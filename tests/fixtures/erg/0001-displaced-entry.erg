@@ -1,0 +1,13 @@
+%erg 0.1
+Title: Displaced log entry incident shape
+Created: 2026-10-03
+Author: claude
+
+--- log ---
+2026-10-01T10:00Z claude created original entry
+
+2026-10-02T10:00Z claude note bumped by an isolated gate
+--- body ---
+Fixture: the incident shape from ticket 0879 -- a displaced entry sits after
+the entry run's terminal blank, glued to the body separator. erg log must land
+the next entry contiguous with it and restore the terminal blank.

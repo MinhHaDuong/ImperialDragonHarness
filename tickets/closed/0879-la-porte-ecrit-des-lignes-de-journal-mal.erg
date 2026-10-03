@@ -2,6 +2,7 @@
 Title: La porte ecrit des lignes de journal malformees dans le checkout partage, et erg validate ne les voit pas
 Created: 2026-09-08
 Author: claude
+Closed: autoclosed — PR #1164
 
 --- log ---
 2026-09-08T07:39Z claude created rapporte par deux tours de porte successifs sur 826, chacun ayant du reverter sa propre ligne a la main
@@ -13,6 +14,12 @@ Author: claude
 2026-10-03T11:49Z claude note Premise objection (verb criterion only, raid 2026-10-03): spec-erg-v1.md now declares verbs an open set (any single token), so the reject-out-of-spec-verb checkbox no longer matches the spec — strict-subset narrowing recorded; author to drop or reword it.
 2026-10-03T11:56Z claude note plan (raid 2026-10-03): upstream write path verified at ~/CNRS/code/git-erg (go toolchain present; 91e1f848 re-vendor pattern confirmed). Upstream: appendLogLine fix preserving the terminal blank, write-side refusal in cmdLog for displaced entries, advisory WARN on read for position and monotonicity (corpus reality: the displaced shape is erg's own systematic output — 460/534 harness files; monotonicity violations 65 — rebase replay is routine); pep-erg-v1.md norms. Harness: tests/test_erg_log_placement.py + 3 hermetic fixtures (red today), re-vendor, spec-erg-v1.md log-section norms, REROLL bump routed to a reroll_bump verdict field (verify-gate L178, gaze L558/580/582-595) committed onto the PR branch. 10 files. Phase 4 must verify the write-refusal does not wedge the live corpus.
 2026-10-03T12:02Z claude note feasibility (raid 2026-10-03): WARN — plan adjusted on evidence. The wedge check proved a write-refusal would reject 460/534 corpus files (the displaced shape is erg's own systematic appendLogLine output; callers include molt/roar/merge/reviewers/housekeeping), so the upstream write path becomes normalize-then-append: auto-repair the missing terminal blank, then append above it (append-only preserved). Read path stays advisory WARN for position and monotonicity (65 non-monotone files are routine rebase replay). No hard refusal anywhere. First test adjusted: erg log on a displaced fixture must land the new entry contiguous and restore the terminal blank (red today — current binary leaves it displaced). Norm backing lands in tickets/spec-erg-v1.md Log section (pep-erg-v1.md has no dedicated log section, only section 14 prose). Vendored binary is ~30 commits behind upstream main; the re-vendor picks that up. Recorded narrowing: the 'erg check rejette une entree hors section' checkbox is satisfied as an advisory WARN — literal rejection would wedge CI validate-tickets on 460 files; author may veto at review.
+2026-10-03T12:14Z reviewer note Implemented: upstream git-erg PR #375 (ticket 0304) fixes appendLogLine to normalize-then-append — new entries land contiguous, terminal blank restored, no write refusal — and adds advisory erg check WARN for displaced entries and regressive timestamps. Harness: re-vendored tickets/erg (revision 2c490b7, picks up the upstream drift since 63b5e92), tests/test_erg_log_placement.py with three hermetic fixtures (red before the re-vendor, green after), spec-erg-v1.md log-section norms (entry placement, timestamp ordering), REROLL bump routed to a reroll_bump verdict field in verify-gate and gaze — the gate writes nothing, the orchestrator poses the note line onto the PR branch or at merge time.
+2026-10-03T12:30Z reviewer note review-pr round 1 on PR #1164 (five-seat panel: correctness/consistency/scope/red-team/doc-propagation, headless claude seats): scope approve; others comment; red team request-changes. Fixed in-branch: reroll_bump added to verify-gate's own YAML verdict schema and given a none value in gaze's; spec placement norm worded to the implemented rule (log block's last blank terminates the run, interior blanks tolerated style); test file gained the append-only invariant and the two-consecutive-turns exit criterion (5 tests green). Consumers outside this ticket's edit scope (raid tally, raid circuit-breaker recipe, gaze fork-liveness fallback) filed as ticket 1023.
+2026-10-03T12:37Z reviewer note review-pr round 2 on PR #1164 (scoped: four objecting seats + regression for scope): all five approve. Took the two consider-tier tightenings: gaze's embedded procedure now says reroll_bump is never none on REROLL; ticket 1023 also names the bare /verify-gate caller as a poser. Remaining consider/nofollow notes accepted as-is (verify-gate keeps its own omit-with-comment schema convention; pre-existing CRLF and echo-separator behaviors unchanged). Panel clean through round 2.
+2026-10-03T13:20Z reviewer note verify-reroll — round 1: test_real_corpus_check_still_passes depends on cwd (tests/test_erg_log_placement.py:136-137)
+
+2026-10-03T14:21Z reviewer closed — autoclosed — PR #1164
 --- body ---
 ## Context
 
@@ -68,11 +75,14 @@ un contrôle négatif reste nécessaire avant de considérer le validateur corri
 
 ## Verification
 
-- [ ] `erg check` rejette une entree de journal placee hors de la section
+- [x] `erg check` rejette une entree de journal placee hors de la section
+      (satisfaite en WARN consultatif, exit 0 — le refus littéral bloquerait
+      la CI validate-tickets sur 460 fichiers ; narrowing enregistrée au plan
+      de faisabilité, l'auteur peut opposer son veto en revue)
 - [ ] `erg check` rejette un verbe hors specification
 - [x] La recette de bump passe par `erg log` et emploie `note` (Gaze et
       verify-gate, vérifiés le 2026-10-02)
-- [ ] Un REROLL sur une porte isolee ne salit aucun checkout partage
+- [x] Un REROLL sur une porte isolee ne salit aucun checkout partage
 
 ## Invariants
 
@@ -82,5 +92,9 @@ un contrôle négatif reste nécessaire avant de considérer le validateur corri
 
 ## Exit criteria
 
-- [ ] Le controle positif rougit avant correctif et passe apres
-- [ ] Deux tours de porte consecutifs ne laissent aucune ligne a reverter
+- [x] Le controle positif rougit avant correctif et passe apres
+      (TestAppendLogLine amont et tests/test_erg_log_placement.py : rouges sur
+      le binaire 63b5e92, verts sur le binaire revendu 2c490b7)
+- [x] Deux tours de porte consecutifs ne laissent aucune ligne a reverter
+      (erg log atterrit contigu et restaure le blanc terminal ; la porte ne
+      logge plus rien, le bump voyage dans reroll_bump)

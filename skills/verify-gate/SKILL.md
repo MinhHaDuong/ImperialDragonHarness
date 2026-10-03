@@ -150,6 +150,7 @@ scope_overflow:
 rationale: |
   <strongest remaining reviewer attack; if APPROVED, why evidence holds>
 root_cause_class: Agent Error | Extractor Error | Original Error | Missing Data | Other  # required on REROLL/ESCALATE
+reroll_bump: note verify-reroll — round {n}: {top unresolved criterion}  # only if REROLL — the gate writes nothing; the orchestrator poses this line
 second_round_needed:   # only if REROLL
   - <prioritised items from unresolved lists>
 ```
@@ -175,7 +176,12 @@ second_round_needed:   # only if REROLL
   APPROVED. Caller handles ticket creation and PR annotation.
 - All lists empty AND all criteria ADDRESSED → APPROVED.
 
-**On REROLL**: run `${ERG:-erg} log <ticket-id> "bump verify-reroll — round {n}: {top unresolved criterion}"`
+**On REROLL**: write no ticket file — run no `erg log`, ever. Emit the bump line
+in the verdict as a `reroll_bump:` field: `note verify-reroll — round {n}: {top unresolved criterion}`.
+The gate runs in an isolated checkout over a shared `main`; a mid-wave `erg log`
+on the ticket collides at the insertion point with the branch's own ticket
+commits. The orchestrator poses the line: committed onto the PR branch with the
+REROLL fix, or deferred to merge time.
 
 If `round == 2` and any trigger fires → upgrade to ESCALATE. Never a third round.
 

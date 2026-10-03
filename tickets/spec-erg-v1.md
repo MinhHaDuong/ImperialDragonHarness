@@ -175,6 +175,23 @@ Append-only. Each line records one event:
 
 Lines are never edited or deleted. To correct an error, append a new line.
 
+**Entry placement.** Log entries are written contiguously — `erg log` appends
+each new entry directly after the last. The log block's last blank line
+terminates the entry run, and `--- body ---` follows that blank; an entry
+placed after that terminal blank is out of section. `erg check` emits an
+advisory WARN for it (exit 0; the parser tolerates the shape, and an interior
+blank above earlier entries is tolerated style, not a placement violation).
+`erg log` normalises on append: the new entry lands inside the run and the
+terminal blank is restored when a displaced entry consumed it. Existing
+entries are never rewritten; moving the blank line below the last entry is a
+hand edit, not a rewrite.
+
+**Timestamp ordering.** Timestamps SHOULD be non-decreasing down the log.
+An older-stamped entry after a newer one draws an advisory WARN from
+`erg check`, never a rejection: a collective wave rebase legitimately replays
+older-stamped lines after newer ones, so the gate must keep passing routine
+wave merges.
+
 ### Body section
 
 Free-form markdown. Suggested structure for actionable tickets:

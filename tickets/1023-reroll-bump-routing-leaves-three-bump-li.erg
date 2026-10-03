@@ -1,0 +1,48 @@
+%erg 0.1
+Title: reroll_bump routing leaves three bump-line consumers stale
+Created: 2026-10-03
+Author: claude
+
+--- log ---
+2026-10-03T12:29Z claude created
+
+--- body ---
+## Context
+
+Ticket 0879 rerouted the REROLL bump out of the isolated verify-gate: the gate
+writes nothing and the bump line travels in the verdict's `reroll_bump:` field,
+posed by the orchestrator with verb `note` (PR #1164). Three consumers of the
+bump line were outside that PR's edit scope and still describe the old recipe.
+
+Found by the #1164 review panel (correctness, consistency, red team, doc
+propagation seats, round 1).
+
+## Scope
+
+- `skills/raid/SKILL.md` wrap-up tally (~L368-372): `grep -h ' bump '
+  tickets/*.erg | awk '{print $4}'` matches the old verb; new REROLL bumps read
+  `note verify-reroll — round {n}: …`, so the "Y verify-reroll" count silently
+  drops to zero, and `$4` names the wrong field even on a match. Match
+  `note verify-reroll` and count on the right field.
+- `skills/raid/SKILL.md` circuit-breaker recipe (~L382-384): hand-writes
+  `{ISO8601} claude bump circuit-breaker — {reason}` into the main-repo
+  tickets/. That is a hand-written append with the verb `bump` -- the exact
+  shape ticket 0879 was filed over. Route it through `erg log <id> "note
+  circuit-breaker — {reason}"`, which now lands the line well-formed.
+- `skills/gaze/SKILL.md` fork-liveness fallback (~L124, L138): "log a bump
+  line on the ticket" reads as permission to run `erg log` on main mid-wave;
+  it should point at the reroll_bump posing rule (orchestrator poses onto the
+  PR branch or defers to merge time).
+
+- A manual `/verify-gate` run outside the raid/gaze flow (round-2 panel
+  note): the verdict comment keeps a durable copy, but nothing names the
+  caller who poses the line onto the PR branch. State it in
+  `skills/verify-gate/SKILL.md` (the caller of a bare gate run poses the
+  reroll_bump line, or defers to the merge).
+
+## Exit criteria
+
+- [ ] The wrap-up tally counts `note verify-reroll` bumps
+- [ ] The circuit-breaker recipe goes through erg log with verb note
+- [ ] The gaze fork-liveness fallback names the reroll_bump posing rule
+- [ ] make check passes

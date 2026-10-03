@@ -1,0 +1,12 @@
+%erg 0.1
+Title: Regressive log timestamps
+Created: 2026-10-03
+Author: claude
+
+--- log ---
+2026-10-02T10:00Z claude created
+2026-10-01T09:00Z claude note replayed by a wave rebase
+
+--- body ---
+Fixture: timestamps decrease mid-log -- routine git-rebase replay. Advisory
+WARN only, never a rejection.

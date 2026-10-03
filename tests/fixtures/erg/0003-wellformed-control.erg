@@ -1,0 +1,12 @@
+%erg 0.1
+Title: Well-formed log control
+Created: 2026-10-03
+Author: claude
+
+--- log ---
+2026-10-01T10:00Z claude created
+2026-10-01T11:00Z claude note contiguous entry
+
+--- body ---
+Fixture: the normative shape -- entries contiguous, one terminal blank ending
+the entry run. Draws no placement warning; erg log keeps the shape.
