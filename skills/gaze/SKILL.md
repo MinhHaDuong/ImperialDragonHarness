@@ -590,7 +590,7 @@ unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
 unresolved_adherence_violations: [...]
 multi_ticket: <distinct close-claim IDs and non-blocking disposition> | none
-reroll_bump: <the exact line to pose, "note verify-reroll — round {n}: {top unresolved criterion}"> (REROLL only)
+reroll_bump: <the exact line to pose, "note verify-reroll — round {n}: {top unresolved criterion}"> | none (REROLL only — the gate writes nothing)
 rationale: <paragraph>
 round: 1 | 2
 gate_session_id: <this run's id>

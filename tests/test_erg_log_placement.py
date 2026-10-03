@@ -55,9 +55,15 @@ def test_log_on_displaced_fixture_lands_contiguous_and_restores_blank(store):
     """The incident shape, repaired on append: the new entry joins the entry
     run (no blank between it and the previous entry) and the terminal blank
     is restored before `--- body ---`."""
+    original = (store / DISPLACED).read_text()
+    prefix = original.split("bumped by an isolated gate\n", 1)[0] + "bumped by an isolated gate\n"
     result = run_erg("log", "0001", "note probe", str(store))
     assert result.returncode == 0, result.stdout + result.stderr
-    lines = (store / DISPLACED).read_text().splitlines()
+    updated = (store / DISPLACED).read_text()
+    # Append-only invariant: everything through the previous (displaced)
+    # entry is byte-identical; the insertion added only below it.
+    assert updated.startswith(prefix), "erg log rewrote existing entries"
+    lines = updated.splitlines()
     body_idx = lines.index("--- body ---")
     # Terminal blank restored: a blank directly before the body separator.
     assert lines[body_idx - 1] == "", "terminal blank not restored before --- body ---"
@@ -68,6 +74,28 @@ def test_log_on_displaced_fixture_lands_contiguous_and_restores_blank(store):
     displaced = lines[body_idx - 3]
     assert displaced.endswith("bumped by an isolated gate"), (
         f"new entry not contiguous with the previous entry: {lines}"
+    )
+
+
+@pytest.mark.integration
+def test_two_log_turns_leave_no_line_to_revert(store):
+    """The ticket's exit criterion: two consecutive turns need no hand revert.
+    Both entries land inside the run in order, the terminal blank survives
+    both, and erg check draws no placement warning afterwards (the interior
+    blank above earlier entries is tolerated style; the historical displaced
+    entry is never rewritten -- moving the blank is a hand edit)."""
+    for turn in ("turn one", "turn two"):
+        result = run_erg("log", "0001", f"note {turn}", str(store))
+        assert result.returncode == 0, result.stdout + result.stderr
+    lines = (store / DISPLACED).read_text().splitlines()
+    body_idx = lines.index("--- body ---")
+    assert lines[body_idx - 1] == "", "terminal blank lost by erg log"
+    assert "note turn two" in lines[body_idx - 2], f"second turn displaced: {lines}"
+    assert "note turn one" in lines[body_idx - 3], f"first turn displaced: {lines}"
+    check = run_erg("check", str(store))
+    assert check.returncode == 0, check.stdout + check.stderr
+    assert f"WARN {DISPLACED}: log entry after" not in check.stderr, (
+        f"placement warning after two normalised turns: {check.stderr}"
     )
 
 

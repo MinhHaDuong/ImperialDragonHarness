@@ -150,6 +150,7 @@ scope_overflow:
 rationale: |
   <strongest remaining reviewer attack; if APPROVED, why evidence holds>
 root_cause_class: Agent Error | Extractor Error | Original Error | Missing Data | Other  # required on REROLL/ESCALATE
+reroll_bump: note verify-reroll — round {n}: {top unresolved criterion}  # only if REROLL — the gate writes nothing; the orchestrator poses this line
 second_round_needed:   # only if REROLL
   - <prioritised items from unresolved lists>
 ```
