@@ -35,7 +35,7 @@
 #   - name: local-qwen
 #     kind: local-model
 #     status: advisory
-#     trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+#     trial-ticket: tickets/closed/0207-agnostic-cli-reviewer-seat-one-config-op.erg
 #     endpoint: http://127.0.0.1:8012/v1
 #     model: openai/qwen3.6-35b-a3b
 
@@ -63,7 +63,7 @@ reviewers:
   - name: openrouter-frontier
     kind: cli-agent
     status: advisory
-    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    trial-ticket: tickets/closed/0207-agnostic-cli-reviewer-seat-one-config-op.erg
     endpoint: https://openrouter.ai/api/v1
     model: openai/gpt-5.6-luna
     credential-env: OPENROUTER_API_KEY_IDH
@@ -76,7 +76,7 @@ reviewers:
   - name: openrouter-budget
     kind: cli-agent
     status: advisory
-    trial-ticket: tickets/0207-agnostic-cli-reviewer-seat-one-config-op.erg
+    trial-ticket: tickets/closed/0207-agnostic-cli-reviewer-seat-one-config-op.erg
     endpoint: https://openrouter.ai/api/v1
     # 2026-09-28: deepseek-v4-flash retired upstream; moved to v4.1-flash,
     # a reasoning model - budget its tokens generously or it burns out in
