@@ -198,6 +198,15 @@ below):
 
 Annotate tickets with PASS/WARN/BLOCK. Commit annotations.
 
+After committing the final annotation, run `git pull --rebase origin main`, then
+record `WAVE_BASE="$(git rev-parse HEAD)"` in the raid log. Per-phase annotation
+commits stay as they are — WAVE_BASE is simply their last commit — so every wave
+ticket annotation is an ancestor of it and all wave branches fork from one
+shared, mergeable base. Patch-equivalent commits are not merge-equivalent: the
+2026-10-02 raid carried the same annotation patch as 26c8ab73 (native) and
+635cf70c (cherry-pick), and every pair of wave PRs holding different SHAs of
+that one patch collided on the ticket files at merge time.
+
 ## Phase 5.0: Land coordination PR (cross-cutting registries)
 
 **When**: 3+ PRs in a wave will edit the same file holding a shared
@@ -221,6 +230,21 @@ itself follows the normal verify/merge gates.
 Group tickets into waves:
 - Wave N: no unmerged dependencies
 - Wave N+1: depends on Wave N results
+
+**Wave base**: every wave branch forks from WAVE_BASE exactly — executors
+spawn from the main checkout sitting at WAVE_BASE (Phase 4), never from
+whatever origin/main has drifted to since.
+
+**When**: origin/main advances mid-wave, after executors have already forked.
+
+**Why**: a branch forked before or after the advance carries a different SHA of
+the annotation commits, and patch-equivalent commits are not merge-equivalent —
+divergent copies collide on `tickets/` at merge time.
+
+**How**: the orchestrator rebases ALL wave branches onto the new main together,
+once — one collective wave rebase, never per-branch — and pushes each rewritten
+branch with `git push --force-with-lease`, explicitly authorized for this
+rewrite of pushed branch SHAs. WAVE_BASE moves to the rebased tip.
 
 For each wave, launch agents with `isolation: "worktree"` and `model-level: strong`
 (per § Model policy — coding workers; `effort: standard`, resolved through the active runtime).
@@ -258,6 +282,9 @@ subagent (read-only; `model-level: standard` per § Model policy) to check:
 - Does `make check` still pass if we imagine them all merged?
 - Are there testing gaps visible only at wave granularity (e.g., two PRs touching the
   same test file in incompatible ways)?
+- Run `git merge-tree --write-tree` pairwise across the wave's PRs over
+  `tickets/`: a ticket-file conflict there means divergent annotation copies —
+  a WAVE_BASE violation — even when the conflicting lines carry identical prose.
 
 Wave-level findings go to the human as a wave-summary comment; they do not block
 individual `/gaze` verdicts.
