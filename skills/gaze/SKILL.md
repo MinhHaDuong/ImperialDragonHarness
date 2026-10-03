@@ -261,7 +261,7 @@ fi
   finding for phase 6 to disposition. Below the size breaker, continue the normal review;
   genuinely bundled tickets are permitted by `rules/git.md` § Merging.
 - If `pr_files >= 15`, the PR exceeds the **15+ files** monster threshold
-  borrowed from `rules/workflow.md` § Autonomous action. Return ESCALATE
+  borrowed from `rules/workflow.md` § Ticket discipline for multi-PR work. Return ESCALATE
   immediately, before spawning any phase 2–5 reviewer battery or phase 6 gate,
   with `circuit_breaker: un-reviewable` and reason
   `un-reviewable: <pr_files> files / <pr_lines> lines — split before review`.
