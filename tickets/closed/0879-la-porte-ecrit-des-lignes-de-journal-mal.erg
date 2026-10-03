@@ -20,6 +20,8 @@ Closed: autoclosed — PR #1164
 2026-10-03T13:20Z reviewer note verify-reroll — round 1: test_real_corpus_check_still_passes depends on cwd (tests/test_erg_log_placement.py:136-137)
 
 2026-10-03T14:21Z reviewer closed — autoclosed — PR #1164
+2026-10-03T15:17Z claude note Author decisions (2026-10-03): (1) the position checkbox stands as satisfied by the advisory WARN — accepted; (2) the out-of-spec-verb checkbox is withdrawn — the spec's open verb set leaves nothing to reject; body updated accordingly.
+
 --- body ---
 ## Context
 
@@ -79,7 +81,10 @@ un contrôle négatif reste nécessaire avant de considérer le validateur corri
       (satisfaite en WARN consultatif, exit 0 — le refus littéral bloquerait
       la CI validate-tickets sur 460 fichiers ; narrowing enregistrée au plan
       de faisabilité, l'auteur peut opposer son veto en revue)
-- [ ] `erg check` rejette un verbe hors specification
+- [x] ~~`erg check` rejette un verbe hors specification~~ — retiré par
+      décision de l'auteur (2026-10-03) : la spécification déclare désormais
+      les verbes comme un ensemble ouvert (spec-erg-v1.md § Log section),
+      aucun verbe n'est hors spécification, il n'y a rien à rejeter
 - [x] La recette de bump passe par `erg log` et emploie `note` (Gaze et
       verify-gate, vérifiés le 2026-10-02)
 - [x] Un REROLL sur une porte isolee ne salit aucun checkout partage
