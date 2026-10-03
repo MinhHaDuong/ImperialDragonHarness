@@ -554,9 +554,10 @@ outright — no `git checkout <ref> -- `, no `git restore .`, no
 `git reset --hard`; inspect another version with `git show <ref>:<path>`
 (rules/git.md); if the review worktree is unreachable or its HEAD differs from
 the anchor HEAD, report NOT-RUN — never fall back to the session cwd. The
-gate's **one** permitted write is the
-`${ERG:-erg} log <ticket-id> …` reroll-bump line (and its PR verdict comment) —
-it edits no other `tickets/*.erg`. The agent's prompt embeds the gate procedure
+gate has **no** permitted writes to `tickets/*.erg` — the reroll-bump line
+travels in the verdict's `reroll_bump:` field (and its PR verdict comment);
+the orchestrator poses the line, the gate never runs `erg log`. The agent's
+prompt embeds the gate procedure
 imperatively and returns the YAML verdict block below as its **final message**;
 the orchestrator parses `verdict` to branch.
 
@@ -577,9 +578,10 @@ excise). Decision: any MISSING criterion, any unresolved human comment, any
 unresolved `verifiable:` minor, any unapplied must-fix, any blocking adherence,
 or any `scope_overflow` with disposition ESCALATE → REROLL (round 1) / ESCALATE
 (round 2); all lists empty and all criteria ADDRESSED → APPROVED. Round 3 is
-forbidden. On REROLL run `${ERG:-erg} log <ticket-id> "bump verify-reroll —
-round {n}: {top unresolved criterion}"` only after the live `verdict` state
-check; then post the PR verdict comment. Return:
+forbidden. On REROLL include `reroll_bump:` in the verdict — value `note
+verify-reroll — round {n}: {top unresolved criterion}` — only after the live
+`verdict` state check; never run `erg log` (the gate writes no ticket file);
+then post the PR verdict comment. Return:
 
 ```yaml
 verdict: APPROVED | REROLL | ESCALATE
@@ -588,12 +590,19 @@ unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
 unresolved_adherence_violations: [...]
 multi_ticket: <distinct close-claim IDs and non-blocking disposition> | none
+reroll_bump: <the exact line to pose, "note verify-reroll — round {n}: {top unresolved criterion}"> (REROLL only)
 rationale: <paragraph>
 round: 1 | 2
 gate_session_id: <this run's id>
 review_worktree_path: <absolute path>
 ruled_tip_sha: <full SHA read from review worktree at verdict time>
 ```
+
+The orchestrator poses the `reroll_bump` line — it never runs `erg log`
+against `main` mid-wave, where it would collide at the insertion point with
+the branch's own ticket commits (ticket 0879, the 1016 collision class):
+commit it onto the PR branch together with the REROLL fix, or defer to merge
+time.
 
 If phase 1 reported `multi_ticket`, carry it into the gate's findings and
 disposition each close-claimed ticket's exit criteria. The finding alone is
