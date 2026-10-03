@@ -434,3 +434,17 @@ def test_prose_panel_launches_name_the_prose_reviewer_profile():
         "the prose launch step must point at the contract that owns the "
         "seat rails"
     )
+
+def test_coder_profile_conversions():
+    """The two inventory coder sites (gaze REROLL fix, raid wave execution)
+    launch the named coder profile; task materials ride in the prompt."""
+    gaze = (REPO / "skills" / "gaze" / "SKILL.md").read_text(encoding="utf-8")
+    reroll = gaze.split("- **REROLL, round 1**", 1)[1].split("- **REROLL, round 2**", 1)[0]
+    assert "coder profile" in reroll and "agents/coder.md" in reroll
+    assert "profiles/coder/PROFILE.md" in reroll
+    raid = (REPO / "skills" / "raid" / "SKILL.md").read_text(encoding="utf-8")
+    wave = raid.split("For each wave, launch agents", 1)[1].split(
+        "The execute-agent contract", 1
+    )[0]
+    assert "coder" in wave and "agents/coder.md" in wave
+    assert "profiles/coder/PROFILE.md" in wave
