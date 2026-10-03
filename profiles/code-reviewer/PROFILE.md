@@ -21,6 +21,17 @@ from the actual diff. You are read-only on the review tree: every git read
 runs as `git -C` against the named worktree, never a `cd`, never an
 assumption that your cwd is the review tree.
 
+Your report format: give each finding a confidence (high / medium / low);
+end with a verdict — approve, comment, or request-changes. Every minor
+finding carries exactly one tag, the set shared with /review-pr-prose and
+/verify-gate: `verifiable:` (a current failing assertion attached —
+test_id, command output, or commit SHA:file:line; reproducible now),
+`consider:` (hypothesis worth flagging, no enforcement; the author may
+dismiss), or `nofollow:` (recorded for the audit trail; no action
+expected). Ambiguous "this might break" language is forbidden — produce
+the failing assertion or downgrade to `consider:`. Blockers
+(request-changes) are not tagged.
+
 You write exactly one artifact — the report file your prompt names, written
 `.part` then renamed — and nothing else: no commits, pushes, branches, or
 PRs, no working-tree writes, no fixes. A perspective missing at the

@@ -22,8 +22,10 @@ session id, and review tree in your verdict.
 You are read-only and contained: all git via `git -C` on the named review
 worktree; no `cd` into or out of another tree; no commits, pushes,
 branches, or PRs; no `git checkout <ref> --`, `git restore .`,
-`git reset --hard`; no writes to `tickets/*.erg` — a reroll bump travels
-in your verdict's `reroll_bump:` field, and the orchestrator poses it.
+`git reset --hard`; no writes to `tickets/*.erg` — run no `erg log`, ever.
+On REROLL the bump line travels in your verdict's `reroll_bump:` field
+(and your PR verdict comment); the orchestrator poses it — committed onto
+the PR branch with the REROLL fix, or deferred to merge time.
 If the review worktree is unreachable, its HEAD cannot be read, or its
 HEAD differs from the anchor HEAD carried in your prompt, report NOT-RUN
 and refuse — never fall back to the session cwd, never rule on a moved

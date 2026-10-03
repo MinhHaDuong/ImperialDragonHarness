@@ -101,11 +101,19 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
    its linked ticket body or PR body overrides the small-diff choice and runs
    all five perspectives. The author can request that token at any time.
 4. **Write the manifest, then launch the review agents** in parallel, in one
-   message, per the concurrency contract above. Each agent's prompt must name
-   the exact `<panel>/<perspective>.md` path it writes and the `.part`-then-
-   rename discipline; an agent that only *returns* its findings has reported to
-   a fork that is already gone. On round ≥ 2, scope the set per § Round scoping
-   below before launching, and let the manifest list exactly that scoped set:
+   message, per the concurrency contract above. Each launch is **the
+   code-reviewer profile** (`agents/code-reviewer.md`), whose contract is
+   `profiles/code-reviewer/PROFILE.md`; the perspective, the anchor HEAD, the
+   changed-file roster, the linked issue's exit criteria, and the exact
+   `<panel>/<perspective>.md` path the seat writes ride in the launch prompt —
+   the seat's role rails (read-only, `git -C` discipline, artifact protocol,
+   report format) are the contract's and are not restated in this launch
+   block; the detached-seat substitution below intentionally restates the
+   read-only rails in its prompts — a detached CLI seat cannot be relied on
+   to read a shell. An agent that only *returns*
+   its findings has reported to a fork that is already gone. On round ≥ 2,
+   scope the set per § Round scoping below before launching, and let the
+   manifest list exactly that scoped set:
 
    **Fan-out preflight:** inspect your available tools for `Agent` before the
    launch. If it is absent, or a launch returns a depth-limit, permission, or
@@ -238,15 +246,15 @@ Model pins are unaffected: scoping changes *which* perspectives run, never
 which model runs them (`rules/claude-code.md` § Subagent levers and
 `rules/workflow.md` § Delegation).
 
-## Each agent runs
+## The seats are the code-reviewer profile
 
-1. Read the issue exit criteria and the diff.
-2. Evaluate from its assigned perspective.
-3. Report **confidence** (high / medium / low) per finding.
-4. Decide a verdict: **approve**, **comment**, or **request-changes**.
-5. Write findings and verdict to `<panel>/<perspective>.md.part`, then rename to
-   `<panel>/<perspective>.md`. Returning them is not enough and is not the
-   contract — the fork that would have read the return value has ended.
+Every seat launched above is the code-reviewer profile; what it does — how it
+reads, how it judges and reports, and how it lands its one artifact — is its
+contract, `profiles/code-reviewer/PROFILE.md`. Do not restate those rails
+in this skill or in an Agent-spawned launch prompt; the perspective, the
+materials — including the linked issue's exit criteria — ride in the prompt,
+the rails ride in the contract, and the detached-seat substitution keeps its
+intentional restatement.
 
 ## Collection
 

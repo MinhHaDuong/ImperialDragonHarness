@@ -215,3 +215,63 @@ def test_no_two_agent_shells_share_a_description():
             "a runtime cannot route two shells with the same card"
         )
         descriptions[description] = path
+
+
+# Wave 2 pilot (ticket 0938 Actions step 4): the review-pr five-perspective
+# launch section names the code-reviewer profile instead of restating the
+# seat rails per launch. The detached-seat substitution section keeps its
+# inline embedding by design (inventory) and stays outside these pins.
+REVIEW_PR = REPO / "skills" / "review-pr" / "SKILL.md"
+
+
+def test_review_pr_launch_names_the_code_reviewer_profile():
+    """The parallel-spawn block launches the named profile whose contract
+    carries the seat rails; perspective and materials ride in the prompt."""
+    review = REVIEW_PR.read_text(encoding="utf-8")
+    launch = " ".join(
+        review.split("Spin multiple agents", 1)[1]
+        .split("**Fan-out preflight:**", 1)[0]
+        .split()
+    )
+    assert "the code-reviewer profile" in launch, (
+        "the review-pr launch block must name the code-reviewer profile it "
+        "launches (agents/code-reviewer.md)"
+    )
+    assert "agents/code-reviewer.md" in launch
+    assert "profiles/code-reviewer/PROFILE.md" in launch, (
+        "the launch block must point at the contract that owns the seat rails"
+    )
+    assert "perspective" in launch and "anchor" in launch, (
+        "perspective and anchor materials stay in the launch prompt"
+    )
+
+
+def test_review_pr_no_longer_restates_the_seat_rails():
+    """The seat rails are the contract's, not the skill body's. The pinned
+    phrases are the removed 'Each agent runs' restatement and the launch
+    sentence's discipline re-embedding (whitespace-normalized: both span
+    line breaks in the removed text)."""
+    flat = " ".join(REVIEW_PR.read_text(encoding="utf-8").split())
+    assert "Evaluate from its assigned perspective" not in flat
+    assert "Decide a verdict: **approve**, **comment**, or **request-changes**" not in flat
+    assert "the `.part`-then-rename discipline" not in flat
+
+
+def test_code_reviewer_contract_carries_the_report_format():
+    """The rails removed from the skill body must live in the contract:
+    confidence per finding, the verdict enum, and the verifiable/consider/
+    nofollow minor-finding tags with verifiable's evidence requirement."""
+    text = " ".join(
+        (REPO / "profiles" / "code-reviewer" / "PROFILE.md")
+        .read_text(encoding="utf-8")
+        .split()
+    )
+    assert "confidence" in text.lower()
+    for verdict in ("approve", "comment", "request-changes"):
+        assert verdict in text, f"contract verdict enum missing {verdict}"
+    for tag in ("verifiable:", "consider:", "nofollow:"):
+        assert tag in text, f"contract minor-finding tag {tag} missing"
+    assert "failing assertion" in text or "test_id" in text, (
+        "verifiable: must require attached evidence (test_id, command "
+        "output, or commit SHA:file:line)"
+    )
