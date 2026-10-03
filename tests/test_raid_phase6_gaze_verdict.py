@@ -108,6 +108,31 @@ def test_phase6_launch_reason_cites_the_nesting_defect():
     )
 
 
+def test_phase6_substitution_trigger_names_detection_causes():
+    """The detached fallback must trigger on every battery NOT-RUN cause.
+
+    The gaze battery NOT-RUN enum carries three causes — guard, no-agent-tool,
+    depth — but the Phase 6 substitution trigger named only two (plus the
+    known-absent-connector heuristic): an inline run reporting
+    `NOT-RUN — cause: guard` would not trigger the detached fallback and the
+    PR would end the wave with no verdict at all (round-1 gate V1/V3). The
+    trigger clause must name each cause beside the NOT-RUN signal it detects.
+    """
+    norm = re.sub(r"\s+", " ", _per_ticket())
+    m = re.search(r"battery: NOT-RUN — cause:", norm)
+    assert m, (
+        "Phase 6 must trigger the detached fallback on the gaze battery "
+        "NOT-RUN signal, not on connector heuristics alone"
+    )
+    window = norm[m.start():m.start() + 250]
+    for cause in ("no-agent-tool", "depth", "guard"):
+        assert cause in window, (
+            f"Phase 6's substitution trigger must name the detection cause "
+            f"{cause!r} beside the battery NOT-RUN signal — a NOT-RUN run "
+            "with an unnamed cause would not trigger the detached fallback"
+        )
+
+
 def test_phase4_flags_planned_pr_size():
     """Phase 4 must compare each planned PR's file count with the /gaze breaker.
 

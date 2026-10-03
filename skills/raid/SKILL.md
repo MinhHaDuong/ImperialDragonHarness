@@ -298,8 +298,8 @@ Respect the max-concurrent-agents cap (see `rules/claude-code.md` § Subagent
 levers). When the runtime's nesting blocks the inline run — a raid is itself
 an agent orchestration, and child sessions do not inherit the agent connector
 (PRs #1060/#1061, #1129-#1132; ticket 1017); detect it by the inline run
-reporting `battery: NOT-RUN — cause: no-agent-tool` or `depth`, or by a known
-absent agent connector — substitute one detached, headless, non-interactive
+reporting `battery: NOT-RUN — cause: no-agent-tool`, `depth`, or `guard`,
+or by a known absent agent connector — substitute one detached, headless, non-interactive
 CLI session per PR per the detached-seat contract
 (`skills/review-pr/SKILL.md` § Detached-seat substitution, ticket 1017): cwd
 pinned to the PR's worktree, prompt embedding `/gaze <pr-number>` plus the
