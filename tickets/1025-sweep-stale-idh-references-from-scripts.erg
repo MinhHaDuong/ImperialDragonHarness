@@ -7,6 +7,9 @@ Author: reviewer
 2026-10-03T20:16Z reviewer created
 2026-10-03T20:16Z claude note Filed by the Zotero-train raid (2026-10-03): the ROADMAP reserved this rider as 1020 but it was never filed; erg new allocated 1025. Scope enumerated at filing: ~10+ files, classification required (stale vs intentional probes).
 2026-10-03T20:18Z reviewer note Rider classification (2026-10-03 feasibility): the scripts/ portion is ALREADY swept and ratcheted — tests/test_stale_idh_layout.py pins the three survivors line-by-line as provenance (probe-memory-symlink.py = 0984 rig, intentional; gen-claude-code-adapter-hooks.py = live-by-design translator for pre-0982 settings forms, removal is a separate retirement; seat-runner.sh:393 = 0217 containment self-test, intentional). The real work is 4 skill files: skills/update-publist/resolve_hal_credentials.sh (docstring+prose, stale, mechanical), skills/reviewers/reviewers.sh:313,321 (comments cite ~/.idh/scripts/bash-env.sh — now $IDH_ROOT/scripts/, stale, mechanical), skills/external-peer-review/peer_review.py:142 (docstring, stale, mechanical), skills/merge/erg-pr-merge:31 (JUDGMENT: quotes the standing allow rule Bash(~/.idh/...) — verify whether the live settings rule moved, then update comment or record). .idh-checks.json mentions are live convention (ratchet excludes via .idh(?!-)); tests are the guards themselves. Scope shrunk from ~10+ files to ~5.
+2026-10-03T20:21Z reviewer execute note Sweep classification: skills/update-publist/resolve_hal_credentials.sh:12,50 stale-fixed (to $IDH_ROOT convention); skills/reviewers/reviewers.sh:313,321 stale-fixed (to $IDH_ROOT/scripts/bash-env.sh); skills/external-peer-review/peer_review.py:142 stale-fixed (docstring, same form); scripts/ survivors stay intentional-pinned (0984 rig, 0982 settings-form translator, 0217 containment self-test) — existing provenance untouched, tests/test_stale_idh_layout.py now ratchets skills/ too.
+2026-10-03T20:21Z reviewer execute note erg-pr-merge:31 finding: ~/.idh does not exist on this machine; ~/.claude/settings.json:91 and settings.shared.json:61 still carry Bash(~/.idh/skills/merge/erg-pr-merge:*) alongside the ~/.claude form (:90/:60) — comment updated to record the ~/.idh rule as a legacy alias kept for migrated settings; the operator-owned settings files and both rules are untouched.
+2026-10-03T20:21Z reviewer execute note Gates: make check-fast 877 passed; make lint 159 passed; make check-tests 1396 passed 2 skipped; check-skills-drift, check-adapter-hooks, check-agnostic skills/scripts/rules, check-personal-data all OK. make check fails ONLY on the pre-existing tickets/1018:9 absolute-path violation introduced by WAVE_BASE ae22cbe7 itself — outside this rider's rails (ticket log lines are records, untouchable); reported to the raid for a separate fix.
 
 --- body ---
 
@@ -36,7 +39,9 @@ $HOME/.idh — classify whether that is live-by-design or stale).
 
 ## Exit criteria
 
-- [ ] Every `.idh` reference in live code is either updated to the
+- [x] Every `.idh` reference in live code is either updated to the
       portable resolution or classified-intentional with a log line
-- [ ] make check passes (test_stale_idh_layout and friends stay green)
-- [ ] No new hard-coded absolute home paths (check-agnostic constraint)
+- [x] make check passes (test_stale_idh_layout and friends stay green)
+      — all targets green on this branch; the sole failure, tickets/1018:9,
+      pre-exists at WAVE_BASE ae22cbe7 (see log)
+- [x] No new hard-coded absolute home paths (check-agnostic constraint)
