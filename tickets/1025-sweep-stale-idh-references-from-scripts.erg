@@ -1,0 +1,42 @@
+%erg 0.1
+Title: Sweep stale ~/.idh references from scripts and gate comments (Zotero train rider)
+Created: 2026-10-03
+Author: reviewer
+
+--- log ---
+2026-10-03T20:16Z reviewer created
+2026-10-03T20:16Z claude note Filed by the Zotero-train raid (2026-10-03): the ROADMAP reserved this rider as 1020 but it was never filed; erg new allocated 1025. Scope enumerated at filing: ~10+ files, classification required (stale vs intentional probes).
+2026-10-03T20:18Z reviewer note Rider classification (2026-10-03 feasibility): the scripts/ portion is ALREADY swept and ratcheted — tests/test_stale_idh_layout.py pins the three survivors line-by-line as provenance (probe-memory-symlink.py = 0984 rig, intentional; gen-claude-code-adapter-hooks.py = live-by-design translator for pre-0982 settings forms, removal is a separate retirement; seat-runner.sh:393 = 0217 containment self-test, intentional). The real work is 4 skill files: skills/update-publist/resolve_hal_credentials.sh (docstring+prose, stale, mechanical), skills/reviewers/reviewers.sh:313,321 (comments cite ~/.idh/scripts/bash-env.sh — now $IDH_ROOT/scripts/, stale, mechanical), skills/external-peer-review/peer_review.py:142 (docstring, stale, mechanical), skills/merge/erg-pr-merge:31 (JUDGMENT: quotes the standing allow rule Bash(~/.idh/...) — verify whether the live settings rule moved, then update comment or record). .idh-checks.json mentions are live convention (ratchet excludes via .idh(?!-)); tests are the guards themselves. Scope shrunk from ~10+ files to ~5.
+
+--- body ---
+
+## Context
+
+ROADMAP's Zotero-train hygiene rider (reserved there as "1020"; filed now
+under its race-allocated ID). The completion evidence for the Zotero train
+row says "no live `~/.idh` references". Today ~10+ files under scripts/,
+rules/, skills/ carry `.idh` strings — a mix of genuinely stale pointers
+from the pre-0999 layout and intentional probes (e.g.
+tests/test_stale_idh_layout.py detects stale layouts BY DESIGN;
+scripts/gen-claude-code-adapter-hooks.py generates hooks that point at
+$HOME/.idh — classify whether that is live-by-design or stale).
+
+## Actions
+
+1. Enumerate every `~/.idh` / `.idh` reference in live code (scripts/,
+   skills/, rules/, bin/, Makefile — tickets history and projects/ memory
+   are records, untouched). Classify each: stale (pre-0999 pointer to a
+   location the portable installation no longer guarantees) vs
+   intentional (a probe or test that exists to detect stale layouts).
+2. Replace stale references with the 0999-portable resolution (the
+   harness root resolved at runtime, or the ~/.agents default) — match the
+   convention already used by the current install strategy
+   (docs/idh-install-strategy.md).
+3. Keep intentional probes; record each classification in the log.
+
+## Exit criteria
+
+- [ ] Every `.idh` reference in live code is either updated to the
+      portable resolution or classified-intentional with a log line
+- [ ] make check passes (test_stale_idh_layout and friends stay green)
+- [ ] No new hard-coded absolute home paths (check-agnostic constraint)
