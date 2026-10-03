@@ -110,6 +110,14 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
    **Fan-out preflight:** inspect your available tools for `Agent` before the
    launch. If it is absent, or a launch returns a depth-limit, permission, or
    other spawn error, do not run the perspectives sequentially yourself.
+   A spawn that returns success is not a guarantee the agent exists: under
+   this runtime's silent child cap, `agent.spawn` has returned success for
+   seats that never appeared in `agent.list` (observed twice on PR #1143,
+   2026-10-02, eight-seat parallel fan-out). When an `agent.list` tool is
+   available, poll it after the launch and treat a seat that never lists as
+   unlaunched — `no report`, never a simulated verdict; the manifest and the
+   landed `.md` artifacts, not the spawn return values, are the source of truth
+   for what ran.
    Keep every unlaunched manifest entry as `no report`. Write
    `PANEL-INTEGRITY: DEGRADED — Agent tool unavailable or spawn failed;
    independent perspectives not run` and `dissent: unavailable` into

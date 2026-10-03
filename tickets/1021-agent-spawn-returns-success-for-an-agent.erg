@@ -11,6 +11,7 @@ Author: claude
 2026-10-03T11:56Z claude note plan (raid 2026-10-03): orchestrator-run reproduction script scripts/repro-spawn-then-list.ts (committed artifact, not CI; run by the raid orchestrator pre-execution); preflight trust-sentence fix after L112 (proposed final text recorded); doc-pin test added to tests/test_gaze_panel_integrity.py with end-anchor split so 1017's section cannot satisfy it vacuously. 4 files.
 2026-10-03T11:58Z claude note Repro 1021 (raid orchestrator, top-level session, 2026-10-03T12:10Z): 8/8 parallel agent.spawn returned success in one batch (~8.5s each) and agent.list showed 8/8 seats at every poll t+0..t+60s; RESULT: NOT-REPRODUCED. Conditions: Vibe unified harness, 8-parallel, top-level session. Observed contrast in the same raid session: over-cap spawns returned loud errors, never silent success ('subagent_concurrency_limit', 'subagent child limit'). Silent-success remains a known intermittent (PR #1143 rounds 1-2, 2026-10-02, 8-agent panel) — documented conditions, EC2 intermittent branch.
 2026-10-03T12:02Z claude note feasibility (raid 2026-10-03): PASS. Insertion pinned 'before Keep every unlaunched manifest entry' (unambiguous). Repro script scripts/repro-spawn-then-list.ts must use portable paths ($HOME/$IDH_ROOT, never absolute /home/...) — check-agnostic.sh scans scripts/ for home-path patterns. Reproduction already run by the orchestrator (NOT-REPRODUCED, log above); the committed script documents the method and conditions.
+2026-10-03T12:05Z vibe note executed (raid wave 2026-10-03, executor vibe): committed scripts/repro-spawn-then-list.ts as the reproduction-method artifact (outcome NOT-REPRODUCED recorded above, 2026-10-03T12:10Z); skills/review-pr/SKILL.md preflight now states a spawn success is not a guarantee the agent exists — poll agent.list, treat never-listed seats as unlaunched, trust manifest and landed artifacts; intermittent conditions documented (PR #1143 rounds 1-2, 2026-10-02, eight-seat parallel fan-out); doc-pin test test_preflight_does_not_trust_spawn_success added to tests/test_gaze_panel_integrity.py; exit criteria ticked, body references the artifact path.
 --- body ---
 ## Context
 
@@ -51,11 +52,20 @@ defensible; the silent-success spawn is not.
 
 ## Exit criteria
 
-- [ ] Reproduction attempted with a written outcome
-- [ ] Spawn success implies the agent exists in `agent.list`, or the failure
+- [x] Reproduction attempted with a written outcome
+- [x] Spawn success implies the agent exists in `agent.list`, or the failure
       is documented as intermittent with the observed conditions
-- [ ] If a runtime-side fix is possible, the review-pr preflight note is
+- [x] If a runtime-side fix is possible, the review-pr preflight note is
       updated to match what spawn results actually guarantee
+
+Reproduction method committed at `scripts/repro-spawn-then-list.ts`
+(top-level session artifact, not CI-wired). Written outcome in the log
+(2026-10-03T12:10Z): NOT-REPRODUCED — silent-success documented as a known
+intermittent with the observed conditions (PR #1143 rounds 1-2, 2026-10-02,
+Vibe unified harness, eight-seat parallel fan-out). No runtime-side fix is
+possible from this repo (`agent.spawn` is Vibe CLI); the preflight note in
+`skills/review-pr/SKILL.md` was updated regardless. Upstream issue filing is
+an author decision.
 
 ## Test
 
