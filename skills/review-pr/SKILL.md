@@ -157,11 +157,10 @@ record that limitation in the report front-matter instead of silently
 running a different model.
 
 Completion is observed by artifact polling under the concurrency contract
-above (manifest, `.part`-then-rename, bounded wait) — reference it,
-do not restate it — and never trust the spawn's success: a spawn beyond a
-silent
-child cap can return success while the child never registers (raid-1008).
-Cap concurrent detached seats to the runtime's slot budget / child cap and
+above (manifest, `.part`-then-rename, bounded wait) — reference it, do
+not restate it — and never trust the spawn's success: a spawn beyond a
+silent child cap can return success while the child never registers
+(memory: raid-1008). Cap concurrent detached seats to the runtime's slot budget / child cap and
 stagger launches; a beyond-budget or deadline-missed seat is `no report`
 with `PANEL-INTEGRITY`, never simulated. `$IDH_ROOT/scripts/seat-runner.sh`
 is an optional heavier transport (one OS-sandboxed process per seat) —
