@@ -303,13 +303,14 @@ absent agent connector — substitute one detached, headless, non-interactive
 CLI session per PR per the detached-seat contract
 (`skills/review-pr/SKILL.md` § Detached-seat substitution, ticket 1017): cwd
 pinned to the PR's worktree, prompt embedding `/gaze <pr-number>` plus the
-caller prerequisites and the containment rails (no merges, no pushes, no
-writes outside the PR branch); the result is observed by polling the written
-verdict artifact — the output-shape block of `skills/gaze/SKILL.md`, under
-that contract's bounded wait, never a spawn exit status — and the structured
-verdict must return to the orchestrator. A REROLL bump/fix runs in the PR's
-worktree so its commits land on the PR branch, never on main mid-wave. Phase
-7 merges stay strictly sequential.
+caller prerequisites and the containment rails (no merges, no writes outside
+the PR branch); the result is observed by polling the written verdict
+artifact — the `## /verify-gate verdict` PR comment per the output shape of
+`skills/gaze/SKILL.md`, accepted only when its `ruled_tip_sha` matches the
+branch tip — under that contract's bounded wait, never a spawn exit status,
+and the structured verdict must return to the orchestrator. A REROLL
+bump/fix runs in the PR's worktree so its commits land on the PR branch,
+never on main mid-wave. Phase 7 merges stay strictly sequential.
 
 **Per-wave:** after all per-ticket `/gaze` runs complete, launch one integration-review
 subagent (read-only; `model-level: standard` per § Model policy) to check:

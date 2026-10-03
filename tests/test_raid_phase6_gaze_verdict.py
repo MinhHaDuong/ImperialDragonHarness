@@ -81,6 +81,18 @@ def test_phase6_gaze_launch_returns_a_verdict():
         "Phase 6 must keep a REROLL bump/fix on the PR branch — commits "
         "landing on main mid-wave are unreviewable and unmergeable"
     )
+    # The detached session is pinned to the PR's worktree, and the polled
+    # verdict is freshness-bound to the branch tip (round-2 review: an
+    # unpinned cwd or a stale artifact would land fixes on main or accept a
+    # verdict over an outdated head).
+    assert "cwd pinned" in norm and "PR's worktree" in norm, (
+        "Phase 6 must pin the detached gaze session's cwd to the PR's worktree"
+    )
+    assert "ruled_tip_sha" in norm and "branch tip" in norm, (
+        "Phase 6 must accept the polled verdict only when its ruled_tip_sha "
+        "matches the branch tip — a stale artifact from a prior round must "
+        "not read as the current verdict"
+    )
 
 
 def test_phase6_launch_reason_cites_the_nesting_defect():

@@ -179,6 +179,12 @@ def test_gaze_battery_not_run_names_cause():
     assert "never fabricate" in norm, (
         "gaze/SKILL.md: a battery that cannot launch must never fabricate findings"
     )
+    # A NOT-RUN battery has a verdict consequence: capped at ESCALATE —
+    # otherwise a no-battery run could still return APPROVED (round-1 review).
+    assert "capped at ESCALATE" in norm and "never APPROVED" in norm, (
+        "gaze/SKILL.md: a battery NOT-RUN must cap the verdict at ESCALATE, "
+        "never APPROVED — an unlaunched battery must not read as a pass"
+    )
     # The output-shape actions block carries the battery line, after — and
     # distinct from — the panel integrity line.
     output = VERIFY.split("## Output shape", 1)[1]
