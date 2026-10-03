@@ -227,6 +227,30 @@ fi
     `review:standard` request runs all five Agent C perspectives.
   - **full**, round ≥ 2 (i.e. the merge request already carries a prior Agent C review) → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate; Agent C is scoped per § Round scoping below.
   Carry the resolved `tier` into the telemetry footer and the output-shape template (see § Telemetry, § Output shape).
+  Size and risk are two axes, never collapsed
+  into one. The 15+ files un-reviewable breaker pre-empts the band — its
+  ESCALATE fires before any battery spawns, so a band never sets a battery
+  tier on an un-reviewable PR. Classify the changed-file
+  roster with a third, cwd-anchored call — it reads no disk (pure
+  path-pattern match), so the missing-path refusal does not apply, and
+  deleted or renamed paths still get a band:
+  `cd $primary_root/.claude/worktrees/review-<pr-number> && python3 "$IDH_ROOT/scripts/prose_predicate.py" --risk <changed files>` — it prints
+  the path-risk **band**: `high` if any file matches a pipeline or guard path
+  (`scripts/**`, `skills/**`, `rules/**`, `hooks/**`, `settings*.json`, and
+  the rest of the `panel-width.json` registry); `low` only if every file
+  matches `docs/**`, `*.bib`, or `**/fixtures/**`; `normal` otherwise.
+  Combine band and tier on the round-1 size classification only — a round ≥ 2
+  stays **full**, and an explicit `review:standard` pre-empts both:
+  - band `high` → raise one rung: tiny → small, small → full — clamped at
+    `full`.
+  - band `low` → lower one rung: full → small, small → tiny — floored at
+    `tiny`; the battery never drops below Agent A + Agent C + the phase-6
+    gate, at every tier and every band.
+  - band `normal` → unchanged.
+  A tiny → small raise arms Agent B and phase 5 (`/simplify`), and the
+  external reviewer panel fires per the existing small/full rule — the
+  battery follows the tier, no special case. What this closes is the battery
+  tier, not panel width: the 0392 width gate already reads `pipeline_paths`.
 
 - **Preflight before spawning phases 2–5.** Count distinct ticket close-claims
   from the PR **body**, using the same line grammar as `erg-pr-merge`: bold or
@@ -662,11 +686,12 @@ Each phase emits start/end lines: `[verify] phase=<name> start=<ISO> / end=<ISO>
 
 ### Verdict footer (PR comment)
 
-Appended to verdict comment: `telemetry: tier=<tiny|small|full> wall=<s>s agents=<n> tokens=<in+out> cost~=$<usd>`
+Appended to verdict comment: `telemetry: tier=<tiny|small|full> risk_band=<high|low|normal> wall=<s>s agents=<n> tokens=<in+out> cost~=$<usd>`
 
-Fields: `tier` (battery tier from phase 1 — `tiny|small|full`), `wall` (phase-1 to
-verdict), `agents` (sub-agent count), `tokens` (sum, use `na` for missing),
-`cost~=` (best-effort USD, `na` if incomplete).
+Fields: `tier` (battery tier from phase 1 — `tiny|small|full`), `risk_band`
+(path-risk band from the phase-1 `--risk` call — `high|low|normal`), `wall`
+(phase-1 to verdict), `agents` (sub-agent count), `tokens` (sum, use `na` for
+missing), `cost~=` (best-effort USD, `na` if incomplete).
 
 ### Thresholds
 
@@ -793,6 +818,7 @@ final report is the signal.
 
 round: <n>
 tier: tiny|small|full
+risk_band: high|low|normal
 circuit_breaker: un-reviewable | none
 multi_ticket: <distinct close-claim IDs> | none (non-blocking below breaker)
 adherence: PASS|FAIL — <n_blocking> blocking | skipped (un-reviewable)
@@ -822,7 +848,7 @@ Adherence: PASS | FAIL (<count>)
 Rationale:
 <paragraph>
 
-telemetry: tier=<tiny|small|full> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
+telemetry: tier=<tiny|small|full> risk_band=<high|low|normal> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
 
 On `--force-approve`, Part A is annotated `FORCE-APPROVED by <reason>`

@@ -177,6 +177,84 @@ def test_gaze_tier_recorded_in_telemetry_and_output_shape():
     )
 
 
+def test_gaze_raises_tier_on_high_risk_paths():
+    """Size and risk are two axes (ticket 0902): the disk-free `--risk` band
+    moves the size tier by one rung — raise on high, lower on low, clamped at
+    full and floored at tiny — and the rule must say so where the tier is
+    computed. The battery never drops below Agent A + Agent C + the phase-6
+    gate, and the 15+ files un-reviewable breaker is checked before the band.
+    """
+    setup = VERIFY.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
+    norm = _normalize(setup)
+    # The third cwd-anchored predicate call — disk-free, so no refusal.
+    assert (
+        'cd $primary_root/.claude/worktrees/review-<pr-number> && python3 '
+        '"$IDH_ROOT/scripts/prose_predicate.py" --risk' in norm
+    ), "gaze setup must run the cwd-anchored `--risk` band call"
+    # The rung moves, both directions, with the clamp and the floor.
+    for rung in ("tiny → small", "small → full", "full → small", "small → tiny"):
+        assert rung in norm, f"gaze setup dropped the band rung move {rung!r}"
+    assert "clamped at" in norm and "floored at" in norm, (
+        "gaze setup must state the clamp (full) and the floor (tiny)"
+    )
+    # The invariant battery floor, at every tier and band.
+    assert "Agent A + Agent C + the phase-6 gate" in norm, (
+        "gaze setup dropped the battery floor invariant"
+    )
+    # Breaker precedence: the 15+ files breaker pre-empts the band — its
+    # ESCALATE fires before any battery spawns, so a band never sets a
+    # battery tier on an un-reviewable PR.
+    assert "never sets a battery tier" in norm, (
+        "gaze setup must state the 15+ files breaker pre-empts the band — a "
+        "band never sets a battery tier on an un-reviewable PR"
+    )
+    # Stated side effects of a tiny → small raise.
+    for name in ("Agent B", "/simplify", "external reviewer panel"):
+        assert name in norm, f"gaze setup dropped the band side effect {name!r}"
+    # The two-axes statement, so a later reader does not collapse them.
+    assert "two axes" in norm, (
+        "gaze setup must state size and risk are two axes, never collapsed"
+    )
+
+
+def test_gaze_risk_band_recorded_in_telemetry_and_output_shape():
+    """The risk band (ticket 0902) must be auditable like the tier (ticket
+    0320): the per-run band has to surface in BOTH the verdict-footer
+    telemetry template and the `## /gaze actions` output-shape template, so a
+    reviewer can read which band ran from the posted comment."""
+    # 1. Verdict-footer template — the section under "### Verdict footer".
+    _, _, footer_after = VERIFY.partition("### Verdict footer")
+    assert footer_after, "gaze/SKILL.md: no `### Verdict footer` section found"
+    footer_section = footer_after.split("###", 1)[0]
+    footer_telemetry = [
+        line for line in footer_section.splitlines() if "telemetry:" in line and "wall=" in line
+    ]
+    assert any("risk_band" in line for line in footer_telemetry), (
+        "gaze/SKILL.md: verdict-footer telemetry template does not carry a "
+        "`risk_band` field (ticket 0902 — the band must be auditable like the tier)"
+    )
+    fields = footer_section[footer_section.index("Fields:"):]
+    assert "risk_band" in fields, (
+        "gaze/SKILL.md: the verdict-footer Fields sentence does not name the "
+        "`risk_band` field"
+    )
+
+    # 2. Output-shape template — the fenced block after "## Output shape".
+    _, _, after = VERIFY.partition("## Output shape")
+    assert after, "gaze/SKILL.md: no `## Output shape` section found"
+    fenced = re.findall(r"```(.*?)```", after, re.DOTALL)
+    assert fenced, "gaze/SKILL.md: no fenced template under `## Output shape`"
+    block = next((b for b in fenced if "risk_band: high|low|normal" in b), None)
+    assert block is not None, (
+        "gaze/SKILL.md: `## /gaze actions` output-shape template does not carry "
+        "a `risk_band` field (ticket 0902)"
+    )
+    assert "risk_band=<high|low|normal>" in block, (
+        "gaze/SKILL.md: the output-shape telemetry line does not carry "
+        "`risk_band` (ticket 0902)"
+    )
+
+
 def test_gaze_refuses_unreviewable_prs():
     """The PR breaker must reuse the monster threshold and run before reviewers."""
     workflow = (REPO / "rules" / "workflow.md").read_text()
