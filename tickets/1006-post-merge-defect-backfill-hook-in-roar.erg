@@ -7,6 +7,7 @@ Blocked-by: 1005
 --- log ---
 2026-10-02T08:00Z MinhHaDuong created
 
+2026-10-03T12:57Z qwen3.8-27b note imagine pass recorded (2026-10-03, raid): keep-as-is; box 2 reworded to the §4.5 defect-bearing predicate over the shared fixed-line reader (satisfiable now, still true when 1007 lands); join = finding anchors ∩ fix hunk ranges with drift guard (fail-loud, never fuzzy); event line carries the record's anchor verbatim
 --- body ---
 ## Context
 
@@ -33,5 +34,12 @@ one-sided (the audition board's structural zero).
 ## Exit criteria
 
 - [ ] A post-merge fix backfills the original PR's attribution record
-- [ ] Backfilled records are visible to the 1007 read surfaces as
-      defect-bearing games
+- [ ] Backfilled records parse through the 1005 fixed-line reader and are
+      defect-bearing per spec §4.5 (the defect-confirmed event line alone
+      suffices) — visible to the 1007 read surfaces once they land
+
+## Raid annotation (2026-10-03, imagine pass)
+PREMISE: Holds, with three caveats. (1) The quoted step-3 anchor exists verbatim (`skills/roar/SKILL.md:136`); step 3 runs before step 6, so the join naturally targets only past records. (2) 1005 is not in the tree yet — no `kind: review-attribution` record exists beyond the spec example and the two `docs/memory-v8/evaluation-results.md:253,276` samples; tests must fixture 1005-format records. (3) "A past PR's review covered these lines" is computable iff reduced to "a past record has a finding anchor at (path, line)" — no "reviewer examined file P" field exists in the format; a fix on a seen-but-unanchored line is a no-op (faithful to §5.3, narrower than the phrasing). Drift hazard: anchors are line numbers as of the reviewed PR's merge — if the path changed between record-merge and fix-base, the equality join is unsound; the hook must detect it and report the anchor unresolvable (fail-loud), never fuzzy-match. Context overclaim (non-blocking): post-merge events are not the "only source of the pair table's neither cell" (a third seat's adopted finding also fills it; in the common two-reviewer game the hook fills no neither at all) — the action is unchanged.
+REIMAGINE: Named sub-hook in step 3 after the anti-pattern sweep, prose in SKILL.md invoking one helper in `skills/roar/` (same shape as `enumerate-merges.py`; the append lands in the same single wrap-up bundle as step 6). Detection: the just-merged fix PR's changed (path, old-range, new-range) from `git diff --unified=0 p1...p2` (parents from step 2's existing enumeration); glob `memory/journal/**/…-review-attribution-pr*.md`, parse fixed lines only; intersect (path, anchor-line) with hunk ranges; drift guard per premise. Event line: `defect-confirmed: <p>:<l> · source: post-merge-fix · pr: <fixPR>` where `<p>:<l>` is the record's anchor verbatim (string equality at read time, §6) and `<fixPR>` is the referencing fix PR. One line per matching anchor; multiple past PRs → one line per record; repeated fixes → repeated lines (rule 5: append-only, repeatable); no match → record untouched, no placeholder; byte-append after the last line, existing lines never rewritten. Degraded paths all visible: no covered past review → no-op said in the step-3 summary; malformed line → WARN stderr + skip; drifted anchor / unresolvable record-PR → reported unresolvable.
+ANTIPATTERNS: No re-judging the original review (mechanical join + append; no flipped adopted flags, no "why the reviewer missed it" prose). No rewriting records (append-only; no reformat/re-indent/"cleanup"). No deduping repeated fixes (a re-fixed line is data). No coupling to 1007 (a minimal fixed-line anchor parse inside 1006's own helper is fine; importing unbuilt 1007 tooling is the trap). No silent drops (WARN/report, never skip without a trace). No fuzzy anchor recovery (no `git log -L` archaeology — report unresolvable). No writing outside the project repo (§4.7). No firing on non-PR merges (no pr: number → skip visibly, octopus precedent).
+EXIT-CRITERIA: Box 1 — the ticket's three tests against a fixture repo: (a) anchored record + simulated fix → exactly one appended line, git diff shows only that line (proves append-only); (b) fix touching no anchored line → zero file changes; (c) second fix at same anchor → second event line. Box 2 — reworded (log 2026-10-03): reduces to the §4.5 defect-bearing predicate over the shared fixed-line reader, satisfiable now and still true when 1007 lands. Verdict: keep-as-is (box 2 reword applied).

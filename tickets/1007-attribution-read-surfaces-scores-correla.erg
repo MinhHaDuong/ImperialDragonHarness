@@ -8,6 +8,7 @@ Blocked-by: 1005
 2026-10-02T08:00Z MinhHaDuong created
 
 2026-10-02T10:24Z MinhHaDuong note 0937 hand-off: 0937's Action 3 / Verification box 3 (a seat that has not authenticated visible on a non-human channel) is deferred to this ticket by the 2026-10-02 raid decision recorded in 0937's log, pending author ratification
+2026-10-03T12:57Z qwen3.8-27b note imagine pass recorded (2026-10-03, raid): reword APPLIED — action 1's 'including writer-reviewer pairs' contradicted spec §4.3/§6 (writer is a stratification variable; writer-reviewer concordance incomputable); 0937 box-3 hand-off made explicit (subsumed by the run-failure rate; machine-readable flag left as an open author question); tool home scripts/ per §3, pure-Python Beta-Binomial (no scipy), enumerate-merges.py migrates here with its three references updated in the same PR
 --- body ---
 ## Context
 
@@ -18,10 +19,15 @@ at read time (spec §6); nothing judged is ever stored in the records.
 
 1. One query tool over a project's attribution records producing the
    three surfaces: per-seat scores (labeled-game catch rate, noise rate,
-   run-failure rate, Beta-Binomial credible intervals), pairwise
-   concordance tables including writer-reviewer pairs (conditioned on
-   defect-bearing games), and marginal unique-catch coverage of seat B
-   given seat A.
+   run-failure rate, Beta-Binomial credible intervals), reviewer-reviewer
+   pairwise concordance tables (conditioned on defect-bearing games),
+   stratified by writer (writer-reviewer concordance is incomputable —
+   the writer is a stratification variable, spec §4.3, §6), and marginal
+   unique-catch coverage of seat B given seat A. The 0937 box-3 hand-off
+   (log 2026-10-02T10:24Z) is subsumed here: the run-failure rate derives
+   from the required `status:` field (spec §4.6) and the query output is
+   the non-human channel; a machine-readable flag for recently-failed
+   seats is an open question for the author, not assumed by this ticket.
 2. Migrate skills/roar/enumerate-merges.py here (per the celebration
    teardown, spec §9): enumerate merged PRs since a reference is exactly
    the enumeration the query needs; the write path is deleted in 1009,
@@ -37,3 +43,9 @@ at read time (spec §6); nothing judged is ever stored in the records.
 - [ ] Correlation table renders with the four concordance cells per pair
 - [ ] Marginal coverage column distinguishes a duplicate seat from a
       complementary one on the same records
+
+## Raid annotation (2026-10-03, imagine pass)
+PREMISE: Holds, with one ticket-vs-spec contradiction (fixed — log 2026-10-03) and one hand-off made explicit. Zero attribution records exist yet (correct: 1005 unmerged; the gate is real). `skills/roar/scores` does not exist — the drifted scorecard parser is the `scores` subcommand in `skills/reviewers/reviewers.sh:821-895` (greps trial cards out of erg logs; 21/31 recent scorecards use rejected prose variants, spec §1.2); it dies in 1009 — 1007 builds a replacement over the record format, not a port of that bash parser. `enumerate-merges.py` exists exactly as §9 describes.
+REIMAGINE: One Python query tool in `scripts/` (spec §3 puts the enumerate-merges utility and shared substrate in `scripts/`; `skills/roar/` is the hot write path and step 2 dies in 1009). Input: project repo root (default cwd); reads `memory/journal/**/*-review-attribution-prNNNN.md`. Three surfaces: (1) Scores — per seat and per recorded model version (§7: a model change splits history): catch/noise/run-failure rates, each Beta-Binomial with Jeffreys prior Beta(1/2,1/2), 90% CrI; no scipy in `requirements-dev.txt` and `tests/test_deps_declared.py` derives imports from source, so a pure-Python regularized incomplete beta (continued fraction + bisection, ~40 lines) — a normal/Wilson approximation would violate the pre-registered §7. (2) Correlation — reviewer-reviewer four-cell concordance (both/unique-A/unique-B/neither) conditioned on defect-bearing games only (§1.1 base-rate discipline), plus Jaccard catch-overlap and shared-hallucination rate; the writer stratifies, never enters as a pair member (§4.3). (3) Marginal coverage — unique-catch rate of B given A over games where both ran. Join key: anchored path:line; a catch = `adopted: yes` finding or defect-confirmed event matching the seat's anchor (§6). `enumerate-merges.py` migration: move to `scripts/` in this PR and update the three references in the same PR — the step-2 call in `skills/roar/SKILL.md:89`, `tests/test_roar_enumerate_merges.py` (ENUMERATE constant), `tests/test_roar_step2_attribution.py:185` (hard-coded string) — or the tree is broken between 1007 and 1009. The migrated enumeration also serves §9's backfill join (reviewed merges with no record → §4.8 fail-loud). Malformed lines: the harvest convention already in tree (`reviewers.sh:852/877` WARN-and-continue; the octopus skip) — WARN the offending line to stderr, skip it, never a silent drop or hard abort.
+ANTIPATTERNS: No storing derived judgments in records (§2/§6: derived, never stored). No prose parsing (rule 1; the 0348 scorecard-poisoning lesson). No silent drops. No writer-reviewer concordance (§4.3: incomputable — the ticket's original wording, now fixed). No acting on correlation without interval justification (§7: report always, act only when intervals justify; eliminate/promote thresholds printed as labels, not enforced). No premature multi-project or cross-model-version aggregation (§4.7, §7). No normal-approximation CrIs; no conditioning concordance on all games; no recovering tickets from branch names (close-commit scan only).
+EXIT-CRITERIA: Box 1 — a table rendered over live journal records after 1005 lands (the harness journal is already v8; the first real reviewed merge yields the first record); tmp-journal fixtures are unit evidence only. Box 2 — records with ≥2 seats, shared and unique anchors, ≥1 defect label (unlabeled games are excluded — fixtures must include `adopted: yes` or a defect-confirmed line); four cells per pair, writer stratification column, WARN convention exercised on a deliberately malformed line. Box 3 — fixtures need both a near-total-overlap (duplicate) and a near-disjoint (complementary) seat pair on the same records so the distinction is falsifiable (anti-tautology guard). Verdict: reword (applied — spec §4.3 contradiction fixed; 0937 box-3 subsumption made explicit).
