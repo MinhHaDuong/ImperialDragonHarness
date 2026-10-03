@@ -14,6 +14,7 @@ docs/2026-10-03-agent-role-inventory.md ("Proposed shell roster"): 323 new
 characters, agents channel 438 -> 761 of 800, no budget raise.
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -177,9 +178,30 @@ def test_agents_channel_stays_within_budget():
         f"agents channel is {total} chars (> {AGENTS_CHANNEL_BUDGET}) — trim a "
         "description or argue a budget raise in a ticket, never by edit"
     )
-    roster_chars = sum(len(n) + len(d) for n, (d, _m) in ROSTER.items())
-    pre_roster = total - roster_chars
-    assert pre_roster + roster_chars == total  # the roster files all counted
+    for name, (description, _model) in ROSTER.items():
+        entry = next(
+            (e for e in entries if e.path == f"agents/{name}.md"), None
+        )
+        assert entry is not None, (
+            f"agents/{name}.md is not counted by the census — missing, or "
+            "not where agent_entries globs"
+        )
+        assert entry.chars == len(name) + len(description), (
+            f"agents/{name}.md census card is {entry.chars} chars but the "
+            f"roster declares {len(name) + len(description)} — the shell's "
+            "name or description drifted from the roster"
+        )
+
+
+def test_no_contract_declares_a_model_section():
+    """Design v2: frontmatter is authoritative for launch parameters; a
+    Model: section in a contract would be a second truth (ticket 0938)."""
+    for name in ROSTER:
+        text = (REPO / "profiles" / name / "PROFILE.md").read_text()
+        assert not re.search(r"^Model:", text, re.MULTILINE), (
+            f"profiles/{name}/PROFILE.md declares a Model: section — "
+            "frontmatter is authoritative; remove the section"
+        )
 
 
 def test_no_two_agent_shells_share_a_description():
