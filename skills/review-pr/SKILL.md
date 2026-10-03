@@ -138,10 +138,10 @@ Child sessions do not inherit the runtime's agent connector: a reviewer
 launched through `Agent` finds no `Agent` tool of its own (observed across
 all four executors of the 2026-10-02 raid, PRs #1129-#1132). When the
 preflight above finds the tool absent for that reason, substitute one
-detached, headless, non-interactive CLI process per seat — never sequential
-self-review — launched from the orchestrating session. The command shape is
-per-runtime; the contract is not: a Vibe headless invocation
-(`vibe -p "<prompt>"`) or a Claude Code `-p` style invocation
+detached, headless, non-interactive CLI process per seat — never
+sequential self-review — launched from the orchestrating session. The
+command shape is per-runtime; the contract is not: a Vibe headless
+invocation (`vibe -p "<prompt>"`) or a Claude Code `-p` style invocation
 (`claude -p "<prompt>"`) both qualify, as does any runtime offering a
 headless non-interactive CLI.
 
@@ -157,8 +157,9 @@ record that limitation in the report front-matter instead of silently
 running a different model.
 
 Completion is observed by artifact polling under the concurrency contract
-above (manifest, `.part`-then-rename, bounded wait) — reference it, do not
-restate it — and never trust the spawn's success: a spawn beyond a silent
+above (manifest, `.part`-then-rename, bounded wait) — reference it,
+do not restate it — and never trust the spawn's success: a spawn beyond a
+silent
 child cap can return success while the child never registers (raid-1008).
 Cap concurrent detached seats to the runtime's slot budget / child cap and
 stagger launches; a beyond-budget or deadline-missed seat is `no report`

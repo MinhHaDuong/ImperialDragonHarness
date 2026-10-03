@@ -35,6 +35,10 @@ def _section(text: str) -> str:
 def test_review_pr_documents_detached_seat_contract():
     review = (REPO / "skills" / "review-pr" / "SKILL.md").read_text()
     section = _section(review)
+    # Phrase-level pins run on a whitespace-normalized copy so a line rewrap
+    # cannot break them and a drift that deletes a load-bearing clause cannot
+    # survive on incidental single words elsewhere in the section.
+    flat = " ".join(section.split())
     # One detached headless CLI process per seat, contract embedded in the prompt.
     assert "non-interactive" in section
     assert "detached" in section
@@ -43,19 +47,24 @@ def test_review_pr_documents_detached_seat_contract():
     assert "cwd" in section
     assert "read-only" in section
     assert "deny-rules" in section
-    assert "one string" in section or "single string" in section
+    assert "one string" in flat or "single string" in flat
     assert "model" in section
     assert "limitation" in section
+    assert "never sequential self-review" in flat
+    assert "model pin" in flat
+    assert "word-split" in flat
     # Completion by artifact polling under the existing concurrency contract.
     assert ".part" in section
     assert "rename" in section
-    assert "concurrency contract" in section
+    assert "concurrency contract" in flat
     # Spawn success is never a completion signal (raid-1008).
     assert "spawn" in section
     assert "success" in section
-    assert "never trust" in section or "not trust" in section
+    assert "never trust" in flat or "not trust" in flat
     # Slot budget / child cap absorbed from the 0980/1009 blind-spot note.
-    assert "slot budget" in section or "child cap" in section
+    assert "slot budget" in flat or "child cap" in flat
+    assert "PANEL-INTEGRITY" in section
+    assert "never simulated" in flat
     assert "no report" in section or "no-report" in section
     # Runtime-portable, not a claude-only recipe.
     lower = section.lower()
@@ -76,8 +85,12 @@ def test_fanout_preflight_points_to_detached_seat_substitution():
 
 def test_gaze_agent_c_points_to_detached_seat_substitution():
     gaze = (REPO / "skills" / "gaze" / "SKILL.md").read_text()
-    agent_c = gaze.split("**Agent C — PR review**", 1)[1].split(
-        "Wait for all spawned agents", 1
-    )[0]
-    assert "detached-seat substitution" in agent_c
-    assert "review-pr" in agent_c
+    # Normalize whitespace: the pointer phrase spans a line break, and the
+    # bare path alone is not unique in this slice (gaze cites it again around
+    # its manifest-derivation rules), so pin the whole phrase.
+    agent_c = " ".join(
+        gaze.split("**Agent C — PR review**", 1)[1]
+        .split("Wait for all spawned agents", 1)[0]
+        .split()
+    )
+    assert "detached-seat substitution in skills/review-pr/SKILL.md" in agent_c
