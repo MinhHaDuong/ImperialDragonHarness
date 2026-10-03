@@ -275,3 +275,44 @@ def test_code_reviewer_contract_carries_the_report_format():
         "verifiable: must require attached evidence (test_id, command "
         "output, or commit SHA:file:line)"
     )
+
+
+# Wave 3 (ticket 0938, final exit criterion): a profile ports to Pi by
+# frontmatter translation alone — demonstrated once, on the pickup surface
+# the inventory verified (~/.pi/agent/agents/*.md, the subagent extension).
+# The deployed translation is committed as a reproducible template under
+# adapters/pi/agents/ so the demonstration is not a one-machine anecdote.
+PI_TEMPLATE = REPO / "adapters" / "pi" / "agents" / "code-reviewer.md"
+
+
+def test_pi_translation_template_exists():
+    assert PI_TEMPLATE.is_file(), (
+        "adapters/pi/agents/code-reviewer.md is absent — the Pi portability "
+        "demonstration (0938 exit criterion 3) has no committed template"
+    )
+
+
+def test_pi_translation_carries_the_contract_pointer():
+    """The translation changes frontmatter only; the body stays the
+    thin-shell pointer, so the contract at profiles/code-reviewer/PROFILE.md
+    is the single truth on both runtimes."""
+    body = " ".join(PI_TEMPLATE.read_text(encoding="utf-8").split())
+    assert "Step 0" in body, "adapters/pi template: no step-0 pointer"
+    assert "profiles/code-reviewer/PROFILE.md" in body, (
+        "adapters/pi template: must point at profiles/code-reviewer/PROFILE.md"
+    )
+    assert "say so in your first output line" in body
+    assert "Never guess a different root" in body
+
+
+def test_pi_translation_frontmatter_name_matches_the_in_repo_shell():
+    fm = _frontmatter(PI_TEMPLATE)
+    shell = _frontmatter(REPO / "agents" / "code-reviewer.md")
+    assert fm.get("name") == shell.get("name") == "code-reviewer", (
+        "the Pi translation and the in-repo shell must declare the same "
+        "frontmatter name — the port is a key translation, not a rename"
+    )
+    assert fm.get("model") and fm.get("tools"), (
+        "the Pi template must carry the Pi-shaped frontmatter fields "
+        "(tools, model) the subagent extension discovers"
+    )
