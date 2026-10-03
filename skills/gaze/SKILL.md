@@ -334,6 +334,15 @@ that cuts a *fresh* tree from the session repo on main/HEAD, which is exactly
 the wrong-branch failure this conversion eliminates; only the REROLL fix
 agent (a mutator) gets `isolation: "worktree"`.
 
+If the battery cannot be launched at all — the isolation guard refuses the
+spawn, the agent connector is absent, or the spawn-depth limit is hit — first
+attempt the detached-seat substitution documented in
+`skills/review-pr/SKILL.md`; if that also cannot run, emit a one-line
+`battery: NOT-RUN — cause: <guard|no-agent-tool|depth>` in the verdict
+comment. That line names a launch failure, not a review finding, and is
+distinct from seat-level `PANEL-INTEGRITY:` (whose name is unchanged): never
+fabricate findings — the gate reports the criteria unverified.
+
 Every reviewer agent's prompt:
 - opens with `TASK DIRECTIVE — execute now`, naming the single sub-skill
   procedure it runs and the PR;
@@ -837,6 +846,7 @@ review: <n_comments_posted> | skipped (tier: tiny) | skipped (un-reviewable)
 review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (un-reviewable)
 review-pr scope: one seat | proportional panel | five perspectives | scoped: <objecting perspectives> + regression (omit if Agent C did not run)
 panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
+battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth>
 simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (prose workpackage) | skipped (un-reviewable)
 fix agent: <n_commits> commits (round 2 only, omit if round 1)
 gate: ran | skipped (un-reviewable) | skipped (--force-approve)

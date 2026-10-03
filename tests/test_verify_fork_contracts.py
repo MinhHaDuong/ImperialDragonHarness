@@ -144,6 +144,60 @@ def test_gaze_only_reroll_fix_agent_gets_isolation():
     )
 
 
+def test_gaze_battery_not_run_names_cause():
+    """Ticket 0990: a battery that cannot launch at all must say so in one
+    line naming the cause, composed AFTER the detached-seat substitution —
+    first attempt the substitution documented in skills/review-pr/SKILL.md,
+    and only if that also cannot run emit the battery NOT-RUN line. The line
+    is a launch failure, distinct from review findings and from seat-level
+    PANEL-INTEGRITY (whose name is unchanged); findings are never fabricated
+    and the gate reports the criteria unverified."""
+    battery = VERIFY.split("### 2–4. Read-only review fan-out", 1)[1].split(
+        "### 5. Simplify", 1
+    )[0]
+    norm = _normalize(battery)
+    assert "detached-seat substitution" in norm and "skills/review-pr/SKILL.md" in norm, (
+        "gaze/SKILL.md: the battery section must first attempt the detached-seat "
+        "substitution documented in skills/review-pr/SKILL.md before declaring "
+        "the battery NOT-RUN"
+    )
+    assert re.search(
+        r"battery: NOT-RUN — cause: <guard\|no-agent-tool\|depth>", norm
+    ), (
+        "gaze/SKILL.md: the battery section must carry the one-line "
+        "`battery: NOT-RUN — cause: <guard|no-agent-tool|depth>` signal"
+    )
+    # Composition order: the substitution is attempted BEFORE the NOT-RUN line.
+    assert norm.index("detached-seat substitution") < norm.index("battery: NOT-RUN"), (
+        "gaze/SKILL.md: the NOT-RUN line is composed only after the detached-seat "
+        "substitution was attempted and also failed"
+    )
+    assert "PANEL-INTEGRITY" in norm and "BATTERY-INTEGRITY" not in VERIFY, (
+        "gaze/SKILL.md: the battery NOT-RUN line must not rename or absorb "
+        "seat-level PANEL-INTEGRITY"
+    )
+    assert "never fabricate" in norm, (
+        "gaze/SKILL.md: a battery that cannot launch must never fabricate findings"
+    )
+    # The output-shape actions block carries the battery line, after — and
+    # distinct from — the panel integrity line.
+    output = VERIFY.split("## Output shape", 1)[1]
+    fenced = re.findall(r"```(.*?)```", output, re.DOTALL)
+    block = next((b for b in fenced if "panel integrity:" in b), None)
+    assert block is not None, (
+        "gaze/SKILL.md: output-shape actions block lost the panel integrity line"
+    )
+    m = re.search(r"battery: ran \| NOT-RUN — cause: <guard\|no-agent-tool\|depth>", block)
+    assert m, (
+        "gaze/SKILL.md: the output-shape actions block must carry "
+        "`battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth>`"
+    )
+    assert block.index("panel integrity:") < m.start(), (
+        "gaze/SKILL.md: the battery line must follow the panel integrity line — "
+        "the two signals are distinct"
+    )
+
+
 def test_gaze_tier_recorded_in_telemetry_and_output_shape():
     """The graduated battery tier (ticket 0320) must be auditable: the per-run
     tier has to surface in BOTH the verdict-footer telemetry template and the
