@@ -387,8 +387,13 @@ model, so on a top-tier session this fan-out is silently a top-model wave.
 **Label-skip:** if the PR carries the
 `verify:adherence-passed` label (set by `/hunt`'s pre-PR gate, see PR #40),
 do **not** spawn this agent — the adherence check already ran clean before the
-PR was opened. Otherwise spawn a read-only Agent on the review worktree `$primary_root/.claude/worktrees/review-<pr-number>`
-(all git via `git -C`), whose FIRST action is to invoke the live contract:
+PR was opened. Otherwise the launch is **the adherence-seat profile**
+(`agents/adherence-seat.md`), whose contract is
+`profiles/adherence-seat/PROFILE.md`: spawn it on the review worktree
+`$primary_root/.claude/worktrees/review-<pr-number>`, the branch and the
+worktree path riding in the launch prompt — the seat's rails (read-only,
+`git -C` discipline, artifact protocol) are the contract's and are not
+restated in this launch block. Its FIRST action is to invoke the live contract:
 
 <!-- harness-extension-point: runtime skill-loader invocation. -->
 ```
@@ -558,23 +563,23 @@ the prompt, the gate agent refuses and reports NOT-RUN — it never falls back
 to the session cwd — and the orchestrator ESCALATEs without posting an approval.
 
 The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
-(ticket 0216) — same rationale as phases 2–4. Spawn one **read-only**
-Agent (waited for by polling its written verdict artifact),
-**`model-level: standard`** (a reviewer, below the coder tier), operating on
-the review worktree
+(ticket 0216) — same rationale as phases 2–4. The launch is **the gate-seat
+profile** (`agents/gate-seat.md`), whose contract is
+`profiles/gate-seat/PROFILE.md` — spawn one seat (waited for by polling its
+written verdict artifact), **`model-level: standard`** (a reviewer, below the
+coder tier), never `isolation: "worktree"`, operating on the review worktree
 `$primary_root/.claude/worktrees/review-<pr-number>` (the equivalent fork call is
-`/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`)
-— every git read runs as `git -C "$primary_root/.claude/worktrees/review-<pr-number>" ...`,
-never assuming its own cwd is the review tree; never
-`isolation: "worktree"`. Containment rails: no `cd` into or out of another
-tree, no commits/pushes/branches/PRs; working-tree overwrites are banned
-outright — no `git checkout <ref> -- `, no `git restore .`, no
-`git reset --hard`; inspect another version with `git show <ref>:<path>`
-(rules/git.md); if the review worktree is unreachable or its HEAD differs from
-the anchor HEAD, report NOT-RUN — never fall back to the session cwd. The
-gate has **no** permitted writes to `tickets/*.erg` — the reroll-bump line
+`/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`);
+the PR number, this run's `gate_session_id`, and the review worktree path ride
+in the launch prompt — the seat's containment rails (read-only except the
+REROLL bump, `git -C` discipline with no `cd` into or out of another tree, no
+commits/pushes/branches/PRs, banned working-tree overwrites, the
+`tickets/*.erg` write ban, the NOT-RUN refusal anchored on the review
+worktree) are the contract's and are not restated in this launch block. The
+gate's only write-shaped output is the verdict itself: the reroll-bump line
 travels in the verdict's `reroll_bump:` field (and its PR verdict comment);
-the orchestrator poses the line, the gate never runs `erg log`. The agent's
+the orchestrator poses the line, the gate never runs `erg log` (ticket 0879).
+The agent's
 prompt embeds the gate procedure
 imperatively and returns the YAML verdict block below as its **final message**;
 the orchestrator parses `verdict` to branch.

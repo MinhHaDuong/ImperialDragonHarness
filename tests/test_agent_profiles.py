@@ -284,6 +284,17 @@ def test_code_reviewer_contract_carries_the_report_format():
 # adapters/pi/agents/ so the demonstration is not a one-machine anecdote.
 PI_TEMPLATE = REPO / "adapters" / "pi" / "agents" / "code-reviewer.md"
 
+# The deployed Pi values the wave-3 demonstration recorded (ticket 0938
+# log, 2026-10-03): model is the observed padme serving value, tools are
+# the existing Pi reviewer.md style. Mutations of any of the three pinned
+# frontmatter fields must fail the pins below.
+PI_MODEL = "padme/qwen3.8-27b"
+PI_TOOLS = "read, grep, find, ls, bash"
+PI_PROVENANCE_COMMENT = (
+    "<!-- Pi translation of agents/code-reviewer.md; "
+    "ticket 0938 portability demonstration. -->"
+)
+
 
 def test_pi_translation_template_exists():
     assert PI_TEMPLATE.is_file(), (
@@ -305,14 +316,121 @@ def test_pi_translation_carries_the_contract_pointer():
     assert "Never guess a different root" in body
 
 
-def test_pi_translation_frontmatter_name_matches_the_in_repo_shell():
+def test_pi_translation_frontmatter_matches_the_in_repo_shell():
+    """Frontmatter is the whole translation: name and description carried
+    verbatim from the in-repo shell, model and tools at the deployed Pi
+    values. Each field is pinned against drift — a runtime re-translation
+    that renames, rewrites the census card, or re-points the model or tool
+    grant must fail here, not in the field."""
     fm = _frontmatter(PI_TEMPLATE)
     shell = _frontmatter(REPO / "agents" / "code-reviewer.md")
     assert fm.get("name") == shell.get("name") == "code-reviewer", (
         "the Pi translation and the in-repo shell must declare the same "
         "frontmatter name — the port is a key translation, not a rename"
     )
-    assert fm.get("model") and fm.get("tools"), (
-        "the Pi template must carry the Pi-shaped frontmatter fields "
-        "(tools, model) the subagent extension discovers"
+    assert fm.get("description") == shell.get("description"), (
+        "the Pi template description must equal the in-repo shell "
+        "description verbatim — the census-counted routing card travels "
+        "unchanged across runtimes"
+    )
+    assert fm.get("model") == PI_MODEL, (
+        f"the Pi template model must stay the deployed value '{PI_MODEL}' "
+        "(the wave-3 observed padme serving value)"
+    )
+    assert fm.get("tools") == PI_TOOLS, (
+        f"the Pi template tools must stay the deployed reviewer-style list "
+        f"'{PI_TOOLS}' — the shell's tool grant is not widened by the port"
+    )
+
+
+def test_pi_template_body_is_the_shell_pointer_plus_one_provenance_comment():
+    """Accurate claim (gaze round-1 correction, PR #1175): frontmatter
+    translated; pointer paragraph byte-identical; exactly one provenance
+    comment added after the frontmatter (Pi's parseFrontmatter requires
+    the file to start with ---). Any other body drift — a reworded pointer,
+    a second comment, a Pi-local edit — fails here."""
+    shell_body = (
+        (REPO / "agents" / "code-reviewer.md")
+        .read_text(encoding="utf-8")
+        .split("---", 2)[2]
+    )
+    template_body = PI_TEMPLATE.read_text(encoding="utf-8").split("---", 2)[2]
+    assert template_body == "\n\n" + PI_PROVENANCE_COMMENT + shell_body, (
+        "the Pi template body must be the in-repo shell's pointer paragraph "
+        "byte-identical, preceded by exactly the one provenance comment"
+    )
+
+
+# Wave 3 fix (ticket 0938, gaze reroll round 1, PR #1175): the three
+# remaining inventory-justified call sites launch named profiles per the
+# wave-2 pattern. Each pin slices to its launch block only — a stray
+# profile mention elsewhere in the skill must not satisfy it.
+GAZE = REPO / "skills" / "gaze" / "SKILL.md"
+PROSE = REPO / "skills" / "review-pr-prose" / "SKILL.md"
+
+
+def test_gaze_agent_a_launch_names_the_adherence_seat_profile():
+    """The phase 2-4 adherence launch (label-skip aside) names the
+    adherence-seat profile and its contract; the live Skill(verify-adherence)
+    invocation stays in the block — the sub-skill contract is not a role
+    rail and is not delegated."""
+    gaze = GAZE.read_text(encoding="utf-8")
+    launch = " ".join(
+        gaze.split("**Agent A — adherence**", 1)[1]
+        .split("**Agent B — built-in review**", 1)[0]
+        .split()
+    )
+    assert "the adherence-seat profile" in launch, (
+        "the Agent A launch block must name the adherence-seat profile it "
+        "launches (agents/adherence-seat.md)"
+    )
+    assert "agents/adherence-seat.md" in launch
+    assert "profiles/adherence-seat/PROFILE.md" in launch, (
+        "the Agent A launch block must point at the contract that owns the "
+        "seat rails"
+    )
+    assert 'Skill(skill: "verify-adherence"' in launch, (
+        "the live Skill(verify-adherence) invocation contract stays verbatim "
+        "in the Agent A launch block"
+    )
+
+
+def test_gaze_gate_launch_names_the_gate_seat_profile():
+    """The phase 6 gate launch names the gate-seat profile and its contract;
+    the embedded gate procedure below the launch stays in the skill."""
+    gaze = GAZE.read_text(encoding="utf-8")
+    launch = " ".join(
+        gaze.split("### 6. Gate", 1)[1]
+        .split("Embedded gate procedure:", 1)[0]
+        .split()
+    )
+    assert "the gate-seat profile" in launch, (
+        "the phase 6 gate launch block must name the gate-seat profile it "
+        "launches (agents/gate-seat.md)"
+    )
+    assert "agents/gate-seat.md" in launch
+    assert "profiles/gate-seat/PROFILE.md" in launch, (
+        "the gate launch block must point at the contract that owns the "
+        "containment rails"
+    )
+
+
+def test_prose_panel_launches_name_the_prose_reviewer_profile():
+    """The panel recruitment step launches every seat as the
+    prose-reviewer profile; the role and rulebook ride in the prompt, the
+    editorial-brief auditor stays inline by inventory."""
+    prose = PROSE.read_text(encoding="utf-8")
+    launch = " ".join(
+        prose.split("3. Recruit the panel", 1)[1]
+        .split("## The seats are", 1)[0]
+        .split()
+    )
+    assert "the prose-reviewer profile" in launch, (
+        "the review-pr-prose launch step must name the prose-reviewer "
+        "profile it launches (agents/prose-reviewer.md)"
+    )
+    assert "agents/prose-reviewer.md" in launch
+    assert "profiles/prose-reviewer/PROFILE.md" in launch, (
+        "the prose launch step must point at the contract that owns the "
+        "seat rails"
     )
