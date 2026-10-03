@@ -2,12 +2,15 @@
 Title: Zotero skill consolidation: one zotero skill with verbs, backend zotero.py
 Created: 2026-10-02
 Author: claude
+Closed: wave B (final) landed — one zotero skill with verbs, index-source absorbed, backend scripts/zotero.py; exit criteria ticked in the body, evidence in the wave B log line
 
 --- log ---
 2026-10-02T13:55Z claude created — design agreed with the author in session; target state recorded in docs/zotero-integration.md (Skills and Principles sections, revised 2026-10-02)
 2026-10-03T20:18Z reviewer note Raid feasibility (2026-10-03, autonomous Zotero train): premise verified, no drift since filing. Blast radius 26 files -> sliced per author mandate: Wave A backend rename + all live run lines (11 files: git mv zotero-import.py->zotero.py + docstring/prog + tests x2 + docs/zotero-dedup-report.md + STATE.md + molt SKILL.md run lines + references/{helper-script,backfill,enrichment}.md + index-source SKILL.md/probe-url docstring); Wave B skill consolidation (15 files: git mv skill dir -> zotero, SKILL.md as verb router with the design-doc mapping — import = probe->match->sync-index->inject internal steps, enrich = enrich+write, audit/reconcile/dedup-report/attach 1:1; match/write presented as shared plumbing not user verbs; backfill mode dissolves into audit/reconcile; URL = import input; absorb index-source incl. probe-url.py+selftest.sh; rules/zotero.md + rules/README.md + cross-refs in critical-lit-review/reading-note; catalog regen). Judgment calls: INDEX_CACHE_DIR stays ~/.cache/zotero-import/ (KISS — avoids an orphaned index re-pull; renaming is scope creep); tests/test_zotero_import.py keeps its name (path constants only); benchmark-board.yml entries are records, untouched. Ticket's Action 4 missed two LIVE sites — molt SKILL.md run lines and STATE.md:32 — both in Wave A. Verb-router wrinkles to state: write is also import's durable-RIS step; backfill mode -> audit/reconcile.
 2026-10-03T20:18Z reviewer note Downstream record (do-not-reach, per ticket): the vendored copy lives at /home/haduong/CNRS/projets/actifs/livre-milliards-climat/.claude/skills/index-source/ (SKILL.md + probe-url.py + selftest.sh) and has ALREADY drifted (pre-IDH_ROOT revision, EDM vocabulary, run lines pointing at a real 138KB file copy ~/.claude/scripts/zotero-import.py — not a symlink); wave B increases that drift (harness catalog loses the name). Also install-side: the ~/.claude/skills/index-source symlink dangles after wave B — idh check follow-up, outside this repo. Both recorded for the author. <!-- harness-extension-point -->
 2026-10-03T20:22Z reviewer note wave A done (PR follows): backend renamed scripts/zotero-import.py->scripts/zotero.py (docstring+prog updated; INDEX_CACHE_DIR deliberately kept at the historical zotero-import cache segment), all live run-line citations swept (molt SKILL.md, zotero-import references/{helper-script,backfill,enrichment}.md, index-source SKILL.md + probe-url.py docstring, docs/zotero-dedup-report.md, STATE.md, both test path constants), ratchet tests/test_zotero_backend_name.py added (retired-path sweep with provenance-pinned wave B sites: zotero-import SKILL.md, probe-url.py mirror comment, docs/zotero-integration.md; ten-verb add_parser assertion). dedup-report --help answers as zotero.py; full 0485 byte-for-byte reproduction remains author-side (needs the live library). Also: pre-existing main gate red (rider note in this ticket tripped check-agnostic /home pattern at WAVE_BASE) repaired with the documented harness-extension-point marker on that log line.
+2026-10-03T20:45Z reviewer claude note wave B done (final wave) — skill consolidation landed: skills/zotero-import git-mv'd to skills/zotero and rewritten as the verb router (import/enrich/audit/reconcile/dedup-report/attach; match/write presented as shared plumbing, not user verbs; the three modes dissolve — import/enrichment map to verbs, backfill -> audit/reconcile with references/backfill.md kept as their shared reference); index-source absorbed (probe-url.py + selftest.sh under skills/zotero/scripts/, URL-intake contract folded into references/import.md with the type-classification table and deprecation note, SKILL.md removed — deprecated, not renamed); all naming sites updated (rules/zotero.md, rules/README.md, critical-lit-review, reading-note, docs/zotero-integration.md two-skill prose + MR #760 row + transport prose, scripts/zotero.py docstring); wave-A ratchet extended with the wave-B skill-name sweep and PROVENANCE emptied (all three pinned sites cleared); catalog regen — one /zotero row. Exit criteria ticked honestly: one zotero skill in catalog, zotero-import and index-source gone, check-skills-drift OK; scripts/zotero.py answers every verb (ten add_parser asserted) and no live zotero-import.py citation survives (ticket history and projects/ records untouched); rules name the consolidated skill; docs/zotero-dedup-report.md run line regenerates the report via the new path (live read-only smoke: 266 candidate groups written vs the 269 baseline — the library's own changes; full 0485 byte-for-byte reproduction stays author-side); full suite green: check-fast 877, lint 166, make check 1403 passed 2 skipped.
+2026-10-03T20:45Z reviewer closed — wave B (final) landed — one zotero skill with verbs, index-source absorbed, backend scripts/zotero.py; exit criteria ticked in the body, evidence in the wave B log line
 
 --- body ---
 ## Context
@@ -56,15 +59,15 @@ drifts when this lands. Record, do not reach into the project.
 
 ## Exit criteria
 
-- [ ] One skill `zotero` in the catalog; `zotero-import` and `index-source`
+- [x] One skill `zotero` in the catalog; `zotero-import` and `index-source`
       gone from it; `make check-skills-drift` passes
-- [ ] `scripts/zotero.py` answers every verb; no stale
+- [x] `scripts/zotero.py` answers every verb; no stale
       `zotero-import.py` references in live docs (ticket history and
       `projects/` memory untouched — records, not live pointers)
-- [ ] `rules/zotero.md` and `rules/README.md` name the consolidated skill
-- [ ] `docs/zotero-dedup-report.md` run line regenerates the report via the
+- [x] `rules/zotero.md` and `rules/README.md` name the consolidated skill
+- [x] `docs/zotero-dedup-report.md` run line regenerates the report via the
       new path
-- [ ] Full test suite passes
+- [x] Full test suite passes
 
 ## Test
 

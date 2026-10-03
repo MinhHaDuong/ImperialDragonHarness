@@ -60,8 +60,8 @@ Zotero exposes three surfaces; a transport is the path a skill takes to them:
 | Local HTTP API `127.0.0.1:23119/api/` | Yes | key-free reads; user-granted key for writes | yes, since Zotero 10 (new since this doc's first draft) |
 | Web API v3 (cloud) | No | API key, rate-limited | yes, but **no merge endpoint anywhere** |
 
-The existing skills chose sqlite reads + Web API writes through Bash-callable Python
-scripts. That is a choice, not a rule — but it is the right one for them:
+The zotero skill chose sqlite reads + Web API writes through Bash-callable Python
+scripts. That is a choice, not a rule — but it is the right one for it:
 
 - The safety contract (backup → dry-run → apply) is expressed as script flags; the
   outputs are durable RIS/report artifacts, not ephemeral tool calls.
@@ -113,7 +113,7 @@ One skill named `zotero`, verbs as arguments — the command surface mirrors the
 | `dedup-report` | hash-dedup report, library against itself | `dedup-report` (ticket 0485) |
 | `attach` | attachment upload to existing stubs | `attach` (MR #760); declared, created on first need |
 
-Today this surface ships as two skills — `zotero-import` (file intake with `import`/`enrichment`/`backfill` modes, `audit`, `reconcile`) and `index-source` (URL intake) — both driving `scripts/zotero-import.py`. The consolidation into the single `zotero` skill, with the backend renamed `scripts/zotero.py`, is ticketed. A URL is an input to `import`, not a separate verb or skill.
+This surface ships as one skill — `zotero` (ticket 1018, landed 2026-10-03), driving `scripts/zotero.py`. The former two skills — zotero-import (file intake) and index-source (URL intake) — are consolidated into it. A URL is an input to `import`, not a separate verb or skill.
 
 The dedup cascade consults keys strongest-first — file content hash (`storageHash`), then persistent identifier (DOI, ISBN, arXiv, handle), then attachment filename, then first-author/year/normalised-title, with title Jaccard as last resort — and stops at the first key that fires. Scope defaults to the **user library**, since that is where `inject` writes; a copy sitting in a read-only group library does not count as already present. The verdict distinguishes `match` / `ambiguous` / `none` / `unchecked`, so "found nothing" and "could not look" stay apart. The RIS file is still written as the durable artifact and remains the fallback when no read-write key resolves.
 
@@ -134,7 +134,7 @@ Prose names a skill's operation precisely; command names stay as they are, scope
 |---|---|---|
 | **Lint** — normalize field formats (date ISO 8601, DOI prefix, pages en-dash, language code) | archiveCIRED | First normalization ticket |
 | **Enrich** — fill missing fields from CrossRef / HAL / OpenAlex; outputs RIS | archiveCIRED | Unbacked — file on demand |
-| ~~**Upload PDF**~~ — attach local archive files to existing Zotero stubs (authorize → multipart → register, idempotent on md5) | archiveCIRED | **Done 2026-08-19** — `zotero-import.py attach --parent <itemKey> <file>...` (MR #760). Exposes the three-step upload `upload_attachment()` already implemented; the repair for an `audit` verdict of `work_present_no_file`, where `inject` would mint a duplicate. |
+| ~~**Upload PDF**~~ — attach local archive files to existing Zotero stubs (authorize → multipart → register, idempotent on md5) | archiveCIRED | **Done 2026-08-19** — `zotero.py attach --parent <itemKey> <file>...` (MR #760, delivered under the backend's former name). Exposes the three-step upload `upload_attachment()` already implemented; the repair for an `audit` verdict of `work_present_no_file`, where `inject` would mint a duplicate. |
 | **Find PDF** — Unpaywall lookup + attach; jurisdiction gate before grey-web | archiveCIRED | Unbacked — file on demand |
 | **OCR** — scanned PDF → text attachment via Mistral | archiveCIRED | Unbacked — file on demand |
 | **Export** — filtered CSL-JSON or RIS by collection/tag/year | CIRED.digital, activity report | RAG schema finalized or report cycle starts |
