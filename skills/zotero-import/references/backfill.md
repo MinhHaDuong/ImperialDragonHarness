@@ -11,8 +11,8 @@ index first — then `match` has a key to consult, and a clean negative stays
 distinguishable from a lookup that could not run:
 
 ```bash
-zotero-import.py sync-index          # ~1 min per 10k items; re-pulls every time
-zotero-import.py audit docs/ --out /tmp/audit.json
+zotero.py sync-index          # ~1 min per 10k items; re-pulls every time
+zotero.py audit docs/ --out /tmp/audit.json
 ```
 
 For projects with BibTeX, use `reconcile` to discover `.bib` files at the
@@ -24,7 +24,7 @@ exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
 an empty clean report.
 
 ```bash
-zotero-import.py reconcile . --out /tmp/zotero-reconcile.json
+zotero.py reconcile . --out /tmp/zotero-reconcile.json
 ```
 
 Resolve any `errors` and inspect `ambiguous` rows before taking action. An
@@ -93,7 +93,7 @@ only ever creates items, so using it here mints a duplicate of a work the
 library already holds:
 
 ```bash
-zotero-import.py attach --parent <itemKey> docs/Walley1991.pdf
+zotero.py attach --parent <itemKey> docs/Walley1991.pdf
 ```
 
 Before trusting an audit's negatives, run it against a case you know is

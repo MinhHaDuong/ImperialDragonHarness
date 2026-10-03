@@ -133,9 +133,9 @@ Run full repo housekeeping and act on every finding.
    ```bash
    if [ -d docs ] || find . -maxdepth 2 -name '*.bib' -type f -print -quit | grep -q .; then
      if [ -f .zotero-reconcile.json ]; then
-       python3 "$IDH_ROOT/scripts/zotero-import.py" reconcile . --apply --out /tmp/zotero-reconcile.json
+       python3 "$IDH_ROOT/scripts/zotero.py" reconcile . --apply --out /tmp/zotero-reconcile.json
      else
-       python3 "$IDH_ROOT/scripts/zotero-import.py" reconcile . --out /tmp/zotero-reconcile.json
+       python3 "$IDH_ROOT/scripts/zotero.py" reconcile . --out /tmp/zotero-reconcile.json
      fi
    fi
    ```
