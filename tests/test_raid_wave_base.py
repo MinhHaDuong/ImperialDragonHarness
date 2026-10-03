@@ -5,9 +5,10 @@ distinct commits (26c8ab73 native vs 635cf70c cherry-pick) because four
 executors forked while parallel sessions advanced main — patch-equivalent
 commits are not merge-equivalent. Phase 4 must therefore record WAVE_BASE as
 the last annotation commit, every wave branch must fork from that exact SHA,
-a mid-wave main advance is one collective wave rebase, and the Phase 6
-integration review must run git merge-tree pairwise over tickets/. Text-grep
-only → fast tier, no marker.
+a mid-wave main advance rebases WAVE_BASE once onto the new main and then
+moves each wave branch with git rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE,
+and the Phase 6 integration review must run git merge-tree pairwise on the
+wave's PR heads. Text-grep only → fast tier, no marker.
 """
 
 import re
@@ -80,7 +81,7 @@ def test_phase5_branches_must_fork_from_wave_base():
     )
 
 
-def test_midwave_advance_is_one_collective_rebase_with_authorized_push():
+def test_midwave_advance_rebases_wave_base_once_then_onto():
     """A mid-wave main advance replays WAVE_BASE once, then moves each branch --onto it."""
     phase5 = _phase5()
     assert "OLD_WAVE_BASE" in phase5 and "NEW_WAVE_BASE" in phase5, (
@@ -90,10 +91,17 @@ def test_midwave_advance_is_one_collective_rebase_with_authorized_push():
         "Phase 5 must rebase the WAVE_BASE branch itself onto the new main first"
     )
     assert re.search(
-        r"git rebase --onto <?NEW_WAVE_BASE>? <?OLD_WAVE_BASE>? <branch>", phase5
+        r"git -C <worktree-path> rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE", phase5
     ), (
-        "Each wave branch must move with git rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE <branch>, "
-        "so the shared annotation commits replay exactly once"
+        "Each wave branch must move with git -C <worktree-path> rebase --onto "
+        "NEW_WAVE_BASE OLD_WAVE_BASE inside its executor worktree, where the branch "
+        "is already HEAD, so the shared annotation commits replay exactly once"
+    )
+    assert (
+        "git rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE <branch>" not in phase5
+    ), (
+        "The <branch>-argument form fails from the orchestrator checkout — the branch "
+        "is already checked out in the executor worktree"
     )
     assert "never per-branch" in phase5, (
         "Phase 5 must forbid per-branch replays of the shared annotation commits"

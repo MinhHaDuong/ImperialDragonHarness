@@ -242,14 +242,18 @@ the annotation commits, and patch-equivalent commits are not merge-equivalent â€
 divergent copies collide on `tickets/` at merge time.
 
 **How**: the orchestrator first rebases WAVE_BASE itself: create a temporary
-branch at OLD_WAVE_BASE and rebase it once onto the new main; its rebased tip is
-NEW_WAVE_BASE. Then move each wave branch with
-`git rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE <branch>`, which replays only the
-branch's own commits, so the shared annotation commits replay exactly once and
-every branch carries the same objects. The shared-base replay happens once,
-never per-branch. Push each rewritten branch with `git push --force-with-lease`,
-explicitly authorized for this rewrite of pushed branch SHAs. WAVE_BASE moves
-to NEW_WAVE_BASE.
+branch at OLD_WAVE_BASE and rebase it once onto the new main; its rebased tip
+is NEW_WAVE_BASE. Then move each wave branch inside its executor's existing
+worktree â€” the same `-C <worktree-path>` targeting Phase 7 uses. Quiesce the
+executor first, then run
+`git -C <worktree-path> rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE` in that
+worktree, where the branch is already HEAD: no `<branch>` argument and no
+checkout (a `<branch>`-argument rebase from the orchestrator checkout fails
+with "already used by worktree"). The rebase replays only the branch's own
+commits, so the shared annotation commits replay exactly
+once, never per-branch, and every branch carries the same objects. Push each
+rewritten branch with `git push --force-with-lease`, explicitly authorized for
+this rewrite of pushed branch SHAs. WAVE_BASE moves to NEW_WAVE_BASE.
 
 **Refresh**: the Phase 4 recording is only the initial value. When a Phase 5.0
 coordination PR lands, or Wave N merges, re-record WAVE_BASE from the merged
