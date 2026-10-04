@@ -8,6 +8,7 @@ Author: reviewer
 2026-10-04T04:26Z claude note Filed after the 1018 night raid (2026-10-03): breaker fired on rename arithmetic on #1178 (14 vs 15) and #1179 (26 raw, ~15 content-bearing). Honest scope note: this repair rescues the rename-inflated class, it does not unblock #1179 by itself (content-bearing count lands at the threshold); that PR gets a direct review-pr panel + external seats instead.
 2026-10-04T04:28Z claude note Executed (2026-10-03): phase-1 computation now rename-aware content-bearing (git diff --name-status -M; A/M/D and R<100 count 1, pure R100 counts 0); breaker bullet, verdict-time re-check, and circuit-breakers list all name the content-bearing rule; 15 threshold untouched; review-pr width gate untouched (out of scope). Red: 3 doc-pins; green: 34 incl. 3 mechanical scenario tests (rename-inflated stays under, rename-with-edit counts once, genuinely-large fires).
 
+2026-10-04T04:40Z reviewer bump verify-reroll — round 1: R100 reorder-rename counted 0 (similarity index ignores line order); integration markers missing on scratch tests
 --- body ---
 
 ## Context
