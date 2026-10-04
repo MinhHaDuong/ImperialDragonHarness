@@ -1,0 +1,62 @@
+%erg 0.1
+Title: Gaze un-reviewable breaker: count content-bearing files, exclude pure renames
+Created: 2026-10-04
+Author: reviewer
+Closed: autoclosed — PR #1180
+
+--- log ---
+2026-10-04T04:26Z reviewer created
+2026-10-04T04:26Z claude note Filed after the 1018 night raid (2026-10-03): breaker fired on rename arithmetic on #1178 (14 vs 15) and #1179 (26 raw, ~15 content-bearing). Honest scope note: this repair rescues the rename-inflated class, it does not unblock #1179 by itself (content-bearing count lands at the threshold); that PR gets a direct review-pr panel + external seats instead.
+2026-10-04T04:28Z claude note Executed (2026-10-03): phase-1 computation now rename-aware content-bearing (git diff --name-status -M; A/M/D and R<100 count 1, pure R100 counts 0); breaker bullet, verdict-time re-check, and circuit-breakers list all name the content-bearing rule; 15 threshold untouched; review-pr width gate untouched (out of scope). Red: 3 doc-pins; green: 34 incl. 3 mechanical scenario tests (rename-inflated stays under, rename-with-edit counts once, genuinely-large fires).
+
+2026-10-04T04:40Z reviewer bump verify-reroll — round 1: R100 reorder-rename counted 0 (similarity index ignores line order); integration markers missing on scratch tests
+2026-10-04T04:48Z reviewer closed — autoclosed — PR #1180
+--- body ---
+
+## Context
+
+Observed on PR #1178 (wave A, 2026-10-03): rename-aware stat = 14 files,
+`--no-renames` roster = 15 — the breaker boundary. Observed again on
+PR #1179 (wave B, the 1018 consolidation): gate-rule count 26
+(`--no-renames`), `--name-status -M` 19 entries, content-bearing ~15 —
+every `git mv` registers as delete+add and pure renames (R100) inflate a
+consolidation diff past the 15-file breaker without adding any review
+load. The breaker fired on rename arithmetic, not on review substance.
+
+## Actions
+
+1. In skills/gaze/SKILL.md Phase 1 (PR size computation): compute
+   `pr_files` from the rename-aware diff, counting CONTENT-BEARING
+   entries only: Added, Modified, Deleted, and Renamed-with-edit
+   (similarity < 100) each count 1; a pure rename (R100, zero line
+   change) counts 0. `pr_lines` stays total insertions + deletions
+   (rename-aware — pure renames contribute nothing). State the rule in
+   one sentence next to the computation.
+2. Same counting in the verdict-time re-check the gate runs (the
+   0990-landed sentence): the re-check counts content-bearing files.
+3. Keep the threshold itself untouched: `>= 15` content-bearing files
+   still fires `circuit_breaker: un-reviewable`. The borrowed threshold
+   (rules/workflow.md § Ticket discipline) is unchanged; the refinement
+   is gaze's own counting rule for rename-heavy diffs. Do NOT fit the
+   threshold to any one PR.
+4. The review-pr panel width gate is OUT OF SCOPE (different axis,
+   fail-safe direction: --no-renames there can only widen a panel).
+
+## Test
+
+A synthetic diff where 16 entries include 10 pure renames (R100) and 6
+content-bearing files must NOT fire the breaker; 16 content-bearing
+files must fire. Red first against the current --no-renames counting.
+
+## Exit criteria
+
+- [ ] The Phase 1 computation and the verdict-time re-check both count
+      content-bearing files, with the rule stated in the skill text
+- [ ] The test proves both directions (rename-inflated passes,
+      genuinely-large fires)
+- [ ] make check passes
+
+## Invariants
+
+- The 15 threshold is not raised or lowered.
+- The breaker still pre-empts the battery before any seat fires.

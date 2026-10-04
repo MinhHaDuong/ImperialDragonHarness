@@ -211,7 +211,7 @@ fi
     messages on the branch.
 - Check CI status for the merge request if the forge exposes it. If the forge CLI or API is unavailable, skip gracefully — CI status is informational only. If checks are configured and any are failing, note this in the setup summary; do not block on it (reviewer decides).
 - First run `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the battery: do not classify an empty or wrong-tree diff as tiny or approve it. Carry its HEAD and changed-file roster into every review prompt.
-- Compute PR size: `git diff origin/main...HEAD --stat` → `pr_lines` (total insertions + deletions) and `pr_files` (files changed). Classify the battery **tier**:
+- Compute PR size rename-aware: `pr_lines` = total insertions + deletions from `git diff origin/main...HEAD --stat`; `pr_files` = the CONTENT-BEARING entry count from `git diff --name-status -M origin/main...HEAD` — added, modified, and deleted each count 1; cross-reference rename entries with `git diff --numstat -M origin/main...HEAD`: a rename counts 1 iff its additions + deletions > 0, otherwise 0 (a genuinely content-free pure rename has zero line change in rename-aware numstat; R100 alone is insufficient because the similarity index ignores line order) — pure renames add no review load, and counting them via `--no-renames` inflates consolidation diffs past the breaker on arithmetic (ticket 1026, observed on PRs #1178/#1179). Classify the battery **tier**:
   Before classifying, check the PR label, PR body, and linked ticket body for
   `review:standard`. An explicit request selects the **full** tier even when
   the size thresholds below would select tiny or small; it also directs Agent C
@@ -260,11 +260,11 @@ fi
   If the count is two or more, record `multi_ticket: <IDs>` as a **non-blocking**
   finding for phase 6 to disposition. Below the size breaker, continue the normal review;
   genuinely bundled tickets are permitted by `rules/git.md` § Merging.
-- If `pr_files >= 15`, the PR exceeds the **15+ files** monster threshold
+- If `pr_files >= 15`, the PR exceeds the **15+ content-bearing files** monster threshold
   borrowed from `rules/workflow.md` § Ticket discipline for multi-PR work. Return ESCALATE
   immediately, before spawning any phase 2–5 reviewer battery or phase 6 gate,
   with `circuit_breaker: un-reviewable` and reason
-  `un-reviewable: <pr_files> files / <pr_lines> lines — split before review`.
+  `un-reviewable: <pr_files> content-bearing files / <pr_lines> lines — split before review`.
   When `multi_ticket` is present, add that the combined tickets are a
   decomposition signal. Post the normal two-section verdict comment with the
   breaker and `gate: skipped (un-reviewable)` visible. In that comment's
@@ -597,7 +597,11 @@ must-fix simplify finding is APPLIED (diff shows it) or has a validated
 rationale. Any `blocking` adherence violation → REROLL. Run `git log
 origin/main..origin/<branch> --stat` (two-dot) and report files not traceable
 to an exit criterion as `scope_overflow` (report only — never rebase/amend to
-excise). At verdict time, re-check the changed-file count against the
+excise). At verdict time, re-check the content-bearing file count (the phase-1
+rule: `git diff --name-status -M` for the roster, cross-referenced with
+`git diff --numstat -M`: A/M/D count 1; renames count 1 iff additions +
+deletions > 0, otherwise 0; R100 alone is insufficient because similarity
+ignores line order) against the
 breaker (`pr_files >= 15`, the phase-1 threshold) — a round-2 fix can grow a
 14-file PR past it after the phase-1 check has passed; if the diff against
 main now meets the breaker, report `circuit_breaker: un-reviewable` in the
@@ -702,7 +706,8 @@ Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 
 ## Circuit breakers
 
 - Setup step cannot find ticket file → ESCALATE.
-- `pr_files >= 15` → ESCALATE as `un-reviewable` before the reviewer battery;
+- `pr_files >= 15` (content-bearing files, phase-1 rule) → ESCALATE as
+  `un-reviewable` before the reviewer battery;
   this is the `rules/workflow.md` 15+ file monster threshold. Name the breaker
   in the verdict comment and mention `multi_ticket` when multiple close claims
   add a decomposition signal. `--force-approve` can override it loudly.
