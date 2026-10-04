@@ -50,9 +50,11 @@ items through the Web API. `references/import.md` carries the full contract.
 ## Safety contract
 
 Never write `zotero.sqlite` (read via `?immutable=1`); merges happen in the
-desktop client. Every mutation follows backup → dry-run → apply, expressed
-as helper flags (`--dry-run`, `--apply`, `--overwrite`), and writes are
-guarded by `If-Unmodified-Since-Version`. The RIS file is the durable
+desktop client. Metadata mutations (`enrich` and its `write` step) follow
+backup → dry-run → apply, expressed as helper flags (`--dry-run`, `--apply`,
+`--overwrite`), and are guarded by `If-Unmodified-Since-Version`. `attach`
+creates: it uploads a new file with `If-None-Match: *` and guards no
+existing item's version. The RIS file is the durable
 artifact and remains the fallback when no read-write key resolves.
 
 ## A scraped identifier is a hypothesis, not a finding

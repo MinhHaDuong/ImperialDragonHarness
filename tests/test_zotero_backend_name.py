@@ -52,8 +52,16 @@ SURFACES = ("skills", "rules", "docs", "tests", "scripts")
 # history and project memory are archives; audit records and the reviewer
 # benchmark board record past runs under the name they ran under.
 EXCLUDED_PARTS = ("tickets", "projects")
-EXCLUDED_NAMES = ("benchmark-board.yml",)
-AUDIT_RECORD = re.compile(r"audit", re.IGNORECASE)
+# Audit records are excluded by EXACT name, not an "audit" substring —
+# a substring blind-spots live files (review of PR #1179: audition.md,
+# mammoth-audit.py would slip). New record files must be exempted
+# explicitly: fail-safe direction, records never silently skip the sweep.
+EXCLUDED_NAMES = (
+    "benchmark-board.yml",
+    "2026-09-24-rules-coherence-audit.md",
+    "audit-0252-worktree-ownership-2026-07-12.md",
+    "trace-compact-audit-2026-06.md",
+)
 
 # The ten backend verbs (ticket 1018: subcommand names are the verbs).
 VERBS = {
@@ -102,7 +110,7 @@ def _is_excluded(path):
         return True
     if path.name in EXCLUDED_NAMES:
         return True
-    return bool(AUDIT_RECORD.search(path.name))
+    return False
 
 
 def _matches(pattern):

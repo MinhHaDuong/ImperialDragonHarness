@@ -141,7 +141,9 @@ Prose names a skill's operation precisely; command names stay as they are, scope
 | **Key sync** — import `Ha-Duong.bib` citation keys into Zotero Extra field | Publications list | Next homepage refresh; `update-publist` is the sanctioned write path |
 | **Dedup** — candidate pairs + HITL merge; auto-apply hash- and DOI-exact matches only | archiveCIRED, publications list | **Triggered 2026-08-14** — ticket 0485. See also ticket 0570: the same 269 clusters make `classify_matches()`'s untie-broken `exact` tier report one parent and drop the rest in silence. 269 clusters where one file md5 sits under distinct parents in the user library, none of them visible to Zotero's own Duplicate Items pane (it matches title/DOI/ISBN + creators + year, same item type, and never the file hash). Detection reads the local DB; the **merge belongs to the desktop client** — the Web API has no merge endpoint, and a Zotero merge is a client-side composite (move children, union collections and tags, trash the losers, write `dc:replaces` on the master; the library already carries 436 such relations). Ticket 0485 closed 2026-10-02: detector and report delivered and live-validated, sample arbitrated; residue — author merges in the client, right-click → Merge n Items. |
 
-Each capability: one script, one skill, no shared framework beyond the RIS contract.
+Each capability rides one backend script; the library capability is the
+one `zotero` skill (verbs, reference files), no shared framework beyond the
+RIS contract.
 
 The former ticket references in this table (0006, 0022–0023, 0037) were dead — those IDs name unrelated work in both the harness and search-works-for-zotero trackers — and are removed (2026-10-02).
 
