@@ -11,6 +11,8 @@ import re
 import subprocess
 from pathlib import Path
 
+from child_env import child_env
+
 import pytest
 
 pytestmark = pytest.mark.adherence
@@ -70,7 +72,8 @@ def test_verdict_time_recheck_uses_the_phase1_rule():
 
 def _run(cwd: Path, *args: str) -> str:
     return subprocess.run(
-        ["git", *args], cwd=cwd, check=True, capture_output=True, text=True
+        ["git", *args], cwd=cwd, check=True, capture_output=True, text=True,
+        env=child_env(),
     ).stdout
 
 
