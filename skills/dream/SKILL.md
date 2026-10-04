@@ -99,6 +99,7 @@ destination. A useful pattern or a reviewed memory PR is not that request.
 
 Lair completes its work and suggests dream in its conclusion after 5 or more
 new experiences. It neither waits nor launches dream. Dream runs when explicitly
-invoked as a separate follow-up.
+invoked as a separate follow-up, in a new `/clear` session — a fresh context,
+not the wrapping session's compacted residue.
 There is no timer or automatic periodic launch. Use an isolated project checkout. Missing paths or permissions are visible
 failures; never fall back to the harness or restore/change its primary branch.
