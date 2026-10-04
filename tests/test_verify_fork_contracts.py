@@ -233,11 +233,11 @@ def test_gate_rechecks_size_breaker_at_verdict_time():
     """V2 (round 1): `pr_files >= 15` was evaluated only at phase 1, before
     re-entry — a round-2 fix can grow a 14-file PR past the breaker with the
     gate never re-checking it. The embedded phase-6 gate procedure must
-    re-check the changed-file count against the breaker at verdict time and
+    re-check the content-bearing file count against the breaker at verdict time and
     report `circuit_breaker: un-reviewable` if it is exceeded."""
     gate = VERIFY.split("### 6. Gate", 1)[1].split("## Branch on verdict", 1)[0]
     norm = _normalize(gate)
-    assert re.search(r"re-check\w* the changed-file count", norm), (
+    assert re.search(r"re-check\w* the content-bearing file count", norm), (
         "gaze/SKILL.md: the phase-6 gate procedure must re-check the "
         "changed-file count at verdict time, not only at phase 1"
     )
