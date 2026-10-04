@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Backend helper scripts/zotero.py for the zotero-import skill.
+"""Backend helper scripts/zotero.py for the zotero skill.
 
 Subcommands: probe, match, dedup-report, write, inject, enrich, sync-index,
 audit, reconcile, attach.

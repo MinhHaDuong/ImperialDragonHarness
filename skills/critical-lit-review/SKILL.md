@@ -59,8 +59,8 @@ agreement on it before searching. It states:
 - **Full text** for kept sources follows the `rules/zotero.md` chain (`docs/` →
   Zotero → ISTEX → open web → author). A source is not inaccessible until that
   chain has run; record which step failed in `justification`.
-- **Intake** of kept sources into Zotero goes through `zotero-import` (PDFs)
-  and `index-source` (URLs). Zotero, not the run directory, holds them.
+- **Intake** of kept sources into Zotero goes through `/zotero import` (PDF or
+  URL alike). Zotero, not the run directory, holds them.
 
 Corpus is complete when the seminal works, the last two or three years, the
 key methodological documents, every major institutional position and every

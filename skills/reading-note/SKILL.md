@@ -22,12 +22,12 @@ Discipline: `rules/zotero.md`. Zotero is the system of record; `docs/` is stagin
   open web → author. A paywall is not inaccessibility until ISTEX has answered;
   a scan without a text layer goes through `ocrmypdf`. Never write a note from
   an abstract and say so if the full text could not be had.
-- **Intake.** If the work is not in Zotero yet, file it first: `zotero-import`
-  for a PDF, `index-source` for a URL. They resolve the identifier, dedupe and
-  attach the file; do not duplicate their lookups here.
+- **Intake.** If the work is not in Zotero yet, file it first with `/zotero`
+  import — PDF or URL. It resolves the identifier, dedupes and
+  attaches the file; do not duplicate its lookups here.
 - **Metadata from the first page**, not from PDF metadata fields:
   `pdftotext -f 1 -l 1`. A DOI scraped from the text may be a cited work's;
-  corroborate it as `zotero-import` describes before trusting it.
+  corroborate it as the `zotero` skill describes before trusting it.
 
 ## 2. Get the research context
 
@@ -71,8 +71,9 @@ template cannot enforce:
 ## 4. Store it
 
 1. Stage the note as `docs/<AuthorYear>_<ShortTitle>.md` (git-ignored staging).
-2. Archive it with `index-source` as its own **Document** item (the research-note
-   row of its type table), titled `Reading note: <work title>`, with the work's
+2. Archive it with `/zotero` import (URL intake) as its own **Document** item
+   (the research-note row of the type table in the skill's import reference),
+   titled `Reading note: <work title>`, with the work's
    DOI or Zotero item key in the note's metadata block so the two link up.
 3. When a `critical-lit-review` run delegated the note, also leave the path in
    the run's working directory it named.
