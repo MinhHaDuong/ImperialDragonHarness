@@ -251,9 +251,9 @@ fi
     `tiny`; the battery never drops below Agent A + Agent C + the phase-6
     gate, at every tier and every band.
   - band `normal` → unchanged.
-  A tiny → small raise arms Agent B and phase 5 (`/simplify`), and the
-  external reviewer panel fires per the existing small/full rule — the
-  battery follows the tier, no special case. What this closes is the battery
+  A tiny → small raise arms Agent B and phase 5 (`/simplify`); the
+  internal battery follows the tier. Optional external review follows
+  § External reviewer panel. What this closes is the battery
   tier, not panel width: the 0392 width gate already reads `pipeline_paths`.
 
 - **Preflight before spawning phases 2–5.** Count distinct ticket close-claims
@@ -796,76 +796,35 @@ Explicit human override. Usage: `/gaze <pr-number> --force-approve <reason>`.
 
 ## External reviewer panel
 
-Request external, decorrelated reviewers through the active runtime. It discovers
-who is available and chooses the route (local or remote agents, llama.cpp, or a
-model gateway). `/reviewers` describes the needs and offers optional helpers;
-no fixed roster or gateway is required. See `skills/reviewers/SKILL.md`.
-The helper-specific instructions below apply only when that helper is selected.
+External, decorrelated review is optional evidence routed by the active
+runtime. When useful or requested, describe the expertise, capability and
+independence needs through `skills/reviewers/SKILL.md` and read its live-route
+reference. The runtime discovers available reviewers and chooses an appropriate
+route; no fixed roster, provider or gateway is required. The internal battery
+and phase-6 gate retain their existing tier and round requirements.
 
-**When seats fire.** Automatically, on **small**- and **full**-tier CODE
-reviews — the decorrelation evidence concentrates ensemble value on
-substantive multi-file code changes. Skip on the **tiny** tier and on prose
-panels — the same `"$IDH_ROOT/scripts/prose_predicate.py"` verdict the phase
-2–4 panel choice used; a LaTeX manuscript never qualifies for external
-code-review seats. No suitable external reviewer available → record that limitation; the
-optional panel is fail-open and does not block a gaze run. An empty helper
-roster alone does not mean the runtime has no other reviewers.
+**Scope and collection.** Optional external code review applies to small/full
+CODE reviews, using the same `"$IDH_ROOT/scripts/prose_predicate.py"` verdict as
+phases 2–4. Skip these code-review routes on tiny tiers and prose panels.
+If selected, route reviews concurrently with phases 2–4 and collect completed
+evidence before phase 6 within the run's deadline. Record the actual reviewer,
+route, independence basis, exact reviewed revisions and raw report. A dispatch
+is not completion; a changed head requires current review evidence.
 
-**How.** Discover and route external reviews concurrently with phases 2–4;
-collect their evidence and integrity status before phase 6. If the runtime
-chooses the bundled helper, invoke
-`/reviewers request <pr>` as a background *shell* job (a Bash call, not an
-agent launch, so the fork-orphan contract does not apply): the sandboxed
-seats (~30–120 s) run concurrently with the internal reviewer battery and
-finish well inside its wall time. Before phase 6, run
-`/reviewers harvest <pr>` synchronously and hand the normalized
-`verifiable:` / `consider:` findings to the gate as panel comments.
+**Disposition.** Pass `verifiable:` / `consider:` findings and their supporting
+evidence to phase 6 as panel comments. The gate dispositions external findings
+identically to internal ones: only verifiable-class findings may bounce;
+suggestions are noted-not-blocking. Optional participation does not waive a
+returned finding.
 
-**Reviewing a PR outside this harness — pass `REVIEWERS_REPO`.** The seats
-read *this harness* by default, so a PR in another repository fails with an
-unknown pathspec: the head branch does not exist where the seats are looking.
-Whenever the reviewed checkout differs from the helper's resolved harness checkout, invoke as
-
-```bash
-REVIEWERS_REPO=<path-to-the-reviewed-checkout> \
-REVIEWERS_PR_BRANCH=<head-branch> \
-  "$IDH_ROOT/skills/reviewers/reviewers.sh" request <pr>
-```
-
-`REVIEWERS_PR_BRANCH` is optional and skips the forge lookup; supply it when
-the head branch is already known, which it is by the time this runs.
-`reviewers.sh help` documents both.
-
-This is not hypothetical: a `/gaze` run on a git-erg PR (2026-09-16) lost all
-three seats, one of the two causes being exactly this — the seats searched the
-harness for a branch that lived in git-erg. Because the panel is fail-open, the
-run reported no external findings rather than an error, and the pathspec
-failure surfaced only in the integrity lines.
-
-**Disposition.** The gate dispositions external findings identically to
-internal ones (0205 rule 1). Seats are **advisory**: only verifiable-class
-findings may bounce. A seat that errors or hangs WARNs and the review
-proceeds — per-seat fail-open; one seat never blocks the verdict.
-
-**Panel integrity** (ticket 0393). `harvest` also emits `SEAT-FAILED:` /
-`SEAT-MISSING:` lines and a `PANEL-INTEGRITY:` headline for every seat that did
-not review. These are **not** findings: do not disposition them. They MUST be
-carried verbatim into the `/gaze` comment, under the panel section.
-A panel reported as run while its external seats silently never authenticated
-is the failure this exists to prevent: it happened, and the run read as clean.
-
-**Scorecard (the trial).** After the gate verdict, for each seat that
-returned findings, append the trial line:
-`/reviewers scorecard <pr> <seat> "<verdict — N verifiable, M consider, of
-which K adopted>"`. This fills ticket 0207's advisory trial (≥5 MRs across
-≥3 projects per config) passively from normal gaze runs.
-
-**Advisory → required promotion** (0205 rule 2, condensed). A seat runs
-advisory for at least 5 merge requests spanning at least 3 projects before
-promotion. Promotion is flipping its check from optional to required — a
-manual roster edit by the author, never automatic. LLM review is
-non-deterministic: promote only seats whose verifiable-class findings are
-stable across re-runs; advisory is the safe default.
+**Panel integrity.** No suitable reviewer, a timeout or a failed route is a
+visible limitation. WARN and continue the required internal battery and gate;
+optional external review is fail-open. Preserve `SEAT-FAILED:` /
+`SEAT-MISSING:` records and the `PANEL-INTEGRITY:` headline verbatim in the
+`/gaze` comment's panel section. These are coverage records, not findings to
+disposition. Distinguish a completed clean review from absent evidence; an
+unavailable route must never be reported as independent agreement. Record
+external review as not selected when none was requested or attempted.
 
 **Forge automated reviewer** (ticket 0206): the gate's comment-validation
 step includes the forge's automated reviewer (e.g. a requested Copilot

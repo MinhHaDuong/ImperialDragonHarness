@@ -377,37 +377,34 @@ For each eligible PR, sequentially within the wave:
    A *permission denial* on the merge call is not a merge failure — handle it
    per § Merge-permission denial below, not by ESCALATE.
 
-### Merge-permission denial: cure the objection, don't park
+### Merge-permission denial: cure the objection with evidence
 
-The permission layer may decline the merge call for an APPROVED PR on the
-ground that it is self-authored and self-reviewed (observed 2026-07-14,
-raid 245/320: `erg-pr-merge` denied twice, both PRs parked for a human
-word). That objection is valid: the coder and the gaze battery share one
-model family. The cure is decorrelated external review, which the raid
-already owns. Answer the objection with evidence; two moves are always
-wrong: weakening permissions (exiting auto mode, skipping permission
-checks) and hand-merging around the guard.
+The permission layer may decline an APPROVED PR's merge because the review
+is insufficiently independent of its author. Inspect the stated objection
+and the actual producer/reviewer identities; do not assume that a launched
+reviewer supplied independent evidence. Never weaken permissions, skip checks
+or hand-merge around the guard.
 
 1. Do not retry the denied call verbatim.
-2. Run `/reviewers request <pr>` then `/reviewers harvest <pr>` — the
-   external seats (0205 panel, 0207 agnostic CLI seats) review the same
-   diff on a different provider. Disposition every harvested finding
-   through the verify-gate contract like any panel comment; a blocking
-   finding sends the PR back through Phase 6 rather than to merge.
-   `harvest` also emits `SEAT-FAILED:` / `SEAT-MISSING:` lines and a
-   `PANEL-INTEGRITY:` headline for every seat that did not review (ticket
-   0393). These are **not** findings: do not disposition them. They MUST be
-   carried verbatim into the external-verdict record of step 3.
-   A panel reported as run while its seats silently never authenticated is
-   no answer to the self-review objection at all.
-3. On a clean disposition, record the external verdict on the merge
-   request (a comment naming the seats and their disposition), quote that
-   verdict and this section's grant in the transcript, and retry the merge
-   once. The PR is no longer self-reviewed-only.
-4. Fallback — empty roster, seat-runner failure, or a second denial: park
-   the PR merge-ready, continue the wave, and make the briefing name each
-   parked PR *and* its deferred post-merge steps (cleanup + per-PR roar),
-   so the author's one-word merge does not strand Phase 8.
+2. Request independent review of the current PR head through the active
+   runtime, using `skills/reviewers/SKILL.md` and its live-route reference.
+   Describe the expertise, capability and independence needed to answer the
+   objection. Let the runtime discover and route a suitable reviewer; record
+   the actual identity, route, independence basis, reviewed base/head and
+   completed report. Disposition every returned finding through verify-gate;
+   a blocking finding sends the PR back through Phase 6. If fixes change the
+   head, refresh the independent evidence before retrying. Preserve failed or
+   missing review records and `PANEL-INTEGRITY:` verbatim in the external
+   verdict record; they are coverage limitations, not findings to disposition.
+3. Only when completed independent evidence answers the stated objection and
+   findings have a clean disposition, post that evidence and its disposition
+   on the PR. Quote the verdict and this recovery contract in the transcript
+   and retry the merge once. A claimed route or empty response is insufficient.
+4. If independent evidence is unavailable or insufficient, or the retry is
+   denied, park the PR merge-ready, continue the wave, and name each parked
+   PR, the unresolved objection and deferred post-merge steps (cleanup +
+   per-PR roar) in the briefing. Optional external review's fail-open policy
+   does not waive a merge denial; do not bypass the permission layer.
 
 After all waves, in one compound so the `cd` persists across the rebase:
 `cd <session-worktree> && git checkout main && git pull --rebase origin main`, then
