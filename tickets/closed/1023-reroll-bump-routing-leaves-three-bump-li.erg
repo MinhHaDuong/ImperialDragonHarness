@@ -8,6 +8,7 @@ Closed: implemented and verified
 2026-10-03T12:29Z claude created
 2026-10-05T08:03Z reviewer note implementation: mixed legacy/current tally behavioral regression passed; make lint 169 passed; make check 1411 passed, 2 skipped
 2026-10-05T08:03Z reviewer closed — implemented and verified
+2026-10-05T08:26Z reviewer note verify-reroll — round 1: wrap-up tally omits legacy reroll notes and counts quoted body samples
 
 --- body ---
 ## Context

@@ -435,12 +435,15 @@ Autonomous mode: ralph loop to next wave.
     print counts by ticket and category (author names may contain spaces):
     ```bash
     awk '
-      FNR == 1 { in_log = 0 }
+      FNR == 1 { in_log = 0; in_body = 0 }
+      in_body { next }
       /^--- log ---$/ { in_log = 1; next }
-      /^--- body ---$/ { in_log = 0 }
+      /^--- body ---$/ { in_log = 0; in_body = 1; next }
       in_log && /^[0-9][0-9][0-9][0-9]-/ {
         if (match($0, / (bump|note) /)) {
           split(substr($0, RSTART + 1), fields, " ")
+          if (fields[1] == "note" && fields[2] == "bump" &&
+              fields[3] == "verify-reroll") fields[2] = fields[3]
           if (fields[1] == "note" && fields[2] != "verify-reroll" &&
               fields[2] != "circuit-breaker") next
           ticket = FILENAME

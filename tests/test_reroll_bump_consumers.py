@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.mark.integration
-def test_wrap_up_tally_counts_log_entries_per_ticket(tmp_path):
+@pytest.mark.parametrize("regression", ["baseline", "legacy_note_bump", "quoted_body_log"])
+def test_wrap_up_tally_counts_log_entries_per_ticket(tmp_path, regression):
     tickets = tmp_path / "tickets"
     tickets.mkdir()
     closed = tickets / "closed"
@@ -37,7 +38,18 @@ def test_wrap_up_tally_counts_log_entries_per_ticket(tmp_path):
         "%erg 0.1\nTitle: example\n\n--- log ---\n"
         "2026-10-05T10:00Z reviewer note verify-reroll — round 1: fix\n"
         "2026-10-05T10:01Z reviewer bump verify-reroll — historical\n"
-        "\n--- body ---\nNo bumps here.\n"
+        + (
+            "2026-10-05T10:02Z reviewer note bump verify-reroll — historical\n"
+            if regression == "legacy_note_bump"
+            else ""
+        )
+        + "\n--- body ---\nNo bumps here.\n"
+        + (
+            "--- log ---\n"
+            "2026-10-05T10:03Z quoted note verify-reroll — body sample\n"
+            if regression == "quoted_body_log"
+            else ""
+        )
     )
     skill = (ROOT / "skills/raid/SKILL.md").read_text()
     wrap_up = skill.split("## Wrap up", 1)[1].split("## Circuit breakers", 1)[0]
@@ -53,7 +65,7 @@ def test_wrap_up_tally_counts_log_entries_per_ticket(tmp_path):
     )
     assert set(result.stdout.splitlines()) == {
         "Ticket 0879: 1 verify-reroll",
-        "Ticket 1005: 2 verify-reroll",
+        f"Ticket 1005: {3 if regression == 'legacy_note_bump' else 2} verify-reroll",
         "Ticket 1023: 2 verify-reroll",
         "Ticket 1023: 1 permission",
         "Ticket 1023: 1 circuit-breaker",
