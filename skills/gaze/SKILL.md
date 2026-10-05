@@ -909,6 +909,7 @@ verdict: APPROVED|REROLL|ESCALATE (direct setup ESCALATE when un-reviewable)
 gate_session_id: <this run's id>
 review_worktree_path: <absolute review tree path>
 ruled_tip_sha: <full SHA read from review tree at verdict time>
+reroll_bump: <exact returned note verify-reroll line; include on REROLL, omit otherwise>
 
 Exit criteria:
 - <criterion 1>: ADDRESSED — <evidence>

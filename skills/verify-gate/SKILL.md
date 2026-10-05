@@ -247,6 +247,7 @@ current round = count + 1.
    Gate session id: <UUID from /gaze, or standalone UUID>
    Review worktree path: <absolute path used for evidence>
    Ruled tip SHA: <full commit SHA read from that worktree>
+   reroll_bump: <exact returned note verify-reroll line; include on REROLL, omit otherwise>
    Exit criteria: <addressed>/<total>  Review: <unresolved>  Simplify: <unresolved>
    Adherence: <blocking>  Scope overflow: <files> (<ticketed>/<escalate>)
    Minors: verifiable:<n> consider:<n> nofollow:<n> malformed:<n>
