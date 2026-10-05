@@ -125,6 +125,7 @@ belong in the external keystore and are resolved by task-specific tools.
 | `/biblio-saturation` | Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness. |
 | `/brood` | Turn accepted Dream findings into project improvements and scoped harness nominations, on explicit request. |
 | `/choose-venue` | Choose where to submit a paper: shortlist journals, or conferences, by fit and diamond open access. |
+| `/coaching` | Replay the frozen, already merged PR benchmark board through a contained reviewer seat and report read-only ground-truth diagnostics. |
 | `/conference-submission-prep` | Prepare a humanities and social sciences conference submission from its call for papers. |
 | `/critical-lit-review` | Critical literature review (état de l'art) in history of economics and STS: object, actors, controversies. |
 | `/cut-prose` | Cut a document to a word or page budget by removing whole passages before condensing anything. Ranks the removable passages against the coverage ledger, cuts them entire, then condenses the survivors until the budget is met. Use for a manuscript trim, a reviewer-mandated length cut, or a slot-limited abstract. |

@@ -43,7 +43,11 @@ RESULT
         ;;
     cafebabe2)
         [[ "$base" == deadbeef2 ]]
-        case "${FAIL_LATE:-}" in exit) echo 'late runner failure' >&2; exit 4;; missing) exit 0;; esac
+        case "${FAIL_LATE:-}" in
+            exit) echo 'late runner failure' >&2; exit 4;;
+            missing) exit 0;;
+            nosummary) printf 'FINDING|severity=consider|file=lib/epsilon.py:1|rationale=unconfirmed\n' > "$out"; exit 0;;
+        esac
         if [ "${CLEAN:-}" = 1 ]; then printf 'SUMMARY|findings=0|verdict=approve\n' > "$out"; exit 0; fi
         cat > "$out" <<'RESULT'
 FINDING|severity=verifiable|file=lib/delta.py:5|rationale=duplicate
@@ -76,7 +80,7 @@ board:
 YAML
 zero="$(CLEAN=1 run --board "$WORK/empty-findings-board.yml")"
 [[ "$zero" == *'findings=0'* && "$zero" == *'board=1MR'* ]]
-for mode in exit missing; do
+for mode in exit missing nosummary; do
     if FAIL_LATE="$mode" run > "$WORK/out" 2> "$WORK/err"; then echo "FAIL: $mode accepted"; exit 1; fi
     [[ ! -s "$WORK/out" ]] || { echo "FAIL: partial success summary for $mode"; exit 1; }
     [[ -s "$WORK/err" ]] || { echo "FAIL: no diagnostic for $mode"; exit 1; }
@@ -84,4 +88,13 @@ done
 if run --credential-env BAD_VAR > "$WORK/out" 2> "$WORK/err"; then echo 'FAIL: bad credential accepted'; exit 1; fi
 [[ ! -s "$WORK/out" && -s "$WORK/err" ]]
 [[ "$(sha256sum "$WORK/board.yml" "$WORK/repo/tickets/0001-test.erg")" == "$before" ]]
+[[ "$(find "$WORK/repo" -type f | wc -l)" -eq 1 ]]
+cat > "$WORK/incomplete.yml" <<'YAML'
+board:
+  - pr: 7
+    title: missing head
+    base: deadbeef7
+YAML
+if run --board "$WORK/incomplete.yml" > "$WORK/out" 2> "$WORK/err"; then echo 'FAIL: incomplete board accepted'; exit 1; fi
+[[ ! -s "$WORK/out" && -s "$WORK/err" ]]
 echo 'PASS: cold replay classification, diagnostics, containment, credentials and immutability'
