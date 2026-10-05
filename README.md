@@ -82,8 +82,8 @@ Follow the [installation guide](docs/idh-install-strategy.md) to register
 reviewed resources with each runtime. It distinguishes current additive
 registration from future native packaging and measured pilot support.
 
-The current `./bin/idh install` creates manifest links and edits the shell loader. It merges harness hooks into Claude/Codex settings
-and links individual resources, preserving unrelated profile content. No
+The current `./bin/idh install` creates manifest links and edits the shell loader. Claude hooks live in the adapter plugin (0887): install links the plugin and removes stale harness hooks from live settings, Codex hooks still merge into its settings,
+and individual resources link, preserving unrelated profile content. No
 repository pointer or whole-profile alias is required. Same-name conflicts
 are refused. Review these host-wide actions: there is no dry run or runtime
 selector, and shell integration is not opt-in; scheduling is left to the host.

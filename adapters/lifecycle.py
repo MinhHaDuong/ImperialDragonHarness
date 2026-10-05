@@ -100,6 +100,34 @@ def install_links() -> int:
     return rc
 
 
+def _plugin_link_ready() -> bool:
+    """The adapter plugin is a working hook source: the manifest's
+    claude-code link resolves to this checkout's adapter AND the payload is
+    intact. Resolution alone proves the switch, not the source — with a
+    broken payload the settings hooks are the only working guards left, so
+    removal must refuse (round-3 red-team finding). The payload predicate
+    mirrors adapter_payload_ready in adapter-claude-code-activate.sh;
+    the link path is looked up in the manifest, never hardcoded."""
+    for entry in entries("claude"):
+        if entry["target"].endswith("/adapters/claude-code"):
+            link = V.expand(entry["path"], root())
+            target = V.expand(entry["target"], root())
+            try:
+                if link.resolve(strict=True) != target.resolve(strict=True):
+                    return False
+            except (OSError, RuntimeError):
+                return False
+            return all(
+                (
+                    (target / ".claude-plugin" / "plugin.json").is_file(),
+                    (target / "hooks" / "hooks.json").is_file(),
+                    (target / "bin" / "idh-hook").is_file(),
+                    os.access(target / "bin" / "idh-hook", os.X_OK),
+                )
+            )
+    return False
+
+
 def register_settings(entry, path, target) -> int:
     """Merge hook registrations without replacing runtime configuration."""
     try:
@@ -116,7 +144,53 @@ def register_settings(entry, path, target) -> int:
         old = path.read_bytes() if path.exists() else b"{}"
         actual = json.loads(old)
         wanted = json.loads(target.read_text())
-        V.merge_hooks(actual, wanted)
+        if V.managed_hooks(wanted):
+            V.merge_hooks(actual, wanted)
+            hooks_message = f"installed: runtime hooks in {path}"
+        else:
+            # Absence mode (0887 activation): the harness hooks moved to the
+            # adapter plugin; remove ours from the live file instead of
+            # adding them, or every guard fires twice. Removal is
+            # command-granular: an operator command grouped into the same
+            # block (Claude Code's /hooks UI groups by matcher) survives;
+            # only the harness's own commands go. Everything else in the
+            # file stays untouched.
+            stale = V.harness_hooks(actual, root())
+            if stale and not _plugin_link_ready():
+                # Never strand the machine on zero guards: if the plugin
+                # link is missing or broken, the settings hooks are the only
+                # source left. Leave them firing and say so — the check
+                # names the state until the link is repaired.
+                report(
+                    "REFUSED",
+                    f"{path}: stale harness hooks left in place — the adapter "
+                    "plugin link is missing or broken, and removing them "
+                    "would leave zero guards",
+                    "rerun idh install after repairing the plugin link "
+                    "(~/.claude/skills/claude-code)",
+                )
+                return 1
+            removed = 0
+            for event, blocks in list(actual.get("hooks", {}).items()):
+                kept = []
+                for block in blocks:
+                    survivors = [
+                        h for h in block.get("hooks", [])
+                        if not V._harness_script(h.get("command", ""), root())
+                    ]
+                    removed += len(block.get("hooks", [])) - len(survivors)
+                    if survivors:
+                        kept.append({**block, "hooks": survivors})
+                if kept:
+                    actual["hooks"][event] = kept
+                else:
+                    actual["hooks"].pop(event)
+            if not actual.get("hooks"):
+                actual.pop("hooks", None)
+            hooks_message = (
+                f"installed: removed {removed} stale harness hook(s) from {path} "
+                "(they live in the adapter plugin now)"
+            ) if removed else ""
         if "claude" in entry["runtimes"]:
             status = actual.get("statusLine")
             if status == {"type": "command", "command": "$HOME/.idh/scripts/statusline.sh"}:
@@ -138,7 +212,7 @@ def register_settings(entry, path, target) -> int:
         if path.exists():
             _backup(path, old, mode)
         _replace(path, (json.dumps(actual, indent=2) + "\n").encode(), mode)
-        print(f"installed: runtime hooks in {path}")
+        print(hooks_message or f"installed: runtime settings in {path}")
         return 0
     except (OSError, ValueError, TypeError, AttributeError) as exc:
         report("REFUSED", f"{path}: {exc}", "inspect runtime settings, then rerun idh install")

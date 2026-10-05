@@ -3,11 +3,16 @@
 #
 # Ticket 0887. The adapter ships inert on purpose. The harness and runtime profile are independent. A plugin directory
 # registered under the runtime's skills/ is
-# auto-discovered on the next session -- while the live settings.json still
-# carries its own copy of the same hooks. Both sources firing means every guard
-# runs twice, on-start.sh backgrounds its git sync twice, and the log lines
+# auto-discovered on the next session. When the live settings.json ALSO
+# carries a copy of the same hooks, both sources fire: every guard runs
+# twice, on-start.sh backgrounds its git sync twice, and the log lines
 # double. The symlink this script creates is therefore the switch, and the
 # switch refuses to close while the live file would double-fire.
+#
+# Run from a git worktree, activate and revert both refuse: the link already
+# exists (activate) or does not point at THIS checkout's adapter (revert's
+# managed-link check), so a worktree session can neither move nor remove the
+# reference checkout's switch.
 #
 #   activate            create the link, after checking the live file
 #   --revert            remove the link
@@ -15,8 +20,14 @@
 #
 # What it deliberately does NOT do: edit the live settings.json. That file is
 # the operator's, it is outside the repository by design, and a script that
-# silently rewrites a user's live configuration is the wrong shape. It tells
-# you what to remove and stops.
+# silently rewrites a user's live configuration is the wrong shape.
+#
+# Since the activation (ticket 0887) the canonical settings.shared.json
+# carries no hooks at all: the plugin is the single hook source. Reverting
+# therefore leaves the guards off until a hooks block is restored to the live
+# settings -- the block lives in git history, in the commit that removed it.
+# --revert allows that rollback and says so loudly instead of refusing
+# forever against a precondition the endgame removed.
 set -euo pipefail
 
 ROOT=$(cd -- "$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")/.." && pwd -P)
@@ -26,57 +37,34 @@ TARGET_REL="$HARNESS_DIR/adapters/claude-code"
 TARGET_ABS="$HARNESS_DIR/adapters/claude-code"
 # Configuration belongs to the runtime profile.
 LIVE="$HOME/.claude/settings.json"
-CANONICAL="$HARNESS_DIR/settings.shared.json"
 
 inspect_live_hooks() {
-    mode=$1
     if [ ! -e "$LIVE" ]; then
         [ -L "$LIVE" ] && return 2
         return 1
     fi
     [ -f "$LIVE" ] || return 2
-    python3 - "$LIVE" "$CANONICAL" "$mode" <<'PY'
+    python3 - "$LIVE" <<'PY'
 import json, sys
 
-def load_object(path):
-    try:
-        with open(path) as stream:
-            value = json.load(stream)
-    except (OSError, ValueError):
-        return None
-    return value if isinstance(value, dict) else None
-
-live = load_object(sys.argv[1])
-if live is None:
+try:
+    with open(sys.argv[1]) as stream:
+        value = json.load(stream)
+except (OSError, ValueError):
     sys.exit(2)
-hooks = live.get("hooks")
+if not isinstance(value, dict):
+    sys.exit(2)
+hooks = value.get("hooks")
 if hooks is None or hooks == {}:
     sys.exit(1)
 if not isinstance(hooks, dict):
     sys.exit(2)
-
-if sys.argv[3] == "any":
-    sys.exit(0)
-
-canonical = load_object(sys.argv[2])
-if canonical is None or not isinstance(canonical.get("hooks"), dict):
-    sys.exit(2)
-for event, wanted_blocks in canonical["hooks"].items():
-    actual_blocks = hooks.get(event)
-    if not isinstance(wanted_blocks, list) or not isinstance(actual_blocks, list):
-        sys.exit(1)
-    remaining = list(actual_blocks)
-    for wanted in wanted_blocks:
-        try:
-            remaining.remove(wanted)
-        except ValueError:
-            sys.exit(1)
 sys.exit(0)
 PY
 }
 
 load_live_hooks_state() {
-    if inspect_live_hooks "$1"; then
+    if inspect_live_hooks; then
         LIVE_HOOKS_STATE=present
     else
         case $? in
@@ -122,7 +110,7 @@ status() {
     else
         echo "adapter: inert (no $LINK)"
     fi
-    load_live_hooks_state any
+    load_live_hooks_state
     case "$LIVE_HOOKS_STATE" in
       present) echo "live settings.json: carries a hooks block" ;;
       absent)  echo "live settings.json: no hooks block" ;;
@@ -140,20 +128,22 @@ case "${1:-activate}" in
   --revert)
     load_link_state
     if [ "$LINK_STATE" = managed ]; then
-        load_live_hooks_state canonical
+        rm "$LINK"
+        load_live_hooks_state
         case "$LIVE_HOOKS_STATE" in
           present)
-            rm "$LINK"
-            echo "adapter: reverted — $LINK removed; the live hooks block is restored"
+            echo "adapter: reverted — $LINK removed; the live settings hooks take over"
             ;;
           absent)
-            echo "adapter: refusing to revert — restore the canonical hooks in $LIVE first" >&2
-            exit 1
+            echo "adapter: reverted — $LINK removed; NO HOOKS WILL FIRE NOW." >&2
+            echo "  The canonical settings.shared.json carries no hooks (the plugin was" >&2
+            echo "  the single source); restore a hooks block to $LIVE if you want" >&2
+            echo "  settings-borne hooks — the block lives in git history, in the" >&2
+            echo "  commit that removed it. Otherwise every guard stays off." >&2
             ;;
           unknown)
-            echo "adapter: refusing to revert — cannot verify the canonical hooks in $LIVE" >&2
-            echo "Make $LIVE and $CANONICAL readable JSON objects, then run this again." >&2
-            exit 1
+            echo "adapter: reverted — $LINK removed; could not read $LIVE," >&2
+            echo "  so whether any hooks still fire is unknown. Check the file." >&2
             ;;
         esac
     elif [ "$LINK_STATE" = unmanaged ]; then
@@ -173,7 +163,7 @@ case "${1:-activate}" in
         echo "adapter: $LINK already exists and is not available — refusing; run --status" >&2
         exit 1
     }
-    load_live_hooks_state any
+    load_live_hooks_state
     case "$LIVE_HOOKS_STATE" in
       present)
         cat >&2 <<MSG
@@ -181,8 +171,7 @@ adapter: refusing to activate — $LIVE still carries a hooks block.
 
 Both sources would fire: every guard twice, on-start.sh's git sync twice.
 Remove the "hooks" key from $LIVE (it is your file, outside the repository by
-design; this script will not edit it), then run this again. Ticket 0886 is what
-turns that hand edit into one command.
+design; this script will not edit it), then run this again.
 MSG
         exit 1
         ;;

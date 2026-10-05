@@ -46,8 +46,10 @@ It checks conflicts and versions before linking reviewed skills.
 
 The bare `./bin/idh install` is all-runtime host setup. It creates
 manifest links and edits `~/.bashrc`; it has no dry run or
-runtime selector. It merges required hooks into existing Claude/Codex
-configuration and links individual rules, skills, instructions, launchers and
+runtime selector. Claude hooks are no longer merged: they live in the adapter
+plugin, which install links (0887; stale harness hooks are removed from
+live settings, never added). Codex hooks still merge into its configuration,
+and install links individual rules, skills, instructions, launchers and
 the Pi extension without replacing profile directories or requiring a
 repository pointer. Unrelated content survives; same-name resource conflicts
 are refused and must be resolved explicitly, never deleted blindly.

@@ -162,8 +162,9 @@ the reason on stderr — carried by three thin wirings. The guard owns the
 decision; adapters only normalize input and carry it. Portability did not
 turn enforcement into advice:
 
-- **Claude Code**: the existing `PreToolUse(Bash)` hook in
-  `settings.shared.json`, registered through the installed launcher.
+- **Claude Code**: the `PreToolUse(Bash)` hook in the adapter plugin
+  (`claude-code/hooks/hooks.json` — the single hook source since 0887's
+  activation), running through the plugin's own resolved-root launcher.
 - **Codex**: `codex/hooks.json` — Codex's PreToolUse payload carries
   `tool_input.command` and its block contract accepts exit 2 with the
   reason on stderr, so the same script runs byte-identical. Install:
@@ -190,10 +191,11 @@ not enforcement. Codex's own docs say some specialized tool paths opt
 out of the hook path: tool hooks are a guardrail, not a complete
 boundary, and the inventory says so.
 
-The installed `idh-hook` launcher resolves its own real checkout location;
-Claude and Codex hook definitions invoke that launcher. Host installation
-merges required hooks into existing runtime configuration rather than owning
-the profile. Changing a Codex definition requires renewed trust through
+The plugin's `idh-hook` launcher (Claude) and the installed `~/.local/bin/
+idh-hook` launcher (Codex) each resolve their own real checkout location;
+Claude hook definitions live in the adapter plugin and Codex's in its merged
+hooks.json. Host installation links the plugin and removes the stale harness
+hooks from live Claude settings rather than owning the profile. Changing a Codex definition requires renewed trust through
 `/hooks`. Ticket 1003's registration slice landed in #1091; legacy helper
 handoff 1002 is WONTDO and 0934 retired unused provenance.py without altering
 source data. V8 capture/integration remain in 0988 after pilot 0920; parent

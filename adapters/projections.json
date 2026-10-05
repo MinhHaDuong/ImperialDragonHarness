@@ -2,6 +2,15 @@
   "_comment": "Declared projections checked before a runtime starts (ticket 0983). scripts/validate-projections.py reads this list and nothing else: an entry that should exist and does not is a failure, which a glob over what happens to exist could never report. `path` is where a runtime looks; `target` is what it must resolve to ($IDH_ROOT = the harness checkout, ~ = $HOME). `installer`, when set, is offered as the alternative repair for a MISSING entry. `runtimes: []` marks an operator-only entry: `idh check` verifies it, no launch waits on it. `required: false` means the entry may be absent on a given machine, but when present it must resolve to its target. Private-overlay targets live under ~/.config/harness/private/ (never committed).",
   "entries": [
     {
+      "path": "~/.claude/skills/claude-code",
+      "target": "$IDH_ROOT/adapters/claude-code",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "why": "the single Claude hook source; a missing or dangling link silently drops every guard (0887). Ordered first: install must close this switch before it removes the stale settings hooks, or a refused link strands the machine on zero guards"
+    },
+    {
       "path": "~/.claude/settings.json",
       "target": "$IDH_ROOT/settings.shared.json",
       "runtimes": [
@@ -9,7 +18,7 @@
       ],
       "required": true,
       "registration": "hooks",
-      "why": "Additive Claude hooks in independently owned settings"
+      "why": "Claude surfaces in independently owned settings; the hooks moved to the adapter plugin (0887), so this check refuses stale harness hooks that would double-fire"
     },
     {
       "path": "~/.local/bin/idh-hook",
@@ -19,7 +28,7 @@
         "codex"
       ],
       "required": true,
-      "why": "Portable Claude hook launcher"
+      "why": "Portable hook launcher (the Codex wiring and the Claude statusline invoke it; the plugin resolves its own)"
     },
     {
       "path": "~/.local/lib/idh/bash-env.sh",

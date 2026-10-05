@@ -13,12 +13,28 @@ from child_env import child_env
 pytestmark = pytest.mark.integration
 
 REPO = Path(__file__).resolve().parent.parent
-SHARED = json.loads((REPO / "settings.shared.json").read_text())
+
+
+def _validator():
+    path = REPO / "scripts" / "validate-projections.py"
+    spec = importlib.util.spec_from_file_location("harness_projection_validator", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def _launcher_hooks():
+    """The portable fail-loud launcher commands that are actually wired.
+
+    Since the adapter activation (ticket 0887) the Claude Code plugin carries
+    the Claude hooks and settings.shared.json carries none, so the settings
+    file is no longer a source of launcher commands. The Codex adapter still
+    wires the fail-loud portable form, and it must keep failing loud when the
+    installed launcher is missing.
+    """
     out = []
-    for event, blocks in SHARED["hooks"].items():
+    document = json.loads((REPO / "adapters" / "codex" / "hooks.json").read_text())
+    for event, blocks in document["hooks"].items():
         for block in blocks:
             for hook in block.get("hooks", []):
                 if "$HOME/.local/bin/idh-hook" in hook.get("command", ""):
@@ -31,7 +47,8 @@ LAUNCHER_HOOKS = _launcher_hooks()
 
 def test_every_launcher_hook_is_found():
     events = {event for event, _ in LAUNCHER_HOOKS}
-    assert {"SessionStart", "SessionEnd", "PreToolUse"} <= events
+    assert {"PreToolUse"} <= events
+    assert LAUNCHER_HOOKS, "no fail-loud launcher hook is wired anywhere"
 
 
 @pytest.mark.parametrize("event,command", LAUNCHER_HOOKS)
@@ -86,28 +103,24 @@ def test_non_executable_script_exits_2(tmp_path, event, command):
     _assert_loud(_run(command, home, tmp_path), home)
 
 
-def _generator():
-    path = REPO / "scripts" / "gen-claude-code-adapter-hooks.py"
-    spec = importlib.util.spec_from_file_location("gen_hooks", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def test_generator_translates_only_the_exact_checked_form():
-    gen = _generator()
+def test_translate_recognizes_exactly_the_checked_forms():
+    """translate (moved to validate-projections with the generator retired,
+    ticket 0887 activation) recognizes a wired launcher command and refuses
+    everything else, so a merge can never replace a command it cannot parse.
+    """
+    v = _validator()
     for _, command in LAUNCHER_HOOKS:
-        assert gen.translate(command).startswith(gen.LAUNCHER), command
+        assert v.translate(command).startswith(v.LAUNCHER), command
     smuggled = (
         '[ -x "$HOME/.local/bin/idh-hook" ] || { touch /tmp/pwn; echo "m" >&2; exit 2; }; '
         'exec "$HOME/.local/bin/idh-hook" x.sh'
     )
-    assert gen.translate(smuggled) == smuggled
+    assert v.translate(smuggled) == smuggled
     substituted = (
         '[ -x "$HOME/.local/bin/idh-hook" ] || { echo "$(touch /tmp/pwn)" >&2; exit 2; }; '
         'exec "$HOME/.local/bin/idh-hook" x.sh'
     )
-    assert gen.translate(substituted) == substituted
+    assert v.translate(substituted) == substituted
 
 
 def test_installed_launcher_runs_the_guard(tmp_path):

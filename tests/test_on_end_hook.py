@@ -268,11 +268,14 @@ def test_a_symlinked_root_is_refused(tmp_path):
 
 @pytest.mark.integration
 def test_hook_is_wired_as_a_session_end_hook():
-    """The canonical settings file runs this script on SessionEnd."""
-    settings = json.loads((REPO_ROOT / "settings.shared.json").read_text())
+    """The adapter plugin — the single hook source since 0887's activation —
+    runs this script on SessionEnd."""
+    plugin = json.loads(
+        (REPO_ROOT / "adapters" / "claude-code" / "hooks" / "hooks.json").read_text()
+    )
     commands = [
         hook.get("command", "")
-        for entry in settings.get("hooks", {}).get("SessionEnd", [])
+        for entry in plugin.get("hooks", {}).get("SessionEnd", [])
         for hook in entry.get("hooks", [])
     ]
     assert any("on-end.sh" in c for c in commands), (

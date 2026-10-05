@@ -38,9 +38,12 @@ PROVENANCE = {
         'link = rig_home / ".idh"',
     ),
     # Translates the retired `$HOME/.idh/scripts/...` hook-command form that
-    # pre-0982 settings still carry; removing the translator is a separate
-    # retirement, not this sweep.
-    "gen-claude-code-adapter-hooks.py": (
+    # pre-0982 settings still carry, so merge_hooks can recognize an installed
+    # predecessor and replace it instead of appending a duplicate. Moved here
+    # from the retired derivation generator with the rest of the translator
+    # (0887 activation); removing the translator is a separate retirement,
+    # not this sweep.
+    "validate-projections.py": (
         "`$HOME/.idh/scripts/x.sh a`",
         "when the ~/.idh pointer is missing",
         ".idh/scripts/(?P<name>",

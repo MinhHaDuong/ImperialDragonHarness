@@ -4,8 +4,10 @@ One canonical decision — ``scripts/guard-destructive-bash.sh`` blocks
 ``git reset --hard`` over uncommitted changes to tracked files, exit 2
 with the reason on stderr — carried by three thin wirings:
 
-- Claude Code: the live ``PreToolUse(Bash)`` hook in ``settings.shared.json``
-  (unchanged by this slice; the ratchet below pins it);
+- Claude Code: the ``PreToolUse(Bash)`` hook in the adapter plugin
+  ``adapters/claude-code/hooks/hooks.json`` — the single hook source since
+  0887's activation (``settings.shared.json`` carries no hooks); the ratchet
+  below pins the wiring;
 - Codex: ``adapters/codex/hooks.json`` — Codex's PreToolUse payload carries
   ``tool_input.command`` and its block contract accepts exit 2 with the
   reason on stderr, so the same script runs byte-identical;
@@ -102,12 +104,33 @@ def pi_adapter_violations(source: str):
     return violations
 
 
-# --- Claude Code wiring (unchanged by the slice; pinned) ------------------
+# --- Claude Code wiring (the adapter plugin is the hook source) -----------
 
 
-def test_claude_wiring_wires_the_canonical_guard():
-    doc = json.loads((REPO / "settings.shared.json").read_text())
-    assert_names_canonical_guard(wiring_commands(doc, source_name="settings.shared.json"))
+CLAUDE_SCRIPT = '"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook" guard-destructive-bash.sh'
+
+
+def test_claude_wiring_names_the_same_guard():
+    doc = json.loads((REPO / "adapters" / "claude-code" / "hooks" / "hooks.json").read_text())
+    commands = wiring_commands(doc, source_name="adapters/claude-code/hooks/hooks.json")
+    # Pinned at full strength, like the Codex wiring below: the invariant is
+    # the exact launcher invocation, not the guard script's bare name.
+    assert_names_canonical_guard(commands, CLAUDE_SCRIPT)
+
+
+def test_claude_wiring_pins_the_rtk_block():
+    """The RTK hook rode along in the move to the plugin; pin it there.
+
+    RTK is owned by its installer, so merge_hooks never manages it — nothing
+    else would notice if it were dropped from its new single home.
+    """
+    doc = json.loads((REPO / "adapters" / "claude-code" / "hooks" / "hooks.json").read_text())
+    commands = [
+        hook.get("command", "")
+        for group in doc["hooks"]["PreToolUse"]
+        for hook in group.get("hooks", [])
+    ]
+    assert "rtk hook claude" in commands
 
 
 # --- Codex wiring ----------------------------------------------------------

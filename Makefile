@@ -1,4 +1,4 @@
-.PHONY: resident-budget skills-catalog adapter-hooks check-adapter-hooks check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check check-fast check-tests lint
+.PHONY: resident-budget skills-catalog check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check check-fast check-tests lint
 
 skills-catalog:
 	./scripts/update-skills-catalog.py
@@ -10,15 +10,6 @@ skills-catalog:
 # tests/test_resident_census.py under `make lint`.
 resident-budget:
 	./scripts/resident_census.py --detail
-
-# The Claude Code adapter's hooks.json is derived from settings.shared.json,
-# never hand-edited: while both files carry the hooks, a hook added to one and
-# not the other is the silent gap the adapter exists to close (ticket 0887).
-adapter-hooks:
-	./scripts/gen-claude-code-adapter-hooks.py
-
-check-adapter-hooks:
-	./scripts/gen-claude-code-adapter-hooks.py --check
 
 # Fast gate (coding-python.md): unit tests only — excludes the integration
 # (subprocess/sleep), slow (network/real-data), and adherence (mechanical
@@ -58,4 +49,4 @@ check-agnostic-rules:
 check-tests:
 	python3 -m pytest tests/ -n 4
 
-check: check-skills-drift check-adapter-hooks check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check-tests
+check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check-tests
