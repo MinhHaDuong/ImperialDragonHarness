@@ -2,13 +2,13 @@
 Title: Attribution read surfaces: scores, correlation, marginal coverage
 Created: 2026-10-02
 Author: MinhHaDuong
-Blocked-by: 1005
 
 --- log ---
 2026-10-02T08:00Z MinhHaDuong created
 
 2026-10-02T10:24Z MinhHaDuong note 0937 hand-off: 0937's Action 3 / Verification box 3 (a seat that has not authenticated visible on a non-human channel) is deferred to this ticket by the 2026-10-02 raid decision recorded in 0937's log, pending author ratification
 2026-10-03T12:57Z qwen3.8-27b note imagine pass recorded (2026-10-03, raid): reword APPLIED — action 1's 'including writer-reviewer pairs' contradicted spec §4.3/§6 (writer is a stratification variable; writer-reviewer concordance incomputable); 0937 box-3 hand-off made explicit (subsumed by the run-failure rate; machine-readable flag left as an open author question); tool home scripts/ per §3, pure-Python Beta-Binomial (no scipy), enumerate-merges.py migrates here with its three references updated in the same PR
+2026-10-05T10:34Z reviewer note blocker 1005 closed — Blocked-by removed.
 --- body ---
 ## Context
 
