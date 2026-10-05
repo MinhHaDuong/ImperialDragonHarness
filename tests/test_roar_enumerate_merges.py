@@ -273,7 +273,7 @@ def test_leading_dash_project_name_accepted(repo):
     """Ticket 0500: every ~/.claude/projects/ directory name begins with '-'.
 
     argparse reads such a value as the start of another option and aborts with a
-    usage dump; roar's step 2 swallows that into `|| ROWS=""` and silently logs
+    usage dump; earlier Roar callers swallowed that into `|| ROWS=""` and logged
     one aggregate record for a whole session. The name must traverse the call.
     """
     base = head(repo)

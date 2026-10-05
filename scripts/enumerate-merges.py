@@ -159,8 +159,8 @@ def normalize_argv(argv: list[str]) -> list[str]:
 
     Every directory under ``~/.claude/projects/`` begins with a dash
     (``-home-haduong--claude``, …), and argparse reads such a value as the start
-    of another option, aborting with a usage dump. Roar's step 2 swallows that
-    exit and degrades to one aggregate record for a whole session, so the
+    of another option, aborting with a usage dump. Earlier Roar callers swallowed
+    that exit and degraded to one aggregate record for a whole session, so the
     normalization lives here rather than in each call site's memory: the
     ``--opt=value`` spelling is the only form argparse accepts for a
     leading-dash value.
@@ -197,7 +197,7 @@ def main() -> int:
     )
     parser.add_argument(
         "since_sha",
-        help="sentinel SHA; merges in <since_sha>..<until> are enumerated",
+        help="range-base SHA; merges in <since_sha>..<until> are enumerated",
     )
     parser.add_argument(
         "--project",
