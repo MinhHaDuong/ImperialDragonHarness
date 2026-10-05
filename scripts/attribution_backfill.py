@@ -124,17 +124,23 @@ def covered_anchor(project, reviewed, base, fix, anchor, renamed):
     if line > len(git(project, "cat-file", "blob", reviewed_blob).splitlines()):
         raise ValueError("anchor line outside reviewed file")
     diff = git(project, "diff", "--no-ext-diff", "--no-textconv", "--no-renames",
-               "--unified=0", base, fix, "--", ":(literal)" + path)
+               "--unified=0", "--inter-hunk-context=0", base, fix, "--", ":(literal)" + path)
     return any(int(start) <= line < int(start) + int(count or "1")
                for start, count in HUNK.findall(diff))
 
 
-def backfill(project, fix, fix_pr, evidence):
+def backfill(project, fix, fix_pr, evidence, merged_through=None):
     project = project.resolve()
     if Path(git(project, "rev-parse", "--show-toplevel").strip()).resolve() != project:
         raise ValueError("--project must be the project's repository root")
     commit_identity(project, fix)
-    git(project, "merge-base", "--is-ancestor", fix, "HEAD")
+    if merged_through:
+        commit_identity(project, merged_through)
+        # A wrap-up branch may remain below the real merge being celebrated.
+        # Require the supplied integration tip to belong to actual origin/main;
+        # a detached or unintegrated fix cannot provide its own proof.
+        git(project, "merge-base", "--is-ancestor", merged_through, "refs/remotes/origin/main")
+    git(project, "merge-base", "--is-ancestor", fix, merged_through or "HEAD")
     parents = git(project, "rev-list", "--parents", "-n", "1", fix).split()[1:]
     if len(parents) not in {1, 2}:
         raise ValueError("fix has unresolved merge shape (root or octopus)")
@@ -198,13 +204,16 @@ def main():
     parser.add_argument("--project", type=Path, required=True)
     parser.add_argument("--fix-pr", type=positive_pr, required=True)
     parser.add_argument("--fix-commit", required=True, help="full merged fix commit SHA")
+    parser.add_argument("--merged-through", metavar="SHA",
+                        help="full integration tip SHA on origin/main when wrap-up HEAD is below fix")
     parser.add_argument("--defect-fix", action="store_true", required=True,
                         help="explicitly commissioned factual defect fix")
     parser.add_argument("--reviewed", action="append", default=[], metavar="PR=SHA",
                         help="durable-trail evidence establishing all record anchor coordinates")
     args = parser.parse_args()
     try:
-        stats = backfill(args.project, args.fix_commit, args.fix_pr, reviewed_evidence(args.reviewed))
+        stats = backfill(args.project, args.fix_commit, args.fix_pr,
+                         reviewed_evidence(args.reviewed), args.merged_through)
         LOG.info("backfill: appended=%s no-match=%s unresolved=%s", stats["appended"],
                  stats["no_match"], stats["unresolved"])
     except (ValueError, OSError, UnicodeError) as error:

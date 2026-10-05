@@ -138,7 +138,11 @@ default branch — there are no remote branches nor merge requests to inspect.
 
    **Backfill commissioned defect fixes only.** When step 2 identifies an actual
    defect-fix PR, run the helper in the project's existing wrap-up worktree,
-   with its full merged commit SHA and explicit `PR=reviewed-SHA` evidence from
+   with its full merged commit SHA and a full integration-tip SHA resolved
+   from the project's `origin/main`, which contains the enumerated fix. The
+   wrap-up branch may stay below that merge; `--merged-through` proves the fix
+   belongs to the actual integration history without changing its checkout.
+   Supply explicit `PR=reviewed-SHA` evidence from
    the durable review trail for each past record. The evidence must establish
    the coordinates of every reviewer attempt in that record; absent or mixed
    revisions are unresolved. Never infer revisions from record context or apply
@@ -146,7 +150,7 @@ default branch — there are no remote branches nor merge requests to inspect.
    Resolve the loaded helper root in the same invocation:
 
    ```bash
-   IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)" && python3 "$IDH_ROOT/scripts/attribution_backfill.py" --project "$PROJECT_REPO" --defect-fix --fix-pr "$FIX_PR" --fix-commit "$FIX_SHA" --reviewed "$PAST_PR=$REVIEWED_SHA"
+   IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)" && MERGED_THROUGH="$(git -C "$PROJECT_REPO" rev-parse --verify 'origin/main^{commit}')" && python3 "$IDH_ROOT/scripts/attribution_backfill.py" --project "$PROJECT_REPO" --merged-through "$MERGED_THROUGH" --defect-fix --fix-pr "$FIX_PR" --fix-commit "$FIX_SHA" --reviewed "$PAST_PR=$REVIEWED_SHA"
    ```
 
    Repeat `--reviewed PR=SHA` for additional supported records. This joins

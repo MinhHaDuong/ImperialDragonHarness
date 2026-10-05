@@ -201,8 +201,16 @@ attempts in the record; ambiguous provenance stays unresolved. These inputs
 are implementation evidence, not new record fields or context-parsing rules.
 
 The supplied reviewed commit must belong to the project's fix-base ancestry.
+By default the fix must belong to `HEAD` history. In Roar's existing wrap-up
+branch below the actual merge, `--merged-through SHA` instead proves the fix
+belongs to a supplied full integration tip that is itself ancestral to actual
+`origin/main`. Roar resolves that tip from the project's `origin/main`; neither
+a detached unintegrated fix nor an arbitrary supplied commit can substitute
+for this integration proof. The helper never advances the wrap-up checkout.
 Whole-file blob equality from that revision to the fix's first parent guards
 line coordinates before joining literal anchors to old-side changed intervals.
+Both unified and inter-hunk context are explicitly zero, so ambient Git
+configuration cannot fuse changed intervals across unchanged anchored lines.
 Pure insertions have no covered old lines. Renamed/missing files, drift,
 unknown revisions, malformed/encrypted records and duplicate PR records warn
 and remain untouched. No fuzzy recovery or implicit snapshot consolidation is
