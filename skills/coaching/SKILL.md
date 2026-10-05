@@ -6,7 +6,15 @@ argument-hint: "<model> [--endpoint URL] [--board FILE] [--credential-env NAME]"
 
 # Coaching: cold replay
 
-Run `skills/coaching/replay.sh <model>` for the shipped board. See
+For the shipped board, resolve the helper from the runtime-supplied path of this
+loaded `SKILL.md` and invoke it in the same shell call:
+
+```bash
+IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"
+"$IDH_ROOT/skills/coaching/replay.sh" <model>
+```
+
+Replace `<loaded-SKILL.md>` with its actual absolute path. See
 `references/replay.md` for options and result semantics. An optional
 `--board FILE` selects a controlled fixture. The replay invokes the contained
 `seat-runner.sh` once per board PR and prints a result only after every PR has

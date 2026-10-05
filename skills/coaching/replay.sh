@@ -309,7 +309,15 @@ for record in "${records[@]}"; do
                 ;;
         esac
     done < "$out"
-    if [ "$summary" -ne 1 ] || [[ ! "$declared" =~ ^[0-9]+$ ]] || [ "$declared" -ne "$findings" ]; then
+    if [ "$summary" -ne 1 ] || [[ ! "$declared" =~ ^[0-9]+$ ]]; then
+        echo "error: incomplete summary on board MR #$pr" >&2; exit 1
+    fi
+    # Compare decimal strings so an oversized count cannot turn an integer
+    # comparison error inside `if` into an apparent clean replay. Leading
+    # zeroes were accepted by the former numeric comparison and remain valid.
+    declared_norm="$(sed 's/^0*//' <<< "$declared")"
+    declared_norm="${declared_norm:-0}"
+    if [[ "$declared_norm" != "$findings" ]]; then
         echo "error: incomplete summary on board MR #$pr" >&2; exit 1
     fi
 done

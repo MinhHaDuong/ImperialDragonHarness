@@ -47,8 +47,14 @@ RESULT
             exit) echo 'late runner failure' >&2; exit 4;;
             missing) exit 0;;
             nosummary) printf 'FINDING|severity=consider|file=lib/epsilon.py:1|rationale=unconfirmed\n' > "$out"; exit 0;;
+            mismatch) printf 'SUMMARY|findings=3|verdict=approve\n' > "$out"; exit 0;;
+            overflow) printf 'SUMMARY|findings=999999999999999999999999999999999999|verdict=approve\n' > "$out"; exit 0;;
         esac
         if [ "${CLEAN:-}" = 1 ]; then printf 'SUMMARY|findings=0|verdict=approve\n' > "$out"; exit 0; fi
+        if [ "${LEADING_ZERO:-}" = 1 ]; then
+            printf 'FINDING|severity=verifiable|file=lib/delta.py:5|rationale=duplicate\nFINDING|severity=consider|file=lib/epsilon.py:1|rationale=unconfirmed\nSUMMARY|findings=0002|verdict=approve\n' > "$out"
+            exit 0
+        fi
         cat > "$out" <<'RESULT'
 FINDING|severity=verifiable|file=lib/delta.py:5|rationale=duplicate
 FINDING|severity=consider|file=lib/epsilon.py:1|rationale=unconfirmed
@@ -80,7 +86,9 @@ board:
 YAML
 zero="$(CLEAN=1 run --board "$WORK/empty-findings-board.yml")"
 [[ "$zero" == *'findings=0'* && "$zero" == *'board=1MR'* ]]
-for mode in exit missing nosummary; do
+leading_zero="$(LEADING_ZERO=1 run)"
+[[ "$leading_zero" == *'findings=6'* && "$leading_zero" == *'duplicate=3'* ]]
+for mode in exit missing nosummary mismatch overflow; do
     if FAIL_LATE="$mode" run > "$WORK/out" 2> "$WORK/err"; then echo "FAIL: $mode accepted"; exit 1; fi
     [[ ! -s "$WORK/out" ]] || { echo "FAIL: partial success summary for $mode"; exit 1; }
     [[ -s "$WORK/err" ]] || { echo "FAIL: no diagnostic for $mode"; exit 1; }

@@ -1,7 +1,17 @@
 # Cold coaching replay
 
-`skills/coaching/replay.sh MODEL [--endpoint URL] [--board FILE] [--repo DIR]
-[--credential-env NAME] [--name LABEL]` runs the frozen board of merged PRs.
+Resolve the helper from the runtime-supplied path of the loaded coaching
+`SKILL.md` and invoke it in the same shell call, from any project directory:
+
+```bash
+IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"
+"$IDH_ROOT/skills/coaching/replay.sh" MODEL
+```
+
+Replace `<loaded-SKILL.md>` with its actual absolute path and `MODEL` with the
+candidate model ID. Optional flags are `--endpoint URL`, `--board FILE`,
+`--repo DIR`, `--credential-env NAME`, and `--name LABEL`. The helper runs the
+frozen board of merged PRs.
 `--repo` selects the checkout supplied to the seat runner and defaults to this
 repository. `--board` defaults to `benchmark-board.yml`. The endpoint option
 defaults to the contained runner's local endpoint. For authenticated endpoints,
