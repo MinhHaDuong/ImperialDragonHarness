@@ -11,6 +11,7 @@ Label: deferred
 2026-10-01T20:37Z MinhHaDuong codex note Superseded by v8; deferred to prevent obsolete implementation dispatch. Not implemented or closed.
 2026-10-05T18:04Z reviewer note raid Imagine — author explicitly selected closure as superseded after verification. v8 bbe0f189 abandoned quality annotation backfill. Blind-Spot requires plan register to distinguish these closures from deferred tickets.
 2026-10-05T18:04Z reviewer note raid Plan — confirm v8 abandoned quality backfill; mark explicit author disposition criterion satisfied, close as superseded together with 0912 and update live plan register. Preserve historical integration review.
+2026-10-05T18:04Z reviewer note raid Feasibility PASS — same v8 author disposition as 0912; close both superseded with plan status propagation and archive-relative link correction, no former scope executed.
 
 --- body ---
 
