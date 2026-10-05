@@ -1,129 +1,72 @@
 %erg 0.1
-Title: Brood: Imagine skill integration review and retrospective opportunity audit
+Title: Brood: post-Dream project improvements and harness nominations
 Created: 2026-09-10
 Author: Codex
 
 --- log ---
 2026-09-10T05:51Z Codex created
 
+2026-10-05T10:00Z codex note Author explicitly replaced old incubation/audit intent: implement post-Dream Brood with local proof of concept, nomination-only harness handoff, and evidence-led generalization. Original body retained in Git history; no old audit completion claimed.
 --- body ---
-## Context
+## Context and author decisions
 
-The author requests a ticket for `/brood`, including our exchanges, a harness
-integration review and an audit of past opportunities to use it, then review
-and merge of this filing. This PR files the work; it does not claim that the
-skill, integration review or retrospective audit has been executed.
+Brood is explicitly requested post-Dream crystallisation, separate from Roar
+(factual capture) and Dream (memory consolidation). The 2026-10-05 author
+replaces this ticket's original pre-planning incubation and retrospective audit.
+That historical rationale remains in Git history; generic exploration remains
+valuable in raid Imagine and is not a prerequisite or deliverable here.
 
-After the harness slimming pass (0572 and the 0881-0884 census/cuts), a new
-Imagine skill must demonstrate useful behavior rather than fill a diagram slot.
-The question is whether a small, optional idea-incubation step adds value before
-planning, without duplicating the existing Imagine phase in `/raid`.
-
-## Conversation and decisions
-
-This is a paraphrased decision record, not a verbatim transcript.
-
-- The author asked whether Imagine needs a skill. The proposed answer was:
-  only if it tests the problem and options before planning work, with a distinct
-  purpose and little overhead. A dedicated skill is not yet validated.
-- Proposed prompts: what outcome and why now; what can be removed, reused or
-  left alone; two or three plausible approaches; which uncertainty merits a
-  small experiment. These are a proposed contract to evaluate, not new resident
-  rules or a required questionnaire for every request.
-- Proposed output: reformulated problem, options, recommendation, remaining
-  uncertainty. Valid outcomes include no action, a bounded experiment, or a
-  handoff to Plan. Preserve the author's goal and flag any proposed intent change.
-- Proposed triggers: open-ended requests and consequential design choices.
-  Avoid automatic ticket creation, a systematic review panel, and mandatory
-  invocation before an obvious correction. Stop once a useful decision is ready.
-- The author requested 16 short draconic names, with mind, brain, eye, chew and
-  tune as cues. The brainstorm was Brood, Hatch, Ember, Spark, Dream, Muse, Scent,
-  Sniff, Chew, Gnaw, Taste, Coil, Glimpse, Wyrm, Mind and Tune. Brood/Hatch/Ember
-  were shortlisted; Dream already names a different skill in this repository.
-- The author then asked for the English meaning of brood: a group of young
-  animals; to incubate eggs; figuratively, to dwell persistently on something,
-  often with worry or resentment. The last sense has a darker connotation than
-  neutral reflection. This lexical explanation is not a persona instruction.
-- The author selected **brood** by requesting this ticket. Use draconic idea
-  incubation as the intended metaphor; obey the resident no-avian-analogy rule.
-  Avoid encouraging rumination or endless exploration. Do not reopen naming as
-  a prerequisite to the requested integration review and audit.
-
-## Relevant files
-
-- `skills/raid/SKILL.md` — existing Imagine and Plan phases, intent drift guard.
-- `skills/hunt/SKILL.md` — inspect actual orchestration boundaries and callers.
-- `skills/dream/SKILL.md` — memory consolidation, distinct from this proposal.
-- `rules/workflow.md`, `rules/authoring-skills.md` — autonomy, identity and skill conventions.
-- `README.md` — generated skill catalog; regenerate only if a skill is added.
-- `scripts/census/README.md`, `scripts/census/traces.py` — reuse trace access and
-  census methodology where applicable, including execution-versus-mention limits.
-- `scripts/mammoth-audit.py` — existing usage audit; invocation counts alone
-  cannot measure opportunities for a skill that does not exist yet.
-- `tickets/closed/0884-verser-les-instruments-de-recensement-et.erg`, `STATE.md`
-  — census handoff, slimming rationale and remaining limits. STATE mentions a
-  local handoff document absent from this checkout; do not assume it is available.
+A project Brood opens a local ticket and implementation merge request. When it
+nominates a harness change, its local implementation is the proof of concept;
+it files only a detailed nomination ticket in the explicitly named harness.
+The harness implementor examines nominations across projects, judges whether
+they work, generalizes and validates. Brood implementors may annotate, simplify
+and decay consolidated memory; source experiences remain append-only.
 
 ## Actions
 
-1. Review integration against the current tree: map existing Imagine/Plan
-   behavior, callers and overlapping skills. Compare a standalone `/brood`,
-   reuse of current guidance, and no addition. Specify triggers, inputs, concise
-   output, stop condition, model/context cost and handoff. Do not assume a
-   standalone `/plan` command exists or add mandatory orchestration by default.
-2. Define a bounded retrospective sample before classifying results: time window,
-   projects, accessible trace sources, sampling method, inclusion/exclusion rules
-   and the decision-time evidence available in each case. Include open design
-   requests, ordinary corrections and cases existing guidance handled adequately.
-3. Audit past opportunities, not mentions of the new name. For each sanitized
-   example, explain the decision point, what `/brood` could have contributed,
-   the existing alternative and added cost. Separate observed behavior from
-   counterfactual benefit; avoid claiming an improved outcome was demonstrated.
-   Report sample counts/denominators, coverage, negative cases and uncertainty.
-4. Keep raw traces and identifying/private content local. Publish a sanitized
-   report in `docs/brood-evaluation.md`, with source categories, dates, method and
-   reproducible local retrieval instructions; never commit raw prompts, session
-   identifiers, private trace paths or credentials. Reuse existing instruments;
-   add a small script only if required for reproducibility, not an audit framework.
-   If traces are unavailable, record the access limitation and local execution
-   handoff. Missing data is not evidence of no opportunity; leave audit pending.
-5. Obtain an independent review of the integration proposal and audit evidence.
-   Record disagreements and a justified go/no-go recommendation in the report.
-   A no-go with adequate evidence is a valid outcome. If go, implement the minimal
-   `skills/brood/SKILL.md` under the authoring rules, update its actual callers
-   only as justified, regenerate the catalog, and review the implementation.
+- Implement a minimal explicit-invocation `skills/brood/SKILL.md`; distinguish
+  project implementation from harness nomination and harness implementation.
+- Reconcile the live v8 design §7, delivery plan, governance instructions and
+  templates, and deferred 0925 without changing Roar/Dream's authority.
+- Define when promotion is justified: benefit evidence versus feasibility,
+  context and maintenance cost, exceptions, counterexamples and provenance;
+  shared-origin or copied nominations are not independent confirmations.
+- Examine accepted Dream revisions plus preserved source experiences and
+  unresolved conflicts. Current rule authority is not proof of effectiveness;
+  Brood may simplify/remove bad rules as well as introduce improvements.
+- Preserve proposal/implementation/validation distinctions; memory decay needs
+  replacement evidence, preserved sources and counterexamples. Recheck source
+  revisions before writing; reconcile concurrent Dream changes.
+- Require audience clearance or a sanitized reproducer for nominations. After
+  harness adoption link back to local implementations for replacement or a
+  justified retained exception; avoid duplicate drift.
 
-## Test
+## Relevant files
 
-- This filing changes no executable behavior and needs no new automated test.
-- For implementation, exercise a genuinely ambiguous request, an obvious fix,
-  and an explicit no-action outcome; inspect whether the output improves a
-  decision without inventing goals, tickets or mandatory steps.
-- If an audit script is changed, test classification/counting with synthetic
-  positive and negative fixtures, including unavailable/incomplete input.
+`skills/dream/SKILL.md`, `memory/DREAM.md`, `AGENTS.md`,
+`docs/2026-09-10-dragon-memory-design.md`,
+`docs/2026-09-11-memory-implementation-plan.md`, `docs/memory-v8/templates/`,
+`tickets/0925-deferred-crystallisation-only-on-explici.erg`,
+`memory/topics/memory-v8-governance.md`, `README.md`.
 
-## Verification
+## Test and verification
 
-- [ ] Integration comparison references actual current skill behavior and callers.
-- [ ] Audit method, denominators, positive/negative cases and limitations are reviewable.
-- [ ] Public report is sanitized and counterfactual claims are labelled as such.
-- [ ] Independent reviewer assesses both integration and retrospective evidence.
-- [ ] If implemented, skill behavior and catalog are checked; `make check` passes.
-- [ ] `tickets/erg check tickets/` passes, including on origin/main after merge.
-
-## Invariants
-
-- Preserve author intent, optional exploration, and prompt/context economy.
-- No avian persona; no forced panel or new resident procedure for ordinary work.
-- No fabricated historical evidence or unqualified null conclusion from a limited sample.
-- Keep reusable reports in their natural location, referenced by this ticket.
-- Merging this filing leaves the ticket open; it is not completion of the work.
+Exercise the skill in isolated synthetic project/harness fixtures: local
+improvement and harness nomination; cross-project evidence including copied
+origins; rule counterexample/no-change; incomplete evidence/privacy and changed
+Dream revisions. Inspect observable outputs, destination boundaries and source
+preservation; wording-only assertions do not establish skill behavior.
+Regenerate the catalog and run meaningful checks. Record review limitations
+honestly; no manufactured historical evidence or implied automatic promotion.
 
 ## Exit criteria
 
-- [ ] Integration review and actual retrospective audit completed, with report linked here.
-- [ ] Independent review resolved and go/no-go rationale recorded.
-- [ ] On go: minimal `/brood` implemented, catalog/callers consistent and gates pass.
-      On no-go: evidence-based decision recorded without adding an unused skill.
-- [ ] Close only after the applicable outcome is complete; unavailable traces
-      remain an explicit blocker to claiming the retrospective audit is done.
+- [ ] Minimal Brood implements the author-approved project/harness workflow,
+      evidence-led promotion timing and allowed consolidated-memory edits.
+- [ ] Live design/governance/templates and deferred 0925 consistently distinguish
+      explicit Brood nominations from forbidden Roar/Dream promotions.
+- [ ] Behavior evaluation demonstrates destination boundaries, evidence limits,
+      source preservation, revision coordination and adoption return path.
+- [ ] Independent review findings are resolved; catalog is current and `make check`
+      and `tickets/erg check tickets/` pass.
