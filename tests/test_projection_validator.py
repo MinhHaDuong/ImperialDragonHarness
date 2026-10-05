@@ -37,6 +37,9 @@ def _checkout(root: Path) -> Path:
     for rel in (
         "scripts/validate-projections.py",
         "scripts/shell-init.sh",
+        "scripts/on-start.sh",
+        "scripts/on-end.sh",
+        "scripts/guard-destructive-bash.sh",
         "scripts/bashrc-loader.sh",
         "adapters/projections.json",
         "adapters/codex/hooks.json",
@@ -608,3 +611,33 @@ def test_a_missing_plugin_link_blocks_the_launch(world):
 
     assert r.returncode == 1
     assert "claude-code" in r.stderr
+
+
+def test_a_hand_copied_plugin_block_also_blocks_the_launch(world):
+    """Detection is not blind to the plugin's own spelling: a block copied
+    from hooks.json into the live settings is a stale harness hook too."""
+    path = _live_settings(world)
+    doc = json.loads(path.read_text())
+    doc["hooks"] = {"SessionEnd": [{"matcher": "", "hooks": [
+        {"type": "command", "command": '"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook" on-end.sh', "timeout": 10}
+    ]}]}
+    path.write_text(json.dumps(doc))
+
+    r = validate(world, "claude")
+
+    assert r.returncode == 1
+    assert "double-fire" in r.stderr
+
+
+def test_an_operator_script_under_claude_scripts_is_not_claimed(world):
+    """Ownership is bounded by the checkout: a command naming a script the
+    harness does not carry stays the operator's, whatever path spelling it
+    uses."""
+    path = _live_settings(world)
+    doc = json.loads(path.read_text())
+    doc["hooks"] = {"SessionStart": [{"matcher": "", "hooks": [
+        {"type": "command", "command": 'bash "$HOME/.claude/scripts/my-own-tool.sh"'}
+    ]}]}
+    path.write_text(json.dumps(doc))
+
+    assert validate(world, "claude").returncode == 0

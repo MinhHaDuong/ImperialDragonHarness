@@ -79,9 +79,12 @@ settings. Re-run host install afterward and refresh Codex trust if needed.
 links, never canonical skills or unmanaged directories. There is no host
 uninstall command.
 
-For hook removal, back up the live Claude/Codex JSON and edit only the exact
-harness hook blocks identified by the checkout templates. Keep unrelated
-hooks, events, metadata and permissions. Remove installer-owned environment
+For hook removal, run `bin/idh install`: it removes exactly the harness's
+own hook commands from the live Claude settings (the plugin is the single
+Claude hook source since 0887) and leaves operator hooks, events, metadata
+and permissions alone — back up first if you want a manual record. For
+Codex, back up the live JSON and edit only the exact harness hook blocks
+identified by the checkout template. Remove installer-owned environment
 or status-line entries only after confirming their exact values. Never
 delete `~/.codex/hooks.json` merely because status says `ok`: that proves
 registration is present, not exclusive ownership.

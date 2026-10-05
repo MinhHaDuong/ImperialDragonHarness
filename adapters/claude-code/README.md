@@ -6,11 +6,12 @@ the measurements, is `tickets/closed/0887-*.erg`.
 
 ## The switch
 
-Nothing loads until `scripts/adapter-claude-code-activate.sh` creates the
-symlink `~/.claude/skills/claude-code -> <checkout>/adapters/claude-code`.
-That is deliberate: the symlink is the switch, and it refuses to close while
-the live settings still carry a hooks block, which would double-fire every
-guard. Since the activation (2026-10-05) this plugin is the single hook
+Nothing loads until the symlink `~/.claude/skills/claude-code ->
+<checkout>/adapters/claude-code` exists. It is created by
+`scripts/adapter-claude-code-activate.sh`, which refuses to close the switch
+while the live settings still carry a hooks block, or by `bin/idh install`,
+which removes those stale hooks in the same pass — so install never leaves
+the double-fire state behind. Since the activation (2026-10-05) this plugin is the single hook
 source — `settings.shared.json` carries no `hooks` key at all, ratcheted by
 `tests/test_claude_code_adapter.py`.
 

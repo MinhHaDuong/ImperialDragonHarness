@@ -123,21 +123,49 @@ def hook_identity(block):
     return normalized
 
 
-def harness_hooks(document):
-    """The hook blocks a document carries that translate onto the plugin
-    launcher — the harness-owned registrations, whatever spelling they were
-    installed under. Foreign hooks (RTK is owned by its installer) translate
-    to themselves and are not returned.
+# The plugin's own hooks.json spelling — what a hand-copied block in live
+# settings looks like. translate() leaves it unchanged (it is already in the
+# launcher form), so detection matches it directly.
+PLUGIN_LAUNCHER = re.compile(
+    r'^"\$\{CLAUDE_PLUGIN_ROOT\}/bin/idh-hook" (?P<name>[\w.-]+)(?P<rest>\s.*)?$'
+)
 
-    This is the live-side half of the single-source contract (0887
-    activation): the adapter plugin is the only hook home, so a live
-    settings file still carrying harness hooks double-fires every guard.
+
+def _harness_script(command: str, root: Path) -> bool:
+    """True when a hook command is harness-owned.
+
+    Ownership is bounded by the checkout: the command must translate onto the
+    plugin launcher (or already be in its spelling) AND name a script the
+    checkout's scripts/ directory actually carries. An operator's own script
+    that happens to live under ~/.claude/scripts is not claimed — the
+    checkout's scripts/ directory is the boundary, not a path spelling.
+    """
+    command = command.strip()
+    m = PLUGIN_LAUNCHER.match(command)
+    if m is None:
+        translated = translate(command)
+        if translated == command:
+            return False
+        m = PLUGIN_LAUNCHER.match(translated.strip())
+    if m is None:
+        return False
+    return (root / "scripts" / m.group("name")).is_file()
+
+
+def harness_hooks(document, root: Path):
+    """The hook blocks a document carries that belong to the harness.
+
+    Foreign hooks (RTK is owned by its installer) carry no harness command
+    and are not returned. This is the live-side half of the single-source
+    contract (0887 activation): the adapter plugin is the only hook home,
+    so a live settings file still carrying harness hooks double-fires every
+    guard.
     """
     stale = {}
     for event, blocks in document.get("hooks", {}).items():
         for block in blocks:
             commands = [h.get("command", "") for h in block.get("hooks", [])]
-            if any(translate(c) != c for c in commands):
+            if any(_harness_script(c, root) for c in commands):
                 stale.setdefault(event, []).append(block)
     return stale
 
@@ -187,7 +215,7 @@ def check_entry(entry: dict, root: Path):
                 # Absence mode (0887 activation): the canonical carries no
                 # hooks — they moved to the adapter plugin — so a live file
                 # still carrying them double-fires every guard.
-                stale = harness_hooks(actual)
+                stale = harness_hooks(actual, root)
                 if not stale:
                     return None
                 reason = (

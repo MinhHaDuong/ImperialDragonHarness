@@ -76,7 +76,7 @@ def test_install_then_check_round_trip_and_planted_break(machine):
             else:
                 # Absence mode (0887): the canonical declares no hooks, so the
                 # live file must carry none of ours — anything else double-fires.
-                assert validator.harness_hooks(actual) == {}, (path, actual)
+                assert validator.harness_hooks(actual, REPO) == {}, (path, actual)
         else:
             assert path.resolve() == target.resolve(), (path, target)
     assert (home / ".local" / "bin" / "idh").resolve() == IDH.resolve()
@@ -511,38 +511,63 @@ def test_preexisting_hook_link_is_not_claimed_by_install(machine):
 def test_install_removes_stale_harness_hooks_from_live_settings(machine):
     """The 0887 endgame, install side: hooks live in the adapter plugin, so a
     live settings file still carrying them double-fires every guard. install
-    removes the harness's own blocks and leaves the operator's hooks alone."""
+    removes the harness's own commands — even from a mixed block — and
+    leaves the operator's hooks alone."""
     home, idh = machine["home"], machine["idh"]
     assert idh("install").returncode == 0
     settings = home / ".claude" / "settings.json"
-    stale_block = {
+    harness_command = (
+        '[ -x "$HOME/.local/bin/idh-hook" ] || { echo "IDH: hook '
+        'launcher missing; run <checkout>/bin/idh install from a '
+        'plain terminal" >&2; exit 2; }; exec '
+        '"$HOME/.local/bin/idh-hook" on-start.sh'
+    )
+    operator_command = {"type": "command", "command": "echo operator-owned"}
+    # One block MIXES a harness command with an operator command — Claude
+    # Code's /hooks UI groups by matcher, so this shape is reachable — and a
+    # second block is the operator's alone.
+    mixed_block = {
         "matcher": "",
-        "hooks": [
-            {
-                "type": "command",
-                "command": (
-                    '[ -x "$HOME/.local/bin/idh-hook" ] || { echo "IDH: hook '
-                    'launcher missing; run <checkout>/bin/idh install from a '
-                    'plain terminal" >&2; exit 2; }; exec '
-                    '"$HOME/.local/bin/idh-hook" on-start.sh'
-                ),
-                "timeout": 30,
-            }
-        ],
+        "hooks": [{"type": "command", "command": harness_command, "timeout": 30}, operator_command],
     }
-    operator_block = {
-        "matcher": "",
-        "hooks": [{"type": "command", "command": "echo operator-owned"}],
-    }
+    operator_block = {"matcher": "", "hooks": [dict(operator_command)]}
     doc = json.loads(settings.read_text())
-    doc["hooks"] = {"SessionStart": [stale_block, operator_block]}
+    doc["hooks"] = {"SessionStart": [mixed_block, operator_block]}
     settings.write_text(json.dumps(doc))
 
     r = idh("install")
 
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "removed stale harness hooks" in r.stdout
+    assert "removed 1 stale harness hook(s)" in r.stdout
     after = json.loads(settings.read_text())
-    assert after["hooks"] == {"SessionStart": [operator_block]}
+    assert after["hooks"] == {"SessionStart": [{"matcher": "", "hooks": [operator_command]}, operator_block]}
     r = idh("check")
     assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_install_refuses_to_strand_a_machine_on_zero_guards(machine):
+    """If the plugin link cannot be in place, the settings hooks are the only
+    source left: install must leave them firing and say so, never remove
+    them into silence (the fail-open class 0887 exists to close)."""
+    home, idh = machine["home"], machine["idh"]
+    assert idh("install").returncode == 0
+    # Break the switch the way a foreign directory would: the link path is
+    # occupied by something install refuses to overwrite.
+    link = home / ".claude" / "skills" / "claude-code"
+    link.unlink()
+    link.mkdir()
+    (link / "foreign.txt").write_text("not ours")
+    settings = home / ".claude" / "settings.json"
+    doc = json.loads(settings.read_text())
+    doc["hooks"] = {"SessionStart": [{"matcher": "", "hooks": [
+        {"type": "command", "command": 'bash "$HOME/.claude/scripts/on-start.sh"', "timeout": 30}
+    ]}]}
+    settings.write_text(json.dumps(doc))
+
+    r = idh("install")
+
+    assert r.returncode == 1
+    assert "zero guards" in r.stdout + r.stderr
+    after = json.loads(settings.read_text())
+    assert "hooks" in after, "the stale hooks must keep firing, not be removed"
+    assert (link / "foreign.txt").exists()

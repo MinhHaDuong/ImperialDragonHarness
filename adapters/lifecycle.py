@@ -100,6 +100,21 @@ def install_links() -> int:
     return rc
 
 
+def _plugin_link_ready() -> bool:
+    """The adapter plugin link (the manifest's claude-code entry) resolves to
+    this checkout's adapter. The link is looked up in the manifest, never
+    hardcoded: if the entry moves, this follows it."""
+    for entry in entries("claude"):
+        if entry["target"].endswith("/adapters/claude-code"):
+            link = V.expand(entry["path"], root())
+            target = V.expand(entry["target"], root())
+            try:
+                return link.resolve(strict=True) == target.resolve(strict=True)
+            except (OSError, RuntimeError):
+                return False
+    return False
+
+
 def register_settings(entry, path, target) -> int:
     """Merge hook registrations without replacing runtime configuration."""
     try:
@@ -122,24 +137,47 @@ def register_settings(entry, path, target) -> int:
         else:
             # Absence mode (0887 activation): the harness hooks moved to the
             # adapter plugin; remove ours from the live file instead of
-            # adding them, or every guard fires twice. Foreign hooks (RTK)
-            # and everything else in the file stay untouched. Granularity is
-            # the block: a block mixing harness and operator commands would
-            # go whole — the settings have never mixed them, and splitting a
-            # block would rewrite semantics the harness does not own.
-            stale = V.harness_hooks(actual)
-            for event, blocks in stale.items():
-                remaining = [b for b in actual["hooks"].get(event, []) if b not in blocks]
-                if remaining:
-                    actual["hooks"][event] = remaining
+            # adding them, or every guard fires twice. Removal is
+            # command-granular: an operator command grouped into the same
+            # block (Claude Code's /hooks UI groups by matcher) survives;
+            # only the harness's own commands go. Everything else in the
+            # file stays untouched.
+            stale = V.harness_hooks(actual, root())
+            if stale and not _plugin_link_ready():
+                # Never strand the machine on zero guards: if the plugin
+                # link is missing or broken, the settings hooks are the only
+                # source left. Leave them firing and say so — the check
+                # names the state until the link is repaired.
+                report(
+                    "REFUSED",
+                    f"{path}: stale harness hooks left in place — the adapter "
+                    "plugin link is missing or broken, and removing them "
+                    "would leave zero guards",
+                    "rerun idh install after repairing the plugin link "
+                    "(~/.claude/skills/claude-code)",
+                )
+                return 1
+            removed = 0
+            for event, blocks in list(actual.get("hooks", {}).items()):
+                kept = []
+                for block in blocks:
+                    survivors = [
+                        h for h in block.get("hooks", [])
+                        if not V._harness_script(h.get("command", ""), root())
+                    ]
+                    removed += len(block.get("hooks", [])) - len(survivors)
+                    if survivors:
+                        kept.append({**block, "hooks": survivors})
+                if kept:
+                    actual["hooks"][event] = kept
                 else:
                     actual["hooks"].pop(event)
             if not actual.get("hooks"):
                 actual.pop("hooks", None)
             hooks_message = (
-                f"installed: removed stale harness hooks from {path} "
+                f"installed: removed {removed} stale harness hook(s) from {path} "
                 "(they live in the adapter plugin now)"
-            ) if stale else ""
+            ) if removed else ""
         if "claude" in entry["runtimes"]:
             status = actual.get("statusLine")
             if status == {"type": "command", "command": "$HOME/.idh/scripts/statusline.sh"}:

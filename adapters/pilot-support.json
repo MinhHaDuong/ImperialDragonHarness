@@ -395,13 +395,13 @@
       "result": "pass"
     },
     {
-      "id": "claude-wiring-unchanged-by-the-slice",
-      "slice": "dirty-reset-guard",
+      "id": "claude-wiring-carried-by-the-plugin",
+      "slice": "claude-adapter-activation",
       "harness": "claude",
       "harness_version": "claude 2.1.283",
-      "assertion": "The live PreToolUse(Bash) wiring in settings.shared.json still names the canonical guard; the slice changed nothing on the Claude side.",
+      "assertion": "The PreToolUse(Bash) wiring in the adapter plugin's hooks.json names the canonical guard through the plugin launcher; the settings.shared.json wiring it replaced is gone (0887 activation).",
       "source_concept": "the existing reference enforcement",
-      "native_expression": "PreToolUse matcher Bash -> installed idh-hook launcher -> canonical guard",
+      "native_expression": "PreToolUse matcher Bash -> ${CLAUDE_PLUGIN_ROOT}/bin/idh-hook -> canonical guard",
       "disposition": "harness-specific",
       "evidence_kind": "static-test",
       "test": "tests/test_guard_adapter_wiring.py::test_claude_wiring_names_the_same_guard",
