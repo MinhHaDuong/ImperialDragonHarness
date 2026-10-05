@@ -25,3 +25,6 @@ Inspect actual inventory, choose minimal relocation/deletion preserving approved
 
 ## Test
 Meaningful retained replay/route/telemetry/integration behavior and reference checks, chosen during Plan from actualcode.
+
+## Raid selection refresh (2026-10-05, explicit1032)
+Explicit author-selected1032 runs. Current merged origin/main c917715ae4252c674e063069db31ea57de20d3c5 includes1030 retirement; original1032 and1009 exits remain unchanged. Owned preparation/source worktrees preserve unrelated primary guards, projection, shell and tournament work. Required baseline through scripts/raid-gate.py passed1495tests2skipped46.14s. Harness deliverable ratio is not applicable.
