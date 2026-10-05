@@ -46,3 +46,8 @@ propagation seats, round 1).
 - [ ] The circuit-breaker recipe goes through erg log with verb note
 - [ ] The gaze fork-liveness fallback names the reroll_bump posing rule
 - [ ] make check passes
+
+## Raid Imagine (2026-10-05)
+PREMISE: PASS; current recipes still omit note verify-reroll and misroute writes.
+APPROACH: Correct existing tally and instructions in place; retain legacy categories and required circuit-breaker placement. Gaze liveness recognizes returned verdict evidence; bare gate caller owns posing on the PR branch or at merge. No helper/library abstraction is warranted. Exit criteria preserved.
+BLIND-SPOT: Cross-ticket multi-round attribution issue addressed in 1005; no 1023 scope change.
