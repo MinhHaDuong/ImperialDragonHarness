@@ -323,9 +323,12 @@ def test_gaze_raises_tier_on_high_risk_paths():
         "gaze setup must state the 15+ files breaker pre-empts the band — a "
         "band never sets a battery tier on an un-reviewable PR"
     )
-    # Stated side effects of a tiny → small raise.
-    for name in ("Agent B", "/simplify", "external reviewer panel"):
+    # Risk raises the internal battery, not optional external participation.
+    for name in ("Agent B", "/simplify"):
         assert name in norm, f"gaze setup dropped the band side effect {name!r}"
+    assert "external reviewer panel fires" not in norm, (
+        "a risk-band raise must not automatically dispatch external review"
+    )
     # The two-axes statement, so a later reader does not collapse them.
     assert "two axes" in norm, (
         "gaze setup must state size and risk are two axes, never collapsed"
