@@ -13,9 +13,13 @@ Tickets hold acceptance criteria; [STATE.md](STATE.md) holds the resume point.
 | Reviewer attribution — 1004 | 1004 tracker → 1005 record template + roar capture → 1006 backfill hook / 1007 read surfaces → 1009 teardown; the chain gates on 0913 | Attribution records replace seat coaching; surfaces report scores and correlation |
 | Runtime policy — 0974/0938 | Apply the adopted model/effort policy (0974); replace inline fork roles with named portable agent profiles (0938); documented detached-CLI reviewer pattern for child sessions (1017); 0980 reviewer-seat audit; 1021 silent spawn failure | Runtime mappings and capability limits tested; spawn success implies the agent exists |
 | Verification workflow | 0990 gaze verdict from a background agent; 0902 gaze tiers on diff size, never paths; 0879 malformed log lines (0205 closed 2026-10-03 — residual dispositions owned by 1009) | Reproductions fail before fixes and pass afterward |
-| Claude adapter — 0887 | 0887 plugin skills-dir: what it can carry, measured; 0888 Imagine skill integration review and retrospective | Fresh-session guard evidence with preserved user configuration |
+| Claude adapter — 0887 | 0887 plugin skills-dir: what it can carry, measured | Fresh-session guard evidence with preserved user configuration |
 | Raid annotations — 1016 | One shared base commit for wave annotations; branches must not fork divergent annotation copies | Wave annotations converge on one base commit |
 | Zotero interface — 1018 | Consolidation: one `zotero` skill with verbs as arguments, backend `scripts/zotero.py`; `index-source` absorbed as import-of-URL. Hygiene rider: 1020 stale `~/.idh` sweep (scripts/, agnostic gate comments) — raid-sweepable any time | One `zotero` skill in the catalog, `index-source` gone, catalog in sync; no live `~/.idh` references |
+
+Brood 0888 is delivered in PR #1187: explicit post-Dream project improvements,
+local proofs of concept and nomination-only harness handoff; the separate harness
+implementor evaluates, generalizes and validates. See [the evaluation](docs/memory-v8/brood-evaluation.md).
 
 The academic skill integration is complete. Optional memory experiments remain
 deferred until evidence justifies them: 0375, 0908, 0912, 0914, 0915,
