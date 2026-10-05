@@ -51,3 +51,7 @@ propagation seats, round 1).
 PREMISE: PASS; current recipes still omit note verify-reroll and misroute writes.
 APPROACH: Correct existing tally and instructions in place; retain legacy categories and required circuit-breaker placement. Gaze liveness recognizes returned verdict evidence; bare gate caller owns posing on the PR branch or at merge. No helper/library abstraction is warranted. Exit criteria preserved.
 BLIND-SPOT: Cross-ticket multi-round attribution issue addressed in 1005; no 1023 scope change.
+
+## Raid Plan (2026-10-05)
+Actions: Replace tally with executable shell recipe retaining ticket identity and mixed legacy/note categories, scanning only log sections; use erg log for circuit breakers; reference verdict-owned liveness and PR-branch-or-merge posing in gaze; name bare gate caller.
+First test: Execute documented tally against temporary mixed-format multi-ticket fixtures, spaced author, body quotation and unrelated notes; assert ticket/category counts. No package or helper needed. Paths: three skill files, focused test, ticket (5). No dependencies or shared implementation paths.
