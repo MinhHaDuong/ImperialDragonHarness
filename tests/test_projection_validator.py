@@ -125,28 +125,6 @@ def validate(world, runtime):
 # --- the manifest --------------------------------------------------------
 
 
-def repair_command(stderr: str, n: int = 0) -> str:
-    """The n-th printed repair, as the author would paste it."""
-    lines = [
-        ln.split("repair: ", 1)[1] for ln in stderr.splitlines() if "repair: " in ln
-    ]
-    return lines[n].split("   (", 1)[0]
-
-
-def run_repair(world, stderr: str, n: int = 0):
-    """Paste the printed repair into a plain shell; it must succeed as printed."""
-    r = subprocess.run(
-        ["bash", "--norc", "-c", repair_command(stderr, n)],
-        env=_env(world),
-        capture_output=True,
-        text=True,
-    )
-    assert r.returncode == 0, (repair_command(stderr, n), r.stderr)
-
-
-# --- the manifest --------------------------------------------------------
-
-
 def test_manifest_declares_one_guard_per_runtime():
     required = {
         (e["path"], rt)
@@ -200,16 +178,15 @@ def test_unset_home_refuses_with_a_message_not_a_traceback(world, monkeypatch):
 
 
 @pytest.mark.integration
-def test_dangling_guard_link_names_culprit_without_overwriting_it(world):
+def test_dangling_guard_link_recommends_install_without_overwriting_it(world):
     link = world["home"] / ".local/bin/idh-hook"
     link.unlink()
     link.symlink_to(world["tmp"] / "gone" / "idh-hook")
     r = validate(world, "codex")
     assert r.returncode == 1
-    assert f"DANGLING: {link}" in r.stderr
+    assert "run `idh install` from a plain terminal" in r.stderr
     assert "IDH_SKIP_VALIDATE=1 codex" in r.stderr
-    assert "inspect " in repair_command(r.stderr)
-    assert "ln -sf" not in repair_command(r.stderr)
+    assert str(link) not in r.stderr
     assert link.readlink() == world["tmp"] / "gone" / "idh-hook"
     # Scoped per runtime: Claude Code does not read the Codex hook.
     assert validate(world, "pi").returncode == 0
@@ -223,8 +200,8 @@ def test_foreign_link_is_refused(world):
     link.symlink_to(other)
     r = validate(world, "pi")
     assert r.returncode == 1
-    assert f"FOREIGN: {link} resolves to {other}" in r.stderr
-    assert "inspect " in repair_command(r.stderr) and "ln -sf" not in r.stderr
+    assert "run `idh install` from a plain terminal" in r.stderr
+    assert str(link) not in r.stderr and str(other) not in r.stderr
     assert link.readlink() == other
 
 
@@ -236,17 +213,13 @@ def test_non_executable_installed_launcher_is_reported(world):
     assert "not executable" in r.stderr
 
 
-@pytest.mark.integration
 @pytest.mark.parametrize("runtime,rel", [("codex", ".codex"), ("pi", ".pi")])
-def test_missing_guard_on_a_fresh_machine_gets_a_repair_that_works(world, runtime, rel):
-    """Fresh registration creates missing parent directories without replacing links."""
+def test_missing_guard_recommends_idh_install(world, runtime, rel):
     shutil.rmtree(world["home"] / rel)
     r = validate(world, runtime)
-    assert r.returncode == 1 and "MISSING:" in r.stderr
-    assert "/bin/idh" in r.stderr  # the managed alternative: idh install
-    for n in range(r.stderr.count("    repair:")):
-        run_repair(world, r.stderr, n)
-    assert validate(world, runtime).returncode == 0
+    assert r.returncode == 1
+    assert "run `idh install` from a plain terminal" in r.stderr
+    assert "MISSING:" not in r.stderr and str(world["home"]) not in r.stderr
 
 
 def test_absent_optional_entry_passes_but_a_dangling_one_does_not(world):
@@ -326,7 +299,8 @@ def test_positive_control_planted_broken_link_blocks_the_launch(world, runtime, 
     r = launch(world, runtime)
     assert r.returncode != 0
     assert "LAUNCHED" not in r.stdout
-    assert f"DANGLING: {link}" in r.stderr and "repair:" in r.stderr
+    assert "run `idh install` from a plain terminal" in r.stderr
+    assert f"DANGLING: {link}" not in r.stderr
 
 
 @pytest.mark.integration
