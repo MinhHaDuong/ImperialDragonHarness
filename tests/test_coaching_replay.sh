@@ -6,7 +6,7 @@ WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 cat > "$WORK/board.yml" <<'YAML'
 board:
   - pr: 1
-    title: one
+    title: "one | with a pipe"
     base: deadbeef1
     head: cafebabe1
     panel: alpha.sh:10 beta.sh:*
