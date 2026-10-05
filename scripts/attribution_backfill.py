@@ -56,10 +56,10 @@ def load_records(project, stats):
         LOG.warning("WARN unresolved: unsafe project journal path")
         stats["unresolved"] += 1
         return records
-    for path in sorted(journal.rglob("*review-attribution-pr*.md*")):
-        if not path.is_file():
+    for path in sorted(journal.rglob("*review-attribution-pr*")):
+        if not path.is_file() or path.suffix not in {".md", ".age"}:
             continue
-        name_pr = re.search(r"review-attribution-pr([1-9][0-9]*)\.md(?:\.age)?$", path.name)
+        name_pr = re.search(r"review-attribution-pr([1-9][0-9]*)\.(?:md(?:\.age)?|age)$", path.name)
         pr = int(name_pr[1]) if name_pr else None
         try:
             if not within_project(path, project):
