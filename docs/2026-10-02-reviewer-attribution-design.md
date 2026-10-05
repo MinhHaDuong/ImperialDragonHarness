@@ -237,7 +237,9 @@ explicit proxy over same-game unconfirmed-anchor unions. Marginal B counts games
 with any confirmed B anchor absent A, over the same labeled both-ran games,
 and reports unique-B anchor counts separately. Thus both-catch games can still
 show complementary coverage at different anchors. Pairs use deterministic
-identity ordering; B given A is directional and is not pooled with its reverse.
+identity ordering, but both A given B and B given A are reported independently
+with their respective unique-anchor counts. Neither direction is pooled or
+hidden by pair ordering; a both-catch game can contribute directional coverage.
 
 Declared bounded SciPy `special.betaincinv` supplies Beta(s+.5,n-s+.5) central
 .05/.95 quantiles, including prior-only intervals when trials are zero (see

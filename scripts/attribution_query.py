@@ -176,13 +176,15 @@ def derive(records):
         ran = [key for key, entry in identities.items() if entry['attempts']['ran']]
         # repr gives deterministic ordering even when version is absent (None).
         for a, b in itertools.combinations(sorted(ran, key=repr), 2):
-            pair = pairs.setdefault((writer, a, b), {'cells': Counter(), 'unique_b_games': 0,
-                                                    'unique_b_anchors': 0, 'intersection': 0,
+            pair = pairs.setdefault((writer, a, b), {'cells': Counter(), 'unique_a_games': 0, 'unique_b_games': 0,
+                                                    'unique_a_anchors': 0, 'unique_b_anchors': 0, 'intersection': 0,
                                                     'union': 0, 'shared_unconfirmed': 0,
                                                     'unconfirmed_union': 0})
             ac, bc = identities[a]['confirmed'], identities[b]['confirmed']
             cell = 'both' if ac and bc else 'unique_a' if ac else 'unique_b' if bc else 'neither'
             pair['cells'][cell] += 1
+            pair['unique_a_games'] += bool(ac - bc)
+            pair['unique_a_anchors'] += len(ac - bc)
             pair['unique_b_games'] += bool(bc - ac)
             pair['unique_b_anchors'] += len(bc - ac)
             # Anchor keys are scoped to a game: same path:line in another PR is another trial.
@@ -211,7 +213,9 @@ def derive(records):
                              'confirmed_anchor_jaccard': {'intersection': pair['intersection'], 'union': pair['union'],
                                                           'value': pair['intersection']/pair['union'] if pair['union'] else None},
                              'shared_nonconfirmed_anchor_proxy': rate(pair['shared_unconfirmed'], pair['unconfirmed_union']),
+                             'unique_a_anchors': pair['unique_a_anchors'],
                              'unique_b_anchors': pair['unique_b_anchors'],
+                             'marginal_a_given_b': rate(pair['unique_a_games'], games),
                              'marginal_b_given_a': rate(pair['unique_b_games'], games)})
     return {'scores': result_scores, 'pairs': result_pairs}
 
@@ -257,14 +261,15 @@ def render(data):
                                  describe_rate(score['catch']), describe_rate(score['nonconfirmed_finding_share_proxy']),
                                  describe_rate(score['run_failure'])]))
     lines += ['Pairs: only labeled PRs where both exact identities ran; binary any-catch cells. '
-              'Jaccard uses same-game confirmed anchors. Marginal B counts games with any B anchor absent A, '
+              'Jaccard uses same-game confirmed anchors. Each directional marginal counts games with any candidate anchor absent the incumbent, '
               'including both-catch games. Shared nonconfirmed anchors are a proxy, not proven hallucinations.',
-              'writer | A | B | games | both/unique-A/unique-B/neither | anchor-Jaccard | unique-B anchors | marginal B | shared nonconfirmed-anchor proxy']
+              'writer | A | B | games | both/unique-A/unique-B/neither | anchor-Jaccard | unique-A anchors | unique-B anchors | marginal A given B | marginal B given A | shared nonconfirmed-anchor proxy']
     for pair in data['pairs']:
         overlap = pair['confirmed_anchor_jaccard']
         lines.append(' | '.join([describe(pair['writer']), describe(pair['a']), describe(pair['b']),
                                  str(pair['labeled_both_ran_games']), '/'.join(str(n) for n in pair['cells'].values()),
-                                 f"{overlap['intersection']}/{overlap['union']}", str(pair['unique_b_anchors']),
+                                 f"{overlap['intersection']}/{overlap['union']}", str(pair['unique_a_anchors']), str(pair['unique_b_anchors']),
+                                 describe_rate(pair['marginal_a_given_b']),
                                  describe_rate(pair['marginal_b_given_a']), describe_rate(pair['shared_nonconfirmed_anchor_proxy'])]))
     if 'coverage' in data:
         lines.append('Explicit merge-range coverage: ' + json.dumps(data['coverage']))

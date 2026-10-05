@@ -219,3 +219,33 @@ def test_symlink_components_are_unavailable_without_reading_target(tmp_path, bou
     assert data['scores'] == [] and data['records']['valid'] == 0
     assert data['records']['unsafe_unavailable'] == 1
     assert 'symlink' in result.stderr and 'WARN' in result.stderr
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('unique_seat', ['A', 'B'])
+def test_both_directional_marginals_survive_pair_sorting(tmp_path, unique_seat):
+    journal = tmp_path/'memory/journal/2026'
+    journal.mkdir(parents=True)
+    attempts = [(seat, 'ran', [('x:1', True)] + ([('y:2', True)] if seat == unique_seat else []))
+                for seat in ('A', 'B')]
+    (journal/'2026-10-05-review-attribution-pr1.md').write_text(record(1, attempts))
+    result = cli(tmp_path, '--json')
+    assert result.returncode == 0, result.stderr
+    pair = json.loads(result.stdout)['pairs'][0]
+    assert (pair['a']['seat'], pair['b']['seat']) == ('A', 'B')
+    assert pair['cells'] == {'both':1, 'unique_a':0, 'unique_b':0, 'neither':0}
+    assert pair['confirmed_anchor_jaccard'] == {'intersection':1, 'union':2, 'value':.5}
+    assert pair['unique_a_anchors'] == (1 if unique_seat == 'A' else 0)
+    assert pair['unique_b_anchors'] == (1 if unique_seat == 'B' else 0)
+    assert (pair['marginal_a_given_b']['successes'], pair['marginal_a_given_b']['trials']) == (int(unique_seat == 'A'), 1)
+    assert (pair['marginal_b_given_a']['successes'], pair['marginal_b_given_a']['trials']) == (int(unique_seat == 'B'), 1)
+    readable = cli(tmp_path)
+    assert readable.returncode == 0
+    header = next(line for line in readable.stdout.splitlines() if 'both/unique-A/unique-B/neither' in line).split(' | ')
+    row = next(line for line in readable.stdout.splitlines() if ' | seat=A,' in line and ' | seat=B,' in line).split(' | ')
+    fields = dict(zip(header, row))
+    assert fields['both/unique-A/unique-B/neither'] == '1/0/0/0'
+    assert fields['unique-A anchors'] == str(int(unique_seat == 'A'))
+    assert fields['unique-B anchors'] == str(int(unique_seat == 'B'))
+    assert fields['marginal A given B'].startswith(f'{int(unique_seat == "A")}/1 [')
+    assert fields['marginal B given A'].startswith(f'{int(unique_seat == "B")}/1 [')

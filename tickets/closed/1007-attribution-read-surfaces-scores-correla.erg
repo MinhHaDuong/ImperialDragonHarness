@@ -110,3 +110,10 @@ mismatches cannot receive credit or available merge coverage. CLI regression
 fixtures cover all combinations. Project-local traversal rejects record and
 directory symlink components, including internal links and journal roots,
 without reading their targets. No publication was attempted during this fix.
+
+PR1193 Correctness follow-up: both directional marginals A given B and B given
+A are independently reported with unique-anchor counts; the original B given A
+field remains intact. An asymmetric same-game CLI fixture checks either seat
+can have one extra confirmed anchor, while the concordance cell remains both.
+JSON and readable controls reproduce red then green, preserving fixed Jeffreys
+intervals and existing exact identities/game denominators.
