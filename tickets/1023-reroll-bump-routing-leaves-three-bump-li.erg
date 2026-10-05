@@ -55,3 +55,6 @@ BLIND-SPOT: Cross-ticket multi-round attribution issue addressed in 1005; no 102
 ## Raid Plan (2026-10-05)
 Actions: Replace tally with executable shell recipe retaining ticket identity and mixed legacy/note categories, scanning only log sections; use erg log for circuit breakers; reference verdict-owned liveness and PR-branch-or-merge posing in gaze; name bare gate caller.
 First test: Execute documented tally against temporary mixed-format multi-ticket fixtures, spaced author, body quotation and unrelated notes; assert ticket/category counts. No package or helper needed. Paths: three skill files, focused test, ticket (5). No dependencies or shared implementation paths.
+
+## Raid feasibility (2026-10-05)
+PASS: Existing paths/signatures verified; 5 content paths per ticket below review breaker; no credentials for public capture fixtures, no new package, no shared implementation path/registry, no coordination PR. Behavioral fixtures must count log entries only and retain legacy categories; capture round-trip must preserve cross-reviewer shared anchors and separate attempts.
