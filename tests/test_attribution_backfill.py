@@ -325,3 +325,57 @@ def test_forced_git_color_still_appends_covered_event(project, color_config):
     assert entry.read_bytes() == before + b"defect-confirmed: source.py:2 \xc2\xb7 source: post-merge-fix \xc2\xb7 pr: 34\n"
     assert parse_record(entry.read_text())["defect_labels"] == ["source.py:2"]
     assert "appended=1" in result.stderr
+
+
+@pytest.mark.parametrize("private_only", [True, False])
+def test_actual_capture_age_name_is_unresolved_and_reserves_pr(project, private_only):
+    repo, entry, _, _ = project
+    # Exact suffix selected by memory-capture.sh for private capture.
+    private = entry.with_suffix(".age")
+    private.write_bytes(b"age-encryption.org/v1\nfixture ciphertext\n")
+    before = entry.read_bytes()
+    if private_only:
+        entry.unlink()
+    commit(repo, "actual private capture basename fixture")
+    result = run(project)
+    assert result.returncode == 0, result.stderr
+    assert "WARN unresolved" in result.stderr and "encrypted record" in result.stderr
+    assert "appended=0" in result.stderr
+    if private_only:
+        assert not entry.exists()
+    else:
+        assert "duplicate attribution records" in result.stderr
+        assert entry.read_bytes() == before
+    assert git(repo, "status", "--porcelain") == ""
+
+
+def test_private_name_reserves_pr_without_reading_fake_plaintext_header(project):
+    repo, entry, _, _ = project
+    private = entry.with_suffix(".age")
+    # Deliberately wrong header is an opaque stub, never evidence for PR 99.
+    private.write_bytes(record(pr=99).encode("utf-8"))
+    before = entry.read_bytes()
+    commit(repo, "unreadable private fixture with misleading content")
+    private.chmod(0)
+    try:
+        result = run(project)
+        assert "encrypted record" in result.stderr
+        assert "duplicate attribution records" in result.stderr
+        assert "appended=0" in result.stderr
+        assert entry.read_bytes() == before
+    finally:
+        private.chmod(0o600)
+
+
+def test_invalid_private_basename_warns_without_header_salvage(project):
+    repo, entry, _, _ = project
+    entry.unlink()
+    private = entry.with_name("2026-10-03-review-attribution-prINVALID.age")
+    private.write_bytes(record().encode("utf-8"))
+    commit(repo, "invalid private filename fixture")
+    result = run(project)
+    assert result.returncode == 0
+    assert "encrypted record" in result.stderr and "WARN unresolved" in result.stderr
+    assert "appended=0" in result.stderr
+    assert not entry.exists()
+    assert git(repo, "status", "--porcelain") == ""
