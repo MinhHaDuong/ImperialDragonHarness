@@ -2,12 +2,15 @@
 Title: Post-merge defect backfill hook in roar step-3 sweep
 Created: 2026-10-02
 Author: MinhHaDuong
+Closed: implemented
 
 --- log ---
 2026-10-02T08:00Z MinhHaDuong created
 
 2026-10-03T12:57Z qwen3.8-27b note imagine pass recorded (2026-10-03, raid): keep-as-is; box 2 reworded to the §4.5 defect-bearing predicate over the shared fixed-line reader (satisfiable now, still true when 1007 lands); join = finding anchors ∩ fix hunk ranges with drift guard (fail-loud, never fuzzy); event line carries the record's anchor verbatim
 2026-10-05T10:34Z reviewer note blocker 1005 closed — Blocked-by removed.
+2026-10-05T11:12Z reviewer closed — implemented
+
 --- body ---
 ## Context
 

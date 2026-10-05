@@ -181,15 +181,46 @@ companion or native store.
    just completed — grep for the same anti-pattern") gains one hook: a
    post-merge fix on lines a past review covered backfills
    a `defect-confirmed` event line in that PR's attribution record. This is
-   the only source of the pair table's "neither" cell and the only thing
-   that makes a game defect-bearing; without it correlation estimates skew
-   optimistic.
+   a post-merge defect-label source; adopted findings also make a game
+   defect-bearing. A third reviewer's adopted finding can also label a pair's
+   "neither" cell. Without post-merge labels, estimates can skew optimistic.
 4. **Offline, on demand (commissioned coaching cycle):** the replay skill
    runs any candidate over the frozen labeled board — same diffs for
    everyone, which the live record cannot give (selection bias: only
    reviewers who played have facts). Replay through the seat-runner is the
    containment wrapper for untrusted external CLI models only;
    runtime-native reviewers need no sandbox.
+
+### Conservative backfill implementation
+
+`scripts/attribution_backfill.py` uses the shared fixed-line reader. Its CLI
+requires an explicitly commissioned defect-fix PR, full merged fix commit SHA,
+project root and `--reviewed PR=SHA` coordinate evidence from the durable review
+trail. The caller must establish that revision for all anchors across all
+attempts in the record; ambiguous provenance stays unresolved. These inputs
+are implementation evidence, not new record fields or context-parsing rules.
+
+The supplied reviewed commit must belong to the project's fix-base ancestry.
+By default the fix must belong to `HEAD` history. In Roar's existing wrap-up
+branch below the actual merge, `--merged-through SHA` instead proves the fix
+belongs to a supplied full integration tip that is itself ancestral to actual
+`origin/main`. Roar resolves that tip from the project's `origin/main`; neither
+a detached unintegrated fix nor an arbitrary supplied commit can substitute
+for this integration proof. The helper never advances the wrap-up checkout.
+Whole-file blob equality from that revision to the fix's first parent guards
+line coordinates before joining literal anchors to old-side changed intervals.
+Both unified and inter-hunk context are explicitly zero, so ambient Git
+configuration cannot fuse changed intervals across unchanged anchored lines.
+Pure insertions have no covered old lines. Renamed/missing files, drift,
+unknown revisions, malformed/encrypted records and duplicate PR records warn
+and remain untouched. No fuzzy recovery or implicit snapshot consolidation is
+performed. A valid append preserves all original bytes, adds one event per
+distinct covered anchor, and validates the candidate with `parse_record`.
+Repeated invocations retain repeated factual events; successful records can
+proceed while unresolved records remain visibly reported. Writes stay in the
+explicit project repository; private records remain encrypted and unresolved.
+A no-match leaves the record untouched. The helper reports counts and fails
+visibly on a write error.
 
 ## 6. Read surfaces (derived, never stored)
 
