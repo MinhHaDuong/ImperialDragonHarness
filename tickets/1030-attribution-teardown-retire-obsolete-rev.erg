@@ -2,10 +2,12 @@
 Title: Attribution teardown: retire obsolete reviewer write machinery
 Created: 2026-10-05
 Author: reviewer
+Blocked-by: 1036
 
 --- log ---
 2026-10-05T10:42Z reviewer created
 2026-10-05T16:57Z reviewer note blocker 1029 closed — Blocked-by removed.
+2026-10-05T17:31Z reviewer note necessary decomposition — 15-path inventory split into 1036 retained-pointer preparation and original 1030 retirement; original exit unchanged.
 
 --- body ---
 
@@ -24,3 +26,6 @@ Inspect actual inventory, choose minimal relocation/deletion preserving approved
 
 ## Test
 Meaningful retained replay/route/telemetry/integration behavior and reference checks, chosen during Plan from actualcode.
+
+## Necessary decomposition (1036)
+Read-only inventory found 15 content-bearing paths including seven deletions, five retained helper/test provenance comments, meaningful retirement contract verification, this ticket closure and normal 1032 unblock. Child 1036 performs only the five comment updates first (7 paths including its ticket and this dependency tracking). After its merge, original 1030 performs the seven deletions plus existing contract verification and normal close/unblock (10 paths). Original exit criterion above remains unchanged; no tracker or historical trial dispositions move into this scope.
