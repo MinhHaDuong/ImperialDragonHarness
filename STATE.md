@@ -1,19 +1,19 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-05T15:31Z
+Last updated: 2026-10-05T16:47Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
 
-As of merged main `b95aff7c` (2026-10-05): attribution 1005/1006/1007, preparation 1035 and first selected-child wave 1031/1033 are integrated. PR1195 provided one shared preparation; PR1196 relocated the frozen coaching assets and PR1197 retired celebration writing while preserving factual capture and backfill. Their actual review-attribution records are included in this local wrap-up bundle; integration of this bundle is pending.
+As of merged main `540b57f7` (2026-10-05): selected children 1031, 1033 and 1034 are integrated. PR1198 supplied the shared factual checkpoint; PR1199 extracted the read-only cold coaching interface and closed original parent 1028 after independent composition verification. Their actual review-attribution records are included in this next factual preparation.
 
-Both source PRs completed appropriate Gaze/gate and ten green CI checks. Independent composition review approved the combined tree `2df6620e`; actual full make check passed 1492 tests, 2 skipped in 47.38s. After the first merge, the second branch's complete tracked tree equalled that tested union and its gate confirmed the current public head without another suite. Merged main has that exact tracked tree. Both Gaze runs exceeded the 15-minute warning and stayed below the 30-minute escalation threshold.
+PR1199 completed five initial perspectives, scoped final objector/regression confirmation, actual initial/final native review, distinct portable simplification and independent criterion gate. Two review findings were fixed before merge: an oversized summary count could bypass fail-loud validation, and documented invocation depended on the caller's directory. Final full make check passed 1495 tests, 2 skipped; merged main's complete tracked tree equals that tested source. All ten CI checks passed. Gaze's actual public completion was approximately 1749s (local payload assembly was 1722s), above the warning and below the escalation; the later merge is outside that review interval. Real-container and live endpoint coverage remain explicitly unclaimed.
 
 ## Ready work
 
-The author selected five bounded children of 1009. This leg completed only 1031 + 1033. Next fresh bounded leg is 1034, which extracts read-only cold replay and closes 1028 only after its original integration exits are verified; then fresh legs continue 1029 → 1030. Ticket 1032 dispositions/final integration is separate, retains blocker 1030, and parent 1009 remains open. Original committed Imagine/Plan/BlindSpot/feasibility and exits remain preserved. PR1191 factual attribution remains visibly pending; PR1190 had mechanical verification only.
+Three of the author's five selected children are complete. Next fresh bounded leg is 1029, then a separate fresh 1030 leg. Ticket 1032 dispositions/final integration remains separate with blocker 1030, and parent 1009 remains open. Original Imagine/Plan/BlindSpot/feasibility exits are preserved; the frozen board, contained assets and legacy dispatcher remain functional. PR1191 factual attribution remains visibly pending; PR1190 had mechanical verification only.
 
 ## Resume point
 The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Portable installation (0999) is complete — integration review closed in #1104; `./bin/idh install`/`check`/`sync` are the registration surface.
@@ -23,7 +23,7 @@ The external-reviewer panel train is closed (0902 #1155; 0205 retired at #1157; 
 
 ## Next actions
 See [ROADMAP.md](ROADMAP.md) for the trains. Verification, raid-annotations, agent-profiles (0938) and Zotero are done. Remaining: attribution teardown 1009 through its bounded children, runtime policy 0974 (+0980 pending 1009), Claude adapter 0887 (0888 integrated in PR1187), memory 0913 standing rollout, and model-tournament 1024 in a parallel session. Portable Gaze simplification 1027 integrated in PR1189. Current routing notes are recorded in 0980/1004; pending tournament evidence does not choose a subscription or provider.
-The primary checkout is based on merged main b95aff7c and retains an unrelated guards edit plus the untracked tournament concept and 1024 ticket. This raid uses owned isolated worktrees and preserves that material.
+The primary checkout is based on merged main 540b57f7 and retains an unrelated guards edit plus the untracked tournament concept and 1024 ticket. This raid uses owned isolated worktrees and preserves that material.
 
 ## Author actions
 - Install the ILaaS consortium key in `~/.config/keys/ilaas.env`, then configure `models.json` (0977).
