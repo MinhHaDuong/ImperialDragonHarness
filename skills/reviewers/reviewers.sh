@@ -21,11 +21,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="${REVIEWERS_REPO:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 PANEL="${REVIEWERS_PANEL:-${SCRIPT_DIR}/panel.yml}"
 # The 0217 seat-runner. Overridable so the test suite can stub it.
-SEAT_RUNNER="${SEAT_RUNNER:-${SCRIPT_DIR}/../../scripts/seat-runner.sh}"
+SEAT_RUNNER="${SEAT_RUNNER:-${SCRIPT_DIR}/../coaching/seat-runner.sh}"
 # Where per-seat findings land for harvest to collect (per merge request).
 FINDINGS_DIR="${REVIEWERS_FINDINGS_DIR:-${TMPDIR:-/tmp}/reviewers}"
 # The frozen benchmark board `audition` replays (ticket 0346). Overridable.
-BENCHMARK_BOARD="${REVIEWERS_BOARD:-${SCRIPT_DIR}/benchmark-board.yml}"
+BENCHMARK_BOARD="${REVIEWERS_BOARD:-${SCRIPT_DIR}/../coaching/benchmark-board.yml}"
 # The erg binary used to append trial-ticket log lines. Overridable for tests.
 ERG="${ERG:-${SCRIPT_DIR}/../../tickets/erg}"
 # The user's credential keystore, consulted when a seat's `credential-env`

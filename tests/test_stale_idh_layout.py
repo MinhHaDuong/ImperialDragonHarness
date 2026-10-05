@@ -46,16 +46,16 @@ PROVENANCE = {
         ".idh/scripts/(?P<name>",
         ".idh/scripts/(?P=name)",
     ),
-    # Containment self-test (0217): the sandbox must block secret reads from
-    # every location, retired ones included.
-    "seat-runner.sh": (
-        "'/.idh/scripts/bash-env.sh",
-    ),
 }
 
 # Provenance for skills/ (ticket 1025): path relative to skills/ -> substrings
 # each surviving line must carry. Same path-scoped keying as PROVENANCE.
 SKILLS_PROVENANCE = {
+    # Containment self-test (0217): the sandbox must block secret reads from
+    # every location, retired ones included.
+    "coaching/seat-runner.sh": (
+        "'/.idh/scripts/bash-env.sh",
+    ),
     # The erg-pr-merge comment must stay accurate to the live operator-owned
     # settings, which still carry the retired-layout allow rule as a legacy
     # alias for migrated installs; quoting the rule means quoting its path.

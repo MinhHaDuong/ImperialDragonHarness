@@ -1,4 +1,4 @@
-"""Round-trip tests for scripts/seat-runner/net-relay.py (ticket 0217).
+"""Round-trip tests for skills/coaching/seat-runner/net-relay.py (ticket 0217).
 
 The relay is the one channel the network-denied reviewer seat reaches out
 through, so a byte-forwarding regression would silently break every seat. These
@@ -21,7 +21,7 @@ import pytest
 
 from child_env import child_env
 
-RELAY = Path(__file__).resolve().parent.parent / "scripts" / "seat-runner" / "net-relay.py"
+RELAY = Path(__file__).resolve().parent.parent / "skills" / "coaching" / "seat-runner" / "net-relay.py"
 
 
 def _serve_echo(srv: socket.socket) -> None:

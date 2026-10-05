@@ -73,7 +73,7 @@ away from the regular panel's sidecars. The regular roster and its paid seats
 are not invoked by this path. The local client fails loud for diffs above
 32,768 bytes so the bounded trial never silently truncates a large PR.
 
-`skills/reviewers/benchmark-board.yml` is the frozen audition board: the frozen
+`skills/coaching/benchmark-board.yml` is the frozen audition board: the frozen
 10 already-merged multi-file code PRs of this repo plus mined defect-bearing
 games appended on top (ticket 1008), each entry with `base`/`head` commit SHAs
 (immutable, so the diff is reconstructable forever) and ground-truth
@@ -86,7 +86,7 @@ edits it. Schema in its header.
 
 ## Dependencies
 
-- `"$IDH_ROOT/scripts/seat-runner.sh"` (ticket 0217) — the
+- `"$IDH_ROOT/skills/coaching/seat-runner.sh"` (ticket 0217) — the
   sandboxed seat execution mechanism `request` invokes. Override with
   `SEAT_RUNNER` for testing.
 - `tickets/erg` — `scorecard` appends the trial log line.

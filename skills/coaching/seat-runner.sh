@@ -34,7 +34,7 @@
 #     netns has no interface but loopback — no route to any host. It reaches
 #     the ONE model endpoint through a bind-mounted Unix-domain socket
 #     (/relay.sock), a filesystem object rather than a network route. Host-side,
-#     scripts/seat-runner/net-relay.py listens on that socket and forwards to
+#     skills/coaching/seat-runner/net-relay.py listens on that socket and forwards to
 #     the real endpoint; container-side the same relay presents the socket as a
 #     loopback TCP port (loopback is per-netns, alive under --network=none) so
 #     aider/litellm get the OPENAI_API_BASE they expect. A misbehaving or

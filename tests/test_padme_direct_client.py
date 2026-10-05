@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest import mock
 
 
-SOURCE = Path(__file__).resolve().parents[1] / "scripts/seat-runner/direct-client.py"
+SOURCE = Path(__file__).resolve().parents[1] / "skills/coaching/seat-runner/direct-client.py"
 spec = importlib.util.spec_from_file_location("padme_direct_client", SOURCE)
 client = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(client)

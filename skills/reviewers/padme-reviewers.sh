@@ -12,7 +12,7 @@ export REVIEWERS_PANEL REVIEWERS_FINDINGS_DIR
 if [[ "${PADME_SEAT_RUNNER:-}" == 1 ]]; then
     base_args=()
     [[ -n "${PADME_REVIEW_BASE:-}" ]] && base_args=(--base "$PADME_REVIEW_BASE")
-    exec "$SELF_DIR/../../scripts/seat-runner.sh" "$@" \
+    exec "$SELF_DIR/../coaching/seat-runner.sh" "$@" \
         ${base_args[@]+"${base_args[@]}"} \
         --client direct --reasoning-effort none --health-path /v1/models
 fi

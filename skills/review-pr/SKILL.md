@@ -184,7 +184,7 @@ silent child cap can return success while the child never registers
 (memory: raid-1008). Cap concurrent detached seats to the runtime's slot
 budget / child cap and stagger launches; a beyond-budget or deadline-missed
 seat is `no report` with `PANEL-INTEGRITY`, never simulated.
-`$IDH_ROOT/scripts/seat-runner.sh` is an optional heavier transport (one
+`$IDH_ROOT/skills/coaching/seat-runner.sh` is an optional heavier transport (one
 OS-sandboxed process per seat) — cite it, never require it, and never
 extend it for this substitution.
 
