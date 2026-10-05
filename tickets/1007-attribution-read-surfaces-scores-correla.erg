@@ -39,9 +39,9 @@ at read time (spec §6); nothing judged is ever stored in the records.
 
 ## Exit criteria
 
-- [ ] Scores table renders from real records with credible intervals
-- [ ] Correlation table renders with the four concordance cells per pair
-- [ ] Marginal coverage column distinguishes a duplicate seat from a
+- [x] Scores table renders from real records with credible intervals
+- [x] Correlation table renders with the four concordance cells per pair
+- [x] Marginal coverage column distinguishes a duplicate seat from a
       complementary one on the same records
 
 ## Raid annotation (2026-10-03, imagine pass)
@@ -77,3 +77,26 @@ Plan supplement: duplicate PR records are ambiguous; WARN and exclude all duplic
 
 ## Raid feasibility refresh (2026-10-05)
 PASS: shared parser signature, live records, explicit coordinate/scoring contracts and scoped path budget verified.1006/1007 share Roar/spec; verify and merge sequentially, then union checks. No3+PR same-wave registry; no coordination-set PR. Annotation prelude lands before executor forks; common WAVE_BASE recorded from resulting main.
+
+## Execution evidence (2026-10-05)
+
+`python3 scripts/attribution_query.py /tmp/t1007-attribution-next --json`
+reads genuine journal records for PRs1185/1186/1189:3 valid,0 malformed,0
+ambiguous,0 encrypted unavailable;17 score rows and75 pair rows. Their
+round-qualified identities remain distinct;1189 is clean and adds prior-only
+catch rows instead of diluting labeled-game denominators. Scores include exact
+central90% Jeffreys intervals. No synthetic fixture is counted as live evidence.
+
+The hand-counted multi-game CLI fixture distinguishes A/B duplicate coverage
+(zero unique-B anchors) from A/C complementary coverage (two unique-B anchors,
+two of four labeled both-ran games), including both-catch at different anchors.
+It covers third-seat labels, neither cells, repeated attempts, postmerge events,
+failed/skipped attempts, writer/version separation, malformed/encrypted inputs
+and duplicate-PR exclusions. Analytic arcsine, pinned posterior endpoints,
+symmetry and extreme counts independently check the SciPy call parameters.
+
+`--since 1c44528b --until aa4efecb05eb0f0952c37d4d257ded72f8296378`
+shows1185/1186/1189 available and1182/1183/1184/1187/1188/1190/1191 missing
+attribution evidence, without inventing review participation. Real git fixtures
+exercise unavailable ambiguous evidence. Migrated enumeration retains legacy
+fields; existing actual Roar bash/celebration-writer tests remain green.

@@ -1,4 +1,4 @@
-"""Tests for skills/roar/enumerate-merges.py (ticket 0331).
+"""Tests for scripts/enumerate-merges.py (ticket 0331).
 
 Roar's telemetry step must log one celebration per merged PR since the
 roar-last-sha sentinel, not a single aggregate blob. This script enumerates
@@ -24,7 +24,7 @@ import pytest
 from child_env import child_env
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-ENUMERATE = REPO_ROOT / "skills" / "roar" / "enumerate-merges.py"
+ENUMERATE = REPO_ROOT / "scripts" / "enumerate-merges.py"
 
 pytestmark = [
     pytest.mark.integration,
@@ -116,6 +116,10 @@ def test_ticket_from_close_commit_not_branch_name(repo):
     )
     records, res = enumerate_merges(repo, base)
     assert len(records) == 2, res.stderr
+    assert records[0]["pr"] == 6
+    assert records[1]["pr"] == 7
+    assert records[1]["merge_sha"] == head(repo)
+    assert records[1]["merged"] == git(repo, "show", "-s", "--format=%cs", "HEAD").stdout.strip()
     assert records[0]["branch"] == "add-feature"
     assert records[0]["ticket"] is None
     assert records[1]["branch"] == "fix-flaky-widget"
@@ -180,6 +184,7 @@ def test_non_pr_merge_subject_branch_null_still_emitted(repo):
     )
     records, res = enumerate_merges(repo, base)
     assert len(records) == 1, res.stderr
+    assert records[0]["pr"] is None
     assert records[0]["branch"] is None
     assert records[0]["ticket"] is None
     assert records[0]["project"] == "testproj"

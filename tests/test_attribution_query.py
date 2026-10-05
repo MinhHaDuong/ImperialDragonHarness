@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from child_env import child_env
+
 ROOT = Path(__file__).resolve().parents[1]
 QUERY = ROOT / 'scripts' / 'attribution_query.py'
 
@@ -45,7 +47,7 @@ def dataset(tmp_path):
 
 
 def cli(root, *args):
-    return subprocess.run([sys.executable,str(QUERY),str(root),*args], text=True, capture_output=True)
+    return subprocess.run([sys.executable,str(QUERY),str(root),*args], text=True, capture_output=True, env=child_env())
 
 
 @pytest.mark.integration
@@ -92,7 +94,7 @@ def test_malformed_duplicate_encrypted_and_empty(tmp_path):
 
 
 def load_query():
-    spec = importlib.util.spec_from_file_location('attribution_query',QUERY)
+    spec = importlib.util.spec_from_file_location('scripts.attribution_query',QUERY)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -110,3 +112,44 @@ def test_jeffreys_analytic_golden_symmetry_and_extremes():
     assert 0 < low < high < .001
     assert mirror == pytest.approx([1-high,1-low],abs=1e-12)
     assert rate(7,20)['interval90'] == pytest.approx([1-x for x in reversed(rate(13,20)['interval90'])])
+
+
+@pytest.mark.integration
+def test_explicit_merge_coverage_does_not_accept_ambiguous_records(tmp_path):
+    def git(*args):
+        result = subprocess.run(['git','-C',str(tmp_path),*args],text=True,capture_output=True,check=True,env=child_env())
+        return result.stdout.strip()
+
+    journal = dataset(tmp_path)
+    (journal/'2026-10-06-review-attribution-pr1.md').write_text((journal/'2026-10-05-review-attribution-pr1.md').read_text())
+    git('init','-b','main')
+    git('config','user.name','Test')
+    git('config','user.email','test@example.com')
+    git('config','commit.gpgsign','false')
+    git('add','.')
+    git('commit','-m','base')
+    base = git('rev-parse','HEAD')
+    for pr in (1,2,99):
+        git('switch','-c',f'branch-{pr}')
+        (tmp_path/f'file-{pr}').write_text(str(pr))
+        git('add','.')
+        git('commit','-m','change')
+        git('switch','main')
+        git('merge','--no-ff',f'branch-{pr}','-m',f'Merge pull request #{pr} from owner/branch-{pr}')
+    data = json.loads(cli(tmp_path,'--json','--since',base,'--until','main').stdout)
+    assert [(merge['pr'],merge['attribution']) for merge in data['coverage']] == [(1,'unavailable'),(2,'available'),(99,'missing')]
+    assert data['coverage'][-1]['merge_sha'] == git('rev-parse','main')
+    assert 'coverage' not in json.loads(cli(tmp_path,'--json').stdout)
+
+
+@pytest.mark.integration
+def test_readable_table_prior_only_and_proxy_labels(tmp_path):
+    journal = tmp_path/'memory/journal/2026'
+    journal.mkdir(parents=True)
+    (journal/'2026-10-05-review-attribution-pr1.md').write_text(record(1,[('skip','skipped',[])]))
+    result = cli(tmp_path)
+    assert result.returncode == 0
+    assert '1/0/0/1' in result.stdout
+    assert result.stdout.count('prior-only') == 3
+    assert 'failed/(ran+failed)' in result.stdout
+    assert 'proxy' in result.stdout and 'upper bound' in result.stdout

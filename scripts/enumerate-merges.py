@@ -8,7 +8,8 @@ one JSON object per line carrying the fields roar's ``log-celebration`` expects
 (that helper stamps ``ts``/``date``):
 
     {"project": str, "branch": str|null, "commits": int,
-     "files_changed": int, "ticket": int|null}
+     "files_changed": int, "ticket": int|null,
+     "pr": int|null, "merge_sha": str, "merged": str}
 
 Branch is parsed from the GitHub-shaped merge subject; ticket is recovered by
 scanning the merge's second-parent commit range for the erg-pr-merge close
@@ -144,6 +145,9 @@ def build_records(since_sha: str, until: str, project: str, root: str) -> list[d
                 "commits": commits,
                 "files_changed": files_changed(p1, p2, root),
                 "ticket": ticket,
+                "pr": int(PR_SUBJECT_RE.match(subject).group(1)) if PR_SUBJECT_RE.match(subject) else None,
+                "merge_sha": sha,
+                "merged": git(["show", "-s", "--format=%cs", sha], cwd=root).strip(),
             }
         )
     return records

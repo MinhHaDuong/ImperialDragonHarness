@@ -207,6 +207,48 @@ A scores-style query over all attribution records of a project:
 - **Marginal coverage:** unique-catch rate of seat B given seat A already
   plays — the squad-management quantity; raw catch rate overstates it.
 
+### Read-side implementation (1007)
+
+Run `python3 scripts/attribution_query.py [PROJECT]` for readable tables or
+add `--json` for the same derivation. Only current-project journal attribution
+filenames are read through the strict shared parser; malformed whole records
+WARN with the filename and parser diagnostic. Multiple valid records for one PR
+WARN and are all excluded; encrypted records are unavailable, never decrypted.
+No data or coaching judgments are persisted.
+
+A game is one PR. An identity is the exact seat/runtime/model/model-version
+tuple (absent version stays unrecorded); writer runtime/model/version/effort
+stratifies every score and pair. Repeated attempts union anchors for binary
+game catches, while raw ran/failed/skipped counts remain separate. A catch trial
+is a labeled game where that identity ran; a success has any globally confirmed
+anchor, including labels supplied by another seat or a later event. Clean games
+are excluded. Run failure is failed/(ran+failed), with skipped separate.
+
+Noise is explicitly a **nonconfirmed emitted-finding share proxy**: later
+confirmation applies to all attempts with that literal anchor; repeated emitted
+findings count as emitted findings, never extra game trials. Unconfirmed does
+not prove a hallucination. Pair cells are binary any-catch over labeled games
+where both ran, with per-cell intervals. Anchor Jaccard sums same-game anchor
+intersection/union counts; shared nonconfirmed-anchor share is likewise an
+explicit proxy over same-game unconfirmed-anchor unions. Marginal B counts games
+with any confirmed B anchor absent A, over the same labeled both-ran games,
+and reports unique-B anchor counts separately. Thus both-catch games can still
+show complementary coverage at different anchors. Pairs use deterministic
+identity ordering; B given A is directional and is not pooled with its reverse.
+
+Declared bounded SciPy `special.betaincinv` supplies Beta(s+.5,n-s+.5) central
+.05/.95 quantiles, including prior-only intervals when trials are zero (see
+[official API](https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.betaincinv.html)).
+Section 7's fixed guidance is printed literally as guidance; no promotion
+verdict is inferred from live games with different selections.
+
+Optional `--since SHA [--until REF]` enumerates only the requested git range
+through `scripts/enumerate-merges.py`, labeling missing/unavailable evidence
+without inferring reviewers. Enumeration preserves legacy celebration fields
+and adds actual merge-subject PR number (null for non-PR merges), merge SHA
+and commit date. Roar's legacy celebration writer remains compatible until its
+separate retirement. No new sentinel is introduced.
+
 ## 7. Statistics policy (pre-registered, values fixed)
 
 Fixed before implementation so post-hoc choices cannot reverse a verdict:
