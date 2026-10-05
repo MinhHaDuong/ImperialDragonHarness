@@ -93,7 +93,10 @@ def test_malformed_duplicate_encrypted_and_empty(tmp_path):
     assert 'no attribution records' in empty.stderr
 
 
-def load_query():
+def load_query(monkeypatch):
+    # The console pytest entry point does not add the repository root.
+    # Limit package-path establishment to this test and restore it afterwards.
+    monkeypatch.syspath_prepend(str(ROOT))
     spec = importlib.util.spec_from_file_location('scripts.attribution_query',QUERY)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -101,8 +104,8 @@ def load_query():
 
 
 @pytest.mark.slow
-def test_jeffreys_analytic_golden_symmetry_and_extremes():
-    rate = load_query().rate
+def test_jeffreys_analytic_golden_symmetry_and_extremes(monkeypatch):
+    rate = load_query(monkeypatch).rate
     prior = rate(0,0)['interval90']
     assert prior == pytest.approx([math.sin(math.pi*.05/2)**2,math.sin(math.pi*.95/2)**2])
     # Independently pinned Jeffreys posterior Beta(1.5, 9.5) quantiles.

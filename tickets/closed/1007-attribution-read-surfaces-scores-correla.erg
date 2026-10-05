@@ -125,3 +125,11 @@ and unavailable; a public sibling makes the whole PR ambiguous and excludes
 all score/coverage credit. Actual CLI regressions use a non-UTF8 ciphertext
 stub at the real basename and check JSON/readable output plus merge coverage;
 no private contents, decryption, fallback or credential access is involved.
+
+PR1193 final test/documentation follow-up: numeric test loading establishes
+ROOT through pytest's scoped monkeypatch.syspath_prepend, so both console
+pytest and python -m pytest resolve the scripts package without production
+changes. Actual console invocation reproduced the loader failure before the
+fix. The design note corrects 0205's closed2026-10-03 status/residual1009
+dispositions and explicitly says the nonconfirmed proxy cannot alone establish
+§7's fixed false-finding threshold. No statistical policy changed.

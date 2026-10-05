@@ -3,8 +3,8 @@
 Date: 2026-10-02
 Status: approved design (author, this session) — awaiting implementation
 Tracker: tickets/1004 (this doc is its deliverable)
-Supersedes: the seat-runner-centric panel contract of tickets/0205 (which stays
-open until the ticket dispositions in §10 land)
+Supersedes: the seat-runner-centric panel contract of tickets/0205 (closed
+2026-10-03); residual teardown and ticket dispositions in §10 belong to 1009.
 
 ## 1. Problem
 
@@ -232,7 +232,9 @@ are excluded. Run failure is failed/(ran+failed), with skipped separate.
 Noise is explicitly a **nonconfirmed emitted-finding share proxy**: later
 confirmation applies to all attempts with that literal anchor; repeated emitted
 findings count as emitted findings, never extra game trials. Unconfirmed does
-not prove a hallucination. Pair cells are binary any-catch over labeled games
+not prove a hallucination. This proxy cannot by itself establish the fixed
+§7 false-finding threshold; author judgment remains manual. Pair cells are
+binary any-catch over labeled games
 where both ran, with per-cell intervals. Anchor Jaccard sums same-game anchor
 intersection/union counts; shared nonconfirmed-anchor share is likewise an
 explicit proxy over same-game unconfirmed-anchor unions. Marginal B counts games
