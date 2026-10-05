@@ -2,9 +2,14 @@
 Title: reroll_bump routing leaves three bump-line consumers stale
 Created: 2026-10-03
 Author: claude
+Closed: implemented and verified
 
 --- log ---
 2026-10-03T12:29Z claude created
+2026-10-05T08:03Z reviewer note implementation: mixed legacy/current tally behavioral regression passed; make lint 169 passed; make check 1411 passed, 2 skipped
+2026-10-05T08:03Z reviewer closed — implemented and verified
+2026-10-05T08:26Z reviewer note verify-reroll — round 1: wrap-up tally omits legacy reroll notes and counts quoted body samples
+2026-10-05T09:03Z reviewer note late doc-propagation finding addressed: durable verify-gate and gaze comment templates carry exact reroll_bump on REROLL; outer gaze remains ESCALATE, no third gate run
 
 --- body ---
 ## Context
@@ -42,10 +47,10 @@ propagation seats, round 1).
 
 ## Exit criteria
 
-- [ ] The wrap-up tally counts `note verify-reroll` bumps
-- [ ] The circuit-breaker recipe goes through erg log with verb note
-- [ ] The gaze fork-liveness fallback names the reroll_bump posing rule
-- [ ] make check passes
+- [x] The wrap-up tally counts `note verify-reroll` bumps
+- [x] The circuit-breaker recipe goes through erg log with verb note
+- [x] The gaze fork-liveness fallback names the reroll_bump posing rule
+- [x] make check passes
 
 ## Raid Imagine (2026-10-05)
 PREMISE: PASS; current recipes still omit note verify-reroll and misroute writes.

@@ -182,6 +182,10 @@ The gate runs in an isolated checkout over a shared `main`; a mid-wave `erg log`
 on the ticket collides at the insertion point with the branch's own ticket
 commits. The orchestrator poses the line: committed onto the PR branch with the
 REROLL fix, or deferred to merge time.
+For a bare `/verify-gate` invocation outside raid/gaze, its caller owns posing
+the returned `reroll_bump` by the same rule: on the PR branch with the fix, or
+at merge time. The caller never runs `erg log` against main mid-wave; the gate
+still writes no ticket file.
 
 If `round == 2` and any trigger fires → upgrade to ESCALATE. Never a third round.
 
@@ -243,6 +247,7 @@ current round = count + 1.
    Gate session id: <UUID from /gaze, or standalone UUID>
    Review worktree path: <absolute path used for evidence>
    Ruled tip SHA: <full commit SHA read from that worktree>
+   reroll_bump: <exact returned note verify-reroll line; include on REROLL, omit otherwise>
    Exit criteria: <addressed>/<total>  Review: <unresolved>  Simplify: <unresolved>
    Adherence: <blocking>  Scope overflow: <files> (<ticketed>/<escalate>)
    Minors: verifiable:<n> consider:<n> nofollow:<n> malformed:<n>

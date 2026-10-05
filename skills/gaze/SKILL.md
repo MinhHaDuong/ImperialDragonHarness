@@ -121,7 +121,8 @@ the background reviewer notifications, then run `/verify-gate <pr>
 worktree=$primary_root/.claude/worktrees/review-<pr-number>` directly to produce the verdict from their outputs.
 
 **Fork liveness.** Once the phase 2–4 review comment has posted on the PR, the
-caller must see either the phase-6 verdict comment or a bump log line within
+caller must see the phase-6 verdict (returned or posted as a PR comment), or
+the orchestrator's posed `reroll_bump` line on the PR branch, within
 `fork_liveness_seconds` (`skills/gaze/telemetry.yml`, env override
 `GAZE_LIVENESS_WINDOW_S`; default 1200s / ~20 min) — same knob pattern as the
 wall/token thresholds in § Telemetry. Two independent stalls landed in exactly
@@ -135,7 +136,10 @@ commit, no verdict, review worktree mtime frozen).
 review worktree's file mtime. All stale/absent → invoke `/verify-gate`
 directly, with the same invocation form as **Caller-side recovery** above
 (one recipe, stated once), and continue the normal round
-flow from its verdict; log a bump line on the ticket. The fallback skips only
+flow from its verdict. On REROLL, the caller poses the returned `reroll_bump`
+using the rule in phase 6: commit it onto the PR branch with the fix, or defer
+to merge time; never run `erg log` against main mid-wave. The returned verdict
+itself is liveness evidence even when posing is deferred. The fallback skips only
 the redundant phase 2–5 re-execution — verify-gate runs at full rigor and the
 two-round cap is unaffected.
 
@@ -905,6 +909,7 @@ verdict: APPROVED|REROLL|ESCALATE (direct setup ESCALATE when un-reviewable)
 gate_session_id: <this run's id>
 review_worktree_path: <absolute review tree path>
 ruled_tip_sha: <full SHA read from review tree at verdict time>
+reroll_bump: <exact returned note verify-reroll line; include on REROLL, omit otherwise>
 
 Exit criteria:
 - <criterion 1>: ADDRESSED — <evidence>
