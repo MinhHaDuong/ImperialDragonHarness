@@ -30,7 +30,7 @@ pilot.
 
 Before interactive launches, the shell wrappers validate the selected
 runtime's registrations. Broken required resources refuse the launch and
-name the repair. `IDH_SKIP_VALIDATE=1` is an explicit, logged bypass.
+recommend `idh install`. `IDH_SKIP_VALIDATE=1` is an explicit, logged bypass.
 
 ## Guard smoke and trust
 
