@@ -1,29 +1,29 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-05T14:25Z
+Last updated: 2026-10-05T15:31Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
 
-As of merged main `3f69ed5b` (2026-10-05): attribution 1005/1006/1007 and preparation 1035 are integrated. PR1194 merged the routing notes and factual checkpoint; its actual post-merge attribution capture is included in this shared preparation.
+As of merged main `b95aff7c` (2026-10-05): attribution 1005/1006/1007, preparation 1035 and first selected-child wave 1031/1033 are integrated. PR1195 provided one shared preparation; PR1196 relocated the frozen coaching assets and PR1197 retired celebration writing while preserving factual capture and backfill. Their actual review-attribution records are included in this local wrap-up bundle; integration of this bundle is pending.
 
-No open PRs at this preparation's readback. PR1194's ten checks passed. The last actual combined source gate was 1499 passed, 2 skipped; this preparation changes only documents, tickets and factual capture and does not claim a new full source run.
+Both source PRs completed appropriate Gaze/gate and ten green CI checks. Independent composition review approved the combined tree `2df6620e`; actual full make check passed 1492 tests, 2 skipped in 47.38s. After the first merge, the second branch's complete tracked tree equalled that tested union and its gate confirmed the current public head without another suite. Merged main has that exact tracked tree. Both Gaze runs exceeded the 15-minute warning and stayed below the 30-minute escalation threshold.
 
 ## Ready work
 
-The author selected five bounded children of 1009: 1031, 1033, 1034, 1029, 1030. This leg executes 1031 celebration retirement alongside 1033 unchanged coaching asset relocation from one merged shared checkpoint. Later fresh legs execute 1034 → 1029 → 1030; 1032 dispositions and final integration remains separate and 1009 stays open. Exact wave base is recorded after this preparation merges.
+The author selected five bounded children of 1009. This leg completed only 1031 + 1033. Next fresh bounded leg is 1034, which extracts read-only cold replay and closes 1028 only after its original integration exits are verified; then fresh legs continue 1029 → 1030. Ticket 1032 dispositions/final integration is separate, retains blocker 1030, and parent 1009 remains open. Original committed Imagine/Plan/BlindSpot/feasibility and exits remain preserved. PR1191 factual attribution remains visibly pending; PR1190 had mechanical verification only.
 
 ## Resume point
 The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Portable installation (0999) is complete — integration review closed in #1104; `./bin/idh install`/`check`/`sync` are the registration surface.
-Memory v8 is delivered end to end: convention/inventory (#1102), pilot (#1109), capture 0988, dreaming 0910/0916, and acceptance trials 0918 — verdict **No global rollout** (docs/memory-v8/evaluation-results.md); 0913 holds the per-project migration.
+Memory v8 is delivered end to end: convention/inventory (#1102), pilot (#1109), capture 0988, dreaming 0910/0916, and acceptance trials 0918 — historical verdict **No global rollout** (docs/memory-v8/evaluation-results.md); 1019/1022 subsequently lifted the acceptance blockers and 0913 now holds ready per-project migration work. The dated October 2 blocked planning note is historical; no rollout is dispatched here.
 The Zotero train is COMPLETE (2026-10-03/04): 1018 consolidated into one `zotero` skill with verbs (waves A #1178 + B #1179, author force-approve on a full review round), the `~/.idh` rider landed as 1025 (#1177), and the gaze un-reviewable breaker now counts content-bearing files (1026, #1180 — pure renames no longer fire it). The 0485 byte-for-byte report reproduction remains author-side; the vendored URL-intake copy in livre-milliards-climat (already drifted) and the now-dangling installed symlink are recorded in 1018.
 The external-reviewer panel train is closed (0902 #1155; 0205 retired at #1157; teardown in the attribution train 1004→1009). The verification loop is ALSO closed: 1016/1017/1021/0879/0990 all merged 2026-10-03 (WAVE_BASE wave annotations, detached-seat substitution, spawn-trust preflight, erg log placement + reroll_bump routing, orchestrator-run gaze + battery NOT-RUN signal). Agent profiles landed under 0938 (2026-10-03): five shells + contracts (agents channel 761/800), all inventory-justified call sites converted, Pi portability demonstrated live; design note with two external strong reviews merged via #1171.
 
 ## Next actions
 See [ROADMAP.md](ROADMAP.md) for the trains. Verification, raid-annotations, agent-profiles (0938) and Zotero are done. Remaining: attribution teardown 1009 through its bounded children, runtime policy 0974 (+0980 pending 1009), Claude adapter 0887 (0888 integrated in PR1187), memory 0913 standing rollout, and model-tournament 1024 in a parallel session. Portable Gaze simplification 1027 integrated in PR1189. Current routing notes are recorded in 0980/1004; pending tournament evidence does not choose a subscription or provider.
-The primary checkout is based on merged main 3f69ed5b and retains an unrelated guards edit plus the untracked tournament concept and 1024 ticket. This raid uses owned isolated worktrees and preserves that material.
+The primary checkout is based on merged main b95aff7c and retains an unrelated guards edit plus the untracked tournament concept and 1024 ticket. This raid uses owned isolated worktrees and preserves that material.
 
 ## Author actions
 - Install the ILaaS consortium key in `~/.config/keys/ilaas.env`, then configure `models.json` (0977).
