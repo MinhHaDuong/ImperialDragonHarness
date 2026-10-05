@@ -16,7 +16,8 @@ IDH_ROOT="$(pwd -P)"
 ```
 
 Host installation registers individual rules, skills, instructions and
-launchers, merges required hooks into Claude/Codex configuration, and links
+launchers, links the Claude adapter plugin (the single Claude hook source,
+0887), merges the Codex hooks into its configuration, and links
 the Pi guard extension. Runtime profiles remain independently owned.
 It also edits the shell loader: review these host-wide actions before
 running it. Scheduling is left to the host. There is no dry run or runtime selector.

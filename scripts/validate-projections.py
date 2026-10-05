@@ -123,6 +123,25 @@ def hook_identity(block):
     return normalized
 
 
+def harness_hooks(document):
+    """The hook blocks a document carries that translate onto the plugin
+    launcher — the harness-owned registrations, whatever spelling they were
+    installed under. Foreign hooks (RTK is owned by its installer) translate
+    to themselves and are not returned.
+
+    This is the live-side half of the single-source contract (0887
+    activation): the adapter plugin is the only hook home, so a live
+    settings file still carrying harness hooks double-fires every guard.
+    """
+    stale = {}
+    for event, blocks in document.get("hooks", {}).items():
+        for block in blocks:
+            commands = [h.get("command", "") for h in block.get("hooks", [])]
+            if any(translate(c) != c for c in commands):
+                stale.setdefault(event, []).append(block)
+    return stale
+
+
 def merge_hooks(actual, wanted):
     if not isinstance(actual, dict):
         raise ValueError("configuration must be an object")
@@ -159,10 +178,22 @@ def check_entry(entry: dict, root: Path):
         try:
             actual = json.loads(path.read_text())
             wanted = json.loads(target.read_text())
-            merged = merge_hooks(json.loads(json.dumps(actual)), wanted)
-            if merged == actual:
-                return None
-            reason = "harness hooks missing"
+            if managed_hooks(wanted):
+                merged = merge_hooks(json.loads(json.dumps(actual)), wanted)
+                if merged == actual:
+                    return None
+                reason = "harness hooks missing"
+            else:
+                # Absence mode (0887 activation): the canonical carries no
+                # hooks — they moved to the adapter plugin — so a live file
+                # still carrying them double-fires every guard.
+                stale = harness_hooks(actual)
+                if not stale:
+                    return None
+                reason = (
+                    "harness hooks stale in the live settings — they moved "
+                    f"to the adapter plugin and now double-fire ({sorted(stale)})"
+                )
         except (OSError, ValueError, TypeError, AttributeError) as exc:
             reason = str(exc)
         return ("MISSING", f"{path}: {reason}",

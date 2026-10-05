@@ -534,3 +534,77 @@ def test_session_start_reminds_only_when_the_loader_is_absent(
     assert ("harness loader is not in your shell config" in r.stdout) is reminded, (
         r.stdout
     )
+
+
+# --- the single-source contract (0887 activation) -------------------------
+
+
+STALE_HARNESS_HOOK = {
+    "matcher": "",
+    "hooks": [
+        {
+            "type": "command",
+            "command": (
+                '[ -x "$HOME/.local/bin/idh-hook" ] || { echo "IDH: hook launcher '
+                'missing; run <checkout>/bin/idh install from a plain terminal" '
+                '>&2; exit 2; }; exec "$HOME/.local/bin/idh-hook" on-start.sh'
+            ),
+            "timeout": 30,
+        }
+    ],
+}
+
+
+def _live_settings(world):
+    return world["home"] / ".claude" / "settings.json"
+
+
+def test_stale_harness_hooks_in_live_settings_block_the_launch(world):
+    """The canonical carries no hooks (they moved to the plugin), so a live
+    file still carrying them double-fires every guard: the launch must name
+    that state instead of passing vacuously."""
+    path = _live_settings(world)
+    doc = json.loads(path.read_text())
+    doc["hooks"] = {"SessionStart": [STALE_HARNESS_HOOK]}
+    path.write_text(json.dumps(doc))
+
+    r = validate(world, "claude")
+
+    assert r.returncode == 1
+    assert "double-fire" in r.stderr
+
+
+def test_operator_hooks_in_live_settings_do_not_block_the_launch(world):
+    """Absence mode refuses only the harness's own registrations: RTK and
+    other foreign hooks are the operator's and stay."""
+    path = _live_settings(world)
+    doc = json.loads(path.read_text())
+    doc["hooks"] = {
+        "SessionStart": [{"matcher": "", "hooks": [{"type": "command", "command": "rtk hook claude"}]}]
+    }
+    path.write_text(json.dumps(doc))
+
+    assert validate(world, "claude").returncode == 0
+
+
+def test_a_clean_live_settings_validates(world):
+    """The intended end state — no hooks key at all — is healthy."""
+    path = _live_settings(world)
+    doc = json.loads(path.read_text())
+    doc.pop("hooks", None)
+    path.write_text(json.dumps(doc))
+
+    assert validate(world, "claude").returncode == 0
+
+
+def test_a_missing_plugin_link_blocks_the_launch(world):
+    """The plugin link is the single hook source; hooks fail open, so the
+    pre-launch check is what sees a missing or dangling switch."""
+    link = world["home"] / ".claude" / "skills" / "claude-code"
+    assert link.is_symlink()
+    link.unlink()
+
+    r = validate(world, "claude")
+
+    assert r.returncode == 1
+    assert "claude-code" in r.stderr

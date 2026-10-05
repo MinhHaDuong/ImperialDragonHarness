@@ -9,7 +9,16 @@
       ],
       "required": true,
       "registration": "hooks",
-      "why": "Additive Claude hooks in independently owned settings"
+      "why": "Claude surfaces in independently owned settings; the hooks moved to the adapter plugin (0887), so this check refuses stale harness hooks that would double-fire"
+    },
+    {
+      "path": "~/.claude/skills/claude-code",
+      "target": "$IDH_ROOT/adapters/claude-code",
+      "runtimes": [
+        "claude"
+      ],
+      "required": true,
+      "why": "the single Claude hook source; a missing or dangling link silently drops every guard (0887)"
     },
     {
       "path": "~/.local/bin/idh-hook",

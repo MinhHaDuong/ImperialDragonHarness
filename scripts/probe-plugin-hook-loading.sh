@@ -19,7 +19,9 @@
 # symlink is what makes the plugin discoverable, so removing the target while
 # keeping the link must stop the hook. A D that fires would mean discovery
 # caches the plugin somewhere the link does not control, and the switch would
-# not be a switch.
+# not be a switch. D is only a finding when A fired: the same binary, the
+# same run shape — a D silence over an A silence means claude did not run at
+# all, not that the broken link was respected.
 #
 # Each case runs `claude -p` in a throwaway HOME with a SessionStart hook whose
 # whole job is to touch a marker file. Requires a working `claude` on PATH and

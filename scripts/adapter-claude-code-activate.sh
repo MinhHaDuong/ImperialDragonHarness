@@ -3,11 +3,16 @@
 #
 # Ticket 0887. The adapter ships inert on purpose. The harness and runtime profile are independent. A plugin directory
 # registered under the runtime's skills/ is
-# auto-discovered on the next session -- while the live settings.json still
-# carries its own copy of the same hooks. Both sources firing means every guard
-# runs twice, on-start.sh backgrounds its git sync twice, and the log lines
+# auto-discovered on the next session. When the live settings.json ALSO
+# carries a copy of the same hooks, both sources fire: every guard runs
+# twice, on-start.sh backgrounds its git sync twice, and the log lines
 # double. The symlink this script creates is therefore the switch, and the
 # switch refuses to close while the live file would double-fire.
+#
+# Run from a git worktree, activate and revert both refuse: the link already
+# exists (activate) or does not point at THIS checkout's adapter (revert's
+# managed-link check), so a worktree session can neither move nor remove the
+# reference checkout's switch.
 #
 #   activate            create the link, after checking the live file
 #   --revert            remove the link

@@ -107,15 +107,30 @@ def pi_adapter_violations(source: str):
 # --- Claude Code wiring (the adapter plugin is the hook source) -----------
 
 
-def test_claude_wiring_wires_the_canonical_guard():
+CLAUDE_SCRIPT = '"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook" guard-destructive-bash.sh'
+
+
+def test_claude_wiring_names_the_same_guard():
     doc = json.loads((REPO / "adapters" / "claude-code" / "hooks" / "hooks.json").read_text())
     commands = wiring_commands(doc, source_name="adapters/claude-code/hooks/hooks.json")
-    # The plugin launches through its own resolved-root launcher
-    # (`${CLAUDE_PLUGIN_ROOT}/bin/idh-hook`), so the invariant is the guard
-    # script's name, not the invocation's spelling.
-    assert any("guard-destructive-bash.sh" in c for c in commands), (
-        f"the canonical guard script is not wired; found {commands}"
-    )
+    # Pinned at full strength, like the Codex wiring below: the invariant is
+    # the exact launcher invocation, not the guard script's bare name.
+    assert_names_canonical_guard(commands, CLAUDE_SCRIPT)
+
+
+def test_claude_wiring_pins_the_rtk_block():
+    """The RTK hook rode along in the move to the plugin; pin it there.
+
+    RTK is owned by its installer, so merge_hooks never manages it — nothing
+    else would notice if it were dropped from its new single home.
+    """
+    doc = json.loads((REPO / "adapters" / "claude-code" / "hooks" / "hooks.json").read_text())
+    commands = [
+        hook.get("command", "")
+        for group in doc["hooks"]["PreToolUse"]
+        for hook in group.get("hooks", [])
+    ]
+    assert "rtk hook claude" in commands
 
 
 # --- Codex wiring ----------------------------------------------------------

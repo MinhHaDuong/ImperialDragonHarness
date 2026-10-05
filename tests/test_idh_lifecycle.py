@@ -71,7 +71,12 @@ def test_install_then_check_round_trip_and_planted_break(machine):
         if entry.get("registration"):
             actual = json.loads(path.read_text())
             wanted = json.loads(target.read_text())
-            assert validator.merge_hooks(json.loads(json.dumps(actual)), wanted) == actual
+            if validator.managed_hooks(wanted):
+                assert validator.merge_hooks(json.loads(json.dumps(actual)), wanted) == actual
+            else:
+                # Absence mode (0887): the canonical declares no hooks, so the
+                # live file must carry none of ours — anything else double-fires.
+                assert validator.harness_hooks(actual) == {}, (path, actual)
         else:
             assert path.resolve() == target.resolve(), (path, target)
     assert (home / ".local" / "bin" / "idh").resolve() == IDH.resolve()
@@ -501,3 +506,43 @@ def test_preexisting_hook_link_is_not_claimed_by_install(machine):
     receipt = json.loads((home / ".local/state/idh/links.json").read_text())
     assert str(hooks) not in receipt
     assert hooks.readlink() == before
+
+
+def test_install_removes_stale_harness_hooks_from_live_settings(machine):
+    """The 0887 endgame, install side: hooks live in the adapter plugin, so a
+    live settings file still carrying them double-fires every guard. install
+    removes the harness's own blocks and leaves the operator's hooks alone."""
+    home, idh = machine["home"], machine["idh"]
+    assert idh("install").returncode == 0
+    settings = home / ".claude" / "settings.json"
+    stale_block = {
+        "matcher": "",
+        "hooks": [
+            {
+                "type": "command",
+                "command": (
+                    '[ -x "$HOME/.local/bin/idh-hook" ] || { echo "IDH: hook '
+                    'launcher missing; run <checkout>/bin/idh install from a '
+                    'plain terminal" >&2; exit 2; }; exec '
+                    '"$HOME/.local/bin/idh-hook" on-start.sh'
+                ),
+                "timeout": 30,
+            }
+        ],
+    }
+    operator_block = {
+        "matcher": "",
+        "hooks": [{"type": "command", "command": "echo operator-owned"}],
+    }
+    doc = json.loads(settings.read_text())
+    doc["hooks"] = {"SessionStart": [stale_block, operator_block]}
+    settings.write_text(json.dumps(doc))
+
+    r = idh("install")
+
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "removed stale harness hooks" in r.stdout
+    after = json.loads(settings.read_text())
+    assert after["hooks"] == {"SessionStart": [operator_block]}
+    r = idh("check")
+    assert r.returncode == 0, r.stdout + r.stderr

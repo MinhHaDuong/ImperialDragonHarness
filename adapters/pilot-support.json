@@ -404,7 +404,7 @@
       "native_expression": "PreToolUse matcher Bash -> installed idh-hook launcher -> canonical guard",
       "disposition": "harness-specific",
       "evidence_kind": "static-test",
-      "test": "tests/test_guard_adapter_wiring.py::test_claude_wiring_wires_the_canonical_guard",
+      "test": "tests/test_guard_adapter_wiring.py::test_claude_wiring_names_the_same_guard",
       "result": "pass"
     },
     {

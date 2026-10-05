@@ -162,8 +162,9 @@ the reason on stderr — carried by three thin wirings. The guard owns the
 decision; adapters only normalize input and carry it. Portability did not
 turn enforcement into advice:
 
-- **Claude Code**: the existing `PreToolUse(Bash)` hook in
-  `settings.shared.json`, registered through the installed launcher.
+- **Claude Code**: the `PreToolUse(Bash)` hook in the adapter plugin
+  (`claude-code/hooks/hooks.json` — the single hook source since 0887's
+  activation), running through the plugin's own resolved-root launcher.
 - **Codex**: `codex/hooks.json` — Codex's PreToolUse payload carries
   `tool_input.command` and its block contract accepts exit 2 with the
   reason on stderr, so the same script runs byte-identical. Install:

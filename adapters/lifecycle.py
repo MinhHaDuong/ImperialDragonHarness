@@ -116,7 +116,27 @@ def register_settings(entry, path, target) -> int:
         old = path.read_bytes() if path.exists() else b"{}"
         actual = json.loads(old)
         wanted = json.loads(target.read_text())
-        V.merge_hooks(actual, wanted)
+        if V.managed_hooks(wanted):
+            V.merge_hooks(actual, wanted)
+            hooks_message = f"installed: runtime hooks in {path}"
+        else:
+            # Absence mode (0887 activation): the harness hooks moved to the
+            # adapter plugin; remove ours from the live file instead of
+            # adding them, or every guard fires twice. Foreign hooks (RTK)
+            # and everything else in the file stay untouched.
+            stale = V.harness_hooks(actual)
+            for event, blocks in stale.items():
+                remaining = [b for b in actual["hooks"].get(event, []) if b not in blocks]
+                if remaining:
+                    actual["hooks"][event] = remaining
+                else:
+                    actual["hooks"].pop(event)
+            if not actual.get("hooks"):
+                actual.pop("hooks", None)
+            hooks_message = (
+                f"installed: removed stale harness hooks from {path} "
+                "(they live in the adapter plugin now)"
+            ) if stale else ""
         if "claude" in entry["runtimes"]:
             status = actual.get("statusLine")
             if status == {"type": "command", "command": "$HOME/.idh/scripts/statusline.sh"}:
@@ -138,7 +158,7 @@ def register_settings(entry, path, target) -> int:
         if path.exists():
             _backup(path, old, mode)
         _replace(path, (json.dumps(actual, indent=2) + "\n").encode(), mode)
-        print(f"installed: runtime hooks in {path}")
+        print(hooks_message or f"installed: runtime settings in {path}")
         return 0
     except (OSError, ValueError, TypeError, AttributeError) as exc:
         report("REFUSED", f"{path}: {exc}", "inspect runtime settings, then rerun idh install")
