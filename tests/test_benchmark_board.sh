@@ -44,13 +44,13 @@
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-BOARD="${REPO_ROOT}/skills/reviewers/benchmark-board.yml"
+BOARD="${REPO_ROOT}/skills/coaching/benchmark-board.yml"
 PASS=0; FAIL=0
 
 fail() { echo "FAIL: $*"; FAIL=$((FAIL+1)); }
 pass() { echo "PASS: $*"; PASS=$((PASS+1)); }
 
-[ -f "$BOARD" ] || { echo "FAIL: skills/reviewers/benchmark-board.yml missing"; exit 1; }
+[ -f "$BOARD" ] || { echo "FAIL: skills/coaching/benchmark-board.yml missing"; exit 1; }
 
 # ── parse: one pipe-delimited record per entry ────────────────────────────────
 # pr|has_defects_key|has_justification|base|head|panel|defects|confirmed

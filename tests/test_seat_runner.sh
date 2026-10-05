@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for scripts/seat-runner.sh — the ticket-0217 OS-contained reviewer seat.
+# Tests for skills/coaching/seat-runner.sh — the ticket-0217 OS-contained reviewer seat.
 #
 # Two tiers, both in one suite (test_bash_suites.py runs it as one integration
 # subprocess, 120s budget):
@@ -49,9 +49,9 @@ fi
 unset _hermetic_probe
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SR="${REPO_ROOT}/scripts/seat-runner.sh"
-RELAY="${REPO_ROOT}/scripts/seat-runner/net-relay.py"
-CONTAINERFILE="${REPO_ROOT}/scripts/seat-runner/Containerfile"
+SR="${REPO_ROOT}/skills/coaching/seat-runner.sh"
+RELAY="${REPO_ROOT}/skills/coaching/seat-runner/net-relay.py"
+CONTAINERFILE="${REPO_ROOT}/skills/coaching/seat-runner/Containerfile"
 IMAGE="localhost/seat-runner:v1"
 PASS=0; FAIL=0
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
@@ -73,7 +73,7 @@ assert_absent() {  # label needle haystack
 }
 
 # ── tier 1: source inspection (no podman needed) ─────────────────────────────
-[ -f "$SR" ] || { echo "FAIL: scripts/seat-runner.sh missing (rename not done)"; echo "Results: 0 passed, 1 failed"; exit 1; }
+[ -f "$SR" ] || { echo "FAIL: skills/coaching/seat-runner.sh missing (rename not done)"; echo "Results: 0 passed, 1 failed"; exit 1; }
 SRC="$(cat "$SR")"
 
 assert_contains "self-test-only flag exists"        "--self-test-only" "$SRC"

@@ -179,7 +179,7 @@ else
 fi
 
 # ── the shipped benchmark board parses and its anchors stay agnostic-clean ───
-SHIPPED="${REPO_ROOT}/skills/reviewers/benchmark-board.yml"
+SHIPPED="${REPO_ROOT}/skills/coaching/benchmark-board.yml"
 if [ -f "$SHIPPED" ]; then
     # It must carry at least the frozen 10 entries (ticket 0346 froze 10;
     # ticket 1008 appends mined defect-bearing games on top).
@@ -214,7 +214,7 @@ STUBEOF
         assert_contains "shipped board: board size matches the file" "board=${n}MR" "$smoke"
     fi
 else
-    echo "FAIL: skills/reviewers/benchmark-board.yml missing"; FAIL=$((FAIL+1))
+    echo "FAIL: skills/coaching/benchmark-board.yml missing"; FAIL=$((FAIL+1))
 fi
 
 # ── B1: seat-runner failure surfaces the .err diagnostic on stderr ───────────

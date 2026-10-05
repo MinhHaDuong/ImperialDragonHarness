@@ -5,7 +5,7 @@
 # image is absent, so CI never needs a builder:
 #
 #   podman build -t localhost/seat-runner:v1 \
-#       -f scripts/seat-runner/Containerfile scripts/seat-runner
+#       -f skills/coaching/seat-runner/Containerfile skills/coaching/seat-runner
 #
 # The runtime seat mounts the invoking user's aider CLI venv + interpreter
 # (read-only, allowlisted — not all of ~/.local); those uv shebangs point at a
