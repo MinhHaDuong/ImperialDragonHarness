@@ -123,7 +123,10 @@ def register_settings(entry, path, target) -> int:
             # Absence mode (0887 activation): the harness hooks moved to the
             # adapter plugin; remove ours from the live file instead of
             # adding them, or every guard fires twice. Foreign hooks (RTK)
-            # and everything else in the file stay untouched.
+            # and everything else in the file stay untouched. Granularity is
+            # the block: a block mixing harness and operator commands would
+            # go whole — the settings have never mixed them, and splitting a
+            # block would rewrite semantics the harness does not own.
             stale = V.harness_hooks(actual)
             for event, blocks in stale.items():
                 remaining = [b for b in actual["hooks"].get(event, []) if b not in blocks]
