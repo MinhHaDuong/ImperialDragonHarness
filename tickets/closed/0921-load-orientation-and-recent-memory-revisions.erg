@@ -3,6 +3,7 @@ Title: Load orientation and recent changes with optimistic revision checks
 Created: 2026-09-11
 Author: codex
 Label: deferred
+Closed: Superseded by the author-approved v8 scope; orientation/recent loader and G/C overlay were abandoned in favor of the searchable append-only journal. Historical body and prior designs remain preserved; no abandoned mechanism was implemented.
 
 --- log ---
 2026-09-11T07:04Z codex created
@@ -11,6 +12,8 @@ Label: deferred
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-09-11T08:45Z claude note After the Fable plan review: inherits the loader half of 0920's withdrawal test, which 0920 cannot exercise at its position.
 2026-10-01T20:37Z MinhHaDuong codex note Superseded by v8; deferred to prevent obsolete implementation dispatch. Not implemented or closed.
+2026-10-05T19:17Z reviewer closed — Superseded by the author-approved v8 scope; orientation/recent loader and G/C overlay were abandoned in favor of the searchable append-only journal. Historical body and prior designs remain preserved; no abandoned mechanism was implemented.
+
 --- body ---
 
 ## Superseded by v8 — do not dispatch

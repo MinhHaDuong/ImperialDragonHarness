@@ -3,12 +3,15 @@ Title: Import legacy inactive markers without retiring particulars
 Created: 2026-09-10
 Author: claude
 Label: deferred
+Closed: Superseded by the author-approved v8 scope; legacy inactive markers are covered by the v8 inventory and pilot when needed. Historical body and prior design remain preserved; no abandoned mechanism was implemented.
 
 --- log ---
 2026-09-10T15:50Z claude created
 2026-09-11T07:04Z codex note Realigned to design v6 adopted by PR #903; prior scope retained in Git history.
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-10-01T20:37Z MinhHaDuong codex note Superseded by v8; deferred to prevent obsolete implementation dispatch. Not implemented or closed.
+2026-10-05T19:17Z reviewer closed — Superseded by the author-approved v8 scope; legacy inactive markers are covered by the v8 inventory and pilot when needed. Historical body and prior design remain preserved; no abandoned mechanism was implemented.
+
 --- body ---
 
 ## Superseded by v8 — do not dispatch
