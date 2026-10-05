@@ -261,13 +261,7 @@ def main(argv=None) -> int:
             file=sys.stderr,
         )
         return 1
-    failures = []
-    for entry in entries:
-        problem = check_entry(entry, root)
-        if problem:
-            failures.append((entry, problem))
-
-    if not failures:
+    if not any(check_entry(entry, root) for entry in entries):
         return 0
 
     err = sys.stderr
