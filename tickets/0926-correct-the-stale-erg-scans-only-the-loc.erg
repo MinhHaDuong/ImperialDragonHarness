@@ -2,10 +2,10 @@
 Title: Correct the stale erg-scans-only-the-local-checkout premise in tickets AGENTS.md
 Created: 2026-09-11
 Author: claude
-Label: deferred
 
 --- log ---
 2026-09-11T15:37Z claude created
+2026-10-05T18:04Z reviewer note raid Imagine — author lifted deferral on 2026-10-05. Original AGENTS bullet already removed by 5ad7d567; preserve pristine shipped asset. Remaining stale collision-script header will be corrected after fresh allocator evidence. Generic integration advice has a base-tip exception documented accurately in LOCAL.md.
 
 --- body ---
 ## Context
