@@ -2,12 +2,14 @@
 Title: Correct the stale erg-scans-only-the-local-checkout premise in tickets AGENTS.md
 Created: 2026-09-11
 Author: claude
+Closed: autoclosed — PR #1204
 
 --- log ---
 2026-09-11T15:37Z claude created
 2026-10-05T18:04Z reviewer note raid Imagine — author lifted deferral on 2026-10-05. Original AGENTS bullet already removed by 5ad7d567; preserve pristine shipped asset. Remaining stale collision-script header will be corrected after fresh allocator evidence. Generic integration advice has a base-tip exception documented accurately in LOCAL.md.
 2026-10-05T18:04Z reviewer note raid Plan — verify shipped asset equality and current integration doctrine; probe allocator in throwaway Git repository with baseline, unpushed ref, sibling draft and post-removal controls; record binary SHA256. Correct only stale script header; audit fetch/check/merge/renumber advice without upstream or behavioral changes. No implementation-mirroring test.
 2026-10-05T18:04Z reviewer note raid Feasibility PASS — 2 content paths, no APIs/keys, no shared registry; source script and pristine-asset gate exist. Original resident correction already delivered; remaining header correction and empirical proof preserve exit intent. LOCAL describes local base-tip exception.
+2026-10-05T19:38Z reviewer closed — autoclosed — PR #1204
 
 --- body ---
 ## Context
