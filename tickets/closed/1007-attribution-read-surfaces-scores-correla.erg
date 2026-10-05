@@ -117,3 +117,11 @@ field remains intact. An asymmetric same-game CLI fixture checks either seat
 can have one extra confirmed anchor, while the concordance cell remains both.
 JSON and readable controls reproduce red then green, preserving fixed Jeffreys
 intervals and existing exact identities/game denominators.
+
+PR1193 Correctness/Red-team encrypted-suffix follow-up: query discovery now
+recognizes memory-capture.sh's actual extensionless-slug plus .age basename,
+retaining .md and .md.age compatibility. Ciphertext-only evidence is visible
+and unavailable; a public sibling makes the whole PR ambiguous and excludes
+all score/coverage credit. Actual CLI regressions use a non-UTF8 ciphertext
+stub at the real basename and check JSON/readable output plus merge coverage;
+no private contents, decryption, fallback or credential access is involved.

@@ -115,7 +115,7 @@ def test_jeffreys_analytic_golden_symmetry_and_extremes():
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize('sibling', ['valid', 'malformed', 'encrypted', 'header-mismatch'])
+@pytest.mark.parametrize('sibling', ['valid', 'malformed', 'encrypted', 'header-mismatch', 'private-only', 'private-sibling'])
 def test_explicit_merge_coverage_does_not_accept_ambiguous_records(tmp_path, sibling):
     def git(*args):
         result = subprocess.run(['git','-C',str(tmp_path),*args],text=True,capture_output=True,check=True,env=child_env())
@@ -123,7 +123,11 @@ def test_explicit_merge_coverage_does_not_accept_ambiguous_records(tmp_path, sib
 
     journal = dataset(tmp_path)
     duplicate = (journal/'2026-10-05-review-attribution-pr1.md').read_text()
-    if sibling == 'encrypted':
+    if sibling.startswith('private-'):
+        (journal/'2026-10-06-review-attribution-pr1.age').write_bytes(b'\xffciphertext-stub')
+        if sibling == 'private-only':
+            (journal/'2026-10-05-review-attribution-pr1.md').unlink()
+    elif sibling == 'encrypted':
         (journal/'2026-10-06-review-attribution-pr1.md.age').write_bytes(b'encrypted')
     else:
         if sibling == 'malformed':
@@ -147,6 +151,10 @@ def test_explicit_merge_coverage_does_not_accept_ambiguous_records(tmp_path, sib
         git('merge','--no-ff',f'branch-{pr}','-m',f'Merge pull request #{pr} from owner/branch-{pr}')
     data = json.loads(cli(tmp_path,'--json','--since',base,'--until','main').stdout)
     assert [(merge['pr'],merge['attribution']) for merge in data['coverage']] == [(1,'unavailable'),(2,'unavailable' if sibling == 'header-mismatch' else 'available'),(99,'missing')]
+    if sibling.startswith('private-'):
+        assert data['records']['encrypted_unavailable'] == 1
+        assert data['records']['valid'] == 7
+        assert data['records']['ambiguous_prs'] == ([1] if sibling == 'private-sibling' else [])
     assert data['coverage'][-1]['merge_sha'] == git('rev-parse','main')
     assert 'coverage' not in json.loads(cli(tmp_path,'--json').stdout)
 
@@ -249,3 +257,27 @@ def test_both_directional_marginals_survive_pair_sorting(tmp_path, unique_seat):
     assert fields['unique-B anchors'] == str(int(unique_seat == 'B'))
     assert fields['marginal A given B'].startswith(f'{int(unique_seat == "A")}/1 [')
     assert fields['marginal B given A'].startswith(f'{int(unique_seat == "B")}/1 [')
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('public_sibling', [False, True])
+def test_actual_private_capture_basename_is_visible_unavailable(tmp_path, public_sibling):
+    journal = tmp_path/'memory/journal/2026'
+    journal.mkdir(parents=True)
+    # memory-capture.sh appends .age directly to its extensionless dated slug.
+    (journal/'2026-10-05-review-attribution-pr12.age').write_bytes(b'\xffciphertext-stub')
+    if public_sibling:
+        (journal/'2026-10-06-review-attribution-pr12.md').write_text(
+            record(12, [('A', 'ran', [('x:1', True)])]))
+    result = cli(tmp_path, '--json')
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data['records']['encrypted_unavailable'] == 1
+    assert data['records']['malformed'] == 0
+    assert data['records']['valid'] == 0 and data['scores'] == []
+    assert data['records']['ambiguous_prs'] == ([12] if public_sibling else [])
+    assert data['records']['ambiguous_records'] == (2 if public_sibling else 0)
+    assert 'pr12.age' in result.stderr and 'encrypted attribution unavailable' in result.stderr
+    readable = cli(tmp_path)
+    assert '"encrypted_unavailable": 1' in readable.stdout
+    assert 'no decryption attempted' in readable.stderr

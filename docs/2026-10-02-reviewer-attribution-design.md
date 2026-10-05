@@ -215,7 +215,9 @@ filenames are read through the strict shared parser; malformed whole records
 WARN with the filename and parser diagnostic. Identifiable filename/header PRs
 are reserved before parsing: multiple record sources for a PR WARN and are all
 excluded, including malformed or encrypted siblings. Encrypted records are
-unavailable, never decrypted. Symlink components, including internal record
+unavailable, never decrypted. Discovery recognizes the capture writer's actual
+`.age` suffix as well as `.md` and legacy `.md.age`, reserving the filename PR
+before any read. Symlink components, including internal record
 links and a symlinked journal/year root, are unavailable and never read.
 No data or coaching judgments are persisted.
 

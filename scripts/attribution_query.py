@@ -17,7 +17,7 @@ else:
     from attribution_record import parse_record
 
 LOG = logging.getLogger(__name__)
-RECORD_NAME = re.compile(r"\d{4}-\d{2}-\d{2}-review-attribution-pr([1-9][0-9]*)\.md(\.age)?$")
+RECORD_NAME = re.compile(r"\d{4}-\d{2}-\d{2}-review-attribution-pr([1-9][0-9]*)(\.md|\.age|\.md\.age)$")
 REVIEWER_FIELDS = ('seat', 'runtime', 'model', 'model-version')
 WRITER_FIELDS = ('runtime', 'model', 'model-version', 'effort')
 GUIDANCE = (
@@ -103,7 +103,7 @@ def read_records(project):
             unavailable_prs.add(pr)
             LOG.warning('WARN %s: symlink or escaping record unavailable; not read', path)
             continue
-        if match[2]:
+        if match[2].endswith('.age'):
             counts['encrypted_unavailable'] += 1
             unavailable_prs.add(pr)
             LOG.warning('WARN %s: encrypted attribution unavailable; no decryption attempted', path)
