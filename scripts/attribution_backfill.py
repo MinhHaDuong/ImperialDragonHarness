@@ -124,7 +124,7 @@ def covered_anchor(project, reviewed, base, fix, anchor, renamed):
     if line > len(git(project, "cat-file", "blob", reviewed_blob).splitlines()):
         raise ValueError("anchor line outside reviewed file")
     diff = git(project, "diff", "--no-ext-diff", "--no-textconv", "--no-renames",
-               "--unified=0", "--inter-hunk-context=0", base, fix, "--", ":(literal)" + path)
+               "--no-color", "--unified=0", "--inter-hunk-context=0", base, fix, "--", ":(literal)" + path)
     return any(int(start) <= line < int(start) + int(count or "1")
                for start, count in HUNK.findall(diff))
 
