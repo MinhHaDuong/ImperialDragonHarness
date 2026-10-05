@@ -2,10 +2,12 @@
 Title: Gaze: portable equivalent for native simplify phase
 Created: 2026-10-05
 Author: reviewer
+Closed: autoclosed — PR #1189
 
 --- log ---
 2026-10-05T10:10Z reviewer created
 
+2026-10-05T10:22Z reviewer closed — autoclosed — PR #1189
 --- body ---
 ## Context
 The mandatory Gaze simplification phase names Claude Code's native `/simplify`.
