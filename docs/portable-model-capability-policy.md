@@ -297,6 +297,13 @@ only governs compute allocation within it.
 
 ## Migration path
 
+Status 2026-10-05 (audit under ticket 0974): Phase 0 done (0975). Phases 1 and
+3 delivered in a different shape by ticket 1000 — skills declare intent and
+carry no pins, so "agreement with the existing pin" no longer applies. Phase 2
+(`team-lead` profile), Phase 4 (adapters, now the runtime's job) and Phase 5
+(economic defaults, gated on the 1024 tournament) remain; the plan text below
+is the original and has not been rewritten.
+
 ### Phase 0 — define semantics, change no behavior
 
 Add the two semantic controls and adapter mappings that reproduce today's
