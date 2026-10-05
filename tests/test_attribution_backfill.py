@@ -313,3 +313,15 @@ def test_integration_tip_without_fix_rejects(merged_wrap_project):
     result = run(project, "--merged-through", git(repo, "rev-parse", merged + "^1"))
     assert result.returncode != 0
     assert entry.read_bytes() == before
+
+
+@pytest.mark.parametrize("color_config", ["color.ui", "color.diff"])
+def test_forced_git_color_still_appends_covered_event(project, color_config):
+    repo, entry, _, _ = project
+    git(repo, "config", color_config, "always")
+    before = entry.read_bytes()
+    result = run(project)
+    assert result.returncode == 0, result.stderr
+    assert entry.read_bytes() == before + b"defect-confirmed: source.py:2 \xc2\xb7 source: post-merge-fix \xc2\xb7 pr: 34\n"
+    assert parse_record(entry.read_text())["defect_labels"] == ["source.py:2"]
+    assert "appended=1" in result.stderr
