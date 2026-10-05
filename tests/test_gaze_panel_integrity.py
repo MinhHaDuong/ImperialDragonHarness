@@ -52,3 +52,40 @@ def test_preflight_does_not_trust_spawn_success():
     assert "agent.list" in preflight
     assert "source of truth" in preflight
     assert "#1143" in preflight
+
+
+def test_live_review_surfaces_do_not_dispatch_retired_governance():
+    """The live skills must not send an agent back into the old write API.
+
+    Check all three entry points, including Gaze setup and Raid recovery;
+    removing only the descriptor's command table would leave live callers.
+    Executables and their exclusive tests remain until the next teardown leg.
+    """
+    for name in ("reviewers", "gaze", "raid"):
+        path = ROOT / f"skills/{name}/SKILL.md"
+        text = path.read_text()
+        calls = re.findall(r"/reviewers\s+(\w+)", text)
+        retired = {"request", "harvest", "scorecard", "scores", "audition", "list"}
+        assert not retired.intersection(calls), (path, calls)
+        assert not re.search(r"(?:reviewers\.sh|panel(?:-padme)?\.yml)", text), path
+
+
+def test_runtime_route_keeps_finding_and_failure_evidence_separate():
+    """A clean review and an unavailable review must remain distinguishable.
+
+    Reuse the gate's existing finding classes and integrity records on the new
+    route, so an optional provider failure cannot masquerade as zero findings.
+    Pointer resolution itself is covered by test_skill_reference_pointers.
+    """
+    descriptor = (ROOT / "skills/reviewers/SKILL.md").read_text()
+    references = re.findall(r"`references/([\w.-]+\.md)`", descriptor)
+    assert references, "the runtime route needs its evidence contract"
+    route = "\n".join(
+        (ROOT / "skills/reviewers/references" / name).read_text()
+        for name in references
+    )
+    for token in ("verifiable:", "consider:", "SEAT-FAILED:",
+                  "SEAT-MISSING:", "PANEL-INTEGRITY:"):
+        assert token in route, f"runtime route lost gate record {token}"
+        assert token in (ROOT / "skills/gaze/SKILL.md").read_text(), token
+    assert "skills/coaching/SKILL.md" in descriptor
