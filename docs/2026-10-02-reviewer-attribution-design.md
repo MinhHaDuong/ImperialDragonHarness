@@ -145,6 +145,33 @@ Rules:
 8. **Fail-loud capture.** A reviewed PR whose record cannot name its
    reviewers is a defect to report, not an omission to fill in from memory.
 
+### Valid capture example (synthetic fixture)
+
+This is a parseable example, not evidence of an actual review. Never copy its
+identities into a live record. Initial capture has no `defect-confirmed:` line;
+post-merge events may subsequently be appended by the backfill hook. Repeated
+anchors across attempts are intentional shared catches.
+
+```text
+kind: review-attribution
+pr: 1164 · merged 2026-10-03 · project: .agents
+writer: runtime=fixture · model=example/writer-v1 · effort=standard
+reviewer: seat=correctness-round1 · runtime=fixture · model=example/reviewer-v1 · status: ran
+  finding: verifiable · scripts/example.py:12 · adopted: yes
+reviewer: seat=regression-round3 · runtime=fixture · model=example/reviewer-v1 · status: ran
+  finding: verifiable · scripts/example.py:12 · adopted: no
+reviewer: seat=external-round3 · runtime=fixture · model=example/external-v1 · status: failed
+```
+
+The reusable fixed-line reader is `scripts/attribution_record.py`. It validates
+required facts, preserves separate reviewer attempts and exposes confirmed
+defect anchors from adopted findings and later event lines. Context prose is
+opaque. Its `--capture PROJECT --audience public|private` mode validates stdin
+before calling the pinned project-memory helper; plain reading emits JSON.
+The encrypted-in-repo policy supersedes §4.7's private-companion alternative:
+uncleared attribution stays in the project as `.age`, never plaintext in a
+companion or native store.
+
 ## 5. The coaching loop
 
 1. **During review (unchanged, free):** the runtime reviews its own way;

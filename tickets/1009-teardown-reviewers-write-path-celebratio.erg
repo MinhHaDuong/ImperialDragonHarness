@@ -2,7 +2,6 @@
 Title: Teardown: reviewers write path, celebration telemetry, ticket dispositions
 Created: 2026-10-02
 Author: MinhHaDuong
-Blocked-by: 1005
 Blocked-by: 1006
 Blocked-by: 1007
 
@@ -12,6 +11,7 @@ Blocked-by: 1007
 2026-10-02T09:24Z MinhHaDuong note blocker 1008 closed — Blocked-by removed.
 2026-10-03T08:22Z qwen3.8-27b note 0205 and 0356 closed ahead of this ticket (2026-10-03 pass, author-approved) — action 3 dispositions for both are now verifications; action 3 remainder: close 0980 WONTDO + annotation lines on the seven closed trial tickets (0206/0207/0217/0208/0346/0348/0353); action 4: workflow.md decorrelation rule rewrite
 2026-10-03T12:57Z qwen3.8-27b note imagine pass recorded (2026-10-03, raid): keep-as-is; full deletion/move/reword inventory in the annotation — blind spots: lair step 0 + check-close-claims.sh reworded by box 2's grep-clean, raid denial-cure wiring reworded, roar renumbering has five cross-refs, seat-runner MOVED to the new coaching skill (not deleted), CLAUDE_TELEMETRY_DIR env var survives (shared with bin/snapshot, bin/usage-report, lair metrics)
+2026-10-05T10:34Z reviewer note blocker 1005 closed — Blocked-by removed.
 --- body ---
 ## Context
 

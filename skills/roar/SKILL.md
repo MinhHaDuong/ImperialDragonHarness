@@ -175,6 +175,40 @@ default branch — there are no remote branches nor merge requests to inspect.
    preserved and reported before worktree cleanup. Do not invoke memory-sweep
    to derive lessons or propose rules during roar.
 
+   **Capture review attribution for every reviewed merged PR**, even when
+   routine completion produces no significant-experience entry. Use the fixed
+   lines in [the attribution contract](../../docs/2026-10-02-reviewer-attribution-design.md#4-the-attribution-record):
+   first line `kind: review-attribution`, PR/date/project, writer runtime,
+   verbatim provider-qualified full model id and effort, then one named
+   `reviewer:` line per review attempt with `status: ran|failed|skipped`.
+   Include `model-version=` whenever the provider exposes it. Record findings
+   as repository-relative `path:line` with `adopted: yes|no`; identical anchors
+   across reviewers are shared catches. Keep distinct rounds and regression
+   checks as distinct name-or-role values, even when model and seat recur;
+   source revision, round and evidence references belong in opaque context.
+   A failed authentication is a named failed attempt, not a clean review.
+   No initial `defect-confirmed:` placeholder is written.
+
+   Read identities, attempt outcomes and adoption decisions from the actual
+   review trail (session outputs or durable PR review comments), never from
+   memory or the example template. Do not reconstruct a full model id from an
+   alias. A reviewed PR whose record cannot name its reviewers or establish
+   required facts is a **capture failure**: report the PR and missing facts in
+   step 11's summary; preserve the pending capture, never silently omit it.
+   Validate the complete record before writing: stream its text on stdin to
+   `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)" && python3 "$IDH_ROOT/scripts/attribution_record.py" --capture "$PROJECT_REPO" --audience public`
+   Replace `<loaded-SKILL.md>` with the absolute path supplied when loading
+   this Roar skill; resolve the helper root in the same shell invocation.
+   (use `private` for uncleared material). `PROJECT_REPO` is the resolved
+   project's wrap-up worktree; the helper writes the dated
+   `review-attribution-prNNNN` journal entry through `memory-capture.sh`.
+   Judge the audience before constructing any file; private text stays in the
+   stream, never a plaintext working-tree file. Report validation, encryption,
+   overwrite or integration failures visibly. Commit successful capture in
+   the same wrap-up bundle. Project installations with their own pinned capture
+   mechanism must apply that mechanism with the same validated record and
+   audience policy; no fallback store is authorized.
+
 ## Bundle and fast track
 
 Roar creates **at most one project branch/worktree** for all wrap-up changes:
