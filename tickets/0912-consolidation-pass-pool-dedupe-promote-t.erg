@@ -12,6 +12,7 @@ Label: deferred
 2026-09-11T08:20Z claude note Rebased on design v7: acceptance conditions closed in §12.1 and nomenclature settled in §17. Scope unchanged; no implementation.
 2026-10-01T20:37Z MinhHaDuong codex note Superseded by v8; deferred to prevent obsolete implementation dispatch. Not implemented or closed.
 2026-10-05T18:04Z reviewer note raid Imagine — author explicitly selected closure as superseded after verification. v8 bbe0f189 abandoned separate discovery engine; editorial grouping belongs to delivered 0916. No former implementation claimed.
+2026-10-05T18:04Z reviewer note raid Plan — inspect v8 plan/design and delivered 0916 evidence; mark explicit disposition criterion satisfied, close as superseded, update v8 plan register together with 0919. No old engine implementation or new tests.
 
 --- body ---
 
