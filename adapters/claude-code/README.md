@@ -2,7 +2,7 @@
 
 The hook wiring of the Imperial Dragon Harness, packaged as a Claude Code
 skills-directory plugin. Ticket 0887; the instruction that argues for it, with
-the measurements, is `tickets/0887-*.erg`.
+the measurements, is `tickets/closed/0887-*.erg`.
 
 ## The switch
 
@@ -16,13 +16,16 @@ source — `settings.shared.json` carries no `hooks` key at all, ratcheted by
 
 ## Why a plugin at all
 
-Measured on Claude Code 2.1.266 (`scripts/probe-plugin-hook-loading.sh`):
+Measured on Claude Code 2.1.266 and re-measured on 2.1.289
+(`scripts/probe-plugin-hook-loading.sh`):
 
 - a plugin under `$HOME/.claude/skills/<name>/` loads with no marketplace, no
   install step, no `--plugin-dir` flag and no trust dialog;
 - it loads the same way through a symlink, which is what frees this directory
   from having to live under `skills/`;
-- project scope (`<repo>/.claude/skills/`) does *not* load under `claude -p`.
+- project scope (`<repo>/.claude/skills/`) does *not* load under `claude -p`;
+- a personal-scope plugin reached through a *broken* symlink does not load —
+  case D, the negative control that makes the link a real switch (2.1.289).
 
 Hooks fail **open** — absent, the guards silently do not run — so they belong
 in a layer git owns and the CLI never writes. Permissions fail **closed** and a
