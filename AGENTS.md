@@ -87,4 +87,6 @@ Roar records significant facts only. Dream consolidates project memory only.
 Neither proposes or creates rules, edits AGENTS.md, or promotes experiences into
 instructions. Crystallisation is a separate task requiring an explicit user
 request, including the intended destination. Repetition, general usefulness and
-acceptance of a memory PR do not grant that authorization.
+acceptance of a memory PR do not grant that authorization. Explicit Brood may
+implement project improvements; a named harness receives nominations only,
+until separately authorized implementation. Sources remain append-only.

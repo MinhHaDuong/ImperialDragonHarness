@@ -123,6 +123,7 @@ belong in the external keystore and are resolved by task-specific tools.
 |---------|-------------|
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
 | `/biblio-saturation` | Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness. |
+| `/brood` | Turn accepted Dream findings into project improvements and scoped harness nominations, on explicit request. |
 | `/choose-venue` | Choose where to submit a paper: shortlist journals, or conferences, by fit and diamond open access. |
 | `/conference-submission-prep` | Prepare a humanities and social sciences conference submission from its call for papers. |
 | `/critical-lit-review` | Critical literature review (état de l'art) in history of economics and STS: object, actors, controversies. |

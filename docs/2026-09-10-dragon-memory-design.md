@@ -233,19 +233,36 @@ du prompt. La prose d’un rêve n’est pas supposée reproductible à l’iden
 
 ## 7. Cristallisation et autorité
 
-Les projets écrivent uniquement dans leur dépôt ou leur compagnon privé
-explicitement configuré. Le harnais fournit des conventions et des outils ;
-il ne reçoit ni leurs souvenirs, ni leurs thèmes, ni leurs promotions. Son
-propre travail peut avoir une mémoire locale lorsqu’il est le projet assigné.
+Les souvenirs et thèmes restent dans le dépôt du projet ; le matériel non
+public y reste chiffré. Le harnais fournit conventions et outils. Sa propre
+mémoire est locale lorsqu’il est le projet explicitement assigné.
 
 Roar capture les faits. Le rêve consolide les thèmes et l’index. Aucun des deux
 ne propose de règles, ne modifie AGENTS.md, ne crée de procédure, test ou issue
 de cristallisation, même si une expérience semble générale ou répétée.
 
-Toute cristallisation demande une instruction explicite de l’auteur dans une
-tâche séparée, avec destination et périmètre. Accepter une PR de mémoire ne
-vaut pas autoriser des règles. Les thèmes peuvent citer des décisions déjà
-adoptées, sans produire de prescription concurrente. AGENTS.md reste court.
+Brood est une tâche post-Dream distincte, demandée explicitement avec destination
+et périmètre. Accepter une PR mémoire ne vaut pas cette autorisation. Brood
+examine les rêves acceptés, leurs révisions, les expériences conservées et les
+conflits. Il peut améliorer, simplifier ou supprimer une règle : l’autorité
+courante ne prouve pas son efficacité. Bénéfices observés, coût de contexte et
+maintenance, exceptions, contre-exemples et provenance guident la décision ;
+la faisabilité seule ne démontre pas le bénéfice. Des copies ou origines communes
+ne constituent pas des confirmations indépendantes. Aucun seuil automatique.
+
+Le projet ouvre un ticket et une PR d’implémentation locale, preuve de concept.
+Une nomination explicitement autorisée écrit seulement un ticket détaillé dans
+le harnais nommé, avec preuves adaptées à son audience ou reproducer assaini.
+L’implémenteur du harnais, mandaté séparément, confronte les nominations et
+implémentations de plusieurs projets, généralise et valide dans leurs contextes.
+Après adoption, il relie le résultat aux tickets locaux pour remplacer les copies
+ou justifier les exceptions conservées, selon leurs autorisations respectives.
+
+Les implémenteurs Brood peuvent annoter, simplifier ou faire décroître les thèmes
+consolidés sur preuves de remplacement, en conservant sources et contre-exemples ;
+le journal reste append-only. Ils revérifient les révisions avant écriture et
+réconcilient les changements Dream concurrents. Propositions, implémentations et
+résultats validés restent distincts. AGENTS.md reste court.
 
 ## 8. Mémoire native, confidentialité et limites
 
