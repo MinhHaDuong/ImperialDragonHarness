@@ -11,6 +11,8 @@ Author: Codex
 2026-10-05T09:27Z codex plan Nine content-bearing paths: Brood, catalog, AGENTS, template AGENTS, live design, delivery plan,0925,0888 and behavioral report. Freeze synthetic fixture expectations before skill execution; inspect destination diffs and journal hashes. No tautological tests/framework. Dream prompt/skill and historical memories unchanged.
 2026-10-05T09:30Z codex feasibility PASS nine planned content paths (<15), no shared-registry wave. Existing tests do not pin revised prohibition. Resident growth margin AGENTS/import368 chars and skill metadata497 chars; keep additions concise. Tools exist, auth/credit unproven; missing native review/simplify remains later gate limitation.
 
+2026-10-05T09:37Z codex execute Brood plus explicit-only policy implemented; independent synthetic behavior execution and report docs/memory-v8/brood-evaluation.md. Fast877, lint169, full1410passed2skipped; semantic adherence and merge-request review pending.
+
 --- body ---
 ## Context and author decisions
 
@@ -66,11 +68,11 @@ honestly; no manufactured historical evidence or implied automatic promotion.
 
 ## Exit criteria
 
-- [ ] Minimal Brood implements the author-approved project/harness workflow,
+- [x] Minimal Brood implements the author-approved project/harness workflow,
       evidence-led promotion timing and allowed consolidated-memory edits.
-- [ ] Live design/governance/templates and deferred 0925 consistently distinguish
+- [x] Live design/governance/templates and deferred 0925 consistently distinguish
       explicit Brood nominations from forbidden Roar/Dream promotions.
-- [ ] Behavior evaluation demonstrates destination boundaries, evidence limits,
+- [x] Behavior evaluation demonstrates destination boundaries, evidence limits,
       source preservation, revision coordination and adoption return path.
 - [ ] Independent review findings are resolved; catalog is current and `make check`
       and `tickets/erg check tickets/` pass.
