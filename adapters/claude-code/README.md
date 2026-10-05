@@ -10,8 +10,9 @@ Nothing loads until the symlink `~/.claude/skills/claude-code ->
 <checkout>/adapters/claude-code` exists. It is created by
 `scripts/adapter-claude-code-activate.sh`, which refuses to close the switch
 while the live settings still carry a hooks block, or by `bin/idh install`,
-which removes those stale hooks in the same pass — so install never leaves
-the double-fire state behind. Since the activation (2026-10-05) this plugin is the single hook
+which removes those stale hooks in the same pass. If the settings step then
+refuses (unreadable live file, unrepairable state), the removal runbook is
+`idh check`: it names the double-fire until the stale hooks are gone. Since the activation (2026-10-05) this plugin is the single hook
 source — `settings.shared.json` carries no `hooks` key at all, ratcheted by
 `tests/test_claude_code_adapter.py`.
 

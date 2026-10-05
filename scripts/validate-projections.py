@@ -219,8 +219,9 @@ def check_entry(entry: dict, root: Path):
                 if not stale:
                     return None
                 reason = (
-                    "harness hooks stale in the live settings — they moved "
-                    f"to the adapter plugin and now double-fire ({sorted(stale)})"
+                    "harness hooks stale in the live settings — the adapter "
+                    "plugin is the single hook source, so they double-fire "
+                    f"once its link is active and must go ({sorted(stale)})"
                 )
         except (OSError, ValueError, TypeError, AttributeError) as exc:
             reason = str(exc)

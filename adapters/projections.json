@@ -28,7 +28,7 @@
         "codex"
       ],
       "required": true,
-      "why": "Portable Claude hook launcher"
+      "why": "Portable hook launcher (the Codex wiring and the Claude statusline invoke it; the plugin resolves its own)"
     },
     {
       "path": "~/.local/lib/idh/bash-env.sh",

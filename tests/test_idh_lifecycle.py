@@ -571,3 +571,30 @@ def test_install_refuses_to_strand_a_machine_on_zero_guards(machine):
     after = json.loads(settings.read_text())
     assert "hooks" in after, "the stale hooks must keep firing, not be removed"
     assert (link / "foreign.txt").exists()
+
+
+def test_install_refuses_removal_when_the_plugin_payload_is_broken(machine):
+    """Round-3 red-team finding: a link that merely RESOLVES is not a working
+    hook source. With the payload broken, the settings hooks are the only
+    guards left — removal must refuse, or install silences the machine with
+    every gate green."""
+    home, idh = machine["home"], machine["idh"]
+    assert idh("install").returncode == 0  # link active, hooks clean
+    settings = home / ".claude" / "settings.json"
+    doc = json.loads(settings.read_text())
+    doc["hooks"] = {"SessionStart": [{"matcher": "", "hooks": [
+        {"type": "command", "command": 'bash "$HOME/.claude/scripts/on-start.sh"', "timeout": 30}
+    ]}]}
+    settings.write_text(json.dumps(doc))
+
+    payload = REPO / "adapters" / "claude-code" / "hooks" / "hooks.json"
+    backup = payload.read_bytes()
+    try:
+        payload.unlink()
+        r = idh("install")
+        assert r.returncode == 1
+        assert "zero guards" in r.stdout + r.stderr
+        after = json.loads(settings.read_text())
+        assert "hooks" in after, "the stale hooks must keep firing, not be removed"
+    finally:
+        payload.write_bytes(backup)

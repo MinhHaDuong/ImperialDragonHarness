@@ -101,17 +101,30 @@ def install_links() -> int:
 
 
 def _plugin_link_ready() -> bool:
-    """The adapter plugin link (the manifest's claude-code entry) resolves to
-    this checkout's adapter. The link is looked up in the manifest, never
-    hardcoded: if the entry moves, this follows it."""
+    """The adapter plugin is a working hook source: the manifest's
+    claude-code link resolves to this checkout's adapter AND the payload is
+    intact. Resolution alone proves the switch, not the source — with a
+    broken payload the settings hooks are the only working guards left, so
+    removal must refuse (round-3 red-team finding). The payload predicate
+    mirrors adapter_payload_ready in adapter-claude-code-activate.sh;
+    the link path is looked up in the manifest, never hardcoded."""
     for entry in entries("claude"):
         if entry["target"].endswith("/adapters/claude-code"):
             link = V.expand(entry["path"], root())
             target = V.expand(entry["target"], root())
             try:
-                return link.resolve(strict=True) == target.resolve(strict=True)
+                if link.resolve(strict=True) != target.resolve(strict=True):
+                    return False
             except (OSError, RuntimeError):
                 return False
+            return all(
+                (
+                    (target / ".claude-plugin" / "plugin.json").is_file(),
+                    (target / "hooks" / "hooks.json").is_file(),
+                    (target / "bin" / "idh-hook").is_file(),
+                    os.access(target / "bin" / "idh-hook", os.X_OK),
+                )
+            )
     return False
 
 
