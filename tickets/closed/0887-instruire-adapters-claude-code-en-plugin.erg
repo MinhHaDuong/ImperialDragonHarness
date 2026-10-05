@@ -2,6 +2,7 @@
 Title: Instruire adapters/claude-code en plugin skills-dir: ce qu'il peut porter, mesure
 Created: 2026-09-09
 Author: claude
+Closed: resolved — adapter activated 2026-10-05: plugin is the single hook source, guard confirmed firing from the plugin in a live session (deny attributed to the plugin), probe case D negative control green on 2.1.289
 
 --- log ---
 2026-09-09T18:20Z claude created instruction demandee par l'auteur : le plugin peut-il etre l'adaptateur CLI Claude, le reste restant generique pour Codex, Pi et l'environnement Claude Code web ? Trois experiences faites sur Claude Code 2.1.266, resultats dans le corps. Depose sur demande de l'auteur, qui leve la doctrine de refroidissement du 2026-07-14 pour ce point
@@ -15,6 +16,8 @@ Author: claude
 2026-10-05T19:29Z MinhHaDuong note Probe rerun on Claude Code 2.1.289 (local binary, default model): A FIRED, B FIRED, C did not fire, exit 0. The 2.1.266 measurements reproduce on the current local version; the only remaining open item is the operator act of action 4.
 2026-10-05T19:37Z MinhHaDuong note Operator act of action 4 done. Live ~/.claude/settings.json hooks block removed (backup /tmp/settings.json.backup-20261005-213720; its hooks were byte-identical to canonical, no operator-owned extras), adapter link placed: ~/.claude/skills/claude-code -> ~/.agents/adapters/claude-code, status ACTIVE, no hooks block in live settings. Confirmation played, not read: a real claude -p session in the harness checkout had its dirty `git reset --hard` in /tmp/idh-confirm-8137 DENIED by guard-destructive-bash.sh, whose message ends "This hook comes from the claude-code@skills-dir plugin" — and the live settings carry no hooks at all, so the plugin is the only possible source. SessionStart confirmed independently: .git/sync-local-main.last, deleted before the session, was recreated by on-start.sh's backgrounded sync during it.
 2026-10-05T19:37Z MinhHaDuong note Probe extended with case D (the negative control the Test section demanded): personal scope through a BROKEN symlink does not fire, on 2.1.289 — the link is genuinely the switch. Canonical settings.shared.json hooks key removed on this branch together with the retirement of gen-claude-code-adapter-hooks.py and its drift gate: the plugin is now the single hook source, ratcheted by test_the_canonical_settings_carry_no_hooks.
+2026-10-05T19:38Z reviewer closed — resolved — adapter activated 2026-10-05: plugin is the single hook source, guard confirmed firing from the plugin in a live session (deny attributed to the plugin), probe case D negative control green on 2.1.289
+
 --- body ---
 ## Context
 
