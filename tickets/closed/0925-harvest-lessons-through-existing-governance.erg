@@ -3,6 +3,7 @@ Title: Deferred crystallisation only on explicit author request
 Created: 2026-09-11
 Author: codex
 Label: deferred
+Closed: Old scope superseded: explicit Brood path delivered and closed by 0888 (live design, templates, behavior evaluation); no automatic promotion mechanism added.
 
 --- log ---
 2026-09-11T07:04Z codex created
@@ -13,6 +14,8 @@ Label: deferred
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-01T22:00Z codex note Author requires project-local writes and no autonomous rule proposals; crystallisation is explicit-request-only and outside core dependencies.
 2026-10-05T09:31Z codex note 0888 remplace la voie de cristallisation par Brood explicitement autorisé ; ancien périmètre toujours différé, aucune promotion automatique.
+2026-10-05T19:20Z reviewer closed — Old scope superseded: explicit Brood path delivered and closed by 0888 (live design, templates, behavior evaluation); no automatic promotion mechanism added.
+
 --- body ---
 
 ## Context

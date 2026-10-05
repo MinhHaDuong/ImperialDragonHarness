@@ -3,6 +3,7 @@ Title: Add lexical task recall and reuse knowledge-hint discovery
 Created: 2026-09-11
 Author: codex
 Label: deferred
+Closed: Superseded by v8 (moteur de rappel dédié abandonné; lecture et rg/grep via 0911/0923, both closed); no task-recall or knowledge-hint code outside docs and tickets; not implemented.
 
 --- log ---
 2026-09-11T07:04Z codex created
@@ -12,6 +13,8 @@ Label: deferred
 
 2026-09-24T16:18Z Codex note Updated deleted knowledge-hint references after 0976; remaining design work stays open.
 2026-10-01T20:37Z MinhHaDuong codex note Superseded by v8; deferred to prevent obsolete implementation dispatch. Not implemented or closed.
+2026-10-05T19:20Z reviewer closed — Superseded by v8 (moteur de rappel dédié abandonné; lecture et rg/grep via 0911/0923, both closed); no task-recall or knowledge-hint code outside docs and tickets; not implemented.
+
 --- body ---
 
 ## Superseded by v8 — do not dispatch
