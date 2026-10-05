@@ -15,13 +15,21 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_wrap_up_tally_counts_log_entries_per_ticket(tmp_path):
     tickets = tmp_path / "tickets"
     tickets.mkdir()
+    closed = tickets / "closed"
+    closed.mkdir()
+    (closed / "0879-example.erg").write_text(
+        "%erg 0.1\nTitle: archived\nClosed: 2026-10-05\n\n--- log ---\n"
+        "2026-10-05T10:00Z reviewer note verify-reroll — round 1: fix\n"
+        "\n--- body ---\nMerged tickets retain their bump history.\n"
+    )
     (tickets / "1023-example.erg").write_text(
         "%erg 0.1\nTitle: example\n\n--- log ---\n"
         "2026-10-05T10:00Z Minh Ha Duong note verify-reroll — round 1: fix\n"
         "2026-10-05T10:01Z reviewer note verify-reroll — round 2: fix\n"
         "2026-10-05T10:02Z reviewer bump permission — historical\n"
         "2026-10-05T10:03Z reviewer note circuit-breaker — timeout\n"
-        "2026-10-05T10:04Z reviewer note discussion of verify-reroll\n"
+        "2026-10-05T10:04Z reviewer note discussion quoting note verify-reroll\n"
+        "2026-10-05T10:04Z reviewer note discussion quoting bump permission\n"
         "\n--- body ---\n"
         "2026-10-05T10:05Z quoted note verify-reroll — not a log entry\n"
     )
@@ -44,6 +52,7 @@ def test_wrap_up_tally_counts_log_entries_per_ticket(tmp_path):
         check=True,
     )
     assert set(result.stdout.splitlines()) == {
+        "Ticket 0879: 1 verify-reroll",
         "Ticket 1005: 2 verify-reroll",
         "Ticket 1023: 2 verify-reroll",
         "Ticket 1023: 1 permission",

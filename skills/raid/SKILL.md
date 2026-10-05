@@ -439,8 +439,10 @@ Autonomous mode: ralph loop to next wave.
       /^--- log ---$/ { in_log = 1; next }
       /^--- body ---$/ { in_log = 0 }
       in_log && /^[0-9][0-9][0-9][0-9]-/ {
-        if (match($0, / (bump [^ ]+|note (verify-reroll|circuit-breaker))( |$)/)) {
-          split(substr($0, RSTART + 1, RLENGTH - 1), fields, " ")
+        if (match($0, / (bump|note) /)) {
+          split(substr($0, RSTART + 1), fields, " ")
+          if (fields[1] == "note" && fields[2] != "verify-reroll" &&
+              fields[2] != "circuit-breaker") next
           ticket = FILENAME
           sub(/^.*\//, "", ticket)
           ticket = substr(ticket, 1, 4)
@@ -453,7 +455,7 @@ Autonomous mode: ralph loop to next wave.
           printf "Ticket %s: %d %s\n", fields[1], count[key], fields[2]
         }
       }
-    ' tickets/*.erg | sort
+    ' tickets/*.erg tickets/closed/*.erg | sort
     ```
     Combine category rows in the briefing as:
     `Ticket NNNN: N bumps (X permission, Y verify-reroll, …) → Z% trivial`.
