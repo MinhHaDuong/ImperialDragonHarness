@@ -13,6 +13,8 @@ Author: Codex
 
 2026-10-05T09:37Z codex execute Brood plus explicit-only policy implemented; independent synthetic behavior execution and report docs/memory-v8/brood-evaluation.md. Fast877, lint169, full1410passed2skipped; semantic adherence and merge-request review pending.
 
+2026-10-05T09:43Z codex note Independent semantic adherence PASS; PR1187 correctness and consistency approve without findings. Native Codex review d3f91beb passed; simplify unavailable, no Gaze or merge approval.
+
 --- body ---
 ## Context and author decisions
 
@@ -74,5 +76,5 @@ honestly; no manufactured historical evidence or implied automatic promotion.
       explicit Brood nominations from forbidden Roar/Dream promotions.
 - [x] Behavior evaluation demonstrates destination boundaries, evidence limits,
       source preservation, revision coordination and adoption return path.
-- [ ] Independent review findings are resolved; catalog is current and `make check`
+- [x] Independent review findings are resolved; catalog is current and `make check`
       and `tickets/erg check tickets/` pass.

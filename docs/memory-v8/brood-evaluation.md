@@ -47,8 +47,11 @@ not test this behavioral requirement.
   `disable-model-invocation`, `user-invocable` and `argument-hint` fields. A
   temporary projection containing its supported name/description passed;
   repository frontmatter tests validate the actual skill. No validator changed.
-- Native `/review` and `/simplify` are unavailable in this runtime. These phases
-  have not run and no Gaze approval is implied.
+- Native Codex review ran via `codex review --base origin/main` after escalation
+  on `d3f91beb5ddd6a9a3337d8940c8e8de70291eb83`, exit 0: no actionable
+  defects; catalog, whitespace and 19 targeted skill tests passed. Its internal
+  independent perspectives were unavailable; the separate review-pr panel supplies
+  them. Native `/simplify` remains unavailable; no Gaze approval is implied.
 
 ## Independent behavioral execution
 
@@ -92,3 +95,13 @@ Final fixture branch commits:
 - gamma: `79e1dfe7c91baaa9bba0d077f9f51c023079fa29`
 - harness: `932f30db956135729a22b513d4f3c92f0a5b105b`
 - delta: `ddbce5c8c522582ced29ad5c40cb7d62301f95ef`
+
+## Independent review
+
+Semantic adherence: PASS, requested `gpt-6-sol` medium. Review-pr round 1
+on PR #1187: Correctness (`gpt-6-sol`) and Consistency (`gpt-6.1-sol`)
+approve without findings. Seats independently inspected the published
+`d3f91beb` diff; the four-slot runtime cap required staggered launches.
+Standard two-perspective panel: 410 changed lines, 10 files, skill pipeline path.
+No missing selected perspective; scope/red-team/doc-propagation were not selected
+as separate seats. These judgments do not replace the unavailable simplify phase.
