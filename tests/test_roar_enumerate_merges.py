@@ -1,8 +1,6 @@
-"""Tests for scripts/enumerate-merges.py (ticket 0331).
+"""Tests for read-side merged-PR enumeration (ticket 0331).
 
-Roar's telemetry step must log one celebration per merged PR since the
-roar-last-sha sentinel, not a single aggregate blob. This script enumerates
-the merge commits in <since-sha>..HEAD and emits one JSON record per merge,
+The script enumerates merge commits in <since-sha>..<until> and emits one JSON record per merge,
 recovering the branch from the GitHub-shaped merge subject and the ticket from
 the erg-pr-merge close commit inside the merge's second-parent range.
 
@@ -303,7 +301,7 @@ def test_until_reference_defaults_to_head(repo):
 def test_until_reference_can_target_another_ref(repo):
     """/roar runs from the merged branch's worktree, which sits below the merge.
 
-    Enumerating to a hard-coded HEAD there misses the merge being celebrated, so
+    Enumerating to a hard-coded HEAD there misses the merge being queried, so
     the terminal reference must be selectable (ticket 0500).
     """
     base = head(repo)

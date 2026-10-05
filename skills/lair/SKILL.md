@@ -13,7 +13,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 
 ## Steps
 
-0. **Skip-housework check**: if `$(git rev-parse --git-common-dir)/roar-last-sha` exists and `git log $(cat $(git rev-parse --git-common-dir)/roar-last-sha)..HEAD --oneline` is empty, skip steps 1–2 (nothing new since last roar). Always perform step 11: pending experiences are independent of new commits.
+0. **Review session scope**: use today's commits and the current ticket state to identify work for steps 1–2. Always perform step 11: pending experiences are independent of new commits.
 
 1. **Housekeeping** — run `/molt` (git sync, healthcheck, eager fix-now repairs, ticket creation).
 2. **Reflect on the session** — summarize work done. `git log --since="6am" --oneline` as starting point.

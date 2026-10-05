@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-"""Enumerate merged PRs since a sentinel SHA as celebration records (ticket 0331).
+"""Enumerate merged PRs in a Git range for read-side attribution (ticket 0331).
 
-Roar's telemetry step logs one celebration per merged PR instead of a single
-aggregate blob. This script enumerates the merge commits in
+This script enumerates the merge commits in
 ``<since-sha>..<until>`` (``--until`` defaults to ``HEAD``) and emits, per merge,
-one JSON object per line carrying the fields roar's ``log-celebration`` expects
-(that helper stamps ``ts``/``date``):
+one JSON object per line carrying project, PR, and merge facts:
 
     {"project": str, "branch": str|null, "commits": int,
      "files_changed": int, "ticket": int|null,
@@ -16,13 +14,10 @@ scanning the merge's second-parent commit range for the erg-pr-merge close
 commit, NOT from the branch name (real branch names such as
 ``worktree-agent-a31bf6655c104744e`` carry misleading digits).
 
-An empty range prints nothing and exits 0. The sentinel-missing / non-ancestor
-guards live in roar's SKILL.md prose, not here.
+An empty range prints nothing and exits 0. Callers provide the range base.
 
-``--until`` exists because /roar normally runs from the worktree of the branch
-just merged, and that worktree sits on the branch tip — BELOW the merge commit.
-Enumerating to a hard-coded ``HEAD`` there misses the very merge being
-celebrated, silently (ticket 0500).
+``--until`` lets callers select the integration tip even when their worktree
+still points to a branch tip below the merge commit (ticket 0500).
 
 Octopus merges (3+ parents) are skipped with a stderr note: the per-PR fields
 are defined for a two-sided PR merge, so an N-way merge is reported rather than
@@ -198,7 +193,7 @@ def normalize_argv(argv: list[str]) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Emit one celebration JSON record per merged PR since a SHA."
+        description="Emit one JSON record per merged PR in a Git range."
     )
     parser.add_argument(
         "since_sha",
