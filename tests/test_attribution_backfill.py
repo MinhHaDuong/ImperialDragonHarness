@@ -239,3 +239,77 @@ def test_reviewed_commit_from_other_history_is_unresolved(project):
     result = run(project, "--reviewed", f"12={foreign}", evidence=False)
     assert "WARN unresolved" in result.stderr
     assert entry.read_bytes() == before
+
+
+@pytest.mark.parametrize("anchor,expected", [("source.py:3", 0), ("source.py:1", 1)])
+def test_configured_interhunk_context_does_not_label_unchanged_middle(project, anchor, expected):
+    repo, entry, _, _ = project
+    git(repo, "reset", "--hard", "HEAD~1")
+    (repo / "source.py").write_text("old1\nkeep2\nanchor3\nkeep4\nold5\n")
+    entry.write_text(record(anchor=anchor))
+    reviewed = commit(repo, "reviewed coordinates for separated edits")
+    (repo / "source.py").write_text("new1\nkeep2\nanchor3\nkeep4\nnew5\n")
+    fix = commit(repo, "separated commissioned changes")
+    git(repo, "config", "diff.interHunkContext", "5")
+    before = entry.read_bytes()
+    result = run((repo, entry, reviewed, fix))
+    assert result.returncode == 0, result.stderr
+    events = parse_record(entry.read_text())["defect_confirmed"]
+    assert len(events) == expected
+    if expected:
+        assert events[0]["anchor"] == anchor
+        assert entry.read_bytes().startswith(before)
+    else:
+        assert entry.read_bytes() == before
+        assert "no-match=1" in result.stderr
+
+
+@pytest.fixture
+def merged_wrap_project(project):
+    repo, entry, reviewed, branch_tip = project
+    git(repo, "branch", "fix-topic", branch_tip)
+    git(repo, "checkout", "-qb", "integration", "HEAD~1")
+    git(repo, "merge", "--no-ff", "-qm", "Merge commissioned fix PR 34", "fix-topic")
+    merged = git(repo, "rev-parse", "HEAD")
+    git(repo, "update-ref", "refs/remotes/origin/main", merged)
+    git(repo, "checkout", "-qb", "wrap-up", "fix-topic")
+    assert git(repo, "rev-parse", "HEAD") == branch_tip
+    return (repo, entry, reviewed, merged), merged, branch_tip
+
+
+def test_wrap_branch_below_real_merge_accepts_proven_integration(merged_wrap_project):
+    project, merged, branch_tip = merged_wrap_project
+    repo, entry, _, _ = project
+    before = entry.read_bytes()
+    result = run(project, "--merged-through", merged)
+    assert result.returncode == 0, result.stderr
+    assert entry.read_bytes() == before + b"defect-confirmed: source.py:2 \xc2\xb7 source: post-merge-fix \xc2\xb7 pr: 34\n"
+    assert git(repo, "rev-parse", "HEAD") == branch_tip
+    assert git(repo, "diff", "--name-only") == str(entry.relative_to(repo))
+
+
+def test_wrap_branch_without_integration_proof_still_rejects(merged_wrap_project):
+    project, _, _ = merged_wrap_project
+    before = project[1].read_bytes()
+    result = run(project)
+    assert result.returncode != 0
+    assert project[1].read_bytes() == before
+
+
+def test_unintegrated_merge_cannot_supply_tautological_proof(merged_wrap_project):
+    project, merged, _ = merged_wrap_project
+    repo, entry, _, _ = project
+    git(repo, "update-ref", "refs/remotes/origin/main", git(repo, "rev-parse", merged + "^1"))
+    before = entry.read_bytes()
+    result = run(project, "--merged-through", merged)
+    assert result.returncode != 0
+    assert entry.read_bytes() == before
+
+
+def test_integration_tip_without_fix_rejects(merged_wrap_project):
+    project, merged, _ = merged_wrap_project
+    repo, entry, _, _ = project
+    before = entry.read_bytes()
+    result = run(project, "--merged-through", git(repo, "rev-parse", merged + "^1"))
+    assert result.returncode != 0
+    assert entry.read_bytes() == before
