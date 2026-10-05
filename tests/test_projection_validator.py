@@ -205,12 +205,13 @@ def test_foreign_link_is_refused(world):
     assert link.readlink() == other
 
 
-def test_non_executable_installed_launcher_is_reported(world):
+def test_non_executable_installed_launcher_recommends_idh_install(world):
     target = world["root"] / "adapters/claude-code/bin/idh-hook"
     target.chmod(0o644)
     r = validate(world, "codex")
-    assert r.returncode == 1 and "UNUSABLE:" in r.stderr
-    assert "not executable" in r.stderr
+    assert r.returncode == 1
+    assert "run `idh install` from a plain terminal" in r.stderr
+    assert str(target) not in r.stderr
 
 
 @pytest.mark.parametrize("runtime,rel", [("codex", ".codex"), ("pi", ".pi")])
@@ -229,7 +230,9 @@ def test_absent_optional_entry_passes_but_a_dangling_one_does_not(world):
     assert validate(world, "codex").returncode == 1
     link.symlink_to(world["tmp"] / "nowhere")
     r = validate(world, "codex")
-    assert r.returncode == 1 and f"DANGLING: {link}" in r.stderr
+    assert r.returncode == 1
+    assert "run `idh install` from a plain terminal" in r.stderr
+    assert str(link) not in r.stderr
 
 
 def test_foreign_real_directory_is_never_overwritten_blind(world):
@@ -237,8 +240,10 @@ def test_foreign_real_directory_is_never_overwritten_blind(world):
     (world["home"] / ".claude/CLAUDE.md").mkdir()
     r = validate(world, "claude")
     assert r.returncode == 1
-    assert "is a real directory" in r.stderr
-    assert "inspect " in r.stderr and "mv " not in r.stderr
+    assert "run `idh install` from a plain terminal" in r.stderr
+    link = world["home"] / ".claude/CLAUDE.md"
+    assert str(link) not in r.stderr
+    assert link.is_dir()
 
 
 def test_unlisted_links_are_not_consulted(world):
