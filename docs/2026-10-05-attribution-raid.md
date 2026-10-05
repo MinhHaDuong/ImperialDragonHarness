@@ -39,3 +39,11 @@ come from actual runtime metadata or native runner headers. Independent contexts
 do not establish model/provider decorrelation. Original tournament files remain
 untouched. Implementation waves, merge SHAs and final test delta follow here
 through factual wrap-up updates.
+
+## Wave 1 checkpoint — 2026-10-05
+
+Ticket1007 merged as PR1193, merge3d19da0882ed81a7b273be3a6d3bcc3d84e2c7c7. Six actual code perspectives, native current-head review, distinct portable simplification and independent criterion gate approved exacte751e701; all ten CI checks passed. Public verification comment5994474533. The factual review-attribution record preserves exact anchored findings and explicitly describes unanchored and mixed-revision limits.
+
+Actual composed1006+1007 full project gate passed1499 tests,2skipped in42.92s. After1007 merged,1006 was rebased locally onto3d19da08 as912c3cca43d971e78440e47a29546d87f1c9e4a3. All2195 tracked files were byte-identical to the tested composition. Its public PR1192 still points atc612bdb; the corrected local publication remains on hold pending specific user approval after automatic review rejection. No approval or forge-anchor success for the unpublished head is inferred. Subsequent1009 implementation remains blocked by unmerged1006.
+
+The exact author-routing note commitab791736da9f9510952cd5d256322167c5e8a5c7 was incorporated as localcheckpoint commita419f15d without changing its six appended lines. Routing transport integration and evidence-based selection policy can complement each other; no architecture choice or new roster was made. This checkpoint is local-only and has not been published. Unrelated main guards changes and untracked tournament material remain untouched.
