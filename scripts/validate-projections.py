@@ -19,10 +19,9 @@ exact repair (or HOME is unset). Exit 2: usage error.
 """
 
 import argparse
-import functools
-import importlib.util
 import json
 import os
+import re
 import shlex
 import sys
 from pathlib import Path
@@ -70,20 +69,57 @@ def managed_hooks(document):
     }
 
 
-@functools.lru_cache(maxsize=1)
-def _translator():
-    path = Path(__file__).resolve().with_name("gen-claude-code-adapter-hooks.py")
-    spec = importlib.util.spec_from_file_location("harness_hook_commands", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module.translate
+# Hook-command translation, moved here when the derivation generator was
+# retired (ticket 0887 activation: the adapter plugin became the single hook
+# source and settings.shared.json dropped its hooks key). It normalizes the
+# hook commands a live settings file may still carry to the plugin launcher
+# form, so merge_hooks can recognize an installed predecessor and replace it
+# instead of appending a duplicate. Every registered form is recognized, the
+# retired pre-portable layout included: an older live file is not an error,
+# it is the exact case registration exists to repair.
+LAUNCHER = '"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook"'
+# `$HOME/.idh/scripts/x.sh a` and `python3 $HOME/.idh/scripts/x.py a`
+HARNESS_SCRIPT = re.compile(
+    r"^(?:python3\s+)?\$HOME/\.idh/scripts/(?P<name>[\w.-]+)(?P<rest>\s.*)?$"
+)
+# The fail-loud pre-0982 form: refuse with exit 2 when the ~/.idh pointer is missing,
+# else exec the script. Exactly
+# `[ -x SCRIPT ] || { echo "MSG" >&2; exit 2; }; exec SCRIPT [args]`:
+# anything else in the prefix fails to match and stays unrecognized, so the
+# merge reports it instead of silently replacing it.
+POINTER_CHECKED = re.compile(
+    r'^\[ -x "\$HOME/\.idh/scripts/(?P<name>[\w.-]+)" \]'
+    r' \|\| \{ echo "(?:[^"`$\\]|\$HOME\b)*" >&2; exit 2; \}; '
+    r'exec "\$HOME/\.idh/scripts/(?P=name)"(?P<rest>\s.*)?$'
+)
+# The portable fail-loud form the shipped adapters carry today.
+PORTABLE_CHECKED = re.compile(
+    r'^\[ -x "\$HOME/\.local/bin/idh-hook" \]'
+    r' \|\| \{ echo "[^"`$\\]*" >&2; exit 2; \}; '
+    r'exec "\$HOME/\.local/bin/idh-hook" (?P<name>[\w.-]+)(?P<rest>\s.*)?$'
+)
+BARE_LAUNCHER = re.compile(
+    r'^"\$HOME/\.local/bin/idh-hook" (?P<name>[\w.-]+)(?P<rest>\s.*)?$'
+)
+LEGACY_CODEX = re.compile(
+    r'^bash "\$HOME/\.(?:idh|claude)/scripts/(?P<name>[\w.-]+)"(?P<rest>\s.*)?$'
+)
+
+
+def translate(command: str) -> str:
+    """Map every registered hook-command form onto the plugin launcher."""
+    stripped = command.strip()
+    for pattern in (PORTABLE_CHECKED, BARE_LAUNCHER, LEGACY_CODEX, POINTER_CHECKED, HARNESS_SCRIPT):
+        if (m := pattern.match(stripped)):
+            return f"{LAUNCHER} {m.group('name')}{m.group('rest') or ''}"
+    return command
 
 
 def hook_identity(block):
     normalized = json.loads(json.dumps(block))
     for hook in normalized.get("hooks", []):
         if "command" in hook:
-            hook["command"] = _translator()(hook["command"])
+            hook["command"] = translate(hook["command"])
     return normalized
 
 

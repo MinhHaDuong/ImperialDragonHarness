@@ -4,8 +4,10 @@ One canonical decision — ``scripts/guard-destructive-bash.sh`` blocks
 ``git reset --hard`` over uncommitted changes to tracked files, exit 2
 with the reason on stderr — carried by three thin wirings:
 
-- Claude Code: the live ``PreToolUse(Bash)`` hook in ``settings.shared.json``
-  (unchanged by this slice; the ratchet below pins it);
+- Claude Code: the ``PreToolUse(Bash)`` hook in the adapter plugin
+  ``adapters/claude-code/hooks/hooks.json`` — the single hook source since
+  0887's activation (``settings.shared.json`` carries no hooks); the ratchet
+  below pins the wiring;
 - Codex: ``adapters/codex/hooks.json`` — Codex's PreToolUse payload carries
   ``tool_input.command`` and its block contract accepts exit 2 with the
   reason on stderr, so the same script runs byte-identical;
@@ -102,12 +104,18 @@ def pi_adapter_violations(source: str):
     return violations
 
 
-# --- Claude Code wiring (unchanged by the slice; pinned) ------------------
+# --- Claude Code wiring (the adapter plugin is the hook source) -----------
 
 
 def test_claude_wiring_wires_the_canonical_guard():
-    doc = json.loads((REPO / "settings.shared.json").read_text())
-    assert_names_canonical_guard(wiring_commands(doc, source_name="settings.shared.json"))
+    doc = json.loads((REPO / "adapters" / "claude-code" / "hooks" / "hooks.json").read_text())
+    commands = wiring_commands(doc, source_name="adapters/claude-code/hooks/hooks.json")
+    # The plugin launches through its own resolved-root launcher
+    # (`${CLAUDE_PLUGIN_ROOT}/bin/idh-hook`), so the invariant is the guard
+    # script's name, not the invocation's spelling.
+    assert any("guard-destructive-bash.sh" in c for c in commands), (
+        f"the canonical guard script is not wired; found {commands}"
+    )
 
 
 # --- Codex wiring ----------------------------------------------------------

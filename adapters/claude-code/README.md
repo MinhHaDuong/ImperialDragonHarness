@@ -4,15 +4,15 @@ The hook wiring of the Imperial Dragon Harness, packaged as a Claude Code
 skills-directory plugin. Ticket 0887; the instruction that argues for it, with
 the measurements, is `tickets/0887-*.erg`.
 
-## It ships inert
+## The switch
 
-Nothing here loads until `scripts/adapter-claude-code-activate.sh` creates the
-symlink `skills/claude-code -> ../adapters/claude-code`. That is deliberate.
-The activation script was built for the earlier profile-based checkout and
-creates its switch under the repository's `skills/`. With the reference clone
-at `~/.agents`, Claude needs explicit registration in its own profile; ticket
-0999 owns that adaptation. Before activation, ensure the live settings and
-plugin do not both register the same hooks.
+Nothing loads until `scripts/adapter-claude-code-activate.sh` creates the
+symlink `~/.claude/skills/claude-code -> <checkout>/adapters/claude-code`.
+That is deliberate: the symlink is the switch, and it refuses to close while
+the live settings still carry a hooks block, which would double-fire every
+guard. Since the activation (2026-10-05) this plugin is the single hook
+source — `settings.shared.json` carries no `hooks` key at all, ratcheted by
+`tests/test_claude_code_adapter.py`.
 
 ## Why a plugin at all
 
@@ -26,20 +26,20 @@ Measured on Claude Code 2.1.266 (`scripts/probe-plugin-hook-loading.sh`):
 
 Hooks fail **open** — absent, the guards silently do not run — so they belong
 in a layer git owns and the CLI never writes. Permissions fail **closed** and a
-plugin cannot carry them anyway; they stay in `settings.shared.json`, which
-ticket 0886 reconciles with the live file.
+plugin cannot carry them anyway; they stay in `settings.shared.json` alongside
+`env` and `statusLine`, the surfaces the plugin cannot carry.
 
 ## Layout
 
     .claude-plugin/plugin.json   manifest
-    hooks/hooks.json             DERIVED — do not hand-edit
+    hooks/hooks.json             the single hook source — maintained here
     bin/idh-hook                 launcher: resolves the harness root, runs a scripts/ hook
 
-`hooks.json` is generated from `settings.shared.json` by
-`scripts/gen-claude-code-adapter-hooks.py`; `make adapter-hooks` regenerates it
-and `make check` fails when it is stale. While both files carry the hooks, a
-hook added to one and not the other is precisely the silent gap this adapter
-exists to close, so neither is allowed to drift from the other.
+`hooks.json` was generated from `settings.shared.json` while both files carried
+the hooks (the drift check `make check-adapter-hooks` held them together); at
+activation the settings dropped their `hooks` key and the generator was
+retired. Hooks are maintained here now — and nowhere else, which is the point:
+one source, no drift possible.
 
 `bin/idh-hook` exists because `${CLAUDE_PLUGIN_ROOT}` holds the path the plugin
 was *discovered* at, not its resolved location: a symlinked plugin gets the
@@ -48,14 +48,15 @@ sit at the same depth. On the guard layer a wrong resolution fails open in
 silence. The launcher resolves its own real location instead, and a missing
 target exits 1 — loud, and never 2, which is Claude Code's "deny the call".
 
-## Legacy activation and rollback
+## Activation and rollback
 
     scripts/adapter-claude-code-activate.sh --status
     scripts/adapter-claude-code-activate.sh            # after clearing the live hooks
     scripts/adapter-claude-code-activate.sh --revert
 
-Reverting removes the symlink only after the live file once again covers every
-hook in `settings.shared.json`; extra local hooks are allowed. The switch
-refuses to remove the plugin while doing so would leave no hook source. Confirm
-a guard actually fires in a new session; reading a configuration file is not
-evidence that it does.
+Activating refuses while the live settings carry a hooks block — both sources
+would fire every guard twice. Reverting removes the symlink and, because the
+canonical settings carry no hooks, says loudly that no guard will fire until a
+hooks block is restored to the live settings; the block lives in git history,
+in the commit that removed it. Confirm a guard actually fires in a new session
+after activating; reading a configuration file is not evidence that it does.

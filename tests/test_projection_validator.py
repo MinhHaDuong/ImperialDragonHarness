@@ -36,7 +36,6 @@ VALIDATOR = _load_validator()
 def _checkout(root: Path) -> Path:
     for rel in (
         "scripts/validate-projections.py",
-        "scripts/gen-claude-code-adapter-hooks.py",
         "scripts/shell-init.sh",
         "scripts/bashrc-loader.sh",
         "adapters/projections.json",

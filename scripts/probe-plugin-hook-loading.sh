@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Does a skills-directory plugin's hook actually fire? Three cases, measured.
+# Does a skills-directory plugin's hook actually fire? Four cases, measured.
 #
 # Ticket 0887. The Claude Code adapter question turns on one fact the docs
 # state and this probe checks: a plugin at $HOME/.claude/skills/<name>/ loads
@@ -7,12 +7,19 @@
 # in a manual is not the same as watching a hook fire, so this runs it.
 #
 # Case A is the probe's own positive control. If A does not fire, the probe
-# could not look -- a "did not fire" on B or C then means nothing, and the
-# script says so rather than reporting three silent negatives as findings.
+# could not look -- a "did not fire" on B, C or D then means nothing, and the
+# script says so rather than reporting silent negatives as findings.
 #
 #   A  personal scope, real directory      expected: FIRED
 #   B  personal scope, through a symlink   expected: FIRED   (layout freedom)
 #   C  project scope, headless (-p)        expected: did not fire (no trust)
+#   D  personal scope, BROKEN symlink      expected: did not fire
+#
+# D is the negative control of the adapter's switch (ticket 0887, Test): the
+# symlink is what makes the plugin discoverable, so removing the target while
+# keeping the link must stop the hook. A D that fires would mean discovery
+# caches the plugin somewhere the link does not control, and the switch would
+# not be a switch.
 #
 # Each case runs `claude -p` in a throwaway HOME with a SessionStart hook whose
 # whole job is to touch a marker file. Requires a working `claude` on PATH and
@@ -62,15 +69,24 @@ mkdir -p "$ROOT/c/home/.claude" "$ROOT/c/work/.claude/skills"
 make_plugin "$ROOT/c/work/.claude/skills/probe-c" probe-c "$ROOT/c/marker"
 C=$(run_case "$ROOT/c/home" "$ROOT/c/work" "$ROOT/c/marker")
 
+# D -- personal scope through a BROKEN symlink: the link stays, the target
+# goes. The adapter's switch is only a switch if this stops the hook.
+mkdir -p "$ROOT/d/home/.claude/skills" "$ROOT/d/work" "$ROOT/d/elsewhere"
+make_plugin "$ROOT/d/elsewhere/probe-d" probe-d "$ROOT/d/marker"
+ln -s "$ROOT/d/elsewhere/probe-d" "$ROOT/d/home/.claude/skills/probe-d"
+rm -rf "$ROOT/d/elsewhere/probe-d"
+D=$(run_case "$ROOT/d/home" "$ROOT/d/work" "$ROOT/d/marker")
+
 printf '%-46s %s\n' \
     "A  personal scope, real directory" "$A" \
     "B  personal scope, through a symlink" "$B" \
-    "C  project scope, headless (-p)" "$C"
+    "C  project scope, headless (-p)" "$C" \
+    "D  personal scope, broken symlink" "$D"
 
 if [ "$A" != FIRED ]; then
     echo
     echo "probe: case A did not fire, so this run could not look at all." >&2
-    echo "       B and C above are not findings. Check that 'claude' runs" >&2
+    echo "       B, C and D above are not findings. Check that 'claude' runs" >&2
     echo "       headlessly here before reading anything into them." >&2
     exit 1
 fi
@@ -82,6 +98,11 @@ if [ "$B" != FIRED ]; then
 fi
 if [ "$C" != "did not fire" ]; then
     echo "probe: case C failed — a project-scope plugin fired under headless -p." >&2
+    FAIL=1
+fi
+if [ "$D" != "did not fire" ]; then
+    echo "probe: case D failed — a broken symlink still fired its hook, so the" >&2
+    echo "       link is not the switch the adapter assumes." >&2
     FAIL=1
 fi
 exit "$FAIL"

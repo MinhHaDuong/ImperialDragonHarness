@@ -12,6 +12,9 @@ Author: claude
 2026-09-09T19:02Z note Disposition tranchee par consequence : adapters/claude-code/ plus lien, la variante que l'experience B rendait possible. Mesure decisive ajoutee au passage : CLAUDE_PLUGIN_ROOT vaut le chemin de DECOUVERTE, pas la cible resolue — un plugin atteint par lien recoit le chemin du lien. Un nombre fixe de .. n'est donc juste que tant que lien et cible sont a la meme profondeur, et sur la couche de garde une resolution muette qui rate echoue en ouverture. Remplace par bin/idh-hook, qui resout sa propre localisation reelle et sort 1 — jamais 2, qui refuserait chaque appel d'outil, jamais 0, qui rendrait un lanceur casse indiscernable d'un hook silencieux correct
 2026-09-09T19:02Z note Deux controles positifs joues, pas supposes : profondeur de resolution sabotee (../../.. -> ../..) fait tomber le cas symlink et deux autres ; hook ajoute a settings.shared.json sans regeneration fait tomber les deux gardes de derive. Le guard de derive tourne en processus plutot qu'en sous-processus, sinon le crible de test-quality le classait integration et l'excluait de make check-fast — un stale adapter doit etre pris avant le push, pas au gate lent
 2026-10-02T06:50Z MinhHaDuong note README no longer contains the former Why not a plugin statement or line-158 pointer. Local Claude Code is 2.1.286; the plugin probe was not rerun, so 2.1.266 remains the only measurement.
+2026-10-05T19:29Z MinhHaDuong note Probe rerun on Claude Code 2.1.289 (local binary, default model): A FIRED, B FIRED, C did not fire, exit 0. The 2.1.266 measurements reproduce on the current local version; the only remaining open item is the operator act of action 4.
+2026-10-05T19:37Z MinhHaDuong note Operator act of action 4 done. Live ~/.claude/settings.json hooks block removed (backup /tmp/settings.json.backup-20261005-213720; its hooks were byte-identical to canonical, no operator-owned extras), adapter link placed: ~/.claude/skills/claude-code -> ~/.agents/adapters/claude-code, status ACTIVE, no hooks block in live settings. Confirmation played, not read: a real claude -p session in the harness checkout had its dirty `git reset --hard` in /tmp/idh-confirm-8137 DENIED by guard-destructive-bash.sh, whose message ends "This hook comes from the claude-code@skills-dir plugin" — and the live settings carry no hooks at all, so the plugin is the only possible source. SessionStart confirmed independently: .git/sync-local-main.last, deleted before the session, was recreated by on-start.sh's backgrounded sync during it.
+2026-10-05T19:37Z MinhHaDuong note Probe extended with case D (the negative control the Test section demanded): personal scope through a BROKEN symlink does not fire, on 2.1.289 — the link is genuinely the switch. Canonical settings.shared.json hooks key removed on this branch together with the retirement of gen-claude-code-adapter-hooks.py and its drift gate: the plugin is now the single hook source, ratcheted by test_the_canonical_settings_carry_no_hooks.
 --- body ---
 ## Context
 
@@ -198,7 +201,10 @@ pas gratuitement : il faut un acte d'installation explicite (un lien vers
 - [x] Disposition tranchee (2026-09-09 : `adapters/claude-code/` plus lien)
 - [x] Hooks portes dans le plugin, adaptateur inerte, commutateur qui refuse le double-tir
 - [x] Controles positifs joues : profondeur sabotee, derive sabotee
-- [ ] Une garde confirmee tirante depuis le plugin sur une vraie session — attend 0886 et un acte operateur
+- [x] Une garde confirmee tirante depuis le plugin sur une vraie session —
+      fait le 2026-10-05 : garde PreToolUse confirmee tirante par un deny reel
+      (git reset --hard sale bloque, message attribue au plugin), SessionStart
+      confirmee par l'effet de bord du sync ; preuve dans le log ci-dessus
 - [x] Aucun ancien énoncé « Why not a plugin? » ne subsiste dans le README ;
       le pointeur historique vers la ligne 158 est retiré (2026-10-02)
 
