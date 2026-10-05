@@ -14,8 +14,8 @@ required entry that is absent is itself a failure.
 
 Usage: validate-projections.py RUNTIME [--root DIR] [--manifest FILE]
 Exit 0: every entry for RUNTIME resolves to its target. Exit 1: at least one
-is missing, dangling or foreign; each culprit is named on stderr with the
-exact repair (or HOME is unset). Exit 2: usage error.
+is missing, dangling or foreign; stderr points to `idh install` (or HOME is
+unset). Exit 2: usage error.
 """
 
 import argparse
@@ -272,17 +272,9 @@ def main(argv=None) -> int:
 
     err = sys.stderr
     print(
-        f"idh: refusing to launch {args.runtime}: {len(failures)} harness "
-        f"projection(s) broken (manifest {manifest})",
-        file=err,
-    )
-    for entry, (kind, detail, repair) in failures:
-        print(f"  {kind}: {detail}", file=err)
-        print(f"    why:    {entry['why']}", file=err)
-        print(f"    repair: {repair}", file=err)
-    print(
-        f"  Run the repair from a plain terminal, then relaunch. To launch anyway "
-        f"(logged): IDH_SKIP_VALIDATE=1 {args.runtime} ...",
+        f"idh: refusing to launch {args.runtime}: harness projections are "
+        f"incomplete; run `idh install` from a plain terminal, then relaunch. "
+        f"To launch anyway (logged): IDH_SKIP_VALIDATE=1 {args.runtime} ...",
         file=err,
     )
     return 1
