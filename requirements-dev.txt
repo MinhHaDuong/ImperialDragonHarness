@@ -23,3 +23,6 @@ ruff>=0.15,<0.16
 # stay serial — both sit at the pytest boot+collection floor where xdist
 # overhead is pure loss.
 pytest-xdist>=3.8,<4
+
+# Attribution query: official inverse-beta primitive for fixed Jeffreys intervals.
+scipy>=1.10,<2

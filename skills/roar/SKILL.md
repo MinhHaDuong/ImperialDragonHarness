@@ -67,6 +67,7 @@ default branch — there are no remote branches nor merge requests to inspect.
    ```bash
    ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
    ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
+   IDH_ROOT="$(cd -P "$ROAR_DIR/../.." && pwd -P)"
    SENTINEL="$(git rev-parse --git-common-dir)/roar-last-sha"
    # Which reference to enumerate up to. /roar normally runs from the worktree
    # of the branch just merged, and that worktree sits on the branch tip —
@@ -86,7 +87,7 @@ default branch — there are no remote branches nor merge requests to inspect.
        REASON="no sentinel yet — first roar in this checkout"
    elif ! git merge-base --is-ancestor "$(cat "$SENTINEL")" "$UNTIL"; then
        REASON="sentinel is not an ancestor of $UNTIL — history rewritten"
-   elif ! ROWS="$("$ROAR_DIR/enumerate-merges.py" "$(cat "$SENTINEL")" --until "$UNTIL" --project "<name>")"; then
+   elif ! ROWS="$("$IDH_ROOT/scripts/enumerate-merges.py" "$(cat "$SENTINEL")" --until "$UNTIL" --project "<name>")"; then
        ROWS=""
        REASON="enumeration FAILED — per-merge-request attribution lost, investigate"
    elif [ -z "$ROWS" ]; then

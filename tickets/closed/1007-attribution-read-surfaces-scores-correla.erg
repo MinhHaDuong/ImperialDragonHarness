@@ -2,6 +2,7 @@
 Title: Attribution read surfaces: scores, correlation, marginal coverage
 Created: 2026-10-02
 Author: MinhHaDuong
+Closed: Implemented exact-identity read surfaces; genuine 1185/1186/1189 acceptance and hand-counted CLI evidence
 
 --- log ---
 2026-10-02T08:00Z MinhHaDuong created
@@ -9,6 +10,8 @@ Author: MinhHaDuong
 2026-10-02T10:24Z MinhHaDuong note 0937 hand-off: 0937's Action 3 / Verification box 3 (a seat that has not authenticated visible on a non-human channel) is deferred to this ticket by the 2026-10-02 raid decision recorded in 0937's log, pending author ratification
 2026-10-03T12:57Z qwen3.8-27b note imagine pass recorded (2026-10-03, raid): reword APPLIED — action 1's 'including writer-reviewer pairs' contradicted spec §4.3/§6 (writer is a stratification variable; writer-reviewer concordance incomputable); 0937 box-3 hand-off made explicit (subsumed by the run-failure rate; machine-readable flag left as an open author question); tool home scripts/ per §3, pure-Python Beta-Binomial (no scipy), enumerate-merges.py migrates here with its three references updated in the same PR
 2026-10-05T10:34Z reviewer note blocker 1005 closed — Blocked-by removed.
+2026-10-05T11:15Z reviewer closed — Implemented exact-identity read surfaces; genuine 1185/1186/1189 acceptance and hand-counted CLI evidence
+
 --- body ---
 ## Context
 
@@ -39,9 +42,9 @@ at read time (spec §6); nothing judged is ever stored in the records.
 
 ## Exit criteria
 
-- [ ] Scores table renders from real records with credible intervals
-- [ ] Correlation table renders with the four concordance cells per pair
-- [ ] Marginal coverage column distinguishes a duplicate seat from a
+- [x] Scores table renders from real records with credible intervals
+- [x] Correlation table renders with the four concordance cells per pair
+- [x] Marginal coverage column distinguishes a duplicate seat from a
       complementary one on the same records
 
 ## Raid annotation (2026-10-03, imagine pass)
@@ -77,3 +80,56 @@ Plan supplement: duplicate PR records are ambiguous; WARN and exclude all duplic
 
 ## Raid feasibility refresh (2026-10-05)
 PASS: shared parser signature, live records, explicit coordinate/scoring contracts and scoped path budget verified.1006/1007 share Roar/spec; verify and merge sequentially, then union checks. No3+PR same-wave registry; no coordination-set PR. Annotation prelude lands before executor forks; common WAVE_BASE recorded from resulting main.
+
+## Execution evidence (2026-10-05)
+
+`python3 scripts/attribution_query.py /tmp/t1007-attribution-next --json`
+reads genuine journal records for PRs1185/1186/1189:3 valid,0 malformed,0
+ambiguous,0 encrypted unavailable;17 score rows and75 pair rows. Their
+round-qualified identities remain distinct;1189 is clean and adds prior-only
+catch rows instead of diluting labeled-game denominators. Scores include exact
+central90% Jeffreys intervals. No synthetic fixture is counted as live evidence.
+
+The hand-counted multi-game CLI fixture distinguishes A/B duplicate coverage
+(zero unique-B anchors) from A/C complementary coverage (two unique-B anchors,
+two of four labeled both-ran games), including both-catch at different anchors.
+It covers third-seat labels, neither cells, repeated attempts, postmerge events,
+failed/skipped attempts, writer/version separation, malformed/encrypted inputs
+and duplicate-PR exclusions. Analytic arcsine, pinned posterior endpoints,
+symmetry and extreme counts independently check the SciPy call parameters.
+
+`--since 1c44528b --until aa4efecb05eb0f0952c37d4d257ded72f8296378`
+shows1185/1186/1189 available and1182/1183/1184/1187/1188/1190/1191 missing
+attribution evidence, without inventing review participation. Real git fixtures
+exercise unavailable ambiguous evidence. Migrated enumeration retains legacy
+fields; existing actual Roar bash/celebration-writer tests remain green.
+
+Local correctness follow-up: identifiable filename/header PRs are reserved
+before parsing, so valid+malformed/encrypted siblings and filename/header
+mismatches cannot receive credit or available merge coverage. CLI regression
+fixtures cover all combinations. Project-local traversal rejects record and
+directory symlink components, including internal links and journal roots,
+without reading their targets. No publication was attempted during this fix.
+
+PR1193 Correctness follow-up: both directional marginals A given B and B given
+A are independently reported with unique-anchor counts; the original B given A
+field remains intact. An asymmetric same-game CLI fixture checks either seat
+can have one extra confirmed anchor, while the concordance cell remains both.
+JSON and readable controls reproduce red then green, preserving fixed Jeffreys
+intervals and existing exact identities/game denominators.
+
+PR1193 Correctness/Red-team encrypted-suffix follow-up: query discovery now
+recognizes memory-capture.sh's actual extensionless-slug plus .age basename,
+retaining .md and .md.age compatibility. Ciphertext-only evidence is visible
+and unavailable; a public sibling makes the whole PR ambiguous and excludes
+all score/coverage credit. Actual CLI regressions use a non-UTF8 ciphertext
+stub at the real basename and check JSON/readable output plus merge coverage;
+no private contents, decryption, fallback or credential access is involved.
+
+PR1193 final test/documentation follow-up: numeric test loading establishes
+ROOT through pytest's scoped monkeypatch.syspath_prepend, so both console
+pytest and python -m pytest resolve the scripts package without production
+changes. Actual console invocation reproduced the loader failure before the
+fix. The design note corrects 0205's closed2026-10-03 status/residual1009
+dispositions and explicitly says the nonconfirmed proxy cannot alone establish
+§7's fixed false-finding threshold. No statistical policy changed.

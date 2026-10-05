@@ -182,7 +182,7 @@ def render_snippet(project=DASH_PROJECT, enumerate_cmd=None, skill_md=SKILL_MD) 
     s = step2_snippet()
     s = s.replace('"<loaded-roar-SKILL.md>"', shlex.quote(str(skill_md)))
     if enumerate_cmd:
-        s = s.replace('"$ROAR_DIR/enumerate-merges.py"', shlex.quote(enumerate_cmd))
+        s = s.replace('"$IDH_ROOT/scripts/enumerate-merges.py"', shlex.quote(enumerate_cmd))
     s = s.replace("<name>", project)
     s = s.replace("<branch>", "aggregate")
     s = s.replace("<n>", "0")

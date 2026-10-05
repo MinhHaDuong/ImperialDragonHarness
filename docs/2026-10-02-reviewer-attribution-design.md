@@ -3,8 +3,8 @@
 Date: 2026-10-02
 Status: approved design (author, this session) — awaiting implementation
 Tracker: tickets/1004 (this doc is its deliverable)
-Supersedes: the seat-runner-centric panel contract of tickets/0205 (which stays
-open until the ticket dispositions in §10 land)
+Supersedes: the seat-runner-centric panel contract of tickets/0205 (closed
+2026-10-03); residual teardown and ticket dispositions in §10 belong to 1009.
 
 ## 1. Problem
 
@@ -206,6 +206,57 @@ A scores-style query over all attribution records of a project:
   (§4.3), not a pair member.
 - **Marginal coverage:** unique-catch rate of seat B given seat A already
   plays — the squad-management quantity; raw catch rate overstates it.
+
+### Read-side implementation (1007)
+
+Run `python3 scripts/attribution_query.py [PROJECT]` for readable tables or
+add `--json` for the same derivation. Only current-project journal attribution
+filenames are read through the strict shared parser; malformed whole records
+WARN with the filename and parser diagnostic. Identifiable filename/header PRs
+are reserved before parsing: multiple record sources for a PR WARN and are all
+excluded, including malformed or encrypted siblings. Encrypted records are
+unavailable, never decrypted. Discovery recognizes the capture writer's actual
+`.age` suffix as well as `.md` and legacy `.md.age`, reserving the filename PR
+before any read. Symlink components, including internal record
+links and a symlinked journal/year root, are unavailable and never read.
+No data or coaching judgments are persisted.
+
+A game is one PR. An identity is the exact seat/runtime/model/model-version
+tuple (absent version stays unrecorded); writer runtime/model/version/effort
+stratifies every score and pair. Repeated attempts union anchors for binary
+game catches, while raw ran/failed/skipped counts remain separate. A catch trial
+is a labeled game where that identity ran; a success has any globally confirmed
+anchor, including labels supplied by another seat or a later event. Clean games
+are excluded. Run failure is failed/(ran+failed), with skipped separate.
+
+Noise is explicitly a **nonconfirmed emitted-finding share proxy**: later
+confirmation applies to all attempts with that literal anchor; repeated emitted
+findings count as emitted findings, never extra game trials. Unconfirmed does
+not prove a hallucination. This proxy cannot by itself establish the fixed
+§7 false-finding threshold; author judgment remains manual. Pair cells are
+binary any-catch over labeled games
+where both ran, with per-cell intervals. Anchor Jaccard sums same-game anchor
+intersection/union counts; shared nonconfirmed-anchor share is likewise an
+explicit proxy over same-game unconfirmed-anchor unions. Marginal B counts games
+with any confirmed B anchor absent A, over the same labeled both-ran games,
+and reports unique-B anchor counts separately. Thus both-catch games can still
+show complementary coverage at different anchors. Pairs use deterministic
+identity ordering, but both A given B and B given A are reported independently
+with their respective unique-anchor counts. Neither direction is pooled or
+hidden by pair ordering; a both-catch game can contribute directional coverage.
+
+Declared bounded SciPy `special.betaincinv` supplies Beta(s+.5,n-s+.5) central
+.05/.95 quantiles, including prior-only intervals when trials are zero (see
+[official API](https://docs.scipy.org/doc/scipy/reference/generated/scipy.special.betaincinv.html)).
+Section 7's fixed guidance is printed literally as guidance; no promotion
+verdict is inferred from live games with different selections.
+
+Optional `--since SHA [--until REF]` enumerates only the requested git range
+through `scripts/enumerate-merges.py`, labeling missing/unavailable evidence
+without inferring reviewers. Enumeration preserves legacy celebration fields
+and adds actual merge-subject PR number (null for non-PR merges), merge SHA
+and commit date. Roar's legacy celebration writer remains compatible until its
+separate retirement. No new sentinel is introduced.
 
 ## 7. Statistics policy (pre-registered, values fixed)
 
