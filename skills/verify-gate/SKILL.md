@@ -45,7 +45,7 @@ standalone-callable for debugging.
    `/review-pr`, human authors) is either ADDRESSED (commit changed the cited file, OR
    the comment was marked resolved, OR a ticket was opened with the rationale) or
    UNRESOLVED. No "I'll get to it later."
-4. **Simplify findings are load-bearing.** Every must-fix from `/simplify` is either
+4. **Simplify findings are load-bearing.** Every must-fix from `/simplify` or Gaze’s portable equivalent is either
    applied (diff shows the change) or explicitly justified in a PR comment that the gate
    agent validates.
 5. **Adherence violations are blocking.** Any `blocking` entry from `/verify-adherence`

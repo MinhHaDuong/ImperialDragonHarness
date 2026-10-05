@@ -429,14 +429,11 @@ what the two calls settle: routing picks *which panel* reviews the diff, the
 axes tell the reviewer *which rulebook* to hold it to. Agent B keeps running on
 prose either way; the audit found it earning its seat there — a rebuilt PDF
 with its link integrity checked on MR 136, and a catch the prose panel missed
-on MR 138. What it lacked was the rulebook, not the mandate. (Phase 5
-`/simplify` is the other built-in slash
-command, and it stays a direct invocation **by decision**: ticket 0349 proposed
-Agent-WRAPping it and was closed wontfix on 2026-07-14 — the fallback
-functions. So `/simplify` runs in the fork's own cwd — a sibling worktree, not
-review-<pr> — and when an Edit/Write into review-<pr> is refused there, it
-applies fixes via Bash. That is the design, not a gap.
-Reopen 0349 only if a gaze-applied simplify edit demonstrably lands wrong.)
+on MR 138. What it lacked was the rulebook, not the mandate. Phase 5 uses the native `/simplify` command when available, or the portable
+procedure below when that command is absent. The native route remains a direct
+invocation (ticket 0349); both routes target the explicit review worktree and
+PR branch, including when the invoking session lives in a sibling worktree.
+
 
 **Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
 or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`).
@@ -550,8 +547,36 @@ phase line. Motive: this phase may commit to the PR branch, and `rules/git.md`
 change to prose goes through its own branch + merge request for the author to
 arbitrate, never through a review-phase auto-fix (ticket 0550: two runs on the
 same file decided this in opposite directions the same day; the rule now
-exists). Otherwise, after 2–4 land their comments (and the early-exit check passes), run `/simplify <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`. This phase may commit fixes
-to the PR branch. Wait for its fixes (if any) to land before the gate reads state.
+exists). Otherwise, after 2–4 land their comments (and the early-exit check passes),
+perform one of these routes. Record `simplify route: native|portable`.
+
+- **Native command available:** run `/simplify <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`.
+- **Native command absent:** launch an independent reviewer through the active
+  runtime (`model-level: standard`, `effort: standard`), using the phase artifact
+  and bounded-wait contract above. Give it the explicit PR number, review tree,
+  base ref, anchor HEAD and changed-file roster. It runs the review-anchor check
+  before and after examining `git -C <review-tree> diff origin/<base>...HEAD`
+  and the relevant surrounding code or instructions. It must look for
+  unnecessary complexity, duplication, opportunities to reuse existing
+  mechanisms, and safe simplifications that preserve behavior and ticket
+  intent. This is a distinct simplification pass, not reuse of a general
+  review's approval. It returns the reviewed SHA, paths examined, and actionable
+  findings with severity, location, proposed change and rationale; or a CLEAN
+  verdict explaining the concrete candidates considered and why they need no
+  change. An absent reviewer, timeout, anchor mismatch, wrong diff or missing
+  evidence means this phase is unresolved and triggers the existing breaker;
+  absence of the slash command alone does not.
+
+For either route, the orchestrator applies bounded fixes only to the PR branch
+in the explicit review tree, or records an evidence-backed disposition for each
+finding. Run affected checks for changes, commit and push fixes, and wait for
+completion before phase 6 reads state. After any fixes, anchor the final HEAD
+again and have the simplification reviewer confirm the dispositions against
+that head; update the artifact with the final reviewed SHA. A moved head without
+this confirmation leaves the pass unresolved. Feed all findings and dispositions
+(or the evidenced CLEAN result), route, and reviewed SHA to verify-gate. The
+same must-fix rules apply to both routes; no portable route silently skips or
+weakens the phase. Existing tiny/prose/adherence skips above remain unchanged.
 
 ### 6. Gate (the non-rubber-stamp step)
 

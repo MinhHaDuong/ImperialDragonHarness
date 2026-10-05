@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Gaze: portable equivalent for native simplify phase
+Created: 2026-10-05
+Author: reviewer
+Closed: autoclosed — PR #1189
+
+--- log ---
+2026-10-05T10:10Z reviewer created
+
+2026-10-05T10:22Z reviewer closed — autoclosed — PR #1189
+--- body ---
+## Context
+The mandatory Gaze simplification phase names Claude Code's native `/simplify`.
+Other runtimes need an executable equivalent rather than a waiver or silent skip.
+Explicit author request: fix portability and finish the pending verification.
+
+## Exit criteria
+- [ ] Native simplify remains the preferred route when available.
+- [ ] A portable independent pass examines the anchored diff and relevant context for unnecessary complexity, duplication, reuse and safe simplification.
+- [ ] Its findings or clean evidence enter verify-gate; missing execution remains unresolved.
+- [ ] Existing containment, skip rules and must-fix handling remain effective.
+- [ ] Project checks pass.
+
+## Relevant files
+- skills/gaze/SKILL.md
+- skills/verify-gate/SKILL.md
+
+## Actions
+Document the fallback at phase 5 and clarify the gate consumes either route.
+Validate with focused contract review and native-available, native-absent,
+stale-head, missing-reviewer and must-fix scenarios; avoid tests mirroring prose.
+
+## Test
+Independently walk the procedure against the above scenarios, checking that
+absence of the native command requires actual review rather than approval.
