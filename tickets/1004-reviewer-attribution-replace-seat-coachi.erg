@@ -9,6 +9,9 @@ Author: MinhHaDuong
 
 2026-10-03T08:22Z qwen3.8-27b note 0205 closed with its integration-review note (tickets/closed/0205-external-reviewer-panel-for-verify-contr.erg) — the '0205 closed with integration-review note' exit criterion is now a verification
 2026-10-03T12:57Z qwen3.8-27b note imagine pass complete (2026-10-03, raid): all five train annotations recorded; verdicts 1005/1006/1009/1004 keep-as-is, 1007 reword applied (spec §4.3 contradiction); wave plan W1=1005, W2=1006+1007 parallel, W3=1009, then the integration review per the 1004 annotation (a)-(g)
+2026-10-05T11:41Z MinhHaDuong note Author routing direction (2026-10-05): attribution should inform more aggressive routing that conserves Claude Pro Max, ChatGPT Pro and Vibe Pro quotas. GLM Coding Plan is a candidate pending tournament1024. Compare an LLM-routing MCP plugin for Claude/Codex with extending and tuning evidence-based IDH routing; measure task quality, actual subscription/API quota and cache cost, completion reliability, routing overhead and time-of-day quota rates. The attribution teardown continues; these options are not an instruction to restore fixed reviewer rosters.
+2026-10-05T11:41Z Codex note Verified vendor terms as of2026-10-05: GLM Coding Plan off-peak usage consumes50% of standard credits, not a50% subscription-price discount. Normal peak is Mon-Fri14:00-18:00 UTC+8 (08:00-12:00 Paris during CEST); currently all-day off-peak promotion runs2026-09-25 through2026-10-07. Source:https://docs.z.ai/devpack/overview . Vendor limits benefits to supported tools:https://docs.z.ai/devpack/usage-policy ; compare routing MCP and native runtime routes against actual eligible billing/quota paths before counting subscription savings. Recheck terms at implementation; no purchase or provider selection authorized by this note.
+
 --- body ---
 ## Context
 
