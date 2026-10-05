@@ -103,3 +103,10 @@ shows1185/1186/1189 available and1182/1183/1184/1187/1188/1190/1191 missing
 attribution evidence, without inventing review participation. Real git fixtures
 exercise unavailable ambiguous evidence. Migrated enumeration retains legacy
 fields; existing actual Roar bash/celebration-writer tests remain green.
+
+Local correctness follow-up: identifiable filename/header PRs are reserved
+before parsing, so valid+malformed/encrypted siblings and filename/header
+mismatches cannot receive credit or available merge coverage. CLI regression
+fixtures cover all combinations. Project-local traversal rejects record and
+directory symlink components, including internal links and journal roots,
+without reading their targets. No publication was attempted during this fix.

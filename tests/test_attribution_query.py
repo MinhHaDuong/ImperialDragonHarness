@@ -86,7 +86,7 @@ def test_malformed_duplicate_encrypted_and_empty(tmp_path):
     (journal/'2026-10-05-review-attribution-pr10.md.age').write_bytes(b'encrypted')
     result = cli(tmp_path,'--json')
     data = json.loads(result.stdout)
-    assert data['records'] == {'valid':7,'malformed':1,'ambiguous_prs':[1],'ambiguous_records':2,'encrypted_unavailable':1}
+    assert data['records'] == {'valid':7,'malformed':1,'ambiguous_prs':[1],'ambiguous_records':2,'encrypted_unavailable':1,'unsafe_unavailable':0}
     assert 'WARN' in result.stderr and 'line 2' in result.stderr and 'ambiguous PR 1' in result.stderr
     empty = cli(tmp_path/'absent','--json')
     assert json.loads(empty.stdout)['scores'] == []
@@ -115,13 +115,22 @@ def test_jeffreys_analytic_golden_symmetry_and_extremes():
 
 
 @pytest.mark.integration
-def test_explicit_merge_coverage_does_not_accept_ambiguous_records(tmp_path):
+@pytest.mark.parametrize('sibling', ['valid', 'malformed', 'encrypted', 'header-mismatch'])
+def test_explicit_merge_coverage_does_not_accept_ambiguous_records(tmp_path, sibling):
     def git(*args):
         result = subprocess.run(['git','-C',str(tmp_path),*args],text=True,capture_output=True,check=True,env=child_env())
         return result.stdout.strip()
 
     journal = dataset(tmp_path)
-    (journal/'2026-10-06-review-attribution-pr1.md').write_text((journal/'2026-10-05-review-attribution-pr1.md').read_text())
+    duplicate = (journal/'2026-10-05-review-attribution-pr1.md').read_text()
+    if sibling == 'encrypted':
+        (journal/'2026-10-06-review-attribution-pr1.md.age').write_bytes(b'encrypted')
+    else:
+        if sibling == 'malformed':
+            duplicate += 'reviewer: malformed\n'
+        elif sibling == 'header-mismatch':
+            duplicate = duplicate.replace('pr: 1 ·', 'pr: 2 ·')
+        (journal/'2026-10-06-review-attribution-pr1.md').write_text(duplicate)
     git('init','-b','main')
     git('config','user.name','Test')
     git('config','user.email','test@example.com')
@@ -137,7 +146,7 @@ def test_explicit_merge_coverage_does_not_accept_ambiguous_records(tmp_path):
         git('switch','main')
         git('merge','--no-ff',f'branch-{pr}','-m',f'Merge pull request #{pr} from owner/branch-{pr}')
     data = json.loads(cli(tmp_path,'--json','--since',base,'--until','main').stdout)
-    assert [(merge['pr'],merge['attribution']) for merge in data['coverage']] == [(1,'unavailable'),(2,'available'),(99,'missing')]
+    assert [(merge['pr'],merge['attribution']) for merge in data['coverage']] == [(1,'unavailable'),(2,'unavailable' if sibling == 'header-mismatch' else 'available'),(99,'missing')]
     assert data['coverage'][-1]['merge_sha'] == git('rev-parse','main')
     assert 'coverage' not in json.loads(cli(tmp_path,'--json').stdout)
 
@@ -153,3 +162,60 @@ def test_readable_table_prior_only_and_proxy_labels(tmp_path):
     assert result.stdout.count('prior-only') == 3
     assert 'failed/(ran+failed)' in result.stdout
     assert 'proxy' in result.stdout and 'upper bound' in result.stdout
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('sibling', ['malformed', 'encrypted', 'header-mismatch'])
+def test_invalid_sibling_reserves_pr_and_cannot_receive_credit(tmp_path, sibling):
+    journal = dataset(tmp_path)
+    source = journal/'2026-10-05-review-attribution-pr1.md'
+    target = journal/('2026-10-06-review-attribution-pr1.md.age' if sibling == 'encrypted'
+                      else '2026-10-06-review-attribution-pr1.md')
+    if sibling == 'encrypted':
+        target.write_bytes(b'encrypted')
+    elif sibling == 'malformed':
+        target.write_text(source.read_text()+'reviewer: malformed\n')
+    else:
+        target.write_text(source.read_text().replace('pr: 1 ·','pr: 2 ·'))
+    result = cli(tmp_path,'--json')
+    data = json.loads(result.stdout)
+    assert 1 in data['records']['ambiguous_prs']
+    assert data['records']['valid'] == (6 if sibling == 'header-mismatch' else 7)
+    assert 'ambiguous PR 1' in result.stderr
+    a = next(s for s in data['scores'] if s['identity']['seat']=='A' and
+             s['identity']['model-version']=='v1' and s['writer']['model-version']=='w1')
+    assert a['catch']['trials'] == (2 if sibling == 'header-mismatch' else 3)
+    assert a['catch']['successes'] == (0 if sibling == 'header-mismatch' else 1)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('boundary', ['outside-record', 'internal-record', 'journal-root', 'year-directory'])
+def test_symlink_components_are_unavailable_without_reading_target(tmp_path, boundary):
+    project = tmp_path/'project'
+    journal = project/'memory/journal/2026'
+    journal.mkdir(parents=True)
+    outside = tmp_path/'outside'
+    outside.mkdir()
+    target = outside/'record.md'
+    target.write_text(record(1,[('outside-seat','ran',[('x:1',True)])]))
+    entry = journal/'2026-10-05-review-attribution-pr1.md'
+    if boundary == 'outside-record':
+        entry.symlink_to(target)
+    elif boundary == 'internal-record':
+        internal = journal/'ordinary-note.md'
+        internal.write_text(target.read_text())
+        entry.symlink_to(internal)
+    elif boundary == 'journal-root':
+        journal.rmdir()
+        journal.parent.rmdir()
+        (outside/'2026-10-05-review-attribution-pr1.md').write_text(target.read_text())
+        (project/'memory/journal').symlink_to(outside, target_is_directory=True)
+    else:
+        journal.rmdir()
+        (outside/'2026-10-05-review-attribution-pr1.md').write_text(target.read_text())
+        journal.symlink_to(outside, target_is_directory=True)
+    result = cli(project,'--json')
+    data = json.loads(result.stdout)
+    assert data['scores'] == [] and data['records']['valid'] == 0
+    assert data['records']['unsafe_unavailable'] == 1
+    assert 'symlink' in result.stderr and 'WARN' in result.stderr

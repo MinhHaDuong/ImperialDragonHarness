@@ -212,8 +212,11 @@ A scores-style query over all attribution records of a project:
 Run `python3 scripts/attribution_query.py [PROJECT]` for readable tables or
 add `--json` for the same derivation. Only current-project journal attribution
 filenames are read through the strict shared parser; malformed whole records
-WARN with the filename and parser diagnostic. Multiple valid records for one PR
-WARN and are all excluded; encrypted records are unavailable, never decrypted.
+WARN with the filename and parser diagnostic. Identifiable filename/header PRs
+are reserved before parsing: multiple record sources for a PR WARN and are all
+excluded, including malformed or encrypted siblings. Encrypted records are
+unavailable, never decrypted. Symlink components, including internal record
+links and a symlinked journal/year root, are unavailable and never read.
 No data or coaching judgments are persisted.
 
 A game is one PR. An identity is the exact seat/runtime/model/model-version

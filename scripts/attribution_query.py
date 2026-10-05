@@ -51,42 +51,88 @@ def identity_dict(key, fields):
     return dict(zip(fields, key))
 
 
+def project_local(path, project):
+    """Do not follow symlink components, including links within the project."""
+    relative = path.relative_to(project)
+    current = project
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            return False
+    return path.resolve().is_relative_to(project)
+
+
+def journal_entries(journal, project, counts):
+    """Traverse only local directories, never a symlinked journal/year root."""
+    pending = [journal]
+    while pending:
+        directory = pending.pop()
+        if not project_local(directory, project):
+            counts['unsafe_unavailable'] += 1
+            LOG.warning('WARN %s: symlink or escaping journal component unavailable', directory)
+            continue
+        if not directory.is_dir():
+            continue
+        for path in sorted(directory.iterdir()):
+            if path.is_symlink() and not RECORD_NAME.fullmatch(path.name):
+                counts['unsafe_unavailable'] += 1
+                LOG.warning('WARN %s: symlink journal component unavailable', path)
+            elif path.is_dir() and not path.is_symlink():
+                pending.append(path)
+            elif RECORD_NAME.fullmatch(path.name):
+                yield path
+
+
 def read_records(project):
-    candidates = defaultdict(list)
+    project = project.resolve()
+    candidates = {}
+    sources = defaultdict(set)
     unavailable_prs = set()
     counts = {'valid': 0, 'malformed': 0, 'ambiguous_prs': [],
-              'ambiguous_records': 0, 'encrypted_unavailable': 0}
+              'ambiguous_records': 0, 'encrypted_unavailable': 0,
+              'unsafe_unavailable': 0}
     journal = project / 'memory' / 'journal'
-    for path in sorted(journal.rglob('*review-attribution-pr*')):
+    for path in journal_entries(journal, project, counts):
         match = RECORD_NAME.fullmatch(path.name)
-        if not match or not path.is_file():
-            continue
         pr = int(match[1])
+        # Reserve identity before parsing: invalid/encrypted evidence is still
+        # evidence of another source for this PR, never permission to pick one.
+        sources[pr].add(path)
+        if not project_local(path, project):
+            counts['unsafe_unavailable'] += 1
+            unavailable_prs.add(pr)
+            LOG.warning('WARN %s: symlink or escaping record unavailable; not read', path)
+            continue
         if match[2]:
             counts['encrypted_unavailable'] += 1
             unavailable_prs.add(pr)
             LOG.warning('WARN %s: encrypted attribution unavailable; no decryption attempted', path)
             continue
         try:
-            record = parse_record(path.read_text())
+            text = path.read_text()
+            header_prs = {int(value) for value in re.findall(
+                r'^\s*pr\s*:\s*([1-9][0-9]*)(?=\s|·|$)', text, re.MULTILINE)}
+            for header_pr in header_prs:
+                sources[header_pr].add(path)
+            record = parse_record(text)
             if record['pr'] != pr:
                 raise ValueError('filename PR differs from record PR')
         except (ValueError, OSError) as error:
             counts['malformed'] += 1
-            unavailable_prs.add(pr)
+            unavailable_prs.update(key for key, paths in sources.items() if path in paths)
             LOG.warning('WARN %s: %s; excluding whole record', path, error)
             continue
-        candidates[pr].append((path, record))
-    records = []
-    for pr, group in sorted(candidates.items()):
-        if len(group) > 1:
+        candidates[pr] = record
+    ambiguous_paths = set()
+    for pr, paths in sorted(sources.items()):
+        if len(paths) > 1:
             counts['ambiguous_prs'].append(pr)
-            counts['ambiguous_records'] += len(group)
+            ambiguous_paths.update(paths)
             unavailable_prs.add(pr)
-            LOG.warning('WARN ambiguous PR %s: excluding all %s duplicate records: %s',
-                        pr, len(group), ', '.join(str(path) for path, _ in group))
-        else:
-            records.append(group[0][1])
+            LOG.warning('WARN ambiguous PR %s: excluding all %s record sources: %s',
+                        pr, len(paths), ', '.join(str(path) for path in sorted(paths)))
+    counts['ambiguous_records'] = len(ambiguous_paths)
+    records = [record for pr, record in sorted(candidates.items()) if pr not in unavailable_prs]
     counts['valid'] = len(records)
     if not records:
         LOG.warning('WARN %s: no attribution records available', journal)
