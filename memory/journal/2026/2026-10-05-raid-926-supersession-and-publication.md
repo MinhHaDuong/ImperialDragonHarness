@@ -26,8 +26,13 @@ published. A second rebase preserved the two path contents; the current
 reviewed head `d2f3dea49b1157961480cf4daa19c2197113d8b8` passed 1495
 tests with 2 skipped, and its [current gate](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1204#issuecomment-6001552867)
 approved. The two-test count difference reflects tests retired by PR1206.
-At this checkpoint, PR1204 remains open while three required GitHub Actions
-guard jobs wait in the hosted queue; seven other jobs have succeeded.
+The merge helper then closed/archived 0926 on the PR branch in
+`9ab388807bfa7d9a82da02638011cac848e4420b`, a ticket rename and two
+closure lines. At this checkpoint PR1204 remains open with protected GitHub
+auto-merge enabled at 2026-10-05T19:39:16Z using `MERGE`, as the author
+requested. All ten checks on the new closure head are queued. On the preceding
+implementation head, seven checks succeeded and three guard jobs remained
+queued. The PR's eventual merge is not yet confirmed.
 
 Review attribution capture remains pending for PR1205. The two implementation
 agents inherited their launch model from the root session, whose exact
