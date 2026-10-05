@@ -5,8 +5,10 @@ Author: Codex
 
 --- log ---
 2026-09-10T05:51Z Codex created
-
 2026-10-05T10:00Z codex note Author explicitly replaced old incubation/audit intent: implement post-Dream Brood with local proof of concept, nomination-only harness handoff, and evidence-led generalization. Original body retained in Git history; no old audit completion claimed.
+2026-10-05T09:25Z codex note Correction: replacement note above used a planned timestamp; actual rewrite/checkpoint happened before09:24Z. No historical experience rewritten.
+2026-10-05T09:26Z codex imagine Minimal instructional skill, existing ticket/Git/review surfaces; no scoring engine, store or retrospective audit. Dream authority unchanged. BLIND-SPOT: CLEAN after separate source/history review. Drift guard compares author-replaced contract, not superseded intent.
+
 --- body ---
 ## Context and author decisions
 
@@ -47,7 +49,7 @@ and decay consolidated memory; source experiences remain append-only.
 `skills/dream/SKILL.md`, `memory/DREAM.md`, `AGENTS.md`,
 `docs/2026-09-10-dragon-memory-design.md`,
 `docs/2026-09-11-memory-implementation-plan.md`, `docs/memory-v8/templates/`,
-`tickets/0925-deferred-crystallisation-only-on-explici.erg`,
+`tickets/0925-harvest-lessons-through-existing-governance.erg`,
 `memory/topics/memory-v8-governance.md`, `README.md`.
 
 ## Test and verification
