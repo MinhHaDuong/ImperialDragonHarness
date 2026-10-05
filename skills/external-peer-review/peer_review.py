@@ -136,8 +136,10 @@ def _credential_provider_file() -> Path:
 def _keystore_value(provider: Path, name: str) -> str | None:
     """Read one variable out of the provider file, or None when unreadable.
 
-    Ported from ``skills/reviewers/reviewers.sh:_keystore_value`` (ticket 0393)
-    and deliberately kept as a shell-out: the provider file is *sourced*, so an
+    Originally ported from ``skills/reviewers/reviewers.sh:_keystore_value``
+    (ticket 0393); the retained counterpart is
+    ``skills/coaching/replay.sh:_keystore_value``. It is deliberately kept as a
+    shell-out: the provider file is *sourced*, so an
     export-less assignment, an ``export`` prefix, a quoted value and a
     continuation all behave exactly as they do for ``$IDH_ROOT/scripts/bash-env.sh``. A
     hand-rolled Python parse of the same file would silently diverge from that

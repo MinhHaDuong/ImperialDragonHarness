@@ -9,7 +9,8 @@
 #   (a) every entry carries a `defects:` key; an explicitly-empty set must
 #       carry a `none confirmed` justification comment inside its block
 #       (on its own line, above the key — inline comments would be parsed
-#       into the anchor field by the scalar block parser in reviewers.sh);
+#       into the anchor field by the scalar block parser in
+#       skills/coaching/replay.sh);
 #   (b) every DEFECTS anchor resolves against the entry's OWN diff: the
 #       basename appears in `git diff --name-only base...head`, and a
 #       line-precise anchor blames (at head) to a commit introduced BY that
@@ -54,7 +55,7 @@ pass() { echo "PASS: $*"; PASS=$((PASS+1)); }
 
 # ── parse: one pipe-delimited record per entry ────────────────────────────────
 # pr|has_defects_key|has_justification|base|head|panel|defects|confirmed
-# Mirrors the scalar block parser in reviewers.sh board_records(), extended
+# Mirrors the scalar block parser in skills/coaching/replay.sh board_records(), extended
 # with the bookkeeping fields the data contract needs. Comment lines are
 # DATA here (justifications and confirmed-fix SHAs live in them), so they
 # are tracked, not skipped.

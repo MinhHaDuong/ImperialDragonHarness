@@ -11,8 +11,7 @@
 #      localhost/seat-runner:v1 image; SKIP when either is absent, never build
 #      the image here) and a timeout test that stubs podman (needs neither).
 #
-# SKIP convention mirrors tests/test_reviewers.sh: echo "SKIP: reason" and keep
-# going; a genuine defect FAILs.
+# SKIP convention: echo "SKIP: reason" and keep going; a genuine defect FAILs.
 set -euo pipefail
 
 # --- hermetic credential scope (2026-07-27) ----------------------------------

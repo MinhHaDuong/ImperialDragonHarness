@@ -1,0 +1,34 @@
+%erg 0.1
+Title: Attribution teardown: refresh retained helper provenance pointers
+Created: 2026-10-05
+Author: reviewer
+Closed: retained provenance pointers refreshed; affected checks and full gate passed
+
+--- log ---
+2026-10-05T17:30Z reviewer created
+2026-10-05T17:31Z reviewer note Imagine/Plan/feasibility PASS — retained provenance comments only; seven content paths; existing affected behavior checks and full gate required.
+2026-10-05T17:38Z reviewer closed — retained provenance pointers refreshed; affected checks and full gate passed
+
+--- body ---
+
+## Context
+Necessary bounded child of 1030 (approved attribution design sections 8–10). The complete retirement inventory reaches 15 content-bearing paths; this preparatory PR refreshes five retained helper/test provenance comments before the seven obsolete executable/config/exclusive-test deletions. Historical origins and frozen benchmark anchors remain evidence, never rewritten.
+
+## Exit criteria
+- [ ] The five retained helper/test comment paths below point to existing retained implementations or explain the convention without a dangling read target; copied-code historical provenance remains explicit.
+- [ ] Reference/catalog hygiene and retained coaching/helper behavior checks pass; no executable behavior or benchmark data changes.
+
+## Relevant files / size boundary
+`scripts/keys-diff.sh`, `skills/update-publist/resolve_hal_credentials.sh`, `skills/external-peer-review/peer_review.py`, `tests/test_seat_runner.sh`, `tests/test_benchmark_board.sh`, this ticket, parent 1030 tracking. Seven content paths maximum; no catalog regeneration is needed because skill frontmatter does not change.
+
+## Imagine
+Retirement should preserve the copied helpers and their origin facts while keeping current read pointers useful. Replace current implementation references with the retained coaching equivalents only where the actual symbol/idiom exists. Keep external peer review's original ticket 0393 origin alongside the current `_keystore_value` reference. Remove the obsolete test-suite name from the SKIP convention description. Frozen board data and historical incident records stay unchanged.
+
+## Actions / Plan
+Inspect the five actual comments and retained `skills/coaching/replay.sh` symbols. Update comments/docstring only. The preliminary tree must remain operational with the old machinery still present; final retirement belongs to original 1030. Use existing retained behavior tests and reference/catalog checks, then declared adherence and full project gate through raid-gate. No comment-mirroring regression tests.
+
+## Test
+Existing keys-diff and HAL credential resolver shell suites; padme direct-client, coaching replay, retained seat-runner and benchmark-board suites; skill reference pointers and catalog drift. Inspect the Python diff to ensure only its docstring changes. Required full make check remains the final pre-publication gate.
+
+## Feasibility
+PASS: actual retained replay contains `_keystore_value` and `board_records`; shell suites are discovered dynamically. Keys-diff has an independent SSH invocation, so describe its word splitting directly while keeping the original source as historical origin. Budget: five comment paths + child ticket + parent 1030 = 7 content-bearing paths. No runtime/provider/credential dependency for these edits.
