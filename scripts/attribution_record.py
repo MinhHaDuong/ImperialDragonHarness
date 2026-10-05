@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 LOG = logging.getLogger(__name__)
-FACT = re.compile(r"^\s*(kind|pr|writer|reviewer|finding|defect-confirmed):")
+FACT = re.compile(r"^\s*(kind|pr|writer|reviewer|finding|defect-confirmed)\s*:")
 
 
 def anchor(value):
@@ -51,9 +51,16 @@ def parse_record(text):
     if not lines or lines[0] != "kind: review-attribution":
         raise ValueError("first line must be kind: review-attribution")
     for number, line in enumerate(lines, 1):
-        if not FACT.match(line):
+        fact = FACT.match(line)
+        if not fact:
             continue
         try:
+            field = fact[1]
+            for required in ("kind", "pr", "writer"):
+                if required not in record:
+                    if field != required:
+                        raise ValueError("fact order requires kind, pr, writer before reviewers")
+                    break
             if line == "kind: review-attribution" and "kind" not in record:
                 record["kind"] = "review-attribution"
             elif line.startswith("pr: ") and "pr" not in record:

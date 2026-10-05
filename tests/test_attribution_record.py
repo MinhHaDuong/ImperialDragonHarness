@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -59,6 +60,22 @@ def test_malformed_required_facts_fail_loud(reader, old, new):
         reader.parse_record(RECORD.replace(old, new))
 
 
+@pytest.mark.parametrize("fact", ["finding", "defect-confirmed"])
+def test_malformed_optional_fact_separator_fails_loud(reader, fact):
+    text = RECORD.replace("  finding:", "  finding :") if fact == "finding" else RECORD + (
+        "defect-confirmed : scripts/missed.py:31 · source: post-merge-fix · pr: 1200\n")
+    with pytest.raises(ValueError, match="line .*malformed"):
+        reader.parse_record(text)
+
+
+@pytest.mark.parametrize("order", [(0, 2, 1), (1, 0, 2), (2, 0, 1)])
+def test_header_order_is_canonical(reader, order):
+    lines = [line for line in RECORD.splitlines(keepends=True) if not line.startswith("  finding:")]
+    text = lines[0] + "".join(lines[index + 1] for index in order) + "".join(lines[4:])
+    with pytest.raises(ValueError, match="line .*order"):
+        reader.parse_record(text)
+
+
 def test_no_reviewers_and_same_attempt_duplicate_fail(reader):
     with pytest.raises(ValueError):
         reader.parse_record(RECORD.split("reviewer:")[0])
@@ -96,6 +113,38 @@ def test_roar_requires_reviewed_merge_capture_and_visible_failure():
     assert "capture failure" in capture
     assert "step 11" in capture
     assert "never from" in capture
+
+
+@pytest.mark.integration
+def test_roar_capture_command_works_in_fresh_unrelated_shell(tmp_path):
+    project = tmp_path / "unrelated-project"
+    subprocess.run(["git", "init", "--quiet", str(project)], env=child_env(), check=True)
+    skill = ROOT / "skills" / "roar" / "SKILL.md"
+    capture = skill.read_text().split("Validate the complete record before writing:")[1]
+    command = next(command for command in re.findall(r"`([^`]+)`", capture)
+                   if 'attribution_record.py" --capture' in command)
+    command = command.replace("<loaded-SKILL.md>", str(skill))
+    environment = child_env()
+    environment.pop("IDH_ROOT", None)
+    environment["PROJECT_REPO"] = str(project)
+    result = subprocess.run(["bash", "--noprofile", "--norc", "-c", command], cwd=project,
+                            input=RECORD, text=True, capture_output=True, env=environment)
+    assert result.returncode == 0, result.stderr
+    assert len(list(project.glob("memory/journal/*/*-review-attribution-pr1164.md"))) == 1
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("fact", ["finding", "defect-confirmed"])
+def test_malformed_optional_facts_never_capture(tmp_path, fact):
+    project = tmp_path / "project"
+    subprocess.run(["git", "init", "--quiet", str(project)], env=child_env(), check=True)
+    text = RECORD.replace("  finding:", "  finding :") if fact == "finding" else RECORD + (
+        "defect-confirmed : scripts/missed.py:31 · source: post-merge-fix · pr: 1200\n")
+    result = subprocess.run(["python3", str(SCRIPT), "--capture", str(project), "--audience", "public"],
+                            input=text, text=True, capture_output=True, env=child_env())
+    assert result.returncode != 0
+    assert "malformed" in result.stderr
+    assert not list(project.glob("memory/journal/*/*"))
 
 
 @pytest.mark.integration

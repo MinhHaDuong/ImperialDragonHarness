@@ -13,6 +13,7 @@ Author: MinhHaDuong
 2026-10-03T10:16Z reviewer note author decision (instructed via qwen3.8-27b, raid 2026-10-03): 0913 gate LIFTED — spec §4/§11 fixes the record contract (format, fixed lines, project memory/journal/ location) independent of per-project rollout; 0909 closed with No-rollout verdict; the harness journal is already v8 (pilot #1109, audience #1112, capture #1117); 0913's residual scope is adopting projects only and changes no convention this contract depends on. Attribution capture proceeds.
 2026-10-03T12:57Z qwen3.8-27b note imagine pass recorded (2026-10-03, raid): keep-as-is; 0937 hand-off disposed — capture-side in scope via Actions 2-3 (named status: lines + fail-loud), read-side (check over N runs) is 1007's run-failure rate; implementation seams per the annotation (spec §4 capture template, step 6 via memory-capture.sh, scripts/attribution_record.py fixed-line reader)
 2026-10-05T08:03Z reviewer note implementation: fixed-line reader and validation-before-capture CLI; distinct attempts and shared anchors preserved; fast 896 passed, adherence 169 passed
+2026-10-05T09:05Z reviewer note verify-reroll — round 1: fix Roar capture root and enforce fixed-line attribution validation
 
 --- body ---
 ## Context
