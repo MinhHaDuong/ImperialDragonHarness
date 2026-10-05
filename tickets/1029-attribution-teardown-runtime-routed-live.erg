@@ -24,3 +24,6 @@ Inspect actual inventory, choose minimal relocation/deletion preserving approved
 
 ## Test
 Meaningful retained replay/route/telemetry/integration behavior and reference checks, chosen during Plan from actualcode.
+
+## Feasibility reference partition
+This PR removes the five obsolete request/harvest/audition/scorecard/scores reference files together with the descriptor pointers. New live route documentation stays referenced. Budget8+5=13contentpaths, leaving less than2 extra paths; split if15.1030 therefore excludes those five deletions and retires remaining old executable/config/exclusive tests. Each intermediate tree must pass both dead-link and orphan-reference checks.

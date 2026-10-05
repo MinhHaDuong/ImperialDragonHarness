@@ -4,6 +4,7 @@ Created: 2026-10-05
 Author: reviewer
 Blocked-by: 1006
 Blocked-by: 1007
+Blocked-by: 1034
 
 --- log ---
 2026-10-05T10:42Z reviewer created
@@ -25,3 +26,6 @@ Inspect actual inventory, choose minimal relocation/deletion preserving approved
 
 ## Test
 Meaningful retained replay/route/telemetry/integration behavior and reference checks, chosen during Plan from actualcode.
+
+## Feasibility split (2026-10-05)
+The independent inventory found14 content paths before any extra fix. This child is now a bounded tracking sign-off unit, implemented by1033 (contained runner/board relocation) then1034 (cold replay extraction). Preserve the original exit contract above.1034 closes this tracker only after relocation and replay verification compose. No giant executor for1028.

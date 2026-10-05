@@ -74,3 +74,6 @@ Numerical meaningful checks: independent hand-pinned oracle constants; Beta(.5,.
 Risks needing explicit acceptance: ratio/proxy names and per-game vs anchor definitions were under-specified; implementation note must disclose them without pretending proven hallucinations or changing fixed thresholds. Live round-qualified identities may initially yield sparse pair data; report it rather than normalize names. Cross-review attempts can have different coordinate provenance; query uses literal contract join, not fuzzy semantic defect clustering.
 
 Plan supplement: duplicate PR records are ambiguous; WARN and exclude all duplicates from query, backfill and coverage until separately resolved. No implicit snapshot consolidation.
+
+## Raid feasibility refresh (2026-10-05)
+PASS: shared parser signature, live records, explicit coordinate/scoring contracts and scoped path budget verified.1006/1007 share Roar/spec; verify and merge sequentially, then union checks. No3+PR same-wave registry; no coordination-set PR. Annotation prelude lands before executor forks; common WAVE_BASE recorded from resulting main.

@@ -4,6 +4,7 @@ Created: 2026-10-02
 Author: MinhHaDuong
 Blocked-by: 1006
 Blocked-by: 1007
+Blocked-by: 1032
 
 --- log ---
 2026-10-02T08:00Z MinhHaDuong created
@@ -112,3 +113,6 @@ Budget fixed: seven trialtickets +0980 +workflow +parent1009 +child1032 =11. Rea
 After annotation prelude lands,1006/1007 can execute from one base with shared Roar/spec paths recognized, Gaze/merges serial and actual union review. Then1028→1029→1030;1031 may execute alongside disjoint replay work after1006/1007, but all resulting PRs follow own live Hunt/Gaze/gate.1032 last. All touched reference/catalog changes must leave each merged intermediate tree valid, and final make check plus independent integration inventory checks the parent original exits. Re-record stable base between waves and preserve real reviewer attribution throughout.
 
 Plan supplement: duplicate PR records are ambiguous; WARN and exclude all duplicates from query, backfill and coverage until separately resolved. No implicit snapshot consolidation.
+
+## Raid feasibility refresh (2026-10-05)
+WARN resolved by bounded partition:1028 now tracks1033assetrelocation→1034replayextraction; 1029 deletes obsolete references with their descriptor pointers;1030 retires remaining write machinery. Retained enumeration/containment tests and sharedtelemetry readers preserved. Every later launch rechecks actual content paths below15;1032 integration audits explicit reviewed-merge cutoff and duplicate-PR ambiguity. Parentblockedby1032, closesonlyonfulloriginalcriteria integration.
