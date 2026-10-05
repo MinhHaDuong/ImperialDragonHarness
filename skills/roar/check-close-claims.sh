@@ -16,10 +16,8 @@
 # script joins from the other side — merged PRs that claimed a close — which is
 # the only side that can see it.
 #
-# WHY NOT REUSE THE SENTINEL. /roar step 2 advances its own sentinel as it logs
-# telemetry, so by the time this runs the range is gone. A date window is
-# self-contained and, unlike a git range, also covers merges made from another
-# checkout that this one has not pulled.
+# WHY USE A DATE WINDOW. It covers merges made from another checkout that
+# this one has not pulled, while a local git range may miss them.
 set -euo pipefail
 
 LIMIT=30

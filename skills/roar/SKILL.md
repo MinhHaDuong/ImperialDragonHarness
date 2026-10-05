@@ -7,7 +7,7 @@ user-invocable: true
 
 # Roar — post-task wrap-up
 
-`[Execute → Celebrate]`
+`[Execute → Reflect]`
 
 Run after the branch has been merged. Do not skip steps.
 
@@ -22,8 +22,7 @@ directory unchanged.
 
 When the working directory is not a git repository (manuscripts, data
 folders): skip the pre-check and steps 7-10; run steps 1-6 and 11.
-Telemetry: use `"branch":"none-non-git-project"`. The step-3 sweep
-records findings in the project's notes instead of erg tickets. State
+The step-3 sweep records findings in the project's notes instead of erg tickets. State
 explicitly which steps were skipped and why.
 (Precedent: Œconomia manuscript wrap-up, 2026-07-07.)
 
@@ -56,90 +55,17 @@ default branch — there are no remote branches nor merge requests to inspect.
 ## Reflect and update
 
 1. **Reflect**: what worked, what didn't, what was surprising.
-2. **Log to telemetry**: log one celebration per merged PR since the sentinel,
-   falling back to a single aggregate entry when no merge commits are found.
-   A batched interactive session merges several PRs then roars once, so a single
-   aggregate blob loses per-ticket attribution (ticket 0331). Enumerate the merge
-   commits in `roar-last-sha..$UNTIL` and log each as its own record when the
-   sentinel exists, is an ancestor of `$UNTIL`, and the enumeration is non-empty.
-   Substitute `<name>` with the project's own directory name — the leading dash
-   of a `~/.claude/projects/` slug is part of it and stays in the record:
-   ```bash
-   ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
-   ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
-   IDH_ROOT="$(cd -P "$ROAR_DIR/../.." && pwd -P)"
-   SENTINEL="$(git rev-parse --git-common-dir)/roar-last-sha"
-   # Which reference to enumerate up to. /roar normally runs from the worktree
-   # of the branch just merged, and that worktree sits on the branch tip —
-   # BELOW the merge commit — so HEAD would miss the very merge being
-   # celebrated, silently (ticket 0500). Target origin/main whenever HEAD is
-   # already contained in it; HEAD is the fallback wherever no origin/main
-   # exists (no-forge repo, or a differently-named default branch).
-   UNTIL=HEAD
-   if git rev-parse --verify --quiet origin/main >/dev/null &&
-      git merge-base --is-ancestor HEAD origin/main; then
-       UNTIL=origin/main
-   fi
-   echo "roar telemetry: enumerating up to $UNTIL ($(git rev-parse --short "$UNTIL"))"
-   ROWS=""
-   REASON=""
-   if [ ! -f "$SENTINEL" ]; then
-       REASON="no sentinel yet — first roar in this checkout"
-   elif ! git merge-base --is-ancestor "$(cat "$SENTINEL")" "$UNTIL"; then
-       REASON="sentinel is not an ancestor of $UNTIL — history rewritten"
-   elif ! ROWS="$("$IDH_ROOT/scripts/enumerate-merges.py" "$(cat "$SENTINEL")" --until "$UNTIL" --project "<name>")"; then
-       ROWS=""
-       REASON="enumeration FAILED — per-merge-request attribution lost, investigate"
-   elif [ -z "$ROWS" ]; then
-       REASON="no merge commits in range — squash merge, or nothing merged"
-   fi
-   if [ -n "$ROWS" ]; then
-       # Per-PR path: one telemetry-equivalent record per merged PR.
-       printf '%s\n' "$ROWS" | while IFS= read -r row; do
-           printf '%s\n' "$row" | "$ROAR_DIR/log-celebration"
-       done
-   else
-       # Aggregate fallback — always says WHY, so a swallowed failure cannot
-       # pass for a legitimate degradation (they produce the same one record).
-       echo "roar telemetry: aggregate fallback — $REASON" >&2
-       echo '{"project":"<name>","branch":"<branch>","commits":<n>,"files_changed":<n>,"ticket":<number|null>}' | "$ROAR_DIR/log-celebration"
-   fi
-   # Sentinel = the reference just enumerated, not HEAD: a branch worktree's
-   # HEAD is below it, and the next roar would re-enumerate the same merges.
-   git rev-parse "$UNTIL" > "$SENTINEL"
-   ```
-   **First roar in a repo: prefer a session base over the aggregate.** The
-   sentinel is absent exactly once per repo, and the aggregate then collapses
-   the whole session into one record — which is the loss ticket 0331 exists to
-   prevent, at its worst in a batched session that merged many PRs. When the
-   session's base commit is known (`origin/main` as it stood before the first
-   merge, recoverable from the reflog or from the first PR's base), run the
-   block above with that sha substituted for `$(cat "$SENTINEL")` in the
-   `enumerate-merges.py` call, instead of falling through. Written out, that
-   call is `enumerate-merges.py <session-base-sha> --until "$UNTIL" --project
-   "<name>"`. It stays prose rather than a second `bash` fence on purpose:
-   step 2 must offer the agent exactly ONE runnable snippet, and
-   `tests/test_roar_step2_attribution.py` executes that snippet to prove the
-   per-merge-request attribution invariant. A second fenced block would make
-   the test's extraction ambiguous, and a test that cannot say which block it
-   ran proves nothing about the one the agent runs.
-   Attribution is per-PR either way; the sentinel only answers *where to start*.
-   Fall back to the aggregate when no defensible base exists — rewritten
-   history, squash-merges, a no-forge repo with no merge commits. (Precedent:
-   padme 2026-08-21, first roar after ten merged PRs.)
-
-   The sentinel is written from `$UNTIL` inside the block above, never from
-   `HEAD`: a branch worktree's `HEAD` sits below the merge just celebrated, so
-   a `HEAD` sentinel would leave that merge to be re-enumerated next time.
-
-   A fallback line naming `FAILED` is a defect report, not a note: per-merge-request
-   attribution was lost for that interval. Say so in the roar summary.
+2. **Review completed merges**: identify each reviewed merged PR from the
+   project's git history and forge, then capture its review attribution in
+   step 6. Report a capture failure if the review trail lacks required facts.
 3. **Sweep for similar patterns**: review the fix just completed. Grep/audit the codebase for the same anti-pattern in other files.
 
-   **Backfill commissioned defect fixes only.** When step 2 identifies an actual
-   defect-fix PR, run the helper in the project's existing wrap-up worktree,
+   **Backfill commissioned defect fixes only.** When the completed merge has
+   explicit evidence that it fixed a defect, identify its actual merged PR and
+   full fix commit SHA from the project's integration history. Run the helper
+   in the project's existing wrap-up worktree,
    with its full merged commit SHA and a full integration-tip SHA resolved
-   from the project's `origin/main`, which contains the enumerated fix. The
+   from the project's `origin/main`, which contains that merged fix. The
    wrap-up branch may stay below that merge; `--merged-through` proves the fix
    belongs to the actual integration history without changing its checkout.
    Supply explicit `PR=reviewed-SHA` evidence from
