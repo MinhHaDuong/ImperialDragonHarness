@@ -1,20 +1,25 @@
 """Real Git/CLI controls for conservative post-merge attribution backfill."""
 
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
 
-from scripts.attribution_record import parse_record
+from child_env import child_env
 
 CLI = Path(__file__).resolve().parents[1] / "scripts" / "attribution_backfill.py"
 pytestmark = pytest.mark.integration
+SPEC = importlib.util.spec_from_file_location("attribution_record", CLI.with_name("attribution_record.py"))
+READER = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(READER)
+parse_record = READER.parse_record
 
 
 def git(repo, *args):
     return subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True,
-                          text=True).stdout.strip()
+                          text=True, env=child_env()).stdout.strip()
 
 
 def commit(repo, name):
@@ -57,7 +62,7 @@ def run(project, *extra, evidence=True):
             "--fix-commit", fix, "--defect-fix"]
     if evidence:
         args += ["--reviewed", f"12={reviewed}"]
-    return subprocess.run(args + list(extra), capture_output=True, text=True)
+    return subprocess.run(args + list(extra), capture_output=True, text=True, env=child_env())
 
 
 def test_actual_cli_appends_only_event_and_shared_reader_labels(project):
@@ -69,3 +74,168 @@ def test_actual_cli_appends_only_event_and_shared_reader_labels(project):
     assert git(repo, "diff", "--name-only") == str(entry.relative_to(repo))
     assert git(repo, "diff", "--numstat").split("\t")[:2] == ["1", "0"]
     assert parse_record(entry.read_text())["defect_labels"] == ["source.py:2"]
+
+
+def test_repeated_invocation_keeps_repeated_events(project):
+    _, entry, _, _ = project
+    assert run(project).returncode == 0
+    assert run(project).returncode == 0
+    assert len(parse_record(entry.read_text())["defect_confirmed"]) == 2
+
+
+def test_second_fix_at_original_anchor_with_restored_base(project):
+    repo, entry, reviewed, _ = project
+    assert run(project).returncode == 0
+    (repo / "source.py").write_text("first\nbroken\nthird\n")
+    commit(repo, "independent reintroduction preserving reviewed coordinates")
+    (repo / "source.py").write_text("first\nfixed again\nthird\n")
+    fix = commit(repo, "second commissioned defect fix")
+    assert run((repo, entry, reviewed, fix)).returncode == 0
+    assert len(parse_record(entry.read_text())["defect_confirmed"]) == 2
+
+
+@pytest.mark.parametrize("anchor", ["source.py:1", "source.py:3"])
+def test_no_overlap_preserves_all_bytes(project, anchor):
+    repo, entry, _, _ = project
+    entry.write_text(record(anchor=anchor))
+    commit(repo, "different anchor record")
+    before = entry.read_bytes()
+    result = run(project)
+    assert result.returncode == 0 and "no-match=1" in result.stderr
+    assert entry.read_bytes() == before
+    assert git(repo, "status", "--porcelain") == ""
+
+
+def test_insertion_does_not_cover_old_line(project):
+    repo, entry, reviewed, _ = project
+    git(repo, "reset", "--hard", "HEAD~1")
+    (repo / "source.py").write_text("first\ninserted\nbroken\nthird\n")
+    fix = commit(repo, "pure insertion before anchor")
+    before = entry.read_bytes()
+    result = run((repo, entry, reviewed, fix))
+    assert "no-match=1" in result.stderr
+    assert entry.read_bytes() == before
+
+
+def test_old_coordinates_after_earlier_insertion(project):
+    repo, entry, reviewed, _ = project
+    git(repo, "reset", "--hard", "HEAD~1")
+    (repo / "source.py").write_text("inserted\nfirst\nfixed\nthird\n")
+    fix = commit(repo, "insertion plus modification shifts new coordinates")
+    assert run((repo, entry, reviewed, fix)).returncode == 0
+    assert parse_record(entry.read_text())["defect_labels"] == ["source.py:2"]
+
+
+@pytest.mark.parametrize("change", ["elsewhere", "shift", "rename", "delete"])
+def test_drift_rename_deletion_are_visible_and_leave_record_untouched(project, change):
+    repo, entry, reviewed, _ = project
+    git(repo, "reset", "--hard", "HEAD~1")
+    if change in {"elsewhere", "shift"}:
+        text = "different\nbroken\nthird\n" if change == "elsewhere" else "extra\nfirst\nbroken\nthird\n"
+        (repo / "source.py").write_text(text)
+        commit(repo, "file drift before fix")
+        (repo / "source.py").write_text(text.replace("broken", "fixed"))
+    elif change == "rename":
+        git(repo, "mv", "source.py", "renamed.py")
+    else:
+        (repo / "source.py").unlink()
+    fix = commit(repo, "commissioned fix with unresolved coordinates")
+    before = entry.read_bytes()
+    result = run((repo, entry, reviewed, fix))
+    assert result.returncode == 0 and "WARN unresolved" in result.stderr
+    assert entry.read_bytes() == before
+    assert git(repo, "status", "--porcelain") == ""
+
+
+@pytest.mark.parametrize("evidence", [None, "0" * 40, "HEAD", "ambiguous"])
+def test_missing_unknown_nonliteral_ambiguous_evidence_is_unresolved(project, evidence):
+    _, entry, reviewed, fix = project
+    before = entry.read_bytes()
+    extra = [] if evidence is None else ["--reviewed", f"12={evidence}"]
+    if evidence == "ambiguous":
+        extra = ["--reviewed", f"12={reviewed}", "--reviewed", f"12={fix}"]
+    result = run(project, *extra, evidence=False)
+    assert result.returncode == 0 and "WARN unresolved" in result.stderr
+    assert entry.read_bytes() == before
+
+
+@pytest.mark.parametrize("bad", ["duplicate", "malformed", "encrypted", "opaque"])
+def test_unresolved_records_do_not_mutate_while_other_pr_can_proceed(project, bad):
+    repo, entry, reviewed, _ = project
+    other = entry.with_name("2026-10-04-review-attribution-pr13.md")
+    other.write_text(record(pr=13))
+    if bad == "duplicate":
+        entry.with_name("2026-10-04-review-attribution-pr12.md").write_text(record())
+    elif bad == "malformed":
+        entry.write_text(record() + "  finding: invalid\n")
+    elif bad == "encrypted":
+        entry.with_suffix(".md.age").write_bytes(b"age-encryption.org/v1\nfixture ciphertext\n")
+    else:
+        entry.write_text(record().replace("source.py:2", "source.py:99"))
+    commit(repo, "mixed review records")
+    before = entry.read_bytes()
+    result = run(project, "--reviewed", f"13={reviewed}")
+    assert result.returncode == 0 and "WARN unresolved" in result.stderr
+    assert entry.read_bytes() == before
+    assert parse_record(other.read_text())["defect_labels"] == ["source.py:2"]
+
+
+def test_opaque_context_is_not_reviewed_coordinate_evidence(project):
+    _, entry, reviewed, _ = project
+    entry.write_text(record() + f"Context reviewed-SHA: {reviewed}\n")
+    before = entry.read_bytes()
+    result = run(project, evidence=False)
+    assert "absent or ambiguous" in result.stderr
+    assert entry.read_bytes() == before
+
+
+def test_record_symlink_cannot_write_outside_project(project, tmp_path):
+    repo, entry, _, _ = project
+    outside = tmp_path.parent / (tmp_path.name + "-outside.md")
+    outside.write_bytes(entry.read_bytes())
+    entry.unlink()
+    entry.symlink_to(outside)
+    before = outside.read_bytes()
+    result = run(project)
+    assert "unsafe record path" in result.stderr
+    assert outside.read_bytes() == before
+
+
+def test_non_pr_uncommissioned_and_non_project_cli_rejected(project):
+    repo, entry, _, _ = project
+    before = entry.read_bytes()
+    assert run(project, "--fix-pr", "0").returncode != 0
+    assert run(project, "--project", str(repo / "memory")).returncode != 0
+    result = subprocess.run([sys.executable, str(CLI), "--project", str(repo),
+                             "--fix-pr", "34", "--fix-commit", project[3]],
+                            capture_output=True, text=True, env=child_env())
+    assert result.returncode != 0 and "--defect-fix" in result.stderr
+    assert entry.read_bytes() == before
+
+
+def test_mismatched_filename_reserves_both_pr_identities(project):
+    _, entry, reviewed, _ = project
+    other = entry.with_name("2026-10-04-review-attribution-pr12.md")
+    other.write_text(record(pr=13))
+    before = entry.read_bytes()
+    result = run(project, "--reviewed", f"13={reviewed}")
+    assert "record PR disagrees with filename" in result.stderr
+    assert "duplicate attribution records" in result.stderr
+    assert entry.read_bytes() == before
+
+
+def test_no_final_newline_preserves_original_prefix(project):
+    _, entry, _, _ = project
+    entry.write_bytes(entry.read_bytes().rstrip(b"\n"))
+    before = entry.read_bytes()
+    assert run(project).returncode == 0
+    assert entry.read_bytes() == before + b"\ndefect-confirmed: source.py:2 \xc2\xb7 source: post-merge-fix \xc2\xb7 pr: 34\n"
+
+
+def test_reviewed_commit_from_other_history_is_unresolved(project):
+    repo, entry, _, _ = project
+    foreign = git(repo, "commit-tree", git(repo, "rev-parse", "HEAD^{tree}"), "-m", "unrelated root")
+    before = entry.read_bytes()
+    result = run(project, "--reviewed", f"12={foreign}", evidence=False)
+    assert "WARN unresolved" in result.stderr
+    assert entry.read_bytes() == before
