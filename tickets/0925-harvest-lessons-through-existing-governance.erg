@@ -12,6 +12,7 @@ Label: deferred
 2026-09-11T08:45Z claude note After the Fable plan review: adds a positive exit criterion; the three existing ones were absence-shaped and met by harvesting nothing.
 2026-10-01T20:37Z MinhHaDuong codex note Realigned to the author-requested v8 Markdown contract; prior scope retained in Git. No runtime implementation or completion claimed.
 2026-10-01T22:00Z codex note Author requires project-local writes and no autonomous rule proposals; crystallisation is explicit-request-only and outside core dependencies.
+2026-10-05T09:31Z codex note 0888 remplace la voie de cristallisation par Brood explicitement autorisé ; ancien périmètre toujours différé, aucune promotion automatique.
 --- body ---
 
 ## Context
@@ -24,5 +25,10 @@ la seule base d’un rêve ou d’une PR mémoire acceptée.
 ## Réactivation
 
 Une demande explicite de l’auteur doit préciser la destination et le périmètre
-d’une tâche distincte. Aucun projet ne peut écrire dans le harnais pour y
-promouvoir ses expériences. Les sources restent conservées.
+d’une tâche distincte. Cette demande est désormais portée par 0888 : Brood
+ouvre ticket et PR d’implémentation locale puis, si autorisé, un ticket de
+nomination seulement dans le harnais nommé, avec preuves adaptées à son audience.
+L’implémenteur du harnais généralise et valide dans une tâche séparée avant
+réconciliation des copies locales. Les thèmes peuvent décroître sur preuves
+de remplacement ; le journal et les contre-exemples restent conservés.
+Ce ticket historique reste différé ; il ne duplique pas la livraison 0888.

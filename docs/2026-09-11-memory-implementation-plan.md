@@ -28,7 +28,7 @@ slug. Leur titre, corps et dépendances expriment le nouveau périmètre.
 | 0910 | Suggestion finale lair au seuil de 5, puis rêve distinct et PR | 0916, 0988 |
 | 0923 | Premier smoke de lecture/capture/rêve, runtime choisi et déclaré | 0910 |
 | 0924 | Preuves sur les trois autres runtimes, dont Vibe | 0923 |
-| 0925 | Différé : cristallisation sur demande explicite seulement | Hors livraison automatique |
+| 0925 | Ancien périmètre différé ; Brood explicite livré par 0888 | Hors livraison automatique |
 | 0918 | Évaluation de lecture, rappel, capture et consolidation | 0924 |
 | 0913 | Migration progressive et retrait des mécanismes remplacés | 0918 |
 | 0909 | Revue du résultat intégré et clôture du programme | 0913, 0988 |
@@ -94,8 +94,13 @@ Aucun test live ni clôture de ticket d’implémentation n’est annoncé.
 
 Les sorties d’un projet restent dans son dépôt ou son compagnon privé explicite.
 Roar ne propose aucune règle ; dream ne propose ni ne réalise de cristallisation.
-0925 est différé et ne bloque plus le programme. Une demande explicite future
-ouvre une tâche distincte. Les instructions actuelles roar/dream/memory-sweep
+0925 reste différé et ne bloque plus le programme. La demande explicite du
+5 octobre 2026 ouvre 0888 : Brood implémente les améliorations locales puis
+nomine, par ticket seulement, dans un harnais nommé et autorisé. Une tâche
+distincte du harnais généralise et valide entre projets puis réconcilie les
+copies locales après adoption. Les sources restent conservées ; les thèmes
+ne décroissent que sur preuves de remplacement. Les révisions Dream sont
+revérifiées avant écriture et la confidentialité avant nomination. Les instructions actuelles roar/dream/memory-sweep
 sont corrigées dès cette clarification ; la proposition lair et le pilote restent à éprouver.
 
 Lair termine puis suggère dream en conclusion à partir de 5 nouvelles
