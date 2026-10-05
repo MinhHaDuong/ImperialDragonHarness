@@ -1,0 +1,26 @@
+%erg 0.1
+Title: Coaching replay: relocate contained runner and frozen board
+Created: 2026-10-05
+Author: reviewer
+Blocked-by: 1006
+Blocked-by: 1007
+
+--- log ---
+2026-10-05T10:53Z reviewer created
+
+--- body ---
+
+## Context
+Child of1028, itself child of1009. Relocate preserved assets before extracting replay.
+
+## Actions
+Move the frozen board and complete contained runner/support tree together without changing ground-truth entries or containment behavior. Repoint old dispatcher runner and board defaults, Padme wrapper runner call, and existing meaningful board/runner/relay/direct-client/audition tests. Keep legacy dispatcher behavior until subsequent extraction/retirement.
+
+## Exit criteria
+- [ ] Existing board, OS containment, relay/direct client and replay smoke tests pass at new paths; board bytes/hash preserved; no source of labels lost.
+
+## Test
+Existing board, OS containment, relay/direct client and replay smoke tests pass at new paths; board bytes/hash preserved; no source of labels lost.
+
+## Planned paths
+Seven existing consumers plus own ticket; pure asset relocations countzero only verified unchanged. Below15.

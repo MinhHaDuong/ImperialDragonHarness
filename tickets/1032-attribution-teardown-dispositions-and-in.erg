@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Attribution teardown: dispositions and integration audit
+Created: 2026-10-05
+Author: reviewer
+Blocked-by: 1030
+Blocked-by: 1031
+
+--- log ---
+2026-10-05T10:42Z reviewer created
+
+--- body ---
+
+## Context
+Child of1009; approved attribution design sections8–10.
+Close0980 WONTDO with approved design reason; verify alreadyclosed0205/0356 disposition, annotate seven closed trialtickets exactlyonce pointing to approvedspec without deleting history. Complete decorrelation gradient inworkflow independent of seatmechanism. Audit records for reviewedmerges since1005; any missing identities/capture must be visiblyresolved, never reconstructed. Integration closes1009 only after allchildren land and parentcriteria checked.
+
+## Exit criteria
+- [ ] 0980closedwithreason;0205/0356verified;sevenclosedtrialtickets annotated;decorrelationgradient preserved; every reviewedmerge after1005 has factualattribution or visiblyreportedcapturefailure resolvedbefore1009close;parentintegrationgreen.
+
+## Relevant files / size boundary
+0980 plussevenclosedtrialtickets,workflowrule,1009tracker,childticket. Below15paths;1004tracker close isseparateintegrationonly ifallitscriteria genuinelymet.
+
+## Actions
+Inspect actual inventory, choose minimal relocation/deletion preserving approved intent; independent review and projectchecks. Further split if15+contentpaths.
+
+## Test
+Meaningful retained replay/route/telemetry/integration behavior and reference checks, chosen during Plan from actualcode.

@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Coaching replay: extract read-only cold replay interface
+Created: 2026-10-05
+Author: reviewer
+Blocked-by: 1033
+
+--- log ---
+2026-10-05T10:53Z reviewer created
+
+--- body ---
+
+## Context
+Child of1028, itself child of1009. Extract cold replay after preserved assets move.
+
+## Actions
+Create thin coaching skill and replay-only helper/reference. Extract only actual board loop/classification/credential/containment mechanisms; no trial-ticket logging, peer-trial SLOW gate, roster governance or automatic promotion. Emit read-only replay results, fail loud on incomplete board execution, preserve known board matcher semantics. Add meaningful direct replay fixtures. Keep old dispatcher functional until1030. Regenerate catalog. Close1028 only after independent composition verifies its original replay contract.
+
+## Exit criteria
+- [ ] Tiny frozen board/stub runner yields hand-counted duplicate/confirmed/unconfirmed findings; failed board replay returnsnonzero withoutsuccesssummary; no tickets/logs mutated. Credential validation and runnercontainment remaincovered.
+
+## Test
+Tiny frozen board/stub runner yields hand-counted duplicate/confirmed/unconfirmed findings; failed board replay returnsnonzero withoutsuccesssummary; no tickets/logs mutated. Credential validation and runnercontainment remaincovered.
+
+## Planned paths
+Coaching SKILL, replay helper/reference/test, README, own ticket,1028tracker (7); no needre-edit relocatedrunner/support. Below15.

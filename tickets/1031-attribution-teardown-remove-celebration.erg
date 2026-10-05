@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Attribution teardown: remove celebration writer and sentinel
+Created: 2026-10-05
+Author: reviewer
+Blocked-by: 1006
+Blocked-by: 1007
+
+--- log ---
+2026-10-05T10:42Z reviewer created
+
+--- body ---
+
+## Context
+Child of1009; approved attribution design sections8–10.
+Remove Roar celebration step2 and log-celebration, sentinel writes/reads, and exclusive celebration tests. Read-side enumerate-merges capability already moved under1007. Reword Lair sentinel step and close-claim comment; keep stable existing step numbers to avoid invented renumbering work. Preserve shared telemetry readers/events/permission-diffs.
+
+## Exit criteria
+- [ ] No celebration telemetry writer or sentinel remains acrossskills/tests/scripts/bin/rules; live Roar uses attribution without celebration write; remaining checks pass.
+
+## Relevant files / size boundary
+skills/roar/SKILL.md, log-celebration, exclusive celebration test, skills/lair/SKILL.md, skills/roar/check-close-claims.sh, affected small contracttests. Below15paths.
+
+## Actions
+Inspect actual inventory, choose minimal relocation/deletion preserving approved intent; independent review and projectchecks. Further split if15+contentpaths.
+
+## Test
+Meaningful retained replay/route/telemetry/integration behavior and reference checks, chosen during Plan from actualcode.

@@ -1,0 +1,26 @@
+%erg 0.1
+Title: Attribution teardown: retire obsolete reviewer write machinery
+Created: 2026-10-05
+Author: reviewer
+Blocked-by: 1029
+
+--- log ---
+2026-10-05T10:42Z reviewer created
+
+--- body ---
+
+## Context
+Child of1009; approved attribution design sections8–10.
+Delete obsolete reviewers write dispatcher, roster configs, scorecard/scores/trial/promotions and their exclusive tests/references after replay and descriptor replacements land. Preserve historical scorecards and moved board/containment; retire only exclusive old mechanism tests.
+
+## Exit criteria
+- [ ] No obsolete roster/trial/write mechanism remains; reduced reviewer/coaching tests pass and reference/catalog hygiene green; retained board/replay remains operational.
+
+## Relevant files / size boundary
+Old reviewers.sh/panel files/references and exclusive obsolete tests. If deletion inventory reaches15 split further viaergnew before executor.
+
+## Actions
+Inspect actual inventory, choose minimal relocation/deletion preserving approved intent; independent review and projectchecks. Further split if15+contentpaths.
+
+## Test
+Meaningful retained replay/route/telemetry/integration behavior and reference checks, chosen during Plan from actualcode.

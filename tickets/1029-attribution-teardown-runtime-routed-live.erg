@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Attribution teardown: runtime-routed live reviewer descriptor
+Created: 2026-10-05
+Author: reviewer
+Blocked-by: 1028
+
+--- log ---
+2026-10-05T10:42Z reviewer created
+
+--- body ---
+
+## Context
+Child of1009; approved attribution design sections8–10.
+Thin reviewers to runtime discovery/route descriptor with live-route reference docs, fail-open semantics and pointer to coaching. Remove Gaze auto request/harvest/scorecard/promotion wiring; rewrite Raid denial cure onto runtime-routed independent evidence. Preserve gate findings dispositions, forge-bot review and internal panel.
+
+## Exit criteria
+- [ ] Reviewers descriptor has no roster/trial governance; Gaze/Raid route optional external review through active runtime and preserve finding evidence/integrity; tests and catalog pass.
+
+## Relevant files / size boundary
+skills/reviewers/SKILL.md, live route references, skills/gaze/SKILL.md, skills/raid/SKILL.md, README.md, affected contracts tests. Below15contentpaths.
+
+## Actions
+Inspect actual inventory, choose minimal relocation/deletion preserving approved intent; independent review and projectchecks. Further split if15+contentpaths.
+
+## Test
+Meaningful retained replay/route/telemetry/integration behavior and reference checks, chosen during Plan from actualcode.
+
+## Feasibility reference partition
+This PR removes the five obsolete request/harvest/audition/scorecard/scores reference files together with the descriptor pointers. New live route documentation stays referenced. Budget8+5=13contentpaths, leaving less than2 extra paths; split if15.1030 therefore excludes those five deletions and retires remaining old executable/config/exclusive tests. Each intermediate tree must pass both dead-link and orphan-reference checks.

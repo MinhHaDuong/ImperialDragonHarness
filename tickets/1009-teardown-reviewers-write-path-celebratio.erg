@@ -4,6 +4,7 @@ Created: 2026-10-02
 Author: MinhHaDuong
 Blocked-by: 1006
 Blocked-by: 1007
+Blocked-by: 1032
 
 --- log ---
 2026-10-02T08:00Z MinhHaDuong created
@@ -60,3 +61,58 @@ KEPT (verified): `benchmark-board.yml` (moves, never deleted; 1008's board = 23 
 REIMAGINE: Four ordered passes. 1 Gate: verify 1005+1006+1007 merged (no recording gap); confirm 1007's PR moved `enumerate-merges.py` (+ test). 2 Celebration teardown: delete step 2 + line 25; renumber (and patch the five cross-refs) or keep numbering stable; delete `log-celebration` + `enumerate-merges.py` original + both telemetry tests; reword lair step 0 + `check-close-claims.sh` comment; optional one-time machine-local archive of `~/.claude/telemetry/celebrations.jsonl` (outside the repo). 3 Reviewers thinning: create `skills/coaching/SKILL.md` (thin REPLAY descriptor, fail-loud, cold path); move the §8 "Move" column into it; delete the "Drop" column; rewrite `reviewers/SKILL.md` to descriptor-only (needs-description + contract prose mirroring the AGENTS.md harness paragraph, live route docs, fail-open, one pointer each to `/coaching` and the project's attribution records — no subcommand table); gaze + raid rewords; `make skills-catalog`. 4 Dispositions + rule (mechanical): `erg close` 0980 WONTDO (premise "seat each runtime behind the runner" dropped by §2; cite §10); verify 0205/0356 headers (no write); exactly one annotation log line each on the seven closed trial tickets pointing at the spec §10 (scorecards stay); reword `rules/workflow.md:107-108` keeping the gradient — the rule now binds runtime-native reviewers, not sandboxed seats (it is already seat-mechanism-free; the change is gradient completion). Final: git grep sweep + `make check`.
 ANTIPATTERNS: Teardown before capture lands (recording gap, §10). Deleting historical scorecard lines (annotate only). Touching `events.jsonl`/`permission-diffs/` or the shared `CLAUDE_TELEMETRY_DIR` readers. Dangling references (lair:16, `check-close-claims.sh:18-21`, raid:326/341, README catalog, renumbered-roar cross-refs, `test_benchmark_board.sh:47` if the board moves, orphaned `references/*.md` — `test_skill_reference_pointers.py` fails on both dead pointers and unpointed files). Deleting `benchmark-board.yml` or the decorrelation evidence doc. Deleting the seat-runner (it moves). Touching the forge-bot paragraph or internal-panel tests. Re-closing/editing closed 0205/0356 headers. Forgetting `make skills-catalog`. Renumbering without patching the five cross-refs.
 EXIT-CRITERIA: Box 1 — reduced suite green (board test, Padmé-route test, surviving dispatcher tests); `git grep` of `skills/reviewers/` empty of roster/trial machinery; no `panel.yml`; frontmatter/reference-pointer tests pass; catalog regenerated. Box 2 — `git grep` `log-celebration` and `roar-last-sha` empty across `skills/ tests/ scripts/ bin/ rules/` (this is what forces the lair + `check-close-claims.sh` rewords); no telemetry step in roar SKILL.md; a live /roar run appends nothing. Box 3 — 0980 gains a `Closed:` WONTDO citing §10; 0205 header verified (no write); exactly one new spec-pointing log line in each of the seven trial tickets; `erg check` passes. Box 4 — integration-review check at close (records are project-local; the harness PR cannot assert it): enumerate merges since 1005's merge SHA, each reviewed merge has a §4 record naming its reviewers; a reviewed PR without one is a §4.8 fail-loud defect. Verdict: keep-as-is (blind spots absorbed by the existing grep-clean criteria and §8/§10 — no reword needed).
+
+## Raid selection decomposition (2026-10-05)
+MONSTER: Original teardown spans well over15contentpaths. Preserve originalActions/Exitcriteria above;1009 nowtracks five bounded implementationchildren:1028containedcoachingreplay;1029runtime live descriptor/routing;1030obsoletewrite machinery removal;1031celebrationwriter/sentinel teardown;1032dispositions andintegration. Dependencies reside onrealprerequisites, nevertracker. Originalsourceandlogs remainappend-only. No parentclose untilallfouroriginalcriteria andsource-preservation audit pass. Furtherchildsplit ifactualpathinventory crosses15.
+
+## Raid Imagine refresh (2026-10-05, next attribution batch)
+PREMISE: PASS; tracker decomposed into1028–1032 before execution. Preserve meaningful moved replay/containment/enumeration tests, frozen ground truth and shared telemetry readers. Do not rename entire old roster dispatcher into coaching; extract cold replay only. Keep live fail-open and cold fail-loud distinct, durable finding disposition and internal/forge reviews unchanged. Retire celebration writer/sentinel only; numbering stays stable.
+BLIND-SPOT: Final no-gap audit must treat duplicate PR records as ambiguous and inspect every reviewed merge through an explicit cutoff (including preparation/wrap merges). Later wrap-ups capture newly merged PRs; never predate an unmerged PR as merged. Historical logs/source evidence remain append-only.
+DRIFT GUARD: Original four parent criteria and allActions preserved; child partitions are implementation choices, not new intent. Existing obsolete deletion inventory is superseded where it would drop useful preserved-capability tests.
+
+## Raid Plan refresh (2026-10-05, next attribution batch)
+
+Read actual children 1028–1032 and reviewers dispatcher, board/runner tests, Padme wrapper and audition reference. Preserve original parent exits; child work is ordered replacement then retirement. Plans need concrete path counts after exact rename similarity, never assume edited relocation is free.
+
+## 1028 contained replay
+
+First test: a tiny real Git board plus stub runner yields known duplicate/unique-confirmed/unconfirmed counts; one failed board invocation aborts without a success summary and without changing any ticket log. Keep existing containment tests and real benchmark ground-truth checks.
+
+Extract board_records, contract decoding, anchor classification, elapsed/percentile and credential helpers plus the board loop into coaching replay. Remove trial-ticket argument/default, erg logging, peer-trial SLOW gate and promotion logic from extracted code. Emit local replay result only; do not introduce another stored scoring ledger. Treat unconfirmed board findings as unconfirmed, retaining board matching semantics. Require explicit project checkout/board and runtime-supplied candidate identity/route. Preserve trusted keystore and containment. Keep old dispatcher functional until1030 removes it.
+
+Paths likely content-bearing: coaching SKILL, replay engine, replay reference, new replay behavioral test, benchmark path test, seat-runner test, net-relay test, direct-client test, old dispatcher default runner path, Padme wrapper runner path, ticket =11. Board plus runner and its three support files can be unchanged relocations (0), but editing board comments makes it one content path. Catalog adds one. Total13 before any extra test/doc; split relocation and replay extraction further if actual diff reaches15. Seat-runner internal sibling paths remain valid when moved together. Keep reviewer-route docs changes for1029. Existing old tests must keep passing at transition; adapt overrides/defaults instead of deleting their meaningful coverage.
+
+## 1029 live descriptor and callers
+
+First check: optional route failure is reported without blocking internal Gaze; an actual verifiable external finding still requires disposition and can bounce. Documentation contract checks should preserve forge-bot paragraph and gate evidence.
+
+Write thin needs/route descriptor with live fail-open, runtime discovery, explicit missing-perspective report and coaching pointer. Keep Padme/OpenRouter route descriptions without fixed panel config dependencies; runtime chooses route, no replacement panel scheduler. Remove Gaze automatic request/harvest/scorecard/promotion paragraphs and revise Raid permission-denial cure to request independent decorrelated review, record identity/route/evidence/failures and honor second-denial escalation. Keep portable simplify unchanged. Update catalog and all surviving skill references together.
+
+Budget: descriptor, at most two route refs, Gaze, Raid, README, descriptor contract test, ticket =8. Additional active helper changes require counted paths. Old governance files may remain until1030 but descriptor must not advertise them; pointer hygiene can require bundling their deletion here or further splitting1030. Verify this transition explicitly before opening a PR.
+
+## 1030 obsolete write machinery
+
+First check: coaching still replays and contains CLI; no dispatcher exposes list/request/harvest/scorecard/scores/audition trial writes, no roster/promotion config remains. Historical tickets and scorecards untouched.
+
+Delete old reviewers.sh, panel.yml, panel-padme.yml, obsolete Padme roster wrapper after routes no longer depend on it, old request/harvest/audition/scorecard/scores references, and exclusively retired dispatcher/audition/Padme-roster tests. Inventory is already near/over15: 4 helpers/config +5 refs +3 exclusive tests +ticket =13, with any other test/doc paths reaching breaker. Count actual inventory and split retirement further if necessary. Do not delete moved runner, board, relay/direct-client/containment tests or migrated enumeration test. Preserve each intermediate PR's reference hygiene; adjust division between1029/1030 if removing advertised refs is required for a green intermediate state.
+
+## 1031 celebration retirement
+
+First verification: grep active skills/tests/scripts/bin/rules has no celebration writer or sentinel reference; shared telemetry env readers, events and permission diff capabilities still exist. Retained enumerate-merges test runs from scripts path.
+
+Remove Roar step2/writer sentence, log-celebration and only exclusive celebration test; reword Lair initial housekeeping and close-claims sentinel comment. Preserve Roar step3 numbering (retired step2 slot omitted), capture/backfill instructions and enumerator. Update any affected existing contract test rather than deleting broad functionality. Budget approximately7 paths inclticket; no machine-local archive necessary.
+
+## 1032 dispositions and integration
+
+First check: snapshot historical ticket bytes and compare after exactly one appended spec annotation for each of seven trial tickets; close0980 with reason; verify0205/0356 headers untouched. Check decorrelation gradient states sibling minimum, stronger different vendor/harness, most independent available for risk without mandatory routing mechanism.
+
+Budget fixed: seven trialtickets +0980 +workflow +parent1009 +child1032 =11. Real capture records/audit report add paths and can reach15; keep capture in bounded normal factual Roar PRs rather than silently waive coverage. Enumerate every reviewed merge after1005, join actual project records and report missing capture/identity visibly. Parent closes only after actual missing entries resolved; no synthetic record stands in. Check1004 separately; closure only if original train criteria truly met.
+
+## Wave sequencing and verification
+
+After annotation prelude lands,1006/1007 can execute from one base with shared Roar/spec paths recognized, Gaze/merges serial and actual union review. Then1028→1029→1030;1031 may execute alongside disjoint replay work after1006/1007, but all resulting PRs follow own live Hunt/Gaze/gate.1032 last. All touched reference/catalog changes must leave each merged intermediate tree valid, and final make check plus independent integration inventory checks the parent original exits. Re-record stable base between waves and preserve real reviewer attribution throughout.
+
+Plan supplement: duplicate PR records are ambiguous; WARN and exclude all duplicates from query, backfill and coverage until separately resolved. No implicit snapshot consolidation.
+
+## Raid feasibility refresh (2026-10-05)
+WARN resolved by bounded partition:1028 now tracks1033assetrelocation→1034replayextraction; 1029 deletes obsolete references with their descriptor pointers;1030 retires remaining write machinery. Retained enumeration/containment tests and sharedtelemetry readers preserved. Every later launch rechecks actual content paths below15;1032 integration audits explicit reviewed-merge cutoff and duplicate-PR ambiguity. Parentblockedby1032, closesonlyonfulloriginalcriteria integration.

@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Attribution teardown: extract contained coaching replay
+Created: 2026-10-05
+Author: reviewer
+Blocked-by: 1006
+Blocked-by: 1007
+Blocked-by: 1034
+
+--- log ---
+2026-10-05T10:42Z reviewer created
+
+--- body ---
+
+## Context
+Child of1009; approved attribution design sections8–10.
+Move frozen labeled board and contained offline replay into a thin coaching skill. Preserve ground truth, replay result semantics and untrusted CLI containment; existing live routes can delegate during transition. No attribution statistics or automatic promotions.
+
+## Exit criteria
+- [ ] A coaching invocation replays the same frozen board and preserves diagnostics; board/containment tests pass at new paths; no ground-truth entries lost.
+
+## Relevant files / size boundary
+skills/coaching/SKILL.md, replay engine, board, moved seat-runner tree, affected replay tests/references. Pure unchanged relocations count zero; modified paths plus ticket/tests must stay below15.
+
+## Actions
+Inspect actual inventory, choose minimal relocation/deletion preserving approved intent; independent review and projectchecks. Further split if15+contentpaths.
+
+## Test
+Meaningful retained replay/route/telemetry/integration behavior and reference checks, chosen during Plan from actualcode.
+
+## Feasibility split (2026-10-05)
+The independent inventory found14 content paths before any extra fix. This child is now a bounded tracking sign-off unit, implemented by1033 (contained runner/board relocation) then1034 (cold replay extraction). Preserve the original exit contract above.1034 closes this tracker only after relocation and replay verification compose. No giant executor for1028.

@@ -1,0 +1,38 @@
+%erg 0.1
+Title: Prepare bounded attribution raid base and factual coverage
+Created: 2026-10-05
+Author: reviewer
+Closed: autoclosed — PR #1191
+
+--- log ---
+2026-10-05T10:58Z reviewer created
+
+2026-10-05T11:03Z reviewer closed — autoclosed — PR #1191
+--- body ---
+
+## Context
+The authorized raid of1006,1007,1009 needs a shared planning base. Landing
+annotations once avoids divergent copies and prevents each implementation
+PR inheriting the entire decomposition path budget. This preparation closes
+only1035; original implementation exits remain open.
+
+## Exit criteria
+- [ ] Original1006/1007/1009 exits and fixed statistics policy are preserved.
+- [ ] Teardown is partitioned into acyclic bounded children with explicit path budgets and intermediate hygiene requirements.
+- [ ] Independent Imagine, BlindSpot, Plan and feasibility findings are recorded, including conservative duplicate-PR ambiguity handling.
+- [ ] Factual1189 attribution coverage is repaired using actual reviewer identity and review evidence without invented findings.
+- [ ] Declared project checks and ticket validation pass.
+
+## Actions
+Checkpoint selected planning annotations, bounded decomposition, factual
+coverage record and durable raid log. Review and merge this prerequisite before
+any execution branch forks. Native and portable phases must actually run;
+this ticket does not waive unavailable verification.
+
+## Relevant files
+Tickets1006,1007,1009,1028–1034; factual1189 record; attribution raid log.
+
+## Test
+Verify original exit text remains intact, dependency graph acyclic and every
+implementation scope below15 content paths or explicit further-split stop.
+Validate actual1189 record with shared reader; full make check and erg check.
