@@ -46,7 +46,12 @@ conservés sans réconciliation. Les autres helpers hérités restent en place ;
 
 ## Périmètres abandonnés ou différés
 
-Les tickets 0908, 0912, 0914, 0915, 0919, 0921 et 0922 sont marqués `deferred`
+Les tickets 0912 et 0919 sont clôturés comme supersédés après vérification et
+décision explicite de l’auteur du 5 octobre 2026. Le groupement éditorial de
+0912 est livré par 0916 (PR #1119) ; le moteur distinct et le backfill de qualité
+de 0919 restent abandonnés, pas déclarés implémentés.
+
+Les tickets 0908, 0914, 0915, 0921 et 0922 restent marqués `deferred`
 et supersédés par v8, pas déclarés implémentés. Leur ancien périmètre reste dans
 Git et le plan historique. Ils ne bloquent pas la livraison et ne doivent pas
 être exécutés contre v7. Toute réactivation exige une nouvelle décision :
