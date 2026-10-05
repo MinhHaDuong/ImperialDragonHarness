@@ -2,12 +2,12 @@
 Title: Attribution teardown: retire obsolete reviewer write machinery
 Created: 2026-10-05
 Author: reviewer
-Blocked-by: 1036
 
 --- log ---
 2026-10-05T10:42Z reviewer created
 2026-10-05T16:57Z reviewer note blocker 1029 closed — Blocked-by removed.
 2026-10-05T17:31Z reviewer note necessary decomposition — 15-path inventory split into 1036 retained-pointer preparation and original 1030 retirement; original exit unchanged.
+2026-10-05T17:38Z reviewer note blocker 1036 closed — Blocked-by removed.
 
 --- body ---
 

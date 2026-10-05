@@ -27,8 +27,9 @@
 # exits 2 — never reported as agreement.
 #
 # Knobs (exist for the tests; production defaults shown). KEYS_DIFF_SSH is
-# invoked UNQUOTED so the multi-word default word-splits into argv words
-# (pattern from skills/reviewers/padme-reviewers.sh).
+# invoked UNQUOTED so the multi-word default word-splits into argv words.
+# This script invokes SSH independently; the retired Padmé reviewer transport
+# was the historical origin of the word-splitting convention.
 #   KEYS_DIFF_LOCAL_DIR  local keystore directory ($HOME/.config/keys)
 #   KEYS_DIFF_SSH       ssh invocation (ssh -F $HOME/.ssh/config -o BatchMode=yes)
 #
