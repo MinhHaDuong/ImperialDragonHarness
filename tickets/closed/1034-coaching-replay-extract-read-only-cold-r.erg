@@ -2,10 +2,12 @@
 Title: Coaching replay: extract read-only cold replay interface
 Created: 2026-10-05
 Author: reviewer
+Closed: cold replay extraction and direct fixture verified
 
 --- log ---
 2026-10-05T10:53Z reviewer created
 2026-10-05T14:41Z reviewer note blocker 1033 closed — Blocked-by removed.
+2026-10-05T15:53Z reviewer closed — cold replay extraction and direct fixture verified
 
 --- body ---
 

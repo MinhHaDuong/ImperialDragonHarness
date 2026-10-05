@@ -2,11 +2,13 @@
 Title: Attribution teardown: extract contained coaching replay
 Created: 2026-10-05
 Author: reviewer
-Blocked-by: 1034
+Closed: original replay contract independently verified: 23 frozen entries byte-identical; 9 affected checks pass
 
 --- log ---
 2026-10-05T10:42Z reviewer created
 2026-10-05T11:15Z reviewer note blocker 1007 closed — Blocked-by removed.
+2026-10-05T15:53Z reviewer note blocker 1034 closed — Blocked-by removed.
+2026-10-05T16:03Z reviewer closed — original replay contract independently verified: 23 frozen entries byte-identical; 9 affected checks pass
 
 --- body ---
 
