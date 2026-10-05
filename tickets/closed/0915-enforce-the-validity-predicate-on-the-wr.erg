@@ -3,6 +3,7 @@ Title: Add canonical-owner routing and validated memory admission
 Created: 2026-09-10
 Author: claude
 Label: deferred
+Closed: Superseded by the author-approved v8 scope; executable predicate admission was abandoned in favor of the documentary Markdown convention. Historical body and prior designs remain preserved; no abandoned mechanism was implemented.
 
 --- log ---
 2026-09-10T16:24Z claude created
@@ -13,6 +14,8 @@ Label: deferred
 
 2026-09-24T16:18Z Codex note Updated deleted knowledge-hint references after 0976; remaining design work stays open.
 2026-10-01T20:37Z MinhHaDuong codex note Superseded by v8; deferred to prevent obsolete implementation dispatch. Not implemented or closed.
+2026-10-05T19:17Z reviewer closed — Superseded by the author-approved v8 scope; executable predicate admission was abandoned in favor of the documentary Markdown convention. Historical body and prior designs remain preserved; no abandoned mechanism was implemented.
+
 --- body ---
 
 ## Superseded by v8 — do not dispatch
