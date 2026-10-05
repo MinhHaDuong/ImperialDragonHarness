@@ -2,7 +2,7 @@
 Title: Calibrate optional quality annotations on a small sample
 Created: 2026-09-10
 Author: claude
-Label: deferred
+Closed: superseded by v8 — systematic quality-annotation backfill abandoned; author requested verified closure on 2026-10-05
 
 --- log ---
 2026-09-10T16:34Z claude created
@@ -12,6 +12,7 @@ Label: deferred
 2026-10-05T18:04Z reviewer note raid Imagine — author explicitly selected closure as superseded after verification. v8 bbe0f189 abandoned quality annotation backfill. Blind-Spot requires plan register to distinguish these closures from deferred tickets.
 2026-10-05T18:04Z reviewer note raid Plan — confirm v8 abandoned quality backfill; mark explicit author disposition criterion satisfied, close as superseded together with 0912 and update live plan register. Preserve historical integration review.
 2026-10-05T18:04Z reviewer note raid Feasibility PASS — same v8 author disposition as 0912; close both superseded with plan status propagation and archive-relative link correction, no former scope executed.
+2026-10-05T18:05Z reviewer closed — superseded by v8 — systematic quality-annotation backfill abandoned; author requested verified closure on 2026-10-05
 
 --- body ---
 
@@ -20,11 +21,12 @@ Label: deferred
 Backfill systématique des annotations de qualité abandonné.
 
 La décision de simplification de l’auteur du 2026-10-01 remplace le périmètre
-v7. Voir le [plan v8](../docs/2026-09-11-memory-implementation-plan.md).
-L’ancien corps reste dans Git et le plan v7 conservé. Ce ticket est différé,
-pas implémenté ni clôturé. Toute réactivation exige un périmètre nouvellement
-autorisé ; retirer le label ne suffit pas à rétablir les anciennes obligations.
+v7. Voir le [plan v8](../../docs/2026-09-11-memory-implementation-plan.md).
+L’ancien corps reste dans Git et le plan v7 conservé. Après vérification du
+plan et de la conception v8, l’auteur a demandé le 2026-10-05 la clôture comme
+supersédé. L’ancien périmètre n’est pas déclaré implémenté. Toute réactivation
+exige un périmètre nouvellement autorisé.
 
 ## Exit criteria
 
-- [ ] Décision explicite de clôture comme supersédé ou de réactivation avec nouveau périmètre.
+- [x] Décision explicite de l’auteur du 2026-10-05 : clôture comme supersédé, après vérification de v8.

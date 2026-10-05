@@ -2,7 +2,7 @@
 Title: Propose consolidation candidates without prescribing outcomes
 Created: 2026-09-10
 Author: claude
-Label: deferred
+Closed: superseded by v8 — separate discovery engine abandoned; editorial grouping delivered by 0916 (PR #1119); author requested verified closure on 2026-10-05
 
 --- log ---
 2026-09-10T15:50Z claude created
@@ -14,19 +14,22 @@ Label: deferred
 2026-10-05T18:04Z reviewer note raid Imagine — author explicitly selected closure as superseded after verification. v8 bbe0f189 abandoned separate discovery engine; editorial grouping belongs to delivered 0916. No former implementation claimed.
 2026-10-05T18:04Z reviewer note raid Plan — inspect v8 plan/design and delivered 0916 evidence; mark explicit disposition criterion satisfied, close as superseded, update v8 plan register together with 0919. No old engine implementation or new tests.
 2026-10-05T18:04Z reviewer note raid Feasibility PASS — closure unit with 0919 touches 3 content files, no dependencies/shared registries; historical v8 disposition verified and author closure decision explicit.
+2026-10-05T18:05Z reviewer closed — superseded by v8 — separate discovery engine abandoned; editorial grouping delivered by 0916 (PR #1119); author requested verified closure on 2026-10-05
 
 --- body ---
 
 ## Superseded by v8 — do not dispatch
 
-Groupement éditorial couvert par 0916 ; moteur de découverte séparé abandonné.
+Groupement éditorial livré par [0916](0916-model-judged-merge-reviewed-promotion-to.erg)
+(PR #1119) ; moteur de découverte séparé abandonné par v8.
 
 La décision de simplification de l’auteur du 2026-10-01 remplace le périmètre
-v7. Voir le [plan v8](../docs/2026-09-11-memory-implementation-plan.md).
-L’ancien corps reste dans Git et le plan v7 conservé. Ce ticket est différé,
-pas implémenté ni clôturé. Toute réactivation exige un périmètre nouvellement
-autorisé ; retirer le label ne suffit pas à rétablir les anciennes obligations.
+v7. Voir le [plan v8](../../docs/2026-09-11-memory-implementation-plan.md).
+L’ancien corps reste dans Git et le plan v7 conservé. Après vérification du
+plan et de la conception v8, l’auteur a demandé le 2026-10-05 la clôture comme
+supersédé. L’ancien périmètre n’est pas déclaré implémenté. Toute réactivation
+exige un périmètre nouvellement autorisé.
 
 ## Exit criteria
 
-- [ ] Décision explicite de clôture comme supersédé ou de réactivation avec nouveau périmètre.
+- [x] Décision explicite de l’auteur du 2026-10-05 : clôture comme supersédé, après vérification de v8.
