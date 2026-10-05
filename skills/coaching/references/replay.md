@@ -36,5 +36,4 @@ inconsistent summary, an incomplete board, or a failed runner exits nonzero
 with a diagnostic on stderr and no result row.
 
 The helper writes only temporary findings and removes them on exit. It never
-edits the board, tickets, logs, or reviewer roster. The existing `/reviewers
-audition` remains available during the transition.
+edits the board, tickets, or logs.

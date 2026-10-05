@@ -57,11 +57,16 @@ def test_preflight_does_not_trust_spawn_success():
 def test_live_review_surfaces_do_not_dispatch_retired_governance():
     """The live skills must not send an agent back into the old write API.
 
-    Check all three entry points, including Gaze setup and Raid recovery;
+    Check Gaze setup, Raid recovery, and Coaching's loaded reference;
     removing only the descriptor's command table would leave live callers.
     """
-    for name in ("reviewers", "gaze", "raid"):
-        path = ROOT / f"skills/{name}/SKILL.md"
+    paths = [ROOT / f"skills/{name}/SKILL.md" for name in
+             ("reviewers", "gaze", "raid", "coaching")]
+    coaching = paths[-1].read_text()
+    references = re.findall(r"`references/([\w.-]+\.md)`", coaching)
+    assert references, "the coaching reference must be checked"
+    paths.extend(ROOT / "skills/coaching/references" / name for name in references)
+    for path in paths:
         text = path.read_text()
         calls = re.findall(r"/reviewers\s+(\w+)", text)
         retired = {"request", "harvest", "scorecard", "scores", "audition", "list"}
