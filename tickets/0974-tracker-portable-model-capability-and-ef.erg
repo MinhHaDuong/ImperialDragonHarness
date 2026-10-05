@@ -7,6 +7,8 @@ Author: claude
 2026-09-24T14:49Z claude created
 
 2026-09-25T13:59Z Minh Ha-Duong note blocker 0975 closed — Blocked-by removed.
+2026-10-05T19:31Z reviewer claude note 2026-10-05 audit: 1000 added as retroactive child; invariants 1,5,6,7,8 uncovered; routing question from 0980 folded in as open design point
+
 --- body ---
 ## Context
 `docs/portable-model-capability-policy.md` (PR #1002) replaces concrete Claude
@@ -30,6 +32,30 @@ Open design points to settle inside the phases, not before:
 - 0975 — Phase 0: vocabulary + behaviour-preserving Claude mapping
   (closed 2026-09-25; accepted with sandbox-only full-gate failures waived;
   see `tickets/closed/0975-phase-0-semantic-model-level-and-effort.erg`)
+- 1000 — skill compute intentions made portable (autoclosed by PR #1092,
+  2026-10-01; retroactive child). Skills declare `model-level`/`effort` in
+  prose and carry no concrete model names; no pins remain to agree with, so
+  Phases 1 and 3 are delivered in a different shape than the doc planned.
+  Covered invariants: 2, 3, 4, 9 (`tests/test_model_policy.py`,
+  `tests/test_model_rightsizing.py`).
+
+## Remaining (2026-10-05 audit)
+Uncovered invariants: 1 (no silent inheritance on broad fan-out), 5
+(`decorrelated-from`), 6 (`intensive` never default for broad fan-out), 7
+(provider mechanics), 8 (trace recording). Phase 4 is largely retired by the
+2026-10-01 decision that the runtime, not the harness, owns translation: waive
+7 in writing or scope it to the Claude mapping only. Phase 2 (`team-lead`
+profile) and Phase 5 (economic defaults) are unfiled; Phase 5 waits on the
+1024 tournament measurements. No child is filed until a gap clears the
+severity floor.
+
+## Open design point: quota-aware routing
+From 0980 (2026-10-05): route more aggressively to conserve Claude Pro Max,
+ChatGPT Pro and Vibe Pro quotas; consider the GLM Coding Plan after 1024
+(off-peak promotion through 2026-10-07 is half usage credits, not half price;
+source docs.z.ai/devpack/overview). Compare an LLM-routing MCP plugin usable
+from Claude and Codex against tuning evidence-based IDH routing. No
+architecture, provider or purchase selected.
 
 ## Exit criteria
 - [ ] Every phase child closed, and the integration review run per `/roar`
