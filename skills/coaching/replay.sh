@@ -44,9 +44,7 @@ _elapsed() {  # t0 t1
 }
 
 # Nearest-rank percentile (1-based) at percentile $1 of the numeric arguments
-# $2..$N. Empty arg list → "0.0". One implementation for audition's per-run
-# p50/p95 AND the peer-relative SLOW median, so the two can never drift apart
-# (ticket 0353).
+# $2..$N. Empty arg list → "0.0". Used for cold replay's per-PR p50/p95.
 _percentile() {  # pct v1 v2 ...
     local pct="$1"; shift
     [ "$#" -gt 0 ] || { printf '0.0'; return 0; }

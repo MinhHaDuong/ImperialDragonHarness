@@ -29,7 +29,7 @@ while [ "$#" -gt 0 ]; do
         --model) model="$2"; shift 2;; *) shift;;
     esac
 done
-[[ "$repo" == "$EXPECTED_REPO" && "$model" == toy && "$out" == /*/1.findings || "$out" == /*/2.findings ]]
+[[ "$repo" == "$EXPECTED_REPO" && "$model" == toy && ( "$out" == /*/1.findings || "$out" == /*/2.findings ) ]]
 case "$branch" in
     cafebabe1)
         [[ "$base" == deadbeef1 ]]
