@@ -1,19 +1,19 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-05T17:25Z
+Last updated: 2026-10-06
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
 
-As of merged main `72284111` (2026-10-05): selected children 1031, 1033, 1034 and 1029 are integrated. PR1200 supplied the shared factual checkpoint; PR1201 thinned the live reviewer descriptor and removed Gaze's automatic roster/trial wiring while preserving evidence, integrity, the internal battery and forge review. Their actual review-attribution records are included in this local factual checkpoint, whose integration is pending.
+As of merged main `3b40940d` (PR1222, 2026-10-06), all bounded implementation children of the reviewer-attribution teardown have landed. The live reviewers skill is a descriptor; contained replay and its frozen board live under coaching. The old live roster/trial writer and Roar celebration writer are retired. PR1222 closed 0980 WONTDO, annotated seven historical trials and completed the runtime-native reviewer decorrelation gradient. PR1221 restored four historical attribution captures while preserving all 21 earlier blobs. This Roar bundle adds factual records for reviewed merged PRs 1221 and 1222 and closes parents 1032 and 1009 after an independent original-criteria integration audit. Ticket 1004 remains open for its separate audit.
 
-PR1201 completed fresh semantic adherence, five actual panel perspectives, actual native review, a distinct portable simplification pass and an independent criterion gate. Every perspective approved with zero findings. Source full gate passed1497tests2skipped47.81s; the required synthesis gate passed1497tests2skipped49.31s. All ten CI checks passed. Merged main's complete tracked tree equals the tested source. Gate completed before900s; actual public Gaze completion was approximately990s, above the warning and below1800s, versus963s local payload assembly. Native and Correctness each ran43targeted checks; no live-provider or real-container execution is claimed.
+The explicit merged range after PR1005 through PR1222 has 33 first-parent merges: 24 attribution records available, one runtime-masked and eight query-missing with independently supported unreviewed classifications. The five formerly UNKNOWN own-review cases 1214/1215/1216/1217/1219 are resolved through dated lifecycle evidence; the withdrawn PR1216 reviewer hypothesis stays withdrawn. The strict reader sees 27 valid records, 26 model-attributable, and no malformed, ambiguous, encrypted or unsafe sources. This bundle's full `make check` passed 1510 tests with two skips in its isolated worktree. [Coverage correction](docs/2026-10-06-roar-historical-classification-proof.md) records the evidence and original parent criteria.
 
 ## Ready work
 
-Four of the author's five selected children are complete. Next is a fresh bounded 1030 retirement leg: its actual fifteen-path inventory requires a necessary split before source implementation. Ticket1032 dispositions/final integration remains separate, and parents1009 and1004 remain open. Original Imagine/Plan/BlindSpot/feasibility exits remain preserved. The frozen coaching board, runner and replay remain operational; the legacy dispatcher/config/exclusive tests remain for1030. PR1191 factual attribution is visibly pending; PR1190 had mechanical verification only.
+The remaining attribution task is 1004's separate original-criteria integration review. Its historical notes stay intact. Runtime policy 0974, memory migration 0913 and the parallel model tournament remain separate work. The original 1032 and 1009 criteria are checked in the dated coverage correction; no new criterion was added.
 
 ## Resume point
 The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Portable installation (0999) is complete — integration review closed in #1104; `./bin/idh install`/`check`/`sync` are the registration surface.
@@ -22,8 +22,8 @@ The Zotero train is COMPLETE (2026-10-03/04): 1018 consolidated into one `zotero
 The external-reviewer panel train is closed (0902 #1155; 0205 retired at #1157; teardown in the attribution train 1004→1009). The verification loop is ALSO closed: 1016/1017/1021/0879/0990 all merged 2026-10-03 (WAVE_BASE wave annotations, detached-seat substitution, spawn-trust preflight, erg log placement + reroll_bump routing, orchestrator-run gaze + battery NOT-RUN signal). Agent profiles landed under 0938 (2026-10-03): five shells + contracts (agents channel 761/800), all inventory-justified call sites converted, Pi portability demonstrated live; design note with two external strong reviews merged via #1171.
 
 ## Next actions
-See [ROADMAP.md](ROADMAP.md) for the trains. Verification, raid-annotations, agent-profiles (0938) and Zotero are done. Remaining: attribution teardown 1009 through its bounded children, runtime policy 0974 (+0980 pending 1009), memory 0913 standing rollout, and model-tournament 1024 in a parallel session. Claude adapter 0887 activated 2026-10-05: the plugin is the single hook source (live settings and settings.shared.json carry no hooks), guard confirmed firing from the plugin in a live session; ticket closes with its PR. Caveat until #1211 merges: an `idh install` from a pre-merge checkout re-merges hooks into the live settings (observed 2026-10-05 during tournament replays); the fixed registration check names it, remove the hooks key or merge. Drop this whole caveat sentence when #1211 merges. Portable Gaze simplification 1027 integrated in PR1189. Current routing notes are recorded in 0980/1004; pending tournament evidence does not choose a subscription or provider.
-The primary checkout is based on merged main 72284111 and retains an unrelated guards edit plus the untracked tournament concept and 1024 ticket. This raid uses owned isolated worktrees and preserves that material.
+See [ROADMAP.md](ROADMAP.md) for the trains. Verification, raid annotations, agent profiles (0938), Zotero and reviewer teardown implementation are done. Remaining: separate attribution integration 1004, runtime policy 0974, memory 0913 per-project migration and the parallel model tournament. Claude adapter 0887 is active: the plugin is the single hook source; PR1211 merged the registration fix and its typed runtime-masked attribution is preserved. Portable Gaze simplification 1027 integrated in PR1189. Open 0974 owns the routing and quota question; retired 0980 is historical, and tournament evidence does not choose a subscription or provider.
+This raid uses owned isolated worktrees and preserves unrelated primary-checkout changes.
 
 ## Author actions
 - Install the ILaaS consortium key in `~/.config/keys/ilaas.env`, then configure `models.json` (0977).
