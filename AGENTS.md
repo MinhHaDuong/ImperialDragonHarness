@@ -9,7 +9,16 @@ model names, fixed agent definitions, or a runtime-specific implementation.
 | Cheaper worker | cheap | economy | Search, extraction, mechanical checks, bounded execution |
 | Competent worker | standard | standard | Planning, orchestration, ordinary review |
 | Expert worker | strong | standard | Difficult implementation or cross-cutting judgment |
-| Smartest advisor | frontier | intensive when needed | Hard decisions, adversarial judgment, escalation |
+| Smartest advisor | frontier | standard (intensive rarely — cost) | One-shot deep problems: hard decisions, adversarial judgment, escalation. NOT orchestration |
+
+Capability class and effort are ORTHOGONAL choices: the class buys judgment
+depth, the effort buys thinking duration. Do not couple them. Frontier is
+reserved for one-shot deep problems, not orchestration. Pairing intensive
+with frontier is the exception, not the rule — it explodes cost for marginal
+judgment. Intensive is not a frontier property at all: it is the DEFAULT
+strategy of the Qwen 3.8 family, which compensates its size with duration
+(template-default XHIGH thinking — measured in the arena: more steps and
+tokens at the same effort label).
 
 Use the least expensive profile adequate for the task. Promote capability when
 the task requires it; organizational rank alone does not determine difficulty.
