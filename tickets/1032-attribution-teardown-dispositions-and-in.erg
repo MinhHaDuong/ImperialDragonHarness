@@ -64,3 +64,6 @@ Actual merged cutoff9681d863ac88ca6f6826e822fff0732b5042e1ad:30merges,26valid re
 
 ## Pending factual evidence (2026-10-06)
 An independent complete-lifecycle audit found no own-review commission in the captured activity for1214/1215/1217, but cannot exclude earlier or out-of-band activity. Their classifications remain UNRESOLVED until an actual review trail or positive producer no-review assertion is supplied; no exemption is fabricated. The factual question to the author is pending. Original integration criteria remain unchanged and1043 remains a dependency.
+
+## Current merged cutoff before PR1221 review (2026-10-06)
+Main advanced through PR1219 at2a95c4643a391efc2749c736a6e930ea71a9ff86:31merges,26valid repositoryrecords,1masked and25model-attributable; in-range23available/1masked/7missing. PR1219publicbody describes ticket-only0974inventory andergcheck withoutsuiterun; emptyreviews/comments cannot prove no-review. Its actualcommission remainsUNRESOLVED/UNKNOWN without actualreviewtrail orpositiveproducerassertion, alongside1214/1215/1217. No exemption, mask ormodel invented. Original1032/1009criteria unchanged; needs-human label and1043dependency retained. Author explicitlyauthorized1042publication; actualPR1221 exists, pending current-head review/integration.

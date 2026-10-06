@@ -618,5 +618,24 @@
     "pr": 1208,
     "source_type": "Actual producer completed assistant wrap-up message explicitly identifying PR1208 and merge333f619d; affirmative no-review assertion, not inference from empty forge collections.",
     "excerpt": "**Attribution de revue :** non capturée, car je n'ai lancé aucune revue sur cette PR. Ce n'est pas un échec de capture."
+  },
+  "pr1219-public-classification": {
+    "source_type": "Actual public PR body, merge metadata, file inventory and empty review/comment collections inspected for the explicit merged cutoff.",
+    "public_pr": "https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1219",
+    "head": "7db584d59b5034f8d59aea0934274317b8ffdc24",
+    "merged_commit": "2a95c4643a391efc2749c736a6e930ea71a9ff86",
+    "merged_at": "2026-10-06T06:21:03Z",
+    "files": [
+      {
+        "path": "tickets/0974-tracker-portable-model-capability-and-ef.erg",
+        "additions": 23,
+        "deletions": 0,
+        "changeType": "MODIFIED"
+      }
+    ],
+    "body": "**Ticket:** refs 0974 (tracker stays open)\n\nAdds a table to the 0974 body mapping each of the nine invariants in `docs/portable-model-capability-policy.md` to the evidence found in tests, skills and scripts.\n\n- Covered: 2, 3, 4, 9. Partial: 1 (reclassified from uncovered). Uncovered: 5, 6, 7, 8.\n- Invariant 6 is recorded as an unresolved tension, not a violation: the `Requested effort: intensive` line in `skills/raid/SKILL.md` has no stated scope.\n- Waivers for 7 and 8 are *proposed*, not signed. The exit criterion \"1–9 backed or waived\" stays open.\n- Read-only inventory; the test suite was not run. Only `tickets/0974-*.erg` changes. `erg check tickets` passes (warnings are pre-existing).\n\nNeeds the author's decision on: the scope of raid's `intensive` line (6), and the proposed waivers (7, 8).\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+    "reviews": [],
+    "comments": [],
+    "classification": "UNRESOLVED/UNKNOWN: actual own-review commission is not established; empty collections and ticket-only source type do not establish a no-review exemption. No identity inferred."
   }
 }

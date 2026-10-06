@@ -31,3 +31,6 @@ Independent interface/artifact review PASS with bounded sequencing WARN. Existin
 
 ## Bounded completion evidence (2026-10-06)
 Refreshedcutoff9681d863ac88ca6f6826e822fff0732b5042e1ad;30merges classified in docs/2026-10-06-attribution-coverage.md. Five recoverableactualcaptures1204/1209/1210/1216/1220,21existingblobs preservedbyte-for-byte. Threeexplicitunresolvedcases1214/1215/1217 remainvisible; noidentityinference; parent1032/1009 remainopenwithoriginalexits.102targetedchecksPASS, temporarystrictquery/preservation/realGitmasked-backfillcontrolsPASS. Fullprojectgate mustpassbeforePRopen; validationevidence retainedinPR. Allcontentpaths including1043partitionandticketmove below15.
+
+## Currency refresh before review (2026-10-06)
+Explicit merged cutoff advancedto2a95c4643a391efc2749c736a6e930ea71a9ff86(PR1219),31merges. Newlyincluded1219own-reviewclassificationUNRESOLVED/UNKNOWN fromactualpublicproof, withno inferredidentity/exemption; originalthreeunknowns retained. Existing21journalblobs bytepreserved andfivecaptures parsedfacts unchanged. Original1042boundedexitcriteria unchanged; parent1032/1009 remainopen. ActualPR1221nowexists afterexplicitauthorpublicationauthorization; no unmergedselfcapture.
