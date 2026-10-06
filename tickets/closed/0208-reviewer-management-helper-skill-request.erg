@@ -15,6 +15,7 @@ Closed: autoclosed — PR #299
 2026-06-05T09:25Z claude note /reviewers skill scaffold landed (PR supersedes #276): list/request/harvest/scorecard wired to the 0217 seat-runner — request runs the runner per roster seat with per-seat fail-open, harvest normalizes FINDING| output to the contract shape (unparseable→WARN), scorecard writes a fixed-schema erg line; empty-roster-safe; tests/test_reviewers.sh 13/13. NOT closing: blocked-by 0217 and the advisory trial (>=5 MRs) is pending
 2026-06-05T11:06Z Minh Ha-Duong note author disposition: close. All six exit criteria verified met (skill landed via PR #292 with Ticket-ref, harvest hardened by 0218/PR #298, delegation stub at verify/SKILL.md:216). Stale Blocked-by:0217 dropped — the remaining containment hardening (network isolation, path allowlist) is 0217's own scope, not this skill's
 2026-06-05T11:08Z MinhHaDuong closed — autoclosed — PR #299
+2026-10-06T04:10Z Codex note Approved disposition: docs/2026-10-02-reviewer-attribution-design.md §10 supersedes this trial mechanism; historical verdicts, scorecards and log history remain evidence.
 --- body ---
 ## Context
 

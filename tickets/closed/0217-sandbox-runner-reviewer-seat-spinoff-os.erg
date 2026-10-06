@@ -20,6 +20,7 @@ Closed: autoclosed — PR #564
 2026-07-13T21:07Z claude note correction: criterion-3 explicit env construction lives in run_seat() at scripts/seat-runner.sh:~183-191; the ~145-160 citation in the 19:59Z note is stale
 2026-07-13T21:07Z claude note bump verify-reroll — round 1: venv-root derivation guard + verifiable minors
 2026-07-13T21:13Z Minh Ha-Duong closed — autoclosed — PR #564
+2026-10-06T04:10Z Codex note Approved disposition: docs/2026-10-02-reviewer-attribution-design.md §10 supersedes this trial mechanism; historical verdicts, scorecards and log history remain evidence.
 --- body ---
 ## Context
 

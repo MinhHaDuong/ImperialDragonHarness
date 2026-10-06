@@ -11,6 +11,7 @@ Closed: autoclosed — PR #612
 
 2026-07-14T18:45Z claude note bump verify-reroll — round 1: unresolved blocker — EXIT trap in audition (reviewers.sh) deletes ${out}.err before the fail-loud 'see ${out}.err' pointer can be read; reproduced empty findings-dir post-exit. Second blocker: unsanitized --name/model flows into erg log note, embedded newline forges a second well-formed ticket-log line undetected by erg check (reproduced against real tickets/erg).
 2026-07-14T18:56Z Minh Ha-Duong closed — autoclosed — PR #612
+2026-10-06T04:10Z Codex note Approved disposition: docs/2026-10-02-reviewer-attribution-design.md §10 supersedes this trial mechanism; historical verdicts, scorecards and log history remain evidence.
 --- body ---
 ## Context
 
