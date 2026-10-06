@@ -1,0 +1,37 @@
+%erg 0.1
+Title: Gaze review: disentangle decorrelation axes — angle, lineage, replication
+Created: 2026-10-06
+Author: MinhHaDuong
+Label: deferred
+
+--- log ---
+2026-10-06T09:57Z MinhHaDuong created
+2026-10-06T09:57Z reviewer label deferred
+
+--- body ---
+
+## Context
+
+The gaze review loop appears to conflate two decorrelation axes:
+- ANGLE: which perspective reviews the work (correctness, consistency,
+  scope, red team...) — seats differ by what they look at;
+- LINEAGE: which model family reviews — seats differ by producer
+  independence (the reason the judge panel excludes candidate families).
+A third axis exists and is currently unexploited: PURE REPLICATION —
+same model, same prompt, inter-run variation from temperature only.
+
+## Scope
+
+- Name the three axes in the review doctrine (rules/guards.md sibling
+  or the review skills) and state what each buys and what it does not.
+- Decide the house policy: how many angles, how many lineages, and when
+  replication (temperature resampling) substitutes for a seat.
+- The judge panel of the arena is a lineage-decorrelated SAME-ANGLE
+  panel (one rubric, three families) — state that explicitly.
+
+## Exit criteria
+
+- [ ] The three axes documented with what each controls
+- [ ] gaze/review skills updated: angle vs lineage no longer conflated
+- [ ] A decision rule: minimum decorrelation for a review to count as
+      independent (incl. when replication suffices)

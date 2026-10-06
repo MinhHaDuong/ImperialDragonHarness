@@ -1,0 +1,41 @@
+%erg 0.1
+Title: Model tournament: PDF report — graphs, Pareto, clusters, situation guide
+Created: 2026-10-06
+Author: MinhHaDuong
+Blocked-by: 1004
+
+--- log ---
+2026-10-06T08:43Z MinhHaDuong created
+2026-10-06T09:44Z reviewer note Author-approved chantier sequence: research PDF after attribution tracker1004 closes; priority-order blocker, not a technical dependency. PDF is research work planned for the weekend.
+
+--- body ---
+
+## Context
+
+Cycles 1 and 2 are complete and analyzed (tracker 1024 journal; raw data
+~/arena/runs/ + analyze2.py; elec params registered 0.23 EUR/kWh x 600 W).
+Deliverable: the square report of the tournament.
+
+## Content
+
+- Graphs from the arena data (reproducible script, not hand-drawn):
+  quality/speed/cost scatter, the Pareto frontier, paired-diff
+  distributions per hypothesis.
+- Tables: the grid, the paired verdicts (H1/H2, effort axes, cross-camp),
+  the 19 documented outcomes in their three classes.
+- Cluster and class analysis (skills/route grid.json clusters; effort =
+  identity doctrine).
+- SITUATION CHOICE GUIDE: off-peak windows (DeepSeek time-of-use
+  halves), quotas and caps (OR key cap stalls the whole judge panel —
+  lesson recorded), latency/interaction needs, privacy/clearance
+  (forces local), GPU state (local lane busy), budget.
+
+Egress: model names, prices and scores are public specs — cleared.
+No project repo content.
+
+## Exit criteria
+
+- [ ] Graphs generated from ~/arena data by a script checked into the report tree
+- [ ] Choice guide reviewed by the author
+- [ ] Report framed (message-framing), typography-finished, pdf-finished
+- [ ] Parent 1024 exit criterion "paired analysis written up" satisfied by this report

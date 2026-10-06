@@ -1,0 +1,36 @@
+%erg 0.1
+Title: Skill arena: candidate scouting — web research, proposals, smoke testing
+Created: 2026-10-06
+Author: MinhHaDuong
+Blocked-by: 1024
+Label: deferred
+
+--- log ---
+2026-10-06T08:43Z MinhHaDuong created
+2026-10-06T09:44Z reviewer label deferred
+2026-10-06T09:44Z reviewer note Author-approved chantier sequence: after tournament tracker1024, deferred candidate scouting. Resume only on an explicit author decision; closure of the blocker does not authorize automatic resumption.
+
+--- body ---
+
+## Context
+
+skills/arena owns the replay procedure; it lacks the FRONT door:
+scouting. Qwen 4 is coming; flash-next may get served (watch DashScope
+intl + OR); new quants appear weekly.
+
+## Scope
+
+- A scouting loop (periodic web research) producing CANDIDATE PROPOSALS:
+  expected cluster position, expected effort identity, price/route
+  state, and the smoke plan (0470 first).
+- Feeds skills/route grid.json + routes.json (update discipline:
+  cycles or explicit tests only — scouting proposes, the arena
+  disposes).
+- Egress: public information only.
+
+## Exit criteria
+
+- [ ] Scouting procedure added to skills/arena (with the author's review)
+- [ ] One scouting pass executed and journalized: flash-next hosted watch,
+      Qwen 4 watch, quant-landscape check
+- [ ] Candidate proposal list with expected positions

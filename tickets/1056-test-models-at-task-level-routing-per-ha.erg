@@ -1,0 +1,34 @@
+%erg 0.1
+Title: Test models at task level: routing per harness task, not bundled roles
+Created: 2026-10-06
+Author: MinhHaDuong
+Label: deferred
+
+--- log ---
+2026-10-06T09:57Z MinhHaDuong created
+2026-10-06T09:57Z reviewer label deferred
+
+--- body ---
+
+## Context
+
+The arena measured (model @effort) identities on WHOLE tickets — each
+leg bundles orchestrator + coder + reviewer work in one wallclock. The
+harness can do better: route PER TASK LEVEL within a piece of work and
+optimize on the capability/effort scale (AGENTS.md profiles: cheap/
+standard/strong/frontier x economy/standard/intensive). The tournament
+data cannot answer "cheap triage + strong judgment" mixes.
+
+## Scope
+
+- Design a task-level variant of the instrument: decompose a ticket into
+  routed steps (search/extraction -> cheap; implementation -> mid;
+  judgment/verification -> strong), measure the mix vs the bundled
+  arms on the same tickets.
+- Compare: best bundled arm vs best routed mix at equal total cost.
+
+## Exit criteria
+
+- [ ] Task-level routing design pre-registered (concept note sect. 8 sibling)
+- [ ] One cycle comparing bundled vs routed on the arena sample
+- [ ] Verdict: does task-level routing beat identity routing, and where

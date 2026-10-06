@@ -1,0 +1,43 @@
+%erg 0.1
+Title: Raise the resident-rules budget 17800 -> 18100 (the monster guard)
+Created: 2026-10-06
+Author: MinhHaDuong
+Closed: 2026-10-06 executed inside #1237
+Label: needs-human
+
+--- log ---
+2026-10-06T10:05Z MinhHaDuong created
+2026-10-06T10:05Z reviewer label needs-human
+2026-10-06T17:28Z reviewer author decision: TRIM — structural, not haircut. The paper-repo rules (~1.3K chars) moved out of the resident git.md into rules/prose/workpackages.md (paths-scoped, indexed); the full monster guard fits back integrally; workflow.md and claude-code.md restored to pristine. Resident total 17721/17800, full suite green (1499 passed). The edit lands inside #1237 (guards.md already travels there; a separate PR would conflict with the bundle on the same file). The budget was never raised.
+
+--- body ---
+
+## Context
+
+The resident-rules channel (rules/*.md auto-loaded per session) was
+exactly at its 17800-char ceiling. The 256K monster guard the author
+asked to engrave (session 2026-10-06, ticket 1024) — even condensed to
+five lines, with its decomposition mechanics delegated to workflow.md's
+existing monster-ticket doctrine — costs 296 chars. The roar bundle
+(#1237) is red on exactly this: test_resident_rules_stay_within_budget,
+total 18096 > 17800.
+
+The guard's message is the house rule: raising a budget is a ticket,
+not an edit. This is the ticket.
+
+## Options for the author
+
+- BUMP: 17800 -> 18100 (+296, the price of the guard; consistent with
+  this session's budget-wall pattern: OR key 20->40->60, month limit
+  20->40). Edit lives in tests/test_rules_resident_budget.py
+  (RESIDENT_BUDGET) once approved.
+- TRIM: ~300 chars of meaning-preserving tightening across the four
+  resident bodies (workflow.md 8398, git.md 5388, claude-code.md 3281,
+  guards.md 1033) — I did not trim shared doctrine unilaterally.
+
+## Exit criteria
+
+- [ ] Author decision recorded: bump or trim
+- [ ] The decided edit lands in its own PR (not inside #1237)
+- [ ] #1237 green and merged
+

@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Arena 262K long-context rerun on HW-v2 (KV int8, expert profiles)
+Created: 2026-10-06
+Author: MinhHaDuong
+Blocked-by: 1049
+Label: deferred
+
+--- log ---
+2026-10-06T08:43Z MinhHaDuong created
+2026-10-06T09:44Z reviewer label deferred
+2026-10-06T09:44Z reviewer note Author-approved separate hardware lineage: retain prerequisite1049, deferred long-context experiment. Resume only on an explicit author decision after the hardware prerequisite is met.
+
+--- body ---
+
+## Context
+
+The four stuck tickets (0333/0452/0673/0874) rerun at 262144 native —
+the servers ran at HALF native during cycle 2. KV int8 (Strata bench
+2026-09-27: q4_0 KV degrades with context, int8 clean); pi contextWindow
+raised to match; rope/YaRN validated locally (needle FIND at 512K).
+524K is REFUSED (author): observed work ceiling ~236K; >256K is a
+monster ticket -> split the work, per rules/guards.md.
+
+Blocked by the HW-v2 window (1049): the rerun rides the new hardware,
+fresh expert profiles (--expert-profile-save per model, trap #831), and
+the restored prefill throughput.
+
+## Exit criteria
+
+- [ ] 4 tickets rerun at 262144 native, KV int8, on HW-v2
+- [ ] Long-context outcomes compared against cycle-2 results
+- [ ] KV and prefill costs measured; the 65K/128K/262K context story written up

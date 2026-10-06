@@ -1,0 +1,39 @@
+%erg 0.1
+Title: Padme HW-v2: merged install window (5060 Ti + 3975WX), engine rebuild, benches
+Created: 2026-10-06
+Author: MinhHaDuong
+Label: deferred
+
+--- log ---
+2026-10-06T08:43Z MinhHaDuong created
+2026-10-06T09:44Z reviewer label deferred
+2026-10-06T09:44Z reviewer note Author-approved separate hardware lineage: deferred until parts are available and the author explicitly resumes the hardware chantier; no dependency on the publication chain.
+
+--- body ---
+
+## Context
+
+One merged hardware boundary, not two: the 5060 Ti 16G (in hand Oct 6)
+and the 3975WX (offer 359 EUR sent to atomino206, awaiting answer;
+validated band under 400 EUR) go in TOGETHER. CPU swap on the P620 is
+~40 min, tool-less, BIOS-native. gpu_inventory extended to CPU and
+engine build recorded per run — one HW-v1/HW-v2 boundary in the data.
+
+## Steps
+
+1. CPU + GPU install; 3-GPU topology: A4000+5060Ti as split stages,
+   3060 as expert-cache helper (the dev-bench-validated pattern).
+2. MANDATORY engine rebuild with archs 86;120 (BUILD.json is [86] only
+   today — otherwise "no kernel image"); llama.cpp arch check.
+3. Bench --gpu-only-full on the new machine; record.
+4. Prefill before/after: the 5060 Ti's 16G restores 8192-token prompt
+   chunks (issue #448: the 3060's 512-slot expert cache caps chunks at
+   512 tokens, ~350 tok/s prefill). Hypothesis: 1500-3000 tok/s, which
+   also cuts the 262K rerun's cold-start from 12.5 min to ~2-3 min.
+
+## Exit criteria
+
+- [ ] Both parts in, single boundary recorded (gpu_inventory + BUILD)
+- [ ] Rebuild + parity check pass
+- [ ] --gpu-only-full bench recorded
+- [ ] Prefill before/after measured (the #448 hypothesis tested)
