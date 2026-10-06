@@ -20,8 +20,8 @@
       "endpoint": "api.mistral.ai (pi built-in)",
       "key_env": "MISTRAL_API_KEY",
       "status": "live",
-      "note": "zai-glm-5-3 direct (the Vibe route).",
-      "last_verified": "2026-10-05"
+      "note": "zai-glm-5-3 direct (the Vibe route). NEW 2026-10-06: mistral-large-4 public preview (~1T MoE, 49B active, vision) at 0.68/2.09 per M (-50% preview, expiry unannounced; 0.07 cached input); context 1M claimed vs ~524K evaluator-side (262K max output); weights due Oct 27 (open-weight, red-team pending); pi's generic custom provider sends the OpenAI 'store' param (422) — use the NATIVE mistral provider, which accepts unknown model ids; pi resolves catalog-unknown mistral models at thinking OFF.",
+      "last_verified": "2026-10-06"
     },
     "deepseek": {
       "endpoint": "api.deepseek.com (pi built-in)",
