@@ -2,11 +2,13 @@
 Title: Raise the resident-rules budget 17800 -> 18100 (the monster guard)
 Created: 2026-10-06
 Author: MinhHaDuong
+Closed: 2026-10-06 executed inside #1237
 Label: needs-human
 
 --- log ---
 2026-10-06T10:05Z MinhHaDuong created
 2026-10-06T10:05Z reviewer label needs-human
+2026-10-06T17:28Z reviewer author decision: TRIM — structural, not haircut. The paper-repo rules (~1.3K chars) moved out of the resident git.md into rules/prose/workpackages.md (paths-scoped, indexed); the full monster guard fits back integrally; workflow.md and claude-code.md restored to pristine. Resident total 17721/17800, full suite green (1499 passed). The edit lands inside #1237 (guards.md already travels there; a separate PR would conflict with the bundle on the same file). The budget was never raised.
 
 --- body ---
 

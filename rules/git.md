@@ -40,6 +40,7 @@ Family rule: **a git command that printed nothing has not necessarily done nothi
 
 ## Repo layout
 
-- **Don't gitignore handoff artifacts.** Generated files a downstream workpackage consumes (figures, tables, `\input` macros) are durable — commit them; caches, aux files and the final PDF are regenerable — gitignore. Sources and bibliography staging: [zotero.md](./zotero.md), Zotero is their system of record.
-- **Prose workpackages are edited in place; the author edits only in their own checkout.** In paper repos, worktree + branch + PR covers code and data; manuscript prose is co-edited in short interactive turns in the author's checkout, committed at session end or milestones, reviewed as the PDF and `latexdiff` between tags. Autonomous prose passes produce *reports*; an autonomous manuscript change goes through a PR, never concurrently with interactive editing of that file. Agents carry the sync, never the author: pull before editing a file the author may have touched; agent work reaches them only through `main` (`scripts/sync-local-main.sh`); show unmerged work as a diff, a build or a PR link, never "open the worktree". The harness repo keeps its no-exceptions gate.
-- **Name workpackage directories in plain language** (`marches-carbone/`, not `p1/`); program codes stay in tickets.
+Paper-repo rules (handoff artifacts, prose workpackages, workpackage
+naming) live in [prose/workpackages.md](./prose/workpackages.md) — scoped,
+loaded on prose-file touch. Sources and bibliography staging:
+[zotero.md](./zotero.md), Zotero is their system of record.

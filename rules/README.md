@@ -29,6 +29,7 @@ it was 942 words while shipping full copies of what it summarised.
 | [coding-python.md](./coding-python.md) | `**/*.py` | Python 3.10+ style, testing markers, Make rules, `uv` workflow. |
 | [coding-bash.md](./coding-bash.md) | `**/*.sh` | Bash `set -euo pipefail` discipline: arithmetic-zero abort, unbound associative-array key. |
 | [prose/_all.md](./prose/_all.md) | `**/*.tex` `**/*.qmd` `**/*.md` `**/*.txt` | Universal prose rules: LLMism guards, Elements of Style. |
+| [prose/workpackages.md](./prose/workpackages.md) | `**/*.tex` `**/*.qmd` `**/docs/**` | Paper-repo workpackages: handoff artifacts, in-place prose editing, sync by agents, plain naming. |
 | [doctype/article.md](./doctype/article.md) | `**/*.tex` | Article conventions: Shapiro's question test, Head's introduction order, argument-led sections, standalone tables. |
 | [doctype/techreport.md](./doctype/techreport.md) | `**/*.tex` | Report conventions: standalone abstract, numbered floats with takeaway captions, label cross-references. |
 | [doctype/slides.md](./doctype/slides.md) | `**/*.tex` | Slide conventions, any format (beamer default): one message, takeaway titles, fragments not paragraphs. |
