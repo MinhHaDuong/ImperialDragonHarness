@@ -124,3 +124,19 @@ the new message. The refreshed seven-day close-claim audit examined 30
 merged PRs and 26 claims across 20 PRs, with zero findings. Wrap-up PR1216
 remains open with its required pytest guard failing; auto-merge is not enabled
 while that check is red.
+
+## Validator discrepancy resolved, 2026-10-06
+
+The preceding red-check paragraph records the earlier PR1216 checkpoint.
+PR1215 closed ticket 1040 and updated the three validator test assertions to
+the generic `idh install` direction, without changing runtime code. Its 78
+focused tests and full check (1494 passed, 2 skipped) succeeded, and all ten
+required CI jobs passed. GitHub merged it as
+`bab206ac586277d6b85b1a3d0344b9189c4bf540` at 03:01:02Z. Ticket 1039,
+which had recorded the same three failures, was marked with its satisfied
+criteria and closed as superseded by 1040/PR1215. The raid wrap-up branch
+remains limited to documentation, factual journal and that ticket disposition;
+it adds no duplicate test or runtime edit.
+The raid wrap-up's own full `make check` on that merged base passed 1494
+tests with 2 skipped in 70.54 seconds; its refreshed seven-day close-claim
+audit examined 30 merged PRs and 26 claims with zero findings.
