@@ -21,11 +21,10 @@ set -euo pipefail
 workflow=.github/workflows/CI.yml
 root=$(git rev-parse --show-toplevel)
 here="$root/ci-local"
-image=localhost/act-runner:dev
 work=$(mktemp -d)
-sock="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/local-ci-$$.sock"  # unix socket paths are capped near 108 bytes
-service_pid=
-trap 'if [ -n "$service_pid" ]; then kill "$service_pid" 2>/dev/null || true; wait "$service_pid" 2>/dev/null || true; fi; rm -rf "$work" "$sock"' EXIT
+# shellcheck source=../ci-local/common.sh
+. "$here/common.sh"
+trap 'stop_service; rm -rf "$work"' EXIT
 trap 'exit 130' INT TERM
 
 for tool in act podman gh; do
@@ -42,20 +41,8 @@ if [ -n "$(git status --porcelain)" ]; then
     echo "local-ci: WARNING: uncommitted changes are NOT tested" >&2
 fi
 
-# A dedicated podman service, so the keep-id setting does not leak into the
-# user's default podman.
-CONTAINERS_CONF="$here/containers.conf" podman system service --time=0 "unix://$sock" 2> "$work/service.log" &
-service_pid=$!
-for _ in $(seq 1 50); do [ -S "$sock" ] && break; sleep 0.1; done
-[ -S "$sock" ] || { echo "local-ci: podman service did not start: $(cat "$work/service.log")" >&2; exit 2; }
-
-# Rebuild when the Containerfile changed since the image was built.
-want=$(sha256sum "$here/Containerfile" | cut -c1-16)
-have=$(podman image inspect --format '{{index .Labels "ci-local.sha"}}' "$image" 2>/dev/null || true)
-if [ "$have" != "$want" ]; then
-    echo "local-ci: building $image"
-    podman build -q --label "ci-local.sha=$want" -t "$image" "$here" >/dev/null
-fi
+start_service
+ensure_image
 
 # act's default copy drops .git, so run from a real clone bind-mounted into the
 # container. Origin points at the forge so `gh` resolves {owner}/{repo}.

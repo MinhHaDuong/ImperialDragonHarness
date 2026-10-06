@@ -1,9 +1,14 @@
 FROM catthehacker/ubuntu:act-latest
 # Closer to a GitHub-hosted runner than the stock act image: podman is
 # preinstalled there, and jobs run as a non-root user with passwordless sudo
-# and a pip-writable system Python.
+# and a pip-writable system Python. The hosted image also ships the forge's CLI
+# (`gh`), which the cross-PR collision job calls; the act image does not.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends podman sudo \
+ && apt-get install -y --no-install-recommends podman sudo curl ca-certificates \
+ && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg -o /usr/share/keyrings/githubcli-archive-keyring.gpg \
+ && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" > /etc/apt/sources.list.d/github-cli.list \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends gh \
  && rm -rf /var/lib/apt/lists/* \
  && echo '#1000 ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/uid1000 \
  && chmod 0440 /etc/sudoers.d/uid1000 \

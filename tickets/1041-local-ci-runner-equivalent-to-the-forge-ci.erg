@@ -37,8 +37,13 @@ Measured facts are in `memory/journal/2026/2026-10-06-local-ci-act-equivalence.m
       workflow's, when `.actrc` is present, and when any job fails.
 - [ ] A negative control per guard (9 jobs) fails at its matching step; the
       driver treats a failure outside a `Main` step as an infrastructure
-      failure, never as a catch. Kept as a repository test, not a scratch script.
-- [ ] `cross-pr-ticket-collision` has a positive control (a colliding ID).
+      failure, never as a catch. Kept as a repository test, not a scratch script
+      (`scripts/local-ci-negative-controls.sh`, opt-in test
+      `tests/test_local_ci_negative_controls.py` with RUN_LOCAL_CI_NEGATIVE=1).
+- [ ] `cross-pr-ticket-collision` has a positive control for BOTH paths: the
+      base-ref collision (fired once) and the sibling-PR collision through
+      `gh` (not yet fired: needs an open PR adding the same ID; the image also
+      lacked `gh` until this ticket added it).
 - [ ] The summary of a run states that only committed HEAD is tested.
 - [ ] Parity with a green forge run on the same commit: same job list, same
       pytest passed/skipped counts, same `grep`/`bash`/`awk` versions.
