@@ -1,0 +1,14 @@
+FROM catthehacker/ubuntu:act-latest
+# Closer to a GitHub-hosted runner than the stock act image: podman is
+# preinstalled there, and jobs run as a non-root user with passwordless sudo
+# and a pip-writable system Python.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends podman sudo \
+ && rm -rf /var/lib/apt/lists/* \
+ && echo '#1000 ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/uid1000 \
+ && chmod 0440 /etc/sudoers.d/uid1000 \
+ && rm -f /usr/lib/python3*/EXTERNALLY-MANAGED \
+ && mkdir -p /home/runner && chown 1000:1000 /home/runner \
+ && chown -R 1000:1000 /usr/local
+ENV HOME=/home/runner
+USER 1000:1000

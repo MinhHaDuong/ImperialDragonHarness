@@ -22,6 +22,8 @@ skills/infrastructure
 skills/directory
 !scripts/
 !scripts/**
+!ci-local/
+!ci-local/**
 !bin/
 !bin/**
 !commands/
