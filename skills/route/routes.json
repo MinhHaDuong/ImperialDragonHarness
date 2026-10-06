@@ -1,0 +1,70 @@
+{
+  "_comment": "Route-state cache owned by skills/route. Key NAMES only, never values. Update on every route state change; stale cache burns attempts and money.",
+  "updated": "2026-10-06T08:00Z",
+  "routes": {
+    "anthropic": {
+      "endpoint": "api.anthropic.com (pi built-in)",
+      "key_env": "ANTHROPIC_API_KEY",
+      "status": "live",
+      "note": "opus-5-5, sonnet-5-5. Effort axis steep: @low pays Opus prices for Sonnet-tier quality with craters.",
+      "last_verified": "2026-10-06"
+    },
+    "openai": {
+      "endpoint": "api.openai.com (pi built-in)",
+      "key_env": "OPENAI_API_KEY",
+      "status": "live",
+      "note": "gpt-6.1-sol, gpt-6-luna. Hit 'no credits remaining' wall 2026-10-06 03:00Z, topped up same morning. No GPT-6 Terra exists; the GPT-6 lineup is Astra / Sol 6.1 / Luna.",
+      "last_verified": "2026-10-06"
+    },
+    "mistral": {
+      "endpoint": "api.mistral.ai (pi built-in)",
+      "key_env": "MISTRAL_API_KEY",
+      "status": "live",
+      "note": "zai-glm-5-3 direct (the Vibe route).",
+      "last_verified": "2026-10-05"
+    },
+    "deepseek": {
+      "endpoint": "api.deepseek.com (pi built-in)",
+      "key_env": "DEEPSEEK_API_KEY",
+      "status": "live",
+      "note": "deepseek-flash. pi catalog bills flat PEAK; real time-of-use halves it off-peak (01-04 & 06-10 UTC weekdays). pi catalog default thinking is HIGH, not pi's default medium.",
+      "last_verified": "2026-10-06"
+    },
+    "openrouter": {
+      "endpoint": "openrouter.ai (pi custom provider)",
+      "key_env": "OPENROUTER_API_KEY_IDH",
+      "status": "live",
+      "cap_monthly_usd": 60,
+      "note": "Key cap raised 40->60 on 2026-10-06 after the 40.15 wall killed all panel judging mid-repass. Judge panel seats (gemini/grok/minimax) route here — a key-cap hit stalls the whole panel. Workspace lifetime credits: 240 total.",
+      "last_verified": "2026-10-06"
+    },
+    "dashscope-intl": {
+      "endpoint": "dashscope-intl.aliyuncs.com/compatible-mode/v1 (NOT the .cn host)",
+      "key_env": "QWEN_API_KEY_AEDIST",
+      "status": "live",
+      "note": "172 models incl. qwen3.8-flash (lineage twin of local flash-next, NOT the same weights: served production vs open-weights preview) and qwen3.8-27b. qwen3.8-flash-next is NOT served anywhere as of 2026-10-06 — weights-only release. No z.ai metered key; pi z.ai doors are subscription-credit channels.",
+      "last_verified": "2026-10-06"
+    },
+    "spacebunny": {
+      "endpoint": "openrouter stealth/space-bunny-alpha",
+      "status": "dead",
+      "note": "404 'No endpoints found' since 2026-10-06 — the free-tier endpoint is gone. 4 valid arena legs stand; holes recorded DNF-PROVIDER.",
+      "last_verified": "2026-10-06"
+    }
+  },
+  "local": {
+    "padme": {
+      "status": "live",
+      "elec": "0.23 EUR/kWh x 600 W under load = 0.138 EUR/h ~ 0.15 $/h (registered 2026-10-06)",
+      "arms": {
+        "a": "qwen3.8-27B Q4_K_M llama-server :8080 (systemd seat)",
+        "b": "Flash-Next Coder IQ1_M (50% experts pruned) Strata :8081",
+        "b2": "Flash-Next full IQ3_S Strata :8081",
+        "b3": "Flash-Next full Q2_0 Strata :8081",
+        "c": "qwen3.6-35b-A3B llama-server :8082",
+        "c2": "qwen3-coder-30b llama-server :8082"
+      },
+      "hardware_note": "HW-v1. Pending: 5060 Ti 16G + 3975WX (merged window) -> HW-v2 boundary; rebuild Strata archs 86;120 mandatory then. Prefill bottleneck = #448 512-token chunk cap from the 3060 expert cache (~350 tok/s cold)."
+    }
+  }
+}
