@@ -1,0 +1,74 @@
+%erg 0.1
+Title: Local CI runner equivalent to the forge CI
+Created: 2026-10-06
+Author: Claude
+
+--- log ---
+2026-10-06T03:07Z Claude created
+
+--- body ---
+## Context
+
+On 2026-10-05 the forge's hosted runners stopped being provisioned and every PR
+blocked with its CI `queued`. The author's direction: first replace the forge's
+CI with a local one whose checks are exactly equivalent, then, separately,
+reflect on the content of the CI (duplication, missing guarantees). Longer
+horizon: a CI native to git for the dyne project; see
+`docs/2026-10-05-merge-gate-spec.md` (draft, not part of this ticket).
+
+Measured facts are in `memory/journal/2026/2026-10-06-local-ci-act-equivalence.md`.
+
+## Scope
+
+- `scripts/local-ci.sh`: runs every job of `.github/workflows/CI.yml` with `act`
+  under rootless podman, one invocation per job (`act -j` honours only the last
+  `-j`), on a fresh clone bind-mounted into the container.
+- `ci-local/Containerfile`, `ci-local/containers.conf`: runner image (non-root
+  uid 1000, podman, passwordless sudo, pip-writable system Python) and a
+  dedicated podman service with a `keep-id` user namespace.
+- The workflow file stays the single definition of the checks. No check is
+  copied, moved or reworded.
+- Not in scope: changing the content of the checks; the merge gate; dyne.
+
+## Exit criteria
+
+- [x] `scripts/local-ci.sh` runs the 10 jobs and exits 0 on a clean tree
+      (715c59d7, 2026-10-06).
+- [x] It exits non-zero when the job list is empty or differs from the
+      workflow's, when `.actrc` is present, and when any job fails. Observed
+      in throwaway repositories: `.actrc` present exits 2; a failing job exits
+      1; a workflow with no job for pull_request exits 2 naming both job sets;
+      an unknown job name exits 2; no workflow at HEAD exits 3 ("not a pass").
+- [x] The forge is optional. Without an `origin` remote, `gh` or a `gh` login,
+      jobs that read `secrets.*` are SKIPPED and listed in the summary, and a
+      skip is never a pass (`LOCAL_CI_STRICT=1` makes it fail). Observed: one
+      plain job passed, one secrets job skipped, exit 0; strict exit 1.
+- [x] A negative control per guard (9 jobs) fails at its matching step; the
+      driver treats a failure outside a `Main` step as an infrastructure
+      failure, never as a catch. Kept as a repository test, not a scratch script
+      (`scripts/local-ci-negative-controls.sh`, opt-in test
+      `tests/test_local_ci_negative_controls.py` with RUN_LOCAL_CI_NEGATIVE=1).
+- [x] `cross-pr-ticket-collision` has a positive control for BOTH paths: the
+      base-ref collision, and the sibling-PR collision through `gh`, which
+      fired on 2026-10-06 ("ticket ID 1041 is also added by open PR #1218")
+      when the runner did not recognise its own PR. The image lacked `gh`
+      until this ticket added it. The runner now finds its PR by HEAD sha, not
+      branch name, so a PR is not its own sibling.
+- [x] The summary of a run states that only committed HEAD is tested.
+- [x] Parity with a green forge run on the same commit (715c59d7): same 10
+      jobs, 1487 passed / 10 skipped on both sides, `grep` 3.11, `bash` 5.2.21,
+      `awk` GNU Awk 5.2.1. Parity on failure too: on PR 1218 the forge and the
+      runner failed the same two jobs (agnostic-guard; pytest-guard, same two
+      tests) on near-identical commits.
+- [x] `ci-local/` is tracked (the catch-all ignore rule re-includes it).
+- [x] The forge's full suite passes on 715c59d7; `make lint` passed locally on
+      the earlier commit and was not re-run on this one.
+
+## Known limits, to record rather than fix here
+
+- The jobs receive the user's `gh` token (act ignores job permissions).
+  Acceptable while the only code that runs is the author's own.
+- The forge tests the merge of the PR into its base; this tests the branch head.
+- `--bind` skips `actions/checkout`; the image approximates `ubuntu-latest`
+  (no `EXTERNALLY-MANAGED` marker, `/usr/local` writable).
+- The `cross-pr-ticket-collision` job still reads open PRs from the forge's API.
