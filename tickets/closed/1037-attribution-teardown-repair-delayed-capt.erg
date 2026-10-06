@@ -1,0 +1,28 @@
+%erg 0.1
+Title: Attribution teardown: repair delayed captures and prove reviewed-merge coverage
+Created: 2026-10-05
+Author: reviewer
+Closed: Six delayed factual captures and 18-merge cutoff coverage verified
+
+--- log ---
+2026-10-05T19:28Z reviewer created
+2026-10-05T19:37Z reviewer closed — Six delayed factual captures and 18-merge cutoff coverage verified
+
+--- body ---
+
+## Context
+Necessary bounded child of1032. Approved design §4.8 and1009 original no-gap exit require every reviewed merge after1005 to have factual attribution before parent closure. Existing13records are valid and unambiguous. At c917715ae4252c674e063069db31ea57de20d3c5 there are18subsequent merges; seven lack records:1190/1191/1202/1203/1205/1206/1207.1190 documented mechanical-only;1207 has only validation claims and empty public review/comment collections. Other five have actual recovered runtime/artifact proof. Unknown identities stay visibly unresolved, never guessed.
+
+## Exit criteria
+- [x] Recovered1191/1202/1203/1205/1206/1207 actual writer/reviewer identities and outcomes are captured once in strict project-local records, supported by durable evidence; no fabricated attempt, finding or final gate.
+- [x] Exhaustive merge coverage after1005 is audited through an explicit actual merged cutoff, with duplicate/encrypted/malformed sources rejected visibly and mechanical-only exemptions evidenced; no unresolved reviewed capture remains at that cutoff.
+- [x] Original records and historical facts remain preserved; parser/query and ticket checks pass; own diff stays below15contentpaths.
+
+## Actions / first check
+Use existing attribution_record.py, attribution_query.py and enumerate-merges.py; compare actual public comments/reviews and safe runtime metadata plus archived atomic reports. First check the live missing-record query against the enumerated merge set and validate all recovered candidate records before capture. Write one factual dated coverage report, not another framework/schema. Prove1191 actual recovered metadata; preserve1206 owner-directed merge with initial review, corrected objector/regression and no finalgate/native/simplify claim. Query missing alone does not prove review.
+
+## Scope / dependencies
+Six factual record paths, one coverage report, own ticket and1032tracker =9contentpaths. Further actual reviewed merges before cutoff may add records; split again if15+contentpaths. Preparation annotations remain one ancestor lineage.1032 disposition/integration follows this capture prerequisite.1004 closes separately only against all original criteria. No unrelated WIP, historical ticket scorecards, routing decisions, shared telemetry or internal panel mutation.
+
+## Evidence classification clarification (2026-10-05)
+Root recovered actual1207producer openai/gpt-6-luna/medium and distinct localreviewcontext with same actualmodel/effort, completedAPPROVE on0e1be56c. Empty public review/comment collections never establish no review; durable local reports and actual role metadata are equally necessary.1207 is the sixth delayed factual capture.1191 actualproducer/manualcontract, Brood consistency+portable phases, gate and genuine native headers have now been recovered; delayed capture repairs the historical gap, not a new retrospective review. Permissionauto-review actors are not source/reviewers. Originalexits remain unchanged except enumerating the newly proven reviewedmerge already implied by complete coverage.
