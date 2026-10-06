@@ -1,0 +1,33 @@
+{
+  "source": "arena/runs/0470-m/run.json and three settled judge records; PR1244",
+  "model": "mistral-large-4",
+  "effort": "off",
+  "seconds": 918.1,
+  "scores": {
+    "gemini": 7,
+    "grok": 10,
+    "minimax": 10
+  },
+  "tokens": {
+    "n_calls": 35,
+    "in_sum": 164975,
+    "cache_read_sum": 954880,
+    "cache_write_sum": 0,
+    "cache_sum": 954880,
+    "out_sum": 25362,
+    "peak_ctx": 53068,
+    "source": "sessions"
+  },
+  "reported_cost_usd": 0.1549,
+  "cache_inclusive_estimate_usd": 0.23203118000000003,
+  "cost_formula": "input*.68 + cacheRead*.07 + output*2.09, divided by 1e6",
+  "time_value_usd_hour": 1,
+  "total_cost_estimate_usd": 0.48705895777777786,
+  "note": "Pi counted cached reads but priced them and other components differently from the public preview rates. Preserve the original reported figure; corrected estimate uses the preregistered 0.68/0.07/2.09 rates. Raw attempt unchanged.",
+  "pi_component_cost_usd": {
+    "input": 0.06599,
+    "output": 0.050724,
+    "cacheRead": 0.0381952,
+    "total": 0.1549092
+  }
+}

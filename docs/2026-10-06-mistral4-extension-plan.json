@@ -1,0 +1,36 @@
+{
+  "created_at": "2026-10-06T18:59:11.931406+00:00",
+  "model": "mistral-large-4",
+  "arm": "m",
+  "effort": "off",
+  "tickets": [
+    "0211",
+    "0233",
+    "0333",
+    "0338",
+    "0452",
+    "0470",
+    "0532",
+    "0673",
+    "0874",
+    "1372"
+  ],
+  "existing_smoke": "0470-m preserved, PR1244",
+  "max_parallel": 9,
+  "cap_usd": 5,
+  "time_cap_seconds": 7200,
+  "panel": [
+    "gemini",
+    "grok",
+    "minimax"
+  ],
+  "hypothesis": "Measure paired quality, duration and direct/total cost against existing identities on the same ten tickets; no early stopping on quality.",
+  "rates_usd_per_million": {
+    "input": 0.68,
+    "cached_input": 0.07,
+    "output": 2.09
+  },
+  "pricing_status": "public-preview rates, fixed for this extension",
+  "egress": "Same cleared historical project prompts as tournament1024; no additional project scope.",
+  "parallelism_note": "Author reiterated all cases parallel; three initial cases plus six launched immediately."
+}
