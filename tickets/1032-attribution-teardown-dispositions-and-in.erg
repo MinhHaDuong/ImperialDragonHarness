@@ -2,14 +2,16 @@
 Title: Attribution teardown: dispositions and integration audit
 Created: 2026-10-05
 Author: reviewer
-
-Blocked-by: 1042
+Blocked-by: 1043
+Label: needs-human
 
 --- log ---
 2026-10-05T10:42Z reviewer created
 2026-10-05T14:39Z reviewer note blocker 1031 closed — Blocked-by removed.
 2026-10-05T18:02Z reviewer note blocker 1030 closed — Blocked-by removed.
 2026-10-05T19:37Z reviewer note blocker 1037 closed — Blocked-by removed.
+2026-10-06T04:03Z reviewer note blocker 1042 closed — Blocked-by removed.
+2026-10-06T04:14Z reviewer label needs-human
 
 --- body ---
 
@@ -53,3 +55,18 @@ Necessary1042capturechild precedes dispositions. Original exit unchanged. First 
 
 ## Raid feasibility (2026-10-06)
 Independent interface/artifact review PASS with bounded sequencing WARN. Existingparser/query/backfill interfaces support typed masks;87relevantchecks passed. Add maskedbackfill temporarypositivecontrol. Ten1038paths belowbreaker;1042capturebudget recount afteractual1038merge;1032elevenpaths pluscoverage,1004separate.1204actualsafeproduceridentitycandidate requires source-role/PRlinkage, not inferentialfill. Serialwaves needno3PRsharedregistry. Initialrestrictedbaseline errors includeGit/sockets/toolaccess, so repeat gate withrequiredlocalaccess beforedeclaringbaseline. Parentclosures remainconditional, noexitdrift.
+
+## Bounded execution partition (2026-10-06)
+1042 owns refreshed captures and explicit unresolved classifications;1043 owns the already-approved historical dispositions and decorrelation gradient. Original combined integration criterion remains unchanged. Missing proof cannot be resolved by classification prose alone or by invented identities;1032/1009 remain open until actual original coverage is proven.
+
+## Bounded capture refresh (2026-10-06)
+Actual merged cutoff9681d863ac88ca6f6826e822fff0732b5042e1ad:30merges,26valid repositoryrecords,21existingblobs preserved, five newcaptures1204/1209/1210/1216/1220.1211runtime-masked preserved.1190/1208/1212 positive no-review mechanical-only;1214/1215/1217 explicitly UNRESOLVED own-review classifications.1216 historical coauthor factualinspection only, nofinalapproval/noindependence. Original1032/1009 integrationexits unchanged and parents remainopen;1043 bounded historicaldispositions remains dependency. Evidence docs/2026-10-06-attribution-coverage.md and sanitizedcaptureproof.
+
+## Pending factual evidence (2026-10-06)
+An independent complete-lifecycle audit found no own-review commission in the captured activity for1214/1215/1217, but cannot exclude earlier or out-of-band activity. Their classifications remain UNRESOLVED until an actual review trail or positive producer no-review assertion is supplied; no exemption is fabricated. The factual question to the author is pending. Original integration criteria remain unchanged and1043 remains a dependency.
+
+## Current merged cutoff before PR1221 review (2026-10-06)
+Main advanced through PR1219 at2a95c4643a391efc2749c736a6e930ea71a9ff86:31merges,26valid repositoryrecords,1masked and25model-attributable; in-range23available/1masked/7missing. PR1219publicbody describes ticket-only0974inventory andergcheck withoutsuiterun; emptyreviews/comments cannot prove no-review. Its actualcommission remainsUNRESOLVED/UNKNOWN without actualreviewtrail orpositiveproducerassertion, alongside1214/1215/1217. No exemption, mask ormodel invented. Original1032/1009criteria unchanged; needs-human label and1043dependency retained. Author explicitlyauthorized1042publication; actualPR1221 exists, pending current-head review/integration.
+
+## Gaze round1 factual correction (2026-10-06)
+Earlier1216factual-review classification is withdrawn: author drafting/reading own checkpoint is not a commissioned review; the cited no-review quote links1190, not1216. The new1216record is removed; historicalevidence and21baselineblobs preserved. Currentcutoff2a95c4643a391efc2749c736a6e930ea71a9ff86 has31merges, four recoverablecaptures1204/1209/1210/1220,25validrepositoryrecords/1masked/24model-attributable; range22available/1masked/8missing. Own-review classifications1214/1215/1216/1217/1219 remainUNRESOLVED/UNKNOWN requiring actualreviewtrail orpositiveproducerassertion. Stableactual-context seats preserve everyrawattempt and distinctrealprocess/gatecontext identities; originalcriteria unchanged andparent1032/1009stayopen with1043dependency.

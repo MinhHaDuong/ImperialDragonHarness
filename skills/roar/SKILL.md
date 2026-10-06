@@ -139,8 +139,10 @@ default branch — there are no remote branches nor merge requests to inspect.
    `reviewer:` line per review attempt with `status: ran|failed|skipped`.
    Include `model-version=` whenever the provider exposes it. Record findings
    as repository-relative `path:line` with `adopted: yes|no`; identical anchors
-   across reviewers are shared catches. Keep distinct rounds and regression
-   checks as distinct name-or-role values, even when model and seat recur;
+   across reviewers are shared catches. Keep a stable name-or-role value for each actual reused reviewer context,
+   including repeated rounds and regression checks; retain every raw attempt.
+   Use distinct values only for genuinely separate contexts or processes. The
+   exact seat/runtime/model/model-version identity unions repeated-attempt anchors;
    source revision, round and evidence references belong in opaque context.
    A failed authentication is a named failed attempt, not a clean review.
    No initial `defect-confirmed:` placeholder is written.

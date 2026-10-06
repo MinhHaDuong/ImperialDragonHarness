@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Attribution: disposition superseded trials and decorrelation guidance
+Created: 2026-10-06
+Author: reviewer
+
+--- log ---
+2026-10-06T03:59Z reviewer created
+
+--- body ---
+
+## Context
+Necessary bounded disposition child of1032, partitioning its approved work independently of unresolved historical capture evidence in1042. Original1032/1009/1004 criteria remain unchanged. Approved design: docs/2026-10-02-reviewer-attribution-design.md sections8–10. No new policy intent is inferred from memory.
+
+## Exit criteria
+- [ ] Close0980 WONTDO citing approved design section10 and preserve the routing/quota questions under0974/1024. Verify0205/0356 closed dispositions without editing their bytes.
+- [ ] Add exactly one approved-spec-pointing log annotation to each closed0206/0207/0217/0208/0346/0348/0353, preserving every earlier byte including scorecards and histories.
+- [ ] Complete workflow decorrelation gradient: sibling model minimum, different vendor or harness stronger, most-decorrelated available appropriate to risk; preserve runtime-native routing and existing independent-review obligations.
+- [ ] Meaningful preservation and reference checks plus full project gate pass; below15contentpaths. Parent1032/1009 remain open until their original factual coverage and integration criteria are proven.
+
+## Imagine / Plan / feasibility
+Existing1032 Imagine, independent BlindSpot and Plan already cover this exact approved partition. Baseline9681d863 contains seven unannotated historical trials; fixed scope7trials+0980move+workflow+1043move+1032dependency=13contentpaths by conservative A/Dcount, under15.0205/0356 read-only. No registries, new frameworks or parser changes. Serial wave after1042. Preserve original criteria and append source logs only viaerg.
+
+## First verification
+Snapshot the fresh wavebase Git blobs for closed0206/0207/0217/0208/0346/0348/0353 and read the corresponding candidate-head blobs. Require exactly one added line per trial, occurring once between `--- log ---` and `--- body ---`, matching the timestamped `YYYY-MM-DDTHH:MMZ AUTHOR note DETAIL` log format and pointing to `docs/2026-10-02-reviewer-attribution-design.md` §10. Remove only that added line, retaining line endings; every remaining byte, including preamble, earlier log entries, scorecards and body, must equal the wavebase blob. Require closed0205/0356 blobs byte-identical. Temporary negative controls changing an earlier timestamped log byte, changing a body byte or duplicating the added annotation must each fail. Existing meaningful reference/decorrelation tests and full declared projectgate; no mirrored prose tests.
