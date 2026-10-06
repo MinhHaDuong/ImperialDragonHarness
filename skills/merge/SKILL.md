@@ -75,6 +75,12 @@ belongs with the command it recovers.)
   fixes from its own review worktree since the caller last fetched:
   `git fetch origin && git merge --ff-only origin/<branch>` first, or a stale
   rebase silently drops the verify fix.
+- **Run the local CI on padme when it is reachable.** `"$IDH_ROOT/scripts/local-ci.sh"`
+  (ticket 1041) reproduces the forge's checks; run it on padme, over ssh from
+  another host, and when padme is unreachable run it where you are and name the
+  host in the report (the script prints it). The image is the same, so the
+  result is equivalent: this chooses a machine, it never replaces the forge's
+  required checks, which still gate the merge.
 
 ## Merge conflict recovery
 

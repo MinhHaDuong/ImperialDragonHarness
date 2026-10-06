@@ -11,6 +11,11 @@
 # uncommitted change is not tested (a warning says so). The forge tests the
 # merge of the PR into its base; this tests the branch head alone.
 #
+# The first output line names the UTC time, the actor and the host. The actor is
+# the OS user unless LOCAL_CI_ACTOR is set; a caller that is an agent should set
+# it to the agent's identity. It is stated, not authenticated: the aim is that a
+# run can be traced, not that it can be proved.
+#
 # Needs act and podman. The forge CLI (`gh`, authenticated) and an `origin`
 # remote are optional: without them the jobs that read the forge's secrets are
 # SKIPPED, and the summary says so; a skip is never a pass. Set
@@ -42,7 +47,8 @@ for rc in "$HOME/.actrc" "$root/.actrc"; do
 done
 
 head=$(git rev-parse --short HEAD)
-echo "local-ci: testing committed HEAD $head of $(git rev-parse --abbrev-ref HEAD)"
+# Who, when, where, what: written to the output so a run can be traced.
+echo "local-ci: $(date -u +%Y-%m-%dT%H:%MZ) ${LOCAL_CI_ACTOR:-$(id -un)}@$(hostname -s) testing committed HEAD $head of $(git rev-parse --abbrev-ref HEAD)"
 if [ -n "$(git status --porcelain)" ]; then
     echo "local-ci: WARNING: uncommitted changes are NOT tested" >&2
 fi
