@@ -1,0 +1,11 @@
+# 1004 closure: observed review and integration sequence
+
+Public-audience capture: public repository/PR facts and actual supplied reviewer metadata only.
+
+The observed interval from 08:09 UTC to the parent merge at 10:13 UTC on 2026-10-06 spans at least 2 hours 4 minutes; the exact raid start is unknown. The completed work closed 1044 via PR 1227, 1055 via PR 1234 and 1004/1054 via PR 1235. The bounded review census records 22 completed model judgments: 18 specific to the three PRs and 4 cross-cutting audits; 20 used openai/gpt-6-sol and 2 used openai/gpt-6.1-sol, all medium effort. One failed simplification attempt later completed after resumption. At least three transport rejections preceded model execution. Neither retries nor mechanical checks are additional completed reviews.
+
+An independent frozen audit surfaced four attribution-fact discrepancies for historical PR 1218; the author explicitly approved their bounded correction. The original-criteria audit caught the final 46-merge endpoint being described as the frozen 44-merge cutoff; the report wording was corrected. Native closure review found a final-head check marked complete while evidence still described checks as pending. Actual checks on the unchanged published head and the independent gate resolved that verification condition. The full suite passed 1,499 with 3 skipped and ten forge jobs succeeded before merge.
+
+After the author asked to reduce ceremony, the caller retained the original-criteria audit, native review, independent gate and required checks, and omitted additional correctness/consistency and simplification commissions on PR 1235. The resulting closure is not recorded as a full unmodified Gaze. An unrelated base advance changed one data row; identical patch evidence and the gate established the bounded current-base result without claiming a rebase or checks on a new head.
+
+The factual [review census and timeline](../../../docs/2026-10-06-raid1004-review-timeline.md) preserves roles, reasons, timing limits, exact merged endpoints and post-merge audit counts. The [PR 1235 attribution](2026-10-06-review-attribution-pr1235.md) records the three actual attempts and their dispositions. Prior PR 1227/1234 records and other sessions' work were preserved.
