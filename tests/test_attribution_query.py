@@ -313,3 +313,22 @@ def test_masked_range_coverage_is_distinct(tmp_path, monkeypatch, caplog):
     merges = query.coverage(tmp_path, 'base', 'HEAD', [query.parse_record(text)], set())
     assert merges[0]['attribution'] == 'runtime-masked'
     assert 'runtime-masked' in caplog.text
+
+
+def test_pr1209_reused_contexts_preserve_attempts_without_self_pairs(monkeypatch):
+    query = load_query(monkeypatch)
+    capture = query.parse_record(
+        (ROOT / 'memory/journal/2026/2026-10-06-review-attribution-pr1209.md').read_text())
+    assert len(capture['reviewers']) == 14
+    attempts = query.game_attempts(capture)
+    assert len(attempts) == 7
+    expected = {'correctness': 4, 'consistency': 2, 'scope': 1, 'red-team': 2,
+                'doc-propagation': 2, 'portable-simplification': 2, 'criterion-gate': 1}
+    assert {identity[0]: item['attempts']['ran'] for identity, item in attempts.items()} == expected
+    data = query.derive([capture])
+    assert len(data['scores']) == 7
+    assert sum(score['attempts']['ran'] for score in data['scores']) == 14
+    assert len(data['pairs']) == 21
+    assert len({frozenset((pair['a']['seat'], pair['b']['seat']))
+                for pair in data['pairs']}) == 21
+    assert all(pair['a']['seat'] != pair['b']['seat'] for pair in data['pairs'])

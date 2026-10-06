@@ -637,5 +637,31 @@
     "reviews": [],
     "comments": [],
     "classification": "UNRESOLVED/UNKNOWN: actual own-review commission is not established; empty collections and ticket-only source type do not establish a no-review exemption. No identity inferred."
-  }
+  },
+  "pr1216-assertion-link-safe.json": {
+    "quoted_assertion": {
+      "source": "actual root assistant event",
+      "timestamp_utc": "2026-10-05T10:52:24Z",
+      "text_subject": "portable simplify PR and its wrap-up PR",
+      "explicit_pr_number_in_event": null,
+      "linked_wrap_up_pr": 1190,
+      "link_basis": [
+        "At 10:40:24Z the same root said PRs 1185 and 1186 were merged and the previous raid was completing its attribution records and wrap-up.",
+        "PR 1190 merged at 10:45:22Z as raid-1005-1023-roar, adding attribution records for PRs 1185 and 1186 and the verification-recovery note.",
+        "The later PR 1193 attribution journal explicitly identifies PR 1190 as unreviewed."
+      ],
+      "cannot_apply_to_pr1216": "PR 1216 was a different raid-926-912-919 wrap-up, merged at 2026-10-06T03:06:00Z, more than 16 hours after the quoted event."
+    },
+    "pr1216_root_read_audit": {
+      "report_path": "docs/2026-10-05-raid-926-912-919.md",
+      "final_public_head": "d2648bc53fb7342856e51ad51e06a4ccac653ffd",
+      "final_merge_utc": "2026-10-06T03:06:00Z",
+      "final_head_review_proven": false,
+      "independent_reviewer_commission_proven": false,
+      "draft_authorship": "At 2026-10-05T18:22:23Z the root wrote a local checkpoint draft of this report; this is authorship, not reviewer inspection.",
+      "draft_read": "At 2026-10-05T19:10:01Z the root read that draft alongside status of PRs 1204 and 1205; this predates PR 1216's final head and merge."
+    },
+    "classification_recommendation": "UNRESOLVED: no positive review or own-PR no-review assertion is linked to PR 1216. The root's authored draft and early source read are not an independent reviewer attempt under design section 4. Section 7's reviewer statistics require a labeled game and cannot turn this source read into a reviewer observation."
+  },
+  "identity_semantics": "Exact seat/runtime/model/model-version identifies each actual context. Reused-context phases retain stable seats and every raw attempt; round/revision evidence stays opaque. Distinct native processes and genuinely separate gate contexts retain distinct seats. No phase suffix creates a new identity for a reused context."
 }
