@@ -1,9 +1,9 @@
-# Frozen benchmark board for `/reviewers audition` (ticket 0346).
+# Frozen benchmark board for contained `/coaching` replay (origin: ticket 0346).
 #
 # Each entry is an ALREADY-MERGED merge request of THIS repo, biased toward
 # complex multi-file CODE changes (ensemble review value concentrates there —
-# ticket 0205). `audition` replays a candidate model over each PR's diff through
-# the 0217 seat-runner and classifies every finding against the ground truth
+# ticket 0205). `/coaching` replays a candidate model over each PR's diff through
+# the contained seat-runner (origin: ticket 0217) and classifies every finding against the ground truth
 # recorded here. Because the board is frozen, every candidate runs the SAME
 # board — cross-candidate comparison becomes sound (the live advisory trial
 # cannot give this: each candidate there sees different PRs).
@@ -24,7 +24,7 @@
 #   defects: anchors of REAL defects the panel MISSED but that are confirmed
 #            (a post-merge fix, a follow-up ticket, a later-found regression). A
 #            candidate finding matching one of these (and no panel anchor) is
-#            UNIQUE-VERIFIED — the payoff the audition is measuring. Empty when no
+#            UNIQUE-VERIFIED — the payoff the replay is measuring. Empty when no
 #            panel-miss has surfaced; append anchors here as they do.
 #   A candidate finding matching NEITHER set is UNIQUE-HALLUCINATED.
 #
@@ -39,9 +39,9 @@
 #   candidate finding to its basename + line before matching. Basenames are
 #   unique enough within a PR's changed set that collisions do not arise.
 #
-# This board is a DATA artifact, not a script. `audition` never edits it, never
-# edits panel.yml, and never files a seat — promotion stays a manual panel.yml
-# edit + PR at 0205's integration review.
+# This board is a DATA artifact, not a script. `/coaching` reads it and reports
+# ground-truth diagnostics; it never edits the board, changes a reviewer roster,
+# logs trial tickets, or makes a promotion decision.
 #
 # Extended (ticket 1008) with MINED defect-bearing entries: already-merged PRs
 # of THIS repo whose defect was confirmed post-merge under the pre-registered
