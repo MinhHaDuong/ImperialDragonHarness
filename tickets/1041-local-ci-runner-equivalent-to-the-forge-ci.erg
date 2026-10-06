@@ -34,10 +34,15 @@ Measured facts are in `memory/journal/2026/2026-10-06-local-ci-act-equivalence.m
 
 - [x] `scripts/local-ci.sh` runs the 10 jobs and exits 0 on a clean tree
       (715c59d7, 2026-10-06).
-- [ ] It exits non-zero when the job list is empty or differs from the
-      workflow's, when `.actrc` is present, and when any job fails.
-      Observed: `.actrc` present exits 2; a failing job exits 1. Not yet
-      exercised: an empty or differing job list.
+- [x] It exits non-zero when the job list is empty or differs from the
+      workflow's, when `.actrc` is present, and when any job fails. Observed
+      in throwaway repositories: `.actrc` present exits 2; a failing job exits
+      1; a workflow with no job for pull_request exits 2 naming both job sets;
+      an unknown job name exits 2; no workflow at HEAD exits 3 ("not a pass").
+- [x] The forge is optional. Without an `origin` remote, `gh` or a `gh` login,
+      jobs that read `secrets.*` are SKIPPED and listed in the summary, and a
+      skip is never a pass (`LOCAL_CI_STRICT=1` makes it fail). Observed: one
+      plain job passed, one secrets job skipped, exit 0; strict exit 1.
 - [x] A negative control per guard (9 jobs) fails at its matching step; the
       driver treats a failure outside a `Main` step as an infrastructure
       failure, never as a catch. Kept as a repository test, not a scratch script
