@@ -27,3 +27,10 @@ Regular announcement input/output1.36/4.18 differs from the preview rates.
 Nine hosted cases were launched simultaneously, retaining0470. At this
 checkpoint0338 is also complete and has three judge files; full-series
 claims and high-effort comparisons remain pending.
+
+Complete handoff pricing addition: author distinguishes official announcement
+1.36/4.18 from OpenRouter promotion0.68/2.09. Actual runs use api.mistral.ai,
+not OpenRouter. The official model card inspected in this session also
+shows0.68/0.07/2.09 with crossed-out regular rates; this does not establish
+an invoice. Retain the registered calculation scenario and mark native
+billing reconciliation pending. Do not infer native pricing from OR alone.

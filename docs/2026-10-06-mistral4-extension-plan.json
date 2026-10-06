@@ -30,7 +30,7 @@
     "cached_input": 0.07,
     "output": 2.09
   },
-  "pricing_status": "public-preview rates, fixed for this extension",
+  "pricing_status": "Preregistered rates scenario, not native billed tariff confirmed. Announcement regular input/output1.36/4.18; author reports OpenRouter promotion0.68/2.09; official model card also displays reduced rates. Runs use native Mistral; native invoice reconciliation pending.",
   "egress": "Same cleared historical project prompts as tournament1024; no additional project scope.",
   "parallelism_note": "Author reiterated all cases parallel; three initial cases plus six launched immediately.",
   "effort_evidence": {
