@@ -40,13 +40,20 @@ Measured facts are in `memory/journal/2026/2026-10-06-local-ci-act-equivalence.m
       failure, never as a catch. Kept as a repository test, not a scratch script
       (`scripts/local-ci-negative-controls.sh`, opt-in test
       `tests/test_local_ci_negative_controls.py` with RUN_LOCAL_CI_NEGATIVE=1).
-- [ ] `cross-pr-ticket-collision` has a positive control for BOTH paths: the
-      base-ref collision (fired once) and the sibling-PR collision through
-      `gh` (not yet fired: needs an open PR adding the same ID; the image also
-      lacked `gh` until this ticket added it).
+- [x] `cross-pr-ticket-collision` has a positive control for BOTH paths: the
+      base-ref collision, and the sibling-PR collision through `gh`, which
+      fired on 2026-10-06 ("ticket ID 1041 is also added by open PR #1218")
+      when the runner did not recognise its own PR. The image lacked `gh`
+      until this ticket added it. The runner now finds its PR by HEAD sha, not
+      branch name, so a PR is not its own sibling.
 - [ ] The summary of a run states that only committed HEAD is tested.
 - [ ] Parity with a green forge run on the same commit: same job list, same
       pytest passed/skipped counts, same `grep`/`bash`/`awk` versions.
+      Measured so far: on PR 1218 the forge and the runner failed the same two
+      jobs (agnostic-guard; pytest-guard, same two tests) on near-identical
+      commits, and the forge is green on 4cbe6df4 with 1487 passed / 10
+      skipped. Still to do: the local run on that same commit, then versions
+      (`awk` was not shown by the forge log).
 - [ ] `ci-local/` is tracked (the catch-all ignore rule re-includes it).
 - [ ] `make lint` and the full suite pass.
 

@@ -7,7 +7,10 @@
 # reported as an infrastructure failure, never as a catch: a first version of
 # this check "caught" nine violations while no job had run at all.
 #
-# Usage: scripts/local-ci-negative-controls.sh     (exit 0 only if every guard caught its violation)
+# Usage: scripts/local-ci-negative-controls.sh [job ...]   (default: all nine guards)
+# Exit 0 only if every selected guard caught its violation. One run produced an
+# infrastructure failure on one guard while a local-ci.sh run shared the host;
+# cause not established, so run them one at a time.
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
@@ -55,8 +58,14 @@ inject() {
     esac
 }
 
+if [ "$#" -gt 0 ]; then
+    cases=("$@")
+else
+    cases=(validate-tickets skill-lint agnostic-guard status-verb-guard personal-data-guard pipefail-guard grep-e-guard tab-ifs-guard pytest-guard)
+fi
+
 fail=0
-for job in validate-tickets skill-lint agnostic-guard status-verb-guard personal-data-guard pipefail-guard grep-e-guard tab-ifs-guard pytest-guard; do
+for job in "${cases[@]}"; do
     git reset -q --hard "$base"
     git clean -qfdx
     inject "$job"
@@ -72,7 +81,8 @@ for job in validate-tickets skill-lint agnostic-guard status-verb-guard personal
         if [ -n "$step" ]; then
             echo "$job: caught - $step"
         else
-            echo "$job: INFRA FAILURE, not a verdict"
+            echo "$job: INFRA FAILURE, not a verdict (log tail follows)"
+            tail -n 15 "$work/$job.log" | sed 's/^/   | /'
             fail=1
         fi
     fi

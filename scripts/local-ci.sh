@@ -52,10 +52,15 @@ git clone --quiet --no-hardlinks "$root" "$clone"
 git -C "$clone" remote set-url origin "$origin"
 git -C "$clone" fetch --quiet origin
 
-pr=$(gh pr view --json number --jq .number 2>/dev/null || true)
-base=$(gh pr view --json baseRefName --jq .baseRefName 2>/dev/null || true)
+# Find this checkout's PR by the commit it points at, not by branch name: a
+# local branch is often pushed under another name, and an unrecognised PR would
+# then count as its own sibling in the collision job.
+open_prs=$(gh pr list --state open --json number,baseRefName,headRefOid)
+head_sha=$(git rev-parse HEAD)
+pr=$(jq -r --arg sha "$head_sha" '[.[] | select(.headRefOid == $sha)][0].number // empty' <<< "$open_prs")
+base=$(jq -r --arg sha "$head_sha" '[.[] | select(.headRefOid == $sha)][0].baseRefName // empty' <<< "$open_prs")
 if [ -z "$pr" ] || [ -z "$base" ]; then
-    echo "local-ci: no open PR for this branch; assuming base main, so every open PR counts as a sibling" >&2
+    echo "local-ci: HEAD is not the head of an open PR; assuming base main, so every open PR counts as a sibling" >&2
     pr=0
     base=main
 fi
