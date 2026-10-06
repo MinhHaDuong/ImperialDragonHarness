@@ -12,6 +12,7 @@ Label: needs-human
 2026-10-06T04:03Z reviewer note blocker 1042 closed — Blocked-by removed.
 2026-10-06T04:14Z reviewer label needs-human
 2026-10-06T04:10Z reviewer note blocker 1043 closed — Blocked-by removed.
+2026-10-06T07:22Z Codex note Timestamp advisory disposition: the original 1043 source closure occurred at 04:10Z and its log row was imported when rebasing onto 1042 evidence that already contained the 04:14Z label event. The earlier-dated row records the original event, not a new action; retain the factual 04:10Z time and accept the advisory regressive-timestamp warning rather than fabricate a replacement.
 
 --- body ---
 
