@@ -2,6 +2,7 @@
 Title: Audit reviewer seats across local CLI runtimes and model effort settings
 Created: 2026-09-28
 Author: Minh Ha-Duong
+Closed: WONTDO — docs/2026-10-02-reviewer-attribution-design.md §10 drops the premise of seating each runtime behind the runner; routing and subscription-quota questions remain open under0974/1024, without selecting an architecture, provider or purchase.
 
 --- log ---
 2026-09-28T06:41Z Minh Ha-Duong created
@@ -9,6 +10,7 @@ Author: Minh Ha-Duong
 2026-10-02T08:01Z MinhHaDuong note premise dropped by the 2026-10-02 reviewer-attribution design (tickets/1004): runtimes review their own way, no seat-runner requirement; WONTDO close lands with the teardown ticket 1009
 2026-10-05T11:41Z MinhHaDuong note Author routing direction (2026-10-05): route more aggressively to conserve Claude Pro Max, ChatGPT Pro and Vibe Pro subscription quotas. Consider GLM Coding Plan after the ongoing tournament (1024). Compare two options: an LLM-routing MCP plugin usable from Claude and Codex, and extending/tuning evidence-based IDH routing. This need survives retirement of the old fixed-seat audit; no routing architecture, provider adoption or subscription purchase selected.
 2026-10-05T11:41Z Codex note GLM off-peak clarification verified2026-10-05: half standard usage credits rather than half subscription price; normal peak Mon-Fri14:00-18:00 UTC+8, with all-day off-peak promotion through2026-10-07. Source:https://docs.z.ai/devpack/overview . Preserve this routing question for follow-up under0974/1024 when closing the superseded fixed-seat audit.
+2026-10-06T04:10Z reviewer closed — WONTDO — docs/2026-10-02-reviewer-attribution-design.md §10 drops the premise of seating each runtime behind the runner; routing and subscription-quota questions remain open under0974/1024, without selecting an architecture, provider or purchase.
 
 --- body ---
 

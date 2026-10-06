@@ -2,7 +2,6 @@
 Title: Attribution teardown: dispositions and integration audit
 Created: 2026-10-05
 Author: reviewer
-Blocked-by: 1043
 Label: needs-human
 
 --- log ---
@@ -12,6 +11,7 @@ Label: needs-human
 2026-10-05T19:37Z reviewer note blocker 1037 closed — Blocked-by removed.
 2026-10-06T04:03Z reviewer note blocker 1042 closed — Blocked-by removed.
 2026-10-06T04:14Z reviewer label needs-human
+2026-10-06T04:10Z reviewer note blocker 1043 closed — Blocked-by removed.
 
 --- body ---
 

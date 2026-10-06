@@ -82,6 +82,7 @@ Closed: autoclosed — PR #987
 2026-09-23T17:17Z Minh Ha-Duong closed — autoclosed — PR #987
 2026-10-02T10:22Z claude note MR #1129 seat=openrouter-frontier verdict: 1 verifiable, 0 consider, of which 1 adopted — verifiable finding (userless scp origin key split) drove gaze REROLL round 1; fixed in 4af6dfac
 2026-10-02T10:22Z claude note MR #1129 seat=copilot verdict: 0 verifiable, 2 consider, of which 0 adopted — ordering-coverage premise partially incorrect (existing port test fails under reorder mutant); ticket-closure finding muted (close-claim carried by merge)
+2026-10-06T04:10Z Codex note Approved disposition: docs/2026-10-02-reviewer-attribution-design.md §10 supersedes this trial mechanism; historical verdicts, scorecards and log history remain evidence.
 --- body ---
 ## Context
 
