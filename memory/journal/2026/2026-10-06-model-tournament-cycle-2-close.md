@@ -55,3 +55,14 @@ judge sensitivity). Cycle 3 pre-declared: locals @medium vs hosted
 qwen3.8-flash (lineage twin, served production vs open-weights preview —
 flash-next is NOT served anywhere as of 2026-10-06), DashScope-intl
 direct, --expert-profile-save enabled on the Strata arms.
+
+Correction (2026-10-06, PR #1237): the opening paragraph combines the
+final successful-leg count with the earlier non-OK count. Before the
+0333-b2 replay, the cycle-2 matrix contained 141/160 OK legs and 19
+non-OK outcomes. After the infrastructure-interrupted 0333-b2 attempt
+was archived and its replay succeeded (30/30), the final matrix contains
+142/160 OK legs, all judged 3/3 (426 seats), and 18 non-OK outcomes:
+4 time-cap DNFs, 8 VOID-EMPTY legs and 6 provider DNFs. The archived
+0333-b2 VOID remains historical attempt evidence; it is not a nineteenth
+non-OK leg in the final matrix. The separate 0233-j leg remains VOID-EMPTY
+after two attempts and does not account for the increase to 142 OK legs.
