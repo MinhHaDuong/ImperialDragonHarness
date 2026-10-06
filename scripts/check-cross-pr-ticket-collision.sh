@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # check-cross-pr-ticket-collision.sh — CI gate against the optimistic-ID trap.
 #
-# The optimistic ID allocation trap (git-erg#282, wontfix) bites across *open
-# PRs*: `erg new` scans only the local checkout, so two branches can hand out the
-# same ticket ID. Per-branch `erg check` and the `validate-tickets` CI job both
-# pass — each branch's IDs are unique within itself — and the duplicate only
-# materializes on `main` after the second PR merges, by which point the first has
-# already landed. This script closes that gap: for the PR under test it lists the
-# ticket IDs it ADDS and fails if any is also added by another OPEN PR.
+# `erg new` allocates max+1 across the store, sibling worktrees' drafts, and
+# cached local/remote branch tips (a best-effort pass bounded at 200 ms, falling
+# back to the worktree result with a warning). Unfetched refs, separate clones,
+# and concurrent allocations can still produce the same ID. Per-branch
+# `erg check` and `validate-tickets` cannot detect every such collision. This
+# gate checks the IDs the PR ADDS against both the base tip and sibling OPEN PRs.
 #
 # Two collision surfaces are checked. The base tip: the added-files diff is
 # taken against the merge-base, so an ID that landed on the base AFTER this

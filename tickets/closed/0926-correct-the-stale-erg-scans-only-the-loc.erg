@@ -2,12 +2,14 @@
 Title: Correct the stale erg-scans-only-the-local-checkout premise in tickets AGENTS.md
 Created: 2026-09-11
 Author: claude
+Closed: autoclosed — PR #1204
 
 --- log ---
 2026-09-11T15:37Z claude created
 2026-10-05T18:04Z reviewer note raid Imagine — author lifted deferral on 2026-10-05. Original AGENTS bullet already removed by 5ad7d567; preserve pristine shipped asset. Remaining stale collision-script header will be corrected after fresh allocator evidence. Generic integration advice has a base-tip exception documented accurately in LOCAL.md.
 2026-10-05T18:04Z reviewer note raid Plan — verify shipped asset equality and current integration doctrine; probe allocator in throwaway Git repository with baseline, unpushed ref, sibling draft and post-removal controls; record binary SHA256. Correct only stale script header; audit fetch/check/merge/renumber advice without upstream or behavioral changes. No implementation-mirroring test.
 2026-10-05T18:04Z reviewer note raid Feasibility PASS — 2 content paths, no APIs/keys, no shared registry; source script and pristine-asset gate exist. Original resident correction already delivered; remaining header correction and empirical proof preserve exit intent. LOCAL describes local base-tip exception.
+2026-10-05T19:38Z reviewer closed — autoclosed — PR #1204
 
 --- body ---
 ## Context
@@ -155,9 +157,9 @@ whitespace-anchored retry dropped `release`'s `tickets/erg new`. A pattern whose
 
 ## Verification
 
-- [ ] Each claim in the corrected bullet is re-derived on the machine rather
+- [x] Each claim in the corrected bullet is re-derived on the machine rather
       than copied from this ticket, with the binary sha256 recorded beside it.
-- [ ] A positive control fires before any "no collision" claim is trusted.
+- [x] A positive control fires before any "no collision" claim is trusted.
 
 ## Invariants
 
@@ -182,3 +184,31 @@ The cost of waiting is that a resident document tells every session something
 false about its tooling, and the frontier-jumping advice it justifies has
 already burned two thirds of one project's ID space, permanently, since the
 allocator never reuses a hole.
+
+## Execution evidence — 2026-10-05
+
+The shipped `tickets/AGENTS.md` was already restored by 5ad7d567 and remains
+byte-identical to `tickets/.erg-assets`; the allocator doctrine now lives in
+`erg integration`, not a resident essay. Only the stale collision-gate header
+needed correction; executable behavior is unchanged.
+
+Fresh throwaway-repository controls using the current harness binary SHA256
+`4776df5d8d011da5fe20113c8a559e11c6d95b7fae5c9d6ec942749392483813`:
+baseline ticket 0001 gives 0002; an unpushed local ref holding 0899 gives 0900;
+deleting that ref returns 0002. An uncommitted sibling-worktree draft 0799 gives
+0800; removing the draft returns 0002. The primary probe worktree stayed clean.
+The retained gap demonstrates max+1 rather than hole filling. `erg next-id
+--help` documents the same-relative subtree and 200 ms ref-pass deadline with
+warning/fallback; the timeout itself was not induced. The behavioral positive
+controls precede the clean removal controls. The call-site search pattern
+`(tickets/erg|\$ERG) new` fires on both release and trace-doctor.
+
+Doctrine audit: fetching before allocation still narrows the unfetched-ref /
+separate-clone window. Checking after fetch still validates the checked-out
+corpus; it is not a reservation or a replacement for the forge gate. Merge-time
+checks still earn their place for concurrent allocation and later renumbering.
+Frontier jumps remain collision recovery only, weighed against permanent holes;
+initial allocation uses `erg new`. No broader reservation mechanism is added.
+The generic integration claim that cross-PR gates never inspect the default
+branch does not describe this harness: `tickets/LOCAL.md` accurately records
+its base-tip check as well as its open-PR check. The CI gate keeps both checks.
