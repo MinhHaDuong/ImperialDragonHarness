@@ -231,6 +231,9 @@ def render(output, snapshot):
                          for dx,dy in [(radius,radius),(-radius,radius),(radius,-radius),(-radius,-radius),
                                        (0,radius),(0,-radius),(radius,0),(-radius,0),
                                        (radius/2,radius),(-radius/2,radius),(radius/2,-radius),(-radius/2,-radius)]]
+                if name == 'quality-cost' and a in {'c', 'c2'}:
+                    preferred = [(22, 20), (30, 28)] if a == 'c' else [(-22, -20), (-30, -28)]
+                    offsets = preferred + offsets
                 placed=False
                 for dx,dy in offsets:
                     if annotation:annotation.remove()
