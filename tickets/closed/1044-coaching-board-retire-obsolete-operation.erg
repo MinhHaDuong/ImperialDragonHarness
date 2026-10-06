@@ -2,10 +2,12 @@
 Title: Coaching board: retire obsolete operational roster comments
 Created: 2026-10-06
 Author: reviewer
+Closed: Implemented contained replay comments; board data byte-identical; review path count corrected
 
 --- log ---
 2026-10-06T08:09Z reviewer created
 2026-10-06T08:11Z reviewer note implementation — contained coaching intro replaces retired audition/panel promotion comments; all board data bytes preserved; integrity and replay checks pass, adherence171 pass
+2026-10-06T08:26Z reviewer closed — Implemented contained replay comments; board data byte-identical; review path count corrected
 
 --- body ---
 
@@ -13,11 +15,11 @@ Author: reviewer
 Residual1009 teardown defect found during1004 original integration criterion(f): the retained frozen board still describes the removed reviewers audition and panel.yml promotion surface as operational. Blocks clean parent integration. Historical data and annotations must remain unchanged.
 
 ## Exit criteria
-- [ ] Board introduction describes existing contained coaching replay, without an operational retired roster/promotion path.
-- [ ] Every non-comment board data byte remains unchanged; retained board integrity and coaching replay checks pass.
+- [x] Board introduction describes existing contained coaching replay, without an operational retired roster/promotion path.
+- [x] Every non-comment board data byte remains unchanged; retained board integrity and coaching replay checks pass.
 
 ## Actions / Imagine / Plan
 Bounded factual comment correction only in skills/coaching/benchmark-board.yml. Preserve every ground-truth entry and historical source ticket reference. Compare before/after with comment-only lines removed; no tautological prose test. Reuse board integrity and coaching replay checks. No library, abstraction or registry change needed. Original1004 scope preserved by this separate residual-child disposition.
 
 ## Feasibility
-PASS: existing board and replay documented and tested. Two contentpaths including this ticket, no keys or API dependencies.
+PASS: existing board and replay documented and tested. Three content paths including this ticket and the parent Imagine annotation, no keys or API dependencies.
