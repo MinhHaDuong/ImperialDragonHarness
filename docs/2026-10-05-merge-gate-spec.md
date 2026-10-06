@@ -14,6 +14,9 @@ Decided since this draft was written (2026-10-06), and not reflected below:
   author: waiting is preferred to bypassing. §7's "fallback: run the checks by
   hand and write the note" is therefore not wanted as a way around the forge.
 - A `pre-push` hook (an "advisory" local run) was dropped as not worth its cost.
+- Trust is a base principle of IDH: no open door. §3's "no contributors, so a
+  self-declaration is accepted" is not the reasoning to keep; the requirement is
+  traceability of what was run, when, by whom, on which host and revision.
 - The ruleset `main-required-checks` requires seven forge checks; three CI jobs
   run but are not required. The content of the CI is to be reviewed before this
   gate is built.
