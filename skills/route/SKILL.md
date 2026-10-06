@@ -27,7 +27,8 @@ before any expensive model touches it.
 
 ## Performance grid
 
-Costs are per leg on the arena sample (11 tickets). Locals pay electricity
+Costs are per leg on the ten-ticket arena sample; cycles are additive and
+each model/effort identity remains distinct. Preliminary smoke runs are excluded. Locals pay electricity
 (0.23 EUR/kWh x 600 W, registered 2026-10-06); hosted pay the API
 (pi cost.total, component-priced).
 
@@ -82,9 +83,12 @@ data.
 Cluster membership lives in `grid.json` (`clusters` key) — data, not
 portable instructions.
 
-*VOID-EMPTY pattern: the OR cheap flashes abandon heavy tickets silently
-(GLM-flash, Mimo: empty diffs on 0452/0874/1372) — inside-cluster selection
-must check ticket weight, not just price.
+Model timeouts and admissible empty submissions score zero; include consumed
+time and cost, and show completion coverage. Provider/quota errors are invalid
+observations pending replay, not evidence of model abandonment. Identities
+with pending cases remain provisional and are excluded from final rankings.
+Paired comparisons retain model failures and report wins, ties and losses;
+an equal median difference does not establish per-ticket dominance.
 
 Within-cluster selection keys: cost per leg (grid above), latency, and
 environment: privacy/clearance (forces LOCAL/PRIVÉ), offline, GPU idle vs

@@ -66,3 +66,18 @@ was archived and its replay succeeded (30/30), the final matrix contains
 0333-b2 VOID remains historical attempt evidence; it is not a nineteenth
 non-OK leg in the final matrix. The separate 0233-j leg remains VOID-EMPTY
 after two attempts and does not account for the increase to 142 OK legs.
+
+Correction (2026-10-06, failure-accounting follow-up after PR #1237):
+Raw session inspection identifies seven GLM Flash/Mimo VOID-EMPTY results
+as OpenRouter 403 monthly-key-limit errors. The earlier silent-abandonment
+and heavy-ticket ban conclusions are withdrawn; targeted replays are in
+progress. The four 7200-second DNFs count as model-stack failures under
+the protocol, not dropped observations. The 0470-c2 empty submission also
+scores zero. Earlier medians, Pareto and paired parity/dominance claims
+conditioned on successful legs are superseded by the corrected summary
+in docs/2026-10-06-tournament-corrected-summary.json and the regenerated
+skills/route/grid.json. Cycles are additive; cycle-1 d/e remain included.
+At the author's request ten SpaceBunny directories and three preliminary
+0188 directories were purged; every other result remains. Pending replays
+are provisional, not final zero-score observations. No unavailable model
+outcome is inferred from a quota failure.

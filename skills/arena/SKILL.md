@@ -79,9 +79,13 @@ resident server legitimately holds — wrap-ups are slow, not stuck.
 
 ## Readout
 
-`python3 analyze2.py` — the multidimensional table (quality /30 medians,
-median time, $/leg API or electricity), the Pareto frontier on the three
-axes, and the pairwise dominance matrix. Electricity is registered:
+`python3 scripts/tournament-analysis.py --arena ~/arena` (from the harness
+repository) emits cumulative per-identity statistics, paired quality outcomes
+and a Pareto frontier restricted to complete observations. The legacy
+`analyze2.py` excluded non-OK legs and must not supply routing conclusions.
+Model failures score zero, with consumed time and cost retained; infrastructure
+errors stay pending until replayed. Display coverage beside every median.
+Do not call equal paired medians strict dominance. Electricity is registered:
 0.23 EUR/kWh, padme 600 W under load. Interim reads carry the easy-ticket
 order bias — the big tickets (the killers) decide; never present a
 mid-cycle read as final.
