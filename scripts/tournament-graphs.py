@@ -246,6 +246,8 @@ def render(output, snapshot):
                 if name in {'quality-cost', 'quality-speed', 'quality-total-cost'} and a in {'c', 'c2'}:
                     preferred = [(22, 20), (30, 28)] if a == 'c' else [(-22, -20), (-30, -28)]
                     offsets = preferred + offsets
+                if name == 'quality-speed' and a == 'e2':
+                    offsets = [(-45, 55), (-55, 70), (-65, 85), (-85, 100)] + offsets
                 placed=False
                 for dx,dy in offsets:
                     if annotation:annotation.remove()
