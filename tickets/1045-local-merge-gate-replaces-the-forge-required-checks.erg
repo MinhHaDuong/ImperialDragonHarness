@@ -1,0 +1,84 @@
+%erg 0.1
+Title: Local merge gate replaces the forge's required checks
+Created: 2026-10-06
+Author: Claude
+
+--- log ---
+2026-10-06T08:45Z Claude created
+
+--- body ---
+## Context
+
+Ticket 1041 gave the harness a local runner that reproduces the forge CI
+(`scripts/local-ci.sh`, merged in PR 1218). It does not change what lets `main`
+move: the ruleset `main-required-checks` still requires seven forge checks
+(validate-tickets, skill-lint, agnostic-guard, status-verb-guard,
+pipefail-guard, grep-e-guard, pytest-guard) and has no bypass actor, so when the
+forge's runners stop, PRs wait, as on 2026-10-05.
+
+The author's aim is a CI native to git, in line with the dyne project (merge
+requests as files, `ci pass`/`verdict` entries pinned to a revision; ticket 0270
+in git-erg, "Hard points: CI, who executes?"). This ticket is that step: the
+gate itself becomes local, so the forge is a host and not an authority.
+
+Decided on 2026-10-06, so not to be reopened here:
+- A bypass actor on the ruleset was applied and then reverted by the author:
+  waiting is preferred to bypassing.
+- A `pre-push` hook calling the local runner (option A) is dropped: it adds a
+  slower run than the forge's, records nothing and is skipped by `--no-verify`.
+
+Draft design, reviewed once by an independent reviewer (gpt-6.1-sol, medium,
+read-only): `docs/2026-10-05-merge-gate-spec.md`. Its vocabulary replaces "CI":
+checks (mechanical), verdict (judgement), merge gate (both, on the same
+revision).
+
+## Prerequisite
+
+The author wants the content of the CI reviewed first: does it duplicate
+`make check`, and what does it miss? Facts to start from: `make check` is not the
+CI (it lacks validate-tickets, status-verb-guard, pipefail-guard, grep-e-guard,
+tab-ifs-guard; it adds check-skills-drift and check-adapter-hooks); three CI jobs
+run but are not required (personal-data-guard, tab-ifs-guard,
+cross-pr-ticket-collision), so a failure of one does not stop a merge. File that
+review as its own ticket; this one is blocked on its outcome.
+
+## Scope
+
+- A record tying a checks result to the exact commit that will become `main`
+  (build the candidate merge first: merge-time hook effects such as `erg close`
+  must be inside what was checked).
+- `/merge` refuses without that record on the candidate and an APPROVED verdict
+  on the branch head; supersession rule: the latest entry for a subject decides.
+- The ruleset's required checks are removed or reduced. This is a forge setting,
+  permanent and visible: it is the author's decision, taken at that step.
+- A guard on `main` that cannot be bypassed from a clone (a
+  `reference-transaction` hook). Installation must be verified: this repository
+  sets `core.hooksPath=hooks`, so a hook placed in `.git/hooks` never runs.
+- One machine moves `main`; the other fetches.
+
+## Open decisions
+
+1. Where the record lives: a note on the candidate commit (outside the tree) or a
+   line in the MR file under dyne (inside the tree, needs a pin that survives
+   appending). The first review found a tree-hash pin unsound: it let a changed
+   `merges/dyne` binary and merge-time hook effects through.
+2. Whether this is built in the harness first or as dyne (git-erg tickets
+   0272/0273 define the `%dyne` format and `dyne merge`); the harness script is
+   then a stand-in.
+3. Which checks the gate runs, given the prerequisite; and the claim that a
+   record written on the author's own machine is a self-declaration, accepted
+   only because there are no contributors.
+
+## Exit criteria
+
+- [ ] The content review of the CI is filed and done, or this ticket records why
+      it is not needed.
+- [ ] The open decisions above are settled and written down.
+- [ ] `/merge` refuses a branch with no record on its candidate commit, and a
+      positive control shows it accepts one.
+- [ ] A hook refuses an update of `main` that is not a gated merge, verified from
+      a second worktree, and its installation is verified under
+      `core.hooksPath`.
+- [ ] The ruleset change is made by the author, and the day the forge is down is
+      rehearsed once (a PR merged with the forge's runners unavailable or
+      unconsulted).
