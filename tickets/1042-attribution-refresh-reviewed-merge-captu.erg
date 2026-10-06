@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Attribution: refresh reviewed-merge captures before 1032 integration
+Created: 2026-10-06
+Author: reviewer
+
+Blocked-by: 1038
+
+--- log ---
+2026-10-06T03:29Z reviewer created
+
+--- body ---
+
+## Context
+Necessary bounded capture child of1032. At092d70af there are29merges after1005 and20validrecords;1190mechanical exemption andtennewmissingPRs. Preserve existingrecords/history.1038 supplies only honest runtime-masked facts for1211; do not use masks for unrelated missing historical identities.
+
+## Exit criteria
+- [ ] Each merge after1005 through explicit refreshed merged cutoff is classified from actual evidence; all recoverable reviewed captures land once with actual identities/outcomes, and unrecoverable cases remain explicitly reported without inferred identities.
+- [ ] Existing records/historical evidence unchanged; strictparser/query reject ambiguous/malformed/unsafe sources; meaningful checks and full projectgate pass.
+- [ ] Diff remains below15contentpaths; newly merged prerequisite captures count toward inventory. Parent1032/1009 close only if original integration criteria proven.
+
+## Actions / Plan
+Classify1204/1208/1209/1210/1211/1212/1214/1215/1216/1217 with publicreviews/comments/body plus durable safe actualroleproof.1204candidate /root/execute_926 in safeproof must be linked toPR1204, never inferred from1205writer. Existingproof reports and memoryjournal provide durable contextualevidence. Preserve1211pendingdraft; use1038capturedrecord. Emptyforgecollections do not prove no review. Validate candidates before projectlocalcapture; enumerate/query existinghelpers; no newframework. Extendcutoff after1038actualmerge and recount. Initialtenrecords+report+ticket+1032dependency=13;1211lands in1038, leaving room foractual1038capture. Split if15.
+
+## First verification
+Snapshot20existingjournalblobs; compare unchanged aftercapture. Run realGit range/query and parser/backfill tests; zero unavailable/malformed/ambiguous claims require actual positivecontrols. Historical gaps remain visible; never capture unmergedself.

@@ -3,6 +3,8 @@ Title: Attribution teardown: dispositions and integration audit
 Created: 2026-10-05
 Author: reviewer
 
+Blocked-by: 1042
+
 --- log ---
 2026-10-05T10:42Z reviewer created
 2026-10-05T14:39Z reviewer note blocker 1031 closed — Blocked-by removed.
@@ -45,3 +47,6 @@ FEASIBILITY: WARN resolvedbyboundedsequencing. Independentmechanicalexistence/ar
 ## Raid Imagine refresh (2026-10-06)
 Explicit author selection follows1038. Original exits unchanged. Merged cutoff092d70af8c6a4fafc163d3a87f305699c518f4c6 has29merges after1005 and20valid records; no malformed/ambiguous/encrypted/unsafe evidence. Missing1190 remains documented mechanical exemption;1210/1211/1204/1208/1214/1209/1212/1215/1216/1217 need factual classification. Original11disposition paths +report +tenpotentialrecords=22: bounded capture child required before implementation. Preserve0205/0356 unchanged; append exactlyonce to0206/0207/0217/0208/0346/0348/0353;0980WONTDO cites approveddesign and routing followups0974/1024. Complete different-vendor/harness and most-decorrelated-available risk gradient.1004 integration remains separate.
 BLIND-SPOT: PR1204 producer unavailable historically, not necessarily runtime-masked. Impossible prose disposition is honest but cannot satisfy1009 original records criterion alone. Do not close1009 unless actual criterion evidence exists; no inferred producer identity or substituted wrapupwriter. Refresh cutoff after every prerequisite merge, never capture unmergedself.
+
+## Raid Plan refresh (2026-10-06)
+Necessary1042capturechild precedes dispositions. Original exit unchanged. First preservationcheck snapshots seven historicaltrialGitblobs plus0205/0356. Remove exactlysingle newlyaddedapprovedspec logline from eachtrial afteredit; allremainingbytes equalbaseline. Duplicate/alteredbyte temporarynegativecontrols mustfail.0205/0356 unchanged. Actualscope elevenpaths pluscoverage ifneeded remainsbelow15. Parentcloseconditional on originalcriteria, strict factualcoverage and independentintegration.1204safe-roleproof candidate requires producer-role linkage before actualcapture; history saying unavailable stayspreserved withappend-onlycorrection ifrecovered.
