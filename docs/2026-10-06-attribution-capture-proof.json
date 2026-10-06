@@ -1,0 +1,619 @@
+{
+  "pr1204-producer-link-safe.json": {
+    "provider": "openai",
+    "model": "gpt-6.1-sol",
+    "effort": "low",
+    "events": [
+      {
+        "event_type": "event_msg",
+        "payload_type": "item_completed",
+        "source_branch_mentioned": true,
+        "pr1204_mentioned": false,
+        "head_hashes": []
+      },
+      {
+        "event_type": "response_item",
+        "payload_type": "custom_tool_call_output",
+        "source_branch_mentioned": true,
+        "pr1204_mentioned": false,
+        "head_hashes": []
+      },
+      {
+        "event_type": "event_msg",
+        "payload_type": "item_completed",
+        "source_branch_mentioned": true,
+        "pr1204_mentioned": false,
+        "head_hashes": []
+      },
+      {
+        "event_type": "response_item",
+        "payload_type": "custom_tool_call_output",
+        "source_branch_mentioned": true,
+        "pr1204_mentioned": false,
+        "head_hashes": []
+      },
+      {
+        "event_type": "response_item",
+        "payload_type": "custom_tool_call",
+        "source_branch_mentioned": true,
+        "pr1204_mentioned": false,
+        "head_hashes": []
+      },
+      {
+        "event_type": "event_msg",
+        "payload_type": "item_completed",
+        "source_branch_mentioned": true,
+        "pr1204_mentioned": false,
+        "head_hashes": []
+      },
+      {
+        "event_type": "response_item",
+        "payload_type": "custom_tool_call",
+        "source_branch_mentioned": true,
+        "pr1204_mentioned": false,
+        "head_hashes": []
+      },
+      {
+        "event_type": "event_msg",
+        "payload_type": "item_completed",
+        "source_branch_mentioned": true,
+        "pr1204_mentioned": true,
+        "head_hashes": []
+      },
+      {
+        "event_type": "response_item",
+        "payload_type": "custom_tool_call_output",
+        "source_branch_mentioned": true,
+        "pr1204_mentioned": true,
+        "head_hashes": []
+      },
+      {
+        "event_type": "event_msg",
+        "payload_type": "item_completed",
+        "source_branch_mentioned": true,
+        "pr1204_mentioned": true,
+        "head_hashes": [
+          "b1222b0ec0deaf60ef1c42e3c3695faa1b1242c1"
+        ]
+      },
+      {
+        "event_type": "response_item",
+        "payload_type": "custom_tool_call_output",
+        "source_branch_mentioned": true,
+        "pr1204_mentioned": true,
+        "head_hashes": [
+          "b1222b0ec0deaf60ef1c42e3c3695faa1b1242c1"
+        ]
+      },
+      {
+        "event_type": "event_msg",
+        "payload_type": "item_completed",
+        "source_branch_mentioned": false,
+        "pr1204_mentioned": true,
+        "head_hashes": [
+          "b1222b0ec0deaf60ef1c42e3c3695faa1b1242c1"
+        ]
+      },
+      {
+        "event_type": "response_item",
+        "payload_type": "message",
+        "source_branch_mentioned": false,
+        "pr1204_mentioned": true,
+        "head_hashes": [
+          "b1222b0ec0deaf60ef1c42e3c3695faa1b1242c1"
+        ]
+      },
+      {
+        "event_type": "event_msg",
+        "payload_type": "task_complete",
+        "source_branch_mentioned": false,
+        "pr1204_mentioned": true,
+        "head_hashes": [
+          "b1222b0ec0deaf60ef1c42e3c3695faa1b1242c1"
+        ]
+      }
+    ]
+  },
+  "pr1204-phases-safe.json": [
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "completed_phases": [
+        {
+          "result": "COMMENT",
+          "hashes": [],
+          "remote_anchor_unavailable": true
+        },
+        {
+          "result": "APPROVED",
+          "hashes": [],
+          "remote_anchor_unavailable": false
+        }
+      ],
+      "context_role": "correctness"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "completed_phases": [
+        {
+          "result": "COMMENT",
+          "hashes": [],
+          "remote_anchor_unavailable": true
+        },
+        {
+          "result": "APPROVED",
+          "hashes": [],
+          "remote_anchor_unavailable": false
+        }
+      ],
+      "context_role": "consistency"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "completed_phases": [
+        {
+          "result": "APPROVED",
+          "hashes": [],
+          "remote_anchor_unavailable": false
+        }
+      ],
+      "context_role": "doc-propagation"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "completed_phases": [
+        {
+          "result": "PASS",
+          "hashes": [
+            "b1222b0ec0deaf60ef1c42e3c3695faa1b1242c1"
+          ],
+          "remote_anchor_unavailable": false
+        },
+        {
+          "result": "PASS",
+          "hashes": [
+            "b3ed9961a91fad10300b7a524208567a117d2189"
+          ],
+          "remote_anchor_unavailable": false
+        },
+        {
+          "result": "PASS",
+          "hashes": [
+            "c917715ae4252c674e063069db31ea57de20d3c5",
+            "d2f3dea49b1157961480cf4daa19c2197113d8b8"
+          ],
+          "remote_anchor_unavailable": false
+        }
+      ],
+      "context_role": "adherence"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "completed_phases": [
+        {
+          "result": "CLEAN",
+          "hashes": [],
+          "remote_anchor_unavailable": false
+        },
+        {
+          "result": "CLEAN",
+          "hashes": [],
+          "remote_anchor_unavailable": false
+        },
+        {
+          "result": "CLEAN",
+          "hashes": [],
+          "remote_anchor_unavailable": false
+        }
+      ],
+      "context_role": "portable-simplification"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "completed_phases": [
+        {
+          "result": "APPROVED",
+          "hashes": [
+            "b1222b0ec0deaf60ef1c42e3c3695faa1b1242c1"
+          ],
+          "remote_anchor_unavailable": false
+        },
+        {
+          "result": "APPROVED",
+          "hashes": [
+            "b1222b0ec0deaf60ef1c42e3c3695faa1b1242c1"
+          ],
+          "remote_anchor_unavailable": false
+        },
+        {
+          "result": "ESCALATE",
+          "hashes": [
+            "b3ed9961a91fad10300b7a524208567a117d2189",
+            "c917715ae4252c674e063069db31ea57de20d3c5"
+          ],
+          "remote_anchor_unavailable": false
+        },
+        {
+          "result": "APPROVED",
+          "hashes": [
+            "c917715ae4252c674e063069db31ea57de20d3c5",
+            "d2f3dea49b1157961480cf4daa19c2197113d8b8"
+          ],
+          "remote_anchor_unavailable": false
+        }
+      ],
+      "context_role": "criterion-gate"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "completed_phases": [
+        {
+          "result": "APPROVED",
+          "hashes": [],
+          "remote_anchor_unavailable": false
+        },
+        {
+          "result": "APPROVED",
+          "hashes": [],
+          "remote_anchor_unavailable": false
+        }
+      ],
+      "context_role": "regression"
+    }
+  ],
+  "pr1209-reviewers-safe.json": [
+    {
+      "context_role": "correctness",
+      "metadata": {
+        "model_provider": "openai",
+        "model": "gpt-6-luna",
+        "reasoning_effort": "medium"
+      }
+    },
+    {
+      "context_role": "consistency",
+      "metadata": {
+        "model_provider": "openai",
+        "model": "gpt-6-luna",
+        "reasoning_effort": "medium"
+      }
+    },
+    {
+      "context_role": "scope",
+      "metadata": {
+        "model_provider": "openai",
+        "model": "gpt-6-luna",
+        "reasoning_effort": "medium"
+      }
+    },
+    {
+      "context_role": "red-team",
+      "metadata": {
+        "model_provider": "openai",
+        "model": "gpt-6-luna",
+        "reasoning_effort": "medium"
+      }
+    },
+    {
+      "context_role": "doc-propagation",
+      "metadata": {
+        "model_provider": "openai",
+        "model": "gpt-6-luna",
+        "reasoning_effort": "medium"
+      }
+    },
+    {
+      "context_role": "portable-simplification",
+      "metadata": {
+        "model_provider": "openai",
+        "model": "gpt-6-luna",
+        "reasoning_effort": "medium"
+      }
+    },
+    {
+      "context_role": "criterion-gate",
+      "metadata": {
+        "model_provider": "openai",
+        "model": "gpt-6-luna",
+        "reasoning_effort": "medium"
+      }
+    }
+  ],
+  "pr1209-initial-anchors-safe.json": [
+    {
+      "heads": [],
+      "anchors": [
+        "scripts/validate-projections.py:273",
+        "tests/test_projection_validator.py:208"
+      ],
+      "consider": false,
+      "must_fix": true
+    }
+  ],
+  "pr1210-reviewer-safe.json": [
+    {
+      "models": [
+        "claude-opus-5-5"
+      ],
+      "events_bounded": [
+        "**Verdict: FAIL.** One merge blocker. The ticket and doc content checks out.\n\n**Blocker: the PR body's Ticket line stops `/merge`** (high confidence)\n- `skills/merge/erg-pr-merge:174-175` lowercases the body. It only treats a line as a close claim if it reads `ticket: tickets/NNNN`.\n- `**Ticket:** 0974 stays open (tracker).` has no `tickets/` path, so it is not a claim. It also doesn't count as a no-close marker, which must be `ticket-ref: tickets/NNNN` or `ticket: none` (lines 181-182).\n- With no claim, no marker and a `tickets/` directory present, line 191-192 stops with \"no close-claim in PR body\".\n- So 0974 cannot be closed by mistake, but the merge fails. Fix: replace the line with `Ticket-ref: tickets/0974-tracker-portable-model-capability-and-ef.erg`.\n\n**Checks that pass**\n1. **Ticket 1000:** `tickets/closed/1000-make-skill-compute-intentions-portable.erg:5` says \"autoclosed — PR #1092\", and the ticket asks for no concrete model choices and portable vocabulary. That matches \"different shape\". I did not open PR #1092's diff.\n2. **Invariant coverage holds:**\n   - 2 is covered by `test_fanout_skill_bodies_declare_model_level` (rightsizing:29).\n   - 3 by `test_portable_skill_instructions_do_not_name_models` (:36).\n   - 4 by `test_invalid_intentions_fail_explicitly` (policy:41).\n   - 9 by `test_auto_is_a_configured_tier_not_session_inheritance` (policy:13).\n   - Searching all",
+        "PASS. I fetched the body again and ran the exact parsing steps from `skills/merge/erg-pr-merge:171-186` on it: no close claims are found, `Ticket-ref` sets the no-close marker (line 181), and nothing is unparseable, so the stop at line 191 doesn't fire.\nThat clears my only blocker, so 0974 stays open and the merge can go ahead. My other findings were minor, and the overall verdict moves from request-changes to approve."
+      ]
+    },
+    {
+      "models": [
+        "claude-haiku-4-5-20251001"
+      ],
+      "events_bounded": []
+    }
+  ],
+  "pr1216-root-read-safe.json": {
+    "metadata": {
+      "model_provider": "openai",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "low"
+    },
+    "root_read_events": [
+      {
+        "gitdiff": false,
+        "report": false,
+        "hashes": []
+      },
+      {
+        "gitdiff": false,
+        "report": false,
+        "hashes": []
+      },
+      {
+        "gitdiff": false,
+        "report": false,
+        "hashes": []
+      },
+      {
+        "gitdiff": true,
+        "report": false,
+        "hashes": []
+      },
+      {
+        "gitdiff": false,
+        "report": false,
+        "hashes": []
+      },
+      {
+        "gitdiff": true,
+        "report": false,
+        "hashes": []
+      },
+      {
+        "gitdiff": false,
+        "report": true,
+        "hashes": [
+          "124637e3705877b0b1d58749a2f65e36dc8d0a76",
+          "84faa0ecef65e9714d17f538942fb98daa72acc1",
+          "b1222b0ec0deaf60ef1c42e3c3695faa1b1242c1"
+        ]
+      },
+      {
+        "gitdiff": false,
+        "report": true,
+        "hashes": []
+      },
+      {
+        "gitdiff": false,
+        "report": false,
+        "hashes": []
+      },
+      {
+        "gitdiff": true,
+        "report": false,
+        "hashes": [
+          "c917715ae4252c674e063069db31ea57de20d3c5",
+          "d2f3dea49b1157961480cf4daa19c2197113d8b8"
+        ]
+      },
+      {
+        "gitdiff": false,
+        "report": false,
+        "hashes": []
+      },
+      {
+        "gitdiff": true,
+        "report": false,
+        "hashes": [
+          "e02cd208b5f9cbe9b60fe556d7dff835702fc1a4"
+        ]
+      },
+      {
+        "gitdiff": false,
+        "report": false,
+        "hashes": []
+      },
+      {
+        "gitdiff": true,
+        "report": false,
+        "hashes": []
+      }
+    ]
+  },
+  "pr1220-models-safe.json": [
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "direct_context_available": true,
+      "context_role": "adherence"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "direct_context_available": true,
+      "context_role": "correctness"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "direct_context_available": true,
+      "context_role": "red-team"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "direct_context_available": true,
+      "context_role": "consistency"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "direct_context_available": true,
+      "context_role": "scope"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "direct_context_available": true,
+      "context_role": "doc-propagation"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "direct_context_available": true,
+      "context_role": "portable-simplification"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "direct_context_available": true,
+      "context_role": "criterion-gate-initial"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "direct_context_available": true,
+      "context_role": "criterion-gate-final"
+    },
+    {
+      "provider": "openai",
+      "model": "gpt-6-sol",
+      "effort": "medium",
+      "direct_context_available": true,
+      "context_role": "wave-integration"
+    }
+  ],
+  "classification-safe.json": {
+    "4": {
+      "metadata": {
+        "model_provider": "openai",
+        "model": "gpt-6-sol",
+        "reasoning_effort": "medium"
+      },
+      "actual_review_tool_names": {
+        "send_message": 15,
+        "wait_agent": 10,
+        "exec": 1
+      },
+      "no_review_assertions": [],
+      "mentioned_prs": []
+    },
+    "7": {
+      "metadata": {
+        "model_provider": "openai",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "low"
+      },
+      "actual_review_tool_names": {
+        "exec": 1
+      },
+      "no_review_assertions": [
+        "Vérification de la fermeture : **PR #1212 est fusionnée**, ses 10 checks étaient verts et les références au chemin déplacé de 0913 sont corrigées. Le PR n’avait aucun avis de review à attribuer."
+      ],
+      "mentioned_prs": []
+    },
+    "8": {
+      "metadata": {
+        "model_provider": "openai",
+        "model": "gpt-6-luna",
+        "reasoning_effort": "medium"
+      },
+      "actual_review_tool_names": {
+        "exec": 12,
+        "spawn_agent": 7,
+        "list_agents": 4,
+        "followup_task": 7,
+        "wait_agent": 2,
+        "send_message": 5
+      },
+      "no_review_assertions": [],
+      "mentioned_prs": []
+    },
+    "15": {
+      "metadata": {
+        "model_provider": "openai",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "low"
+      },
+      "actual_review_tool_names": {
+        "spawn_agent": 23,
+        "exec": 21,
+        "send_message": 20,
+        "followup_task": 13,
+        "list_agents": 1,
+        "wait_agent": 10
+      },
+      "no_review_assertions": [],
+      "mentioned_prs": []
+    },
+    "16": {
+      "metadata": {
+        "model_provider": "openai",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "low"
+      },
+      "actual_review_tool_names": {
+        "spawn_agent": 10,
+        "send_message": 272,
+        "wait_agent": 349,
+        "list_agents": 31,
+        "exec": 128,
+        "followup_task": 10
+      },
+      "no_review_assertions": [
+        "The preparation step now includes a factual attribution record for the portable simplify PR. The wrap-up PR had mechanical checks and CI but no reviewer pass, so it is recorded as unreviewed rather than given an invented reviewer. This keeps the later coverage",
+        "The native review found no correctness issues, though its sandbox blocked some containment and relay checks; the worker’s escalated full-suite pass is separate evidence. One reviewer launch failed at model capacity and is being replaced, with no review result "
+      ],
+      "mentioned_prs": []
+    }
+  },
+  "scope": "Sanitized actual runtime metadata and completed-event extracts, inspected for this capture; requested pins are not identities. Original source files remain private. Context order and repeated completed phases are preserved; no runtime session identifiers published.",
+  "pr1220-writer": {
+    "provider": "openai",
+    "model": "gpt-6.1-sol",
+    "effort": "low",
+    "producer_completion_confirmed": true,
+    "public_pr_body_confirmed": true,
+    "head": "1eaf43f7ccab0f02b9bb1715d4d96b3e93c501dc"
+  },
+  "pr1208-positive-no-review-assertion": [
+    "`/roar` est terminé : le lot 0914, 0922 et 0925 est clos sur `main` (PR #1208, merge `333f619d`). Je n'ai écrit ni entrée de journal ni PR de wrap-up.\n\n**Le merge.** Après ma relance (`gh run rerun`), les trois jobs annulés ont tourné et passé. Les 10 checks étaient verts et GitHub a mergé la PR par l'auto-merge. Sur `origin/main`, les trois tickets sont dans `tickets/closed/` avec un en-tête `Closed:`, et il n'en reste aucune copie ouverte.\n\n**Les étapes du skill.**\n- **Contrôle d'ancêtre :** HEAD était bien un ancêtre de `origin/main`.\n- **`check-close-claims.sh` :** il signale deux revendications non honorées, 0887 (PR #1211) et 0926 (PR #1204). Je les ai vérifiées sur `origin/main` : les deux sont dans `tickets/closed/` avec `Closed:`. Ce sont de faux positifs, parce que le script lisait mon worktree, qui était en retard sur `main`. Rien à réparer.\n- **Tracker parent :** aucun ticket parent ne référence ces trois tickets.\n- **Attribution de revue :** non capturée, car je n'ai lancé aucune revue sur cette PR. Ce n'est pas un échec de capture.\n- **Journal :** aucune entrée écrite. L'annulation de la CI par la panne de runners est un incident ordinaire, donc je ne l'ai pas consign"
+  ]
+}
