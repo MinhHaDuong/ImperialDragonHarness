@@ -10,6 +10,8 @@ Closed: Author-approved narrow correction, strict reader and required checks pas
 2026-10-06T09:22Z reviewer note Author explicitly approved the exact four-fact PR1218 correction and dated appended context, replying "i approve" to the concrete candidate and design-section3 append-only exception request. Authorization does not extend to a schema or standing rule change.
 2026-10-06T09:23Z reviewer closed — Author-approved narrow correction, strict reader and required checks passed; independent candidate audit factual PASS. Current-head Gaze and merge remain required.
 
+2026-10-06T09:30Z reviewer note Consistency review clarified the final exit: candidate review and checks passed; tracker1004 remains open until correction1055 actually merges. Current-head Gaze approval and merge are pending release gates, not claims of completed integration.
+
 --- body ---
 ## Context
 
@@ -35,5 +37,5 @@ parser/current required checks and independent review, and land separately.
 - [x] Author authorizes the exact fixed-fact correction despite append-only.
 - [x] Actual writer effort and reviewer-supplied anchors/dispositions are
       corrected with durable safe proof, no invented coordinates.
-- [x] Strict reader, required checks and independent review pass; correction
-      merged before1004 closes.
+- [x] Strict reader, required checks and independent candidate review pass.
+- [x] Tracker1004 remains open and cannot close before this correction merges.
