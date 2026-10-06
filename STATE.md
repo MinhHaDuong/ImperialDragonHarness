@@ -1,19 +1,24 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-06
+Last updated: 2026-10-06T17:34Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
+<!-- generated 2026-10-06T17:34Z · as of e024306c -->
 
-As of merged main `3b40940d` (PR1222, 2026-10-06), all bounded implementation children of the reviewer-attribution teardown have landed. The live reviewers skill is a descriptor; contained replay and its frozen board live under coaching. The old live roster/trial writer and Roar celebration writer are retired. PR1222 closed 0980 WONTDO, annotated seven historical trials and completed the runtime-native reviewer decorrelation gradient. PR1221 restored four historical attribution captures while preserving all 21 earlier blobs. This Roar bundle adds factual records for reviewed merged PRs 1221 and 1222 and closes parents 1032 and 1009 after an independent original-criteria integration audit. Ticket 1004 remains open for its separate audit.
-
-The explicit merged range after PR1005 through PR1222 has 33 first-parent merges: 24 attribution records available, one runtime-masked and eight query-missing with independently supported unreviewed classifications. The five formerly UNKNOWN own-review cases 1214/1215/1216/1217/1219 are resolved through dated lifecycle evidence; the withdrawn PR1216 reviewer hypothesis stays withdrawn. The strict reader sees 27 valid records, 26 model-attributable, and no malformed, ambiguous, encrypted or unsafe sources. This bundle's full `make check` passed 1510 tests with two skips in its isolated worktree. [Coverage correction](docs/2026-10-06-roar-historical-classification-proof.md) records the evidence and original parent criteria.
+**Tickets:** 3 ready · 12 blocked — `erg ready tickets/` for full list
+  next: 0974 Tracker: portable model capability and effort p… · 1045 Local merge gate replaces the forge's required …
+**In flight:** no open PRs · CI main: success
+**Recent (first-parent):**
+  e024306c Merge pull request #1237 from MinhHaDuong/roar/model-tournament-cycle2-wrapup
+  ea764d5f Merge pull request #1238 from MinhHaDuong/roar/raid1004-20261006
+  017fcccb Merge pull request #1235 from MinhHaDuong/raid/1004-integration
 
 ## Ready work
 
-The remaining attribution task is 1004's separate original-criteria integration review. Its historical notes stay intact. Runtime policy 0974, memory migration 0913 and the parallel model tournament remain separate work. The original 1032 and 1009 criteria are checked in the dated coverage correction; no new criterion was added.
+The remaining attribution task is 1004's separate original-criteria integration review. Its historical notes stay intact. Runtime policy 0974 and memory migration 0913 remain separate work. The model tournament cycle 2 is CLOSED (142/160 legs, 426 seats, multidimensional analysis done): skills/route + skills/arena are on main, the routing verdict is recorded in tracker 1024, and eleven follow-up tickets (1046-1058) carry the rest — report, cycle 3, HW-v2, live routing application. The original 1032 and 1009 criteria are checked in the dated coverage correction; no new criterion was added.
 
 ## Resume point
 The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Portable installation (0999) is complete — integration review closed in #1104; `./bin/idh install`/`check`/`sync` are the registration surface.
@@ -22,7 +27,7 @@ The Zotero train is COMPLETE (2026-10-03/04): 1018 consolidated into one `zotero
 The external-reviewer panel train is closed (0902 #1155; 0205 retired at #1157; teardown in the attribution train 1004→1009). The verification loop is ALSO closed: 1016/1017/1021/0879/0990 all merged 2026-10-03 (WAVE_BASE wave annotations, detached-seat substitution, spawn-trust preflight, erg log placement + reroll_bump routing, orchestrator-run gaze + battery NOT-RUN signal). Agent profiles landed under 0938 (2026-10-03): five shells + contracts (agents channel 761/800), all inventory-justified call sites converted, Pi portability demonstrated live; design note with two external strong reviews merged via #1171.
 
 ## Next actions
-See [ROADMAP.md](ROADMAP.md) for the trains. Verification, raid annotations, agent profiles (0938), Zotero and reviewer teardown implementation are done. Remaining: separate attribution integration 1004, runtime policy 0974, memory 0913 per-project migration and the parallel model tournament. Claude adapter 0887 is active: the plugin is the single hook source; PR1211 merged the registration fix and its typed runtime-masked attribution is preserved. Portable Gaze simplification 1027 integrated in PR1189. Open 0974 owns the routing and quota question; retired 0980 is historical, and tournament evidence does not choose a subscription or provider.
+See [ROADMAP.md](ROADMAP.md) for the trains. Verification, raid annotations, agent profiles (0938), Zotero and reviewer teardown implementation are done. Remaining: separate attribution integration 1004, runtime policy 0974, memory 0913 per-project migration. The model tournament is closed for cycle 2 — its follow-ups are ticketed (1046-1058: PDF report, blog, cycle 3, HW-v2 window, 262K rerun, scouting, live routing, drive2 v2, task-level routing, decorrelation axes, judge sensitivity). Claude adapter 0887 is active: the plugin is the single hook source; PR1211 merged the registration fix and its typed runtime-masked attribution is preserved. Portable Gaze simplification 1027 integrated in PR1189. Open 0974 owns the routing and quota question; retired 0980 is historical, and tournament evidence does not choose a subscription or provider.
 This raid uses owned isolated worktrees and preserves unrelated primary-checkout changes.
 
 ## Author actions
