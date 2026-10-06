@@ -6,6 +6,7 @@ Author: Claude
 --- log ---
 2026-10-06T08:45Z Claude created
 2026-10-06T08:39Z Claude note The "created" time above was estimated, not read: it is later than the real creation (the PR merged before 08:39Z). Added the trust principle (no open door, traceability instead), the parallel and background-merge criteria, and where the local CI runs.
+2026-10-06T08:46Z Claude note Reframed traceability. The author meant tracing agents that get around the CI with git options, not who ran it. Added criteria for the credentials, a journal of updates to main, and a sweep of main; made the design runtime-neutral (git and the forge, no agent-runtime hook as its basis).
 
 --- body ---
 ## Context
@@ -27,10 +28,15 @@ Decided on 2026-10-06, so not to be reopened here:
   waiting is preferred to bypassing.
 - A `pre-push` hook calling the local runner (option A) is dropped: it adds a
   slower run than the forge's, records nothing and is skipped by `--no-verify`.
-- Trust is a base principle of IDH, so the gate leaves no open door: no bypass,
-  no unguarded path to `main`. What it must add is traceability: what was run,
-  when, by whom, on which machine and revision. A record is a statement that can
-  be traced, not proof; the aim is that nothing happens untraceably.
+- Trust is a base principle of IDH, so the gate leaves no open door: no bypass
+  actor, no unguarded path to `main`. What it adds is traceability, of two
+  things: what was run (when, by whom, on which host and revision), and any
+  attempt to get around the gate with git options (`--no-verify`,
+  `core.hooksPath`, `update-ref`, `branch -f`, `push --force`, an edit of the
+  ruleset). Neither may depend on one agent runtime: the basis is git and the
+  forge, which hold for any agent runtime and for a human. A per-runtime adapter
+  (for instance a pre-tool hook) may add early warnings but is never what the
+  trace rests on. A record is a statement that can be traced, not proof.
 - Where the local CI runs: padme when it is reachable (skill `merge`, section
   "Before merging"), else the current host, named in the output.
 
@@ -86,6 +92,20 @@ review as its own ticket; this one is blocked on its outcome.
 - [ ] Each record names the time, the actor, the host, the revision checked, the
       command and its scope, and the tool versions: enough to answer "what was
       run, when, by whom" after the fact.
+- [ ] The credentials that agent sessions use cannot edit the ruleset (the
+      author's setting on the forge). Today the session's forge login can, and
+      did on 2026-10-06 at the author's request; whether any session needs those
+      rights has not been checked.
+- [ ] Every update of `main` is journaled by a git hook (`reference-transaction`,
+      which `--no-verify` does not skip): time, OS user, host, the command lines
+      of the process chain, the git identity. A client that overrides
+      `core.hooksPath` defeats the hook, which is why the next criterion exists.
+- [ ] A periodic sweep checks that each commit that entered `main` is the merge
+      of a PR whose required checks were green (or, once built, of a gate
+      record), and reports any that is not. It uses only git and the forge's API,
+      so it also catches a bypass that evaded every hook.
+- [ ] Nothing above requires a particular agent runtime. A per-runtime detector
+      is optional, and its absence is not a gap in the trace.
 - [ ] The local checks run their jobs in parallel, with a concurrency of
       `min(jobs, nproc / 2)` (this host reports 24 threads, 12 cores; the author
       has a 32-core upgrade on order, not delivered). Each job has its own clone.
