@@ -9,6 +9,8 @@ Author: claude
 2026-09-25T13:59Z Minh Ha-Duong note blocker 0975 closed — Blocked-by removed.
 2026-10-05T19:31Z reviewer claude note 2026-10-05 audit: 1000 added as retroactive child; invariants 1,5,6,7,8 uncovered; routing question from 0980 folded in as open design point
 2026-10-06T06:00Z reviewer claude note invariant inventory table added to body (read-only, suite not run); invariant 1 reclassified partial; waivers for 7 and 8 proposed, not signed
+2026-10-06T07:00Z reviewer claude note author decisions: option C (ClaudeMapping and its tests removed; invariants 4, 7, 9 waived), invariant 6 settled by the one-shot frontier/intensive doctrine (raid effort set to standard), invariant 8 attached to Phase 5. Residual risk for 4 and 9 stated in the table. Review brief: docs/2026-10-06-routing-doctrine-brief.md
+2026-10-06T08:30Z reviewer claude note correction to the entry above: the author separated two rules, frontier is one-shot only and intensive is rarely paired with frontier; advisor row is frontier/standard. Brief consolidated with author remarks (boundary, portability axes, quality/cost/speed/time, quota windows, profiles, routing skill direction, clusters and effort as model identity); five review questions defined
 
 --- body ---
 ## Context
@@ -38,7 +40,8 @@ Open design points to settle inside the phases, not before:
   prose and carry no concrete model names; no pins remain to agree with, so
   Phases 1 and 3 are delivered in a different shape than the doc planned.
   Covered invariants: 2, 3, 4, 9 (`tests/test_model_policy.py`,
-  `tests/test_model_rightsizing.py`).
+  `tests/test_model_rightsizing.py`); 4 and 9 waived 2026-10-06 and
+  `tests/test_model_policy.py` removed, see the inventory below.
 
 ## Remaining (2026-10-05 audit)
 Uncovered invariants: 1 (no silent inheritance on broad fan-out), 5
@@ -52,25 +55,25 @@ severity floor.
 
 ## Invariant inventory (2026-10-06, read-only; suite not run)
 Invariants are numbered as in `docs/portable-model-capability-policy.md`
-§ Tests and invariants. "Evidence" names what a reader can open; a
-disposition marked *proposed* awaits the author's written waiver.
+§ Tests and invariants. "Evidence" names what a reader can open. Dispositions
+for 4, 6, 7, 8, 9 were decided by the author on 2026-10-06 (see log).
 
-| # | Evidence found | State | Proposed disposition |
-|---|----------------|-------|----------------------|
+| # | Evidence found | State | Disposition |
+|---|----------------|-------|-------------|
 | 1 | `test_fanout_skill_bodies_declare_model_level` checks that a fan-out skill body declares a level; it does not observe a launch | partial | keep as text-level cover; real launch cover belongs to the runtime adapter |
 | 2 | same test, plus `test_skill_compute_frontmatter_is_semantic` | covered | none |
 | 3 | `test_portable_skill_instructions_do_not_name_models` and its negative control | covered | none |
-| 4 | `test_invalid_intentions_fail_explicitly` | covered | none |
+| 4 | `test_invalid_intentions_fail_explicitly` exercised `ClaudeMapping`, which no live code called | waived 2026-10-06 | author choice C: the harness holds no translation code; removed with its tests |
 | 5 | `decorrelated-from` is declared in `skills/biblio-saturation/SKILL.md` only; `gaze`, `reviewers/references/live-route.md` and `rules/workflow.md` state decorrelation in prose; no resolver, no adapter test | uncovered | open question, nearest to the severity floor; shares the model-id blocker of 1038 on Vibe |
-| 6 | no test; `skills/raid/SKILL.md` carries `Requested effort: intensive` in prose, outside frontmatter, so the frontmatter test cannot see it. Whether it describes the orchestrator or the workers is not settled; the skill gives workers `standard` and reserves `intensive` for advisors | uncovered, tension unresolved | declare the scope of that line, then decide between a test and a waiver |
-| 7 | no provider-mechanics test; `tests/test_claude_code_adapter.py` covers hook wiring, not model or effort | uncovered | *proposed*: waive in writing outside the Claude mapping (2026-10-01 decision: runtime owns translation) |
-| 8 | no trace recording of requested level/effort; `scripts/attribution_record.py` requires `runtime`, `model`, `effort` for the writer line, a partial overlap | uncovered | *proposed*: defer to 1004/1038, which carry the capture contract |
-| 9 | `test_auto_is_a_configured_tier_not_session_inheritance` | covered | none |
+| 6 | `skills/raid/SKILL.md` carried `Requested effort: intensive` in prose, outside frontmatter, contradicting its own body (orchestration `standard/standard`) | resolved 2026-10-06 | author doctrine, two rules: `frontier` is for one-shot calls only, never an orchestrator or fan-out setting; `intensive` is rarely paired with `frontier` (cost) and is not a frontier property. Raid orchestrator set to `standard`, advisor to `frontier`/`standard`; no test (a prose-scanning test is brittle) |
+| 7 | no provider-mechanics test; the only mapping test covered `ClaudeMapping`, which no live code called | waived 2026-10-06 | author choice C (2026-10-01 decision: runtime owns translation). Whether Codex and Pi expose model and effort controls was not read |
+| 8 | no trace recording of the requested level/effort; `scripts/attribution_record.py` requires `runtime`, `model`, `effort` for the writer line, which covers the concrete result only | attached to Phase 5 | author accepted 2026-10-06: Phase 5 needs traces and waits for 1024 |
+| 9 | `test_auto_is_a_configured_tier_not_session_inheritance` exercised `ClaudeMapping`, which no live code called | waived 2026-10-06 | author choice C. Residual risk: nothing executable states that `auto` never resolves to the caller's model; it is rule text (`rules/claude-code.md`) plus the text-level test for invariants 1 and 2 |
 
-Count: covered 2, 3, 4, 9; partial 1; uncovered 5, 6, 7, 8. Nothing here
-clears the severity floor today; the exit criterion "invariants 1–9 backed or
-waived" stays open until the author signs the proposed waivers for 7 and 8
-and settles 5 and 6.
+Count (2026-10-06): covered 2, 3; partial 1; uncovered 5; waived 4, 7, 9;
+resolved 6; attached to Phase 5: 8. The exit criterion "invariants 1–9 backed or
+waived" stays open until 5 is settled and 8 lands with Phase 5. Doctrine and
+review brief: `docs/2026-10-06-routing-doctrine-brief.md`.
 
 ## Open design point: quota-aware routing
 From 0980 (2026-10-05): route more aggressively to conserve Claude Pro Max,
