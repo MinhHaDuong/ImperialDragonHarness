@@ -93,6 +93,8 @@ for job in "${jobs[@]}"; do
     if timeout 1800 bash -c 'cd "$1" && shift && DOCKER_HOST="unix://$1" act pull_request --pull=false --bind -e "$2" --secret-file "$3" -P "ubuntu-latest=$4" -j "$5"' _ \
             "$clone" "$sock" "$work/event.json" "$work/secrets" "$image" "$job" > "$work/$job.log" 2>&1; then
         echo "   pass"
+        # Counts let a pass be compared with the forge's, not just trusted.
+        grep -E '[0-9]+ passed' "$work/$job.log" | tail -n 1 | sed 's/^.*| /   /' || true
     else
         echo "   FAIL (log tail)"
         tail -n 25 "$work/$job.log" | sed 's/^/   | /'

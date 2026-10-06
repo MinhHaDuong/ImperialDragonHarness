@@ -32,10 +32,13 @@ Measured facts are in `memory/journal/2026/2026-10-06-local-ci-act-equivalence.m
 
 ## Exit criteria
 
-- [ ] `scripts/local-ci.sh` runs the 10 jobs and exits 0 on a clean tree.
+- [x] `scripts/local-ci.sh` runs the 10 jobs and exits 0 on a clean tree
+      (715c59d7, 2026-10-06).
 - [ ] It exits non-zero when the job list is empty or differs from the
       workflow's, when `.actrc` is present, and when any job fails.
-- [ ] A negative control per guard (9 jobs) fails at its matching step; the
+      Observed: `.actrc` present exits 2; a failing job exits 1. Not yet
+      exercised: an empty or differing job list.
+- [x] A negative control per guard (9 jobs) fails at its matching step; the
       driver treats a failure outside a `Main` step as an infrastructure
       failure, never as a catch. Kept as a repository test, not a scratch script
       (`scripts/local-ci-negative-controls.sh`, opt-in test
@@ -46,16 +49,15 @@ Measured facts are in `memory/journal/2026/2026-10-06-local-ci-act-equivalence.m
       when the runner did not recognise its own PR. The image lacked `gh`
       until this ticket added it. The runner now finds its PR by HEAD sha, not
       branch name, so a PR is not its own sibling.
-- [ ] The summary of a run states that only committed HEAD is tested.
-- [ ] Parity with a green forge run on the same commit: same job list, same
-      pytest passed/skipped counts, same `grep`/`bash`/`awk` versions.
-      Measured so far: on PR 1218 the forge and the runner failed the same two
-      jobs (agnostic-guard; pytest-guard, same two tests) on near-identical
-      commits, and the forge is green on 4cbe6df4 with 1487 passed / 10
-      skipped. Still to do: the local run on that same commit, then versions
-      (`awk` was not shown by the forge log).
-- [ ] `ci-local/` is tracked (the catch-all ignore rule re-includes it).
-- [ ] `make lint` and the full suite pass.
+- [x] The summary of a run states that only committed HEAD is tested.
+- [x] Parity with a green forge run on the same commit (715c59d7): same 10
+      jobs, 1487 passed / 10 skipped on both sides, `grep` 3.11, `bash` 5.2.21,
+      `awk` GNU Awk 5.2.1. Parity on failure too: on PR 1218 the forge and the
+      runner failed the same two jobs (agnostic-guard; pytest-guard, same two
+      tests) on near-identical commits.
+- [x] `ci-local/` is tracked (the catch-all ignore rule re-includes it).
+- [x] The forge's full suite passes on 715c59d7; `make lint` passed locally on
+      the earlier commit and was not re-run on this one.
 
 ## Known limits, to record rather than fix here
 
