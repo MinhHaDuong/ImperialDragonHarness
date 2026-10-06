@@ -32,12 +32,20 @@ def identity(value, writer=False):
         if not sep or not item.strip() or key in fields:
             raise ValueError("invalid or repeated identity field")
         fields[key] = item
-    required = {"runtime", "model", "effort"} if writer else {"seat", "runtime", "model", "status"}
-    if not required <= fields.keys() or fields.keys() - required - {"model-version"}:
+    required = {"runtime", "effort"} if writer else {"seat", "runtime", "status"}
+    masked = "model-state" in fields or "model-evidence" in fields
+    required |= {"model-state", "model-evidence"} if masked else {"model"}
+    optional = set() if masked else {"model-version"}
+    if not required <= fields.keys() or fields.keys() - required - optional:
         raise ValueError("missing or unexpected identity field")
-    model = fields["model"]
-    if not re.fullmatch(r"[^\s/<>]+/[^\s<>]+", model) or model.lower().endswith("/unknown"):
-        raise ValueError("model must be the verbatim provider-qualified id, never a placeholder")
+    if masked:
+        if fields["model-state"] != "runtime-masked":
+            raise ValueError("model-state must be runtime-masked")
+        anchor(fields["model-evidence"])
+    else:
+        model = fields["model"]
+        if not re.fullmatch(r"[^\s/<>]+/[^\s<>]+", model) or model.lower().endswith("/unknown"):
+            raise ValueError("model must be the verbatim provider-qualified id, never a placeholder")
     if not writer and fields["status"] not in {"ran", "failed", "skipped"}:
         raise ValueError("reviewer status must be ran, failed or skipped")
     return fields
@@ -100,6 +108,12 @@ def parse_record(text):
     labels.update(event["anchor"] for event in record["defect_confirmed"])
     record["defect_labels"] = sorted(labels)
     return record
+
+
+def runtime_masked(record):
+    """A single masked identity makes the whole game model-unattributable."""
+    return any(identity.get("model-state") == "runtime-masked"
+               for identity in [record["writer"], *record["reviewers"]])
 
 
 def capture_record(text, record, repository, audience):

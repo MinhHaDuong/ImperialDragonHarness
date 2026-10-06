@@ -63,3 +63,15 @@ reviewer: seat=doc-propagation-r3 · runtime=vibe · model=unpinned-runtime-assi
   finding: consider · adapters/projections.json:24 · adopted: yes
 
 context: three five-seat rounds at anchors 67d4c809 / e0591d11 / e3a7ca1a; reset exception each round (fix diffs touched files outside the prior round's set). Evidence: the three synthesis reviews posted on PR #1211. Per-seat model pinning unavailable in the runtime (each seat's report front-matter records it); writer model id masked in session logs, not reconstructed from an alias. A review seat's HOME-clobber incident during a reproduction is disclosed in the round-2 review; the live file was restored sha-verified.
+
+
+Resolution (1038, 2026-10-06): the original draft above is preserved verbatim.
+The runtime concealed the writer provider id and did not expose spawned-seat
+provider ids for these attempts. The public three five-seat syntheses confirm
+runtime-assigned seats without model pinning; no alias can recover the actual
+historical identities. Model re-audition is impossible from available facts.
+Captured with explicit runtime-masked identities in
+memory/journal/2026/2026-10-06-review-attribution-pr1211.md. All 15 attempts,
+findings, adoption decisions and incident context are preserved; the draft's
+blocker severity maps to the contract's verifiable category, without changing
+adoption or inventing findings. No absent native/external review is inferred.

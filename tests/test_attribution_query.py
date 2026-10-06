@@ -86,7 +86,7 @@ def test_malformed_duplicate_encrypted_and_empty(tmp_path):
     (journal/'2026-10-05-review-attribution-pr10.md.age').write_bytes(b'encrypted')
     result = cli(tmp_path,'--json')
     data = json.loads(result.stdout)
-    assert data['records'] == {'valid':7,'malformed':1,'ambiguous_prs':[1],'ambiguous_records':2,'encrypted_unavailable':1,'unsafe_unavailable':0}
+    assert data['records'] == {'valid':7,'runtime_masked':0,'model_attributable':7,'malformed':1,'ambiguous_prs':[1],'ambiguous_records':2,'encrypted_unavailable':1,'unsafe_unavailable':0}
     assert 'WARN' in result.stderr and 'line 2' in result.stderr and 'ambiguous PR 1' in result.stderr
     empty = cli(tmp_path/'absent','--json')
     assert json.loads(empty.stdout)['scores'] == []
@@ -284,3 +284,32 @@ def test_actual_private_capture_basename_is_visible_unavailable(tmp_path, public
     readable = cli(tmp_path)
     assert '"encrypted_unavailable": 1' in readable.stdout
     assert 'no decryption attempted' in readable.stderr
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('masked_identity', ['writer', 'reviewer'])
+def test_mask_excludes_whole_game_without_affecting_known_estimates(tmp_path, masked_identity):
+    journal = dataset(tmp_path)
+    before = json.loads(cli(tmp_path, '--json').stdout)
+    text = record(9, [('A', 'ran', [('x:1', True)]), ('B', 'ran', [('new:2', True)])])
+    target = 'model=p/writer · model-version=w1' if masked_identity == 'writer' else 'model=p/reviewer · model-version=v1'
+    text = text.replace(target, 'model-state=runtime-masked · model-evidence=evidence.md:1', 1)
+    (journal / '2026-10-05-review-attribution-pr9.md').write_text(text)
+    after = json.loads(cli(tmp_path, '--json').stdout)
+    assert after['scores'] == before['scores']
+    assert after['pairs'] == before['pairs']
+    assert after['records']['valid'] == 9
+    assert after['records']['runtime_masked'] == 1
+    assert after['records']['model_attributable'] == 8
+
+
+def test_masked_range_coverage_is_distinct(tmp_path, monkeypatch, caplog):
+    query = load_query(monkeypatch)
+    text = record(1, [('A', 'ran', [])]).replace(
+        'model=p/writer · model-version=w1',
+        'model-state=runtime-masked · model-evidence=evidence.md:1')
+    response = subprocess.CompletedProcess([], 0, json.dumps({'pr': 1, 'merge_sha': 'abc'}) + '\n', '')
+    monkeypatch.setattr(query.subprocess, 'run', lambda *args, **kwargs: response)
+    merges = query.coverage(tmp_path, 'base', 'HEAD', [query.parse_record(text)], set())
+    assert merges[0]['attribution'] == 'runtime-masked'
+    assert 'runtime-masked' in caplog.text

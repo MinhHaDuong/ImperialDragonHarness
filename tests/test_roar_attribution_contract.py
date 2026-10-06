@@ -15,3 +15,10 @@ def test_roar_uses_merged_fix_evidence_without_celebration_state():
     assert "--fix-pr \"$FIX_PR\" --fix-commit \"$FIX_SHA\"" in live_steps
     assert "--merged-through \"$MERGED_THROUGH\"" in live_steps
     assert not (ROOT / "skills/roar/log-celebration").exists()
+
+
+def test_roar_captures_typed_masks_with_evidence_and_explicit_limits():
+    roar = (ROOT / "skills/roar/SKILL.md").read_text()
+    assert "model-state=runtime-masked · model-evidence=" in roar
+    assert "whole PR game is excluded" in roar
+    assert "Never use this state to cover unrelated missing facts" in roar

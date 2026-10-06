@@ -1,0 +1,72 @@
+%erg 0.1
+Title: Attribution capture cannot state the writer model id on the Vibe runtime
+Created: 2026-10-06
+Author: reviewer
+Closed: Typed runtime-masked capture preserves unknowable identities and resolves PR1211 pending evidence
+
+--- log ---
+2026-10-06T02:47Z reviewer created
+2026-10-06T03:34Z reviewer closed — Typed runtime-masked capture preserves unknowable identities and resolves PR1211 pending evidence
+2026-10-06T03:49Z reviewer note verify-reroll — round 1: PR1211 reviewer masks cite pinning-only evidence instead of attempt-linked identity concealment
+
+--- body ---
+## Context
+
+Roar step 6 for PR #1211 (ImperialDragonHarness, 2026-10-05): the
+review-attribution record could not be captured. The writer line requires
+the verbatim provider-qualified model id; on the Mistral Vibe runtime the
+session cannot learn it. Probed: ~/.vibe/config.toml (no model key),
+session logs under ~/.vibe/logs/session/unified/<id>/ (provider masked as
+"configured", session_metadata.active_model null, provider_operations carry
+no model field), environment (nothing). The attribution contract
+(docs/2026-10-02-reviewer-attribution-design.md §4) forbids reconstructing
+an id from an alias, and scripts/attribution_record.py correctly refuses
+placeholders ("model must be the verbatim provider-qualified id").
+
+Consequence: every reviewed PR wrapped up from this runtime is a capture
+failure for the 1004/1005 attribution program — the reviewer seats
+(agent.spawn takes no model pin either) and the writer are both
+unnameable at the model level. First observed on PR #1211; draft
+preserved at memory/pending-capture-pr1211.md.txt on branch
+roar/0887-activation-wrapup.
+
+## Exit criteria
+- [x] A session running on the Vibe runtime can obtain its verbatim
+      provider-qualified model id (and per-seat ids for spawned subagents)
+      through a sanctioned, durable source: a CLI flag, an environment
+      variable, or a field in the session logs that today masks it as
+      "configured" — or the attribution contract and validator gain an
+      explicitly modeled "runtime-masked" fact that keeps re-audition
+      honestly impossible rather than silently wrong.
+- [x] The PR #1211 attribution record is captured from the then-available
+      facts, or the pending capture is explicitly resolved as impossible.
+
+## Invariants
+- No reconstruction of model ids from aliases or third-party notes.
+- The validator keeps refusing free-text placeholders.
+
+## Raid Imagine (2026-10-06)
+Explicit author selection: 1038 first, then1032. Original exits/invariants unchanged. Installed Vibe logger exposes a configured alias or routed default, not historical verbatim provider identities. Choose explicitly typed runtime-masked writer/reviewer facts with required durable evidence and no model/model-version. Keep rejecting placeholders. Exclude whole masked games from model estimates and correlation, report masks visibly in counts and range coverage. Preserve original PR1211 pending draft and append resolution; capture its15actual attempts, with documented blocker-to-verifiable normalization. No historical-unavailable state is introduced here. About10content paths; no package/library search is useful for this fixed existing parser contract. Upstream exposure alone cannot recover historical1211; typed facts require bounded implementation, no author work or provider expense.
+BLIND-SPOT: Existing1009 requires actual records for every reviewed merge. PR1204 historical writer unavailable is distinct from runtime masking; prose impossibility alone cannot authorize parent closure. Preserve that limit for1032.
+
+## Raid Plan (2026-10-06)
+Named grammar unchanged. Masked identities carry model-state=runtime-masked and model-evidence=repository-relative-path:positive-line, without model/model-version; reuse anchor syntax without reading evidence during parsing. Share runtime_masked(record); exclude whole game from derive when any identity masked, retaining facts/findings. Counts distinguish syntactic valid, runtime_masked, model_attributable; range coverage runtime-masked is distinct from available/missing/unavailable with visible warning. First red tests: real masked capture/query roundtrip; contradictory/escaping/placeholders reject; mixed masked/named labeled game cannot alter known-only scores or pairs. Update downstream exact-count assertions, existing backfill remains meaningful. Preserve15PR1211attempts, public syntheses and incident context; normalize blocker toverifiable explicitly, append pending resolution preserving original bytes. Exacttenpaths: attribution_record.py,attribution_query.py,test_attribution_record.py,test_attribution_query.py,test_roar_attribution_contract.py,approveddesign,roarSKILL,PR1211journal,pendingdraft,1038ticket. Original exits preserved.
+
+## Raid feasibility (2026-10-06)
+Independent interface/artifact review PASS with bounded sequencing WARN. Existingparser/query/backfill interfaces support typed masks;87relevantchecks passed. Add maskedbackfill temporarypositivecontrol. Ten1038paths belowbreaker;1042capturebudget recount afteractual1038merge;1032elevenpaths pluscoverage,1004separate.1204actualsafeproduceridentitycandidate requires source-role/PRlinkage, not inferentialfill. Serialwaves needno3PRsharedregistry. Initialrestrictedbaseline errors includeGit/sockets/toolaccess, so repeat gate withrequiredlocalaccess beforedeclaringbaseline. Parentclosures remainconditional, noexitdrift.
+
+## Implementation evidence (2026-10-06)
+Typed runtime-masked facts require durable repository-relative evidence and
+forbid model/model-version; named model grammar still rejects placeholders.
+The shared runtime_masked helper excludes every affected PR game from derived
+model estimates, with separate valid/runtime_masked/model_attributable counts
+and explicit runtime-masked range coverage warnings. PR1211's 15 actual
+attempts are captured at memory/journal/2026/2026-10-06-review-attribution-pr1211.md;
+the original pending draft is preserved and resolution appended, with blocker
+severity normalized explicitly to verifiable and three durable synthesis URLs.
+Red check-fast: four intended behavior failures, 922 passes. Final fast:
+926 passes. Targeted parser/query/Roar:65 passes. Existing parser/query/backfill
+baseline plus mask behavior:99 passes before final factual regression addition.
+Temporary masked-backfill positive control preserved all bytes and appended
+only the confirmed event. Mechanical adherence:171 passes. Semantic adherence
+and full pre-PR gate evidence will be reported in the PR.

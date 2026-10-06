@@ -148,7 +148,14 @@ default branch — there are no remote branches nor merge requests to inspect.
    Read identities, attempt outcomes and adoption decisions from the actual
    review trail (session outputs or durable PR review comments), never from
    memory or the example template. Do not reconstruct a full model id from an
-   alias. A reviewed PR whose record cannot name its reviewers or establish
+   alias. When the runtime conceals the verbatim id, use the contract's explicit
+   `model-state=runtime-masked · model-evidence=<repo-relative-path>:<positive-line>`
+   instead of `model=` on each affected writer or reviewer; omit `model-version=`.
+   Preserve durable evidence connecting that limitation to the actual attempts.
+   This preserves factual capture while leaving model re-audition impossible:
+   the whole PR game is excluded from model estimates and visibly counted as
+   runtime-masked. Never use this state to cover unrelated missing facts.
+   A reviewed PR whose record cannot name its reviewers or establish
    required facts is a **capture failure**: report the PR and missing facts in
    step 11's summary; preserve the pending capture, never silently omit it.
    Validate the complete record before writing: stream its text on stdin to

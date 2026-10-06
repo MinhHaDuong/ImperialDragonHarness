@@ -145,6 +145,29 @@ Rules:
 8. **Fail-loud capture.** A reviewed PR whose record cannot name its
    reviewers is a defect to report, not an omission to fill in from memory.
 
+### Runtime-masked identities (1038)
+
+When the active runtime conceals a writer or reviewer's verbatim provider id,
+record the observed concealment explicitly. Replace `model=` with
+`model-state=runtime-masked · model-evidence=<repo-relative-path>:<positive-line>`
+on that identity. Runtime, writer effort, reviewer seat and attempt status
+remain required. The evidence anchor points to durable project-local facts
+establishing this runtime limitation for that attempt; it is not a model alias
+or a guessed identity. `model=` and `model-version=` are forbidden alongside
+this state. The parser validates the anchor syntax without opening evidence;
+review verifies the evidence and its connection to the recorded attempts.
+Free-text placeholders and other states remain invalid.
+
+Such a record preserves review attempts, findings, adoption and later defect
+labels, but re-audition by model remains impossible. Any masked writer or
+reviewer excludes the **whole PR game** from model scores, run-failure rates,
+correlation and marginal coverage; even named seats in that game are excluded.
+Read-side counts distinguish syntactically `valid`, `runtime_masked` and
+`model_attributable` games. Explicit range coverage labels these records
+`runtime-masked`, distinct from available, missing and unavailable evidence,
+and emits a warning. This state does not excuse other missing required facts
+or authorize an identity inferred from an alias or third-party recollection.
+
 ### Valid capture example (synthetic fixture)
 
 This is a parseable example, not evidence of an actual review. Never copy its
