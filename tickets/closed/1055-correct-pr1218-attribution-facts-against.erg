@@ -1,0 +1,39 @@
+%erg 0.1
+Title: Correct PR1218 attribution facts against actual draft review trail
+Created: 2026-10-06
+Author: reviewer
+Closed: Author-approved narrow correction, strict reader and required checks passed; independent candidate audit factual PASS. Current-head Gaze and merge remain required.
+
+--- log ---
+2026-10-06T08:57Z reviewer created
+
+2026-10-06T09:22Z reviewer note Author explicitly approved the exact four-fact PR1218 correction and dated appended context, replying "i approve" to the concrete candidate and design-section3 append-only exception request. Authorization does not extend to a schema or standing rule change.
+2026-10-06T09:23Z reviewer closed — Author-approved narrow correction, strict reader and required checks passed; independent candidate audit factual PASS. Current-head Gaze and merge remain required.
+
+--- body ---
+## Context
+
+New merged PR1232 wrote PR1218 fixed facts conflicting with the directly
+recovered producer/reviewer trail: writer effort is medium, not low; the
+reviewer supplied no `.gitignore:2` coordinate for delivery advice. Other
+composite findings require bounded dispositions: environment approximation
+remains, and forge checkout parity at supplied runner line61 remains a limit.
+Existing public bytes are preserved by1004's integration audit. Design section3
+requires append-only facts and provides no identity/anchor correction event.
+Author approval of the concrete narrow correction is required before replacing
+erroneous fixed lines; no new schema or standing rule is proposed.
+
+## Actions
+
+Review the concrete candidate against direct runtime fields and completed
+reviewer output; obtain author authorization for this specific correction;
+apply only the PR1218 record correction and durable provenance, run strict
+parser/current required checks and independent review, and land separately.
+
+## Exit criteria
+
+- [x] Author authorizes the exact fixed-fact correction despite append-only.
+- [x] Actual writer effort and reviewer-supplied anchors/dispositions are
+      corrected with durable safe proof, no invented coordinates.
+- [x] Strict reader, required checks and independent review pass; correction
+      merged before1004 closes.
