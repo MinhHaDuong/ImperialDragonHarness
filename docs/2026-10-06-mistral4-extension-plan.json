@@ -32,5 +32,22 @@
   },
   "pricing_status": "public-preview rates, fixed for this extension",
   "egress": "Same cleared historical project prompts as tournament1024; no additional project scope.",
-  "parallelism_note": "Author reiterated all cases parallel; three initial cases plus six launched immediately."
+  "parallelism_note": "Author reiterated all cases parallel; three initial cases plus six launched immediately.",
+  "effort_evidence": {
+    "pi_session": "off",
+    "api_reasoning_effort": "omitted for catalog-unknown/non-reasoning model, per author handoff inspecting Pi1.0.4",
+    "direct_probe": "none and omitted identical on one multiplication prompt; high accepted; low rejected, supported values high/none",
+    "limitation": "Pi off is an observable runtime setting, not proof of no internal reasoning; no high arm launched",
+    "cmd_txt": "Only cmd[:6] persisted, therefore cannot establish presence or absence of --thinking"
+  },
+  "cost_evidence": {
+    "pi_catalog_rates_usd_per_million": {
+      "input": 0.4,
+      "output": 2,
+      "cached_input": 0.04
+    },
+    "smoke_reported_usd": 0.1549,
+    "registered_rates_estimate_usd": 0.23203118,
+    "policy": "Preserve raw pi figures and derive corrected preview-price estimates from token components; not a provider invoice."
+  }
 }
