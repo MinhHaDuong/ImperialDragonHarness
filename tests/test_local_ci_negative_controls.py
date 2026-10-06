@@ -18,7 +18,7 @@ from child_env import child_env
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "scripts" / "local-ci-negative-controls.sh"
 
-pytestmark = pytest.mark.slow
+pytestmark = [pytest.mark.slow, pytest.mark.integration]
 
 
 @pytest.mark.skipif(

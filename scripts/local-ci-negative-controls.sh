@@ -38,7 +38,8 @@ inject() {
     skill-lint)
         sed -i '0,/^description:/s/^description:/descr1ption:/' "$skill" ;;
     agnostic-guard)
-        echo '/home/someuser/projects/SomeProject' >> "$skill" ;;
+        # built from parts: the guard also scans this very script for the literal
+        printf '/%s/someuser/projects/SomeProject\n' home >> "$skill" ;;
     status-verb-guard)
         echo '2026-05-01T10:00Z claude status closed — done' >> "$skill" ;;
     personal-data-guard)
