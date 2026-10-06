@@ -543,8 +543,8 @@ def _live_settings(world):
 
 def test_stale_harness_hooks_in_live_settings_block_the_launch(world):
     """The canonical carries no hooks (they moved to the plugin), so a live
-    file still carrying them double-fires every guard: the launch must name
-    that state instead of passing vacuously."""
+    file still carrying them double-fires every guard: refuse the launch
+    and direct the operator to the installer."""
     path = _live_settings(world)
     doc = json.loads(path.read_text())
     doc["hooks"] = {"SessionStart": [STALE_HARNESS_HOOK]}
@@ -553,7 +553,8 @@ def test_stale_harness_hooks_in_live_settings_block_the_launch(world):
     r = validate(world, "claude")
 
     assert r.returncode == 1
-    assert "double-fire" in r.stderr
+    assert "run `idh install` from a plain terminal" in r.stderr
+    assert str(path) not in r.stderr
 
 
 def test_operator_hooks_in_live_settings_do_not_block_the_launch(world):
@@ -589,7 +590,8 @@ def test_a_missing_plugin_link_blocks_the_launch(world):
     r = validate(world, "claude")
 
     assert r.returncode == 1
-    assert "claude-code" in r.stderr
+    assert "run `idh install` from a plain terminal" in r.stderr
+    assert str(link) not in r.stderr
 
 
 def test_a_hand_copied_plugin_block_also_blocks_the_launch(world):
@@ -605,7 +607,8 @@ def test_a_hand_copied_plugin_block_also_blocks_the_launch(world):
     r = validate(world, "claude")
 
     assert r.returncode == 1
-    assert "double-fire" in r.stderr
+    assert "run `idh install` from a plain terminal" in r.stderr
+    assert str(path) not in r.stderr
 
 
 def test_an_operator_script_under_claude_scripts_is_not_claimed(world):
