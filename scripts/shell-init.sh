@@ -5,8 +5,8 @@
 #
 # Wraps claude, codex and pi. Before each launch, the projection validator
 # (scripts/validate-projections.py, ticket 0983) checks every link the runtime
-# depends on and refuses the launch with the culprit and its repair: a
-# dangling link would otherwise drop the guard or the instructions silently.
+# depends on and refuses the launch with the `idh install` repair: a broken
+# projection would otherwise drop the guard or the instructions silently.
 # The claude wrapper also skips permission prompts and names the session
 # after the project.
 #
