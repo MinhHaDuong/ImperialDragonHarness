@@ -23,3 +23,6 @@ Classify1204/1208/1209/1210/1211/1212/1214/1215/1216/1217 with publicreviews/com
 
 ## First verification
 Snapshot20existingjournalblobs; compare unchanged aftercapture. Run realGit range/query and parser/backfill tests; zero unavailable/malformed/ambiguous claims require actual positivecontrols. Historical gaps remain visible; never capture unmergedself.
+
+## Raid feasibility (2026-10-06)
+Independent interface/artifact review PASS with bounded sequencing WARN. Existingparser/query/backfill interfaces support typed masks;87relevantchecks passed. Add maskedbackfill temporarypositivecontrol. Ten1038paths belowbreaker;1042capturebudget recount afteractual1038merge;1032elevenpaths pluscoverage,1004separate.1204actualsafeproduceridentitycandidate requires source-role/PRlinkage, not inferentialfill. Serialwaves needno3PRsharedregistry. Initialrestrictedbaseline errors includeGit/sockets/toolaccess, so repeat gate withrequiredlocalaccess beforedeclaringbaseline. Parentclosures remainconditional, noexitdrift.
