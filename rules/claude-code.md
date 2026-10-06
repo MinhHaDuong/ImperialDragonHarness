@@ -6,8 +6,8 @@ loads the rest of `rules/` and skips this file.
 
 ## Entering the session
 
-Except for `/hunt N` (below) and manuscript prose (`git.md` § Prose
-workpackages), call `EnterWorktree` before answering, then `git switch <branch>`.
+Except for `/hunt N` (below) and manuscript prose
+([prose/workpackages.md](./prose/workpackages.md)), call `EnterWorktree` before answering, then `git switch <branch>`.
 
 | Context | Worktree name | Phase |
 |---------|---------------|-------|
@@ -36,14 +36,13 @@ conversation's language, then answer:
   to the session model, a `Workflow` `agent()` inherits it. Set it per launch,
   with the short enum token (`sonnet|opus|haiku|fable`); a full `claude-*` id is
   valid only in frontmatter. A `context: fork` skill is the exception for its
-  own fork: frontmatter `model:` pins it (probe, 2026-09-23), and unpinned it
+  own fork: frontmatter `model:` pins it; unpinned it
   inherits the caller's tier, so pin every forked skill. Reviewers below the
   coder tier, mechanical lookups at `haiku`, coders at the top tier. Enforced
   by `tests/test_model_rightsizing.py`.
 - **Effort is set per agent *definition*, not per `Agent` call**: `effort:` in
   a subagent's frontmatter pins it; `Workflow`'s `agent()` takes `opts.effort`,
-  the only per-call lever. Unreliable on models with a pinned default effort
-  (memory `feedback_subagent_model_effort_levers`).
+  the only per-call lever. Unreliable on models with a pinned default effort.
 - **`team-lead` delegation needs a nesting depth of at least 2**, or it
   silently degrades into a flat agent. The default has flipped twice: when
   delegations come back flat, check it before debugging the prompt.
