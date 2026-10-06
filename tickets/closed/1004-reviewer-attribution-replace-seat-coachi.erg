@@ -2,6 +2,7 @@
 Title: Reviewer attribution: replace seat coaching with attribution records (tracker)
 Created: 2026-10-02
 Author: MinhHaDuong
+Closed: Original exits and(a)-(g) independently verified at ef1d6d87; evidence published PR1235; merge requires current-head Gaze and local CI.
 
 --- log ---
 2026-10-02T08:00Z MinhHaDuong created
@@ -12,6 +13,7 @@ Author: MinhHaDuong
 2026-10-05T11:41Z MinhHaDuong note Author routing direction (2026-10-05): attribution should inform more aggressive routing that conserves Claude Pro Max, ChatGPT Pro and Vibe Pro quotas. GLM Coding Plan is a candidate pending tournament1024. Compare an LLM-routing MCP plugin for Claude/Codex with extending and tuning evidence-based IDH routing; measure task quality, actual subscription/API quota and cache cost, completion reliability, routing overhead and time-of-day quota rates. The attribution teardown continues; these options are not an instruction to restore fixed reviewer rosters.
 2026-10-05T11:41Z Codex note Verified vendor terms as of2026-10-05: GLM Coding Plan off-peak usage consumes50% of standard credits, not a50% subscription-price discount. Normal peak is Mon-Fri14:00-18:00 UTC+8 (08:00-12:00 Paris during CEST); currently all-day off-peak promotion runs2026-09-25 through2026-10-07. Source:https://docs.z.ai/devpack/overview . Vendor limits benefits to supported tools:https://docs.z.ai/devpack/usage-policy ; compare routing MCP and native runtime routes against actual eligible billing/quota paths before counting subscription savings. Recheck terms at implementation; no purchase or provider selection authorized by this note.
 
+2026-10-06T10:00Z reviewer closed — Original exits and(a)-(g) independently verified at ef1d6d87; evidence published PR1235; merge requires current-head Gaze and local CI.
 --- body ---
 ## Context
 
@@ -51,12 +53,12 @@ recording gap.
 
 ## Exit criteria
 
-- [ ] 1005-1008 merged; attribution records capture writer/reviewer/
+- [x] 1005-1008 merged; attribution records capture writer/reviewer/
       findings/defects facts on every reviewed merge
-- [ ] 1009 landed: reviewers skill thinned to descriptor+replay,
+- [x] 1009 landed: reviewers skill thinned to descriptor+replay,
       celebration telemetry deleted, 0980 closed WONTDO, closed trial
       tickets annotated
-- [ ] 0205 closed with integration-review note cross-referencing this
+- [x] 0205 closed with integration-review note cross-referencing this
       tracker and the spec
 
 ## Raid annotation (2026-10-03, imagine pass)
