@@ -63,3 +63,48 @@ script were historical imported project memory and the dated v8 integration
 review. The memory v8 tracker 0909 had already been closed. No defect-fix
 backfill was commissioned by either PR: 1204 changes a comment and ticket
 evidence; 1205 records author-selected supersession.
+
+## Final integration update, 2026-10-06
+
+The earlier paragraphs record the 2026-10-05 checkpoint. GitHub completed all
+ten required checks on PR1204's closure head and merged it at
+2026-10-06T02:48:37Z as `ebd54f466644e82ef13c422340bb7a19a6ff8b1e`.
+Ticket 0926 is archived with `Closed: autoclosed — PR #1204`. The final
+integrated `main` contains both PR heads. On that tree plus this factual
+wrap-up, `make check` passed 1494 tests with 2 skipped in 41.50 seconds.
+The seven-day close-claim audit examined 30 merged PRs and 25 claims across
+19 PRs, with zero dropped or unresolved claims. Tracker 0909 was already
+closed; the 0912, 0919 and 0926 closure claims all took effect.
+
+PR1213 independently captured a validated
+[`review-attribution-pr1205`](2026-10-05-review-attribution-pr1205.md) record
+using actual producer runtime proof. This supersedes the checkpoint's pending
+capture statement for PR1205; the record is already on `main` and was not
+rewritten here. PR1204 has no attribution record. Its producer's exact
+provider-qualified model ID and effort are unavailable in this raid's
+durable launch trail, so its required `writer:` line cannot be asserted.
+The pending capture is reported rather than filled from another agent's
+identity.
+
+PR1204 review attempts retained for that pending capture: round one reviewed
+`b1222b0ec0deaf60ef1c42e3c3695faa1b1242c1` with distinct Correctness,
+Consistency and Doc-propagation agents, adherence, portable simplification,
+native Codex CLI 0.160.0 `openai/gpt-6.1-sol`/low, and criterion gate. The
+agent reviewer launches were pinned to `openai/gpt-6-sol`/medium. The first
+gate approved. Round two reviewed
+`b3ed9961a91fad10300b7a524208567a117d2189` with a fresh Regression
+agent, adherence, simplification, native Codex CLI 0.160.0
+`openai/gpt-6-luna`/medium, and criterion gate; its gate returned local
+`ESCALATE` because main had moved. Round three reviewed
+`d2f3dea49b1157961480cf4daa19c2197113d8b8` with fresh Regression,
+adherence, simplification, native Codex CLI 0.160.0
+`openai/gpt-6-luna`/medium, and criterion gate; all ran and the gate approved.
+The round-three public gate is linked above. No anchored reviewer finding was
+reported on PR1204; no model version beyond those IDs was exposed. The merge
+helper's subsequent closure commit is a ticket rename plus two closure lines.
+
+The final `origin/main` sweep found the corrected script header and no other
+operational local-checkout-only allocator claim. Historical imported project
+memory still contains old claims as dated evidence. No prior attribution
+record anchors a changed line of the PR1204 comment, so no post-merge
+defect-confirmed event was appended.
