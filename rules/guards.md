@@ -14,11 +14,6 @@ bare-context profiles to load as one file.
   unavailable destination instead of falling back to the harness or native
   store.
 - **More than ~256K tokens of context is a monster ticket: SPLIT THE
-  WORK, never widen the window.** Work tops out ~236K un-compacted
-  (1024, 2026-10-05); decomposition mechanics in workflow.md. Answer a
-  context wall with task decomposition, not a bigger window, KV
-  tricks, or compaction.
-- **More than ~256K tokens of context is a monster ticket: SPLIT THE
   WORK, never extend the window.** Work tops out ~236K un-compacted
   (1024, 2026-10-05). Answer context walls with decomposition — never
   bigger windows, KV tricks or compaction. Size tickets to fit; a run
