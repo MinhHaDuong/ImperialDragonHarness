@@ -1,0 +1,28 @@
+{
+  "_comment": "Performance grid + cluster membership owned by skills/route. Data lives here (not in portable SKILL.md instructions, per the model-rightsizing policy). Content derives from arena cycles only (skills/arena); cells marked provisional are not routing-grade until their cycle closes. Cost conventions: hosted = API $ per leg (pi cost.total); local = electricity at 0.23 EUR/kWh x 600 W (registered 2026-10-06).",
+  "updated": "2026-10-06T09:15Z",
+  "grid": [
+    {"model": "claude-opus-5-5", "effort": "medium", "quality": "23.7 (c1 final)", "time": "~10 min", "cost": "~2.2", "role": "consistency buyer — the only arm without a crater; hard/monster work"},
+    {"model": "qwen3.8-flash-next IQ3_S", "effort": "xhigh (template)", "quality": "26.0 (c2 final)", "time": "43 min", "cost": "0.11 elec", "role": "best local quality; privacy; big-ticket survivor (18/30 on the killer ticket where the hosted mid-tier cratered); beats hosted Sol 6.1 @medium paired 7-2"},
+    {"model": "qwen3.8-flash-next Q2_0", "effort": "xhigh (template)", "quality": "25.0 (c2 final)", "time": "32 min", "cost": "0.08 elec", "role": "quality parity with Luna paired (median 0.0); DNFs the killer ticket — speed tier for non-judgment work"},
+    {"model": "gpt-6.1-sol", "effort": "low", "quality": "23.2 (c2 final)", "time": "5 min", "cost": "0.21", "role": "solid mid hosted; strictly dominates its own @medium point (quality tie, faster 9/10, cheaper 10/10)"},
+    {"model": "gpt-6.1-sol", "effort": "medium", "quality": "25.0 (c2 final)", "time": "9 min", "cost": "0.34", "role": "best complete-coverage hosted quality"},
+    {"model": "qwen3.8-27b", "effort": "xhigh (template)", "quality": "24.0 (c2 final)", "time": "48 min", "cost": "0.12 elec", "role": "daily local seat + vision niche; DNF on the killer ticket"},
+    {"model": "claude-sonnet-5-5", "effort": "medium", "quality": "21.0 (c2 final)", "time": "1 min", "cost": "0.15", "role": "fastest hosted; quality tie with Sol @low (paired 4-6) at lower latency and cost"},
+    {"model": "zai-glm-5-3", "effort": "high", "quality": "21.6 (c1 final)", "time": "9 min", "cost": "0.52", "role": ""},
+    {"model": "gpt-6-luna", "effort": "medium", "quality": "21.8 (c2 final)", "time": "4 min", "cost": "0.028", "role": "DEFAULT WORKHORSE: parity with the old locals paired, 10x speed, no crater observed"},
+    {"model": "claude-opus-5-5", "effort": "low", "quality": "22.8 (c2 final)", "time": "3 min", "cost": "0.31", "role": "≈ its @medium point paired (4-6) at 1/3 cost — both efforts crater on different tickets; the @medium premium buys ~0.5 median point, not consistency"},
+    {"model": "deepseek-flash", "effort": "high (catalog default, NOT pi medium)", "quality": "20.5 (c2 final)", "time": "10 min", "cost": "0.11", "role": ""},
+    {"model": "glm-5.3-flash", "effort": "high (catalog default)", "quality": "27.0 SURVIVOR BIAS (5/10 legs)", "time": "10 min", "cost": "0.17", "role": "VOID-EMPTY on heavy tickets (0233/0452/0874/1372) — coverage-adjusted the worst value in the flash class"},
+    {"model": "mimo-v2.6-flash", "effort": "medium", "quality": "21.8 (6/10 legs)", "time": "51 min", "cost": "0.10", "role": "VOID-EMPTY on 0452/0673/1372, DNF on 0211 — heavy-work abandoner"},
+    {"model": "qwen3.6-35b-a3b / qwen3-coder-30b", "effort": "template default", "quality": "~9", "time": "<7 min", "cost": "0.02 elec", "role": "FALSE-COMPLETION family — never route real work here"}
+  ],
+  "clusters": {
+    "ASSURANCE": {"members": ["claude-opus-5-5 @medium"], "when": "no-crater allowed; high stakes; monster tickets"},
+    "MILIEU SOLIDE": {"members": ["gpt-6.1-sol @low/@medium", "claude-sonnet-5-5 @medium", "zai-glm-5-3 @high"], "when": "real implementation work; hosted is fine"},
+    "ECONOMIQUES": {"members": ["gpt-6-luna @medium (default)", "deepseek-flash @high", "glm-5.3-flash @high*", "mimo-v2.6-flash @medium*"], "when": "routine, cheap-to-verify, bulk triage", "caveat": "* VOID-EMPTY pattern: the cheap flashes abandon heavy tickets silently — check ticket weight, not just price"},
+    "LOCAL-PRIVE": {"members": ["flash-next IQ3_S @xhigh", "flash-next Q2_0 @xhigh", "qwen3.8-27b @xhigh"], "when": "uncleared content; offline; GPU idle"},
+    "BANNIS": {"members": ["35b-a3b", "coder-30b", "OR flashes on heavy tickets"], "when": "never route real work here"}
+  },
+  "within_cluster_keys": ["cost per leg (grid)", "latency", "clearance (forces LOCAL-PRIVE)", "offline", "GPU state", "provider rate limits"]
+}

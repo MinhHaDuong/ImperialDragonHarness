@@ -1,6 +1,6 @@
 ---
 name: route
-description: "Model routing for harness work: performance grid, route-state cache, and difficulty triage. The single home for which model serves which work — never dispersed into other harness rules."
+description: "Model routing: performance grid, route cache, triage, clusters. The single home for which model serves which work."
 disable-model-invocation: false
 user-invocable: false
 ---
@@ -31,21 +31,10 @@ Costs are per leg on the arena sample (11 tickets). Locals pay electricity
 (0.23 EUR/kWh x 600 W, registered 2026-10-06); hosted pay the API
 (pi cost.total, component-priced).
 
-Cycle-1 FINAL / cycle-2 PROVISIONAL (backlog of judging pending):
-
-| model (effort EXPLICIT) | qual /30 | time | $/leg | role |
-|---|---|---|---|---|
-| Opus 5.5 @medium | 23.7 (c1) | ~10 min | ~2.2 | consistency buyer — the only arm without a crater; hard/monster work |
-| FlashNext IQ3_S @xhigh (local) | ~27 (c2 prov.) | 43 min | 0.11 elec | best local quality; privacy; big-ticket survivor (18/30 on the killer ticket where Sol cratered) |
-| Sol 6.1 @low | ~24.5 (c2 prov.) | 6 min | 0.20 | solid mid hosted |
-| Luna 6 @medium | ~23 (c2 prov.) | 4 min | 0.03 | DEFAULT WORKHORSE for routine work; beats Sol 6.0/6.1@medium on efficiency, no crater observed |
-| 27B @xhigh (local) | ~24 (c2 prov.) | 48 min | 0.12 elec | daily local seat + vision niche |
-| GLM 5.3 @high | 21.6 (c1) | 9 min | 0.52 | — |
-| Sonnet 5.5 @medium | ~21.5 (c2 prov.) | 1 min | 0.11 | fast hosted filler |
-| Coder IQ1_M @xhigh (local) | 21.1 (c1) | 31 min | 0.08 elec | — (false-completion risk) |
-| 35B-A3B / Coder-30B @tpl (local) | 9-10 | <7 min | 0.02 elec | FALSE-COMPLETION family — never route real work here |
-| Opus 5.5 @low | ~20.5 | 3 min | 0.44 | NOT worth it: pays Opus prices, delivers Sonnet-tier with craters |
-| OR cheap flashes (GLM-flash, Mimo, SpaceBunny) | mixed | — | 0.06-0.17 | VOID-EMPTY on heavy tickets — silent abandonment; cheap routine only, with a liveness check |
+The grid lives in `grid.json` beside this file (data, not portable
+instructions — the model-rightsizing policy keeps concrete model names
+out of SKILL.md). Read it for quality/speed/cost per identity and the
+provisional marks; update it ONLY from arena cycle data.
 
 Effort labels are model-relative, NOT transportable across generations
 (Sol 6.1 @medium does more work than Sol 6.0 @medium at the same label).
@@ -58,8 +47,9 @@ grid rows are identities, not knobs. Consequences:
   it enters the grid.
 - Always name the effort explicitly; `@default` is banned in labels —
   resolve it to the real level first (pi `defaultThinkingLevel`=medium,
-  but the pi CATALOG default wins per model: deepseek-flash and
-  glm-5.3-flash sit at HIGH, verified in sessions 2026-10-05).
+  but the pi CATALOG default wins per model — the DeepSeek and GLM flash
+  siblings sit at HIGH, not medium, verified in sessions 2026-10-05;
+  grid.json names them).
 - The identity's verified level comes from session evidence
   (`thinking_level_change` events), never from the label it was launched
   with.
@@ -89,13 +79,8 @@ COST and ENVIRONMENT pick the MODEL inside the cluster. Clusters derive
 from the grid (arena cycles only); membership moves only with new cycle
 data.
 
-| cluster | members (effort explicit) | when the task says |
-|---|---|---|
-| ASSURANCE (no-crater allowed) | Opus 5.5 @medium | high stakes, monster tickets, work where a silent failure costs more than the call |
-| MILIEU SOLIDE | Sol 6.1 @low/@medium, Sonnet 5.5 @medium, GLM 5.3 @high | real implementation work, judgment-heavier than routine, hosted is fine |
-| ÉCONOMIQUES | Luna 6 @medium (default), DeepSeek 4.1 Flash @high, GLM 5.3 Flash @high*, Mimo @medium* | routine work, cheap to verify, bulk triage |
-| LOCAL / PRIVÉ | FlashNext IQ3_S @xhigh, FlashNext Q2_0 @xhigh, 27B @xhigh | uncleared content, offline, GPU-bound work |
-| BANNIS | 35B-A3B, Coder-30B (false-completion); OR flashes on heavy tickets* | never route real work here |
+Cluster membership lives in `grid.json` (`clusters` key) — data, not
+portable instructions.
 
 *VOID-EMPTY pattern: the OR cheap flashes abandon heavy tickets silently
 (GLM-flash, Mimo: empty diffs on 0452/0874/1372) — inside-cluster selection

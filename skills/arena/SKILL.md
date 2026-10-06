@@ -1,6 +1,6 @@
 ---
 name: arena
-description: "Replay the model tournament bench when a new model ships: declare arms, pre-register, run the parallel cycle, judge blind, produce the quality/speed/cost readout that feeds skills/route."
+description: "Replay the model tournament bench: declare arms, run, judge, feed the route grid."
 disable-model-invocation: false
 user-invocable: true
 ---

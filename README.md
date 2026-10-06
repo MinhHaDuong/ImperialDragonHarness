@@ -121,7 +121,7 @@ belong in the external keystore and are resolved by task-specific tools.
 
 | Command | Description |
 |---------|-------------|
-| `/arena` | Replay the model tournament bench when a new model ships: declare arms, pre-register, run the parallel cycle, judge blind, produce the quality/speed/cost readout that feeds skills/route. |
+| `/arena` | Replay the model tournament bench: declare arms, run, judge, feed the route grid. |
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
 | `/biblio-saturation` | Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness. |
 | `/brood` | Turn accepted Dream findings into project improvements and scoped harness nominations, on explicit request. |
@@ -152,7 +152,7 @@ belong in the external keystore and are resolved by task-specific tools.
 | `/review-pr-prose` | Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review. |
 | `/reviewers` | Describe live independent review needs and let the active runtime discover and route optional reviewers, preserving findings and integrity evidence. |
 | `/roar` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
-| `/route` | Model routing for harness work: performance grid, route-state cache, and difficulty triage. The single home for which model serves which work — never dispersed into other harness rules. |
+| `/route` | Model routing: performance grid, route cache, triage, clusters. The single home for which model serves which work. |
 | `/slides` | Make or review a talk's slide deck: build a beamer deck from a written text, or critique an existing deck with prioritized fixes. Keywords: diaporama, présentation. |
 | `/submission-event` | Classify a manuscript submission event — submitted, resubmitted, accepted, published — by which external register its object belongs in, then propagate it to the homepage publications list and/or the CNRS secretariat roadmap. The roadmap tracks work in progress; the publications list tracks works, so never update both automatically. |
 | `/trace-doctor` | Monthly survey of Claude Code session-trace economics — cost census, hypothesis statistics, and a ranked cost-saving recommendation report, cross-referenced against tickets. Never auto-applies changes; files tickets for actionable findings. |
