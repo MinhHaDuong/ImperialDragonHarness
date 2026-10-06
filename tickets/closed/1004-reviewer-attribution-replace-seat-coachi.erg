@@ -2,6 +2,7 @@
 Title: Reviewer attribution: replace seat coaching with attribution records (tracker)
 Created: 2026-10-02
 Author: MinhHaDuong
+Closed: Original exits and(a)-(g) independently verified at ef1d6d87; evidence published PR1235; merge requires current-head Gaze and local CI.
 
 --- log ---
 2026-10-02T08:00Z MinhHaDuong created
@@ -12,6 +13,7 @@ Author: MinhHaDuong
 2026-10-05T11:41Z MinhHaDuong note Author routing direction (2026-10-05): attribution should inform more aggressive routing that conserves Claude Pro Max, ChatGPT Pro and Vibe Pro quotas. GLM Coding Plan is a candidate pending tournament1024. Compare an LLM-routing MCP plugin for Claude/Codex with extending and tuning evidence-based IDH routing; measure task quality, actual subscription/API quota and cache cost, completion reliability, routing overhead and time-of-day quota rates. The attribution teardown continues; these options are not an instruction to restore fixed reviewer rosters.
 2026-10-05T11:41Z Codex note Verified vendor terms as of2026-10-05: GLM Coding Plan off-peak usage consumes50% of standard credits, not a50% subscription-price discount. Normal peak is Mon-Fri14:00-18:00 UTC+8 (08:00-12:00 Paris during CEST); currently all-day off-peak promotion runs2026-09-25 through2026-10-07. Source:https://docs.z.ai/devpack/overview . Vendor limits benefits to supported tools:https://docs.z.ai/devpack/usage-policy ; compare routing MCP and native runtime routes against actual eligible billing/quota paths before counting subscription savings. Recheck terms at implementation; no purchase or provider selection authorized by this note.
 
+2026-10-06T10:00Z reviewer closed — Original exits and(a)-(g) independently verified at ef1d6d87; evidence published PR1235; merge requires current-head Gaze and local CI.
 --- body ---
 ## Context
 
@@ -51,12 +53,12 @@ recording gap.
 
 ## Exit criteria
 
-- [ ] 1005-1008 merged; attribution records capture writer/reviewer/
+- [x] 1005-1008 merged; attribution records capture writer/reviewer/
       findings/defects facts on every reviewed merge
-- [ ] 1009 landed: reviewers skill thinned to descriptor+replay,
+- [x] 1009 landed: reviewers skill thinned to descriptor+replay,
       celebration telemetry deleted, 0980 closed WONTDO, closed trial
       tickets annotated
-- [ ] 0205 closed with integration-review note cross-referencing this
+- [x] 0205 closed with integration-review note cross-referencing this
       tracker and the spec
 
 ## Raid annotation (2026-10-03, imagine pass)
@@ -69,3 +71,9 @@ EXIT-CRITERIA: Box 1 — all four children in `tickets/closed/`; ≥1 live real-
 PREMISE: KEEP-AS-IS. All implementation children, including1009, are merged at8898bb7d; original integration criteria(a)-(g) remain unchanged. Perform an evidence-only end-to-end audit with the existing strict reader, query, enumeration and backfill simulation. No new routing, roster or statistics framework.
 BLIND-SPOT: CLEAN, independent read-only review; all34post-1005 first-parent integration commits are PR merges. Known checks: current cutoff includes1224, whose own review classification needs direct evidence, and coaching board retains an obsolete operational panel.yml promotion comment. That comment is residual1009 teardown work, not permission to redo children under this tracker. SharedCLAUDE_TELEMETRY_DIR readers are intentionally preserved under spec9; verify retirement of the celebration seam.
 DRIFT GUARD: Original exits and(a)-(g) preserved. No close while a reviewed-merge capture gap remains. No inferred identities or deletion of historical evidence.
+
+## Raid Plan refresh (2026-10-06)
+PASS: report original(a)-(g) with existing source/test evidence, capture actual PR1224 prepared-bundle reviewer attempt, and re-enumerate through current merged cutoff. Correct residual board comments via child1044 first, then close1004 only after independent original-criteria review. Existing115targeted attribution checks passed, including real Git append-only backfill and malformed/duplicate warning controls. Preserve all existing record bytes. Integration paths:1004ticket, integrationreport,1224record,1224proof; separate1044ticket+boardsource carried on a preceding bounded PR. No new schema, framework, prose-mirroring tests or purchased service.
+
+## Raid Feasibility refresh (2026-10-06)
+WARN resolved by actual evidence and bounded1044 residual child:1224 prepared-bundle integration was a completed separate reviewer session, not an unreviewed wrap. Producer and reviewer direct runtime metadata both identifyopenai/gpt-6-sol,medium; no concrete model decorrelation claimed. Review covered prepared bundle before final publication commit, never asserted exact finaltip. Existing helpers/signatures and115targeted checks verified. No keys, registry contention or new intent. Four-path integration evidence plus bounded1044 source remains below15contentpaths. Shared initial base8898bb7d; annotation commits stay on one lineage; re-record mergedbase between serial PRs.
