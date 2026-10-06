@@ -6,7 +6,7 @@ memory notes and tickets.
 
 ## Branch and commit
 
-- **Always work on a branch.** Main is read-only. Everything (code, docs, tickets, STATE, memory, config) lands via branch + PR; the forge gate is closed, there is no direct-push path. Sole exception: manuscript prose in paper repos — § Prose workpackages below.
+- **Always work on a branch.** Main is read-only. Everything (code, docs, tickets, STATE, memory, config) lands via branch + PR; the forge gate is closed, there is no direct-push path. Sole exception: manuscript prose — [prose/workpackages.md](./prose/workpackages.md).
 - **One change per commit.** The message explains *why this change and not another*: alternatives considered, local design choices made. Merge commits carry the strategic level — architecture decisions, cross-file impacts, residual debt.
 - **Git is the project's long-term memory.** Top-level files reflect *now*; history lives in `git log`.
 - **Worktrees are throwaway, branches hold durable state.** Never `rm -rf` a worktree the runtime created; `git worktree prune` after deleting the branch.
