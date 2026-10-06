@@ -3,7 +3,7 @@
   "updated": "2026-10-06T09:15Z",
   "grid": [
     {"model": "claude-opus-5-5", "effort": "medium", "quality": "23.7 (c1 final)", "time": "~10 min", "cost": "~2.2", "role": "consistency buyer — the only arm without a crater; hard/monster work"},
-    {"model": "qwen3.8-flash-next IQ3_S", "effort": "xhigh (template)", "quality": "26.0 (c2 final)", "time": "43 min", "cost": "0.11 elec", "role": "best local quality; privacy; big-ticket survivor (18/30 on the killer ticket where the hosted mid-tier cratered); beats hosted Sol 6.1 @medium paired 7-2"},
+    {"model": "qwen3.8-flash-next IQ3_S", "effort": "xhigh (template)", "quality": "26.5 (c2 final, 10/10 legs)", "time": "43 min", "cost": "0.11 elec", "role": "best fully-covered arm of the tournament (26.5 median, 10/10); 30/30 unanimous on the killer ticket; beats hosted Sol 6.1 @medium paired 7-2"},
     {"model": "qwen3.8-flash-next Q2_0", "effort": "xhigh (template)", "quality": "25.0 (c2 final)", "time": "32 min", "cost": "0.08 elec", "role": "quality parity with Luna paired (median 0.0); DNFs the killer ticket — speed tier for non-judgment work"},
     {"model": "gpt-6.1-sol", "effort": "low", "quality": "23.2 (c2 final)", "time": "5 min", "cost": "0.21", "role": "solid mid hosted; strictly dominates its own @medium point (quality tie, faster 9/10, cheaper 10/10)"},
     {"model": "gpt-6.1-sol", "effort": "medium", "quality": "25.0 (c2 final)", "time": "9 min", "cost": "0.34", "role": "best complete-coverage hosted quality"},
