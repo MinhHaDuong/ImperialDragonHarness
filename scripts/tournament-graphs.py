@@ -17,6 +17,7 @@ matplotlib.rcParams['pdf.fonttype'] = 42
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.patches import FancyArrowPatch
+from matplotlib.transforms import Bbox
 import numpy as np
 from scipy.stats import rankdata
 
@@ -24,12 +25,12 @@ spec = importlib.util.spec_from_file_location('analysis', Path(__file__).with_na
 analysis = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(analysis)
 LABELS = {
-'a': 'Qwen 3.8 27B\nQ4_K_M · llama.cpp\nxhigh (template)',
-'b': 'Qwen 3.8 Flash-Next Coder\nIQ1_M · Strata · pruned\nxhigh (template)',
-'b2': 'Qwen 3.8 Flash-Next\nIQ3_S · Strata\nxhigh (template)',
-'b3': 'Qwen 3.8 Flash-Next\nQ2_0 · Strata\nxhigh (template)',
-'c': 'Qwen 3.6 35B-A3B\nUD-Q4_K_XL · llama.cpp\neffort template (non mesuré)',
-'c2': 'Qwen 3 Coder 30B-A3B\nUD-Q4_K_XL · llama.cpp\neffort template (non mesuré)',
+'a': 'Qwen 3.8 27B\nQ4_K_M · llama.cpp\nxhigh (fixé côté serveur)',
+'b': 'Qwen 3.8 Flash-Next Coder\nIQ1_M · Strata · pruned\nxhigh (fixé côté serveur)',
+'b2': 'Qwen 3.8 Flash-Next\nIQ3_S · Strata\nxhigh (fixé côté serveur)',
+'b3': 'Qwen 3.8 Flash-Next\nQ2_0 · Strata\nxhigh (fixé côté serveur)',
+'c': 'Qwen 3.6 35B-A3B\nUD-Q4_K_XL · llama.cpp\neffort non mesuré',
+'c2': 'Qwen 3 Coder 30B-A3B\nUD-Q4_K_XL · llama.cpp\neffort non mesuré',
 'd': 'Claude Opus 5.5\nAPI Anthropic\nmedium',
 'd2': 'Claude Opus 5.5\nAPI Anthropic\nlow',
 'e': 'GPT 6 Sol\nAPI OpenAI\nmedium',
@@ -97,6 +98,15 @@ def holm(rows):
     for rank, i in enumerate(order):
         previous = max(previous, min(1, (len(rows) - rank) * rows[i]['p']))
         rows[i]['p_holm'] = previous
+
+
+def pareto_xy(arms, xkey, ykey):
+    """Two-axis frontier of complete identities; quality up, resources down."""
+    eligible = {a: r for a, r in arms.items() if r['final'] and r.get(xkey) is not None and r.get(ykey) is not None}
+    def dominates(x, y):
+        advantages = [(x[k] - y[k]) * (1 if k == 'quality_median' else -1) for k in [xkey, ykey]]
+        return all(v >= 0 for v in advantages) and any(v > 0 for v in advantages)
+    return {a for a, r in eligible.items() if not any(dominates(other, r) for b, other in eligible.items() if b != a)}
 
 
 def render(output, snapshot):
@@ -190,6 +200,7 @@ def render(output, snapshot):
             fig.suptitle(title,fontsize=20,fontweight='bold',x=.045,ha='left')
             fig.text(.045,.89,'Identités modèle × variante × effort · médianes par ticket, échecs de modèle inclus',fontsize=10)
             entries=[]
+            frontier=pareto_xy(snapshot['arms'],xkey,ykey)
             for a in nodes:
                 row=snapshot['arms'][a]
                 if row[xkey] is None or row[ykey] is None:continue
@@ -199,6 +210,8 @@ def render(output, snapshot):
                 provisional=not row['final']
                 ax.scatter(x,y,s=65,marker='o' if a in analysis.LOCAL else 's',
                            facecolors='none' if provisional else color,edgecolors='#ea580c' if provisional else color,zorder=3)
+                if a in frontier:
+                    ax.scatter(x,y,s=210,facecolors='none',edgecolors='#b45309',linewidths=1.8,zorder=2)
                 entries.append((a,x,y,color,provisional))
             if xkey in {'cost_usd_median','seconds_median'}:ax.set_xscale('log')
             if ykey == 'seconds_median':ax.set_yscale('log')
@@ -206,18 +219,34 @@ def render(output, snapshot):
             ax.margins(x=.17,y=.15);ax.grid(alpha=.2,which='both');ax.set_xlabel(xlabel,fontsize=10);ax.set_ylabel(ylabel,fontsize=10)
             # Deterministic label placement in display coordinates, with leader lines.
             fig.canvas.draw(); renderer=fig.canvas.get_renderer(); boxes=[]
-            for a,x,y,color,provisional in sorted(entries,key=lambda item:(item[2],item[1])):
+            point_boxes=[]
+            for _,x,y,_,_ in entries:
+                px,py=ax.transData.transform((x,y))
+                point_boxes.append(Bbox.from_extents(px-13,py-13,px+13,py+13))
+            bounds=ax.get_window_extent(renderer)
+            for a,x,y,color,provisional in sorted(entries,key=lambda item:(item[0] not in frontier,item[2],item[1])):
                 annotation=None
-                offsets=[(dx,dy) for radius in [9,18,29,42,55] for dx,dy in [(radius, radius/2),(-radius,radius/2),(radius,-radius/2),(-radius,-radius/2),(0,radius),(0,-radius)]]
+                offsets=[(dx,dy) for radius in range(15,226,10)
+                         for dx,dy in [(radius,radius),(-radius,radius),(radius,-radius),(-radius,-radius),
+                                       (0,radius),(0,-radius),(radius,0),(-radius,0),
+                                       (radius/2,radius),(-radius/2,radius),(radius/2,-radius),(-radius/2,-radius)]]
+                placed=False
                 for dx,dy in offsets:
                     if annotation:annotation.remove()
-                    annotation=ax.annotate(a+("*" if provisional else ""),(x,y),xytext=(dx,dy),textcoords='offset points',
-                                           fontsize=9,ha='center',va='center',color='#ea580c' if provisional else color,
+                    label=(a+' · '+LABELS[a]) if a in frontier else a+("*" if provisional else "")
+                    annotation=ax.annotate(label,(x,y),xytext=(dx,dy),textcoords='offset points',
+                                           fontsize=7 if a in frontier else 9,ha='center',va='center',
+                                           color='#92400e' if a in frontier else '#ea580c' if provisional else color,
                                            arrowprops={'arrowstyle':'-','color':'#94a3b8','lw':.7},
-                                           bbox={'facecolor':'white','edgecolor':'none','pad':1.3})
-                    fig.canvas.draw()
-                    box=annotation.get_bbox_patch().get_window_extent(renderer).expanded(1.15,1.25)
-                    if not any(box.overlaps(other) for other in boxes):break
+                                           bbox={'facecolor':'none','edgecolor':'none','pad':1.3})
+                    annotation.update_positions(renderer)
+                    annotation.update_bbox_position_size(renderer)
+                    box=annotation.get_bbox_patch().get_window_extent(renderer).expanded(1.05,1.08)
+                    inside=box.x0 >= bounds.x0+2 and box.x1 <= bounds.x1-2 and box.y0 >= bounds.y0+2 and box.y1 <= bounds.y1-2
+                    if inside and not any(box.overlaps(other) for other in boxes+point_boxes):
+                        placed=True;break
+                if not placed:
+                    raise RuntimeError(f'No collision-free position for {name}/{a}')
                 boxes.append(box)
             fig.text(.665,.85,'Modèle · variante / moteur · effort',fontsize=10,fontweight='bold')
             for i,a in enumerate(nodes):
@@ -225,9 +254,9 @@ def render(output, snapshot):
                 description=label[0]+'\n'+label[1]+' · '+label[2]
                 color='#ea580c' if not snapshot['arms'][a]['final'] else '#2563eb' if a in analysis.LOCAL else '#059669'
                 fig.text(.665,.81-i*.041,a+('*' if not snapshot['arms'][a]['final'] else ''),fontsize=9,fontweight='bold',color=color,va='top')
-                fig.text(.70,.81-i*.041,description,fontsize=7.4,va='top',linespacing=1.1)
-            fig.text(.045,.08,'Bleu / cercles : local ; vert / carrés : hébergé. Orange / creux / * : provisoire, sur les seules observations valides.',fontsize=8)
-            fig.text(.045,.045,'Axes de coût et de durée logarithmiques. Médianes marginales : ces distances ne remplacent pas les tests appariés.\n'
+                fig.text(.70,.81-i*.041,description,fontsize=7.4,va='top',linespacing=1.1,fontweight='bold' if a in frontier else 'normal')
+            fig.text(.045,.08,'Cercle doré + nom complet : frontière de Pareto sur ces deux axes (identités complètes seulement).',fontsize=8)
+            fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Coût et durée en échelle logarithmique.\n'
                      'Coût local = électricité seule ; coût hébergé = API. Les graphiques de significativité utilisent uniquement les identités complètes.',fontsize=8)
             pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
         fig=plt.figure(figsize=(11.6929,8.2677));fig.text(.06,.91,'Méthode et périmètre',fontsize=20,fontweight='bold')

@@ -38,3 +38,13 @@ def test_holm_adjustment():
     rows = [{'p':.001}, {'p':.02}, {'p':.03}]
     graphs.holm(rows)
     assert [r['p_holm'] for r in rows] == [.003,.04,.04]
+
+
+def test_pareto_uses_axis_direction_and_excludes_provisional():
+    arms = {
+        'a': {'final': True, 'quality_median': 20, 'cost_usd_median': 1},
+        'b': {'final': True, 'quality_median': 25, 'cost_usd_median': 2},
+        'c': {'final': True, 'quality_median': 19, 'cost_usd_median': 2},
+        'd': {'final': False, 'quality_median': 30, 'cost_usd_median': 0},
+    }
+    assert graphs.pareto_xy(arms, 'cost_usd_median', 'quality_median') == {'a','b'}

@@ -1,12 +1,12 @@
 digraph G {
 rankdir=TB;
 node [shape=box, fontname="DejaVu Sans"];
-a [label="Qwen 3.8 27B\nQ4_K_M · llama.cpp\nxhigh (template)"];
-b [label="Qwen 3.8 Flash-Next Coder\nIQ1_M · Strata · pruned\nxhigh (template)"];
-b2 [label="Qwen 3.8 Flash-Next\nIQ3_S · Strata\nxhigh (template)"];
-b3 [label="Qwen 3.8 Flash-Next\nQ2_0 · Strata\nxhigh (template)"];
-c [label="Qwen 3.6 35B-A3B\nUD-Q4_K_XL · llama.cpp\neffort template (non mesuré)"];
-c2 [label="Qwen 3 Coder 30B-A3B\nUD-Q4_K_XL · llama.cpp\neffort template (non mesuré)"];
+a [label="Qwen 3.8 27B\nQ4_K_M · llama.cpp\nxhigh (fixé côté serveur)"];
+b [label="Qwen 3.8 Flash-Next Coder\nIQ1_M · Strata · pruned\nxhigh (fixé côté serveur)"];
+b2 [label="Qwen 3.8 Flash-Next\nIQ3_S · Strata\nxhigh (fixé côté serveur)"];
+b3 [label="Qwen 3.8 Flash-Next\nQ2_0 · Strata\nxhigh (fixé côté serveur)"];
+c [label="Qwen 3.6 35B-A3B\nUD-Q4_K_XL · llama.cpp\neffort non mesuré"];
+c2 [label="Qwen 3 Coder 30B-A3B\nUD-Q4_K_XL · llama.cpp\neffort non mesuré"];
 d [label="Claude Opus 5.5\nAPI Anthropic\nmedium"];
 d2 [label="Claude Opus 5.5\nAPI Anthropic\nlow"];
 e [label="GPT 6 Sol\nAPI OpenAI\nmedium"];
