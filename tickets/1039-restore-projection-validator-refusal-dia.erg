@@ -1,0 +1,41 @@
+%erg 0.1
+Title: Restore projection-validator refusal diagnostics after PR 1209
+Created: 2026-10-06
+Author: reviewer
+
+--- log ---
+2026-10-06T02:56Z reviewer created
+
+--- body ---
+## Context
+
+PR #1209 merged on 2026-10-06 as `e02cd208b5f9cbe9b60fe556d7dff835702fc1a4`.
+Its validator now stops at the first broken projection and prints a general
+refusal directing the operator to `idh install`. Three existing tests still
+require the refusal to include `double-fire` or `claude-code` for their
+specific broken fixtures. On `origin/main` at `bd2efaad7cbf0a44d57545a68ebf9394aaef8157`,
+the documentation-only PR #1216 ran `make check`: 3 failed, 1491 passed,
+2 skipped. A targeted rerun reproduced the same three failures, with 75
+other validator tests deselected. `git diff origin/main...HEAD -- scripts tests
+adapters` is empty on PR #1216; this is an integrated-main failure, not a
+change introduced by that wrap-up.
+
+The failed tests are
+`test_stale_harness_hooks_in_live_settings_block_the_launch`,
+`test_a_missing_plugin_link_blocks_the_launch`, and
+`test_a_hand_copied_plugin_block_also_blocks_the_launch` in
+`tests/test_projection_validator.py`. Each still sees exit 1, but the stderr
+is the generic `idh: refusing to launch claude: harness projections are
+incomplete; run idh install ...` line instead of the asserted defect name.
+The intended detail contract after PR #1209 needs reconciliation; no change
+to the launch refusal's fail-closed behavior is requested here.
+
+## Exit criteria
+
+- [ ] Decide whether the post-1209 launch refusal should name the specific
+      broken projection or whether the tests should assert the intended
+      generic install direction; document the intended operator-visible
+      message in the relevant code or test.
+- [ ] All three named tests pass, with a positive control that a broken
+      projection still refuses launch and a healthy projection still launches.
+- [ ] `make check` passes on the resolved integration branch.

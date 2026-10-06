@@ -108,3 +108,19 @@ operational local-checkout-only allocator claim. Historical imported project
 memory still contains old claims as dated evidence. No prior attribution
 record anchors a changed line of the PR1204 comment, so no post-merge
 defect-confirmed event was appended.
+
+## Later main advance, 2026-10-06
+
+After the final integration check above, PRs1209 and 1212 advanced main to
+`bd2efaad7cbf0a44d57545a68ebf9394aaef8157`. The same wrap-up branch,
+rebased onto that main, had no script, test or adapter diff. `make check`
+then returned 3 failures, 1491 passes and 2 skips. A targeted run reproduced
+the three failures in `tests/test_projection_validator.py`: launch still
+refused with exit 1, but the stderr was the generic install direction while
+the tests expected `double-fire` or `claude-code` details. The full test suite
+on the earlier `6f976c33` main had passed as recorded above. Ticket 1039
+records the post-1209 discrepancy without assigning an unproved intent to
+the new message. The refreshed seven-day close-claim audit examined 30
+merged PRs and 26 claims across 20 PRs, with zero findings. Wrap-up PR1216
+remains open with its required pytest guard failing; auto-merge is not enabled
+while that check is red.
