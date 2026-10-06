@@ -1,5 +1,5 @@
 digraph G {
-rankdir=LR;
+rankdir=TB;
 node [shape=box, fontname="DejaVu Sans"];
 a [label="Qwen 3.8 27B\nQ4_K_M · llama.cpp\nxhigh (template)"];
 b [label="Qwen 3.8 Flash-Next Coder\nIQ1_M · Strata · pruned\nxhigh (template)"];

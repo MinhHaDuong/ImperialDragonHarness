@@ -124,7 +124,7 @@ def render(output, snapshot):
             r['shown'] = (r['winner'], r['loser']) in reduced and r['p'] < .05
         results[metric] = {'comparisons': rows, 'edges': sorted(edges), 'reduced': sorted(reduced),
                            'holm_edges': [(r['winner'], r['loser']) for r in rows if r['p_holm'] < .05]}
-        dot = ['digraph G {', 'rankdir=LR;', 'node [shape=box, fontname="DejaVu Sans"];']
+        dot = ['digraph G {', 'rankdir=TB;', 'node [shape=box, fontname="DejaVu Sans"];']
         for a in nodes:
             label = LABELS[a] + ('\nPROVISOIRE' if not snapshot['arms'][a]['final'] else '')
             dot.append(f'{a} [label={json.dumps(label, ensure_ascii=False)}];')
@@ -155,11 +155,11 @@ def render(output, snapshot):
             maxrank = max(layers)
             for rank, layer in layers.items():
                 for index, a in enumerate(layer):
-                    positions[a] = ((rank + .5)/(maxrank+1), (index+.5)/len(layer))
+                    positions[a] = ((index+.5)/len(layer), 1 - (rank + .5)/(maxrank+1))
             fig, ax = plt.subplots(figsize=(11.6929, 8.2677))
             fig.subplots_adjust(left=.035, right=.965, bottom=.13, top=.85)
             fig.suptitle(f'{title} — qui bat qui ?', fontsize=19, fontweight='bold', x=.045, ha='left')
-            fig.text(.045,.89,'Flèche du meilleur vers le moins bon · Wilcoxon apparié exact · p < 0,05 bilatéral',fontsize=10)
+            fig.text(.045,.89,'Meilleur en haut · flèche vers le moins bon · Wilcoxon apparié exact · p < 0,05 bilatéral',fontsize=10)
             for a, b in sorted(edges):
                 ax.add_patch(FancyArrowPatch(positions[a], positions[b], arrowstyle='-|>', mutation_scale=12,
                                             color='#64748b', linewidth=1, shrinkA=32, shrinkB=34,
