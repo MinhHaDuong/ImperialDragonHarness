@@ -1,0 +1,36 @@
+%erg 0.1
+Title: 1004 integration closure: freeze coverage evidence and verify original exits
+Created: 2026-10-06
+Author: reviewer
+
+--- log ---
+2026-10-06T08:52Z reviewer created
+
+--- body ---
+## Context
+
+Bounded continuation of tracker1004's original integration audit, split at
+the repository context guard. Original1004 exits and annotation(a)-(g) remain
+authoritative. Evidence already prepared in
+docs/2026-10-06-attribution-integration.md. Residual teardown repair1044 is
+PR1227. The author confirmed a named human review of PR1225, approved its
+coverage, and excluded it from model statistics. Preserve unrelated primary
+checkout changes and all existing attribution record bytes.
+
+## Actions
+
+After1044 lands, rebase the isolated integration branch onto merged main;
+freeze and name the enumeration cutoff, classify each PR with direct evidence,
+capture actual reviewed merges (including1227), and incorporate the bounded
+1228–1230 provenance report. Later merges require their own capture rather
+than an unbounded moving-cutoff chase. Verify original(a)-(g) independently,
+run current required checks, and publish the evidence PR. Close1004 only once
+all its original criteria pass, with current-head gaze approval before merge.
+Run the authorized raid's post-merge roar and report exact remaining limits.
+
+## Exit criteria
+
+- [ ] Original1004(a)-(g) verified at an explicit merged cutoff; every reviewed
+      PR has factual attribution or the author's approved human-review note.
+- [ ] Independent review and required checks pass on the final evidence head.
+- [ ] Evidence published and1054/1004 closed only after their actual exits pass.
