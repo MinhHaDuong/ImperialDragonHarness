@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Repair projection tests after generic install diagnostics
+Created: 2026-10-06
+Author: reviewer
+Closed: Three stale assertions updated; unsafe configurations still refused; 78 focused and 1494 full tests pass
+
+--- log ---
+2026-10-06T02:56Z reviewer created
+2026-10-06T02:58Z reviewer closed — Three stale assertions updated; unsafe configurations still refused; 78 focused and 1494 full tests pass
+
+--- body ---
+## Context
+
+PR1209 simplified projection failures to the generic idh install instruction. Three hook/plugin safety tests added by PR1211 still assert the removed detailed diagnostics. Their concurrent integration caused the required pytest CI to fail on the factual Roar PR1215. Reproduced against actual integrated main:3 failed,75 passed.
+
+## Exit criteria
+- [x] All three invalid hook/plugin cases still refuse launch and assert the installer instruction without exposing the affected local path.
+- [x] Clean settings and operator-owned hooks continue to pass the existing validator suite.
+- [x] Focused suite and full project checks pass on current main plus the correction.
+
+## Scope
+
+Update only the three existing assertions and their stale explanatory sentence in tests/test_projection_validator.py. No runtime policy or validator behavior change. Included in the single Roar1213 wrap-up bundle.
+
+Validation:78 focused tests passed in1.74s; full make check passed1494 tests,2 skipped in42.15s on the actual current-main integration plus correction. Invalid hook/plugin configurations still return1, while clean settings and operator hooks remain allowed.
