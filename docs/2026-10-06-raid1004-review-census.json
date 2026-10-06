@@ -1,0 +1,97 @@
+{
+  "endpoint": {
+    "pr": 1235,
+    "merged_at_utc": "2026-10-06T10:13:00Z",
+    "merge_sha": "017fcccb795843637187d0d3e4e86713295e8fdc",
+    "published_head": "f8909b40a693bb971f2220a9f06d73d7fdb83fff"
+  },
+  "scope_note": "Bounded census: 18 PR-specific judgments plus 4 distinct cross-cutting commissions; historical recaptures and preparatory analysis excluded.",
+  "counts": {
+    "completed_model_review_judgments": 22,
+    "pr_specific_completed": 18,
+    "cross_cutting_completed": 4,
+    "failed_model_review_attempts": 1,
+    "transport_rejections_pre_model_launch_minimum": 3
+  },
+  "by_pr": {
+    "1227": {
+      "completed": {
+        "adherence": 1,
+        "native": 1,
+        "perspective_seats": 3,
+        "simplify": 1,
+        "initial_gate_verdict": 1,
+        "total": 7
+      },
+      "currency_gate_confirmations": 1,
+      "failed_model_attempts": 0
+    },
+    "1234": {
+      "completed": {
+        "native_rounds": 2,
+        "perspective_completions": 4,
+        "simplify_resumed": 1,
+        "gate_verdict": 1,
+        "total": 8
+      },
+      "failed_model_attempts": {
+        "simplify_initial_network_failure": 1
+      },
+      "currency_resumes_same_context": 1,
+      "transport_rejections_prelaunch": 1
+    },
+    "1235": {
+      "completed": {
+        "original_criteria_audit": 1,
+        "native_current_head": 1,
+        "independent_gate": 1,
+        "total": 3
+      },
+      "failed_model_attempts": 0,
+      "transport_rejections_prelaunch": 1,
+      "not_run": [
+        "correctness",
+        "consistency",
+        "simplify"
+      ]
+    }
+  },
+  "timeline": {
+    "earliest_observable_1044_checkpoint_utc": "2026-10-06T08:09:00Z",
+    "original_criteria_audit_completed_utc": "2026-10-06T10:00:44Z",
+    "native_review_completed_utc": "2026-10-06T10:02:55Z",
+    "gate_started_approx_utc": "2026-10-06T10:05:00Z",
+    "merge_utc": "2026-10-06T10:13:00Z",
+    "caveat": "Exact raid start and reviewer execution duration are not established; observed workflow interval is at least 2h04.",
+    "pr1227_merge_utc": "2026-10-06T08:55:34Z",
+    "pr1234_merge_utc": "2026-10-06T09:52:45Z",
+    "observable_elapsed_minutes_minimum": 124
+  },
+  "sources": {
+    "pr1227": "https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1227",
+    "pr1234": "https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1234",
+    "pr1235": "https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1235",
+    "project_records": [
+      "memory/journal/2026/2026-10-06-review-attribution-pr1227.md",
+      "memory/journal/2026/2026-10-06-review-attribution-pr1234.md",
+      "memory/journal/2026/2026-10-06-review-attribution-pr1235.md",
+      "docs/2026-10-06-attribution-integration.md"
+    ]
+  },
+  "model_counts": {
+    "openai/gpt-6-sol": {
+      "completed": 20,
+      "effort": "medium"
+    },
+    "openai/gpt-6.1-sol": {
+      "completed": 2,
+      "effort": "medium"
+    }
+  },
+  "cross_cutting_commissions": [
+    "initial integration bundle",
+    "PR 1227 wave composition",
+    "PR 1218 candidate factual correction",
+    "frozen 1004 endpoint audit"
+  ]
+}

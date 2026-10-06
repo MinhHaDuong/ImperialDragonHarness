@@ -1,0 +1,56 @@
+# PR 1235 post-merge review census (bounded)
+
+**Endpoint:** PR 1235 merged at 2026-10-06 10:13:00 UTC as `017fcccb795843637187d0d3e4e86713295e8fdc`; published head `f8909b40a693bb971f2220a9f06d73d7fdb83fff`. This census distinguishes actual completed model judgments from transport, mechanical, and orchestration events. It does not count the historical PR 1218/1224/1229 reviews re-captured during this session as new commissions.
+
+## Count by scope
+
+| Scope | Completed substantive independent model reviews | Failed model review attempts | Currency confirmations / regression reviews | Transport rejection before model launch | Not model reviews |
+|---|---:|---:|---:|---:|---|
+| PR 1227 board residue (1044) | 6 substantive contexts/reports: adherence, native, multi-perspective correctness+consistency+red team (3 seats), portable simplification; plus one initial gate judgment | 0 evidenced | 1 same-context gate currency refresh, no fresh reviewer judgment | 1 observed in the root execution trace | Producer orchestration, mechanical full suite, local/public CI |
+| PR 1234 four-fact correction (1055) | 2 native reviews; 4 perspective review completions across rounds (Correctness, Consistency, Regression); 1 completed simplification; 1 gate verdict = **8 completed review judgments** | 1 simplifier attempt failed on network restriction before resumed completion | 1 gate context resumed for base currency, then delivered APPROVED; same verdict/context | 1 native-review transport auto-review rejection before actual model launch | Producer lint/label path, CI, capacity failure after verdict write |
+| PR 1235 final parent closure | 3: independent original-criteria audit, current-head native review, independent current-head verify-gate | 0 evidenced | 0 additional currency judgments; gate incorporated the bounded base-currency proof | 1 initial native transport auto-review rejection before retry and actual model execution | C Correctness/Consistency and D Simplify were explicitly NOT RUN; full suite, lint, Padmé/forge CI; orchestration |
+| **PR-specific subtotal** | **18 completed reviewer-seat/context judgments** (7 + 8 + 3) | **1 failed model attempt** | Same-context currency confirmations and interrupted resumes; no extra PR 1235/1234 perspective commissioned for currency | **At least 3 prelaunch transport rejections** | Mechanical checks are not in review totals |
+
+The PR 1227 figure counts distinct actual reviewer seats/contexts and one initial gate verdict; its later current-currency gate is counted as one currency confirmation, not another independent review. Its three perspective seats count separately. The PR 1234 figure counts each completed perspective seat in each round; the Regression seat is additional to correctness/consistency, and the completed resumed simplification is one completion. The gate’s interrupted pre-verdict base-currency wait and post-write delivery-capacity failure did not create extra judgments. Four additional completed commissions reviewed the initial integration bundle, PR 1227's wave composition, the PR 1218 candidate factual correction, and the frozen 1004 endpoint. These are distinct scoped judgments, although the integration reviewer context was reused. Together with the PR-specific subtotal, the preserved evidence supports **22 completed model review judgments**. Preparatory task-space analysis and historical reviews captured for attribution are outside this denominator. This is a bounded count, not a claim of exhaustive absence beyond the preserved evidence.
+
+## Who reviewed and why
+
+- **PR 1227:** Correctness and Consistency used `openai/gpt-6.1-sol`, medium effort; the other five judgments used `openai/gpt-6-sol`, medium effort. The roles were adherence and native reviewer contexts; Correctness and Consistency plus Red-team seats; a portable simplification reviewer; and a distinct verify-gate judgment. The three C seats were actual perspectives; the macro review orchestrator was not a reviewer. The final currency pass reused the gate context.
+- **PR 1234:** native reviewer context on two rounds; Correctness and Consistency in round one; Consistency and Correctness regression in round two; simplification (one failed initial attempt, then a clean completion in a resumed context); and one gate context. Runtime metadata identifies the actual reviewer family/model as `openai/gpt-6-sol`, medium effort; the PR record captures writer as `openai/gpt-6.1-sol`, low effort. Do not infer provider-family decorrelation here.
+- **PR 1235:** an independent original-criteria audit at `ef1d6d87` tested whether original 1004 criteria (a)–(g) were actually met; native review inspected the closure PR and caught a mismatch between a checked final-verification criterion and evidence that still described checks as pending; the current-head gate checked disposition, 13 exit criteria, the actual diff, check results, and base currency. All three were `openai/gpt-6-sol`, medium effort where metadata was available; the audit identity was `openai/gpt-6-sol`, medium effort. The native P2 was resolved by then running same-head full suite, lint, local CI and forge checks and having the gate independently confirm those facts; no code change was necessary. The caller omitted additional Correctness/Consistency and Simplify layers after user steering against excess ceremony. They are recorded as NOT RUN, not silently treated as completions.
+
+The four cross-cutting commissions also used `openai/gpt-6-sol`, medium effort. The 22 completed judgments therefore comprise **20 by `openai/gpt-6-sol` and 2 by `openai/gpt-6.1-sol`, all at medium effort**. These are review commissions, not 22 different people or necessarily 22 distinct runtime contexts. All belong to the same provider family. The confirmed human review of PR 1225 is covered separately and excluded from these model counts.
+
+## Why the review happened
+
+The review train existed to substantiate ticket 1004's original (a)–(g) obligations and validate the 1044 board-residue correction, then correct four fixed attribution facts for PR 1218 under the approved 1055 exception. The frozen audit surfaced PR 1218 writer-effort and unsupported-finding-coordinate inaccuracies; PR 1234 corrected those facts without rewriting unrelated record content. The original-criteria audit found the 46-merge endpoint was mislabeled as the frozen cutoff; this was corrected in the integration report. The PR 1235 native reviewer then found that the closure ticket marked final-head verification complete while its cited evidence still said those checks were pending. The final same-head checks and independent gate addressed that factual gap before merge.
+
+Coverage figures at the fixed PR 1234 endpoint were 46 first-parent merges: 29 available, 1 runtime-masked, 16 visibly missing status, 32 valid records, 31 model-attributable, no malformed records. Those missing-status rows were separately classified with bounded lifecycle evidence; human PR 1225 review was author-confirmed and kept outside model statistics. The final audit does not claim universal absence beyond that evidence. The remaining 16 missing statuses are therefore not 16 failed reviews.
+
+## Timeline (UTC)
+
+- **Before 10:00:** bounded earlier integration and frozen audits ran. Earliest observable checkpoint for 1044 is 08:09 UTC; the underlying raid start time is not established here.
+- **08:55:34:** PR 1227 merged; the board-residue correction closed 1044.
+- **09:52:45:** PR 1234 merged; the approved four-fact attribution correction closed 1055.
+- **10:00:44:** final original-criteria audit completed at `ef1d6d87`, passing (a)–(g) after the endpoint-label correction.
+- **About 10:02, finished 10:02:55:** native review of the prepared PR 1235 closure head produced one P2.
+- **About 10:05:** independent current-head gate began; after the exact-head checks/base-currency evidence it returned APPROVED, one verdict.
+- **10:13:00:** PR 1235 merged as `017fcccb…`.
+
+PR 1227 and PR 1234 timeline detail remains in their contemporaneous attribution and review records; this report does not invent start times from file modification times. Their review artifacts show the substantive sequence but do not expose a complete, safely whitelisted timeline in the material summarized here.
+
+## Practical conclusion
+
+The observable interval from 08:09 to the parent merge at 10:13 is **at least 2 hours 4 minutes**; the exact raid start is not established. This is elapsed workflow time, not measured reviewer execution time. It includes implementation, attribution reconstruction, evolving-base checks, CI, publication and merge orchestration. One simplification attempt failed before a successful resumed completion; at least three review transport requests were rejected before model launch and then retried with public-material proof. Neither category adds completed judgments. Currency confirmations and delivery retries likewise do not add reviews.
+
+The second PR 1234 perspective round followed a real finding about premature completion wording. PR 1235's final verification finding was resolved by actual checks on the published head. The final caller omitted additional C/D passes after the user's request to reduce ceremony; that decision is recorded rather than described as a full unmodified Gaze. These are factual observations, not proposed harness rules.
+
+**Durable evidence:** PR [1227](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1227), [1234](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1234), [1235](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1235); project docs `docs/2026-10-06-attribution-integration.md`, `docs/2026-10-06-attribution-cutoff-proof.md`, and the dated journal records for PR 1227, 1229, 1234 and 1225.
+
+## Post-merge Roar audit
+
+The seven-day close-claim sweep examined 30 merged PRs: 19 close claims across 14 PRs, 11 explicit no-close bodies and 5 unrecognized bodies; zero dropped or unresolved claims were found among recognized claims. The unrecognized bodies remain outside that claim count. Source checks read origin/main at017fcccb, where 1004,1044,1054,1055 and1005–1009 are archived. The original integration suite passed 1,499 tests with 3 skipped before closure; exact final published head independently passed 1,499 with 3 skipped, and all 10 forge jobs succeeded.
+
+The commissioned defect backfill for merged PR 1227/89fca541872a97120d17420c24905bd1b6de640d and PR 1234/145d8075a66aba9463b6d2c92aea5de89e75f7f1 each reported appended=0, no-match=0, unresolved=32. No all-attempt compatible reviewed-coordinate proof was supplied, so no defect event was inferred or appended. These 32 unresolved provenance checks are not32 confirmed defects. Routine parent closure does not commission another defect-fix backfill.
+
+A union sweep of the integration ref's operational skills, rules and build files found no retired celebration writer/sentinel or operational panel.yml references. Coaching's contained seat-runner remains intentionally present. Concurrent unrelated worktrees and open PR 1237 were preserved. Roar created one bounded wrap-up bundle containing this report, its count data, the actual PR 1235 attribution capture and one factual experience entry; no standing instruction was changed.
