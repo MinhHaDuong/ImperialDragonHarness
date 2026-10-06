@@ -110,8 +110,18 @@ def pareto_xy(arms, xkey, ykey):
     return {a for a, r in eligible.items() if not any(dominates(other, r) for b, other in eligible.items() if b != a)}
 
 
+def total_cost_median(legs, hourly_usd):
+    costs = [r['cost_usd'] + hourly_usd * r['seconds'] / 3600
+             for r in legs.values() if r.get('cost_usd') is not None and r.get('seconds') is not None]
+    return statistics.median(costs) if costs else None
+
+
 def render(output, snapshot):
     nodes = sorted(snapshot['arms'])
+    hourly_usd = snapshot.get('time_value_usd_hour', 1.0)
+    for arm in nodes:
+        snapshot['arms'][arm]['total_cost_usd_median'] = total_cost_median(snapshot['legs'][arm], hourly_usd)
+    (output/'total-cost.json').write_text(json.dumps({'time_value_usd_hour': hourly_usd, 'medians': {a: snapshot['arms'][a]['total_cost_usd_median'] for a in nodes}}, indent=2)+'\n')
     results = {}
     for metric, (title, direction, units) in AXES.items():
         rows = []
@@ -194,6 +204,8 @@ def render(output, snapshot):
              'Durée médiane (minutes ; plus bas = plus rapide)', 'Qualité médiane (/30 ; plus haut = meilleur)'),
             ('speed-cost', 'Vitesse / coût', 'cost_usd_median', 'seconds_median',
              'Coût médian (USD ; plus bas = moins cher)', 'Durée médiane (minutes ; plus bas = plus rapide)'),
+            ('quality-total-cost', f'Qualité / coût total — temps à {hourly_usd:g} USD/h', 'total_cost_usd_median', 'quality_median',
+             'Coût total médian (USD ; coût direct + durée valorisée)', 'Qualité médiane (/30 ; plus haut = meilleur)'),
         ]
         for name, title, xkey, ykey, xlabel, ylabel in scatter_axes:
             fig=plt.figure(figsize=(11.6929,8.2677))
@@ -214,7 +226,7 @@ def render(output, snapshot):
                 if a in frontier:
                     ax.scatter(x,y,s=210,facecolors='none',edgecolors='#b45309',linewidths=1.8,zorder=2)
                 entries.append((a,x,y,color,provisional))
-            if xkey in {'cost_usd_median','seconds_median'}:ax.set_xscale('log')
+            if xkey in {'cost_usd_median','total_cost_usd_median','seconds_median'}:ax.set_xscale('log')
             if ykey == 'seconds_median':ax.set_yscale('log')
             if ykey == 'quality_median':ax.set_ylim(0,32)
             ax.margins(x=.17,y=.15);ax.grid(alpha=.2,which='both');ax.set_xlabel(xlabel,fontsize=10);ax.set_ylabel(ylabel,fontsize=10)
@@ -231,7 +243,7 @@ def render(output, snapshot):
                          for dx,dy in [(radius,radius),(-radius,radius),(radius,-radius),(-radius,-radius),
                                        (0,radius),(0,-radius),(radius,0),(-radius,0),
                                        (radius/2,radius),(-radius/2,radius),(radius/2,-radius),(-radius/2,-radius)]]
-                if name in {'quality-cost', 'quality-speed'} and a in {'c', 'c2'}:
+                if name in {'quality-cost', 'quality-speed', 'quality-total-cost'} and a in {'c', 'c2'}:
                     preferred = [(22, 20), (30, 28)] if a == 'c' else [(-22, -20), (-30, -28)]
                     offsets = preferred + offsets
                 placed=False
@@ -260,6 +272,8 @@ def render(output, snapshot):
                 fig.text(.665,.81-i*.041,a+('*' if not snapshot['arms'][a]['final'] else ''),fontsize=9,fontweight='bold',color=color,va='top')
                 fig.text(.70,.81-i*.041,description,fontsize=7.4,va='top',linespacing=1.1,fontweight='bold' if a in frontier else 'normal')
             fig.text(.045,.08,'Cercle doré + nom complet : frontière de Pareto sur ces deux axes (identités complètes, qualité médiane ≥ 15/30).',fontsize=8)
+            if name == 'quality-total-cost':
+                fig.text(.045,.855,f'Par ticket : coût total = coût direct + {hourly_usd:g} × durée / 3 600 ; puis médiane. Toute la durée est valorisée, DNF inclus.',fontsize=8)
             fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Coût et durée en échelle logarithmique.\n'
                      'Coût local = électricité seule ; coût hébergé = API. Les graphiques de significativité utilisent uniquement les identités complètes.',fontsize=8)
             pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
@@ -288,7 +302,10 @@ def main():
     parser.add_argument('--arena',type=Path,default=Path.home()/'arena')
     parser.add_argument('--output',type=Path,default=Path('docs/tournament-graphs'))
     parser.add_argument('--snapshot',type=Path,help='Render from a frozen cleared snapshot, without accessing arena transcripts')
-    args=parser.parse_args();args.output.mkdir(parents=True,exist_ok=True)
+    parser.add_argument('--time-value', type=float, default=1.0, help='USD per hour of elapsed run duration')
+    args=parser.parse_args()
+    if args.time_value < 0:parser.error('time value must be nonnegative')
+    args.output.mkdir(parents=True,exist_ok=True)
     if args.snapshot:
         snapshot=json.loads(args.snapshot.read_text())
     else:
@@ -301,6 +318,7 @@ def main():
                 row=analysis.read_leg(directory,arm)
                 if row['state'] in {'ok','failure'}:legs[directory.name.rsplit('-',1)[0]]=row
             snapshot['legs'][arm]=legs
+    snapshot['time_value_usd_hour'] = args.time_value
     (args.output/'snapshot.json').write_text(json.dumps(snapshot,indent=2)+'\n')
     results=render(args.output,snapshot)
     for axis,r in results.items():print(axis,len(r['edges']),'significant;',len(r['reduced']),'shown;',len(r['holm_edges']),'Holm')

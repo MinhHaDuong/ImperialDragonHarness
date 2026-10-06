@@ -33,3 +33,6 @@ Référence de méthode : [SciPy Wilcoxon](https://docs.scipy.org/doc/scipy/refe
 
 Frontières XY : qualité médiane ≥ 15/30 et observations complètes requises.
 Les modèles sous ce seuil restent visibles, mais ne sont pas admissibles.
+
+Le quatrième XY valorise toute la durée à 1 USD/h : coût direct + durée/3600,
+calculé par ticket avant la médiane. Paramètre reproductible : `--time-value 1`.

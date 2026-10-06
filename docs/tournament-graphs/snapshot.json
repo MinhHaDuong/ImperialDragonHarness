@@ -1271,5 +1271,6 @@
         "cost_usd": 0.0165
       }
     }
-  }
+  },
+  "time_value_usd_hour": 1.0
 }

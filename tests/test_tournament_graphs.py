@@ -56,3 +56,12 @@ def test_pareto_rejects_unusable_quality_even_on_speed_cost():
         'usable': {'final': True, 'quality_median': 15, 'cost_usd_median': 1, 'seconds_median': 100},
     }
     assert graphs.pareto_xy(arms, 'cost_usd_median', 'seconds_median') == {'usable'}
+
+
+def test_total_cost_sums_per_ticket_before_median():
+    legs = {
+        '1': {'cost_usd': 0, 'seconds': 7200},
+        '2': {'cost_usd': 1, 'seconds': 3600},
+        '3': {'cost_usd': 100, 'seconds': 0},
+    }
+    assert graphs.total_cost_median(legs, 1) == 2
