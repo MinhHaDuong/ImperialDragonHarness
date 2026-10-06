@@ -149,7 +149,7 @@ def test_closed_acceptance_ledger_still_carries_the_original_cells():
 
 
 def test_0913_log_carries_the_result():
-    ticket = next(TICKETS.glob("0913-*.erg"))
+    ticket = next((TICKETS / "closed").glob("0913-*.erg"))
     text = ticket.read_text(encoding="utf-8")
     assert "1022" in text
     assert "pass/pass/pass/no-event/pass" in text

@@ -130,7 +130,7 @@ event stream (23 events: thread.started, turn.started, 12 item.completed,
 **Cell S9.codex re-trial verdict: pass.**
 
 **Blocker disposition: channel closed, re-trial passed.** The S9.codex
-blocker on [0913](../../tickets/0913-retire-the-dead-retention-machinery-and.erg)
+blocker on [0913](../../tickets/closed/0913-retire-the-dead-retention-machinery-and.erg)
 downgrades per the author's decision 1. The rollout condition now standing:
 adopting hosts carry no user-level `~/.codex/AGENTS.md`, checked by the
 one-line preflight recorded above. The other recorded 0913 blocker (the
