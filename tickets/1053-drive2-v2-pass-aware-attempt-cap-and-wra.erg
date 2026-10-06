@@ -1,0 +1,34 @@
+%erg 0.1
+Title: drive2 v2: pass-aware attempt cap and wrap-up vram-wait fixes
+Created: 2026-10-06
+Author: MinhHaDuong
+Blocked-by: 1024
+Label: deferred
+
+--- log ---
+2026-10-06T08:43Z MinhHaDuong created
+2026-10-06T09:44Z reviewer label deferred
+2026-10-06T09:44Z reviewer note Author-approved chantier sequence: after tournament tracker1024, deferred driver improvements. Resume only on an explicit author decision; closure of the blocker does not authorize automatic resumption.
+
+--- body ---
+
+## Context
+
+Four harness warts are documented in the 1024 journal (2026-10-06).
+Two are already fixed in code (unloaded assertion local-only;
+judged3 + idempotent judge seats) — keep them fixed. Two remain
+workarounds:
+
+1. MAX_ATTEMPTS is LIFETIME, not per-pass: re-passes need manual
+   runs-void archiving to free poisoned legs. Make the attempt cap
+   pass-aware (a pass context or a cap that resets per driver run).
+2. stop-arm.sh vram-wait polls BOTH GPUs under 800/600 MiB while arm
+   A's resident server legitimately holds VRAM: every stop burns its
+   full 180s and a wrap-up takes ~15 min. Make vram-wait scoped to the
+   arms actually being torn down (exclude the arm being kept).
+
+## Exit criteria
+
+- [ ] Both fixes in, with a smoke pass on 0470 to verify no regression
+- [ ] A re-pass observed to free legs without manual archiving
+- [ ] Wrap-up observed under 2 min with arm A resident

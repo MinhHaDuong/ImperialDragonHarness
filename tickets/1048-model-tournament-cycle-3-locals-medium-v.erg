@@ -1,0 +1,51 @@
+%erg 0.1
+Title: Model tournament cycle 3: locals @medium vs hosted flash, profile-hot strata
+Created: 2026-10-06
+Author: MinhHaDuong
+Blocked-by: 1053
+Label: deferred
+
+--- log ---
+2026-10-06T08:43Z MinhHaDuong created
+2026-10-06T09:44Z reviewer label deferred
+2026-10-06T09:44Z reviewer note Author-approved chantier sequence: cycle3 after driver improvements1053, deferred experimentation. Resume only on an explicit author decision; this cycle is not a prerequisite for the current research PDF or blog posts.
+
+--- body ---
+
+## Context
+
+Cycle 3 as pre-registered in the concept note (sect. 8) and the 1024
+journal: the local flash-next family at EXPLICIT @medium vs the hosted
+lineage twin.
+
+## Arms
+
+- Local, all three quant versions COUNT (the Coder IQ1_M too): b2 IQ3_S,
+  b3 Q2_0, Coder IQ1_M, @medium explicit — effort = identity, so this
+  is a NEW identity for each (smoke first, then legs).
+- Hosted: qwen3.8-flash — the PRODUCTION sibling of flash-next (same
+  architecture, served build vs open-weights preview — NOT the same
+  weights; label it "lineage twin" in every table) at @default(xhigh)
+  and @medium.
+- Route: DIRECT DashScope via a custom pi provider (QWEN_API_KEY_AEDIST
+  on dashscope-intl; key live, 172 models). flash-next is NOT served
+  anywhere as of 2026-10-06 — recheck the catalog at launch; if it
+  appears, take the true twin instead.
+
+## Strata optimization (the answer to "which local branch")
+
+Enable --expert-profile-save on the Strata arms for this cycle: the
+merged-but-dormant lever (+14-31% decode from cache-hit 69.6% -> 96%+),
+fresh profiles per model, mind trap #831 (the loaded profile's length
+caps the expert arena). This is the Strata optimization that ships now;
+the Hardin22 dual-GPU decode cluster is NOT merged upstream — track it,
+do not wait for it. The engine duel (llama.cpp vs Strata on flash-next)
+needs a viable llama.cpp GGUF (~110G Unsloth class — verify before
+declaring that arm; defer if nothing good exists).
+
+## Exit criteria
+
+- [ ] Arms + hypotheses pre-registered before the first leg (concept note sect. 8)
+- [ ] Smoke 0470 on every new arm before real legs
+- [ ] Pass complete; paired multidimensional analysis (analyze2.py)
+- [ ] skills/route grid.json updated from cycle data only

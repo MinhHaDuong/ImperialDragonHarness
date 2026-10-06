@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Judge panel sensitivity: does removing one judge change the conclusions
+Created: 2026-10-06
+Author: MinhHaDuong
+Label: deferred
+
+--- log ---
+2026-10-06T09:57Z MinhHaDuong created
+2026-10-06T09:57Z reviewer label deferred
+
+--- body ---
+
+## Context
+
+The arena's quality axis rests on a 3-seat panel (gemini / grok /
+minimax, one rubric, lineage-decorrelated). Unanswered: how sensitive
+are the cycle conclusions to one seat?
+
+## Scope
+
+- Leave-one-judge-out analysis on the complete cycle-1+2 data
+  (~420 seat verdicts, all in ~/arena/runs/*/judges/): recompute the
+  grid, the paired verdicts (H1/H2, effort axes, cross-camp) and the
+  cluster table with each seat removed, and with all pairs.
+- Identify: does ANY single seat's removal flip a conclusion? Which
+  seat is most load-bearing? Which is most divergent (and is the
+  divergence systematic — e.g., a leniency bias, as suspected in the
+  2026-10-05 panel-comparison of gemini-flash)?
+- If one seat is dispensable, the panel cost drops by a third.
+
+## Exit criteria
+
+- [ ] Leave-one-out recomputation scripted (reproducible, not hand-work)
+- [ ] Per-conclusion stability table: which verdicts flip, which hold
+- [ ] Verdict recorded: panel composition recommendation for cycle 3
