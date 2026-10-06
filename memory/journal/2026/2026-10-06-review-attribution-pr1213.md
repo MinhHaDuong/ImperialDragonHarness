@@ -1,0 +1,34 @@
+kind: review-attribution
+pr: 1213 · merged 2026-10-06 · project: .agents
+writer: runtime=codex · model=openai/gpt-6-sol · effort=medium
+reviewer: seat=adherence-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
+reviewer: seat=correctness-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
+  finding: verifiable · memory/journal/2026/2026-10-05-review-attribution-pr1205.md:8 · adopted: yes
+reviewer: seat=consistency-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
+  finding: verifiable · memory/journal/2026/2026-10-05-review-attribution-pr1205.md:8 · adopted: yes
+  finding: verifiable · memory/journal/2026/2026-10-05-review-attribution-pr1206.md:16 · adopted: yes
+reviewer: seat=doc-propagation-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
+  finding: verifiable · memory/journal/2026/2026-10-05-review-attribution-pr1205.md:8 · adopted: yes
+  finding: verifiable · memory/journal/2026/2026-10-05-review-attribution-pr1206.md:16 · adopted: yes
+reviewer: seat=native-round1 · runtime=codex-cli-0.160.0 · model=openai/gpt-6-luna · status: ran
+reviewer: seat=correctness-round2 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
+reviewer: seat=consistency-round2 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
+reviewer: seat=doc-propagation-round2 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
+reviewer: seat=native-round2 · runtime=codex-cli-0.160.0 · model=openai/gpt-6-luna · status: ran
+reviewer: seat=fresh-regression-round2 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
+reviewer: seat=portable-simplification · runtime=codex · model=openai/gpt-6.1-sol · status: ran
+reviewer: seat=criterion-gate-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
+
+PR1213 repaired six delayed factual captures (1191,1202,1203,1205,1206,1207) and audited eighteen merges through explicit historical cutoff c917715ae4252c674e063069db31ea57de20d3c5. All thirteen earlier records were byte-preserved. Source writer actual openai/gpt-6-sol/medium is established by retained runtime metadata. Initial head133957887ce3cb0cc6b65fb14106910cddbadbb3 was reviewed by two fresh core contexts, reused root Doc and a separate native CLI process. Correctness caught the PR1205 portable reviewer model error; Consistency and Doc also caught the mislabeled PR1206 stop-report URL. Both facts were corrected by the same source producer at41d27e1fb4082120aeb98d0db8c132a33c0d6385 and confirmed by both original objectors, Doc, a fresh regression context and genuine native review. The two anchors above are shared catches, not five different defects.
+
+Actual internal reviewer contexts used openai/gpt-6.1-sol/medium, except reused root manual Doc openai/gpt-6.1-sol/low. Both native processes expose CLI0.160.0/openai/gpt-6-luna/medium, exit0 CLEAN; neither claims a passing test suite. Runtime metadata and retained native headers establish these identities independently of requested profile pins. All named attempts share a provider; no provider independence or exposed model revision is claimed. The distinct portable pass considered four simplification candidates and was CLEAN without changes. Required final full check passed1495 tests,2 skipped in40.38s on41d27e1; adherence passed171.
+
+Original Gaze started2026-10-05T19:43:09.752882Z. Its1800-second cap expired before the independent gate completed at20:13:26.659443Z. The gate addressed all three technical criteria with empty unresolved lists, but its terminal verdict is ESCALATE. Public stop6002142943 preserves that result; the later author override6002224564 explicitly lifted the time-limit stop and authorized automerge. No retrospective technical APPROVED Gaze is claimed. Actual public initial review5419798021 required both facts; follow-up5419940103 confirmed them on41d27e1. Initial and corrected reports remain separately retained.
+
+Ticket-aware merge helper stopped before mutation because CI was pending;1037 was already closed and archived in the reviewed branch. Author-requested GitHub automerge was enabled2026-10-05T20:20:26Z on the exact reviewed head, with required ruleset checks enforced. Six CI jobs passed and four were cancelled before starting. On2026-10-06, an explicitly requested retry reran the cancelled jobs, all ten checks succeeded, and automerge landed at02:49:50Z as6f976c338f90f14f3fd3213822f69769f35641dc. The current integration base also contains concurrent project merges outside the historical audit cutoff; this record does not extend that audit claim or close1032/1009/1004.
+
+Roar verified1037's archived Closed header; parent1032 remains open. The close-claim sweep examined40 merged PRs,29 claims across23 PRs,17 explicit no-close and zero unrecognised bodies/findings. The current-ref sweep parsed all nineteen existing records without malformed or duplicate evidence. PR1211 has an explicitly documented capture failure tracked by1038: runtime model identifiers are masked. The range query also visibly reports absent records for1204,1208,1210 and1214; their identities are not reconstructed here. PR1190 remains the documented mechanical-only warning. These later gaps remain for1032's fresh integration audit; the six completed captures stay intact. No existing reviewed finding anchor was fixed by an old-side hunk in this delayed-capture merge, so no commissioned post-merge defect backfill or defect-confirmed event is fabricated.
+
+Public evidence: https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1213 ; initial review https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1213#pullrequestreview-5419798021 ; follow-up https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1213#pullrequestreview-5419940103 ; stop https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1213#issuecomment-6002142943 ; author override https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1213#issuecomment-6002224564 . Complete local review artifacts and native logs are retained in the owned raid evidence archive. This factual capture preserves the original stop and later explicit override; it proposes no rule or memory promotion.
+
+Post-merge Roar integration check on the isolated actual6f976c33 tree passed1494 tests,2 skipped in42.74s. The ticket corpus check passed549 tickets with531 historical advisory warnings;1037 and1032 format validation passed. The attribution query after capture has20 valid records; PR1213 is available at the explicit6f976c33 cutoff, with the six previously reported missing entries still visible. No primary worktree edits were changed or included.
