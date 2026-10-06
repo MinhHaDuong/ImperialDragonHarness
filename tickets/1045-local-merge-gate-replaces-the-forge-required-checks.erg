@@ -5,6 +5,7 @@ Author: Claude
 
 --- log ---
 2026-10-06T08:45Z Claude created
+2026-10-06T08:39Z Claude note The "created" time above was estimated, not read: it is later than the real creation (the PR merged before 08:39Z). Added the trust principle (no open door, traceability instead), the parallel and background-merge criteria, and where the local CI runs.
 
 --- body ---
 ## Context
@@ -26,6 +27,12 @@ Decided on 2026-10-06, so not to be reopened here:
   waiting is preferred to bypassing.
 - A `pre-push` hook calling the local runner (option A) is dropped: it adds a
   slower run than the forge's, records nothing and is skipped by `--no-verify`.
+- Trust is a base principle of IDH, so the gate leaves no open door: no bypass,
+  no unguarded path to `main`. What it must add is traceability: what was run,
+  when, by whom, on which machine and revision. A record is a statement that can
+  be traced, not proof; the aim is that nothing happens untraceably.
+- Where the local CI runs: padme when it is reachable (skill `merge`, section
+  "Before merging"), else the current host, named in the output.
 
 Draft design, reviewed once by an independent reviewer (gpt-6.1-sol, medium,
 read-only): `docs/2026-10-05-merge-gate-spec.md`. Its vocabulary replaces "CI":
@@ -65,15 +72,28 @@ review as its own ticket; this one is blocked on its outcome.
 2. Whether this is built in the harness first or as dyne (git-erg tickets
    0272/0273 define the `%dyne` format and `dyne merge`); the harness script is
    then a stand-in.
-3. Which checks the gate runs, given the prerequisite; and the claim that a
-   record written on the author's own machine is a self-declaration, accepted
-   only because there are no contributors.
+3. Which checks the gate runs, given the prerequisite; and how the record names
+   who ran it (a human, or an agent with its model and runtime where known)
+   without claiming to authenticate it. The harness already captures attribution
+   (`scripts/attribution_record.py`, tickets 1032 to 1038): reuse it rather than
+   invent a format. How it would plug in has not been checked.
 
 ## Exit criteria
 
 - [ ] The content review of the CI is filed and done, or this ticket records why
       it is not needed.
 - [ ] The open decisions above are settled and written down.
+- [ ] Each record names the time, the actor, the host, the revision checked, the
+      command and its scope, and the tool versions: enough to answer "what was
+      run, when, by whom" after the fact.
+- [ ] The local checks run their jobs in parallel, with a concurrency of
+      `min(jobs, nproc / 2)` (this host reports 24 threads, 12 cores; the author
+      has a 32-core upgrade on order, not delivered). Each job has its own clone.
+      The negative controls are re-run under parallelism before it is called
+      safe: one infrastructure failure was seen when two runners shared the host,
+      cause not established (a clash of container names is a hypothesis).
+- [ ] The merge is made in the background once the gate passes, as the forge's
+      auto-merge does, so waiting costs no attention.
 - [ ] `/merge` refuses a branch with no record on its candidate commit, and a
       positive control shows it accepts one.
 - [ ] A hook refuses an update of `main` that is not a gated merge, verified from
