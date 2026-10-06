@@ -30,3 +30,6 @@ nécessaire. Pour un nouvel instantané, omettre `--snapshot` et fournir
 `--arena ~/arena`.
 
 Référence de méthode : [SciPy Wilcoxon](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html).
+
+Frontières XY : qualité médiane ≥ 15/30 et observations complètes requises.
+Les modèles sous ce seuil restent visibles, mais ne sont pas admissibles.

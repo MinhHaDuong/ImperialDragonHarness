@@ -48,3 +48,11 @@ def test_pareto_uses_axis_direction_and_excludes_provisional():
         'd': {'final': False, 'quality_median': 30, 'cost_usd_median': 0},
     }
     assert graphs.pareto_xy(arms, 'cost_usd_median', 'quality_median') == {'a','b'}
+
+
+def test_pareto_rejects_unusable_quality_even_on_speed_cost():
+    arms = {
+        'bad': {'final': True, 'quality_median': 14.99, 'cost_usd_median': .01, 'seconds_median': 1},
+        'usable': {'final': True, 'quality_median': 15, 'cost_usd_median': 1, 'seconds_median': 100},
+    }
+    assert graphs.pareto_xy(arms, 'cost_usd_median', 'seconds_median') == {'usable'}

@@ -102,7 +102,8 @@ def holm(rows):
 
 def pareto_xy(arms, xkey, ykey):
     """Two-axis frontier of complete identities; quality up, resources down."""
-    eligible = {a: r for a, r in arms.items() if r['final'] and r.get(xkey) is not None and r.get(ykey) is not None}
+    eligible = {a: r for a, r in arms.items() if r['final'] and r.get('quality_median') is not None and r['quality_median'] >= 15
+                and r.get(xkey) is not None and r.get(ykey) is not None}
     def dominates(x, y):
         advantages = [(x[k] - y[k]) * (1 if k == 'quality_median' else -1) for k in [xkey, ykey]]
         return all(v >= 0 for v in advantages) and any(v > 0 for v in advantages)
@@ -255,7 +256,7 @@ def render(output, snapshot):
                 color='#ea580c' if not snapshot['arms'][a]['final'] else '#2563eb' if a in analysis.LOCAL else '#059669'
                 fig.text(.665,.81-i*.041,a+('*' if not snapshot['arms'][a]['final'] else ''),fontsize=9,fontweight='bold',color=color,va='top')
                 fig.text(.70,.81-i*.041,description,fontsize=7.4,va='top',linespacing=1.1,fontweight='bold' if a in frontier else 'normal')
-            fig.text(.045,.08,'Cercle doré + nom complet : frontière de Pareto sur ces deux axes (identités complètes seulement).',fontsize=8)
+            fig.text(.045,.08,'Cercle doré + nom complet : frontière de Pareto sur ces deux axes (identités complètes, qualité médiane ≥ 15/30).',fontsize=8)
             fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Coût et durée en échelle logarithmique.\n'
                      'Coût local = électricité seule ; coût hébergé = API. Les graphiques de significativité utilisent uniquement les identités complètes.',fontsize=8)
             pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
