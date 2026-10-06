@@ -7,6 +7,7 @@ Closed: Typed runtime-masked capture preserves unknowable identities and resolve
 --- log ---
 2026-10-06T02:47Z reviewer created
 2026-10-06T03:34Z reviewer closed — Typed runtime-masked capture preserves unknowable identities and resolves PR1211 pending evidence
+2026-10-06T03:49Z reviewer note verify-reroll — round 1: PR1211 reviewer masks cite pinning-only evidence instead of attempt-linked identity concealment
 
 --- body ---
 ## Context
