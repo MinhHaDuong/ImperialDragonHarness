@@ -187,16 +187,24 @@ A useful default is:
 | team lead | standard | standard |
 | executor | auto | economy |
 | mechanical helper | cheap | economy |
-| hard-tail escalation | frontier | intensive |
+| hard-tail escalation (advisor) | frontier | standard (`intensive` rarely) |
 
 This expresses the fan-out economics without claiming that all workers are easy.
 
-The hard-tail row is a **one-shot advisor call**, not a standing setting
-(author, 2026-10-06). A `frontier` model at `intensive` effort answers a single
-deep, well-defined problem with a self-contained brief: a ticket that can be
-neither done nor split, a review of a scientific argument and its methods, or a
-design review of a critical feature. It is never the setting of an orchestrator,
-a team lead or a fan-out member.
+Two separate rules govern the hard-tail row (author, 2026-10-06). Class and
+effort are orthogonal: the class buys depth of judgment, the effort buys thinking
+duration.
+
+The `frontier` class is a **one-shot advisor call**, not a standing setting. It
+answers a single deep, well-defined problem with a self-contained brief: a ticket
+that can be neither done nor split, a review of a scientific argument and its
+methods, or a design review of a critical feature. It is never the setting of an
+orchestrator, a team lead or a fan-out member.
+
+`intensive` effort is rarely paired with `frontier`: the pairing makes costs run
+away for marginal judgment. `intensive` is not a frontier property; it is the
+default strategy of some model families (the author reports the Qwen 3.8 family,
+which makes up for its size with long thinking).
 
 The MOE row is a recommendation to the author, not a setting: the interface
 session's model is chosen when the session starts, and IDH cannot pin it.
@@ -290,8 +298,8 @@ Escalation operates on the portable controls:
 ```text
 alternative approach
     -> model-level +1
-    -> standard effort
-    -> intensive effort / frontier
+    -> frontier, as a one-shot call
+    -> intensive effort (rarely: cost)
     -> stop / author
 ```
 

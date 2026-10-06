@@ -33,7 +33,8 @@ advisor class for difficult judgments; no fixed runtime profile is required.
 - **Execute:** coding worker class, `model-level: strong`, `effort: standard`
   for difficult repository mutations; use a cheaper class for bounded tasks.
 - **Advisor:** smartest available advisor class, `model-level: frontier`,
-  `effort: intensive`, as a one-shot call with a self-contained brief on a
+  `effort: standard` (`intensive` only rarely: it multiplies cost for marginal
+  judgment), as a one-shot call with a self-contained brief on a
   deep, well-defined problem: a ticket that can be neither done nor split, a
   review of a scientific argument and its methods, or a design review of a
   critical feature. Never a standing setting of the orchestrator or a fan-out
