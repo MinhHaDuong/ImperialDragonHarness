@@ -15,3 +15,5 @@ L’annonce donne **1,36 USD en entrée et 4,18 USD en sortie par million de tok
 Nous avons lancé les **neuf autres tâches en parallèle**, sur les mêmes bases de code historiques et avec les mêmes critères que les autres modèles. Le premier résultat est conservé. Chaque production sera évaluée à l’aveugle ; nous comparerons ensuite qualité, durée et coût ticket par ticket. Un dépassement du budget de temps compte comme un échec ; une panne de fournisseur exige un rejeu.
 
 Cette série nous dira si Mistral Large 4 trouve une place sur la frontière qualité/coût de nos outils de travail. À ce stade, nous avons un premier résultat et une expérience en cours. Le classement attendra les dix tâches.
+
+*Actualisation pendant le test : cinq tâches ont abouti par l’API native ; les cinq autres ont été interrompues par des erreurs de service. Elles sont relancées en parallèle via OpenRouter, qui ne propose actuellement que Mistral comme fournisseur pour ce modèle. Nous distinguerons les deux routes dans les résultats : disponibilité du service et qualité du modèle sont deux mesures différentes.*

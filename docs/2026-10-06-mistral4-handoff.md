@@ -34,3 +34,13 @@ not OpenRouter. The official model card inspected in this session also
 shows0.68/0.07/2.09 with crossed-out regular rates; this does not establish
 an invoice. Retain the registered calculation scenario and mark native
 billing reconciliation pending. Do not infer native pricing from OR alone.
+
+At20:29Z, recurring provider errors satisfy the author's conditional
+instruction to change route. Native m remains unchanged: five OK legs
+with three judges and five provider-incident legs. Five parallel relaunches
+0211/0233/0452/0874/1372 use separate arm mo, provider openrouter, exact
+model mistralai/mistral-large-4-0, Pi off. Initial model-change events match
+all five sessions; no provider errors observed at launch. A direct probe
+with reasoning none and fallback disabled returned OK from Mistral. No
+fallback model is configured in the arena. Native and OR route data must
+not be pooled as a single homogeneous ten-ticket identity.
