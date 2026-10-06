@@ -12,9 +12,9 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 if __package__:
-    from .attribution_record import parse_record
+    from .attribution_record import parse_record, runtime_masked
 else:
-    from attribution_record import parse_record
+    from attribution_record import parse_record, runtime_masked
 
 LOG = logging.getLogger(__name__)
 RECORD_NAME = re.compile(r"\d{4}-\d{2}-\d{2}-review-attribution-pr([1-9][0-9]*)(\.md|\.age|\.md\.age)$")
@@ -134,6 +134,11 @@ def read_records(project):
     counts['ambiguous_records'] = len(ambiguous_paths)
     records = [record for pr, record in sorted(candidates.items()) if pr not in unavailable_prs]
     counts['valid'] = len(records)
+    counts['runtime_masked'] = sum(runtime_masked(record) for record in records)
+    counts['model_attributable'] = counts['valid'] - counts['runtime_masked']
+    for record in records:
+        if runtime_masked(record):
+            LOG.warning('WARN PR %s: runtime-masked identity; whole game excluded from model estimates', record['pr'])
     if not records:
         LOG.warning('WARN %s: no attribution records available', journal)
     return records, counts, unavailable_prs
@@ -159,6 +164,8 @@ def derive(records):
     scores = {}
     pairs = {}
     for record in records:
+        if runtime_masked(record):
+            continue
         writer = identity_key(record['writer'], WRITER_FIELDS)
         labeled = bool(record['defect_labels'])
         identities = game_attempts(record)
@@ -229,9 +236,10 @@ def coverage(project, since, until, records, unavailable_prs):
         LOG.warning('%s', completed.stderr.rstrip())
     merges = [json.loads(line) for line in completed.stdout.splitlines()]
     valid_prs = {record['pr'] for record in records}
+    masked_prs = {record['pr'] for record in records if runtime_masked(record)}
     for merge in merges:
         pr = merge['pr']
-        merge['attribution'] = ('available' if pr in valid_prs else 'unavailable' if pr in unavailable_prs
+        merge['attribution'] = ('runtime-masked' if pr in masked_prs else 'available' if pr in valid_prs else 'unavailable' if pr in unavailable_prs
                                 else 'missing' if pr is not None else 'unknown-pr')
         if merge['attribution'] != 'available':
             LOG.warning('WARN merge %s PR %s: %s attribution evidence', merge['merge_sha'], pr, merge['attribution'])

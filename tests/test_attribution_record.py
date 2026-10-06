@@ -163,3 +163,62 @@ def test_capture_round_trip_and_invalid_record_writes_nothing(tmp_path):
                          text=True, capture_output=True, env=child_env())
     assert bad.returncode != 0
     assert not list(project.glob("memory/journal/*/*pr1165*"))
+
+
+MASK = 'model-state=runtime-masked · model-evidence=memory/pending-capture-pr1211.md.txt:3'
+
+
+def test_typed_mask_preserves_facts_without_inventing_identity(reader):
+    text = RECORD.replace('model=example/writer-v1', MASK).replace('model=example/reviewer-v1', MASK)
+    parsed = reader.parse_record(text)
+    assert reader.runtime_masked(parsed)
+    assert 'model' not in parsed['writer']
+    assert parsed['writer']['model-evidence'].endswith(':3')
+    assert parsed['defect_labels'] == ['scripts/example.py:12']
+    assert len(parsed['reviewers']) == 3
+
+
+@pytest.mark.parametrize('mask', [
+    'model-state=unknown · model-evidence=evidence.md:1',
+    'model-state=runtime-masked',
+    MASK + ' · model=example/writer-v1',
+    MASK + ' · model-version=v1',
+    'model-state=runtime-masked · model-evidence=../evidence.md:1',
+    'model-state=runtime-masked · model-evidence=/evidence.md:1',
+    'model-state=runtime-masked · model-evidence=evidence.md:0',
+    'model=runtime-masked',
+])
+def test_mask_requires_exclusive_typed_evidence(reader, mask):
+    with pytest.raises(ValueError):
+        reader.parse_record(RECORD.replace('model=example/writer-v1', mask))
+
+
+@pytest.mark.integration
+def test_masked_capture_query_round_trip(tmp_path):
+    project = tmp_path / 'project'
+    subprocess.run(['git', 'init', '--quiet', str(project)], env=child_env(), check=True)
+    text = RECORD.replace('model=example/writer-v1', MASK)
+    captured = subprocess.run(['python3', str(SCRIPT), '--capture', str(project), '--audience', 'public'],
+                              input=text, text=True, capture_output=True, env=child_env())
+    assert captured.returncode == 0, captured.stderr
+    queried = subprocess.run(['python3', str(ROOT / 'scripts/attribution_query.py'), str(project), '--json'],
+                             text=True, capture_output=True, env=child_env(), check=True)
+    data = json.loads(queried.stdout)
+    assert data['records']['valid'] == data['records']['runtime_masked'] == 1
+    assert data['records']['model_attributable'] == 0
+    assert data['scores'] == data['pairs'] == []
+    assert 'runtime-masked' in queried.stderr
+
+
+def test_pr1211_preserves_all_original_attempts_and_draft(reader):
+    draft = (ROOT / "memory/pending-capture-pr1211.md.txt").read_text().split("\n\nResolution (1038", 1)[0]
+    text = (ROOT / "memory/journal/2026/2026-10-06-review-attribution-pr1211.md").read_text()
+    parsed = reader.parse_record(text)
+    assert len(parsed["reviewers"]) == 15
+    assert reader.runtime_masked(parsed)
+    assert all(attempt["status"] == "ran" for attempt in parsed["reviewers"])
+    normalized = draft.replace("finding: blocker", "finding: verifiable")
+    assert [line for line in text.splitlines() if line.startswith("  finding:")] == [
+        line for line in normalized.splitlines() if line.startswith("  finding:")]
+    assert "HOME-clobber incident" in text
+    assert text.count("#pullrequestreview-") == 3

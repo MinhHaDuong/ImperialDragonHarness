@@ -2,9 +2,11 @@
 Title: Attribution capture cannot state the writer model id on the Vibe runtime
 Created: 2026-10-06
 Author: reviewer
+Closed: Typed runtime-masked capture preserves unknowable identities and resolves PR1211 pending evidence
 
 --- log ---
 2026-10-06T02:47Z reviewer created
+2026-10-06T03:34Z reviewer closed — Typed runtime-masked capture preserves unknowable identities and resolves PR1211 pending evidence
 
 --- body ---
 ## Context
@@ -28,14 +30,14 @@ preserved at memory/pending-capture-pr1211.md.txt on branch
 roar/0887-activation-wrapup.
 
 ## Exit criteria
-- [ ] A session running on the Vibe runtime can obtain its verbatim
+- [x] A session running on the Vibe runtime can obtain its verbatim
       provider-qualified model id (and per-seat ids for spawned subagents)
       through a sanctioned, durable source: a CLI flag, an environment
       variable, or a field in the session logs that today masks it as
       "configured" — or the attribution contract and validator gain an
       explicitly modeled "runtime-masked" fact that keeps re-audition
       honestly impossible rather than silently wrong.
-- [ ] The PR #1211 attribution record is captured from the then-available
+- [x] The PR #1211 attribution record is captured from the then-available
       facts, or the pending capture is explicitly resolved as impossible.
 
 ## Invariants
@@ -51,3 +53,19 @@ Named grammar unchanged. Masked identities carry model-state=runtime-masked and 
 
 ## Raid feasibility (2026-10-06)
 Independent interface/artifact review PASS with bounded sequencing WARN. Existingparser/query/backfill interfaces support typed masks;87relevantchecks passed. Add maskedbackfill temporarypositivecontrol. Ten1038paths belowbreaker;1042capturebudget recount afteractual1038merge;1032elevenpaths pluscoverage,1004separate.1204actualsafeproduceridentitycandidate requires source-role/PRlinkage, not inferentialfill. Serialwaves needno3PRsharedregistry. Initialrestrictedbaseline errors includeGit/sockets/toolaccess, so repeat gate withrequiredlocalaccess beforedeclaringbaseline. Parentclosures remainconditional, noexitdrift.
+
+## Implementation evidence (2026-10-06)
+Typed runtime-masked facts require durable repository-relative evidence and
+forbid model/model-version; named model grammar still rejects placeholders.
+The shared runtime_masked helper excludes every affected PR game from derived
+model estimates, with separate valid/runtime_masked/model_attributable counts
+and explicit runtime-masked range coverage warnings. PR1211's 15 actual
+attempts are captured at memory/journal/2026/2026-10-06-review-attribution-pr1211.md;
+the original pending draft is preserved and resolution appended, with blocker
+severity normalized explicitly to verifiable and three durable synthesis URLs.
+Red check-fast: four intended behavior failures, 922 passes. Final fast:
+926 passes. Targeted parser/query/Roar:65 passes. Existing parser/query/backfill
+baseline plus mask behavior:99 passes before final factual regression addition.
+Temporary masked-backfill positive control preserved all bytes and appended
+only the confirmed event. Mechanical adherence:171 passes. Semantic adherence
+and full pre-PR gate evidence will be reported in the PR.
