@@ -7,7 +7,7 @@ argument-hint: '[ticket-ids or "all open"]'
 model-level: standard
 ---
 
-Requested effort: `effort: intensive`.
+Requested effort: `effort: standard`.
 
 # Raid $ARGUMENTS — Imperial Dragon hunt
 
@@ -33,7 +33,11 @@ advisor class for difficult judgments; no fixed runtime profile is required.
 - **Execute:** coding worker class, `model-level: strong`, `effort: standard`
   for difficult repository mutations; use a cheaper class for bounded tasks.
 - **Advisor:** smartest available advisor class, `model-level: frontier`,
-  `effort: intensive`, for exceptional decisions and hard-tail escalation.
+  `effort: intensive`, as a one-shot call with a self-contained brief on a
+  deep, well-defined problem: a ticket that can be neither done nor split, a
+  review of a scientific argument and its methods, or a design review of a
+  critical feature. Never a standing setting of the orchestrator or a fan-out
+  member.
 - **Per-ticket `/gaze`:** respect that skill's declared reviewer intentions.
 
 Choose the least expensive class adequate for the responsibility. Raise the

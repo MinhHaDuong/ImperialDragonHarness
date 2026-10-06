@@ -191,6 +191,13 @@ A useful default is:
 
 This expresses the fan-out economics without claiming that all workers are easy.
 
+The hard-tail row is a **one-shot advisor call**, not a standing setting
+(author, 2026-10-06). A `frontier` model at `intensive` effort answers a single
+deep, well-defined problem with a self-contained brief: a ticket that can be
+neither done nor split, a review of a scientific argument and its methods, or a
+design review of a critical feature. It is never the setting of an orchestrator,
+a team lead or a fan-out member.
+
 The MOE row is a recommendation to the author, not a setting: the interface
 session's model is chosen when the session starts, and IDH cannot pin it.
 
@@ -387,6 +394,17 @@ quality from traces, not assumed.
    the runtime exposes it.
 9. `auto` never resolves to the caller's model on a runtime without a router;
    an adapter test demonstrates this against the Claude adapter.
+
+Status 2026-10-06 (author decision, ticket 0974): invariants 4, 7 and 9 are
+**waived in writing**. The harness holds no live translation code: the Phase 0
+dry-run class `ClaudeMapping` had no caller outside its own tests and is removed,
+because the runtime owns translation (2026-10-01). Invariants 4 and 9 stay true
+as rule text only (`rules/claude-code.md`: pin a model on every fan-out launch)
+plus the text-level test `test_fanout_skill_bodies_declare_model_level`; nothing
+executable states that `auto` never resolves to the caller's model. Invariant 6
+is settled by the one-shot rule in § Default role policy, with no test. Invariant
+8 is attached to Phase 5. Invariant 1 is partial (text-level only); invariant 5
+is uncovered.
 
 ## Non-goals
 
