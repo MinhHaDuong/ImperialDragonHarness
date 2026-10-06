@@ -138,7 +138,7 @@ clone with origin removed. From the session record (sha256 above):
 **Blocker disposition: pi re-run performed on the local provider; all
 five re-run cells pass or no-event for pi-with-qwen3.8-27b under the
 declared changed input.** The pi re-run blocker on
-[0913](../../tickets/0913-retire-the-dead-retention-machinery-and.erg) is
+[0913](../../tickets/closed/0913-retire-the-dead-retention-machinery-and.erg) is
 resolved by this ticket; together with the S9.codex channel closure
 (ticket 1019), no acceptance-trial blocker remains recorded on 0913's
 gate. The metered huggingface/Kimi-K2.6 leg itself was never re-run

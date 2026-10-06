@@ -116,7 +116,7 @@ def test_closed_acceptance_ledger_still_carries_the_original_fail():
 
 
 def test_0913_log_carries_the_result_and_the_standing_condition():
-    ticket = next(TICKETS.glob("0913-*.erg"))
+    ticket = next((TICKETS / "closed").glob("0913-*.erg"))
     text = ticket.read_text(encoding="utf-8")
     assert "channel closed, re-trial passed" in text
     assert "no user-level ~/.codex/AGENTS.md" in text

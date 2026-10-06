@@ -30,7 +30,7 @@ seven deferred workpackages 0908, 0912, 0914, 0915, 0919, 0921, 0922 (plan
 line 49). No silent drops.
 
 0913 is neither delivered nor closed: the author's scope decision of
-2026-10-02, recorded verbatim in [0913's log](../../tickets/0913-retire-the-dead-retention-machinery-and.erg),
+2026-10-02, recorded verbatim in [0913's log](../../tickets/closed/0913-retire-the-dead-retention-machinery-and.erg),
 keeps it open — "SCOPE DECISION (author, 2026-10-02, on the predeclared
 No-rollout verdict from PR #1142): 0913 stays open as the standing rollout
 workpackage, gated on the recorded blockers — codex's native-note
@@ -141,7 +141,7 @@ Verdict: MET.
   same boundaries (no TTL, no automatic promotion, no second index writer),
   same deferred set.
 - F3 — the per-machine key story (author decision of 2026-10-02, recorded
-  in [0913's log](../../tickets/0913-retire-the-dead-retention-machinery-and.erg)):
+  in [0913's log](../../tickets/closed/0913-retire-the-dead-retention-machinery-and.erg)):
   private capture uses one age X25519 identity per project, derived from
   the repository's normalized origin URL, stored under `~/.config/keys`
   and never tracked; per-machine keys stand, and the cross-machine
