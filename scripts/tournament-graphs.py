@@ -177,7 +177,23 @@ def render(output, snapshot):
             dot.append(f'{a} -> {b} [label="p={r["p"]:.4f}; n={r["n"]}", penwidth={r["line_width"]:.3f}];')
         dot.append('}')
         (output / f'{metric}.dot').write_text('\n'.join(dot)+'\n')
-    with PdfPages(output / 'comparaisons-modeles.pdf', metadata={'Title': 'Tournoi : comparaisons appariées à 95 %', 'Author': 'Minh Ha Duong', 'Subject': 'Qualité, vitesse et coût ; réduction transitive'}) as pdf:
+    with PdfPages(output / 'comparaisons-modeles.pdf', metadata={'Title': 'Qualité, vitesse et coût des LLM pour la recherche', 'Author': 'Minh Ha Duong', 'Subject': 'Qualité, vitesse et coût ; réduction transitive'}) as pdf:
+        fig=plt.figure(figsize=(11.6929,8.2677))
+        fig.text(.06,.91,'Qualité, vitesse et coût des LLM pour la recherche',fontsize=22,fontweight='bold')
+        fig.text(.06,.85,f'Intercomparaison avec Pi et Imperial Dragon Harness, {snapshot["generated_at"][:10]}',fontsize=13)
+        fig.text(.06,.10,'minh.ha-duong@cnrs.fr',fontsize=12)
+        fig.text(.06,.78,'Dix tickets tirés au hasard dans l’historique des projets de l’auteur.\nDes modèles locaux et hébergés reprennent les mêmes tâches ; trois juges notent les résultats sur 30.\nNous comparons leur qualité, leur durée et leur coût, ainsi que le poids des incidents et des reprises.',
+                 fontsize=12,linespacing=1.6,va='top')
+        findings=[
+            ('Le saut générationnel', 'Le saut générationnel entre Qwen 3.6 et Qwen 3.8 porte les modèles ouverts exécutés\nlocalement au niveau de qualité des modèles commerciaux hébergés sur les tâches\nde cet échantillon.'),
+            ('La contrainte du local', 'Sur la workstation testée, la lenteur et la nécessité de sérialiser les tâches sur les GPU\nlimitent fortement l’usage interactif, tandis que les API permettent des flux de travail\nfortement parallélisés.'),
+            ('Mistral Large 4 en version beta', 'Mistral Large 4, annoncé le 6 octobre 2026, est prometteur en qualité, mais les incidents\nd’hébergement et les boucles observées dans son intégration au runtime Pi pénalisent\nencore sa fiabilité, sa vitesse et son coût.')]
+        y=.61
+        for heading,text in findings:
+            fig.text(.06,y,heading,fontsize=15,fontweight='bold',va='top')
+            fig.text(.06,y-.045,text,fontsize=12,va='top',linespacing=1.5)
+            y-=.17
+        fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
         scatter_axes = [
             ('quality-cost', 'Qualité / coût', 'cost_usd_mean', 'quality_mean',
              'Coût moyen (USD)', 'Qualité moyenne (/30)'),
@@ -332,11 +348,17 @@ def render(output, snapshot):
             "Le juge principal est Gemini 3.1 Pro Preview ; les deux autres sont Grok 4.3 et MiniMax M2.5.\nLes résultats conservés du premier cycle ont été jugés par Gemini 3.1 Pro Preview,\nDeepSeek V4 Pro et Kimi K3. Les notes sont additionnées, sans pondération entre juges.",
             "Les modèles locaux tournent sur une Lenovo ThinkStation P620 : Ryzen Threadripper PRO\n3945WX, 128 Go de RAM, deux GPU RTX A4000 + RTX 3060 (28 Go de VRAM au total).\nLe coût local estime l’électricité à 600 W et 0,23 €/kWh, sans amortissement du matériel.\nLes coûts API sont ceux des tokens consommés ; conversion commune : 1,08 USD pour 1 EUR.",
             "Les nuages de points présentent les moyennes par ticket de qualité, durée et coût.\nMistral Idéal retient le dernier résultat réussi de chaque ticket. Mistral beta additionne\nles coûts et durées de tous ses essais, interruptions comprises, et garde la meilleure note.\nSes coûts sont répartis selon les tokens facturés ; les nouveaux essais restent estimés.\nLa frontière de Pareto exclut les séries incomplètes et les qualités moyennes inférieures à 15/30.",
-            "Sur les trois graphes acycliques, les flèches comparent les résultats\nticket par ticket par un test de Wilcoxon apparié, bilatéral, au seuil de 5 %. Elles vont vers le résultat moins juste, plus lent ou plus cher.\nLes flèches redondantes par transitivité sont retirées pour faciliter la lecture.\nL’absence de flèche ne prouve pas l’équivalence ; un chemin indirect n’est pas un test supplémentaire.",
+            "Sur les trois graphes acycliques, les flèches comparent les résultats\nticket par ticket par un test de Wilcoxon apparié, bilatéral, au seuil de 5 %.\nElles vont vers le résultat moins juste, plus lent ou plus cher.\nLes flèches redondantes par transitivité sont retirées pour faciliter la lecture.\nL’absence de flèche ne prouve pas l’équivalence ; un chemin indirect n’est pas un test supplémentaire.",
             "Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets, aucune différence ne franchit ce seuil plus exigeant : les écarts détectés\ndeux à deux ne constituent donc pas un classement global garanti à 95 %.\nLes astérisques signalent les séries provisoires ; Mistral beta a un contour pointillé dans les DAG.\nQwen 3, Qwen 3.6 et GPT-6 Sol figurent seulement dans les nuages de points.",
         ]
+        paragraphs.append("Limite : cette évaluation confie à un seul modèle l’ensemble du travail : orchestration,\nréalisation et revue de sa propre production. Elle mesure donc sa capacité à mener\nune tâche de bout en bout, plutôt que les performances d’un harnais qui choisit\ndifférents modèles selon les rôles et confie les revues à des modèles distincts pour\nréduire les erreurs corrélées. Les trois juges externes évaluent le résultat final ;\nils ne participent pas à sa réalisation.")
         y=.84
-        for text in paragraphs:
+        for index,text in enumerate(paragraphs):
+            if index == 5:
+                fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
+                fig=plt.figure(figsize=(11.6929,8.2677))
+                fig.text(.06,.91,'Méthode : comparaisons et limites',fontsize=20,fontweight='bold')
+                y=.84
             fig.text(.06,y,text,fontsize=9.5,va='top',linespacing=1.35)
             y-=len(text.splitlines())*.0215+.023
         fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
