@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-07T06:43:34.927133+00:00",
+  "generated_at": "2026-10-07T07:13:48.636685+00:00",
   "arms": {
     "a": {
       "expected": 10,
@@ -297,32 +297,32 @@
       "failures": 0,
       "pending": 3,
       "final": false,
-      "quality_median": 25.0,
-      "quality_mean": 23.285714285714285,
+      "quality_median": 26.5,
+      "quality_mean": 25.928571428571427,
       "seconds_median": 1548.3,
-      "cost_usd_median": 1.8552096751960696,
+      "cost_usd_median": 1.1254461486565122,
       "time_observed": 7,
       "cost_observed": 7,
-      "seconds_mean": 2703.1285714285714,
-      "cost_usd_mean": 4.516567693688995,
-      "total_cost_usd_mean": 5.2674367413080425
+      "seconds_mean": 1641.7428571428572,
+      "cost_usd_mean": 1.2344779904653567,
+      "total_cost_usd_mean": 1.6905176730050393
     },
     "mr": {
       "expected": 10,
-      "evaluated": 7,
+      "evaluated": 8,
       "ok": 7,
-      "failures": 0,
-      "pending": 3,
+      "failures": 1,
+      "pending": 2,
       "final": false,
-      "quality_median": 25.0,
-      "quality_mean": 23.285714285714285,
-      "seconds_median": 1548.3,
-      "cost_usd_median": 1.8552096751960696,
-      "time_observed": 7,
-      "cost_observed": 7,
-      "seconds_mean": 3614.5,
-      "cost_usd_mean": 4.945148311105258,
-      "total_cost_usd_mean": 5.949176088883035
+      "quality_median": 25.75,
+      "quality_mean": 22.6875,
+      "seconds_median": 2422.0499999999997,
+      "cost_usd_median": 1.704922039092133,
+      "time_observed": 8,
+      "cost_observed": 8,
+      "seconds_mean": 3256.7375,
+      "cost_usd_mean": 2.330058630542373,
+      "total_cost_usd_mean": 3.2347079360979287
     }
   },
   "legs": {
@@ -1381,23 +1381,17 @@
       }
     },
     "mi": {
-      "0233": {
-        "state": "ok",
-        "quality": 20.5,
-        "seconds": 5470.1,
-        "cost_usd": 10.945522642918306
-      },
       "0338": {
         "state": "ok",
         "quality": 25.0,
         "seconds": 478.3,
         "cost_usd": 0.2881363164347645
       },
-      "0452": {
+      "0211": {
         "state": "ok",
-        "quality": 19.0,
-        "seconds": 6737.2,
-        "cost_usd": 13.845206510154952
+        "quality": 28.0,
+        "seconds": 2559.3,
+        "cost_usd": 1.1254461486565122
       },
       "0333": {
         "state": "ok",
@@ -1416,6 +1410,12 @@
         "quality": 25.0,
         "seconds": 1217.6,
         "cost_usd": 0.9494855507519468
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 2218.3,
+        "cost_usd": 0.6906550818512758
       },
       "0470": {
         "state": "ok",
@@ -1425,23 +1425,17 @@
       }
     },
     "mr": {
-      "0233": {
-        "state": "ok",
-        "quality": 20.5,
-        "seconds": 9100.5,
-        "cost_usd": 11.785640814360065
-      },
       "0338": {
         "state": "ok",
         "quality": 25.0,
         "seconds": 478.3,
         "cost_usd": 0.2881363164347645
       },
-      "0452": {
+      "0211": {
         "state": "ok",
-        "quality": 19.0,
-        "seconds": 8567.7,
-        "cost_usd": 15.788510545396793
+        "quality": 28.0,
+        "seconds": 6827.400000000001,
+        "cost_usd": 1.5546344029881962
       },
       "0333": {
         "state": "ok",
@@ -1455,11 +1449,23 @@
         "seconds": 1093.3,
         "cost_usd": 1.2869456423875647
       },
+      "0874": {
+        "state": "failure",
+        "quality": 0,
+        "seconds": 5646.3,
+        "cost_usd": 7.597014446073654
+      },
       "0532": {
         "state": "ok",
         "quality": 25.0,
         "seconds": 1217.6,
         "cost_usd": 0.9494855507519468
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 5946.900000000001,
+        "cost_usd": 2.4469333772971904
       },
       "0470": {
         "state": "ok",
@@ -1523,6 +1529,8 @@
     "real": "All completed attempts summed per ticket, best successful quality",
     "attempts": [
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0211",
         "finished": "2026-10-06T20:10:23Z",
         "verdict": "VOID-EMPTY",
@@ -1533,6 +1541,20 @@
         "source": "runs/0211-m/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0211",
+        "finished": "2026-10-07T07:09:04Z",
+        "verdict": "OK",
+        "quality": 28.0,
+        "seconds": 2559.3,
+        "cost_usd": 1.1254461486565122,
+        "pi_cost_usd": 0.7765,
+        "source": "runs/0211-mr/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0233",
         "finished": "2026-10-06T20:10:17Z",
         "verdict": "VOID-EMPTY",
@@ -1543,6 +1565,8 @@
         "source": "runs/0233-m/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": true,
         "ticket": "0233",
         "finished": "2026-10-06T23:14:25Z",
         "verdict": "OK",
@@ -1553,6 +1577,8 @@
         "source": "runs/0233-mr/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0333",
         "finished": "2026-10-06T19:25:04Z",
         "verdict": "OK",
@@ -1563,6 +1589,8 @@
         "source": "runs/0333-m/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0338",
         "finished": "2026-10-06T19:07:58Z",
         "verdict": "OK",
@@ -1573,6 +1601,8 @@
         "source": "runs/0338-m/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0452",
         "finished": "2026-10-06T19:30:30Z",
         "verdict": "VOID-EMPTY",
@@ -1583,6 +1613,8 @@
         "source": "runs/0452-m/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": true,
         "ticket": "0452",
         "finished": "2026-10-06T23:35:33Z",
         "verdict": "OK",
@@ -1593,6 +1625,8 @@
         "source": "runs/0452-mr/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0470",
         "finished": "2026-10-06T18:42:48Z",
         "verdict": "OK",
@@ -1603,6 +1637,8 @@
         "source": "runs/0470-m/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0470",
         "finished": "2026-10-06T22:22:52Z",
         "verdict": "OK",
@@ -1613,6 +1649,8 @@
         "source": "runs/0470-mr/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0532",
         "finished": "2026-10-06T19:20:18Z",
         "verdict": "OK",
@@ -1623,6 +1661,8 @@
         "source": "runs/0532-m/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0673",
         "finished": "2026-10-06T19:18:12Z",
         "verdict": "OK",
@@ -1633,6 +1673,8 @@
         "source": "runs/0673-m/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0874",
         "finished": "2026-10-06T20:08:21Z",
         "verdict": "VOID-EMPTY",
@@ -1643,6 +1685,20 @@
         "source": "runs/0874-m/run.json"
       },
       {
+        "model_failure": true,
+        "loop_failure": false,
+        "ticket": "0874",
+        "finished": "2026-10-07T07:05:05Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 2320.7,
+        "cost_usd": 1.4469191735880524,
+        "pi_cost_usd": 1.0062,
+        "source": "runs/0874-mr/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "1372",
         "finished": "2026-10-06T20:08:42Z",
         "verdict": "VOID-EMPTY",
@@ -1653,6 +1709,20 @@
         "source": "runs/1372-m/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "1372",
+        "finished": "2026-10-07T07:03:23Z",
+        "verdict": "OK",
+        "quality": 30.0,
+        "seconds": 2218.3,
+        "cost_usd": 0.6906550818512758,
+        "pi_cost_usd": 0.4759,
+        "source": "runs/1372-mr/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0233",
         "finished": "2026-10-06T21:39:43Z",
         "verdict": "VOID-EMPTY",
@@ -1663,6 +1733,8 @@
         "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0233-mr/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0452",
         "finished": "2026-10-06T21:39:43Z",
         "verdict": "VOID-EMPTY",
@@ -1673,6 +1745,8 @@
         "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0452-mr/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0470",
         "finished": "2026-10-06T21:39:43Z",
         "verdict": "VOID-EMPTY",
@@ -1683,6 +1757,8 @@
         "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0470-mr/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0233",
         "finished": "2026-10-06T19:20:02Z",
         "verdict": "VOID-EMPTY",
@@ -1693,6 +1769,8 @@
         "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/0233-m/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "0874",
         "finished": "2026-10-06T19:17:36Z",
         "verdict": "VOID-EMPTY",
@@ -1703,6 +1781,8 @@
         "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/0874-m/run.json"
       },
       {
+        "model_failure": false,
+        "loop_failure": false,
         "ticket": "1372",
         "finished": "2026-10-06T19:23:59Z",
         "verdict": "VOID-EMPTY",

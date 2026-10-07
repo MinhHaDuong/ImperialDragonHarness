@@ -37,7 +37,8 @@ def collect(arena):
         cost = sum(tokens.get(k, 0) * rate / 1e6 for k, rate in RATES_EUR_M.items()) * USD_EUR if tokens else (0 if r.get('cost_usd') == 0 else None)
         diagnostic = path.parent / 'diagnostic.json'
         loop_failure = (diagnostic.exists() and json.loads(diagnostic.read_text()).get('loop_failure', False)) or any(path.parent.glob('attempts/*/http-trace/*.breaker.json'))
-        records.append({'loop_failure': bool(loop_failure), 'ticket': r['ticket'], 'finished': r.get('finished', ''),
+        model_failure = diagnostic.exists() and json.loads(diagnostic.read_text()).get('model_failure', False)
+        records.append({'model_failure': bool(model_failure), 'loop_failure': bool(loop_failure), 'ticket': r['ticket'], 'finished': r.get('finished', ''),
                         'verdict': r.get('verdict'), 'quality': sum(scores) if len(scores) == 3 else None,
                         'seconds': r.get('seconds'), 'cost_usd': cost,
                         'pi_cost_usd': r.get('cost_usd'), 'source': str(path.relative_to(arena))})
@@ -53,6 +54,10 @@ def add_series(snapshot, arena):
             attempts = [r for r in records if r['ticket'] == ticket]
             successes = [r for r in attempts if r['verdict'] == 'OK' and r['quality'] is not None]
             if not successes:
+                if real and any(r.get('model_failure') for r in attempts):
+                    legs[ticket] = {'state':'failure', 'quality':0,
+                        'seconds':sum(r['seconds'] for r in attempts) if all(r['seconds'] is not None for r in attempts) else None,
+                        'cost_usd':sum(r['cost_usd'] for r in attempts) if all(r['cost_usd'] is not None for r in attempts) else None}
                 continue
             admissible = [r for r in successes if not r.get('loop_failure')]
             if not admissible:
@@ -65,7 +70,7 @@ def add_series(snapshot, arena):
             values = [r[key] for r in legs.values() if r[key] is not None]
             return statistics.median(values) if values else None
         snapshot['legs'][arm] = legs
-        snapshot['arms'][arm] = {'expected': len(tickets), 'evaluated': len(legs), 'ok': len(legs), 'failures': 0,
+        snapshot['arms'][arm] = {'expected': len(tickets), 'evaluated': len(legs), 'ok': sum(r['state']=='ok' for r in legs.values()), 'failures': sum(r['state']=='failure' for r in legs.values()),
                                  'pending': len(tickets)-len(legs), 'final': len(legs)==len(tickets),
                                  'quality_median': med('quality'), 'quality_mean': statistics.mean(r['quality'] for r in legs.values()) if legs else None,
                                  'seconds_median': med('seconds'), 'cost_usd_median': med('cost_usd'),
