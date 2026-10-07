@@ -16,12 +16,13 @@ USD_EUR = 1.08
 def collect(arena):
     records = []
     paths = list((arena / 'runs').glob('*-m/run.json')) + list((arena / 'runs').glob('*-mr/run.json'))
+    paths += list((arena / 'runs').glob('*-mb/run.json'))
     paths += [p for p in (arena / 'runs-void').rglob('run.json')
-              if p.parent.name.endswith(('-m', '-mr')) and 'attempts' not in p.parts]
+              if p.parent.name.endswith(('-m', '-mr', '-mb')) and 'attempts' not in p.parts]
     seen = set()
     for path in sorted(paths):
         r = json.loads(path.read_text())
-        if r.get('arm') not in {'m', 'mr'}:
+        if r.get('arm') not in {'m', 'mr', 'mb'}:
             continue
         key = (r['ticket'], r['arm'], r.get('finished'), r.get('t0', {}).get('utc'), r.get('attempt'))
         if key in seen:
@@ -34,7 +35,9 @@ def collect(arena):
                 scores.append(q['score'])
         tokens = r.get('tokens', {})
         cost = sum(tokens.get(k, 0) * rate / 1e6 for k, rate in RATES_EUR_M.items()) * USD_EUR if tokens else (0 if r.get('cost_usd') == 0 else None)
-        records.append({'ticket': r['ticket'], 'finished': r.get('finished', ''),
+        diagnostic = path.parent / 'diagnostic.json'
+        loop_failure = (diagnostic.exists() and json.loads(diagnostic.read_text()).get('loop_failure', False)) or any(path.parent.glob('attempts/*/http-trace/*.breaker.json'))
+        records.append({'loop_failure': bool(loop_failure), 'ticket': r['ticket'], 'finished': r.get('finished', ''),
                         'verdict': r.get('verdict'), 'quality': sum(scores) if len(scores) == 3 else None,
                         'seconds': r.get('seconds'), 'cost_usd': cost,
                         'pi_cost_usd': r.get('cost_usd'), 'source': str(path.relative_to(arena))})
@@ -51,7 +54,10 @@ def add_series(snapshot, arena):
             successes = [r for r in attempts if r['verdict'] == 'OK' and r['quality'] is not None]
             if not successes:
                 continue
-            latest = max(successes, key=lambda r: r['finished'])
+            admissible = [r for r in successes if not r.get('loop_failure')]
+            if not admissible:
+                continue
+            latest = max(admissible, key=lambda r: r['finished'])
             legs[ticket] = {'state': 'ok', 'quality': max(r['quality'] for r in successes) if real else latest['quality'],
                             'seconds': sum(r['seconds'] for r in attempts) if real and all(r['seconds'] is not None for r in attempts) else latest['seconds'] if not real else None,
                             'cost_usd': sum(r['cost_usd'] for r in attempts) if real and all(r['cost_usd'] is not None for r in attempts) else latest['cost_usd'] if not real else None}
