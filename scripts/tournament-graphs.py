@@ -185,11 +185,11 @@ def render(output, snapshot):
         fig.text(.06,.78,'Dix tickets tirés au hasard dans l’historique des projets de l’auteur.\nDes modèles locaux et hébergés reprennent les mêmes tâches ; trois juges notent les résultats sur 30.\nNous comparons leur qualité, leur durée et leur coût, ainsi que le poids des incidents et des reprises.',
                  fontsize=12,linespacing=1.6,va='top')
         findings=[
-            ('Le vainqueur surprise en API', 'Luna 6 medium fait quasi jeu égal en qualité avec Sol 6.1 low, pour un coût inférieur.\nIl est le vainqueur surprise de ce comparatif.'),
-            ('Le choix en non-interactif', 'Pour les tâches non interactives, Qwen 3.8 Flash-Next à effort xhigh, exécuté\nlocalement avec Strata, domine ce comparatif.'),
-            ('Le saut générationnel', 'Le saut générationnel entre Qwen 3.6 et Qwen 3.8 porte les modèles ouverts exécutés\nlocalement au niveau de qualité des modèles commerciaux hébergés sur les tâches\nde cet échantillon.'),
-            ('La contrainte du local', 'Sur la workstation testée, la lenteur et la nécessité de sérialiser les tâches sur les GPU\nlimitent fortement l’usage interactif, tandis que les API permettent des flux de travail\nfortement parallélisés.'),
-            ('Mistral Large 4 en version beta', 'Mistral Large 4, annoncé le 6 octobre 2026, est prometteur en qualité, mais les incidents\nd’hébergement et les boucles observées dans son intégration au runtime Pi pénalisent\nencore sa fiabilité, sa vitesse et son coût.')]
+            ('Luna 6 medium : qualité proche de Sol 6.1 low, coût inférieur', 'Luna 6 medium fait quasi jeu égal en qualité avec Sol 6.1 low, pour un coût inférieur.\nLimite : la mesure mélange orchestration-codage-revue.'),
+            ('Qwen 3.8 Flash-Next xhigh avec Strata domine en non-interactif', 'Pour les tâches non interactives, Qwen 3.8 Flash-Next à effort xhigh, exécuté\nlocalement avec Strata, domine ce comparatif.'),
+            ('Qwen 3.8 local atteint la qualité des modèles commerciaux hébergés', 'Le saut générationnel entre Qwen 3.6 et Qwen 3.8 porte les modèles ouverts exécutés\nlocalement au niveau de qualité des modèles commerciaux hébergés sur les tâches\nde cet échantillon.'),
+            ('La lenteur et la sérialisation sur GPU limitent l’interactif en local', 'Sur la workstation testée, la lenteur et la nécessité de sérialiser les tâches sur les GPU\nlimitent fortement l’usage interactif, tandis que les API permettent des flux de travail\nfortement parallélisés.'),
+            ('Mistral Large 4 : qualité prometteuse, fiabilité encore pénalisante', 'Mistral Large 4, annoncé le 6 octobre 2026, est prometteur en qualité, mais les incidents\nd’hébergement et les boucles observées dans son intégration au runtime Pi pénalisent\nencore sa fiabilité, sa vitesse et son coût.')]
         y=.65
         for heading,text in findings:
             fig.text(.06,y,heading,fontsize=13,fontweight='bold',va='top')
