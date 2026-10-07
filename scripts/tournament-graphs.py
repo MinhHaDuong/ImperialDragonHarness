@@ -240,9 +240,24 @@ def render(output, snapshot):
                     ax.scatter(x,y,s=210,facecolors='none',edgecolors='#b45309',linewidths=1.8,zorder=2)
                 entries.append((a,x,y,color,provisional))
             if xkey in {'cost_usd_mean','total_cost_usd_mean','seconds_mean'}:ax.set_xscale('log')
-            if ykey == 'seconds_mean':ax.set_yscale('log')
+            if ykey == 'seconds_mean':
+                ax.set_yscale('log')
+                ax.invert_yaxis()
             if ykey == 'quality_mean':ax.set_ylim(0,32)
             ax.margins(x=.17,y=.15);ax.grid(alpha=.2,which='both');ax.set_xlabel(xlabel,fontsize=10);ax.set_ylabel(ylabel,fontsize=10)
+            # Horizontal endpoint cues follow the actual direction of each axis.
+            endpoint_words = {'quality_mean': ('Faux', 'Juste'),
+                              'seconds_mean': ('Rapide', 'Lent'),
+                              'cost_usd_mean': ('Abordable', 'Cher'),
+                              'total_cost_usd_mean': ('Abordable', 'Cher')}
+            left, right = endpoint_words[xkey]
+            ax.text(0, -.055, left, transform=ax.transAxes, ha='left', va='top', fontsize=9, rotation=0)
+            ax.text(1, -.055, right, transform=ax.transAxes, ha='right', va='top', fontsize=9, rotation=0)
+            bottom, top = endpoint_words[ykey]
+            if ax.yaxis_inverted():
+                bottom, top = top, bottom
+            ax.text(-.012, -.02, bottom, transform=ax.transAxes, ha='right', va='bottom', fontsize=9, rotation=0)
+            ax.text(-.012, 1.02, top, transform=ax.transAxes, ha='right', va='top', fontsize=9, rotation=0)
             # Deterministic label placement in display coordinates, with leader lines.
             fig.canvas.draw(); renderer=fig.canvas.get_renderer(); boxes=[]
             point_boxes=[]
