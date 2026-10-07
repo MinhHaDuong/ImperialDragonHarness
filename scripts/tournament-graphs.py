@@ -389,6 +389,31 @@ def render(output, snapshot):
             fig.text(.06,y,text,fontsize=9.5,va='top',linespacing=1.35)
             y-=len(text.splitlines())*.0215+.023
         fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
+        fig=plt.figure(figsize=(11.6929,8.2677))
+        fig.text(.06,.92,'Annexe : résultats par modèle',fontsize=20,fontweight='bold')
+        columns=['Modèle · variante / moteur · effort','Réussis / 10','Qualité\nmoyenne /30','Durée moyenne\n(min / ticket)','Coût moyen\n(USD / ticket)']
+        table_rows=[]
+        for arm in nodes:
+            row=snapshot['arms'][arm]
+            parts=LABELS[arm].split('\n')
+            identity=DISPLAY_CODES.get(arm,arm)+' · '+parts[0]+'\n'+parts[1]+' · '+parts[2]
+            def display(value):
+                return '—' if value is None else f'{value:.2f}'.replace('.', ',')
+            table_rows.append([identity,f'{row["ok"]} / {row["expected"]}',display(row['quality_mean']),
+                               display(row['seconds_mean']/60 if row['seconds_mean'] is not None else None),display(row['cost_usd_mean'])])
+        ax=fig.add_axes([.06,.16,.88,.68]);ax.axis('off')
+        table=ax.table(cellText=table_rows,colLabels=columns,colWidths=[.49,.10,.12,.145,.145],cellLoc='center',bbox=[0,0,1,1])
+        table.auto_set_font_size(False);table.set_fontsize(8)
+        for (r,c),cell in table.get_celld().items():
+            cell.set_edgecolor('#cbd5e1');cell.set_linewidth(.5)
+            if r == 0:
+                cell.set_facecolor('#e2e8f0');cell.set_text_props(weight='bold')
+            else:
+                cell.set_facecolor('#f8fafc' if r % 2 else 'white')
+                if c == 0:cell.set_text_props(ha='left')
+        note='Moyennes par ticket, échecs inclus ; les séries incomplètes portent sur les tickets évalués. Coût local : électricité seule. Mistral Idéal : dix succès, dont 0874 via OpenRouter. Mistral beta : mêmes notes, coûts et durées de toutes les tentatives directes, plus le remplacement OR de 0874. « Réussis » compte les tickets livrés, pas le nombre de tentatives.'
+        fig.text(.06,.12,wrap_paragraph(fig,note,9),fontsize=9,va='top',linespacing=1.35)
+        fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
     allrows=[r for result in results.values() for r in result['comparisons']]
     with (output/'comparisons.csv').open('w') as out:
         writer=csv.DictWriter(out,fieldnames=list(allrows[0]));writer.writeheader();writer.writerows(allrows)
