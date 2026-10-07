@@ -1893,5 +1893,5 @@
       }
     ]
   },
-  "time_value_usd_hour": 1.0
+  "time_value_usd_per_erg_hour": 1.0
 }

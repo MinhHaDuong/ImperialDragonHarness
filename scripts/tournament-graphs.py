@@ -143,7 +143,7 @@ def total_cost_median(legs, hourly_usd):
 def render(output, snapshot):
     nodes = sorted(snapshot['arms'])
     source_text = f"Source: minh.ha-duong@cnrs.fr, {snapshot['generated_at'][:10]}"
-    hourly_usd = snapshot.get('time_value_usd_hour', 1.0)
+    hourly_usd = snapshot.get('time_value_usd_per_erg_hour', 1.0)
     for arm in nodes:
         legs = snapshot['legs'][arm]
         for metric in ['quality', 'seconds', 'cost_usd']:
@@ -155,7 +155,7 @@ def render(output, snapshot):
         totals_eur = [r['cost_usd']/1.08 + .10*r['seconds']/3600 for r in legs.values()
                       if r.get('cost_usd') is not None and r.get('seconds') is not None]
         snapshot['arms'][arm]['total_cost_eur_010_mean'] = statistics.mean(totals_eur) if totals_eur else None
-    (output/'total-cost.json').write_text(json.dumps({'time_value_usd_hour': hourly_usd, 'means': {a: snapshot['arms'][a]['total_cost_usd_mean'] for a in nodes}}, indent=2)+'\n')
+    (output/'total-cost.json').write_text(json.dumps({'time_value_usd_per_erg_hour': hourly_usd, 'means': {a: snapshot['arms'][a]['total_cost_usd_mean'] for a in nodes}}, indent=2)+'\n')
     (output/'total-cost-010-eur.json').write_text(json.dumps({'time_value_eur_per_erg_hour': .10, 'usd_per_eur': 1.08, 'means': {a: snapshot['arms'][a]['total_cost_eur_010_mean'] for a in nodes}}, indent=2)+'\n')
     dag_nodes = [a for a in nodes if a not in {'c', 'c2', 'e'}]
     results = {}
@@ -227,8 +227,8 @@ def render(output, snapshot):
              'Durée moyenne (minutes)', 'Qualité moyenne (/30)'),
             ('speed-cost', 'Vitesse / coût', 'cost_usd_mean', 'seconds_mean',
              'Coût moyen (USD)', 'Durée moyenne (minutes)'),
-            ('quality-total-cost', f'Qualité / coût total — temps à {hourly_usd:g} USD/h', 'total_cost_usd_mean', 'quality_mean',
-             'Coût total moyen (USD ; coût direct + durée valorisée)', 'Qualité moyenne (/30)'),
+            ('quality-total-cost', f'Qualité / coût total — temps à {hourly_usd:g} USD/(erg·h)', 'total_cost_usd_mean', 'quality_mean',
+             'Coût total moyen (USD / erg ; coût direct + délai valorisé)', 'Qualité moyenne (/30)'),
             ('quality-total-cost-010-eur', 'Qualité / coût total — temps à 0,10 EUR/(erg·h)', 'total_cost_eur_010_mean', 'quality_mean',
              'Coût total moyen (EUR / erg ; coût direct + durée valorisée)', 'Qualité moyenne (/30)'),
         ]
@@ -327,7 +327,7 @@ def render(output, snapshot):
             if name == 'quality-total-cost-010-eur':
                 fig.text(.045,.855,'Par erg moyen : coût direct en USD / 1,08 + 0,10 × durée / 3 600 (secondes) ; puis moyenne. DNF inclus.',fontsize=8)
             if name == 'quality-total-cost':
-                fig.text(.045,.855,f'Par ticket : coût total = coût direct + {hourly_usd:g} × durée / 3 600 ; puis moyenne. Toute la durée est valorisée, DNF inclus.',fontsize=8)
+                fig.text(.045,.855,f'Par erg moyen : coût total = coût direct + {hourly_usd:g} × durée / 3 600 ; puis moyenne. Durée en secondes, DNF inclus.',fontsize=8)
             fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Mistral : losange violet = Idéal, cercle rouge = beta. Coût et durée en échelle logarithmique.\n'
                      'Coût local = électricité seule ; coût hébergé = API.',fontsize=8)
             fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
@@ -380,7 +380,7 @@ def render(output, snapshot):
             "Notation des résultats sur 30 selon le système de la boxe : trois juges partent de 10\net déduisent des points pour les fautes selon leur sévérité : −3, −2, −1 ou −0,5 point.\nLes juges examinent le travail sans connaître le modèle qui l’a produit. Une absence\nde résultat exploitable vaut zéro ; une impossibilité correctement expliquée est jugée normalement.",
             "Le juge principal est Gemini 3.1 Pro Preview ; les deux autres sont Grok 4.3 et MiniMax M2.5.\nLes résultats conservés du premier cycle ont été jugés par Gemini 3.1 Pro Preview,\nDeepSeek V4 Pro et Kimi K3. Les notes sont additionnées, sans pondération entre juges.",
             "Les modèles locaux tournent sur une Lenovo ThinkStation P620 : Ryzen Threadripper PRO\n3945WX, 128 Go de RAM, deux GPU RTX A4000 + RTX 3060 (28 Go de VRAM au total).\nLe coût local estime l’électricité à 600 W et 0,23 €/kWh, sans amortissement du matériel.\nLes coûts API sont ceux des tokens consommés ; conversion commune : 1,08 USD pour 1 EUR.",
-            "Les nuages de points présentent les moyennes par ticket de qualité, durée et coût.\nMistral Idéal retient le dernier résultat réussi de chaque ticket. Mistral beta additionne\nles coûts et durées de tous ses essais, interruptions comprises, et garde la meilleure note.\nSes coûts sont répartis selon les tokens facturés ; les nouveaux essais restent estimés.\nLa frontière de Pareto exclut les séries incomplètes et les qualités moyennes inférieures à 15/30.",
+            "Les nuages de points présentent les moyennes par ticket de qualité, durée et coût.\nChaque ticket représente un erg moyen. La valeur du délai est exprimée par erg et par heure, en USD/(erg·h) ou EUR/(erg·h), et non comme un salaire horaire.\nMistral Idéal retient le dernier résultat réussi de chaque ticket. Mistral beta additionne\nles coûts et durées de tous ses essais, interruptions comprises, et garde la meilleure note.\nSes coûts sont répartis selon les tokens facturés ; les nouveaux essais restent estimés.\nLa frontière de Pareto exclut les séries incomplètes et les qualités moyennes inférieures à 15/30.",
             "Sur les trois graphes acycliques, les flèches comparent les résultats\nticket par ticket par un test de Wilcoxon apparié, bilatéral, au seuil de 5 %.\nElles vont vers le résultat moins juste, plus lent ou plus cher.\nLes flèches redondantes par transitivité sont retirées pour faciliter la lecture.\nL’absence de flèche ne prouve pas l’équivalence ; un chemin indirect n’est pas un test supplémentaire.",
             "Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets, aucune différence ne franchit ce seuil plus exigeant : les écarts détectés\ndeux à deux ne constituent donc pas un classement global garanti à 95 %.\nLes astérisques signalent les séries provisoires ; Mistral beta a un contour pointillé dans les DAG.\nQwen 3, Qwen 3.6 et GPT-6 Sol figurent seulement dans les nuages de points.",
         ]
@@ -435,7 +435,7 @@ def main():
     parser.add_argument('--arena',type=Path,default=Path.home()/'arena')
     parser.add_argument('--output',type=Path,default=Path('docs/tournament-graphs'))
     parser.add_argument('--snapshot',type=Path,help='Render from a frozen cleared snapshot, without accessing arena transcripts')
-    parser.add_argument('--time-value', type=float, default=1.0, help='USD per hour of elapsed run duration')
+    parser.add_argument('--time-value', type=float, default=1.0, help='USD per erg-hour of delivery delay; each benchmark ticket represents one average erg')
     args=parser.parse_args()
     if args.time_value < 0:parser.error('time value must be nonnegative')
     args.output.mkdir(parents=True,exist_ok=True)
@@ -456,7 +456,7 @@ def main():
         mistral = importlib.util.module_from_spec(mspec)
         mspec.loader.exec_module(mistral)
         mistral.add_series(snapshot, args.arena)
-    snapshot['time_value_usd_hour'] = args.time_value
+    snapshot['time_value_usd_per_erg_hour'] = args.time_value
     (args.output/'snapshot.json').write_text(json.dumps(snapshot,indent=2)+'\n')
     results=render(args.output,snapshot)
     (args.output/'snapshot.json').write_text(json.dumps(snapshot,indent=2)+'\n')
