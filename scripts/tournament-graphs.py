@@ -398,10 +398,10 @@ def render(output, snapshot):
             text = wrap_paragraph(fig, text, 9.5)
             fig.text(.06,y,text,fontsize=9.5,va='top',linespacing=1.35)
             y-=len(text.splitlines())*.0215+.023
-            if index == 1:
-                fig.text(.06,y,'Pi : github.com/earendil-works/pi',fontsize=9,color='#2563eb',va='top',url='https://github.com/earendil-works/pi')
-                fig.text(.46,y,'IDH : github.com/MinhHaDuong/ImperialDragonHarness',fontsize=9,color='#2563eb',va='top',url='https://github.com/MinhHaDuong/ImperialDragonHarness')
-                y-=.04
+            if index == 5:
+                fig.text(.06,y,'• Pi : github.com/earendil-works/pi',fontsize=9,color='#2563eb',va='top',url='https://github.com/earendil-works/pi')
+                fig.text(.06,y-.03,'• IDH : github.com/MinhHaDuong/ImperialDragonHarness',fontsize=9,color='#2563eb',va='top',url='https://github.com/MinhHaDuong/ImperialDragonHarness')
+                y-=.07
         fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
         fig=plt.figure(figsize=(11.6929,8.2677))
         fig.text(.06,.92,'Annexe : résultats par modèle',fontsize=20,fontweight='bold')
