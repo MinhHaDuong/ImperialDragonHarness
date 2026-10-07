@@ -13,7 +13,7 @@
         "median_advantage": -0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8192307692307692
+        "line_width": 0.4903846153846154
       },
       {
         "axis": "quality",
@@ -27,7 +27,7 @@
         "median_advantage": 4.25,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.035384615384615
+        "line_width": 0.9023076923076923
       },
       {
         "axis": "quality",
@@ -41,7 +41,7 @@
         "median_advantage": 1.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7357692307692304
+        "line_width": 0.46211538461538454
       },
       {
         "axis": "quality",
@@ -55,7 +55,7 @@
         "median_advantage": 12.5,
         "p_holm": 1,
         "shown": true,
-        "line_width": 3.1561538461538463
+        "line_width": 1.281923076923077
       },
       {
         "axis": "quality",
@@ -69,7 +69,7 @@
         "median_advantage": 10.75,
         "p_holm": 1,
         "shown": true,
-        "line_width": 3.478076923076924
+        "line_width": 1.3909615384615386
       },
       {
         "axis": "quality",
@@ -83,7 +83,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.4392307692307686
+        "line_width": 0.7003846153846153
       },
       {
         "axis": "quality",
@@ -97,7 +97,7 @@
         "median_advantage": 0.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9026923076923071
+        "line_width": 0.518653846153846
       },
       {
         "axis": "quality",
@@ -111,7 +111,7 @@
         "median_advantage": 2.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.3080769230769231
+        "line_width": 0.6559615384615385
       },
       {
         "axis": "quality",
@@ -125,7 +125,7 @@
         "median_advantage": 1.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.188846153846153
+        "line_width": 0.6155769230769228
       },
       {
         "axis": "quality",
@@ -139,7 +139,7 @@
         "median_advantage": 2.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0099999999999993
+        "line_width": 0.5549999999999998
       },
       {
         "axis": "quality",
@@ -153,7 +153,7 @@
         "median_advantage": -0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9503846153846147
+        "line_width": 0.5348076923076921
       },
       {
         "axis": "quality",
@@ -167,7 +167,7 @@
         "median_advantage": 1.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8788461538461538
+        "line_width": 0.510576923076923
       },
       {
         "axis": "quality",
@@ -181,7 +181,7 @@
         "median_advantage": 0.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0219230769230765
+        "line_width": 0.5590384615384614
       },
       {
         "axis": "quality",
@@ -195,7 +195,7 @@
         "median_advantage": 3.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9384615384615385
+        "line_width": 0.5307692307692308
       },
       {
         "axis": "quality",
@@ -209,7 +209,7 @@
         "median_advantage": 2.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8549999999999996
+        "line_width": 0.5025
       },
       {
         "axis": "quality",
@@ -223,7 +223,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.081538461538461
+        "line_width": 0.5792307692307691
       },
       {
         "axis": "quality",
@@ -237,7 +237,7 @@
         "median_advantage": 4.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.3438461538461537
+        "line_width": 0.668076923076923
       },
       {
         "axis": "quality",
@@ -251,7 +251,7 @@
         "median_advantage": 5.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.9161538461538457
+        "line_width": 0.8619230769230768
       },
       {
         "axis": "quality",
@@ -265,7 +265,7 @@
         "median_advantage": 3.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7834615384615388
+        "line_width": 0.4782692307692309
       },
       {
         "axis": "quality",
@@ -279,7 +279,7 @@
         "median_advantage": 12.0,
         "p_holm": 1,
         "shown": true,
-        "line_width": 3.275384615384615
+        "line_width": 1.3223076923076924
       },
       {
         "axis": "quality",
@@ -293,7 +293,7 @@
         "median_advantage": 12.25,
         "p_holm": 0.80859375,
         "shown": true,
-        "line_width": 3.5973076923076928
+        "line_width": 1.431346153846154
       },
       {
         "axis": "quality",
@@ -307,7 +307,7 @@
         "median_advantage": 2.25,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.3199999999999994
+        "line_width": 0.6599999999999999
       },
       {
         "axis": "quality",
@@ -321,7 +321,7 @@
         "median_advantage": 1.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7834615384615379
+        "line_width": 0.4782692307692306
       },
       {
         "axis": "quality",
@@ -335,7 +335,7 @@
         "median_advantage": 4.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.4273076923076924
+        "line_width": 0.696346153846154
       },
       {
         "axis": "quality",
@@ -349,7 +349,7 @@
         "median_advantage": -0.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.069615384615384
+        "line_width": 0.5751923076923074
       },
       {
         "axis": "quality",
@@ -363,7 +363,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8907692307692301
+        "line_width": 0.5146153846153844
       },
       {
         "axis": "quality",
@@ -377,7 +377,7 @@
         "median_advantage": 0.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8311538461538455
+        "line_width": 0.4944230769230767
       },
       {
         "axis": "quality",
@@ -391,7 +391,7 @@
         "median_advantage": -0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7596153846153846
+        "line_width": 0.4701923076923077
       },
       {
         "axis": "quality",
@@ -405,7 +405,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9026923076923071
+        "line_width": 0.518653846153846
       },
       {
         "axis": "quality",
@@ -419,7 +419,7 @@
         "median_advantage": 3.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8192307692307692
+        "line_width": 0.4903846153846154
       },
       {
         "axis": "quality",
@@ -433,7 +433,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7357692307692304
+        "line_width": 0.46211538461538454
       },
       {
         "axis": "quality",
@@ -447,7 +447,7 @@
         "median_advantage": -1.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9623076923076918
+        "line_width": 0.5388461538461538
       },
       {
         "axis": "quality",
@@ -461,7 +461,7 @@
         "median_advantage": 3.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2246153846153844
+        "line_width": 0.6276923076923077
       },
       {
         "axis": "quality",
@@ -475,7 +475,7 @@
         "median_advantage": 3.5,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.9996153846153846
+        "line_width": 0.8901923076923077
       },
       {
         "axis": "quality",
@@ -489,7 +489,7 @@
         "median_advantage": 18.25,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "quality",
@@ -503,7 +503,7 @@
         "median_advantage": 17.0,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "quality",
@@ -517,7 +517,7 @@
         "median_advantage": 1.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2961538461538462
+        "line_width": 0.6519230769230769
       },
       {
         "axis": "quality",
@@ -531,7 +531,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.8326923076923076
+        "line_width": 0.8336538461538461
       },
       {
         "axis": "quality",
@@ -545,7 +545,7 @@
         "median_advantage": 10.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.643461538461538
+        "line_width": 1.1082692307692308
       },
       {
         "axis": "quality",
@@ -559,7 +559,7 @@
         "median_advantage": 2.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.5465384615384616
+        "line_width": 0.7367307692307693
       },
       {
         "axis": "quality",
@@ -573,7 +573,7 @@
         "median_advantage": 3.0,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.7253846153846155
+        "line_width": 0.7973076923076924
       },
       {
         "axis": "quality",
@@ -587,7 +587,7 @@
         "median_advantage": 4.75,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.7850000000000001
+        "line_width": 0.8175000000000001
       },
       {
         "axis": "quality",
@@ -601,7 +601,7 @@
         "median_advantage": 4.5,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.856538461538461
+        "line_width": 0.8417307692307692
       },
       {
         "axis": "quality",
@@ -615,7 +615,7 @@
         "median_advantage": 5.0,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.7134615384615384
+        "line_width": 0.7932692307692308
       },
       {
         "axis": "quality",
@@ -629,7 +629,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.7969230769230764
+        "line_width": 0.8215384615384613
       },
       {
         "axis": "quality",
@@ -643,7 +643,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.880384615384615
+        "line_width": 0.8498076923076923
       },
       {
         "axis": "quality",
@@ -657,7 +657,7 @@
         "median_advantage": 2.75,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.6538461538461537
+        "line_width": 0.7730769230769231
       },
       {
         "axis": "quality",
@@ -671,7 +671,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.3915384615384612
+        "line_width": 0.6842307692307692
       },
       {
         "axis": "quality",
@@ -685,7 +685,7 @@
         "median_advantage": 13.0,
         "p_holm": 1,
         "shown": true,
-        "line_width": 3.191923076923077
+        "line_width": 1.2940384615384615
       },
       {
         "axis": "quality",
@@ -699,7 +699,7 @@
         "median_advantage": 11.25,
         "p_holm": 1,
         "shown": true,
-        "line_width": 3.5138461538461545
+        "line_width": 1.4030769230769233
       },
       {
         "axis": "quality",
@@ -713,7 +713,7 @@
         "median_advantage": 2.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.4034615384615383
+        "line_width": 0.6882692307692307
       },
       {
         "axis": "quality",
@@ -727,7 +727,7 @@
         "median_advantage": 1.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8669230769230767
+        "line_width": 0.5065384615384615
       },
       {
         "axis": "quality",
@@ -741,7 +741,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.3438461538461537
+        "line_width": 0.668076923076923
       },
       {
         "axis": "quality",
@@ -755,7 +755,7 @@
         "median_advantage": 0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1530769230769227
+        "line_width": 0.6034615384615384
       },
       {
         "axis": "quality",
@@ -769,7 +769,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9742307692307688
+        "line_width": 0.5428846153846153
       },
       {
         "axis": "quality",
@@ -783,7 +783,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9146153846153843
+        "line_width": 0.5226923076923076
       },
       {
         "axis": "quality",
@@ -797,7 +797,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8430769230769234
+        "line_width": 0.49846153846153857
       },
       {
         "axis": "quality",
@@ -811,7 +811,7 @@
         "median_advantage": -0.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9861538461538459
+        "line_width": 0.5469230769230768
       },
       {
         "axis": "quality",
@@ -825,7 +825,7 @@
         "median_advantage": 3.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.902692307692308
+        "line_width": 0.5186538461538462
       },
       {
         "axis": "quality",
@@ -839,7 +839,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8192307692307692
+        "line_width": 0.4903846153846154
       },
       {
         "axis": "quality",
@@ -853,7 +853,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0457692307692306
+        "line_width": 0.5671153846153846
       },
       {
         "axis": "quality",
@@ -867,7 +867,7 @@
         "median_advantage": 1.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.3080769230769231
+        "line_width": 0.6559615384615385
       },
       {
         "axis": "quality",
@@ -881,7 +881,7 @@
         "median_advantage": -2.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0219230769230772
+        "line_width": 0.5590384615384617
       },
       {
         "axis": "quality",
@@ -895,7 +895,7 @@
         "median_advantage": 13.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "quality",
@@ -909,7 +909,7 @@
         "median_advantage": 12.25,
         "p_holm": 1,
         "shown": true,
-        "line_width": 3.3588461538461534
+        "line_width": 1.350576923076923
       },
       {
         "axis": "quality",
@@ -923,7 +923,7 @@
         "median_advantage": 6.75,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.5480769230769234
+        "line_width": 1.0759615384615384
       },
       {
         "axis": "quality",
@@ -937,7 +937,7 @@
         "median_advantage": 14.75,
         "p_holm": 0.80859375,
         "shown": false,
-        "line_width": 3.6449999999999996
+        "line_width": 1.4474999999999998
       },
       {
         "axis": "quality",
@@ -951,7 +951,7 @@
         "median_advantage": 11.25,
         "p_holm": 1,
         "shown": true,
-        "line_width": 3.466153846153846
+        "line_width": 1.3869230769230767
       },
       {
         "axis": "quality",
@@ -965,7 +965,7 @@
         "median_advantage": 12.75,
         "p_holm": 0.5625,
         "shown": false,
-        "line_width": 3.406538461538461
+        "line_width": 1.366730769230769
       },
       {
         "axis": "quality",
@@ -979,7 +979,7 @@
         "median_advantage": 8.0,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.335
+        "line_width": 1.3425000000000002
       },
       {
         "axis": "quality",
@@ -993,7 +993,7 @@
         "median_advantage": 10.0,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.478076923076923
+        "line_width": 1.3909615384615384
       },
       {
         "axis": "quality",
@@ -1007,7 +1007,7 @@
         "median_advantage": 15.0,
         "p_holm": 1,
         "shown": true,
-        "line_width": 3.394615384615385
+        "line_width": 1.3626923076923079
       },
       {
         "axis": "quality",
@@ -1021,7 +1021,7 @@
         "median_advantage": 13.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 3.3111538461538457
+        "line_width": 1.334423076923077
       },
       {
         "axis": "quality",
@@ -1035,7 +1035,7 @@
         "median_advantage": 10.0,
         "p_holm": 0.5625,
         "shown": false,
-        "line_width": 3.537692307692307
+        "line_width": 1.411153846153846
       },
       {
         "axis": "quality",
@@ -1049,7 +1049,7 @@
         "median_advantage": 15.25,
         "p_holm": 1,
         "shown": true,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "quality",
@@ -1063,7 +1063,7 @@
         "median_advantage": 17.25,
         "p_holm": 0.5625,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "quality",
@@ -1077,7 +1077,7 @@
         "median_advantage": 10.5,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.680769230769231
+        "line_width": 1.4596153846153845
       },
       {
         "axis": "quality",
@@ -1091,7 +1091,7 @@
         "median_advantage": 6.0,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.87
+        "line_width": 1.185
       },
       {
         "axis": "quality",
@@ -1105,7 +1105,7 @@
         "median_advantage": 12.25,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "quality",
@@ -1119,7 +1119,7 @@
         "median_advantage": 12.0,
         "p_holm": 0.5625,
         "shown": true,
-        "line_width": 3.7880769230769227
+        "line_width": 1.4959615384615383
       },
       {
         "axis": "quality",
@@ -1133,7 +1133,7 @@
         "median_advantage": 11.25,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.7284615384615387
+        "line_width": 1.4757692307692307
       },
       {
         "axis": "quality",
@@ -1147,7 +1147,7 @@
         "median_advantage": 12.0,
         "p_holm": 0.5625,
         "shown": true,
-        "line_width": 3.6569230769230776
+        "line_width": 1.4515384615384617
       },
       {
         "axis": "quality",
@@ -1161,7 +1161,7 @@
         "median_advantage": 11.0,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "quality",
@@ -1175,7 +1175,7 @@
         "median_advantage": 14.25,
         "p_holm": 1,
         "shown": true,
-        "line_width": 3.7165384615384625
+        "line_width": 1.4717307692307695
       },
       {
         "axis": "quality",
@@ -1189,7 +1189,7 @@
         "median_advantage": 12.0,
         "p_holm": 1,
         "shown": true,
-        "line_width": 3.6330769230769233
+        "line_width": 1.4434615384615386
       },
       {
         "axis": "quality",
@@ -1203,7 +1203,7 @@
         "median_advantage": 13.0,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "quality",
@@ -1217,7 +1217,7 @@
         "median_advantage": 11.75,
         "p_holm": 0.5625,
         "shown": true,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "quality",
@@ -1231,7 +1231,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2365384615384616
+        "line_width": 0.6317307692307692
       },
       {
         "axis": "quality",
@@ -1245,7 +1245,7 @@
         "median_advantage": 7.0,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.047307692307692
+        "line_width": 0.9063461538461537
       },
       {
         "axis": "quality",
@@ -1259,7 +1259,7 @@
         "median_advantage": 1.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9503846153846156
+        "line_width": 0.5348076923076924
       },
       {
         "axis": "quality",
@@ -1273,7 +1273,7 @@
         "median_advantage": 0.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1292307692307695
+        "line_width": 0.5953846153846154
       },
       {
         "axis": "quality",
@@ -1287,7 +1287,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1888461538461539
+        "line_width": 0.6155769230769231
       },
       {
         "axis": "quality",
@@ -1301,7 +1301,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.260384615384615
+        "line_width": 0.6398076923076922
       },
       {
         "axis": "quality",
@@ -1315,7 +1315,7 @@
         "median_advantage": 1.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1173076923076923
+        "line_width": 0.5913461538461539
       },
       {
         "axis": "quality",
@@ -1329,7 +1329,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2007692307692301
+        "line_width": 0.6196153846153845
       },
       {
         "axis": "quality",
@@ -1343,7 +1343,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.284230769230769
+        "line_width": 0.6478846153846154
       },
       {
         "axis": "quality",
@@ -1357,7 +1357,7 @@
         "median_advantage": 3.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0576923076923077
+        "line_width": 0.5711538461538461
       },
       {
         "axis": "quality",
@@ -1371,7 +1371,7 @@
         "median_advantage": 1.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.795384615384615
+        "line_width": 0.4823076923076922
       },
       {
         "axis": "quality",
@@ -1385,7 +1385,7 @@
         "median_advantage": 1.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.5107692307692304
+        "line_width": 0.7246153846153846
       },
       {
         "axis": "quality",
@@ -1399,7 +1399,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9861538461538459
+        "line_width": 0.5469230769230768
       },
       {
         "axis": "quality",
@@ -1413,7 +1413,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8073076923076921
+        "line_width": 0.4863461538461538
       },
       {
         "axis": "quality",
@@ -1427,7 +1427,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7476923076923074
+        "line_width": 0.4661538461538461
       },
       {
         "axis": "quality",
@@ -1441,7 +1441,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7238461538461533
+        "line_width": 0.45807692307692294
       },
       {
         "axis": "quality",
@@ -1455,7 +1455,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8192307692307692
+        "line_width": 0.4903846153846154
       },
       {
         "axis": "quality",
@@ -1469,7 +1469,7 @@
         "median_advantage": 3.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7357692307692312
+        "line_width": 0.4621153846153848
       },
       {
         "axis": "quality",
@@ -1483,7 +1483,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7476923076923074
+        "line_width": 0.4661538461538461
       },
       {
         "axis": "quality",
@@ -1497,7 +1497,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8788461538461538
+        "line_width": 0.510576923076923
       },
       {
         "axis": "quality",
@@ -1511,7 +1511,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1411538461538464
+        "line_width": 0.5994230769230771
       },
       {
         "axis": "quality",
@@ -1525,7 +1525,7 @@
         "median_advantage": 4.0,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.7969230769230764
+        "line_width": 0.8215384615384613
       },
       {
         "axis": "quality",
@@ -1539,7 +1539,7 @@
         "median_advantage": 5.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.6180769230769225
+        "line_width": 0.7609615384615382
       },
       {
         "axis": "quality",
@@ -1553,7 +1553,7 @@
         "median_advantage": 3.0,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.558461538461538
+        "line_width": 0.7407692307692306
       },
       {
         "axis": "quality",
@@ -1567,7 +1567,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.486923076923077
+        "line_width": 0.7165384615384616
       },
       {
         "axis": "quality",
@@ -1581,7 +1581,7 @@
         "median_advantage": 2.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.6299999999999994
+        "line_width": 0.7649999999999999
       },
       {
         "axis": "quality",
@@ -1595,7 +1595,7 @@
         "median_advantage": 6.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.5465384615384616
+        "line_width": 0.7367307692307693
       },
       {
         "axis": "quality",
@@ -1609,7 +1609,7 @@
         "median_advantage": 6.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.463076923076923
+        "line_width": 0.7084615384615385
       },
       {
         "axis": "quality",
@@ -1623,7 +1623,7 @@
         "median_advantage": 2.75,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.6896153846153843
+        "line_width": 0.7851923076923075
       },
       {
         "axis": "quality",
@@ -1637,7 +1637,7 @@
         "median_advantage": 8.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.9519230769230769
+        "line_width": 0.8740384615384615
       },
       {
         "axis": "quality",
@@ -1651,7 +1651,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8788461538461538
+        "line_width": 0.510576923076923
       },
       {
         "axis": "quality",
@@ -1665,7 +1665,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9384615384615385
+        "line_width": 0.5307692307692308
       },
       {
         "axis": "quality",
@@ -1679,7 +1679,7 @@
         "median_advantage": -0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0099999999999993
+        "line_width": 0.5549999999999998
       },
       {
         "axis": "quality",
@@ -1693,7 +1693,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8669230769230767
+        "line_width": 0.5065384615384615
       },
       {
         "axis": "quality",
@@ -1707,7 +1707,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9503846153846147
+        "line_width": 0.5348076923076921
       },
       {
         "axis": "quality",
@@ -1721,7 +1721,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0338461538461534
+        "line_width": 0.563076923076923
       },
       {
         "axis": "quality",
@@ -1735,7 +1735,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8073076923076921
+        "line_width": 0.4863461538461538
       },
       {
         "axis": "quality",
@@ -1749,7 +1749,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8550000000000004
+        "line_width": 0.5025000000000002
       },
       {
         "axis": "quality",
@@ -1763,7 +1763,7 @@
         "median_advantage": -0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7596153846153846
+        "line_width": 0.4701923076923077
       },
       {
         "axis": "quality",
@@ -1777,7 +1777,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8311538461538455
+        "line_width": 0.4944230769230767
       },
       {
         "axis": "quality",
@@ -1791,7 +1791,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7119230769230771
+        "line_width": 0.4540384615384616
       },
       {
         "axis": "quality",
@@ -1805,7 +1805,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7715384615384608
+        "line_width": 0.474230769230769
       },
       {
         "axis": "quality",
@@ -1819,7 +1819,7 @@
         "median_advantage": 0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8549999999999996
+        "line_width": 0.5025
       },
       {
         "axis": "quality",
@@ -1833,7 +1833,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7715384615384616
+        "line_width": 0.4742307692307693
       },
       {
         "axis": "quality",
@@ -1847,7 +1847,7 @@
         "median_advantage": 1.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0338461538461543
+        "line_width": 0.5630769230769233
       },
       {
         "axis": "quality",
@@ -1861,7 +1861,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7715384615384608
+        "line_width": 0.474230769230769
       },
       {
         "axis": "quality",
@@ -1875,7 +1875,7 @@
         "median_advantage": 0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7715384615384616
+        "line_width": 0.4742307692307693
       },
       {
         "axis": "quality",
@@ -1889,7 +1889,7 @@
         "median_advantage": 1.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7119230769230762
+        "line_width": 0.45403846153846134
       },
       {
         "axis": "quality",
@@ -1903,7 +1903,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.795384615384615
+        "line_width": 0.4823076923076922
       },
       {
         "axis": "quality",
@@ -1917,7 +1917,7 @@
         "median_advantage": 0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8311538461538464
+        "line_width": 0.494423076923077
       },
       {
         "axis": "quality",
@@ -1931,7 +1931,7 @@
         "median_advantage": 3.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.093461538461539
+        "line_width": 0.583269230769231
       },
       {
         "axis": "quality",
@@ -1945,7 +1945,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8430769230769225
+        "line_width": 0.4984615384615383
       },
       {
         "axis": "quality",
@@ -1959,7 +1959,7 @@
         "median_advantage": 5.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7596153846153846
+        "line_width": 0.4701923076923077
       },
       {
         "axis": "quality",
@@ -1973,7 +1973,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7238461538461541
+        "line_width": 0.4580769230769232
       },
       {
         "axis": "quality",
@@ -1987,7 +1987,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9026923076923071
+        "line_width": 0.518653846153846
       },
       {
         "axis": "quality",
@@ -2001,7 +2001,7 @@
         "median_advantage": 6.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1649999999999998
+        "line_width": 0.6074999999999999
       },
       {
         "axis": "quality",
@@ -2015,7 +2015,7 @@
         "median_advantage": 3.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7834615384615379
+        "line_width": 0.4782692307692306
       },
       {
         "axis": "quality",
@@ -2029,7 +2029,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8669230769230767
+        "line_width": 0.5065384615384615
       },
       {
         "axis": "quality",
@@ -2043,7 +2043,7 @@
         "median_advantage": 0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7596153846153846
+        "line_width": 0.4701923076923077
       },
       {
         "axis": "quality",
@@ -2057,7 +2057,7 @@
         "median_advantage": 4.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0219230769230772
+        "line_width": 0.5590384615384617
       },
       {
         "axis": "quality",
@@ -2071,7 +2071,7 @@
         "median_advantage": 1.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7834615384615388
+        "line_width": 0.4782692307692309
       },
       {
         "axis": "quality",
@@ -2085,7 +2085,7 @@
         "median_advantage": 2.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8430769230769225
+        "line_width": 0.4984615384615383
       },
       {
         "axis": "quality",
@@ -2099,7 +2099,7 @@
         "median_advantage": 1.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1053846153846152
+        "line_width": 0.5873076923076923
       },
       {
         "axis": "quality",
@@ -2113,7 +2113,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9265384615384613
+        "line_width": 0.5267307692307692
       },
       {
         "axis": "quality",
@@ -2127,7 +2127,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1888461538461539
+        "line_width": 0.6155769230769231
       },
       {
         "axis": "quality",
@@ -2141,7 +2141,7 @@
         "median_advantage": 5.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9623076923076926
+        "line_width": 0.538846153846154
       }
     ],
     "edges": [
@@ -2480,7 +2480,7 @@
         "median_advantage": 1215.9499999999998,
         "p_holm": 0.416015625,
         "shown": true,
-        "line_width": 1.5878907059608287
+        "line_width": 0.7507371745996355
       },
       {
         "axis": "seconds",
@@ -2494,7 +2494,7 @@
         "median_advantage": 860.4999999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2994172846909913
+        "line_width": 0.6530284351372713
       },
       {
         "axis": "seconds",
@@ -2508,7 +2508,7 @@
         "median_advantage": 1284.2,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.5732037981574853
+        "line_width": 0.7457625767952774
       },
       {
         "axis": "seconds",
@@ -2522,7 +2522,7 @@
         "median_advantage": 2927.8999999999996,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2536,7 +2536,7 @@
         "median_advantage": 2666.25,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2550,7 +2550,7 @@
         "median_advantage": 2791.45,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2564,7 +2564,7 @@
         "median_advantage": 3025.1499999999996,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2578,7 +2578,7 @@
         "median_advantage": 2855.75,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2592,7 +2592,7 @@
         "median_advantage": 2746.0,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2606,7 +2606,7 @@
         "median_advantage": 2633.6,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2620,7 +2620,7 @@
         "median_advantage": 2804.0,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2634,7 +2634,7 @@
         "median_advantage": 3056.45,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2648,7 +2648,7 @@
         "median_advantage": 2638.55,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2662,7 +2662,7 @@
         "median_advantage": 2116.1000000000004,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 2.2860976427270936
+        "line_width": 0.9872266209236928
       },
       {
         "axis": "seconds",
@@ -2676,7 +2676,7 @@
         "median_advantage": 1024.8999999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8131785448789244
+        "line_width": 0.48833466842673245
       },
       {
         "axis": "seconds",
@@ -2690,7 +2690,7 @@
         "median_advantage": 2971.95,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2704,7 +2704,7 @@
         "median_advantage": 220.05000000000018,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0900975379920073
+        "line_width": 0.5821298112553573
       },
       {
         "axis": "seconds",
@@ -2718,7 +2718,7 @@
         "median_advantage": 573.8499999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9884734212698376
+        "line_width": 0.5477087394623644
       },
       {
         "axis": "seconds",
@@ -2732,7 +2732,7 @@
         "median_advantage": 123.89999999999992,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.714686907803343
+        "line_width": 0.4549745978043581
       },
       {
         "axis": "seconds",
@@ -2746,7 +2746,7 @@
         "median_advantage": 1551.3999999999999,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.184209337756873
+        "line_width": 1.2914257434337797
       },
       {
         "axis": "seconds",
@@ -2760,7 +2760,7 @@
         "median_advantage": 1175.4,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.386505929657119
+        "line_width": 1.3599455568193466
       },
       {
         "axis": "seconds",
@@ -2774,7 +2774,7 @@
         "median_advantage": 1385.4,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.402155508253723
+        "line_width": 1.3652462205375513
       },
       {
         "axis": "seconds",
@@ -2788,7 +2788,7 @@
         "median_advantage": 1663.4,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2802,7 +2802,7 @@
         "median_advantage": 1576.8500000000001,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2816,7 +2816,7 @@
         "median_advantage": 1582.95,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2830,7 +2830,7 @@
         "median_advantage": 1275.75,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.547983602222309
+        "line_width": 1.4146396072043304
       },
       {
         "axis": "seconds",
@@ -2844,7 +2844,7 @@
         "median_advantage": 1312.1,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.119146172042452
+        "line_width": 1.2693882195627662
       },
       {
         "axis": "seconds",
@@ -2858,7 +2858,7 @@
         "median_advantage": 1754.6999999999998,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2872,7 +2872,7 @@
         "median_advantage": 1424.8,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.300607372853248
+        "line_width": 1.3308508843535196
       },
       {
         "axis": "seconds",
@@ -2886,7 +2886,7 @@
         "median_advantage": 1046.7,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.3982069367662642
+        "line_width": 0.6864894463240573
       },
       {
         "axis": "seconds",
@@ -2900,7 +2900,7 @@
         "median_advantage": 326.35000000000014,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.4747121610819045
+        "line_width": 0.7124025061729031
       },
       {
         "axis": "seconds",
@@ -2914,7 +2914,7 @@
         "median_advantage": 1608.25,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2928,7 +2928,7 @@
         "median_advantage": 1096.6499999999996,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.9779882439528362
+        "line_width": 0.8828669858549929
       },
       {
         "axis": "seconds",
@@ -2942,7 +2942,7 @@
         "median_advantage": 601.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9737865134664943
+        "line_width": 0.5427341416580062
       },
       {
         "axis": "seconds",
@@ -2956,7 +2956,7 @@
         "median_advantage": 2302.95,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.4726827590267106
+        "line_width": 1.389134482896144
       },
       {
         "axis": "seconds",
@@ -2970,7 +2970,7 @@
         "median_advantage": 2270.7,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.6749793509269564
+        "line_width": 1.457654296281711
       },
       {
         "axis": "seconds",
@@ -2984,7 +2984,7 @@
         "median_advantage": 2238.7,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.6906289295235606
+        "line_width": 1.4629549599999156
       },
       {
         "axis": "seconds",
@@ -2998,7 +2998,7 @@
         "median_advantage": 2481.6000000000004,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3012,7 +3012,7 @@
         "median_advantage": 2281.9,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3026,7 +3026,7 @@
         "median_advantage": 2282.15,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3040,7 +3040,7 @@
         "median_advantage": 2085.1,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3054,7 +3054,7 @@
         "median_advantage": 2005.85,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.4076195933122895
+        "line_width": 1.3670969590251305
       },
       {
         "axis": "seconds",
@@ -3068,7 +3068,7 @@
         "median_advantage": 2506.25,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3082,7 +3082,7 @@
         "median_advantage": 2040.4499999999998,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.5890807941230856
+        "line_width": 1.4285596238158838
       },
       {
         "axis": "seconds",
@@ -3096,7 +3096,7 @@
         "median_advantage": 1901.9499999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.6866803580361018
+        "line_width": 0.7841981857864216
       },
       {
         "axis": "seconds",
@@ -3110,7 +3110,7 @@
         "median_advantage": -155.64999999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.186238739812067
+        "line_width": 0.6146937667105389
       },
       {
         "axis": "seconds",
@@ -3124,7 +3124,7 @@
         "median_advantage": 2412.9500000000003,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3138,7 +3138,7 @@
         "median_advantage": 991.8999999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.6895148226829986
+        "line_width": 0.7851582463926285
       },
       {
         "axis": "seconds",
@@ -3152,7 +3152,7 @@
         "median_advantage": 1525.25,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.198896245560216
+        "line_width": 1.296400341238138
       },
       {
         "axis": "seconds",
@@ -3166,7 +3166,7 @@
         "median_advantage": 1335.15,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.401192837460462
+        "line_width": 1.3649201546237046
       },
       {
         "axis": "seconds",
@@ -3180,7 +3180,7 @@
         "median_advantage": 1507.15,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.416842416057066
+        "line_width": 1.3702208183419096
       },
       {
         "axis": "seconds",
@@ -3194,7 +3194,7 @@
         "median_advantage": 1763.3,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3208,7 +3208,7 @@
         "median_advantage": 1634.3000000000002,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3222,7 +3222,7 @@
         "median_advantage": 1692.7,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3236,7 +3236,7 @@
         "median_advantage": 1385.5,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.5626705100256517
+        "line_width": 1.4196142050086886
       },
       {
         "axis": "seconds",
@@ -3250,7 +3250,7 @@
         "median_advantage": 1150.8999999999999,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.133833079845796
+        "line_width": 1.2743628173671244
       },
       {
         "axis": "seconds",
@@ -3264,7 +3264,7 @@
         "median_advantage": 1864.4499999999998,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3278,7 +3278,7 @@
         "median_advantage": 1379.0499999999997,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.315294280656592
+        "line_width": 1.3358254821578779
       },
       {
         "axis": "seconds",
@@ -3292,7 +3292,7 @@
         "median_advantage": 1139.3,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.4128938445696073
+        "line_width": 0.6914640441284154
       },
       {
         "axis": "seconds",
@@ -3306,7 +3306,7 @@
         "median_advantage": 364.6999999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.4600252532785611
+        "line_width": 0.707427908368545
       },
       {
         "axis": "seconds",
@@ -3320,7 +3320,7 @@
         "median_advantage": 1536.3999999999999,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3334,7 +3334,7 @@
         "median_advantage": 1216.35,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.9633013361494926
+        "line_width": 0.8778923880506346
       },
       {
         "axis": "seconds",
@@ -3348,7 +3348,7 @@
         "median_advantage": 39.300000000000004,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9022965919002454
+        "line_width": 0.5185198133855671
       },
       {
         "axis": "seconds",
@@ -3362,7 +3362,7 @@
         "median_advantage": 70.55,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9179461704968497
+        "line_width": 0.5238204771037717
       },
       {
         "axis": "seconds",
@@ -3376,7 +3376,7 @@
         "median_advantage": 249.59999999999997,
         "p_holm": 0.673828125,
         "shown": true,
-        "line_width": 2.934411875505285
+        "line_width": 1.2068169255743708
       },
       {
         "axis": "seconds",
@@ -3390,7 +3390,7 @@
         "median_advantage": 174.6,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.047202337501937
+        "line_width": 0.906310469153882
       },
       {
         "axis": "seconds",
@@ -3404,7 +3404,7 @@
         "median_advantage": 104.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.9584469132353985
+        "line_width": 0.8762481480313447
       },
       {
         "axis": "seconds",
@@ -3418,7 +3418,7 @@
         "median_advantage": 43.999999999999986,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0637742644654355
+        "line_width": 0.5732138637705508
       },
       {
         "axis": "seconds",
@@ -3432,7 +3432,7 @@
         "median_advantage": 131.54999999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7650631657144206
+        "line_width": 0.47203752387101344
       },
       {
         "axis": "seconds",
@@ -3446,7 +3446,7 @@
         "median_advantage": 347.29999999999995,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.6150360539166986
+        "line_width": 1.437350921487914
       },
       {
         "axis": "seconds",
@@ -3460,7 +3460,7 @@
         "median_advantage": 90.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8163980350963748
+        "line_width": 0.4894251409197399
       },
       {
         "axis": "seconds",
@@ -3474,7 +3474,7 @@
         "median_advantage": 306.70000000000005,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.4860024009906088
+        "line_width": 1.0549362971097225
       },
       {
         "axis": "seconds",
@@ -3488,7 +3488,7 @@
         "median_advantage": 2450.8999999999996,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3502,7 +3502,7 @@
         "median_advantage": 101.44999999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.005949716350894
+        "line_width": 0.8923378071511092
       },
       {
         "axis": "seconds",
@@ -3516,7 +3516,7 @@
         "median_advantage": 3322.7,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3530,7 +3530,7 @@
         "median_advantage": 68.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7156495785966046
+        "line_width": 0.4553006637182048
       },
       {
         "axis": "seconds",
@@ -3544,7 +3544,7 @@
         "median_advantage": 138.10000000000002,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 2.73211528360504
+        "line_width": 1.138297112188804
       },
       {
         "axis": "seconds",
@@ -3558,7 +3558,7 @@
         "median_advantage": 132.9,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.844905745601692
+        "line_width": 0.837790655768315
       },
       {
         "axis": "seconds",
@@ -3572,7 +3572,7 @@
         "median_advantage": 112.75000000000003,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.7561503213351533
+        "line_width": 0.8077283346457778
       },
       {
         "axis": "seconds",
@@ -3586,7 +3586,7 @@
         "median_advantage": -80.95000000000002,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8614776725651903
+        "line_width": 0.5046940503849838
       },
       {
         "axis": "seconds",
@@ -3600,7 +3600,7 @@
         "median_advantage": 72.80000000000001,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.967359757614666
+        "line_width": 0.5405573372565804
       },
       {
         "axis": "seconds",
@@ -3614,7 +3614,7 @@
         "median_advantage": 219.34999999999997,
         "p_holm": 1,
         "shown": false,
-        "line_width": 3.4127394620164537
+        "line_width": 1.3688311081023472
       },
       {
         "axis": "seconds",
@@ -3628,7 +3628,7 @@
         "median_advantage": -20.599999999999994,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7858985568038702
+        "line_width": 0.47909467246582704
       },
       {
         "axis": "seconds",
@@ -3642,7 +3642,7 @@
         "median_advantage": 221.7,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.688298992890854
+        "line_width": 1.1234561104952894
       },
       {
         "axis": "seconds",
@@ -3656,7 +3656,7 @@
         "median_advantage": 1949.5500000000002,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3670,7 +3670,7 @@
         "median_advantage": 118.34999999999998,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.8036531244506486
+        "line_width": 0.8238179937655423
       },
       {
         "axis": "seconds",
@@ -3684,7 +3684,7 @@
         "median_advantage": 3877.2,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3698,7 +3698,7 @@
         "median_advantage": 233.7,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 2.716465705008435
+        "line_width": 1.132996448470599
       },
       {
         "axis": "seconds",
@@ -3712,7 +3712,7 @@
         "median_advantage": 64.30000000000001,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.8292561670050873
+        "line_width": 0.8324899920501103
       },
       {
         "axis": "seconds",
@@ -3726,7 +3726,7 @@
         "median_advantage": 39.45000000000002,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.7405007427385488
+        "line_width": 0.8024276709275731
       },
       {
         "axis": "seconds",
@@ -3740,7 +3740,7 @@
         "median_advantage": 26.55000000000001,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8458280939685858
+        "line_width": 0.4993933866667791
       },
       {
         "axis": "seconds",
@@ -3754,7 +3754,7 @@
         "median_advantage": 93.84999999999997,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9830093362112704
+        "line_width": 0.5458580009747852
       },
       {
         "axis": "seconds",
@@ -3768,7 +3768,7 @@
         "median_advantage": 265.0,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.3970898834198486
+        "line_width": 1.3635304443841423
       },
       {
         "axis": "seconds",
@@ -3782,7 +3782,7 @@
         "median_advantage": 23.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8015481354004748
+        "line_width": 0.4843953361840318
       },
       {
         "axis": "seconds",
@@ -3796,7 +3796,7 @@
         "median_advantage": 309.45000000000005,
         "p_holm": 0.416015625,
         "shown": true,
-        "line_width": 2.7039485714874587
+        "line_width": 1.128756774213494
       },
       {
         "axis": "seconds",
@@ -3810,7 +3810,7 @@
         "median_advantage": 2063.65,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3824,7 +3824,7 @@
         "median_advantage": 52.69999999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.788003545854044
+        "line_width": 0.8185173300473375
       },
       {
         "axis": "seconds",
@@ -3838,7 +3838,7 @@
         "median_advantage": 3848.1000000000004,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3852,7 +3852,7 @@
         "median_advantage": 9.8,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.5872095380033477
+        "line_width": 0.7505064564204889
       },
       {
         "axis": "seconds",
@@ -3866,7 +3866,7 @@
         "median_advantage": 93.89999999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.675964962269887
+        "line_width": 0.7805687775430262
       },
       {
         "axis": "seconds",
@@ -3880,7 +3880,7 @@
         "median_advantage": 323.55,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 2.5706376110398494
+        "line_width": 1.0836030618038202
       },
       {
         "axis": "seconds",
@@ -3894,7 +3894,7 @@
         "median_advantage": 302.1,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 2.999475041219706
+        "line_width": 1.2288544494453844
       },
       {
         "axis": "seconds",
@@ -3908,7 +3908,7 @@
         "median_advantage": 31.3,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.3806241784114133
+        "line_width": 0.6805339959135432
       },
       {
         "axis": "seconds",
@@ -3922,7 +3922,7 @@
         "median_advantage": 276.44999999999993,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 2.81801384040891
+        "line_width": 1.167391784654631
       },
       {
         "axis": "seconds",
@@ -3936,7 +3936,7 @@
         "median_advantage": 529.85,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3950,7 +3950,7 @@
         "median_advantage": 2496.0,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3964,7 +3964,7 @@
         "median_advantage": 137.14999999999998,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.6284621591543913
+        "line_width": 0.7644791184232615
       },
       {
         "axis": "seconds",
@@ -3978,7 +3978,7 @@
         "median_advantage": 4304.1,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3992,7 +3992,7 @@
         "median_advantage": 23.30000000000002,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7887554242665386
+        "line_width": 0.48006232112253727
       },
       {
         "axis": "seconds",
@@ -4006,7 +4006,7 @@
         "median_advantage": 312.4,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.6834280730365019
+        "line_width": 0.7830966053833313
       },
       {
         "axis": "seconds",
@@ -4020,7 +4020,7 @@
         "median_advantage": 214.10000000000002,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.1122655032163578
+        "line_width": 0.9283479930248955
       },
       {
         "axis": "seconds",
@@ -4034,7 +4034,7 @@
         "median_advantage": 86.55,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.2678337164147613
+        "line_width": 0.9810404523340321
       },
       {
         "axis": "seconds",
@@ -4048,7 +4048,7 @@
         "median_advantage": 229.3,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.9308043024055623
+        "line_width": 0.8668853282341421
       },
       {
         "axis": "seconds",
@@ -4062,7 +4062,7 @@
         "median_advantage": 396.6,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4076,7 +4076,7 @@
         "median_advantage": 2043.15,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4090,7 +4090,7 @@
         "median_advantage": -1.1999999999999975,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7412526211510432
+        "line_width": 0.4639726620027727
       },
       {
         "axis": "seconds",
@@ -4104,7 +4104,7 @@
         "median_advantage": 3970.8,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4118,7 +4118,7 @@
         "median_advantage": 209.7,
         "p_holm": 0.916015625,
         "shown": true,
-        "line_width": 1.594672648769963
+        "line_width": 0.753034284260794
       },
       {
         "axis": "seconds",
@@ -4132,7 +4132,7 @@
         "median_advantage": 288.85,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.023510078949819
+        "line_width": 0.8982856719023582
       },
       {
         "axis": "seconds",
@@ -4146,7 +4146,7 @@
         "median_advantage": 242.79999999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.3565891406813
+        "line_width": 1.0111027734565694
       },
       {
         "axis": "seconds",
@@ -4160,7 +4160,7 @@
         "median_advantage": 209.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.8420488781390236
+        "line_width": 0.8368230071116047
       },
       {
         "axis": "seconds",
@@ -4174,7 +4174,7 @@
         "median_advantage": 385.54999999999995,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.7444493142260074
+        "line_width": 1.481184445141067
       },
       {
         "axis": "seconds",
@@ -4188,7 +4188,7 @@
         "median_advantage": 2526.05,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4202,7 +4202,7 @@
         "median_advantage": 49.45,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7475028031154954
+        "line_width": 0.46608965911976463
       },
       {
         "axis": "seconds",
@@ -4216,7 +4216,7 @@
         "median_advantage": 4407.6,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4230,7 +4230,7 @@
         "median_advantage": 131.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.128837430179856
+        "line_width": 0.5952513876415642
       },
       {
         "axis": "seconds",
@@ -4244,7 +4244,7 @@
         "median_advantage": 411.65,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.251261789451263
+        "line_width": 1.3141370577173634
       },
       {
         "axis": "seconds",
@@ -4258,7 +4258,7 @@
         "median_advantage": 6.4500000000000455,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9473762293690605
+        "line_width": 0.5337887228508109
       },
       {
         "axis": "seconds",
@@ -4272,7 +4272,7 @@
         "median_advantage": 252.30000000000007,
         "p_holm": 0.673828125,
         "shown": true,
-        "line_width": 2.8497766654560444
+        "line_width": 1.1781501608802731
       },
       {
         "axis": "seconds",
@@ -4286,7 +4286,7 @@
         "median_advantage": 2444.3,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4300,7 +4300,7 @@
         "median_advantage": 190.3,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.6421754518854583
+        "line_width": 0.7691239433805585
       },
       {
         "axis": "seconds",
@@ -4314,7 +4314,7 @@
         "median_advantage": 4132.65,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4328,7 +4328,7 @@
         "median_advantage": 442.6,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.6800992196311197
+        "line_width": 1.4593884453589274
       },
       {
         "axis": "seconds",
@@ -4342,7 +4342,7 @@
         "median_advantage": -70.89999999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8814612008107955
+        "line_width": 0.5114626647907533
       },
       {
         "axis": "seconds",
@@ -4356,7 +4356,7 @@
         "median_advantage": 360.5,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.4209392352761885
+        "line_width": 1.032898773238709
       },
       {
         "axis": "seconds",
@@ -4370,7 +4370,7 @@
         "median_advantage": 2237.2,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4384,7 +4384,7 @@
         "median_advantage": 142.95000000000005,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.0710128820653146
+        "line_width": 0.9143753310221227
       },
       {
         "axis": "seconds",
@@ -4398,7 +4398,7 @@
         "median_advantage": 3632.3500000000004,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4412,7 +4412,7 @@
         "median_advantage": 471.15,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.4986380188203237
+        "line_width": 1.3979257805681742
       },
       {
         "axis": "seconds",
@@ -4426,7 +4426,7 @@
         "median_advantage": 561.1500000000001,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4440,7 +4440,7 @@
         "median_advantage": 2664.0,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4454,7 +4454,7 @@
         "median_advantage": 172.8,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.309086337565805
+        "line_width": 0.9950131143368048
       },
       {
         "axis": "seconds",
@@ -4468,7 +4468,7 @@
         "median_advantage": 4189.5,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4482,7 +4482,7 @@
         "median_advantage": 291.15000000000003,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.602400436086984
+        "line_width": 1.0943614380294624
       },
       {
         "axis": "seconds",
@@ -4496,7 +4496,7 @@
         "median_advantage": 1928.45,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4510,7 +4510,7 @@
         "median_advantage": 101.64999999999998,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.889551681254519
+        "line_width": 0.8529126662313694
       },
       {
         "axis": "seconds",
@@ -4524,7 +4524,7 @@
         "median_advantage": 3483.3,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4538,7 +4538,7 @@
         "median_advantage": 1742.7,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.1729190978481685
+        "line_width": 0.9488919524969603
       },
       {
         "axis": "seconds",
@@ -4552,7 +4552,7 @@
         "median_advantage": 476.65,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.791952117341503
+        "line_width": 1.4972741042608315
       },
       {
         "axis": "seconds",
@@ -4566,7 +4566,7 @@
         "median_advantage": 2608.3,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.6761951807191
+        "line_width": 1.1193564321790501
       },
       {
         "axis": "seconds",
@@ -4580,7 +4580,7 @@
         "median_advantage": 2380.15,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -4594,7 +4594,7 @@
         "median_advantage": -343.24999999999966,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2032760828709317
+        "line_width": 0.6204644796820897
       },
       {
         "axis": "seconds",
@@ -4608,7 +4608,7 @@
         "median_advantage": 4307.8,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       }
     ],
     "edges": [
@@ -5227,7 +5227,7 @@
         "median_advantage": 0.05034033,
         "p_holm": 0.36328125,
         "shown": true,
-        "line_width": 1.6595686473577693
+        "line_width": 0.7750151870082767
       },
       {
         "axis": "cost_usd",
@@ -5241,7 +5241,7 @@
         "median_advantage": 0.03562470000000001,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.3478072461084825
+        "line_width": 0.6694185833593248
       },
       {
         "axis": "cost_usd",
@@ -5255,7 +5255,7 @@
         "median_advantage": 0.05316588000000002,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.6436960898908324
+        "line_width": 0.7696389981888303
       },
       {
         "axis": "cost_usd",
@@ -5269,7 +5269,7 @@
         "median_advantage": 0.12121506000000003,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5283,7 +5283,7 @@
         "median_advantage": 0.11038275000000003,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5297,7 +5297,7 @@
         "median_advantage": 0.6845248999999999,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5311,7 +5311,7 @@
         "median_advantage": 0.17358439999999997,
         "p_holm": 0.56640625,
         "shown": true,
-        "line_width": 2.7946249616490446
+        "line_width": 1.1594697450746765
       },
       {
         "axis": "cost_usd",
@@ -5325,7 +5325,7 @@
         "median_advantage": 0.20453126999999996,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 2.496245674916236
+        "line_width": 1.0584057931167896
       },
       {
         "axis": "cost_usd",
@@ -5339,7 +5339,7 @@
         "median_advantage": 0.06412802999999996,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2126592039978665
+        "line_width": 0.6236426336121806
       },
       {
         "axis": "cost_usd",
@@ -5353,7 +5353,7 @@
         "median_advantage": 0.22792447,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 2.479121123002532
+        "line_width": 1.0526055416621478
       },
       {
         "axis": "cost_usd",
@@ -5367,7 +5367,7 @@
         "median_advantage": 0.42718976999999997,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5381,7 +5381,7 @@
         "median_advantage": 0.04988976999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.9904447914509915
+        "line_width": 0.887086139039852
       },
       {
         "axis": "cost_usd",
@@ -5395,7 +5395,7 @@
         "median_advantage": 0.031721520000000045,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8835799076767915
+        "line_width": 0.512180291309881
       },
       {
         "axis": "cost_usd",
@@ -5409,7 +5409,7 @@
         "median_advantage": 0.06496593999999997,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.0005641127444673
+        "line_width": 0.890513651090868
       },
       {
         "axis": "cost_usd",
@@ -5423,7 +5423,7 @@
         "median_advantage": 0.05798799000000003,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2328259473839944
+        "line_width": 0.6304733047590949
       },
       {
         "axis": "cost_usd",
@@ -5437,7 +5437,7 @@
         "median_advantage": 0.10162195000000004,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.5013214728966933
+        "line_width": 1.398834692432751
       },
       {
         "axis": "cost_usd",
@@ -5451,7 +5451,7 @@
         "median_advantage": 1.92247107624663,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5465,7 +5465,7 @@
         "median_advantage": 0.023757390000000003,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0117614012492866
+        "line_width": 0.5555966036489519
       },
       {
         "axis": "cost_usd",
@@ -5479,7 +5479,7 @@
         "median_advantage": 0.005129459999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7158725574669368
+        "line_width": 0.45537618881944636
       },
       {
         "axis": "cost_usd",
@@ -5493,7 +5493,7 @@
         "median_advantage": 0.06422796000000001,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.384755429898674
+        "line_width": 1.3593526456108413
       },
       {
         "axis": "cost_usd",
@@ -5507,7 +5507,7 @@
         "median_advantage": 0.04866156000000002,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.603383089532459
+        "line_width": 1.433403949680349
       },
       {
         "axis": "cost_usd",
@@ -5521,7 +5521,7 @@
         "median_advantage": 0.7329421999999999,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5535,7 +5535,7 @@
         "median_advantage": 0.24086333,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.7541936090068138
+        "line_width": 1.4844849320829532
       },
       {
         "axis": "cost_usd",
@@ -5549,7 +5549,7 @@
         "median_advantage": 0.31056495,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.455814322274005
+        "line_width": 1.3834209801250663
       },
       {
         "axis": "cost_usd",
@@ -5563,7 +5563,7 @@
         "median_advantage": 0.1391922,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.172227851355636
+        "line_width": 0.9486578206204573
       },
       {
         "axis": "cost_usd",
@@ -5577,7 +5577,7 @@
         "median_advantage": 0.27563382999999997,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.438689770360301
+        "line_width": 1.3776207286704245
       },
       {
         "axis": "cost_usd",
@@ -5591,7 +5591,7 @@
         "median_advantage": 0.45358382999999997,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5605,7 +5605,7 @@
         "median_advantage": 0.05384463999999997,
         "p_holm": 0.36328125,
         "shown": false,
-        "line_width": 2.95001343880876
+        "line_width": 1.2121013260481286
       },
       {
         "axis": "cost_usd",
@@ -5619,7 +5619,7 @@
         "median_advantage": 0.03479219999999998,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.4759887396809774
+        "line_width": 0.7128348956983956
       },
       {
         "axis": "cost_usd",
@@ -5633,7 +5633,7 @@
         "median_advantage": 0.10361332999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.960132760102237
+        "line_width": 1.2155288380991447
       },
       {
         "axis": "cost_usd",
@@ -5647,7 +5647,7 @@
         "median_advantage": 0.0039946399999999695,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.126742699973775
+        "line_width": 0.5945418822491819
       },
       {
         "axis": "cost_usd",
@@ -5661,7 +5661,7 @@
         "median_advantage": 0.04149416000000002,
         "p_holm": 0.9765625,
         "shown": true,
-        "line_width": 2.5417528255389237
+        "line_width": 1.0738195054244741
       },
       {
         "axis": "cost_usd",
@@ -5675,7 +5675,7 @@
         "median_advantage": 2.04902880624663,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5689,7 +5689,7 @@
         "median_advantage": 0.024912450000000003,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9958888437823498
+        "line_width": 0.5502204148295056
       },
       {
         "axis": "cost_usd",
@@ -5703,7 +5703,7 @@
         "median_advantage": 0.09534213000000002,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.696516831147961
+        "line_width": 1.464949249259793
       },
       {
         "axis": "cost_usd",
@@ -5717,7 +5717,7 @@
         "median_advantage": 0.09400698000000002,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5731,7 +5731,7 @@
         "median_advantage": 0.7071913999999999,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5745,7 +5745,7 @@
         "median_advantage": 0.21584076999999996,
         "p_holm": 0.56640625,
         "shown": false,
-        "line_width": 3.442432207757528
+        "line_width": 1.3788883284340012
       },
       {
         "axis": "cost_usd",
@@ -5759,7 +5759,7 @@
         "median_advantage": 0.28977801,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.144052921024718
+        "line_width": 1.2778243764761144
       },
       {
         "axis": "cost_usd",
@@ -5773,7 +5773,7 @@
         "median_advantage": 0.10782295999999995,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.8604664501063495
+        "line_width": 0.8430612169715055
       },
       {
         "axis": "cost_usd",
@@ -5787,7 +5787,7 @@
         "median_advantage": 0.26145627999999993,
         "p_holm": 0.36328125,
         "shown": false,
-        "line_width": 3.126928369111014
+        "line_width": 1.2720241250214728
       },
       {
         "axis": "cost_usd",
@@ -5801,7 +5801,7 @@
         "median_advantage": 0.44134185,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5815,7 +5815,7 @@
         "median_advantage": 0.06795789999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.6382520375594742
+        "line_width": 1.1065047223991769
       },
       {
         "axis": "cost_usd",
@@ -5829,7 +5829,7 @@
         "median_advantage": 0.02129184999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.164227338431691
+        "line_width": 0.6072382920494437
       },
       {
         "axis": "cost_usd",
@@ -5843,7 +5843,7 @@
         "median_advantage": 0.07944184999999998,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.64837135885295
+        "line_width": 1.1099322344501927
       },
       {
         "axis": "cost_usd",
@@ -5857,7 +5857,7 @@
         "median_advantage": 0.008478280000000019,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8149812987244883
+        "line_width": 0.48894527860022996
       },
       {
         "axis": "cost_usd",
@@ -5871,7 +5871,7 @@
         "median_advantage": 0.08009255000000003,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 2.85351422678821
+        "line_width": 1.179416109073426
       },
       {
         "axis": "cost_usd",
@@ -5885,7 +5885,7 @@
         "median_advantage": 2.02067601624663,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5899,7 +5899,7 @@
         "median_advantage": 0.06314535000000002,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.4006279873656107
+        "line_width": 1.3647288344302877
       },
       {
         "axis": "cost_usd",
@@ -5913,7 +5913,7 @@
         "median_advantage": 0.05527521000000002,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.6192556469993953
+        "line_width": 1.4387801384997954
       },
       {
         "axis": "cost_usd",
@@ -5927,7 +5927,7 @@
         "median_advantage": 0.7376907799999999,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5941,7 +5941,7 @@
         "median_advantage": 0.25373626,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.7383210515398773
+        "line_width": 1.4791087432635068
       },
       {
         "axis": "cost_usd",
@@ -5955,7 +5955,7 @@
         "median_advantage": 0.31896087,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.4399417648070676
+        "line_width": 1.3780447913056197
       },
       {
         "axis": "cost_usd",
@@ -5969,7 +5969,7 @@
         "median_advantage": 0.13219099999999995,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.156355293888699
+        "line_width": 0.9432816318010111
       },
       {
         "axis": "cost_usd",
@@ -5983,7 +5983,7 @@
         "median_advantage": 0.29172601,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.4228172128933645
+        "line_width": 1.3722445398509782
       },
       {
         "axis": "cost_usd",
@@ -5997,7 +5997,7 @@
         "median_advantage": 0.47398626,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6011,7 +6011,7 @@
         "median_advantage": 0.09668625999999998,
         "p_holm": 0.56640625,
         "shown": false,
-        "line_width": 2.9341408813418237
+        "line_width": 1.2067251372286822
       },
       {
         "axis": "cost_usd",
@@ -6025,7 +6025,7 @@
         "median_advantage": 0.04866865999999995,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.4601161822140407
+        "line_width": 0.7074587068789493
       },
       {
         "axis": "cost_usd",
@@ -6039,7 +6039,7 @@
         "median_advantage": 0.10644450999999998,
         "p_holm": 0.56640625,
         "shown": false,
-        "line_width": 2.9442602026352995
+        "line_width": 1.2101526492796983
       },
       {
         "axis": "cost_usd",
@@ -6053,7 +6053,7 @@
         "median_advantage": 0.009733239999999983,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1108701425068381
+        "line_width": 0.5891656934297356
       },
       {
         "axis": "cost_usd",
@@ -6067,7 +6067,7 @@
         "median_advantage": 0.03610651000000002,
         "p_holm": 0.9765625,
         "shown": true,
-        "line_width": 2.5576253830058606
+        "line_width": 1.0791956942439207
       },
       {
         "axis": "cost_usd",
@@ -6081,7 +6081,7 @@
         "median_advantage": 2.04319554624663,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6095,7 +6095,7 @@
         "median_advantage": 0.00162702,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9186276596337846
+        "line_width": 0.5240513040695077
       },
       {
         "axis": "cost_usd",
@@ -6109,7 +6109,7 @@
         "median_advantage": 0.7919144300000001,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6123,7 +6123,7 @@
         "median_advantage": 0.28439917000000003,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6137,7 +6137,7 @@
         "median_advantage": 0.35748838,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6151,7 +6151,7 @@
         "median_advantage": 0.19816443,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6165,7 +6165,7 @@
         "median_advantage": 0.32222779,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6179,7 +6179,7 @@
         "median_advantage": 0.50464917,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6193,7 +6193,7 @@
         "median_advantage": 0.12966253,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6207,7 +6207,7 @@
         "median_advantage": 0.09750201,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6221,7 +6221,7 @@
         "median_advantage": 0.13881989,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6235,7 +6235,7 @@
         "median_advantage": 0.06001655,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6249,7 +6249,7 @@
         "median_advantage": 0.004912529999999996,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.5430026043597505
+        "line_width": 0.7355331401863672
       },
       {
         "axis": "cost_usd",
@@ -6263,7 +6263,7 @@
         "median_advantage": 2.13499797624663,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6277,7 +6277,7 @@
         "median_advantage": 0.79060619,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6291,7 +6291,7 @@
         "median_advantage": 0.29216995,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6305,7 +6305,7 @@
         "median_advantage": 0.35342083,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6319,7 +6319,7 @@
         "median_advantage": 0.19685619,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6333,7 +6333,7 @@
         "median_advantage": 0.31517083,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6347,7 +6347,7 @@
         "median_advantage": 0.51241995,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6361,7 +6361,7 @@
         "median_advantage": 0.13511995,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6375,7 +6375,7 @@
         "median_advantage": 0.09245619,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6389,7 +6389,7 @@
         "median_advantage": 0.14495329999999998,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6403,7 +6403,7 @@
         "median_advantage": 0.05132668,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6417,7 +6417,7 @@
         "median_advantage": 0.01115619,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.7616302639935346
+        "line_width": 0.8095844442558746
       },
       {
         "axis": "cost_usd",
@@ -6431,7 +6431,7 @@
         "median_advantage": 2.11565589624663,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6445,7 +6445,7 @@
         "median_advantage": 0.45089999999999997,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.145803167285403
+        "line_width": 1.2784172018224755
       },
       {
         "axis": "cost_usd",
@@ -6459,7 +6459,7 @@
         "median_advantage": 0.5087999999999999,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.444182454018213
+        "line_width": 1.3794811537803624
       },
       {
         "axis": "cost_usd",
@@ -6473,7 +6473,7 @@
         "median_advantage": 0.59375,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6487,7 +6487,7 @@
         "median_advantage": 0.47679999999999995,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.461307005931916
+        "line_width": 1.385281405235004
       },
       {
         "axis": "cost_usd",
@@ -6501,7 +6501,7 @@
         "median_advantage": 0.15684999999999996,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0813461512947524
+        "line_width": 0.5791656318901581
       },
       {
         "axis": "cost_usd",
@@ -6515,7 +6515,7 @@
         "median_advantage": 0.6463999999999999,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6529,7 +6529,7 @@
         "median_advantage": 0.6981499999999999,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6543,7 +6543,7 @@
         "median_advantage": 0.6069,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6557,7 +6557,7 @@
         "median_advantage": 0.71445,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6571,7 +6571,7 @@
         "median_advantage": 0.77945,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6585,7 +6585,7 @@
         "median_advantage": 0.832474424530925,
         "p_holm": 0.9765625,
         "shown": true,
-        "line_width": 2.9712868042571623
+        "line_width": 1.2193068207967808
       },
       {
         "axis": "cost_usd",
@@ -6599,7 +6599,7 @@
         "median_advantage": 0.02375000000000002,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9983792867328092
+        "line_width": 0.551063951957887
       },
       {
         "axis": "cost_usd",
@@ -6613,7 +6613,7 @@
         "median_advantage": 0.11580000000000001,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.2819657576511783
+        "line_width": 0.9858271114624959
       },
       {
         "axis": "cost_usd",
@@ -6627,7 +6627,7 @@
         "median_advantage": 6.938893903907228e-18,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.015503838646513
+        "line_width": 0.5568642034125286
       },
       {
         "axis": "cost_usd",
@@ -6641,7 +6641,7 @@
         "median_advantage": 0.3193,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 2.7644570159906516
+        "line_width": 1.1492515699323174
       },
       {
         "axis": "cost_usd",
@@ -6655,7 +6655,7 @@
         "median_advantage": 0.08095000000000002,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 1.5041801701980533
+        "line_width": 0.7223836060348245
       },
       {
         "axis": "cost_usd",
@@ -6669,7 +6669,7 @@
         "median_advantage": 0.2222,
         "p_holm": 0.56640625,
         "shown": false,
-        "line_width": 2.978204869325837
+        "line_width": 1.2216500363845575
       },
       {
         "axis": "cost_usd",
@@ -6683,7 +6683,7 @@
         "median_advantage": 0.0839,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.4940608489045777
+        "line_width": 0.7189560939838087
       },
       {
         "axis": "cost_usd",
@@ -6697,7 +6697,7 @@
         "median_advantage": 0.17875,
         "p_holm": 0.9765625,
         "shown": true,
-        "line_width": 3.3274509090330397
+        "line_width": 1.3399430498337714
       },
       {
         "axis": "cost_usd",
@@ -6711,7 +6711,7 @@
         "median_advantage": 0.2788,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6725,7 +6725,7 @@
         "median_advantage": 1.82972152624663,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6739,7 +6739,7 @@
         "median_advantage": 0.17604999999999998,
         "p_holm": 0.56640625,
         "shown": true,
-        "line_width": 1.9835864709183693
+        "line_width": 0.8847631595046089
       },
       {
         "axis": "cost_usd",
@@ -6753,7 +6753,7 @@
         "median_advantage": 0.02449999999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7171245519137038
+        "line_width": 0.45580025145464165
       },
       {
         "axis": "cost_usd",
@@ -6767,7 +6767,7 @@
         "median_advantage": 0.2499,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.0628363027234604
+        "line_width": 1.2503155218902045
       },
       {
         "axis": "cost_usd",
@@ -6781,7 +6781,7 @@
         "median_advantage": 0.1405,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.205800883465244
+        "line_width": 0.6213196540769375
       },
       {
         "axis": "cost_usd",
@@ -6795,7 +6795,7 @@
         "median_advantage": 0.24270000000000003,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 2.6798255825930273
+        "line_width": 1.1205860844266706
       },
       {
         "axis": "cost_usd",
@@ -6809,7 +6809,7 @@
         "median_advantage": 0.14105,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1956815621717685
+        "line_width": 0.6178921420259216
       },
       {
         "axis": "cost_usd",
@@ -6823,7 +6823,7 @@
         "median_advantage": 0.3139,
         "p_holm": 0.56640625,
         "shown": true,
-        "line_width": 3.02907162230023
+        "line_width": 1.2388790978758843
       },
       {
         "axis": "cost_usd",
@@ -6837,7 +6837,7 @@
         "median_advantage": 0.33030000000000004,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6851,7 +6851,7 @@
         "median_advantage": 1.77067152624663,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6865,7 +6865,7 @@
         "median_advantage": 0.11694999999999998,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 1.966461919004665
+        "line_width": 0.8789629080499672
       },
       {
         "axis": "cost_usd",
@@ -6879,7 +6879,7 @@
         "median_advantage": 0.36025,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6893,7 +6893,7 @@
         "median_advantage": 0.008700000000000006,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.477785587453125
+        "line_width": 0.7134435054276713
       },
       {
         "axis": "cost_usd",
@@ -6907,7 +6907,7 @@
         "median_advantage": 0.10885,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.3962391116746582
+        "line_width": 0.6858229249220616
       },
       {
         "axis": "cost_usd",
@@ -6921,7 +6921,7 @@
         "median_advantage": 0.013149999999999995,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.4879049087466005
+        "line_width": 0.7168710174786873
       },
       {
         "axis": "cost_usd",
@@ -6935,7 +6935,7 @@
         "median_advantage": 0.06295,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.7454851513818608
+        "line_width": 0.8041159383712755
       },
       {
         "axis": "cost_usd",
@@ -6949,7 +6949,7 @@
         "median_advantage": 0.1857,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6963,7 +6963,7 @@
         "median_advantage": 1.94672152624663,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -6977,7 +6977,7 @@
         "median_advantage": 0.28115,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.0799608546371644
+        "line_width": 1.256115773344846
       },
       {
         "axis": "cost_usd",
@@ -6991,7 +6991,7 @@
         "median_advantage": 0.08025,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1886763315515403
+        "line_width": 0.6155194026222959
       },
       {
         "axis": "cost_usd",
@@ -7005,7 +7005,7 @@
         "median_advantage": 0.2421,
         "p_holm": 0.36328125,
         "shown": true,
-        "line_width": 2.6627010306793233
+        "line_width": 1.1147858329720288
       },
       {
         "axis": "cost_usd",
@@ -7019,7 +7019,7 @@
         "median_advantage": 0.11439999999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1785570102580643
+        "line_width": 0.6120918905712799
       },
       {
         "axis": "cost_usd",
@@ -7033,7 +7033,7 @@
         "median_advantage": 0.23764999999999997,
         "p_holm": 0.298828125,
         "shown": true,
-        "line_width": 3.011947070386526
+        "line_width": 1.2330788464212428
       },
       {
         "axis": "cost_usd",
@@ -7047,7 +7047,7 @@
         "median_advantage": 0.313,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -7061,7 +7061,7 @@
         "median_advantage": 1.80852152624663,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -7075,7 +7075,7 @@
         "median_advantage": 0.40735,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.5686371861887043
+        "line_width": 1.421635175967142
       },
       {
         "axis": "cost_usd",
@@ -7089,7 +7089,7 @@
         "median_advantage": 0.44245,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -7103,7 +7103,7 @@
         "median_advantage": 0.39135,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.5585178648952285
+        "line_width": 1.4182076639161258
       },
       {
         "axis": "cost_usd",
@@ -7117,7 +7117,7 @@
         "median_advantage": 0.42305,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -7131,7 +7131,7 @@
         "median_advantage": 0.4965,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -7145,7 +7145,7 @@
         "median_advantage": 1.5935338901426932,
         "p_holm": 0.9765625,
         "shown": true,
-        "line_width": 3.3526329555519148
+        "line_width": 1.348472452686939
       },
       {
         "axis": "cost_usd",
@@ -7159,7 +7159,7 @@
         "median_advantage": 0.07940000000000001,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.174024699127783
+        "line_width": 0.949266430349733
       },
       {
         "axis": "cost_usd",
@@ -7173,7 +7173,7 @@
         "median_advantage": 0.007850000000000003,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7101193212934757
+        "line_width": 0.453427512051016
       },
       {
         "axis": "cost_usd",
@@ -7187,7 +7187,7 @@
         "median_advantage": 0.049850000000000005,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.5232707388349853
+        "line_width": 1.0675594437989468
       },
       {
         "axis": "cost_usd",
@@ -7201,7 +7201,7 @@
         "median_advantage": 0.1251,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -7215,7 +7215,7 @@
         "median_advantage": 1.9016338901426932,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -7229,7 +7229,7 @@
         "median_advantage": 0.0775,
         "p_holm": 1,
         "shown": true,
-        "line_width": 2.184144020421259
+        "line_width": 0.952693942400749
       },
       {
         "axis": "cost_usd",
@@ -7243,7 +7243,7 @@
         "median_advantage": 0.0587,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0492460397072023
+        "line_width": 0.5682930134492137
       },
       {
         "axis": "cost_usd",
@@ -7257,7 +7257,7 @@
         "median_advantage": 0.08105,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.317741565219901
+        "line_width": 1.3366544011228698
       },
       {
         "axis": "cost_usd",
@@ -7271,7 +7271,7 @@
         "median_advantage": 1.99547152624663,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -7285,7 +7285,7 @@
         "median_advantage": 0.064,
         "p_holm": 1,
         "shown": false,
-        "line_width": 2.5333900601284616
+        "line_width": 1.0709869558499627
       },
       {
         "axis": "cost_usd",
@@ -7299,7 +7299,7 @@
         "median_advantage": 0.14155,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -7313,7 +7313,7 @@
         "median_advantage": 1.8662838901426935,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -7327,7 +7327,7 @@
         "median_advantage": 0.04395,
         "p_holm": 0.56640625,
         "shown": true,
-        "line_width": 2.968495525512699
+        "line_width": 1.218361387673656
       },
       {
         "axis": "cost_usd",
@@ -7341,7 +7341,7 @@
         "median_advantage": 2.0946715262466302,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -7355,7 +7355,7 @@
         "median_advantage": 2.09867152624663,
         "p_holm": 0.298828125,
         "shown": false,
-        "line_width": 3.8
+        "line_width": 1.5
       }
     ],
     "edges": [

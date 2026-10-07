@@ -163,7 +163,7 @@ def render(output, snapshot):
             r['shown'] = (r['winner'], r['loser']) in reduced and r['p'] < .05
         scale = float(np.percentile([r['effect_intensity'] for r in rows if r['shown']],95)) if reduced else 1
         for r in rows:
-            r['line_width'] = .7 + 3.1*min(1,r['effect_intensity']/max(scale,1e-12))
+            r['line_width'] = .45 + 1.05*min(1,r['effect_intensity']/max(scale,1e-12))
         results[metric] = {'comparisons': rows, 'edges': sorted(edges), 'reduced': sorted(reduced),
                            'holm_edges': [(r['winner'], r['loser']) for r in rows if r['p_holm'] < .05]}
         dot = ['digraph G {', 'rankdir=TB;', 'node [shape=box, fontname="DejaVu Sans"];']
@@ -206,7 +206,7 @@ def render(output, snapshot):
             fig.text(.045,.89,f'{best} en haut · flèche vers {worse} · Wilcoxon apparié exact · p < 0,05 bilatéral',fontsize=10)
             widths = {(r['winner'],r['loser']):r['line_width'] for r in results[metric]['comparisons']}
             for a, b in sorted(edges):
-                ax.add_patch(FancyArrowPatch(positions[a], positions[b], arrowstyle='-|>', mutation_scale=12,
+                ax.add_patch(FancyArrowPatch(positions[a], positions[b], arrowstyle='-|>', mutation_scale=9,
                                             color='#64748b', linewidth=widths[a,b], shrinkA=32, shrinkB=34,
                                             connectionstyle='arc3,rad=0.04', zorder=1))
             for a, (x,y) in positions.items():
