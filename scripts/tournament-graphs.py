@@ -25,8 +25,8 @@ spec = importlib.util.spec_from_file_location('analysis', Path(__file__).with_na
 analysis = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(analysis)
 LABELS = {
-'mi': 'Mistral Large 4 · idéale\nAPI Mistral direct\noff',
-'mr': 'Mistral Large 4 · réelle\nAPI Mistral direct\noff',
+'mi': 'Mistral Large 4 · Idéal\nAPI Mistral direct\noff',
+'mr': 'Mistral Large 4 · beta\nAPI Mistral direct\noff',
 'a': 'Qwen 3.8 27B\nQ4_K_M · llama.cpp\nxhigh (fixé côté serveur)',
 'b': 'Qwen 3.8 Flash-Next Coder\nIQ1_M · Strata · pruned\nxhigh (fixé côté serveur)',
 'b2': 'Qwen 3.8 Flash-Next\nIQ3_S · Strata\nxhigh (fixé côté serveur)',
@@ -281,7 +281,7 @@ def render(output, snapshot):
                 placed=False
                 for dx,dy in offsets:
                     if annotation:annotation.remove()
-                    label=(a+' · '+LABELS[a]) if a in frontier else {'mi':'Mistral idéale','mr':'Mistral réelle'}.get(a,a)+("*" if provisional else "")
+                    label=(a+' · '+LABELS[a]) if a in frontier else {'mi':'Mistral Idéal','mr':'Mistral beta'}.get(a,a)+("*" if provisional else "")
                     annotation=ax.annotate(label,(x,y),xytext=(dx,dy),textcoords='offset points',
                                            fontsize=7 if a in frontier else 9,ha='center',va='center',
                                            color=color if a in {'mi','mr'} else '#92400e' if a in frontier else '#ea580c' if provisional else color,
@@ -306,7 +306,7 @@ def render(output, snapshot):
             fig.text(.045,.08,'Cercle doré + nom complet : frontière de Pareto sur ces deux axes (identités complètes, qualité moyenne ≥ 15/30).',fontsize=8)
             if name == 'quality-total-cost':
                 fig.text(.045,.855,f'Par ticket : coût total = coût direct + {hourly_usd:g} × durée / 3 600 ; puis moyenne. Toute la durée est valorisée, DNF inclus.',fontsize=8)
-            fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Mistral : losange violet = idéale, cercle rouge = réelle. Coût et durée en échelle logarithmique.\n'
+            fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Mistral : losange violet = Idéal, cercle rouge = beta. Coût et durée en échelle logarithmique.\n'
                      'Coût local = électricité seule ; coût hébergé = API. Les graphiques de significativité utilisent uniquement les identités complètes.',fontsize=8)
             pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
         fig=plt.figure(figsize=(11.6929,8.2677));fig.text(.06,.91,'Méthode et périmètre',fontsize=20,fontweight='bold')
@@ -316,7 +316,7 @@ def render(output, snapshot):
             'Test : Wilcoxon des rangs signés, bilatéral ; permutations exhaustives des signes (2^m).\nDifférences nulles exclues, rangs ex æquo moyens, arrondi des différences à 9 décimales.\nHypothèse : différences indépendantes entre tickets et symétriques autour de zéro sous H0.\nLa direction suit la somme des rangs signés ; aucune flèche tirée d’une simple différence de médianes.',
             'Les pages principales utilisent p < 0,05 par comparaison. Les p ajustés de Holm, par axe,\nsont fournis dans le CSV ; les comptes ajustés figurent au bas des graphes. Avec 10 tickets\net de nombreuses paires, la correction est peu puissante. Pas de flèche ne signifie pas égalité.',
             'Réduction transitive : supprimer uniquement les liens déjà reliés par un autre chemin ;\nconserver toutes les comparaisons directes dans le CSV. La significativité n’est pas transitive.\nLes cycles, s’ils existent, restent visibles à l’intérieur de leurs composantes fortement connexes.',
-            'Les erreurs fournisseur/quota restent invalides et nécessitent un rejeu. Aucun score de modèle\nn’est déduit de ces erreurs. Mistral idéale : dernier succès ; réelle : tous les essais, meilleure note.\nCoûts Mistral estimés aux tarifs EUR de lancement ; temps cumulés par ticket.\nSource statistique : docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html',
+            'Les erreurs fournisseur/quota restent invalides et nécessitent un rejeu. Aucun score de modèle\nn’est déduit de ces erreurs. Mistral Idéal : dernier succès ; réelle : tous les essais, meilleure note.\nCoûts Mistral estimés aux tarifs EUR de lancement ; temps cumulés par ticket.\nSource statistique : docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html',
         ]
         y=.83
         for text in paragraphs:
