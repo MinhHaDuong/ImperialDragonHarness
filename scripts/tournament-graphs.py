@@ -204,7 +204,7 @@ def render(output, snapshot):
         fig.text(.06,.78,'Dix tickets tirés au hasard dans l’historique des projets de l’auteur.\nDes modèles locaux et hébergés reprennent les mêmes tâches ; trois juges notent les résultats sur 30.\nNous comparons leur qualité, leur durée et leur coût, ainsi que le poids des incidents et des reprises.',
                  fontsize=12,linespacing=1.6,va='top')
         findings=[
-            ('Luna 6 medium : qualité et vitesse de Sol 6.1 low, en moins cher', 'Luna 6 medium fait jeu égal avec Sol 6.1 low en qualité et vitesse, en moins cher. Limite : la mesure mélange orchestration-codage-revue.'),
+            ('Vainqueur du tournoi : Luna 6 medium', 'Luna 6 medium fait jeu égal avec Sol 6.1 low en qualité et vitesse, en moins cher. Limite : la mesure mélange orchestration-codage-revue.'),
             ('Qwen 3.8 Flash-Next xhigh avec Strata domine en non-interactif', 'Pour les tâches non interactives, Qwen 3.8 Flash-Next à effort xhigh, exécuté localement avec Strata, domine ce comparatif.'),
             ('Qwen 3.8 local atteint la qualité des modèles commerciaux hébergés', 'Le saut générationnel entre Qwen 3.6 et Qwen 3.8 porte les modèles ouverts exécutés localement au niveau de qualité des modèles commerciaux hébergés sur les tâches de cet échantillon.'),
             ('La lenteur et la sérialisation sur GPU limitent l’interactif en local', 'Sur la workstation testée, la lenteur et la nécessité de sérialiser les tâches sur les GPU limitent fortement l’usage interactif, tandis que les API permettent des flux de travail fortement parallélisés. Les attentes portent sur Qwen 4 et Mistral 4, les mises à niveau du matériel et les optimisations quotidiennes du runtime, qui pourraient atténuer ces contraintes.'),
