@@ -865,6 +865,9 @@ def render(output, snapshot):
             "Limite : les séries usuelles retiennent les résultats après reprises, tandis que Mistral beta cumule les essais. Les coûts, durées et taux de réussite ne mesurent donc pas uniformément la fiabilité au premier essai. La colonne « Tentés » compte les tentatives préservées, y compris celles invalidées pour infrastructure ou mauvais état de départ ; ces incidents ne sont pas tous imputables au modèle. Pour les deux lignes Mistral, ce compte couvre les deux fournisseurs, tandis que les coûts beta suivent le périmètre documenté. Les tokens générés moyens suivent les runs retenus pour chaque série, et comprennent le reasoning quand il est inclus dans les tokens de sortie déclarés ; les tokenizers diffèrent entre fournisseurs."
         )
         paragraphs.append(
+            "Reprise b2 : les archives contiennent 11 tentatives pour les 10 tickets, dont une tentative 0333 interrompue par SIGTERM après 17 min 24 s (code de sortie 143), décrite dans le journal comme un arrêt lors d’une pause. Le rejeu retenu a obtenu 30/30 ; la tentative interrompue n’avait pas de note permettant un choix du meilleur score. Ce remplacement et ses ressources écartées empêchent de lire la série comme dix succès au premier essai. En retirant 0333 de toutes les séries, Qwen b2 et les deux séries Mistral ont chacun une qualité moyenne de 25,78/30 sur neuf tickets : b2 n’a alors plus seul la meilleure moyenne. « Tentés » est un compte des traces préservées, pas une garantie d’historique exhaustif."
+        )
+        paragraphs.append(
             "La sélection des candidats est purement ad hoc, sans prétention à l’exhaustivité.\nQuels modèles, variantes ou runtimes souhaiteriez-vous voir dans le prochain comparatif ?\nVos suggestions et retours sont bienvenus à minh.ha-duong@cnrs.fr."
         )
         y = 0.84
