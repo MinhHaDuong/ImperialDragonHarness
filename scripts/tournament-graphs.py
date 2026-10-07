@@ -24,6 +24,7 @@ from scipy.stats import rankdata
 spec = importlib.util.spec_from_file_location('analysis', Path(__file__).with_name('tournament-analysis.py'))
 analysis = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(analysis)
+DISPLAY_CODES = {'mr': 'mβ'}
 LABELS = {
 'mi': 'Mistral Large 4 · Idéal\nAPI Mistral direct\noff',
 'mr': 'Mistral Large 4 · beta\nAPI Mistral direct\noff',
@@ -281,7 +282,7 @@ def render(output, snapshot):
                 placed=False
                 for dx,dy in offsets:
                     if annotation:annotation.remove()
-                    label=(a+' · '+LABELS[a]) if a in frontier else {'mi':'Mistral Idéal','mr':'Mistral beta'}.get(a,a)+("*" if provisional else "")
+                    label=(DISPLAY_CODES.get(a,a)+' · '+LABELS[a]) if a in frontier else {'mi':'Mistral Idéal','mr':'Mistral beta'}.get(a,DISPLAY_CODES.get(a,a))+("*" if provisional else "")
                     annotation=ax.annotate(label,(x,y),xytext=(dx,dy),textcoords='offset points',
                                            fontsize=7 if a in frontier else 9,ha='center',va='center',
                                            color=color if a in {'mi','mr'} else '#92400e' if a in frontier else '#ea580c' if provisional else color,
@@ -301,7 +302,7 @@ def render(output, snapshot):
                 label=LABELS[a].split('\n')
                 description=label[0]+'\n'+label[1]+' · '+label[2]
                 color={'mi':'#7c3aed','mr':'#dc2626'}.get(a, '#ea580c' if not snapshot['arms'][a]['final'] else '#2563eb' if a in analysis.LOCAL else '#059669')
-                fig.text(.665,.81-i*min(.041, .72/len(nodes)),a+('*' if not snapshot['arms'][a]['final'] else ''),fontsize=9,fontweight='bold',color=color,va='top')
+                fig.text(.665,.81-i*min(.041, .72/len(nodes)),DISPLAY_CODES.get(a,a)+('*' if not snapshot['arms'][a]['final'] else ''),fontsize=9,fontweight='bold',color=color,va='top')
                 fig.text(.70,.81-i*min(.041, .72/len(nodes)),description,fontsize=7.4,va='top',linespacing=1.1,fontweight='bold' if a in frontier else 'normal')
             fig.text(.045,.08,'Cercle doré + nom complet : frontière de Pareto sur ces deux axes (identités complètes, qualité moyenne ≥ 15/30).',fontsize=8)
             if name == 'quality-total-cost':
