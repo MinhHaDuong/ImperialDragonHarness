@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-07T07:13:48.636685+00:00",
+  "generated_at": "2026-10-07T07:15:54.228665+00:00",
   "arms": {
     "a": {
       "expected": 10,
@@ -292,37 +292,37 @@
     },
     "mi": {
       "expected": 10,
-      "evaluated": 7,
-      "ok": 7,
+      "evaluated": 9,
+      "ok": 9,
       "failures": 0,
-      "pending": 3,
+      "pending": 1,
       "final": false,
-      "quality_median": 26.5,
-      "quality_mean": 25.928571428571427,
-      "seconds_median": 1548.3,
-      "cost_usd_median": 1.1254461486565122,
-      "time_observed": 7,
-      "cost_observed": 7,
-      "seconds_mean": 1641.7428571428572,
-      "cost_usd_mean": 1.2344779904653567,
-      "total_cost_usd_mean": 1.6905176730050393
+      "quality_median": 25.0,
+      "quality_mean": 24.555555555555557,
+      "seconds_median": 2218.3,
+      "cost_usd_median": 1.2869456423875647,
+      "time_observed": 9,
+      "cost_observed": 9,
+      "seconds_mean": 2633.277777777778,
+      "cost_usd_mean": 3.7146750095923062,
+      "total_cost_usd_mean": 4.446141058975022
     },
     "mr": {
       "expected": 10,
-      "evaluated": 8,
-      "ok": 7,
+      "evaluated": 10,
+      "ok": 9,
       "failures": 1,
-      "pending": 2,
-      "final": false,
-      "quality_median": 25.75,
-      "quality_mean": 22.6875,
-      "seconds_median": 2422.0499999999997,
-      "cost_usd_median": 1.704922039092133,
-      "time_observed": 8,
-      "cost_observed": 8,
-      "seconds_mean": 3256.7375,
-      "cost_usd_mean": 2.330058630542373,
-      "total_cost_usd_mean": 3.2347079360979287
+      "pending": 0,
+      "final": true,
+      "quality_median": 25.0,
+      "quality_mean": 22.1,
+      "seconds_median": 4471.05,
+      "cost_usd_median": 2.1510715262466302,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "seconds_mean": 4372.21,
+      "cost_usd_mean": 4.621462040409584,
+      "total_cost_usd_mean": 5.835964818187362
     }
   },
   "legs": {
@@ -1381,6 +1381,12 @@
       }
     },
     "mi": {
+      "0233": {
+        "state": "ok",
+        "quality": 20.5,
+        "seconds": 5470.1,
+        "cost_usd": 10.945522642918306
+      },
       "0338": {
         "state": "ok",
         "quality": 25.0,
@@ -1392,6 +1398,12 @@
         "quality": 28.0,
         "seconds": 2559.3,
         "cost_usd": 1.1254461486565122
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 19.0,
+        "seconds": 6737.2,
+        "cost_usd": 13.845206510154952
       },
       "0333": {
         "state": "ok",
@@ -1425,6 +1437,12 @@
       }
     },
     "mr": {
+      "0233": {
+        "state": "ok",
+        "quality": 20.5,
+        "seconds": 9100.5,
+        "cost_usd": 11.785640814360065
+      },
       "0338": {
         "state": "ok",
         "quality": 25.0,
@@ -1436,6 +1454,12 @@
         "quality": 28.0,
         "seconds": 6827.400000000001,
         "cost_usd": 1.5546344029881962
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 19.0,
+        "seconds": 8567.7,
+        "cost_usd": 15.788510545396793
       },
       "0333": {
         "state": "ok",

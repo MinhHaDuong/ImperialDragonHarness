@@ -60,8 +60,10 @@ def add_series(snapshot, arena):
                         'cost_usd':sum(r['cost_usd'] for r in attempts) if all(r['cost_usd'] is not None for r in attempts) else None}
                 continue
             admissible = [r for r in successes if not r.get('loop_failure')]
+            # Keep the last measured success until a replacement succeeds.
+            # Loop diagnosis must not silently remove a ticket from either series.
             if not admissible:
-                continue
+                admissible = successes
             latest = max(admissible, key=lambda r: r['finished'])
             legs[ticket] = {'state': 'ok', 'quality': max(r['quality'] for r in successes) if real else latest['quality'],
                             'seconds': sum(r['seconds'] for r in attempts) if real and all(r['seconds'] is not None for r in attempts) else latest['seconds'] if not real else None,

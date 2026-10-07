@@ -19,7 +19,7 @@ j [label="GLM 5.3 Flash\nAPI OpenRouter\nhigh"];
 k [label="Mimo v2.6 Flash\nAPI OpenRouter\nmedium"];
 l [label="GPT 6 Luna\nAPI OpenAI\nmedium"];
 mi [label="Mistral Large 4 · idéale\nAPI Mistral direct\noff\nPROVISOIRE"];
-mr [label="Mistral Large 4 · réelle\nAPI Mistral direct\noff\nPROVISOIRE"];
+mr [label="Mistral Large 4 · réelle\nAPI Mistral direct\noff"];
 a -> c [label="p=0.0449; n=10"];
 a -> c2 [label="p=0.0137; n=10"];
 b -> c [label="p=0.0176; n=10"];
@@ -52,4 +52,6 @@ j -> c [label="p=0.0371; n=10"];
 j -> c2 [label="p=0.0117; n=10"];
 k -> c2 [label="p=0.0117; n=10"];
 l -> e [label="p=0.0488; n=10"];
+mr -> c [label="p=0.0195; n=10"];
+mr -> c2 [label="p=0.0039; n=10"];
 }
