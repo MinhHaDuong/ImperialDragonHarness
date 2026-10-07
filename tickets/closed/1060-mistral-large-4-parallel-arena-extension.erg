@@ -2,11 +2,13 @@
 Title: Mistral Large 4: parallel arena extension and timely French news draft
 Created: 2026-10-06
 Author: MinhHaDuong
+Closed: autoclosed — PR #1245
 
 --- log ---
 2026-10-06T19:01Z MinhHaDuong created
 
 2026-10-06T20:30Z reviewer note Recurring native Mistral incidents trigger author-authorized OpenRouter route change; five cases relaunched in parallel as separate arm mo. Five initial session model-change events match openrouter/mistralai/mistral-large-4-0 with no provider errors. Native records preserved; route pooling prohibited.
+2026-10-07T19:41Z Minh Ha-Duong closed — autoclosed — PR #1245
 --- body ---
 ## Context
 
