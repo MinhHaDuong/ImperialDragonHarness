@@ -181,18 +181,20 @@ def render(output, snapshot):
         fig=plt.figure(figsize=(11.6929,8.2677))
         fig.text(.06,.91,'Qualité, vitesse et coût des LLM pour la recherche',fontsize=22,fontweight='bold')
         fig.text(.06,.85,f'Intercomparaison avec Pi et Imperial Dragon Harness, {snapshot["generated_at"][:10]}',fontsize=13)
-        fig.text(.06,.10,'minh.ha-duong@cnrs.fr',fontsize=12)
+        fig.text(.06,.07,'minh.ha-duong@cnrs.fr',fontsize=12)
         fig.text(.06,.78,'Dix tickets tirés au hasard dans l’historique des projets de l’auteur.\nDes modèles locaux et hébergés reprennent les mêmes tâches ; trois juges notent les résultats sur 30.\nNous comparons leur qualité, leur durée et leur coût, ainsi que le poids des incidents et des reprises.',
                  fontsize=12,linespacing=1.6,va='top')
         findings=[
+            ('Le vainqueur surprise en API', 'Luna 6 medium fait quasi jeu égal en qualité avec Sol 6.1 low, pour un coût inférieur.\nIl est le vainqueur surprise de ce comparatif.'),
+            ('Le choix en non-interactif', 'Pour les tâches non interactives, Qwen 3.8 Flash-Next à effort xhigh, exécuté\nlocalement avec Strata, domine ce comparatif.'),
             ('Le saut générationnel', 'Le saut générationnel entre Qwen 3.6 et Qwen 3.8 porte les modèles ouverts exécutés\nlocalement au niveau de qualité des modèles commerciaux hébergés sur les tâches\nde cet échantillon.'),
             ('La contrainte du local', 'Sur la workstation testée, la lenteur et la nécessité de sérialiser les tâches sur les GPU\nlimitent fortement l’usage interactif, tandis que les API permettent des flux de travail\nfortement parallélisés.'),
             ('Mistral Large 4 en version beta', 'Mistral Large 4, annoncé le 6 octobre 2026, est prometteur en qualité, mais les incidents\nd’hébergement et les boucles observées dans son intégration au runtime Pi pénalisent\nencore sa fiabilité, sa vitesse et son coût.')]
-        y=.61
+        y=.65
         for heading,text in findings:
-            fig.text(.06,y,heading,fontsize=15,fontweight='bold',va='top')
-            fig.text(.06,y-.045,text,fontsize=12,va='top',linespacing=1.5)
-            y-=.17
+            fig.text(.06,y,heading,fontsize=13,fontweight='bold',va='top')
+            fig.text(.06,y-.03,text,fontsize=10.5,va='top',linespacing=1.35)
+            y-=.04 + .025 * len(text.splitlines())
         fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
         scatter_axes = [
             ('quality-cost', 'Qualité / coût', 'cost_usd_mean', 'quality_mean',
