@@ -862,6 +862,9 @@ def render(output, snapshot):
             "Limite : sur le ticket 0874, la dernière tentative directe avec Mistral a atteint le plafond de deux heures, malgré 195 réponses API réussies. Le modèle a longuement exploré le projet puis multiplié les tests, avec des modules et un hook manquants dans l’environnement. Le disjoncteur de répétitions identiques ne détecte pas cette dérive à commandes variables. Le résultat réussi via OpenRouter remplace ce ticket dans la série idéale ; Mistral beta conserve les coûts et durées des tentatives directes échouées et ajoute ceux du remplacement. La série Mistral combine donc deux filières d’hébergement. Le coût OpenRouter est celui enregistré pour ce run ; les coûts directs suivent la calibration de la facture Mistral."
         )
         paragraphs.append(
+            "Limite : les séries usuelles retiennent les résultats après reprises, tandis que Mistral beta cumule les essais. Les coûts, durées et taux de réussite ne mesurent donc pas uniformément la fiabilité au premier essai. La colonne « Tentés » compte les tentatives préservées, y compris celles invalidées pour infrastructure ou mauvais état de départ ; ces incidents ne sont pas tous imputables au modèle. Pour les deux lignes Mistral, ce compte couvre les deux fournisseurs, tandis que les coûts beta suivent le périmètre documenté. Les tokens générés moyens suivent les runs retenus pour chaque série, et comprennent le reasoning quand il est inclus dans les tokens de sortie déclarés ; les tokenizers diffèrent entre fournisseurs."
+        )
+        paragraphs.append(
             "La sélection des candidats est purement ad hoc, sans prétention à l’exhaustivité.\nQuels modèles, variantes ou runtimes souhaiteriez-vous voir dans le prochain comparatif ?\nVos suggestions et retours sont bienvenus à minh.ha-duong@cnrs.fr."
         )
         y = 0.84
@@ -911,10 +914,12 @@ def render(output, snapshot):
         )
         columns = [
             "Modèle · variante / moteur · effort",
+            "Tentés",
             "Réussis / 10",
             "Qualité\nmoyenne /30",
             "Durée moyenne\n(min / ticket)",
             "Coût moyen\n(USD / ticket)",
+            "Tokens générés\nmoyens / ticket",
         ]
         table_rows = []
         for arm in nodes:
@@ -936,6 +941,7 @@ def render(output, snapshot):
             table_rows.append(
                 [
                     identity,
+                    str(row.get("attempts_observed", "—")),
                     f"{row['ok']} / {row['expected']}",
                     display(row["quality_mean"]),
                     display(
@@ -944,6 +950,9 @@ def render(output, snapshot):
                         else None
                     ),
                     display(row["cost_usd_mean"]),
+                    "—"
+                    if row.get("output_tokens_mean") is None
+                    else f"{row['output_tokens_mean']:,.0f}".replace(",", " "),
                 ]
             )
         ax = fig.add_axes([0.06, 0.16, 0.88, 0.68])
@@ -951,12 +960,12 @@ def render(output, snapshot):
         table = ax.table(
             cellText=table_rows,
             colLabels=columns,
-            colWidths=[0.49, 0.10, 0.12, 0.145, 0.145],
+            colWidths=[0.42, 0.065, 0.09, 0.095, 0.11, 0.10, 0.12],
             cellLoc="center",
             bbox=[0, 0, 1, 1],
         )
         table.auto_set_font_size(False)
-        table.set_fontsize(8)
+        table.set_fontsize(7.3)
         for (r, c), cell in table.get_celld().items():
             cell.set_edgecolor("#cbd5e1")
             cell.set_linewidth(0.5)
@@ -1032,6 +1041,12 @@ def main():
         mistral = importlib.util.module_from_spec(mspec)
         mspec.loader.exec_module(mistral)
         mistral.add_series(snapshot, args.arena)
+        aspec = importlib.util.spec_from_file_location(
+            "attempt_audit", Path(__file__).with_name("tournament-attempts.py")
+        )
+        audit = importlib.util.module_from_spec(aspec)
+        aspec.loader.exec_module(audit)
+        audit.annotate(snapshot, args.arena)
     snapshot["time_value_usd_per_erg_hour"] = args.time_value
     (args.output / "snapshot.json").write_text(json.dumps(snapshot, indent=2) + "\n")
     results = render(args.output, snapshot)

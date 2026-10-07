@@ -17,7 +17,9 @@
       "seconds_mean": 3832.3,
       "cost_usd_mean": 0.15865722000000004,
       "total_cost_usd_mean": 1.2231849977777778,
-      "total_cost_eur_010_mean": 0.25335761111111116
+      "total_cost_eur_010_mean": 0.25335761111111116,
+      "attempts_observed": 16,
+      "output_tokens_mean": 68016.3
     },
     "b": {
       "expected": 10,
@@ -35,7 +37,9 @@
       "seconds_mean": 2364.82,
       "cost_usd_mean": 0.09790354800000002,
       "total_cost_usd_mean": 0.7547979924444445,
-      "total_cost_eur_010_mean": 0.1563408777777778
+      "total_cost_eur_010_mean": 0.1563408777777778,
+      "attempts_observed": 14,
+      "output_tokens_mean": 64701.5
     },
     "b2": {
       "expected": 10,
@@ -53,7 +57,9 @@
       "seconds_mean": 2766.41,
       "cost_usd_mean": 0.11452937400000003,
       "total_cost_usd_mean": 0.8829765962222222,
-      "total_cost_eur_010_mean": 0.18289043888888892
+      "total_cost_eur_010_mean": 0.18289043888888892,
+      "attempts_observed": 11,
+      "output_tokens_mean": 71071.5
     },
     "b3": {
       "expected": 10,
@@ -71,7 +77,9 @@
       "seconds_mean": 2383.78,
       "cost_usd_mean": 0.09868849200000003,
       "total_cost_usd_mean": 0.7608496031111112,
-      "total_cost_eur_010_mean": 0.15759434444444448
+      "total_cost_eur_010_mean": 0.15759434444444448,
+      "attempts_observed": 10,
+      "output_tokens_mean": 71416
     },
     "c": {
       "expected": 10,
@@ -89,7 +97,9 @@
       "seconds_mean": 612.62,
       "cost_usd_mean": 0.025362468000000006,
       "total_cost_usd_mean": 0.19553469022222222,
-      "total_cost_eur_010_mean": 0.040500988888888895
+      "total_cost_eur_010_mean": 0.040500988888888895,
+      "attempts_observed": 10,
+      "output_tokens_mean": 24584
     },
     "c2": {
       "expected": 10,
@@ -107,7 +117,9 @@
       "seconds_mean": 548.81,
       "cost_usd_mean": 0.022720734000000006,
       "total_cost_usd_mean": 0.17516795622222223,
-      "total_cost_eur_010_mean": 0.03628243888888889
+      "total_cost_eur_010_mean": 0.03628243888888889,
+      "attempts_observed": 10,
+      "output_tokens_mean": 11476.6
     },
     "d": {
       "expected": 10,
@@ -125,7 +137,9 @@
       "seconds_mean": 544.16,
       "cost_usd_mean": 1.5578400000000001,
       "total_cost_usd_mean": 1.7089955555555556,
-      "total_cost_eur_010_mean": 1.45756
+      "total_cost_eur_010_mean": 1.45756,
+      "attempts_observed": 12,
+      "output_tokens_mean": 24772.9
     },
     "d2": {
       "expected": 10,
@@ -143,7 +157,9 @@
       "seconds_mean": 181.79,
       "cost_usd_mean": 0.45512,
       "total_cost_usd_mean": 0.5056172222222223,
-      "total_cost_eur_010_mean": 0.4264571296296296
+      "total_cost_eur_010_mean": 0.4264571296296296,
+      "attempts_observed": 10,
+      "output_tokens_mean": 8665.6
     },
     "e": {
       "expected": 10,
@@ -161,7 +177,9 @@
       "seconds_mean": 294.49,
       "cost_usd_mean": 0.39168,
       "total_cost_usd_mean": 0.47348277777777775,
-      "total_cost_eur_010_mean": 0.37084694444444444
+      "total_cost_eur_010_mean": 0.37084694444444444,
+      "attempts_observed": 10,
+      "output_tokens_mean": 7547.5
     },
     "e2": {
       "expected": 10,
@@ -179,7 +197,9 @@
       "seconds_mean": 309.05,
       "cost_usd_mean": 0.20534,
       "total_cost_usd_mean": 0.2911872222222222,
-      "total_cost_eur_010_mean": 0.19871435185185182
+      "total_cost_eur_010_mean": 0.19871435185185182,
+      "attempts_observed": 10,
+      "output_tokens_mean": 4686.6
     },
     "e3": {
       "expected": 10,
@@ -197,7 +217,9 @@
       "seconds_mean": 502.68,
       "cost_usd_mean": 0.38832,
       "total_cost_usd_mean": 0.5279533333333333,
-      "total_cost_eur_010_mean": 0.37351888888888884
+      "total_cost_eur_010_mean": 0.37351888888888884,
+      "attempts_observed": 10,
+      "output_tokens_mean": 9425
     },
     "f": {
       "expected": 10,
@@ -215,7 +237,9 @@
       "seconds_mean": 634.68,
       "cost_usd_mean": 1.28588,
       "total_cost_usd_mean": 1.46218,
-      "total_cost_eur_010_mean": 1.2082596296296297
+      "total_cost_eur_010_mean": 1.2082596296296297,
+      "attempts_observed": 10,
+      "output_tokens_mean": 46748.3
     },
     "g": {
       "expected": 10,
@@ -233,7 +257,9 @@
       "seconds_mean": 125.55999999999999,
       "cost_usd_mean": 0.30368,
       "total_cost_usd_mean": 0.3385577777777778,
-      "total_cost_eur_010_mean": 0.2846729629629629
+      "total_cost_eur_010_mean": 0.2846729629629629,
+      "attempts_observed": 10,
+      "output_tokens_mean": 8896.1
     },
     "i": {
       "expected": 10,
@@ -251,7 +277,9 @@
       "seconds_mean": 575.05,
       "cost_usd_mean": 0.14466,
       "total_cost_usd_mean": 0.3043961111111111,
-      "total_cost_eur_010_mean": 0.14991805555555554
+      "total_cost_eur_010_mean": 0.14991805555555554,
+      "attempts_observed": 10,
+      "output_tokens_mean": 63848.1
     },
     "j": {
       "expected": 10,
@@ -269,7 +297,9 @@
       "seconds_mean": 1617.81,
       "cost_usd_mean": 0.30523,
       "total_cost_usd_mean": 0.7546216666666667,
-      "total_cost_eur_010_mean": 0.327559537037037
+      "total_cost_eur_010_mean": 0.327559537037037,
+      "attempts_observed": 15,
+      "output_tokens_mean": 46654.2
     },
     "k": {
       "expected": 10,
@@ -287,7 +317,9 @@
       "seconds_mean": 3603.58,
       "cost_usd_mean": 0.12135,
       "total_cost_usd_mean": 1.1223444444444444,
-      "total_cost_eur_010_mean": 0.21246055555555554
+      "total_cost_eur_010_mean": 0.21246055555555554,
+      "attempts_observed": 13,
+      "output_tokens_mean": 125159
     },
     "l": {
       "expected": 10,
@@ -305,7 +337,9 @@
       "seconds_mean": 301.17,
       "cost_usd_mean": 0.03876,
       "total_cost_usd_mean": 0.12241833333333334,
-      "total_cost_eur_010_mean": 0.044254722222222216
+      "total_cost_eur_010_mean": 0.044254722222222216,
+      "attempts_observed": 10,
+      "output_tokens_mean": 16051.5
     },
     "mi": {
       "expected": 10,
@@ -323,7 +357,9 @@
       "seconds_mean": 1835.93,
       "cost_usd_mean": 1.7405697589462015,
       "total_cost_usd_mean": 2.250550314501757,
-      "total_cost_eur_010_mean": 1.6626367212464828
+      "total_cost_eur_010_mean": 1.6626367212464828,
+      "attempts_observed": 35,
+      "output_tokens_mean": 59605
     },
     "mr": {
       "expected": 10,
@@ -341,7 +377,9 @@
       "seconds_mean": 5778.94,
       "cost_usd_mean": 6.357274408839133,
       "total_cost_usd_mean": 7.962535519950244,
-      "total_cost_eur_010_mean": 6.046891304480678
+      "total_cost_eur_010_mean": 6.046891304480678,
+      "attempts_observed": 35,
+      "output_tokens_mean": 196232.9
     }
   },
   "legs": {
@@ -1893,5 +1931,1834 @@
       }
     ]
   },
-  "time_value_usd_per_erg_hour": 1.0
+  "time_value_usd_per_erg_hour": 1.0,
+  "attempt_audit": {
+    "scope": "All preserved attempts for the ten sampled tickets, including invalid infrastructure and wrong-base attempts. Mistral includes both providers for counts; token means follow the runs used for each graph series. Counts are not pure model reliability.",
+    "records": [
+      {
+        "ticket": "0452",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-03T17:42:43Z",
+        "output_tokens": 11496,
+        "source": "runs/0452-e/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-03T18:09:50Z",
+        "output_tokens": 23902,
+        "source": "runs/0452-c/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-03T19:49:27Z",
+        "output_tokens": 41648,
+        "source": "runs/0452-d/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-03T20:32:31Z",
+        "output_tokens": 37740,
+        "source": "runs/0211-c/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-03T20:31:12Z",
+        "output_tokens": 13964,
+        "source": "runs/0211-d/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-03T21:11:52Z",
+        "output_tokens": 40332,
+        "source": "runs/0211-b/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-03T20:46:12Z",
+        "output_tokens": 22812,
+        "source": "runs/0211-f/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-03T21:40:29Z",
+        "output_tokens": 84382,
+        "source": "runs/0333-f/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:02:53Z",
+        "output_tokens": 66676,
+        "source": "runs/0333-b/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:11:01Z",
+        "output_tokens": 27686,
+        "source": "runs/0333-d/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:22:26Z",
+        "output_tokens": 16727,
+        "source": "runs/0333-c/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:20:13Z",
+        "output_tokens": 7560,
+        "source": "runs/0333-e/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:27:05Z",
+        "output_tokens": 24010,
+        "source": "runs/0338-f/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:32:40Z",
+        "output_tokens": 9827,
+        "source": "runs/0338-e/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:37:15Z",
+        "output_tokens": 16338,
+        "source": "runs/0338-c/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:50:53Z",
+        "output_tokens": 21224,
+        "source": "runs/0338-d/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:18:51Z",
+        "output_tokens": 59117,
+        "source": "runs/0452-b/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:21:33Z",
+        "output_tokens": 2344,
+        "source": "runs/0470-d/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:28:28Z",
+        "output_tokens": 940,
+        "source": "runs/0470-e/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:34:34Z",
+        "output_tokens": 22190,
+        "source": "runs/0470-f/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:38:52Z",
+        "output_tokens": 5859,
+        "source": "runs/0470-c/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:42:00Z",
+        "output_tokens": 17250,
+        "source": "runs/0532-d/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:46:12Z",
+        "output_tokens": 17215,
+        "source": "runs/0532-c/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:51:02Z",
+        "output_tokens": 35612,
+        "source": "runs/0532-f/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:00:10Z",
+        "output_tokens": 6469,
+        "source": "runs/0532-e/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:27:46Z",
+        "output_tokens": 51041,
+        "source": "runs/0532-b/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:11:15Z",
+        "output_tokens": 32136,
+        "source": "runs/0673-f/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:35:37Z",
+        "output_tokens": 11815,
+        "source": "runs/0673-d/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:42:19Z",
+        "output_tokens": 8071,
+        "source": "runs/0673-e/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:53:12Z",
+        "output_tokens": 0,
+        "source": "runs/0673-c/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-04T04:27:11Z",
+        "output_tokens": 5459,
+        "source": "runs/0211-e/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T05:24:45Z",
+        "output_tokens": 41623,
+        "source": "runs/0211-a/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-04T05:49:34Z",
+        "output_tokens": 35668,
+        "source": "runs/0233-f/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-04T06:51:42Z",
+        "output_tokens": 48255,
+        "source": "runs/0233-b/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-04T07:00:08Z",
+        "output_tokens": 5619,
+        "source": "runs/0233-e/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T07:50:10Z",
+        "output_tokens": 28347,
+        "source": "runs/0233-a/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-04T08:10:58Z",
+        "output_tokens": 23370,
+        "source": "runs/0233-c/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T10:11:20Z",
+        "output_tokens": 117476,
+        "source": "runs/0333-a/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-04T10:41:45Z",
+        "output_tokens": 55169,
+        "source": "runs/0338-b/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T11:33:44Z",
+        "output_tokens": 61045,
+        "source": "runs/0338-a/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T13:14:32Z",
+        "output_tokens": 104797,
+        "source": "runs/0452-a/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-04T13:56:11Z",
+        "output_tokens": 49300,
+        "source": "runs/0452-f/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-04T14:20:51Z",
+        "output_tokens": 22286,
+        "source": "runs/0470-b/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T14:43:23Z",
+        "output_tokens": 22751,
+        "source": "runs/0470-a/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T15:32:35Z",
+        "output_tokens": 49502,
+        "source": "runs/0532-a/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-04T16:25:33Z",
+        "output_tokens": 56387,
+        "source": "runs/0673-b/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T17:24:09Z",
+        "output_tokens": 59384,
+        "source": "runs/0673-a/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-04T20:54:31Z",
+        "output_tokens": 8508,
+        "source": "runs/0233-d/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-04T21:17:12Z",
+        "output_tokens": 94495,
+        "source": "runs/0874-d/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "a",
+        "verdict": "DNF",
+        "finished": "2026-10-04T23:25:29Z",
+        "output_tokens": 134971,
+        "source": "runs/0874-a/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-05T01:14:49Z",
+        "output_tokens": 209486,
+        "source": "runs/0874-b/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-05T01:43:56Z",
+        "output_tokens": 132985,
+        "source": "runs/0874-f/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-05T02:24:00Z",
+        "output_tokens": 92413,
+        "source": "runs/0874-c/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-05T02:29:56Z",
+        "output_tokens": 14734,
+        "source": "runs/0874-e/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-05T02:53:38Z",
+        "output_tokens": 8795,
+        "source": "runs/1372-d/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-05T04:10:52Z",
+        "output_tokens": 60267,
+        "source": "runs/1372-a/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-05T04:27:02Z",
+        "output_tokens": 28388,
+        "source": "runs/1372-f/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-05T04:40:38Z",
+        "output_tokens": 12276,
+        "source": "runs/1372-c/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-05T05:08:45Z",
+        "output_tokens": 5300,
+        "source": "runs/1372-e/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-05T05:56:42Z",
+        "output_tokens": 38266,
+        "source": "runs/1372-b/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "k",
+        "verdict": "DNF",
+        "finished": "2026-10-05T08:57:51Z",
+        "output_tokens": 279323,
+        "source": "runs/0211-k/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T09:03:03Z",
+        "output_tokens": 16343,
+        "source": "runs/0211-l/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-05T09:18:44Z",
+        "output_tokens": 6678,
+        "source": "runs/0211-c2/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-05T10:07:39Z",
+        "output_tokens": 57370,
+        "source": "runs/0211-b3/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-05T10:47:51Z",
+        "output_tokens": 4148,
+        "source": "runs/0211-g/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T10:56:51Z",
+        "output_tokens": 4108,
+        "source": "runs/0211-e2/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T11:02:57Z",
+        "output_tokens": 38168,
+        "source": "runs/0211-i/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-05T12:04:17Z",
+        "output_tokens": 77535,
+        "source": "runs/0211-b2/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T12:29:11Z",
+        "output_tokens": 4417,
+        "source": "runs/0211-d2/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T12:43:57Z",
+        "output_tokens": 15038,
+        "source": "runs/0233-l/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T12:52:07Z",
+        "output_tokens": 4618,
+        "source": "runs/0233-e2/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-05T12:55:19Z",
+        "output_tokens": 4521,
+        "source": "runs/0233-g/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:13:12Z",
+        "output_tokens": 30365,
+        "source": "runs/0211-j/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:40:49Z",
+        "output_tokens": 197015,
+        "source": "runs/0233-k/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T12:58:58Z",
+        "output_tokens": 3874,
+        "source": "runs/0233-d2/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:09:30Z",
+        "output_tokens": 10152,
+        "source": "runs/0211-e3/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:07:09Z",
+        "output_tokens": 7552,
+        "source": "runs/0333-e2/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:05:44Z",
+        "output_tokens": 29330,
+        "source": "runs/0333-l/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:01:39Z",
+        "output_tokens": 32342,
+        "source": "runs/0233-i/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:00:53Z",
+        "output_tokens": 12856,
+        "source": "runs/0333-g/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:34:19Z",
+        "output_tokens": 34196,
+        "source": "runs/0233-b3/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:13:37Z",
+        "output_tokens": 9453,
+        "source": "runs/0333-d2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:11:02Z",
+        "output_tokens": 3897,
+        "source": "runs/0338-g/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:22:56Z",
+        "output_tokens": 84421,
+        "source": "runs/0333-i/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:13:21Z",
+        "output_tokens": 11280,
+        "source": "runs/0338-l/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:18:07Z",
+        "output_tokens": 7051,
+        "source": "runs/0338-e2/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:17:51Z",
+        "output_tokens": 6372,
+        "source": "runs/0233-e3/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-06T07:04:59Z",
+        "output_tokens": 13967,
+        "source": "runs/0452-g/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:25:16Z",
+        "output_tokens": 36651,
+        "source": "runs/0452-l/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-06T07:03:09Z",
+        "output_tokens": 1566,
+        "source": "runs/0338-d2/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:47:24Z",
+        "output_tokens": 10982,
+        "source": "runs/0333-e3/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:42:01Z",
+        "output_tokens": 7231,
+        "source": "runs/0452-e2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-06T07:07:01Z",
+        "output_tokens": 43933,
+        "source": "runs/0338-i/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "j",
+        "verdict": "DNF",
+        "finished": "2026-10-05T15:36:45Z",
+        "output_tokens": 117191,
+        "source": "runs/0333-j/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:36:59Z",
+        "output_tokens": 604,
+        "source": "runs/0470-g/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:48:07Z",
+        "output_tokens": 1885,
+        "source": "runs/0470-l/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:52:53Z",
+        "output_tokens": 17772,
+        "source": "runs/0452-d2/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:41:00Z",
+        "output_tokens": 7593,
+        "source": "runs/0233-c2/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:07:52Z",
+        "output_tokens": 3562,
+        "source": "runs/0532-g/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:26:56Z",
+        "output_tokens": 52693,
+        "source": "runs/0233-b2/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:13:51Z",
+        "output_tokens": 992,
+        "source": "runs/0470-e2/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:56:46Z",
+        "output_tokens": 75116,
+        "source": "runs/0452-i/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:53:15Z",
+        "output_tokens": 8722,
+        "source": "runs/0338-e3/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:29:31Z",
+        "output_tokens": 14650,
+        "source": "runs/0532-l/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-06T07:03:21Z",
+        "output_tokens": 841,
+        "source": "runs/0470-d2/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:22:52Z",
+        "output_tokens": 15343,
+        "source": "runs/0452-e3/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:24:39Z",
+        "output_tokens": 65839,
+        "source": "runs/0470-i/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:09:20Z",
+        "output_tokens": 6368,
+        "source": "runs/0673-g/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:18:19Z",
+        "output_tokens": 5867,
+        "source": "runs/0532-e2/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:31:20Z",
+        "output_tokens": 8050,
+        "source": "runs/0673-l/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:12:34Z",
+        "output_tokens": 8628,
+        "source": "runs/0532-d2/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:23:31Z",
+        "output_tokens": 1547,
+        "source": "runs/0470-e3/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:29:36Z",
+        "output_tokens": 49664,
+        "source": "runs/0532-i/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:18:34Z",
+        "output_tokens": 37026,
+        "source": "runs/0874-g/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:23:04Z",
+        "output_tokens": 4376,
+        "source": "runs/0673-e2/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-06T09:39:50Z",
+        "output_tokens": 77278,
+        "source": "runs/0333-b2/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:46:57Z",
+        "output_tokens": 16807,
+        "source": "runs/0874-l/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:46:11Z",
+        "output_tokens": 8010,
+        "source": "runs/0673-d2/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:53:21Z",
+        "output_tokens": 8761,
+        "source": "runs/0532-e3/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:55:20Z",
+        "output_tokens": 43959,
+        "source": "runs/0673-i/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:44:48Z",
+        "output_tokens": 2012,
+        "source": "runs/1372-g/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:14:53Z",
+        "output_tokens": 71616,
+        "source": "runs/0333-k/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:45:39Z",
+        "output_tokens": 2805,
+        "source": "runs/0874-e2/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:09:45Z",
+        "output_tokens": 2266,
+        "source": "runs/1372-e2/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:10:05Z",
+        "output_tokens": 29954,
+        "source": "runs/0874-d2/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:14:41Z",
+        "output_tokens": 10481,
+        "source": "runs/1372-l/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:15:12Z",
+        "output_tokens": 6569,
+        "source": "runs/0673-e3/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:23:40Z",
+        "output_tokens": 152790,
+        "source": "runs/0874-i/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:22:44Z",
+        "output_tokens": 2141,
+        "source": "runs/1372-d2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:42:05Z",
+        "output_tokens": 46177,
+        "source": "runs/0338-k/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:27:08Z",
+        "output_tokens": 21808,
+        "source": "runs/0874-e3/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-06T06:36:14Z",
+        "output_tokens": 36750,
+        "source": "runs/0470-b3/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-06T07:55:16Z",
+        "output_tokens": 83264,
+        "source": "runs/0333-b3/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-06T08:02:08Z",
+        "output_tokens": 9056,
+        "source": "runs/0333-c2/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:35:56Z",
+        "output_tokens": 52249,
+        "source": "runs/1372-i/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:43:50Z",
+        "output_tokens": 3994,
+        "source": "runs/1372-e3/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-05T16:18:05Z",
+        "output_tokens": 74811,
+        "source": "runs/0470-b2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:19:32Z",
+        "output_tokens": 31852,
+        "source": "runs/0338-j/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-05T16:57:03Z",
+        "output_tokens": 78335,
+        "source": "runs/0470-k/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-05T16:27:38Z",
+        "output_tokens": 8647,
+        "source": "runs/0470-j/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-05T16:25:36Z",
+        "output_tokens": 6725,
+        "source": "runs/0532-c2/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-05T16:43:15Z",
+        "output_tokens": 42980,
+        "source": "runs/0532-b3/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-05T16:56:32Z",
+        "output_tokens": 24416,
+        "source": "runs/0532-j/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-05T17:19:28Z",
+        "output_tokens": 56317,
+        "source": "runs/0532-b2/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-05T17:26:16Z",
+        "output_tokens": 30734,
+        "source": "runs/0673-j/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-05T18:20:09Z",
+        "output_tokens": 205915,
+        "source": "runs/0532-k/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-05T18:08:15Z",
+        "output_tokens": 70317,
+        "source": "runs/0673-b2/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-05T18:46:14Z",
+        "output_tokens": 68202,
+        "source": "runs/0673-b3/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-05T20:35:47Z",
+        "output_tokens": 202672,
+        "source": "runs/0874-k/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-05T18:50:57Z",
+        "output_tokens": 5077,
+        "source": "runs/0673-c2/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-05T20:06:52Z",
+        "output_tokens": 127415,
+        "source": "runs/0874-b2/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-05T20:16:33Z",
+        "output_tokens": 10987,
+        "source": "runs/0874-c2/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "b3",
+        "verdict": "DNF",
+        "finished": "2026-10-05T22:18:27Z",
+        "output_tokens": 229611,
+        "source": "runs/0874-b3/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-05T23:08:58Z",
+        "output_tokens": 33500,
+        "source": "runs/1372-b3/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-05T23:34:42Z",
+        "output_tokens": 26493,
+        "source": "runs/1372-c2/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-06T00:34:19Z",
+        "output_tokens": 41861,
+        "source": "runs/1372-b2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:44:08Z",
+        "output_tokens": 15158,
+        "source": "runs/0338-c2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-06T04:13:11Z",
+        "output_tokens": 53233,
+        "source": "runs/0338-b2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-06T04:34:17Z",
+        "output_tokens": 50423,
+        "source": "runs/0338-b3/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-06T05:19:19Z",
+        "output_tokens": 79255,
+        "source": "runs/0452-b2/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-06T05:54:28Z",
+        "output_tokens": 77864,
+        "source": "runs/0452-b3/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-06T06:15:33Z",
+        "output_tokens": 23275,
+        "source": "runs/0452-c2/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "c2",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T06:17:07Z",
+        "output_tokens": 3724,
+        "source": "runs/0470-c2/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-06T17:54:50Z",
+        "output_tokens": 67425,
+        "source": "runs/0452-k/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-06T17:30:41Z",
+        "output_tokens": 22586,
+        "source": "runs/0233-j/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-06T17:42:11Z",
+        "output_tokens": 39568,
+        "source": "runs/0452-j/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-06T18:38:10Z",
+        "output_tokens": 136039,
+        "source": "runs/0874-j/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-06T18:23:43Z",
+        "output_tokens": 52287,
+        "source": "runs/0673-k/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-06T19:14:27Z",
+        "output_tokens": 50825,
+        "source": "runs/1372-k/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-06T18:45:42Z",
+        "output_tokens": 25144,
+        "source": "runs/1372-j/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "m",
+        "verdict": "OK",
+        "finished": "2026-10-06T18:42:48Z",
+        "output_tokens": 25362,
+        "source": "runs/0470-m/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "m",
+        "verdict": "OK",
+        "finished": "2026-10-06T19:25:04Z",
+        "output_tokens": 42779,
+        "source": "runs/0333-m/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T20:10:23Z",
+        "output_tokens": 15415,
+        "source": "runs/0211-m/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "m",
+        "verdict": "OK",
+        "finished": "2026-10-06T19:07:58Z",
+        "output_tokens": 13572,
+        "source": "runs/0338-m/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T19:30:30Z",
+        "output_tokens": 43652,
+        "source": "runs/0452-m/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "m",
+        "verdict": "OK",
+        "finished": "2026-10-06T19:18:12Z",
+        "output_tokens": 19576,
+        "source": "runs/0673-m/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "m",
+        "verdict": "OK",
+        "finished": "2026-10-06T19:20:18Z",
+        "output_tokens": 20310,
+        "source": "runs/0532-m/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T20:10:17Z",
+        "output_tokens": 107377,
+        "source": "runs/0233-m/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T20:08:21Z",
+        "output_tokens": 87153,
+        "source": "runs/0874-m/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T20:08:42Z",
+        "output_tokens": 14861,
+        "source": "runs/1372-m/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "mo",
+        "verdict": "OK",
+        "finished": "2026-10-06T21:23:21Z",
+        "output_tokens": 96579,
+        "source": "runs/0874-mo/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "mo",
+        "verdict": "OK",
+        "finished": "2026-10-06T21:13:12Z",
+        "output_tokens": 25785,
+        "source": "runs/0211-mo/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "mo",
+        "verdict": "OK",
+        "finished": "2026-10-06T20:53:35Z",
+        "output_tokens": 13353,
+        "source": "runs/1372-mo/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "mo",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:33:53Z",
+        "output_tokens": 715,
+        "source": "runs/0452-mo/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "mo",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:33:53Z",
+        "output_tokens": 1019,
+        "source": "runs/0233-mo/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "mo",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:33:53Z",
+        "output_tokens": 782,
+        "source": "runs/0470-mo/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "mr",
+        "verdict": "OK",
+        "finished": "2026-10-06T23:14:25Z",
+        "output_tokens": 232050,
+        "source": "runs/0233-mr/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "mr",
+        "verdict": "OK",
+        "finished": "2026-10-06T23:35:33Z",
+        "output_tokens": 286033,
+        "source": "runs/0452-mr/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "mr",
+        "verdict": "OK",
+        "finished": "2026-10-06T22:22:52Z",
+        "output_tokens": 57361,
+        "source": "runs/0470-mr/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "mr",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-07T07:05:05Z",
+        "output_tokens": 134588,
+        "source": "runs/0874-mr/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "mr",
+        "verdict": "OK",
+        "finished": "2026-10-07T07:03:23Z",
+        "output_tokens": 58337,
+        "source": "runs/1372-mr/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "mr",
+        "verdict": "OK",
+        "finished": "2026-10-07T07:09:04Z",
+        "output_tokens": 100261,
+        "source": "runs/0211-mr/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "mb",
+        "verdict": "OK",
+        "finished": "2026-10-07T07:36:41Z",
+        "output_tokens": 110721,
+        "source": "runs/0452-mb/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "mb",
+        "verdict": "OK",
+        "finished": "2026-10-07T07:35:31Z",
+        "output_tokens": 76554,
+        "source": "runs/0233-mb/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "mb",
+        "verdict": "DNF",
+        "finished": "2026-10-07T09:20:16Z",
+        "output_tokens": 351087,
+        "source": "runs/0874-mb/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-03T21:18:01Z",
+        "output_tokens": 5495,
+        "source": "runs-void/0211-a-infrastructure-void/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:16:05Z",
+        "output_tokens": 9132,
+        "source": "runs-void/0333-a-infrastructure-void/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:37:22Z",
+        "output_tokens": 11247,
+        "source": "runs-void/0470-a-infrastructure-void/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:03:19Z",
+        "output_tokens": 18522,
+        "source": "runs-void/0532-a-infrastructure-void/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-03T20:13:49Z",
+        "output_tokens": 103155,
+        "source": "runs-void/0452-a-infrastructure-void/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-04T08:20:49Z",
+        "output_tokens": 0,
+        "source": "runs-void/0233-d-infra-void/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:41:17Z",
+        "output_tokens": 5509,
+        "source": "runs-void/0338-b-infra-void/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:48:02Z",
+        "output_tokens": 8531,
+        "source": "runs-void/0673-b-infra-void/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:26:11Z",
+        "output_tokens": 4481,
+        "source": "runs-void/0470-b-infra-void/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "a",
+        "verdict": "DNF",
+        "finished": "2026-10-04T19:35:22Z",
+        "output_tokens": 145873,
+        "source": "runs-void/0874-a-wrong-base/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "b",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-04T20:04:05Z",
+        "output_tokens": 57517,
+        "source": "runs-void/0874-b-wrong-base/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-04T17:27:23Z",
+        "output_tokens": 2583,
+        "source": "runs-void/0874-d-wrong-base/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "j",
+        "verdict": "VOID-REROUTE",
+        "finished": "2026-10-05T10:46:24Z",
+        "output_tokens": 19313,
+        "source": "runs-void/0211-j-void-bug/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "h",
+        "verdict": "VOID-REROUTE",
+        "finished": "2026-10-05T12:27:32Z",
+        "output_tokens": 11533,
+        "source": "runs-void/0211-h-void-bug/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "h",
+        "verdict": "VOID-REROUTE",
+        "finished": "2026-10-05T12:40:11Z",
+        "output_tokens": 18082,
+        "source": "runs-void/0233-h-void-bug/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "b2",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-05T15:01:28Z",
+        "output_tokens": 30617,
+        "source": "runs-void/0333-b2-infra-void-pause-kill-20261006/attempts/2/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "j",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T07:02:19Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/0233-j/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "j",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T03:19:36Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/0452-j/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "j",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T03:19:37Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/0874-j/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "j",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T03:19:38Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/1372-j/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "k",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T03:19:30Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/0452-k/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "k",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T03:19:31Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/0673-k/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "k",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T03:19:32Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/1372-k/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T18:24:16Z",
+        "output_tokens": 0,
+        "source": "runs-void/0470-m-infra-void-store-param-20261006/attempts/1/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T19:20:02Z",
+        "output_tokens": 902,
+        "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/0233-m/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T19:17:36Z",
+        "output_tokens": 36268,
+        "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/0874-m/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T19:23:59Z",
+        "output_tokens": 31531,
+        "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/1372-m/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "mo",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T20:32:05Z",
+        "output_tokens": 7795,
+        "source": "runs-void/mistral4-or-incidents-20261006T213315Z/0233-mo/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "mo",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T20:30:17Z",
+        "output_tokens": 113,
+        "source": "runs-void/mistral4-or-incidents-20261006T213315Z/0452-mo/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "mo",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:04:57Z",
+        "output_tokens": 43673,
+        "source": "runs-void/mistral4-or-incidents-20261006T213315Z/0470-mo/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "mr",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:39:43Z",
+        "output_tokens": 0,
+        "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0233-mr/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "mr",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:39:43Z",
+        "output_tokens": 0,
+        "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0452-mr/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "mr",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:39:43Z",
+        "output_tokens": 0,
+        "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0470-mr/run.json"
+      }
+    ]
+  }
 }
