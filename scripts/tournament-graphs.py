@@ -145,16 +145,25 @@ def render(output, snapshot):
                            for t in common if snapshot['legs'][a][t][metric] is not None and snapshot['legs'][b][t][metric] is not None]
             if not differences:
                 continue
+            paired = [(snapshot['legs'][a][t][metric], snapshot['legs'][b][t][metric])
+                      for t in common if snapshot['legs'][a][t][metric] is not None
+                      and snapshot['legs'][b][t][metric] is not None]
+            mean_a = statistics.mean(x for x,y in paired)
+            mean_b = statistics.mean(y for x,y in paired)
+            effect = abs(mean_a-mean_b) if metric == 'quality' else abs(float(np.log(max(mean_a,1e-12)/max(mean_b,1e-12))))
             p, sign = signed_rank(differences)
             rows.append({'axis': metric, 'a': a, 'b': b, 'n': len(differences), 'p': p,
                          'winner': a if sign > 0 else b if sign < 0 else '',
                          'loser': b if sign > 0 else a if sign < 0 else '',
-                         'median_advantage': statistics.median(differences) * sign})
+                         'effect_intensity': effect, 'median_advantage': statistics.median(differences) * sign})
         holm(rows)
         edges = {(r['winner'], r['loser']) for r in rows if r['p'] < .05 and r['winner']}
         reduced, groups = reduce_edges(nodes, edges)
         for r in rows:
             r['shown'] = (r['winner'], r['loser']) in reduced and r['p'] < .05
+        scale = float(np.percentile([r['effect_intensity'] for r in rows if r['shown']],95)) if reduced else 1
+        for r in rows:
+            r['line_width'] = .7 + 3.1*min(1,r['effect_intensity']/max(scale,1e-12))
         results[metric] = {'comparisons': rows, 'edges': sorted(edges), 'reduced': sorted(reduced),
                            'holm_edges': [(r['winner'], r['loser']) for r in rows if r['p_holm'] < .05]}
         dot = ['digraph G {', 'rankdir=TB;', 'node [shape=box, fontname="DejaVu Sans"];']
@@ -164,7 +173,7 @@ def render(output, snapshot):
             dot.append(f'{a} [label={json.dumps(label, ensure_ascii=False)}{style}];')
         for a, b in sorted(reduced):
             r = next(r for r in rows if r['winner'] == a and r['loser'] == b)
-            dot.append(f'{a} -> {b} [label="p={r["p"]:.4f}; n={r["n"]}"];')
+            dot.append(f'{a} -> {b} [label="p={r["p"]:.4f}; n={r["n"]}", penwidth={r["line_width"]:.3f}];')
         dot.append('}')
         (output / f'{metric}.dot').write_text('\n'.join(dot)+'\n')
     with PdfPages(output / 'comparaisons-modeles.pdf', metadata={'Title': 'Tournoi : comparaisons appariées à 95 %', 'Author': 'Minh Ha Duong', 'Subject': 'Qualité, vitesse et coût ; réduction transitive'}) as pdf:
@@ -195,9 +204,10 @@ def render(output, snapshot):
             fig.suptitle(f'{title} — qui bat qui ?', fontsize=19, fontweight='bold', x=.045, ha='left')
             best, worse = AXIS_WORDS[metric]
             fig.text(.045,.89,f'{best} en haut · flèche vers {worse} · Wilcoxon apparié exact · p < 0,05 bilatéral',fontsize=10)
+            widths = {(r['winner'],r['loser']):r['line_width'] for r in results[metric]['comparisons']}
             for a, b in sorted(edges):
                 ax.add_patch(FancyArrowPatch(positions[a], positions[b], arrowstyle='-|>', mutation_scale=12,
-                                            color='#64748b', linewidth=1, shrinkA=32, shrinkB=34,
+                                            color='#64748b', linewidth=widths[a,b], shrinkA=32, shrinkB=34,
                                             connectionstyle='arc3,rad=0.04', zorder=1))
             for a, (x,y) in positions.items():
                 provisional = not snapshot['arms'][a]['final']
@@ -207,7 +217,7 @@ def render(output, snapshot):
             ax.set_xlim(-.015,1.015);ax.set_ylim(-.02,1.02);ax.axis('off')
             summary=results[metric]
             fig.text(.045,.075,'Ces flèches sont significatives deux à deux ; dix tickets ne suffisent pas à garantir le classement complet à 95 %.',fontsize=9)
-            fig.text(.045,.045,'Seuil nominal par comparaison, sans garantie simultanée. Absence de flèche ≠ équivalence.\n'
+            fig.text(.045,.045,'L’épaisseur des flèches traduit l’intensité de l’effet. Absence de flèche ≠ équivalence.\n'
                      'Un chemin indirect ne constitue pas un nouveau test significatif. Détails p et n dans le CSV et les fichiers DOT.',fontsize=8)
             fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);fig.savefig(output/f'{metric}.png',dpi=160);plt.close(fig)
         scatter_axes = [

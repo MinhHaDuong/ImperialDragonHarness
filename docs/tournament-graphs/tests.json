@@ -9,9 +9,11 @@
         "p": 0.845703125,
         "winner": "b",
         "loser": "a",
+        "effect_intensity": 0.5,
         "median_advantage": -0.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8192307692307692
       },
       {
         "axis": "quality",
@@ -21,9 +23,11 @@
         "p": 0.02734375,
         "winner": "b2",
         "loser": "a",
+        "effect_intensity": 5.599999999999998,
         "median_advantage": 4.25,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.035384615384615
       },
       {
         "axis": "quality",
@@ -33,9 +37,11 @@
         "p": 0.93359375,
         "winner": "b3",
         "loser": "a",
+        "effect_intensity": 0.14999999999999858,
         "median_advantage": 1.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7357692307692304
       },
       {
         "axis": "quality",
@@ -45,9 +51,11 @@
         "p": 0.044921875,
         "winner": "a",
         "loser": "c",
+        "effect_intensity": 10.3,
         "median_advantage": 12.5,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 3.1561538461538463
       },
       {
         "axis": "quality",
@@ -57,9 +65,11 @@
         "p": 0.013671875,
         "winner": "a",
         "loser": "c2",
+        "effect_intensity": 11.650000000000002,
         "median_advantage": 10.75,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 3.478076923076924
       },
       {
         "axis": "quality",
@@ -69,9 +79,11 @@
         "p": 0.02734375,
         "winner": "d",
         "loser": "a",
+        "effect_intensity": 3.099999999999998,
         "median_advantage": 2.5,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.4392307692307686
       },
       {
         "axis": "quality",
@@ -81,9 +93,11 @@
         "p": 0.5859375,
         "winner": "d2",
         "loser": "a",
+        "effect_intensity": 0.8499999999999979,
         "median_advantage": 0.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9026923076923071
       },
       {
         "axis": "quality",
@@ -93,9 +107,11 @@
         "p": 0.13671875,
         "winner": "a",
         "loser": "e",
+        "effect_intensity": 2.5500000000000007,
         "median_advantage": 2.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.3080769230769231
       },
       {
         "axis": "quality",
@@ -105,9 +121,11 @@
         "p": 0.37890625,
         "winner": "e2",
         "loser": "a",
+        "effect_intensity": 2.049999999999997,
         "median_advantage": 1.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.188846153846153
       },
       {
         "axis": "quality",
@@ -117,9 +135,11 @@
         "p": 0.412109375,
         "winner": "e3",
         "loser": "a",
+        "effect_intensity": 1.2999999999999972,
         "median_advantage": 2.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0099999999999993
       },
       {
         "axis": "quality",
@@ -129,9 +149,11 @@
         "p": 0.94140625,
         "winner": "f",
         "loser": "a",
+        "effect_intensity": 1.0499999999999972,
         "median_advantage": -0.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9503846153846147
       },
       {
         "axis": "quality",
@@ -141,9 +163,11 @@
         "p": 0.671875,
         "winner": "a",
         "loser": "g",
+        "effect_intensity": 0.75,
         "median_advantage": 1.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8788461538461538
       },
       {
         "axis": "quality",
@@ -153,9 +177,11 @@
         "p": 0.66796875,
         "winner": "a",
         "loser": "i",
+        "effect_intensity": 1.3499999999999979,
         "median_advantage": 0.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0219230769230765
       },
       {
         "axis": "quality",
@@ -165,9 +191,11 @@
         "p": 0.203125,
         "winner": "j",
         "loser": "a",
+        "effect_intensity": 1.0,
         "median_advantage": 3.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9384615384615385
       },
       {
         "axis": "quality",
@@ -177,9 +205,11 @@
         "p": 0.44140625,
         "winner": "k",
         "loser": "a",
+        "effect_intensity": 0.6499999999999986,
         "median_advantage": 2.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8549999999999996
       },
       {
         "axis": "quality",
@@ -189,9 +219,11 @@
         "p": 0.98046875,
         "winner": "a",
         "loser": "l",
+        "effect_intensity": 1.5999999999999979,
         "median_advantage": 0.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.081538461538461
       },
       {
         "axis": "quality",
@@ -201,9 +233,11 @@
         "p": 0.125,
         "winner": "mr",
         "loser": "a",
+        "effect_intensity": 2.6999999999999993,
         "median_advantage": 4.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.3438461538461537
       },
       {
         "axis": "quality",
@@ -213,9 +247,11 @@
         "p": 0.0546875,
         "winner": "b2",
         "loser": "b",
+        "effect_intensity": 5.099999999999998,
         "median_advantage": 5.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.9161538461538457
       },
       {
         "axis": "quality",
@@ -225,9 +261,11 @@
         "p": 0.822265625,
         "winner": "b",
         "loser": "b3",
+        "effect_intensity": 0.3500000000000014,
         "median_advantage": 3.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7834615384615388
       },
       {
         "axis": "quality",
@@ -237,9 +275,11 @@
         "p": 0.017578125,
         "winner": "b",
         "loser": "c",
+        "effect_intensity": 10.8,
         "median_advantage": 12.0,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 3.275384615384615
       },
       {
         "axis": "quality",
@@ -249,9 +289,11 @@
         "p": 0.005859375,
         "winner": "b",
         "loser": "c2",
+        "effect_intensity": 12.150000000000002,
         "median_advantage": 12.25,
         "p_holm": 0.80859375,
-        "shown": true
+        "shown": true,
+        "line_width": 3.5973076923076928
       },
       {
         "axis": "quality",
@@ -261,9 +303,11 @@
         "p": 0.021484375,
         "winner": "d",
         "loser": "b",
+        "effect_intensity": 2.599999999999998,
         "median_advantage": 2.25,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.3199999999999994
       },
       {
         "axis": "quality",
@@ -273,9 +317,11 @@
         "p": 0.70703125,
         "winner": "d2",
         "loser": "b",
+        "effect_intensity": 0.34999999999999787,
         "median_advantage": 1.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7834615384615379
       },
       {
         "axis": "quality",
@@ -285,9 +331,11 @@
         "p": 0.16015625,
         "winner": "b",
         "loser": "e",
+        "effect_intensity": 3.0500000000000007,
         "median_advantage": 4.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.4273076923076924
       },
       {
         "axis": "quality",
@@ -297,9 +345,11 @@
         "p": 0.40625,
         "winner": "e2",
         "loser": "b",
+        "effect_intensity": 1.5499999999999972,
         "median_advantage": -0.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.069615384615384
       },
       {
         "axis": "quality",
@@ -309,9 +359,11 @@
         "p": 0.5703125,
         "winner": "e3",
         "loser": "b",
+        "effect_intensity": 0.7999999999999972,
         "median_advantage": 2.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8907692307692301
       },
       {
         "axis": "quality",
@@ -321,9 +373,11 @@
         "p": 0.8671875,
         "winner": "f",
         "loser": "b",
+        "effect_intensity": 0.5499999999999972,
         "median_advantage": 0.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8311538461538455
       },
       {
         "axis": "quality",
@@ -333,9 +387,11 @@
         "p": 0.94140625,
         "winner": "g",
         "loser": "b",
+        "effect_intensity": 0.25,
         "median_advantage": -0.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7596153846153846
       },
       {
         "axis": "quality",
@@ -345,9 +401,11 @@
         "p": 0.826171875,
         "winner": "i",
         "loser": "b",
+        "effect_intensity": 0.8499999999999979,
         "median_advantage": -0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9026923076923071
       },
       {
         "axis": "quality",
@@ -357,9 +415,11 @@
         "p": 0.6953125,
         "winner": "j",
         "loser": "b",
+        "effect_intensity": 0.5,
         "median_advantage": 3.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8192307692307692
       },
       {
         "axis": "quality",
@@ -369,9 +429,11 @@
         "p": 0.5390625,
         "winner": "k",
         "loser": "b",
+        "effect_intensity": 0.14999999999999858,
         "median_advantage": 2.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7357692307692304
       },
       {
         "axis": "quality",
@@ -381,9 +443,11 @@
         "p": 0.841796875,
         "winner": "l",
         "loser": "b",
+        "effect_intensity": 1.0999999999999979,
         "median_advantage": -1.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9623076923076918
       },
       {
         "axis": "quality",
@@ -393,9 +457,11 @@
         "p": 0.173828125,
         "winner": "mr",
         "loser": "b",
+        "effect_intensity": 2.1999999999999993,
         "median_advantage": 3.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.2246153846153844
       },
       {
         "axis": "quality",
@@ -405,9 +471,11 @@
         "p": 0.0078125,
         "winner": "b2",
         "loser": "b3",
+        "effect_intensity": 5.449999999999999,
         "median_advantage": 3.5,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.9996153846153846
       },
       {
         "axis": "quality",
@@ -417,9 +485,11 @@
         "p": 0.001953125,
         "winner": "b2",
         "loser": "c",
+        "effect_intensity": 15.899999999999999,
         "median_advantage": 18.25,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "quality",
@@ -429,9 +499,11 @@
         "p": 0.001953125,
         "winner": "b2",
         "loser": "c2",
+        "effect_intensity": 17.25,
         "median_advantage": 17.0,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "quality",
@@ -441,9 +513,11 @@
         "p": 0.359375,
         "winner": "b2",
         "loser": "d",
+        "effect_intensity": 2.5,
         "median_advantage": 1.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.2961538461538462
       },
       {
         "axis": "quality",
@@ -453,9 +527,11 @@
         "p": 0.0625,
         "winner": "b2",
         "loser": "d2",
+        "effect_intensity": 4.75,
         "median_advantage": 2.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.8326923076923076
       },
       {
         "axis": "quality",
@@ -465,9 +541,11 @@
         "p": 0.01171875,
         "winner": "b2",
         "loser": "e",
+        "effect_intensity": 8.149999999999999,
         "median_advantage": 10.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.643461538461538
       },
       {
         "axis": "quality",
@@ -477,9 +555,11 @@
         "p": 0.07421875,
         "winner": "b2",
         "loser": "e2",
+        "effect_intensity": 3.5500000000000007,
         "median_advantage": 2.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.5465384615384616
       },
       {
         "axis": "quality",
@@ -489,9 +569,11 @@
         "p": 0.0234375,
         "winner": "b2",
         "loser": "e3",
+        "effect_intensity": 4.300000000000001,
         "median_advantage": 3.0,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.7253846153846155
       },
       {
         "axis": "quality",
@@ -501,9 +583,11 @@
         "p": 0.013671875,
         "winner": "b2",
         "loser": "f",
+        "effect_intensity": 4.550000000000001,
         "median_advantage": 4.75,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.7850000000000001
       },
       {
         "axis": "quality",
@@ -513,9 +597,11 @@
         "p": 0.029296875,
         "winner": "b2",
         "loser": "g",
+        "effect_intensity": 4.849999999999998,
         "median_advantage": 4.5,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.856538461538461
       },
       {
         "axis": "quality",
@@ -525,9 +611,11 @@
         "p": 0.0390625,
         "winner": "b2",
         "loser": "i",
+        "effect_intensity": 4.25,
         "median_advantage": 5.0,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.7134615384615384
       },
       {
         "axis": "quality",
@@ -537,9 +625,11 @@
         "p": 0.2890625,
         "winner": "b2",
         "loser": "j",
+        "effect_intensity": 4.599999999999998,
         "median_advantage": 0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.7969230769230764
       },
       {
         "axis": "quality",
@@ -549,9 +639,11 @@
         "p": 0.09765625,
         "winner": "b2",
         "loser": "k",
+        "effect_intensity": 4.949999999999999,
         "median_advantage": 2.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.880384615384615
       },
       {
         "axis": "quality",
@@ -561,9 +653,11 @@
         "p": 0.015625,
         "winner": "b2",
         "loser": "l",
+        "effect_intensity": 4.0,
         "median_advantage": 2.75,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.6538461538461537
       },
       {
         "axis": "quality",
@@ -573,9 +667,11 @@
         "p": 0.4140625,
         "winner": "b2",
         "loser": "mr",
+        "effect_intensity": 2.8999999999999986,
         "median_advantage": 1.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.3915384615384612
       },
       {
         "axis": "quality",
@@ -585,9 +681,11 @@
         "p": 0.029296875,
         "winner": "b3",
         "loser": "c",
+        "effect_intensity": 10.45,
         "median_advantage": 13.0,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 3.191923076923077
       },
       {
         "axis": "quality",
@@ -597,9 +695,11 @@
         "p": 0.0078125,
         "winner": "b3",
         "loser": "c2",
+        "effect_intensity": 11.8,
         "median_advantage": 11.25,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 3.5138461538461545
       },
       {
         "axis": "quality",
@@ -609,9 +709,11 @@
         "p": 0.203125,
         "winner": "d",
         "loser": "b3",
+        "effect_intensity": 2.9499999999999993,
         "median_advantage": 2.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.4034615384615383
       },
       {
         "axis": "quality",
@@ -621,9 +723,11 @@
         "p": 0.71484375,
         "winner": "d2",
         "loser": "b3",
+        "effect_intensity": 0.6999999999999993,
         "median_advantage": 1.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8669230769230767
       },
       {
         "axis": "quality",
@@ -633,9 +737,11 @@
         "p": 0.333984375,
         "winner": "b3",
         "loser": "e",
+        "effect_intensity": 2.6999999999999993,
         "median_advantage": 2.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.3438461538461537
       },
       {
         "axis": "quality",
@@ -645,9 +751,11 @@
         "p": 0.541015625,
         "winner": "e2",
         "loser": "b3",
+        "effect_intensity": 1.8999999999999986,
         "median_advantage": 0.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.1530769230769227
       },
       {
         "axis": "quality",
@@ -657,9 +765,11 @@
         "p": 0.7734375,
         "winner": "e3",
         "loser": "b3",
+        "effect_intensity": 1.1499999999999986,
         "median_advantage": 0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9742307692307688
       },
       {
         "axis": "quality",
@@ -669,9 +779,11 @@
         "p": 0.98046875,
         "winner": "b3",
         "loser": "f",
+        "effect_intensity": 0.8999999999999986,
         "median_advantage": 2.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9146153846153843
       },
       {
         "axis": "quality",
@@ -681,9 +793,11 @@
         "p": 0.9453125,
         "winner": "g",
         "loser": "b3",
+        "effect_intensity": 0.6000000000000014,
         "median_advantage": 0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8430769230769234
       },
       {
         "axis": "quality",
@@ -693,9 +807,11 @@
         "p": 0.796875,
         "winner": "i",
         "loser": "b3",
+        "effect_intensity": 1.1999999999999993,
         "median_advantage": -0.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9861538461538459
       },
       {
         "axis": "quality",
@@ -705,9 +821,11 @@
         "p": 0.361328125,
         "winner": "j",
         "loser": "b3",
+        "effect_intensity": 0.8500000000000014,
         "median_advantage": 3.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.902692307692308
       },
       {
         "axis": "quality",
@@ -717,9 +835,11 @@
         "p": 0.7109375,
         "winner": "k",
         "loser": "b3",
+        "effect_intensity": 0.5,
         "median_advantage": 1.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8192307692307692
       },
       {
         "axis": "quality",
@@ -729,9 +849,11 @@
         "p": 0.84375,
         "winner": "l",
         "loser": "b3",
+        "effect_intensity": 1.4499999999999993,
         "median_advantage": 1.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0457692307692306
       },
       {
         "axis": "quality",
@@ -741,9 +863,11 @@
         "p": 0.3828125,
         "winner": "mr",
         "loser": "b3",
+        "effect_intensity": 2.5500000000000007,
         "median_advantage": 1.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.3080769230769231
       },
       {
         "axis": "quality",
@@ -753,9 +877,11 @@
         "p": 0.98046875,
         "winner": "c",
         "loser": "c2",
+        "effect_intensity": 1.3500000000000014,
         "median_advantage": -2.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0219230769230772
       },
       {
         "axis": "quality",
@@ -765,9 +891,11 @@
         "p": 0.01953125,
         "winner": "d",
         "loser": "c",
+        "effect_intensity": 13.399999999999999,
         "median_advantage": 13.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "quality",
@@ -777,9 +905,11 @@
         "p": 0.013671875,
         "winner": "d2",
         "loser": "c",
+        "effect_intensity": 11.149999999999999,
         "median_advantage": 12.25,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 3.3588461538461534
       },
       {
         "axis": "quality",
@@ -789,9 +919,11 @@
         "p": 0.037109375,
         "winner": "e",
         "loser": "c",
+        "effect_intensity": 7.75,
         "median_advantage": 6.75,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.5480769230769234
       },
       {
         "axis": "quality",
@@ -801,9 +933,11 @@
         "p": 0.005859375,
         "winner": "e2",
         "loser": "c",
+        "effect_intensity": 12.349999999999998,
         "median_advantage": 14.75,
         "p_holm": 0.80859375,
-        "shown": false
+        "shown": false,
+        "line_width": 3.6449999999999996
       },
       {
         "axis": "quality",
@@ -813,9 +947,11 @@
         "p": 0.0234375,
         "winner": "e3",
         "loser": "c",
+        "effect_intensity": 11.599999999999998,
         "median_advantage": 11.25,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 3.466153846153846
       },
       {
         "axis": "quality",
@@ -825,9 +961,11 @@
         "p": 0.00390625,
         "winner": "f",
         "loser": "c",
+        "effect_intensity": 11.349999999999998,
         "median_advantage": 12.75,
         "p_holm": 0.5625,
-        "shown": false
+        "shown": false,
+        "line_width": 3.406538461538461
       },
       {
         "axis": "quality",
@@ -837,9 +975,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "c",
+        "effect_intensity": 11.05,
         "median_advantage": 8.0,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.335
       },
       {
         "axis": "quality",
@@ -849,9 +989,11 @@
         "p": 0.001953125,
         "winner": "i",
         "loser": "c",
+        "effect_intensity": 11.649999999999999,
         "median_advantage": 10.0,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.478076923076923
       },
       {
         "axis": "quality",
@@ -861,9 +1003,11 @@
         "p": 0.037109375,
         "winner": "j",
         "loser": "c",
+        "effect_intensity": 11.3,
         "median_advantage": 15.0,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 3.394615384615385
       },
       {
         "axis": "quality",
@@ -873,9 +1017,11 @@
         "p": 0.064453125,
         "winner": "k",
         "loser": "c",
+        "effect_intensity": 10.95,
         "median_advantage": 13.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 3.3111538461538457
       },
       {
         "axis": "quality",
@@ -885,9 +1031,11 @@
         "p": 0.00390625,
         "winner": "l",
         "loser": "c",
+        "effect_intensity": 11.899999999999999,
         "median_advantage": 10.0,
         "p_holm": 0.5625,
-        "shown": false
+        "shown": false,
+        "line_width": 3.537692307692307
       },
       {
         "axis": "quality",
@@ -897,9 +1045,11 @@
         "p": 0.01953125,
         "winner": "mr",
         "loser": "c",
+        "effect_intensity": 13.0,
         "median_advantage": 15.25,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 3.8
       },
       {
         "axis": "quality",
@@ -909,9 +1059,11 @@
         "p": 0.00390625,
         "winner": "d",
         "loser": "c2",
+        "effect_intensity": 14.75,
         "median_advantage": 17.25,
         "p_holm": 0.5625,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "quality",
@@ -921,9 +1073,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "c2",
+        "effect_intensity": 12.5,
         "median_advantage": 10.5,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.680769230769231
       },
       {
         "axis": "quality",
@@ -933,9 +1087,11 @@
         "p": 0.01953125,
         "winner": "e",
         "loser": "c2",
+        "effect_intensity": 9.100000000000001,
         "median_advantage": 6.0,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.87
       },
       {
         "axis": "quality",
@@ -945,9 +1101,11 @@
         "p": 0.001953125,
         "winner": "e2",
         "loser": "c2",
+        "effect_intensity": 13.7,
         "median_advantage": 12.25,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "quality",
@@ -957,9 +1115,11 @@
         "p": 0.00390625,
         "winner": "e3",
         "loser": "c2",
+        "effect_intensity": 12.95,
         "median_advantage": 12.0,
         "p_holm": 0.5625,
-        "shown": true
+        "shown": true,
+        "line_width": 3.7880769230769227
       },
       {
         "axis": "quality",
@@ -969,9 +1129,11 @@
         "p": 0.001953125,
         "winner": "f",
         "loser": "c2",
+        "effect_intensity": 12.7,
         "median_advantage": 11.25,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.7284615384615387
       },
       {
         "axis": "quality",
@@ -981,9 +1143,11 @@
         "p": 0.00390625,
         "winner": "g",
         "loser": "c2",
+        "effect_intensity": 12.400000000000002,
         "median_advantage": 12.0,
         "p_holm": 0.5625,
-        "shown": true
+        "shown": true,
+        "line_width": 3.6569230769230776
       },
       {
         "axis": "quality",
@@ -993,9 +1157,11 @@
         "p": 0.001953125,
         "winner": "i",
         "loser": "c2",
+        "effect_intensity": 13.0,
         "median_advantage": 11.0,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.8
       },
       {
         "axis": "quality",
@@ -1005,9 +1171,11 @@
         "p": 0.01171875,
         "winner": "j",
         "loser": "c2",
+        "effect_intensity": 12.650000000000002,
         "median_advantage": 14.25,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 3.7165384615384625
       },
       {
         "axis": "quality",
@@ -1017,9 +1185,11 @@
         "p": 0.01171875,
         "winner": "k",
         "loser": "c2",
+        "effect_intensity": 12.3,
         "median_advantage": 12.0,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 3.6330769230769233
       },
       {
         "axis": "quality",
@@ -1029,9 +1199,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "c2",
+        "effect_intensity": 13.25,
         "median_advantage": 13.0,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "quality",
@@ -1041,9 +1213,11 @@
         "p": 0.00390625,
         "winner": "mr",
         "loser": "c2",
+        "effect_intensity": 14.350000000000001,
         "median_advantage": 11.75,
         "p_holm": 0.5625,
-        "shown": true
+        "shown": true,
+        "line_width": 3.8
       },
       {
         "axis": "quality",
@@ -1053,9 +1227,11 @@
         "p": 0.515625,
         "winner": "d",
         "loser": "d2",
+        "effect_intensity": 2.25,
         "median_advantage": 0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.2365384615384616
       },
       {
         "axis": "quality",
@@ -1065,9 +1241,11 @@
         "p": 0.01171875,
         "winner": "d",
         "loser": "e",
+        "effect_intensity": 5.649999999999999,
         "median_advantage": 7.0,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.047307692307692
       },
       {
         "axis": "quality",
@@ -1077,9 +1255,11 @@
         "p": 0.28515625,
         "winner": "d",
         "loser": "e2",
+        "effect_intensity": 1.0500000000000007,
         "median_advantage": 1.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9503846153846156
       },
       {
         "axis": "quality",
@@ -1089,9 +1269,11 @@
         "p": 0.375,
         "winner": "d",
         "loser": "e3",
+        "effect_intensity": 1.8000000000000007,
         "median_advantage": 0.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.1292307692307695
       },
       {
         "axis": "quality",
@@ -1101,9 +1283,11 @@
         "p": 0.310546875,
         "winner": "d",
         "loser": "f",
+        "effect_intensity": 2.0500000000000007,
         "median_advantage": 2.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.1888461538461539
       },
       {
         "axis": "quality",
@@ -1113,9 +1297,11 @@
         "p": 0.171875,
         "winner": "d",
         "loser": "g",
+        "effect_intensity": 2.349999999999998,
         "median_advantage": 2.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.260384615384615
       },
       {
         "axis": "quality",
@@ -1125,9 +1311,11 @@
         "p": 0.484375,
         "winner": "d",
         "loser": "i",
+        "effect_intensity": 1.75,
         "median_advantage": 1.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.1173076923076923
       },
       {
         "axis": "quality",
@@ -1137,9 +1325,11 @@
         "p": 0.93359375,
         "winner": "d",
         "loser": "j",
+        "effect_intensity": 2.099999999999998,
         "median_advantage": -0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.2007692307692301
       },
       {
         "axis": "quality",
@@ -1149,9 +1339,11 @@
         "p": 0.7421875,
         "winner": "d",
         "loser": "k",
+        "effect_intensity": 2.4499999999999993,
         "median_advantage": 0.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.284230769230769
       },
       {
         "axis": "quality",
@@ -1161,9 +1353,11 @@
         "p": 0.21484375,
         "winner": "d",
         "loser": "l",
+        "effect_intensity": 1.5,
         "median_advantage": 3.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0576923076923077
       },
       {
         "axis": "quality",
@@ -1173,9 +1367,11 @@
         "p": 0.82421875,
         "winner": "mr",
         "loser": "d",
+        "effect_intensity": 0.3999999999999986,
         "median_advantage": 1.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.795384615384615
       },
       {
         "axis": "quality",
@@ -1185,9 +1381,11 @@
         "p": 0.09765625,
         "winner": "d2",
         "loser": "e",
+        "effect_intensity": 3.3999999999999986,
         "median_advantage": 1.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.5107692307692304
       },
       {
         "axis": "quality",
@@ -1197,9 +1395,11 @@
         "p": 0.96875,
         "winner": "e2",
         "loser": "d2",
+        "effect_intensity": 1.1999999999999993,
         "median_advantage": -0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9861538461538459
       },
       {
         "axis": "quality",
@@ -1209,9 +1409,11 @@
         "p": 1.0,
         "winner": "",
         "loser": "",
+        "effect_intensity": 0.4499999999999993,
         "median_advantage": 0.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8073076923076921
       },
       {
         "axis": "quality",
@@ -1221,9 +1423,11 @@
         "p": 0.94921875,
         "winner": "d2",
         "loser": "f",
+        "effect_intensity": 0.1999999999999993,
         "median_advantage": 0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7476923076923074
       },
       {
         "axis": "quality",
@@ -1233,9 +1437,11 @@
         "p": 0.845703125,
         "winner": "d2",
         "loser": "g",
+        "effect_intensity": 0.09999999999999787,
         "median_advantage": 1.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7238461538461533
       },
       {
         "axis": "quality",
@@ -1245,9 +1451,11 @@
         "p": 1.0,
         "winner": "",
         "loser": "",
+        "effect_intensity": 0.5,
         "median_advantage": 0.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8192307692307692
       },
       {
         "axis": "quality",
@@ -1257,9 +1465,11 @@
         "p": 0.4921875,
         "winner": "j",
         "loser": "d2",
+        "effect_intensity": 0.15000000000000213,
         "median_advantage": 3.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7357692307692312
       },
       {
         "axis": "quality",
@@ -1269,9 +1479,11 @@
         "p": 0.84375,
         "winner": "d2",
         "loser": "k",
+        "effect_intensity": 0.1999999999999993,
         "median_advantage": -0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7476923076923074
       },
       {
         "axis": "quality",
@@ -1281,9 +1493,11 @@
         "p": 0.8828125,
         "winner": "l",
         "loser": "d2",
+        "effect_intensity": 0.75,
         "median_advantage": -0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8788461538461538
       },
       {
         "axis": "quality",
@@ -1293,9 +1507,11 @@
         "p": 0.375,
         "winner": "mr",
         "loser": "d2",
+        "effect_intensity": 1.8500000000000014,
         "median_advantage": 2.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.1411538461538464
       },
       {
         "axis": "quality",
@@ -1305,9 +1521,11 @@
         "p": 0.02734375,
         "winner": "e2",
         "loser": "e",
+        "effect_intensity": 4.599999999999998,
         "median_advantage": 4.0,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.7969230769230764
       },
       {
         "axis": "quality",
@@ -1317,9 +1535,11 @@
         "p": 0.134765625,
         "winner": "e3",
         "loser": "e",
+        "effect_intensity": 3.849999999999998,
         "median_advantage": 5.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.6180769230769225
       },
       {
         "axis": "quality",
@@ -1329,9 +1549,11 @@
         "p": 0.029296875,
         "winner": "f",
         "loser": "e",
+        "effect_intensity": 3.599999999999998,
         "median_advantage": 3.0,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.558461538461538
       },
       {
         "axis": "quality",
@@ -1341,9 +1563,11 @@
         "p": 0.125,
         "winner": "g",
         "loser": "e",
+        "effect_intensity": 3.3000000000000007,
         "median_advantage": 2.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.486923076923077
       },
       {
         "axis": "quality",
@@ -1353,9 +1577,11 @@
         "p": 0.125,
         "winner": "i",
         "loser": "e",
+        "effect_intensity": 3.8999999999999986,
         "median_advantage": 2.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.6299999999999994
       },
       {
         "axis": "quality",
@@ -1365,9 +1591,11 @@
         "p": 0.15234375,
         "winner": "j",
         "loser": "e",
+        "effect_intensity": 3.5500000000000007,
         "median_advantage": 6.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.5465384615384616
       },
       {
         "axis": "quality",
@@ -1377,9 +1605,11 @@
         "p": 0.23046875,
         "winner": "k",
         "loser": "e",
+        "effect_intensity": 3.1999999999999993,
         "median_advantage": 6.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.463076923076923
       },
       {
         "axis": "quality",
@@ -1389,9 +1619,11 @@
         "p": 0.048828125,
         "winner": "l",
         "loser": "e",
+        "effect_intensity": 4.149999999999999,
         "median_advantage": 2.75,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.6896153846153843
       },
       {
         "axis": "quality",
@@ -1401,9 +1633,11 @@
         "p": 0.087890625,
         "winner": "mr",
         "loser": "e",
+        "effect_intensity": 5.25,
         "median_advantage": 8.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.9519230769230769
       },
       {
         "axis": "quality",
@@ -1413,9 +1647,11 @@
         "p": 0.9453125,
         "winner": "e2",
         "loser": "e3",
+        "effect_intensity": 0.75,
         "median_advantage": 0.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8788461538461538
       },
       {
         "axis": "quality",
@@ -1425,9 +1661,11 @@
         "p": 0.48828125,
         "winner": "e2",
         "loser": "f",
+        "effect_intensity": 1.0,
         "median_advantage": 0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9384615384615385
       },
       {
         "axis": "quality",
@@ -1437,9 +1675,11 @@
         "p": 0.5703125,
         "winner": "e2",
         "loser": "g",
+        "effect_intensity": 1.2999999999999972,
         "median_advantage": -0.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0099999999999993
       },
       {
         "axis": "quality",
@@ -1449,9 +1689,11 @@
         "p": 0.904296875,
         "winner": "i",
         "loser": "e2",
+        "effect_intensity": 0.6999999999999993,
         "median_advantage": 1.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8669230769230767
       },
       {
         "axis": "quality",
@@ -1461,9 +1703,11 @@
         "p": 0.8203125,
         "winner": "j",
         "loser": "e2",
+        "effect_intensity": 1.0499999999999972,
         "median_advantage": 0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9503846153846147
       },
       {
         "axis": "quality",
@@ -1473,9 +1717,11 @@
         "p": 0.93359375,
         "winner": "k",
         "loser": "e2",
+        "effect_intensity": 1.3999999999999986,
         "median_advantage": 0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0338461538461534
       },
       {
         "axis": "quality",
@@ -1485,9 +1731,11 @@
         "p": 0.75390625,
         "winner": "e2",
         "loser": "l",
+        "effect_intensity": 0.4499999999999993,
         "median_advantage": 0.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8073076923076921
       },
       {
         "axis": "quality",
@@ -1497,9 +1745,11 @@
         "p": 0.431640625,
         "winner": "mr",
         "loser": "e2",
+        "effect_intensity": 0.6500000000000021,
         "median_advantage": 2.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8550000000000004
       },
       {
         "axis": "quality",
@@ -1509,9 +1759,11 @@
         "p": 0.984375,
         "winner": "e3",
         "loser": "f",
+        "effect_intensity": 0.25,
         "median_advantage": -0.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7596153846153846
       },
       {
         "axis": "quality",
@@ -1521,9 +1773,11 @@
         "p": 0.767578125,
         "winner": "e3",
         "loser": "g",
+        "effect_intensity": 0.5499999999999972,
         "median_advantage": 2.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8311538461538455
       },
       {
         "axis": "quality",
@@ -1533,9 +1787,11 @@
         "p": 0.71484375,
         "winner": "e3",
         "loser": "i",
+        "effect_intensity": 0.05000000000000071,
         "median_advantage": -0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7119230769230771
       },
       {
         "axis": "quality",
@@ -1545,9 +1801,11 @@
         "p": 0.548828125,
         "winner": "j",
         "loser": "e3",
+        "effect_intensity": 0.29999999999999716,
         "median_advantage": 2.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7715384615384608
       },
       {
         "axis": "quality",
@@ -1557,9 +1815,11 @@
         "p": 0.9140625,
         "winner": "k",
         "loser": "e3",
+        "effect_intensity": 0.6499999999999986,
         "median_advantage": 0.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8549999999999996
       },
       {
         "axis": "quality",
@@ -1569,9 +1829,11 @@
         "p": 0.9375,
         "winner": "e3",
         "loser": "l",
+        "effect_intensity": 0.3000000000000007,
         "median_advantage": 0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7715384615384616
       },
       {
         "axis": "quality",
@@ -1581,9 +1843,11 @@
         "p": 0.416015625,
         "winner": "mr",
         "loser": "e3",
+        "effect_intensity": 1.4000000000000021,
         "median_advantage": 1.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0338461538461543
       },
       {
         "axis": "quality",
@@ -1593,9 +1857,11 @@
         "p": 0.94140625,
         "winner": "f",
         "loser": "g",
+        "effect_intensity": 0.29999999999999716,
         "median_advantage": 0.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7715384615384608
       },
       {
         "axis": "quality",
@@ -1605,9 +1871,11 @@
         "p": 0.865234375,
         "winner": "f",
         "loser": "i",
+        "effect_intensity": 0.3000000000000007,
         "median_advantage": 0.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7715384615384616
       },
       {
         "axis": "quality",
@@ -1617,9 +1885,11 @@
         "p": 0.44140625,
         "winner": "j",
         "loser": "f",
+        "effect_intensity": 0.04999999999999716,
         "median_advantage": 1.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7119230769230762
       },
       {
         "axis": "quality",
@@ -1629,9 +1899,11 @@
         "p": 0.572265625,
         "winner": "k",
         "loser": "f",
+        "effect_intensity": 0.3999999999999986,
         "median_advantage": 1.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.795384615384615
       },
       {
         "axis": "quality",
@@ -1641,9 +1913,11 @@
         "p": 0.826171875,
         "winner": "l",
         "loser": "f",
+        "effect_intensity": 0.5500000000000007,
         "median_advantage": 0.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8311538461538464
       },
       {
         "axis": "quality",
@@ -1653,9 +1927,11 @@
         "p": 0.5546875,
         "winner": "mr",
         "loser": "f",
+        "effect_intensity": 1.6500000000000021,
         "median_advantage": 3.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.093461538461539
       },
       {
         "axis": "quality",
@@ -1665,9 +1941,11 @@
         "p": 0.44921875,
         "winner": "i",
         "loser": "g",
+        "effect_intensity": 0.5999999999999979,
         "median_advantage": 0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8430769230769225
       },
       {
         "axis": "quality",
@@ -1677,9 +1955,11 @@
         "p": 0.578125,
         "winner": "j",
         "loser": "g",
+        "effect_intensity": 0.25,
         "median_advantage": 5.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7596153846153846
       },
       {
         "axis": "quality",
@@ -1689,9 +1969,11 @@
         "p": 0.541015625,
         "winner": "k",
         "loser": "g",
+        "effect_intensity": 0.10000000000000142,
         "median_advantage": 2.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7238461538461541
       },
       {
         "axis": "quality",
@@ -1701,9 +1983,11 @@
         "p": 0.25390625,
         "winner": "l",
         "loser": "g",
+        "effect_intensity": 0.8499999999999979,
         "median_advantage": 1.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9026923076923071
       },
       {
         "axis": "quality",
@@ -1713,9 +1997,11 @@
         "p": 0.4140625,
         "winner": "mr",
         "loser": "g",
+        "effect_intensity": 1.9499999999999993,
         "median_advantage": 6.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.1649999999999998
       },
       {
         "axis": "quality",
@@ -1725,9 +2011,11 @@
         "p": 0.734375,
         "winner": "j",
         "loser": "i",
+        "effect_intensity": 0.34999999999999787,
         "median_advantage": 3.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7834615384615379
       },
       {
         "axis": "quality",
@@ -1737,9 +2025,11 @@
         "p": 0.8203125,
         "winner": "k",
         "loser": "i",
+        "effect_intensity": 0.6999999999999993,
         "median_advantage": -0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8669230769230767
       },
       {
         "axis": "quality",
@@ -1749,9 +2039,11 @@
         "p": 0.875,
         "winner": "l",
         "loser": "i",
+        "effect_intensity": 0.25,
         "median_advantage": 0.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7596153846153846
       },
       {
         "axis": "quality",
@@ -1761,9 +2053,11 @@
         "p": 0.50390625,
         "winner": "mr",
         "loser": "i",
+        "effect_intensity": 1.3500000000000014,
         "median_advantage": 4.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0219230769230772
       },
       {
         "axis": "quality",
@@ -1773,9 +2067,11 @@
         "p": 0.78125,
         "winner": "j",
         "loser": "k",
+        "effect_intensity": 0.3500000000000014,
         "median_advantage": 1.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7834615384615388
       },
       {
         "axis": "quality",
@@ -1785,9 +2081,11 @@
         "p": 0.494140625,
         "winner": "j",
         "loser": "l",
+        "effect_intensity": 0.5999999999999979,
         "median_advantage": 2.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8430769230769225
       },
       {
         "axis": "quality",
@@ -1797,9 +2095,11 @@
         "p": 0.646484375,
         "winner": "mr",
         "loser": "j",
+        "effect_intensity": 1.6999999999999993,
         "median_advantage": 1.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.1053846153846152
       },
       {
         "axis": "quality",
@@ -1809,9 +2109,11 @@
         "p": 0.9140625,
         "winner": "k",
         "loser": "l",
+        "effect_intensity": 0.9499999999999993,
         "median_advantage": -0.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9265384615384613
       },
       {
         "axis": "quality",
@@ -1821,9 +2123,11 @@
         "p": 0.4765625,
         "winner": "mr",
         "loser": "k",
+        "effect_intensity": 2.0500000000000007,
         "median_advantage": 2.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.1888461538461539
       },
       {
         "axis": "quality",
@@ -1833,9 +2137,11 @@
         "p": 0.55078125,
         "winner": "mr",
         "loser": "l",
+        "effect_intensity": 1.1000000000000014,
         "median_advantage": 5.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9623076923076926
       }
     ],
     "edges": [
@@ -2170,9 +2476,11 @@
         "p": 0.005859375,
         "winner": "b",
         "loser": "a",
+        "effect_intensity": 0.4827632360336564,
         "median_advantage": 1215.9499999999998,
         "p_holm": 0.416015625,
-        "shown": true
+        "shown": true,
+        "line_width": 1.5878907059608287
       },
       {
         "axis": "seconds",
@@ -2182,9 +2490,11 @@
         "p": 0.10546875,
         "winner": "b2",
         "loser": "a",
+        "effect_intensity": 0.32591469439786763,
         "median_advantage": 860.4999999999998,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.2994172846909913
       },
       {
         "axis": "seconds",
@@ -2194,9 +2504,11 @@
         "p": 0.02734375,
         "winner": "b3",
         "loser": "a",
+        "effect_intensity": 0.47477768207879534,
         "median_advantage": 1284.2,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.5732037981574853
       },
       {
         "axis": "seconds",
@@ -2206,9 +2518,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "a",
+        "effect_intensity": 1.8334755825298745,
         "median_advantage": 2927.8999999999996,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2218,9 +2532,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "a",
+        "effect_intensity": 1.943468126306598,
         "median_advantage": 2666.25,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2230,9 +2546,11 @@
         "p": 0.001953125,
         "winner": "d",
         "loser": "a",
+        "effect_intensity": 1.9519771028677213,
         "median_advantage": 2791.45,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2242,9 +2560,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "a",
+        "effect_intensity": 3.048368249396636,
         "median_advantage": 3025.1499999999996,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2254,9 +2574,11 @@
         "p": 0.001953125,
         "winner": "e",
         "loser": "a",
+        "effect_intensity": 2.5659753774688636,
         "median_advantage": 2855.75,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2266,9 +2588,11 @@
         "p": 0.001953125,
         "winner": "e2",
         "loser": "a",
+        "effect_intensity": 2.5177173480213244,
         "median_advantage": 2746.0,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2278,9 +2602,11 @@
         "p": 0.001953125,
         "winner": "e3",
         "loser": "a",
+        "effect_intensity": 2.031266639379663,
         "median_advantage": 2633.6,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2290,9 +2616,11 @@
         "p": 0.001953125,
         "winner": "f",
         "loser": "a",
+        "effect_intensity": 1.7980994892607178,
         "median_advantage": 2804.0,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2302,9 +2630,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "a",
+        "effect_intensity": 3.418436692152854,
         "median_advantage": 3056.45,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2314,9 +2644,11 @@
         "p": 0.001953125,
         "winner": "i",
         "loser": "a",
+        "effect_intensity": 1.8967634305880163,
         "median_advantage": 2638.55,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2326,9 +2658,11 @@
         "p": 0.00390625,
         "winner": "j",
         "loser": "a",
+        "effect_intensity": 0.862391762328084,
         "median_advantage": 2116.1000000000004,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 2.2860976427270936
       },
       {
         "axis": "seconds",
@@ -2338,9 +2672,11 @@
         "p": 0.76953125,
         "winner": "k",
         "loser": "a",
+        "effect_intensity": 0.06153734937027313,
         "median_advantage": 1024.8999999999999,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8131785448789244
       },
       {
         "axis": "seconds",
@@ -2350,9 +2686,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "a",
+        "effect_intensity": 2.5435455347550615,
         "median_advantage": 2971.95,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2362,9 +2700,11 @@
         "p": 0.6953125,
         "winner": "a",
         "loser": "mr",
+        "effect_intensity": 0.2121035264199421,
         "median_advantage": 220.05000000000018,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0900975379920073
       },
       {
         "axis": "seconds",
@@ -2374,9 +2714,11 @@
         "p": 0.275390625,
         "winner": "b",
         "loser": "b2",
+        "effect_intensity": 0.15684854163578887,
         "median_advantage": 573.8499999999999,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9884734212698376
       },
       {
         "axis": "seconds",
@@ -2386,9 +2728,11 @@
         "p": 0.6953125,
         "winner": "b",
         "loser": "b3",
+        "effect_intensity": 0.007985553954861032,
         "median_advantage": 123.89999999999992,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.714686907803343
       },
       {
         "axis": "seconds",
@@ -2398,9 +2742,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "b",
+        "effect_intensity": 1.350712346496218,
         "median_advantage": 1551.3999999999999,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.184209337756873
       },
       {
         "axis": "seconds",
@@ -2410,9 +2756,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "b",
+        "effect_intensity": 1.4607048902729418,
         "median_advantage": 1175.4,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.386505929657119
       },
       {
         "axis": "seconds",
@@ -2422,9 +2770,11 @@
         "p": 0.001953125,
         "winner": "d",
         "loser": "b",
+        "effect_intensity": 1.4692138668340649,
         "median_advantage": 1385.4,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.402155508253723
       },
       {
         "axis": "seconds",
@@ -2434,9 +2784,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "b",
+        "effect_intensity": 2.5656050133629797,
         "median_advantage": 1663.4,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2446,9 +2798,11 @@
         "p": 0.001953125,
         "winner": "e",
         "loser": "b",
+        "effect_intensity": 2.083212141435207,
         "median_advantage": 1576.8500000000001,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2458,9 +2812,11 @@
         "p": 0.001953125,
         "winner": "e2",
         "loser": "b",
+        "effect_intensity": 2.034954111987668,
         "median_advantage": 1582.95,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2470,9 +2826,11 @@
         "p": 0.001953125,
         "winner": "e3",
         "loser": "b",
+        "effect_intensity": 1.5485034033460063,
         "median_advantage": 1275.75,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.547983602222309
       },
       {
         "axis": "seconds",
@@ -2482,9 +2840,11 @@
         "p": 0.001953125,
         "winner": "f",
         "loser": "b",
+        "effect_intensity": 1.3153362532270614,
         "median_advantage": 1312.1,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.119146172042452
       },
       {
         "axis": "seconds",
@@ -2494,9 +2854,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "b",
+        "effect_intensity": 2.9356734561191975,
         "median_advantage": 1754.6999999999998,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2506,9 +2868,11 @@
         "p": 0.001953125,
         "winner": "i",
         "loser": "b",
+        "effect_intensity": 1.4140001945543599,
         "median_advantage": 1424.8,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.300607372853248
       },
       {
         "axis": "seconds",
@@ -2518,9 +2882,11 @@
         "p": 0.083984375,
         "winner": "j",
         "loser": "b",
+        "effect_intensity": 0.3796285262944275,
         "median_advantage": 1046.7,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.3982069367662642
       },
       {
         "axis": "seconds",
@@ -2530,9 +2896,11 @@
         "p": 0.083984375,
         "winner": "b",
         "loser": "k",
+        "effect_intensity": 0.42122588666338345,
         "median_advantage": 326.35000000000014,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.4747121610819045
       },
       {
         "axis": "seconds",
@@ -2542,9 +2910,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "b",
+        "effect_intensity": 2.060782298721405,
         "median_advantage": 1608.25,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2554,9 +2924,11 @@
         "p": 0.232421875,
         "winner": "b",
         "loser": "mr",
+        "effect_intensity": 0.6948667624535986,
         "median_advantage": 1096.6499999999996,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.9779882439528362
       },
       {
         "axis": "seconds",
@@ -2566,9 +2938,11 @@
         "p": 0.083984375,
         "winner": "b3",
         "loser": "b2",
+        "effect_intensity": 0.1488629876809277,
         "median_advantage": 601.75,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9737865134664943
       },
       {
         "axis": "seconds",
@@ -2578,9 +2952,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "b2",
+        "effect_intensity": 1.507560888132007,
         "median_advantage": 2302.95,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.4726827590267106
       },
       {
         "axis": "seconds",
@@ -2590,9 +2966,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "b2",
+        "effect_intensity": 1.6175534319087306,
         "median_advantage": 2270.7,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.6749793509269564
       },
       {
         "axis": "seconds",
@@ -2602,9 +2980,11 @@
         "p": 0.001953125,
         "winner": "d",
         "loser": "b2",
+        "effect_intensity": 1.6260624084698536,
         "median_advantage": 2238.7,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.6906289295235606
       },
       {
         "axis": "seconds",
@@ -2614,9 +2994,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "b2",
+        "effect_intensity": 2.7224535549987685,
         "median_advantage": 2481.6000000000004,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2626,9 +3008,11 @@
         "p": 0.001953125,
         "winner": "e",
         "loser": "b2",
+        "effect_intensity": 2.2400606830709964,
         "median_advantage": 2281.9,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2638,9 +3022,11 @@
         "p": 0.001953125,
         "winner": "e2",
         "loser": "b2",
+        "effect_intensity": 2.1918026536234567,
         "median_advantage": 2282.15,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2650,9 +3036,11 @@
         "p": 0.001953125,
         "winner": "e3",
         "loser": "b2",
+        "effect_intensity": 1.7053519449817953,
         "median_advantage": 2085.1,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2662,9 +3050,11 @@
         "p": 0.001953125,
         "winner": "f",
         "loser": "b2",
+        "effect_intensity": 1.4721847948628501,
         "median_advantage": 2005.85,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.4076195933122895
       },
       {
         "axis": "seconds",
@@ -2674,9 +3064,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "b2",
+        "effect_intensity": 3.0925219977549863,
         "median_advantage": 2506.25,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2686,9 +3078,11 @@
         "p": 0.001953125,
         "winner": "i",
         "loser": "b2",
+        "effect_intensity": 1.5708487361901486,
         "median_advantage": 2040.4499999999998,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.5890807941230856
       },
       {
         "axis": "seconds",
@@ -2698,9 +3092,11 @@
         "p": 0.083984375,
         "winner": "j",
         "loser": "b2",
+        "effect_intensity": 0.5364770679302163,
         "median_advantage": 1901.9499999999998,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.6866803580361018
       },
       {
         "axis": "seconds",
@@ -2710,9 +3106,11 @@
         "p": 0.556640625,
         "winner": "b2",
         "loser": "k",
+        "effect_intensity": 0.26437734502759463,
         "median_advantage": -155.64999999999998,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.186238739812067
       },
       {
         "axis": "seconds",
@@ -2722,9 +3120,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "b2",
+        "effect_intensity": 2.2176308403571943,
         "median_advantage": 2412.9500000000003,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2734,9 +3134,11 @@
         "p": 0.232421875,
         "winner": "b2",
         "loser": "mr",
+        "effect_intensity": 0.5380182208178097,
         "median_advantage": 991.8999999999999,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.6895148226829986
       },
       {
         "axis": "seconds",
@@ -2746,9 +3148,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "b3",
+        "effect_intensity": 1.3586979004510793,
         "median_advantage": 1525.25,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.198896245560216
       },
       {
         "axis": "seconds",
@@ -2758,9 +3162,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "b3",
+        "effect_intensity": 1.4686904442278026,
         "median_advantage": 1335.15,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.401192837460462
       },
       {
         "axis": "seconds",
@@ -2770,9 +3176,11 @@
         "p": 0.001953125,
         "winner": "d",
         "loser": "b3",
+        "effect_intensity": 1.477199420788926,
         "median_advantage": 1507.15,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.416842416057066
       },
       {
         "axis": "seconds",
@@ -2782,9 +3190,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "b3",
+        "effect_intensity": 2.573590567317841,
         "median_advantage": 1763.3,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2794,9 +3204,11 @@
         "p": 0.001953125,
         "winner": "e",
         "loser": "b3",
+        "effect_intensity": 2.0911976953900684,
         "median_advantage": 1634.3000000000002,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2806,9 +3218,11 @@
         "p": 0.001953125,
         "winner": "e2",
         "loser": "b3",
+        "effect_intensity": 2.0429396659425287,
         "median_advantage": 1692.7,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2818,9 +3232,11 @@
         "p": 0.001953125,
         "winner": "e3",
         "loser": "b3",
+        "effect_intensity": 1.5564889573008673,
         "median_advantage": 1385.5,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.5626705100256517
       },
       {
         "axis": "seconds",
@@ -2830,9 +3246,11 @@
         "p": 0.001953125,
         "winner": "f",
         "loser": "b3",
+        "effect_intensity": 1.3233218071819224,
         "median_advantage": 1150.8999999999999,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.133833079845796
       },
       {
         "axis": "seconds",
@@ -2842,9 +3260,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "b3",
+        "effect_intensity": 2.9436590100740583,
         "median_advantage": 1864.4499999999998,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2854,9 +3274,11 @@
         "p": 0.001953125,
         "winner": "i",
         "loser": "b3",
+        "effect_intensity": 1.421985748509221,
         "median_advantage": 1379.0499999999997,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.315294280656592
       },
       {
         "axis": "seconds",
@@ -2866,9 +3288,11 @@
         "p": 0.083984375,
         "winner": "j",
         "loser": "b3",
+        "effect_intensity": 0.38761408024928856,
         "median_advantage": 1139.3,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.4128938445696073
       },
       {
         "axis": "seconds",
@@ -2878,9 +3302,11 @@
         "p": 0.232421875,
         "winner": "b3",
         "loser": "k",
+        "effect_intensity": 0.4132403327085223,
         "median_advantage": 364.6999999999998,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.4600252532785611
       },
       {
         "axis": "seconds",
@@ -2890,9 +3316,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "b3",
+        "effect_intensity": 2.0687678526762663,
         "median_advantage": 1536.3999999999999,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -2902,9 +3330,11 @@
         "p": 0.193359375,
         "winner": "b3",
         "loser": "mr",
+        "effect_intensity": 0.6868812084987374,
         "median_advantage": 1216.35,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.9633013361494926
       },
       {
         "axis": "seconds",
@@ -2914,9 +3344,11 @@
         "p": 1.0,
         "winner": "c2",
         "loser": "c",
+        "effect_intensity": 0.10999254377672357,
         "median_advantage": 39.300000000000004,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9022965919002454
       },
       {
         "axis": "seconds",
@@ -2926,9 +3358,11 @@
         "p": 0.275390625,
         "winner": "d",
         "loser": "c",
+        "effect_intensity": 0.11850152033784665,
         "median_advantage": 70.55,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9179461704968497
       },
       {
         "axis": "seconds",
@@ -2938,9 +3372,11 @@
         "p": 0.009765625,
         "winner": "d2",
         "loser": "c",
+        "effect_intensity": 1.2148926668667617,
         "median_advantage": 249.59999999999997,
         "p_holm": 0.673828125,
-        "shown": true
+        "shown": true,
+        "line_width": 2.934411875505285
       },
       {
         "axis": "seconds",
@@ -2950,9 +3386,11 @@
         "p": 0.16015625,
         "winner": "e",
         "loser": "c",
+        "effect_intensity": 0.7324997949389892,
         "median_advantage": 174.6,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.047202337501937
       },
       {
         "axis": "seconds",
@@ -2962,9 +3400,11 @@
         "p": 0.232421875,
         "winner": "e2",
         "loser": "c",
+        "effect_intensity": 0.6842417654914497,
         "median_advantage": 104.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.9584469132353985
       },
       {
         "axis": "seconds",
@@ -2974,9 +3414,11 @@
         "p": 0.921875,
         "winner": "e3",
         "loser": "c",
+        "effect_intensity": 0.1977910568497882,
         "median_advantage": 43.999999999999986,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0637742644654355
       },
       {
         "axis": "seconds",
@@ -2986,9 +3428,11 @@
         "p": 0.625,
         "winner": "c",
         "loser": "f",
+        "effect_intensity": 0.035376093269156764,
         "median_advantage": 131.54999999999998,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7650631657144206
       },
       {
         "axis": "seconds",
@@ -2998,9 +3442,11 @@
         "p": 0.00390625,
         "winner": "g",
         "loser": "c",
+        "effect_intensity": 1.5849611096229792,
         "median_advantage": 347.29999999999995,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.6150360539166986
       },
       {
         "axis": "seconds",
@@ -3010,9 +3456,11 @@
         "p": 0.845703125,
         "winner": "i",
         "loser": "c",
+        "effect_intensity": 0.06328784805814161,
         "median_advantage": 90.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8163980350963748
       },
       {
         "axis": "seconds",
@@ -3022,9 +3470,11 @@
         "p": 0.037109375,
         "winner": "c",
         "loser": "j",
+        "effect_intensity": 0.9710838202017907,
         "median_advantage": 306.70000000000005,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.4860024009906088
       },
       {
         "axis": "seconds",
@@ -3034,9 +3484,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "k",
+        "effect_intensity": 1.7719382331596016,
         "median_advantage": 2450.8999999999996,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3046,9 +3498,11 @@
         "p": 0.275390625,
         "winner": "l",
         "loser": "c",
+        "effect_intensity": 0.710069952225187,
         "median_advantage": 101.44999999999999,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.005949716350894
       },
       {
         "axis": "seconds",
@@ -3058,9 +3512,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "mr",
+        "effect_intensity": 2.0455791089498168,
         "median_advantage": 3322.7,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3070,9 +3526,11 @@
         "p": 0.6953125,
         "winner": "d",
         "loser": "c2",
+        "effect_intensity": 0.008508976561123321,
         "median_advantage": 68.25,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7156495785966046
       },
       {
         "axis": "seconds",
@@ -3082,9 +3540,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "c2",
+        "effect_intensity": 1.1049001230900382,
         "median_advantage": 138.10000000000002,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 2.73211528360504
       },
       {
         "axis": "seconds",
@@ -3094,9 +3554,11 @@
         "p": 0.037109375,
         "winner": "e",
         "loser": "c2",
+        "effect_intensity": 0.6225072511622657,
         "median_advantage": 132.9,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.844905745601692
       },
       {
         "axis": "seconds",
@@ -3106,9 +3568,11 @@
         "p": 0.193359375,
         "winner": "e2",
         "loser": "c2",
+        "effect_intensity": 0.5742492217147261,
         "median_advantage": 112.75000000000003,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.7561503213351533
       },
       {
         "axis": "seconds",
@@ -3118,9 +3582,11 @@
         "p": 1.0,
         "winner": "e3",
         "loser": "c2",
+        "effect_intensity": 0.08779851307306467,
         "median_advantage": -80.95000000000002,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8614776725651903
       },
       {
         "axis": "seconds",
@@ -3130,9 +3596,11 @@
         "p": 0.76953125,
         "winner": "c2",
         "loser": "f",
+        "effect_intensity": 0.1453686370458803,
         "median_advantage": 72.80000000000001,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.967359757614666
       },
       {
         "axis": "seconds",
@@ -3142,9 +3610,11 @@
         "p": 0.01953125,
         "winner": "g",
         "loser": "c2",
+        "effect_intensity": 1.474968565846256,
         "median_advantage": 219.34999999999997,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 3.4127394620164537
       },
       {
         "axis": "seconds",
@@ -3154,9 +3624,11 @@
         "p": 1.0,
         "winner": "c2",
         "loser": "i",
+        "effect_intensity": 0.046704695718581796,
         "median_advantage": -20.599999999999994,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7858985568038702
       },
       {
         "axis": "seconds",
@@ -3166,9 +3638,11 @@
         "p": 0.064453125,
         "winner": "c2",
         "loser": "j",
+        "effect_intensity": 1.0810763639785141,
         "median_advantage": 221.7,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.688298992890854
       },
       {
         "axis": "seconds",
@@ -3178,9 +3652,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "k",
+        "effect_intensity": 1.881930776936325,
         "median_advantage": 1949.5500000000002,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3190,9 +3666,11 @@
         "p": 0.02734375,
         "winner": "l",
         "loser": "c2",
+        "effect_intensity": 0.6000774084484636,
         "median_advantage": 118.34999999999998,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.8036531244506486
       },
       {
         "axis": "seconds",
@@ -3202,9 +3680,11 @@
         "p": 0.00390625,
         "winner": "c2",
         "loser": "mr",
+        "effect_intensity": 2.15557165272654,
         "median_advantage": 3877.2,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3214,9 +3694,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "d",
+        "effect_intensity": 1.096391146528915,
         "median_advantage": 233.7,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 2.716465705008435
       },
       {
         "axis": "seconds",
@@ -3226,9 +3708,11 @@
         "p": 0.02734375,
         "winner": "e",
         "loser": "d",
+        "effect_intensity": 0.6139982746011424,
         "median_advantage": 64.30000000000001,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.8292561670050873
       },
       {
         "axis": "seconds",
@@ -3238,9 +3722,11 @@
         "p": 0.375,
         "winner": "e2",
         "loser": "d",
+        "effect_intensity": 0.565740245153603,
         "median_advantage": 39.45000000000002,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.7405007427385488
       },
       {
         "axis": "seconds",
@@ -3250,9 +3736,11 @@
         "p": 1.0,
         "winner": "d",
         "loser": "e3",
+        "effect_intensity": 0.07928953651194152,
         "median_advantage": 26.55000000000001,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8458280939685858
       },
       {
         "axis": "seconds",
@@ -3262,9 +3750,11 @@
         "p": 0.375,
         "winner": "d",
         "loser": "f",
+        "effect_intensity": 0.1538776136070035,
         "median_advantage": 93.84999999999997,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9830093362112704
       },
       {
         "axis": "seconds",
@@ -3274,9 +3764,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "d",
+        "effect_intensity": 1.4664595892851324,
         "median_advantage": 265.0,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.3970898834198486
       },
       {
         "axis": "seconds",
@@ -3286,9 +3778,11 @@
         "p": 0.76953125,
         "winner": "d",
         "loser": "i",
+        "effect_intensity": 0.05521367227970501,
         "median_advantage": 23.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8015481354004748
       },
       {
         "axis": "seconds",
@@ -3298,9 +3792,11 @@
         "p": 0.005859375,
         "winner": "d",
         "loser": "j",
+        "effect_intensity": 1.0895853405396374,
         "median_advantage": 309.45000000000005,
         "p_holm": 0.416015625,
-        "shown": true
+        "shown": true,
+        "line_width": 2.7039485714874587
       },
       {
         "axis": "seconds",
@@ -3310,9 +3806,11 @@
         "p": 0.001953125,
         "winner": "d",
         "loser": "k",
+        "effect_intensity": 1.8904397534974482,
         "median_advantage": 2063.65,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3322,9 +3820,11 @@
         "p": 0.275390625,
         "winner": "l",
         "loser": "d",
+        "effect_intensity": 0.5915684318873402,
         "median_advantage": 52.69999999999999,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.788003545854044
       },
       {
         "axis": "seconds",
@@ -3334,9 +3834,11 @@
         "p": 0.001953125,
         "winner": "d",
         "loser": "mr",
+        "effect_intensity": 2.1640806292876635,
         "median_advantage": 3848.1000000000004,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3346,9 +3848,11 @@
         "p": 0.275390625,
         "winner": "d2",
         "loser": "e",
+        "effect_intensity": 0.4823928719277724,
         "median_advantage": 9.8,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.5872095380033477
       },
       {
         "axis": "seconds",
@@ -3358,9 +3862,11 @@
         "p": 0.10546875,
         "winner": "d2",
         "loser": "e2",
+        "effect_intensity": 0.5306509013753121,
         "median_advantage": 93.89999999999998,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.675964962269887
       },
       {
         "axis": "seconds",
@@ -3370,9 +3876,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "e3",
+        "effect_intensity": 1.0171016100169734,
         "median_advantage": 323.55,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 2.5706376110398494
       },
       {
         "axis": "seconds",
@@ -3382,9 +3890,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "f",
+        "effect_intensity": 1.2502687601359184,
         "median_advantage": 302.1,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 2.999475041219706
       },
       {
         "axis": "seconds",
@@ -3394,9 +3904,11 @@
         "p": 0.16015625,
         "winner": "g",
         "loser": "d2",
+        "effect_intensity": 0.3700684427562177,
         "median_advantage": 31.3,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.3806241784114133
       },
       {
         "axis": "seconds",
@@ -3406,9 +3918,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "i",
+        "effect_intensity": 1.1516048188086199,
         "median_advantage": 276.44999999999993,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 2.81801384040891
       },
       {
         "axis": "seconds",
@@ -3418,9 +3932,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "j",
+        "effect_intensity": 2.1859764870685523,
         "median_advantage": 529.85,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3430,9 +3946,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "k",
+        "effect_intensity": 2.986830900026363,
         "median_advantage": 2496.0,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3442,9 +3960,11 @@
         "p": 0.048828125,
         "winner": "d2",
         "loser": "l",
+        "effect_intensity": 0.5048227146415746,
         "median_advantage": 137.14999999999998,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.6284621591543913
       },
       {
         "axis": "seconds",
@@ -3454,9 +3974,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "mr",
+        "effect_intensity": 3.2604717758165784,
         "median_advantage": 4304.1,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3466,9 +3988,11 @@
         "p": 0.431640625,
         "winner": "e",
         "loser": "e2",
+        "effect_intensity": 0.0482580294475395,
         "median_advantage": 23.30000000000002,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7887554242665386
       },
       {
         "axis": "seconds",
@@ -3478,9 +4002,11 @@
         "p": 0.083984375,
         "winner": "e",
         "loser": "e3",
+        "effect_intensity": 0.534708738089201,
         "median_advantage": 312.4,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.6834280730365019
       },
       {
         "axis": "seconds",
@@ -3490,9 +4016,11 @@
         "p": 0.083984375,
         "winner": "e",
         "loser": "f",
+        "effect_intensity": 0.7678758882081459,
         "median_advantage": 214.10000000000002,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.1122655032163578
       },
       {
         "axis": "seconds",
@@ -3502,9 +4030,11 @@
         "p": 0.130859375,
         "winner": "g",
         "loser": "e",
+        "effect_intensity": 0.8524613146839901,
         "median_advantage": 86.55,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.2678337164147613
       },
       {
         "axis": "seconds",
@@ -3514,9 +4044,11 @@
         "p": 0.048828125,
         "winner": "e",
         "loser": "i",
+        "effect_intensity": 0.6692119468808475,
         "median_advantage": 229.3,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.9308043024055623
       },
       {
         "axis": "seconds",
@@ -3526,9 +4058,11 @@
         "p": 0.001953125,
         "winner": "e",
         "loser": "j",
+        "effect_intensity": 1.70358361514078,
         "median_advantage": 396.6,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3538,9 +4072,11 @@
         "p": 0.001953125,
         "winner": "e",
         "loser": "k",
+        "effect_intensity": 2.504438028098591,
         "median_advantage": 2043.15,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3550,9 +4086,11 @@
         "p": 0.921875,
         "winner": "e",
         "loser": "l",
+        "effect_intensity": 0.022429842713802106,
         "median_advantage": -1.1999999999999975,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7412526211510432
       },
       {
         "axis": "seconds",
@@ -3562,9 +4100,11 @@
         "p": 0.001953125,
         "winner": "e",
         "loser": "mr",
+        "effect_intensity": 2.778078903888806,
         "median_advantage": 3970.8,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3574,9 +4114,11 @@
         "p": 0.013671875,
         "winner": "e2",
         "loser": "e3",
+        "effect_intensity": 0.48645070864166146,
         "median_advantage": 209.7,
         "p_holm": 0.916015625,
-        "shown": true
+        "shown": true,
+        "line_width": 1.594672648769963
       },
       {
         "axis": "seconds",
@@ -3586,9 +4128,11 @@
         "p": 0.048828125,
         "winner": "e2",
         "loser": "f",
+        "effect_intensity": 0.7196178587606065,
         "median_advantage": 288.85,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.023510078949819
       },
       {
         "axis": "seconds",
@@ -3598,9 +4142,11 @@
         "p": 0.083984375,
         "winner": "g",
         "loser": "e2",
+        "effect_intensity": 0.9007193441315297,
         "median_advantage": 242.79999999999998,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.3565891406813
       },
       {
         "axis": "seconds",
@@ -3610,9 +4156,11 @@
         "p": 0.064453125,
         "winner": "e2",
         "loser": "i",
+        "effect_intensity": 0.620953917433308,
         "median_advantage": 209.5,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.8420488781390236
       },
       {
         "axis": "seconds",
@@ -3622,9 +4170,11 @@
         "p": 0.001953125,
         "winner": "e2",
         "loser": "j",
+        "effect_intensity": 1.6553255856932403,
         "median_advantage": 385.54999999999995,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.7444493142260074
       },
       {
         "axis": "seconds",
@@ -3634,9 +4184,11 @@
         "p": 0.001953125,
         "winner": "e2",
         "loser": "k",
+        "effect_intensity": 2.4561799986510513,
         "median_advantage": 2526.05,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3646,9 +4198,11 @@
         "p": 0.6953125,
         "winner": "l",
         "loser": "e2",
+        "effect_intensity": 0.025828186733737442,
         "median_advantage": 49.45,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7475028031154954
       },
       {
         "axis": "seconds",
@@ -3658,9 +4212,11 @@
         "p": 0.001953125,
         "winner": "e2",
         "loser": "mr",
+        "effect_intensity": 2.729820874441266,
         "median_advantage": 4407.6,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3670,9 +4226,11 @@
         "p": 0.4921875,
         "winner": "e3",
         "loser": "f",
+        "effect_intensity": 0.2331671501189449,
         "median_advantage": 131.0,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.128837430179856
       },
       {
         "axis": "seconds",
@@ -3682,9 +4240,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "e3",
+        "effect_intensity": 1.3871700527731912,
         "median_advantage": 411.65,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.251261789451263
       },
       {
         "axis": "seconds",
@@ -3694,9 +4254,11 @@
         "p": 0.76953125,
         "winner": "e3",
         "loser": "i",
+        "effect_intensity": 0.13450320879164646,
         "median_advantage": 6.4500000000000455,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9473762293690605
       },
       {
         "axis": "seconds",
@@ -3706,9 +4268,11 @@
         "p": 0.009765625,
         "winner": "e3",
         "loser": "j",
+        "effect_intensity": 1.1688748770515789,
         "median_advantage": 252.30000000000007,
         "p_holm": 0.673828125,
-        "shown": true
+        "shown": true,
+        "line_width": 2.8497766654560444
       },
       {
         "axis": "seconds",
@@ -3718,9 +4282,11 @@
         "p": 0.001953125,
         "winner": "e3",
         "loser": "k",
+        "effect_intensity": 1.96972929000939,
         "median_advantage": 2444.3,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3730,9 +4296,11 @@
         "p": 0.01953125,
         "winner": "l",
         "loser": "e3",
+        "effect_intensity": 0.5122788953753988,
         "median_advantage": 190.3,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.6421754518854583
       },
       {
         "axis": "seconds",
@@ -3742,9 +4310,11 @@
         "p": 0.001953125,
         "winner": "e3",
         "loser": "mr",
+        "effect_intensity": 2.243370165799605,
         "median_advantage": 4132.65,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3754,9 +4324,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "f",
+        "effect_intensity": 1.6203372028921361,
         "median_advantage": 442.6,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.6800992196311197
       },
       {
         "axis": "seconds",
@@ -3766,9 +4338,11 @@
         "p": 0.845703125,
         "winner": "i",
         "loser": "f",
+        "effect_intensity": 0.09866394132729843,
         "median_advantage": -70.89999999999999,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8814612008107955
       },
       {
         "axis": "seconds",
@@ -3778,9 +4352,11 @@
         "p": 0.037109375,
         "winner": "f",
         "loser": "j",
+        "effect_intensity": 0.9357077269326339,
         "median_advantage": 360.5,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.4209392352761885
       },
       {
         "axis": "seconds",
@@ -3790,9 +4366,11 @@
         "p": 0.001953125,
         "winner": "f",
         "loser": "k",
+        "effect_intensity": 1.7365621398904447,
         "median_advantage": 2237.2,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3802,9 +4380,11 @@
         "p": 0.130859375,
         "winner": "l",
         "loser": "f",
+        "effect_intensity": 0.7454460454943438,
         "median_advantage": 142.95000000000005,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.0710128820653146
       },
       {
         "axis": "seconds",
@@ -3814,9 +4394,11 @@
         "p": 0.001953125,
         "winner": "f",
         "loser": "mr",
+        "effect_intensity": 2.01020301568066,
         "median_advantage": 3632.3500000000004,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3826,9 +4408,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "i",
+        "effect_intensity": 1.5216732615648376,
         "median_advantage": 471.15,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.4986380188203237
       },
       {
         "axis": "seconds",
@@ -3838,9 +4422,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "j",
+        "effect_intensity": 2.55604492982477,
         "median_advantage": 561.1500000000001,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3850,9 +4436,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "k",
+        "effect_intensity": 3.356899342782581,
         "median_advantage": 2664.0,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3862,9 +4450,11 @@
         "p": 0.048828125,
         "winner": "g",
         "loser": "l",
+        "effect_intensity": 0.8748911573977923,
         "median_advantage": 172.8,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.309086337565805
       },
       {
         "axis": "seconds",
@@ -3874,9 +4464,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "mr",
+        "effect_intensity": 3.630540218572796,
         "median_advantage": 4189.5,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3886,9 +4478,11 @@
         "p": 0.037109375,
         "winner": "i",
         "loser": "j",
+        "effect_intensity": 1.0343716682599324,
         "median_advantage": 291.15000000000003,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.602400436086984
       },
       {
         "axis": "seconds",
@@ -3898,9 +4492,11 @@
         "p": 0.001953125,
         "winner": "i",
         "loser": "k",
+        "effect_intensity": 1.8352260812177432,
         "median_advantage": 1928.45,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3910,9 +4506,11 @@
         "p": 0.02734375,
         "winner": "l",
         "loser": "i",
+        "effect_intensity": 0.6467821041670454,
         "median_advantage": 101.64999999999998,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.889551681254519
       },
       {
         "axis": "seconds",
@@ -3922,9 +4520,11 @@
         "p": 0.001953125,
         "winner": "i",
         "loser": "mr",
+        "effect_intensity": 2.1088669570079586,
         "median_advantage": 3483.3,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3934,9 +4534,11 @@
         "p": 0.048828125,
         "winner": "j",
         "loser": "k",
+        "effect_intensity": 0.8008544129578108,
         "median_advantage": 1742.7,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.1729190978481685
       },
       {
         "axis": "seconds",
@@ -3946,9 +4548,11 @@
         "p": 0.00390625,
         "winner": "l",
         "loser": "j",
+        "effect_intensity": 1.6811537724269778,
         "median_advantage": 476.65,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.791952117341503
       },
       {
         "axis": "seconds",
@@ -3958,9 +4562,11 @@
         "p": 0.048828125,
         "winner": "j",
         "loser": "mr",
+        "effect_intensity": 1.074495288748026,
         "median_advantage": 2608.3,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.6761951807191
       },
       {
         "axis": "seconds",
@@ -3970,9 +4576,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "k",
+        "effect_intensity": 2.4820081853847884,
         "median_advantage": 2380.15,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "seconds",
@@ -3982,9 +4590,11 @@
         "p": 0.625,
         "winner": "k",
         "loser": "mr",
+        "effect_intensity": 0.2736408757902151,
         "median_advantage": -343.24999999999966,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.2032760828709317
       },
       {
         "axis": "seconds",
@@ -3994,9 +4604,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "mr",
+        "effect_intensity": 2.7556490611750037,
         "median_advantage": 4307.8,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       }
     ],
     "edges": [
@@ -4611,9 +5223,11 @@
         "p": 0.005859375,
         "winner": "b",
         "loser": "a",
+        "effect_intensity": 0.4827632360336565,
         "median_advantage": 0.05034033,
         "p_holm": 0.36328125,
-        "shown": true
+        "shown": true,
+        "line_width": 1.6595686473577693
       },
       {
         "axis": "cost_usd",
@@ -4623,9 +5237,11 @@
         "p": 0.10546875,
         "winner": "b2",
         "loser": "a",
+        "effect_intensity": 0.32591469439786747,
         "median_advantage": 0.03562470000000001,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.3478072461084825
       },
       {
         "axis": "cost_usd",
@@ -4635,9 +5251,11 @@
         "p": 0.02734375,
         "winner": "b3",
         "loser": "a",
+        "effect_intensity": 0.47477768207879534,
         "median_advantage": 0.05316588000000002,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.6436960898908324
       },
       {
         "axis": "cost_usd",
@@ -4647,9 +5265,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "a",
+        "effect_intensity": 1.8334755825298745,
         "median_advantage": 0.12121506000000003,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -4659,9 +5279,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "a",
+        "effect_intensity": 1.943468126306598,
         "median_advantage": 0.11038275000000003,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -4671,9 +5293,11 @@
         "p": 0.001953125,
         "winner": "a",
         "loser": "d",
+        "effect_intensity": 2.2843094994175845,
         "median_advantage": 0.6845248999999999,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -4683,9 +5307,11 @@
         "p": 0.009765625,
         "winner": "a",
         "loser": "d2",
+        "effect_intensity": 1.0538150944666536,
         "median_advantage": 0.17358439999999997,
         "p_holm": 0.56640625,
-        "shown": true
+        "shown": true,
+        "line_width": 2.7946249616490446
       },
       {
         "axis": "cost_usd",
@@ -4695,9 +5321,11 @@
         "p": 0.001953125,
         "winner": "a",
         "loser": "e",
+        "effect_intensity": 0.903699153908168,
         "median_advantage": 0.20453126999999996,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 2.496245674916236
       },
       {
         "axis": "cost_usd",
@@ -4707,9 +5335,11 @@
         "p": 0.193359375,
         "winner": "a",
         "loser": "e2",
+        "effect_intensity": 0.2579211158950802,
         "median_advantage": 0.06412802999999996,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.2126592039978665
       },
       {
         "axis": "cost_usd",
@@ -4719,9 +5349,11 @@
         "p": 0.00390625,
         "winner": "a",
         "loser": "e3",
+        "effect_intensity": 0.8950837160025528,
         "median_advantage": 0.22792447,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 2.479121123002532
       },
       {
         "axis": "cost_usd",
@@ -4731,9 +5363,11 @@
         "p": 0.001953125,
         "winner": "a",
         "loser": "f",
+        "effect_intensity": 2.092452561870734,
         "median_advantage": 0.42718976999999997,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -4743,9 +5377,11 @@
         "p": 0.083984375,
         "winner": "a",
         "loser": "g",
+        "effect_intensity": 0.6492284894458247,
         "median_advantage": 0.04988976999999998,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.9904447914509915
       },
       {
         "axis": "cost_usd",
@@ -4755,9 +5391,11 @@
         "p": 0.375,
         "winner": "i",
         "loser": "a",
+        "effect_intensity": 0.09235986455460363,
         "median_advantage": 0.031721520000000045,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8835799076767915
       },
       {
         "axis": "cost_usd",
@@ -4767,9 +5405,11 @@
         "p": 0.083984375,
         "winner": "a",
         "loser": "j",
+        "effect_intensity": 0.6543195648030223,
         "median_advantage": 0.06496593999999997,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.0005641127444673
       },
       {
         "axis": "cost_usd",
@@ -4779,9 +5419,11 @@
         "p": 0.275390625,
         "winner": "k",
         "loser": "a",
+        "effect_intensity": 0.26806709380312815,
         "median_advantage": 0.05798799000000003,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.2328259473839944
       },
       {
         "axis": "cost_usd",
@@ -4791,9 +5433,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "a",
+        "effect_intensity": 1.409357238953173,
         "median_advantage": 0.10162195000000004,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.5013214728966933
       },
       {
         "axis": "cost_usd",
@@ -4803,9 +5447,11 @@
         "p": 0.001953125,
         "winner": "a",
         "loser": "mr",
+        "effect_intensity": 3.4270039492654325,
         "median_advantage": 1.92247107624663,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -4815,9 +5461,11 @@
         "p": 0.275390625,
         "winner": "b",
         "loser": "b2",
+        "effect_intensity": 0.156848541635789,
         "median_advantage": 0.023757390000000003,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0117614012492866
       },
       {
         "axis": "cost_usd",
@@ -4827,9 +5475,11 @@
         "p": 0.6953125,
         "winner": "b",
         "loser": "b3",
+        "effect_intensity": 0.007985553954861143,
         "median_advantage": 0.005129459999999999,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7158725574669368
       },
       {
         "axis": "cost_usd",
@@ -4839,9 +5489,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "b",
+        "effect_intensity": 1.350712346496218,
         "median_advantage": 0.06422796000000001,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.384755429898674
       },
       {
         "axis": "cost_usd",
@@ -4851,9 +5503,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "b",
+        "effect_intensity": 1.4607048902729414,
         "median_advantage": 0.04866156000000002,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.603383089532459
       },
       {
         "axis": "cost_usd",
@@ -4863,9 +5517,11 @@
         "p": 0.001953125,
         "winner": "b",
         "loser": "d",
+        "effect_intensity": 2.767072735451241,
         "median_advantage": 0.7329421999999999,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -4875,9 +5531,11 @@
         "p": 0.001953125,
         "winner": "b",
         "loser": "d2",
+        "effect_intensity": 1.53657833050031,
         "median_advantage": 0.24086333,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.7541936090068138
       },
       {
         "axis": "cost_usd",
@@ -4887,9 +5545,11 @@
         "p": 0.001953125,
         "winner": "b",
         "loser": "e",
+        "effect_intensity": 1.3864623899418247,
         "median_advantage": 0.31056495,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.455814322274005
       },
       {
         "axis": "cost_usd",
@@ -4899,9 +5559,11 @@
         "p": 0.02734375,
         "winner": "b",
         "loser": "e2",
+        "effect_intensity": 0.7406843519287367,
         "median_advantage": 0.1391922,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.172227851355636
       },
       {
         "axis": "cost_usd",
@@ -4911,9 +5573,11 @@
         "p": 0.001953125,
         "winner": "b",
         "loser": "e3",
+        "effect_intensity": 1.3778469520362093,
         "median_advantage": 0.27563382999999997,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.438689770360301
       },
       {
         "axis": "cost_usd",
@@ -4923,9 +5587,11 @@
         "p": 0.001953125,
         "winner": "b",
         "loser": "f",
+        "effect_intensity": 2.575215797904391,
         "median_advantage": 0.45358382999999997,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -4935,9 +5601,11 @@
         "p": 0.005859375,
         "winner": "b",
         "loser": "g",
+        "effect_intensity": 1.1319917254794811,
         "median_advantage": 0.05384463999999997,
         "p_holm": 0.36328125,
-        "shown": false
+        "shown": false,
+        "line_width": 2.95001343880876
       },
       {
         "axis": "cost_usd",
@@ -4947,9 +5615,11 @@
         "p": 0.037109375,
         "winner": "b",
         "loser": "i",
+        "effect_intensity": 0.39040337147905285,
         "median_advantage": 0.03479219999999998,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.4759887396809774
       },
       {
         "axis": "cost_usd",
@@ -4959,9 +5629,11 @@
         "p": 0.02734375,
         "winner": "b",
         "loser": "j",
+        "effect_intensity": 1.137082800836679,
         "median_advantage": 0.10361332999999998,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.960132760102237
       },
       {
         "axis": "cost_usd",
@@ -4971,9 +5643,11 @@
         "p": 0.845703125,
         "winner": "b",
         "loser": "k",
+        "effect_intensity": 0.21469614223052846,
         "median_advantage": 0.0039946399999999695,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.126742699973775
       },
       {
         "axis": "cost_usd",
@@ -4983,9 +5657,11 @@
         "p": 0.01953125,
         "winner": "l",
         "loser": "b",
+        "effect_intensity": 0.9265940029195164,
         "median_advantage": 0.04149416000000002,
         "p_holm": 0.9765625,
-        "shown": true
+        "shown": true,
+        "line_width": 2.5417528255389237
       },
       {
         "axis": "cost_usd",
@@ -4995,9 +5671,11 @@
         "p": 0.001953125,
         "winner": "b",
         "loser": "mr",
+        "effect_intensity": 3.909767185299089,
         "median_advantage": 2.04902880624663,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5007,9 +5685,11 @@
         "p": 0.083984375,
         "winner": "b3",
         "loser": "b2",
+        "effect_intensity": 0.1488629876809279,
         "median_advantage": 0.024912450000000003,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9958888437823498
       },
       {
         "axis": "cost_usd",
@@ -5019,9 +5699,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "b2",
+        "effect_intensity": 1.507560888132007,
         "median_advantage": 0.09534213000000002,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.696516831147961
       },
       {
         "axis": "cost_usd",
@@ -5031,9 +5713,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "b2",
+        "effect_intensity": 1.6175534319087304,
         "median_advantage": 0.09400698000000002,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5043,9 +5727,11 @@
         "p": 0.001953125,
         "winner": "b2",
         "loser": "d",
+        "effect_intensity": 2.610224193815452,
         "median_advantage": 0.7071913999999999,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5055,9 +5741,11 @@
         "p": 0.009765625,
         "winner": "b2",
         "loser": "d2",
+        "effect_intensity": 1.379729788864521,
         "median_advantage": 0.21584076999999996,
         "p_holm": 0.56640625,
-        "shown": false
+        "shown": false,
+        "line_width": 3.442432207757528
       },
       {
         "axis": "cost_usd",
@@ -5067,9 +5755,11 @@
         "p": 0.00390625,
         "winner": "b2",
         "loser": "e",
+        "effect_intensity": 1.2296138483060355,
         "median_advantage": 0.28977801,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.144052921024718
       },
       {
         "axis": "cost_usd",
@@ -5079,9 +5769,11 @@
         "p": 0.02734375,
         "winner": "b2",
         "loser": "e2",
+        "effect_intensity": 0.5838358102929477,
         "median_advantage": 0.10782295999999995,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.8604664501063495
       },
       {
         "axis": "cost_usd",
@@ -5091,9 +5783,11 @@
         "p": 0.005859375,
         "winner": "b2",
         "loser": "e3",
+        "effect_intensity": 1.2209984104004203,
         "median_advantage": 0.26145627999999993,
         "p_holm": 0.36328125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.126928369111014
       },
       {
         "axis": "cost_usd",
@@ -5103,9 +5797,11 @@
         "p": 0.001953125,
         "winner": "b2",
         "loser": "f",
+        "effect_intensity": 2.418367256268602,
         "median_advantage": 0.44134185,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5115,9 +5811,11 @@
         "p": 0.083984375,
         "winner": "b2",
         "loser": "g",
+        "effect_intensity": 0.9751431838436921,
         "median_advantage": 0.06795789999999999,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.6382520375594742
       },
       {
         "axis": "cost_usd",
@@ -5127,9 +5825,11 @@
         "p": 0.322265625,
         "winner": "b2",
         "loser": "i",
+        "effect_intensity": 0.23355482984326373,
         "median_advantage": 0.02129184999999998,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.164227338431691
       },
       {
         "axis": "cost_usd",
@@ -5139,9 +5839,11 @@
         "p": 0.048828125,
         "winner": "b2",
         "loser": "j",
+        "effect_intensity": 0.9802342592008897,
         "median_advantage": 0.07944184999999998,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.64837135885295
       },
       {
         "axis": "cost_usd",
@@ -5151,9 +5853,11 @@
         "p": 0.845703125,
         "winner": "k",
         "loser": "b2",
+        "effect_intensity": 0.05784760059473938,
         "median_advantage": 0.008478280000000019,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.8149812987244883
       },
       {
         "axis": "cost_usd",
@@ -5163,9 +5867,11 @@
         "p": 0.00390625,
         "winner": "l",
         "loser": "b2",
+        "effect_intensity": 1.0834425445553053,
         "median_advantage": 0.08009255000000003,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 2.85351422678821
       },
       {
         "axis": "cost_usd",
@@ -5175,9 +5881,11 @@
         "p": 0.001953125,
         "winner": "b2",
         "loser": "mr",
+        "effect_intensity": 3.7529186436633,
         "median_advantage": 2.02067601624663,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5187,9 +5895,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "b3",
+        "effect_intensity": 1.3586979004510793,
         "median_advantage": 0.06314535000000002,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.4006279873656107
       },
       {
         "axis": "cost_usd",
@@ -5199,9 +5909,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "b3",
+        "effect_intensity": 1.4686904442278026,
         "median_advantage": 0.05527521000000002,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.6192556469993953
       },
       {
         "axis": "cost_usd",
@@ -5211,9 +5923,11 @@
         "p": 0.001953125,
         "winner": "b3",
         "loser": "d",
+        "effect_intensity": 2.7590871814963798,
         "median_advantage": 0.7376907799999999,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5223,9 +5937,11 @@
         "p": 0.001953125,
         "winner": "b3",
         "loser": "d2",
+        "effect_intensity": 1.528592776545449,
         "median_advantage": 0.25373626,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.7383210515398773
       },
       {
         "axis": "cost_usd",
@@ -5235,9 +5951,11 @@
         "p": 0.001953125,
         "winner": "b3",
         "loser": "e",
+        "effect_intensity": 1.3784768359869632,
         "median_advantage": 0.31896087,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.4399417648070676
       },
       {
         "axis": "cost_usd",
@@ -5247,9 +5965,11 @@
         "p": 0.037109375,
         "winner": "b3",
         "loser": "e2",
+        "effect_intensity": 0.7326987979738756,
         "median_advantage": 0.13219099999999995,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.156355293888699
       },
       {
         "axis": "cost_usd",
@@ -5259,9 +5979,11 @@
         "p": 0.001953125,
         "winner": "b3",
         "loser": "e3",
+        "effect_intensity": 1.369861398081348,
         "median_advantage": 0.29172601,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.4228172128933645
       },
       {
         "axis": "cost_usd",
@@ -5271,9 +5993,11 @@
         "p": 0.001953125,
         "winner": "b3",
         "loser": "f",
+        "effect_intensity": 2.56723024394953,
         "median_advantage": 0.47398626,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5283,9 +6007,11 @@
         "p": 0.009765625,
         "winner": "b3",
         "loser": "g",
+        "effect_intensity": 1.12400617152462,
         "median_advantage": 0.09668625999999998,
         "p_holm": 0.56640625,
-        "shown": false
+        "shown": false,
+        "line_width": 2.9341408813418237
       },
       {
         "axis": "cost_usd",
@@ -5295,9 +6021,11 @@
         "p": 0.02734375,
         "winner": "b3",
         "loser": "i",
+        "effect_intensity": 0.3824178175241917,
         "median_advantage": 0.04866865999999995,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.4601161822140407
       },
       {
         "axis": "cost_usd",
@@ -5307,9 +6035,11 @@
         "p": 0.009765625,
         "winner": "b3",
         "loser": "j",
+        "effect_intensity": 1.1290972468818177,
         "median_advantage": 0.10644450999999998,
         "p_holm": 0.56640625,
-        "shown": false
+        "shown": false,
+        "line_width": 2.9442602026352995
       },
       {
         "axis": "cost_usd",
@@ -5319,9 +6049,11 @@
         "p": 0.625,
         "winner": "b3",
         "loser": "k",
+        "effect_intensity": 0.20671058827566727,
         "median_advantage": 0.009733239999999983,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.1108701425068381
       },
       {
         "axis": "cost_usd",
@@ -5331,9 +6063,11 @@
         "p": 0.01953125,
         "winner": "l",
         "loser": "b3",
+        "effect_intensity": 0.9345795568743777,
         "median_advantage": 0.03610651000000002,
         "p_holm": 0.9765625,
-        "shown": true
+        "shown": true,
+        "line_width": 2.5576253830058606
       },
       {
         "axis": "cost_usd",
@@ -5343,9 +6077,11 @@
         "p": 0.001953125,
         "winner": "b3",
         "loser": "mr",
+        "effect_intensity": 3.9017816313442277,
         "median_advantage": 2.04319554624663,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5355,9 +6091,11 @@
         "p": 1.0,
         "winner": "c2",
         "loser": "c",
+        "effect_intensity": 0.10999254377672338,
         "median_advantage": 0.00162702,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9186276596337846
       },
       {
         "axis": "cost_usd",
@@ -5367,9 +6105,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "d",
+        "effect_intensity": 4.117785081947459,
         "median_advantage": 0.7919144300000001,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5379,9 +6119,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "d2",
+        "effect_intensity": 2.887290676996528,
         "median_advantage": 0.28439917000000003,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5391,9 +6133,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "e",
+        "effect_intensity": 2.7371747364380425,
         "median_advantage": 0.35748838,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5403,9 +6147,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "e2",
+        "effect_intensity": 2.091396698424955,
         "median_advantage": 0.19816443,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5415,9 +6161,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "e3",
+        "effect_intensity": 2.7285592985324274,
         "median_advantage": 0.32222779,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5427,9 +6175,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "f",
+        "effect_intensity": 3.925928144400609,
         "median_advantage": 0.50464917,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5439,9 +6189,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "g",
+        "effect_intensity": 2.482704071975699,
         "median_advantage": 0.12966253,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5451,9 +6203,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "i",
+        "effect_intensity": 1.7411157179752708,
         "median_advantage": 0.09750201,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5463,9 +6217,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "j",
+        "effect_intensity": 2.4877951473328968,
         "median_advantage": 0.13881989,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5475,9 +6231,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "k",
+        "effect_intensity": 1.5654084887267465,
         "median_advantage": 0.06001655,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5487,9 +6245,11 @@
         "p": 0.322265625,
         "winner": "c",
         "loser": "l",
+        "effect_intensity": 0.42411834357670175,
         "median_advantage": 0.004912529999999996,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.5430026043597505
       },
       {
         "axis": "cost_usd",
@@ -5499,9 +6259,11 @@
         "p": 0.001953125,
         "winner": "c",
         "loser": "mr",
+        "effect_intensity": 5.2604795317953075,
         "median_advantage": 2.13499797624663,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5511,9 +6273,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "d",
+        "effect_intensity": 4.227777625724182,
         "median_advantage": 0.79060619,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5523,9 +6287,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "d2",
+        "effect_intensity": 2.9972832207732516,
         "median_advantage": 0.29216995,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5535,9 +6301,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "e",
+        "effect_intensity": 2.847167280214766,
         "median_advantage": 0.35342083,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5547,9 +6315,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "e2",
+        "effect_intensity": 2.201389242201678,
         "median_advantage": 0.19685619,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5559,9 +6329,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "e3",
+        "effect_intensity": 2.8385518423091507,
         "median_advantage": 0.31517083,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5571,9 +6343,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "f",
+        "effect_intensity": 4.035920688177332,
         "median_advantage": 0.51241995,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5583,9 +6357,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "g",
+        "effect_intensity": 2.5926966157524225,
         "median_advantage": 0.13511995,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5595,9 +6371,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "i",
+        "effect_intensity": 1.851108261751994,
         "median_advantage": 0.09245619,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5607,9 +6385,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "j",
+        "effect_intensity": 2.5977876911096205,
         "median_advantage": 0.14495329999999998,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5619,9 +6399,11 @@
         "p": 0.00390625,
         "winner": "c2",
         "loser": "k",
+        "effect_intensity": 1.6754010325034698,
         "median_advantage": 0.05132668,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5631,9 +6413,11 @@
         "p": 0.193359375,
         "winner": "c2",
         "loser": "l",
+        "effect_intensity": 0.5341108873534249,
         "median_advantage": 0.01115619,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.7616302639935346
       },
       {
         "axis": "cost_usd",
@@ -5643,9 +6427,11 @@
         "p": 0.001953125,
         "winner": "c2",
         "loser": "mr",
+        "effect_intensity": 5.370472075572031,
         "median_advantage": 2.11565589624663,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5655,9 +6441,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "d",
+        "effect_intensity": 1.230494404950931,
         "median_advantage": 0.45089999999999997,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.145803167285403
       },
       {
         "axis": "cost_usd",
@@ -5667,9 +6455,11 @@
         "p": 0.001953125,
         "winner": "e",
         "loser": "d",
+        "effect_intensity": 1.3806103455094165,
         "median_advantage": 0.5087999999999999,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.444182454018213
       },
       {
         "axis": "cost_usd",
@@ -5679,9 +6469,11 @@
         "p": 0.001953125,
         "winner": "e2",
         "loser": "d",
+        "effect_intensity": 2.0263883835225043,
         "median_advantage": 0.59375,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5691,9 +6483,11 @@
         "p": 0.001953125,
         "winner": "e3",
         "loser": "d",
+        "effect_intensity": 1.3892257834150314,
         "median_advantage": 0.47679999999999995,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.461307005931916
       },
       {
         "axis": "cost_usd",
@@ -5703,9 +6497,11 @@
         "p": 0.322265625,
         "winner": "f",
         "loser": "d",
+        "effect_intensity": 0.19185693754685018,
         "median_advantage": 0.15684999999999996,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0813461512947524
       },
       {
         "axis": "cost_usd",
@@ -5715,9 +6511,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "d",
+        "effect_intensity": 1.6350810099717599,
         "median_advantage": 0.6463999999999999,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5727,9 +6525,11 @@
         "p": 0.00390625,
         "winner": "i",
         "loser": "d",
+        "effect_intensity": 2.376669363972188,
         "median_advantage": 0.6981499999999999,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5739,9 +6539,11 @@
         "p": 0.001953125,
         "winner": "j",
         "loser": "d",
+        "effect_intensity": 1.6299899346145623,
         "median_advantage": 0.6069,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5751,9 +6553,11 @@
         "p": 0.001953125,
         "winner": "k",
         "loser": "d",
+        "effect_intensity": 2.5523765932207128,
         "median_advantage": 0.71445,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5763,9 +6567,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "d",
+        "effect_intensity": 3.6936667383707573,
         "median_advantage": 0.77945,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5775,9 +6581,11 @@
         "p": 0.01953125,
         "winner": "d",
         "loser": "mr",
+        "effect_intensity": 1.142694449847848,
         "median_advantage": 0.832474424530925,
         "p_holm": 0.9765625,
-        "shown": true
+        "shown": true,
+        "line_width": 2.9712868042571623
       },
       {
         "axis": "cost_usd",
@@ -5787,9 +6595,11 @@
         "p": 0.76953125,
         "winner": "e",
         "loser": "d2",
+        "effect_intensity": 0.15011594055848557,
         "median_advantage": 0.02375000000000002,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.9983792867328092
       },
       {
         "axis": "cost_usd",
@@ -5799,9 +6609,11 @@
         "p": 0.037109375,
         "winner": "e2",
         "loser": "d2",
+        "effect_intensity": 0.7958939785715733,
         "median_advantage": 0.11580000000000001,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.2819657576511783
       },
       {
         "axis": "cost_usd",
@@ -5811,9 +6623,11 @@
         "p": 0.71484375,
         "winner": "e3",
         "loser": "d2",
+        "effect_intensity": 0.15873137846410068,
         "median_advantage": 6.938893903907228e-18,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.015503838646513
       },
       {
         "axis": "cost_usd",
@@ -5823,9 +6637,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "f",
+        "effect_intensity": 1.0386374674040808,
         "median_advantage": 0.3193,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 2.7644570159906516
       },
       {
         "axis": "cost_usd",
@@ -5835,9 +6651,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "d2",
+        "effect_intensity": 0.40458660502082894,
         "median_advantage": 0.08095000000000002,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 1.5041801701980533
       },
       {
         "axis": "cost_usd",
@@ -5847,9 +6665,11 @@
         "p": 0.009765625,
         "winner": "i",
         "loser": "d2",
+        "effect_intensity": 1.1461749590212573,
         "median_advantage": 0.2222,
         "p_holm": 0.56640625,
-        "shown": false
+        "shown": false,
+        "line_width": 2.978204869325837
       },
       {
         "axis": "cost_usd",
@@ -5859,9 +6679,11 @@
         "p": 0.048828125,
         "winner": "j",
         "loser": "d2",
+        "effect_intensity": 0.39949552966363133,
         "median_advantage": 0.0839,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 1.4940608489045777
       },
       {
         "axis": "cost_usd",
@@ -5871,9 +6693,11 @@
         "p": 0.01953125,
         "winner": "k",
         "loser": "d2",
+        "effect_intensity": 1.3218821882697818,
         "median_advantage": 0.17875,
         "p_holm": 0.9765625,
-        "shown": true
+        "shown": true,
+        "line_width": 3.3274509090330397
       },
       {
         "axis": "cost_usd",
@@ -5883,9 +6707,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "d2",
+        "effect_intensity": 2.4631723334198266,
         "median_advantage": 0.2788,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5895,9 +6721,11 @@
         "p": 0.001953125,
         "winner": "d2",
         "loser": "mr",
+        "effect_intensity": 2.373188854798779,
         "median_advantage": 1.82972152624663,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -5907,9 +6735,11 @@
         "p": 0.009765625,
         "winner": "e2",
         "loser": "e",
+        "effect_intensity": 0.6457780380130879,
         "median_advantage": 0.17604999999999998,
         "p_holm": 0.56640625,
-        "shown": true
+        "shown": true,
+        "line_width": 1.9835864709183693
       },
       {
         "axis": "cost_usd",
@@ -5919,9 +6749,11 @@
         "p": 1.0,
         "winner": "e",
         "loser": "e3",
+        "effect_intensity": 0.008615437905615213,
         "median_advantage": 0.02449999999999999,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7171245519137038
       },
       {
         "axis": "cost_usd",
@@ -5931,9 +6763,11 @@
         "p": 0.001953125,
         "winner": "e",
         "loser": "f",
+        "effect_intensity": 1.1887534079625663,
         "median_advantage": 0.2499,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.0628363027234604
       },
       {
         "axis": "cost_usd",
@@ -5943,9 +6777,11 @@
         "p": 0.083984375,
         "winner": "g",
         "loser": "e",
+        "effect_intensity": 0.25447066446234334,
         "median_advantage": 0.1405,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.205800883465244
       },
       {
         "axis": "cost_usd",
@@ -5955,9 +6791,11 @@
         "p": 0.00390625,
         "winner": "i",
         "loser": "e",
+        "effect_intensity": 0.9960590184627718,
         "median_advantage": 0.24270000000000003,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 2.6798255825930273
       },
       {
         "axis": "cost_usd",
@@ -5967,9 +6805,11 @@
         "p": 0.275390625,
         "winner": "j",
         "loser": "e",
+        "effect_intensity": 0.24937958910514582,
         "median_advantage": 0.14105,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.1956815621717685
       },
       {
         "axis": "cost_usd",
@@ -5979,9 +6819,11 @@
         "p": 0.009765625,
         "winner": "k",
         "loser": "e",
+        "effect_intensity": 1.171766247711296,
         "median_advantage": 0.3139,
         "p_holm": 0.56640625,
-        "shown": true
+        "shown": true,
+        "line_width": 3.02907162230023
       },
       {
         "axis": "cost_usd",
@@ -5991,9 +6833,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "e",
+        "effect_intensity": 2.3130563928613412,
         "median_advantage": 0.33030000000000004,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6003,9 +6847,11 @@
         "p": 0.00390625,
         "winner": "e",
         "loser": "mr",
+        "effect_intensity": 2.5233047953572645,
         "median_advantage": 1.77067152624663,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6015,9 +6861,11 @@
         "p": 0.001953125,
         "winner": "e2",
         "loser": "e3",
+        "effect_intensity": 0.6371626001074726,
         "median_advantage": 0.11694999999999998,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 1.966461919004665
       },
       {
         "axis": "cost_usd",
@@ -6027,9 +6875,11 @@
         "p": 0.001953125,
         "winner": "e2",
         "loser": "f",
+        "effect_intensity": 1.834531445975654,
         "median_advantage": 0.36025,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6039,9 +6889,11 @@
         "p": 0.921875,
         "winner": "e2",
         "loser": "g",
+        "effect_intensity": 0.3913073735507444,
         "median_advantage": 0.008700000000000006,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.477785587453125
       },
       {
         "axis": "cost_usd",
@@ -6051,9 +6903,11 @@
         "p": 0.16015625,
         "winner": "i",
         "loser": "e2",
+        "effect_intensity": 0.35028098044968387,
         "median_advantage": 0.10885,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.3962391116746582
       },
       {
         "axis": "cost_usd",
@@ -6063,9 +6917,11 @@
         "p": 0.845703125,
         "winner": "j",
         "loser": "e2",
+        "effect_intensity": 0.396398448907942,
         "median_advantage": 0.013149999999999995,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.4879049087466005
       },
       {
         "axis": "cost_usd",
@@ -6075,9 +6931,11 @@
         "p": 0.064453125,
         "winner": "k",
         "loser": "e2",
+        "effect_intensity": 0.5259882096982083,
         "median_advantage": 0.06295,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.7454851513818608
       },
       {
         "axis": "cost_usd",
@@ -6087,9 +6945,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "e2",
+        "effect_intensity": 1.6672783548482533,
         "median_advantage": 0.1857,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6099,9 +6959,11 @@
         "p": 0.001953125,
         "winner": "e2",
         "loser": "mr",
+        "effect_intensity": 3.1690828333703522,
         "median_advantage": 1.94672152624663,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6111,9 +6973,11 @@
         "p": 0.00390625,
         "winner": "e3",
         "loser": "f",
+        "effect_intensity": 1.1973688458681815,
         "median_advantage": 0.28115,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.0799608546371644
       },
       {
         "axis": "cost_usd",
@@ -6123,9 +6987,11 @@
         "p": 0.083984375,
         "winner": "g",
         "loser": "e3",
+        "effect_intensity": 0.24585522655672823,
         "median_advantage": 0.08025,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.1886763315515403
       },
       {
         "axis": "cost_usd",
@@ -6135,9 +7001,11 @@
         "p": 0.005859375,
         "winner": "i",
         "loser": "e3",
+        "effect_intensity": 0.9874435805571565,
         "median_advantage": 0.2421,
         "p_holm": 0.36328125,
-        "shown": true
+        "shown": true,
+        "line_width": 2.6627010306793233
       },
       {
         "axis": "cost_usd",
@@ -6147,9 +7015,11 @@
         "p": 0.193359375,
         "winner": "j",
         "loser": "e3",
+        "effect_intensity": 0.24076415119953043,
         "median_advantage": 0.11439999999999999,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.1785570102580643
       },
       {
         "axis": "cost_usd",
@@ -6159,9 +7029,11 @@
         "p": 0.001953125,
         "winner": "k",
         "loser": "e3",
+        "effect_intensity": 1.1631508098056809,
         "median_advantage": 0.23764999999999997,
         "p_holm": 0.298828125,
-        "shown": true
+        "shown": true,
+        "line_width": 3.011947070386526
       },
       {
         "axis": "cost_usd",
@@ -6171,9 +7043,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "e3",
+        "effect_intensity": 2.3044409549557257,
         "median_advantage": 0.313,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6183,9 +7057,11 @@
         "p": 0.00390625,
         "winner": "e3",
         "loser": "mr",
+        "effect_intensity": 2.5319202332628796,
         "median_advantage": 1.80852152624663,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6195,9 +7071,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "f",
+        "effect_intensity": 1.4432240724249097,
         "median_advantage": 0.40735,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.5686371861887043
       },
       {
         "axis": "cost_usd",
@@ -6207,9 +7085,11 @@
         "p": 0.001953125,
         "winner": "i",
         "loser": "f",
+        "effect_intensity": 2.184812426425338,
         "median_advantage": 0.44245,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6219,9 +7099,11 @@
         "p": 0.001953125,
         "winner": "j",
         "loser": "f",
+        "effect_intensity": 1.438132997067712,
         "median_advantage": 0.39135,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.5585178648952285
       },
       {
         "axis": "cost_usd",
@@ -6231,9 +7113,11 @@
         "p": 0.001953125,
         "winner": "k",
         "loser": "f",
+        "effect_intensity": 2.3605196556738623,
         "median_advantage": 0.42305,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6243,9 +7127,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "f",
+        "effect_intensity": 3.5018098008239074,
         "median_advantage": 0.4965,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6255,9 +7141,11 @@
         "p": 0.01953125,
         "winner": "f",
         "loser": "mr",
+        "effect_intensity": 1.3345513873946981,
         "median_advantage": 1.5935338901426932,
         "p_holm": 0.9765625,
-        "shown": true
+        "shown": true,
+        "line_width": 3.3526329555519148
       },
       {
         "axis": "cost_usd",
@@ -6267,9 +7155,11 @@
         "p": 0.048828125,
         "winner": "i",
         "loser": "g",
+        "effect_intensity": 0.7415883540004282,
         "median_advantage": 0.07940000000000001,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.174024699127783
       },
       {
         "axis": "cost_usd",
@@ -6279,9 +7169,11 @@
         "p": 0.845703125,
         "winner": "j",
         "loser": "g",
+        "effect_intensity": 0.005091075357197649,
         "median_advantage": 0.007850000000000003,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 0.7101193212934757
       },
       {
         "axis": "cost_usd",
@@ -6291,9 +7183,11 @@
         "p": 0.083984375,
         "winner": "k",
         "loser": "g",
+        "effect_intensity": 0.9172955832489527,
         "median_advantage": 0.049850000000000005,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.5232707388349853
       },
       {
         "axis": "cost_usd",
@@ -6303,9 +7197,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "g",
+        "effect_intensity": 2.0585857283989974,
         "median_advantage": 0.1251,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6315,9 +7211,11 @@
         "p": 0.001953125,
         "winner": "g",
         "loser": "mr",
+        "effect_intensity": 2.777775459819608,
         "median_advantage": 1.9016338901426932,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6327,9 +7225,11 @@
         "p": 0.048828125,
         "winner": "i",
         "loser": "j",
+        "effect_intensity": 0.746679429357626,
         "median_advantage": 0.0775,
         "p_holm": 1,
-        "shown": true
+        "shown": true,
+        "line_width": 2.184144020421259
       },
       {
         "axis": "cost_usd",
@@ -6339,9 +7239,11 @@
         "p": 0.275390625,
         "winner": "k",
         "loser": "i",
+        "effect_intensity": 0.1757072292485243,
         "median_advantage": 0.0587,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 1.0492460397072023
       },
       {
         "axis": "cost_usd",
@@ -6351,9 +7253,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "i",
+        "effect_intensity": 1.3169973743985692,
         "median_advantage": 0.08105,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.317741565219901
       },
       {
         "axis": "cost_usd",
@@ -6363,9 +7267,11 @@
         "p": 0.001953125,
         "winner": "i",
         "loser": "mr",
+        "effect_intensity": 3.519363813820036,
         "median_advantage": 1.99547152624663,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6375,9 +7281,11 @@
         "p": 0.083984375,
         "winner": "k",
         "loser": "j",
+        "effect_intensity": 0.9223866586061503,
         "median_advantage": 0.064,
         "p_holm": 1,
-        "shown": false
+        "shown": false,
+        "line_width": 2.5333900601284616
       },
       {
         "axis": "cost_usd",
@@ -6387,9 +7295,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "j",
+        "effect_intensity": 2.063676803756195,
         "median_advantage": 0.14155,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6399,9 +7309,11 @@
         "p": 0.001953125,
         "winner": "j",
         "loser": "mr",
+        "effect_intensity": 2.7726843844624103,
         "median_advantage": 1.8662838901426935,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6411,9 +7323,11 @@
         "p": 0.009765625,
         "winner": "l",
         "loser": "k",
+        "effect_intensity": 1.1412901451500448,
         "median_advantage": 0.04395,
         "p_holm": 0.56640625,
-        "shown": true
+        "shown": true,
+        "line_width": 2.968495525512699
       },
       {
         "axis": "cost_usd",
@@ -6423,9 +7337,11 @@
         "p": 0.001953125,
         "winner": "k",
         "loser": "mr",
+        "effect_intensity": 3.6950710430685607,
         "median_advantage": 2.0946715262466302,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       },
       {
         "axis": "cost_usd",
@@ -6435,9 +7351,11 @@
         "p": 0.001953125,
         "winner": "l",
         "loser": "mr",
+        "effect_intensity": 4.836361188218605,
         "median_advantage": 2.09867152624663,
         "p_holm": 0.298828125,
-        "shown": false
+        "shown": false,
+        "line_width": 3.8
       }
     ],
     "edges": [
