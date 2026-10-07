@@ -16,7 +16,8 @@
       "final": true,
       "seconds_mean": 3832.3,
       "cost_usd_mean": 0.15865722000000004,
-      "total_cost_usd_mean": 1.2231849977777778
+      "total_cost_usd_mean": 1.2231849977777778,
+      "total_cost_eur_010_mean": 0.25335761111111116
     },
     "b": {
       "expected": 10,
@@ -33,7 +34,8 @@
       "final": true,
       "seconds_mean": 2364.82,
       "cost_usd_mean": 0.09790354800000002,
-      "total_cost_usd_mean": 0.7547979924444445
+      "total_cost_usd_mean": 0.7547979924444445,
+      "total_cost_eur_010_mean": 0.1563408777777778
     },
     "b2": {
       "expected": 10,
@@ -50,7 +52,8 @@
       "final": true,
       "seconds_mean": 2766.41,
       "cost_usd_mean": 0.11452937400000003,
-      "total_cost_usd_mean": 0.8829765962222222
+      "total_cost_usd_mean": 0.8829765962222222,
+      "total_cost_eur_010_mean": 0.18289043888888892
     },
     "b3": {
       "expected": 10,
@@ -67,7 +70,8 @@
       "final": true,
       "seconds_mean": 2383.78,
       "cost_usd_mean": 0.09868849200000003,
-      "total_cost_usd_mean": 0.7608496031111112
+      "total_cost_usd_mean": 0.7608496031111112,
+      "total_cost_eur_010_mean": 0.15759434444444448
     },
     "c": {
       "expected": 10,
@@ -84,7 +88,8 @@
       "final": true,
       "seconds_mean": 612.62,
       "cost_usd_mean": 0.025362468000000006,
-      "total_cost_usd_mean": 0.19553469022222222
+      "total_cost_usd_mean": 0.19553469022222222,
+      "total_cost_eur_010_mean": 0.040500988888888895
     },
     "c2": {
       "expected": 10,
@@ -101,7 +106,8 @@
       "final": true,
       "seconds_mean": 548.81,
       "cost_usd_mean": 0.022720734000000006,
-      "total_cost_usd_mean": 0.17516795622222223
+      "total_cost_usd_mean": 0.17516795622222223,
+      "total_cost_eur_010_mean": 0.03628243888888889
     },
     "d": {
       "expected": 10,
@@ -118,7 +124,8 @@
       "final": true,
       "seconds_mean": 544.16,
       "cost_usd_mean": 1.5578400000000001,
-      "total_cost_usd_mean": 1.7089955555555556
+      "total_cost_usd_mean": 1.7089955555555556,
+      "total_cost_eur_010_mean": 1.45756
     },
     "d2": {
       "expected": 10,
@@ -135,7 +142,8 @@
       "final": true,
       "seconds_mean": 181.79,
       "cost_usd_mean": 0.45512,
-      "total_cost_usd_mean": 0.5056172222222223
+      "total_cost_usd_mean": 0.5056172222222223,
+      "total_cost_eur_010_mean": 0.4264571296296296
     },
     "e": {
       "expected": 10,
@@ -152,7 +160,8 @@
       "final": true,
       "seconds_mean": 294.49,
       "cost_usd_mean": 0.39168,
-      "total_cost_usd_mean": 0.47348277777777775
+      "total_cost_usd_mean": 0.47348277777777775,
+      "total_cost_eur_010_mean": 0.37084694444444444
     },
     "e2": {
       "expected": 10,
@@ -169,7 +178,8 @@
       "final": true,
       "seconds_mean": 309.05,
       "cost_usd_mean": 0.20534,
-      "total_cost_usd_mean": 0.2911872222222222
+      "total_cost_usd_mean": 0.2911872222222222,
+      "total_cost_eur_010_mean": 0.19871435185185182
     },
     "e3": {
       "expected": 10,
@@ -186,7 +196,8 @@
       "final": true,
       "seconds_mean": 502.68,
       "cost_usd_mean": 0.38832,
-      "total_cost_usd_mean": 0.5279533333333333
+      "total_cost_usd_mean": 0.5279533333333333,
+      "total_cost_eur_010_mean": 0.37351888888888884
     },
     "f": {
       "expected": 10,
@@ -203,7 +214,8 @@
       "final": true,
       "seconds_mean": 634.68,
       "cost_usd_mean": 1.28588,
-      "total_cost_usd_mean": 1.46218
+      "total_cost_usd_mean": 1.46218,
+      "total_cost_eur_010_mean": 1.2082596296296297
     },
     "g": {
       "expected": 10,
@@ -220,7 +232,8 @@
       "final": true,
       "seconds_mean": 125.55999999999999,
       "cost_usd_mean": 0.30368,
-      "total_cost_usd_mean": 0.3385577777777778
+      "total_cost_usd_mean": 0.3385577777777778,
+      "total_cost_eur_010_mean": 0.2846729629629629
     },
     "i": {
       "expected": 10,
@@ -237,7 +250,8 @@
       "final": true,
       "seconds_mean": 575.05,
       "cost_usd_mean": 0.14466,
-      "total_cost_usd_mean": 0.3043961111111111
+      "total_cost_usd_mean": 0.3043961111111111,
+      "total_cost_eur_010_mean": 0.14991805555555554
     },
     "j": {
       "expected": 10,
@@ -254,7 +268,8 @@
       "final": true,
       "seconds_mean": 1617.81,
       "cost_usd_mean": 0.30523,
-      "total_cost_usd_mean": 0.7546216666666667
+      "total_cost_usd_mean": 0.7546216666666667,
+      "total_cost_eur_010_mean": 0.327559537037037
     },
     "k": {
       "expected": 10,
@@ -271,7 +286,8 @@
       "final": true,
       "seconds_mean": 3603.58,
       "cost_usd_mean": 0.12135,
-      "total_cost_usd_mean": 1.1223444444444444
+      "total_cost_usd_mean": 1.1223444444444444,
+      "total_cost_eur_010_mean": 0.21246055555555554
     },
     "l": {
       "expected": 10,
@@ -288,7 +304,8 @@
       "final": true,
       "seconds_mean": 301.17,
       "cost_usd_mean": 0.03876,
-      "total_cost_usd_mean": 0.12241833333333334
+      "total_cost_usd_mean": 0.12241833333333334,
+      "total_cost_eur_010_mean": 0.044254722222222216
     },
     "mi": {
       "expected": 10,
@@ -305,7 +322,8 @@
       "cost_observed": 10,
       "seconds_mean": 1835.93,
       "cost_usd_mean": 1.7405697589462015,
-      "total_cost_usd_mean": 2.250550314501757
+      "total_cost_usd_mean": 2.250550314501757,
+      "total_cost_eur_010_mean": 1.6626367212464828
     },
     "mr": {
       "expected": 10,
@@ -322,7 +340,8 @@
       "cost_observed": 10,
       "seconds_mean": 5778.94,
       "cost_usd_mean": 6.357274408839133,
-      "total_cost_usd_mean": 7.962535519950244
+      "total_cost_usd_mean": 7.962535519950244,
+      "total_cost_eur_010_mean": 6.046891304480678
     }
   },
   "legs": {

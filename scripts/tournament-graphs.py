@@ -152,7 +152,11 @@ def render(output, snapshot):
         totals = [r['cost_usd'] + hourly_usd*r['seconds']/3600 for r in legs.values()
                   if r.get('cost_usd') is not None and r.get('seconds') is not None]
         snapshot['arms'][arm]['total_cost_usd_mean'] = statistics.mean(totals) if totals else None
+        totals_eur = [r['cost_usd']/1.08 + .10*r['seconds']/3600 for r in legs.values()
+                      if r.get('cost_usd') is not None and r.get('seconds') is not None]
+        snapshot['arms'][arm]['total_cost_eur_010_mean'] = statistics.mean(totals_eur) if totals_eur else None
     (output/'total-cost.json').write_text(json.dumps({'time_value_usd_hour': hourly_usd, 'means': {a: snapshot['arms'][a]['total_cost_usd_mean'] for a in nodes}}, indent=2)+'\n')
+    (output/'total-cost-010-eur.json').write_text(json.dumps({'time_value_eur_per_erg_hour': .10, 'usd_per_eur': 1.08, 'means': {a: snapshot['arms'][a]['total_cost_eur_010_mean'] for a in nodes}}, indent=2)+'\n')
     dag_nodes = [a for a in nodes if a not in {'c', 'c2', 'e'}]
     results = {}
     for metric, (title, direction, units) in AXES.items():
@@ -225,6 +229,8 @@ def render(output, snapshot):
              'Coût moyen (USD)', 'Durée moyenne (minutes)'),
             ('quality-total-cost', f'Qualité / coût total — temps à {hourly_usd:g} USD/h', 'total_cost_usd_mean', 'quality_mean',
              'Coût total moyen (USD ; coût direct + durée valorisée)', 'Qualité moyenne (/30)'),
+            ('quality-total-cost-010-eur', 'Qualité / coût total — temps à 0,10 EUR/(erg·h)', 'total_cost_eur_010_mean', 'quality_mean',
+             'Coût total moyen (EUR / erg ; coût direct + durée valorisée)', 'Qualité moyenne (/30)'),
         ]
         for name, title, xkey, ykey, xlabel, ylabel in scatter_axes:
             fig=plt.figure(figsize=(11.6929,8.2677))
@@ -251,7 +257,7 @@ def render(output, snapshot):
                 if a in frontier:
                     ax.scatter(x,y,s=210,facecolors='none',edgecolors='#b45309',linewidths=1.8,zorder=2)
                 entries.append((a,x,y,color,provisional))
-            if xkey in {'cost_usd_mean','total_cost_usd_mean','seconds_mean'}:ax.set_xscale('log')
+            if xkey in {'cost_usd_mean','total_cost_usd_mean','total_cost_eur_010_mean','seconds_mean'}:ax.set_xscale('log')
             if ykey == 'seconds_mean':
                 ax.set_yscale('log')
                 ax.invert_yaxis()
@@ -261,7 +267,8 @@ def render(output, snapshot):
             endpoint_words = {'quality_mean': ('Faux', 'Juste'),
                               'seconds_mean': ('Rapide', 'Lent'),
                               'cost_usd_mean': ('Abordable', 'Cher'),
-                              'total_cost_usd_mean': ('Abordable', 'Cher')}
+                              'total_cost_usd_mean': ('Abordable', 'Cher'),
+                              'total_cost_eur_010_mean': ('Abordable', 'Cher')}
             left, right = endpoint_words[xkey]
             ax.text(0, -.055, left, transform=ax.transAxes, ha='left', va='top', fontsize=9, rotation=0)
             ax.text(1, -.055, right, transform=ax.transAxes, ha='right', va='top', fontsize=9, rotation=0)
@@ -283,7 +290,7 @@ def render(output, snapshot):
                          for dx,dy in [(radius,radius),(-radius,radius),(radius,-radius),(-radius,-radius),
                                        (0,radius),(0,-radius),(radius,0),(-radius,0),
                                        (radius/2,radius),(-radius/2,radius),(radius/2,-radius),(-radius/2,-radius)]]
-                if name in {'quality-cost', 'quality-speed', 'quality-total-cost'} and a in {'c', 'c2'}:
+                if name in {'quality-cost', 'quality-speed', 'quality-total-cost', 'quality-total-cost-010-eur'} and a in {'c', 'c2'}:
                     preferred = [(22, 20), (30, 28)] if a == 'c' else [(-22, -20), (-30, -28)]
                     offsets = preferred + offsets
                 if name == 'quality-speed' and a == 'b2':
@@ -317,6 +324,8 @@ def render(output, snapshot):
                 color={'mi':'#7c3aed','mr':'#dc2626'}.get(a, '#ea580c' if not snapshot['arms'][a]['final'] else '#2563eb' if a in analysis.LOCAL else '#059669')
                 fig.text(.665,.81-i*min(.041, .72/len(nodes)),DISPLAY_CODES.get(a,a)+('*' if not snapshot['arms'][a]['final'] else ''),fontsize=9,fontweight='bold',color=color,va='top')
                 fig.text(.70,.81-i*min(.041, .72/len(nodes)),description,fontsize=7.4,va='top',linespacing=1.1,fontweight='bold' if a in frontier else 'normal')
+            if name == 'quality-total-cost-010-eur':
+                fig.text(.045,.855,'Par erg moyen : coût direct en USD / 1,08 + 0,10 × durée / 3 600 (secondes) ; puis moyenne. DNF inclus.',fontsize=8)
             if name == 'quality-total-cost':
                 fig.text(.045,.855,f'Par ticket : coût total = coût direct + {hourly_usd:g} × durée / 3 600 ; puis moyenne. Toute la durée est valorisée, DNF inclus.',fontsize=8)
             fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Mistral : losange violet = Idéal, cercle rouge = beta. Coût et durée en échelle logarithmique.\n'
