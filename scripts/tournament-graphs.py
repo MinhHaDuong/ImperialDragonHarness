@@ -221,10 +221,15 @@ def render(output, snapshot):
                 if row[xkey] is None or row[ykey] is None:continue
                 x=row[xkey]/60 if xkey == 'seconds_median' else row[xkey]
                 y=row[ykey]/60 if ykey == 'seconds_median' else row[ykey]
-                color='#2563eb' if a in analysis.LOCAL else '#059669'
+                color={'mi':'#7c3aed','mr':'#dc2626'}.get(a, '#2563eb' if a in analysis.LOCAL else '#059669')
                 provisional=not row['final']
-                ax.scatter(x,y,s=65,marker='o' if a in analysis.LOCAL else 's',
-                           facecolors='none' if provisional else color,edgecolors='#ea580c' if provisional else color,zorder=3)
+                # Concentric distinct markers preserve exact coordinates when medians coincide.
+                marker = {'mi':'D','mr':'o'}.get(a, 'o' if a in analysis.LOCAL else 's')
+                size = {'mi':65,'mr':190}.get(a,65)
+                ax.scatter(x,y,s=size,marker=marker,
+                           facecolors='none' if provisional or a == 'mr' else color,
+                           edgecolors=color if a in {'mi','mr'} else '#ea580c' if provisional else color,
+                           linewidths=1.7 if a in {'mi','mr'} else 1,zorder=4 if a == 'mi' else 3)
                 if a in frontier:
                     ax.scatter(x,y,s=210,facecolors='none',edgecolors='#b45309',linewidths=1.8,zorder=2)
                 entries.append((a,x,y,color,provisional))
@@ -250,13 +255,15 @@ def render(output, snapshot):
                     offsets = preferred + offsets
                 if name == 'quality-speed' and a == 'e2':
                     offsets = [(-45, 55), (-55, 70), (-65, 85), (-85, 100)] + offsets
+                if a in {'mi','mr'}:
+                    offsets = ([(0,35),(0,50),(-55,35)] if a == 'mi' else [(0,-35),(0,-50),(55,-35)]) + offsets
                 placed=False
                 for dx,dy in offsets:
                     if annotation:annotation.remove()
-                    label=(a+' · '+LABELS[a]) if a in frontier else a+("*" if provisional else "")
+                    label=(a+' · '+LABELS[a]) if a in frontier else {'mi':'Mistral idéale','mr':'Mistral réelle'}.get(a,a)+("*" if provisional else "")
                     annotation=ax.annotate(label,(x,y),xytext=(dx,dy),textcoords='offset points',
                                            fontsize=7 if a in frontier else 9,ha='center',va='center',
-                                           color='#92400e' if a in frontier else '#ea580c' if provisional else color,
+                                           color=color if a in {'mi','mr'} else '#92400e' if a in frontier else '#ea580c' if provisional else color,
                                            arrowprops={'arrowstyle':'-','color':'#94a3b8','lw':.7},
                                            bbox={'facecolor':'none','edgecolor':'none','pad':1.3})
                     annotation.update_positions(renderer)
@@ -272,13 +279,13 @@ def render(output, snapshot):
             for i,a in enumerate(nodes):
                 label=LABELS[a].split('\n')
                 description=label[0]+'\n'+label[1]+' · '+label[2]
-                color='#ea580c' if not snapshot['arms'][a]['final'] else '#2563eb' if a in analysis.LOCAL else '#059669'
+                color={'mi':'#7c3aed','mr':'#dc2626'}.get(a, '#ea580c' if not snapshot['arms'][a]['final'] else '#2563eb' if a in analysis.LOCAL else '#059669')
                 fig.text(.665,.81-i*min(.041, .72/len(nodes)),a+('*' if not snapshot['arms'][a]['final'] else ''),fontsize=9,fontweight='bold',color=color,va='top')
                 fig.text(.70,.81-i*min(.041, .72/len(nodes)),description,fontsize=7.4,va='top',linespacing=1.1,fontweight='bold' if a in frontier else 'normal')
             fig.text(.045,.08,'Cercle doré + nom complet : frontière de Pareto sur ces deux axes (identités complètes, qualité médiane ≥ 15/30).',fontsize=8)
             if name == 'quality-total-cost':
                 fig.text(.045,.855,f'Par ticket : coût total = coût direct + {hourly_usd:g} × durée / 3 600 ; puis médiane. Toute la durée est valorisée, DNF inclus.',fontsize=8)
-            fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Coût et durée en échelle logarithmique.\n'
+            fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Mistral : losange violet = idéale, cercle rouge = réelle. Coût et durée en échelle logarithmique.\n'
                      'Coût local = électricité seule ; coût hébergé = API. Les graphiques de significativité utilisent uniquement les identités complètes.',fontsize=8)
             pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
         fig=plt.figure(figsize=(11.6929,8.2677));fig.text(.06,.91,'Méthode et périmètre',fontsize=20,fontweight='bold')
