@@ -42,6 +42,18 @@ def collect(arena):
                         'verdict': r.get('verdict'), 'quality': sum(scores) if len(scores) == 3 else None,
                         'seconds': r.get('seconds'), 'cost_usd': cost,
                         'pi_cost_usd': r.get('cost_usd'), 'source': str(path.relative_to(arena))})
+    # Explicit successful OpenRouter replacement for native ticket 0874.
+    path = arena / 'runs' / '0874-mo' / 'run.json'
+    if path.exists():
+        r = json.loads(path.read_text())
+        scores = [json.loads(f.read_text()).get('parsed', {}).get('score')
+                  for f in (path.parent / 'judges').glob('*.json')]
+        if r.get('verdict') == 'OK' and len(scores) == 3 and all(isinstance(q, (int, float)) for q in scores):
+            records.append({'model_failure': False, 'loop_failure': False, 'ticket': '0874',
+                            'finished': r.get('finished', ''), 'verdict': 'OK', 'quality': sum(scores),
+                            'seconds': r.get('seconds'), 'cost_usd': r.get('cost_usd'),
+                            'pi_cost_usd': r.get('cost_usd'), 'source': str(path.relative_to(arena)),
+                            'provider': 'OpenRouter', 'replacement': True})
     return records
 
 
@@ -78,7 +90,7 @@ def add_series(snapshot, arena):
                                  'seconds_median': med('seconds'), 'cost_usd_median': med('cost_usd'),
                                  'time_observed': sum(r['seconds'] is not None for r in legs.values()),
                                  'cost_observed': sum(r['cost_usd'] is not None for r in legs.values())}
-    snapshot['mistral_accounting'] = {'scope': 'Mistral direct only; OpenRouter excluded', 'rates_eur_per_million': RATES_EUR_M,
+    snapshot['mistral_accounting'] = {'scope': 'Mistral direct attempts plus successful OpenRouter replacement for ticket 0874', 'rates_eur_per_million': RATES_EUR_M,
                                      'usd_per_eur': USD_EUR, 'pricing': 'Proportional allocation of native EUR39.77 invoice by token category; later runs estimated at frozen calibrated rates', 'invoice_calibration': CALIBRATION,
                                      'ideal': 'Latest judged successful run per ticket', 'real': 'All completed attempts summed per ticket, best successful quality',
                                      'attempts': records}

@@ -47,8 +47,8 @@ DASHED_MODELS = {'c', 'c2', 'e', 'mr'}
 AXIS_WORDS = {'quality': ('Juste', 'Faux'), 'seconds': ('Rapide', 'Lent'), 'cost_usd': ('Abordable', 'Cher')}
 DISPLAY_CODES = {'mr': 'mβ'}
 LABELS = {
-'mi': 'Mistral Large 4 · Idéal\nAPI Mistral direct\noff',
-'mr': 'Mistral Large 4 · beta\nAPI Mistral direct\noff',
+'mi': 'Mistral Large 4 · Idéal\nAPI Mistral + OR (0874)\noff',
+'mr': 'Mistral Large 4 · beta\nAPI Mistral + OR (0874)\noff',
 'a': 'Qwen 3.8 27B\nQ4_K_M · llama.cpp\nxhigh (fixé côté serveur)',
 'b': 'Qwen 3.8 Flash-Next Coder\nIQ1_M · Strata · pruned\nxhigh (fixé côté serveur)',
 'b2': 'Qwen 3.8 Flash-Next\nIQ3_S · Strata\nxhigh (fixé côté serveur)',
@@ -374,6 +374,7 @@ def render(output, snapshot):
             "Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets, aucune différence ne franchit ce seuil plus exigeant : les écarts détectés\ndeux à deux ne constituent donc pas un classement global garanti à 95 %.\nLes astérisques signalent les séries provisoires ; Mistral beta a un contour pointillé dans les DAG.\nQwen 3, Qwen 3.6 et GPT-6 Sol figurent seulement dans les nuages de points.",
         ]
         paragraphs.append("Limite : cette évaluation confie à un seul modèle l’ensemble du travail : orchestration,\nréalisation et revue de sa propre production. Elle mesure donc sa capacité à mener\nune tâche de bout en bout, plutôt que les performances d’un harnais qui choisit\ndifférents modèles selon les rôles et confie les revues à des modèles distincts pour\nréduire les erreurs corrélées. Les trois juges externes évaluent le résultat final ;\nils ne participent pas à sa réalisation.")
+        paragraphs.append("Limite : sur le ticket 0874, la dernière tentative directe a atteint le plafond de deux heures, malgré 195 réponses API réussies. Le modèle a longuement exploré le projet puis multiplié les tests, avec des modules et un hook manquants dans l’environnement. Le disjoncteur de répétitions identiques ne détecte pas cette dérive à commandes variables. Le résultat réussi via OpenRouter remplace ce ticket dans la série idéale ; Mistral beta conserve les coûts et durées des tentatives directes échouées et ajoute ceux du remplacement. La série Mistral combine donc deux filières d’hébergement. Le coût OpenRouter est celui enregistré pour ce run ; les coûts directs suivent la calibration de la facture Mistral.")
         paragraphs.append("La sélection des candidats est purement ad hoc, sans prétention à l’exhaustivité.\nQuels modèles, variantes ou runtimes souhaiteriez-vous voir dans le prochain comparatif ?\nVos suggestions et retours sont bienvenus à minh.ha-duong@cnrs.fr.")
         y=.84
         for index,text in enumerate(paragraphs):
