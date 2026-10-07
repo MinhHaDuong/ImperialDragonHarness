@@ -160,6 +160,30 @@
       {
         "axis": "quality",
         "a": "a",
+        "b": "j",
+        "n": 10,
+        "p": 0.203125,
+        "winner": "j",
+        "loser": "a",
+        "median_advantage": 3.5,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "a",
+        "b": "k",
+        "n": 10,
+        "p": 0.44140625,
+        "winner": "k",
+        "loser": "a",
+        "median_advantage": 2.25,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "a",
         "b": "l",
         "n": 10,
         "p": 0.98046875,
@@ -214,7 +238,7 @@
         "winner": "b",
         "loser": "c2",
         "median_advantage": 12.25,
-        "p_holm": 0.533203125,
+        "p_holm": 0.71484375,
         "shown": true
       },
       {
@@ -316,6 +340,30 @@
       {
         "axis": "quality",
         "a": "b",
+        "b": "j",
+        "n": 10,
+        "p": 0.6953125,
+        "winner": "j",
+        "loser": "b",
+        "median_advantage": 3.25,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "b",
+        "b": "k",
+        "n": 10,
+        "p": 0.5390625,
+        "winner": "k",
+        "loser": "b",
+        "median_advantage": 2.5,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "b",
         "b": "l",
         "n": 10,
         "p": 0.841796875,
@@ -334,7 +382,7 @@
         "winner": "b2",
         "loser": "b3",
         "median_advantage": 3.5,
-        "p_holm": 0.6953125,
+        "p_holm": 0.9375,
         "shown": true
       },
       {
@@ -346,7 +394,7 @@
         "winner": "b2",
         "loser": "c",
         "median_advantage": 18.25,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -358,7 +406,7 @@
         "winner": "b2",
         "loser": "c2",
         "median_advantage": 17.0,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -460,6 +508,30 @@
       {
         "axis": "quality",
         "a": "b2",
+        "b": "j",
+        "n": 10,
+        "p": 0.2890625,
+        "winner": "b2",
+        "loser": "j",
+        "median_advantage": 0.5,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "b2",
+        "b": "k",
+        "n": 10,
+        "p": 0.09765625,
+        "winner": "b2",
+        "loser": "k",
+        "median_advantage": 2.5,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "b2",
         "b": "l",
         "n": 10,
         "p": 0.015625,
@@ -490,7 +562,7 @@
         "winner": "b3",
         "loser": "c2",
         "median_advantage": 11.25,
-        "p_holm": 0.6953125,
+        "p_holm": 0.9375,
         "shown": true
       },
       {
@@ -592,6 +664,30 @@
       {
         "axis": "quality",
         "a": "b3",
+        "b": "j",
+        "n": 10,
+        "p": 0.361328125,
+        "winner": "j",
+        "loser": "b3",
+        "median_advantage": 3.5,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "b3",
+        "b": "k",
+        "n": 10,
+        "p": 0.7109375,
+        "winner": "k",
+        "loser": "b3",
+        "median_advantage": 1.0,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "b3",
         "b": "l",
         "n": 10,
         "p": 0.84375,
@@ -658,7 +754,7 @@
         "winner": "e2",
         "loser": "c",
         "median_advantage": 14.75,
-        "p_holm": 0.533203125,
+        "p_holm": 0.71484375,
         "shown": false
       },
       {
@@ -682,7 +778,7 @@
         "winner": "f",
         "loser": "c",
         "median_advantage": 12.75,
-        "p_holm": 0.375,
+        "p_holm": 0.49609375,
         "shown": false
       },
       {
@@ -694,7 +790,7 @@
         "winner": "g",
         "loser": "c",
         "median_advantage": 8.0,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -706,8 +802,32 @@
         "winner": "i",
         "loser": "c",
         "median_advantage": 10.0,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
+      },
+      {
+        "axis": "quality",
+        "a": "c",
+        "b": "j",
+        "n": 10,
+        "p": 0.037109375,
+        "winner": "j",
+        "loser": "c",
+        "median_advantage": 15.0,
+        "p_holm": 1,
+        "shown": true
+      },
+      {
+        "axis": "quality",
+        "a": "c",
+        "b": "k",
+        "n": 10,
+        "p": 0.064453125,
+        "winner": "k",
+        "loser": "c",
+        "median_advantage": 13.0,
+        "p_holm": 1,
+        "shown": false
       },
       {
         "axis": "quality",
@@ -718,7 +838,7 @@
         "winner": "l",
         "loser": "c",
         "median_advantage": 10.0,
-        "p_holm": 0.375,
+        "p_holm": 0.49609375,
         "shown": false
       },
       {
@@ -730,7 +850,7 @@
         "winner": "d",
         "loser": "c2",
         "median_advantage": 17.25,
-        "p_holm": 0.375,
+        "p_holm": 0.49609375,
         "shown": false
       },
       {
@@ -742,7 +862,7 @@
         "winner": "d2",
         "loser": "c2",
         "median_advantage": 10.5,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -766,7 +886,7 @@
         "winner": "e2",
         "loser": "c2",
         "median_advantage": 12.25,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -778,7 +898,7 @@
         "winner": "e3",
         "loser": "c2",
         "median_advantage": 12.0,
-        "p_holm": 0.375,
+        "p_holm": 0.49609375,
         "shown": true
       },
       {
@@ -790,7 +910,7 @@
         "winner": "f",
         "loser": "c2",
         "median_advantage": 11.25,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -802,7 +922,7 @@
         "winner": "g",
         "loser": "c2",
         "median_advantage": 12.0,
-        "p_holm": 0.375,
+        "p_holm": 0.49609375,
         "shown": true
       },
       {
@@ -814,7 +934,31 @@
         "winner": "i",
         "loser": "c2",
         "median_advantage": 11.0,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
+        "shown": true
+      },
+      {
+        "axis": "quality",
+        "a": "c2",
+        "b": "j",
+        "n": 10,
+        "p": 0.01171875,
+        "winner": "j",
+        "loser": "c2",
+        "median_advantage": 14.25,
+        "p_holm": 1,
+        "shown": true
+      },
+      {
+        "axis": "quality",
+        "a": "c2",
+        "b": "k",
+        "n": 10,
+        "p": 0.01171875,
+        "winner": "k",
+        "loser": "c2",
+        "median_advantage": 12.0,
+        "p_holm": 1,
         "shown": true
       },
       {
@@ -826,7 +970,7 @@
         "winner": "l",
         "loser": "c2",
         "median_advantage": 13.0,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -910,6 +1054,30 @@
         "winner": "d",
         "loser": "i",
         "median_advantage": 1.75,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "d",
+        "b": "j",
+        "n": 10,
+        "p": 0.93359375,
+        "winner": "d",
+        "loser": "j",
+        "median_advantage": -0.5,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "d",
+        "b": "k",
+        "n": 10,
+        "p": 0.7421875,
+        "winner": "d",
+        "loser": "k",
+        "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false
       },
@@ -1000,6 +1168,30 @@
       {
         "axis": "quality",
         "a": "d2",
+        "b": "j",
+        "n": 10,
+        "p": 0.4921875,
+        "winner": "j",
+        "loser": "d2",
+        "median_advantage": 3.0,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "d2",
+        "b": "k",
+        "n": 10,
+        "p": 0.84375,
+        "winner": "d2",
+        "loser": "k",
+        "median_advantage": -0.5,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "d2",
         "b": "l",
         "n": 10,
         "p": 0.8828125,
@@ -1072,6 +1264,30 @@
       {
         "axis": "quality",
         "a": "e",
+        "b": "j",
+        "n": 10,
+        "p": 0.15234375,
+        "winner": "j",
+        "loser": "e",
+        "median_advantage": 6.0,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "e",
+        "b": "k",
+        "n": 10,
+        "p": 0.23046875,
+        "winner": "k",
+        "loser": "e",
+        "median_advantage": 6.25,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "e",
         "b": "l",
         "n": 10,
         "p": 0.048828125,
@@ -1132,6 +1348,30 @@
       {
         "axis": "quality",
         "a": "e2",
+        "b": "j",
+        "n": 10,
+        "p": 0.8203125,
+        "winner": "j",
+        "loser": "e2",
+        "median_advantage": 0.5,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "e2",
+        "b": "k",
+        "n": 10,
+        "p": 0.93359375,
+        "winner": "k",
+        "loser": "e2",
+        "median_advantage": 0.5,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "e2",
         "b": "l",
         "n": 10,
         "p": 0.75390625,
@@ -1180,6 +1420,30 @@
       {
         "axis": "quality",
         "a": "e3",
+        "b": "j",
+        "n": 10,
+        "p": 0.548828125,
+        "winner": "j",
+        "loser": "e3",
+        "median_advantage": 2.0,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "e3",
+        "b": "k",
+        "n": 10,
+        "p": 0.9140625,
+        "winner": "k",
+        "loser": "e3",
+        "median_advantage": 0.25,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "e3",
         "b": "l",
         "n": 10,
         "p": 0.9375,
@@ -1216,6 +1480,30 @@
       {
         "axis": "quality",
         "a": "f",
+        "b": "j",
+        "n": 10,
+        "p": 0.44140625,
+        "winner": "j",
+        "loser": "f",
+        "median_advantage": 1.75,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "f",
+        "b": "k",
+        "n": 10,
+        "p": 0.572265625,
+        "winner": "k",
+        "loser": "f",
+        "median_advantage": 1.0,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "f",
         "b": "l",
         "n": 10,
         "p": 0.826171875,
@@ -1240,6 +1528,30 @@
       {
         "axis": "quality",
         "a": "g",
+        "b": "j",
+        "n": 10,
+        "p": 0.578125,
+        "winner": "j",
+        "loser": "g",
+        "median_advantage": 5.0,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "g",
+        "b": "k",
+        "n": 10,
+        "p": 0.541015625,
+        "winner": "k",
+        "loser": "g",
+        "median_advantage": 2.0,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "g",
         "b": "l",
         "n": 10,
         "p": 0.25390625,
@@ -1252,12 +1564,72 @@
       {
         "axis": "quality",
         "a": "i",
+        "b": "j",
+        "n": 10,
+        "p": 0.734375,
+        "winner": "j",
+        "loser": "i",
+        "median_advantage": 3.0,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "i",
+        "b": "k",
+        "n": 10,
+        "p": 0.8203125,
+        "winner": "k",
+        "loser": "i",
+        "median_advantage": -0.5,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "i",
         "b": "l",
         "n": 10,
         "p": 0.875,
         "winner": "l",
         "loser": "i",
         "median_advantage": 0.25,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "j",
+        "b": "k",
+        "n": 10,
+        "p": 0.78125,
+        "winner": "j",
+        "loser": "k",
+        "median_advantage": 1.5,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "j",
+        "b": "l",
+        "n": 10,
+        "p": 0.494140625,
+        "winner": "j",
+        "loser": "l",
+        "median_advantage": 2.75,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "quality",
+        "a": "k",
+        "b": "l",
+        "n": 10,
+        "p": 0.9140625,
+        "winner": "k",
+        "loser": "l",
+        "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false
       }
@@ -1412,6 +1784,18 @@
         "c2"
       ],
       [
+        "j",
+        "c"
+      ],
+      [
+        "j",
+        "c2"
+      ],
+      [
+        "k",
+        "c2"
+      ],
+      [
         "l",
         "c"
       ],
@@ -1538,6 +1922,18 @@
         "c2"
       ],
       [
+        "j",
+        "c"
+      ],
+      [
+        "j",
+        "c2"
+      ],
+      [
+        "k",
+        "c2"
+      ],
+      [
         "l",
         "e"
       ]
@@ -1555,7 +1951,7 @@
         "winner": "b",
         "loser": "a",
         "median_advantage": 1215.9499999999998,
-        "p_holm": 0.298828125,
+        "p_holm": 0.380859375,
         "shown": true
       },
       {
@@ -1591,7 +1987,7 @@
         "winner": "c",
         "loser": "a",
         "median_advantage": 2927.8999999999996,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1603,7 +1999,7 @@
         "winner": "c2",
         "loser": "a",
         "median_advantage": 2666.25,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1615,7 +2011,7 @@
         "winner": "d",
         "loser": "a",
         "median_advantage": 2791.45,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1627,7 +2023,7 @@
         "winner": "d2",
         "loser": "a",
         "median_advantage": 3025.1499999999996,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1639,7 +2035,7 @@
         "winner": "e",
         "loser": "a",
         "median_advantage": 2855.75,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1651,7 +2047,7 @@
         "winner": "e2",
         "loser": "a",
         "median_advantage": 2746.0,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1663,7 +2059,7 @@
         "winner": "e3",
         "loser": "a",
         "median_advantage": 2633.6,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1675,7 +2071,7 @@
         "winner": "f",
         "loser": "a",
         "median_advantage": 2804.0,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1687,7 +2083,7 @@
         "winner": "g",
         "loser": "a",
         "median_advantage": 3056.45,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1699,7 +2095,31 @@
         "winner": "i",
         "loser": "a",
         "median_advantage": 2638.55,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "a",
+        "b": "j",
+        "n": 10,
+        "p": 0.00390625,
+        "winner": "j",
+        "loser": "a",
+        "median_advantage": 2116.1000000000004,
+        "p_holm": 0.265625,
+        "shown": true
+      },
+      {
+        "axis": "seconds",
+        "a": "a",
+        "b": "k",
+        "n": 10,
+        "p": 0.76953125,
+        "winner": "k",
+        "loser": "a",
+        "median_advantage": 1024.8999999999999,
+        "p_holm": 1,
         "shown": false
       },
       {
@@ -1711,7 +2131,7 @@
         "winner": "l",
         "loser": "a",
         "median_advantage": 2971.95,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1747,7 +2167,7 @@
         "winner": "c",
         "loser": "b",
         "median_advantage": 1551.3999999999999,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -1759,7 +2179,7 @@
         "winner": "c2",
         "loser": "b",
         "median_advantage": 1175.4,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -1771,7 +2191,7 @@
         "winner": "d",
         "loser": "b",
         "median_advantage": 1385.4,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -1783,7 +2203,7 @@
         "winner": "d2",
         "loser": "b",
         "median_advantage": 1663.4,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1795,7 +2215,7 @@
         "winner": "e",
         "loser": "b",
         "median_advantage": 1576.8500000000001,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1807,7 +2227,7 @@
         "winner": "e2",
         "loser": "b",
         "median_advantage": 1582.95,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1819,7 +2239,7 @@
         "winner": "e3",
         "loser": "b",
         "median_advantage": 1275.75,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -1831,7 +2251,7 @@
         "winner": "f",
         "loser": "b",
         "median_advantage": 1312.1,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -1843,7 +2263,7 @@
         "winner": "g",
         "loser": "b",
         "median_advantage": 1754.6999999999998,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1855,8 +2275,32 @@
         "winner": "i",
         "loser": "b",
         "median_advantage": 1424.8,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
+      },
+      {
+        "axis": "seconds",
+        "a": "b",
+        "b": "j",
+        "n": 10,
+        "p": 0.083984375,
+        "winner": "j",
+        "loser": "b",
+        "median_advantage": 1046.7,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "b",
+        "b": "k",
+        "n": 10,
+        "p": 0.083984375,
+        "winner": "b",
+        "loser": "k",
+        "median_advantage": 326.35000000000014,
+        "p_holm": 1,
+        "shown": false
       },
       {
         "axis": "seconds",
@@ -1867,7 +2311,7 @@
         "winner": "l",
         "loser": "b",
         "median_advantage": 1608.25,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1891,7 +2335,7 @@
         "winner": "c",
         "loser": "b2",
         "median_advantage": 2302.95,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -1903,7 +2347,7 @@
         "winner": "c2",
         "loser": "b2",
         "median_advantage": 2270.7,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -1915,7 +2359,7 @@
         "winner": "d",
         "loser": "b2",
         "median_advantage": 2238.7,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -1927,7 +2371,7 @@
         "winner": "d2",
         "loser": "b2",
         "median_advantage": 2481.6000000000004,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1939,7 +2383,7 @@
         "winner": "e",
         "loser": "b2",
         "median_advantage": 2281.9,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1951,7 +2395,7 @@
         "winner": "e2",
         "loser": "b2",
         "median_advantage": 2282.15,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1963,7 +2407,7 @@
         "winner": "e3",
         "loser": "b2",
         "median_advantage": 2085.1,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -1975,7 +2419,7 @@
         "winner": "f",
         "loser": "b2",
         "median_advantage": 2005.85,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -1987,7 +2431,7 @@
         "winner": "g",
         "loser": "b2",
         "median_advantage": 2506.25,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -1999,8 +2443,32 @@
         "winner": "i",
         "loser": "b2",
         "median_advantage": 2040.4499999999998,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
+      },
+      {
+        "axis": "seconds",
+        "a": "b2",
+        "b": "j",
+        "n": 10,
+        "p": 0.083984375,
+        "winner": "j",
+        "loser": "b2",
+        "median_advantage": 1901.9499999999998,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "b2",
+        "b": "k",
+        "n": 10,
+        "p": 0.556640625,
+        "winner": "b2",
+        "loser": "k",
+        "median_advantage": -155.64999999999998,
+        "p_holm": 1,
+        "shown": false
       },
       {
         "axis": "seconds",
@@ -2011,7 +2479,7 @@
         "winner": "l",
         "loser": "b2",
         "median_advantage": 2412.9500000000003,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2023,7 +2491,7 @@
         "winner": "c",
         "loser": "b3",
         "median_advantage": 1525.25,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -2035,7 +2503,7 @@
         "winner": "c2",
         "loser": "b3",
         "median_advantage": 1335.15,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -2047,7 +2515,7 @@
         "winner": "d",
         "loser": "b3",
         "median_advantage": 1507.15,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -2059,7 +2527,7 @@
         "winner": "d2",
         "loser": "b3",
         "median_advantage": 1763.3,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2071,7 +2539,7 @@
         "winner": "e",
         "loser": "b3",
         "median_advantage": 1634.3000000000002,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2083,7 +2551,7 @@
         "winner": "e2",
         "loser": "b3",
         "median_advantage": 1692.7,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2095,7 +2563,7 @@
         "winner": "e3",
         "loser": "b3",
         "median_advantage": 1385.5,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -2107,7 +2575,7 @@
         "winner": "f",
         "loser": "b3",
         "median_advantage": 1150.8999999999999,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -2119,7 +2587,7 @@
         "winner": "g",
         "loser": "b3",
         "median_advantage": 1864.4499999999998,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2131,8 +2599,32 @@
         "winner": "i",
         "loser": "b3",
         "median_advantage": 1379.0499999999997,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
+      },
+      {
+        "axis": "seconds",
+        "a": "b3",
+        "b": "j",
+        "n": 10,
+        "p": 0.083984375,
+        "winner": "j",
+        "loser": "b3",
+        "median_advantage": 1139.3,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "b3",
+        "b": "k",
+        "n": 10,
+        "p": 0.232421875,
+        "winner": "b3",
+        "loser": "k",
+        "median_advantage": 364.6999999999998,
+        "p_holm": 1,
+        "shown": false
       },
       {
         "axis": "seconds",
@@ -2143,7 +2635,7 @@
         "winner": "l",
         "loser": "b3",
         "median_advantage": 1536.3999999999999,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2179,7 +2671,7 @@
         "winner": "d2",
         "loser": "c",
         "median_advantage": 249.59999999999997,
-        "p_holm": 0.48828125,
+        "p_holm": 0.615234375,
         "shown": true
       },
       {
@@ -2239,7 +2731,7 @@
         "winner": "g",
         "loser": "c",
         "median_advantage": 347.29999999999995,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -2252,6 +2744,30 @@
         "loser": "c",
         "median_advantage": 90.0,
         "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "c",
+        "b": "j",
+        "n": 10,
+        "p": 0.037109375,
+        "winner": "c",
+        "loser": "j",
+        "median_advantage": 306.70000000000005,
+        "p_holm": 1,
+        "shown": true
+      },
+      {
+        "axis": "seconds",
+        "a": "c",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "c",
+        "loser": "k",
+        "median_advantage": 2450.8999999999996,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2287,7 +2803,7 @@
         "winner": "d2",
         "loser": "c2",
         "median_advantage": 138.10000000000002,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2347,7 +2863,7 @@
         "winner": "g",
         "loser": "c2",
         "median_advantage": 219.34999999999997,
-        "p_holm": 0.9375,
+        "p_holm": 1,
         "shown": false
       },
       {
@@ -2361,6 +2877,30 @@
         "median_advantage": -20.599999999999994,
         "p_holm": 1,
         "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "c2",
+        "b": "j",
+        "n": 10,
+        "p": 0.064453125,
+        "winner": "c2",
+        "loser": "j",
+        "median_advantage": 221.7,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "c2",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "c2",
+        "loser": "k",
+        "median_advantage": 1949.5500000000002,
+        "p_holm": 0.265625,
+        "shown": true
       },
       {
         "axis": "seconds",
@@ -2383,7 +2923,7 @@
         "winner": "d2",
         "loser": "d",
         "median_advantage": 233.7,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -2443,7 +2983,7 @@
         "winner": "g",
         "loser": "d",
         "median_advantage": 265.0,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -2456,6 +2996,30 @@
         "loser": "i",
         "median_advantage": 23.0,
         "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "d",
+        "b": "j",
+        "n": 10,
+        "p": 0.005859375,
+        "winner": "d",
+        "loser": "j",
+        "median_advantage": 309.45000000000005,
+        "p_holm": 0.380859375,
+        "shown": true
+      },
+      {
+        "axis": "seconds",
+        "a": "d",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "d",
+        "loser": "k",
+        "median_advantage": 2063.65,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2503,7 +3067,7 @@
         "winner": "d2",
         "loser": "e3",
         "median_advantage": 323.55,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2515,7 +3079,7 @@
         "winner": "d2",
         "loser": "f",
         "median_advantage": 302.1,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -2539,7 +3103,31 @@
         "winner": "d2",
         "loser": "i",
         "median_advantage": 276.44999999999993,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "d2",
+        "b": "j",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "d2",
+        "loser": "j",
+        "median_advantage": 529.85,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "d2",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "d2",
+        "loser": "k",
+        "median_advantage": 2496.0,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2617,6 +3205,30 @@
       {
         "axis": "seconds",
         "a": "e",
+        "b": "j",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "e",
+        "loser": "j",
+        "median_advantage": 396.6,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "e",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "e",
+        "loser": "k",
+        "median_advantage": 2043.15,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "e",
         "b": "l",
         "n": 10,
         "p": 0.921875,
@@ -2635,7 +3247,7 @@
         "winner": "e2",
         "loser": "e3",
         "median_advantage": 209.7,
-        "p_holm": 0.669921875,
+        "p_holm": 0.833984375,
         "shown": true
       },
       {
@@ -2677,6 +3289,30 @@
       {
         "axis": "seconds",
         "a": "e2",
+        "b": "j",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "e2",
+        "loser": "j",
+        "median_advantage": 385.54999999999995,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "e2",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "e2",
+        "loser": "k",
+        "median_advantage": 2526.05,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "e2",
         "b": "l",
         "n": 10,
         "p": 0.6953125,
@@ -2707,7 +3343,7 @@
         "winner": "g",
         "loser": "e3",
         "median_advantage": 411.65,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2725,13 +3361,37 @@
       {
         "axis": "seconds",
         "a": "e3",
+        "b": "j",
+        "n": 10,
+        "p": 0.009765625,
+        "winner": "e3",
+        "loser": "j",
+        "median_advantage": 252.30000000000007,
+        "p_holm": 0.615234375,
+        "shown": true
+      },
+      {
+        "axis": "seconds",
+        "a": "e3",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "e3",
+        "loser": "k",
+        "median_advantage": 2444.3,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "e3",
         "b": "l",
         "n": 10,
         "p": 0.01953125,
         "winner": "l",
         "loser": "e3",
         "median_advantage": 190.3,
-        "p_holm": 0.9375,
+        "p_holm": 1,
         "shown": true
       },
       {
@@ -2743,7 +3403,7 @@
         "winner": "g",
         "loser": "f",
         "median_advantage": 442.6,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -2756,6 +3416,30 @@
         "loser": "f",
         "median_advantage": -70.89999999999999,
         "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "f",
+        "b": "j",
+        "n": 10,
+        "p": 0.037109375,
+        "winner": "f",
+        "loser": "j",
+        "median_advantage": 360.5,
+        "p_holm": 1,
+        "shown": true
+      },
+      {
+        "axis": "seconds",
+        "a": "f",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "f",
+        "loser": "k",
+        "median_advantage": 2237.2,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2779,7 +3463,31 @@
         "winner": "g",
         "loser": "i",
         "median_advantage": 471.15,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "g",
+        "b": "j",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "g",
+        "loser": "j",
+        "median_advantage": 561.1500000000001,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "g",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "g",
+        "loser": "k",
+        "median_advantage": 2664.0,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -2797,6 +3505,30 @@
       {
         "axis": "seconds",
         "a": "i",
+        "b": "j",
+        "n": 10,
+        "p": 0.037109375,
+        "winner": "i",
+        "loser": "j",
+        "median_advantage": 291.15000000000003,
+        "p_holm": 1,
+        "shown": true
+      },
+      {
+        "axis": "seconds",
+        "a": "i",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "i",
+        "loser": "k",
+        "median_advantage": 1928.45,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "i",
         "b": "l",
         "n": 10,
         "p": 0.02734375,
@@ -2805,6 +3537,42 @@
         "median_advantage": 101.64999999999998,
         "p_holm": 1,
         "shown": true
+      },
+      {
+        "axis": "seconds",
+        "a": "j",
+        "b": "k",
+        "n": 10,
+        "p": 0.048828125,
+        "winner": "j",
+        "loser": "k",
+        "median_advantage": 1742.7,
+        "p_holm": 1,
+        "shown": true
+      },
+      {
+        "axis": "seconds",
+        "a": "j",
+        "b": "l",
+        "n": 10,
+        "p": 0.00390625,
+        "winner": "l",
+        "loser": "j",
+        "median_advantage": 476.65,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "seconds",
+        "a": "k",
+        "b": "l",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "l",
+        "loser": "k",
+        "median_advantage": 2380.15,
+        "p_holm": 0.265625,
+        "shown": false
       }
     ],
     "edges": [
@@ -2833,6 +3601,14 @@
         "b3"
       ],
       [
+        "c",
+        "j"
+      ],
+      [
+        "c",
+        "k"
+      ],
+      [
         "c2",
         "a"
       ],
@@ -2849,6 +3625,10 @@
         "b3"
       ],
       [
+        "c2",
+        "k"
+      ],
+      [
         "d",
         "a"
       ],
@@ -2863,6 +3643,14 @@
       [
         "d",
         "b3"
+      ],
+      [
+        "d",
+        "j"
+      ],
+      [
+        "d",
+        "k"
       ],
       [
         "d2",
@@ -2906,6 +3694,14 @@
       ],
       [
         "d2",
+        "j"
+      ],
+      [
+        "d2",
+        "k"
+      ],
+      [
+        "d2",
         "l"
       ],
       [
@@ -2937,6 +3733,14 @@
         "i"
       ],
       [
+        "e",
+        "j"
+      ],
+      [
+        "e",
+        "k"
+      ],
+      [
         "e2",
         "a"
       ],
@@ -2961,6 +3765,14 @@
         "f"
       ],
       [
+        "e2",
+        "j"
+      ],
+      [
+        "e2",
+        "k"
+      ],
+      [
         "e3",
         "a"
       ],
@@ -2977,6 +3789,14 @@
         "b3"
       ],
       [
+        "e3",
+        "j"
+      ],
+      [
+        "e3",
+        "k"
+      ],
+      [
         "f",
         "a"
       ],
@@ -2991,6 +3811,14 @@
       [
         "f",
         "b3"
+      ],
+      [
+        "f",
+        "j"
+      ],
+      [
+        "f",
+        "k"
       ],
       [
         "g",
@@ -3034,6 +3862,14 @@
       ],
       [
         "g",
+        "j"
+      ],
+      [
+        "g",
+        "k"
+      ],
+      [
+        "g",
         "l"
       ],
       [
@@ -3051,6 +3887,22 @@
       [
         "i",
         "b3"
+      ],
+      [
+        "i",
+        "j"
+      ],
+      [
+        "i",
+        "k"
+      ],
+      [
+        "j",
+        "a"
+      ],
+      [
+        "j",
+        "k"
       ],
       [
         "l",
@@ -3079,6 +3931,14 @@
       [
         "l",
         "i"
+      ],
+      [
+        "l",
+        "j"
+      ],
+      [
+        "l",
+        "k"
       ]
     ],
     "reduced": [
@@ -3103,6 +3963,10 @@
         "b3"
       ],
       [
+        "c",
+        "j"
+      ],
+      [
         "c2",
         "b"
       ],
@@ -3115,6 +3979,10 @@
         "b3"
       ],
       [
+        "c2",
+        "k"
+      ],
+      [
         "d",
         "b"
       ],
@@ -3125,6 +3993,10 @@
       [
         "d",
         "b3"
+      ],
+      [
+        "d",
+        "j"
       ],
       [
         "d2",
@@ -3175,6 +4047,10 @@
         "b3"
       ],
       [
+        "e3",
+        "j"
+      ],
+      [
         "f",
         "b"
       ],
@@ -3185,6 +4061,10 @@
       [
         "f",
         "b3"
+      ],
+      [
+        "f",
+        "j"
       ],
       [
         "g",
@@ -3213,6 +4093,18 @@
       [
         "i",
         "b3"
+      ],
+      [
+        "i",
+        "j"
+      ],
+      [
+        "j",
+        "a"
+      ],
+      [
+        "j",
+        "k"
       ],
       [
         "l",
@@ -3240,7 +4132,7 @@
         "winner": "b",
         "loser": "a",
         "median_advantage": 0.05034033,
-        "p_holm": 0.228515625,
+        "p_holm": 0.3515625,
         "shown": true
       },
       {
@@ -3264,7 +4156,7 @@
         "winner": "b3",
         "loser": "a",
         "median_advantage": 0.05316588000000002,
-        "p_holm": 0.765625,
+        "p_holm": 1,
         "shown": true
       },
       {
@@ -3276,7 +4168,7 @@
         "winner": "c",
         "loser": "a",
         "median_advantage": 0.12121506000000003,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3288,7 +4180,7 @@
         "winner": "c2",
         "loser": "a",
         "median_advantage": 0.11038275000000003,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3300,7 +4192,7 @@
         "winner": "a",
         "loser": "d",
         "median_advantage": 0.6845248999999999,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3312,7 +4204,7 @@
         "winner": "a",
         "loser": "d2",
         "median_advantage": 0.17358439999999997,
-        "p_holm": 0.341796875,
+        "p_holm": 0.546875,
         "shown": true
       },
       {
@@ -3324,7 +4216,7 @@
         "winner": "a",
         "loser": "e",
         "median_advantage": 0.20453126999999996,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -3348,7 +4240,7 @@
         "winner": "a",
         "loser": "e3",
         "median_advantage": 0.22792447,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -3360,7 +4252,7 @@
         "winner": "a",
         "loser": "f",
         "median_advantage": 0.42718976999999997,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3390,13 +4282,37 @@
       {
         "axis": "cost_usd",
         "a": "a",
+        "b": "j",
+        "n": 10,
+        "p": 0.083984375,
+        "winner": "a",
+        "loser": "j",
+        "median_advantage": 0.06496593999999997,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "a",
+        "b": "k",
+        "n": 10,
+        "p": 0.275390625,
+        "winner": "k",
+        "loser": "a",
+        "median_advantage": 0.05798799000000003,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "a",
         "b": "l",
         "n": 10,
         "p": 0.001953125,
         "winner": "l",
         "loser": "a",
         "median_advantage": 0.10162195000000004,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3432,7 +4348,7 @@
         "winner": "c",
         "loser": "b",
         "median_advantage": 0.06422796000000001,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -3444,7 +4360,7 @@
         "winner": "c2",
         "loser": "b",
         "median_advantage": 0.04866156000000002,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -3456,7 +4372,7 @@
         "winner": "b",
         "loser": "d",
         "median_advantage": 0.7329421999999999,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3468,7 +4384,7 @@
         "winner": "b",
         "loser": "d2",
         "median_advantage": 0.24086333,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3480,7 +4396,7 @@
         "winner": "b",
         "loser": "e",
         "median_advantage": 0.31056495,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3492,7 +4408,7 @@
         "winner": "b",
         "loser": "e2",
         "median_advantage": 0.1391922,
-        "p_holm": 0.765625,
+        "p_holm": 1,
         "shown": true
       },
       {
@@ -3504,7 +4420,7 @@
         "winner": "b",
         "loser": "e3",
         "median_advantage": 0.27563382999999997,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3516,7 +4432,7 @@
         "winner": "b",
         "loser": "f",
         "median_advantage": 0.45358382999999997,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3528,7 +4444,7 @@
         "winner": "b",
         "loser": "g",
         "median_advantage": 0.05384463999999997,
-        "p_holm": 0.228515625,
+        "p_holm": 0.3515625,
         "shown": false
       },
       {
@@ -3540,8 +4456,32 @@
         "winner": "b",
         "loser": "i",
         "median_advantage": 0.03479219999999998,
-        "p_holm": 0.890625,
+        "p_holm": 1,
         "shown": true
+      },
+      {
+        "axis": "cost_usd",
+        "a": "b",
+        "b": "j",
+        "n": 10,
+        "p": 0.02734375,
+        "winner": "b",
+        "loser": "j",
+        "median_advantage": 0.10361332999999998,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "b",
+        "b": "k",
+        "n": 10,
+        "p": 0.845703125,
+        "winner": "b",
+        "loser": "k",
+        "median_advantage": 0.0039946399999999695,
+        "p_holm": 1,
+        "shown": false
       },
       {
         "axis": "cost_usd",
@@ -3552,7 +4492,7 @@
         "winner": "l",
         "loser": "b",
         "median_advantage": 0.04149416000000002,
-        "p_holm": 0.5859375,
+        "p_holm": 0.9375,
         "shown": true
       },
       {
@@ -3576,7 +4516,7 @@
         "winner": "c",
         "loser": "b2",
         "median_advantage": 0.09534213000000002,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -3588,7 +4528,7 @@
         "winner": "c2",
         "loser": "b2",
         "median_advantage": 0.09400698000000002,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -3600,7 +4540,7 @@
         "winner": "b2",
         "loser": "d",
         "median_advantage": 0.7071913999999999,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3612,7 +4552,7 @@
         "winner": "b2",
         "loser": "d2",
         "median_advantage": 0.21584076999999996,
-        "p_holm": 0.341796875,
+        "p_holm": 0.546875,
         "shown": false
       },
       {
@@ -3624,7 +4564,7 @@
         "winner": "b2",
         "loser": "e",
         "median_advantage": 0.28977801,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3636,7 +4576,7 @@
         "winner": "b2",
         "loser": "e2",
         "median_advantage": 0.10782295999999995,
-        "p_holm": 0.765625,
+        "p_holm": 1,
         "shown": true
       },
       {
@@ -3648,7 +4588,7 @@
         "winner": "b2",
         "loser": "e3",
         "median_advantage": 0.26145627999999993,
-        "p_holm": 0.228515625,
+        "p_holm": 0.3515625,
         "shown": false
       },
       {
@@ -3660,7 +4600,7 @@
         "winner": "b2",
         "loser": "f",
         "median_advantage": 0.44134185,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3690,13 +4630,37 @@
       {
         "axis": "cost_usd",
         "a": "b2",
+        "b": "j",
+        "n": 10,
+        "p": 0.048828125,
+        "winner": "b2",
+        "loser": "j",
+        "median_advantage": 0.07944184999999998,
+        "p_holm": 1,
+        "shown": true
+      },
+      {
+        "axis": "cost_usd",
+        "a": "b2",
+        "b": "k",
+        "n": 10,
+        "p": 0.845703125,
+        "winner": "k",
+        "loser": "b2",
+        "median_advantage": 0.008478280000000019,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "b2",
         "b": "l",
         "n": 10,
         "p": 0.00390625,
         "winner": "l",
         "loser": "b2",
         "median_advantage": 0.08009255000000003,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -3708,7 +4672,7 @@
         "winner": "c",
         "loser": "b3",
         "median_advantage": 0.06314535000000002,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -3720,7 +4684,7 @@
         "winner": "c2",
         "loser": "b3",
         "median_advantage": 0.05527521000000002,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -3732,7 +4696,7 @@
         "winner": "b3",
         "loser": "d",
         "median_advantage": 0.7376907799999999,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3744,7 +4708,7 @@
         "winner": "b3",
         "loser": "d2",
         "median_advantage": 0.25373626,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3756,7 +4720,7 @@
         "winner": "b3",
         "loser": "e",
         "median_advantage": 0.31896087,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3768,7 +4732,7 @@
         "winner": "b3",
         "loser": "e2",
         "median_advantage": 0.13219099999999995,
-        "p_holm": 0.890625,
+        "p_holm": 1,
         "shown": true
       },
       {
@@ -3780,7 +4744,7 @@
         "winner": "b3",
         "loser": "e3",
         "median_advantage": 0.29172601,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3792,7 +4756,7 @@
         "winner": "b3",
         "loser": "f",
         "median_advantage": 0.47398626,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3804,7 +4768,7 @@
         "winner": "b3",
         "loser": "g",
         "median_advantage": 0.09668625999999998,
-        "p_holm": 0.341796875,
+        "p_holm": 0.546875,
         "shown": false
       },
       {
@@ -3816,8 +4780,32 @@
         "winner": "b3",
         "loser": "i",
         "median_advantage": 0.04866865999999995,
-        "p_holm": 0.765625,
+        "p_holm": 1,
         "shown": true
+      },
+      {
+        "axis": "cost_usd",
+        "a": "b3",
+        "b": "j",
+        "n": 10,
+        "p": 0.009765625,
+        "winner": "b3",
+        "loser": "j",
+        "median_advantage": 0.10644450999999998,
+        "p_holm": 0.546875,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "b3",
+        "b": "k",
+        "n": 10,
+        "p": 0.625,
+        "winner": "b3",
+        "loser": "k",
+        "median_advantage": 0.009733239999999983,
+        "p_holm": 1,
+        "shown": false
       },
       {
         "axis": "cost_usd",
@@ -3828,7 +4816,7 @@
         "winner": "l",
         "loser": "b3",
         "median_advantage": 0.03610651000000002,
-        "p_holm": 0.5859375,
+        "p_holm": 0.9375,
         "shown": true
       },
       {
@@ -3852,7 +4840,7 @@
         "winner": "c",
         "loser": "d",
         "median_advantage": 0.7919144300000001,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3864,7 +4852,7 @@
         "winner": "c",
         "loser": "d2",
         "median_advantage": 0.28439917000000003,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3876,7 +4864,7 @@
         "winner": "c",
         "loser": "e",
         "median_advantage": 0.35748838,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3888,7 +4876,7 @@
         "winner": "c",
         "loser": "e2",
         "median_advantage": 0.19816443,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3900,7 +4888,7 @@
         "winner": "c",
         "loser": "e3",
         "median_advantage": 0.32222779,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3912,7 +4900,7 @@
         "winner": "c",
         "loser": "f",
         "median_advantage": 0.50464917,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3924,7 +4912,7 @@
         "winner": "c",
         "loser": "g",
         "median_advantage": 0.12966253,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3936,8 +4924,32 @@
         "winner": "c",
         "loser": "i",
         "median_advantage": 0.09750201,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "c",
+        "b": "j",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "c",
+        "loser": "j",
+        "median_advantage": 0.13881989,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "c",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "c",
+        "loser": "k",
+        "median_advantage": 0.06001655,
+        "p_holm": 0.265625,
+        "shown": true
       },
       {
         "axis": "cost_usd",
@@ -3960,7 +4972,7 @@
         "winner": "c2",
         "loser": "d",
         "median_advantage": 0.79060619,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3972,7 +4984,7 @@
         "winner": "c2",
         "loser": "d2",
         "median_advantage": 0.29216995,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3984,7 +4996,7 @@
         "winner": "c2",
         "loser": "e",
         "median_advantage": 0.35342083,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -3996,7 +5008,7 @@
         "winner": "c2",
         "loser": "e2",
         "median_advantage": 0.19685619,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4008,7 +5020,7 @@
         "winner": "c2",
         "loser": "e3",
         "median_advantage": 0.31517083,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4020,7 +5032,7 @@
         "winner": "c2",
         "loser": "f",
         "median_advantage": 0.51241995,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4032,7 +5044,7 @@
         "winner": "c2",
         "loser": "g",
         "median_advantage": 0.13511995,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4044,8 +5056,32 @@
         "winner": "c2",
         "loser": "i",
         "median_advantage": 0.09245619,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "c2",
+        "b": "j",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "c2",
+        "loser": "j",
+        "median_advantage": 0.14495329999999998,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "c2",
+        "b": "k",
+        "n": 10,
+        "p": 0.00390625,
+        "winner": "c2",
+        "loser": "k",
+        "median_advantage": 0.05132668,
+        "p_holm": 0.265625,
+        "shown": true
       },
       {
         "axis": "cost_usd",
@@ -4068,7 +5104,7 @@
         "winner": "d2",
         "loser": "d",
         "median_advantage": 0.45089999999999997,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -4080,7 +5116,7 @@
         "winner": "e",
         "loser": "d",
         "median_advantage": 0.5087999999999999,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -4092,7 +5128,7 @@
         "winner": "e2",
         "loser": "d",
         "median_advantage": 0.59375,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4104,7 +5140,7 @@
         "winner": "e3",
         "loser": "d",
         "median_advantage": 0.47679999999999995,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -4128,7 +5164,7 @@
         "winner": "g",
         "loser": "d",
         "median_advantage": 0.6463999999999999,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4140,7 +5176,31 @@
         "winner": "i",
         "loser": "d",
         "median_advantage": 0.6981499999999999,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "d",
+        "b": "j",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "j",
+        "loser": "d",
+        "median_advantage": 0.6069,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "d",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "k",
+        "loser": "d",
+        "median_advantage": 0.71445,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4152,7 +5212,7 @@
         "winner": "l",
         "loser": "d",
         "median_advantage": 0.77945,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4176,7 +5236,7 @@
         "winner": "e2",
         "loser": "d2",
         "median_advantage": 0.11580000000000001,
-        "p_holm": 0.890625,
+        "p_holm": 1,
         "shown": true
       },
       {
@@ -4200,7 +5260,7 @@
         "winner": "d2",
         "loser": "f",
         "median_advantage": 0.3193,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -4212,7 +5272,7 @@
         "winner": "g",
         "loser": "d2",
         "median_advantage": 0.08095000000000002,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -4224,8 +5284,32 @@
         "winner": "i",
         "loser": "d2",
         "median_advantage": 0.2222,
-        "p_holm": 0.341796875,
+        "p_holm": 0.546875,
         "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "d2",
+        "b": "j",
+        "n": 10,
+        "p": 0.048828125,
+        "winner": "j",
+        "loser": "d2",
+        "median_advantage": 0.0839,
+        "p_holm": 1,
+        "shown": true
+      },
+      {
+        "axis": "cost_usd",
+        "a": "d2",
+        "b": "k",
+        "n": 10,
+        "p": 0.01953125,
+        "winner": "k",
+        "loser": "d2",
+        "median_advantage": 0.17875,
+        "p_holm": 0.9375,
+        "shown": true
       },
       {
         "axis": "cost_usd",
@@ -4236,7 +5320,7 @@
         "winner": "l",
         "loser": "d2",
         "median_advantage": 0.2788,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4248,7 +5332,7 @@
         "winner": "e2",
         "loser": "e",
         "median_advantage": 0.17604999999999998,
-        "p_holm": 0.341796875,
+        "p_holm": 0.546875,
         "shown": true
       },
       {
@@ -4272,7 +5356,7 @@
         "winner": "e",
         "loser": "f",
         "median_advantage": 0.2499,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -4296,7 +5380,31 @@
         "winner": "i",
         "loser": "e",
         "median_advantage": 0.24270000000000003,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
+        "shown": true
+      },
+      {
+        "axis": "cost_usd",
+        "a": "e",
+        "b": "j",
+        "n": 10,
+        "p": 0.275390625,
+        "winner": "j",
+        "loser": "e",
+        "median_advantage": 0.14105,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "e",
+        "b": "k",
+        "n": 10,
+        "p": 0.009765625,
+        "winner": "k",
+        "loser": "e",
+        "median_advantage": 0.3139,
+        "p_holm": 0.546875,
         "shown": true
       },
       {
@@ -4308,7 +5416,7 @@
         "winner": "l",
         "loser": "e",
         "median_advantage": 0.33030000000000004,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4320,7 +5428,7 @@
         "winner": "e2",
         "loser": "e3",
         "median_advantage": 0.11694999999999998,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -4332,7 +5440,7 @@
         "winner": "e2",
         "loser": "f",
         "median_advantage": 0.36025,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4362,13 +5470,37 @@
       {
         "axis": "cost_usd",
         "a": "e2",
+        "b": "j",
+        "n": 10,
+        "p": 0.845703125,
+        "winner": "j",
+        "loser": "e2",
+        "median_advantage": 0.013149999999999995,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "e2",
+        "b": "k",
+        "n": 10,
+        "p": 0.064453125,
+        "winner": "k",
+        "loser": "e2",
+        "median_advantage": 0.06295,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "e2",
         "b": "l",
         "n": 10,
         "p": 0.001953125,
         "winner": "l",
         "loser": "e2",
         "median_advantage": 0.1857,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4380,7 +5512,7 @@
         "winner": "e3",
         "loser": "f",
         "median_advantage": 0.28115,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -4404,7 +5536,31 @@
         "winner": "i",
         "loser": "e3",
         "median_advantage": 0.2421,
-        "p_holm": 0.228515625,
+        "p_holm": 0.3515625,
+        "shown": true
+      },
+      {
+        "axis": "cost_usd",
+        "a": "e3",
+        "b": "j",
+        "n": 10,
+        "p": 0.193359375,
+        "winner": "j",
+        "loser": "e3",
+        "median_advantage": 0.11439999999999999,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "e3",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "k",
+        "loser": "e3",
+        "median_advantage": 0.23764999999999997,
+        "p_holm": 0.265625,
         "shown": true
       },
       {
@@ -4416,7 +5572,7 @@
         "winner": "l",
         "loser": "e3",
         "median_advantage": 0.313,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4428,7 +5584,7 @@
         "winner": "g",
         "loser": "f",
         "median_advantage": 0.40735,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4440,7 +5596,31 @@
         "winner": "i",
         "loser": "f",
         "median_advantage": 0.44245,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "f",
+        "b": "j",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "j",
+        "loser": "f",
+        "median_advantage": 0.39135,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "f",
+        "b": "k",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "k",
+        "loser": "f",
+        "median_advantage": 0.42305,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4452,7 +5632,7 @@
         "winner": "l",
         "loser": "f",
         "median_advantage": 0.4965,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
       },
       {
@@ -4470,13 +5650,61 @@
       {
         "axis": "cost_usd",
         "a": "g",
+        "b": "j",
+        "n": 10,
+        "p": 0.845703125,
+        "winner": "j",
+        "loser": "g",
+        "median_advantage": 0.007850000000000003,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "g",
+        "b": "k",
+        "n": 10,
+        "p": 0.083984375,
+        "winner": "k",
+        "loser": "g",
+        "median_advantage": 0.049850000000000005,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "g",
         "b": "l",
         "n": 10,
         "p": 0.001953125,
         "winner": "l",
         "loser": "g",
         "median_advantage": 0.1251,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "i",
+        "b": "j",
+        "n": 10,
+        "p": 0.048828125,
+        "winner": "i",
+        "loser": "j",
+        "median_advantage": 0.0775,
+        "p_holm": 1,
+        "shown": true
+      },
+      {
+        "axis": "cost_usd",
+        "a": "i",
+        "b": "k",
+        "n": 10,
+        "p": 0.275390625,
+        "winner": "k",
+        "loser": "i",
+        "median_advantage": 0.0587,
+        "p_holm": 1,
         "shown": false
       },
       {
@@ -4488,8 +5716,44 @@
         "winner": "l",
         "loser": "i",
         "median_advantage": 0.08105,
-        "p_holm": 0.205078125,
+        "p_holm": 0.265625,
         "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "j",
+        "b": "k",
+        "n": 10,
+        "p": 0.083984375,
+        "winner": "k",
+        "loser": "j",
+        "median_advantage": 0.064,
+        "p_holm": 1,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "j",
+        "b": "l",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "l",
+        "loser": "j",
+        "median_advantage": 0.14155,
+        "p_holm": 0.265625,
+        "shown": false
+      },
+      {
+        "axis": "cost_usd",
+        "a": "k",
+        "b": "l",
+        "n": 10,
+        "p": 0.009765625,
+        "winner": "l",
+        "loser": "k",
+        "median_advantage": 0.04395,
+        "p_holm": 0.546875,
+        "shown": true
       }
     ],
     "edges": [
@@ -4550,6 +5814,10 @@
         "i"
       ],
       [
+        "b",
+        "j"
+      ],
+      [
         "b2",
         "d"
       ],
@@ -4572,6 +5840,10 @@
       [
         "b2",
         "f"
+      ],
+      [
+        "b2",
+        "j"
       ],
       [
         "b3",
@@ -4608,6 +5880,10 @@
       [
         "b3",
         "i"
+      ],
+      [
+        "b3",
+        "j"
       ],
       [
         "c",
@@ -4658,6 +5934,14 @@
         "i"
       ],
       [
+        "c",
+        "j"
+      ],
+      [
+        "c",
+        "k"
+      ],
+      [
         "c2",
         "a"
       ],
@@ -4704,6 +5988,14 @@
       [
         "c2",
         "i"
+      ],
+      [
+        "c2",
+        "j"
+      ],
+      [
+        "c2",
+        "k"
       ],
       [
         "d2",
@@ -4786,6 +6078,42 @@
         "g"
       ],
       [
+        "i",
+        "j"
+      ],
+      [
+        "j",
+        "d"
+      ],
+      [
+        "j",
+        "d2"
+      ],
+      [
+        "j",
+        "f"
+      ],
+      [
+        "k",
+        "d"
+      ],
+      [
+        "k",
+        "d2"
+      ],
+      [
+        "k",
+        "e"
+      ],
+      [
+        "k",
+        "e3"
+      ],
+      [
+        "k",
+        "f"
+      ],
+      [
         "l",
         "a"
       ],
@@ -4832,6 +6160,14 @@
       [
         "l",
         "i"
+      ],
+      [
+        "l",
+        "j"
+      ],
+      [
+        "l",
+        "k"
       ]
     ],
     "reduced": [
@@ -4864,6 +6200,10 @@
         "e2"
       ],
       [
+        "b2",
+        "j"
+      ],
+      [
         "b3",
         "a"
       ],
@@ -4888,6 +6228,10 @@
         "b3"
       ],
       [
+        "c",
+        "k"
+      ],
+      [
         "c2",
         "b"
       ],
@@ -4898,6 +6242,10 @@
       [
         "c2",
         "b3"
+      ],
+      [
+        "c2",
+        "k"
       ],
       [
         "d2",
@@ -4952,6 +6300,26 @@
         "g"
       ],
       [
+        "i",
+        "j"
+      ],
+      [
+        "j",
+        "d2"
+      ],
+      [
+        "k",
+        "d2"
+      ],
+      [
+        "k",
+        "e"
+      ],
+      [
+        "k",
+        "e3"
+      ],
+      [
         "l",
         "b"
       ],
@@ -4962,6 +6330,10 @@
       [
         "l",
         "b3"
+      ],
+      [
+        "l",
+        "k"
       ]
     ],
     "holm_edges": []

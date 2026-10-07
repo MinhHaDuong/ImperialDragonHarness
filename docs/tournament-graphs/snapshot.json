@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-06T17:58:04.551438+00:00",
+  "generated_at": "2026-10-07T06:30:38.299960+00:00",
   "arms": {
     "a": {
       "expected": 10,
@@ -199,31 +199,31 @@
     },
     "j": {
       "expected": 10,
-      "evaluated": 8,
-      "ok": 7,
+      "evaluated": 10,
+      "ok": 9,
       "failures": 1,
-      "pending": 2,
-      "quality_median": 26.5,
-      "quality_mean": 22.75,
-      "seconds_median": 617.75,
+      "pending": 0,
+      "quality_median": 26.0,
+      "quality_mean": 21.6,
+      "seconds_median": 623.3,
       "cost_usd_median": 0.1694,
-      "time_observed": 8,
-      "cost_observed": 8,
-      "final": false
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true
     },
     "k": {
       "expected": 10,
-      "evaluated": 8,
-      "ok": 7,
+      "evaluated": 10,
+      "ok": 9,
       "failures": 1,
-      "pending": 2,
-      "quality_median": 21.75,
-      "quality_mean": 19.6875,
-      "seconds_median": 3037.45,
-      "cost_usd_median": 0.1109,
-      "time_observed": 8,
-      "cost_observed": 8,
-      "final": false
+      "pending": 0,
+      "quality_median": 23.0,
+      "quality_mean": 21.25,
+      "seconds_median": 2693.7,
+      "cost_usd_median": 0.08075,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true
     },
     "l": {
       "expected": 10,
@@ -238,6 +238,34 @@
       "time_observed": 10,
       "cost_observed": 10,
       "final": true
+    },
+    "mi": {
+      "expected": 10,
+      "evaluated": 7,
+      "ok": 7,
+      "failures": 0,
+      "pending": 3,
+      "final": false,
+      "quality_median": 25.0,
+      "quality_mean": 23.285714285714285,
+      "seconds_median": 1548.3,
+      "cost_usd_median": 1.8587489688000003,
+      "time_observed": 7,
+      "cost_observed": 7
+    },
+    "mr": {
+      "expected": 10,
+      "evaluated": 7,
+      "ok": 7,
+      "failures": 0,
+      "pending": 3,
+      "final": false,
+      "quality_median": 25.0,
+      "quality_mean": 23.285714285714285,
+      "seconds_median": 1548.3,
+      "cost_usd_median": 1.8587489688000003,
+      "time_observed": 7,
+      "cost_observed": 7
     }
   },
   "legs": {
@@ -1157,6 +1185,18 @@
         "quality": 29.0,
         "seconds": 628.3,
         "cost_usd": 0.2137
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 8.0,
+        "seconds": 3269.1,
+        "cost_usd": 0.9654
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 1445.6,
+        "cost_usd": 0.1033
       }
     },
     "k": {
@@ -1202,11 +1242,23 @@
         "seconds": 3858.6,
         "cost_usd": 0.1252
       },
+      "0673": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 1630.0,
+        "cost_usd": 0.0465
+      },
       "0874": {
         "state": "ok",
         "quality": 15.0,
         "seconds": 6441.3,
         "cost_usd": 0.2462
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 3171.1,
+        "cost_usd": 0.0479
       }
     },
     "l": {
@@ -1270,7 +1322,299 @@
         "seconds": 598.4,
         "cost_usd": 0.0165
       }
+    },
+    "mi": {
+      "0233": {
+        "state": "ok",
+        "quality": 20.5,
+        "seconds": 5470.1,
+        "cost_usd": 10.9773884016
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 478.3,
+        "cost_usd": 0.28744387920000003
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 19.0,
+        "seconds": 6737.2,
+        "cost_usd": 13.891855233600001
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 17.0,
+        "seconds": 1548.3,
+        "cost_usd": 1.8587489688000003
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 26.5,
+        "seconds": 1093.3,
+        "cost_usd": 1.2890510208000001
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 1217.6,
+        "cost_usd": 0.9506838672000001
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 2377.1,
+        "cost_usd": 2.4487107624
+      }
+    },
+    "mr": {
+      "0233": {
+        "state": "ok",
+        "quality": 20.5,
+        "seconds": 9100.5,
+        "cost_usd": 11.8055638944
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 478.3,
+        "cost_usd": 0.28744387920000003
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 19.0,
+        "seconds": 8567.7,
+        "cost_usd": 15.836216493600002
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 17.0,
+        "seconds": 1548.3,
+        "cost_usd": 1.8587489688000003
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 26.5,
+        "seconds": 1093.3,
+        "cost_usd": 1.2890510208000001
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 1217.6,
+        "cost_usd": 0.9506838672000001
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 3295.7999999999997,
+        "cost_usd": 2.6626832352000003
+      }
     }
+  },
+  "mistral_accounting": {
+    "scope": "Mistral direct only; OpenRouter excluded",
+    "rates_eur_per_million": {
+      "in_sum": 0.58,
+      "cache_read_sum": 0.06,
+      "out_sum": 1.78
+    },
+    "usd_per_eur": 1.08,
+    "pricing": "Estimate from rounded console launch-discount rates; not an invoice allocation",
+    "ideal": "Latest judged successful run per ticket",
+    "real": "All completed attempts summed per ticket, best successful quality",
+    "attempts": [
+      {
+        "ticket": "0211",
+        "finished": "2026-10-06T20:10:23Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 4268.1,
+        "cost_usd": 0.42796600560000003,
+        "pi_cost_usd": 0.2832,
+        "source": "runs/0211-m/run.json"
+      },
+      {
+        "ticket": "0233",
+        "finished": "2026-10-06T20:10:17Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 2383.4,
+        "cost_usd": 0.8112977711999999,
+        "pi_cost_usd": 0.5969,
+        "source": "runs/0233-m/run.json"
+      },
+      {
+        "ticket": "0233",
+        "finished": "2026-10-06T23:14:25Z",
+        "verdict": "OK",
+        "quality": 20.5,
+        "seconds": 5470.1,
+        "cost_usd": 10.9773884016,
+        "pi_cost_usd": 7.0303,
+        "source": "runs/0233-mr/run.json"
+      },
+      {
+        "ticket": "0333",
+        "finished": "2026-10-06T19:25:04Z",
+        "verdict": "OK",
+        "quality": 17.0,
+        "seconds": 1548.3,
+        "cost_usd": 1.8587489688000003,
+        "pi_cost_usd": 1.1967,
+        "source": "runs/0333-m/run.json"
+      },
+      {
+        "ticket": "0338",
+        "finished": "2026-10-06T19:07:58Z",
+        "verdict": "OK",
+        "quality": 25.0,
+        "seconds": 478.3,
+        "cost_usd": 0.28744387920000003,
+        "pi_cost_usd": 0.1914,
+        "source": "runs/0338-m/run.json"
+      },
+      {
+        "ticket": "0452",
+        "finished": "2026-10-06T19:30:30Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 1829.9,
+        "cost_usd": 1.94436126,
+        "pi_cost_usd": 1.2579,
+        "source": "runs/0452-m/run.json"
+      },
+      {
+        "ticket": "0452",
+        "finished": "2026-10-06T23:35:33Z",
+        "verdict": "OK",
+        "quality": 19.0,
+        "seconds": 6737.2,
+        "cost_usd": 13.891855233600001,
+        "pi_cost_usd": 8.8775,
+        "source": "runs/0452-mr/run.json"
+      },
+      {
+        "ticket": "0470",
+        "finished": "2026-10-06T18:42:48Z",
+        "verdict": "OK",
+        "quality": 27.0,
+        "seconds": 918.1,
+        "cost_usd": 0.2139724728,
+        "pi_cost_usd": 0.1549,
+        "source": "runs/0470-m/run.json"
+      },
+      {
+        "ticket": "0470",
+        "finished": "2026-10-06T22:22:52Z",
+        "verdict": "OK",
+        "quality": 30.0,
+        "seconds": 2377.1,
+        "cost_usd": 2.4487107624,
+        "pi_cost_usd": 1.5805,
+        "source": "runs/0470-mr/run.json"
+      },
+      {
+        "ticket": "0532",
+        "finished": "2026-10-06T19:20:18Z",
+        "verdict": "OK",
+        "quality": 25.0,
+        "seconds": 1217.6,
+        "cost_usd": 0.9506838672000001,
+        "pi_cost_usd": 0.6129,
+        "source": "runs/0532-m/run.json"
+      },
+      {
+        "ticket": "0673",
+        "finished": "2026-10-06T19:18:12Z",
+        "verdict": "OK",
+        "quality": 26.5,
+        "seconds": 1093.3,
+        "cost_usd": 1.2890510208000001,
+        "pi_cost_usd": 0.8261,
+        "source": "runs/0673-m/run.json"
+      },
+      {
+        "ticket": "0874",
+        "finished": "2026-10-06T20:08:21Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 2267.3,
+        "cost_usd": 4.6130890608,
+        "pi_cost_usd": 2.9282,
+        "source": "runs/0874-m/run.json"
+      },
+      {
+        "ticket": "1372",
+        "finished": "2026-10-06T20:08:42Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 2288.3,
+        "cost_usd": 0.4115486016,
+        "pi_cost_usd": 0.2706,
+        "source": "runs/1372-m/run.json"
+      },
+      {
+        "ticket": "0233",
+        "finished": "2026-10-06T21:39:43Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 0.6,
+        "cost_usd": 0.0,
+        "pi_cost_usd": 0.0,
+        "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0233-mr/run.json"
+      },
+      {
+        "ticket": "0452",
+        "finished": "2026-10-06T21:39:43Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 0.6,
+        "cost_usd": 0.0,
+        "pi_cost_usd": 0.0,
+        "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0452-mr/run.json"
+      },
+      {
+        "ticket": "0470",
+        "finished": "2026-10-06T21:39:43Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 0.6,
+        "cost_usd": 0.0,
+        "pi_cost_usd": 0.0,
+        "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0470-mr/run.json"
+      },
+      {
+        "ticket": "0233",
+        "finished": "2026-10-06T19:20:02Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 1246.4,
+        "cost_usd": 0.0168777216,
+        "pi_cost_usd": 0.0114,
+        "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/0233-m/run.json"
+      },
+      {
+        "ticket": "0874",
+        "finished": "2026-10-06T19:17:36Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 1058.3,
+        "cost_usd": 1.5593395536,
+        "pi_cost_usd": 1.0105,
+        "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/0874-m/run.json"
+      },
+      {
+        "ticket": "1372",
+        "finished": "2026-10-06T19:23:59Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 1440.3,
+        "cost_usd": 1.3470785352,
+        "pi_cost_usd": 0.8668,
+        "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/1372-m/run.json"
+      }
+    ]
   },
   "time_value_usd_hour": 1.0
 }

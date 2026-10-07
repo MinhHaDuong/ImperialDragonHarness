@@ -25,6 +25,8 @@ spec = importlib.util.spec_from_file_location('analysis', Path(__file__).with_na
 analysis = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(analysis)
 LABELS = {
+'mi': 'Mistral Large 4 · idéale\nAPI Mistral direct\noff',
+'mr': 'Mistral Large 4 · réelle\nAPI Mistral direct\noff',
 'a': 'Qwen 3.8 27B\nQ4_K_M · llama.cpp\nxhigh (fixé côté serveur)',
 'b': 'Qwen 3.8 Flash-Next Coder\nIQ1_M · Strata · pruned\nxhigh (fixé côté serveur)',
 'b2': 'Qwen 3.8 Flash-Next\nIQ3_S · Strata\nxhigh (fixé côté serveur)',
@@ -271,8 +273,8 @@ def render(output, snapshot):
                 label=LABELS[a].split('\n')
                 description=label[0]+'\n'+label[1]+' · '+label[2]
                 color='#ea580c' if not snapshot['arms'][a]['final'] else '#2563eb' if a in analysis.LOCAL else '#059669'
-                fig.text(.665,.81-i*.041,a+('*' if not snapshot['arms'][a]['final'] else ''),fontsize=9,fontweight='bold',color=color,va='top')
-                fig.text(.70,.81-i*.041,description,fontsize=7.4,va='top',linespacing=1.1,fontweight='bold' if a in frontier else 'normal')
+                fig.text(.665,.81-i*min(.041, .72/len(nodes)),a+('*' if not snapshot['arms'][a]['final'] else ''),fontsize=9,fontweight='bold',color=color,va='top')
+                fig.text(.70,.81-i*min(.041, .72/len(nodes)),description,fontsize=7.4,va='top',linespacing=1.1,fontweight='bold' if a in frontier else 'normal')
             fig.text(.045,.08,'Cercle doré + nom complet : frontière de Pareto sur ces deux axes (identités complètes, qualité médiane ≥ 15/30).',fontsize=8)
             if name == 'quality-total-cost':
                 fig.text(.045,.855,f'Par ticket : coût total = coût direct + {hourly_usd:g} × durée / 3 600 ; puis médiane. Toute la durée est valorisée, DNF inclus.',fontsize=8)
@@ -281,12 +283,12 @@ def render(output, snapshot):
             pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
         fig=plt.figure(figsize=(11.6929,8.2677));fig.text(.06,.91,'Méthode et périmètre',fontsize=20,fontweight='bold')
         paragraphs=[
-            f"Instantané UTC : {snapshot['generated_at']}. Cycles additifs : 17 identités, 10 tickets par identité.\nSpaceBunny et les essais préliminaires 0188 sont exclus. Les bras en rejeu sont isolés et marqués provisoires.",
+            f"Instantané UTC : {snapshot['generated_at']}. Cycles additifs : {len(nodes)} identités, 10 tickets par identité.\nSpaceBunny et les essais préliminaires 0188 sont exclus. Les bras en rejeu sont isolés et marqués provisoires.",
             'Unité statistique : le ticket (au plus 10 paires), pas les trois juges.\nQualité : somme des trois notes /30 ; DNF et soumission vide admissible = 0.\nVitesse : durée consommée ; un DNF au plafond garde ses 7 200 secondes.\nCoût : API consommée, ou électricité locale à 0,23 EUR/kWh × 600 W, convertie à 1,08 USD/EUR.\nLe coût local exclut matériel et amortissement : ce sont des coûts marginaux différents.',
             'Test : Wilcoxon des rangs signés, bilatéral ; permutations exhaustives des signes (2^m).\nDifférences nulles exclues, rangs ex æquo moyens, arrondi des différences à 9 décimales.\nHypothèse : différences indépendantes entre tickets et symétriques autour de zéro sous H0.\nLa direction suit la somme des rangs signés ; aucune flèche tirée d’une simple différence de médianes.',
             'Les pages principales utilisent p < 0,05 par comparaison. Les p ajustés de Holm, par axe,\nsont fournis dans le CSV ; les comptes ajustés figurent au bas des graphes. Avec 10 tickets\net de nombreuses paires, la correction est peu puissante. Pas de flèche ne signifie pas égalité.',
             'Réduction transitive : supprimer uniquement les liens déjà reliés par un autre chemin ;\nconserver toutes les comparaisons directes dans le CSV. La significativité n’est pas transitive.\nLes cycles, s’ils existent, restent visibles à l’intérieur de leurs composantes fortement connexes.',
-            'Les erreurs fournisseur/quota restent invalides et nécessitent un rejeu. Aucun score de modèle\nn’est déduit de ces erreurs. Instantané provisoire tant que GLM Flash et Mimo ne sont pas complets.\nSource statistique : docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html',
+            'Les erreurs fournisseur/quota restent invalides et nécessitent un rejeu. Aucun score de modèle\nn’est déduit de ces erreurs. Mistral idéale : dernier succès ; réelle : tous les essais, meilleure note.\nCoûts Mistral estimés aux tarifs EUR de lancement ; temps cumulés par ticket.\nSource statistique : docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html',
         ]
         y=.83
         for text in paragraphs:
@@ -320,6 +322,11 @@ def main():
                 row=analysis.read_leg(directory,arm)
                 if row['state'] in {'ok','failure'}:legs[directory.name.rsplit('-',1)[0]]=row
             snapshot['legs'][arm]=legs
+    if not args.snapshot:
+        mspec = importlib.util.spec_from_file_location('mistral_series', Path(__file__).with_name('tournament-mistral-series.py'))
+        mistral = importlib.util.module_from_spec(mspec)
+        mspec.loader.exec_module(mistral)
+        mistral.add_series(snapshot, args.arena)
     snapshot['time_value_usd_hour'] = args.time_value
     (args.output/'snapshot.json').write_text(json.dumps(snapshot,indent=2)+'\n')
     results=render(args.output,snapshot)
