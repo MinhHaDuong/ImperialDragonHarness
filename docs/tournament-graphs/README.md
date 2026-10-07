@@ -48,3 +48,8 @@ Costs are estimated from token counters using the author's rounded launch rates
 (EUR/M: input .58, cache .06, output 1.78), converted at 1.08 USD/EUR for the common
 axes. Original Pi costs and attempt provenance remain in the frozen snapshot;
 this estimate is not an exact allocation of the EUR39.77 native invoice.
+
+Scatterplots now use arithmetic means per ticket for all three axes: quality,
+duration, and cost (including time-valued total cost). Pareto eligibility requires
+mean quality >=15/30. This replaces the earlier median display; signed-rank tests
+continue to use the underlying paired ticket results without changing their method.

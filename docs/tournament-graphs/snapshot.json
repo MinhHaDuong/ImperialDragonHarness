@@ -13,7 +13,10 @@
       "cost_usd_median": 0.12908727000000003,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 3832.3,
+      "cost_usd_mean": 0.15865722000000004,
+      "total_cost_usd_mean": 1.2231849977777778
     },
     "b": {
       "expected": 10,
@@ -27,7 +30,10 @@
       "cost_usd_median": 0.07775748000000002,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 2364.82,
+      "cost_usd_mean": 0.09790354800000002,
+      "total_cost_usd_mean": 0.7547979924444445
     },
     "b2": {
       "expected": 10,
@@ -41,7 +47,10 @@
       "cost_usd_median": 0.10647873000000002,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 2766.41,
+      "cost_usd_mean": 0.11452937400000003,
+      "total_cost_usd_mean": 0.8829765962222222
     },
     "b3": {
       "expected": 10,
@@ -55,7 +64,10 @@
       "cost_usd_median": 0.08230113000000003,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 2383.78,
+      "cost_usd_mean": 0.09868849200000003,
+      "total_cost_usd_mean": 0.7608496031111112
     },
     "c": {
       "expected": 10,
@@ -69,7 +81,10 @@
       "cost_usd_median": 0.016187400000000005,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 612.62,
+      "cost_usd_mean": 0.025362468000000006,
+      "total_cost_usd_mean": 0.19553469022222222
     },
     "c2": {
       "expected": 10,
@@ -83,7 +98,10 @@
       "cost_usd_median": 0.013958010000000003,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 548.81,
+      "cost_usd_mean": 0.022720734000000006,
+      "total_cost_usd_mean": 0.17516795622222223
     },
     "d": {
       "expected": 10,
@@ -97,7 +115,10 @@
       "cost_usd_median": 0.8003,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 544.16,
+      "cost_usd_mean": 1.5578400000000001,
+      "total_cost_usd_mean": 1.7089955555555556
     },
     "d2": {
       "expected": 10,
@@ -111,7 +132,10 @@
       "cost_usd_median": 0.30665,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 181.79,
+      "cost_usd_mean": 0.45512,
+      "total_cost_usd_mean": 0.5056172222222223
     },
     "e": {
       "expected": 10,
@@ -125,7 +149,10 @@
       "cost_usd_median": 0.37315,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 294.49,
+      "cost_usd_mean": 0.39168,
+      "total_cost_usd_mean": 0.47348277777777775
     },
     "e2": {
       "expected": 10,
@@ -139,7 +166,10 @@
       "cost_usd_median": 0.20655,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 309.05,
+      "cost_usd_mean": 0.20534,
+      "total_cost_usd_mean": 0.2911872222222222
     },
     "e3": {
       "expected": 10,
@@ -153,7 +183,10 @@
       "cost_usd_median": 0.3349,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 502.68,
+      "cost_usd_mean": 0.38832,
+      "total_cost_usd_mean": 0.5279533333333333
     },
     "f": {
       "expected": 10,
@@ -167,7 +200,10 @@
       "cost_usd_median": 0.52425,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 634.68,
+      "cost_usd_mean": 1.28588,
+      "total_cost_usd_mean": 1.46218
     },
     "g": {
       "expected": 10,
@@ -181,7 +217,10 @@
       "cost_usd_median": 0.1544,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 125.55999999999999,
+      "cost_usd_mean": 0.30368,
+      "total_cost_usd_mean": 0.3385577777777778
     },
     "i": {
       "expected": 10,
@@ -195,7 +234,10 @@
       "cost_usd_median": 0.1059,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 575.05,
+      "cost_usd_mean": 0.14466,
+      "total_cost_usd_mean": 0.3043961111111111
     },
     "j": {
       "expected": 10,
@@ -209,7 +251,10 @@
       "cost_usd_median": 0.1694,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 1617.81,
+      "cost_usd_mean": 0.30523,
+      "total_cost_usd_mean": 0.7546216666666667
     },
     "k": {
       "expected": 10,
@@ -223,7 +268,10 @@
       "cost_usd_median": 0.08075,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 3603.58,
+      "cost_usd_mean": 0.12135,
+      "total_cost_usd_mean": 1.1223444444444444
     },
     "l": {
       "expected": 10,
@@ -237,7 +285,10 @@
       "cost_usd_median": 0.02775,
       "time_observed": 10,
       "cost_observed": 10,
-      "final": true
+      "final": true,
+      "seconds_mean": 301.17,
+      "cost_usd_mean": 0.03876,
+      "total_cost_usd_mean": 0.12241833333333334
     },
     "mi": {
       "expected": 10,
@@ -251,7 +302,10 @@
       "seconds_median": 1548.3,
       "cost_usd_median": 1.8587489688000003,
       "time_observed": 7,
-      "cost_observed": 7
+      "cost_observed": 7,
+      "seconds_mean": 2703.1285714285714,
+      "cost_usd_mean": 4.529126019085715,
+      "total_cost_usd_mean": 5.279995066704762
     },
     "mr": {
       "expected": 10,
@@ -265,7 +319,10 @@
       "seconds_median": 1548.3,
       "cost_usd_median": 1.8587489688000003,
       "time_observed": 7,
-      "cost_observed": 7
+      "cost_observed": 7,
+      "seconds_mean": 3614.5,
+      "cost_usd_mean": 4.955770194171429,
+      "total_cost_usd_mean": 5.9597979719492065
     }
   },
   "legs": {
