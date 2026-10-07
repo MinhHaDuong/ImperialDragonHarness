@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-07T06:30:38.299960+00:00",
+  "generated_at": "2026-10-07T06:43:34.927133+00:00",
   "arms": {
     "a": {
       "expected": 10,
@@ -300,12 +300,12 @@
       "quality_median": 25.0,
       "quality_mean": 23.285714285714285,
       "seconds_median": 1548.3,
-      "cost_usd_median": 1.8587489688000003,
+      "cost_usd_median": 1.8552096751960696,
       "time_observed": 7,
       "cost_observed": 7,
       "seconds_mean": 2703.1285714285714,
-      "cost_usd_mean": 4.529126019085715,
-      "total_cost_usd_mean": 5.279995066704762
+      "cost_usd_mean": 4.516567693688995,
+      "total_cost_usd_mean": 5.2674367413080425
     },
     "mr": {
       "expected": 10,
@@ -317,12 +317,12 @@
       "quality_median": 25.0,
       "quality_mean": 23.285714285714285,
       "seconds_median": 1548.3,
-      "cost_usd_median": 1.8587489688000003,
+      "cost_usd_median": 1.8552096751960696,
       "time_observed": 7,
       "cost_observed": 7,
       "seconds_mean": 3614.5,
-      "cost_usd_mean": 4.955770194171429,
-      "total_cost_usd_mean": 5.9597979719492065
+      "cost_usd_mean": 4.945148311105258,
+      "total_cost_usd_mean": 5.949176088883035
     }
   },
   "legs": {
@@ -1385,43 +1385,43 @@
         "state": "ok",
         "quality": 20.5,
         "seconds": 5470.1,
-        "cost_usd": 10.9773884016
+        "cost_usd": 10.945522642918306
       },
       "0338": {
         "state": "ok",
         "quality": 25.0,
         "seconds": 478.3,
-        "cost_usd": 0.28744387920000003
+        "cost_usd": 0.2881363164347645
       },
       "0452": {
         "state": "ok",
         "quality": 19.0,
         "seconds": 6737.2,
-        "cost_usd": 13.891855233600001
+        "cost_usd": 13.845206510154952
       },
       "0333": {
         "state": "ok",
         "quality": 17.0,
         "seconds": 1548.3,
-        "cost_usd": 1.8587489688000003
+        "cost_usd": 1.8552096751960696
       },
       "0673": {
         "state": "ok",
         "quality": 26.5,
         "seconds": 1093.3,
-        "cost_usd": 1.2890510208000001
+        "cost_usd": 1.2869456423875647
       },
       "0532": {
         "state": "ok",
         "quality": 25.0,
         "seconds": 1217.6,
-        "cost_usd": 0.9506838672000001
+        "cost_usd": 0.9494855507519468
       },
       "0470": {
         "state": "ok",
         "quality": 30.0,
         "seconds": 2377.1,
-        "cost_usd": 2.4487107624
+        "cost_usd": 2.4454675179793632
       }
     },
     "mr": {
@@ -1429,55 +1429,96 @@
         "state": "ok",
         "quality": 20.5,
         "seconds": 9100.5,
-        "cost_usd": 11.8055638944
+        "cost_usd": 11.785640814360065
       },
       "0338": {
         "state": "ok",
         "quality": 25.0,
         "seconds": 478.3,
-        "cost_usd": 0.28744387920000003
+        "cost_usd": 0.2881363164347645
       },
       "0452": {
         "state": "ok",
         "quality": 19.0,
         "seconds": 8567.7,
-        "cost_usd": 15.836216493600002
+        "cost_usd": 15.788510545396793
       },
       "0333": {
         "state": "ok",
         "quality": 17.0,
         "seconds": 1548.3,
-        "cost_usd": 1.8587489688000003
+        "cost_usd": 1.8552096751960696
       },
       "0673": {
         "state": "ok",
         "quality": 26.5,
         "seconds": 1093.3,
-        "cost_usd": 1.2890510208000001
+        "cost_usd": 1.2869456423875647
       },
       "0532": {
         "state": "ok",
         "quality": 25.0,
         "seconds": 1217.6,
-        "cost_usd": 0.9506838672000001
+        "cost_usd": 0.9494855507519468
       },
       "0470": {
         "state": "ok",
         "quality": 30.0,
         "seconds": 3295.7999999999997,
-        "cost_usd": 2.6626832352000003
+        "cost_usd": 2.6621096332095973
       }
     }
   },
   "mistral_accounting": {
     "scope": "Mistral direct only; OpenRouter excluded",
     "rates_eur_per_million": {
-      "in_sum": 0.58,
-      "cache_read_sum": 0.06,
-      "out_sum": 1.78
+      "in_sum": 0.5801392115903371,
+      "cache_read_sum": 0.05950538675886692,
+      "out_sum": 1.8951810187951676
     },
     "usd_per_eur": 1.08,
-    "pricing": "Estimate from rounded console launch-discount rates; not an invoice allocation",
+    "pricing": "Proportional allocation of native EUR39.77 invoice by token category; later runs estimated at frozen calibrated rates",
+    "invoice_calibration": {
+      "scope": "Native Mistral completed attempts before the new 0211/0874/1372 direct retries; OpenRouter excluded",
+      "invoice_eur": {
+        "in_sum": 12.23,
+        "cache_read_sum": 25.58,
+        "out_sum": 1.96
+      },
+      "measured_tokens": {
+        "in_sum": 21081147,
+        "cache_read_sum": 429877048,
+        "out_sum": 1034202
+      },
+      "effective_eur_per_million": {
+        "in_sum": 0.5801392115903371,
+        "cache_read_sum": 0.05950538675886692,
+        "out_sum": 1.8951810187951676
+      },
+      "allocation": "Per token category, invoice amount times run tokens divided by measured campaign tokens. Frozen denominator; future runs estimated at calibrated rates.",
+      "sources": [
+        "runs/0211-m/run.json",
+        "runs/0233-m/run.json",
+        "runs/0233-mr/run.json",
+        "runs/0333-m/run.json",
+        "runs/0338-m/run.json",
+        "runs/0452-m/run.json",
+        "runs/0452-mr/run.json",
+        "runs/0470-m/run.json",
+        "runs/0470-mr/run.json",
+        "runs/0532-m/run.json",
+        "runs/0673-m/run.json",
+        "runs/0874-m/run.json",
+        "runs/1372-m/run.json",
+        "runs-void/mistral4-direct-budget-20261006T214315Z/0233-mr/run.json",
+        "runs-void/mistral4-direct-budget-20261006T214315Z/0452-mr/run.json",
+        "runs-void/mistral4-direct-budget-20261006T214315Z/0470-mr/run.json",
+        "runs-void/mistral4-provider-incidents-20261006T193033Z/0233-m/run.json",
+        "runs-void/mistral4-provider-incidents-20261006T193033Z/0874-m/run.json",
+        "runs-void/mistral4-provider-incidents-20261006T193033Z/1372-m/run.json"
+      ],
+      "note": "Author console token counts are rounded; measured counters are used to conserve EUR39.77 exactly across the frozen campaign."
+    },
     "ideal": "Latest judged successful run per ticket",
     "real": "All completed attempts summed per ticket, best successful quality",
     "attempts": [
@@ -1487,7 +1528,7 @@
         "verdict": "VOID-EMPTY",
         "quality": null,
         "seconds": 4268.1,
-        "cost_usd": 0.42796600560000003,
+        "cost_usd": 0.4291882543316841,
         "pi_cost_usd": 0.2832,
         "source": "runs/0211-m/run.json"
       },
@@ -1497,7 +1538,7 @@
         "verdict": "VOID-EMPTY",
         "quality": null,
         "seconds": 2383.4,
-        "cost_usd": 0.8112977711999999,
+        "cost_usd": 0.8231507865159425,
         "pi_cost_usd": 0.5969,
         "source": "runs/0233-m/run.json"
       },
@@ -1507,7 +1548,7 @@
         "verdict": "OK",
         "quality": 20.5,
         "seconds": 5470.1,
-        "cost_usd": 10.9773884016,
+        "cost_usd": 10.945522642918306,
         "pi_cost_usd": 7.0303,
         "source": "runs/0233-mr/run.json"
       },
@@ -1517,7 +1558,7 @@
         "verdict": "OK",
         "quality": 17.0,
         "seconds": 1548.3,
-        "cost_usd": 1.8587489688000003,
+        "cost_usd": 1.8552096751960696,
         "pi_cost_usd": 1.1967,
         "source": "runs/0333-m/run.json"
       },
@@ -1527,7 +1568,7 @@
         "verdict": "OK",
         "quality": 25.0,
         "seconds": 478.3,
-        "cost_usd": 0.28744387920000003,
+        "cost_usd": 0.2881363164347645,
         "pi_cost_usd": 0.1914,
         "source": "runs/0338-m/run.json"
       },
@@ -1537,7 +1578,7 @@
         "verdict": "VOID-EMPTY",
         "quality": null,
         "seconds": 1829.9,
-        "cost_usd": 1.94436126,
+        "cost_usd": 1.9433040352418414,
         "pi_cost_usd": 1.2579,
         "source": "runs/0452-m/run.json"
       },
@@ -1547,7 +1588,7 @@
         "verdict": "OK",
         "quality": 19.0,
         "seconds": 6737.2,
-        "cost_usd": 13.891855233600001,
+        "cost_usd": 13.845206510154952,
         "pi_cost_usd": 8.8775,
         "source": "runs/0452-mr/run.json"
       },
@@ -1557,7 +1598,7 @@
         "verdict": "OK",
         "quality": 27.0,
         "seconds": 918.1,
-        "cost_usd": 0.2139724728,
+        "cost_usd": 0.21664211523023422,
         "pi_cost_usd": 0.1549,
         "source": "runs/0470-m/run.json"
       },
@@ -1567,7 +1608,7 @@
         "verdict": "OK",
         "quality": 30.0,
         "seconds": 2377.1,
-        "cost_usd": 2.4487107624,
+        "cost_usd": 2.4454675179793632,
         "pi_cost_usd": 1.5805,
         "source": "runs/0470-mr/run.json"
       },
@@ -1577,7 +1618,7 @@
         "verdict": "OK",
         "quality": 25.0,
         "seconds": 1217.6,
-        "cost_usd": 0.9506838672000001,
+        "cost_usd": 0.9494855507519468,
         "pi_cost_usd": 0.6129,
         "source": "runs/0532-m/run.json"
       },
@@ -1587,7 +1628,7 @@
         "verdict": "OK",
         "quality": 26.5,
         "seconds": 1093.3,
-        "cost_usd": 1.2890510208000001,
+        "cost_usd": 1.2869456423875647,
         "pi_cost_usd": 0.8261,
         "source": "runs/0673-m/run.json"
       },
@@ -1597,7 +1638,7 @@
         "verdict": "VOID-EMPTY",
         "quality": null,
         "seconds": 2267.3,
-        "cost_usd": 4.6130890608,
+        "cost_usd": 4.591177013893173,
         "pi_cost_usd": 2.9282,
         "source": "runs/0874-m/run.json"
       },
@@ -1607,7 +1648,7 @@
         "verdict": "VOID-EMPTY",
         "quality": null,
         "seconds": 2288.3,
-        "cost_usd": 0.4115486016,
+        "cost_usd": 0.41202949039450715,
         "pi_cost_usd": 0.2706,
         "source": "runs/1372-m/run.json"
       },
@@ -1647,7 +1688,7 @@
         "verdict": "VOID-EMPTY",
         "quality": null,
         "seconds": 1246.4,
-        "cost_usd": 0.0168777216,
+        "cost_usd": 0.016967384925815635,
         "pi_cost_usd": 0.0114,
         "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/0233-m/run.json"
       },
@@ -1657,7 +1698,7 @@
         "verdict": "VOID-EMPTY",
         "quality": null,
         "seconds": 1058.3,
-        "cost_usd": 1.5593395536,
+        "cost_usd": 1.5589182585924286,
         "pi_cost_usd": 1.0105,
         "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/0874-m/run.json"
       },
@@ -1667,7 +1708,7 @@
         "verdict": "VOID-EMPTY",
         "quality": null,
         "seconds": 1440.3,
-        "cost_usd": 1.3470785352,
+        "cost_usd": 1.3442488050514076,
         "pi_cost_usd": 0.8668,
         "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/1372-m/run.json"
       }

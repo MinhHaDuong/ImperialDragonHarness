@@ -1,13 +1,15 @@
 """Build native Mistral ideal/real series from preserved attempts.
 
-Costs use token totals and launch-discount EUR rates supplied by the author.
-Rates are rounded console values, so estimates need not equal the invoice.
+Costs allocate the native invoice proportionally within each token category.
+Frozen calibrated rates estimate later runs without reallocating the old invoice.
 Elapsed times are summed per ticket (not parallel campaign wall time).
 """
 import json
 import statistics
+from pathlib import Path
 
-RATES_EUR_M = {'in_sum': .58, 'cache_read_sum': .06, 'out_sum': 1.78}
+CALIBRATION = json.loads(Path(__file__).with_name('tournament-mistral-invoice.json').read_text())
+RATES_EUR_M = CALIBRATION['effective_eur_per_million']
 USD_EUR = 1.08
 
 
@@ -64,6 +66,6 @@ def add_series(snapshot, arena):
                                  'time_observed': sum(r['seconds'] is not None for r in legs.values()),
                                  'cost_observed': sum(r['cost_usd'] is not None for r in legs.values())}
     snapshot['mistral_accounting'] = {'scope': 'Mistral direct only; OpenRouter excluded', 'rates_eur_per_million': RATES_EUR_M,
-                                     'usd_per_eur': USD_EUR, 'pricing': 'Estimate from rounded console launch-discount rates; not an invoice allocation',
+                                     'usd_per_eur': USD_EUR, 'pricing': 'Proportional allocation of native EUR39.77 invoice by token category; later runs estimated at frozen calibrated rates', 'invoice_calibration': CALIBRATION,
                                      'ideal': 'Latest judged successful run per ticket', 'real': 'All completed attempts summed per ticket, best successful quality',
                                      'attempts': records}

@@ -44,10 +44,15 @@ per ticket; `mr` sums the duration and cost of every preserved native attempt
 is excluded. Attempts are deduplicated, and nested attempt records and archive
 manifests are not counted again. Pending tickets keep both series provisional.
 Elapsed times are cumulative per ticket, not campaign wall time under parallelism.
-Costs are estimated from token counters using the author's rounded launch rates
-(EUR/M: input .58, cache .06, output 1.78), converted at 1.08 USD/EUR for the common
-axes. Original Pi costs and attempt provenance remain in the frozen snapshot;
-this estimate is not an exact allocation of the EUR39.77 native invoice.
+Costs allocate the author's EUR39.77 native invoice proportionally within each
+token category (input EUR12.23, cache EUR25.58, output EUR1.96), using measured
+session token totals as frozen denominators. Calibration, source records and
+rates are in `scripts/tournament-mistral-invoice.json` and the snapshot. The old
+campaign sums exactly to EUR39.77; later runs use these calibrated rates as
+estimates until their billing is available. USD axes retain 1.08 USD/EUR.
+Original Pi costs are preserved for audit. This is a proportional allocation,
+not provider-supplied per-request billing.
+
 
 Scatterplots now use arithmetic means per ticket for all three axes: quality,
 duration, and cost (including time-valued total cost). Pareto eligibility requires
