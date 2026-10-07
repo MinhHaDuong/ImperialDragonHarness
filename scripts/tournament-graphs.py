@@ -134,10 +134,11 @@ def render(output, snapshot):
                   if r.get('cost_usd') is not None and r.get('seconds') is not None]
         snapshot['arms'][arm]['total_cost_usd_mean'] = statistics.mean(totals) if totals else None
     (output/'total-cost.json').write_text(json.dumps({'time_value_usd_hour': hourly_usd, 'means': {a: snapshot['arms'][a]['total_cost_usd_mean'] for a in nodes}}, indent=2)+'\n')
+    dag_nodes = [a for a in nodes if a not in {'c', 'c2', 'e'}]
     results = {}
     for metric, (title, direction, units) in AXES.items():
         rows = []
-        for a, b in itertools.combinations(nodes, 2):
+        for a, b in itertools.combinations(dag_nodes, 2):
             if not snapshot['arms'][a]['final'] or not snapshot['arms'][b]['final']:
                 continue
             common = sorted(set(snapshot['legs'][a]) & set(snapshot['legs'][b]))
@@ -158,7 +159,7 @@ def render(output, snapshot):
                          'effect_intensity': effect, 'median_advantage': statistics.median(differences) * sign})
         holm(rows)
         edges = {(r['winner'], r['loser']) for r in rows if r['p'] < .05 and r['winner']}
-        reduced, groups = reduce_edges(nodes, edges)
+        reduced, groups = reduce_edges(dag_nodes, edges)
         for r in rows:
             r['shown'] = (r['winner'], r['loser']) in reduced and r['p'] < .05
         scale = float(np.percentile([r['effect_intensity'] for r in rows if r['shown']],95)) if reduced else 1
@@ -167,7 +168,7 @@ def render(output, snapshot):
         results[metric] = {'comparisons': rows, 'edges': sorted(edges), 'reduced': sorted(reduced),
                            'holm_edges': [(r['winner'], r['loser']) for r in rows if r['p_holm'] < .05]}
         dot = ['digraph G {', 'rankdir=TB;', 'node [shape=box, fontname="DejaVu Sans"];']
-        for a in nodes:
+        for a in dag_nodes:
             label = LABELS[a] + ('\nPROVISOIRE' if not snapshot['arms'][a]['final'] else '')
             style = ', style="dashed"' if a in DASHED_MODELS else ''
             dot.append(f'{a} [label={json.dumps(label, ensure_ascii=False)}{style}];')
@@ -283,7 +284,7 @@ def render(output, snapshot):
             fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
         for metric, (title, direction, units) in AXES.items():
             edges = set(map(tuple, results[metric]['reduced']))
-            _, groups = reduce_edges(nodes, edges)
+            _, groups = reduce_edges(dag_nodes, edges)
             membership = {v: i for i, g in enumerate(groups) for v in g}
             ranks = dict.fromkeys(range(len(groups)), 0)
             for _ in range(len(groups)):
@@ -291,7 +292,7 @@ def render(output, snapshot):
                     if membership[a] != membership[b]:
                         ranks[membership[b]] = max(ranks[membership[b]], ranks[membership[a]] + 1)
             layers = {}
-            for a in nodes:
+            for a in dag_nodes:
                 layers.setdefault(ranks[membership[a]], []).append(a)
             # Barycentric ordering reduces crossings without changing the graph.
             for _ in range(5):
@@ -332,7 +333,7 @@ def render(output, snapshot):
             "Les modèles locaux tournent sur une Lenovo ThinkStation P620 : Ryzen Threadripper PRO\n3945WX, 128 Go de RAM, deux GPU RTX A4000 + RTX 3060 (28 Go de VRAM au total).\nLe coût local estime l’électricité à 600 W et 0,23 €/kWh, sans amortissement du matériel.\nLes coûts API sont ceux des tokens consommés ; conversion commune : 1,08 USD pour 1 EUR.",
             "Les nuages de points présentent les moyennes par ticket de qualité, durée et coût.\nMistral Idéal retient le dernier résultat réussi de chaque ticket. Mistral beta additionne\nles coûts et durées de tous ses essais, interruptions comprises, et garde la meilleure note.\nSes coûts sont répartis selon les tokens facturés ; les nouveaux essais restent estimés.\nLa frontière de Pareto exclut les séries incomplètes et les qualités moyennes inférieures à 15/30.",
             "Sur les trois graphes acycliques, les flèches comparent les résultats\nticket par ticket par un test de Wilcoxon apparié, bilatéral, au seuil de 5 %. Elles vont vers le résultat moins juste, plus lent ou plus cher.\nLes flèches redondantes par transitivité sont retirées pour faciliter la lecture.\nL’absence de flèche ne prouve pas l’équivalence ; un chemin indirect n’est pas un test supplémentaire.",
-            "Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets, aucune différence ne franchit ce seuil plus exigeant : les écarts détectés\ndeux à deux ne constituent donc pas un classement global garanti à 95 %.\nLes astérisques signalent les séries provisoires ; les contours pointillés des DAG distinguent\nQwen 3, Qwen 3.6, Sol 6 et Mistral beta.",
+            "Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets, aucune différence ne franchit ce seuil plus exigeant : les écarts détectés\ndeux à deux ne constituent donc pas un classement global garanti à 95 %.\nLes astérisques signalent les séries provisoires ; Mistral beta a un contour pointillé dans les DAG.\nQwen 3, Qwen 3.6 et GPT-6 Sol figurent seulement dans les nuages de points.",
         ]
         y=.84
         for text in paragraphs:
