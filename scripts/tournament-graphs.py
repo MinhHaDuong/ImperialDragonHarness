@@ -309,7 +309,6 @@ def render(output, snapshot):
                 color={'mi':'#7c3aed','mr':'#dc2626'}.get(a, '#ea580c' if not snapshot['arms'][a]['final'] else '#2563eb' if a in analysis.LOCAL else '#059669')
                 fig.text(.665,.81-i*min(.041, .72/len(nodes)),DISPLAY_CODES.get(a,a)+('*' if not snapshot['arms'][a]['final'] else ''),fontsize=9,fontweight='bold',color=color,va='top')
                 fig.text(.70,.81-i*min(.041, .72/len(nodes)),description,fontsize=7.4,va='top',linespacing=1.1,fontweight='bold' if a in frontier else 'normal')
-            fig.text(.045,.08,'Cercle doré + nom complet : frontière de Pareto sur ces deux axes (identités complètes, qualité moyenne ≥ 15/30).',fontsize=8)
             if name == 'quality-total-cost':
                 fig.text(.045,.855,f'Par ticket : coût total = coût direct + {hourly_usd:g} × durée / 3 600 ; puis moyenne. Toute la durée est valorisée, DNF inclus.',fontsize=8)
             fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Mistral : losange violet = Idéal, cercle rouge = beta. Coût et durée en échelle logarithmique.\n'
