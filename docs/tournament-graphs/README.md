@@ -4,8 +4,9 @@ Rapport du 7 octobre 2026, révisé après la beta 0 (PR #1243) et la revue Astr
 Les changements de présentation et de discussion ont été ratifiés par l’auteur.
 L’instantané numérique et les comparaisons statistiques restent inchangés.
 
-Le PDF A4 paysage contient 13 pages : présentation, cinq nuages XY, trois
-DAG de significativité, deux pages de méthode, table des résultats et discussion.
+Le PDF A4 paysage contient 12 pages : présentation, table des résultats, cinq nuages XY,
+trois DAG de significativité et deux pages de méthode. La perspective du benchmark
+de mai est intégrée à la méthode, sans page de discussion séparée.
 Les PNG sont des aperçus du PDF. Les cycles sont additifs ; SpaceBunny et les
 préliminaires sont exclus.
 
