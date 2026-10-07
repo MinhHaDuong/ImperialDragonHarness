@@ -312,7 +312,7 @@ def render(output, snapshot):
             if name == 'quality-total-cost':
                 fig.text(.045,.855,f'Par ticket : coût total = coût direct + {hourly_usd:g} × durée / 3 600 ; puis moyenne. Toute la durée est valorisée, DNF inclus.',fontsize=8)
             fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Mistral : losange violet = Idéal, cercle rouge = beta. Coût et durée en échelle logarithmique.\n'
-                     'Coût local = électricité seule ; coût hébergé = API. Les graphiques de significativité utilisent uniquement les identités complètes.',fontsize=8)
+                     'Coût local = électricité seule ; coût hébergé = API.',fontsize=8)
             pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
         fig=plt.figure(figsize=(11.6929,8.2677));fig.text(.06,.91,'Méthode et périmètre',fontsize=20,fontweight='bold')
         paragraphs=[
