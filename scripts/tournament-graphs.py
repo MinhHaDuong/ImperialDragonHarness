@@ -402,6 +402,92 @@ def render(output, snapshot):
         )
         pdf.savefig(fig)
         plt.close(fig)
+        fig = plt.figure(figsize=(11.6929, 8.2677))
+        fig.text(0.06, 0.92, "Résultats par modèle", fontsize=20, fontweight="bold")
+        columns = [
+            "Modèle · variante / moteur · effort",
+            "Tentés",
+            "Réussis / 10",
+            "Qualité\nmoyenne /30",
+            "Durée moyenne\n(min / ticket)",
+            "Coût moyen\n(USD / ticket)",
+            "Tokens générés\nmoyens / ticket",
+        ]
+        table_rows = []
+        for arm in nodes:
+            row = snapshot["arms"][arm]
+            parts = LABELS[arm].split("\n")
+            identity = (
+                DISPLAY_CODES.get(arm, arm)
+                + " · "
+                + parts[0]
+                + "\n"
+                + parts[1]
+                + " · "
+                + parts[2]
+            )
+
+            def display(value):
+                return "—" if value is None else f"{value:.2f}".replace(".", ",")
+
+            table_rows.append(
+                [
+                    identity,
+                    str(row.get("attempts_observed", "—")),
+                    f"{row['ok']} / {row['expected']}",
+                    display(row["quality_mean"]),
+                    display(
+                        row["seconds_mean"] / 60
+                        if row["seconds_mean"] is not None
+                        else None
+                    ),
+                    display(row["cost_usd_mean"]),
+                    "—"
+                    if row.get("output_tokens_mean") is None
+                    else f"{row['output_tokens_mean']:,.0f}".replace(",", " "),
+                ]
+            )
+        ax = fig.add_axes([0.06, 0.16, 0.88, 0.68])
+        ax.axis("off")
+        table = ax.table(
+            cellText=table_rows,
+            colLabels=columns,
+            colWidths=[0.42, 0.065, 0.09, 0.095, 0.11, 0.10, 0.12],
+            cellLoc="center",
+            bbox=[0, 0, 1, 1],
+        )
+        table.auto_set_font_size(False)
+        table.set_fontsize(7.3)
+        for (r, c), cell in table.get_celld().items():
+            cell.set_edgecolor("#cbd5e1")
+            cell.set_linewidth(0.5)
+            if r == 0:
+                cell.set_facecolor("#e2e8f0")
+                cell.set_text_props(weight="bold")
+            else:
+                cell.set_facecolor("#f8fafc" if r % 2 else "white")
+                if c == 0:
+                    cell.set_text_props(ha="left")
+        note = "Moyennes par ticket, échecs inclus ; les séries incomplètes portent sur les tickets évalués. Coût local : électricité seule. Mistral Idéal : dix succès, dont 0874 via OpenRouter. Mistral beta : mêmes notes, coûts et durées de 25 tentatives directes conservées, plus le remplacement OR de 0874 ; huit autres tentatives OR et un incident direct de configuration sont exclus. « Réussis » compte les tickets livrés, pas le nombre de tentatives. Les 9/10 correspondent à quatre dépassements du plafond de deux heures (a et b3 : 0874 ; j : 0333 ; k : 0211) et à une fin sans livraison valide (c2 : 0470). Ces échecs sont conservés à 0/30, avec leurs ressources consommées, plutôt que remplacés par une réussite après reprise ; le traitement particulier de Mistral est détaillé dans les limites."
+        fig.text(
+            0.06,
+            0.12,
+            wrap_paragraph(fig, note, 9),
+            fontsize=9,
+            va="top",
+            linespacing=1.35,
+        )
+        fig.text(0.045, 0.015, source_text, fontsize=8, color="#475569")
+        fig.text(
+            0.955,
+            0.015,
+            str(pdf.get_pagecount() + 1),
+            ha="right",
+            fontsize=8,
+            color="#475569",
+        )
+        pdf.savefig(fig)
+        plt.close(fig)
         scatter_axes = [
             (
                 "quality-cost",
@@ -874,7 +960,7 @@ def render(output, snapshot):
             "Notation des résultats sur 30 selon le système de la boxe : trois juges partent de 10\net déduisent des points pour les fautes selon leur sévérité : −3, −2, −1 ou −0,5 point.\nLes juges examinent le travail sans connaître le modèle qui l’a produit. Une absence\nde résultat exploitable vaut zéro ; une impossibilité correctement expliquée est jugée normalement.",
             "Le juge principal est Gemini 3.1 Pro Preview ; les deux autres sont Grok 4.3 et MiniMax M2.5.\nLes résultats conservés du premier cycle ont été jugés par Gemini 3.1 Pro Preview,\nDeepSeek V4 Pro et Kimi K3. Les notes sont additionnées, sans pondération entre juges.",
             "Les modèles locaux tournent sur une Lenovo ThinkStation P620 : Ryzen Threadripper PRO\n3945WX, 128 Go de RAM, deux GPU RTX A4000 + RTX 3060 (28 Go de VRAM au total).\nLe coût local estime l’électricité à 600 W et 0,23 €/kWh, sans amortissement du matériel.\nLes coûts API sont ceux des tokens consommés ; conversion commune : 1,08 USD pour 1 EUR.",
-            "Les nuages de points présentent les moyennes par ticket de qualité, durée et coût.\nChaque ticket représente un erg moyen. La valeur du délai est exprimée par erg et par heure, en USD/(erg·h) ou EUR/(erg·h), et non comme un salaire horaire.\nMistral Idéal retient le dernier résultat réussi de chaque ticket. Mistral beta additionne\nles coûts et durées de 25 tentatives directes conservées et du succès OpenRouter sur 0874,\ninterruptions comprises, et garde la meilleure note. Huit autres tentatives OpenRouter\net une tentative directe invalidée pour configuration ne sont pas comptabilisées.\nSes coûts sont répartis selon les tokens facturés ; les nouveaux essais restent estimés.\nLa frontière de Pareto exclut les séries incomplètes et les qualités moyennes inférieures à 15/30.",
+            "Les nuages de points présentent les moyennes par ticket de qualité, durée et coût.\nChaque ticket représente un erg moyen. La valeur du délai est exprimée par erg et par heure, en USD/(erg·h) ou EUR/(erg·h), et non comme un salaire horaire. Le coût pertinent est celui du résultat livré : les reprises consomment des ressources et retardent sa livraison.\nMistral Idéal retient le dernier résultat réussi de chaque ticket. Mistral beta additionne\nles coûts et durées de 25 tentatives directes conservées et du succès OpenRouter sur 0874,\ninterruptions comprises, et garde la meilleure note. Huit autres tentatives OpenRouter\net une tentative directe invalidée pour configuration ne sont pas comptabilisées.\nSes coûts sont répartis selon les tokens facturés ; les nouveaux essais restent estimés.\nLa frontière de Pareto exclut les séries incomplètes et les qualités moyennes inférieures à 15/30.",
             "Sur les trois graphes acycliques, les flèches comparent les résultats\nticket par ticket par un test de Wilcoxon apparié, bilatéral, au seuil de 5 %.\nElles vont vers le résultat moins juste, plus lent ou plus cher.\nLes flèches redondantes par transitivité sont retirées pour faciliter la lecture.\nL’absence de flèche ne prouve pas l’équivalence ; un chemin indirect n’est pas un test supplémentaire.",
             "Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets et 120 comparaisons par graphe, ce seuil corrigé est hors d’atteinte du test utilisé,\nmême lorsqu’un modèle gagne sur les dix tickets. L’absence de flèches après correction ne signifie\ndonc pas que les modèles sont équivalents : cet échantillon ne permet pas d’établir les différences\navec cette garantie globale.\nMistral beta a un contour pointillé dans les DAG.\nQwen 3, Qwen 3.6 et GPT-6 Sol figurent seulement dans les nuages de points.",
         ]
@@ -885,7 +971,7 @@ def render(output, snapshot):
             "Limite : sur le ticket 0874, la dernière tentative directe avec Mistral a atteint le plafond de deux heures, malgré 195 réponses API réussies. Le modèle a longuement exploré le projet puis multiplié les tests, avec des modules et un hook manquants dans l’environnement. Le disjoncteur de répétitions identiques ne détecte pas cette dérive à commandes variables. Le résultat réussi via OpenRouter remplace ce ticket dans la série idéale ; Mistral beta conserve les coûts et durées des tentatives directes échouées et ajoute ceux du remplacement. La série Mistral combine donc deux filières d’hébergement. Le coût OpenRouter est celui enregistré pour ce run ; les coûts directs suivent la calibration de la facture Mistral."
         )
         paragraphs.append(
-            "Limite : les séries usuelles retiennent les résultats après reprises, tandis que Mistral beta cumule les essais. Les coûts, durées et taux de réussite ne mesurent donc pas uniformément la fiabilité au premier essai. La colonne « Tentés » compte les tentatives préservées, y compris celles invalidées pour infrastructure ou mauvais état de départ ; ces incidents ne sont pas tous imputables au modèle. Pour les deux lignes Mistral, ce compte couvre les deux fournisseurs, tandis que les coûts beta suivent le périmètre documenté. Les tokens générés moyens suivent les runs retenus pour chaque série, et comprennent le reasoning quand il est inclus dans les tokens de sortie déclarés ; les tokenizers diffèrent entre fournisseurs."
+            "Limite : les séries usuelles retiennent les résultats après reprises, tandis que Mistral beta cumule les essais. La répétabilité est la faible dispersion des résultats entre répétitions ; la réussite au premier essai est une autre forme de fiabilité. Les reprises hétérogènes empêchent ici de comparer uniformément cette dernière. La colonne « Tentés » compte les tentatives préservées, y compris celles invalidées pour infrastructure ou mauvais état de départ ; ces incidents ne sont pas tous imputables au modèle. Pour les deux lignes Mistral, ce compte couvre les deux fournisseurs, tandis que les coûts beta suivent le périmètre documenté. Les tokens générés moyens suivent les runs retenus pour chaque série, et comprennent le reasoning quand il est inclus dans les tokens de sortie déclarés ; les tokenizers diffèrent entre fournisseurs."
         )
         paragraphs.append(
             "Reprise b2 : les archives contiennent 11 tentatives pour les 10 tickets, dont une tentative 0333 interrompue par SIGTERM après 17 min 24 s (code de sortie 143). L’auteur a confirmé avoir demandé cette pause pour libérer le GPU pour un autre travail ; ce n’était pas un arrêt motivé par la qualité du résultat. Le rejeu retenu a obtenu 30/30 ; la tentative interrompue n’avait pas de note permettant un choix du meilleur score. Ce remplacement et ses ressources écartées empêchent de lire la série comme dix succès au premier essai. En retirant 0333 de toutes les séries, Qwen b2 et les deux séries Mistral ont chacun une qualité moyenne de 25,78/30 sur neuf tickets : b2 n’a alors plus seul la meilleure moyenne. « Tentés » est un compte des traces préservées, pas une garantie d’historique exhaustif."
@@ -920,6 +1006,10 @@ def render(output, snapshot):
             fig.text(0.06, y, text, fontsize=9.5, va="top", linespacing=1.35)
             y -= len(text.splitlines()) * 0.0215 + 0.023
             if index == 5:
+                perspective = "En mai 2026, un benchmark d’inventaire des centrales thermiques au Vietnam, avec cinq répétitions par condition, montrait l’apport des sources et la répétabilité des modèles commerciaux. Ici, nous évaluons le travail livré avec outils, plutôt que l’exactitude d’un inventaire factuel."
+                perspective = wrap_paragraph(fig, perspective, 9.5)
+                fig.text(0.06, y, perspective, fontsize=9.5, va="top", linespacing=1.35)
+                y -= len(perspective.splitlines()) * 0.0215 + 0.023
                 fig.text(
                     0.06,
                     y,
@@ -947,150 +1037,16 @@ def render(output, snapshot):
                     va="top",
                     url="https://github.com/MinhHaDuong/ImperialDragonHarness/tree/433c6fd224ccb77e6ff91b74365440fd2f9a6bcd/docs/tournament-graphs",
                 )
-                y -= 0.10
-        fig.text(0.045, 0.015, source_text, fontsize=8, color="#475569")
-        fig.text(
-            0.955,
-            0.015,
-            str(pdf.get_pagecount() + 1),
-            ha="right",
-            fontsize=8,
-            color="#475569",
-        )
-        pdf.savefig(fig)
-        plt.close(fig)
-        fig = plt.figure(figsize=(11.6929, 8.2677))
-        fig.text(
-            0.06, 0.92, "Annexe : résultats par modèle", fontsize=20, fontweight="bold"
-        )
-        columns = [
-            "Modèle · variante / moteur · effort",
-            "Tentés",
-            "Réussis / 10",
-            "Qualité\nmoyenne /30",
-            "Durée moyenne\n(min / ticket)",
-            "Coût moyen\n(USD / ticket)",
-            "Tokens générés\nmoyens / ticket",
-        ]
-        table_rows = []
-        for arm in nodes:
-            row = snapshot["arms"][arm]
-            parts = LABELS[arm].split("\n")
-            identity = (
-                DISPLAY_CODES.get(arm, arm)
-                + " · "
-                + parts[0]
-                + "\n"
-                + parts[1]
-                + " · "
-                + parts[2]
-            )
-
-            def display(value):
-                return "—" if value is None else f"{value:.2f}".replace(".", ",")
-
-            table_rows.append(
-                [
-                    identity,
-                    str(row.get("attempts_observed", "—")),
-                    f"{row['ok']} / {row['expected']}",
-                    display(row["quality_mean"]),
-                    display(
-                        row["seconds_mean"] / 60
-                        if row["seconds_mean"] is not None
-                        else None
-                    ),
-                    display(row["cost_usd_mean"]),
-                    "—"
-                    if row.get("output_tokens_mean") is None
-                    else f"{row['output_tokens_mean']:,.0f}".replace(",", " "),
-                ]
-            )
-        ax = fig.add_axes([0.06, 0.16, 0.88, 0.68])
-        ax.axis("off")
-        table = ax.table(
-            cellText=table_rows,
-            colLabels=columns,
-            colWidths=[0.42, 0.065, 0.09, 0.095, 0.11, 0.10, 0.12],
-            cellLoc="center",
-            bbox=[0, 0, 1, 1],
-        )
-        table.auto_set_font_size(False)
-        table.set_fontsize(7.3)
-        for (r, c), cell in table.get_celld().items():
-            cell.set_edgecolor("#cbd5e1")
-            cell.set_linewidth(0.5)
-            if r == 0:
-                cell.set_facecolor("#e2e8f0")
-                cell.set_text_props(weight="bold")
-            else:
-                cell.set_facecolor("#f8fafc" if r % 2 else "white")
-                if c == 0:
-                    cell.set_text_props(ha="left")
-        note = "Moyennes par ticket, échecs inclus ; les séries incomplètes portent sur les tickets évalués. Coût local : électricité seule. Mistral Idéal : dix succès, dont 0874 via OpenRouter. Mistral beta : mêmes notes, coûts et durées de 25 tentatives directes conservées, plus le remplacement OR de 0874 ; huit autres tentatives OR et un incident direct de configuration sont exclus. « Réussis » compte les tickets livrés, pas le nombre de tentatives. Les 9/10 correspondent à quatre dépassements du plafond de deux heures (a et b3 : 0874 ; j : 0333 ; k : 0211) et à une fin sans livraison valide (c2 : 0470). Ces échecs sont conservés à 0/30, avec leurs ressources consommées, plutôt que remplacés par une réussite après reprise ; le traitement particulier de Mistral est détaillé dans les limites."
-        fig.text(
-            0.06,
-            0.12,
-            wrap_paragraph(fig, note, 9),
-            fontsize=9,
-            va="top",
-            linespacing=1.35,
-        )
-        fig.text(0.045, 0.015, source_text, fontsize=8, color="#475569")
-        fig.text(
-            0.955,
-            0.015,
-            str(pdf.get_pagecount() + 1),
-            ha="right",
-            fontsize=8,
-            color="#475569",
-        )
-        pdf.savefig(fig)
-        plt.close(fig)
-        fig = plt.figure(figsize=(11.6929, 8.2677))
-        fig.text(
-            0.06,
-            0.91,
-            "Discussion : de la réponse au travail livré",
-            fontsize=20,
-            fontweight="bold",
-        )
-        discussion = [
-            (
-                "Deux benchmarks pour deux questions de recherche",
-                "En mai 2026, nous avions testé si les LLM pouvaient produire un inventaire fiable des centrales thermiques au Vietnam, nécessaire à la modélisation du système électrique. Quatorze modèles répondaient sans documents ; quatre étaient ensuite comparés avec ou sans documents sources, en un ou plusieurs tours, avec cinq répétitions par condition et un inventaire de référence. Fournir les sources aidait davantage qu’ajouter des tours. Le tournoi d’octobre porte sur une autre tâche : exécuter dix tickets de recherche avec outils et accès au projet. À harnais commun, ses résultats invitent à choisir conjointement le modèle et l’effort, plutôt qu’à monter systématiquement en gamme.",
-            ),
-            (
-                "Répétabilité et réussite au premier essai : deux formes de fiabilité",
-                "Le benchmark de mai montrait déjà que les modèles commerciaux vendaient aussi de la répétabilité : une faible dispersion des résultats entre répétitions. Le tournoi aborde un autre aspect de la fiabilité : livrer un résultat exploitable dès le premier essai. Les incidents Mistral montrent l’importance économique de cette distinction. Toutefois, les reprises et leur comptabilisation diffèrent entre modèles ; ce rapport ne permet donc pas encore de comparer uniformément leurs taux de réussite au premier essai.",
-            ),
-            (
-                "Du prix de la requête au coût du résultat livré",
-                "Le premier benchmark mesurait le coût par requête. Les reprises Mistral montrent pourquoi il faut aussi compter le travail interrompu et le délai avant livraison. La valeur du délai dépend de l’usage : l’interactivité et le travail asynchrone peuvent conduire à des choix différents. Les protocoles de reprise restent toutefois hétérogènes entre séries.",
-            ),
-            (
-                "La qualité recherche reste une question ouverte",
-                "En mai, la vérification de la qualité recherche restait inachevée. Les notes de trois juges sur dix tickets ne la remplacent pas : elles évaluent des livrables selon une autre grille. Le prochain enjeu est de vérifier les faits et leur provenance, puis d’évaluer des harnais qui routent les rôles et confient la revue à des modèles distincts.",
-            ),
-        ]
-        y = 0.83
-        for heading, text in discussion:
-            fig.text(0.06, y, heading, fontsize=12, fontweight="bold", va="top")
-            text = wrap_paragraph(fig, text, 10.5)
-            fig.text(0.06, y - 0.035, text, fontsize=10.5, va="top", linespacing=1.4)
-            y -= 0.075 + 0.025 * len(text.splitlines())
-        fig.text(0.06, y, "Référence", fontsize=11, fontweight="bold", va="top")
-        reference = "Ha-Duong, Minh (2026). Beyond RAG: Architectures for Reliable Economic Statistics with Agentic Systems. Présentation à Econom’IA, Thema, CY Cergy Paris Université, 27 mai. Support français."
-        fig.text(
-            0.06,
-            y - 0.035,
-            wrap_paragraph(fig, reference, 9.5),
-            fontsize=9.5,
-            va="top",
-            linespacing=1.4,
-            url="https://minh.haduong.com/files/HaDuong-2026-EconomIA-BeyondRAG.pdf",
-            color="#2563eb",
-        )
+                fig.text(
+                    0.06,
+                    y - 0.09,
+                    "• Benchmark de mai 2026 : Beyond RAG (présentation)",
+                    fontsize=9,
+                    color="#2563eb",
+                    va="top",
+                    url="https://minh.haduong.com/files/HaDuong-2026-EconomIA-BeyondRAG.pdf",
+                )
+                y -= 0.13
         fig.text(0.045, 0.015, source_text, fontsize=8, color="#475569")
         fig.text(
             0.955,
