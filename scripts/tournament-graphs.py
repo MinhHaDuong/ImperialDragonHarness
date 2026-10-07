@@ -206,8 +206,7 @@ def render(output, snapshot):
                               'edgecolor':'#ea580c' if provisional else '#2563eb','linestyle':'--' if provisional or a in DASHED_MODELS else '-'},zorder=2)
             ax.set_xlim(-.015,1.015);ax.set_ylim(-.02,1.02);ax.axis('off')
             summary=results[metric]
-            fig.text(.045,.075,f"{len(summary['edges'])} différences significatives ; {len(edges)} flèches après réduction transitive. "
-                     f"Holm (famille de {len(summary['comparisons'])} tests) : {len(summary['holm_edges'])} flèches.",fontsize=9)
+            fig.text(.045,.075,'Ces flèches sont significatives deux à deux ; dix tickets ne suffisent pas à garantir le classement complet à 95 %.',fontsize=9)
             fig.text(.045,.045,'Seuil nominal par comparaison, sans garantie simultanée. Absence de flèche ≠ équivalence.\n'
                      'Un chemin indirect ne constitue pas un nouveau test significatif. Détails p et n dans le CSV et les fichiers DOT.',fontsize=8)
             fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);fig.savefig(output/f'{metric}.png',dpi=160);plt.close(fig)
@@ -323,7 +322,7 @@ def render(output, snapshot):
             "Les modèles locaux tournent sur une Lenovo ThinkStation P620 : Ryzen Threadripper PRO\n3945WX, 128 Go de RAM, deux GPU RTX A4000 + RTX 3060 (28 Go de VRAM au total).\nLe coût local estime l’électricité à 600 W et 0,23 €/kWh, sans amortissement du matériel.\nLes coûts API sont ceux des tokens consommés ; conversion commune : 1,08 USD pour 1 EUR.",
             "Les nuages de points présentent les moyennes par ticket de qualité, durée et coût.\nMistral Idéal retient le dernier résultat réussi de chaque ticket. Mistral beta additionne\nles coûts et durées de tous ses essais, interruptions comprises, et garde la meilleure note.\nSes coûts sont répartis selon les tokens facturés ; les nouveaux essais restent estimés.\nLa frontière de Pareto exclut les séries incomplètes et les qualités moyennes inférieures à 15/30.",
             "Sur les trois premiers graphes acycliques, les flèches comparent les résultats\nticket par ticket par un test de Wilcoxon apparié, bilatéral, au seuil de 5 %. Elles vont vers le résultat moins juste, plus lent ou plus cher.\nLes flèches redondantes par transitivité sont retirées pour faciliter la lecture.\nL’absence de flèche ne prouve pas l’équivalence ; un chemin indirect n’est pas un test supplémentaire.",
-            "Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nUne correction de Holm tenant compte des comparaisons multiples est également calculée ;\nses résultats figurent sous les graphes. Avec dix tickets, les conclusions restent exploratoires.\nLes astérisques signalent les séries provisoires ; les contours pointillés des DAG distinguent\nQwen 3, Qwen 3.6, Sol 6 et Mistral beta.",
+            "Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets, aucune différence ne franchit ce seuil plus exigeant : les écarts détectés\ndeux à deux ne constituent donc pas un classement global garanti à 95 %.\nLes astérisques signalent les séries provisoires ; les contours pointillés des DAG distinguent\nQwen 3, Qwen 3.6, Sol 6 et Mistral beta.",
         ]
         y=.84
         for text in paragraphs:
