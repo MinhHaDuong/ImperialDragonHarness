@@ -277,7 +277,7 @@ def render(output, snapshot):
                 px,py=ax.transData.transform((x,y))
                 point_boxes.append(Bbox.from_extents(px-13,py-13,px+13,py+13))
             bounds=ax.get_window_extent(renderer)
-            for a,x,y,color,provisional in sorted(entries,key=lambda item:(item[0] not in frontier,item[2],item[1])):
+            for a,x,y,color,provisional in sorted(entries,key=lambda item:(not (name == 'quality-speed' and item[0] == 'b2'),item[0] not in frontier,item[2],item[1])):
                 annotation=None
                 offsets=[(dx,dy) for radius in range(15,226,10)
                          for dx,dy in [(radius,radius),(-radius,radius),(radius,-radius),(-radius,-radius),
@@ -286,6 +286,8 @@ def render(output, snapshot):
                 if name in {'quality-cost', 'quality-speed', 'quality-total-cost'} and a in {'c', 'c2'}:
                     preferred = [(22, 20), (30, 28)] if a == 'c' else [(-22, -20), (-30, -28)]
                     offsets = preferred + offsets
+                if name == 'quality-speed' and a == 'b2':
+                    offsets = [(45,35),(55,45),(65,55)] + [(dx,dy) for dx,dy in offsets if dx > 0 and dy > 0]
                 if name == 'quality-speed' and a == 'e2':
                     offsets = [(-45, 55), (-55, 70), (-65, 85), (-85, 100)] + offsets
                 if a in {'mi','mr'}:
