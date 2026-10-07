@@ -24,6 +24,8 @@ from scipy.stats import rankdata
 spec = importlib.util.spec_from_file_location('analysis', Path(__file__).with_name('tournament-analysis.py'))
 analysis = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(analysis)
+DASHED_MODELS = {'c', 'c2', 'e', 'mr'}
+AXIS_WORDS = {'quality': ('Juste', 'Faux'), 'seconds': ('Rapide', 'Lent'), 'cost_usd': ('Abordable', 'Cher')}
 DISPLAY_CODES = {'mr': 'mβ'}
 LABELS = {
 'mi': 'Mistral Large 4 · Idéal\nAPI Mistral direct\noff',
@@ -157,7 +159,8 @@ def render(output, snapshot):
         dot = ['digraph G {', 'rankdir=TB;', 'node [shape=box, fontname="DejaVu Sans"];']
         for a in nodes:
             label = LABELS[a] + ('\nPROVISOIRE' if not snapshot['arms'][a]['final'] else '')
-            dot.append(f'{a} [label={json.dumps(label, ensure_ascii=False)}];')
+            style = ', style="dashed"' if a in DASHED_MODELS else ''
+            dot.append(f'{a} [label={json.dumps(label, ensure_ascii=False)}{style}];')
         for a, b in sorted(reduced):
             r = next(r for r in rows if r['winner'] == a and r['loser'] == b)
             dot.append(f'{a} -> {b} [label="p={r["p"]:.4f}; n={r["n"]}"];')
@@ -189,7 +192,8 @@ def render(output, snapshot):
             fig, ax = plt.subplots(figsize=(11.6929, 8.2677))
             fig.subplots_adjust(left=.035, right=.965, bottom=.13, top=.85)
             fig.suptitle(f'{title} — qui bat qui ?', fontsize=19, fontweight='bold', x=.045, ha='left')
-            fig.text(.045,.89,'Meilleur en haut · flèche vers le moins bon · Wilcoxon apparié exact · p < 0,05 bilatéral',fontsize=10)
+            best, worse = AXIS_WORDS[metric]
+            fig.text(.045,.89,f'{best} en haut · flèche vers {worse} · Wilcoxon apparié exact · p < 0,05 bilatéral',fontsize=10)
             for a, b in sorted(edges):
                 ax.add_patch(FancyArrowPatch(positions[a], positions[b], arrowstyle='-|>', mutation_scale=12,
                                             color='#64748b', linewidth=1, shrinkA=32, shrinkB=34,
@@ -198,7 +202,7 @@ def render(output, snapshot):
                 provisional = not snapshot['arms'][a]['final']
                 ax.text(x,y,LABELS[a]+ ('\nPROVISOIRE' if provisional else ''),ha='center',va='center',fontsize=7.3,
                         bbox={'boxstyle':'round,pad=.4','facecolor':'#fff7ed' if provisional else '#eff6ff',
-                              'edgecolor':'#ea580c' if provisional else '#2563eb','linestyle':'--' if provisional else '-'},zorder=2)
+                              'edgecolor':'#ea580c' if provisional else '#2563eb','linestyle':'--' if provisional or a in DASHED_MODELS else '-'},zorder=2)
             ax.set_xlim(-.015,1.015);ax.set_ylim(-.02,1.02);ax.axis('off')
             summary=results[metric]
             fig.text(.045,.075,f"{len(summary['edges'])} différences significatives ; {len(edges)} flèches après réduction transitive. "
@@ -208,13 +212,13 @@ def render(output, snapshot):
             pdf.savefig(fig);fig.savefig(output/f'{metric}.png',dpi=160);plt.close(fig)
         scatter_axes = [
             ('quality-cost', 'Qualité / coût', 'cost_usd_mean', 'quality_mean',
-             'Coût moyen (USD ; plus bas = moins cher)', 'Qualité moyenne (/30 ; plus haut = meilleur)'),
+             'Coût moyen (USD)', 'Qualité moyenne (/30)'),
             ('quality-speed', 'Qualité / vitesse', 'seconds_mean', 'quality_mean',
-             'Durée moyenne (minutes ; plus bas = plus rapide)', 'Qualité moyenne (/30 ; plus haut = meilleur)'),
+             'Durée moyenne (minutes)', 'Qualité moyenne (/30)'),
             ('speed-cost', 'Vitesse / coût', 'cost_usd_mean', 'seconds_mean',
-             'Coût moyen (USD ; plus bas = moins cher)', 'Durée moyenne (minutes ; plus bas = plus rapide)'),
+             'Coût moyen (USD)', 'Durée moyenne (minutes)'),
             ('quality-total-cost', f'Qualité / coût total — temps à {hourly_usd:g} USD/h', 'total_cost_usd_mean', 'quality_mean',
-             'Coût total moyen (USD ; coût direct + durée valorisée)', 'Qualité moyenne (/30 ; plus haut = meilleur)'),
+             'Coût total moyen (USD ; coût direct + durée valorisée)', 'Qualité moyenne (/30)'),
         ]
         for name, title, xkey, ykey, xlabel, ylabel in scatter_axes:
             fig=plt.figure(figsize=(11.6929,8.2677))
@@ -236,7 +240,8 @@ def render(output, snapshot):
                 ax.scatter(x,y,s=size,marker=marker,
                            facecolors='none' if provisional or a == 'mr' else color,
                            edgecolors=color if a in {'mi','mr'} else '#ea580c' if provisional else color,
-                           linewidths=1.7 if a in {'mi','mr'} else 1,zorder=4 if a == 'mi' else 3)
+                           linewidths=1.7 if a in {'mi','mr'} or a in DASHED_MODELS else 1,
+                           linestyles='--' if a in DASHED_MODELS else '-',zorder=4 if a == 'mi' else 3)
                 if a in frontier:
                     ax.scatter(x,y,s=210,facecolors='none',edgecolors='#b45309',linewidths=1.8,zorder=2)
                 entries.append((a,x,y,color,provisional))
@@ -308,7 +313,7 @@ def render(output, snapshot):
             if name == 'quality-total-cost':
                 fig.text(.045,.855,f'Par ticket : coût total = coût direct + {hourly_usd:g} × durée / 3 600 ; puis moyenne. Toute la durée est valorisée, DNF inclus.',fontsize=8)
             fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Mistral : losange violet = Idéal, cercle rouge = beta. Coût et durée en échelle logarithmique.\n'
-                     'Coût local = électricité seule ; coût hébergé = API. Les graphiques de significativité utilisent uniquement les identités complètes.',fontsize=8)
+                     'Contours pointillés : Qwen 3 / 3.6, Sol 6, Mistral beta. Coût local = électricité seule ; hébergé = API. Les graphiques de significativité utilisent uniquement les identités complètes.',fontsize=8)
             pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
         fig=plt.figure(figsize=(11.6929,8.2677));fig.text(.06,.91,'Méthode et périmètre',fontsize=20,fontweight='bold')
         paragraphs=[
@@ -317,7 +322,7 @@ def render(output, snapshot):
             'Test : Wilcoxon des rangs signés, bilatéral ; permutations exhaustives des signes (2^m).\nDifférences nulles exclues, rangs ex æquo moyens, arrondi des différences à 9 décimales.\nHypothèse : différences indépendantes entre tickets et symétriques autour de zéro sous H0.\nLa direction suit la somme des rangs signés ; aucune flèche tirée d’une simple différence de médianes.',
             'Les pages principales utilisent p < 0,05 par comparaison. Les p ajustés de Holm, par axe,\nsont fournis dans le CSV ; les comptes ajustés figurent au bas des graphes. Avec 10 tickets\net de nombreuses paires, la correction est peu puissante. Pas de flèche ne signifie pas égalité.',
             'Réduction transitive : supprimer uniquement les liens déjà reliés par un autre chemin ;\nconserver toutes les comparaisons directes dans le CSV. La significativité n’est pas transitive.\nLes cycles, s’ils existent, restent visibles à l’intérieur de leurs composantes fortement connexes.',
-            'Les erreurs fournisseur/quota restent invalides et nécessitent un rejeu. Aucun score de modèle\nn’est déduit de ces erreurs. Mistral Idéal : dernier succès ; réelle : tous les essais, meilleure note.\nCoûts Mistral estimés aux tarifs EUR de lancement ; temps cumulés par ticket.\nSource statistique : docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html',
+            'Les erreurs fournisseur/quota restent invalides et nécessitent un rejeu. Aucun score de modèle\nn’est déduit de ces erreurs. Mistral Idéal : dernier succès ; beta : tous les essais, meilleure note.\nCoûts Mistral estimés aux tarifs EUR de lancement ; temps cumulés par ticket.\nSource statistique : docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html',
         ]
         y=.83
         for text in paragraphs:
