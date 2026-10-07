@@ -1,26 +1,27 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-06T17:34Z
+Last updated: 2026-10-07T19:52Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-06T17:34Z · as of e024306c -->
+<!-- generated 2026-10-07T19:52Z · as of 8cffb36b -->
 
 **Tickets:** 3 ready · 12 blocked — `erg ready tickets/` for full list
   next: 0974 Tracker: portable model capability and effort p… · 1045 Local merge gate replaces the forge's required …
-**In flight:** no open PRs · CI main: success
+**In flight:** no open PRs · CI main: in progress
 **Recent (first-parent):**
-  e024306c Merge pull request #1237 from MinhHaDuong/roar/model-tournament-cycle2-wrapup
-  ea764d5f Merge pull request #1238 from MinhHaDuong/roar/raid1004-20261006
-  017fcccb Merge pull request #1235 from MinhHaDuong/raid/1004-integration
+  8cffb36b Merge pull request #1248 from MinhHaDuong/roar/pr1245-wrapup
+  e50e1e19 Merge pull request #1245 from MinhHaDuong/news/mistral-large4-arena
+  59ddd1b8 Merge pull request #1247 from MinhHaDuong/docs/tournament-report-layout
 
 ## Ready work
 
 The remaining attribution task is 1004's separate original-criteria integration review. Its historical notes stay intact. Runtime policy 0974 and memory migration 0913 remain separate work. The model tournament cycle 2 is CLOSED (142/160 legs, 426 seats, multidimensional analysis done): skills/route + skills/arena are on main, the routing verdict is recorded in tracker 1024, and eleven follow-up tickets (1046-1058) carry the rest — report, cycle 3, HW-v2, live routing application. The original 1032 and 1009 criteria are checked in the dated coverage correction; no new criterion was added.
 
 ## Resume point
+2026-10-07: PR #1245 (Mistral Large 4 arena extension, ticket 1060) merged; PR #1248 (roar journal capture for #1245) merged. Housekeeping sweep run 2026-10-07: no stale branches/worktrees, no exit-criteria closures.
 The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Portable installation (0999) is complete — integration review closed in #1104; `./bin/idh install`/`check`/`sync` are the registration surface.
 Memory v8 is delivered end to end: convention/inventory (#1102), pilot (#1109), capture 0988, dreaming 0910/0916, and acceptance trials 0918 — historical verdict **No global rollout** (docs/memory-v8/evaluation-results.md); 1019/1022 subsequently lifted the acceptance blockers and 0913 now holds ready per-project migration work. The dated October 2 blocked planning note is historical; no rollout is dispatched here.
 The Zotero train is COMPLETE (2026-10-03/04): 1018 consolidated into one `zotero` skill with verbs (waves A #1178 + B #1179, author force-approve on a full review round), the `~/.idh` rider landed as 1025 (#1177), and the gaze un-reviewable breaker now counts content-bearing files (1026, #1180 — pure renames no longer fire it). The 0485 byte-for-byte report reproduction remains author-side; the vendored URL-intake copy in livre-milliards-climat (already drifted) and the now-dangling installed symlink are recorded in 1018.
