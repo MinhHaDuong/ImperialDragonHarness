@@ -9,16 +9,16 @@ import datetime
 import importlib.util
 import itertools
 import json
-from pathlib import Path
 import statistics
+from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
+from matplotlib.font_manager import FontProperties
 from matplotlib.patches import FancyArrowPatch
 from matplotlib.transforms import Bbox
-from matplotlib.font_manager import FontProperties
-import numpy as np
 from scipy.stats import rankdata
 
 matplotlib.use("Agg")
@@ -352,10 +352,9 @@ def render(output, snapshot):
         fig.text(
             0.06,
             0.85,
-            f"Intercomparaison avec Pi, sur des tickets de projets utilisant Imperial Dragon Harness\n{snapshot['generated_at'][:10]}",
+            "Intercomparaison avec Pi, sur des tickets de projets utilisant Imperial Dragon Harness",
             fontsize=12,
         )
-        fig.text(0.06, 0.045, "minh.ha-duong@cnrs.fr", fontsize=12)
         fig.text(
             0.06,
             0.78,
@@ -366,16 +365,16 @@ def render(output, snapshot):
         )
         findings = [
             (
-                "Vainqueur du tournoi : Luna 6 medium",
-                "Luna 6 medium fait jeu égal avec Sol 6.1 low en qualité et vitesse, en moins cher. Limite : la mesure mélange orchestration-codage-revue.",
+                "Luna 6 medium : le meilleur compromis observé",
+                "Chez Claude comme chez ChatGPT, monter en gamme tout en réduisant l’effort ne donne pas ici d’avantage net : Opus 5.5 low face à Sonnet 5.5 medium, et Sol 6.1 low face à Luna 6 medium, offrent une qualité moyenne proche pour un coût supérieur. Sonnet est aussi plus rapide qu’Opus ; Luna fait jeu comparable avec Sol en vitesse. Limite : la mesure mélange orchestration-codage-revue.",
             ),
             (
-                "Qwen 3.8 Flash-Next xhigh avec Strata domine en non-interactif",
-                "Pour les tâches non interactives, Qwen 3.8 Flash-Next à effort xhigh, exécuté localement avec Strata, domine ce comparatif.",
+                "Qwen 3.8 Flash-Next xhigh : une option locale pour privilégier la qualité",
+                "Avec Strata et la quantification IQ3_S, cette configuration obtient la meilleure note moyenne : 26,2/30, pour une durée moyenne de 46 minutes par ticket. Elle convient davantage au travail asynchrone. Son avance reste sensible à l’échantillon : sans le ticket 0333, sa moyenne rejoint celle de Mistral.",
             ),
             (
-                "Qwen 3.8 local atteint la qualité des modèles commerciaux hébergés",
-                "Qwen 3.8 progresse nettement par rapport à Qwen 3.6. Sur ces dix tâches, il atteint en local la qualité des modèles commerciaux hébergés. Cette comparaison utilise toutefois un effort xhigh pour Qwen, contre medium pour les modèles commerciaux de référence. Ce réglage privilégie la qualité au prix d’une verbosité accrue, donc d’une durée plus longue.",
+                "La configuration Qwen 3.8 locale atteint la qualité des références hébergées",
+                "La meilleure configuration Qwen 3.8 locale rejoint la qualité des références commerciales et progresse nettement sur Qwen 3.6. Le gain mêle génération, quantification, runtime et effort. Qwen tourne à xhigh, contre medium pour les références : davantage de verbosité et une durée accrue.",
             ),
             (
                 "La lenteur et la sérialisation sur GPU limitent l’interactif en local",
@@ -391,8 +390,16 @@ def render(output, snapshot):
             fig.text(0.06, y, heading, fontsize=13, fontweight="bold", va="top")
             text = wrap_paragraph(fig, text, 10.5)
             fig.text(0.06, y - 0.03, text, fontsize=10.5, va="top", linespacing=1.35)
-            y -= 0.065 + 0.025 * len(text.splitlines())
+            y -= 0.05 + 0.025 * len(text.splitlines())
         fig.text(0.045, 0.015, source_text, fontsize=8, color="#475569")
+        fig.text(
+            0.955,
+            0.015,
+            str(pdf.get_pagecount() + 1),
+            ha="right",
+            fontsize=8,
+            color="#475569",
+        )
         pdf.savefig(fig)
         plt.close(fig)
         scatter_axes = [
@@ -726,11 +733,19 @@ def render(output, snapshot):
             fig.text(
                 0.045,
                 0.045,
-                "Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Mistral : losange violet = Idéal, cercle rouge = beta. Coût et durée en échelle logarithmique.\n"
-                "Coût local = électricité seule ; coût hébergé = API.",
+                "Bleu : local ; vert : hébergé. Mistral : losange violet = Idéal, cercle rouge = beta. Coût et durée en échelle logarithmique.\n"
+                "Anneau orange : frontière de Pareto (séries complètes, qualité moyenne ≥ 15/30). Coût local = électricité seule ; coût hébergé = API.",
                 fontsize=8,
             )
             fig.text(0.045, 0.015, source_text, fontsize=8, color="#475569")
+            fig.text(
+                0.955,
+                0.015,
+                str(pdf.get_pagecount() + 1),
+                ha="right",
+                fontsize=8,
+                color="#475569",
+            )
             pdf.savefig(fig)
             fig.savefig(output / f"{name}.png", dpi=160)
             plt.close(fig)
@@ -836,10 +851,18 @@ def render(output, snapshot):
                 0.045,
                 0.045,
                 "L’épaisseur des flèches traduit l’intensité de l’effet. Absence de flèche ≠ équivalence.\n"
-                "Un chemin indirect ne constitue pas un nouveau test significatif. Détails p et n dans le CSV et les fichiers DOT.",
+                "Un chemin indirect ne constitue pas un nouveau test significatif.",
                 fontsize=8,
             )
             fig.text(0.045, 0.015, source_text, fontsize=8, color="#475569")
+            fig.text(
+                0.955,
+                0.015,
+                str(pdf.get_pagecount() + 1),
+                ha="right",
+                fontsize=8,
+                color="#475569",
+            )
             pdf.savefig(fig)
             fig.savefig(output / f"{metric}.png", dpi=160)
             plt.close(fig)
@@ -851,9 +874,9 @@ def render(output, snapshot):
             "Notation des résultats sur 30 selon le système de la boxe : trois juges partent de 10\net déduisent des points pour les fautes selon leur sévérité : −3, −2, −1 ou −0,5 point.\nLes juges examinent le travail sans connaître le modèle qui l’a produit. Une absence\nde résultat exploitable vaut zéro ; une impossibilité correctement expliquée est jugée normalement.",
             "Le juge principal est Gemini 3.1 Pro Preview ; les deux autres sont Grok 4.3 et MiniMax M2.5.\nLes résultats conservés du premier cycle ont été jugés par Gemini 3.1 Pro Preview,\nDeepSeek V4 Pro et Kimi K3. Les notes sont additionnées, sans pondération entre juges.",
             "Les modèles locaux tournent sur une Lenovo ThinkStation P620 : Ryzen Threadripper PRO\n3945WX, 128 Go de RAM, deux GPU RTX A4000 + RTX 3060 (28 Go de VRAM au total).\nLe coût local estime l’électricité à 600 W et 0,23 €/kWh, sans amortissement du matériel.\nLes coûts API sont ceux des tokens consommés ; conversion commune : 1,08 USD pour 1 EUR.",
-            "Les nuages de points présentent les moyennes par ticket de qualité, durée et coût.\nChaque ticket représente un erg moyen. La valeur du délai est exprimée par erg et par heure, en USD/(erg·h) ou EUR/(erg·h), et non comme un salaire horaire.\nMistral Idéal retient le dernier résultat réussi de chaque ticket. Mistral beta additionne\nles coûts et durées de tous ses essais, interruptions comprises, et garde la meilleure note.\nSes coûts sont répartis selon les tokens facturés ; les nouveaux essais restent estimés.\nLa frontière de Pareto exclut les séries incomplètes et les qualités moyennes inférieures à 15/30.",
+            "Les nuages de points présentent les moyennes par ticket de qualité, durée et coût.\nChaque ticket représente un erg moyen. La valeur du délai est exprimée par erg et par heure, en USD/(erg·h) ou EUR/(erg·h), et non comme un salaire horaire.\nMistral Idéal retient le dernier résultat réussi de chaque ticket. Mistral beta additionne\nles coûts et durées de 25 tentatives directes conservées et du succès OpenRouter sur 0874,\ninterruptions comprises, et garde la meilleure note. Huit autres tentatives OpenRouter\net une tentative directe invalidée pour configuration ne sont pas comptabilisées.\nSes coûts sont répartis selon les tokens facturés ; les nouveaux essais restent estimés.\nLa frontière de Pareto exclut les séries incomplètes et les qualités moyennes inférieures à 15/30.",
             "Sur les trois graphes acycliques, les flèches comparent les résultats\nticket par ticket par un test de Wilcoxon apparié, bilatéral, au seuil de 5 %.\nElles vont vers le résultat moins juste, plus lent ou plus cher.\nLes flèches redondantes par transitivité sont retirées pour faciliter la lecture.\nL’absence de flèche ne prouve pas l’équivalence ; un chemin indirect n’est pas un test supplémentaire.",
-            "Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets, aucune différence ne franchit ce seuil plus exigeant : les écarts détectés\ndeux à deux ne constituent donc pas un classement global garanti à 95 %.\nLes astérisques signalent les séries provisoires ; Mistral beta a un contour pointillé dans les DAG.\nQwen 3, Qwen 3.6 et GPT-6 Sol figurent seulement dans les nuages de points.",
+            "Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets et 120 comparaisons par graphe, ce seuil corrigé est hors d’atteinte du test utilisé,\nmême lorsqu’un modèle gagne sur les dix tickets. L’absence de flèches après correction ne signifie\ndonc pas que les modèles sont équivalents : cet échantillon ne permet pas d’établir les différences\navec cette garantie globale.\nMistral beta a un contour pointillé dans les DAG.\nQwen 3, Qwen 3.6 et GPT-6 Sol figurent seulement dans les nuages de points.",
         ]
         paragraphs.append(
             "Limite : cette évaluation confie à un seul modèle l’ensemble du travail : orchestration,\nréalisation et revue de sa propre production. Elle mesure donc sa capacité à mener\nune tâche de bout en bout, plutôt que les performances d’un harnais qui choisit\ndifférents modèles selon les rôles et confie les revues à des modèles distincts pour\nréduire les erreurs corrélées. Les trois juges externes évaluent le résultat final ;\nils ne participent pas à sa réalisation."
@@ -874,6 +897,14 @@ def render(output, snapshot):
         for index, text in enumerate(paragraphs):
             if index == 6:
                 fig.text(0.045, 0.015, source_text, fontsize=8, color="#475569")
+                fig.text(
+                    0.955,
+                    0.015,
+                    str(pdf.get_pagecount() + 1),
+                    ha="right",
+                    fontsize=8,
+                    color="#475569",
+                )
                 pdf.savefig(fig)
                 plt.close(fig)
                 fig = plt.figure(figsize=(11.6929, 8.2677))
@@ -907,8 +938,25 @@ def render(output, snapshot):
                     va="top",
                     url="https://github.com/MinhHaDuong/ImperialDragonHarness",
                 )
-                y -= 0.07
+                fig.text(
+                    0.06,
+                    y - 0.06,
+                    "• Données et scripts du comparatif : version figée beta 0",
+                    fontsize=9,
+                    color="#2563eb",
+                    va="top",
+                    url="https://github.com/MinhHaDuong/ImperialDragonHarness/tree/433c6fd224ccb77e6ff91b74365440fd2f9a6bcd/docs/tournament-graphs",
+                )
+                y -= 0.10
         fig.text(0.045, 0.015, source_text, fontsize=8, color="#475569")
+        fig.text(
+            0.955,
+            0.015,
+            str(pdf.get_pagecount() + 1),
+            ha="right",
+            fontsize=8,
+            color="#475569",
+        )
         pdf.savefig(fig)
         plt.close(fig)
         fig = plt.figure(figsize=(11.6929, 8.2677))
@@ -979,7 +1027,7 @@ def render(output, snapshot):
                 cell.set_facecolor("#f8fafc" if r % 2 else "white")
                 if c == 0:
                     cell.set_text_props(ha="left")
-        note = "Moyennes par ticket, échecs inclus ; les séries incomplètes portent sur les tickets évalués. Coût local : électricité seule. Mistral Idéal : dix succès, dont 0874 via OpenRouter. Mistral beta : mêmes notes, coûts et durées de toutes les tentatives directes, plus le remplacement OR de 0874. « Réussis » compte les tickets livrés, pas le nombre de tentatives."
+        note = "Moyennes par ticket, échecs inclus ; les séries incomplètes portent sur les tickets évalués. Coût local : électricité seule. Mistral Idéal : dix succès, dont 0874 via OpenRouter. Mistral beta : mêmes notes, coûts et durées de 25 tentatives directes conservées, plus le remplacement OR de 0874 ; huit autres tentatives OR et un incident direct de configuration sont exclus. « Réussis » compte les tickets livrés, pas le nombre de tentatives. Les 9/10 correspondent à quatre dépassements du plafond de deux heures (a et b3 : 0874 ; j : 0333 ; k : 0211) et à une fin sans livraison valide (c2 : 0470). Ces échecs sont conservés à 0/30, avec leurs ressources consommées, plutôt que remplacés par une réussite après reprise ; le traitement particulier de Mistral est détaillé dans les limites."
         fig.text(
             0.06,
             0.12,
@@ -989,6 +1037,69 @@ def render(output, snapshot):
             linespacing=1.35,
         )
         fig.text(0.045, 0.015, source_text, fontsize=8, color="#475569")
+        fig.text(
+            0.955,
+            0.015,
+            str(pdf.get_pagecount() + 1),
+            ha="right",
+            fontsize=8,
+            color="#475569",
+        )
+        pdf.savefig(fig)
+        plt.close(fig)
+        fig = plt.figure(figsize=(11.6929, 8.2677))
+        fig.text(
+            0.06,
+            0.91,
+            "Discussion : de la réponse au travail livré",
+            fontsize=20,
+            fontweight="bold",
+        )
+        discussion = [
+            (
+                "Deux benchmarks pour deux questions de recherche",
+                "En mai 2026, nous avions testé si les LLM pouvaient produire un inventaire fiable des centrales thermiques au Vietnam, nécessaire à la modélisation du système électrique. Quatorze modèles répondaient sans documents ; quatre étaient ensuite comparés avec ou sans documents sources, en un ou plusieurs tours, avec cinq répétitions par condition et un inventaire de référence. Fournir les sources aidait davantage qu’ajouter des tours. Le tournoi d’octobre porte sur une autre tâche : exécuter dix tickets de recherche avec outils et accès au projet. À harnais commun, ses résultats invitent à choisir conjointement le modèle et l’effort, plutôt qu’à monter systématiquement en gamme.",
+            ),
+            (
+                "Répétabilité et réussite au premier essai : deux formes de fiabilité",
+                "Le benchmark de mai montrait déjà que les modèles commerciaux vendaient aussi de la répétabilité : une faible dispersion des résultats entre répétitions. Le tournoi aborde un autre aspect de la fiabilité : livrer un résultat exploitable dès le premier essai. Les incidents Mistral montrent l’importance économique de cette distinction. Toutefois, les reprises et leur comptabilisation diffèrent entre modèles ; ce rapport ne permet donc pas encore de comparer uniformément leurs taux de réussite au premier essai.",
+            ),
+            (
+                "Du prix de la requête au coût du résultat livré",
+                "Le premier benchmark mesurait le coût par requête. Les reprises Mistral montrent pourquoi il faut aussi compter le travail interrompu et le délai avant livraison. La valeur du délai dépend de l’usage : l’interactivité et le travail asynchrone peuvent conduire à des choix différents. Les protocoles de reprise restent toutefois hétérogènes entre séries.",
+            ),
+            (
+                "La qualité recherche reste une question ouverte",
+                "En mai, la vérification de la qualité recherche restait inachevée. Les notes de trois juges sur dix tickets ne la remplacent pas : elles évaluent des livrables selon une autre grille. Le prochain enjeu est de vérifier les faits et leur provenance, puis d’évaluer des harnais qui routent les rôles et confient la revue à des modèles distincts.",
+            ),
+        ]
+        y = 0.83
+        for heading, text in discussion:
+            fig.text(0.06, y, heading, fontsize=12, fontweight="bold", va="top")
+            text = wrap_paragraph(fig, text, 10.5)
+            fig.text(0.06, y - 0.035, text, fontsize=10.5, va="top", linespacing=1.4)
+            y -= 0.075 + 0.025 * len(text.splitlines())
+        fig.text(0.06, y, "Référence", fontsize=11, fontweight="bold", va="top")
+        reference = "Ha-Duong, Minh (2026). Beyond RAG: Architectures for Reliable Economic Statistics with Agentic Systems. Présentation à Econom’IA, Thema, CY Cergy Paris Université, 27 mai. Support français."
+        fig.text(
+            0.06,
+            y - 0.035,
+            wrap_paragraph(fig, reference, 9.5),
+            fontsize=9.5,
+            va="top",
+            linespacing=1.4,
+            url="https://minh.haduong.com/files/HaDuong-2026-EconomIA-BeyondRAG.pdf",
+            color="#2563eb",
+        )
+        fig.text(0.045, 0.015, source_text, fontsize=8, color="#475569")
+        fig.text(
+            0.955,
+            0.015,
+            str(pdf.get_pagecount() + 1),
+            ha="right",
+            fontsize=8,
+            color="#475569",
+        )
         pdf.savefig(fig)
         plt.close(fig)
     allrows = [r for result in results.values() for r in result["comparisons"]]
