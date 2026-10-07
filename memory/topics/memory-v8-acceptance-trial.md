@@ -58,6 +58,13 @@ AGENTS.md while the planted CLAUDE.md was never delivered to it — the
 contradictory-note probe missed its target on that runtime, and the
 conductor's loading-order assumption was wrong in the other direction.
 
+Refreshed 2026-10-07 from a later entry of the same day: the Pi miss is
+explained by pi loading only the first of `AGENTS.override.md`, `AGENTS.md`,
+`AGENTS.MD`, `CLAUDE.md` per directory; the pi cells re-ran and passed on the
+local llama.cpp server (PR #1150), and the codex channel was closed with a
+user-level `AGENTS.md` in `CODEX_HOME` (PR #1147). The metered Kimi-K2.6 pi
+leg was never re-run.
+
 ## Hypotheses, not facts
 
 That any of these behaviors generalize beyond the sessions, versions and
@@ -79,6 +86,7 @@ as single-sample evidence; no runtime is certified by these observations.
 - Vibe probe entries: [read-index helper absent](../journal/2026/2026-10-02-t0918-trial-read-index-helper-absent.md), [smoke slug collision](../journal/2026/2026-10-02-t0918-trial-smoke-slug-collision.md), [native AGENTS.md injection](../journal/2026/2026-10-02-t0918-trial-vibe-native-agents-injection.md), [aborted-session read-index](../journal/2026/2026-10-02-skills-dream-read-index-not-found.md).
 - [Pi leg interrupted by credit depletion](../journal/2026/2026-10-02-memory-v8-0918-pi-leg-interrupted-credit-depletion.md) — external limit, not a capture decision.
 - [Pi loaded AGENTS.md, not the planted CLAUDE.md](../journal/2026/2026-10-02-memory-v8-0918-pi-loaded-agents-not-planted-claude-md.md) — the S9-pi probe missed its target; delivery channel confirmed.
+- [Orchestrated raid closes 0909](../journal/2026/2026-10-02-orchestrated-raid-closes-memory-v8-tracker.md) — post-trial re-runs, PRs #1147 and #1150.
 - Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
   revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).
   Trial provenance: [evaluation protocol](../../docs/memory-v8/evaluation-protocol.md)
