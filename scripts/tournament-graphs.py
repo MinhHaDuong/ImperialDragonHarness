@@ -123,6 +123,7 @@ def total_cost_median(legs, hourly_usd):
 
 def render(output, snapshot):
     nodes = sorted(snapshot['arms'])
+    source_text = f"Source: minh.ha-duong@cnrs.fr, {snapshot['generated_at'][:10]}"
     hourly_usd = snapshot.get('time_value_usd_hour', 1.0)
     for arm in nodes:
         legs = snapshot['legs'][arm]
@@ -209,7 +210,7 @@ def render(output, snapshot):
                      f"Holm (famille de {len(summary['comparisons'])} tests) : {len(summary['holm_edges'])} flèches.",fontsize=9)
             fig.text(.045,.045,'Seuil nominal par comparaison, sans garantie simultanée. Absence de flèche ≠ équivalence.\n'
                      'Un chemin indirect ne constitue pas un nouveau test significatif. Détails p et n dans le CSV et les fichiers DOT.',fontsize=8)
-            pdf.savefig(fig);fig.savefig(output/f'{metric}.png',dpi=160);plt.close(fig)
+            fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);fig.savefig(output/f'{metric}.png',dpi=160);plt.close(fig)
         scatter_axes = [
             ('quality-cost', 'Qualité / coût', 'cost_usd_mean', 'quality_mean',
              'Coût moyen (USD)', 'Qualité moyenne (/30)'),
@@ -313,7 +314,7 @@ def render(output, snapshot):
                 fig.text(.045,.855,f'Par ticket : coût total = coût direct + {hourly_usd:g} × durée / 3 600 ; puis moyenne. Toute la durée est valorisée, DNF inclus.',fontsize=8)
             fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Mistral : losange violet = Idéal, cercle rouge = beta. Coût et durée en échelle logarithmique.\n'
                      'Coût local = électricité seule ; coût hébergé = API.',fontsize=8)
-            pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
+            fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
         fig=plt.figure(figsize=(11.6929,8.2677));fig.text(.06,.91,'Méthode et périmètre',fontsize=20,fontweight='bold')
         paragraphs=[
             f"Instantané UTC : {snapshot['generated_at']}. Cycles additifs : {len(nodes)} identités, 10 tickets par identité.\nSpaceBunny et les essais préliminaires 0188 sont exclus. Les bras en rejeu sont isolés et marqués provisoires.",
@@ -326,7 +327,7 @@ def render(output, snapshot):
         y=.83
         for text in paragraphs:
             fig.text(.06,y,text,fontsize=10,va='top',linespacing=1.6);y-=.115 if len(text.splitlines())<=3 else .175
-        pdf.savefig(fig);plt.close(fig)
+        fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
     allrows=[r for result in results.values() for r in result['comparisons']]
     with (output/'comparisons.csv').open('w') as out:
         writer=csv.DictWriter(out,fieldnames=list(allrows[0]));writer.writeheader();writer.writerows(allrows)
