@@ -1,4 +1,4 @@
-Version du rapport : **beta 0**, arrêtée le 2026-10-07.
+Révision en cours après la **beta 0**, fusionnée dans la PR #1243 le 2026-10-07.
 
 # Comparaisons du tournoi
 

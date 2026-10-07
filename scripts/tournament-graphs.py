@@ -366,8 +366,8 @@ def render(output, snapshot):
         )
         findings = [
             (
-                "Vainqueur du tournoi : Luna 6 medium",
-                "Luna 6 medium fait jeu égal avec Sol 6.1 low en qualité et vitesse, en moins cher. Limite : la mesure mélange orchestration-codage-revue.",
+                "Luna 6 medium : le meilleur compromis observé",
+                "Des moyennes de qualité et de durée proches de Sol 6.1 low, pour un coût divisé par 5,3. Limite : la mesure mélange orchestration-codage-revue.",
             ),
             (
                 "Qwen 3.8 Flash-Next xhigh avec Strata domine en non-interactif",
