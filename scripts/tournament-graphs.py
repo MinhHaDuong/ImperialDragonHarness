@@ -18,8 +18,27 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.patches import FancyArrowPatch
 from matplotlib.transforms import Bbox
+from matplotlib.font_manager import FontProperties
 import numpy as np
 from scipy.stats import rankdata
+
+def wrap_paragraph(fig, text, fontsize, width=.88):
+    """Wrap prose to the available physical width of the landscape page."""
+    renderer = fig.canvas.get_renderer()
+    font = FontProperties(size=fontsize)
+    limit = fig.bbox.width * width
+    lines, line = [], ''
+    for word in text.split():
+        candidate = f'{line} {word}' if line else word
+        if line and renderer.get_text_width_height_descent(candidate, font, False)[0] > limit:
+            lines.append(line)
+            line = word
+        else:
+            line = candidate
+    if line:
+        lines.append(line)
+    return '\n'.join(lines)
+
 
 spec = importlib.util.spec_from_file_location('analysis', Path(__file__).with_name('tournament-analysis.py'))
 analysis = importlib.util.module_from_spec(spec)
@@ -185,14 +204,15 @@ def render(output, snapshot):
         fig.text(.06,.78,'Dix tickets tirés au hasard dans l’historique des projets de l’auteur.\nDes modèles locaux et hébergés reprennent les mêmes tâches ; trois juges notent les résultats sur 30.\nNous comparons leur qualité, leur durée et leur coût, ainsi que le poids des incidents et des reprises.',
                  fontsize=12,linespacing=1.6,va='top')
         findings=[
-            ('Luna 6 medium : qualité proche de Sol 6.1 low, coût inférieur', 'Luna 6 medium fait quasi jeu égal en qualité avec Sol 6.1 low, pour un coût inférieur.\nLimite : la mesure mélange orchestration-codage-revue.'),
-            ('Qwen 3.8 Flash-Next xhigh avec Strata domine en non-interactif', 'Pour les tâches non interactives, Qwen 3.8 Flash-Next à effort xhigh, exécuté\nlocalement avec Strata, domine ce comparatif.'),
-            ('Qwen 3.8 local atteint la qualité des modèles commerciaux hébergés', 'Le saut générationnel entre Qwen 3.6 et Qwen 3.8 porte les modèles ouverts exécutés\nlocalement au niveau de qualité des modèles commerciaux hébergés sur les tâches\nde cet échantillon.'),
-            ('La lenteur et la sérialisation sur GPU limitent l’interactif en local', 'Sur la workstation testée, la lenteur et la nécessité de sérialiser les tâches sur les GPU\nlimitent fortement l’usage interactif, tandis que les API permettent des flux de travail\nfortement parallélisés.\nLes attentes portent sur Qwen 4 et Mistral 4, les mises à niveau du matériel et les\noptimisations quotidiennes du runtime, qui pourraient atténuer ces contraintes.'),
-            ('Mistral Large 4 : qualité prometteuse, fiabilité encore pénalisante', 'Mistral Large 4, annoncé le 6 octobre 2026, est prometteur en qualité, mais les incidents\nd’hébergement et les boucles observées dans son intégration au runtime Pi pénalisent\nencore sa fiabilité, sa vitesse et son coût.')]
+            ('Luna 6 medium : qualité proche de Sol 6.1 low, coût inférieur', 'Luna 6 medium fait quasi jeu égal en qualité avec Sol 6.1 low, pour un coût inférieur. Limite : la mesure mélange orchestration-codage-revue.'),
+            ('Qwen 3.8 Flash-Next xhigh avec Strata domine en non-interactif', 'Pour les tâches non interactives, Qwen 3.8 Flash-Next à effort xhigh, exécuté localement avec Strata, domine ce comparatif.'),
+            ('Qwen 3.8 local atteint la qualité des modèles commerciaux hébergés', 'Le saut générationnel entre Qwen 3.6 et Qwen 3.8 porte les modèles ouverts exécutés localement au niveau de qualité des modèles commerciaux hébergés sur les tâches de cet échantillon.'),
+            ('La lenteur et la sérialisation sur GPU limitent l’interactif en local', 'Sur la workstation testée, la lenteur et la nécessité de sérialiser les tâches sur les GPU limitent fortement l’usage interactif, tandis que les API permettent des flux de travail fortement parallélisés. Les attentes portent sur Qwen 4 et Mistral 4, les mises à niveau du matériel et les optimisations quotidiennes du runtime, qui pourraient atténuer ces contraintes.'),
+            ('Mistral Large 4 : qualité prometteuse, fiabilité encore pénalisante', 'Mistral Large 4, annoncé le 6 octobre 2026, est prometteur en qualité, mais les incidents d’hébergement et les boucles observées dans son intégration au runtime Pi pénalisent encore sa fiabilité, sa vitesse et son coût.')]
         y=.65
         for heading,text in findings:
             fig.text(.06,y,heading,fontsize=13,fontweight='bold',va='top')
+            text = wrap_paragraph(fig, text, 10.5)
             fig.text(.06,y-.03,text,fontsize=10.5,va='top',linespacing=1.35)
             y-=.04 + .025 * len(text.splitlines())
         fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
@@ -362,6 +382,7 @@ def render(output, snapshot):
                 fig=plt.figure(figsize=(11.6929,8.2677))
                 fig.text(.06,.91,'Méthode : comparaisons et limites',fontsize=20,fontweight='bold')
                 y=.84
+            text = wrap_paragraph(fig, text, 9.5)
             fig.text(.06,y,text,fontsize=9.5,va='top',linespacing=1.35)
             y-=len(text.splitlines())*.0215+.023
         fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
