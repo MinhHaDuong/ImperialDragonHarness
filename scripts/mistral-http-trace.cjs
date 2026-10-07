@@ -10,11 +10,12 @@ if (root) {
   const {AsyncLocalStorage} = require('node:async_hooks');
   const nested = new AsyncLocalStorage();
   const original = (...args) => nested.run(true, () => activeFetch(...args));
-  let sequence=0, previous='', repeats=0;
+  let sequence=0, previous='', repeats=0, tripped=false;
   const hash = x => crypto.createHash('sha256').update(x).digest('hex');
   const write = (file,x) => fs.writeFileSync(file,JSON.stringify(x,null,2),{mode:0o600});
   const tracedFetch = async function(input, options) {
     if (nested.getStore()) return baseFetch(input,options);
+    if(tripped) throw new Error('MISTRAL_LOOP_BREAKER: session already tripped');
     const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url);
     if (url.hostname !== 'api.mistral.ai' || !url.pathname.endsWith('/chat/completions'))
       return original(input,options);
@@ -32,6 +33,11 @@ if (root) {
     repeats=results.length && signature===previous ? repeats+1 : results.length ? 1 : 0;
     previous=signature;
     if(repeats>=5) write(prefix+'.loop.json',{repetitions:repeats,signature,action:'observe-only',timestamp:new Date().toISOString()});
+    if(repeats>=Number(process.env.MISTRAL_LOOP_BREAKER || Infinity)) {
+      tripped=true;
+      write(prefix+'.breaker.json',{repetitions:repeats,signature,action:'abort-before-next-request',timestamp:new Date().toISOString()});
+      throw new Error('MISTRAL_LOOP_BREAKER: identical tool calls and results repeated');
+    }
     let response;
     try { response=await original(input,options); }
     catch(error) {write(prefix+'.error.json',{name:error.name,timestamp:new Date().toISOString()});throw error;}

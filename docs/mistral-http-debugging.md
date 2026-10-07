@@ -28,3 +28,13 @@ Verification: `node tests/test-mistral-http-trace.cjs`. Checks exact stream byte
 one upstream call per request, observe-only loop detection, credential-header
 exclusion and private file modes. Live Pi smoke evidence stays in
 `~/arena/mistral-http-instrumentation-smoke/`.
+
+With `MISTRAL_LOOP_BREAKER=5`, the fifth identical pair triggers a private
+`.breaker.json` marker and rejects the next HTTP request. The session remains
+latched, preventing subsequent requests. Diagnostic retries use arm `mb`, native
+ML4/off, with the changed protocol explicitly recorded. Old completed looped
+runs are annotated via `diagnostic.json` without rewriting original records:
+they remain in real cumulative cost/time, but cannot be selected as ideal success.
+An external watcher polls existing uninstrumented sessions every five seconds,
+compares tool commands and results, and terminates only the matching Pi process
+group when five identical consecutive pairs are confirmed.

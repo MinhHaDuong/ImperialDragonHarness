@@ -17,3 +17,15 @@ Nous avons lancé les **neuf autres tâches en parallèle**, sur les mêmes base
 Cette série nous dira si Mistral Large 4 trouve une place sur la frontière qualité/coût de nos outils de travail. À ce stade, nous avons un premier résultat et une expérience en cours. Le classement attendra les dix tâches.
 
 *Actualisation pendant le test : cinq tâches ont abouti par l’API native ; les cinq autres ont été interrompues par des erreurs de service. Elles sont relancées en parallèle via OpenRouter, qui ne propose actuellement que Mistral comme fournisseur pour ce modèle. Nous distinguerons les deux routes dans les résultats : disponibilité du service et qualité du modèle sont deux mesures différentes.*
+
+## Bilan provisoire et limites
+
+Sur ce panel, la qualité de ML4 est bonne, plus proche d’Opus medium que d’Opus
+low. Des boucles observées dans la chaîne Pi–ML4 et plusieurs reprises après
+incidents fournisseur dégradent fortement vitesse et coût effectifs. Dans ces
+conditions, ML4 n’est pas compétitif face à Qwen 3.8 Flash-Next sur Strata xhigh
+local. Cette conclusion reste provisoire : les trois derniers runs natifs doivent
+être intégrés. Le coût local compte l’électricité seule, sans amortissement.
+Les boucles ne sont pas encore attribuées définitivement au modèle ou à Pi.
+Un disjoncteur diagnostique change le protocole : ses runs doivent être identifiés
+comme tels, distincts des runs originaux, avec leur historique de dépenses conservé.
