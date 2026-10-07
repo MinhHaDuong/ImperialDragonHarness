@@ -1,5 +1,5 @@
 {
-  "_comment": "Cumulative arena identities; SpaceBunny and preliminary 0188 excluded. Model failures score 0/30 with consumed time/cost retained. Infrastructure failures and incomplete panels stay pending. Numeric source: docs/2026-10-06-tournament-corrected-summary.json; regenerate with scripts/tournament-analysis.py. Local electricity converted at 1.08 USD/EUR; hosted API USD.",
+  "_comment": "Cumulative arena identities; SpaceBunny and preliminary 0188 excluded. Model failures score 0/30 with consumed time/cost retained. Infrastructure failures and incomplete panels stay pending. Numeric source: docs/2026-10-06-tournament-corrected-summary.json; regenerate with $IDH_ROOT/scripts/tournament-analysis.py. Local electricity converted at 1.08 USD/EUR; hosted API USD.",
   "updated": "2026-10-06T17:54:10.941255+00:00",
   "grid": [
     {

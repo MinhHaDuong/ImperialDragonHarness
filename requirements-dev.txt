@@ -26,3 +26,7 @@ pytest-xdist>=3.8,<4
 
 # Attribution query: official inverse-beta primitive for fixed Jeffreys intervals.
 scipy>=1.10,<2
+
+# Reproducible tournament figures and their numeric arrays.
+matplotlib>=3.6,<4
+numpy>=1.24,<3

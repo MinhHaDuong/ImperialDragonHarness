@@ -79,8 +79,15 @@ resident server legitimately holds — wrap-ups are slow, not stuck.
 
 ## Readout
 
-`python3 scripts/tournament-analysis.py --arena ~/arena` (from the harness
-repository) emits cumulative per-identity statistics, paired quality outcomes
+Resolve the helper root from the runtime-supplied loaded skill path:
+
+```bash
+IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"
+```
+
+
+`python3 "$IDH_ROOT/scripts/tournament-analysis.py" --arena ~/arena`
+(with `IDH_ROOT` resolved to the harness checkout) emits cumulative per-identity statistics, paired quality outcomes
 and a Pareto frontier restricted to complete observations. The legacy
 `analyze2.py` excluded non-OK legs and must not supply routing conclusions.
 Model failures score zero, with consumed time and cost retained; infrastructure

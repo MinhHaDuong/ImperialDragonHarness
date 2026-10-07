@@ -1,3 +1,5 @@
+Version du rapport : **beta 0**, arrêtée le 2026-10-07.
+
 # Comparaisons du tournoi
 
 `comparaisons-modeles.pdf` : trois graphes de significativité, trois nuages XY (qualité/coût,
