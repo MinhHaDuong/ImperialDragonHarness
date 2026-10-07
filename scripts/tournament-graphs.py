@@ -203,14 +203,14 @@ def render(output, snapshot):
     with PdfPages(output / 'comparaisons-modeles.pdf', metadata={'Title': 'Qualité, vitesse et coût des LLM pour la recherche', 'Author': 'Minh Ha Duong', 'Subject': 'Qualité, vitesse et coût ; réduction transitive'}) as pdf:
         fig=plt.figure(figsize=(11.6929,8.2677))
         fig.text(.06,.91,'Qualité, vitesse et coût des LLM pour la recherche',fontsize=22,fontweight='bold')
-        fig.text(.06,.85,f'Intercomparaison avec Pi et Imperial Dragon Harness, {snapshot["generated_at"][:10]}',fontsize=13)
+        fig.text(.06,.85,f'Intercomparaison avec Pi, sur des tickets de projets utilisant Imperial Dragon Harness\n{snapshot["generated_at"][:10]}',fontsize=12)
         fig.text(.06,.045,'minh.ha-duong@cnrs.fr',fontsize=12)
         fig.text(.06,.78,'Dix tickets tirés au hasard dans l’historique des projets de l’auteur.\nDes modèles locaux et hébergés reprennent les mêmes tâches ; trois juges notent les résultats sur 30.\nNous comparons leur qualité, leur durée et leur coût, ainsi que le poids des incidents et des reprises.',
                  fontsize=12,linespacing=1.6,va='top')
         findings=[
             ('Vainqueur du tournoi : Luna 6 medium', 'Luna 6 medium fait jeu égal avec Sol 6.1 low en qualité et vitesse, en moins cher. Limite : la mesure mélange orchestration-codage-revue.'),
             ('Qwen 3.8 Flash-Next xhigh avec Strata domine en non-interactif', 'Pour les tâches non interactives, Qwen 3.8 Flash-Next à effort xhigh, exécuté localement avec Strata, domine ce comparatif.'),
-            ('Qwen 3.8 local atteint la qualité des modèles commerciaux hébergés', 'Qwen 3.8 progresse nettement par rapport à Qwen 3.6. Sur ces dix tâches, il atteint en local la qualité des modèles commerciaux hébergés. Cette comparaison utilise toutefois un effort xhigh pour Qwen, contre medium pour les modèles commerciaux de référence. Ce réglage privilégie la qualité au prix d’une durée plus longue.'),
+            ('Qwen 3.8 local atteint la qualité des modèles commerciaux hébergés', 'Qwen 3.8 progresse nettement par rapport à Qwen 3.6. Sur ces dix tâches, il atteint en local la qualité des modèles commerciaux hébergés. Cette comparaison utilise toutefois un effort xhigh pour Qwen, contre medium pour les modèles commerciaux de référence. Ce réglage privilégie la qualité au prix d’une verbosité accrue, donc d’une durée plus longue.'),
             ('La lenteur et la sérialisation sur GPU limitent l’interactif en local', 'Sur la workstation de test, la lenteur et la nécessité de sérialiser les tâches sur les GPU limitent fortement l’usage interactif, tandis que les API permettent des flux de travail fortement parallélisés. Les attentes portent sur Qwen 4 et Mistral 4, les mises à niveau du matériel et les optimisations quotidiennes du runtime, qui pourraient atténuer ces contraintes.'),
             ('Mistral Large 4 : qualité prometteuse, fiabilité encore pénalisante', 'Mistral Large 4, annoncé le 6 octobre 2026, est prometteur en qualité, mais les incidents d’hébergement et les boucles observées dans son intégration au runtime Pi pénalisent encore sa fiabilité, sa vitesse et son coût.')]
         y=.65
@@ -377,6 +377,7 @@ def render(output, snapshot):
         fig=plt.figure(figsize=(11.6929,8.2677));fig.text(.06,.91,'Méthode et périmètre',fontsize=20,fontweight='bold')
         paragraphs=[
             "Échantillon aléatoire de 10 tickets tiré dans l’historique des projets de l’auteur.\nChaque modèle reprend les mêmes tâches depuis leur état antérieur à la résolution,\navec les consignes du projet et une limite de deux heures par tentative.",
+            "Pi fournit le runtime d’agent : accès au modèle, appels d’outils et gestion de la session. Les tickets proviennent de projets utilisant Imperial Dragon Harness (IDH). Le prompt demande de respecter les consignes historiques de chaque dépôt (AGENTS.md, tickets/AGENTS.md et règles associées). Pour évaluer chaque modèle séparément, le tournoi désactive les revues externes et les panels Gaze, review-pr et verify-gate : le modèle réalise les tâches, exécute les contrôles mécaniques et effectue sa propre revue. Les trois juges interviennent seulement après la réalisation. Il s’agit donc d’une évaluation avec Pi et les consignes des projets, pas du workflow IDH complet.",
             "Notation des résultats sur 30 selon le système de la boxe : trois juges partent de 10\net déduisent des points pour les fautes selon leur sévérité : −3, −2, −1 ou −0,5 point.\nLes juges examinent le travail sans connaître le modèle qui l’a produit. Une absence\nde résultat exploitable vaut zéro ; une impossibilité correctement expliquée est jugée normalement.",
             "Le juge principal est Gemini 3.1 Pro Preview ; les deux autres sont Grok 4.3 et MiniMax M2.5.\nLes résultats conservés du premier cycle ont été jugés par Gemini 3.1 Pro Preview,\nDeepSeek V4 Pro et Kimi K3. Les notes sont additionnées, sans pondération entre juges.",
             "Les modèles locaux tournent sur une Lenovo ThinkStation P620 : Ryzen Threadripper PRO\n3945WX, 128 Go de RAM, deux GPU RTX A4000 + RTX 3060 (28 Go de VRAM au total).\nLe coût local estime l’électricité à 600 W et 0,23 €/kWh, sans amortissement du matériel.\nLes coûts API sont ceux des tokens consommés ; conversion commune : 1,08 USD pour 1 EUR.",
@@ -389,7 +390,7 @@ def render(output, snapshot):
         paragraphs.append("La sélection des candidats est purement ad hoc, sans prétention à l’exhaustivité.\nQuels modèles, variantes ou runtimes souhaiteriez-vous voir dans le prochain comparatif ?\nVos suggestions et retours sont bienvenus à minh.ha-duong@cnrs.fr.")
         y=.84
         for index,text in enumerate(paragraphs):
-            if index == 5:
+            if index == 6:
                 fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
                 fig=plt.figure(figsize=(11.6929,8.2677))
                 fig.text(.06,.91,'Méthode : comparaisons et limites',fontsize=20,fontweight='bold')
@@ -397,6 +398,10 @@ def render(output, snapshot):
             text = wrap_paragraph(fig, text, 9.5)
             fig.text(.06,y,text,fontsize=9.5,va='top',linespacing=1.35)
             y-=len(text.splitlines())*.0215+.023
+            if index == 1:
+                fig.text(.06,y,'Pi : github.com/earendil-works/pi',fontsize=9,color='#2563eb',va='top',url='https://github.com/earendil-works/pi')
+                fig.text(.46,y,'IDH : github.com/MinhHaDuong/ImperialDragonHarness',fontsize=9,color='#2563eb',va='top',url='https://github.com/MinhHaDuong/ImperialDragonHarness')
+                y-=.04
         fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
         fig=plt.figure(figsize=(11.6929,8.2677))
         fig.text(.06,.92,'Annexe : résultats par modèle',fontsize=20,fontweight='bold')
