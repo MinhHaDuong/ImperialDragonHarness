@@ -177,49 +177,6 @@ def render(output, snapshot):
         dot.append('}')
         (output / f'{metric}.dot').write_text('\n'.join(dot)+'\n')
     with PdfPages(output / 'comparaisons-modeles.pdf', metadata={'Title': 'Tournoi : comparaisons appariées à 95 %', 'Author': 'Minh Ha Duong', 'Subject': 'Qualité, vitesse et coût ; réduction transitive'}) as pdf:
-        for metric, (title, direction, units) in AXES.items():
-            edges = set(map(tuple, results[metric]['reduced']))
-            _, groups = reduce_edges(nodes, edges)
-            membership = {v: i for i, g in enumerate(groups) for v in g}
-            ranks = dict.fromkeys(range(len(groups)), 0)
-            for _ in range(len(groups)):
-                for a, b in edges:
-                    if membership[a] != membership[b]:
-                        ranks[membership[b]] = max(ranks[membership[b]], ranks[membership[a]] + 1)
-            layers = {}
-            for a in nodes:
-                layers.setdefault(ranks[membership[a]], []).append(a)
-            # Barycentric ordering reduces crossings without changing the graph.
-            for _ in range(5):
-                for level in sorted(layers):
-                    previous_positions = {a: i for lay in layers.values() for i, a in enumerate(lay)}
-                    layers[level].sort(key=lambda a: statistics.mean([previous_positions[u] for u, v in edges if v == a]) if any(v == a for u, v in edges) else previous_positions[a])
-            positions = {}
-            maxrank = max(layers)
-            for rank, layer in layers.items():
-                for index, a in enumerate(layer):
-                    positions[a] = ((index+.5)/len(layer), 1 - (rank + .5)/(maxrank+1))
-            fig, ax = plt.subplots(figsize=(11.6929, 8.2677))
-            fig.subplots_adjust(left=.035, right=.965, bottom=.13, top=.85)
-            fig.suptitle(f'{title} — qui bat qui ?', fontsize=19, fontweight='bold', x=.045, ha='left')
-            best, worse = AXIS_WORDS[metric]
-            fig.text(.045,.89,f'{best} en haut · flèche vers {worse} · Wilcoxon apparié exact · p < 0,05 bilatéral',fontsize=10)
-            widths = {(r['winner'],r['loser']):r['line_width'] for r in results[metric]['comparisons']}
-            for a, b in sorted(edges):
-                ax.add_patch(FancyArrowPatch(positions[a], positions[b], arrowstyle='-|>', mutation_scale=9,
-                                            color='#64748b', linewidth=widths[a,b], shrinkA=32, shrinkB=34,
-                                            connectionstyle='arc3,rad=0.04', zorder=1))
-            for a, (x,y) in positions.items():
-                provisional = not snapshot['arms'][a]['final']
-                ax.text(x,y,LABELS[a]+ ('\nPROVISOIRE' if provisional else ''),ha='center',va='center',fontsize=7.3,
-                        bbox={'boxstyle':'round,pad=.4','facecolor':'#fff7ed' if provisional else '#eff6ff',
-                              'edgecolor':'#ea580c' if provisional else '#2563eb','linestyle':'--' if provisional or a in DASHED_MODELS else '-'},zorder=2)
-            ax.set_xlim(-.015,1.015);ax.set_ylim(-.02,1.02);ax.axis('off')
-            summary=results[metric]
-            fig.text(.045,.075,'Ces flèches sont significatives deux à deux ; dix tickets ne suffisent pas à garantir le classement complet à 95 %.',fontsize=9)
-            fig.text(.045,.045,'L’épaisseur des flèches traduit l’intensité de l’effet. Absence de flèche ≠ équivalence.\n'
-                     'Un chemin indirect ne constitue pas un nouveau test significatif. Détails p et n dans le CSV et les fichiers DOT.',fontsize=8)
-            fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);fig.savefig(output/f'{metric}.png',dpi=160);plt.close(fig)
         scatter_axes = [
             ('quality-cost', 'Qualité / coût', 'cost_usd_mean', 'quality_mean',
              'Coût moyen (USD)', 'Qualité moyenne (/30)'),
@@ -324,6 +281,49 @@ def render(output, snapshot):
             fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Mistral : losange violet = Idéal, cercle rouge = beta. Coût et durée en échelle logarithmique.\n'
                      'Coût local = électricité seule ; coût hébergé = API.',fontsize=8)
             fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
+        for metric, (title, direction, units) in AXES.items():
+            edges = set(map(tuple, results[metric]['reduced']))
+            _, groups = reduce_edges(nodes, edges)
+            membership = {v: i for i, g in enumerate(groups) for v in g}
+            ranks = dict.fromkeys(range(len(groups)), 0)
+            for _ in range(len(groups)):
+                for a, b in edges:
+                    if membership[a] != membership[b]:
+                        ranks[membership[b]] = max(ranks[membership[b]], ranks[membership[a]] + 1)
+            layers = {}
+            for a in nodes:
+                layers.setdefault(ranks[membership[a]], []).append(a)
+            # Barycentric ordering reduces crossings without changing the graph.
+            for _ in range(5):
+                for level in sorted(layers):
+                    previous_positions = {a: i for lay in layers.values() for i, a in enumerate(lay)}
+                    layers[level].sort(key=lambda a: statistics.mean([previous_positions[u] for u, v in edges if v == a]) if any(v == a for u, v in edges) else previous_positions[a])
+            positions = {}
+            maxrank = max(layers)
+            for rank, layer in layers.items():
+                for index, a in enumerate(layer):
+                    positions[a] = ((index+.5)/len(layer), 1 - (rank + .5)/(maxrank+1))
+            fig, ax = plt.subplots(figsize=(11.6929, 8.2677))
+            fig.subplots_adjust(left=.035, right=.965, bottom=.13, top=.85)
+            fig.suptitle(f'{title} — qui bat qui ?', fontsize=19, fontweight='bold', x=.045, ha='left')
+            best, worse = AXIS_WORDS[metric]
+            fig.text(.045,.89,f'{best} en haut · flèche vers {worse} · Wilcoxon apparié exact · p < 0,05 bilatéral',fontsize=10)
+            widths = {(r['winner'],r['loser']):r['line_width'] for r in results[metric]['comparisons']}
+            for a, b in sorted(edges):
+                ax.add_patch(FancyArrowPatch(positions[a], positions[b], arrowstyle='-|>', mutation_scale=9,
+                                            color='#64748b', linewidth=widths[a,b], shrinkA=32, shrinkB=34,
+                                            connectionstyle='arc3,rad=0.04', zorder=1))
+            for a, (x,y) in positions.items():
+                provisional = not snapshot['arms'][a]['final']
+                ax.text(x,y,LABELS[a]+ ('\nPROVISOIRE' if provisional else ''),ha='center',va='center',fontsize=7.3,
+                        bbox={'boxstyle':'round,pad=.4','facecolor':'#fff7ed' if provisional else '#eff6ff',
+                              'edgecolor':'#ea580c' if provisional else '#2563eb','linestyle':'--' if provisional or a in DASHED_MODELS else '-'},zorder=2)
+            ax.set_xlim(-.015,1.015);ax.set_ylim(-.02,1.02);ax.axis('off')
+            summary=results[metric]
+            fig.text(.045,.075,'Ces flèches sont significatives deux à deux ; dix tickets ne suffisent pas à garantir le classement complet à 95 %.',fontsize=9)
+            fig.text(.045,.045,'L’épaisseur des flèches traduit l’intensité de l’effet. Absence de flèche ≠ équivalence.\n'
+                     'Un chemin indirect ne constitue pas un nouveau test significatif. Détails p et n dans le CSV et les fichiers DOT.',fontsize=8)
+            fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);fig.savefig(output/f'{metric}.png',dpi=160);plt.close(fig)
         fig=plt.figure(figsize=(11.6929,8.2677));fig.text(.06,.91,'Méthode et périmètre',fontsize=20,fontweight='bold')
         paragraphs=[
             "Échantillon aléatoire de 10 tickets tiré dans l’historique des projets de l’auteur.\nChaque modèle reprend les mêmes tâches depuis leur état antérieur à la résolution,\navec les consignes du projet et une limite de deux heures par tentative.",
@@ -331,7 +331,7 @@ def render(output, snapshot):
             "Le juge principal est Gemini 3.1 Pro Preview ; les deux autres sont Grok 4.3 et MiniMax M2.5.\nLes résultats conservés du premier cycle ont été jugés par Gemini 3.1 Pro Preview,\nDeepSeek V4 Pro et Kimi K3. Les notes sont additionnées, sans pondération entre juges.",
             "Les modèles locaux tournent sur une Lenovo ThinkStation P620 : Ryzen Threadripper PRO\n3945WX, 128 Go de RAM, deux GPU RTX A4000 + RTX 3060 (28 Go de VRAM au total).\nLe coût local estime l’électricité à 600 W et 0,23 €/kWh, sans amortissement du matériel.\nLes coûts API sont ceux des tokens consommés ; conversion commune : 1,08 USD pour 1 EUR.",
             "Les nuages de points présentent les moyennes par ticket de qualité, durée et coût.\nMistral Idéal retient le dernier résultat réussi de chaque ticket. Mistral beta additionne\nles coûts et durées de tous ses essais, interruptions comprises, et garde la meilleure note.\nSes coûts sont répartis selon les tokens facturés ; les nouveaux essais restent estimés.\nLa frontière de Pareto exclut les séries incomplètes et les qualités moyennes inférieures à 15/30.",
-            "Sur les trois premiers graphes acycliques, les flèches comparent les résultats\nticket par ticket par un test de Wilcoxon apparié, bilatéral, au seuil de 5 %. Elles vont vers le résultat moins juste, plus lent ou plus cher.\nLes flèches redondantes par transitivité sont retirées pour faciliter la lecture.\nL’absence de flèche ne prouve pas l’équivalence ; un chemin indirect n’est pas un test supplémentaire.",
+            "Sur les trois graphes acycliques, les flèches comparent les résultats\nticket par ticket par un test de Wilcoxon apparié, bilatéral, au seuil de 5 %. Elles vont vers le résultat moins juste, plus lent ou plus cher.\nLes flèches redondantes par transitivité sont retirées pour faciliter la lecture.\nL’absence de flèche ne prouve pas l’équivalence ; un chemin indirect n’est pas un test supplémentaire.",
             "Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets, aucune différence ne franchit ce seuil plus exigeant : les écarts détectés\ndeux à deux ne constituent donc pas un classement global garanti à 95 %.\nLes astérisques signalent les séries provisoires ; les contours pointillés des DAG distinguent\nQwen 3, Qwen 3.6, Sol 6 et Mistral beta.",
         ]
         y=.84
