@@ -1,0 +1,41 @@
+{
+  "scope": "Native Mistral completed attempts before the new 0211/0874/1372 direct retries; OpenRouter excluded",
+  "invoice_eur": {
+    "in_sum": 12.23,
+    "cache_read_sum": 25.58,
+    "out_sum": 1.96
+  },
+  "measured_tokens": {
+    "in_sum": 21081147,
+    "cache_read_sum": 429877048,
+    "out_sum": 1034202
+  },
+  "effective_eur_per_million": {
+    "in_sum": 0.5801392115903371,
+    "cache_read_sum": 0.05950538675886692,
+    "out_sum": 1.8951810187951676
+  },
+  "allocation": "Per token category, invoice amount times run tokens divided by measured campaign tokens. Frozen denominator; future runs estimated at calibrated rates.",
+  "sources": [
+    "runs/0211-m/run.json",
+    "runs/0233-m/run.json",
+    "runs/0233-mr/run.json",
+    "runs/0333-m/run.json",
+    "runs/0338-m/run.json",
+    "runs/0452-m/run.json",
+    "runs/0452-mr/run.json",
+    "runs/0470-m/run.json",
+    "runs/0470-mr/run.json",
+    "runs/0532-m/run.json",
+    "runs/0673-m/run.json",
+    "runs/0874-m/run.json",
+    "runs/1372-m/run.json",
+    "runs-void/mistral4-direct-budget-20261006T214315Z/0233-mr/run.json",
+    "runs-void/mistral4-direct-budget-20261006T214315Z/0452-mr/run.json",
+    "runs-void/mistral4-direct-budget-20261006T214315Z/0470-mr/run.json",
+    "runs-void/mistral4-provider-incidents-20261006T193033Z/0233-m/run.json",
+    "runs-void/mistral4-provider-incidents-20261006T193033Z/0874-m/run.json",
+    "runs-void/mistral4-provider-incidents-20261006T193033Z/1372-m/run.json"
+  ],
+  "note": "Author console token counts are rounded; measured counters are used to conserve EUR39.77 exactly across the frozen campaign."
+}

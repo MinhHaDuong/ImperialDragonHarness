@@ -1,0 +1,3764 @@
+{
+  "generated_at": "2026-10-07T08:30:11.822662+00:00",
+  "arms": {
+    "a": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 9,
+      "failures": 1,
+      "pending": 0,
+      "quality_median": 22.75,
+      "quality_mean": 20.6,
+      "seconds_median": 3118.05,
+      "cost_usd_median": 0.12908727000000003,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 3832.3,
+      "cost_usd_mean": 0.15865722000000004,
+      "total_cost_usd_mean": 1.2231849977777778,
+      "total_cost_eur_010_mean": 0.25335761111111116,
+      "attempts_observed": 16,
+      "output_tokens_mean": 68016.3
+    },
+    "b": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "quality_median": 21.25,
+      "quality_mean": 21.1,
+      "seconds_median": 1878.1999999999998,
+      "cost_usd_median": 0.07775748000000002,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 2364.82,
+      "cost_usd_mean": 0.09790354800000002,
+      "total_cost_usd_mean": 0.7547979924444445,
+      "total_cost_eur_010_mean": 0.1563408777777778,
+      "attempts_observed": 14,
+      "output_tokens_mean": 64701.5
+    },
+    "b2": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "quality_median": 26.5,
+      "quality_mean": 26.2,
+      "seconds_median": 2571.95,
+      "cost_usd_median": 0.10647873000000002,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 2766.41,
+      "cost_usd_mean": 0.11452937400000003,
+      "total_cost_usd_mean": 0.8829765962222222,
+      "total_cost_eur_010_mean": 0.18289043888888892,
+      "attempts_observed": 11,
+      "output_tokens_mean": 71071.5
+    },
+    "b3": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 9,
+      "failures": 1,
+      "pending": 0,
+      "quality_median": 24.0,
+      "quality_mean": 20.75,
+      "seconds_median": 1987.9499999999998,
+      "cost_usd_median": 0.08230113000000003,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 2383.78,
+      "cost_usd_mean": 0.09868849200000003,
+      "total_cost_usd_mean": 0.7608496031111112,
+      "total_cost_eur_010_mean": 0.15759434444444448,
+      "attempts_observed": 10,
+      "output_tokens_mean": 71416
+    },
+    "c": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "quality_median": 9.25,
+      "quality_mean": 10.3,
+      "seconds_median": 391.0,
+      "cost_usd_median": 0.016187400000000005,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 612.62,
+      "cost_usd_mean": 0.025362468000000006,
+      "total_cost_usd_mean": 0.19553469022222222,
+      "total_cost_eur_010_mean": 0.040500988888888895,
+      "attempts_observed": 10,
+      "output_tokens_mean": 24584
+    },
+    "c2": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 9,
+      "failures": 1,
+      "pending": 0,
+      "quality_median": 8.5,
+      "quality_mean": 8.95,
+      "seconds_median": 337.15,
+      "cost_usd_median": 0.013958010000000003,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 548.81,
+      "cost_usd_mean": 0.022720734000000006,
+      "total_cost_usd_mean": 0.17516795622222223,
+      "total_cost_eur_010_mean": 0.03628243888888889,
+      "attempts_observed": 10,
+      "output_tokens_mean": 11476.6
+    },
+    "d": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "quality_median": 26.5,
+      "quality_mean": 23.7,
+      "seconds_median": 359.3,
+      "cost_usd_median": 0.8003,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 544.16,
+      "cost_usd_mean": 1.5578400000000001,
+      "total_cost_usd_mean": 1.7089955555555556,
+      "total_cost_eur_010_mean": 1.45756,
+      "attempts_observed": 12,
+      "output_tokens_mean": 24772.9
+    },
+    "d2": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "quality_median": 22.75,
+      "quality_mean": 21.45,
+      "seconds_median": 169.05,
+      "cost_usd_median": 0.30665,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 181.79,
+      "cost_usd_mean": 0.45512,
+      "total_cost_usd_mean": 0.5056172222222223,
+      "total_cost_eur_010_mean": 0.4264571296296296,
+      "attempts_observed": 10,
+      "output_tokens_mean": 8665.6
+    },
+    "e": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "quality_median": 16.0,
+      "quality_mean": 18.05,
+      "seconds_median": 211.75,
+      "cost_usd_median": 0.37315,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 294.49,
+      "cost_usd_mean": 0.39168,
+      "total_cost_usd_mean": 0.47348277777777775,
+      "total_cost_eur_010_mean": 0.37084694444444444,
+      "attempts_observed": 10,
+      "output_tokens_mean": 7547.5
+    },
+    "e2": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "quality_median": 23.25,
+      "quality_mean": 22.65,
+      "seconds_median": 306.1,
+      "cost_usd_median": 0.20655,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 309.05,
+      "cost_usd_mean": 0.20534,
+      "total_cost_usd_mean": 0.2911872222222222,
+      "total_cost_eur_010_mean": 0.19871435185185182,
+      "attempts_observed": 10,
+      "output_tokens_mean": 4686.6
+    },
+    "e3": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "quality_median": 25.0,
+      "quality_mean": 21.9,
+      "seconds_median": 564.25,
+      "cost_usd_median": 0.3349,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 502.68,
+      "cost_usd_mean": 0.38832,
+      "total_cost_usd_mean": 0.5279533333333333,
+      "total_cost_eur_010_mean": 0.37351888888888884,
+      "attempts_observed": 10,
+      "output_tokens_mean": 9425
+    },
+    "f": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "quality_median": 22.0,
+      "quality_mean": 21.65,
+      "seconds_median": 522.5,
+      "cost_usd_median": 0.52425,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 634.68,
+      "cost_usd_mean": 1.28588,
+      "total_cost_usd_mean": 1.46218,
+      "total_cost_eur_010_mean": 1.2082596296296297,
+      "attempts_observed": 10,
+      "output_tokens_mean": 46748.3
+    },
+    "g": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "quality_median": 21.0,
+      "quality_mean": 21.35,
+      "seconds_median": 67.95,
+      "cost_usd_median": 0.1544,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 125.55999999999999,
+      "cost_usd_mean": 0.30368,
+      "total_cost_usd_mean": 0.3385577777777778,
+      "total_cost_eur_010_mean": 0.2846729629629629,
+      "attempts_observed": 10,
+      "output_tokens_mean": 8896.1
+    },
+    "i": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "quality_median": 20.5,
+      "quality_mean": 21.95,
+      "seconds_median": 608.9000000000001,
+      "cost_usd_median": 0.1059,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 575.05,
+      "cost_usd_mean": 0.14466,
+      "total_cost_usd_mean": 0.3043961111111111,
+      "total_cost_eur_010_mean": 0.14991805555555554,
+      "attempts_observed": 10,
+      "output_tokens_mean": 63848.1
+    },
+    "j": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 9,
+      "failures": 1,
+      "pending": 0,
+      "quality_median": 26.0,
+      "quality_mean": 21.6,
+      "seconds_median": 623.3,
+      "cost_usd_median": 0.1694,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 1617.81,
+      "cost_usd_mean": 0.30523,
+      "total_cost_usd_mean": 0.7546216666666667,
+      "total_cost_eur_010_mean": 0.327559537037037,
+      "attempts_observed": 15,
+      "output_tokens_mean": 46654.2
+    },
+    "k": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 9,
+      "failures": 1,
+      "pending": 0,
+      "quality_median": 23.0,
+      "quality_mean": 21.25,
+      "seconds_median": 2693.7,
+      "cost_usd_median": 0.08075,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 3603.58,
+      "cost_usd_mean": 0.12135,
+      "total_cost_usd_mean": 1.1223444444444444,
+      "total_cost_eur_010_mean": 0.21246055555555554,
+      "attempts_observed": 13,
+      "output_tokens_mean": 125159
+    },
+    "l": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "quality_median": 21.75,
+      "quality_mean": 22.2,
+      "seconds_median": 230.2,
+      "cost_usd_median": 0.02775,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "final": true,
+      "seconds_mean": 301.17,
+      "cost_usd_mean": 0.03876,
+      "total_cost_usd_mean": 0.12241833333333334,
+      "total_cost_eur_010_mean": 0.044254722222222216,
+      "attempts_observed": 10,
+      "output_tokens_mean": 16051.5
+    },
+    "mi": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "final": true,
+      "quality_median": 25.75,
+      "quality_mean": 24.9,
+      "seconds_median": 1827.85,
+      "cost_usd_median": 1.2061958955220384,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "seconds_mean": 1835.93,
+      "cost_usd_mean": 1.7405697589462015,
+      "total_cost_usd_mean": 2.250550314501757,
+      "total_cost_eur_010_mean": 1.6626367212464828,
+      "attempts_observed": 35,
+      "output_tokens_mean": 59605
+    },
+    "mr": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "final": true,
+      "quality_median": 25.75,
+      "quality_mean": 24.9,
+      "seconds_median": 4621.35,
+      "cost_usd_median": 2.1510715262466302,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "seconds_mean": 5778.94,
+      "cost_usd_mean": 6.357274408839133,
+      "total_cost_usd_mean": 7.962535519950244,
+      "total_cost_eur_010_mean": 6.046891304480678,
+      "attempts_observed": 35,
+      "output_tokens_mean": 196232.9
+    }
+  },
+  "legs": {
+    "a": {
+      "0211": {
+        "state": "ok",
+        "quality": 21.5,
+        "seconds": 2695.2,
+        "cost_usd": 0.11158128000000002
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 17.5,
+        "seconds": 2426.5,
+        "cost_usd": 0.10045710000000002
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 29.5,
+        "seconds": 6581.5,
+        "cost_usd": 0.27247410000000005
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 20.0,
+        "seconds": 2905.5,
+        "cost_usd": 0.12028770000000003
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 24.0,
+        "seconds": 5383.0,
+        "cost_usd": 0.22285620000000006
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 1076.1,
+        "cost_usd": 0.044550540000000007
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 15.0,
+        "seconds": 2262.4,
+        "cost_usd": 0.09366336000000003
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 24.0,
+        "seconds": 3330.6,
+        "cost_usd": 0.13788684000000004
+      },
+      "0874": {
+        "state": "failure",
+        "quality": 0,
+        "seconds": 7200.2,
+        "cost_usd": 0.29808828000000004
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 25.5,
+        "seconds": 4462.0,
+        "cost_usd": 0.18472680000000005
+      }
+    },
+    "b": {
+      "0211": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 1741.9,
+        "cost_usd": 0.07211466000000002
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 19.0,
+        "seconds": 3157.9,
+        "cost_usd": 0.13073706000000004
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 20.0,
+        "seconds": 2285.3,
+        "cost_usd": 0.09461142000000003
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 27.5,
+        "seconds": 1426.9,
+        "cost_usd": 0.05907366000000002
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 22.5,
+        "seconds": 1938.6,
+        "cost_usd": 0.08025804000000002
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 27.5,
+        "seconds": 883.9,
+        "cost_usd": 0.03659346000000001
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 20.0,
+        "seconds": 1436.2,
+        "cost_usd": 0.059458680000000014
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 17.0,
+        "seconds": 1817.8,
+        "cost_usd": 0.07525692000000002
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 4.0,
+        "seconds": 6315.4,
+        "cost_usd": 0.26145756000000003
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 23.5,
+        "seconds": 2644.3,
+        "cost_usd": 0.10947402000000003
+      }
+    },
+    "b2": {
+      "0211": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 3454.4,
+        "cost_usd": 0.14301216000000003
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 2353.7,
+        "cost_usd": 0.09744318000000002
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 2820.5,
+        "cost_usd": 0.11676870000000003
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 1549.3,
+        "cost_usd": 0.06414102000000002
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 27.0,
+        "seconds": 2551.1,
+        "cost_usd": 0.10561554000000002
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 2517.8,
+        "cost_usd": 0.10423692000000004
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 1905.2,
+        "cost_usd": 0.07887528000000002
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 27.5,
+        "seconds": 2592.8,
+        "cost_usd": 0.10734192000000004
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 18.0,
+        "seconds": 4440.5,
+        "cost_usd": 0.18383670000000005
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 22.5,
+        "seconds": 3478.8,
+        "cost_usd": 0.14402232000000004
+      }
+    },
+    "b3": {
+      "0211": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 2835.2,
+        "cost_usd": 0.11737728000000003
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 28.0,
+        "seconds": 1438.4,
+        "cost_usd": 0.05954976000000002
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 2326.1,
+        "cost_usd": 0.09630054000000002
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 1095.9,
+        "cost_usd": 0.045370260000000016
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 10.0,
+        "seconds": 1941.1,
+        "cost_usd": 0.08036154000000002
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 23.0,
+        "seconds": 1090.9,
+        "cost_usd": 0.04516326000000002
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 21.0,
+        "seconds": 989.8,
+        "cost_usd": 0.04097772000000001
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 2034.8,
+        "cost_usd": 0.08424072000000002
+      },
+      "0874": {
+        "state": "failure",
+        "quality": 0,
+        "seconds": 7200.3,
+        "cost_usd": 0.2980924200000001
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 18.5,
+        "seconds": 2885.3,
+        "cost_usd": 0.11945142000000003
+      }
+    },
+    "c": {
+      "0211": {
+        "state": "ok",
+        "quality": 16.5,
+        "seconds": 1086.6,
+        "cost_usd": 0.04498524000000001
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 8.5,
+        "seconds": 556.2,
+        "cost_usd": 0.023026680000000008
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 5.5,
+        "seconds": 385.2,
+        "cost_usd": 0.015947280000000005
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 6.0,
+        "seconds": 365.9,
+        "cost_usd": 0.015148260000000002
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 0.0,
+        "seconds": 639.2,
+        "cost_usd": 0.026462880000000008
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 94.3,
+        "cost_usd": 0.0039040200000000007
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 2.5,
+        "seconds": 390.7,
+        "cost_usd": 0.016174980000000002
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 10.0,
+        "seconds": 14.4,
+        "cost_usd": 0.0005961600000000002
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 16.0,
+        "seconds": 2202.4,
+        "cost_usd": 0.09117936000000003
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 13.0,
+        "seconds": 391.3,
+        "cost_usd": 0.016199820000000004
+      }
+    },
+    "c2": {
+      "0211": {
+        "state": "ok",
+        "quality": 9.0,
+        "seconds": 857.1,
+        "cost_usd": 0.03548394000000001
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 11.5,
+        "seconds": 247.6,
+        "cost_usd": 0.010250640000000002
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 8.0,
+        "seconds": 305.1,
+        "cost_usd": 0.012631140000000004
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 15.0,
+        "seconds": 629.2,
+        "cost_usd": 0.026048880000000007
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 3.0,
+        "seconds": 1142.1,
+        "cost_usd": 0.04728294000000001
+      },
+      "0470": {
+        "state": "failure",
+        "quality": 0,
+        "seconds": 82.5,
+        "cost_usd": 0.003415500000000001
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 13.0,
+        "seconds": 323.9,
+        "cost_usd": 0.013409460000000002
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 15.0,
+        "seconds": 144.4,
+        "cost_usd": 0.0059781600000000015
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 8.0,
+        "seconds": 350.4,
+        "cost_usd": 0.014506560000000003
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 7.0,
+        "seconds": 1405.8,
+        "cost_usd": 0.058200120000000015
+      }
+    },
+    "d": {
+      "0211": {
+        "state": "ok",
+        "quality": 28.5,
+        "seconds": 1005.2,
+        "cost_usd": 0.6759
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 20.0,
+        "seconds": 129.2,
+        "cost_usd": 0.4421
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 355.3,
+        "cost_usd": 1.5837
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 289.9,
+        "cost_usd": 1.0877
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 581.2,
+        "cost_usd": 2.7817
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 29.2,
+        "cost_usd": 0.1436
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 22.0,
+        "seconds": 240.7,
+        "cost_usd": 0.8392
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 21.5,
+        "seconds": 363.3,
+        "cost_usd": 0.7614
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 3.0,
+        "seconds": 1216.7,
+        "cost_usd": 6.8108
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 28.0,
+        "seconds": 1230.9,
+        "cost_usd": 0.4523
+      }
+    },
+    "d2": {
+      "0211": {
+        "state": "ok",
+        "quality": 11.0,
+        "seconds": 96.9,
+        "cost_usd": 0.2207
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 19.0,
+        "seconds": 74.4,
+        "cost_usd": 0.2154
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 202.1,
+        "cost_usd": 0.5047
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 23.5,
+        "seconds": 49.8,
+        "cost_usd": 0.142
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 15.0,
+        "seconds": 313.3,
+        "cost_usd": 0.9336
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 11.4,
+        "cost_usd": 0.0828
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 227.5,
+        "cost_usd": 0.3926
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 24.0,
+        "seconds": 136.0,
+        "cost_usd": 0.4938
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 14.0,
+        "seconds": 322.5,
+        "cost_usd": 1.4276
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 22.0,
+        "seconds": 384.0,
+        "cost_usd": 0.138
+      }
+    },
+    "e": {
+      "0211": {
+        "state": "ok",
+        "quality": 14.0,
+        "seconds": 99.1,
+        "cost_usd": 0.2001
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 14.0,
+        "seconds": 88.9,
+        "cost_usd": 0.2775
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 184.2,
+        "cost_usd": 0.4778
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 22.0,
+        "seconds": 217.7,
+        "cost_usd": 0.4489
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 18.0,
+        "seconds": 273.2,
+        "cost_usd": 0.6229
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 16.5,
+        "cost_usd": 0.0515
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 13.0,
+        "seconds": 268.0,
+        "cost_usd": 0.2974
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 13.5,
+        "seconds": 306.9,
+        "cost_usd": 0.5264
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 7.0,
+        "seconds": 205.8,
+        "cost_usd": 0.7313
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 21.0,
+        "seconds": 1284.6,
+        "cost_usd": 0.283
+      }
+    },
+    "e2": {
+      "0211": {
+        "state": "ok",
+        "quality": 27.5,
+        "seconds": 416.7,
+        "cost_usd": 0.2668
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 14.5,
+        "seconds": 358.1,
+        "cost_usd": 0.1674
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 565.1,
+        "cost_usd": 0.3236
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 23.0,
+        "seconds": 460.2,
+        "cost_usd": 0.239
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 19.0,
+        "seconds": 306.6,
+        "cost_usd": 0.3412
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 29.7,
+        "cost_usd": 0.0571
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 20.0,
+        "seconds": 267.4,
+        "cost_usd": 0.2139
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 23.5,
+        "seconds": 283.9,
+        "cost_usd": 0.1992
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 15.0,
+        "seconds": 97.2,
+        "cost_usd": 0.1601
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 305.6,
+        "cost_usd": 0.0851
+      }
+    },
+    "e3": {
+      "0211": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 706.3,
+        "cost_usd": 0.4165
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 21.0,
+        "seconds": 454.3,
+        "cost_usd": 0.2435
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 630.9,
+        "cost_usd": 0.5179
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 334.5,
+        "cost_usd": 0.3415
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 570.5,
+        "cost_usd": 0.6635
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 37.7,
+        "cost_usd": 0.0696
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 558.0,
+        "cost_usd": 0.3283
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 20.0,
+        "seconds": 634.4,
+        "cost_usd": 0.3187
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 6.0,
+        "seconds": 639.1,
+        "cost_usd": 0.8165
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 14.0,
+        "seconds": 461.1,
+        "cost_usd": 0.1672
+      }
+    },
+    "f": {
+      "0211": {
+        "state": "ok",
+        "quality": 20.5,
+        "seconds": 200.9,
+        "cost_usd": 0.3685
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 23.0,
+        "seconds": 1029.6,
+        "cost_usd": 0.527
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 28.5,
+        "seconds": 1275.0,
+        "cost_usd": 2.9496
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 22.5,
+        "seconds": 186.3,
+        "cost_usd": 0.5042
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 21.5,
+        "seconds": 690.4,
+        "cost_usd": 1.2606
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 309.8,
+        "cost_usd": 0.3018
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 15.5,
+        "seconds": 242.2,
+        "cost_usd": 0.5215
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 22.5,
+        "seconds": 441.8,
+        "cost_usd": 0.8363
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 14.5,
+        "seconds": 1367.6,
+        "cost_usd": 5.1433
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 18.0,
+        "seconds": 603.2,
+        "cost_usd": 0.446
+      }
+    },
+    "g": {
+      "0211": {
+        "state": "ok",
+        "quality": 22.0,
+        "seconds": 39.5,
+        "cost_usd": 0.1186
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 15.0,
+        "seconds": 94.0,
+        "cost_usd": 0.1902
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 188.7,
+        "cost_usd": 0.4449
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 14.0,
+        "seconds": 35.9,
+        "cost_usd": 0.1073
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 21.0,
+        "seconds": 159.7,
+        "cost_usd": 0.4253
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 10.8,
+        "cost_usd": 0.0479
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 23.0,
+        "seconds": 38.8,
+        "cost_usd": 0.1037
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 20.5,
+        "seconds": 87.3,
+        "cost_usd": 0.2583
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 19.0,
+        "seconds": 552.3,
+        "cost_usd": 1.2609
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 21.0,
+        "seconds": 48.6,
+        "cost_usd": 0.0797
+      }
+    },
+    "i": {
+      "0211": {
+        "state": "ok",
+        "quality": 21.0,
+        "seconds": 290.2,
+        "cost_usd": 0.0851
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 16.5,
+        "seconds": 235.6,
+        "cost_usd": 0.0649
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 750.0,
+        "cost_usd": 0.205
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 18.0,
+        "seconds": 281.9,
+        "cost_usd": 0.0869
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 20.0,
+        "seconds": 540.7,
+        "cost_usd": 0.1917
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 831.8,
+        "cost_usd": 0.1486
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 27.0,
+        "seconds": 294.7,
+        "cost_usd": 0.0987
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 23.0,
+        "seconds": 677.1,
+        "cost_usd": 0.1056
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 18.0,
+        "seconds": 1143.7,
+        "cost_usd": 0.3539
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 17.0,
+        "seconds": 704.8,
+        "cost_usd": 0.1062
+      }
+    },
+    "j": {
+      "0211": {
+        "state": "ok",
+        "quality": 21.0,
+        "seconds": 928.2,
+        "cost_usd": 0.1657
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 482.6,
+        "cost_usd": 0.1197
+      },
+      "0333": {
+        "state": "failure",
+        "quality": 0,
+        "seconds": 7200.1,
+        "cost_usd": 0.8138
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 23.0,
+        "seconds": 617.2,
+        "cost_usd": 0.1288
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 28.0,
+        "seconds": 618.3,
+        "cost_usd": 0.3581
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 27.0,
+        "seconds": 456.4,
+        "cost_usd": 0.0107
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 28.0,
+        "seconds": 532.3,
+        "cost_usd": 0.1731
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 628.3,
+        "cost_usd": 0.2137
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 8.0,
+        "seconds": 3269.1,
+        "cost_usd": 0.9654
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 1445.6,
+        "cost_usd": 0.1033
+      }
+    },
+    "k": {
+      "0211": {
+        "state": "failure",
+        "quality": 0,
+        "seconds": 7200.2,
+        "cost_usd": 0.3346
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 21.5,
+        "seconds": 6185.5,
+        "cost_usd": 0.1416
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 1862.0,
+        "cost_usd": 0.0649
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 17.0,
+        "seconds": 1539.5,
+        "cost_usd": 0.0562
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 28.0,
+        "seconds": 1931.3,
+        "cost_usd": 0.0966
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 24.0,
+        "seconds": 2216.3,
+        "cost_usd": 0.0538
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 22.0,
+        "seconds": 3858.6,
+        "cost_usd": 0.1252
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 1630.0,
+        "cost_usd": 0.0465
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 15.0,
+        "seconds": 6441.3,
+        "cost_usd": 0.2462
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 3171.1,
+        "cost_usd": 0.0479
+      }
+    },
+    "l": {
+      "0211": {
+        "state": "ok",
+        "quality": 23.0,
+        "seconds": 236.0,
+        "cost_usd": 0.0294
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 17.0,
+        "seconds": 224.4,
+        "cost_usd": 0.0292
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 480.2,
+        "cost_usd": 0.0883
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 20.5,
+        "seconds": 185.0,
+        "cost_usd": 0.0188
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 20.5,
+        "seconds": 714.2,
+        "cost_usd": 0.1211
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 28.7,
+        "cost_usd": 0.0033
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 253.4,
+        "cost_usd": 0.0263
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 20.0,
+        "seconds": 107.2,
+        "cost_usd": 0.0154
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 18.0,
+        "seconds": 184.2,
+        "cost_usd": 0.0393
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 23.0,
+        "seconds": 598.4,
+        "cost_usd": 0.0165
+      }
+    },
+    "mi": {
+      "0233": {
+        "state": "ok",
+        "quality": 22.5,
+        "seconds": 1793.1,
+        "cost_usd": 0.7866990489544513
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 478.3,
+        "cost_usd": 0.2881363164347645
+      },
+      "0211": {
+        "state": "ok",
+        "quality": 28.0,
+        "seconds": 2559.3,
+        "cost_usd": 1.1254461486565122
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 1862.6,
+        "cost_usd": 1.8401526072500674
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 17.0,
+        "seconds": 1548.3,
+        "cost_usd": 1.8552096751960696
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 26.5,
+        "seconds": 1093.3,
+        "cost_usd": 1.2869456423875647
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 16.0,
+        "seconds": 3211.4,
+        "cost_usd": 6.1375
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 1217.6,
+        "cost_usd": 0.9494855507519468
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 2218.3,
+        "cost_usd": 0.6906550818512758
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 2377.1,
+        "cost_usd": 2.4454675179793632
+      }
+    },
+    "mr": {
+      "0233": {
+        "state": "ok",
+        "quality": 22.5,
+        "seconds": 10893.6,
+        "cost_usd": 12.572339863314514
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 478.3,
+        "cost_usd": 0.2881363164347645
+      },
+      "0211": {
+        "state": "ok",
+        "quality": 28.0,
+        "seconds": 6827.400000000001,
+        "cost_usd": 1.5546344029881962
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 29.0,
+        "seconds": 10430.3,
+        "cost_usd": 17.628663152646862
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 17.0,
+        "seconds": 1548.3,
+        "cost_usd": 1.8552096751960696
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 26.5,
+        "seconds": 1093.3,
+        "cost_usd": 1.2869456423875647
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 16.0,
+        "seconds": 16057.9,
+        "cost_usd": 22.328286474164617
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 25.0,
+        "seconds": 1217.6,
+        "cost_usd": 0.9494855507519468
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 5946.900000000001,
+        "cost_usd": 2.4469333772971904
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 3295.7999999999997,
+        "cost_usd": 2.6621096332095973
+      }
+    }
+  },
+  "mistral_accounting": {
+    "scope": "Mistral direct attempts plus successful OpenRouter replacement for ticket 0874",
+    "rates_eur_per_million": {
+      "in_sum": 0.5801392115903371,
+      "cache_read_sum": 0.05950538675886692,
+      "out_sum": 1.8951810187951676
+    },
+    "usd_per_eur": 1.08,
+    "pricing": "Proportional allocation of native EUR39.77 invoice by token category; later runs estimated at frozen calibrated rates",
+    "invoice_calibration": {
+      "scope": "Native Mistral completed attempts before the new 0211/0874/1372 direct retries; OpenRouter excluded",
+      "invoice_eur": {
+        "in_sum": 12.23,
+        "cache_read_sum": 25.58,
+        "out_sum": 1.96
+      },
+      "measured_tokens": {
+        "in_sum": 21081147,
+        "cache_read_sum": 429877048,
+        "out_sum": 1034202
+      },
+      "effective_eur_per_million": {
+        "in_sum": 0.5801392115903371,
+        "cache_read_sum": 0.05950538675886692,
+        "out_sum": 1.8951810187951676
+      },
+      "allocation": "Per token category, invoice amount times run tokens divided by measured campaign tokens. Frozen denominator; future runs estimated at calibrated rates.",
+      "sources": [
+        "runs/0211-m/run.json",
+        "runs/0233-m/run.json",
+        "runs/0233-mr/run.json",
+        "runs/0333-m/run.json",
+        "runs/0338-m/run.json",
+        "runs/0452-m/run.json",
+        "runs/0452-mr/run.json",
+        "runs/0470-m/run.json",
+        "runs/0470-mr/run.json",
+        "runs/0532-m/run.json",
+        "runs/0673-m/run.json",
+        "runs/0874-m/run.json",
+        "runs/1372-m/run.json",
+        "runs-void/mistral4-direct-budget-20261006T214315Z/0233-mr/run.json",
+        "runs-void/mistral4-direct-budget-20261006T214315Z/0452-mr/run.json",
+        "runs-void/mistral4-direct-budget-20261006T214315Z/0470-mr/run.json",
+        "runs-void/mistral4-provider-incidents-20261006T193033Z/0233-m/run.json",
+        "runs-void/mistral4-provider-incidents-20261006T193033Z/0874-m/run.json",
+        "runs-void/mistral4-provider-incidents-20261006T193033Z/1372-m/run.json"
+      ],
+      "note": "Author console token counts are rounded; measured counters are used to conserve EUR39.77 exactly across the frozen campaign."
+    },
+    "ideal": "Latest judged successful run per ticket",
+    "real": "All completed attempts summed per ticket, best successful quality",
+    "attempts": [
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0211",
+        "finished": "2026-10-06T20:10:23Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 4268.1,
+        "cost_usd": 0.4291882543316841,
+        "pi_cost_usd": 0.2832,
+        "source": "runs/0211-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0211",
+        "finished": "2026-10-07T07:09:04Z",
+        "verdict": "OK",
+        "quality": 28.0,
+        "seconds": 2559.3,
+        "cost_usd": 1.1254461486565122,
+        "pi_cost_usd": 0.7765,
+        "source": "runs/0211-mr/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0233",
+        "finished": "2026-10-06T20:10:17Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 2383.4,
+        "cost_usd": 0.8231507865159425,
+        "pi_cost_usd": 0.5969,
+        "source": "runs/0233-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0233",
+        "finished": "2026-10-07T07:35:31Z",
+        "verdict": "OK",
+        "quality": 22.5,
+        "seconds": 1793.1,
+        "cost_usd": 0.7866990489544513,
+        "pi_cost_usd": 0.551,
+        "source": "runs/0233-mb/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": true,
+        "ticket": "0233",
+        "finished": "2026-10-06T23:14:25Z",
+        "verdict": "OK",
+        "quality": 20.5,
+        "seconds": 5470.1,
+        "cost_usd": 10.945522642918306,
+        "pi_cost_usd": 7.0303,
+        "source": "runs/0233-mr/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0333",
+        "finished": "2026-10-06T19:25:04Z",
+        "verdict": "OK",
+        "quality": 17.0,
+        "seconds": 1548.3,
+        "cost_usd": 1.8552096751960696,
+        "pi_cost_usd": 1.1967,
+        "source": "runs/0333-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0338",
+        "finished": "2026-10-06T19:07:58Z",
+        "verdict": "OK",
+        "quality": 25.0,
+        "seconds": 478.3,
+        "cost_usd": 0.2881363164347645,
+        "pi_cost_usd": 0.1914,
+        "source": "runs/0338-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0452",
+        "finished": "2026-10-06T19:30:30Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 1829.9,
+        "cost_usd": 1.9433040352418414,
+        "pi_cost_usd": 1.2579,
+        "source": "runs/0452-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0452",
+        "finished": "2026-10-07T07:36:41Z",
+        "verdict": "OK",
+        "quality": 29.0,
+        "seconds": 1862.6,
+        "cost_usd": 1.8401526072500674,
+        "pi_cost_usd": 1.2348,
+        "source": "runs/0452-mb/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": true,
+        "ticket": "0452",
+        "finished": "2026-10-06T23:35:33Z",
+        "verdict": "OK",
+        "quality": 19.0,
+        "seconds": 6737.2,
+        "cost_usd": 13.845206510154952,
+        "pi_cost_usd": 8.8775,
+        "source": "runs/0452-mr/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0470",
+        "finished": "2026-10-06T18:42:48Z",
+        "verdict": "OK",
+        "quality": 27.0,
+        "seconds": 918.1,
+        "cost_usd": 0.21664211523023422,
+        "pi_cost_usd": 0.1549,
+        "source": "runs/0470-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0470",
+        "finished": "2026-10-06T22:22:52Z",
+        "verdict": "OK",
+        "quality": 30.0,
+        "seconds": 2377.1,
+        "cost_usd": 2.4454675179793632,
+        "pi_cost_usd": 1.5805,
+        "source": "runs/0470-mr/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0532",
+        "finished": "2026-10-06T19:20:18Z",
+        "verdict": "OK",
+        "quality": 25.0,
+        "seconds": 1217.6,
+        "cost_usd": 0.9494855507519468,
+        "pi_cost_usd": 0.6129,
+        "source": "runs/0532-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0673",
+        "finished": "2026-10-06T19:18:12Z",
+        "verdict": "OK",
+        "quality": 26.5,
+        "seconds": 1093.3,
+        "cost_usd": 1.2869456423875647,
+        "pi_cost_usd": 0.8261,
+        "source": "runs/0673-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0874",
+        "finished": "2026-10-06T20:08:21Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 2267.3,
+        "cost_usd": 4.591177013893173,
+        "pi_cost_usd": 2.9282,
+        "source": "runs/0874-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0874",
+        "finished": "2026-10-07T09:20:16Z",
+        "verdict": "DNF",
+        "quality": null,
+        "seconds": 7200.2,
+        "cost_usd": 8.593772028090962,
+        "pi_cost_usd": 9.2926,
+        "source": "runs/0874-mb/run.json"
+      },
+      {
+        "model_failure": true,
+        "loop_failure": false,
+        "ticket": "0874",
+        "finished": "2026-10-07T07:05:05Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 2320.7,
+        "cost_usd": 1.4469191735880524,
+        "pi_cost_usd": 1.0062,
+        "source": "runs/0874-mr/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "1372",
+        "finished": "2026-10-06T20:08:42Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 2288.3,
+        "cost_usd": 0.41202949039450715,
+        "pi_cost_usd": 0.2706,
+        "source": "runs/1372-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "1372",
+        "finished": "2026-10-07T07:03:23Z",
+        "verdict": "OK",
+        "quality": 30.0,
+        "seconds": 2218.3,
+        "cost_usd": 0.6906550818512758,
+        "pi_cost_usd": 0.4759,
+        "source": "runs/1372-mr/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0233",
+        "finished": "2026-10-06T21:39:43Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 0.6,
+        "cost_usd": 0.0,
+        "pi_cost_usd": 0.0,
+        "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0233-mr/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0452",
+        "finished": "2026-10-06T21:39:43Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 0.6,
+        "cost_usd": 0.0,
+        "pi_cost_usd": 0.0,
+        "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0452-mr/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0470",
+        "finished": "2026-10-06T21:39:43Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 0.6,
+        "cost_usd": 0.0,
+        "pi_cost_usd": 0.0,
+        "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0470-mr/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0233",
+        "finished": "2026-10-06T19:20:02Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 1246.4,
+        "cost_usd": 0.016967384925815635,
+        "pi_cost_usd": 0.0114,
+        "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/0233-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0874",
+        "finished": "2026-10-06T19:17:36Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 1058.3,
+        "cost_usd": 1.5589182585924286,
+        "pi_cost_usd": 1.0105,
+        "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/0874-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "1372",
+        "finished": "2026-10-06T19:23:59Z",
+        "verdict": "VOID-EMPTY",
+        "quality": null,
+        "seconds": 1440.3,
+        "cost_usd": 1.3442488050514076,
+        "pi_cost_usd": 0.8668,
+        "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/1372-m/run.json"
+      },
+      {
+        "model_failure": false,
+        "loop_failure": false,
+        "ticket": "0874",
+        "finished": "2026-10-06T21:23:21Z",
+        "verdict": "OK",
+        "quality": 16.0,
+        "seconds": 3211.4,
+        "cost_usd": 6.1375,
+        "pi_cost_usd": 6.1375,
+        "source": "runs/0874-mo/run.json",
+        "provider": "OpenRouter",
+        "replacement": true
+      }
+    ]
+  },
+  "time_value_usd_per_erg_hour": 1.0,
+  "attempt_audit": {
+    "scope": "All preserved attempts for the ten sampled tickets, including invalid infrastructure and wrong-base attempts. Mistral includes both providers for counts; token means follow the runs used for each graph series. Counts are not pure model reliability.",
+    "records": [
+      {
+        "ticket": "0452",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-03T17:42:43Z",
+        "output_tokens": 11496,
+        "source": "runs/0452-e/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-03T18:09:50Z",
+        "output_tokens": 23902,
+        "source": "runs/0452-c/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-03T19:49:27Z",
+        "output_tokens": 41648,
+        "source": "runs/0452-d/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-03T20:32:31Z",
+        "output_tokens": 37740,
+        "source": "runs/0211-c/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-03T20:31:12Z",
+        "output_tokens": 13964,
+        "source": "runs/0211-d/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-03T21:11:52Z",
+        "output_tokens": 40332,
+        "source": "runs/0211-b/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-03T20:46:12Z",
+        "output_tokens": 22812,
+        "source": "runs/0211-f/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-03T21:40:29Z",
+        "output_tokens": 84382,
+        "source": "runs/0333-f/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:02:53Z",
+        "output_tokens": 66676,
+        "source": "runs/0333-b/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:11:01Z",
+        "output_tokens": 27686,
+        "source": "runs/0333-d/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:22:26Z",
+        "output_tokens": 16727,
+        "source": "runs/0333-c/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:20:13Z",
+        "output_tokens": 7560,
+        "source": "runs/0333-e/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:27:05Z",
+        "output_tokens": 24010,
+        "source": "runs/0338-f/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:32:40Z",
+        "output_tokens": 9827,
+        "source": "runs/0338-e/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:37:15Z",
+        "output_tokens": 16338,
+        "source": "runs/0338-c/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:50:53Z",
+        "output_tokens": 21224,
+        "source": "runs/0338-d/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:18:51Z",
+        "output_tokens": 59117,
+        "source": "runs/0452-b/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:21:33Z",
+        "output_tokens": 2344,
+        "source": "runs/0470-d/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:28:28Z",
+        "output_tokens": 940,
+        "source": "runs/0470-e/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:34:34Z",
+        "output_tokens": 22190,
+        "source": "runs/0470-f/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:38:52Z",
+        "output_tokens": 5859,
+        "source": "runs/0470-c/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:42:00Z",
+        "output_tokens": 17250,
+        "source": "runs/0532-d/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:46:12Z",
+        "output_tokens": 17215,
+        "source": "runs/0532-c/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:51:02Z",
+        "output_tokens": 35612,
+        "source": "runs/0532-f/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:00:10Z",
+        "output_tokens": 6469,
+        "source": "runs/0532-e/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:27:46Z",
+        "output_tokens": 51041,
+        "source": "runs/0532-b/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:11:15Z",
+        "output_tokens": 32136,
+        "source": "runs/0673-f/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:35:37Z",
+        "output_tokens": 11815,
+        "source": "runs/0673-d/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:42:19Z",
+        "output_tokens": 8071,
+        "source": "runs/0673-e/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:53:12Z",
+        "output_tokens": 0,
+        "source": "runs/0673-c/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-04T04:27:11Z",
+        "output_tokens": 5459,
+        "source": "runs/0211-e/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T05:24:45Z",
+        "output_tokens": 41623,
+        "source": "runs/0211-a/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-04T05:49:34Z",
+        "output_tokens": 35668,
+        "source": "runs/0233-f/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-04T06:51:42Z",
+        "output_tokens": 48255,
+        "source": "runs/0233-b/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-04T07:00:08Z",
+        "output_tokens": 5619,
+        "source": "runs/0233-e/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T07:50:10Z",
+        "output_tokens": 28347,
+        "source": "runs/0233-a/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-04T08:10:58Z",
+        "output_tokens": 23370,
+        "source": "runs/0233-c/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T10:11:20Z",
+        "output_tokens": 117476,
+        "source": "runs/0333-a/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-04T10:41:45Z",
+        "output_tokens": 55169,
+        "source": "runs/0338-b/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T11:33:44Z",
+        "output_tokens": 61045,
+        "source": "runs/0338-a/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T13:14:32Z",
+        "output_tokens": 104797,
+        "source": "runs/0452-a/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-04T13:56:11Z",
+        "output_tokens": 49300,
+        "source": "runs/0452-f/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-04T14:20:51Z",
+        "output_tokens": 22286,
+        "source": "runs/0470-b/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T14:43:23Z",
+        "output_tokens": 22751,
+        "source": "runs/0470-a/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T15:32:35Z",
+        "output_tokens": 49502,
+        "source": "runs/0532-a/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-04T16:25:33Z",
+        "output_tokens": 56387,
+        "source": "runs/0673-b/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T17:24:09Z",
+        "output_tokens": 59384,
+        "source": "runs/0673-a/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-04T20:54:31Z",
+        "output_tokens": 8508,
+        "source": "runs/0233-d/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-04T21:17:12Z",
+        "output_tokens": 94495,
+        "source": "runs/0874-d/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "a",
+        "verdict": "DNF",
+        "finished": "2026-10-04T23:25:29Z",
+        "output_tokens": 134971,
+        "source": "runs/0874-a/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-05T01:14:49Z",
+        "output_tokens": 209486,
+        "source": "runs/0874-b/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-05T01:43:56Z",
+        "output_tokens": 132985,
+        "source": "runs/0874-f/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-05T02:24:00Z",
+        "output_tokens": 92413,
+        "source": "runs/0874-c/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-05T02:29:56Z",
+        "output_tokens": 14734,
+        "source": "runs/0874-e/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-05T02:53:38Z",
+        "output_tokens": 8795,
+        "source": "runs/1372-d/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-05T04:10:52Z",
+        "output_tokens": 60267,
+        "source": "runs/1372-a/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "f",
+        "verdict": "OK",
+        "finished": "2026-10-05T04:27:02Z",
+        "output_tokens": 28388,
+        "source": "runs/1372-f/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "c",
+        "verdict": "OK",
+        "finished": "2026-10-05T04:40:38Z",
+        "output_tokens": 12276,
+        "source": "runs/1372-c/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "e",
+        "verdict": "OK",
+        "finished": "2026-10-05T05:08:45Z",
+        "output_tokens": 5300,
+        "source": "runs/1372-e/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-05T05:56:42Z",
+        "output_tokens": 38266,
+        "source": "runs/1372-b/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "k",
+        "verdict": "DNF",
+        "finished": "2026-10-05T08:57:51Z",
+        "output_tokens": 279323,
+        "source": "runs/0211-k/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T09:03:03Z",
+        "output_tokens": 16343,
+        "source": "runs/0211-l/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-05T09:18:44Z",
+        "output_tokens": 6678,
+        "source": "runs/0211-c2/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-05T10:07:39Z",
+        "output_tokens": 57370,
+        "source": "runs/0211-b3/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-05T10:47:51Z",
+        "output_tokens": 4148,
+        "source": "runs/0211-g/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T10:56:51Z",
+        "output_tokens": 4108,
+        "source": "runs/0211-e2/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T11:02:57Z",
+        "output_tokens": 38168,
+        "source": "runs/0211-i/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-05T12:04:17Z",
+        "output_tokens": 77535,
+        "source": "runs/0211-b2/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T12:29:11Z",
+        "output_tokens": 4417,
+        "source": "runs/0211-d2/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T12:43:57Z",
+        "output_tokens": 15038,
+        "source": "runs/0233-l/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T12:52:07Z",
+        "output_tokens": 4618,
+        "source": "runs/0233-e2/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-05T12:55:19Z",
+        "output_tokens": 4521,
+        "source": "runs/0233-g/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:13:12Z",
+        "output_tokens": 30365,
+        "source": "runs/0211-j/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:40:49Z",
+        "output_tokens": 197015,
+        "source": "runs/0233-k/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T12:58:58Z",
+        "output_tokens": 3874,
+        "source": "runs/0233-d2/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:09:30Z",
+        "output_tokens": 10152,
+        "source": "runs/0211-e3/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:07:09Z",
+        "output_tokens": 7552,
+        "source": "runs/0333-e2/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:05:44Z",
+        "output_tokens": 29330,
+        "source": "runs/0333-l/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:01:39Z",
+        "output_tokens": 32342,
+        "source": "runs/0233-i/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:00:53Z",
+        "output_tokens": 12856,
+        "source": "runs/0333-g/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:34:19Z",
+        "output_tokens": 34196,
+        "source": "runs/0233-b3/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:13:37Z",
+        "output_tokens": 9453,
+        "source": "runs/0333-d2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:11:02Z",
+        "output_tokens": 3897,
+        "source": "runs/0338-g/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:22:56Z",
+        "output_tokens": 84421,
+        "source": "runs/0333-i/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:13:21Z",
+        "output_tokens": 11280,
+        "source": "runs/0338-l/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:18:07Z",
+        "output_tokens": 7051,
+        "source": "runs/0338-e2/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:17:51Z",
+        "output_tokens": 6372,
+        "source": "runs/0233-e3/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-06T07:04:59Z",
+        "output_tokens": 13967,
+        "source": "runs/0452-g/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:25:16Z",
+        "output_tokens": 36651,
+        "source": "runs/0452-l/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-06T07:03:09Z",
+        "output_tokens": 1566,
+        "source": "runs/0338-d2/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:47:24Z",
+        "output_tokens": 10982,
+        "source": "runs/0333-e3/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:42:01Z",
+        "output_tokens": 7231,
+        "source": "runs/0452-e2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-06T07:07:01Z",
+        "output_tokens": 43933,
+        "source": "runs/0338-i/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "j",
+        "verdict": "DNF",
+        "finished": "2026-10-05T15:36:45Z",
+        "output_tokens": 117191,
+        "source": "runs/0333-j/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:36:59Z",
+        "output_tokens": 604,
+        "source": "runs/0470-g/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:48:07Z",
+        "output_tokens": 1885,
+        "source": "runs/0470-l/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:52:53Z",
+        "output_tokens": 17772,
+        "source": "runs/0452-d2/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:41:00Z",
+        "output_tokens": 7593,
+        "source": "runs/0233-c2/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:07:52Z",
+        "output_tokens": 3562,
+        "source": "runs/0532-g/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:26:56Z",
+        "output_tokens": 52693,
+        "source": "runs/0233-b2/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:13:51Z",
+        "output_tokens": 992,
+        "source": "runs/0470-e2/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:56:46Z",
+        "output_tokens": 75116,
+        "source": "runs/0452-i/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T13:53:15Z",
+        "output_tokens": 8722,
+        "source": "runs/0338-e3/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:29:31Z",
+        "output_tokens": 14650,
+        "source": "runs/0532-l/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-06T07:03:21Z",
+        "output_tokens": 841,
+        "source": "runs/0470-d2/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:22:52Z",
+        "output_tokens": 15343,
+        "source": "runs/0452-e3/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:24:39Z",
+        "output_tokens": 65839,
+        "source": "runs/0470-i/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:09:20Z",
+        "output_tokens": 6368,
+        "source": "runs/0673-g/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:18:19Z",
+        "output_tokens": 5867,
+        "source": "runs/0532-e2/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:31:20Z",
+        "output_tokens": 8050,
+        "source": "runs/0673-l/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:12:34Z",
+        "output_tokens": 8628,
+        "source": "runs/0532-d2/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:23:31Z",
+        "output_tokens": 1547,
+        "source": "runs/0470-e3/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:29:36Z",
+        "output_tokens": 49664,
+        "source": "runs/0532-i/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:18:34Z",
+        "output_tokens": 37026,
+        "source": "runs/0874-g/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:23:04Z",
+        "output_tokens": 4376,
+        "source": "runs/0673-e2/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-06T09:39:50Z",
+        "output_tokens": 77278,
+        "source": "runs/0333-b2/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:46:57Z",
+        "output_tokens": 16807,
+        "source": "runs/0874-l/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:46:11Z",
+        "output_tokens": 8010,
+        "source": "runs/0673-d2/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:53:21Z",
+        "output_tokens": 8761,
+        "source": "runs/0532-e3/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:55:20Z",
+        "output_tokens": 43959,
+        "source": "runs/0673-i/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "g",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:44:48Z",
+        "output_tokens": 2012,
+        "source": "runs/1372-g/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:14:53Z",
+        "output_tokens": 71616,
+        "source": "runs/0333-k/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T14:45:39Z",
+        "output_tokens": 2805,
+        "source": "runs/0874-e2/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "e2",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:09:45Z",
+        "output_tokens": 2266,
+        "source": "runs/1372-e2/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:10:05Z",
+        "output_tokens": 29954,
+        "source": "runs/0874-d2/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "l",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:14:41Z",
+        "output_tokens": 10481,
+        "source": "runs/1372-l/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:15:12Z",
+        "output_tokens": 6569,
+        "source": "runs/0673-e3/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:23:40Z",
+        "output_tokens": 152790,
+        "source": "runs/0874-i/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "d2",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:22:44Z",
+        "output_tokens": 2141,
+        "source": "runs/1372-d2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:42:05Z",
+        "output_tokens": 46177,
+        "source": "runs/0338-k/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:27:08Z",
+        "output_tokens": 21808,
+        "source": "runs/0874-e3/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-06T06:36:14Z",
+        "output_tokens": 36750,
+        "source": "runs/0470-b3/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-06T07:55:16Z",
+        "output_tokens": 83264,
+        "source": "runs/0333-b3/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-06T08:02:08Z",
+        "output_tokens": 9056,
+        "source": "runs/0333-c2/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "i",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:35:56Z",
+        "output_tokens": 52249,
+        "source": "runs/1372-i/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "e3",
+        "verdict": "OK",
+        "finished": "2026-10-05T15:43:50Z",
+        "output_tokens": 3994,
+        "source": "runs/1372-e3/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-05T16:18:05Z",
+        "output_tokens": 74811,
+        "source": "runs/0470-b2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:19:32Z",
+        "output_tokens": 31852,
+        "source": "runs/0338-j/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-05T16:57:03Z",
+        "output_tokens": 78335,
+        "source": "runs/0470-k/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-05T16:27:38Z",
+        "output_tokens": 8647,
+        "source": "runs/0470-j/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-05T16:25:36Z",
+        "output_tokens": 6725,
+        "source": "runs/0532-c2/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-05T16:43:15Z",
+        "output_tokens": 42980,
+        "source": "runs/0532-b3/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-05T16:56:32Z",
+        "output_tokens": 24416,
+        "source": "runs/0532-j/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-05T17:19:28Z",
+        "output_tokens": 56317,
+        "source": "runs/0532-b2/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-05T17:26:16Z",
+        "output_tokens": 30734,
+        "source": "runs/0673-j/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-05T18:20:09Z",
+        "output_tokens": 205915,
+        "source": "runs/0532-k/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-05T18:08:15Z",
+        "output_tokens": 70317,
+        "source": "runs/0673-b2/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-05T18:46:14Z",
+        "output_tokens": 68202,
+        "source": "runs/0673-b3/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-05T20:35:47Z",
+        "output_tokens": 202672,
+        "source": "runs/0874-k/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-05T18:50:57Z",
+        "output_tokens": 5077,
+        "source": "runs/0673-c2/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-05T20:06:52Z",
+        "output_tokens": 127415,
+        "source": "runs/0874-b2/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-05T20:16:33Z",
+        "output_tokens": 10987,
+        "source": "runs/0874-c2/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "b3",
+        "verdict": "DNF",
+        "finished": "2026-10-05T22:18:27Z",
+        "output_tokens": 229611,
+        "source": "runs/0874-b3/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-05T23:08:58Z",
+        "output_tokens": 33500,
+        "source": "runs/1372-b3/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-05T23:34:42Z",
+        "output_tokens": 26493,
+        "source": "runs/1372-c2/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-06T00:34:19Z",
+        "output_tokens": 41861,
+        "source": "runs/1372-b2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-06T03:44:08Z",
+        "output_tokens": 15158,
+        "source": "runs/0338-c2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-06T04:13:11Z",
+        "output_tokens": 53233,
+        "source": "runs/0338-b2/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-06T04:34:17Z",
+        "output_tokens": 50423,
+        "source": "runs/0338-b3/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "b2",
+        "verdict": "OK",
+        "finished": "2026-10-06T05:19:19Z",
+        "output_tokens": 79255,
+        "source": "runs/0452-b2/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "b3",
+        "verdict": "OK",
+        "finished": "2026-10-06T05:54:28Z",
+        "output_tokens": 77864,
+        "source": "runs/0452-b3/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "c2",
+        "verdict": "OK",
+        "finished": "2026-10-06T06:15:33Z",
+        "output_tokens": 23275,
+        "source": "runs/0452-c2/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "c2",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T06:17:07Z",
+        "output_tokens": 3724,
+        "source": "runs/0470-c2/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-06T17:54:50Z",
+        "output_tokens": 67425,
+        "source": "runs/0452-k/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-06T17:30:41Z",
+        "output_tokens": 22586,
+        "source": "runs/0233-j/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-06T17:42:11Z",
+        "output_tokens": 39568,
+        "source": "runs/0452-j/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-06T18:38:10Z",
+        "output_tokens": 136039,
+        "source": "runs/0874-j/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-06T18:23:43Z",
+        "output_tokens": 52287,
+        "source": "runs/0673-k/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "k",
+        "verdict": "OK",
+        "finished": "2026-10-06T19:14:27Z",
+        "output_tokens": 50825,
+        "source": "runs/1372-k/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "j",
+        "verdict": "OK",
+        "finished": "2026-10-06T18:45:42Z",
+        "output_tokens": 25144,
+        "source": "runs/1372-j/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "m",
+        "verdict": "OK",
+        "finished": "2026-10-06T18:42:48Z",
+        "output_tokens": 25362,
+        "source": "runs/0470-m/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "m",
+        "verdict": "OK",
+        "finished": "2026-10-06T19:25:04Z",
+        "output_tokens": 42779,
+        "source": "runs/0333-m/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T20:10:23Z",
+        "output_tokens": 15415,
+        "source": "runs/0211-m/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "m",
+        "verdict": "OK",
+        "finished": "2026-10-06T19:07:58Z",
+        "output_tokens": 13572,
+        "source": "runs/0338-m/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T19:30:30Z",
+        "output_tokens": 43652,
+        "source": "runs/0452-m/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "m",
+        "verdict": "OK",
+        "finished": "2026-10-06T19:18:12Z",
+        "output_tokens": 19576,
+        "source": "runs/0673-m/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "m",
+        "verdict": "OK",
+        "finished": "2026-10-06T19:20:18Z",
+        "output_tokens": 20310,
+        "source": "runs/0532-m/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T20:10:17Z",
+        "output_tokens": 107377,
+        "source": "runs/0233-m/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T20:08:21Z",
+        "output_tokens": 87153,
+        "source": "runs/0874-m/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T20:08:42Z",
+        "output_tokens": 14861,
+        "source": "runs/1372-m/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "mo",
+        "verdict": "OK",
+        "finished": "2026-10-06T21:23:21Z",
+        "output_tokens": 96579,
+        "source": "runs/0874-mo/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "mo",
+        "verdict": "OK",
+        "finished": "2026-10-06T21:13:12Z",
+        "output_tokens": 25785,
+        "source": "runs/0211-mo/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "mo",
+        "verdict": "OK",
+        "finished": "2026-10-06T20:53:35Z",
+        "output_tokens": 13353,
+        "source": "runs/1372-mo/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "mo",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:33:53Z",
+        "output_tokens": 715,
+        "source": "runs/0452-mo/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "mo",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:33:53Z",
+        "output_tokens": 1019,
+        "source": "runs/0233-mo/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "mo",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:33:53Z",
+        "output_tokens": 782,
+        "source": "runs/0470-mo/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "mr",
+        "verdict": "OK",
+        "finished": "2026-10-06T23:14:25Z",
+        "output_tokens": 232050,
+        "source": "runs/0233-mr/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "mr",
+        "verdict": "OK",
+        "finished": "2026-10-06T23:35:33Z",
+        "output_tokens": 286033,
+        "source": "runs/0452-mr/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "mr",
+        "verdict": "OK",
+        "finished": "2026-10-06T22:22:52Z",
+        "output_tokens": 57361,
+        "source": "runs/0470-mr/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "mr",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-07T07:05:05Z",
+        "output_tokens": 134588,
+        "source": "runs/0874-mr/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "mr",
+        "verdict": "OK",
+        "finished": "2026-10-07T07:03:23Z",
+        "output_tokens": 58337,
+        "source": "runs/1372-mr/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "mr",
+        "verdict": "OK",
+        "finished": "2026-10-07T07:09:04Z",
+        "output_tokens": 100261,
+        "source": "runs/0211-mr/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "mb",
+        "verdict": "OK",
+        "finished": "2026-10-07T07:36:41Z",
+        "output_tokens": 110721,
+        "source": "runs/0452-mb/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "mb",
+        "verdict": "OK",
+        "finished": "2026-10-07T07:35:31Z",
+        "output_tokens": 76554,
+        "source": "runs/0233-mb/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "mb",
+        "verdict": "DNF",
+        "finished": "2026-10-07T09:20:16Z",
+        "output_tokens": 351087,
+        "source": "runs/0874-mb/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-03T21:18:01Z",
+        "output_tokens": 5495,
+        "source": "runs-void/0211-a-infrastructure-void/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:16:05Z",
+        "output_tokens": 9132,
+        "source": "runs-void/0333-a-infrastructure-void/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:37:22Z",
+        "output_tokens": 11247,
+        "source": "runs-void/0470-a-infrastructure-void/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:03:19Z",
+        "output_tokens": 18522,
+        "source": "runs-void/0532-a-infrastructure-void/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "a",
+        "verdict": "OK",
+        "finished": "2026-10-03T20:13:49Z",
+        "output_tokens": 103155,
+        "source": "runs-void/0452-a-infrastructure-void/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-04T08:20:49Z",
+        "output_tokens": 0,
+        "source": "runs-void/0233-d-infra-void/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-03T22:41:17Z",
+        "output_tokens": 5509,
+        "source": "runs-void/0338-b-infra-void/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-04T00:48:02Z",
+        "output_tokens": 8531,
+        "source": "runs-void/0673-b-infra-void/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "b",
+        "verdict": "OK",
+        "finished": "2026-10-03T23:26:11Z",
+        "output_tokens": 4481,
+        "source": "runs-void/0470-b-infra-void/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "a",
+        "verdict": "DNF",
+        "finished": "2026-10-04T19:35:22Z",
+        "output_tokens": 145873,
+        "source": "runs-void/0874-a-wrong-base/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "b",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-04T20:04:05Z",
+        "output_tokens": 57517,
+        "source": "runs-void/0874-b-wrong-base/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "d",
+        "verdict": "OK",
+        "finished": "2026-10-04T17:27:23Z",
+        "output_tokens": 2583,
+        "source": "runs-void/0874-d-wrong-base/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "j",
+        "verdict": "VOID-REROUTE",
+        "finished": "2026-10-05T10:46:24Z",
+        "output_tokens": 19313,
+        "source": "runs-void/0211-j-void-bug/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "h",
+        "verdict": "VOID-REROUTE",
+        "finished": "2026-10-05T12:27:32Z",
+        "output_tokens": 11533,
+        "source": "runs-void/0211-h-void-bug/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "h",
+        "verdict": "VOID-REROUTE",
+        "finished": "2026-10-05T12:40:11Z",
+        "output_tokens": 18082,
+        "source": "runs-void/0233-h-void-bug/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "b2",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-05T15:01:28Z",
+        "output_tokens": 30617,
+        "source": "runs-void/0333-b2-infra-void-pause-kill-20261006/attempts/2/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "j",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T07:02:19Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/0233-j/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "j",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T03:19:36Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/0452-j/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "j",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T03:19:37Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/0874-j/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "j",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T03:19:38Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/1372-j/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "k",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T03:19:30Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/0452-k/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "k",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T03:19:31Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/0673-k/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "k",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T03:19:32Z",
+        "output_tokens": 0,
+        "source": "runs-void/quota-replay-20261006T172238Z/1372-k/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T18:24:16Z",
+        "output_tokens": 0,
+        "source": "runs-void/0470-m-infra-void-store-param-20261006/attempts/1/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T19:20:02Z",
+        "output_tokens": 902,
+        "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/0233-m/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T19:17:36Z",
+        "output_tokens": 36268,
+        "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/0874-m/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "m",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T19:23:59Z",
+        "output_tokens": 31531,
+        "source": "runs-void/mistral4-provider-incidents-20261006T193033Z/1372-m/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "mo",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T20:32:05Z",
+        "output_tokens": 7795,
+        "source": "runs-void/mistral4-or-incidents-20261006T213315Z/0233-mo/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "mo",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T20:30:17Z",
+        "output_tokens": 113,
+        "source": "runs-void/mistral4-or-incidents-20261006T213315Z/0452-mo/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "mo",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:04:57Z",
+        "output_tokens": 43673,
+        "source": "runs-void/mistral4-or-incidents-20261006T213315Z/0470-mo/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "mr",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:39:43Z",
+        "output_tokens": 0,
+        "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0233-mr/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "mr",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:39:43Z",
+        "output_tokens": 0,
+        "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0452-mr/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "mr",
+        "verdict": "VOID-EMPTY",
+        "finished": "2026-10-06T21:39:43Z",
+        "output_tokens": 0,
+        "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0470-mr/run.json"
+      }
+    ]
+  }
+}

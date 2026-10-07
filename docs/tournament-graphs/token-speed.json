@@ -1,0 +1,400 @@
+{
+  "method": "Output tokens / response wall time; includes prefill, network and provider waiting. All successful runs of selected arms. Provider tokenizers differ. No causal isolation of effort.",
+  "arms": {
+    "b2": {
+      "tickets": 10,
+      "mean_output_tokens": 68364.1,
+      "mean_response_seconds": 2043.374300312996,
+      "effective_output_tps": 33.45647441564096,
+      "mean_ticket_seconds": 2766.41,
+      "records": [
+        {
+          "ticket": "0211",
+          "output_tokens": 75443,
+          "response_seconds": 2156.896000623703,
+          "calls": 132,
+          "ticket_seconds": 3454.4
+        },
+        {
+          "ticket": "0233",
+          "output_tokens": 52693,
+          "response_seconds": 1526.8600001335144,
+          "calls": 91,
+          "ticket_seconds": 2353.7
+        },
+        {
+          "ticket": "0333",
+          "output_tokens": 73756,
+          "response_seconds": 2262.4290010929108,
+          "calls": 124,
+          "ticket_seconds": 2820.5
+        },
+        {
+          "ticket": "0338",
+          "output_tokens": 53233,
+          "response_seconds": 1490.1360006332397,
+          "calls": 94,
+          "ticket_seconds": 1549.3
+        },
+        {
+          "ticket": "0452",
+          "output_tokens": 76025,
+          "response_seconds": 2300.9140000343323,
+          "calls": 124,
+          "ticket_seconds": 2551.1
+        },
+        {
+          "ticket": "0470",
+          "output_tokens": 73429,
+          "response_seconds": 2232.7889993190765,
+          "calls": 126,
+          "ticket_seconds": 2517.8
+        },
+        {
+          "ticket": "0532",
+          "output_tokens": 52386,
+          "response_seconds": 1526.739999294281,
+          "calls": 60,
+          "ticket_seconds": 1905.2
+        },
+        {
+          "ticket": "0673",
+          "output_tokens": 68651,
+          "response_seconds": 2190.7700016498566,
+          "calls": 101,
+          "ticket_seconds": 2592.8
+        },
+        {
+          "ticket": "0874",
+          "output_tokens": 116164,
+          "response_seconds": 3458.440999984741,
+          "calls": 144,
+          "ticket_seconds": 4440.5
+        },
+        {
+          "ticket": "1372",
+          "output_tokens": 41861,
+          "response_seconds": 1287.7680003643036,
+          "calls": 80,
+          "ticket_seconds": 3478.8
+        }
+      ]
+    },
+    "d": {
+      "tickets": 10,
+      "mean_output_tokens": 24772.5,
+      "mean_response_seconds": 282.40300009250643,
+      "effective_output_tps": 87.72038537793615,
+      "mean_ticket_seconds": 544.16,
+      "records": [
+        {
+          "ticket": "0211",
+          "output_tokens": 13962,
+          "response_seconds": 159.44599986076355,
+          "calls": 28,
+          "ticket_seconds": 1005.2
+        },
+        {
+          "ticket": "0233",
+          "output_tokens": 8508,
+          "response_seconds": 100.58500051498413,
+          "calls": 17,
+          "ticket_seconds": 129.2
+        },
+        {
+          "ticket": "0333",
+          "output_tokens": 27686,
+          "response_seconds": 314.4470009803772,
+          "calls": 49,
+          "ticket_seconds": 355.3
+        },
+        {
+          "ticket": "0338",
+          "output_tokens": 21224,
+          "response_seconds": 239.26099967956543,
+          "calls": 40,
+          "ticket_seconds": 289.9
+        },
+        {
+          "ticket": "0452",
+          "output_tokens": 41648,
+          "response_seconds": 434.2309994697571,
+          "calls": 60,
+          "ticket_seconds": 581.2
+        },
+        {
+          "ticket": "0470",
+          "output_tokens": 2344,
+          "response_seconds": 28.569000005722046,
+          "calls": 5,
+          "ticket_seconds": 29.2
+        },
+        {
+          "ticket": "0532",
+          "output_tokens": 17250,
+          "response_seconds": 197.79600024223328,
+          "calls": 23,
+          "ticket_seconds": 240.7
+        },
+        {
+          "ticket": "0673",
+          "output_tokens": 11815,
+          "response_seconds": 161.4460003376007,
+          "calls": 30,
+          "ticket_seconds": 363.3
+        },
+        {
+          "ticket": "0874",
+          "output_tokens": 94495,
+          "response_seconds": 1062.14199924469,
+          "calls": 121,
+          "ticket_seconds": 1216.7
+        },
+        {
+          "ticket": "1372",
+          "output_tokens": 8793,
+          "response_seconds": 126.10700058937073,
+          "calls": 25,
+          "ticket_seconds": 1230.9
+        }
+      ]
+    },
+    "e2": {
+      "tickets": 10,
+      "mean_output_tokens": 4686.6,
+      "mean_response_seconds": 157.0223997592926,
+      "effective_output_tps": 29.846697077514552,
+      "mean_ticket_seconds": 309.05,
+      "records": [
+        {
+          "ticket": "0211",
+          "output_tokens": 4108,
+          "response_seconds": 145.32199907302856,
+          "calls": 24,
+          "ticket_seconds": 416.7
+        },
+        {
+          "ticket": "0233",
+          "output_tokens": 4618,
+          "response_seconds": 117.13899970054626,
+          "calls": 21,
+          "ticket_seconds": 358.1
+        },
+        {
+          "ticket": "0333",
+          "output_tokens": 7552,
+          "response_seconds": 263.8670003414154,
+          "calls": 49,
+          "ticket_seconds": 565.1
+        },
+        {
+          "ticket": "0338",
+          "output_tokens": 7051,
+          "response_seconds": 364.6919996738434,
+          "calls": 46,
+          "ticket_seconds": 460.2
+        },
+        {
+          "ticket": "0452",
+          "output_tokens": 7231,
+          "response_seconds": 196.98399949073792,
+          "calls": 36,
+          "ticket_seconds": 306.6
+        },
+        {
+          "ticket": "0470",
+          "output_tokens": 992,
+          "response_seconds": 29.16499972343445,
+          "calls": 8,
+          "ticket_seconds": 29.7
+        },
+        {
+          "ticket": "0532",
+          "output_tokens": 5867,
+          "response_seconds": 144.8119990825653,
+          "calls": 31,
+          "ticket_seconds": 267.4
+        },
+        {
+          "ticket": "0673",
+          "output_tokens": 4376,
+          "response_seconds": 127.61000084877014,
+          "calls": 34,
+          "ticket_seconds": 283.9
+        },
+        {
+          "ticket": "0874",
+          "output_tokens": 2805,
+          "response_seconds": 96.23499989509583,
+          "calls": 17,
+          "ticket_seconds": 97.2
+        },
+        {
+          "ticket": "1372",
+          "output_tokens": 2266,
+          "response_seconds": 84.39799976348877,
+          "calls": 15,
+          "ticket_seconds": 305.6
+        }
+      ]
+    },
+    "e3": {
+      "tickets": 10,
+      "mean_output_tokens": 9425,
+      "mean_response_seconds": 272.8452999830246,
+      "effective_output_tps": 34.543384110286624,
+      "mean_ticket_seconds": 502.68,
+      "records": [
+        {
+          "ticket": "0211",
+          "output_tokens": 10152,
+          "response_seconds": 308.14699959754944,
+          "calls": 39,
+          "ticket_seconds": 706.3
+        },
+        {
+          "ticket": "0233",
+          "output_tokens": 6372,
+          "response_seconds": 152.18099927902222,
+          "calls": 26,
+          "ticket_seconds": 454.3
+        },
+        {
+          "ticket": "0333",
+          "output_tokens": 10982,
+          "response_seconds": 329.34899950027466,
+          "calls": 37,
+          "ticket_seconds": 630.9
+        },
+        {
+          "ticket": "0338",
+          "output_tokens": 8722,
+          "response_seconds": 235.9420006275177,
+          "calls": 28,
+          "ticket_seconds": 334.5
+        },
+        {
+          "ticket": "0452",
+          "output_tokens": 15343,
+          "response_seconds": 326.91900062561035,
+          "calls": 44,
+          "ticket_seconds": 570.5
+        },
+        {
+          "ticket": "0470",
+          "output_tokens": 1547,
+          "response_seconds": 36.3970000743866,
+          "calls": 8,
+          "ticket_seconds": 37.7
+        },
+        {
+          "ticket": "0532",
+          "output_tokens": 8761,
+          "response_seconds": 263.9770004749298,
+          "calls": 27,
+          "ticket_seconds": 558.0
+        },
+        {
+          "ticket": "0673",
+          "output_tokens": 6569,
+          "response_seconds": 311.4469995498657,
+          "calls": 27,
+          "ticket_seconds": 634.4
+        },
+        {
+          "ticket": "0874",
+          "output_tokens": 21808,
+          "response_seconds": 624.1129999160767,
+          "calls": 52,
+          "ticket_seconds": 639.1
+        },
+        {
+          "ticket": "1372",
+          "output_tokens": 3994,
+          "response_seconds": 139.98100018501282,
+          "calls": 19,
+          "ticket_seconds": 461.1
+        }
+      ]
+    },
+    "l": {
+      "tickets": 10,
+      "mean_output_tokens": 16051.5,
+      "mean_response_seconds": 204.99169991016387,
+      "effective_output_tps": 78.30317035779719,
+      "mean_ticket_seconds": 301.17,
+      "records": [
+        {
+          "ticket": "0211",
+          "output_tokens": 16343,
+          "response_seconds": 226.8280005455017,
+          "calls": 36,
+          "ticket_seconds": 236.0
+        },
+        {
+          "ticket": "0233",
+          "output_tokens": 15038,
+          "response_seconds": 188.07299971580505,
+          "calls": 32,
+          "ticket_seconds": 224.4
+        },
+        {
+          "ticket": "0333",
+          "output_tokens": 29330,
+          "response_seconds": 368.7339994907379,
+          "calls": 58,
+          "ticket_seconds": 480.2
+        },
+        {
+          "ticket": "0338",
+          "output_tokens": 11280,
+          "response_seconds": 132.16600012779236,
+          "calls": 23,
+          "ticket_seconds": 185.0
+        },
+        {
+          "ticket": "0452",
+          "output_tokens": 36651,
+          "response_seconds": 482.77399945259094,
+          "calls": 68,
+          "ticket_seconds": 714.2
+        },
+        {
+          "ticket": "0470",
+          "output_tokens": 1885,
+          "response_seconds": 28.162999868392944,
+          "calls": 7,
+          "ticket_seconds": 28.7
+        },
+        {
+          "ticket": "0532",
+          "output_tokens": 14650,
+          "response_seconds": 191.69799947738647,
+          "calls": 27,
+          "ticket_seconds": 253.4
+        },
+        {
+          "ticket": "0673",
+          "output_tokens": 8050,
+          "response_seconds": 104.80700016021729,
+          "calls": 19,
+          "ticket_seconds": 107.2
+        },
+        {
+          "ticket": "0874",
+          "output_tokens": 16807,
+          "response_seconds": 181.5360004901886,
+          "calls": 24,
+          "ticket_seconds": 184.2
+        },
+        {
+          "ticket": "1372",
+          "output_tokens": 10481,
+          "response_seconds": 145.1379997730255,
+          "calls": 21,
+          "ticket_seconds": 598.4
+        }
+      ]
+    }
+  }
+}

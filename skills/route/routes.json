@@ -1,12 +1,12 @@
 {
   "_comment": "Route-state cache owned by skills/route. Key NAMES only, never values. Update on every route state change; stale cache burns attempts and money.",
-  "updated": "2026-10-06T08:00Z",
+  "updated": "2026-10-06T17:54:10.941255+00:00",
   "routes": {
     "anthropic": {
       "endpoint": "api.anthropic.com (pi built-in)",
       "key_env": "ANTHROPIC_API_KEY",
       "status": "live",
-      "note": "opus-5-5, sonnet-5-5. Effort axis steep: @low pays Opus prices for Sonnet-tier quality with craters.",
+      "note": "opus-5-5, sonnet-5-5. @low vs @medium: paired median quality difference -0.5; measured cost and latency lower. See corrected cumulative grid.",
       "last_verified": "2026-10-06"
     },
     "openai": {
@@ -35,20 +35,20 @@
       "key_env": "OPENROUTER_API_KEY_IDH",
       "status": "live",
       "cap_monthly_usd": 60,
-      "note": "Key cap raised 40->60 on 2026-10-06 after the 40.15 wall killed all panel judging mid-repass. Judge panel seats (gemini/grok/minimax) route here — a key-cap hit stalls the whole panel. Workspace lifetime credits: 240 total.",
+      "note": "Monthly key cap 60 USD; author reported 45.18/60 before replay. Seven GLM Flash/Mimo failures were 403 key-limit errors, not model abandonment; targeted replay underway. Candidate and judge calls share this cap.",
       "last_verified": "2026-10-06"
     },
     "dashscope-intl": {
       "endpoint": "dashscope-intl.aliyuncs.com/compatible-mode/v1 (NOT the .cn host)",
       "key_env": "QWEN_API_KEY_AEDIST",
       "status": "live",
-      "note": "172 models incl. qwen3.8-flash (lineage twin of local flash-next, NOT the same weights: served production vs open-weights preview) and qwen3.8-27b. qwen3.8-flash-next is NOT served anywhere as of 2026-10-06 — weights-only release. No z.ai metered key; pi z.ai doors are subscription-credit channels.",
+      "note": "172 models incl. qwen3.8-flash (lineage twin of local flash-next, NOT the same weights: served production vs open-weights preview) and qwen3.8-27b. qwen3.8-flash-next is NOT served anywhere as of 2026-10-06 \u2014 weights-only release. No z.ai metered key; pi z.ai doors are subscription-credit channels.",
       "last_verified": "2026-10-06"
     },
     "spacebunny": {
       "endpoint": "openrouter stealth/space-bunny-alpha",
       "status": "dead",
-      "note": "404 'No endpoints found' since 2026-10-06 — the free-tier endpoint is gone. 4 valid arena legs stand; holes recorded DNF-PROVIDER.",
+      "note": "Endpoint expired; all ten SpaceBunny result directories purged at author request. Excluded from the cumulative performance grid.",
       "last_verified": "2026-10-06"
     }
   },
