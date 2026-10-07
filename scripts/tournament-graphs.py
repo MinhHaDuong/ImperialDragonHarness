@@ -218,7 +218,7 @@ def render(output, snapshot):
             fig.text(.06,y,heading,fontsize=13,fontweight='bold',va='top')
             text = wrap_paragraph(fig, text, 10.5)
             fig.text(.06,y-.03,text,fontsize=10.5,va='top',linespacing=1.35)
-            y-=.04 + .025 * len(text.splitlines())
+            y-=.065 + .025 * len(text.splitlines())
         fig.text(.045,.015,source_text,fontsize=8,color='#475569');pdf.savefig(fig);plt.close(fig)
         scatter_axes = [
             ('quality-cost', 'Qualité / coût', 'cost_usd_mean', 'quality_mean',
