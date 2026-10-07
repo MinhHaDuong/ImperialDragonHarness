@@ -240,8 +240,8 @@ def render(output, snapshot):
                 ax.scatter(x,y,s=size,marker=marker,
                            facecolors='none' if provisional or a == 'mr' else color,
                            edgecolors=color if a in {'mi','mr'} else '#ea580c' if provisional else color,
-                           linewidths=1.7 if a in {'mi','mr'} or a in DASHED_MODELS else 1,
-                           linestyles='--' if a in DASHED_MODELS else '-',zorder=4 if a == 'mi' else 3)
+                           linewidths=1.7 if a in {'mi','mr'} else 1,
+                           linestyles='-',zorder=4 if a == 'mi' else 3)
                 if a in frontier:
                     ax.scatter(x,y,s=210,facecolors='none',edgecolors='#b45309',linewidths=1.8,zorder=2)
                 entries.append((a,x,y,color,provisional))
@@ -313,7 +313,7 @@ def render(output, snapshot):
             if name == 'quality-total-cost':
                 fig.text(.045,.855,f'Par ticket : coût total = coût direct + {hourly_usd:g} × durée / 3 600 ; puis moyenne. Toute la durée est valorisée, DNF inclus.',fontsize=8)
             fig.text(.045,.045,'Bleu : local ; vert : hébergé ; orange / creux / * : provisoire. Mistral : losange violet = Idéal, cercle rouge = beta. Coût et durée en échelle logarithmique.\n'
-                     'Contours pointillés : Qwen 3 / 3.6, Sol 6, Mistral beta. Coût local = électricité seule ; hébergé = API. Les graphiques de significativité utilisent uniquement les identités complètes.',fontsize=8)
+                     'Coût local = électricité seule ; coût hébergé = API. Les graphiques de significativité utilisent uniquement les identités complètes.',fontsize=8)
             pdf.savefig(fig);fig.savefig(output/f'{name}.png',dpi=160);plt.close(fig)
         fig=plt.figure(figsize=(11.6929,8.2677));fig.text(.06,.91,'Méthode et périmètre',fontsize=20,fontweight='bold')
         paragraphs=[
