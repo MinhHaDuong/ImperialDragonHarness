@@ -2,6 +2,7 @@
 Title: Routing B0: cross-family decorrelation doctrine and launch-choice floor
 Created: 2026-10-08
 Author: claude
+Closed: Doctrine, contradiction fixes and floor test merged (#1269, #1272); live cross-family seat run on PR 1272 returned no findings
 
 --- log ---
 2026-10-08T15:36Z claude created
@@ -9,6 +10,8 @@ Author: claude
 2026-10-08T18:02Z reviewer note blocker 1064 closed — Blocked-by removed.
 2026-10-08T19:24Z reviewer B0 content merged via PR (doctrine in skills/route/references/decorrelation.md; contradictions in rules/workflow.md, rules/claude-code.md, profiles/coder fixed; floor test tests/test_launch_model_choice.py, per skill not per launch line). Open exit criterion: a live gaze run on a Claude-produced PR showing a non-Claude seat or no report with DEGRADED has not been done; ticket stays open until it is.
 2026-10-08T19:35Z reviewer Author 2026-10-08: B0 must not over-apply decorrelation; many PRs are trivial and a straightforward review by a lower model of the same class suffices. Doctrine amended: review scales to risk (trivial: one same-family reviewer; ordinary: same family fine, not called independent; high risk: at least one other-family seat). DEGRADED only for a required seat that could not run.
+2026-10-08T20:18Z reviewer Live criterion met 2026-10-08 (sub-agent run): PR #1272 (high-risk row, edits rules/workflow.md) was reviewed by a non-Claude seat: codex exec -s read-only -m gpt-6-luna, header model gpt-6-luna, provider openai, reasoning effort low, 13936 tokens, the seat read repo files (2 tool executions). Verdict verbatim: 'no findings'. Caveats: low effort, no positive control, so the null covers only that perspective; the runner noticed a possible tension in rules/workflow.md between the new risk-scaling text and 'Most decorrelated available for risk', which the seat did not raise (judged consistent: the phrase applies to high risk). Door note: --skip-git-repo-check was refused by this session's worktree guard and dropped; it is unnecessary inside a repo.
+2026-10-08T20:18Z reviewer closed — Doctrine, contradiction fixes and floor test merged (#1269, #1272); live cross-family seat run on PR 1272 returned no findings
 
 --- body ---
 ## Context
