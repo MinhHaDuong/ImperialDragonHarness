@@ -3,12 +3,14 @@ Title: Routing A2: launch doors and per-runtime route recommendations
 Created: 2026-10-08
 Author: claude
 Blocked-by: 1063
+Closed: autoclosed — PR #1267
 
 --- log ---
 2026-10-08T15:36Z claude created
 2026-10-08T15:40Z claude note Child of tracker 1052 (wave A2).
 2026-10-08T15:47Z reviewer note blocker 1062 closed — Blocked-by removed.
 2026-10-08T17:59Z reviewer A2 done 2026-10-08. Launch doors in routes.json launch_doors (claude-code, pi, codex, vibe); four skills/route/routes-recommendations-<runtime>.md files plus pointer lines in SKILL.md; the decision section of SKILL.md is rewritten (orchestrator chooses from grid, no two-stage script); no-model-names test exempts skills/route/; policy non-goals amended. Door evidence: claude -p --model haiku -> claude-haiku-5-5 (verified); codex exec -m gpt-6-luna accepted, claude-haiku-5-5 rejected (verified); Agent model=haiku -> claude-haiku-5-5 (verified, 1063); vibe -p runs but printed no model id from an untrusted folder (partly verified); Pi NOT run, credentials not loaded (author accepted: marked unverified). make check: 1514 passed, 3 skipped. Exit criterion 'each template run once' is met for 2 of 4 runtimes, partly for Vibe, not for Pi; the Pi file and routes.json say unverified. Codex subagent selection also unverified. Kill criterion applied: Codex file states no Anthropic door.
+2026-10-08T18:02Z reviewer closed — autoclosed — PR #1267
 
 --- body ---
 ## Context
