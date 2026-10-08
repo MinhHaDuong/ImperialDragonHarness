@@ -2,12 +2,12 @@
 Title: Routing: apply the cycle-2 verdict to the live routing config
 Created: 2026-10-06
 Author: MinhHaDuong
-Blocked-by: 1047
 
 --- log ---
 2026-10-06T08:43Z MinhHaDuong created
 2026-10-06T09:44Z reviewer note Author-approved chantier sequence: apply live routing after research blog posts1047; priority-order blocker, not a technical dependency.
 2026-10-08T15:37Z reviewer claude note Scope widened by the author 2026-10-08: the target is no longer a models.json successor but the skills/route grid, plus LLM-chosen routing and teardown of the model-level x effort chooser. Children: 1062 (A1 grid, Haiku, SpaceBunny), 1063 (A0 live checks), 1064 (A2 launch doors), 1065 (B0 decorrelation), 1066 (B1), 1067 (B2a), 1068 (B2b), 1069 (B3 teardown and ticket line), 1070 (C measure). Blocked-by: 1047 is a priority order, not a technical dependency; whether to lift it is the author's call.
+2026-10-08T17:41Z reviewer Author lifted Blocked-by: 1047 on 2026-10-08: the routing work proceeds ahead of the blog posts.
 
 --- body ---
 
