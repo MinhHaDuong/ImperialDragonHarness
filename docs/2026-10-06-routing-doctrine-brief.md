@@ -1,6 +1,6 @@
 # LLM routing doctrine in IDH: brief for review
 
-**Status:** consolidated 2026-10-06 from existing sources and the author's
+**Status:** superseded in part on 2026-10-08 by tracker 1052 and `skills/route/SKILL.md`: the qualifier spec (`model-level`, `effort`, `auto`, `decorrelated-from`), the default roles and the vocabulary layer below are retired; the decorrelation and measurement material still holds. Consolidated 2026-10-06 from existing sources and the author's
 statements of the same day. This note is meant to unify the routing doctrine and
 to replace the scattered statements of it. Until the routing skill exists (§ The
 routing skill), the sources below keep their specifics: the policy doc keeps the
@@ -74,48 +74,7 @@ them is a change to the policy's non-goals; see § Direction stated, not decided
 
 ## What
 
-**Two portable controls.**
-
-```text
-model-level: auto | cheap | standard | strong | frontier
-effort:      economy | standard | intensive
-```
-
-Relative intentions, not capability scores and not model aliases. An adapter may
-map two levels to one runtime setting. *Settled.* Whether these are the right
-levers is review question Q0.
-
-**`auto`: no judgment made.** The launch does not state a level. If the runtime
-has its own router, it decides. If not (Claude Code on an `Agent` launch), the
-adapter's configured default tier applies, never the caller's model. Nobody
-chooses at launch time in that second case; the choice was made earlier, by the
-configuration. In the role table, "executor: `auto`" means no judgment and the
-default tier. The orchestrator's judgment concentrates where it matters:
-promoting a hard task to `strong`, or demoting a mechanical one to `cheap`.
-Renaming the value to `default` is an option, not proposed now: the name sits in
-`MODEL_LEVELS`, in the skills and in the tests. *Settled as a rule, wording
-changed 2026-10-06.*
-
-**`decorrelated-from: <producer launch>`** is the one constraint levels cannot
-express. The adapter resolves it from what it knows of both concrete models: at
-minimum a different family or tier, another vendor where available. *Settled as
-a design; no resolver exists.*
-
-**Default roles.** MOE/interface strong/standard; team lead standard/standard;
-executor auto/economy; mechanical helper cheap/economy; hard-tail escalation
-(advisor) frontier/standard, `intensive` only rarely. The MOE row is a
-recommendation to the author: the session's model is chosen at start and IDH
-cannot pin it. *Settled* (policy § Default role policy), except the advisor row,
-changed 2026-10-06 by the author.
-
-**General rule.** Least expensive level adequate for the responsibility; a
-stronger model at moderate effort beats a weaker one at extreme effort
-(assumption A5). *Settled.*
-
-**Escalation ladder.** alternative approach → model-level +1 → `frontier`, as a
-one-shot call → `intensive` effort, rarely, because of its cost → stop and ask
-the author. Guidance, not a state machine. *Settled* (policy § Escalation;
-`rules/workflow.md` § Escalation protocol stays authoritative).
+**Superseded 2026-10-08.** The two portable controls, `auto`, `decorrelated-from`, the default-role table, the general rule and the escalation ladder that stood here (all marked *Settled*) were retired by tracker 1052: skills state a role and a need, and `skills/route/SKILL.md` decides the worker. Reviewer independence is a family question (`skills/route/references/decorrelation.md`).
 
 **Two separate rules, not one.** Author-stated 2026-10-06. Class and effort are
 orthogonal choices: the class buys depth of judgment, the effort buys thinking
@@ -206,10 +165,10 @@ Routing weighs quality, cost and speed. Everything in this section is
 |---|---|---|
 | Spec | the contract, role defaults, escalation, invariants 1 to 9 | `docs/portable-model-capability-policy.md` |
 | Rules | delegation doctrine; Claude Code lever mechanics | `rules/workflow.md` § Delegation; `rules/claude-code.md` § Subagent levers |
-| Skills | intentions in prose (`model-level`, `Requested effort`) | `skills/*/SKILL.md` |
+| Skills | a role and a need in prose; no qualifiers (retired 2026-10-08) | `skills/*/SKILL.md` |
 | Agent profiles | per-role shell and contract | `agents/*.md`; `profiles/*/PROFILE.md` |
 | Adapters | runtime translation, registration | `adapters/claude-code/`, `adapters/codex/`, `adapters/pi/` (Pi pins `padme/qwen3.8-27b`: concrete, below the boundary, as intended) |
-| Vocabulary | the two enums | `scripts/model_policy.py` |
+| Vocabulary | retired 2026-10-08 (was `scripts/model_policy.py`) | none |
 | Measurement | tournament, attribution records, trace surveys | tickets 1024, 1004; `scripts/trace-*.py`; `skills/trace-doctor` |
 | Routing skill (direction) | performance grid, cached route state, scripts | not built; § The routing skill |
 | Runtime config | concrete mappings, models, prices | outside the repository, by design, until the grid exists |
@@ -246,7 +205,7 @@ Findings, verified by reading on 2026-10-06:
   is `strong`; the four seats are `standard` but the table has no reviewer row;
   mechanical helper, advisor and interface have no profile;
 - no shell sets `effort`; one role at two efforts would need two profiles;
-- skills use `model-level`, shells use `model: standard` in the native field.
+- skills use `model-level`, shells use `model: standard` in the native field. (superseded 2026-10-08: no qualifiers remain)
   Whether Claude Code understands `model: standard` or falls back to inheritance
   is **not verified**; it is the cheapest probe in the review list;
 - the `agents` census channel is 761 of 800 characters; `team-lead`'s description
@@ -294,7 +253,7 @@ field. *Open: recommended, not decided.*
 
 ## How
 
-**Declaration.** Skills state intent in prose (`model-level: …`, `Requested
+(Superseded 2026-10-08.) **Declaration.** Skills state intent in prose (`model-level: …`, `Requested
 effort: …`). Semantic effort stays in prose because native frontmatter parsers may
 read `effort` as a provider enum (policy § Implemented skill boundary).
 
@@ -450,7 +409,7 @@ Five reviews, each independent. Each reports with the repository's diagnosis
 discipline: observation first, cause held until isolated, a null result not counted
 until a positive control fired. Each reads this brief at a recorded commit.
 
-**Q0 (key question): are `model-level` and `effort` the right levers?** Effort
+(Answered 2026-10-08: no, retired.) **Q0 (key question): are `model-level` and `effort` the right levers?** Effort
 levels and the meaning of "default" are not standardized across providers, and a
 capabilities, speed and cost scoring is being finished (author, 2026-10-06; its
 source and results are not in the repository). Compare four designs: the two

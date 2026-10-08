@@ -9,6 +9,7 @@ Author: claude
 2026-10-08T19:37Z reviewer note blocker 1067 closed — Blocked-by removed.
 2026-10-08T19:45Z reviewer note blocker 1066 closed — Blocked-by removed.
 2026-10-08T20:16Z reviewer note blocker 1068 closed — Blocked-by removed.
+2026-10-08T20:29Z reviewer code/docs/rules half done on branch routing/1069-delete-qualifier: model_policy.py and test_model_rightsizing.py deleted, model-name scanner moved to test_skill_frontmatter.py
 
 --- body ---
 ## Context

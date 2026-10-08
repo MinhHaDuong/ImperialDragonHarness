@@ -53,9 +53,9 @@ count below was run on this tree with `rg`; none is carried from the
 | **Scope reframing** (Imagine) — why now, simplest path, YAGNI scan per ticket | skills/raid/SKILL.md:106–115 | Stays inline for now: single caller (raid), once per ticket per raid, and the phase text is the contract — a shell would carry a pointer to prose that lives one screen away. Revisit if imagine-style reframing spreads to another skill. |
 | **Blind-spot check** — what the whole team failed to look for, across tickets | skills/raid/SKILL.md:120–135 | Stays inline: same single-caller argument; the probe list is the role. |
 | **Plan writing** — Actions, first test, dependencies per ticket | skills/raid/SKILL.md:170–180 | Stays inline: same argument. |
-| **Feasibility (mechanical)** — paths/lines/signatures exist (cheap tier) | skills/raid/SKILL.md:189–190 | Stays inline: pure lookup whose checklist is phase-local. |
-| **Feasibility (cross-ticket)** — conflicts, cross-cutting registries, PR size (standard tier) | skills/raid/SKILL.md:190–197 | Stays inline: same. |
-| **Wave execution** — implements one ticket in a worktree: branch, test, gate, PR, evidence | skills/raid/SKILL.md:269 (spawn: `isolation: "worktree"`, `model-level: strong`) | Justified: repeats per ticket per wave every raid, and is the same role as gaze's REROLL fix and hunt's detached executor. Proposed: `coder`. |
+| **Feasibility (mechanical)** — paths/lines/signatures exist | skills/raid/SKILL.md:189–190 | Stays inline: pure lookup whose checklist is phase-local. |
+| **Feasibility (cross-ticket)** — conflicts, cross-cutting registries, PR size | skills/raid/SKILL.md:190–197 | Stays inline: same. |
+| **Wave execution** — implements one ticket in a worktree: branch, test, gate, PR, evidence | skills/raid/SKILL.md:269 (spawn: `isolation: "worktree"`) | Justified: repeats per ticket per wave every raid, and is the same role as gaze's REROLL fix and hunt's detached executor. Proposed: `coder`. |
 | **Wave integration review** — do merged PRs compose; does `make check` pass on the union | skills/raid/SKILL.md:315–327 | Stays inline for now: one seat per wave, checklist is wave-local; a shell adds indirection without deduplication. |
 
 `hunt` names `Agent(isolation: "worktree")` only for its worktree-ownership

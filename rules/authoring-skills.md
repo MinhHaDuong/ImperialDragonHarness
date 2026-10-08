@@ -10,14 +10,13 @@ Loaded when you edit a skill. These rules are enforced by
 `tests/test_skill_descriptions.py` and `tests/test_skill_frontmatter.py`; the
 tests are the gate, this is why.
 
-- **Skills name roles, capability classes, and effort levels, never models.**
-  Use `model-level: auto|cheap|standard|strong|frontier` and
-  `effort: economy|standard|intensive`. Cheaper workers favor `cheap/economy`;
-  the smartest advisor uses `frontier`, with effort chosen for the task.
-  Concrete model IDs and provider controls belong to runtime configuration.
-  Declare intentions for spawned children as well as the skill itself. Let the
-  active runtime determine agents and concrete models on the fly; do not
-  require fixed profiles or a runtime-specific implementation in skills.
+- **A skill states a role and a need; the route skill decides the worker.**
+  Write "a reviewer from another model family" or "a cheap mechanical lookup",
+  never a model name, or capability-tier declaration. The choice of
+  model and effort, and reviewer decorrelation, belong to `skills/route/SKILL.md`
+  and its references; concrete model IDs live only there and in runtime
+  configuration. Enforced by `tests/test_skill_frontmatter.py` (`skills/route/`
+  is exempt: it holds the grid).
 - **Name capabilities, not the tool that provides them.** "Schedule a wake-up",
   not a timer-tool name; "delegate to a subagent", not an agent-tool name;
   "merge request" not "PR", "ticket" not "issue", "forge" not "GitHub"; never

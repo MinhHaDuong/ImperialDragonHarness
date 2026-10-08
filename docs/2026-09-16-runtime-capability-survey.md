@@ -35,8 +35,8 @@ Two caveats on the Pi row. Subagents are not core: they come from a
 third-party npm extension pinned to a pi version, and at least three competing
 implementations exist (`tintinweb/pi-subagents`, `mjakl/pi-subagent`,
 `nicobailon/pi-subagents`). And `model:` takes a fully qualified provider id
-(`anthropic/claude-opus-4-6`), not the short enum token that
-`tests/test_model_rightsizing.py` pins.
+(`anthropic/claude-opus-4-6`), not the short enum token the route skill's launch rule
+uses (`skills/route/SKILL.md`, `rules/claude-code.md`).
 
 ## Axis 2 — lifecycle hooks (Pi)
 
