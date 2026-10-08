@@ -9,10 +9,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from model_policy import EFFORTS, MODEL_LEVELS  # noqa: E402
 
 SKILLS = Path(__file__).resolve().parents[1] / 'skills'
-FANOUT_SIGNAL = re.compile(
-    r'(launch|spawn|spin)[^.\n]{0,40}\bagents?\b|background agents?'
-    r'|agents?[^.\n]{0,25}\bin parallel\b', re.IGNORECASE,
-)
 MODEL_LEVEL = re.compile(r'model-level\s*:\s*(auto|cheap|standard|strong|frontier)\b')
 CONCRETE_MODEL = re.compile(
     r'\b(?:sonnet|opus|haiku|fable)\b|\b(?:claude-(?:opus|sonnet|haiku|fable)|(?:gpt|gemini|mistral-large|deepseek)-[a-z0-9])[\w.-]*',
@@ -24,13 +20,6 @@ def skill_files():
     files = sorted(SKILLS.glob('*/SKILL.md'))
     assert files, 'no skills found'
     return files
-
-
-def test_fanout_skill_bodies_declare_model_level():
-    for path in skill_files():
-        body = path.read_text().split('---', 2)[-1]
-        if FANOUT_SIGNAL.search(body):
-            assert MODEL_LEVEL.search(body), f'{path}: fan-out lacks capability intent'
 
 
 def test_portable_skill_instructions_do_not_name_models():

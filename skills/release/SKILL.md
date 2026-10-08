@@ -47,7 +47,7 @@ skill **never signs** a tag — that is the human's sole responsibility.
 ## 2. Parallel audits
 
 Launch **three background agents in parallel** (single message, all as
-background agents), each pinned to **`model-level: standard`** — these are read-and-audit
+background agents), each a mid-tier worker chosen per the `route` skill — these are read-and-audit
 reviewers (security, UX, doc/test coherence), so they stay below the coder tier
 (`rules/workflow.md` § Delegation); left unpinned they inherit
 the session model and silently run the fan-out at top tier. Wait for all to

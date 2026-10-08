@@ -38,10 +38,9 @@ of at most 8** — the authorized concurrency ceiling; batching trades a little
 wall-clock for bounded coordination overhead. Rounds are
 **sequential-blocking**: the dryness test needs the full round's yield.
 
-Declare intentions per launch (frontmatter does not propagate): finders
-use the cheaper worker class (`model-level: cheap`, `effort: economy`); judges
-and critic use the smartest advisor class (`model-level: frontier`,
-`effort: intensive`). Declare `decorrelated-from: <producer launch>` for the
+Choose the worker per launch with the `route` skill (frontmatter does not
+propagate): finders are bulk lookup work for a cheap worker; judges and critic
+are deep judgment for the strongest available advisor. Declare `decorrelated-from: <producer launch>` for the
 verifier; the runtime must resolve an independent model.
 
 ### Phase 1 — register lines (parallel pipeline, one chain per line)

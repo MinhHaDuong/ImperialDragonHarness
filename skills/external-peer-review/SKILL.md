@@ -14,7 +14,7 @@ This complements the simulated panel in `/review-pr-prose`.
 1. **Locate the manuscript.** Resolve the PDF path and any requested review
    questions. If needed, use the project's build procedure to obtain the PDF.
 2. **Describe the reviewers needed.** Request independent advisors with the
-   relevant expertise (`model-level: frontier`, `effort: intensive` when useful).
+   relevant expertise (deep judgment; pick per the `route` skill).
    Prefer reviewers decorrelated from the producer and from one another.
    Personas such as a skeptical expert and an attentive student can diversify
    questions; they do not establish model independence by themselves.
