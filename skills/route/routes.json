@@ -6,8 +6,8 @@
       "endpoint": "api.anthropic.com (pi built-in)",
       "key_env": "ANTHROPIC_API_KEY",
       "status": "live",
-      "note": "opus-5-5, sonnet-5-5. @low vs @medium: paired median quality difference -0.5; measured cost and latency lower. See corrected cumulative grid.",
-      "last_verified": "2026-10-06"
+      "note": "opus-5-5, sonnet-5-5, haiku-5-5 (arm N, added 2026-10-08, effort medium; 0.10/0.50 per M in/out up to 100K prompt tokens, 0.50/2.50 above, so the price multiplies by 5 past 100K). @low vs @medium: paired median quality difference -0.5; measured cost and latency lower. See corrected cumulative grid.",
+      "last_verified": "2026-10-08"
     },
     "openai": {
       "endpoint": "api.openai.com (pi built-in)",
@@ -43,12 +43,6 @@
       "key_env": "QWEN_API_KEY_AEDIST",
       "status": "live",
       "note": "172 models incl. qwen3.8-flash (lineage twin of local flash-next, NOT the same weights: served production vs open-weights preview) and qwen3.8-27b. qwen3.8-flash-next is NOT served anywhere as of 2026-10-06 \u2014 weights-only release. No z.ai metered key; pi z.ai doors are subscription-credit channels.",
-      "last_verified": "2026-10-06"
-    },
-    "spacebunny": {
-      "endpoint": "openrouter stealth/space-bunny-alpha",
-      "status": "dead",
-      "note": "Endpoint expired; all ten SpaceBunny result directories purged at author request. Excluded from the cumulative performance grid.",
       "last_verified": "2026-10-06"
     }
   },

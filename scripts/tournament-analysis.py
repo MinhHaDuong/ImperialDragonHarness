@@ -12,6 +12,29 @@ import statistics
 
 LOCAL = {"a", "b", "b2", "b3", "c", "c2"}
 ELEC_USD_S = 0.23 * 0.6 * 1.08 / 3600
+# Arms whose legs sit outside the frozen matrix: cycle-1 d/e, and n (Haiku 5.5),
+# launched on 2026-10-08 after the matrix was written.
+OFF_MATRIX = {"d", "e", "n"}
+# Model lineage per arm, independent of the provider or door that serves it:
+# hosted and local Qwen are one family, OpenRouter-served GLM is GLM.
+FAMILY = {
+    "a": "Qwen",
+    "b2": "Qwen",
+    "b3": "Qwen",
+    "c": "Qwen",
+    "c2": "Qwen",
+    "d": "Anthropic",
+    "d2": "Anthropic",
+    "e2": "OpenAI",
+    "e3": "OpenAI",
+    "f": "GLM",
+    "g": "Anthropic",
+    "i": "DeepSeek",
+    "j": "GLM",
+    "k": "Xiaomi",
+    "l": "OpenAI",
+    "n": "Anthropic",
+}
 
 
 def read_leg(directory, arm):
@@ -69,12 +92,12 @@ def analyze(arena):
     expected = {
         (row["ticket"], arm) for row in matrix for arm in row["arm_order"] if arm != "h"
     }
-    # Cycles are additive: retain cycle-1 d/e identities; preliminary 0188 is excluded.
+    # Cycles are additive: retain the off-matrix identities; preliminary 0188 is excluded.
     expected |= {
         (p.name.rsplit("-", 1)[0], p.name.rsplit("-", 1)[1])
         for p in (arena / "runs").iterdir()
         if p.is_dir()
-        and p.name.rsplit("-", 1)[1] in {"d", "e"}
+        and p.name.rsplit("-", 1)[1] in OFF_MATRIX
         and not p.name.startswith("0188-")
     }
     legs = {
@@ -171,33 +194,41 @@ def analyze(arena):
     }
 
 
+def refresh_grid(grid, report):
+    """Refresh numeric fields and the lineage family of each grid row by arm."""
+    for row in grid["grid"]:
+        result = report["arms"][row["arm"]]
+        row["family"] = FAMILY[row["arm"]]
+        row["coverage"] = result
+        state = "final" if result["final"] else "provisional"
+        row["quality"] = (
+            f"{result['quality_median']:.2f} ({state}, "
+            f"failures={result['failures']}/{result['expected']})"
+        )
+        row["time"] = (
+            f"{result['seconds_median'] / 60:.2f} min"
+            if result["seconds_median"] is not None
+            else "pending"
+        )
+        row["cost"] = (
+            f"{result['cost_usd_median']:.4f} USD"
+            if result["cost_usd_median"] is not None
+            else "pending"
+        )
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--arena", type=Path, default=Path.home() / "arena")
     parser.add_argument(
         "--grid",
         type=Path,
-        help="Refresh numeric fields of an existing grid by its arm identifiers",
+        help="Refresh numeric fields and family of an existing grid by its arm identifiers",
     )
     args = parser.parse_args()
     report = analyze(args.arena)
     if args.grid:
         grid = json.loads(args.grid.read_text())
-        for row in grid["grid"]:
-            result = report["arms"][row["arm"]]
-            row["coverage"] = result
-            row["quality"] = (
-                f"{result['quality_median']:.2f} ({'final' if result['final'] else 'provisional'}, failures=0/30)"
-            )
-            row["time"] = (
-                f"{result['seconds_median'] / 60:.2f} min"
-                if result["seconds_median"] is not None
-                else "pending"
-            )
-            row["cost"] = (
-                f"{result['cost_usd_median']:.4f} USD"
-                if result["cost_usd_median"] is not None
-                else "pending"
-            )
+        refresh_grid(grid, report)
         args.grid.write_text(json.dumps(grid, indent=2) + "\n")
     print(json.dumps(report, indent=2))
