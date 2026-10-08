@@ -5,7 +5,6 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "[pr-number] [worktree=<path>] (defaults to the current branch's open merge request)"
 context: fork
-model-level: standard
 # Foreground: /gaze runs this as phase 4 (Agent C) and blocks on its structured
 # output. Claude Code 2.1.218 made `context: fork` skills background by default;
 # a fork cannot wait on a background completion, so the default would orphan
@@ -35,10 +34,11 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 > PR while the intended target sat unreviewed).
 
 Spin multiple agents in parallel, each with a distinct perspective. Run all
-agents in fresh contexts, each pinned to **`model-level: standard`** — reviewers stay
-below the coder tier (`rules/workflow.md` § Delegation), and an
-unpinned Agent inherits the session model, so on a top-tier session this fan-out
-silently becomes a top-model wave.
+agents in fresh contexts, each with its model chosen per launch from the `route` skill; say
+the choice and why. An unpinned Agent inherits the session model, so on a top-tier
+session this fan-out silently becomes a top-model wave. Independence follows `skills/route/references/decorrelation.md`:
+a trivial change takes cheap same-family seats, a high-risk one needs one
+cross-family detached seat, else `no report` and `PANEL-INTEGRITY: DEGRADED`.
 
 **Concurrency contract (`rules/authoring-skills.md`): parallel-background,
 collected by polling.** This skill runs as a `context: fork` (see frontmatter),

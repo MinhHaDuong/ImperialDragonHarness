@@ -5,7 +5,6 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "[pr-number] [worktree=<path>] (defaults to the current branch's open merge request)"
 context: fork
-model-level: standard
 # Foreground: the prose sibling of review-pr, invoked the same way by /gaze on
 # manuscript PRs. Claude Code 2.1.218 made `context: fork` skills background by
 # default; a fork cannot wait on a background completion, so the default would
@@ -34,10 +33,10 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 > (2026-06-10: exactly that burned a five-agent panel on an already-merged
 > PR while the intended target sat unreviewed).
 
-Spin disciplinary agents in parallel, each in a fresh context, each pinned to
-**`model-level: standard`** (reviewers below the coder tier — rules/workflow.md;
-an unpinned Agent inherits the session model and silently runs the fan-out at
-top tier). Prose review reads **full text**, not just diff.
+Spin disciplinary agents in parallel, each in a fresh context, each with its model
+chosen per launch from the `route` skill (state the choice and why; an unpinned
+Agent inherits the session model and silently runs the fan-out at top tier).
+Independence follows `skills/route/references/decorrelation.md`. Prose review reads **full text**, not just diff.
 
 **Concurrency contract (`rules/authoring-skills.md`): parallel-background,
 collected by polling.** This skill runs as a `context: fork` (see frontmatter),
@@ -92,7 +91,7 @@ prompt carries this rulebook. It reads `config/ai-tells.yml` for blacklisted wor
 
 ## Editorial-brief auditor (when present)
 
-If the project defines an editorial brief at `docs/editorial-brief.md`, one agent is the **editorial-brief auditor** (pinned `model-level: standard` like the rest of the panel). Skip silently when the file is absent — this check is project-specific and optional (skills degrade gracefully).
+If the project defines an editorial brief at `docs/editorial-brief.md`, one agent is the **editorial-brief auditor** (model chosen per launch like the rest of the panel). Skip silently when the file is absent — this check is project-specific and optional (skills degrade gracefully).
 
 The skill owns the schema, projects own the content. Expected brief format — one standing decision per entry, each entry carrying:
 

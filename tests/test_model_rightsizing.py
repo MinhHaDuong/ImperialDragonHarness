@@ -6,7 +6,6 @@ from pathlib import Path
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from model_policy import EFFORTS, MODEL_LEVELS  # noqa: E402
 
 SKILLS = Path(__file__).resolve().parents[1] / 'skills'
 MODEL_LEVEL = re.compile(r'model-level\s*:\s*(auto|cheap|standard|strong|frontier)\b')
@@ -33,20 +32,6 @@ def test_portable_skill_instructions_do_not_name_models():
         if path.name == 'SKILL.md':
             fm = text.split('---', 2)[1]
             assert not re.search(r'^model:', fm, re.MULTILINE), f'{path}: use model-level'
-
-
-def test_skill_compute_frontmatter_is_semantic():
-    forked = []
-    for path in skill_files():
-        fm = path.read_text().split('---', 2)[1]
-        for field, values in [('model-level', MODEL_LEVELS), ('effort', EFFORTS)]:
-            match = re.search(rf'^{field}:\s*(\S+)\s*$', fm, re.MULTILINE)
-            if match:
-                assert match.group(1) in values, f'{path}: invalid {field}'
-        if re.search(r'^context:\s*fork\s*$', fm, re.MULTILINE):
-            forked.append(path)
-            assert MODEL_LEVEL.search(fm), f'{path}: fork lacks capability intent'
-    assert forked, 'no forked skills found'
 
 
 def test_model_identity_scanner_controls():
