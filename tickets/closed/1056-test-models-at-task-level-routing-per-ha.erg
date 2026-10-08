@@ -3,10 +3,12 @@ Title: Test models at task level: routing per harness task, not bundled roles
 Created: 2026-10-06
 Author: MinhHaDuong
 Label: deferred
+Closed: superseded by 1052: routing per task level is now the orchestrator's choice from the route grid, with the stated reason
 
 --- log ---
 2026-10-06T09:57Z MinhHaDuong created
 2026-10-06T09:57Z reviewer label deferred
+2026-10-08T20:27Z reviewer closed — superseded by 1052: routing per task level is now the orchestrator's choice from the route grid, with the stated reason
 
 --- body ---
 

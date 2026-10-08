@@ -8,6 +8,7 @@ Label: deferred
 2026-10-08T08:16Z reviewer created
 2026-10-08T08:20Z reviewer label deferred
 2026-10-08T08:20Z reviewer note Deferred on the author's instruction (2026-10-08, during the tournament publication). No work until an explicit author decision to open the next cycle.
+2026-10-08T20:27Z reviewer Reference to 0974 updated: 0974 is closed, superseded by 1052 (ticket 1069).
 
 --- body ---
 ## Context
@@ -19,8 +20,8 @@ seat. The reader of the report cannot act on "Luna is the best compromise" for t
 coder seat alone, or for the reviewer seat alone.
 
 The arena (`skills/arena`) therefore needs a redesign to test the three roles
-separately. Related, not blocking: 0974 (portable model-level policy, which
-assigns levels per role), 1047 (blog posts that state this limit), 1051 and 1050
+separately. Related, not blocking: 0974 (closed, superseded by 1052: workers are
+now chosen by the orchestrator from the route grid), 1047 (blog posts that state this limit), 1051 and 1050
 (candidate scouting and long-context rerun).
 
 ## Design questions to settle first
