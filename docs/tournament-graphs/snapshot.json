@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-07T08:30:11.822662+00:00",
+  "generated_at": "2026-10-08T08:28:28.224249+00:00",
   "arms": {
     "a": {
       "expected": 10,
@@ -380,6 +380,43 @@
       "total_cost_eur_010_mean": 6.046891304480678,
       "attempts_observed": 35,
       "output_tokens_mean": 196232.9
+    },
+    "n": {
+      "expected": 10,
+      "evaluated": 10,
+      "ok": 10,
+      "failures": 0,
+      "pending": 0,
+      "final": true,
+      "time_observed": 10,
+      "cost_observed": 10,
+      "accounting_scope": "beta",
+      "model_id": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "effort": "medium",
+      "pi_version": "1.1.0",
+      "attempts_observed": 10,
+      "retries_observed": 0,
+      "timeouts_observed": 0,
+      "cost_usd_total": 1.2571,
+      "seconds_total": 3668.4,
+      "output_tokens_mean": 26511.4,
+      "quality_mean": 21.7,
+      "quality_median": 22.5,
+      "seconds_mean": 366.84000000000003,
+      "seconds_median": 181.89999999999998,
+      "cost_usd_mean": 0.12571,
+      "cost_usd_median": 0.02275,
+      "total_cost_usd_mean": 0.22761,
+      "total_cost_eur_010_mean": 0.12658814814814814,
+      "retry_policy": {
+        "automatic_scored_retries": 0,
+        "maximum_scored_attempts_per_ticket": 2,
+        "manual_retry_policy": "At most one manually initiated retry for infrastructure failure; preserve every attempt and accumulate all costs and durations. Model failures are retained as zero-quality outcomes.",
+        "provider_internal_retries": "Pi default; session errors counted where observable; individual HTTP transport retries not instrumented.",
+        "judge_retries": "No automatic retry in extension driver; any manual judge retry must preserve previous evidence.",
+        "actual_scored_retries": 0
+      }
     }
   },
   "legs": {
@@ -1559,6 +1596,128 @@
         "quality": 30.0,
         "seconds": 3295.7999999999997,
         "cost_usd": 2.6621096332095973
+      }
+    },
+    "n": {
+      "0211": {
+        "state": "ok",
+        "quality": 19.0,
+        "seconds": 176.7,
+        "cost_usd": 0.0209,
+        "accounting_scope": "beta",
+        "attempts": 1,
+        "model_id": "claude-haiku-5-5",
+        "provider": "anthropic",
+        "effort": "medium",
+        "pi_version": "1.1.0"
+      },
+      "0233": {
+        "state": "ok",
+        "quality": 23.0,
+        "seconds": 136.2,
+        "cost_usd": 0.0209,
+        "accounting_scope": "beta",
+        "attempts": 1,
+        "model_id": "claude-haiku-5-5",
+        "provider": "anthropic",
+        "effort": "medium",
+        "pi_version": "1.1.0"
+      },
+      "0333": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 773.2,
+        "cost_usd": 0.255,
+        "accounting_scope": "beta",
+        "attempts": 1,
+        "model_id": "claude-haiku-5-5",
+        "provider": "anthropic",
+        "effort": "medium",
+        "pi_version": "1.1.0"
+      },
+      "0338": {
+        "state": "ok",
+        "quality": 16.0,
+        "seconds": 99.4,
+        "cost_usd": 0.0135,
+        "accounting_scope": "beta",
+        "attempts": 1,
+        "model_id": "claude-haiku-5-5",
+        "provider": "anthropic",
+        "effort": "medium",
+        "pi_version": "1.1.0"
+      },
+      "0452": {
+        "state": "ok",
+        "quality": 20.0,
+        "seconds": 334.0,
+        "cost_usd": 0.2184,
+        "accounting_scope": "beta",
+        "attempts": 1,
+        "model_id": "claude-haiku-5-5",
+        "provider": "anthropic",
+        "effort": "medium",
+        "pi_version": "1.1.0"
+      },
+      "0470": {
+        "state": "ok",
+        "quality": 30.0,
+        "seconds": 24.1,
+        "cost_usd": 0.0036,
+        "accounting_scope": "beta",
+        "attempts": 1,
+        "model_id": "claude-haiku-5-5",
+        "provider": "anthropic",
+        "effort": "medium",
+        "pi_version": "1.1.0"
+      },
+      "0532": {
+        "state": "ok",
+        "quality": 26.0,
+        "seconds": 187.1,
+        "cost_usd": 0.0251,
+        "accounting_scope": "beta",
+        "attempts": 1,
+        "model_id": "claude-haiku-5-5",
+        "provider": "anthropic",
+        "effort": "medium",
+        "pi_version": "1.1.0"
+      },
+      "0673": {
+        "state": "ok",
+        "quality": 24.0,
+        "seconds": 114.6,
+        "cost_usd": 0.0246,
+        "accounting_scope": "beta",
+        "attempts": 1,
+        "model_id": "claude-haiku-5-5",
+        "provider": "anthropic",
+        "effort": "medium",
+        "pi_version": "1.1.0"
+      },
+      "0874": {
+        "state": "ok",
+        "quality": 7.0,
+        "seconds": 773.2,
+        "cost_usd": 0.6586,
+        "accounting_scope": "beta",
+        "attempts": 1,
+        "model_id": "claude-haiku-5-5",
+        "provider": "anthropic",
+        "effort": "medium",
+        "pi_version": "1.1.0"
+      },
+      "1372": {
+        "state": "ok",
+        "quality": 22.0,
+        "seconds": 1049.9,
+        "cost_usd": 0.0165,
+        "accounting_scope": "beta",
+        "attempts": 1,
+        "model_id": "claude-haiku-5-5",
+        "provider": "anthropic",
+        "effort": "medium",
+        "pi_version": "1.1.0"
       }
     }
   },
@@ -3758,7 +3917,122 @@
         "finished": "2026-10-06T21:39:43Z",
         "output_tokens": 0,
         "source": "runs-void/mistral4-direct-budget-20261006T214315Z/0470-mr/run.json"
+      },
+      {
+        "ticket": "0211",
+        "arm": "n",
+        "verdict": "OK",
+        "finished": "2026-10-08T08:03:58Z",
+        "output_tokens": 16258,
+        "source": "runs/0211-n/attempts/1/run.json"
+      },
+      {
+        "ticket": "0233",
+        "arm": "n",
+        "verdict": "OK",
+        "finished": "2026-10-08T08:03:18Z",
+        "output_tokens": 12246,
+        "source": "runs/0233-n/attempts/1/run.json"
+      },
+      {
+        "ticket": "0333",
+        "arm": "n",
+        "verdict": "OK",
+        "finished": "2026-10-08T08:13:55Z",
+        "output_tokens": 47912,
+        "source": "runs/0333-n/attempts/1/run.json"
+      },
+      {
+        "ticket": "0338",
+        "arm": "n",
+        "verdict": "OK",
+        "finished": "2026-10-08T08:02:43Z",
+        "output_tokens": 10672,
+        "source": "runs/0338-n/attempts/1/run.json"
+      },
+      {
+        "ticket": "0452",
+        "arm": "n",
+        "verdict": "OK",
+        "finished": "2026-10-08T08:06:38Z",
+        "output_tokens": 45299,
+        "source": "runs/0452-n/attempts/1/run.json"
+      },
+      {
+        "ticket": "0470",
+        "arm": "n",
+        "verdict": "OK",
+        "finished": "2026-10-08T08:01:26Z",
+        "output_tokens": 2130,
+        "source": "runs/0470-n/attempts/1/run.json"
+      },
+      {
+        "ticket": "0532",
+        "arm": "n",
+        "verdict": "OK",
+        "finished": "2026-10-08T08:04:11Z",
+        "output_tokens": 23043,
+        "source": "runs/0532-n/attempts/1/run.json"
+      },
+      {
+        "ticket": "0673",
+        "arm": "n",
+        "verdict": "OK",
+        "finished": "2026-10-08T08:02:58Z",
+        "output_tokens": 14088,
+        "source": "runs/0673-n/attempts/1/run.json"
+      },
+      {
+        "ticket": "0874",
+        "arm": "n",
+        "verdict": "OK",
+        "finished": "2026-10-08T08:13:55Z",
+        "output_tokens": 82978,
+        "source": "runs/0874-n/attempts/1/run.json"
+      },
+      {
+        "ticket": "1372",
+        "arm": "n",
+        "verdict": "OK",
+        "finished": "2026-10-08T08:18:33Z",
+        "output_tokens": 10488,
+        "source": "runs/1372-n/attempts/1/run.json"
       }
     ]
+  },
+  "haiku55_accounting": {
+    "source": "haiku55-accounting.json",
+    "added_at": "2026-10-08T08:28:28.224249+00:00",
+    "previous_snapshot_generated_at": "2026-10-07T08:30:11.822662+00:00",
+    "accounting_scope": "beta",
+    "pi_version": "1.1.0",
+    "candidate_cost_usd_total": 1.2571,
+    "smoke": {
+      "rc": 0,
+      "providers": [
+        "anthropic"
+      ],
+      "models": [
+        "claude-haiku-5-5"
+      ],
+      "efforts": [
+        "medium"
+      ],
+      "read_tool": true,
+      "marker_reply": true,
+      "cost_usd": 0.00028389,
+      "pass": true
+    },
+    "judge_cost_usd_total": 1.483838195,
+    "retry_policy": {
+      "automatic_scored_retries": 0,
+      "maximum_scored_attempts_per_ticket": 2,
+      "manual_retry_policy": "At most one manually initiated retry for infrastructure failure; preserve every attempt and accumulate all costs and durations. Model failures are retained as zero-quality outcomes.",
+      "provider_internal_retries": "Pi default; session errors counted where observable; individual HTTP transport retries not instrumented.",
+      "judge_retries": "No automatic retry in extension driver; any manual judge retry must preserve previous evidence.",
+      "actual_scored_retries": 0
+    },
+    "budget_ceiling_usd": null,
+    "parallel_overshoot_authorized": true
   }
 }
