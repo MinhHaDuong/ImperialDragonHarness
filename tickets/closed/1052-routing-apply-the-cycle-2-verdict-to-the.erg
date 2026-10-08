@@ -2,6 +2,7 @@
 Title: Routing: apply the cycle-2 verdict to the live routing config
 Created: 2026-10-06
 Author: MinhHaDuong
+Closed: LLM-chosen routing landed: grid with Haiku 5.5 and family labels, launch doors, per-runtime recommendations, risk-scaled decorrelation doctrine, qualifier chooser retired
 
 --- log ---
 2026-10-06T08:43Z MinhHaDuong created
@@ -9,6 +10,8 @@ Author: MinhHaDuong
 2026-10-08T15:37Z reviewer claude note Scope widened by the author 2026-10-08: the target is no longer a models.json successor but the skills/route grid, plus LLM-chosen routing and teardown of the model-level x effort chooser. Children: 1062 (A1 grid, Haiku, SpaceBunny), 1063 (A0 live checks), 1064 (A2 launch doors), 1065 (B0 decorrelation), 1066 (B1), 1067 (B2a), 1068 (B2b), 1069 (B3 teardown and ticket line), 1070 (C measure). Blocked-by: 1047 is a priority order, not a technical dependency; whether to lift it is the author's call.
 2026-10-08T17:41Z reviewer Author lifted Blocked-by: 1047 on 2026-10-08: the routing work proceeds ahead of the blog posts.
 2026-10-08T20:27Z reviewer Ticket line cleaned under 1069: 0974, 1056 closed as superseded; 1057 closed, folded into 1065; 1048 kept deferred as grid data; 1061 reference fixed. Kept as listed: 1024, 1046, 1047, 1049, 1050, 1051, 1053, 1058.
+2026-10-08T20:42Z reviewer Integration review 2026-10-08: children 1062-1070 all closed. Union grep for model-level and MODEL_LEVELS over skills agents rules scripts tests AGENTS.md finds nothing; no 'below the coder tier' left in skills, rules, agents or profiles; make check passes on main. Residual: Pi and Codex run-time subagent behaviour unverified for Codex; no /gaze ran on the wave PRs; memory notes on Claude Code mechanics still mention tier pins (left to roar/dream).
+2026-10-08T20:42Z reviewer closed — LLM-chosen routing landed: grid with Haiku 5.5 and family labels, launch doors, per-runtime recommendations, risk-scaled decorrelation doctrine, qualifier chooser retired
 
 --- body ---
 
