@@ -58,7 +58,9 @@ et `tests.json` ; les `.dot` donnent les liens visibles et leurs valeurs p/n.
 ## Périmètre Mistral et reprises
 
 `mi`, affiché mL (Mistral dernier succès), retient le dernier succès jugé de
-chaque ticket, dont le succès OpenRouter de 0874. `mr`, affiché mA (Mistral
+chaque ticket, dont le succès OpenRouter de 0874. Sur les trois tickets avec
+plusieurs succès notés (0233, 0452, 0470), le dernier est aussi le meilleur :
+les deux séries ont donc les mêmes notes. `mr`, affiché mA (Mistral
 toutes tentatives), additionne les coûts
 et durées de 25 tentatives directes conservées et de ce remplacement OpenRouter,
 avec la meilleure note réussie par ticket. Les deux séries comptent 35 tentatives
