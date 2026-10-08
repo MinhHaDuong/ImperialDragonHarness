@@ -58,10 +58,10 @@ AXIS_WORDS = {
     "seconds": ("Rapide", "Lent"),
     "cost_usd": ("Abordable", "Cher"),
 }
-DISPLAY_CODES = {"mr": "mβ"}
+DISPLAY_CODES = {"mi": "mL", "mr": "mA"}
 LABELS = {
-    "mi": "Mistral Large 4 · Idéal\nAPI Mistral + OR (0874)\noff",
-    "mr": "Mistral Large 4 · beta\nAPI Mistral + OR (0874)\noff",
+    "mi": "Mistral Large 4 · dernier succès\nAPI Mistral + OR (0874)\noff",
+    "mr": "Mistral Large 4 · toutes tentatives\nAPI Mistral + OR (0874)\noff",
     "a": "Qwen 3.8 27B\nQ4_K_M · llama.cpp\nxhigh (fixé côté serveur)",
     "b": "Qwen 3.8 Flash-Next Coder\nIQ1_M · Strata · pruned\nxhigh (fixé côté serveur)",
     "b2": "Qwen 3.8 Flash-Next\nIQ3_S · Strata\nxhigh (fixé côté serveur)",
@@ -367,7 +367,7 @@ def render(output, snapshot):
         findings = [
             (
                 "Luna 6 medium : le meilleur compromis observé",
-                "Chez Claude comme chez ChatGPT, monter en gamme tout en réduisant l’effort ne donne pas ici d’avantage net : Opus 5.5 low face à Sonnet 5.5 medium, et Sol 6.1 low face à Luna 6 medium, offrent une qualité moyenne proche pour un coût supérieur. Sonnet est aussi plus rapide qu’Opus ; Luna fait jeu comparable avec Sol en vitesse. Limite : la mesure mélange orchestration-codage-revue.",
+                "Chez Claude comme chez ChatGPT, monter en gamme tout en réduisant l’effort ne donne pas ici d’avantage net : Opus 5.5 low face à Sonnet 5.5 medium, et Sol 6.1 low face à Luna 6 medium, offrent une qualité moyenne proche pour un coût supérieur. Sonnet est aussi plus rapide qu’Opus ; Luna fait jeu comparable avec Sol en vitesse. Haiku 5.5 égale Sonnet en qualité (21,7 contre 21,4/30) pour 0,13 USD au lieu de 0,30, mais trois fois plus lent. Limite : un seul modèle tient les trois rôles, ce qui peut défavoriser un modèle conçu pour un seul.",
             ),
             (
                 "Qwen 3.8 Flash-Next xhigh : une option locale pour privilégier la qualité",
@@ -448,7 +448,7 @@ def render(output, snapshot):
                     else f"{row['output_tokens_mean']:,.0f}".replace(",", " "),
                 ]
             )
-        ax = fig.add_axes([0.06, 0.16, 0.88, 0.68])
+        ax = fig.add_axes([0.06, 0.19, 0.88, 0.65])
         ax.axis("off")
         table = ax.table(
             cellText=table_rows,
@@ -469,10 +469,10 @@ def render(output, snapshot):
                 cell.set_facecolor("#f8fafc" if r % 2 else "white")
                 if c == 0:
                     cell.set_text_props(ha="left")
-        note = "Moyennes par ticket, échecs inclus ; les séries incomplètes portent sur les tickets évalués. Coût local : électricité seule. Mistral Idéal : dix succès, dont 0874 via OpenRouter. Mistral beta : mêmes notes, coûts et durées de 25 tentatives directes conservées, plus le remplacement OR de 0874 ; huit autres tentatives OR et un incident direct de configuration sont exclus. « Réussis » compte les tickets livrés, pas le nombre de tentatives. Les 9/10 correspondent à quatre dépassements du plafond de deux heures (a et b3 : 0874 ; j : 0333 ; k : 0211) et à une fin sans livraison valide (c2 : 0470). Ces échecs sont conservés à 0/30, avec leurs ressources consommées, plutôt que remplacés par une réussite après reprise ; le traitement particulier de Mistral est détaillé dans les limites."
+        note = "Moyennes par ticket, échecs inclus ; les séries incomplètes portent sur les tickets évalués. Coût local : électricité seule. Mistral dernier succès : dix succès, dont 0874 via OpenRouter. Mistral toutes tentatives : mêmes notes, coûts et durées de 25 tentatives directes conservées, plus le remplacement OR de 0874 ; huit autres tentatives OR et un incident direct de configuration sont exclus. « Réussis » compte les tickets livrés, pas le nombre de tentatives. Les 9/10 correspondent à quatre dépassements du plafond de deux heures (a et b3 : 0874 ; j : 0333 ; k : 0211) et à une fin sans livraison valide (c2 : 0470). Ces échecs sont conservés à 0/30, avec leurs ressources consommées, plutôt que remplacés par une réussite après reprise ; le traitement particulier de Mistral est détaillé dans les limites."
         fig.text(
             0.06,
-            0.12,
+            0.155,
             wrap_paragraph(fig, note, 9),
             fontsize=9,
             va="top",
@@ -722,7 +722,7 @@ def render(output, snapshot):
                     label = (
                         (DISPLAY_CODES.get(a, a) + " · " + LABELS[a])
                         if a in frontier
-                        else {"mi": "Mistral Idéal", "mr": "Mistral beta"}.get(
+                        else {"mi": "Mistral dernier succès", "mr": "Mistral toutes tentatives"}.get(
                             a, DISPLAY_CODES.get(a, a)
                         )
                         + ("*" if provisional else "")
@@ -820,7 +820,7 @@ def render(output, snapshot):
             fig.text(
                 0.045,
                 0.045,
-                "Bleu : local ; vert : hébergé. Mistral : losange violet = Idéal, cercle rouge = beta. Coût et durée en échelle logarithmique.\n"
+                "Bleu : local ; vert : hébergé. Mistral : losange violet = dernier succès, cercle rouge = toutes tentatives. Coût et durée en échelle logarithmique.\n"
                 "Anneau orange : frontière de Pareto (séries complètes, qualité moyenne ≥ 15/30). Coût local = électricité seule ; coût hébergé = API.",
                 fontsize=8,
             )
@@ -961,18 +961,18 @@ def render(output, snapshot):
             "Notation des résultats sur 30 selon le système de la boxe : trois juges partent de 10\net déduisent des points pour les fautes selon leur sévérité : −3, −2, −1 ou −0,5 point.\nLes juges examinent le travail sans connaître le modèle qui l’a produit. Une absence\nde résultat exploitable vaut zéro ; une impossibilité correctement expliquée est jugée normalement.",
             "Le juge principal est Gemini 3.1 Pro Preview ; les deux autres sont Grok 4.3 et MiniMax M2.5.\nLes résultats conservés du premier cycle ont été jugés par Gemini 3.1 Pro Preview,\nDeepSeek V4 Pro et Kimi K3. Les notes sont additionnées, sans pondération entre juges.",
             "Les modèles locaux tournent sur une Lenovo ThinkStation P620 : Ryzen Threadripper PRO\n3945WX, 128 Go de RAM, deux GPU RTX A4000 + RTX 3060 (28 Go de VRAM au total).\nLe coût local estime l’électricité à 600 W et 0,23 €/kWh, sans amortissement du matériel.\nLes coûts API sont ceux des tokens consommés ; conversion commune : 1,08 USD pour 1 EUR.",
-            "Les nuages de points présentent les moyennes par ticket de qualité, durée et coût.\nChaque ticket représente un erg moyen. La valeur du délai est exprimée par erg et par heure, en USD/(erg·h) ou EUR/(erg·h), et non comme un salaire horaire. Le coût pertinent est celui du résultat livré : les reprises consomment des ressources et retardent sa livraison.\nMistral Idéal retient le dernier résultat réussi de chaque ticket. Mistral beta additionne\nles coûts et durées de 25 tentatives directes conservées et du succès OpenRouter sur 0874,\ninterruptions comprises, et garde la meilleure note. Huit autres tentatives OpenRouter\net une tentative directe invalidée pour configuration ne sont pas comptabilisées.\nSes coûts sont répartis selon les tokens facturés ; les nouveaux essais restent estimés.\nLa frontière de Pareto exclut les séries incomplètes et les qualités moyennes inférieures à 15/30.",
+            "Les nuages de points présentent les moyennes par ticket de qualité, durée et coût.\nChaque ticket représente un erg moyen. La valeur du délai est exprimée par erg et par heure, en USD/(erg·h) ou EUR/(erg·h), et non comme un salaire horaire. Le coût pertinent est celui du résultat livré : les reprises consomment des ressources et retardent sa livraison.\nMistral dernier succès retient le dernier résultat réussi de chaque ticket, aussi le meilleur sur les trois tickets repris. Mistral toutes tentatives additionne\nles coûts et durées de 25 tentatives directes conservées et du succès OpenRouter sur 0874,\ninterruptions comprises, et garde la meilleure note. Huit autres tentatives OpenRouter\net une tentative directe invalidée pour configuration ne sont pas comptabilisées.\nSes coûts sont répartis selon les tokens facturés ; les nouveaux essais restent estimés.\nLa frontière de Pareto exclut les séries incomplètes et les qualités moyennes inférieures à 15/30.",
             "Sur les trois graphes acycliques, les flèches comparent les résultats\nticket par ticket par un test de Wilcoxon apparié, bilatéral, au seuil de 5 %.\nElles vont vers le résultat moins juste, plus lent ou plus cher.\nLes flèches redondantes par transitivité sont retirées pour faciliter la lecture.\nL’absence de flèche ne prouve pas l’équivalence ; un chemin indirect n’est pas un test supplémentaire.",
-            f"Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets et {len(dag_nodes) * (len(dag_nodes) - 1) // 2} comparaisons par graphe, ce seuil corrigé est hors d’atteinte du test utilisé,\nmême lorsqu’un modèle gagne sur les dix tickets. L’absence de flèches après correction ne signifie\ndonc pas que les modèles sont équivalents : cet échantillon ne permet pas d’établir les différences\navec cette garantie globale.\nMistral beta a un contour pointillé dans les DAG.\nQwen 3, Qwen 3.6 et GPT-6 Sol figurent seulement dans les nuages de points.",
+            f"Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets et {len(dag_nodes) * (len(dag_nodes) - 1) // 2} comparaisons par graphe, ce seuil corrigé est hors d’atteinte du test utilisé,\nmême lorsqu’un modèle gagne sur les dix tickets. L’absence de flèches après correction ne signifie\ndonc pas que les modèles sont équivalents : cet échantillon ne permet pas d’établir les différences\navec cette garantie globale.\nMistral toutes tentatives a un contour pointillé dans les DAG.\nQwen 3, Qwen 3.6 et GPT-6 Sol figurent seulement dans les nuages de points.",
         ]
         paragraphs.append(
-            "Limite : cette évaluation confie à un seul modèle l’ensemble du travail : orchestration,\nréalisation et revue de sa propre production. Elle mesure donc sa capacité à mener\nune tâche de bout en bout, plutôt que les performances d’un harnais qui choisit\ndifférents modèles selon les rôles et confie les revues à des modèles distincts pour\nréduire les erreurs corrélées. Les trois juges externes évaluent le résultat final ;\nils ne participent pas à sa réalisation."
+            "Limite : cette évaluation confie à un seul modèle l’ensemble du travail : orchestration,\nréalisation et revue de sa propre production. Elle mesure donc sa capacité à mener\nune tâche de bout en bout, plutôt que les performances d’un harnais qui choisit\ndifférents modèles selon les rôles et confie les revues à des modèles distincts pour\nréduire les erreurs corrélées. Ce choix peut défavoriser un exécutant tel Haiku 5.5, ou tout modèle plus à l’aise\ndans un seul rôle ; le test ne le mesure pas. Les trois juges externes évaluent le\nrésultat final sans y participer."
         )
         paragraphs.append(
-            "Limite : sur le ticket 0874, la dernière tentative directe avec Mistral a atteint le plafond de deux heures, malgré 195 réponses API réussies. Le modèle a longuement exploré le projet puis multiplié les tests, avec des modules et un hook manquants dans l’environnement. Le disjoncteur de répétitions identiques ne détecte pas cette dérive à commandes variables. Le résultat réussi via OpenRouter remplace ce ticket dans la série idéale ; Mistral beta conserve les coûts et durées des tentatives directes échouées et ajoute ceux du remplacement. La série Mistral combine donc deux filières d’hébergement. Le coût OpenRouter est celui enregistré pour ce run ; les coûts directs suivent la calibration de la facture Mistral."
+            "Limite : sur le ticket 0874, la dernière tentative directe avec Mistral a atteint le plafond de deux heures, malgré 195 réponses API réussies. Le modèle a longuement exploré le projet puis multiplié les tests, avec des modules et un hook manquants dans l’environnement. Le disjoncteur de répétitions identiques ne détecte pas cette dérive à commandes variables. Le résultat réussi via OpenRouter remplace ce ticket dans la série « dernier succès » ; Mistral toutes tentatives conserve les coûts et durées des tentatives directes échouées et ajoute ceux du remplacement. La série Mistral combine donc deux filières d’hébergement. Le coût OpenRouter est celui enregistré pour ce run ; les coûts directs suivent la calibration de la facture Mistral."
         )
         paragraphs.append(
-            "Limite : les séries usuelles retiennent les résultats après reprises, tandis que Mistral beta cumule les essais. La répétabilité est la faible dispersion des résultats entre répétitions ; la réussite au premier essai est une autre forme de fiabilité. Les reprises hétérogènes empêchent ici de comparer uniformément cette dernière. La colonne « Tentés » compte les tentatives préservées, y compris celles invalidées pour infrastructure ou mauvais état de départ ; ces incidents ne sont pas tous imputables au modèle. Pour les deux lignes Mistral, ce compte couvre les deux fournisseurs, tandis que les coûts beta suivent le périmètre documenté. Les tokens générés moyens suivent les runs retenus pour chaque série, et comprennent le reasoning quand il est inclus dans les tokens de sortie déclarés ; les tokenizers diffèrent entre fournisseurs."
+            "Limite : les séries usuelles retiennent les résultats après reprises, tandis que Mistral toutes tentatives cumule les essais. La répétabilité est la faible dispersion des résultats entre répétitions ; la réussite au premier essai est une autre forme de fiabilité. Les reprises hétérogènes empêchent ici de comparer uniformément cette dernière. La colonne « Tentés » compte les tentatives préservées, y compris celles invalidées pour infrastructure ou mauvais état de départ ; ces incidents ne sont pas tous imputables au modèle. Pour les deux lignes Mistral, ce compte couvre les deux fournisseurs, tandis que les coûts « toutes tentatives » suivent le périmètre documenté. Les tokens générés moyens suivent les runs retenus pour chaque série, et comprennent le reasoning quand il est inclus dans les tokens de sortie déclarés ; les tokenizers diffèrent entre fournisseurs."
         )
         paragraphs.append(
             "Reprise b2 : les archives contiennent 11 tentatives pour les 10 tickets, dont une tentative 0333 interrompue par SIGTERM après 17 min 24 s (code de sortie 143). L’auteur a confirmé avoir demandé cette pause pour libérer le GPU pour un autre travail ; ce n’était pas un arrêt motivé par la qualité du résultat. Le rejeu retenu a obtenu 30/30 ; la tentative interrompue n’avait pas de note permettant un choix du meilleur score. Ce remplacement et ses ressources écartées empêchent de lire la série comme dix succès au premier essai. En retirant 0333 de toutes les séries, Qwen b2 et les deux séries Mistral ont chacun une qualité moyenne de 25,78/30 sur neuf tickets : b2 n’a alors plus seul la meilleure moyenne. « Tentés » est un compte des traces préservées, pas une garantie d’historique exhaustif."
@@ -1032,7 +1032,7 @@ def render(output, snapshot):
                 fig.text(
                     0.06,
                     y - 0.06,
-                    "• Données et scripts du comparatif : version figée beta 0",
+                    "• Données et scripts du comparatif : version figée du 8 octobre 2026",
                     fontsize=9,
                     color="#2563eb",
                     va="top",

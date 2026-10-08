@@ -57,11 +57,14 @@ et `tests.json` ; les `.dot` donnent les liens visibles et leurs valeurs p/n.
 
 ## Périmètre Mistral et reprises
 
-`mi` (Mistral Idéal) retient le dernier succès jugé de chaque ticket, dont le
-succès OpenRouter de 0874. `mr`, affiché mβ (Mistral beta), additionne les coûts
+`mi`, affiché mL (Mistral dernier succès), retient le dernier succès jugé de
+chaque ticket, dont le succès OpenRouter de 0874. Sur les trois tickets avec
+plusieurs succès notés (0233, 0452, 0470), le dernier est aussi le meilleur :
+les deux séries ont donc les mêmes notes. `mr`, affiché mA (Mistral
+toutes tentatives), additionne les coûts
 et durées de 25 tentatives directes conservées et de ce remplacement OpenRouter,
 avec la meilleure note réussie par ticket. Les deux séries comptent 35 tentatives
-préservées dans la table, mais neuf sont hors du périmètre des ressources beta :
+préservées dans la table, mais neuf sont hors du périmètre des ressources « toutes tentatives » :
 huit autres essais OpenRouter et un incident direct de configuration sur 0470.
 Il ne s’agit donc pas du coût exhaustif de la campagne.
 

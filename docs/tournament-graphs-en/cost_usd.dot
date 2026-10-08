@@ -1,10 +1,10 @@
 digraph G {
 rankdir=TB;
 node [shape=box, fontname="DejaVu Sans"];
-a [label="Qwen 3.8 27B\nQ4_K_M · llama.cpp\nxhigh (fixé côté serveur)"];
-b [label="Qwen 3.8 Flash-Next Coder\nIQ1_M · Strata · pruned\nxhigh (fixé côté serveur)"];
-b2 [label="Qwen 3.8 Flash-Next\nIQ3_S · Strata\nxhigh (fixé côté serveur)"];
-b3 [label="Qwen 3.8 Flash-Next\nQ2_0 · Strata\nxhigh (fixé côté serveur)"];
+a [label="Qwen 3.8 27B\nQ4_K_M · llama.cpp\nxhigh (set server-side)"];
+b [label="Qwen 3.8 Flash-Next Coder\nIQ1_M · Strata · pruned\nxhigh (set server-side)"];
+b2 [label="Qwen 3.8 Flash-Next\nIQ3_S · Strata\nxhigh (set server-side)"];
+b3 [label="Qwen 3.8 Flash-Next\nQ2_0 · Strata\nxhigh (set server-side)"];
 d [label="Claude Opus 5.5\nAPI Anthropic\nmedium"];
 d2 [label="Claude Opus 5.5\nAPI Anthropic\nlow"];
 e2 [label="GPT 6.1 Sol\nAPI OpenAI\nlow"];
@@ -15,8 +15,8 @@ i [label="DeepSeek Flash\nAPI DeepSeek\nhigh"];
 j [label="GLM 5.3 Flash\nAPI OpenRouter\nhigh"];
 k [label="Mimo v2.6 Flash\nAPI OpenRouter\nmedium"];
 l [label="GPT 6 Luna\nAPI OpenAI\nmedium"];
-mi [label="Mistral Large 4 · dernier succès\nAPI Mistral + OR (0874)\noff"];
-mr [label="Mistral Large 4 · toutes tentatives\nAPI Mistral + OR (0874)\noff", style="dashed"];
+mi [label="Mistral Large 4 · Last success\nAPI Mistral + OR (0874)\noff"];
+mr [label="Mistral Large 4 · All attempts\nAPI Mistral + OR (0874)\noff", style="dashed"];
 n [label="Claude Haiku 5.5\nAPI Anthropic\nmedium"];
 a -> d2 [label="p=0.0098; n=10", penwidth=1.221];
 a -> e3 [label="p=0.0039; n=10", penwidth=1.105];
