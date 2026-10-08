@@ -13,14 +13,14 @@ v8 repository memory. Pilot and audience: [pilot.md](../docs/memory-v8/pilot.md)
 
 ## Recent experiences
 
-- [Haiku review delay](journal/2026/2026-10-08-haiku-review-delay.md) — full Gaze invocation, incomplete authorized fix bundle, timing and attribution sources.
+- [Haiku review](journal/2026/2026-10-08-haiku-review-delay.md).
 
 - [Contradiction surfaced by Claude](journal/2026/2026-10-02-memory-v8-0918-claude-surfaced-planted-contradiction.md) — planted note flagged, provenance verified.
 - [Pre-merge link catch](journal/2026/2026-10-02-memory-v8-0918-post-merge-link-catch.md) — relocated-clone proof caught the protocol.
 - [Concurrent detached sessions](journal/2026/2026-10-02-memory-v8-0918-concurrent-detached-claude-sessions.md) — both preserved.
 - [Pi leg interrupted](journal/2026/2026-10-02-memory-v8-0918-pi-leg-interrupted-credit-depletion.md) — provider credits, outcomes recorded.
 
-Older experiences live in their topics; search the journal.
+Older experiences: search topics and journal.
 
 ## Dreams
 
