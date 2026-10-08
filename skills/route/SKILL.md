@@ -103,6 +103,14 @@ General recommendations:
   when none was reachable. The doctrine (three axes, the rule, the default on
   a Claude-produced change) is `references/decorrelation.md`.
 - Never route to a (model, effort) pair that is not in the grid.
+- **Say the choice out loud, with the reason.** Before launching a worker,
+  write one line: which worker, its family, and why this one fits the task's
+  risk and cost (for example "Haiku, same family, trivial ticket bookkeeping,
+  cheapest adequate" or "Luna as a cross-family seat, the change edits the
+  merge gate"). Writing the reason forces the proportionality: a trivial task
+  gets a cheap same-family worker, a high-risk one gets the stronger or
+  other-family worker. A launch with no stated reason is a launch that
+  was not thought through.
 
 Launch doors. A worker is reached in one of two ways: a subagent inside the
 current CLI, or a headless CLI started from bash with a given model. The

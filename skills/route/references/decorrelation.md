@@ -27,8 +27,9 @@ case and is enough. Independence is bought only where it pays.
 | Ordinary (a feature or fix with tests, a doc rewrite) | The usual angles, same family is fine. Report the family; do not call it independent. |
 | High risk (rules and guards, merge and release gates, credentials, deletion or migration, anything hard to reverse, or the author asks) | At least one seat from another family. |
 
-The author or the orchestrator decides the row; when unsure, take the lighter
-one. A same-family review is never reported as independent, but it is not
+The author or the orchestrator decides the row and states it, with the reason,
+in the line that announces the launch (`SKILL.md`, "Say the choice out loud");
+when unsure, take the lighter one. A same-family review is never reported as independent, but it is not
 degraded either: `PANEL-INTEGRITY: DEGRADED` is for a seat that was required
 and could not run.
 
