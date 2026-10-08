@@ -174,3 +174,9 @@ is untouched. The accepting reviewers accepted different prose.
 
 This mirrors § Round scoping in `skills/review-pr/SKILL.md` (ticket 0377); keep
 the two in sync.
+
+## Worker models
+
+Choose the model of each launched worker per launch, from the `route` skill grid
+(`skills/route/SKILL.md`); never rely on the session model by default. Seats that
+must be independent follow `skills/route/references/decorrelation.md`.

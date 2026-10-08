@@ -886,3 +886,9 @@ telemetry: tier=<tiny|small|full> risk_band=<high|low|normal> wall=<seconds>s ag
 
 On `--force-approve`, Part A is annotated `FORCE-APPROVED by <reason>`
 and Part B shows the gate's would-have-been verdict before override.
+
+## Worker models
+
+Choose the model of each launched worker per launch, from the `route` skill grid
+(`skills/route/SKILL.md`); never rely on the session model by default. Seats that
+must be independent follow `skills/route/references/decorrelation.md`.

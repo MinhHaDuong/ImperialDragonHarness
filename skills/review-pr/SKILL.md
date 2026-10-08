@@ -357,3 +357,9 @@ Rules:
 | Introduced by this PR | request-changes |
 | Pre-existing but touched | comment + new ticket |
 | Pre-existing and untouched | investigate → ticket if warranted |
+
+## Worker models
+
+Choose the model of each launched worker per launch, from the `route` skill grid
+(`skills/route/SKILL.md`); never rely on the session model by default. Seats that
+must be independent follow `skills/route/references/decorrelation.md`.
