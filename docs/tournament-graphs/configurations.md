@@ -1,6 +1,6 @@
 # Identités des configurations testées
 
-Identifiants déclarés et observés dans les manifests conservés des runs du tournoi (3–7 octobre 2026). Les alias API ne garantissent pas une version immuable du modèle hébergé.
+Identifiants déclarés et observés dans les manifests conservés des runs du tournoi (3–8 octobre 2026). Les alias API ne garantissent pas une version immuable du modèle hébergé.
 
 | Série | Provider Pi | Identifiant de modèle |
 |---|---|---|
