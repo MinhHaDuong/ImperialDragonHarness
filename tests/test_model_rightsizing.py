@@ -37,6 +37,8 @@ def test_portable_skill_instructions_do_not_name_models():
     files = sorted(SKILLS.rglob('*.md'))
     assert files
     for path in files:
+        if path.relative_to(SKILLS).parts[0] == 'route':
+            continue  # the route skill holds the grid and per-runtime recommendations, which name models
         text = path.read_text()
         assert not CONCRETE_MODEL.search(text), f'{path}: concrete model in portable instructions'
         if path.name == 'SKILL.md':

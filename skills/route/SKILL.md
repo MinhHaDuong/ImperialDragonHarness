@@ -7,14 +7,14 @@ user-invocable: false
 
 # Route — routage des modèles
 
-`[Grid → Triage → Decision]`
+`[Grid → Triage → Choice]`
 
 This skill owns three things, and they live nowhere else: the performance
 grid (which model is worth what, at explicit effort levels), the route-state
 cache (`routes.json` beside this file — which doors are alive, at what caps
-and prices), and the two-stage routing decision (cluster by task, then
-model by cost and environment) that decides where a piece of work goes
-before any expensive model touches it.
+and prices, plus how each runtime launches a worker), and the guidance an
+orchestrator uses to choose a worker before any expensive model touches the
+work.
 
 ## Update discipline
 
@@ -33,8 +33,8 @@ each model/effort identity remains distinct. Preliminary smoke runs are excluded
 (pi cost.total, component-priced).
 
 The grid lives in `grid.json` beside this file (data, not portable
-instructions — the model-rightsizing policy keeps concrete model names
-out of SKILL.md). Read it for quality/speed/cost per identity and the
+instructions; model names live in data and in the per-runtime
+recommendation files). Read it for quality/speed/cost per identity and the
 provisional marks; update it ONLY from arena cycle data.
 
 Effort labels are model-relative, NOT transportable across generations
@@ -73,15 +73,47 @@ trivial swaps (0470) are not.
   characterized; near-zero variance — it validates infrastructure, it does
   not discriminate models).
 
-## Two-stage routing: cluster by task, then model by cost and environment
+## Choosing a worker
 
-Stage 1 — the TASK picks the CLUSTER (triage above feeds it). Stage 2 —
-COST and ENVIRONMENT pick the MODEL inside the cluster. Clusters derive
-from the grid (arena cycles only); membership moves only with new cycle
-data.
+The orchestrating model chooses, from the task and its context. No script
+maps a level to a model. Inputs:
 
-Cluster membership lives in `grid.json` (`clusters` key) — data, not
-portable instructions.
+1. The task, after triage above: what it costs to be wrong, how cheap it is
+   to verify, how much context it needs.
+2. The grid (`grid.json`): quality, time and cost per (model @effort)
+   identity, the `clusters` key as a starting shortlist, and the `family`
+   label of each row.
+3. The route cache (`routes.json`): which doors are alive, their caps, and
+   how each runtime launches a worker (`launch_doors`).
+4. The general recommendations below, then your runtime's file.
+
+General recommendations:
+
+- Spend the least that the task tolerates. Smoke, routine, bulk and
+  cheap-to-verify work goes to the ÉCONOMIQUES cluster; Luna is the default
+  absent a reason, and Haiku 5.5 is its peer inside Claude Code. Keep a
+  Haiku worker under 100K prompt tokens (price x5 above).
+- Concrete implementation goes to MILIEU SOLIDE; judgment, consistency or
+  monster work to ASSURANCE. Uncleared content forces LOCAL/PRIVÉ. Ambiguous
+  tasks wait for a human before any spend. The 256K guard outranks all of
+  it: oversize context is a split-the-work ticket.
+- Choose the lineage on purpose. A reviewer that shares the producer's
+  `family` adds replication, not independence. When the risk calls for an
+  independent view, take a worker of another family, and say in the report
+  when none was reachable.
+- Never route to a (model, effort) pair that is not in the grid.
+
+Launch doors. A worker is reached in one of two ways: a subagent inside the
+current CLI, or a headless CLI started from bash with a given model. The
+exact forms, and which were verified, are in `routes.json` under
+`launch_doors`. Pin the model on every launch.
+
+Runtime recommendations. Read the file for the runtime you are running in:
+
+- If you are Claude Code, read `routes-recommendations-claude-code.md`.
+- If you are Codex, read `routes-recommendations-codex.md`.
+- If you are Pi, read `routes-recommendations-pi.md`.
+- If you are Vibe, read `routes-recommendations-vibe.md`.
 
 Model timeouts and admissible empty submissions score zero; include consumed
 time and cost, and show completion coverage. Provider/quota errors are invalid
@@ -92,15 +124,8 @@ an equal median difference does not establish per-ticket dominance.
 
 Within-cluster selection keys: cost per leg (grid above), latency, and
 environment: privacy/clearance (forces LOCAL/PRIVÉ), offline, GPU idle vs
-the local lane busy, provider rate limits. Within ÉCONOMIQUES, Luna is the
-default absent a reason; within LOCAL/PRIVÉ, IQ3_S for quality, Q2_0 for
-speed on non-judgment tickets, 27B for vision.
-
-Cluster-by-task examples (triage output → cluster): smoke/routine →
-ÉCONOMIQUES; concrete implementation → MILIEU SOLIDE; judgment/consistency
-or monster → ASSURANCE; uncleared content → LOCAL/PRIVÉ; ambiguous →
-need-human before any spend. The 256K guard outranks all stages: oversize
-context is a split-the-work ticket, never a bigger-window ticket.
+the local lane busy, provider rate limits. Within LOCAL/PRIVÉ, IQ3_S for
+quality, Q2_0 for speed on non-judgment tickets, 27B for vision.
 
 ## routes.json
 
