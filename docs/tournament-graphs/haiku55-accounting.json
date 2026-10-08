@@ -1,0 +1,625 @@
+{
+  "arm": "n",
+  "model_id": "claude-haiku-5-5",
+  "provider": "anthropic",
+  "effort": "medium",
+  "pi_version": "1.1.0",
+  "accounting_scope": "beta",
+  "scope": "All scored candidate attempts, including failures and retries, summed per ticket. Judges and preliminary tool smoke separate from plotted candidate cost.",
+  "pricing": {
+    "prompt_up_to_100000": {
+      "input": 0.1,
+      "output": 0.5,
+      "cache_read": 0.01,
+      "cache_write": 0.125
+    },
+    "prompt_over_100000": {
+      "input": 0.5,
+      "output": 2.5,
+      "cache_read": 0.05,
+      "cache_write": 0.625
+    }
+  },
+  "pricing_source": "https://www.anthropic.com/claude-haiku-5-5",
+  "cost_method": "Sum recorded per-attempt Pi tiered component costs rounded to four decimals, matching existing manifests; unrounded session totals retained for audit.",
+  "parallel_workers": 10,
+  "admission_gate_usd": 5,
+  "budget_ceiling_usd": null,
+  "parallel_overshoot_authorized": true,
+  "authorization": "User explicitly authorized parallel launch with possible spend above the $5 admission gate, 2026-10-08",
+  "time_cap_seconds_per_attempt": 7200,
+  "retry_policy": {
+    "automatic_scored_retries": 0,
+    "maximum_scored_attempts_per_ticket": 2,
+    "manual_retry_policy": "At most one manually initiated retry for infrastructure failure; preserve every attempt and accumulate all costs and durations. Model failures are retained as zero-quality outcomes.",
+    "provider_internal_retries": "Pi default; session errors counted where observable; individual HTTP transport retries not instrumented.",
+    "judge_retries": "No automatic retry in extension driver; any manual judge retry must preserve previous evidence.",
+    "actual_scored_retries": 0
+  },
+  "candidate_cost_usd_total": 1.2571,
+  "candidate_session_cost_usd_total": 1.257252575,
+  "smoke": {
+    "rc": 0,
+    "providers": [
+      "anthropic"
+    ],
+    "models": [
+      "claude-haiku-5-5"
+    ],
+    "efforts": [
+      "medium"
+    ],
+    "read_tool": true,
+    "marker_reply": true,
+    "cost_usd": 0.00028389,
+    "pass": true
+  },
+  "judge_cost_usd_total": 1.483838195,
+  "attempts": [
+    {
+      "ticket": "0211",
+      "arm": "n",
+      "attempt": 1,
+      "verdict": "OK",
+      "pi_rc": 0,
+      "pi_version": "1.1.0",
+      "provider": "anthropic",
+      "model_id": "claude-haiku-5-5",
+      "effort": "medium",
+      "finished": "2026-10-08T08:03:58Z",
+      "seconds": 176.7,
+      "cost_usd": 0.0209,
+      "session_cost_usd": 0.02093039,
+      "output_tokens": 16258,
+      "tokens": {
+        "n_calls": 21,
+        "in_sum": 44,
+        "cache_read_sum": 701024,
+        "cache_write_sum": 46294,
+        "cache_sum": 747318,
+        "out_sum": 16258,
+        "peak_ctx": 46579,
+        "source": "sessions"
+      },
+      "session_errors": 0,
+      "requests_above_100k": 0,
+      "standalone_usage_events": 0,
+      "standalone_usage_kinds": [],
+      "source": "runs/0211-n/attempts/1/run.json",
+      "time_cap_seconds": 7200
+    },
+    {
+      "ticket": "0233",
+      "arm": "n",
+      "attempt": 1,
+      "verdict": "OK",
+      "pi_rc": 0,
+      "pi_version": "1.1.0",
+      "provider": "anthropic",
+      "model_id": "claude-haiku-5-5",
+      "effort": "medium",
+      "finished": "2026-10-08T08:03:18Z",
+      "seconds": 136.2,
+      "cost_usd": 0.0209,
+      "session_cost_usd": 0.02092254,
+      "output_tokens": 12246,
+      "tokens": {
+        "n_calls": 25,
+        "in_sum": 52,
+        "cache_read_sum": 878684,
+        "cache_write_sum": 48060,
+        "cache_sum": 926744,
+        "out_sum": 12246,
+        "peak_ctx": 48316,
+        "source": "sessions"
+      },
+      "session_errors": 0,
+      "requests_above_100k": 0,
+      "standalone_usage_events": 0,
+      "standalone_usage_kinds": [],
+      "source": "runs/0233-n/attempts/1/run.json",
+      "time_cap_seconds": 7200
+    },
+    {
+      "ticket": "0333",
+      "arm": "n",
+      "attempt": 1,
+      "verdict": "OK",
+      "pi_rc": 0,
+      "pi_version": "1.1.0",
+      "provider": "anthropic",
+      "model_id": "claude-haiku-5-5",
+      "effort": "medium",
+      "finished": "2026-10-08T08:13:55Z",
+      "seconds": 773.2,
+      "cost_usd": 0.255,
+      "session_cost_usd": 0.25500091,
+      "output_tokens": 47912,
+      "tokens": {
+        "n_calls": 57,
+        "in_sum": 116,
+        "cache_read_sum": 4758426,
+        "cache_write_sum": 129554,
+        "cache_sum": 4887980,
+        "out_sum": 47912,
+        "peak_ctx": 128962,
+        "source": "sessions"
+      },
+      "session_errors": 0,
+      "requests_above_100k": 24,
+      "standalone_usage_events": 1,
+      "standalone_usage_kinds": [
+        "cache_warm"
+      ],
+      "source": "runs/0333-n/attempts/1/run.json",
+      "time_cap_seconds": 7200
+    },
+    {
+      "ticket": "0338",
+      "arm": "n",
+      "attempt": 1,
+      "verdict": "OK",
+      "pi_rc": 0,
+      "pi_version": "1.1.0",
+      "provider": "anthropic",
+      "model_id": "claude-haiku-5-5",
+      "effort": "medium",
+      "finished": "2026-10-08T08:02:43Z",
+      "seconds": 99.4,
+      "cost_usd": 0.0135,
+      "session_cost_usd": 0.013546815,
+      "output_tokens": 10672,
+      "tokens": {
+        "n_calls": 13,
+        "in_sum": 28,
+        "cache_read_sum": 334114,
+        "cache_write_sum": 38935,
+        "cache_sum": 373049,
+        "out_sum": 10672,
+        "peak_ctx": 38388,
+        "source": "sessions"
+      },
+      "session_errors": 0,
+      "requests_above_100k": 0,
+      "standalone_usage_events": 0,
+      "standalone_usage_kinds": [],
+      "source": "runs/0338-n/attempts/1/run.json",
+      "time_cap_seconds": 7200
+    },
+    {
+      "ticket": "0452",
+      "arm": "n",
+      "attempt": 1,
+      "verdict": "OK",
+      "pi_rc": 0,
+      "pi_version": "1.1.0",
+      "provider": "anthropic",
+      "model_id": "claude-haiku-5-5",
+      "effort": "medium",
+      "finished": "2026-10-08T08:06:38Z",
+      "seconds": 334.0,
+      "cost_usd": 0.2184,
+      "session_cost_usd": 0.21842136,
+      "output_tokens": 45299,
+      "tokens": {
+        "n_calls": 36,
+        "in_sum": 74,
+        "cache_read_sum": 3096066,
+        "cache_write_sum": 127252,
+        "cache_sum": 3223318,
+        "out_sum": 45299,
+        "peak_ctx": 126442,
+        "source": "sessions"
+      },
+      "session_errors": 0,
+      "requests_above_100k": 20,
+      "standalone_usage_events": 0,
+      "standalone_usage_kinds": [],
+      "source": "runs/0452-n/attempts/1/run.json",
+      "time_cap_seconds": 7200
+    },
+    {
+      "ticket": "0470",
+      "arm": "n",
+      "attempt": 1,
+      "verdict": "OK",
+      "pi_rc": 0,
+      "pi_version": "1.1.0",
+      "provider": "anthropic",
+      "model_id": "claude-haiku-5-5",
+      "effort": "medium",
+      "finished": "2026-10-08T08:01:26Z",
+      "seconds": 24.1,
+      "cost_usd": 0.0036,
+      "session_cost_usd": 0.003564355,
+      "output_tokens": 2130,
+      "tokens": {
+        "n_calls": 4,
+        "in_sum": 10,
+        "cache_read_sum": 41123,
+        "cache_write_sum": 16697,
+        "cache_sum": 57820,
+        "out_sum": 2130,
+        "peak_ctx": 16184,
+        "source": "sessions"
+      },
+      "session_errors": 0,
+      "requests_above_100k": 0,
+      "standalone_usage_events": 0,
+      "standalone_usage_kinds": [],
+      "source": "runs/0470-n/attempts/1/run.json",
+      "time_cap_seconds": 7200
+    },
+    {
+      "ticket": "0532",
+      "arm": "n",
+      "attempt": 1,
+      "verdict": "OK",
+      "pi_rc": 0,
+      "pi_version": "1.1.0",
+      "provider": "anthropic",
+      "model_id": "claude-haiku-5-5",
+      "effort": "medium",
+      "finished": "2026-10-08T08:04:11Z",
+      "seconds": 187.1,
+      "cost_usd": 0.0251,
+      "session_cost_usd": 0.025119355,
+      "output_tokens": 23043,
+      "tokens": {
+        "n_calls": 19,
+        "in_sum": 40,
+        "cache_read_sum": 626998,
+        "cache_write_sum": 58591,
+        "cache_sum": 685589,
+        "out_sum": 23043,
+        "peak_ctx": 57941,
+        "source": "sessions"
+      },
+      "session_errors": 0,
+      "requests_above_100k": 0,
+      "standalone_usage_events": 0,
+      "standalone_usage_kinds": [],
+      "source": "runs/0532-n/attempts/1/run.json",
+      "time_cap_seconds": 7200
+    },
+    {
+      "ticket": "0673",
+      "arm": "n",
+      "attempt": 1,
+      "verdict": "OK",
+      "pi_rc": 0,
+      "pi_version": "1.1.0",
+      "provider": "anthropic",
+      "model_id": "claude-haiku-5-5",
+      "effort": "medium",
+      "finished": "2026-10-08T08:02:58Z",
+      "seconds": 114.6,
+      "cost_usd": 0.0246,
+      "session_cost_usd": 0.024633890000000002,
+      "output_tokens": 14088,
+      "tokens": {
+        "n_calls": 24,
+        "in_sum": 50,
+        "cache_read_sum": 971764,
+        "cache_write_sum": 62938,
+        "cache_sum": 1034702,
+        "out_sum": 14088,
+        "peak_ctx": 63006,
+        "source": "sessions"
+      },
+      "session_errors": 0,
+      "requests_above_100k": 0,
+      "standalone_usage_events": 0,
+      "standalone_usage_kinds": [],
+      "source": "runs/0673-n/attempts/1/run.json",
+      "time_cap_seconds": 7200
+    },
+    {
+      "ticket": "0874",
+      "arm": "n",
+      "attempt": 1,
+      "verdict": "OK",
+      "pi_rc": 0,
+      "pi_version": "1.1.0",
+      "provider": "anthropic",
+      "model_id": "claude-haiku-5-5",
+      "effort": "medium",
+      "finished": "2026-10-08T08:13:55Z",
+      "seconds": 773.2,
+      "cost_usd": 0.6586,
+      "session_cost_usd": 0.658630065,
+      "output_tokens": 82978,
+      "tokens": {
+        "n_calls": 77,
+        "in_sum": 156,
+        "cache_read_sum": 9621950,
+        "cache_write_sum": 206565,
+        "cache_sum": 9828515,
+        "out_sum": 82978,
+        "peak_ctx": 206934,
+        "source": "sessions"
+      },
+      "session_errors": 0,
+      "requests_above_100k": 46,
+      "standalone_usage_events": 0,
+      "standalone_usage_kinds": [],
+      "source": "runs/0874-n/attempts/1/run.json",
+      "time_cap_seconds": 7200
+    },
+    {
+      "ticket": "1372",
+      "arm": "n",
+      "attempt": 1,
+      "verdict": "OK",
+      "pi_rc": 0,
+      "pi_version": "1.1.0",
+      "provider": "anthropic",
+      "model_id": "claude-haiku-5-5",
+      "effort": "medium",
+      "finished": "2026-10-08T08:18:33Z",
+      "seconds": 1049.9,
+      "cost_usd": 0.0165,
+      "session_cost_usd": 0.016482895,
+      "output_tokens": 10488,
+      "tokens": {
+        "n_calls": 15,
+        "in_sum": 32,
+        "cache_read_sum": 317857,
+        "cache_write_sum": 64457,
+        "cache_sum": 382314,
+        "out_sum": 10488,
+        "peak_ctx": 34294,
+        "source": "sessions"
+      },
+      "session_errors": 0,
+      "requests_above_100k": 0,
+      "standalone_usage_events": 0,
+      "standalone_usage_kinds": [],
+      "source": "runs/1372-n/attempts/1/run.json",
+      "time_cap_seconds": 7200
+    }
+  ],
+  "judges": [
+    {
+      "ticket": "0211",
+      "seat": "gemini",
+      "model": "google/gemini-3.1-pro-preview",
+      "score": 5.0,
+      "cost_usd": 0.159154,
+      "source": "runs/0211-n/judges/gemini.json"
+    },
+    {
+      "ticket": "0211",
+      "seat": "grok",
+      "model": "x-ai/grok-4.3",
+      "score": 7.0,
+      "cost_usd": 0.0099406,
+      "source": "runs/0211-n/judges/grok.json"
+    },
+    {
+      "ticket": "0211",
+      "seat": "minimax",
+      "model": "minimax/minimax-m2.5",
+      "score": 7.0,
+      "cost_usd": 0.0027915,
+      "source": "runs/0211-n/judges/minimax.json"
+    },
+    {
+      "ticket": "0233",
+      "seat": "gemini",
+      "model": "google/gemini-3.1-pro-preview",
+      "score": 6.0,
+      "cost_usd": 0.108684,
+      "source": "runs/0233-n/judges/gemini.json"
+    },
+    {
+      "ticket": "0233",
+      "seat": "grok",
+      "model": "x-ai/grok-4.3",
+      "score": 7.0,
+      "cost_usd": 0.01116435,
+      "source": "runs/0233-n/judges/grok.json"
+    },
+    {
+      "ticket": "0233",
+      "seat": "minimax",
+      "model": "minimax/minimax-m2.5",
+      "score": 10.0,
+      "cost_usd": 0.0030711,
+      "source": "runs/0233-n/judges/minimax.json"
+    },
+    {
+      "ticket": "0333",
+      "seat": "gemini",
+      "model": "google/gemini-3.1-pro-preview",
+      "score": 10.0,
+      "cost_usd": 0.06388,
+      "source": "runs/0333-n/judges/gemini.json"
+    },
+    {
+      "ticket": "0333",
+      "seat": "grok",
+      "model": "x-ai/grok-4.3",
+      "score": 10.0,
+      "cost_usd": 0.01927435,
+      "source": "runs/0333-n/judges/grok.json"
+    },
+    {
+      "ticket": "0333",
+      "seat": "minimax",
+      "model": "minimax/minimax-m2.5",
+      "score": 10.0,
+      "cost_usd": 0.01140107,
+      "source": "runs/0333-n/judges/minimax.json"
+    },
+    {
+      "ticket": "0338",
+      "seat": "gemini",
+      "model": "google/gemini-3.1-pro-preview",
+      "score": 7.0,
+      "cost_usd": 0.097726,
+      "source": "runs/0338-n/judges/gemini.json"
+    },
+    {
+      "ticket": "0338",
+      "seat": "grok",
+      "model": "x-ai/grok-4.3",
+      "score": 4.0,
+      "cost_usd": 0.01010685,
+      "source": "runs/0338-n/judges/grok.json"
+    },
+    {
+      "ticket": "0338",
+      "seat": "minimax",
+      "model": "minimax/minimax-m2.5",
+      "score": 5.0,
+      "cost_usd": 0.0065893,
+      "source": "runs/0338-n/judges/minimax.json"
+    },
+    {
+      "ticket": "0452",
+      "seat": "gemini",
+      "model": "google/gemini-3.1-pro-preview",
+      "score": 10.0,
+      "cost_usd": 0.231224,
+      "source": "runs/0452-n/judges/gemini.json"
+    },
+    {
+      "ticket": "0452",
+      "seat": "grok",
+      "model": "x-ai/grok-4.3",
+      "score": 4.0,
+      "cost_usd": 0.0284081,
+      "source": "runs/0452-n/judges/grok.json"
+    },
+    {
+      "ticket": "0452",
+      "seat": "minimax",
+      "model": "minimax/minimax-m2.5",
+      "score": 6.0,
+      "cost_usd": 0.007259465,
+      "source": "runs/0452-n/judges/minimax.json"
+    },
+    {
+      "ticket": "0470",
+      "seat": "gemini",
+      "model": "google/gemini-3.1-pro-preview",
+      "score": 10.0,
+      "cost_usd": 0.036472,
+      "source": "runs/0470-n/judges/gemini.json"
+    },
+    {
+      "ticket": "0470",
+      "seat": "grok",
+      "model": "x-ai/grok-4.3",
+      "score": 10.0,
+      "cost_usd": 0.0076681,
+      "source": "runs/0470-n/judges/grok.json"
+    },
+    {
+      "ticket": "0470",
+      "seat": "minimax",
+      "model": "minimax/minimax-m2.5",
+      "score": 10.0,
+      "cost_usd": 0.00197991,
+      "source": "runs/0470-n/judges/minimax.json"
+    },
+    {
+      "ticket": "0532",
+      "seat": "gemini",
+      "model": "google/gemini-3.1-pro-preview",
+      "score": 7.0,
+      "cost_usd": 0.18468,
+      "source": "runs/0532-n/judges/gemini.json"
+    },
+    {
+      "ticket": "0532",
+      "seat": "grok",
+      "model": "x-ai/grok-4.3",
+      "score": 10.0,
+      "cost_usd": 0.01921435,
+      "source": "runs/0532-n/judges/grok.json"
+    },
+    {
+      "ticket": "0532",
+      "seat": "minimax",
+      "model": "minimax/minimax-m2.5",
+      "score": 9.0,
+      "cost_usd": 0.0053655,
+      "source": "runs/0532-n/judges/minimax.json"
+    },
+    {
+      "ticket": "0673",
+      "seat": "gemini",
+      "model": "google/gemini-3.1-pro-preview",
+      "score": 6.0,
+      "cost_usd": 0.07171,
+      "source": "runs/0673-n/judges/gemini.json"
+    },
+    {
+      "ticket": "0673",
+      "seat": "grok",
+      "model": "x-ai/grok-4.3",
+      "score": 8.0,
+      "cost_usd": 0.01128185,
+      "source": "runs/0673-n/judges/grok.json"
+    },
+    {
+      "ticket": "0673",
+      "seat": "minimax",
+      "model": "minimax/minimax-m2.5",
+      "score": 10.0,
+      "cost_usd": 0.0030375,
+      "source": "runs/0673-n/judges/minimax.json"
+    },
+    {
+      "ticket": "0874",
+      "seat": "gemini",
+      "model": "google/gemini-3.1-pro-preview",
+      "score": 0.0,
+      "cost_usd": 0.18874,
+      "source": "runs/0874-n/judges/gemini.json"
+    },
+    {
+      "ticket": "0874",
+      "seat": "grok",
+      "model": "x-ai/grok-4.3",
+      "score": 7.0,
+      "cost_usd": 0.0553256,
+      "source": "runs/0874-n/judges/grok.json"
+    },
+    {
+      "ticket": "0874",
+      "seat": "minimax",
+      "model": "minimax/minimax-m2.5",
+      "score": 0.0,
+      "cost_usd": 0.01655208,
+      "source": "runs/0874-n/judges/minimax.json"
+    },
+    {
+      "ticket": "1372",
+      "seat": "gemini",
+      "model": "google/gemini-3.1-pro-preview",
+      "score": 6.5,
+      "cost_usd": 0.094004,
+      "source": "runs/1372-n/judges/gemini.json"
+    },
+    {
+      "ticket": "1372",
+      "seat": "grok",
+      "model": "x-ai/grok-4.3",
+      "score": 8.0,
+      "cost_usd": 0.0103906,
+      "source": "runs/1372-n/judges/grok.json"
+    },
+    {
+      "ticket": "1372",
+      "seat": "minimax",
+      "model": "minimax/minimax-m2.5",
+      "score": 7.5,
+      "cost_usd": 0.00674202,
+      "source": "runs/1372-n/judges/minimax.json"
+    }
+  ],
+  "extension_cost_usd_total_including_smoke_and_judges": 2.741222085
+}
