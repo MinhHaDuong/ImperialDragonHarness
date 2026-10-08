@@ -3,11 +3,13 @@ Title: Routing B2a: retire model pins from agents and profiles
 Created: 2026-10-08
 Author: claude
 Blocked-by: 1065
+Closed: autoclosed — PR #1271
 
 --- log ---
 2026-10-08T15:36Z claude created
 2026-10-08T15:40Z claude note Child of tracker 1052 (wave B2a).
 2026-10-08T17:50Z reviewer From A0 (1063): the model: standard|strong frontmatter tokens make an unpinned launch fail with HTTP 404 in Claude Code; B2a should delete them rather than reword.
+2026-10-08T19:37Z reviewer closed — autoclosed — PR #1271
 
 --- body ---
 ## Context
