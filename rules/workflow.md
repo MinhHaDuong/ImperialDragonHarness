@@ -104,9 +104,9 @@ A clean-room render is usually seconds — run it yourself.
   cover the task.
 - **Delegate intent, not procedure.** Goal, constraints, definition of done;
   the delegate chooses the method. Long runs go to background delegates.
-- Reviewers — an independent review needs a seat from a different model
-  family than the producer; same-family seats add angle or replication, not
-  independence. Doctrine: `skills/route/references/decorrelation.md`. Most
+- Reviewers — scale to the risk: a trivial change takes one cheaper
+  same-family reviewer. Only a high-risk change needs a seat from a different
+  model family; a same-family review is never called independent. Doctrine: `skills/route/references/decorrelation.md`. Most
   decorrelated available for risk; retain native routing and
   independent-review duties; report any perspective that was unreachable.
 - **Watch contention, not headcount.** Three or more agents on one file or
