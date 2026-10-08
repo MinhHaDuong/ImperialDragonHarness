@@ -153,6 +153,12 @@ The former ticket references in this table (0006, 0022–0023, 0037) were dead �
 
 Perishable inventory: tool names and versions rot; re-verify before relying on any entry. Frontends are transports to the three surfaces in decision 5 — what matters is which surface they reach and what they leave behind.
 
+**External discovery** (optional, separate from library access)
+- [HAL Discovery MCP](hal-discovery-mcp.md) — official experimental public
+  metadata discovery for topics, authors, structures and funded projects.
+  Explicit session/project activation only; no default registration or tool
+  loading. Full text, Zotero intake and HAL deposit retain their existing paths.
+
 **MCP servers** (interactive HITL retrieval; never a correctness dependency)
 - **Zoteus** (`@oscardvs/zoteus`, TypeScript, MIT, v1.6.x, very active) — the recommended overlay: local-first, key-free reads via the desktop app's local API, versioned reversible writes, semantic search over PDFs, CSL citations, add-by-DOI. No attachment-hash audit, no merge composite. The author maintains a fork under search-works-for-zotero and has upstreamed hardening (oscardvs/zoteus#25, 2026-08-28).
 - `54yyyu/zotero-mcp` (Python, FastMCP) — sqlite reads, Zotero 10 local writes; ships a companion `zotero-cli`.

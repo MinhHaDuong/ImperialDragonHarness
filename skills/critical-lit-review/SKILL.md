@@ -49,6 +49,9 @@ agreement on it before searching. It states:
   search protocol. Seed it with the scoping document's object, axes and
   languages, the author's own publications and frequent co-authors. Do not run
   a separate ad hoc crawl.
+- **Optional HAL transport**: [HAL Discovery MCP](../../docs/hal-discovery-mcp.md),
+  activated only for this task; direct HAL API remains a fallback. This
+  pointer does not register or load MCP tools.
 - **Pool every candidate raw, then screen once with one rule** derived from
   the scoping document. Never screen sources iteratively as they arrive, and
   never add records screened by one rule to a corpus filtered by another.

@@ -67,6 +67,9 @@ Draw angles from this taxonomy and adapt to the claim:
   (term × term across Scopus-like engines).
 - **Languages**: French, Russian, Chinese, Japanese, German — via zbMATH,
   Math-Net.ru, theses.fr, HAL, national repositories.
+- **Optional HAL transport**: [HAL Discovery MCP](../../docs/hal-discovery-mcp.md),
+  activated only for this task; direct HAL API remains a fallback. This
+  pointer does not register or load MCP tools.
 - **Gray literature**: PhD theses, SSRN and central-bank working papers,
   institutional repositories.
 - **Citation graph**: forward/backward citations of the pivot papers
