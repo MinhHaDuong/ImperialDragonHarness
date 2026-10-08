@@ -1,0 +1,30 @@
+%erg 0.1
+Title: Routing B2b: retire qualifiers from the five fork review skills
+Created: 2026-10-08
+Author: claude
+Blocked-by: 1065
+
+--- log ---
+2026-10-08T15:36Z claude created
+2026-10-08T15:40Z claude note Child of tracker 1052 (wave B2b).
+
+--- body ---
+## Context
+`gaze`, `review-pr`, `review-pr-prose`, `verify-adherence`, `verify-gate` are
+the five `context: fork` skills and pin their seats to `model-level: standard`
+("reviewers stay below the coder tier"). A fork runs at the caller's tier and
+cannot judge at launch. Decision: the decorrelation rule applies to the SEATS a
+fork launches, not to the fork itself; no concrete `model:` in skill
+frontmatter.
+
+## Scope
+- Replace the tier pins with the cross-family rule of 1065, including its
+  default (one cross-family detached seat, else `no report` and `DEGRADED`).
+- `review-pr`'s detached-seat section keeps "record `no report`, never simulate".
+- Same PR: retire `tests/test_model_rightsizing.py:56-65` (the fork-frontmatter check).
+
+## Exit criteria
+- [ ] None of the five skills declares `model-level` or `effort`
+- [ ] The fork-frontmatter test is retired in this PR; the suite passes
+- [ ] `make skills-catalog` and `make check-skills-drift` pass
+- [ ] `make check` passes

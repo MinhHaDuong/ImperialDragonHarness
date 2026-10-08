@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Routing B0: cross-family decorrelation doctrine and launch-choice floor
+Created: 2026-10-08
+Author: claude
+Blocked-by: 1064
+
+--- log ---
+2026-10-08T15:36Z claude created
+2026-10-08T15:40Z claude note Child of tracker 1052 (wave B0). Absorbs ticket 1057 (decorrelation axes).
+
+--- body ---
+## Context
+Decorrelation today is prose: no code resolves a reviewer's family and no
+test checks "different family from producer". The only enforced lever is the
+tier pin, which this redesign removes (and which may already be inert, see
+1063). Every Claude Code subagent is Anthropic, so cross-family review means a
+headless CLI seat via the launch doors of 1064; the mechanism exists in
+`skills/review-pr/SKILL.md:151-186` (detached-seat substitution, `no report`,
+never simulate).
+
+Contradictions to fix: `rules/workflow.md:107` says other-vendor reviewers
+"stronger" while skills pin reviewers below the coder; "sibling minimum" is
+defined nowhere; `rules/claude-code.md:41-42` claims the rightsizing test
+enforces reviewer-below-coder (it does not); `profiles/coder/PROFILE.md:29-30`
+claims reviewers are decorrelated "by construction".
+
+## Scope
+- Rule: an independent review seat comes from a different FAMILY than the
+  producer, checked against the grid `family` field; when none is reachable,
+  say so in the report. Name the three axes (angle, lineage, replication) and
+  when replication may substitute (folds in 1057).
+- Default on a Claude-produced PR: attempt one cross-family detached seat
+  through the cheapest live door in `routes.json`; else `no report` and
+  `PANEL-INTEGRITY: DEGRADED`. Cost is real (OpenRouter 60 USD/month cap,
+  OpenAI credit wall); state it.
+- Attribution: derive family from the provider prefix of `model`; use the
+  existing `model-state=runtime-masked` for Vibe. Add a field only for lineage
+  twins the grid labels.
+- Mechanical floor: a test that every launch line in a skill body names an
+  explicit model choice, so an omitted choice fails CI instead of silently
+  inheriting the session model.
+- Fix the contradictions above; may ship with "no cross-family seat reachable,
+  say so" as the only behaviour if the doors of 1064 slip.
+
+## Exit criteria
+- [ ] Doctrine written in the review skills' shared reference or rules, with the three axes
+- [ ] The contradictions listed above are fixed
+- [ ] The mechanical-floor test exists and fails on a launch line with no model choice
+- [ ] A gaze run on a Claude-produced PR gets a non-Claude seat or reports `no report` with `DEGRADED`
+- [ ] `make check` passes

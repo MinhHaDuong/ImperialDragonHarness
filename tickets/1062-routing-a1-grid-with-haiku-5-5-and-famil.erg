@@ -1,0 +1,41 @@
+%erg 0.1
+Title: Routing A1: grid with Haiku 5.5 and family, remove SpaceBunny
+Created: 2026-10-08
+Author: claude
+
+--- log ---
+2026-10-08T15:36Z claude created
+2026-10-08T15:40Z claude note Child of tracker 1052 (wave A1 of the LLM-chosen routing plan; the tracker lists all children).
+
+--- body ---
+## Context
+Routing moves from the deterministic model-level x effort chooser to the
+orchestrating LLM choosing from the grid (tracker 1052). Haiku 5.5 is absent
+from `skills/route/grid.json` and `routes.json`; its arm-N data sits in
+`docs/tournament-graphs/haiku55-results.csv`. SpaceBunny is dead and removed
+at the author's request.
+
+`scripts/tournament-analysis.py` only refreshes numeric fields of EXISTING
+grid rows keyed by `row["arm"]`; arm discovery reads `~/arena/runs.json`
+`arm_order` (no `n`), so a hand-added `"arm": "n"` row would raise `KeyError`.
+Line ~190 hardcodes `failures=0/30` in the quality string.
+
+## Scope
+- Extend arm discovery to include arm `n` (or add it to `arm_order`), add a
+  lineage `family` emitter (Anthropic, OpenAI, Mistral, Qwen, DeepSeek, GLM;
+  independent of provider or door), add the Haiku 5.5 row, run `--grid`.
+- Fix the hardcoded `failures=0/30`; point the grid `_comment` numeric source
+  at the Haiku data (the corrected-summary JSON has none).
+- Add Haiku 5.5 to the Anthropic entry of `routes.json`; note that its price
+  multiplies by 5 above 100k prompt tokens.
+- Remove SpaceBunny: the `routes.json` entry, the grid-comment wording (via
+  the generator), the example at `skills/route/SKILL.md:110`. Leave the
+  historical docs.
+- Check the `~/arena/runs/*-n` legs have complete judge files so Haiku is
+  marked final, not provisional.
+
+## Exit criteria
+- [ ] `grid.json` and `routes.json` parse; the grid shows Haiku 5.5 and a `family` per identity
+- [ ] `grep -ri spacebunny skills/` finds nothing
+- [ ] Haiku 5.5 is marked final, or the reason it is provisional is recorded
+- [ ] `make check` passes

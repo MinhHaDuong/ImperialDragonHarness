@@ -1,0 +1,28 @@
+%erg 0.1
+Title: Routing C: measure LLM-chosen routing by USD per PR and cross-family rate
+Created: 2026-10-08
+Author: claude
+Blocked-by: 1069
+
+--- log ---
+2026-10-08T15:36Z claude created
+2026-10-08T15:40Z claude note Child of tracker 1052 (wave C).
+
+--- body ---
+## Context
+With the chooser gone, nobody has measured what LLM-chosen routing costs or
+whether cross-family seats are actually selected. Quality deltas against the
+old pins may be meaningless if the pins were inert (see 1063).
+
+## Scope
+Replay about 10 merged PRs with the `coaching` skill. Metrics: USD per PR and
+the rate at which a cross-family seat is selected when one is reachable.
+Estimated cost: a few USD and about 1 author-hour reading the diagnostics.
+Drop the "vs old pins" comparison if 1063 shows the pins were inert. Judgment
+seats (gaze, verify-gate) stay on standard-class recommendations until this
+shows a cheaper model matches.
+
+## Exit criteria
+- [ ] USD per PR and cross-family rate reported, with the arithmetic shown
+- [ ] `verify-adherence` still catches a known violation on an old PR under LLM-chosen routing
+- [ ] Verdict recorded on whether review and gate seats may move to a cheaper model

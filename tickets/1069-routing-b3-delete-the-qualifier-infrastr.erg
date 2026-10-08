@@ -1,0 +1,51 @@
+%erg 0.1
+Title: Routing B3: delete the qualifier infrastructure and clean tickets
+Created: 2026-10-08
+Author: claude
+Blocked-by: 1066
+Blocked-by: 1067
+Blocked-by: 1068
+
+--- log ---
+2026-10-08T15:36Z claude created
+2026-10-08T15:40Z claude note Child of tracker 1052 (wave B3). Tests were edited in their own waves; this wave deletes what is left.
+
+--- body ---
+## Context
+After B1, B2a and B2b nothing declares the qualifiers. What remains is the
+enum module, its test, and the doctrine.
+
+## Scope
+- Delete `scripts/model_policy.py`. Move
+  `test_portable_skill_instructions_do_not_name_models` into
+  `tests/test_skill_frontmatter.py` (with the `skills/route/` exemption), then
+  delete `tests/test_model_rightsizing.py`.
+- Docs: mark superseded the qualifier sections of
+  `docs/portable-model-capability-policy.md` (Portable contract, Default role
+  policy, Runtime mappings, Migration path, Tests and invariants); trim
+  `docs/2026-10-06-routing-doctrine-brief.md` (qualifier spec, vocabulary
+  table, profiles, the "Settled" claims at lines 95-102); strip pins from
+  `docs/2026-10-03-agent-role-inventory.md`; fix the pointer in
+  `docs/2026-09-16-runtime-capability-survey.md`.
+- Rules: rewrite `rules/authoring-skills.md` (a skill states a role and a
+  need, the route skill decides), `rules/claude-code.md` (keep "pin the model
+  on every fan-out launch", it is launch mechanics), `rules/workflow.md` line
+  13, and the `AGENTS.md` profile table (replace with a pointer to the route
+  skill; `~/.claude/CLAUDE.md` is a symlink to it, pinned by
+  `tests/test_memory_v8_runtimes.py:145-153`).
+- Tickets: close 0974 and 1056 as superseded by 1052; fold 1057 into 1065
+  (close with a pointer); re-point 1052's target from the "models.json
+  successor" to the `skills/route` grid and decide its `Blocked-by: 1047`
+  (author); keep 1061 deferred and fix its 0974 reference; 1048 close as
+  superseded or keep deferred as grid data (author); keep 1024, 1046, 1047,
+  1049, 1050, 1051, 1053, 1058. Re-run a body search for `model-level` in open
+  tickets first.
+- Leave the Claude Code mechanics memory notes alone (still valid); roar/dream
+  own memory.
+
+## Exit criteria
+- [ ] `grep -r "model-level\|MODEL_LEVELS" skills agents rules scripts tests AGENTS.md` finds nothing outside history
+- [ ] The no-model-names test passes from its new home
+- [ ] `make skills-catalog` and `make check-skills-drift` pass
+- [ ] The ticket line matches the list above
+- [ ] `make check` passes

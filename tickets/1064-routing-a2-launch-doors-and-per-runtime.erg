@@ -1,0 +1,40 @@
+%erg 0.1
+Title: Routing A2: launch doors and per-runtime route recommendations
+Created: 2026-10-08
+Author: claude
+Blocked-by: 1062
+Blocked-by: 1063
+
+--- log ---
+2026-10-08T15:36Z claude created
+2026-10-08T15:40Z claude note Child of tracker 1052 (wave A2).
+
+--- body ---
+## Context
+The route skill defines "doors" only as providers. Nothing says how a worker
+is reached in each runtime. Launch doors are two: a subagent inside the
+current CLI (Claude Code, Pi, Codex), and a headless CLI started from bash
+with a given model (`claude -p`, `pi --print`, `codex exec`, `vibe -p`).
+Recipes are scattered (`skills/hunt`, `skills/review-pr:151-186`,
+`docs/trace-ab-2026-06.md:105`, `skills/coaching/seat-runner.sh`).
+
+## Scope
+- `skills/route/routes.json`: launch doors by runtime (Claude Code, Pi,
+  Codex, Vibe): subagent form (what to pin) and headless command template
+  with a model flag; note the Vibe limit (file tools denied headless, ticket 1017).
+- Rewrite `skills/route/SKILL.md`: the orchestrator chooses from the grid
+  using general recommendations; replace the two-stage cluster-then-script
+  decision. Add one pointer line per runtime ("If you are Codex, read
+  `routes-recommendations-codex.md`") and the four recommendation files.
+- Model names may appear in the recommendation files and route data. Amend
+  `test_portable_skill_instructions_do_not_name_models` with an exemption for
+  `skills/route/` in this PR.
+- Amend the non-goals in `docs/portable-model-capability-policy.md:417-421`
+  (the harness now holds a grid; `grid.json` already contradicted them).
+
+## Exit criteria
+- [ ] Each launch-door template run once, evidence in the log
+- [ ] `model: haiku` resolves to Haiku 5.5 in a live session
+- [ ] Four per-runtime recommendation files and their pointer lines exist
+- [ ] The no-model-names test passes with the `skills/route/` exemption
+- [ ] `make check` passes

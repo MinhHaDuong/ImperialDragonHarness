@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Routing B1: retire model-level and effort outside review skills
+Created: 2026-10-08
+Author: claude
+Blocked-by: 1064
+
+--- log ---
+2026-10-08T15:36Z claude created
+2026-10-08T15:40Z claude note Child of tracker 1052 (wave B1).
+
+--- body ---
+## Context
+Skills declare `model-level` and `effort` as launch intentions. With the LLM
+choosing from the route grid (1064), these declarations go. Each PR edits the
+tests it breaks, so CI stays green between waves.
+
+## Scope
+- Replace the declarations with a task description plus a pointer to the
+  route skill in: `raid`, `healthcheck`, `molt`, `trace-doctor`, `hunt`,
+  `release`, `biblio-saturation`, `critical-lit-review`, `external-peer-review`
+  (and `external-peer-review/references/openrouter.md:34`).
+- Fix `raid/SKILL.md:276-277` and `gaze/SKILL.md:678-679`, which describe the
+  coder pin as `model-level: strong` (it is `model: strong`).
+- Same PR: edit `tests/test_model_rightsizing.py:31-35` (fan-out bodies must
+  declare `model-level`) and `tests/test_hunt_triage_prestep.py:106`.
+
+## Exit criteria
+- [ ] None of the listed skills mentions `model-level` or `effort:`
+- [ ] The two tests are edited in this PR and pass
+- [ ] `make skills-catalog` and `make check-skills-drift` pass
+- [ ] `make check` passes
