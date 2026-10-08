@@ -79,6 +79,7 @@ LABELS = {
     "j": "GLM 5.3 Flash\nAPI OpenRouter\nhigh",
     "k": "Mimo v2.6 Flash\nAPI OpenRouter\nmedium",
     "l": "GPT 6 Luna\nAPI OpenAI\nmedium",
+    "n": "Claude Haiku 5.5\nAPI Anthropic\nmedium",
 }
 AXES = {
     "quality": ("Qualité", 1, "points /30"),
