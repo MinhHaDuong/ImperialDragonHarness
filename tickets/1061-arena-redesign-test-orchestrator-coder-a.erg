@@ -1,0 +1,53 @@
+%erg 0.1
+Title: Arena redesign: test orchestrator, coder and reviewer models separately
+Created: 2026-10-08
+Author: reviewer
+Label: deferred
+
+--- log ---
+2026-10-08T08:16Z reviewer created
+2026-10-08T08:20Z reviewer label deferred
+2026-10-08T08:20Z reviewer note Deferred on the author's instruction (2026-10-08, during the tournament publication). No work until an explicit author decision to open the next cycle.
+
+--- body ---
+## Context
+The tournament (cycle 2, report beta 1) runs each configuration as one model
+doing orchestration, coding and review inside Pi. The report names this as a
+limit: IDH workflows can assign those three roles to different models, so a
+ranking of single-model configurations does not say which model to put in which
+seat. The reader of the report cannot act on "Luna is the best compromise" for the
+coder seat alone, or for the reviewer seat alone.
+
+The arena (`skills/arena`) therefore needs a redesign to test the three roles
+separately. Related, not blocking: 0974 (portable model-level policy, which
+assigns levels per role), 1047 (blog posts that state this limit), 1051 and 1050
+(candidate scouting and long-context rerun).
+
+## Design questions to settle first
+- Unit of measure. A role-split run is a triple (orchestrator, coder, reviewer),
+  so the arm count grows as the product of candidates per seat. Decide between
+  a full factorial on a few candidates, one-factor-at-a-time around a fixed
+  baseline, and a fractional design. Price each in USD and author-hours before
+  choosing; the tournament cost is the reference.
+- Scoring. Today three judges score the deliverable out of 30. A reviewer-seat
+  test needs a quality measure for the review itself (defects found, false
+  alarms, verdict agreement with a reference), not only the final deliverable.
+- Contamination. The judge panel must exclude families that sit in any of the
+  three seats under test, as the cycle-2 candidate list already requires for
+  executors.
+- Seed tickets. Same sampling as cycle 2 or a fresh draw; ten tickets gave
+  nominal 5 % comparisons only, so a role-split design needs more tickets or
+  paired comparisons to say anything per seat.
+- Fixed seats. Which seats stay fixed while one varies, and which model fills
+  them.
+- Decorrelation. Reviewer seats are meant to differ from the producer
+  (`rules/workflow.md` § Delegation); the design should measure whether that
+  matters.
+
+## Exit criteria
+- [ ] Written design: the measured quantity per seat, the factorial or
+      one-factor plan, the judge-exclusion rule, the ticket sample, and a
+      priced run budget
+- [ ] Author decision on the budget and the candidate list before any run
+- [ ] `skills/arena` updated, or a successor skill, to run role-split arms
+- [ ] `make check` passes
