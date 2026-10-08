@@ -3,12 +3,13 @@
 Read after `SKILL.md`. Defaults for an orchestrator running inside Pi.
 Launch forms are in `routes.json` under `launch_doors.pi`.
 
-## Status: unverified
+## Status: syntax known, providers vary by host
 
-On 2026-10-08 `pi auth check` reported `not_ready` for Anthropic, OpenAI and
-OpenRouter in the probing shell, so no Pi launch was run (ticket 1063). The
-statements below come from the help text only. Verify with one live call
-before relying on them.
+Run `pi --list-models` first: Pi only reaches the providers configured on
+the host. On padme (2026-10-08, ticket 1063) it lists huggingface and the
+local padme seats; `pi auth check` reports `not_ready` for Anthropic, OpenAI
+and OpenRouter. That is a configuration fact of that host, not a Pi fault.
+No Pi launch was run by the probe.
 
 ## What Pi can reach
 

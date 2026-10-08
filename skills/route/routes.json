@@ -83,8 +83,9 @@
       },
       "headless": {
         "template": "pi --no-session -p --model <provider>/<id>[:<thinking>] \"<prompt>\"",
-        "families": ["any provider whose credentials are loaded: Anthropic, OpenAI, Mistral, DeepSeek, OpenRouter-served"],
-        "status": "unverified: 'pi auth check' reported not_ready for anthropic, openai and openrouter in the 2026-10-08 shell, so no live call was made"
+        "families": ["any provider configured in the host's Pi"],
+        "note": "Configured providers differ per host. On padme (2026-10-08) pi --list-models shows only huggingface (76 models) and the local padme seats; anthropic, openai and openrouter report not_ready. Run 'pi --list-models' before routing to Pi.",
+        "status": "unverified live; syntax from pi --help and a user-run Pi session (--model <provider>/<id> --print)"
       }
     },
     "codex": {
