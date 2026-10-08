@@ -3,11 +3,13 @@ Title: Routing B2b: retire qualifiers from the five fork review skills
 Created: 2026-10-08
 Author: claude
 Blocked-by: 1065
+Closed: autoclosed — PR #1274
 
 --- log ---
 2026-10-08T15:36Z claude created
 2026-10-08T15:40Z claude note Child of tracker 1052 (wave B2b).
 2026-10-08T20:14Z reviewer Done in PR: model-level removed from the frontmatter and bodies of gaze, review-pr, review-pr-prose, verify-adherence, verify-gate; seats now choose a model per launch from the route skill with the stated reason; independence follows skills/route/references/decorrelation.md (scaled to risk). tests/test_model_rightsizing.py: fork-frontmatter test retired. make check: 1516 passed, 3 skipped.
+2026-10-08T20:16Z reviewer closed — autoclosed — PR #1274
 
 --- body ---
 ## Context
