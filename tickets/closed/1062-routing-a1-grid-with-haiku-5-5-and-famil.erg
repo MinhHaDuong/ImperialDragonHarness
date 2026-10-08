@@ -2,11 +2,13 @@
 Title: Routing A1: grid with Haiku 5.5 and family, remove SpaceBunny
 Created: 2026-10-08
 Author: claude
+Closed: autoclosed — PR #1263
 
 --- log ---
 2026-10-08T15:36Z claude created
 2026-10-08T15:40Z claude note Child of tracker 1052 (wave A1 of the LLM-chosen routing plan; the tracker lists all children).
 2026-10-08T15:43Z reviewer claude note Done: arm n added to the off-matrix set, FAMILY emitter and refresh_grid added (tests in tests/test_tournament_analysis.py), failures string now uses real counts (b3, a, j, k, c2 were mislabelled 0/30), Haiku row generated from the arena (final 10/10: quality median 22.5, 3.03 min, 0.0227 USD median per ticket; Luna 21.75, 3.84 min, 0.0278 USD). Correction to the plan: Haiku and Luna costs are both per ticket (median), so they ARE comparable; the 'units differ' caveat was wrong. SpaceBunny removed from routes.json, the grid comment and SKILL.md.
+2026-10-08T15:47Z reviewer closed — autoclosed — PR #1263
 
 --- body ---
 ## Context
