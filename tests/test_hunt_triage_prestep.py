@@ -103,8 +103,8 @@ def test_detach_launch_line_is_mechanical():
         "step 2b's launch line must pin worktree isolation, which is what makes "
         "the spawned agent pass step 3's ownership check"
     )
-    assert "model: strong" in step2b, (
-        "step 2b's launch line must name the coder pin (`model: strong`, agents/coder.md) — an "
+    assert "agents/coder.md" in step2b, (
+        "step 2b's launch line must name the coder profile (agents/coder.md; model chosen per launch via route) — an "
         "unpinned launch silently inherits the session model"
     )
     assert re.search(r"\bone\b", step2b, re.IGNORECASE), (

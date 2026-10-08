@@ -58,8 +58,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
      interactive session: hand the ticket to ONE background worktree-isolated
      agent. Not a raid — for a single ticket its orchestrator and review panels
      cost more than the ticket returns. Launch with `isolation: "worktree"` and
-     the coder pin (`model: strong`, per `agents/coder.md`; choose the concrete
-     worker per the `route` skill). The agent's FIRST action is mechanical:
+     the coder profile (`agents/coder.md`; choose the model per launch from the
+     `route` skill, there is no frontmatter pin). The agent's FIRST action is mechanical:
      ```
      Skill(skill: "hunt", args: "$ARGUMENTS")
      ```

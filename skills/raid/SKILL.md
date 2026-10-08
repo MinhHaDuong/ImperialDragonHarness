@@ -28,7 +28,7 @@ difficult judgments.
   concise.
 - **Planning, review, and orchestration:** mid-tier workers; promote difficult
   cross-ticket judgment to a stronger one when needed.
-- **Execute:** the coder profile (`agents/coder.md`, pinned `model: strong`) for
+- **Execute:** the coder profile (`agents/coder.md`, model chosen per launch from the `route` skill) for
   difficult repository mutations; use a cheaper worker for bounded tasks.
 - **Advisor:** the strongest available advisor, at standard effort
   (intensive only rarely: it multiplies cost for marginal judgment), as a
@@ -271,7 +271,7 @@ main tip before the next wave's branches fork.
 
 For each wave, launch agents with `isolation: "worktree"` — the **coder
 profile** (`agents/coder.md`, whose contract is `profiles/coder/PROFILE.md`;
-frontmatter pins `model: strong` per § Model policy — coding workers).
+the model is chosen per launch from the `route` skill, no frontmatter pin).
 
 The execute-agent contract's FIRST action is mechanical. The agent invokes the
 hunt skill with the ticket ID:
