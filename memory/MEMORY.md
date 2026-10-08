@@ -17,6 +17,7 @@ v8 repository memory. Pilot: [pilot.md](../docs/memory-v8/pilot.md). Provenance:
 
 ## Recent experiences
 
+- [LLM-chosen routing, wave A1](journal/2026/2026-10-08-llm-routing-plan-and-wave-a1.md).
 - [Haiku review](journal/2026/2026-10-08-haiku-review-delay.md).
 - [PR 1245 forced gaze](journal/2026/2026-10-07-pr1245-forced-gaze-stuck-ci-merge.md)
 - [Mistral 4 pi context](journal/2026/2026-10-07-mistral4-pi-context-correction.md)
