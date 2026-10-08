@@ -15,7 +15,24 @@ The arena judge panel is a lineage-decorrelated, same-angle panel: one
 rubric, three families, none of them a candidate's family. A multi-angle
 panel of one family is a thoroughness check, not an independent review.
 
-## The rule
+## Scale the review to the risk
+
+Most changes are small and cheap to verify. A straightforward review by a
+cheaper model of the same class, in the producer's own family, is the normal
+case and is enough. Independence is bought only where it pays.
+
+| Change | Review |
+|---|---|
+| Trivial or mechanical (typo, ticket bookkeeping, data refresh, a rename with a green test) | One same-family reviewer, at or below the producer's class. No cross-family seat. |
+| Ordinary (a feature or fix with tests, a doc rewrite) | The usual angles, same family is fine. Report the family; do not call it independent. |
+| High risk (rules and guards, merge and release gates, credentials, deletion or migration, anything hard to reverse, or the author asks) | At least one seat from another family. |
+
+The author or the orchestrator decides the row; when unsure, take the lighter
+one. A same-family review is never reported as independent, but it is not
+degraded either: `PANEL-INTEGRITY: DEGRADED` is for a seat that was required
+and could not run.
+
+## The rule for an independent review
 
 - A review counts as **independent** only when at least one seat comes from
   a different family than the producer. Take the producer's family from the
@@ -24,13 +41,12 @@ panel of one family is a thoroughness check, not an independent review.
   labelled in the grid and counts as the same family.
 - **Replication substitutes for lineage only when no other-family seat is
   reachable**, and the report then says "same family, not independent".
-- Capability is chosen from the grid for the work. There is no rule that a
-  reviewer sits below or above the producer; there is no "sibling minimum".
-  When risk is high, take the strongest other-family seat that is reachable.
-- When no other-family seat is reachable, say so in the report. Never
-  simulate one.
+- Capability is chosen from the grid for the work, and a cheaper model of the
+  same class is a legitimate reviewer. There is no "sibling minimum".
+- When an other-family seat was required (high risk) and none is reachable,
+  say so in the report. Never simulate one.
 
-## Default on a Claude-produced change
+## When a cross-family seat is required
 
 1. Every `Agent` child in Claude Code is Anthropic, so the extra seat is a
    headless CLI started from bash, from `launch_doors` in `routes.json`
