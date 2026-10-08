@@ -5,7 +5,7 @@ inline fork roles with thin runtime shells whose body is a pointer to a
 harness-side contract at ``profiles/<name>/PROFILE.md``. No machinery
 validates the pointer; these doc-pin tests are the enforcement surface the
 design names: every roster shell exists with the census-checked card, points
-at its contract, declares a model from the short enum, and every contract
+at its contract, carries no model token, and every contract
 exists and lists its baseline rules. They fail while the roster is absent —
 the wave 1 red step.
 
@@ -27,31 +27,17 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
 
 import resident_census as rc  # noqa: E402
-from model_policy import MODEL_LEVELS  # noqa: E402
 
-# name -> (description, model) exactly as the inventory roster registers them.
+# name -> description exactly as the inventory roster registers them.
 # The census arithmetic (323 chars, 761/800) depends on these strings.
+# No model: a frontmatter token reaches the API unmapped (HTTP 404, ticket
+# 1063); the per-launch model is the only lever (rules/claude-code.md).
 ROSTER = {
-    "coder": (
-        "Executes a ticket contract in a worktree; branch, PR, evidence.",
-        "strong",
-    ),
-    "code-reviewer": (
-        "Code-review seat; perspective arrives in the prompt.",
-        "standard",
-    ),
-    "prose-reviewer": (
-        "Prose-panel seat; role and rulebook arrive in the prompt.",
-        "standard",
-    ),
-    "gate-seat": (
-        "Read-only verify-gate seat; verdict only.",
-        "standard",
-    ),
-    "adherence-seat": (
-        "Read-only verify-adherence seat; verdict artifact only.",
-        "standard",
-    ),
+    "coder": "Executes a ticket contract in a worktree; branch, PR, evidence.",
+    "code-reviewer": "Code-review seat; perspective arrives in the prompt.",
+    "prose-reviewer": "Prose-panel seat; role and rulebook arrive in the prompt.",
+    "gate-seat": "Read-only verify-gate seat; verdict only.",
+    "adherence-seat": "Read-only verify-adherence seat; verdict artifact only.",
 }
 
 AGENTS_CHANNEL_BUDGET = 800  # tests/test_resident_census.py owns the budget
@@ -70,7 +56,7 @@ def _frontmatter(path: Path) -> dict[str, str]:
 
 
 def test_every_roster_shell_exists_with_the_census_card():
-    for name, (description, _model) in ROSTER.items():
+    for name, description in ROSTER.items():
         path = REPO / "agents" / f"{name}.md"
         assert path.is_file(), f"agents/{name}.md is absent — roster not landed"
         fm = _frontmatter(path)
@@ -81,16 +67,13 @@ def test_every_roster_shell_exists_with_the_census_card():
         )
 
 
-def test_every_roster_shell_declares_a_model_from_the_short_enum():
-    for name, (_description, model) in ROSTER.items():
+def test_no_roster_shell_carries_a_model_token():
+    """An unpinned launch sends a frontmatter model token to the API as-is
+    (HTTP 404, ticket 1063); the model is chosen per launch, never here."""
+    for name in ROSTER:
         path = REPO / "agents" / f"{name}.md"
-        fm = _frontmatter(path)
-        declared = fm.get("model")
-        assert declared in MODEL_LEVELS, (
-            f"{path}: model '{declared}' outside the short enum {MODEL_LEVELS}"
-        )
-        assert declared == model, (
-            f"{path}: model is '{declared}', roster pins '{model}'"
+        assert "model" not in _frontmatter(path), (
+            f"{path}: frontmatter must not carry a model token"
         )
 
 
@@ -178,7 +161,7 @@ def test_agents_channel_stays_within_budget():
         f"agents channel is {total} chars (> {AGENTS_CHANNEL_BUDGET}) — trim a "
         "description or argue a budget raise in a ticket, never by edit"
     )
-    for name, (description, _model) in ROSTER.items():
+    for name, description in ROSTER.items():
         entry = next(
             (e for e in entries if e.path == f"agents/{name}.md"), None
         )

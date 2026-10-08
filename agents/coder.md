@@ -1,7 +1,6 @@
 ---
 name: coder
 description: Executes a ticket contract in a worktree; branch, PR, evidence.
-model: strong
 tools: Read, Grep, Glob, Bash, Write, Edit
 ---
 

@@ -1,7 +1,6 @@
 ---
 name: prose-reviewer
 description: Prose-panel seat; role and rulebook arrive in the prompt.
-model: standard
 tools: Read, Grep, Glob, Bash, Write
 ---
 

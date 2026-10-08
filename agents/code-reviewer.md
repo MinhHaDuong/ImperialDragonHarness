@@ -1,7 +1,6 @@
 ---
 name: code-reviewer
 description: Code-review seat; perspective arrives in the prompt.
-model: standard
 tools: Read, Grep, Glob, Bash, Write
 ---
 

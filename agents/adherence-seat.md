@@ -1,7 +1,6 @@
 ---
 name: adherence-seat
 description: Read-only verify-adherence seat; verdict artifact only.
-model: standard
 tools: Read, Grep, Glob, Bash, Write
 ---
 
