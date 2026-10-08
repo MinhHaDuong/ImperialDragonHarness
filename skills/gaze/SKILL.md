@@ -5,7 +5,6 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pr-number>"
 context: fork
-model-level: standard
 # Background by intent: /gaze is long-running, and a raid wave gates several PRs
 # at once — backgrounding the orchestrator is what lets those run concurrently.
 # This matches the Claude Code 2.1.218 default; pinned explicitly so a future
@@ -381,11 +380,12 @@ before it proceeds. Do **not** launch them as background agents: a fork's
 turn ends the moment it stops calling tools, and a background completion
 re-invokes the MAIN loop, not the fork, so a background fan-out returns at
 launch and orphans its reviewers (ticket 0250; see **Fork execution
-contract**). Once all return, collect their structured outputs. Pin every
-read-only reviewer to
-**`model-level: standard`** — reviewers stay below the coder tier (`rules/workflow.md`
-§ Delegation), and an unpinned Agent inherits the session
+contract**). Once all return, collect their structured outputs. Choose the
+model of every read-only reviewer per launch from the `route` skill and state the
+choice and why; an unpinned Agent inherits the session
 model, so on a top-tier session this fan-out is silently a top-model wave.
+Independence follows `skills/route/references/decorrelation.md`: scale to the risk; a high-risk PR needs one
+cross-family detached seat, else `no report` and `PANEL-INTEGRITY: DEGRADED`.
 
 **Agent A — adherence** (`/verify-adherence <branch> worktree=<absolute-review-worktree>`).
 **Label-skip:** if the PR carries the
@@ -556,7 +556,7 @@ perform one of these routes. Record `simplify route: native|portable`.
 
 - **Native command available:** run `/simplify <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`.
 - **Native command absent:** launch an independent reviewer through the active
-  runtime (`model-level: standard`, `effort: standard`), using the phase artifact
+  runtime (model chosen per launch from the `route` skill), using the phase artifact
   and bounded-wait contract above. Give it the explicit PR number, review tree,
   base ref, anchor HEAD and changed-file roster. It runs the review-anchor check
   before and after examining `git -C <review-tree> diff origin/<base>...HEAD`
@@ -595,8 +595,7 @@ The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
 (ticket 0216) — same rationale as phases 2–4. The launch is **the gate-seat
 profile** (`agents/gate-seat.md`), whose contract is
 `profiles/gate-seat/PROFILE.md` — spawn one seat (waited for by polling its
-written verdict artifact), **`model-level: standard`** (a reviewer, below the
-coder tier), never `isolation: "worktree"`, operating on the review worktree
+written verdict artifact), with its model chosen per launch from the `route` skill, never `isolation: "worktree"`, operating on the review worktree
 `$primary_root/.claude/worktrees/review-<pr-number>` (the equivalent fork call is
 `/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`);
 the PR number, this run's `gate_session_id`, and the review worktree path ride

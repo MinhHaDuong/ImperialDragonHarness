@@ -5,7 +5,6 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "<branch> [worktree=<path>] [trace=<path>]"
 context: fork
-model-level: standard
 # Foreground: /gaze runs this as phase 2 (Agent A) and blocks on its structured
 # output. Claude Code 2.1.218 made `context: fork` skills background by default;
 # a fork cannot wait on a background completion, so the default would orphan
@@ -197,8 +196,8 @@ in practice.
 ### 3. Semantic subagent (fallback only)
 
 Only runs if any `.claude/rules/*.md` file changed OR if the diff touches architectural
-concerns not covered by phases 1–2. Spin **one** subagent, pinned to
-**`model-level: standard`** (a reviewer, below the coder tier — rules/workflow.md; left
+concerns not covered by phases 1–2. Spin **one** subagent, with its
+model chosen per launch from the `route` skill (state the choice and why; left
 unpinned it inherits the session model and runs at top tier), with:
 
 - The diff.
