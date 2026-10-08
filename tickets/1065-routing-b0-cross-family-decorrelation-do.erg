@@ -7,6 +7,7 @@ Author: claude
 2026-10-08T15:36Z claude created
 2026-10-08T15:40Z claude note Child of tracker 1052 (wave B0). Absorbs ticket 1057 (decorrelation axes).
 2026-10-08T18:02Z reviewer note blocker 1064 closed — Blocked-by removed.
+2026-10-08T19:24Z reviewer B0 content merged via PR (doctrine in skills/route/references/decorrelation.md; contradictions in rules/workflow.md, rules/claude-code.md, profiles/coder fixed; floor test tests/test_launch_model_choice.py, per skill not per launch line). Open exit criterion: a live gaze run on a Claude-produced PR showing a non-Claude seat or no report with DEGRADED has not been done; ticket stays open until it is.
 
 --- body ---
 ## Context

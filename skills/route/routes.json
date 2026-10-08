@@ -84,7 +84,7 @@
       "headless": {
         "template": "pi --no-session -p --model <provider>/<id>[:<thinking>] \"<prompt>\"",
         "families": ["any provider configured in the host's Pi"],
-        "note": "Configured providers differ per host. On padme (2026-10-08) pi --list-models shows only huggingface (76 models) and the local padme seats; anthropic, openai and openrouter report not_ready. Run 'pi --list-models' before routing to Pi.",
+        "note": "Author 2026-10-08: Anthropic API credits for Max-plan owners are coming, so Pi can call Anthropic once the Claude weekly limit is exhausted. Wrapper ~/.local/bin/pi-haiku (host-local, not in the repo) runs Pi on anthropic/claude-haiku-5-5 only and refuses --model/--provider/--models/--api-key overrides, so no costlier model is reachable through it; the key is read from ~/.config/keys/anthropic.env into that process only. Tested 2026-10-08: overrides refused, key authenticates, call returns HTTP 400 credit balance too low (no credits yet). Do not route to it until a call succeeds. Configured providers differ per host. On padme (2026-10-08) pi --list-models shows only huggingface (76 models) and the local padme seats; anthropic, openai and openrouter report not_ready. Run 'pi --list-models' before routing to Pi.",
         "status": "unverified live; syntax from pi --help and a user-run Pi session (--model <provider>/<id> --print)"
       }
     },

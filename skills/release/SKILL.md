@@ -145,3 +145,9 @@ updated, and whether the tag verified.
 - No forge-CLI commands in this prose.
 - The Imperial Dragon is not a bird — no avian analogies. Scale, power,
   taxonomy.
+
+## Worker models
+
+Choose the model of each launched worker per launch, from the `route` skill grid
+(`skills/route/SKILL.md`); never rely on the session model by default. Seats that
+must be independent follow `skills/route/references/decorrelation.md`.

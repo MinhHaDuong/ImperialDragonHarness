@@ -100,7 +100,8 @@ General recommendations:
 - Choose the lineage on purpose. A reviewer that shares the producer's
   `family` adds replication, not independence. When the risk calls for an
   independent view, take a worker of another family, and say in the report
-  when none was reachable.
+  when none was reachable. The doctrine (three axes, the rule, the default on
+  a Claude-produced change) is `references/decorrelation.md`.
 - Never route to a (model, effort) pair that is not in the grid.
 
 Launch doors. A worker is reached in one of two ways: a subagent inside the

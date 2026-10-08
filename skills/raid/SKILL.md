@@ -527,3 +527,9 @@ Bump reason: `redirect ban triggered`.
 
 **Escalation**: If the same fix fails twice, stop and leave a
 ticket comment with the two failed approaches.
+
+## Worker models
+
+Choose the model of each launched worker per launch, from the `route` skill grid
+(`skills/route/SKILL.md`); never rely on the session model by default. Seats that
+must be independent follow `skills/route/references/decorrelation.md`.

@@ -37,9 +37,12 @@ conversation's language, then answer:
   with the short enum token (`sonnet|opus|haiku|fable`); a full `claude-*` id is
   valid only in frontmatter. A `context: fork` skill is the exception for its
   own fork: frontmatter `model:` pins it; unpinned it
-  inherits the caller's tier, so pin every forked skill. Reviewers below the
-  coder tier, mechanical lookups at `haiku`, coders at the top tier. Enforced
-  by `tests/test_model_rightsizing.py`.
+  inherits the caller's tier, so pin every forked skill. Choose each worker from the route skill's grid
+  (`skills/route/SKILL.md`): mechanical lookups at `haiku` while they stay
+  under 100K prompt tokens, coders at the top tier. A skill that launches
+  workers must say so; `tests/test_launch_model_choice.py` checks that.
+  Reviewer independence is a family question, not a tier question
+  (`skills/route/references/decorrelation.md`).
 - **Effort is set per agent *definition*, not per `Agent` call**: `effort:` in
   a subagent's frontmatter pins it; `Workflow`'s `agent()` takes `opts.effort`,
   the only per-call lever. Unreliable on models with a pinned default effort.
