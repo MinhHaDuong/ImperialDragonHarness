@@ -107,6 +107,6 @@ context is a split-the-work ticket, never a bigger-window ticket.
 Cache of the doors: provider, endpoint, key name (names only — never values),
 status (live / dead / capped), price notes, caps, last_verified. Update it
 whenever a route changes state — the 2026-10-06 session showed why: a free
-endpoint can die overnight (SpaceBunny 404) and a billing wall can drop
+endpoint can die overnight (a stealth OpenRouter model returned 404) and a billing wall can drop
 mid-pass (OpenAI "no credits remaining"). Routing on a stale route cache
 burns attempts and money.

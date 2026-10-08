@@ -39,6 +39,34 @@ def test_unfinished_panel_is_pending_and_zero_cost_is_valid(tmp_path):
     assert row['quality'] == 29 and row['cost_usd'] == 0
 
 
+def test_arm_run_outside_the_matrix_is_included(tmp_path):
+    # Arm n (Haiku 5.5) was launched after the matrix was frozen: no matrix row names it.
+    (tmp_path / 'runs.json').write_text(json.dumps({'matrix': [{'ticket': '0001', 'arm_order': ['a']}]}))
+    for arm in ['a', 'n']:
+        folder = tmp_path / 'runs' / f'0001-{arm}'
+        folder.mkdir(parents=True)
+        record(folder, 'DNF')
+    assert set(analysis.analyze(tmp_path)['arms']) == {'a', 'n'}
+
+
+def test_grid_refresh_labels_family_and_counts_real_failures():
+    result = {
+        'quality_median': 12.0, 'seconds_median': 120.0, 'cost_usd_median': 0.5,
+        'final': True, 'expected': 10, 'failures': 1,
+    }
+    grid = {'grid': [{'arm': 'n', 'model': 'claude-haiku-5-5'}]}
+    analysis.refresh_grid(grid, {'arms': {'n': result}})
+    row = grid['grid'][0]
+    assert row['family'] == 'Anthropic'
+    assert row['quality'] == '12.00 (final, failures=1/10)'
+    assert row['time'] == '2.00 min' and row['cost'] == '0.5000 USD'
+
+
+def test_every_grid_arm_has_a_family():
+    grid = json.loads((Path(__file__).parents[1] / 'skills/route/grid.json').read_text())
+    assert {row['arm'] for row in grid['grid']} <= set(analysis.FAMILY)
+
+
 def test_paired_timeout_remains_in_sample(tmp_path):
     (tmp_path / 'runs.json').write_text(json.dumps({'matrix': [{'ticket': '0001', 'arm_order': ['a', 'l', 'h']}]}))
     for arm in ['a', 'l']:
