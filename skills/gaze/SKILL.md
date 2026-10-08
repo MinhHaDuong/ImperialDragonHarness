@@ -675,8 +675,8 @@ breaker.
   the skill. The caller merges.
 - **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"` —
   the **coder profile** (`agents/coder.md`, whose contract is
-  `profiles/coder/PROFILE.md`; frontmatter sets `model-level: strong`, coding
-  worker class; `effort: standard`, resolved through the active runtime) —
+  `profiles/coder/PROFILE.md`; frontmatter pins `model: strong`, coding
+  worker class) —
   waited for by polling
   the artifact it writes on completion (so this fork survives until it pushes — see
   **Fork execution contract**), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by

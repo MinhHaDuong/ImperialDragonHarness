@@ -31,7 +31,7 @@ The bundled script is `"$IDH_ROOT/skills/external-peer-review/peer_review.py"`.
    and stops; never echo the value.
 
 3. **Resolve advisor roles and personas.** Request two independent smartest
-   advisor models (`model-level: frontier`, `effort: intensive`) from runtime
+   advisor models (deep judgment; pick per the `route` skill) from runtime
    configuration, preferably from different providers. Pass their resolved IDs
    explicitly with `--models`; do not rely on the helper's concrete defaults.
    If no mapping is available, ask for runtime configuration. Default personas

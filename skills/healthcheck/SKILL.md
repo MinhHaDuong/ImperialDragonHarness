@@ -1,13 +1,12 @@
 ---
 name: healthcheck
-model-level: standard
 description: "Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent."
 disable-model-invocation: false
 user-invocable: true
 argument-hint:
 ---
 
-Requested effort: `effort: economy`.
+Bounded, mostly mechanical audit work; choose the worker per the `route` skill (`skills/route/SKILL.md`).
 
 # Repo healthcheck
 

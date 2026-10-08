@@ -4,10 +4,9 @@ description: "Work through multiple tickets autonomously: pick targets, implemen
 disable-model-invocation: false
 user-invocable: true
 argument-hint: '[ticket-ids or "all open"]'
-model-level: standard
 ---
 
-Requested effort: `effort: standard`.
+Orchestration with ordinary judgment; choose workers per the `route` skill (`skills/route/SKILL.md`).
 
 # Raid $ARGUMENTS — Imperial Dragon hunt
 
@@ -19,31 +18,30 @@ and enforcing invariants.
 
 ## Model policy (rightsizing)
 
-Declare a role, `model-level`, and semantic `effort` for every launch.
-Let the active runtime choose agents and concrete models on the fly from these
-intentions and its available capabilities. Skill frontmatter does not configure
-spawned children. Favor cheaper workers for broad fan-out and reserve the smartest
-advisor class for difficult judgments; no fixed runtime profile is required.
+Name a role for every launch and choose the worker for it with the `route`
+skill (`skills/route/SKILL.md`), which owns the grid, the route cache and the
+launch-choice rule. Skill frontmatter does not configure spawned children.
+Favor cheap workers for broad fan-out and reserve the strongest advisor for
+difficult judgments.
 
-- **Workers and mechanical helpers:** cheaper worker class,
-  `model-level: cheap`, `effort: economy`. Keep mechanical verdicts concise.
-- **Planning, review, and orchestration:** competent worker class,
-  `model-level: standard`, `effort: standard`. Promote difficult cross-ticket
-  judgment to `model-level: strong` when needed.
-- **Execute:** coding worker class, `model-level: strong`, `effort: standard`
-  for difficult repository mutations; use a cheaper class for bounded tasks.
-- **Advisor:** smartest available advisor class, `model-level: frontier`,
-  `effort: standard` (`intensive` only rarely: it multiplies cost for marginal
-  judgment), as a one-shot call with a self-contained brief on a
+- **Workers and mechanical helpers:** cheap workers; keep mechanical verdicts
+  concise.
+- **Planning, review, and orchestration:** mid-tier workers; promote difficult
+  cross-ticket judgment to a stronger one when needed.
+- **Execute:** the coder profile (`agents/coder.md`, pinned `model: strong`) for
+  difficult repository mutations; use a cheaper worker for bounded tasks.
+- **Advisor:** the strongest available advisor, at standard effort
+  (intensive only rarely: it multiplies cost for marginal judgment), as a
+  one-shot call with a self-contained brief on a
   deep, well-defined problem: a ticket that can be neither done nor split, a
   review of a scientific argument and its methods, or a design review of a
   critical feature. Never a standing setting of the orchestrator or a fan-out
   member.
 - **Per-ticket `/gaze`:** respect that skill's declared reviewer intentions.
 
-Choose the least expensive class adequate for the responsibility. Raise the
-capability class before requesting intensive effort. Model identities and
-provider-specific effort controls belong to runtime configuration.
+Choose the least expensive worker adequate for the responsibility. Model
+identities and provider-specific effort controls belong to the `route` skill
+and runtime configuration.
 
 ## Balance rule
 
@@ -111,7 +109,7 @@ Apply the monster-ticket checklist (`rules/workflow.md` § Autonomous action) to
 ## Phase 2: Imagine (parallel)
 
 For each ticket, launch an agent (background, no isolation needed — read-only;
-`model-level: standard` per § Model policy):
+mid-tier worker per § Model policy):
 - Read ticket + STATE.md + surrounding code
 - Reimagine: why now, why this scope, what's the simplest path
 - **Antipattern scan (scope).** YAGNI (search the package registry —
@@ -123,7 +121,7 @@ Wait for all.
 ### Blind-Spot pass (cross-ticket)
 
 Before committing the reimagined tickets, launch **one** additional read-only
-agent (`model-level: standard` per § Model policy) over the original tickets **and all
+agent (mid-tier worker per § Model policy) over the original tickets **and all
 Imagine outputs together**. Its job is not to review implementation quality or
 repeat the per-ticket critique. It challenges the *search space the Imagine
 team considered*: what important thing did the whole team fail to look for?
@@ -174,7 +172,7 @@ agent proposed to change and why.
 
 ## Phase 3: Plan (parallel)
 
-For each reimagined ticket, launch an agent (background; `model-level: standard` per
+For each reimagined ticket, launch an agent (background; mid-tier worker per
 § Model policy):
 - Read ticket + actual source code
 - Write Actions, first test, dependencies
@@ -189,8 +187,8 @@ the execute agent prompt and the agent creates the file as its first step.
 
 ## Phase 4: Verify feasibility
 
-Launch agents by cluster to cross-check plans (`model-level: cheap` for the mechanical
-existence checks — paths/lines/signatures; `model-level: standard` for the cross-ticket
+Launch agents by cluster to cross-check plans (a cheap worker for the mechanical
+existence checks — paths/lines/signatures; a mid-tier worker for the cross-ticket
 conflict and cross-cutting-registry scan, which is judgement across N plans, not
 lookup — missing it cost a resurrection agent for 3 of 4 merges, see § Phase 5.0
 below):
@@ -273,8 +271,7 @@ main tip before the next wave's branches fork.
 
 For each wave, launch agents with `isolation: "worktree"` — the **coder
 profile** (`agents/coder.md`, whose contract is `profiles/coder/PROFILE.md`;
-frontmatter sets `model-level: strong` per § Model policy — coding workers;
-`effort: standard`, resolved through the active runtime).
+frontmatter pins `model: strong` per § Model policy — coding workers).
 
 The execute-agent contract's FIRST action is mechanical. The agent invokes the
 hunt skill with the ticket ID:
@@ -320,7 +317,7 @@ bump/fix runs in the PR's worktree so its commits land on the PR branch,
 never on main mid-wave. Phase 7 merges stay strictly sequential.
 
 **Per-wave:** after all per-ticket `/gaze` runs complete, launch one integration-review
-subagent (read-only; `model-level: standard` per § Model policy) to check:
+subagent (read-only; mid-tier worker per § Model policy) to check:
 - Do the merged/merge-pending PRs compose without contradiction?
 - Does `make check` still pass if we imagine them all merged?
 - Are there testing gaps visible only at wave granularity (e.g., two PRs touching the

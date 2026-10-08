@@ -1,12 +1,11 @@
 ---
 name: molt
-model-level: standard
 description: "Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps."
 user-invocable: true
 argument-hint:
 ---
 
-Requested effort: `effort: economy`.
+Bounded, mostly mechanical housekeeping; choose the worker per the `route` skill (`skills/route/SKILL.md`).
 
 # Molt — repo housekeeping
 
