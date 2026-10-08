@@ -28,4 +28,4 @@ Les six séries locales sont Qwen 3.8 27B Q4_K_M (a), Flash-Next Coder IQ1_M pru
 
 Pi 1.0.4 était rapporté dans le relevé de session Mistral du 6 octobre ; sa version n’est pas enregistrée systématiquement par tentative. Certains runs récents enregistrent le build Strata : version 0.1.38, source `d844541998f4d168` (exemple : 0333-b2). Ces informations ne prouvent pas que tous les runs utilisaient ce build. Le commit llama.cpp n’est pas enregistré dans les manifests consultés.
 
-Les efforts figurent dans le PDF. Pour Mistral, « off » désigne le réglage Pi : cela ne prouve pas l’absence de raisonnement interne côté API. Les séries Idéal et beta utilisent le même modèle et des périmètres comptables différents ; toutes deux incluent le succès OpenRouter du ticket 0874.
+Les efforts figurent dans le PDF. Pour Mistral, « off » désigne le réglage Pi : cela ne prouve pas l’absence de raisonnement interne côté API. Les séries « dernier succès » et « toutes tentatives » utilisent le même modèle et des périmètres comptables différents ; toutes deux incluent le succès OpenRouter du ticket 0874.

@@ -10,7 +10,7 @@ Luna 6 medium ressort comme le meilleur compromis observé : sa qualité et sa v
 
 En local, Qwen 3.8 Flash-Next IQ3_S avec Strata, à effort xhigh, obtient la meilleure note moyenne : 26,2/30. Mais il faut attendre en moyenne 46 minutes par ticket sur ma workstation, et les tâches partagent les GPU. C’est une option pour le travail asynchrone, moins commode en interactif. Son avance dépend aussi de l’échantillon : retirer un ticket suffit à rejoindre la moyenne de Mistral.
 
-Mistral Large 4 est prometteur en qualité. Les incidents d’hébergement et les difficultés d’intégration ont toutefois imposé des reprises, parfois longues et coûteuses. Deux séries distinguent les dix réussites retenues et une comptabilité élargie des tentatives. Cette dernière ne couvre pas tous les essais OpenRouter ; le périmètre est explicité dans le rapport.
+Mistral Large 4 est prometteur en qualité. Les incidents d’hébergement et les difficultés d’intégration ont toutefois imposé des reprises, parfois longues et coûteuses. Deux séries distinguent le dernier succès de chaque ticket et l’ensemble des tentatives directes. Cette dernière ne couvre pas tous les essais OpenRouter ; le périmètre est explicité dans le rapport.
 
 Ce sont dix tickets de mes projets, avec des configurations choisies selon mes usages. Les efforts diffèrent, les coûts locaux ne comprennent que l’électricité et les reprises ne suivent pas un protocole uniforme. Les graphes de significativité donnent des comparaisons nominales à 5 % ; ils ne garantissent pas un classement global. Le test confie aussi orchestration, codage et revue à un seul modèle, alors que mes workflows peuvent répartir ces rôles.
 
