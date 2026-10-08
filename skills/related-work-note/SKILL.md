@@ -37,6 +37,10 @@ prepared answer.
 - **Non-English titles** must include a bracketed English
   translation: `{Titre original [English translation]}`.
 
+Optional HAL metadata discovery: see [HAL Discovery MCP](../../docs/hal-discovery-mcp.md).
+Activate only for this task when supported; direct HAL API remains a fallback.
+This pointer does not register or load MCP tools.
+
 ## Toolchain
 
 **biblatex** (not BibTeX) compiled with **biber**. Local `.bib` is
