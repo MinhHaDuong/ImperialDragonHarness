@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Routing C: measure LLM-chosen routing by USD per PR and cross-family rate
+Created: 2026-10-08
+Author: claude
+Closed: Measured: USD per PR and cross-family rate reported (derived); verdict insufficient evidence to downgrade; adherence check met only as a rule-text control
+
+--- log ---
+2026-10-08T15:36Z claude created
+2026-10-08T15:40Z claude note Child of tracker 1052 (wave C).
+2026-10-08T20:32Z reviewer note blocker 1069 closed — Blocked-by removed.
+2026-10-08T20:42Z reviewer Measured 2026-10-08 (sub-agent, advisor Astra chose pilot-then-10): 10 items = 9 frozen-board PRs + non-board adherence control PR 212 (commit e6907845), 3 arms on identical prompts built from the seat-runner contract plus each base...head diff (the coaching seat-runner is aider-in-podman and cannot launch Agent-child or Codex seats): Sonnet and Haiku as Agent children, Luna via codex exec -m gpt-6-luna (header read). 30/30 runs completed, 0 failures. Board defects caught: 0/4 per arm (strict basename:line match; near misses count as misses). Findings: Sonnet 29, Haiku 35, Luna 7; unconfirmed by board 19, 24, 4 (not proven false). Spend is DERIVED, not metered, from child token counts (Sonnet 502K, Haiku 576K, Luna 84.6K incl ~30K overhead per Agent child) times assumed prices (Sonnet 3 USD/M input is an assumption, Haiku 0.10-0.50/M from routes.json, Luna 0.0278 per ticket from the grid): total <= 2.1 USD, about 0.22 USD per item for the three-arm panel (Sonnet <= 0.15, Haiku <= 0.03, Luna about 0.03 per item). Cross-family selection by a Sonnet-child orchestrator that read the route skill and the decorrelation doctrine: 6/10 chose Luna (credential, guard and gate PRs), 4 stayed same-family; n=10 and the PR titles were shown, so the rate may not carry over. Adherence: the known violation (weak predicate forbidden by ticket 0310) in PR 212 fired in all three arms, but this was a rule-text semantic check by the seats, NOT the verify-adherence skill itself run under LLM-chosen routing, and no board PR holds the known violation, so exit criterion 2 is met only in that weaker form. Verdict: insufficient evidence to downgrade review or gate seats (no arm caught any recorded board defect, so the board cannot rank the arms); gate seats stay standard-class. Provisional only: Haiku and Luna seats cost roughly 5 times less than Sonnet per ordinary review, which supports trying one cheap same-family seat on trivial changes, as the doctrine already says. Closing with those two limits stated.
+2026-10-08T20:42Z reviewer closed — Measured: USD per PR and cross-family rate reported (derived); verdict insufficient evidence to downgrade; adherence check met only as a rule-text control
+
+--- body ---
+## Context
+With the chooser gone, nobody has measured what LLM-chosen routing costs or
+whether cross-family seats are actually selected. Quality deltas against the
+old pins may be meaningless if the pins were inert (see 1063).
+
+## Scope
+Replay about 10 merged PRs with the `coaching` skill. Metrics: USD per PR and
+the rate at which a cross-family seat is selected when one is reachable.
+Estimated cost: a few USD and about 1 author-hour reading the diagnostics.
+Drop the "vs old pins" comparison if 1063 shows the pins were inert. Judgment
+seats (gaze, verify-gate) stay on standard-class recommendations until this
+shows a cheaper model matches.
+
+## Exit criteria
+- [ ] USD per PR and cross-family rate reported, with the arithmetic shown
+- [ ] `verify-adherence` still catches a known violation on an old PR under LLM-chosen routing
+- [ ] Verdict recorded on whether review and gate seats may move to a cheaper model

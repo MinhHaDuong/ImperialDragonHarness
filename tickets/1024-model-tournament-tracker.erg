@@ -2,7 +2,6 @@
 Title: Model tournament: six arms on the same harness work (tracker)
 Created: 2026-10-03
 Author: MinhHaDuong
-Blocked-by: 1052
 
 --- log ---
 2026-10-03T12:56Z MinhHaDuong created
@@ -97,6 +96,7 @@ Blocked-by: 1052
 2026-10-06T09:44Z reviewer note Author-approved chantier sequence: verify and close this tournament tracker after live routing1052; report1046 and blog posts1047 precede routing. Do not place this tracker as a blocker of those children; original exit criteria remain unchanged.
 2026-10-06T09:55Z MinhHaDuong note CYCLE 2 FULLY CLOSED: 0333-b2 re-run (author-justified) landed OK in 2820.5s (47 min, 0.108 EUR elec) and scored 30/30 UNANIMOUS (gemini 10, grok 10, minimax 10, all three with inspections) on the consistency-heavy killer ticket. The minimax seat needed a manual re-run after the first call died with a tool timeout (the judge never answered; relaunched in background, answered cleanly). FINAL CYCLE-2 NUMBERS: 142/160 legs OK, all judged 3/3 (426 seats); b2 FlashNext IQ3_S finishes at 26.5 median on FULL 10/10 coverage — the best fully-covered arm of the tournament (only GLM 5.3 Flash's 27.0 median is higher, survivor-biased at 5/10 with VOID-EMPTYs on heavy tickets). Grid cell updated on main via PR #1236 (surgical one-line diff). FOLLOW-UP TICKETS (author, deferred): 1056 task-level routing test (the arena bundled orchestrator+coder+reviewer; the harness can route per task on the capability/effort scale — the mix question the tournament cannot answer), 1057 decorrelation axes disentangled in the gaze review (ANGLE vs LINEAGE conflated; third axis = pure replication with temperature-induced inter-run variation; the arena panel is explicitly a lineage-decorrelated SAME-ANGLE panel), 1058 judge-panel leave-one-out sensitivity (does removing one seat flip any conclusion; which seat is load-bearing; panel cost drops by a third if one is dispensable).
 2026-10-06T18:50Z reviewer SCOUTING SMOKE — Mistral Large 4 (author: 'Mistral 4 vient de sortir ! Tu l'as ?'): the preview API answered live on the direct mistral door (key works; pi 1.0.4's catalog predates the release). First data point, smoke ticket 0470: OK in 918.1s (15.3 min — ran the full test suite), $0.1549 (35 calls, 25K output, peak ctx 53K), judged 27/30 (gemini 7 — REROLL deduction for a WRONG IMPOSSIBILITY CLAIM, verifying token scope via public repos instead of the exit criteria; grok 10, minimax 10). IDENTITY: @off — pi resolves unknown mistral-catalog models with thinking off (harness fact recorded). Two infra casualties of the path, archived to runs-void: the custom mistral-ml4 provider sent the OpenAI 'store' param (422 from api.mistral.ai — the generic openai-completions client), fixed by using the NATIVE mistral provider which accepts unknown model ids. Cycle-3 question now concrete: ML4 @off (observed default) + @medium if the API exposes thinking control; at preview rates (0.68/2.09, -50%, expiry unannounced) the $5 cap gives ~10-15 legs.
+2026-10-08T20:42Z reviewer note blocker 1052 closed — Blocked-by removed.
 
 --- body ---
 ## Context
