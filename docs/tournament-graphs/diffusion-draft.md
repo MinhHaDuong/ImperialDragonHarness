@@ -12,7 +12,7 @@ En local, Qwen 3.8 Flash-Next IQ3_S avec Strata, à effort xhigh, obtient la mei
 
 Mistral Large 4 est prometteur en qualité. Les incidents d’hébergement et les difficultés d’intégration ont toutefois imposé des reprises, parfois longues et coûteuses. Deux séries distinguent le dernier succès de chaque ticket et l’ensemble des tentatives directes. Cette dernière ne couvre pas tous les essais OpenRouter ; le périmètre est explicité dans le rapport.
 
-Ce sont dix tickets de mes projets, avec des configurations choisies selon mes usages. Les efforts diffèrent, les coûts locaux ne comprennent que l’électricité et les reprises ne suivent pas un protocole uniforme. Les graphes de significativité donnent des comparaisons nominales à 5 % ; ils ne garantissent pas un classement global. Le test confie aussi orchestration, codage et revue à un seul modèle, alors que mes workflows peuvent répartir ces rôles.
+Ce sont dix tickets de mes projets, avec des configurations choisies selon mes usages. Les efforts diffèrent, les coûts locaux ne comprennent que l’électricité et les reprises ne suivent pas un protocole uniforme. Les graphes de significativité donnent des comparaisons nominales à 5 % ; ils ne garantissent pas un classement global. Le test confie aussi orchestration, codage et revue à un seul modèle, alors que mes workflows peuvent répartir ces rôles. Ce choix peut défavoriser un modèle conçu comme exécutant, tel Haiku 5.5, ou tout modèle plus à l’aise dans un seul rôle.
 
 Au-delà du classement, une question m’intéresse : combien vaut un résultat livré plus tôt ? Deux figures ajoutent au coût direct une valeur du délai de 1 USD ou de 0,10 EUR par erg et par heure. Elles permettent de distinguer un choix interactif d’un choix asynchrone.
 
@@ -28,7 +28,7 @@ Title: Ten real research tasks with Pi: quality, latency and cost across my loca
 
 I replayed ten randomly sampled tickets from my research projects, using Pi and each project’s instructions, with three model judges scoring the deliverables. Luna medium was the best observed compromise in this sample. Local Qwen 3.8 Flash-Next IQ3_S on Strata at xhigh had the highest mean quality, but averaged 46 minutes per ticket on my workstation. Mistral Large 4 showed promising quality, alongside substantial retry overhead.
 
-This is my own small benchmark, not a universal ranking. Effort settings and retry policies differ; local costs cover electricity only. The report explains failures, accounting exclusions and sensitivity to one ticket. PDF, numeric snapshot and plotting scripts: [blog link]. I would welcome feedback on the evaluation design and similar measurements from your own workflows.
+This is my own small benchmark, not a universal ranking. One model fills every role (orchestration, coding, review), which may disadvantage worker-tier models such as Haiku 5.5. Effort settings and retry policies differ; local costs cover electricity only. The report explains failures, accounting exclusions and sensitivity to one ticket. PDF, numeric snapshot and plotting scripts: [blog link]. I would welcome feedback on the evaluation design and similar measurements from your own workflows.
 
 ## Canal à préciser
 
