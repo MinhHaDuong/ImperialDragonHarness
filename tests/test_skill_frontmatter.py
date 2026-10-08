@@ -30,6 +30,12 @@ sys.path.insert(0, str(REPO / "scripts"))
 
 import skill_frontmatter as sf  # noqa: E402
 
+SKILLS = REPO / "skills"
+CONCRETE_MODEL = re.compile(
+    r'\b(?:sonnet|opus|haiku|fable)\b|\b(?:claude-(?:opus|sonnet|haiku|fable)|(?:gpt|gemini|mistral-large|deepseek)-[a-z0-9])[\w.-]*',
+    re.IGNORECASE,
+)
+
 # Free-text fields: values authored as prose or usage strings, where a colon,
 # a leading bracket, or a quote is a natural thing to write and a YAML
 # special character. Enum-like fields (name, model, user-invocable) are not
@@ -154,3 +160,23 @@ def test_free_text_fields_are_quoted():
         "(rules/authoring-skills.md) — wrap the value in \" \", or ' ' when it "
         "already contains a double quote:\n  " + "\n  ".join(offenders)
     )
+
+
+def test_portable_skill_instructions_do_not_name_models():
+    files = sorted(SKILLS.rglob("*.md"))
+    assert files
+    for path in files:
+        if path.relative_to(SKILLS).parts[0] == "route":
+            continue  # the route skill holds the grid and per-runtime recommendations, which name models
+        text = path.read_text()
+        assert not CONCRETE_MODEL.search(text), f"{path}: concrete model in portable instructions"
+        if path.name == "SKILL.md":
+            fm = text.split("---", 2)[1]
+            assert not re.search(r"^model:", fm, re.MULTILINE), f"{path}: a skill states a role, not a model"
+
+
+def test_model_identity_scanner_controls():
+    for name in ["sonnet", "claude-opus-4", "openai/gpt-5.5", "gemini-2.5-pro", "deepseek-chat", "gpt-oss-120b", "gemini-pro"]:
+        assert CONCRETE_MODEL.search(name)
+    for role in ["cheaper worker", "smartest advisor", "Scopus"]:
+        assert not CONCRETE_MODEL.search(role)

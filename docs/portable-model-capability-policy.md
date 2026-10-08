@@ -3,6 +3,8 @@
 **Status:** policy / staged runtime migration
 **Date:** 2026-09-24
 
+> **Superseded 2026-10-08 (tracker 1052).** The `model-level` and `effort` qualifiers, the default role policy, runtime mappings, migration path, and the tests-and-invariants sections below are retired: worker choice now belongs to `skills/route/SKILL.md`. The text is kept as history, not as current policy.
+
 ## Decision
 
 IDH should express **how much model capability and deliberation a task deserves**,
@@ -109,6 +111,9 @@ IDH vocabulary.
 
 ## Portable contract
 
+>**Superseded 2026-10-08.** The qualifier vocabulary (`model-level`, `effort`) and everything below it in this section were retired by tracker 1052. The route skill (`skills/route/SKILL.md`) now decides the worker. Kept as history.
+
+
 ### Model level
 
 ```text
@@ -179,6 +184,9 @@ tier; where the runtime offers another vendor, that is stronger).
 
 ## Default role policy
 
+>**Superseded 2026-10-08.** The qualifier vocabulary (`model-level`, `effort`) and everything below it in this section were retired by tracker 1052. The route skill (`skills/route/SKILL.md`) now decides the worker. Kept as history.
+
+
 A useful default is:
 
 | Role | Model level | Effort |
@@ -246,6 +254,9 @@ gateway.
 
 ## Runtime mappings
 
+>**Superseded 2026-10-08.** The qualifier vocabulary (`model-level`, `effort`) and everything below it in this section were retired by tracker 1052. The route skill (`skills/route/SKILL.md`) now decides the worker. Kept as history.
+
+
 Adapters need only a small mapping/configuration surface. Conceptually:
 
 ```text
@@ -311,6 +322,9 @@ The existing workflow escalation doctrine remains authoritative; this policy
 only governs compute allocation within it.
 
 ## Migration path
+
+>**Superseded 2026-10-08.** The qualifier vocabulary (`model-level`, `effort`) and everything below it in this section were retired by tracker 1052. The route skill (`skills/route/SKILL.md`) now decides the worker. Kept as history.
+
 
 Status 2026-10-05 (audit under ticket 0974): Phase 0 done (0975). Phases 1 and
 3 delivered in a different shape by ticket 1000 — skills declare intent and
@@ -387,6 +401,9 @@ Lowering team leads to `economy` is decided here, on measured verification
 quality from traces, not assumed.
 
 ## Tests and invariants
+
+>**Superseded 2026-10-08.** The qualifier vocabulary (`model-level`, `effort`) and everything below it in this section were retired by tracker 1052. The route skill (`skills/route/SKILL.md`) now decides the worker. Kept as history.
+
 
 1. Broad fan-out never silently inherits an expensive root configuration.
 2. Every launch either declares a semantic level or explicitly says `auto`.

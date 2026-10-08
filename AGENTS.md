@@ -1,29 +1,8 @@
 # Harness agent profiles
 
-Choose agents and concrete models on the fly using the active runtime's available
-capabilities. The harness describes the profiles it needs; it does not prescribe
-model names, fixed agent definitions, or a runtime-specific implementation.
-
-| Requested profile | Capability class | Effort | Typical responsibility |
-|---|---|---|---|
-| Cheaper worker | cheap | economy | Search, extraction, mechanical checks, bounded execution |
-| Competent worker | standard | standard | Planning, orchestration, ordinary review |
-| Expert worker | strong | standard | Difficult implementation or cross-cutting judgment |
-| Smartest advisor | frontier | standard (intensive rarely — cost) | One-shot deep problems: hard decisions, adversarial judgment, escalation. NOT orchestration |
-
-Capability class and effort are orthogonal axes — the doctrine detail lives in docs/portable-model-capability-policy.md.
-
-Use the least expensive profile adequate for the task. Promote capability when
-the task requires it; organizational rank alone does not determine difficulty.
-Reserve intensive effort for tasks that benefit from it rather than broad fan-out.
-
-Skills state intentions with `model-level: auto|cheap|standard|strong|frontier`
-and `effort: economy|standard|intensive`. These are relative capability and effort
-classes, not model IDs or native launch parameters. Apply each child's declared
-intentions independently; let the runtime choose how to realize them. `auto`
-delegates the choice explicitly to the runtime. When independent verification is
-requested, choose a reviewer decorrelated from the producer when available and
-report any limitation.
+Worker choice (model, effort, reviewer decorrelation) is made by the route skill,
+`skills/route/SKILL.md`, not by skills or this file. A skill states a role and a
+need; it never names a model or a capability tier.
 
 External reviewer discovery and routing also belong to the active runtime.
 Request independent reviewers with the required expertise, capability class,
