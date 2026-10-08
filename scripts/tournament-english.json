@@ -81,5 +81,7 @@
   " en haut · flèche vers ": " at the top · arrow towards ",
   " · Wilcoxon apparié exact · p < 0,05 bilatéral": " · exact paired Wilcoxon · two-sided p < 0.05",
   "Mistral Large 4 · toutes tentatives\nAPI Mistral + OR (0874)\noff": "Mistral Large 4 · All attempts\nAPI Mistral + OR (0874)\noff",
-  "Mistral toutes tentatives": "Mistral all attempts"
+  "Mistral toutes tentatives": "Mistral all attempts",
+  "Le seuil de 5 % vaut pour chaque comparaison, sans garantie simultanée pour tout le graphe.\nLa correction de Holm contrôle le risque de faux positifs lié aux comparaisons multiples.\nAvec dix tickets et ": "The 5% threshold applies to each comparison, without a simultaneous guarantee for the whole graph. Holm correction controls the false-positive risk from multiple comparisons. With ten tickets and ",
+  " comparaisons par graphe, ce seuil corrigé est hors d’atteinte du test utilisé,\nmême lorsqu’un modèle gagne sur les dix tickets. L’absence de flèches après correction ne signifie\ndonc pas que les modèles sont équivalents : cet échantillon ne permet pas d’établir les différences\navec cette garantie globale.\nMistral toutes tentatives a un contour pointillé dans les DAG.\nQwen 3, Qwen 3.6 et GPT-6 Sol figurent seulement dans les nuages de points.": " comparisons per graph, the corrected threshold is unattainable for this test, even when a model wins all ten tickets. No arrows after correction therefore does not mean the models are equivalent: this sample cannot establish differences with that global guarantee. Mistral all attempts has a dashed outline in the DAGs. Qwen 3, Qwen 3.6 and GPT-6 Sol appear only in scatterplots."
 }
