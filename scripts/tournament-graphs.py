@@ -79,6 +79,7 @@ LABELS = {
     "j": "GLM 5.3 Flash\nAPI OpenRouter\nhigh",
     "k": "Mimo v2.6 Flash\nAPI OpenRouter\nmedium",
     "l": "GPT 6 Luna\nAPI OpenAI\nmedium",
+    "n": "Claude Haiku 5.5\nAPI Anthropic\nmedium",
 }
 AXES = {
     "quality": ("Qualité", 1, "points /30"),
@@ -366,7 +367,7 @@ def render(output, snapshot):
         findings = [
             (
                 "Luna 6 medium : le meilleur compromis observé",
-                "Chez Claude comme chez ChatGPT, monter en gamme tout en réduisant l’effort ne donne pas ici d’avantage net : Opus 5.5 low face à Sonnet 5.5 medium, et Sol 6.1 low face à Luna 6 medium, offrent une qualité moyenne proche pour un coût supérieur. Sonnet est aussi plus rapide qu’Opus ; Luna fait jeu comparable avec Sol en vitesse. Limite : un seul modèle tient les trois rôles (orchestration, codage, revue), ce qui peut défavoriser un modèle conçu pour un seul.",
+                "Chez Claude comme chez ChatGPT, monter en gamme tout en réduisant l’effort ne donne pas ici d’avantage net : Opus 5.5 low face à Sonnet 5.5 medium, et Sol 6.1 low face à Luna 6 medium, offrent une qualité moyenne proche pour un coût supérieur. Sonnet est aussi plus rapide qu’Opus ; Luna fait jeu comparable avec Sol en vitesse. Haiku 5.5 égale Sonnet en qualité (21,7 contre 21,4/30) pour 0,13 USD au lieu de 0,30, mais trois fois plus lent. Limite : un seul modèle tient les trois rôles, ce qui peut défavoriser un modèle conçu pour un seul.",
             ),
             (
                 "Qwen 3.8 Flash-Next xhigh : une option locale pour privilégier la qualité",
@@ -447,7 +448,7 @@ def render(output, snapshot):
                     else f"{row['output_tokens_mean']:,.0f}".replace(",", " "),
                 ]
             )
-        ax = fig.add_axes([0.06, 0.16, 0.88, 0.68])
+        ax = fig.add_axes([0.06, 0.19, 0.88, 0.65])
         ax.axis("off")
         table = ax.table(
             cellText=table_rows,
@@ -471,7 +472,7 @@ def render(output, snapshot):
         note = "Moyennes par ticket, échecs inclus ; les séries incomplètes portent sur les tickets évalués. Coût local : électricité seule. Mistral dernier succès : dix succès, dont 0874 via OpenRouter. Mistral toutes tentatives : mêmes notes, coûts et durées de 25 tentatives directes conservées, plus le remplacement OR de 0874 ; huit autres tentatives OR et un incident direct de configuration sont exclus. « Réussis » compte les tickets livrés, pas le nombre de tentatives. Les 9/10 correspondent à quatre dépassements du plafond de deux heures (a et b3 : 0874 ; j : 0333 ; k : 0211) et à une fin sans livraison valide (c2 : 0470). Ces échecs sont conservés à 0/30, avec leurs ressources consommées, plutôt que remplacés par une réussite après reprise ; le traitement particulier de Mistral est détaillé dans les limites."
         fig.text(
             0.06,
-            0.12,
+            0.155,
             wrap_paragraph(fig, note, 9),
             fontsize=9,
             va="top",

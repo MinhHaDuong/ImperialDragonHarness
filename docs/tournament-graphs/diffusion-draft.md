@@ -6,7 +6,7 @@ Titre proposé : Quel LLM pour mes tâches de recherche ? Dix tickets, qualité,
 
 Pour choisir les modèles que j’utilise dans mes projets de recherche, j’ai fait reprendre dix tickets tirés au hasard dans leur historique. Chaque configuration travaille avec Pi, les outils et les consignes du projet ; trois modèles jugent le résultat sur 30. Je compare la qualité, le temps jusqu’au résultat et les dépenses directes. Le rapport, les données numériques et les scripts permettent de refaire les figures.
 
-Luna 6 medium ressort comme le meilleur compromis observé : sa qualité et sa vitesse moyennes sont proches de Sol 6.1 low, pour un coût inférieur. Chez Claude aussi, monter en gamme tout en réduisant l’effort n’offre pas ici d’avantage net : Opus 5.5 low n’apporte pas de gain de qualité établi face à Sonnet 5.5 medium, qui est plus rapide et moins cher.
+Luna 6 medium ressort comme le meilleur compromis observé : sa qualité et sa vitesse moyennes sont proches de Sol 6.1 low, pour un coût inférieur. Chez Claude aussi, monter en gamme tout en réduisant l’effort n’offre pas ici d’avantage net : Opus 5.5 low n’apporte pas de gain de qualité établi face à Sonnet 5.5 medium, qui est plus rapide et moins cher. Haiku 5.5, testé en dernier, égale Sonnet en qualité (21,7 contre 21,4/30) pour moins de la moitié du coût, mais il est près de trois fois plus lent.
 
 En local, Qwen 3.8 Flash-Next IQ3_S avec Strata, à effort xhigh, obtient la meilleure note moyenne : 26,2/30. Mais il faut attendre en moyenne 46 minutes par ticket sur ma workstation, et les tâches partagent les GPU. C’est une option pour le travail asynchrone, moins commode en interactif. Son avance dépend aussi de l’échantillon : retirer un ticket suffit à rejoindre la moyenne de Mistral.
 
@@ -26,7 +26,7 @@ J’ai comparé les configurations LLM que j’utilise pour la recherche sur dix
 
 Title: Ten real research tasks with Pi: quality, latency and cost across my local and hosted LLM setups
 
-I replayed ten randomly sampled tickets from my research projects, using Pi and each project’s instructions, with three model judges scoring the deliverables. Luna medium was the best observed compromise in this sample. Local Qwen 3.8 Flash-Next IQ3_S on Strata at xhigh had the highest mean quality, but averaged 46 minutes per ticket on my workstation. Mistral Large 4 showed promising quality, alongside substantial retry overhead.
+I replayed ten randomly sampled tickets from my research projects, using Pi and each project’s instructions, with three model judges scoring the deliverables. Luna medium was the best observed compromise in this sample. Local Qwen 3.8 Flash-Next IQ3_S on Strata at xhigh had the highest mean quality, but averaged 46 minutes per ticket on my workstation. Mistral Large 4 showed promising quality, alongside substantial retry overhead. Haiku 5.5 at medium effort matched Sonnet 5.5 on quality (21.7 vs 21.4/30) at under half the cost, but took nearly three times as long.
 
 This is my own small benchmark, not a universal ranking. One model fills every role (orchestration, coding, review), which may disadvantage worker-tier models such as Haiku 5.5. Effort settings and retry policies differ; local costs cover electricity only. The report explains failures, accounting exclusions and sensitivity to one ticket. PDF, numeric snapshot and plotting scripts: [blog link]. I would welcome feedback on the evaluation design and similar measurements from your own workflows.
 
