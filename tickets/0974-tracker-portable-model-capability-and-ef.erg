@@ -2,6 +2,8 @@
 Title: Tracker: portable model capability and effort policy
 Created: 2026-09-24
 Author: claude
+Blocked-by: 1024
+Label: deferred
 
 --- log ---
 2026-09-24T14:49Z claude created
@@ -11,6 +13,9 @@ Author: claude
 2026-10-06T06:00Z reviewer claude note invariant inventory table added to body (read-only, suite not run); invariant 1 reclassified partial; waivers for 7 and 8 proposed, not signed
 2026-10-06T07:00Z reviewer claude note author decisions: option C (ClaudeMapping and its tests removed; invariants 4, 7, 9 waived), invariant 6 settled by the one-shot frontier/intensive doctrine (raid effort set to standard), invariant 8 attached to Phase 5. Residual risk for 4 and 9 stated in the table. Review brief: docs/2026-10-06-routing-doctrine-brief.md
 2026-10-06T08:30Z reviewer claude note correction to the entry above: the author separated two rules, frontier is one-shot only and intensive is rarely paired with frontier; advisor row is frontier/standard. Brief consolidated with author remarks (boundary, portability axes, quality/cost/speed/time, quota windows, profiles, routing skill direction, clusters and effort as model identity); five review questions defined
+2026-10-06T09:44Z reviewer label deferred
+2026-10-06T09:44Z reviewer note Author-approved chantier sequence: after tournament tracker1024, deferred infrastructure work. Resume only on an explicit author decision; closure of the blocker does not authorize automatic resumption.
+2026-10-08T10:00Z reviewer note Landed from an uncommitted edit in the primary checkout (made 2026-10-06, never committed or pushed); content unchanged, original timestamps kept.
 
 --- body ---
 ## Context
