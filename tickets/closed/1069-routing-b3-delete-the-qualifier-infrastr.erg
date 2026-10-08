@@ -2,6 +2,7 @@
 Title: Routing B3: delete the qualifier infrastructure and clean tickets
 Created: 2026-10-08
 Author: claude
+Closed: autoclosed — PR #1277
 
 --- log ---
 2026-10-08T15:36Z claude created
@@ -10,6 +11,7 @@ Author: claude
 2026-10-08T19:45Z reviewer note blocker 1066 closed — Blocked-by removed.
 2026-10-08T20:16Z reviewer note blocker 1068 closed — Blocked-by removed.
 2026-10-08T20:29Z reviewer code/docs/rules half done on branch routing/1069-delete-qualifier: model_policy.py and test_model_rightsizing.py deleted, model-name scanner moved to test_skill_frontmatter.py
+2026-10-08T20:32Z reviewer closed — autoclosed — PR #1277
 
 --- body ---
 ## Context
