@@ -13,7 +13,7 @@
         "median_advantage": -0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5450226244343892
+        "line_width": 0.545151789759855
       },
       {
         "axis": "quality",
@@ -41,7 +41,7 @@
         "median_advantage": 1.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.4785067873303165
+        "line_width": 0.47854553692795626
       },
       {
         "axis": "quality",
@@ -55,7 +55,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.0391402714932125
+        "line_width": 1.039941096511101
       },
       {
         "axis": "quality",
@@ -69,7 +69,7 @@
         "median_advantage": 0.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6115384615384611
+        "line_width": 0.6117580425917531
       },
       {
         "axis": "quality",
@@ -83,7 +83,7 @@
         "median_advantage": 1.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.839592760180995
+        "line_width": 0.840122338015405
       },
       {
         "axis": "quality",
@@ -97,7 +97,7 @@
         "median_advantage": 2.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6970588235294113
+        "line_width": 0.6973946533756226
       },
       {
         "axis": "quality",
@@ -111,7 +111,7 @@
         "median_advantage": -0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6495475113122168
+        "line_width": 0.649818758495695
       },
       {
         "axis": "quality",
@@ -125,7 +125,7 @@
         "median_advantage": 1.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5925339366515838
+        "line_width": 0.5927276846397825
       },
       {
         "axis": "quality",
@@ -139,7 +139,7 @@
         "median_advantage": 0.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7065610859728504
+        "line_width": 0.7069098323516082
       },
       {
         "axis": "quality",
@@ -153,7 +153,7 @@
         "median_advantage": 3.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6400452488687783
+        "line_width": 0.6403035795197101
       },
       {
         "axis": "quality",
@@ -167,7 +167,7 @@
         "median_advantage": 2.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5735294117647056
+        "line_width": 0.5736973266878113
       },
       {
         "axis": "quality",
@@ -181,7 +181,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.754072398190045
+        "line_width": 0.7544857272315357
       },
       {
         "axis": "quality",
@@ -195,7 +195,7 @@
         "median_advantage": 5.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2671945701357463
+        "line_width": 1.268305391934753
       },
       {
         "axis": "quality",
@@ -209,7 +209,21 @@
         "median_advantage": 5.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2671945701357463
+        "line_width": 1.268305391934753
+      },
+      {
+        "axis": "quality",
+        "a": "a",
+        "b": "n",
+        "n": 10,
+        "p": 0.62890625,
+        "winner": "n",
+        "loser": "a",
+        "effect_intensity": 1.0999999999999979,
+        "median_advantage": 0.25,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.6593339374716807
       },
       {
         "axis": "quality",
@@ -223,7 +237,7 @@
         "median_advantage": 5.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.419230769230769
+        "line_width": 1.420548255550521
       },
       {
         "axis": "quality",
@@ -237,7 +251,7 @@
         "median_advantage": 3.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5165158371040727
+        "line_width": 0.5166062528318988
       },
       {
         "axis": "quality",
@@ -251,7 +265,7 @@
         "median_advantage": 2.25,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.9441176470588233
+        "line_width": 0.9447893067512458
       },
       {
         "axis": "quality",
@@ -265,7 +279,7 @@
         "median_advantage": 1.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.516515837104072
+        "line_width": 0.5166062528318981
       },
       {
         "axis": "quality",
@@ -279,7 +293,7 @@
         "median_advantage": -0.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7445701357466059
+        "line_width": 0.7449705482555501
       },
       {
         "axis": "quality",
@@ -293,7 +307,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6020361990950222
+        "line_width": 0.6022428636157675
       },
       {
         "axis": "quality",
@@ -307,7 +321,7 @@
         "median_advantage": 0.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5545248868778275
+        "line_width": 0.55466696873584
       },
       {
         "axis": "quality",
@@ -321,7 +335,7 @@
         "median_advantage": -0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.4975113122171946
+        "line_width": 0.49757589487992754
       },
       {
         "axis": "quality",
@@ -335,7 +349,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6115384615384611
+        "line_width": 0.6117580425917531
       },
       {
         "axis": "quality",
@@ -349,7 +363,7 @@
         "median_advantage": 3.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5450226244343892
+        "line_width": 0.545151789759855
       },
       {
         "axis": "quality",
@@ -363,7 +377,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.4785067873303165
+        "line_width": 0.47854553692795626
       },
       {
         "axis": "quality",
@@ -377,7 +391,7 @@
         "median_advantage": -1.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6590497737556558
+        "line_width": 0.6593339374716807
       },
       {
         "axis": "quality",
@@ -391,7 +405,7 @@
         "median_advantage": 4.25,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.172171945701357
+        "line_width": 1.1731536021748978
       },
       {
         "axis": "quality",
@@ -405,7 +419,21 @@
         "median_advantage": 4.25,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.172171945701357
+        "line_width": 1.1731536021748978
+      },
+      {
+        "axis": "quality",
+        "a": "b",
+        "b": "n",
+        "n": 10,
+        "p": 0.642578125,
+        "winner": "n",
+        "loser": "b",
+        "effect_intensity": 0.5999999999999979,
+        "median_advantage": 2.75,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.5641821477118256
       },
       {
         "axis": "quality",
@@ -417,9 +445,9 @@
         "loser": "b3",
         "effect_intensity": 5.449999999999999,
         "median_advantage": 3.5,
-        "p_holm": 0.9375,
+        "p_holm": 1,
         "shown": true,
-        "line_width": 1.485746606334842
+        "line_width": 1.4871545083824198
       },
       {
         "axis": "quality",
@@ -433,7 +461,7 @@
         "median_advantage": 1.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9251131221719459
+        "line_width": 0.9257589487992752
       },
       {
         "axis": "quality",
@@ -447,7 +475,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.3527149321266971
+        "line_width": 1.3539420027186229
       },
       {
         "axis": "quality",
@@ -461,7 +489,7 @@
         "median_advantage": 2.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1246606334841631
+        "line_width": 1.1255777072949709
       },
       {
         "axis": "quality",
@@ -475,7 +503,7 @@
         "median_advantage": 3.0,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.267194570135747
+        "line_width": 1.2683053919347536
       },
       {
         "axis": "quality",
@@ -489,7 +517,7 @@
         "median_advantage": 4.75,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.3147058823529416
+        "line_width": 1.315881286814681
       },
       {
         "axis": "quality",
@@ -503,7 +531,7 @@
         "median_advantage": 4.5,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.3717194570135747
+        "line_width": 1.3729723606705935
       },
       {
         "axis": "quality",
@@ -517,7 +545,7 @@
         "median_advantage": 5.0,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.2576923076923079
+        "line_width": 1.2587902129587678
       },
       {
         "axis": "quality",
@@ -531,7 +559,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.32420814479638
+        "line_width": 1.3253964657906658
       },
       {
         "axis": "quality",
@@ -545,7 +573,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.3907239819004527
+        "line_width": 1.3920027186225647
       },
       {
         "axis": "quality",
@@ -559,7 +587,7 @@
         "median_advantage": 2.75,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.2101809954751135
+        "line_width": 1.2112143180788404
       },
       {
         "axis": "quality",
@@ -573,7 +601,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.697058823529412
+        "line_width": 0.6973946533756232
       },
       {
         "axis": "quality",
@@ -587,7 +615,21 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.697058823529412
+        "line_width": 0.6973946533756232
+      },
+      {
+        "axis": "quality",
+        "a": "b2",
+        "b": "n",
+        "n": 10,
+        "p": 0.0390625,
+        "winner": "b2",
+        "loser": "n",
+        "effect_intensity": 4.5,
+        "median_advantage": 5.25,
+        "p_holm": 1,
+        "shown": true,
+        "line_width": 1.3063661078386954
       },
       {
         "axis": "quality",
@@ -601,7 +643,7 @@
         "median_advantage": 2.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.010633484162896
+        "line_width": 1.0113955595831448
       },
       {
         "axis": "quality",
@@ -615,7 +657,7 @@
         "median_advantage": 1.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5830316742081447
+        "line_width": 0.5832125056637969
       },
       {
         "axis": "quality",
@@ -629,7 +671,7 @@
         "median_advantage": 0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8110859728506785
+        "line_width": 0.8115768010874489
       },
       {
         "axis": "quality",
@@ -643,7 +685,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6685520361990949
+        "line_width": 0.6688491164476663
       },
       {
         "axis": "quality",
@@ -657,7 +699,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6210407239819002
+        "line_width": 0.6212732215677388
       },
       {
         "axis": "quality",
@@ -671,7 +713,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5640271493212673
+        "line_width": 0.5641821477118263
       },
       {
         "axis": "quality",
@@ -685,7 +727,7 @@
         "median_advantage": -0.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6780542986425339
+        "line_width": 0.678364295423652
       },
       {
         "axis": "quality",
@@ -699,7 +741,7 @@
         "median_advantage": 3.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6115384615384618
+        "line_width": 0.6117580425917538
       },
       {
         "axis": "quality",
@@ -713,7 +755,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5450226244343892
+        "line_width": 0.545151789759855
       },
       {
         "axis": "quality",
@@ -727,7 +769,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7255656108597285
+        "line_width": 0.7259401903035796
       },
       {
         "axis": "quality",
@@ -741,7 +783,7 @@
         "median_advantage": 3.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2386877828054297
+        "line_width": 1.2397598550067965
       },
       {
         "axis": "quality",
@@ -755,7 +797,21 @@
         "median_advantage": 3.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2386877828054297
+        "line_width": 1.2397598550067965
+      },
+      {
+        "axis": "quality",
+        "a": "b3",
+        "b": "n",
+        "n": 10,
+        "p": 0.6875,
+        "winner": "n",
+        "loser": "b3",
+        "effect_intensity": 0.9499999999999993,
+        "median_advantage": 1.75,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.6307884005437244
       },
       {
         "axis": "quality",
@@ -769,7 +825,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8776018099547513
+        "line_width": 0.8781830539193477
       },
       {
         "axis": "quality",
@@ -783,7 +839,7 @@
         "median_advantage": 1.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6495475113122174
+        "line_width": 0.6498187584956957
       },
       {
         "axis": "quality",
@@ -797,7 +853,7 @@
         "median_advantage": 0.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7920814479638012
+        "line_width": 0.7925464431354783
       },
       {
         "axis": "quality",
@@ -811,7 +867,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8395927601809958
+        "line_width": 0.8401223380154058
       },
       {
         "axis": "quality",
@@ -825,7 +881,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8966063348416287
+        "line_width": 0.8972134118713183
       },
       {
         "axis": "quality",
@@ -839,7 +895,7 @@
         "median_advantage": 1.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7825791855203621
+        "line_width": 0.7830312641594926
       },
       {
         "axis": "quality",
@@ -853,7 +909,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.849095022624434
+        "line_width": 0.8496375169913908
       },
       {
         "axis": "quality",
@@ -867,7 +923,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9156108597285069
+        "line_width": 0.9162437698232896
       },
       {
         "axis": "quality",
@@ -881,7 +937,7 @@
         "median_advantage": 3.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7350678733031675
+        "line_width": 0.7354553692795651
       },
       {
         "axis": "quality",
@@ -895,7 +951,7 @@
         "median_advantage": 2.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6780542986425339
+        "line_width": 0.678364295423652
       },
       {
         "axis": "quality",
@@ -909,7 +965,21 @@
         "median_advantage": 2.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6780542986425339
+        "line_width": 0.678364295423652
+      },
+      {
+        "axis": "quality",
+        "a": "d",
+        "b": "n",
+        "n": 10,
+        "p": 0.40625,
+        "winner": "d",
+        "loser": "n",
+        "effect_intensity": 2.0,
+        "median_advantage": -0.5,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.8306071590394202
       },
       {
         "axis": "quality",
@@ -923,7 +993,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6780542986425339
+        "line_width": 0.678364295423652
       },
       {
         "axis": "quality",
@@ -937,7 +1007,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5355203619909501
+        "line_width": 0.5356366107838694
       },
       {
         "axis": "quality",
@@ -951,7 +1021,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.48800904977375553
+        "line_width": 0.4880607159039419
       },
       {
         "axis": "quality",
@@ -965,7 +1035,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.46900452488687744
+        "line_width": 0.4690303579519706
       },
       {
         "axis": "quality",
@@ -979,7 +1049,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5450226244343892
+        "line_width": 0.545151789759855
       },
       {
         "axis": "quality",
@@ -993,7 +1063,7 @@
         "median_advantage": 3.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.47850678733031715
+        "line_width": 0.4785455369279569
       },
       {
         "axis": "quality",
@@ -1007,7 +1077,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.48800904977375553
+        "line_width": 0.4880607159039419
       },
       {
         "axis": "quality",
@@ -1021,7 +1091,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5925339366515838
+        "line_width": 0.5927276846397825
       },
       {
         "axis": "quality",
@@ -1035,7 +1105,7 @@
         "median_advantage": 2.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1056561085972851
+        "line_width": 1.1065473493429996
       },
       {
         "axis": "quality",
@@ -1049,7 +1119,21 @@
         "median_advantage": 2.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1056561085972851
+        "line_width": 1.1065473493429996
+      },
+      {
+        "axis": "quality",
+        "a": "d2",
+        "b": "n",
+        "n": 10,
+        "p": 1.0,
+        "winner": "n",
+        "loser": "d2",
+        "effect_intensity": 0.25,
+        "median_advantage": -0.0,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.49757589487992754
       },
       {
         "axis": "quality",
@@ -1063,7 +1147,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5925339366515838
+        "line_width": 0.5927276846397825
       },
       {
         "axis": "quality",
@@ -1077,7 +1161,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6400452488687783
+        "line_width": 0.6403035795197101
       },
       {
         "axis": "quality",
@@ -1091,7 +1175,7 @@
         "median_advantage": -0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6970588235294113
+        "line_width": 0.6973946533756226
       },
       {
         "axis": "quality",
@@ -1105,7 +1189,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5830316742081447
+        "line_width": 0.5832125056637969
       },
       {
         "axis": "quality",
@@ -1119,7 +1203,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6495475113122168
+        "line_width": 0.649818758495695
       },
       {
         "axis": "quality",
@@ -1133,7 +1217,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7160633484162895
+        "line_width": 0.7164250113275938
       },
       {
         "axis": "quality",
@@ -1147,7 +1231,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5355203619909501
+        "line_width": 0.5356366107838694
       },
       {
         "axis": "quality",
@@ -1161,7 +1245,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8776018099547513
+        "line_width": 0.8781830539193477
       },
       {
         "axis": "quality",
@@ -1175,7 +1259,21 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8776018099547513
+        "line_width": 0.8781830539193477
+      },
+      {
+        "axis": "quality",
+        "a": "e2",
+        "b": "n",
+        "n": 10,
+        "p": 0.78515625,
+        "winner": "e2",
+        "loser": "n",
+        "effect_intensity": 0.9499999999999993,
+        "median_advantage": -0.75,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.6307884005437244
       },
       {
         "axis": "quality",
@@ -1189,7 +1287,7 @@
         "median_advantage": -0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.4975113122171946
+        "line_width": 0.49757589487992754
       },
       {
         "axis": "quality",
@@ -1203,7 +1301,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5545248868778275
+        "line_width": 0.55466696873584
       },
       {
         "axis": "quality",
@@ -1217,7 +1315,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.45950226244343906
+        "line_width": 0.45951517897598565
       },
       {
         "axis": "quality",
@@ -1231,7 +1329,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.507013574660633
+        "line_width": 0.5070910738559125
       },
       {
         "axis": "quality",
@@ -1245,7 +1343,7 @@
         "median_advantage": 0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5735294117647056
+        "line_width": 0.5736973266878113
       },
       {
         "axis": "quality",
@@ -1259,7 +1357,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5070135746606337
+        "line_width": 0.5070910738559131
       },
       {
         "axis": "quality",
@@ -1273,7 +1371,7 @@
         "median_advantage": 3.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.020135746606335
+        "line_width": 1.0209107385591303
       },
       {
         "axis": "quality",
@@ -1287,7 +1385,21 @@
         "median_advantage": 3.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.020135746606335
+        "line_width": 1.0209107385591303
+      },
+      {
+        "axis": "quality",
+        "a": "e3",
+        "b": "n",
+        "n": 10,
+        "p": 0.96875,
+        "winner": "e3",
+        "loser": "n",
+        "effect_intensity": 0.1999999999999993,
+        "median_advantage": -0.5,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.4880607159039419
       },
       {
         "axis": "quality",
@@ -1301,7 +1413,7 @@
         "median_advantage": 0.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.507013574660633
+        "line_width": 0.5070910738559125
       },
       {
         "axis": "quality",
@@ -1315,7 +1427,7 @@
         "median_advantage": 0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5070135746606337
+        "line_width": 0.5070910738559131
       },
       {
         "axis": "quality",
@@ -1329,7 +1441,7 @@
         "median_advantage": 1.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.4595022624434384
+        "line_width": 0.459515178975985
       },
       {
         "axis": "quality",
@@ -1343,7 +1455,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5260180995475111
+        "line_width": 0.5261214318078837
       },
       {
         "axis": "quality",
@@ -1357,7 +1469,7 @@
         "median_advantage": 0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5545248868778282
+        "line_width": 0.5546669687358406
       },
       {
         "axis": "quality",
@@ -1371,7 +1483,7 @@
         "median_advantage": 3.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0676470588235296
+        "line_width": 1.0684866334390577
       },
       {
         "axis": "quality",
@@ -1385,7 +1497,21 @@
         "median_advantage": 3.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0676470588235296
+        "line_width": 1.0684866334390577
+      },
+      {
+        "axis": "quality",
+        "a": "f",
+        "b": "n",
+        "n": 10,
+        "p": 1.0,
+        "winner": "",
+        "loser": "",
+        "effect_intensity": 0.05000000000000071,
+        "median_advantage": 0.0,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.45951517897598565
       },
       {
         "axis": "quality",
@@ -1399,7 +1525,7 @@
         "median_advantage": 0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5640271493212666
+        "line_width": 0.5641821477118256
       },
       {
         "axis": "quality",
@@ -1413,7 +1539,7 @@
         "median_advantage": 5.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.4975113122171946
+        "line_width": 0.49757589487992754
       },
       {
         "axis": "quality",
@@ -1427,7 +1553,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.4690045248868781
+        "line_width": 0.4690303579519713
       },
       {
         "axis": "quality",
@@ -1441,7 +1567,7 @@
         "median_advantage": 1.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6115384615384611
+        "line_width": 0.6117580425917531
       },
       {
         "axis": "quality",
@@ -1455,7 +1581,7 @@
         "median_advantage": 6.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1246606334841625
+        "line_width": 1.1255777072949702
       },
       {
         "axis": "quality",
@@ -1469,7 +1595,21 @@
         "median_advantage": 6.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1246606334841625
+        "line_width": 1.1255777072949702
+      },
+      {
+        "axis": "quality",
+        "a": "g",
+        "b": "n",
+        "n": 10,
+        "p": 0.416015625,
+        "winner": "n",
+        "loser": "g",
+        "effect_intensity": 0.34999999999999787,
+        "median_advantage": 1.0,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.5166062528318981
       },
       {
         "axis": "quality",
@@ -1483,7 +1623,7 @@
         "median_advantage": 3.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.516515837104072
+        "line_width": 0.5166062528318981
       },
       {
         "axis": "quality",
@@ -1497,7 +1637,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5830316742081447
+        "line_width": 0.5832125056637969
       },
       {
         "axis": "quality",
@@ -1511,7 +1651,7 @@
         "median_advantage": 0.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.4975113122171946
+        "line_width": 0.49757589487992754
       },
       {
         "axis": "quality",
@@ -1525,7 +1665,7 @@
         "median_advantage": 4.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.010633484162896
+        "line_width": 1.0113955595831448
       },
       {
         "axis": "quality",
@@ -1539,7 +1679,21 @@
         "median_advantage": 4.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.010633484162896
+        "line_width": 1.0113955595831448
+      },
+      {
+        "axis": "quality",
+        "a": "i",
+        "b": "n",
+        "n": 10,
+        "p": 0.9453125,
+        "winner": "i",
+        "loser": "n",
+        "effect_intensity": 0.25,
+        "median_advantage": 0.0,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.49757589487992754
       },
       {
         "axis": "quality",
@@ -1553,7 +1707,7 @@
         "median_advantage": 1.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5165158371040727
+        "line_width": 0.5166062528318988
       },
       {
         "axis": "quality",
@@ -1567,7 +1721,7 @@
         "median_advantage": 2.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5640271493212666
+        "line_width": 0.5641821477118256
       },
       {
         "axis": "quality",
@@ -1581,7 +1735,7 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.077149321266968
+        "line_width": 1.0780018124150428
       },
       {
         "axis": "quality",
@@ -1595,7 +1749,21 @@
         "median_advantage": 2.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.077149321266968
+        "line_width": 1.0780018124150428
+      },
+      {
+        "axis": "quality",
+        "a": "j",
+        "b": "n",
+        "n": 10,
+        "p": 0.197265625,
+        "winner": "j",
+        "loser": "n",
+        "effect_intensity": 0.09999999999999787,
+        "median_advantage": 2.5,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.4690303579519706
       },
       {
         "axis": "quality",
@@ -1609,7 +1777,7 @@
         "median_advantage": -0.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6305429864253393
+        "line_width": 0.6307884005437244
       },
       {
         "axis": "quality",
@@ -1623,7 +1791,7 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1436651583710407
+        "line_width": 1.1446080652469415
       },
       {
         "axis": "quality",
@@ -1637,7 +1805,21 @@
         "median_advantage": 2.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1436651583710407
+        "line_width": 1.1446080652469415
+      },
+      {
+        "axis": "quality",
+        "a": "k",
+        "b": "n",
+        "n": 10,
+        "p": 0.84765625,
+        "winner": "k",
+        "loser": "n",
+        "effect_intensity": 0.4499999999999993,
+        "median_advantage": 0.5,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.5356366107838694
       },
       {
         "axis": "quality",
@@ -1651,7 +1833,7 @@
         "median_advantage": 5.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9631221719457013
+        "line_width": 0.9638196647032171
       },
       {
         "axis": "quality",
@@ -1665,7 +1847,21 @@
         "median_advantage": 5.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9631221719457013
+        "line_width": 0.9638196647032171
+      },
+      {
+        "axis": "quality",
+        "a": "l",
+        "b": "n",
+        "n": 10,
+        "p": 0.9921875,
+        "winner": "l",
+        "loser": "n",
+        "effect_intensity": 0.5,
+        "median_advantage": 0.25,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.545151789759855
       },
       {
         "axis": "quality",
@@ -1680,6 +1876,34 @@
         "p_holm": 1,
         "shown": false,
         "line_width": 0.45
+      },
+      {
+        "axis": "quality",
+        "a": "mi",
+        "b": "n",
+        "n": 10,
+        "p": 0.22265625,
+        "winner": "mi",
+        "loser": "n",
+        "effect_intensity": 3.1999999999999993,
+        "median_advantage": 5.25,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 1.0589714544630722
+      },
+      {
+        "axis": "quality",
+        "a": "mr",
+        "b": "n",
+        "n": 10,
+        "p": 0.22265625,
+        "winner": "mr",
+        "loser": "n",
+        "effect_intensity": 3.1999999999999993,
+        "median_advantage": 5.25,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 1.0589714544630722
       }
     ],
     "edges": [
@@ -1710,6 +1934,10 @@
       [
         "b2",
         "l"
+      ],
+      [
+        "b2",
+        "n"
       ],
       [
         "d",
@@ -1756,6 +1984,10 @@
       [
         "b2",
         "l"
+      ],
+      [
+        "b2",
+        "n"
       ],
       [
         "d",
@@ -1788,9 +2020,9 @@
         "loser": "a",
         "effect_intensity": 0.4827632360336564,
         "median_advantage": 1215.9499999999998,
-        "p_holm": 0.29296875,
+        "p_holm": 0.333984375,
         "shown": true,
-        "line_width": 0.7768435759576219
+        "line_width": 0.7898692046596254
       },
       {
         "axis": "seconds",
@@ -1804,7 +2036,7 @@
         "median_advantage": 860.4999999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6706529334116655
+        "line_width": 0.6794465686367339
       },
       {
         "axis": "seconds",
@@ -1818,7 +2050,7 @@
         "median_advantage": 1284.2,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.771437143123065
+        "line_width": 0.7842473103875935
       },
       {
         "axis": "seconds",
@@ -1830,7 +2062,7 @@
         "loser": "a",
         "effect_intensity": 1.9519771028677213,
         "median_advantage": 2791.45,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -1844,7 +2076,7 @@
         "loser": "a",
         "effect_intensity": 3.048368249396636,
         "median_advantage": 3025.1499999999996,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -1858,7 +2090,7 @@
         "loser": "a",
         "effect_intensity": 2.5177173480213244,
         "median_advantage": 2746.0,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -1872,7 +2104,7 @@
         "loser": "a",
         "effect_intensity": 2.031266639379663,
         "median_advantage": 2633.6,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -1886,7 +2118,7 @@
         "loser": "a",
         "effect_intensity": 1.7980994892607178,
         "median_advantage": 2804.0,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -1900,7 +2132,7 @@
         "loser": "a",
         "effect_intensity": 3.418436692152854,
         "median_advantage": 3056.45,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -1914,7 +2146,7 @@
         "loser": "a",
         "effect_intensity": 1.8967634305880163,
         "median_advantage": 2638.55,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -1928,9 +2160,9 @@
         "loser": "a",
         "effect_intensity": 0.862391762328084,
         "median_advantage": 2116.1000000000004,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.0338622049837611
+        "line_width": 1.0571307433754644
       },
       {
         "axis": "seconds",
@@ -1944,7 +2176,7 @@
         "median_advantage": 1024.8999999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.49166242543318145
+        "line_width": 0.4933227893639319
       },
       {
         "axis": "seconds",
@@ -1956,7 +2188,7 @@
         "loser": "a",
         "effect_intensity": 2.5435455347550615,
         "median_advantage": 2971.95,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -1970,9 +2202,9 @@
         "loser": "a",
         "effect_intensity": 0.7359139800346547,
         "median_advantage": 2240.5,
-        "p_holm": 0.62890625,
+        "p_holm": 0.724609375,
         "shown": true,
-        "line_width": 0.948233375863285
+        "line_width": 0.9680893664298011
       },
       {
         "axis": "seconds",
@@ -1986,7 +2218,21 @@
         "median_advantage": 1852.3000000000002,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7280921690372131
+        "line_width": 0.7391749181112937
+      },
+      {
+        "axis": "seconds",
+        "a": "a",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "a",
+        "effect_intensity": 2.346294638435863,
+        "median_advantage": 3011.05,
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2000,7 +2246,7 @@
         "median_advantage": 573.8499999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5561906425459564
+        "line_width": 0.5604226360228916
       },
       {
         "axis": "seconds",
@@ -2014,7 +2260,7 @@
         "median_advantage": 123.89999999999992,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.45540643283455695
+        "line_width": 0.4556218942720318
       },
       {
         "axis": "seconds",
@@ -2026,9 +2272,9 @@
         "loser": "b",
         "effect_intensity": 1.4692138668340649,
         "median_advantage": 1385.4,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.44469694094331
+        "line_width": 1.4843383901771972
       },
       {
         "axis": "seconds",
@@ -2040,7 +2286,7 @@
         "loser": "b",
         "effect_intensity": 2.5656050133629797,
         "median_advantage": 1663.4,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2054,7 +2300,7 @@
         "loser": "b",
         "effect_intensity": 2.034954111987668,
         "median_advantage": 1582.95,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2068,9 +2314,9 @@
         "loser": "b",
         "effect_intensity": 1.5485034033460063,
         "median_advantage": 1275.75,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.4983780701496328
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2082,9 +2328,9 @@
         "loser": "b",
         "effect_intensity": 1.3153362532270614,
         "median_advantage": 1312.1,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.340517695845135
+        "line_width": 1.3760073114040667
       },
       {
         "axis": "seconds",
@@ -2096,7 +2342,7 @@
         "loser": "b",
         "effect_intensity": 2.9356734561191975,
         "median_advantage": 1754.6999999999998,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2110,9 +2356,9 @@
         "loser": "b",
         "effect_intensity": 1.4140001945543599,
         "median_advantage": 1424.8,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.407315813420184
+        "line_width": 1.4454675203938727
       },
       {
         "axis": "seconds",
@@ -2126,7 +2372,7 @@
         "median_advantage": 1046.7,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7070186290261391
+        "line_width": 0.717261538715839
       },
       {
         "axis": "seconds",
@@ -2140,7 +2386,7 @@
         "median_advantage": 326.35000000000014,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7351811505244406
+        "line_width": 0.7465464152956938
       },
       {
         "axis": "seconds",
@@ -2152,7 +2398,7 @@
         "loser": "b",
         "effect_intensity": 2.060782298721405,
         "median_advantage": 1608.25,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2168,7 +2414,7 @@
         "median_advantage": 575.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6213897999056632
+        "line_width": 0.6282201617701757
       },
       {
         "axis": "seconds",
@@ -2182,7 +2428,21 @@
         "median_advantage": 2857.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.054935744994835
+        "line_width": 1.079044122770919
+      },
+      {
+        "axis": "seconds",
+        "a": "b",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "b",
+        "effect_intensity": 1.8635314024022067,
+        "median_advantage": 1579.8000000000002,
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2196,7 +2456,7 @@
         "median_advantage": 601.75,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5507842097113994
+        "line_width": 0.5548007417508596
       },
       {
         "axis": "seconds",
@@ -2208,7 +2468,7 @@
         "loser": "b2",
         "effect_intensity": 1.6260624084698536,
         "median_advantage": 2238.7,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2222,7 +2482,7 @@
         "loser": "b2",
         "effect_intensity": 2.7224535549987685,
         "median_advantage": 2481.6000000000004,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2236,7 +2496,7 @@
         "loser": "b2",
         "effect_intensity": 2.1918026536234567,
         "median_advantage": 2282.15,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2250,7 +2510,7 @@
         "loser": "b2",
         "effect_intensity": 1.7053519449817953,
         "median_advantage": 2085.1,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2264,9 +2524,9 @@
         "loser": "b2",
         "effect_intensity": 1.4721847948628501,
         "median_advantage": 2005.85,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
-        "line_width": 1.4467083383910915
+        "line_width": 1.486429947426958
       },
       {
         "axis": "seconds",
@@ -2278,7 +2538,7 @@
         "loser": "b2",
         "effect_intensity": 3.0925219977549863,
         "median_advantage": 2506.25,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2292,7 +2552,7 @@
         "loser": "b2",
         "effect_intensity": 1.5708487361901486,
         "median_advantage": 2040.4499999999998,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2308,7 +2568,7 @@
         "median_advantage": 1901.9499999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8132092715720955
+        "line_width": 0.8276841747387305
       },
       {
         "axis": "seconds",
@@ -2322,7 +2582,7 @@
         "median_advantage": -155.64999999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6289905079784842
+        "line_width": 0.6361237792728022
       },
       {
         "axis": "seconds",
@@ -2334,7 +2594,7 @@
         "loser": "b2",
         "effect_intensity": 2.2176308403571943,
         "median_advantage": 2412.9500000000003,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2348,9 +2608,9 @@
         "loser": "b2",
         "effect_intensity": 0.40999928563678717,
         "median_advantage": 983.05,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 0.7275804424516195
+        "line_width": 0.7386427977930672
       },
       {
         "axis": "seconds",
@@ -2364,7 +2624,21 @@
         "median_advantage": 1623.05,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9487451024488784
+        "line_width": 0.9686214867480276
+      },
+      {
+        "axis": "seconds",
+        "a": "b2",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "b2",
+        "effect_intensity": 2.0203799440379955,
+        "median_advantage": 2323.2,
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2376,9 +2650,9 @@
         "loser": "b3",
         "effect_intensity": 1.477199420788926,
         "median_advantage": 1507.15,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.4501033737778668
+        "line_width": 1.489960284449229
       },
       {
         "axis": "seconds",
@@ -2390,7 +2664,7 @@
         "loser": "b3",
         "effect_intensity": 2.573590567317841,
         "median_advantage": 1763.3,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2404,7 +2678,7 @@
         "loser": "b3",
         "effect_intensity": 2.0429396659425287,
         "median_advantage": 1692.7,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2418,7 +2692,7 @@
         "loser": "b3",
         "effect_intensity": 1.5564889573008673,
         "median_advantage": 1385.5,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
         "line_width": 1.5
       },
@@ -2432,9 +2706,9 @@
         "loser": "b3",
         "effect_intensity": 1.3233218071819224,
         "median_advantage": 1150.8999999999999,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.3459241286796921
+        "line_width": 1.3816292056760984
       },
       {
         "axis": "seconds",
@@ -2446,7 +2720,7 @@
         "loser": "b3",
         "effect_intensity": 2.9436590100740583,
         "median_advantage": 1864.4499999999998,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2460,9 +2734,9 @@
         "loser": "b3",
         "effect_intensity": 1.421985748509221,
         "median_advantage": 1379.0499999999997,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.412722246254741
+        "line_width": 1.4510894146659048
       },
       {
         "axis": "seconds",
@@ -2476,7 +2750,7 @@
         "median_advantage": 1139.3,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7124250618606961
+        "line_width": 0.7228834329878708
       },
       {
         "axis": "seconds",
@@ -2490,7 +2764,7 @@
         "median_advantage": 364.6999999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7297747176898836
+        "line_width": 0.7409245210236618
       },
       {
         "axis": "seconds",
@@ -2502,7 +2776,7 @@
         "loser": "b3",
         "effect_intensity": 2.0687678526762663,
         "median_advantage": 1536.3999999999999,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2518,7 +2792,7 @@
         "median_advantage": 446.7499999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6267962327402201
+        "line_width": 0.6338420560422076
       },
       {
         "axis": "seconds",
@@ -2532,7 +2806,21 @@
         "median_advantage": 2633.25,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.049529312160278
+        "line_width": 1.0734222284988872
+      },
+      {
+        "axis": "seconds",
+        "a": "b3",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "b3",
+        "effect_intensity": 1.8715169563570677,
+        "median_advantage": 1580.0,
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -2544,9 +2832,9 @@
         "loser": "d",
         "effect_intensity": 1.096391146528915,
         "median_advantage": 233.7,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.192286023939911
+        "line_width": 1.2218681936680424
       },
       {
         "axis": "seconds",
@@ -2560,7 +2848,7 @@
         "median_advantage": 39.45000000000002,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.833021222387063
+        "line_width": 0.8482856870875969
       },
       {
         "axis": "seconds",
@@ -2574,7 +2862,7 @@
         "median_advantage": 26.55000000000001,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5036811292063231
+        "line_width": 0.5058204720258881
       },
       {
         "axis": "seconds",
@@ -2588,7 +2876,7 @@
         "median_advantage": 93.84999999999997,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5541792450981747
+        "line_width": 0.5583310787731305
       },
       {
         "axis": "seconds",
@@ -2600,9 +2888,9 @@
         "loser": "d",
         "effect_intensity": 1.4664595892851324,
         "median_advantage": 265.0,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.4428322216439096
+        "line_width": 1.4823993566094003
       },
       {
         "axis": "seconds",
@@ -2616,7 +2904,7 @@
         "median_advantage": 23.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.48738112752312585
+        "line_width": 0.4888708697833244
       },
       {
         "axis": "seconds",
@@ -2628,9 +2916,9 @@
         "loser": "j",
         "effect_intensity": 1.0895853405396374,
         "median_advantage": 309.45000000000005,
-        "p_holm": 0.29296875,
+        "p_holm": 0.333984375,
         "shown": true,
-        "line_width": 1.1876783119171708
+        "line_width": 1.2170768514613584
       },
       {
         "axis": "seconds",
@@ -2642,7 +2930,7 @@
         "loser": "k",
         "effect_intensity": 1.8904397534974482,
         "median_advantage": 2063.65,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2658,7 +2946,7 @@
         "median_advantage": 52.69999999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8505075931014381
+        "line_width": 0.8664689384783129
       },
       {
         "axis": "seconds",
@@ -2670,9 +2958,9 @@
         "loser": "mi",
         "effect_intensity": 1.2160631228330665,
         "median_advantage": 1237.1999999999998,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.2733071410376466
+        "line_width": 1.3061182284070214
       },
       {
         "axis": "seconds",
@@ -2684,9 +2972,23 @@
         "loser": "mr",
         "effect_intensity": 2.3627322325858913,
         "median_advantage": 3991.3,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "seconds",
+        "a": "d",
+        "b": "n",
+        "n": 10,
+        "p": 0.083984375,
+        "winner": "n",
+        "loser": "d",
+        "effect_intensity": 0.3943175355681417,
+        "median_advantage": 185.75,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.7276027194986008
       },
       {
         "axis": "seconds",
@@ -2700,7 +3002,7 @@
         "median_advantage": 93.89999999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8092648015528481
+        "line_width": 0.8235825065804456
       },
       {
         "axis": "seconds",
@@ -2712,9 +3014,9 @@
         "loser": "e3",
         "effect_intensity": 1.0171016100169734,
         "median_advantage": 323.55,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
-        "line_width": 1.1386048947335878
+        "line_width": 1.1660477216421543
       },
       {
         "axis": "seconds",
@@ -2726,9 +3028,9 @@
         "loser": "f",
         "effect_intensity": 1.2502687601359184,
         "median_advantage": 302.1,
-        "p_holm": 0.234375,
-        "shown": true,
-        "line_width": 1.2964652690380856
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.3301992724411729
       },
       {
         "axis": "seconds",
@@ -2742,7 +3044,7 @@
         "median_advantage": 31.3,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7005461977039987
+        "line_width": 0.710531162941358
       },
       {
         "axis": "seconds",
@@ -2754,9 +3056,9 @@
         "loser": "i",
         "effect_intensity": 1.1516048188086199,
         "median_advantage": 276.44999999999993,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
-        "line_width": 1.2296671514630368
+        "line_width": 1.2607390634513667
       },
       {
         "axis": "seconds",
@@ -2768,7 +3070,7 @@
         "loser": "j",
         "effect_intensity": 2.1859764870685523,
         "median_advantage": 529.85,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2782,7 +3084,7 @@
         "loser": "k",
         "effect_intensity": 2.986830900026363,
         "median_advantage": 2496.0,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2798,7 +3100,7 @@
         "median_advantage": 137.14999999999998,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.7917784308384728
+        "line_width": 0.8053992551897293
       },
       {
         "axis": "seconds",
@@ -2810,7 +3112,7 @@
         "loser": "mi",
         "effect_intensity": 2.3124542693619814,
         "median_advantage": 1634.0,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2824,9 +3126,23 @@
         "loser": "mr",
         "effect_intensity": 3.459123379114806,
         "median_advantage": 4423.65,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "seconds",
+        "a": "d2",
+        "b": "n",
+        "n": 10,
+        "p": 0.037109375,
+        "winner": "d2",
+        "loser": "n",
+        "effect_intensity": 0.7020736109607733,
+        "median_advantage": 55.699999999999996,
+        "p_holm": 1,
+        "shown": true,
+        "line_width": 0.9442654741694417
       },
       {
         "axis": "seconds",
@@ -2838,9 +3154,9 @@
         "loser": "e3",
         "effect_intensity": 0.48645070864166146,
         "median_advantage": 209.7,
-        "p_holm": 0.62890625,
+        "p_holm": 0.724609375,
         "shown": true,
-        "line_width": 0.7793400931807397
+        "line_width": 0.7924652150617089
       },
       {
         "axis": "seconds",
@@ -2854,7 +3170,7 @@
         "median_advantage": 288.85,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.9372004674852377
+        "line_width": 0.9566167658607274
       },
       {
         "axis": "seconds",
@@ -2868,7 +3184,7 @@
         "median_advantage": 242.79999999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.0598109992568467
+        "line_width": 1.0841136695218037
       },
       {
         "axis": "seconds",
@@ -2882,7 +3198,7 @@
         "median_advantage": 209.5,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8704023499101887
+        "line_width": 0.8871565568709212
       },
       {
         "axis": "seconds",
@@ -2894,7 +3210,7 @@
         "loser": "j",
         "effect_intensity": 1.6553255856932403,
         "median_advantage": 385.54999999999995,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2908,7 +3224,7 @@
         "loser": "k",
         "effect_intensity": 2.4561799986510513,
         "median_advantage": 2526.05,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2924,7 +3240,7 @@
         "median_advantage": 49.45,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.46748637071437527
+        "line_width": 0.4681832513907162
       },
       {
         "axis": "seconds",
@@ -2936,7 +3252,7 @@
         "loser": "mi",
         "effect_intensity": 1.7818033679866694,
         "median_advantage": 1495.5,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -2950,9 +3266,23 @@
         "loser": "mr",
         "effect_intensity": 2.928472477739494,
         "median_advantage": 4453.7,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "seconds",
+        "a": "e2",
+        "b": "n",
+        "n": 10,
+        "p": 0.921875,
+        "winner": "n",
+        "loser": "e2",
+        "effect_intensity": 0.17142270958546119,
+        "median_advantage": 42.94999999999999,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.5706829675889962
       },
       {
         "axis": "seconds",
@@ -2966,7 +3296,7 @@
         "median_advantage": 131.0,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6078603743044977
+        "line_width": 0.6141515507990185
       },
       {
         "axis": "seconds",
@@ -2978,9 +3308,9 @@
         "loser": "e3",
         "effect_intensity": 1.3871700527731912,
         "median_advantage": 411.65,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
-        "line_width": 1.3891510924375867
+        "line_width": 1.4265788845835123
       },
       {
         "axis": "seconds",
@@ -2994,7 +3324,7 @@
         "median_advantage": 6.4500000000000455,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.541062256729449
+        "line_width": 0.5446913418092123
       },
       {
         "axis": "seconds",
@@ -3006,9 +3336,9 @@
         "loser": "j",
         "effect_intensity": 1.1688748770515789,
         "median_advantage": 252.30000000000007,
-        "p_holm": 0.458984375,
+        "p_holm": 0.52734375,
         "shown": true,
-        "line_width": 1.2413594411234938
+        "line_width": 1.2728973234872463
       },
       {
         "axis": "seconds",
@@ -3020,7 +3350,7 @@
         "loser": "k",
         "effect_intensity": 1.96972929000939,
         "median_advantage": 2444.3,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -3034,9 +3364,9 @@
         "loser": "e3",
         "effect_intensity": 0.5122788953753988,
         "median_advantage": 190.3,
-        "p_holm": 0.859375,
+        "p_holm": 0.99609375,
         "shown": true,
-        "line_width": 0.796826463895115
+        "line_width": 0.8106484664524249
       },
       {
         "axis": "seconds",
@@ -3048,9 +3378,9 @@
         "loser": "mi",
         "effect_intensity": 1.295352659345008,
         "median_advantage": 1315.4499999999998,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.3269882702439697
+        "line_width": 1.3619387004329095
       },
       {
         "axis": "seconds",
@@ -3062,9 +3392,23 @@
         "loser": "mr",
         "effect_intensity": 2.4420217690978325,
         "median_advantage": 4371.95,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "seconds",
+        "a": "e3",
+        "b": "n",
+        "n": 10,
+        "p": 0.232421875,
+        "winner": "n",
+        "loser": "e3",
+        "effect_intensity": 0.3150279990562004,
+        "median_advantage": 235.8,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.6717822474727129
       },
       {
         "axis": "seconds",
@@ -3076,8 +3420,8 @@
         "loser": "f",
         "effect_intensity": 1.6203372028921361,
         "median_advantage": 442.6,
-        "p_holm": 0.234375,
-        "shown": true,
+        "p_holm": 0.265625,
+        "shown": false,
         "line_width": 1.5
       },
       {
@@ -3092,7 +3436,7 @@
         "median_advantage": -70.89999999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5167981175750488
+        "line_width": 0.5194602089898062
       },
       {
         "axis": "seconds",
@@ -3106,7 +3450,7 @@
         "median_advantage": 360.5,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.083499066818996
+        "line_width": 1.1087457726882277
       },
       {
         "axis": "seconds",
@@ -3118,7 +3462,7 @@
         "loser": "k",
         "effect_intensity": 1.7365621398904447,
         "median_advantage": 2237.2,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -3134,7 +3478,7 @@
         "median_advantage": 142.95000000000005,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9546868381996128
+        "line_width": 0.9748000172514435
       },
       {
         "axis": "seconds",
@@ -3146,9 +3490,9 @@
         "loser": "mi",
         "effect_intensity": 1.062185509226063,
         "median_advantage": 1073.7999999999997,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.169127895939472
+        "line_width": 1.197787149633891
       },
       {
         "axis": "seconds",
@@ -3160,9 +3504,23 @@
         "loser": "mr",
         "effect_intensity": 2.208854618978888,
         "median_advantage": 4164.85,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "seconds",
+        "a": "f",
+        "b": "n",
+        "n": 10,
+        "p": 0.037109375,
+        "winner": "n",
+        "loser": "f",
+        "effect_intensity": 0.5481951491751452,
+        "median_advantage": 306.45000000000005,
+        "p_holm": 1,
+        "shown": true,
+        "line_width": 0.8359337982717312
       },
       {
         "axis": "seconds",
@@ -3174,9 +3532,9 @@
         "loser": "i",
         "effect_intensity": 1.5216732615648376,
         "median_advantage": 471.15,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
-        "line_width": 1.4802133491670355
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3188,7 +3546,7 @@
         "loser": "j",
         "effect_intensity": 2.55604492982477,
         "median_advantage": 561.1500000000001,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -3202,7 +3560,7 @@
         "loser": "k",
         "effect_intensity": 3.356899342782581,
         "median_advantage": 2664.0,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -3218,7 +3576,7 @@
         "median_advantage": 172.8,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.0423246285424717
+        "line_width": 1.0659304181310874
       },
       {
         "axis": "seconds",
@@ -3230,7 +3588,7 @@
         "loser": "mi",
         "effect_intensity": 2.682522712118199,
         "median_advantage": 1701.0,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -3244,9 +3602,23 @@
         "loser": "mr",
         "effect_intensity": 3.829191821871024,
         "median_advantage": 4591.65,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "seconds",
+        "a": "g",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "g",
+        "loser": "n",
+        "effect_intensity": 1.0721420537169908,
+        "median_advantage": 142.75,
+        "p_holm": 0.265625,
+        "shown": true,
+        "line_width": 1.2047966371107997
       },
       {
         "axis": "seconds",
@@ -3260,7 +3632,7 @@
         "median_advantage": 291.15000000000003,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.1502971843940448
+        "line_width": 1.178205981678034
       },
       {
         "axis": "seconds",
@@ -3272,7 +3644,7 @@
         "loser": "k",
         "effect_intensity": 1.8352260812177432,
         "median_advantage": 1928.45,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -3288,7 +3660,7 @@
         "median_advantage": 101.64999999999998,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.887888720624564
+        "line_width": 0.9053398082616375
       },
       {
         "axis": "seconds",
@@ -3300,9 +3672,9 @@
         "loser": "mi",
         "effect_intensity": 1.1608494505533615,
         "median_advantage": 1417.7,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.235926013514521
+        "line_width": 1.2672473586236972
       },
       {
         "axis": "seconds",
@@ -3314,9 +3686,23 @@
         "loser": "mr",
         "effect_intensity": 2.3075185603061863,
         "median_advantage": 3853.05,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "seconds",
+        "a": "i",
+        "b": "n",
+        "n": 10,
+        "p": 0.048828125,
+        "winner": "n",
+        "loser": "i",
+        "effect_intensity": 0.4495312078478468,
+        "median_advantage": 148.0,
+        "p_holm": 1,
+        "shown": true,
+        "line_width": 0.7664735892819251
       },
       {
         "axis": "seconds",
@@ -3330,7 +3716,7 @@
         "median_advantage": 1742.7,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.9921997795505795
+        "line_width": 1.0138079540115326
       },
       {
         "axis": "seconds",
@@ -3342,7 +3728,7 @@
         "loser": "j",
         "effect_intensity": 1.6811537724269778,
         "median_advantage": 476.65,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -3358,7 +3744,7 @@
         "median_advantage": 729.0000000000001,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.535628829120476
+        "line_width": 0.5390413769456633
       },
       {
         "axis": "seconds",
@@ -3372,7 +3758,21 @@
         "median_advantage": 3670.3500000000004,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.311954374020974
+        "line_width": 1.346305661486758
+      },
+      {
+        "axis": "seconds",
+        "a": "j",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "j",
+        "effect_intensity": 1.4839028761077793,
+        "median_advantage": 472.99999999999994,
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.494679570959959
       },
       {
         "axis": "seconds",
@@ -3384,7 +3784,7 @@
         "loser": "k",
         "effect_intensity": 2.4820081853847884,
         "median_advantage": 2380.15,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -3398,9 +3798,9 @@
         "loser": "k",
         "effect_intensity": 0.6743766306643817,
         "median_advantage": 1006.9999999999999,
-        "p_holm": 0.29296875,
+        "p_holm": 0.333984375,
         "shown": true,
-        "line_width": 0.9065709504301036
+        "line_width": 0.9247665770658693
       },
       {
         "axis": "seconds",
@@ -3414,7 +3814,21 @@
         "median_advantage": 382.89999999999975,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7697545944703943
+        "line_width": 0.7824977074752255
+      },
+      {
+        "axis": "seconds",
+        "a": "k",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "k",
+        "effect_intensity": 2.28475728906559,
+        "median_advantage": 2156.7,
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.5
       },
       {
         "axis": "seconds",
@@ -3426,7 +3840,7 @@
         "loser": "mi",
         "effect_intensity": 1.807631554720407,
         "median_advantage": 1358.5499999999997,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -3440,9 +3854,23 @@
         "loser": "mr",
         "effect_intensity": 2.9543006644732315,
         "median_advantage": 4307.8,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "seconds",
+        "a": "l",
+        "b": "n",
+        "n": 10,
+        "p": 1.0,
+        "winner": "l",
+        "loser": "n",
+        "effect_intensity": 0.1972508963191986,
+        "median_advantage": -31.950000000000003,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.5888662189797123
       },
       {
         "axis": "seconds",
@@ -3456,7 +3884,35 @@
         "median_advantage": 2323.65,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.226325544900498
+        "line_width": 1.2572642845410948
+      },
+      {
+        "axis": "seconds",
+        "a": "mi",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "mi",
+        "effect_intensity": 1.6103806584012084,
+        "median_advantage": 1348.5,
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.5
+      },
+      {
+        "axis": "seconds",
+        "a": "mr",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "mr",
+        "effect_intensity": 2.757049768154033,
+        "median_advantage": 4084.35,
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.5
       }
     ],
     "edges": [
@@ -3553,6 +4009,10 @@
         "mr"
       ],
       [
+        "d2",
+        "n"
+      ],
+      [
         "e2",
         "a"
       ],
@@ -3709,6 +4169,10 @@
         "mr"
       ],
       [
+        "g",
+        "n"
+      ],
+      [
         "i",
         "a"
       ],
@@ -3806,6 +4270,46 @@
       ],
       [
         "mi",
+        "mr"
+      ],
+      [
+        "n",
+        "a"
+      ],
+      [
+        "n",
+        "b"
+      ],
+      [
+        "n",
+        "b2"
+      ],
+      [
+        "n",
+        "b3"
+      ],
+      [
+        "n",
+        "f"
+      ],
+      [
+        "n",
+        "i"
+      ],
+      [
+        "n",
+        "j"
+      ],
+      [
+        "n",
+        "k"
+      ],
+      [
+        "n",
+        "mi"
+      ],
+      [
+        "n",
         "mr"
       ]
     ],
@@ -3840,11 +4344,11 @@
       ],
       [
         "d2",
-        "f"
+        "l"
       ],
       [
         "d2",
-        "l"
+        "n"
       ],
       [
         "e2",
@@ -3892,11 +4396,11 @@
       ],
       [
         "g",
-        "f"
+        "l"
       ],
       [
         "g",
-        "l"
+        "n"
       ],
       [
         "i",
@@ -3949,6 +4453,14 @@
       [
         "mi",
         "mr"
+      ],
+      [
+        "n",
+        "f"
+      ],
+      [
+        "n",
+        "i"
       ]
     ],
     "holm_edges": []
@@ -3965,9 +4477,9 @@
         "loser": "a",
         "effect_intensity": 0.4827632360336565,
         "median_advantage": 0.05034033,
-        "p_holm": 0.328125,
+        "p_holm": 0.375,
         "shown": true,
-        "line_width": 0.7999427035863743
+        "line_width": 0.8033765731151266
       },
       {
         "axis": "cost_usd",
@@ -3981,7 +4493,7 @@
         "median_advantage": 0.03562470000000001,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6862472135060538
+        "line_width": 0.6885654276005244
       },
       {
         "axis": "cost_usd",
@@ -3995,7 +4507,7 @@
         "median_advantage": 0.05316588000000002,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.7941541800783329
+        "line_width": 0.7975312487814441
       },
       {
         "axis": "cost_usd",
@@ -4007,7 +4519,7 @@
         "loser": "d",
         "effect_intensity": 2.2843094994175845,
         "median_advantage": 0.6845248999999999,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4021,9 +4533,9 @@
         "loser": "d2",
         "effect_intensity": 1.0538150944666536,
         "median_advantage": 0.17358439999999997,
-        "p_holm": 0.5078125,
+        "p_holm": 0.5859375,
         "shown": true,
-        "line_width": 1.2138835679941493
+        "line_width": 1.2213792993832226
       },
       {
         "axis": "cost_usd",
@@ -4037,7 +4549,7 @@
         "median_advantage": 0.06412802999999996,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6369604101378725
+        "line_width": 0.6387949894815078
       },
       {
         "axis": "cost_usd",
@@ -4049,9 +4561,9 @@
         "loser": "e3",
         "effect_intensity": 0.8950837160025528,
         "median_advantage": 0.22792447,
-        "p_holm": 0.2421875,
+        "p_holm": 0.2734375,
         "shown": true,
-        "line_width": 1.098823257726764
+        "line_width": 1.105189941162139
       },
       {
         "axis": "cost_usd",
@@ -4063,7 +4575,7 @@
         "loser": "f",
         "effect_intensity": 2.092452561870734,
         "median_advantage": 0.42718976999999997,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4079,7 +4591,7 @@
         "median_advantage": 0.04988976999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.920609101696656
+        "line_width": 0.9252270298251981
       },
       {
         "axis": "cost_usd",
@@ -4093,7 +4605,7 @@
         "median_advantage": 0.031721520000000045,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5169492999729086
+        "line_width": 0.5176062508359847
       },
       {
         "axis": "cost_usd",
@@ -4107,7 +4619,7 @@
         "median_advantage": 0.06496593999999997,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.9242994918127241
+        "line_width": 0.9289536324927465
       },
       {
         "axis": "cost_usd",
@@ -4121,7 +4633,7 @@
         "median_advantage": 0.05798799000000003,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6443149696292717
+        "line_width": 0.6462217167805969
       },
       {
         "axis": "cost_usd",
@@ -4133,9 +4645,9 @@
         "loser": "a",
         "effect_intensity": 1.409357238953173,
         "median_advantage": 0.10162195000000004,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
-        "line_width": 1.471606961147964
+        "line_width": 1.4816316451270695
       },
       {
         "axis": "cost_usd",
@@ -4147,7 +4659,7 @@
         "loser": "mi",
         "effect_intensity": 2.395221760303779,
         "median_advantage": 1.0814618355220385,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4161,9 +4673,23 @@
         "loser": "mr",
         "effect_intensity": 3.6906089864344285,
         "median_advantage": 1.92247107624663,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "a",
+        "b": "n",
+        "n": 10,
+        "p": 0.083984375,
+        "winner": "n",
+        "loser": "a",
+        "effect_intensity": 0.23276835904899879,
+        "median_advantage": 0.07406023000000003,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.6203834901061771
       },
       {
         "axis": "cost_usd",
@@ -4177,7 +4703,7 @@
         "median_advantage": 0.023757390000000003,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5636954900803205
+        "line_width": 0.5648111455146021
       },
       {
         "axis": "cost_usd",
@@ -4191,7 +4717,7 @@
         "median_advantage": 0.005129459999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.45578852350804144
+        "line_width": 0.45584532433368236
       },
       {
         "axis": "cost_usd",
@@ -4203,7 +4729,7 @@
         "loser": "d",
         "effect_intensity": 2.767072735451241,
         "median_advantage": 0.7329421999999999,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4217,7 +4743,7 @@
         "loser": "d2",
         "effect_intensity": 1.53657833050031,
         "median_advantage": 0.24086333,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4233,7 +4759,7 @@
         "median_advantage": 0.1391922,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.9869031137242468
+        "line_width": 0.9921715625966343
       },
       {
         "axis": "cost_usd",
@@ -4245,9 +4771,9 @@
         "loser": "e3",
         "effect_intensity": 1.3778469520362093,
         "median_advantage": 0.27563382999999997,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
-        "line_width": 1.4487659613131385
+        "line_width": 1.4585665142772655
       },
       {
         "axis": "cost_usd",
@@ -4259,7 +4785,7 @@
         "loser": "f",
         "effect_intensity": 2.575215797904391,
         "median_advantage": 0.45358382999999997,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4273,9 +4799,9 @@
         "loser": "g",
         "effect_intensity": 1.1319917254794811,
         "median_advantage": 0.05384463999999997,
-        "p_holm": 0.328125,
+        "p_holm": 0.375,
         "shown": false,
-        "line_width": 1.2705518052830302
+        "line_width": 1.2786036029403245
       },
       {
         "axis": "cost_usd",
@@ -4289,7 +4815,7 @@
         "median_advantage": 0.03479219999999998,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.7329934036134658
+        "line_width": 0.7357703222791419
       },
       {
         "axis": "cost_usd",
@@ -4303,7 +4829,7 @@
         "median_advantage": 0.10361332999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.2742421953990986
+        "line_width": 1.2823302056078731
       },
       {
         "axis": "cost_usd",
@@ -4317,7 +4843,7 @@
         "median_advantage": 0.0039946399999999695,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6056277339571028
+        "line_width": 0.6071548563345297
       },
       {
         "axis": "cost_usd",
@@ -4329,9 +4855,9 @@
         "loser": "b",
         "effect_intensity": 0.9265940029195164,
         "median_advantage": 0.04149416000000002,
-        "p_holm": 0.87890625,
+        "p_holm": 1,
         "shown": true,
-        "line_width": 1.1216642575615896
+        "line_width": 1.1282550720119429
       },
       {
         "axis": "cost_usd",
@@ -4343,7 +4869,7 @@
         "loser": "mi",
         "effect_intensity": 2.8779849963374353,
         "median_advantage": 1.1325101055220386,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4357,9 +4883,23 @@
         "loser": "mr",
         "effect_intensity": 4.173372222468085,
         "median_advantage": 2.04902880624663,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "b",
+        "b": "n",
+        "n": 10,
+        "p": 1.0,
+        "winner": "n",
+        "loser": "b",
+        "effect_intensity": 0.24999487698465758,
+        "median_advantage": 0.03996617000000002,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.6329930830089493
       },
       {
         "axis": "cost_usd",
@@ -4373,7 +4913,7 @@
         "median_advantage": 0.024912450000000003,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5579069665722791
+        "line_width": 0.5589658211809199
       },
       {
         "axis": "cost_usd",
@@ -4385,7 +4925,7 @@
         "loser": "d",
         "effect_intensity": 2.610224193815452,
         "median_advantage": 0.7071913999999999,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4399,9 +4939,9 @@
         "loser": "d2",
         "effect_intensity": 1.379729788864521,
         "median_advantage": 0.21584076999999996,
-        "p_holm": 0.5078125,
+        "p_holm": 0.5859375,
         "shown": false,
-        "line_width": 1.450130781500203
+        "line_width": 1.459944726983747
       },
       {
         "axis": "cost_usd",
@@ -4415,7 +4955,7 @@
         "median_advantage": 0.10782295999999995,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.8732076236439263
+        "line_width": 0.8773604170820322
       },
       {
         "axis": "cost_usd",
@@ -4427,9 +4967,9 @@
         "loser": "e3",
         "effect_intensity": 1.2209984104004203,
         "median_advantage": 0.26145627999999993,
-        "p_holm": 0.328125,
+        "p_holm": 0.375,
         "shown": false,
-        "line_width": 1.335070471232818
+        "line_width": 1.3437553687626633
       },
       {
         "axis": "cost_usd",
@@ -4441,7 +4981,7 @@
         "loser": "f",
         "effect_intensity": 2.418367256268602,
         "median_advantage": 0.44134185,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4457,7 +4997,7 @@
         "median_advantage": 0.06795789999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1568563152027098
+        "line_width": 1.1637924574257223
       },
       {
         "axis": "cost_usd",
@@ -4471,7 +5011,7 @@
         "median_advantage": 0.02129184999999998,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6192979135331451
+        "line_width": 0.6209591767645396
       },
       {
         "axis": "cost_usd",
@@ -4485,7 +5025,7 @@
         "median_advantage": 0.07944184999999998,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.160546705318778
+        "line_width": 1.1675190600932708
       },
       {
         "axis": "cost_usd",
@@ -4499,7 +5039,7 @@
         "median_advantage": 0.008478280000000019,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.4919322438767822
+        "line_width": 0.4923437108199275
       },
       {
         "axis": "cost_usd",
@@ -4511,9 +5051,9 @@
         "loser": "b2",
         "effect_intensity": 1.0834425445553053,
         "median_advantage": 0.08009255000000003,
-        "p_holm": 0.2421875,
+        "p_holm": 0.2734375,
         "shown": true,
-        "line_width": 1.23535974764191
+        "line_width": 1.243066217526545
       },
       {
         "axis": "cost_usd",
@@ -4525,7 +5065,7 @@
         "loser": "mi",
         "effect_intensity": 2.7211364547016466,
         "median_advantage": 1.0810188555220384,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4539,9 +5079,23 @@
         "loser": "mr",
         "effect_intensity": 4.016523680832296,
         "median_advantage": 2.02067601624663,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "b2",
+        "b": "n",
+        "n": 10,
+        "p": 0.845703125,
+        "winner": "n",
+        "loser": "b2",
+        "effect_intensity": 0.09314633534886858,
+        "median_advantage": 0.06515923000000001,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.5181819374943473
       },
       {
         "axis": "cost_usd",
@@ -4553,7 +5107,7 @@
         "loser": "d",
         "effect_intensity": 2.7590871814963798,
         "median_advantage": 0.7376907799999999,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4567,7 +5121,7 @@
         "loser": "d2",
         "effect_intensity": 1.528592776545449,
         "median_advantage": 0.25373626,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4583,7 +5137,7 @@
         "median_advantage": 0.13219099999999995,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.9811145902162055
+        "line_width": 0.9863262382629518
       },
       {
         "axis": "cost_usd",
@@ -4595,9 +5149,9 @@
         "loser": "e3",
         "effect_intensity": 1.369861398081348,
         "median_advantage": 0.29172601,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
-        "line_width": 1.4429774378050968
+        "line_width": 1.452721189943583
       },
       {
         "axis": "cost_usd",
@@ -4609,7 +5163,7 @@
         "loser": "f",
         "effect_intensity": 2.56723024394953,
         "median_advantage": 0.47398626,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4623,9 +5177,9 @@
         "loser": "g",
         "effect_intensity": 1.12400617152462,
         "median_advantage": 0.09668625999999998,
-        "p_holm": 0.5078125,
+        "p_holm": 0.5859375,
         "shown": false,
-        "line_width": 1.2647632817749885
+        "line_width": 1.272758278606642
       },
       {
         "axis": "cost_usd",
@@ -4639,7 +5193,7 @@
         "median_advantage": 0.04866865999999995,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.7272048801054243
+        "line_width": 0.7299249979454594
       },
       {
         "axis": "cost_usd",
@@ -4651,9 +5205,9 @@
         "loser": "j",
         "effect_intensity": 1.1290972468818177,
         "median_advantage": 0.10644450999999998,
-        "p_holm": 0.5078125,
+        "p_holm": 0.5859375,
         "shown": false,
-        "line_width": 1.2684536718910568
+        "line_width": 1.2764848812741907
       },
       {
         "axis": "cost_usd",
@@ -4667,7 +5221,7 @@
         "median_advantage": 0.009733239999999983,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5998392104490613
+        "line_width": 0.6013095320008472
       },
       {
         "axis": "cost_usd",
@@ -4679,9 +5233,9 @@
         "loser": "b3",
         "effect_intensity": 0.9345795568743777,
         "median_advantage": 0.03610651000000002,
-        "p_holm": 0.87890625,
+        "p_holm": 1,
         "shown": true,
-        "line_width": 1.127452781069631
+        "line_width": 1.1341003963456253
       },
       {
         "axis": "cost_usd",
@@ -4693,7 +5247,7 @@
         "loser": "mi",
         "effect_intensity": 2.869999442382574,
         "median_advantage": 1.1053868955220385,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4707,9 +5261,23 @@
         "loser": "mr",
         "effect_intensity": 4.165386668513224,
         "median_advantage": 2.04319554624663,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "b3",
+        "b": "n",
+        "n": 10,
+        "p": 1.0,
+        "winner": "n",
+        "loser": "b3",
+        "effect_intensity": 0.24200932302979652,
+        "median_advantage": 0.03526001000000002,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.6271477586752671
       },
       {
         "axis": "cost_usd",
@@ -4721,9 +5289,9 @@
         "loser": "d",
         "effect_intensity": 1.230494404950931,
         "median_advantage": 0.45089999999999997,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.3419538744379773
+        "line_width": 1.350706316478047
       },
       {
         "axis": "cost_usd",
@@ -4735,7 +5303,7 @@
         "loser": "d",
         "effect_intensity": 2.0263883835225043,
         "median_advantage": 0.59375,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4749,9 +5317,9 @@
         "loser": "d",
         "effect_intensity": 1.3892257834150314,
         "median_advantage": 0.47679999999999995,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.4570141847053621
+        "line_width": 1.4668956746991304
       },
       {
         "axis": "cost_usd",
@@ -4765,7 +5333,7 @@
         "median_advantage": 0.15684999999999996,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.589072179519209
+        "line_width": 0.5904368478339187
       },
       {
         "axis": "cost_usd",
@@ -4777,7 +5345,7 @@
         "loser": "d",
         "effect_intensity": 1.6350810099717599,
         "median_advantage": 0.6463999999999999,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4791,7 +5359,7 @@
         "loser": "d",
         "effect_intensity": 2.376669363972188,
         "median_advantage": 0.6981499999999999,
-        "p_holm": 0.2421875,
+        "p_holm": 0.2734375,
         "shown": false,
         "line_width": 1.5
       },
@@ -4805,7 +5373,7 @@
         "loser": "d",
         "effect_intensity": 1.6299899346145623,
         "median_advantage": 0.6069,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4819,7 +5387,7 @@
         "loser": "d",
         "effect_intensity": 2.5523765932207128,
         "median_advantage": 0.71445,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4833,7 +5401,7 @@
         "loser": "d",
         "effect_intensity": 3.6936667383707573,
         "median_advantage": 0.77945,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4849,7 +5417,7 @@
         "median_advantage": 0.2549323785236727,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5303974568450492
+        "line_width": 0.5311863699283055
       },
       {
         "axis": "cost_usd",
@@ -4861,9 +5429,23 @@
         "loser": "mr",
         "effect_intensity": 1.4062994870168442,
         "median_advantage": 1.4366838901426933,
-        "p_holm": 0.62890625,
+        "p_holm": 0.73828125,
         "shown": true,
-        "line_width": 1.4693904750951179
+        "line_width": 1.4793934094453847
+      },
+      {
+        "axis": "cost_usd",
+        "a": "d",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "d",
+        "effect_intensity": 2.517077858466583,
+        "median_advantage": 0.77545,
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -4877,7 +5459,7 @@
         "median_advantage": 0.11580000000000001,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.0269231578562767
+        "line_width": 1.032584309901715
       },
       {
         "axis": "cost_usd",
@@ -4891,7 +5473,7 @@
         "median_advantage": 6.938893903907228e-18,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5650603102673851
+        "line_width": 0.5661893582210837
       },
       {
         "axis": "cost_usd",
@@ -4903,9 +5485,9 @@
         "loser": "f",
         "effect_intensity": 1.0386374674040808,
         "median_advantage": 0.3193,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.2028816949187684
+        "line_width": 1.2102694686441284
       },
       {
         "axis": "cost_usd",
@@ -4917,9 +5499,9 @@
         "loser": "d2",
         "effect_intensity": 0.40458660502082894,
         "median_advantage": 0.08095000000000002,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 0.7432744662974934
+        "line_width": 0.7461522695580247
       },
       {
         "axis": "cost_usd",
@@ -4931,9 +5513,9 @@
         "loser": "d2",
         "effect_intensity": 1.1461749590212573,
         "median_advantage": 0.2222,
-        "p_holm": 0.5078125,
+        "p_holm": 0.5859375,
         "shown": false,
-        "line_width": 1.280832867967058
+        "line_width": 1.2889855502192076
       },
       {
         "axis": "cost_usd",
@@ -4947,7 +5529,7 @@
         "median_advantage": 0.0839,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.7395840761814252
+        "line_width": 0.7424256668904763
       },
       {
         "axis": "cost_usd",
@@ -4959,9 +5541,9 @@
         "loser": "d2",
         "effect_intensity": 1.3218821882697818,
         "median_advantage": 0.17875,
-        "p_holm": 0.87890625,
+        "p_holm": 1,
         "shown": true,
-        "line_width": 1.408198537623421
+        "line_width": 1.4176010161638197
       },
       {
         "axis": "cost_usd",
@@ -4973,7 +5555,7 @@
         "loser": "d2",
         "effect_intensity": 2.4631723334198266,
         "median_advantage": 0.2788,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -4987,9 +5569,9 @@
         "loser": "mi",
         "effect_intensity": 1.3414066658371253,
         "median_advantage": 0.8489458955220384,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.4223513312830265
+        "line_width": 1.4318926864063524
       },
       {
         "axis": "cost_usd",
@@ -5001,9 +5583,23 @@
         "loser": "mr",
         "effect_intensity": 2.636793891967775,
         "median_advantage": 1.82972152624663,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "d2",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "d2",
+        "effect_intensity": 1.2865834535156524,
+        "median_advantage": 0.22475,
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.3917627894893998
       },
       {
         "axis": "cost_usd",
@@ -5015,9 +5611,9 @@
         "loser": "e3",
         "effect_intensity": 0.6371626001074726,
         "median_advantage": 0.11694999999999998,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 0.9118628475888917
+        "line_width": 0.9163949516806313
       },
       {
         "axis": "cost_usd",
@@ -5029,7 +5625,7 @@
         "loser": "f",
         "effect_intensity": 1.834531445975654,
         "median_advantage": 0.36025,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5045,7 +5641,7 @@
         "median_advantage": 0.008700000000000006,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7336486915587834
+        "line_width": 0.7364320403436903
       },
       {
         "axis": "cost_usd",
@@ -5059,7 +5655,7 @@
         "median_advantage": 0.10885,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7039097101107811
+        "line_width": 0.7064012403174925
       },
       {
         "axis": "cost_usd",
@@ -5073,7 +5669,7 @@
         "median_advantage": 0.013149999999999995,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.7373390816748516
+        "line_width": 0.7401586430112388
       },
       {
         "axis": "cost_usd",
@@ -5087,7 +5683,7 @@
         "median_advantage": 0.06295,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.8312753797671439
+        "line_width": 0.8350167062621046
       },
       {
         "axis": "cost_usd",
@@ -5099,7 +5695,7 @@
         "loser": "e2",
         "effect_intensity": 1.6672783548482533,
         "median_advantage": 0.1857,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5113,7 +5709,7 @@
         "loser": "mi",
         "effect_intensity": 2.1373006444086986,
         "median_advantage": 0.9731958955220384,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5127,9 +5723,23 @@
         "loser": "mr",
         "effect_intensity": 3.432687870539348,
         "median_advantage": 1.94672152624663,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "e2",
+        "b": "n",
+        "n": 10,
+        "p": 0.080078125,
+        "winner": "n",
+        "loser": "e2",
+        "effect_intensity": 0.490689474944079,
+        "median_advantage": 0.13465,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.8091784795876849
       },
       {
         "axis": "cost_usd",
@@ -5141,9 +5751,9 @@
         "loser": "f",
         "effect_intensity": 1.1973688458681815,
         "median_advantage": 0.28115,
-        "p_holm": 0.2421875,
+        "p_holm": 0.2734375,
         "shown": true,
-        "line_width": 1.3179420051861535
+        "line_width": 1.326458826865212
       },
       {
         "axis": "cost_usd",
@@ -5157,7 +5767,7 @@
         "median_advantage": 0.08025,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6282141560301082
+        "line_width": 0.629962911336941
       },
       {
         "axis": "cost_usd",
@@ -5169,9 +5779,9 @@
         "loser": "e3",
         "effect_intensity": 0.9874435805571565,
         "median_advantage": 0.2421,
-        "p_holm": 0.328125,
+        "p_holm": 0.375,
         "shown": true,
-        "line_width": 1.1657725576996727
+        "line_width": 1.1727961919981238
       },
       {
         "axis": "cost_usd",
@@ -5185,7 +5795,7 @@
         "median_advantage": 0.11439999999999999,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.6245237659140399
+        "line_width": 0.6262363086693925
       },
       {
         "axis": "cost_usd",
@@ -5197,9 +5807,9 @@
         "loser": "e3",
         "effect_intensity": 1.1631508098056809,
         "median_advantage": 0.23764999999999997,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": true,
-        "line_width": 1.2931382273560357
+        "line_width": 1.3014116579427357
       },
       {
         "axis": "cost_usd",
@@ -5211,7 +5821,7 @@
         "loser": "e3",
         "effect_intensity": 2.3044409549557257,
         "median_advantage": 0.313,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5225,7 +5835,7 @@
         "loser": "mi",
         "effect_intensity": 1.5001380443012262,
         "median_advantage": 0.8385958955220385,
-        "p_holm": 0.2421875,
+        "p_holm": 0.2734375,
         "shown": true,
         "line_width": 1.5
       },
@@ -5239,9 +5849,23 @@
         "loser": "mr",
         "effect_intensity": 2.7955252704318756,
         "median_advantage": 1.80852152624663,
-        "p_holm": 0.2421875,
+        "p_holm": 0.2734375,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "e3",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "e3",
+        "effect_intensity": 1.1278520750515517,
+        "median_advantage": 0.27849999999999997,
+        "p_holm": 0.265625,
+        "shown": true,
+        "line_width": 1.2755734312683162
       },
       {
         "axis": "cost_usd",
@@ -5253,9 +5877,9 @@
         "loser": "f",
         "effect_intensity": 1.4432240724249097,
         "median_advantage": 0.40735,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
-        "line_width": 1.4961561612162617
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5267,7 +5891,7 @@
         "loser": "f",
         "effect_intensity": 2.184812426425338,
         "median_advantage": 0.44245,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5281,9 +5905,9 @@
         "loser": "f",
         "effect_intensity": 1.438132997067712,
         "median_advantage": 0.39135,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
-        "line_width": 1.4924657711001934
+        "line_width": 1.5
       },
       {
         "axis": "cost_usd",
@@ -5295,7 +5919,7 @@
         "loser": "f",
         "effect_intensity": 2.3605196556738623,
         "median_advantage": 0.42305,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5309,7 +5933,7 @@
         "loser": "f",
         "effect_intensity": 3.5018098008239074,
         "median_advantage": 0.4965,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5325,7 +5949,7 @@
         "median_advantage": 0.4393155965697558,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.669469636364258
+        "line_width": 0.6716232177622241
       },
       {
         "axis": "cost_usd",
@@ -5337,8 +5961,22 @@
         "loser": "mr",
         "effect_intensity": 1.5981564245636943,
         "median_advantage": 1.5935338901426932,
-        "p_holm": 0.87890625,
+        "p_holm": 1,
         "shown": true,
+        "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "f",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "f",
+        "effect_intensity": 2.325220920919733,
+        "median_advantage": 0.50125,
+        "p_holm": 0.265625,
+        "shown": false,
         "line_width": 1.5
       },
       {
@@ -5353,7 +5991,7 @@
         "median_advantage": 0.07940000000000001,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.9875584016695644
+        "line_width": 0.9928332806611828
       },
       {
         "axis": "cost_usd",
@@ -5367,7 +6005,7 @@
         "median_advantage": 0.007850000000000003,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.4536903901160682
+        "line_width": 0.4537266026675485
       },
       {
         "axis": "cost_usd",
@@ -5381,7 +6019,7 @@
         "median_advantage": 0.049850000000000005,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1149240713259274
+        "line_width": 1.1214487466057947
       },
       {
         "axis": "cost_usd",
@@ -5393,7 +6031,7 @@
         "loser": "g",
         "effect_intensity": 2.0585857283989974,
         "median_advantage": 0.1251,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5407,7 +6045,7 @@
         "loser": "mi",
         "effect_intensity": 1.7459932708579544,
         "median_advantage": 1.0177458955220384,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5421,9 +6059,23 @@
         "loser": "mr",
         "effect_intensity": 3.0413804969886042,
         "median_advantage": 1.9016338901426932,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "g",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "g",
+        "effect_intensity": 0.8819968484948234,
+        "median_advantage": 0.1335,
+        "p_holm": 0.265625,
+        "shown": true,
+        "line_width": 1.095610519931375
       },
       {
         "axis": "cost_usd",
@@ -5437,7 +6089,7 @@
         "median_advantage": 0.0775,
         "p_holm": 1,
         "shown": true,
-        "line_width": 0.9912487917856327
+        "line_width": 0.9965598833287312
       },
       {
         "axis": "cost_usd",
@@ -5451,7 +6103,7 @@
         "median_advantage": 0.0587,
         "p_holm": 1,
         "shown": false,
-        "line_width": 0.5773656696563629
+        "line_width": 0.5786154659446121
       },
       {
         "axis": "cost_usd",
@@ -5463,9 +6115,9 @@
         "loser": "i",
         "effect_intensity": 1.3169973743985692,
         "median_advantage": 0.08105,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
-        "line_width": 1.4046576611750554
+        "line_width": 1.4140253942910845
       },
       {
         "axis": "cost_usd",
@@ -5477,7 +6129,7 @@
         "loser": "mi",
         "effect_intensity": 2.487581624858383,
         "median_advantage": 1.1108458955220386,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5491,9 +6143,23 @@
         "loser": "mr",
         "effect_intensity": 3.7829688509890325,
         "median_advantage": 1.99547152624663,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "i",
+        "b": "n",
+        "n": 10,
+        "p": 0.193359375,
+        "winner": "n",
+        "loser": "i",
+        "effect_intensity": 0.14040849449439508,
+        "median_advantage": 0.0688,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.5527772392701923
       },
       {
         "axis": "cost_usd",
@@ -5507,7 +6173,7 @@
         "median_advantage": 0.064,
         "p_holm": 1,
         "shown": false,
-        "line_width": 1.1186144614419957
+        "line_width": 1.1251753492733434
       },
       {
         "axis": "cost_usd",
@@ -5519,7 +6185,7 @@
         "loser": "j",
         "effect_intensity": 2.063676803756195,
         "median_advantage": 0.14155,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5533,7 +6199,7 @@
         "loser": "mi",
         "effect_intensity": 1.7409021955007566,
         "median_advantage": 1.0005779119262908,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5547,9 +6213,23 @@
         "loser": "mr",
         "effect_intensity": 3.0362894216314062,
         "median_advantage": 1.8662838901426935,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "j",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "j",
+        "effect_intensity": 0.8870879238520211,
+        "median_advantage": 0.14225,
+        "p_holm": 0.265625,
+        "shown": true,
+        "line_width": 1.0993371225989237
       },
       {
         "axis": "cost_usd",
@@ -5561,9 +6241,9 @@
         "loser": "k",
         "effect_intensity": 1.1412901451500448,
         "median_advantage": 0.04395,
-        "p_holm": 0.5078125,
+        "p_holm": 0.5859375,
         "shown": true,
-        "line_width": 1.2772919915186922
+        "line_width": 1.2854099283464726
       },
       {
         "axis": "cost_usd",
@@ -5575,7 +6255,7 @@
         "loser": "mi",
         "effect_intensity": 2.663288854106907,
         "median_advantage": 1.0323655965697558,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5589,9 +6269,23 @@
         "loser": "mr",
         "effect_intensity": 3.9586760802375567,
         "median_advantage": 2.0946715262466302,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "k",
+        "b": "n",
+        "n": 10,
+        "p": 0.845703125,
+        "winner": "n",
+        "loser": "k",
+        "effect_intensity": 0.035298734754129174,
+        "median_advantage": 0.03705,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 0.47583822667441966
       },
       {
         "axis": "cost_usd",
@@ -5603,7 +6297,7 @@
         "loser": "mi",
         "effect_intensity": 3.804578999256952,
         "median_advantage": 1.1837958955220382,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
       },
@@ -5617,9 +6311,23 @@
         "loser": "mr",
         "effect_intensity": 5.099966225387601,
         "median_advantage": 2.09867152624663,
-        "p_holm": 0.234375,
+        "p_holm": 0.265625,
         "shown": false,
         "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "l",
+        "b": "n",
+        "n": 10,
+        "p": 0.359375,
+        "winner": "l",
+        "loser": "n",
+        "effect_intensity": 1.176588879904174,
+        "median_advantage": 0.00014999999999999996,
+        "p_holm": 1,
+        "shown": false,
+        "line_width": 1.311248155020892
       },
       {
         "axis": "cost_usd",
@@ -5633,7 +6341,35 @@
         "median_advantage": 0.32291518478095904,
         "p_holm": 1,
         "shown": true,
-        "line_width": 1.3889930182500687
+        "line_width": 1.3982070395170794
+      },
+      {
+        "axis": "cost_usd",
+        "a": "mi",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "mi",
+        "effect_intensity": 2.627990119352778,
+        "median_advantage": 1.1834458955220386,
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.5
+      },
+      {
+        "axis": "cost_usd",
+        "a": "mr",
+        "b": "n",
+        "n": 10,
+        "p": 0.001953125,
+        "winner": "n",
+        "loser": "mr",
+        "effect_intensity": 3.9233773454834275,
+        "median_advantage": 2.01532152624663,
+        "p_holm": 0.265625,
+        "shown": false,
+        "line_width": 1.5
       }
     ],
     "edges": [
@@ -6004,6 +6740,38 @@
       [
         "mi",
         "mr"
+      ],
+      [
+        "n",
+        "d"
+      ],
+      [
+        "n",
+        "d2"
+      ],
+      [
+        "n",
+        "e3"
+      ],
+      [
+        "n",
+        "f"
+      ],
+      [
+        "n",
+        "g"
+      ],
+      [
+        "n",
+        "j"
+      ],
+      [
+        "n",
+        "mi"
+      ],
+      [
+        "n",
+        "mr"
       ]
     ],
     "reduced": [
@@ -6134,6 +6902,18 @@
       [
         "mi",
         "mr"
+      ],
+      [
+        "n",
+        "e3"
+      ],
+      [
+        "n",
+        "g"
+      ],
+      [
+        "n",
+        "j"
       ]
     ],
     "holm_edges": []
