@@ -1,7 +1,6 @@
 ---
 name: gate-seat
 description: Read-only verify-gate seat; verdict only.
-model: standard
 tools: Read, Grep, Glob, Bash, Write
 ---
 

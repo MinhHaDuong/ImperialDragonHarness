@@ -3,8 +3,9 @@
 Rules:
 - `rules/guards.md` — the baseline both guards; they apply to you whatever
   runtime launched you, bare context or not.
-- `rules/workflow.md` § Delegation — the gate is a reviewer, decorrelated
-  from the coder and below the coder tier; it rules, it never repairs.
+- `rules/workflow.md` § Delegation — the gate is a reviewer; independence means
+  a different model family than the producer
+  (`skills/route/references/decorrelation.md`); it rules, it never repairs.
 - `rules/git.md` — reading state you will act on; inspect another version
   with `git show <ref>:<path>`; working-tree overwrites are banned.
 

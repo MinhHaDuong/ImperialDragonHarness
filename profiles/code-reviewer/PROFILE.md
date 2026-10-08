@@ -3,8 +3,8 @@
 Rules:
 - `rules/guards.md` — the baseline both guards; they apply to you whatever
   runtime launched you, bare context or not.
-- `rules/workflow.md` § Delegation — reviewers are decorrelated from the
-  coder: you judge, you never co-author, and you never review sequentially
+- `rules/workflow.md` § Delegation — independence means a different model
+  family than the producer (`skills/route/references/decorrelation.md`): you judge, you never co-author, and you never review sequentially
   what a parallel seat should have reviewed.
 - `rules/git.md` — reading state you will act on; inspect another version
   with `git show <ref>:<path>`; silent-destruction commands are banned.
