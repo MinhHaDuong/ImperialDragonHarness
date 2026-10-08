@@ -2,7 +2,7 @@
 
 Rapport du 7 octobre 2026, révisé après la beta 0 (PR #1243) et la revue Astra.
 Les changements de présentation et de discussion ont été ratifiés par l’auteur.
-L’instantané numérique et les comparaisons statistiques restent inchangés.
+Les séries de la beta 1 sont préservées. L’instantané inclut désormais N (Haiku 5.5, 8 octobre) ; les figures et comparaisons publiées restent celles du 7 octobre.
 
 Le PDF A4 paysage contient 12 pages : présentation, table des résultats, cinq nuages XY,
 trois DAG de significativité et deux pages de méthode. La perspective du benchmark
@@ -11,6 +11,8 @@ Les PNG sont des aperçus du PDF. Les cycles sont additifs ; SpaceBunny et les
 préliminaires sont exclus.
 
 ## Reproduire les figures
+
+La commande ci-dessous utilise l’instantané courant, incluant N ; elle ne reproduit donc pas à l’identique les figures beta 1 du 7 octobre.
 
 Depuis la racine du dépôt, avec Python et les dépendances de `requirements-dev.txt` :
 
@@ -46,7 +48,7 @@ flèches redondantes. L’absence de flèche ne prouve pas l’équivalence ; un
 indirect n’est pas un test supplémentaire. L’épaisseur indique l’intensité de l’effet.
 Qwen 3, Qwen 3.6 et GPT-6 Sol restent dans les nuages mais sont exclus des DAG.
 
-Holm est calculé séparément sur les 120 comparaisons de chaque axe. Avec dix
+Dans les artefacts beta 1 conservés, Holm est calculé séparément sur les 120 comparaisons de chaque axe. Une régénération incluant N portera ce nombre à 136 ; elle appartient au lot de publication. Avec dix
 paires, le minimum possible de p bilatéral est 2/1024, supérieur au premier
 seuil 0,05/120 : aucune comparaison ne peut franchir cette correction dans ce
 protocole. Les tests nominaux n’établissent donc pas un classement global à 95 %.
