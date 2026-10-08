@@ -84,7 +84,7 @@
       "headless": {
         "template": "pi --no-session -p --model <provider>/<id>[:<thinking>] \"<prompt>\"",
         "families": ["any provider configured in the host's Pi"],
-        "note": "Author 2026-10-08: Anthropic API credits for Max-plan owners are coming, so Pi can call Anthropic once the Claude weekly limit is exhausted. Wrapper ~/.local/bin/pi-haiku (host-local, not in the repo) runs Pi on anthropic/claude-haiku-5-5 only and refuses --model/--provider/--models/--api-key overrides, so no costlier model is reachable through it; the key is read from ~/.config/keys/anthropic.env into that process only. Verified 2026-10-08 after the Max-plan credits arrived: overrides refused; a call succeeded and the JSON events name claude-haiku-5-5. Live door for Haiku only; Pi still has no other Anthropic model through this wrapper. Configured providers differ per host. On padme (2026-10-08) pi --list-models shows only huggingface (76 models) and the local padme seats; anthropic, openai and openrouter report not_ready. Run 'pi --list-models' before routing to Pi.",
+        "note": "Author 2026-10-08: Anthropic API credits for Max-plan owners are coming, so Pi can call Anthropic once the Claude weekly limit is exhausted. Wrapper scripts/pi-haiku (copy it to ~/.local/bin/pi-haiku on a host; the installed copy is host-local) runs Pi on anthropic/claude-haiku-5-5 only and refuses --model/--provider/--models/--api-key overrides, so no costlier model is reachable through it; the key is read from ~/.config/keys/anthropic.env into that process only. Verified 2026-10-08 after the Max-plan credits arrived: overrides refused; a call succeeded and the JSON events name claude-haiku-5-5. Live door for Haiku only; Pi still has no other Anthropic model through this wrapper. Configured providers differ per host. On padme (2026-10-08) pi --list-models shows only huggingface (76 models) and the local padme seats; anthropic, openai and openrouter report not_ready. Run 'pi --list-models' before routing to Pi.",
         "status": "verified 2026-10-08 for anthropic/claude-haiku-5-5 through pi-haiku; other providers per host configuration"
       }
     },
@@ -94,7 +94,7 @@
         "status": "read from the tool schema 2026-10-08; honouring the override not run"
       },
       "headless": {
-        "template": "codex exec --skip-git-repo-check -C <dir> -m <openai-model-id> \"<prompt>\"",
+        "template": "codex exec -s read-only -m <openai-model-id> -o <outfile> - < <promptfile>",
         "families": ["OpenAI"],
         "note": "Under a ChatGPT-account login every non-OpenAI model is rejected (HTTP 400). Read the 'model:' line of the session header; the model's own self-report is wrong (it said gpt-6.1-sol while running gpt-6-luna).",
         "status": "verified 2026-10-08 (-m gpt-6-luna accepted; -m claude-haiku-5-5 rejected)"

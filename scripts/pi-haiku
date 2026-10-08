@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Pi restricted to Haiku 5.5 on the Anthropic API. The key is read from
+# ~/.config/keys/anthropic.env into this process only, never exported to the
+# login environment, so plain `pi` keeps no Anthropic access.
+# Model, provider and key flags are refused: a more expensive model cannot be
+# selected through this wrapper.
+set -euo pipefail
+
+MODEL="claude-haiku-5-5"
+
+for arg in "$@"; do
+  case "$arg" in
+    --model|--model=*|--provider|--provider=*|--models|--models=*|--api-key|--api-key=*)
+      echo "pi-haiku: $arg refused; this wrapper only runs anthropic/$MODEL" >&2
+      exit 2 ;;
+  esac
+done
+
+keyfile="$HOME/.config/keys/anthropic.env"
+[ -r "$keyfile" ] || { echo "pi-haiku: $keyfile not readable" >&2; exit 1; }
+set -a
+# shellcheck disable=SC1090
+. "$keyfile"
+set +a
+[ -n "${ANTHROPIC_API_KEY:-}" ] || { echo "pi-haiku: ANTHROPIC_API_KEY missing in $keyfile" >&2; exit 1; }
+
+exec pi --provider anthropic --model "$MODEL" --models "anthropic/$MODEL" "$@"
