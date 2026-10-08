@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Routing B2a: retire model pins from agents and profiles
+Created: 2026-10-08
+Author: claude
+Blocked-by: 1065
+
+--- log ---
+2026-10-08T15:36Z claude created
+2026-10-08T15:40Z claude note Child of tracker 1052 (wave B2a).
+
+--- body ---
+## Context
+`agents/*.md` pin `model: standard|strong`. Profiles say reviewers sit "below
+the coder tier" or are "decorrelated from the coder". Both are replaced by the
+decorrelation doctrine of 1065.
+
+## Scope
+- `agents/coder.md`, `code-reviewer.md`, `prose-reviewer.md`, `gate-seat.md`,
+  `adherence-seat.md`: remove the pins (per the 1063 finding on whether they
+  were ever honoured).
+- `profiles/{adherence-seat,gate-seat}/PROFILE.md:6-7` and
+  `profiles/{code-reviewer,prose-reviewer}/PROFILE.md:6`: reword. Keep the
+  pointers to `rules/workflow.md` and `rules/git.md` that
+  `tests/test_agent_profiles.py:127-142` require.
+- Same PR: the ROSTER model tuples (`tests/test_agent_profiles.py:32-53`) and
+  the short-enum test at lines 85-93.
+
+## Exit criteria
+- [ ] No agent file or profile carries a tier pin or tier wording
+- [ ] `tests/test_agent_profiles.py` edited and passes (it runs in CI, adherence marker included)
+- [ ] `make check` passes

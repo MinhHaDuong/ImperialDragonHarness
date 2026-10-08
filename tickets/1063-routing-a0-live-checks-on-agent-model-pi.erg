@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Routing A0: live checks on agent model pin, Pi and Codex subagent models
+Created: 2026-10-08
+Author: claude
+
+--- log ---
+2026-10-08T15:36Z claude created
+2026-10-08T15:40Z claude note Child of tracker 1052 (wave A0, research only; no repo change except this ticket's log).
+
+--- body ---
+## Context
+Three facts the routing redesign treats as inputs are unverified:
+1. `agents/*.md` carry `model: standard|strong`, which no adapter maps. What
+   does Claude Code do with an unknown value: honour, ignore, inherit the
+   session model? If ignored, the silent-inheritance risk already exists.
+2. How do Pi and Codex choose a subagent's model? Pi addresses models by
+   fully qualified provider id, so Pi may be a native cross-family door.
+3. Can Codex launch Anthropic agents? (Used to decide that Codex needs no Sol
+   recommendation.)
+
+## Scope
+One live probe per question with a positive control (a launch whose model is
+known to be honoured) before trusting a null. Record the evidence in this
+ticket's log. Do not edit repo files.
+
+## Exit criteria
+- [ ] Q1 answered with a positive control, evidence in the log
+- [ ] Q2 answered for Pi and Codex, evidence in the log
+- [ ] Q3 answered, or marked unverified; if unverified at the end of A2 (1064), the Codex recommendation file says "no cross-family door; record `no report`"
