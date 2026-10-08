@@ -78,8 +78,8 @@
     },
     "pi": {
       "subagent": {
-        "form": "unknown",
-        "status": "unverified"
+        "form": "Pi core has no subagents; the example extension examples/extensions/subagent spawns 'pi --mode json -p --no-session --model <agent.model>' with the model read from the agent file frontmatter (pinned per agent file, not per call). The installed extension is a dangling symlink on this host, so it is not loaded.",
+        "status": "read from code 2026-10-08, not run"
       },
       "headless": {
         "template": "pi --no-session -p --model <provider>/<id>[:<thinking>] \"<prompt>\"",
@@ -90,8 +90,8 @@
     },
     "codex": {
       "subagent": {
-        "form": "multi_agent feature is stable and enabled; how a subagent picks its model was not probed",
-        "status": "unverified"
+        "form": "spawn_agent tool (multi_agent feature, stable and on). Per 'codex debug prompt-input', it accepts model and reasoning_effort overrides only when fork_turns is not 'all' (full-history forks inherit the parent model and reject overrides), and only when the user, AGENTS.md or a skill asks for it. The parent model here is gpt-6.1-sol; there is no [agents] config.",
+        "status": "read from the tool schema 2026-10-08; honouring the override not run"
       },
       "headless": {
         "template": "codex exec --skip-git-repo-check -C <dir> -m <openai-model-id> \"<prompt>\"",

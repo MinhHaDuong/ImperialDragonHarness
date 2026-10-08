@@ -2,6 +2,7 @@
 Title: Routing A0: live checks on agent model pin, Pi and Codex subagent models
 Created: 2026-10-08
 Author: claude
+Closed: Q1-Q3 answered with evidence in the log; Pi and Codex subagent run-time behaviour recorded as unverified in routes.json
 
 --- log ---
 2026-10-08T15:36Z claude created
@@ -12,6 +13,8 @@ Author: claude
 2026-10-08T19:24Z reviewer Author 2026-10-08: Anthropic will give API credits to Max-plan owners; plan is to configure Pi to call Anthropic when the Claude weekly limit is exhausted. That would make Pi a cross-family-capable door with an Anthropic leg. Not yet configured; re-run the Pi probe (pi --list-models, then one pi --model anthropic/<id> --print call) once credentials exist.
 2026-10-08T19:25Z reviewer 2026-10-08: ~/.local/bin/pi-haiku created (host-local): Pi restricted to anthropic/claude-haiku-5-5, override flags refused, key sourced per process only. Live test: override refused; call reached Anthropic and returned HTTP 400 'credit balance is too low', so the key works but the account has no API credit yet. Re-run 'pi-haiku --no-session -p --no-tools "Reply with only your exact model id."' once the Max-plan credits arrive; a successful call settles the Pi cloud door for Haiku. Spend control beyond the model restriction is the console workspace limit, not this wrapper.
 2026-10-08T19:47Z reviewer 2026-10-08: Max-plan credits arrived. pi-haiku --no-session -p --mode json returned model claude-haiku-5-5 (JSON events; the model's own self-report declined to name itself, so the event field is the evidence). Pi headless to Anthropic Haiku is VERIFIED. Still open: Pi and Codex subagent model selection.
+2026-10-08T20:18Z reviewer Q2 closed by reading (sub-agent, 2026-10-08), no live subagent launched, so run-time behaviour is UNVERIFIED. Pi: core has no subagents. The example extension examples/extensions/subagent/index.ts:300-303 spawns 'pi --mode json -p --no-session --model <agent.model ?? dispatch default>'; agents.ts:98 reads 'model:' from the agent frontmatter, so the pin is per agent file, not per call. ~/.pi/agent/agents/{scout,worker}.md pin padme/qwen3.8-27b. The installed ~/.pi/agent/extensions/subagent/*.ts are dangling symlinks (old node-v22.23.1 path), so the extension is not loaded. Codex 0.161.0: multi_agent is stable and on (spawn_agent, followup_task, send_message, wait_agent). Per 'codex debug prompt-input', spawn_agent accepts model and reasoning_effort overrides only when fork_turns is not 'all', and only when the user, AGENTS.md or a skill asks for it. Parent model gpt-6.1-sol; no [agents] config. Q3: --oss/--local-provider offer only lmstudio/ollama; with a ChatGPT login there is no Anthropic door; a custom provider route is neither configured nor tested. Closing: all three exit criteria answered, the two run-time behaviours are recorded as unverified in routes.json.
+2026-10-08T20:18Z reviewer closed — Q1-Q3 answered with evidence in the log; Pi and Codex subagent run-time behaviour recorded as unverified in routes.json
 
 --- body ---
 ## Context
