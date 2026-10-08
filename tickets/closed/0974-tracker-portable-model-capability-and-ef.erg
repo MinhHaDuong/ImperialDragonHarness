@@ -4,6 +4,7 @@ Created: 2026-09-24
 Author: claude
 Blocked-by: 1024
 Label: deferred
+Closed: superseded by tracker 1052: the model-level x effort policy is retired and the orchestrator chooses workers from the skills/route grid
 
 --- log ---
 2026-09-24T14:49Z claude created
@@ -16,6 +17,7 @@ Label: deferred
 2026-10-06T09:44Z reviewer label deferred
 2026-10-06T09:44Z reviewer note Author-approved chantier sequence: after tournament tracker1024, deferred infrastructure work. Resume only on an explicit author decision; closure of the blocker does not authorize automatic resumption.
 2026-10-08T10:00Z reviewer note Landed from an uncommitted edit in the primary checkout (made 2026-10-06, never committed or pushed); content unchanged, original timestamps kept.
+2026-10-08T20:27Z reviewer closed — superseded by tracker 1052: the model-level x effort policy is retired and the orchestrator chooses workers from the skills/route grid
 
 --- body ---
 ## Context

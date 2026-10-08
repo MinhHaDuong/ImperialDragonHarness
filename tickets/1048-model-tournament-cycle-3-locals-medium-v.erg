@@ -9,6 +9,7 @@ Label: deferred
 2026-10-06T08:43Z MinhHaDuong created
 2026-10-06T09:44Z reviewer label deferred
 2026-10-06T09:44Z reviewer note Author-approved chantier sequence: cycle3 after driver improvements1053, deferred experimentation. Resume only on an explicit author decision; this cycle is not a prerequisite for the current research PDF or blog posts.
+2026-10-08T20:27Z reviewer Kept deferred as grid data (decided 2026-10-08 under 1069, the author raised the question and the recommendation was to keep it): the last exit criterion is reworded because the grid now also takes rows from the arena refresh. Not a prerequisite of the routing work.
 
 --- body ---
 
@@ -48,4 +49,4 @@ declaring that arm; defer if nothing good exists).
 - [ ] Arms + hypotheses pre-registered before the first leg (concept note sect. 8)
 - [ ] Smoke 0470 on every new arm before real legs
 - [ ] Pass complete; paired multidimensional analysis (analyze2.py)
-- [ ] skills/route grid.json updated from cycle data only
+- [ ] skills/route grid.json gains or refreshes the local rows from cycle data (the grid also takes rows from the arena refresh, `scripts/tournament-analysis.py --grid`)
