@@ -416,9 +416,16 @@ is uncovered.
 
 ## Non-goals
 
-- No harness-wide model registry.
-- No model capability matrix.
-- No benchmark-based automatic ranking.
+Amended 2026-10-08 (ticket 1064). The first three lines below were already
+contradicted: `skills/route/grid.json` is a harness-held capability matrix
+refreshed from arena data, and `skills/route/routes.json` is a route registry.
+Both live only in `skills/route/`; skills elsewhere still name no models, and
+the orchestrator chooses workers from the grid (`skills/route/SKILL.md`)
+rather than from a deterministic level-to-model map.
+
+- No model registry outside `skills/route/`.
+- No capability matrix outside `skills/route/`.
+- No automatic ranking from benchmarks; the grid changes only from arena data.
 - No lifecycle/deprecation database.
 - No price optimizer in the harness.
 - No attempt to make provider effort controls semantically identical.

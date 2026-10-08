@@ -60,5 +60,56 @@
       },
       "hardware_note": "HW-v1. Pending: 5060 Ti 16G + 3975WX (merged window) -> HW-v2 boundary; rebuild Strata archs 86;120 mandatory then. Prefill bottleneck = #448 512-token chunk cap from the 3060 expert cache (~350 tok/s cold)."
     }
+  },
+  "launch_doors": {
+    "_comment": "How a worker is reached, per runtime. Two doors: a subagent inside the current CLI, and a headless CLI started from bash with a given model. 'verified' lines were run once on the date shown (ticket 1063/1064 logs); 'unverified' lines were not run and are not to be trusted until they are.",
+    "claude-code": {
+      "subagent": {
+        "form": "Agent tool with a per-launch model token (haiku|sonnet|opus|fable); Workflow agent() inherits the session model unless opts set otherwise",
+        "pin": "Pin the model on EVERY launch. Frontmatter 'model: standard|strong' tokens in agents/*.md are sent to the API verbatim and return HTTP 404; a per-launch model overrides them. An unpinned general-purpose launch inherits the session model.",
+        "families": ["Anthropic"],
+        "status": "verified 2026-10-08"
+      },
+      "headless": {
+        "template": "claude -p --model <haiku|sonnet|opus|fable> \"<prompt>\"",
+        "families": ["Anthropic"],
+        "status": "verified 2026-10-08 (--model haiku answered claude-haiku-5-5)"
+      }
+    },
+    "pi": {
+      "subagent": {
+        "form": "unknown",
+        "status": "unverified"
+      },
+      "headless": {
+        "template": "pi --no-session -p --model <provider>/<id>[:<thinking>] \"<prompt>\"",
+        "families": ["any provider whose credentials are loaded: Anthropic, OpenAI, Mistral, DeepSeek, OpenRouter-served"],
+        "status": "unverified: 'pi auth check' reported not_ready for anthropic, openai and openrouter in the 2026-10-08 shell, so no live call was made"
+      }
+    },
+    "codex": {
+      "subagent": {
+        "form": "multi_agent feature is stable and enabled; how a subagent picks its model was not probed",
+        "status": "unverified"
+      },
+      "headless": {
+        "template": "codex exec --skip-git-repo-check -C <dir> -m <openai-model-id> \"<prompt>\"",
+        "families": ["OpenAI"],
+        "note": "Under a ChatGPT-account login every non-OpenAI model is rejected (HTTP 400). Read the 'model:' line of the session header; the model's own self-report is wrong (it said gpt-6.1-sol while running gpt-6-luna).",
+        "status": "verified 2026-10-08 (-m gpt-6-luna accepted; -m claude-haiku-5-5 rejected)"
+      }
+    },
+    "vibe": {
+      "subagent": {
+        "form": "unknown",
+        "status": "unverified"
+      },
+      "headless": {
+        "template": "vibe -p \"<prompt>\" --max-turns <n> [--agent <name>]",
+        "families": ["Mistral"],
+        "note": "No model flag: the model comes from the agent or the config. Run from a trusted folder (--trust) or project config is ignored. Cannot be a detached review seat: file tools are denied to headless sessions (ticket 1017); record 'no report', never simulate.",
+        "status": "partly verified 2026-10-08: the command runs, but the probe printed no model id from an untrusted folder"
+      }
+    }
   }
 }
