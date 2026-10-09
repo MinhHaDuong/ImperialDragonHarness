@@ -7,7 +7,7 @@ Préparé par ChatGPT prompté par Ha-Duong Minh
 
 Les rapports français et anglais passent de 12 à **26 pages**. Le contenu demandé par 1046 est ajouté à partir des données publiques accessibles : grille et frontière de Pareto 3D, verdicts et distributions appariées, classes de routage, événements historiques corrigés et guide situationnel. La synthèse et ses données numériques sont conservées.
 
-L’auteur a demandé ce complément et autorisé une **branche de revue GitHub**, sans fusion ni diffusion sur les autres canaux. La revue du guide par l’auteur et la validation formelle des critères restent à faire. Les archives privées `~/arena` ne sont pas disponibles dans cet environnement ; cette revue ne prétend pas les avoir réauditées.
+L’auteur a demandé ce complément et autorisé une **branche de revue GitHub**, sans fusion ni diffusion sur les autres canaux. Mise à jour du 9 octobre (Claude Opus 5.5) : guide relu par un relecteur Fable délégué par l’auteur, rapports cadrés, typographiés et finis, et reconstruction depuis `~/arena` sur padme. Le 9 octobre, sur padme, le dépôt récupéré au commit `5e743082` de la branche `t1046-report-finish` a régénéré figures et PDF depuis `~/arena` (`python3 scripts/tournament-graphs.py --arena ~/arena --output docs/tournament-graphs --time-value 1` puis `python3 scripts/tournament-graphs-en.py --arena ~/arena --time-value 1`). `tests.json`, `comparisons.csv`, `appendix-analysis.json`, `paired-differences.csv`, les coûts valorisés et les `.dot` sont identiques octet pour octet ; le texte des PDF est identique mot pour mot hors date de génération et placement des étiquettes. Les PDF et PNG versionnés sont ceux de padme. L’instantané public est conservé : il ne diffère de celui reconstruit que par les métadonnées comptables de Haiku 5.5, ajoutées hors générateur.
 
 ## Sommaire des ajouts
 
@@ -36,12 +36,12 @@ L’auteur a demandé ce complément et autorisé une **branche de revue GitHub*
 
 | Critère original | Résultat de cette exécution | Restant |
 |---|---|---|
-| Graphes générés depuis `~/arena`, script dans le dépôt | Générateurs présents pour archives arena et instantané public ; distributions ajoutées et reproduction publique vérifiée | Exécution/audit direct des archives privées non disponible ici |
-| Guide revu par l’auteur | Proposition complète pages 24–25 | Revue explicite de l’auteur |
-| Cadrage, typographie et finition PDF | Ajouts cadrés, rendus FR/EN contrôlés ; rapports de 26 pages | Accord éditorial sur la version complète avant diffusion |
-| Analyse appariée du parent 1024 satisfaite par le rapport | Tables et distributions présentes, sources et précautions explicites | Validation de la couverture du parent ; aucune approbation supposée |
+| Graphes générés depuis `~/arena`, script dans le dépôt | Régénérés sur padme depuis `~/arena` au commit de la branche ; sorties numériques identiques à l’instantané | Aucun |
+| Guide revu (Fable, délégué par l’auteur) | Relecteur prose-reviewer, modèle Fable : ACCEPT WITH CHANGES, huit constats appliqués (pages 24–25) | Aucun |
+| Cadrage, typographie et finition PDF | message-framing (message en page 13), typography-finish (espaces insécables U+00A0 du complément français), pdf-finish (A4, 26 pages, métadonnées, aucun glyphe manquant) | Aucun |
+| Analyse appariée du parent 1024 satisfaite par le rapport | Pages 14–21 : verdicts H1/H2, effort, inter-camps, distributions, 190 paires avec Holm | Le volet « verdict de routage dans STATE/ROADMAP » du critère parent relève de 1024/1052 |
 
-Les cases d’approbation restent décochées dans le ticket. Ce complément ne clôt pas 1046 ni 1047 et ne modifie pas les politiques de routage.
+Les critères de 1046 sont cochés dans le ticket. Ce complément ne clôt pas 1047 et ne modifie pas les politiques de routage.
 
 ## Reproduire
 
