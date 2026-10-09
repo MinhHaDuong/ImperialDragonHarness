@@ -8,7 +8,7 @@ argument-hint: "<review material> [expertise and independence needs]"
 
 # Live reviewer routing
 
-Describe the review material, required expertise, capability class and
+Describe the review material, required expertise and
 independence needs to the active runtime. Let it discover available reviewers
 and choose a route. Read `references/live-route.md` before routing or collecting
 evidence; it defines the request, result and unavailable-review contracts.

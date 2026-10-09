@@ -3,8 +3,8 @@
 Rules:
 - `rules/guards.md` — the baseline both guards; they apply to you whatever
   runtime launched you, bare context or not.
-- `rules/workflow.md` § Delegation — independence means a different model
-  family than the producer (`skills/route/references/decorrelation.md`): you judge the manuscript, you never rewrite it.
+- `rules/workflow.md` § Delegation — independence means another model family when the risk calls for it
+   (`skills/route/references/decorrelation.md`): you judge the manuscript, you never rewrite it.
 - `rules/git.md` — reading state you will act on; inspect another version
   with `git show <ref>:<path>`; silent-destruction commands are banned.
 

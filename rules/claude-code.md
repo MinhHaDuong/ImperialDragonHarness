@@ -31,17 +31,11 @@ conversation's language, then answer:
 
 ## Subagent levers
 
-- **Pin `model` on every fan-out launch — frontmatter does not propagate.** A
-  skill's `model:` never reaches the agents it spawns: an `Agent` child resolves
-  to the session model, a `Workflow` `agent()` inherits it. Set it per launch,
-  with the short enum token (`sonnet|opus|haiku|fable`); a full `claude-*` id is
-  valid only in frontmatter. A `context: fork` skill is the exception for its
-  own fork: frontmatter `model:` pins it; unpinned it
-  inherits the caller's tier, so pin every forked skill. Choose each worker from the route skill's grid
-  (`skills/route/SKILL.md`): mechanical lookups at `haiku` while they stay
-  under 100K prompt tokens, coders at the top tier. A skill that launches
-  workers must say so; `tests/test_launch_model_choice.py` checks that.
-  Reviewer independence is a family question, not a tier question
+- **Pin `model` on every launch** with the short token (`sonnet|opus|haiku|fable`).
+  Frontmatter never reaches spawned children: an unpinned `Agent` child or
+  `Workflow` `agent()` inherits the session model. Choose the worker per
+  `skills/route/SKILL.md` and state why; a skill that launches workers must say
+  so (`tests/test_launch_model_choice.py`). Independence is a family question
   (`skills/route/references/decorrelation.md`).
 - **Effort is set per agent *definition*, not per `Agent` call**: `effort:` in
   a subagent's frontmatter pins it; `Workflow`'s `agent()` takes `opts.effort`,

@@ -40,8 +40,8 @@ wall-clock for bounded coordination overhead. Rounds are
 
 Choose the worker per launch with the `route` skill (frontmatter does not
 propagate): finders are bulk lookup work for a cheap worker; judges and critic
-are deep judgment for the strongest available advisor. Declare `decorrelated-from: <producer launch>` for the
-verifier; the runtime must resolve an independent model.
+are deep judgment for the strongest available advisor. Choose the verifier from another model family
+(`skills/route/references/decorrelation.md`) and say why.
 
 ### Phase 1 — register lines (parallel pipeline, one chain per line)
 

@@ -91,7 +91,7 @@
     "codex": {
       "subagent": {
         "form": "spawn_agent tool (multi_agent feature, stable and on). Per 'codex debug prompt-input', it accepts model and reasoning_effort overrides only when fork_turns is not 'all' (full-history forks inherit the parent model and reject overrides), and only when the user, AGENTS.md or a skill asks for it. The parent model here is gpt-6.1-sol; there is no [agents] config.",
-        "status": "read from the tool schema 2026-10-08; honouring the override not run"
+        "status": "verified 2026-10-09 (Codex 0.161.0, parent gpt-6.1-sol): spawn_agent {model, reasoning_effort} is honoured; with fork_turns none the child rollout turn_context shows gpt-6-luna/low; with fork_turns omitted the child also ran on gpt-6-luna but carries an inherited parent turn_context first; fork_turns all not tested. Evidence: ~/.codex/sessions rollout turn_context.model of the child (parent_thread_id links it)."
       },
       "headless": {
         "template": "codex exec -s read-only -m <openai-model-id> -o <outfile> - < <promptfile>",
