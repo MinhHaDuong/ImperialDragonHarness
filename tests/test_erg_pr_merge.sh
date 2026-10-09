@@ -146,6 +146,13 @@ case "$1 $2" in
     elif [[ "${STUB_RULE_REQUIRED:-0}" == "1" ]]; then
       echo '[{"type":"required_status_checks","parameters":{"required_status_checks":[{"context":"required"}]}}]'
     else echo '[]'; fi ;;
+  "api repos/{owner}/{repo}/pulls/$STUB_PR")
+    # Short-claim normalization: PATCH stores the body, a GET reads it back.
+    if [[ "$*" == *"PATCH"* ]]; then
+      jq -r '.body' > "$STUB_PATCH_FILE"; echo '{}'
+    else
+      cat "$STUB_PATCH_FILE"
+    fi ;;
   *)
     echo "stub gh: unexpected: $*" >&2; exit 1 ;;
 esac
@@ -260,6 +267,7 @@ run_merge() {  # $1 body, $2 title, $3+ script args (default: 42)
       STUB_READY_LOG="${STUB_READY_LOG:-/dev/null}" \
       STUB_MERGE_COSMETIC_FAIL="${STUB_MERGE_COSMETIC_FAIL:-0}" \
       STUB_MERGE_EFFECT="${STUB_MERGE_EFFECT:-no}" \
+      STUB_PATCH_FILE="${STUB_PATCH_FILE:-/dev/null}" \
       STUB_STATE="${STUB_STATE:-MERGED}" \
       STUB_SYNC_LOG="${STUB_SYNC_LOG:-/dev/null}" \
       ERG_PR_MERGE_SYNC="${ERG_PR_MERGE_SYNC:-}" \
@@ -1157,6 +1165,31 @@ else
 fi
 if (( c_miss )); then echo "FAIL: -C PATH flag contract not met"; fail=1
 else echo "PASS: -C PATH cds into the target checkout from any cwd; loud on missing/bad path"; fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Short-form claim `**Ticket:** NNNN`: resolved to the single ticket file, the
+# PR body rewritten to the canonical path (read back), and the ticket closed.
+# No match keeps the refusal; a `#NNNN` reference never closes anything.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo shortclaim 0312
+PATCHF="$WORK/patched-body"; : > "$PATCHF"
+if STUB_PATCH_FILE="$PATCHF" run_merge $'Summary.\n\n**Ticket:** 0312\n' "fix: short" >/dev/null 2>&1; then
+    if closed_has 0312 && grep -qx '\*\*Ticket:\*\* tickets/0312-fixture.erg' "$PATCHF"; then
+        echo "PASS: short Ticket: NNNN normalized to canonical path and closed"
+    else echo "FAIL: short claim not normalized/closed"; cat "$PATCHF"; fail=1; fi
+else
+    echo "FAIL: short claim PR exited non-zero"; fail=1
+fi
+seed_repo shortmiss 0313
+: > "$PATCHF"
+if STUB_PATCH_FILE="$PATCHF" run_merge $'**Ticket:** 0999\n' "fix: miss" >/dev/null 2>&1; then
+    echo "FAIL: unresolvable short claim should still die"; fail=1
+elif [[ -s "$PATCHF" ]]; then echo "FAIL: unresolvable short claim rewrote body"; fail=1
+else echo "PASS: unresolvable short claim keeps the refusal, body untouched"; fi
+seed_repo hashref 0314
+if run_merge $'Follows #0314.\n' "chore(0314): ref" >/dev/null 2>&1 || closed_has 0314; then
+    echo "FAIL: #NNNN reference was treated as a close claim"; fail=1
+else echo "PASS: #NNNN reference never closes"; fi
 
 if (( fail )); then exit 1; fi
 echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip, output-rewrite-tolerant guards"
