@@ -162,6 +162,46 @@ fi
 
 BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
 
+# Short-form claims: `Ticket: NNNN` (bold or not) states the intent without
+# ambiguity, so normalize it instead of refusing. Each short ID must resolve to
+# exactly one tickets/NNNN-*.erg or tickets/closed/NNNN-*.erg; zero or several
+# matches leave the line alone and the strict checks below refuse as before.
+# The body is rewritten on the forge, then read back, so the canonical form
+# stays the only one in circulation and roar's check-close-claims.sh sweep
+# (same strict regex, run on merged bodies) needs no change. Only a 4-digit ID
+# alone after `Ticket:` qualifies — `0312-foo`, `0312, 0313`, `#1326` or a
+# `chore(1075)` title never do.
+SHORT_IDS=$(printf '%s\n' "$BODY" | awk '
+    /^[[:space:]]*```/ || /^[[:space:]]*~~~/ { fenced = !fenced; next }
+    !fenced { print }
+' | grep -ioP '^\*{0,2}ticket:?\*{0,2}:?\s*\K[0-9]{4}(?=\s*$)' | sort -u || true)
+if [[ -n "$SHORT_IDS" ]]; then
+    NEW_BODY="$BODY"
+    for sid in $SHORT_IDS; do
+        shopt -s nullglob
+        hits=(tickets/"$sid"-*.erg tickets/closed/"$sid"-*.erg)
+        shopt -u nullglob
+        if (( ${#hits[@]} != 1 )); then
+            echo "erg-pr-merge: short claim 'Ticket: $sid' matches ${#hits[@]} ticket files — not normalized" >&2
+            continue
+        fi
+        NEW_BODY=$(printf '%s' "$NEW_BODY" | SID="$sid" CANON="${hits[0]}" perl -pe '
+            if (/^\s*(```|~~~)/) { $f = !$f; next }
+            s{^(\*{0,2}ticket:?\*{0,2}:?\s*)$ENV{SID}(?=\s*$)}{$1$ENV{CANON}}i unless $f;
+        ')
+    done
+    if [[ "$NEW_BODY" != "$BODY" ]]; then
+        echo "Normalizing short Ticket claim(s) in PR #${PR} body to canonical paths..."
+        jq -n --arg body "$NEW_BODY" '{body:$body}' \
+            | gh api "repos/{owner}/{repo}/pulls/${PR}" -X PATCH --input - >/dev/null \
+            || die "could not rewrite PR #${PR} body to the canonical Ticket form"  # harness-extension-point
+        READBACK=$(gh api "repos/{owner}/{repo}/pulls/${PR}" --jq '.body // ""')  # harness-extension-point
+        [[ "$READBACK" == "$NEW_BODY" ]] \
+            || die "PR #${PR} body rewrite did not stick (read-back differs) — fix the Ticket line by hand"
+        BODY="$NEW_BODY"
+    fi
+fi
+
 # Accept both tickets/NNNN and tickets/closed/NNNN with the usual Ticket prefix.
 # A PR may bundle several tickets — collect ALL matching lines. `sort -u` is
 # load-bearing: a duplicated ID would re-close an already-archived ticket in

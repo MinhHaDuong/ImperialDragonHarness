@@ -39,6 +39,12 @@ The script reads close intent from the PR **body** only — never the title:
   clean no-op.
 - `Ticket-ref: tickets/NNNN-...` — references a ticket **without closing it**
   (for annotating a deliberately-open ticket).
+- `Ticket: NNNN` (short form) — normalized, not refused: when exactly one
+  `tickets/NNNN-*.erg` or `tickets/closed/NNNN-*.erg` matches, the script
+  rewrites the body to the canonical path on the forge, reads it back, and
+  proceeds; zero or several matches fall through to the error below. Only a
+  4-digit ID alone after `Ticket:` qualifies — never `NNNN-slug`,
+  `NNNN, MMMM` or `#NNNN`.
 - `Ticket: none` — the PR closes nothing.
 - With none of these lines and a `tickets/` dir present, the script errors.
 - Ticket lines inside Markdown code fences are examples and are ignored.
