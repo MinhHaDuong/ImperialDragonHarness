@@ -87,6 +87,6 @@ Two patterns keep the fast tier honest — generalizable, adopt per project (ref
 
 ## Data pitfalls
 
-- **Null keys.** `dropna` the key before `merge(on=...)` / `set_index`: pandas matches NaN to NaN, and a few thousand nulls can explode a join into tens of millions of rows. NaN is truthy, so `str(x or "")` and `row.get(k, "")` yield `"nan"`; blank with `pd.isna` and grep shipped artifacts for `\bnan\b`.
-- **Human judgments never live in a regenerable file.** Keep them in their own append-only artifact keyed by (item, annotator); a generator that emits a fill-me-in column aborts if the target already holds annotations.
+- **Null keys.** `dropna` the key before `merge(on=...)`: pandas matches NaN keys to each other, and a few thousand nulls can explode a join into tens of millions of rows. A float NaN is truthy, so `str(x or "")` yields `"nan"`, as does `row.get(k, "")` when the key holds NaN; blank with `pd.isna` and grep shipped artifacts for `\bnan\b`.
+- **Human judgments never live in a regenerable file.** Keep them in their own append-only artifact keyed by (item, annotator); a generator that emits a fill-me-in column exits non-zero if the target already holds annotations.
 - **JSON newlines.** A single-object JSON file ends with exactly one newline; JSONL writers add no trailing blank line.
