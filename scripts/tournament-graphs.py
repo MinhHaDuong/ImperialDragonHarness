@@ -334,8 +334,10 @@ def render(output, snapshot):
             )
         dot.append("}")
         (output / f"{metric}.dot").write_text("\n".join(dot) + "\n")
+    report_path = output / "comparaisons-modeles.pdf"
+    working_report_path = report_path.with_suffix(".pdf.tmp")
     with PdfPages(
-        output / "comparaisons-modeles.pdf",
+        working_report_path,
         metadata={
             "Title": "Qualité, vitesse et coût des LLM pour la recherche",
             "Author": "Minh Ha Duong",
@@ -367,23 +369,23 @@ def render(output, snapshot):
         findings = [
             (
                 "Luna 6 medium : le meilleur compromis observé",
-                "Chez Claude comme chez ChatGPT, monter en gamme tout en réduisant l’effort ne donne pas ici d’avantage net : Opus 5.5 low face à Sonnet 5.5 medium, et Sol 6.1 low face à Luna 6 medium, offrent une qualité moyenne proche pour un coût supérieur. Sonnet est aussi plus rapide qu’Opus ; Luna fait jeu comparable avec Sol en vitesse. Haiku 5.5 égale Sonnet en qualité (21,7 contre 21,4/30) pour 0,13 USD au lieu de 0,30, mais trois fois plus lent. Limite : un seul modèle tient les trois rôles, ce qui peut défavoriser un modèle conçu pour un seul.",
+                "Chez Claude comme chez ChatGPT, monter en gamme tout en réduisant l’effort ne donne pas ici d’avantage net : Opus 5.5 low face à Sonnet 5.5 medium, et Sol 6.1 low face à Luna 6 medium, offrent une qualité moyenne proche pour un coût supérieur. Sonnet est aussi plus rapide qu’Opus ; Luna fait jeu comparable avec Sol en vitesse. Haiku 5.5 : moyenne proche de Sonnet (21,70 contre 21,35/30), coût de 0,13 contre 0,30 USD, durée ×2,92 ; équivalence non établie. Limite : un seul modèle tient les trois rôles, ce qui peut défavoriser un modèle conçu pour un seul.",
             ),
             (
                 "Qwen 3.8 Flash-Next xhigh : une option locale pour privilégier la qualité",
                 "Avec Strata et la quantification IQ3_S, cette configuration obtient la meilleure note moyenne : 26,2/30, pour une durée moyenne de 46 minutes par ticket. Elle convient davantage au travail asynchrone. Son avance reste sensible à l’échantillon : sans le ticket 0333, sa moyenne rejoint celle de Mistral.",
             ),
             (
-                "La configuration Qwen 3.8 locale atteint la qualité des références hébergées",
-                "La meilleure configuration Qwen 3.8 locale rejoint la qualité des références commerciales et progresse nettement sur Qwen 3.6. Le gain mêle génération, quantification, runtime et effort. Qwen tourne à xhigh, contre medium pour les références : davantage de verbosité et une durée accrue.",
+                "Qwen 3.8 local : une moyenne élevée face aux références hébergées",
+                "La meilleure configuration Qwen 3.8 locale obtient une note moyenne supérieure aux références hébergées et à Qwen 3.6 dans cet échantillon. Le gain mêle génération, quantification, runtime et effort. Qwen tourne à xhigh, contre medium pour les références : davantage de verbosité et une durée accrue.",
             ),
             (
                 "La lenteur et la sérialisation sur GPU limitent l’interactif en local",
                 "Sur la workstation de test, la lenteur et la nécessité de sérialiser les tâches sur les GPU limitent fortement l’usage interactif, tandis que les API permettent des flux de travail fortement parallélisés. Les attentes portent sur les modèles locaux éventuellement dérivés de Qwen 4 et Mistral 4, les mises à niveau du matériel et les optimisations quotidiennes du runtime, qui pourraient atténuer ces contraintes.",
             ),
             (
-                "Mistral Large 4 : qualité prometteuse, fiabilité encore pénalisante",
-                "Mistral Large 4, annoncé le 6 octobre 2026, est prometteur en qualité, mais les incidents d’hébergement et les boucles observées dans son intégration au runtime Pi pénalisent encore sa fiabilité, sa vitesse et son coût.",
+                "Mistral Large 4 : qualité prometteuse, intégration et reprises coûteuses",
+                "Mistral Large 4, annoncé le 6 octobre 2026, est prometteur en qualité, mais les incidents d’hébergement et les boucles observées dans son intégration au runtime Pi pénalisent la configuration testée en durée et en coût ; la fiabilité propre du modèle n’est pas isolée.",
             ),
         ]
         y = 0.65
@@ -931,7 +933,7 @@ def render(output, snapshot):
             fig.text(
                 0.045,
                 0.075,
-                "Ces flèches sont significatives deux à deux ; dix tickets ne suffisent pas à garantir le classement complet à 95 %.",
+                "Flèches au seuil nominal de 5 % ; aucune comparaison ne passe la correction de Holm (136 tests par axe).",
                 fontsize=9,
             )
             fig.text(
@@ -1032,11 +1034,11 @@ def render(output, snapshot):
                 fig.text(
                     0.06,
                     y - 0.06,
-                    "• Données et scripts du comparatif : version figée du 8 octobre 2026",
+                    "• Données du comparatif : instantané figé du 8 octobre 2026",
                     fontsize=9,
                     color="#2563eb",
                     va="top",
-                    url="https://github.com/MinhHaDuong/ImperialDragonHarness/tree/433c6fd224ccb77e6ff91b74365440fd2f9a6bcd/docs/tournament-graphs",
+                    url="https://github.com/MinhHaDuong/ImperialDragonHarness/tree/e352f74befe459538f11330487e8cbb517bde04f/docs/tournament-graphs",
                 )
                 fig.text(
                     0.06,
@@ -1059,6 +1061,16 @@ def render(output, snapshot):
         )
         pdf.savefig(fig)
         plt.close(fig)
+        completion_spec = importlib.util.spec_from_file_location(
+            "completion", Path(__file__).with_name("tournament-report-completion.py")
+        )
+        completion = importlib.util.module_from_spec(completion_spec)
+        completion_spec.loader.exec_module(completion)
+        completion.append_report(
+            pdf, snapshot, results, output, LABELS, signed_rank, holm,
+            wrap_paragraph, globals().get("__tournament_language__", "fr"),
+        )
+    working_report_path.replace(report_path)
     allrows = [r for result in results.values() for r in result["comparisons"]]
     with (output / "comparisons.csv").open("w") as out:
         writer = csv.DictWriter(out, fieldnames=list(allrows[0]))

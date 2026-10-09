@@ -32,5 +32,5 @@ if __name__ == "__main__":
     # Execute only the repository-owned renderer, after translating its literals.
     exec(  # noqa: S102
         compile(tree, str(source), "exec"),
-        {"__name__": "__main__", "__file__": str(source)},
+        {"__name__": "__main__", "__file__": str(source), "__tournament_language__": "en"},
     )

@@ -21,7 +21,6 @@ Identifiants déclarés et observés dans les manifests conservés des runs du t
 | j | openrouter | `z-ai/glm-5.3-flash` |
 | k | openrouter | `xiaomi/mimo-v2.6-flash` |
 | l | openai | `gpt-6-luna` |
-| n | anthropic | `claude-haiku-5-5` |
 | mi | mistral ; openrouter | `mistral-large-4` ; `mistralai/mistral-large-4-0` |
 | n | anthropic | `claude-haiku-5-5` |
 | mr | mistral ; openrouter | `mistral-large-4` ; `mistralai/mistral-large-4-0` |
@@ -40,4 +39,4 @@ Périmètre **toutes tentatives** : coûts et durées de toutes les tentatives c
 
 Bilan observé : 10 tentatives, 0 reprises, 0 tickets échoués, 0 dépassements de délai. Coût candidat total : **1.2571 USD**. Le smoke (0.00028389 USD) et les juges (1.483838 USD) sont comptés séparément. Les tarifs Haiku sont appliqués par requête, cache inclus, avec multiplication par cinq au-delà de 100 000 tokens de prompt.
 
-Table par ticket : [haiku55-results.csv](haiku55-results.csv). Audit des tentatives, tarifs, coûts et scores : [haiku55-accounting.json](haiku55-accounting.json). Les séries existantes sont inchangées ; les figures, PDFs et comparaisons statistiques n’ont pas été régénérés.
+Table par ticket : [haiku55-results.csv](haiku55-results.csv). Audit des tentatives, tarifs, coûts et scores : [haiku55-accounting.json](haiku55-accounting.json). Les données des séries existantes sont inchangées ; les figures, PDF et comparaisons statistiques ont été régénérés avec N. Les comparaisons multiples passent de 120 à 136 par axe ; aucune ne passe Holm.

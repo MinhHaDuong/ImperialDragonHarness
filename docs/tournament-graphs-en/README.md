@@ -1,6 +1,6 @@
 # English edition for sharing
 
-English translation of the 12-page French beta 1 report. Identical numeric
+English edition of the 26-page French report (12-page synthesis and 14-page ticket-1046 supplement). Identical numeric
 snapshot and statistical computations; English text and decimal points.
 
 From the repository root:
@@ -14,3 +14,5 @@ The wrapper translates text constants from the French renderer before layout,
 using `scripts/tournament-english.json`; it does not duplicate the analysis.
 Output: `model-comparison.pdf` and English PNG figures in this directory.
 The PDF and figures are prepared for review and sharing; nothing is posted to Reddit.
+
+The supplement includes paired distributions and H1/H2 verdicts, effort comparisons, routing classes, corrected historical outcomes and a situation guide. `appendix-analysis.json` covers all 190 pairs of 20 identities, separately from the original 136-pair DAG family; `paired-differences.csv` supplies the 130 plotted task observations. Author review of the guide remains pending.

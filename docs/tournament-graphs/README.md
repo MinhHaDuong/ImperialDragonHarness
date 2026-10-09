@@ -2,17 +2,17 @@
 
 Rapport du 7 octobre 2026, révisé après la beta 0 (PR #1243) et la revue Astra.
 Les changements de présentation et de discussion ont été ratifiés par l’auteur.
-Les séries de la beta 1 sont préservées. L’instantané inclut désormais N (Haiku 5.5, 8 octobre) ; les figures et comparaisons publiées restent celles du 7 octobre.
+Les séries de la beta 1 sont préservées. L’instantané, les PDF français et anglais, les PNG et les comparaisons incluent N (Haiku 5.5, 8 octobre). Ces artefacts sont préparés pour diffusion ; les textes ne sont pas encore publiés.
 
-Le PDF A4 paysage contient 12 pages : présentation, table des résultats, cinq nuages XY,
-trois DAG de significativité et deux pages de méthode. La perspective du benchmark
+Le PDF A4 paysage contient désormais 26 pages : les 12 pages de synthèse (présentation, table des résultats, cinq nuages XY,
+trois DAG nominaux et deux pages de méthode), puis le complément 1046 du 9 octobre : grille et Pareto 3D, verdicts H1/H2, effort et inter-camps, cinq pages de distributions appariées, classes, événements historiques et guide situationnel. La perspective du benchmark
 de mai est intégrée à la méthode, sans page de discussion séparée.
 Les PNG sont des aperçus du PDF. Les cycles sont additifs ; SpaceBunny et les
 préliminaires sont exclus.
 
 ## Reproduire les figures
 
-La commande ci-dessous utilise l’instantané courant, incluant N ; elle ne reproduit donc pas à l’identique les figures beta 1 du 7 octobre.
+La commande ci-dessous régénère les artefacts courants du 8 octobre, incluant N ; elle ne reproduit pas les figures historiques du 7 octobre.
 
 Depuis la racine du dépôt, avec Python et l’environnement de `uv sync` (groupe `dev` de `pyproject.toml`) :
 
@@ -48,10 +48,10 @@ flèches redondantes. L’absence de flèche ne prouve pas l’équivalence ; un
 indirect n’est pas un test supplémentaire. L’épaisseur indique l’intensité de l’effet.
 Qwen 3, Qwen 3.6 et GPT-6 Sol restent dans les nuages mais sont exclus des DAG.
 
-Dans les artefacts beta 1 conservés, Holm est calculé séparément sur les 120 comparaisons de chaque axe. Une régénération incluant N portera ce nombre à 136 ; elle appartient au lot de publication. Avec dix
-paires, le minimum possible de p bilatéral est 2/1024, supérieur au premier
-seuil 0,05/120 : aucune comparaison ne peut franchir cette correction dans ce
-protocole. Les tests nominaux n’établissent donc pas un classement global à 95 %.
+Dans les artefacts courants incluant N, Holm est calculé séparément sur les
+136 comparaisons de chaque axe (120 avant l’ajout de N). Avec dix paires,
+le minimum possible de p bilatéral est 2/1024, supérieur au premier seuil
+0,05/136 : aucune comparaison ne peut franchir cette correction dans ce protocole. Les tests nominaux n’établissent donc pas un classement global à 95 %.
 Les comparaisons, y compris les flèches retirées, figurent dans `comparisons.csv`
 et `tests.json` ; les `.dot` donnent les liens visibles et leurs valeurs p/n.
 
@@ -89,3 +89,11 @@ le GPU et la sensibilité au retrait de 0333 sont décrites dans les limites du 
 - [Idées optionnelles et candidats pour un prochain cycle](candidats-cycle-suivant.md).
 - [Méthode du test de Wilcoxon (SciPy)](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html).
 - [Présentation du benchmark de mai 2026](https://minh.haduong.com/files/HaDuong-2026-EconomIA-BeyondRAG.pdf), discutée à la fin du rapport.
+
+## Complément du 9 octobre — ticket 1046
+
+Le même générateur appelle `scripts/tournament-report-completion.py` pour les pages 13–26 dans les deux langues. `appendix-analysis.json` donne les 190 paires des 20 identités du rapport, avec Holm séparément par axe ; cette famille complémentaire est distincte des 136 paires des DAG. Aucune ne passe Holm. `paired-differences.csv` contient les 130 observations des treize comparaisons illustrées, avec les ratios par ticket. Les données originales ne sont pas modifiées.
+
+Les groupes de la grille sont des catégories opérationnelles, pas des clusters statistiquement estimés. Les 19 événements historiques sont documentés avec leurs corrections : 18 non-OK après le rejeu b2, puis reprises de quota ; les cinq échecs retenus dans les séries courantes restent notés zéro. Le guide couvre confidentialité, délai, budget, GPU, quotas et heures creuses DeepSeek, vérifiées le 9 octobre sur la [documentation officielle](https://api-docs.deepseek.com/quick_start/pricing/). Les tarifs du guide ne remplacent pas les coûts figés du tournoi.
+
+Le guide est une proposition à relire par l’auteur. Les sources privées `~/arena` ne sont pas disponibles dans cette revue : la reproduction est faite depuis l’instantané public, sans réaudit des archives brutes. Couverture des critères : [completion-1046.md](completion-1046.md). Aucune publication ni fusion n’est autorisée.
