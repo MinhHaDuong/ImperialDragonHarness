@@ -115,3 +115,18 @@ def test_french_spacing_binds_high_punctuation_guillemets_and_digit_groups():
     assert completion.french_spacing(text) == (
         f"Luna{nb}: 0,03{nb}; «{nb}coût{nb}»{nb}? 2{nb}500 tokens, ticket 0333 2026"
     )
+
+
+def test_wrap_paragraph_keeps_nonbreaking_spaces_before_french_punctuation():
+    import matplotlib.pyplot as plt
+
+    fig = plt.figure(figsize=(3, 2))
+    try:
+        text = " ".join(["Luna : 0,03 ; « coût »"] * 6)
+        wrapped = graphs.wrap_paragraph(fig, text, 10, width=0.5)
+    finally:
+        plt.close(fig)
+    assert "\n" in wrapped
+    for line in wrapped.split("\n"):
+        assert not line.startswith((":", ";", "»"))
+    assert "Luna\u00a0:" in wrapped and "«\u00a0coût\u00a0»" in wrapped

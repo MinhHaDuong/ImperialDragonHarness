@@ -15,6 +15,7 @@ from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.text
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.font_manager import FontProperties
@@ -25,6 +26,31 @@ from scipy.stats import rankdata
 matplotlib.use("Agg")
 matplotlib.rcParams["pdf.fonttype"] = 42
 
+completion_spec = importlib.util.spec_from_file_location(
+    "completion", Path(__file__).with_name("tournament-report-completion.py")
+)
+completion = importlib.util.module_from_spec(completion_spec)
+completion_spec.loader.exec_module(completion)
+FRENCH = globals().get("__tournament_language__", "fr") == "fr"
+
+
+def french_text(text):
+    """French typography for rendered strings; English and mathtext pass through."""
+    if FRENCH and isinstance(text, str) and "$" not in text:
+        return completion.french_spacing(text)
+    return text
+
+
+_matplotlib_set_text = matplotlib.text.Text.set_text
+
+
+def _set_french_text(self, text):
+    return _matplotlib_set_text(self, french_text(text))
+
+
+# Every figure string (titles, labels, legends, tables) goes through Text.set_text.
+matplotlib.text.Text.set_text = _set_french_text
+
 
 def wrap_paragraph(fig, text, fontsize, width=0.88):
     """Wrap prose to the available physical width of the landscape page."""
@@ -32,7 +58,8 @@ def wrap_paragraph(fig, text, fontsize, width=0.88):
     font = FontProperties(size=fontsize)
     limit = fig.bbox.width * width
     lines, line = [], ""
-    for word in re.split(r"[ \t\r\n]+", text.strip()):
+    # Split on ASCII whitespace only: str.split() would break U+00A0 bindings.
+    for word in re.split(r"[ \t\r\n]+", french_text(text).strip()):
         candidate = f"{line} {word}" if line else word
         if (
             line
@@ -1062,11 +1089,6 @@ def render(output, snapshot):
         )
         pdf.savefig(fig)
         plt.close(fig)
-        completion_spec = importlib.util.spec_from_file_location(
-            "completion", Path(__file__).with_name("tournament-report-completion.py")
-        )
-        completion = importlib.util.module_from_spec(completion_spec)
-        completion_spec.loader.exec_module(completion)
         completion.append_report(
             pdf, snapshot, results, output, LABELS, signed_rank, holm,
             wrap_paragraph, globals().get("__tournament_language__", "fr"),
