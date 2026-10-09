@@ -1,0 +1,28 @@
+%erg 0.1
+Title: Portable worktree recipe in hunt, raid and gaze: drop isolation parameter
+Created: 2026-10-09
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-09T13:06Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Child of 1074 (census and blind-spot pass there). `isolation: "worktree"` is a
+Claude Code Agent parameter inside skills that must run on Pi and Codex too.
+Lightening: remove it, and the prohibitions that exist only to dodge it.
+
+## Scope
+- hunt, raid, gaze (REROLL fix agent), team-lead, merge/roar wording: the
+  executor creates its own worktree with `git worktree add
+  .claude/worktrees/<name> -b <branch>`, runs `git worktree lock` on it, and
+  works only there; remove `isolation: "worktree"` and gaze's reviewer
+  prohibitions about it.
+- Keep the session `EnterWorktree` opt-in untouched (ticket 1077).
+- Update the tests pinning the old text (test_hunt_worktree_ownership,
+  test_hunt_triage_prestep, test_verify_fork_contracts) to pin the new recipe.
+
+## Exit criteria
+- [ ] No `isolation: "worktree"` left in skills/ or agents/
+- [ ] Recipe includes `git worktree lock`; worktree-gc honours it
+- [ ] `make check` passes

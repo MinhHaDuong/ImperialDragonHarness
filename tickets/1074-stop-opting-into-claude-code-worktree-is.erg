@@ -78,6 +78,10 @@ The guard is not only ours to remove: Claude Code also isolates
 - Planned PR reaches ~16 files: split into children (skills portable;
   session opt-in) before execution.
 
+## Tracker (author decision 2026-10-09: split; `git worktree lock`)
+- 1076 portable worktree recipe in skills
+- 1077 session opt-in, decided after an experiment
+
 ## Exit criteria
 - [x] Transcript census with counts (true / false positive), positive control fired
 - [ ] Opt-in removed; `/hunt`, `/raid`, `/gaze` use plain git
