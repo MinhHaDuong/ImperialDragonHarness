@@ -18,8 +18,9 @@ and enforcing invariants.
 
 ## Model policy
 
-Name a role for every launch and choose the worker for it with the `route`
-skill (`skills/route/SKILL.md`), stating the choice and why. Skill frontmatter
+Name a role for every launch, state the choice and why. Choose the model of each launched worker per launch, from the `route` skill grid
+(`skills/route/SKILL.md`); seats that must be independent follow
+`skills/route/references/decorrelation.md` ("The launch line"). Skill frontmatter
 does not configure spawned children.
 
 - **Execute:** the coder profile (`agents/coder.md`); cheaper workers for
@@ -512,9 +513,3 @@ Bump reason: `redirect ban triggered`.
 
 **Escalation**: If the same fix fails twice, stop and leave a
 ticket comment with the two failed approaches.
-
-## Worker models
-
-Choose the model of each launched worker per launch, from the `route` skill grid
-(`skills/route/SKILL.md`); never rely on the session model by default. Seats that
-must be independent follow `skills/route/references/decorrelation.md`.

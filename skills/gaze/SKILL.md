@@ -380,11 +380,9 @@ before it proceeds. Do **not** launch them as background agents: a fork's
 turn ends the moment it stops calling tools, and a background completion
 re-invokes the MAIN loop, not the fork, so a background fan-out returns at
 launch and orphans its reviewers (ticket 0250; see **Fork execution
-contract**). Once all return, collect their structured outputs. Choose the
-model of every read-only reviewer per launch from the `route` skill and state the
-choice and why; an unpinned Agent inherits the session
-model, so on a top-tier session this fan-out is silently a top-model wave.
-Independence follows `skills/route/references/decorrelation.md`: scale to the risk; a high-risk PR needs one
+contract**). Once all return, collect their structured outputs. Choose the model of each launched worker per launch, from the `route` skill grid
+(`skills/route/SKILL.md`); seats that must be independent follow
+`skills/route/references/decorrelation.md` ("The launch line"): scale to the risk; a high-risk PR needs one
 cross-family detached seat, else `no report` and `PANEL-INTEGRITY: DEGRADED`.
 
 **Agent A — adherence** (`/verify-adherence <branch> worktree=<absolute-review-worktree>`).
@@ -885,9 +883,3 @@ telemetry: tier=<tiny|small|full> risk_band=<high|low|normal> wall=<seconds>s ag
 
 On `--force-approve`, Part A is annotated `FORCE-APPROVED by <reason>`
 and Part B shows the gate's would-have-been verdict before override.
-
-## Worker models
-
-Choose the model of each launched worker per launch, from the `route` skill grid
-(`skills/route/SKILL.md`); never rely on the session model by default. Seats that
-must be independent follow `skills/route/references/decorrelation.md`.

@@ -47,10 +47,10 @@ skill **never signs** a tag — that is the human's sole responsibility.
 ## 2. Parallel audits
 
 Launch **three background agents in parallel** (single message, all as
-background agents), each worker chosen per the `route` skill (`skills/route/SKILL.md`; read-and-audit
-reviewers for security, UX and doc/test coherence) and stated with its reason; left unpinned they inherit
-the session model and silently run the fan-out at top tier. Wait for all to
-return, then consolidate.
+background agents), as read-and-audit reviewers for security, UX and doc/test coherence. Choose the model of each launched worker per launch, from the `route` skill grid
+(`skills/route/SKILL.md`); seats that must be independent follow
+`skills/route/references/decorrelation.md` ("The launch line").
+Wait for all to return, then consolidate.
 
 **Agent A — security audit.** Review the release surface for:
 - supply chain (dependencies, pinned versions, fetched scripts),
@@ -144,9 +144,3 @@ updated, and whether the tag verified.
 - No forge-CLI commands in this prose.
 - The Imperial Dragon is not a bird — no avian analogies. Scale, power,
   taxonomy.
-
-## Worker models
-
-Choose the model of each launched worker per launch, from the `route` skill grid
-(`skills/route/SKILL.md`); never rely on the session model by default. Seats that
-must be independent follow `skills/route/references/decorrelation.md`.

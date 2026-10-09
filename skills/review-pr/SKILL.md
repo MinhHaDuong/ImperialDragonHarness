@@ -33,11 +33,10 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 > (2026-06-10: exactly that burned a five-agent panel on an already-merged
 > PR while the intended target sat unreviewed).
 
-Spin multiple agents in parallel, each with a distinct perspective. Run all
-agents in fresh contexts, each with its model chosen per launch from the `route` skill; say
-the choice and why. An unpinned Agent inherits the session model, so on a top-tier
-session this fan-out silently becomes a top-model wave. Independence follows `skills/route/references/decorrelation.md`:
-a trivial change takes cheap same-family seats, a high-risk one needs one
+Spin multiple agents in parallel, each with a distinct perspective, each in a fresh context. Choose the model of each launched worker per launch, from the `route` skill grid
+(`skills/route/SKILL.md`); seats that must be independent follow
+`skills/route/references/decorrelation.md` ("The launch line").
+A trivial change takes cheap same-family seats, a high-risk one needs one
 cross-family detached seat, else `no report` and `PANEL-INTEGRITY: DEGRADED`.
 
 **Concurrency contract (`rules/authoring-skills.md`): parallel-background,
@@ -357,9 +356,3 @@ Rules:
 | Introduced by this PR | request-changes |
 | Pre-existing but touched | comment + new ticket |
 | Pre-existing and untouched | investigate → ticket if warranted |
-
-## Worker models
-
-Choose the model of each launched worker per launch, from the `route` skill grid
-(`skills/route/SKILL.md`); never rely on the session model by default. Seats that
-must be independent follow `skills/route/references/decorrelation.md`.

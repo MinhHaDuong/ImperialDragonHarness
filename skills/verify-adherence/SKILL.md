@@ -197,8 +197,7 @@ in practice.
 
 Only runs if any `.claude/rules/*.md` file changed OR if the diff touches architectural
 concerns not covered by phases 1–2. Spin **one** subagent, with its
-model chosen per launch from the `route` skill (state the choice and why; left
-unpinned it inherits the session model and runs at top tier), with:
+model chosen per launch from the `route` skill (state the choice and why), with:
 
 - The diff.
 - The relevant `.claude/rules/*.md` files.
