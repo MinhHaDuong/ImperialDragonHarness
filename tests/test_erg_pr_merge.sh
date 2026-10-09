@@ -1186,6 +1186,14 @@ if STUB_PATCH_FILE="$PATCHF" run_merge $'**Ticket:** 0999\n' "fix: miss" >/dev/n
     echo "FAIL: unresolvable short claim should still die"; fail=1
 elif [[ -s "$PATCHF" ]]; then echo "FAIL: unresolvable short claim rewrote body"; fail=1
 else echo "PASS: unresolvable short claim keeps the refusal, body untouched"; fi
+seed_repo shortdup 0316
+cp "$REPO/tickets/0316-fixture.erg" "$REPO/tickets/0316-twin.erg"
+git -C "$REPO" add tickets/ && git -C "$REPO" commit -q -m 'fixture: ambiguous 0316'
+: > "$PATCHF"
+if STUB_PATCH_FILE="$PATCHF" run_merge $'**Ticket:** 0316\n' "fix: dup" >/dev/null 2>&1; then
+    echo "FAIL: ambiguous short claim should still die"; fail=1
+elif [[ -s "$PATCHF" ]] || closed_has 0316; then echo "FAIL: ambiguous short claim rewrote body or closed"; fail=1
+else echo "PASS: ambiguous short claim (two files) keeps the refusal, body untouched"; fi
 seed_repo hashref 0314
 if run_merge $'Follows #0314.\n' "chore(0314): ref" >/dev/null 2>&1 || closed_has 0314; then
     echo "FAIL: #NNNN reference was treated as a close claim"; fail=1
