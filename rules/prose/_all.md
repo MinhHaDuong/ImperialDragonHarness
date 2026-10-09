@@ -49,6 +49,7 @@ These are the tics that mark text as machine-written. Cut them.
 - **Do not overstate.** One unearned superlative makes the reader doubt every other claim.
 - **Prefer the standard word to the fancy one.** "use" over "utilize", "before" over "prior to".
 - **Cutting to a word budget? Remove whole before you condense** — see `/cut-prose`: rank and cut weak/redundant passages entire, then condense the remainder; never a condense-only plan.
+- **Cross-reference by label** (`\ref`, `@sec-`/`@fig-`), never a typed section, figure or page number, nor "above/below": numbers and pages move under reflow.
 - **An unresolved `\cite` or `\ref` is a link error, not a warning** — the toolchain renders a placeholder and exits 0; gate the build on it (see `manuscript-build.md`).
 - **Absence claims stay humble**: "to our knowledge" or "we did not find", never "no prior work exists" or "nobody has done".
 - **Every empirical number comes from a committed generated artifact** (table, macro, vars file), never hand-typed or copied from an agent's survey notes; agent counts are hypotheses until the script runs.

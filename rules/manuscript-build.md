@@ -4,7 +4,7 @@ paths:
   - "**/_quarto.yml"
   - "**/_quarto.yaml"
   - "**/*.latexmkrc"
-last-reviewed: 2026-08-14
+last-reviewed: 2026-10-09
 ---
 # Manuscript builds — assert the product, not the exit code
 
@@ -76,3 +76,11 @@ at the review gate instead, by `verify-adherence` phase 1.0's reference-resoluti
 check, which reads sources rather than logs. That gate runs even in a repo with no `scripts/`
 directory. Reference implementation: `scripts/check_tex_unresolved.py`
 in polycentric_activity (ticket 0091).
+
+## Figures are build products
+
+A figure is written to a file by a committed script that a Make target runs.
+The manuscript includes the file; it never draws data inline (pgfplots, TikZ
+plots, hand-typed coordinates). An inline plot is a hand-typed number in
+disguise: it escapes the generated-artifact rule in `prose/_all.md` and
+drifts silently when the data change.

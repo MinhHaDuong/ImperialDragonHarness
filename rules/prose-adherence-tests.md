@@ -1,13 +1,14 @@
 ---
 paths:
-  - "**/tests/**/*prose*.py"
-  - "**/tests/**/*manuscript*.py"
+  - "**/tests/**/*.py"
+  - "**/test_*.py"
   - "**/docs/editorial-brief.md"
 last-reviewed: 2026-10-09
 ---
 # Prose adherence tests — pin defects, never phrasings
 
-Loaded when a project's prose tests or its editorial brief are touched.
+Loaded when any test file or the editorial brief is touched. It binds only in a
+repo that has a manuscript; in a repo without one, stop reading here.
 Promoted from two projects that reached the same rule independently
 (ticket 0375).
 
