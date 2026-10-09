@@ -11,6 +11,7 @@ Closed: Trial sweep landed in PR #1300 (rules promoted, author decisions applied
 2026-10-09T12:00Z claude note Trial sweep on branch t0375-trial: 22 files/2 repos inventoried, 11 rule rows promoted (prose/_all, doctype/article, new rules/prose-adherence-tests.md); project trims proposed, not applied
 2026-10-09T15:00Z claude note Author decisions applied on PR 1300 (crossref to prose/_all, gap paragraph to article, figures to manuscript-build, adherence-tests globs widened); non-writing rules split to 1073
 2026-10-09T13:07Z Minh Ha-Duong closed — Trial sweep landed in PR #1300 (rules promoted, author decisions applied); non-writing rules continue in 1073; project-side trims belong to those repos
+2026-10-09T14:00Z claude note Per-repo trims ticketed: climate-finance-het 2053 (PR 1746, merged), aedist 0682 (PR 1178)
 
 --- body ---
 ## Context
