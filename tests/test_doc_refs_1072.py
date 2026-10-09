@@ -20,3 +20,14 @@ def test_route_cites_existing_decorrelation_headings():
     assert cited
     for name in cited:
         assert name in headings, f"{name!r} is not a heading in decorrelation.md"
+
+
+def test_makefile_run_comment_does_not_claim_ci_sets_virtual_env():
+    text = (ROOT / "Makefile").read_text()
+    assert "as in CI after" not in text
+    assert "VIRTUAL_ENV set, as in CI" not in text
+
+
+def test_review_pr_collection_names_manifest_first_field():
+    text = " ".join((ROOT / "skills/review-pr/SKILL.md").read_text().split())
+    assert "every manifest entry (its first, perspective field)" in text
