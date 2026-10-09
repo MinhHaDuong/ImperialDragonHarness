@@ -347,10 +347,10 @@ def append_report(
                 ),
             ),
             (
-                tr("Statut de diffusion", "Publication status"),
+                tr("Statut et licence", "Status and licence"),
                 tr(
-                    "Préparé par ChatGPT puis finalisé par Claude Opus 5.5, à la demande de Ha-Duong Minh. La branche de revue est autorisée ; aucune fusion, publication du billet ou diffusion Tchap/Reddit n’est autorisée. Message : aucun classement ne survit à la correction de Holm ; choisir d’abord selon les contraintes (confidentialité, délai, budget, GPU, quotas), puis selon le compromis observé. Le guide ci-dessous n’est pas une décision de routage appliquée.",
-                    "Prepared by ChatGPT, then finalized by Claude Opus 5.5, at the request of Ha-Duong Minh. A review branch is authorized; no merge, blog publication or Tchap/Reddit distribution is authorized. Message: no ranking survives Holm correction; choose by constraints first (privacy, latency, budget, GPU, quotas), then by the observed trade-off. The following guide is not an applied routing decision.",
+                    "Préparé par ChatGPT puis finalisé par Claude Opus 5.5, à la demande de Ha-Duong Minh. Licence science ouverte : CC BY 4.0 (réutilisation libre avec attribution). Message : aucun classement ne survit à la correction de Holm ; choisir d’abord selon les contraintes (confidentialité, délai, budget, GPU, quotas), puis selon le compromis observé. Le guide ci-dessous n’est pas une décision de routage appliquée.",
+                    "Prepared by ChatGPT, then finalized by Claude Opus 5.5, at the request of Ha-Duong Minh. Open science licence: CC BY 4.0 (free reuse with attribution). Message: no ranking survives Holm correction; choose by constraints first (privacy, latency, budget, GPU, quotas), then by the observed trade-off. The following guide is not an applied routing decision.",
                 ),
             ),
         ],
