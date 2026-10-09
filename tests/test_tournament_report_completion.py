@@ -107,3 +107,11 @@ def test_cluster_memberships_match_the_existing_grid():
     assert set(grid["clusters"]) == set(completion.CLUSTERS)
     assert set(completion.CLUSTERS["ECONOMIQUES"]) == {"l", "n", "i", "j", "k"}
     assert len({a for group in completion.CLUSTERS.values() for a in group}) == 15
+
+
+def test_french_spacing_binds_high_punctuation_guillemets_and_digit_groups():
+    nb = "\u00a0"
+    text = "Luna : 0,03 ; « coût » ? 2 500 tokens, ticket 0333 2026"
+    assert completion.french_spacing(text) == (
+        f"Luna{nb}: 0,03{nb}; «{nb}coût{nb}»{nb}? 2{nb}500 tokens, ticket 0333 2026"
+    )

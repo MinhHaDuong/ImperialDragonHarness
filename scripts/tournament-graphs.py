@@ -9,6 +9,7 @@ import datetime
 import importlib.util
 import itertools
 import json
+import re
 import statistics
 from pathlib import Path
 
@@ -31,7 +32,7 @@ def wrap_paragraph(fig, text, fontsize, width=0.88):
     font = FontProperties(size=fontsize)
     limit = fig.bbox.width * width
     lines, line = [], ""
-    for word in text.split():
+    for word in re.split(r"[ \t\r\n]+", text.strip()):
         candidate = f"{line} {word}" if line else word
         if (
             line

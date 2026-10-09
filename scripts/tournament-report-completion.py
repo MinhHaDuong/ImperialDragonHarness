@@ -5,6 +5,7 @@ import csv
 import itertools
 import json
 import math
+import re
 import statistics
 
 import matplotlib.pyplot as plt
@@ -150,13 +151,20 @@ def frontier3(snapshot):
     )
 
 
+def french_spacing(text):
+    """Bind French high punctuation, guillemets and digit groups with U+00A0."""
+    text = re.sub(r" ([:;?!»])", "\u00a0\\1", text)
+    text = text.replace("« ", "«\u00a0")
+    return re.sub(r"(?<=\d) (?=\d{3}\b)", "\u00a0", text)
+
+
 def append_report(
     pdf, snapshot, results, output, labels, signed_rank, holm, wrap, language="fr"
 ):
     en = language == "en"
 
     def tr(fr, eng):
-        return eng if en else fr
+        return eng if en else french_spacing(fr)
 
     def number(v, digits=2):
         text = f"{v:.{digits}f}"
@@ -304,8 +312,8 @@ def append_report(
             "Supplementary analyses and situation guide",
         ),
         tr(
-            "Résultats figés du 8 octobre ; complément rédigé le 9 octobre. Relecture de l’auteur en attente.",
-            "October 8 frozen results; supplement prepared October 9. Author review pending.",
+            "Résultats figés du 8 octobre ; complément rédigé le 9 octobre. Guide relu par un relecteur délégué (Fable) à la demande de l’auteur.",
+            "October 8 frozen results; supplement prepared October 9. Guide reviewed by a delegated Fable reviewer at the author’s request.",
         ),
     )
     prose(
@@ -328,8 +336,8 @@ def append_report(
             (
                 tr("Statut de diffusion", "Publication status"),
                 tr(
-                    "Préparé par ChatGPT prompté par Ha-Duong Minh. La branche de revue est autorisée ; aucune fusion, publication du billet ou diffusion Tchap/Reddit n’est autorisée. Le guide ci-dessous constitue une proposition à valider par l’auteur, pas une décision de routage appliquée.",
-                    "Préparé par ChatGPT prompté par Ha-Duong Minh. A review branch is authorized; no merge, blog publication or Tchap/Reddit distribution is authorized. The following guide is a proposal for author review, not an applied routing decision.",
+                    "Préparé par ChatGPT prompté par Ha-Duong Minh. La branche de revue est autorisée ; aucune fusion, publication du billet ou diffusion Tchap/Reddit n’est autorisée. Message : aucun classement ne survit à la correction de Holm ; choisir d’abord selon les contraintes (confidentialité, délai, budget, GPU, quotas), puis selon le compromis observé. Le guide ci-dessous n’est pas une décision de routage appliquée.",
+                    "Prepared by ChatGPT prompted by Ha-Duong Minh. A review branch is authorized; no merge, blog publication or Tchap/Reddit distribution is authorized. Message: no ranking survives Holm correction; choose by constraints first (privacy, latency, budget, GPU, quotas), then by the observed trade-off. The following guide is not an applied routing decision.",
                 ),
             ),
         ],
@@ -727,8 +735,8 @@ def append_report(
             "Situation guide: constraints before ranking",
         ),
         tr(
-            "Proposition pour revue de l’auteur. Ce guide ne vaut ni autorisation de transfert de données ni politique de routage appliquée.",
-            "Proposal for author review. This guide is neither data-transfer authorization nor an applied routing policy.",
+            "Relu par un relecteur délégué (Fable) à la demande de l’auteur. Ce guide ne vaut ni autorisation de transfert de données ni politique de routage appliquée.",
+            "Reviewed by a delegated Fable reviewer at the author’s request. This guide is neither data-transfer authorization nor an applied routing policy.",
         ),
     )
     scenarios = [
@@ -748,36 +756,36 @@ def append_report(
                 "Interactive, short wait preferred",
             ),
             tr(
-                "Sonnet : 2,09 min en moyenne ; Opus low : 3,03 ; Luna : 5,02. Ce sont des moyennes observées, pas des délais garantis.",
-                "Sonnet: 2.09 min mean; Opus low: 3.03; Luna: 5.02. Observed means, not guaranteed response times.",
+                "Sonnet : 2,09 min en moyenne (médiane 1,13) ; Opus low : 3,03 (2,82) ; Haiku : 6,11 (3,03) ; Luna : 5,02 (3,84). Valeurs observées, pas des délais garantis ; Sonnet et Opus low ne sont pas séparés, même nominalement (p = 0,16).",
+                "Sonnet: 2.09 min mean (1.13 median); Opus low: 3.03 (2.82); Haiku: 6.11 (3.03); Luna: 5.02 (3.84). Observed values, not guaranteed times; Sonnet/Opus low is not separated even nominally (p = 0.16).",
             ),
         ),
         (
             tr("Volume, budget API réduit", "Bulk work, small API budget"),
             tr(
-                "Luna : 0,0388 USD/ticket, candidat économique observé. Haiku : 0,1257 USD moyen, mais médiane 0,0228 ; longues tâches et tarifs par seuil rendent la moyenne informative.",
-                "Luna: USD 0.0388/task, observed economical candidate. Haiku: USD 0.1257 mean but 0.0228 median; long tasks and pricing tiers make the mean informative.",
+                "Luna : 0,0388 USD en moyenne, 0,0278 en médiane par ticket. Haiku : 0,1257 moyen, 0,0228 médian ; la moyenne porte le risque de queue des longues tâches et du tarif ×5 au-delà de 100 000 tokens de prompt. Écart de coût apparié non significatif même nominalement (p = 0,36 ; Haiku moins cher sur 5/10).",
+                "Luna: USD 0.0388 mean, 0.0278 median per ticket. Haiku: 0.1257 mean, 0.0228 median; the mean carries the tail risk from long tasks and the 5x rate above 100k prompt tokens. Paired cost difference not even nominal (p = 0.36, Haiku cheaper on 5/10).",
             ),
         ),
         (
             tr("Travail asynchrone, GPU disponible", "Asynchronous, GPU available"),
             tr(
-                "IQ3_S : 26,20/30, 46,11 min. Préserver un créneau GPU ; le test n’évalue pas le débit multiutilisateur ni une autre machine.",
-                "IQ3_S: 26.20/30, 46.11 min. Reserve a GPU window; the test does not measure multiuser throughput or another machine.",
+                "IQ3_S : 26,20/30, 46,11 min. Préserver un créneau GPU ; le test n’évalue pas le débit multiutilisateur ni une autre machine. Meilleure moyenne locale ; les écarts aux autres séries locales sont nominaux seulement.",
+                "IQ3_S: 26.20/30, 46.11 min. Reserve a GPU window; the test does not measure multiuser throughput or another machine. Best local mean; gaps to other local arms are nominal only.",
             ),
         ),
         (
             tr("GPU occupé", "GPU busy"),
             tr(
-                "Si le contenu est autorisé, envisager une API ; sinon attendre. La pause de 0333-b2 montre l’arbitrage d’usage, pas une défaillance du modèle.",
-                "If content is cleared, consider an API; otherwise wait. The 0333-b2 pause shows resource contention, not model failure.",
+                "Si le contenu est autorisé, choisir dans les lignes délai ou budget ; sinon attendre. La pause de 0333-b2 est une libération du GPU demandée par l’auteur (rejeu 30/30), pas une défaillance du modèle.",
+                "If content is cleared, pick from the latency or budget rows; otherwise wait. The 0333-b2 pause was an author-requested GPU release (replay 30/30), not a model failure.",
             ),
         ),
         (
             tr("Coût de reprise important", "Retries matter"),
             tr(
-                "Budgéter les tentatives et l’intégration, pas seulement le dernier succès. Mistral mA est encore un périmètre incomplet ; ne pas l’employer comme facture totale.",
-                "Budget attempts and integration, not just last success. Mistral mA is still incomplete; do not treat it as a full campaign bill.",
+                "Budgéter toutes les tentatives et le jugement, pas seulement le dernier succès. Mistral mA couvre 26 des 35 tentatives conservées, pas la facture de la campagne. Pour Haiku, le jugement (1,48 USD) a coûté plus que les runs candidats (1,26).",
+                "Budget every attempt and the judging, not just the last success. Mistral mA covers 26 of 35 preserved attempts, not the campaign bill. For Haiku, judging (USD 1.48) cost more than the candidate runs (1.26).",
             ),
         ),
     ]
@@ -802,8 +810,8 @@ def append_report(
         wrap(
             fig,
             tr(
-                f"Exemple Haiku/Sonnet : en valorisant le délai linéairement, leurs coûts totaux moyens sont égaux vers {number(threshold)} USD par ticket et par heure. Au-dessus, Sonnet est moins cher en coût total valorisé ; au-dessous, Haiku. Cela ignore la différence de qualité et n’exprime pas une préférence de l’auteur.",
-                f"Haiku/Sonnet example: with linear delay valuation, mean total costs cross at about USD {number(threshold)} per task-hour. Above this, Sonnet has lower valued total cost; below it, Haiku. This ignores quality differences and does not state an author preference.",
+                f"Exemple Haiku/Sonnet : en valorisant le délai linéairement, leurs coûts totaux moyens sont égaux vers {number(threshold)} USD par heure de délai et par ticket (l’erg·h du rapport). Au-dessus, Sonnet est moins cher en coût total valorisé ; au-dessous, Haiku. Cela ignore la différence de qualité (nominale seulement, p = 0,42) et n’exprime pas une préférence de l’auteur.",
+                f"Haiku/Sonnet example: with linear delay valuation, mean total costs cross at about USD {number(threshold)} per hour of delay per ticket (the report’s erg·h). Above this, Sonnet has lower valued total cost; below it, Haiku. This ignores the quality difference (nominal only, p = 0.42) and does not state an author preference.",
             ),
             10,
         ),
@@ -848,8 +856,8 @@ def append_report(
                     "Quotas and caps: protect the judges too",
                 ),
                 tr(
-                    "Le journal rapporte un manque de crédits OpenAI, un plafond mensuel OpenRouter passé de 40 à 60 USD et un endpoint gratuit retiré. Le plafond OpenRouter a bloqué le panel entier, dont les trois juges utilisaient ce fournisseur. Avant une nouvelle campagne : vérifier crédits, caps, limite de concurrence et budget des juges ; réserver une marge ; conserver les traces d’incident et distinguer erreur fournisseur et erreur du modèle.",
-                    "The journal records depleted OpenAI credits, an OpenRouter monthly cap raised from USD 40 to 60, and a withdrawn free endpoint. The OpenRouter cap stalled the entire panel, whose three judges used that provider. Before a new campaign: check credits, caps, concurrency limits and judge budget; reserve headroom; preserve incident evidence and distinguish provider and model errors.",
+                    "Le journal rapporte un manque de crédits OpenAI, un plafond mensuel OpenRouter passé de 40 à 60 USD et un endpoint gratuit retiré. Le plafond OpenRouter a bloqué le panel entier, dont les trois juges utilisaient ce fournisseur. Avant une nouvelle campagne : vérifier crédits, caps, limites de concurrence (DeepSeek : Flash 2 500, Pro 500) et budget des juges ; réserver une marge ; conserver les traces d’incident et distinguer erreur fournisseur et erreur du modèle.",
+                    "The journal records depleted OpenAI credits, an OpenRouter monthly cap raised from USD 40 to 60, and a withdrawn free endpoint. The OpenRouter cap stalled the entire panel, whose three judges used that provider. Before a new campaign: check credits, caps, concurrency limits (DeepSeek: Flash 2,500, Pro 500) and judge budget; reserve headroom; preserve incident evidence and distinguish provider and model errors.",
                 ),
             ),
         ],
@@ -894,15 +902,15 @@ def append_report(
                     "Sources and traceability limits",
                 ),
                 tr(
-                    "Instantané public figé e352f74… : résultats retenus, audits de tentatives et coûts Mistral/Haiku. Grille : skills/route/grid.json. Hypothèses : ticket 1024, entrée du 5 octobre à 08:40Z. Événements : journal du 6 octobre et corrections. Les archives ~/arena, la sélection aléatoire et les factures originales ne sont pas accessibles ici ; leur provenance privée n’est donc pas réauditée. Les six incidents h sont documentés en nombre, sans identifiants inventés.",
-                    "Frozen public snapshot e352f74…: retained results, attempt audits and Mistral/Haiku costs. Grid: skills/route/grid.json. Hypotheses: ticket 1024, October 5 at 08:40Z. Outcomes: October 6 journal and corrections. Private ~/arena archives, random selection and original invoices are unavailable here, so private provenance is not reaudited. Six h incidents are reported as a count without invented identifiers.",
+                    "Instantané public figé e352f74… : résultats retenus, audits de tentatives et coûts Mistral/Haiku. Grille : skills/route/grid.json. Hypothèses : ticket 1024, entrée du 5 octobre à 08:40Z. Événements : journal du 6 octobre et corrections. Le 9 octobre, le générateur relancé en mode --arena sur les archives privées (padme) reproduit à l’identique tests.json, comparisons.csv et toutes les valeurs des séries ; l’instantané public ajoute seulement les métadonnées comptables de Haiku 5.5. La sélection aléatoire et les factures originales ne sont pas réauditées. Les six incidents h sont documentés en nombre, sans identifiants inventés.",
+                    "Frozen public snapshot e352f74…: retained results, attempt audits and Mistral/Haiku costs. Grid: skills/route/grid.json. Hypotheses: ticket 1024, October 5 at 08:40Z. Outcomes: October 6 journal and corrections. On October 9 the generator rerun in --arena mode on the private archives (padme) reproduced tests.json, comparisons.csv and every series value identically; the public snapshot only adds Haiku 5.5 accounting metadata. Random selection and original invoices are not reaudited. Six h incidents are reported as a count without invented identifiers.",
                 ),
             ),
             (
-                tr("Critères à valider", "Criteria requiring validation"),
+                tr("État des critères de sortie", "Exit criteria status"),
                 tr(
-                    "Contenu demandé : graphes, grille, verdicts H1/H2, effort, inter-camps, distributions, classes, événements et guide désormais présents. Reproduction publique et finition contrôlées. La revue du guide par l’auteur reste ouverte, ainsi que la validation formelle de la couverture du parent 1024. Ne pas cocher ces approbations à partir de ce document. Le contenu des tickets d’origine n’est pas exporté.",
-                    "Requested content is now present: plots, grid, H1/H2 verdicts, effort, cross-camp comparisons, distributions, classes, outcomes and guide. Public reproduction and layout are checked. Author review of the guide and formal parent-1024 coverage validation remain open. This document must not be used to claim those approvals. Original task content is not exported.",
+                    "Contenu demandé : graphes, grille, verdicts H1/H2, effort, inter-camps, distributions, classes, événements et guide désormais présents. Reproduction publique et finition contrôlées. Le guide a été relu par un relecteur délégué (Fable) sur instruction de l’auteur, et ses corrections appliquées. Ce rapport constitue l’analyse appariée demandée par le parent 1024. Le contenu des tickets d’origine n’est pas exporté.",
+                    "Requested content is now present: plots, grid, H1/H2 verdicts, effort, cross-camp comparisons, distributions, classes, outcomes and guide. Public reproduction and layout are checked. The guide was reviewed by a delegated Fable reviewer on the author’s instruction, and its corrections applied. This report is the paired-analysis write-up required by parent 1024. Original task content is not exported.",
                 ),
             ),
         ],
