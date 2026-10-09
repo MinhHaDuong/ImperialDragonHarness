@@ -190,7 +190,8 @@ no further confirmation is needed. Do not bypass failing checks or protected
 branch requirements. Dream, suggested in lair’s conclusion, remains a separately
 invoked and reviewed workflow, launched in a new `/clear` session.
 A failed check or submission leaves the one branch preserved and reported.
-Wait for confirmed integration before cleaning up that worktree.
+Do not wait for the bundle's checks: step 9b's bundle exception lets the
+worktree go once the branch is pushed and auto-merge is armed.
 
 ## Close and clean up
 
@@ -239,10 +240,24 @@ Wait for confirmed integration before cleaning up that worktree.
        0174 and 0948.
     b. Immediately before removal, fetch the project integration branch and
        re-run `git merge-base --is-ancestor HEAD origin/main` on the current
-       HEAD, after any capture commit. If fetch or ancestry verification fails,
-       preserve the worktree and branch (`action: "keep"`) and report pending
-       integration. An earlier pre-capture check is not sufficient. Only then
-       call `ExitWorktree` with action `remove`. With this refreshed check,
+       HEAD, after any capture commit.
+
+       **Bundle exception.** HEAD passes without ancestry only when all
+       hold: it is the `roar-*` wrap-up branch this run created after the
+       task merge (never the task branch, never a reused branch); after a
+       fresh fetch, `git rev-parse HEAD @{u}` prints one SHA twice; and a
+       read-back of its merge request shows it open with auto-merge armed
+       (<!-- harness-extension-point -->`gh pr view --json state,autoMergeRequest`).
+       The forge then holds the only durable copy: name the merge request
+       as pending integration in step 11. A later failed check leaves it
+       open, and the next roar's step 10 stale-merge-request check surfaces
+       it.
+
+       If fetch or verification
+       fails, preserve the worktree and branch (`action: "keep"`) and report
+       pending integration. An earlier pre-capture check is not sufficient. Only then
+       call `ExitWorktree` with action `remove`. With the ancestry check
+       (not the bundle exception, whose local branch may go with the tree),
        the worktree branch is fully merged — ExitWorktree's
        "N commits would be discarded" warning is a false alarm from a
        stale local main — it can even name a branch that no longer
