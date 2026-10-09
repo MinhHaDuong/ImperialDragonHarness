@@ -23,33 +23,18 @@ tests are the gate, this is why.
   hardcode `gh`. The harness outlives tool generations — names rot, capabilities
   don't. Enforced by `scripts/check-agnostic.sh`; a genuinely runtime-specific
   line goes behind `<!-- harness-extension-point -->`.
-- **Never take a name the runtime already binds.** A skill directory whose name
-  matches a built-in command shadows it, with no warning at either end: the
-  built-in simply stops being reachable, and the only symptom is a user typing
-  the command and getting something else. `skills/memory/` held `/memory` from
-  the harness's first commit until 2026-09-16, when the author typed it expecting
-  the built-in's view of the resident memory files. Nothing in the tree recorded
-  the collision, and the skill had drifted to describing a store schema that no
-  longer existed — a shadowed name hides its own staleness, since the users who
-  would notice are the ones the built-in was serving. No test gates this: a list
-  of built-in names is exactly the kind that rots, and the runtime's own command
-  list is the authority. Check it when you name a skill, not after.
-  Renaming away from a collision takes no stub at the old name — a stub keeps the
-  shadow, which is the thing being removed.
+- **Never take a name the runtime already binds.** A skill named after a
+  built-in command silently shadows it and hides its own staleness. Check the
+  runtime's command list when you name one; renaming away needs no stub.
 - **Discoverability first in `description:`.** The first sentence states the
   plain, unthemed function in the words a naive user would search ("Audit
   test-suite quality…"). Theming, lore and jargon come after it. Skill *names*
   may stay themed — the opening sentence is what a user scans.
 - **Always quote free-text frontmatter.** `description:` and `argument-hint:`
-  are wrapped in `"` (or `'` when the value contains a double quote). Both carry
-  prose, where a colon, a leading `[` or a quote is natural to write and special
-  in YAML: `description: Supervise a run: keep the queue moving` is a parse
-  error, `argument-hint: [pr-number]` parses as a list. Quoting unconditionally
-  makes the frontmatter valid by construction.
-  A lenient consumer will not cover for it — a runtime loader displayed four
-  unparseable `SKILL.md` files for months. Write new consumers strictly too: a
-  regex plus `.strip('"')` returns the same all-clear whether the document is
-  valid or broken (ticket 0515).
+  are wrapped in `"` (or `'` when the value contains a double quote); prose
+  carries colons, leading `[` and quotes that YAML parses wrongly. Write new
+  consumers strictly too: a lenient regex returns the same all-clear on broken
+  documents.
 - **Every multi-item step declares its concurrency** — parallel-background or
   sequential-blocking — and why. Model defaults differ across versions; the
   skill text is the contract.
