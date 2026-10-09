@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from child_env import child_env
 
 ROOT = Path(__file__).parents[1]
 
@@ -153,5 +154,6 @@ def test_supplement_opens_with_a_section_title_page():
             capture_output=True,
             text=True,
             check=True,
+            env=child_env(),
         ).stdout
         assert title in " ".join(text.split())
