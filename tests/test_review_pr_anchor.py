@@ -9,15 +9,14 @@ import sys
 import pytest
 
 from child_env import child_env
+from run_checked import run_checked
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "review-pr-anchor.py"
 
 
 def git(cwd, *args):
-    return subprocess.run(["git", "-C", str(cwd), *args], check=True,
-                          capture_output=True, text=True,
-                          env=child_env()).stdout.strip()
+    return run_checked(["git", "-C", str(cwd), *args]).stdout.strip()
 
 
 @pytest.fixture

@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from child_env import child_env
+from run_checked import run_checked
 
 CLI = Path(__file__).resolve().parents[1] / "scripts" / "attribution_backfill.py"
 pytestmark = pytest.mark.integration
@@ -18,8 +19,7 @@ parse_record = READER.parse_record
 
 
 def git(repo, *args):
-    return subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True,
-                          text=True, env=child_env()).stdout.strip()
+    return run_checked(["git", "-C", str(repo), *args]).stdout.strip()
 
 
 def commit(repo, name):

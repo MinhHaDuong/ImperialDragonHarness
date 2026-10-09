@@ -48,11 +48,11 @@ def _repo(root: Path, name: str, *, dirty: bool = False, untracked: bool = False
     return repo
 
 
-def _run(command: str, cwd: Path | str) -> subprocess.CompletedProcess:
+def _run(command: str, cwd: Path | str, extra_env: dict | None = None) -> subprocess.CompletedProcess:
     payload = {"tool_name": "Bash", "tool_input": {"command": command}, "cwd": str(cwd)}
     return subprocess.run(
         ["bash", str(HOOK)], input=json.dumps(payload), capture_output=True, text=True,
-        cwd=REPO, timeout=30, env=child_env(),
+        cwd=REPO, timeout=30, env={**child_env(), **(extra_env or {})},
     )
 
 
@@ -149,4 +149,7 @@ def test_unreadable_payload_allows(stdin):
 
 def test_non_repo_target_allows(tmp_path):
     """git cannot read the tree, so the reset would fail on its own."""
-    assert _run("git reset --hard", tmp_path).returncode == 0
+    # The ceiling keeps the tool from discovering an enclosing repo when TMPDIR
+    # itself sits inside one (e.g. under ~/.claude/jobs/...).
+    ceiling = {"GIT_CEILING_DIRECTORIES": str(tmp_path.parent)}
+    assert _run("git reset --hard", tmp_path, ceiling).returncode == 0

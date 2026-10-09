@@ -54,6 +54,7 @@ set -euo pipefail
 echo "$*" >> "${STUB_GH_LOG:-/dev/null}"
 case "$1 $2" in
   "pr list")
+    [[ -n "${STUB_PR_LIST_FAIL:-}" ]] && { echo "gh: not logged in" >&2; exit 4; }
     echo "$STUB_PR_LIST" ;;
   "api "*|"api")
     # Emulate `gh api ... --jq '...'`: emit the already-filtered filenames the
@@ -131,6 +132,7 @@ run_check() {  # env STUB_PR_LIST, STUB_SIBLING_FILES, SELF_PR_NUMBER, STUB_GH_L
       STUB_PR_LIST="${STUB_PR_LIST:-[]}" \
       STUB_SIBLING_FILES="${STUB_SIBLING_FILES:-}" \
       STUB_API_FAIL="${STUB_API_FAIL:-}" \
+      STUB_PR_LIST_FAIL="${STUB_PR_LIST_FAIL:-}" \
       STUB_GH_LOG="${STUB_GH_LOG:-/dev/null}" \
       bash "$SCRIPT" )
 }
@@ -150,7 +152,7 @@ else
     echo "$out" | grep -q '#77'       || { echo "  message does not name sibling PR #77"; a_ok=0; }
     echo "$out" | grep -qi 'next'     || { echo "  message lacks a next-free-ID suggestion"; a_ok=0; }
     if (( a_ok )); then echo "PASS: collision fails, names the sibling PR and a next-free-ID suggestion"
-    else echo "FAIL: collision message incomplete"; fail=1; fi
+    else echo "FAIL: collision message incomplete"; echo "$out"; fail=1; fi
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -239,7 +241,7 @@ else
     echo "$out" | grep -q '0300-merged-sibling'   || { echo "  message does not name the base-tip rival file"; e_ok=0; }
     echo "$out" | grep -qi 'next'                 || { echo "  message lacks a next-free-ID suggestion"; e_ok=0; }
     if (( e_ok )); then echo "PASS: base-tip collision fails, names the rival file and a next-free-ID suggestion"
-    else echo "FAIL: base-tip collision message incomplete"; fail=1; fi
+    else echo "FAIL: base-tip collision message incomplete"; echo "$out"; fail=1; fi
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -285,6 +287,18 @@ if out=$(SELF_PR_NUMBER=99 STUB_PR_LIST='[]' run_check 2>&1); then
     echo "PASS: same-ID rename is not flagged (exit 0)"
 else
     echo "FAIL: rename wrongly flagged as a base-tip collision"; echo "$out"; fail=1
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case (h): gh cannot list open PRs -> exit 2 (fail closed), one clear line
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo ghdown 0300
+rc=0
+out=$(SELF_PR_NUMBER=99 STUB_PR_LIST_FAIL=1 run_check 2>&1) || rc=$?
+if [[ "$rc" -eq 2 ]] && echo "$out" | grep -qF 'cross-pr-collision: cannot list open PRs (no gh auth/network/GitHub remote)'; then
+    echo "PASS: gh failure fails closed (exit 2) with one clear line"
+else
+    echo "FAIL: gh failure should exit 2 with the clear line (got rc=$rc)"; echo "$out"; fail=1
 fi
 
 if (( fail )); then exit 1; fi

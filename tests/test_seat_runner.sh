@@ -660,3 +660,5 @@ fi
 echo ""
 echo "Results: ${PASS} passed, ${FAIL} failed"
 [ "$FAIL" -eq 0 ] || exit 1
+# Zero checks ran: exit 77 so the runner reports a skip, not a pass.
+[ "$PASS" -gt 0 ] || exit 77

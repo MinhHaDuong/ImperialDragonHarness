@@ -46,7 +46,9 @@ check-agnostic-rules:
 # -n 4 per the 1011 worker-safety audit: three parallel trials reproduced
 # the serial pass/skip counts exactly, 81s -> 38.6s. check-fast and lint are
 # deliberately serial (both sit at the pytest boot+collection floor).
+# Falls back to serial when pytest-xdist is not installed (probe: import xdist).
+HAVE_XDIST := $(shell python3 -c 'import xdist' 2>/dev/null && echo yes)
 check-tests:
-	python3 -m pytest tests/ -n 4
+	python3 -m pytest tests/ $(if $(HAVE_XDIST),-n 4)
 
 check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check-tests
