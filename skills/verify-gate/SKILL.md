@@ -258,7 +258,7 @@ current round = count + 1.
 
 - No ticket (no close claim, no title/body reference) → not a breaker. The
   PR body's stated intent and test plan stand in for exit criteria; record a
-  `no_ticket` nit. A PR body that states no intent at all → REROLL, not ESCALATE.
+  `no_ticket` nit.
 - A close claim naming a ticket file that does not exist → ESCALATE (dangling
   claim; `/merge` would fail on it).
 - PR body lacks test plan → not a gate-level failure, but recorded as a nit.
