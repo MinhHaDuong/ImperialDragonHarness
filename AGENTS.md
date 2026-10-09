@@ -4,13 +4,9 @@ Worker choice (model, effort, reviewer decorrelation) is made by the route skill
 `skills/route/SKILL.md`, not by skills or this file. A skill states a role and a
 need; it never names a model or a capability tier.
 
-External reviewer discovery and routing also belong to the active runtime.
-Request independent reviewers with the required expertise, independence needs,
-and access to the review material; let the runtime find who is available and
-route between llama.cpp on Padmé, OpenRouter, other local agents, or agents on
-another host. These are possible resources, not a mandatory roster or preference
-order. Use existing helpers when useful; do not require one gateway or transport.
-Record the reviewer identity, route, evidence, and any unavailable perspective.
+Reviewer routing and independence: `rules/workflow.md` (Delegation) and
+`skills/route/references/decorrelation.md`. Record the reviewer identity, route,
+evidence, and any unavailable perspective.
 
 ## Harness instructions
 
