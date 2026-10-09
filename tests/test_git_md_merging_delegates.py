@@ -63,3 +63,20 @@ def test_gaze_states_branch_currency_as_a_caller_prerequisite():
         "caller rebases onto current origin/main before invoking — /gaze "
         "does not rebase the PR branch itself"
     )
+
+
+def test_roar_proposal_rule_yields_to_raid_phase_8():
+    """git.md's "propose, don't auto-run" /roar rule must name its exception.
+
+    raid Phase 8 runs /roar per merged PR; an unscoped resident rule made a
+    raid stop and propose instead (ticket 1075 raid, 2026-10-09).
+    """
+    raid = _normalize((REPO / "skills" / "raid" / "SKILL.md").read_text())
+    assert "## Phase 8: Celebrate" in raid and "run `/roar` for each" in raid, (
+        "raid Phase 8 moved or changed: update the git.md exception to match"
+    )
+    line = next(ln for ln in GIT_RULES.split("- **") if ln.startswith("Propose `/roar`"))
+    assert "raid Phase 8" in line, (
+        "rules/git.md's propose-/roar rule must exempt an invoked skill that "
+        "sequences /roar (raid Phase 8)"
+    )
