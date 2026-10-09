@@ -1,6 +1,6 @@
 ---
 name: pdf-finish
-description: "Finishing pass on a PDF deliverable before it leaves the workshop — journal submission, preprint deposit, personal page, report handoff. Automates pagination through header knobs, verifies the result with a scripted text sweep rather than by eye, and treats each named variant as a reproducible transform layer. Keyword: finition."
+description: "Finishing pass on a PDF deliverable before it leaves the workshop — journal submission, preprint deposit, personal page, report handoff. Keyword: finition."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pdf-or-manuscript-path>"
