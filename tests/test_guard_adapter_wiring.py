@@ -130,7 +130,7 @@ def test_claude_wiring_pins_the_rtk_block():
         for group in doc["hooks"]["PreToolUse"]
         for hook in group.get("hooks", [])
     ]
-    assert "rtk hook claude" in commands
+    assert any(c.endswith("exec rtk hook claude'") for c in commands)
 
 
 # --- Codex wiring ----------------------------------------------------------

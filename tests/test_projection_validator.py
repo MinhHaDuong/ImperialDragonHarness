@@ -557,17 +557,31 @@ def test_stale_harness_hooks_in_live_settings_block_the_launch(world):
     assert str(path) not in r.stderr
 
 
-def test_operator_hooks_in_live_settings_do_not_block_the_launch(world):
+@pytest.mark.parametrize("rtk_command", VALIDATOR.RTK_HOOK_COMMANDS)
+def test_operator_hooks_in_live_settings_do_not_block_the_launch(world, rtk_command):
     """Absence mode refuses only the harness's own registrations: RTK and
     other foreign hooks are the operator's and stay."""
     path = _live_settings(world)
     doc = json.loads(path.read_text())
     doc["hooks"] = {
-        "SessionStart": [{"matcher": "", "hooks": [{"type": "command", "command": "rtk hook claude"}]}]
+        "SessionStart": [{"matcher": "", "hooks": [{"type": "command", "command": rtk_command}]}]
     }
     path.write_text(json.dumps(doc))
 
     assert validate(world, "claude").returncode == 0
+
+
+def test_validator_recognises_the_bare_and_the_guarded_rtk_form():
+    """The plugin's own command is the guarded form; old live files carry the bare one."""
+    plugin = json.loads((REPO / "adapters" / "claude-code" / "hooks" / "hooks.json").read_text())
+    registered = [
+        h["command"]
+        for b in plugin["hooks"]["PreToolUse"]
+        for h in b["hooks"]
+        if "rtk hook claude" in h["command"]
+    ]
+    assert registered and all(c in VALIDATOR.RTK_HOOK_COMMANDS for c in registered)
+    assert "rtk hook claude" in VALIDATOR.RTK_HOOK_COMMANDS
 
 
 def test_a_clean_live_settings_validates(world):
