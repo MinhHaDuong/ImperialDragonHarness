@@ -190,7 +190,8 @@ no further confirmation is needed. Do not bypass failing checks or protected
 branch requirements. Dream, suggested in lair’s conclusion, remains a separately
 invoked and reviewed workflow, launched in a new `/clear` session.
 A failed check or submission leaves the one branch preserved and reported.
-Wait for confirmed integration before cleaning up that worktree.
+Do not wait for the bundle's checks: once its branch is pushed and its merge
+request has auto-merge armed, step 9 may clean up the worktree.
 
 ## Close and clean up
 
@@ -239,9 +240,14 @@ Wait for confirmed integration before cleaning up that worktree.
        0174 and 0948.
     b. Immediately before removal, fetch the project integration branch and
        re-run `git merge-base --is-ancestor HEAD origin/main` on the current
-       HEAD, after any capture commit. If fetch or ancestry verification fails,
-       preserve the worktree and branch (`action: "keep"`) and report pending
-       integration. An earlier pre-capture check is not sufficient. Only then
+       HEAD, after any capture commit. A HEAD that is the wrap-up bundle's
+       own branch passes instead when it matches its pushed upstream
+       (`git rev-parse HEAD @{u}` equal) and its merge request is open with
+       auto-merge armed: the forge holds the durable copy, and a later
+       failed check leaves an open merge request that `/molt` reports. The
+       task branch never takes that exception. If fetch or verification
+       fails, preserve the worktree and branch (`action: "keep"`) and report
+       pending integration. An earlier pre-capture check is not sufficient. Only then
        call `ExitWorktree` with action `remove`. With this refreshed check,
        the worktree branch is fully merged — ExitWorktree's
        "N commits would be discarded" warning is a false alarm from a
