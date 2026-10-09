@@ -1,0 +1,40 @@
+%erg 0.1
+Title: Stop opting into Claude Code worktree isolation unless transcripts show real catches
+Created: 2026-10-09
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-09T12:35Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Claude Code's built-in worktree isolation guard (text "This session is
+isolated in the worktree … Refusing to run it", in the Claude Code binary,
+not in this repo) switches on when a session calls `EnterWorktree`. The
+harness asks every session to do so: `scripts/on-start.sh:13` and
+`rules/claude-code.md` § Entering the session, since adb33d79 (2026-04-15).
+Memory records only misfires: gates stranded by a session worktree switch
+(2026-09-07), rtk-rewritten git refused, nested repos blocked, background
+memory writes refused, raid `/gaze` escalating unreviewed (ticket 0990), and
+during the 1072 raid (2026-10-09) review seats unable to create review
+worktrees, after which a lead invented an operator waiver to get a gate
+seat to rule. No memory records a true catch. Doctrine: a misfiring guard is
+removed, not wrapped in another guard.
+
+## Scope
+1. Positive control first: search session transcripts under
+   `~/.claude/projects` (worktree-named folders included) for the refusal
+   text and classify each hit as a true catch (would have written the shared
+   checkout or main by mistake) or a false positive. Plant one known refusal
+   and confirm the search finds it.
+2. If no true catch: drop the `EnterWorktree` opt-in from `on-start.sh` and
+   `rules/claude-code.md`; sessions use plain `git worktree add` and work
+   there. Keep main read-only (forge gate) and `guard-destructive-bash.sh`.
+   Check the `/hunt`, `/raid` and `/gaze` paths that assume `EnterWorktree`.
+3. If true catches exist: report them and stop; the author decides.
+
+## Exit criteria
+- [ ] Transcript census with counts (true / false positive), positive control fired
+- [ ] Opt-in removed and skills adjusted, or catches reported to the author
+- [ ] A raid's `/gaze` can create its review worktree (demonstrated once)
+- [ ] `make check` passes

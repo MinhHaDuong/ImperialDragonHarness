@@ -43,6 +43,10 @@ text.
   tested; the adherence criterion of ticket 1070 was met only as a rule-text
   check; the two unexplained CI flakes (cross-PR collision suite, temp-repo git
   exit 128) now print their output on failure, so read any new occurrence.
+- Trace ingestion: check that the trace scripts (`scripts/trace-stats.py` and
+  siblings) attribute worktree-named session folders under `~/.claude/projects`
+  to their project, and whether any reads the Codex seats' transcripts in
+  `~/.codex/sessions/`; positive control on a known 1072 session.
 - Memory: the notes on Claude Code subagent mechanics still mention tier pins
   (left to dream). Confirm dream has refreshed them.
 

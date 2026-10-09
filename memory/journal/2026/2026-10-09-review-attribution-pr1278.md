@@ -1,0 +1,12 @@
+kind: review-attribution
+pr: 1278 · merged 2026-10-08 · project: .agents
+writer: runtime=claude-code · model=anthropic/claude-sonnet-5-5 · effort=unrecorded
+reviewer: seat=retro-1072-sonnet · runtime=claude-code · model=anthropic/claude-sonnet-5-5 · status: ran
+  finding: consider · tests/test_skill_frontmatter.py:34 · adopted: no
+  finding: consider · tests/test_skill_frontmatter.py:178 · adopted: no
+reviewer: seat=retro-1072-codex · runtime=codex-cli-0.161.0 · model=openai/gpt-6.1-sol · status: ran
+  finding: verifiable · tests/test_memory_v8_runtimes.py:143 · adopted: no
+
+Reviewed base f6195f38, head 77cbacfb, merge 34d8857f. Retroactive review under ticket 1072 (2026-10-09), shape of /review-pr plus /verify-gate, orchestrated by a Claude Code team lead. Launch lines: `sonnet | Anthropic | default | high | per-PR diff-vs-criteria review; same family as the writer, so replication only`; `codex gpt-6.1-sol | OpenAI | medium | high | other-family seat for independence on a Claude-produced diff; headless codex exec, read-only sandbox`. PANEL-INTEGRITY: OK (other-family seat ran). Writer model taken from the head commit's Co-Authored-By trailer; writer effort was not recorded. Severity floor: no finding blocks merge, corrupts state or bites the science; below-floor findings were fixed in small PRs or accepted. Anchor revision: the path:line anchors in the finding lines resolve on origin/main 9b280d56 (the checkout the reviewers read), not at the reviewed head named above; the reviewed revision is that head, its changes are read as the diff base..head.
+
+Ticket 1069 exit criteria: grep for model-level/MODEL_LEVELS empty outside history MET; no-model-names test passes from new home MET (logic replicated standalone; positive control fires on Opus and model: sonnet); skills catalog and drift MET; ticket line matches PARTLY (ticket items landed in #1277 as the Closed line names); make check MET by CI. Nothing live imports or cites scripts/model_policy.py or tests/test_model_rightsizing.py. Dispositions: test_skill_frontmatter.py:34 (scanner vocabulary lacks Luna, Qwen, GLM, grok; skills/arena names some) ACCEPTED, widening needs the arena prose reworded first, guard-only weakness, for 1071; :178 (no tmp-tree control for the file loop) ACCEPTED below floor; test_memory_v8_runtimes.py:143 (checks a repo-root CLAUDE.md that does not exist, so the ticket overstates the symlink pin; the installed symlink is correct) ACCEPTED; AGENTS.md capability-class wording already fixed by de75ce05 and 1b3c3520.
