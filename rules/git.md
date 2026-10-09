@@ -23,7 +23,7 @@ Family rule: **a git command that printed nothing has not necessarily done nothi
 - **Merge through `/merge`.** It reads merge settings at merge time (they drift), carries the close-claim syntax, syncs after an APPROVED `/gaze`, and holds the recoveries: a denied force-push, a direct forge merge that skipped a `**Ticket:**` claim (§ Dropped close-claim sweep), a multi-PR wave whose union must be verified and a conflict in a *generated* file, which is regenerated, never hand-merged (`/merge` § Merge conflict recovery). One ticket per PR unless they genuinely land together.
 - **Rebase at every gate, not just before merge.** A gate validates branch ⊕ base, so a verdict on a stale base is partly void. Rebase onto current `origin/main`, force-push with lease, wait for CI — before opening the MR, before `/gaze`, before merging.
 - **Anchor branch-mutating git after a fork returns.** The shell cwd may sit in another worktree: before the first `switch`/`checkout`/`merge`/`rebase`/`commit`/`push`/`reset` of that turn, check `git rev-parse --show-toplevel` or use `git -C <path>`.
-- **Propose `/roar` after a merge lands** — propose, don't auto-run.
+- **Propose `/roar` after a merge lands** — propose, don't auto-run — unless an invoked skill sequences it (raid Phase 8).
 
 ## Branch cleanup
 
