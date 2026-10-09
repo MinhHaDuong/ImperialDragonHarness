@@ -431,3 +431,21 @@ def test_coder_profile_conversions():
     )[0]
     assert "coder" in wave and "agents/coder.md" in wave
     assert "profiles/coder/PROFILE.md" in wave
+
+
+def test_hunt_detach_profile_carries_skill_and_agent_tools():
+    """The executor hunt step 2b detaches must be able to run the hunt flow.
+
+    Its first action is ``Skill(skill: "hunt", ...)`` and the flow launches
+    reviewers and /review-pr seats; a profile without Skill and Agent stops at
+    once (ticket 1075, observed on ticket 1046).
+    """
+    hunt = (REPO / "skills" / "hunt" / "SKILL.md").read_text(encoding="utf-8")
+    named = set(re.findall(r"agents/([\w-]+)\.md", hunt))
+    assert named, "hunt must name the profile it detaches to"
+    for name in named:
+        tools = _frontmatter(REPO / "agents" / f"{name}.md").get("tools", "")
+        listed = {t.strip() for t in tools.split(",")}
+        assert {"Skill", "Agent"} <= listed, (
+            f"agents/{name}.md tools {tools!r} must include Skill and Agent"
+        )

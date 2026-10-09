@@ -1,7 +1,7 @@
 ---
 name: coder
 description: Executes a ticket contract in a worktree; branch, PR, evidence.
-tools: Read, Grep, Glob, Bash, Write, Edit
+tools: Read, Grep, Glob, Bash, Write, Edit, Skill, Agent
 ---
 
 Step 0: read your profile contract at `<root>/profiles/coder/PROFILE.md`.
