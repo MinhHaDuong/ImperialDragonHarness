@@ -4,11 +4,11 @@ Ticket 0470. ``rules/coding-python.md`` makes this test mandatory per
 project; until now `make lint` selected only grep/AST ratchets and ruff ran
 by hand, outside any guard.
 
-Pinning (documented deviation from the rule's uv-lock path, decided in the
-ticket): IDH has no pyproject.toml/uv by design, so the version is pinned as
-a range in ``requirements-dev.txt`` and the series is asserted here — an
-ambient ruff that drifts to another minor series silently changes rules,
-which is exactly what the rule forbids.
+Pinning: the version is a range in the ``dev`` group of ``pyproject.toml``
+(locked in uv.lock; the harness adopted uv on the author's decision of
+2026-10-09) and the series is asserted here — an ambient ruff that drifts to
+another minor series silently changes rules, which is exactly what the rule
+forbids.
 
 Scope lives in ``.ruff.toml``: ruff's default rule set, and **no per-file
 ignores** — 0470 grandfathered nine pre-existing violations to land the gate
@@ -25,6 +25,7 @@ from pathlib import Path
 import pytest
 
 from child_env import child_env
+from repo_sources import dev_requirements
 
 # adherence: this is the lint gate, selected by `make lint`. integration: it
 # spawns subprocesses, which the marker-hygiene lens (scripts/test-quality.py)
@@ -35,14 +36,14 @@ REPO = Path(__file__).resolve().parents[1]
 
 
 def _pinned_bounds() -> tuple[tuple[int, ...], tuple[int, ...]]:
-    # Single source of truth: the `ruff>=A,<B` range in requirements-dev.txt.
+    # Single source of truth: the `ruff>=A,<B` range in pyproject.toml's dev group.
     # Both bounds are consulted — the upper one is the half of the pin that
     # actually bounds drift. A second hardcoded copy here would drift from
     # the declaration on the next bump.
-    text = (REPO / "requirements-dev.txt").read_text(encoding="utf-8")
+    text = "\n".join(dev_requirements())
     m = re.search(r"^ruff\s*>=\s*([\d.]+)\s*,\s*<\s*([\d.]+)", text, re.MULTILINE)
     assert m, (
-        "no `ruff>=A,<B` range found in requirements-dev.txt — the pin and "
+        "no `ruff>=A,<B` range found in pyproject.toml's dev group — the pin and "
         "this gate must move together (ticket 0470)"
     )
     return _vtuple(m.group(1)), _vtuple(m.group(2))
@@ -56,7 +57,7 @@ def _ruff() -> str:
     ruff = shutil.which("ruff")
     assert ruff is not None, (
         "ruff not found — install the pinned dev dependency "
-        "(pip install -r requirements-dev.txt, ticket 0470)"
+        "(`uv sync`, ticket 0470)"
     )
     return ruff
 
@@ -70,7 +71,7 @@ def test_ruff_version_satisfies_pinned_range():
     lower, upper = _pinned_bounds()
     version = out.stdout.strip().removeprefix("ruff ")
     assert lower <= _vtuple(version) < upper, (
-        f"ruff {version} is outside the pinned range (requirements-dev.txt) — "
+        f"ruff {version} is outside the pinned range (pyproject.toml) — "
         "an unpinned ruff drifts between machines and silently changes rules "
         "on upgrade (rules/coding-python.md)"
     )

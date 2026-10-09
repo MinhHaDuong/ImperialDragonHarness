@@ -10,6 +10,7 @@ is ~270 files. One walk, one read, one definition of the surface.
 """
 
 import functools
+import tomllib
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
@@ -46,3 +47,15 @@ def source_texts() -> tuple[tuple[str, str], ...]:
                 continue
             out.append((path.relative_to(REPO).as_posix(), text))
     return tuple(out)
+
+
+def dev_requirements() -> tuple[str, ...]:
+    """Requirement strings of pyproject.toml's `dev` dependency group — the
+    single declaration CI and a fresh machine both sync from (ticket 0530)."""
+    pyproject = REPO / "pyproject.toml"
+    assert pyproject.is_file(), (
+        "pyproject.toml not found — dev dependencies are declared in its "
+        "[dependency-groups] dev table (ticket 0530)"
+    )
+    data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+    return tuple(data.get("dependency-groups", {}).get("dev", ()))
