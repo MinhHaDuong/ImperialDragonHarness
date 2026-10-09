@@ -40,8 +40,9 @@ def step3_text() -> str:
 def test_plain_git_recipe_with_lock():
     """Ticket 1076: portable recipe, plain git plus a lock worktree-gc honours."""
     step3 = step3_text()
-    assert "git worktree add .claude/worktrees/" in step3
-    assert "git worktree lock" in step3
+    assert ".claude/worktrees/t$ARGUMENTS-" in step3
+    assert 'worktree add "$W"' in step3, "recipe must root the tree on the primary checkout"
+    assert "worktree lock" in step3
     assert "EnterWorktree" not in step3 and "isolation" not in step3
 
 
@@ -56,7 +57,7 @@ def test_lock_reason_matches_gc_dead_pid_rail():
     assert m, "could not locate worktree-gc's lock-pid regex"
     regex = re.compile(r"\(pid ([0-9]+)")
     step3 = step3_text()
-    r = re.search(r"git worktree lock\s+--reason\s+\"([^\"]*)\"", step3)
+    r = re.search(r"worktree lock\s+--reason\s+\"([^\"]*)\"", step3)
     assert r, "recipe lock must carry --reason \"...\""
     reason = re.sub(r"<[^>]*pid[^>]*>", "12345", r.group(1))
     assert regex.search(reason), f"reason {reason!r} would not match gc's regex"

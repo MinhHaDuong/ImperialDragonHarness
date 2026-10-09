@@ -16,6 +16,9 @@ that kind. Removing the opt-in needs a replacement for "who moves the session".
 1. Experiment once 1076 lands: from a session not entered in a worktree, spawn
    a subagent without the isolation parameter and run `git worktree add`;
    also from a background job. Record whether the runtime guard still fires.
+   Also record `echo $PPID` from a session Bash call, end the session, and
+   `ps -p` it: the 1076 lock reason assumes that pid lives exactly as long as
+   the session (Fable seat on PR #1313).
 2. Report to the author with the result; the author decides removal of the
    opt-in in `scripts/on-start.sh` and `rules/claude-code.md`.
 

@@ -79,12 +79,16 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    may host a live session is **not owned**: a hunt must never rebase, branch, or
    leave uncommitted files in it (2026-06-11: a hunt inherited an orchestration
    session's worktree, rebased its branch, and stranded in-progress test edits
-   there). Otherwise create one with plain git, from the repo root, `<pid>` from
-   `bash -c 'echo $$'` so parallel sessions get distinct paths:
+   there). Otherwise create one with plain git under the primary checkout,
+   `<pid>` from `bash -c 'echo $$'` so parallel sessions get distinct paths:
    ```bash
-   git worktree add .claude/worktrees/t$ARGUMENTS-<pid> -b t$ARGUMENTS-short-description origin/main
-   git worktree lock --reason "hunt t$ARGUMENTS (pid <owner-pid>)" .claude/worktrees/t$ARGUMENTS-<pid>
+   R=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
+   W=$R/.claude/worktrees/t$ARGUMENTS-<pid>
+   git -C "$R" worktree add "$W" -b t$ARGUMENTS-short-description origin/main
+   git -C "$R" worktree lock --reason "hunt t$ARGUMENTS (pid <owner-pid>)" "$W"
    ```
+   If the branch already exists (re-hunt, second session), drop `-b` and name
+   it: `git -C "$R" worktree add "$W" <branch>`. Without `origin/main`, use `main`.
    `<owner-pid>` is the long-lived runtime process: `echo $PPID` in the Bash tool,
    whose shell is the runtime's child. Not the `bash -c 'echo $$'` child, which
    dies at once and would let `worktree-gc` unlock a live tree. The lock marks it

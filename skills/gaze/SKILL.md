@@ -674,7 +674,7 @@ breaker.
 
 - **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence. End
   the skill. The caller merges.
-- **REROLL, round 1** → spawn a fix subagent that creates and locks its own worktree on the PR branch (hunt step 3 recipe) —
+- **REROLL, round 1** → spawn a fix subagent that creates and locks its own worktree on the PR branch (`git worktree add <path> <PR_BRANCH>`, then `git worktree lock` as in hunt step 3) —
   the **coder profile** (`agents/coder.md`, whose contract is
   `profiles/coder/PROFILE.md`; the model is chosen per launch from the
   `route` skill, no frontmatter pin) —
