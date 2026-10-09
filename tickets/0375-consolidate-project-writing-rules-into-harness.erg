@@ -8,6 +8,7 @@ Label: deferred
 2026-07-28T08:30Z haduong created
 2026-07-28T08:50Z haduong note Author: sweep ALL sibling project rule files at reimagine time, not only writing.md; prose-ticket TDD clause relocated to Climate_finance writing.md
 2026-10-09T12:00Z claude note Trial sweep on branch t0375-trial: 22 files/2 repos inventoried, 11 rule rows promoted (prose/_all, doctype/article, new rules/prose-adherence-tests.md); project trims proposed, not applied
+2026-10-09T15:00Z claude note Author decisions applied on PR 1300 (crossref to prose/_all, gap paragraph to article, figures to manuscript-build, adherence-tests globs widened); non-writing rules split to 1073
 
 --- body ---
 ## Context

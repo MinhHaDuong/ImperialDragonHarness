@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Sort non-writing project rules found by the 0375 sweep
+Created: 2026-10-09
+Author: claude
+
+--- log ---
+2026-10-09T12:25Z claude created
+
+--- body ---
+## Context
+The ticket 0375 trial sweep (`docs/2026-10-09-t0375-project-rules-inventory.md`,
+§ Non-writing rules) found about six project-local rules that are not about
+writing, so they fall outside 0375's writing scope. They cover Python
+(test tiers, data traps, JSON trailing newline), tickets (fast path,
+ID-collision scan), workflow (science vs tooling lane, test one before
+blasting, audit before instrumenting) and skills (prefer skills over commands).
+
+## Actions
+1. For each O row in the inventory, decide: promote to `rules/coding-python.md`,
+   `tickets/AGENTS.md`, `rules/workflow.md` or `authoring-skills.md`; keep it
+   local; or record it as memory.
+2. Respect resident budgets: `workflow.md` is loaded every session.
+
+## Exit criteria
+- [ ] Every O row has a recorded verdict
+- [ ] Promoted rules land once, harness-level; project trims proposed per repo
+- [ ] `make check` passes
