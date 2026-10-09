@@ -1,0 +1,27 @@
+%erg 0.1
+Title: hunt: detached executor launches coder profile, which lacks Skill and Agent tools
+Created: 2026-10-09
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-09T13:05Z Minh Ha-Duong created
+
+--- body ---
+
+## Context
+
+skills/hunt/SKILL.md step 2b detaches an interactive hunt to ONE background
+worktree-isolated agent "with the coder profile (agents/coder.md)" whose first
+action is `Skill(skill: "hunt", ...)`. agents/coder.md line 4 declares
+`tools: Read, Grep, Glob, Bash, Write, Edit` — no Skill, no Agent. On
+2026-10-09 (ticket 1046) the coder executor stopped at once: it could not load
+hunt, the finishing skills, nor launch the delegated reviewer, nor run
+/review-pr (which spawns seats). A general-purpose relaunch with the same brief
+completed (PR #1305). Every detached hunt hits this, so the default path is
+broken.
+
+## Exit criteria
+
+- [ ] The executor hunt step 2b launches has the Skill and Agent tools (fix
+      the coder tool list, or point 2b at a profile that has them)
+- [ ] A test pins that the profile hunt names for detachment carries Skill and Agent
