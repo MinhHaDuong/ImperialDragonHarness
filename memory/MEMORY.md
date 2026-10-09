@@ -17,6 +17,7 @@ v8 repository memory. Pilot: [pilot.md](../docs/memory-v8/pilot.md). Provenance:
 
 ## Recent experiences
 
+- [Routing review round and host hygiene](journal/2026/2026-10-09-routing-review-round-and-host-hygiene.md).
 - [LLM-chosen routing, waves A0 to C](journal/2026/2026-10-08-llm-routing-waves-a0-to-c.md).
 - [LLM-chosen routing, wave A1](journal/2026/2026-10-08-llm-routing-plan-and-wave-a1.md).
 - [Haiku review](journal/2026/2026-10-08-haiku-review-delay.md).

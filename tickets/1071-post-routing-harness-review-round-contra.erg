@@ -1,0 +1,51 @@
+%erg 0.1
+Title: Post-routing harness review round: contradictions, prompt level, efficiency, test suite
+Created: 2026-10-09
+Author: reviewer
+
+--- log ---
+2026-10-09T09:05Z reviewer created
+
+--- body ---
+## Context
+Tracker 1052 retired the model-level x effort chooser; the orchestrator now
+chooses workers from the `skills/route` grid and states why. A first review
+round ran right after (2026-10-09): contradiction, prompt-level and efficiency
+seats, a cross-family Luna seat, and an Opus review of the mechanical test
+suite; their fixes landed in #1283, #1286 to #1289. That round read a harness
+that had not yet been used under the new rules. This ticket asks for a second
+round once the new mechanisms have run for real.
+
+## Scope
+Run after several real `/gaze` and `/raid` runs have used the new launch line,
+the review-pr manifest check (`scripts/panel-manifest-check.py`) and the
+risk-scaled decorrelation doctrine, so the review can read behaviour, not only
+text.
+- Contradiction seat plus one other-family seat over AGENTS.md, rules/, skills/,
+  agents/, profiles/, adapters/ (non-contradiction of who chooses, who reviews,
+  how to pin).
+- Prompt-level seat over the routing material and the resident rules: right
+  level for a capable model, no restated defaults, no incident history.
+- Efficiency seat: resident-context bytes before and after #1286, cost per full
+  `/gaze` under the new seat table with prices taken from grid.json, and
+  whether the launch line is actually written in recent sessions (read the
+  traces, do not guess).
+- Mechanical suite (Opus): padme, doudou and a secretless box (env -i, no CLIs,
+  no network). Include the uv path now (`uv sync --frozen` in CI and locally),
+  the guarded rtk hook, the xdist fallback, and the exit-77 skip mapping.
+  Positive control for every null result.
+- Check the open gaps recorded after the first round: Pi `reviewer`,
+  `code-reviewer` and `planner` agents never run; Codex `fork_turns` "all" not
+  tested; the adherence criterion of ticket 1070 was met only as a rule-text
+  check; the two unexplained CI flakes (cross-PR collision suite, temp-repo git
+  exit 128) now print their output on failure, so read any new occurrence.
+- Memory: the notes on Claude Code subagent mechanics still mention tier pins
+  (left to dream). Confirm dream has refreshed them.
+
+## Exit criteria
+- [ ] Each seat reports findings with `path:line` anchors; every finding is
+      fixed, ticketed above the severity floor, or recorded as accepted
+- [ ] At least one seat is from another model family than the coordinator
+- [ ] Resident-context byte counts reported before and after
+- [ ] The suite result is reported for padme, doudou and the secretless run
+- [ ] `make check` passes after the fixes
