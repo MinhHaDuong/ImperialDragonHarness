@@ -306,6 +306,19 @@ def append_report(
                 cell.get_text().set_fontweight("bold")
         return obj
 
+    fig = plt.figure(figsize=(11.6929, 8.2677))
+    fig.text(
+        0.5,
+        0.5,
+        tr("Annexe technique auto-générée", "Auto-generated technical appendix"),
+        ha="center",
+        va="center",
+        fontsize=32,
+        fontweight="bold",
+        color="#dc2626",
+    )
+    finish(fig)
+
     fig = page(
         tr(
             "Analyses complémentaires et guide de choix",
@@ -329,8 +342,8 @@ def append_report(
             (
                 tr("Sommaire du rapport complété", "Contents of the completed report"),
                 tr(
-                    "Pages 1-12 : synthèse, résultats, cinq nuages, trois DAG, méthode et limites. Page 14 : grille, médianes et Pareto 3D. Pages 15-16 : verdicts appariés. Pages 17-21 : distributions de treize comparaisons. Page 22 : analyse des classes. Page 23 : événements historiques et corrections. Pages 24-25 : guide situationnel, quotas et tarification. Page 26 : provenance et couverture du ticket.",
-                    "Pages 1-12: summary, results, five scatterplots, three DAGs, methods and limits. Page 14: grid, medians and 3D Pareto. Pages 15-16: paired verdicts. Pages 17-21: distributions for thirteen comparisons. Page 22: routing classes. Page 23: historical outcomes and corrections. Pages 24-25: situation guide, quotas and pricing. Page 26: provenance and ticket coverage.",
+                    "Pages 1-12 : synthèse, résultats, cinq nuages, trois DAG, méthode et limites. Page 13 : titre de l’annexe technique. Page 15 : grille, médianes et Pareto 3D. Pages 16-17 : verdicts appariés. Pages 18-22 : distributions de treize comparaisons. Page 23 : analyse des classes. Page 24 : événements historiques et corrections. Pages 25-26 : guide situationnel, quotas et tarification. Page 27 : provenance et couverture du ticket.",
+                    "Pages 1-12: summary, results, five scatterplots, three DAGs, methods and limits. Page 13: technical appendix title. Page 15: grid, medians and 3D Pareto. Pages 16-17: paired verdicts. Pages 18-22: distributions for thirteen comparisons. Page 23: routing classes. Page 24: historical outcomes and corrections. Pages 25-26: situation guide, quotas and pricing. Page 27: provenance and ticket coverage.",
                 ),
             ),
             (
@@ -892,8 +905,8 @@ def append_report(
             (
                 tr("Reproduction", "Reproduction"),
                 tr(
-                    "Le générateur original appelle tournament-report-completion.py pour ajouter les pages 13-26 dans les deux langues. Les distributions et tests sont recalculés depuis l’instantané produit à partir de ~/arena (snapshot.json) ; appendix-analysis.json conserve toutes les 190 paires et paired-differences.csv les 130 observations des treize comparaisons présentées. Les données numériques de base et les 136 tests par axe des DAG sont inchangés.",
-                    "The original generator calls tournament-report-completion.py to append pages 13-26 in both languages. Distributions and tests are recomputed from the snapshot built from ~/arena (snapshot.json); appendix-analysis.json retains all 190 pairs and paired-differences.csv the 130 observations of thirteen displayed comparisons. Base numeric data and the DAG 136 tests per axis are unchanged.",
+                    "Le générateur original appelle tournament-report-completion.py pour ajouter les pages 13-27 dans les deux langues. Les distributions et tests sont recalculés depuis l’instantané produit à partir de ~/arena (snapshot.json) ; appendix-analysis.json conserve toutes les 190 paires et paired-differences.csv les 130 observations des treize comparaisons présentées. Les données numériques de base et les 136 tests par axe des DAG sont inchangés.",
+                    "The original generator calls tournament-report-completion.py to append pages 13-27 in both languages. Distributions and tests are recomputed from the snapshot built from ~/arena (snapshot.json); appendix-analysis.json retains all 190 pairs and paired-differences.csv the 130 observations of thirteen displayed comparisons. Base numeric data and the DAG 136 tests per axis are unchanged.",
                 ),
             ),
             (
