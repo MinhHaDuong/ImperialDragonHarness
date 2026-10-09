@@ -34,8 +34,8 @@ Family rule: **a git command that printed nothing has not necessarily done nothi
 
 ## Reading state you will act on
 
-- **Never read a SHA, a count, or a tip from output a proxy may rewrite.** The `rtk` hook compacts for a reader, not a parser: counts came back zero, `git log` dropped merge commits, and past ~2 kB it truncates head-first, so a test runner's verdict goes first. Use plumbing that answers in exit codes and single values (`git rev-parse`, `git rev-list --count A..B`, `git merge-base --is-ancestor`). What it spares moves between versions: ask `rtk hook check <cmd>`. Escape hatches: `RTK_DISABLED=1`, `/usr/bin/git -C <worktree> …` (also the remedy when the rewrite makes the isolation guard fail closed); `~/.local/share/rtk/tee/` keeps unfiltered output.
-- **Verify a forge mutation by reading it back.** `gh pr edit --body` can exit non-zero behind a harmless-looking deprecation warning, body unchanged; `gh api … -X PATCH --input -` fed by `jq -n --rawfile body <file>` works. **An all-clear indistinguishable from "I could not look" is not a check.**
+- **Never read a SHA, a count, or a tip from output a proxy may rewrite.** The `rtk` hook compacts for a reader, not a parser: it can rewrite counts, drop commits and truncate long output head-first. Use plumbing that answers in exit codes and single values (`git rev-parse`, `git rev-list --count A..B`, `git merge-base --is-ancestor`). What it spares moves between versions: ask `rtk hook check <cmd>`. Escape hatches: `RTK_DISABLED=1`, `/usr/bin/git -C <worktree> …` (also the remedy when the rewrite makes the isolation guard fail closed); `~/.local/share/rtk/tee/` keeps unfiltered output.
+- **Verify a forge mutation by reading it back.** Exit codes and warnings do not tell you whether the mutation landed. **An all-clear indistinguishable from "I could not look" is not a check.**
 - **Local main syncs by ref, never by assumption:** `scripts/sync-local-main.sh`, run at session start and after `/merge`. Never `git branch -f main`, never stash a dirty file to force a sync.
 
 ## Repo layout

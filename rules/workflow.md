@@ -53,9 +53,7 @@ change, stop and switch to a branch (prose exception: `git.md`).
 
 **Project memory:** write only in the assigned project's worktree or explicit
 private companion, never the installed harness. A refused write stays pending;
-do not retry outside the project. Roar captures facts; dream consolidates local
-memory. Neither proposes rules or edits AGENTS.md. Crystallisation requires a
-separate explicit user request with its destination.
+do not retry outside the project (boundary: AGENTS.md § Project memory boundary).
 
 **Parked-cwd trap.** After entering, check `basename "$(git rev-parse --show-toplevel)"` is the
 expected project: worktree creation resolves the repo from the session base
@@ -104,11 +102,10 @@ A clean-room render is usually seconds — run it yourself.
   cover the task.
 - **Delegate intent, not procedure.** Goal, constraints, definition of done;
   the delegate chooses the method. Long runs go to background delegates.
-- Reviewers — scale to the risk: a trivial change takes one cheaper
-  same-family reviewer. Only a high-risk change needs a seat from a different
-  model family; a same-family review is never called independent. Doctrine: `skills/route/references/decorrelation.md`. Most
-  decorrelated available for risk; retain native routing and
-  independent-review duties; report any perspective that was unreachable.
+- **Reviewers scale to the risk** (`skills/route/references/decorrelation.md`):
+  a trivial change takes one cheaper same-family reviewer; a high-risk change
+  needs a seat from another model family. A same-family review is never called
+  independent; report any required perspective that was unreachable.
 - **Watch contention, not headcount.** Three or more agents on one file or
   registry → open a coordination change first. One `/gaze` per PR at a time.
 - **Say what a delegate in a shared worktree must not do.** A read-only brief
@@ -137,8 +134,8 @@ Preserve the list of modified files, the test commands, and the current plan.
 # Micro-turn discipline
 
 Batch read-only navigation (`git status`/`log`/`diff`, `ls`, `grep`, `cat`) into
-one compound call: each idle turn re-reads the whole context, ≈15.6% of all
-spend in the census (`/trace-doctor` re-measures it).
+one compound call: each idle turn re-reads the whole context (`/trace-doctor`
+measures the share).
 
 # Autonomous action
 
