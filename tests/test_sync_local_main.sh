@@ -149,7 +149,8 @@ fi
 
 # --- case 8: not a git repo → skip, exit 0 ----------------------------------
 plain="$SANDBOX/plain" && mkdir -p "$plain"
-if out=$(bash "$SYNC" "$plain") && echo "$out" | grep -q "not a git repo"; then
+# The ceiling keeps git from finding an enclosing repo when TMPDIR is inside one.
+if out=$(GIT_CEILING_DIRECTORIES="$SANDBOX" bash "$SYNC" "$plain") && echo "$out" | grep -q "not a git repo"; then
     _pass "non-repo directory is skipped with exit 0"
 else
     _fail "non-repo directory must skip cleanly"

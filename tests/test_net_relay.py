@@ -9,9 +9,11 @@ between, a client on the other.
 Integration-tier: each test spawns the relay as a subprocess.
 """
 
+import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from collections.abc import Callable
@@ -98,11 +100,22 @@ def _free_tcp_port() -> int:
     return port
 
 
+@pytest.fixture
+def sock_dir():
+    """Short path for AF_UNIX sockets (sun_path is ~108 bytes; a pytest
+    tmp_path under a deep TMPDIR overflows it)."""
+    d = Path(tempfile.mkdtemp(dir="/tmp", prefix="relay-"))
+    try:
+        yield d
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 @pytest.mark.integration
-def test_relay_unix_to_tcp_round_trip(tmp_path):
+def test_relay_unix_to_tcp_round_trip(sock_dir):
     """listen unix ⇄ connect tcp — the host-side orientation."""
     srv, port = _tcp_echo_server()
-    sock_path = tmp_path / "relay.sock"
+    sock_path = sock_dir / "relay.sock"
     relay = _spawn_relay(f"unix:{sock_path}", f"tcp:127.0.0.1:{port}")
     try:
         _wait_until(sock_path.exists, f"relay socket {sock_path}")
@@ -115,10 +128,10 @@ def test_relay_unix_to_tcp_round_trip(tmp_path):
 
 
 @pytest.mark.integration
-def test_relay_tcp_to_unix_round_trip(tmp_path):
+def test_relay_tcp_to_unix_round_trip(sock_dir):
     """listen tcp ⇄ connect unix — the container-side orientation."""
     # A Unix-domain echo server standing in for the bind-mounted socket.
-    echo_path = tmp_path / "echo.sock"
+    echo_path = sock_dir / "echo.sock"
     usrv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     usrv.bind(str(echo_path))
     usrv.listen(8)
