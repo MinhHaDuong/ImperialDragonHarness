@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-10-09T13:06Z Minh Ha-Duong created
+2026-10-09T13:22Z Minh-Ha-Duong note verify-reroll — round 1: hunt step 3 bare git worktree lock has no pid reason so worktree-gc never reclaims it
 
 --- body ---
 ## Context
