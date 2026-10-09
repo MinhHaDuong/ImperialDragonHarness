@@ -97,7 +97,9 @@ Sorted by ticket 1073; its verdicts table below supersedes the notes in this tab
   1 manuscript-build section, 1 new 8-bullet file. Left local: 15 X; 2 H trims.
 - Non-writing rows: 11; ticket 1073 sorted the 6 candidates into 9 items, 5 promoted (coding-python.md, authoring-skills.md), the rest covered or local.
 
-## Proposed trims per project file (separate per-repo PRs, author's call)
+## Proposed trims per project file
+
+Tracked in each repo: climate-finance-het ticket 2053, aedist ticket 0682.
 
 - **climate-finance-het `writing.md`:** replace § Ghost mode with a one-line
   pointer to `/review-pr-prose`; replace § CI test polarity rule with a pointer
