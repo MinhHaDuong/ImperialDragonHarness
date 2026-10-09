@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from child_env import child_env
+from run_checked import run_checked
 
 ROOT = Path(__file__).resolve().parents[1]
 QUERY = ROOT / 'scripts' / 'attribution_query.py'
@@ -121,7 +122,7 @@ def test_jeffreys_analytic_golden_symmetry_and_extremes(monkeypatch):
 @pytest.mark.parametrize('sibling', ['valid', 'malformed', 'encrypted', 'header-mismatch', 'private-only', 'private-sibling'])
 def test_explicit_merge_coverage_does_not_accept_ambiguous_records(tmp_path, sibling):
     def git(*args):
-        result = subprocess.run(['git','-C',str(tmp_path),*args],text=True,capture_output=True,check=True,env=child_env())
+        result = run_checked(['git','-C',str(tmp_path),*args])
         return result.stdout.strip()
 
     journal = dataset(tmp_path)

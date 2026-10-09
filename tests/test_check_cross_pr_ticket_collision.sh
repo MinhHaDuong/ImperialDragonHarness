@@ -150,7 +150,7 @@ else
     echo "$out" | grep -q '#77'       || { echo "  message does not name sibling PR #77"; a_ok=0; }
     echo "$out" | grep -qi 'next'     || { echo "  message lacks a next-free-ID suggestion"; a_ok=0; }
     if (( a_ok )); then echo "PASS: collision fails, names the sibling PR and a next-free-ID suggestion"
-    else echo "FAIL: collision message incomplete"; fail=1; fi
+    else echo "FAIL: collision message incomplete"; echo "$out"; fail=1; fi
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -239,7 +239,7 @@ else
     echo "$out" | grep -q '0300-merged-sibling'   || { echo "  message does not name the base-tip rival file"; e_ok=0; }
     echo "$out" | grep -qi 'next'                 || { echo "  message lacks a next-free-ID suggestion"; e_ok=0; }
     if (( e_ok )); then echo "PASS: base-tip collision fails, names the rival file and a next-free-ID suggestion"
-    else echo "FAIL: base-tip collision message incomplete"; fail=1; fi
+    else echo "FAIL: base-tip collision message incomplete"; echo "$out"; fail=1; fi
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
