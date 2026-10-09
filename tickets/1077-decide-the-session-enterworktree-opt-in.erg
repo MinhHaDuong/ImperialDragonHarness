@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-10-09T13:06Z Minh Ha-Duong created
+2026-10-09T14:30Z claude note Parent 1074 closed by author request; its open exit criteria moved here; Blocked-by 1076 removed (1076 merged in #1313)
 
 --- body ---
 ## Context
@@ -27,5 +28,6 @@ that kind. Removing the opt-in needs a replacement for "who moves the session".
 ## Exit criteria
 - [ ] Experiment run and recorded (positive control: one refusal reproduced)
 - [ ] Author decision recorded
-
-Blocked-by: 1076
+- [ ] If removal decided: opt-in removed; `/hunt`, `/raid`, `/gaze` use plain git (from 1074)
+- [ ] A raid's `/gaze` can create its review worktree, demonstrated once (from 1074)
+- [ ] `make check` passes (from 1074)
