@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Point ~/.pi/agent/extensions/subagent/{index,agents}.ts at the example
+# extension of the Pi release named in ~/.pi/agent/install/current-version.
+# Idempotent; run it after a Pi upgrade (pi-haiku runs it on every start).
+# Exits 0 and says why when Pi is not installed, so CI boxes pass.
+set -euo pipefail
+
+pi_home="${PI_HOME:-$HOME/.pi/agent}"
+marker="$pi_home/install/current-version"
+
+if [ ! -r "$marker" ]; then
+  echo "pi-subagent-link: no Pi install at $pi_home; nothing to link" >&2
+  exit 0
+fi
+
+version="$(tr -d '[:space:]' < "$marker")"
+src="$pi_home/install/releases/$version/node_modules/@earendil-works/pi-coding-agent/examples/extensions/subagent"
+if [ ! -d "$src" ]; then
+  echo "pi-subagent-link: release $version has no subagent example at $src" >&2
+  exit 1
+fi
+
+dest="$pi_home/extensions/subagent"
+mkdir -p "$dest"
+for f in index.ts agents.ts; do
+  ln -sfn "$src/$f" "$dest/$f"
+done
