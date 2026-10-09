@@ -385,6 +385,14 @@ contract**). Once all return, collect their structured outputs. Choose the model
 `skills/route/references/decorrelation.md` ("The launch line"): scale to the risk; a high-risk PR needs one
 cross-family detached seat, else `no report` and `PANEL-INTEGRITY: DEGRADED`.
 
+Seat defaults are guidance, not pins; raise a seat when the change warrants it:
+
+| Seat | Default worker class | When to raise |
+|---|---|---|
+| adherence, scope, docs-propagation, consistency | cheap cluster | a rule is subtle or the diff is large |
+| correctness, gate | mid-size model | high-risk or cross-cutting change |
+| red team | mid-size model | high-risk change: another family (`decorrelation.md`) |
+
 **Agent A — adherence** (`/verify-adherence <branch> worktree=<absolute-review-worktree>`).
 **Label-skip:** if the PR carries the
 `verify:adherence-passed` label (set by `/hunt`'s pre-PR gate, see PR #40),

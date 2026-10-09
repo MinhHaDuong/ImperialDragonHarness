@@ -57,8 +57,12 @@ carried nothing.
 So the panel is collected from **artifacts**, never from return values:
 
 1. Before launching, write the roster to `<panel>/manifest.txt`, one perspective
-   per line. This is the set collection checks against. Without it, "no more
-   reports are arriving" cannot be told from "none were ever launched".
+   per line as `perspective<TAB>model<TAB>family<TAB>reason`: the worker chosen
+   (short token or provider/id), its family from the route grid, and the one-line
+   why. This is the set collection checks against. Without it, "no more
+   reports are arriving" cannot be told from "none were ever launched". Run
+   `python3 "$IDH_ROOT/scripts/panel-manifest-check.py" <panel>/manifest.txt`
+   before launching; a line with an empty model, family or reason fails it.
 2. Each reviewer writes its report to `<panel>/<perspective>.md.part`, then
    renames it to `<panel>/<perspective>.md`. The rename is the completion
    signal: a half-written file never carries the final name.
