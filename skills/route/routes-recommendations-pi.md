@@ -14,5 +14,6 @@ Run `pi --list-models` first: Pi only reaches the providers configured on the ho
 
 Follow the general recommendations in `SKILL.md` and the grid. For cheap
 work prefer the cluster default, Luna, or Haiku 5.5 when the Anthropic
-credentials are loaded. For a review of Claude-produced work, choose a
-non-Anthropic model.
+credentials are loaded. When a review of Claude-produced work must be
+independent (high risk, `references/decorrelation.md`), choose a non-Anthropic
+model.

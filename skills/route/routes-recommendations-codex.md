@@ -11,8 +11,10 @@ Launch forms are in `routes.json` under `launch_doors.codex`.
 - Therefore this runtime has no cross-family door of its own. A review seat
   from another family is a headless CLI that is not Codex (`claude -p`,
   `pi -p`), when one is reachable from bash. Otherwise record `no report`.
-- Subagent model selection in Codex is unverified. Until it is checked, name
-  the model through `codex exec -m` and read the `model:` line of the session
+- Subagent model selection: `spawn_agent` honours `model` and
+  `reasoning_effort` when `fork_turns` is not `all` (verified 2026-10-09,
+  `routes.json`); under `all` it is unmeasured. For a headless seat, name the
+  model through `codex exec -m` and read the `model:` line of the session
   header. The model's own answer to "which model are you" is not evidence.
 
 ## Which model for which work

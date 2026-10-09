@@ -25,7 +25,7 @@ The orchestrator picks the row. When unsure, take the lighter one.
 
 ## Independent means another family
 
-- A review is **independent** only when at least one seat comes from a different family than the producer. Take the producer's family from the grid `family` field; in an attribution record, from the provider prefix of the `model` id. A lineage twin counts as the same family.
+- A review is **independent** only when at least one seat comes from a different family than the producer. Take the producer's family from the grid `family` field of the model actually run, never from the provider or door (GLM served through Mistral is still GLM). A lineage twin counts as the same family.
 - Replication substitutes for lineage only when no other-family seat is reachable; the report then says "same family, not independent".
 - When a required other-family seat is unreachable, say so. Never simulate one.
 

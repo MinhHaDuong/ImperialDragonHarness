@@ -95,7 +95,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    in use for `worktree-gc` and molt while that pid lives; `worktree-gc` reclaims
    it once the pid is dead (it parses `(pid N` from the reason). Work only there: absolute
    paths under it, `git -C <worktree>` for git. Ad hoc orchestrators should not
-   hand-type this contract: spawn the hunt headlessly with `claude -p "/hunt <id>"`.
+   hand-type this contract: spawn the hunt headlessly with `claude -p "/hunt <id>" --model <token>`.
    Choose the model of each launched worker per launch, from the `route` skill grid
    (`skills/route/SKILL.md`); seats that must be independent follow
    `skills/route/references/decorrelation.md` ("The launch line").
