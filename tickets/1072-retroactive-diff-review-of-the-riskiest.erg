@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-09T09:40Z reviewer created
+2026-10-09T09:45Z reviewer Author 2026-10-09: blocks 1071 (the global coherence round follows this detailed one). Fixes made here must account for the fixes already landed by the first review round (#1283, #1286 to #1289, #1292) so they do not reintroduce a bug those fixed.
 
 --- body ---
 ## Context
@@ -46,6 +47,19 @@ Code; record `no report` and `PANEL-INTEGRITY: DEGRADED` if it cannot run),
 the launch line stated for each seat, and anchors as `path:line`. Capture one
 review-attribution record per reviewed PR in the roar bundle that follows.
 
+Fixing rule. The reviewed diffs predate the first review round's fixes
+(#1283, #1286, #1287, #1288, #1289, #1292), which changed some of the same
+files (`rules/`, `skills/route/`, the review and raid skills, the Makefile,
+the test helpers). Review each PR's own diff, but write every fix against
+current `origin/main`: read what the later fixes changed in the touched
+lines (`git log -p origin/main -- <path>`) and the reason in their commit
+messages before editing, and do not restore text or behaviour a later fix
+removed on purpose (for example the tier vocabulary, the per-skill
+launch-choice sentence, the exit-77 skip mapping, the guarded hook form).
+Each fix that touches a path changed by a first-round PR carries a test or a
+grep that fails on the reintroduced bug. Fixes land in small PRs rebased at
+every gate; 1071 starts only after they are all on `main`.
+
 Estimated cost: about 0.7 to 1.4 USD per full review (derived from grid
 prices with an assumed seat mix, not measured), so roughly 5 to 10 USD for
 the seven items, plus about one author-hour to read the findings.
@@ -56,3 +70,5 @@ the seven items, plus about one author-hour to read the findings.
 - [ ] At least one other-family seat per PR, or `no report` with `PANEL-INTEGRITY: DEGRADED` stated
 - [ ] A review-attribution record exists for each reviewed PR
 - [ ] doudou's first real snapshot log lines are read and reported
+- [ ] Every fix was written against current `origin/main`, with the later fixes' intent checked; a fix touching a first-round path carries a regression guard
+- [ ] `make check` passes on `main` after the last fix, and 1071 is unblocked
