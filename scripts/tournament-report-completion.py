@@ -882,8 +882,8 @@ def append_report(
             "Provenance and ticket 1046 exit criteria",
         ),
         tr(
-            "Compléments calculés sur les données publiques ; aucune archive privée de travail n’est incluse.",
-            "Supplements computed from public data; no private task archive is included.",
+            "Compléments calculés depuis ~/arena (padme) ; l’instantané public donne les mêmes chiffres. Aucun contenu de tâche privée n’est inclus.",
+            "Supplements computed from ~/arena (padme); the public snapshot gives the same numbers. No private task content is included.",
         ),
     )
     prose(

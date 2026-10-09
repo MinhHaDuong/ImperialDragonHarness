@@ -41,15 +41,17 @@ def french_text(text):
     return text
 
 
-_matplotlib_set_text = matplotlib.text.Text.set_text
+def install_french_text():
+    """Route every figure string (titles, labels, legends, tables) through french_text.
 
+    Installed by main() only, so importing this module (tests) leaves matplotlib intact.
+    """
+    original = matplotlib.text.Text.set_text
 
-def _set_french_text(self, text):
-    return _matplotlib_set_text(self, french_text(text))
+    def set_text(self, text):
+        return original(self, french_text(text))
 
-
-# Every figure string (titles, labels, legends, tables) goes through Text.set_text.
-matplotlib.text.Text.set_text = _set_french_text
+    matplotlib.text.Text.set_text = set_text
 
 
 def wrap_paragraph(fig, text, fontsize, width=0.88):
@@ -1119,6 +1121,7 @@ def main():
         help="USD per erg-hour of delivery delay; each benchmark ticket represents one average erg",
     )
     args = parser.parse_args()
+    install_french_text()
     if args.time_value < 0:
         parser.error("time value must be nonnegative")
     args.output.mkdir(parents=True, exist_ok=True)

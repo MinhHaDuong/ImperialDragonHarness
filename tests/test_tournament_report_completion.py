@@ -130,3 +130,10 @@ def test_wrap_paragraph_keeps_nonbreaking_spaces_before_french_punctuation():
     for line in wrapped.split("\n"):
         assert not line.startswith((":", ";", "»"))
     assert "Luna\u00a0:" in wrapped and "«\u00a0coût\u00a0»" in wrapped
+
+
+def test_french_text_binds_french_figure_strings_and_skips_mathtext():
+    assert graphs.FRENCH
+    assert graphs.french_text("Bleu : local ; vert") == "Bleu\u00a0: local\u00a0; vert"
+    assert graphs.french_text("$H_0 : f = 0$") == "$H_0 : f = 0$"
+    assert graphs.french_text(None) is None

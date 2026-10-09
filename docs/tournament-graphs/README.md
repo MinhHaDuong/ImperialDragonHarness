@@ -12,20 +12,18 @@ préliminaires sont exclus.
 
 ## Reproduire les figures
 
-La commande ci-dessous régénère les artefacts courants du 8 octobre, incluant N ; elle ne reproduit pas les figures historiques du 7 octobre.
-
+Les artefacts versionnés sont reconstruits depuis les archives privées `~/arena`, sur padme ; ils ne reproduisent pas les figures historiques du 7 octobre.
 Depuis la racine du dépôt, avec Python et l’environnement de `uv sync` (groupe `dev` de `pyproject.toml`) :
 
 ```bash
 MPLCONFIGDIR=/tmp/tournament-mpl python3 scripts/tournament-graphs.py \
-  --snapshot docs/tournament-graphs/snapshot.json \
-  --output docs/tournament-graphs --time-value 1
+  --arena ~/arena --output docs/tournament-graphs --time-value 1
 ```
 
 NumPy, SciPy et Matplotlib sont nécessaires ; Graphviz ne l’est pas.
-L’instantané public suffit : aucune conversation ni clé API n’est requise.
-Pour reconstruire un nouvel instantané depuis les archives privées, omettre
-`--snapshot` et fournir `--arena ~/arena` ; cela change les données de référence.
+Sans accès à `~/arena`, remplacer `--arena ~/arena` par `--snapshot docs/tournament-graphs/snapshot.json` :
+l’instantané public donne les mêmes sorties numériques, sans conversation ni clé API
+(parité : [completion-1046.md § Provenance padme](completion-1046.md#provenance-padme)).
 
 ## Lire les figures
 

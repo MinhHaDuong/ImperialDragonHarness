@@ -64,6 +64,6 @@ Le 9 octobre, sur padme, le dépôt récupéré au commit `bf2da994` de la branc
 
 - Fichiers de base (`snapshot.json`, `tests.json`, `comparisons.csv` et coûts valorisés) inchangés par rapport à la base de la branche ; versions FR/EN identiques.
 - Compléments FR/EN numériques identiques ; 190 paires uniques, dix tickets par paire et 130 observations dans le CSV des distributions.
-- 25 tests ciblés réussis (générateur, complément, typographie française, analyse, tentatives et dépendances déclarées) ; suite complète `make check` réussie ; lint des scripts modifiés réussi : permutations exactes, Holm, Pareto, ratios appariés correctement réorientés, cohérence des familles et grille.
+- `uv run python -m pytest tests/test_tournament_report_completion.py tests/test_tournament_graphs.py` réussi, ainsi que la suite complète `make check` ; lint des scripts modifiés réussi : permutations exactes, Holm, Pareto, ratios appariés correctement réorientés, cohérence des familles et grille.
 - Deux PDF de 26 pages, inspectés par rendu. Les figures d’origine sont conservées ; les cinq planches appariées par langue sont ajoutées.
 - Ni conversation brute, ni clé, ni contenu des tâches privées n’est ajouté aux rapports.
