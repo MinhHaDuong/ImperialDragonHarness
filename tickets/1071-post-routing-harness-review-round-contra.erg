@@ -2,11 +2,11 @@
 Title: Post-routing harness review round: contradictions, prompt level, efficiency, test suite
 Created: 2026-10-09
 Author: reviewer
-Blocked-by: 1072
 
 --- log ---
 2026-10-09T09:05Z reviewer created
 2026-10-09T09:45Z reviewer Author 2026-10-09: the global coherence review comes after the detailed per-diff review, so this ticket is blocked by 1072. Its scope should read the harness as left by the 1072 fixes.
+2026-10-09T13:04Z Minh Ha-Duong note blocker 1072 closed — Blocked-by removed.
 
 --- body ---
 ## Context
