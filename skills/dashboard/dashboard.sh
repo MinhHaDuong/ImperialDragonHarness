@@ -20,7 +20,7 @@ done
 echo "== remote branches"
 git branch -r --format='%(refname:short)' | grep -v -e HEAD -e '^origin$' -e '^origin/main$' || true
 
-if command -v gh >/dev/null; then  # harness-extension-point
+if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then  # harness-extension-point
     echo "== open merge requests"
     gh pr list --state open --json number,headRefName,title,autoMergeRequest \
         --jq '.[]|"\(.number) \(.headRefName) auto=\(.autoMergeRequest!=null) \(.title)"'  # harness-extension-point
@@ -28,5 +28,5 @@ if command -v gh >/dev/null; then  # harness-extension-point
     gh pr list --state merged --limit 8 --json number,mergedAt,title \
         --jq '.[]|"\(.number) \(.mergedAt) \(.title)"'  # harness-extension-point
 else
-    echo "== merge requests: forge CLI unavailable, not inspected"
+    echo "== merge requests: forge CLI unavailable or signed out, NOT inspected"
 fi

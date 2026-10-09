@@ -1,6 +1,6 @@
 ---
 name: dashboard
-description: "Ticket dashboard: open tickets, branches and merge requests from origin/main, reported as a before/after delta led by the open-ticket count. Read-only; the inspector's view."
+description: "Ticket dashboard: open tickets, branches and merge requests; full state plus a delta led by the ticket count."
 user-invocable: true
 argument-hint:
 ---
@@ -17,6 +17,10 @@ feeding the next.
 DASH_DIR="$(cd -P "$(dirname "<loaded-SKILL.md>")" && pwd -P)"
 "$DASH_DIR/dashboard.sh"
 ```
+
+Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for
+this skill. "Read-only" means no write to the work: the fetch still updates
+remote-tracking refs.
 
 It fetches and reads `origin/main` (never the working tree), lists open
 tickets with title, labels and `Blocked-by`, remote branches, open merge

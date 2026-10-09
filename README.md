@@ -133,7 +133,7 @@ belong in the external keystore and are resolved by task-specific tools.
 | `/conference-submission-prep` | Prepare a humanities and social sciences conference submission from its call for papers. |
 | `/critical-lit-review` | Critical literature review (état de l'art) in history of economics and STS: object, actors, controversies. |
 | `/cut-prose` | Cut a document to a word or page budget by removing whole passages before condensing anything. Use for a manuscript trim, a reviewer-mandated length cut, or a slot-limited abstract. |
-| `/dashboard` | Ticket dashboard: open tickets, branches and merge requests from origin/main, reported as a before/after delta led by the open-ticket count. Read-only; the inspector's view. |
+| `/dashboard` | Ticket dashboard: open tickets, branches and merge requests; full state plus a delta led by the ticket count. |
 | `/dream` | Consolidate one project's repository memory without proposing rules. |
 | `/external-peer-review` | Obtain independent external frontier-class peer reviews of a manuscript PDF; synthesize convergent findings into one verdict. |
 | `/gaze` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller. |
