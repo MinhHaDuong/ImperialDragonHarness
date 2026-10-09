@@ -24,12 +24,13 @@ requests with their auto-merge state, and recent merges.
 
 ## 2. Report
 
-First call in a session: one table of open tickets grouped as in progress
-(branch or merge request), takeable, blocked, deferred; then open merge
-requests.
+Every call prints the **full state**: one table of open tickets grouped as
+in progress (branch or merge request), takeable, blocked, deferred; then the
+open merge requests. The delta never replaces it.
 
-Later calls: a **delta table** of changed rows only (item | before | after),
-then one summary line. Unchanged state: say so in one line.
+From the second call on, put a **delta table** above the full state: changed
+rows only (item | before | after), then one summary line. Unchanged state:
+say so in one line, then print the full state anyway.
 
 - **Lead the summary with the open-ticket count trend.** A good delta is a
   falling count; flag growth and name what created tickets.
