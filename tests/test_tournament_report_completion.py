@@ -3,8 +3,13 @@
 import importlib.util
 import json
 import math
+import shutil
 import statistics
+import subprocess
 from pathlib import Path
+
+import pytest
+from child_env import child_env
 
 ROOT = Path(__file__).parents[1]
 
@@ -137,3 +142,21 @@ def test_french_text_binds_french_figure_strings_and_skips_mathtext():
     assert graphs.french_text("Bleu : local ; vert") == "Bleu\u00a0: local\u00a0; vert"
     assert graphs.french_text("$H_0 : f = 0$") == "$H_0 : f = 0$"
     assert graphs.french_text(None) is None
+
+
+@pytest.mark.integration
+def test_supplement_opens_with_a_section_title_page():
+    if shutil.which("pdftotext") is None:
+        pytest.skip("pdftotext (poppler-utils) not installed")
+    for pdf, title in (
+        ("docs/tournament-graphs/comparaisons-modeles.pdf", "Annexe technique auto-générée"),
+        ("docs/tournament-graphs-en/model-comparison.pdf", "Auto-generated technical appendix"),
+    ):
+        text = subprocess.run(
+            ["pdftotext", "-f", "13", "-l", "13", str(ROOT / pdf), "-"],
+            capture_output=True,
+            text=True,
+            check=True,
+            env=child_env(),
+        ).stdout
+        assert title in " ".join(text.split())

@@ -4,7 +4,7 @@ Rapport du 7 octobre 2026, révisé après la beta 0 (PR #1243) et la revue Astr
 Les changements de présentation et de discussion ont été ratifiés par l’auteur.
 Les séries de la beta 1 sont préservées. L’instantané, les PDF français et anglais, les PNG et les comparaisons incluent N (Haiku 5.5, 8 octobre). Ces artefacts sont préparés pour diffusion ; les textes ne sont pas encore publiés.
 
-Le PDF A4 paysage contient désormais 26 pages : les 12 pages de synthèse (présentation, table des résultats, cinq nuages XY,
+Le PDF A4 paysage contient désormais 27 pages : les 12 pages de synthèse (présentation, table des résultats, cinq nuages XY,
 trois DAG nominaux et deux pages de méthode), puis le complément 1046 du 9 octobre : grille et Pareto 3D, verdicts H1/H2, effort et inter-camps, cinq pages de distributions appariées, classes, événements historiques et guide situationnel. La perspective du benchmark
 de mai est intégrée à la méthode, sans page de discussion séparée.
 Les PNG sont des aperçus du PDF. Les cycles sont additifs ; SpaceBunny et les
@@ -95,7 +95,7 @@ le GPU et la sensibilité au retrait de 0333 sont décrites dans les limites du 
 
 ## Complément du 9 octobre — ticket 1046
 
-Le même générateur appelle `scripts/tournament-report-completion.py` pour les pages 13–26 dans les deux langues. `appendix-analysis.json` donne les 190 paires des 20 identités du rapport, avec Holm séparément par axe ; cette famille complémentaire est distincte des 136 paires des DAG. Aucune ne passe Holm. `paired-differences.csv` contient les 130 observations des treize comparaisons illustrées, avec les ratios par ticket. Les données originales ne sont pas modifiées.
+Le même générateur appelle `scripts/tournament-report-completion.py` pour les pages 13–27 (page 13 : titre « Annexe technique auto-générée ») dans les deux langues. `appendix-analysis.json` donne les 190 paires des 20 identités du rapport, avec Holm séparément par axe ; cette famille complémentaire est distincte des 136 paires des DAG. Aucune ne passe Holm. `paired-differences.csv` contient les 130 observations des treize comparaisons illustrées, avec les ratios par ticket. Les données originales ne sont pas modifiées.
 
 Les groupes de la grille sont des catégories opérationnelles, pas des clusters statistiquement estimés. Les 19 événements historiques sont documentés avec leurs corrections : 18 non-OK après le rejeu b2, puis reprises de quota ; les cinq échecs retenus dans les séries courantes restent notés zéro. Le guide couvre confidentialité, délai, budget, GPU, quotas et heures creuses DeepSeek, vérifiées le 9 octobre sur la [documentation officielle](https://api-docs.deepseek.com/quick_start/pricing/). Les tarifs du guide ne remplacent pas les coûts figés du tournoi.
 

@@ -1,6 +1,6 @@
 # English edition for sharing
 
-English edition of the 26-page French report (12-page synthesis and 14-page ticket-1046 supplement). Identical numeric
+English edition of the 27-page French report (12-page synthesis, an appendix title page and the 14-page ticket-1046 supplement). Identical numeric
 snapshot and statistical computations; English text and decimal points.
 
 From the repository root, on the host that holds `~/arena` (padme):
