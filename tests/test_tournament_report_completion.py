@@ -107,3 +107,33 @@ def test_cluster_memberships_match_the_existing_grid():
     assert set(grid["clusters"]) == set(completion.CLUSTERS)
     assert set(completion.CLUSTERS["ECONOMIQUES"]) == {"l", "n", "i", "j", "k"}
     assert len({a for group in completion.CLUSTERS.values() for a in group}) == 15
+
+
+def test_french_spacing_binds_high_punctuation_guillemets_and_digit_groups():
+    nb = "\u00a0"
+    text = "Luna : 0,03 ; « coût » ? 2 500 tokens, ticket 0333 2026"
+    assert completion.french_spacing(text) == (
+        f"Luna{nb}: 0,03{nb}; «{nb}coût{nb}»{nb}? 2{nb}500 tokens, ticket 0333 2026"
+    )
+
+
+def test_wrap_paragraph_keeps_nonbreaking_spaces_before_french_punctuation():
+    import matplotlib.pyplot as plt
+
+    fig = plt.figure(figsize=(3, 2))
+    try:
+        text = " ".join(["Luna : 0,03 ; « coût »"] * 6)
+        wrapped = graphs.wrap_paragraph(fig, text, 10, width=0.5)
+    finally:
+        plt.close(fig)
+    assert "\n" in wrapped
+    for line in wrapped.split("\n"):
+        assert not line.startswith((":", ";", "»"))
+    assert "Luna\u00a0:" in wrapped and "«\u00a0coût\u00a0»" in wrapped
+
+
+def test_french_text_binds_french_figure_strings_and_skips_mathtext():
+    assert graphs.FRENCH
+    assert graphs.french_text("Bleu : local ; vert") == "Bleu\u00a0: local\u00a0; vert"
+    assert graphs.french_text("$H_0 : f = 0$") == "$H_0 : f = 0$"
+    assert graphs.french_text(None) is None

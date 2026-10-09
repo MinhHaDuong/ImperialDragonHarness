@@ -12,20 +12,23 @@ préliminaires sont exclus.
 
 ## Reproduire les figures
 
-La commande ci-dessous régénère les artefacts courants du 8 octobre, incluant N ; elle ne reproduit pas les figures historiques du 7 octobre.
+Les artefacts versionnés sont reconstruits depuis les archives privées `~/arena`, sur padme ; ils ne reproduisent pas les figures historiques du 7 octobre.
 
 Depuis la racine du dépôt, avec Python et l’environnement de `uv sync` (groupe `dev` de `pyproject.toml`) :
 
 ```bash
 MPLCONFIGDIR=/tmp/tournament-mpl python3 scripts/tournament-graphs.py \
-  --snapshot docs/tournament-graphs/snapshot.json \
-  --output docs/tournament-graphs --time-value 1
+  --arena ~/arena --output docs/tournament-graphs --time-value 1
+MPLCONFIGDIR=/tmp/tournament-mpl python3 scripts/tournament-graphs-en.py \
+  --arena ~/arena --time-value 1
 ```
 
+La seconde commande produit l’édition anglaise dans `docs/tournament-graphs-en/`.
+
 NumPy, SciPy et Matplotlib sont nécessaires ; Graphviz ne l’est pas.
-L’instantané public suffit : aucune conversation ni clé API n’est requise.
-Pour reconstruire un nouvel instantané depuis les archives privées, omettre
-`--snapshot` et fournir `--arena ~/arena` ; cela change les données de référence.
+Sans accès à `~/arena`, remplacer `--arena ~/arena` par `--snapshot docs/tournament-graphs/snapshot.json` :
+l’instantané public donne les mêmes sorties numériques, sans conversation ni clé API
+(parité : [completion-1046.md § Provenance padme](completion-1046.md#provenance-padme)).
 
 ## Lire les figures
 
@@ -96,4 +99,4 @@ Le même générateur appelle `scripts/tournament-report-completion.py` pour les
 
 Les groupes de la grille sont des catégories opérationnelles, pas des clusters statistiquement estimés. Les 19 événements historiques sont documentés avec leurs corrections : 18 non-OK après le rejeu b2, puis reprises de quota ; les cinq échecs retenus dans les séries courantes restent notés zéro. Le guide couvre confidentialité, délai, budget, GPU, quotas et heures creuses DeepSeek, vérifiées le 9 octobre sur la [documentation officielle](https://api-docs.deepseek.com/quick_start/pricing/). Les tarifs du guide ne remplacent pas les coûts figés du tournoi.
 
-Le guide est une proposition à relire par l’auteur. Les sources privées `~/arena` ne sont pas disponibles dans cette revue : la reproduction est faite depuis l’instantané public, sans réaudit des archives brutes. Couverture des critères : [completion-1046.md](completion-1046.md). Aucune publication ni fusion n’est autorisée.
+Le guide a été relu par un relecteur délégué (Fable, sur instruction de l’auteur) ; ses corrections sont appliquées. Figures et PDF sont reconstruits depuis `~/arena` sur padme : commandes et parité dans [completion-1046.md § Provenance padme](completion-1046.md#provenance-padme). Couverture des critères : [completion-1046.md](completion-1046.md). Aucune publication n’est autorisée.

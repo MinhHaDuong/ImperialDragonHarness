@@ -9,11 +9,13 @@ import datetime
 import importlib.util
 import itertools
 import json
+import re
 import statistics
 from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.text
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.font_manager import FontProperties
@@ -24,6 +26,33 @@ from scipy.stats import rankdata
 matplotlib.use("Agg")
 matplotlib.rcParams["pdf.fonttype"] = 42
 
+completion_spec = importlib.util.spec_from_file_location(
+    "completion", Path(__file__).with_name("tournament-report-completion.py")
+)
+completion = importlib.util.module_from_spec(completion_spec)
+completion_spec.loader.exec_module(completion)
+FRENCH = globals().get("__tournament_language__", "fr") == "fr"
+
+
+def french_text(text):
+    """French typography for rendered strings; English and mathtext pass through."""
+    if FRENCH and isinstance(text, str) and "$" not in text:
+        return completion.french_spacing(text)
+    return text
+
+
+def install_french_text():
+    """Route every figure string (titles, labels, legends, tables) through french_text.
+
+    Installed by main() only, so importing this module (tests) leaves matplotlib intact.
+    """
+    original = matplotlib.text.Text.set_text
+
+    def set_text(self, text):
+        return original(self, french_text(text))
+
+    matplotlib.text.Text.set_text = set_text
+
 
 def wrap_paragraph(fig, text, fontsize, width=0.88):
     """Wrap prose to the available physical width of the landscape page."""
@@ -31,7 +60,8 @@ def wrap_paragraph(fig, text, fontsize, width=0.88):
     font = FontProperties(size=fontsize)
     limit = fig.bbox.width * width
     lines, line = [], ""
-    for word in text.split():
+    # Split on ASCII whitespace only: str.split() would break U+00A0 bindings.
+    for word in re.split(r"[ \t\r\n]+", french_text(text).strip()):
         candidate = f"{line} {word}" if line else word
         if (
             line
@@ -1061,11 +1091,6 @@ def render(output, snapshot):
         )
         pdf.savefig(fig)
         plt.close(fig)
-        completion_spec = importlib.util.spec_from_file_location(
-            "completion", Path(__file__).with_name("tournament-report-completion.py")
-        )
-        completion = importlib.util.module_from_spec(completion_spec)
-        completion_spec.loader.exec_module(completion)
         completion.append_report(
             pdf, snapshot, results, output, LABELS, signed_rank, holm,
             wrap_paragraph, globals().get("__tournament_language__", "fr"),
@@ -1096,6 +1121,7 @@ def main():
         help="USD per erg-hour of delivery delay; each benchmark ticket represents one average erg",
     )
     args = parser.parse_args()
+    install_french_text()
     if args.time_value < 0:
         parser.error("time value must be nonnegative")
     args.output.mkdir(parents=True, exist_ok=True)
