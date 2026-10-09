@@ -30,7 +30,9 @@ work.
 The grid lives in `grid.json` beside this file (data, not portable
 instructions; model names live in data and in the per-runtime
 recommendation files). Read it for quality/speed/cost per identity and the
-provisional marks; update it ONLY from arena cycle data.
+provisional marks; per-arm coverage counts and evidence notes live in
+`grid-coverage.json` (keyed by arm, not needed to choose); update both ONLY
+from arena cycle data.
 
 Effort labels are model-relative, NOT transportable across generations
 (Sol 6.1 @medium does more work than Sol 6.0 @medium at the same label).

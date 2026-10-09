@@ -1,5 +1,5 @@
 {
-  "_comment": "Cumulative arena identities; preliminary 0188 excluded. Model failures score 0/30 with consumed time/cost retained. Infrastructure failures and incomplete panels stay pending. Numeric fields are refreshed from the arena directory by $IDH_ROOT/scripts/tournament-analysis.py --grid (earlier arms: docs/2026-10-06-tournament-corrected-summary.json; arm n, Haiku 5.5: docs/tournament-graphs/haiku55-results.csv). `family` is the model lineage, independent of provider or door. Local electricity converted at 1.08 USD/EUR; hosted API USD.",
+  "_comment": "Cumulative arena identities; preliminary 0188 excluded. Model failures score 0/30 with consumed time/cost retained. Infrastructure failures and incomplete panels stay pending. Numeric fields are refreshed from the arena directory by $IDH_ROOT/scripts/tournament-analysis.py --grid (earlier arms: docs/2026-10-06-tournament-corrected-summary.json; arm n, Haiku 5.5: docs/tournament-graphs/haiku55-results.csv). `family` is the model lineage, independent of provider or door. Local electricity converted at 1.08 USD/EUR; hosted API USD. Per-arm coverage and role notes: grid-coverage.json, keyed by arm.",
   "updated": "2026-10-06T17:54:10.941255+00:00",
   "grid": [
     {
@@ -8,22 +8,7 @@
       "quality": "26.50 (final, failures=0/10)",
       "time": "5.99 min",
       "cost": "0.8003 USD",
-      "role": "10/10 completed; strong cycle-1 identity. Paired advantage over @low is 0.5 median point; no claim of guaranteed consistency.",
       "arm": "d",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 10,
-        "failures": 0,
-        "pending": 0,
-        "quality_median": 26.5,
-        "quality_mean": 23.7,
-        "seconds_median": 359.3,
-        "cost_usd_median": 0.8003,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "Anthropic"
     },
     {
@@ -32,22 +17,7 @@
       "quality": "26.50 (final, failures=0/10)",
       "time": "42.87 min",
       "cost": "0.1065 USD",
-      "role": "26.5 median on 10/10; beats Sol @medium quality 7 wins, 2 ties, 1 loss (median paired +3.0); slower.",
       "arm": "b2",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 10,
-        "failures": 0,
-        "pending": 0,
-        "quality_median": 26.5,
-        "quality_mean": 26.2,
-        "seconds_median": 2571.95,
-        "cost_usd_median": 0.10647873000000002,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "Qwen"
     },
     {
@@ -56,22 +26,7 @@
       "quality": "24.00 (final, failures=1/10)",
       "time": "33.13 min",
       "cost": "0.0823 USD",
-      "role": "9/10 completed; 0874 timeout scores zero. Paired vs Luna: 4 wins, 1 tie, 5 losses; median -1.0.",
       "arm": "b3",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 9,
-        "failures": 1,
-        "pending": 0,
-        "quality_median": 24.0,
-        "quality_mean": 20.75,
-        "seconds_median": 1987.9499999999998,
-        "cost_usd_median": 0.08230113000000003,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "Qwen"
     },
     {
@@ -80,22 +35,7 @@
       "quality": "23.25 (final, failures=0/10)",
       "time": "5.10 min",
       "cost": "0.2066 USD",
-      "role": "Paired quality vs @medium: 5 wins, 5 losses; median difference zero. Faster 9/10, cheaper 10/10; no per-ticket quality dominance.",
       "arm": "e2",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 10,
-        "failures": 0,
-        "pending": 0,
-        "quality_median": 23.25,
-        "quality_mean": 22.65,
-        "seconds_median": 306.1,
-        "cost_usd_median": 0.20655,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "OpenAI"
     },
     {
@@ -104,22 +44,7 @@
       "quality": "25.00 (final, failures=0/10)",
       "time": "9.40 min",
       "cost": "0.3349 USD",
-      "role": "Complete-coverage hosted quality reference.",
       "arm": "e3",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 10,
-        "failures": 0,
-        "pending": 0,
-        "quality_median": 25.0,
-        "quality_mean": 21.9,
-        "seconds_median": 564.25,
-        "cost_usd_median": 0.3349,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "OpenAI"
     },
     {
@@ -128,22 +53,7 @@
       "quality": "22.75 (final, failures=1/10)",
       "time": "51.97 min",
       "cost": "0.1291 USD",
-      "role": "9/10 completed; 0874 timeout scores zero. Paired quality vs Luna: 5 wins, 5 losses; median difference zero.",
       "arm": "a",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 9,
-        "failures": 1,
-        "pending": 0,
-        "quality_median": 22.75,
-        "quality_mean": 20.6,
-        "seconds_median": 3118.05,
-        "cost_usd_median": 0.12908727000000003,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "Qwen"
     },
     {
@@ -152,22 +62,7 @@
       "quality": "21.00 (final, failures=0/10)",
       "time": "1.13 min",
       "cost": "0.1544 USD",
-      "role": "Low-latency hosted identity; use paired results rather than equality of marginal medians.",
       "arm": "g",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 10,
-        "failures": 0,
-        "pending": 0,
-        "quality_median": 21.0,
-        "quality_mean": 21.35,
-        "seconds_median": 67.95,
-        "cost_usd_median": 0.1544,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "Anthropic"
     },
     {
@@ -176,22 +71,7 @@
       "quality": "22.00 (final, failures=0/10)",
       "time": "8.71 min",
       "cost": "0.5242 USD",
-      "role": "Complete-coverage cycle-1/2 shared identity.",
       "arm": "f",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 10,
-        "failures": 0,
-        "pending": 0,
-        "quality_median": 22.0,
-        "quality_mean": 21.65,
-        "seconds_median": 522.5,
-        "cost_usd_median": 0.52425,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "GLM"
     },
     {
@@ -200,22 +80,7 @@
       "quality": "21.75 (final, failures=0/10)",
       "time": "3.84 min",
       "cost": "0.0278 USD",
-      "role": "Routine default: complete coverage, low measured API cost. Q2_0 exact-parity claim withdrawn.",
       "arm": "l",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 10,
-        "failures": 0,
-        "pending": 0,
-        "quality_median": 21.75,
-        "quality_mean": 22.2,
-        "seconds_median": 230.2,
-        "cost_usd_median": 0.02775,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "OpenAI"
     },
     {
@@ -224,23 +89,8 @@
       "quality": "22.50 (final, failures=0/10)",
       "time": "3.03 min",
       "cost": "0.0227 USD",
-      "role": "Added 2026-10-08 from arena arm N: Anthropic native, Pi 1.1.0, effort medium set explicitly, scored by the same Gemini/Grok/MiniMax panel as the other arms, all attempts counted. Price multiplies by 5 above 100,000 prompt tokens, so it suits workers under that size. Per-ticket table: docs/tournament-graphs/haiku55-results.csv.",
       "arm": "n",
-      "family": "Anthropic",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 10,
-        "failures": 0,
-        "pending": 0,
-        "quality_median": 22.5,
-        "quality_mean": 21.7,
-        "seconds_median": 181.89999999999998,
-        "cost_usd_median": 0.02275,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      }
+      "family": "Anthropic"
     },
     {
       "model": "claude-opus-5-5",
@@ -248,22 +98,7 @@
       "quality": "22.75 (final, failures=0/10)",
       "time": "2.82 min",
       "cost": "0.3066 USD",
-      "role": "10/10 completed; compared with @medium, paired median -0.5 at lower measured cost and latency.",
       "arm": "d2",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 10,
-        "failures": 0,
-        "pending": 0,
-        "quality_median": 22.75,
-        "quality_mean": 21.45,
-        "seconds_median": 169.05,
-        "cost_usd_median": 0.30665,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "Anthropic"
     },
     {
@@ -272,22 +107,7 @@
       "quality": "20.50 (final, failures=0/10)",
       "time": "10.15 min",
       "cost": "0.1059 USD",
-      "role": "Complete-coverage economical hosted identity.",
       "arm": "i",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 10,
-        "failures": 0,
-        "pending": 0,
-        "quality_median": 20.5,
-        "quality_mean": 21.95,
-        "seconds_median": 608.9000000000001,
-        "cost_usd_median": 0.1059,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "DeepSeek"
     },
     {
@@ -296,22 +116,7 @@
       "quality": "26.00 (final, failures=1/10)",
       "time": "10.39 min",
       "cost": "0.1694 USD",
-      "role": "PROVISIONAL: quota errors were infrastructure failures, not silent model abandonment; replay underway. 0333 timeout counts zero.",
       "arm": "j",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 9,
-        "failures": 1,
-        "pending": 0,
-        "quality_median": 26.0,
-        "quality_mean": 21.6,
-        "seconds_median": 623.3,
-        "cost_usd_median": 0.1694,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "GLM"
     },
     {
@@ -320,22 +125,7 @@
       "quality": "23.00 (final, failures=1/10)",
       "time": "44.89 min",
       "cost": "0.0808 USD",
-      "role": "PROVISIONAL: quota errors were infrastructure failures, not silent model abandonment; replay underway. 0211 timeout counts zero.",
       "arm": "k",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 9,
-        "failures": 1,
-        "pending": 0,
-        "quality_median": 23.0,
-        "quality_mean": 21.25,
-        "seconds_median": 2693.7,
-        "cost_usd_median": 0.08075,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "Xiaomi"
     },
     {
@@ -344,22 +134,7 @@
       "quality": "9.25 (final, failures=0/10)",
       "time": "6.52 min",
       "cost": "0.0162 USD",
-      "role": "Low measured quality; false-completion behavior retained as a routing concern.",
       "arm": "c",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 10,
-        "failures": 0,
-        "pending": 0,
-        "quality_median": 9.25,
-        "quality_mean": 10.3,
-        "seconds_median": 391.0,
-        "cost_usd_median": 0.016187400000000005,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "Qwen"
     },
     {
@@ -368,22 +143,7 @@
       "quality": "8.50 (final, failures=1/10)",
       "time": "5.62 min",
       "cost": "0.0140 USD",
-      "role": "Low measured quality; 0470 empty submission scores zero.",
       "arm": "c2",
-      "coverage": {
-        "expected": 10,
-        "evaluated": 10,
-        "ok": 9,
-        "failures": 1,
-        "pending": 0,
-        "quality_median": 8.5,
-        "quality_mean": 8.95,
-        "seconds_median": 337.15,
-        "cost_usd_median": 0.013958010000000003,
-        "time_observed": 10,
-        "cost_observed": 10,
-        "final": true
-      },
       "family": "Qwen"
     }
   ],

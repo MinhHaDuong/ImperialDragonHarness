@@ -67,6 +67,28 @@ def test_every_grid_arm_has_a_family():
     assert {row['arm'] for row in grid['grid']} <= set(analysis.FAMILY)
 
 
+def test_grid_detail_goes_to_coverage_file_joined_by_arm():
+    result = {
+        'quality_median': 12.0, 'seconds_median': 120.0, 'cost_usd_median': 0.5,
+        'final': True, 'expected': 10, 'failures': 1,
+    }
+    grid = {'grid': [{'arm': 'n', 'model': 'claude-haiku-5-5'}]}
+    detail = {'arms': {'n': {'role': 'note'}}}
+    analysis.refresh_grid(grid, {'arms': {'n': result}}, detail)
+    assert 'coverage' not in grid['grid'][0]
+    assert detail['arms']['n'] == {'role': 'note', 'family': 'Anthropic', 'coverage': result}
+
+
+def test_committed_grid_and_coverage_join_on_arm_without_overlap():
+    root = Path(__file__).parents[1] / 'skills/route'
+    grid = json.loads((root / 'grid.json').read_text())
+    detail = json.loads((root / 'grid-coverage.json').read_text())['arms']
+    assert {row['arm'] for row in grid['grid']} == set(detail)
+    for row in grid['grid']:
+        assert row['family'] == detail[row['arm']]['family']
+        assert not (set(row) & set(detail[row['arm']])) - {'family'}
+
+
 def test_paired_timeout_remains_in_sample(tmp_path):
     (tmp_path / 'runs.json').write_text(json.dumps({'matrix': [{'ticket': '0001', 'arm_order': ['a', 'l', 'h']}]}))
     for arm in ['a', 'l']:
