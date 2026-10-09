@@ -1,0 +1,58 @@
+%erg 0.1
+Title: Retroactive diff review of the riskiest routing-era PRs, with attribution
+Created: 2026-10-09
+Author: reviewer
+
+--- log ---
+2026-10-09T09:40Z reviewer created
+
+--- body ---
+## Context
+The routing work (tracker 1052, PRs #1262 to #1293, 2026-10-08 and 09) merged
+without `/gaze`: the PRs were verified by `make check`, CI, the coders' own
+proofs and spot reads, and most were written by coder sub-agents of one model
+family. No review-attribution record exists for them except the Luna seat on
+#1272. A whole-harness review round (ticket 1071) reads the final state, not
+each diff against its ticket, so it cannot replace a per-PR review. This
+ticket reviews the riskiest diffs retroactively. Sibling of 1071; do not merge
+the two.
+
+## Scope
+Review each diff (`gh pr diff <N>`, or the merge commit's first-parent diff)
+against the exit criteria of the ticket it closed (`tickets/closed/`), in the
+shape of `/review-pr` and `/verify-gate`, one PR at a time:
+- #1290 rtk hook guard: runs on every Bash call; check stdin passthrough,
+  the validator's accepted forms, and a shell without `sh` on PATH.
+- #1291 uv adoption: `pyproject.toml`, `uv.lock`, CI `uv sync --frozen`,
+  Makefile `RUN` wrapper; check a secretless CI box, the xdist probe order,
+  the pinned `setup-uv` tag, and that `requires-python` matches reality.
+- #1289 test portability: exit-77 mapping, `run_checked`, the collision gate's
+  new exit 2, TMPDIR and `GIT_CEILING_DIRECTORIES` changes, the Makefile
+  fallback; check that no test now passes vacuously.
+- #1288 review and raid skills: the new `scripts/panel-manifest-check.py` gate
+  and the manifest format change in `review-pr`; check the validator's edge
+  cases and that skills still launch workers correctly.
+- #1269 and #1272 decorrelation doctrine and its rewrite; #1278 deletion of
+  `scripts/model_policy.py` and the `AGENTS.md` rewrite (nothing else imports
+  or cites them).
+- Not a PR: doudou's `/usr/local/sbin/snapshot.sh` (root-owned, tested only on a
+  fake tree). Read `/var/log/snapshot.log` after the first run and confirm the
+  `Excluded:` lines for `.local/share/uv-cache` and each `.venv`, and that no
+  non-regenerable path was removed from a snapshot.
+
+Each review uses at least one seat from another model family than the
+orchestrator (Codex with an OpenAI model is the reachable door from Claude
+Code; record `no report` and `PANEL-INTEGRITY: DEGRADED` if it cannot run),
+the launch line stated for each seat, and anchors as `path:line`. Capture one
+review-attribution record per reviewed PR in the roar bundle that follows.
+
+Estimated cost: about 0.7 to 1.4 USD per full review (derived from grid
+prices with an assumed seat mix, not measured), so roughly 5 to 10 USD for
+the seven items, plus about one author-hour to read the findings.
+
+## Exit criteria
+- [ ] Each listed PR has a diff-anchored review; every finding is fixed, ticketed above the severity floor, or recorded as accepted
+- [ ] Each PR's closed ticket exit criteria are checked against its diff, with the result recorded
+- [ ] At least one other-family seat per PR, or `no report` with `PANEL-INTEGRITY: DEGRADED` stated
+- [ ] A review-attribution record exists for each reviewed PR
+- [ ] doudou's first real snapshot log lines are read and reported
