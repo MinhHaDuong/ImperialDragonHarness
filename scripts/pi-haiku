@@ -24,4 +24,6 @@ set -a
 set +a
 [ -n "${ANTHROPIC_API_KEY:-}" ] || { echo "pi-haiku: ANTHROPIC_API_KEY missing in $keyfile" >&2; exit 1; }
 
+"$(dirname "$(readlink -f "$0")")/pi-subagent-link" 2>/dev/null || true
+
 exec pi --provider anthropic --model "$MODEL" --models "anthropic/$MODEL" "$@"

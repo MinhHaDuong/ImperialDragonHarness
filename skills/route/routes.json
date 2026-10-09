@@ -78,7 +78,7 @@
     },
     "pi": {
       "subagent": {
-        "form": "Pi core has no subagents; the example extension examples/extensions/subagent spawns 'pi --mode json -p --no-session --model <agent.model>' with the model read from the agent file frontmatter (pinned per agent file, not per call). On padme the two symlinks in ~/.pi/agent/extensions/subagent/ were dangling (old node path) and were repointed to ~/.pi/agent/install/releases/1.1.0/... on 2026-10-08; they break again if that release path changes. Agent definitions live in ~/.pi/agent/agents/; haiku-scout.md pins anthropic/claude-haiku-5-5 and needs the pi-haiku wrapper for the key.",
+        "form": "Pi core has no subagents; the example extension examples/extensions/subagent spawns 'pi --mode json -p --no-session --model <agent.model>' with the model read from the agent file frontmatter (pinned per agent file, not per call). On padme the two symlinks in ~/.pi/agent/extensions/subagent/ were dangling (old node path) and were repointed to ~/.pi/agent/install/releases/1.1.0/... on 2026-10-08; scripts/pi-subagent-link re-points them from ~/.pi/agent/install/current-version and pi-haiku runs it at every start, so a Pi upgrade does not break them. Agent definitions live in ~/.pi/agent/agents/; haiku-scout.md pins anthropic/claude-haiku-5-5 and needs the pi-haiku wrapper for the key.",
         "status": "verified 2026-10-08 on padme: pi-haiku loaded the extension, the subagent tool launched a child whose events name anthropic/claude-haiku-5-5"
       },
       "headless": {
