@@ -20,7 +20,9 @@ that kind. Removing the opt-in needs a replacement for "who moves the session".
    `ps -p` it: the 1076 lock reason assumes that pid lives exactly as long as
    the session (Fable seat on PR #1313).
 2. Report to the author with the result; the author decides removal of the
-   opt-in in `scripts/on-start.sh` and `rules/claude-code.md`.
+   opt-in in `scripts/on-start.sh` and `rules/claude-code.md`; if removed, the
+   `ExitWorktree` steps in skills/lair (step 26) and skills/roar (step 9b-c)
+   and skills/raid:358 go with it (roar sweep, PR #1313).
 
 ## Exit criteria
 - [ ] Experiment run and recorded (positive control: one refusal reproduced)
