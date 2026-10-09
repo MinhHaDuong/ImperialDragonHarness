@@ -99,9 +99,8 @@ def test_detach_launch_line_is_mechanical():
         'as `Skill(skill: "hunt", args: "<id>")`, mirroring raid Phase 5 — a '
         "prose paraphrase of the contract is what drifted in the aedist waves"
     )
-    assert 'isolation: "worktree"' in step2b, (
-        "step 2b's launch line must pin worktree isolation, which is what makes "
-        "the spawned agent pass step 3's ownership check"
+    assert 'isolation: "worktree"' not in step2b, (
+        "step 2b must stay portable: the agent creates its own worktree (ticket 1076)"
     )
     assert "agents/coder.md" in step2b, (
         "step 2b's launch line must name the coder profile (agents/coder.md; model chosen per launch via route) — an "
@@ -182,7 +181,7 @@ def test_triage_precedes_any_code():
         for label, marker in (
             ("2", "\n2. Check the **Exit criteria**"),
             ("2b", "\n2b."),
-            ("3", "\n3. Enter the ticket's **own** worktree"),
+            ("3", "\n3. Work in the ticket's **own** worktree"),
         )
     }
     assert positions["2"] < positions["2b"] < positions["3"], (

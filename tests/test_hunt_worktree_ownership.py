@@ -1,4 +1,6 @@
-"""Hunt step 3 recognizes a spawner-created `agent-*` worktree as owned.
+"""Hunt step 3 worktree ownership and the portable plain-git recipe (ticket 1076).
+
+History:
 
 Ticket 0294 (child of 0251): `Agent(isolation:"worktree")` names its worktree
 `agent-<id>`, not `t<id>`, so a spawned execute agent invoking `Skill(hunt)`
@@ -35,14 +37,12 @@ def step3_text() -> str:
     return re.sub(r"\s+", " ", m.group(0))
 
 
-def test_agent_worktree_is_owned():
-    """The generalized predicate accepts the spawner's `agent-*` worktree."""
+def test_plain_git_recipe_with_lock():
+    """Ticket 1076: portable recipe, plain git plus a lock worktree-gc honours."""
     step3 = step3_text()
-    assert "agent-*" in step3, (
-        "step 3 must recognize the spawner-created `agent-*` worktree as owned "
-        "(ticket 0294); the exact-`t$ARGUMENTS`-only check rejected raid execute "
-        "agents"
-    )
+    assert "git worktree add .claude/worktrees/" in step3
+    assert "git worktree lock" in step3
+    assert "EnterWorktree" not in step3 and "isolation" not in step3
 
 
 def test_shared_and_explore_worktrees_still_forbidden():
@@ -62,18 +62,7 @@ def test_clean_tree_gate_is_executable():
     step3 = step3_text()
     assert "git status --porcelain" in step3, (
         "step 3 must state `git status --porcelain` as the executable cleanliness "
-        "gate for the agent-* ownership case, not just the word 'clean' (ticket 0294)"
-    )
-
-
-def test_rejection_as_confirmation_documented():
-    """An `EnterWorktree` rejection in a spawned context is confirmation."""
-    step3 = step3_text()
-    assert "already in a worktree" in step3, (
-        "step 3 must mention the `EnterWorktree` 'already in a worktree' rejection"
-    )
-    assert re.search(r"confirm", step3, re.IGNORECASE), (
-        "step 3 must document the rejection-as-confirmation branch (ticket 0294)"
+        "gate for a handed-over worktree, not just the word 'clean' (ticket 0294)"
     )
 
 
@@ -87,8 +76,8 @@ def test_pid_discriminator_obtainable():
     step3 = step3_text()
     assert "bash -c 'echo $$'" in step3, (
         "step 3 must show a literal, executable way to obtain the session-PID "
-        "discriminator (e.g. `bash -c 'echo $$'`) before the EnterWorktree call, "
-        "since the name schema rejects `$` characters (ticket 0309)"
+        "discriminator (e.g. `bash -c 'echo $$'`) "
+        "so parallel sessions get distinct paths (ticket 0309)"
     )
 
 

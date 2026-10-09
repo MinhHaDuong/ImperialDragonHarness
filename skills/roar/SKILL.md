@@ -273,10 +273,8 @@ Wait for confirmed integration before cleaning up that worktree.
        0355 failure the closing note below describes.
     No-forge repo: every ancestry probe in this step compares against the
     local default branch instead of `origin/main`.
-    Skip if not in a worktree. When roar runs inside an `isolation:"worktree"`
-    subagent, `ExitWorktree` is unavailable — skip this step; the harness
-    auto-cleans the agent's worktree once its branch is merged and the tree
-    is clean.
+    Skip if not in a worktree. A worktree a subagent created and locked itself is
+    left to `worktree-gc` once its branch is merged.
 10. **Verify hygiene** — and run the branch sweep, which is this step's job.
     Delete only after the ancestry probe: a plain delete has no merged-check
     of its own, and a remote branch can be the only copy of an unmerged

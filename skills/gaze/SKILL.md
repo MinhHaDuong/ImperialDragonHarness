@@ -331,12 +331,9 @@ own cwd is the review tree; how a runtime sets a spawned agent's cwd
 is not portable, `git -C` is (ticket 0853). Waiting on a written artifact, not on a return value, is
 load-bearing, not incidental — see **Fork execution contract** below: this
 skill runs as a `context: fork`, and a fork cannot wait on background
-agents. Do **not** give these agents `isolation: "worktree"` —
-that cuts a *fresh* tree from the session repo on main/HEAD, which is exactly
-the wrong-branch failure this conversion eliminates; only the REROLL fix
-agent (a mutator) gets `isolation: "worktree"`.
+agents.
 
-If the battery cannot be launched at all — the isolation guard refuses the
+If the battery cannot be launched at all — the runtime refuses the
 spawn, the agent connector is absent, or the spawn-depth limit is hit — first
 attempt the detached-seat substitution documented in
 `skills/review-pr/SKILL.md`; if that also cannot run, emit a one-line
@@ -347,7 +344,7 @@ a battery NOT-RUN; seats launched but reports missing stays seat-level
 failure, not a review finding: never fabricate findings — the gate reports
 the criteria unverified, and the verdict is capped at ESCALATE, never
 APPROVED. When the phase-6 gate itself cannot launch — under the same
-causes: the isolation guard refuses the spawn, the agent connector is
+causes: the runtime refuses the spawn, the agent connector is
 absent, or the spawn-depth limit is hit — the gaze orchestrator emits the
 capped verdict directly with `gate: skipped (gate launch failure — see
 battery NOT-RUN)` and the criteria reported unverified — never fabricated.
@@ -600,7 +597,7 @@ The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
 (ticket 0216) — same rationale as phases 2–4. The launch is **the gate-seat
 profile** (`agents/gate-seat.md`), whose contract is
 `profiles/gate-seat/PROFILE.md` — spawn one seat (waited for by polling its
-written verdict artifact), with its model chosen per launch from the `route` skill, never `isolation: "worktree"`, operating on the review worktree
+written verdict artifact), with its model chosen per launch from the `route` skill, operating on the review worktree
 `$primary_root/.claude/worktrees/review-<pr-number>` (the equivalent fork call is
 `/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`);
 the PR number, this run's `gate_session_id`, and the review worktree path ride
@@ -677,7 +674,7 @@ breaker.
 
 - **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence. End
   the skill. The caller merges.
-- **REROLL, round 1** → spawn a fix subagent with `isolation: "worktree"` —
+- **REROLL, round 1** → spawn a fix subagent that creates and locks its own worktree on the PR branch (hunt step 3 recipe) —
   the **coder profile** (`agents/coder.md`, whose contract is
   `profiles/coder/PROFILE.md`; the model is chosen per launch from the
   `route` skill, no frontmatter pin) —

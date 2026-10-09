@@ -55,10 +55,9 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
      recommended default, and end the turn. That return is a success outcome of the
      hunt, not a failure, exactly as the raid drift guard treats a premise objection.
    - **Detach by default.** No tell hit, and the hunt is running in the author's
-     interactive session: hand the ticket to ONE background worktree-isolated
-     agent. Not a raid — for a single ticket its orchestrator and review panels
-     cost more than the ticket returns. Launch with `isolation: "worktree"` and
-     the coder profile (`agents/coder.md`; choose the model per launch from the
+     interactive session: hand the ticket to ONE background agent, which creates
+     its own worktree in step 3. Not a raid — for a single ticket its orchestrator and review panels
+     cost more than the ticket returns. Launch it with the coder profile (`agents/coder.md`; choose the model per launch from the
      `route` skill, there is no frontmatter pin). The agent's FIRST action is mechanical:
      ```
      Skill(skill: "hunt", args: "$ARGUMENTS")
@@ -74,41 +73,25 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
      the interactive session stays at decision altitude instead of accumulating
      the executor's test dumps, diffs, and review rounds, which measured 5.4x the
      cost of the same contract run detached.
-3. Enter the ticket's **own** worktree, or confirm the spawner already gave you one.
-   A worktree is **owned** when either its basename is `t$ARGUMENTS` or begins with
-   `t$ARGUMENTS-` (the collision-resistant suffixed form — see the `EnterWorktree`
-   call below), OR its basename matches `agent-*` (the orchestrator created it for this agent session) AND
-   `git status --porcelain` prints nothing — the session started inside it and its tree
-   is clean (that is what `Agent(isolation:"worktree")` produces). Both conditions must
-   hold: an `agent-*` basename over a dirty tree is not proof of ownership. A shared or
-   `explore-*` worktree that may host a live session is **not
-   owned**: a hunt must never rebase, branch, or leave uncommitted files in a worktree
-   it does not own (2026-06-11: a hunt inherited an orchestration session's worktree,
-   rebased its branch, and stranded in-progress test edits there). Resolve ownership
-   before the first branch-mutating command:
-   - Already inside an owned worktree — basename `t$ARGUMENTS` or beginning with `t$ARGUMENTS-`, or an `agent-*`
-     one from an `Agent(isolation:"worktree")` spawn whose `git status --porcelain` is
-     empty — means you are isolation-confirmed; proceed to step 4. When such a spawned
-     agent has its `EnterWorktree` rejected with "already in a worktree", that rejection
-     **is** the confirmation only if the current tree passes the same clean `agent-*`
-     check; a rejection over a dirty or non-`agent-*` tree means STOP — the worktree is
-     not owned — not an error to proceed through.
-   - Otherwise call `EnterWorktree` with name `t$ARGUMENTS-<pid>`, where `<pid>`
-     is the session PID — a discriminator that keeps parallel sessions on the same
-     ticket in distinct worktree paths. Resolve it to a literal first (the
-     `EnterWorktree` name schema rejects `$` characters): run `bash -c 'echo $$'`
-     and substitute the number, e.g. pass `t$ARGUMENTS-12345`, not the raw
-     `t$ARGUMENTS-$$`. Call `EnterWorktree` even if the session already sits inside
-     some other, unowned worktree.
-   Confirm with `basename "$(git rev-parse --show-toplevel)"`: it must be `t$ARGUMENTS`,
-   begin with `t$ARGUMENTS-`, or be the `agent-*` worktree of this session (rules/git.md § anchor branch-mutating git
-   across a forked-skill boundary). Ad hoc orchestrators should not hand-type this
-   ownership contract: spawn the hunt headlessly with `claude -p "/hunt <id>"`,
-   so the live SKILL.md text supplies the rule instead of a copy that drifts.
+3. Work in the ticket's **own** worktree. A worktree is **owned** when you created
+   it for this ticket, or the spawner handed it to you by path with
+   `git status --porcelain` printing nothing. A shared or `explore-*` worktree that
+   may host a live session is **not owned**: a hunt must never rebase, branch, or
+   leave uncommitted files in it (2026-06-11: a hunt inherited an orchestration
+   session's worktree, rebased its branch, and stranded in-progress test edits
+   there). Otherwise create one with plain git, from the repo root, `<pid>` from
+   `bash -c 'echo $$'` so parallel sessions get distinct paths:
+   ```bash
+   git worktree add .claude/worktrees/t$ARGUMENTS-<pid> -b t$ARGUMENTS-short-description origin/main
+   git worktree lock .claude/worktrees/t$ARGUMENTS-<pid>
+   ```
+   The lock marks it in use for `worktree-gc` and molt. Work only there: absolute
+   paths under it, `git -C <worktree>` for git. Ad hoc orchestrators should not
+   hand-type this contract: spawn the hunt headlessly with `claude -p "/hunt <id>"`.
    Choose the model of each launched worker per launch, from the `route` skill grid
    (`skills/route/SKILL.md`); seats that must be independent follow
    `skills/route/references/decorrelation.md` ("The launch line").
-4. Create or checkout the ticket branch:
+4. In a handed-over worktree, create or checkout the ticket branch (step 3 already made it otherwise):
    ```bash
    git switch -c t$ARGUMENTS-short-description
    ```

@@ -258,7 +258,7 @@ this rewrite of pushed branch SHAs. WAVE_BASE moves to NEW_WAVE_BASE.
 coordination PR lands, or Wave N merges, re-record WAVE_BASE from the merged
 main tip before the next wave's branches fork.
 
-For each wave, launch agents with `isolation: "worktree"` — the **coder
+For each wave, launch agents — each creates and locks its own worktree (hunt step 3) — the **coder
 profile** (`agents/coder.md`, whose contract is `profiles/coder/PROFILE.md`;
 the model is chosen per launch from the `route` skill, no frontmatter pin).
 
