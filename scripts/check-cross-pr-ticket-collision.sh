@@ -23,6 +23,8 @@
 #   SELF_PR_NUMBER  this PR's number, excluded from the sibling scan
 #
 # Exit 0: no collision (or no ticket files added — fast path, no forge calls).
+# Exit 2: the open-PR list could not be fetched (no gh auth/network/GitHub
+#         remote) — fails closed with one clear line.
 # Exit 1: a ticket ID this PR adds is also added by an open PR. Message names the
 #         colliding PR(s) and suggests the next free ID.
 
@@ -91,7 +93,12 @@ done <<< "$OWN_PATHS"
 
 # ── enumerate sibling open PRs (forge-specific) ───────────────────────────────
 # harness-extension-point: GitHub CLI — swap this block for another forge's API.
-SIBLINGS_JSON=$(gh pr list --state open --json number,headRefName) # harness-extension-point
+# Fail closed but legibly: without gh auth, network or a GitHub remote the
+# bare call dies under set -e with an opaque message; say what is missing.
+if ! SIBLINGS_JSON=$(gh pr list --state open --json number,headRefName 2>/dev/null); then # harness-extension-point
+    echo "cross-pr-collision: cannot list open PRs (no gh auth/network/GitHub remote)" >&2
+    exit 2
+fi
 
 while IFS=$'\t' read -r pr_number pr_branch; do
     [[ -z "$pr_number" ]] && continue
