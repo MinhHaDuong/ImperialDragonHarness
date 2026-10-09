@@ -125,7 +125,7 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
    for what ran.
    Keep every unlaunched manifest entry as `no report`. Write
    `PANEL-INTEGRITY: DEGRADED — Agent tool unavailable or spawn failed;
-   independent perspectives not run` and `dissent: unavailable` into
+   selected perspectives not run` and `dissent: unavailable` into
    `<panel>/review.md`, post them in the single PR review, and return them in
    the structured result. A panel with missing reports also carries a
    `PANEL-INTEGRITY:` line naming those perspectives. Never use

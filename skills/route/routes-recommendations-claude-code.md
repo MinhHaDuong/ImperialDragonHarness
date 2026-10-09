@@ -26,8 +26,8 @@ oversize context, uncleared content, or a cross-family need).
 
 - Pin the model on every launch with the short token `haiku`, `sonnet`,
   `opus` or `fable`. A child never inherits a skill's frontmatter, an unpinned
-  `Agent` child inherits the session model, and the `model: standard|strong`
-  tokens in agent definitions return HTTP 404 (ticket 1063, 2026-10-08).
+  `Agent` child inherits the session model; harness agent definitions carry no
+  `model:` line.
 - Every `Agent` child is Anthropic. A cross-family worker is a headless CLI
   started from bash: `pi -p` with a provider-qualified model, or
   `codex exec -m` for OpenAI.

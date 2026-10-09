@@ -9,8 +9,9 @@ argument-hint: "<review material> [expertise and independence needs]"
 # Live reviewer routing
 
 Describe the review material, required expertise and
-independence needs to the active runtime. Let it discover available reviewers
-and choose a route. Read `references/live-route.md` before routing or collecting
+independence needs. The route skill (`skills/route/SKILL.md`) chooses the
+worker and `skills/route/references/decorrelation.md` decides when a seat counts
+as independent; the active runtime only discovers which reviewers are reachable. Read `references/live-route.md` before routing or collecting
 evidence; it defines the request, result and unavailable-review contracts.
 
 Possible resources include llama.cpp on Padmé, OpenRouter, other local agents,

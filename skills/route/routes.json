@@ -66,7 +66,7 @@
     "claude-code": {
       "subagent": {
         "form": "Agent tool with a per-launch model token (haiku|sonnet|opus|fable); Workflow agent() inherits the session model unless opts set otherwise",
-        "pin": "Pin the model on EVERY launch. Frontmatter 'model: standard|strong' tokens in agents/*.md are sent to the API verbatim and return HTTP 404; a per-launch model overrides them. An unpinned general-purpose launch inherits the session model.",
+        "pin": "Pin the model on EVERY launch. Harness agents/*.md carry no model: line (the former 'model: standard|strong' tokens returned HTTP 404 and were removed, ticket 1063). An unpinned general-purpose launch inherits the session model.",
         "families": ["Anthropic"],
         "status": "verified 2026-10-08"
       },
@@ -91,7 +91,7 @@
     "codex": {
       "subagent": {
         "form": "spawn_agent tool (multi_agent feature, stable and on). Per 'codex debug prompt-input', it accepts model and reasoning_effort overrides only when fork_turns is not 'all' (full-history forks inherit the parent model and reject overrides), and only when the user, AGENTS.md or a skill asks for it. The parent model here is gpt-6.1-sol; there is no [agents] config.",
-        "status": "verified 2026-10-09 (Codex 0.161.0, parent gpt-6.1-sol): spawn_agent {model, reasoning_effort} is honoured; with fork_turns none the child rollout turn_context shows gpt-6-luna/low; with fork_turns omitted the child also ran on gpt-6-luna but carries an inherited parent turn_context first; fork_turns all not tested. Evidence: ~/.codex/sessions rollout turn_context.model of the child (parent_thread_id links it)."
+        "status": "verified 2026-10-09 (Codex 0.161.0, parent gpt-6.1-sol): spawn_agent {model, reasoning_effort} is honoured; with fork_turns none the child rollout turn_context shows gpt-6-luna/low; with fork_turns omitted the child also ran on gpt-6-luna but carries an inherited parent turn_context first; fork_turns all: 109 spawn_agent calls in ~/.codex/sessions (46 with a model override) were accepted, but the child turn_context.model was not read, so whether the override is honoured under 'all' is unmeasured. Evidence: ~/.codex/sessions rollout turn_context.model of the child (parent_thread_id links it)."
       },
       "headless": {
         "template": "codex exec -s read-only -m <openai-model-id> -o <outfile> - < <promptfile>",

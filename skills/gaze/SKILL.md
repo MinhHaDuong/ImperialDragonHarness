@@ -374,9 +374,9 @@ Every reviewer agent's prompt:
 Spawn the applicable agents **in a single message, as parallel background
 Agent calls**, each writing its result to the phase artifact path — the single message runs them
 concurrently, and the bounded poll on those artifacts is what makes this fork wait
-before it proceeds. Do **not** launch them as background agents: a fork's
+before it proceeds. Keep polling until every artifact lands: a fork's
 turn ends the moment it stops calling tools, and a background completion
-re-invokes the MAIN loop, not the fork, so a background fan-out returns at
+re-invokes the MAIN loop, not the fork, so a fork that stops polling returns at
 launch and orphans its reviewers (ticket 0250; see **Fork execution
 contract**). Once all return, collect their structured outputs. Choose the model of each launched worker per launch, from the `route` skill grid
 (`skills/route/SKILL.md`); seats that must be independent follow
@@ -457,7 +457,7 @@ limit, or denied spawn is a panel integrity failure, not permission to replace
 independent perspectives with sequential self-review. Write the selected roster
 to the manifest and mark each unlaunched perspective `no report`. Post the
 review on the PR with `PANEL-INTEGRITY: DEGRADED — Agent tool unavailable or
-spawn failed; independent perspectives not run` and `dissent: unavailable`;
+spawn failed; selected perspectives not run` and `dissent: unavailable`;
 return those same lines in Agent C's structured block. The /gaze orchestrator
 must carry the exact `PANEL-INTEGRITY:` line into its final verdict comment
 and use `panel integrity: DEGRADED` in the actions section. Never write
@@ -559,7 +559,7 @@ exists). Otherwise, after 2–4 land their comments (and the early-exit check pa
 perform one of these routes. Record `simplify route: native|portable`.
 
 - **Native command available:** run `/simplify <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`.
-- **Native command absent:** launch an independent reviewer through the active
+- **Native command absent:** launch a separate reviewer through the active
   runtime (model chosen per launch from the `route` skill), using the phase artifact
   and bounded-wait contract above. Give it the explicit PR number, review tree,
   base ref, anchor HEAD and changed-file roster. It runs the review-anchor check
