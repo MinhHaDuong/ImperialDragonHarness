@@ -1194,6 +1194,15 @@ if STUB_PATCH_FILE="$PATCHF" run_merge $'**Ticket:** 0316\n' "fix: dup" >/dev/nu
     echo "FAIL: ambiguous short claim should still die"; fail=1
 elif [[ -s "$PATCHF" ]] || closed_has 0316; then echo "FAIL: ambiguous short claim rewrote body or closed"; fail=1
 else echo "PASS: ambiguous short claim (two files) keeps the refusal, body untouched"; fi
+for suffixed in '**Ticket:** 0317-foo' '**Ticket:** 0317, 0318'; do
+    seed_repo "shortsuffix$RANDOM" 0317 0318
+    : > "$PATCHF"
+    if STUB_PATCH_FILE="$PATCHF" run_merge "$suffixed"$'\n' "fix: suffix" >/dev/null 2>&1; then
+        echo "FAIL: suffixed short claim '$suffixed' should die"; fail=1
+    elif [[ -s "$PATCHF" ]] || closed_has 0317 || closed_has 0318; then
+        echo "FAIL: suffixed short claim '$suffixed' rewrote body or closed"; fail=1
+    else echo "PASS: suffixed short claim '$suffixed' refused, body untouched"; fi
+done
 seed_repo hashref 0314
 if run_merge $'Follows #0314.\n' "chore(0314): ref" >/dev/null 2>&1 || closed_has 0314; then
     echo "FAIL: #NNNN reference was treated as a close claim"; fail=1
