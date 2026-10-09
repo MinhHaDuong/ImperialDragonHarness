@@ -1,0 +1,47 @@
+---
+name: dashboard
+description: "Ticket dashboard: open tickets, branches and merge requests from origin/main, reported as a before/after delta led by the open-ticket count. Read-only; the inspector's view."
+user-invocable: true
+argument-hint:
+---
+
+# Dashboard
+
+Read-only. Never checks out, commits, merges or launches workers: the
+dashboard inspects, it does not drive the work. Steps run sequentially, each
+feeding the next.
+
+## 1. Collect
+
+```bash
+DASH_DIR="$(cd -P "$(dirname "<loaded-SKILL.md>")" && pwd -P)"
+"$DASH_DIR/dashboard.sh"
+```
+
+It fetches and reads `origin/main` (never the working tree), lists open
+tickets with title, labels and `Blocked-by`, remote branches, open merge
+requests with their auto-merge state, and recent merges.
+
+## 2. Report
+
+First call in a session: one table of open tickets grouped as in progress
+(branch or merge request), takeable, blocked, deferred; then open merge
+requests.
+
+Later calls: a **delta table** of changed rows only (item | before | after),
+then one summary line. Unchanged state: say so in one line.
+
+- **Lead the summary with the open-ticket count trend.** A good delta is a
+  falling count; flag growth and name what created tickets.
+- A ticket created and closed in the same merge request leaves the count
+  unchanged.
+- A `Blocked-by` on a closed ticket means takeable, not a stale header.
+
+## 3. Inspect
+
+For each merge request new or changed since the last call, read its diff,
+checks and `/verify-gate` verdicts, sequentially, and report findings against
+its stated claims: ticket line in path form, `ruled_tip_sha` versus the tip
+(a later ticket-close commit from the merge helper is normal), test gaps,
+rules relaxed. Report only; fixes belong to the session doing the work or to
+the author.
