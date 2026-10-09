@@ -892,8 +892,8 @@ def append_report(
             (
                 tr("Reproduction", "Reproduction"),
                 tr(
-                    "Le générateur original appelle tournament-report-completion.py pour ajouter les pages 13-26 dans les deux langues. Les distributions et tests sont recalculés depuis snapshot.json ; appendix-analysis.json conserve toutes les 190 paires et paired-differences.csv les 130 observations des treize comparaisons présentées. Les données numériques de base et les 136 tests par axe des DAG sont inchangés.",
-                    "The original generator calls tournament-report-completion.py to append pages 13-26 in both languages. Distributions and tests are recomputed from snapshot.json; appendix-analysis.json retains all 190 pairs and paired-differences.csv the 130 observations of thirteen displayed comparisons. Base numeric data and the DAG 136 tests per axis are unchanged.",
+                    "Le générateur original appelle tournament-report-completion.py pour ajouter les pages 13-26 dans les deux langues. Les distributions et tests sont recalculés depuis l’instantané produit à partir de ~/arena (snapshot.json) ; appendix-analysis.json conserve toutes les 190 paires et paired-differences.csv les 130 observations des treize comparaisons présentées. Les données numériques de base et les 136 tests par axe des DAG sont inchangés.",
+                    "The original generator calls tournament-report-completion.py to append pages 13-26 in both languages. Distributions and tests are recomputed from the snapshot built from ~/arena (snapshot.json); appendix-analysis.json retains all 190 pairs and paired-differences.csv the 130 observations of thirteen displayed comparisons. Base numeric data and the DAG 136 tests per axis are unchanged.",
                 ),
             ),
             (

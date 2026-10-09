@@ -13,12 +13,17 @@ préliminaires sont exclus.
 ## Reproduire les figures
 
 Les artefacts versionnés sont reconstruits depuis les archives privées `~/arena`, sur padme ; ils ne reproduisent pas les figures historiques du 7 octobre.
+
 Depuis la racine du dépôt, avec Python et l’environnement de `uv sync` (groupe `dev` de `pyproject.toml`) :
 
 ```bash
 MPLCONFIGDIR=/tmp/tournament-mpl python3 scripts/tournament-graphs.py \
   --arena ~/arena --output docs/tournament-graphs --time-value 1
+MPLCONFIGDIR=/tmp/tournament-mpl python3 scripts/tournament-graphs-en.py \
+  --arena ~/arena --time-value 1
 ```
+
+La seconde commande produit l’édition anglaise dans `docs/tournament-graphs-en/`.
 
 NumPy, SciPy et Matplotlib sont nécessaires ; Graphviz ne l’est pas.
 Sans accès à `~/arena`, remplacer `--arena ~/arena` par `--snapshot docs/tournament-graphs/snapshot.json` :

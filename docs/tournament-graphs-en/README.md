@@ -3,12 +3,14 @@
 English edition of the 26-page French report (12-page synthesis and 14-page ticket-1046 supplement). Identical numeric
 snapshot and statistical computations; English text and decimal points.
 
-From the repository root:
+From the repository root, on the host that holds `~/arena` (padme):
 
 ```bash
 MPLCONFIGDIR=/tmp/tournament-mpl python3 scripts/tournament-graphs-en.py \
-  --snapshot docs/tournament-graphs/snapshot.json --time-value 1
+  --arena ~/arena --time-value 1
 ```
+
+Without `~/arena`, pass `--snapshot docs/tournament-graphs/snapshot.json` instead; numeric outputs are identical.
 
 The wrapper translates text constants from the French renderer before layout,
 using `scripts/tournament-english.json`; it does not duplicate the analysis.
