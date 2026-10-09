@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-09T09:40Z reviewer created
 2026-10-09T09:45Z reviewer Author 2026-10-09: blocks 1071 (the global coherence round follows this detailed one). Fixes made here must account for the fixes already landed by the first review round (#1283, #1286 to #1289, #1292) so they do not reintroduce a bug those fixed.
+2026-10-09T12:30Z team-lead reviewed #1290 #1291 #1289 #1288 #1269+#1272 #1278: seats anthropic/claude-sonnet-5-5 (replication) and openai/gpt-6.1-sol via codex exec (independent), PANEL-INTEGRITY OK on all six; records memory/journal/2026/2026-10-09-review-attribution-pr{1290,1291,1289,1288,1269,1278}.md (1272 covered in the 1269 record; a second pr1272 record would be ambiguous). No finding above the severity floor; no ticket filed. Fix PRs open, unmerged: #1297 manifest validator edges, #1298 stale doc refs, #1299 launch detector widening, #1301 CI uv sync --locked, #1302 stall-repro partial run skips. Pending: doudou snapshot criterion (last run 2026-10-09 09:32 predates the script install; no Excluded uv-cache/.venv line yet), make check on main after the fixes land.
 
 --- body ---
 ## Context

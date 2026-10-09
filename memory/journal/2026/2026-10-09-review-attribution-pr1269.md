@@ -1,0 +1,17 @@
+kind: review-attribution
+pr: 1269 · merged 2026-10-08 · project: .agents
+writer: runtime=claude-code · model=anthropic/claude-sonnet-5-5 · effort=unrecorded
+reviewer: seat=retro-1072-sonnet · runtime=claude-code · model=anthropic/claude-sonnet-5-5 · status: ran
+  finding: verifiable · skills/route/SKILL.md:92 · adopted: yes
+  finding: verifiable · tests/test_launch_model_choice.py:8 · adopted: yes
+  finding: verifiable · rules/workflow.md:107 · adopted: no
+  finding: verifiable · tickets/closed/1065-routing-b0-cross-family-decorrelation-do.erg:11 · adopted: no
+reviewer: seat=retro-1072-codex · runtime=codex-cli-0.161.0 · model=openai/gpt-6.1-sol · status: ran
+  finding: verifiable · skills/route/SKILL.md:92 · adopted: yes
+  finding: verifiable · tests/test_launch_model_choice.py:8 · adopted: yes
+  finding: verifiable · skills/route/references/decorrelation.md:28 · adopted: no
+  finding: consider · skills/review-pr/SKILL.md:33 · adopted: no
+
+Reviewed base ea81e658, head 88db7d29, merge 701cc007. Retroactive review under ticket 1072 (2026-10-09), shape of /review-pr plus /verify-gate, orchestrated by a Claude Code team lead. Launch lines: `sonnet | Anthropic | default | high | per-PR diff-vs-criteria review; same family as the writer, so replication only`; `codex gpt-6.1-sol | OpenAI | medium | high | other-family seat for independence on a Claude-produced diff; headless codex exec, read-only sandbox`. PANEL-INTEGRITY: OK (other-family seat ran). Writer model taken from the head commit's Co-Authored-By trailer; writer effort was not recorded. Severity floor: no finding blocks merge, corrupts state or bites the science; below-floor findings were fixed in small PRs or accepted. Anchors are on origin/main 9b280d56.
+
+This record covers the #1269 plus #1272 unit (1272: base 701cc007, head 32f60266, merge 2a8495fe). It is filed under 1269 only because a second pr-1272 record would make the attribution query treat PR 1272 as ambiguous; the existing 2026-10-08 pr1272 record (Luna seat) stays untouched and append-only. Ticket 1065 exit criteria: doctrine with three axes MET; listed contradictions fixed PARTLY at merge (review-pr lines 39/247 and gaze 386 kept 'below the coder tier'), MET on current main; mechanical floor test PARTLY (per skill, not per launch line; missed hunt and verify-adherence); gaze run on a Claude PR with non-Claude seat NOT MET as worded (standalone Luna run, no /gaze); make check MET by CI. Dispositions: route/SKILL.md:92 stale section reference FIXED, PR #1298; test_launch_model_choice.py:8 detector gap FIXED, PR #1299 (Codex blocks-merge downgraded: guard gap, not state); decorrelation.md:28 family source (grid family vs provider prefix) ACCEPTED, for the 1071 coherence round; review-pr:33 'spin multiple agents' vs one-reviewer path ACCEPTED, for 1071; workflow.md:107 rule stated twice ACCEPTED, resident-rules wording is author territory; 1065 log premature-completion claim ACCEPTED as history, recorded here (closed tickets are append-only); #1269 scope creep in routes.json ACCEPTED, later rewritten.
