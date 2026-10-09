@@ -41,15 +41,9 @@ conversation's language, then answer:
   a subagent's frontmatter pins it; `Workflow`'s `agent()` takes `opts.effort`,
   the only per-call lever. Unreliable on models with a pinned default effort.
 - **`team-lead` delegation needs a nesting depth of at least 2**, or it
-  silently degrades into a flat agent. The default has flipped twice: when
-  delegations come back flat, check it before debugging the prompt.
+  silently degrades into a flat agent; check it before debugging the prompt.
 <!-- harness-extension-point -->
-- *Current-generation knobs, names that rot:* `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS` (default 20)
-  <!-- harness-extension-point --> and `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (default 3).
-  The two capabilities above do not rot; these spellings will.
-- **A fork resumed via `SendMessage` can mistake itself for the coordinator**
-  (it inherited the dispatch) and reject re-grounding as injection. Try one
-  resume; if it drifts, read its output in the shared worktree or redo the work.
+  Knobs: `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`, `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`.
 
 ## Hook output
 
