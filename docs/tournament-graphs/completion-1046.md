@@ -36,7 +36,7 @@ L’auteur a demandé ce complément et autorisé une **branche de revue GitHub*
 
 | Critère original | Résultat de cette exécution | Restant |
 |---|---|---|
-| Graphes générés depuis `~/arena`, script dans le dépôt | Régénérés sur padme depuis `~/arena` au commit `bf2da994` de la PR #1305 ; sorties numériques identiques à l’instantané | Aucun |
+| Graphes générés depuis `~/arena`, script dans le dépôt | Régénérés sur padme depuis `~/arena` au commit `34dc3556` de la PR #1305 ; sorties numériques identiques à l’instantané | Aucun |
 | Guide revu (Fable, délégué par l’auteur) | Relecteur prose-reviewer, modèle Fable : ACCEPT WITH CHANGES, huit constats appliqués (pages 24–25) | Aucun |
 | Cadrage, typographie et finition PDF | message-framing (message en page 13), typography-finish (espaces insécables U+00A0 sur tout le texte français, pages 1–26 et figures), pdf-finish (A4, 26 pages, métadonnées, aucun glyphe manquant) | Aucun |
 | Analyse appariée du parent 1024 satisfaite par le rapport | Pages 14–21 : verdicts H1/H2, effort, inter-camps, distributions, 190 paires avec Holm | Le volet « verdict de routage dans STATE/ROADMAP » du critère parent relève de 1024/1052 |
@@ -58,7 +58,7 @@ Sans accès à `~/arena`, remplacer `--arena ~/arena` par `--snapshot docs/tourn
 
 ### Provenance padme
 
-Le 9 octobre, sur padme, le dépôt récupéré au commit `bf2da994` de la branche `t1046-report-finish` (PR #1305) a régénéré figures et PDF depuis `~/arena` avec les deux commandes ci-dessus. `tests.json`, `comparisons.csv`, `appendix-analysis.json`, `paired-differences.csv`, les coûts valorisés et les `.dot` sont identiques octet pour octet à ceux produits depuis l’instantané ; le texte des PDF ne diffère que par la date de génération et le placement de quelques étiquettes (matplotlib 3.10.8 sur padme). Les PDF et PNG versionnés sont ceux de padme. `snapshot.json` est conservé : l’instantané reconstruit ne diffère que par l’absence des métadonnées comptables de Haiku 5.5, ajoutées hors générateur ; toutes les valeurs communes sont égales.
+Le 9 octobre, sur padme, le dépôt récupéré au commit `34dc3556` de la branche `t1046-report-finish` (PR #1305) a régénéré figures et PDF depuis `~/arena` avec les deux commandes ci-dessus. `tests.json`, `comparisons.csv`, `appendix-analysis.json`, `paired-differences.csv`, les coûts valorisés et les `.dot` sont identiques octet pour octet à ceux produits depuis l’instantané ; le texte des PDF ne diffère que par la date de génération et le placement de quelques étiquettes (matplotlib 3.10.8 sur padme). Les PDF et PNG versionnés sont ceux de padme. `snapshot.json` est conservé : l’instantané reconstruit ne diffère que par l’absence des métadonnées comptables de Haiku 5.5, ajoutées hors générateur ; toutes les valeurs communes sont égales.
 
 ## Validation
 
