@@ -10,3 +10,4 @@ Reviewed base 51c21a28, head ce3488f9, merge 488a4b9a. Retroactive review under 
 
 Criteria (PR body; Ticket: none): secretless CI MET; xdist probe after RUN MET; setup-uv v10.2.0 exact tag exists MET; requires-python >=3.11 matches tomllib use and 3.11 grammar parse MET; dev ranges unchanged MET; requirements-dev.txt references updated MET; test-count claim not re-run. Dispositions: CI.yml:280 (uv sync --frozen never checks lock freshness; reproduced) FIXED, PR #1301; Makefile:4 (comment claims CI sets VIRTUAL_ENV) FIXED, PR #1298. Notes accepted: setup-uv installs latest uv; xdist probe runs at parse time; stale VIRTUAL_ENV bypasses uv by design.
 Guard note: the Makefile comment fix in #1298 carries no regression test; it is a comment with no behaviour to reintroduce (accepted).
+defect-confirmed: Makefile:4 · source: post-merge-fix · pr: 1298
