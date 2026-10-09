@@ -277,7 +277,7 @@ jobs:
         # guards the list (ticket 0530). The env's bin goes first on PATH so
         # every later step's python3/pytest/ruff is the locked one.
         run: |
-          uv sync --frozen
+          uv sync --locked
           echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
       # The shell-based regression suites in tests/*.sh are run under pytest via
       # tests/test_bash_suites.py; several of them build their payloads with jq.
