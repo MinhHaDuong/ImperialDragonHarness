@@ -31,6 +31,32 @@ def test_empty_manifest_rejected():
     assert check_mod.check('\n# comment only\n')
 
 
+def test_duplicate_perspective_rejected():
+    assert check_mod.check('a\tm\tf\tr\na\tm\tf\tr\n')
+    assert check_mod.check('a\tm\tf\tr\nb\tm\tf\tr\n') == []
+
+
+def test_perspective_name_charset():
+    for bad in ('../x', 'a/b', 'a b', '﻿a'):
+        assert check_mod.check(f'{bad}\tm\tf\tr\n'), bad
+    for good in ('red-team', 'doc-propagation', 'ai_tells2'):
+        assert check_mod.check(f'{good}\tm\tf\tr\n') == [], good
+
+
+def test_bom_is_stripped_by_main(tmp_path):
+    path = tmp_path / 'bom.txt'
+    path.write_bytes(b'\xef\xbb\xbf' + GOOD.encode())
+    assert check_mod.main(['x', str(path)]) == 0
+
+
+def test_unreadable_manifest_fails_cleanly(tmp_path, capsys):
+    binary = tmp_path / 'bin.txt'
+    binary.write_bytes(b'\xff\xfe\x80\x81')
+    assert check_mod.main(['x', str(tmp_path / 'missing.txt')]) == 1
+    assert check_mod.main(['x', str(binary)]) == 1
+    assert capsys.readouterr().err.count('PANEL-MANIFEST:') == 2
+
+
 def test_main_exit_codes(tmp_path, capsys):
     good, bad = tmp_path / 'good.txt', tmp_path / 'bad.txt'
     good.write_text(GOOD)
