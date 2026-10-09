@@ -1,7 +1,7 @@
 <!-- last-reviewed: 2026-10-05 -->
 # Guards
 
-Both guards apply to every agent role — a main session and a spawned profile
+These guards apply to every agent role — a main session and a spawned profile
 alike, whatever runtime launched it. Rules only; hoisted from AGENTS.md for
 bare-context profiles to load as one file.
 
@@ -13,8 +13,7 @@ bare-context profiles to load as one file.
   project. Resolve the project repository before writing; stop and report an
   unavailable destination instead of falling back to the harness or native
   store.
-- **More than ~256K tokens of context is a monster ticket: SPLIT THE
-  WORK, never extend the window.** Work tops out ~236K un-compacted.
-  Answer context walls with decomposition — never
-  bigger windows, KV tricks or compaction. Size tickets to fit; a run
-  that starts compacting should split, not grind.
+- **More than ~256K tokens of context is a monster ticket: split the
+  work.** Work tops out ~236K un-compacted. Never answer a context wall
+  with a bigger window, KV tricks or compaction; a run that starts
+  compacting should split, not grind.

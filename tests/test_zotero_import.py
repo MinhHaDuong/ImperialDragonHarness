@@ -984,8 +984,11 @@ def test_zotero_schema_snapshot_matches_live():
     import json
     import urllib.request
 
-    with urllib.request.urlopen("https://api.zotero.org/schema", timeout=30) as r:
-        schema = json.load(r)
+    try:
+        with urllib.request.urlopen("https://api.zotero.org/schema", timeout=30) as r:
+            schema = json.load(r)
+    except urllib.error.URLError as exc:
+        pytest.skip(f"api.zotero.org unreachable: {exc.reason}")
     live = {t["itemType"]: {f["field"] for f in t["fields"]}
             for t in schema["itemTypes"]}
 

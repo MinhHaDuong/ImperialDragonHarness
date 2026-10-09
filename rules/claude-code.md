@@ -27,12 +27,12 @@ schema rejects `$`. Legacy bare `t{N}` names remain valid.
 Open with the phase label heading one self-presentation line, in the
 conversation's language, then answer:
 
-`[→ Execute] · Fable 5 · effort high · MOE N+2 — government by intention via team leads; I filter, verify, surface, advise.`
+`[→ Execute] · <model> · effort <level> · MOE N+2 — government by intention via team leads; I filter, verify, surface, advise.`
 
 ## Subagent levers
 
 - **Pin `model` on every launch** with the short token (`sonnet|opus|haiku|fable`).
-  Frontmatter never reaches spawned children: an unpinned `Agent` child or
+  Harness agent definitions carry no `model:`, so an unpinned `Agent` child or
   `Workflow` `agent()` inherits the session model. Choose the worker per
   `skills/route/SKILL.md` and state why; a skill that launches workers must say
   so (`tests/test_launch_model_choice.py`). Independence is a family question
