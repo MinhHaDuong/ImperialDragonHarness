@@ -3,6 +3,7 @@
 import importlib.util
 import json
 import math
+import shutil
 import statistics
 import subprocess
 from pathlib import Path
@@ -145,6 +146,8 @@ def test_french_text_binds_french_figure_strings_and_skips_mathtext():
 
 @pytest.mark.integration
 def test_supplement_opens_with_a_section_title_page():
+    if shutil.which("pdftotext") is None:
+        pytest.skip("pdftotext (poppler-utils) not installed")
     for pdf, title in (
         ("docs/tournament-graphs/comparaisons-modeles.pdf", "Annexe technique auto-générée"),
         ("docs/tournament-graphs-en/model-comparison.pdf", "Auto-generated technical appendix"),
