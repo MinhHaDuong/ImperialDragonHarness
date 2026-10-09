@@ -93,7 +93,7 @@ def test_stall_reproduction_without_age_is_skip_not_pass(tmp_path):
     for tool in (
         "bash env git grep find head sed awk mktemp rm mkdir cat dirname basename "
         "sort tr date cp mv ls wc chmod ln cut printf touch tail uniq xargs "
-        "diff cmp readlink realpath sleep tee true false id uname"
+        "diff cmp readlink realpath sleep tee true false id uname sha256sum"
     ).split():
         found = shutil.which(tool)
         if found and not (bindir / tool).exists():
