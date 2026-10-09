@@ -21,3 +21,7 @@ they impose no empirical template.
 - **Write for a careful robot** (Shapiro): linear, explicit, plain; every term defined before use, no step left to inference.
 - **Sections follow the argument, not IMRaD**: periods, authors or controversies are legitimate units.
 - **Tables stand alone**: a title stating the content, units, sources and sample in the notes, consistent decimals, plain-language labels rather than variable codes.
+- **A falsifiable claim names its falsifier ex ante**; land the payoff once.
+- **The conclusion introduces no new facts**.
+- **No heading above a one-paragraph subsection**.
+- **The bibliography cites no in-repo documents**.

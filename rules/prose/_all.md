@@ -50,6 +50,8 @@ These are the tics that mark text as machine-written. Cut them.
 - **Prefer the standard word to the fancy one.** "use" over "utilize", "before" over "prior to".
 - **Cutting to a word budget? Remove whole before you condense** — see `/cut-prose`: rank and cut weak/redundant passages entire, then condense the remainder; never a condense-only plan.
 - **An unresolved `\cite` or `\ref` is a link error, not a warning** — the toolchain renders a placeholder and exits 0; gate the build on it (see `manuscript-build.md`).
+- **Absence claims stay humble**: "to our knowledge" or "we did not find", never "no prior work exists" or "nobody has done".
+- **Every empirical number comes from a committed generated artifact** (table, macro, vars file), never hand-typed or copied from an agent's survey notes; agent counts are hypotheses until the script runs.
 - **Generated texts carry the correct date.** Render-time dates (`date: today`, `\today`) for working documents; a pinned date only on a frozen submission artifact, updated at each submission event (stale March date on a July revision, 2026-07-24).
 
 ## Scope note
