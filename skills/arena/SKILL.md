@@ -102,3 +102,26 @@ mid-cycle read as final.
 The cycle verdict updates skills/route (grid + routes.json) in the same
 pass. Weak separators (the smoke ticket) stay IN the matrix — tests are
 paired, exclusion would be data selection.
+
+## Reporting methodology
+
+Moved here from the route skill: these rules govern how cycle data is read, not
+which worker to choose.
+
+- Costs are per leg on the ten-ticket sample; cycles are additive and each
+  (model @effort) identity stays distinct. Preliminary smoke runs are excluded.
+  Locals pay electricity (0.23 EUR/kWh x 600 W, registered 2026-10-06); hosted
+  pay the API (pi cost.total, component-priced).
+- Model timeouts and admissible empty submissions score zero; include consumed
+  time and cost, and show completion coverage. Provider/quota errors are invalid
+  observations pending replay, not evidence of model abandonment. Identities
+  with pending cases remain provisional and are excluded from final rankings.
+- Paired comparisons retain model failures and report wins, ties and losses;
+  an equal median difference does not establish per-ticket dominance.
+- Difficulty is semantic: in the 16-arm data strong arms correlate 0.83-1.0 on
+  which tickets are hard, while difficulty vs diff-lines is 0.08 (code-large
+  holds both the easiest and the hardest tickets). Judgment / consistency
+  tickets (0874, 0452) are the killers; concrete fixes (0333) and trivial
+  swaps (0470) are not.
+- 0470 is the smoke ticket: fast, fully characterized, near-zero variance. It
+  validates infrastructure and does not discriminate models.
