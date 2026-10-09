@@ -50,7 +50,8 @@ else
     echo "SKIP: age not installed — private-capture assertions will not run"
 fi
 
-_pass() { echo "PASS: $1"; }
+NPASS=0
+_pass() { echo "PASS: $1"; NPASS=$((NPASS+1)); }
 _fail() { echo "FAIL: $1"; fail=1; }
 
 # Byte fingerprint of every file under memory/, sorted by path. The note-set
@@ -269,5 +270,10 @@ fi
 
 if [ "$fail" -eq 0 ]; then
     echo "ALL PASS: memory stall reproduction (0988)"
+fi
+# Zero checks ran (age absent): exit 77 so the runner reports a skip, not a pass.
+if [ "$fail" -eq 0 ] && [ "$NPASS" -eq 0 ]; then
+    echo "SKIP: no check ran"
+    exit 77
 fi
 exit $fail

@@ -25,7 +25,8 @@ else
     echo "SKIP: age not installed — capture suites cannot run"
 fi
 
-_pass() { echo "PASS: $1"; }
+NPASS=0
+_pass() { echo "PASS: $1"; NPASS=$((NPASS+1)); }
 _fail() { echo "FAIL: $1"; fail=1; }
 
 DATE=$(date +%Y-%m-%d)
@@ -218,7 +219,12 @@ else
     echo "SKIP: all capture assertions need age"
 fi
 
-if [ "$fail" -eq 0 ]; then
+if [ "$fail" -eq 0 ] && [ "$NPASS" -gt 0 ]; then
     echo "ALL PASS: memory-capture helper"
+fi
+# Zero checks ran (age absent): exit 77 so the runner reports a skip, not a pass.
+if [ "$fail" -eq 0 ] && [ "$NPASS" -eq 0 ]; then
+    echo "SKIP: no check ran"
+    exit 77
 fi
 exit $fail
