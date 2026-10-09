@@ -41,7 +41,7 @@ Ratio about one catch per 1,300 refusals. `guard-destructive-bash.sh`
 already covers `reset --hard` on a dirty tree; nothing portable covers
 `restore` or `checkout` in the primary.
 
-The garde-fou is not only ours to remove: Claude Code also isolates
+The guard is not only ours to remove: Claude Code also isolates
 `isolation: worktree` subagents and background jobs on its own.
 
 ## Constraints
