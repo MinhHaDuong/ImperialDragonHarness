@@ -738,7 +738,9 @@ Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 
 
 ## Circuit breakers
 
-- Setup step cannot find ticket file → ESCALATE.
+- Close claim names a ticket file that does not exist → ESCALATE. A PR with
+  no ticket at all is not a breaker: the gate reviews it against the PR body
+  (`/verify-gate` § Circuit breakers).
 - `pr_files >= 15` (content-bearing files, phase-1 rule) → ESCALATE as
   `un-reviewable` before the reviewer battery;
   this is the `rules/workflow.md` 15+ file monster threshold. Name the breaker
