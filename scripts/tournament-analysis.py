@@ -194,12 +194,23 @@ def analyze(arena):
     }
 
 
-def refresh_grid(grid, report):
-    """Refresh numeric fields and the lineage family of each grid row by arm."""
+def refresh_grid(grid, report, detail=None):
+    """Refresh numeric fields and the lineage family of each grid row by arm.
+
+    The choice-time grid keeps the compact fields; the per-arm coverage object
+    goes to `detail` (the sibling grid-coverage.json, keyed by arm), which
+    carries `family` too so the two files join on `arm`. Without `detail` the
+    coverage stays on the row.
+    """
     for row in grid["grid"]:
         result = report["arms"][row["arm"]]
         row["family"] = FAMILY[row["arm"]]
-        row["coverage"] = result
+        if detail is None:
+            row["coverage"] = result
+        else:
+            entry = detail["arms"].setdefault(row["arm"], {})
+            entry["family"] = row["family"]
+            entry["coverage"] = result
         state = "final" if result["final"] else "provisional"
         row["quality"] = (
             f"{result['quality_median']:.2f} ({state}, "
@@ -225,10 +236,22 @@ if __name__ == "__main__":
         type=Path,
         help="Refresh numeric fields and family of an existing grid by its arm identifiers",
     )
+    parser.add_argument(
+        "--coverage",
+        type=Path,
+        help="Coverage detail file written with --grid (default: grid-coverage.json beside the grid)",
+    )
     args = parser.parse_args()
     report = analyze(args.arena)
     if args.grid:
         grid = json.loads(args.grid.read_text())
-        refresh_grid(grid, report)
+        coverage_path = args.coverage or args.grid.with_name("grid-coverage.json")
+        detail = (
+            json.loads(coverage_path.read_text())
+            if coverage_path.exists()
+            else {"arms": {}}
+        )
+        refresh_grid(grid, report, detail)
         args.grid.write_text(json.dumps(grid, indent=2) + "\n")
+        coverage_path.write_text(json.dumps(detail, indent=2) + "\n")
     print(json.dumps(report, indent=2))
