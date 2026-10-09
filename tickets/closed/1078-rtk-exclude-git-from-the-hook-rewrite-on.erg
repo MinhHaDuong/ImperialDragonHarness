@@ -2,9 +2,11 @@
 Title: rtk: exclude git from the hook rewrite on every machine
 Created: 2026-10-09
 Author: Minh Ha-Duong
+Closed: doudou and padme exclude git; both probes verified
 
 --- log ---
 2026-10-09T13:37Z Minh Ha-Duong created
+2026-10-09T13:48Z Minh Ha-Duong closed — doudou and padme exclude git; both probes verified
 
 --- body ---
 ## Context
@@ -25,7 +27,7 @@ design (0932): not committed; record each machine here.
 - [x] doudou: config edited 2026-10-09
 - [x] doudou: `rtk hook check "git commit -q -m x"` prints `No rewrite`, and
       `rtk hook check "ls -la"` still rewrites (positive control)
-- [ ] padme: same edit, same two checks
+- [x] padme: same edit, same two checks (probe 2026-10-09, all git No rewrite, ls rewrites)
 - [x] `RTK.md` example no longer shows `git status` → `rtk git status`
 
 ## Relevant files
