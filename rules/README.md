@@ -26,7 +26,7 @@ it was 942 words while shipping full copies of what it summarised.
 
 | File | Loads on | Summary |
 |------|----------|---------|
-| [coding-python.md](./coding-python.md) | `**/*.py` | Python 3.10+ style, testing markers, Make rules, `uv` workflow. |
+| [coding-python.md](./coding-python.md) | `**/*.py` | Python 3.10+ style, testing markers, Make rules, `uv` workflow, data pitfalls (null keys, NaN, human judgments, JSON newlines). |
 | [coding-bash.md](./coding-bash.md) | `**/*.sh` | Bash `set -euo pipefail` discipline: arithmetic-zero abort, unbound associative-array key. |
 | [prose/_all.md](./prose/_all.md) | `**/*.tex` `**/*.qmd` `**/*.md` `**/*.txt` | Universal prose rules: LLMism guards, Elements of Style, label cross-references. |
 | [prose-adherence-tests.md](./prose-adherence-tests.md) | `**/tests/**/*.py` `**/test_*.py` `**/docs/editorial-brief.md` | In a repo with a manuscript: prose tests pin negative guards and mechanical checks only; positive intent lives in the editorial brief; prose tickets skip TDD; sweep before guard. |
@@ -37,7 +37,7 @@ it was 942 words while shipping full copies of what it summarised.
 | [doctype/book.md](./doctype/book.md) | `**/*.tex` | Book conventions: book-wide terminology, chapter openings/closings, single-place notation. |
 | [lang/fr.md](./lang/fr.md) | prose files | French language norms: guillemets « », virgule décimale, casse de phrase. |
 | [lang/en.md](./lang/en.md) | prose files | English norms: one spelling variety, serial comma, sentence-case headings. |
-| [authoring-skills.md](./authoring-skills.md) | `**/SKILL.md`, `**/skills/**/*.md` | Writing a skill: name capabilities not tools, discoverability-first `description:`, quoted frontmatter, declared concurrency, naming. |
+| [authoring-skills.md](./authoring-skills.md) | `**/SKILL.md`, `**/skills/**/*.md` | Writing a skill: name capabilities not tools, discoverability-first `description:`, quoted frontmatter, declared concurrency, skill-not-command, test one before blasting, naming. |
 | [zotero.md](./zotero.md) | `**/*.bib`, `**/*.ris`, `**/docs/**` | Zotero management — Zotero is the system of record; `docs/` and `.bib` are git-ignored staging. Also named by `/zotero`. |
 | [manuscript-build.md](./manuscript-build.md) | `**/Makefile`, `**/_quarto.y(a)ml`, `**/*.latexmkrc` | An unresolved `\cite`/`\ref` is a link error, not a warning: gate the build on the log, vendor the check, `.DELETE_ON_ERROR`; figures are script-built, never drawn inline. |
 | [state.md](./state.md) | `STATE.md` | STATE.md format spec — sections, length cap, pruning rules. |

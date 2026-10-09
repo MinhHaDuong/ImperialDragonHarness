@@ -84,3 +84,9 @@ Two patterns keep the fast tier honest — generalizable, adopt per project (ref
 - **No `.PHONY` for real work.** Use `.PHONY` only for aliases.
 - **No hand-curated data in the pipeline.** Every CSV/tex file referenced by slides or report must have a Makefile target that generates it from `measurements.jsonl` or another tracked source.
 - **Split the build by workpackage.** Analysis (Python/R, data access) and writing (LaTeX, Quarto) workpackages live in separate Makefiles. A writing-side build must produce the manuscript from handoff artifacts alone — no `uv run`, no data fetch. Enables clean-room builds and enforces the artifact discipline in [git.md](./git.md).
+
+## Data pitfalls
+
+- **Null keys.** `dropna` the key before `merge(on=...)` / `set_index`: pandas matches NaN to NaN, and a few thousand nulls can explode a join into tens of millions of rows. NaN is truthy, so `str(x or "")` and `row.get(k, "")` yield `"nan"`; blank with `pd.isna` and grep shipped artifacts for `\bnan\b`.
+- **Human judgments never live in a regenerable file.** Keep them in their own append-only artifact keyed by (item, annotator); a generator that emits a fill-me-in column aborts if the target already holds annotations.
+- **JSON newlines.** A single-object JSON file ends with exactly one newline; JSONL writers add no trailing blank line.

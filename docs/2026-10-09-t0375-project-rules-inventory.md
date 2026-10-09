@@ -71,6 +71,22 @@ Sorting these is ticket 1073 (`tickets/1073-sort-non-writing-project-rules-found
 | aedist experiment-design.md | genericity, pinned reps, no_think, metrics dict, MoE repeat=3 | X | project-local (MoE non-determinism could become memory) |
 | aedist json-output.md | JSON files end with one newline | O | coding-python candidate |
 
+### Verdicts (ticket 1073)
+
+| Row | Verdict |
+|---|---|
+| cfh coding.md test tiers | already covered by `rules/coding-python.md`; trim local |
+| cfh coding.md null DOIs / NaN truthy; human judgments | promoted to `rules/coding-python.md` § Data pitfalls |
+| cfh ticket-filing.md fast path | keep local (depends on cfh's unprotected main) |
+| cfh ticket-filing.md ID-collision scan | covered by `erg integration`; trim local |
+| cfh workflow.md science vs tooling lane | keep local |
+| aedist workflow.md test one before blasting | promoted to `rules/authoring-skills.md` |
+| aedist workflow.md audit before instrumenting | keep local |
+| aedist workflow.md prefer skills over commands | promoted to `rules/authoring-skills.md` |
+| aedist json-output.md JSON newline | promoted to `rules/coding-python.md` § Data pitfalls |
+
+`tickets/AGENTS.md` (erg-owned) and `rules/workflow.md` (resident) are untouched.
+
 ## Counts
 
 - Files swept: 22 (2 repos); 0 in paper repos.
@@ -88,12 +104,18 @@ Sorting these is ticket 1073 (`tickets/1073-sort-non-writing-project-rules-found
   to the harness rule plus the local test path and the 0338/0590 evidence
   link; drop the first two bullets of § Claims; drop § When to ask the author.
 - **climate-finance-het `rules-editing.md`:** delete (harness worktree rule).
-- **climate-finance-het `coding.md`:** drop the `uv run` bullet's generic half.
+- **climate-finance-het `coding.md`:** drop the `uv run` bullet's generic half;
+  drop the test-tiers section and the null-DOI/NaN and human-judgment bullets
+  (now in `rules/coding-python.md`).
+- **climate-finance-het `ticket-filing.md`:** drop the ID-collision scan
+  (covered by `erg integration`); keep the fast path.
 - **aedist `writing.md`:** drop the absence-claim, one-paragraph-heading,
   no-in-repo-bibliography, gap-paragraph and inline-figure rules; shorten the hardcoded-crossref rule to the
   local test and house conventions; replace § CI test polarity rule with a
   pointer, keeping the local anchor examples.
-- **aedist `workflow.md`:** shorten § Derive prose from generated artifacts to
+- **aedist `json-output.md`:** delete (now in `rules/coding-python.md`).
+- **aedist `workflow.md`:** drop test-one-before-blasting and prefer-skills
+  (now in `rules/authoring-skills.md`); shorten § Derive prose from generated artifacts to
   the local test and the 0452 evidence.
 
 ## Author decisions (2026-10-09)
