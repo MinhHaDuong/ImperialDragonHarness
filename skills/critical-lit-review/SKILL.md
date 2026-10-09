@@ -79,7 +79,7 @@ publications. Usually fifteen to twenty-five.
 Delegate each to `reading-note`; do not write notes inline. Launch the
 readers **parallel-background, in batches of at most 8**: the notes are
 independent of one another, and the batch bounds coordination overhead.
-Choose a mid-tier worker per the `route` skill on every launch: a note is bulk
+Choose the worker per the `route` skill on every launch: a note is bulk
 interpretive work, and the synthesis below stays with the coordinating
 session. Each brief carries the
 citation, the staged full text or Zotero item, the scoping document, and why

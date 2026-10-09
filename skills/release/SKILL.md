@@ -47,9 +47,8 @@ skill **never signs** a tag — that is the human's sole responsibility.
 ## 2. Parallel audits
 
 Launch **three background agents in parallel** (single message, all as
-background agents), each a mid-tier worker chosen per the `route` skill — these are read-and-audit
-reviewers (security, UX, doc/test coherence), so they need no coder-grade worker
-(`skills/route/SKILL.md`); left unpinned they inherit
+background agents), each worker chosen per the `route` skill (`skills/route/SKILL.md`; read-and-audit
+reviewers for security, UX and doc/test coherence) and stated with its reason; left unpinned they inherit
 the session model and silently run the fan-out at top tier. Wait for all to
 return, then consolidate.
 

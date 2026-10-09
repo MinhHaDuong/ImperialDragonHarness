@@ -3,22 +3,12 @@
 Read after `SKILL.md`. Defaults for an orchestrator running inside Pi.
 Launch forms are in `routes.json` under `launch_doors.pi`.
 
-## Status: syntax known, providers vary by host
-
-Run `pi --list-models` first: Pi only reaches the providers configured on
-the host. On padme (2026-10-08, ticket 1063) it lists huggingface and the
-local padme seats; `pi auth check` reports `not_ready` for Anthropic, OpenAI
-and OpenRouter. That is a configuration fact of that host, not a Pi fault.
-No Pi launch was run by the probe.
-
 ## What Pi can reach
 
-- Pi names a model by provider and id (`--model <provider>/<id>`, optional
-  `:<thinking>` suffix; `--provider` selects the provider). In principle one
-  Pi session can reach every family whose credentials are loaded, so it may
-  be a native cross-family door. This is the claim to verify.
-- A headless worker: `pi --no-session -p --model <provider>/<id> "<prompt>"`.
-- How a Pi subagent picks its model is unknown.
+Run `pi --list-models` first: Pi only reaches the providers configured on the host. On padme it lists huggingface and the local padme seats; Anthropic is reachable only through `pi-haiku` (`scripts/pi-haiku`), which fixes Haiku 5.5 and refuses any other model.
+
+- Pi names a model by provider and id: `pi --no-session -p --model <provider>/<id> "<prompt>"`.
+- A Pi subagent (the `subagent` extension, relinked by `scripts/pi-subagent-link`) takes its model from the `model:` line of its agent file in `~/.pi/agent/agents/`. Pi agent files therefore carry a model; this is the one sanctioned pin, and the orchestrator picks which agent file to launch. Verified on padme for a Haiku-pinned agent (`haiku-scout`).
 
 ## Which model for which work
 
