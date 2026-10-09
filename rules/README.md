@@ -31,7 +31,7 @@ it was 942 words while shipping full copies of what it summarised.
 | [prose/_all.md](./prose/_all.md) | `**/*.tex` `**/*.qmd` `**/*.md` `**/*.txt` | Universal prose rules: LLMism guards, Elements of Style. |
 | [prose-adherence-tests.md](./prose-adherence-tests.md) | `**/tests/**/*.py` `**/test_*.py` `**/docs/editorial-brief.md` | In a repo with a manuscript: prose tests pin negative guards and mechanical checks only; positive intent lives in the editorial brief; prose tickets skip TDD; sweep before guard. |
 | [prose/workpackages.md](./prose/workpackages.md) | `**/*.tex` `**/*.qmd` `**/docs/**` | Paper-repo workpackages: handoff artifacts, in-place prose editing, sync by agents, plain naming. |
-| [doctype/article.md](./doctype/article.md) | `**/*.tex` | Article conventions: Shapiro's question test, Head's introduction order, argument-led sections, standalone tables, falsifier ex ante, no new facts in the conclusion. |
+| [doctype/article.md](./doctype/article.md) | `**/*.tex` | Article conventions: Shapiro's question test, Head's introduction order, argument-led sections, Related Work gap paragraph, standalone tables, falsifier ex ante, no new facts in the conclusion. |
 | [doctype/techreport.md](./doctype/techreport.md) | `**/*.tex` | Report conventions: standalone abstract, numbered floats with takeaway captions, label cross-references. |
 | [doctype/slides.md](./doctype/slides.md) | `**/*.tex` | Slide conventions, any format (beamer default): one message, takeaway titles, fragments not paragraphs. |
 | [doctype/book.md](./doctype/book.md) | `**/*.tex` | Book conventions: book-wide terminology, chapter openings/closings, label cross-references. |

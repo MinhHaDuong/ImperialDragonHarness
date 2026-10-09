@@ -10,7 +10,7 @@ Document-type conventions only (language: `lang/`; universal prose:
 article, history of economics included; no empirical template.
 
 - **The question has an answer, the answer is not obvious, and it matters to someone** (Shapiro): "why did X recast Y in 1972?" qualifies; "the history of Y" does not.
-- **The introduction runs hook, question, antecedents, contribution, road-map** (Head).
+- **The introduction runs hook, question, antecedents, contribution, road-map** (Head), one or two paragraphs each.
 - **The hook says why the subject matters, puzzles or divides**, never "a growing literature".
 - **State the question in one sentence a referee can quote**: "This article asks…".
 - **Antecedents are the few works the contribution is measured against**; no survey.
