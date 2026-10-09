@@ -1,0 +1,36 @@
+%erg 0.1
+Title: verify-adherence phase 3 skips its semantic worker and assumes make lint
+Created: 2026-10-09
+Author: reviewer
+
+--- log ---
+2026-10-09T19:06Z reviewer created
+
+--- body ---
+## Context
+Ticket 1070 exit criterion 2 ("verify-adherence still catches a known violation
+under LLM-chosen routing") was met only as a rule-text control. A re-run on
+2026-10-09 (two sub-agent runs, PR 212 commit e6907845, base a06cfe28; known
+violation: `scripts/pretooluse-worktree-path-guard.sh:15`, weak `[ -f .git ]`
+predicate forbidden by ticket 0310) showed:
+- Run on the bare PR: FAIL, flagged only because the caller supplied the 0310
+  text; no worker launched.
+- Run on a fixture that edited `.claude/rules/*.md` (the phase 3 trigger) and
+  added a `lint` target: PASS, violation not flagged, phase 3 judged applicable
+  but no subagent was spun, no model routed. The forked skill read part of the
+  rule diffs itself (cut off by `head -150`).
+
+## Observations
+- `skills/verify-adherence/SKILL.md` phase 3 triggers on `.claude/rules/*.md`,
+  but this harness keeps its rules in `rules/` and `.claude` is gitignored; the
+  fixture needed `git add -f` copies. The trigger may never fire here.
+- Phase 3 says "Spin **one** subagent" but nothing records whether it ran; a
+  skipped phase 3 and an empty phase 3 read the same (PASS).
+- Phase 1 assumes `make lint`; a commit without it fails as "no declared runner".
+
+## Exit criteria
+- [ ] Phase 3 trigger matches this harness's rules path, and a rules-touching
+      diff always launches (or records why it did not launch) the semantic worker
+- [ ] The verdict states whether phase 3 ran and which worker served
+- [ ] A fixture whose repo rules state the 0310 rule, with the violation in the
+      diff and no caller hint, is flagged by the semantic path with `file:line`
