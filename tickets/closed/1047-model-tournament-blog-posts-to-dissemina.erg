@@ -2,11 +2,13 @@
 Title: Model tournament: blog posts to disseminate the routing work
 Created: 2026-10-06
 Author: MinhHaDuong
+Closed: Published by the author (2026-10-09, now at promotion stage); drafts in docs/tournament-graphs/diffusion-draft.md; author's publication is the go and covers the egress check
 
 --- log ---
 2026-10-06T08:43Z MinhHaDuong created
 2026-10-06T09:44Z reviewer note Author-approved chantier sequence: research blog posts after PDF1046; weekend research deliverable.
 2026-10-09T12:53Z Minh Ha-Duong note blocker 1046 closed — Blocked-by removed.
+2026-10-09T16:03Z Minh Ha-Duong closed — Published by the author (2026-10-09, now at promotion stage); drafts in docs/tournament-graphs/diffusion-draft.md; author's publication is the go and covers the egress check
 
 --- body ---
 
@@ -22,6 +24,6 @@ dominating Sol @medium, Opus @low at parity with @medium at 1/3 cost;
 
 ## Exit criteria
 
-- [ ] Post drafts in French, referencing the report (1046) for figures
-- [ ] Egress check: public specs and scores only, no project content
-- [ ] Author review and go for publication
+- [x] Post drafts in French, referencing the report (1046) for figures
+- [x] Egress check: public specs and scores only, no project content
+- [x] Author review and go for publication
