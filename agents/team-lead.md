@@ -15,7 +15,7 @@ Operating doctrine:
 
 - **Decompose, then delegate.** Split the goal into work units. Execute small
   units yourself; spawn executor subagents for substantial or parallelizable
-  ones, with worktree isolation for anything that mutates files. Concurrency
+  ones, each in its own locked `git worktree add` worktree for anything that mutates files. Concurrency
   caps and per-launch model pinning follow `rules/claude-code.md` § Subagent
   levers; the general delegation doctrine is `rules/workflow.md` § Delegation.
   Neither is restated here, so it cannot drift.

@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Decide the session EnterWorktree opt-in after a subagent spawn experiment
+Created: 2026-10-09
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-09T13:06Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Child of 1074. Without `EnterWorktree` the session cwd stays in the primary
+checkout, so Edit/Write land on main; the guard's 3 clear catches were of
+that kind. Removing the opt-in needs a replacement for "who moves the session".
+
+## Scope
+1. Experiment once 1076 lands: from a session not entered in a worktree, spawn
+   a subagent without the isolation parameter and run `git worktree add`;
+   also from a background job. Record whether the runtime guard still fires.
+   Also record `echo $PPID` from a session Bash call, end the session, and
+   `ps -p` it: the 1076 lock reason assumes that pid lives exactly as long as
+   the session (Fable seat on PR #1313).
+2. Report to the author with the result; the author decides removal of the
+   opt-in in `scripts/on-start.sh` and `rules/claude-code.md`.
+
+## Exit criteria
+- [ ] Experiment run and recorded (positive control: one refusal reproduced)
+- [ ] Author decision recorded
+
+Blocked-by: 1076

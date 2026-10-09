@@ -258,7 +258,7 @@ this rewrite of pushed branch SHAs. WAVE_BASE moves to NEW_WAVE_BASE.
 coordination PR lands, or Wave N merges, re-record WAVE_BASE from the merged
 main tip before the next wave's branches fork.
 
-For each wave, launch agents with `isolation: "worktree"` — the **coder
+For each wave, launch agents — each creates and locks its own worktree (hunt step 3) — the **coder
 profile** (`agents/coder.md`, whose contract is `profiles/coder/PROFILE.md`;
 the model is chosen per launch from the `route` skill, no frontmatter pin).
 
@@ -355,8 +355,7 @@ For each eligible PR, sequentially within the wave:
 1. `git fetch origin` to pick up any prior merges.
 2. No checkout needed — `-C <path>` points the merge tool at a checkout that
    already has the PR branch. An Execute agent's own worktree qualifies
-   directly: take its path from the agent's completion notification
-   (`.claude/worktrees/agent-<id>`). Do not check out, `cd`, or `EnterWorktree`
+   directly: take its path from the agent's completion notification. Do not check out, `cd`, or `EnterWorktree`
    into it, and do not delete and re-checkout the branch. <!-- harness-extension-point -->
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
 4. Run `"$IDH_ROOT/skills/merge/erg-pr-merge" -C <worktree-path> <pr-number>`.
@@ -475,7 +474,7 @@ survives the deletion:
 ```
 
 This commits everything on the agent's branch and pushes it. Nothing enforces
-the order, so keep it: salvage first, then `git worktree remove` (never
+the order, so keep it: salvage first, then `git worktree unlock` and `git worktree remove` (never
 `--force` over uncommitted changes). Relaunch the finisher on the **existing** branch with
 `git switch <branch>` (NOT `-c`) — if this follows a killed-agent fork, confirm
 the tree with `git rev-parse --show-toplevel` first (rules/git.md § anchor across

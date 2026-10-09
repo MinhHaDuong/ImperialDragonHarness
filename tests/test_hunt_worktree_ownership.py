@@ -1,4 +1,6 @@
-"""Hunt step 3 recognizes a spawner-created `agent-*` worktree as owned.
+"""Hunt step 3 worktree ownership and the portable plain-git recipe (ticket 1076).
+
+History:
 
 Ticket 0294 (child of 0251): `Agent(isolation:"worktree")` names its worktree
 `agent-<id>`, not `t<id>`, so a spawned execute agent invoking `Skill(hunt)`
@@ -35,14 +37,31 @@ def step3_text() -> str:
     return re.sub(r"\s+", " ", m.group(0))
 
 
-def test_agent_worktree_is_owned():
-    """The generalized predicate accepts the spawner's `agent-*` worktree."""
+def test_plain_git_recipe_with_lock():
+    """Ticket 1076: portable recipe, plain git plus a lock worktree-gc honours."""
     step3 = step3_text()
-    assert "agent-*" in step3, (
-        "step 3 must recognize the spawner-created `agent-*` worktree as owned "
-        "(ticket 0294); the exact-`t$ARGUMENTS`-only check rejected raid execute "
-        "agents"
-    )
+    assert ".claude/worktrees/t$ARGUMENTS-" in step3
+    assert 'worktree add "$W"' in step3, "recipe must root the tree on the primary checkout"
+    assert "worktree lock" in step3
+    assert "EnterWorktree" not in step3 and "isolation" not in step3
+
+
+def test_lock_reason_matches_gc_dead_pid_rail():
+    """The recipe's lock reason carries `(pid N`, the shape worktree-gc parses.
+
+    Without it gc treats the lock as an opaque in-use marker and never
+    reclaims the tree, even when the owner is long dead.
+    """
+    gc = (REPO / "scripts" / "worktree-gc.sh").read_text()
+    m = re.search(r'=~ (\\\(pid\\ \(\[0-9\]\+\))', gc)
+    assert m, "could not locate worktree-gc's lock-pid regex"
+    regex = re.compile(r"\(pid ([0-9]+)")
+    step3 = step3_text()
+    r = re.search(r"worktree lock\s+--reason\s+\"([^\"]*)\"", step3)
+    assert r, "recipe lock must carry --reason \"...\""
+    reason = re.sub(r"<[^>]*pid[^>]*>", "12345", r.group(1))
+    assert regex.search(reason), f"reason {reason!r} would not match gc's regex"
+    assert "$PPID" in step3, "recipe must say how to get the long-lived owner pid"
 
 
 def test_shared_and_explore_worktrees_still_forbidden():
@@ -62,18 +81,7 @@ def test_clean_tree_gate_is_executable():
     step3 = step3_text()
     assert "git status --porcelain" in step3, (
         "step 3 must state `git status --porcelain` as the executable cleanliness "
-        "gate for the agent-* ownership case, not just the word 'clean' (ticket 0294)"
-    )
-
-
-def test_rejection_as_confirmation_documented():
-    """An `EnterWorktree` rejection in a spawned context is confirmation."""
-    step3 = step3_text()
-    assert "already in a worktree" in step3, (
-        "step 3 must mention the `EnterWorktree` 'already in a worktree' rejection"
-    )
-    assert re.search(r"confirm", step3, re.IGNORECASE), (
-        "step 3 must document the rejection-as-confirmation branch (ticket 0294)"
+        "gate for a handed-over worktree, not just the word 'clean' (ticket 0294)"
     )
 
 
@@ -87,8 +95,8 @@ def test_pid_discriminator_obtainable():
     step3 = step3_text()
     assert "bash -c 'echo $$'" in step3, (
         "step 3 must show a literal, executable way to obtain the session-PID "
-        "discriminator (e.g. `bash -c 'echo $$'`) before the EnterWorktree call, "
-        "since the name schema rejects `$` characters (ticket 0309)"
+        "discriminator (e.g. `bash -c 'echo $$'`) "
+        "so parallel sessions get distinct paths (ticket 0309)"
     )
 
 

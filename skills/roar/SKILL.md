@@ -266,17 +266,16 @@ Wait for confirmed integration before cleaning up that worktree.
        path rather than creating it (16 sessions, 2026-06-18 to 09-10). If
        this session created that tree itself (`git worktree add`), exit with
        `keep`, then — tree clean, branch an ancestor of `origin/main` — run
-       `git worktree remove <path>` and `git worktree prune` from the primary
-       checkout. A tree it did not create (another session's, an isolated
-       agent's `agent-…`) stays: exit with `keep` and leave it to `/molt`.
+       `git worktree unlock <path>` (hunt locks its tree), `git worktree remove
+       <path>` and `git worktree prune` from the primary
+       checkout. A tree it did not create (another session's, or one held by
+       another agent) stays: exit with `keep` and leave it to `/molt`.
        Branch ancestry cannot show that no live session stands in it, the
        0355 failure the closing note below describes.
     No-forge repo: every ancestry probe in this step compares against the
     local default branch instead of `origin/main`.
-    Skip if not in a worktree. When roar runs inside an `isolation:"worktree"`
-    subagent, `ExitWorktree` is unavailable — skip this step; the harness
-    auto-cleans the agent's worktree once its branch is merged and the tree
-    is clean.
+    Skip if not in a worktree. A worktree a subagent created and locked itself is
+    left to `worktree-gc` once its branch is merged.
 10. **Verify hygiene** — and run the branch sweep, which is this step's job.
     Delete only after the ancestry probe: a plain delete has no merged-check
     of its own, and a remote branch can be the only copy of an unmerged

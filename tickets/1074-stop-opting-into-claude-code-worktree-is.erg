@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-10-09T12:35Z Minh Ha-Duong created
+2026-10-09T16:00Z Minh Ha-Duong amended: census done, scope narrowed under portability and lightening
 
 --- body ---
 ## Context
@@ -21,20 +22,68 @@ worktrees, after which a lead invented an operator waiver to get a gate
 seat to rule. No memory records a true catch. Doctrine: a misfiring guard is
 removed, not wrapped in another guard.
 
+## Census (2026-10-09, step 1 done)
+Tool results under `~/.claude/projects/**/*.jsonl` holding the refusal text:
+9,537 (positive control: the probe fires on known refusals). By stated reason:
+rtk-wrapped git ~3,000; "too complex to verify" ~3,200; `cd`/`-C` to the
+shared checkout 1,704, of which 154 matched a git write verb.
+
+Those 154, read one by one: ~145 false positives (`git worktree add/remove`
+of review and task worktrees from the primary, the 1072 symptom; work inside
+another worktree or `/tmp`; read-only probes; the nested `fork/` repo).
+True catches, clear: `git -C ~/.claude restore --worktree` over uncommitted
+memory files (2026-09-24, twice); `git -C <primary> checkout <branch>` moving
+the author's checkout off main (2026-09-06). Probable, cwd not recorded:
+`reset --hard` (2026-09-30), `merge --no-edit` and `git add` (2026-09-02),
+`checkout --detach FETCH_HEAD` (2026-09-23), and a local `merge --ff-only`
+into a paper repo's main (2026-08-10, possibly the prose exception).
+Ratio about one catch per 1,300 refusals. `guard-destructive-bash.sh`
+already covers `reset --hard` on a dirty tree; nothing portable covers
+`restore` or `checkout` in the primary.
+
+The guard is not only ours to remove: Claude Code also isolates
+`isolation: worktree` subagents and background jobs on its own.
+
+## Constraints
+- Portability: skills run on Pi and Codex too; only `rules/claude-code.md`
+  may name Claude Code mechanisms.
+- Lightening: delete a misfiring guard, do not wrap it in exceptions (no rtk
+  carve-out, no new rule lines to dodge the guard).
+
 ## Scope
-1. Positive control first: search session transcripts under
-   `~/.claude/projects` (worktree-named folders included) for the refusal
-   text and classify each hit as a true catch (would have written the shared
-   checkout or main by mistake) or a false positive. Plant one known refusal
-   and confirm the search finds it.
-2. If no true catch: drop the `EnterWorktree` opt-in from `on-start.sh` and
-   `rules/claude-code.md`; sessions use plain `git worktree add` and work
-   there. Keep main read-only (forge gate) and `guard-destructive-bash.sh`.
-   Check the `/hunt`, `/raid` and `/gaze` paths that assume `EnterWorktree`.
-3. If true catches exist: report them and stop; the author decides.
+1. Drop the `EnterWorktree` opt-in from `scripts/on-start.sh` and
+   `rules/claude-code.md`; sessions use plain `git worktree add`.
+2. Make `/hunt`, `/raid` and `/gaze` runtime-neutral: plain git only.
+3. One line in `rules/claude-code.md`: background jobs and isolated subagents
+   are isolated by the runtime; work there with plain git in that worktree.
+4. Accepted residual risk, stated in the commit: `restore`/`checkout` in the
+   primary checkout lose their only guard (2 clear catches in two months).
+   Keep the forge gate and `guard-destructive-bash.sh`; add nothing.
+
+## Blind-spot pass (raid 2026-10-09)
+- EnterWorktree is also what moves the session cwd: with plain
+  `git worktree add`, Edit/Write default to the primary checkout on main, and
+  two sessions can share it. Removal needs a stated replacement for "who
+  enters the worktree" (rules/workflow.md Worktree paths). Author decision.
+- `isolation: "worktree"` (hunt, raid, gaze REROLL, team-lead) is a separate,
+  Claude-only parameter in portable skills; replace it with "create your own
+  `git worktree add` and work only there", and drop gaze's reviewer
+  prohibitions that exist only to dodge it. Open: does the runtime still
+  isolate background subagents without it? Check with one spawn.
+- `worktree-gc.sh` and molt's active-session guard read the EnterWorktree
+  lock; plain worktrees need `git worktree lock` or the rail drops.
+- Tests pinning the old text: test_project_coherence_prompt,
+  test_hunt_worktree_ownership, test_hunt_triage_prestep,
+  test_verify_fork_contracts.
+- Planned PR reaches ~16 files: split into children (skills portable;
+  session opt-in) before execution.
+
+## Tracker (author decision 2026-10-09: split; `git worktree lock`)
+- 1076 portable worktree recipe in skills
+- 1077 session opt-in, decided after an experiment
 
 ## Exit criteria
-- [ ] Transcript census with counts (true / false positive), positive control fired
-- [ ] Opt-in removed and skills adjusted, or catches reported to the author
+- [x] Transcript census with counts (true / false positive), positive control fired
+- [ ] Opt-in removed; `/hunt`, `/raid`, `/gaze` use plain git
 - [ ] A raid's `/gaze` can create its review worktree (demonstrated once)
 - [ ] `make check` passes
