@@ -256,7 +256,11 @@ current round = count + 1.
 
 ## Circuit breakers
 
-- Ticket cannot be located → ESCALATE (no blind approval).
+- No ticket (no close claim, no title/body reference) → not a breaker. The
+  PR body's stated intent and test plan stand in for exit criteria; record a
+  `no_ticket` nit.
+- A close claim naming a ticket file that does not exist → ESCALATE (dangling
+  claim; `/merge` would fail on it).
 - PR body lacks test plan → not a gate-level failure, but recorded as a nit.
 - Gate cannot access commit timestamps → ESCALATE (cannot distinguish pre/post comment changes).
 - Contradictory signals between phases 2–5 → ESCALATE (no silent resolution).

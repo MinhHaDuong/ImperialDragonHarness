@@ -208,7 +208,9 @@ fi
 - Abort if not mergeable or if there are open merge conflicts.
 - Collect:
   - The ticket file(s) referenced by PR-body close claims (`tickets/*.erg`);
-    include any title/body reference when no close claim exists.
+    include any title/body reference when no close claim exists. No close
+    claim and no title/body reference → proceed with `ticket: none`; the gate
+    reviews against the PR body (`/verify-gate` § Circuit breakers).
   - PR body, full diff, all existing review comments, all inline comments, all commit
     messages on the branch.
 - Check CI status for the merge request if the forge exposes it. If the forge CLI or API is unavailable, skip gracefully — CI status is informational only. If checks are configured and any are failing, note this in the setup summary; do not block on it (reviewer decides).
@@ -277,7 +279,7 @@ fi
   loudly under the existing override contract; record the waived breaker and
   size in its PR comment.
 
-- If any of these cannot be located, ESCALATE with a clear message. Do not proceed.
+- ESCALATE with a clear message, and do not proceed, only if a close claim names a nonexistent ticket file or the PR body, diff or comments cannot be located. A missing ticket with no claim and no reference is not an escalation.
 
 #### Round scoping
 
@@ -738,7 +740,9 @@ Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 
 
 ## Circuit breakers
 
-- Setup step cannot find ticket file → ESCALATE.
+- Close claim names a ticket file that does not exist → ESCALATE. A PR with
+  no ticket at all is not a breaker: the gate reviews it against the PR body
+  (`/verify-gate` § Circuit breakers).
 - `pr_files >= 15` (content-bearing files, phase-1 rule) → ESCALATE as
   `un-reviewable` before the reviewer battery;
   this is the `rules/workflow.md` 15+ file monster threshold. Name the breaker
