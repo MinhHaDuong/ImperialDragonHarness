@@ -1,0 +1,40 @@
+# Dev environment of the harness repo, managed with uv (`uv sync`).
+# Not a distributable package: this file declares dependencies only.
+# Single source of truth for dev dependencies (replaces requirements-dev.txt,
+# ticket 0530); tests/test_deps_declared.py derives third-party imports from
+# source and fails when one is missing from the dev group, and
+# tests/test_ruff.py reads the ruff range from here.
+[project]
+name = "imperial-dragon-harness"
+version = "0.0.0"
+description = "Imperial Dragon Harness development environment"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    # Validates adapters/pilot-support.json against its own schema (ticket 0802);
+    # hand-rolling that check would duplicate the schema it is meant to verify.
+    "jsonschema>=4.10,<5",
+    # external-peer-review's bundled script calls OpenAI-compatible review APIs.
+    "openai>=2,<3",
+    "pytest>=8,<10",
+    "pytest-cov>=5,<8",
+    "PyYAML>=6,<7",
+    "requests>=2.28,<3",
+    # Range-pinned; tests/test_ruff.py asserts the running series matches, so an
+    # ambient ruff outside 0.15.x fails loud instead of changing rules (ticket 0470).
+    "ruff>=0.15,<0.16",
+    # Parallel test execution for the full suite (ticket 1011): -n 4 measured
+    # 81s -> 38.6s with zero collisions across three trials; check-fast and lint
+    # stay serial — both sit at the pytest boot+collection floor.
+    "pytest-xdist>=3.8,<4",
+    # Attribution query: official inverse-beta primitive for fixed Jeffreys intervals.
+    "scipy>=1.10,<2",
+    # Reproducible tournament figures and their numeric arrays.
+    "matplotlib>=3.6,<4",
+    "numpy>=1.24,<3",
+]
