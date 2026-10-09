@@ -268,8 +268,8 @@ Wait for confirmed integration before cleaning up that worktree.
        `keep`, then — tree clean, branch an ancestor of `origin/main` — run
        `git worktree unlock <path>` (hunt locks its tree), `git worktree remove
        <path>` and `git worktree prune` from the primary
-       checkout. A tree it did not create (another session's, or one a
-       spawned agent holds) stays: exit with `keep` and leave it to `/molt`.
+       checkout. A tree it did not create (another session's, or one held by
+       another agent) stays: exit with `keep` and leave it to `/molt`.
        Branch ancestry cannot show that no live session stands in it, the
        0355 failure the closing note below describes.
     No-forge repo: every ancestry probe in this step compares against the
