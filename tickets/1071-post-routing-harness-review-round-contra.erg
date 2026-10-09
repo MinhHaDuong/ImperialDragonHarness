@@ -2,9 +2,11 @@
 Title: Post-routing harness review round: contradictions, prompt level, efficiency, test suite
 Created: 2026-10-09
 Author: reviewer
+Blocked-by: 1072
 
 --- log ---
 2026-10-09T09:05Z reviewer created
+2026-10-09T09:45Z reviewer Author 2026-10-09: the global coherence review comes after the detailed per-diff review, so this ticket is blocked by 1072. Its scope should read the harness as left by the 1072 fixes.
 
 --- body ---
 ## Context
@@ -17,6 +19,8 @@ that had not yet been used under the new rules. This ticket asks for a second
 round once the new mechanisms have run for real.
 
 ## Scope
+Blocked by 1072: this is the global coherence review, so it starts from the
+harness as left by the per-diff fixes of 1072, not before.
 Run after several real `/gaze` and `/raid` runs have used the new launch line,
 the review-pr manifest check (`scripts/panel-manifest-check.py`) and the
 risk-scaled decorrelation doctrine, so the review can read behaviour, not only
