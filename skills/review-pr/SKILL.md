@@ -94,7 +94,7 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
    Otherwise choose the proportional panel below, with at least Correctness +
    Consistency even if the risk description is trivial. Record the counts, matched
    pipeline paths, and chosen width in `<panel>/width.txt` and the posted
-   synthesis; `manifest.txt` remains perspective names only.
+   synthesis; `manifest.txt` keeps its four tab-separated columns; the width lives only in `width.txt`.
    A `review:standard` label on the PR or the exact token `review:standard` in
    its linked ticket body or PR body overrides the small-diff choice and runs
    all five perspectives. The author can request that token at any time.
@@ -254,7 +254,7 @@ intentional restatement.
 ## Collection
 
 Sequential-blocking, and bounded. Wait in one loop until every manifest entry
-has its report or the deadline passes; give the panel roughly ten minutes.
+(its first, perspective field) has its report or the deadline passes; give the panel roughly ten minutes.
 
 Then compare what landed against `<panel>/manifest.txt` and classify each
 perspective as **reported** or **no report**. This comparison is the check, and

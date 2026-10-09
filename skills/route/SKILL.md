@@ -89,8 +89,8 @@ General recommendations:
 - Choose the lineage on purpose. A reviewer that shares the producer's
   `family` adds replication, not independence. When the risk calls for an
   independent view, take a worker of another family, and say in the report
-  when none was reachable. The doctrine (three axes, the rule, the default on
-  a Claude-produced change) is `references/decorrelation.md`.
+  when none was reachable. The doctrine (sections "Three axes", "Scale the review to
+  the risk", "Independent means another family") is `references/decorrelation.md`.
 - Never route to a (model, effort) pair that is not in the grid.
 - **Say the choice out loud, with the reason.** Before launching a worker,
   write the launch line (`references/decorrelation.md`, "The launch line"):
