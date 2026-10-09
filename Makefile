@@ -1,7 +1,7 @@
 .PHONY: resident-budget skills-catalog check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check check-fast check-tests lint
 
 # Interpreter wrapper (uv adoption, author decision 2026-10-09): inside an
-# activated env (VIRTUAL_ENV set, as in CI after `uv sync`) the env's python3
+# activated env (VIRTUAL_ENV set) the env's python3
 # is already first on PATH, so run bare. Otherwise, when uv is present, go
 # through `uv run --frozen` so a plain `make check` uses the locked .venv and
 # never rewrites uv.lock. Without uv, fall back to the ambient interpreter.
