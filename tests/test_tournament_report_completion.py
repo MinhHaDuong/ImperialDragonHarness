@@ -1,0 +1,109 @@
+"""Numerical invariants of the reproducible report supplement."""
+
+import importlib.util
+import json
+import math
+import statistics
+from pathlib import Path
+
+ROOT = Path(__file__).parents[1]
+
+
+def module(name, filename):
+    spec = importlib.util.spec_from_file_location(name, ROOT / "scripts" / filename)
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
+completion = module("completion", "tournament-report-completion.py")
+graphs = module("graphs", "tournament-graphs.py")
+
+
+def test_oriented_even_sample_recomputes_ratios_instead_of_inverting_median():
+    ratios = [0.1, 0.2, 3, 8]
+    snapshot = {
+        "legs": {
+            "a": {
+                str(i): {"quality": 20 + i, "seconds": r, "cost_usd": r}
+                for i, r in enumerate(ratios)
+            },
+            "b": {
+                str(i): {"quality": 22 - i, "seconds": 1, "cost_usd": 1}
+                for i in range(4)
+            },
+        }
+    }
+    rows = completion.analyze(snapshot, graphs.signed_rank, graphs.holm)
+    reverse = completion.oriented(rows, "b", "a", snapshot)
+    assert reverse["seconds_ratio_median"] == statistics.median(1 / r for r in ratios)
+    assert reverse["seconds_ratio_median"] != 1 / statistics.median(ratios)
+    assert reverse["quality_differences"] == [2, 0, -2, -4]
+    assert reverse["wins"] == 1 and reverse["ties"] == 1 and reverse["losses"] == 2
+
+
+def test_frontier_uses_three_axes_and_quality_floor():
+    snapshot = {
+        "arms": {
+            "cheap": {
+                "final": True,
+                "quality_mean": 20,
+                "seconds_mean": 5,
+                "cost_usd_mean": 1,
+            },
+            "quality": {
+                "final": True,
+                "quality_mean": 25,
+                "seconds_mean": 10,
+                "cost_usd_mean": 2,
+            },
+            "dominated": {
+                "final": True,
+                "quality_mean": 19,
+                "seconds_mean": 6,
+                "cost_usd_mean": 2,
+            },
+            "unusable": {
+                "final": True,
+                "quality_mean": 8,
+                "seconds_mean": 0.1,
+                "cost_usd_mean": 0.01,
+            },
+        }
+    }
+    assert completion.frontier3(snapshot) == ["cheap", "quality"]
+
+
+def test_published_supplement_matches_original_tests_and_all_pairs():
+    snapshot = json.loads((ROOT / "docs/tournament-graphs/snapshot.json").read_text())
+    report = json.loads(
+        (ROOT / "docs/tournament-graphs/appendix-analysis.json").read_text()
+    )
+    originals = json.loads((ROOT / "docs/tournament-graphs/tests.json").read_text())
+    assert len(report["comparisons"]) == math.comb(len(snapshot["arms"]), 2) == 190
+    assert len(report["selected_pairs"]) == 13
+    assert len({(r["a"], r["b"]) for r in report["comparisons"]}) == 190
+    for metric in ("quality", "seconds", "cost_usd"):
+        source = {
+            frozenset((r["a"], r["b"])): r["p"]
+            for r in originals[metric]["comparisons"]
+        }
+        for row in report["comparisons"]:
+            pair = frozenset((row["a"], row["b"]))
+            if pair in source:
+                assert row[metric + "_p"] == source[pair]
+            assert row[metric + "_p_holm_190"] >= 0.05
+    for metric in ("quality", "seconds", "cost_usd"):
+        row = next(r for r in report["comparisons"] if {r["a"], r["b"]} == {"c", "l"})
+        diff = [
+            snapshot["legs"]["c"][t][metric] - snapshot["legs"]["l"][t][metric]
+            for t in sorted(snapshot["legs"]["c"])
+        ]
+        assert row[metric + "_p"] == graphs.signed_rank(diff)[0]
+
+
+def test_cluster_memberships_match_the_existing_grid():
+    grid = json.loads((ROOT / "skills/route/grid.json").read_text())
+    assert set(grid["clusters"]) == set(completion.CLUSTERS)
+    assert set(completion.CLUSTERS["ECONOMIQUES"]) == {"l", "n", "i", "j", "k"}
+    assert len({a for group in completion.CLUSTERS.values() for a in group}) == 15
