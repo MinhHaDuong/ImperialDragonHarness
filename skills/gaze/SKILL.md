@@ -96,10 +96,9 @@ written in advance can.
 Without this, the failure is silent and total: the fork ends its turn at the
 launch, the completions re-invoke the **MAIN loop**, and the fork's last message
 is a fan-out narration ("reviewers are running in parallel…") instead of a
-verdict, with phases 5–6 never running. This orphaned two real gate runs (aedist
-`/gaze 977` and `/gaze 978`, 2026-06-11), each forcing the caller to relaunch a
+verdict, with phases 5–6 never running. This orphaned two real gate runs, each forcing the caller to relaunch a
 duplicate reviewer battery, and did it again on two consecutive `/review-pr`
-rounds (`/gaze`-less, ticket 0900, 2026-09-10) where ten reviewers returned real
+rounds where ten reviewers returned real
 verdicts and the merge request carried none of them.
 
 **Bound every wait, and record what did not arrive.** An agent missing at the

@@ -28,10 +28,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 > current branch; if exactly one exists, announce "reviewing PR #N (<title>)
 > — resolved from branch <branch>" and proceed. If that yields nothing or
 > several, list the actual open merge requests and STOP so the user can pick
-> from real candidates. Never suggest a fabricated example number — an
-> invented "e.g. #N" anchors the user into re-invoking on the wrong PR
-> (2026-06-10: exactly that burned a five-agent panel on an already-merged
-> PR while the intended target sat unreviewed).
+> from real candidates. Never invent an example PR number.
 
 Spin multiple agents in parallel, each with a distinct perspective, each in a fresh context. Choose the model of each launched worker per launch, from the `route` skill grid
 (`skills/route/SKILL.md`); seats that must be independent follow
@@ -50,9 +47,7 @@ alive only by continuing to call tools.
 Left alone, the failure is silent and total: the fork ends its turn at the
 launch, the completions re-invoke the main loop, no synthesis runs, and no
 review is ever posted — while the fork's last message reads like a fan-out in
-progress. Observed twice on one merge request, 2026-09-10: ten reviewers
-returned real verdicts, two of them `request-changes`, and the merge request
-carried nothing.
+progress.
 
 So the panel is collected from **artifacts**, never from return values:
 
@@ -123,8 +118,7 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
    other spawn error, do not run the perspectives sequentially yourself.
    A spawn that returns success is not a guarantee the agent exists: under
    this runtime's silent child cap, `agent.spawn` has returned success for
-   seats that never appeared in `agent.list` (observed twice on PR #1143,
-   2026-10-02, five-seat parallel fan-out). When an `agent.list` tool is
+   seats that never appeared in `agent.list` (observed twice on PR #1143, five-seat parallel fan-out). When an `agent.list` tool is
    available, poll it after the launch and treat a seat that never lists as
    unlaunched — `no report`, never a simulated verdict; the manifest and the
    landed `.md` artifacts, not the spawn return values, are the source of truth
@@ -154,16 +148,14 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
 ### Detached-seat substitution
 
 Child sessions do not inherit the runtime's agent connector: a reviewer
-launched through `Agent` finds no `Agent` tool of its own (observed across
-all four executors of the 2026-10-02 raid, PRs #1129-#1132). When the
+launched through `Agent` finds no `Agent` tool of its own. When the
 preflight above finds the tool absent for that reason, substitute one
 detached, headless, non-interactive CLI process per seat — never
 sequential self-review — launched from the orchestrating session. The
 command shape is per-runtime; the contract is not: a Vibe headless
 invocation (`vibe -p "<prompt>"`) or a Claude Code `-p` style invocation
 (`claude -p "<prompt>"`) both qualify, as does any runtime offering a
-headless non-interactive CLI. Transport limitation, observed 2026-10-02
-(ticket 1017): the Vibe CLI cannot currently serve as a detached seat —
+headless non-interactive CLI. Transport limitation: the Vibe CLI cannot currently serve as a detached seat —
 its approval policy denies file tools to headless `vibe -p` sessions even
 with trust/auto-approve flags, so the seat reads nothing and produces no
 artifact; use another CLI transport (the `claude -p` form is measured
@@ -175,7 +167,7 @@ and the exact `<panel>/<perspective>.md` path the seat writes. Restate the
 read-only rails there too: the seat writes nothing outside its panel
 artifact, posts nothing to the forge, and holds no credentials. Pin each
 process's cwd to the review worktree, and pass deny-rules as one string —
-quoted, never word-split (a recorded mis-launch). Request the model pin
+quoted, never word-split. Request the model pin
 explicitly; when the detached CLI cannot enforce per-seat model selection,
 record that limitation in the report front-matter instead of silently
 running a different model.
