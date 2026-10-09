@@ -23,7 +23,7 @@ design (0932): not committed; record each machine here.
 
 ## Exit criteria
 - [x] doudou: config edited 2026-10-09
-- [ ] doudou: `rtk hook check "git commit -q -m x"` prints `No rewrite`, and
+- [x] doudou: `rtk hook check "git commit -q -m x"` prints `No rewrite`, and
       `rtk hook check "ls -la"` still rewrites (positive control)
 - [ ] padme: same edit, same two checks
 - [x] `RTK.md` example no longer shows `git status` → `rtk git status`
