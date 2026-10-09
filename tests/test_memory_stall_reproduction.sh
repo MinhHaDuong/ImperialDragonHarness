@@ -268,12 +268,13 @@ else
     echo "SKIP: treatment arm needs age (private capture); not installed"
 fi
 
-if [ "$fail" -eq 0 ]; then
+if [ "$fail" -eq 0 ] && [ "$HAVE_AGE" -eq 1 ]; then
     echo "ALL PASS: memory stall reproduction (0988)"
 fi
-# Zero checks ran (age absent): exit 77 so the runner reports a skip, not a pass.
-if [ "$fail" -eq 0 ] && [ "$NPASS" -eq 0 ]; then
-    echo "SKIP: no check ran"
+# Treatment arm skipped (age absent): the reproduction did not run, so a pass
+# would be vacuous. Exit 77 so the runner reports a skip, not a pass (1072).
+if [ "$fail" -eq 0 ] && { [ "$HAVE_AGE" -eq 0 ] || [ "$NPASS" -eq 0 ]; }; then
+    echo "SKIP: treatment arm or all checks skipped"
     exit 77
 fi
 exit $fail

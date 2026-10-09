@@ -81,3 +81,33 @@ def test_stub_passing_suite_passes(tmp_path):
 def test_stub_failing_suite_fails(tmp_path):
     with pytest.raises(AssertionError):
         _run_stub(tmp_path, 'echo "FAIL: a"\nexit 1\n')
+
+
+@pytest.mark.integration
+def test_stall_reproduction_without_age_is_skip_not_pass(tmp_path):
+    """1072: with `age` hidden the treatment arm is skipped; exit 77, never 0."""
+    import shutil
+
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    for tool in (
+        "bash env git grep find head sed awk mktemp rm mkdir cat dirname basename "
+        "sort tr date cp mv ls wc chmod ln cut printf touch tail uniq xargs "
+        "diff cmp readlink realpath sleep tee true false id uname sha256sum"
+    ).split():
+        found = shutil.which(tool)
+        if found and not (bindir / tool).exists():
+            (bindir / tool).symlink_to(found)
+    env = child_env()
+    env["PATH"] = str(bindir)
+    result = subprocess.run(
+        [str(bindir / "bash"), str(TESTS_DIR / "test_memory_stall_reproduction.sh")],
+        cwd=TESTS_DIR.parent,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env=env,
+    )
+    assert not shutil.which("age", path=env["PATH"])
+    assert result.returncode == 77, (result.returncode, result.stdout, result.stderr)
+    assert "ALL PASS" not in result.stdout
