@@ -77,6 +77,43 @@ def test_every_launched_script_exists():
     assert missing == [], f"hooks.json launches scripts that do not exist: {missing}"
 
 
+# --- the optional rtk hook -------------------------------------------------
+
+
+def _rtk_command() -> str:
+    found = [c for c in _commands() if "rtk hook claude" in c]
+    assert len(found) == 1
+    return found[0]
+
+
+@pytest.mark.integration
+def test_rtk_hook_is_silent_and_harmless_when_rtk_is_absent(tmp_path):
+    """rtk is an optional compactor: off PATH, the hook must not error."""
+    (tmp_path / "sh").symlink_to("/bin/sh")  # the only thing on PATH: no rtk
+    r = subprocess.run(
+        ["/bin/sh", "-c", _rtk_command()],
+        input="{}", capture_output=True, text=True,
+        env={"PATH": str(tmp_path)},
+    )
+    assert (r.returncode, r.stdout, r.stderr) == (0, "", "")
+
+
+@pytest.mark.integration
+def test_rtk_hook_execs_rtk_with_its_args_and_stdin_when_present(tmp_path):
+    """Positive control for the test above: a stub rtk really is reached."""
+    stub = tmp_path / "rtk"
+    stub.write_text('#!/bin/sh\necho "argv=$*"; cat\n')
+    stub.chmod(0o755)
+    payload = '{"tool_input":{"command":"ls"}}'
+    r = subprocess.run(
+        ["/bin/sh", "-c", _rtk_command()],
+        input=payload, capture_output=True, text=True,
+        env={"PATH": f"{tmp_path}:/usr/bin:/bin"},
+    )
+    assert r.returncode == 0
+    assert r.stdout == f"argv=hook claude\n{payload}"
+
+
 # --- the launcher ----------------------------------------------------------
 
 

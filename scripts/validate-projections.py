@@ -59,11 +59,19 @@ def resolved(path: Path):
     return real
 
 
+# RTK is optional: the plugin registers the guarded form (silent when rtk is
+# off PATH); live settings.json files may still carry the bare form.
+RTK_HOOK_COMMANDS = (
+    "rtk hook claude",
+    "sh -c 'command -v rtk >/dev/null 2>&1 || exit 0; exec rtk hook claude'",
+)
+
+
 def managed_hooks(document):
     """Only harness hooks are registered; RTK is owned by its installer."""
     return {
         event: [b for b in blocks if not any(
-            h.get("command") == "rtk hook claude" for h in b.get("hooks", [])
+            h.get("command") in RTK_HOOK_COMMANDS for h in b.get("hooks", [])
         )]
         for event, blocks in document.get("hooks", {}).items()
     }
