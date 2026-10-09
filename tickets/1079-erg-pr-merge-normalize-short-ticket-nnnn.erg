@@ -1,0 +1,19 @@
+%erg 0.1
+Title: erg-pr-merge: normalize short Ticket: NNNN close claims
+Created: 2026-10-09
+Author: claude
+
+--- log ---
+2026-10-09T14:37Z claude created
+
+--- body ---
+## Context
+`erg-pr-merge` died with "no close-claim" on a body line `**Ticket:** 1075`,
+although the intent is unambiguous. Tolerating the short form would leave
+merged bodies that roar's `check-close-claims.sh` (strict regex) cannot read.
+
+## Exit criteria
+- [x] A short `Ticket: NNNN` resolving to exactly one `tickets/(closed/)NNNN-*.erg` is rewritten on the forge to the canonical path, read back, and closed
+- [x] Zero or several matches keep the refusal; body untouched
+- [x] `#NNNN` and `chore(NNNN)` never close a ticket
+- [x] `tests/test_erg_pr_merge.sh` covers all three; `skills/merge/SKILL.md` documents the rule
