@@ -2,10 +2,12 @@
 Title: Stop opting into Claude Code worktree isolation unless transcripts show real catches
 Created: 2026-10-09
 Author: Minh Ha-Duong
+Closed: Closed by author request to shrink the backlog: 1076 merged (#1313); remaining exit criteria moved to 1077
 
 --- log ---
 2026-10-09T12:35Z Minh Ha-Duong created
 2026-10-09T16:00Z Minh Ha-Duong amended: census done, scope narrowed under portability and lightening
+2026-10-09T14:13Z Minh Ha-Duong closed — Closed by author request to shrink the backlog: 1076 merged (#1313); remaining exit criteria moved to 1077
 
 --- body ---
 ## Context
