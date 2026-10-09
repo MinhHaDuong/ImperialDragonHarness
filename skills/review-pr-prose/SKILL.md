@@ -28,15 +28,11 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 > current branch; if exactly one exists, announce "reviewing PR #N (<title>)
 > — resolved from branch <branch>" and proceed. If that yields nothing or
 > several, list the actual open merge requests and STOP so the user can pick
-> from real candidates. Never suggest a fabricated example number — an
-> invented "e.g. #N" anchors the user into re-invoking on the wrong PR
-> (2026-06-10: exactly that burned a five-agent panel on an already-merged
-> PR while the intended target sat unreviewed).
+> from real candidates. Never invent an example PR number.
 
-Spin disciplinary agents in parallel, each in a fresh context, each with its model
-chosen per launch from the `route` skill (state the choice and why; an unpinned
-Agent inherits the session model and silently runs the fan-out at top tier).
-Independence follows `skills/route/references/decorrelation.md`. Prose review reads **full text**, not just diff.
+Spin disciplinary agents in parallel, each in a fresh context. Choose the model of each launched worker per launch, from the `route` skill grid
+(`skills/route/SKILL.md`); seats that must be independent follow
+`skills/route/references/decorrelation.md` ("The launch line"). Prose review reads **full text**, not just diff.
 
 **Concurrency contract (`rules/authoring-skills.md`): parallel-background,
 collected by polling.** This skill runs as a `context: fork` (see frontmatter),
@@ -173,9 +169,3 @@ is untouched. The accepting reviewers accepted different prose.
 
 This mirrors § Round scoping in `skills/review-pr/SKILL.md` (ticket 0377); keep
 the two in sync.
-
-## Worker models
-
-Choose the model of each launched worker per launch, from the `route` skill grid
-(`skills/route/SKILL.md`); never rely on the session model by default. Seats that
-must be independent follow `skills/route/references/decorrelation.md`.

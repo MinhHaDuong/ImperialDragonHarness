@@ -96,10 +96,9 @@ written in advance can.
 Without this, the failure is silent and total: the fork ends its turn at the
 launch, the completions re-invoke the **MAIN loop**, and the fork's last message
 is a fan-out narration ("reviewers are running in parallel…") instead of a
-verdict, with phases 5–6 never running. This orphaned two real gate runs (aedist
-`/gaze 977` and `/gaze 978`, 2026-06-11), each forcing the caller to relaunch a
+verdict, with phases 5–6 never running. This orphaned two real gate runs, each forcing the caller to relaunch a
 duplicate reviewer battery, and did it again on two consecutive `/review-pr`
-rounds (`/gaze`-less, ticket 0900, 2026-09-10) where ten reviewers returned real
+rounds where ten reviewers returned real
 verdicts and the merge request carried none of them.
 
 **Bound every wait, and record what did not arrive.** An agent missing at the
@@ -380,12 +379,18 @@ before it proceeds. Do **not** launch them as background agents: a fork's
 turn ends the moment it stops calling tools, and a background completion
 re-invokes the MAIN loop, not the fork, so a background fan-out returns at
 launch and orphans its reviewers (ticket 0250; see **Fork execution
-contract**). Once all return, collect their structured outputs. Choose the
-model of every read-only reviewer per launch from the `route` skill and state the
-choice and why; an unpinned Agent inherits the session
-model, so on a top-tier session this fan-out is silently a top-model wave.
-Independence follows `skills/route/references/decorrelation.md`: scale to the risk; a high-risk PR needs one
+contract**). Once all return, collect their structured outputs. Choose the model of each launched worker per launch, from the `route` skill grid
+(`skills/route/SKILL.md`); seats that must be independent follow
+`skills/route/references/decorrelation.md` ("The launch line"): scale to the risk; a high-risk PR needs one
 cross-family detached seat, else `no report` and `PANEL-INTEGRITY: DEGRADED`.
+
+Seat defaults are guidance, not pins; raise a seat when the change warrants it:
+
+| Seat | Default worker class | When to raise |
+|---|---|---|
+| adherence, scope, docs-propagation, consistency | cheap cluster | a rule is subtle or the diff is large |
+| correctness, gate | mid-size model | high-risk or cross-cutting change |
+| red team | mid-size model | high-risk change: another family (`decorrelation.md`) |
 
 **Agent A — adherence** (`/verify-adherence <branch> worktree=<absolute-review-worktree>`).
 **Label-skip:** if the PR carries the
@@ -885,9 +890,3 @@ telemetry: tier=<tiny|small|full> risk_band=<high|low|normal> wall=<seconds>s ag
 
 On `--force-approve`, Part A is annotated `FORCE-APPROVED by <reason>`
 and Part B shows the gate's would-have-been verdict before override.
-
-## Worker models
-
-Choose the model of each launched worker per launch, from the `route` skill grid
-(`skills/route/SKILL.md`); never rely on the session model by default. Seats that
-must be independent follow `skills/route/references/decorrelation.md`.
