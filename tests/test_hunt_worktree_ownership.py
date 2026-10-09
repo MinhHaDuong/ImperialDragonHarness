@@ -45,6 +45,24 @@ def test_plain_git_recipe_with_lock():
     assert "EnterWorktree" not in step3 and "isolation" not in step3
 
 
+def test_lock_reason_matches_gc_dead_pid_rail():
+    """The recipe's lock reason carries `(pid N`, the shape worktree-gc parses.
+
+    Without it gc treats the lock as an opaque in-use marker and never
+    reclaims the tree, even when the owner is long dead.
+    """
+    gc = (REPO / "scripts" / "worktree-gc.sh").read_text()
+    m = re.search(r'=~ (\\\(pid\\ \(\[0-9\]\+\))', gc)
+    assert m, "could not locate worktree-gc's lock-pid regex"
+    regex = re.compile(r"\(pid ([0-9]+)")
+    step3 = step3_text()
+    r = re.search(r"git worktree lock\s+--reason\s+\"([^\"]*)\"", step3)
+    assert r, "recipe lock must carry --reason \"...\""
+    reason = re.sub(r"<[^>]*pid[^>]*>", "12345", r.group(1))
+    assert regex.search(reason), f"reason {reason!r} would not match gc's regex"
+    assert "$PPID" in step3, "recipe must say how to get the long-lived owner pid"
+
+
 def test_shared_and_explore_worktrees_still_forbidden():
     """The 2026-06-11 shared-worktree protection is intact."""
     step3 = step3_text()

@@ -83,9 +83,13 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    `bash -c 'echo $$'` so parallel sessions get distinct paths:
    ```bash
    git worktree add .claude/worktrees/t$ARGUMENTS-<pid> -b t$ARGUMENTS-short-description origin/main
-   git worktree lock .claude/worktrees/t$ARGUMENTS-<pid>
+   git worktree lock --reason "hunt t$ARGUMENTS (pid <owner-pid>)" .claude/worktrees/t$ARGUMENTS-<pid>
    ```
-   The lock marks it in use for `worktree-gc` and molt. Work only there: absolute
+   `<owner-pid>` is the long-lived runtime process: `echo $PPID` in the Bash tool,
+   whose shell is the runtime's child. Not the `bash -c 'echo $$'` child, which
+   dies at once and would let `worktree-gc` unlock a live tree. The lock marks it
+   in use for `worktree-gc` and molt while that pid lives; `worktree-gc` reclaims
+   it once the pid is dead (it parses `(pid N` from the reason). Work only there: absolute
    paths under it, `git -C <worktree>` for git. Ad hoc orchestrators should not
    hand-type this contract: spawn the hunt headlessly with `claude -p "/hunt <id>"`.
    Choose the model of each launched worker per launch, from the `route` skill grid
