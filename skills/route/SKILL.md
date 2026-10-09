@@ -27,11 +27,6 @@ work.
 
 ## Performance grid
 
-Costs are per leg on the ten-ticket arena sample; cycles are additive and
-each model/effort identity remains distinct. Preliminary smoke runs are excluded. Locals pay electricity
-(0.23 EUR/kWh x 600 W, registered 2026-10-06); hosted pay the API
-(pi cost.total, component-priced).
-
 The grid lives in `grid.json` beside this file (data, not portable
 instructions; model names live in data and in the per-runtime
 recommendation files). Read it for quality/speed/cost per identity and the
@@ -46,32 +41,23 @@ grid rows are identities, not knobs. Consequences:
 - Never route to an unbenched (model, effort) pair. Changing the effort
   creates a NEW identity that needs at least a smoke + spot check before
   it enters the grid.
-- Always name the effort explicitly; `@default` is banned in labels —
-  resolve it to the real level first (pi `defaultThinkingLevel`=medium,
-  but the pi CATALOG default wins per model — the DeepSeek and GLM flash
-  siblings sit at HIGH, not medium, verified in sessions 2026-10-05;
-  grid.json names them).
+- Always name the effort explicitly; resolve defaults from session evidence.
 - The identity's verified level comes from session evidence
   (`thinking_level_change` events), never from the label it was launched
   with.
 
 ## Difficulty triage (before routing)
 
-Difficulty is an intrinsic, SEMANTIC property of the ticket: our 16-arm data
-shows strong arms correlate 0.83-1.0 on which tickets are hard, while
-mechanical metadata predicts nothing (Pearson difficulty vs diff-lines =
-0.08; code-large contains both the easiest and hardest tickets). Judgment /
-consistency tickets (0874, 0452) are the killers; concrete fixes (0333) and
-trivial swaps (0470) are not.
+Difficulty is an intrinsic, SEMANTIC property of the ticket: strong models
+agree on which tickets are hard, while mechanical metadata (size, files,
+stratum) predicts nothing. Judgment and consistency tickets are the killers;
+concrete fixes and trivial swaps are not.
 
 - Triage is an LLM read of title + body + exit criteria, priced in the value
   class (~0.01 $). Mechanical features (stratum, size, files) do NOT
   separate difficulty — do not use them alone.
 - The 256K monster guard is a hard floor and stays: oversize context is a
   split-the-work ticket, never a bigger-window ticket.
-- Known cheap validators: 0470 is the arena's smoke ticket (fast, fully
-  characterized; near-zero variance — it validates infrastructure, it does
-  not discriminate models).
 
 ## Choosing a worker
 
@@ -95,7 +81,8 @@ General recommendations:
   Haiku worker under 100K prompt tokens (price x5 above).
 - Concrete implementation goes to MILIEU SOLIDE; judgment, consistency or
   monster work to ASSURANCE. Uncleared content forces LOCAL/PRIVÉ. Ambiguous
-  tasks wait for a human before any spend. The 256K guard outranks all of
+  tasks wait for a human before any spend; when `rules/workflow.md` batches
+  decisions, the batched list wins: collect, ask once, with a recommended default. The 256K guard outranks all of
   it: oversize context is a split-the-work ticket.
 - Choose the lineage on purpose. A reviewer that shares the producer's
   `family` adds replication, not independence. When the risk calls for an
@@ -121,13 +108,6 @@ Runtime recommendations. Read the file for the runtime you are running in:
 - If you are Pi, read `routes-recommendations-pi.md`.
 - If you are Vibe, read `routes-recommendations-vibe.md`.
 
-Model timeouts and admissible empty submissions score zero; include consumed
-time and cost, and show completion coverage. Provider/quota errors are invalid
-observations pending replay, not evidence of model abandonment. Identities
-with pending cases remain provisional and are excluded from final rankings.
-Paired comparisons retain model failures and report wins, ties and losses;
-an equal median difference does not establish per-ticket dominance.
-
 Within-cluster selection keys: cost per leg (grid above), latency, and
 environment: privacy/clearance (forces LOCAL/PRIVÉ), offline, GPU idle vs
 the local lane busy, provider rate limits. Within LOCAL/PRIVÉ, IQ3_S for
@@ -135,9 +115,6 @@ quality, Q2_0 for speed on non-judgment tickets, 27B for vision.
 
 ## routes.json
 
-Cache of the doors: provider, endpoint, key name (names only — never values),
-status (live / dead / capped), price notes, caps, last_verified. Update it
-whenever a route changes state — the 2026-10-06 session showed why: a free
-endpoint can die overnight (a stealth OpenRouter model returned 404) and a billing wall can drop
-mid-pass (OpenAI "no credits remaining"). Routing on a stale route cache
-burns attempts and money.
+Cache of the doors: provider, endpoint, key name (names only, never values),
+status (live / dead / capped), price notes, caps, last_verified. Update
+routes.json whenever a door changes state.
