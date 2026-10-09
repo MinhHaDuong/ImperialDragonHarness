@@ -49,3 +49,6 @@ tests are the gate, this is why.
   than a copy per branch.
 - **The Imperial Dragon is not a bird.** No avian analogies, in names,
   explanations or rationale. Scale, power, taxonomy.
+- **A new slash-invocable automation is a skill**, not a legacy command file.
+- **Test one before blasting.** A skill that fans out batch API calls dry-runs
+  prompt assembly and runs one real call per regime before the full batch.

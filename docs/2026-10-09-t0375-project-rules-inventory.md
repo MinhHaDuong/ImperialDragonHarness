@@ -53,9 +53,9 @@ No **L** rule was found in either repo.
 | aedist writing.md | CI test polarity rule + loose anchors + conditional negatives | T | **promoted**; trim to pointer |
 | aedist workflow.md | Derive prose from generated artifacts, not agent enumeration | P | **promoted** (merged with the macros rule above); trim |
 
-## Non-writing rules — classified, not promoted
+## Non-writing rules
 
-Sorting these is ticket 1073 (`tickets/1073-sort-non-writing-project-rules-found-by.erg`).
+Sorted by ticket 1073; its verdicts table below supersedes the notes in this table (`tickets/1073-sort-non-writing-project-rules-found-by.erg`).
 
 | Source | Rule | Layer | Note |
 |---|---|---|---|
@@ -71,6 +71,22 @@ Sorting these is ticket 1073 (`tickets/1073-sort-non-writing-project-rules-found
 | aedist experiment-design.md | genericity, pinned reps, no_think, metrics dict, MoE repeat=3 | X | project-local (MoE non-determinism could become memory) |
 | aedist json-output.md | JSON files end with one newline | O | coding-python candidate |
 
+### Verdicts (ticket 1073)
+
+| Row | Verdict |
+|---|---|
+| cfh coding.md test tiers | already covered by `rules/coding-python.md`; trim local |
+| cfh coding.md null DOIs / NaN truthy; human judgments | promoted to `rules/coding-python.md` § Data pitfalls |
+| cfh ticket-filing.md fast path | keep local (depends on cfh's unprotected main) |
+| cfh ticket-filing.md ID-collision scan | covered by `erg integration`; trim local |
+| cfh workflow.md science vs tooling lane | keep local |
+| aedist workflow.md test one before blasting | promoted to `rules/authoring-skills.md` |
+| aedist workflow.md audit before instrumenting | keep local |
+| aedist workflow.md prefer skills over commands | promoted to `rules/authoring-skills.md` |
+| aedist json-output.md JSON newline | promoted to `rules/coding-python.md` § Data pitfalls |
+
+`tickets/AGENTS.md` (erg-owned) and `rules/workflow.md` (resident) are untouched.
+
 ## Counts
 
 - Files swept: 22 (2 repos); 0 in paper repos.
@@ -79,7 +95,7 @@ Sorting these is ticket 1073 (`tickets/1073-sort-non-writing-project-rules-found
   the generated-numbers rule.)
 - Promoted: 14 rule rows, collapsed into 3 prose lines, 5 article lines,
   1 manuscript-build section, 1 new 8-bullet file. Left local: 15 X; 2 H trims.
-- Non-writing rows: 11 (not promoted; 6 flagged as other-rule candidates, ticket 1073).
+- Non-writing rows: 11; ticket 1073 sorted the 6 candidates into 9 items, 5 promoted (coding-python.md, authoring-skills.md), the rest covered or local.
 
 ## Proposed trims per project file (separate per-repo PRs, author's call)
 
@@ -88,12 +104,18 @@ Sorting these is ticket 1073 (`tickets/1073-sort-non-writing-project-rules-found
   to the harness rule plus the local test path and the 0338/0590 evidence
   link; drop the first two bullets of § Claims; drop § When to ask the author.
 - **climate-finance-het `rules-editing.md`:** delete (harness worktree rule).
-- **climate-finance-het `coding.md`:** drop the `uv run` bullet's generic half.
+- **climate-finance-het `coding.md`:** drop the `uv run` bullet's generic half;
+  drop the test-tiers section and the null-DOI/NaN and human-judgment bullets
+  (now in `rules/coding-python.md`).
+- **climate-finance-het `ticket-filing.md`:** drop the ID-collision scan
+  (covered by `erg integration`); keep the fast path.
 - **aedist `writing.md`:** drop the absence-claim, one-paragraph-heading,
   no-in-repo-bibliography, gap-paragraph and inline-figure rules; shorten the hardcoded-crossref rule to the
   local test and house conventions; replace § CI test polarity rule with a
   pointer, keeping the local anchor examples.
-- **aedist `workflow.md`:** shorten § Derive prose from generated artifacts to
+- **aedist `json-output.md`:** delete (now in `rules/coding-python.md`).
+- **aedist `workflow.md`:** drop test-one-before-blasting and prefer-skills
+  (now in `rules/authoring-skills.md`); shorten § Derive prose from generated artifacts to
   the local test and the 0452 evidence.
 
 ## Author decisions (2026-10-09)
