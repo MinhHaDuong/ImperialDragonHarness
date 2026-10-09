@@ -112,7 +112,9 @@ make check            # full gate
 make resident-budget  # report startup context cost
 ```
 
-Development dependencies are listed in `requirements-dev.txt`. Credentials
+Setup: `uv sync` creates `.venv` from `pyproject.toml` and `uv.lock`
+(development dependencies, `dev` group). Activate it, or let `make` call
+`uv run --frozen` for you. Credentials
 belong in the external keystore and are resolved by task-specific tools.
 
 ## Skills Catalog

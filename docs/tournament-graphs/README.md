@@ -14,7 +14,7 @@ préliminaires sont exclus.
 
 La commande ci-dessous utilise l’instantané courant, incluant N ; elle ne reproduit donc pas à l’identique les figures beta 1 du 7 octobre.
 
-Depuis la racine du dépôt, avec Python et les dépendances de `requirements-dev.txt` :
+Depuis la racine du dépôt, avec Python et l’environnement de `uv sync` (groupe `dev` de `pyproject.toml`) :
 
 ```bash
 MPLCONFIGDIR=/tmp/tournament-mpl python3 scripts/tournament-graphs.py \
