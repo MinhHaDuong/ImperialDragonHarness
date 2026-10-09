@@ -3,7 +3,8 @@
 
 # Harness components
 !.gitignore
-!requirements-dev.txt
+!pyproject.toml
+!uv.lock
 !.ruff.toml
 !README.md
 !STATE.md

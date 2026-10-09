@@ -3,8 +3,8 @@
 Ticket 0530. PyYAML reached CI only through the ubuntu-latest image and the
 pre-commit hook only through whatever the machine happened to have: green by
 environmental coincidence, not by contract. The declaration lives in
-``requirements-dev.txt`` — the one place both CI (pytest-guard installs from
-it) and a fresh machine read.
+the ``dev`` group of ``pyproject.toml`` — the one place both CI (pytest-guard
+runs ``uv sync`` from it) and a fresh machine read.
 
 The guard derives imports from the *source* (``ast``), never from the
 declaration file it checks — a test that reads the same list it verifies
@@ -34,9 +34,7 @@ from pathlib import Path
 import pytest
 
 import repo_sources
-from repo_sources import REPO, source_texts
-
-REQUIREMENTS = REPO / "requirements-dev.txt"
+from repo_sources import dev_requirements, source_texts
 
 # Import name → PyPI distribution name, where they differ (PEP 503-normalized).
 IMPORT_TO_DIST = {
@@ -123,18 +121,12 @@ def _normalize(name: str) -> str:
 
 
 def declared_dists() -> set[str]:
-    assert REQUIREMENTS.is_file(), (
-        f"{REQUIREMENTS.name} not found — third-party dependencies must be "
-        "declared where CI and a fresh machine both read them (ticket 0530)"
-    )
     dists = set()
-    for line in REQUIREMENTS.read_text(encoding="utf-8").splitlines():
-        line = line.split("#")[0].strip()
-        if not line:
-            continue
-        m = re.match(r"[A-Za-z0-9][A-Za-z0-9._-]*", line)
+    for line in dev_requirements():
+        m = re.match(r"[A-Za-z0-9][A-Za-z0-9._-]*", line.strip())
         if m:
             dists.add(_normalize(m.group(0)))
+    assert dists, "pyproject.toml declares an empty dev dependency group (ticket 0530)"
     return dists
 
 
@@ -190,7 +182,8 @@ def test_third_party_imports_are_declared():
         if dist not in declared:
             offenders.append(f"{module} (imported by {', '.join(sorted(files))})")
     assert not offenders, (
-        "third-party imports missing from requirements-dev.txt — an ambient "
+        "third-party imports missing from pyproject.toml [dependency-groups] dev "
+        "— an ambient "
         "interpreter that happens to have them is not a contract "
         "(ticket 0530):\n  " + "\n  ".join(offenders)
     )

@@ -24,7 +24,7 @@ Script structure:
 
 Dependencies: **always `uv sync`** (never pip). `uv run python scripts/...` to execute.
 
-**Keep the uv cache and the project env on one filesystem.** uv hardlinks wheels from its cache (`UV_CACHE_DIR`) into `.venv`. Hardlinks cannot cross filesystems, so when cache and env sit on different ones uv silently copies the whole dependency closure (≈1.8 GB with torch) into every env — slow enough to make worktree creation time out and fail. If big regenerable things live on a separate disk, put the env there too, beside the cache, and symlink `.venv` to it (symlinks cross filesystems; hardlinks do not). Pre-create the target first: a dangling `.venv` symlink makes `uv run` error.
+**Keep the uv cache and the project env linkable.** uv hardlinks wheels from its cache (`UV_CACHE_DIR`) into `.venv`. Hardlinks cannot cross filesystems, nor btrfs subvolumes: when cache and env sit on different ones uv falls back to copying the whole dependency closure (≈1.8 GB with torch) into every env — slow enough to make worktree creation time out and fail. Either keep the cache and the projects on the same subvolume, or set `UV_LINK_MODE=clone`: a reflink works across subvolumes of one btrfs filesystem (verified on padme, 2026-10-09: reflink OK, hardlink fails with cross-device). Never `UV_LINK_MODE=copy`. Across genuinely different filesystems neither works: put the env beside the cache and symlink `.venv` to it (symlinks cross filesystems). Pre-create the target first: a dangling `.venv` symlink makes `uv run` error.
 
 ## Testing
 
