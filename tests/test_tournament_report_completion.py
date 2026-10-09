@@ -160,3 +160,21 @@ def test_supplement_opens_with_a_section_title_page():
             env=child_env(),
         ).stdout
         assert title in " ".join(text.split())
+
+
+@pytest.mark.integration
+def test_report_states_cc_by_licence():
+    if shutil.which("pdftotext") is None:
+        pytest.skip("pdftotext (poppler-utils) not installed")
+    for pdf in (
+        "docs/tournament-graphs/comparaisons-modeles.pdf",
+        "docs/tournament-graphs-en/model-comparison.pdf",
+    ):
+        text = subprocess.run(
+            ["pdftotext", "-f", "14", "-l", "14", str(ROOT / pdf), "-"],
+            capture_output=True,
+            text=True,
+            check=True,
+            env=child_env(),
+        ).stdout
+        assert "CC BY 4.0" in " ".join(text.split())
