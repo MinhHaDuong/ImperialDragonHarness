@@ -75,7 +75,9 @@ def test_roar_proposal_rule_yields_to_raid_phase_8():
     assert "## Phase 8: Celebrate" in raid and "run `/roar` for each" in raid, (
         "raid Phase 8 moved or changed: update the git.md exception to match"
     )
-    line = next(ln for ln in GIT_RULES.split("- **") if ln.startswith("Propose `/roar`"))
+    line = next(
+        (ln for ln in GIT_RULES.split("- **") if ln.startswith("Propose `/roar`")), ""
+    )
     assert "raid Phase 8" in line, (
         "rules/git.md's propose-/roar rule must exempt an invoked skill that "
         "sequences /roar (raid Phase 8)"
