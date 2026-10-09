@@ -5,8 +5,9 @@ from pathlib import Path
 
 SKILLS = Path(__file__).resolve().parents[1] / 'skills'
 FANOUT_SIGNAL = re.compile(
-    r'(launch|spawn|spin)[^.\n]{0,40}\bagents?\b|background agents?'
-    r'|agents?[^.\n]{0,25}\bin parallel\b', re.IGNORECASE,
+    r'(launch|spawn|spin)[^.\n]{0,40}\b(sub-?)?agents?\b|background (sub-?)?agents?'
+    r'|\bclaude -p\b|\bcodex exec\b'
+    r'|(sub-?)?agents?[^.\n]{0,25}\bin parallel\b', re.IGNORECASE,
 )
 CHOICE = re.compile(
     r'model of each launched worker per launch,\s+from the `route` skill grid'
@@ -41,4 +42,7 @@ def test_floor_controls():
     assert not lacks_choice(stated)
     assert len(CHOICE.findall(stated + '\n' + stated)) == 2
     assert lacks_choice('Launch three agents. Choose the model per launch, from the `route` skill grid.')
+    assert lacks_choice('Spin **one** subagent for the check.')
+    assert lacks_choice('Run `claude -p "do it"` per ticket.')
+    assert lacks_choice('Run `codex exec "do it"` per ticket.')
     assert not lacks_choice('No fan-out here.')

@@ -105,6 +105,9 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    across a forked-skill boundary). Ad hoc orchestrators should not hand-type this
    ownership contract: spawn the hunt headlessly with `claude -p "/hunt <id>"`,
    so the live SKILL.md text supplies the rule instead of a copy that drifts.
+   Choose the model of each launched worker per launch, from the `route` skill grid
+   (`skills/route/SKILL.md`); seats that must be independent follow
+   `skills/route/references/decorrelation.md` ("The launch line").
 4. Create or checkout the ticket branch:
    ```bash
    git switch -c t$ARGUMENTS-short-description

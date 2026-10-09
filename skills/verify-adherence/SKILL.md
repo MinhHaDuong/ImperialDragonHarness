@@ -196,8 +196,9 @@ in practice.
 ### 3. Semantic subagent (fallback only)
 
 Only runs if any `.claude/rules/*.md` file changed OR if the diff touches architectural
-concerns not covered by phases 1–2. Spin **one** subagent, with its
-model chosen per launch from the `route` skill (state the choice and why), with:
+concerns not covered by phases 1–2. Spin **one** subagent. Choose the model of each launched worker per launch, from the `route` skill grid
+(`skills/route/SKILL.md`); seats that must be independent follow
+`skills/route/references/decorrelation.md` ("The launch line"). Give it:
 
 - The diff.
 - The relevant `.claude/rules/*.md` files.
