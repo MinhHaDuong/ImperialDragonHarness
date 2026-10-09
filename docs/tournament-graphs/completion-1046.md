@@ -1,13 +1,13 @@
 # Complément du rapport — couverture du ticket 1046
 
 Date : 9 octobre 2026  
-Préparé par ChatGPT prompté par Ha-Duong Minh
+Préparé par ChatGPT, puis finalisé par Claude Opus 5.5 (PR #1305), à la demande de Ha-Duong Minh
 
 ## Résumé exécutif
 
-Les rapports français et anglais passent de 12 à **26 pages**. Le contenu demandé par 1046 est ajouté à partir des données publiques accessibles : grille et frontière de Pareto 3D, verdicts et distributions appariées, classes de routage, événements historiques corrigés et guide situationnel. La synthèse et ses données numériques sont conservées.
+Les rapports français et anglais passent de 12 à **26 pages**. Le contenu demandé par 1046 est ajouté à partir des archives `~/arena` (reconstruction sur padme) et de l’instantané public : grille et frontière de Pareto 3D, verdicts et distributions appariées, classes de routage, événements historiques corrigés et guide situationnel. La synthèse et ses données numériques sont conservées.
 
-L’auteur a demandé ce complément et autorisé une **branche de revue GitHub**, sans fusion ni diffusion sur les autres canaux. Mise à jour du 9 octobre (Claude Opus 5.5) : guide relu par un relecteur Fable délégué par l’auteur, rapports cadrés, typographiés et finis, et reconstruction depuis `~/arena` sur padme. Le 9 octobre, sur padme, le dépôt récupéré au commit `5e743082` de la branche `t1046-report-finish` a régénéré figures et PDF depuis `~/arena` (`python3 scripts/tournament-graphs.py --arena ~/arena --output docs/tournament-graphs --time-value 1` puis `python3 scripts/tournament-graphs-en.py --arena ~/arena --time-value 1`). `tests.json`, `comparisons.csv`, `appendix-analysis.json`, `paired-differences.csv`, les coûts valorisés et les `.dot` sont identiques octet pour octet ; le texte des PDF est identique mot pour mot hors date de génération et placement des étiquettes. Les PDF et PNG versionnés sont ceux de padme. L’instantané public est conservé : il ne diffère de celui reconstruit que par les métadonnées comptables de Haiku 5.5, ajoutées hors générateur.
+L’auteur a demandé ce complément et autorisé une **branche de revue GitHub**, sans fusion ni diffusion sur les autres canaux. Mise à jour du 9 octobre (Claude Opus 5.5, PR #1305) : guide relu par un relecteur Fable délégué par l’auteur, rapports cadrés, typographiés et finis, figures reconstruites depuis `~/arena` sur padme (voir [Provenance padme](#provenance-padme)).
 
 ## Sommaire des ajouts
 
@@ -20,7 +20,7 @@ L’auteur a demandé ce complément et autorisé une **branche de revue GitHub*
 | 22 | Analyse critique des cinq classes de la grille | `skills/route/grid.json`, valeurs de l’instantané |
 | 23 | Les 19 événements historiques et leur reclassement | Journal du 6 octobre avec ses corrections |
 | 24–25 | Guide : confidentialité, latence, budget, GPU, reprises, quotas et heures creuses | Tarification DeepSeek officielle vérifiée le 9 octobre |
-| 26 | Sources, limites de traçabilité et critères ouverts | Aucun contenu des tickets privés exporté |
+| 26 | Provenance, sources et état des critères de sortie | Aucun contenu des tickets privés exporté |
 
 ## Verdicts et précautions
 
@@ -36,31 +36,34 @@ L’auteur a demandé ce complément et autorisé une **branche de revue GitHub*
 
 | Critère original | Résultat de cette exécution | Restant |
 |---|---|---|
-| Graphes générés depuis `~/arena`, script dans le dépôt | Régénérés sur padme depuis `~/arena` au commit de la branche ; sorties numériques identiques à l’instantané | Aucun |
+| Graphes générés depuis `~/arena`, script dans le dépôt | Régénérés sur padme depuis `~/arena` au commit `bf2da994` de la PR #1305 ; sorties numériques identiques à l’instantané | Aucun |
 | Guide revu (Fable, délégué par l’auteur) | Relecteur prose-reviewer, modèle Fable : ACCEPT WITH CHANGES, huit constats appliqués (pages 24–25) | Aucun |
-| Cadrage, typographie et finition PDF | message-framing (message en page 13), typography-finish (espaces insécables U+00A0 du complément français), pdf-finish (A4, 26 pages, métadonnées, aucun glyphe manquant) | Aucun |
+| Cadrage, typographie et finition PDF | message-framing (message en page 13), typography-finish (espaces insécables U+00A0 sur tout le texte français, pages 1–26 et figures), pdf-finish (A4, 26 pages, métadonnées, aucun glyphe manquant) | Aucun |
 | Analyse appariée du parent 1024 satisfaite par le rapport | Pages 14–21 : verdicts H1/H2, effort, inter-camps, distributions, 190 paires avec Holm | Le volet « verdict de routage dans STATE/ROADMAP » du critère parent relève de 1024/1052 |
 
 Les critères de 1046 sont cochés dans le ticket. Ce complément ne clôt pas 1047 et ne modifie pas les politiques de routage.
 
 ## Reproduire
 
-Depuis la racine du dépôt, avec les dépendances déclarées :
+Les figures et PDF versionnés sont reconstruits depuis les archives privées, sur la machine qui les héberge (padme), depuis la racine du dépôt :
 
 ```bash
 MPLCONFIGDIR=/tmp/tournament-mpl python3 scripts/tournament-graphs.py \
-  --snapshot docs/tournament-graphs/snapshot.json \
-  --output docs/tournament-graphs --time-value 1
+  --arena ~/arena --output docs/tournament-graphs --time-value 1
 MPLCONFIGDIR=/tmp/tournament-mpl python3 scripts/tournament-graphs-en.py \
-  --snapshot docs/tournament-graphs/snapshot.json --time-value 1
+  --arena ~/arena --time-value 1
 ```
 
-Le premier script conserve le mode `--arena` pour une reconstruction privée. `scripts/tournament-report-completion.py` reçoit les résultats numériques des DAG pour réutiliser leurs 136 valeurs p par axe, puis calcule les 54 paires additionnelles. L’ajustement Holm du complément est refait sur l’ensemble des 190 paires, pas seulement sur les treize comparaisons illustrées.
+Sans accès à `~/arena`, remplacer `--arena ~/arena` par `--snapshot docs/tournament-graphs/snapshot.json` : les sorties numériques sont identiques (voir ci-dessous). `scripts/tournament-report-completion.py` reçoit les résultats numériques des DAG pour réutiliser leurs 136 valeurs p par axe, puis calcule les 54 paires additionnelles. L’ajustement Holm du complément est refait sur l’ensemble des 190 paires, pas seulement sur les treize comparaisons illustrées.
+
+### Provenance padme
+
+Le 9 octobre, sur padme, le dépôt récupéré au commit `bf2da994` de la branche `t1046-report-finish` (PR #1305) a régénéré figures et PDF depuis `~/arena` avec les deux commandes ci-dessus. `tests.json`, `comparisons.csv`, `appendix-analysis.json`, `paired-differences.csv`, les coûts valorisés et les `.dot` sont identiques octet pour octet à ceux produits depuis l’instantané ; le texte des PDF ne diffère que par la date de génération et le placement de quelques étiquettes (matplotlib 3.10.8 sur padme). Les PDF et PNG versionnés sont ceux de padme. `snapshot.json` est conservé : l’instantané reconstruit ne diffère que par l’absence des métadonnées comptables de Haiku 5.5, ajoutées hors générateur ; toutes les valeurs communes sont égales.
 
 ## Validation
 
 - Fichiers de base (`snapshot.json`, `tests.json`, `comparisons.csv` et coûts valorisés) inchangés par rapport à la base de la branche ; versions FR/EN identiques.
 - Compléments FR/EN numériques identiques ; 190 paires uniques, dix tickets par paire et 130 observations dans le CSV des distributions.
-- 23 tests ciblés réussis (générateur, complément, analyse, tentatives et dépendances déclarées) ; lint des scripts modifiés réussi : permutations exactes, Holm, Pareto, ratios appariés correctement réorientés, cohérence des familles et grille.
+- 25 tests ciblés réussis (générateur, complément, typographie française, analyse, tentatives et dépendances déclarées) ; suite complète `make check` réussie ; lint des scripts modifiés réussi : permutations exactes, Holm, Pareto, ratios appariés correctement réorientés, cohérence des familles et grille.
 - Deux PDF de 26 pages, inspectés par rendu. Les figures d’origine sont conservées ; les cinq planches appariées par langue sont ajoutées.
 - Ni conversation brute, ni clé, ni contenu des tâches privées n’est ajouté aux rapports.
