@@ -577,7 +577,7 @@ fi
 # Case 13: post-push mergeability recompute race (ticket 0200). The close-commit
 # push flips mergeable to UNKNOWN; the first `gh pr merge --auto` fails "not
 # mergeable". The script must poll mergeability until it settles, retry --auto
-# once (which now succeeds), and NOT fall back to watch-then-merge.
+# once (which now succeeds), and NOT watch the checks.
 # ════════════════════════════════════════════════════════════════════════════
 seed_repo recompute 0230
 MLOG="$WORK/merge13.log"; CLOG="$WORK/checks13.log"
@@ -594,7 +594,7 @@ if STUB_AUTO_FAILS=0 STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
     # --auto must have been attempted twice (initial fail + retry after settle).
     autos=$(grep -c -- '--auto' "$MLOG" || true)
     [[ "$autos" -ge 2 ]] || { echo "  expected >=2 --auto attempts, got $autos"; rc_miss=1; }
-    # Must NOT have fallen back to watch-then-merge.
+    # Must NOT have watched the checks.
     grep -q -- '--watch' "$CLOG" && { echo "  fell back to watch on a transient race"; rc_miss=1; }
     if (( rc_miss )); then echo "FAIL: post-push recompute race not handled"; fail=1
     else echo "PASS: --auto retried after mergeability settles; no spurious fallback"; fi
@@ -752,7 +752,7 @@ fi
 
 # ════════════════════════════════════════════════════════════════════════════
 # Case 15: draft PR (ticket 0271). Roar/raid sweeps file bootstrap PRs as draft;
-# both auto-merge and the watch-then-merge fallback reject a draft. Invoking the
+# both auto-merge and a direct merge reject a draft. Invoking the
 # script is explicit intent to merge, so it must `gh pr ready` the PR first,
 # then merge and close the ticket. Anti-regression: a non-draft PR (every other
 # case) must NOT call `gh pr ready`.

@@ -154,7 +154,7 @@ if [[ "$PENDING" -gt 0 ]]; then
 fi
 
 # A draft PR is rejected by both auto-merge ("Pull Request is still a draft")
-# and the watch-then-merge fallback. Roar/raid sweeps file bootstrap PRs as
+# and a direct merge. Roar/raid sweeps file bootstrap PRs as
 # draft deliberately; invoking this script is explicit intent to merge, so mark
 # the PR ready rather than aborting at the merge step. (harness-extension-point)
 IS_DRAFT=$(echo "$PR_JSON" | jq -r '.isDraft')
@@ -486,7 +486,7 @@ merge_directly_or_die() {
     [[ "$failing" -eq 0 ]] || die "CI has ${failing} failing check(s) — fix before merging"
     pending=$(echo "$roll" | jq -r '[.[] | select(.status != "COMPLETED" and .status != null)] | length')
     if [[ "$pending" -gt 0 ]]; then
-        die "auto-merge is unavailable and ${pending} check(s) are pending; the close commit is pushed. Ask erg-pr-status ${PR}, then merge directly once it exits 0 or re-run when checks are done."
+        die "auto-merge is unavailable and ${pending} check(s) are pending; the close commit is pushed. Re-run this script once the checks have completed; the re-run adds no second close. erg-pr-status ${PR} reports only merged (0), failed (1) or not merged yet (2)."
     fi
 }
 

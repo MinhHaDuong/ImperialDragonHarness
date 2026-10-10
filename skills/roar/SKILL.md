@@ -28,11 +28,17 @@ explicitly which steps were skipped and why.
 
 ## Pre-check
 
-If the merge was only queued (checks were pending), ask the outcome once with
-`"$IDH_ROOT/skills/merge/erg-pr-status" N`: exit 0 merged, proceed; 2 pending,
-stop and say the merge has not landed yet (do not wait or loop; the user or a
-later step re-runs `/roar`); 1 failed, report it. Then verify the branch has
-been merged before proceeding:
+If the merge was only queued (checks were pending), ask the outcome once:
+
+```bash
+ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
+IDH_ROOT="$(cd -P "$(dirname "$ROAR_SKILL_MD")/../.." && pwd -P)"
+"$IDH_ROOT/skills/merge/erg-pr-status" N
+```
+
+Exit 0 merged, proceed; 2 pending, stop and say the merge has not landed yet
+(do not wait or loop; the user or a later step re-runs `/roar`); 1 failed,
+report it. Then verify the branch has been merged before proceeding:
 ```bash
 git fetch origin && git merge-base --is-ancestor HEAD origin/main
 ```
