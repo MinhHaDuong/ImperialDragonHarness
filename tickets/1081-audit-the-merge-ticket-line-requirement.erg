@@ -21,32 +21,32 @@ ticket does not yet claim the line is a net cost: it may also catch real
 dropped close-claims (see the "Dropped close-claim sweep" in
 `skills/merge/SKILL.md`).
 
+## Decision
+
+Delete the guard (doctrine: prefer deleting a misfiring guard over growing it).
+A missing Ticket line is not an intent to close; the failure it risks is a
+ticket left open, which is visible (open-ticket count) and reversible.
+`check-close-claims.sh` joins from claims, so it cannot see a PR with no line:
+the backstop is the open ticket itself, not a sweep.
+
+Kept: a `Ticket:` line that is written but unrecognised still dies (an
+attempted claim silently dropped would strand the close), as do malformed
+paths and claims absent at the branch tip.
+
+Measured (derived, `gh pr list`, last 400 merged PRs, 2026-09-16..2026-10-10,
+24 days): `Ticket: none` 155/400; close claim 196/400; `Ticket-ref` 86/400;
+no ticket text at all 16/400 (upper bound on missing-line bounces). Bounce
+and benefit counts were not measured; the decision does not depend on them.
+
 ## Work
 
-1. Measure. Count merged PRs over a fixed window (suggest 90 days) whose body
-   carries `Ticket: none`, whose first `erg-pr-merge` run bounced on the
-   missing line, and which closed nothing. Sources: `gh pr list --state merged`
-   bodies and edit history, session traces (`/trace-doctor`), and
-   `skills/roar/check-close-claims.sh`. Report the numerator, the denominator,
-   and the window; label any derived figure as derived.
-2. Measure the benefit side: how many PRs in the same window had a
-   missing-line bounce that revealed a real forgotten close-claim.
-3. Search for fixes and price them (author-hours, risk). Candidates, not
-   decisions:
-   - default to "closes nothing" when the PR touches no ticket file and
-     names no ticket, and keep the error only when the diff touches
-     `tickets/`;
-   - infer from branch or commit trailers;
-   - have `erg-pr-merge` offer the edit itself (write `Ticket: none` to the
-     body and read it back) instead of failing;
-   - keep the requirement and have `gh pr create` templates carry the line.
-4. Recommend one, with the case against it.
+- `skills/merge/erg-pr-merge`: no Ticket line -> merge as closing nothing.
+- `skills/merge/SKILL.md`: grammar bullet updated.
+- Tests: `test_erg_pr_merge.sh` cases 7 and #NNNN, `test_close_claim_grammar.sh`
+  no-claim rows now expect a merge that closes nothing; added a case that an
+  unrecognised `Ticket:` line still dies.
 
 ## Exit criteria
-- [ ] Measured counts and window recorded in this ticket (numerator,
-      denominator, both sides of the cost).
-- [ ] At least three fixes priced; one recommended with its counter-argument.
-- [ ] A follow-up ticket filed for the chosen fix, or this ticket closed with
-      the reason none is worth it.
-
-Not part of this ticket: implementing the fix.
+- [x] Guard removed for the absent-line case; unrecognised lines still die.
+- [x] Tests updated and green.
+- [x] Decision and counts recorded here.

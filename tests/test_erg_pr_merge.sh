@@ -388,22 +388,25 @@ else
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
-# Case 7: title-only PR — a chore(NNNN) title prefix is a SUBJECT reference,
-# not a close claim. The PR must die (no close-claim in body), the seeded
-# ticket must SURVIVE, and the message must name both the `none` and
-# `Ticket-ref` escape hatches (ties the test to the new die message). (0199)
+# Case 7: title-only PR, no Ticket line — a chore(NNNN) title prefix is a
+# SUBJECT reference, not a close claim. A missing line closes nothing (1081):
+# the merge proceeds and the seeded ticket must SURVIVE. A written-but-
+# unrecognised Ticket line must still die.
 # ════════════════════════════════════════════════════════════════════════════
 seed_repo titleonly 0216
 BODY7=$'Summary only — 0216 stays open until the last two stores are done.\n'
 if out=$(run_merge "$BODY7" "chore(0216): log dogfood run" 2>&1); then
-    echo "FAIL: title-only PR should have died (title prefix is not a close claim)"; fail=1
+    if closed_has 0216; then echo "FAIL: title prefix closed 0216"; fail=1
+    else echo "PASS: missing Ticket line merges, closes nothing; 0216 survives"; fi
 else
-    msg_ok=1
-    echo "$out" | grep -q 'none'       || { echo "  die msg lacks 'none'";       msg_ok=0; }
-    echo "$out" | grep -q 'Ticket-ref' || { echo "  die msg lacks 'Ticket-ref'"; msg_ok=0; }
-    if closed_has 0216; then echo "  0216 wrongly closed by title fallback"; msg_ok=0; fi
-    if (( msg_ok )); then echo "PASS: title prefix never closes; die names none/Ticket-ref; 0216 survives"
-    else echo "FAIL: title-only PR did not behave per new contract"; fail=1; fi
+    echo "FAIL: missing Ticket line should merge as closing nothing"; fail=1
+fi
+seed_repo badline 0217
+BODY7B=$'Summary.\n\nTicket: see 0217\n'
+if out=$(run_merge "$BODY7B" "chore: x" 2>&1); then
+    echo "FAIL: unrecognised Ticket line should die"; fail=1
+else
+    echo "PASS: unrecognised Ticket line still dies"
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -1204,7 +1207,7 @@ for suffixed in '**Ticket:** 0317-foo' '**Ticket:** 0317, 0318'; do
     else echo "PASS: suffixed short claim '$suffixed' refused, body untouched"; fi
 done
 seed_repo hashref 0314
-if run_merge $'Follows #0314.\n' "chore(0314): ref" >/dev/null 2>&1 || closed_has 0314; then
+if ! run_merge $'Follows #0314.\n' "chore(0314): ref" >/dev/null 2>&1 || closed_has 0314; then
     echo "FAIL: #NNNN reference was treated as a close claim"; fail=1
 else echo "PASS: #NNNN reference never closes"; fi
 
