@@ -404,7 +404,7 @@ fi
 # Unrecognised or indented claims die with the new message and close nothing;
 # prose that merely starts with the word "Ticket" is not a claim.
 n=0
-for badbody in $'Ticket: see 0217\n' $'- Ticket: tickets/0217-x.erg\n' $'  **Ticket:** 0217-x\n'; do
+for badbody in $'Ticket: see 0217\n' $'- Ticket: tickets/0217-x.erg\n' $'  **Ticket:** 0217-x\n' $'1. Ticket: tickets/0217-x.erg\n' $'Ticket : tickets/0217-x.erg\n' $'Tickets: tickets/0217-x.erg\n'; do
     n=$((n + 1))
     seed_repo "badline$n" 0217
     if out=$(run_merge "Summary."$'\n\n'"$badbody" "chore: x" 2>&1); then

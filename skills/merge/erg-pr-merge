@@ -234,7 +234,7 @@ fi
 # still dies — that is an attempted claim, and silently dropping it would
 # strand the close.
 if [[ -z "$TICKET_IDS" ]] && [[ -z "$NOCLOSE" ]] && [[ -d tickets ]]; then
-    if printf '%s\n' "$CLAIM_BODY" | grep -qP '^[\s>*-]*ticket(-ref)?\*{0,2}:'; then
+    if printf '%s\n' "$CLAIM_BODY" | grep -qP '^[\s>*+-]*(\d+[.)]\s*)?\**tickets?(-ref)?\**\s*[:-]'; then
         die "unrecognised Ticket line in PR body — use 'Ticket: tickets/NNNN-...' to close a ticket, 'Ticket-ref: tickets/NNNN-...' to reference one without closing, or 'Ticket: none'. (Title prefixes like chore(NNNN) are NOT close claims.)"
     fi
     echo "No Ticket line in PR #${PR} body — closing nothing."
