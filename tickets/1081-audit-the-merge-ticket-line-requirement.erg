@@ -29,9 +29,9 @@ ticket left open, which is visible (open-ticket count) and reversible.
 `check-close-claims.sh` joins from claims, so it cannot see a PR with no line:
 the backstop is the open ticket itself, not a sweep.
 
-Kept: a `Ticket:` line that is written but unrecognised still dies (an
-attempted claim silently dropped would strand the close), as do malformed
-paths and claims absent at the branch tip.
+Two Opus reviews tried a narrower guard (die on a written-but-unrecognised
+`Ticket:` line); each round found regex holes, so it was deleted too. Kept:
+malformed `Ticket: tickets/...` paths and claims absent at the branch tip.
 
 Measured (derived, `gh pr list`, last 400 merged PRs, 2026-09-16..2026-10-10,
 24 days): `Ticket: none` 155/400; close claim 196/400; `Ticket-ref` 86/400;
@@ -43,10 +43,10 @@ and benefit counts were not measured; the decision does not depend on them.
 - `skills/merge/erg-pr-merge`: no Ticket line -> merge as closing nothing.
 - `skills/merge/SKILL.md`: grammar bullet updated.
 - Tests: `test_erg_pr_merge.sh` cases 7 and #NNNN, `test_close_claim_grammar.sh`
-  no-claim rows now expect a merge that closes nothing; added a case that an
-  unrecognised `Ticket:` line still dies.
+  no-claim rows, unreadable lines and unresolvable short claims now expect a
+  merge that closes nothing.
 
 ## Exit criteria
-- [x] Guard removed for the absent-line case; unrecognised lines still die.
+- [x] Guard removed for absent and unreadable lines.
 - [x] Tests updated and green.
 - [x] Decision and counts recorded here.

@@ -390,8 +390,8 @@ fi
 # ════════════════════════════════════════════════════════════════════════════
 # Case 7: title-only PR, no Ticket line — a chore(NNNN) title prefix is a
 # SUBJECT reference, not a close claim. A missing line closes nothing (1081):
-# the merge proceeds and the seeded ticket must SURVIVE. A written-but-
-# unrecognised Ticket line must still die.
+# the merge proceeds and the seeded ticket must SURVIVE. Unreadable Ticket lines
+# are not claims either.
 # ════════════════════════════════════════════════════════════════════════════
 seed_repo titleonly 0216
 BODY7=$'Summary only — 0216 stays open until the last two stores are done.\n'
@@ -401,17 +401,15 @@ if out=$(run_merge "$BODY7" "chore(0216): log dogfood run" 2>&1); then
 else
     echo "FAIL: missing Ticket line should merge as closing nothing"; fail=1
 fi
-# Unrecognised or indented claims die with the new message and close nothing;
-# prose that merely starts with the word "Ticket" is not a claim.
+# Lines the grammar cannot read are not claims: the PR merges and closes
+# nothing, with no guard to grow (1081).
 n=0
-for badbody in $'Ticket: see 0217\n' $'- Ticket: tickets/0217-x.erg\n' $'  **Ticket:** 0217-x\n' $'1. Ticket: tickets/0217-x.erg\n' $'Ticket : tickets/0217-x.erg\n' $'Tickets: tickets/0217-x.erg\n'; do
+for badbody in $'Ticket: see 0217\n' $'- Ticket: tickets/0217-x.erg\n' $'Tickets: tickets/0217-x.erg\n'; do
     n=$((n + 1))
     seed_repo "badline$n" 0217
-    if out=$(run_merge "Summary."$'\n\n'"$badbody" "chore: x" 2>&1); then
-        echo "FAIL: unrecognised Ticket line should die: $badbody"; fail=1
-    elif [[ "$out" != *'unrecognised Ticket line'* ]] || closed_has 0217; then
-        echo "FAIL: wrong die or 0217 closed for: $badbody"; fail=1
-    else echo "PASS: unrecognised Ticket line dies with the new message ($n)"; fi
+    if out=$(run_merge "Summary."$'\n\n'"$badbody" "chore: x" 2>&1) && ! closed_has 0217; then
+        echo "PASS: unreadable Ticket line merges, closes nothing ($n)"
+    else echo "FAIL: unreadable Ticket line bounced or closed 0217: $badbody"; fail=1; fi
 done
 seed_repo prose 0218
 if run_merge $'Tickets are tracked elsewhere.\nTicket 0218 stays open.\n' "chore: x" >/dev/null 2>&1 && ! closed_has 0218; then
@@ -1181,7 +1179,7 @@ else echo "PASS: -C PATH cds into the target checkout from any cwd; loud on miss
 # ════════════════════════════════════════════════════════════════════════════
 # Short-form claim `**Ticket:** NNNN`: resolved to the single ticket file, the
 # PR body rewritten to the canonical path (read back), and the ticket closed.
-# No match keeps the refusal; a `#NNNN` reference never closes anything.
+# No match closes nothing; a `#NNNN` reference never closes anything.
 # ════════════════════════════════════════════════════════════════════════════
 seed_repo shortclaim 0312
 PATCHF="$WORK/patched-body"; : > "$PATCHF"
@@ -1195,25 +1193,25 @@ fi
 seed_repo shortmiss 0313
 : > "$PATCHF"
 if STUB_PATCH_FILE="$PATCHF" run_merge $'**Ticket:** 0999\n' "fix: miss" >/dev/null 2>&1; then
-    echo "FAIL: unresolvable short claim should still die"; fail=1
-elif [[ -s "$PATCHF" ]]; then echo "FAIL: unresolvable short claim rewrote body"; fail=1
-else echo "PASS: unresolvable short claim keeps the refusal, body untouched"; fi
+    if [[ -s "$PATCHF" ]] || closed_has 0313; then echo "FAIL: unresolvable short claim rewrote body or closed"; fail=1
+    else echo "PASS: unresolvable short claim closes nothing, body untouched"; fi
+else echo "FAIL: unresolvable short claim should merge as closing nothing"; fail=1; fi
 seed_repo shortdup 0316
 cp "$REPO/tickets/0316-fixture.erg" "$REPO/tickets/0316-twin.erg"
 git -C "$REPO" add tickets/ && git -C "$REPO" commit -q -m 'fixture: ambiguous 0316'
 : > "$PATCHF"
 if STUB_PATCH_FILE="$PATCHF" run_merge $'**Ticket:** 0316\n' "fix: dup" >/dev/null 2>&1; then
-    echo "FAIL: ambiguous short claim should still die"; fail=1
-elif [[ -s "$PATCHF" ]] || closed_has 0316; then echo "FAIL: ambiguous short claim rewrote body or closed"; fail=1
-else echo "PASS: ambiguous short claim (two files) keeps the refusal, body untouched"; fi
+    if [[ -s "$PATCHF" ]] || closed_has 0316; then echo "FAIL: ambiguous short claim rewrote body or closed"; fail=1
+    else echo "PASS: ambiguous short claim (two files) closes nothing, body untouched"; fi
+else echo "FAIL: ambiguous short claim should merge as closing nothing"; fail=1; fi
 for suffixed in '**Ticket:** 0317-foo' '**Ticket:** 0317, 0318'; do
     seed_repo "shortsuffix$RANDOM" 0317 0318
     : > "$PATCHF"
     if STUB_PATCH_FILE="$PATCHF" run_merge "$suffixed"$'\n' "fix: suffix" >/dev/null 2>&1; then
-        echo "FAIL: suffixed short claim '$suffixed' should die"; fail=1
-    elif [[ -s "$PATCHF" ]] || closed_has 0317 || closed_has 0318; then
-        echo "FAIL: suffixed short claim '$suffixed' rewrote body or closed"; fail=1
-    else echo "PASS: suffixed short claim '$suffixed' refused, body untouched"; fi
+        if [[ -s "$PATCHF" ]] || closed_has 0317 || closed_has 0318; then
+            echo "FAIL: suffixed short claim '$suffixed' rewrote body or closed"; fail=1
+        else echo "PASS: suffixed short claim '$suffixed' closes nothing, body untouched"; fi
+    else echo "FAIL: suffixed short claim '$suffixed' should merge as closing nothing"; fail=1; fi
 done
 seed_repo hashref 0314
 if ! run_merge $'Follows #0314.\n' "chore(0314): ref" >/dev/null 2>&1 || closed_has 0314; then
