@@ -228,8 +228,13 @@ if [[ -n "$CLAIM_LINES" ]] && printf '%s\n' "$CLAIM_LINES" | grep -qPv '^\*{0,2}
     die "unparseable Ticket path in PR body — expected tickets/NNNN or tickets/closed/NNNN"
 fi
 
+# Nothing recognised means the PR closes nothing: neither an absent line nor a
+# line the grammar cannot read is a claim, and the failure that risks (a ticket
+# left open) is visible and reversible (ticket 1081). Only a malformed
+# `Ticket: tickets/...` path dies, above.
 if [[ -z "$TICKET_IDS" ]] && [[ -z "$NOCLOSE" ]] && [[ -d tickets ]]; then
-    die "no close-claim in PR body — add a 'Ticket: tickets/NNNN-...' line to close a ticket, 'Ticket-ref: tickets/NNNN-...' to reference one without closing, or 'Ticket: none' if this PR closes nothing. (Title prefixes like chore(NNNN) are NOT close claims.)"
+    echo "No recognised Ticket line in PR #${PR} body — closing nothing."
+    NOCLOSE=1
 fi
 
 # ── Step 1.5: cross-check close claims against the branch content ─────────────

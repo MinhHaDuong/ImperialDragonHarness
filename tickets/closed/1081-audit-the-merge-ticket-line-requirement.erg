@@ -1,0 +1,54 @@
+%erg 0.1
+Title: Audit the merge Ticket-line requirement as friction and find a fix
+Created: 2026-10-10
+Author: claude
+Closed: autoclosed — PR #1348
+
+--- log ---
+2026-10-10T14:54Z claude created
+2026-10-10T16:55Z reviewer closed — autoclosed — PR #1348
+
+--- body ---
+## Context
+
+`skills/merge/erg-pr-merge` reads close intent from the PR body and errors when
+a repo with a `tickets/` directory has none of `**Ticket:**`, `Ticket-ref:` or
+`Ticket: none`. PR #1344 (permissions cleanup, no ticket) hit that error path
+at merge time: the PR body had to be edited and read back before `/merge` could
+run. A PR that deliberately closes nothing is common; the bounce costs a turn
+and a forge round-trip each time.
+
+Observed once, in this session. How often it recurs is unmeasured, so this
+ticket does not yet claim the line is a net cost: it may also catch real
+dropped close-claims (see the "Dropped close-claim sweep" in
+`skills/merge/SKILL.md`).
+
+## Decision
+
+Delete the guard (doctrine: prefer deleting a misfiring guard over growing it).
+A missing Ticket line is not an intent to close; the failure it risks is a
+ticket left open, which is visible (open-ticket count) and reversible.
+`check-close-claims.sh` joins from claims, so it cannot see a PR with no line:
+the backstop is the open ticket itself, not a sweep.
+
+Two Opus reviews tried a narrower guard (die on a written-but-unrecognised
+`Ticket:` line); each round found regex holes, so it was deleted too. Kept:
+malformed `Ticket: tickets/...` paths and claims absent at the branch tip.
+
+Measured (derived, `gh pr list`, last 400 merged PRs, 2026-09-16..2026-10-10,
+24 days): `Ticket: none` 155/400; close claim 196/400; `Ticket-ref` 86/400;
+no ticket text at all 16/400 (upper bound on missing-line bounces). Bounce
+and benefit counts were not measured; the decision does not depend on them.
+
+## Work
+
+- `skills/merge/erg-pr-merge`: no Ticket line -> merge as closing nothing.
+- `skills/merge/SKILL.md`: grammar bullet updated.
+- Tests: `test_erg_pr_merge.sh` cases 7 and #NNNN, `test_close_claim_grammar.sh`
+  no-claim rows, unreadable lines and unresolvable short claims now expect a
+  merge that closes nothing.
+
+## Exit criteria
+- [x] Guard removed for absent and unreadable lines.
+- [x] Tests updated and green.
+- [x] Decision and counts recorded here.

@@ -92,8 +92,8 @@ make_gh_stub "$TMP"
 make_erg_stub "$TMP"
 
 # Each row runs the current merge helper in a real temporary git repository.
-# Claims must reach the real helper's close call; the non-claim must stop at its
-# explicit no-close-claim guard.  The archived row is already terminal, so the
+# Claims must reach the real helper's close call; the non-claim must merge
+# as closing nothing.  The archived row is already terminal, so the
 # helper's observable agreement is its "already closed" path rather than a new
 # close mutation.
 while IFS='|' read -r label expected escaped_body; do
@@ -106,7 +106,7 @@ while IFS='|' read -r label expected escaped_body; do
     if out=$(run_merge "$MERGE" "$body" "$repo" "$close_log" 2>&1); then rc=0; else rc=$?; fi
 
     if [[ "$expected" == '-' ]]; then
-        if [[ "$rc" -ne 0 && "$out" == *'no close-claim in PR body'* && ! -s "$close_log" ]]; then
+        if [[ "$rc" -eq 0 && "$out" == *'closing nothing'* && ! -s "$close_log" ]]; then
             pass "merge helper leaves $label outside the close grammar"
         else
             fail_case "merge helper misclassified $label (rc $rc): $out"

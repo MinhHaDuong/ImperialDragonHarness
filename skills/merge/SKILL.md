@@ -46,7 +46,9 @@ The script reads close intent from the PR **body** only — never the title:
   4-digit ID alone after `Ticket:` qualifies — never `NNNN-slug`,
   `NNNN, MMMM` or `#NNNN`.
 - `Ticket: none` — the PR closes nothing.
-- With none of these lines and a `tickets/` dir present, the script errors.
+- With no recognised `Ticket` line, the PR closes nothing (same as
+  `Ticket: none`); a line the grammar cannot read is not a claim. Only a
+  malformed `Ticket: tickets/...` path errors.
 - Ticket lines inside Markdown code fences are examples and are ignored.
   Ticket paths outside fences that cannot be parsed cause an error.
 - Title prefixes like `chore(0216):` are subject references — they **never**
