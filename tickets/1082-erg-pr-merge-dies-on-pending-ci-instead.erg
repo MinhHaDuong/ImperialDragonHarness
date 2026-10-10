@@ -1,0 +1,60 @@
+%erg 0.1
+Title: erg-pr-merge dies on pending CI instead of arming auto-merge
+Created: 2026-10-10
+Author: claude
+
+--- log ---
+2026-10-10T16:30Z claude created
+
+--- body ---
+## Context
+
+`skills/merge/erg-pr-merge` queues the merge with `--auto` and documents that
+the PR "lands when required checks pass" (script step 3, line 373: "--auto lets
+GitHub gate on required checks itself"). Before reaching that step it refuses:
+lines 144-149 count checks whose status is not COMPLETED and
+`die "CI has N check(s) still running — wait for completion"`.
+
+The two behaviours contradict each other. On 2026-10-10, PR #1345 (a ticket-only
+change) was merged by `/merge` seconds after opening; the script refused with 10
+checks running. The agent ended its turn, no later caller re-ran the script, and
+the PR sat open for about an hour with all 10 checks green after roughly two
+minutes (slowest: pytest-guard, 1m36s). A refusal in a multi-step flow (raid,
+then roar) ends the flow at that point; the `/roar` that should follow never
+runs.
+
+Related: ticket 1081 (the missing `Ticket:` line is the other `/merge` bounce),
+ticket 1045 (a local gate; the author decided on 2026-10-06 that waiting is
+preferred to bypassing the forge's required checks). Not read in detail: the
+rest of the script's watch-then-merge fallback (lines ~380-460).
+
+## Options, priced (estimates, not measurements)
+
+1. Track typical CI duration and delay the check. About 0.5 author-hour. A wrong
+   guess repeats this failure; run times vary (a queued runner breaks it).
+2. A command that returns merged or failed, run in the background so the harness
+   wakes the caller when it exits (`gh pr checks --watch --fail-fast`, then
+   merge). About 0.5 author-hour. A foreground wait conflicts with the standing
+   no-blocking-waits feedback.
+3. Local CI only. 2 to 4 author-hours plus a policy change; it is ticket 1045's
+   scope and the forge gate stays closed, so it is out of scope here.
+4. Arm auto-merge immediately (drop the PENDING `die`, keep the FAILING one) and
+   let the forge gate on required checks. Smallest change; the caller can no
+   longer tell merged from pending without a later check, so pair it with option
+   2 for callers that need the outcome (raid, roar).
+
+Recommendation: option 4 plus option 2 for callers that must continue. Case
+against: a PR armed while checks run can merge before a late-registering check
+that is not in the ruleset's required set; confirm the required set covers every
+check that matters before dropping the guard.
+
+## Exit criteria
+- [ ] Reproduce: a test (or recorded run) shows the script returning non-zero
+      on a PR whose checks are pending, and the chosen behaviour instead.
+- [ ] The chosen option is implemented in `skills/merge/erg-pr-merge` with its
+      test, and `skills/merge/SKILL.md` describes the actual behaviour.
+- [ ] The `/raid` and `/roar` callers get the outcome (merged or failed)
+      without a foreground poll.
+- [ ] `make check` passes.
+
+Not part of this ticket: implementing it now (author instruction 2026-10-10).
