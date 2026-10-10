@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-10T16:30Z claude created
+2026-10-10T16:45Z claude note Option 2 rewritten at the author's request: no shell sleep loop and no foreground --watch (they hang; see 0889); a one-shot status command replaces it; portability constraints and criteria added.
 
 --- body ---
 ## Context
@@ -32,10 +33,21 @@ rest of the script's watch-then-merge fallback (lines ~380-460).
 
 1. Track typical CI duration and delay the check. About 0.5 author-hour. A wrong
    guess repeats this failure; run times vary (a queued runner breaks it).
-2. A command that returns merged or failed, run in the background so the harness
-   wakes the caller when it exits (`gh pr checks --watch --fail-fast`, then
-   merge). About 0.5 author-hour. A foreground wait conflicts with the standing
-   no-blocking-waits feedback.
+2. Get the outcome without the caller waiting. Not a shell sleep loop, and not a
+   foreground `gh pr checks --watch`: a polling loop in Bash is the shape that
+   hangs (ticket 0889 measured 105 agent-written waiters in 551 sessions and two
+   stranded processes; `scripts/guard-pgrep-waiter.sh` denies the pgrep form).
+   `gh ... --watch` is the same poll inside gh and hangs when checks never
+   register (the script already handles that race, lines ~425-445). Two shapes
+   survive these objections:
+   a. A one-shot status command (working name `erg-pr-status N`): reads the
+      forge once and exits 0 merged, 1 failed, 2 pending. It never waits. The
+      caller (raid, roar, the next turn) asks again at its next step, and a
+      pending answer is a normal state, not an error.
+   b. A runtime-native background wake (Claude Code `run_in_background`, which
+      re-invokes the caller on exit) around that one-shot command, with a hard
+      timeout. Optional; only where the runtime has such a mechanism.
+   About 1 author-hour for (a). (b) adds nothing to (a) except prompt wake-up.
 3. Local CI only. 2 to 4 author-hours plus a policy change; it is ticket 1045's
    scope and the forge gate stays closed, so it is out of scope here.
 4. Arm auto-merge immediately (drop the PENDING `die`, keep the FAILING one) and
@@ -43,8 +55,25 @@ rest of the script's watch-then-merge fallback (lines ~380-460).
    longer tell merged from pending without a later check, so pair it with option
    2 for callers that need the outcome (raid, roar).
 
-Recommendation: option 4 plus option 2 for callers that must continue. Case
-against: a PR armed while checks run can merge before a late-registering check
+## Portability constraints
+
+The fix must work on every runtime and machine the harness serves (Claude Code,
+Pi, Codex, Vibe; padme, doudou, CI), so it rests on git, the forge CLI and exit
+codes only:
+- no sleep or pgrep loop, no `timeout`-wrapped retry loop, no `--watch` in
+  foreground; the only waiting is the forge's own auto-merge, which needs none
+  of the caller's time;
+- no dependence on a runtime's background-task or wake-up feature for
+  correctness (that is an optimisation per runtime, shape 2b);
+- no GNU-only flags (`date -d`, `sed -i`, `timeout`) and no assumption about the
+  shell beyond what `erg-pr-merge` already uses; check it runs on doudou's
+  system Python and PATH (a non-login `ssh` omits `~/.local/bin`, journal
+  2026-10-09);
+- the idempotence rule in `skills/merge/SKILL.md` still holds: a re-run after
+  the close commit is pushed must not close twice.
+
+Recommendation: option 4 plus option 2a (the one-shot status) for callers that
+must continue; 2b only as a per-runtime extra. Case against: a PR armed while checks run can merge before a late-registering check
 that is not in the ruleset's required set; confirm the required set covers every
 check that matters before dropping the guard.
 
@@ -53,8 +82,12 @@ check that matters before dropping the guard.
       on a PR whose checks are pending, and the chosen behaviour instead.
 - [ ] The chosen option is implemented in `skills/merge/erg-pr-merge` with its
       test, and `skills/merge/SKILL.md` describes the actual behaviour.
-- [ ] The `/raid` and `/roar` callers get the outcome (merged or failed)
-      without a foreground poll.
+- [ ] The `/raid` and `/roar` callers get the outcome (merged, failed or
+      pending) from a one-shot call, with no loop and no foreground wait; a
+      test greps the new code and the skills for `sleep`, `pgrep -`, `--watch`
+      and retry loops.
+- [ ] Portability: the new path runs on padme and doudou and under each
+      supported runtime without a runtime-specific feature.
 - [ ] `make check` passes.
 
 Not part of this ticket: implementing it now (author instruction 2026-10-10).
