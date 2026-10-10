@@ -11,6 +11,8 @@ PR #1344 (permissions rewrite plus the install sync) and PR #1345 (ticket 1081).
 - After #1345 was opened, `erg-pr-merge` exited with "CI has 10 check(s) still running". The agent then waited for the next user message; the user reported about one hour. `gh pr checks` showed all 10 passing, the slowest at 1m36s.
 - `local-ci.sh` ran twice (about 70 s of tests each), once on a ticket-only change. The user asked why writing the 52-line ticket took over 13 minutes; per-step timings were not available.
 
+- The first wrap-up PR (#1346) failed `pytest-guard`: `tests/test_resident_census.py::test_channel_budgets` measured the session-start hook at 2175 characters against a 2100 budget, with `main` green at `7b2c93e4`. The cause was the one-line index entry added to `memory/MEMORY.md`; with that line removed the test passes locally (5 passed). This entry is therefore not linked from the index.
+
 ## Disclosed gaps
 - The live `~/.claude/settings.json` and `settings.local.json` on every machine are unchanged; they take the new allows after `idh install`.
 - The pruning of `settings.local.json` was planned and not done.
