@@ -545,6 +545,29 @@ def test_install_removes_stale_harness_hooks_from_live_settings(machine):
     assert r.returncode == 0, r.stdout + r.stderr
 
 
+def test_install_adds_shared_permissions_and_keeps_operator_rules(machine):
+    """The shared allow list reaches the live settings on every machine, as a
+    union: the operator's own rules survive and a second install is a no-op."""
+    home, idh = machine["home"], machine["idh"]
+    assert idh("install").returncode == 0
+    settings = home / ".claude" / "settings.json"
+    shared = json.loads((REPO / "settings.shared.json").read_text())["permissions"]
+    doc = json.loads(settings.read_text())
+    doc["permissions"] = {"allow": ["Read(//operator/**)"], "defaultMode": "plan"}
+    settings.write_text(json.dumps(doc))
+
+    r = idh("install")
+
+    assert r.returncode == 0, r.stdout + r.stderr
+    after = json.loads(settings.read_text())["permissions"]
+    assert "Read(//operator/**)" in after["allow"]
+    assert set(shared["allow"]) <= set(after["allow"])
+    assert after["defaultMode"] == "plan"
+    before = settings.read_text()
+    assert idh("install").returncode == 0
+    assert settings.read_text() == before
+
+
 def test_install_refuses_to_strand_a_machine_on_zero_guards(machine):
     """If the plugin link cannot be in place, the settings hooks are the only
     source left: install must leave them firing and say so, never remove
