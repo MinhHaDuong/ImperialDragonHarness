@@ -62,7 +62,17 @@ appear to re-open closed tickets and revert prose. That is not WIP — run
 `git reset --hard HEAD` in that worktree before any salvage or gc decision
 (ticket 0249 incident, aedist PR #979).
 
-Merge is queued via auto-merge; it lands when required checks pass (falls back to watch-then-merge where auto-merge is disabled). A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
+Merge is queued via auto-merge at once, **whether or not checks are still running**: the forge gates on the required checks and merges when they pass, so the script neither refuses on pending checks nor waits for them. A **failing** check is still a refusal, before anything is closed or queued. Where auto-merge is disabled the script reads the checks once and merges directly only if every check is done; pending checks there stop it with a pointer to the status command, never a wait.
+
+Queued is not merged. To learn the outcome, ask once with
+`"$IDH_ROOT/skills/merge/erg-pr-status" [-C WORKTREE] N`: exit 0 merged, 1
+failed (a check failed, or the PR closed unmerged), 2 pending, 3 the forge
+could not be read. It reads the forge a single time and never waits; **pending
+is a normal answer, not an error**. The caller asks again at its next step
+(raid: before the per-PR roar; roar: before its merged-branch pre-check) and
+never loops, sleeps or watches in the meantime. A runtime may wrap that one
+command in its own background wake-up as an optimisation; correctness never
+depends on it. A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
 
 ## Before merging
 
@@ -122,10 +132,14 @@ command it recovers.)
   that step. Do not re-run it and do not hand-close the ticket: the close
   commit is already on the branch, so finish with a direct forge merge once CI
   is green.
-- **"CI checks never registered" on a repo with no checks.** The close commit
-  is already pushed. If the PR is mergeable, its rollup is empty, and the base
-  has no required checks, finish with `gh pr merge --merge`; do not retry the <!-- harness-extension-point -->
-  non-idempotent close step.
+- **"auto-merge is unavailable and N check(s) are pending".** The close commit
+  is already pushed and the script did not wait. Ask `erg-pr-status` at the
+  next step; once the checks are done and green, re-run the script (a re-run
+  after the close commit adds no second close) or finish with a direct forge
+  merge. Do not loop on the status command.
+- **Empty rollup on a repo with no checks.** The script merges directly after
+  one read when the base has no required checks (legacy protection and rulesets
+  both inspected); with required checks configured it refuses instead.
 - **"must run from PR branch" after a fast-forward.** HEAD is detached after
   `merge --ff-only`: `git checkout <branch>`, then retry.
 - **Force-push denied, branch already pushed.** Rebasing rewrites the branch's
@@ -173,13 +187,15 @@ branch and PR.
 
 ## After the merge lands
 
-The script itself polls for the merge to land and then runs
-`"$IDH_ROOT/scripts/sync-local-main.sh"` on the base branch (rules/git.md
-§ Local main syncs eagerly) — no manual sync step. Two outputs still need
-action:
+The script reads the PR state once after queueing; when it already reads MERGED
+it runs `"$IDH_ROOT/scripts/sync-local-main.sh"` on the base branch
+(rules/git.md § Local main syncs eagerly) — no manual sync step. Two outputs
+still need action:
 
-- "Merge queued but not yet landed" — the bounded poll ran out (slow CI).
-  Confirm the PR reaches MERGED, then run `"$IDH_ROOT/scripts/sync-local-main.sh"`.
+- "Merge not yet landed" — the usual case when checks were pending. Ask
+  `erg-pr-status` once at the next step; on exit 0 run
+  `"$IDH_ROOT/scripts/sync-local-main.sh"`; on 2 carry on and ask again later;
+  on 1 report the failure.
 - "left untouched" in the sync report — dirty overlap or divergence where the
   base branch is checked out; report it to the caller rather than forcing.
 
