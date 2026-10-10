@@ -205,6 +205,21 @@ def register_settings(entry, path, target) -> int:
             if env.get("UV_ENV_FILE") == str(home / ".idh/.env"):
                 env.pop("UV_ENV_FILE")
             env.setdefault("BASH_ENV", str(home / ".local/lib/idh/bash-env.sh"))
+            wanted_perms = wanted.get("permissions", {})
+            perms = actual.setdefault("permissions", {})
+            if not isinstance(perms, dict):
+                raise ValueError("permissions must be an object")
+            # Union, never replace: Claude Code appends "don't ask again"
+            # rules to this file, and an operator's own rules must survive.
+            for key in ("allow", "deny", "ask", "additionalDirectories"):
+                rules = perms.get(key, [])
+                missing = [r for r in wanted_perms.get(key, []) if r not in rules]
+                if missing:
+                    perms[key] = [*rules, *missing]
+            if "defaultMode" in wanted_perms:
+                perms.setdefault("defaultMode", wanted_perms["defaultMode"])
+            if not perms:
+                actual.pop("permissions")
         if json.loads(old) == actual:
             return 0
         path.parent.mkdir(parents=True, exist_ok=True)
