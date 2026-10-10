@@ -20,7 +20,10 @@
 #      ticket file is absent (force-replaced branch, PR #522); warn on a
 #      title/claim disagreement. Override: ERG_PR_MERGE_ALLOW_MISSING_TICKET=1
 #   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push (always)
-#   3. Queue auto-merge via the forge CLI; falls back to watch-then-merge if auto-merge disabled
+#   3. Queue auto-merge via the forge CLI (pending checks are fine: the forge
+#      gates on them); if auto-merge is disabled, merge directly only when the
+#      one-shot rollup read shows every check done. Never waits: ask
+#      erg-pr-status for the outcome (exit 0 merged, 1 failed, 2 pending).
 #   4. If not in worktree: git checkout base && git pull --rebase
 
 set -euo pipefail
@@ -145,11 +148,13 @@ PENDING=$(echo "$PR_JSON" | jq -r '
     [.statusCheckRollup[]? | select(.status != "COMPLETED" and .status != null)]
     | length')
 if [[ "$PENDING" -gt 0 ]]; then
-    die "CI has ${PENDING} check(s) still running — wait for completion"
+    # Not a refusal (ticket 1082): the forge's own auto-merge gates on the
+    # required checks, so arm it now and let the caller ask erg-pr-status later.
+    echo "CI has ${PENDING} check(s) pending — arming auto-merge; the forge merges when required checks pass."
 fi
 
 # A draft PR is rejected by both auto-merge ("Pull Request is still a draft")
-# and the watch-then-merge fallback. Roar/raid sweeps file bootstrap PRs as
+# and a direct merge. Roar/raid sweeps file bootstrap PRs as
 # draft deliberately; invoking this script is explicit intent to merge, so mark
 # the PR ready rather than aborting at the merge step. (harness-extension-point)
 IS_DRAFT=$(echo "$PR_JSON" | jq -r '.isDraft')
@@ -382,10 +387,6 @@ fi
 # in_worktree: deleteBranchOnMerge cleans the remote; the local --delete-branch
 # flag would fail on the primary worktree's main-lock (ticket 0170).
 
-# Bounded retry tuning for the post-push checks-watch and merged-state races.
-WATCH_RACE_TRIES="${ERG_PR_MERGE_WATCH_TRIES:-3}"   # checks-watch race retries
-MERGED_POLL_TRIES="${ERG_PR_MERGE_MERGED_POLL_TRIES:-12}" # merged-state polls (ticket 0277)
-
 # Eager local-main sync once the merge lands (ticket 0277; rules/git.md
 # § Local main syncs eagerly). Overridable so the test suite injects a stub.
 SYNC_LOCAL_MAIN="${ERG_PR_MERGE_SYNC:-$(cd "$(dirname "$0")" && pwd)/../../scripts/sync-local-main.sh}"
@@ -427,15 +428,10 @@ try_auto_merge() {
     return 1
 }
 
-# Watch CI, tolerating the post-push check-registration race. A fresh push
-# leaves a brief window where the checks-watch reports "no checks reported on
-# the <branch> branch" and exits non-zero in ~1s — that is neither a red check
-# nor a timeout, so retry it a bounded number of times. On a real failure or a
-# watch timeout, die() with a message naming the actual cause rather than the
-# misleading "did not pass within 600s". After all registration retries, only
-# an empty PR rollup AND no required checks on the base permit a direct merge.
-# GitHub's branch endpoint covers legacy protection; effective branch rules
-# cover repository and organization rulesets. (tickets 0200/0871)
+# Direct merge is allowed on an EMPTY PR rollup only when no required checks
+# exist on the base (a repository without checks). GitHub's branch endpoint
+# covers legacy protection; effective branch rules cover repository and
+# organization rulesets. (tickets 0200/0871)
 no_checks_required() {
     local pr_now branch_now rules_now
     pr_now=$(gh pr view "$PR" --json mergeable,statusCheckRollup) \
@@ -470,41 +466,37 @@ no_checks_required() {
     echo "PR is MERGEABLE with an empty rollup and no required checks; merging directly."
 }
 
-watch_checks_or_die() {
-    local out rc i
-    for (( i=1; i<=WATCH_RACE_TRIES; i++ )); do
-        out=$(timeout 600 gh pr checks "$PR" --watch --fail-fast 2>&1) && { echo "$out"; return 0; }  # harness-extension-point
-        rc=$?
-        echo "$out" >&2
-        if echo "$out" | grep -qi 'no checks reported'; then
-            echo "No checks registered yet (attempt ${i}/${WATCH_RACE_TRIES}) — waiting for CI to register..."
-            sleep "$POLL_INTERVAL"
-            continue
-        fi
-        if [[ "$rc" -eq 124 ]]; then
-            die "CI watch timed out after 600s — aborting merge"
-        fi
-        die "CI checks failed (checks-watch exited ${rc}) — fix red checks before merging"
-    done
-    echo "CI checks never registered after ${WATCH_RACE_TRIES} attempts; inspecting base requirements..."
-    no_checks_required
+# Fallback when the forge refuses auto-merge (repo setting off): decide from ONE
+# read of the rollup, never by waiting (ticket 1082). Empty rollup -> only a
+# repository without required checks may merge directly; any failing check
+# refuses; a check still running refuses and points at erg-pr-status, because
+# without auto-merge nothing on the forge will merge the PR later and the
+# caller re-runs this script once the checks are done.
+merge_directly_or_die() {
+    local roll failing pending total
+    roll=$(gh pr view "$PR" --json statusCheckRollup) \
+        || die "could not read PR checks — aborting merge"  # harness-extension-point
+    roll=$(echo "$roll" | jq -c '.statusCheckRollup')
+    total=$(echo "$roll" | jq -r 'if type == "array" then length else -1 end')
+    if [[ "$total" -le 0 ]]; then
+        no_checks_required
+        return 0
+    fi
+    failing=$(echo "$roll" | jq -r '[.[] | select(.conclusion == "FAILURE" or .conclusion == "TIMED_OUT")] | length')
+    [[ "$failing" -eq 0 ]] || die "CI has ${failing} failing check(s) — fix before merging"
+    pending=$(echo "$roll" | jq -r '[.[] | select(.status != "COMPLETED" and .status != null)] | length')
+    if [[ "$pending" -gt 0 ]]; then
+        die "auto-merge is unavailable and ${pending} check(s) are pending; the close commit is pushed. Re-run this script once the checks have completed; the re-run adds no second close. erg-pr-status ${PR} reports only merged (0), failed (1) or not merged yet (2)."
+    fi
 }
 
-# Poll until the PR reports MERGED — bounded, for the auto-queued path where
-# the merge lands only after required checks pass. (ticket 0277)
-wait_for_merged() {
-    local i state
-    for (( i=0; i<MERGED_POLL_TRIES; i++ )); do
-        state=$(gh pr view "$PR" --json state --jq '.state' 2>/dev/null || echo UNKNOWN)  # harness-extension-point
-        [[ "$state" == "MERGED" ]] && return 0
-        # Closed without merging: this merge will never land — stop polling.
-        [[ "$state" == "CLOSED" ]] && return 1
-        # No sleep after the final poll — the timeout path returns immediately.
-        if (( i + 1 < MERGED_POLL_TRIES )); then
-            sleep "$POLL_INTERVAL"
-        fi
-    done
-    return 1
+# One read of the PR state, no polling (ticket 1082; was a bounded poll,
+# ticket 0277). A queued auto-merge lands on the forge's schedule; the caller
+# learns the outcome from erg-pr-status.
+merge_landed_now() {
+    local state
+    state=$(gh pr view "$PR" --json state --jq '.state' 2>/dev/null || echo UNKNOWN)  # harness-extension-point
+    [[ "$state" == "MERGED" ]]
 }
 
 # Sync the local base branch once the merge has landed. Never fatal: the sync
@@ -534,20 +526,20 @@ fi
 if try_auto_merge; then
     echo "Merge queued; lands when required checks pass."
     AUTO_QUEUED=1
-    if wait_for_merged; then
+    if merge_landed_now; then
         echo "PR #${PR} merged."
         MERGE_LANDED=1
         sync_local_base
     else
         MERGE_LANDED=0
-        echo "Merge not confirmed landed — check PR #${PR}'s state, then sync local ${BASE_BRANCH} after it lands (sync-local-main.sh)."
+        echo "Merge not yet landed — ask: erg-pr-status ${PR} (exit 0 merged, 1 failed, 2 pending), then sync local ${BASE_BRANCH} after it lands (sync-local-main.sh)."
     fi
 else
-    # Genuine auto-merge-unavailable: repo has auto-merge disabled. Legacy
-    # watch-then-merge path so the script stays usable without
-    # allow_auto_merge. (ticket 0198)
-    echo "Auto-merge unavailable — falling back to watch-then-merge..."  # harness-extension-point
-    watch_checks_or_die
+    # Genuine auto-merge-unavailable: repo has auto-merge disabled. Direct
+    # merge on a one-shot read of the checks so the script stays usable without
+    # allow_auto_merge. (tickets 0198, 1082)
+    echo "Auto-merge unavailable — merging directly if every check is done..."  # harness-extension-point
+    merge_directly_or_die
     if [[ "$IN_WORKTREE" -eq 1 ]]; then  # harness-extension-point
         gh pr merge "$PR" --merge || merge_took_effect \
             || die "merge failed and PR is not merged — check 'gh pr view $PR'"  # harness-extension-point

@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# erg-pr-status — one-shot outcome of a PR (ticket 1082). Reads the forge once.
+#
+# Usage: erg-pr-status [-C PATH] [PR_NUMBER]
+#
+# Exit codes (one line on stdout says the same in words):
+#   0  merged
+#   1  failed: a check failed or timed out, or the PR was closed unmerged
+#   2  pending: still open, nothing failed (checks running, or auto-merge armed
+#      and waiting for the forge) — a normal state, not an error
+#   3  unreadable: the forge could not be read (no verdict)
+#
+# It never waits, retries or polls. The caller asks again at its next step.
+# Needs only bash, the forge CLI and jq (what erg-pr-merge already needs); no
+# GNU-only flags. Without PR_NUMBER it reads the PR of the checked-out branch.
+set -euo pipefail
+
+if [[ "${1:-}" == "-C" ]]; then
+    [[ $# -ge 2 ]] || { echo "erg-pr-status: -C requires a PATH argument" >&2; exit 3; }
+    cd "$2" || { echo "erg-pr-status: -C: could not cd into '$2'" >&2; exit 3; }
+    shift 2
+fi
+
+PR="${1:-}"
+
+if ! JSON=$(gh pr view ${PR:+"$PR"} --json number,state,statusCheckRollup,autoMergeRequest 2>&1); then  # harness-extension-point
+    echo "erg-pr-status: could not read PR ${PR:-of this branch}: ${JSON}" >&2
+    exit 3
+fi
+if ! echo "$JSON" | jq -e 'type == "object" and (.state | type == "string")' >/dev/null 2>&1; then
+    echo "erg-pr-status: could not read PR ${PR:-of this branch}: unexpected forge answer" >&2
+    exit 3
+fi
+
+STATE=$(echo "$JSON" | jq -r '.state')
+NUM=$(echo "$JSON" | jq -r '.number // empty')
+FAILING=$(echo "$JSON" | jq -r '[.statusCheckRollup[]? | select(.conclusion == "FAILURE" or .conclusion == "TIMED_OUT")] | length')
+PENDING=$(echo "$JSON" | jq -r '[.statusCheckRollup[]? | select(.status != "COMPLETED" and .status != null)] | length')
+ARMED=$(echo "$JSON" | jq -r 'if .autoMergeRequest != null then "armed" else "not armed" end')
+
+case "$STATE" in
+    MERGED)
+        echo "PR #${NUM}: merged"
+        exit 0 ;;
+    CLOSED)
+        echo "PR #${NUM}: failed — closed without merging"
+        exit 1 ;;
+esac
+
+if [[ "$FAILING" -gt 0 ]]; then
+    echo "PR #${NUM}: failed — ${FAILING} check(s) failing"
+    exit 1
+fi
+echo "PR #${NUM}: pending — ${PENDING} check(s) running, auto-merge ${ARMED}"
+exit 2

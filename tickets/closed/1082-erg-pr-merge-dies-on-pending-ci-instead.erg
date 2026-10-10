@@ -2,10 +2,14 @@
 Title: erg-pr-merge dies on pending CI instead of arming auto-merge
 Created: 2026-10-10
 Author: claude
+Closed: autoclosed — PR #1352
 
 --- log ---
 2026-10-10T16:30Z claude created
 2026-10-10T16:45Z claude note Option 2 rewritten at the author's request: no shell sleep loop and no foreground --watch (they hang; see 0889); a one-shot status command replaces it; portability constraints and criteria added.
+2026-10-10T17:06Z reviewer note PR #1348 (a missing Ticket line now closes nothing, ticket 1081) is the sibling fix to the other /merge friction; this ticket removes the pending-CI refusal
+2026-10-10T17:27Z reviewer note verify-reroll — round 1: roar pre-check called erg-pr-status via unset $IDH_ROOT; erg-pr-merge message said merge on status exit 0 (exit 0 means merged); stale watch-then-merge wording
+2026-10-10T17:29Z reviewer closed — autoclosed — PR #1352
 
 --- body ---
 ## Context

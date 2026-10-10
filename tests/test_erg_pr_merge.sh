@@ -350,7 +350,8 @@ else
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
-# Case 5: fallback — auto-merge disabled -> watch-then-merge (ticket 0198)
+# Case 5: fallback — auto-merge disabled -> one-shot read, then direct merge
+# (tickets 0198, 1082: no checks watcher, no wait)
 # ════════════════════════════════════════════════════════════════════════════
 seed_repo fallback 0197
 MLOG="$WORK/merge5.log"; CLOG="$WORK/checks5.log"
@@ -360,12 +361,12 @@ if STUB_AUTO_FAILS=1 STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
    run_merge "$BODY5" "ticket(0197): fallback" >/dev/null 2>&1; then
     fb_miss=0
     grep -q -- '--auto' "$MLOG" || { echo "  no --auto attempt logged"; fb_miss=1; }
-    grep -q -- '--watch' "$CLOG" || { echo "  fallback did not watch checks"; fb_miss=1; }
-    # A bare --merge (no --auto) must have been issued after the watch.
+    [[ ! -s "$CLOG" ]] || { echo "  fallback called the checks watcher"; fb_miss=1; }
+    # A bare --merge (no --auto) must have been issued after one rollup read.
     grep -v -- '--auto' "$MLOG" | grep -q -- '--merge' \
         || { echo "  no plain --merge after fallback"; fb_miss=1; }
     if (( fb_miss )); then echo "FAIL: fallback path incomplete"; fail=1
-    else echo "PASS: fallback to watch-then-merge when auto-merge disabled"; fi
+    else echo "PASS: fallback merges directly (no watcher) when auto-merge disabled"; fi
 else
     echo "FAIL: erg-pr-merge exited non-zero on fallback path"; fail=1
 fi
@@ -576,7 +577,7 @@ fi
 # Case 13: post-push mergeability recompute race (ticket 0200). The close-commit
 # push flips mergeable to UNKNOWN; the first `gh pr merge --auto` fails "not
 # mergeable". The script must poll mergeability until it settles, retry --auto
-# once (which now succeeds), and NOT fall back to watch-then-merge.
+# once (which now succeeds), and NOT watch the checks.
 # ════════════════════════════════════════════════════════════════════════════
 seed_repo recompute 0230
 MLOG="$WORK/merge13.log"; CLOG="$WORK/checks13.log"
@@ -593,7 +594,7 @@ if STUB_AUTO_FAILS=0 STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
     # --auto must have been attempted twice (initial fail + retry after settle).
     autos=$(grep -c -- '--auto' "$MLOG" || true)
     [[ "$autos" -ge 2 ]] || { echo "  expected >=2 --auto attempts, got $autos"; rc_miss=1; }
-    # Must NOT have fallen back to watch-then-merge.
+    # Must NOT have watched the checks.
     grep -q -- '--watch' "$CLOG" && { echo "  fell back to watch on a transient race"; rc_miss=1; }
     if (( rc_miss )); then echo "FAIL: post-push recompute race not handled"; fail=1
     else echo "PASS: --auto retried after mergeability settles; no spurious fallback"; fi
@@ -602,37 +603,30 @@ else
 fi
 
 # ════════════════════════════════════════════════════════════════════════════
-# Case 14: fallback watch survives the no-checks-reported registration race
-# (ticket 0200). Auto-merge is genuinely unavailable, so the script falls back
-# to watch-then-merge. The first `gh pr checks --watch` exits non-zero with
-# "no checks reported" (fresh-push registration race); the script must retry
-# the watch, succeed on the second, then issue a plain --merge.
+# Case 14: fallback with checks still pending (ticket 1082). Auto-merge is
+# unavailable, so the forge will not merge by itself. The script must NOT wait
+# (no checks watcher, no sleep loop): it exits non-zero at once, issues no
+# direct merge, and names the one-shot status command to ask later.
 # ════════════════════════════════════════════════════════════════════════════
 seed_repo registration 0231
 MLOG="$WORK/merge14.log"; CLOG="$WORK/checks14.log"
 : > "$MLOG"; : > "$CLOG"
-NOCHECKS_FLAG="$WORK/nochecks14"; echo 0 > "$NOCHECKS_FLAG"
 BODY14=$'Summary.\n\n**Ticket:** tickets/0231-fixture.erg\n'
-if STUB_AUTO_FAILS=1 STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
-   STUB_CHECKS_NOCHECKS_ONCE="$NOCHECKS_FLAG" \
-   run_merge "$BODY14" "ticket(0231): registration" >/dev/null 2>&1; then
-    reg_miss=0
-    closed_has 0231 || { echo "  not closed: 0231"; reg_miss=1; }
-    # Watch must have been retried (no-checks once, then success): >=2 watches.
-    watches=$(grep -c -- '--watch' "$CLOG" || true)
-    [[ "$watches" -ge 2 ]] || { echo "  expected >=2 --watch attempts, got $watches"; reg_miss=1; }
-    # A plain --merge (no --auto) must follow the successful watch.
-    grep -v -- '--auto' "$MLOG" | grep -q -- '--merge' \
-        || { echo "  no plain --merge after fallback watch"; reg_miss=1; }
-    if (( reg_miss )); then echo "FAIL: no-checks registration race not survived"; fail=1
-    else echo "PASS: fallback watch retries past no-checks race, then merges"; fi
+if out=$(STUB_AUTO_FAILS=1 STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
+   STUB_ROLLUP='[{"status":"IN_PROGRESS","conclusion":""}]' \
+   run_merge "$BODY14" "ticket(0231): registration" 2>&1); then
+    echo "FAIL: pending checks with auto-merge unavailable exited 0: $out"; fail=1
 else
-    echo "FAIL: erg-pr-merge exited non-zero on no-checks registration race"; fail=1
+    reg_miss=0
+    [[ ! -s "$CLOG" ]] || { echo "  checks watcher was called"; reg_miss=1; }
+    grep -v -- '--auto' "$MLOG" | grep -q -- '--merge' && { echo "  direct merge issued on pending checks"; reg_miss=1; }
+    [[ "$out" == *"erg-pr-status"* ]] || { echo "  no pointer to erg-pr-status in: $out"; reg_miss=1; }
+    if (( reg_miss )); then echo "FAIL: pending fallback mishandled"; fail=1
+    else echo "PASS: pending checks + no auto-merge -> immediate refusal naming erg-pr-status, no wait"; fi
 fi
 
-# Case 14b: a repository with no checks cannot satisfy gh's checks watcher.
-# After bounded registration retries, a mergeable PR with no required checks
-# and an empty rollup must take the direct fallback merge.
+# Case 14b: a repository with no checks. A mergeable PR with no required checks
+# and an empty rollup takes the direct fallback merge after ONE read.
 seed_repo nochecksforever 0871
 MLOG="$WORK/merge14b.log"; CLOG="$WORK/checks14b.log"
 : > "$MLOG"; : > "$CLOG"
@@ -642,11 +636,11 @@ if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
    run_merge "$BODY14b" "ticket(0871): no checks" 2>&1); then
     nc_miss=0
     closed_has 0871 || { echo "  ticket not closed"; nc_miss=1; }
-    [[ $(grep -c -- '--watch' "$CLOG") -eq 3 ]] || { echo "  registration retries missing"; nc_miss=1; }
+    [[ ! -s "$CLOG" ]] || { echo "  checks watcher was called"; nc_miss=1; }
     grep -v -- '--auto' "$MLOG" | grep -q -- '--merge' || { echo "  direct merge missing"; nc_miss=1; }
     [[ "$out" == *"no required checks"* ]] || { echo "  no-check decision not explained"; nc_miss=1; }
     if (( nc_miss )); then echo "FAIL: no-checks fallback incomplete"; fail=1
-    else echo "PASS: no-checks repo merges after bounded retries"; fi
+    else echo "PASS: no-checks repo merges directly after one read"; fi
 else
     echo "FAIL: no-checks repo aborted: $out"; fail=1
 fi
@@ -713,20 +707,19 @@ else
     echo "FAIL: explicit unprotected base was blocked"; fail=1
 fi
 
-# A contradictory nonempty PR rollup must fail closed rather than claim that
-# the repository has no checks.
+# A completed-green rollup with auto-merge unavailable merges directly after
+# one read (ticket 1082; the forge reported every check done).
 seed_repo nonemptyrollup 0874
 MLOG="$WORK/merge-rollup.log"; : > "$MLOG"
 BODY_ROLLUP=$'Summary.\n\n**Ticket:** tickets/0874-fixture.erg\n'
-if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_NOCHECKS_ALWAYS=1 \
+if STUB_AUTO_FAILS=1 \
    STUB_ROLLUP='[{"status":"COMPLETED","conclusion":"SUCCESS"}]' \
    STUB_MERGE_LOG="$MLOG" \
-   run_merge "$BODY_ROLLUP" "ticket(0874): rollup" 2>&1); then
-    echo "FAIL: nonempty rollup allowed no-checks direct merge"; fail=1
-elif [[ "$out" != *"rollup is unavailable or not empty"* ]] || grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
-    echo "FAIL: nonempty rollup was not recognized"; fail=1
+   run_merge "$BODY_ROLLUP" "ticket(0874): rollup" >/dev/null 2>&1 \
+   && grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+    echo "PASS: green rollup merges directly when auto-merge is unavailable"
 else
-    echo "PASS: nonempty rollup blocks no-checks direct merge"
+    echo "FAIL: green rollup did not merge directly"; fail=1
 fi
 
 # A null rollup is unavailable data, not evidence that the PR has no checks.
@@ -747,10 +740,11 @@ fi
 seed_repo redcheck 0873
 MLOG="$WORK/merge-redcheck.log"; : > "$MLOG"
 BODY_RED=$'Summary.\n\n**Ticket:** tickets/0873-fixture.erg\n'
-if out=$(STUB_AUTO_FAILS=1 STUB_CHECKS_RED=1 STUB_MERGE_LOG="$MLOG" \
+if out=$(STUB_AUTO_FAILS=1 STUB_MERGE_LOG="$MLOG" \
+   STUB_ROLLUP='[{"status":"COMPLETED","conclusion":"FAILURE"},{"status":"IN_PROGRESS","conclusion":""}]' \
    run_merge "$BODY_RED" "ticket(0873): red check" 2>&1); then
     echo "FAIL: red check allowed merge"; fail=1
-elif [[ "$out" != *"CI checks failed"* ]] || grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
+elif [[ "$out" != *"failing check"* ]] || grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
     echo "FAIL: red check did not retain abort behavior"; fail=1
 else
     echo "PASS: red check still aborts with CI failure"
@@ -758,7 +752,7 @@ fi
 
 # ════════════════════════════════════════════════════════════════════════════
 # Case 15: draft PR (ticket 0271). Roar/raid sweeps file bootstrap PRs as draft;
-# both auto-merge and the watch-then-merge fallback reject a draft. Invoking the
+# both auto-merge and a direct merge reject a draft. Invoking the
 # script is explicit intent to merge, so it must `gh pr ready` the PR first,
 # then merge and close the ticket. Anti-regression: a non-draft PR (every other
 # case) must NOT call `gh pr ready`.
@@ -1218,5 +1212,59 @@ if ! run_merge $'Follows #0314.\n' "chore(0314): ref" >/dev/null 2>&1 || closed_
     echo "FAIL: #NNNN reference was treated as a close claim"; fail=1
 else echo "PASS: #NNNN reference never closes"; fi
 
+# ════════════════════════════════════════════════════════════════════════════
+# Case 30 (ticket 1082): pending checks no longer refuse. Reproduction: before
+# the change the script died "CI has N check(s) still running" at pre-flight and
+# never reached --auto. Now it arms auto-merge at once, exits 0, never waits for
+# the merge to land, and tells the caller which command reports the outcome.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo pendingarm 0301
+MLOG="$WORK/merge30.log"; CLOG="$WORK/checks30.log"
+: > "$MLOG"; : > "$CLOG"
+BODY30=$'Summary.\n\n**Ticket:** tickets/0301-fixture.erg\n'
+if out=$(STUB_STATE=OPEN STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
+   STUB_ROLLUP='[{"status":"IN_PROGRESS","conclusion":""},{"status":"QUEUED","conclusion":""}]' \
+   run_merge "$BODY30" "ticket(0301): pending" 2>&1); then
+    p_miss=0
+    grep -q -- '--auto' "$MLOG" || { echo "  --auto not armed"; p_miss=1; }
+    closed_has 0301 || { echo "  ticket not closed"; p_miss=1; }
+    [[ ! -s "$CLOG" ]] || { echo "  checks watcher was called"; p_miss=1; }
+    [[ "$out" == *"erg-pr-status"* ]] || { echo "  no erg-pr-status pointer"; p_miss=1; }
+    [[ "$out" != *"still running"* ]] || { echo "  old refusal text present"; p_miss=1; }
+    if (( p_miss )); then echo "FAIL: pending checks not handled by arming auto-merge"; fail=1
+    else echo "PASS: pending checks -> auto-merge armed, exit 0, outcome via erg-pr-status"; fi
+else
+    echo "FAIL: pending checks still refused: $out"; fail=1
+fi
+
+# Case 31: a FAILING check stays a refusal even with other checks pending, and
+# nothing is closed, pushed or armed.
+seed_repo pendingfail 0302
+MLOG="$WORK/merge31.log"; : > "$MLOG"
+BODY31=$'Summary.\n\n**Ticket:** tickets/0302-fixture.erg\n'
+if out=$(STUB_MERGE_LOG="$MLOG" \
+   STUB_ROLLUP='[{"status":"COMPLETED","conclusion":"FAILURE"},{"status":"IN_PROGRESS","conclusion":""}]' \
+   run_merge "$BODY31" "ticket(0302): failing" 2>&1); then
+    echo "FAIL: failing check was armed"; fail=1
+elif [[ "$out" != *"failing check"* ]] || [[ -s "$MLOG" ]] || closed_has 0302; then
+    echo "FAIL: failing check refusal incomplete"; fail=1
+else echo "PASS: failing check still refused before any close or arm"; fi
+
+# Case 32: re-run after the close commit is pushed must not close twice: the
+# second pass finds the ticket archived and adds no second close commit.
+seed_repo rerun 0303
+MLOG="$WORK/merge32.log"; : > "$MLOG"
+BODY32=$'Summary.\n\n**Ticket:** tickets/0303-fixture.erg\n'
+ROLL32='[{"status":"IN_PROGRESS","conclusion":""}]'
+STUB_STATE=OPEN STUB_ROLLUP="$ROLL32" STUB_MERGE_LOG="$MLOG" \
+    run_merge "$BODY32" "ticket(0303): rerun" >/dev/null 2>&1 || true
+n1=$(git -C "$REPO" rev-list --count "$BASE..$BRANCH")
+STUB_STATE=OPEN STUB_ROLLUP="$ROLL32" STUB_MERGE_LOG="$MLOG" \
+    run_merge "$BODY32" "ticket(0303): rerun" >/dev/null 2>&1 || true
+n2=$(git -C "$REPO" rev-list --count "$BASE..$BRANCH")
+if [[ "$n1" -eq 1 && "$n2" -eq 1 ]] && closed_has 0303; then
+    echo "PASS: re-run after the close commit does not close twice"
+else echo "FAIL: re-run changed the branch (commits $n1 -> $n2)"; fail=1; fi
+
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto/-watch races handled, drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip, output-rewrite-tolerant guards"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto race handled, pending checks arm auto-merge (1082), drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip, output-rewrite-tolerant guards"

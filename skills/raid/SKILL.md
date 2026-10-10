@@ -363,7 +363,13 @@ For each eligible PR, sequentially within the wave:
    <!-- harness-extension-point -->
    Runtime permission rules must authorize the resolved helper path. Use
    `-C` to select the worktree for every Git and forge operation.
-5. If merge fails (conflict, CI regression), ESCALATE — leave a PR comment and move to the next PR.
+   The merge is queued, not necessarily landed: pending checks are normal.
+   Ask the outcome once with `"$IDH_ROOT/skills/merge/erg-pr-status" -C <worktree-path> <pr-number>`
+   (exit 0 merged, 1 failed, 2 pending, 3 unreadable) — no loop, no sleep, no
+   foreground wait. Pending is not a failure: move on, and ask again once before
+   Phase 8 for each PR still pending; a PR still pending then is listed as
+   queued in the briefing, not as merged.
+5. If merge fails (conflict, CI regression), or the status reads failed, ESCALATE — leave a PR comment and move to the next PR.
    A *permission denial* on the merge call is not a merge failure — handle it
    per § Merge-permission denial below, not by ESCALATE.
 
@@ -403,7 +409,8 @@ After all waves, in one compound so the `cd` persists across the rebase:
 ## Phase 8: Celebrate (per-merged-PR)
 
 After all merges, from the updated main branch, run `/roar` for each
-successfully merged PR. The roar pre-check (`git merge-base --is-ancestor
+PR whose `erg-pr-status` answered merged (exit 0); a pending PR gets its
+`/roar` at a later step, once asked again. The roar pre-check (`git merge-base --is-ancestor
 HEAD origin/main`) passes because HEAD is main after the pull.
 
 ## Mid-session checkpoint (~50% effort)
