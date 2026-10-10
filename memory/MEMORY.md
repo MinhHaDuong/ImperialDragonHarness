@@ -18,6 +18,7 @@ v8 repository memory. Pilot: [pilot.md](../docs/memory-v8/pilot.md). Provenance:
 ## Recent experiences
 
 - LLM-chosen routing: [A1](journal/2026/2026-10-08-llm-routing-plan-and-wave-a1.md), [A0 to C](journal/2026/2026-10-08-llm-routing-waves-a0-to-c.md), [review round](journal/2026/2026-10-09-routing-review-round-and-host-hygiene.md).
+- [Permissions: allow all Bash, idh install sync](journal/2026/2026-10-10-permissions-allow-all-and-idh-install-sync.md)
 - [Haiku review](journal/2026/2026-10-08-haiku-review-delay.md).
 - [PR 1245 forced gaze](journal/2026/2026-10-07-pr1245-forced-gaze-stuck-ci-merge.md)
 - [Mistral 4 pi context](journal/2026/2026-10-07-mistral4-pi-context-correction.md)
