@@ -1,21 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-11T16:27Z
-Housekeeping (molt) run: 2026-10-11T16:30Z
+Last updated: 2026-10-11T16:36Z
+Housekeeping (molt) run: 2026-10-11T16:40Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-11T16:27Z · as of d7be2304 -->
+<!-- generated 2026-10-11T16:36Z · as of 9e0b062e -->
 
-**Tickets:** 3 ready · 7 blocked — `erg ready tickets/` for full list
+**Tickets:** 6 ready · 7 blocked — `erg ready tickets/` for full list
   next: 1045 Local merge gate replaces the forge's required … · 1077 Decide the session EnterWorktree opt-in after a…
 **In flight:** no open PRs · CI main: success
 **Recent (first-parent):**
-  d7be2304 Merge pull request #1355 from MinhHaDuong/roar-1354
-  a2d7ea45 Merge pull request #1354 from MinhHaDuong/t-roar-recall-first
-  a2eb8914 Merge pull request #1353 from MinhHaDuong/roar-1352
+  9e0b062e Merge pull request #1358 from MinhHaDuong/tickets-molt-raid-scripts
+  0f5b6f6d Merge pull request #1357 from MinhHaDuong/housekeeping-state-2026-10-11
+  6ef8c351 Merge pull request #1356 from MinhHaDuong/ticket-roar-close-script
 
 ## Ready work
 
@@ -31,8 +31,7 @@ The external-reviewer panel train is closed (0902 #1155; 0205 retired at #1157; 
 
 ## Next actions
 See [ROADMAP.md](ROADMAP.md) for the trains. Verification, raid annotations, agent profiles (0938), Zotero and reviewer teardown implementation are done. Remaining: separate attribution integration 1004, memory 0913 per-project migration, the second routing review round 1071. The model tournament is closed for cycle 2 — its follow-ups are ticketed (1046-1058: PDF report, blog, cycle 3, HW-v2 window, 262K rerun, scouting, live routing (done, 1052), drive2 v2, judge sensitivity; task-level routing and decorrelation axes were folded into 1052/1065). Claude adapter 0887 is active: the plugin is the single hook source; PR1211 merged the registration fix and its typed runtime-masked attribution is preserved. Portable Gaze simplification 1027 integrated in PR1189. Routing is now the orchestrator's choice from the `skills/route` grid (1052); retired 0980 is historical, and tournament evidence does not choose a subscription or provider.
-Ready tickets 2026-10-11: 1045, 1077, 1080, 1084 (1084: script roar's mechanical close/cleanup steps; PR #1356, auto-merge armed).
-This raid uses owned isolated worktrees and preserves unrelated primary-checkout changes.
+Ready tickets 2026-10-11: 1045, 1077, 1080, 1084, 1085, 1086 — the last three move inline SKILL.md shell into tested scripts (roar close/cleanup, molt ticket close, raid reroll parser).
 
 ## Author actions
 - Install the ILaaS consortium key in `~/.config/keys/ilaas.env`, then configure `models.json` (0977).
