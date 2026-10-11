@@ -1,0 +1,22 @@
+%erg 0.1
+Title: roar: capture before sweep; end with a clear verdict
+Created: 2026-10-11
+Author: reviewer
+Closed: implemented in this PR
+
+--- log ---
+2026-10-11T07:13Z reviewer created
+2026-10-11T07:13Z reviewer closed — implemented in this PR
+2026-10-11T08:00Z reviewer note verify-reroll — round 1: cross-references updated MISSING (SKILL.md:25 step-3 sweep; attribution-integration.md:8 Roar step 3); step 11 /clear pending-definition conflicts with step 9b bundle and pending capture
+
+--- body ---
+## Context
+Transcript survey (2026-10-11, 64 roar sessions across repos): roar typically
+runs at ~200k context, ~20 of 59 above 256k, and ~22 sessions continue new
+work after roar on the old context (up to 864k). Only reflect, merge review and
+capture need session history; capture sat after the sweep (old step 6).
+
+## Exit criteria
+- [x] Capture moves to step 3, right after review of merges; sweep/report/docs become 4–6; steps 7–11 keep their numbers
+- [x] Cross-references updated (skill, attribution design doc, test comment); journals left append-only
+- [x] Step 11 ends with a context verdict: safe to /clear when nothing is pending, never /compact

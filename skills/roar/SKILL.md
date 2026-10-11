@@ -22,7 +22,7 @@ directory unchanged.
 
 When the working directory is not a git repository (manuscripts, data
 folders): skip the pre-check and steps 7-10; run steps 1-6 and 11.
-The step-3 sweep records findings in the project's notes instead of erg tickets. State
+The step-4 sweep records findings in the project's notes instead of erg tickets. State
 explicitly which steps were skipped and why.
 (Precedent: Œconomia manuscript wrap-up, 2026-07-07.)
 
@@ -67,55 +67,8 @@ default branch — there are no remote branches nor merge requests to inspect.
 1. **Reflect**: what worked, what didn't, what was surprising.
 2. **Review completed merges**: identify each reviewed merged PR from the
    project's git history and forge, then capture its review attribution in
-   step 6. Report a capture failure if the review trail lacks required facts.
-3. **Sweep for similar patterns**: review the fix just completed. Grep/audit the codebase for the same anti-pattern in other files.
-
-   **Backfill commissioned defect fixes only.** When the completed merge has
-   explicit evidence that it fixed a defect, identify its actual merged PR and
-   full fix commit SHA from the project's integration history. Run the helper
-   in the project's existing wrap-up worktree,
-   with its full merged commit SHA and a full integration-tip SHA resolved
-   from the project's `origin/main`, which contains that merged fix. The
-   wrap-up branch may stay below that merge; `--merged-through` proves the fix
-   belongs to the actual integration history without changing its checkout.
-   Supply explicit `PR=reviewed-SHA` evidence from
-   the durable review trail for each past record. The evidence must establish
-   the coordinates of every reviewer attempt in that record; absent or mixed
-   revisions are unresolved. Never infer revisions from record context or apply
-   a branch-wide SHA across attempts without supporting trail evidence.
-   Resolve the loaded helper root in the same invocation:
-
-   ```bash
-   IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)" && MERGED_THROUGH="$(git -C "$PROJECT_REPO" rev-parse --verify 'origin/main^{commit}')" && python3 "$IDH_ROOT/scripts/attribution_backfill.py" --project "$PROJECT_REPO" --merged-through "$MERGED_THROUGH" --defect-fix --fix-pr "$FIX_PR" --fix-commit "$FIX_SHA" --reviewed "$PAST_PR=$REVIEWED_SHA"
-   ```
-
-   Repeat `--reviewed PR=SHA` for additional supported records. This joins
-   literal finding anchors to fix old-side hunks only when the reviewed file
-   blob equals the first-parent fix base. Pure insertions do not cover old
-   lines. Duplicate PR records, malformed/encrypted records, unknown revisions,
-   drift, rename or missing files warn unresolved; never decrypt, recover
-   coordinates fuzzily or write outside the project. Routine merges and merges
-   without a PR identity do not commission this hook; report their visible skip.
-   Keep appends in the existing single wrap-up bundle. Report the helper's
-   appended/no-match/unresolved counts, including a no-covered-review no-op;
-   a write error is a failure to report, never an all-clear. Backfill is factual
-   and never changes original findings or adopted flags.
-
-   **Sweep the ref, not the working tree.** The pre-check's
-   `merge-base --is-ancestor HEAD origin/main` exits 0 both when your branch is
-   merged and when the checkout is simply *behind* main, so a green pre-check is
-   no evidence the tree carries main's content — and a sweep run there reports
-   on files main no longer has (2026-09-10: this step read a guard script that
-   PR #869 had deleted minutes earlier, and would have returned a confident
-   wrong answer had the deletion not been known). Enumerate with
-   `git ls-tree -r --name-only origin/main -- <dir>` and read with
-   `git show origin/main:<path>` — never `git checkout <ref> -- <path>`, which
-   writes the index.
- Record qualifying follow-up tickets in the single wrap-up branch: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then include it in the wrap-up commit — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174). Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
-4. **Report related findings** from the sweep. Do not turn experiences into
-   unsolicited standing tests, rule proposals or crystallisation tickets.
-5. **Update project docs** if pipeline, data contract, or methodology changed.
-6. **Capture significant project experiences**, if any, before removing the
+   step 3. Report a capture failure if the review trail lacks required facts.
+3. **Capture significant project experiences**, if any, before removing the
    worktree. Write and commit an append-only entry under the project's
    `memory/journal/YYYY/YYYY-MM-DD-<slug>.md`. Record context, observable events,
    outcome and decisions already made, with references. Include positive and
@@ -183,6 +136,53 @@ default branch — there are no remote branches nor merge requests to inspect.
    the same wrap-up bundle. Project installations with their own pinned capture
    mechanism must apply that mechanism with the same validated record and
    audience policy; no fallback store is authorized.
+4. **Sweep for similar patterns**: review the fix just completed. Grep/audit the codebase for the same anti-pattern in other files.
+
+   **Backfill commissioned defect fixes only.** When the completed merge has
+   explicit evidence that it fixed a defect, identify its actual merged PR and
+   full fix commit SHA from the project's integration history. Run the helper
+   in the project's existing wrap-up worktree,
+   with its full merged commit SHA and a full integration-tip SHA resolved
+   from the project's `origin/main`, which contains that merged fix. The
+   wrap-up branch may stay below that merge; `--merged-through` proves the fix
+   belongs to the actual integration history without changing its checkout.
+   Supply explicit `PR=reviewed-SHA` evidence from
+   the durable review trail for each past record. The evidence must establish
+   the coordinates of every reviewer attempt in that record; absent or mixed
+   revisions are unresolved. Never infer revisions from record context or apply
+   a branch-wide SHA across attempts without supporting trail evidence.
+   Resolve the loaded helper root in the same invocation:
+
+   ```bash
+   IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)" && MERGED_THROUGH="$(git -C "$PROJECT_REPO" rev-parse --verify 'origin/main^{commit}')" && python3 "$IDH_ROOT/scripts/attribution_backfill.py" --project "$PROJECT_REPO" --merged-through "$MERGED_THROUGH" --defect-fix --fix-pr "$FIX_PR" --fix-commit "$FIX_SHA" --reviewed "$PAST_PR=$REVIEWED_SHA"
+   ```
+
+   Repeat `--reviewed PR=SHA` for additional supported records. This joins
+   literal finding anchors to fix old-side hunks only when the reviewed file
+   blob equals the first-parent fix base. Pure insertions do not cover old
+   lines. Duplicate PR records, malformed/encrypted records, unknown revisions,
+   drift, rename or missing files warn unresolved; never decrypt, recover
+   coordinates fuzzily or write outside the project. Routine merges and merges
+   without a PR identity do not commission this hook; report their visible skip.
+   Keep appends in the existing single wrap-up bundle. Report the helper's
+   appended/no-match/unresolved counts, including a no-covered-review no-op;
+   a write error is a failure to report, never an all-clear. Backfill is factual
+   and never changes original findings or adopted flags.
+
+   **Sweep the ref, not the working tree.** The pre-check's
+   `merge-base --is-ancestor HEAD origin/main` exits 0 both when your branch is
+   merged and when the checkout is simply *behind* main, so a green pre-check is
+   no evidence the tree carries main's content — and a sweep run there reports
+   on files main no longer has (2026-09-10: this step read a guard script that
+   PR #869 had deleted minutes earlier, and would have returned a confident
+   wrong answer had the deletion not been known). Enumerate with
+   `git ls-tree -r --name-only origin/main -- <dir>` and read with
+   `git show origin/main:<path>` — never `git checkout <ref> -- <path>`, which
+   writes the index.
+ Record qualifying follow-up tickets in the single wrap-up branch: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then include it in the wrap-up commit — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174). Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
+5. **Report related findings** from the sweep. Do not turn experiences into
+   unsolicited standing tests, rule proposals or crystallisation tickets.
+6. **Update project docs** if pipeline, data contract, or methodology changed.
 
 ## Bundle and fast track
 
@@ -259,7 +259,8 @@ worktree go once the branch is pushed and auto-merge is armed.
        read-back of its merge request shows it open with auto-merge armed
        (<!-- harness-extension-point -->`gh pr view --json state,autoMergeRequest`).
        The forge then holds the only durable copy: name the merge request
-       as pending integration in step 11. A later failed check leaves it
+       in step 11 as armed, pending forge integration; it does not block
+       the `/clear` verdict. A later failed check leaves it
        open, and the next roar's step 10 stale-merge-request check surfaces
        it.
 
@@ -358,7 +359,17 @@ worktree go once the branch is pushed and auto-merge is armed.
       default branch; there are no remote branches nor merge requests, and
       every ancestry probe compares against the local default branch.
 11. **Report** the completed work and any pending factual capture. Do not offer
-    rule changes or interpreted memories.
+    rule changes or interpreted memories. End with a context verdict.
+    Pending means anything this step reports as pending: an unmerged PR,
+    running CI, an agent still running, a visible pending capture or
+    unintegrated capture branch (step 3), a kept worktree or unpushed or
+    failed bundle (step 9), or an unresolved close claim (step 7). An auto-merge-armed
+    wrap-up bundle that passed the step-9b read-back does not block the
+    verdict: its content is pushed and the forge will merge it, so the
+    verdict line names its merge request. When nothing is pending, say
+    "State saved — safe to `/clear`"; otherwise name each pending item, since
+    only then has roar written everything durable. Advise `/clear`, never
+    `/compact`.
 
 Note: STATE.md is updated on main during `/lair`, not here. Worktree GC
 belongs to housekeeping (`/molt`), not here: roar exits and disposes of its

@@ -28,7 +28,7 @@ RUNTIME_DOCS = {
     "Pi": REPO / "docs" / "2026-10-02-memory-v8-runtime-pi.md",
 }
 
-# This hunt's own roar capture (step 6): the factual episode record of the
+# This hunt's own roar capture (step 3): the factual episode record of the
 # three-runtime verification, written through scripts/memory-capture.sh like
 # every other journal entry, clearly marked as smoke evidence.
 HUNT_ENTRY = (
