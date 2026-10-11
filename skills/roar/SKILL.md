@@ -22,7 +22,7 @@ directory unchanged.
 
 When the working directory is not a git repository (manuscripts, data
 folders): skip the pre-check and steps 7-10; run steps 1-6 and 11.
-The step-3 sweep records findings in the project's notes instead of erg tickets. State
+The step-4 sweep records findings in the project's notes instead of erg tickets. State
 explicitly which steps were skipped and why.
 (Precedent: Œconomia manuscript wrap-up, 2026-07-07.)
 
@@ -259,7 +259,8 @@ worktree go once the branch is pushed and auto-merge is armed.
        read-back of its merge request shows it open with auto-merge armed
        (<!-- harness-extension-point -->`gh pr view --json state,autoMergeRequest`).
        The forge then holds the only durable copy: name the merge request
-       as pending integration in step 11. A later failed check leaves it
+       in step 11 as armed, pending forge integration; it does not block
+       the `/clear` verdict. A later failed check leaves it
        open, and the next roar's step 10 stale-merge-request check surfaces
        it.
 
@@ -358,10 +359,17 @@ worktree go once the branch is pushed and auto-merge is armed.
       default branch; there are no remote branches nor merge requests, and
       every ancestry probe compares against the local default branch.
 11. **Report** the completed work and any pending factual capture. Do not offer
-    rule changes or interpreted memories. End with a context verdict: when
-    nothing is pending (no unmerged PR, running CI or agent still running), say
-    "State saved — safe to `/clear`"; otherwise name what is pending. Advise
-    `/clear`, never `/compact`: roar has written everything durable.
+    rule changes or interpreted memories. End with a context verdict.
+    Pending means anything this step reports as pending: an unmerged PR,
+    running CI, an agent still running, a visible pending capture or
+    unintegrated capture branch (step 3), a kept worktree or unpushed or
+    failed bundle (step 9), or an unresolved close claim (step 7). An auto-merge-armed
+    wrap-up bundle that passed the step-9b read-back does not block the
+    verdict: its content is pushed and the forge will merge it, so the
+    verdict line names its merge request. When nothing is pending, say
+    "State saved — safe to `/clear`"; otherwise name each pending item, since
+    only then has roar written everything durable. Advise `/clear`, never
+    `/compact`.
 
 Note: STATE.md is updated on main during `/lair`, not here. Worktree GC
 belongs to housekeeping (`/molt`), not here: roar exits and disposes of its

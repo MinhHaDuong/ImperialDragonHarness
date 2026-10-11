@@ -40,7 +40,7 @@ def test_bundle_exception_excludes_task_and_reused_branches():
 def test_failed_bundle_is_surfaced_by_roar_not_molt():
     rule = _bundle_exception()
     assert "/molt" not in rule, "molt does not report open merge requests"
-    assert "pending integration in step 11" in rule
+    assert "in step 11" in rule and "does not block" in rule
     assert "step 10" in rule
 
 
