@@ -1,20 +1,21 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-09T09:13Z
+Last updated: 2026-10-11T16:27Z
+Housekeeping (molt) run: 2026-10-11T16:30Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-09T09:13Z · as of d8288af9 -->
+<!-- generated 2026-10-11T16:27Z · as of d7be2304 -->
 
-**Tickets:** 4 ready · 9 blocked — `erg ready tickets/` for full list
-  next: 1024 Model tournament: six arms on the same harness … · 1045 Local merge gate replaces the forge's required …
-**In flight:** 1 open PR (1 draft), oldest #1285 0d · CI main: success
+**Tickets:** 3 ready · 7 blocked — `erg ready tickets/` for full list
+  next: 1045 Local merge gate replaces the forge's required … · 1077 Decide the session EnterWorktree opt-in after a…
+**In flight:** no open PRs · CI main: success
 **Recent (first-parent):**
-  d8288af9 Merge pull request #1292 from MinhHaDuong/roar/routing-followons-2026-10-09
-  488a4b9a Merge pull request #1291 from MinhHaDuong/uv-adoption
-  51c21a28 Merge pull request #1290 from MinhHaDuong/fix/rtk-hook-portable
+  d7be2304 Merge pull request #1355 from MinhHaDuong/roar-1354
+  a2d7ea45 Merge pull request #1354 from MinhHaDuong/t-roar-recall-first
+  a2eb8914 Merge pull request #1353 from MinhHaDuong/roar-1352
 
 ## Ready work
 
@@ -22,7 +23,7 @@ The remaining attribution task is 1004's separate original-criteria integration 
 
 ## Resume point
 2026-10-09: LLM-chosen routing is landed (tracker 1052 and children 1062-1070 closed; #1262-#1292): the orchestrator picks workers from the `skills/route` grid and states why, `model-level`/`effort` and `scripts/model_policy.py` are gone, review independence is a model-family question scaled to risk (`skills/route/references/decorrelation.md`), the harness is on uv (`pyproject.toml`, `uv.lock`, CI `uv sync`), the rtk hook is guarded. 1071 asks for a second review round once the new mechanisms have run. Second round (1071, 2026-10-09): Pi `reviewer` and `planner` did run (2026-10-02 raid), `code-reviewer` never; Codex `fork_turns` all was called 109 times, override honouring unmeasured; the launch line appears in 1 of 154 traced launches (no mechanical check); 1070's adherence criterion is still met by rule text only; no script reads `~/.codex/sessions`. Host work: padme `UV_LINK_MODE=clone`; doudou uv cache moved to the btrfs home, venvs rebuilt, snapshot script excludes the cache and `.venv`.
-2026-10-08: tournament reports final (FR+EN, 12 pages; Mistral series relabelled "last success"/"all attempts"; Haiku 5.5 arm integrated, #1252/#1253), blog post NOT published (1047 awaits the author's go); 1061 (role-split arena redesign) filed deferred; 0974 closed as superseded by 1052. Housekeeping 2026-10-08: 15 dead worktrees GC'd; raid-attribution-union holds a superseded staged snapshot (author decides).
+2026-10-08: tournament reports final (FR+EN, 12 pages; Mistral series relabelled "last success"/"all attempts"; Haiku 5.5 arm integrated, #1252/#1253), blog post (1047) closed and the arena results published ~2026-10-09; 1061 (role-split arena redesign) filed deferred; 0974 closed as superseded by 1052. Housekeeping 2026-10-08: 15 dead worktrees GC'd; raid-attribution-union holds a superseded staged snapshot (author decides).
 The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Portable installation (0999) is complete — integration review closed in #1104; `./bin/idh install`/`check`/`sync` are the registration surface.
 Memory v8 is delivered end to end: convention/inventory (#1102), pilot (#1109), capture 0988, dreaming 0910/0916, and acceptance trials 0918 — historical verdict **No global rollout** (docs/memory-v8/evaluation-results.md); 1019/1022 subsequently lifted the acceptance blockers and 0913 now holds ready per-project migration work. The dated October 2 blocked planning note is historical; no rollout is dispatched here.
 The Zotero train is COMPLETE (2026-10-03/04): 1018 consolidated into one `zotero` skill with verbs (waves A #1178 + B #1179, author force-approve on a full review round), the `~/.idh` rider landed as 1025 (#1177), and the gaze un-reviewable breaker now counts content-bearing files (1026, #1180 — pure renames no longer fire it). The 0485 byte-for-byte report reproduction remains author-side; the vendored URL-intake copy in livre-milliards-climat (already drifted) and the now-dangling installed symlink are recorded in 1018.
@@ -30,10 +31,10 @@ The external-reviewer panel train is closed (0902 #1155; 0205 retired at #1157; 
 
 ## Next actions
 See [ROADMAP.md](ROADMAP.md) for the trains. Verification, raid annotations, agent profiles (0938), Zotero and reviewer teardown implementation are done. Remaining: separate attribution integration 1004, memory 0913 per-project migration, the second routing review round 1071. The model tournament is closed for cycle 2 — its follow-ups are ticketed (1046-1058: PDF report, blog, cycle 3, HW-v2 window, 262K rerun, scouting, live routing (done, 1052), drive2 v2, judge sensitivity; task-level routing and decorrelation axes were folded into 1052/1065). Claude adapter 0887 is active: the plugin is the single hook source; PR1211 merged the registration fix and its typed runtime-masked attribution is preserved. Portable Gaze simplification 1027 integrated in PR1189. Routing is now the orchestrator's choice from the `skills/route` grid (1052); retired 0980 is historical, and tournament evidence does not choose a subscription or provider.
+Ready tickets 2026-10-11: 1045, 1077, 1080, 1084 (1084: script roar's mechanical close/cleanup steps; PR #1356, auto-merge armed).
 This raid uses owned isolated worktrees and preserves unrelated primary-checkout changes.
 
 ## Author actions
-- Review `docs/tournament-graphs/diffusion-draft.md`, decide the blog destination, then give the go for ticket 1047; review dream PR #1250.
 - Install the ILaaS consortium key in `~/.config/keys/ilaas.env`, then configure `models.json` (0977).
 - Rotate the six exposed bash-x values and the Albert key, deferred to October 2026.
 - Merge the 266 hash-duplicate clusters in the client (right-click → Merge n Items), via the report regenerated by `python3 scripts/zotero.py dedup-report --out /tmp/zotero-duplicates.html` (0485 closed; author-side chore).
