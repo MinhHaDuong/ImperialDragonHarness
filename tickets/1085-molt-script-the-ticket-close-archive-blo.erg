@@ -1,0 +1,25 @@
+%erg 0.1
+Title: molt: script the ticket close/archive blocks; fix merged-branch probe and fixed /tmp path
+Created: 2026-10-11
+Author: reviewer
+
+--- log ---
+2026-10-11T16:30Z reviewer created
+
+--- body ---
+## Context
+Audit of inline SKILL.md code (2026-10-11): `skills/molt/SKILL.md` holds about 30
+lines of untested ticket-close logic (close, archive, stage, prune duplicates in
+`tickets/` vs `tickets/closed/`), the same job roar does inline (ticket 1084
+scripts roar's copy). Two defects ride along:
+- The merged-branch probe (bash block near line 239) uses GNU-only `grep -oP`,
+  parses `ls`, and derives the ticket from the branch with `t\K\d+`; a branch
+  not named `tN…` yields nothing and the probe reports "not merged" silently.
+- The Zotero reconcile block writes the fixed path `/tmp/zotero-reconcile.json`;
+  parallel sessions clobber each other.
+
+## Exit criteria
+- [ ] The close / archive / stage / duplicate-prune blocks become one script (shared with 1084's roar script if it has landed, otherwise placed so 1084 can reuse it), with tests for close-already-moved, archive-reported paths, and the duplicate prune
+- [ ] The merged-branch probe uses `git merge-base --is-ancestor` (or the PR squash-subject check as a second signal), portable grep only, and reports "could not determine" rather than "not merged" when it cannot map a branch
+- [ ] The reconcile output path is per-session (`mktemp`), not a fixed `/tmp` name
+- [ ] `skills/molt/SKILL.md` calls the script instead of inline blocks
