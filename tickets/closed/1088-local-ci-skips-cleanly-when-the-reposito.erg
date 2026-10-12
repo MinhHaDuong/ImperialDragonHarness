@@ -2,9 +2,11 @@
 Title: local CI skips cleanly when the repository has no workflow
 Created: 2026-10-12
 Author: Minh Ha-Duong
+Closed: implemented and verified — PR #1368
 
 --- log ---
 2026-10-12T08:04Z Minh Ha-Duong created
+2026-10-12T08:29Z Minh Ha-Duong closed — implemented and verified — PR #1368
 
 --- body ---
 ## Context
@@ -29,7 +31,7 @@ The shared `scripts/local-ci.sh` sources `<repo>/ci-local/common.sh` before it c
 - No CI workflow or local runner assets are added to projects that intentionally have no CI.
 
 ## Exit criteria
-- [ ] No workflow: runner returns the documented no-workflow skip code 3 before probing `act`, `podman`, or `ci-local/`, and says no checks ran.
-- [ ] Workflow present but helper absent: runner exits non-zero with a clear diagnostic.
-- [ ] Regression tests cover both paths and pass.
-- [ ] `make check-fast` and `make lint` pass.
+- [x] No workflow: runner returns the documented no-workflow skip code 3 before probing `act`, `podman`, or `ci-local/`, and says no checks ran.
+- [x] Workflow present but helper absent: runner exits non-zero with a clear diagnostic.
+- [x] Regression tests cover both paths and pass.
+- [x] `make check-fast` and `make lint` pass.
