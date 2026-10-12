@@ -20,6 +20,7 @@ import argparse
 import logging
 import os
 import re
+import stat
 import sys
 from collections import Counter
 from pathlib import Path
@@ -93,8 +94,22 @@ def ticket_files(dirs: list[Path]) -> tuple[list[Path], bool]:
             log.error("cannot read directory %s: %s", d, err.strerror)
             unreadable = True
             continue
-        found += [d / n for n in names
-                  if n.endswith(".erg") and not n.startswith(".") and (d / n).is_file()]
+        for n in names:
+            if not n.endswith(".erg") or n.startswith("."):
+                continue
+            path = d / n
+            try:
+                # Not Path.is_file(): it swallows the stat error of a directory that
+                # can be listed but not searched (mode 0444) and answers False, so
+                # every ticket in it vanished from the tally with empty stderr and
+                # exit 0 — an all-clear out of a failed look (PR #1372, 2026-10-12).
+                kind = stat.S_IFMT(path.stat().st_mode)
+            except OSError as err:
+                log.error("cannot stat %s: %s", path, err.strerror)
+                unreadable = True
+                continue
+            if kind == stat.S_IFREG:
+                found.append(path)
     return found, unreadable
 
 

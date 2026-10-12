@@ -297,6 +297,26 @@ def test_unreadable_only_directory_is_not_silent(tmp_path):
 
 
 @needs_unprivileged
+def test_unstatable_directory_entries_are_not_silent(tmp_path):
+    # A mode-0444 directory can be LISTED but not SEARCHED: os.listdir returns the
+    # names, every stat on them raises PermissionError. Path.is_file() swallows that
+    # error and answers False, so the tickets disappeared from the tally with empty
+    # stderr and exit 0 — "all clear" reported for a corpus it could not read.
+    # Reproduced on PR #1372 tip e3039d4d by the round-2 gaze seat.
+    tickets = write_tickets(tmp_path, {"1050-x.erg": GOOD_LOG,
+                                       "closed/0900-x.erg": GOOD_LOG})
+    closed = tickets / "closed"
+    closed.chmod(0o444)
+    try:
+        r = run_script(tmp_path, "tickets", "tickets/closed")
+    finally:
+        closed.chmod(0o755)
+    assert r.returncode == 2
+    assert "cannot stat" in r.stderr and "0900-x.erg" in r.stderr
+    assert "Ticket 1050: 1 permission" in r.stdout  # readable rows are kept
+
+
+@needs_unprivileged
 def test_unreadable_ticket_file_exits_2_without_traceback(tmp_path):
     tickets = write_tickets(tmp_path, {"1050-x.erg": GOOD_LOG, "1051-y.erg": GOOD_LOG})
     (tickets / "1051-y.erg").chmod(0)
