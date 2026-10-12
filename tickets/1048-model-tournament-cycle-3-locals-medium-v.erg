@@ -26,6 +26,7 @@ Label: deferred
 2026-10-12T06:10Z claude note Prepared on padme: Strata configs strata-c3-{solo,helper}-{medium,xhigh}.json in ~/Strata-daily (CUDA 13.0, port 8081, reasoning_effort, frozen profile data/expert-profile-c3-<topo>.bin, gpu_order as_given); pi providers padme-mellum (:8083) and dashscope (apiKey $QWEN_API_KEY_AEDIST, compat supportsDeveloperRole false; answers at medium and xhigh, pi records xhigh as high); ~/arena branch t1048-cycle3 (6296ad1, off t1053-pass-aware-cap) declares f1m/f1x/f2m/f2x, ml0/ml1, q8m/q8x. Draft pre-registration in the concept note (cycle-3 revised slate)
 2026-10-12T06:27Z claude note Strata qualification (v0.1.43, CUDA 13.0): all four arm configs load and report their level (medium / high); frozen profiles data/expert-profile-c3-{solo,helper}.bin built from one bench suite each (no tournament ticket). Bench with profile, thinking on, short chat decode: solo 79.5 tok/s, helper 106.7; solo 4K/16K prompt 2053/3097 tok/s. Solo verified on the 5070 Ti (14.1 GB, A4000 idle); the bench README mislabels the host 2x A4000. Preload off does not start serving (verify needs the profile tier). Arena branch t1048-cycle3 rebuilt on arena main: 16e4e43
 2026-10-12T06:44Z claude note author: scoring split for the A-vs-B deployment choice; full legs f2x f2m ml0 q8m q8x, speed-only f1x f1m (3 tickets), Mellum screened on 3 tickets, ml1 dropped
+2026-10-12T06:49Z claude note author: speed and Mellum-screen tickets 0470, 0532, 0452
 
 --- body ---
 
@@ -53,8 +54,7 @@ per model and effort, and the topologies are compared on speed only.
   ml0 (Mellum on the A4000: the deployment-A coder), q8m and q8x (hosted
   qwen3.8-flash: a deployment-B coder candidate). Haiku, Luna and the other
   hosted coders come from cycle 2.
-- Speed-only, 3 tickets (0470 plus one mid and one large ticket, fixed at
-  pre-registration): f1x, f1m (Flash-Next, 5070 Ti solo). Their time and
+- Speed-only, 3 tickets (0470, 0532, 0452: author, 2026-10-12): f1x, f1m (Flash-Next, 5070 Ti solo). Their time and
   tokens go in the readout; they are not on the scatterplot.
 - Mellum screen: ml0 runs the 3 speed-check tickets first; the remaining 7
   legs run only if it finishes them (no collapse on the large one). If it

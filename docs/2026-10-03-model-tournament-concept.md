@@ -400,8 +400,9 @@ Arms (all locals at ctx 131072; an arm that cannot load it is dropped):
 | f1m | same | medium | 5070 Ti solo | 3, speed only | deployment-A reviewer speed |
 
 The scored arms are the scatterplot points; Haiku, Luna and the other hosted
-coders enter from their cycle-2 scores. The 3 speed tickets are 0470 plus
-one mid and one large ticket, named before the first leg. Mellum screen:
+coders enter from their cycle-2 scores. The 3 speed tickets (author, 2026-10-12) are
+0470 (data, ~21K peak context), 0532 (prose, ~70K) and 0452 (code-large,
+~115K: at the compaction edge). Mellum screen:
 ml0 runs those 3 first and continues to 10 only if it finishes them; a
 collapse on the large one rules deployment A out. Dropped: ml1 (Mellum on
 the 5070 Ti; neither deployment puts it there).
