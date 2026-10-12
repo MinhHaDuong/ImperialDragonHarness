@@ -16,6 +16,7 @@ Label: deferred
 2026-10-12T04:58Z claude note Strata settings reviewed against v0.1.43: preload protocol, helper flags, solo/helper default differences, CPU swap timing
 2026-10-12T05:00Z claude note preload-off arms dropped (author): two Flash-Next arms with frozen profile; off vs on measured by bench.sh
 2026-10-12T05:01Z claude note Gemma UD-Q4_K_XL on 5070 Ti dropped (author): NVFP4 covers that card
+2026-10-12T05:07Z claude note author: Flash-Next 2x2 effort medium|xhigh x solo|helper; ctx 131072 for every local arm or drop; gemini panel seat replaced for cycle 3; CPU swap undecided
 
 --- body ---
 
@@ -28,18 +29,26 @@ lineage twin.
 ## Arms
 
 Revised 2026-10-12 by the author (supersedes the 2026-10-06 list; no leg
-had run). Six local arms: two on Flash-Next, four on two new families.
+had run). Eight local arms: four on Flash-Next, four on two new families.
 
-- Local Flash-Next IQ3_S (b2), Strata v0.1.43, CUDA 13.0, @medium explicit,
-  on 5070 Ti solo | 5070 Ti + A4000 as expert helper (two arms, smoke
-  each first), both with a frozen expert profile (`--expert-profile`, see
+Context rule (author, 2026-10-12): every local arm runs at ctx 131072. An
+arm that cannot load 131072 on its card is dropped, not run shorter.
+
+- Local Flash-Next IQ3_S (b2), Strata v0.1.43, CUDA 13.0, as a 2x2 (four
+  arms, smoke each first): effort @medium | @xhigh, explicit (xhigh is the
+  cycle-2 template default, so the @xhigh arms anchor against cycle 2);
+  topology 5070 Ti solo | 5070 Ti + A4000 as expert helper. All four use a
+  frozen expert profile (`--expert-profile`, see
   Strata settings below). Preload off is NOT a tournament arm (author,
   2026-10-12): it only changes the cold start, which a long leg on a
   resident server dilutes; it is measured by `./bench.sh` instead.
 - Mellum 2.1 12B-A2.5B Thinking Q8_0 (JetBrains), llama-server, ctx 131072,
   `/data/models/gguf/mellum/`, on A4000 solo | 5070 Ti solo (two arms).
-- Gemma 4 26B-A4B QAT UD-Q4_K_XL (Google), llama-server, ctx 65536 (the
-  most that fits), on A4000 solo only. The 5070 Ti runs the NVFP4 build
+  Its effort levels are not known yet: record the real level from session
+  evidence before the smoke (same for Gemma).
+- Gemma 4 26B-A4B QAT UD-Q4_K_XL (Google), llama-server, on A4000 solo
+  only. Loads 64K at most with the current settings: try a lighter KV cache
+  (q8_0 or k8v4-style) to reach 131072, else drop the arm. The 5070 Ti runs the NVFP4 build
   instead (author, 2026-10-12: the Q4 arm there is redundant).
 - Gemma 4 26B-A4B NVFP4 on 5070 Ti solo only (Blackwell FP4; the A4000 has
   no FP4 path). Candidate file: FreedomAISVR/Gemma-4-26B-A4B-it-NVFP4-GGUF
@@ -47,7 +56,7 @@ had run). Six local arms: two on Flash-Next, four on two new families.
   ggufbench (~16.45 GiB, does not fit 16 GB) and the FreedomAISVR "QAT-NVFP4"
   hybrid (weights stay Q4_0, only norms/biases are NVFP4). Before declaring
   the arm: check the file card, confirm padme's llama.cpp build runs NVFP4 on
-  sm_120, and take the largest ctx that fits (aim 131072).
+  sm_120, and load ctx 131072 (else drop the arm).
 - Hosted: qwen3.8-flash, lineage twin of flash-next (same architecture,
   NOT the same weights; label it "lineage twin" in every table), at
   @default(xhigh) and @medium, DIRECT DashScope via the custom pi provider
@@ -55,6 +64,12 @@ had run). Six local arms: two on Flash-Next, four on two new families.
   flash-next itself is served, take the true twin.
 - Dropped: b3 Q2_0 and Coder IQ1_M (cycle 2 means 20.8 and 21.1 / 30 vs
   26.2 for b2).
+
+Panel (author, 2026-10-12): Gemma is a Google model, so the gemini seat
+breaks the family-disjointness rule. Replace it for all of cycle 3 (the
+whole cycle judged by one panel): pick a seat from a family absent from the
+lineup, calibrate it on cycle-2 legs as minimax was on 2026-10-05 (~$3),
+and pre-register the change. Cross-cycle comparisons note the seat change.
 
 Mellum and Gemma run in their own window, not beside the Flash-Next arms
 (author, 2026-10-12).
