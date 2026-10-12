@@ -271,7 +271,7 @@ PI_TEMPLATE = REPO / "adapters" / "pi" / "agents" / "code-reviewer.md"
 # log, 2026-10-03): model is the observed padme serving value, tools are
 # the existing Pi reviewer.md style. Mutations of any of the three pinned
 # frontmatter fields must fail the pins below.
-PI_MODEL = "padme/qwen3.8-27b"
+PI_MODEL = "padme/qwen3.8-flash-next-iq3_s"  # padme serving value since 2026-10-12 (ticket 1048)
 PI_TOOLS = "read, grep, find, ls, bash"
 PI_PROVENANCE_COMMENT = (
     "<!-- Pi translation of agents/code-reviewer.md; "
