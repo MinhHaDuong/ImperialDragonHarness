@@ -431,12 +431,14 @@ Autonomous mode: ralph loop to next wave.
     IDH_ROOT="${IDH_ROOT:?set IDH_ROOT per the helper-command note at the top}"
     python3 "$IDH_ROOT/scripts/raid-reroll-tally.py" tickets tickets/closed
     ```
-    A `WARNING drift:` line on stderr means a ticket log has entries but none
-    in the timestamp shape, so its counts are missing: do not read the absent
-    rows as zero. Exit 2 means no ticket directory was found; report it, do not
-    read it as an all-clear.
+    A `WARNING drift:` line on stderr means a ticket log has lines outside the
+    timestamp shape; those entries are not counted, so do not read their absence
+    as zero. A verb rename (`bump` → another word) yields zeros with no warning:
+    the drift check covers timestamp shape only. Exit 2 with `no ticket directory`
+    on stderr means the repo could not be read; report it, do not read it as an
+    all-clear.
     Combine category rows in the briefing as:
-    `Ticket NNNN: N bumps (X permission, Y verify-reroll, …)`.
+    `Ticket NNNN: N entries (X permission, Y verify-reroll, Z circuit-breaker, …)`.
 2. All merged PRs confirmed on main. Any ESCALATED PRs listed with reasons.
    Any ticket Phase 1 excluded as skip-labelled is listed here too, with the
    decisions it is waiting on. When the queue held nothing else, that list is
