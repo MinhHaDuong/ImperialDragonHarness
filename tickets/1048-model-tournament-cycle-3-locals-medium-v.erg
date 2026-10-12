@@ -20,6 +20,8 @@ Label: deferred
 2026-10-12T05:25Z claude note Gemma qualification on padme, ctx 131072, KV q8_0, -fa on, needle at 114K tokens: Q4 UD-Q4_K_XL on A4000 fits fully on GPU only with -ub 128 (pp 920, tg 38.7 tok/s at 114K; 94 tok/s at 4K); -ub 256 OOMs mid-prompt. NVFP4 (FreedomAISVR, genuine NVFP4) on 5070 Ti never fits fully (compute buffer short), needs --n-cpu-moe 3 (pp 1899, tg 63 tok/s at 114K); --n-cpu-moe 1 OOMs. Offload cost at 4K on Q4: 1 layer ~90 vs 94, 3 layers 20-31 tok/s. Then Gemma cancelled by the author, NVFP4 weights deleted, gemini seat kept
 2026-10-12T05:27Z claude note effort levers: Mellum template has enable_thinking only; Strata v0.1.43 takes reasoning_effort per request or as a config default (#1641)
 2026-10-12T05:28Z claude note Mellum sampling from the model card: temp 0.6, top-p 0.95, top-k 20 (vendor agentic evals used temp 1.0)
+2026-10-12T05:51Z claude note Mellum qualification, Q8_0, ctx 131072, KV q8_0, -fa on, fully on GPU: loads 13.8 GB on either card and survives a 114K prompt. 5070 Ti: pp 7385 / tg 214 tok/s at 4K, pp 5235 / tg 111 at 114K. A4000: pp 3713 / tg 114 at 4K, pp 2274 / tg 48 at 114K. Recall open: at 114K it thought past 6000 tokens without an answer on both cards (temp 0); at 4K it answered in 193 tokens
+2026-10-12T05:51Z claude note Strata effort check, IQ3_S solo 5070 Ti, v0.1.43: reasoning_effort reaches the template (a system instruction per level). Easy prompt: no separation. Counting problem, 2 runs each, all correct (832): reasoning 7000/6591 chars at medium vs 11672/8789 at xhigh, completion tokens overlapping (4405/4615 vs 5387/3998). The lever acts, modestly; the 2x2 stands
 
 --- body ---
 
