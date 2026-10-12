@@ -10,6 +10,7 @@ Label: deferred
 2026-10-06T09:44Z reviewer label deferred
 2026-10-06T09:44Z reviewer note Author-approved chantier sequence: cycle3 after driver improvements1053, deferred experimentation. Resume only on an explicit author decision; this cycle is not a prerequisite for the current research PDF or blog posts.
 2026-10-08T20:27Z reviewer Kept deferred as grid data (decided 2026-10-08 under 1069, the author raised the question and the recommendation was to keep it): the last exit criterion is reworded because the grid now also takes rows from the arena refresh. Not a prerequisite of the routing work.
+2026-10-12T04:35Z claude note arms réinscriptibles, candidats Mellum 2.1 / Gemma 4, mesures padme
 
 --- body ---
 
@@ -50,3 +51,43 @@ declaring that arm; defer if nothing good exists).
 - [ ] Smoke 0470 on every new arm before real legs
 - [ ] Pass complete; paired multidimensional analysis (analyze2.py)
 - [ ] skills/route grid.json gains or refreshes the local rows from cycle data (the grid also takes rows from the arena refresh, `scripts/tournament-analysis.py --grid`)
+
+## Note (auteur, 2026-10-12)
+
+Annotation seulement : le rerun reste à imaginer.
+
+Le cycle 3 n'a pas démarré (aucun leg) : sa liste d'arms peut être réécrite
+librement, à condition de l'inscrire dans la note conceptuelle §8 et le
+journal 1024 avant le premier leg. L'auteur veut d'abord un cycle « codeur »
+comparable au cycle 2, puis la refonte 1061.
+
+Candidats nommés le 2026-10-12, encore à imaginer :
+- Mellum 2.1 12B-A2.5B Thinking (JetBrains, sorti le 2026-10-08,
+  Apache 2.0, famille distincte de Qwen, GGUF officiel). Carte du vendeur,
+  auto-déclarée : LiveCodeBench v6 82,0, SWE-bench Verified 47,0,
+  SWE-bench Pro 28,0, évals agentiques faites dans Pi v0.73.1. Q8_0
+  téléchargé sur padme : `/data/models/gguf/mellum/`.
+- Gemma 4 26B-A4B QAT UD-Q4_K_XL (Google), déjà sur padme.
+- b2 (Flash-Next IQ3_S, Strata) @medium comme ancre. b3 et Coder sont
+  jugés faibles au cycle 2 (moyennes 20,8 et 21,1 / 30, contre 26,2 pour
+  b2), candidats à l'abandon.
+- Le levier `--expert-profile-save` noté plus haut n'a pas encore été essayé.
+
+Mesures padme des 2026-10-11/12 (memo padme `gpu-swap-5070ti-memo.md`,
+PR padme #95–#97), pour le prix en temps des arms locaux :
+- Flash-Next IQ3_S sur Strata v0.1.43, moteur CUDA 13.0 : A4000 en helper
+  d'experts 100/92/119 tok/s (code/stats/writing), A4000 en peer
+  95/90/126, 5070 Ti seul 89/85/115. Au départ (v0.1.38, A4000 + 3060) :
+  40/39/48. Le moteur CUDA 12.8 plante dès que le 5070 Ti est la carte
+  primaire (upstream #220/#224). Ne jamais utiliser CUDA 13.2 (upstream
+  #892, sortie incohérente). Éviter `--prefill auto:32768` (upstream #1468).
+- Qwen3.8-27B Q4_K_M sur llama-server, MTP, ctx 131072 : 35,5/31,9 tok/s
+  avant le swap, 72,8/69,0 après (`--split-mode tensor --tensor-split 8,16`,
+  `CUDA_DEVICE_ORDER=PCI_BUS_ID`), 80,7 en prod.
+- Reviewer sur l'A4000 pendant que Strata tourne seul sur le 5070 Ti :
+  Mellum 2.1 Q8_0 charge 131K de contexte (13,8 Go), 108/110 tok/s seul,
+  105/107 à côté de Strata. Gemma 4 26B-A4B charge 64K au plus (15,1 Go),
+  85 tok/s seul, 81 à côté. Strata perd 3–5 % à côté. llama-server est
+  épinglé sur les CPU 12–23 (Strata épingle son pool sur 0–11).
+- Le pool CPU de Strata sature le 3945WX (12 threads, ~1 200 % CPU). Un
+  3975WX est acheté ; le rerun CPU est prévu.
