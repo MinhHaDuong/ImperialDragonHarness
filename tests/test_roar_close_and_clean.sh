@@ -38,7 +38,7 @@ _check_true() { # <label> <cmd...>
 # PATH for hermetic children: real tools by symlink, plus a gh stub. `nogh`
 # omits the stub (and gh itself) for the could-not-look case.
 TOOLS="$T/tools"; mkdir -p "$TOOLS"
-for t in bash git jq date awk grep sed sort cat mkdir rm mv ls head tail tr cut wc dirname basename realpath readlink printf env uname find xargs mktemp; do
+for t in bash git jq date awk grep sed sort cat mkdir rm mv ls head tail tr cut wc dirname basename realpath readlink printf env uname find xargs mktemp touch; do
     p=$(command -v "$t" 2>/dev/null || true); [ -n "$p" ] && ln -sf "$p" "$TOOLS/$t"
 done
 STUBS="$T/stubs"; mkdir -p "$STUBS"
@@ -131,7 +131,7 @@ make_world "$T/c4m" merged-a merged-b; cd "$W"
 git checkout -q merged-a
 mutant current '/guard:current/d;/guard:worktree/d'
 run "$MUTANT" --phase after-exit
-_check_rc "current control: unguarded sweep hits git's refusal (rc 1)" 1 "$rc"
+_check_true "current control: unguarded sweep deletes the branch it stands on" bash -c '! git rev-parse --verify -q refs/heads/merged-a >/dev/null'
 
 # --- 5. guard: branch checked out in another worktree, whole-line match ------
 make_world "$T/c5" merged-a merged-a-2 merged-b; cd "$W"
@@ -145,7 +145,7 @@ make_world "$T/c5m" merged-a merged-b; cd "$W"
 git worktree add -q "$T/c5m/x" merged-a
 mutant worktree '/guard:worktree/d'
 run "$MUTANT" --phase after-exit
-_check_rc "worktree control: unguarded sweep fails (rc 1)" 1 "$rc"
+_check_true "worktree control: unguarded sweep deletes another session's branch" bash -c '! git rev-parse --verify -q refs/heads/merged-a >/dev/null'
 
 # --- 6. -D after the ancestry probe; unmerged survives -----------------------
 make_world "$T/c6"; cd "$W"
@@ -166,7 +166,7 @@ git checkout -q -b ancestor; git commit -q --allow-empty -m side
 git push -q origin ancestor:main
 git checkout -q -b adv; git commit -q --allow-empty -m adv; git push -q origin adv:main
 git checkout -q main; git branch -q -D adv
-mutant dflag 's/branch -D/branch -d/'
+mutant dflag 's|git update-ref -d "refs/heads/$b" "$PROBED"|git branch -d -- "$b"|'
 run "$MUTANT" --phase after-exit
 _check_true "-D control: with -d the ancestor survives" has_local ancestor
 
@@ -181,8 +181,14 @@ _check_true "failed fetch deletes nothing" has_local merged-a
 # no tickets/erg at all (the aedist-technical-report case)
 make_world "$T/c9"; cd "$W"
 run "$SCRIPT" --phase before-exit --ticket 0001
-_check_rc "no tickets/erg exits 2" 2 "$rc"
-_check_lacks "no tickets/erg is no all-clear" "$out" "RESULT: clean"
+_check_rc "no ticket store: explicit skip, exit 0 (SKILL.md prerequisite policy)" 0 "$rc"
+_check_says "…says it skipped" "$out" "CLOSE: skipped"
+_check_says "…and the claims check skipped too" "$out" "CLAIMS: skipped"
+# a ticket store that exists but cannot answer is not a repo without one
+mkdir tickets
+run "$SCRIPT" --phase before-exit --ticket 0001
+_check_rc "tickets/ without a runnable erg exits 2" 2 "$rc"
+_check_lacks "…is no all-clear" "$out" "RESULT: clean"
 
 # --- 10. ticket close, claims, tracker detection -----------------------------
 ticket_world() { # <dir>
@@ -239,7 +245,7 @@ mkdir -p "$T/c13/wrap"
 cat > "$T/c13/wrap/git" <<WRAP
 #!/usr/bin/env bash
 if [ "\$1" = push ] && [ ! -e "$T/c13/pushed" ]; then
-    touch "$T/c13/pushed"; "$TOOLS/git" -C "$T/c13/colleague" push -q origin merged-a
+    : > "$T/c13/pushed"; "$TOOLS/git" -C "$T/c13/colleague" push -q origin merged-a
 fi
 exec "$TOOLS/git" "\$@"
 WRAP
@@ -255,8 +261,120 @@ git -C "$T/c14/colleague" config user.email t@t; git -C "$T/c14/colleague" confi
 git -C "$T/c14/colleague" checkout -q merged-a; git -C "$T/c14/colleague" commit -q --allow-empty -m "new work"
 mkdir -p "$T/c14/wrap"
 sed "s/c13/c14/g" "$T/c13/wrap/git" > "$T/c14/wrap/git"; chmod +x "$T/c14/wrap/git"
-mutant lease 's/--force-with-lease="[^"]*(")" origin/origin/;s|--force-with-lease="refs/heads/\$b:\$(git rev-parse "refs/remotes/origin/\$b")" origin ":refs/heads/\$b"|origin --delete "$b"|'
+mutant lease 's|--force-with-lease="refs/heads/$b:$PROBED" origin ":refs/heads/$b"|origin --delete "$b"|'
 env -i PATH="$T/c14/wrap:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$MUTANT" --phase after-exit >/dev/null 2>&1 || true
 _check_true "lease control: unleased delete destroys the raced commit" bash -c '! git -C "$0" ls-remote --heads origin merged-a | grep -q .' "$W"
+
+
+# --- 12. the lease and the delete bind to the object id the probe approved ----
+# A wrapper plays the colleague the moment the sweep's ancestry probe returns.
+wrapped() { # <wrapdir> <args...>: run the real script with a git wrapper first on PATH
+    local wd="$1"; shift
+    out=$(env -i PATH="$wd:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$@" 2>&1) && rc=0 || rc=$?
+}
+colleague() { # <dir> <branch>: a second clone of <dir>/o.git on <branch>
+    git clone -q "$1/o.git" "$1/colleague" 2>/dev/null
+    git -C "$1/colleague" config user.email t@t; git -C "$1/colleague" config user.name t
+    git -C "$1/colleague" checkout -q "$2"
+}
+
+# 12a. approved A, then a push AND a fetch move the tracking ref to unmerged B before
+# the delete: a lease read from the tracking ref afterwards would adopt B.
+race_remote() { # <dir> <script>
+    make_world "$1" merged-a; cd "$W"
+    G branch -q -D merged-a                       # only the remote probe runs
+    colleague "$1" merged-a; git -C "$1/colleague" commit -q --allow-empty -m "new work"
+    mkdir -p "$1/wrap"
+    cat > "$1/wrap/git" <<WRAP
+#!/usr/bin/env bash
+if [ "\$1" = merge-base ] && [ ! -e "$1/raced" ]; then
+    : > "$1/raced"; "$TOOLS/git" "\$@"; rc=\$?
+    "$TOOLS/git" -C "$1/colleague" push -q origin merged-a
+    "$TOOLS/git" -C "$W" fetch -q origin
+    exit \$rc
+fi
+exec "$TOOLS/git" "\$@"
+WRAP
+    chmod +x "$1/wrap/git"
+    wrapped "$1/wrap" "$2" --phase after-exit
+}
+race_remote "$T/c15" "$SCRIPT"
+_check_rc "tracking ref moved after the probe: delete refused (rc 1)" 1 "$rc"
+_check_true "…the colleague's commit survives on the remote" has_remote merged-a
+
+# 12b. approved A, then the local branch advances to unmerged B: update-ref -d is
+# leased to A, where `branch -D` by name would destroy B.
+make_world "$T/c16" merged-a; cd "$W"
+B=$(G commit-tree -p merged-a -m wip "merged-a^{tree}")
+mkdir -p "$T/c16/wrap"
+cat > "$T/c16/wrap/git" <<WRAP
+#!/usr/bin/env bash
+if [ "\$1" = merge-base ] && [ ! -e "$T/c16/raced" ]; then
+    : > "$T/c16/raced"; "$TOOLS/git" "\$@"; rc=\$?
+    "$TOOLS/git" -C "$W" update-ref refs/heads/merged-a $B
+    exit \$rc
+fi
+exec "$TOOLS/git" "\$@"
+WRAP
+chmod +x "$T/c16/wrap/git"
+wrapped "$T/c16/wrap" "$SCRIPT" --phase after-exit
+_check_rc "local branch advanced after the probe: delete refused (rc 1)" 1 "$rc"
+_check_true "…the advanced branch survives" bash -c '[ "$(git -C "$0" rev-parse refs/heads/merged-a)" = "$1" ]' "$W" "$B"
+
+# controls for 12a/12b: the old constructions destroy the raced commit
+mutant tracklease 's|force-with-lease="refs/heads/$b:$PROBED"|force-with-lease="refs/heads/$b:$(git rev-parse "refs/remotes/origin/$b")"|'
+rm -rf "$T/c15n"; race_remote "$T/c15n" "$MUTANT"
+_check_true "lease-from-tracking-ref control: the raced commit is destroyed" bash -c '! git -C "$0" ls-remote --heads origin merged-a | grep -q .' "$W"
+make_world "$T/c16m" merged-a; cd "$W"
+B=$(G commit-tree -p merged-a -m wip "merged-a^{tree}")
+mkdir -p "$T/c16m/wrap"; sed "s/c16/c16m/g" "$T/c16/wrap/git" | sed "s/update-ref refs\/heads\/merged-a [0-9a-f]*/update-ref refs\/heads\/merged-a $B/" > "$T/c16m/wrap/git"; chmod +x "$T/c16m/wrap/git"
+mutant byname 's|git update-ref -d "refs/heads/$b" "$PROBED"|git branch -D -- "$b"|'
+wrapped "$T/c16m/wrap" "$MUTANT" --phase after-exit
+_check_true "by-name delete control: the advanced branch is destroyed" bash -c '! git -C "$0" rev-parse --verify -q refs/heads/merged-a >/dev/null' "$W"
+
+# --- 13. enumeration failures are could-not-look, never an empty clean sweep ---
+make_world "$T/c17" merged-a; cd "$W"
+mkdir -p "$T/c17/wrap"
+cat > "$T/c17/wrap/git" <<WRAP
+#!/usr/bin/env bash
+[ "\$1" = for-each-ref ] && exit 7
+exec "$TOOLS/git" "\$@"
+WRAP
+chmod +x "$T/c17/wrap/git"
+wrapped "$T/c17/wrap" "$SCRIPT" --phase after-exit
+_check_rc "for-each-ref failing exits 2" 2 "$rc"
+_check_lacks "…is no all-clear" "$out" "RESULT: clean"
+_check_says "…names the failed listing" "$out" "cannot list"
+_check_true "…and deleted nothing" has_local merged-a
+
+# --- 14. a tag shadowing the integration branch cannot authorize a delete ------
+# An unqualified `origin/main` resolves to refs/tags/origin/main first. The tag
+# sits one commit above the unmerged branch, so against the tag it looks merged.
+make_world "$T/c18"; cd "$W"
+git checkout -q -b unmerged; git commit -q --allow-empty -m wip; git push -q origin unmerged
+git commit -q --allow-empty -m above; git tag origin/main HEAD
+git checkout -q main; git branch -q -D unmerged 2>/dev/null || git branch -q -D -f unmerged
+git branch -q unmerged origin/unmerged
+run "$SCRIPT" --phase after-exit --default-branch main
+_check_rc "tag-shadowed base: sweep still completes (rc 0)" 0 "$rc"
+_check_true "tag-shadowed base: unmerged branch survives locally" has_local unmerged
+_check_true "tag-shadowed base: unmerged branch survives remotely" has_remote unmerged
+
+# --- 15. the worktree-exit preflight runs on its own, fresh ---------------------
+make_world "$T/c19"; cd "$W"
+G worktree add -q -b pf "$T/c19/pf" main
+cd "$T/c19/pf"
+run "$SCRIPT" --phase preflight
+_check_rc "preflight phase, clean worktree: rc 0" 0 "$rc"
+_check_says "…ran the preflight" "$out" "PREFLIGHT: ok"
+_check_lacks "…and nothing else" "$out" "SWEEP"
+echo stray > stray.txt
+run "$SCRIPT" --phase preflight
+_check_rc "preflight phase, dirty worktree: rc 1" 1 "$rc"
+_check_says "…reports DIRTY" "$out" "PREFLIGHT: DIRTY"
+cd "$W"
+
+# SKILL.md runs that fresh preflight at worktree exit (step 9a)
+_check_true "SKILL.md step 9a runs the preflight phase" grep -q -- '--phase preflight' "$REPO/skills/roar/SKILL.md"
 
 exit $fail

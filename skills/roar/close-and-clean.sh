@@ -12,6 +12,8 @@
 # Phases exist because step 9 (ExitWorktree) sits between the preflight and
 # the sweep, and the sweep's current-branch guard depends on the cwd:
 #   before-exit  close, close claims, tracker detection, preflight
+#   preflight    the worktree-exit preflight alone, run fresh right before
+#                ExitWorktree (the before-exit result predates the wrap-up work)
 #   after-exit   local and remote branch sweep
 #   all          both (default; for a roar that is not in a worktree)
 #
@@ -35,13 +37,13 @@ while [ $# -gt 0 ]; do
         --default-branch) DEFAULT="$2"; shift 2 ;;
         --phase)          PHASE="$2"; shift 2 ;;
         -h|--help)
-            echo "usage: close-and-clean.sh [--ticket NNNN] [--days N] [--default-branch B] [--phase before-exit|after-exit|all]"
+            echo "usage: close-and-clean.sh [--ticket NNNN] [--days N] [--default-branch B] [--phase before-exit|preflight|after-exit|all]"
             echo "  Roar steps 7-10. Exit 0 clean, 1 findings, 2 could-not-look."
             exit 0 ;;
         *) echo "close-and-clean: unknown argument '$1'" >&2; exit 2 ;;
     esac
 done
-case "$PHASE" in before-exit|after-exit|all) ;; *) echo "close-and-clean: bad --phase '$PHASE'" >&2; exit 2 ;; esac
+case "$PHASE" in before-exit|preflight|after-exit|all) ;; *) echo "close-and-clean: bad --phase '$PHASE'" >&2; exit 2 ;; esac
 
 ROAR_DIR="${CLOSE_AND_CLEAN_ROAR_DIR:-$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)}"
 IDH_ROOT="${IDH_ROOT:-$(cd -P "$ROAR_DIR/../.." && pwd -P)}"
@@ -63,9 +65,14 @@ is_closed() { grep -q '^Closed:' "$1"; }
 # ── Step 7: close the ticket ──────────────────────────────────────────────────
 close_ticket() {
     [ -n "$TICKET" ] || { note "CLOSE: skipped (no --ticket)"; return 0; }
+    if [ ! -d tickets ]; then
+        # No ticket workflow in this repo: the SKILL.md prerequisite policy, an explicit skip.
+        note "CLOSE: skipped (no tickets/ directory — this repo has no ticket store)"
+        return 0
+    fi
     if [ ! -x tickets/erg ]; then
-        # A repo without a ticket store cannot answer; do not read that as done.
-        note "CLOSE: COULD-NOT-LOOK no tickets/erg here — not an all-clear"
+        # A ticket store that cannot answer is not a repo without one.
+        note "CLOSE: COULD-NOT-LOOK tickets/ exists but tickets/erg does not run — not an all-clear"
         bump 2; return 0
     fi
     local f
@@ -88,8 +95,12 @@ close_ticket() {
 # ── Step 7: close claims of recently merged PRs ───────────────────────────────
 check_claims() {
     local rc=0
-    if [ ! -x tickets/erg ] || [ ! -d tickets ]; then
-        note "CLAIMS: COULD-NOT-LOOK no ticket store — not an all-clear"
+    if [ ! -d tickets ]; then
+        note "CLAIMS: skipped (no tickets/ directory — this repo has no ticket store)"
+        return 0
+    fi
+    if [ ! -x tickets/erg ]; then
+        note "CLAIMS: COULD-NOT-LOOK tickets/ exists but tickets/erg does not run — not an all-clear"
         bump 2; return 0
     fi
     # Not `|| true`: the exit code is the finding. DROPPED is reported, never
@@ -142,14 +153,19 @@ preflight() {
 # Every delete is isolated (`if probe; then delete || FAIL`): a refused delete
 # is reported and the sweep carries on, instead of aborting under `set -e`
 # with every later branch never swept.
-# True when <ref> is merged into $base and safe to delete. A branch whose tip IS the
-# base tip carries no work of its own — it may be a colleague's branch created a
-# moment ago — so it is kept. A probe that errors (not "not an ancestor") is a
-# could-not-look, never read as "unmerged, all fine".
-probe() { # <ref>
+# True when <ref> (a full refname) is merged into $base_tip and safe to delete. The
+# ref is resolved ONCE, to PROBED, and the ancestry test runs on that object id: the
+# delete is then leased to PROBED, so a ref that moves after the verdict (a push, a
+# concurrent fetch) is refused, never destroyed. A branch whose tip IS the base tip
+# carries no work of its own — it may be a colleague's branch created a moment ago —
+# so it is kept. A probe that errors (not "not an ancestor") is a could-not-look,
+# never read as "unmerged, all fine".
+PROBED=""
+probe() { # <full refname>
     local rc=0
-    [ "$(git rev-parse "$1^{commit}")" = "$base_tip" ] && return 1
-    git merge-base --is-ancestor "$1" "$base" || rc=$?
+    PROBED=$(git rev-parse --verify -q "$1^{commit}") || { note "SWEEP: COULD-NOT-LOOK cannot resolve $1"; bump 2; return 1; }
+    [ "$PROBED" = "$base_tip" ] && return 1
+    git merge-base --is-ancestor "$PROBED" "$base_tip" || rc=$?
     case "$rc" in
         0) return 0 ;;
         1) return 1 ;;
@@ -157,66 +173,88 @@ probe() { # <ref>
     esac
 }
 
+# True when any worktree stands on <branch>. Asked again at delete time, not only
+# once up front: a session may check the branch out meanwhile. Fails closed — a
+# worktree list that cannot be read keeps the branch.
+checked_out() { # <branch>
+    local l
+    l=$(git worktree list --porcelain) || { note "SWEEP: COULD-NOT-LOOK worktree list failed — keeping $1"; bump 2; return 0; }
+    printf '%s\n' "$l" | awk '/^branch /{sub("refs/heads/","",$2); print $2}' | grep -qxF -- "$1"
+}
+
 sweep() {
-    local has_origin=0 b cur checked failed=0 deleted="" kept="" rdeleted="" rkept=""
+    local has_origin=0 b cur failed=0 deleted="" kept="" rdeleted="" rkept="" lbranches="" rbranches=""
     git remote get-url origin >/dev/null 2>&1 && has_origin=1
+    # Full refnames throughout: an unqualified `origin/main` or `main` is shadowed by a
+    # tag of that name, and the probe would then approve against the wrong commit.
     if [ "$has_origin" -eq 1 ]; then
         if ! git fetch --prune origin >/dev/null 2>&1; then
             note "SWEEP: COULD-NOT-LOOK git fetch --prune failed — nothing deleted, not an all-clear"
             bump 2; return 0
         fi
         if [ -z "$DEFAULT" ]; then
-            DEFAULT=$(git symbolic-ref --short -q refs/remotes/origin/HEAD 2>/dev/null || true)
-            DEFAULT="${DEFAULT#origin/}"
+            DEFAULT=$(git symbolic-ref -q refs/remotes/origin/HEAD 2>/dev/null || true)
+            DEFAULT="${DEFAULT#refs/remotes/origin/}"
         fi
         DEFAULT="${DEFAULT:-main}"
-        base="origin/$DEFAULT"
+        base="refs/remotes/origin/$DEFAULT"
     else
         # No-forge repo: "merged" means contained in the local default branch.
         DEFAULT="${DEFAULT:-main}"
-        base="$DEFAULT"
+        base="refs/heads/$DEFAULT"
     fi
-    if ! git rev-parse --verify -q "$base^{commit}" >/dev/null; then
+    if ! base_tip=$(git rev-parse --verify -q "$base^{commit}"); then
         note "SWEEP: COULD-NOT-LOOK no $base to probe against"
         bump 2; return 0
     fi
 
-    cur=$(git branch --show-current)
-    # Every branch checked out in ANY worktree — a parallel session may be standing on one.
-    checked=$(git worktree list --porcelain | awk '/^branch /{sub("refs/heads/","",$2); print $2}')
-    base_tip=$(git rev-parse "$base^{commit}")
+    # Enumerate into variables, not process substitutions: a failed for-each-ref
+    # inside `< <(...)` is invisible to set -e and reads as an empty, clean sweep.
     # lstrip, not :short — :short prints `heads/x` when a tag or remote ref shares the
     # name, and the whole-line guards below would then miss it.
+    cur=$(git branch --show-current)
+    lbranches=$(git for-each-ref --format='%(refname:lstrip=2)' refs/heads/) ||
+        { note "SWEEP: COULD-NOT-LOOK cannot list local branches"; bump 2; lbranches=""; }
     while IFS= read -r b; do
+        [ -n "$b" ] || continue
         [ "$b" = "$DEFAULT" ] && continue   # guard:default — always an ancestor of itself; with HEAD detached nothing else protects it
         [ "$b" = "$cur" ] && continue       # guard:current — never delete the branch you are standing on
-        # guard:worktree — whole-LINE match: `git worktree list` emits one branch per line,
-        # and a space-delimited membership test silently never fires (bug written 2026-09-10).
-        printf '%s\n' "$checked" | grep -qxF -- "$b" && continue  # guard:worktree
+        # guard:worktree — a branch checked out in ANY worktree is another session's; matched
+        # on whole LINES (a space-delimited membership test silently never fires, 2026-09-10).
+        checked_out "$b" && continue  # guard:worktree
         if probe "refs/heads/$b"; then
-            # -D, not -d: -d checks merged-into-HEAD (or upstream), not merged-into-base,
-            # so it refuses branches the probe has just proven contained.
-            if git branch -D -- "$b" >/dev/null 2>&1; then deleted="$deleted $b"; else failed=$((failed + 1)); note "SWEEP: FAILED to delete local $b"; fi
+            # update-ref with the probed object id, not `branch -D`: the delete is refused
+            # if the branch moved since the probe (checked above, in the same breath).
+            checked_out "$b" && continue  # guard:worktree
+            if git update-ref -d "refs/heads/$b" "$PROBED" >/dev/null 2>&1; then
+                git config --remove-section "branch.$b" >/dev/null 2>&1 || true
+                deleted="$deleted $b"
+            else
+                failed=$((failed + 1)); note "SWEEP: FAILED to delete local $b (moved since the probe, or refused)"
+            fi
         else
             kept="$kept $b"
         fi
-    done < <(git for-each-ref --format='%(refname:lstrip=2)' refs/heads/)
+    done <<<"$lbranches"
 
     if [ "$has_origin" -eq 1 ]; then
+        rbranches=$(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/origin/) ||
+            { note "SWEEP: COULD-NOT-LOOK cannot list remote branches"; bump 2; rbranches=""; }
         while IFS= read -r b; do
+            [ -n "$b" ] || continue
             # origin/HEAD is a symref, listed as a branch named HEAD; deleting it fails
             # and, unisolated under `set -e`, aborted the whole sweep (2026-08-14).
             [ "$b" = HEAD ] && continue  # guard:symref
             [ "$b" = "$DEFAULT" ] && continue
-            # The lease pins the delete to the commit the probe approved: a push landing
-            # between the fetch and here is refused, not destroyed. Full refname also
-            # sidesteps a tag of the same name.
+            # The lease pins the delete to the commit the probe approved (PROBED, read once
+            # inside probe): a push landing between the fetch and here is refused, not
+            # destroyed. Full refname also sidesteps a tag of the same name.
             if probe "refs/remotes/origin/$b"; then
-                if git push --force-with-lease="refs/heads/$b:$(git rev-parse "refs/remotes/origin/$b")" origin ":refs/heads/$b" >/dev/null 2>&1; then rdeleted="$rdeleted $b"; else failed=$((failed + 1)); note "SWEEP: FAILED to delete remote $b"; fi
+                if git push --force-with-lease="refs/heads/$b:$PROBED" origin ":refs/heads/$b" >/dev/null 2>&1; then rdeleted="$rdeleted $b"; else failed=$((failed + 1)); note "SWEEP: FAILED to delete remote $b"; fi
             else
                 rkept="$rkept $b"
             fi
-        done < <(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/origin/)
+        done <<<"$rbranches"
     else
         note "SWEEP: no origin — remote side skipped; probes compare against local $DEFAULT"
     fi
@@ -224,12 +262,15 @@ sweep() {
     note "SWEEP: local deleted:${deleted:- none}; unmerged kept:${kept:- none}"
     [ "$has_origin" -eq 1 ] && note "SWEEP: remote deleted:${rdeleted:- none}; unmerged kept:${rkept:- none}"
     if [ "$failed" -gt 0 ]; then bump 1; fi
+    return 0
 }
 
 case "$PHASE" in before-exit|all)
     close_ticket
     check_claims
-    detect_tracker
+    detect_tracker ;;
+esac
+case "$PHASE" in before-exit|preflight|all)
     preflight ;;
 esac
 case "$PHASE" in after-exit|all)

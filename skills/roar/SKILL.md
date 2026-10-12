@@ -217,8 +217,10 @@ worktree go once the branch is pushed and auto-merge is armed.
    "$ROAR_DIR/close-and-clean.sh" --phase before-exit --ticket NNNN --days 7
    ```
 
-   Exit 0 clean, 1 findings, 2 could-not-look (never an all-clear: a missing
-   `tickets/erg`, an unreadable forge or a failed fetch all give 2). Omit
+   Exit 0 clean, 1 findings, 2 could-not-look (never an all-clear: a
+   `tickets/` whose `erg` does not run, an unreadable forge or a failed fetch
+   all give 2; a repo with no `tickets/` directory at all gets an explicit
+   `skipped` line for CLOSE and CLAIMS, per the prerequisite policy above). Omit
    `--ticket` when there is none. Not in a worktree: use `--phase all` and
    skip step 9. Its report lines:
 
@@ -245,10 +247,19 @@ worktree go once the branch is pushed and auto-merge is armed.
     check; on that hit, perform the integration review above — the script
     detects, it does not review.
 9. **Exit worktree** (if in one):
-    a. Preflight from inside the worktree: the `PREFLIGHT` line of the step-7
-       run already covered it (`$IDH_ROOT/scripts/worktree-exit-preflight.sh`, called
-       through `$IDH_ROOT`). If it reported `DIRTY`, commit (or
-       `$IDH_ROOT/scripts/worktree-salvage.sh`) and re-run the step 7 command. It removes only `.panel/` and
+    a. Preflight from inside the worktree, run fresh now: the step-7 result
+       predates the integration review and the wrap-up work, so it is not
+       reused (`$IDH_ROOT/scripts/worktree-exit-preflight.sh`, called through
+       `$IDH_ROOT`):
+
+       ```bash
+       ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
+       ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
+       "$ROAR_DIR/close-and-clean.sh" --phase preflight
+       ```
+
+       If it reports `DIRTY`, commit (or `$IDH_ROOT/scripts/worktree-salvage.sh`)
+       and re-run this command. It removes only `.panel/` and
        `build/panel-head/` review scratch first, then refuses on every other
        uncommitted/untracked file — including a fresh ticket draft
        `tickets/erg new` wrote but never committed. This cleanliness gate does
