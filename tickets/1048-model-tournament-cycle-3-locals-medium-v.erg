@@ -11,6 +11,7 @@ Label: deferred
 2026-10-08T20:27Z reviewer Kept deferred as grid data (decided 2026-10-08 under 1069, the author raised the question and the recommendation was to keep it): the last exit criterion is reworded because the grid now also takes rows from the arena refresh. Not a prerequisite of the routing work.
 2026-10-12T04:35Z claude note arms réinscriptibles, candidats Mellum 2.1 / Gemma 4, mesures padme
 2026-10-12T04:45Z claude note arms revised per author: Flash-Next IQ3_S 5070 Ti solo vs A4000 helper x preload off/on; add Mellum 2.1 Thinking Q8_0, Gemma 4 26B-A4B; drop b3, Coder
+2026-10-12T04:51Z claude note Mellum and Gemma in their own window (author); hosted arm stays in 1048; placement pinned per arm, stale padme configs recorded
 
 --- body ---
 
@@ -43,9 +44,17 @@ had run). The lineup is a 2x2 on Flash-Next plus two new families.
 - Dropped: b3 Q2_0 and Coder IQ1_M (cycle 2 means 20.8 and 21.1 / 30 vs
   26.2 for b2).
 
-Open placement question to settle at pre-registration: Mellum and Gemma
-run on the A4000, so they cannot share it with the helper-topology
-Flash-Next arms; run them in their own window (or beside Flash-Next solo).
+Mellum and Gemma run in their own window, not beside the Flash-Next arms
+(author, 2026-10-12).
+
+GPU placement is NOT an arena-level knob: each local arm's placement lives
+in its launch script (`~/arena/start-arm.sh`, `~/Strata/strata-*.json`).
+Before the first leg, every new arm pins its placement explicitly
+(`CUDA_DEVICE_ORDER=PCI_BUS_ID`, device list, CUDA 13.0 lib dirs) and the
+pre-registration records it. Observed on padme 2026-10-12, still from the
+pre-swap topology: `strata-iq3_s.json` lists `gpu: [0, 1]` with CUDA 12.8
+lib dirs (nvidia-smi index 0 = A4000, 1 = 5070 Ti), already loads an
+expert profile dated 2026-10-03, and arms c/c2 keep `--tensor-split 16,12`.
 
 ## Strata optimization (the answer to "which local branch")
 
