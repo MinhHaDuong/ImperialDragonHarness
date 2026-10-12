@@ -14,6 +14,7 @@ Label: deferred
 2026-10-12T04:51Z claude note Mellum and Gemma in their own window (author); hosted arm stays in 1048; placement pinned per arm, stale padme configs recorded
 2026-10-12T04:54Z claude note Mellum and Gemma on A4000 and 5070 Ti each, plus Gemma NVFP4 on 5070 Ti (author)
 2026-10-12T04:58Z claude note Strata settings reviewed against v0.1.43: preload protocol, helper flags, solo/helper default differences, CPU swap timing
+2026-10-12T05:00Z claude note preload-off arms dropped (author): two Flash-Next arms with frozen profile; off vs on measured by bench.sh
 
 --- body ---
 
@@ -26,13 +27,14 @@ lineage twin.
 ## Arms
 
 Revised 2026-10-12 by the author (supersedes the 2026-10-06 list; no leg
-had run). The lineup is a 2x2 on Flash-Next plus two new families.
+had run). Seven local arms: two on Flash-Next, five on two new families.
 
 - Local Flash-Next IQ3_S (b2), Strata v0.1.43, CUDA 13.0, @medium explicit,
-  as a 2x2 (four new identities, smoke each first):
-  - topology: 5070 Ti solo | 5070 Ti + A4000 as expert helper;
-  - preload: off | on (the proposed expert-profile preload: a profile
-    loaded with `--expert-profile`, see Strata settings below).
+  on 5070 Ti solo | 5070 Ti + A4000 as expert helper (two arms, smoke
+  each first), both with a frozen expert profile (`--expert-profile`, see
+  Strata settings below). Preload off is NOT a tournament arm (author,
+  2026-10-12): it only changes the cold start, which a long leg on a
+  resident server dilutes; it is measured by `./bench.sh` instead.
 - Mellum 2.1 12B-A2.5B Thinking Q8_0 (JetBrains), llama-server, ctx 131072,
   `/data/models/gguf/mellum/`, on A4000 solo | 5070 Ti solo (two arms).
 - Gemma 4 26B-A4B QAT UD-Q4_K_XL (Google), llama-server, ctx 65536 (the
@@ -76,8 +78,9 @@ Preload, two flags:
   (default 10).
 - The padme bench numbers above (solo 89/85/115, helper 100/92/119) were
   taken WITH `--expert-profile` (`Strata-daily/data/expert-profile.bin`,
-  2026-10-11). The "off" arms therefore drop the flag; the "on" arms reuse
-  the bench condition.
+  2026-10-11): the tournament arms reuse that condition.
+- Preload off vs on: `./bench.sh` once each per topology (four runs, under
+  an hour), before the first leg; the speed record, not a tournament arm.
 - Profile protocol: build one profile per topology on a warm-up of
   non-tournament prompts, then freeze it. No `--expert-profile-save` during
   legs, so no leg learns from an earlier tournament leg. Mind trap #831
