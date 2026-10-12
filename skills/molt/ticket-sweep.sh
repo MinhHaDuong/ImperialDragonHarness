@@ -58,7 +58,7 @@ cmd_archive() {
 }
 
 cmd_merged_probe() {
-  local branch=${1:?usage: merged-probe <branch>} num ticket pr
+  local branch=${1:?usage: merged-probe <branch>} num ticket pr subjects
   # Signal A: ancestry (merge commits and fast-forwards).
   if git merge-base --is-ancestor "$branch" main 2>/dev/null; then
     return 0
@@ -71,7 +71,9 @@ cmd_merged_probe() {
   [ -n "$ticket" ] || cannot_look "no closed ticket $num"
   pr=$(sed -nE 's/^Closed:.*#([0-9]+).*/\1/p' "$ticket" | head -n 1)
   [ -n "$pr" ] || cannot_look "ticket $num has no PR number in Closed:"
-  if git log main --format=%s | grep -qE "\(#${pr}\)"; then
+  # Capture first: grep -q exiting early would SIGPIPE git log under pipefail.
+  subjects=$(git log main --format=%s)
+  if grep -qE "\(#${pr}\)" <<< "$subjects"; then
     return 0
   fi
   return 1
