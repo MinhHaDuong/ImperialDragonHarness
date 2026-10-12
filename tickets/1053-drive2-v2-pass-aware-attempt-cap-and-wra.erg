@@ -13,6 +13,7 @@ Author: MinhHaDuong
 2026-10-12T06:08Z Minh-Ha-Duong note re-pass observed: scratch copy of a stuck leg (ARENA_RUNS=~/arena-scratch-1053, 0211-h, 2 prior attempts, no record): without ARENA_PASS refused 'attempts exhausted (2)', no new dir; under ARENA_PASS=repass-1053-060729 ran attempt 3 stamped with the pass, no archiving. Runner-level re-pass, not a full drive2 pass. Arm H's provider 404'd and runner still scored OK: filed separately.
 2026-10-12T06:25Z Minh-Ha-Duong note done: arena main e2857da (b03b205, 0a15fcf, e2857da). Review (sonnet) CHANGES addressed: vram-wait fails closed on unowned VRAM, pids re-captured after kill, pass id persisted in .driver-pass. Controls with a live 1048 holder: pid wait blocks, empty list returns 0. Smoke 0470-i (scratch, pass smoke-1053-0470): OK, 762 s, 0.122 USD, 204 tool turns, no error turns.
 2026-10-12T06:44Z Minh-Ha-Duong note evidence limits (author accepted 2026-10-12): criterion 2 shown by a runner-level re-pass on a scratch copy of one stuck leg (0211-h), not a full drive2 pass; criterion 3 re-timed after the fail-closed vram-wait change, see next note.
+2026-10-12T06:45Z Minh-Ha-Duong note criterion 3 re-timed on the reviewed code (arena e2857da), 08:45 CEST: local_arms_down(exclude=a) took 1 s with arm A resident (pid 181559, ~25 GB across both GPUs); A healthy after.
 
 --- body ---
 
