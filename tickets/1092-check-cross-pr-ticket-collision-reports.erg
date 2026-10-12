@@ -1,0 +1,31 @@
+%erg 0.1
+Title: check-cross-pr-ticket-collision reports a false collision when run outside CI
+Created: 2026-10-12
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-12T16:57Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+`scripts/check-cross-pr-ticket-collision.sh` excludes this PR from its sibling
+scan only through the `SELF_PR_NUMBER` environment variable, which only
+`.github/workflows/CI.yml` sets. Run interactively from a worktree whose branch
+already has an open PR, it reports that PR's own ticket as a rival claim:
+
+    COLLISION: ticket ID 1089 is also added by open PR #1374 (branch t1084-roar-close-and-clean).
+    exit 1
+
+Observed on 2026-10-12 while checking the `t1084-roar-close-and-clean` branch
+before a merge decision. CI is unaffected — it passes
+`github.event.pull_request.number`. The exposure is an agent that runs the gate
+locally, believes the report and renumbers a ticket that never collided, which
+breaks the ticket ID and every cross-reference to it.
+
+## Exit criteria
+
+- [ ] With `SELF_PR_NUMBER` unset, the script resolves its own PR from the current branch (forge call marked `harness-extension-point`) and excludes it; when the branch has no open PR it scans the full sibling list
+- [ ] Run from a worktree whose branch has an open PR adding a ticket file, it exits 0 with that PR excluded, verified against a real open PR
+- [ ] Positive control: a genuine sibling collision is still reported when two open PRs add the same ID and the script runs from one of them
+- [ ] `make check` passes
