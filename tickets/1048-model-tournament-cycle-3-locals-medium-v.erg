@@ -13,6 +13,7 @@ Label: deferred
 2026-10-12T04:45Z claude note arms revised per author: Flash-Next IQ3_S 5070 Ti solo vs A4000 helper x preload off/on; add Mellum 2.1 Thinking Q8_0, Gemma 4 26B-A4B; drop b3, Coder
 2026-10-12T04:51Z claude note Mellum and Gemma in their own window (author); hosted arm stays in 1048; placement pinned per arm, stale padme configs recorded
 2026-10-12T04:54Z claude note Mellum and Gemma on A4000 and 5070 Ti each, plus Gemma NVFP4 on 5070 Ti (author)
+2026-10-12T04:58Z claude note Strata settings reviewed against v0.1.43: preload protocol, helper flags, solo/helper default differences, CPU swap timing
 
 --- body ---
 
@@ -31,8 +32,7 @@ had run). The lineup is a 2x2 on Flash-Next plus two new families.
   as a 2x2 (four new identities, smoke each first):
   - topology: 5070 Ti solo | 5070 Ti + A4000 as expert helper;
   - preload: off | on (the proposed expert-profile preload: a profile
-    saved with `--expert-profile-save` on a warm-up run, loaded at start;
-    fresh profile per topology; mind trap #831).
+    loaded with `--expert-profile`, see Strata settings below).
 - Mellum 2.1 12B-A2.5B Thinking Q8_0 (JetBrains), llama-server, ctx 131072,
   `/data/models/gguf/mellum/`, on A4000 solo | 5070 Ti solo (two arms).
 - Gemma 4 26B-A4B QAT UD-Q4_K_XL (Google), llama-server, ctx 65536 (the
@@ -64,16 +64,47 @@ pre-swap topology: `strata-iq3_s.json` lists `gpu: [0, 1]` with CUDA 12.8
 lib dirs (nvidia-smi index 0 = A4000, 1 = 5070 Ti), already loads an
 expert profile dated 2026-10-03, and arms c/c2 keep `--tensor-split 16,12`.
 
-## Strata optimization (the answer to "which local branch")
+## Strata settings (reviewed 2026-10-12 against v0.1.43)
 
-Enable --expert-profile-save on the Strata arms for this cycle: the
-merged-but-dormant lever (+14-31% decode from cache-hit 69.6% -> 96%+),
-fresh profiles per model, mind trap #831 (the loaded profile's length
-caps the expert arena). This is the Strata optimization that ships now;
-the Hardin22 dual-GPU decode cluster is NOT merged upstream — track it,
-do not wait for it. The engine duel (llama.cpp vs Strata on flash-next)
-needs a viable llama.cpp GGUF (~110G Unsloth class — verify before
-declaring that arm; defer if nothing good exists).
+Engine: the arena must point at `~/Strata-daily` (v0.1.43, sm_86 + sm_120,
+CUDA 13.0). `~/Strata/engine` is v0.1.38 built for sm_86 only.
+
+Preload, two flags:
+- `--expert-profile P` loads the VRAM expert tier from a profile at start.
+- `--expert-profile-save P` (#477, `--serve`) writes what the adaptive tier
+  learned, on quit and every `--expert-profile-save-every` minutes
+  (default 10).
+- The padme bench numbers above (solo 89/85/115, helper 100/92/119) were
+  taken WITH `--expert-profile` (`Strata-daily/data/expert-profile.bin`,
+  2026-10-11). The "off" arms therefore drop the flag; the "on" arms reuse
+  the bench condition.
+- Profile protocol: build one profile per topology on a warm-up of
+  non-tournament prompts, then freeze it. No `--expert-profile-save` during
+  legs, so no leg learns from an earlier tournament leg. Mind trap #831
+  (the profile's length caps the expert arena).
+
+Other settings that change the comparison:
+- Helper arm: the padme helper bench used `--expert-cache-device1` and
+  `--remote-expert-opt` (#578, opt-in, rounds differently). Keep both and
+  declare them in the arm identity.
+- Not just topology: since v0.1.42 the route tail skip
+  (`STRATA_ROUTE_TAIL_SKIP=7`) and the CPU-measured PCIe share are ON for one
+  GPU and OFF with a helper or peer GPU. Solo vs helper compares two stacks,
+  not one engine on two topologies; declare it, do not equalize.
+- Since v0.1.41 the CPU takes part of short prompt chunks (<1,024 tokens, the
+  typical tool result) on one NVIDIA GPU. The CPU pool already saturates the
+  3945WX: run every Strata arm on the same CPU. If the 3975WX goes in, it goes
+  in before the first Strata leg or after the last, never mid-cycle.
+- Keep `--batch` / `"parallel"` off (the local lane is sequential) and pin
+  `"gpu_order": "as_given"` on any layer split (v0.1.41 reorders by default).
+- v0.1.43 ships `./bench.sh` (`tools/strata_bench.py`, 3-10 min): run it on
+  each Strata arm after the smoke, as the speed record.
+- Keep: no CUDA 13.2 (upstream #892), no `--prefill auto:32768` (#1468).
+
+The engine duel (llama.cpp vs Strata on flash-next) needs a viable
+llama.cpp GGUF (~110G Unsloth class): verify before declaring it, defer if
+nothing good exists. The Hardin22 dual-GPU decode cluster is not merged
+upstream: track it, do not wait for it.
 
 ## Exit criteria
 
