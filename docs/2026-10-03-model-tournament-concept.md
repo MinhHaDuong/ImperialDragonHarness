@@ -374,11 +374,11 @@ pre-registration at launch ($0.15/$0.47 expected per the rate card). Local arms'
 "no knob" becomes "@template-default (xhigh)" until the effort is pinned.
 Estimated cost: hosted 2 arms x 10 legs ~ $3-6 + panel ~$15.
 
-### Cycle-3 slate revised (author, 2026-10-12): DRAFT, not yet registered
+### Cycle-3 slate revised (author, 2026-10-12): REGISTERED
 
-Supersedes the 2026-10-05 slate above; no cycle-3 leg has run. Becomes the
-pre-registration once the author freezes it, before the first leg. Ticket
-1048 holds the decision trail and the qualification measurements.
+Supersedes the 2026-10-05 slate above. Frozen by the author on 2026-10-12,
+before any cycle-3 leg ran; no protocol change mid-cycle. Ticket 1048 holds
+the decision trail and the qualification measurements.
 
 Purpose (author, 2026-10-12): inform the choice between two deployments.
 A = Flash-Next on the 5070 Ti as orchestrator + Mellum on the A4000 as local
