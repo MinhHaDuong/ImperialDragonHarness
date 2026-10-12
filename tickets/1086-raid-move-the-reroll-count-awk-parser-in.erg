@@ -16,7 +16,7 @@ It encodes the erg log format with no test; if erg changes its log-line shape th
 counts silently drop to zero and the reroll circuit-breaker never trips.
 
 ## Exit criteria
-- [ ] The parser lives in a script under `skills/raid/` (or `scripts/`) or as an `erg` subcommand, with output identical to the current awk on the current ticket corpus (byte-compared)
-- [ ] Tests cover a `bump`, a `note bump verify-reroll`, a `note circuit-breaker`, an ignored `note`, and a body line that looks like a log line
-- [ ] A positive control: on a fixture with known counts the script reports them, and an empty result on a non-empty log is flagged rather than printed as zero
-- [ ] `skills/raid/SKILL.md` calls the script instead of the inline awk
+- [x] The parser lives in a script under `skills/raid/` (or `scripts/`) or as an `erg` subcommand, with output identical to the current awk on the current ticket corpus (byte-compared)
+- [x] Tests cover a `bump`, a `note bump verify-reroll`, a `note circuit-breaker`, an ignored `note`, and a body line that looks like a log line
+- [x] A positive control: on a fixture with known counts the script reports them, and an empty result on a non-empty log is flagged rather than printed as zero
+- [x] `skills/raid/SKILL.md` calls the script instead of the inline awk

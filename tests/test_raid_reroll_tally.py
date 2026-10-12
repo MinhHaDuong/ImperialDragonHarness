@@ -256,3 +256,72 @@ def test_differential_against_awk_oracle(tmp_path):
     port = run_script(tmp_path, "tickets", "tickets/closed")
     assert port.returncode == 0
     assert port.stdout == oracle.stdout
+
+
+GOOD_LOG = ("%erg 0.1\nTitle: x\n\n--- log ---\n"
+            "2026-10-05T10:00Z reviewer bump permission\n\n--- body ---\n")
+
+needs_unprivileged = pytest.mark.skipif(
+    hasattr(__import__("os"), "geteuid") and __import__("os").geteuid() == 0,
+    reason="root ignores file modes")
+
+
+@needs_unprivileged
+def test_unreadable_directory_is_could_not_look(tmp_path):
+    # Control: the same tree with the directory readable gives two rows, exit 0.
+    write_tickets(tmp_path, {"1050-x.erg": GOOD_LOG, "closed/0900-x.erg": GOOD_LOG})
+    ok = run_script(tmp_path, "tickets", "tickets/closed")
+    assert ok.returncode == 0 and len(ok.stdout.splitlines()) == 2
+    closed = tmp_path / "tickets" / "closed"
+    closed.chmod(0)
+    try:
+        r = run_script(tmp_path, "tickets", "tickets/closed")
+    finally:
+        closed.chmod(0o755)
+    assert r.returncode == 2
+    assert "cannot read" in r.stderr and "closed" in r.stderr
+    assert "Ticket 1050: 1 permission" in r.stdout  # partial rows are kept
+
+
+@needs_unprivileged
+def test_unreadable_only_directory_is_not_silent(tmp_path):
+    write_tickets(tmp_path, {"1050-x.erg": GOOD_LOG})
+    d = tmp_path / "tickets"
+    d.chmod(0)
+    try:
+        r = run_script(tmp_path, "tickets")
+    finally:
+        d.chmod(0o755)
+    assert r.returncode == 2
+    assert r.stderr != ""
+
+
+@needs_unprivileged
+def test_unreadable_ticket_file_exits_2_without_traceback(tmp_path):
+    tickets = write_tickets(tmp_path, {"1050-x.erg": GOOD_LOG, "1051-y.erg": GOOD_LOG})
+    (tickets / "1051-y.erg").chmod(0)
+    try:
+        r = run_script(tmp_path, "tickets")
+    finally:
+        (tickets / "1051-y.erg").chmod(0o644)
+    assert r.returncode == 2
+    assert "Traceback" not in r.stderr
+    assert "1051-y.erg" in r.stderr
+    assert r.stdout == "Ticket 1050: 1 permission\n"
+
+
+@pytest.mark.parametrize("mutation", [
+    ("verb", GOOD_LOG.replace("bump", "reroll")),
+    ("marker", GOOD_LOG.replace("--- log ---", "--- history ---")),
+], ids=lambda m: m[0])
+def test_known_positive_changed_verb_or_marker_is_flagged(tmp_path, mutation):
+    # Positive control: the unmutated fixture reports its row with a quiet stderr;
+    # the mutated one must not come back as exit 0 with nothing on either stream.
+    write_tickets(tmp_path, {"1060-x.erg": GOOD_LOG})
+    ok = run_script(tmp_path, "tickets")
+    assert ok.stdout == "Ticket 1060: 1 permission\n" and ok.stderr == ""
+    write_tickets(tmp_path, {"1060-x.erg": mutation[1]})
+    r = run_script(tmp_path, "tickets")
+    assert r.returncode == 0
+    assert r.stdout == ""
+    assert "drift" in r.stderr

@@ -432,11 +432,10 @@ Autonomous mode: ralph loop to next wave.
     python3 "$IDH_ROOT/scripts/raid-reroll-tally.py" tickets tickets/closed
     ```
     A `WARNING drift:` line on stderr means a ticket log has lines outside the
-    timestamp shape; those entries are not counted, so do not read their absence
-    as zero. A verb rename (`bump` → another word) yields zeros with no warning:
-    the drift check covers timestamp shape only. Exit 2 with `no ticket directory`
-    on stderr means the repo could not be read; report it, do not read it as an
-    all-clear.
+    timestamp shape, a ticket has no `--- log ---` marker, or entries exist but
+    none is a bump or note (verb rename); uncounted entries are not zeros. Exit 2
+    on stderr (`no ticket directory`, `cannot read ...`) means part of the repo
+    could not be read: report it, do not read the rows as an all-clear.
     Combine category rows in the briefing as:
     `Ticket NNNN: N entries (X permission, Y verify-reroll, Z circuit-breaker, …)`.
 2. All merged PRs confirmed on main. Any ESCALATED PRs listed with reasons.
