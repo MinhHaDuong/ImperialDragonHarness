@@ -12,6 +12,7 @@ Label: deferred
 2026-10-12T04:35Z claude note arms réinscriptibles, candidats Mellum 2.1 / Gemma 4, mesures padme
 2026-10-12T04:45Z claude note arms revised per author: Flash-Next IQ3_S 5070 Ti solo vs A4000 helper x preload off/on; add Mellum 2.1 Thinking Q8_0, Gemma 4 26B-A4B; drop b3, Coder
 2026-10-12T04:51Z claude note Mellum and Gemma in their own window (author); hosted arm stays in 1048; placement pinned per arm, stale padme configs recorded
+2026-10-12T04:54Z claude note Mellum and Gemma on A4000 and 5070 Ti each, plus Gemma NVFP4 on 5070 Ti (author)
 
 --- body ---
 
@@ -33,9 +34,16 @@ had run). The lineup is a 2x2 on Flash-Next plus two new families.
     saved with `--expert-profile-save` on a warm-up run, loaded at start;
     fresh profile per topology; mind trap #831).
 - Mellum 2.1 12B-A2.5B Thinking Q8_0 (JetBrains), llama-server, ctx 131072,
-  `/data/models/gguf/mellum/`.
+  `/data/models/gguf/mellum/`, on A4000 solo | 5070 Ti solo (two arms).
 - Gemma 4 26B-A4B QAT UD-Q4_K_XL (Google), llama-server, ctx 65536 (the
-  most that fits).
+  most that fits), on A4000 solo | 5070 Ti solo (two arms).
+- Gemma 4 26B-A4B NVFP4 on 5070 Ti solo only (Blackwell FP4; the A4000 has
+  no FP4 path). Candidate file: FreedomAISVR/Gemma-4-26B-A4B-it-NVFP4-GGUF
+  (~13.45 GB, 4.57 bpw, community build, not Google or NVIDIA). Rejected:
+  ggufbench (~16.45 GiB, does not fit 16 GB) and the FreedomAISVR "QAT-NVFP4"
+  hybrid (weights stay Q4_0, only norms/biases are NVFP4). Before declaring
+  the arm: check the file card, confirm padme's llama.cpp build runs NVFP4 on
+  sm_120, and take the largest ctx that fits (aim 131072).
 - Hosted: qwen3.8-flash, lineage twin of flash-next (same architecture,
   NOT the same weights; label it "lineage twin" in every table), at
   @default(xhigh) and @medium, DIRECT DashScope via the custom pi provider
