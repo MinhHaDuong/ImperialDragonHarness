@@ -24,7 +24,11 @@ exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
 an empty clean report.
 
 ```bash
-zotero.py reconcile . --out /tmp/zotero-reconcile.json
+out=$(mktemp "${TMPDIR:-/tmp}/zotero-reconcile.XXXXXX.json")
+status=0
+zotero.py reconcile . --out "$out" || status=$?
+echo "reconcile report: $out (exit $status)"
+[ "$status" -eq 0 ]
 ```
 
 Resolve any `errors` and inspect `ambiguous` rows before taking action. An

@@ -2,9 +2,12 @@
 Title: molt: script the ticket close/archive blocks; fix merged-branch probe and fixed /tmp path
 Created: 2026-10-11
 Author: reviewer
+Closed: autoclosed — PR #1373
 
 --- log ---
 2026-10-11T16:30Z reviewer created
+2026-10-12T13:51Z Minh-Ha-Duong raid 1084/1085/1086: imagine EXECUTE-WITH-CHANGE; blind-spot fed in; plan accepted; feasibility FEASIBLE
+2026-10-12T15:22Z Minh Ha-Duong closed — autoclosed — PR #1373
 
 --- body ---
 ## Context
@@ -19,7 +22,7 @@ scripts roar's copy). Two defects ride along:
   parallel sessions clobber each other.
 
 ## Exit criteria
-- [ ] The close / archive / stage / duplicate-prune blocks become one script (shared with 1084's roar script if it has landed, otherwise placed so 1084 can reuse it), with tests for close-already-moved, archive-reported paths, and the duplicate prune
-- [ ] The merged-branch probe uses `git merge-base --is-ancestor` (or the PR squash-subject check as a second signal), portable grep only, and reports "could not determine" rather than "not merged" when it cannot map a branch
-- [ ] The reconcile output path is per-session (`mktemp`), not a fixed `/tmp` name
-- [ ] `skills/molt/SKILL.md` calls the script instead of inline blocks
+- [x] The close / archive / stage / duplicate-prune blocks become one script (shared with 1084's roar script if it has landed, otherwise placed so 1084 can reuse it), with tests for close-already-moved, archive-reported paths, and the duplicate prune
+- [x] The merged-branch probe uses `git merge-base --is-ancestor` (or the PR squash-subject check as a second signal), portable grep only, and reports "could not determine" rather than "not merged" when it cannot map a branch
+- [x] The reconcile output path is per-session (`mktemp`), not a fixed `/tmp` name
+- [x] `skills/molt/SKILL.md` calls the script instead of inline blocks
