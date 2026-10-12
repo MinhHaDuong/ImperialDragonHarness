@@ -11,10 +11,11 @@
 # uncommitted change is not tested (a warning says so). The forge tests the
 # merge of the PR into its base; this tests the branch head alone.
 #
-# The first output line names the UTC time, the actor and the host. The actor is
-# the OS user unless LOCAL_CI_ACTOR is set; a caller that is an agent should set
-# it to the agent's identity. It is stated, not authenticated: the aim is that a
-# run can be traced, not that it can be proved.
+# For a configured workflow run, the first output line names the UTC time, the
+# actor and the host. The actor is the OS user unless LOCAL_CI_ACTOR is set; a
+# caller that is an agent should set it to the agent's identity. It is stated,
+# not authenticated: the aim is that a run can be traced, not that it can be
+# proved.
 #
 # Needs act and podman. The forge CLI (`gh`, authenticated) and an `origin`
 # remote are optional: without them the jobs that read the forge's secrets are
@@ -31,7 +32,18 @@ set -euo pipefail
 
 workflow=.github/workflows/CI.yml
 root=$(git rev-parse --show-toplevel)
+# A repository with no workflow has intentionally opted out of CI. Check this
+# before project-local runner files or container tools are needed.
+if ! git -C "$root" cat-file -e "HEAD:$workflow" 2>/dev/null; then
+    echo "local-ci: SKIP — no $workflow at HEAD; no CI checks were run (exit 3, not a pass)."
+    exit 3
+fi
+
 here="$root/ci-local"
+if [ ! -r "$here/common.sh" ]; then
+    echo "local-ci: ci-local/common.sh is missing for a repository with $workflow." >&2
+    exit 2
+fi
 work=$(mktemp -d)
 # shellcheck source=../ci-local/common.sh
 . "$here/common.sh"
@@ -52,12 +64,6 @@ echo "local-ci: $(date -u +%Y-%m-%dT%H:%MZ) ${LOCAL_CI_ACTOR:-$(id -un)}@$(hostn
 if [ -n "$(git status --porcelain)" ]; then
     echo "local-ci: WARNING: uncommitted changes are NOT tested" >&2
 fi
-# No workflow is a state to declare, not to guess at: say so and stop.
-git cat-file -e "HEAD:$workflow" 2>/dev/null || {
-    echo "local-ci: no $workflow at HEAD, so there is no CI to run. This is not a pass." >&2
-    exit 3
-}
-
 start_service
 ensure_image
 

@@ -1,0 +1,37 @@
+%erg 0.1
+Title: local CI skips cleanly when the repository has no workflow
+Created: 2026-10-12
+Author: Minh Ha-Duong
+Closed: implemented and verified — PR #1368
+
+--- log ---
+2026-10-12T08:04Z Minh Ha-Duong created
+2026-10-12T08:29Z Minh Ha-Duong closed — implemented and verified — PR #1368
+
+--- body ---
+## Context
+
+The shared `scripts/local-ci.sh` sources `<repo>/ci-local/common.sh` before it checks for `.github/workflows/CI.yml`. In repositories that intentionally have no CI, including `climate-finance-het` (see that project's decision 0321), it errors on the absent helper directory instead of reporting a clean skip. Keep the no-CI decision; make the generic runner distinguish “no workflow” from a broken local-CI setup.
+
+## Relevant files
+- `scripts/local-ci.sh` — workflow and helper preflight order.
+- `tests/test_local_ci_no_workflow.py` — hermetic subprocess coverage.
+
+## Actions
+1. Detect a missing workflow before sourcing project helper files; print an explicit `SKIP` and return the documented no-workflow skip code 3.
+2. If a workflow exists but `ci-local/common.sh` is missing, print a clear setup error and exit non-zero.
+3. Add regression tests for both cases.
+
+## Test
+- Build temporary git repositories in pytest; run the committed runner with no workflow and with a workflow but no helper directory.
+
+## Invariants
+- Existing CI repositories retain all current validation and runner behavior.
+- A skip is labeled as a skip, never a pass.
+- No CI workflow or local runner assets are added to projects that intentionally have no CI.
+
+## Exit criteria
+- [x] No workflow: runner returns the documented no-workflow skip code 3 before probing `act`, `podman`, or `ci-local/`, and says no checks ran.
+- [x] Workflow present but helper absent: runner exits non-zero with a clear diagnostic.
+- [x] Regression tests cover both paths and pass.
+- [x] `make check-fast` and `make lint` pass.
