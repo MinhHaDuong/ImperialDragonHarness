@@ -10,7 +10,7 @@ Label: deferred
 2026-10-06T09:44Z reviewer note Author-approved chantier sequence: cycle3 after driver improvements1053, deferred experimentation. Resume only on an explicit author decision; this cycle is not a prerequisite for the current research PDF or blog posts.
 2026-10-08T20:27Z reviewer Kept deferred as grid data (decided 2026-10-08 under 1069, the author raised the question and the recommendation was to keep it): the last exit criterion is reworded because the grid now also takes rows from the arena refresh. Not a prerequisite of the routing work.
 2026-10-12T04:35Z claude note arms réinscriptibles, candidats Mellum 2.1 / Gemma 4, mesures padme
-2026-10-12T06:49Z Minh Ha-Duong note blocker 1053 closed — Blocked-by removed.
+2026-10-12T04:45Z claude note arms revised per author: Flash-Next IQ3_S 5070 Ti solo vs A4000 helper x preload off/on; add Mellum 2.1 Thinking Q8_0, Gemma 4 26B-A4B; drop b3, Coder
 
 --- body ---
 
@@ -22,17 +22,30 @@ lineage twin.
 
 ## Arms
 
-- Local, all three quant versions COUNT (the Coder IQ1_M too): b2 IQ3_S,
-  b3 Q2_0, Coder IQ1_M, @medium explicit — effort = identity, so this
-  is a NEW identity for each (smoke first, then legs).
-- Hosted: qwen3.8-flash — the PRODUCTION sibling of flash-next (same
-  architecture, served build vs open-weights preview — NOT the same
-  weights; label it "lineage twin" in every table) at @default(xhigh)
-  and @medium.
-- Route: DIRECT DashScope via a custom pi provider (QWEN_API_KEY_AEDIST
-  on dashscope-intl; key live, 172 models). flash-next is NOT served
-  anywhere as of 2026-10-06 — recheck the catalog at launch; if it
-  appears, take the true twin instead.
+Revised 2026-10-12 by the author (supersedes the 2026-10-06 list; no leg
+had run). The lineup is a 2x2 on Flash-Next plus two new families.
+
+- Local Flash-Next IQ3_S (b2), Strata v0.1.43, CUDA 13.0, @medium explicit,
+  as a 2x2 (four new identities, smoke each first):
+  - topology: 5070 Ti solo | 5070 Ti + A4000 as expert helper;
+  - preload: off | on (the proposed expert-profile preload: a profile
+    saved with `--expert-profile-save` on a warm-up run, loaded at start;
+    fresh profile per topology; mind trap #831).
+- Mellum 2.1 12B-A2.5B Thinking Q8_0 (JetBrains), llama-server, ctx 131072,
+  `/data/models/gguf/mellum/`.
+- Gemma 4 26B-A4B QAT UD-Q4_K_XL (Google), llama-server, ctx 65536 (the
+  most that fits).
+- Hosted: qwen3.8-flash, lineage twin of flash-next (same architecture,
+  NOT the same weights; label it "lineage twin" in every table), at
+  @default(xhigh) and @medium, DIRECT DashScope via the custom pi provider
+  (QWEN_API_KEY_AEDIST, dashscope-intl). Recheck the catalog at launch; if
+  flash-next itself is served, take the true twin.
+- Dropped: b3 Q2_0 and Coder IQ1_M (cycle 2 means 20.8 and 21.1 / 30 vs
+  26.2 for b2).
+
+Open placement question to settle at pre-registration: Mellum and Gemma
+run on the A4000, so they cannot share it with the helper-topology
+Flash-Next arms; run them in their own window (or beside Flash-Next solo).
 
 ## Strata optimization (the answer to "which local branch")
 
