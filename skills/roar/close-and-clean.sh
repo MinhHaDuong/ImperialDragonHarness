@@ -26,6 +26,10 @@ DEFAULT=""
 PHASE=all
 while [ $# -gt 0 ]; do
     case "$1" in
+        --ticket|--days|--default-branch|--phase)
+            [ $# -ge 2 ] || { echo "close-and-clean: $1 needs a value" >&2; exit 2; } ;;&
+    esac
+    case "$1" in
         --ticket)         TICKET="$2"; shift 2 ;;
         --days)           DAYS="$2"; shift 2 ;;
         --default-branch) DEFAULT="$2"; shift 2 ;;
@@ -39,10 +43,11 @@ while [ $# -gt 0 ]; do
 done
 case "$PHASE" in before-exit|after-exit|all) ;; *) echo "close-and-clean: bad --phase '$PHASE'" >&2; exit 2 ;; esac
 
-ROAR_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+ROAR_DIR="${ROAR_DIR:-$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)}"
 IDH_ROOT="${IDH_ROOT:-$(cd -P "$ROAR_DIR/../.." && pwd -P)}"
 
 SEV=0
+base=""; base_tip=""
 note() { echo "roar: $*"; }
 bump() { [ "$1" -gt "$SEV" ] && SEV=$1; return 0; }
 
@@ -137,11 +142,26 @@ preflight() {
 # Every delete is isolated (`if probe; then delete || FAIL`): a refused delete
 # is reported and the sweep carries on, instead of aborting under `set -e`
 # with every later branch never swept.
+# True when <ref> is merged into $base and safe to delete. A branch whose tip IS the
+# base tip carries no work of its own — it may be a colleague's branch created a
+# moment ago — so it is kept. A probe that errors (not "not an ancestor") is a
+# could-not-look, never read as "unmerged, all fine".
+probe() { # <ref>
+    local rc=0
+    [ "$(git rev-parse "$1^{commit}")" = "$base_tip" ] && return 1
+    git merge-base --is-ancestor "$1" "$base" || rc=$?
+    case "$rc" in
+        0) return 0 ;;
+        1) return 1 ;;
+        *) note "SWEEP: COULD-NOT-LOOK ancestry probe failed for $1"; bump 2; return 1 ;;
+    esac
+}
+
 sweep() {
-    local has_origin=0 base b ref cur checked failed=0 deleted="" kept="" rdeleted="" rkept=""
+    local has_origin=0 b cur checked failed=0 deleted="" kept="" rdeleted="" rkept=""
     git remote get-url origin >/dev/null 2>&1 && has_origin=1
     if [ "$has_origin" -eq 1 ]; then
-        if ! git fetch --prune >/dev/null 2>&1; then
+        if ! git fetch --prune origin >/dev/null 2>&1; then
             note "SWEEP: COULD-NOT-LOOK git fetch --prune failed — nothing deleted, not an all-clear"
             bump 2; return 0
         fi
@@ -164,35 +184,36 @@ sweep() {
     cur=$(git branch --show-current)
     # Every branch checked out in ANY worktree — a parallel session may be standing on one.
     checked=$(git worktree list --porcelain | awk '/^branch /{sub("refs/heads/","",$2); print $2}')
+    base_tip=$(git rev-parse "$base^{commit}")
+    # lstrip, not :short — :short prints `heads/x` when a tag or remote ref shares the
+    # name, and the whole-line guards below would then miss it.
     while IFS= read -r b; do
         [ "$b" = "$DEFAULT" ] && continue   # guard:default — always an ancestor of itself; with HEAD detached nothing else protects it
         [ "$b" = "$cur" ] && continue       # guard:current — never delete the branch you are standing on
         # guard:worktree — whole-LINE match: `git worktree list` emits one branch per line,
         # and a space-delimited membership test silently never fires (bug written 2026-09-10).
         printf '%s\n' "$checked" | grep -qxF -- "$b" && continue  # guard:worktree
-        if git merge-base --is-ancestor "$b" "$base"; then
+        if probe "refs/heads/$b"; then
             # -D, not -d: -d checks merged-into-HEAD (or upstream), not merged-into-base,
             # so it refuses branches the probe has just proven contained.
             if git branch -D "$b" >/dev/null 2>&1; then deleted="$deleted $b"; else failed=$((failed + 1)); note "SWEEP: FAILED to delete local $b"; fi
         else
             kept="$kept $b"
         fi
-    done < <(git for-each-ref --format='%(refname:short)' refs/heads/)
+    done < <(git for-each-ref --format='%(refname:lstrip=2)' refs/heads/)
 
     if [ "$has_origin" -eq 1 ]; then
-        while IFS= read -r ref; do
-            # The bare `origin` symref (origin/HEAD) is listed as plain `origin`; without this
-            # guard the loop tries to delete it (2026-08-14).
-            case "$ref" in origin/*) ;; *) continue ;; esac  # guard:symref
-            b="${ref#origin/}"
+        while IFS= read -r b; do
+            # origin/HEAD is a symref, listed as a branch named HEAD; deleting it fails
+            # and, unisolated under `set -e`, aborted the whole sweep (2026-08-14).
+            [ "$b" = HEAD ] && continue  # guard:symref
             [ "$b" = "$DEFAULT" ] && continue
-            [ "$b" = HEAD ] && continue
-            if git merge-base --is-ancestor "$ref" "$base"; then
+            if probe "refs/remotes/origin/$b"; then
                 if git push origin --delete "$b" >/dev/null 2>&1; then rdeleted="$rdeleted $b"; else failed=$((failed + 1)); note "SWEEP: FAILED to delete remote $b"; fi
             else
                 rkept="$rkept $b"
             fi
-        done < <(git for-each-ref --format='%(refname:short)' refs/remotes/origin/)
+        done < <(git for-each-ref --format='%(refname:lstrip=3)' refs/remotes/origin/)
     else
         note "SWEEP: no origin — remote side skipped; probes compare against local $DEFAULT"
     fi

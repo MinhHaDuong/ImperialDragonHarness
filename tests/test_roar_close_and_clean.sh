@@ -46,24 +46,23 @@ printf '#!/usr/bin/env bash\necho "[]"\n' > "$STUBS/gh"; chmod +x "$STUBS/gh"
 
 run() { # <script> <args...>: hermetic run in the current directory; sets out, rc
     local s="$1"; shift
-    out=$(env -i PATH="$STUBS:$TOOLS" HOME="$T" GIT_CONFIG_GLOBAL=/dev/null bash "$s" "$@" 2>&1) && rc=0 || rc=$?
+    out=$(env -i PATH="$STUBS:$TOOLS" HOME="$T" ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$s" "$@" 2>&1) && rc=0 || rc=$?
 }
 run_nogh() {
     local s="$1"; shift
-    out=$(env -i PATH="$TOOLS" HOME="$T" GIT_CONFIG_GLOBAL=/dev/null bash "$s" "$@" 2>&1) && rc=0 || rc=$?
+    out=$(env -i PATH="$TOOLS" HOME="$T" ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$s" "$@" 2>&1) && rc=0 || rc=$?
 }
 
 # A copy of the real script with every line tagged `# guard:<name>` removed
-# (or an arbitrary sed expression applied). Lives beside the original so the
-# script's own-dir resolution still works.
+# (or an arbitrary sed expression applied), in a temp dir; run() points ROAR_DIR
+# at the real skill directory so the copy still finds its helpers.
 mutant() { # <name> <sed-expr>
-    local m="$REPO/skills/roar/.mutant-$1-$$.sh"
+    mkdir -p "$T/mutants"
+    local m="$T/mutants/$1.sh"
     sed "$2" "$SCRIPT" > "$m"
     cmp -s "$SCRIPT" "$m" && { echo "FAIL: mutation '$2' changed nothing"; fail=1; }
-    MUTANTS+=("$m"); MUTANT="$m"
+    MUTANT="$m"
 }
-MUTANTS=()
-trap 'rm -f "${MUTANTS[@]}"; rm -rf "$T"' EXIT
 
 G() { git -C "$W" "$@"; }
 make_world() { # <dir>: bare origin + clone; sets W. Branches given as args are merged into main and pushed.
@@ -75,6 +74,8 @@ make_world() { # <dir>: bare origin + clone; sets W. Branches given as args are 
     G commit -q --allow-empty -m init; G branch -M main
     G push -q origin main
     for b in "$@"; do G branch "$b"; G push -q origin "$b"; done
+    # Main moves past the branches: a branch AT main's tip carries no work and is kept.
+    G commit -q --allow-empty -m advance; G push -q origin main
     G remote set-head origin main >/dev/null
 }
 has_local() { git -C "$W" rev-parse --verify -q "refs/heads/$1" >/dev/null; }
@@ -91,24 +92,28 @@ _check_true "main survives" has_local main
 _check_says "reports a result line" "$out" "RESULT: clean"
 
 # --- 2. guard: origin/HEAD symref --------------------------------------------
-make_world "$T/c2" merged-a merged-b; cd "$W"
-run "$SCRIPT" --phase after-exit
+# origin/HEAD points at `trunk`, an ancestor strictly behind main: without the guard
+# the sweep tries to delete the symref itself.
+make_world "$T/c2" merged-a merged-b trunk; cd "$W"
+G remote set-head origin trunk >/dev/null
+run "$SCRIPT" --phase after-exit --default-branch main
 _check_rc "symref: guarded sweep exits 0" 0 "$rc"
 _check_true "symref: origin/merged-b removed past the symref" bash -c '[ -z "$(git ls-remote --heads origin merged-b)" ]'
 _check_true "symref: origin/main survives" has_remote main
-make_world "$T/c2m" merged-a merged-b; cd "$W"
+make_world "$T/c2m" merged-a merged-b trunk; cd "$W"
+G remote set-head origin trunk >/dev/null
 mutant symref '/guard:symref/d'
-run "$MUTANT" --phase after-exit
+run "$MUTANT" --phase after-exit --default-branch main
 _check_true "symref control: unguarded sweep does not exit 0" test "$rc" != 0
 
 # --- 3. guard: main survives a detached primary checkout ---------------------
 make_world "$T/c3" merged-a; cd "$W"
-git checkout -q --detach
+git checkout -q --detach; git branch -f main HEAD~1   # main behind origin/main: an ancestor, not the tip
 run "$SCRIPT" --phase after-exit
 _check_rc "detached: guarded sweep exits 0" 0 "$rc"
 _check_true "detached: main survives" has_local main
 make_world "$T/c3m" merged-a; cd "$W"
-git checkout -q --detach
+git checkout -q --detach; git branch -f main HEAD~1
 mutant default '/guard:default/d'
 run "$MUTANT" --phase after-exit
 _check_true "default-branch control: main is destroyed" bash -c '! git rev-parse --verify -q refs/heads/main >/dev/null'
@@ -146,7 +151,8 @@ _check_rc "worktree control: unguarded sweep fails (rc 1)" 1 "$rc"
 make_world "$T/c6"; cd "$W"
 git checkout -q -b ancestor; git commit -q --allow-empty -m side
 git push -q origin ancestor:main            # origin/main now contains `ancestor`
-git checkout -q main                         # HEAD does not contain it: -d would refuse
+git checkout -q -b adv; git commit -q --allow-empty -m adv; git push -q origin adv:main
+git checkout -q main; git branch -q -D adv   # HEAD does not contain `ancestor`: -d would refuse
 git checkout -q -b unmerged; git commit -q --allow-empty -m wip
 git push -q origin unmerged
 git checkout -q main
@@ -157,7 +163,9 @@ _check_true "unmerged: local survives" has_local unmerged
 _check_true "unmerged: remote survives" has_remote unmerged
 make_world "$T/c6m"; cd "$W"
 git checkout -q -b ancestor; git commit -q --allow-empty -m side
-git push -q origin ancestor:main; git checkout -q main
+git push -q origin ancestor:main
+git checkout -q -b adv; git commit -q --allow-empty -m adv; git push -q origin adv:main
+git checkout -q main; git branch -q -D adv
 mutant dflag 's/branch -D/branch -d/'
 run "$MUTANT" --phase after-exit
 _check_true "-D control: with -d the ancestor survives" has_local ancestor
@@ -169,11 +177,6 @@ run "$SCRIPT" --phase after-exit
 _check_rc "failed fetch exits 2" 2 "$rc"
 _check_lacks "failed fetch is no all-clear" "$out" "RESULT: clean"
 _check_true "failed fetch deletes nothing" has_local merged-a
-
-make_world "$T/c8" merged-a; cd "$W"
-run_nogh "$SCRIPT" --phase before-exit
-_check_rc "no forge CLI exits 2" 2 "$rc"
-_check_lacks "no forge CLI is no all-clear" "$out" "RESULT: clean"
 
 # no tickets/erg at all (the aedist-technical-report case)
 make_world "$T/c9"; cd "$W"
@@ -191,6 +194,24 @@ ticket_world() { # <dir>
     printf '%%erg 0.1\nTitle: child two\nCreated: 2026-10-01\nAuthor: t\nParent: 0100\nClosed: 2026-10-02 done\n\n--- log ---\n\n--- body ---\n' > tickets/0102-two.erg
     G add -A; G commit -q -m tickets; G push -q origin main
 }
+# the forge case must reach the forge: a real ticket store, no gh on PATH
+ticket_world "$T/c8"
+run_nogh "$SCRIPT" --phase before-exit
+_check_rc "no forge CLI exits 2" 2 "$rc"
+_check_says "…reached the claims check" "$out" "CLAIMS: COULD-NOT-LOOK (exit"
+_check_lacks "no forge CLI is no all-clear" "$out" "RESULT: clean"
+
+run "$SCRIPT" --ticket
+_check_rc "an option missing its value exits 2" 2 "$rc"
+
+# a branch AT main's tip (a colleague's just-created branch) is kept, locally and remotely
+make_world "$T/c12"; cd "$W"
+G branch fresh; G push -q origin fresh
+run "$SCRIPT" --phase after-exit
+_check_rc "tip-of-main branch: sweep exits 0" 0 "$rc"
+_check_true "tip-of-main branch kept locally" has_local fresh
+_check_true "tip-of-main branch kept remotely" has_remote fresh
+
 ticket_world "$T/c10"
 run "$SCRIPT" --phase before-exit --ticket 0101
 _check_rc "open ticket closed: finding, rc 1" 1 "$rc"

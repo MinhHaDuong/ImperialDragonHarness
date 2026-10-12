@@ -313,8 +313,14 @@ worktree go once the branch is pushed and auto-merge is armed.
     stand):
 
     ```bash
+    ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
+    ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
     "$ROAR_DIR/close-and-clean.sh" --phase after-exit
     ```
+
+    (`--default-branch B` overrides the default branch, otherwise read from
+    `origin/HEAD`. A branch whose tip is the default branch's tip is kept: it
+    carries no work and may be a colleague's just-created branch.)
 
     It runs `git fetch --prune`, then deletes only branches that pass the
     ancestry probe against `origin/<default>` — a plain delete has no
