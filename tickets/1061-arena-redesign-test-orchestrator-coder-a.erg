@@ -9,6 +9,7 @@ Label: deferred
 2026-10-08T08:20Z reviewer label deferred
 2026-10-08T08:20Z reviewer note Deferred on the author's instruction (2026-10-08, during the tournament publication). No work until an explicit author decision to open the next cycle.
 2026-10-08T20:27Z reviewer Reference to 0974 updated: 0974 is closed, superseded by 1052 (ticket 1069).
+2026-10-12T04:35Z claude note direction de design de l'auteur (IDH + config Pi + vérif ex post des sièges), contexte reviewers
 
 --- body ---
 ## Context
@@ -52,3 +53,38 @@ now chosen by the orchestrator from the route grid), 1047 (blog posts that state
 - [ ] Author decision on the budget and the candidate list before any run
 - [ ] `skills/arena` updated, or a successor skill, to run role-split arms
 - [ ] `make check` passes
+
+## Note de direction (auteur, 2026-10-12)
+
+Annotation seulement : le rerun reste à concevoir.
+
+Direction proposée : faire tourner IDH tel quel, piloté par un fichier de
+configuration Pi qui ne liste que les modèles testés ; un patch léger sur
+AGENTS.md épingle le modèle de chaque siège (orchestrateur, codeur,
+reviewer 1, reviewer 2) ; un script ex post lit les traces de session et
+vérifie quel modèle a réellement servi chaque siège (siège ↔ modèle, run
+rejeté si un siège a dérivé). Cela répond à « Unit of measure »
+(l'affectation des sièges devient de la configuration, pas du code) et fait
+de « Fixed seats » un choix de config.
+
+Restent ouverts :
+- la mesure de qualité du siège reviewer (piste : faire relire les
+  soumissions du cycle 2 déjà notées par le panel et comparer aux verdicts
+  REROLL/CHANGES du panel) ;
+- la taille de l'échantillon de tickets ;
+- la règle d'exclusion des juges quand une famille occupe un siège.
+
+Contexte des reviewers, mesuré le 2026-10-12 sur les logs Claude Code de
+doudou (2 946 sous-agents de review ; pic de contexte = input + cache par
+appel) :
+
+| Agent | p50 | p90 | max |
+|---|---|---|---|
+| gate-seat | 26,6K | | 32K |
+| adherence-seat | 27,4K | | 33K |
+| code-reviewer | 28,4K | 45K | 64K |
+| gaze-pr-review | 36K | 56K | 78K |
+| general-purpose en review | 90K | 159K | 405K |
+
+Brief ≈ 13K (surtout le prompt système Claude Code). Logs de padme
+(sessions pi) non mesurés.
