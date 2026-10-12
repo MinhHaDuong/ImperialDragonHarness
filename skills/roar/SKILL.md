@@ -206,48 +206,54 @@ worktree go once the branch is pushed and auto-merge is armed.
 ## Close and clean up
 
 7. **Close** the ticket if still open, then **check that the close claims of
-   every recently merged PR actually ran** — not only this session's:
+   every recently merged PR actually ran** — not only this session's. One
+   script runs steps 7-10's mechanical parts (close, close claims, tracker
+   detection, preflight, branch sweep) and ends with a one-screen report; the
+   judgment around it stays here. Run the first half now:
 
    ```bash
    ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
    ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
-   "$ROAR_DIR/check-close-claims.sh" --days 7 || true
+   "$ROAR_DIR/close-and-clean.sh" --phase before-exit --ticket NNNN --days 7
    ```
 
-   A PR body's `**Ticket:**` line is executed by `erg-pr-merge`, not by the
-   forge. Any other route — a bare forge-CLI merge, the forge's web UI, another
-   machine, another session — lands the code and drops the claim with no
-   output, and `erg check` passes either way (git-erg PR #334, 2026-09-10:
-   ticket 0276's fix sat on main while 0276 stayed open, found by luck in a
-   `/perch` pass and repaired by a second PR).
+   Exit 0 clean, 1 findings, 2 could-not-look (never an all-clear: a missing
+   `tickets/erg`, an unreadable forge or a failed fetch all give 2). Omit
+   `--ticket` when there is none. Not in a worktree: use `--phase all` and
+   skip step 9. Its report lines:
 
-   `/healthcheck` step 9 does not cover this. It reports tickets carrying a
-   `Closed:` header that were never archived, so it indexes on the header being
-   *present* — blind by construction to a ticket that was never closed at all.
-   This script joins from the other side, merged PRs that claimed a close.
-
-   Findings are `DROPPED` (ticket exists, no `Closed:` header) or `UNRESOLVED`
-   (no such ticket here — renumbered, or this checkout is behind). Repair a
-   `DROPPED` with `tickets/erg close <id>` plus `tickets/erg archive`, committed
-   like any other change. Exit 2 means the forge could not be read, which is
-   not an all-clear; the trailing count line says what was actually examined.
+   - `CLOSE: ALREADY-CLOSED` is the usual case after `/merge`;
+     `CLOSED-UNCOMMITTED` means it closed and archived the ticket and you must
+     commit that in the wrap-up bundle.
+   - `CLAIMS`: a PR body's `**Ticket:**` line is executed by `erg-pr-merge`,
+     not by the forge. Any other route — a bare forge-CLI merge, the forge's
+     web UI, another machine, another session — lands the code and drops the
+     claim with no output, and `erg check` passes either way (git-erg PR #334,
+     2026-09-10: ticket 0276's fix sat on main while 0276 stayed open). The
+     findings are `DROPPED` (ticket exists, no `Closed:` header) or
+     `UNRESOLVED` (no such ticket here — renumbered, or this checkout is
+     behind). The script never repairs a `DROPPED`: do it with
+     `tickets/erg close <id>` plus `tickets/erg archive`, committed like any
+     other change. `/healthcheck` step 9 does not cover this: it indexes on
+     the `Closed:` header being *present*, so it is blind to a ticket that was
+     never closed at all.
 8. **Check for tracking ticket**: if the closed ticket has a parent, check whether all sibling sub-tickets are now closed.
     - All closed → integration review: re-read all child diffs, run full test suite, verify exit criteria, and run a **repo-wide union sweep for the change class** (stale refs, moved/renamed paths) — a green suite does not exercise the build graph, so a dangling build reference survives every per-PR check. It is caught only by grepping the whole tree for the class of change at integration, not per-PR. (2026-07-11, 0240 reorg: a merged `.mk` prerequisite kept a moved script's old flat path; per-move greps and green `make check-fast` all passed — only the integration union grep found it.)
     - Any open → do nothing, tracker stays open.
+
+    The script's `TRACKER: INTEGRATION-REVIEW-DUE <parent>` line is this
+    check; on that hit, perform the integration review above — the script
+    detects, it does not review.
 9. **Exit worktree** (if in one):
-    a. Preflight from inside the worktree:
-       ```bash
-       ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
-       ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
-       IDH_ROOT="$(cd -P "$ROAR_DIR/../.." && pwd -P)"
-       "$IDH_ROOT/scripts/worktree-exit-preflight.sh"
-       ```
-       Removes only `.panel/` and `build/panel-head/` review scratch first,
-       then refuses (exit 1) on every other uncommitted/untracked file —
-       including a fresh ticket draft `tickets/erg new` wrote but never
-       committed. This cleanliness gate does not prove commits are integrated. If it blocks, commit
-       (or `$IDH_ROOT/scripts/worktree-salvage.sh`) and re-run. See tickets
-       0174 and 0948.
+    a. Preflight from inside the worktree: the `PREFLIGHT` line of the step-7
+       run already covered it (`$IDH_ROOT/scripts/worktree-exit-preflight.sh`, called
+       through `$IDH_ROOT`). If it reported `DIRTY`, commit (or
+       `$IDH_ROOT/scripts/worktree-salvage.sh`) and re-run
+       `close-and-clean.sh --phase before-exit`. It removes only `.panel/` and
+       `build/panel-head/` review scratch first, then refuses on every other
+       uncommitted/untracked file — including a fresh ticket draft
+       `tickets/erg new` wrote but never committed. This cleanliness gate does
+       not prove commits are integrated. See tickets 0174 and 0948.
     b. Immediately before removal, fetch the project integration branch and
        re-run `git merge-base --is-ancestor HEAD origin/main` on the current
        HEAD, after any capture commit.
@@ -303,54 +309,25 @@ worktree go once the branch is pushed and auto-merge is armed.
     Skip if not in a worktree. A worktree a subagent created and locked itself is
     left to `worktree-gc` once its branch is merged.
 10. **Verify hygiene** — and run the branch sweep, which is this step's job.
-    Delete only after the ancestry probe: a plain delete has no merged-check
-    of its own, and a remote branch can be the only copy of an unmerged
-    colleague's work.
+    After step 9 (the sweep's current-branch guard depends on where you now
+    stand):
 
     ```bash
-    git fetch --prune
-    cur=$(git branch --show-current)
-    # every branch checked out in ANY worktree — a parallel session may be standing on one
-    checked=$(git worktree list --porcelain | awk '/^branch /{sub("refs/heads/","",$2); print $2}')
-    for b in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
-      [ "$b" = main ] && continue     # main is always an ancestor; nothing protects it when HEAD is detached
-      [ "$b" = "$cur" ] && continue   # never delete the branch you are standing on
-      printf '%s\n' "$checked" | grep -qx "$b" && continue   # checked out elsewhere; not yours to delete
-      git merge-base --is-ancestor "$b" origin/main && git branch -D "$b"
-    done
+    "$ROAR_DIR/close-and-clean.sh" --phase after-exit
     ```
 
-    Where the forge does not delete merged branches itself (per-repo setting —
-    check it, don't assume), the remote side accumulates the same debt:
-
-    ```bash
-    git fetch --prune
-    for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin/); do
-      case "$ref" in origin/*) ;; *) continue ;; esac  # skips the bare `origin` symref
-      b="${ref#origin/}"
-      [ "$b" = main ] && continue
-      [ "$b" = HEAD ] && continue
-      git merge-base --is-ancestor "$ref" origin/main && git push origin --delete "$b"
-    done
-    ```
-
-    Five lines are load-bearing, each for a branch someone lost: the `case`
-    guard (without it the loop deletes the bare `origin` symref, fails, and
-    `set -e` aborts the sweep on its first iteration while looking like it
-    worked), the `main` and current-branch guards (a detached primary checkout
-    lets a plain `git branch -d main` succeed), and `-D` over `-d` (`-d` checks
-    merged-into-HEAD, not merged-into-`origin/main`, so it silently refuses
-    branches the probe has just proven contained), and the `grep -qx` worktree
-    guard (a branch another session has checked out is an ancestor of
-    `origin/main` like any other; without the guard the `git branch -D` fails as
-    the FINAL command of its `&&` chain, so under `set -e` it aborts the whole
-    sweep and every branch after it in iteration order is never swept — git's
-    refusal is a backstop, not a guard. Match on whole LINES: `git worktree
-    list` emits one branch per line, and a space-delimited membership test
-    silently never fires — that bug was written here on 2026-09-10 and caught
-    only by reading the output, not the exit code). The loops key on exit codes,
-    not parsed output, which is what keeps them correct under an output-framing
-    hook. Incident detail: memory `reference_branch_cleanup_incidents`,
+    It runs `git fetch --prune`, then deletes only branches that pass the
+    ancestry probe against `origin/<default>` — a plain delete has no
+    merged-check of its own, and a remote branch can be the only copy of an
+    unmerged colleague's work. Where the forge does not delete merged branches
+    itself (per-repo setting — check it, don't assume), the remote side
+    accumulates the same debt, so it sweeps that too. A refused delete is
+    reported as `FAILED` (exit 1) and the sweep carries on. The guards are
+    load-bearing, each for a branch someone lost, and each is tested by
+    stripping it from the real script (`tests/test_roar_close_and_clean.sh`):
+    the `origin` symref skip, the default-branch and current-branch skips,
+    the whole-line checked-out-in-any-worktree skip, and `-D` after the
+    probe. Incident detail: memory `reference_branch_cleanup_incidents`,
     ticket 0242.
 
     - Then: `git branch -a` → no stale remote branches; check for stale merge

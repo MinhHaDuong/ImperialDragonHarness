@@ -22,7 +22,7 @@ T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
 
 _check_rc() { # <label> <expected> <actual>
-    if [ "$2" = "$3" ]; then echo "PASS: $1"; else echo "FAIL: $1 — expected rc $2, got $3"; fail=1; fi
+    if [ "$2" = "$3" ]; then echo "PASS: $1"; else echo "FAIL: $1 — expected rc $2, got $3"; echo "${out:-}" | sed "s/^/    | /"; fail=1; fi
 }
 _check_says() { # <label> <output> <substring>
     case "$2" in *"$3"*) echo "PASS: $1" ;; *) echo "FAIL: $1 — output lacked '$3'"; fail=1 ;; esac
