@@ -2,10 +2,12 @@
 Title: molt: script the ticket close/archive blocks; fix merged-branch probe and fixed /tmp path
 Created: 2026-10-11
 Author: reviewer
+Closed: autoclosed — PR #1373
 
 --- log ---
 2026-10-11T16:30Z reviewer created
 2026-10-12T13:51Z Minh-Ha-Duong raid 1084/1085/1086: imagine EXECUTE-WITH-CHANGE; blind-spot fed in; plan accepted; feasibility FEASIBLE
+2026-10-12T15:22Z Minh Ha-Duong closed — autoclosed — PR #1373
 
 --- body ---
 ## Context
