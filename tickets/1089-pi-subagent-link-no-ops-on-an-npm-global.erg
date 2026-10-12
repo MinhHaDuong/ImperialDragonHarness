@@ -10,7 +10,7 @@ Author: Minh Ha-Duong
 ## Context
 On host doudou, `~/.pi/agent/extensions/` holds only `idh-guard.ts` and
 `~/.pi/agent/agents/` does not exist. `bash scripts/pi-subagent-link` prints
-`no Pi install at /home/haduong/.pi/agent; nothing to link` and EXITS 0 while
+`no Pi install at ~/.pi/agent; nothing to link` and EXITS 0 while
 linking nothing: it resolves the release from `~/.pi/agent/install/current-version`,
 a layout that does not exist for an npm-global install (`~/.local/bin/pi` ->
 `~/.local/lib/node_modules/@earendil-works/pi-coding-agent`, v1.1.0). The
