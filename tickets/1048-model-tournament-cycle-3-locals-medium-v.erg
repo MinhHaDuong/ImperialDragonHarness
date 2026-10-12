@@ -34,6 +34,7 @@ Author: MinhHaDuong
 2026-10-12T07:11Z claude note author read the console model card: qwen3.8-flash intl $0.15 in, $0.47 out, implicit-cache input $0.016, explicit cache creation $0.20 / read $0.016 per M. The pre-registered $0.016 cache rate stands; pi models.json and runner PRICE_TABLE already carry it. DashScope available credit 0 USD; billing method not yet confirmed
 2026-10-12T07:16Z claude note DashScope cleared for the hosted arms: free quota 988,602 / 1,000,000 tokens for qwen3.8-flash (expires 2026-11-24), Free Quota Only OFF, a valid credit card is the preferred payment method (postpaid). The free tokens go first, then metered billing; the arena prices every leg at list regardless
 2026-10-12T07:19Z claude note deferred label lifted on the author's decision to run cycle 3. OpenRouter panel key raised to $80/month ($23.33 left), account $44.45
+2026-10-12T10:20Z claude note Mellum early legs: 0470 BLOCKED after 18 tool calls (panel 17/30; every Flash-Next arm solved it, 29-30), 0532 VOID-EMPTY (10.5 min, peak 109K, compacted once): 0 of 9 edits applied, 4 with LaTeX backslashes sent unescaped in the tool JSON (\t became a tab), ~50 probing shell calls, a false 'successfully edited' claim on an empty diff, a closing question to an absent user, invented subagents. Context is not the binding constraint. Untested confound: vendor evals ran Pi v0.73.1, padme runs pi 1.1.0 (edit tool schema). Author's reading: benchmaxxed, smelly; colour it so on the scatterplot. Coder-only and reviewer-seat tests deferred to cycle 4
 
 --- body ---
 
