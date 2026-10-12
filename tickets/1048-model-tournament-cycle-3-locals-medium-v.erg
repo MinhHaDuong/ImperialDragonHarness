@@ -19,6 +19,7 @@ Label: deferred
 2026-10-12T05:07Z claude note author: Flash-Next 2x2 effort medium|xhigh x solo|helper; ctx 131072 for every local arm or drop; gemini panel seat replaced for cycle 3; CPU swap undecided
 2026-10-12T05:25Z claude note Gemma qualification on padme, ctx 131072, KV q8_0, -fa on, needle at 114K tokens: Q4 UD-Q4_K_XL on A4000 fits fully on GPU only with -ub 128 (pp 920, tg 38.7 tok/s at 114K; 94 tok/s at 4K); -ub 256 OOMs mid-prompt. NVFP4 (FreedomAISVR, genuine NVFP4) on 5070 Ti never fits fully (compute buffer short), needs --n-cpu-moe 3 (pp 1899, tg 63 tok/s at 114K); --n-cpu-moe 1 OOMs. Offload cost at 4K on Q4: 1 layer ~90 vs 94, 3 layers 20-31 tok/s. Then Gemma cancelled by the author, NVFP4 weights deleted, gemini seat kept
 2026-10-12T05:27Z claude note effort levers: Mellum template has enable_thinking only; Strata v0.1.43 takes reasoning_effort per request or as a config default (#1641)
+2026-10-12T05:28Z claude note Mellum sampling from the model card: temp 0.6, top-p 0.95, top-k 20 (vendor agentic evals used temp 1.0)
 
 --- body ---
 
@@ -53,7 +54,13 @@ arm that cannot load 131072 on its card is dropped, not run shorter.
   `/data/models/gguf/mellum/`, on A4000 solo | 5070 Ti solo (two arms).
   No effort levels: its chat template only knows `enable_thinking` (on by
   default, no budget, no reasoning_effort). Identity: @thinking (template
-  default); confirm from session evidence at the smoke.
+  default); confirm from session evidence at the smoke. Sampling, set on
+  llama-server for both arms: `--temp 0.6 --top-p 0.95 --top-k 20`, the
+  model card's recommended setting (HF card, usage and GGUF sections).
+  Caveat for the readout: the vendor's agentic scores (Pi v0.73.1) used
+  "each model's default sampling (temperature 1.0 for Mellum2.1)", a 114K
+  context and up to 16K tokens per turn, so our runs are not a replication
+  of those scores.
 - Hosted: qwen3.8-flash, lineage twin of flash-next (same architecture,
   NOT the same weights; label it "lineage twin" in every table), at
   @default(xhigh) and @medium, DIRECT DashScope via the custom pi provider
