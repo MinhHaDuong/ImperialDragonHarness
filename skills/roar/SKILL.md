@@ -248,8 +248,7 @@ worktree go once the branch is pushed and auto-merge is armed.
     a. Preflight from inside the worktree: the `PREFLIGHT` line of the step-7
        run already covered it (`$IDH_ROOT/scripts/worktree-exit-preflight.sh`, called
        through `$IDH_ROOT`). If it reported `DIRTY`, commit (or
-       `$IDH_ROOT/scripts/worktree-salvage.sh`) and re-run
-       `close-and-clean.sh --phase before-exit`. It removes only `.panel/` and
+       `$IDH_ROOT/scripts/worktree-salvage.sh`) and re-run the step 7 command. It removes only `.panel/` and
        `build/panel-head/` review scratch first, then refuses on every other
        uncommitted/untracked file — including a fresh ticket draft
        `tickets/erg new` wrote but never committed. This cleanliness gate does

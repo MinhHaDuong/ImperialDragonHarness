@@ -46,15 +46,15 @@ printf '#!/usr/bin/env bash\necho "[]"\n' > "$STUBS/gh"; chmod +x "$STUBS/gh"
 
 run() { # <script> <args...>: hermetic run in the current directory; sets out, rc
     local s="$1"; shift
-    out=$(env -i PATH="$STUBS:$TOOLS" HOME="$T" ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$s" "$@" 2>&1) && rc=0 || rc=$?
+    out=$(env -i PATH="$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$s" "$@" 2>&1) && rc=0 || rc=$?
 }
 run_nogh() {
     local s="$1"; shift
-    out=$(env -i PATH="$TOOLS" HOME="$T" ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$s" "$@" 2>&1) && rc=0 || rc=$?
+    out=$(env -i PATH="$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$s" "$@" 2>&1) && rc=0 || rc=$?
 }
 
 # A copy of the real script with every line tagged `# guard:<name>` removed
-# (or an arbitrary sed expression applied), in a temp dir; run() points ROAR_DIR
+# (or an arbitrary sed expression applied), in a temp dir; run() points CLOSE_AND_CLEAN_ROAR_DIR
 # at the real skill directory so the copy still finds its helpers.
 mutant() { # <name> <sed-expr>
     mkdir -p "$T/mutants"
@@ -226,5 +226,37 @@ G add -A; G commit -q -m c3
 run "$SCRIPT" --phase before-exit --ticket 0101
 _check_lacks "open sibling: no integration review" "$out" "INTEGRATION-REVIEW-DUE"
 _check_true "tracker detection never exits 2" test "$rc" != 2
+
+# --- 11. remote delete is leased to the probed commit -------------------------
+# A colleague pushes to a merged branch AFTER the sweep's fetch: the delete must
+# be refused, not destroy their commit. A git wrapper on PATH plays the colleague
+# the moment the sweep pushes.
+make_world "$T/c13" merged-a; cd "$W"
+git clone -q "$T/c13/o.git" "$T/c13/colleague" 2>/dev/null
+git -C "$T/c13/colleague" config user.email t@t; git -C "$T/c13/colleague" config user.name t
+git -C "$T/c13/colleague" checkout -q merged-a; git -C "$T/c13/colleague" commit -q --allow-empty -m "new work"
+mkdir -p "$T/c13/wrap"
+cat > "$T/c13/wrap/git" <<WRAP
+#!/usr/bin/env bash
+if [ "\$1" = push ] && [ ! -e "$T/c13/pushed" ]; then
+    touch "$T/c13/pushed"; "$TOOLS/git" -C "$T/c13/colleague" push -q origin merged-a
+fi
+exec "$TOOLS/git" "\$@"
+WRAP
+chmod +x "$T/c13/wrap/git"
+out=$(env -i PATH="$T/c13/wrap:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$SCRIPT" --phase after-exit 2>&1) && rc=0 || rc=$?
+_check_rc "raced remote delete is refused (rc 1)" 1 "$rc"
+_check_true "colleague's new commit survives on the remote" has_remote merged-a
+
+# control: without the lease the same race destroys the colleague's commit
+make_world "$T/c14" merged-a; cd "$W"
+git clone -q "$T/c14/o.git" "$T/c14/colleague" 2>/dev/null
+git -C "$T/c14/colleague" config user.email t@t; git -C "$T/c14/colleague" config user.name t
+git -C "$T/c14/colleague" checkout -q merged-a; git -C "$T/c14/colleague" commit -q --allow-empty -m "new work"
+mkdir -p "$T/c14/wrap"
+sed "s/c13/c14/g" "$T/c13/wrap/git" > "$T/c14/wrap/git"; chmod +x "$T/c14/wrap/git"
+mutant lease 's/--force-with-lease="[^"]*(")" origin/origin/;s|--force-with-lease="refs/heads/\$b:\$(git rev-parse "refs/remotes/origin/\$b")" origin ":refs/heads/\$b"|origin --delete "$b"|'
+env -i PATH="$T/c14/wrap:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$MUTANT" --phase after-exit >/dev/null 2>&1 || true
+_check_true "lease control: unleased delete destroys the raced commit" bash -c '! git -C "$0" ls-remote --heads origin merged-a | grep -q .' "$W"
 
 exit $fail

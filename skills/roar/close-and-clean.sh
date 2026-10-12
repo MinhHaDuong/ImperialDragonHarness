@@ -43,7 +43,7 @@ while [ $# -gt 0 ]; do
 done
 case "$PHASE" in before-exit|after-exit|all) ;; *) echo "close-and-clean: bad --phase '$PHASE'" >&2; exit 2 ;; esac
 
-ROAR_DIR="${ROAR_DIR:-$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)}"
+ROAR_DIR="${CLOSE_AND_CLEAN_ROAR_DIR:-$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)}"
 IDH_ROOT="${IDH_ROOT:-$(cd -P "$ROAR_DIR/../.." && pwd -P)}"
 
 SEV=0
@@ -196,7 +196,7 @@ sweep() {
         if probe "refs/heads/$b"; then
             # -D, not -d: -d checks merged-into-HEAD (or upstream), not merged-into-base,
             # so it refuses branches the probe has just proven contained.
-            if git branch -D "$b" >/dev/null 2>&1; then deleted="$deleted $b"; else failed=$((failed + 1)); note "SWEEP: FAILED to delete local $b"; fi
+            if git branch -D -- "$b" >/dev/null 2>&1; then deleted="$deleted $b"; else failed=$((failed + 1)); note "SWEEP: FAILED to delete local $b"; fi
         else
             kept="$kept $b"
         fi
@@ -208,8 +208,11 @@ sweep() {
             # and, unisolated under `set -e`, aborted the whole sweep (2026-08-14).
             [ "$b" = HEAD ] && continue  # guard:symref
             [ "$b" = "$DEFAULT" ] && continue
+            # The lease pins the delete to the commit the probe approved: a push landing
+            # between the fetch and here is refused, not destroyed. Full refname also
+            # sidesteps a tag of the same name.
             if probe "refs/remotes/origin/$b"; then
-                if git push origin --delete "$b" >/dev/null 2>&1; then rdeleted="$rdeleted $b"; else failed=$((failed + 1)); note "SWEEP: FAILED to delete remote $b"; fi
+                if git push --force-with-lease="refs/heads/$b:$(git rev-parse "refs/remotes/origin/$b")" origin ":refs/heads/$b" >/dev/null 2>&1; then rdeleted="$rdeleted $b"; else failed=$((failed + 1)); note "SWEEP: FAILED to delete remote $b"; fi
             else
                 rkept="$rkept $b"
             fi

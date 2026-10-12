@@ -8,8 +8,8 @@ set -euo pipefail
 # ExitWorktree will silently destroy the draft — the failure mode that lost
 # the 0173 ticket. See ticket 0174.
 #
-# This is a skill-level gate, called from /roar step 9 (through skills/roar/close-and-clean.sh) and /lair
-# step 7 before invoking ExitWorktree. Checks tracked-modified, staged, AND
+# This is a skill-level gate, called from /roar step 9 (through
+# skills/roar/close-and-clean.sh) and /lair step 7 before invoking ExitWorktree. Checks tracked-modified, staged, AND
 # untracked entries — `git status --porcelain` covers all three by default.
 #
 # Arg: worktree path (default: current directory).
