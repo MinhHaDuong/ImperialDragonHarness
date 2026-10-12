@@ -132,12 +132,14 @@ Run full repo housekeeping and act on every finding.
    ```bash
    if [ -d docs ] || find . -maxdepth 2 -name '*.bib' -type f -print -quit | grep -q .; then
      out=$(mktemp "${TMPDIR:-/tmp}/zotero-reconcile.XXXXXX.json")
+     status=0
      if [ -f .zotero-reconcile.json ]; then
-       python3 "$IDH_ROOT/scripts/zotero.py" reconcile . --apply --out "$out"
+       python3 "$IDH_ROOT/scripts/zotero.py" reconcile . --apply --out "$out" || status=$?
      else
-       python3 "$IDH_ROOT/scripts/zotero.py" reconcile . --out "$out"
+       python3 "$IDH_ROOT/scripts/zotero.py" reconcile . --out "$out" || status=$?
      fi
-     echo "reconcile report: $out"
+     echo "reconcile report: $out (exit $status)"
+     [ "$status" -eq 0 ]
    fi
    ```
 

@@ -22,7 +22,9 @@ TICKET = (
 
 
 def run(*args, cwd, env=None):
-    result = subprocess.run(args, cwd=cwd, env=env, text=True, capture_output=True)
+    result = subprocess.run(
+        args, cwd=cwd, env=env if env is not None else child_env(), text=True, capture_output=True
+    )
     assert result.returncode == 0, f"{args}: {result.stdout}\n{result.stderr}"
     return result
 
@@ -148,8 +150,9 @@ def test_close_stages_moved_ticket(tmp_path):
 
 @pytest.mark.integration
 def test_close_already_moved(tmp_path):
-    """No open source file: report and exit 1 without a git pathspec error."""
+    """Ticket already archived: report and exit 1 without a git pathspec error."""
     repo = make_repo(tmp_path, ticket=False)
+    closed_ticket(repo, 1, "already-done")
     r = sweep(repo, "close", "0001")
     assert r.returncode == 1
     assert "No open ticket file for 0001" in r.stderr
@@ -276,3 +279,87 @@ def test_prune_skips_untracked_duplicate(tmp_path):
     r = sweep(repo, "archive")
     assert r.returncode == 0 and "untracked duplicate" in r.stderr
     assert (repo / "tickets/0001-probe.erg").exists()
+
+
+def reconcile_block():
+    section = MOLT.read_text().split("1.8. **Reconcile", 1)[1].split("2. **Healthcheck.**", 1)[0]
+    return reconcile_blocks(section)[0]
+
+
+def reconcile_blocks(text):
+    import re
+
+    return re.findall(r"```bash\n(.*?)\n\s*```", text, re.S)
+
+
+def stub_zotero(tmp_path, status):
+    root = tmp_path / "idh"
+    (root / "scripts").mkdir(parents=True)
+    (root / "scripts/zotero.py").write_text(f"import sys\nsys.exit({status})\n")
+    shim = tmp_path / "bin/zotero.py"
+    shim.parent.mkdir(parents=True)
+    shim.write_text(f"#!/bin/sh\nexit {status}\n")
+    shim.chmod(0o755)
+    proj = tmp_path / "proj"
+    (proj / "docs").mkdir(parents=True)
+    env = child_env()
+    env["IDH_ROOT"] = str(root)
+    env["TMPDIR"] = str(tmp_path)
+    env["PATH"] = f"{shim.parent}:{env['PATH']}"
+    return proj, env
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("which", ["molt", "backfill"])
+def test_reconcile_failure_propagates_and_path_announced(tmp_path, which):
+    """A failing reconcile must fail the block, and the report path is still named."""
+    if which == "molt":
+        block = reconcile_block()
+    else:
+        text = (ROOT / "skills/zotero/references/backfill.md").read_text()
+        block = next(b for b in reconcile_blocks(text) if "reconcile . --out" in b)
+    proj, env = stub_zotero(tmp_path, 7)
+    r = subprocess.run(["bash", "-c", block], cwd=proj, env=env, text=True, capture_output=True)
+    assert r.returncode != 0, (r.returncode, r.stdout, r.stderr)
+    assert "reconcile report: " in r.stdout and "(exit 7)" in r.stdout
+    okdir = tmp_path / "ok"
+    okdir.mkdir()
+    proj2, env2 = stub_zotero(okdir, 0)
+    assert subprocess.run(["bash", "-c", block], cwd=proj2, env=env2).returncode == 0
+
+
+@pytest.mark.integration
+def test_probe_ignores_pr_subject_older_than_the_fork(tmp_path):
+    """A historical main commit citing the same PR number is not a merge of this branch."""
+    repo = make_repo(tmp_path)
+    closed_ticket(repo, 7, "autoclosed — PR #42")
+    run("git", "commit", "-q", "--allow-empty", "-m", "old unrelated work (#42)", cwd=repo)
+    branch_with_commit(repo, "t0007-thing")
+    run("git", "commit", "-q", "--allow-empty", "-m", "later work", cwd=repo)
+    assert sweep(repo, "merged-probe", "t0007-thing").returncode == 1
+
+
+@pytest.mark.integration
+def test_archive_failure_is_reported_and_stops_the_prune(tmp_path):
+    repo = make_repo(tmp_path, ticket=False)
+    (repo / "tickets/closed/0001-probe.erg").write_text(TICKET)
+    run("git", "add", "--", "tickets", cwd=repo)
+    (repo / "tickets/0001-probe.erg").write_text(TICKET)
+    run("git", "add", "--", "tickets", cwd=repo)
+    run("git", "commit", "-qm", "duplicate", cwd=repo)
+    bad = tmp_path / "bad-erg"
+    bad.write_text("#!/bin/sh\necho 'archive: boom' >&2\nexit 1\n")
+    bad.chmod(0o755)
+    r = sweep(repo, "archive", erg=bad)
+    assert r.returncode != 0
+    assert "boom" in r.stderr
+    assert (repo / "tickets/0001-probe.erg").exists()
+
+
+def test_run_helper_strips_bash_env(tmp_path, monkeypatch):
+    marker = tmp_path / "loaded"
+    loader = tmp_path / "loader.sh"
+    loader.write_text(f"touch {marker}\n")
+    monkeypatch.setenv("BASH_ENV", str(loader))
+    run("bash", "-c", "true", cwd=tmp_path)
+    assert not marker.exists()

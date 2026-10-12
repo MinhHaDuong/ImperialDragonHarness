@@ -20,7 +20,7 @@ scripts roar's copy). Two defects ride along:
   parallel sessions clobber each other.
 
 ## Exit criteria
-- [ ] The close / archive / stage / duplicate-prune blocks become one script (shared with 1084's roar script if it has landed, otherwise placed so 1084 can reuse it), with tests for close-already-moved, archive-reported paths, and the duplicate prune
-- [ ] The merged-branch probe uses `git merge-base --is-ancestor` (or the PR squash-subject check as a second signal), portable grep only, and reports "could not determine" rather than "not merged" when it cannot map a branch
-- [ ] The reconcile output path is per-session (`mktemp`), not a fixed `/tmp` name
-- [ ] `skills/molt/SKILL.md` calls the script instead of inline blocks
+- [x] The close / archive / stage / duplicate-prune blocks become one script (shared with 1084's roar script if it has landed, otherwise placed so 1084 can reuse it), with tests for close-already-moved, archive-reported paths, and the duplicate prune
+- [x] The merged-branch probe uses `git merge-base --is-ancestor` (or the PR squash-subject check as a second signal), portable grep only, and reports "could not determine" rather than "not merged" when it cannot map a branch
+- [x] The reconcile output path is per-session (`mktemp`), not a fixed `/tmp` name
+- [x] `skills/molt/SKILL.md` calls the script instead of inline blocks
