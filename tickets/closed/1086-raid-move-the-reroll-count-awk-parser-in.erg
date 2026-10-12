@@ -2,10 +2,12 @@
 Title: raid: move the reroll-count awk parser into a tested script
 Created: 2026-10-11
 Author: reviewer
+Closed: autoclosed — PR #1372
 
 --- log ---
 2026-10-11T16:30Z reviewer created
 2026-10-12T13:52Z Minh-Ha-Duong raid 1084/1085/1086: imagine EXECUTE-WITH-CHANGE; blind-spot fed in; plan accepted; feasibility verdict not supplied to executor (brief carried placeholder)
+2026-10-12T15:21Z Minh Ha-Duong closed — autoclosed — PR #1372
 
 --- body ---
 ## Context
