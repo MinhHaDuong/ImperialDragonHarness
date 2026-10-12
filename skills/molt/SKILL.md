@@ -131,11 +131,13 @@ Run full repo housekeeping and act on every finding.
 
    ```bash
    if [ -d docs ] || find . -maxdepth 2 -name '*.bib' -type f -print -quit | grep -q .; then
+     out=$(mktemp "${TMPDIR:-/tmp}/zotero-reconcile.XXXXXX.json")
      if [ -f .zotero-reconcile.json ]; then
-       python3 "$IDH_ROOT/scripts/zotero.py" reconcile . --apply --out /tmp/zotero-reconcile.json
+       python3 "$IDH_ROOT/scripts/zotero.py" reconcile . --apply --out "$out"
      else
-       python3 "$IDH_ROOT/scripts/zotero.py" reconcile . --out /tmp/zotero-reconcile.json
+       python3 "$IDH_ROOT/scripts/zotero.py" reconcile . --out "$out"
      fi
+     echo "reconcile report: $out"
    fi
    ```
 
@@ -166,17 +168,13 @@ Run full repo housekeeping and act on every finding.
    survive separate Bash tool calls.
 
    ```bash
-   ticket_id=<id>
-   source=$(find tickets -maxdepth 1 -type f -name "${ticket_id}-*.erg" -print -quit)
-   [ -n "$source" ] || { echo "No open ticket file for $ticket_id" >&2; exit 1; }
-   tickets/erg close "$ticket_id" already-done tickets/ || exit $?
-   git add -u -- "$source"
-   destination="tickets/closed/$(basename "$source")"
-   [ ! -f "$destination" ] || git add -- "$destination"
+   bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" close <id>
    ```
 
-   If the close command fails, stop the sweep and report the error; do not
-   continue to archive or commit its partial edits.
+   The script closes, then stages the closed file in one process. If it fails,
+   stop the sweep and report the error; do not continue to archive or commit its
+   partial edits. Exit 2 means `tickets/` or the erg binary is missing: skip
+   the ticket sweep for this repository.
 
    Current `erg` moves the file on close; older `erg` leaves it at the source
    path until step 2.6 archives it. Log each closure as a fix-now
@@ -189,39 +187,16 @@ Run full repo housekeeping and act on every finding.
 2.6. **Archive closed tickets.** Skip if `tickets/` is absent.
 
    ```bash
-   # Older erg moves files here; current erg may already have moved them on
-   # close. Stage only paths reported by this archive call.
-   archive_output=$(tickets/erg archive tickets/ 2>/dev/null) || true
-   while IFS= read -r line; do
-     case "$line" in
-       "ARCHIVED "*)
-         source="tickets/${line#ARCHIVED }"
-         if git ls-files --error-unmatch -- "$source" >/dev/null 2>&1; then
-           git add -u -- "$source"
-         fi
-         destination="tickets/closed/$(basename "$source")"
-         [ ! -f "$destination" ] || git add -- "$destination"
-         ;;
-     esac
-   done <<< "$archive_output"
+   bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" archive
    ```
 
-   The guarded archive moves any remaining ticket with a non-empty `Closed:`
-   header from `tickets/` into `tickets/closed/`. It also reports those moves
-   for exact-path staging. After archiving, remove any file from `tickets/`
-   that already exists in `tickets/closed/` (duplicate committed under both
-   paths, possible independently of this sweep):
-
-   ```bash
-   shopt -s nullglob
-   for f in tickets/*.erg; do
-     base=$(basename "$f")
-     if [ -f "tickets/closed/$base" ]; then
-       git rm "$f"
-     fi
-   done
-   shopt -u nullglob
-   ```
+   The script moves any remaining ticket with a non-empty `Closed:` header from
+   `tickets/` into `tickets/closed/` and stages exactly the paths the archive
+   call reports (older `erg` leaves the file at the source path on close;
+   current `erg` moves it). It then removes any file from `tickets/` that
+   already exists in `tickets/closed/` (duplicate committed under both paths,
+   possible independently of this sweep). Exit 2 means `tickets/` or the erg
+   binary is missing: skip, do not treat it as a clean sweep.
 
    If any files were moved or removed, stage and include them in the step 3
    commit (`chore: housekeeping fixes (sweep)`). Do not create a separate
@@ -233,13 +208,13 @@ Run full repo housekeeping and act on every finding.
    **Branch deletion (fix-now from healthcheck check 4):** When a fix-now bullet says
    to delete a branch, apply these guards before acting. Skip (log a warning) if any
    guard trips:
-   - **Merge guard**: re-run the merge probe from healthcheck check 4 and confirm
-     it exits 0. If the ticket ID does NOT appear in main's commit log since the branch
-     diverged, the branch is not yet merged — skip deletion.
+   - **Merge guard**: re-run the merge probe from healthcheck check 4 and act on
+     its exit status. Exit 0 → merged, deletion may proceed. Exit 1 → the branch
+     is not merged, skip deletion. Exit 2 (`could-not-determine`) → the branch
+     cannot be mapped to a landed merge request: skip deletion and log it; never
+     read 2 as merged or as not merged.
      ```bash
-     merge_base=$(git merge-base main <branch>)
-     pr_num=$(grep -oP '^Closed:.*#\K[0-9]+' tickets/closed/$(ls tickets/closed/ | grep -P "^$(echo <branch> | grep -oP 't\K\d+')-" | head -1) 2>/dev/null | head -1 || true)
-     [ -n "$pr_num" ] && git log $merge_base..main --format="%s%n%b" | grep -qE "\(#${pr_num}\)"
+     bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" merged-probe <branch>
      ```
    - **Worktree guard**: if the branch is prefixed with `+` in `git branch` output, a
      worktree is checked out on it. Skip if the worktree is dirty (uncommitted changes).

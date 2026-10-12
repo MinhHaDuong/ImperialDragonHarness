@@ -39,13 +39,11 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
    - **Non-ticket branches** with `commits_beyond_default > 0`: flag as cleanup candidate.
    - **Closed-ticket branches** (name matches `t<NNNN>-*` and ticket NNNN has a `Closed:` line) where the merge probe succeeds: classify as **fix-now** — safe to delete. Run this probe per branch:
      ```bash
-     merge_base=$(git merge-base main <branch>)
-     pr_num=$(grep -oP '^Closed:.*#\K[0-9]+' tickets/closed/$(ls tickets/closed/ | grep -P "^$(echo <branch> | grep -oP 't\K\d+')-" | head -1) 2>/dev/null | head -1 || true)
-     [ -n "$pr_num" ] && git log $merge_base..main --format="%s%n%b" | grep -qE "\(#${pr_num}\)"
+     bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" merged-probe <branch>
      ```
-     If the probe exits 0, the branch landed on main. Emit one fix-now bullet per matching branch: `Delete local branch \`<branch>\` (closed ticket <NNNN>, merged into main)`.
-     Note: for branches merged before 2026-05-25, the repo used squash-merge — `git merge-base --is-ancestor` is unreliable for those; the PR-number grep above handles both merge strategies.
-   - **Closed-ticket branches** where the merge probe fails (grep exits non-zero): flag as cleanup candidate (commits not yet on default branch — manual review needed before deleting).
+     Exit 0 means the branch landed on main: ancestry (`git merge-base --is-ancestor`) or, as an equal second signal, the merge request number from the ticket's `Closed:` header appearing as `(#N)` in a subject on main. Emit one fix-now bullet per matching branch: `Delete local branch \`<branch>\` (closed ticket <NNNN>, merged into main)`.
+     Note: the merge-request-subject signal stays because ancestry misses squash merges made before 2026-05-25, which left no ancestry; the probe tries both.
+   - **Closed-ticket branches** where the merge probe exits 1 (not merged) or 2 (`could-not-determine`: the branch maps to no ticket or the ticket records no merge request number, or `tickets/` or erg is missing): flag as cleanup candidate for manual review, not fix-now. Exit 2 is never a deletion.
 5. **Worktrees** — from `worktrees`. Flag entries with `locked: true` whose lock pid is no longer running. For each worktree, also run:
    ```bash
    git log <worktree-head>..<main-head> --oneline | wc -l

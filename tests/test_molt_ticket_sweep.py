@@ -220,7 +220,7 @@ def test_prune_duplicates(tmp_path):
 
 def test_skills_call_the_script():
     molt = MOLT.read_text()
-    assert molt.count("ticket-sweep.sh") >= 4  # close, archive, probe, + prose
+    assert molt.count("ticket-sweep.sh\" ") == 3  # close, archive, merged-probe
     assert "ticket-sweep.sh" in HEALTHCHECK.read_text()
     assert "grep -oP" not in molt + HEALTHCHECK.read_text()
 
