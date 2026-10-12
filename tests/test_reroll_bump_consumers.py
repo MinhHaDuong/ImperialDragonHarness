@@ -58,7 +58,7 @@ def test_wrap_up_tally_counts_log_entries_per_ticket(tmp_path, regression):
     result = subprocess.run(
         ["bash", "-e", "-c", command.group(1)],
         cwd=tmp_path,
-        env=child_env(),
+        env={**child_env(), "IDH_ROOT": str(ROOT)},
         capture_output=True,
         text=True,
         check=True,
@@ -70,3 +70,29 @@ def test_wrap_up_tally_counts_log_entries_per_ticket(tmp_path, regression):
         "Ticket 1023: 1 permission",
         "Ticket 1023: 1 circuit-breaker",
     }
+
+
+@pytest.mark.integration
+def test_zero_timestamp_log_is_flagged_not_zeroed(tmp_path):
+    # A log whose entries lost the timestamp shape must not look like an all-clear.
+    tickets = tmp_path / "tickets"
+    tickets.mkdir()
+    (tickets / "1040-example.erg").write_text(
+        "%erg 0.1\nTitle: example\n\n--- log ---\n"
+        "2026/10/05 10:00 reviewer bump permission\n"
+        "\n--- body ---\nNo entries.\n"
+    )
+    skill = (ROOT / "skills/raid/SKILL.md").read_text()
+    wrap_up = skill.split("## Wrap up", 1)[1].split("## Circuit breakers", 1)[0]
+    command = re.search(r"```(?:bash)?\n(.*?)\n\s*```", wrap_up, re.S)
+    assert command, "wrap-up must provide an executable tally recipe"
+    result = subprocess.run(
+        ["bash", "-e", "-c", command.group(1)],
+        cwd=tmp_path,
+        env={**child_env(), "IDH_ROOT": str(ROOT)},
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert result.stdout == ""
+    assert "drift" in result.stderr

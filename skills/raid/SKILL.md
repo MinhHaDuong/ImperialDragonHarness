@@ -428,34 +428,15 @@ Autonomous mode: ralph loop to next wave.
 1b. Scan ticket log sections for current bump notes and legacy bump entries;
     print counts by ticket and category (author names may contain spaces):
     ```bash
-    awk '
-      FNR == 1 { in_log = 0; in_body = 0 }
-      in_body { next }
-      /^--- log ---$/ { in_log = 1; next }
-      /^--- body ---$/ { in_log = 0; in_body = 1; next }
-      in_log && /^[0-9][0-9][0-9][0-9]-/ {
-        if (match($0, / (bump|note) /)) {
-          split(substr($0, RSTART + 1), fields, " ")
-          if (fields[1] == "note" && fields[2] == "bump" &&
-              fields[3] == "verify-reroll") fields[2] = fields[3]
-          if (fields[1] == "note" && fields[2] != "verify-reroll" &&
-              fields[2] != "circuit-breaker") next
-          ticket = FILENAME
-          sub(/^.*\//, "", ticket)
-          ticket = substr(ticket, 1, 4)
-          count[ticket " " fields[2]]++
-        }
-      }
-      END {
-        for (key in count) {
-          split(key, fields, " ")
-          printf "Ticket %s: %d %s\n", fields[1], count[key], fields[2]
-        }
-      }
-    ' tickets/*.erg tickets/closed/*.erg | sort
+    IDH_ROOT="${IDH_ROOT:?set IDH_ROOT per the helper-command note at the top}"
+    python3 "$IDH_ROOT/scripts/raid-reroll-tally.py" tickets tickets/closed
     ```
+    A `WARNING drift:` line on stderr means a ticket log has entries but none
+    in the timestamp shape, so its counts are missing: do not read the absent
+    rows as zero. Exit 2 means no ticket directory was found; report it, do not
+    read it as an all-clear.
     Combine category rows in the briefing as:
-    `Ticket NNNN: N bumps (X permission, Y verify-reroll, …) → Z% trivial`.
+    `Ticket NNNN: N bumps (X permission, Y verify-reroll, …)`.
 2. All merged PRs confirmed on main. Any ESCALATED PRs listed with reasons.
    Any ticket Phase 1 excluded as skip-labelled is listed here too, with the
    decisions it is waiting on. When the queue held nothing else, that list is
