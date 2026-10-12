@@ -374,6 +374,79 @@ pre-registration at launch ($0.15/$0.47 expected per the rate card). Local arms'
 "no knob" becomes "@template-default (xhigh)" until the effort is pinned.
 Estimated cost: hosted 2 arms x 10 legs ~ $3-6 + panel ~$15.
 
+### Cycle-3 slate revised (author, 2026-10-12): REGISTERED
+
+Supersedes the 2026-10-05 slate above. Frozen by the author on 2026-10-12,
+before any cycle-3 leg ran; no protocol change mid-cycle. Ticket 1048 holds
+the decision trail and the qualification measurements.
+
+Purpose (author, 2026-10-12): inform the choice between two deployments.
+A = Flash-Next on the 5070 Ti as orchestrator + Mellum on the A4000 as local
+coder. B = Flash-Next on both GPUs (A4000 helper) + a hosted coder. Reviewers
+in both: Flash-Next at lower thinking, Haiku, Luna. Same weights give the
+same answers on either topology, so quality is scored once per model and
+effort; topologies are compared on speed only.
+
+Arms (all locals at ctx 131072; an arm that cannot load it is dropped):
+
+| Arm | Stack | Effort | Placement | Legs | Role |
+|---|---|---|---|---|---|
+| f2x | Flash-Next IQ3_S, Strata v0.1.43 (src e568e70), CUDA 13.0, `--expert-cache-device1 --remote-expert-opt` | xhigh (config "high") | 5070 Ti + A4000 helper | 10, scored | orchestrator |
+| f2m | same | medium | 5070 Ti + A4000 helper | 10, scored | lower-thinking reviewer |
+| ml1 | Mellum 2.1 12B-A2.5B Thinking Q8_0, llama-server | @thinking | 5070 Ti solo | 3 screen, then 10, scored | deployment-A coder (scored on the faster card; same answers on the A4000) |
+| q8m | qwen3.8-flash, DashScope intl direct (lineage twin) | medium | hosted | 10, scored | deployment-B coder candidate |
+| q8x | same | xhigh (pi records "high") | hosted | 10, scored | same |
+| f1x | Flash-Next IQ3_S as f2x, without the helper | xhigh | 5070 Ti solo | 3, speed only | deployment-A orchestrator speed |
+| f1m | same | medium | 5070 Ti solo | 3, speed only | deployment-A reviewer speed |
+
+The scored arms are the scatterplot points; Haiku, Luna and the other hosted
+coders enter from their cycle-2 scores. The 3 speed tickets (author, 2026-10-12) are
+0470 (data, ~21K peak context), 0532 (prose, ~70K) and 0452 (code-large,
+~115K: at the compaction edge). Mellum screen:
+ml1 runs those 3 first and continues to 10 only if it finishes them; a
+collapse on the large one rules deployment A out. Mellum runs on the 5070 Ti
+to shorten test time (author, 2026-10-12): same weights, same answers; its
+A4000 speed comes from qualification (decode 114 / 48 tok/s at 4K / 114K,
+against 214 / 111 on the 5070 Ti). Dropped: ml0.
+
+Fixed knobs: Strata effort as the config default (`reasoning_effort`, #1641;
+pi sends none to local servers); frozen per-topology expert profile, built
+from the Strata bench suite (no tournament ticket), no profile saving during
+legs; Mellum sampling per its card (temp 0.6, top-p 0.95, top-k 20); hosted
+pi contextWindow 131072, like the locals, so no arm escapes compaction.
+Prices: q8m/q8x $0.15 in / $0.47 out / $0.016 implicit-cache read per M
+(Model Studio console model card, read by the author 2026-10-12; explicit
+cache creation $0.20, read $0.016, unused by pi);
+$5.00 spend cap per hosted arm. Locals: electricity only.
+
+Sample and panel: the cycle-2 draw (0211, 0233, 0333, 0338, 0452, 0470,
+0532, 0673, 0874, 1372), smoke 0470 first on every arm; the cycle-2 panel
+(gemini / grok / minimax), rubric and blinding unchanged.
+
+Hypotheses:
+
+- H1 (effort): on the same stack, xhigh beats medium on the panel sum, at a
+  longer wall-clock. Pairs f2m-f2x, q8m-q8x.
+- H2 (placement): the helper topology is faster than solo per ticket. Pairs
+  f1x-f2x, f1m-f2m on the 3 speed tickets; time and tokens only. Solo also
+  differs by v0.1.42 defaults (route tail skip and measured PCIe share are on
+  solo, off with a helper): a stack difference, not only a card one.
+- H3 (local vs hosted twin): at matched effort the hosted flash matches the
+  local Flash-Next on quality. Pairs f2m-q8m, f2x-q8x. Not the same weights.
+- H4 (deployment A): Mellum 2.1 is within 3 points of the best
+  hosted coder of cycles 2-3 at a tenth of its cost or less. Its card's
+  agentic scores (temp 1.0, Pi) are not replicated here.
+- Cross-cycle anchor: f2x vs cycle-2 b2 (xhigh template default, v0.1.38,
+  pre-swap GPUs) bundles engine, GPU and driver changes; reported, not
+  attributed.
+- Not tested: the composed team (orchestrator handing work to a coder,
+  reviewers checking it). The harness cannot yet route roles to different
+  models within one run; a later cycle.
+
+Not in the tournament: preload off (the engine does not serve without the profile); Gemma 4
+(qualified, then cancelled 2026-10-12); the CPU swap (undecided; never
+mid-cycle).
+
 ### Extended-context rerun (author, 2026-10-05): the 262K ceiling experiment
 
 Motivated by cycle-1 data: local sessions BUTT against 128K (pi compaction
