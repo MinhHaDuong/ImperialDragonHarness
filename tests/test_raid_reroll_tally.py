@@ -1,0 +1,347 @@
+"""scripts/raid-reroll-tally.py: RAID wrap-up step 1b, ported from the inline awk.
+
+Ticket 1086. The awk program in AWK_ORACLE is the pre-port recipe, kept
+verbatim as a test oracle: the differential test fails if the port drifts
+from it on any fixture. The oracle is skipped where awk is absent.
+"""
+
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+from child_env import child_env
+
+pytestmark = pytest.mark.integration
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = ROOT / "scripts/raid-reroll-tally.py"
+
+AWK_ORACLE = r"""
+  FNR == 1 { in_log = 0; in_body = 0 }
+  in_body { next }
+  /^--- log ---$/ { in_log = 1; next }
+  /^--- body ---$/ { in_log = 0; in_body = 1; next }
+  in_log && /^[0-9][0-9][0-9][0-9]-/ {
+    if (match($0, / (bump|note) /)) {
+      split(substr($0, RSTART + 1), fields, " ")
+      if (fields[1] == "note" && fields[2] == "bump" &&
+          fields[3] == "verify-reroll") fields[2] = fields[3]
+      if (fields[1] == "note" && fields[2] != "verify-reroll" &&
+          fields[2] != "circuit-breaker") next
+      ticket = FILENAME
+      sub(/^.*\//, "", ticket)
+      ticket = substr(ticket, 1, 4)
+      count[ticket " " fields[2]]++
+    }
+  }
+  END {
+    for (key in count) {
+      split(key, fields, " ")
+      printf "Ticket %s: %d %s\n", fields[1], count[key], fields[2]
+    }
+  }
+"""
+
+MAIN_FIXTURE = {
+    "closed/0879-example.erg": (
+        "%erg 0.1\nTitle: archived\nClosed: 2026-10-05\n\n--- log ---\n"
+        "2026-10-05T10:00Z reviewer note verify-reroll — round 1: fix\n"
+        "\n--- body ---\nMerged tickets retain their bump history.\n"
+    ),
+    "1023-example.erg": (
+        "%erg 0.1\nTitle: example\n\n--- log ---\n"
+        "2026-10-05T10:00Z Minh Ha Duong note verify-reroll — round 1: fix\n"
+        "2026-10-05T10:01Z reviewer note verify-reroll — round 2: fix\n"
+        "2026-10-05T10:02Z reviewer bump permission — historical\n"
+        "2026-10-05T10:03Z reviewer note circuit-breaker — timeout\n"
+        "2026-10-05T10:04Z reviewer note discussion quoting note verify-reroll\n"
+        "2026-10-05T10:04Z reviewer note discussion quoting bump permission\n"
+        "\n--- body ---\n"
+        "2026-10-05T10:05Z quoted note verify-reroll — not a log entry\n"
+    ),
+    "1005-example.erg": (
+        "%erg 0.1\nTitle: example\n\n--- log ---\n"
+        "2026-10-05T10:00Z reviewer note verify-reroll — round 1: fix\n"
+        "2026-10-05T10:01Z reviewer bump verify-reroll — historical\n"
+        "2026-10-05T10:02Z reviewer note bump verify-reroll — historical\n"
+        "\n--- body ---\nNo bumps here.\n"
+    ),
+}
+
+EXPECTED_MAIN = {
+    "Ticket 0879: 1 verify-reroll",
+    "Ticket 1005: 3 verify-reroll",
+    "Ticket 1023: 2 verify-reroll",
+    "Ticket 1023: 1 permission",
+    "Ticket 1023: 1 circuit-breaker",
+}
+
+
+def write_tickets(root: Path, files: dict[str, str]) -> Path:
+    tickets = root / "tickets"
+    for name, text in files.items():
+        path = tickets / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+    return tickets
+
+
+def run_script(cwd: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), *args],
+        cwd=cwd,
+        env=child_env(),
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_unparsed_log_is_flagged_not_zeroed(tmp_path):
+    t = tmp_path / "tickets"
+    t.mkdir()
+    (t / "1023-x.erg").write_text(
+        "%erg 0.1\nTitle: x\n\n--- log ---\n"
+        "2026/10/05 10:00 reviewer bump permission\n\n--- body ---\n")
+    r = subprocess.run([sys.executable, SCRIPT, "tickets"], cwd=tmp_path,
+                       env=child_env(), capture_output=True, text=True)
+    assert r.stdout == ""
+    assert "drift" in r.stderr
+
+
+def test_drift_flag_fires_on_unparsed_log(tmp_path):
+    # Positive control: an awk-equivalent that prints nothing and exits 0
+    # passes the stdout check but fails here, since it never warns.
+    write_tickets(tmp_path, {
+        "1023-x.erg": (
+            "%erg 0.1\nTitle: x\n\n--- log ---\n"
+            "2026/10/05 10:00 reviewer bump permission\n\n--- body ---\n"),
+    })
+    r = run_script(tmp_path, "tickets")
+    assert r.returncode == 0
+    assert "drift" in r.stderr
+    assert "1023-x.erg" in r.stderr
+
+
+def test_clean_log_emits_no_drift_warning(tmp_path):
+    write_tickets(tmp_path, MAIN_FIXTURE)
+    r = run_script(tmp_path, "tickets", "tickets/closed")
+    assert r.returncode == 0
+    assert "drift" not in r.stderr
+
+
+def test_partial_drift_keeps_counts_and_warns(tmp_path):
+    # One legacy-format line beside good ones: the good entries count, and the
+    # bad line must not vanish silently.
+    write_tickets(tmp_path, {
+        "1040-x.erg": (
+            "%erg 0.1\nTitle: x\n\n--- log ---\n"
+            "2026-10-05T10:00Z reviewer bump permission\n"
+            "2026/10/05 10:01 reviewer bump verify-reroll\n"
+            "\n--- body ---\n"),
+    })
+    r = run_script(tmp_path, "tickets")
+    assert r.returncode == 0
+    assert r.stdout == "Ticket 1040: 1 permission\n"
+    assert "drift" in r.stderr
+
+
+def test_crlf_log_is_parsed_not_silently_dropped(tmp_path):
+    # Positive control: without CR tolerance this file yields no rows and no warning.
+    write_tickets(tmp_path, {
+        "1043-x.erg": (
+            "%erg 0.1\r\nTitle: x\r\n\r\n--- log ---\r\n"
+            "2026-10-05T10:00Z reviewer bump permission\r\n"
+            "\r\n--- body ---\r\n"),
+    })
+    r = run_script(tmp_path, "tickets")
+    assert r.returncode == 0
+    assert r.stdout == "Ticket 1043: 1 permission\n"
+    assert "drift" not in r.stderr
+
+
+def test_directory_and_dotfile_named_erg_are_skipped(tmp_path):
+    # A directory named *.erg must not crash the wrap-up; a dotfile is not a ticket.
+    write_tickets(tmp_path, {
+        "1044-x.erg": "%erg 0.1\nTitle: x\n\n--- log ---\n"
+                      "2026-10-05T10:00Z reviewer bump permission\n\n--- body ---\n",
+        ".1045-hidden.erg": "%erg 0.1\nTitle: x\n\n--- log ---\n"
+                            "2026-10-05T10:00Z reviewer bump permission\n\n--- body ---\n",
+    })
+    (tmp_path / "tickets" / "1046-dir.erg").mkdir()
+    r = run_script(tmp_path, "tickets")
+    assert r.returncode == 0
+    assert r.stdout == "Ticket 1044: 1 permission\n"
+
+
+def test_empty_log_section_is_not_drift(tmp_path):
+    write_tickets(tmp_path, {
+        "1030-x.erg": "%erg 0.1\nTitle: x\n\n--- log ---\n\n--- body ---\n",
+    })
+    r = run_script(tmp_path, "tickets")
+    assert r.returncode == 0
+    assert r.stdout == ""
+    assert "drift" not in r.stderr
+
+
+@pytest.mark.parametrize("regression", ["baseline", "quoted_body_log"])
+def test_body_log_lines_ignored(tmp_path, regression):
+    files = dict(MAIN_FIXTURE)
+    if regression == "quoted_body_log":
+        # Positive control: a parser that skips the body terminator counts this
+        # line and reports 1005 as 4 instead of 3.
+        files["1005-example.erg"] += (
+            "--- log ---\n2026-10-05T10:03Z quoted note verify-reroll — body sample\n")
+    write_tickets(tmp_path, files)
+    r = run_script(tmp_path, "tickets", "tickets/closed")
+    assert r.returncode == 0
+    assert set(r.stdout.splitlines()) == EXPECTED_MAIN
+
+
+def test_first_occurrence_match(tmp_path):
+    # A naive re.search for "bump" counts this as a bump; the first " (bump|note) "
+    # is " note ", so the entry is a discussion note and must not count.
+    write_tickets(tmp_path, {
+        "1040-x.erg": (
+            "%erg 0.1\nTitle: x\n\n--- log ---\n"
+            "2026-10-05T10:00Z reviewer note discussion quoting bump permission\n"
+            "\n--- body ---\n"),
+    })
+    r = run_script(tmp_path, "tickets")
+    assert r.returncode == 0
+    assert r.stdout == ""
+
+
+def test_bare_bump_keeps_awk_trailing_space(tmp_path):
+    # awk prints an empty kind as "... N " with a trailing space; the port keeps it.
+    write_tickets(tmp_path, {
+        "1041-x.erg": "%erg 0.1\nTitle: x\n\n--- log ---\n"
+                      "2026-10-05T10:00Z reviewer bump \n\n--- body ---\n",
+    })
+    r = run_script(tmp_path, "tickets")
+    assert r.returncode == 0
+    assert r.stdout == "Ticket 1041: 1 \n"
+
+
+def test_missing_ticket_dirs_exit_2(tmp_path):
+    # A project repo with no tickets/ directory (no erg bootstrap): could not look,
+    # so it must never report an all-clear.
+    r = run_script(tmp_path, "tickets", "tickets/closed")
+    assert r.returncode == 2
+    assert r.stdout == ""
+    # Python's own missing-script exit is also 2; pin the script's message too.
+    assert "no ticket directory" in r.stderr
+
+
+@pytest.mark.skipif(shutil.which("awk") is None, reason="awk oracle needs awk")
+def test_differential_against_awk_oracle(tmp_path):
+    files = dict(MAIN_FIXTURE)
+    files["1041-x.erg"] = ("%erg 0.1\nTitle: x\n\n--- log ---\n"
+                           "2026-10-05T10:00Z reviewer bump \n\n--- body ---\n")
+    files["1040-x.erg"] = ("%erg 0.1\nTitle: x\n\n--- log ---\n"
+                           "2026-10-05T10:00Z reviewer note discussion quoting bump permission\n"
+                           "2026/10/05 10:01 reviewer bump permission\n\n--- body ---\n")
+    files["1042-x.erg"] = ("%erg 0.1\nTitle: x\n\n--- log ---\n"
+                           "2026/10/05 10:00 reviewer bump permission\n\n--- body ---\n")
+    tickets = write_tickets(tmp_path, files)
+    closed = tickets / "closed"
+    erg_files = sorted(str(p) for p in tickets.glob("*.erg")) + sorted(
+        str(p) for p in closed.glob("*.erg"))
+    awk = subprocess.run(["awk", AWK_ORACLE, *erg_files], capture_output=True,
+                         text=True, env=child_env(), check=True)
+    oracle = subprocess.run(["sort"], input=awk.stdout, capture_output=True,
+                            text=True, env={**child_env(), "LC_ALL": "C"}, check=True)
+    port = run_script(tmp_path, "tickets", "tickets/closed")
+    assert port.returncode == 0
+    assert port.stdout == oracle.stdout
+
+
+GOOD_LOG = ("%erg 0.1\nTitle: x\n\n--- log ---\n"
+            "2026-10-05T10:00Z reviewer bump permission\n\n--- body ---\n")
+
+needs_unprivileged = pytest.mark.skipif(
+    hasattr(__import__("os"), "geteuid") and __import__("os").geteuid() == 0,
+    reason="root ignores file modes")
+
+
+@needs_unprivileged
+def test_unreadable_directory_is_could_not_look(tmp_path):
+    # Control: the same tree with the directory readable gives two rows, exit 0.
+    write_tickets(tmp_path, {"1050-x.erg": GOOD_LOG, "closed/0900-x.erg": GOOD_LOG})
+    ok = run_script(tmp_path, "tickets", "tickets/closed")
+    assert ok.returncode == 0 and len(ok.stdout.splitlines()) == 2
+    closed = tmp_path / "tickets" / "closed"
+    closed.chmod(0)
+    try:
+        r = run_script(tmp_path, "tickets", "tickets/closed")
+    finally:
+        closed.chmod(0o755)
+    assert r.returncode == 2
+    assert "cannot read" in r.stderr and "closed" in r.stderr
+    assert "Ticket 1050: 1 permission" in r.stdout  # partial rows are kept
+
+
+@needs_unprivileged
+def test_unreadable_only_directory_is_not_silent(tmp_path):
+    write_tickets(tmp_path, {"1050-x.erg": GOOD_LOG})
+    d = tmp_path / "tickets"
+    d.chmod(0)
+    try:
+        r = run_script(tmp_path, "tickets")
+    finally:
+        d.chmod(0o755)
+    assert r.returncode == 2
+    assert r.stderr != ""
+
+
+@needs_unprivileged
+def test_unstatable_directory_entries_are_not_silent(tmp_path):
+    # A mode-0444 directory can be LISTED but not SEARCHED: os.listdir returns the
+    # names, every stat on them raises PermissionError. Path.is_file() swallows that
+    # error and answers False, so the tickets disappeared from the tally with empty
+    # stderr and exit 0 — "all clear" reported for a corpus it could not read.
+    # Reproduced on PR #1372 tip e3039d4d by the round-2 gaze seat.
+    tickets = write_tickets(tmp_path, {"1050-x.erg": GOOD_LOG,
+                                       "closed/0900-x.erg": GOOD_LOG})
+    closed = tickets / "closed"
+    closed.chmod(0o444)
+    try:
+        r = run_script(tmp_path, "tickets", "tickets/closed")
+    finally:
+        closed.chmod(0o755)
+    assert r.returncode == 2
+    assert "cannot stat" in r.stderr and "0900-x.erg" in r.stderr
+    assert "Ticket 1050: 1 permission" in r.stdout  # readable rows are kept
+
+
+@needs_unprivileged
+def test_unreadable_ticket_file_exits_2_without_traceback(tmp_path):
+    tickets = write_tickets(tmp_path, {"1050-x.erg": GOOD_LOG, "1051-y.erg": GOOD_LOG})
+    (tickets / "1051-y.erg").chmod(0)
+    try:
+        r = run_script(tmp_path, "tickets")
+    finally:
+        (tickets / "1051-y.erg").chmod(0o644)
+    assert r.returncode == 2
+    assert "Traceback" not in r.stderr
+    assert "1051-y.erg" in r.stderr
+    assert r.stdout == "Ticket 1050: 1 permission\n"
+
+
+@pytest.mark.parametrize("mutation", [
+    ("verb", GOOD_LOG.replace("bump", "reroll")),
+    ("marker", GOOD_LOG.replace("--- log ---", "--- history ---")),
+], ids=lambda m: m[0])
+def test_known_positive_changed_verb_or_marker_is_flagged(tmp_path, mutation):
+    # Positive control: the unmutated fixture reports its row with a quiet stderr;
+    # the mutated one must not come back as exit 0 with nothing on either stream.
+    write_tickets(tmp_path, {"1060-x.erg": GOOD_LOG})
+    ok = run_script(tmp_path, "tickets")
+    assert ok.stdout == "Ticket 1060: 1 permission\n" and ok.stderr == ""
+    write_tickets(tmp_path, {"1060-x.erg": mutation[1]})
+    r = run_script(tmp_path, "tickets")
+    assert r.returncode == 0
+    assert r.stdout == ""
+    assert "drift" in r.stderr
