@@ -393,7 +393,7 @@ Arms (all locals at ctx 131072; an arm that cannot load it is dropped):
 |---|---|---|---|---|---|
 | f2x | Flash-Next IQ3_S, Strata v0.1.43 (src e568e70), CUDA 13.0, `--expert-cache-device1 --remote-expert-opt` | xhigh (config "high") | 5070 Ti + A4000 helper | 10, scored | orchestrator |
 | f2m | same | medium | 5070 Ti + A4000 helper | 10, scored | lower-thinking reviewer |
-| ml0 | Mellum 2.1 12B-A2.5B Thinking Q8_0, llama-server | @thinking | A4000 solo | 3 screen, then 10, scored | deployment-A coder |
+| ml1 | Mellum 2.1 12B-A2.5B Thinking Q8_0, llama-server | @thinking | 5070 Ti solo | 3 screen, then 10, scored | deployment-A coder (scored on the faster card; same answers on the A4000) |
 | q8m | qwen3.8-flash, DashScope intl direct (lineage twin) | medium | hosted | 10, scored | deployment-B coder candidate |
 | q8x | same | xhigh (pi records "high") | hosted | 10, scored | same |
 | f1x | Flash-Next IQ3_S as f2x, without the helper | xhigh | 5070 Ti solo | 3, speed only | deployment-A orchestrator speed |
@@ -403,9 +403,11 @@ The scored arms are the scatterplot points; Haiku, Luna and the other hosted
 coders enter from their cycle-2 scores. The 3 speed tickets (author, 2026-10-12) are
 0470 (data, ~21K peak context), 0532 (prose, ~70K) and 0452 (code-large,
 ~115K: at the compaction edge). Mellum screen:
-ml0 runs those 3 first and continues to 10 only if it finishes them; a
-collapse on the large one rules deployment A out. Dropped: ml1 (Mellum on
-the 5070 Ti; neither deployment puts it there).
+ml1 runs those 3 first and continues to 10 only if it finishes them; a
+collapse on the large one rules deployment A out. Mellum runs on the 5070 Ti
+to shorten test time (author, 2026-10-12): same weights, same answers; its
+A4000 speed comes from qualification (decode 114 / 48 tok/s at 4K / 114K,
+against 214 / 111 on the 5070 Ti). Dropped: ml0.
 
 Fixed knobs: Strata effort as the config default (`reasoning_effort`, #1641;
 pi sends none to local servers); frozen per-topology expert profile, built
@@ -430,7 +432,7 @@ Hypotheses:
   solo, off with a helper): a stack difference, not only a card one.
 - H3 (local vs hosted twin): at matched effort the hosted flash matches the
   local Flash-Next on quality. Pairs f2m-q8m, f2x-q8x. Not the same weights.
-- H4 (deployment A): Mellum 2.1 on the A4000 is within 3 points of the best
+- H4 (deployment A): Mellum 2.1 is within 3 points of the best
   hosted coder of cycles 2-3 at a tenth of its cost or less. Its card's
   agentic scores (temp 1.0, Pi) are not replicated here.
 - Cross-cycle anchor: f2x vs cycle-2 b2 (xhigh template default, v0.1.38,

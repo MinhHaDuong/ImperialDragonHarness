@@ -27,6 +27,7 @@ Label: deferred
 2026-10-12T06:27Z claude note Strata qualification (v0.1.43, CUDA 13.0): all four arm configs load and report their level (medium / high); frozen profiles data/expert-profile-c3-{solo,helper}.bin built from one bench suite each (no tournament ticket). Bench with profile, thinking on, short chat decode: solo 79.5 tok/s, helper 106.7; solo 4K/16K prompt 2053/3097 tok/s. Solo verified on the 5070 Ti (14.1 GB, A4000 idle); the bench README mislabels the host 2x A4000. Preload off does not start serving (verify needs the profile tier). Arena branch t1048-cycle3 rebuilt on arena main: 16e4e43
 2026-10-12T06:44Z claude note author: scoring split for the A-vs-B deployment choice; full legs f2x f2m ml0 q8m q8x, speed-only f1x f1m (3 tickets), Mellum screened on 3 tickets, ml1 dropped
 2026-10-12T06:49Z claude note author: speed and Mellum-screen tickets 0470, 0532, 0452
+2026-10-12T06:51Z claude note author: Mellum scored on the 5070 Ti (ml1) for test time, ml0 dropped. No NVFP4 GGUF of Mellum exists (2026-10-12): only a compressed-tensors NVFP4 for vLLM and an MLX one
 
 --- body ---
 
@@ -51,16 +52,17 @@ per model and effort, and the topologies are compared on speed only.
 - Full 10-ticket legs, panel-scored (the scatterplot points): f2x and f2m
   (Flash-Next, A4000 helper, xhigh / medium: orchestrator and lower-thinking
   reviewer; helper because it is faster, its quality stands for solo too),
-  ml0 (Mellum on the A4000: the deployment-A coder), q8m and q8x (hosted
+  ml1 (Mellum, scored on the 5070 Ti for test time; same answers on the
+  A4000, whose speed comes from qualification: the deployment-A coder), q8m and q8x (hosted
   qwen3.8-flash: a deployment-B coder candidate). Haiku, Luna and the other
   hosted coders come from cycle 2.
 - Speed-only, 3 tickets (0470, 0532, 0452: author, 2026-10-12): f1x, f1m (Flash-Next, 5070 Ti solo). Their time and
   tokens go in the readout; they are not on the scatterplot.
-- Mellum screen: ml0 runs the 3 speed-check tickets first; the remaining 7
+- Mellum screen: ml1 runs the 3 speed-check tickets first; the remaining 7
   legs run only if it finishes them (no collapse on the large one). If it
-  collapses, deployment A is out and ml0 stops at 3 legs.
-- ml1 (Mellum on the 5070 Ti) is dropped: neither deployment puts Mellum
-  there.
+  collapses, deployment A is out and ml1 stops at 3 legs.
+- ml0 (Mellum on the A4000) is dropped (author, 2026-10-12: less test
+  time).
 
 Context rule (author, 2026-10-12): every local arm runs at ctx 131072. An
 arm that cannot load 131072 on its card is dropped, not run shorter.
