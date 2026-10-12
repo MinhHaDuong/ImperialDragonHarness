@@ -26,7 +26,9 @@ cmd_close() {
   source=$(find tickets -maxdepth 1 -type f -name "${id}-*.erg" -print -quit)
   [ -n "$source" ] || { echo "No open ticket file for $id" >&2; exit 1; }
   "$ERG" close "$id" already-done tickets/
-  git add -u -- "$source"
+  if git ls-files --error-unmatch -- "$source" >/dev/null 2>&1; then
+    git add -u -- "$source"
+  fi
   destination="tickets/closed/$(basename "$source")"
   [ ! -f "$destination" ] || git add -- "$destination"
 }
@@ -52,24 +54,29 @@ cmd_archive() {
   for f in tickets/*.erg; do
     [ -e "$f" ] || continue
     if [ -f "tickets/closed/$(basename "$f")" ]; then
-      git rm -- "$f" >/dev/null
+      if git ls-files --error-unmatch -- "$f" >/dev/null 2>&1; then
+        git rm -q -- "$f"
+      else
+        echo "untracked duplicate left in place: $f" >&2
+      fi
     fi
   done
 }
 
 cmd_merged_probe() {
-  local branch=${1:?usage: merged-probe <branch>} num ticket pr subjects
+  local branch=${1:?usage: merged-probe <branch>} num ticket pr subjects rc
   # Signal A: ancestry (merge commits and fast-forwards).
-  if git merge-base --is-ancestor "$branch" main 2>/dev/null; then
-    return 0
-  fi
+  rc=0
+  git merge-base --is-ancestor "$branch" main 2>/dev/null || rc=$?
+  [ "$rc" -eq 0 ] && return 0
+  [ "$rc" -eq 1 ] || cannot_look "git could not compare $branch with main"
   # Signal B: squash merges leave no ancestry; look for "(#N)" in main's
   # subjects, with N taken from the closed ticket's Closed: header.
   [[ $branch =~ ^t([0-9]+) ]] || cannot_look "branch $branch does not map to a ticket"
   num=$(printf '%04d' "$((10#${BASH_REMATCH[1]}))")
   ticket=$(compgen -G "tickets/closed/${num}-*" | head -n 1 || true)
   [ -n "$ticket" ] || cannot_look "no closed ticket $num"
-  pr=$(sed -nE 's/^Closed:.*#([0-9]+).*/\1/p' "$ticket" | head -n 1)
+  pr=$(sed -nE 's/^Closed:[^#]*#([0-9]+).*/\1/p' "$ticket" | head -n 1)
   [ -n "$pr" ] || cannot_look "ticket $num has no PR number in Closed:"
   # Capture first: grep -q exiting early would SIGPIPE git log under pipefail.
   subjects=$(git log main --format=%s)

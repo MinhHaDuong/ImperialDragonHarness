@@ -220,7 +220,8 @@ def test_prune_duplicates(tmp_path):
 
 def test_skills_call_the_script():
     molt = MOLT.read_text()
-    assert molt.count("ticket-sweep.sh\" ") == 3  # close, archive, merged-probe
+    for sub in ("close <id>", "archive", "merged-probe <branch>"):
+        assert f'ticket-sweep.sh" {sub}' in molt, sub
     assert "ticket-sweep.sh" in HEALTHCHECK.read_text()
     assert "grep -oP" not in molt + HEALTHCHECK.read_text()
 
@@ -248,3 +249,30 @@ def test_reconcile_path_is_per_run(tmp_path):
         run("bash", "-c", block, cwd=proj, env=env)
     seen = (root / "scripts/seen.txt").read_text().split()
     assert len(seen) == 2 and seen[0] != seen[1]
+
+
+@pytest.mark.integration
+def test_probe_missing_branch_is_could_not_determine(tmp_path):
+    """A git error (no such branch) is not 'not merged' and not a crash."""
+    repo = make_repo(tmp_path)
+    r = sweep(repo, "merged-probe", "t0009-nope")
+    assert r.returncode == 2 and "could-not-determine" in r.stdout
+
+
+@pytest.mark.integration
+def test_probe_first_pr_number_wins(tmp_path):
+    repo = make_repo(tmp_path)
+    closed_ticket(repo, 7, "autoclosed — PR #42, followup of #12")
+    branch_with_commit(repo, "t0007-thing")
+    run("git", "commit", "-q", "--allow-empty", "-m", "feat: thing (#42)", cwd=repo)
+    assert sweep(repo, "merged-probe", "t0007-thing").returncode == 0
+
+
+@pytest.mark.integration
+def test_prune_skips_untracked_duplicate(tmp_path):
+    repo = make_repo(tmp_path, ticket=False)
+    (repo / "tickets/0001-probe.erg").write_text(TICKET)
+    (repo / "tickets/closed/0001-probe.erg").write_text(TICKET)
+    r = sweep(repo, "archive")
+    assert r.returncode == 0 and "untracked duplicate" in r.stderr
+    assert (repo / "tickets/0001-probe.erg").exists()
