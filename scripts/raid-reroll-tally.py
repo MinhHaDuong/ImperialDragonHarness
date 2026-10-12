@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Tally bump and note log entries per ticket for RAID wrap-up step 1b.
 
-Port of the awk recipe in skills/raid/SKILL.md (ticket 1086). Prints
-`Ticket NNNN: N kind` lines, bytewise sorted, for each ticket log section.
+Ported from the awk recipe that lived inline in skills/raid/SKILL.md; the
+awk is kept as the differential oracle in tests/test_raid_reroll_tally.py
+(ticket 1086). Prints `Ticket NNNN: N kind` lines, bytewise sorted.
 
-Drift: a log section with entries but no line in the timestamp shape
-`YYYY-` is reported on stderr and that file contributes nothing. Exit stays
-0 so a `set -e` wrap-up continues. Exit 2 means no ticket directory was
-found, so the repo cannot be read at all.
+Drift: a log line that is not in the timestamp shape `YYYY-` is reported on
+stderr, and its file's other entries are still counted. Exit stays 0 so a
+`set -e` wrap-up continues. Exit 2 means no ticket directory was found, so
+the repo cannot be read at all.
 
 Known limit: the drift check catches timestamp-shape changes only. A verb
 rename (bump -> reroll) still yields zeros with no warning.
@@ -35,9 +36,9 @@ def tally_file(path: Path, counts: Counter[tuple[str, str]]) -> bool:
     ticket = path.name[:4]
     text = path.read_bytes().decode("utf-8", errors="replace")
     in_log = False
-    has_text = False
-    has_shape = False
-    for line in text.split("\n"):
+    unshaped = 0
+    for raw in text.split("\n"):
+        line = raw.removesuffix("\r")
         if line == BODY_OPEN:
             break
         if line == LOG_OPEN:
@@ -45,11 +46,10 @@ def tally_file(path: Path, counts: Counter[tuple[str, str]]) -> bool:
             continue
         if not in_log:
             continue
-        if line.strip(" \t"):
-            has_text = True
         if not ENTRY_SHAPE.match(line):
+            if line.strip(" \t"):
+                unshaped += 1
             continue
-        has_shape = True
         match = VERB.search(line)
         if not match:
             continue
@@ -61,18 +61,17 @@ def tally_file(path: Path, counts: Counter[tuple[str, str]]) -> bool:
         if verb == "note" and kind not in KEPT_NOTES:
             continue
         counts[(ticket, kind)] += 1
-    drift = has_text and not has_shape
-    if drift:
-        log.warning("drift: %s has log entries, none in the timestamp shape; "
-                    "its counts are not trusted", path.name)
-    return drift
+    if unshaped:
+        log.warning("drift: %s has %d log line(s) not in the timestamp shape; "
+                    "those entries are not counted", path.name, unshaped)
+    return unshaped > 0
 
 
 def ticket_files(dirs: list[Path]) -> list[Path]:
-    found = [d for d in dirs if d.is_dir()]
-    if not found:
-        return []
-    return [p for d in found for p in sorted(d.glob("*.erg"))]
+    """Ticket files directly under each existing dir; dotfiles and dirs skipped."""
+    return [p for d in dirs if d.is_dir()
+            for p in sorted(d.glob("*.erg"))
+            if p.is_file() and not p.name.startswith(".")]
 
 
 def main() -> int:

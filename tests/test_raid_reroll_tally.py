@@ -132,6 +132,50 @@ def test_clean_log_emits_no_drift_warning(tmp_path):
     assert "drift" not in r.stderr
 
 
+def test_partial_drift_keeps_counts_and_warns(tmp_path):
+    # One legacy-format line beside good ones: the good entries count, and the
+    # bad line must not vanish silently.
+    write_tickets(tmp_path, {
+        "1040-x.erg": (
+            "%erg 0.1\nTitle: x\n\n--- log ---\n"
+            "2026-10-05T10:00Z reviewer bump permission\n"
+            "2026/10/05 10:01 reviewer bump verify-reroll\n"
+            "\n--- body ---\n"),
+    })
+    r = run_script(tmp_path, "tickets")
+    assert r.returncode == 0
+    assert r.stdout == "Ticket 1040: 1 permission\n"
+    assert "drift" in r.stderr
+
+
+def test_crlf_log_is_parsed_not_silently_dropped(tmp_path):
+    # Positive control: without CR tolerance this file yields no rows and no warning.
+    write_tickets(tmp_path, {
+        "1043-x.erg": (
+            "%erg 0.1\r\nTitle: x\r\n\r\n--- log ---\r\n"
+            "2026-10-05T10:00Z reviewer bump permission\r\n"
+            "\r\n--- body ---\r\n"),
+    })
+    r = run_script(tmp_path, "tickets")
+    assert r.returncode == 0
+    assert r.stdout == "Ticket 1043: 1 permission\n"
+    assert "drift" not in r.stderr
+
+
+def test_directory_and_dotfile_named_erg_are_skipped(tmp_path):
+    # A directory named *.erg must not crash the wrap-up; a dotfile is not a ticket.
+    write_tickets(tmp_path, {
+        "1044-x.erg": "%erg 0.1\nTitle: x\n\n--- log ---\n"
+                      "2026-10-05T10:00Z reviewer bump permission\n\n--- body ---\n",
+        ".1045-hidden.erg": "%erg 0.1\nTitle: x\n\n--- log ---\n"
+                            "2026-10-05T10:00Z reviewer bump permission\n\n--- body ---\n",
+    })
+    (tmp_path / "tickets" / "1046-dir.erg").mkdir()
+    r = run_script(tmp_path, "tickets")
+    assert r.returncode == 0
+    assert r.stdout == "Ticket 1044: 1 permission\n"
+
+
 def test_empty_log_section_is_not_drift(tmp_path):
     write_tickets(tmp_path, {
         "1030-x.erg": "%erg 0.1\nTitle: x\n\n--- log ---\n\n--- body ---\n",
@@ -182,7 +226,8 @@ def test_bare_bump_keeps_awk_trailing_space(tmp_path):
 
 
 def test_missing_ticket_dirs_exit_2(tmp_path):
-    # aedist-style repo with no tickets/: could-not-look, never an all-clear.
+    # A project repo with no tickets/ directory (no erg bootstrap): could not look,
+    # so it must never report an all-clear.
     r = run_script(tmp_path, "tickets", "tickets/closed")
     assert r.returncode == 2
     assert r.stdout == ""
