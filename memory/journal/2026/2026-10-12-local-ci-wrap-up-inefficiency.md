@@ -1,0 +1,17 @@
+# Local CI fix and prolonged operational wrap-up
+
+Date: 2026-10-12. Projects involved: climate-finance-het and ImperialDragonHarness.
+
+The session first refreshed stale climate-finance project state and reviewed and merged PR1774. The subsequent request was to fix missing ci-local/; the author chose a clean skip for a repository intentionally lacking a CI workflow. Implementation moved to the shared IDH runner, producing ticket1088 and PR1368. The code changed two preflight paths and added two regression tests: absence of a committed workflow exits3 with an explicit SKIP, while absence of the helper in a workflow repository exits2 as a setup error.
+
+The work included five review perspectives, two documentation corrections, local check-fast/lint, GitHub checks, and complete local CI on padme. The initial review manifest named an Anthropic Red Team seat, but the launched seat ran an OpenAI model. During merge/wrap-up, the session discovered that discrepancy and ran a separate cross-family review. Automatic approval review first rejected that launch on a private-payload claim; verification that the repository was public supported a successful retry. The additional seat approved with no blocking findings.
+
+The implementation commit was 3734816f969c1a4bcf82e2396872087ec8b36243. The final code/comment head was 03963c9f135c06efefb7e562f2177d96589de1d9. Padme local CI started at 08:21 UTC and ultimately reported ten jobs passed, zero failed and zero skipped; its pytest job reported 1554 passed and 12 skipped. Ticket closure produced b862f75c79fa40a4a92d8a07d1fd14e3347a7389. PR1368 merged at 08:32:35 UTC as f0716cf319634dacc6c1d62964dbea6010c021df. Auto-merge initially left one required check running, and roar stopped at its required one-shot precheck. The author's later status query resumed roar after the merge had landed.
+
+During wrap-up the author asked, “What did we spend the last 2 hours on?” The session response identified state refresh, the runner fix, regression tests, review, documentation corrections, CI runs and bookkeeping. This records the author's elapsed-time question; it does not establish a separately measured two-hour duration.
+
+The author then requested a committed memory of this incident for a later postmortem of inefficiency and IDH streamlining, and stated, “I want SCIENCE”. The accepted scope at that point was to save the factual incident now and defer postmortem analysis and workflow changes to another day. No standing rule change or science task was commissioned in that message.
+
+References: https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1368 ; memory/journal/2026/2026-10-12-pr1368-review-evidence.md ; memory/journal/2026/2026-10-12-review-attribution-pr1368.md.
+
+Wrap-up checks examined 184 recent merged PRs and 62 ticket close claims, with no dropped closure found; 14 PR bodies had no recognised ticket marker. The commissioned historical attribution backfill appended no facts and reported65 unresolved records because no supported full reviewed-revision coordinates were supplied; the relevant historical PR1218 record explicitly describes an uncommitted draft review, so its merged SHA cannot substitute for reviewed coordinates. No follow-up ticket was filed from the pattern sweep. An initial wrap-up make invocation stopped before tests because the sandbox could not write the uv cache; the same declared test commands were rerun with the Makefile RUN wrapper empty, using the available Python environment.
