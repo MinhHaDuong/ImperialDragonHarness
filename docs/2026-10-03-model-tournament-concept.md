@@ -414,8 +414,9 @@ pi sends none to local servers); frozen per-topology expert profile, built
 from the Strata bench suite (no tournament ticket), no profile saving during
 legs; Mellum sampling per its card (temp 0.6, top-p 0.95, top-k 20); hosted
 pi contextWindow 131072, like the locals, so no arm escapes compaction.
-Prices: q8m/q8x $0.15 in / $0.47 out / $0.016 cache read per M (third-party
-trackers of the intl rate card; confirm on the Model Studio page at launch);
+Prices: q8m/q8x $0.15 in / $0.47 out / $0.016 implicit-cache read per M
+(Model Studio console model card, read by the author 2026-10-12; explicit
+cache creation $0.20, read $0.016, unused by pi);
 $5.00 spend cap per hosted arm. Locals: electricity only.
 
 Sample and panel: the cycle-2 draw (0211, 0233, 0333, 0338, 0452, 0470,
