@@ -104,7 +104,11 @@ make_world "$T/c2m" merged-a merged-b trunk; cd "$W"
 G remote set-head origin trunk >/dev/null
 mutant symref '/guard:symref/d'
 run "$MUTANT" --phase after-exit --default-branch main
-_check_true "symref control: unguarded sweep does not exit 0" test "$rc" != 0
+# Narrowed claim: stripped alone, this guard's consequence is a bogus finding (the sweep
+# tries to push-delete a branch named HEAD, which cannot exist), not a wrongful deletion.
+# The abort that once skipped every later branch is the separate per-delete isolation.
+_check_rc "symref control: stripped, a clean sweep turns into a false finding (rc 1)" 1 "$rc"
+_check_says "symref control: …naming the bogus remote HEAD delete" "$out" "FAILED to delete remote HEAD"
 
 # --- 3. guard: main survives a detached primary checkout ---------------------
 make_world "$T/c3" merged-a; cd "$W"
@@ -119,8 +123,9 @@ run "$MUTANT" --phase after-exit
 _check_true "default-branch control: main is destroyed" bash -c '! git rev-parse --verify -q refs/heads/main >/dev/null'
 
 # --- 4. guard: current branch ------------------------------------------------
-# The current branch is also in `git worktree list`, so the worktree guard
-# covers it too; the control strips both to show what git alone does.
+# Three independent layers hold the current branch: guard:current, guard:worktree (it is in
+# `git worktree list`) and git's own refusal inside `branch -D`. Stripping any ONE leaves it
+# standing, so the per-guard control proves redundancy; the destructive control removes all three.
 make_world "$T/c4" merged-a merged-b; cd "$W"
 git checkout -q merged-a
 run "$SCRIPT" --phase after-exit
@@ -129,9 +134,14 @@ _check_true "current: checked-out branch survives" has_local merged-a
 _check_true "current: other merged branch still swept" bash -c '! git rev-parse --verify -q refs/heads/merged-b >/dev/null'
 make_world "$T/c4m" merged-a merged-b; cd "$W"
 git checkout -q merged-a
-mutant current '/guard:current/d;/guard:worktree/d'
+mutant current '/guard:current/d'
 run "$MUTANT" --phase after-exit
-_check_true "current control: unguarded sweep deletes the branch it stands on" bash -c '! git rev-parse --verify -q refs/heads/merged-a >/dev/null'
+_check_true "current control: strip guard:current alone — the worktree layer still holds it" has_local merged-a
+make_world "$T/c4n" merged-a merged-b; cd "$W"
+git checkout -q merged-a
+mutant current3 '/guard:current/d;/guard:worktree/d;s|git branch -D -- "$b"|git update-ref -d "refs/heads/$b"|'
+run "$MUTANT" --phase after-exit
+_check_true "current control: all three layers stripped deletes the branch it stands on" bash -c '! git rev-parse --verify -q refs/heads/merged-a >/dev/null'
 
 # --- 5. guard: branch checked out in another worktree, whole-line match ------
 make_world "$T/c5" merged-a merged-a-2 merged-b; cd "$W"
@@ -143,9 +153,13 @@ _check_true "worktree: prefix-sharing merged-a-2 is NOT protected" bash -c '! gi
 _check_true "worktree: later branch merged-b still swept" bash -c '! git rev-parse --verify -q refs/heads/merged-b >/dev/null'
 make_world "$T/c5m" merged-a merged-b; cd "$W"
 git worktree add -q "$T/c5m/x" merged-a
+# Narrowed claim: git's own refusal backs this guard up, so stripped alone the consequence is a
+# refused delete reported as a finding (rc 1) with the branch alive; the destruction control is
+# section 16, where git's refusal is the thing removed.
 mutant worktree '/guard:worktree/d'
 run "$MUTANT" --phase after-exit
-_check_true "worktree control: unguarded sweep deletes another session's branch" bash -c '! git rev-parse --verify -q refs/heads/merged-a >/dev/null'
+_check_rc "worktree control: stripped, git refuses the delete and the sweep says so (rc 1)" 1 "$rc"
+_check_true "worktree control: …the other session's branch still stands" has_local merged-a
 
 # --- 6. -D after the ancestry probe; unmerged survives -----------------------
 make_world "$T/c6"; cd "$W"
@@ -166,9 +180,19 @@ git checkout -q -b ancestor; git commit -q --allow-empty -m side
 git push -q origin ancestor:main
 git checkout -q -b adv; git commit -q --allow-empty -m adv; git push -q origin adv:main
 git checkout -q main; git branch -q -D adv
-mutant dflag 's|git update-ref -d "refs/heads/$b" "$PROBED"|git branch -d -- "$b"|'
+mutant dflag 's|git branch -D -- "$b"|git branch -d -- "$b"|'
 run "$MUTANT" --phase after-exit
-_check_true "-D control: with -d the ancestor survives" has_local ancestor
+# Narrowed claim: this concern guards the other direction (over-retention), so its control
+# shows a merged branch wrongly kept and reported as a failed delete, not a deletion.
+_check_true "-D control: with -d the merged ancestor is wrongly kept" has_local ancestor
+_check_rc "-D control: …and the sweep reports it as a finding (rc 1)" 1 "$rc"
+# The probe half of the concern: without the ancestry test an unmerged branch is destroyed.
+make_world "$T/c6p"; cd "$W"
+git checkout -q -b unmerged; git commit -q --allow-empty -m wip; git push -q origin unmerged; git checkout -q main
+mutant noprobe 's/git merge-base --is-ancestor "$PROBED" "$base_tip" || rc=$?/rc=0/'
+run "$MUTANT" --phase after-exit
+_check_true "probe control: without the ancestry test the unmerged branch is destroyed locally" bash -c '! git rev-parse --verify -q refs/heads/unmerged >/dev/null'
+_check_true "probe control: …and remotely" bash -c '[ -z "$(git ls-remote --heads origin unmerged)" ]'
 
 # --- 7. could-not-look is exit 2, never an all-clear -------------------------
 make_world "$T/c7" merged-a; cd "$W"
@@ -302,35 +326,61 @@ race_remote "$T/c15" "$SCRIPT"
 _check_rc "tracking ref moved after the probe: delete refused (rc 1)" 1 "$rc"
 _check_true "…the colleague's commit survives on the remote" has_remote merged-a
 
-# 12b. approved A, then the local branch advances to unmerged B: update-ref -d is
-# leased to A, where `branch -D` by name would destroy B.
-make_world "$T/c16" merged-a; cd "$W"
-B=$(G commit-tree -p merged-a -m wip "merged-a^{tree}")
-mkdir -p "$T/c16/wrap"
-cat > "$T/c16/wrap/git" <<WRAP
+# 12b. approved A, then the local branch advances to unmerged B. Real git, no mocked delete:
+# the wrapper moves the ref with `update-ref` at the named trigger, then runs the real command.
+#   trigger merge-base : the move lands right after the probe
+#   trigger branch -D  : the move lands inside the window between the probe and git's delete
+race_local() { # <dir> <script> <trigger git subcommand>
+    make_world "$1" merged-a; cd "$W"
+    B=$(G commit-tree -p merged-a -m wip "merged-a^{tree}")
+    mkdir -p "$1/wrap"
+    cat > "$1/wrap/git" <<WRAP
 #!/usr/bin/env bash
-if [ "\$1" = merge-base ] && [ ! -e "$T/c16/raced" ]; then
-    : > "$T/c16/raced"; "$TOOLS/git" "\$@"; rc=\$?
-    "$TOOLS/git" -C "$W" update-ref refs/heads/merged-a $B
-    exit \$rc
+if [ "\$1 \$2" = "$3" ] && [ ! -e "$1/raced" ]; then
+    : > "$1/raced"; "$TOOLS/git" -C "$W" update-ref refs/heads/merged-a $B
 fi
 exec "$TOOLS/git" "\$@"
 WRAP
-chmod +x "$T/c16/wrap/git"
-wrapped "$T/c16/wrap" "$SCRIPT" --phase after-exit
-_check_rc "local branch advanced after the probe: delete refused (rc 1)" 1 "$rc"
-_check_true "…the advanced branch survives" bash -c '[ "$(git -C "$0" rev-parse refs/heads/merged-a)" = "$1" ]' "$W" "$B"
+    chmod +x "$1/wrap/git"
+    wrapped "$1/wrap" "$2" --phase after-exit
+}
+for trig in "merge-base --is-ancestor" "branch -D"; do
+    race_local "$T/c16${trig%% *}" "$SCRIPT" "$trig"
+    _check_rc "local branch advanced ($trig trigger): reported as a finding (rc 1)" 1 "$rc"
+    _check_true "…the advanced branch survives at its new tip" bash -c '[ "$(git -C "$0" rev-parse refs/heads/merged-a)" = "$1" ]' "$W" "$B"
+done
+_check_says "…and the report says it was restored" "$out" "restored at"
+# control: strip the restore and the same race destroys the unmerged commit
+mutant norestore 's|if restore_branch "$b" "$was"; then   # guard:restore|if false; then|'
+race_local "$T/c16m" "$MUTANT" "branch -D"
+_check_true "restore control: without it the advanced branch is destroyed" bash -c '! git -C "$0" rev-parse --verify -q refs/heads/merged-a >/dev/null' "$W"
 
-# controls for 12a/12b: the old constructions destroy the raced commit
-mutant tracklease 's|force-with-lease="refs/heads/$b:$PROBED"|force-with-lease="refs/heads/$b:$(git rev-parse "refs/remotes/origin/$b")"|'
-rm -rf "$T/c15n"; race_remote "$T/c15n" "$MUTANT"
-_check_true "lease-from-tracking-ref control: the raced commit is destroyed" bash -c '! git -C "$0" ls-remote --heads origin merged-a | grep -q .' "$W"
-make_world "$T/c16m" merged-a; cd "$W"
-B=$(G commit-tree -p merged-a -m wip "merged-a^{tree}")
-mkdir -p "$T/c16m/wrap"; sed "s/c16/c16m/g" "$T/c16/wrap/git" | sed "s/update-ref refs\/heads\/merged-a [0-9a-f]*/update-ref refs\/heads\/merged-a $B/" > "$T/c16m/wrap/git"; chmod +x "$T/c16m/wrap/git"
-mutant byname 's|git update-ref -d "refs/heads/$b" "$PROBED"|git branch -D -- "$b"|'
-wrapped "$T/c16m/wrap" "$MUTANT" --phase after-exit
-_check_true "by-name delete control: the advanced branch is destroyed" bash -c '! git -C "$0" rev-parse --verify -q refs/heads/merged-a >/dev/null' "$W"
+# --- 16. a peer checks the branch out AFTER the occupancy snapshot -------------
+# The wrapper adds a real second worktree on the branch the moment the sweep calls the
+# delete — after every list the script read. The branch is still at the probed commit, so a
+# compare-and-set on the object id alone would succeed; git's own refusal must hold.
+race_peer() { # <dir> <script>
+    make_world "$1" merged-a; cd "$W"
+    mkdir -p "$1/wrap"
+    cat > "$1/wrap/git" <<WRAP
+#!/usr/bin/env bash
+if { [ "\$1 \$2" = "branch -D" ] || [ "\$1 \$2" = "update-ref -d" ]; } && [ ! -e "$1/raced" ]; then
+    : > "$1/raced"; "$TOOLS/git" -C "$W" worktree add -q "$1/peer" merged-a
+fi
+exec "$TOOLS/git" "\$@"
+WRAP
+    chmod +x "$1/wrap/git"
+    wrapped "$1/wrap" "$2" --phase after-exit
+}
+race_peer "$T/c20" "$SCRIPT"
+_check_rc "peer checkout after the snapshot: delete refused, reported (rc 1)" 1 "$rc"
+_check_true "…the branch under the live worktree survives" has_local merged-a
+_check_true "…and the peer worktree still has it checked out" bash -c '[ "$(git -C "$0/peer" branch --show-current)" = merged-a ]' "$T/c20"
+# control: the update-ref construction (compare-and-set, no worktree refusal) deletes it
+mutant updateref 's|del=$(LC_ALL=C git branch -D -- "$b" 2>&1)|del=$(LC_ALL=C git update-ref -d "refs/heads/$b" "$PROBED" 2>\&1 \&\& echo "(was $PROBED)")|'
+race_peer "$T/c20m" "$MUTANT"
+_check_true "update-ref control: the branch is deleted from under the live worktree" bash -c '! git -C "$0" rev-parse --verify -q refs/heads/merged-a >/dev/null' "$W"
+_check_true "update-ref control: …while the peer worktree exists" test -d "$T/c20m/peer"
 
 # --- 13. enumeration failures are could-not-look, never an empty clean sweep ---
 make_world "$T/c17" merged-a; cd "$W"

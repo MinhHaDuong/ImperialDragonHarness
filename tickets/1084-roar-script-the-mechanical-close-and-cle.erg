@@ -25,4 +25,4 @@ turns are mechanical, not measured per step). Preferred over a phase-B subagent
 - [x] The five load-bearing branch-sweep guards (origin symref case, main, current branch, other-worktree whole-line match, `-D` after ancestry probe) each have a test
 - [x] Exit codes distinguish clean / findings / could-not-look; no all-clear on an unreadable forge
 - [x] `skills/roar/SKILL.md` steps 7-10 call the script instead of inline blocks; judgment steps (1-6, integration review, worktree exit, report) unchanged
-- [ ] Remeasure turns per roar on roars run after the merge and record the result in the journal
+- [ ] Remeasure turns per roar on roars run after the merge and record the result in the journal — discharged by follow-up 1090, not met at merge

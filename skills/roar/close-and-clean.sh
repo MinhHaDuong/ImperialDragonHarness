@@ -182,6 +182,14 @@ checked_out() { # <branch>
     printf '%s\n' "$l" | awk '/^branch /{sub("refs/heads/","",$2); print $2}' | grep -qxF -- "$1"
 }
 
+# Put back a branch the sweep removed at a tip the probe never approved. Recreates only
+# an absent ref (the empty old value), so it cannot overwrite a branch made meanwhile.
+restore_branch() { # <branch> <abbreviated sha git reported>
+    local full
+    [ -n "$2" ] && full=$(git rev-parse --verify -q "$2^{commit}") &&
+        git update-ref "refs/heads/$1" "$full" "" >/dev/null 2>&1
+}
+
 sweep() {
     local has_origin=0 b cur failed=0 deleted="" kept="" rdeleted="" rkept="" lbranches="" rbranches=""
     git remote get-url origin >/dev/null 2>&1 && has_origin=1
@@ -223,14 +231,28 @@ sweep() {
         # on whole LINES (a space-delimited membership test silently never fires, 2026-09-10).
         checked_out "$b" && continue  # guard:worktree
         if probe "refs/heads/$b"; then
-            # update-ref with the probed object id, not `branch -D`: the delete is refused
-            # if the branch moved since the probe (checked above, in the same breath).
-            checked_out "$b" && continue  # guard:worktree
-            if git update-ref -d "refs/heads/$b" "$PROBED" >/dev/null 2>&1; then
-                git config --remove-section "branch.$b" >/dev/null 2>&1 || true
-                deleted="$deleted $b"
+            # `git branch -D`, not `update-ref -d <oid>`: update-ref has the compare-and-set but
+            # none of git's refusal to delete a branch a worktree stands on, and an occupancy
+            # list read before the delete can never close that gap (a peer checks the branch
+            # out in between). branch -D makes the refusal itself, inside the delete. It names
+            # the tip it removed ("was <sha>"); one that is not the probed commit means the
+            # branch moved after the probe, and is put back (nothing is lost: the object is
+            # still there, and only an absent ref is recreated).
+            if del=$(LC_ALL=C git branch -D -- "$b" 2>&1); then
+                was=$(printf '%s\n' "$del" | sed -n 's/.*(was \([0-9a-f]\{7,\}\)).*/\1/p' | head -1)
+                if [ -n "$was" ] && [[ "$PROBED" == "$was"* ]]; then
+                    git config --remove-section "branch.$b" >/dev/null 2>&1 || true
+                    deleted="$deleted $b"
+                else
+                    failed=$((failed + 1))
+                    if restore_branch "$b" "$was"; then   # guard:restore
+                        note "SWEEP: FAILED local $b moved since the probe — restored at $was"
+                    else
+                        note "SWEEP: FAILED local $b deleted at an unprobed tip (${was:-unknown}), not restorable"; bump 2
+                    fi
+                fi
             else
-                failed=$((failed + 1)); note "SWEEP: FAILED to delete local $b (moved since the probe, or refused)"
+                failed=$((failed + 1)); note "SWEEP: FAILED to delete local $b (refused: ${del##*error: })"
             fi
         else
             kept="$kept $b"
