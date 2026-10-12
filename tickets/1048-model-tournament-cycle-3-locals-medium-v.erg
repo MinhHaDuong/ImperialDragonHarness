@@ -25,6 +25,7 @@ Label: deferred
 2026-10-12T06:10Z claude note Mellum recall at 114K with card sampling (temp 0.6/top-p 0.95/top-k 20, 16K output cap), 5070 Ti, 2 runs: both hit the cap with no answer. Run 1 enumerated sections one by one (no repetition); run 2 degenerated into a word loop (54/501 distinct 200-char windows). Flash-Next and both Gemma builds passed the same synthetic needle. Risk for tickets past ~100K
 2026-10-12T06:10Z claude note Prepared on padme: Strata configs strata-c3-{solo,helper}-{medium,xhigh}.json in ~/Strata-daily (CUDA 13.0, port 8081, reasoning_effort, frozen profile data/expert-profile-c3-<topo>.bin, gpu_order as_given); pi providers padme-mellum (:8083) and dashscope (apiKey $QWEN_API_KEY_AEDIST, compat supportsDeveloperRole false; answers at medium and xhigh, pi records xhigh as high); ~/arena branch t1048-cycle3 (6296ad1, off t1053-pass-aware-cap) declares f1m/f1x/f2m/f2x, ml0/ml1, q8m/q8x. Draft pre-registration in the concept note (cycle-3 revised slate)
 2026-10-12T06:27Z claude note Strata qualification (v0.1.43, CUDA 13.0): all four arm configs load and report their level (medium / high); frozen profiles data/expert-profile-c3-{solo,helper}.bin built from one bench suite each (no tournament ticket). Bench with profile, thinking on, short chat decode: solo 79.5 tok/s, helper 106.7; solo 4K/16K prompt 2053/3097 tok/s. Solo verified on the 5070 Ti (14.1 GB, A4000 idle); the bench README mislabels the host 2x A4000. Preload off does not start serving (verify needs the profile tier). Arena branch t1048-cycle3 rebuilt on arena main: 16e4e43
+2026-10-12T06:44Z claude note author: scoring split for the A-vs-B deployment choice; full legs f2x f2m ml0 q8m q8x, speed-only f1x f1m (3 tickets), Mellum screened on 3 tickets, ml1 dropped
 
 --- body ---
 
@@ -38,6 +39,28 @@ lineage twin.
 
 Revised 2026-10-12 by the author (supersedes the 2026-10-06 list; no leg
 had run). Six local arms: four on Flash-Next, two on Mellum.
+
+Scoring split (author, 2026-10-12). Cycle 3 informs a choice between two
+deployments: A = Flash-Next on the 5070 Ti as orchestrator + Mellum on the
+A4000 as local coder; B = Flash-Next on both GPUs (A4000 helper) + a hosted
+coder. Reviewers in both: Flash-Next at lower thinking, Haiku, Luna. Same
+weights give the same answers on either topology, so quality is scored once
+per model and effort, and the topologies are compared on speed only.
+
+- Full 10-ticket legs, panel-scored (the scatterplot points): f2x and f2m
+  (Flash-Next, A4000 helper, xhigh / medium: orchestrator and lower-thinking
+  reviewer; helper because it is faster, its quality stands for solo too),
+  ml0 (Mellum on the A4000: the deployment-A coder), q8m and q8x (hosted
+  qwen3.8-flash: a deployment-B coder candidate). Haiku, Luna and the other
+  hosted coders come from cycle 2.
+- Speed-only, 3 tickets (0470 plus one mid and one large ticket, fixed at
+  pre-registration): f1x, f1m (Flash-Next, 5070 Ti solo). Their time and
+  tokens go in the readout; they are not on the scatterplot.
+- Mellum screen: ml0 runs the 3 speed-check tickets first; the remaining 7
+  legs run only if it finishes them (no collapse on the large one). If it
+  collapses, deployment A is out and ml0 stops at 3 legs.
+- ml1 (Mellum on the 5070 Ti) is dropped: neither deployment puts Mellum
+  there.
 
 Context rule (author, 2026-10-12): every local arm runs at ctx 131072. An
 arm that cannot load 131072 on its card is dropped, not run shorter.
