@@ -99,7 +99,7 @@ def test_probe_squash_subject_is_merged(tmp_path):
     branch_with_commit(repo, "t0007-thing")
     run("git", "commit", "-q", "--allow-empty", "-m", "feat: thing (#42)", cwd=repo)
     ancestor = subprocess.run(
-        ["git", "merge-base", "--is-ancestor", "t0007-thing", "main"], cwd=repo
+        ["git", "merge-base", "--is-ancestor", "t0007-thing", "main"], cwd=repo, env=child_env()
     )
     assert ancestor.returncode == 1
     assert sweep(repo, "merged-probe", "t0007-thing").returncode == 0
