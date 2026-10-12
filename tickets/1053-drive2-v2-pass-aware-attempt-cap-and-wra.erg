@@ -2,7 +2,6 @@
 Title: drive2 v2: pass-aware attempt cap and wrap-up vram-wait fixes
 Created: 2026-10-06
 Author: MinhHaDuong
-Label: deferred
 
 --- log ---
 2026-10-06T08:43Z MinhHaDuong created
@@ -10,6 +9,8 @@ Label: deferred
 2026-10-06T09:44Z reviewer note Author-approved chantier sequence: after tournament tracker1024, deferred driver improvements. Resume only on an explicit author decision; closure of the blocker does not authorize automatic resumption.
 2026-10-09T15:54Z Minh-Ha-Duong note Blocked-by 1024 dropped: tracker 1024 closed 2026-10-09 by author request; stays deferred, resume only on author decision
 2026-10-12T05:29Z Minh-Ha-Duong note 1048-coordinated: author decision 1a 2026-10-12; ~/arena on padme is now a local git repo; fixes on its branch t1053-pass-aware-cap (b03b205): ARENA_PASS per-pass cap in runner.py/drive2.py, stop-arm.sh vram-wait scoped to the stopped arm pids. Smoke with arm A resident: wrap-up teardown 0s (was ~15 min), A healthy, live-holder control blocks. Cap: 0470-c/k/l (2 lifetime attempts) count 0 under a new pass. Open: re-pass observed freeing legs in a real driver pass; merge arena branch to its main after review.
+2026-10-12T06:08Z Minh Ha-Duong unlabel deferred
+2026-10-12T06:08Z Minh-Ha-Duong note re-pass observed: scratch copy of a stuck leg (ARENA_RUNS=~/arena-scratch-1053, 0211-h, 2 prior attempts, no record): without ARENA_PASS refused 'attempts exhausted (2)', no new dir; under ARENA_PASS=repass-1053-060729 ran attempt 3 stamped with the pass, no archiving. Runner-level re-pass, not a full drive2 pass. Arm H's provider 404'd and runner still scored OK: filed separately.
 
 --- body ---
 
