@@ -1,0 +1,40 @@
+%erg 0.1
+Title: resident census counts the untracked private overlay links, red make check only in the primary checkout
+Created: 2026-10-12
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-12T16:57Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+`make check` on main in the primary checkout fails
+`tests/test_resident_census.py::test_channel_budgets`: the skills channel is
+7784 chars against a 7000 budget. The same commit passes in a fresh worktree
+and in CI, so the gate is red only where an agent actually runs it.
+
+Cause: the primary checkout carries UNTRACKED symlinks
+`skills/{email,infrastructure,directory}` -> `~/.config/harness/private/skills/<name>`
+(the private overlay, present since 2026-10-02). `scripts/resident_census.py`
+counts `_name_and_description` for every `skills/*/SKILL.md` glob hit and
+follows those links; a clean worktree does not have them. Measured at the raid
+wave base commit fc0a75d8355817400b4370824f5314fa212d7c5a: 6952 chars without
+the links, 7784 with them (+832). Reproduced by copying the three links into a
+clean worktree at that commit — identical failure, identical count.
+
+Same class as closed ticket 0989 (idh tests read the real checkout's untracked
+private overlay links), which fixed the adapter/lifecycle fixtures through
+`tests/tracked_tree.py`; the census was not covered by that fix.
+
+Two facts must not be conflated. The private skill descriptions really are
+resident in a session started in the primary checkout, so the token cost is
+real. The budget in `tests/test_resident_census.py` is argued against the
+tracked harness content, and that is what the overlay breaks.
+
+## Exit criteria
+
+- [ ] `make check` passes both in the primary checkout and in a clean worktree on the same commit
+- [ ] The census states which skills it counted and whether private overlay links were present, so a real all-clear is distinguishable from a census that never saw the overlay (the docstring already treats a consumer project's own CLAUDE.md as extra)
+- [ ] The budget decision is argued here, not made silently: trim the private descriptions, raise the skills budget with the +832 stated, or measure the overlay as a separate channel the tracked-content gate does not fail on
+- [ ] Positive control: planting the three links in a worktree reproduces the failure the fix claims to handle, and their absence leaves the census green

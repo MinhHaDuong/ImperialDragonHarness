@@ -1,0 +1,27 @@
+# raid wave 1084/1085/1086: detached-seat gate battery, branch-occupancy asymmetry, retry-budget exhaustion
+
+Project: ImperialDragonHarness. Public audience: published PR/code information, review outcomes and process facts; no credentials, no private infrastructure detail, no personal data.
+
+## Context
+
+`/raid 1084 1085 1086` ran on doudou with no Pi subagent tool available in the orchestrating session, so every worker and reviewer seat was a detached headless CLI process (Claude Code `claude -p` for implementation, Pi `pi --no-session -p` for the gate battery). Three PRs were opened from one wave: #1372 (ticket 1086), #1373 (ticket 1085), #1374 (ticket 1084, a script replacing roar's inline close-and-clean steps).
+
+## Events
+
+- The Pi subagent extension was not installed on this host. `scripts/pi-subagent-link` printed "no Pi install at /home/haduong/.pi/agent; nothing to link" and exited 0 while an npm-global Pi install existed at another path. Filed as ticket 1089 on the #1374 branch.
+- The detached OpenAI-family gate battery returned substantive findings on all three PRs in round 1 and forced one bounce each. On #1373 it reproduced a merged-probe false all-clear (the subject signal scanned all of `main` instead of divergence-scoped history), an `echo` that masked a reconciliation failure, and `env=None` children inheriting `BASH_ENV`. On #1372 it reproduced silent omission of unreadable ticket directories and an unhandled PermissionError returning exit 1 where the contract says could-not-look exit 2.
+- On #1374, round 2 found that the executor's fix had replaced `git branch -D` with `git update-ref -d`. The orchestrator measured the consequence directly: `git branch -D topic` refuses with "cannot delete branch 'topic' used by worktree at ...", while `git update-ref -d refs/heads/topic <oid>` returns 0 and removes the branch another worktree is standing on. Round 3 then found three preservation defects in the delete-then-restore compensation: `core.abbrev=4` prints "(was 8047)" while the parser required 7+ hex, leaving the branch absent; a tag named after the printed abbreviation made `rev-parse "$2^{commit}"` resolve the wrong object and restore a different tip; and an interruption between delete and restore leaves the moved tip with no branch, no reflog and no containing ref, while even a successful restore loses upstream configuration and reflog. `git update-ref refs/heads/<b> <sha> ""` was verified to refuse clobbering a ref recreated in the window (rc 128, reference already exists).
+- Retry budgets: each PR is bounced once. #1372's second round found a surviving variant (a mode-0444 directory that lists names but cannot be searched, so `Path.is_file()` swallowed the stat error and exited 0). The caller authorised an orchestrator insertion instead of a third executor round; the fix stats each candidate explicitly, prints `cannot stat <path>: <reason>` and exits 2, with the 600-file corpus re-measured byte-identical against the awk oracle (67 rows, SHA256 20306283db4e6660bcdf7acc2c8e30b0e6fa1775079f4fcb5694154393fa36f3). #1374 received a second, off-budget bounce on the caller's explicit choice; its third round still returned REROLL, and the caller chose to hold the PR open rather than spend a third round.
+- Native built-in `/review` is structurally unavailable in a detached Pi seat. Every seat reported it NOT-RUN rather than simulating it, and every terminal verdict on the wave was ESCALATE on that breaker even where the substantive verdict was APPROVED. Merging #1372 and #1373 therefore rested on recorded unavailable-perspective evidence, not on a clean terminal verdict.
+- `scripts/check-cross-pr-ticket-collision.sh` run from a worktree whose branch already has an open PR reports that PR's own ticket as a collision (`COLLISION: ticket ID 1089 is also added by open PR #1374 (branch t1084-roar-close-and-clean)`), because `SELF_PR_NUMBER` is supplied only by the CI workflow.
+- `make check` in the primary checkout fails `tests/test_resident_census.py::test_channel_budgets` (skills channel 7784 chars over the 7000 budget) while the same commit passes in a fresh worktree and in CI. The three untracked `skills/{directory,email,infrastructure}` private overlay symlinks resolve only in the primary checkout; the census globs `skills/*/SKILL.md` there. Reproduced at the wave base commit with the links copied into a clean worktree.
+
+## Outcome
+
+#1372 and #1373 merged at 2026-10-12T15:24:41Z and 15:25:30Z (5a82a6145e3b0ae76a93696392b910723fb2a2c5, 1e8ccb3874f2f7bd0c12be05ae3d35f1cc656b53); tickets 1086 and 1085 closed and archived by the merge path. #1374 remains open with its round-3 verdict, the three preservation defects and the prescribed pre-delete full-OID check logged on ticket 1084. Ticket 1090 carries #1374's post-merge remeasure criterion. Worktrees and branches for the merged 1085 and 1086 were removed after an ancestry probe; git's own worktree guard refused the branch delete until the dead-pid locks were unlocked.
+
+## Decisions already made
+
+- The caller chose a second off-budget bounce for #1374, then chose to hold #1374 open rather than spend a third round.
+- The caller authorised the orchestrator insertion on #1372, with attribution stated in the PR body.
+- Reviewer independence was maintained by routing the gate battery to the OpenAI family against Anthropic-family implementers; the adherence and gate children inside the battery ran the Anthropic route and are recorded as not independent of the producer.
