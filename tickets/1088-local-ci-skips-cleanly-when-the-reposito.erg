@@ -9,7 +9,7 @@ Author: Minh Ha-Duong
 --- body ---
 ## Context
 
-The shared `scripts/local-ci.sh` sources `<repo>/ci-local/common.sh` before it checks for `.github/workflows/CI.yml`. In repositories that intentionally have no CI (this project is one; see decision 0321), it errors on the absent helper directory instead of reporting a clean skip. Keep the no-CI decision; make the generic runner distinguish “no workflow” from a broken local-CI setup.
+The shared `scripts/local-ci.sh` sources `<repo>/ci-local/common.sh` before it checks for `.github/workflows/CI.yml`. In repositories that intentionally have no CI, including `climate-finance-het` (see that project's decision 0321), it errors on the absent helper directory instead of reporting a clean skip. Keep the no-CI decision; make the generic runner distinguish “no workflow” from a broken local-CI setup.
 
 ## Relevant files
 - `scripts/local-ci.sh` — workflow and helper preflight order.
