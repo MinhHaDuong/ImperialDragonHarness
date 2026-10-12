@@ -28,6 +28,9 @@ Label: deferred
 2026-10-12T06:44Z claude note author: scoring split for the A-vs-B deployment choice; full legs f2x f2m ml0 q8m q8x, speed-only f1x f1m (3 tickets), Mellum screened on 3 tickets, ml1 dropped
 2026-10-12T06:49Z claude note author: speed and Mellum-screen tickets 0470, 0532, 0452
 2026-10-12T06:51Z claude note author: Mellum scored on the 5070 Ti (ml1) for test time, ml0 dropped. No NVFP4 GGUF of Mellum exists (2026-10-12): only a compressed-tensors NVFP4 for vLLM and an MLX one
+2026-10-12T06:54Z claude note Prices checked on the Model Studio page: qwen3.8-flash intl $0.15 in / $0.47 out per M, no context tiers, thinking billed as output. Cache-hit price NOT published (the context-cache page says it is neither the usual 10% nor 20%; see the console); the $0.016 used so far is a tracker figure. It dominates the hosted cost (0452-b2: 9.4M cached vs 0.19M input), so it must be read from the console or measured before the freeze
+2026-10-12T06:54Z claude note Balances 2026-10-12: OpenRouter key IDH (the whole panel) has $3.33 left of its $60 limit; the account has $19.45 of $240. Panel need ~$12 for ~50 scored legs: raise the key limit by at least $15 and top up the account before launch. DashScope balance not readable with the API key alone (console only)
+2026-10-12T06:54Z claude note Electricity (author): the 5070 Ti draws up to 300 W (A4000 140 W). analyze2 prices every local leg at a flat 0.6 kW x 0.23 EUR/kWh, which ignores the topology. analyze2 LOCAL set extended to the cycle-3 arms (arena 3c20271); per-leg power logging is proposed, not built
 
 --- body ---
 
