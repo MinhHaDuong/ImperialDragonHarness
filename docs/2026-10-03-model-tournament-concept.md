@@ -374,6 +374,61 @@ pre-registration at launch ($0.15/$0.47 expected per the rate card). Local arms'
 "no knob" becomes "@template-default (xhigh)" until the effort is pinned.
 Estimated cost: hosted 2 arms x 10 legs ~ $3-6 + panel ~$15.
 
+### Cycle-3 slate revised (author, 2026-10-12): DRAFT, not yet registered
+
+Supersedes the 2026-10-05 slate above; no cycle-3 leg has run. Becomes the
+pre-registration once the author freezes it, before the first leg. Ticket
+1048 holds the decision trail and the qualification measurements.
+
+Arms (all locals at ctx 131072; an arm that cannot load it is dropped):
+
+| Arm | Stack | Effort | Placement |
+|---|---|---|---|
+| f1m | Flash-Next IQ3_S, Strata v0.1.43 (src e568e70), CUDA 13.0 | medium | 5070 Ti solo |
+| f1x | same | xhigh | 5070 Ti solo |
+| f2m | same, `--expert-cache-device1 --remote-expert-opt` | medium | 5070 Ti + A4000 helper |
+| f2x | same | xhigh | 5070 Ti + A4000 helper |
+| ml1 | Mellum 2.1 12B-A2.5B Thinking Q8_0, llama-server | @thinking | 5070 Ti solo |
+| ml0 | same | @thinking | A4000 solo |
+| q8m | qwen3.8-flash, DashScope intl direct (lineage twin) | medium | hosted |
+| q8x | same | xhigh (pi records "high") | hosted |
+
+Fixed knobs: Strata effort as the config default (`reasoning_effort`, #1641;
+pi sends none to local servers); frozen per-topology expert profile, built
+from the Strata bench suite (no tournament ticket), no profile saving during
+legs; Mellum sampling per its card (temp 0.6, top-p 0.95, top-k 20); hosted
+pi contextWindow 131072, like the locals, so no arm escapes compaction.
+Prices: q8m/q8x $0.15 in / $0.47 out / $0.016 cache read per M (third-party
+trackers of the intl rate card; confirm on the Model Studio page at launch);
+$5.00 spend cap per hosted arm. Locals: electricity only.
+
+Sample and panel: the cycle-2 draw (0211, 0233, 0333, 0338, 0452, 0470,
+0532, 0673, 0874, 1372), smoke 0470 first on every arm; the cycle-2 panel
+(gemini / grok / minimax), rubric and blinding unchanged.
+
+Hypotheses:
+
+- H1 (effort): on the same stack, xhigh beats medium on the panel sum, at a
+  longer wall-clock. Pairs f1m-f1x, f2m-f2x, q8m-q8x.
+- H2 (placement): the helper topology is faster than solo at equal quality.
+  Pairs f1m-f2m, f1x-f2x. A quality gap here is a stack effect (v0.1.42 route
+  tail skip and measured PCIe share are on solo, off with a helper), not a
+  card effect.
+- H3 (local vs hosted twin): at matched effort the hosted flash matches the
+  local Flash-Next on quality. Pairs f2m-q8m, f2x-q8x. Not the same weights.
+- H4 (newcomer): Mellum 2.1 is within 3 points of Flash-Next @xhigh on the
+  panel sum. Pair ml1-f2x. Its card's agentic scores (temp 1.0, Pi) are not
+  replicated here.
+- H5 (card): Mellum quality is equal on both cards; only speed differs.
+  Pair ml0-ml1.
+- Cross-cycle anchor: f2x vs cycle-2 b2 (xhigh template default, v0.1.38,
+  pre-swap GPUs) bundles engine, GPU and driver changes; reported, not
+  attributed.
+
+Not in the tournament: preload off vs on (Strata bench only); Gemma 4
+(qualified, then cancelled 2026-10-12); the CPU swap (undecided; never
+mid-cycle).
+
 ### Extended-context rerun (author, 2026-10-05): the 262K ceiling experiment
 
 Motivated by cycle-1 data: local sessions BUTT against 128K (pi compaction
