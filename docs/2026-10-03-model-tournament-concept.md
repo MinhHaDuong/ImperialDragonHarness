@@ -385,7 +385,7 @@ Arms (all locals at ctx 131072; an arm that cannot load it is dropped):
 | Arm | Stack | Effort | Placement |
 |---|---|---|---|
 | f1m | Flash-Next IQ3_S, Strata v0.1.43 (src e568e70), CUDA 13.0 | medium | 5070 Ti solo |
-| f1x | same | xhigh | 5070 Ti solo |
+| f1x | same | xhigh (config "high") | 5070 Ti solo |
 | f2m | same, `--expert-cache-device1 --remote-expert-opt` | medium | 5070 Ti + A4000 helper |
 | f2x | same | xhigh | 5070 Ti + A4000 helper |
 | ml1 | Mellum 2.1 12B-A2.5B Thinking Q8_0, llama-server | @thinking | 5070 Ti solo |

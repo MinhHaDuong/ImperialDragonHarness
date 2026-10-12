@@ -24,6 +24,7 @@ Label: deferred
 2026-10-12T05:51Z claude note Strata effort check, IQ3_S solo 5070 Ti, v0.1.43: reasoning_effort reaches the template (a system instruction per level). Easy prompt: no separation. Counting problem, 2 runs each, all correct (832): reasoning 7000/6591 chars at medium vs 11672/8789 at xhigh, completion tokens overlapping (4405/4615 vs 5387/3998). The lever acts, modestly; the 2x2 stands
 2026-10-12T06:10Z claude note Mellum recall at 114K with card sampling (temp 0.6/top-p 0.95/top-k 20, 16K output cap), 5070 Ti, 2 runs: both hit the cap with no answer. Run 1 enumerated sections one by one (no repetition); run 2 degenerated into a word loop (54/501 distinct 200-char windows). Flash-Next and both Gemma builds passed the same synthetic needle. Risk for tickets past ~100K
 2026-10-12T06:10Z claude note Prepared on padme: Strata configs strata-c3-{solo,helper}-{medium,xhigh}.json in ~/Strata-daily (CUDA 13.0, port 8081, reasoning_effort, frozen profile data/expert-profile-c3-<topo>.bin, gpu_order as_given); pi providers padme-mellum (:8083) and dashscope (apiKey $QWEN_API_KEY_AEDIST, compat supportsDeveloperRole false; answers at medium and xhigh, pi records xhigh as high); ~/arena branch t1048-cycle3 (6296ad1, off t1053-pass-aware-cap) declares f1m/f1x/f2m/f2x, ml0/ml1, q8m/q8x. Draft pre-registration in the concept note (cycle-3 revised slate)
+2026-10-12T06:27Z claude note Strata qualification (v0.1.43, CUDA 13.0): all four arm configs load and report their level (medium / high); frozen profiles data/expert-profile-c3-{solo,helper}.bin built from one bench suite each (no tournament ticket). Bench with profile, thinking on, short chat decode: solo 79.5 tok/s, helper 106.7; solo 4K/16K prompt 2053/3097 tok/s. Solo verified on the 5070 Ti (14.1 GB, A4000 idle); the bench README mislabels the host 2x A4000. Preload off does not start serving (verify needs the profile tier). Arena branch t1048-cycle3 rebuilt on arena main: 16e4e43
 
 --- body ---
 
@@ -46,14 +47,16 @@ arm that cannot load 131072 on its card is dropped, not run shorter.
   cycle-2 template default, so the @xhigh arms anchor against cycle 2);
   topology 5070 Ti solo | 5070 Ti + A4000 as expert helper. pi sends no
   effort to local servers (1024, 2026-10-05), so the level is set in each
-  arm's Strata config, `"reasoning_effort": "medium"` or `"xhigh"` (#1641:
+  arm's Strata config, `"reasoning_effort": "medium"` or `"high"` (the config
+  rejects the literal "xhigh"; high maps to xhigh) (#1641:
   the default for requests that carry none). Qualification checks that the
   two levels give different thinking lengths on the same prompt; if they do
   not, the 2x2 collapses to two arms. All four use a
   frozen expert profile (`--expert-profile`, see
-  Strata settings below). Preload off is NOT a tournament arm (author,
-  2026-10-12): it only changes the cold start, which a long leg on a
-  resident server dilutes; it is measured by `./bench.sh` instead.
+  Strata settings below). Preload off is not a tournament arm (author,
+  2026-10-12), and not a valid configuration either: v0.1.43 refuses to
+  serve these packs without it (speculative verify "needs the profile-filled
+  VRAM expert tier").
 - Mellum 2.1 12B-A2.5B Thinking Q8_0 (JetBrains), llama-server, ctx 131072,
   `/data/models/gguf/mellum/`, on A4000 solo | 5070 Ti solo (two arms).
   No effort levels: its chat template only knows `enable_thinking` (on by
@@ -103,8 +106,8 @@ Preload, two flags:
 - The padme bench numbers above (solo 89/85/115, helper 100/92/119) were
   taken WITH `--expert-profile` (`Strata-daily/data/expert-profile.bin`,
   2026-10-11): the tournament arms reuse that condition.
-- Preload off vs on: `./bench.sh` once each per topology (four runs, under
-  an hour), before the first leg; the speed record, not a tournament arm.
+- Preload off vs on: dropped, the engine does not serve without the
+  profile. The bench with the frozen profile is the speed record.
 - Profile protocol: build one profile per topology on a warm-up of
   non-tournament prompts, then freeze it. No `--expert-profile-save` during
   legs, so no leg learns from an earlier tournament leg. Mind trap #831
