@@ -2,7 +2,6 @@
 Title: Model tournament cycle 3: locals @medium vs hosted flash, profile-hot strata
 Created: 2026-10-06
 Author: MinhHaDuong
-Blocked-by: 1053
 Label: deferred
 
 --- log ---
@@ -11,6 +10,7 @@ Label: deferred
 2026-10-06T09:44Z reviewer note Author-approved chantier sequence: cycle3 after driver improvements1053, deferred experimentation. Resume only on an explicit author decision; this cycle is not a prerequisite for the current research PDF or blog posts.
 2026-10-08T20:27Z reviewer Kept deferred as grid data (decided 2026-10-08 under 1069, the author raised the question and the recommendation was to keep it): the last exit criterion is reworded because the grid now also takes rows from the arena refresh. Not a prerequisite of the routing work.
 2026-10-12T04:35Z claude note arms réinscriptibles, candidats Mellum 2.1 / Gemma 4, mesures padme
+2026-10-12T06:49Z Minh Ha-Duong note blocker 1053 closed — Blocked-by removed.
 
 --- body ---
 
