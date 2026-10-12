@@ -14,6 +14,8 @@ import pytest
 
 from child_env import child_env
 
+pytestmark = pytest.mark.integration
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/raid-reroll-tally.py"
 
