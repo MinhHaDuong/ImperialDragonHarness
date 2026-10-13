@@ -1,0 +1,37 @@
+{
+  "gate_session_id": "379555be-dab1-417e-ab00-0c7ff4dccca7",
+  "ruled_tip_sha": "b731a7287d1448ae57396197c3a9a219bbe9715a",
+  "source_read_only": true,
+  "reviewer_routes": [
+    {
+      "role": "adherence,simplify,local-correctness",
+      "tool_target": "/root/gaze_1386/adherence",
+      "selected_model": "gpt-6.1-sol",
+      "selected_effort": "medium",
+      "selected_family": "OpenAI",
+      "runtime_identity_independently_observed": false,
+      "evidence": "spawn_agent API accepted explicit model and reasoning_effort; role artifact discloses caller-selected routing; reused context after separate passes"
+    },
+    {
+      "role": "supplementary-general-review",
+      "tool_target": "/root/gaze_1386/panel",
+      "selected_model": "gpt-6.1-sol",
+      "selected_effort": "medium",
+      "selected_family": "OpenAI",
+      "runtime_identity_independently_observed": false,
+      "evidence": "spawn_agent API accepted explicit model and reasoning_effort; general report comes from panel orchestrator, not failed external seats"
+    },
+    {
+      "role": "local-consistency",
+      "tool_target": "/root/gaze_1386/consistency_local",
+      "selected_model": "gpt-6.1-sol",
+      "selected_effort": "medium",
+      "selected_family": "OpenAI",
+      "runtime_identity_independently_observed": false,
+      "evidence": "spawn_agent API accepted explicit model and reasoning_effort with fork_turns none; fresh local context"
+    }
+  ],
+  "external_review": "rejected before launch; no actual runtime identity exists",
+  "native_review": "unavailable; supplementary local general review explicitly labeled",
+  "phase6": "skipped --force-approve"
+}

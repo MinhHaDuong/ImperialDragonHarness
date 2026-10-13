@@ -1,0 +1,11 @@
+{
+  "perspective": "correctness",
+  "status": "no report",
+  "actual_model": "runtime-masked/unavailable",
+  "actual_effort": "unavailable",
+  "actual_family": "unavailable",
+  "route_manifest": "manifest.txt",
+  "evidence": "launch-rejection.txt",
+  "launched": false,
+  "spend_usd": 0
+}

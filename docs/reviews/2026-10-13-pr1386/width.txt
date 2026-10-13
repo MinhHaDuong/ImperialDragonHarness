@@ -1,0 +1,10 @@
+round: 1 (forge reviews=[]; 2026-10-13)
+changed files: 109
+known added lines: 343
+known deleted lines: 49455
+known changed lines: 49798
+binary/unknown files: 28
+pipeline matches: scripts/**, skills/**
+width: Correctness + Consistency + Red-team
+risk: high-risk deletion/migration, other-family seat required
+proportional bounded review: manifest/hash proof replaces rereading history

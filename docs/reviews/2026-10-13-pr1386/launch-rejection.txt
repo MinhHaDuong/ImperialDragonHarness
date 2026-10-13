@@ -1,0 +1,2 @@
+Automatic approval review rejected launch of three detached Claude reviewer processes before execution. Reason: Launching detached Claude reviewers can transmit repository, ticket, and migration contents to an external model service; the user authorized the merge/review goal but not this sensitive payload to that destination. Do not bypass this rejection through a workaround or indirect execution.
+All three processes were not launched. No runtime identities, model answers or spend exist. Requested identities in manifest are requested routes only.
