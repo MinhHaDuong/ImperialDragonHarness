@@ -2,6 +2,7 @@
 Title: roar: script the mechanical close and cleanup steps
 Created: 2026-10-11
 Author: reviewer
+Closed: autoclosed — PR #1374
 
 --- log ---
 2026-10-11T16:25Z reviewer created
@@ -11,6 +12,7 @@ Author: reviewer
 2026-10-13T11:19Z Minh-Ha-Duong revision per author PR1374#issuecomment-6144242041: roar cleans only current completed ticket/PR worktrees and branches. Replaced repository-wide enumeration with explicit local/remote branch=full-approved-OID targets; no targets deletes nothing and foreign merged refs remain. Removed delete-then-restore/output parsing; exact ref/OID and ancestry checks refuse drift, ordinary -d with command-local upstream disabled preserves conservative HEAD/worktree refusal, remote deletion leases supplied OID. Worktree ownership remains caller responsibility. Prior exhausted gate ledger above preserved; remeasurement follow-up1090 unchanged.
 2026-10-13T11:29Z Minh-Ha-Duong round6 revision: actual metadata-failure controls reproduced fail-open preflight; explicit successful nonempty git-dir/common-dir reads now precede comparison/helper. Red-team configured other-to-local-scratch fetch mapping reproduced foreign unmerged tip overwrite; cleanup now validates default ref then fetches only its integration ref with empty refmap and disabled tags/pruning/submodule recursion/auto-maintenance. Direct and opportunistic local-head mappings preserve foreign tips in new controls; requested protected targets report retained findings. Header distinguishes absent ticket-store skip from unreadability. Prior gate ledger remains held.
 2026-10-13T11:40Z Minh-Ha-Duong round7 revision: independent red-team reproduced Git2.53 SIGSEGV139 for empty branch.remote override on ordinary push-u tracking branches. New positive tracked-merged control reproduces missed cleanup and late-drift control rejects crash-as-refusal. Use per-approved-OID nonempty HEAD-check remote alias only after scoped config-regexp confirms no keys; configured fetch-only alias is retained1 and unreadable config fails2, without printing config values. Native unexpected deletion errors report error/exit rather than assumed refusal or preservation. Historical exhausted gate and remeasurement1090 unchanged.
+2026-10-13T12:11Z Minh Ha-Duong closed — autoclosed — PR #1374
 
 --- body ---
 ## Context
