@@ -1,0 +1,1 @@
+round1;4files;200changedlines;pipeline:scripts/resident_census.py;proportional:Correctness+Consistency+Doc propagation; ordinary+scripts; staggered under one free slot

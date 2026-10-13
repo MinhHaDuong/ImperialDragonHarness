@@ -1,0 +1,3 @@
+correctness	gpt-6.1-sol	OpenAI	ordinary census fix with direct controls; same-family angle review at low effort
+consistency	gpt-6.1-sol	OpenAI	ordinary census fix with direct controls; same-family angle review at low effort
+doc-propagation	gpt-6.1-sol	OpenAI	ordinary census fix with direct controls; same-family angle review at low effort
