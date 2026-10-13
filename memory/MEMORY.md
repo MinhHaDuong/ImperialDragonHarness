@@ -24,7 +24,7 @@ v8 repository memory. Pilot: [pilot.md](../docs/memory-v8/pilot.md). Provenance:
 ## Dreams
 
 - [Second dream](dreams/2026-10-07-second-dream.md) — accepted.
-- [Third dream](dreams/2026-10-13-third-dream.md) — under review.
+- [Third dream](dreams/2026-10-13-third-dream.md) — accepted.
 
 Search the journal for older or unprocessed experiences. The legacy index
 stays in Git history; each legacy reference note is linked from its topic.

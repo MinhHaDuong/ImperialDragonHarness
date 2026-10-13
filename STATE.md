@@ -1,42 +1,36 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-13T10:47Z
-Housekeeping (molt) run: 2026-10-13T10:47Z
+Last updated: 2026-10-13T17:40Z
+Housekeeping (molt) run: 2026-10-13T17:40Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-13T10:47Z · as of 46072d75 -->
+<!-- generated 2026-10-13T17:40Z · as of 07bf3281 -->
 
-**Tickets:** 6 ready · 6 blocked — `erg ready tickets/` for full list
+**Tickets:** 7 ready · 6 blocked — `erg ready tickets/` for full list
   next: 1045 Local merge gate replaces the forge's required … · 1048 Model tournament cycle 3: locals @medium vs hos…
-**In flight:** 1 open PR, oldest #1374 0d · CI main: in progress
+**In flight:** no open PRs · CI main: success
 **Recent (first-parent):**
-  46072d75 chore: refresh STATE after raid and housekeeping
-  153b6d2b Merge pull request #1379 from MinhHaDuong/raid-1091-1092
-  3f71300b Merge pull request #1378 from MinhHaDuong/t1091-census-overlay
+  07bf3281 Merge pull request #1384 from MinhHaDuong/roar-dream3-2026-10-13
+  bdf25e00 Merge pull request #1382 from MinhHaDuong/dream/2026-10-13-third-dream
+  240d1dc8 Merge pull request #1383 from MinhHaDuong/chore/drop-legacy-index-link-pin
 
 ## Ready work
-
-Ready tickets: 1045 (local merge gate), 1048 (cycle-3 design), 1077 (worktree opt-in), 1080 (adherence semantic phase), 1084 (held roar cleanup PR), and 1087 (arena provider-error classification). The cycle-3 rerun and role-split design remain to be conceived; no new tournament run is scheduled by this session.
+Ready: 1045 (local merge gate), 1048 (cycle-3 completion), 1077 (worktree opt-in), 1080 (adherence semantic phase), 1087 (arena provider errors), 1089 (npm-global Pi linking), 1090 (post-merge Roar measurement). Six other tickets are deferred, including 1050 blocked on hardware 1049.
 
 ## Resume point
-
-Tickets 1092 and 1091 are closed and archived through #1377 and #1378. The collision guard now excludes self by repository and branch identity. The census retains the 7000-character indexed-skill budget and reports local cards separately while including their session cost. Main passed the complete suite in the primary checkout with the live overlay: 1606 passed, 4 skipped (2026-10-13).
-
-PR #1374 (1084) remains open and held: gaze returned ESCALATE after the two-round limit was already exceeded. No new battery or merge ran. The decision and the raid review evidence are preserved in the dated journal and the bounded roar bundle #1379.
-
-Attribution integration 1004, memory dispatch 0913, and the second routing review 1071 are closed. Their records remain historical; any further project migrations belong to the dispatched child tickets. Inline-helper tickets 1085 and 1086 landed in #1373 and #1372.
-
-The historical local `dream/2026-10-07` branch carries a distinct commit from main and was pushed for preservation. It was neither accepted anew nor used to mark additional journal blobs processed. Historical foreign worktrees and local branches were retained; our merged execution and review worktrees were removed after preflight and ancestry checks. General branch deletion was rejected by automatic approval review, so no broad deletion ran.
+Main passed `make check`: 1603 passed, 4 skipped on doudou (2026-10-13). Tickets 1092, 1091 and 1084 are closed through #1377, #1378 and #1374. Roar cleanup now uses explicit completed-task targets; 1090 retains the unmeasured performance follow-up. The third Dream is accepted through #1382; #1383 removed the duplicate-index test pin.
+Housekeeping removed four inactive, clean historical worktrees and four orphan session scratch directories. No WIP was found. Merged Roar branches were deleted; rewritten historical commits remain pushed on `dream/2026-10-07`, `t1084-roar-close-and-clean` and `archive/review-1319-20261013`.
+Review-attribution gaps for #1374 and 69 unresolved historical backfill records remain documented in the journal; no missing identities or revision coordinates were inferred.
 
 ## Next actions
-
-Resolve the held #1374 disposition before attempting its merge. Continue the ready tickets from `erg ready tickets/`; 1084 needs that disposition, and 1080 addresses the separately tracked adherence gap. Publication correction 1093 is deferred; no publication was performed. Defect backfill for #1377/#1378 appended no labels because historical reviewed coordinates were not established (69 unresolved records per invocation).
+Continue from `erg ready tickets/`. Complete cycle 3 under 1048 before treating its results as routing-grade; role-split redesign remains deferred under 1061. Publication correction 1093 stays deferred, with its frozen bundle in the arena repository; no publication ran.
+Zotero reconciliation reports 28 staging files absent from the consulted index (report-only; no import or purge). Inspect provenance before any archival action.
 
 ## Author actions
 - Install the ILaaS consortium key in `~/.config/keys/ilaas.env`, then configure `models.json` (0977).
 - Rotate the six exposed bash-x values and the Albert key, deferred to October 2026.
-- Merge the 266 hash-duplicate clusters in the client (right-click → Merge n Items), via the report regenerated by `python3 scripts/zotero.py dedup-report --out /tmp/zotero-duplicates.html` (0485 closed; author-side chore).
-- Zotero train residue: run `idh check` to clean the now-dangling installed skill symlink (retired name, path in ticket 1018); decide on the drifted vendored URL-intake copy in livre-milliards-climat; the 0485 byte-for-byte reproduction needs the live library.
+- Merge the 266 hash-duplicate clusters in the Zotero client via the report from `python3 scripts/zotero.py dedup-report --out /tmp/zotero-duplicates.html` (0485 closed; author-side chore).
+- Zotero train residue: run `idh check` for the dangling installed skill symlink (1018); decide on the drifted vendored URL-intake copy in livre-milliards-climat; the 0485 byte-for-byte reproduction needs the live library.
