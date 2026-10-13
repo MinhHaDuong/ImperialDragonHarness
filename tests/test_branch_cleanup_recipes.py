@@ -2,20 +2,10 @@
 
 Two documented recipes lost branches on 2026-06-10:
 
-1. The stale-branch cleanup loop — in ``rules/git.md`` until 2026-09-09,
-   now in ``skills/roar/SKILL.md`` step 10, which is whose job it is —
-   deletes any local branch that is an ancestor of
-   origin/main — local ``main`` always is, and so is the branch you are
-   standing on right after a merge. The recipe must skip ``main`` and the
-   current branch explicitly, and use ``git branch -D`` (safe: the
-   merge-base probe has just proven the branch is an ancestor of
-   origin/main; ``-d`` checks merged-into-HEAD and spuriously refuses).
-   A third way to lose one, added 2026-09-10: a branch a PARALLEL session
-   has checked out in its own worktree is an ancestor of origin/main like
-   any other, and the sweep reached one. Git's refusal to delete a
-   checked-out branch is a backstop, not a guard — and because that
-   refusal is the final command of its ``&&`` chain, under ``set -e`` it
-   aborts the sweep for every branch after it.
+1. Historical sweeps deleted branches outside the completed task. The current
+   contract accepts only explicitly named completed-PR targets with their full
+   approved head OIDs. Local cleanup keeps Git's ordinary merge/worktree refusal;
+   drift is refused before deletion. Behavioral coverage lives in the shell test.
 
 2. ``skills/roar/SKILL.md`` step 9b blanket-authorized ExitWorktree's
    ``discard_changes``, which also deletes the ORIGINAL branch the
@@ -24,7 +14,11 @@ Two documented recipes lost branches on 2026-06-10:
    pushed or merged first, offer ``action: "keep"`` otherwise, and
    document the reflog recovery path.
 
-These are string-match ratchets on the rule/skill text.
+The sweep itself moved into ``skills/roar/close-and-clean.sh`` (ticket 1084);
+its guards are tested behaviourally in ``tests/test_roar_close_and_clean.sh``
+by running the real script and stripping one guard at a time. What remains here
+are string-match ratchets on the rule/skill text: the rule delegates the
+sweep, and step 9b's ExitWorktree discipline.
 """
 
 from pathlib import Path
@@ -33,18 +27,6 @@ REPO = Path(__file__).resolve().parents[1]
 
 GIT_RULES = (REPO / "rules" / "git.md").read_text()
 ROAR_SKILL = (REPO / "skills" / "roar" / "SKILL.md").read_text()
-
-
-def cleanup_recipe() -> str:
-    """The local-branch sweep: the first fenced bash block of roar step 10."""
-    step = ROAR_SKILL.split("**Verify hygiene**", 1)[1]
-    return step.split("```bash", 1)[1].split("```", 1)[0]
-
-
-def remote_recipe() -> str:
-    """The remote-branch sweep: the second fenced block of the same step."""
-    step = ROAR_SKILL.split("**Verify hygiene**", 1)[1]
-    return step.split("```bash", 2)[2].split("```", 1)[0]
 
 
 def test_git_md_delegates_the_sweep_and_inlines_no_loop():
@@ -60,54 +42,6 @@ def test_git_md_delegates_the_sweep_and_inlines_no_loop():
     )
     assert "/roar` step 10" in GIT_RULES, (
         "rules/git.md must point at the skill that owns the sweep"
-    )
-
-
-def test_git_md_recipe_skips_main():
-    recipe = cleanup_recipe()
-    assert '[ "$b" = main ] && continue' in recipe, (
-        "roar step 10 cleanup loop must skip local main — it is always an "
-        "ancestor of origin/main and the loop would delete it"
-    )
-
-
-def test_git_md_recipe_skips_current_branch():
-    recipe = cleanup_recipe()
-    assert "--show-current" in recipe, (
-        "roar step 10 cleanup loop must skip the current branch "
-        "(guard via git branch --show-current)"
-    )
-
-
-def test_git_md_recipe_uses_force_delete_after_ancestor_probe():
-    recipe = cleanup_recipe()
-    assert 'git branch -D "$b"' in recipe, (
-        "roar step 10 cleanup loop must use -D: -d checks merged-into-HEAD "
-        "and silently skips branches whose upstream is gone; the "
-        "merge-base --is-ancestor probe already proved the branch merged"
-    )
-    assert 'git branch -d "$b"' not in recipe
-
-
-def test_roar_10_sweep_skips_branches_checked_out_elsewhere():
-    """A peer session's branch is an ancestor of origin/main like any other.
-
-    Without the guard the sweep reaches it and `git branch -D` fails as the
-    final command of its `&&` chain — under `set -e` that aborts the whole
-    loop, so every branch after it in iteration order is silently never
-    swept. The membership test must match whole LINES: `git worktree list`
-    emits one branch per line, and a space-delimited test never fires.
-    """
-    recipe = cleanup_recipe()
-    assert "worktree list --porcelain" in recipe, (
-        "roar step 10 cleanup loop must build its protected set from "
-        "git worktree list --porcelain — a branch checked out by a parallel "
-        "session is an ancestor of origin/main and the loop would reach it"
-    )
-    assert "grep -qx" in recipe, (
-        "the protected-set membership test must be whole-line (grep -qx): "
-        "git worktree list emits one branch per line, and a space-delimited "
-        "test silently never fires (bug written and caught 2026-09-10)"
     )
 
 
@@ -134,15 +68,10 @@ def test_roar_9b_documents_reflog_recovery():
     )
 
 
-def test_remote_sweep_guards_the_bare_origin_symref():
-    """Without the `case` guard the loop deletes the bare `origin` symref.
-
-    That fails, and under ``set -e`` it aborts the sweep on its first
-    iteration — leaving every stale branch in place while the run looks like it
-    did something (2026-08-14).
-    """
-    recipe = remote_recipe()
-    assert "case \"$ref\" in origin/*)" in recipe, (
-        "roar step 10 remote sweep must skip the bare `origin` symref"
-    )
-    assert '[ "$b" = main ] && continue' in recipe
+def test_roar_cleanup_requires_explicit_completed_task_targets():
+    helper = (REPO / "skills/roar/close-and-clean.sh").read_text()
+    assert "--local-branch" in helper and "--remote-branch" in helper
+    assert "for-each-ref" not in helper, "roar must not enumerate cleanup candidates"
+    assert "restore_branch" not in helper, "refuse drift before deleting"
+    assert "git branch -D" not in helper, "retain ordinary Git merge refusal"
+    assert "only the completed task" in ROAR_SKILL

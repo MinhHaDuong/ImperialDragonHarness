@@ -41,8 +41,9 @@ def test_failed_bundle_is_surfaced_by_roar_not_molt():
     rule = _bundle_exception()
     assert "/molt" not in rule, "molt does not report open merge requests"
     assert "in step 11" in rule and "does not block" in rule
-    assert "step 10" in rule
+    assert "a later roar for that bundle" in rule
+    assert "pending merge request" in rule
 
 
 def test_task_branch_still_needs_ancestry():
-    assert "merge-base --is-ancestor HEAD origin/main" in ROAR
+    assert "merge-base --is-ancestor HEAD refs/remotes/origin/main" in ROAR

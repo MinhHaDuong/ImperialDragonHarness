@@ -1,0 +1,19 @@
+%erg 0.1
+Title: roar: remeasure turns per roar after close-and-clean merges
+Created: 2026-10-12
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-12T15:32Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Discharges the last exit criterion of 1084 (remeasure turns per roar), which cannot be
+met before 1084 merges: it needs roars run with `skills/roar/close-and-clean.sh`.
+Baseline (1084 body, padme 2026-10-11, 400 sessions, 75 roars): median 16 turns starting at
+215k context, ~420k cache-read input equivalents per roar; 29 roars start above 256k.
+1084's estimate of ~40% saving is derived (8-10 of 16 turns assumed mechanical), not measured.
+
+## Exit criteria
+- [ ] Turns and cache-read equivalents measured, by the baseline's method, on at least 10 roars run after 1084 merged; before/after table in the journal
+- [ ] The derived ~40% estimate is replaced by the measured figure, or the gap is explained
