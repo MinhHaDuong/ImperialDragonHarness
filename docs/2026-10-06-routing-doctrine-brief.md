@@ -14,7 +14,7 @@ Sources:
 (PR #1002, tracker 0974), [reviewer attribution
 design](2026-10-02-reviewer-attribution-design.md) (who reviewed, and how we
 learn which reviewer is worth routing to), [tournament concept
-note](2026-10-03-model-tournament-concept.md) (how a routing verdict is
+note](arena-integration.md) (how a routing verdict is
 measured; tracker 1024, in flight and not on `main` when this was written),
 [agent profile subsystem design](2026-10-03-agent-profile-subsystem-design.md).
 

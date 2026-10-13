@@ -9,16 +9,16 @@ A reusable, science-backed personal harness for AI-assisted research across proj
 ## Status
 <!-- generated 2026-10-13T17:40Z · as of 07bf3281 -->
 
-**Tickets:** 7 ready · 6 blocked — `erg ready tickets/` for full list
-  next: 1045 Local merge gate replaces the forge's required … · 1048 Model tournament cycle 3: locals @medium vs hos…
-**In flight:** no open PRs · CI main: success
+**Tickets:** 6 ready · 0 blocked — `erg ready tickets/` for full list
+  next: 1045 Local merge gate replaces the forge's required …
+**In flight:** arena separation (1094), prepared on separate-arena · CI main: success
 **Recent (first-parent):**
   07bf3281 Merge pull request #1384 from MinhHaDuong/roar-dream3-2026-10-13
   bdf25e00 Merge pull request #1382 from MinhHaDuong/dream/2026-10-13-third-dream
   240d1dc8 Merge pull request #1383 from MinhHaDuong/chore/drop-legacy-index-link-pin
 
 ## Ready work
-Ready: 1045 (local merge gate), 1048 (cycle-3 completion), 1077 (worktree opt-in), 1080 (adherence semantic phase), 1087 (arena provider errors), 1089 (npm-global Pi linking), 1090 (post-merge Roar measurement). Six other tickets are deferred, including 1050 blocked on hardware 1049.
+Ready: 1045 (local merge gate), 1077 (worktree opt-in), 1080 (adherence semantic phase), 1089 (npm-global Pi linking), 1090 (post-merge Roar measurement). Arena-only tickets have moved to the independent repository; see docs/arena-integration.md.
 
 ## Resume point
 Main passed `make check`: 1603 passed, 4 skipped on doudou (2026-10-13). Tickets 1092, 1091 and 1084 are closed through #1377, #1378 and #1374. Roar cleanup now uses explicit completed-task targets; 1090 retains the unmeasured performance follow-up. The third Dream is accepted through #1382; #1383 removed the duplicate-index test pin.
@@ -26,7 +26,7 @@ Housekeeping removed four inactive, clean historical worktrees and four orphan s
 Review-attribution gaps for #1374 and 69 unresolved historical backfill records remain documented in the journal; no missing identities or revision coordinates were inferred.
 
 ## Next actions
-Continue from `erg ready tickets/`. Complete cycle 3 under 1048 before treating its results as routing-grade; role-split redesign remains deferred under 1061. Publication correction 1093 stays deferred, with its frozen bundle in the arena repository; no publication ran.
+Continue from `erg ready tickets/`. Arena cycle 3, role-split redesign and publication correction are followed in the independent arena repository (1048, 1061, 1093). Consume reviewed cycle evidence through skills/route; no publication ran during separation.
 Zotero reconciliation reports 28 staging files absent from the consulted index (report-only; no import or purge). Inspect provenance before any archival action.
 
 ## Author actions

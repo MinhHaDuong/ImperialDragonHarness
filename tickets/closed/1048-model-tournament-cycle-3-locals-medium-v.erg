@@ -2,6 +2,7 @@
 Title: Model tournament cycle 3: locals @medium vs hosted flash, profile-hot strata
 Created: 2026-10-06
 Author: MinhHaDuong
+Closed: wontdo — transferred to the independent arena repository, tickets/1048-model-tournament-cycle-3-locals-medium-v.erg; cycle 3 remains open there
 
 --- log ---
 2026-10-06T08:43Z MinhHaDuong created
@@ -40,6 +41,7 @@ Author: MinhHaDuong
 2026-10-12T13:17Z claude note Author decisions after the speed stage: hosted qwen3.8-flash dropped at 3 tickets (slower, 18-47 min vs 9-24 local, and $0.07-0.30 per leg vs electricity; scores 24-30, no better). Production: Flash-Next IQ3_S, 2 GPUs (A4000 expert helper: +20% decode per token, no other day job for the A4000), xhigh by default, medium per conversation
 2026-10-12T13:17Z claude note Production switched 2026-10-12 ~15:05 CEST: strata-server.service (user unit, enabled, port 8080, Conflicts=llama-server) replaces llama-server.service (27B, disabled, kept). pi on doudou and padme default to padme/qwen3.8-flash-next-iq3_s, thinking high (= xhigh); pi sends the level per request, one level per conversation keeps the prompt cache (the template puts the effort instruction at the start of the system prompt). Found and fixed: both pi installs silently fell back to hosted models (doudou to openrouter/auto, the default was missing from enabledModels; padme to huggingface Kimi-K2.6, the padme provider lacked the model)
 2026-10-12T13:17Z claude note Night mode: arena-night.timer 22:00 (stop production, drive2 on ~/arena/.night-matrix, 05:30 deadline, restore production on exit), strata-morning.timer 07:30 safety net; lingering on. Handover dry run: 46 s downtime, 8080 free during the arena, production back healthy. Night 1 (2026-10-12): f2x and f2m on the 7 remaining tickets, 14 legs (arena 57ea546)
+2026-10-13T19:29Z Codex closed — wontdo — transferred to the independent arena repository, tickets/1048-model-tournament-cycle-3-locals-medium-v.erg; cycle 3 remains open there
 
 --- body ---
 

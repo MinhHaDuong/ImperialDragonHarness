@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Finish separation of the independent arena repository from the harness
+Created: 2026-10-13
+Author: Codex
+Closed: autoclosed — PR #1386
+
+--- log ---
+2026-10-13T19:27Z Codex created User requested verification and completion of the independent arena separation.
+
+2026-10-13T19:28Z Codex note Transfer byte-verified; FR/EN reproduction 24 artifacts per language (PDF text and other file bytes identical); correction archive hashes all verify. Harness make check: 1579 passed, 3 skipped with required host access. Arena standalone validation recorded in migration/README.md. Merge still requires the migration-size review exception.
+
+2026-10-13T19:33Z Codex note Author requested initializing arena ticket store, preserving open copies of 1087 and 1048 there, and closing the harness copies as wontdo. Implemented using erg init and erg close; original journals preserved.
+2026-10-13T20:09Z reviewer closed — autoclosed — PR #1386
+
+--- body ---
+## Context
+Arena runner lives in its own repository, while the harness still hosted analysis, reporting, protocol and open project tickets. Transfer the logical unit with evidence; retain the harness-owned routing grid and historical harness journals.
+
+## Exit criteria
+- [x] Analysis, report generators, protocol, historical reports and their tests are available in the independent arena repository with a source commit and original SHA-256 manifest.
+- [x] Open arena tickets 1048, 1049, 1050, 1051, 1058, 1061, 1087, 1093 retain IDs, complete journals and unresolved criteria in arena, and leave the harness open-ticket queue.
+- [x] Harness route integration points to the independent tools; routing data numbers and historical journals are unchanged.
+- [x] Standalone arena tests and before/after FR+EN reproduction pass; arithmetic-correction archive hashes verify.
+- [x] Harness catalog, dependency lock and full checks pass.
+
+## Evidence
+Harness: docs/arena-integration.md. Arena: migration/from-harness-2026-10-13.json and migration/README.md. Local review branches: separate-arena (harness) and separate-harness-assets (arena). Transfer does not publish or rerun private benchmark legs.

@@ -2,10 +2,12 @@
 Title: arena runner: provider error with empty output scored verdict OK
 Created: 2026-10-12
 Author: Minh Ha-Duong
+Closed: wontdo — transferred to the independent arena repository, tickets/1087-arena-runner-provider-error-with-empty-o.erg; fix remains open there
 
 --- log ---
 2026-10-12T06:08Z Minh Ha-Duong created
 2026-10-12T06:44Z Minh-Ha-Duong note Related: 1053 (found during its re-pass check)
+2026-10-13T19:29Z Codex closed — wontdo — transferred to the independent arena repository, tickets/1087-arena-runner-provider-error-with-empty-o.erg; fix remains open there
 
 --- body ---
 
