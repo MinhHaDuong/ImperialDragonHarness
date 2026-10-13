@@ -24,7 +24,9 @@ This command writes the specified grid and its sibling coverage file.
 
 Open tickets transferred with their original IDs and complete journals:
 1048, 1049, 1050, 1051, 1058, 1061, 1087, 1093. Their current files live in
-arena's `tickets/`; transfer does not mean completion. Closed harness tickets
+arena's `tickets/`; transfer does not mean completion. At the author’s request,
+1048 and 1087 have historical copies closed as `wontdo` in the harness,
+with explicit transfer reasons; their arena copies stay open. Closed harness tickets
 and dated harness memories remain historical records. The independent repo
 also holds copies of the closed tournament tracker/report/runner tickets.
 Old harness-relative report paths resolve in arena with the same suffix;
