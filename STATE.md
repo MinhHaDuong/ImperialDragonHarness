@@ -1,37 +1,39 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-11T16:36Z
-Housekeeping (molt) run: 2026-10-11T16:40Z
+Last updated: 2026-10-13T10:47Z
+Housekeeping (molt) run: 2026-10-13T10:47Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-11T16:36Z · as of 9e0b062e -->
+<!-- generated 2026-10-13T10:47Z · as of 46072d75 -->
 
-**Tickets:** 6 ready · 7 blocked — `erg ready tickets/` for full list
-  next: 1045 Local merge gate replaces the forge's required … · 1077 Decide the session EnterWorktree opt-in after a…
-**In flight:** no open PRs · CI main: success
+**Tickets:** 6 ready · 6 blocked — `erg ready tickets/` for full list
+  next: 1045 Local merge gate replaces the forge's required … · 1048 Model tournament cycle 3: locals @medium vs hos…
+**In flight:** 1 open PR, oldest #1374 0d · CI main: in progress
 **Recent (first-parent):**
-  9e0b062e Merge pull request #1358 from MinhHaDuong/tickets-molt-raid-scripts
-  0f5b6f6d Merge pull request #1357 from MinhHaDuong/housekeeping-state-2026-10-11
-  6ef8c351 Merge pull request #1356 from MinhHaDuong/ticket-roar-close-script
+  46072d75 chore: refresh STATE after raid and housekeeping
+  153b6d2b Merge pull request #1379 from MinhHaDuong/raid-1091-1092
+  3f71300b Merge pull request #1378 from MinhHaDuong/t1091-census-overlay
 
 ## Ready work
 
-The remaining attribution task is 1004's separate original-criteria integration review. Its historical notes stay intact. Memory migration 0913 remains separate work. The model tournament cycle 2 is CLOSED (142/160 legs, 426 seats, multidimensional analysis done): skills/route + skills/arena are on main, the routing verdict is recorded in tracker 1024, and eleven follow-up tickets (1046-1058) carry the rest — report, cycle 3, HW-v2, live routing application. The original 1032 and 1009 criteria are checked in the dated coverage correction; no new criterion was added.
+Ready tickets: 1045 (local merge gate), 1048 (cycle-3 design), 1077 (worktree opt-in), 1080 (adherence semantic phase), 1084 (held roar cleanup PR), and 1087 (arena provider-error classification). The cycle-3 rerun and role-split design remain to be conceived; no new tournament run is scheduled by this session.
 
 ## Resume point
-2026-10-09: LLM-chosen routing is landed (tracker 1052 and children 1062-1070 closed; #1262-#1292): the orchestrator picks workers from the `skills/route` grid and states why, `model-level`/`effort` and `scripts/model_policy.py` are gone, review independence is a model-family question scaled to risk (`skills/route/references/decorrelation.md`), the harness is on uv (`pyproject.toml`, `uv.lock`, CI `uv sync`), the rtk hook is guarded. 1071 asks for a second review round once the new mechanisms have run. Second round (1071, 2026-10-09): Pi `reviewer` and `planner` did run (2026-10-02 raid), `code-reviewer` never; Codex `fork_turns` all was called 109 times, override honouring unmeasured; the launch line appears in 1 of 154 traced launches (no mechanical check); 1070's adherence criterion is still met by rule text only; no script reads `~/.codex/sessions`. Host work: padme `UV_LINK_MODE=clone`; doudou uv cache moved to the btrfs home, venvs rebuilt, snapshot script excludes the cache and `.venv`.
-2026-10-08: tournament reports final (FR+EN, 12 pages; Mistral series relabelled "last success"/"all attempts"; Haiku 5.5 arm integrated, #1252/#1253), blog post (1047) closed and the arena results published ~2026-10-09; 1061 (role-split arena redesign) filed deferred; 0974 closed as superseded by 1052. Housekeeping 2026-10-08: 15 dead worktrees GC'd; raid-attribution-union holds a superseded staged snapshot (author decides).
-The reference clone is `~/.agents`; helpers must resolve any checkout path portably. Portable installation (0999) is complete — integration review closed in #1104; `./bin/idh install`/`check`/`sync` are the registration surface.
-Memory v8 is delivered end to end: convention/inventory (#1102), pilot (#1109), capture 0988, dreaming 0910/0916, and acceptance trials 0918 — historical verdict **No global rollout** (docs/memory-v8/evaluation-results.md); 1019/1022 subsequently lifted the acceptance blockers and 0913 now holds ready per-project migration work. The dated October 2 blocked planning note is historical; no rollout is dispatched here.
-The Zotero train is COMPLETE (2026-10-03/04): 1018 consolidated into one `zotero` skill with verbs (waves A #1178 + B #1179, author force-approve on a full review round), the `~/.idh` rider landed as 1025 (#1177), and the gaze un-reviewable breaker now counts content-bearing files (1026, #1180 — pure renames no longer fire it). The 0485 byte-for-byte report reproduction remains author-side; the vendored URL-intake copy in livre-milliards-climat (already drifted) and the now-dangling installed symlink are recorded in 1018.
-The external-reviewer panel train is closed (0902 #1155; 0205 retired at #1157; teardown in the attribution train 1004→1009). The verification loop is ALSO closed: 1016/1017/1021/0879/0990 all merged 2026-10-03 (WAVE_BASE wave annotations, detached-seat substitution, spawn-trust preflight, erg log placement + reroll_bump routing, orchestrator-run gaze + battery NOT-RUN signal). Agent profiles landed under 0938 (2026-10-03): five shells + contracts (agents channel 761/800), all inventory-justified call sites converted, Pi portability demonstrated live; design note with two external strong reviews merged via #1171.
+
+Tickets 1092 and 1091 are closed and archived through #1377 and #1378. The collision guard now excludes self by repository and branch identity. The census retains the 7000-character indexed-skill budget and reports local cards separately while including their session cost. Main passed the complete suite in the primary checkout with the live overlay: 1606 passed, 4 skipped (2026-10-13).
+
+PR #1374 (1084) remains open and held: gaze returned ESCALATE after the two-round limit was already exceeded. No new battery or merge ran. The decision and the raid review evidence are preserved in the dated journal and the bounded roar bundle #1379.
+
+Attribution integration 1004, memory dispatch 0913, and the second routing review 1071 are closed. Their records remain historical; any further project migrations belong to the dispatched child tickets. Inline-helper tickets 1085 and 1086 landed in #1373 and #1372.
+
+The historical local `dream/2026-10-07` branch carries a distinct commit from main and was pushed for preservation. It was neither accepted anew nor used to mark additional journal blobs processed. Historical foreign worktrees and local branches were retained; our merged execution and review worktrees were removed after preflight and ancestry checks. General branch deletion was rejected by automatic approval review, so no broad deletion ran.
 
 ## Next actions
-See [ROADMAP.md](ROADMAP.md) for the trains. Verification, raid annotations, agent profiles (0938), Zotero and reviewer teardown implementation are done. Remaining: separate attribution integration 1004, memory 0913 per-project migration, the second routing review round 1071. The model tournament is closed for cycle 2 — its follow-ups are ticketed (1046-1058: PDF report, blog, cycle 3, HW-v2 window, 262K rerun, scouting, live routing (done, 1052), drive2 v2, judge sensitivity; task-level routing and decorrelation axes were folded into 1052/1065). Claude adapter 0887 is active: the plugin is the single hook source; PR1211 merged the registration fix and its typed runtime-masked attribution is preserved. Portable Gaze simplification 1027 integrated in PR1189. Routing is now the orchestrator's choice from the `skills/route` grid (1052); retired 0980 is historical, and tournament evidence does not choose a subscription or provider.
-Ready tickets 2026-10-11: 1045, 1077, 1080, 1084, 1085, 1086 — the last three move inline SKILL.md shell into tested scripts (roar close/cleanup, molt ticket close, raid reroll parser).
+
+Resolve the held #1374 disposition before attempting its merge. Continue the ready tickets from `erg ready tickets/`; 1084 needs that disposition, and 1080 addresses the separately tracked adherence gap. Publication correction 1093 is deferred; no publication was performed. Defect backfill for #1377/#1378 appended no labels because historical reviewed coordinates were not established (69 unresolved records per invocation).
 
 ## Author actions
 - Install the ILaaS consortium key in `~/.config/keys/ilaas.env`, then configure `models.json` (0977).
