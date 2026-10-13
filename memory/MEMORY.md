@@ -26,12 +26,5 @@ v8 repository memory. Pilot: [pilot.md](../docs/memory-v8/pilot.md). Provenance:
 - [Second dream](dreams/2026-10-07-second-dream.md) — accepted.
 - [Third dream](dreams/2026-10-13-third-dream.md) — under review.
 
-## Reference notes
-
-- [Zotero library](reference_zotero.md)
-- [Subagent levers](feedback_subagent_model_effort_levers.md)
-- [git in a worktree](reference_git_in_a_worktree_session.md)
-- [Branch cleanup](reference_branch_cleanup_incidents.md)
-
 Search the journal for older or unprocessed experiences. The legacy index
-stays in Git history; every linked path is still linked above.
+stays in Git history; each legacy reference note is linked from its topic.

@@ -228,9 +228,14 @@ Pruning (index):
 - The first dream's line was dropped, as that dream itself suggested once a
   successor was accepted. It stays linked from the governance topic.
 - Topic hooks were shortened to fit the 2100-character hook budget.
+- The "Reference notes" section was removed. Each of its four lines
+  duplicated a topic line, and the worktree note's line sent readers to
+  partly stale advice. Each note stays linked from its topic. The section
+  existed only to satisfy a test pin, which the author directed be deleted
+  (2026-10-13) in a separate PR, #1383, on which this branch is stacked.
 
-No journal entry was rewritten, moved or deleted. No rule, AGENTS.md, skill,
-runbook, test or root note was edited.
+No journal entry was rewritten, moved or deleted. This dream edited no rule,
+AGENTS.md, skill, runbook, test or root note; the test change is #1383's.
 
 ### Coherence
 
@@ -335,7 +340,7 @@ Corrections re-examined against their sources:
   exclusion. Padme was not re-read today, so the topic attributes the padme
   state to the 2026-10-09 entry.
 - Links: every relative link in the index, the topics and this report resolves
-  (checked by script). The index is 37 lines and 1675 characters, under the
+  (checked by script). The index is 30 lines and 1436 characters, under the
   100-line limit and the 2100-character hook budget. The memory tests passed:
   20 across `test_memory_v8_pilot.py`, `test_resident_census.py` and
   `test_on_start_memory_injection.py`, run through the project's uv
