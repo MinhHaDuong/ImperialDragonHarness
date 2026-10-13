@@ -1,6 +1,6 @@
 # Concurrent sessions on one checkout
 
-Scope: episodes of 2026-10-02 to 2026-10-06 in which two or more sessions,
+Scope: episodes of 2026-10-02 to 2026-10-13 in which two or more sessions,
 or a session and its subagent, acted on the same primary checkout of this
 repository or on the same live user files. Each fact is dated and sourced
 below; the applicable rules are `rules/git.md` (branch discipline, no stash,
@@ -49,6 +49,34 @@ edit reached running sessions, one of which corrected its open PR #1223
 against the new text. No work was lost; the split of the two sessions' work
 went to the author.
 
+Refresh, 2026-10-08 to 2026-10-13. Parallel sessions with no shared channel
+used git as the shared surface. On the tournament publication day, a Codex
+session ran a late arm while a Claude session wrote the reports; the author
+relayed messages and set an ownership split by file, and a fix request that
+crossed the split needed separate authorisation (PR #1253). On padme, two
+sessions shared the arena checkout: one created and switched to its branch,
+and the other session's next commit landed on it. The commit was recovered by
+cherry-pick into a separate worktree. Cross-session messages to a bypass-mode
+session were held for approval, and one expired undelivered, until the author
+set `crossSessionInbound: "accept"` on doudou (2026-10-12). An abandoned agent
+worktree still held PR #1300's branch, so `erg-pr-merge` refused to run from
+another branch and the PR went through the forge's auto-merge (2026-10-09).
+The PR #1374 roar preserved a branch held in another session's locked
+worktree because ownership was not established (2026-10-13).
+
+A primary checkout that differs from a clean tree changed test results twice.
+On 2026-10-12, untracked private skill symlinks in the primary checkout pushed
+the skills census over budget, while the same commit passed in a worktree and
+in CI (fixed by 1091, which budgets tracked cards only). On 2026-10-13 the
+primary checkout was moved to a test commit and then restored, with a recorded
+post-restore check. The same class appeared on 2026-09-29: hermetic tests that
+faked `HOME` but ran from the checkout were red there and green elsewhere.
+
+Cross-repo base. On 2026-10-12, a session based in another repository worked
+in this harness by absolute paths after `EnterWorktree` refused the path.
+Forked `/gaze` runs then resolved PR numbers against the base repository and
+returned "PR not found".
+
 ## Exceptions and contrasts
 
 The read-only reviewer episode is not a counter-example to the Delegation
@@ -76,5 +104,13 @@ involve a direct-push refusal, a symlinked instruction file, or a missing
 - [Reviewer switched the primary checkout's branch](../journal/2026/2026-10-04-review-subagent-switched-primary-checkout-branch.md)
 - [0887 live reinstall regression](../journal/2026/2026-10-05-0887-activation-live-reinstall-regression.md)
 - [Two sessions, one set of routing remarks](../journal/2026/2026-10-06-two-sessions-one-set-of-routing-remarks.md)
+- [Tournament publication day](../journal/2026/2026-10-08-tournament-publication-wrapup.md) and [PR 1253 review delay](../journal/2026/2026-10-08-haiku-review-delay.md)
+- [PR 1300 branch held by another worktree](../journal/2026/2026-10-09-pr1300-branch-held-direct-merge.md)
+- [Arena 1053 shared checkout](../journal/2026/2026-10-12-t1053-close-shared-arena-checkout.md) and [first half](../journal/2026/2026-10-12-t1053-arena-git-and-scoped-vram-wait.md)
+- [Cross-repo session gaze forks](../journal/2026/2026-10-12-cross-repo-session-gaze-forks.md)
+- [Raid 1084/1085/1086, overlay census](../journal/2026/2026-10-12-raid-1084-1086-detached-gaze-occupancy.md)
+- [Raid 1091/1092](../journal/2026/2026-10-13-raid-1091-1092-and-gaze-1374.md)
+- [PR 1374 merge and roar](../journal/2026/2026-10-13-pr1374-author-scope-revision-and-merge.md)
+- [2026-09-29 relocation lessons import](../journal/2026/2026-10-09-import-2026-09-29-relocation-lessons.md)
 - Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
   revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).

@@ -46,6 +46,24 @@ records procedural fixture results only, not field benefit
 dream ([2026-10-07](../dreams/2026-10-07-second-dream.md)) added the
 operational topics indexed beside this one.
 
+Refresh, 2026-10-08 to 2026-10-13. On 2026-10-09, nine legacy native notes
+from the 2026-09-29 relocation session were imported as one journal entry with
+their blob ids, facts restated and nothing promoted. Their content is
+consolidated under [hosts](host-environment.md),
+[concurrency](shared-checkout-concurrency.md) and
+[raids](raid-review-and-merge.md). The index's session-start
+hook budget (2100 characters, `tests/test_resident_census.py`) refused one
+added index line on 2026-10-10 (2175 characters), so that entry stayed
+unlinked from the index. Roar's capture moved to step 3, before the sweep, and
+step 11 now ends with a `/clear` verdict (ticket 1083, PR #1354). This followed
+a heuristic transcript survey on padme: about 20 of 64 roars ran above 256k
+context, about 22 of 59 sessions outside this repository kept working after
+roar, and none ran `/clear`. The author ruled out `/compact` before roar,
+because it drops the detail capture needs. The commissioned attribution
+backfill appended zero events in each run: 34 records unresolved on 2026-10-08,
+65 on 2026-10-12 and 69 on 2026-10-13. Historical reviewed-revision coordinates
+were missing, and no run inferred them.
+
 ## Sources and exceptions
 
 - [2026-10-01: memory v8 design and boundaries](../journal/2026/2026-10-01-memory-v8-design-and-boundaries.md) — design adoption.
@@ -57,6 +75,10 @@ operational topics indexed beside this one.
 - [Brood adoption](../journal/2026/2026-10-05-brood-adoption-pr1187.md) — author decision, PR #1187.
 - [Raid 926/912/919](../journal/2026/2026-10-05-raid-926-supersession-and-publication.md) — 0912/0919 superseded.
 - [0913 close path](../journal/2026/2026-10-06-0913-dispatch-close-path.md) — rollout workpackage closed.
+- [Legacy notes import](../journal/2026/2026-10-09-import-2026-09-29-relocation-lessons.md) — nine native notes, 2026-10-09.
+- [Index budget refusal](../journal/2026/2026-10-10-permissions-allow-all-and-idh-install-sync.md) — the unlinked entry.
+- [Roar /clear verdict survey](../journal/2026/2026-10-11-roar-clear-verdict-survey.md) — ticket 1083.
+- [Backfill counts](../journal/2026/2026-10-08-haiku55-arm-n-integration.md), [65](../journal/2026/2026-10-12-local-ci-wrap-up-inefficiency.md), [69](../journal/2026/2026-10-13-pr1374-author-scope-revision-and-merge.md).
 - [Legacy retirement record](../../docs/memory-v8/legacy-retirement.md) — removed execution paths and recovery.
 - [Retired legacy feedback: rules from consolidation](../feedback_rules_come_from_memory_consolidation.md) — historical evidence only; its advice to derive rules was superseded by v8 and the author's 2026-10-01 RETIRE LEGACY direction. Kept as history, never current authority.
 - Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
