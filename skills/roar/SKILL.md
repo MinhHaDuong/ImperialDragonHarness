@@ -372,8 +372,12 @@ worktree go once the branch is pushed and auto-merge is armed.
     comes from the explicit PR evidence, not its relationship to that tip.
 
     Immediately before local deletion it rechecks the OID and occupancy, then
-    uses ordinary `git branch -d`, with its upstream disabled for that command
-    so Git checks containment in HEAD as an additional conservative guard.
+    uses ordinary `git branch -d`, with its remote overridden for that command
+    to `idh-roar-head-check-<approved-OID>`. Before the override it verifies that
+    no configuration keys exist for that alias; a configured alias is a retained
+    finding and an unreadable config is could-not-look. The nonempty unconfigured
+    alias makes Git check containment in HEAD as an additional conservative guard,
+    avoiding the empty-remote crash for tracked branches in Git 2.53.
     A checkout behind integration may therefore retain an otherwise eligible
     target. This retains Git's merge and worktree refusal
     without editing persistent upstream config. These prechecks are not atomic

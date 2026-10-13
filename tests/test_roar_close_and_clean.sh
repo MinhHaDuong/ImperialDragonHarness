@@ -140,6 +140,27 @@ run "$SCRIPT" --phase after-exit --default-branch 'invalid:ref' --local-branch "
 _check_rc "invalid full default ref refuses fetch" 2 "$rc"
 _check_true "invalid default preserves target" has_local completed
 
+# A normal PR branch published with push -u must clean up without crashing.
+make_world "$T/tracked-merged" completed foreign; cd "$W"
+G push -qu origin completed
+L=$(local_target completed)
+run "$SCRIPT" --phase after-exit --local-branch "$L"
+_check_rc "merged push-u branch cleanup succeeds" 0 "$rc"
+_check_true "merged push-u local removed" bash -c '! git rev-parse --verify -q refs/heads/completed >/dev/null'
+_check_true "merged push-u foreign preserved" has_local foreign
+_check_lacks "merged push-u no crash" "$out" "Segmentation fault"
+
+# A chosen HEAD-check alias already configured (fetch only, no URL) is retained.
+make_world "$T/upstream-alias-collision" completed; cd "$W"
+G push -qu origin completed
+L=$(local_target completed)
+ALIAS="idh-roar-head-check-${L#*=}"
+G config "remote.$ALIAS.fetch" '+refs/heads/*:refs/remotes/alias/*'
+run "$SCRIPT" --phase after-exit --local-branch "$L"
+_check_rc "configured HEAD-check alias retained" 1 "$rc"
+_check_true "configured HEAD-check alias preserves target" has_local completed
+_check_says "configured alias retention reason" "$out" "HEAD-check alias configured"
+
 # Multi-PR task: repetition is explicit, never repository-wide discovery.
 make_world "$T/scope-multi" one two foreign; cd "$W"
 run "$SCRIPT" --phase after-exit --local-branch "$(local_target one)" --local-branch "$(local_target two)"
@@ -203,6 +224,38 @@ wrapped() {
     local wd="$1"; shift
     out=$(env -i PATH="$wd:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?
 }
+# Inspection errors checking the alias must not be read as "unconfigured".
+make_world "$T/upstream-alias-unreadable" completed; cd "$W"
+G push -qu origin completed
+L=$(local_target completed)
+mkdir -p "$T/upstream-alias-unreadable/wrap"
+cat > "$T/upstream-alias-unreadable/wrap/git" <<WRAP
+#!/usr/bin/env bash
+[ "\$1 \$2" = "config --get-regexp" ] && exit 128
+exec "$TOOLS/git" "\$@"
+WRAP
+chmod +x "$T/upstream-alias-unreadable/wrap/git"
+wrapped "$T/upstream-alias-unreadable/wrap" --phase after-exit --local-branch "$L"
+_check_rc "unreadable HEAD-check alias config fails closed" 2 "$rc"
+_check_true "unreadable HEAD-check alias preserves branch" has_local completed
+_check_lacks "unreadable HEAD-check alias no all-clear" "$out" "RESULT: clean"
+
+# Unexpected native failures are errors, not ordinary merge/worktree refusals.
+make_world "$T/native-delete-error" completed; cd "$W"
+L=$(local_target completed)
+mkdir -p "$T/native-delete-error/wrap"
+cat > "$T/native-delete-error/wrap/git" <<WRAP
+#!/usr/bin/env bash
+[[ " \$* " == *" branch -d "* ]] && exit 139
+exec "$TOOLS/git" "\$@"
+WRAP
+chmod +x "$T/native-delete-error/wrap/git"
+wrapped "$T/native-delete-error/wrap" --phase after-exit --local-branch "$L"
+_check_rc "unexpected native delete error fails closed" 2 "$rc"
+_check_says "unexpected native error reported accurately" "$out" "native deletion failed for completed (exit 139)"
+_check_lacks "unexpected native error not called refusal" "$out" "Git refused deletion"
+_check_lacks "unexpected native error does not assert preservation" "$out" "kept"
+
 # Drift after ancestry must be refused before deleting, preserving config/reflog.
 make_world "$T/scope-race" completed; cd "$W"
 L=$(local_target completed)
@@ -246,6 +299,7 @@ WRAP
 chmod +x "$T/scope-late-drift/wrap/git"
 wrapped "$T/scope-late-drift/wrap" --phase after-exit --local-branch "$L"
 _check_rc "late unmerged tip tracking itself refused" 1 "$rc"
+_check_lacks "late unmerged tip native refusal without crash" "$out" "Segmentation fault"
 _check_true "late unmerged tip survives" bash -c '[ "$(git rev-parse refs/heads/completed)" = "$1" ]' _ "$B"
 _check_true "persistent upstream unchanged" bash -c '[ "$(git config branch.completed.merge)" = refs/heads/completed ]'
 

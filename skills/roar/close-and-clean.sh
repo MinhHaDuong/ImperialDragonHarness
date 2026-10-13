@@ -286,7 +286,7 @@ cleanup() {
 }
 
 cleanup_side() { # <local|remote> <explicit targets...>
-    local side="$1"; shift
+    local side="$1" head_check_remote; shift
     for target in "$@"; do
         b="${target%%=*}"; oid="${target#*=}"
         if [ "$b" = "$DEFAULT" ]; then
@@ -324,11 +324,24 @@ cleanup_side() { # <local|remote> <explicit targets...>
             # and use Git's conservative HEAD merge check. Config is unchanged.
             # The OID precheck is not atomic with branch -d: ordinary Git
             # semantics remain a backstop, not a universal concurrency promise.
-            if git -c "branch.$b.remote=" branch -d -- "$b" >/dev/null 2>&1; then
-                deleted="$deleted $b"
-            else
-                note "SWEEP: FAILED local $b — Git refused deletion; kept"; bump 1
-            fi
+            # A nonempty unconfigured remote avoids the empty-remote crash in
+            # Git 2.53 for branches with an upstream. Inspect every alias key,
+            # not merely a URL; never print config values (they may be private).
+            head_check_remote="idh-roar-head-check-$oid"
+            rc=0
+            git config --get-regexp "^remote\.$head_check_remote\." >/dev/null 2>&1 || rc=$?
+            case "$rc" in
+                1) ;;
+                0) note "SWEEP: RETAINED local $b (HEAD-check alias configured)"; bump 1; continue ;;
+                *) note "SWEEP: COULD-NOT-LOOK cannot inspect HEAD-check alias for $b"; bump 2; continue ;;
+            esac
+            rc=0
+            git -c "branch.$b.remote=$head_check_remote" branch -d -- "$b" >/dev/null 2>&1 || rc=$?
+            case "$rc" in
+                0) deleted="$deleted $b" ;;
+                1) note "SWEEP: FAILED local $b — Git refused deletion; kept"; bump 1 ;;
+                *) note "SWEEP: COULD-NOT-LOOK native deletion failed for $b (exit $rc)"; bump 2 ;;
+            esac
         else
             if git push --force-with-lease="refs/heads/$b:$oid" origin ":refs/heads/$b" >/dev/null 2>&1; then
                 rdeleted="$rdeleted $b"
