@@ -124,7 +124,6 @@ belong in the external keystore and are resolved by task-specific tools.
 | Command | Description |
 |---------|-------------|
 | `/aap-annonce` | Process a call-for-proposals announcement (AAP, appel à projets): file it, calendar deadlines, assess fit, propose three entry angles. |
-| `/arena` | Replay the model tournament bench: declare arms, run, judge, feed the route grid. |
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
 | `/biblio-saturation` | Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness. |
 | `/brood` | Turn accepted Dream findings into project improvements and scoped harness nominations, on explicit request. |

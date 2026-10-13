@@ -1,5 +1,5 @@
 {
-  "_comment": "Cumulative arena identities; preliminary 0188 excluded. Model failures score 0/30 with consumed time/cost retained. Infrastructure failures and incomplete panels stay pending. Numeric fields are refreshed from the arena directory by $IDH_ROOT/scripts/tournament-analysis.py --grid (earlier arms: docs/2026-10-06-tournament-corrected-summary.json; arm n, Haiku 5.5: docs/tournament-graphs/haiku55-results.csv). `family` is the model lineage, independent of provider or door. Local electricity converted at 1.08 USD/EUR; hosted API USD. Per-arm coverage and role notes: grid-coverage.json, keyed by arm.",
+  "_comment": "Cumulative arena identities; preliminary 0188 excluded. Model failures score 0/30 with consumed time/cost retained. Infrastructure failures and incomplete panels stay pending. Numeric fields are refreshed from the arena directory by $ARENA_ROOT/scripts/tournament-analysis.py --grid (earlier arms: arena:docs/2026-10-06-tournament-corrected-summary.json; arm n, Haiku 5.5: arena:docs/tournament-graphs/haiku55-results.csv). `family` is the model lineage, independent of provider or door. Local electricity converted at 1.08 USD/EUR; hosted API USD. Per-arm coverage and role notes: grid-coverage.json, keyed by arm.",
   "updated": "2026-10-06T17:54:10.941255+00:00",
   "grid": [
     {

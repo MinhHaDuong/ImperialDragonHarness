@@ -1,5 +1,5 @@
 {
-  "_comment": "Arena coverage detail for skills/route/grid.json, keyed by arm; not read at choice time. coverage = completion counts, failures, pending, spread statistics from $IDH_ROOT/scripts/tournament-analysis.py --grid (rewritten with the grid). role = hand-written evidence note per arm. family repeats the grid row's so the files join on arm.",
+  "_comment": "Arena coverage detail for skills/route/grid.json, keyed by arm; not read at choice time. coverage = completion counts, failures, pending, spread statistics from $ARENA_ROOT/scripts/tournament-analysis.py --grid (rewritten with the grid). role = hand-written evidence note per arm. family repeats the grid row's so the files join on arm.",
   "arms": {
     "d": {
       "family": "Anthropic",
@@ -165,7 +165,7 @@
     },
     "n": {
       "family": "Anthropic",
-      "role": "Added 2026-10-08 from arena arm N: Anthropic native, Pi 1.1.0, effort medium set explicitly, scored by the same Gemini/Grok/MiniMax panel as the other arms, all attempts counted. Price multiplies by 5 above 100,000 prompt tokens, so it suits workers under that size. Per-ticket table: docs/tournament-graphs/haiku55-results.csv.",
+      "role": "Added 2026-10-08 from arena arm N: Anthropic native, Pi 1.1.0, effort medium set explicitly, scored by the same Gemini/Grok/MiniMax panel as the other arms, all attempts counted. Price multiplies by 5 above 100,000 prompt tokens, so it suits workers under that size. Per-ticket table: arena:docs/tournament-graphs/haiku55-results.csv.",
       "coverage": {
         "expected": 10,
         "evaluated": 10,

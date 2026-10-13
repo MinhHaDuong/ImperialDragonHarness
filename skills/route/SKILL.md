@@ -18,12 +18,16 @@ work.
 
 ## Update discipline
 
-- The grid changes ONLY from arena cycle data (skills/arena) or an explicit
+- The grid changes ONLY from cycle data from the independent arena repository or an explicit
   author-run test — never from vibes, provider marketing, or bench claims.
 - Mid-cycle: the grid may show a cycle's provisional numbers marked
   `provisional`; they are not routing-grade until the cycle closes.
 - After each cycle: refresh the grid AND `routes.json` (status, prices, caps,
   `last_verified`), in the same pass as the cycle verdict.
+
+Arena protocol, runner, analysis and reports live in the independent repository.
+See [the integration contract](../../docs/arena-integration.md) for locations,
+transferred tickets and the explicit grid refresh command.
 
 ## Performance grid
 
