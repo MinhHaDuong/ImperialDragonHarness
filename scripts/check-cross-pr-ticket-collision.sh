@@ -14,17 +14,19 @@
 # is invisible to it — the script therefore compares added IDs against the base
 # tip's tickets/ directly, in plain git. And sibling OPEN PRs, via the forge.
 #
-# Forge coupling is confined to two calls, each marked `# harness-extension-point`
-# (the isolation idiom used in skills/merge/erg-pr-merge): listing open PRs and
-# fetching a PR's changed files. Everything else is forge-agnostic git + text.
+# Forge coupling is confined to three calls, each marked `# harness-extension-point`
+# (the isolation idiom used in skills/merge/erg-pr-merge): resolving the source
+# repository, listing open PRs and fetching a PR's changed files. Everything else is forge-agnostic git + text.
 #
 # Environment (all optional; defaults suit GitHub Actions `pull_request`):
 #   BASE_REF        base ref to diff against          (default: origin/main)
-#   SELF_PR_NUMBER  this PR's number, excluded from the sibling scan
+#   SELF_PR_NUMBER  this PR's number (otherwise inferred from current branch)
 #
 # Exit 0: no collision (or no ticket files added — fast path, no forge calls).
 # Exit 2: the open-PR list could not be fetched (no gh auth/network/GitHub
-#         remote) — fails closed with one clear line.
+#         remote), or self identity cannot be established — fails closed.
+#         Inspection failure takes precedence over any base collision already
+#         reported, and suppresses renumber advice until self identity is known.
 # Exit 1: a ticket ID this PR adds is also added by an open PR. Message names the
 #         colliding PR(s) and suggests the next free ID.
 
@@ -95,9 +97,29 @@ done <<< "$OWN_PATHS"
 # harness-extension-point: GitHub CLI — swap this block for another forge's API.
 # Fail closed but legibly: without gh auth, network or a GitHub remote the
 # bare call dies under set -e with an opaque message; say what is missing.
-if ! SIBLINGS_JSON=$(gh pr list --state open --json number,headRefName 2>/dev/null); then # harness-extension-point
+if ! SIBLINGS_JSON=$(gh pr list --state open --json number,headRefName,headRepository 2>/dev/null); then # harness-extension-point
     echo "cross-pr-collision: cannot list open PRs (no gh auth/network/GitHub remote)" >&2
     exit 2
+fi
+
+# ── infer self only when the caller supplied no explicit override ────────────
+if [[ -z "$SELF_PR" ]]; then
+    CURRENT_BRANCH=$(git symbolic-ref --quiet --short HEAD || true)
+    # Resolve the local source repository, not the forge's default/base repo:
+    # forks may have identically named branches. Never exclude on name alone.
+    SOURCE_URL=$(git remote get-url origin 2>/dev/null || true)
+    # harness-extension-point: GitHub CLI — establish local origin's identity.
+    if [[ -z "$CURRENT_BRANCH" || -z "$SOURCE_URL" ]] || ! SOURCE_REPO=$(gh repo view "$SOURCE_URL" --json nameWithOwner --jq .nameWithOwner 2>/dev/null) || [[ -z "$SOURCE_REPO" ]]; then
+        echo "cross-pr-collision: cannot establish self repository/branch; set SELF_PR_NUMBER (no renumber recommendation)." >&2
+        exit 2
+    fi
+    SELF_MATCHES=$(jq -r --arg branch "$CURRENT_BRANCH" --arg repo "$SOURCE_REPO" '.[] | select(.headRefName == $branch and .headRepository.nameWithOwner == $repo) | .number' <<< "$SIBLINGS_JSON")
+    if [[ $(grep -c . <<< "$SELF_MATCHES" || true) -gt 1 ]]; then
+        echo "cross-pr-collision: ambiguous self PR for current repository/branch; set SELF_PR_NUMBER (no renumber recommendation)." >&2
+        exit 2
+    fi
+    # No source match means every listed PR is a genuine sibling.
+    SELF_PR="$SELF_MATCHES"
 fi
 
 while IFS=$'\t' read -r pr_number pr_branch; do

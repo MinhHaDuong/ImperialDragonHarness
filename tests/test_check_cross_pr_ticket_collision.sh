@@ -26,6 +26,10 @@
 #   (g) the PR RENAMES a base ticket (delete old slug + add new slug, same ID)
 #       -> exit 0; the old path on the base tip is the PR's own file, not a
 #       rival claimant.
+#   (h) unreadable open-PR list fails closed (exit 2).
+# Additional controls cover repository+branch self inference, no own open PR,
+# genuine same-ID siblings, foreign same-name branches, ambiguous/missing
+# source identity and explicit override bypass.
 set -euo pipefail
 # Hermetic children (ticket 0875): the checker is exercised as
 # `bash "$SCRIPT"` against a stubbed gh, and such a child inherits BASH_ENV —
@@ -55,7 +59,10 @@ echo "$*" >> "${STUB_GH_LOG:-/dev/null}"
 case "$1 $2" in
   "pr list")
     [[ -n "${STUB_PR_LIST_FAIL:-}" ]] && { echo "gh: not logged in" >&2; exit 4; }
-    echo "$STUB_PR_LIST" ;;
+    jq 'map(. + {headRepository: (.headRepository // {nameWithOwner: "local/source"})})' <<< "$STUB_PR_LIST" ;;
+  "repo view")
+    [[ -n "${STUB_SOURCE_FAIL:-}" ]] && exit 1
+    echo local/source ;;
   "api "*|"api")
     # Emulate `gh api ... --jq '...'`: emit the already-filtered filenames the
     # script's downstream pipe expects (one per line).
@@ -131,6 +138,7 @@ run_check() {  # env STUB_PR_LIST, STUB_SIBLING_FILES, SELF_PR_NUMBER, STUB_GH_L
       SELF_PR_NUMBER="${SELF_PR_NUMBER:-}" \
       STUB_PR_LIST="${STUB_PR_LIST:-[]}" \
       STUB_SIBLING_FILES="${STUB_SIBLING_FILES:-}" \
+      STUB_SOURCE_FAIL="${STUB_SOURCE_FAIL:-}" \
       STUB_API_FAIL="${STUB_API_FAIL:-}" \
       STUB_PR_LIST_FAIL="${STUB_PR_LIST_FAIL:-}" \
       STUB_GH_LOG="${STUB_GH_LOG:-/dev/null}" \
@@ -300,6 +308,82 @@ if [[ "$rc" -eq 2 ]] && echo "$out" | grep -qF 'cross-pr-collision: cannot list 
 else
     echo "FAIL: gh failure should exit 2 with the clear line (got rc=$rc)"; echo "$out"; fail=1
 fi
+
+# Infer the open PR locally: never fetch its own files.
+seed_repo inferred 0300
+GHLOG="$WORK/inferred.log"; : > "$GHLOG"
+rc=0
+out=$(STUB_GH_LOG="$GHLOG" \
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"}]' \
+      STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 0 ]] && ! grep -q 'api repos' "$GHLOG"; then
+    echo "PASS: inferred self PR excluded without fetching its files"
+else
+    echo "FAIL: own inferred PR was scanned (rc=$rc)"; echo "$out"; fail=1
+fi
+
+# Inferred own PR is excluded while a genuine sibling collision fails.
+rc=0
+out=$(\
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"},{"number":77,"headRefName":"sibling"}]' \
+      STUB_SIBLING_FILES='tickets/0300-sibling.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 1 ]] && grep -q '#77' <<< "$out" && ! grep -q '#99' <<< "$out"; then
+    echo "PASS: inferred self excluded and genuine sibling collision fails"
+else
+    echo "FAIL: inferred self/sibling collision incorrect (rc=$rc)"; echo "$out"; fail=1
+fi
+
+# No own open PR: scan every sibling.
+rc=0
+out=$(STUB_PR_LIST='[{"number":77,"headRefName":"sibling"}]' \
+      STUB_SIBLING_FILES='tickets/0300-sibling.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 1 ]] && grep -q '#77' <<< "$out"; then
+    echo "PASS: branch without an open PR scans the full sibling list"
+else
+    echo "FAIL: branch without PR skipped sibling (rc=$rc)"; echo "$out"; fail=1
+fi
+
+# Ambiguous self claims are uncertainty, never a renumber recommendation.
+rc=0
+out=$(\
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"},{"number":88,"headRefName":"pr-inferred"}]' \
+      STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 2 ]] && ! grep -q 'Renumber your' <<< "$out"; then
+    echo "PASS: ambiguous self fails closed without renumber advice"
+else echo "FAIL: ambiguous self produced unsafe verdict (rc=$rc)"; echo "$out"; fail=1; fi
+
+# A foreign fork's same-named branch is a sibling, never self.
+rc=0
+out=$(\
+      STUB_PR_LIST='[{"number":55,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"foreign/fork"}}]' \
+      STUB_SIBLING_FILES='tickets/0300-foreign.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 1 ]] && grep -q '#55' <<< "$out"; then
+    echo "PASS: foreign fork with same branch name remains a collision"
+else echo "FAIL: foreign same-name PR excluded (rc=$rc)"; echo "$out"; fail=1; fi
+
+# Same-named own and foreign branches: exclude only the proven own source.
+rc=0
+out=$(\
+      STUB_PR_LIST='[{"number":55,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"foreign/fork"}},{"number":99,"headRefName":"pr-inferred"}]' \
+      STUB_SIBLING_FILES='tickets/0300-foreign.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 1 ]] && grep -q '#55' <<< "$out" && ! grep -q '#99' <<< "$out"; then
+    echo "PASS: same-name own source excluded while foreign sibling collides"
+else echo "FAIL: same-name source verification incorrect (rc=$rc)"; echo "$out"; fail=1; fi
+
+# Unavailable source identity must not turn a matching name into self.
+rc=0
+out=$(STUB_SOURCE_FAIL=1 STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"}]' \
+      STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 2 ]] && ! grep -q 'Renumber your' <<< "$out"; then
+    echo "PASS: unavailable source identity fails closed without renumber advice"
+else echo "FAIL: unavailable source identity unsafe (rc=$rc)"; echo "$out"; fail=1; fi
+
+# Explicit override bypasses repository/branch inference.
+GHLOG="$WORK/override.log"; : > "$GHLOG"
+out=$(SELF_PR_NUMBER=99 STUB_SOURCE_FAIL=1 STUB_GH_LOG="$GHLOG" \
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"}]' run_check 2>&1) || fail=1
+if grep -q 'repo view' "$GHLOG"; then echo "FAIL: override triggered lookup"; fail=1
+else echo "PASS: explicit override bypasses inference"; fi
 
 if (( fail )); then exit 1; fi
 echo "PASS: cross-PR ticket-ID collision gate — collisions fail with a named PR, distinct IDs pass, no-ticket PRs skip the forge call, fetch failures warn, base-tip claims are caught, renames pass"
