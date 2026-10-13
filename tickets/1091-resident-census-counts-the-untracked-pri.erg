@@ -7,6 +7,7 @@ Author: Minh Ha-Duong
 2026-10-12T16:57Z Minh Ha-Duong created
 2026-10-13T09:38Z Minh-Ha-Duong note raid Imagine: EXECUTE; keep skills budget at 7000 for tracked content, measure local overlays separately with inventory and full session cost; Blind-Spot requires Git tracking semantics including tracked directory symlinks; exit criteria unchanged.
 2026-10-13T09:39Z Minh-Ha-Duong note raid feasibility WARN: tracked_tree fixture has no Git metadata; initialize/index a temporary fixture for classification controls and retain a separate unknown-metadata control. Three planned paths plus shared wave annotations remain below the 15-file breaker; no shared registry or new dependency.
+2026-10-13T10:18Z coder note Actual primary and clean worktree full make check both PASS at 7e1f77b1928ee49de97990940fd4b24b3df49cc7 (1606 passed, 4 skipped); actual primary retained three live private links, then housekeeping-20261012 at 1e8ccb3874f2f7bd0c12be05ae3d35f1cc656b53 was restored and verified clean. All four exit criteria evidenced; ticket-only completion update preserves tested code and tests.
 
 --- body ---
 ## Context
@@ -36,10 +37,10 @@ tracked harness content, and that is what the overlay breaks.
 
 ## Exit criteria
 
-- [ ] `make check` passes both in the primary checkout and in a clean worktree on the same commit
-- [ ] The census states which skills it counted and whether private overlay links were present, so a real all-clear is distinguishable from a census that never saw the overlay (the docstring already treats a consumer project's own CLAUDE.md as extra)
-- [ ] The budget decision is argued here, not made silently: trim the private descriptions, raise the skills budget with the +832 stated, or measure the overlay as a separate channel the tracked-content gate does not fail on
-- [ ] Positive control: planting the three links in a worktree reproduces the failure the fix claims to handle, and their absence leaves the census green
+- [x] `make check` passes both in the primary checkout and in a clean worktree on the same commit
+- [x] The census states which skills it counted and whether private overlay links were present, so a real all-clear is distinguishable from a census that never saw the overlay (the docstring already treats a consumer project's own CLAUDE.md as extra)
+- [x] The budget decision is argued here, not made silently: trim the private descriptions, raise the skills budget with the +832 stated, or measure the overlay as a separate channel the tracked-content gate does not fail on
+- [x] Positive control: planting the three links in a worktree reproduces the failure the fix claims to handle, and their absence leaves the census green
 
 ## Raid plan — 2026-10-13
 
@@ -76,3 +77,39 @@ First census regression run:3failed,5passed. Fixed controls:8passed; check-fast:
 clean full gate had1605passed,4skipped and one sandbox environment failure:
 `test_index_injected_for_a_worktree_of_this_repository` requires write access
 to Git worktree metadata. Rerun the full gate with that metadata access before PR.
+
+
+## Completed criteria — actual primary verification, 2026-10-13
+
+This evidence supersedes the earlier candidate's pending-primary statement;
+the historical code-commit measurements and initial environment failure above
+remain preserved.
+
+1. At `7e1f77b1928ee49de97990940fd4b24b3df49cc7`, full `make check`
+   passed both in the actual primary checkout with its three live private
+   links (1606 passed, 4 skipped, 76.91 seconds) and in the clean owned
+   worktree (1606 passed, 4 skipped, 104.06 seconds). The primary was checked
+   for cleanliness and foreign processes, temporarily detached at that SHA,
+   then restored to `housekeeping-20261012` at
+   `1e8ccb3874f2f7bd0c12be05ae3d35f1cc656b53` and verified clean.
+   Evidence: `/tmp/t1091-actual-primary-manifest.log`,
+   `/tmp/t1091-actual-primary-full.log`, and
+   `/tmp/t1091-full-clean-final.log`.
+2. Both report modes enumerate the counted skill paths and state local-link
+   presence or unknown tracking. The actual primary's observed inventory
+   reports 6952 tracked + 832 local chars and 43994 session chars, matching
+   the contained overlay control; clean session cost is 43162 chars.
+   Evidence: `/tmp/t1091-primary-observed-using-new-census.log` and the
+   eight passing `tests/test_resident_census.py` controls.
+3. The argued decision remains the Raid plan's 7000-char tracked cap, with
+   supplemental local cost included in every session total. No cap changed.
+4. The old census at wave base
+   `30a46f85995d8064762570abadf519deade1d1a9` counts the planted cards as
+   7784 chars versus 6952 without them, reproducing the old 7000-cap failure.
+   Fixed same-commit clean, contained-overlay, and actual-primary full gates
+   pass while retaining the measured 832-char cost.
+   Evidence: `/tmp/t1091-old-overlay-control.log` and
+   `/tmp/t1091-full-overlay-final.log`.
+
+The final completion update changes this ticket only; census code and tests
+remain identical to the same-commit actual-primary and clean-worktree gates.
