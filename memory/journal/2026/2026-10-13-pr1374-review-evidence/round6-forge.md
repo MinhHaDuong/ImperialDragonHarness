@@ -32,4 +32,3 @@ Actual CLI metadata reports claude-sonnet-5-5, medium launch, session1f43ae63-d6
 - red team: comment (its fetch finding explicitly requires correction before merge)
 
 Synthesis: **request-changes**. Dissent is retained: Scope and Doc propagation approve; Correctness blocks on metadata failure, Red team found the fetch rewrite. Parent has authorised the cheap fixes under the requested revision, with regression review to follow. The historical gate cap remains unchanged.
-

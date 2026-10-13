@@ -244,4 +244,3 @@ Le balayage de toutes les branches locales et distantes de cette PR est donc hor
 Révision demandée : remplacer l’énumération générale par des cibles explicitement transmises pour les PR terminées ; préserver toutes les branches/worktrees étrangers, même fusionnés ; vérifier les préconditions de chaque cible ; supprimer le protocole de suppression puis restauration et son parsing de sortie humaine. Adapter les appels dans Roar, les critères du ticket et les tests à ce contrat. Le nettoyage général reste dans Lair/Molt.
 
 Cette instruction autorise la révision, pas une approbation forcée ni une remise à zéro silencieuse de l’historique des gates. Les anciens verdicts et reproductions restent conservés.
-

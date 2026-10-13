@@ -47,4 +47,3 @@ Adherence make lint: 182 passed; four retained Python branch-cleanup ratchets pa
 - regression (correctness + doc propagation): request-changes
 
 dissent: red team/regression block on late checkout; consistency/scope report no new implementation blocker. Synthesis: request-changes on reproduced regression. Parent anchor unchanged; source status clean, branch unchanged. No edits, commits, pushes, real branch/worktree deletes or other-worktree access.
-

@@ -34,4 +34,3 @@ Panel: proportional, 4 of 5 seats (Scope omitted). Width: 6 files, over the smal
 - scope: not run (proportional panel)
 
 Synthesis verdict: request-changes on item 1 alone; items 2-4 recommended in the same round. dissent: none among the four reported seats; every seat is same-family, so no cross-family check was done.
-

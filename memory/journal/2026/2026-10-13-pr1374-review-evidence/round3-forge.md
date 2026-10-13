@@ -37,4 +37,3 @@ All FIVE ticket 1084 criteria remain `[ ]`. Criterion 5 explicitly requires post
 - regression (correctness + doc propagation): comment
 
 Synthesis verdict: request-changes. Review round 3 is a panel-history count, NOT a third verify-gate attempt: this GAZE invocation has not yet gated.
-

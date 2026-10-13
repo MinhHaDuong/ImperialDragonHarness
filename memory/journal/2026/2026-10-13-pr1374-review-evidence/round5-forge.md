@@ -36,4 +36,3 @@ Actual current-tip `bash tests/test_roar_close_and_clean.sh`: rc0, **82 PASS ass
 - regression (correctness + doc propagation): request-changes
 
 dissent: scope finds contract-preserving wiring and explicit future measurement discharge; the other seats block local preservation. Synthesis: request-changes. Panel-history round5 is distinct from gate-attempt count. No repository edits/commits/pushes/branches/worktree deletion or other-worktree access occurred; all destructive experiments used our own /tmp repos. Branch was not rebased; current-base prerequisite remains caller responsibility.
-

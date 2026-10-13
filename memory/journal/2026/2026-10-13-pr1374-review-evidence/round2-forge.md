@@ -33,4 +33,3 @@ Round-1 items all verified fixed by running them: step 10 ROAR_DIR preamble, tip
 - scope: not run
 
 Synthesis verdict: comment. Item 1 is recommended before merge but is a narrow race, not a regression from the inherited recipe. dissent: red team requests changes on item 1; the other three seats do not. All same-family, no cross-family check done.
-

@@ -28,4 +28,3 @@ Source runtime helper/behavioural tests passed full1603/4skip, shell117,fast960,
 - redteam: comment (functional failure requires correction before completion)
 
 Synthesis: **request-changes** for normal upstream-tracking cleanup functionality. Safe retention is acknowledged; the PR still needs to perform the cleanup it promises. Parent has authorised that final bounded fix under the revision request. Historical gate cap remains unchanged.
-

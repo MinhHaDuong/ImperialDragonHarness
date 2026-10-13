@@ -31,4 +31,3 @@ Actual CLI context `1f43ae63-d61c-4df3-b223-fa6f4f41599b`, canonical modelUsage 
 - regression (Correctness/Consistency/Scope/Doc): approve
 
 Synthesis: **approve — code review only**. Historical gate comments and their cap are retained. PR has not been merged or armed for automatic merge. The future turns-per-roar measurement remains with1090, not claimed performed.
-
