@@ -50,3 +50,29 @@ Actions: classify cards from the Git index, including tracked directory symlinks
 First test: clean tracked tree plus the three local overlay links; preserve the clean tracked subtotal, display all links and +832 chars, include supplemental cost in the session total. Positive control demonstrates that counting the combined cards under the old cap reproduces the original overflow. Cover absence, tracked links and unavailable tracking.
 
 Files: scripts/resident_census.py; tests/test_resident_census.py; this ticket. Reuse tests/tracked_tree.py and stdlib tools; no new copying layer or dependency. Exit criteria unchanged.
+
+
+## Execution evidence — 2026-10-13
+
+Kept the skills cap at 7000. The Git index classifies file cards and tracked
+directory symlinks; untracked links and ordinary directories enter supplemental
+`skills-local`. Both report modes enumerate every observed skill and state local
+link presence or unknown tracking. Session totals include the supplement;
+metadata-free roots retain all observed cost in the budgeted skills channel.
+
+The old census from wave base `30a46f85995d8064762570abadf519deade1d1a9`
+charges the planted cards as 7784 vs 6952 clean, reproducing the old overflow.
+The real selected cards measure email275 + infrastructure275 + directory282 =832.
+Code commit `0de58dd4` preserves 6952 tracked +832 local, and session totals
+43162 clean /43994 with links. The contained checkout at that exact commit,
+`/tmp/t1091-primary-overlay-check`, carries the three exact live symlink targets
+and passed full `make check` (1606passed,4skipped). The actual primary checkout
+was not modified or run at the new commit; its literal criterion remains for
+post-merge verification. This contained same-code comparison is the authorized
+pre-merge proxy, not a claim that the primary already runs the new census.
+
+First census regression run:3failed,5passed. Fixed controls:8passed; check-fast:
+964passed; declared adherence (`Makefile:31`, `make lint`):185passed. The first
+clean full gate had1605passed,4skipped and one sandbox environment failure:
+`test_index_injected_for_a_worktree_of_this_repository` requires write access
+to Git worktree metadata. Rerun the full gate with that metadata access before PR.

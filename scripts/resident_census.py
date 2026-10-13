@@ -28,6 +28,12 @@ is paid on top, per project. ``--project DIR`` measures it (0971); it is not a
 harness channel, because the harness cannot gate a project, so the budget is
 surfaced by the SessionStart coherence prompt rather than tested here.
 
+Local skill cards absent from the Git index are supplemental ``skills-local``
+cost, included in every session total. The tracked ``skills`` budget stays a
+harness contract; a tracked directory symlink also owns its card. If tracking
+is unavailable, all observed cards conservatively remain in ``skills`` and
+the inventory reports unknown rather than claiming an overlay-free session.
+
 **Tokens here are derived, not measured.** This module counts characters,
 which is exact. ``/context`` reports tokens per category, which is the only
 token measurement available without the API's ``count_tokens``; dividing one
@@ -42,6 +48,7 @@ disagrees; the character counts are the contract.
 
 import argparse
 import re
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -69,6 +76,8 @@ class Entry:
     channel: str
     path: str
     chars: int
+    tracking: str | None = None
+    linked: bool = False
 
     @property
     def tokens(self) -> int:
@@ -183,11 +192,46 @@ def _name_and_description(path: Path) -> int:
     return len(str(fm.get("name", ""))) + len(str(fm.get("description", "")))
 
 
+def _skill_index(root: Path) -> dict[str, str] | None:
+    """Git index modes, or unknown if this root's tracking cannot be inspected."""
+    try:
+        top = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+            capture_output=True, check=True, timeout=5,
+        ).stdout.decode().strip()
+        if Path(top).resolve() != root.resolve():
+            return None  # an exported tree nested inside a different repository
+        listed = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "--stage", "-z", "--", "skills"],
+            capture_output=True, check=True, timeout=5,
+        ).stdout.decode()
+        return {
+            path: metadata.split()[0]
+            for record in listed.split("\0") if record
+            for metadata, path in [record.split("\t", 1)]
+        }
+    except (OSError, subprocess.SubprocessError, UnicodeError, ValueError):
+        return None
+
+
 def skill_entries(root: Path) -> list[Entry]:
-    return [
-        Entry("skills", str(p.relative_to(root)), _name_and_description(p))
-        for p in sorted((root / "skills").glob("*/SKILL.md"))
-    ]
+    index = _skill_index(root)
+    out = []
+    for path in sorted((root / "skills").glob("*/SKILL.md")):
+        rel = str(path.relative_to(root))
+        if index is None:
+            tracking = "unknown"
+        else:
+            # A tracked directory symlink owns the card reached through it.
+            parent = str(path.parent.relative_to(root))
+            tracked = rel in index or index.get(parent) == "120000"
+            tracking = "tracked" if tracked else "untracked"
+        out.append(Entry(
+            "skills-local" if tracking == "untracked" else "skills",
+            rel, _name_and_description(path), tracking,
+            path.is_symlink() or path.parent.is_symlink(),
+        ))
+    return out
 
 
 def agent_entries(root: Path) -> list[Entry]:
@@ -262,8 +306,8 @@ def census(root: Path) -> list[Entry]:
 
 
 def channel_chars(entries: list[Entry]) -> dict[str, int]:
-    """Per-channel totals. ``memory`` is the largest index, not their sum."""
-    totals = {c: 0 for c in CHANNELS}
+    """Totals including supplemental local cards; memory is the largest index."""
+    totals = {c: 0 for c in (*CHANNELS, "skills-local")}
     for e in entries:
         if e.channel == "memory":
             totals["memory"] = max(totals["memory"], e.chars)
@@ -280,6 +324,15 @@ def session_chars(entries: list[Entry]) -> int:
 def _render(entries: list[Entry], detail: bool) -> str:
     lines = []
     totals = channel_chars(entries)
+    skills = [e for e in entries if e.tracking is not None]
+    unknown = any(e.tracking == "unknown" for e in skills) or not skills
+    links = "unknown" if unknown else (
+        "present" if any(e.tracking == "untracked" and e.linked for e in skills) else "absent"
+    )
+    lines.append(f"Local skill links: {links}. Tracking: {'unknown' if unknown else 'Git index'}.")
+    lines.append("Skill inventory (name + description; unknown tracking retains full budgeted cost):")
+    for e in skills:
+        lines.append(f"  {e.chars:7d} chars  {e.tracking}  {e.path}")
     if detail:
         for channel in CHANNELS:
             rows = sorted(
@@ -293,12 +346,12 @@ def _render(entries: list[Entry], detail: bool) -> str:
             for e in rows:
                 lines.append(f"  {e.chars:7d} chars  ~{e.tokens:6d} tok  {e.path}")
     lines.append("")
-    lines.append(f"{'channel':<10} {'chars':>8} {'~tokens':>9}")
-    for channel in CHANNELS:
+    lines.append(f"{'channel':<13} {'chars':>8} {'~tokens':>9}")
+    for channel in (*CHANNELS, "skills-local"):
         chars = totals[channel]
-        lines.append(f"{channel:<10} {chars:8d} {round(chars / CHARS_PER_TOKEN):9d}")
+        lines.append(f"{channel:<13} {chars:8d} {round(chars / CHARS_PER_TOKEN):9d}")
     total = session_chars(entries)
-    lines.append(f"{'TOTAL':<10} {total:8d} {round(total / CHARS_PER_TOKEN):9d}")
+    lines.append(f"{'TOTAL':<13} {total:8d} {round(total / CHARS_PER_TOKEN):9d}")
     lines.append("")
     lines.append(
         f"Tokens derived at {CHARS_PER_TOKEN} chars/token, not measured — see "
