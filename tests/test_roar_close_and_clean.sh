@@ -101,6 +101,45 @@ run "$SCRIPT" --phase after-exit --remote-branch "$R"
 _check_rc "target beyond fetch refspec cleaned from actual remote evidence" 0 "$rc"
 _check_true "custom-fetch foreign retained" has_remote foreign
 
+# A configured fetch mapping into a local head must never move foreign work.
+make_world "$T/custom-local-fetch" completed other; cd "$W"
+L=$(local_target completed)
+G checkout -q -b scratch; G commit -q --allow-empty -m foreign-unmerged
+FOREIGN_OID=$(G rev-parse refs/heads/scratch)
+G checkout -q main
+G config --replace-all remote.origin.fetch '+refs/heads/other:refs/heads/scratch'
+run "$SCRIPT" --phase after-exit --local-branch "$L"
+_check_rc "custom local refspec: explicit cleanup completes" 0 "$rc"
+_check_true "custom local refspec: unrelated unmerged local tip preserved" bash -c '[ "$(git rev-parse refs/heads/scratch)" = "$1" ]' _ "$FOREIGN_OID"
+_check_true "custom local refspec: explicit target removed" bash -c '! git rev-parse --verify -q refs/heads/completed >/dev/null'
+
+# Explicit integration fetch must also ignore opportunistic main->scratch mapping.
+make_world "$T/opportunistic-local-fetch" completed; cd "$W"
+L=$(local_target completed)
+G checkout -q -b scratch; G commit -q --allow-empty -m foreign-unmerged
+FOREIGN_OID=$(G rev-parse refs/heads/scratch)
+G checkout -q main
+G config --replace-all remote.origin.fetch '+refs/heads/main:refs/heads/scratch'
+run "$SCRIPT" --phase after-exit --local-branch "$L"
+_check_rc "opportunistic refmap: cleanup completes" 0 "$rc"
+_check_true "opportunistic refmap: foreign tip preserved" bash -c '[ "$(git rev-parse refs/heads/scratch)" = "$1" ]' _ "$FOREIGN_OID"
+_check_true "opportunistic refmap: explicit target removed" bash -c '! git rev-parse --verify -q refs/heads/completed >/dev/null'
+
+# A symbolic integration tracking ref must not redirect the fetch into local work.
+make_world "$T/symbolic-base" completed; cd "$W"
+L=$(local_target completed)
+G checkout -q -b scratch; G commit -q --allow-empty -m foreign-unmerged
+FOREIGN_OID=$(G rev-parse refs/heads/scratch)
+G checkout -q main
+G symbolic-ref refs/remotes/origin/main refs/heads/scratch
+run "$SCRIPT" --phase after-exit --local-branch "$L"
+_check_rc "symbolic integration destination refuses fetch" 2 "$rc"
+_check_true "symbolic integration destination preserves foreign tip" bash -c '[ "$(git rev-parse refs/heads/scratch)" = "$1" ]' _ "$FOREIGN_OID"
+_check_true "symbolic integration destination preserves target" has_local completed
+run "$SCRIPT" --phase after-exit --default-branch 'invalid:ref' --local-branch "$L"
+_check_rc "invalid full default ref refuses fetch" 2 "$rc"
+_check_true "invalid default preserves target" has_local completed
+
 # Multi-PR task: repetition is explicit, never repository-wide discovery.
 make_world "$T/scope-multi" one two foreign; cd "$W"
 run "$SCRIPT" --phase after-exit --local-branch "$(local_target one)" --local-branch "$(local_target two)"
@@ -114,7 +153,9 @@ G worktree add -q "$T/scope-protected/peer" occupied
 G branch fresh-tip
 L=$(local_target occupied); P=$(local_target occupied-prefix)
 run "$SCRIPT" --phase after-exit --local-branch "$L" --remote-branch "$(remote_target occupied)" --local-branch "$P" --local-branch "$(local_target main)" --local-branch "$(local_target fresh-tip)"
-_check_rc "protected targets retained" 0 "$rc"
+_check_rc "protected targets reported as findings" 1 "$rc"
+_check_says "occupied retention reason reported" "$out" "occupied worktree"
+_check_says "default retention reason reported" "$out" "default branch"
 _check_true "occupied branch preserved" has_local occupied
 _check_true "occupied remote preserved" has_remote occupied
 _check_true "whole-line occupancy permits prefix sibling cleanup" bash -c '! git rev-parse --verify -q refs/heads/occupied-prefix >/dev/null'
@@ -122,6 +163,8 @@ _check_true "default preserved when named" has_local main
 _check_true "explicit completed target at integration tip eligible" bash -c '! git rev-parse --verify -q refs/heads/fresh-tip >/dev/null'
 G checkout -q fresh
 run "$SCRIPT" --phase after-exit --local-branch "$(local_target fresh)" --remote-branch "$(remote_target fresh)"
+_check_rc "current target retained as finding" 1 "$rc"
+_check_says "current retention reason reported" "$out" "current branch"
 _check_true "current target local preserved" has_local fresh
 _check_true "current target remote preserved" has_remote fresh
 
@@ -324,6 +367,26 @@ echo stray > stray.txt
 run "$SCRIPT" --phase preflight
 _check_rc "preflight phase, dirty worktree: rc 1" 1 "$rc"
 _check_says "…reports DIRTY" "$out" "PREFLIGHT: DIRTY"
+# Failures reading either/both metadata paths must not skip the helper as
+# empty==empty; dirty state and scratch must remain without an all-clear.
+for metadata in both --git-dir --git-common-dir; do
+    mkdir -p .panel; echo review > .panel/report.txt
+    mkdir -p "$T/c19/wrap-$metadata"
+    cat > "$T/c19/wrap-$metadata/git" <<WRAP
+#!/usr/bin/env bash
+if [ "\$1" = rev-parse ] && { [ "$metadata" = both ] || [ "\$2" = "$metadata" ]; }; then
+    exit 128
+fi
+exec "$TOOLS/git" "\$@"
+WRAP
+    chmod +x "$T/c19/wrap-$metadata/git"
+    wrapped "$T/c19/wrap-$metadata" --phase preflight
+    _check_rc "preflight unreadable $metadata metadata fails closed" 2 "$rc"
+    _check_says "preflight unreadable $metadata reported" "$out" "PREFLIGHT: COULD-NOT-LOOK"
+    _check_lacks "preflight unreadable $metadata no all-clear" "$out" "RESULT: clean"
+    _check_true "preflight unreadable $metadata preserves dirty state" test -f stray.txt
+    _check_true "preflight unreadable $metadata never invokes scratch cleanup" test -f .panel/report.txt
+done
 cd "$W"
 
 # SKILL.md runs that fresh preflight at worktree exit (step 9a)

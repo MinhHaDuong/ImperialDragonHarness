@@ -7,7 +7,8 @@
 # script only does what is deterministic and ends with a one-screen report.
 #
 # Exit codes — 0 clean, 1 findings, 2 could-not-look. 2 is never an all-clear:
-# a missing ticket store, an unreadable forge or a failed fetch all land there.
+# an unreadable existing ticket store, forge or Git metadata yields 2. A repo
+# without tickets/ explicitly skips that workflow and may still exit cleanly.
 #
 # Phases exist because step 9 (ExitWorktree) sits between the preflight and
 # the cleanup, and the cleanup's current-branch guard depends on the cwd:
@@ -136,11 +137,17 @@ detect_tracker() {
 
 # ── Step 9a: worktree-exit preflight ──────────────────────────────────────────
 preflight() {
-    if [ "$(git rev-parse --git-dir)" = "$(git rev-parse --git-common-dir)" ]; then
+    local git_dir common_dir rc=0
+    if ! git_dir=$(git rev-parse --git-dir) ||
+        ! common_dir=$(git rev-parse --git-common-dir) ||
+        [ -z "$git_dir" ] || [ -z "$common_dir" ]; then
+        note "PREFLIGHT: COULD-NOT-LOOK cannot read Git metadata paths"
+        bump 2; return 0
+    fi
+    if [ "$git_dir" = "$common_dir" ]; then
         note "PREFLIGHT: skipped (not in a linked worktree)"
         return 0
     fi
-    local rc=0
     "$IDH_ROOT/scripts/worktree-exit-preflight.sh" || rc=$?
     case "$rc" in
         0) note "PREFLIGHT: ok" ;;
@@ -208,7 +215,10 @@ checked_out() { # <branch>; unreadable list refuses cleanup
     listing=$(git worktree list --porcelain) || {
         note "SWEEP: COULD-NOT-LOOK worktree list failed — keeping $1"; bump 2; return 0;
     }
-    printf '%s\n' "$listing" | grep -qxF -- "branch refs/heads/$1"
+    if printf '%s\n' "$listing" | grep -qxF -- "branch refs/heads/$1"; then
+        note "SWEEP: RETAINED $1 (occupied worktree)"; bump 1; return 0
+    fi
+    return 1
 }
 
 cleanup() {
@@ -222,15 +232,30 @@ cleanup() {
     done
     git remote get-url origin >/dev/null 2>&1 && has_origin=1
     if [ "$has_origin" -eq 1 ]; then
-        if ! git fetch --no-prune --no-prune-tags origin >/dev/null 2>&1; then
-            note "SWEEP: COULD-NOT-LOOK git fetch failed — nothing deleted"; bump 2; return 0
-        fi
         if [ -z "$DEFAULT" ]; then
             DEFAULT=$(git symbolic-ref -q refs/remotes/origin/HEAD 2>/dev/null || true)
             DEFAULT="${DEFAULT#refs/remotes/origin/}"
         fi
         DEFAULT="${DEFAULT:-main}"
         base="refs/remotes/origin/$DEFAULT"
+        if ! git check-ref-format "refs/heads/$DEFAULT" >/dev/null 2>&1 ||
+            ! git check-ref-format "$base" >/dev/null 2>&1; then
+            note "SWEEP: COULD-NOT-LOOK invalid default integration ref"; bump 2; return 0
+        fi
+        rc=0
+        git symbolic-ref -q "$base" >/dev/null 2>&1 || rc=$?
+        case "$rc" in
+            1) ;;
+            *) note "SWEEP: COULD-NOT-LOOK integration tracking ref is symbolic or unreadable"; bump 2; return 0 ;;
+        esac
+        # Ignore configured refspecs/opportunistic mappings: they can force-move
+        # unrelated local heads. Fetch only the integration ref, with no tags,
+        # pruning, submodule recursion or automatic repository maintenance.
+        if ! git fetch --refmap= --no-prune --no-prune-tags --no-tags \
+            --no-recurse-submodules --no-auto-gc --no-write-commit-graph origin \
+            "+refs/heads/$DEFAULT:$base" >/dev/null 2>&1; then
+            note "SWEEP: COULD-NOT-LOOK integration fetch failed — nothing deleted"; bump 2; return 0
+        fi
     else
         DEFAULT="${DEFAULT:-main}"
         base="refs/heads/$DEFAULT"
@@ -264,9 +289,15 @@ cleanup_side() { # <local|remote> <explicit targets...>
     local side="$1"; shift
     for target in "$@"; do
         b="${target%%=*}"; oid="${target#*=}"
-        [ "$b" = "$DEFAULT" ] && continue
-        [ "$b" = "$cur" ] && continue
-        [ "$b" = HEAD ] && continue
+        if [ "$b" = "$DEFAULT" ]; then
+            note "SWEEP: RETAINED $side $b (default branch)"; bump 1; continue
+        fi
+        if [ "$b" = "$cur" ]; then
+            note "SWEEP: RETAINED $side $b (current branch)"; bump 1; continue
+        fi
+        if [ "$b" = HEAD ]; then
+            note "SWEEP: RETAINED $side $b (HEAD)"; bump 1; continue
+        fi
         checked_out "$b" && continue
         if [ "$side" = local ]; then ref="refs/heads/$b"; else ref="refs/remotes/origin/$b"; fi
         if [ "$side" = local ]; then

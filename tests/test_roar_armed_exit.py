@@ -46,4 +46,4 @@ def test_failed_bundle_is_surfaced_by_roar_not_molt():
 
 
 def test_task_branch_still_needs_ancestry():
-    assert "merge-base --is-ancestor HEAD origin/main" in ROAR
+    assert "merge-base --is-ancestor HEAD refs/remotes/origin/main" in ROAR

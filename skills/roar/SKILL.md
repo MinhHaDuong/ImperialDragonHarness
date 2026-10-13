@@ -40,22 +40,31 @@ Exit 0 merged, proceed; 2 pending, stop and say the merge has not landed yet
 (do not wait or loop; the user or a later step re-runs `/roar`); 1 failed,
 report it. Then verify the branch has been merged before proceeding:
 ```bash
-git fetch origin && git merge-base --is-ancestor HEAD origin/main
+ROAR_BASE_RC=0
+git symbolic-ref -q refs/remotes/origin/main >/dev/null 2>&1 || ROAR_BASE_RC=$?
+[ "$ROAR_BASE_RC" -eq 1 ] || { echo "Roar: integration ref symbolic or unreadable; keep all work" >&2; exit 2; }
+git fetch --refmap= --no-prune --no-prune-tags --no-tags \
+  --no-recurse-submodules --no-auto-gc --no-write-commit-graph origin \
+  +refs/heads/main:refs/remotes/origin/main ||
+  { echo "Roar: integration fetch failed; keep all work" >&2; exit 2; }
+git merge-base --is-ancestor HEAD refs/remotes/origin/main
 ```
-If the ancestry check fails, do not stop yet: a rebase at the merge gate
+If metadata verification or fetch fails, preserve all work and report that
+integration could not be verified. The fallback below applies only after a
+successful fetch. If the ancestry check fails, do not stop yet: a rebase at the merge gate
 (mandatory per `rules/git.md`) rewrites the SHA, so a checkout still on the
 pre-rebase commit is patch-equivalent but not an ancestor. Fall back to:
 ```bash
-git cherry origin/main HEAD <merge-base-or-branch-point>
+git cherry refs/remotes/origin/main HEAD <merge-base-or-branch-point>
 ```
 A `-` prefix on every listed commit means the patches are already upstream —
 treat that as merged and proceed. Only if commits show `+` (genuinely absent
-from origin/main) stop and tell the user. Do not continue with roar in that case.
+from refs/remotes/origin/main) stop and tell the user. Do not continue with roar in that case.
 
 No-forge repo (`git remote get-url origin` fails — no `origin`, e.g. a
 direct-to-master checkout with only ssh peers): there is no forge gate.
 "Merged" means committed to the local default branch — verify with
-`git merge-base --is-ancestor HEAD <master|main>` — and every `origin/main`
+`git merge-base --is-ancestor HEAD <master|main>` — and every `refs/remotes/origin/main`
 probe in this skill is moot. Downstream, degrade as molt/healthcheck do: a
 missing prerequisite yields an explicit skip with a one-line reason, never a
 fail. Concretely: step 9's ancestry checks compare against the local default
@@ -143,7 +152,7 @@ default branch — there are no remote branches nor merge requests to inspect.
    full fix commit SHA from the project's integration history. Run the helper
    in the project's existing wrap-up worktree,
    with its full merged commit SHA and a full integration-tip SHA resolved
-   from the project's `origin/main`, which contains that merged fix. The
+   from the project's `refs/remotes/origin/main`, which contains that merged fix. The
    wrap-up branch may stay below that merge; `--merged-through` proves the fix
    belongs to the actual integration history without changing its checkout.
    Supply explicit `PR=reviewed-SHA` evidence from
@@ -154,7 +163,7 @@ default branch — there are no remote branches nor merge requests to inspect.
    Resolve the loaded helper root in the same invocation:
 
    ```bash
-   IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)" && MERGED_THROUGH="$(git -C "$PROJECT_REPO" rev-parse --verify 'origin/main^{commit}')" && python3 "$IDH_ROOT/scripts/attribution_backfill.py" --project "$PROJECT_REPO" --merged-through "$MERGED_THROUGH" --defect-fix --fix-pr "$FIX_PR" --fix-commit "$FIX_SHA" --reviewed "$PAST_PR=$REVIEWED_SHA"
+   IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)" && MERGED_THROUGH="$(git -C "$PROJECT_REPO" rev-parse --verify 'refs/remotes/origin/main^{commit}')" && python3 "$IDH_ROOT/scripts/attribution_backfill.py" --project "$PROJECT_REPO" --merged-through "$MERGED_THROUGH" --defect-fix --fix-pr "$FIX_PR" --fix-commit "$FIX_SHA" --reviewed "$PAST_PR=$REVIEWED_SHA"
    ```
 
    Repeat `--reviewed PR=SHA` for additional supported records. This joins
@@ -170,14 +179,14 @@ default branch — there are no remote branches nor merge requests to inspect.
    and never changes original findings or adopted flags.
 
    **Sweep the ref, not the working tree.** The pre-check's
-   `merge-base --is-ancestor HEAD origin/main` exits 0 both when your branch is
+   `merge-base --is-ancestor HEAD refs/remotes/origin/main` exits 0 both when your branch is
    merged and when the checkout is simply *behind* main, so a green pre-check is
    no evidence the tree carries main's content — and a sweep run there reports
    on files main no longer has (2026-09-10: this step read a guard script that
    PR #869 had deleted minutes earlier, and would have returned a confident
    wrong answer had the deletion not been known). Enumerate with
-   `git ls-tree -r --name-only origin/main -- <dir>` and read with
-   `git show origin/main:<path>` — never `git checkout <ref> -- <path>`, which
+   `git ls-tree -r --name-only refs/remotes/origin/main -- <dir>` and read with
+   `git show refs/remotes/origin/main:<path>` — never `git checkout <ref> -- <path>`, which
    writes the index.
  Record qualifying follow-up tickets in the single wrap-up branch: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then include it in the wrap-up commit — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174). Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
 5. **Report related findings** from the sweep. Do not turn experiences into
@@ -268,8 +277,10 @@ worktree go once the branch is pushed and auto-merge is armed.
        uncommitted/untracked file — including a fresh ticket draft
        `tickets/erg new` wrote but never committed. This cleanliness gate does
        not prove commits are integrated. See tickets 0174 and 0948.
-    b. Immediately before removal, fetch the project integration branch and
-       re-run `git merge-base --is-ancestor HEAD origin/main` on the current
+    b. Immediately before removal, repeat the pre-check's bounded integration
+       fetch: the exact source/destination refspec, empty refmap and disabled
+       tags/pruning/submodule recursion/automatic maintenance. Refuse a symbolic
+       or unreadable integration destination before fetching. Then re-run `git merge-base --is-ancestor HEAD refs/remotes/origin/main` on the current
        HEAD, after any capture commit.
 
        **Bundle exception.** HEAD passes without ancestry only when all
@@ -299,7 +310,7 @@ worktree go once the branch is pushed and auto-merge is armed.
        original branch — the one the primary checkout returns to. So
        BEFORE authorizing `discard_changes`, verify that ORIGINAL branch
        belongs to the explicitly completed task and is pushed or merged (`git -C <primary> merge-base --is-ancestor
-       <original-branch> origin/main`, or check it has an up-to-date
+       <original-branch> refs/remotes/origin/main`, or check it has an up-to-date
        upstream). If ownership is unproven or it carries unmerged commits, use `action: "keep"`
        instead (2026-06-10: discard_changes deleted
        `dream-consolidate-2026-06-09` and orphaned another session's
@@ -310,7 +321,7 @@ worktree go once the branch is pushed and auto-merge is armed.
     c. `ExitWorktree` refuses `remove` on a worktree the session entered by
        path rather than creating it (16 sessions, 2026-06-18 to 09-10). If
        this session created that tree itself (`git worktree add`), exit with
-       `keep`, then — tree clean, branch an ancestor of `origin/main` — run
+       `keep`, then — tree clean, branch an ancestor of `refs/remotes/origin/main` — run
        `git worktree unlock <path>` (hunt locks its tree), `git worktree remove
        <path>` from the primary
        checkout. A tree it did not create (another session's, or one held by
@@ -318,7 +329,7 @@ worktree go once the branch is pushed and auto-merge is armed.
        Branch ancestry cannot show that no live session stands in it, the
        0355 failure the closing note below describes.
     No-forge repo: every ancestry probe in this step compares against the
-    local default branch instead of `origin/main`.
+    local default branch instead of `refs/remotes/origin/main`.
     Skip if not in a worktree. A worktree a subagent created and locked itself is
     left to `worktree-gc` once its branch is merged.
 10. **Clean only the completed task** — roar cleans only the completed task's
@@ -349,11 +360,14 @@ worktree go once the branch is pushed and auto-merge is armed.
     whose original head is not an ancestor is retained; patch equivalence
     may justify the wrap-up pre-check but does not authorize deletion here.
 
-    The helper fetches origin with pruning disabled, including prune-tags config, resolves exact
+    The helper fetches only the default integration branch into its tracking ref,
+    ignoring configured refspecs and opportunistic refmaps. It disables tags,
+    pruning, submodule recursion and automatic maintenance, then resolves exact
     refnames, requires the supplied full OID to match, and checks ancestry
     against `refs/remotes/origin/<default>` (the local default without origin).
     `--default-branch B` overrides the default read from `origin/HEAD`, falling
-    back to main. Default, current, symbolic and occupied branches remain.
+    back to main. Default, current, symbolic and occupied branches remain and are reported
+    as retained findings (exit 1).
     A named completed-PR branch at the integration tip is eligible; ownership
     comes from the explicit PR evidence, not its relationship to that tip.
 
