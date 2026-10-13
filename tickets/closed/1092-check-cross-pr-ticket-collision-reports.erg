@@ -10,6 +10,8 @@ Closed: implemented
 2026-10-13T09:39Z Minh-Ha-Duong note raid feasibility PASS: script and hermetic suite exist; extend gh stub dispatch and environment forwarding for self lookup. Three planned paths plus shared annotations remain below the 15-file breaker; no coordination PR needed.
 2026-10-13T09:41Z Minh Ha-Duong closed — implemented
 
+2026-10-13T09:53Z coder note Review fix verifies source repository plus branch; foreign same-name collision control passes; exit criteria checked with actual validation evidence.
+
 --- body ---
 ## Context
 
@@ -29,10 +31,10 @@ breaks the ticket ID and every cross-reference to it.
 
 ## Exit criteria
 
-- [ ] With `SELF_PR_NUMBER` unset, the script resolves its own PR from the current branch (forge call marked `harness-extension-point`) and excludes it; when the branch has no open PR it scans the full sibling list
-- [ ] Run from a worktree whose branch has an open PR adding a ticket file, it exits 0 with that PR excluded, verified against a real open PR
-- [ ] Positive control: a genuine sibling collision is still reported when two open PRs add the same ID and the script runs from one of them
-- [ ] `make check` passes
+- [x] With `SELF_PR_NUMBER` unset, the script resolves its own PR from the current branch (forge call marked `harness-extension-point`) and excludes it; when the branch has no open PR it scans the full sibling list
+- [x] Run from a worktree whose branch has an open PR adding a ticket file, it exits 0 with that PR excluded, verified against a real open PR
+- [x] Positive control: a genuine sibling collision is still reported when two open PRs add the same ID and the script runs from one of them
+- [x] `make check` passes
 
 ## Raid plan — 2026-10-13
 
@@ -41,3 +43,9 @@ Actions: preserve explicit SELF_PR_NUMBER and the no-ticket fast path; infer thi
 First test: unset SELF_PR_NUMBER; own PR claims the added ID, a sibling claims a distinct ID; expect exit 0 and no own-PR file fetch. Positive control: sibling claims same ID and is named with exit 1. Cover lookup miss/failure, no open PR, override and unreadable forge. Validate against a real open PR as required.
 
 Files: scripts/check-cross-pr-ticket-collision.sh; tests/test_check_cross_pr_ticket_collision.sh; this ticket. Dependencies: git, gh, jq and existing hermetic shell fixtures. No new library. Exit criteria unchanged.
+
+## Validation evidence — 2026-10-13
+
+- Real open PR #1374 (`t1084-roar-close-and-clean`, head `aa4850dea8ecdbc5017900537a579d4708db3303`) adds 1089/1090: isolated checkout, unset SELF_PR_NUMBER, exit 0. A forced self-lookup failure with the real open-PR list/source-repository lookup also exits 0.
+- Hermetic open-PR controls exclude own #99 and report sibling #77 for ID 0300 (exit 1). Single foreign-fork #55 with the same branch name also reports a collision; successful-but-foreign lookup is verified against source identity. Missing source identity and ambiguous self both fail closed without renumber advice.
+- Updated affected shell suite passes; `make check-fast`: 964 passed; declared adherence `make lint`: 182 passed. Post-fix full `make check`: 1603 passed, 4 skipped (76.14s); structural checks passed.

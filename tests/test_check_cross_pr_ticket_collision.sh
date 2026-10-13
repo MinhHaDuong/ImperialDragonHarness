@@ -55,7 +55,10 @@ echo "$*" >> "${STUB_GH_LOG:-/dev/null}"
 case "$1 $2" in
   "pr list")
     [[ -n "${STUB_PR_LIST_FAIL:-}" ]] && { echo "gh: not logged in" >&2; exit 4; }
-    echo "$STUB_PR_LIST" ;;
+    jq 'map(. + {headRepository: (.headRepository // {nameWithOwner: "local/source"})})' <<< "$STUB_PR_LIST" ;;
+  "repo view")
+    [[ -n "${STUB_SOURCE_FAIL:-}" ]] && exit 1
+    echo local/source ;;
   "pr view")
     [[ -n "${STUB_SELF_FAIL:-}" ]] && exit 1
     printf '%s\n' "${STUB_SELF_NUMBER:-}" ;;
@@ -136,6 +139,7 @@ run_check() {  # env STUB_PR_LIST, STUB_SIBLING_FILES, SELF_PR_NUMBER, STUB_GH_L
       STUB_SIBLING_FILES="${STUB_SIBLING_FILES:-}" \
       STUB_SELF_NUMBER="${STUB_SELF_NUMBER:-}" \
       STUB_SELF_FAIL="${STUB_SELF_FAIL:-}" \
+      STUB_SOURCE_FAIL="${STUB_SOURCE_FAIL:-}" \
       STUB_API_FAIL="${STUB_API_FAIL:-}" \
       STUB_PR_LIST_FAIL="${STUB_PR_LIST_FAIL:-}" \
       STUB_GH_LOG="${STUB_GH_LOG:-/dev/null}" \
@@ -199,9 +203,7 @@ fi
 seed_repo apifail 0300
 if out=$(SELF_PR_NUMBER=99 \
          STUB_PR_LIST='[{"number":99,"headRefName":"pr-apifail"},{"number":77,"headRefName":"pr-sibling"}]' \
-         STUB_SELF_NUMBER="${STUB_SELF_NUMBER:-}" \
-      STUB_SELF_FAIL="${STUB_SELF_FAIL:-}" \
-      STUB_API_FAIL=1 \
+         STUB_API_FAIL=1 \
          run_check 2>&1); then
     if echo "$out" | grep -q 'WARNING' && echo "$out" | grep -q '#77'; then
         echo "PASS: fetch failure fails open with a WARNING naming PR #77"
@@ -357,6 +359,32 @@ out=$(STUB_SELF_FAIL=1 \
 if [[ "$rc" == 2 ]] && ! grep -q 'Renumber your' <<< "$out"; then
     echo "PASS: ambiguous self fails closed without renumber advice"
 else echo "FAIL: ambiguous self produced unsafe verdict (rc=$rc)"; echo "$out"; fail=1; fi
+
+# A foreign fork's same-named branch is a sibling, never self.
+rc=0
+out=$(STUB_SELF_FAIL=1 \
+      STUB_PR_LIST='[{"number":55,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"foreign/fork"}}]' \
+      STUB_SIBLING_FILES='tickets/0300-foreign.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 1 ]] && grep -q '#55' <<< "$out"; then
+    echo "PASS: foreign fork with same branch name remains a collision"
+else echo "FAIL: foreign same-name PR excluded (rc=$rc)"; echo "$out"; fail=1; fi
+
+# Even a successful lookup is verified against repository identity.
+rc=0
+out=$(STUB_SELF_NUMBER=55 \
+      STUB_PR_LIST='[{"number":55,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"foreign/fork"}},{"number":99,"headRefName":"pr-inferred"}]' \
+      STUB_SIBLING_FILES='tickets/0300-foreign.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 1 ]] && grep -q '#55' <<< "$out" && ! grep -q '#99' <<< "$out"; then
+    echo "PASS: repository identity overrides foreign lookup result"
+else echo "FAIL: lookup bypassed source verification (rc=$rc)"; echo "$out"; fail=1; fi
+
+# Unavailable source identity must not turn a matching name into self.
+rc=0
+out=$(STUB_SOURCE_FAIL=1 STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"}]' \
+      STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 2 ]] && ! grep -q 'Renumber your' <<< "$out"; then
+    echo "PASS: unavailable source identity fails closed without renumber advice"
+else echo "FAIL: unavailable source identity unsafe (rc=$rc)"; echo "$out"; fail=1; fi
 
 # Explicit override must avoid lookup, even if the lookup would disagree.
 GHLOG="$WORK/override.log"; : > "$GHLOG"
