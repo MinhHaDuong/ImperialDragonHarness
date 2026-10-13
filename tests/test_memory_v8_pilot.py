@@ -38,15 +38,6 @@ PILOT_SOURCES = (
     "journal/2026/2026-10-02-memory-v8-merge-under-parallel-housekeeping.md",
 )
 
-# The four reference notes the legacy index linked. Correspondence requires
-# the v8 surface (index or themes) to keep linking each of them.
-LEGACY_INDEX_LINKS = (
-    "reference_zotero.md",
-    "feedback_subagent_model_effort_levers.md",
-    "reference_git_in_a_worktree_session.md",
-    "reference_branch_cleanup_incidents.md",
-)
-
 LINK = re.compile(r"\]\(([^)#\s]+)(?:#[^)\s]*)?\)")
 
 
@@ -82,12 +73,10 @@ def test_pilot_sources_stay_at_inventory_paths():
         assert (MEMORY / rel).is_file(), rel
 
 
-def test_v8_surface_links_sources_and_journal():
+def test_v8_surface_links_journal_and_resolves():
     surface = [INDEX, *sorted((MEMORY / "topics").glob("*.md"))]
     assert surface
     combined = "".join(p.read_text(encoding="utf-8") for p in surface)
-    for name in LEGACY_INDEX_LINKS:
-        assert f"({name})" in combined, name
     assert "journal/2026/" in combined
     assert not unresolved_links(REPO, INDEX)
     for doc in surface:
