@@ -59,7 +59,7 @@ direct-to-master checkout with only ssh peers): there is no forge gate.
 probe in this skill is moot. Downstream, degrade as molt/healthcheck do: a
 missing prerequisite yields an explicit skip with a one-line reason, never a
 fail. Concretely: step 9's ancestry checks compare against the local default
-branch; step 10 reduces to checking that local branches are merged into the
+branch; step 10 checks only explicitly supplied local cleanup targets against the
 default branch — there are no remote branches nor merge requests to inspect.
 
 ## Reflect and update
@@ -208,7 +208,7 @@ worktree go once the branch is pushed and auto-merge is armed.
 7. **Close** the ticket if still open, then **check that the close claims of
    every recently merged PR actually ran** — not only this session's. One
    script runs steps 7-10's mechanical parts (close, close claims, tracker
-   detection, preflight, branch sweep) and ends with a one-screen report; the
+   detection, preflight, explicit branch cleanup) and ends with a one-screen report; the
    judgment around it stays here. Run the first half now:
 
    ```bash
@@ -221,8 +221,8 @@ worktree go once the branch is pushed and auto-merge is armed.
    `tickets/` whose `erg` does not run, an unreadable forge or a failed fetch
    all give 2; a repo with no `tickets/` directory at all gets an explicit
    `skipped` line for CLOSE and CLAIMS, per the prerequisite policy above). Omit
-   `--ticket` when there is none. Not in a worktree: use `--phase all` and
-   skip step 9. Its report lines:
+   `--ticket` when there is none. Not in a worktree: use `--phase all` with step 10's explicit
+   cleanup targets and skip step 9. With no targets, cleanup deletes no branches. Its report lines:
 
    - `CLOSE: ALREADY-CLOSED` is the usual case after `/merge`;
      `CLOSED-UNCOMMITTED` means it closed and archived the ticket and you must
@@ -247,6 +247,10 @@ worktree go once the branch is pushed and auto-merge is armed.
     check; on that hit, perform the integration review above — the script
     detects, it does not review.
 9. **Exit worktree** (if in one):
+    Remove only a worktree owned by this session for the completed ticket/PR,
+    or explicitly handed over for that task with proven ownership. Ancestry,
+    branch-name similarity and a merged PR alone do not establish ownership.
+    If ownership is uncertain, keep it. The helper never removes worktrees.
     a. Preflight from inside the worktree, run fresh now: the step-7 result
        predates the integration review and the wrap-up work, so it is not
        reused (`$IDH_ROOT/scripts/worktree-exit-preflight.sh`, called through
@@ -277,8 +281,7 @@ worktree go once the branch is pushed and auto-merge is armed.
        The forge then holds the only durable copy: name the merge request
        in step 11 as armed, pending forge integration; it does not block
        the `/clear` verdict. A later failed check leaves it
-       open, and the next roar's step 10 stale-merge-request check surfaces
-       it.
+       open, and a later roar for that bundle reports its pending merge request.
 
        If fetch or verification
        fails, preserve the worktree and branch (`action: "keep"`) and report
@@ -295,9 +298,9 @@ worktree go once the branch is pushed and auto-merge is armed.
        checkout, and with `discard_changes: true` it also deletes the
        original branch — the one the primary checkout returns to. So
        BEFORE authorizing `discard_changes`, verify that ORIGINAL branch
-       is pushed or merged (`git -C <primary> merge-base --is-ancestor
+       belongs to the explicitly completed task and is pushed or merged (`git -C <primary> merge-base --is-ancestor
        <original-branch> origin/main`, or check it has an up-to-date
-       upstream). If it carries unmerged commits, use `action: "keep"`
+       upstream). If ownership is unproven or it carries unmerged commits, use `action: "keep"`
        instead (2026-06-10: discard_changes deleted
        `dream-consolidate-2026-06-09` and orphaned another session's
        unmerged commit at a detached HEAD). Recovery if the branch was
@@ -309,7 +312,7 @@ worktree go once the branch is pushed and auto-merge is armed.
        this session created that tree itself (`git worktree add`), exit with
        `keep`, then — tree clean, branch an ancestor of `origin/main` — run
        `git worktree unlock <path>` (hunt locks its tree), `git worktree remove
-       <path>` and `git worktree prune` from the primary
+       <path>` from the primary
        checkout. A tree it did not create (another session's, or one held by
        another agent) stays: exit with `keep` and leave it to `/molt`.
        Branch ancestry cannot show that no live session stands in it, the
@@ -318,39 +321,55 @@ worktree go once the branch is pushed and auto-merge is armed.
     local default branch instead of `origin/main`.
     Skip if not in a worktree. A worktree a subagent created and locked itself is
     left to `worktree-gc` once its branch is merged.
-10. **Verify hygiene** — and run the branch sweep, which is this step's job.
-    After step 9 (the sweep's current-branch guard depends on where you now
-    stand):
+10. **Clean only the completed task** — roar cleans only the completed task's
+    explicitly identified closed-ticket/merged-PR branches and owned worktrees.
+    Other branches and worktrees remain, even when merged. Repository-wide
+    housekeeping belongs to lair/molt.
+
+    After step 9, supply each actual merged PR's source branch and full head
+    OID from its durable merge/review evidence. Record these coordinates before
+    worktree exit. For a task with multiple completed PRs, repeat the options;
+    do not discover candidates by enumerating refs, matching ticket prefixes,
+    or adopting a freshly reread mutable branch tip as approval.
 
     ```bash
     ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
     ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
-    "$ROAR_DIR/close-and-clean.sh" --phase after-exit
+    "$ROAR_DIR/close-and-clean.sh" --phase after-exit \
+      --local-branch "$COMPLETED_PR_BRANCH=$COMPLETED_PR_HEAD_OID" \
+      --remote-branch "$COMPLETED_PR_BRANCH=$COMPLETED_PR_HEAD_OID"
     ```
 
-    (`--default-branch B` overrides the default branch, otherwise read from
-    `origin/HEAD`. A branch whose tip is the default branch's tip is kept: it
-    carries no work and may be a colleague's just-created branch.)
+    `--local-branch B=OID` and `--remote-branch B=OID` are independent,
+    repeatable cleanup targets. Omit either side if there is no verified
+    target there (for example, the forge already deleted the remote branch).
+    With neither option, the helper deletes nothing. Repeated cleanup reports
+    already absent targets; remote absence is checked at the named remote ref,
+    rather than inferred from a missing tracking ref. A squash/rebase merge
+    whose original head is not an ancestor is retained; patch equivalence
+    may justify the wrap-up pre-check but does not authorize deletion here.
 
-    It runs `git fetch --prune`, then deletes only branches that pass the
-    ancestry probe against `origin/<default>` — a plain delete has no
-    merged-check of its own, and a remote branch can be the only copy of an
-    unmerged colleague's work. Where the forge does not delete merged branches
-    itself (per-repo setting — check it, don't assume), the remote side
-    accumulates the same debt, so it sweeps that too. A refused delete is
-    reported as `FAILED` (exit 1) and the sweep carries on. The guards are
-    load-bearing, each for a branch someone lost, and each is tested by
-    stripping it from the real script (`tests/test_roar_close_and_clean.sh`):
-    the `origin` symref skip, the default-branch and current-branch skips,
-    the whole-line checked-out-in-any-worktree skip, and `-D` after the
-    probe. Incident detail: memory `reference_branch_cleanup_incidents`,
-    ticket 0242.
+    The helper fetches origin with pruning disabled, including prune-tags config, resolves exact
+    refnames, requires the supplied full OID to match, and checks ancestry
+    against `refs/remotes/origin/<default>` (the local default without origin).
+    `--default-branch B` overrides the default read from `origin/HEAD`, falling
+    back to main. Default, current, symbolic and occupied branches remain.
+    A named completed-PR branch at the integration tip is eligible; ownership
+    comes from the explicit PR evidence, not its relationship to that tip.
 
-    - Then: `git branch -a` → no stale remote branches; check for stale merge
-      requests.
-    - No-forge repo: only check that local branches are merged into the
-      default branch; there are no remote branches nor merge requests, and
-      every ancestry probe compares against the local default branch.
+    Immediately before local deletion it rechecks the OID and occupancy, then
+    uses ordinary `git branch -d`, with its upstream disabled for that command
+    so Git checks containment in HEAD as an additional conservative guard.
+    A checkout behind integration may therefore retain an otherwise eligible
+    target. This retains Git's merge and worktree refusal
+    without editing persistent upstream config. These prechecks are not atomic
+    with deletion and do not promise safety against arbitrary concurrent ref
+    writers. Remote deletion leases the supplied OID. Drift, unmerged targets
+    and refused deletes are findings (exit 1); unreadable prerequisites are
+    could-not-look (exit 2), never an all-clear. No delete-and-restore recovery
+    or human-output parsing is used. Report retained targets for later handling;
+    do not broaden the cleanup scope.
+
 11. **Report** the completed work and any pending factual capture. Do not offer
     rule changes or interpreted memories. End with a context verdict.
     Pending means anything this step reports as pending: an unmerged PR,

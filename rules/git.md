@@ -27,10 +27,13 @@ Family rule: **a git command that printed nothing has not necessarily done nothi
 
 ## Branch cleanup
 
-- **Delete branches after merge, and only after an ancestry probe.** The
-  probe-guarded sweep, local and remote, is `/roar` step 10 — run it there
-  rather than improvising a loop. Never `git branch -D` a branch whose merge
-  you have not verified.
+- **Roar cleans only the just-completed ticket/PR.** `/roar` step 10 takes
+  explicitly identified source branches and full approved head OIDs from the
+  current task's merged PRs, then checks ancestry before cleanup. All foreign
+  branches/worktrees remain, even when merged; repository-wide housekeeping
+  belongs to lair/molt. Worktree removal also requires task ownership.
+  Local cleanup retains ordinary Git merge/worktree refusal with `-d`; drift
+  or unreadable evidence means retain and report, never force or compensate.
 
 ## Reading state you will act on
 

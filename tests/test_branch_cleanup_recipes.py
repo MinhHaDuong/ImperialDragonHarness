@@ -2,20 +2,10 @@
 
 Two documented recipes lost branches on 2026-06-10:
 
-1. The stale-branch cleanup loop — in ``rules/git.md`` until 2026-09-09,
-   now in ``skills/roar/SKILL.md`` step 10, which is whose job it is —
-   deletes any local branch that is an ancestor of
-   origin/main — local ``main`` always is, and so is the branch you are
-   standing on right after a merge. The recipe must skip ``main`` and the
-   current branch explicitly, and use ``git branch -D`` (safe: the
-   merge-base probe has just proven the branch is an ancestor of
-   origin/main; ``-d`` checks merged-into-HEAD and spuriously refuses).
-   A third way to lose one, added 2026-09-10: a branch a PARALLEL session
-   has checked out in its own worktree is an ancestor of origin/main like
-   any other, and the sweep reached one. Git's refusal to delete a
-   checked-out branch is a backstop, not a guard — and because that
-   refusal is the final command of its ``&&`` chain, under ``set -e`` it
-   aborts the sweep for every branch after it.
+1. Historical sweeps deleted branches outside the completed task. The current
+   contract accepts only explicitly named completed-PR targets with their full
+   approved head OIDs. Local cleanup keeps Git's ordinary merge/worktree refusal;
+   drift is refused before deletion. Behavioral coverage lives in the shell test.
 
 2. ``skills/roar/SKILL.md`` step 9b blanket-authorized ExitWorktree's
    ``discard_changes``, which also deletes the ORIGINAL branch the
@@ -76,3 +66,12 @@ def test_roar_9b_documents_reflog_recovery():
         "roar step 9b must document the recovery path (reflog + "
         "git switch -c) for a branch deleted by discard_changes"
     )
+
+
+def test_roar_cleanup_requires_explicit_completed_task_targets():
+    helper = (REPO / "skills/roar/close-and-clean.sh").read_text()
+    assert "--local-branch" in helper and "--remote-branch" in helper
+    assert "for-each-ref" not in helper, "roar must not enumerate cleanup candidates"
+    assert "restore_branch" not in helper, "refuse drift before deleting"
+    assert "git branch -D" not in helper, "retain ordinary Git merge refusal"
+    assert "only the completed task" in ROAR_SKILL
