@@ -56,6 +56,9 @@ case "$1 $2" in
   "pr list")
     [[ -n "${STUB_PR_LIST_FAIL:-}" ]] && { echo "gh: not logged in" >&2; exit 4; }
     echo "$STUB_PR_LIST" ;;
+  "pr view")
+    [[ -n "${STUB_SELF_FAIL:-}" ]] && exit 1
+    printf '%s\n' "${STUB_SELF_NUMBER:-}" ;;
   "api "*|"api")
     # Emulate `gh api ... --jq '...'`: emit the already-filtered filenames the
     # script's downstream pipe expects (one per line).
@@ -131,6 +134,8 @@ run_check() {  # env STUB_PR_LIST, STUB_SIBLING_FILES, SELF_PR_NUMBER, STUB_GH_L
       SELF_PR_NUMBER="${SELF_PR_NUMBER:-}" \
       STUB_PR_LIST="${STUB_PR_LIST:-[]}" \
       STUB_SIBLING_FILES="${STUB_SIBLING_FILES:-}" \
+      STUB_SELF_NUMBER="${STUB_SELF_NUMBER:-}" \
+      STUB_SELF_FAIL="${STUB_SELF_FAIL:-}" \
       STUB_API_FAIL="${STUB_API_FAIL:-}" \
       STUB_PR_LIST_FAIL="${STUB_PR_LIST_FAIL:-}" \
       STUB_GH_LOG="${STUB_GH_LOG:-/dev/null}" \
@@ -194,7 +199,9 @@ fi
 seed_repo apifail 0300
 if out=$(SELF_PR_NUMBER=99 \
          STUB_PR_LIST='[{"number":99,"headRefName":"pr-apifail"},{"number":77,"headRefName":"pr-sibling"}]' \
-         STUB_API_FAIL=1 \
+         STUB_SELF_NUMBER="${STUB_SELF_NUMBER:-}" \
+      STUB_SELF_FAIL="${STUB_SELF_FAIL:-}" \
+      STUB_API_FAIL=1 \
          run_check 2>&1); then
     if echo "$out" | grep -q 'WARNING' && echo "$out" | grep -q '#77'; then
         echo "PASS: fetch failure fails open with a WARNING naming PR #77"
@@ -300,6 +307,63 @@ if [[ "$rc" -eq 2 ]] && echo "$out" | grep -qF 'cross-pr-collision: cannot list 
 else
     echo "FAIL: gh failure should exit 2 with the clear line (got rc=$rc)"; echo "$out"; fail=1
 fi
+
+# Infer the open PR locally: never fetch its own files.
+seed_repo inferred 0300
+GHLOG="$WORK/inferred.log"; : > "$GHLOG"
+rc=0
+out=$(STUB_SELF_NUMBER=99 STUB_GH_LOG="$GHLOG" \
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"}]' \
+      STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 0 ]] && ! grep -q 'api repos' "$GHLOG"; then
+    echo "PASS: inferred self PR excluded without fetching its files"
+else
+    echo "FAIL: own inferred PR was scanned (rc=$rc)"; echo "$out"; fail=1
+fi
+
+# Failed lookup is visibly recovered from the full open-PR list.
+rc=0
+out=$(STUB_SELF_FAIL=1 \
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"},{"number":77,"headRefName":"sibling"}]' \
+      STUB_SIBLING_FILES='tickets/0300-sibling.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 1 ]] && grep -q '#77' <<< "$out" && grep -q 'WARNING' <<< "$out" && ! grep -q '#99' <<< "$out"; then
+    echo "PASS: failed self lookup recovers and genuine sibling collision fails"
+else
+    echo "FAIL: self lookup recovery/collision incorrect (rc=$rc)"; echo "$out"; fail=1
+fi
+
+# No own open PR: lookup miss still scans every sibling.
+rc=0
+out=$(STUB_SELF_FAIL=1 STUB_PR_LIST='[{"number":77,"headRefName":"sibling"}]' \
+      STUB_SIBLING_FILES='tickets/0300-sibling.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 1 ]] && grep -q '#77' <<< "$out"; then
+    echo "PASS: branch without an open PR scans the full sibling list"
+else
+    echo "FAIL: branch without PR skipped sibling (rc=$rc)"; echo "$out"; fail=1
+fi
+
+# Successful miss (closed PR/no result) also recovers self from the list.
+rc=0
+out=$(STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"}]' \
+      STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 0 ]]; then echo "PASS: lookup miss recovers self from list"
+else echo "FAIL: lookup miss scanned own PR"; echo "$out"; fail=1; fi
+
+# Ambiguous self claims are uncertainty, never a renumber recommendation.
+rc=0
+out=$(STUB_SELF_FAIL=1 \
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"},{"number":88,"headRefName":"pr-inferred"}]' \
+      STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 2 ]] && ! grep -q 'Renumber your' <<< "$out"; then
+    echo "PASS: ambiguous self fails closed without renumber advice"
+else echo "FAIL: ambiguous self produced unsafe verdict (rc=$rc)"; echo "$out"; fail=1; fi
+
+# Explicit override must avoid lookup, even if the lookup would disagree.
+GHLOG="$WORK/override.log"; : > "$GHLOG"
+out=$(SELF_PR_NUMBER=99 STUB_SELF_NUMBER=77 STUB_GH_LOG="$GHLOG" \
+      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred"}]' run_check 2>&1) || fail=1
+if grep -q 'pr view' "$GHLOG"; then echo "FAIL: override triggered lookup"; fail=1
+else echo "PASS: explicit override bypasses inference"; fi
 
 if (( fail )); then exit 1; fi
 echo "PASS: cross-PR ticket-ID collision gate — collisions fail with a named PR, distinct IDs pass, no-ticket PRs skip the forge call, fetch failures warn, base-tip claims are caught, renames pass"

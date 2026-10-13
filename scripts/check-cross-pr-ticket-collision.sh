@@ -14,13 +14,13 @@
 # is invisible to it — the script therefore compares added IDs against the base
 # tip's tickets/ directly, in plain git. And sibling OPEN PRs, via the forge.
 #
-# Forge coupling is confined to two calls, each marked `# harness-extension-point`
-# (the isolation idiom used in skills/merge/erg-pr-merge): listing open PRs and
+# Forge coupling is confined to three calls, each marked `# harness-extension-point`
+# (the isolation idiom used in skills/merge/erg-pr-merge): resolving this branch’s PR, listing open PRs and
 # fetching a PR's changed files. Everything else is forge-agnostic git + text.
 #
 # Environment (all optional; defaults suit GitHub Actions `pull_request`):
 #   BASE_REF        base ref to diff against          (default: origin/main)
-#   SELF_PR_NUMBER  this PR's number, excluded from the sibling scan
+#   SELF_PR_NUMBER  this PR's number (otherwise inferred from current branch)
 #
 # Exit 0: no collision (or no ticket files added — fast path, no forge calls).
 # Exit 2: the open-PR list could not be fetched (no gh auth/network/GitHub
@@ -98,6 +98,30 @@ done <<< "$OWN_PATHS"
 if ! SIBLINGS_JSON=$(gh pr list --state open --json number,headRefName 2>/dev/null); then # harness-extension-point
     echo "cross-pr-collision: cannot list open PRs (no gh auth/network/GitHub remote)" >&2
     exit 2
+fi
+
+# ── infer self only when the caller supplied no explicit override ────────────
+if [[ -z "$SELF_PR" ]]; then
+    CURRENT_BRANCH=$(git symbolic-ref --quiet --short HEAD || true)
+    # harness-extension-point: GitHub CLI — resolve the current branch's PR.
+    if ! SELF_PR=$(gh pr view --json number,state --jq 'select(.state == "OPEN") | .number' 2>/dev/null); then
+        echo "cross-pr-collision: WARNING — self PR lookup failed; resolving from the open-PR list." >&2
+        SELF_PR=""
+    fi
+    # pr view can return a closed PR or miss; the fetched list distinguishes
+    # no open PR from lookup failure. Match the actual branch, not added IDs.
+    if [[ -z "$SELF_PR" ]]; then
+        if [[ -z "$CURRENT_BRANCH" ]]; then
+            echo "cross-pr-collision: cannot resolve self PR from detached HEAD; set SELF_PR_NUMBER (no renumber recommendation)." >&2
+            exit 2
+        fi
+        SELF_MATCHES=$(jq -r --arg branch "$CURRENT_BRANCH" '.[] | select(.headRefName == $branch) | .number' <<< "$SIBLINGS_JSON")
+        if [[ $(grep -c . <<< "$SELF_MATCHES" || true) -gt 1 ]]; then
+            echo "cross-pr-collision: ambiguous self PR for current branch; set SELF_PR_NUMBER (no renumber recommendation)." >&2
+            exit 2
+        fi
+        SELF_PR="$SELF_MATCHES"
+    fi
 fi
 
 while IFS=$'\t' read -r pr_number pr_branch; do
