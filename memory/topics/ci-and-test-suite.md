@@ -1,7 +1,7 @@
 # CI and the test suite
 
 Scope: measurements and author decisions about the forge CI, the local CI
-runner and the test suite's cost, 2026-10-02 to 2026-10-07. Standing
+runner and the test suite's cost, 2026-10-02 to 2026-10-13. Standing
 procedure lives in `skills/merge/SKILL.md` (where the local CI runs) and in
 ticket 1045 (local merge gate, open); this topic records evidence only.
 
@@ -41,6 +41,38 @@ native note records the author's preference that followed (preserved in the
 event and adds no rule here. Forge-check waits twice returned on a stale
 rollup before the new head's checks existed (2026-10-06).
 
+Refresh, 2026-10-08 to 2026-10-13. Single CI failures that passed on rerun,
+with causes not established: `test_attribution_query` (a temporary-repo
+`git merge` exited 128, PR #1263) and `test_check_cross_pr_ticket_collision.sh`
+(PR #1270). An Opus review found 0 failures in 48 parallel runs of the
+collision suite. It also found that shell suites skipping every check reported
+PASSED, fixed by mapping exit 77 to a pytest skip. The collision script, run
+from a worktree whose branch already has an open PR, reports that PR's own
+ticket, because `SELF_PR_NUMBER` comes only from the CI workflow. On padme,
+uv environments changed the last float digit of tournament outputs, while
+system Python (matplotlib 3.10.8, the committed provenance) reproduced main
+byte for byte. A CI test needing `pdftotext` now skips where the binary is
+absent. Full `make check` counts rose from 1514 passed (2026-10-08, local, wave A1)
+to 1606 (2026-10-13, the tested union commit of 1091 and 1092). Per-host differences came from missing tools on doudou and a
+network test on a secretless box.
+
+Local CI. Ticket 1088 (PR #1368, 2026-10-12): the shared runner exits 3 with
+an explicit SKIP in a repository without a committed workflow. During that
+wrap-up the author asked, "What did we spend the last 2 hours on?", asked for a
+committed record for a later inefficiency postmortem ("I want SCIENCE"), and
+deferred the analysis. The duration was not measured separately. On
+2026-10-10, `local-ci.sh` ran twice, once on a ticket-only change, and the
+author asked why a 52-line ticket took over 13 minutes; no per-step timings
+existed.
+
+Forge waits, continued. `erg-pr-merge` refused while checks ran, and a caller
+that ended its turn left PR #1345 open for about an hour, although all checks
+had passed within two minutes (2026-10-10). Ticket 1082 (PR #1352) made the
+helper arm auto-merge on pending checks and added the one-shot `erg-pr-status`
+(exit 0 merged, 1 failed, 2 pending). The author had asked that it not be a
+sleep loop. On 2026-10-13 a merge attempt failed because required checks had
+not yet registered, and auto-merge was armed after they appeared.
+
 ## Author decisions recorded in the sources
 
 No `pre-push` hook calling the local runner. Ticket 1045: a local merge gate
@@ -58,5 +90,13 @@ replaces the forge's required checks after a review of the CI's content.
 - [Leftover podman service](../journal/2026/2026-10-06-leftover-podman-service.md)
 - [0913 close path, stale-base CI](../journal/2026/2026-10-06-0913-dispatch-close-path.md)
 - [PR #1245 stuck check](../journal/2026/2026-10-07-pr1245-forced-gaze-stuck-ci-merge.md)
+- [Routing A1 and A0 to C, flakes](../journal/2026/2026-10-08-llm-routing-plan-and-wave-a1.md), [waves](../journal/2026/2026-10-08-llm-routing-waves-a0-to-c.md)
+- [Review round, suite findings](../journal/2026/2026-10-09-routing-review-round-and-host-hygiene.md) and [round two](../journal/2026/2026-10-09-routing-review-round-two.md)
+- [Padme float drift](../journal/2026/2026-10-09-tournament-report-padme-env-float-drift.md)
+- [Merge script CI refusal](../journal/2026/2026-10-10-merge-script-ci-refusal-and-ticket-1082.md) and [raid 1082](../journal/2026/2026-10-10-raid-1082-erg-pr-merge-pending-ci.md)
+- [Permissions, local CI runs](../journal/2026/2026-10-10-permissions-allow-all-and-idh-install-sync.md)
+- [Local CI wrap-up](../journal/2026/2026-10-12-local-ci-wrap-up-inefficiency.md)
+- [Raid 1084/1085/1086, collision self-report](../journal/2026/2026-10-12-raid-1084-1086-detached-gaze-occupancy.md)
+- [Raid 1091/1092](../journal/2026/2026-10-13-raid-1091-1092-and-gaze-1374.md) and [PR 1374 merge](../journal/2026/2026-10-13-pr1374-author-scope-revision-and-merge.md)
 - Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
   revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).
