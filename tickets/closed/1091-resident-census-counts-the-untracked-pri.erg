@@ -1,0 +1,117 @@
+%erg 0.1
+Title: resident census counts the untracked private overlay links, red make check only in the primary checkout
+Created: 2026-10-12
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #1378
+
+--- log ---
+2026-10-12T16:57Z Minh Ha-Duong created
+2026-10-13T09:38Z Minh-Ha-Duong note raid Imagine: EXECUTE; keep skills budget at 7000 for tracked content, measure local overlays separately with inventory and full session cost; Blind-Spot requires Git tracking semantics including tracked directory symlinks; exit criteria unchanged.
+2026-10-13T09:39Z Minh-Ha-Duong note raid feasibility WARN: tracked_tree fixture has no Git metadata; initialize/index a temporary fixture for classification controls and retain a separate unknown-metadata control. Three planned paths plus shared wave annotations remain below the 15-file breaker; no shared registry or new dependency.
+2026-10-13T10:18Z coder note Actual primary and clean worktree full make check both PASS at 7e1f77b1928ee49de97990940fd4b24b3df49cc7 (1606 passed, 4 skipped); actual primary retained three live private links, then housekeeping-20261012 at 1e8ccb3874f2f7bd0c12be05ae3d35f1cc656b53 was restored and verified clean. All four exit criteria evidenced; ticket-only completion update preserves tested code and tests.
+2026-10-13T10:40Z Minh Ha-Duong closed — autoclosed — PR #1378
+
+--- body ---
+## Context
+
+`make check` on main in the primary checkout fails
+`tests/test_resident_census.py::test_channel_budgets`: the skills channel is
+7784 chars against a 7000 budget. The same commit passes in a fresh worktree
+and in CI, so the gate is red only where an agent actually runs it.
+
+Cause: the primary checkout carries UNTRACKED symlinks
+`skills/{email,infrastructure,directory}` -> `~/.config/harness/private/skills/<name>`
+(the private overlay, present since 2026-10-02). `scripts/resident_census.py`
+counts `_name_and_description` for every `skills/*/SKILL.md` glob hit and
+follows those links; a clean worktree does not have them. Measured at the raid
+wave base commit fc0a75d8355817400b4370824f5314fa212d7c5a: 6952 chars without
+the links, 7784 with them (+832). Reproduced by copying the three links into a
+clean worktree at that commit — identical failure, identical count.
+
+Same class as closed ticket 0989 (idh tests read the real checkout's untracked
+private overlay links), which fixed the adapter/lifecycle fixtures through
+`tests/tracked_tree.py`; the census was not covered by that fix.
+
+Two facts must not be conflated. The private skill descriptions really are
+resident in a session started in the primary checkout, so the token cost is
+real. The budget in `tests/test_resident_census.py` is argued against the
+tracked harness content, and that is what the overlay breaks.
+
+## Exit criteria
+
+- [x] `make check` passes both in the primary checkout and in a clean worktree on the same commit
+- [x] The census states which skills it counted and whether private overlay links were present, so a real all-clear is distinguishable from a census that never saw the overlay (the docstring already treats a consumer project's own CLAUDE.md as extra)
+- [x] The budget decision is argued here, not made silently: trim the private descriptions, raise the skills budget with the +832 stated, or measure the overlay as a separate channel the tracked-content gate does not fail on
+- [x] Positive control: planting the three links in a worktree reproduces the failure the fix claims to handle, and their absence leaves the census green
+
+## Raid plan — 2026-10-13
+
+Budget decision: keep the 7000-character cap on tracked harness skill cards. Local private cards remain real resident cost and must be separately visible, with their inventory, presence/absence (or unknown classification), subtotal and contribution to the real session total. Neither raise the cap nor silently omit their cost.
+
+Actions: classify cards from the Git index, including tracked directory symlinks and untracked ordinary directories, rather than symlink type alone. Preserve existing budgeted channel contracts and downstream total semantics; show unknown when tracking cannot be inspected. Metadata-free roots must still report their full observed cost conservatively.
+
+First test: clean tracked tree plus the three local overlay links; preserve the clean tracked subtotal, display all links and +832 chars, include supplemental cost in the session total. Positive control demonstrates that counting the combined cards under the old cap reproduces the original overflow. Cover absence, tracked links and unavailable tracking.
+
+Files: scripts/resident_census.py; tests/test_resident_census.py; this ticket. Reuse tests/tracked_tree.py and stdlib tools; no new copying layer or dependency. Exit criteria unchanged.
+
+
+## Execution evidence — 2026-10-13
+
+Kept the skills cap at 7000. The Git index classifies file cards and tracked
+directory symlinks; untracked links and ordinary directories enter supplemental
+`skills-local`. Both report modes enumerate every observed skill and state local
+link presence or unknown tracking. Session totals include the supplement;
+metadata-free roots retain all observed cost in the budgeted skills channel.
+
+The old census from wave base `30a46f85995d8064762570abadf519deade1d1a9`
+charges the planted cards as 7784 vs 6952 clean, reproducing the old overflow.
+The real selected cards measure email275 + infrastructure275 + directory282 =832.
+Code commit `0de58dd4` preserves 6952 tracked +832 local, and session totals
+43162 clean /43994 with links. The contained checkout at that exact commit,
+`/tmp/t1091-primary-overlay-check`, carries the three exact live symlink targets
+and passed full `make check` (1606passed,4skipped). The actual primary checkout
+was not modified or run at the new commit; its literal criterion remains for
+post-merge verification. This contained same-code comparison is the authorized
+pre-merge proxy, not a claim that the primary already runs the new census.
+
+First census regression run:3failed,5passed. Fixed controls:8passed; check-fast:
+964passed; declared adherence (`Makefile:31`, `make lint`):185passed. The first
+clean full gate had1605passed,4skipped and one sandbox environment failure:
+`test_index_injected_for_a_worktree_of_this_repository` requires write access
+to Git worktree metadata. Rerun the full gate with that metadata access before PR.
+
+
+## Completed criteria — actual primary verification, 2026-10-13
+
+This evidence supersedes the earlier candidate's pending-primary statement;
+the historical code-commit measurements and initial environment failure above
+remain preserved.
+
+1. At `7e1f77b1928ee49de97990940fd4b24b3df49cc7`, full `make check`
+   passed both in the actual primary checkout with its three live private
+   links (1606 passed, 4 skipped, 76.91 seconds) and in the clean owned
+   worktree (1606 passed, 4 skipped, 104.06 seconds). The primary was checked
+   for cleanliness and foreign processes, temporarily detached at that SHA,
+   then restored to `housekeeping-20261012` at
+   `1e8ccb3874f2f7bd0c12be05ae3d35f1cc656b53` and verified clean.
+   Evidence: `/tmp/t1091-actual-primary-manifest.log`,
+   `/tmp/t1091-actual-primary-full.log`, and
+   `/tmp/t1091-full-clean-final.log`.
+2. Both report modes enumerate the counted skill paths and state local-link
+   presence or unknown tracking. The actual primary's observed inventory
+   reports 6952 tracked + 832 local chars and 43994 session chars, matching
+   the contained overlay control; clean session cost is 43162 chars.
+   Evidence: `/tmp/t1091-primary-observed-using-new-census.log` and the
+   eight passing `tests/test_resident_census.py` controls.
+3. The argued decision remains the Raid plan's 7000-char tracked cap, with
+   supplemental local cost included in every session total. No cap changed.
+4. The old census at wave base
+   `30a46f85995d8064762570abadf519deade1d1a9` counts the planted cards as
+   7784 chars versus 6952 without them, reproducing the old 7000-cap failure.
+   Fixed same-commit clean, contained-overlay, and actual-primary full gates
+   pass while retaining the measured 832-char cost.
+   Evidence: `/tmp/t1091-old-overlay-control.log` and
+   `/tmp/t1091-full-overlay-final.log`.
+
+The final completion update changes this ticket only; census code and tests
+remain identical to the same-commit actual-primary and clean-worktree gates.

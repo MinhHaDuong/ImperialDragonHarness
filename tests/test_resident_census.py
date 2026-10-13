@@ -19,6 +19,8 @@ budget. ``test_every_channel_is_populated`` is what tells a real all-clear
 from a census that could not look.
 """
 
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -31,6 +33,8 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
 
 import resident_census as rc  # noqa: E402
+from child_env import child_env  # noqa: E402
+from tracked_tree import tracked_checkout  # noqa: E402
 
 # Measured 2026-09-10 (chars, the exact unit — the token column of the census
 # is derived). Headroom is a sentence, not a section.
@@ -59,7 +63,7 @@ BUDGETS = {
     # whose project is this harness repository, so no other session pays it.
     "hook": 2100,  # memory/MEMORY.md, printed by scripts/on-start.sh
     "memory": 14500,  # the largest per-project index; only one is resident
-    "skills": 7000,  # name + description of every SKILL.md
+    "skills": 7000,  # tracked cards; local cards are supplemental (1091)
     "agents": 800,  # name + description of every agents/*.md
 }
 
@@ -150,3 +154,76 @@ def test_session_total_is_the_sum_of_the_channels(entries):
 def test_every_channel_has_a_budget_and_a_floor():
     """A channel added to the census without a budget is an unwatched channel."""
     assert set(rc.CHANNELS) == set(BUDGETS) == set(FLOORS)
+
+
+@pytest.fixture
+def indexed_tree(tmp_path):
+    """The tracked-tree helper omits .git; index this contained copy explicitly."""
+    root = tmp_path / "harness"
+    shutil.copytree(tracked_checkout(), root, symlinks=True)
+    for args in (("init", "-q"), ("add", ".")):
+        subprocess.run(["git", "-C", str(root), *args], check=True,
+                       capture_output=True, env=child_env())
+    return root
+
+
+def plant_skill(root, name, chars, *, linked):
+    target = root.parent / name if linked else root / "skills" / name
+    target.mkdir(parents=True)
+    (target / "SKILL.md").write_text(
+        f"---\nname: {name}\ndescription: {'x' * (chars - len(name))}\n---\n",
+        encoding="utf-8",
+    )
+    if linked:
+        (root / "skills" / name).symlink_to(target, target_is_directory=True)
+
+
+def test_local_overlay_cost_is_visible_without_breaking_tracked_budget(indexed_tree):
+    clean = rc.census(indexed_tree)
+    clean_total = rc.channel_chars(clean)["skills"]
+    assert clean_total <= BUDGETS["skills"]
+    # Costs measured from the three live cards at the ticket's wave base.
+    for name, chars in (("email", 275), ("infrastructure", 275), ("directory", 282)):
+        plant_skill(indexed_tree, name, chars, linked=True)
+    observed = rc.census(indexed_tree)
+    totals = rc.channel_chars(observed)
+    assert totals["skills"] == clean_total
+    assert "Local skill links: absent" in rc._render(clean, False)
+    assert totals["skills-local"] == 832
+    # Positive control: the old combined-budget interpretation still overflows.
+    assert totals["skills"] + totals["skills-local"] > BUDGETS["skills"]
+    assert rc.session_chars(observed) == rc.session_chars(clean) + 832
+    assert rc.session_chars(observed) == sum(totals.values())
+    for detail in (False, True):
+        report = rc._render(observed, detail)
+        assert "Local skill links: present" in report
+        assert "832" in report
+        for name in ("email", "infrastructure", "directory"):
+            assert f"skills/{name}/SKILL.md" in report
+        assert "tracked" in report
+
+
+@pytest.mark.integration
+def test_git_index_handles_tracked_directory_links_and_untracked_directories(indexed_tree):
+    plant_skill(indexed_tree, "tracked-link", 71, linked=True)
+    subprocess.run(["git", "-C", str(indexed_tree), "add", "skills/tracked-link"],
+                   check=True, capture_output=True, env=child_env())
+    plant_skill(indexed_tree, "local-directory", 53, linked=False)
+    rows = {e.path: e for e in rc.skill_entries(indexed_tree)}
+    assert rows["skills/tracked-link/SKILL.md"].channel == "skills"
+    assert rows["skills/tracked-link/SKILL.md"].tracking == "tracked"
+    assert rows["skills/local-directory/SKILL.md"].channel == "skills-local"
+    assert rows["skills/local-directory/SKILL.md"].tracking == "untracked"
+
+
+def test_missing_git_metadata_keeps_full_observed_cost_and_reports_unknown(tmp_path):
+    # No .git: never infer "untracked" from a failed Git inspection.
+    plant_skill(tmp_path, "unknown", 97, linked=False)
+    rows = rc.skill_entries(tmp_path)
+    assert rc.channel_chars(rows)["skills"] == 97
+    assert rows[0].tracking == "unknown"
+    assert rc.session_chars(rows) == 97
+    report = rc._render(rows, False)
+    assert "unknown" in report
+    assert "Local skill links: unknown" in report
+    assert "skills/unknown/SKILL.md" in report
