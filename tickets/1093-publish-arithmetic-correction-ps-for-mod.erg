@@ -14,7 +14,7 @@ The published model-comparison scores contain tariff arithmetic errors. User dec
 
 ## Frozen artefacts
 
-Arena repository: /home/haduong/CNRS/code/arena
+Arena repository: ~/CNRS/code/arena
 Bundle: archives/2026-10-13-arithmetic-correction/
 Read README.md and verify SHA256SUMS.json before use. Corrected FR/EN PDFs, figures, paired comparisons, blog PS HTML, optional comment draft, frozen published snapshot, source hashes, correction audit and reproduction scripts are preserved together. Original published blog PDF remains identifiable; it has not been replaced.
 
