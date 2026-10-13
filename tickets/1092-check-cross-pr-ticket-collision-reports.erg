@@ -30,3 +30,11 @@ breaks the ticket ID and every cross-reference to it.
 - [ ] Run from a worktree whose branch has an open PR adding a ticket file, it exits 0 with that PR excluded, verified against a real open PR
 - [ ] Positive control: a genuine sibling collision is still reported when two open PRs add the same ID and the script runs from one of them
 - [ ] `make check` passes
+
+## Raid plan — 2026-10-13
+
+Actions: preserve explicit SELF_PR_NUMBER and the no-ticket fast path; infer this PR with a marked forge lookup when unset. A lookup failure is not proof of no PR: use the successfully fetched open-PR list/current branch to disambiguate, report uncertainty and never recommend renumbering on an uncertain self claim. Update forge-coupling documentation.
+
+First test: unset SELF_PR_NUMBER; own PR claims the added ID, a sibling claims a distinct ID; expect exit 0 and no own-PR file fetch. Positive control: sibling claims same ID and is named with exit 1. Cover lookup miss/failure, no open PR, override and unreadable forge. Validate against a real open PR as required.
+
+Files: scripts/check-cross-pr-ticket-collision.sh; tests/test_check_cross_pr_ticket_collision.sh; this ticket. Dependencies: git, gh, jq and existing hermetic shell fixtures. No new library. Exit criteria unchanged.
