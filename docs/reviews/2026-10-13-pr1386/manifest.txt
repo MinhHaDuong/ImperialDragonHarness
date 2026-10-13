@@ -1,0 +1,3 @@
+correctness	claude-haiku-5-5 @medium	Anthropic	mechanical transfer and exit criteria
+consistency	claude-opus-5-5 @medium	Anthropic	judgment of integration references and ownership
+red-team	claude-sonnet-5-5 @medium	Anthropic	adversarial migration and external destination assumptions

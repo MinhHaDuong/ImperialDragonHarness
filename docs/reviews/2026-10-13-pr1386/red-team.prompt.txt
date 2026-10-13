@@ -1,0 +1,138 @@
+You are a detached code-reviewer seat, perspective red-team. Review PR 1386 anchored HEAD b731a7287d1448ae57396197c3a9a219bbe9715a at /home/haduong/.agents/.claude/worktrees/review-1386. Read-only review: every git read uses git -C /home/haduong/.agents/.claude/worktrees/review-1386; no commits, pushes, ticket edits, source edits, forge posts or credentials access. Do not spawn agents. Write exactly /home/haduong/.agents/.claude/worktrees/review-1386/.panel/1386/red-team.md.part then rename to /home/haduong/.agents/.claude/worktrees/review-1386/.panel/1386/red-team.md; all other files are read-only. If file writes unavailable, return report in final response (launcher will preserve it as detached transport output, clearly labeled). Keep under 2500 words. Report concrete findings confidence and verdict approve/comment/request-changes. Nonblockers use verifiable: with evidence, consider: for untested hypotheses, nofollow: for known disposition. Report actual model identity only if runtime evidence exists; no self-identity guessing.
+The PR deletes 96 transferred files, mostly historical reports. Do NOT reread the 49K historical lines. Instead inspect /home/haduong/CNRS/code/arena/migration/from-harness-2026-10-13.json and migration/README.md plus /home/haduong/.agents/.claude/worktrees/review-1386/.panel/1386/manifest-verification.json. Focus small integration edits with git diff excluding removed history and uv.lock bulk. Read docs/arena-integration.md, skills/route changes, tests/test_route_grid.py, pyproject.toml, README.md, STATE.md and archived tickets 1048/1087. Manifest transfer verification passed all original hashes and destination exists; six documented adaptations. Routing numeric data should remain unchanged. Arena no remote configured, local destination already committed. Known authorized disposition: installed Claude/Pi arena symlinks still point harness and caller will relocate after merge; record nofollow only, not blocker. General native /review unavailable; you serve supplementary review, not native execution. Verify practical consistency and remaining active references; dated memory and closed tickets may retain historical links.
+Ticket criteria:
+%erg 0.1
+Title: Finish separation of the independent arena repository from the harness
+Created: 2026-10-13
+Author: Codex
+
+--- log ---
+2026-10-13T19:27Z Codex created User requested verification and completion of the independent arena separation.
+
+2026-10-13T19:28Z Codex note Transfer byte-verified; FR/EN reproduction 24 artifacts per language (PDF text and other file bytes identical); correction archive hashes all verify. Harness make check: 1579 passed, 3 skipped with required host access. Arena standalone validation recorded in migration/README.md. Merge still requires the migration-size review exception.
+
+2026-10-13T19:33Z Codex note Author requested initializing arena ticket store, preserving open copies of 1087 and 1048 there, and closing the harness copies as wontdo. Implemented using erg init and erg close; original journals preserved.
+
+--- body ---
+## Context
+Arena runner lives in its own repository, while the harness still hosted analysis, reporting, protocol and open project tickets. Transfer the logical unit with evidence; retain the harness-owned routing grid and historical harness journals.
+
+## Exit criteria
+- [x] Analysis, report generators, protocol, historical reports and their tests are available in the independent arena repository with a source commit and original SHA-256 manifest.
+- [x] Open arena tickets 1048, 1049, 1050, 1051, 1058, 1061, 1087, 1093 retain IDs, complete journals and unresolved criteria in arena, and leave the harness open-ticket queue.
+- [x] Harness route integration points to the independent tools; routing data numbers and historical journals are unchanged.
+- [x] Standalone arena tests and before/after FR+EN reproduction pass; arithmetic-correction archive hashes verify.
+- [x] Harness catalog, dependency lock and full checks pass.
+
+## Evidence
+Harness: docs/arena-integration.md. Arena: migration/from-harness-2026-10-13.json and migration/README.md. Local review branches: separate-arena (harness) and separate-harness-assets (arena). Transfer does not publish or rerun private benchmark legs.
+
+Changed-file roster:
+README.md
+STATE.md
+docs/2026-10-03-model-tournament-concept.md
+docs/2026-10-06-mistral4-extension-plan.json
+docs/2026-10-06-mistral4-handoff.md
+docs/2026-10-06-mistral4-openrouter-plan.json
+docs/2026-10-06-mistral4-smoke-cost-proof.json
+docs/2026-10-06-routing-doctrine-brief.md
+docs/2026-10-06-tournament-corrected-summary.json
+docs/2026-10-07-mistral4-0874-postmortem.md
+docs/2026-10-07-mistral4-explicit-model.json
+docs/arena-integration.md
+docs/blog/2026-10-06-mistral-large-4-premier-test.md
+docs/mistral-http-debugging.md
+docs/tournament-graphs-en/README.md
+docs/tournament-graphs-en/appendix-analysis.json
+docs/tournament-graphs-en/comparisons.csv
+docs/tournament-graphs-en/cost_usd.dot
+docs/tournament-graphs-en/cost_usd.png
+docs/tournament-graphs-en/model-comparison.pdf
+docs/tournament-graphs-en/paired-differences.csv
+docs/tournament-graphs-en/paired-distributions-1.png
+docs/tournament-graphs-en/paired-distributions-2.png
+docs/tournament-graphs-en/paired-distributions-3.png
+docs/tournament-graphs-en/paired-distributions-4.png
+docs/tournament-graphs-en/paired-distributions-5.png
+docs/tournament-graphs-en/quality-cost.png
+docs/tournament-graphs-en/quality-speed.png
+docs/tournament-graphs-en/quality-total-cost-010-eur.png
+docs/tournament-graphs-en/quality-total-cost.png
+docs/tournament-graphs-en/quality.dot
+docs/tournament-graphs-en/quality.png
+docs/tournament-graphs-en/seconds.dot
+docs/tournament-graphs-en/seconds.png
+docs/tournament-graphs-en/snapshot.json
+docs/tournament-graphs-en/speed-cost.png
+docs/tournament-graphs-en/tests.json
+docs/tournament-graphs-en/total-cost-010-eur.json
+docs/tournament-graphs-en/total-cost.json
+docs/tournament-graphs/HANDOFF-doudou.md
+docs/tournament-graphs/README.md
+docs/tournament-graphs/appendix-analysis.json
+docs/tournament-graphs/candidats-cycle-suivant.md
+docs/tournament-graphs/comparaisons-modeles.pdf
+docs/tournament-graphs/comparisons.csv
+docs/tournament-graphs/completion-1046.md
+docs/tournament-graphs/configurations.md
+docs/tournament-graphs/cost_usd.dot
+docs/tournament-graphs/cost_usd.png
+docs/tournament-graphs/diffusion-draft.md
+docs/tournament-graphs/haiku55-accounting.json
+docs/tournament-graphs/haiku55-results.csv
+docs/tournament-graphs/paired-differences.csv
+docs/tournament-graphs/paired-distributions-1.png
+docs/tournament-graphs/paired-distributions-2.png
+docs/tournament-graphs/paired-distributions-3.png
+docs/tournament-graphs/paired-distributions-4.png
+docs/tournament-graphs/paired-distributions-5.png
+docs/tournament-graphs/publication-review-2026-10-08.md
+docs/tournament-graphs/quality-cost.png
+docs/tournament-graphs/quality-speed.png
+docs/tournament-graphs/quality-total-cost-010-eur.png
+docs/tournament-graphs/quality-total-cost.png
+docs/tournament-graphs/quality.dot
+docs/tournament-graphs/quality.png
+docs/tournament-graphs/seconds.dot
+docs/tournament-graphs/seconds.png
+docs/tournament-graphs/snapshot.json
+docs/tournament-graphs/speed-cost.png
+docs/tournament-graphs/tests.json
+docs/tournament-graphs/token-speed.json
+docs/tournament-graphs/total-cost-010-eur.json
+docs/tournament-graphs/total-cost.json
+pyproject.toml
+scripts/mistral-http-replay.py
+scripts/mistral-http-trace.cjs
+scripts/mistral4-extension.py
+scripts/tournament-analysis.py
+scripts/tournament-attempts.py
+scripts/tournament-english.json
+scripts/tournament-graphs-en.py
+scripts/tournament-graphs.py
+scripts/tournament-mistral-invoice.json
+scripts/tournament-mistral-series.py
+scripts/tournament-report-completion.py
+scripts/tournament-token-speed.py
+skills/arena/SKILL.md
+skills/route/SKILL.md
+skills/route/grid-coverage.json
+skills/route/grid.json
+tests/test-mistral-http-trace.cjs
+tests/test-mistral-loop-breaker.cjs
+tests/test_route_grid.py
+tests/test_tournament_analysis.py
+tests/test_tournament_attempts.py
+tests/test_tournament_graphs.py
+tests/test_tournament_report_completion.py
+tickets/1049-padme-hw-v2-merged-install-window-5060-t.erg
+tickets/1050-arena-262k-long-context-rerun-on-hw-v2-k.erg
+tickets/1051-skill-arena-candidate-scouting-web-resea.erg
+tickets/1058-judge-panel-sensitivity-does-removing-on.erg
+tickets/1061-arena-redesign-test-orchestrator-coder-a.erg
+tickets/1093-publish-arithmetic-correction-ps-for-mod.erg
+tickets/1094-separate-arena-from-harness.erg
+tickets/closed/1048-model-tournament-cycle-3-locals-medium-v.erg
+tickets/closed/1087-arena-runner-provider-error-with-empty-o.erg
+uv.lock
+

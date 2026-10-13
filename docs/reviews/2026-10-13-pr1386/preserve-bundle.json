@@ -1,0 +1,30 @@
+{
+  "minimal_wrapup_bundle": [
+    "gaze-summary.md",
+    "adherence.md",
+    "adherence-lint-host.log",
+    "correctness.md",
+    "consistency.md",
+    "simplify.md",
+    "supplementary-general-review.md",
+    "manifest-verification.json",
+    "routing-evidence.json",
+    "launch-rejection.txt",
+    "correctness.attribution.json",
+    "consistency.attribution.json",
+    "red-team.attribution.json",
+    "anchor-final.txt"
+  ],
+  "raw_attempts_preserve_also": [
+    "adherence-lint.log",
+    "adherence-lint-retry.log",
+    "review-pr.md",
+    "review.md",
+    "manifest.txt",
+    "width.txt",
+    "correctness.prompt.txt",
+    "consistency.prompt.txt",
+    "red-team.prompt.txt"
+  ],
+  "pr_comment": "https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1386#issuecomment-6154160669"
+}

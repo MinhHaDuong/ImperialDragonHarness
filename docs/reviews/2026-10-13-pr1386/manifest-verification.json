@@ -1,0 +1,12 @@
+{
+  "original_hashes_verified": 96,
+  "failures": [],
+  "adapted_after_transfer": [
+    "scripts/tournament-analysis.py",
+    "scripts/tournament-graphs.py",
+    "skills/arena/SKILL.md",
+    "tests/test_tournament_analysis.py",
+    "tests/test_tournament_report_completion.py",
+    "scripts/mistral4-extension.py"
+  ]
+}
