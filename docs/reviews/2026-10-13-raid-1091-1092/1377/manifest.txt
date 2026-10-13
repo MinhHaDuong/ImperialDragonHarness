@@ -1,0 +1,4 @@
+correctness	gpt-6.1-sol	low	correctness.md
+consistency	gpt-6-luna	medium	consistency.md
+doc-propagation	gpt-6-luna	medium	doc-propagation.md
+red-team	claude-sonnet-5-5	medium	red-team.md
