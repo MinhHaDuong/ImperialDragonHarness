@@ -14,9 +14,9 @@
 # is invisible to it — the script therefore compares added IDs against the base
 # tip's tickets/ directly, in plain git. And sibling OPEN PRs, via the forge.
 #
-# Forge coupling is confined to four calls, each marked `# harness-extension-point`
+# Forge coupling is confined to three calls, each marked `# harness-extension-point`
 # (the isolation idiom used in skills/merge/erg-pr-merge): resolving the source
-# repository and branch PR, listing open PRs and fetching a PR's changed files. Everything else is forge-agnostic git + text.
+# repository, listing open PRs and fetching a PR's changed files. Everything else is forge-agnostic git + text.
 #
 # Environment (all optional; defaults suit GitHub Actions `pull_request`):
 #   BASE_REF        base ref to diff against          (default: origin/main)
@@ -25,6 +25,8 @@
 # Exit 0: no collision (or no ticket files added — fast path, no forge calls).
 # Exit 2: the open-PR list could not be fetched (no gh auth/network/GitHub
 #         remote), or self identity cannot be established — fails closed.
+#         Inspection failure takes precedence over any base collision already
+#         reported, and suppresses renumber advice until self identity is known.
 # Exit 1: a ticket ID this PR adds is also added by an open PR. Message names the
 #         colliding PR(s) and suggests the next free ID.
 
@@ -103,11 +105,6 @@ fi
 # ── infer self only when the caller supplied no explicit override ────────────
 if [[ -z "$SELF_PR" ]]; then
     CURRENT_BRANCH=$(git symbolic-ref --quiet --short HEAD || true)
-    # harness-extension-point: GitHub CLI — resolve the current branch's PR.
-    if ! SELF_PR=$(gh pr view --json number,state --jq 'select(.state == "OPEN") | .number' 2>/dev/null); then
-        echo "cross-pr-collision: WARNING — self PR lookup unavailable or no open PR; resolving from the open-PR list." >&2
-        SELF_PR=""
-    fi
     # Resolve the local source repository, not the forge's default/base repo:
     # forks may have identically named branches. Never exclude on name alone.
     SOURCE_URL=$(git remote get-url origin 2>/dev/null || true)
@@ -121,8 +118,7 @@ if [[ -z "$SELF_PR" ]]; then
         echo "cross-pr-collision: ambiguous self PR for current repository/branch; set SELF_PR_NUMBER (no renumber recommendation)." >&2
         exit 2
     fi
-    # The list also verifies a successful pr view result against source identity.
-    # A miss with no source match means every listed PR is a genuine sibling.
+    # No source match means every listed PR is a genuine sibling.
     SELF_PR="$SELF_MATCHES"
 fi
 

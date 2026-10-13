@@ -38,14 +38,14 @@ breaks the ticket ID and every cross-reference to it.
 
 ## Raid plan — 2026-10-13
 
-Actions: preserve explicit SELF_PR_NUMBER and the no-ticket fast path; infer this PR with a marked forge lookup when unset. A lookup failure is not proof of no PR: use the successfully fetched open-PR list/current branch to disambiguate, report uncertainty and never recommend renumbering on an uncertain self claim. Update forge-coupling documentation.
+Actions: preserve explicit SELF_PR_NUMBER and the no-ticket fast path; infer this PR from the marked open-PR list lookup plus the proven local origin repository/current branch when unset. An inspection failure is not proof of no PR: fail closed and never recommend renumbering on an uncertain self claim. Update forge-coupling documentation.
 
-First test: unset SELF_PR_NUMBER; own PR claims the added ID, a sibling claims a distinct ID; expect exit 0 and no own-PR file fetch. Positive control: sibling claims same ID and is named with exit 1. Cover lookup miss/failure, no open PR, override and unreadable forge. Validate against a real open PR as required.
+First test: unset SELF_PR_NUMBER; own PR claims the added ID, a sibling claims a distinct ID; expect exit 0 and no own-PR file fetch. Positive control: sibling claims same ID and is named with exit 1. Cover no matching open PR, repository/list inspection failure, override, foreign same-name siblings and ambiguity. Validate against a real open PR as required.
 
 Files: scripts/check-cross-pr-ticket-collision.sh; tests/test_check_cross_pr_ticket_collision.sh; this ticket. Dependencies: git, gh, jq and existing hermetic shell fixtures. No new library. Exit criteria unchanged.
 
 ## Validation evidence — 2026-10-13
 
-- Real open PR #1374 (`t1084-roar-close-and-clean`, head `aa4850dea8ecdbc5017900537a579d4708db3303`) adds 1089/1090: isolated checkout, unset SELF_PR_NUMBER, exit 0. A forced self-lookup failure with the real open-PR list/source-repository lookup also exits 0.
-- Hermetic open-PR controls exclude own #99 and report sibling #77 for ID 0300 (exit 1). Single foreign-fork #55 with the same branch name also reports a collision; successful-but-foreign lookup is verified against source identity. Missing source identity and ambiguous self both fail closed without renumber advice.
-- Updated affected shell suite passes; `make check-fast`: 964 passed; declared adherence `make lint`: 182 passed. Post-fix full `make check`: 1603 passed, 4 skipped (76.14s); structural checks passed.
+- Real open PR #1374 (`t1084-roar-close-and-clean`, head `aa4850dea8ecdbc5017900537a579d4708db3303`) adds 1089/1090: isolated checkout, unset SELF_PR_NUMBER, exit 0. Final simplified inference uses the actual open-PR list and origin-repository lookup, exits 0 and excludes its own claim.
+- Hermetic open-PR controls exclude own #99 and report sibling #77 for ID 0300 (exit 1). Single foreign-fork #55 with the same branch name also reports a collision; same-name own and foreign PRs are distinguished by source repository identity. Missing source identity and ambiguous self both fail closed without renumber advice.
+- Updated affected shell suite passes; `make check-fast`: 964 passed; declared adherence `make lint`: 182 passed. Final simplified full `make check`: 1603 passed, 4 skipped (84.02s); structural checks passed.
