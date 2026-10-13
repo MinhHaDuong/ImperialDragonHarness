@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-10-12T16:57Z Minh Ha-Duong created
 2026-10-13T09:38Z Minh-Ha-Duong note raid Imagine: EXECUTE; keep skills budget at 7000 for tracked content, measure local overlays separately with inventory and full session cost; Blind-Spot requires Git tracking semantics including tracked directory symlinks; exit criteria unchanged.
+2026-10-13T09:39Z Minh-Ha-Duong note raid feasibility WARN: tracked_tree fixture has no Git metadata; initialize/index a temporary fixture for classification controls and retain a separate unknown-metadata control. Three planned paths plus shared wave annotations remain below the 15-file breaker; no shared registry or new dependency.
 
 --- body ---
 ## Context
