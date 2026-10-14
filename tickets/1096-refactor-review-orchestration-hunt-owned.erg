@@ -11,6 +11,7 @@ Label: deferred
 2026-10-14T19:35Z reviewer note Author answered the five questions (see docs/discussions/2026-10-14-1096-design.md, Answers): C now plus a separate reliability ticket; evidence allow-list from the 3-month census incl. Copilot; inherited independence only if identical; native seats optional; gaze becomes the single review skill, code fold now, prose after a measured raid, no aliases, retired names linted.
 2026-10-14T19:43Z reviewer note Reliability work filed as ticket 1099 (Blocked-by: 1096), at the author's request.
 2026-10-14T19:55Z reviewer note Round 3 panel on the adopted plan recorded in the design doc: child 0 (other-project sweep) added, all seat objections absorbed; three questions await the author.
+2026-10-14T19:57Z reviewer note Author answered round 3: child 0 other-project sweep authorized (no stub skill); Copilot a binding comment, never a planned seat; risk floor from paths plus ticket text. Plan of record: children 0-3, measured raid, conditional child 4, then 1099.
 
 --- body ---
 ## Author mandate (2026-10-14)
