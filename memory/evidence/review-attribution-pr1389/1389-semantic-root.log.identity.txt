@@ -1,0 +1,12 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /tmp/idh-raid-1080-prep
+model: gpt-6.1-sol
+provider: openai
+approval: on-request
+sandbox: read-only
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a139e8-b209-7c73-b945-a2a2e63d1eb8
+--------
