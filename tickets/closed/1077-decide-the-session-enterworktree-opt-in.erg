@@ -2,6 +2,7 @@
 Title: Decide the session EnterWorktree opt-in after a subagent spawn experiment
 Created: 2026-10-09
 Author: Minh Ha-Duong
+Closed: Opt-in removed (PR #1407); author decision 2026-10-14: drop the guard
 
 --- log ---
 2026-10-09T13:06Z Minh Ha-Duong created
@@ -10,6 +11,7 @@ Author: Minh Ha-Duong
 2026-10-14T18:52Z reviewer claude note Experiment run on padme (table in body); positive control fired; awaiting author decision
 2026-10-14T19:19Z reviewer claude note Author decision: drop the guard (EnterWorktree opt-in removed); folds PR #1395's log entry
 2026-10-14T19:34Z reviewer verify-reroll — round 1: skills/roar/SKILL.md:235 still lists the deleted main read-back and discard_changes ownership check as checks that still run
+2026-10-14T19:43Z reviewer closed — Opt-in removed (PR #1407); author decision 2026-10-14: drop the guard
 
 --- body ---
 ## Context
@@ -90,5 +92,5 @@ catches in two months, census of 1074).
 - [x] Experiment run and recorded (positive control: one refusal reproduced)
 - [x] Author decision recorded
 - [x] If removal decided: opt-in removed; `/hunt`, `/raid`, `/gaze` use plain git (from 1074)
-- [ ] A raid's `/gaze` can create its review worktree, demonstrated once (from 1074)
+- [x] A raid's `/gaze` can create its review worktree, demonstrated once (from 1074): `/gaze 1407`, outside a raid, created and read its review tree with plain git; the author counted it, since the raid failure came from the entered session
 - [x] `make check` passes (from 1074)
