@@ -229,7 +229,11 @@ worktree go once the branch is pushed and auto-merge is armed.
    Exit 0 clean, 1 findings, 2 could-not-look (never an all-clear: a
    `tickets/` whose `erg` does not run, an unreadable forge or a failed fetch
    all give 2; a repo with no `tickets/` directory at all gets an explicit
-   `skipped` line for CLOSE and CLAIMS, per the prerequisite policy above). Omit
+   `skipped` line for CLOSE and CLAIMS, per the prerequisite policy above).
+   The exit code and report are the verdict for every phase: act on them and do
+   not re-run the script's own fetches, ancestry or OID checks, or a phase that
+   exited 0, to confirm it; the checks this skill names outside the script
+   still run. Omit
    `--ticket` when there is none. Not in a worktree: use `--phase all` with step 10's explicit
    cleanup targets and skip step 9. With no targets, cleanup deletes no branches. Its report lines:
 
