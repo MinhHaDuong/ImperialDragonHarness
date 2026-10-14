@@ -1,0 +1,61 @@
+%erg 0.1
+Title: Refactor review orchestration: hunt-owned plan, review-code/prose helpers, final gate
+Created: 2026-10-14
+Author: Minh Ha-Duong
+Label: deferred
+
+--- log ---
+2026-10-14T09:55Z Minh Ha-Duong created
+2026-10-14T10:30Z author note Merge the proposal with reservations about a three-skill review architecture; evaluate alternatives before implementation.
+
+--- body ---
+## Author mandate (2026-10-14)
+
+Refactor the articulation AND names of the review workflow. Current overlap:
+raid orchestrates tickets; hunt already runs review-pr; gaze orchestrates
+another review battery, including review-pr; review-pr itself orchestrates
+reviewers. PR-based naming (review-pr) also clashes with content-based naming
+(review-pr-prose, called review-prose in discussion).
+
+The author requests this follow-up after raids 1080/1089 exceeded the requested
+20-minute closing window. Implementation belongs to a later session. Related
+resource-lifecycle discussion is deferred separately under 1095.
+
+## Required direction
+
+Hunt owns a justified, proportionate review plan based on risk and actual
+review history. The plan controls execution, rather than merely narrating it:
+what valid evidence exists, what changed since it, which perspectives remain
+necessary, why and at what budget. Reuse valid current evidence; no automatic
+second battery for an unchanged diff.
+
+The review / review-code / review-prose arrangement is a candidate, not an
+approved three-skill architecture. The author explicitly reserves judgment
+on that extra layer. Compare a single review skill with content-specific modes
+against separate helpers, and justify the smallest arrangement that meets the
+needs. Hunt controls the chosen review mechanism. Preserve useful standalone
+review invocation. Raid coordinates tickets and merges, not a second per-ticket
+review orchestrator. Remove gaze as a separate orchestration layer, or retain
+only a compatibility alias that does not add another battery.
+
+Keep verify-gate as the final check of actual exit criteria, comments and
+applicable proof for the final head/base. Reviewers remain distinct from the
+coder; required lineage independence and actual identity/coverage records
+still apply. Missing review evidence must never become simulated approval.
+
+## Exit criteria
+
+- [ ] Hunt produces and executes the justified review plan above, with explicit
+      reuse/invalidation decisions tied to revisions and affected scope.
+- [ ] Resolve the author's reservation about a three-skill architecture: compare
+      simpler alternatives and justify the chosen names and responsibilities;
+      gaze removal or compatibility-only behavior is explicit.
+- [ ] verify-gate still blocks missing criteria, unresolved blocking findings
+      and absent required proof; merge remains a separate caller decision.
+- [ ] Regression scenarios demonstrate unchanged-head reuse without duplicate
+      reviewers, proportionate re-review after relevant changes, and rejection
+      of stale/missing proof. They test behavior, not wording alone.
+- [ ] Update affected skills, profiles, callers, documentation and catalog;
+      split into child PRs before implementation if the 15-file breaker applies,
+      and verify their integration before closing the tracker.
+
