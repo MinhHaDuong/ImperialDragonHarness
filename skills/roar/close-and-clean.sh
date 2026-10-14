@@ -13,10 +13,12 @@
 # Phases exist because step 9 (worktree removal) sits between the preflight and
 # the cleanup, and the cleanup's current-branch guard depends on the cwd:
 #   before-exit  close, close claims, tracker detection, preflight
-#   preflight    the worktree-exit preflight alone, run fresh right before
-#                the removal (the before-exit result predates the wrap-up work)
-#   after-exit   local and remote scoped branch cleanup
-#   all          both (default; for a roar that is not in a worktree)
+#   preflight    the worktree-exit preflight alone
+#   exit-check   step 9 in one call (ticket 1098), run inside the worktree:
+#                fresh preflight, integration fetch, HEAD ancestry or the bundle
+#                exception, local main sync; prints EXIT: READY or KEEP-PENDING
+#   after-exit   worktree removal (--remove-worktree), then scoped branch cleanup
+#   all          before-exit and after-exit (default; a roar not in a worktree)
 #
 set -euo pipefail
 
@@ -24,11 +26,13 @@ TICKET=""
 DAYS=7
 DEFAULT=""
 PHASE=all
+BUNDLE=""
+RM_TREE=""
 LOCAL_TARGETS=()
 REMOTE_TARGETS=()
 while [ $# -gt 0 ]; do
     case "$1" in
-        --ticket|--days|--default-branch|--phase|--local-branch|--remote-branch)
+        --ticket|--days|--default-branch|--phase|--local-branch|--remote-branch|--bundle-branch|--remove-worktree)
             [ $# -ge 2 ] || { echo "close-and-clean: $1 needs a value" >&2; exit 2; } ;;&
     esac
     case "$1" in
@@ -38,15 +42,18 @@ while [ $# -gt 0 ]; do
         --days)           DAYS="$2"; shift 2 ;;
         --default-branch) DEFAULT="$2"; shift 2 ;;
         --phase)          PHASE="$2"; shift 2 ;;
+        --bundle-branch)  BUNDLE="$2"; shift 2 ;;
+        --remove-worktree) RM_TREE="$2"; shift 2 ;;
         -h|--help)
-            echo "usage: close-and-clean.sh [--ticket NNNN] [--days N] [--default-branch B] [--phase before-exit|preflight|after-exit|all] [--local-branch B=OID] [--remote-branch B=OID]"
+            echo "usage: close-and-clean.sh [--ticket NNNN] [--days N] [--default-branch B] [--phase before-exit|preflight|exit-check|after-exit|all] [--bundle-branch B] [--remove-worktree PATH] [--local-branch B=OID] [--remote-branch B=OID]"
             echo "  Roar steps 7-10. Exit 0 clean, 1 findings, 2 could-not-look."
             echo "  Repeat branch options only for this completed task; OID is its merged PR head (full hex)."
+            echo "  --bundle-branch and --remove-worktree name only what this task owns."
             exit 0 ;;
         *) echo "close-and-clean: unknown argument '$1'" >&2; exit 2 ;;
     esac
 done
-case "$PHASE" in before-exit|preflight|after-exit|all) ;; *) echo "close-and-clean: bad --phase '$PHASE'" >&2; exit 2 ;; esac
+case "$PHASE" in before-exit|preflight|exit-check|after-exit|all) ;; *) echo "close-and-clean: bad --phase '$PHASE'" >&2; exit 2 ;; esac
 
 ROAR_DIR="${CLOSE_AND_CLEAN_ROAR_DIR:-$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)}"
 IDH_ROOT="${IDH_ROOT:-$(cd -P "$ROAR_DIR/../.." && pwd -P)}"
@@ -221,8 +228,144 @@ checked_out() { # <branch>; unreadable list refuses cleanup
     return 1
 }
 
+# Resolve the default integration ref and fetch only it. Shared by exit-check
+# and cleanup; <label> prefixes the report. Returns 1 after a could-not-look.
+has_origin=0
+resolve_base() { # <label>
+    local rc
+    has_origin=0
+    git remote get-url origin >/dev/null 2>&1 && has_origin=1
+    if [ "$has_origin" -eq 0 ]; then
+        DEFAULT="${DEFAULT:-main}"
+        base="refs/heads/$DEFAULT"
+        return 0
+    fi
+    if [ -z "$DEFAULT" ]; then
+        DEFAULT=$(git symbolic-ref -q refs/remotes/origin/HEAD 2>/dev/null || true)
+        DEFAULT="${DEFAULT#refs/remotes/origin/}"
+    fi
+    DEFAULT="${DEFAULT:-main}"
+    base="refs/remotes/origin/$DEFAULT"
+    if ! git check-ref-format "refs/heads/$DEFAULT" >/dev/null 2>&1 ||
+        ! git check-ref-format "$base" >/dev/null 2>&1; then
+        note "$1: COULD-NOT-LOOK invalid default integration ref"; bump 2; return 1
+    fi
+    rc=0
+    git symbolic-ref -q "$base" >/dev/null 2>&1 || rc=$?
+    case "$rc" in
+        1) ;;
+        *) note "$1: COULD-NOT-LOOK integration tracking ref is symbolic or unreadable"; bump 2; return 1 ;;
+    esac
+    # Ignore configured refspecs/opportunistic mappings: they can force-move
+    # unrelated local heads. Fetch only the integration ref, with no tags,
+    # pruning, submodule recursion or automatic repository maintenance.
+    if ! git fetch --refmap= --no-prune --no-prune-tags --no-tags \
+        --no-recurse-submodules --no-auto-gc --no-write-commit-graph origin \
+        "+refs/heads/$DEFAULT:$base" >/dev/null 2>&1; then
+        note "$1: COULD-NOT-LOOK integration fetch failed — nothing changed"; bump 2; return 1
+    fi
+}
+
+# ── Step 9: exit check, one call before leaving the worktree (ticket 1098) ─────
+# READY means: the tree is clean and its work is integrated (or is the armed
+# wrap-up bundle). The caller then cds to the main checkout and lets
+# after-exit remove the tree: no `remove`, no `discard_changes` (ticket 1097).
+bundle_armed() { # <head oid>
+    local answer armed
+    answer=$(git ls-remote --exit-code --heads origin "refs/heads/$BUNDLE") || {
+        note "EXIT: KEEP-PENDING bundle $BUNDLE is not on origin"; bump 1; return 1;
+    }
+    if [ "$answer" != "$(printf '%s\t%s' "$1" "refs/heads/$BUNDLE")" ]; then
+        note "EXIT: KEEP-PENDING bundle $BUNDLE on origin differs from HEAD — push it"; bump 1; return 1
+    fi
+    # <!-- harness-extension-point --> forge read-back of the merge request
+    armed=$(gh pr view "$BUNDLE" --json state,autoMergeRequest \
+        --jq 'select(.state == "OPEN" and .autoMergeRequest != null) | "armed"' 2>/dev/null) || {
+        note "EXIT: COULD-NOT-LOOK cannot read the merge request for $BUNDLE"; bump 2; return 1;
+    }
+    if [ "$armed" != armed ]; then
+        note "EXIT: KEEP-PENDING merge request for $BUNDLE is not open with auto-merge armed"; bump 1; return 1
+    fi
+    note "EXIT: bundle $BUNDLE pushed, merge request open with auto-merge armed"
+}
+
+exit_check() {
+    local head cur top primary rc after
+    preflight
+    if [ "$SEV" -ge 1 ]; then
+        note "EXIT: KEEP-PENDING preflight did not pass"; return 0
+    fi
+    if [ "$(git rev-parse --git-dir)" = "$(git rev-parse --git-common-dir)" ]; then
+        note "EXIT: skipped (not in a linked worktree)"; return 0
+    fi
+    resolve_base EXIT || return 0
+    if ! base_tip=$(git rev-parse --verify -q "$base^{commit}") ||
+        ! head=$(git rev-parse --verify -q HEAD) ||
+        ! top=$(git rev-parse --show-toplevel); then
+        note "EXIT: COULD-NOT-LOOK cannot read HEAD or $base"; bump 2; return 0
+    fi
+    cur=$(git symbolic-ref --quiet --short HEAD || true)
+    after="--phase after-exit --remove-worktree $top"
+    rc=0
+    git merge-base --is-ancestor "$head" "$base_tip" || rc=$?
+    case "$rc" in
+        0)  note "EXIT: HEAD is in $base"
+            [ -n "$cur" ] && [ "$cur" != "$DEFAULT" ] && after="$after --local-branch $cur=$head" ;;
+        1)  if [ -n "$BUNDLE" ] && [ "$BUNDLE" = "$cur" ] && [[ "$BUNDLE" == roar-* ]] && [ "$has_origin" -eq 1 ]; then
+                bundle_armed "$head" || return 0
+            else
+                note "EXIT: KEEP-PENDING HEAD $head is not in $base"; bump 1; return 0
+            fi ;;
+        *)  note "EXIT: COULD-NOT-LOOK ancestry check failed"; bump 2; return 0 ;;
+    esac
+    primary=$(git worktree list --porcelain | sed -n '1s/^worktree //p') || primary=""
+    if [ -z "$primary" ]; then
+        note "EXIT: COULD-NOT-LOOK cannot find the main checkout"; bump 2; return 0
+    fi
+    # Best effort: a synced local main lets after-exit's `branch -d` see the
+    # merge. A refusal here is reported, never a reason to keep the tree.
+    if [ "$has_origin" -eq 1 ]; then
+        "$IDH_ROOT/scripts/sync-local-main.sh" "$primary" "$DEFAULT" | sed 's/^/roar: SYNC: /' || true
+        if [ "$(git -C "$primary" rev-parse --verify -q "refs/heads/$DEFAULT" || true)" != "$base_tip" ]; then
+            note "EXIT: local $DEFAULT differs from $base after sync — after-exit may keep the branch"
+        fi
+    fi
+    note "EXIT: READY — cd to the main checkout $(printf %q "$primary"), then run: close-and-clean.sh $after"
+}
+
+# ── Step 9c/10: remove the owned worktree once the session has left it ─────
+real() { cd -P "$1" 2>/dev/null && pwd -P; }
+
+remove_worktree() {
+    local path listing p primary="" registered=0 here
+    [ -n "$RM_TREE" ] || return 0
+    path=$(real "$RM_TREE") || { note "WORKTREE: ALREADY-ABSENT $RM_TREE"; return 0; }
+    listing=$(git worktree list --porcelain) || { note "WORKTREE: COULD-NOT-LOOK cannot list worktrees"; bump 2; return 0; }
+    while read -r p; do
+        p=$(real "$p") || continue
+        [ -n "$primary" ] || primary="$p"   # the first entry is the main checkout
+        [ "$p" = "$path" ] && registered=1
+    done < <(printf '%s\n' "$listing" | sed -n 's/^worktree //p')
+    here=$(real "$(git rev-parse --show-toplevel)") || { note "WORKTREE: COULD-NOT-LOOK cannot read the current checkout"; bump 2; return 0; }
+    if [ "$registered" -eq 0 ]; then
+        note "WORKTREE: REFUSED $path is not a worktree of this repository"; bump 1; return 0
+    fi
+    if [ "$path" = "$primary" ]; then
+        note "WORKTREE: REFUSED $path is the main checkout"; bump 1; return 0
+    fi
+    if [ "$path" = "$here" ]; then
+        note "WORKTREE: REFUSED $path is the current checkout — cd to the main checkout first"; bump 1; return 0
+    fi
+    git worktree unlock "$path" >/dev/null 2>&1 || true   # hunt locks its tree
+    if git worktree remove -- "$path" >/dev/null 2>&1; then
+        note "WORKTREE: REMOVED $path"
+    else
+        note "WORKTREE: FAILED $path — Git refused (uncommitted or untracked files); kept"; bump 1
+    fi
+}
+
 cleanup() {
-    local has_origin=0 target b oid ref cur rc deleted="" rdeleted=""
+    local target b oid ref cur rc deleted="" rdeleted=""
     if [ "${#LOCAL_TARGETS[@]}" -eq 0 ] && [ "${#REMOTE_TARGETS[@]}" -eq 0 ]; then
         note "SWEEP: skipped (no explicit completed-task branch targets)"; return 0
     fi
@@ -230,38 +373,9 @@ cleanup() {
     for target in "${LOCAL_TARGETS[@]}" "${REMOTE_TARGETS[@]}"; do
         validate_target "$target" || return 0
     done
-    git remote get-url origin >/dev/null 2>&1 && has_origin=1
-    if [ "$has_origin" -eq 1 ]; then
-        if [ -z "$DEFAULT" ]; then
-            DEFAULT=$(git symbolic-ref -q refs/remotes/origin/HEAD 2>/dev/null || true)
-            DEFAULT="${DEFAULT#refs/remotes/origin/}"
-        fi
-        DEFAULT="${DEFAULT:-main}"
-        base="refs/remotes/origin/$DEFAULT"
-        if ! git check-ref-format "refs/heads/$DEFAULT" >/dev/null 2>&1 ||
-            ! git check-ref-format "$base" >/dev/null 2>&1; then
-            note "SWEEP: COULD-NOT-LOOK invalid default integration ref"; bump 2; return 0
-        fi
-        rc=0
-        git symbolic-ref -q "$base" >/dev/null 2>&1 || rc=$?
-        case "$rc" in
-            1) ;;
-            *) note "SWEEP: COULD-NOT-LOOK integration tracking ref is symbolic or unreadable"; bump 2; return 0 ;;
-        esac
-        # Ignore configured refspecs/opportunistic mappings: they can force-move
-        # unrelated local heads. Fetch only the integration ref, with no tags,
-        # pruning, submodule recursion or automatic repository maintenance.
-        if ! git fetch --refmap= --no-prune --no-prune-tags --no-tags \
-            --no-recurse-submodules --no-auto-gc --no-write-commit-graph origin \
-            "+refs/heads/$DEFAULT:$base" >/dev/null 2>&1; then
-            note "SWEEP: COULD-NOT-LOOK integration fetch failed — nothing deleted"; bump 2; return 0
-        fi
-    else
-        DEFAULT="${DEFAULT:-main}"
-        base="refs/heads/$DEFAULT"
-        if [ "${#REMOTE_TARGETS[@]}" -gt 0 ]; then
-            note "SWEEP: COULD-NOT-LOOK remote targets supplied without origin"; bump 2; return 0
-        fi
+    resolve_base SWEEP || return 0
+    if [ "$has_origin" -eq 0 ] && [ "${#REMOTE_TARGETS[@]}" -gt 0 ]; then
+        note "SWEEP: COULD-NOT-LOOK remote targets supplied without origin"; bump 2; return 0
     fi
     if ! base_tip=$(git rev-parse --verify -q "$base^{commit}") ||
         ! cur=$(git symbolic-ref --quiet --short HEAD 2>/dev/null || { rc=$?; [ "$rc" -eq 1 ]; }); then
@@ -360,7 +474,11 @@ esac
 case "$PHASE" in before-exit|preflight|all)
     preflight ;;
 esac
+case "$PHASE" in exit-check)
+    exit_check ;;
+esac
 case "$PHASE" in after-exit|all)
+    remove_worktree
     cleanup ;;
 esac
 

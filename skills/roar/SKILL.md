@@ -209,7 +209,7 @@ no further confirmation is needed. Do not bypass failing checks or protected
 branch requirements. Dream, suggested in lair’s conclusion, remains a separately
 invoked and reviewed workflow, launched in a new `/clear` session.
 A failed check or submission leaves the one branch preserved and reported.
-Do not wait for the bundle's checks: step 9b's bundle exception lets the
+Do not wait for the bundle's checks: step 9's exit check lets the
 worktree go once the branch is pushed and auto-merge is armed.
 
 ## Close and clean up
@@ -217,7 +217,7 @@ worktree go once the branch is pushed and auto-merge is armed.
 7. **Close** the ticket if still open, then **check that the close claims of
    every recently merged PR actually ran** — not only this session's. One
    script runs steps 7-10's mechanical parts (close, close claims, tracker
-   detection, preflight, explicit branch cleanup) and ends with a one-screen report; the
+   detection, preflight, worktree exit check and removal, explicit branch cleanup) and ends with a one-screen report; the
    judgment around it stays here. Run the first half now:
 
    ```bash
@@ -229,9 +229,9 @@ worktree go once the branch is pushed and auto-merge is armed.
    In every phase here and in steps 9-10, the script's exit code and report
    are the verdict for what the script checks: do not repeat its fetches,
    ancestry or OID checks, or re-run a phase that exited 0, to confirm it. A
-   phase this skill tells you to run again later (step 9a's fresh preflight)
-   is a new run, not a confirmation. The checks this skill names outside the
-   script still run: step 9b's fetch and ancestry re-check.
+   phase this skill tells you to run later (step 9's exit check, with its
+   fresh preflight) is a new run, not a confirmation. Ownership of the tree
+   and branches you name stays your judgment.
 
    Exit 0 clean, 1 findings, 2 could-not-look (never an all-clear: a
    `tickets/` whose `erg` does not run, an unreadable forge or a failed fetch
@@ -266,65 +266,52 @@ worktree go once the branch is pushed and auto-merge is armed.
     Remove only a worktree owned by this session for the completed ticket/PR,
     or explicitly handed over for that task with proven ownership. Ancestry,
     branch-name similarity and a merged PR alone do not establish ownership.
-    If ownership is uncertain, keep it. The helper never removes worktrees.
-    a. Preflight from inside the worktree, run fresh now: the step-7 result
-       predates the integration review and the wrap-up work, so it is not
-       reused (`$IDH_ROOT/scripts/worktree-exit-preflight.sh`, called through
-       `$IDH_ROOT`):
+    If ownership is uncertain, keep it and name it in step 11. A tree another
+    session or agent holds stays; it is left to `/molt` or `worktree-gc`.
+
+    a. From inside the worktree, after the last wrap-up commit, run the exit
+       check (ticket 1098). Pass `--bundle-branch` only for the `roar-*`
+       wrap-up branch this run created after the task merge, never the task
+       branch or a reused branch:
 
        ```bash
        ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
        ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
-       "$ROAR_DIR/close-and-clean.sh" --phase preflight
+       "$ROAR_DIR/close-and-clean.sh" --phase exit-check [--bundle-branch roar-…]
        ```
 
-       If it reports `DIRTY`, commit (or `$IDH_ROOT/scripts/worktree-salvage.sh`)
-       and re-run this command. It removes only `.panel/` and
-       `build/panel-head/` review scratch first, then refuses on every other
-       uncommitted/untracked file — including a fresh ticket draft
-       `tickets/erg new` wrote but never committed. This cleanliness gate does
-       not prove commits are integrated. See tickets 0174 and 0948.
-    b. Immediately before removal, repeat the pre-check's bounded integration
-       fetch: the exact source/destination refspec, empty refmap and disabled
-       tags/pruning/submodule recursion/automatic maintenance. Refuse a symbolic
-       or unreadable integration destination before fetching. Then re-run `git merge-base --is-ancestor HEAD refs/remotes/origin/main` on the current
-       HEAD, after any capture commit.
+       It runs a fresh preflight (the step-7 result predates the wrap-up
+       work), the bounded integration fetch, the ancestry check of HEAD, or
+       for the bundle: its remote tip equals HEAD and its merge request is
+       open with auto-merge armed. It then syncs local `main`, best effort.
+       `PREFLIGHT: DIRTY` → commit (or `$IDH_ROOT/scripts/worktree-salvage.sh`)
+       and re-run; the preflight removes only `.panel/` and `build/panel-head/`
+       review scratch and refuses every other uncommitted file, including an
+       uncommitted ticket draft (tickets 0174, 0948).
 
-       **Bundle exception.** HEAD passes without ancestry only when all
-       hold: it is the `roar-*` wrap-up branch this run created after the
-       task merge (never the task branch, never a reused branch); after a
-       fresh fetch, `git rev-parse HEAD @{u}` prints one SHA twice; and a
-       read-back of its merge request shows it open with auto-merge armed
-       (<!-- harness-extension-point -->`gh pr view --json state,autoMergeRequest`).
-       The forge then holds the only durable copy: name the merge request
-       in step 11 as armed, pending forge integration; it does not block
-       the `/clear` verdict. A later failed check leaves it
-       open, and a later roar for that bundle reports its pending merge request.
+    b. `EXIT: READY` → `cd` to the main checkout, then run the `after-exit`
+       command the report prints, adding step 10's remote target.
+       `after-exit --remove-worktree` unlocks the tree (hunt locks it) and
+       runs `git worktree remove`, which refuses uncommitted work; the branch
+       survives removal, so no commit can be lost here. Never `--force`. An
+       armed bundle is named in step 11 as pending forge integration; it
+       does not block the `/clear` verdict, and a later roar reports its
+       merge request if a check fails.
 
-       If fetch or verification
-       fails, keep the worktree and branch and report pending integration.
-       An earlier pre-capture check is not sufficient. Only then, if this
-       session created the tree itself (`git worktree add`): `cd` to the
-       primary checkout, sync local main
-       (`"$IDH_ROOT/scripts/sync-local-main.sh" <primary>`), then
-       `git worktree unlock <path>` (hunt locks its tree) and
-       `git worktree remove <path>`. Plain `remove` refuses a dirty tree;
-       never `--force`. The branch goes in step 10, which checks ancestry;
-       under the bundle exception it stays for the forge.
-    c. A tree this session did not create (another session's, or one held
-       by another agent) stays: `cd` out and leave it to `/molt`. Branch
-       ancestry cannot show that no live session stands in it, the 0355
-       failure the closing note below describes.
-    No-forge repo: every ancestry probe in this step compares against the
-    local default branch instead of `refs/remotes/origin/main`.
-    Skip if not in a worktree. A worktree a subagent created and locked itself is
-    left to `worktree-gc` once its branch is merged.
+    c. `EXIT: KEEP-PENDING` or exit 2 → `cd` to the main checkout, no
+       removal, and report the kept tree and the pending integration in
+       step 11.
+
+    No-forge repo: the exit check compares against the local default branch.
+    Skip this step if not in a worktree. A worktree a subagent created and
+    locked itself is left to `worktree-gc` once its branch is merged.
 10. **Clean only the completed task** — roar cleans only the completed task's
     explicitly identified closed-ticket/merged-PR branches and owned worktrees.
     Other branches and worktrees remain, even when merged. Repository-wide
     housekeeping belongs to lair/molt.
 
-    After step 9, supply each actual merged PR's source branch and full head
+    The `after-exit` command step 9's exit check prints already names the
+    worktree and its local branch. Add each actual merged PR's source branch and full head
     OID from its durable merge/review evidence. Record these coordinates before
     worktree exit. For a task with multiple completed PRs, repeat the options;
     do not discover candidates by enumerating refs, matching ticket prefixes,
@@ -334,6 +321,7 @@ worktree go once the branch is pushed and auto-merge is armed.
     ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
     ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
     "$ROAR_DIR/close-and-clean.sh" --phase after-exit \
+      --remove-worktree "$WORKTREE_PATH" \
       --local-branch "$COMPLETED_PR_BRANCH=$COMPLETED_PR_HEAD_OID" \
       --remote-branch "$COMPLETED_PR_BRANCH=$COMPLETED_PR_HEAD_OID"
     ```
@@ -381,7 +369,7 @@ worktree go once the branch is pushed and auto-merge is armed.
     running CI, an agent still running, a visible pending capture or
     unintegrated capture branch (step 3), a kept worktree or unpushed or
     failed bundle (step 9), or an unresolved close claim (step 7). An auto-merge-armed
-    wrap-up bundle that passed the step-9b read-back does not block the
+    wrap-up bundle that passed step 9's exit check does not block the
     verdict: its content is pushed and the forge will merge it, so the
     verdict line names its merge request. When nothing is pending, say
     "State saved — safe to `/clear`"; otherwise name each pending item, since
