@@ -14,7 +14,7 @@ Before its initial commit replace `scripts/check-tree.sh` with:
 
 ```bash
 #!/usr/bin/env bash
-set -eu
+set -euo pipefail
 git rev-parse --is-inside-work-tree
 ```
 
@@ -40,28 +40,51 @@ The resumed invocation's worker returned a concrete finding but omitted its
 explicit severity field. Its optional same-session normalization failed because
 the transport could not resume that session. This attempt is invalid, even
 though it found the defect. A second complete neutral invocation requests the
-contract's exact worker schema and supplies the accepted run below.
+contract's exact worker schema and supplies the earlier valid run retained below.
 Sanitized native execution extracts live in `adherence-semantic/outer.jsonl`
 and `worker.jsonl`; `evidence.json` records the compact result and links their
 actual launch, completion, loaded skill, and identity observations. User/account
 metadata, encrypted reasoning, unrelated runtime instructions and rate limits
 are omitted. No worker identity is inferred from its own self-description.
 
-The accepted run loaded
+The final accepted skill copy is
 `/tmp/idh-raid-1080-prep/skills/verify-adherence/SKILL.md`, SHA-256
-`4435caf5dedc0bd8e1ac08832a19eb5b4a1347e722931e4741c90e32a6d9a5db`.
-Its outer native session ran Sol 6.1 at medium effort, as observed in the
+`e457cd8e89d9efa19eacd018d5a696beaaf848e2726aa371d8bc1fbd5c697983`.
+The outer native session ran Sol 6.1 at medium effort, as observed in the
 runtime `turn_context`. The distinct headless worker ran Haiku 5.5, Anthropic
 family, as observed in `modelUsage` (effective effort unavailable; medium was
-requested). The worker completed in 20.946 seconds, costing $0.0143562;
-outer invocation to validation checkpoint took 81 seconds. Actual token usage
+requested). An earlier valid worker completed in 20.946 seconds, costing $0.0143562;
+that outer invocation to validation checkpoint took 81 seconds. Actual token usage
 is retained in the worker result. The prior invalid worker cost $0.00491546.
 
 `make syntax` passed. The accepted worker explicitly returned
 `severity: blocking`, `scripts/check-tree.sh:3`, and `suggested_test`; the
 outer verdict is `adherence: FAIL` with no infrastructure escalation.
-The outer rejected an unsupported nit alleging missing mechanical enforcement,
+In the earlier valid run, the outer rejected an unsupported nit alleging missing mechanical enforcement,
 and a separate proposed test that would swallow its failure. Those rejected
 items remain in the unmodified worker output; they do not weaken the verified
 blocking finding. Worker self-reported orchestration metadata is ignored;
 the distinct process launch/completion records establish execution.
+
+## Verification
+
+The first `make check-fast` was RED: 6 failed, 938 passed, 645 deselected
+in 6.39 seconds. After the contract repair and retained-run assertions it
+passed 945 tests. `make lint` passed 185 tests; ruff passed.
+The branch's first completed semantic self-gate found no blockers and caught
+minor wording and fixture shell-discipline nits. Those were fixed before
+opening the merge request. Generic verdict schema examples were also aligned
+with discovered project rules. Frozen source hashing validates the retained
+loaded-source snapshot, rather than requiring future skill versions to keep
+an obsolete hash. A fresh complete neutral fixture invocation validates the
+resulting skill version; its record is the final accepted run in evidence.json.
+
+The final accepted run loaded the SHA-256 above after the consistency edits.
+Its distinct worker session is `0df0c0b2-06f6-4385-8b39-e2475e35df6f`,
+result UUID `a3c3477a-9752-4e75-9e33-2b7a6a297371`; it completed in
+16.648 seconds, costing $0.00469613. Complete invocation elapsed time was
+86.048935 seconds. Native outer token-usage counters are retained in outer.jsonl.
+The final worker proposed both a grep and behavioral test; the grep would
+match rule text, so the behavioral alternative is the usable suggestion.
+An ancillary evidence line number was corrected from 6 to 7; the blocking
+finding at scripts/check-tree.sh:3 was correct as returned.

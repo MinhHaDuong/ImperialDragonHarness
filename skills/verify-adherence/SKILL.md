@@ -26,7 +26,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 > from the environment (worktree name, git status snapshot, ticket files, or
 > the shared task list).
 
-Enforce the project's declared rules on a branch or PR. **Prefer tests
+Enforce the project's declared rules on a branch or merge request. **Prefer tests
 over LLM checks.** If a rule can be mechanized, the skill's job is to run the test or grep.
 An LLM subagent is the fallback for semantic residue only.
 
@@ -264,18 +264,18 @@ semantic_review:
   completion_evidence: <completed valid worker report record, or null>
 mechanical_failures:
   - test_or_grep: <id>
-    rule_ref: <.claude/rules/foo.md#section>
+    rule_ref: <project-rule-path#section>
     file: <path>
     line: <n>
 semantic_findings:
-  - rule_section: <.claude/rules/architecture.md#phase-2-rule-4>
+  - rule_section: <project-rule-path#section>
     concern: <one sentence>
     file: <path>
     line: <n>
     severity: blocking | nit
     suggested_test: <grep pattern or project test snippet>
 untested_rules:
-  - rule: <.claude/rules/foo.md#bar>
+  - rule: <project-rule-path#section>
     suggested_test: <code>
 ```
 
