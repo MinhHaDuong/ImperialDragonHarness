@@ -2,6 +2,7 @@
 Title: roar: one exit-check phase replaces step 9a-9b by hand; leave the worktree by cd + git worktree remove
 Created: 2026-10-14
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1409
 
 --- log ---
 2026-10-14T19:23Z Minh Ha-Duong created
@@ -9,6 +10,7 @@ Author: Minh Ha-Duong
 2026-10-14T19:50Z reviewer Minh Ha-Duong decided after gaze ESCALATE: primary-branch and main read-back stay non-gating notes; ignored files: wording fix, scan stays with 1095. Fix round: ls-remote could-not-look, quoted printed command, forge stub runs the real jq filter, tests for no forge, absent tree, parked primary
 2026-10-14T19:54Z reviewer Minh Ha-Duong rebased on #1407 (ticket 1077 retires EnterWorktree/ExitWorktree): step 9 now leaves by cd to the main checkout instead of ExitWorktree keep; exit tail is exit-check, cd, after-exit
 2026-10-14T20:09Z reviewer note verify-reroll — round 1: PR #1409 title/body (future merge commit message) still directs 'ExitWorktree … keep', retired by #1407; stale 'Step 9c/10' label at close-and-clean.sh:345
+2026-10-14T20:17Z reviewer closed — autoclosed — PR #1409
 
 --- body ---
 ## Context
