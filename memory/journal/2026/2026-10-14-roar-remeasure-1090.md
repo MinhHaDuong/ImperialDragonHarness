@@ -2,7 +2,8 @@
 
 Project: ImperialDragonHarness. Sources: Claude Code, Codex and Pi session
 transcripts on padme and doudou; script and raw rows in
-[2026-10-14-roar-remeasure-1090/](2026-10-14-roar-remeasure-1090/).
+the folder beside this entry, aggregate output in
+[analysis-output.txt](2026-10-14-roar-remeasure-1090/analysis-output.txt).
 
 ## Method
 

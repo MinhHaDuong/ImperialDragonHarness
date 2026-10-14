@@ -5,7 +5,12 @@ next genuine user prompt, or the end of the session/turn. A model call is one
 API response (Claude Code: distinct message.id; Codex: token_count event;
 Pi: assistant message with usage). Prints TSV.
 """
-import glob, json, os, re, socket
+
+import glob
+import json
+import os
+import re
+import socket
 
 CUT = "2026-10-12T13:58"
 HOST = socket.gethostname()
@@ -24,7 +29,9 @@ def texts(c):
 def genuine_prompt(t):
     # A typed prompt: short, not a replayed transcript or tool dump.
     s = t.strip()
-    return 0 < len(s) < 400 and not re.match(r"^(\[|user:|assistant:|Retained|<local-command|<task-notification|Caveat:)", s)
+    return 0 < len(s) < 400 and not re.match(
+        r"^(\[|user:|assistant:|Retained|<local-command|<task-notification|Caveat:)", s
+    )
 
 
 def emit(rt, start, project, calls, combined):
@@ -34,13 +41,31 @@ def emit(rt, start, project, calls, combined):
     cr = sum(c[1] for c in calls)
     cw = sum(c[2] for c in calls)
     unc = sum(c[0] for c in calls)
-    print("\t".join(map(str, [HOST, rt, start[:16], len(calls), ctx0, cr, cw, unc, int(combined), project])))
+    print(
+        "\t".join(
+            map(
+                str,
+                [
+                    HOST,
+                    rt,
+                    start[:16],
+                    len(calls),
+                    ctx0,
+                    cr,
+                    cw,
+                    unc,
+                    int(combined),
+                    project,
+                ],
+            )
+        )
+    )
 
 
 def claude():
     for f in glob.glob(os.path.expanduser("~/.claude/projects/*/*.jsonl")):
         try:
-            rows = [json.loads(l) for l in open(f, errors="replace")]
+            rows = [json.loads(line) for line in open(f, errors="replace")]
         except Exception:
             continue
         proj = os.path.basename(os.path.dirname(f))
@@ -52,56 +77,104 @@ def claude():
             m = d.get("message") or {}
             if d.get("type") == "user" and not d.get("isMeta"):
                 c = m.get("content")
-                is_tool = isinstance(c, list) and any(isinstance(b, dict) and b.get("type") == "tool_result" for b in c)
+                is_tool = isinstance(c, list) and any(
+                    isinstance(b, dict) and b.get("type") == "tool_result" for b in c
+                )
                 if is_tool:
                     continue
                 txt = " ".join(texts(c))
                 if start and genuine_prompt(txt) or (start and "<command-name>" in txt):
-                    emit("claude", start, proj, calls, combined); start = None
-                if start is None and ts >= CUT and INVOKE.search(txt) and (genuine_prompt(txt) or "<command-name>/roar" in txt):
+                    emit("claude", start, proj, calls, combined)
+                    start = None
+                if (
+                    start is None
+                    and ts >= CUT
+                    and INVOKE.search(txt)
+                    and (genuine_prompt(txt) or "<command-name>/roar" in txt)
+                ):
                     start, calls, seen = ts, [], set()
-                    combined = not re.fullmatch(r"\s*[/$]roar\s*|.*<command-name>/roar</command-name>.*", txt, re.S)
+                    combined = not re.fullmatch(
+                        r"\s*[/$]roar\s*|.*<command-name>/roar</command-name>.*",
+                        txt,
+                        re.S,
+                    )
             elif d.get("type") == "assistant":
                 if start is None and ts >= CUT:
                     for b in m.get("content") or []:
-                        if isinstance(b, dict) and b.get("type") == "tool_use" and b.get("name") == "Skill" and (b.get("input") or {}).get("skill") == "roar":
+                        if (
+                            isinstance(b, dict)
+                            and b.get("type") == "tool_use"
+                            and b.get("name") == "Skill"
+                            and (b.get("input") or {}).get("skill") == "roar"
+                        ):
                             start, calls, seen, combined = ts, [], set(), True
                 if start and m.get("id") and m["id"] not in seen:
-                    seen.add(m["id"]); u = m.get("usage") or {}
-                    calls.append((u.get("input_tokens", 0), u.get("cache_read_input_tokens", 0), u.get("cache_creation_input_tokens", 0)))
+                    seen.add(m["id"])
+                    u = m.get("usage") or {}
+                    calls.append(
+                        (
+                            u.get("input_tokens", 0),
+                            u.get("cache_read_input_tokens", 0),
+                            u.get("cache_creation_input_tokens", 0),
+                        )
+                    )
         if start:
             emit("claude", start, proj, calls, combined)
 
 
 def codex():
-    for f in glob.glob(os.path.expanduser("~/.codex/sessions/**/*.jsonl"), recursive=True):
-        rows = [json.loads(l) for l in open(f, errors="replace")]
-        cwd = next((r["payload"].get("cwd", "") for r in rows if r.get("type") == "session_meta"), "")
+    for f in glob.glob(
+        os.path.expanduser("~/.codex/sessions/**/*.jsonl"), recursive=True
+    ):
+        rows = [json.loads(line) for line in open(f, errors="replace")]
+        cwd = next(
+            (
+                r["payload"].get("cwd", "")
+                for r in rows
+                if r.get("type") == "session_meta"
+            ),
+            "",
+        )
         start, calls, combined, last = None, [], False, None
         for d in rows:
             p, ts = d.get("payload") or {}, d.get("timestamp", "")
-            if d.get("type") == "response_item" and p.get("type") == "message" and p.get("role") == "user":
+            if (
+                d.get("type") == "response_item"
+                and p.get("type") == "message"
+                and p.get("role") == "user"
+            ):
                 txt = " ".join(texts(p.get("content")))
                 if not genuine_prompt(txt):
                     continue
                 if start:
-                    emit("codex", start, cwd, calls, combined); start = None
+                    emit("codex", start, cwd, calls, combined)
+                    start = None
                 if ts >= CUT and INVOKE.search(txt):
                     start, calls, last = ts, [], None
-                    combined = not re.fullmatch(r"\s*\$roar\b.*", txt, re.S) or len(txt.strip()) > 20
-            elif start and d.get("type") == "event_msg" and p.get("type") == "token_count":
+                    combined = (
+                        not re.fullmatch(r"\s*\$roar\b.*", txt, re.S)
+                        or len(txt.strip()) > 20
+                    )
+            elif (
+                start
+                and d.get("type") == "event_msg"
+                and p.get("type") == "token_count"
+            ):
                 u = ((p.get("info") or {}).get("last_token_usage")) or {}
                 key = json.dumps(u, sort_keys=True)
                 if u and key != last:
-                    last = key; cached = u.get("cached_input_tokens", 0)
+                    last = key
+                    cached = u.get("cached_input_tokens", 0)
                     calls.append((u.get("input_tokens", 0) - cached, cached, 0))
         if start:
             emit("codex", start, cwd, calls, combined)
 
 
 def pi():
-    for f in glob.glob(os.path.expanduser("~/.pi/agent/sessions/**/*.jsonl"), recursive=True):
-        rows = [json.loads(l) for l in open(f, errors="replace")]
+    for f in glob.glob(
+        os.path.expanduser("~/.pi/agent/sessions/**/*.jsonl"), recursive=True
+    ):
+        rows = [json.loads(line) for line in open(f, errors="replace")]
         cwd = next((r.get("cwd", "") for r in rows if r.get("type") == "session"), "")
         start, calls, combined = None, [], False
         for d in rows:
@@ -111,14 +184,19 @@ def pi():
                 if not genuine_prompt(txt):
                     continue
                 if start:
-                    emit("pi", start, cwd, calls, combined); start = None
+                    emit("pi", start, cwd, calls, combined)
+                    start = None
                 if ts >= CUT and INVOKE.search(txt):
                     start, calls, combined = ts, [], len(txt.strip()) > 6
             elif start and m.get("role") == "assistant":
                 u = m.get("usage") or {}
-                calls.append((u.get("input", 0), u.get("cacheRead", 0), u.get("cacheWrite", 0)))
+                calls.append(
+                    (u.get("input", 0), u.get("cacheRead", 0), u.get("cacheWrite", 0))
+                )
         if start:
             emit("pi", start, cwd, calls, combined)
 
 
-claude(); codex(); pi()
+claude()
+codex()
+pi()
