@@ -226,6 +226,14 @@ worktree go once the branch is pushed and auto-merge is armed.
    "$ROAR_DIR/close-and-clean.sh" --phase before-exit --ticket NNNN --days 7
    ```
 
+   In every phase here and in steps 9-10, the script's exit code and report
+   are the verdict for what the script checks: do not repeat its fetches,
+   ancestry or OID checks, or re-run a phase that exited 0, to confirm it. A
+   phase this skill tells you to run again later (step 9a's fresh preflight)
+   is a new run, not a confirmation. The checks this skill names outside the
+   script still run: step 9b's fetch and ancestry re-check, the `main`
+   read-back after sync, and the `discard_changes` ownership check.
+
    Exit 0 clean, 1 findings, 2 could-not-look (never an all-clear: a
    `tickets/` whose `erg` does not run, an unreadable forge or a failed fetch
    all give 2; a repo with no `tickets/` directory at all gets an explicit
