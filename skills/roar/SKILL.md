@@ -231,8 +231,7 @@ worktree go once the branch is pushed and auto-merge is armed.
    ancestry or OID checks, or re-run a phase that exited 0, to confirm it. A
    phase this skill tells you to run again later (step 9a's fresh preflight)
    is a new run, not a confirmation. The checks this skill names outside the
-   script still run: step 9b's fetch and ancestry re-check, the `main`
-   read-back after sync, and the `discard_changes` ownership check.
+   script still run: step 9b's fetch and ancestry re-check.
 
    Exit 0 clean, 1 findings, 2 could-not-look (never an all-clear: a
    `tickets/` whose `erg` does not run, an unreadable forge or a failed fetch
