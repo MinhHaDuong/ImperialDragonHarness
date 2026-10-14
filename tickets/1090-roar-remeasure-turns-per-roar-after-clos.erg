@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-10-12T15:32Z Minh Ha-Duong created
+2026-10-14T17:50Z reviewer Minh Ha-Duong measured 22 roars after 1084 (all runtimes, both hosts): roar-only median 14 turns (was 16), 224k equivalents (was ~420k), mostly from smaller start context; journal 2026-10-14-roar-remeasure-1090
 
 --- body ---
 ## Context
@@ -15,5 +16,5 @@ Baseline (1084 body, padme 2026-10-11, 400 sessions, 75 roars): median 16 turns 
 1084's estimate of ~40% saving is derived (8-10 of 16 turns assumed mechanical), not measured.
 
 ## Exit criteria
-- [ ] Turns and cache-read equivalents measured, by the baseline's method, on at least 10 roars run after 1084 merged; before/after table in the journal
-- [ ] The derived ~40% estimate is replaced by the measured figure, or the gap is explained
+- [x] Turns and cache-read equivalents measured, by the baseline's method, on at least 10 roars run after 1084 merged; before/after table in the journal
+- [x] The derived ~40% estimate is replaced by the measured figure, or the gap is explained
