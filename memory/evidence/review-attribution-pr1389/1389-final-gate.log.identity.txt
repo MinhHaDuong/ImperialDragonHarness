@@ -1,0 +1,12 @@
+Reading additional input from stdin...
+OpenAI Codex v0.162.1
+--------
+workdir: /home/haduong/.agents/.claude/worktrees/review-1389
+model: gpt-6.1-sol
+provider: openai
+approval: on-request
+sandbox: read-only
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a139f2-a7b7-7232-946a-03ad79b0489c
+--------

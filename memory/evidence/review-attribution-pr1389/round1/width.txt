@@ -1,0 +1,8 @@
+round: 1
+added: 618
+deleted: 57
+changed-lines: 675
+files: 12
+pipeline paths: skills/verify-adherence/SKILL.md
+width: all five
+risk: high-risk semantic gate

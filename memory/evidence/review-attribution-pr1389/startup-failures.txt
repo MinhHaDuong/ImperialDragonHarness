@@ -1,0 +1,5 @@
+3891: Error: failed to initialize in-process app-server client: Read-only file system (os error 30)
+3893: Error: failed to initialize in-process app-server client: Read-only file system (os error 30)
+3895: Error: failed to initialize in-process app-server client: Read-only file system (os error 30)
+4317: Error: failed to initialize in-process app-server client: Read-only file system (os error 30)
+Three initial child roles (adherence/simplify/native review) exited1; a later native-review retry failed identically. Thus two actual native review startup failures, plus the adherence/simplify bootstrap failures. No effective child runtime identity observed.

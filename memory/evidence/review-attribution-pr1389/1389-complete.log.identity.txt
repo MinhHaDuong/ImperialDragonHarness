@@ -1,0 +1,11 @@
+OpenAI Codex v0.162.1
+--------
+workdir: /home/haduong/.agents/.claude/worktrees/review-1389
+model: gpt-6.1-sol
+provider: openai
+approval: on-request
+sandbox: read-only
+reasoning effort: low
+reasoning summaries: none
+session id: 01a13a00-fccd-7010-ac21-76e64da5e3ce
+--------

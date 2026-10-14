@@ -1,0 +1,5 @@
+correctness	opus	Anthropic	high-risk gate correctness and original exit criteria; requested medium effort
+consistency	opus	Anthropic	judgment of contract coherence and runtime evidence; requested medium effort
+scope	haiku	Anthropic	bounded scope against ticket actions; requested medium effort
+red-team	opus	Anthropic	high-risk failure-closed and adversarial invariants; requested medium effort
+doc-propagation	haiku	Anthropic	artifact and source attribution verification; requested medium effort

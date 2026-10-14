@@ -1,0 +1,5 @@
+correctness	opus	Anthropic	prior model pin retained; outstanding correctness round-2 findings at medium requested effort
+consistency	opus	Anthropic	prior model pin retained; outstanding consistency round-2 findings at medium requested effort
+scope	haiku	Anthropic	prior model pin retained; outstanding scope round-2 findings at medium requested effort
+red-team	opus	Anthropic	prior model pin retained; outstanding red-team round-2 findings at medium requested effort
+doc-propagation	haiku	Anthropic	prior model pin retained; outstanding doc-propagation round-2 findings at medium requested effort

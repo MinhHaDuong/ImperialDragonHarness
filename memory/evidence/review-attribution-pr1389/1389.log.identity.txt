@@ -1,0 +1,11 @@
+OpenAI Codex v0.162.1
+--------
+workdir: /home/haduong/.agents/.claude/worktrees/review-1389
+model: gpt-6.1-sol
+provider: openai
+approval: on-request
+sandbox: workspace-write [workdir, /tmp, $TMPDIR] (network access enabled)
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a139d9-37ff-7420-9715-1babb86c7c8e
+--------
