@@ -2,11 +2,13 @@
 Title: roar: sync local main before ExitWorktree remove, so the stale-main refusal never shows
 Created: 2026-10-14
 Author: Minh Ha-Duong
+Closed: Moot after PR #1407: roar no longer calls ExitWorktree; step 9 removes the tree with plain git worktree remove after the ancestry check
 
 --- log ---
 2026-10-14T16:20Z Minh Ha-Duong created (author request, interactive: "this 'worktree not deletable' red error message is an eyesore")
 2026-10-14T16:13Z reviewer closed — done
 2026-10-14T18:59Z reviewer Minh Ha-Duong reopened: after PR #1398 two roars (padme 3f82806b, d331a70c) still got the refusal with local main synced; see body
+2026-10-14T19:52Z reviewer closed — Moot after PR #1407: roar no longer calls ExitWorktree; step 9 removes the tree with plain git worktree remove after the ancestry check
 
 --- body ---
 ## Context
