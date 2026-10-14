@@ -1,36 +1,36 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-14T11:07Z
-Housekeeping (molt) run: 2026-10-14T11:07Z
+Last updated: 2026-10-14T20:36Z
+Housekeeping (molt) run: 2026-10-14T20:36Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-14T11:07Z · as of 66c6850e -->
+<!-- generated 2026-10-14T20:36Z · as of 5d107443 -->
 
-**Tickets:** 3 ready · 2 blocked — `erg ready tickets/` for full list
-  next: 1045 Local merge gate replaces the forge's required … · 1077 Decide the session EnterWorktree opt-in after a…
-**In flight:** no open PRs · CI main: success
+**Tickets:** 2 ready · 2 blocked — `erg ready tickets/` for full list
+  next: 1045 Local merge gate replaces the forge's required … · 1100 Implement review orchestration: gaze as the sin…
+**In flight:** 1 open PR (1 draft), oldest #1415 0d · CI main: in progress
 **Recent (first-parent):**
-  66c6850e Merge pull request #1393 from MinhHaDuong/roar-raids-1080-1089
-  fea2413a Merge pull request #1390 from MinhHaDuong/t1089-pi-subagent-npm
-  ae72703f Merge pull request #1389 from MinhHaDuong/t1080-adherence-semantic
+  5d107443 Merge pull request #1414 from MinhHaDuong/t1096-design-close-2
+  a58d4003 Merge pull request #1413 from MinhHaDuong/roar-1098-20261014
+  6c0957aa Merge pull request #1409 from MinhHaDuong/t1098-roar-exit-check
 
 ## Ready work
-Ready: 1045 (local merge gate), 1077 (worktree opt-in), 1090 (post-merge Roar measurement).
-Deferred: 1095 (task-owned tmp cleanup and crash recovery), 1096 (review orchestration refactor). The three-skill review architecture remains a candidate; compare simpler alternatives before choosing it.
+Ready: 1045 (local merge gate), 1100 (review orchestration implementation: gaze as the single review skill; children 0-4 listed, file each before its work starts).
+Blocked: 1099 (bounded review time) waits on 1100. Deferred: 1095 (task-owned tmp cleanup and crash recovery).
 Arena-only work lives in the independent repository; see docs/arena-integration.md.
 
 ## Resume point
-Main supports actual semantic-worker execution/evidence in verify-adherence and both managed-release and npm-global Pi module discovery. Tickets 1080 and 1089 are closed. The helper creates no ~/bin; the requested upstream installer issue is earendil-works/pi#10932, auto-closed by contributor policy.
-Main passed `make check` on padme at 66c6850e: 1595 passed, 3 skipped in 48.52s (2026-10-14). Healthcheck's fast suite passed 946 tests; forge checks on the repaired review journal also passed. The journal and review-attribution records are integrated through #1393, including failed attempts and retained documentation dissent. Absolute links in captured reports were repaired; all seven memory-portability tests pass.
-All local preparatory work is pushed. Historical rewritten branches are preserved; no uncommitted deliverable was found. Current review identities are explicitly runtime-masked where the provider-qualified ID was unavailable. Historical attribution backfill reported 70 unresolved records per fix; no reviewed revision or model identity was inferred.
-Arena remains independent; transferred harness tickets 1048 and 1087 are archived. Routing consumes the independent arena's reviewed evidence through docs/arena-integration.md. The third Dream is accepted; subsequent journal entries remain available for a separate Dream.
+Design ticket 1096 is closed (#1414); its plan of record is docs/discussions/2026-10-14-1096-design.md (three panel rounds and the author's answers). Implementation is 1100. Tickets 1077, 1090, 1097 and 1098 are closed: sessions enter worktrees with plain git and roar leaves by cd plus `git worktree remove` (#1407, #1409).
+Main passed `make check` on padme at 5d107443: 1592 passed, 3 skipped in 51.39s (2026-10-14T20:36Z).
+Branch census 2026-10-14: remote branches are main, archive/review-1319-20261013 (kept) and ci-pytest-guard-speed (#1415). The superseded raid-1080-prep, raid-1089-prep, t1084-roar-close-and-clean and dream/2026-10-07 were deleted with the author's approval; stale 1097 and readback worktrees removed.
+Arena remains independent. Routing consumes the independent arena's reviewed evidence through docs/arena-integration.md. 17 journal entries on main are not yet covered by an accepted Dream.
 
 ## Next actions
-Continue from `erg ready tickets/`. Resume 1095 and 1096 only when selected for a later session. Arena cycles, role-split redesign and publication correction belong to the independent arena repository; no publication ran here.
-Zotero staging reconciliation checked this repository's docs directory and found zero candidate files; no import or purge ran. Author-side Zotero actions below remain outstanding.
+Continue from `erg ready tickets/`. Open PRs: #1415 (pytest-guard speed; its worktree explore-ci-speed-2014346 is locked with no session found running in it) and #1416 (roar journal, auto-merge armed).
+Zotero staging reconciliation could not run on 2026-10-14T20:36Z: no ZOTERO_USER_ID in the flag, environment or ~/.config/keys/zotero.env. Author-side Zotero actions below remain outstanding.
 
 ## Author actions
 - Install the ILaaS consortium key in `~/.config/keys/ilaas.env`, then configure `models.json` (0977).
