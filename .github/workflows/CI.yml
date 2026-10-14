@@ -285,10 +285,18 @@ jobs:
         run: jq --version
       # The memory-capture suites (ticket 0988) exercise the pinned age
       # encrypt/decrypt commands for real; on a host without age they skip.
+      # A pinned release, checksum-verified: apt-get update cost ~8 s to fetch
+      # every package index for one small binary. Bump version and sha256 together.
       - name: Ensure age is available
+        env:
+          AGE_VERSION: v1.3.2
+          AGE_SHA256: cbe24006683f8eb669266162894b9a522a1af52f2665fbc63a4bb032ed26ac10
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq age
+          curl -fsSL -o "$RUNNER_TEMP/age.tgz" \
+            "https://github.com/FiloSottile/age/releases/download/$AGE_VERSION/age-$AGE_VERSION-linux-amd64.tar.gz"
+          echo "$AGE_SHA256  $RUNNER_TEMP/age.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/age.tgz" -C "$RUNNER_TEMP"
+          sudo install "$RUNNER_TEMP/age/age" "$RUNNER_TEMP/age/age-keygen" /usr/local/bin/
           age --version && age-keygen --version
       # Permanent diagnostic print (ticket 0875): the hermeticity guard's scan
       # is a bash + awk + grep pipeline, and a red-green divergence between
@@ -299,9 +307,7 @@ jobs:
           awk --version 2>&1 | head -1 || true
           grep --version | head -1
           bash --version | head -1
-      - name: Run test suite with coverage
-        # Coverage is reported (term-missing) but not yet gated. Add
-        # --cov-fail-under=<N> here to ratchet once the baseline is raised.
-        run: |
-          python3 -m pytest tests/ -v -n 4 \
-            --cov=scripts --cov-report=term-missing
+      - name: Run test suite
+        # Coverage was reported here but never gated, at a cost on every PR;
+        # run it locally when wanted: pytest tests/ -n 4 --cov=scripts
+        run: python3 -m pytest tests/ -v -n 4
