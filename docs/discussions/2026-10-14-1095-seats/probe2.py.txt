@@ -1,0 +1,36 @@
+import os,glob,time,sys
+H=os.path.expanduser('~')
+def files():
+    fs=[]
+    for pat in ['.claude/projects/*/*.jsonl','.claude/projects/*/*/subagents/*.jsonl','.pi/agent/sessions/**/*.jsonl','.codex/sessions/**/*.jsonl']:
+        fs+=glob.glob(os.path.join(H,pat),recursive=True)
+    out=[]
+    for f in fs:
+        try: out.append((f,os.path.getmtime(f),os.path.getsize(f)))
+        except OSError: pass
+    return out
+ALL=files()
+print('history files',len(ALL),'bytes',sum(s for _,_,s in ALL)//10**6,'MB')
+cands=sys.argv[1:]
+for c in cands:
+    t0=time.time()
+    try: mt=os.path.getmtime(c)
+    except Exception as e: print(c,'MISSING');continue
+    # birth: use min mtime of contents? use dir mtime; bound: histories modified after the candidate's earliest file mtime
+    ear=mt
+    for r,d,f in os.walk(c):
+        for x in f:
+            try: ear=min(ear,os.lstat(os.path.join(r,x)).st_mtime)
+            except: pass
+    sel=[f for f,m,s in ALL if m>=ear-60 and 't1095' not in f and 'd331a70c' not in f]
+    needle=c.encode()
+    hits=[]
+    for f in sel:
+        try:
+            with open(f,'rb') as fh:
+                for n,line in enumerate(fh,1):
+                    if needle in line:
+                        hits.append((f,n));break
+        except: pass
+    print(c,'files_scanned',len(sel),'hit_files',len(hits),'sec',round(time.time()-t0,1))
+    for f,n in hits[:4]: print('   ',f.replace(H,'~')[-110:],'line',n)
