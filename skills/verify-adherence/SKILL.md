@@ -26,7 +26,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 > from the environment (worktree name, git status snapshot, ticket files, or
 > the shared task list).
 
-Enforce the project's `.claude/rules/*.md` conventions on a branch or PR. **Prefer tests
+Enforce the project's declared rules on a branch or merge request. **Prefer tests
 over LLM checks.** If a rule can be mechanized, the skill's job is to run the test or grep.
 An LLM subagent is the fallback for semantic residue only.
 
@@ -195,44 +195,99 @@ in practice.
 
 ### 3. Semantic subagent (fallback only)
 
-Only runs if any `.claude/rules/*.md` file changed OR if the diff touches architectural
-concerns not covered by phases 1–2. Spin **one** subagent. Choose the model of each launched worker per launch, from the `route` skill grid
-(`skills/route/SKILL.md`); seats that must be independent follow
-`skills/route/references/decorrelation.md` ("The launch line"). Give it:
+Discover rule locations from the project's `AGENTS.md`, `CLAUDE.md`, and their
+explicit rule references. Include existing conventional `rules/` and
+`.claude/rules/` Markdown trees; do not assume either is the only location.
+Read the applicable instructions and rule contents in full, without `head`
+truncation. Compare against the branch's merge base with `origin/main` (or
+`main` when no remote exists), including added, renamed and deleted rule files.
+Read deleted rule files at the base so their removal is reviewable; a missing
+referenced rule is an infrastructure escalation, not an empty rule set.
 
-- The diff.
-- The relevant `.claude/rules/*.md` files.
-- Prompt: "For each rule section, cite one piece of evidence that the diff either adheres
-  to or violates it. Only flag concrete violations with file:line anchors. For every
-  violation, suggest a grep pattern or test that could catch it mechanically next time."
+Phase 3 is **required** whenever the diff touches any discovered rule file or
+instruction file, including deletion/rename, OR architectural concerns remain
+uncovered by phases 1–2. State that applicability decision and its reason.
+Otherwise record `status: skipped`, a concrete reason, and no worker identity.
+Mechanical success does not discharge a required semantic review.
 
-Output: `{rule_section, concern, file:line, severity, suggested_test}`.
+When required, launch **one actual distinct worker** through an available
+runtime subagent tool or the existing detached CLI transport. Choose its route
+from the loaded `route` skill (`skills/route/SKILL.md` and its grid/cache/runtime
+recommendations); record the launch line before launch. Seats that must be
+independent follow `skills/route/references/decorrelation.md`. Give it:
 
-**Hard constraints** on the subagent:
-- Must cite file:line for every finding.
-- Must propose a `suggested_test` for every semantic finding — no exceptions.
-- Must not flag hypotheticals ("could be a problem if…"). Only concrete violations.
+- The complete diff and base/head identifiers, with the project worktree path.
+- The discovered applicable instructions and full rule contents, including
+  base versions of removed rules; identify each rule's source path.
+- Prompt: "For each rule section, cite one piece of evidence that the diff either
+  adheres to or violates it. Only flag concrete violations with file:line
+  anchors. For every violation, suggest a grep pattern or test that could catch
+  it mechanically next time. Return findings and evidence for reviewed rules.
+  Review only: do not edit, add, commit, push, or mutate project/forge state."
+
+Wait for completion and validate the worker's returned report before emitting
+PASS. Record observed runtime identity (worker/session id, model/family/effort
+where exposed), route/transport, launch evidence and completion evidence.
+Requested model names and a model's self-report are not observed identity;
+record masked identity fields as unavailable rather than inventing them.
+Inline analysis does not count as a launch or a completed worker. A promised
+launch, a tool call rejected before execution, and a started worker without a
+completed valid report cannot satisfy phase 3.
+
+Output findings: `{rule_section, concern, file:line, severity, suggested_test}`.
+Each finding must have a concrete source anchor, severity `blocking` or `nit`,
+and a nonempty `suggested_test`. A clean report must still provide evidence
+for the reviewed rules; an empty/malformed response cannot stand for review.
+Validate each anchor against the reviewed diff or relevant project source.
+Reject hypotheticals and unsupported anchors. The caller may reject worker
+findings, but must not create findings, upgrade severity, or supply missing
+severity, anchors, or suggested tests on the worker's behalf. No worker available, launch or
+completion failure → `status: unavailable`; malformed or unanchored output →
+`status: invalid`. Either required status emits `adherence: FAIL` with
+`escalation: adherence-infrastructure` and a concrete reason, never silent PASS.
+A valid completed worker alone earns `status: ran`.
 
 ### 4. Emit verdict
 
 ```yaml
 adherence: PASS | FAIL
+escalation: null | adherence-infrastructure
+semantic_review:
+  applicable: true | false
+  status: ran | skipped | unavailable | invalid
+  reason: <trigger, skip reason, or infrastructure failure>
+  rule_sources: [<project rule paths>]
+  worker_id: <observed runtime worker/session id, or null>
+  model: <observed id, or unavailable>
+  family: <observed lineage, or unavailable>
+  effort: <observed effort, or unavailable>
+  route: <chosen route and transport, or null>
+  launch_evidence: <actual tool/process/session record, or null>
+  completion_evidence: <completed valid worker report record, or null>
 mechanical_failures:
   - test_or_grep: <id>
-    rule_ref: <.claude/rules/foo.md#section>
+    rule_ref: <project-rule-path#section>
     file: <path>
     line: <n>
 semantic_findings:
-  - rule_section: <.claude/rules/architecture.md#phase-2-rule-4>
+  - rule_section: <project-rule-path#section>
     concern: <one sentence>
     file: <path>
     line: <n>
     severity: blocking | nit
     suggested_test: <grep pattern or project test snippet>
 untested_rules:
-  - rule: <.claude/rules/foo.md#bar>
+  - rule: <project-rule-path#section>
     suggested_test: <code>
 ```
+
+Verdict mapping is mandatory: any mechanical failure or blocking semantic finding → adherence: FAIL.
+A required semantic review with status other than `ran` also fails with the
+infrastructure escalation above. PASS requires successful mechanical checks,
+no blocking semantic findings, and either a valid completed semantic worker
+or an explicitly justified inapplicable `skipped` status. Always emit
+`semantic_review`, even when an earlier phase stops execution; record it as
+`skipped` with reason "earlier blocking phase" and no launch/completion claim.
 
 ## Ratchet discipline
 

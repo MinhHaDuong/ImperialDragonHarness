@@ -1,0 +1,120 @@
+%erg 0.1
+Title: verify-adherence phase 3 skips its semantic worker and assumes make lint
+Created: 2026-10-09
+Author: reviewer
+Closed: implemented
+
+--- log ---
+2026-10-09T19:06Z reviewer created
+2026-10-14T08:47Z Minh Ha-Duong closed — implemented
+
+--- body ---
+## Context
+Ticket 1070 exit criterion 2 ("verify-adherence still catches a known violation
+under LLM-chosen routing") was met only as a rule-text control. A re-run on
+2026-10-09 (two sub-agent runs, PR 212 commit e6907845, base a06cfe28; known
+violation: `scripts/pretooluse-worktree-path-guard.sh:15`, weak `[ -f .git ]`
+predicate forbidden by ticket 0310) showed:
+- Run on the bare PR: FAIL, flagged only because the caller supplied the 0310
+  text; no worker launched.
+- Run on a fixture that edited `.claude/rules/*.md` (the phase 3 trigger) and
+  added a `lint` target: PASS, violation not flagged, phase 3 judged applicable
+  but no subagent was spun, no model routed. The forked skill read part of the
+  rule diffs itself (cut off by `head -150`).
+
+## Observations
+- `skills/verify-adherence/SKILL.md` phase 3 triggers on `.claude/rules/*.md`,
+  but this harness keeps its rules in `rules/` and `.claude` is gitignored; the
+  fixture needed `git add -f` copies. The trigger may never fire here.
+- Phase 3 says "Spin **one** subagent" but nothing records whether it ran; a
+  skipped phase 3 and an empty phase 3 read the same (PASS).
+- Phase 1 assumes `make lint`; a commit without it fails as "no declared runner".
+
+## Exit criteria
+- [x] Phase 3 trigger matches this harness's rules path, and a rules-touching
+      diff always launches (or records why it did not launch) the semantic worker
+- [x] The verdict states whether phase 3 ran and which worker served
+- [x] A fixture whose repo rules state the 0310 rule, with the violation in the
+      diff and no caller hint, is flagged by the semantic path with `file:line`
+
+## Raid 1080 — Imagine (2026-10-14)
+
+Proceed with a narrow skill-contract repair. Phase 1 runner discovery was
+already fixed by 0953; retain that declaration contract. Phase 3 still misses
+the harness rules/ tree and lacks observed worker execution evidence.
+Discover project rule locations, route one actual semantic worker, and record
+applicability/status/reason/identity/completion. A required missing worker must
+fail closed as infrastructure escalation; inline review cannot count as launch.
+Reuse current runtime/delegation mechanisms, without a new dependency framework.
+
+Live acceptance: a minimal Git fixture declares rules/ and a syntax-only runner;
+a rules-touching branch adds a script violating the fixture's explicit 0310
+rule. Invoke the complete skill with branch/worktree only, without a caller
+hint. Retain actual launch/completion evidence and a blocking semantic finding
+with file:line and suggested_test. Contract tests alone are insufficient.
+
+Blind-spot findings incorporated: verify the loaded skill path and content hash
+against the modified worktree copy; require overall adherence FAIL, not merely
+a finding. All original exit criteria preserved. Antipattern scan: no new
+dependencies proposed; avoid reopening runner discovery or changing resident
+rules. Cost: bounded contract/test work and one live outer+child invocation;
+actual duration/tokens recorded at acceptance.
+
+## Actions
+
+1. Add focused semantic-contract acceptance coverage; establish RED on the
+   present skill. Do not substitute wording checks for live acceptance.
+2. Repair rule-location discovery and mandatory routed-worker execution.
+   Preserve phase 1 declaration discovery; document complete inputs, observed
+   worker identity/completion, unavailable/invalid-worker escalation, and
+   blocking-finding-to-FAIL mapping. Reuse existing detached transport if needed.
+3. Run a minimal neutral rules/ fixture through the complete modified skill
+   with no caller defect hint. Retain sanitized outer/child execution evidence,
+   loaded skill absolute path and SHA-256, mechanical success, blocking semantic
+   file:line + suggested_test and global FAIL. Archive reproducible fixture
+   inputs and compact evidence, avoiding a new framework.
+4. Run targeted existing contract checks, make lint, and the normal pre-PR
+   project gate. Open a PR, then review and verify all original criteria.
+
+## Test
+
+First acceptance: rules-touching fixture with an explicit 0310 project rule
+and syntax-only adherence runner. Its script introduces [ -f .git ]. Require
+a distinct actually completed routed semantic worker and overall FAIL with a
+blocking anchored finding. Reject ran without completion and PASS with a
+blocking finding. Frozen evidence records prove this run only; supplementary
+contract tests do not claim to execute future skill versions.
+
+## Dependencies and planned size
+
+No new library or registry dependency. One working routed model door is
+required for live acceptance. Antipattern scan: no general evidence framework
+or archival-only test can replace the actual invocation. Plan covers the skill,
+one test module, four minimal fixture files, compact evidence/report artifacts
+and ticket closure (12 planned paths, 13 with optional retained RED trace);
+frontmatter unchanged, no catalog update. Stay below the 15-file gaze breaker.
+
+## Feasibility
+
+PASS (2026-10-14), with WARN: actual authenticated live worker route must be
+verified by invocation, not binary presence or stale route-cache status.
+One PR, no inter-ticket registry/conflict coordination required. Runner
+declaration and existing tests located; current phase 3 defect confirmed.
+Roster: skills/verify-adherence/SKILL.md; tests/test_verify_adherence_semantic.py;
+tests/fixtures/adherence-semantic/{AGENTS.md,Makefile,rules/worktrees.md,
+scripts/check-tree.sh}; docs/2026-10-14-adherence-semantic.md;
+docs/adherence-semantic/{evidence.json,outer.jsonl,worker.jsonl};
+tickets/{1080-verify-adherence-phase-3-skips-its-seman.erg,
+closed/1080-verify-adherence-phase-3-skips-its-seman.erg}.
+Optional RED trace adds one path. Freeze actual content-bearing roster before
+gaze; collapse artifacts if later review evidence would reach the breaker.
+Baseline make check: 1577 passed, 4 skipped, one sandbox Git write failure;
+that exact test passed (1 passed) on host recheck with required Git access.
+
+## Implementation evidence (2026-10-14)
+
+Live complete-skill acceptance and rejected attempts are retained in
+`docs/2026-10-14-adherence-semantic.md` and `docs/adherence-semantic/`.
+Modified worktree skill SHA-256 is 70146986d93d312bbf76060821cee592e99cfd9f38e97d61f60b0d7b892c3099.
+The syntax-only runner passed; a distinct completed routed worker returned
+blocking scripts/check-tree.sh:3 with suggested_test; global adherence FAIL.
