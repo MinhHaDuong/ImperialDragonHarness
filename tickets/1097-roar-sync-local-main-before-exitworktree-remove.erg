@@ -1,0 +1,30 @@
+%erg 0.1
+Title: roar: sync local main before ExitWorktree remove, so the stale-main refusal never shows
+Created: 2026-10-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-14T16:20Z Minh Ha-Duong created (author request, interactive: "this 'worktree not deletable' red error message is an eyesore")
+
+--- body ---
+## Context
+
+At the end of a roar, `ExitWorktree action=remove` compares the worktree's HEAD with the session's ORIGINAL branch, which is the primary checkout's local `main`. It does not compare with `origin/main`. When local `main` is behind, an already merged wrap-up commit counts as unmerged. The tool then refuses with a red error ("Worktree has 1 commit on … Removing will discard this work permanently") and offers `discard_changes: true`. That option could also delete the original branch (roar step 9b).
+
+Roar step 9b already calls this "a false alarm from a stale local main". It handles it by explaining it, not by preventing it. Every roar whose primary `main` lags therefore shows a red error, needs a judgment call and takes a manual detour: `keep`, then `git worktree remove`, then a retried branch cleanup that also fails while local `main` is stale (`git branch -d` checks containment in HEAD).
+
+Observed on 2026-10-14, JETP-observer, PR #164: the primary's `main` was at `ed30e399` while the merge was on `origin/main` (`d3fa5c27`). `ExitWorktree remove` refused. `close-and-clean.sh --phase after-exit` reported "Git refused deletion; kept" for the local branch. After `scripts/sync-local-main.sh` fast-forwarded `main`, the same cleanup ran clean.
+
+## Proposed fix (KISS)
+
+In roar step 9b, after the integration fetch and ancestry check and before `ExitWorktree`, run `"$IDH_ROOT/scripts/sync-local-main.sh"` against the primary checkout. It syncs by ref, never by assumption (`rules/git.md`), and refuses a dirty or busy primary on its own. On success, the tool's comparison passes and `remove` exits silently. On refusal, fall back without an error: `keep`, then the existing step 9c removal. Step 10's local branch deletion then also succeeds the first time.
+
+Delete the "false alarm" explanation from step 9b once the cause is gone. Keep the `discard_changes` warning.
+
+## Exit criteria
+
+- [ ] Roar step 9b syncs local `main` with `sync-local-main.sh` before `ExitWorktree remove`; when the sync refuses, roar takes the quiet `keep` + step 9c path instead of showing the refusal
+- [ ] A roar from a worktree whose primary `main` is behind `origin/main` exits with `remove` and no red error, shown once (positive control: the refusal reproduced first with the sync skipped)
+- [ ] Step 10's local branch cleanup succeeds on the first attempt in that scenario
+- [ ] The stale-main "false alarm" paragraph of step 9b is removed or reduced to the fallback case
+- [ ] `make check` passes
