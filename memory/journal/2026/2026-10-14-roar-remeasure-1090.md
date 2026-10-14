@@ -30,16 +30,65 @@ transcripts on padme and doudou; script and raw rows in
 | After, roar-only prompts, Claude Code | 13 | 14 | 157k | 274k | 1 |
 | After, bundled prompts (upper bound) | 7 | 38 | 109k | 541k | 1 |
 
-## Reading
+## Same-method control
 
-- Turns per roar fell about 12% (16 → 14), not the ~40% that 1084 derived
-  from assuming 8–10 of 16 turns were mechanical. The derived estimate is
-  replaced by this figure.
-- Equivalents fell about 47% (420k → 224k), but most of that comes from
-  roars now starting in smaller contexts (215k → 147k; 29/75 → 1/15 above
-  256k), which close-and-clean does not control. Per turn: 420k/16 ≈ 26k
-  before, 224k/14 ≈ 16k after (derived).
-- Caveats: the baseline was one host and one runtime, and its exact window
-  rule is unknown; the after-sample is small (15). Two 2-turn windows
-  (doudou 2026-10-13 20:09, padme 2026-10-14 17:38) look like re-invocations
-  of a roar already run. Pi kept one interactive roar session (bundled).
+The table above compares against the 1084 figure, whose method is unknown.
+Rerunning this window rule on every Claude Code roar since 2026-09-01, on
+both hosts (`roardeep.py`, `analyze.py`, `analysis-output.txt`), shows that
+comparison was misleading:
+
+| Solo Claude Code roars | Roars | Median turns | Median start context | Median equivalents |
+|---|---|---|---|---|
+| 2026-10-01 to 1084 merge | 53 | 10 | 169k | 203k |
+| After 1084 merge | 14 | 12.5 | 152k | 232k |
+
+Against roars from the same weeks, 1084 saved no turns; the median rose.
+The apparent 16 → 14 came from a baseline drawn mostly from September.
+
+## Why the turns were not saved
+
+- close-and-clean runs in three phases (`before-exit`, `preflight`,
+  `after-exit`) around `ExitWorktree`, which only the model can call, and
+  `ExitWorktree` is deferred, so each roar also spends a `ToolSearch` turn.
+  With the `sync-local-main.sh` call added by 1097 on 2026-10-14, the
+  mechanical floor is about six turns: the script did not remove turns, it
+  renamed them.
+- Sessions re-verify around the script: git-read calls per solo roar went
+  from 4.0 to 5.3 (fetch, `merge-base --is-ancestor`, `rev-parse` before and
+  after `ExitWorktree`), and some roars ran a phase twice.
+- The 8–10-mechanical-turns premise was wrong. The long roars are long on
+  judgment work: review attribution capture and backfill, journal writing,
+  PR evidence reconstruction (for example doudou 2026-10-14 12:58, 35 turns,
+  most on attribution records).
+- Tool calls per turn rose (1.23 → 1.36), so batching improved; it did not
+  offset the added phases.
+
+## Why roars start in smaller sessions
+
+Weekly medians, all Claude Code roars:
+
+| Week | Roars | Start context | Pre-roar API calls | Start > 256k |
+|---|---|---|---|---|
+| Sep 1–7 | 40 | 316k | 169 | 70% |
+| Sep 8–14 | 32 | 293k | 169 | 72% |
+| Sep 15–21 | 23 | 224k | 147 | 48% |
+| Sep 22–30 | 30 | 212k | 106 | 33% |
+| Oct 1–7 | 13 | 138k | 69 | 23% |
+| Oct 8–14 | 91 | 147k | 64 | 23% |
+
+The decline is gradual from mid-September and flat since early October,
+so it predates 1084 and is not its effect. Sessions do less work before
+roar (pre-roar API calls 169 → 64) and roars run far more often (13 → 91
+per week). The cause is not isolated. Changes in the window include the
+gaze PR-size refusal (2026-09-23), the session-start resident-text warning
+(0971, 2026-09-24), the bundled roar wrap-up (2026-10-01) and the
+resident-rules trim with the 256K guard (2026-10-06); none was measured
+separately.
+
+## Caveats
+
+The 1084 baseline's exact window rule is unknown. The after-sample is
+small. Two 2-turn windows (doudou 2026-10-13 20:09, padme 2026-10-14
+17:38) look like re-invocations of a roar already run. Pi kept one
+interactive roar session (bundled). Transcripts older than September are
+no longer on disk.

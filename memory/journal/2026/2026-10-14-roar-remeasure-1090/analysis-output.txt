@@ -1,0 +1,36 @@
+== ALL
+ before: n=192 turns=18.0 ctx0=238k eq=520k pre_calls=118.0 compacted=15 >256k=87 cc_used=0 tools/turn=1.07
+ after : n=18 turns=18.5 ctx0=154k eq=374k pre_calls=74.0 compacted=1 >256k=2 cc_used=11 tools/turn=1.32
+ after, cc used: n=11 turns=19 ctx0=147k eq=379k pre_calls=64 compacted=1 >256k=0 cc_used=11 tools/turn=1.41
+ after, cc not used: n=7 turns=10 ctx0=202k eq=274k pre_calls=94 compacted=0 >256k=2 cc_used=0 tools/turn=1.01
+== SOLO
+ before: n=104 turns=13.5 ctx0=210k eq=335k pre_calls=105.0 compacted=6 >256k=41 cc_used=0 tools/turn=1.08
+ after : n=13 turns=14 ctx0=157k eq=274k pre_calls=77 compacted=1 >256k=1 cc_used=7 tools/turn=1.36
+ after, cc used: n=7 turns=18 ctx0=147k eq=372k pre_calls=71 compacted=1 >256k=0 cc_used=7 tools/turn=1.52
+ after, cc not used: n=6 turns=8.5 ctx0=194k eq=230k pre_calls=85.5 compacted=0 >256k=1 cc_used=0 tools/turn=1.03
+== tool calls per roar by category (solo roars, mean)
+ before (n=104) {'other': 8.9, 'git read': 4.0, 'memory/journal/STATE': 2.2, 'read/search': 2.1, 'forge (gh)': 1.7, 'worktree tool': 1.1, 'tickets': 1.1, 'commit/push': 0.3, 'skill load': 0.1, 'subagent': 0.1}
+ after (n=13) {'other': 6.8, 'git read': 5.3, 'memory/journal/STATE': 3.1, 'close-and-clean.sh': 1.5, 'worktree tool': 1.4, 'forge (gh)': 1.3, 'read/search': 1.1, 'commit/push': 0.4, 'tickets': 0.2, 'subagent': 0.1}
+== by week (solo): n, median turns, median ctx0, median pre_calls
+  2026-09-1 14 38.0 444k 221.0
+  2026-09-2 15 25 271k 147
+  2026-09-3 7 22 170k 169
+  2026-09-4 20 13.0 197k 113.5
+  2026-10-1 5 6 98k 54
+  2026-10-2 56 10.0 170k 75.0
+== after-roar 'other' tool samples
+  10 ToolSearch
+  7 Bash: python3 /home/haduong/.agents/scripts/attribution_record.py --ca
+  4 Bash: KEYFILE=github.env /tmp/claude-1001/-home-haduong-CNRS-projets-a
+  3 Bash: bash /home/haduong/.claude/jobs/a31be0f7/tmp/ghw.sh pr list --st
+  3 Bash: bash /tmp/claude-1001/-home-haduong--agents/9f899e65-af5f-432b-9
+  2 Bash: python3 /home/haduong/.agents/scripts/attribution_record.py --he
+  2 Bash: cd /home/haduong/CNRS/projets/actifs/JETP-observer/.claude/workt
+  2 Bash: IDH_ROOT="$(cd -P "$(dirname /home/haduong/.claude/skills/roar/S
+  2 Bash: git -C /home/haduong/CNRS/projets/actifs/JETP-observer/.claude/w
+  2 Bash: gh repo view --json squashMergeAllowed,mergeCommitAllowed,rebase
+  2 Bash: python3 -c "
+  2 Bash: D=/home/haduong/.claude/projects/-home-haduong-CNRS-projets-acti
+  1 Bash: git symbolic-ref -q refs/remotes/origin/main; echo rc=$?
+  1 Bash: git symbolic-ref -q refs/remotes/origin/main
+  1 Bash: git switch -c roar-dream-20261014 refs/remotes/origin/main
