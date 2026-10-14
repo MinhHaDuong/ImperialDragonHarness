@@ -6,6 +6,7 @@ Label: deferred
 
 --- log ---
 2026-10-14T09:55Z Minh Ha-Duong created
+2026-10-14T10:30Z author note Merge the proposal with reservations about a three-skill review architecture; evaluate alternatives before implementation.
 
 --- body ---
 ## Author mandate (2026-10-14)
@@ -28,8 +29,11 @@ what valid evidence exists, what changed since it, which perspectives remain
 necessary, why and at what budget. Reuse valid current evidence; no automatic
 second battery for an unchanged diff.
 
-Use review as the common entry/dispatcher, with review-code and review-prose
-as content-specific helpers controlled by hunt. Preserve useful standalone
+The review / review-code / review-prose arrangement is a candidate, not an
+approved three-skill architecture. The author explicitly reserves judgment
+on that extra layer. Compare a single review skill with content-specific modes
+against separate helpers, and justify the smallest arrangement that meets the
+needs. Hunt controls the chosen review mechanism. Preserve useful standalone
 review invocation. Raid coordinates tickets and merges, not a second per-ticket
 review orchestrator. Remove gaze as a separate orchestration layer, or retain
 only a compatibility alias that does not add another battery.
@@ -43,8 +47,9 @@ still apply. Missing review evidence must never become simulated approval.
 
 - [ ] Hunt produces and executes the justified review plan above, with explicit
       reuse/invalidation decisions tied to revisions and affected scope.
-- [ ] review / review-code / review-prose naming and responsibilities are
-      consistent; gaze removal or compatibility-only behavior is explicit.
+- [ ] Resolve the author's reservation about a three-skill architecture: compare
+      simpler alternatives and justify the chosen names and responsibilities;
+      gaze removal or compatibility-only behavior is explicit.
 - [ ] verify-gate still blocks missing criteria, unresolved blocking findings
       and absent required proof; merge remains a separate caller decision.
 - [ ] Regression scenarios demonstrate unchanged-head reuse without duplicate
