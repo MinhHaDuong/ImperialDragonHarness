@@ -1,8 +1,8 @@
 %erg 0.1
-Title: Refactor review orchestration: hunt-owned plan, review-code/prose helpers, final gate
+Title: Design review orchestration: choose the review architecture and its plan of record
 Created: 2026-10-14
 Author: Minh Ha-Duong
-Label: deferred
+Closed: design complete: plan of record in docs/discussions/2026-10-14-1096-design.md; implementation in 1100
 
 --- log ---
 2026-10-14T09:55Z Minh Ha-Duong created
@@ -12,6 +12,8 @@ Label: deferred
 2026-10-14T19:43Z reviewer note Reliability work filed as ticket 1099 (Blocked-by: 1096), at the author's request.
 2026-10-14T19:55Z reviewer note Round 3 panel on the adopted plan recorded in the design doc: child 0 (other-project sweep) added, all seat objections absorbed; three questions await the author.
 2026-10-14T19:57Z reviewer note Author answered round 3: child 0 other-project sweep authorized (no stub skill); Copilot a binding comment, never a planned seat; risk floor from paths plus ticket text. Plan of record: children 0-3, measured raid, conditional child 4, then 1099.
+2026-10-14T20:26Z reviewer reviewer note Narrowed to the design at the author's request; implementation split to 1100, 1099 re-pointed to 1100.
+2026-10-14T20:26Z reviewer closed — design complete: plan of record in docs/discussions/2026-10-14-1096-design.md; implementation in 1100
 
 --- body ---
 ## Author mandate (2026-10-14)
@@ -48,19 +50,24 @@ applicable proof for the final head/base. Reviewers remain distinct from the
 coder; required lineage independence and actual identity/coverage records
 still apply. Missing review evidence must never become simulated approval.
 
+## Scope after the design discussion (2026-10-14)
+
+At the author's request this ticket covers the design only. The
+implementation moved to ticket 1100, which carries the exit criteria first
+written here (hunt-owned plan, verify-gate unchanged as final check,
+behavioural regression scenarios, propagation and the 15-file split).
+
 ## Exit criteria
 
-- [ ] Hunt produces and executes the justified review plan above, with explicit
-      reuse/invalidation decisions tied to revisions and affected scope.
-- [ ] Resolve the author's reservation about a three-skill architecture: compare
-      simpler alternatives and justify the chosen names and responsibilities;
-      gaze removal or compatibility-only behavior is explicit.
-- [ ] verify-gate still blocks missing criteria, unresolved blocking findings
-      and absent required proof; merge remains a separate caller decision.
-- [ ] Regression scenarios demonstrate unchanged-head reuse without duplicate
-      reviewers, proportionate re-review after relevant changes, and rejection
-      of stale/missing proof. They test behavior, not wording alone.
-- [ ] Update affected skills, profiles, callers, documentation and catalog;
-      split into child PRs before implementation if the 15-file breaker applies,
-      and verify their integration before closing the tracker.
-
+- [x] Compare a single review skill with content modes against separate
+      helpers and the three-skill router; justify the smallest arrangement.
+      Record: `docs/discussions/2026-10-14-1096-design.md` (three panel
+      rounds, seat notes in `docs/discussions/2026-10-14-1096-seats/`).
+- [x] Settle names and responsibilities, gaze included: gaze becomes the
+      single review skill with `mode=code|prose|both`; verify-gate stays the
+      separate final check; review-pr and review-pr-prose are retired with
+      no aliases and a retired-name lint (Answers 5, round 3 answers).
+- [x] The author answers the open questions (five in round 2, three in
+      round 3); the answers and the resulting plan of record (children 0-4,
+      measured raid, then 1099) are in the design document.
+- [x] Implementation filed as its own ticket (1100); 1099 re-pointed to it.
