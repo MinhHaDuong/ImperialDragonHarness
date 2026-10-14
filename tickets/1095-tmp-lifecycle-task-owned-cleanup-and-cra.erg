@@ -7,6 +7,7 @@ Label: deferred
 --- log ---
 2026-10-14T09:33Z Minh Ha-Duong created
 2026-10-14T16:17Z reviewer note Design discussion held (4 seats, 2 rounds): docs/discussions/2026-10-14-1095-design.md. Two designs remain (report-only; worktree-owned .tmp/ plus report); five author questions with defaults and prices await an answer.
+2026-10-14T17:32Z reviewer note Author proposed Design 3 (report-only scan with session-history attribution at roar and lair); portability and evidence assessed it, recorded in docs/discussions/2026-10-14-1095-design.md. Questions revised; still awaiting answers.
 
 --- body ---
 ## Context
