@@ -1,0 +1,129 @@
+{
+  "scope": "Frozen evidence of this actual invocation only; contract tests do not execute future skills.",
+  "loaded_skill": {
+    "path": "/tmp/idh-raid-1080-prep/skills/verify-adherence/SKILL.md",
+    "sha256": "4435caf5dedc0bd8e1ac08832a19eb5b4a1347e722931e4741c90e32a6d9a5db"
+  },
+  "outer": {
+    "worker_id": "01a13990-6738-7aa2-8f21-ac99891d2084",
+    "parent_worker_id": "01a1398a-c491-72d2-ac21-9a3f5917a79e",
+    "model": "gpt-6.1-sol",
+    "family": "OpenAI",
+    "effort": "medium",
+    "identity_source": "native session_meta and turn_context",
+    "arguments": "candidate worktree=/tmp/idh-1080-live"
+  },
+  "accepted_run": {
+    "adherence": "FAIL",
+    "escalation": null,
+    "arguments": "candidate worktree=/tmp/idh-1080-live",
+    "base": "2bc0eda6a664e128a9320e39a5ac8345ffdc455d",
+    "head": "38b550b99d429ec43c7bd3bcf2de950d7b23ea6d",
+    "phase_1_0": {
+      "status": "skipped",
+      "reason": "no .tex, .qmd, or .bib files touched",
+      "discovery_record": "6679ea"
+    },
+    "phase_2": {
+      "status": "completed through declared runner"
+    },
+    "semantic_review": {
+      "applicable": true,
+      "status": "ran",
+      "reason": "diff changes discovered rules/worktrees.md",
+      "rule_sources": [
+        "AGENTS.md",
+        "rules/worktrees.md"
+      ],
+      "worker_id": "b9ea7234-ad56-449d-9357-e5132b047917",
+      "model": "claude-haiku-5-5",
+      "family": "Anthropic",
+      "effort": "unavailable",
+      "requested_effort": "medium",
+      "route": "loaded route grid/cache; Claude headless cross-family worker",
+      "launch_evidence": {
+        "command": "claude -p --model haiku --effort medium --output-format json --tools '' < /tmp/idh-1080-adherence-retry-prompt.txt > /tmp/idh-1080-adherence-retry-worker.json",
+        "exec_chunk": "8cb745",
+        "exec_session_id": 32921
+      },
+      "completion_evidence": {
+        "exec_chunk": "07d04f",
+        "exit_status": 0,
+        "result_uuid": "878407ff-ca46-44ff-8a0e-922f9651a959",
+        "terminal_reason": "completed",
+        "subtype": "success",
+        "is_error": false,
+        "identity_source": "modelUsage.claude-haiku-5-5.canonicalModel",
+        "report": "/tmp/idh-1080-adherence-retry-worker.json"
+      }
+    },
+    "mechanical_failures": [],
+    "semantic_findings": [
+      {
+        "rule_section": "rules/worktrees.md#worktree-identity-0310",
+        "concern": "The script replaces the compliant git rev-parse --is-inside-work-tree with the forbidden [ -f .git ] predicate, which the rule explicitly prohibits.",
+        "file": "scripts/check-tree.sh",
+        "line": 3,
+        "severity": "blocking",
+        "suggested_test": "rg -n '\\[ -f \\.git \\]|test -f \\.git' scripts/ --glob '*.sh' && exit 1; rg -q 'git rev-parse --is-inside-work-tree' scripts/check-tree.sh"
+      }
+    ],
+    "untested_rules": [],
+    "validation": {
+      "anchor": "scripts/check-tree.sh:3 verified against complete diff and numbered source",
+      "rule_anchor": "rules/worktrees.md:3-7 verified against full source",
+      "evidence": "worker reviewed detection requirement, forbidden predicate, scope sentence, and AGENTS.md declaration",
+      "rejected_finding": "worker nit at rules/worktrees.md:7 alleges missing enforcement; no project rule requires mechanical enforcement",
+      "rejected_test_suggestion": "worker untested_rules proposal uses \"&& exit 1 || true\" and would swallow failure",
+      "worker_orchestration_self_report": "ignored; actual outer runtime launch/completion records used"
+    },
+    "elapsed": {
+      "start_utc": "2026-10-14T08:43:38Z",
+      "validation_checkpoint_utc": "2026-10-14T08:44:59Z",
+      "seconds_to_validation_checkpoint": 81,
+      "worker_duration_seconds": 20.946
+    },
+    "cost_usd": 0.0143562,
+    "evidence_files": {
+      "prompt": {
+        "path": "/tmp/idh-1080-adherence-retry-prompt.txt",
+        "sha256": "7bd228f4816d4124957f2b51401f8c72f7ae23890c8305084ebee67b00e84577"
+      },
+      "raw_worker_stdout": {
+        "path": "/tmp/idh-1080-adherence-retry-worker.json",
+        "sha256": "dbb9f1e2f9895cd5f76240e408dfcb26311db46117dbb069e53700b5f92fc328"
+      }
+    },
+    "environment_failures_this_invocation": [],
+    "mechanical_runner": {
+      "declaration": "AGENTS.md:4",
+      "corroboration": "Makefile:2",
+      "command": "make syntax",
+      "output": "bash -n scripts/check-tree.sh\n",
+      "exit_status": 0,
+      "execution_record": "0b9617"
+    }
+  },
+  "prior_attempts": [
+    {
+      "status": "input-parse failure",
+      "reason": "Outer misread literal candidate branch; clarification only, no defect hint."
+    },
+    {
+      "adherence": "FAIL",
+      "escalation": "adherence-infrastructure",
+      "semantic_review": {
+        "status": "invalid",
+        "worker_id": "449abcb7-bf3b-4a51-940b-8e0ad30ce458"
+      },
+      "reason": "Completed narrative omitted explicit severity; optional resume failed No conversation found.",
+      "exit_status": 0,
+      "result_uuid": "ee5dc92d-233d-4152-9518-72a32390cbdd",
+      "cost_usd": 0.00491546
+    }
+  ],
+  "evidence_sources": {
+    "outer": "outer.jsonl",
+    "worker": "worker.jsonl"
+  }
+}

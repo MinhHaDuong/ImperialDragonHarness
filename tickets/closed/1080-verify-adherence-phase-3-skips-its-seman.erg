@@ -2,9 +2,11 @@
 Title: verify-adherence phase 3 skips its semantic worker and assumes make lint
 Created: 2026-10-09
 Author: reviewer
+Closed: implemented
 
 --- log ---
 2026-10-09T19:06Z reviewer created
+2026-10-14T08:47Z Minh Ha-Duong closed — implemented
 
 --- body ---
 ## Context
@@ -29,10 +31,10 @@ predicate forbidden by ticket 0310) showed:
 - Phase 1 assumes `make lint`; a commit without it fails as "no declared runner".
 
 ## Exit criteria
-- [ ] Phase 3 trigger matches this harness's rules path, and a rules-touching
+- [x] Phase 3 trigger matches this harness's rules path, and a rules-touching
       diff always launches (or records why it did not launch) the semantic worker
-- [ ] The verdict states whether phase 3 ran and which worker served
-- [ ] A fixture whose repo rules state the 0310 rule, with the violation in the
+- [x] The verdict states whether phase 3 ran and which worker served
+- [x] A fixture whose repo rules state the 0310 rule, with the violation in the
       diff and no caller hint, is flagged by the semantic path with `file:line`
 
 ## Raid 1080 — Imagine (2026-10-14)
@@ -108,3 +110,11 @@ Optional RED trace adds one path. Freeze actual content-bearing roster before
 gaze; collapse artifacts if later review evidence would reach the breaker.
 Baseline make check: 1577 passed, 4 skipped, one sandbox Git write failure;
 that exact test passed (1 passed) on host recheck with required Git access.
+
+## Implementation evidence (2026-10-14)
+
+Live complete-skill acceptance and rejected attempts are retained in
+`docs/2026-10-14-adherence-semantic.md` and `docs/adherence-semantic/`.
+Modified worktree skill SHA-256 is 4435caf5dedc0bd8e1ac08832a19eb5b4a1347e722931e4741c90e32a6d9a5db.
+The syntax-only runner passed; a distinct completed routed worker returned
+blocking scripts/check-tree.sh:3 with suggested_test; global adherence FAIL.
