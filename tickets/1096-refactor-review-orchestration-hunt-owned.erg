@@ -8,6 +8,7 @@ Label: deferred
 2026-10-14T09:55Z Minh Ha-Duong created
 2026-10-14T10:30Z author note Merge the proposal with reservations about a three-skill review architecture; evaluate alternatives before implementation.
 2026-10-14T16:20Z reviewer note Design discussion (4 seats, 2 rounds) recorded in docs/discussions/2026-10-14-1096-design.md: designs C (delete second battery, shared reuse script) and A (C plus prose fold); B and the three-skill router rejected; five questions await the author.
+2026-10-14T19:35Z reviewer note Author answered the five questions (see docs/discussions/2026-10-14-1096-design.md, Answers): C now plus a separate reliability ticket; evidence allow-list from the 3-month census incl. Copilot; inherited independence only if identical; native seats optional; gaze becomes the single review skill, code fold now, prose after a measured raid, no aliases, retired names linted.
 
 --- body ---
 ## Author mandate (2026-10-14)

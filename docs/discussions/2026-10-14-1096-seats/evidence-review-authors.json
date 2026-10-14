@@ -1,0 +1,73 @@
+{
+ "window": "updated:>=2026-07-14 (to 2026-10-14)",
+ "repos_listed": 22,
+ "repos_failed": [],
+ "prs_scanned": 2783,
+ "prs_truncated_over_100": [],
+ "keywords": [
+  "review-pr",
+  "## Review",
+  "REVIEW-ANCHOR",
+  "/gaze",
+  "verify-gate",
+  "Verdict",
+  "APPROVED",
+  "REROLL",
+  "ESCALATE",
+  "PANEL-INTEGRITY",
+  "review-evidence"
+ ],
+ "authors": [
+  {
+   "login": "MinhHaDuong",
+   "type": "User",
+   "reviews": 711,
+   "review_comments": 1136,
+   "repos": 16,
+   "repo_names": [
+    "DOIfetch",
+    "ImperialDragonHarness",
+    "JETP-observer",
+    "Tracing-Kieu",
+    "aedist-technical-report",
+    "archiveCIRED",
+    "cadens",
+    "climate-finance-het",
+    "fuzzy-corpus",
+    "gavard-schoch-2026-comment",
+    "git-erg",
+    "livre-milliards-climat",
+    "padme",
+    "polycentric_activity",
+    "search-works-for-zotero",
+    "zoteus"
+   ]
+  },
+  {
+   "login": "copilot-pull-request-reviewer",
+   "type": "Bot",
+   "reviews": 184,
+   "review_comments": 0,
+   "repos": 6,
+   "repo_names": [
+    "ImperialDragonHarness",
+    "climate-finance-het",
+    "git-erg",
+    "padme",
+    "polycentric_activity",
+    "search-works-for-zotero"
+   ]
+  },
+  {
+   "login": "copilot-swe-agent",
+   "type": "Bot",
+   "reviews": 9,
+   "review_comments": 0,
+   "repos": 2,
+   "repo_names": [
+    "ImperialDragonHarness",
+    "search-works-for-zotero"
+   ]
+  }
+ ]
+}
