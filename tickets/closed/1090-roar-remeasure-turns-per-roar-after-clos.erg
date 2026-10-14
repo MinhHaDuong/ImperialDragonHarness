@@ -2,11 +2,13 @@
 Title: roar: remeasure turns per roar after close-and-clean merges
 Created: 2026-10-12
 Author: Minh Ha-Duong
+Closed: Measured in PR #1403: no turn saving from 1084; gap explained in journal 2026-10-14-roar-remeasure-1090
 
 --- log ---
 2026-10-12T15:32Z Minh Ha-Duong created
 2026-10-14T17:50Z reviewer Minh Ha-Duong measured 22 roars after 1084 (all runtimes, both hosts): roar-only median 14 turns (was 16), 224k equivalents (was ~420k), mostly from smaller start context; journal 2026-10-14-roar-remeasure-1090
 2026-10-14T18:46Z reviewer Same-method control (Oct solo roars before 1084, n=53): median 10 turns, 203k; after: 12.5 turns, 232k. No turn saving; gap explained in the journal (three script phases around ExitWorktree plus re-verification). Smaller start context predates 1084.
+2026-10-14T19:27Z reviewer closed — Measured in PR #1403: no turn saving from 1084; gap explained in journal 2026-10-14-roar-remeasure-1090
 
 --- body ---
 ## Context
