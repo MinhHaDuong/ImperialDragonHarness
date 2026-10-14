@@ -6,7 +6,9 @@ Author: Minh Ha-Duong
 --- log ---
 2026-10-09T13:06Z Minh Ha-Duong created
 2026-10-09T14:30Z claude note Parent 1074 closed by author request; its open exit criteria moved here; Blocked-by 1076 removed (1076 merged in #1313)
+2026-10-14T16:00Z claude note Scope item 1 experiment run on padme, session not entered (no EnterWorktree), worktrees under ~/.cache/t1077, TMPDIR there. Main session `git -C ~/.agents worktree add`: ran, no refusal; compound `cd <primary> && git worktree list && git -C ...` also ran. Async subagent without isolation: `pwd`=~/.agents, `git -C ~/.agents worktree add` and `worktree list` ran, no refusal. Background Bash job (run_in_background) `git -C ~/.agents worktree add`: exit 0, no refusal. Positive control, same command from a subagent with isolation=worktree: REFUSED ("This agent is isolated in the worktree ..., but this command redirects git to the shared checkout via -C"), read-only `git -C ~/.agents worktree list` refused too. Reading: the guard fires only for an agent whose own cwd the runtime isolated; without EnterWorktree nothing guards the session or its non-isolated children. PPID: session Bash $PPID=3742738, the `claude` process itself (ps at 15:52Z), recorded in ~/.cache/t1077/ppid.txt for the author's `ps -p` after session end; both subagents' Bash reported the same PPID=3742738, so a PPID-keyed 1076 lock is shared by the session and its subagents. Probe worktrees removed; the isolated agent's worktree was auto-cleaned by the runtime.
 2026-10-14T18:52Z reviewer claude note Experiment run on padme (table in body); positive control fired; awaiting author decision
+2026-10-14T19:19Z reviewer claude note Author decision: drop the guard (EnterWorktree opt-in removed); folds PR #1395's log entry
 
 --- body ---
 ## Context
@@ -36,7 +38,8 @@ primary checkout.
 | not entered | background Bash job | — | ok |
 | not entered | subagent, no isolation | ok | — |
 | entered (`EnterWorktree path=`) | session Bash | **refused** (positive control) | ok, run from the worktree |
-| entered | subagent, no isolation | **refused**, add and remove | not run |
+| entered | subagent, no isolation | **refused**, add and remove | ok: add, lock, unlock, remove |
+| entered | session Bash, toward a sibling worktree | **refused**, `-C` and `cd` alike | — |
 
 - The guard fires only after the session enters a worktree, and a
   non-isolated subagent inherits it from its parent. Unentered, nothing
@@ -51,10 +54,27 @@ primary checkout.
   `claude -p` pid was gone once it exited. 1076's lock therefore outlives
   the session in interactive use (safe direction: kept locked, never
   unlocked early) and matches the session in headless use.
+- The guard refuses git toward any tree other than the session's own,
+  not only the primary: `/gaze` seats reading `git -C "$review_tree"` stay
+  blocked whatever the recipe. Dropping `-C` from hunt alone does not fix
+  `/gaze`. The rules recommend `-C` in four places (git.md:25, git.md:40,
+  workflow.md:49, workflow.md:60), refused once entered.
+- A parallel session ran the same experiment earlier (PR #1395, log entry
+  16:00Z above, positive control an `isolation: worktree` subagent); its
+  findings agree.
+- A `cd` into the worktree moves the session's Bash cwd, but a session
+  restart resets it to the launch directory: absolute paths remain the rule.
+
+## Decision (author, 2026-10-14)
+Drop the guard: remove the `EnterWorktree` opt-in, no replacement guard.
+Sessions create and lock their worktree with plain git and `cd` into it,
+the convention Codex and Pi already follow. Accepted residual risk:
+`restore`/`checkout` aimed at another tree lose their only guard (2 clear
+catches in two months, census of 1074).
 
 ## Exit criteria
 - [x] Experiment run and recorded (positive control: one refusal reproduced)
-- [ ] Author decision recorded
-- [ ] If removal decided: opt-in removed; `/hunt`, `/raid`, `/gaze` use plain git (from 1074)
+- [x] Author decision recorded
+- [x] If removal decided: opt-in removed; `/hunt`, `/raid`, `/gaze` use plain git (from 1074)
 - [ ] A raid's `/gaze` can create its review worktree, demonstrated once (from 1074)
-- [ ] `make check` passes (from 1074)
+- [x] `make check` passes (from 1074)
