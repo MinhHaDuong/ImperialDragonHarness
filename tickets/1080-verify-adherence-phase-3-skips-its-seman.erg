@@ -91,3 +91,20 @@ or archival-only test can replace the actual invocation. Plan covers the skill,
 one test module, four minimal fixture files, compact evidence/report artifacts
 and ticket closure (12 planned paths, 13 with optional retained RED trace);
 frontmatter unchanged, no catalog update. Stay below the 15-file gaze breaker.
+
+## Feasibility
+
+PASS (2026-10-14), with WARN: actual authenticated live worker route must be
+verified by invocation, not binary presence or stale route-cache status.
+One PR, no inter-ticket registry/conflict coordination required. Runner
+declaration and existing tests located; current phase 3 defect confirmed.
+Roster: skills/verify-adherence/SKILL.md; tests/test_verify_adherence_semantic.py;
+tests/fixtures/adherence-semantic/{AGENTS.md,Makefile,rules/worktrees.md,
+scripts/check-tree.sh}; docs/2026-10-14-adherence-semantic.md;
+docs/adherence-semantic/{evidence.json,outer.jsonl,worker.jsonl};
+tickets/{1080-verify-adherence-phase-3-skips-its-seman.erg,
+closed/1080-verify-adherence-phase-3-skips-its-seman.erg}.
+Optional RED trace adds one path. Freeze actual content-bearing roster before
+gaze; collapse artifacts if later review evidence would reach the breaker.
+Baseline make check: 1577 passed, 4 skipped, one sandbox Git write failure;
+that exact test passed (1 passed) on host recheck with required Git access.
