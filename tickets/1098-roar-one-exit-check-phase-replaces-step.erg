@@ -1,5 +1,5 @@
 %erg 0.1
-Title: roar: one exit-check phase replaces step 9a-9b by hand; leave the worktree with keep + git worktree remove
+Title: roar: one exit-check phase replaces step 9a-9b by hand; leave the worktree by cd + git worktree remove
 Created: 2026-10-14
 Author: Minh Ha-Duong
 
@@ -8,13 +8,14 @@ Author: Minh Ha-Duong
 2026-10-14T19:30Z reviewer Minh Ha-Duong implemented exit-check phase and after-exit --remove-worktree; step 9 rewritten (keep, never remove/discard); 37 new shell checks; make check 1593 passed
 2026-10-14T19:50Z reviewer Minh Ha-Duong decided after gaze ESCALATE: primary-branch and main read-back stay non-gating notes; ignored files: wording fix, scan stays with 1095. Fix round: ls-remote could-not-look, quoted printed command, forge stub runs the real jq filter, tests for no forge, absent tree, parked primary
 2026-10-14T19:54Z reviewer Minh Ha-Duong rebased on #1407 (ticket 1077 retires EnterWorktree/ExitWorktree): step 9 now leaves by cd to the main checkout instead of ExitWorktree keep; exit tail is exit-check, cd, after-exit
+2026-10-14T20:09Z reviewer note verify-reroll — round 1: PR #1409 title/body (future merge commit message) still directs 'ExitWorktree … keep', retired by #1407; stale 'Step 9c/10' label at close-and-clean.sh:345
 
 --- body ---
 ## Context
 Ticket 1090 found 1084 saved no turns: close-and-clean covers steps 7, 9a and 10, but step 9b (fetch, ancestry, bundle read-back, main sync and read-back) stayed as prose the model runs command by command, and `ExitWorktree remove` is refused once per exit even with main synced (1097, reopened). The exit tail from preflight to the end took 7-21 tool calls (median 10, n=4).
 
 ## Design (author: "only reasonable safety checks")
-- `--phase exit-check [--bundle-branch B]`: preflight (clean tree), bounded fetch of the integration ref, HEAD ancestry or the bundle exception (B is the current `roar-*` branch, the remote tip equals HEAD, its merge request is open with auto-merge armed), main checkout on the default branch, `sync-local-main.sh`, main read-back. One verdict: `EXIT: READY` or `EXIT: KEEP-PENDING <reason>`, plus the `after-exit` command to run.
+- `--phase exit-check [--bundle-branch B]`: preflight (clean tree), bounded fetch of the integration ref, HEAD ancestry or the bundle exception (B is the current `roar-*` branch, the remote tip equals HEAD, its merge request is open with auto-merge armed), main checkout on the default branch, `sync-local-main.sh`, main read-back (these last three are non-gating notes, see Author decisions). One verdict: `EXIT: READY` or `EXIT: KEEP-PENDING <reason>`, plus the `after-exit` command to run.
 - The model then cds to the main checkout (no runtime worktree tool, ticket 1077), and runs `after-exit --remove-worktree PATH`: unlock and `git worktree remove` (Git refuses a dirty tree; never the main checkout or the cwd), then the scoped branch cleanup.
 - Ownership stays the model's: it passes `--bundle-branch` and `--remove-worktree` only for trees and branches this task owns.
 

@@ -290,7 +290,8 @@ worktree go once the branch is pushed and auto-merge is armed.
        uncommitted ticket draft (tickets 0174, 0948).
 
     b. `EXIT: READY` → `cd` to the main checkout, then run the `after-exit`
-       command the report prints, adding step 10's remote target.
+       command the report prints (run as `"$ROAR_DIR/close-and-clean.sh" …`;
+       the READY line prints it bare), adding step 10's remote target.
        `after-exit --remove-worktree` unlocks the tree (hunt locks it) and
        runs `git worktree remove`. Git refuses a tree with modified or
        untracked files, and the branch survives removal, so no commit is

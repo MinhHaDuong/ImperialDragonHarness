@@ -342,7 +342,7 @@ exit_check() {
     note "EXIT: READY — cd to the main checkout $(printf %q "$primary"), then run: close-and-clean.sh $after"
 }
 
-# ── Step 9c/10: remove the owned worktree once the session has left it ─────
+# ── Step 9b/10: remove the owned worktree once the session has left it ─────
 real() { cd -P "$1" 2>/dev/null && pwd -P; }
 
 remove_worktree() {
