@@ -231,8 +231,7 @@ worktree go once the branch is pushed and auto-merge is armed.
    ancestry or OID checks, or re-run a phase that exited 0, to confirm it. A
    phase this skill tells you to run again later (step 9a's fresh preflight)
    is a new run, not a confirmation. The checks this skill names outside the
-   script still run: step 9b's fetch and ancestry re-check, the `main`
-   read-back after sync, and the `discard_changes` ownership check.
+   script still run: step 9b's fetch and ancestry re-check.
 
    Exit 0 clean, 1 findings, 2 could-not-look (never an all-clear: a
    `tickets/` whose `erg` does not run, an unreadable forge or a failed fetch
@@ -303,53 +302,19 @@ worktree go once the branch is pushed and auto-merge is armed.
        open, and a later roar for that bundle reports its pending merge request.
 
        If fetch or verification
-       fails, preserve the worktree and branch (`action: "keep"`) and report
-       pending integration. An earlier pre-capture check is not sufficient. Only then
-       call `ExitWorktree` with action `remove`, after syncing local main:
-       `"$IDH_ROOT/scripts/sync-local-main.sh" <primary>`, then confirm
-       `git -C <primary> rev-parse main` equals `git rev-parse refs/remotes/origin/main`.
-       ExitWorktree compares HEAD with the primary's local `main`, not
-       `origin/main`, so a lagging `main` makes a merged wrap-up commit look
-       unmerged and `remove` refuses with a red error. The script exits 0
-       always and refuses dirty or busy primaries itself: if `main` still
-       differs after it, show no error but take `keep` plus step 9c and
-       report the keep and pending integration in step 11 (drift means
-       retain and report). ExitWorktree compares with the session's ORIGINAL
-       branch, normally the primary's local `main`: if the primary sits on
-       another branch, or the `rev-parse main` read is refused, take `keep`
-       plus 9c. The sync serves the ancestry path only; under the bundle
-       exception (wrap-up HEAD unmerged by design) it cannot help, so use
-       `keep` plus 9c or the existing bundle handling.
-       With the ancestry check
-       (not the bundle exception, whose local branch may go with the tree),
-       the worktree branch is fully merged; ExitWorktree's
-       "N commits would be discarded" warning can still name a branch that no longer
-       exists (a parallel session's hygiene pruned it post-merge;
-       `git rev-parse --verify refs/heads/<branch>` confirms,
-       climate-finance-het 2026-07-22). But `discard_changes` does more than remove the
-       worktree: ExitWorktree restores the session to the ORIGINAL
-       checkout, and with `discard_changes: true` it also deletes the
-       original branch — the one the primary checkout returns to. So
-       BEFORE authorizing `discard_changes`, verify that ORIGINAL branch
-       belongs to the explicitly completed task and is pushed or merged (`git -C <primary> merge-base --is-ancestor
-       <original-branch> refs/remotes/origin/main`, or check it has an up-to-date
-       upstream). If ownership is unproven or it carries unmerged commits, use `action: "keep"`
-       instead (2026-06-10: discard_changes deleted
-       `dream-consolidate-2026-06-09` and orphaned another session's
-       unmerged commit at a detached HEAD). Recovery if the branch was
-       deleted anyway: find the commit in `git reflog` (or the deletion
-       message prints its sha) and re-create the branch with
-       `git switch -c <branch> <sha>`.
-    c. `ExitWorktree` refuses `remove` on a worktree the session entered by
-       path rather than creating it (16 sessions, 2026-06-18 to 09-10). If
-       this session created that tree itself (`git worktree add`), exit with
-       `keep`, then — tree clean, branch an ancestor of `refs/remotes/origin/main` — run
-       `git worktree unlock <path>` (hunt locks its tree), `git worktree remove
-       <path>` from the primary
-       checkout. A tree it did not create (another session's, or one held by
-       another agent) stays: exit with `keep` and leave it to `/molt`.
-       Branch ancestry cannot show that no live session stands in it, the
-       0355 failure the closing note below describes.
+       fails, keep the worktree and branch and report pending integration.
+       An earlier pre-capture check is not sufficient. Only then, if this
+       session created the tree itself (`git worktree add`): `cd` to the
+       primary checkout, sync local main
+       (`"$IDH_ROOT/scripts/sync-local-main.sh" <primary>`), then
+       `git worktree unlock <path>` (hunt locks its tree) and
+       `git worktree remove <path>`. Plain `remove` refuses a dirty tree;
+       never `--force`. The branch goes in step 10, which checks ancestry;
+       under the bundle exception it stays for the forge.
+    c. A tree this session did not create (another session's, or one held
+       by another agent) stays: `cd` out and leave it to `/molt`. Branch
+       ancestry cannot show that no live session stands in it, the 0355
+       failure the closing note below describes.
     No-forge repo: every ancestry probe in this step compares against the
     local default branch instead of `refs/remotes/origin/main`.
     Skip if not in a worktree. A worktree a subagent created and locked itself is

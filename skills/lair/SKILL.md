@@ -22,8 +22,8 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 5. **Commit WIP if needed** — uncommitted work gets `wip:` prefix, committed to the current branch, and pushed.
 6. **Handoff notes** — for in-progress tickets with unpushed context, add a comment to the ticket: what's done, what's next, blockers.
 7. **Exit worktree** — if in a worktree:
-    a. Preflight from inside the worktree: `"$IDH_ROOT/scripts/worktree-exit-preflight.sh"` (purges `.panel/` and `build/panel-head/` review scratch, then refuses on any other uncommitted/untracked state; closes the ExitWorktree gap, tickets 0174 and 0948). If it blocks, finish step 5/6 (commit WIP, handoff notes) and re-run.
-    b. Call `ExitWorktree` to return to the main working tree. All remaining steps run on main.
+    a. Preflight from inside the worktree: `"$IDH_ROOT/scripts/worktree-exit-preflight.sh"` (purges `.panel/` and `build/panel-head/` review scratch, then refuses on any other uncommitted/untracked state; tickets 0174 and 0948). If it blocks, finish step 5/6 (commit WIP, handoff notes) and re-run.
+    b. `cd` to the primary checkout (`dirname "$(git rev-parse --path-format=absolute --git-common-dir)"`). All remaining steps run on main.
 8. **Hygiene sweep**:
    - Stale worktrees were GC'd by `/molt` at step 1 (housekeeping owns worktree GC; the script's rails protect active sessions — ticket 0355). Here, just `git worktree prune` for leftover admin entries of already-deleted dirs.
    - **A worktree the GC skipped for uncommitted changes is a signal, not just an obstacle**: diff it and ask "is this a closed ticket's dropped deliverable?" — `erg-pr-merge` autocloses on the `**Ticket:**` line unconditionally, so a PR can close a ticket having landed only part of the work, leaving the rest as orphaned WIP (2026-06-16: ticket 0609's mandated adherence test sat uncommitted for weeks after PR #1111 autoclosed 0609 with only the data fix). Preserve it (`wip(NNNN):` commit + push), then re-ticket and execute; never silently discard. Verify any recovered test actually runs — uncommitted WIP may never have been linted/executed.

@@ -1,0 +1,96 @@
+%erg 0.1
+Title: Decide the session EnterWorktree opt-in after a subagent spawn experiment
+Created: 2026-10-09
+Author: Minh Ha-Duong
+Closed: Opt-in removed (PR #1407); author decision 2026-10-14: drop the guard
+
+--- log ---
+2026-10-09T13:06Z Minh Ha-Duong created
+2026-10-09T14:30Z claude note Parent 1074 closed by author request; its open exit criteria moved here; Blocked-by 1076 removed (1076 merged in #1313)
+2026-10-14T16:00Z claude note Scope item 1 experiment run on padme, session not entered (no EnterWorktree), worktrees under ~/.cache/t1077, TMPDIR there. Main session `git -C ~/.agents worktree add`: ran, no refusal; compound `cd <primary> && git worktree list && git -C ...` also ran. Async subagent without isolation: `pwd`=~/.agents, `git -C ~/.agents worktree add` and `worktree list` ran, no refusal. Background Bash job (run_in_background) `git -C ~/.agents worktree add`: exit 0, no refusal. Positive control, same command from a subagent with isolation=worktree: REFUSED ("This agent is isolated in the worktree ..., but this command redirects git to the shared checkout via -C"), read-only `git -C ~/.agents worktree list` refused too. Reading: the guard fires only for an agent whose own cwd the runtime isolated; without EnterWorktree nothing guards the session or its non-isolated children. PPID: session Bash $PPID=3742738, the `claude` process itself (ps at 15:52Z), recorded in ~/.cache/t1077/ppid.txt for the author's `ps -p` after session end; both subagents' Bash reported the same PPID=3742738, so a PPID-keyed 1076 lock is shared by the session and its subagents. Probe worktrees removed; the isolated agent's worktree was auto-cleaned by the runtime.
+2026-10-14T18:52Z reviewer claude note Experiment run on padme (table in body); positive control fired; awaiting author decision
+2026-10-14T19:19Z reviewer claude note Author decision: drop the guard (EnterWorktree opt-in removed); folds PR #1395's log entry
+2026-10-14T19:34Z reviewer verify-reroll — round 1: skills/roar/SKILL.md:235 still lists the deleted main read-back and discard_changes ownership check as checks that still run
+2026-10-14T19:43Z reviewer closed — Opt-in removed (PR #1407); author decision 2026-10-14: drop the guard
+
+--- body ---
+## Context
+Child of 1074. Without `EnterWorktree` the session cwd stays in the primary
+checkout, so Edit/Write land on main; the guard's 3 clear catches were of
+that kind. Removing the opt-in needs a replacement for "who moves the session".
+
+## Scope
+1. Experiment once 1076 lands: from a session not entered in a worktree, spawn
+   a subagent without the isolation parameter and run `git worktree add`;
+   also from a background job. Record whether the runtime guard still fires.
+   Also record `echo $PPID` from a session Bash call, end the session, and
+   `ps -p` it: the 1076 lock reason assumes that pid lives exactly as long as
+   the session (Fable seat on PR #1313).
+2. Report to the author with the result; the author decides removal of the
+   opt-in in `scripts/on-start.sh` and `rules/claude-code.md`; if removed, the
+   `ExitWorktree` steps in skills/lair (step 26) and skills/roar (step 9b-c)
+   and skills/raid:358 go with it (roar sweep, PR #1313).
+
+## Experiment (padme, 2026-10-14, Claude Code, Opus 5.5 session, Haiku probes)
+Probe: `worktree add --detach` + `remove` of a scratch tree, against the
+primary checkout.
+
+| Session state | Caller | `git -C <primary>` | plain `git` |
+|---|---|---|---|
+| not entered | session Bash | ok | ok |
+| not entered | background Bash job | — | ok |
+| not entered | subagent, no isolation | ok | — |
+| entered (`EnterWorktree path=`) | session Bash | **refused** (positive control) | ok, run from the worktree |
+| entered | subagent, no isolation | **refused**, add and remove | ok: add, lock, unlock, remove |
+| entered | session Bash, toward a sibling worktree | **refused**, `-C` and `cd` alike | — |
+
+- The guard fires only after the session enters a worktree, and a
+  non-isolated subagent inherits it from its parent. Unentered, nothing
+  fired, background job included.
+- Refusal text: "redirects git to the shared checkout via -C". The same
+  `worktree add` without `-C`, run from inside the entered worktree, passes:
+  the git common dir is shared. hunt step 3 (`git -C "$R" worktree add`)
+  is therefore refused in an entered session as written.
+- `$PPID`: a subagent's Bash reports the session's own pid. The pid is
+  the runtime process, not the session: this conversation's pid had lived
+  2h45 since an earlier session's launch, through `/clear`. A headless
+  `claude -p` pid was gone once it exited. 1076's lock therefore outlives
+  the session in interactive use (safe direction: kept locked, never
+  unlocked early) and matches the session in headless use.
+- The guard refuses git toward any tree other than the session's own,
+  not only the primary: `/gaze` seats reading `git -C "$review_tree"` stay
+  blocked whatever the recipe. Dropping `-C` from hunt alone does not fix
+  `/gaze`. The rules recommend `-C` in four places (git.md:25, git.md:40,
+  workflow.md:49, workflow.md:60), refused once entered.
+- A parallel session ran the same experiment earlier (PR #1395, log entry
+  16:00Z above, positive control an `isolation: worktree` subagent); its
+  findings agree.
+- A `cd` into the worktree moves the session's Bash cwd, but a session
+  restart resets it to the launch directory, and so does a `cd` outside the
+  project tree (the runtime resets the shell to the launch directory, not
+  to the worktree): absolute paths remain the rule.
+- The accepted risk fired once in this session: after the restart, a
+  relative-path `sed` edited `skills/lair/SKILL.md` in the primary
+  checkout instead of the worktree. `/gaze` spotted the dirty primary;
+  the edit was moved to the branch and reversed on main.
+- The #1395 session's pid (3742738) was gone after that session ended:
+  a process that hosted one session dies with it.
+- Author's context in that session's launch prompt, not measured here: in
+  a JETP session on 2026-10-14 the guard refused about 8 read-only
+  commands (ssh reads of another host, `git -C <other repo> diff` loops, a
+  sed loop over ticket files, a tmux launch whose prompt mentioned git)
+  and caught nothing it should have.
+
+## Decision (author, 2026-10-14)
+Drop the guard: remove the `EnterWorktree` opt-in, no replacement guard.
+Sessions create and lock their worktree with plain git and `cd` into it,
+the convention Codex and Pi already follow. Accepted residual risk:
+`restore`/`checkout` aimed at another tree lose their only guard (2 clear
+catches in two months, census of 1074).
+
+## Exit criteria
+- [x] Experiment run and recorded (positive control: one refusal reproduced)
+- [x] Author decision recorded
+- [x] If removal decided: opt-in removed; `/hunt`, `/raid`, `/gaze` use plain git (from 1074)
+- [x] A raid's `/gaze` can create its review worktree, demonstrated once (from 1074): `/gaze 1407`, outside a raid, created and read its review tree with plain git; the author counted it, since the raid failure came from the entered session
+- [x] `make check` passes (from 1074)

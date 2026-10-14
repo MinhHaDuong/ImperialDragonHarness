@@ -88,8 +88,9 @@ def test_clean_tree_gate_is_executable():
 def test_pid_discriminator_obtainable():
     """Step 3 spells out a literal, executable way to obtain the `$$` discriminator.
 
-    Ticket 0309: `EnterWorktree`'s name schema rejects `$` characters, so the
-    model must resolve the session PID to a literal before the call. Step 3 must
+    The worktree name must carry a literal PID so two sessions land in distinct
+    paths, so the model must resolve the session PID to a literal first (history:
+    ticket 0309, when `EnterWorktree`'s name schema rejected `$`). Step 3 must
     show how (e.g. `bash -c 'echo $$'`), not just reference the bare `$$` token.
     """
     step3 = step3_text()

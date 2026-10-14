@@ -10,11 +10,11 @@
 # an unreadable existing ticket store, forge or Git metadata yields 2. A repo
 # without tickets/ explicitly skips that workflow and may still exit cleanly.
 #
-# Phases exist because step 9 (ExitWorktree) sits between the preflight and
+# Phases exist because step 9 (worktree removal) sits between the preflight and
 # the cleanup, and the cleanup's current-branch guard depends on the cwd:
 #   before-exit  close, close claims, tracker detection, preflight
 #   preflight    the worktree-exit preflight alone, run fresh right before
-#                ExitWorktree (the before-exit result predates the wrap-up work)
+#                the removal (the before-exit result predates the wrap-up work)
 #   after-exit   local and remote scoped branch cleanup
 #   all          both (default; for a roar that is not in a worktree)
 #

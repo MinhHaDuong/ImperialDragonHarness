@@ -2,14 +2,13 @@
 set -euo pipefail
 # Refuse to exit a worktree that still has uncommitted state.
 #
-# Why: ExitWorktree is a harness tool, not a Bash command, so the
-# `Bash(git worktree remove*)` PreToolUse matcher cannot guard it. A sweep that
-# Write's a new ticket draft (untracked, never `git add`'d) and then calls
-# ExitWorktree will silently destroy the draft — the failure mode that lost
-# the 0173 ticket. See ticket 0174.
+# Why: a sweep that Write's a new ticket draft (untracked, never `git add`'d)
+# and then leaves its worktree loses the draft — the failure mode that lost
+# the 0173 ticket under the runtime's ExitWorktree. See ticket 0174. Plain
+# `git worktree remove` refuses too, but without the salvage route below.
 #
 # This is a skill-level gate, called from /roar step 9 (through
-# skills/roar/close-and-clean.sh) and /lair step 7 before invoking ExitWorktree. Checks tracked-modified, staged, AND
+# skills/roar/close-and-clean.sh) and /lair step 7 before leaving the worktree. Checks tracked-modified, staged, AND
 # untracked entries — `git status --porcelain` covers all three by default.
 #
 # Arg: worktree path (default: current directory).
@@ -55,11 +54,11 @@ status=$(git -C "$path" status --porcelain --untracked-files=all 2>/dev/null) ||
 [ -z "$status" ] && exit 0
 
 cat >&2 <<EOF
-Blocked: worktree '$path' has uncommitted state — ExitWorktree would destroy it.
+Blocked: worktree '$path' has uncommitted state — removing the worktree would destroy it.
 
 $status
 
-Commit (and push) anything you mean to keep before calling ExitWorktree. For
+Commit (and push) anything you mean to keep before removing the worktree. For
 ticket drafts filed during /roar sweeps, commit the new tickets/NNNN-*.erg
 (erg new writes it; you must commit it). For genuine WIP, salvage:
 

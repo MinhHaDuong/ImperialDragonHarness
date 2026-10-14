@@ -355,8 +355,8 @@ For each eligible PR, sequentially within the wave:
 1. `git fetch origin` to pick up any prior merges.
 2. No checkout needed — `-C <path>` points the merge tool at a checkout that
    already has the PR branch. An Execute agent's own worktree qualifies
-   directly: take its path from the agent's completion notification. Do not check out, `cd`, or `EnterWorktree`
-   into it, and do not delete and re-checkout the branch. <!-- harness-extension-point -->
+   directly: take its path from the agent's completion notification. Do not check out or `cd`
+   into it, and do not delete and re-checkout the branch.
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
 4. Run `"$IDH_ROOT/skills/merge/erg-pr-merge" -C <worktree-path> <pr-number>`.
    This atomically closes the ticket and merges via GitHub API.

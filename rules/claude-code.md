@@ -7,7 +7,15 @@ loads the rest of `rules/` and skips this file.
 ## Entering the session
 
 Except for `/hunt N` (below) and manuscript prose
-([prose/workpackages.md](./prose/workpackages.md)), call `EnterWorktree` before answering, then `git switch <branch>`.
+([prose/workpackages.md](./prose/workpackages.md)), create the conversation's
+worktree before answering with the plain-git recipe of `/hunt` step 3
+(`git worktree add`, `git worktree lock`, `cd`), named from the table below.
+The Bash tool keeps its cwd, so the `cd` moves the session; a restart resets
+it, so paths stay absolute.
+
+Never call `EnterWorktree`. It switches on a runtime guard that refuses git
+aimed at any other worktree, `-C` and `cd` alike, and the session's subagents
+inherit it: review seats cannot reach their review tree.
 
 | Context | Worktree name | Phase |
 |---------|---------------|-------|
@@ -18,10 +26,9 @@ Except for `/hunt N` (below) and manuscript prose
 | MR review | `review-{N}` | `[→ Verify]` |
 
 `{pid}` is a short session discriminator so two sessions on one ticket land in
-distinct paths; resolve `$$` with `bash -c 'echo $$'` first, since the name
-schema rejects `$`. Legacy bare `t{N}` names remain valid.
+distinct paths: `bash -c 'echo $$'`. Legacy bare `t{N}` names remain valid.
 
-**`/hunt N`: do not enter a worktree before the skill runs** — a pre-emptive
+**`/hunt N`: do not create a worktree before the skill runs** — a pre-emptive
 `t{N}-*` worktree makes its ownership check skip the triage.
 
 Open with the phase label heading one self-presentation line, in the
