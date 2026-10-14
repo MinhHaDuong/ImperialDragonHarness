@@ -3,6 +3,10 @@
 Waiting for the wrap-up PR's CI and auto-merge kept roar from finishing
 (author decision, 2026-10-09). The pushed branch and open auto-merge PR are
 the durable copy; the task branch still needs the merged-ancestry check.
+
+Since ticket 1098 these checks run in close-and-clean.sh's exit-check phase,
+exercised behaviourally in tests/test_roar_close_and_clean.sh; these ratchets
+keep the script's probes and the skill's ownership scope in place.
 """
 
 import re
@@ -14,36 +18,35 @@ pytestmark = pytest.mark.adherence
 
 REPO = Path(__file__).resolve().parents[1]
 ROAR = re.sub(r"\s+", " ", (REPO / "skills" / "roar" / "SKILL.md").read_text())
+SCRIPT = (REPO / "skills" / "roar" / "close-and-clean.sh").read_text()
 
 
-def _bundle_exception() -> str:
-    return ROAR.split("**Bundle exception.**", 1)[1].split("If fetch or verification", 1)[0]
+def _function(name: str) -> str:
+    return SCRIPT.split(f"{name}() {{", 1)[1].split("\n}\n", 1)[0]
+
+
+def _step9() -> str:
+    return ROAR.split("9. **Exit worktree**", 1)[1].split("10. **Clean only", 1)[0]
 
 
 def test_bundle_exit_needs_pushed_tip_and_armed_auto_merge():
     assert "Wait for confirmed integration before cleaning up" not in ROAR
-    rule = _bundle_exception()
-    assert "fresh fetch" in rule and "git rev-parse HEAD @{u}" in rule, (
-        "the pushed-tip probe must follow a fetch, or @{u} can be stale"
-    )
-    assert "auto-merge armed" in rule and "autoMergeRequest" in rule, (
-        "armed must be read back from the forge, not asserted"
-    )
+    probe = _function("bundle_armed")
+    assert "git ls-remote" in probe, "the pushed tip is read from the remote, never a stale @{u}"
+    assert "autoMergeRequest" in probe, "armed must be read back from the forge, not asserted"
 
 
 def test_bundle_exception_excludes_task_and_reused_branches():
-    rule = _bundle_exception()
-    assert "`roar-*` wrap-up branch this run created" in rule
-    assert "never the task branch" in rule and "never a reused branch" in rule
+    assert "`roar-*` wrap-up branch this run created" in _step9()
+    assert "never the task branch or a reused branch" in _step9()
+    assert '"$BUNDLE" == roar-*' in _function("exit_check")
 
 
 def test_failed_bundle_is_surfaced_by_roar_not_molt():
-    rule = _bundle_exception()
-    assert "/molt" not in rule, "molt does not report open merge requests"
-    assert "in step 11" in rule and "does not block" in rule
-    assert "a later roar for that bundle" in rule
-    assert "pending merge request" in rule
+    step9 = _step9()
+    assert "in step 11" in step9 and "does not block" in step9
+    assert "a later roar reports its merge request" in step9
 
 
 def test_task_branch_still_needs_ancestry():
-    assert "merge-base --is-ancestor HEAD refs/remotes/origin/main" in ROAR
+    assert 'merge-base --is-ancestor "$head" "$base_tip"' in _function("exit_check")

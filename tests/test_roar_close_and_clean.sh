@@ -443,7 +443,161 @@ WRAP
 done
 cd "$W"
 
-# SKILL.md runs that fresh preflight at worktree exit (step 9a)
-_check_true "SKILL.md step 9a runs the preflight phase" grep -q -- '--phase preflight' "$REPO/skills/roar/SKILL.md"
+# ── exit-check and worktree removal (ticket 1098) ───────────────────────────
+# A linked worktree WT on branch <b>, one commit of work, pushed.
+exit_world() { # <dir> <branch>: sets W (main checkout) and WT
+    make_world "$1"; cd "$W"
+    WT="$1/wt"
+    G worktree add -q -b "$2" "$WT" main 2>/dev/null
+    git -C "$WT" commit -q --allow-empty -m work
+    git -C "$WT" push -q origin "$2"
+}
+merge_elsewhere() { # <branch>: merge it on origin from another clone, so W's main lags
+    local c="$W/../c2"
+    git clone -q "$W/../o.git" "$c" 2>/dev/null
+    git -C "$c" -c user.email=t@t -c user.name=t merge -q --no-ff -m "merge $1" "origin/$1"
+    git -C "$c" push -q origin main
+}
+# Forge stubs answer `gh pr view B --json … --jq F` by running the caller's
+# real jq filter over a fixture, so the filter itself is exercised.
+forge_stub() { # <dir> <pr json>
+    mkdir -p "$1"
+    cat > "$1/gh" <<STUB
+#!/usr/bin/env bash
+f=""; while [ \$# -gt 0 ]; do [ "\$1" = --jq ] && f="\$2"; shift; done
+printf '%s' '$2' | jq -r "\$f"
+STUB
+    chmod +x "$1/gh"
+}
+ARMED="$T/armed";     forge_stub "$ARMED"    '{"state":"OPEN","autoMergeRequest":{"mergeMethod":"MERGE"}}'
+UNARMED="$T/unarmed"; forge_stub "$UNARMED"  '{"state":"OPEN","autoMergeRequest":null}'
+CLOSEDPR="$T/closed"; forge_stub "$CLOSEDPR" '{"state":"CLOSED","autoMergeRequest":{"mergeMethod":"MERGE"}}'
+NOFORGE="$T/noforge"; mkdir -p "$NOFORGE"
+printf '#!/usr/bin/env bash\nexit 1\n' > "$NOFORGE/gh"; chmod +x "$NOFORGE/gh"
+
+exit_world "$T/ec-merged" task; merge_elsewhere task; cd "$WT"
+run "$SCRIPT" --phase exit-check
+_check_rc "exit-check merged: ready" 0 "$rc"
+_check_says "exit-check merged: verdict" "$out" "EXIT: READY"
+_check_says "exit-check merged: says leave via the main checkout" "$out" "cd to the main checkout"
+_check_says "exit-check merged: hands over the tree" "$out" "--remove-worktree $(cd -P "$WT" && pwd -P)"
+_check_says "exit-check merged: hands over the task branch" "$out" "--local-branch task=$(git -C "$WT" rev-parse HEAD)"
+_check_true "exit-check merged: local main synced to origin" \
+    test "$(G rev-parse main)" = "$(G rev-parse refs/remotes/origin/main)"
+# The handed-over command finishes the job from the main checkout.
+cmd=$(printf '%s\n' "$out" | sed -n 's/.*then run: close-and-clean.sh //p')
+cd "$W"
+eval "set -- $cmd"   # the printed command is shell-quoted
+run "$SCRIPT" "$@"
+_check_rc "after-exit from exit-check output: clean" 0 "$rc"
+_check_true "after-exit: worktree removed" test ! -d "$WT"
+_check_lacks "after-exit: task branch deleted" "$(G branch --list task)" "task"
+
+exit_world "$T/ec-unmerged" task; cd "$WT"
+run "$SCRIPT" --phase exit-check
+_check_rc "exit-check unmerged: findings" 1 "$rc"
+_check_says "exit-check unmerged: keep pending" "$out" "EXIT: KEEP-PENDING"
+_check_lacks "exit-check unmerged: not ready" "$out" "EXIT: READY"
+
+exit_world "$T/ec-dirty" task; merge_elsewhere task; cd "$WT"
+echo stray > stray.txt
+run "$SCRIPT" --phase exit-check
+_check_rc "exit-check dirty: findings" 1 "$rc"
+_check_says "exit-check dirty: keep pending" "$out" "EXIT: KEEP-PENDING preflight"
+
+exit_world "$T/ec-nofetch" task; merge_elsewhere task; cd "$WT"
+G remote set-url origin "$T/ec-nofetch/missing.git"
+run "$SCRIPT" --phase exit-check
+_check_rc "exit-check fetch failure: could-not-look" 2 "$rc"
+_check_lacks "exit-check fetch failure: no ready" "$out" "EXIT: READY"
+
+exit_world "$T/ec-bundle" roar-wrap; cd "$WT"
+wrapped "$ARMED" --phase exit-check --bundle-branch roar-wrap
+_check_rc "exit-check bundle armed: ready" 0 "$rc"
+_check_says "exit-check bundle armed: verdict" "$out" "EXIT: READY"
+_check_lacks "exit-check bundle armed: unmerged branch not handed to cleanup" "$out" "--local-branch roar-wrap"
+wrapped "$UNARMED" --phase exit-check --bundle-branch roar-wrap
+_check_rc "exit-check bundle not armed: findings" 1 "$rc"
+_check_says "exit-check bundle not armed: keep pending" "$out" "auto-merge armed"
+wrapped "$CLOSEDPR" --phase exit-check --bundle-branch roar-wrap
+_check_rc "exit-check bundle closed merge request: findings" 1 "$rc"
+_check_lacks "exit-check bundle closed merge request: not ready" "$out" "EXIT: READY"
+wrapped "$NOFORGE" --phase exit-check --bundle-branch roar-wrap
+_check_rc "exit-check bundle unreadable forge: could-not-look" 2 "$rc"
+_check_lacks "exit-check bundle unreadable forge: not ready" "$out" "EXIT: READY"
+git -C "$WT" commit -q --allow-empty -m unpushed
+wrapped "$ARMED" --phase exit-check --bundle-branch roar-wrap
+_check_rc "exit-check bundle unpushed: findings" 1 "$rc"
+_check_says "exit-check bundle unpushed: says push" "$out" "differs from HEAD"
+
+exit_world "$T/ec-notbundle" task; cd "$WT"
+wrapped "$ARMED" --phase exit-check --bundle-branch task
+_check_rc "exit-check bundle name must be roar-*: findings" 1 "$rc"
+_check_lacks "exit-check bundle name must be roar-*: not ready" "$out" "EXIT: READY"
+
+cd "$W"
+run "$SCRIPT" --phase exit-check
+_check_rc "exit-check outside a linked worktree: skipped" 0 "$rc"
+_check_says "exit-check outside a linked worktree: says so" "$out" "not in a linked worktree"
+
+# after-exit --remove-worktree refusals
+exit_world "$T/rm-guards" task; cd "$W"
+echo stray > "$WT/stray.txt"
+run "$SCRIPT" --phase after-exit --remove-worktree "$WT"
+_check_rc "remove dirty tree: Git refusal is a finding" 1 "$rc"
+_check_true "remove dirty tree: tree kept" test -f "$WT/stray.txt"
+rm "$WT/stray.txt"
+run "$SCRIPT" --phase after-exit --remove-worktree "$W"
+_check_rc "remove main checkout: refused" 1 "$rc"
+_check_says "remove main checkout: says why" "$out" "is the main checkout"
+cd "$WT"
+run "$SCRIPT" --phase after-exit --remove-worktree "$WT"
+_check_rc "remove current checkout: refused" 1 "$rc"
+_check_says "remove current checkout: says cd out first" "$out" "cd to the main checkout first"
+cd "$W"
+run "$SCRIPT" --phase after-exit --remove-worktree "$T"
+_check_rc "remove unregistered dir: refused" 1 "$rc"
+_check_true "remove unregistered dir: untouched" test -d "$T/tools"
+G worktree lock "$WT"
+run "$SCRIPT" --phase after-exit --remove-worktree "$WT"
+_check_rc "remove locked clean tree: removed" 0 "$rc"
+_check_true "remove locked clean tree: gone" test ! -d "$WT"
+_check_true "remove locked clean tree: branch kept (no target named)" has_local task
+
+run "$SCRIPT" --phase after-exit --remove-worktree "$WT"
+_check_rc "remove already-absent tree: clean" 0 "$rc"
+_check_says "remove already-absent tree: reported" "$out" "WORKTREE: ALREADY-ABSENT"
+
+# No forge: compare against the local default branch; nothing to sync.
+mkdir -p "$T/ec-local"; L="$T/ec-local/repo"
+git init -q -b main "$L"; git -C "$L" -c user.email=t@t -c user.name=t commit -q --allow-empty -m init
+git -C "$L" worktree add -q -b task "$T/ec-local/wt" main 2>/dev/null
+git -C "$T/ec-local/wt" -c user.email=t@t -c user.name=t commit -q --allow-empty -m work
+cd "$T/ec-local/wt"
+run "$SCRIPT" --phase exit-check
+_check_rc "exit-check no forge, unmerged: findings" 1 "$rc"
+git -C "$L" -c user.email=t@t -c user.name=t merge -q --no-ff -m "merge task" task
+run "$SCRIPT" --phase exit-check
+_check_rc "exit-check no forge, merged: ready" 0 "$rc"
+_check_says "exit-check no forge, merged: verdict" "$out" "EXIT: READY"
+
+# Author decision (ticket 1098): a main checkout parked on another branch does
+# not block the exit. The tree goes; branch -d then keeps the branch, reported.
+exit_world "$T/ec-parked" task; merge_elsewhere task
+G switch -q -c parked
+cd "$WT"
+run "$SCRIPT" --phase exit-check
+_check_rc "exit-check primary parked: ready" 0 "$rc"
+_check_says "exit-check primary parked: notes main differs" "$out" "after-exit may keep the branch"
+cmd=$(printf '%s\n' "$out" | sed -n 's/.*then run: close-and-clean.sh //p')
+cd "$W"
+eval "set -- $cmd"
+run "$SCRIPT" "$@"
+_check_rc "after-exit primary parked: finding" 1 "$rc"
+_check_true "after-exit primary parked: tree removed" test ! -d "$WT"
+_check_true "after-exit primary parked: branch kept, nothing lost" has_local task
+
+# SKILL.md leaves the worktree through exit-check, cd and after-exit (step 9)
+_check_true "SKILL.md step 9 runs the exit-check phase" grep -q -- '--phase exit-check' "$REPO/skills/roar/SKILL.md"
 
 exit $fail
