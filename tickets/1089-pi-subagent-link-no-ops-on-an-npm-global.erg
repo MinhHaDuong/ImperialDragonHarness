@@ -28,3 +28,31 @@ and fail loudly (non-zero) rather than exit 0 when neither layout exists.
 - [ ] `scripts/pi-subagent-link` links the subagent extension and agents on an npm-global install (fixture: `pi` symlink into a `node_modules/@earendil-works/pi-coding-agent` tree)
 - [ ] With neither layout present it exits non-zero with a message naming both paths it tried
 - [ ] The existing `current-version` layout still works (regression test)
+
+## Raid 1089 — Imagine (2026-10-14)
+
+Proceed; the current host's managed Pi 1.2.0 does not invalidate the original
+npm-global fixture. Preserve all three exit criteria. Keep managed release
+lookup first; fall back through the actual PATH executable, real symlink target
+and ancestor package root. Validate both index.ts and agents.ts modules before
+linking. Do not hardcode either executable bin directory or create ~/bin.
+Both-source failure names marker/release and the executable attempt; a broken
+managed source may still fall back. No new dependency or generalized installer.
+
+Author clarification: no ~/bin directory in the home; prefer ~/.local/bin for
+Pi's public launcher. Requested upstream report deposited as
+https://github.com/earendil-works/pi/issues/10932, with selector reproduction.
+It is auto-closed by the upstream new-contributor policy, awaiting maintainer
+review. The installer can select even an absent ~/bin from PATH and later
+create it. The harness helper will only create its extension destination.
+
+Blind-spot pass: standalone helper tests would miss pi-haiku's stderr masking.
+Smallest repair removes the stderr discard, preserving the wrapper's existing
+continue-on-setup-failure behavior and Pi's exit status. Test the diagnostic
+through that caller with synthetic fixtures; do not read real credential files.
+The modules linked by this helper are index.ts and agents.ts, not user-specific
+model-pinned agent definitions. No other material omission.
+
+Estimated scope: two shell files, one focused subprocess test module and this
+ticket; no registry collisions or monster-ticket signals. Implementation is
+bounded; review/gates dominate elapsed time. Harness work is the deliverable.
