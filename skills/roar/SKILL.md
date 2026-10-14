@@ -304,7 +304,14 @@ worktree go once the branch is pushed and auto-merge is armed.
        `origin/main`, so a lagging `main` makes a merged wrap-up commit look
        unmerged and `remove` refuses with a red error. The script exits 0
        always and refuses dirty or busy primaries itself: if `main` still
-       differs after it, say nothing and take `keep` plus step 9c instead.
+       differs after it, show no error but take `keep` plus step 9c and
+       report the keep and pending integration in step 11 (drift means
+       retain and report). ExitWorktree compares with the session's ORIGINAL
+       branch, normally the primary's local `main`: if the primary sits on
+       another branch, or the `rev-parse main` read is refused, take `keep`
+       plus 9c. The sync serves the ancestry path only; under the bundle
+       exception (wrap-up HEAD unmerged by design) it cannot help, so use
+       `keep` plus 9c or the existing bundle handling.
        With the ancestry check
        (not the bundle exception, whose local branch may go with the tree),
        the worktree branch is fully merged; ExitWorktree's
