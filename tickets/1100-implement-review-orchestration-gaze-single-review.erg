@@ -1,0 +1,55 @@
+%erg 0.1
+Title: Implement review orchestration: gaze as the single review skill, hunt-owned plan
+Created: 2026-10-14
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-14T20:26Z reviewer created Split from 1096 at the author's request: 1096 keeps the design and closes, this ticket carries the implementation.
+
+--- body ---
+## Context
+
+Design ticket 1096 is closed. Its plan of record is the design document
+`docs/discussions/2026-10-14-1096-design.md`, sections "Answers" and
+"Round 3" (the round-3 revision supersedes the earlier plan list). This
+ticket implements it; the original mandate and required direction stay in
+ticket 1096.
+
+Summary of the adopted design: hunt owns a proportionate review plan from
+risk and actual review history; valid evidence is reused, no second battery
+on an unchanged diff; gaze becomes the single review skill with
+`mode=code|prose|both` and never returns APPROVED ("gaze reviews,
+verify-gate gates"); verify-gate stays the separate final check that hunt
+runs; review-pr and review-pr-prose are retired with no aliases and a
+retired-name lint over live paths; Copilot reviews are binding comments,
+never seats; the risk floor is the higher of path and ticket-text matches.
+
+## Plan (tracker, one child ticket per PR, filed before work starts)
+
+| Child | Content | Agent-h | Author-h |
+|---|---|---|---|
+| 0 | Sweep other projects on padme and doudou for review-pr, review-pr-prose and gaze-as-gate wording; one PR per affected project, repointing to gaze plus verify-gate. Authorized writes, this purpose only. No stub skill. | 1.5 | 0.5 |
+| 1 | Evidence core: forge actor contract (allow-list of three pinned actor IDs, fail closed), shared reuse script, verify-gate stale and no-report checks, seat table, risk floor, report hashes in the block, behavioural regression tests. | 3.5 | 0.5 |
+| 2 | Gaze rebuilt as the review entry: inline, transport preflight with detached fallback, controller-written artifacts, validated return schema; review-pr's code panel becomes the code mode; old battery and `agents/gaze-pr-review.md` deleted; portable simplify a declared seat. | 3.5 | 0.4 |
+| 3 | Retire review-pr in one merge wave (move, IDH_ROOT fix, hunt, references, lint), installed-link cleanup, read-only audit of installed registrations. Waits for child 0's PRs. | 3.5 | 0.5 |
+| — | One measured raid with the new timings. | | 0.25 |
+| 4 | Conditional prose fold: only if the measured raid or a drift test shows the panel bodies diverging; retire review-pr-prose, extend the lint. | (2.5) | (0.4) |
+
+Committed: about 12 agent-hours and 2.15 author-hours. Ticket 1099
+(bounded review time) follows and is blocked by this ticket.
+
+## Exit criteria
+
+- [ ] Hunt produces and executes the justified review plan, with explicit
+      reuse/invalidation decisions tied to revisions and affected scope.
+- [ ] Gaze is the single review skill; review-pr is retired with no alias and
+      the retired-name lint fails on any live reference.
+- [ ] verify-gate still blocks missing criteria, unresolved blocking findings
+      (Copilot's included) and absent required proof; merge remains a
+      separate caller decision; a test shows gaze never returns APPROVED.
+- [ ] Regression scenarios demonstrate unchanged-head reuse without duplicate
+      reviewers, proportionate re-review after relevant changes, and rejection
+      of stale/missing proof. They test behavior, not wording alone.
+- [ ] Child 0's project PRs merged before review-pr is retired.
+- [ ] Affected skills, profiles, callers, documentation and catalog updated;
+      integration of the children verified before this tracker closes.
