@@ -57,3 +57,37 @@ a finding. All original exit criteria preserved. Antipattern scan: no new
 dependencies proposed; avoid reopening runner discovery or changing resident
 rules. Cost: bounded contract/test work and one live outer+child invocation;
 actual duration/tokens recorded at acceptance.
+
+## Actions
+
+1. Add focused semantic-contract acceptance coverage; establish RED on the
+   present skill. Do not substitute wording checks for live acceptance.
+2. Repair rule-location discovery and mandatory routed-worker execution.
+   Preserve phase 1 declaration discovery; document complete inputs, observed
+   worker identity/completion, unavailable/invalid-worker escalation, and
+   blocking-finding-to-FAIL mapping. Reuse existing detached transport if needed.
+3. Run a minimal neutral rules/ fixture through the complete modified skill
+   with no caller defect hint. Retain sanitized outer/child execution evidence,
+   loaded skill absolute path and SHA-256, mechanical success, blocking semantic
+   file:line + suggested_test and global FAIL. Archive reproducible fixture
+   inputs and compact evidence, avoiding a new framework.
+4. Run targeted existing contract checks, make lint, and the normal pre-PR
+   project gate. Open a PR, then review and verify all original criteria.
+
+## Test
+
+First acceptance: rules-touching fixture with an explicit 0310 project rule
+and syntax-only adherence runner. Its script introduces [ -f .git ]. Require
+a distinct actually completed routed semantic worker and overall FAIL with a
+blocking anchored finding. Reject ran without completion and PASS with a
+blocking finding. Frozen evidence records prove this run only; supplementary
+contract tests do not claim to execute future skill versions.
+
+## Dependencies and planned size
+
+No new library or registry dependency. One working routed model door is
+required for live acceptance. Antipattern scan: no general evidence framework
+or archival-only test can replace the actual invocation. Plan covers the skill,
+one test module, four minimal fixture files, compact evidence/report artifacts
+and ticket closure (12 planned paths, 13 with optional retained RED trace);
+frontmatter unchanged, no catalog update. Stay below the 15-file gaze breaker.
