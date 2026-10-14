@@ -1,0 +1,7 @@
+# Values seat round 2 (SIMULATED), summary
+Round-1 objections on the core answered and simulated-accepted (custody, context paths, inherited line, simplify declared seat, named replication, time claim withdrawn).
+C: Excellence accept; residual: prose path is the manuscript path where drift goes unnoticed → test asserting both skills call the shared script with the same policy version. Integrity accept; residual: policy version must include the hash of scripts/review-evidence.py itself. Kindness best of set; fail-closed message must name the command that regenerates the block.
+A: Excellence: `both` right but new logic on a rare path; acceptable as later third child, not a precondition. Integrity: no new objection. Kindness: keep review-pr-prose alias until the next manuscript round actually runs through it, not one calendar release.
+Decisions: (1) accept; reliability ticket should block the 20-minute goal, not 1096. (2) accept + at high row the reused seat's report hash must resolve to a readable report at gate time, else no-report. (3) accept; transport and worker recorded for any other-family seat. (4) accept without qualification. (5) accept name; objects to one-release lifetime for review-pr-prose alias.
+Missing question: human reviewers posting outside the controller account → default: human reviews remain load-bearing comments (verify-gate non-negotiable 3), never reused seats, listed as `human: ran`.
+Lean (simulated): C now with script-hash and drift-test amendments.

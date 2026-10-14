@@ -7,6 +7,7 @@ Label: deferred
 --- log ---
 2026-10-14T09:55Z Minh Ha-Duong created
 2026-10-14T10:30Z author note Merge the proposal with reservations about a three-skill review architecture; evaluate alternatives before implementation.
+2026-10-14T16:20Z reviewer note Design discussion (4 seats, 2 rounds) recorded in docs/discussions/2026-10-14-1096-design.md: designs C (delete second battery, shared reuse script) and A (C plus prose fold); B and the three-skill router rejected; five questions await the author.
 
 --- body ---
 ## Author mandate (2026-10-14)

@@ -1,0 +1,63 @@
+1330 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | memory(1329): review attribution + raid-1075 journ
+1331 rp_posts 2 heads ['b3d0f942', 'c46175a0'] gaze 2 gate 1 first->merge_min 13.5 | roar: exit wrap-up worktree once bundle is pushed 
+1332 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | memory: roar journal for PR #1328 (1079 close)
+1333 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | memory(1331): review-attribution record
+1334 rp_posts 3 heads ['05fa052b', 'f961c062', 'f961c062'] gaze 2 gate 0 first->merge_min 34.5 | skills: add /dashboard (read-only ticket and merge
+1335 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | tickets(1024): close tournament tracker; 1051/1053
+1336 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | tickets(1047): close — blog posts published
+1337 rp_posts 0 heads [] gaze 1 gate 0 first->merge_min 2.6 | t1071: second review round, rules and profiles
+1338 rp_posts 0 heads [] gaze 1 gate 0 first->merge_min 1.7 | t1071: second review round, route and review skill
+1339 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | roar: 1071 review round two (journal)
+1340 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | memory: roar journal for PR 1334 (review attributi
+1341 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | ticket(1080): verify-adherence phase 3 never ran i
+1342 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | roar: 1071 follow-up journal
+1343 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | rules/git: /roar after a merge is a reminder
+1344 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | settings: allow all Bash, drop the permissions den
+1345 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | ticket(1081): audit the merge Ticket-line requirem
+1346 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | roar: journal for permissions allow-all and idh in
+1347 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | ticket(1082): erg-pr-merge dies on pending CI
+1348 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | merge: a missing Ticket line closes nothing
+1349 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | ticket(1082): option 2 is a one-shot status; add p
+1350 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | roar: journal for the merge-script CI refusal and 
+1351 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | memory: roar for ticket 1081 / PR 1348
+1352 rp_posts 0 heads [] gaze 2 gate 0 first->merge_min 5.0 | merge: arm auto-merge on pending CI, add one-shot 
+1353 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | roar: journal for the 1082 raid
+1354 rp_posts 1 heads ['9ce97006'] gaze 1 gate 0 first->merge_min 5.7 | roar: capture before sweep; end with a /clear verd
+1355 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | roar(1354): journal and review attribution
+1356 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | ticket 1084: script roar's mechanical close and cl
+1357 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | chore: housekeeping sweep 2026-10-11 (STATE refres
+1358 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | tickets 1085, 1086: script molt ticket close and r
+1359 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | chore: housekeeping sweep and STATE refresh 2026-1
+1360 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | tickets(1061): annotation de l'auteur, 2026-10-12
+1361 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | tickets(1048): annotation de l'auteur, 2026-10-12
+1362 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | ticket(1048): revise cycle 3 arms
+1363 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | memory: roar 2026-10-12 (annotations 1061/1048)
+1364 rp_posts 0 heads [] gaze 1 gate 0 first->merge_min 0.4 | tickets(1053): padme arena fixes and smoke evidenc
+1365 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | memory: roar 2026-10-12 — 1053 arena fixes, attrib
+1366 rp_posts 1 heads ['568c5ef0'] gaze 2 gate 1 first->merge_min 15.2 | tickets(1053): close — arena fixes merged and veri
+1367 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | memory: roar 2026-10-12 — 1053 closed, attribution
+1368 rp_posts 2 heads ['03963c9f', '03963c9f'] gaze 0 gate 0 first->merge_min 14.6 | fix: skip local CI cleanly when no workflow exists
+1369 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | memory: record local CI session inefficiency and P
+1370 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | ticket(1048): Mellum flagged benchmaxxed
+1371 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | ticket(1048): production on Flash-Next, night-mode
+1372 rp_posts 3 heads ['c3e90dee', 'f39edf40', 'e3039d4d'] gaze 2 gate 0 first->merge_min 82.7 | raid: port the reroll-count awk into a tested scri
+1373 rp_posts 3 heads ['4c96b68c', 'd2409c7d', '6a184167'] gaze 2 gate 0 first->merge_min 83.4 | molt: script ticket close/archive, fix merged-bran
+1374 rp_posts 8 heads ['e2c79395', '86296e73', '3dbdcbbf', '3cf977c3', '3424fb34', '3a5fcb31', 'ddc6210a', 'c3d769ef'] gaze 4 gate 0 first->merge_min 1332.9 | feat(roar): clean only explicitly completed PR bra
+1375 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | roar wrap-up: review attribution for #1372/#1373, 
+1376 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | Track deferred PS for model-comparison arithmetic 
+1377 rp_posts 1 heads ['5a0600a2'] gaze 1 gate 0 first->merge_min 15.6 | fix: exclude inferred own PR from ticket collision
+1378 rp_posts 2 heads ['7e1f77b1', '9e2fdd3f'] gaze 2 gate 0 first->merge_min 49.7 | fix(census): keep local skill cost visible outside
+1379 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | roar: raid 1091/1092 verification and attribution
+1380 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | chore: refresh STATE after raid and housekeeping
+1381 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | roar(1374): preserve revision evidence and pending
+1382 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | dream(3): consolidate the 2026-10-08 to 2026-10-13
+1383 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | test(memory): drop the legacy index-link pin
+1384 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | roar(dream3): capture the index-duplication fix an
+1385 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | chore: evening housekeeping and STATE refresh 2026
+1386 rp_posts 0 heads [] gaze 1 gate 0 first->merge_min 5.3 | Finish arena separation from the harness
+1387 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | roar: preserve arena separation and review evidenc
+1388 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | lair: refresh state after arena separation
+1389 rp_posts 2 heads ['00c5a333', '825b1eda'] gaze 0 gate 1 first->merge_min 79.0 | Fix adherence semantic worker discovery and observ
+1390 rp_posts 1 heads ['40708b7b'] gaze 0 gate 1 first->merge_min 59.1 | fix(pi): link subagent examples on npm-global inst
+1391 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | ticket: defer the author-requested review workflow
+1392 rp_posts 0 heads [] gaze 0 gate 0 first->merge_min None | memory: wrap up deferred review refactor ticket
