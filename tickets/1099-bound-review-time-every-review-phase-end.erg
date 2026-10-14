@@ -1,0 +1,62 @@
+%erg 0.1
+Title: Bound review time: every review phase ends within budget
+Created: 2026-10-14
+Author: Minh Ha-Duong
+Blocked-by: 1096
+
+--- log ---
+2026-10-14T19:43Z Minh Ha-Duong created
+2026-10-14T19:45Z Minh Ha-Duong note Filed from the 1096 design discussion (answer 1); sequenced after the review layers are simplified.
+
+--- body ---
+## Goal
+
+Every review phase ends within its time budget with a verdict, or with a
+recorded "no report". This bounds the worst case and is directly checkable.
+Reducing the variability of review time is the main lever; whether the
+startup wait is a fixed cost or variability is settled by measurement.
+
+## Why
+
+Raids 1080 and 1089 overran the author's 20-minute closing window: 79 and 59
+minutes from first review to merge (PRs 1389, 1390). The time went to seats
+that failed to start, stalled or were dropped, not to reviewing itself.
+Unbroken reviews are already fast (JETP-observer #154: 1.8 min; #152:
+10.6 min). Evidence and counts: docs/discussions/2026-10-14-1096-design.md
+("What the evidence says about the 20-minute window") and its seat records.
+
+## Sequencing
+
+Blocked by 1096 (simplify the review layers: gaze becomes the single review
+skill, no second battery). Budgets are set on the simplified chain, not on
+the layers 1096 removes.
+
+## Scope
+
+1. Measure first. Timestamp every seat: launched, started, finished, failed
+   or timed out, including failed starts (today only Codex seats leave a
+   trace, through UUIDv7 session ids). Break one raid's closing time down
+   by phase. Current derived estimate: ~10 min before the first native seat
+   starts, ~15 min lost to a timed-out gate, ~17 min to completion.
+2. Fix the startup failures recorded on 1389/1390: the Claude CLI argument
+   error at launch, the thread limit when spawning native seats, native
+   review failing on a read-only file system.
+3. Bound timeouts: a budget per seat and per gate; on expiry, record
+   "no report" and move on, instead of discovering an exit-124 controller
+   or an interrupted gate later.
+4. Stop the isolation guard from dropping seats (7 PRs, the most frequent
+   recorded cause). Find why it refuses legitimate seats; prefer narrowing
+   or deleting a misfiring guard over growing it (rules/workflow.md).
+
+## Exit criteria
+
+- [ ] Per-phase timestamps, failed starts included, are recorded for every
+      review phase and seat.
+- [ ] Each review phase and seat has a budget; on expiry it records
+      "no report" rather than waiting.
+- [ ] The startup failures listed above no longer reproduce.
+- [ ] The isolation guard no longer drops legitimate seats, or is narrowed.
+- [ ] A full raid closes from first review to merge within 20 minutes,
+      shown by its timestamps, phase by phase.
+- [ ] No seat is dropped silently: a missing seat appears as "no report",
+      and a required one still blocks the merge (ESCALATE).
