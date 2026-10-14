@@ -1,0 +1,43 @@
+%erg 0.1
+Title: Tmp lifecycle: task-owned cleanup and crash recovery across runtimes
+Created: 2026-10-14
+Author: Minh Ha-Duong
+Label: deferred
+
+--- log ---
+2026-10-14T09:33Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+The author reports recurring /tmp growth and Disk full and asks WHERE and HOW
+the harness should clean up in the work cycle. A one-shot cleanup does not
+answer that request. On 2026-10-14 the author explicitly deferred this discussion
+to another day while closing raids 1080 and 1089. This ticket preserves the
+discussion, not authorization to implement a broad cleanup policy now.
+
+Current mechanisms: SessionEnd/on-end.sh clears Claude session scratch;
+molt sweeps recognized orphan scratch via session_scratch.py and stale
+registered worktrees via worktree-gc.sh. Those mechanisms do not account for
+arbitrary command/test temporary directories across runtimes. Existing
+context: closed 0854 (session scratch), 0300/0303 (temporary worktree scope).
+
+## Discussion to resume
+
+Decide an ownership/lifecycle contract for task-created temporaries. Candidate
+points: source cleanup at command/test completion (finally/trap/temporary
+directory context); task cleanup at roar after preserving work and evidence;
+startup/molt recovery after crashes. Consider a task-specific temp root or
+registry so cleanup can identify its own resources, across Codex/Claude/Pi.
+Preserve live sessions, uncommitted worktrees and required review evidence.
+Separate leaks in project tests from the harness's lifecycle responsibility.
+No generic age-based rm of /tmp.
+
+## Exit criteria
+
+- [ ] Resume discussion with the author; record chosen lifecycle points and
+      ownership/retention policy, with current mechanism references.
+- [ ] Define a concrete bounded implementation plan and verification for
+      normal completion, crash recovery and preservation of live/WIP resources;
+      create implementation child tickets if the decision needs them.
+
