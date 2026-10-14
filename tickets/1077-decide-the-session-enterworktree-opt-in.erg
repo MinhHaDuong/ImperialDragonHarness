@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-10-09T13:06Z Minh Ha-Duong created
 2026-10-09T14:30Z claude note Parent 1074 closed by author request; its open exit criteria moved here; Blocked-by 1076 removed (1076 merged in #1313)
+2026-10-14T16:00Z claude note Scope item 1 experiment run on padme, session not entered (no EnterWorktree), worktrees under ~/.cache/t1077, TMPDIR there. Main session `git -C ~/.agents worktree add`: ran, no refusal; compound `cd <primary> && git worktree list && git -C ...` also ran. Async subagent without isolation: `pwd`=/home/haduong/.agents, `git -C ~/.agents worktree add` and `worktree list` ran, no refusal. Background Bash job (run_in_background) `git -C ~/.agents worktree add`: exit 0, no refusal. Positive control, same command from a subagent with isolation=worktree: REFUSED ("This agent is isolated in the worktree ..., but this command redirects git to the shared checkout via -C"), read-only `git -C ~/.agents worktree list` refused too. Reading: the guard fires only for an agent whose own cwd the runtime isolated; without EnterWorktree nothing guards the session or its non-isolated children. PPID: session Bash $PPID=3742738, the `claude` process itself (ps at 15:52Z), recorded in ~/.cache/t1077/ppid.txt for the author's `ps -p` after session end; both subagents' Bash reported the same PPID=3742738, so a PPID-keyed 1076 lock is shared by the session and its subagents. Probe worktrees removed; the isolated agent's worktree was auto-cleaned by the runtime.
 
 --- body ---
 ## Context
@@ -26,7 +27,7 @@ that kind. Removing the opt-in needs a replacement for "who moves the session".
    and skills/raid:358 go with it (roar sweep, PR #1313).
 
 ## Exit criteria
-- [ ] Experiment run and recorded (positive control: one refusal reproduced)
+- [x] Experiment run and recorded (positive control: one refusal reproduced)
 - [ ] Author decision recorded
 - [ ] If removal decided: opt-in removed; `/hunt`, `/raid`, `/gaze` use plain git (from 1074)
 - [ ] A raid's `/gaze` can create its review worktree, demonstrated once (from 1074)
