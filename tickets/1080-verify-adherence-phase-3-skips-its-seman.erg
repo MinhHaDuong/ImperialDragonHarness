@@ -34,3 +34,26 @@ predicate forbidden by ticket 0310) showed:
 - [ ] The verdict states whether phase 3 ran and which worker served
 - [ ] A fixture whose repo rules state the 0310 rule, with the violation in the
       diff and no caller hint, is flagged by the semantic path with `file:line`
+
+## Raid 1080 — Imagine (2026-10-14)
+
+Proceed with a narrow skill-contract repair. Phase 1 runner discovery was
+already fixed by 0953; retain that declaration contract. Phase 3 still misses
+the harness rules/ tree and lacks observed worker execution evidence.
+Discover project rule locations, route one actual semantic worker, and record
+applicability/status/reason/identity/completion. A required missing worker must
+fail closed as infrastructure escalation; inline review cannot count as launch.
+Reuse current runtime/delegation mechanisms, without a new dependency framework.
+
+Live acceptance: a minimal Git fixture declares rules/ and a syntax-only runner;
+a rules-touching branch adds a script violating the fixture's explicit 0310
+rule. Invoke the complete skill with branch/worktree only, without a caller
+hint. Retain actual launch/completion evidence and a blocking semantic finding
+with file:line and suggested_test. Contract tests alone are insufficient.
+
+Blind-spot findings incorporated: verify the loaded skill path and content hash
+against the modified worktree copy; require overall adherence FAIL, not merely
+a finding. All original exit criteria preserved. Antipattern scan: no new
+dependencies proposed; avoid reopening runner discovery or changing resident
+rules. Cost: bounded contract/test work and one live outer+child invocation;
+actual duration/tokens recorded at acceptance.
