@@ -2,9 +2,11 @@
 Title: pi-subagent-link no-ops on an npm-global Pi install
 Created: 2026-10-12
 Author: Minh Ha-Duong
+Closed: implemented
 
 --- log ---
 2026-10-12T13:54Z Minh Ha-Duong created
+2026-10-14T09:38Z Minh Ha-Duong closed — implemented
 
 --- body ---
 ## Context
@@ -25,9 +27,9 @@ Resolve the install from the real path of the `pi` executable as a fallback,
 and fail loudly (non-zero) rather than exit 0 when neither layout exists.
 
 ## Exit criteria
-- [ ] `scripts/pi-subagent-link` links the subagent extension and agents on an npm-global install (fixture: `pi` symlink into a `node_modules/@earendil-works/pi-coding-agent` tree)
-- [ ] With neither layout present it exits non-zero with a message naming both paths it tried
-- [ ] The existing `current-version` layout still works (regression test)
+- [x] `scripts/pi-subagent-link` links the subagent extension and agents on an npm-global install (fixture: `pi` symlink into a `node_modules/@earendil-works/pi-coding-agent` tree)
+- [x] With neither layout present it exits non-zero with a message naming both paths it tried
+- [x] The existing `current-version` layout still works (regression test)
 
 ## Raid 1089 — Imagine (2026-10-14)
 
@@ -97,3 +99,17 @@ exercise real ancestor discovery. Wrapper-copy test isolates ONLY keyfile
 location; HOME stays untouched and no live key is read. Five planned content
 paths; no shared registry or inter-ticket dependency. No test suite was run in
 this mechanical feasibility phase. Execution follows completion of raid 1080.
+
+## Execution evidence (2026-10-14)
+
+The first focused run was RED: 5 failed, 2 passed, including actual missing
+npm symlinks and hidden wrapper stderr. The affected integration module is
+GREEN: 7 passed, covering npm idempotence, managed precedence, broken managed
+fallback, managed-only regression, absent/incomplete-source failure and the
+wrapper's visible diagnostic, exact arguments and exit status 23.
+`make check-fast`: 937 passed (integration fixtures are correctly excluded).
+`make lint`: 185 passed; declared adherence runner, no semantic residue.
+No HOME override, real credential/config reads, new dependency or launcher
+directory creation. The user authorized parallel execution with 1080,
+superseding the earlier sequential feasibility note. Deferred follow-up:
+`1095-pi-subagent-link-user-agent-definitions.erg` remains open.

@@ -1,22 +1,55 @@
 #!/usr/bin/env bash
-# Point ~/.pi/agent/extensions/subagent/{index,agents}.ts at the example
-# extension of the Pi release named in ~/.pi/agent/install/current-version.
-# Idempotent; run it after a Pi upgrade (pi-haiku runs it on every start).
-# Exits 0 and says why when Pi is not installed, so CI boxes pass.
+# Link the managed release's subagent example, falling back to the package
+# containing the actual Pi executable on PATH (including npm-global installs).
+# Idempotent; run after an upgrade. Missing/incomplete sources fail visibly.
 set -euo pipefail
 
 pi_home="${PI_HOME:-$HOME/.pi/agent}"
 marker="$pi_home/install/current-version"
+src=""
+managed_attempt="$marker (unreadable)"
 
-if [ ! -r "$marker" ]; then
-  echo "pi-subagent-link: no Pi install at $pi_home; nothing to link" >&2
-  exit 0
+has_modules() {
+  [ -f "$1/index.ts" ] && [ -r "$1/index.ts" ] &&
+    [ -f "$1/agents.ts" ] && [ -r "$1/agents.ts" ]
+}
+
+if [ -r "$marker" ]; then
+  version="$(tr -d '[:space:]' < "$marker")"
+  candidate="$pi_home/install/releases/$version/node_modules/@earendil-works/pi-coding-agent/examples/extensions/subagent"
+  managed_attempt="$marker -> $candidate"
+  if has_modules "$candidate"; then
+    src="$candidate"
+  fi
 fi
 
-version="$(tr -d '[:space:]' < "$marker")"
-src="$pi_home/install/releases/$version/node_modules/@earendil-works/pi-coding-agent/examples/extensions/subagent"
-if [ ! -d "$src" ]; then
-  echo "pi-subagent-link: release $version has no subagent example at $src" >&2
+executable_attempt="pi on PATH (not found)"
+if [ -z "$src" ]; then
+  executable="$(command -v pi || true)"
+  if [ -n "$executable" ]; then
+    resolved="$(readlink -f "$executable" || true)"
+    executable_attempt="pi on PATH: $executable -> ${resolved:-unresolved}"
+    if [ -n "$resolved" ]; then
+      package="$(dirname "$resolved")"
+      while [ "$package" != / ]; do
+        parent="$(dirname "$package")"
+        if [ "${package##*/}" = pi-coding-agent ] &&
+          [ "${parent##*/}" = @earendil-works ]; then
+          candidate="$package/examples/extensions/subagent"
+          executable_attempt="$executable_attempt -> $candidate"
+          if has_modules "$candidate"; then
+            src="$candidate"
+          fi
+          break
+        fi
+        package="$parent"
+      done
+    fi
+  fi
+fi
+
+if [ -z "$src" ]; then
+  echo "pi-subagent-link: no complete subagent example; tried managed $managed_attempt; executable $executable_attempt" >&2
   exit 1
 fi
 
