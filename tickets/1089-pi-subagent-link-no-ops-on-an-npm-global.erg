@@ -56,3 +56,34 @@ model-pinned agent definitions. No other material omission.
 Estimated scope: two shell files, one focused subprocess test module and this
 ticket; no registry collisions or monster-ticket signals. Implementation is
 bounded; review/gates dominate elapsed time. Harness work is the deliverable.
+
+## Actions
+
+1. First RED: an npm-global executable symlink into a nested package tree with
+   both example modules; assert actual destination links resolve correctly.
+   Use tmp_path, child_env(), PI_HOME and a controlled utility PATH. Never
+   override HOME or read the host's keys or Pi config.
+2. Preserve managed current-version lookup; add real-executable ancestor
+   discovery as fallback, including a broken managed source. Validate both
+   source files, then create only the extension links. Emit a nonzero diagnostic
+   naming both attempts when neither works. Test missing module and idempotence.
+3. Cover marker-layout regression and neither-layout failure in subprocesses
+   without exposing the host's actual pi executable on PATH.
+4. Remove pi-haiku's stderr discard, preserving continue-on-helper-failure and
+   final exec behavior. Test a copy of the actual wrapper with ONLY its keyfile
+   assignment redirected to a synthetic fixture path (assert one replacement),
+   helper alongside and stub pi. Assert visible helper diagnostic, exact Pi
+   arguments and exit status. No production credential/config API change.
+5. Run affected tests, check-fast, declared adherence and one pre-PR full gate;
+   review and merge after verify-gate clears. Preserve user preference and
+   upstream issue link in the delivery.
+
+## Test and dependencies
+
+Positive controls: npm-global and managed sources both produce real symlinks.
+Negative controls: neither source and incomplete modules never report success
+or create dangling links. Caller test catches masked diagnostics without
+changing wrapper exit policy. No new package/library dependency; no shared
+registry changes. Planned content paths: scripts/pi-subagent-link,
+scripts/pi-haiku, tests/test_pi_subagent_link.py, this ticket and its closed
+path (at most five paths). Existing current-version behavior is preserved.
