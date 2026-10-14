@@ -8,17 +8,14 @@ Two documented recipes lost branches on 2026-06-10:
    drift is refused before deletion. Behavioral coverage lives in the shell test.
 
 2. ``skills/roar/SKILL.md`` step 9b blanket-authorized ExitWorktree's
-   ``discard_changes``, which also deletes the ORIGINAL branch the
-   primary checkout returns to — orphaning unmerged commits at a
-   detached HEAD. The step must require verifying the original branch is
-   pushed or merged first, offer ``action: "keep"`` otherwise, and
-   document the reflog recovery path.
+   ``discard_changes``, which also deleted the ORIGINAL branch. Sessions no
+   longer enter worktrees through the runtime (ticket 1077), so step 9 removes
+   the tree with plain ``git worktree remove`` and the hazard is gone.
 
 The sweep itself moved into ``skills/roar/close-and-clean.sh`` (ticket 1084);
 its guards are tested behaviourally in ``tests/test_roar_close_and_clean.sh``
 by running the real script and stripping one guard at a time. What remains here
-are string-match ratchets on the rule/skill text: the rule delegates the
-sweep, and step 9b's ExitWorktree discipline.
+is a string-match ratchet on the rule text: the rule delegates the sweep.
 """
 
 from pathlib import Path
@@ -42,29 +39,6 @@ def test_git_md_delegates_the_sweep_and_inlines_no_loop():
     )
     assert "/roar` step 10" in GIT_RULES, (
         "rules/git.md must point at the skill that owns the sweep"
-    )
-
-
-def test_roar_9b_checks_original_branch_before_discard():
-    assert "ORIGINAL branch" in ROAR_SKILL, (
-        "roar step 9b must require verifying the ORIGINAL branch (the one "
-        "the primary checkout returns to) is pushed or merged before "
-        "authorizing discard_changes"
-    )
-    assert "pushed or merged" in ROAR_SKILL
-
-
-def test_roar_9b_offers_keep_for_unmerged_original():
-    assert '`action: "keep"`' in ROAR_SKILL, (
-        "roar step 9b must direct the agent to use action: \"keep\" when "
-        "the original branch carries unmerged commits"
-    )
-
-
-def test_roar_9b_documents_reflog_recovery():
-    assert "reflog" in ROAR_SKILL and "git switch -c" in ROAR_SKILL, (
-        "roar step 9b must document the recovery path (reflog + "
-        "git switch -c) for a branch deleted by discard_changes"
     )
 
 

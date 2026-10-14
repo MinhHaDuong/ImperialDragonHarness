@@ -84,11 +84,14 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    ```bash
    R=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
    W=$R/.claude/worktrees/t$ARGUMENTS-<pid>
-   git -C "$R" worktree add "$W" -b t$ARGUMENTS-short-description origin/main
-   git -C "$R" worktree lock --reason "hunt t$ARGUMENTS (pid <owner-pid>)" "$W"
+   git worktree add "$W" -b t$ARGUMENTS-short-description origin/main
+   git worktree lock --reason "hunt t$ARGUMENTS (pid <owner-pid>)" "$W"
+   cd "$W"
    ```
+   Plain `git` works from any checkout of the repo: every worktree shares one
+   git store. The `cd` keeps a bare command off the primary checkout.
    If the branch already exists (re-hunt, second session), drop `-b` and name
-   it: `git -C "$R" worktree add "$W" <branch>`. Without `origin/main`, use `main`.
+   it: `git worktree add "$W" <branch>`. Without `origin/main`, use `main`.
    `<owner-pid>` is the long-lived runtime process: `echo $PPID` in the Bash tool,
    whose shell is the runtime's child. Not the `bash -c 'echo $$'` child, which
    dies at once and would let `worktree-gc` unlock a live tree. The lock marks it

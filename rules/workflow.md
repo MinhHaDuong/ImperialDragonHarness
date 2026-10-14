@@ -55,9 +55,9 @@ change, stop and switch to a branch (prose exception: `git.md`).
 private companion, never the installed harness. A refused write stays pending;
 do not retry outside the project (boundary: AGENTS.md § Project memory boundary).
 
-**Parked-cwd trap.** After entering, check `basename "$(git rev-parse --show-toplevel)"` is the
-expected project: worktree creation resolves the repo from the session base
-cwd, not the last `cd`, so a base cwd parked off-project lands it in the nearest enclosing repo. Wrong repo → `git -C <project> worktree add
+**Parked-cwd trap.** Before creating the worktree, check `basename "$(git rev-parse --show-toplevel)"` is the
+expected project: a cwd parked off-project resolves the nearest enclosing repo.
+Wrong repo → `git -C <project> worktree add
 <project>/.claude/worktrees/<name> -b <branch>` and absolute paths throughout.
 
 # Escalation protocol

@@ -10,8 +10,8 @@ Exercises:
                                           under .claude/worktrees/ (ticket 0325).
   - scripts/worktree-exit-preflight.sh  — refuse worktree-exit while there are
                                           uncommitted files (incl. untracked).
-                                          Closes the ExitWorktree gap that lost
-                                          the 0173 draft (ticket 0174).
+                                          Closes the gap that lost the 0173
+                                          draft (ticket 0174).
 """
 
 import shutil
@@ -421,12 +421,11 @@ def test_gc_warns_when_worktrees_dir_unreadable(origin):
 # worktree-exit-preflight.sh — ticket 0174
 # --------------------------------------------------------------------------- #
 #
-# The PreToolUse Bash(git worktree remove*) matcher does not fire on the
-# ExitWorktree harness tool, so a /roar sweep that Write's a ticket draft
-# and then calls ExitWorktree silently drops the draft. The preflight script
-# is the skill-level gate that closes that window: invoked by the roar
-# and lair skills before they call ExitWorktree, it refuses when the
-# worktree has any uncommitted state (tracked or untracked).
+# A /roar sweep that Write's a ticket draft and then leaves its worktree
+# drops the draft (0173, under the runtime's ExitWorktree). The preflight
+# script is the skill-level gate: invoked by the roar and lair skills before
+# they leave the worktree, it refuses when the worktree has any uncommitted
+# state (tracked or untracked).
 
 def _preflight(path):
     return subprocess.run(
@@ -438,7 +437,7 @@ def _preflight(path):
 def test_preflight_blocks_on_untracked_ticket_draft(origin):
     """The exact failure mode that lost the 0173 draft: a /roar sweep
     Write's a new ticket file (untracked, never `git add`'d) and step 9 then
-    calls ExitWorktree. The preflight must refuse before ExitWorktree runs."""
+    removes the worktree. The preflight must refuse before the removal."""
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-sweep", dirty=False)
     (wt / "tickets").mkdir()
@@ -447,7 +446,7 @@ def test_preflight_blocks_on_untracked_ticket_draft(origin):
     res = _preflight(wt)
     assert res.returncode != 0
     assert "0999-swept-class-bug.erg" in res.stderr
-    assert "ExitWorktree" in res.stderr  # message names the gate it's guarding
+    assert "removing the worktree" in res.stderr  # names what it guards
 
 
 def test_preflight_blocks_on_tracked_modification(origin):
