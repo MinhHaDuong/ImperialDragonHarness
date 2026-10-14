@@ -77,4 +77,4 @@ rationale: |
 audit_comment: https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1389#issuecomment-6166530606
 ```
 
-Audit comment posted under the invoked [verify-gate skill](/home/haduong/.agents/skills/verify-gate/SKILL.md).
+Audit comment posted under the invoked [verify-gate skill](../../../skills/verify-gate/SKILL.md).

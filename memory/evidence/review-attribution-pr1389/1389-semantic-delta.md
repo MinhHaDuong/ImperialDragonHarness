@@ -1,6 +1,6 @@
 **Reviewed SHA:** `9bd20fa3f24f05cf8cc5030d40f44b380fe5b6c3`
 
-**Assessment:** Clean for the requested changes. The fixture recipe now explicitly requires a blank separator before the appended rule text ([doc lines 24–30](/tmp/idh-raid-1080-prep/docs/2026-10-14-adherence-semantic.md:24)). The evidence description identifies `evidence.json` as a caller-normalized summary, labels its annotations, and distinguishes it from the raw verdict in `outer.jsonl` ([lines 64–69](/tmp/idh-raid-1080-prep/docs/2026-10-14-adherence-semantic.md:64)).
+**Assessment:** Clean for the requested changes. The fixture recipe now explicitly requires a blank separator before the appended rule text ([doc lines 24–30](../../../docs/2026-10-14-adherence-semantic.md#L24)). The evidence description identifies `evidence.json` as a caller-normalized summary, labels its annotations, and distinguishes it from the raw verdict in `outer.jsonl` ([lines 64–69](../../../docs/2026-10-14-adherence-semantic.md#L64)).
 
 **Rule sources:** `AGENTS.md`, `rules/guards.md`, `rules/prose/_all.md`, `rules/workflow.md`, and the complete `skills/verify-adherence/SKILL.md`.
 
