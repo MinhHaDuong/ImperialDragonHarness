@@ -44,7 +44,7 @@ reviewer: seat=doc-propagation-799794c5-1e75-4451-9fcd-4743fe7a668f · runtime=C
   finding: consider · docs/adherence-semantic/outer.jsonl:67 · adopted: no
   finding: consider · docs/2026-10-14-adherence-semantic.md:25 · adopted: yes
 Context: round2; reviewed 825b1eda84a5948705ed618101b5a799821618d1; raw report memory/evidence/review-attribution-pr1389/round2/doc-propagation.md. All raw findings retained; fixed/disposed statuses follow posted reviews5515767441/5516093770 and final gate6166530606.
-reviewer: seat=1389-01a139d9-37ff-7420-9715-1babb86c7c8e · runtime=Codex-CLI · model-state=runtime-masked · model-evidence=memory/evidence/review-attribution-pr1389/identities.txt:14 · status: ran
+reviewer: seat=1389-01a139d9-37ff-7420-9715-1babb86c7c8e · runtime=Codex-CLI · model-state=runtime-masked · model-evidence=memory/evidence/review-attribution-pr1389/identities.txt:14 · status: failed
 Context: actual source 1389.log; completed actual scoped run; no new adopted findings.
 reviewer: seat=1389-native-root-01a139e3-2520-7952-849d-a9d696f3ffa8 · runtime=Codex-CLI · model-state=runtime-masked · model-evidence=memory/evidence/review-attribution-pr1389/identities.txt:15 · status: ran
 Context: actual source 1389-native-root.log; completed actual scoped run; no new adopted findings.
@@ -79,3 +79,7 @@ Context: actual retained semantic acceptance attempt, source docs/adherence-sema
   finding: consider · tests/fixtures/adherence-semantic/scripts/check-tree.sh:3 · adopted: no
 reviewer: seat=semantic-acceptance-449abcb7-bf3b-4a51-940b-8e0ad30ce458 · runtime=Claude-headless · model-state=runtime-masked · model-evidence=memory/evidence/review-attribution-pr1389/identities.txt:30 · status: failed
 Context: actual optional resume failed; preserves stable same-context seat name, no findings.
+
+reviewer: seat=semantic-acceptance-0df0c0b2-06f6-4385-8b39-e2475e35df6f · runtime=Claude-headless · model-state=runtime-masked · model-evidence=memory/evidence/review-attribution-pr1389/identities.txt:31 · status: ran
+  finding: consider · tests/fixtures/adherence-semantic/scripts/check-tree.sh:3 · adopted: no
+Context: superseded warm fixture review, preserved raw at docs/adherence-semantic/worker.jsonl:7; not the accepted cold invocation and not a repaired implementation defect.
