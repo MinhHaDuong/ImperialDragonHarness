@@ -22,7 +22,8 @@ git rev-parse --is-inside-work-tree
 ```
 
 Commit the initial four files, create branch `candidate`, restore the archived
-`check-tree.sh`, append the following line to `rules/worktrees.md`, then commit:
+`check-tree.sh`, append a blank separator followed by the line below to
+`rules/worktrees.md`, then commit:
 
 ```
 Apply this rule to every worktree detection script.
@@ -60,8 +61,10 @@ $0.00180995. Actual timings, token usage and costs are retained in the
 
 ## Evidence provenance and limits
 
-[evidence.json](adherence-semantic/evidence.json) holds the final accepted
-verdict, loaded-source snapshot and previous accepted runs. The snapshot hash
+[evidence.json](adherence-semantic/evidence.json) holds a caller-normalized
+summary of the final emitted verdict, its loaded-source snapshot and previous
+accepted runs. Supported aliases and the mechanical-runner summary are caller
+annotations; the raw emitted verdict remains in outer.jsonl. The snapshot hash
 checks that historical source, rather than requiring future versions to retain
 an obsolete hash.
 
