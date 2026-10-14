@@ -1,0 +1,9 @@
+git version 2.43.0
+control: untracked file visible?
+?? untracked.txt
+probe: excluded .tmp visible? (empty = invisible)
+with --ignored:
+!! .tmp/
+worktree remove without --force:
+exit=0
+ls: impossible d'accéder à '../wt/.tmp': Aucun fichier ou dossier de ce nom
