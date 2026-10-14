@@ -67,6 +67,10 @@ primary checkout.
   restart resets it to the launch directory, and so does a `cd` outside the
   project tree (the runtime resets the shell to the launch directory, not
   to the worktree): absolute paths remain the rule.
+- The accepted risk fired once in this session: after the restart, a
+  relative-path `sed` edited `skills/lair/SKILL.md` in the primary
+  checkout instead of the worktree. `/gaze` spotted the dirty primary;
+  the edit was moved to the branch and reversed on main.
 - The #1395 session's pid (3742738) was gone after that session ended:
   a process that hosted one session dies with it.
 - Author's context in that session's launch prompt, not measured here: in
