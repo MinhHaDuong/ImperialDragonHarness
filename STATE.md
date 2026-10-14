@@ -1,34 +1,36 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-13T20:22Z
-Housekeeping (molt) run: 2026-10-13T20:21Z
+Last updated: 2026-10-14T11:07Z
+Housekeeping (molt) run: 2026-10-14T11:07Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-13T20:22Z · as of ba8456ca -->
+<!-- generated 2026-10-14T11:07Z · as of 66c6850e -->
 
-**Tickets:** 5 ready · 0 blocked — `erg ready tickets/` for full list
+**Tickets:** 3 ready · 2 blocked — `erg ready tickets/` for full list
   next: 1045 Local merge gate replaces the forge's required … · 1077 Decide the session EnterWorktree opt-in after a…
 **In flight:** no open PRs · CI main: success
 **Recent (first-parent):**
-  ba8456ca Merge pull request #1387 from MinhHaDuong/roar-arena-2026-10-13
-  87ec7481 Merge pull request #1386 from MinhHaDuong/separate-arena
-  c98bef7f Merge pull request #1385 from MinhHaDuong/housekeeping-state-2026-10-13-evening
+  66c6850e Merge pull request #1393 from MinhHaDuong/roar-raids-1080-1089
+  fea2413a Merge pull request #1390 from MinhHaDuong/t1089-pi-subagent-npm
+  ae72703f Merge pull request #1389 from MinhHaDuong/t1080-adherence-semantic
 
 ## Ready work
-Ready: 1045 (local merge gate), 1077 (worktree opt-in), 1080 (adherence semantic phase), 1089 (npm-global Pi linking), 1090 (post-merge Roar measurement). Arena-only tickets have moved to the independent repository; see docs/arena-integration.md.
+Ready: 1045 (local merge gate), 1077 (worktree opt-in), 1090 (post-merge Roar measurement).
+Deferred: 1095 (task-owned tmp cleanup and crash recovery), 1096 (review orchestration refactor). The three-skill review architecture remains a candidate; compare simpler alternatives before choosing it.
+Arena-only work lives in the independent repository; see docs/arena-integration.md.
 
 ## Resume point
-Arena is independent: #1386 merged and 1094 closed; analysis, protocol, reports and eight open arena tickets now live in the arena repository. Harness copies of 1048 and 1087 are archived as wontdo with transfer reasons. The harness retains routing data and historical journals; installed Claude/Pi arena links point to the independent repository. Integration: docs/arena-integration.md.
-Main passed `make check`: 1579 passed, 3 skipped on padme (2026-10-13). Local CI passed all ten jobs before the task merge. Review facts are merged through #1387: author-approved force merge; same-family local reviews, native /review unavailable, external launches rejected before execution. Runtime-masked local attribution and the pre-launch identity gap are preserved without inferred IDs.
-Housekeeping removed two dead historical worktrees, their merged local branches, owned transfer/review worktrees and one orphan scratch after permission repair on three user-owned temporary directories. No WIP was found. Retired zotero-import links were removed; `idh check` passes. Historical rewritten commits remain on the three existing archive branches.
-The third Dream is accepted (#1382). Historical review-attribution gaps for #1374 and the earlier backfill remain documented; no missing identities were inferred.
+Main supports actual semantic-worker execution/evidence in verify-adherence and both managed-release and npm-global Pi module discovery. Tickets 1080 and 1089 are closed. The helper creates no ~/bin; the requested upstream installer issue is earendil-works/pi#10932, auto-closed by contributor policy.
+Main passed `make check` on padme at 66c6850e: 1595 passed, 3 skipped in 48.52s (2026-10-14). Healthcheck's fast suite passed 946 tests; forge checks on the repaired review journal also passed. The journal and review-attribution records are integrated through #1393, including failed attempts and retained documentation dissent. Absolute links in captured reports were repaired; all seven memory-portability tests pass.
+All local preparatory work is pushed. Historical rewritten branches are preserved; no uncommitted deliverable was found. Current review identities are explicitly runtime-masked where the provider-qualified ID was unavailable. Historical attribution backfill reported 70 unresolved records per fix; no reviewed revision or model identity was inferred.
+Arena remains independent; transferred harness tickets 1048 and 1087 are archived. Routing consumes the independent arena's reviewed evidence through docs/arena-integration.md. The third Dream is accepted; subsequent journal entries remain available for a separate Dream.
 
 ## Next actions
-Continue from `erg ready tickets/`. Arena cycle 3, role-split redesign and publication correction are followed in the independent arena repository (1048, 1061, 1093). Consume reviewed cycle evidence through skills/route; no publication ran during separation.
-Zotero staging reconciliation could not run on padme: no user ID configured. The earlier 28-file report was not refreshed; no import or purge ran.
+Continue from `erg ready tickets/`. Resume 1095 and 1096 only when selected for a later session. Arena cycles, role-split redesign and publication correction belong to the independent arena repository; no publication ran here.
+Zotero staging reconciliation checked this repository's docs directory and found zero candidate files; no import or purge ran. Author-side Zotero actions below remain outstanding.
 
 ## Author actions
 - Install the ILaaS consortium key in `~/.config/keys/ilaas.env`, then configure `models.json` (0977).
