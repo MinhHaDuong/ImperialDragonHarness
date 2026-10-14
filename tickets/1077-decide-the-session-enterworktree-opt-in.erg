@@ -64,7 +64,16 @@ primary checkout.
   16:00Z above, positive control an `isolation: worktree` subagent); its
   findings agree.
 - A `cd` into the worktree moves the session's Bash cwd, but a session
-  restart resets it to the launch directory: absolute paths remain the rule.
+  restart resets it to the launch directory, and so does a `cd` outside the
+  project tree (the runtime resets the shell to the launch directory, not
+  to the worktree): absolute paths remain the rule.
+- The #1395 session's pid (3742738) was gone after that session ended:
+  a process that hosted one session dies with it.
+- Author's context in that session's launch prompt, not measured here: in
+  a JETP session on 2026-10-14 the guard refused about 8 read-only
+  commands (ssh reads of another host, `git -C <other repo> diff` loops, a
+  sed loop over ticket files, a tmux launch whose prompt mentioned git)
+  and caught nothing it should have.
 
 ## Decision (author, 2026-10-14)
 Drop the guard: remove the `EnterWorktree` opt-in, no replacement guard.
