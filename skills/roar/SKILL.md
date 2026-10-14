@@ -297,11 +297,18 @@ worktree go once the branch is pushed and auto-merge is armed.
        If fetch or verification
        fails, preserve the worktree and branch (`action: "keep"`) and report
        pending integration. An earlier pre-capture check is not sufficient. Only then
-       call `ExitWorktree` with action `remove`. With the ancestry check
+       call `ExitWorktree` with action `remove`, after syncing local main:
+       `"$IDH_ROOT/scripts/sync-local-main.sh" <primary>`, then confirm
+       `git -C <primary> rev-parse main` equals `git rev-parse refs/remotes/origin/main`.
+       ExitWorktree compares HEAD with the primary's local `main`, not
+       `origin/main`, so a lagging `main` makes a merged wrap-up commit look
+       unmerged and `remove` refuses with a red error. The script exits 0
+       always and refuses dirty or busy primaries itself: if `main` still
+       differs after it, say nothing and take `keep` plus step 9c instead.
+       With the ancestry check
        (not the bundle exception, whose local branch may go with the tree),
-       the worktree branch is fully merged — ExitWorktree's
-       "N commits would be discarded" warning is a false alarm from a
-       stale local main — it can even name a branch that no longer
+       the worktree branch is fully merged; ExitWorktree's
+       "N commits would be discarded" warning can still name a branch that no longer
        exists (a parallel session's hygiene pruned it post-merge;
        `git rev-parse --verify refs/heads/<branch>` confirms,
        climate-finance-het 2026-07-22). But `discard_changes` does more than remove the

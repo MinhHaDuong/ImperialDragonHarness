@@ -2,9 +2,11 @@
 Title: roar: sync local main before ExitWorktree remove, so the stale-main refusal never shows
 Created: 2026-10-14
 Author: Minh Ha-Duong
+Closed: done
 
 --- log ---
 2026-10-14T16:20Z Minh Ha-Duong created (author request, interactive: "this 'worktree not deletable' red error message is an eyesore")
+2026-10-14T16:13Z reviewer closed — done
 
 --- body ---
 ## Context
