@@ -68,6 +68,8 @@ the distinct process launch/completion records establish execution.
 
 ## Verification
 
+Original machine-generated check output is retained as `development_check_output`
+records in [outer.jsonl](adherence-semantic/outer.jsonl).
 The first `make check-fast` was RED: 6 failed, 938 passed, 645 deselected
 in 6.39 seconds. After the contract repair and retained-run assertions it
 passed 945 tests. `make lint` passed 185 tests; ruff passed.
