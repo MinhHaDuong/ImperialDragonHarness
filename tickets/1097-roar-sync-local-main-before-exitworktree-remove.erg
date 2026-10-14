@@ -2,11 +2,11 @@
 Title: roar: sync local main before ExitWorktree remove, so the stale-main refusal never shows
 Created: 2026-10-14
 Author: Minh Ha-Duong
-Closed: done
 
 --- log ---
 2026-10-14T16:20Z Minh Ha-Duong created (author request, interactive: "this 'worktree not deletable' red error message is an eyesore")
 2026-10-14T16:13Z reviewer closed — done
+2026-10-14T18:59Z reviewer Minh Ha-Duong reopened: after PR #1398 two roars (padme 3f82806b, d331a70c) still got the refusal with local main synced; see body
 
 --- body ---
 ## Context
@@ -30,3 +30,19 @@ Delete the "false alarm" explanation from step 9b once the cause is gone. Keep t
 - [ ] Step 10's local branch cleanup succeeds on the first attempt in that scenario
 - [ ] The stale-main "false alarm" paragraph of step 9b is removed or reduced to the fallback case
 - [ ] `make check` passes
+
+## Reopened 2026-10-14: the sync does not prevent the refusal
+
+Two roars exited a worktree after PR #1398 merged (16:18Z). Both ran step 9b in the new order, and both still got the refusal on the first `remove`:
+
+- padme session `3f82806b`, 17:36Z, worktree `t1045-3745426`: `merge-base --is-ancestor HEAD refs/remotes/origin/main` exit 0; `sync-local-main.sh` ran; `git rev-parse refs/remotes/origin/main main` printed `36a0fddd…` twice. `ExitWorktree remove` then refused: "Worktree has 6 commits on worktree-t1045-3745426". The session took `keep`.
+- padme session `d331a70c`, 17:47Z, worktree `t1095-3763784`: same order, refusal for 16 commits. The session verified the branch tip `85d904da` and re-ran with `discard_changes: true`. `85d904da` is on `origin/main` (checked afterwards), so nothing was lost.
+
+With local `main` synced and HEAD merged, `ExitWorktree` still counts the worktree branch's commits as discardable. The Context premise (it compares HEAD with the primary's local `main`) is contradicted by these runs. What it compares against is not yet established. The PR #1398 throwaway-repo control passed, so something differs between that control and real use; how each branch reached `main` (merge commit or fast-forward) is unchecked.
+
+The refusal tells the model to re-run with `discard_changes: true`, the path that deleted a branch on 2026-06-10.
+
+Next: a controlled experiment. Create a worktree with `EnterWorktree`, commit, merge to `main` once with a merge commit and once by fast-forward, sync, then call `ExitWorktree remove`. Record which case passes. Measurement context: ticket 1090, `memory/journal/2026/2026-10-14-roar-remeasure-1090.md`.
+
+- [ ] The experiment identifies what `ExitWorktree` compares against, with a positive control
+- [ ] Step 9b is corrected to match, or reduced to `keep` + step 9c when the tool's check cannot be satisfied
