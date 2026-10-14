@@ -11,8 +11,8 @@ SKILL = ROOT / "skills/verify-adherence/SKILL.md"
 
 
 @pytest.mark.parametrize("requirement", [
-    "rules/", "AGENTS.md", "deleted rule files", "status: ran | skipped | unavailable | invalid",
-    "completion_evidence:", "Inline analysis does not count", "blocking semantic finding → adherence: FAIL",
+    "Include existing conventional `rules/`", "AGENTS.md", "deleted rule files", "status: ran | skipped | unavailable | invalid",
+    "completion_evidence:", "Inline analysis does not count", "must not create findings", "blocking semantic finding → adherence: FAIL",
 ])
 def test_semantic_execution_contract(requirement):
     semantic = SKILL.read_text().split("### 3. Semantic subagent")[1]

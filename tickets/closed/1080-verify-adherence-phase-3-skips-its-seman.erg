@@ -115,6 +115,6 @@ that exact test passed (1 passed) on host recheck with required Git access.
 
 Live complete-skill acceptance and rejected attempts are retained in
 `docs/2026-10-14-adherence-semantic.md` and `docs/adherence-semantic/`.
-Modified worktree skill SHA-256 is e457cd8e89d9efa19eacd018d5a696beaaf848e2726aa371d8bc1fbd5c697983.
+Modified worktree skill SHA-256 is 70146986d93d312bbf76060821cee592e99cfd9f38e97d61f60b0d7b892c3099.
 The syntax-only runner passed; a distinct completed routed worker returned
 blocking scripts/check-tree.sh:3 with suggested_test; global adherence FAIL.

@@ -239,7 +239,9 @@ Each finding must have a concrete source anchor, severity `blocking` or `nit`,
 and a nonempty `suggested_test`. A clean report must still provide evidence
 for the reviewed rules; an empty/malformed response cannot stand for review.
 Validate each anchor against the reviewed diff or relevant project source.
-Reject hypotheticals and unsupported anchors. No worker available, launch or
+Reject hypotheticals and unsupported anchors. The caller may reject worker
+findings, but must not create findings, upgrade severity, or supply missing
+severity, anchors, or suggested tests on the worker's behalf. No worker available, launch or
 completion failure → `status: unavailable`; malformed or unanchored output →
 `status: invalid`. Either required status emits `adherence: FAIL` with
 `escalation: adherence-infrastructure` and a concrete reason, never silent PASS.

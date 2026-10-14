@@ -1,16 +1,19 @@
 # Ticket 1080 live semantic acceptance
 
-The change keeps project runner discovery intact and repairs semantic rule
-location discovery, actual routed worker execution, completion validation and
-blocking-finding verdict mapping. Contract tests are supplementary: they do
-not execute future versions of the skill. The retained execution records prove
-only this recorded invocation of the exact skill hash.
+The repair preserves declared project runner discovery, discovers project
+rules, requires an actual routed semantic worker, validates completion and
+maps a blocking semantic finding to overall FAIL. The caller may reject
+unsupported worker findings, but cannot create findings or supply missing
+worker severity, anchors or suggested tests.
+
+Contract tests supplement live acceptance. They do not execute future skill
+versions. Retained execution records prove the recorded source snapshot only.
 
 ## Reproduce the neutral fixture
 
-Use a fresh temporary directory as `fixture`; copy
-`tests/fixtures/adherence-semantic/` into it. Initialize Git with branch `main`.
-Before its initial commit replace `scripts/check-tree.sh` with:
+Copy `tests/fixtures/adherence-semantic/` into a fresh temporary directory and
+initialize Git with branch `main`. Before the initial commit replace
+`scripts/check-tree.sh` with:
 
 ```bash
 #!/usr/bin/env bash
@@ -26,67 +29,66 @@ Apply this rule to every worktree detection script.
 ```
 
 Invoke the complete modified skill with argument string
-`candidate worktree=<fixture>`. Supply its absolute worktree SKILL.md path and
-verify its SHA-256 before execution. Give the caller no defect description.
-The fixture's declared `make syntax` runner intentionally checks syntax only;
-it cannot substitute for the semantic worker.
+`candidate worktree=<fixture>` in an empty-context outer seat. Supply the
+absolute worktree SKILL.md path and verify its SHA-256 before execution.
+Give the caller no defect description or expected verdict. The declared
+`make syntax` runner checks syntax only; it cannot replace semantic review.
 
-## Execution and limits
+## Accepted execution
 
-The first outer attempt misread the literal branch name `candidate` as a
-placeholder and stopped for missing arguments. The same outer seat resumed
-when the branch parsing was clarified; no rule or defect hint was supplied.
-The resumed invocation's worker returned a concrete finding but omitted its
-explicit severity field. Its optional same-session normalization failed because
-the transport could not resume that session. This attempt is invalid, even
-though it found the defect. A second complete neutral invocation requests the
-contract's exact worker schema and supplies the earlier valid run retained below.
-Sanitized native execution extracts live in `adherence-semantic/outer.jsonl`
-and `worker.jsonl`; `evidence.json` records the compact result and links their
-actual launch, completion, loaded skill, and identity observations. User/account
-metadata, encrypted reasoning, unrelated runtime instructions and rate limits
-are omitted. No worker identity is inferred from its own self-description.
-
-The final accepted skill copy is
+The final accepted run loaded
 `/tmp/idh-raid-1080-prep/skills/verify-adherence/SKILL.md`, SHA-256
-`e457cd8e89d9efa19eacd018d5a696beaaf848e2726aa371d8bc1fbd5c697983`.
-The outer native session ran Sol 6.1 at medium effort, as observed in the
-runtime `turn_context`. The distinct headless worker ran Haiku 5.5, Anthropic
-family, as observed in `modelUsage` (effective effort unavailable; medium was
-requested). An earlier valid worker completed in 20.946 seconds, costing $0.0143562;
-that outer invocation to validation checkpoint took 81 seconds. Actual token usage
-is retained in the worker result. The prior invalid worker cost $0.00491546.
+`70146986d93d312bbf76060821cee592e99cfd9f38e97d61f60b0d7b892c3099`.
+Native outer session `01a139bf-563d-71b2-ae0d-153ffda57d84` was launched
+with `fork_turns: none`. Its model and effort are observed in `turn_context`:
+Sol 6.1, medium, OpenAI family. The actual caller invocation provided only
+contract loading, neutral branch/worktree and evidence instructions.
 
-`make syntax` passed. The accepted worker explicitly returned
-`severity: blocking`, `scripts/check-tree.sh:3`, and `suggested_test`; the
-outer verdict is `adherence: FAIL` with no infrastructure escalation.
-In the earlier valid run, the outer rejected an unsupported nit alleging missing mechanical enforcement,
-and a separate proposed test that would swallow its failure. Those rejected
-items remain in the unmodified worker output; they do not weaken the verified
-blocking finding. Worker self-reported orchestration metadata is ignored;
-the distinct process launch/completion records establish execution.
+`make syntax` passed. A distinct routed Claude CLI worker completed with
+session `3f10718b-2941-4929-9da5-c8c444afce35` and result UUID
+`260da837-39bb-407b-a983-0342956e4bca`. Runtime observations identify
+Haiku 5.5, Anthropic family; medium was requested, effective effort unavailable.
+The worker returned explicit `severity: blocking`, `scripts/check-tree.sh:3`
+and a nonempty `suggested_test`. The full skill returned `adherence: FAIL`
+with no infrastructure escalation. The caller preserved the finding verbatim
+and rejected an auxiliary evidence entry with an unsupported line number.
+
+Worker elapsed time was 12.238 seconds (rounded), with reported cost
+$0.00180995. Actual timings, token usage and costs are retained in the
+[evidence records](adherence-semantic/evidence.json) and
+[worker runtime records](adherence-semantic/worker.jsonl).
+
+## Evidence provenance and limits
+
+[evidence.json](adherence-semantic/evidence.json) holds the final accepted
+verdict, loaded-source snapshot and previous accepted runs. The snapshot hash
+checks that historical source, rather than requiring future versions to retain
+an obsolete hash.
+
+[outer.jsonl](adherence-semantic/outer.jsonl) contains selected historical
+native extracts, the complete functional tool-call/result sequence of the
+final empty-context outer, native identity and token-usage observations,
+explicitly named annotations, and original generated check output. The final
+sequence includes loaded path/hash, discovery, runner, route loading and
+child launch/completion. Native launch metadata attests `fork_turns: none`;
+the runtime encrypts the caller message in its native file. Its exact plaintext
+is separately labeled as an annotation from the actual user-visible tool
+invocation, rather than presented as native plaintext. Worker input is retained
+verbatim and contains the complete project sources/diff without a defect hint.
+User/account metadata, encrypted reasoning and unrelated runtime instructions
+are omitted. Runtime worker identities do not come from model self-report.
+
+Earlier invocations reused an outer seat after a branch-parsing correction;
+those were warm outer runs with fresh workers, not empty-context executions.
+The first narrative worker omitted severity and was marked invalid; optional
+session resumption failed. Those records and the originally mistaken outer
+normalization remain, with an explicit correction. The final accepted run
+uses an empty-context outer and does not depend on those earlier attempts.
 
 ## Verification
 
-Original machine-generated check output is retained as `development_check_output`
-records in [outer.jsonl](adherence-semantic/outer.jsonl).
-The first `make check-fast` was RED: 6 failed, 938 passed, 645 deselected
-in 6.39 seconds. After the contract repair and retained-run assertions it
-passed 945 tests. `make lint` passed 185 tests; ruff passed.
-The branch's first completed semantic self-gate found no blockers and caught
-minor wording and fixture shell-discipline nits. Those were fixed before
-opening the merge request. Generic verdict schema examples were also aligned
-with discovered project rules. Frozen source hashing validates the retained
-loaded-source snapshot, rather than requiring future skill versions to keep
-an obsolete hash. A fresh complete neutral fixture invocation validates the
-resulting skill version; its record is the final accepted run in evidence.json.
-
-The final accepted run loaded the SHA-256 above after the consistency edits.
-Its distinct worker session is `0df0c0b2-06f6-4385-8b39-e2475e35df6f`,
-result UUID `a3c3477a-9752-4e75-9e33-2b7a6a297371`; it completed in
-16.648 seconds, costing $0.00469613. Complete invocation elapsed time was
-86.048935 seconds. Native outer token-usage counters are retained in outer.jsonl.
-The final worker proposed both a grep and behavioral test; the grep would
-match rule text, so the behavioral alternative is the usable suggestion.
-An ancillary evidence line number was corrected from 6 to 7; the blocking
-finding at scripts/check-tree.sh:3 was correct as returned.
+Original machine-generated red/green/lint output is committed as
+`development_check_output` records in outer.jsonl. The first fast gate failed
+six focused contract checks, then passed after the repair. The review also
+caught a weak `rules/` substring assertion: it now requires the discriminating
+conventional-discovery clause, which the legacy contract does not contain.

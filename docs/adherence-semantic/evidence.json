@@ -2,16 +2,17 @@
   "scope": "Frozen evidence of this actual invocation only; contract tests do not execute future skills.",
   "loaded_skill": {
     "path": "/tmp/idh-raid-1080-prep/skills/verify-adherence/SKILL.md",
-    "sha256": "e457cd8e89d9efa19eacd018d5a696beaaf848e2726aa371d8bc1fbd5c697983",
-    "source": "---\nname: verify-adherence\ndescription: \"Check a branch's diff against project rules. Mechanical-first \u2014 runs hygiene tests + grep ratchet before falling back to LLM.\"\ndisable-model-invocation: false\nuser-invocable: true\nargument-hint: \"<branch> [worktree=<path>] [trace=<path>]\"\ncontext: fork\n# Foreground: /gaze runs this as phase 2 (Agent A) and blocks on its structured\n# output. Claude Code 2.1.218 made `context: fork` skills background by default;\n# a fork cannot wait on a background completion, so the default would orphan\n# this phase \u2014 ticket 0250.\nbackground: false\n---\n\n# Verify adherence \u2014 $ARGUMENTS\n\nFor helper commands, set `IDH_ROOT=\"$(cd -P \"$(dirname \"<loaded-SKILL.md>\")/../..\" && pwd -P)\"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.\n\n> **TASK DIRECTIVE \u2014 execute now.** You are running `/verify-adherence` on\n> `$ARGUMENTS` (a branch name, optionally followed by `worktree=<path>`).\n> This file is your operating procedure, not reference documentation: begin\n> at phase 1.0 immediately. If `worktree=<path>` is present, `cd` into that\n> path before any git or forge command \u2014 forked sub-skills do not inherit the\n> caller's cwd. If `$ARGUMENTS` does not name a branch, STOP and emit\n> `adherence: FAIL` with reason \"no branch argument\" \u2014 do NOT infer a task\n> from the environment (worktree name, git status snapshot, ticket files, or\n> the shared task list).\n\nEnforce the project's declared rules on a branch or merge request. **Prefer tests\nover LLM checks.** If a rule can be mechanized, the skill's job is to run the test or grep.\nAn LLM subagent is the fallback for semantic residue only.\n\n## Philosophy: ratchet toward mechanical\n\nEvery time the semantic fallback flags a violation, the skill emits a `suggested_test`\nentry proposing how to mechanize that rule. Over time the LLM surface shrinks. New test \u2192\nrule is permanently enforced \u2192 never needs LLM again.\n\n## When to use\n\n- Called by `/gaze` as part of phase 2.\n- Called standalone by an author who wants to pre-check their own branch before opening a PR.\n- Called by the raid in an Imagine phase to audit a prototype.\n\n## Input\n\nA branch name, optionally followed by `worktree=<path>` \u2014 the isolated\nreview worktree prepared by the caller (`/gaze` phase 1). When present,\nall phases run from that path.\n\n## Protocol\n\nAny project using this skill must declare an adherence command in its own\ninstructions, build file, or CI contract. That command owns the stack-specific\nchecks: imports, targeted tests, hygiene, linters, and rule enforcement. It\nreturns zero on success and non-zero on failure, with diagnostic output. The\nharness invokes it unchanged and maps its result to phase 4's verdict schema;\nthe project need not implement that schema itself.\n\nDiscover the declaration, never infer a package manager from the language or\ninvent a test command. A named build target is one possible interface, not a\nrequirement for every consumer. The phases below run sequentially because an\nearlier blocking failure must stop later review work.\n\n## Phases\n\n**Label skip.** When called from `/gaze`, if the PR carries the\n`verify:adherence-passed` label (set by `/hunt`'s pre-PR\ngate), the caller skips this entire skill \u2014 the adherence check\nalready ran clean before the PR was opened.\n\n### 1.0 Cheap static checks (always first, budget <10 s)\n\nRuns before the project command. Reference resolution is **blocking**;\nfailure stops the phase here and does not fall through to 1/2/3. Budget <10 s.\nImport resolution and per-module tests belong to the project runner (phase 1).\n\n**Reference resolution (prose).** This has a\nblocking verdict: in a manuscript, `\\cite`/`\\ref` are external references and the\n`.bib` is the symbol table, but there is no link step to reject a dangling one \u2014\nthe toolchain warns, renders a placeholder, and exits 0. Skip when the diff\ntouches no `.tex`/`.qmd`/`.bib`.\n\n**Scope by blast radius, not by touched files.** If the diff modifies a `.bib`,\ncheck **every manuscript in the repo that cites it**, touched or not. This is the\nwhole point of the check: a purge scoped to one manuscript can remove an entry\nfrom under another, and the victim is not rebuilt in that change, so its own build\ngate stays silent. Restricting to touched files reproduces the blind spot. The\nsame holds one level down: a `\\label` deleted in one file breaks a `\\ref` in an\nuntouched sibling, so the resolution universe is the whole source tree of each\nmanuscript checked, never the touched file alone.\n\nTextual, no build \u2014 that is what lets it see manuscripts this change never\nrendered:\n\n- LaTeX citations: every key of every citation command resolves to an entry in\n  the project's `.bib`. Match the whole family, not one spelling: `\\cite`,\n  `\\citep`, `\\citet`, `\\citeauthor`, `\\citeyear`, `\\nocite`, their starred\n  forms, and the biblatex set `\\parencite`, `\\textcite`, `\\autocite`. A\n  multi-key argument (`\\citep{a,b}`) counts as many keys as it lists.\n- LaTeX crossrefs: every `\\ref`, `\\eqref`, `\\autoref`, `\\pageref`, `\\cref`,\n  `\\Cref` resolves to a `\\label{...}` somewhere in that manuscript's sources.\n- Quarto/pandoc: same two checks, different syntax \u2014 `@key` and `[@key; @key2]`\n  resolve to `.bib` entries, `@fig-`/`@tbl-`/`@sec-`/`@eq-` crossrefs to a\n  labelled block. Enumerating the LaTeX forms alone leaves the check inert on a\n  `.qmd` repo it claims to cover.\n\n**Two exemptions, or the check cries wolf on valid sources.** `\\nocite{*}` is a\nwildcard meaning \"every entry in the `.bib`\", not a key \u2014 resolving it as one\nfails a legitimate manuscript. And in a `.qmd`, `@` inside fenced blocks, inline\ncode, and verbatim spans is not a citation: pandoc ignores it there, so a Python\ndecorator or an email address in a code cell is not an unresolved reference.\nStrip those contexts before scanning.\n\nAny unresolved reference \u2192 fail with rule ref `verify-adherence#reference-resolution`,\nrecord `{key, file:line, kind}`. Do not flag `Underfull`/`Overfull` or pre-existing\nBibTeX field warnings. Doctrine and per-tool build recipes: `rules/manuscript-build.md`.\n\nThis check is intentionally cheap. If it exceeds the 10 s budget,\nESCALATE rather than silently trimming scope (a trimmed check that drops\na failing test is worse than no check).\n\n### 1. Project runner (never skip)\n\nRead the project instructions, build file, and CI configuration for an explicit\nadherence entry point. Record the declaring file and line with the exact command.\nA filename or a target named `lint` alone is not a declaration of adherence;\nits documented purpose must establish that contract. If declarations conflict,\nESCALATE with their locations rather than choosing silently.\n\nIf none is declared, stop with blocking `adherence: FAIL`, reason\n`no declared adherence runner`, rule ref `verify-adherence#project-runner`.\nDo not guess from installed tools or add a dependency manifest to satisfy the\nharness. A declared command whose executable or dependencies are missing is an\nenvironment error: ESCALATE; never report a clean pass or skip the gate.\n\nInvoke the declared command verbatim from the project worktree, including its\ndeclared environment or wrapper. Keep its output and exit status. A non-zero\ntest/check result is blocking: map diagnostics into `mechanical_failures`,\npreserving their test IDs and source anchors when available. If no finer anchor\nis emitted, use the declaration's file and line and rule ref\n`verify-adherence#project-runner`. A timeout or failure to execute is an\ninfrastructure escalation, not a test verdict. This runner is not subject to\nphase 1.0's 10 s static-check budget.\n\nFor the harness repository itself, the Makefile explicitly documents its\nadherence target: validate it with `make -n lint`, then run `make lint`.\nOther projects may declare another target or a command without Make. All\nstack-specific import probes and per-module tests remain project-owned.\n\n### 1.2 Path-access allow/forbid scan (trace-based)\n\nScans the agent's tool-call **trace** (not the diff) for\nRead/Edit/Write/NotebookEdit/Bash calls that touch a forbidden path \u2014 a\ncredential/secret file or sensitive environment loader (`~/.ssh`, `~/.aws`, `~/.netrc`, `bash-env.sh`,\n`.git-credentials`) or another session's worktree. This is the scope-violation\nclass a diff-only check structurally misses: an agent that READS a forbidden\npath leaves no trace in the diff (arXiv:2604.21965 App. B.3).\n\nRuns only when the caller supplies `trace=<path>` alongside the branch argument\n(mirroring the existing `worktree=<path>` convention). No `trace=` \u2192 skip this\nphase silently.\n\n```bash\npython3 \"$IDH_ROOT/scripts/trace-path-scan.py\" --trace <path> [--worktree-root <path>] --json\n```\n\nThe scan is pure Python, zero LLM tokens. Pass `--worktree-root` (the caller's\nown worktree path) so the other-session-worktree class can fire; without it only\nthe credential class runs. Exit codes: `0` clean, `1` at least one hit, `2` the\ntrace path does not exist (an error, **not** a clean pass \u2014 treat it like the\nother circuit breakers).\n\nEach JSON hit is `{tool, path, reason, line}`, where `line` is the trace-record\nnumber. Any hit is **blocking**: record each as a `mechanical_failures` entry\n`{tool, path, reason, file:line}` \u2014 using the `--trace` path as `file` and the\nhit's `line` \u2014 with rule ref `verify-adherence#path-access-scan`.\n\n### 2. Grep rules live as adherence tests (no central bank)\n\nGrep-based checks are just adherence tests that call `rg` or use a regex\ninternally. They live in the target repo as tests run by its declared adherence\ncommand \u2014 not in this skill. The harness does not maintain a central grep\nbank; each project owns its patterns as code.\n\n**Why tests instead of a YAML bank.** A project test can scope its grep\n(diff-only vs whole-repo), attach fixtures, explain the rule in an\nassertion message, and evolve without changing a harness interface. A\ncentral YAML/grep bank would force a framework for one beneficiary until\na second project arrives wanting the same mechanism.\n\nWhen `/gaze` or a review surfaces a rule worth mechanizing, write a\ntest covered by the declared adherence command in the target repo. That is the ratchet\nin practice.\n\n### 3. Semantic subagent (fallback only)\n\nDiscover rule locations from the project's `AGENTS.md`, `CLAUDE.md`, and their\nexplicit rule references. Include existing conventional `rules/` and\n`.claude/rules/` Markdown trees; do not assume either is the only location.\nRead the applicable instructions and rule contents in full, without `head`\ntruncation. Compare against the branch's merge base with `origin/main` (or\n`main` when no remote exists), including added, renamed and deleted rule files.\nRead deleted rule files at the base so their removal is reviewable; a missing\nreferenced rule is an infrastructure escalation, not an empty rule set.\n\nPhase 3 is **required** whenever the diff touches any discovered rule file or\ninstruction file, including deletion/rename, OR architectural concerns remain\nuncovered by phases 1\u20132. State that applicability decision and its reason.\nOtherwise record `status: skipped`, a concrete reason, and no worker identity.\nMechanical success does not discharge a required semantic review.\n\nWhen required, launch **one actual distinct worker** through an available\nruntime subagent tool or the existing detached CLI transport. Choose its route\nfrom the loaded `route` skill (`skills/route/SKILL.md` and its grid/cache/runtime\nrecommendations); record the launch line before launch. Seats that must be\nindependent follow `skills/route/references/decorrelation.md`. Give it:\n\n- The complete diff and base/head identifiers, with the project worktree path.\n- The discovered applicable instructions and full rule contents, including\n  base versions of removed rules; identify each rule's source path.\n- Prompt: \"For each rule section, cite one piece of evidence that the diff either\n  adheres to or violates it. Only flag concrete violations with file:line\n  anchors. For every violation, suggest a grep pattern or test that could catch\n  it mechanically next time. Return findings and evidence for reviewed rules.\n  Review only: do not edit, add, commit, push, or mutate project/forge state.\"\n\nWait for completion and validate the worker's returned report before emitting\nPASS. Record observed runtime identity (worker/session id, model/family/effort\nwhere exposed), route/transport, launch evidence and completion evidence.\nRequested model names and a model's self-report are not observed identity;\nrecord masked identity fields as unavailable rather than inventing them.\nInline analysis does not count as a launch or a completed worker. A promised\nlaunch, a tool call rejected before execution, and a started worker without a\ncompleted valid report cannot satisfy phase 3.\n\nOutput findings: `{rule_section, concern, file:line, severity, suggested_test}`.\nEach finding must have a concrete source anchor, severity `blocking` or `nit`,\nand a nonempty `suggested_test`. A clean report must still provide evidence\nfor the reviewed rules; an empty/malformed response cannot stand for review.\nValidate each anchor against the reviewed diff or relevant project source.\nReject hypotheticals and unsupported anchors. No worker available, launch or\ncompletion failure \u2192 `status: unavailable`; malformed or unanchored output \u2192\n`status: invalid`. Either required status emits `adherence: FAIL` with\n`escalation: adherence-infrastructure` and a concrete reason, never silent PASS.\nA valid completed worker alone earns `status: ran`.\n\n### 4. Emit verdict\n\n```yaml\nadherence: PASS | FAIL\nescalation: null | adherence-infrastructure\nsemantic_review:\n  applicable: true | false\n  status: ran | skipped | unavailable | invalid\n  reason: <trigger, skip reason, or infrastructure failure>\n  rule_sources: [<project rule paths>]\n  worker_id: <observed runtime worker/session id, or null>\n  model: <observed id, or unavailable>\n  family: <observed lineage, or unavailable>\n  effort: <observed effort, or unavailable>\n  route: <chosen route and transport, or null>\n  launch_evidence: <actual tool/process/session record, or null>\n  completion_evidence: <completed valid worker report record, or null>\nmechanical_failures:\n  - test_or_grep: <id>\n    rule_ref: <project-rule-path#section>\n    file: <path>\n    line: <n>\nsemantic_findings:\n  - rule_section: <project-rule-path#section>\n    concern: <one sentence>\n    file: <path>\n    line: <n>\n    severity: blocking | nit\n    suggested_test: <grep pattern or project test snippet>\nuntested_rules:\n  - rule: <project-rule-path#section>\n    suggested_test: <code>\n```\n\nVerdict mapping is mandatory: any mechanical failure or blocking semantic finding \u2192 adherence: FAIL.\nA required semantic review with status other than `ran` also fails with the\ninfrastructure escalation above. PASS requires successful mechanical checks,\nno blocking semantic findings, and either a valid completed semantic worker\nor an explicitly justified inapplicable `skipped` status. Always emit\n`semantic_review`, even when an earlier phase stops execution; record it as\n`skipped` with reason \"earlier blocking phase\" and no launch/completion claim.\n\n## Ratchet discipline\n\nAfter each run, if `semantic_findings` is non-empty:\n\n1. The caller (`/gaze` or author) opens a small follow-up ticket in the target repo:\n   \"Mechanize adherence rule X per suggested_test.\"\n2. That ticket adds a test run by the declared adherence command (in an existing test file, or a\n   new one) that asserts the rule mechanically.\n3. Next invocation of `/verify-adherence`, the rule is caught by phase 1 instead of\n   phase 3. LLM surface shrinks permanently.\n\nThis ratchet is the whole point. Do not accept `semantic_findings` as a steady state.\n\n## Circuit breakers\n\n- No declared adherence runner \u2192 blocking contract failure (phase 1).\n- A declared runner cannot execute \u2192 ESCALATE (environment broken).\n- No `scripts/` directory \u2192 **reference resolution still runs** when prose is\n  in scope. A manuscript-only layout does not exempt phase 1.0 or the project runner.\n- No `trace=<path>` argument supplied \u2192 skip phase 1.2 silently (the trace is an\n  optional input, like `worktree=`; a standalone author pre-check has none).\n- Phase 1 fails to run (env broken) \u2192 ESCALATE; don't fall through.\n- Semantic subagent output lacks `file:line` or `suggested_test` \u2192 reject the output and\n  flag as adherence-infrastructure bug. Don't silently accept.\n\n## Not in scope\n\n- Writing style / AI-tells (handled by `/review-pr-prose` and `config/ai-tells.yml`).\n- Ticket format (enforced by pre-commit hook).\n- Git branch naming (enforced by pre-commit hook).\n- Merging decisions. This skill never affects merge state.\n"
+    "sha256": "70146986d93d312bbf76060821cee592e99cfd9f38e97d61f60b0d7b892c3099",
+    "source": "---\nname: verify-adherence\ndescription: \"Check a branch's diff against project rules. Mechanical-first \u2014 runs hygiene tests + grep ratchet before falling back to LLM.\"\ndisable-model-invocation: false\nuser-invocable: true\nargument-hint: \"<branch> [worktree=<path>] [trace=<path>]\"\ncontext: fork\n# Foreground: /gaze runs this as phase 2 (Agent A) and blocks on its structured\n# output. Claude Code 2.1.218 made `context: fork` skills background by default;\n# a fork cannot wait on a background completion, so the default would orphan\n# this phase \u2014 ticket 0250.\nbackground: false\n---\n\n# Verify adherence \u2014 $ARGUMENTS\n\nFor helper commands, set `IDH_ROOT=\"$(cd -P \"$(dirname \"<loaded-SKILL.md>\")/../..\" && pwd -P)\"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.\n\n> **TASK DIRECTIVE \u2014 execute now.** You are running `/verify-adherence` on\n> `$ARGUMENTS` (a branch name, optionally followed by `worktree=<path>`).\n> This file is your operating procedure, not reference documentation: begin\n> at phase 1.0 immediately. If `worktree=<path>` is present, `cd` into that\n> path before any git or forge command \u2014 forked sub-skills do not inherit the\n> caller's cwd. If `$ARGUMENTS` does not name a branch, STOP and emit\n> `adherence: FAIL` with reason \"no branch argument\" \u2014 do NOT infer a task\n> from the environment (worktree name, git status snapshot, ticket files, or\n> the shared task list).\n\nEnforce the project's declared rules on a branch or merge request. **Prefer tests\nover LLM checks.** If a rule can be mechanized, the skill's job is to run the test or grep.\nAn LLM subagent is the fallback for semantic residue only.\n\n## Philosophy: ratchet toward mechanical\n\nEvery time the semantic fallback flags a violation, the skill emits a `suggested_test`\nentry proposing how to mechanize that rule. Over time the LLM surface shrinks. New test \u2192\nrule is permanently enforced \u2192 never needs LLM again.\n\n## When to use\n\n- Called by `/gaze` as part of phase 2.\n- Called standalone by an author who wants to pre-check their own branch before opening a PR.\n- Called by the raid in an Imagine phase to audit a prototype.\n\n## Input\n\nA branch name, optionally followed by `worktree=<path>` \u2014 the isolated\nreview worktree prepared by the caller (`/gaze` phase 1). When present,\nall phases run from that path.\n\n## Protocol\n\nAny project using this skill must declare an adherence command in its own\ninstructions, build file, or CI contract. That command owns the stack-specific\nchecks: imports, targeted tests, hygiene, linters, and rule enforcement. It\nreturns zero on success and non-zero on failure, with diagnostic output. The\nharness invokes it unchanged and maps its result to phase 4's verdict schema;\nthe project need not implement that schema itself.\n\nDiscover the declaration, never infer a package manager from the language or\ninvent a test command. A named build target is one possible interface, not a\nrequirement for every consumer. The phases below run sequentially because an\nearlier blocking failure must stop later review work.\n\n## Phases\n\n**Label skip.** When called from `/gaze`, if the PR carries the\n`verify:adherence-passed` label (set by `/hunt`'s pre-PR\ngate), the caller skips this entire skill \u2014 the adherence check\nalready ran clean before the PR was opened.\n\n### 1.0 Cheap static checks (always first, budget <10 s)\n\nRuns before the project command. Reference resolution is **blocking**;\nfailure stops the phase here and does not fall through to 1/2/3. Budget <10 s.\nImport resolution and per-module tests belong to the project runner (phase 1).\n\n**Reference resolution (prose).** This has a\nblocking verdict: in a manuscript, `\\cite`/`\\ref` are external references and the\n`.bib` is the symbol table, but there is no link step to reject a dangling one \u2014\nthe toolchain warns, renders a placeholder, and exits 0. Skip when the diff\ntouches no `.tex`/`.qmd`/`.bib`.\n\n**Scope by blast radius, not by touched files.** If the diff modifies a `.bib`,\ncheck **every manuscript in the repo that cites it**, touched or not. This is the\nwhole point of the check: a purge scoped to one manuscript can remove an entry\nfrom under another, and the victim is not rebuilt in that change, so its own build\ngate stays silent. Restricting to touched files reproduces the blind spot. The\nsame holds one level down: a `\\label` deleted in one file breaks a `\\ref` in an\nuntouched sibling, so the resolution universe is the whole source tree of each\nmanuscript checked, never the touched file alone.\n\nTextual, no build \u2014 that is what lets it see manuscripts this change never\nrendered:\n\n- LaTeX citations: every key of every citation command resolves to an entry in\n  the project's `.bib`. Match the whole family, not one spelling: `\\cite`,\n  `\\citep`, `\\citet`, `\\citeauthor`, `\\citeyear`, `\\nocite`, their starred\n  forms, and the biblatex set `\\parencite`, `\\textcite`, `\\autocite`. A\n  multi-key argument (`\\citep{a,b}`) counts as many keys as it lists.\n- LaTeX crossrefs: every `\\ref`, `\\eqref`, `\\autoref`, `\\pageref`, `\\cref`,\n  `\\Cref` resolves to a `\\label{...}` somewhere in that manuscript's sources.\n- Quarto/pandoc: same two checks, different syntax \u2014 `@key` and `[@key; @key2]`\n  resolve to `.bib` entries, `@fig-`/`@tbl-`/`@sec-`/`@eq-` crossrefs to a\n  labelled block. Enumerating the LaTeX forms alone leaves the check inert on a\n  `.qmd` repo it claims to cover.\n\n**Two exemptions, or the check cries wolf on valid sources.** `\\nocite{*}` is a\nwildcard meaning \"every entry in the `.bib`\", not a key \u2014 resolving it as one\nfails a legitimate manuscript. And in a `.qmd`, `@` inside fenced blocks, inline\ncode, and verbatim spans is not a citation: pandoc ignores it there, so a Python\ndecorator or an email address in a code cell is not an unresolved reference.\nStrip those contexts before scanning.\n\nAny unresolved reference \u2192 fail with rule ref `verify-adherence#reference-resolution`,\nrecord `{key, file:line, kind}`. Do not flag `Underfull`/`Overfull` or pre-existing\nBibTeX field warnings. Doctrine and per-tool build recipes: `rules/manuscript-build.md`.\n\nThis check is intentionally cheap. If it exceeds the 10 s budget,\nESCALATE rather than silently trimming scope (a trimmed check that drops\na failing test is worse than no check).\n\n### 1. Project runner (never skip)\n\nRead the project instructions, build file, and CI configuration for an explicit\nadherence entry point. Record the declaring file and line with the exact command.\nA filename or a target named `lint` alone is not a declaration of adherence;\nits documented purpose must establish that contract. If declarations conflict,\nESCALATE with their locations rather than choosing silently.\n\nIf none is declared, stop with blocking `adherence: FAIL`, reason\n`no declared adherence runner`, rule ref `verify-adherence#project-runner`.\nDo not guess from installed tools or add a dependency manifest to satisfy the\nharness. A declared command whose executable or dependencies are missing is an\nenvironment error: ESCALATE; never report a clean pass or skip the gate.\n\nInvoke the declared command verbatim from the project worktree, including its\ndeclared environment or wrapper. Keep its output and exit status. A non-zero\ntest/check result is blocking: map diagnostics into `mechanical_failures`,\npreserving their test IDs and source anchors when available. If no finer anchor\nis emitted, use the declaration's file and line and rule ref\n`verify-adherence#project-runner`. A timeout or failure to execute is an\ninfrastructure escalation, not a test verdict. This runner is not subject to\nphase 1.0's 10 s static-check budget.\n\nFor the harness repository itself, the Makefile explicitly documents its\nadherence target: validate it with `make -n lint`, then run `make lint`.\nOther projects may declare another target or a command without Make. All\nstack-specific import probes and per-module tests remain project-owned.\n\n### 1.2 Path-access allow/forbid scan (trace-based)\n\nScans the agent's tool-call **trace** (not the diff) for\nRead/Edit/Write/NotebookEdit/Bash calls that touch a forbidden path \u2014 a\ncredential/secret file or sensitive environment loader (`~/.ssh`, `~/.aws`, `~/.netrc`, `bash-env.sh`,\n`.git-credentials`) or another session's worktree. This is the scope-violation\nclass a diff-only check structurally misses: an agent that READS a forbidden\npath leaves no trace in the diff (arXiv:2604.21965 App. B.3).\n\nRuns only when the caller supplies `trace=<path>` alongside the branch argument\n(mirroring the existing `worktree=<path>` convention). No `trace=` \u2192 skip this\nphase silently.\n\n```bash\npython3 \"$IDH_ROOT/scripts/trace-path-scan.py\" --trace <path> [--worktree-root <path>] --json\n```\n\nThe scan is pure Python, zero LLM tokens. Pass `--worktree-root` (the caller's\nown worktree path) so the other-session-worktree class can fire; without it only\nthe credential class runs. Exit codes: `0` clean, `1` at least one hit, `2` the\ntrace path does not exist (an error, **not** a clean pass \u2014 treat it like the\nother circuit breakers).\n\nEach JSON hit is `{tool, path, reason, line}`, where `line` is the trace-record\nnumber. Any hit is **blocking**: record each as a `mechanical_failures` entry\n`{tool, path, reason, file:line}` \u2014 using the `--trace` path as `file` and the\nhit's `line` \u2014 with rule ref `verify-adherence#path-access-scan`.\n\n### 2. Grep rules live as adherence tests (no central bank)\n\nGrep-based checks are just adherence tests that call `rg` or use a regex\ninternally. They live in the target repo as tests run by its declared adherence\ncommand \u2014 not in this skill. The harness does not maintain a central grep\nbank; each project owns its patterns as code.\n\n**Why tests instead of a YAML bank.** A project test can scope its grep\n(diff-only vs whole-repo), attach fixtures, explain the rule in an\nassertion message, and evolve without changing a harness interface. A\ncentral YAML/grep bank would force a framework for one beneficiary until\na second project arrives wanting the same mechanism.\n\nWhen `/gaze` or a review surfaces a rule worth mechanizing, write a\ntest covered by the declared adherence command in the target repo. That is the ratchet\nin practice.\n\n### 3. Semantic subagent (fallback only)\n\nDiscover rule locations from the project's `AGENTS.md`, `CLAUDE.md`, and their\nexplicit rule references. Include existing conventional `rules/` and\n`.claude/rules/` Markdown trees; do not assume either is the only location.\nRead the applicable instructions and rule contents in full, without `head`\ntruncation. Compare against the branch's merge base with `origin/main` (or\n`main` when no remote exists), including added, renamed and deleted rule files.\nRead deleted rule files at the base so their removal is reviewable; a missing\nreferenced rule is an infrastructure escalation, not an empty rule set.\n\nPhase 3 is **required** whenever the diff touches any discovered rule file or\ninstruction file, including deletion/rename, OR architectural concerns remain\nuncovered by phases 1\u20132. State that applicability decision and its reason.\nOtherwise record `status: skipped`, a concrete reason, and no worker identity.\nMechanical success does not discharge a required semantic review.\n\nWhen required, launch **one actual distinct worker** through an available\nruntime subagent tool or the existing detached CLI transport. Choose its route\nfrom the loaded `route` skill (`skills/route/SKILL.md` and its grid/cache/runtime\nrecommendations); record the launch line before launch. Seats that must be\nindependent follow `skills/route/references/decorrelation.md`. Give it:\n\n- The complete diff and base/head identifiers, with the project worktree path.\n- The discovered applicable instructions and full rule contents, including\n  base versions of removed rules; identify each rule's source path.\n- Prompt: \"For each rule section, cite one piece of evidence that the diff either\n  adheres to or violates it. Only flag concrete violations with file:line\n  anchors. For every violation, suggest a grep pattern or test that could catch\n  it mechanically next time. Return findings and evidence for reviewed rules.\n  Review only: do not edit, add, commit, push, or mutate project/forge state.\"\n\nWait for completion and validate the worker's returned report before emitting\nPASS. Record observed runtime identity (worker/session id, model/family/effort\nwhere exposed), route/transport, launch evidence and completion evidence.\nRequested model names and a model's self-report are not observed identity;\nrecord masked identity fields as unavailable rather than inventing them.\nInline analysis does not count as a launch or a completed worker. A promised\nlaunch, a tool call rejected before execution, and a started worker without a\ncompleted valid report cannot satisfy phase 3.\n\nOutput findings: `{rule_section, concern, file:line, severity, suggested_test}`.\nEach finding must have a concrete source anchor, severity `blocking` or `nit`,\nand a nonempty `suggested_test`. A clean report must still provide evidence\nfor the reviewed rules; an empty/malformed response cannot stand for review.\nValidate each anchor against the reviewed diff or relevant project source.\nReject hypotheticals and unsupported anchors. The caller may reject worker\nfindings, but must not create findings, upgrade severity, or supply missing\nseverity, anchors, or suggested tests on the worker's behalf. No worker available, launch or\ncompletion failure \u2192 `status: unavailable`; malformed or unanchored output \u2192\n`status: invalid`. Either required status emits `adherence: FAIL` with\n`escalation: adherence-infrastructure` and a concrete reason, never silent PASS.\nA valid completed worker alone earns `status: ran`.\n\n### 4. Emit verdict\n\n```yaml\nadherence: PASS | FAIL\nescalation: null | adherence-infrastructure\nsemantic_review:\n  applicable: true | false\n  status: ran | skipped | unavailable | invalid\n  reason: <trigger, skip reason, or infrastructure failure>\n  rule_sources: [<project rule paths>]\n  worker_id: <observed runtime worker/session id, or null>\n  model: <observed id, or unavailable>\n  family: <observed lineage, or unavailable>\n  effort: <observed effort, or unavailable>\n  route: <chosen route and transport, or null>\n  launch_evidence: <actual tool/process/session record, or null>\n  completion_evidence: <completed valid worker report record, or null>\nmechanical_failures:\n  - test_or_grep: <id>\n    rule_ref: <project-rule-path#section>\n    file: <path>\n    line: <n>\nsemantic_findings:\n  - rule_section: <project-rule-path#section>\n    concern: <one sentence>\n    file: <path>\n    line: <n>\n    severity: blocking | nit\n    suggested_test: <grep pattern or project test snippet>\nuntested_rules:\n  - rule: <project-rule-path#section>\n    suggested_test: <code>\n```\n\nVerdict mapping is mandatory: any mechanical failure or blocking semantic finding \u2192 adherence: FAIL.\nA required semantic review with status other than `ran` also fails with the\ninfrastructure escalation above. PASS requires successful mechanical checks,\nno blocking semantic findings, and either a valid completed semantic worker\nor an explicitly justified inapplicable `skipped` status. Always emit\n`semantic_review`, even when an earlier phase stops execution; record it as\n`skipped` with reason \"earlier blocking phase\" and no launch/completion claim.\n\n## Ratchet discipline\n\nAfter each run, if `semantic_findings` is non-empty:\n\n1. The caller (`/gaze` or author) opens a small follow-up ticket in the target repo:\n   \"Mechanize adherence rule X per suggested_test.\"\n2. That ticket adds a test run by the declared adherence command (in an existing test file, or a\n   new one) that asserts the rule mechanically.\n3. Next invocation of `/verify-adherence`, the rule is caught by phase 1 instead of\n   phase 3. LLM surface shrinks permanently.\n\nThis ratchet is the whole point. Do not accept `semantic_findings` as a steady state.\n\n## Circuit breakers\n\n- No declared adherence runner \u2192 blocking contract failure (phase 1).\n- A declared runner cannot execute \u2192 ESCALATE (environment broken).\n- No `scripts/` directory \u2192 **reference resolution still runs** when prose is\n  in scope. A manuscript-only layout does not exempt phase 1.0 or the project runner.\n- No `trace=<path>` argument supplied \u2192 skip phase 1.2 silently (the trace is an\n  optional input, like `worktree=`; a standalone author pre-check has none).\n- Phase 1 fails to run (env broken) \u2192 ESCALATE; don't fall through.\n- Semantic subagent output lacks `file:line` or `suggested_test` \u2192 reject the output and\n  flag as adherence-infrastructure bug. Don't silently accept.\n\n## Not in scope\n\n- Writing style / AI-tells (handled by `/review-pr-prose` and `config/ai-tells.yml`).\n- Ticket format (enforced by pre-commit hook).\n- Git branch naming (enforced by pre-commit hook).\n- Merging decisions. This skill never affects merge state.\n"
   },
   "outer": {
-    "worker_id": "01a13990-6738-7aa2-8f21-ac99891d2084",
+    "worker_id": "01a139bf-563d-71b2-ae0d-153ffda57d84",
     "parent_worker_id": "01a1398a-c491-72d2-ac21-9a3f5917a79e",
     "model": "gpt-6.1-sol",
     "family": "OpenAI",
     "effort": "medium",
-    "identity_source": "native session_meta and turn_context",
+    "fresh_context": true,
+    "identity_source": "native session_meta and turn_context; observed fork_turns none; family from loaded route grid",
     "arguments": "candidate worktree=/tmp/idh-1080-live-final"
   },
   "accepted_run": {
@@ -20,68 +21,112 @@
     "arguments": "candidate worktree=/tmp/idh-1080-live-final",
     "base": "e89dda965d33da74121774bf7f856f1bb01d289a",
     "head": "e6b36baf797cddd7df598b923d8f63dc1546ce62",
-    "phase1_0": {
-      "status": "skipped",
-      "reason": "no .tex/.qmd/.bib touched"
+    "phases": {
+      "1.0": {
+        "status": "skipped",
+        "reason": "No .tex/.qmd/.bib changed",
+        "elapsed_seconds": 0.007035255432128906
+      },
+      "1": {
+        "status": "passed",
+        "command": "make syntax",
+        "declaring_file_line": [
+          "AGENTS.md:4",
+          "Makefile:2"
+        ],
+        "exit_code": 0
+      },
+      "1.2": {
+        "status": "skipped",
+        "reason": "No trace argument"
+      },
+      "2": {
+        "status": "project-owned; included in declared runner"
+      }
     },
     "semantic_review": {
       "applicable": true,
       "status": "ran",
-      "reason": "diff changes discovered rules/worktrees.md",
+      "reason": "Diff changes discovered rule rules/worktrees.md; blocking script violation not covered by shell syntax runner",
       "rule_sources": [
         "AGENTS.md",
         "rules/worktrees.md"
       ],
-      "worker_id": "0df0c0b2-06f6-4385-8b39-e2475e35df6f",
+      "worker_id": "3f10718b-2941-4929-9da5-c8c444afce35",
       "model": "claude-haiku-5-5",
       "family": "Anthropic",
       "effort": "unavailable",
       "requested_effort": "medium",
-      "route": "loaded route grid economical cluster; Claude detached cross-family transport",
+      "route": "live route grid claude-haiku-5-5 @medium via Claude headless CLI",
       "launch_evidence": {
-        "command": "claude -p --model haiku --effort medium --output-format json --tools '' < /tmp/idh-1080-final-acceptance/worker-prompt.txt > /tmp/idh-1080-final-acceptance/worker.stdout.json 2> /tmp/idh-1080-final-acceptance/worker.stderr",
-        "exec_chunk": "30f9e1",
-        "exec_session_id": 59913
+        "path": "/tmp/idh-1080-final-fresh-invocation/worker.launch.json",
+        "pid": 8,
+        "command": [
+          "claude",
+          "-p",
+          "--model",
+          "claude-haiku-5-5",
+          "--effort",
+          "medium",
+          "--output-format",
+          "stream-json",
+          "--verbose",
+          "--safe-mode",
+          "--no-session-persistence",
+          "--tools",
+          ""
+        ],
+        "exec_session_id": 56997
       },
       "completion_evidence": {
-        "exec_chunk": "bb4003",
-        "exit_status": 0,
-        "result_uuid": "a3c3477a-9752-4e75-9e33-2b7a6a297371",
+        "path": "/tmp/idh-1080-final-fresh-invocation/worker.stdout.jsonl",
+        "uuid": "260da837-39bb-407b-a983-0342956e4bca",
+        "subtype": "success",
         "terminal_reason": "completed",
-        "is_error": false,
-        "stdout": "/tmp/idh-1080-final-acceptance/worker.stdout.json"
-      }
+        "exit_code": 0,
+        "validated_report": "/tmp/idh-1080-final-fresh-invocation/worker.validation.json",
+        "result_uuid": "260da837-39bb-407b-a983-0342956e4bca",
+        "exit_status": 0
+      },
+      "elapsed_seconds": 12.238394498825073,
+      "runtime_duration_ms": 10809,
+      "cost_usd": 0.00180995
     },
     "mechanical_failures": [],
     "semantic_findings": [
       {
-        "rule_section": "rules/worktrees.md: Worktree identity (0310) \u2014 the predicate `[ -f .git ]` is forbidden",
-        "concern": "scripts/check-tree.sh replaces `git rev-parse --is-inside-work-tree` with the forbidden `[ -f .git ]` predicate. This only matches linked worktrees, so an ordinary repository whose `.git` is a directory is no longer identified. The original script printed `true` for both cases; the new one prints nothing in an ordinary repo, which is the regression the rule names.",
+        "rule_section": "rules/worktrees.md: 'Worktree identity (0310)', paragraph 2, and the forbidden-predicate sentence",
+        "concern": "scripts/check-tree.sh replaces the compliant `git rev-parse --is-inside-work-tree` check with the forbidden `[ -f .git ]` predicate. The rule says this predicate only recognizes linked worktrees and rejects ordinary repositories whose .git is a directory, and the diff applies it to a worktree detection script.",
         "file": "scripts/check-tree.sh",
         "line": 3,
         "severity": "blocking",
-        "suggested_test": "Grep gate: `! grep -rnF '[ -f .git ]' scripts/ rules/` (and a regex variant `grep -rnE '\\[ -f \\.?\\.git \\]'` to catch spacing or `./.git` variants), wired into `make syntax`. Behavioral test: `git init` a temp directory (real `.git` directory), run `scripts/check-tree.sh` from it, and assert it reports a Git worktree. Today's `make syntax` (`bash -n` only) cannot catch this, so the grep gate is needed."
+        "suggested_test": "Add to the Makefile `syntax` target (or a separate rule check): `! grep -rnE '\\[ +-f +\\.?git *\\]' scripts/` so the build fails when the forbidden predicate appears. Keep `rules/` out of the grep scope, because the rule file quotes the predicate as prohibited text. Note that `make syntax` (`bash -n`) only checks shell syntax, so it would not catch this violation."
       }
     ],
     "untested_rules": [],
-    "validation": {
-      "anchor": "scripts/check-tree.sh:3 verified against diff and numbered source",
-      "rule": "rules/worktrees.md:3-5 verified",
-      "evidence_line_correction": "Worker calls added scope sentence line6; actual line7. Main finding anchor remains correct.",
-      "suggestion_limitation": "Suggested grep scans rules/ and would match rule text itself. Behavioral-test alternative is the usable proposal; retain raw suggestion unchanged."
+    "rejected_worker_evidence": [
+      {
+        "entry": {
+          "rule_section": "rules/worktrees.md: 'Apply this rule to every worktree detection script.' (added in this diff)",
+          "evidence": "The diff adds the sentence 'Apply this rule to every worktree detection script.' to the rule file. scripts/check-tree.sh is a worktree detection script that does not follow the rule, so the new sentence is violated by that script.",
+          "file": "rules/worktrees.md",
+          "line": 5
+        },
+        "reason": "Claims added sentence at rules/worktrees.md:5; it is actually line 7. Rejected unsupported evidence anchor. Remaining evidence covers the sole rule section and finding anchor is valid."
+      }
+    ],
+    "review_only": {
+      "git_status": "",
+      "project_mutations": false
     },
-    "worker_duration_ms": 16648,
-    "cost_usd": 0.00469613,
-    "start_utc": "2026-10-14T08:55:31+00:00",
-    "end_utc": "2026-10-14T08:56:57.048935+00:00",
-    "elapsed_seconds": 86.048935,
     "mechanical_runner": {
       "command": "make syntax",
-      "declaration": "AGENTS.md:4",
-      "corroborating_declaration": "Makefile:2",
       "exit_status": 0,
-      "output": "bash -n scripts/check-tree.sh\n",
-      "execution_record": "ec7365"
+      "declaration": [
+        "AGENTS.md:4",
+        "Makefile:2"
+      ],
+      "output": "bash -n scripts/check-tree.sh\n"
     }
   },
   "prior_attempts": [
@@ -203,5 +248,93 @@
       }
     },
     "reason": "Superseded by minor consistency edits; original actual invocation remains retained."
-  }
+  },
+  "prior_valid_runs": [
+    {
+      "loaded_skill": {
+        "path": "/tmp/idh-raid-1080-prep/skills/verify-adherence/SKILL.md",
+        "sha256": "e457cd8e89d9efa19eacd018d5a696beaaf848e2726aa371d8bc1fbd5c697983"
+      },
+      "outer": {
+        "worker_id": "01a13990-6738-7aa2-8f21-ac99891d2084",
+        "parent_worker_id": "01a1398a-c491-72d2-ac21-9a3f5917a79e",
+        "model": "gpt-6.1-sol",
+        "family": "OpenAI",
+        "effort": "medium",
+        "identity_source": "native session_meta and turn_context",
+        "arguments": "candidate worktree=/tmp/idh-1080-live-final"
+      },
+      "accepted_run": {
+        "adherence": "FAIL",
+        "escalation": null,
+        "arguments": "candidate worktree=/tmp/idh-1080-live-final",
+        "base": "e89dda965d33da74121774bf7f856f1bb01d289a",
+        "head": "e6b36baf797cddd7df598b923d8f63dc1546ce62",
+        "phase1_0": {
+          "status": "skipped",
+          "reason": "no .tex/.qmd/.bib touched"
+        },
+        "semantic_review": {
+          "applicable": true,
+          "status": "ran",
+          "reason": "diff changes discovered rules/worktrees.md",
+          "rule_sources": [
+            "AGENTS.md",
+            "rules/worktrees.md"
+          ],
+          "worker_id": "0df0c0b2-06f6-4385-8b39-e2475e35df6f",
+          "model": "claude-haiku-5-5",
+          "family": "Anthropic",
+          "effort": "unavailable",
+          "requested_effort": "medium",
+          "route": "loaded route grid economical cluster; Claude detached cross-family transport",
+          "launch_evidence": {
+            "command": "claude -p --model haiku --effort medium --output-format json --tools '' < /tmp/idh-1080-final-acceptance/worker-prompt.txt > /tmp/idh-1080-final-acceptance/worker.stdout.json 2> /tmp/idh-1080-final-acceptance/worker.stderr",
+            "exec_chunk": "30f9e1",
+            "exec_session_id": 59913
+          },
+          "completion_evidence": {
+            "exec_chunk": "bb4003",
+            "exit_status": 0,
+            "result_uuid": "a3c3477a-9752-4e75-9e33-2b7a6a297371",
+            "terminal_reason": "completed",
+            "is_error": false,
+            "stdout": "/tmp/idh-1080-final-acceptance/worker.stdout.json"
+          }
+        },
+        "mechanical_failures": [],
+        "semantic_findings": [
+          {
+            "rule_section": "rules/worktrees.md: Worktree identity (0310) \u2014 the predicate `[ -f .git ]` is forbidden",
+            "concern": "scripts/check-tree.sh replaces `git rev-parse --is-inside-work-tree` with the forbidden `[ -f .git ]` predicate. This only matches linked worktrees, so an ordinary repository whose `.git` is a directory is no longer identified. The original script printed `true` for both cases; the new one prints nothing in an ordinary repo, which is the regression the rule names.",
+            "file": "scripts/check-tree.sh",
+            "line": 3,
+            "severity": "blocking",
+            "suggested_test": "Grep gate: `! grep -rnF '[ -f .git ]' scripts/ rules/` (and a regex variant `grep -rnE '\\[ -f \\.?\\.git \\]'` to catch spacing or `./.git` variants), wired into `make syntax`. Behavioral test: `git init` a temp directory (real `.git` directory), run `scripts/check-tree.sh` from it, and assert it reports a Git worktree. Today's `make syntax` (`bash -n` only) cannot catch this, so the grep gate is needed."
+          }
+        ],
+        "untested_rules": [],
+        "validation": {
+          "anchor": "scripts/check-tree.sh:3 verified against diff and numbered source",
+          "rule": "rules/worktrees.md:3-5 verified",
+          "evidence_line_correction": "Worker calls added scope sentence line6; actual line7. Main finding anchor remains correct.",
+          "suggestion_limitation": "Suggested grep scans rules/ and would match rule text itself. Behavioral-test alternative is the usable proposal; retain raw suggestion unchanged."
+        },
+        "worker_duration_ms": 16648,
+        "cost_usd": 0.00469613,
+        "start_utc": "2026-10-14T08:55:31+00:00",
+        "end_utc": "2026-10-14T08:56:57.048935+00:00",
+        "elapsed_seconds": 86.048935,
+        "mechanical_runner": {
+          "command": "make syntax",
+          "declaration": "AGENTS.md:4",
+          "corroborating_declaration": "Makefile:2",
+          "exit_status": 0,
+          "output": "bash -n scripts/check-tree.sh\n",
+          "execution_record": "ec7365"
+        }
+      },
+      "reason": "Warm outer execution superseded by an empty-context outer on clarified contract."
+    }
+  ]
 }
