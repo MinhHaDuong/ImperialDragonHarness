@@ -87,3 +87,13 @@ changing wrapper exit policy. No new package/library dependency; no shared
 registry changes. Planned content paths: scripts/pi-subagent-link,
 scripts/pi-haiku, tests/test_pi_subagent_link.py, this ticket and its closed
 path (at most five paths). Existing current-version behavior is preserved.
+
+## Feasibility
+
+PASS (2026-10-14): PI_HOME is an existing helper seam, child_env() is available,
+and fixture-only utility shims permit a controlled PATH without real host Pi.
+Invoke Bash by absolute path. The nested npm executable symlink and two modules
+exercise real ancestor discovery. Wrapper-copy test isolates ONLY keyfile
+location; HOME stays untouched and no live key is read. Five planned content
+paths; no shared registry or inter-ticket dependency. No test suite was run in
+this mechanical feasibility phase. Execution follows completion of raid 1080.
