@@ -10,6 +10,7 @@ Label: deferred
 2026-10-14T16:20Z reviewer note Design discussion (4 seats, 2 rounds) recorded in docs/discussions/2026-10-14-1096-design.md: designs C (delete second battery, shared reuse script) and A (C plus prose fold); B and the three-skill router rejected; five questions await the author.
 2026-10-14T19:35Z reviewer note Author answered the five questions (see docs/discussions/2026-10-14-1096-design.md, Answers): C now plus a separate reliability ticket; evidence allow-list from the 3-month census incl. Copilot; inherited independence only if identical; native seats optional; gaze becomes the single review skill, code fold now, prose after a measured raid, no aliases, retired names linted.
 2026-10-14T19:43Z reviewer note Reliability work filed as ticket 1099 (Blocked-by: 1096), at the author's request.
+2026-10-14T19:55Z reviewer note Round 3 panel on the adopted plan recorded in the design doc: child 0 (other-project sweep) added, all seat objections absorbed; three questions await the author.
 
 --- body ---
 ## Author mandate (2026-10-14)
