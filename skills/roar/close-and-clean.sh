@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Roar steps 7-10 in one command (ticket 1084): ticket close, close-claim
-# check, tracker-sibling detection, worktree-exit preflight, scoped branch cleanup.
+# Roar steps 7-10 in a few commands (tickets 1084, 1098): ticket close,
+# close-claim check, tracker-sibling detection, worktree-exit preflight, the
+# step-9 exit check, owned worktree removal, scoped branch cleanup.
 #
 # The model used to retype these as bash blocks, one turn each, every turn
 # re-reading the whole session context. The judgment stays in SKILL.md; this
@@ -142,7 +143,7 @@ detect_tracker() {
     fi
 }
 
-# ── Step 9a: worktree-exit preflight ──────────────────────────────────────────
+# ── Steps 7 and 9: worktree-exit preflight ──────────────────────────────────────────
 preflight() {
     local git_dir common_dir rc=0
     if ! git_dir=$(git rev-parse --git-dir) ||
@@ -271,10 +272,13 @@ resolve_base() { # <label>
 # wrap-up bundle). The caller then cds to the main checkout and lets
 # after-exit remove the tree: no `remove`, no `discard_changes` (ticket 1097).
 bundle_armed() { # <head oid>
-    local answer armed
-    answer=$(git ls-remote --exit-code --heads origin "refs/heads/$BUNDLE") || {
-        note "EXIT: KEEP-PENDING bundle $BUNDLE is not on origin"; bump 1; return 1;
-    }
+    local answer armed rc=0
+    answer=$(git ls-remote --exit-code --heads origin "refs/heads/$BUNDLE") || rc=$?
+    case "$rc" in
+        0) ;;
+        2) note "EXIT: KEEP-PENDING bundle $BUNDLE is not on origin"; bump 1; return 1 ;;
+        *) note "EXIT: COULD-NOT-LOOK cannot read origin for $BUNDLE"; bump 2; return 1 ;;
+    esac
     if [ "$answer" != "$(printf '%s\t%s' "$1" "refs/heads/$BUNDLE")" ]; then
         note "EXIT: KEEP-PENDING bundle $BUNDLE on origin differs from HEAD — push it"; bump 1; return 1
     fi
@@ -305,12 +309,12 @@ exit_check() {
         note "EXIT: COULD-NOT-LOOK cannot read HEAD or $base"; bump 2; return 0
     fi
     cur=$(git symbolic-ref --quiet --short HEAD || true)
-    after="--phase after-exit --remove-worktree $top"
+    after="--phase after-exit --remove-worktree $(printf %q "$top")"
     rc=0
     git merge-base --is-ancestor "$head" "$base_tip" || rc=$?
     case "$rc" in
         0)  note "EXIT: HEAD is in $base"
-            [ -n "$cur" ] && [ "$cur" != "$DEFAULT" ] && after="$after --local-branch $cur=$head" ;;
+            [ -n "$cur" ] && [ "$cur" != "$DEFAULT" ] && after="$after --local-branch $(printf %q "$cur=$head")" ;;
         1)  if [ -n "$BUNDLE" ] && [ "$BUNDLE" = "$cur" ] && [[ "$BUNDLE" == roar-* ]] && [ "$has_origin" -eq 1 ]; then
                 bundle_armed "$head" || return 0
             else
@@ -328,6 +332,11 @@ exit_check() {
         "$IDH_ROOT/scripts/sync-local-main.sh" "$primary" "$DEFAULT" | sed 's/^/roar: SYNC: /' || true
         if [ "$(git -C "$primary" rev-parse --verify -q "refs/heads/$DEFAULT" || true)" != "$base_tip" ]; then
             note "EXIT: local $DEFAULT differs from $base after sync — after-exit may keep the branch"
+        fi
+        # Not a gate (author decision, ticket 1098): branch -d checks containment
+        # in the main checkout's HEAD, so a parked checkout keeps the branch.
+        if [ "$(git -C "$primary" symbolic-ref --quiet --short HEAD || true)" != "$DEFAULT" ]; then
+            note "EXIT: main checkout is not on $DEFAULT — after-exit may keep the branch"
         fi
     fi
     note "EXIT: READY — cd to the main checkout $(printf %q "$primary"), then run: close-and-clean.sh $after"

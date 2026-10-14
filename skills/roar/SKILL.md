@@ -292,9 +292,11 @@ worktree go once the branch is pushed and auto-merge is armed.
     b. `EXIT: READY` → `cd` to the main checkout, then run the `after-exit`
        command the report prints, adding step 10's remote target.
        `after-exit --remove-worktree` unlocks the tree (hunt locks it) and
-       runs `git worktree remove`, which refuses uncommitted work; the branch
-       survives removal, so no commit can be lost here. Never `--force`. An
-       armed bundle is named in step 11 as pending forge integration; it
+       runs `git worktree remove`. Git refuses a tree with modified or
+       untracked files, and the branch survives removal, so no commit is
+       lost; ignored files are deleted with the tree, as with any
+       `git worktree remove` (scan for them: ticket 1095). Never `--force`.
+       An armed bundle is named in step 11 as pending forge integration; it
        does not block the `/clear` verdict, and a later roar reports its
        merge request if a check fails.
 
