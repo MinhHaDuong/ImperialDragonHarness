@@ -1,6 +1,6 @@
 # Zotero Integration — IDH Architecture
 
-**Status**: Draft — 2026-06-24, revised 2026-10-02
+**Status**: Draft — 2026-06-24, revised 2026-10-15
 
 ## Principles
 
@@ -46,9 +46,14 @@ Skills compose by piping RIS: `lint | enrich | apply`. No shared framework neede
 
 No custom formats. CSL-JSON is richer (use for RAG and activity report). RIS is simpler (use when Zotero import/export is the destination). Choose per consumer; never invent a third format.
 
-### 4. Harness-level extraction trigger: dream-time
+### 4. Harness-level extraction requires an authorized task
 
-Client functions stay in the project (`reconcile_zotero.py`) until `/dream` finds two projects using them. Dream already promotes project-level patterns to the harness when a threshold is crossed — this is that mechanism. No explicit hook needed.
+Whether a shared function belongs in the harness is decided by a separately
+authorized task, not a Hoard run. Hoard consolidates project memory; it does
+not promote code. Brood may implement project improvements and nominate a
+change to a named, authorized harness, but does not authorize harness
+implementation. Harness work remains a separate task under the existing
+authorization.
 
 ### 5. Transports are chosen per skill
 

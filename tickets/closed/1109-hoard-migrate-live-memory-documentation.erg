@@ -2,10 +2,12 @@
 Title: Hoard: migrate live memory documentation and project templates
 Created: 2026-10-15
 Author: reviewer
+Closed: migrated active Hoard docs and verified template/helper no-op
 
 --- log ---
 2026-10-15T08:02Z reviewer created
 2026-10-15T09:24Z reviewer note blocker 1106 closed — Blocked-by removed.
+2026-10-15T09:58Z reviewer closed — migrated active Hoard docs and verified template/helper no-op
 
 --- body ---
 
@@ -13,7 +15,7 @@ Author: reviewer
 Child of 1102, split from 1106 to keep each PR below 15 content-bearing paths. Migrate current memory convention, templates and operational docs/link targets after actual harness memory migration. Preserve historical narratives, dated evaluation evidence and report/journal bytes. Inventory exact live files before implementation; split further if needed.
 
 ## Exit criteria
-- [ ] Live docs/templates point to hoard, memory/HOARD.md and memory/hoards/; generated new-project conventions work and links resolve. Historical evidence remains unchanged. Relevant tests and make check pass.
+- [x] Live docs/templates point to hoard, memory/HOARD.md and memory/hoards/; generated new-project conventions work and links resolve. Historical evidence remains unchanged. Relevant tests and make check pass.
 
 ## Raid Plan and feasibility — 2026-10-15
 PASS: 9 paths including this ticket; 10 if the results test needs an edit.

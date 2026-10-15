@@ -31,7 +31,7 @@ ImperialDragonHarness/          # reference clone: ~/.agents
 ├── tests/                  # The gates; `make check` runs them
 ├── tickets/                # git-erg ticket store (`tickets/AGENTS.md`)
 ├── adapters/               # Native glue for other harnesses (`adapters/README.md`)
-├── memory/                 # The harness's own v8 memory (journal, topics, dreams)
+├── memory/                 # The harness's own v8 memory (journal, topics, hoards)
 ├── projects/<slug>/memory/ # Legacy corpus pending migration (0913)
 ├── bin/ hooks/             # PATH utilities, git hooks
 ├── settings.shared.json    # Tracked config; the live settings.json is git-ignored
@@ -39,7 +39,7 @@ ImperialDragonHarness/          # reference clone: ~/.agents
 ```
 
 Project memory is written in each project’s own repository, never into this
-installation. Roar captures facts; hoard consolidates memory without proposing
+installation. Roar captures facts; Hoard consolidates memory without proposing
 rules. Crystallisation requires a separate explicit user request.
 
 See [ROADMAP.md](ROADMAP.md) for priorities and [STATE.md](STATE.md) for the
@@ -73,8 +73,8 @@ cd ~/.agents
 
 If `~/.agents` already exists, inspect it first. Other checkout locations are
 supported by the portable registration contract: entry points resolve the
-checkout from their real location or an explicit root argument. Hoard/memory
-uses project-local Markdown in v8, not the retired shared-store provenance
+checkout from their real location or an explicit root argument. Hoard uses
+project-local Markdown in v8, not the retired shared-store provenance
 helper. The old helper handoff 1002 is closed WONTDO; safe capture and
 integration landed in 0988 (pinned helper + reproduction suite).
 
