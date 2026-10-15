@@ -64,6 +64,29 @@ backfill appended zero events in each run: 34 records unresolved on 2026-10-08,
 65 on 2026-10-12 and 69 on 2026-10-13. Historical reviewed-revision coordinates
 were missing, and no run inferred them.
 
+## Refresh: index simplification and canonical Hoard paths
+
+The [third consolidation follow-up](../journal/2026/2026-10-13-third-dream-index-duplication-and-merge.md)
+records the author's removal of a test pin that forced duplicate reference-note
+links in the index. Test changes landed separately in #1383, consolidation in
+#1382. Explicit author merge instructions overrode that run's no-automatic-merge
+clause; they do not grant future Hoard merge authority.
+
+The [1106 migration record](../journal/2026/2026-10-15-hoard-path-migration.md)
+pins original/current paths and blobs: current prompt `memory/HOARD.md` v8-r2,
+six byte-preserved reports under `memory/hoards/`. Historical report bodies
+and journal bytes retain former names; one archival journal link is explicitly
+mapped. This was migration, not consolidation. The
+[final integration checkpoint](../journal/2026/2026-10-15-raid-1101-1103-1104-integration-pending-attribution.md)
+records canonical Hoard/Yawn activation across Claude, Codex and Pi, with no
+managed old-name alias. Interrupted trial pass 3 is not accepted processing.
+
+The same checkpoint distinguishes the diff producer from the journal recorder
+for attribution. Later observed producer effort enabled six validated records
+(#1424, #1426–#1430); #1423/#1425 still lack producer or initial context facts.
+No model pin is reconstructed. The historical append-in-place question from
+the accepted reports remains unresolved; this pass changes no journal bytes.
+
 ## Sources and exceptions
 
 - [2026-10-01: memory v8 design and boundaries](../journal/2026/2026-10-01-memory-v8-design-and-boundaries.md) — design adoption.

@@ -29,6 +29,23 @@ safety contract does not cover every verb identically: `attach` creates with
 `If-None-Match: *` and the version guard exists only in `enrich`, as the
 #1179 review established.
 
+## Refresh: local API preference and on-demand reconciliation
+
+The [2026-10-14 author preference](../journal/2026/2026-10-14-zotero-local-api-preference.md)
+is explicit: « N’hésite pas à demander que j’ouvre le Zotero local pour passer
+par l’API, ça va plus vite. » Availability still needs checking; this changes
+neither deduplication nor the prohibition on SQLite writes.
+
+The [2026-10-15 reconciliation episode](../journal/2026/2026-10-15-molt-zotero-reconcile-removed.md)
+records a zero-staged-file run killed after 300 s without a report. Cache bytes
+were unchanged and no project had an apply opt-in; the slow rebuild's cause
+was not established. The author chose removal from Molt and on-demand Zotero
+reconcile, with an early exit before index loading for empty staging (#1434).
+Review minors became 1111/1112. Subsequent merged #1437 repaired empty reports
+and apply preflight (Git source evidence at this pass's base); 1112/1113 remain
+separate follow-ups. Removing a housekeeping step does not withdraw
+`rules/zotero.md`'s reconciliation discipline or prove library completeness.
+
 ## Sources and exceptions
 
 - [Préférence explicite pour l’API locale, 2026-10-14](../journal/2026/2026-10-14-zotero-local-api-preference.md) — l’utilisateur accepte qu’on lui demande d’ouvrir Zotero pour utiliser son API et gagner du temps.

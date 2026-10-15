@@ -53,9 +53,28 @@ fix PRs (details in [raids, review panels and merges](raid-review-and-merge.md))
 Ticket 1074 (closed 2026-10-09) split the question: skills dropped
 `isolation: "worktree"` for a plain-git recipe with `git worktree lock`
 (ticket 1076, PR #1313); whether sessions keep opting in through
-`EnterWorktree` is ticket 1077, still open on 2026-10-13. The census's
+`EnterWorktree` was then ticket 1077 (closed 2026-10-14; see below). The census's
 blind-spot pass noted that `EnterWorktree` also moves the session cwd, whereas
 a plain `git worktree add` leaves Edit and Write on the primary checkout.
+
+## Refresh: EnterWorktree retired (2026-10-14)
+
+[Ticket 1077 / PR #1407](../journal/2026/2026-10-14-enterworktree-opt-in-dropped-1077.md)
+closed after controlled probes: plain worktree operations passed in an
+un-entered session, whereas EnterWorktree enabled a guard refusing both
+`-C` and `cd` into sibling trees, including for subagents. Plain operations
+from the entered tree without `-C` still passed. A parallel session obtained
+the same result. The author chose to drop EnterWorktree without a replacement
+guard, keeping plain git worktrees. Current `rules/claude-code.md` forbids
+EnterWorktree and specifies add/lock/cd; the earlier refusal catalogue is
+historical and conditional on sessions that activated that runtime guard.
+
+A restart reset cwd to the primary checkout and a relative edit reached main;
+the edit was moved to the branch and reversed on main. After the change,
+review-tree creation and reads succeeded from an un-entered session. The
+accepted residual risk is loss of the runtime guard against writes aimed at
+another tree. The concurrency topic records this same episode, not a separate
+measurement of the risk.
 
 ## Sources and exceptions
 

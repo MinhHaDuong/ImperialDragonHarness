@@ -221,6 +221,50 @@ was run. Likewise, the 2026-10-08 to 2026-10-13 catches by other-family seats
 (#1298, #1303, #1372 to #1374, #1377) are individual episodes, not a measured
 advantage. The same-family seats also caught defects (#1328, #1354).
 
+## Later review and integration evidence (2026-10-13 to 2026-10-15)
+
+[The Arena separation](../journal/2026/2026-10-13-arena-separation-and-force-merge.md)
+hit the 107-file breaker and merged under explicit force approval. Supplementary
+local reviews passed, but native review and external launches were unavailable;
+correctness reused adherence/simplify context and no independent gate ran.
+
+[1080/1089](../journal/2026/2026-10-14-raids-1080-1089-wrap-up.md) retained
+failed bootstrap/controller attempts before completed panels and final gates.
+The cold adherence fixture passed syntax checks and a distinct semantic worker
+found the planted violation without a hint. The requested 20-minute closing
+window was exceeded. Backfill appended zero records and left 70 unresolved
+historical records; it did not infer revision coordinates.
+
+The [1098 review](../journal/2026/2026-10-14-roar-exit-check-1098.md) caught
+an incorrect ignored-file safety promise. A local cross-family seat completed
+in round one; all round-two external attempts failed, so final approval stayed
+DEGRADED. The [1096 design follow-up](../journal/2026/2026-10-14-1096-split-and-session-cleanup.md)
+closed the design ticket and moved implementation to 1100, with 1099 blocked
+on it. The earlier [architecture reservation](../journal/2026/2026-10-14-review-workflow-followup.md)
+is history, not evidence that the now-closed design ticket remains deferred.
+
+The [1101–1109 integration trail](../journal/2026/2026-10-15-raid-1101-1103-1104-integration-pending-attribution.md)
+records actual adopted migration-boundary fixes, #1424's initial activation
+REROLL and author-approved staged acceptance, #1429's advisor-requested source
+authentication correction, and #1430's semantic FAIL withdrawn after the SAME
+reviewer rechecked governing authority. Original dissent stays distinguishable
+from later approval. Capacity rejections produced no model reviews. External
+Claude launches were denied and local Qwen calls produced no completed review;
+native reviews are same-family replication, not other-family independence.
+
+New attribution records cover #1386, #1389, #1390, #1398, #1406, #1407, #1409,
+#1424, #1426–#1430 and #1434. They retain repeated attempts and reused contexts;
+this pass derives no cross-record performance rate. The six validated rename
+records use observed producer effort but masked served pins, excluding them
+from model scoring. #1423/#1425 remain pending for missing producer/initial
+context evidence. #1434 records eight masked reviewer lines and aggregate minor
+findings without invented per-seat anchors; see [Zotero](zotero-library.md).
+
+PR #1403's `**Ticket:** Closes 1090` closed nothing; #1408 archived the ticket.
+This is an identified grammar mismatch, unlike the unresolved #1377 body.
+#1403/#1404/#1408 had no reviews. #1414 stayed open despite green checks and
+auto-merge, then merged directly; cause remains unestablished.
+
 ## Sources
 
 - [First raid on pi, PR #1153](../journal/2026/2026-10-02-first-raid-on-pi-pr1153.md)
