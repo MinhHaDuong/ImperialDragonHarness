@@ -8,6 +8,7 @@ with its origin remote removed and no harness installed, reads the whole
 memory surface through relative links alone.
 """
 
+import hashlib
 import re
 import shutil
 import subprocess
@@ -50,7 +51,7 @@ def relative_links(text):
     ]
 
 
-def unresolved_links(root, doc):
+def unresolved_links(root, doc, archival_links=()):
     """Relative links in ``doc`` that do not resolve inside ``root``."""
     broken = []
     for target in relative_links(doc.read_text(encoding="utf-8")):
@@ -58,8 +59,88 @@ def unresolved_links(root, doc):
         if not resolved.is_relative_to(root.resolve()):
             broken.append(f"{target} (escapes the clone)")
         elif not resolved.is_file():
-            broken.append(target)
+            source = doc.relative_to(root).as_posix()
+            old = resolved.relative_to(root.resolve()).as_posix()
+            current = (source == "memory/MEMORY.md" or source.startswith("memory/topics/")
+                       or source in {"docs/memory-v8/README.md",
+                                     "docs/2026-10-02-memory-v8-runtime-smoke.md"})
+            if current or (source, old) not in archival_links:
+                broken.append(target)
     return broken
+
+
+MIGRATION_RECORD = "memory/journal/2026/2026-10-15-hoard-path-migration.md"
+
+
+def relocation_record(root):
+    text = (root / MIGRATION_RECORD).read_text()
+    mappings = re.findall(r"^\| `(memory/(?:DREAM\.md|dreams/[^`]+))` \| `([^`]+)` \| `([0-9a-f]{40})` \|$", text, re.MULTILINE)
+    archives = set(re.findall(r"^\| `([^`]+)` \| `(memory/(?:DREAM\.md|dreams/[^`]+))` \|$", text, re.MULTILINE))
+    baseline = re.search(r"^Baseline commit: `([0-9a-f]{40})`", text, re.MULTILINE).group(1)
+    return baseline, mappings, archives
+
+
+def blob_id(data):
+    return hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+
+
+def verified_archival_links(root):
+    """Verify this migration's exact relocation ledger against retained Git data."""
+    baseline, mappings, archives = relocation_record(root)
+    assert len(mappings) == 7
+    old_paths = set()
+    for old, new, oid in mappings:
+        old_paths.add(old)
+        assert not (root / old).exists(), old
+        original = subprocess.run(
+            ["git", "-C", str(root), "show", f"{baseline}:{old}"],
+            check=True, capture_output=True, env=child_env(),
+        ).stdout
+        assert blob_id(original) == oid, old
+        current = (root / new).read_bytes()
+        if old == "memory/DREAM.md":
+            assert new == "memory/HOARD.md"
+            assert re.search(rb"(?m)^Prompt revision: v8-r1\b", original)
+            assert re.search(rb"(?m)^Prompt revision: v8-r2\b", current)
+        else:
+            assert new == old.replace("memory/dreams/", "memory/hoards/", 1)
+            assert blob_id(current) == oid, new
+    assert len(old_paths) == 7
+    assert archives
+    for source, old in archives:
+        assert (root / source).is_file(), source
+        assert old in old_paths, old
+        original_source = subprocess.run(
+            ["git", "-C", str(root), "show", f"{baseline}:{source}"],
+            check=True, capture_output=True, env=child_env(),
+        ).stdout
+        assert (root / source).read_bytes() == original_source, f"archival source changed: {source}"
+        original_targets = {
+            ((root / source).parent / target).resolve()
+            for target in relative_links(original_source.decode("utf-8"))
+        }
+        assert (root / old).resolve() in original_targets, f"historical link absent: {source}: {old}"
+    return archives
+
+
+def test_current_memory_uses_relocated_paths():
+    assert (MEMORY / "HOARD.md").is_file()
+    assert not (MEMORY / "DREAM.md").exists()
+    assert (MEMORY / "hoards").is_dir()
+    assert not (MEMORY / "dreams").exists()
+
+
+def test_archival_exceptions_reject_unmapped_and_current_broken_links(tmp_path):
+    root = tmp_path
+    archive = root / "memory/journal/2026/old.md"
+    archive.parent.mkdir(parents=True)
+    archive.write_text("[declared](../../dreams/report.md) [broken](unmapped.md)\n")
+    allowed = {("memory/journal/2026/old.md", "memory/dreams/report.md")}
+    assert unresolved_links(root, archive, allowed) == ["unmapped.md"]
+    current = root / "memory/MEMORY.md"
+    current.write_text("[declared](dreams/report.md)\n")
+    allowed.add(("memory/MEMORY.md", "memory/dreams/report.md"))
+    assert unresolved_links(root, current, allowed) == ["dreams/report.md"]
 
 
 def test_index_is_bounded_and_terminated():
@@ -121,8 +202,8 @@ def test_relocated_clone_remains_readable(tmp_path):
 
     Clone the repository, move the clone elsewhere, drop the origin remote —
     then read the memory surface with plain file access only: every relative
-    link in every Markdown file under memory/ and docs/memory-v8/ must
-    resolve inside the relocated clone.
+    link in every Markdown file under memory/ and docs/memory-v8/, plus
+    the live runtime-smoke document, must resolve inside the relocated clone.
     """
     checkout = tmp_path / "checkout"
     subprocess.run(
@@ -138,11 +219,50 @@ def test_relocated_clone_remains_readable(tmp_path):
     )
 
     assert (relocated / "memory" / "MEMORY.md").is_file()
+    archival_links = verified_archival_links(relocated)
     docs = [
         *sorted((relocated / "memory").rglob("*.md")),
         *sorted((relocated / "docs" / "memory-v8").glob("*.md")),
+        relocated / "docs" / "2026-10-02-memory-v8-runtime-smoke.md",
     ]
     assert docs
+    encountered = set()
     for doc in docs:
-        broken = unresolved_links(relocated, doc)
+        for target in unresolved_links(relocated, doc):
+            resolved = (doc.parent / target).resolve()
+            encountered.add((doc.relative_to(relocated).as_posix(),
+                             resolved.relative_to(relocated).as_posix()))
+        broken = unresolved_links(relocated, doc, archival_links)
         assert not broken, f"{doc}: {broken}"
+    assert encountered <= archival_links
+    assert any(source.startswith("memory/journal/") for source, old in encountered)
+    archive = relocated / "memory/journal/2026/2026-10-13-third-dream-index-duplication-and-merge.md"
+    archive.write_text(archive.read_text() + "\n[negative control](unmapped-broken.md)\n")
+    assert "unmapped-broken.md" in unresolved_links(relocated, archive, archival_links)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("mutation", ["source_bytes", "invented_link"])
+def test_archival_source_must_match_its_historical_bytes_and_link(tmp_path, mutation):
+    root = tmp_path / "clone"
+    subprocess.run(
+        ["git", "clone", "--quiet", "--no-hardlinks", str(REPO), str(root)],
+        check=True, env=child_env(),
+    )
+    _, mappings, archives = relocation_record(root)
+    source, old = next(iter(archives))
+    if mutation == "source_bytes":
+        journal = root / source
+        original = journal.read_bytes()
+        journal.write_bytes(original + b"\nA false historical statement.\n")
+        assert relative_links(journal.read_text()) == relative_links(original.decode("utf-8"))
+        error = "archival source changed"
+    else:
+        other = next(path for path, _, _ in mappings
+                     if path.startswith("memory/dreams/") and path != old)
+        record = root / MIGRATION_RECORD
+        record.write_text(record.read_text().replace(
+            f"| `{source}` | `{old}` |", f"| `{source}` | `{other}` |"))
+        error = "historical link absent"
+    with pytest.raises(AssertionError, match=error):
+        verified_archival_links(root)

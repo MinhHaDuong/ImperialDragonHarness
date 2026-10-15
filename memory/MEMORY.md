@@ -21,10 +21,10 @@ v8 repository memory. Pilot: [pilot.md](../docs/memory-v8/pilot.md). Provenance:
 - [PR 1374 merge](journal/2026/2026-10-13-pr1374-author-scope-revision-and-merge.md)
 - [Raid 1091/1092](journal/2026/2026-10-13-raid-1091-1092-and-gaze-1374.md)
 
-## Dreams
+## Hoards
 
-- [Second dream](dreams/2026-10-07-second-dream.md) — accepted.
-- [Third dream](dreams/2026-10-13-third-dream.md) — accepted.
+- [Second hoard](hoards/2026-10-07-second-dream.md) — accepted.
+- [Third hoard](hoards/2026-10-13-third-dream.md) — accepted.
 
 Search the journal for older or unprocessed experiences. The legacy index
 stays in Git history; each legacy reference note is linked from its topic.

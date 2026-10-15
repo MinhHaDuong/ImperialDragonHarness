@@ -70,7 +70,7 @@ was announced as running twice while failing (server on the wrong port, then
 the launch script refusing the arm's own server), and four attempts were
 voided. A Claude Code native note records the author's remark that followed,
 "Babysit your takeoffs" (text preserved in the
-[third dream](../dreams/2026-10-13-third-dream.md)); it agrees with the entry
+[third dream](../hoards/2026-10-13-third-dream.md)); it agrees with the entry
 and adds no rule here. Mellum 2.1
 failed long-context recall and applied 0 of 9 edits on one ticket, and the
 author marked it benchmaxxed. Two runs of one ticket on Flash-Next diverged at

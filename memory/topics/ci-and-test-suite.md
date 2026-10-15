@@ -37,7 +37,7 @@ Forge waits. A required `pytest-guard` stayed `in_progress` 1 h 49 min on
 PR #1245 (usual about 1.5 min), cause not established; a blocking
 `gh pr checks --watch` was stopped at the author's request. A Claude Code
 native note records the author's preference that followed (preserved in the
-[2026-10-07 dream](../dreams/2026-10-07-second-dream.md)); it agrees with the
+[2026-10-07 dream](../hoards/2026-10-07-second-dream.md)); it agrees with the
 event and adds no rule here. Forge-check waits twice returned on a stale
 rollup before the new head's checks existed (2026-10-06).
 

@@ -19,11 +19,11 @@ same day by the author's encrypted-in-repo decision — uncleared material
 stays in this repository as age-encrypted `.age` ciphertext from birth,
 plaintext never in the tree, the key under `~/.config/keys` and never
 tracked (PR #1112, mechanics pinned by 0988). Without the key an entry is
-existing but unreadable: dream skips it and reports the count, never
-treating it as empty. Roar captures facts; DREAM consolidates without rule
+existing but unreadable: hoard skips it and reports the count, never
+treating it as empty. Roar captures facts; HOARD consolidates without rule
 promotion; the journal is append-only. The pilot declaration is
 [docs/memory-v8/pilot.md](../../docs/memory-v8/pilot.md); this correction
-was made by the [first dream](../dreams/2026-10-02-pilot-first-dream.md),
+was made by the [first dream](../hoards/2026-10-02-pilot-first-dream.md),
 which cites the sources below. The pilot's evaluation protocol was
 committed to main before its acceptance trials on 2026-10-02
 ([evaluation protocol](../../docs/memory-v8/evaluation-protocol.md), PR
@@ -43,7 +43,7 @@ evidence-based edits to consolidated memories while the journal stays
 append-only, and leaves Dream and Roar authority unchanged. Its evaluation
 records procedural fixture results only, not field benefit
 ([brood evaluation](../../docs/memory-v8/brood-evaluation.md)). The second
-dream ([2026-10-07](../dreams/2026-10-07-second-dream.md)) added the
+dream ([2026-10-07](../hoards/2026-10-07-second-dream.md)) added the
 operational topics indexed beside this one.
 
 Refresh, 2026-10-08 to 2026-10-13. On 2026-10-09, nine legacy native notes

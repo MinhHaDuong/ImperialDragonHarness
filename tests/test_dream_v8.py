@@ -23,8 +23,8 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 MEMORY = REPO / "memory"
-DREAM_PROMPT = MEMORY / "DREAM.md"
-DREAMS = MEMORY / "dreams"
+DREAM_PROMPT = MEMORY / "HOARD.md"
+DREAMS = MEMORY / "hoards"
 # The pilot dream's own report, pinned by name: a later dated report must not
 # hijack these pilot-specific expectations (they describe this dream's
 # correction, ledgers and passes).
@@ -103,7 +103,7 @@ def test_convention_docs_point_at_the_live_prompt():
     text = (REPO / "docs" / "memory-v8" / "README.md").read_text(
         encoding="utf-8"
     )
-    assert "memory/DREAM.md" in text, (
+    assert "memory/HOARD.md" in text, (
         "the adopting convention does not name the versioned prompt"
     )
 

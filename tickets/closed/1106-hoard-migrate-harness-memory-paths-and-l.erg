@@ -2,10 +2,14 @@
 Title: Hoard: migrate harness memory paths and live documentation
 Created: 2026-10-15
 Author: reviewer
+Closed: implemented
 
 --- log ---
 2026-10-15T07:30Z reviewer created
 2026-10-15T08:55Z reviewer note blocker 1105 closed — Blocked-by removed.
+2026-10-15T09:24Z reviewer closed — implemented
+
+2026-10-15T09:25Z Codex note Committed migration and relocated clone verified: 44 affected, 972 fast, 185 adherence passed; 217 files preserved, 244 ledger blobs accessible, 7 relocation mappings and 1 archival source/target pair. Full pre-PR gate follows.
 
 --- body ---
 
@@ -13,7 +17,7 @@ Author: reviewer
 Child of 1102. Migrate this harness project memory and active documentation/link targets using 1104. Keep accepted report and journal bytes unchanged, retain historical ledger references, advance prompt revision, and maintain index <=100 lines. Repair operational docs/templates without rewriting historical accounts.
 
 ## Exit criteria
-- [ ] Harness uses memory/HOARD.md and memory/hoards/ exclusively for consolidation, links resolve and historical provenance remains verifiable. Compare preserved artifact bytes. make check passes. Split further before execution if PR reaches 15 paths.
+- [x] Harness uses memory/HOARD.md and memory/hoards/ exclusively for consolidation, links resolve and historical provenance remains verifiable. Compare preserved artifact bytes. make check passes. Split further before execution if PR reaches 15 paths.
 
 ## Raid Plan and feasibility — 2026-10-15
 PASS: 12 content-bearing paths including this ticket: HOARD prompt, MEMORY
@@ -35,7 +39,8 @@ to their recorded original blobs; historical r1 prompt references must retain
 the accessible r1 blob while the current r2 prompt exists. A broken link
 without a declared relocation must still fail. This is provenance validation,
 not a runtime alias or an old-layout consolidation path. No blanket archive
-link exemption. Historical evaluation doc link repairs remain in 1109.
+link exemption. Ticket 1110 pins historical evaluation citations before this
+migration; live documentation/templates remain in 1109.
 
 First test: demonstrate the relocated clone fails only for the inventoried
 old targets, then verify the explicit provenance mapping and a negative
