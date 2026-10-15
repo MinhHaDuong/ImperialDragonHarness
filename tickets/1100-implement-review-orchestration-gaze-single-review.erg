@@ -8,6 +8,8 @@ Author: Minh Ha-Duong
 
 2026-10-15T10:12Z ChatGPT note Author-requested tentative review storage/delivery proposal recorded below; compatibility with the unread design specification remains to be checked.
 
+2026-10-15T10:18Z ChatGPT note Author adopts repository-backed review reports after discussion of the design conflict; trust is presumed and revision validation distinguishes reviewed content from subsequent report-only commits. See decision below.
+
 --- body ---
 ## Context
 
@@ -78,3 +80,31 @@ this discussion. This does not supersede the adopted specification.
 Reconcile this option with the specification's transport, controller-written
 artifact, evidence and reuse contracts before adoption. Existing exit
 criteria remain unchanged.
+
+## Author decision — repository-backed review reports (2026-10-15)
+
+Following the specification read and discussion, the author adopts the
+`reviews/<base-short>..<head-short>/<agent>-<angle>.md` layout and
+launcher-collected final reports described above. The preceding tentative
+status is superseded by this decision.
+
+- Trust in reviewers is presumed by default; this change introduces no
+  additional reviewer-authentication or signing requirement.
+- Preserve the full reviewed base/head SHAs. Adding report files in a later
+  commit does not by itself invalidate the review: validation must establish
+  that subsequent changes are confined to review artifacts. Changes to
+  reviewed content or relevant context remain subject to the existing
+  invalidation/reuse contract. Final checks and the gate remain tied to the
+  delivered revision.
+- This explicitly revises the design's choice of forge comments instead of
+  branch files as the report store. Reconcile the specification and evidence
+  implementation accordingly; a changed HEAD alone is not sufficient to
+  reject otherwise valid review evidence.
+- CLI reports are captured by the launcher; external GitHub Copilot reviews
+  require API ingestion preserving source links, IDs and reviewed revision.
+  Copilot remains binding external feedback, not a planned panel seat or an
+  independence contribution.
+
+This records an authorized design choice, not an implemented feature.
+Container/CI delivery, cross-host transport and Copilot ingestion still
+require implementation review. The implementation ticket stays open.
