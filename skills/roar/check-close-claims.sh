@@ -8,7 +8,7 @@
 # identical evidence behind (git-erg PR #334, 2026-09-10: the fix for ticket
 # 0276 sat on main while 0276 stayed open; a `/perch` pass found it by luck).
 #
-# WHY THIS IS NOT A REPLAY OF healthcheck STEP 9. That step reports
+# WHY THIS IS NOT A REPLAY OF yawn STEP 9. That step reports
 # `tickets.closed_unarchived` — tickets carrying a `Closed:` header that were
 # never moved to `tickets/closed/`. It indexes on the header being PRESENT, so
 # it is blind by construction to a ticket that was never closed at all: to it,

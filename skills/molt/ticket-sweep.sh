@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Ticket close / archive / merged-branch probe for /molt and /healthcheck.
+# Ticket close / archive / merged-branch probe for /molt and /yawn.
 #
 #   ticket-sweep.sh close <id>           close an open ticket as already-done, stage it
 #   ticket-sweep.sh archive              archive closed tickets, prune duplicates, stage

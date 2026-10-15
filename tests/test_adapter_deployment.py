@@ -2,7 +2,7 @@
 
 The pilot surface is four links, in two planes:
 
-- skills plane (0802/0803): ``~/.agents/skills/{perch,healthcheck}`` and,
+- skills plane (0802/0803): ``~/.agents/skills/{perch,yawn}`` and,
   when the repository is not ``~/.claude`` itself, a Claude Code projection
   — all via ``bin/idh``;
 - wiring plane (0809): ``~/.codex/hooks.json`` and
@@ -68,12 +68,16 @@ def wirings():
 def test_full_pilot_surface_installs_and_skills_uninstall(home):
     # Links first: ~/.claude becomes the checkout, as on a real machine.
     assert wirings() == 0
-    for skill in ("perch", "healthcheck"):
+    for skill in ("perch", "yawn"):
         for harness in ("claude", "codex", "pi"):
             perch.install(harness, skill)
+    assert "yawn" in perch.known_skills()
+    assert "healthcheck" not in perch.known_skills()
+    for harness in ("claude", "codex", "pi"):
+        assert "already discoverable" in perch.install(harness, "yawn")
     managed = [
         home / ".agents" / "skills" / "perch",
-        home / ".agents" / "skills" / "healthcheck",
+        home / ".agents" / "skills" / "yawn",
         home / ".pi" / "agent" / "extensions" / "idh-guard.ts",
     ]
     for path in managed:
@@ -81,7 +85,7 @@ def test_full_pilot_surface_installs_and_skills_uninstall(home):
     assert (home / ".claude" / "skills" / "perch").resolve() == REPO / "skills" / "perch"
     assert json.loads((home / ".codex" / "hooks.json").read_text())["hooks"]["PreToolUse"]
 
-    for skill in ("perch", "healthcheck"):
+    for skill in ("perch", "yawn"):
         for harness in ("claude", "codex", "pi"):
             perch.uninstall(harness, skill)
     assert not (home / ".agents" / "skills" / "perch").is_symlink()

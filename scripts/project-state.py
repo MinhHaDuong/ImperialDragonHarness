@@ -362,7 +362,7 @@ def session_scratch_state(project):
     The only collector that is not about the repo: session scratch directories
     live under the user's temp root and are shared by every project, but they
     are what kills the Bash tool when the temp filesystem fills, so the
-    healthcheck reads them here rather than growing a second probe. `project` is
+    yawn reads them here rather than growing a second probe. `project` is
     accepted for the collector signature and deliberately unused.
     """
     del project

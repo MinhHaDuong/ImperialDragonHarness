@@ -459,9 +459,9 @@ def test_a_truncated_walk_warns_that_the_totals_are_a_floor(tmp_path, monkeypatc
 # ── documentation coupling ───────────────────────────────────────────────────
 
 
-def test_healthcheck_documents_the_temp_check():
+def test_yawn_documents_the_temp_check():
     """Item 12 exists and reads the probe field, not an ad-hoc command."""
-    text = (REPO_ROOT / "skills" / "healthcheck" / "SKILL.md").read_text()
+    text = (REPO_ROOT / "skills" / "yawn" / "SKILL.md").read_text()
     assert "12. **Session scratch" in text
     assert "session_scratch" in text
 

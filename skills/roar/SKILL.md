@@ -65,7 +65,7 @@ No-forge repo (`git remote get-url origin` fails — no `origin`, e.g. a
 direct-to-master checkout with only ssh peers): there is no forge gate.
 "Merged" means committed to the local default branch — verify with
 `git merge-base --is-ancestor HEAD <master|main>` — and every `refs/remotes/origin/main`
-probe in this skill is moot. Downstream, degrade as molt/healthcheck do: a
+probe in this skill is moot. Downstream, degrade as molt/yawn do: a
 missing prerequisite yields an explicit skip with a one-line reason, never a
 fail. Concretely: step 9's ancestry checks compare against the local default
 branch; step 10 checks only explicitly supplied local cleanup targets against the
@@ -252,7 +252,7 @@ worktree go once the branch is pushed and auto-merge is armed.
      `UNRESOLVED` (no such ticket here — renumbered, or this checkout is
      behind). The script never repairs a `DROPPED`: do it with
      `tickets/erg close <id>` plus `tickets/erg archive`, committed like any
-     other change. `/healthcheck` step 9 does not cover this: it indexes on
+     other change. `/yawn` step 9 does not cover this: it indexes on
      the `Closed:` header being *present*, so it is blind to a ticket that was
      never closed at all.
 8. **Check for tracking ticket**: if the closed ticket has a parent, check whether all sibling sub-tickets are now closed.

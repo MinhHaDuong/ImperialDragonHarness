@@ -73,7 +73,7 @@ def make_tree(root: Path):
 
 def test_every_seam_body_derives_from_the_runtime_supplied_path():
     """The invariant: any body that sets IDH_ROOT derives it from the
-    runtime-supplied loaded-skill path via cd -P — one line (healthcheck,
+    runtime-supplied loaded-skill path via cd -P — one line (yawn,
     dream, ...) or two (roar, which needs its own skill dir first) — and
     never from a hard-coded installation root or the project cwd."""
     bodies = bodies_with_seam()
@@ -97,8 +97,8 @@ def test_the_canonical_one_line_spelling_dominates():
     )
 
 
-def test_healthcheck_body_invokes_the_probe_through_the_seam():
-    body = (REPO / "skills" / "healthcheck" / "SKILL.md").read_text()
+def test_yawn_body_invokes_the_probe_through_the_seam():
+    body = (REPO / "skills" / "yawn" / "SKILL.md").read_text()
     assert 'python3 "$IDH_ROOT/scripts/project-state.py"' in body
     assert '"$(git rev-parse --show-toplevel)"' in body
 

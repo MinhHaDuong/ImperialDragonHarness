@@ -18,11 +18,11 @@ Author decision (2026-10-15): use `yawn`, without a transition alias or legacy
 compatibility entry point. Migrate live callers and installed registrations.
 
 ## Exit criteria
-- [ ] Skill renamed `yawn`; every reference updated in one commit (15 files
+- [x] Skill renamed `yawn`; every reference updated in one commit (15 files
       in skills, rules, tests, Makefile, scripts, hooks; molt calls it).
 - [ ] No `/healthcheck` alias or legacy compatibility entry point remains;
       live callers and installed registrations use `yawn`.
-- [ ] `make skills-catalog` regenerated; `make check-skills-drift` and
+- [x] `make skills-catalog` regenerated; `make check-skills-drift` and
       `make check` pass.
 
 ## Raid Imagine — 2026-10-15
@@ -33,3 +33,9 @@ Actions: adapt real installer discovery/idempotence test to yawn first, then ato
 
 ## Raid feasibility — 2026-10-15
 PASS: actual skill/caller/test paths confirmed; installer canonical_source is generic. Seven shared annotation tickets counted in branch footprint. 1103 atomic size exception explicitly authorized. No three-PR registry contention: 1103 and 1105 activate sequentially; 1101 and 1104 finish before 1105. Baseline make check: 1592 passed, 3 skipped in 52.13s (existing primary venv; normal Git access).
+
+## Execution — 2026-10-15
+
+Atomic-size exception approved by author: “Découper 1102 ; autoriser une PR atomique de plus de 15 fichiers pour 1103 (recommandé).” This exception covers size only; all normal gates and review remain required.
+
+Canonical skill, live callers, installer fixtures and catalog migrated together. Historical pilot evidence retains its original name. Host registrations remain pending canonical merge; activation/readback belongs to the parent raid and is documented in docs/adapter-operations.md. No host installation was performed from this worktree.

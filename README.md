@@ -136,14 +136,13 @@ belong in the external keystore and are resolved by task-specific tools.
 | `/dream` | Consolidate one project's repository memory without proposing rules. |
 | `/external-peer-review` | Obtain independent external frontier-class peer reviews of a manuscript PDF; synthesize convergent findings into one verdict. |
 | `/gaze` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller. |
-| `/healthcheck` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
 | `/hunt` | Begin work on a ticket — creates a worktree and writes the first test. |
 | `/ingest-decision-letter` | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check that maps every remark to a ticket. Turns Revise-and-Resubmit intake into one deterministic pass instead of a manual re-count. |
 | `/lair` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
 | `/memory-sweep` | Review a project's repository memory for stale or contradictory claims. |
 | `/merge` | Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI). |
 | `/message-framing` | Frame the central message of a talk, abstract or article before drafting it. |
-| `/molt` | Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
+| `/molt` | Repo housekeeping — git sync, yawn, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
 | `/pdf-finish` | Finishing pass on a PDF deliverable before it leaves the workshop — journal submission, preprint deposit, personal page, report handoff. Keyword: finition. |
 | `/perch` | Mid-session orientation — summarize what's done, surface unresolved points. Assesses clear-readiness and offers to do the work if conditions are right. |
 | `/raid` | Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears. |
@@ -164,6 +163,7 @@ belong in the external keystore and are resolved by task-specific tools.
 | `/update-publist` | Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |
 | `/verify-adherence` | Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. |
 | `/verify-gate` | Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE with explicit evidence. Does not merge — the merge decision belongs to the caller. |
+| `/yawn` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
 | `/zotero` | Import one or more PDFs or URLs into Zotero, enrich existing items, or audit and reconcile the library — extract metadata, resolve identifiers online, dedupe against the library (desktop database or a cached Web API index), and inject items with their PDFs through the Zotero Web API (RIS file as fallback). |
 
 <!-- skills:end -->
@@ -177,7 +177,7 @@ The preferred ticket system is [git-erg](https://github.com/MinhHaDuong/git-erg)
 The reference clone lives at `~/.agents`. The installation strategy uses
 native registration to coexist with runtime-owned configuration.
 Portability is measured, not presumed: `adapters/` currently has pilot
-evidence for two skills (`perch`, `healthcheck`) and one guard across Claude
+evidence for two skills (`perch`, `yawn`) and one guard across Claude
 Code, Codex and Pi. Mistral Vibe has a version and skill-path probe but no
 behavioral port yet. See `adapters/pilot-support.json` and
 `docs/adapter-operations.md` for the current evidence.
