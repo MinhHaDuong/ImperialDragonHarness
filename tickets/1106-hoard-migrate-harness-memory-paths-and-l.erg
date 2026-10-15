@@ -35,7 +35,8 @@ to their recorded original blobs; historical r1 prompt references must retain
 the accessible r1 blob while the current r2 prompt exists. A broken link
 without a declared relocation must still fail. This is provenance validation,
 not a runtime alias or an old-layout consolidation path. No blanket archive
-link exemption. Historical evaluation doc link repairs remain in 1109.
+link exemption. Ticket 1110 pins historical evaluation citations before this
+migration; live documentation/templates remain in 1109.
 
 First test: demonstrate the relocated clone fails only for the inventoried
 old targets, then verify the explicit provenance mapping and a negative
