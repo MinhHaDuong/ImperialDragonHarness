@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-15T06:44Z claude created
+2026-10-15T07:07Z Codex note Author decision 2026-10-15: use yawn without a transition alias or legacy compatibility entry point; migrate live callers and installed registrations.
 
 --- body ---
 ## Context
@@ -13,9 +14,13 @@ is long to type and is the only non-draconic name among the session-hygiene
 skills (lair, molt, perch, roar). Proposed: `yawn`, four letters, the dragon
 waking and stretching before work. No existing use of `yawn` in the harness.
 
+Author decision (2026-10-15): use `yawn`, without a transition alias or legacy
+compatibility entry point. Migrate live callers and installed registrations.
+
 ## Exit criteria
 - [ ] Skill renamed `yawn`; every reference updated in one commit (15 files
       in skills, rules, tests, Makefile, scripts, hooks; molt calls it).
-- [ ] Transition alias `/healthcheck` for one release, removal ticketed.
+- [ ] No `/healthcheck` alias or legacy compatibility entry point remains;
+      live callers and installed registrations use `yawn`.
 - [ ] `make skills-catalog` regenerated; `make check-skills-drift` and
       `make check` pass.
