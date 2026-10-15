@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-10-15T06:44Z claude created
 2026-10-15T07:07Z Codex note Author decision 2026-10-15: use yawn without a transition alias or legacy compatibility entry point; migrate live callers and installed registrations.
+2026-10-15T08:27Z reviewer note Author accepted staged validation on2026-10-15: merge the reviewed atomic rename, then activate and read back managed host registrations from synchronized canonical sources; keep1103open until verification. Exact answer: Oui, fusion puis activation vérifiée ; ticket ouvert jusque-là (recommandé). Size exception remains separate; no review waiver.
 
 --- body ---
 ## Context
