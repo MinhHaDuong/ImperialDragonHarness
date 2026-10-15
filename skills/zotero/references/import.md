@@ -10,8 +10,8 @@
 6. If duplicates exist, **warn the user and ask** before importing. Default is import-with-warning; remind to dedupe inside Zotero.
 7. Translate the title to English. Put it in the **Short Title** field (`shortTitle`, which Zotero calls "Short Title" / abbreviated title).
 8. `write` one combined RIS file alongside the first item — the durable import artifact, kept even when injection succeeds.
-9. `inject` the same entries JSON. Report the returned item keys. On any per-entry error, or when no RW key resolves, fall back to `xdg-open` on the RIS file and say so.
-10. Verify: the inject output lists one `itemKey` (plus `attachmentKey` when `attach_pdf` was set) per entry — read one item back if anything looks off. The local `zotero.sqlite` only reflects the change after the desktop client syncs; do not treat a stale local DB as a failed import.
+9. `inject` the same entries JSON; Zotero must be running. On any per-entry error, or when the connector does not answer, fall back to `xdg-open` on the RIS file and say so.
+10. Verify: the inject output reports `status: "created"` per entry (plus `attachment` when `attach_pdf` was set). The connector returns no item key; look the items up in Zotero if anything looks off. While Zotero runs, the helper reads `zotero.sqlite` as a snapshot that can lag the client, so a `match` straight after an import may not see the new item yet — that is not a failed import.
 
 ## URL intake
 
@@ -62,11 +62,13 @@ substitution in the entry.
 
 ## Injection
 
-`inject` maps the same entries JSON onto Zotero item JSON (RIS type → Zotero `itemType`; fields without a slot on the type, e.g. a DOI on a book, land in `extra`), creates the items in one batch, then uploads each `attach_pdf` PDF as an `imported_file` attachment via Zotero's three-step upload contract.
+`inject` maps the same entries JSON onto Zotero item JSON (RIS type → Zotero `itemType`; fields without a slot on the type, e.g. a DOI on a book, land in `extra`) and hands each item to the Zotero desktop connector at `127.0.0.1:23119`, one connector session per item: `saveItems` creates it, `updateSession` moves it to the destination, then `saveAttachment` stores each `attach_pdf` PDF under it.
 
-- Credentials: `ZOTERO_RW_API_KEY` and `ZOTERO_USER_ID`, from the environment or `~/.config/keys/zotero.env`. Never inline a key into argv.
-- `--collection KEY` files the new items under a collection.
-- `--dry-run` prints the item JSON without touching the API — use it to show the user what would be created when the metadata is uncertain.
+- **Zotero must be running.** The helper pings the connector first and fails loudly, before any save, when nothing answers. No key or account is involved.
+- **Destination.** The connector saves into whatever is selected in the Zotero window; the helper then moves the item to `--library` (the user library by default, or a numeric libraryID such as an editable group) or to `--collection KEY` (whose own library it uses). The move selects that target in the Zotero window. A read-only group cannot be a destination.
+- **Duplicate guard.** Before saving, each entry is matched against a fresh read of `zotero.sqlite` (content hash, identifiers, filename, author-year-title) and against the rest of the batch; any hit is refused unless `--force`. Nothing is recorded between runs: a re-run relies on that read, which can lag a running Zotero (the output then carries a `warning`), so check Zotero's *Duplicate Items* pane after a retried import.
+- A save that fails in transit may still have reached Zotero, so the run stops there and marks the rest `not attempted`; inspect Zotero before retrying.
+- `--dry-run` prints the item JSON without contacting Zotero — use it to show the user what would be created when the metadata is uncertain.
 - The call returns non-zero if any entry failed; the JSON output carries the per-entry error.
 
 ## Field-mapping rules
@@ -74,11 +76,11 @@ substitution in the entry.
 - **Title** in the document's original language (RIS `TI`).
 - **Short Title** = English translation of the title (RIS `ST`). Generate it yourself if the document doesn't supply one.
 - **Authors**: prefer canonical order from CrossRef/OpenLibrary when available; otherwise extract from the byline on page 1. Convert `"First Middle Last"` → `"Last, First Middle"` (the script does this automatically, but do it once if you're feeding the script the wrong way around). Institutions verbatim with a trailing comma so they aren't reordered.
-- **Page count**: include `numPages` for every entry. On the RIS path (`write`), monograph-like types (BOOK, THES, RPRT, CHAP, MANSCPT) emit it as `SP` and everything else as a `pages:N` keyword (RIS has no per-type "total pages" slot for journal articles). On the API path (`inject`), only `book`, `thesis` and `manuscript` have a real `numPages` field; every other type — reports included — gets it in Extra as `number-of-pages`.
-- **Field placement is per item type** on the `inject` path: posting a field the target type does not own is a hard 400 from the API. `entry_to_zotero_item()` routes each value through `ZOTERO_SLOT_FIELD` (a reduced snapshot of `api.zotero.org/schema`) — so `publisher` becomes `institution` on a report, `university` on a thesis, `journal` becomes `bookTitle` / `proceedingsTitle` / `series` / `seriesTitle` / `websiteTitle`, and even `year` is type-dependent (a patent has no `date` field, only `issueDate`). Anything with no home lands in Extra under its CSL name; nothing is dropped.
+- **Page count**: include `numPages` for every entry. On the RIS path (`write`), monograph-like types (BOOK, THES, RPRT, CHAP, MANSCPT) emit it as `SP` and everything else as a `pages:N` keyword (RIS has no per-type "total pages" slot for journal articles). On the connector path (`inject`), only `book`, `thesis` and `manuscript` have a real `numPages` field; every other type — reports included — gets it in Extra as `number-of-pages`.
+- **Field placement is per item type** on the `inject` path: a field the target type does not own is refused or dropped on save. `entry_to_zotero_item()` routes each value through `ZOTERO_SLOT_FIELD` (a reduced snapshot of Zotero's item-type schema, checked against the local `zotero.sqlite`) — so `publisher` becomes `institution` on a report, `university` on a thesis, `journal` becomes `bookTitle` / `proceedingsTitle` / `series` / `seriesTitle` / `websiteTitle`, and even `year` is type-dependent (a patent has no `date` field, only `issueDate`). Anything with no home lands in Extra under its CSL name; nothing is dropped.
 - **Every accepted RIS code reaches a real Zotero type.** `CPAPER`→conferencePaper, `GOVDOC`→report, `PAT`→patent, `STAND`→standard, `UNPB`→manuscript, `WEB`→webpage, following Zotero's own RIS translator. A code outside the accepted set still degrades to `document`, but logs a warning and records `Unmapped RIS type: <code>` in Extra — never silently.
 - **A report needs four fields the generic ones don't cover**: `publisher` (→ `institution`), `place`, `number` (→ `reportNumber`), `genre` (→ `reportType`). Supply all four and the item is complete in one `inject`.
-- **PDF attachment**: pass `attach_pdf: true` plus the absolute `pdf` path so Zotero picks it up via `L1`. The user has configured "Yes — let Zotero copy it": Zotero respects the user's *Linked Attachments* preference at import time.
+- **PDF attachment**: pass `attach_pdf: true` plus the absolute `pdf` path. `inject` sends the file bytes to the connector, which stores a copy; on the RIS fallback Zotero picks it up via `L1` and respects the user's *Linked Attachments* preference ("Yes — let Zotero copy it").
 - **Filename is a fallback only** for title/year/authors. If you used the filename, say so in your summary so the user knows to spot-check.
 
 ## Identifier resolution
@@ -98,6 +100,6 @@ After refined `match`, classify each item by the `verdict`:
 - **`verdict: "none"`** → import normally.
 - **`verdict: "match"`** → already present in the destination library (`why` names the key: `storageHash`, `doi`, `isbn`, `arxiv`, `handle`, `filename`, `creator-year-title`). Default: **skip**, tell the user, ask if they want to import anyway (e.g. to refresh metadata). Exception: if the hit has **no attachment** and the key was metadata-level (not `storageHash`/`filename`), the PDF itself is missing from Zotero — default: **import** so the PDF lands, warning that this creates a duplicate item the user should merge.
 - **`verdict: "ambiguous"`** (only title similarity fired, or several exact/strong candidates tie — e.g. two records legitimately sharing one attachment md5, ticket 0570) → show the candidate(s) to the user and ask. Never silently match, never silently skip.
-- **`verdict: "unchecked"`** → no key could be consulted (no DB, or no usable metadata). Say so explicitly — this is not a clean negative.
+- **`verdict: "unchecked"`** → no key could be consulted (no local `zotero.sqlite`, or no usable metadata). Say so explicitly — this is not a clean negative.
 
 Always remind the user that Zotero's *Duplicate Items* view (left panel) is the place to merge afterwards.

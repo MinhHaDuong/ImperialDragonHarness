@@ -30,11 +30,12 @@ The report is local HTML with `zotero://select/library/items/<key>` links for
 each candidate parent and every matching attachment beneath it. The attachment
 filenames identify the exact files to review when a parent has several children.
 `--format json` provides the same data for inspection. The command reads only
-`zotero.sqlite` through the existing immutable connection,
-defaults to the user library, excludes trashed items, and refuses a nonempty
-write-ahead log because an immutable connection would otherwise miss pending
-changes. It never calls the Web API or mutates Zotero. The only optional write
-is the named report file.
+`zotero.sqlite`, read-only (`mode=ro`, which sees the write-ahead log),
+defaults to the user library, and excludes trashed items. When a running
+Zotero holds the file locked, the only read left is the immutable snapshot,
+which ignores the write-ahead log; the command then refuses a nonempty log
+rather than miss pending changes. It contacts no service and never mutates
+Zotero. The only optional write is the named report file.
 
 The exact content hash is the match key. DOI, ISBN and title agreements among
 parents of the same item type are displayed as extra evidence. They are **not**

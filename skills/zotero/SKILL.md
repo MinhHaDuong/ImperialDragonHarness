@@ -1,6 +1,6 @@
 ---
 name: zotero
-description: "Import one or more PDFs or URLs into Zotero, enrich existing items, or audit and reconcile the library — extract metadata, resolve identifiers online, dedupe against the library (desktop database or a cached Web API index), and inject items with their PDFs through the Zotero Web API (RIS file as fallback)."
+description: "Import one or more PDFs or URLs into Zotero, suggest enrichments to existing items, or audit and reconcile the library — extract metadata, resolve identifiers online, dedupe against the local desktop database, and create items with their PDFs through the running Zotero desktop connector (RIS file as fallback)."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "import <pdf-or-url>... | enrich | audit <dir> | reconcile <repo> | dedup-report | attach"
@@ -22,11 +22,11 @@ A run uses exactly one verb. **Read the verb's file before acting.**
 | verb | does | file |
 |---|---|---|
 | `import` | one or more PDFs or URLs → new items with attachments | `references/import.md` |
-| `enrich` | fill missing fields on items that already exist | `references/enrichment.md` |
+| `enrich` | report missing fields on items that already exist, for the author to fill | `references/enrichment.md` |
 | `audit` | report a staging directory or BibTeX-linked repository against the library | `references/backfill.md` |
 | `reconcile` | repair the staging ↔ library correspondence (report-only by default) | `references/backfill.md` |
 | `dedup-report` | hash-dedup report, library against itself (ticket 0485) | `docs/zotero-dedup-report.md` |
-| `attach` | upload files onto an item that already exists | declared, created on first need (YAGNI) |
+| `attach` | report how to file a document onto an item that already exists | `references/backfill.md` |
 
 The former three modes dissolve into this surface: `import` and `enrichment`
 map to the `import` and `enrich` verbs, and the backfill mode splits between
@@ -41,21 +41,27 @@ import and audit both, and `write` is the durable-RIS step behind import and
 enrich alike. `references/helper-script.md` documents every subcommand and
 the guarantees of its output (`why` / `certainty` / `consulted` / `skipped`).
 
-Inside `import`: probe → match → sync-index → inject. `probe` (or
+Inside `import`: probe → match → write → inject. `probe` (or
 `probe-url.py` for URLs) extracts, `match` dedupes against the desktop
-database, `sync-index` supplies the cached Web API index when no desktop DB
-resolves, `write` emits the durable RIS artifact, and `inject` creates the
-items through the Web API. `references/import.md` carries the full contract.
+database, `write` emits the durable RIS artifact, and `inject` creates the
+items through the Zotero desktop connector. `references/import.md` carries
+the full contract.
 
 ## Safety contract
 
-Never write `zotero.sqlite` (read via `?immutable=1`); merges happen in the
-desktop client. Metadata mutations (`enrich` and its `write` step) follow
-backup → dry-run → apply, expressed as helper flags (`--dry-run`, `--apply`,
-`--overwrite`), and are guarded by `If-Unmodified-Since-Version`. `attach`
-creates: it uploads a new file with `If-None-Match: *` and guards no
-existing item's version. The RIS file is the durable
-artifact and remains the fallback when no read-write key resolves.
+The helper is local-only and stateless. Every call reads `zotero.sqlite`
+afresh, read-only (`mode=ro`, or the `immutable=1` snapshot when a running
+Zotero holds the file locked; the output names which as `read_mode`), and
+keeps nothing on disk between runs. Never write `zotero.sqlite`; merges
+happen in the desktop client.
+
+The only write is the creation of new items with their PDFs, through the
+desktop connector at `127.0.0.1:23119`: Zotero must be running, and `inject`
+fails loudly when the connector does not answer. Existing items are never
+edited by the helper: `enrich`, `attach` and `reconcile --apply` report the
+edit (item key, field, old → new) for the author to make in the client. The
+RIS file is the durable artifact and remains the fallback when Zotero is not
+running.
 
 ## A scraped identifier is a hypothesis, not a finding
 
@@ -89,6 +95,6 @@ mismatch alone is not evidence of a wrong match.
 
 End your turn with:
 
-- One line per item (PDF or URL): title (orig) — `[type]` — item key (or fallback/xdg-open status) — duplicate verdict.
+- One line per item (PDF or URL): title (orig) — `[type]` — `created` (the connector returns no item key) or fallback/xdg-open status — duplicate verdict.
 - The RIS file path (artifact, and the fallback import route).
 - A reminder about Zotero deduplication if any duplicate-risk entry was imported.
