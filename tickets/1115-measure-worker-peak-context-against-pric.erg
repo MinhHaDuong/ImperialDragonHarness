@@ -1,0 +1,57 @@
+%erg 0.1
+Title: Measure worker peak context against the 100K price cliff
+Created: 2026-10-15
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-15T18:15Z Minh Ha-Duong created
+2026-10-15T18:15Z claude note Split from 1114 step 1 at the author's request: measure before building any decomposition machinery.
+
+--- body ---
+## Question
+
+How often does a harness worker cross 100K prompt tokens, and what share of
+worker spend is billed above that line? Haiku 5.5 is five times dearer per
+token past 100K prompt tokens (`skills/route/routes.json`); [[1114]] builds
+decomposition machinery only if the cliff is actually crossed.
+
+## Data
+
+- Claude Code traces under `~/.claude/projects/` on doudou and padme, main
+  sessions and subagents. `scripts/trace-stats.py` already parses them, one
+  row per agent, usage counted once per `message.id` (tickets 0236, 0237).
+- Pi sessions (`~/.pi/agent/sessions/`) and Codex rollouts
+  (`~/.codex/sessions/`) for the headless seats, where their usage records
+  allow it.
+- Arena legs N (Haiku 5.5) and L (Luna @medium): file the arena-side part in
+  the arena repository if its run records are needed.
+
+## Method
+
+Prompt size of one call = `input_tokens + cache_read_input_tokens +
+cache_creation_input_tokens`. Per agent: peak prompt size, number of calls
+past 85K and past 100K, cost as billed, and the counterfactual cost had every
+call been billed at the under-cliff rate. Report by model, role (main session
+vs subagent vs headless seat) and project, over a stated window.
+
+Extend `trace-stats.py` (new columns, tiered pricing for Haiku 5.5) rather
+than writing a parallel parser; check its PRICING table against current list
+prices first, since it is dated 2026-06.
+
+## Decision rule (pre-registered)
+
+1114 continues if, among Haiku-eligible workers (subagents and headless
+seats), more than 10% peak above 85K, or more than 10% of their spend is
+billed above 100K. Otherwise 1114 closes as a documented non-finding, and
+the existing one-line rule in the route skill stands.
+
+## Exit criteria
+
+- [ ] `trace-stats.py` emits peak prompt size, calls past 85K and 100K, and
+      over-cliff spend per agent, with tests on a fixture trace that crosses
+      the cliff
+- [ ] Haiku 5.5 tiered pricing in its PRICING table, source and date cited
+- [ ] Run on doudou and padme over the last 30 days; summary committed
+      under `docs/` (aggregates only, no transcript content)
+- [ ] Decision recorded in the logs of this ticket and of [[1114]]
+- [ ] `make check` passes

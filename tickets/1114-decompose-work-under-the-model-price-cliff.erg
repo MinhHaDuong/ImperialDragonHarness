@@ -2,10 +2,12 @@
 Title: Decompose work so each worker stays under its model's price cliff
 Created: 2026-10-15
 Author: Minh Ha-Duong
+Blocked-by: 1115
 
 --- log ---
-2026-10-15T19:30Z Minh Ha-Duong created
-2026-10-15T19:30Z claude note Filed from an interactive discussion on Haiku 5.5 vs Luna @max value: the author asks that the harness decompose work so cheap workers stay inside their price zone.
+2026-10-15T18:05Z Minh Ha-Duong created
+2026-10-15T18:05Z claude note Filed from an interactive discussion on Haiku 5.5 vs Luna @max value: the author asks that the harness decompose work so cheap workers stay inside their price zone.
+2026-10-15T18:16Z claude note Step 1 split out as [[1115]] (measurement, with a pre-registered decision rule); Blocked-by 1115.
 
 --- body ---
 ## Context
