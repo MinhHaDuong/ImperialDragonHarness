@@ -9,7 +9,12 @@ certify the trials themselves (STEP B, same ticket).
 """
 
 import re
+import subprocess
 from pathlib import Path
+
+import pytest
+
+from child_env import child_env
 
 REPO = Path(__file__).resolve().parents[1]
 PROTOCOL = REPO / "docs" / "memory-v8" / "evaluation-protocol.md"
@@ -134,3 +139,25 @@ def test_protocol_relative_links_resolve():
         assert resolved == REPO or REPO in resolved.parents, (
             f"link escapes the repository: {target!r}"
         )
+
+
+@pytest.mark.integration  # verifies a historical object in this repository's Git database
+def test_protocol_pins_historical_dream_prompt_blob():
+    text = PROTOCOL.read_text(encoding="utf-8")
+    match = re.search(
+        r"\[memory/DREAM\.md\]\(https://github\.com/MinhHaDuong/"
+        r"ImperialDragonHarness/blob/([0-9a-f]{40})/memory/DREAM\.md\)",
+        text,
+    )
+    assert match, "the v8-r1 prompt needs an immutable full-commit GitHub permalink"
+    commit = match.group(1)
+    assert commit == "4ed566b5d56b837593f6b19f1fb34a3f21f5910c"
+    blob = subprocess.run(
+        ["git", "rev-parse", f"{commit}:memory/DREAM.md"],
+        cwd=REPO,
+        env=child_env(),
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert blob == "6087a0b3f641bdc4cbeac595e87d174eb11bcbf5"

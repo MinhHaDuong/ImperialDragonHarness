@@ -19,7 +19,7 @@ pass; two genuine failures are recorded below.
 |---|---|
 | Protocol | docs/memory-v8/evaluation-protocol.md blob 0a0714eacb7c at main be1ea2fc |
 | Design | docs/2026-09-10-dragon-memory-design.md blob 74ff94ed5d56 (v8) |
-| DREAM prompt | memory/DREAM.md, prompt revision v8-r1 (2026-10-02), blob 6087a0b3f641 |
+| DREAM prompt | [memory/DREAM.md](https://github.com/MinhHaDuong/ImperialDragonHarness/blob/4ed566b5d56b837593f6b19f1fb34a3f21f5910c/memory/DREAM.md), prompt revision v8-r1 (2026-10-02), blob 6087a0b3f641 |
 | Review contract | skills/review-pr/SKILL.md blob b401f134fe48 with skills/reviewers/SKILL.md blob 70260afca8c6, at their then-current main revisions — the versioned input, not a fixed mechanism (F4) |
 | Vibe CLI | 2.25.8 (`vibe --version`); model Mistral Vibe (Mistral AI); conductor session plus one nested probe (session df5b9c45, disposable VIBE_HOME) |
 | Claude Code | 2.1.286 (`claude --version`); model claude-opus-5-5 (init event of session 209a7b15); two concurrent sessions in one clone, both headless `-p`, allowed tools Read Grep Glob Bash Write; host SessionStart hook fired (recorded observable) |
@@ -225,7 +225,7 @@ and one a withdrawn claim, both originals unchanged), all written through
 audience declared at capture, committed on the trial branch, journal
 append-only (the three flawed or superseded entries stand unchanged with
 corrections linking them). Consolidation evidence: the three dream reports
-under [memory/dreams/](../../memory/dreams/2026-10-02-0918-trial-dream-pass1.md)
+under [memory/dreams/](https://github.com/MinhHaDuong/ImperialDragonHarness/blob/fc4eea6901b0a0391f6f68cf51e360b2a3ae7ea3/memory/dreams/2026-10-02-0918-trial-dream-pass1.md)
 (passes 1 and 2, plus the interrupted pass 3, all in that directory) and the
 resulting topic and
 index state. Obedience evidence: commit hashes on the trial branch — no

@@ -1,0 +1,53 @@
+%erg 0.1
+Title: Pin historical memory citations before Hoard path migration
+Created: 2026-10-15
+Author: reviewer
+
+--- log ---
+2026-10-15T09:18Z reviewer created
+
+--- body ---
+
+## Context
+Child of 1102. Three independent tests validate the links in the v8 pilot
+protocol, results and integration review, and these paths are outside the
+pilot's own relative-link resolver. Prepare their historical citations before
+1106 migrates `memory/DREAM.md` and `memory/dreams/`. Preserve dated prose,
+citations, revisions and recorded blob IDs. These are immutable archive links,
+not runtime paths or aliases.
+
+## Exit criteria
+- [ ] Replace links to `memory/DREAM.md` and `memory/dreams/` artifacts in the
+  three scoped documents with canonical GitHub permalinks at full immutable
+  commits that contain the cited files. For the v8-r1 prompt, use commit
+  `4ed566b5d56b837593f6b19f1fb34a3f21f5910c` and verify blob
+  `6087a0b3f641bdc4cbeac595e87d174eb11bcbf5`.
+- [ ] Add a provenance test proving the prompt citation's full commit and
+  permalink target match the actual Git blob. Keep all existing link tests
+  strict; relevant tests and `make check` pass.
+- [ ] Update only the existing 1109 plan to record that these three historical
+  documents are prepared here; current documentation and templates remain in
+  1109 after 1106.
+
+## Relevant files
+- `docs/memory-v8/evaluation-protocol.md`
+- `docs/memory-v8/evaluation-results.md`
+- `docs/memory-v8/integration-review.md`
+- `tests/test_memory_v8_protocol.py`
+- `tests/test_memory_v8_evaluation_results.py`
+- `tests/test_memory_v8_integration_review.py`
+- `tickets/1109-hoard-migrate-live-memory-documentation.erg`
+
+## Test
+In `tests/test_memory_v8_protocol.py`, parse the prompt link, require the
+canonical GitHub blob URL with a full 40-character commit, and verify with
+`git rev-parse <commit>:memory/DREAM.md` that it equals the recorded full blob
+`6087a0b3f641bdc4cbeac595e87d174eb11bcbf5`. Existing link checks in all three
+test modules must remain strict for repository-relative targets.
+
+## Plan
+Verify all cited artifacts against local Git objects before editing; use
+historical commits containing exact blobs. Write the provenance fixture first,
+confirm it fails, update only the three scoped documents, the provenance test,
+and the 1109 plan note. Run focused citation tests, `make check-fast`, lint,
+then full `make check` at committed HEAD.

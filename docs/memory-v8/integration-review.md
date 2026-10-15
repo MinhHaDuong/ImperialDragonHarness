@@ -53,7 +53,7 @@ Read from the tree, not from claims:
   Sources-and-exceptions section; read as the sample,
   [memory-v8 governance](../../memory/topics/memory-v8-governance.md)
   cites its journal sources and records the superseded private-companion
-  clause as corrected by the [first dream](../../memory/dreams/2026-10-02-pilot-first-dream.md).
+  clause as corrected by the [first dream](https://github.com/MinhHaDuong/ImperialDragonHarness/blob/fc4eea6901b0a0391f6f68cf51e360b2a3ae7ea3/memory/dreams/2026-10-02-pilot-first-dream.md).
 - Journal append-only: 35 entries under `memory/journal/2026/`; verified
   mechanically that no entry was modified after reaching main — every entry
   file appears in exactly one first-parent commit of `a78b73ea`.
@@ -66,7 +66,7 @@ Read from the tree, not from claims:
 - Dream reports: `memory/dreams/` carries the pilot
   first dream and the trial passes 1 and 2, plus the interrupted pass 3 with
   `STATUS: INTERRUPTED` visible in the file; the versioned prompt
-  [memory/DREAM.md](../../memory/DREAM.md) states revision v8-r1
+  [memory/DREAM.md](https://github.com/MinhHaDuong/ImperialDragonHarness/blob/4ed566b5d56b837593f6b19f1fb34a3f21f5910c/memory/DREAM.md) states revision v8-r1
   (blob `6087a0b3f641`).
 - Retired legacy machinery: `skills/dream/read-index.py`, `commit.py` and
   `provenance.py` are absent; the [retirement record](legacy-retirement.md)
