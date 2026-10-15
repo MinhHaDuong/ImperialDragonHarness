@@ -37,8 +37,7 @@ absorbed into `import`: a URL is one more input, probed by the skill's own
 `probe-url.py` script.
 
 `match` and `write` are shared plumbing, not user verbs: `match` serves
-import and audit both, and `write` is the durable-RIS step behind import and
-enrich alike. `references/helper-script.md` documents every subcommand and
+import and audit both, and `write` is the durable-RIS step behind import. `references/helper-script.md` documents every subcommand and
 the guarantees of its output (`why` / `certainty` / `consulted` / `skipped`).
 
 Inside `import`: probe → match → write → inject. `probe` (or
@@ -58,8 +57,9 @@ happen in the desktop client.
 The only write is the creation of new items with their PDFs, through the
 desktop connector at `127.0.0.1:23119`: Zotero must be running, and `inject`
 fails loudly when the connector does not answer. Existing items are never
-edited by the helper: `enrich`, `attach` and `reconcile --apply` report the
-edit (item key, field, old → new) for the author to make in the client. The
+edited by the helper: `enrich`, `attach` and `reconcile` report the edit
+(item key, field, old → new) for the author to make in the client;
+`reconcile --apply` creates only the absent items. The
 RIS file is the durable artifact and remains the fallback when Zotero is not
 running.
 

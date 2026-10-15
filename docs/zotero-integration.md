@@ -7,7 +7,7 @@
 - **Narrow, specialized skills** — narrow in domain, not in mode: one discipline per skill, verbs as arguments, modes share the machinery (harness precedent: the `reviewers` skill). The target surface is one `zotero` skill, not a prefixed family.
 - **Each skill chooses the transport best suited to its task** — local database read, the desktop connector, the local HTTP API, or a transport bundled with an MCP overlay — judged on liveness requirement, blast radius, durable artifacts, and dependency footprint.
 - **For general work outside the skills**, the harness documents the interface options and lets the session choose. No option is a required dependency.
-- **Hard invariants, regardless of transport**: never write `zotero.sqlite`; merges happen in the desktop client; every mutation follows backup → dry-run → apply with durable artifacts.
+- **Hard invariants, regardless of transport**: never write `zotero.sqlite`; merges and edits to existing items happen in the desktop client; creating items is previewed first (`--dry-run`) and leaves a durable RIS artifact.
 - **Local-only and stateless helper** (decided 2026-10-15, ticket 1113): `scripts/zotero.py` reaches no cloud service, holds no credential, and keeps no cache, index or record between runs.
 - **KISS and YAGNI at all layers.**
 
@@ -41,7 +41,7 @@ This has worked for 30+ years. Do not reconsider until a concrete pain point for
 
 RIS is the interchange format across all skills. Every mutating skill is a pure function: items in → corrected RIS out. Applying a delta to existing items is the author's step in the desktop client; the helper reports it (item key, field, old → new).
 
-Skills compose by piping RIS: `lint | enrich | apply`. No shared framework needed beyond that contract.
+New items travel as RIS (`write`) and as the same entries JSON (`inject`); suggested edits to existing items travel as `{itemKey, field, old, new}` rows (`enrich`, `attach`, `reconcile`). No shared framework needed beyond those two contracts.
 
 ### 3. Export format: RIS or CSL-JSON only
 
@@ -69,14 +69,15 @@ Zotero exposes these surfaces on the author's machine; a transport is the path a
 The zotero skill chose sqlite reads + connector creation through Bash-callable
 Python scripts, and no cloud surface (ticket 1113):
 
-- The safety contract (backup → dry-run → apply) is expressed as script flags; the
-  outputs are durable RIS/report artifacts, not ephemeral tool calls.
+- The safety contract is expressed as script flags (`--dry-run`, an explicit
+  `--apply` opt-in); the outputs are durable RIS/report artifacts, not
+  ephemeral tool calls.
 - Reads need no running client and no network, so autonomous sessions (`raid`,
   `nightbeat`, `beat`) can audit and reconcile headless. Creating items needs
   Zotero running; a headless `reconcile --apply` reports the connector failure
   and writes nothing.
-- A full library read takes about half a second (7,700 works, 2026-10-15), so
-  there is nothing to cache.
+- A full library read takes about 0.4 s (7,672 works, measured on doudou
+  2026-10-15), so there is nothing to cache.
 - Reading the immutable snapshot while Zotero runs can lag the client's latest
   writes; every output names its `read_mode`.
 
@@ -103,8 +104,8 @@ a destination. Validate the library selector early; fail fast on malformed input
 
 Every mutating skill must:
 
-1. Fetch and save current state to `outputs/zotero-backups/<skill>-<ISO8601>.json` before writing.
-2. Output a RIS file of desired state; never write directly.
+1. Never edit an existing item itself; nothing to back up, since the helper changes no stored item.
+2. Output a RIS file of the items it creates, kept even when creation succeeds.
 3. Edits to existing items are reported (item key, field, old → new) and applied by the author in the client.
 4. Dry-run by default; creating items requires an explicit flag or project opt-in.
 5. In autonomous/background sessions: create only high-confidence new items; write low-confidence proposals to a RIS proposal file and stop. Never block waiting for input.
@@ -118,7 +119,7 @@ One skill named `zotero`, verbs as arguments — the command surface mirrors the
 | verb | does | backed by (today) |
 |---|---|---|
 | `import <pdf-or-url>...` | file or URL intake → new items with attachments | `inject`, `probe`, `match`; URL probing via `probe-url.py` |
-| `enrich` | report missing fields on existing items | `enrich`, `write` |
+| `enrich` | report missing fields on existing items | `enrich` |
 | `audit` | report staging ↔ library drift | `audit` |
 | `reconcile` | repair the correspondence | `reconcile` |
 | `dedup-report` | hash-dedup report, library against itself | `dedup-report` (ticket 0485) |

@@ -4,8 +4,8 @@ A whole `docs/` folder is not the happy path repeated N times. Two things
 change, and both are failure modes rather than conveniences.
 
 **Dedup must be possible at all.** Every lookup reads the desktop client's
-`zotero.sqlite`, afresh on each run (about half a second for a 7,700-work
-library). On a machine with no desktop client that file does not exist, every
+`zotero.sqlite`, afresh on each run (about 0.4 s for a 7,672-work library,
+measured 2026-10-15). On a machine with no desktop client that file does not exist, every
 lookup returns `verdict: "unchecked"`, and a backfill that reads "unchecked"
 as "absent" re-imports the entire library. Run the backfill where the
 desktop database lives; a clean negative then stays distinguishable from a
