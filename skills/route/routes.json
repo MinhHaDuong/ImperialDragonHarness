@@ -1,6 +1,6 @@
 {
   "_comment": "Route-state cache owned by skills/route. Key NAMES only, never values. Update on every route state change; stale cache burns attempts and money.",
-  "updated": "2026-10-06T17:54:10.941255+00:00",
+  "updated": "2026-10-15",
   "routes": {
     "anthropic": {
       "endpoint": "api.anthropic.com (pi built-in)",
@@ -42,7 +42,7 @@
       "endpoint": "dashscope-intl.aliyuncs.com/compatible-mode/v1 (NOT the .cn host)",
       "key_env": "QWEN_API_KEY_AEDIST",
       "status": "live",
-      "note": "172 models incl. qwen3.8-flash (lineage twin of local flash-next, NOT the same weights: served production vs open-weights preview) and qwen3.8-27b. qwen3.8-flash-next is NOT served anywhere as of 2026-10-06 \u2014 weights-only release. No z.ai metered key; pi z.ai doors are subscription-credit channels.",
+      "note": "172 models incl. qwen3.8-flash (lineage twin of local flash-next, NOT the same weights: served production vs open-weights preview) and qwen3.8-27b. qwen3.8-flash-next is NOT served anywhere as of 2026-10-06 — weights-only release. No z.ai metered key; pi z.ai doors are subscription-credit channels.",
       "last_verified": "2026-10-06"
     }
   },
@@ -56,9 +56,17 @@
         "b2": "Flash-Next full IQ3_S Strata :8081",
         "b3": "Flash-Next full Q2_0 Strata :8081",
         "c": "qwen3.6-35b-A3B llama-server :8082",
-        "c2": "qwen3-coder-30b llama-server :8082"
+        "c2": "qwen3-coder-30b llama-server :8082",
+        "f1x": "Flash-Next IQ3_S @xhigh, solo RTX 5070 Ti; provisional current-work candidate; verify loaded profile before use",
+        "f2m": "Flash-Next IQ3_S @medium, RTX 5070 Ti + RTX A4000 expert-compute helper; provisional current-work candidate; verify loaded profile before use"
       },
-      "hardware_note": "HW-v1. Pending: 5060 Ti 16G + 3975WX (merged window) -> HW-v2 boundary; rebuild Strata archs 86;120 mandatory then. Prefill bottleneck = #448 512-token chunk cap from the 3060 expert cache (~350 tok/s cold)."
+      "hardware_note": "HW-v1. Pending: 5060 Ti 16G + 3975WX (merged window) -> HW-v2 boundary; rebuild Strata archs 86;120 mandatory then. Prefill bottleneck = #448 512-token chunk cap from the 3060 expert cache (~350 tok/s cold).",
+      "current_work_candidates": [
+        "f1x",
+        "f2m"
+      ],
+      "candidate_scope": "Author-approved provisional candidates for current single-agent work. Verify model, effort and placement against the measured profile before use; selection is not proof of service availability or statistical superiority.",
+      "cycle3_evidence": "arena/docs/cycle3-readout.json sha256:b7a0dbebb366dd8c6c5af0ee65586d377aa900aaa942d09c8dc6d0d335cfcc09"
     }
   },
   "launch_doors": {
