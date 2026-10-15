@@ -64,7 +64,7 @@ Zotero exposes these surfaces on the author's machine; a transport is the path a
 |---|---|---|---|
 | Local `zotero.sqlite`, opened `mode=ro` (or `immutable=1` while the client holds it locked) | No | none | never (invariant) |
 | Desktop connector `127.0.0.1:23119/connector/` | Yes | none | creates new items and their attachments; cannot edit an existing item |
-| Local HTTP API `127.0.0.1:23119/api/` | Yes | key-free reads; user-granted key for writes | yes, since Zotero 10 (new since this doc's first draft) |
+| Local HTTP API `127.0.0.1:23119/api/` (not used by the helper) | Yes | key-free reads; writes need a grant in the client | yes, since Zotero 10 (new since this doc's first draft) |
 
 The zotero skill chose sqlite reads + connector creation through Bash-callable
 Python scripts, and no cloud surface (ticket 1113):
