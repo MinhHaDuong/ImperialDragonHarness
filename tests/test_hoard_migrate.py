@@ -262,3 +262,30 @@ def test_stage_directory_failure_is_reported_without_writes(project, monkeypatch
         migrate.apply_migration(plan)
     assert tree(project) == before
     assert not list(project.glob(".hoard-migrate-*"))
+
+
+def test_relative_skill_entrypoints_and_directory_targets(project):
+    (project / "skills/dream").mkdir(parents=True)
+    (project / "skills/dream/SKILL.md").write_text("canonical skill")
+    old = (
+        "[skill](../skills/dream/SKILL.md) [directory](../skills/dream/)\n"
+        "Root /skills/dream/ and skills/dream/ and skills/dream.\n"
+        "Retired ../skills/dream/read-index.py skills/dream/commit.py\n"
+        "Near skills/dreamish ../skills/dreamish/SKILL.md\n"
+        "[other](../docs/dreams/retained.md)\n"
+        "[remote](https://example.org/skills/dream/SKILL.md)\n"
+        "[remote dir](https://example.org/skills/dream/)\n"
+    )
+    expected = (
+        "[skill](../skills/hoard/SKILL.md) [directory](../skills/hoard/)\n"
+        "Root /skills/hoard/ and skills/hoard/ and skills/hoard.\n"
+        "Retired ../skills/dream/read-index.py skills/dream/commit.py\n"
+        "Near skills/dreamish ../skills/dreamish/SKILL.md\n"
+        "[other](../docs/dreams/retained.md)\n"
+        "[remote](https://example.org/skills/dream/SKILL.md)\n"
+        "[remote dir](https://example.org/skills/dream/)\n"
+    )
+    (project / "memory/MEMORY.md").write_text(old)
+    migrate.apply_migration(migrate.plan_migration(project))
+    assert (project / "memory/MEMORY.md").read_text() == expected
+    assert (project / "skills/dream/SKILL.md").read_text() == "canonical skill"

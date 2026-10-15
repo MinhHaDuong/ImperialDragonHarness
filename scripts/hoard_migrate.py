@@ -107,8 +107,9 @@ def _rewrite(data, reference, moves, root):
     # Only the current skill directory/entrypoint is renamed. Retired helpers
     # keep the path under which they historically existed.
     text = re.sub(
-        r"(?<![\w./-])skills/dream(?:/SKILL\.md)?(?![\w/-]|\.(?!\s|$))",
-        lambda match: match[0].replace("skills/dream", "skills/hoard", 1), text,
+        r"(?<![\w./:-])(?P<prefix>/?(?:[\w.-]+/)*)skills/dream"
+        r"(?P<entry>/SKILL\.md|/)?(?![\w/-]|\.(?!\s|$))",
+        lambda match: match["prefix"] + "skills/hoard" + (match["entry"] or ""), text,
     )
     text = re.sub(r"(?<![\w./-])/dream(?![\w./-])", "/hoard", text)
     return text.encode("utf-8")
