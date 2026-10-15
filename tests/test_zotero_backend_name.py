@@ -63,12 +63,11 @@ EXCLUDED_NAMES = (
     "trace-compact-audit-2026-06.md",
 )
 
-# The ten backend verbs (ticket 1018: subcommand names are the verbs).
+# The nine backend verbs (ticket 1018: subcommand names are the verbs).
 VERBS = {
     "probe",
     "match",
     "dedup-report",
-    "sync-index",
     "audit",
     "reconcile",
     "attach",

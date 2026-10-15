@@ -68,7 +68,7 @@ def fixture_db(path: Path) -> None:
 def test_known_cross_parent_pair_and_scope(tmp_path):
     db = tmp_path / "zotero.sqlite"
     fixture_db(db)
-    conn = zi.zotero_open(db)
+    conn, _ = zi.zotero_open(db)
     report = zi.duplicate_hash_report(conn)
     conn.close()
     assert report["candidate_clusters"] == 1
@@ -109,12 +109,43 @@ def test_cli_report_is_escaped_linked_and_read_only(tmp_path):
 
 
 @pytest.mark.integration
-def test_cli_refuses_nonempty_wal_snapshot(tmp_path):
+def test_cli_refuses_a_locked_database_with_pending_wal_writes(tmp_path):
+    """A running Zotero: the live read is locked out and the WAL holds writes
+    the immutable snapshot cannot see, so the report refuses."""
     db = tmp_path / "zotero.sqlite"
     fixture_db(db)
-    Path(str(db) + "-wal").write_bytes(b"pending")
-    result = subprocess.run(
-        [sys.executable, str(SCRIPT), "dedup-report", "--zotero-db", str(db)],
-        capture_output=True, text=True, env=child_env())
+    holder = sqlite3.connect(db)
+    holder.execute("PRAGMA journal_mode=WAL")
+    holder.execute("PRAGMA wal_autocheckpoint=0")
+    holder.execute("PRAGMA locking_mode=EXCLUSIVE")
+    holder.execute("INSERT INTO deletedItems VALUES (11)")
+    holder.commit()
+    try:
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "dedup-report", "--zotero-db", str(db)],
+            capture_output=True, text=True, env=child_env())
+    finally:
+        holder.close()
     assert result.returncode != 0
     assert "pending WAL writes" in result.stderr
+
+
+@pytest.mark.integration
+def test_cli_reads_an_unlocked_wal_live(tmp_path):
+    """Zotero closed but un-checkpointed: mode=ro reads the WAL, no refusal."""
+    db = tmp_path / "zotero.sqlite"
+    fixture_db(db)
+    writer = sqlite3.connect(db)
+    writer.execute("PRAGMA journal_mode=WAL")
+    writer.execute("PRAGMA wal_autocheckpoint=0")
+    writer.execute("INSERT INTO deletedItems VALUES (11)")
+    writer.commit()
+    try:
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "dedup-report", "--zotero-db", str(db),
+             "--format", "json"], capture_output=True, text=True, env=child_env())
+    finally:
+        writer.close()
+    assert result.returncode == 0, result.stderr
+    # Item 11 trashed in the WAL only: its cross-parent pair disappears.
+    assert '"candidate_clusters": 0' in result.stdout

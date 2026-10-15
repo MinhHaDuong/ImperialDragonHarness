@@ -11,7 +11,6 @@ import json
 import sqlite3
 import subprocess
 import sys
-import urllib.error
 from pathlib import Path
 
 import pytest
@@ -175,7 +174,8 @@ def _build_zotero_db() -> sqlite3.Connection:
     c.executescript(
         """
         CREATE TABLE libraries (libraryID INTEGER PRIMARY KEY, type TEXT);
-        CREATE TABLE items (itemID INTEGER PRIMARY KEY, libraryID INT);
+        CREATE TABLE items (itemID INTEGER PRIMARY KEY, libraryID INT,
+                            key TEXT GENERATED ALWAYS AS ('K' || itemID) VIRTUAL);
         CREATE TABLE fields (fieldID INTEGER PRIMARY KEY, fieldName TEXT);
         CREATE TABLE itemDataValues (valueID INTEGER PRIMARY KEY, value TEXT);
         CREATE TABLE itemData (itemID INT, fieldID INT, valueID INT);
@@ -562,7 +562,6 @@ def test_entry_to_zotero_item_journal_article():
         {"type": "JOUR", "title": "T", "authors": ["Jane Smith"], "year": 2015,
          "doi": "10.1/x", "journal": "Econometrica", "volume": "83",
          "issue": "4", "pages": "1467-1495", "numPages": 29},
-        collection=None,
     )
     assert item["itemType"] == "journalArticle"
     assert item["DOI"] == "10.1/x"
@@ -577,18 +576,16 @@ def test_entry_to_zotero_item_book_numpages_and_isbn():
     item = zi.entry_to_zotero_item(
         {"type": "BOOK", "title": "B", "isbn": "978-0-13-468599-1",
          "numPages": 300, "doi": "10.2/y"},
-        collection="ABCD1234",
     )
     assert item["itemType"] == "book"
     assert item["ISBN"] == "978-0-13-468599-1"
     assert item["numPages"] == "300"
     # schema 42 gives `book` a real DOI field; no need for the extra fallback
     assert item["DOI"] == "10.2/y"
-    assert item["collections"] == ["ABCD1234"]
 
 
 def test_entry_to_zotero_item_unknown_type_falls_back_to_document():
-    assert zi.entry_to_zotero_item({"type": "XXXX"}, None)["itemType"] == "document"
+    assert zi.entry_to_zotero_item({"type": "XXXX"})["itemType"] == "document"
 
 
 # ── per-type field validity (the 400-from-Zotero class) ─────────────────────
@@ -710,7 +707,7 @@ MAXIMAL_ENTRY = {
 
 
 def _render(ris_type: str) -> dict:
-    return zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": ris_type}, None)
+    return zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": ris_type})
 
 
 def test_every_mapped_type_emits_only_fields_that_type_owns():
@@ -730,7 +727,7 @@ def test_every_mapped_type_emits_only_fields_that_type_owns():
 
 
 def test_unknown_ris_type_fallback_emits_only_document_fields():
-    item = zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": "XXXX"}, None)
+    item = zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": "XXXX"})
     assert item["itemType"] == "document"
     bad = sorted(
         k for k in item
@@ -860,7 +857,7 @@ def test_previously_unmapped_codes_reach_their_type(ris_code, zot_type):
 
 def test_unrecognised_ris_code_records_what_it_degraded_from():
     """Degradation to `document` must leave a trace, not vanish."""
-    item = zi.entry_to_zotero_item({"type": "ZZZZ", "title": "T"}, None)
+    item = zi.entry_to_zotero_item({"type": "ZZZZ", "title": "T"})
     assert item["itemType"] == "document"
     assert "Unmapped RIS type: ZZZZ" in item["extra"]
 
@@ -918,7 +915,7 @@ def test_rand_p69_memorandum_is_complete_in_one_pass():
         "number": "P-69",
         "genre": "RAND Paper",
         "numPages": 78,
-    }, None)
+    })
     assert item == {
         "itemType": "report",
         "title": "Market Mechanisms and Maximization",
@@ -977,23 +974,26 @@ def test_known_entry_keys_pass_validation():
 
 
 @pytest.mark.slow
-def test_zotero_schema_snapshot_matches_live():
-    """Drift guard: the pinned tables against api.zotero.org/schema.
+def test_zotero_schema_snapshot_matches_local_zotero():
+    """Drift guard: the pinned tables against the local client's schema.
 
-    Network-only, so `inject` itself never needs it. A failure here means
-    Zotero changed a type's field set; re-derive both this snapshot and
-    `ZOTERO_SLOT_FIELD` from the live schema.
+    Reads `itemTypeFields` from the desktop zotero.sqlite, read-only. A
+    failure means Zotero changed a type's field set; re-derive both this
+    snapshot and `ZOTERO_SLOT_FIELD` from that table.
     """
-    import json
-    import urllib.request
-
+    db = zi.find_zotero_db()
+    if db is None:
+        pytest.skip("no local zotero.sqlite to compare against")
+    conn, _ = zi.zotero_open(db)
     try:
-        with urllib.request.urlopen("https://api.zotero.org/schema", timeout=30) as r:
-            schema = json.load(r)
-    except urllib.error.URLError as exc:
-        pytest.skip(f"api.zotero.org unreachable: {exc.reason}")
-    live = {t["itemType"]: {f["field"] for f in t["fields"]}
-            for t in schema["itemTypes"]}
+        live: dict[str, set[str]] = {}
+        for type_name, field in conn.execute(
+                "SELECT t.typeName, f.fieldName FROM itemTypeFields itf "
+                "JOIN itemTypes t ON t.itemTypeID = itf.itemTypeID "
+                "JOIN fields f ON f.fieldID = itf.fieldID"):
+            live.setdefault(type_name, set()).add(field)
+    finally:
+        conn.close()
 
     for zot_type, pinned in SCHEMA_42_FIELDS.items():
         assert set(pinned) == live[zot_type], f"{zot_type} field set drifted"
@@ -1005,21 +1005,10 @@ def test_zotero_schema_snapshot_matches_live():
         assert zi.ZOTERO_SLOT_FIELD[slot] == derived, f"slot {slot} drifted"
 
 
-def test_load_env_file_parses_and_ignores_comments(tmp_path):
-    f = tmp_path / "k.env"
-    f.write_text("# comment\nZOTERO_RW_API_KEY=abc\n\nZOTERO_USER_ID = 42\nnoise\n")
-    vals = zi.load_env_file(f)
-    assert vals == {"ZOTERO_RW_API_KEY": "abc", "ZOTERO_USER_ID": "42"}
-
-
-def test_load_env_file_missing_returns_empty(tmp_path):
-    assert zi.load_env_file(tmp_path / "absent.env") == {}
-
-
 # --- enrich: filling fields on an item that already exists ------------------
 #
-# The HTTP round-trip is thin and needs the network; the decision of WHAT to
-# write is where the mistakes live, so that is what these lock down. Each
+# enrich only reports: the decision of WHAT to suggest is where the mistakes
+# live, so that is what these lock down. Each
 # guard gets a red case, because a guard nobody has seen refuse is a guard
 # nobody has tested.
 
@@ -1104,41 +1093,259 @@ def test_parse_set_rejects_a_pair_without_equals():
         zi.parse_set(["DOI"])
 
 
-def test_enrich_status_zero_when_everything_landed():
-    assert zi.enrich_status([{"status": "written"},
-                             {"status": "nothing to write"}], False) == 0
+def test_enrich_status_zero_when_everything_is_suggested():
+    assert zi.enrich_status([{"status": "suggested"},
+                             {"status": "nothing to change"}]) == 0
 
 
 def test_enrich_status_nonzero_on_a_refusal():
     """Declining to act and acting must not share an exit code."""
     assert zi.enrich_status(
-        [{"status": "nothing to write", "refused": ["DOI: already holds ..."]}],
-        False) == 1
+        [{"status": "nothing to change", "refused": ["DOI: already holds ..."]}]) == 1
 
 
-def test_enrich_status_nonzero_on_readback_mismatch():
-    assert zi.enrich_status([{"status": "readback mismatch"}], False) == 1
+def test_enrich_status_nonzero_on_a_missing_item():
+    assert zi.enrich_status([{"status": "not found"}]) == 1
 
 
-def test_enrich_status_dry_run_ignores_the_would_patch_status():
-    assert zi.enrich_status([{"status": "would patch at version 7"}], True) == 0
 # --------------------------------------------------------------------------
-# Web-API index: dedup on a machine with no Zotero desktop database.
-#
-# The defect these guard: on such a machine every match returned "unchecked",
-# and a backfill that treats "unchecked" as "absent" re-imports the library.
+# A file-backed zotero.sqlite with the slice of the real schema that
+# read_library, item_data, resolve_target and local_account touch.
 # --------------------------------------------------------------------------
 
+ZOTERO_SCHEMA = """
+CREATE TABLE libraries (libraryID INTEGER PRIMARY KEY, type TEXT);
+CREATE TABLE itemTypes (itemTypeID INTEGER PRIMARY KEY, typeName TEXT);
+CREATE TABLE items (itemID INTEGER PRIMARY KEY, itemTypeID INT,
+                    libraryID INT, key TEXT);
+CREATE TABLE fields (fieldID INTEGER PRIMARY KEY, fieldName TEXT);
+CREATE TABLE itemTypeFields (itemTypeID INT, fieldID INT, hide INT,
+                             orderIndex INT);
+CREATE TABLE itemDataValues (valueID INTEGER PRIMARY KEY, value TEXT);
+CREATE TABLE itemData (itemID INT, fieldID INT, valueID INT);
+CREATE TABLE deletedItems (itemID INT);
+CREATE TABLE creators (creatorID INTEGER PRIMARY KEY, firstName TEXT,
+                       lastName TEXT, fieldMode INT);
+CREATE TABLE itemCreators (itemID INT, creatorID INT, creatorTypeID INT,
+                           orderIndex INT);
+CREATE TABLE itemAttachments (itemID INTEGER PRIMARY KEY, parentItemID INT,
+                              linkMode INT, contentType TEXT, path TEXT,
+                              storageHash TEXT);
+CREATE TABLE fulltextItems (itemID INT, indexedPages INT, totalPages INT);
+CREATE TABLE collections (collectionID INTEGER PRIMARY KEY, libraryID INT,
+                          key TEXT);
+CREATE TABLE settings (setting TEXT, key TEXT, value);
+INSERT INTO libraries VALUES (1, 'user'), (3, 'group');
+INSERT INTO itemTypes VALUES (1, 'journalArticle'), (2, 'attachment'),
+                             (3, 'note');
+INSERT INTO fields VALUES (1, 'title'), (2, 'DOI'), (3, 'date'), (4, 'ISBN'),
+                          (5, 'extra'), (6, 'url');
+INSERT INTO itemTypeFields VALUES (1, 1, 0, 0), (1, 2, 0, 1), (1, 3, 0, 2),
+                                  (1, 5, 0, 3), (1, 6, 0, 4);
+INSERT INTO collections VALUES (7, 3, 'GRPCOLL1');
+"""
 
-def _index(works=None, attachments=None):
-    return {"schema": zi.INDEX_SCHEMA, "user": "1", "fetched": "2026-08-19T00:00:00Z",
-            "works": works or [], "attachments": attachments or []}
+
+def _zotero_file(tmp_path, works=(), attachments=(), account="1"):
+    """works: (itemID, libraryID, key, {field: value}, [surnames]);
+    attachments: (itemID, parentID, libraryID, key, path, md5, linkMode)."""
+    db = tmp_path / "zotero.sqlite"
+    conn = sqlite3.connect(db)
+    conn.executescript(ZOTERO_SCHEMA)
+    if account is not None:
+        conn.execute("INSERT INTO settings VALUES ('account', 'userID', ?)",
+                     (int(account),))
+    fid = {name: i for i, name in conn.execute("SELECT fieldID, fieldName FROM fields")}
+    for item_id, lib, key, fields, surnames in works:
+        conn.execute("INSERT INTO items VALUES (?, 1, ?, ?)", (item_id, lib, key))
+        for name, value in fields.items():
+            vid = conn.execute("INSERT INTO itemDataValues (value) VALUES (?)",
+                               (value,)).lastrowid
+            conn.execute("INSERT INTO itemData VALUES (?, ?, ?)",
+                         (item_id, fid[name], vid))
+        for order, surname in enumerate(surnames):
+            cid = conn.execute("INSERT INTO creators (lastName) VALUES (?)",
+                               (surname,)).lastrowid
+            conn.execute("INSERT INTO itemCreators VALUES (?, ?, 1, ?)",
+                         (item_id, cid, order))
+    for item_id, parent, lib, key, path, digest, link in attachments:
+        conn.execute("INSERT INTO items VALUES (?, 2, ?, ?)", (item_id, lib, key))
+        conn.execute("INSERT INTO itemAttachments VALUES (?, ?, ?, ?, ?, ?)",
+                     (item_id, parent, link, "application/pdf", path, digest))
+    conn.commit()
+    conn.close()
+    return db
+
+
+def test_read_library_builds_the_snapshot_from_sqlite(tmp_path):
+    digest = hashlib.md5(b"stored").hexdigest().upper()
+    db = _zotero_file(tmp_path, works=[
+        (10, 1, "WORK0010", {"title": "Coherent Measures of Risk",
+                             "date": "1999-07-01 1999", "DOI": "10.1/x"},
+         ["Artzner", "Delbaen"]),
+        (11, 3, "GROUP011", {"title": "Group Paper"}, ["Other"]),
+    ], attachments=[
+        (20, 10, 1, "ATTACH20", "storage:risk.pdf", digest, 0),
+        (21, 10, 1, "ATTACH21", "/abs/linked.pdf", None, 2),
+    ])
+    conn, mode = zi.zotero_open(db)
+    lib = zi.read_library(conn)
+    conn.close()
+    assert mode == zi.READ_LIVE
+    assert [w["key"] for w in lib["works"]] == ["WORK0010"]
+    work = lib["works"][0]
+    assert work["creators"] == ["Artzner", "Delbaen"]
+    assert work["DOI"] == "10.1/x" and work["ISBN"] == ""
+    atts = {a["key"]: a for a in lib["attachments"]}
+    assert atts["ATTACH20"] == {"key": "ATTACH20", "parent": "WORK0010",
+                                "filename": "risk.pdf", "md5": digest.lower(),
+                                "contentType": "application/pdf",
+                                "linkMode": "imported_file"}
+    assert atts["ATTACH21"]["linkMode"] == "linked_file"
+
+
+def test_library_snapshot_matches_a_stored_file_end_to_end(tmp_path):
+    """Positive control for the whole read path: sqlite -> snapshot -> match."""
+    pdf = tmp_path / "local-copy.pdf"
+    pdf.write_bytes(b"%PDF stored bytes")
+    db = _zotero_file(tmp_path, works=[
+        (10, 1, "WORK0010", {"title": "Stored Paper"}, ["Smith"])],
+        attachments=[(20, 10, 1, "ATTACH20", "storage:x.pdf",
+                      zi.file_md5(pdf), 0)])
+    snap = zi.library_snapshot(db)
+    assert snap["account"] == "1" and snap["read_mode"] == zi.READ_LIVE
+    res = zi.library_matches(snap, pdf_path=pdf)
+    assert res["verdict"] == "match"
+    assert res["matches"][0]["key"] == "WORK0010"
+    assert res["source"] == "zotero.sqlite"
+
+
+def test_library_snapshot_without_a_database_is_none():
+    assert zi.library_snapshot(None) is None
+
+
+def _wal_db(tmp_path):
+    db = tmp_path / "zotero.sqlite"
+    conn = sqlite3.connect(db)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA wal_autocheckpoint=0")
+    conn.execute("CREATE TABLE t (v TEXT)")
+    conn.execute("INSERT INTO t VALUES ('checkpointed')")
+    conn.commit()
+    conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    conn.execute("INSERT INTO t VALUES ('only in the WAL')")
+    conn.commit()
+    return db, conn
+
+
+def test_live_read_sees_writes_still_in_the_wal(tmp_path):
+    """mode=ro reads the WAL: the positive control for the immutable lag."""
+    db, writer = _wal_db(tmp_path)
+    conn, mode = zi.zotero_open(db, busy_timeout=0.05)
+    rows = {v for (v,) in conn.execute("SELECT v FROM t")}
+    conn.close()
+    writer.close()
+    assert mode == zi.READ_LIVE
+    assert rows == {"checkpointed", "only in the WAL"}
+
+
+def test_locked_database_falls_back_to_a_lagging_snapshot(tmp_path):
+    """A running Zotero holds the file exclusively: the read still works,
+    names its mode, and can miss the WAL — which is why it is reported."""
+    db, writer = _wal_db(tmp_path)
+    writer.execute("PRAGMA locking_mode=EXCLUSIVE")
+    writer.execute("INSERT INTO t VALUES ('locked write')")
+    writer.commit()
+    conn, mode = zi.zotero_open(db, busy_timeout=0.05)
+    rows = {v for (v,) in conn.execute("SELECT v FROM t")}
+    conn.close()
+    writer.close()
+    assert mode == zi.READ_SNAPSHOT
+    assert "checkpointed" in rows and "locked write" not in rows
+
+
+def test_neither_read_mode_can_write(tmp_path):
+    db = _zotero_file(tmp_path)
+    conn, _ = zi.zotero_open(db)
+    with pytest.raises(sqlite3.OperationalError):
+        conn.execute("INSERT INTO libraries VALUES (9, 'user')")
+    conn.close()
+
+
+def test_item_data_lists_every_field_the_type_owns(tmp_path):
+    db = _zotero_file(tmp_path, works=[
+        (10, 1, "WORK0010", {"title": "Optimum Utilization"}, ["Koopmans"])])
+    conn, _ = zi.zotero_open(db)
+    data = zi.item_data(conn, "WORK0010")
+    assert zi.item_data(conn, "MISSING1") is None
+    conn.close()
+    assert data["title"] == "Optimum Utilization"
+    assert data["DOI"] == "" and "ISBN" not in data
+    assert data["itemType"] == "journalArticle"
+
+
+def test_cmd_enrich_reports_the_edit_and_never_writes(tmp_path, capsys):
+    import argparse
+    db = _zotero_file(tmp_path, works=[
+        (10, 1, "WORK0010", {"title": "Optimum Utilization",
+                             "url": "https://old.example"}, ["Koopmans"])])
+    before = db.read_bytes()
+    args = argparse.Namespace(jobs_file=None, item_key="WORK0010",
+                              expect_title="Optimum", overwrite=False,
+                              set=["DOI=10.2307/1907301", "url=https://new.example"],
+                              zotero_db=str(db), library="user")
+    assert zi.cmd_enrich(args) == 1  # the url conflict is refused
+    out = json.loads(capsys.readouterr().out)
+    row = out["results"][0]
+    assert row["suggested"] == [{"itemKey": "WORK0010", "field": "DOI",
+                                 "old": "", "new": "10.2307/1907301"}]
+    assert "url" in row["refused"][0]
+    assert db.read_bytes() == before
+
+
+def test_cmd_attach_reports_the_by_hand_step(tmp_path, capsys):
+    import argparse
+    db = _zotero_file(tmp_path, works=[
+        (10, 1, "WORK0010", {"title": "Present Without File"}, ["Walley"])])
+    pdf = tmp_path / "Walley1991.pdf"
+    pdf.write_bytes(b"%PDF")
+    args = argparse.Namespace(parent="WORK0010", file=[str(pdf)],
+                              zotero_db=str(db), library="user")
+    assert zi.cmd_attach(args) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["suggested"] == [{"itemKey": "WORK0010", "field": "attachment",
+                                 "old": "", "new": str(pdf.resolve())}]
+    args.parent = "MISSING1"
+    assert zi.cmd_attach(args) == 1
+
+
+def test_resolve_target_names_a_group_collection_and_its_library(tmp_path):
+    db = _zotero_file(tmp_path)
+    conn, _ = zi.zotero_open(db)
+    assert zi.resolve_target(conn, "user", None) == ("L1", 1)
+    assert zi.resolve_target(conn, "3", None) == ("L3", 3)
+    assert zi.resolve_target(conn, "user", "GRPCOLL1") == ("C7", 3)
+    with pytest.raises(ValueError):
+        zi.resolve_target(conn, "all", None)
+    with pytest.raises(ValueError):
+        zi.resolve_target(conn, "user", "NOSUCHKY")
+    conn.close()
+
+
+# --------------------------------------------------------------------------
+# Library snapshot: dedup over the in-memory read of zotero.sqlite.
+# --------------------------------------------------------------------------
+
+
+def _library(works=None, attachments=None):
+    return {"works": works or [], "attachments": attachments or [],
+            "read_mode": "ro", "zotero_db": "zotero.sqlite", "account": "1"}
 
 
 def _work(key, title, date="1999", creators=("Artzner",), doi=""):
     return {"key": key, "itemType": "journalArticle", "title": title,
             "date": date, "DOI": doi, "ISBN": "", "url": "", "extra": "",
-            "collections": [], "creators": list(creators)}
+            "creators": list(creators)}
 
 
 def _att(key, parent, filename="f.pdf", md5=None, ctype="application/pdf",
@@ -1147,27 +1354,27 @@ def _att(key, parent, filename="f.pdf", md5=None, ctype="application/pdf",
             "contentType": ctype, "linkMode": link}
 
 
-def test_api_matches_content_hash_is_exact(tmp_path):
+def test_library_matches_content_hash_is_exact(tmp_path):
     pdf = tmp_path / "paper.pdf"
     pdf.write_bytes(b"%PDF-1.4 content")
     digest = hashlib.md5(pdf.read_bytes()).hexdigest()
-    idx = _index([_work("W1", "Coherent Measures of Risk")],
+    idx = _library([_work("W1", "Coherent Measures of Risk")],
                  [_att("A1", "W1", "paper.pdf", digest)])
-    res = zi.api_matches(idx, pdf_path=pdf)
+    res = zi.library_matches(idx, pdf_path=pdf)
     assert res["verdict"] == "match"
     assert res["matches"][0]["key"] == "W1"
     assert res["matches"][0]["why"] == ["storageHash"]
     assert res["matches"][0]["certainty"] == "exact"
 
 
-def test_api_matches_hash_beats_a_renamed_file(tmp_path):
-    """Content identity survives renaming — the key the sqlite path lacks."""
+def test_library_matches_hash_beats_a_renamed_file(tmp_path):
+    """Content identity survives renaming."""
     pdf = tmp_path / "MyOwnName-2024.pdf"
     pdf.write_bytes(b"%PDF-1.4 body")
     digest = hashlib.md5(pdf.read_bytes()).hexdigest()
-    idx = _index([_work("W1", "Totally Different Recorded Title")],
+    idx = _library([_work("W1", "Totally Different Recorded Title")],
                  [_att("A1", "W1", "original-publisher-name.pdf", digest)])
-    res = zi.api_matches(idx, title="Totally Different Recorded Title", pdf_path=pdf)
+    res = zi.library_matches(idx, title="Totally Different Recorded Title", pdf_path=pdf)
     assert res["matches"][0]["key"] == "W1"
 
 
@@ -1191,22 +1398,22 @@ def test_classify_matches_single_exact_still_matches():
                                 {"certainty": "strong"}]) == "match"
 
 
-def _two_parent_index(pdf, md5s):
+def _two_parent_library(pdf, md5s):
     """Two records whose attachments carry the given md5 pair — the tie
     fixture shared by the exact (same md5) and strong (same filename,
     different md5) cases."""
-    return _index([_work("W1", "Working Paper Version"),
+    return _library([_work("W1", "Working Paper Version"),
                    _work("W2", "Journal Version")],
                   [_att("A1", "W1", pdf.name, md5s[0]),
                    _att("A2", "W2", pdf.name, md5s[1])])
 
 
-def test_api_matches_exact_md5_tie_names_both_parents(tmp_path):
+def test_library_matches_exact_md5_tie_names_both_parents(tmp_path):
     pdf = tmp_path / "shared.pdf"
     pdf.write_bytes(b"%PDF-1.4 same bytes")
     digest = hashlib.md5(pdf.read_bytes()).hexdigest()
-    idx = _two_parent_index(pdf, (digest, digest))
-    res = zi.api_matches(idx, pdf_path=pdf)
+    idx = _two_parent_library(pdf, (digest, digest))
+    res = zi.library_matches(idx, pdf_path=pdf)
     assert res["verdict"] == "ambiguous"
     assert {m["key"] for m in res["matches"]} == {"W1", "W2"}
 
@@ -1217,7 +1424,7 @@ def test_audit_exact_md5_tie_names_every_parent(tmp_path, monkeypatch):
     pdf = tmp_path / "shared.pdf"
     pdf.write_bytes(b"%PDF-1.4 same bytes")
     digest = hashlib.md5(pdf.read_bytes()).hexdigest()
-    idx = _two_parent_index(pdf, (digest, digest))
+    idx = _two_parent_library(pdf, (digest, digest))
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
     row = zi.audit_one(pdf, idx)
@@ -1232,7 +1439,7 @@ def test_audit_strong_filename_tie_names_every_parent(tmp_path, monkeypatch):
     one. Every tied parent is named."""
     pdf = tmp_path / "paper.pdf"
     pdf.write_bytes(b"%PDF-1.4 local bytes")
-    idx = _two_parent_index(pdf, ("md5-one", "md5-two"))
+    idx = _two_parent_library(pdf, ("md5-one", "md5-two"))
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
     row = zi.audit_one(pdf, idx)
@@ -1240,66 +1447,66 @@ def test_audit_strong_filename_tie_names_every_parent(tmp_path, monkeypatch):
     assert named == {"W1", "W2"}
 
 
-def test_api_matches_doi_exact():
-    idx = _index([_work("W1", "T", doi="10.1111/1467-9965.00068")])
-    res = zi.api_matches(idx, doi="10.1111/1467-9965.00068")
+def test_library_matches_doi_exact():
+    idx = _library([_work("W1", "T", doi="10.1111/1467-9965.00068")])
+    res = zi.library_matches(idx, doi="10.1111/1467-9965.00068")
     assert res["verdict"] == "match"
     assert res["matches"][0]["why"] == ["doi"]
 
 
-def test_api_matches_doi_is_case_insensitive():
-    idx = _index([_work("W1", "T", doi="10.1111/ABC")])
-    assert zi.api_matches(idx, doi="10.1111/abc")["verdict"] == "match"
+def test_library_matches_doi_is_case_insensitive():
+    idx = _library([_work("W1", "T", doi="10.1111/ABC")])
+    assert zi.library_matches(idx, doi="10.1111/abc")["verdict"] == "match"
 
 
-def test_api_matches_creator_year_title():
-    idx = _index([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
-    res = zi.api_matches(idx, title="Coherent Measures of Risk", year="1999",
+def test_library_matches_creator_year_title():
+    idx = _library([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
+    res = zi.library_matches(idx, title="Coherent Measures of Risk", year="1999",
                          first_author="Artzner")
     assert res["verdict"] == "match"
 
 
-def test_api_matches_wrong_author_does_not_match():
-    idx = _index([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
-    res = zi.api_matches(idx, title="Coherent Measures of Risk", year="1999",
+def test_library_matches_wrong_author_does_not_match():
+    idx = _library([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
+    res = zi.library_matches(idx, title="Coherent Measures of Risk", year="1999",
                          first_author="Delbaen")
     assert res["verdict"] == "none"
 
 
-def test_api_matches_empty_library_is_none_not_unchecked():
+def test_library_matches_empty_library_is_none_not_unchecked():
     """A clean negative and a lookup that could not run are different answers."""
-    res = zi.api_matches(_index(), title="Some Long Distinctive Title Here",
+    res = zi.library_matches(_library(), title="Some Long Distinctive Title Here",
                          first_author="Nobody")
     assert res["verdict"] == "none"
     assert "creator-year-title" in res["consulted"]
 
 
-def test_api_matches_no_usable_key_is_unchecked():
-    res = zi.api_matches(_index([_work("W1", "T")]))
+def test_library_matches_no_usable_key_is_unchecked():
+    res = zi.library_matches(_library([_work("W1", "T")]))
     assert res["verdict"] == "unchecked"
     assert res["consulted"] == []
     assert res["skipped"]
 
 
-def test_api_matches_short_title_is_skipped_not_matched():
-    idx = _index([_work("W1", "On Growth", "1950", ("Solow",))])
-    res = zi.api_matches(idx, title="On Growth", first_author="Solow")
+def test_library_matches_short_title_is_skipped_not_matched():
+    idx = _library([_work("W1", "On Growth", "1950", ("Solow",))])
+    res = zi.library_matches(idx, title="On Growth", first_author="Solow")
     assert res["verdict"] == "unchecked"
     assert any("too short" in s for s in res["skipped"])
 
 
-def test_api_matches_reports_missing_file_on_the_work():
+def test_library_matches_reports_missing_file_on_the_work():
     """The present-but-no-file case is what `attach` exists to repair."""
-    idx = _index([_work("W1", "Sraffa and von Neumann", "2001", ("Kurz",))], [])
-    res = zi.api_matches(idx, title="Sraffa and von Neumann", year="2001",
+    idx = _library([_work("W1", "Sraffa and von Neumann", "2001", ("Kurz",))], [])
+    res = zi.library_matches(idx, title="Sraffa and von Neumann", year="2001",
                          first_author="Kurz")
     assert res["matches"][0]["has_file"] is False
 
 
-def test_api_matches_linked_url_does_not_count_as_a_stored_file():
-    idx = _index([_work("W1", "Sraffa and von Neumann", "2001", ("Kurz",))],
+def test_library_matches_linked_url_does_not_count_as_a_stored_file():
+    idx = _library([_work("W1", "Sraffa and von Neumann", "2001", ("Kurz",))],
                  [_att("A1", "W1", "", None, "text/html", "linked_url")])
-    res = zi.api_matches(idx, title="Sraffa and von Neumann", year="2001",
+    res = zi.library_matches(idx, title="Sraffa and von Neumann", year="2001",
                          first_author="Kurz")
     assert res["matches"][0]["has_file"] is False
 
@@ -1360,47 +1567,47 @@ def test_corroborate_is_accent_insensitive():
     assert out["confidence"] in ("corroborated", "weak")
 
 
-def test_index_views_separates_pdf_from_other_stored_files():
-    idx = _index([_work("W1", "T"), _work("W2", "U")],
+def test_library_views_separates_pdf_from_other_stored_files():
+    idx = _library([_work("W1", "T"), _work("W2", "U")],
                  [_att("A1", "W1", "a.pdf", "d1", "application/pdf"),
                   _att("A2", "W2", "b.docx", "d2",
                        "application/vnd.openxmlformats-officedocument"
                        ".wordprocessingml.document")])
-    v = zi._index_views(idx)
+    v = zi._library_views(idx)
     assert v["parents_with_pdf"] == {"W1"}
     assert v["parents_with_file"] == {"W1", "W2"}
 
 
-def test_api_matches_scores_overlap_against_the_library_title():
+def test_library_matches_scores_overlap_against_the_library_title():
     """Extra document text may surface a true match, never manufacture one.
 
     The denominator is the library title's own tokens, so a bigger bag of
     document words cannot drag an unrelated item over the threshold.
     """
-    idx = _index([_work("W1", "Method of Limits in the Theory of Index Numbers",
+    idx = _library([_work("W1", "Method of Limits in the Theory of Index Numbers",
                         "1969", ("Afriat",)),
                   _work("W2", "An Entirely Unrelated Study of Something Else",
                         "1969", ("Afriat",))])
-    res = zi.api_matches(idx, title="", year="1969", authors=["Afriat"],
+    res = zi.library_matches(idx, title="", year="1969", authors=["Afriat"],
                          text="MethodOfLimits Index Numbers method of limits "
                               "in the theory of index numbers")
     assert [m["key"] for m in res["matches"]] == ["W1"]
 
 
-def test_api_matches_text_alone_is_enough_when_pdfinfo_title_is_junk():
+def test_library_matches_text_alone_is_enough_when_pdfinfo_title_is_junk():
     """The real audit defect: pdfinfo reads 'PII: 0014-2921(69)90001-4'."""
-    idx = _index([_work("W1", "Methods of choosing equipment at "
+    idx = _library([_work("W1", "Methods of choosing equipment at "
                               "Electricite de France", "1969", ("Bessiere",))])
     junk = "PII: 0014-2921(69)90001-4"
-    res = zi.api_matches(idx, title=junk, year="1969", authors=["Bessiere"],
+    res = zi.library_matches(idx, title=junk, year="1969", authors=["Bessiere"],
                          text="Methods of choosing equipment at Electricite "
                               "de France")
     assert res["verdict"] == "match"
 
 
-def test_api_matches_no_title_and_no_text_is_unchecked():
-    idx = _index([_work("W1", "Anything At All Here", "1969", ("Afriat",))])
-    res = zi.api_matches(idx, year="1969", authors=["Afriat"])
+def test_library_matches_no_title_and_no_text_is_unchecked():
+    idx = _library([_work("W1", "Anything At All Here", "1969", ("Afriat",))])
+    res = zi.library_matches(idx, year="1969", authors=["Afriat"])
     assert res["verdict"] == "unchecked"
     assert any("no title or text" in s for s in res["skipped"])
 
@@ -1422,7 +1629,7 @@ def test_title_windows_group_consecutive_lines():
 
 
 def test_scattered_vocabulary_is_weak_not_strong():
-    idx = _index([_work("W1", "Systems of inequalities involving convex functions",
+    idx = _library([_work("W1", "Systems of inequalities involving convex functions",
                         "1957", ("Hoffman",))])
     scattered = ("Some recent applications of the theory of linear\n"
                  "inequalities to extremal combinatorial analysis\n"
@@ -1430,7 +1637,7 @@ def test_scattered_vocabulary_is_weak_not_strong():
                  "we consider systems of constraints\n"
                  "the objective functions are convex\n"
                  "involving several parameters\n")
-    res = zi.api_matches(idx, title="", year="1960", authors=["Hoffman"],
+    res = zi.library_matches(idx, title="", year="1960", authors=["Hoffman"],
                          text=scattered)
     assert res["matches"], "the candidate should still surface"
     assert res["matches"][0]["certainty"] == "weak"
@@ -1438,10 +1645,10 @@ def test_scattered_vocabulary_is_weak_not_strong():
 
 
 def test_title_on_one_line_is_strong():
-    idx = _index([_work("W1", "Systems of inequalities involving convex functions",
+    idx = _library([_work("W1", "Systems of inequalities involving convex functions",
                         "1957", ("Hoffman",))])
     text = "Systems of inequalities involving convex functions\nby A. J. Hoffman"
-    res = zi.api_matches(idx, title="", year="1957", authors=["Hoffman"], text=text)
+    res = zi.library_matches(idx, title="", year="1957", authors=["Hoffman"], text=text)
     assert res["matches"][0]["certainty"] == "strong"
     assert res["verdict"] == "match"
 
@@ -1458,14 +1665,14 @@ def test_front_matter_drops_blank_lines():
 
 def test_window_precision_separates_a_title_line_from_a_body_window():
     """Same recall, different precision — only the title line is strong."""
-    idx = _index([_work("W1", "Systems of inequalities involving convex functions",
+    idx = _library([_work("W1", "Systems of inequalities involving convex functions",
                         "1957", ("Hoffman",))])
     body = ("we consider systems of constraints\n"
             "the objective functions are convex\n"
             "involving several unrelated parameters\n")
     title_line = "Systems of inequalities involving convex functions\n"
-    weak = zi.api_matches(idx, year="1957", authors=["Hoffman"], text=body)
-    strong = zi.api_matches(idx, year="1957", authors=["Hoffman"], text=title_line)
+    weak = zi.library_matches(idx, year="1957", authors=["Hoffman"], text=body)
+    strong = zi.library_matches(idx, year="1957", authors=["Hoffman"], text=title_line)
     assert weak["matches"][0]["certainty"] == "weak"
     assert strong["matches"][0]["certainty"] == "strong"
 
@@ -1474,7 +1681,7 @@ def test_audit_verdicts_cover_every_certainty(tmp_path, monkeypatch):
     """A weak hit must surface as `ambiguous`, never silently as `absent`."""
     pdf = tmp_path / "Hoffman1960-x.pdf"
     pdf.write_bytes(b"%PDF-1.4")
-    idx = _index([_work("W1", "Systems of inequalities involving convex functions",
+    idx = _library([_work("W1", "Systems of inequalities involving convex functions",
                         "1957", ("Hoffman",))])
     monkeypatch.setattr(zi, "_pdf_probe_text",
                         lambda p: "we consider systems of constraints\n"
@@ -1489,7 +1696,7 @@ def test_audit_verdict_absent_when_nothing_fires(tmp_path, monkeypatch):
     pdf.write_bytes(b"%PDF-1.4")
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "an unrelated document\n")
     monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
-    row = zi.audit_one(pdf, _index([_work("W1", "Something Else Entirely Here")]))
+    row = zi.audit_one(pdf, _library([_work("W1", "Something Else Entirely Here")]))
     assert row["verdict"] == "absent"
     assert row["consulted"], "absent must mean 'looked and found nothing'"
 
@@ -1498,7 +1705,7 @@ def test_audit_verdict_identical_on_content_hash(tmp_path, monkeypatch):
     pdf = tmp_path / "Any2020-x.pdf"
     pdf.write_bytes(b"%PDF-1.4 unique bytes")
     digest = hashlib.md5(pdf.read_bytes()).hexdigest()
-    idx = _index([_work("W1", "Whatever")], [_att("A1", "W1", "other.pdf", digest)])
+    idx = _library([_work("W1", "Whatever")], [_att("A1", "W1", "other.pdf", digest)])
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
     row = zi.audit_one(pdf, idx)
@@ -1517,15 +1724,14 @@ def _audit_args(tmp_path, directory, **kw):
     import argparse
 
     return argparse.Namespace(
-        directory=str(directory), out=kw.get("out"), ext=None, refresh=False,
-        user_id="1", api_key="k")
+        directory=str(directory), out=kw.get("out"), ext=None,
+        zotero_db=None, library="user")
 
 
 def test_cmd_audit_missing_directory_is_a_json_error_not_a_traceback(
         tmp_path, monkeypatch, capsys):
     """A mistyped path degrades like every other subcommand, rc 1 + JSON."""
-    monkeypatch.setattr(zi, "resolve_read_credentials", lambda a: ("1", "k"))
-    monkeypatch.setattr(zi, "load_index", lambda u, k, **kw: _index())
+    monkeypatch.setattr(zi, "library_snapshot", lambda *a, **k: _library())
     rc = zi.cmd_audit(_audit_args(tmp_path, tmp_path / "nope"))
     assert rc == 1
     out = json.loads(capsys.readouterr().out)
@@ -1536,8 +1742,7 @@ def test_cmd_audit_file_instead_of_directory_is_a_json_error(
         tmp_path, monkeypatch, capsys):
     f = tmp_path / "one.pdf"
     f.write_bytes(b"%PDF-1.4")
-    monkeypatch.setattr(zi, "resolve_read_credentials", lambda a: ("1", "k"))
-    monkeypatch.setattr(zi, "load_index", lambda u, k, **kw: _index())
+    monkeypatch.setattr(zi, "library_snapshot", lambda *a, **k: _library())
     assert zi.cmd_audit(_audit_args(tmp_path, f)) == 1
     assert "error" in json.loads(capsys.readouterr().out)
 
@@ -1556,8 +1761,7 @@ def test_cmd_audit_one_unreadable_file_does_not_abort_the_batch(
                 "zotero_title": None, "why": None, "certainty": None,
                 "consulted": ["creator-year-title"], "skipped": []}
 
-    monkeypatch.setattr(zi, "resolve_read_credentials", lambda a: ("1", "k"))
-    monkeypatch.setattr(zi, "load_index", lambda u, k, **kw: _index())
+    monkeypatch.setattr(zi, "library_snapshot", lambda *a, **k: _library())
     monkeypatch.setattr(zi, "audit_one", flaky)
     rc = zi.cmd_audit(_audit_args(tmp_path, tmp_path, out=str(out)))
     assert rc == 0
@@ -1578,7 +1782,7 @@ def test_audit_one_reads_the_pdfinfo_title_of_a_scanned_pdf(
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
     monkeypatch.setattr(zi, "pdfinfo",
                         lambda p: {"Title": "Coherent Measures of Risk"})
-    idx = _index([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
+    idx = _library([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
     row = zi.audit_one(pdf, idx)
     assert row["verdict"] == "work_present_no_file"
     assert row["zotero_key"] == "W1"
@@ -1593,7 +1797,7 @@ def test_audit_one_survives_a_failing_pdfinfo(tmp_path, monkeypatch):
         raise RuntimeError("pdfinfo timed out")
 
     monkeypatch.setattr(zi, "pdfinfo", boom)
-    assert zi.audit_one(pdf, _index())["verdict"] == "absent"
+    assert zi.audit_one(pdf, _library())["verdict"] == "absent"
 
 
 def test_corroborate_short_surname_does_not_match_inside_a_word():
@@ -1622,10 +1826,10 @@ def test_corroborate_title_with_no_usable_tokens_is_unchecked():
     assert out["reason"]
 
 
-def test_api_matches_reports_the_filename_key_as_skipped_without_a_pdf():
+def test_library_matches_reports_the_filename_key_as_skipped_without_a_pdf():
     """The sqlite cascade says so; the API cascade must report the same split."""
-    idx = _index([_work("W1", "Something Else Entirely Here")])
-    res = zi.api_matches(idx, title="A Totally Unrelated Long Title",
+    idx = _library([_work("W1", "Something Else Entirely Here")])
+    res = zi.library_matches(idx, title="A Totally Unrelated Long Title",
                          first_author="Nobody")
     assert any("filename" in s for s in res["skipped"])
 
@@ -1644,36 +1848,36 @@ def _work_extra(key, title, extra="", url="", isbn=""):
     return w
 
 
-def test_api_matches_isbn_ignores_hyphenation():
-    idx = _index([_work_extra("W1", "A Book", isbn="978-0-262-03384-8")])
-    res = zi.api_matches(idx, isbn="9780262033848")
+def test_library_matches_isbn_ignores_hyphenation():
+    idx = _library([_work_extra("W1", "A Book", isbn="978-0-262-03384-8")])
+    res = zi.library_matches(idx, isbn="9780262033848")
     assert res["verdict"] == "match"
     assert res["matches"][0]["why"] == ["isbn"]
 
 
-def test_api_matches_arxiv_from_extra():
-    idx = _index([_work_extra("W1", "A Preprint", extra="arXiv:2401.01234")])
-    res = zi.api_matches(idx, arxiv="2401.01234")
+def test_library_matches_arxiv_from_extra():
+    idx = _library([_work_extra("W1", "A Preprint", extra="arXiv:2401.01234")])
+    res = zi.library_matches(idx, arxiv="2401.01234")
     assert res["verdict"] == "match"
     assert res["matches"][0]["why"] == ["arxiv"]
 
 
-def test_api_matches_arxiv_from_url():
-    idx = _index([_work_extra("W1", "A Preprint",
+def test_library_matches_arxiv_from_url():
+    idx = _library([_work_extra("W1", "A Preprint",
                               url="https://arxiv.org/abs/2401.01234")])
-    assert zi.api_matches(idx, arxiv="2401.01234")["verdict"] == "match"
+    assert zi.library_matches(idx, arxiv="2401.01234")["verdict"] == "match"
 
 
-def test_api_matches_handle_accepts_bare_or_full_url():
-    idx = _index([_work_extra("W1", "A Report",
+def test_library_matches_handle_accepts_bare_or_full_url():
+    idx = _library([_work_extra("W1", "A Report",
                               url="https://hdl.handle.net/10419/12345")])
     for supplied in ("10419/12345", "https://hdl.handle.net/10419/12345"):
-        assert zi.api_matches(idx, handle=supplied)["verdict"] == "match", supplied
+        assert zi.library_matches(idx, handle=supplied)["verdict"] == "match", supplied
 
 
-def test_api_matches_reports_every_identifier_key_it_could_not_use():
+def test_library_matches_reports_every_identifier_key_it_could_not_use():
     """`skipped` must name each key, so "found nothing" stays legible."""
-    res = zi.api_matches(_index([_work("W1", "T")]), doi="10.1/x")
+    res = zi.library_matches(_library([_work("W1", "T")]), doi="10.1/x")
     for label in ("isbn", "arxiv", "handle"):
         assert any(s.startswith(label) for s in res["skipped"]), label
 
@@ -1682,36 +1886,6 @@ def test_file_md5_matches_a_whole_file_read(tmp_path):
     p = tmp_path / "big.pdf"
     p.write_bytes(b"x" * (3 * (1 << 20) + 17))  # spans several chunks
     assert zi.file_md5(p) == hashlib.md5(p.read_bytes()).hexdigest()
-
-
-def test_api_get_retry_does_not_retry_a_permanent_client_error(monkeypatch):
-    """401/403/404 are answers. Retrying buries the cause in a backoff."""
-    calls = []
-
-    def boom(method, path, key, *a, **kw):
-        calls.append(path)
-        raise urllib.error.HTTPError(path, 403, "Forbidden", {}, None)
-
-    monkeypatch.setattr(zi, "api_request", boom)
-    monkeypatch.setattr(zi.time, "sleep", lambda s: None)
-    with pytest.raises(urllib.error.HTTPError):
-        zi._api_get_retry("/users/1/items", "k")
-    assert len(calls) == 1
-
-
-def test_api_get_retry_does_retry_a_rate_limit(monkeypatch):
-    calls = []
-
-    def flaky(method, path, key, *a, **kw):
-        calls.append(path)
-        if len(calls) < 3:
-            raise urllib.error.HTTPError(path, 429, "Too Many", {}, None)
-        return [{"ok": True}]
-
-    monkeypatch.setattr(zi, "api_request", flaky)
-    monkeypatch.setattr(zi.time, "sleep", lambda s: None)
-    assert zi._api_get_retry("/users/1/items", "k") == [{"ok": True}]
-    assert len(calls) == 3
 
 
 # --------------------------------------------------------------------------
@@ -1741,8 +1915,73 @@ def test_corroborate_entry_without_a_pdf_is_unchecked():
     assert out["confidence"] == "unchecked"
 
 
-def test_inject_refuses_contradicted_metadata(tmp_path, monkeypatch, capsys):
+@pytest.fixture
+def connector(monkeypatch):
+    """A local stand-in for the Zotero desktop connector; records each call.
+
+    `state["status"]` overrides an endpoint's answer; `state["on_save"]` runs
+    on each saveItems body, e.g. to write the item into a fixture database
+    the way the real client would.
+    """
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    state = {"calls": [], "status": {}, "on_save": None}
+
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass
+
+        def _reply(self, code, body=b""):
+            self.send_response(code)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self):
+            state["calls"].append(("ping", None, {}))
+            self._reply(200, b"Zotero is running")
+
+        def do_POST(self):
+            body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+            endpoint = self.path.rsplit("/", 1)[-1]
+            state["calls"].append((endpoint, body, dict(self.headers)))
+            if endpoint == "saveItems" and state["on_save"]:
+                state["on_save"](json.loads(body))
+            default = 201 if endpoint in ("saveItems", "saveAttachment") else 200
+            self._reply(state["status"].get(endpoint, default))
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    monkeypatch.setattr(zi, "CONNECTOR_URL",
+                        f"http://127.0.0.1:{server.server_port}")
+    yield state
+    server.shutdown()
+    server.server_close()
+
+
+def _saves(state, endpoint="saveItems"):
+    return [json.loads(body) for name, body, _ in state["calls"]
+            if name == endpoint]
+
+
+def _inject_args(db, entries, **over):
     import argparse
+    base = dict(entries_json=json.dumps(entries), entries_file=None,
+                collection=None, library="user", zotero_db=str(db),
+                dry_run=False, skip_corroboration=False, force=False)
+    base.update(over)
+    return argparse.Namespace(**base)
+
+
+def _corroborated(monkeypatch):
+    monkeypatch.setattr(zi, "corroborate_entry",
+                        lambda _: {"confidence": "corroborated"})
+
+
+def test_inject_refuses_contradicted_metadata(tmp_path, monkeypatch, capsys,
+                                              connector):
     pdf = _pdf_with_text(tmp_path, "cottle.pdf",
                          "The Basic George B. Dantzig\nRichard W. Cottle\n",
                          monkeypatch)
@@ -1751,42 +1990,30 @@ def test_inject_refuses_contradicted_metadata(tmp_path, monkeypatch, capsys):
         "type": "JOUR", "title": "Ronald Graham: laying the foundations of "
                                  "online optimization",
         "authors": ["Albers, Susanne"], "pdf": str(pdf), "attach_pdf": True}]))
-    called = []
-    monkeypatch.setattr(zi, "api_request",
-                        lambda *a, **k: called.append(a) or {})
-    args = argparse.Namespace(entries_json=None, entries_file=str(entries),
-                              collection=None, user_id="1", api_key="k",
-                              dry_run=False, skip_corroboration=False)
+    args = _inject_args(_zotero_file(tmp_path), None, entries_json=None,
+                        entries_file=str(entries))
     rc = zi.cmd_inject(args)
     out = json.loads(capsys.readouterr().out)
     assert rc == 1
-    assert not called, "nothing may be created when the document denies it"
+    assert not connector["calls"], "nothing may be created when the document denies it"
     assert out["error"] == "metadata contradicted by the document"
 
 
-def test_inject_skip_corroboration_lets_it_through(tmp_path, monkeypatch, capsys):
-    import argparse
+def test_inject_skip_corroboration_lets_it_through(tmp_path, monkeypatch, capsys,
+                                                   connector):
     pdf = _pdf_with_text(tmp_path, "cottle.pdf",
                          "The Basic George B. Dantzig\nRichard W. Cottle\n",
                          monkeypatch)
-    entries = tmp_path / "e.json"
-    entries.write_text(json.dumps([{
+    args = _inject_args(_zotero_file(tmp_path), [{
         "type": "JOUR", "title": "Ronald Graham: laying the foundations of "
                                  "online optimization",
-        "authors": ["Albers, Susanne"], "year": "2020",
-        "pdf": str(pdf)}]))
-    monkeypatch.setattr(zi, "api_request",
-                        lambda *a, **k: {"successful": {"0": {"key": "ZZZZZZZZ"}}})
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
-    monkeypatch.setattr(zi, "build_index",
-                        lambda *a, **k: {"works": [], "attachments": []})
-    args = argparse.Namespace(entries_json=None, entries_file=str(entries),
-                              collection=None, user_id="1", api_key="k",
-                              dry_run=False, skip_corroboration=True)
+        "authors": ["Albers, Susanne"], "year": "2020", "pdf": str(pdf)}],
+        skip_corroboration=True)
     assert zi.cmd_inject(args) == 0
     out = json.loads(capsys.readouterr().out)
-    assert out["results"][0]["itemKey"] == "ZZZZZZZZ"
+    assert out["results"][0]["status"] == "created"
     assert out["results"][0]["corroboration"] == "contradicted"
+    assert len(_saves(connector)) == 1
 
 
 def test_inject_dry_run_reports_corroboration(tmp_path, monkeypatch, capsys):
@@ -1799,7 +2026,6 @@ def test_inject_dry_run_reports_corroboration(tmp_path, monkeypatch, capsys):
         "type": "JOUR", "title": "Coherent Measures of Risk",
         "authors": ["Artzner, Philippe"], "pdf": str(pdf)}]))
     args = argparse.Namespace(entries_json=None, entries_file=str(entries),
-                              collection=None, user_id="1", api_key="k",
                               dry_run=True, skip_corroboration=False)
     assert zi.cmd_inject(args) == 0
     out = json.loads(capsys.readouterr().out)
@@ -1807,63 +2033,115 @@ def test_inject_dry_run_reports_corroboration(tmp_path, monkeypatch, capsys):
     assert out["items"][0]["title"] == "Coherent Measures of Risk"
 
 
-def test_inject_batches_51_and_ledger_prevents_second_create(
-        tmp_path, monkeypatch, capsys):
-    import argparse
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
-    monkeypatch.setattr(zi, "build_index",
-                        lambda *a, **k: {"works": [], "attachments": []})
-    monkeypatch.setattr(zi, "corroborate_entry",
-                        lambda _: {"confidence": "corroborated"})
-    calls = []
+def test_inject_fails_loudly_when_zotero_is_not_running(tmp_path, monkeypatch,
+                                                        capsys):
+    import socket
+    _corroborated(monkeypatch)
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+    monkeypatch.setattr(zi, "CONNECTOR_URL", f"http://127.0.0.1:{port}")
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"paper")
+    args = _inject_args(_zotero_file(tmp_path), [{
+        "title": "New Paper", "authors": ["Smith, Jane"], "year": "2020",
+        "pdf": str(pdf)}])
+    assert zi.cmd_inject(args) == 1
+    captured = capsys.readouterr()
+    assert "Zotero is not running" in captured.err
+    assert "Zotero is not running" in json.loads(captured.out)["error"]
 
-    def fake_request(method, path, key, body=None, **kw):
-        assert method == "POST"
-        batch = json.loads(body)
-        calls.append(len(batch))
-        return {"successful": {str(i): {"key": f"{len(calls):04d}{i:04d}"}
-                               for i in range(len(batch))}}
 
-    monkeypatch.setattr(zi, "api_request", fake_request)
-    entries = []
-    for n in range(51):
-        pdf = tmp_path / f"p{n}.pdf"
-        pdf.write_bytes(f"distinct {n}".encode())
-        entries.append({"title": f"Article {n}", "authors": ["Smith, Jane"],
-                        "year": "2020", "pdf": str(pdf)})
-    args = argparse.Namespace(entries_json=json.dumps(entries),
-                              entries_file=None, collection=None, user_id="1",
-                              api_key="key", dry_run=False,
-                              skip_corroboration=False, force=False)
+def test_inject_needs_the_local_database(tmp_path, monkeypatch, capsys, connector):
+    _corroborated(monkeypatch)
+    args = _inject_args(tmp_path / "absent.sqlite", [{"title": "T"}])
+    assert zi.cmd_inject(args) == 1
+    assert "no local Zotero database" in json.loads(capsys.readouterr().out)["error"]
+    assert not connector["calls"]
+
+
+def test_inject_saves_moves_to_target_then_attaches(tmp_path, monkeypatch,
+                                                    capsys, connector):
+    """Group-library target: the item is moved before the file is attached,
+    so the PDF is stored once, where the item ends up."""
+    _corroborated(monkeypatch)
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"%PDF new paper")
+    args = _inject_args(_zotero_file(tmp_path), [{
+        "title": "New Paper", "authors": ["Smith, Jane"], "year": "2020",
+        "doi": "10.1234/new", "pdf": str(pdf), "attach_pdf": True}],
+        collection="GRPCOLL1")
     assert zi.cmd_inject(args) == 0
-    first = json.loads(capsys.readouterr().out)
-    assert calls == [50, 1]
-    assert len(first["results"]) == 51
-    assert len(zi.read_injection_ledger("1")) == 51
-    assert zi.cmd_inject(args) == 0
-    second = json.loads(capsys.readouterr().out)
-    assert calls == [50, 1]
-    assert all(r["status"] == "already_in_ledger" for r in second["results"])
+    out = json.loads(capsys.readouterr().out)
+    assert out["library"] == "C7"
+    assert [c[0] for c in connector["calls"]] == [
+        "ping", "saveItems", "updateSession", "saveAttachment"]
+    saved = _saves(connector)[0]
+    item = saved["items"][0]
+    assert item["DOI"] == "10.1234/new" and "collections" not in item
+    session = saved["sessionID"]
+    assert _saves(connector, "updateSession") == [
+        {"sessionID": session, "target": "C7", "tags": []}]
+    _, body, headers = connector["calls"][-1]
+    assert body == pdf.read_bytes()
+    meta = json.loads(headers["X-Metadata"])
+    assert meta["sessionID"] == session and meta["parentItemID"] == item["id"]
+    assert out["results"][0]["attachment"] == "paper.pdf"
 
 
-@pytest.mark.parametrize("count,second", [(2, 1), (51, 50)])
-def test_inject_blocks_distinct_pdfs_with_same_doi_before_post(
-        tmp_path, monkeypatch, capsys, count, second):
-    import argparse
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
-    monkeypatch.setattr(zi, "build_index",
-                        lambda *a, **k: {"works": [], "attachments": []})
-    monkeypatch.setattr(zi, "corroborate_entry",
-                        lambda _: {"confidence": "corroborated"})
-    posts = []
+def test_inject_refuses_a_work_already_in_the_library(tmp_path, monkeypatch,
+                                                      capsys, connector):
+    _corroborated(monkeypatch)
+    db = _zotero_file(tmp_path, works=[
+        (10, 1, "WORK0010", {"title": "Old Paper", "DOI": "10.1234/same"},
+         ["Smith"])])
+    pdf = tmp_path / "copy.pdf"
+    pdf.write_bytes(b"another copy")
+    args = _inject_args(db, [{"title": "Old Paper", "authors": ["Smith, Jane"],
+                              "year": "2020", "doi": "10.1234/same",
+                              "pdf": str(pdf)}])
+    assert zi.cmd_inject(args) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert "duplicate" in out["results"][0]["error"]
+    assert out["results"][0]["matches"][0]["key"] == "WORK0010"
+    assert not _saves(connector)
 
-    def fake_request(method, path, key, body=None, **kw):
-        batch = json.loads(body)
-        posts.extend(batch)
-        return {"successful": {str(i): {"key": f"{i:08d}"}
-                               for i in range(len(batch))}}
 
-    monkeypatch.setattr(zi, "api_request", fake_request)
+def test_second_run_reads_the_library_afresh(tmp_path, monkeypatch, capsys,
+                                             connector):
+    """Stateless: nothing is kept between runs. Two runs on one work create it once
+    because the second run reads what the first one saved."""
+    _corroborated(monkeypatch)
+    db = _zotero_file(tmp_path)
+
+    def zotero_writes(payload):
+        conn = sqlite3.connect(db)
+        item = payload["items"][0]
+        conn.execute("INSERT INTO items VALUES (99, 1, 1, 'NEWITEM9')")
+        vid = conn.execute("INSERT INTO itemDataValues (value) VALUES (?)",
+                           (item["DOI"],)).lastrowid
+        conn.execute("INSERT INTO itemData VALUES (99, 2, ?)", (vid,))
+        conn.commit()
+        conn.close()
+
+    connector["on_save"] = zotero_writes
+    for n in range(2):
+        pdf = tmp_path / f"copy-{n}.pdf"
+        pdf.write_bytes(f"different PDF {n}".encode())
+        args = _inject_args(db, [{"title": "The Same Paper",
+                                  "authors": ["Smith, Jane"], "year": "2020",
+                                  "doi": "10.1234/same", "pdf": str(pdf)}])
+        assert zi.cmd_inject(args) == (0 if n == 0 else 1)
+        result = json.loads(capsys.readouterr().out)
+        if n == 1:
+            assert "duplicate" in result["results"][0]["error"]
+    assert len(_saves(connector)) == 1
+
+
+@pytest.mark.parametrize("count,second", [(2, 1), (6, 5)])
+def test_inject_blocks_distinct_pdfs_with_same_doi_before_saving(
+        tmp_path, monkeypatch, capsys, connector, count, second):
+    _corroborated(monkeypatch)
     entries = []
     for n in range(count):
         pdf = tmp_path / f"paper-{n}.pdf"
@@ -1872,252 +2150,76 @@ def test_inject_blocks_distinct_pdfs_with_same_doi_before_post(
         entries.append({"title": f"Distinct Article {n}",
                         "authors": ["Smith, Jane"], "year": "2020",
                         "doi": doi, "pdf": str(pdf)})
-    args = argparse.Namespace(entries_json=json.dumps(entries),
-                              entries_file=None, collection=None, user_id="1",
-                              api_key="key", dry_run=False,
-                              skip_corroboration=False, force=False)
-    assert zi.cmd_inject(args) == 1
+    assert zi.cmd_inject(_inject_args(_zotero_file(tmp_path), entries)) == 1
     out = json.loads(capsys.readouterr().out)
     assert "same work" in out["results"][0]["error"]
     assert "same work" in out["results"][second]["error"]
-    assert len(posts) == count - 2
-    assert not any(item.get("DOI") == "10.1234/duplicate" for item in posts)
+    saved = [s["items"][0] for s in _saves(connector)]
+    assert len(saved) == count - 2
+    assert not any(item.get("DOI") == "10.1234/duplicate" for item in saved)
 
 
 def test_inject_allows_generic_title_when_author_or_year_differs(
-        tmp_path, monkeypatch, capsys):
-    import argparse
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
-    monkeypatch.setattr(zi, "build_index",
-                        lambda *a, **k: {"works": [], "attachments": []})
-    monkeypatch.setattr(zi, "corroborate_entry",
-                        lambda _: {"confidence": "corroborated"})
-    posts = []
-
-    def fake_request(method, path, key, body=None, **kw):
-        posts.extend(json.loads(body))
-        return {"successful": {"0": {"key": "ABCDEFGH"},
-                               "1": {"key": "HGFEDCBA"}}}
-
-    monkeypatch.setattr(zi, "api_request", fake_request)
+        tmp_path, monkeypatch, capsys, connector):
+    _corroborated(monkeypatch)
     entries = []
     for n, (author, year) in enumerate((('Smith, Jane', '2020'),
                                         ('Jones, Pat', '2021'))):
         pdf = tmp_path / f"work-{n}.pdf"
         pdf.write_bytes(f"paper {n}".encode())
         entries.append({"title": "Introduction to Economics",
-                        "authors": [author], "year": year,
-                        "pdf": str(pdf)})
-    args = argparse.Namespace(entries_json=json.dumps(entries),
-                              entries_file=None, collection=None, user_id="1",
-                              api_key="key", dry_run=False,
-                              skip_corroboration=False, force=False)
-    assert zi.cmd_inject(args) == 0
+                        "authors": [author], "year": year, "pdf": str(pdf)})
+    assert zi.cmd_inject(_inject_args(_zotero_file(tmp_path), entries)) == 0
     capsys.readouterr()
-    assert len(posts) == 2
+    assert len(_saves(connector)) == 2
 
 
-def test_two_sweeps_refresh_inside_user_lock_before_second_write(
-        tmp_path, monkeypatch, capsys):
-    import argparse
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
-    monkeypatch.setattr(zi, "corroborate_entry",
-                        lambda _: {"confidence": "corroborated"})
-    remote = {"works": [], "attachments": []}
-    pulls = []
-
-    def fresh_index(*args):
-        pulls.append(len(remote["works"]))
-        return {"works": list(remote["works"]), "attachments": []}
-
-    monkeypatch.setattr(zi, "build_index", fresh_index)
-    posts = []
-
-    def fake_request(method, path, key, body=None, **kw):
-        item = json.loads(body)[0]
-        posts.append(item)
-        remote["works"].append({
-            "key": "ABCDEFGH", "title": item["title"], "DOI": item["DOI"],
-            "date": "2020", "creators": ["Smith"]})
-        return {"successful": {"0": {"key": "ABCDEFGH"}}}
-
-    monkeypatch.setattr(zi, "api_request", fake_request)
-    stale_prelock_index = {"works": [], "attachments": []}
+def test_inject_stops_after_an_uncertain_save(tmp_path, monkeypatch, capsys,
+                                              connector):
+    _corroborated(monkeypatch)
+    connector["status"]["saveItems"] = 500
+    entries = []
     for n in range(2):
-        pdf = tmp_path / f"copy-{n}.pdf"
-        pdf.write_bytes(f"different PDF {n}".encode())
-        args = argparse.Namespace(entries_json=json.dumps([{
-            "title": "The Same Paper", "authors": ["Smith, Jane"],
-            "year": "2020", "doi": "10.1234/same", "pdf": str(pdf)}]),
-            entries_file=None, collection=None, user_id="1", api_key="key",
-            dry_run=False, skip_corroboration=False, force=False,
-            _fresh_index=stale_prelock_index)
-        assert zi.cmd_inject(args) == (0 if n == 0 else 1)
-        result = json.loads(capsys.readouterr().out)
-        if n == 1:
-            assert "duplicate" in result["results"][0]["error"]
-    assert pulls == [0, 1]
-    assert len(posts) == 1
+        pdf = tmp_path / f"p{n}.pdf"
+        pdf.write_bytes(f"distinct {n}".encode())
+        entries.append({"title": f"Article {n}", "authors": ["Smith, Jane"],
+                        "year": "2020", "pdf": str(pdf)})
+    assert zi.cmd_inject(_inject_args(_zotero_file(tmp_path), entries)) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert "create outcome unknown" in out["results"][0]["error"]
+    assert "not attempted" in out["results"][1]["error"]
+    assert len(_saves(connector)) == 1
 
 
-def test_inject_fails_closed_on_damaged_ledger(tmp_path, monkeypatch):
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path)
-    zi.injection_ledger_path("1").write_text("not-json\n")
-    with pytest.raises(ValueError, match="damaged injection ledger"):
-        zi.read_injection_ledger("1")
-
-
-def test_inject_resumes_attachment_without_recreating_parent(
-        tmp_path, monkeypatch, capsys):
-    import argparse
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
-    monkeypatch.setattr(zi, "build_index",
-                        lambda *a, **k: {"works": [], "attachments": []})
-    monkeypatch.setattr(zi, "corroborate_entry",
-                        lambda _: {"confidence": "corroborated"})
+def test_inject_reports_a_refused_attachment(tmp_path, monkeypatch, capsys,
+                                             connector):
+    _corroborated(monkeypatch)
+    connector["status"]["saveAttachment"] = 200  # "Library files are not editable."
     pdf = tmp_path / "paper.pdf"
-    pdf.write_bytes(b"new paper")
-    creates = []
-
-    def fake_request(method, path, key, body=None, **kw):
-        creates.append(path)
-        return {"successful": {"0": {"key": "ABCDEFGH"}}}
-
-    monkeypatch.setattr(zi, "api_request", fake_request)
-    uploads = []
-
-    def fake_upload(user, key, parent, path, **kw):
-        uploads.append(parent)
-        if len(uploads) == 1:
-            raise OSError("temporary upload failure")
-        return "HGFEDCBA"
-
-    monkeypatch.setattr(zi, "upload_attachment", fake_upload)
-    args = argparse.Namespace(entries_json=json.dumps([{
-        "title": "New Paper", "authors": ["Smith, Jane"],
-        "year": "2020", "pdf": str(pdf), "attach_pdf": True}]),
-        entries_file=None, collection=None, user_id="1", api_key="key",
-        dry_run=False, skip_corroboration=False, force=False)
+    pdf.write_bytes(b"paper")
+    args = _inject_args(_zotero_file(tmp_path), [{
+        "title": "New Paper", "authors": ["Smith, Jane"], "year": "2020",
+        "pdf": str(pdf), "attach_pdf": True}])
     assert zi.cmd_inject(args) == 1
-    first = json.loads(capsys.readouterr().out)
-    assert first["results"][0]["itemKey"] == "ABCDEFGH"
+    out = json.loads(capsys.readouterr().out)
+    assert "saveAttachment answered HTTP 200" in out["results"][0]["attachment_error"]
+
+
+def test_inject_warns_when_it_read_a_lagging_snapshot(tmp_path, monkeypatch,
+                                                      capsys, connector):
+    _corroborated(monkeypatch)
+    real_open = zi.zotero_open
+    monkeypatch.setattr(zi, "zotero_open",
+                        lambda path, *a: (real_open(path)[0], zi.READ_SNAPSHOT))
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"paper")
+    args = _inject_args(_zotero_file(tmp_path), [{
+        "title": "New Paper", "authors": ["Smith, Jane"], "year": "2020",
+        "pdf": str(pdf)}])
     assert zi.cmd_inject(args) == 0
-    second = json.loads(capsys.readouterr().out)
-    assert creates == ["/users/1/items"]
-    assert uploads == ["ABCDEFGH", "ABCDEFGH"]
-    assert second["results"][0]["status"] == "attachment_resumed"
-    assert zi.read_injection_ledger("1")[zi.file_md5(pdf)]["attachmentKey"] == "HGFEDCBA"
-
-
-def test_inject_lost_parent_response_blocks_replay(tmp_path, monkeypatch, capsys):
-    import argparse
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
-    monkeypatch.setattr(zi, "build_index",
-                        lambda *a, **k: {"works": [], "attachments": []})
-    monkeypatch.setattr(zi, "corroborate_entry",
-                        lambda _: {"confidence": "corroborated"})
-    pdf = tmp_path / "paper.pdf"
-    pdf.write_bytes(b"new paper")
-    posts = []
-
-    def lost_response(method, path, key, body=None, **kw):
-        posts.append(path)
-        raise urllib.error.URLError("response lost after remote create")
-
-    monkeypatch.setattr(zi, "api_request", lost_response)
-    args = argparse.Namespace(entries_json=json.dumps([{
-        "title": "New Paper", "authors": ["Smith, Jane"],
-        "year": "2020", "pdf": str(pdf)}]),
-        entries_file=None, collection=None, user_id="1", api_key="key",
-        dry_run=False, skip_corroboration=False, force=False)
-    assert zi.cmd_inject(args) == 1
-    capsys.readouterr()
-    assert zi.read_injection_ledger("1")[zi.file_md5(pdf)]["state"] == "creating"
-    assert zi.cmd_inject(args) == 1
-    second = json.loads(capsys.readouterr().out)
-    assert posts == ["/users/1/items"]
-    assert "inspect remote library" in second["results"][0]["error"]
-
-
-def test_inject_lost_attachment_response_blocks_replay(
-        tmp_path, monkeypatch, capsys):
-    import argparse
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
-    monkeypatch.setattr(zi, "build_index",
-                        lambda *a, **k: {"works": [], "attachments": []})
-    monkeypatch.setattr(zi, "corroborate_entry",
-                        lambda _: {"confidence": "corroborated"})
-    pdf = tmp_path / "paper.pdf"
-    pdf.write_bytes(b"new paper")
-    posts = []
-
-    def lost_attachment(method, path, key, body=None, **kw):
-        posts.append(path)
-        if len(posts) == 1:
-            return {"successful": {"0": {"key": "ABCDEFGH"}}}
-        raise urllib.error.URLError("attachment response lost")
-
-    monkeypatch.setattr(zi, "api_request", lost_attachment)
-    args = argparse.Namespace(entries_json=json.dumps([{
-        "title": "New Paper", "authors": ["Smith, Jane"],
-        "year": "2020", "pdf": str(pdf), "attach_pdf": True}]),
-        entries_file=None, collection=None, user_id="1", api_key="key",
-        dry_run=False, skip_corroboration=False, force=False)
-    assert zi.cmd_inject(args) == 1
-    capsys.readouterr()
-    assert zi.read_injection_ledger("1")[zi.file_md5(pdf)]["state"] == "attachment_creating"
-    assert zi.cmd_inject(args) == 1
-    second = json.loads(capsys.readouterr().out)
-    assert posts == ["/users/1/items", "/users/1/items"]
-    assert "inspect remote library" in second["results"][0]["error"]
-
-
-def test_api_request_retries_429_and_honors_backoff(monkeypatch):
-    from email.message import Message
-    headers = Message()
-    headers["Retry-After"] = "2"
-    waits = []
-    clock = [100.0]
-    monkeypatch.setattr(zi.time, "monotonic", lambda: clock[0])
-    monkeypatch.setattr(zi.time, "sleep",
-                        lambda seconds: (waits.append(seconds),
-                                         clock.__setitem__(0, clock[0] + seconds)))
-    monkeypatch.setattr(zi, "_API_BACKOFF_UNTIL", 0.0)
-    calls = [0]
-
-    class Response:
-        headers = {"Backoff": "3"}
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *args):
-            return False
-
-        def read(self):
-            return b"{}"
-
-    def fake_urlopen(req, timeout):
-        calls[0] += 1
-        if calls[0] == 1:
-            raise urllib.error.HTTPError(req.full_url, 429, "rate", headers,
-                                         None)
-        return Response()
-
-    monkeypatch.setattr(zi.urllib.request, "urlopen", fake_urlopen)
-    assert zi.api_request("GET", "/users/1/items", "key") == {}
-    assert zi.api_request("GET", "/users/1/items", "key") == {}
-    assert waits == [2.0, 3.0]
-
-
-def test_rate_delay_handles_http_date_and_invalid_header():
-    from datetime import datetime, timedelta, timezone
-    from email.utils import format_datetime
-    future = format_datetime(datetime.now(timezone.utc) + timedelta(seconds=30))
-    assert 0 < zi._rate_delay(future) <= 30
-    assert zi._rate_delay("garbled") is None
-    assert zi._rate_delay("NaN") is None
-    assert zi._rate_delay("999999999999999999999999") > zi.MAX_RATE_WAIT
+    out = json.loads(capsys.readouterr().out)
+    assert out["read_mode"] == zi.READ_SNAPSHOT
+    assert "Duplicate Items" in out["warning"]
 
 
 def test_reconcile_discovers_nonstandard_bib_and_orphans(tmp_path):
@@ -2141,145 +2243,141 @@ def test_reconcile_discovers_nonstandard_bib_and_orphans(tmp_path):
     assert found["errors"] == []
 
 
-def test_reconcile_with_nothing_staged_skips_the_index(tmp_path, monkeypatch, capsys):
+def _reconcile_args(tmp_path, **over):
     import argparse
-    (tmp_path / "docs").mkdir()
-    (tmp_path / "docs" / "notes.md").write_text("no staged documents")
-    monkeypatch.setattr(zi, "load_index",
-                        lambda *a, **k: pytest.fail("index loaded for zero files"))
-    args = argparse.Namespace(root=str(tmp_path), apply=False, refresh=False,
-                              out=None, user_id="1", api_key="read")
-    assert zi.cmd_reconcile(args) == 0
-    report = json.loads(capsys.readouterr().out)
-    assert report["verdict"] == "checked" and report["files"] == 0
+    base = dict(root=str(tmp_path), apply=False, out=None, library="user",
+                zotero_db=str(tmp_path / "zotero.sqlite"))
+    base.update(over)
+    return argparse.Namespace(**base)
 
 
-@pytest.mark.parametrize("staging", [False, True])
-def test_reconcile_empty_report_writes_out(tmp_path, monkeypatch, capsys, staging):
-    import argparse
-    if staging:
-        (tmp_path / "docs").mkdir()
-    monkeypatch.setattr(zi, "load_index",
-                        lambda *a, **k: pytest.fail("empty run loaded index"))
-    monkeypatch.setattr(zi, "resolve_read_credentials",
-                        lambda *a: pytest.fail("report-only empty run needs no key"))
-    out = tmp_path / "report.json"
-    args = argparse.Namespace(root=str(tmp_path), apply=False, refresh=False,
-                              out=str(out), user_id="1", api_key=None)
-    assert zi.cmd_reconcile(args) == 0
-    report = json.loads(out.read_text())
-    assert report["verdict"] == ("checked" if staging else "no_staging")
-    assert report["bib_files"] == []
-    assert report["staging_dirs"] == (["docs"] if staging else [])
-    assert report["index_fetched"] is None
-    assert report["actions"] == {} and report["rows"] == []
-    assert "rows" not in json.loads(capsys.readouterr().out)
+def _snap(**over):
+    return {"works": [], "attachments": [], "zotero_db": "zotero.sqlite",
+            "read_mode": "ro", "account": "1", **over}
 
 
-@pytest.mark.parametrize("staging", [False, True])
-@pytest.mark.parametrize("problem", ["missing", "invalid", "wrong_user", "no_read_key", "valid"])
-def test_reconcile_empty_apply_validates_without_index(
-        tmp_path, monkeypatch, capsys, staging, problem):
-    import argparse
-    if staging:
-        (tmp_path / "docs").mkdir()
-    if problem != "missing":
-        config = {"apply": True, "user_id": "2" if problem == "wrong_user" else "1"}
-        (tmp_path / ".zotero-reconcile.json").write_text(
-            "[]" if problem == "invalid" else json.dumps(config))
-
-    def read_credentials(_):
-        if problem == "no_read_key":
-            raise SystemExit("no ZOTERO_API_KEY")
-        return "1", "read"
-
-    monkeypatch.setattr(zi, "resolve_read_credentials", read_credentials)
-    # Nothing to write: like a no-write replay, no write key is required.
-    for name in ("load_index", "build_index", "cmd_inject", "resolve_credentials"):
-        monkeypatch.setattr(zi, name, lambda *a, **k: pytest.fail("empty apply did work"))
-    out = tmp_path / "report.json"
-    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
-                              out=str(out), user_id="1", api_key="read")
-    assert zi.cmd_reconcile(args) == (0 if problem == "valid" else 1)
-    report = json.loads(out.read_text())
-    assert report["apply_status"] == ("nothing" if problem == "valid" else "failed")
-    assert ("apply_error" in report) == (problem != "valid")
-    assert report["index_fetched"] is None
-    capsys.readouterr()
-
-
-def test_reconcile_apply_without_write_key_still_reports(
-        tmp_path, monkeypatch, capsys):
-    import argparse
+def _staged_bib_paper(tmp_path, opt_in='{"apply": true, "user_id": "1"}'):
     docs = tmp_path / "docs"
-    docs.mkdir()
-    (docs / "paper.pdf").write_bytes(b"paper")
-    (tmp_path / "sources.bib").write_text(
-        "@article{one, title={An Interesting Paper}, "
-        "author={Smith, Jane}, year={2020}, file={docs/paper.pdf}}\n")
-    (tmp_path / ".zotero-reconcile.json").write_text(
-        '{"apply": true, "user_id": "1"}')
-    idx = {"works": [], "attachments": [], "fetched": "now"}
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
-    monkeypatch.setattr(zi, "ZOTERO_ENV_FILE", tmp_path / "no-env")
-    monkeypatch.delenv("ZOTERO_RW_API_KEY", raising=False)
-    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
-    monkeypatch.setattr(zi, "load_index", lambda *a, **k: idx)
-    monkeypatch.setattr(zi, "build_index", lambda *a, **k: idx)
-    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
-    monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
-    monkeypatch.setattr(zi, "pdfinfo", lambda _: {})
-    monkeypatch.setattr(zi, "corroborate_entry",
-                        lambda _: {"confidence": "corroborated"})
-    monkeypatch.setattr(zi, "cmd_inject", lambda _: pytest.fail("wrote without key"))
-    out = tmp_path / "report.json"
-    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
-                              out=str(out), user_id="1", api_key="read",
-                              rw_api_key=None)
-    assert zi.cmd_reconcile(args) == 1
-    report = json.loads(out.read_text())
-    assert report["apply_status"] == "failed"
-    assert "ZOTERO_RW_API_KEY" in report["apply_error"]
-    capsys.readouterr()
-
-
-def test_reconcile_staged_file_loads_index(tmp_path, monkeypatch, capsys):
-    import argparse
-    (tmp_path / "docs").mkdir()
-    (tmp_path / "docs/paper.pdf").write_bytes(b"staged")
-    calls = []
-    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
-    def load(*a, **k):
-        calls.append(True)
-        return {"fetched": "now"}
-    monkeypatch.setattr(zi, "load_index", load)
-    monkeypatch.setattr(zi, "audit_one", lambda *a, **k: {"verdict": "identical"})
-    args = argparse.Namespace(root=str(tmp_path), apply=False, refresh=False,
-                              out=None, user_id="1", api_key="read")
-    assert zi.cmd_reconcile(args) == 0
-    assert calls == [True]
-    assert json.loads(capsys.readouterr().out)["files"] == 1
-
-
-def test_reconcile_apply_requires_matching_project_opt_in(
-        tmp_path, monkeypatch, capsys):
-    import argparse
-    docs = tmp_path / "docs"
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
     docs.mkdir()
     pdf = docs / "paper.pdf"
     pdf.write_bytes(b"paper")
     (tmp_path / "sources.bib").write_text(
         "@article{one, title={An Interesting Paper}, "
         "author={Smith, Jane}, year={2020}, file={docs/paper.pdf}}\n")
-    idx = {"works": [], "attachments": [], "fetched": "now"}
-    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
-    monkeypatch.setattr(zi, "load_index", lambda *a, **k: idx)
+    if opt_in is not None:
+        (tmp_path / ".zotero-reconcile.json").write_text(opt_in)
+    return pdf
+
+
+def _quiet_pdf_tools(monkeypatch):
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
     monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
+    monkeypatch.setattr(zi, "pdfinfo", lambda _: {})
+
+
+def _closed_port():
+    import socket
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
+
+
+def test_reconcile_with_nothing_staged_skips_the_library(tmp_path, monkeypatch, capsys):
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "notes.md").write_text("no staged documents")
+    monkeypatch.setattr(zi, "library_snapshot",
+                        lambda *a, **k: pytest.fail("library read for zero files"))
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path)) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["verdict"] == "checked" and report["files"] == 0
+
+
+@pytest.mark.parametrize("staging", [False, True])
+def test_reconcile_empty_report_writes_out_with_the_full_keys(
+        tmp_path, monkeypatch, capsys, staging):
+    if staging:
+        (tmp_path / "docs").mkdir()
+    monkeypatch.setattr(zi, "library_snapshot",
+                        lambda *a, **k: pytest.fail("empty run read the library"))
+    out = tmp_path / "report.json"
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path, out=str(out))) == 0
+    report = json.loads(out.read_text())
+    assert report["verdict"] == ("checked" if staging else "no_staging")
+    assert report["bib_files"] == []
+    assert report["staging_dirs"] == (["docs"] if staging else [])
+    assert report["actions"] == {} and report["rows"] == []
+    full = set(zi.reconcile_report(tmp_path, zi.discover_reconcile_files(tmp_path),
+                                   [], []))
+    assert set(report) == full
+    assert not {"index_fetched", "user_id", "api_key"} & set(report)
+    assert "rows" not in json.loads(capsys.readouterr().out)
+
+
+@pytest.mark.parametrize("staging", [False, True])
+@pytest.mark.parametrize("problem", ["missing", "invalid", "wrong_user",
+                                     "no_db", "valid"])
+def test_reconcile_empty_apply_validates_the_opt_in(
+        tmp_path, monkeypatch, capsys, staging, problem):
+    if staging:
+        (tmp_path / "docs").mkdir()
+    if problem != "missing":
+        config = {"apply": True, "user_id": "2" if problem == "wrong_user" else "1"}
+        (tmp_path / ".zotero-reconcile.json").write_text(
+            "[]" if problem == "invalid" else json.dumps(config))
+    db = tmp_path / "zotero.sqlite"
+    if problem != "no_db":
+        _zotero_file(tmp_path, account="1")
+    else:
+        monkeypatch.setattr(zi, "find_zotero_db", lambda: None)
+    for name in ("library_snapshot", "cmd_inject", "connector_ping"):
+        monkeypatch.setattr(zi, name, lambda *a, **k: pytest.fail("empty apply did work"))
+    out = tmp_path / "report.json"
+    args = _reconcile_args(tmp_path, apply=True, out=str(out), zotero_db=str(db))
+    assert zi.cmd_reconcile(args) == (0 if problem == "valid" else 1)
+    report = json.loads(out.read_text())
+    assert report["apply_status"] == ("nothing" if problem == "valid" else "failed")
+    assert ("apply_error" in report) == (problem != "valid")
+    capsys.readouterr()
+
+
+def test_reconcile_staged_file_reads_the_library(tmp_path, monkeypatch, capsys):
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs/paper.pdf").write_bytes(b"staged")
+    calls = []
+
+    def snapshot(*a, **k):
+        calls.append(True)
+        return _snap()
+
+    monkeypatch.setattr(zi, "library_snapshot", snapshot)
+    monkeypatch.setattr(zi, "audit_one", lambda *a, **k: {"verdict": "identical"})
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path)) == 0
+    assert calls == [True]
+    assert json.loads(capsys.readouterr().out)["files"] == 1
+
+
+def test_reconcile_without_a_database_is_unchecked_and_still_writes_out(
+        tmp_path, monkeypatch, capsys):
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs/paper.pdf").write_bytes(b"staged")
+    out = tmp_path / "report.json"
+    monkeypatch.setattr(zi, "find_zotero_db", lambda: None)
+    args = _reconcile_args(tmp_path, out=str(out),
+                           zotero_db=str(tmp_path / "absent.sqlite"))
+    assert zi.cmd_reconcile(args) == 1
+    report = json.loads(out.read_text())
+    assert report["verdict"] == "unchecked"
+    assert "no local Zotero database found" in report["errors"]
+    capsys.readouterr()
+
+
+def test_reconcile_apply_requires_matching_project_opt_in(
+        tmp_path, monkeypatch, capsys):
+    _staged_bib_paper(tmp_path, opt_in=None)
+    monkeypatch.setattr(zi, "library_snapshot", lambda *a, **k: _snap())
+    _quiet_pdf_tools(monkeypatch)
     monkeypatch.setattr(zi, "cmd_inject", lambda _: pytest.fail("wrote without opt-in"))
-    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
-                              out=None, user_id="1", api_key="read")
+    args = _reconcile_args(tmp_path, apply=True)
     assert zi.cmd_reconcile(args) == 1
     report = json.loads(capsys.readouterr().out)
     assert "apply_error" in report
@@ -2292,112 +2390,83 @@ def test_reconcile_apply_requires_matching_project_opt_in(
 
 def test_reconcile_apply_reports_fresh_match_on_no_write_replay(
         tmp_path, monkeypatch, capsys):
-    import argparse
-    docs = tmp_path / "docs"
-    docs.mkdir()
-    (docs / "paper.pdf").write_bytes(b"paper")
-    (tmp_path / "sources.bib").write_text(
-        "@article{one, title={An Interesting Paper}, "
-        "author={Smith, Jane}, year={2020}, file={docs/paper.pdf}}\n")
-    (tmp_path / ".zotero-reconcile.json").write_text(
-        '{"apply": true, "user_id": "1"}')
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
-    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
-    cached = {"fetched": "before"}
-    fresh = {"fetched": "after"}
-    monkeypatch.setattr(zi, "load_index", lambda *a, **k: cached)
-    monkeypatch.setattr(zi, "build_index", lambda *a, **k: fresh)
+    _staged_bib_paper(tmp_path)
+    reads = iter([_snap(read_mode="before"), _snap(read_mode="after")])
+    monkeypatch.setattr(zi, "library_snapshot", lambda *a, **k: next(reads))
     monkeypatch.setattr(
         zi, "audit_one",
         lambda path, idx, **kwargs: {
             "file": str(path),
-            "verdict": "absent" if idx is cached else "identical",
+            "verdict": "absent" if idx["read_mode"] == "before" else "identical",
         })
     monkeypatch.setattr(zi, "cmd_inject", lambda _: pytest.fail("duplicate write"))
-    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
-                              out=None, user_id="1", api_key="read")
-    assert zi.cmd_reconcile(args) == 0
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path, apply=True)) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["summary"] == {"identical": 1}
     assert report["rows"][0]["verdict"] == "identical"
     assert report["rows"][0]["source"] == "bib"
-    assert report["index_fetched"] == "after"
+    assert report["library"]["read_mode"] == "after"
     assert report["applied"] == []
     assert report["apply_status"] == "nothing"
 
 
 def test_reconcile_apply_imports_only_corroborated_absent_pdf(
         tmp_path, monkeypatch, capsys):
-    import argparse
-    docs = tmp_path / "docs"
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
-    docs.mkdir()
-    pdf = docs / "paper.pdf"
-    pdf.write_bytes(b"paper")
-    (tmp_path / "sources.bib").write_text(
-        "@article{one, title={An Interesting Paper}, "
-        "author={Smith, Jane}, year={2020}, file={docs/paper.pdf}}\n")
-    (tmp_path / ".zotero-reconcile.json").write_text(
-        '{"apply": true, "user_id": "1"}')
-    idx = {"works": [], "attachments": [], "fetched": "now"}
-    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
-    monkeypatch.setattr(zi, "resolve_credentials", lambda _: ("1", "write"))
-    monkeypatch.setattr(zi, "load_index", lambda *a, **k: idx)
-    pulls = []
-    monkeypatch.setattr(zi, "build_index",
-                        lambda *a, **k: pulls.append(1) or idx)
-    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
-    monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
-    monkeypatch.setattr(zi, "pdfinfo", lambda _: {})
-    monkeypatch.setattr(zi, "corroborate_entry",
-                        lambda _: {"confidence": "corroborated"})
+    pdf = _staged_bib_paper(tmp_path)
+    reads = []
+
+    def snapshot(*a, **k):
+        reads.append(_snap())
+        return reads[-1]
+
+    monkeypatch.setattr(zi, "library_snapshot", snapshot)
+    _quiet_pdf_tools(monkeypatch)
+    _corroborated(monkeypatch)
     seen = []
-    outcomes = ["created", "already_in_ledger"]
 
     def fake_inject(args):
         seen.extend(json.loads(args.entries_json))
-        assert args.api_key == "write"
-        assert args._locked_index is idx
-        print(json.dumps({"results": [{"status": outcomes.pop(0)}]}))
+        assert args._snapshot is reads[-1], "inject reuses the locked read"
+        print(json.dumps({"results": [{"status": "created"}]}))
         return 0
 
     monkeypatch.setattr(zi, "cmd_inject", fake_inject)
-    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
-                              out=None, user_id="1", api_key="read")
-    assert zi.cmd_reconcile(args) == 0
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path, apply=True)) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["summary"] == {"injected": 1}
     assert report["applied"] == [{"status": "created", "file": "docs/paper.pdf"}]
     assert seen[0]["title"] == "An Interesting Paper"
     assert seen[0]["pdf"] == str(pdf)
-    assert zi.cmd_reconcile(args) == 0
-    second = json.loads(capsys.readouterr().out)
-    assert second["summary"] == {"already_present": 1}
-    assert second["apply_status"] == "nothing"
-    assert len(pulls) == 2, "one fresh library pull per apply sweep"
+    assert len(reads) == 2, "one fresh library read per apply sweep"
+
+
+def test_reconcile_apply_reports_zotero_not_running(tmp_path, monkeypatch, capsys):
+    _staged_bib_paper(tmp_path)
+    _zotero_file(tmp_path, account="1")
+    _quiet_pdf_tools(monkeypatch)
+    _corroborated(monkeypatch)
+    monkeypatch.setattr(zi, "CONNECTOR_URL", f"http://127.0.0.1:{_closed_port()}")
+    out = tmp_path / "report.json"
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path, apply=True, out=str(out))) == 1
+    report = json.loads(out.read_text())
+    assert report["apply_status"] == "failed"
+    assert "Zotero is not running" in report["apply_error"]
+    capsys.readouterr()
 
 
 def test_reconcile_apply_can_import_orphan_with_complete_pdf_metadata(
         tmp_path, monkeypatch, capsys):
-    import argparse
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
     docs = tmp_path / "docs"
     docs.mkdir()
-    pdf = docs / "orphan.pdf"
-    pdf.write_bytes(b"orphan bytes")
+    (docs / "orphan.pdf").write_bytes(b"orphan bytes")
     (tmp_path / ".zotero-reconcile.json").write_text(
         '{"apply": true, "user_id": "1"}')
-    idx = {"works": [], "attachments": [], "fetched": "now"}
-    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
-    monkeypatch.setattr(zi, "resolve_credentials", lambda _: ("1", "write"))
-    monkeypatch.setattr(zi, "load_index", lambda *a, **k: idx)
-    monkeypatch.setattr(zi, "build_index", lambda *a, **k: idx)
+    monkeypatch.setattr(zi, "library_snapshot", lambda *a, **k: _snap())
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda _: {
         "Title": "A Newly Acquired Paper", "Author": "Jane Smith",
         "CreationDate": "2020"})
-    monkeypatch.setattr(zi, "corroborate_entry",
-                        lambda _: {"confidence": "corroborated"})
+    _corroborated(monkeypatch)
     seen = []
 
     def fake_inject(args):
@@ -2406,38 +2475,45 @@ def test_reconcile_apply_can_import_orphan_with_complete_pdf_metadata(
         return 0
 
     monkeypatch.setattr(zi, "cmd_inject", fake_inject)
-    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
-                              out=None, user_id="1", api_key="read")
-    assert zi.cmd_reconcile(args) == 0
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path, apply=True)) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["summary"]["injected"] == 1
     assert seen[0]["title"] == "A Newly Acquired Paper"
     assert seen[0]["authors"] == ["Jane Smith"]
-    assert not (docs / ".zotero-reconcile.lock").exists()
+    assert sorted(p.name for p in docs.iterdir()) == ["orphan.pdf"], \
+        "the staging lock leaves no file behind"
 
 
 def test_reconcile_apply_defers_orphan_without_metadata_once(
         tmp_path, monkeypatch, capsys):
-    import argparse
-    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
     docs = tmp_path / "docs"
     docs.mkdir()
     (docs / "orphan.pdf").write_bytes(b"unreadable scan")
     (tmp_path / ".zotero-reconcile.json").write_text(
         '{"apply": true, "user_id": "1"}')
-    idx = {"works": [], "attachments": [], "fetched": "now"}
-    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
-    monkeypatch.setattr(zi, "load_index", lambda *a, **k: idx)
-    monkeypatch.setattr(zi, "build_index", lambda *a, **k: idx)
+    monkeypatch.setattr(zi, "library_snapshot", lambda *a, **k: _snap())
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda _: {})
     monkeypatch.setattr(zi, "cmd_inject", lambda _: pytest.fail("wrote orphan"))
-    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
-                              out=None, user_id="1", api_key="read")
-    assert zi.cmd_reconcile(args) == 0
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path, apply=True)) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["summary"] == {"deferred": 1}
     assert report["apply_status"] == "deferred"
+
+
+def test_reconcile_suggests_the_attach_edit_for_a_present_work(
+        tmp_path, monkeypatch, capsys):
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs/paper.pdf").write_bytes(b"staged")
+    monkeypatch.setattr(zi, "library_snapshot", lambda *a, **k: _snap())
+    monkeypatch.setattr(zi, "audit_one", lambda path, _idx, **_kw: {
+        "file": path.name, "verdict": "work_present_no_file",
+        "zotero_key": "WORK0010"})
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path)) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["suggested_edits"] == [{"itemKey": "WORK0010",
+                                          "field": "attachment", "old": "",
+                                          "new": "docs/paper.pdf"}]
 
 
 def test_reconcile_uses_docs_default_only_without_bib(tmp_path):
@@ -2575,7 +2651,7 @@ def test_reconcile_uses_bib_metadata_for_linked_match(tmp_path, monkeypatch):
         seen.update(kwargs)
         return {"matches": [], "consulted": ["doi"], "skipped": []}
 
-    monkeypatch.setattr(zi, "api_matches", fake_match)
+    monkeypatch.setattr(zi, "library_matches", fake_match)
     row = zi.audit_one(pdf, {"works": [], "attachments": []}, bib_entry={
         "_key": "levin", "title": "Useful Paper", "doi": "10.1234/test",
         "author": "Levin, John and Smith, Jane", "year": "1997"
@@ -2597,7 +2673,7 @@ def test_reconcile_normalizes_natural_order_bib_author(tmp_path, monkeypatch):
         seen.update(kwargs)
         return {"matches": [], "consulted": [], "skipped": []}
 
-    monkeypatch.setattr(zi, "api_matches", fake_match)
+    monkeypatch.setattr(zi, "library_matches", fake_match)
     zi.audit_one(pdf, {"works": [], "attachments": []}, bib_entry={
         "author": "John Levin and Jane Smith", "title": "Useful Paper"
     })
@@ -2606,7 +2682,6 @@ def test_reconcile_normalizes_natural_order_bib_author(tmp_path, monkeypatch):
 
 def test_reconcile_report_is_read_only_and_counts_both_directions(
         tmp_path, monkeypatch, capsys):
-    import argparse
     docs = tmp_path / "docs"
     docs.mkdir()
     (docs / "linked.pdf").write_bytes(b"linked")
@@ -2614,16 +2689,11 @@ def test_reconcile_report_is_read_only_and_counts_both_directions(
     (tmp_path / "sources.bib").write_text(
         "@article{one, title={Useful Paper}, file={docs/linked.pdf}}\n"
     )
-    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
-    monkeypatch.setattr(zi, "load_index", lambda *_a, **_k: {
-        "fetched": "2026-09-23", "works": [], "attachments": []
-    })
+    monkeypatch.setattr(zi, "library_snapshot", lambda *_a, **_k: _snap())
     monkeypatch.setattr(zi, "audit_one", lambda path, _idx, **_kw: {
         "file": path.name, "verdict": "absent"
     })
-    args = argparse.Namespace(root=str(tmp_path), refresh=False,
-                              user_id=None, api_key=None, out=None)
-    assert zi.cmd_reconcile(args) == 0
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path)) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["summary"] == {"absent": 2}
     assert {r["source"] for r in report["rows"]} == {"bib", "orphan"}
@@ -2632,22 +2702,16 @@ def test_reconcile_report_is_read_only_and_counts_both_directions(
 
 def test_reconcile_file_output_keeps_stdout_compact_and_reports_ties(
         tmp_path, monkeypatch, capsys):
-    import argparse
     docs = tmp_path / "docs"
     docs.mkdir()
     (docs / "paper.pdf").write_bytes(b"paper")
-    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
-    monkeypatch.setattr(zi, "load_index", lambda *_a, **_k: {
-        "fetched": "2026-09-23", "works": [], "attachments": []
-    })
+    monkeypatch.setattr(zi, "library_snapshot", lambda *_a, **_k: _snap())
     monkeypatch.setattr(zi, "audit_one", lambda path, _idx, **_kw: {
         "file": path.name, "verdict": "work_present_no_file",
         "also_matches": [{"key": "B", "title": "Paper", "why": ["title"]}]
     })
     output = tmp_path / "report.json"
-    args = argparse.Namespace(root=str(tmp_path), refresh=False,
-                              user_id=None, api_key=None, out=str(output))
-    assert zi.cmd_reconcile(args) == 0
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path, out=str(output))) == 0
     compact = json.loads(capsys.readouterr().out)
     full = json.loads(output.read_text())
     assert "rows" not in compact
