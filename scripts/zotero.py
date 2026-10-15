@@ -2200,6 +2200,35 @@ def cmd_match(args: argparse.Namespace) -> int:
     return 0
 
 
+def write_report_file(output: Path, body: str, db_path: Path) -> None:
+    """Write a 0600 report, never onto the Zotero database or its companions.
+
+    Real paths are compared even when the file does not exist yet, so a
+    dangling symlink to `zotero.sqlite-wal` is refused; O_NOFOLLOW refuses a
+    symlink swapped in after that check; and the opened file is compared by
+    inode before it is truncated, which catches a hard link.
+    """
+    guarded = [Path(f"{db_path}{suffix}")
+               for suffix in ("", "-wal", "-shm", "-journal")]
+    refusal = "dedup-report: --out names the Zotero database"
+    if os.path.realpath(output) in {os.path.realpath(g) for g in guarded}:
+        raise SystemExit(refusal)
+    try:
+        fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    except OSError as exc:
+        raise SystemExit(f"dedup-report: cannot open --out {output}: {exc}") from exc
+    with os.fdopen(fd, "w", encoding="utf-8") as stream:
+        opened = os.fstat(stream.fileno())
+        for g in guarded:
+            if g.exists():
+                st = g.stat()
+                if (st.st_dev, st.st_ino) == (opened.st_dev, opened.st_ino):
+                    raise SystemExit(refusal)
+        os.ftruncate(stream.fileno(), 0)
+        os.fchmod(stream.fileno(), 0o600)
+        stream.write(body)
+
+
 def cmd_dedup_report(args: argparse.Namespace) -> int:
     """Report existing-library duplicate-file candidates without Zotero writes."""
     db_path = resolve_db_path(args.zotero_db)
@@ -2224,17 +2253,7 @@ def cmd_dedup_report(args: argparse.Namespace) -> int:
     body = (json.dumps(report, indent=2, ensure_ascii=False) + "\n"
             if args.format == "json" else duplicate_hash_html(report))
     if args.out:
-        output = Path(args.out)
-        guarded = [Path(f"{db_path}{suffix}")
-                   for suffix in ("", "-wal", "-shm", "-journal")]
-        if output.exists() and any(g.exists() and os.path.samefile(output, g)
-                                   for g in guarded):
-            # samefile also catches a symlink or a hard link to the database.
-            raise SystemExit("dedup-report: --out names the Zotero database")
-        fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-        with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            os.fchmod(stream.fileno(), 0o600)
-            stream.write(body)
+        write_report_file(Path(args.out), body, db_path)
         print(f"dedup-report: {report['candidate_clusters']} candidate groups "
               f"written to {args.out}")
     else:
@@ -2588,8 +2607,8 @@ def reconcile_apply_config(root: Path, account: str | None) -> dict[str, Any]:
         raise ValueError("the local Zotero is signed in to no account; "
                          "cannot check the configured user_id")
     if str(config.get("user_id")) != str(account):
-        raise ValueError("configured user_id differs from target library "
-                         f"(local Zotero is signed in as {account})")
+        raise ValueError("configured user_id differs from the account the "
+                         f"local Zotero is signed in as ({account})")
     return config
 
 

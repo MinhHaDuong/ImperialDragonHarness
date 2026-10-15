@@ -173,8 +173,11 @@ def test_out_may_not_name_the_database(tmp_path):
     os.link(db, hard)
     sym = tmp_path / "also-innocent.json"
     sym.symlink_to(db)
-    for target in (db, hard, sym):
+    dangling = tmp_path / "dangling.json"
+    dangling.symlink_to(f"{db}-wal")  # Zotero closed: no WAL file yet
+    for target in (db, hard, sym, dangling):
         args = argparse.Namespace(zotero_db=str(db), format="json", out=str(target))
         with pytest.raises(SystemExit, match="names the Zotero database"):
             zi.cmd_dedup_report(args)
     assert db.read_bytes() == before
+    assert not Path(f"{db}-wal").exists()

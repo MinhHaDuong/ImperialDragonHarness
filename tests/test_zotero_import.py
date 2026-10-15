@@ -2263,6 +2263,9 @@ def test_connector_ignores_proxy_settings(monkeypatch, connector):
     monkeypatch.delenv("no_proxy", raising=False)
     monkeypatch.delenv("NO_PROXY", raising=False)
     monkeypatch.setattr(zi, "_CONNECTOR_OPENER", zi.connector_opener())
+    # Drop urllib's cached global opener too, so a regression to plain
+    # urlopen would build one under the dead proxy and fail here.
+    monkeypatch.setattr(zi.urllib.request, "_opener", None)
     zi.connector_ping()
     assert connector["calls"][-1][0] == "ping"
 
@@ -2467,7 +2470,7 @@ def test_reconcile_apply_requires_matching_project_opt_in(
         '{"apply": true, "user_id": "2"}')
     assert zi.cmd_reconcile(args) == 1
     report = json.loads(capsys.readouterr().out)
-    assert "differs from target" in report["apply_error"]
+    assert "differs from the account" in report["apply_error"]
 
 
 def test_reconcile_apply_reports_fresh_match_on_no_write_replay(
