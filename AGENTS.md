@@ -25,7 +25,7 @@ Missing memory does not block work; report a known incomplete installation.
 
 At roar, commit significant facts here; uncleared material only as encrypted `.age`;
 preserve journal entries and link corrections from new entries. Do not derive
-lessons, propose rules, or write into the harness for another project; DREAM
+lessons, propose rules, or write into the harness for another project; HOARD
 separately prunes, merges and refreshes themes, preserving sources. MEMORY.md
 is at most 100 lines; no automatic rule proposals or timer.
 
@@ -60,10 +60,15 @@ repository; uncleared material stays encrypted. When the harness itself is
 the explicitly assigned project, its own project memory follows the same
 convention.
 
-Roar records significant facts only. Dream consolidates project memory only.
+Roar records significant facts only. Hoard consolidates project memory only.
 Neither proposes or creates rules, edits AGENTS.md, or promotes experiences into
 instructions. Crystallisation is a separate task requiring an explicit user
 request, including the intended destination. Repetition, general usefulness and
 acceptance of a memory PR do not grant that authorization. Explicit Brood may
 implement project improvements; a named harness receives nominations only,
 until separately authorized implementation. Sources remain append-only.
+
+On explicit Hoard invocation, one-way migration may mechanically update
+inventoried active path/command references in the selected project's isolated
+branch, including AGENTS.md. This grants no policy changes or consolidation
+writes outside memory.

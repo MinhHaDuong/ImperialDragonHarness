@@ -29,7 +29,7 @@ DREAMS = MEMORY / "dreams"
 # hijack these pilot-specific expectations (they describe this dream's
 # correction, ledgers and passes).
 PILOT_REPORT = DREAMS / "2026-10-02-pilot-first-dream.md"
-SKILL = REPO / "skills" / "dream" / "SKILL.md"
+SKILL = REPO / "skills" / "hoard" / "SKILL.md"
 
 # Journal entries on origin/main before the pilot dream. Their blob pins
 # prove the dream did not rewrite or move any of them; entries captured

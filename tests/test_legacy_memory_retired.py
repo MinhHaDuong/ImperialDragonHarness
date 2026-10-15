@@ -8,9 +8,9 @@ pytestmark = pytest.mark.adherence
 REPO = Path(__file__).resolve().parents[1]
 
 
-def test_legacy_dream_entrypoints_are_retired():
+def test_legacy_hoard_entrypoints_are_retired():
     for name in ("commit.py", "read-index.py", "provenance.py"):
-        assert not (REPO / "skills" / "dream" / name).exists(), name
+        assert not (REPO / "skills" / "hoard" / name).exists(), name
 
 
 def test_active_index_excludes_retired_rule_advice():

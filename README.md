@@ -19,7 +19,7 @@ Every task passes through five phases:
 | 2 | **Plan** | Design, write tickets with test specs |
 | 3 | **Execute** | TDD red/green/refactor, open PR |
 | 4 | **Verify** | Review PR, fix, iterate ≤3 cycles |
-| 5 | **Celebrate** | Reflect, consolidate memory, dream forward |
+| 5 | **Celebrate** | Reflect, consolidate memory, look ahead |
 
 ## Structure
 
@@ -39,7 +39,7 @@ ImperialDragonHarness/          # reference clone: ~/.agents
 ```
 
 Project memory is written in each project’s own repository, never into this
-installation. Roar captures facts; dream consolidates memory without proposing
+installation. Roar captures facts; hoard consolidates memory without proposing
 rules. Crystallisation requires a separate explicit user request.
 
 See [ROADMAP.md](ROADMAP.md) for priorities and [STATE.md](STATE.md) for the
@@ -73,7 +73,7 @@ cd ~/.agents
 
 If `~/.agents` already exists, inspect it first. Other checkout locations are
 supported by the portable registration contract: entry points resolve the
-checkout from their real location or an explicit root argument. Dream/memory
+checkout from their real location or an explicit root argument. Hoard/memory
 uses project-local Markdown in v8, not the retired shared-store provenance
 helper. The old helper handoff 1002 is closed WONTDO; safe capture and
 integration landed in 0988 (pinned helper + reproduction suite).
@@ -126,16 +126,16 @@ belong in the external keystore and are resolved by task-specific tools.
 | `/aap-annonce` | Process a call-for-proposals announcement (AAP, appel à projets): file it, calendar deadlines, assess fit, propose three entry angles. |
 | `/bib-merge` | Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries. |
 | `/biblio-saturation` | Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness. |
-| `/brood` | Turn accepted Dream findings into project improvements and scoped harness nominations, on explicit request. |
+| `/brood` | Turn accepted Hoard findings into project improvements and scoped harness nominations, on explicit request. |
 | `/choose-venue` | Choose where to submit a paper: shortlist journals, or conferences, by fit and diamond open access. |
 | `/coaching` | Replay the frozen, already merged PR benchmark board through a contained reviewer seat and report read-only ground-truth diagnostics. |
 | `/conference-submission-prep` | Prepare a humanities and social sciences conference submission from its call for papers. |
 | `/critical-lit-review` | Critical literature review (état de l'art) in history of economics and STS: object, actors, controversies. |
 | `/cut-prose` | Cut a document to a word or page budget by removing whole passages before condensing anything. Use for a manuscript trim, a reviewer-mandated length cut, or a slot-limited abstract. |
 | `/dashboard` | Ticket dashboard: open tickets, branches and merge requests; full state plus a delta led by the ticket count. |
-| `/dream` | Consolidate one project's repository memory without proposing rules. |
 | `/external-peer-review` | Obtain independent external frontier-class peer reviews of a manuscript PDF; synthesize convergent findings into one verdict. |
 | `/gaze` | Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller. |
+| `/hoard` | Consolidate one project's repository memory without proposing rules. |
 | `/hunt` | Begin work on a ticket — creates a worktree and writes the first test. |
 | `/ingest-decision-letter` | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check that maps every remark to a ticket. Turns Revise-and-Resubmit intake into one deterministic pass instead of a manual re-count. |
 | `/lair` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
