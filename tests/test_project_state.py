@@ -272,5 +272,5 @@ def test_hooks_state_wired_into_collectors():
 
     source = inspect.getsource(ps.main)
     assert '"hooks": hooks_state' in source, (
-        "hooks_state must be a collector so the healthcheck skill sees it"
+        "hooks_state must be a collector so the yawn skill sees it"
     )

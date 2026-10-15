@@ -10,7 +10,7 @@ three sessions killed at once, ending in a reboot).
 
 Two consumers:
 
-* `project-state.py` calls `scan()` for healthcheck item 12 — usage against the
+* `project-state.py` calls `scan()` for yawn item 12 — usage against the
   per-user cap, and the session directories whose session has no live process.
   Report only.
 * `/molt` calls `--sweep`, which removes exactly those orphans. It re-runs the
@@ -36,7 +36,7 @@ sweep is scoped to the current user's own root and why the age rail exists.
 
 Never relocates the temp root: the runtime's relocation knob is an operator
 decision (the root must also stay short — sandbox socket paths are built under
-it), so this reports and cleans, and the healthcheck names the knob.
+it), so this reports and cleans, and the yawn names the knob.
 """
 
 import argparse
@@ -71,7 +71,7 @@ WARN_FRACTION = 0.6
 WARN_ORPHAN_COUNT = 8
 # Never sweep a directory touched more recently than this.
 MIN_ORPHAN_AGE_MINUTES = 15
-# Walk ceiling, so a pathological tree cannot stall a healthcheck.
+# Walk ceiling, so a pathological tree cannot stall a yawn.
 MAX_ENTRIES = 200_000
 
 

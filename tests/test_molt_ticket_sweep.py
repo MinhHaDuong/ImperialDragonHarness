@@ -11,7 +11,7 @@ from child_env import child_env
 ROOT = Path(__file__).resolve().parent.parent
 SWEEP = ROOT / "skills/molt/ticket-sweep.sh"
 MOLT = ROOT / "skills/molt/SKILL.md"
-HEALTHCHECK = ROOT / "skills/healthcheck/SKILL.md"
+YAWN = ROOT / "skills/yawn/SKILL.md"
 OLD_ERG_REV = "51ee49c"
 
 TICKET = (
@@ -225,8 +225,8 @@ def test_skills_call_the_script():
     molt = MOLT.read_text()
     for sub in ("close <id>", "archive", "merged-probe <branch>"):
         assert f'ticket-sweep.sh" {sub}' in molt, sub
-    assert "ticket-sweep.sh" in HEALTHCHECK.read_text()
-    assert "grep -oP" not in molt + HEALTHCHECK.read_text()
+    assert "ticket-sweep.sh" in YAWN.read_text()
+    assert "grep -oP" not in molt + YAWN.read_text()
 
 
 @pytest.mark.integration
@@ -234,7 +234,7 @@ def test_reconcile_path_is_per_run(tmp_path):
     """Run molt step 1.8 twice with a stub zotero.py; the --out paths must differ."""
     import re
 
-    section = MOLT.read_text().split("1.8. **Reconcile", 1)[1].split("2. **Healthcheck.**", 1)[0]
+    section = MOLT.read_text().split("1.8. **Reconcile", 1)[1].split("2. **Yawn.**", 1)[0]
     block = re.findall(r"```bash\n(.*?)\n\s*```", section, re.S)[0]
     root = tmp_path / "idh"
     (root / "scripts").mkdir(parents=True)
@@ -282,7 +282,7 @@ def test_prune_skips_untracked_duplicate(tmp_path):
 
 
 def reconcile_block():
-    section = MOLT.read_text().split("1.8. **Reconcile", 1)[1].split("2. **Healthcheck.**", 1)[0]
+    section = MOLT.read_text().split("1.8. **Reconcile", 1)[1].split("2. **Yawn.**", 1)[0]
     return reconcile_blocks(section)[0]
 
 

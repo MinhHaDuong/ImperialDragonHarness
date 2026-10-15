@@ -138,7 +138,8 @@ The contract, measured 2026-09-28 on all three pilot runtimes:
    No build step, no second copy, no `IDH_HOME` — zero of the three runtimes
    needed it, so per the 0803 gate it does not exist.
 
-`healthcheck` is the proof slice: `bin/idh install skill healthcheck` makes
+`yawn` is the current name of the proof slice (recorded as `healthcheck` in
+the dated pilot evidence): `bin/idh install skill yawn` makes
 it discoverable everywhere, and its `project-state.py` probe runs through
 Claude Code, Codex and Pi against the live repository. The deterministic
 half is `tests/test_skill_seam.py`: the derivation is pinned against

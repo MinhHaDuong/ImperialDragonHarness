@@ -2,7 +2,7 @@
   "schema_version": 1,
   "canonical_sources": {
     "perch": "skills/perch/SKILL.md",
-    "healthcheck": "skills/healthcheck/SKILL.md",
+    "yawn": "skills/yawn/SKILL.md",
     "dirty-reset-guard": "scripts/guard-destructive-bash.sh"
   },
   "versions": [

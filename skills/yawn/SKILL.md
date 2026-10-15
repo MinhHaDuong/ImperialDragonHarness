@@ -1,5 +1,5 @@
 ---
-name: healthcheck
+name: yawn
 description: "Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent."
 disable-model-invocation: false
 user-invocable: true
@@ -8,7 +8,7 @@ argument-hint:
 
 Bounded, mostly mechanical audit work; choose the worker per the `route` skill (`skills/route/SKILL.md`).
 
-# Repo healthcheck
+# Yawn — repository healthcheck
 
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
@@ -101,7 +101,7 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
 ## Output format
 
 ```
-## Healthcheck — {date}
+## Yawn — {date}
 
 | Check            | Status | Detail                       |
 |------------------|--------|------------------------------|

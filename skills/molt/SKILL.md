@@ -1,6 +1,6 @@
 ---
 name: molt
-description: "Repo housekeeping — git sync, healthcheck, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps."
+description: "Repo housekeeping — git sync, yawn, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps."
 user-invocable: true
 argument-hint:
 ---
@@ -41,7 +41,7 @@ Run full repo housekeeping and act on every finding.
    `erg` *before* step 1's git phase, because both erg-driven surfaces a sweep
    acts on run against whatever binary is on `PATH`: the corpus check
    `erg check tickets/` inside `housekeeping-git.sh`, and `erg ready` inside the
-   step-2 healthcheck probe (`project-state.py` prefers `which erg`). A stale
+   step-2 yawn probe (`project-state.py` prefers `which erg`). A stale
    installed binary produces *false* violations on tickets using format the old
    binary predates — six bogus folder/header hits on closed tickets carrying the
    newer `Label:` header, 2026-06-04 — and an autonomous sweep would file
@@ -116,12 +116,12 @@ Run full repo housekeeping and act on every finding.
    or the session id named by anything running. A directory touched in the
    last few minutes is skipped too, so a session that has just created its
    directory cannot be caught in the gap. It computes its own list rather than
-   trusting the healthcheck's: a session can start between the two. Silent when
+   trusting the yawn's: a session can start between the two. Silent when
    there is nothing to remove; one line per directory otherwise, and it never
    exits non-zero. Nothing to commit — this is host state, not repo state.
 
    Add `--dry-run` to list without removing. The temp root itself is never
-   relocated here: that is an operator decision (check 12 of the healthcheck
+   relocated here: that is an operator decision (check 12 of the yawn
    names the knob).
 
 1.8. **Reconcile document staging with Zotero.** In the current project checkout,
@@ -150,8 +150,8 @@ Run full repo housekeeping and act on every finding.
    `unchecked`, `deferred`, and nonzero exit statuses; never read an empty
    report as proof that the library is complete. Do not purge staging files.
 
-2. **Healthcheck.** Invoke /healthcheck. The probe (`project-state.py`)
-   runs once inside healthcheck and covers all checks — do not re-run git
+2. **Yawn.** Invoke /yawn. The probe (`project-state.py`)
+   runs once inside yawn and covers all checks — do not re-run git
    commands already collected there. Parse the **Action plan** section from
    the output: the bold headings `**fix-now**`, `**open-ticket**`, `**skip**`
    are the contract interface consumed by steps 3–5 below.
@@ -207,10 +207,10 @@ Run full repo housekeeping and act on every finding.
 3. **Fix `fix-now` items.** Apply every `fix-now` item inline. If any fixes were
    applied, commit once: `chore: housekeeping fixes (sweep)`.
 
-   **Branch deletion (fix-now from healthcheck check 4):** When a fix-now bullet says
+   **Branch deletion (fix-now from yawn check 4):** When a fix-now bullet says
    to delete a branch, apply these guards before acting. Skip (log a warning) if any
    guard trips:
-   - **Merge guard**: re-run the merge probe from healthcheck check 4 and act on
+   - **Merge guard**: re-run the merge probe from yawn check 4 and act on
      its exit status. Exit 0 → merged, deletion may proceed. Exit 1 → the branch
      is not merged, skip deletion. Exit 2 (`could-not-determine`) → the branch
      cannot be mapped to a landed merge request: skip deletion and log it; never

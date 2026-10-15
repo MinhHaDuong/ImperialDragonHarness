@@ -23,8 +23,8 @@ It also edits the shell loader: review these host-wide actions before
 running it. Scheduling is left to the host. There is no dry run or runtime selector.
 Same-name resource conflicts are refused; unrelated content is preserved.
 
-The measured runtime pilot covers perch, healthcheck and the dirty-reset
-guard. Installing or discovering the whole catalog does not certify every
+The measured runtime pilot covers perch, healthcheck (now yawn) and the
+dirty-reset guard. Installing or discovering the whole catalog does not certify every
 skill's workflow. The legacy helper handoff 1002 is WONTDO. Project-local v8
 memory is tracked by 0911/0917, the pilot 0920, and integration 0988 after the
 pilot.
@@ -32,6 +32,23 @@ pilot.
 Before interactive launches, the shell wrappers validate the selected
 runtime's registrations. Broken required resources refuse the launch and
 recommend `idh install`. `IDH_SKIP_VALIDATE=1` is an explicit, logged bypass.
+
+## Rename activation: healthcheck to yawn (1103)
+
+Host registration migration is pending until the canonical rename merges.
+Run installation from the active primary checkout after it contains
+`skills/yawn/SKILL.md`, then run `bin/idh check` and read back the managed
+skill projections for Claude Code, Codex and Pi. The installer discovers
+canonical names dynamically; no compatibility alias is provided.
+
+Before installation, inspect old `healthcheck` registrations and remove only
+symlinks demonstrably managed by this checkout (their targets name its former
+`skills/healthcheck` directory). Preserve foreign links and real directories
+for operator inspection. After the rename, `bin/idh uninstall skill healthcheck`
+cannot perform this cleanup: it requires the now-absent canonical skill.
+Verify that the old managed registrations are absent and the new `yawn`
+registrations resolve into the active primary checkout, never a ticket worktree.
+The dated pilot evidence retains the name under which it was measured.
 
 ## Guard smoke and trust
 
