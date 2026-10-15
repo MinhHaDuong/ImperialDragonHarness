@@ -2763,7 +2763,12 @@ def emit_reconcile_report(report: dict[str, Any], out: str | None) -> None:
 
 def reconcile_empty_report(root: Path, found: dict[str, Any],
                            args: argparse.Namespace) -> int:
-    """Validate empty apply requests, but never rebuild an unused index."""
+    """Validate empty apply requests, but never rebuild an unused index.
+
+    Like a no-write replay on the main path, an empty apply needs the opt-in
+    and read credentials only; a write key is resolved only when there is
+    something to write.
+    """
     staging = [str(p.relative_to(root)) for p in found["staging_dirs"]
                if p.is_dir()]
     report = {"verdict": "checked" if staging or found["bib_files"] else "no_staging",
@@ -2776,11 +2781,6 @@ def reconcile_empty_report(root: Path, found: dict[str, Any],
         try:
             user, _ = resolve_read_credentials(args)
             reconcile_apply_config(root, user)
-            write_args = argparse.Namespace(
-                user_id=user, api_key=getattr(args, "rw_api_key", None))
-            write_user, _ = resolve_credentials(write_args)
-            if write_user != user:
-                raise ValueError("write credential targets another user")
             report.update({"applied": [], "apply_status": "nothing"})
         except (OSError, ValueError, TypeError, SystemExit) as exc:
             report.update({"apply_error": str(exc), "apply_status": "failed"})
@@ -2845,10 +2845,9 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                "tied_parents": "several records tie at the top tier "
                                "(also_matches); pick one before attach --parent"}
     report = {"verdict": "unchecked" if errors else "checked",
-              "root": str(root.resolve()),
-              "bib_files": [str(p.relative_to(root.resolve()))
-                            for p in found["bib_files"]],
-              "staging_dirs": [str(p.relative_to(root.resolve()))
+              "root": str(root),
+              "bib_files": [str(p.relative_to(root)) for p in found["bib_files"]],
+              "staging_dirs": [str(p.relative_to(root))
                                for p in found["staging_dirs"] if p.is_dir()],
               "index_fetched": idx["fetched"], "files": len(rows),
               "summary": summary,
@@ -2956,7 +2955,8 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                         report["actions"].pop("absent", None)
                     report["apply_status"] = "deferred" if deferred else "nothing"
         except (OSError, ValueError, KeyError, TypeError, RuntimeError,
-                urllib.error.URLError) as exc:
+                urllib.error.URLError, SystemExit) as exc:
+            # SystemExit: a missing write key must still leave a report.
             report["apply_error"] = str(exc)
             report["apply_status"] = "failed"
             summary["apply_failed"] = 1

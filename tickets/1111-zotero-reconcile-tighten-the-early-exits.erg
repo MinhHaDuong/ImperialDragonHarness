@@ -8,6 +8,8 @@ Author: Minh Ha-Duong
 
 2026-10-15T16:14Z ChatGPT note Empty-run reports and apply preflight corrected; focused offline regression tests pass. Full suite remains unverified after automatic review blocked a broad run that could contact Zotero.
 
+2026-10-15T17:20Z Claude note Review fixes: restore executable bit; empty apply needs read credentials only, like a no-write replay; main path reports a missing write key instead of exiting.
+
 --- body ---
 ## Context
 PR #1434 added an early exit to `scripts/zotero.py reconcile` when nothing is
@@ -35,9 +37,12 @@ flagged minor gaps (comment 6194717551):
 
 ## Validation of the proposed fix
 
-19 focused offline tests passed, including both empty exits, output artifacts,
-invalid/missing opt-in, missing/mismatched write credentials, staged-file index
-loading, unchanged no-write replay and the relocated backfill shell test.
+Focused offline tests pass, including both empty exits, output artifacts,
+invalid/missing opt-in, missing read credentials, staged-file index loading,
+unchanged no-write replay, a missing write key on the main path (report still
+written) and the relocated backfill shell test. An empty apply, like a no-write
+replay, needs the opt-in and read credentials only; the write key is resolved
+only when there is something to write.
 Ruff and git diff --check pass. Full make check has not passed here: automatic
 approval review blocked the broad test run because it could contact Zotero.
 The ticket stays open pending full validation and review.
