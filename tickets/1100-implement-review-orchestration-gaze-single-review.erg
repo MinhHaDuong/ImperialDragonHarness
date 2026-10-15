@@ -6,6 +6,8 @@ Author: Minh Ha-Duong
 --- log ---
 2026-10-14T20:26Z reviewer created Split from 1096 at the author's request: 1096 keeps the design and closes, this ticket carries the implementation.
 
+2026-10-15T10:12Z ChatGPT note Author-requested tentative review storage/delivery proposal recorded below; compatibility with the unread design specification remains to be checked.
+
 --- body ---
 ## Context
 
@@ -53,3 +55,26 @@ Committed: about 12 agent-hours and 2.15 author-hours. Ticket 1099
 - [ ] Child 0's project PRs merged before review-pr is retired.
 - [ ] Affected skills, profiles, callers, documentation and catalog updated;
       integration of the children verified before this tracker closes.
+
+## Tentative proposal — review storage and delivery (2026-10-15)
+
+Author-requested discussion note only, subject to compatibility with
+`docs/discussions/2026-10-14-1096-design.md`, which was not read during
+this discussion. This does not supersede the adopted specification.
+
+- Store tracked reports under
+  `reviews/<base-short>..<head-short>/<agent>-<angle>.md`: one directory
+  per reviewed range, one report per agent and angle.
+- Use SHA abbreviations of at least six characters, extended when needed
+  for uniqueness; preserve the complete base/head SHAs in each report.
+- Reviewers work in their own worktrees and return their final reports via
+  CLI stdout or structured final-result output. The launcher captures and
+  validates the result and writes the file in the orchestrator's worktree,
+  without requiring reviewers to write into that worktree.
+- Commit the collected reports on the delivery branch so they travel with
+  the code/PR. Report commits follow the reviewed head and are outside the
+  reviewed range.
+
+Reconcile this option with the specification's transport, controller-written
+artifact, evidence and reuse contracts before adoption. Existing exit
+criteria remain unchanged.
