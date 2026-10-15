@@ -8,9 +8,12 @@ and `docs/tournament-graphs-en/` relative to that repository.
 
 The harness owns the worker routing skill, its grid, coverage and door cache.
 It consumes reviewed arena evidence; it does not host the tournament runner,
-protocol, reporting scripts, reports or their tests. Grid numbers were not
-changed during the separation and remain historical evidence, not corrected
-publication scores or cycle-3 results.
+protocol, reporting scripts, reports or their tests. Legacy grid numbers were not
+changed during the separation and remain historical evidence rather than
+corrected publication scores. The 2026-10-15 refresh adds two author-selected,
+provisional cycle-3 candidates (f1x and f2m); their pinned readout, metric
+definitions and coverage limits are recorded in the route grid and coverage
+files. Existing legacy rows and role clusters remain unchanged.
 
 To prepare an explicit refresh in a harness review branch, set both roots:
 
