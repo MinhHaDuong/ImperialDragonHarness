@@ -149,3 +149,27 @@ def test_cli_reads_an_unlocked_wal_live(tmp_path):
     assert result.returncode == 0, result.stderr
     # Item 11 trashed in the WAL only: its cross-parent pair disappears.
     assert '"candidate_clusters": 0' in result.stdout
+
+
+def test_report_names_its_read_mode(tmp_path, capsys):
+    import argparse
+    db = tmp_path / "zotero.sqlite"
+    fixture_db(db)
+    args = argparse.Namespace(zotero_db=str(db), format="json", out=None)
+    assert zi.cmd_dedup_report(args) == 0
+    assert '"read_mode": "ro"' in capsys.readouterr().out
+    args.format = "html"
+    assert zi.cmd_dedup_report(args) == 0
+    assert "read mode: ro" in capsys.readouterr().out
+
+
+def test_out_may_not_name_the_database(tmp_path):
+    import argparse
+    db = tmp_path / "zotero.sqlite"
+    fixture_db(db)
+    before = db.read_bytes()
+    for target in (db, Path(f"{db}-wal")):
+        args = argparse.Namespace(zotero_db=str(db), format="json", out=str(target))
+        with pytest.raises(SystemExit, match="names the Zotero database"):
+            zi.cmd_dedup_report(args)
+    assert db.read_bytes() == before

@@ -10,9 +10,8 @@ skill directories must be gone, and no live file may cite the retired skill
 names in a citation form (a skills/ path, a backticked /command invocation,
 or a backticked bare name).
 
-Bare unbackticked prose is out of scope for the skill-name sweep: the
-historical cache segment ~/.cache/zotero-import/ deliberately keeps the old
-name (ticket 1018), and record files quote past runs in plain prose.
+Bare unbackticked prose is out of scope for the skill-name sweep: record
+files quote past runs in plain prose.
 """
 
 import re

@@ -172,8 +172,9 @@ def zotero_open(db_path: Path, busy_timeout: float = READ_BUSY_TIMEOUT
         conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
         return conn, READ_LIVE
     except sqlite3.OperationalError as exc:
-        logging.warning("zotero.sqlite is locked (%s); reading the immutable "
-                        "snapshot, which can lag a running Zotero", exc)
+        logging.warning("zotero.sqlite cannot be read live (%s); reading the "
+                        "immutable snapshot, which can lag a running Zotero",
+                        exc)
     return sqlite3.connect(f"{uri}?immutable=1", uri=True), READ_SNAPSHOT
 
 
@@ -656,7 +657,8 @@ def duplicate_hash_html(report: dict[str, Any]) -> str:
              "<title>Zotero duplicate-file candidates</title>",
              "<h1>Zotero duplicate-file candidates</h1>",
              (f"<p>{report['candidate_clusters']} hash group(s) in My Library; "
-              f"{report['hashed_attachments_scanned']} hashed attachments scanned. "
+              f"{report['hashed_attachments_scanned']} hashed attachments scanned "
+              f"(read mode: {esc(str(report.get('read_mode')))}). "
               "These are candidates, not merge instructions.</p>"),
              ("<p>The match key is the attachment content hash. Additional "
               "bibliographic matches below are hints, not a claim that "
@@ -1245,6 +1247,17 @@ class ConnectorUnavailable(RuntimeError):
     """The desktop connector did not answer: Zotero is not running."""
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args: Any, **kwargs: Any) -> None:
+        return None
+
+
+# No proxy, no redirect: a loopback URL must stay on the loopback, whatever
+# http_proxy says and whatever the listener answers.
+_CONNECTOR_OPENER = urllib.request.build_opener(
+    urllib.request.ProxyHandler({}), _NoRedirect())
+
+
 def connector_base() -> str:
     """The connector URL, refused unless it is on this machine.
 
@@ -1275,7 +1288,7 @@ def connector_post(endpoint: str, payload: dict[str, Any] | bytes, *,
     for name, value in (headers or {}).items():
         req.add_header(name, value)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with _CONNECTOR_OPENER.open(req, timeout=timeout) as resp:
             return resp.status, resp.read()
     except urllib.error.HTTPError as exc:
         return exc.code, exc.read() or b""
@@ -1285,18 +1298,20 @@ def connector_ping(timeout: float = 5.0) -> None:
     """Fail loudly unless the desktop connector answers."""
     base = connector_base()
     try:
-        with urllib.request.urlopen(f"{base}/connector/ping",
+        with _CONNECTOR_OPENER.open(f"{base}/connector/ping",
                                     timeout=timeout) as resp:
             if resp.status == 200:
                 return
             status = resp.status
+    except urllib.error.HTTPError as exc:
+        status = exc.code
     except (urllib.error.URLError, OSError) as exc:
         raise ConnectorUnavailable(
             f"Zotero is not running: no answer from the desktop connector at "
             f"{CONNECTOR_URL} ({exc}). Start Zotero and retry.") from exc
     raise ConnectorUnavailable(
-        f"the desktop connector at {CONNECTOR_URL} answered HTTP {status}; "
-        "start Zotero and retry")
+        f"something answers at {CONNECTOR_URL} but not as the Zotero "
+        f"connector (HTTP {status}); check that it is Zotero and retry")
 
 
 def connector_save(item: dict[str, Any], pdf: Path | None,
@@ -1482,6 +1497,10 @@ def cmd_inject(args: argparse.Namespace) -> int:
             target, lib_id = resolve_target(conn, library, collection)
             snapshot = (held if held is not None
                         else {**read_library(conn, lib_id), "read_mode": mode})
+            if snapshot.get("library_id") != lib_id:
+                raise ValueError(f"the duplicate guard read library "
+                                 f"{snapshot.get('library_id')}, not the "
+                                 f"destination {lib_id}")
         except (ValueError, sqlite3.Error) as exc:
             emit_json({"error": str(exc)})
             return 1
@@ -1562,7 +1581,8 @@ def inject_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
             results[n].update(connector_save(items[n], pdf, target))
         except (urllib.error.URLError, OSError, RuntimeError) as exc:
             # A save that failed in transit may still have reached Zotero.
-            # Stop here: the next run's duplicate guard reads the library.
+            # Stop here. The next run reads the library again, but while
+            # Zotero runs that read can lag, so the item may not show yet.
             results[n]["error"] = f"create outcome unknown: {exc}"
             for m, _, _ in pending[pos + 1:]:
                 results[m]["error"] = "not attempted after an uncertain save"
@@ -1654,6 +1674,8 @@ def cmd_enrich(args: argparse.Namespace) -> int:
             raise SystemExit(f"job missing {sorted(missing)}: {job}")
         if not job["set"]:
             raise SystemExit(f"job for {job['item_key']} sets nothing")
+        if not isinstance(job["expect_title"], str) or not job["expect_title"]:
+            raise SystemExit(f"job for {job['item_key']} has no expect_title")
 
     db_path = resolve_db_path(args.zotero_db)
     if db_path is None:
@@ -1781,7 +1803,8 @@ def read_library(conn: sqlite3.Connection,
             "contentType": content_type or "",
             "linkMode": LINK_MODES.get(link_mode, str(link_mode)),
         })
-    return {"works": list(works.values()), "attachments": attachments}
+    return {"works": list(works.values()), "attachments": attachments,
+            "library_id": lib_id}
 
 
 def library_snapshot(db_path: Path | None,
@@ -2188,7 +2211,7 @@ def cmd_dedup_report(args: argparse.Namespace) -> int:
                          "pending WAL writes; close Zotero and retry")
     try:
         conn.execute("PRAGMA query_only=ON")
-        report = duplicate_hash_report(conn)
+        report = {**duplicate_hash_report(conn), "read_mode": mode}
     finally:
         conn.close()
     if not report["hashed_attachments_scanned"]:
@@ -2198,6 +2221,9 @@ def cmd_dedup_report(args: argparse.Namespace) -> int:
             if args.format == "json" else duplicate_hash_html(report))
     if args.out:
         output = Path(args.out)
+        if output.resolve() in {Path(f"{db_path.resolve()}{suffix}")
+                                for suffix in ("", "-wal", "-shm", "-journal")}:
+            raise SystemExit("dedup-report: --out names the Zotero database")
         fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
             os.fchmod(stream.fileno(), 0o600)
@@ -2613,11 +2639,12 @@ def reconcile_empty_report(root: Path, found: dict[str, Any],
             db_path = resolve_db_path(getattr(args, "zotero_db", None))
             if db_path is None:
                 raise ValueError("no local Zotero database found")
-            conn, _ = zotero_open(db_path)
+            conn, mode = zotero_open(db_path)
             try:
                 account = local_account(conn)
             finally:
                 conn.close()
+            report["library"] = {"zotero_db": str(db_path), "read_mode": mode}
             reconcile_apply_config(root, account)
             report.update({"applied": [], "apply_status": "nothing"})
         except (OSError, ValueError, TypeError, sqlite3.Error) as exc:
@@ -2655,7 +2682,8 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
     """Report by default; apply only with a matching project opt-in file."""
     root = Path(args.root).resolve()
     if not root.is_dir():
-        emit_json({"verdict": "unchecked", "error": f"not a directory: {root}"})
+        emit_reconcile_report({"verdict": "unchecked",
+                               "error": f"not a directory: {root}"}, args.out)
         return 1
     found = discover_reconcile_files(root)
     if not (found["linked"] or found["orphans"] or found["errors"]):
@@ -2663,10 +2691,14 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
         return reconcile_empty_report(root, found, args)
     library = getattr(args, "library", USER_LIBRARY)
     db_path = resolve_db_path(getattr(args, "zotero_db", None))
-    idx = library_snapshot(db_path, library)
+    try:
+        idx = library_snapshot(db_path, library)
+    except sqlite3.Error as exc:
+        idx, read_error = None, f"cannot read zotero.sqlite: {exc}"
+    else:
+        read_error = "no local Zotero database found"
     if idx is None:
-        report = reconcile_report(root, found, [],
-                                  found["errors"] + ["no local Zotero database found"])
+        report = reconcile_report(root, found, [], found["errors"] + [read_error])
         emit_reconcile_report(report, args.out)
         return 1
     rows, errors = audit_sources(root, found, idx)
@@ -2681,9 +2713,17 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                 raise ValueError("discovery or audit is unchecked")
             db_path = Path(idx["zotero_db"])
             with directory_locks(found["staging_dirs"] + [db_path.parent]):
-                # Re-read under the locks and keep them through the saves: a
-                # second sweep cannot act on a pre-lock read.
-                fresh = library_snapshot(db_path, library)
+                # Re-read under the locks and keep them through the saves, so
+                # two local sweeps cannot both act on the same pre-lock read.
+                # The read covers the library the items will land in: a
+                # collection in a group is checked against that group.
+                conn, _ = zotero_open(db_path)
+                try:
+                    _, target_lib = resolve_target(conn, library,
+                                                   config.get("collection"))
+                finally:
+                    conn.close()
+                fresh = library_snapshot(db_path, target_lib)
                 report, apply_rc = reconcile_apply(root, found, fresh, config,
                                                    args)
         except (OSError, ValueError, KeyError, TypeError, RuntimeError,
@@ -2743,6 +2783,8 @@ def reconcile_apply(root: Path, found: dict[str, Any], fresh: dict[str, Any],
         if "results" not in outcome:
             raise RuntimeError(outcome.get("error", "inject failed"))
         report["applied"] = outcome["results"]
+        if outcome.get("warning"):
+            report["warning"] = outcome["warning"]
         for file, result in zip(job_paths, report["applied"]):
             result["file"] = file
             summary["absent"] -= 1
@@ -2804,13 +2846,14 @@ def cmd_attach(args: argparse.Namespace) -> int:
     db_path = resolve_db_path(args.zotero_db)
     if db_path is None:
         raise SystemExit("attach: no local Zotero database found")
-    conn, _ = zotero_open(db_path)
+    conn, mode = zotero_open(db_path)
     try:
         data = item_data(conn, args.parent, args.library)
     finally:
         conn.close()
     if data is None:
-        emit_json({"parent": args.parent, "error": "item not found"})
+        emit_json({"parent": args.parent, "read_mode": mode,
+                   "error": "item not found"})
         return 1
     rc = 0
     suggested = []
@@ -2823,6 +2866,7 @@ def cmd_attach(args: argparse.Namespace) -> int:
         suggested.append({"itemKey": args.parent, "field": "attachment",
                           "old": "", "new": str(p.resolve())})
     emit_json({"parent": args.parent, "title": data.get("title"),
+               "read_mode": mode,
                "apply": "in Zotero, select the item, then Add Attachment > "
                         "Attach Stored Copy of File (or drag the file onto it)",
                "suggested": suggested})

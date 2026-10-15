@@ -984,7 +984,9 @@ def test_zotero_schema_snapshot_matches_local_zotero():
     db = zi.find_zotero_db()
     if db is None:
         pytest.skip("no local zotero.sqlite to compare against")
-    conn, _ = zi.zotero_open(db)
+    # immutable=1: no lock, no -shm update — the author's library is not
+    # touched in any way by a test run.
+    conn = sqlite3.connect(f"{db.resolve().as_uri()}?immutable=1", uri=True)
     try:
         live: dict[str, set[str]] = {}
         for type_name, field in conn.execute(
@@ -1315,6 +1317,7 @@ def test_cmd_attach_reports_the_by_hand_step(tmp_path, capsys):
     out = json.loads(capsys.readouterr().out)
     assert out["suggested"] == [{"itemKey": "WORK0010", "field": "attachment",
                                  "old": "", "new": str(pdf.resolve())}]
+    assert out["read_mode"] == zi.READ_LIVE
     args.parent = "MISSING1"
     assert zi.cmd_attach(args) == 1
 
@@ -2213,6 +2216,42 @@ def test_inject_reports_a_refused_attachment(tmp_path, monkeypatch, capsys,
     assert "saveAttachment answered HTTP 200" in out["results"][0]["attachment_error"]
 
 
+def test_inject_refuses_a_guard_read_of_another_library(tmp_path, monkeypatch,
+                                                      capsys, connector):
+    _corroborated(monkeypatch)
+    pdf = tmp_path / "paper.pdf"
+    pdf.write_bytes(b"paper")
+    args = _inject_args(_zotero_file(tmp_path), [{
+        "title": "New Paper", "authors": ["Smith, Jane"], "year": "2020",
+        "pdf": str(pdf)}], collection="GRPCOLL1",
+        _snapshot={"works": [], "attachments": [], "library_id": 1})
+    assert zi.cmd_inject(args) == 1
+    assert "not the destination 3" in json.loads(capsys.readouterr().out)["error"]
+    assert not _saves(connector)
+
+
+def test_connector_ignores_proxy_settings(tmp_path, monkeypatch, capsys,
+                                          connector):
+    """The loopback check would be moot if a proxy relayed the PDF."""
+    monkeypatch.setenv("http_proxy", "http://127.0.0.1:9")
+    monkeypatch.setenv("HTTP_PROXY", "http://127.0.0.1:9")
+    monkeypatch.delenv("no_proxy", raising=False)
+    monkeypatch.delenv("NO_PROXY", raising=False)
+    zi.connector_ping()
+    assert connector["calls"][-1][0] == "ping"
+
+
+def test_connector_ping_names_a_wrong_answer(monkeypatch, connector):
+    connector["status"]["ping"] = 404
+
+    def not_zotero(*a, **k):
+        raise zi.urllib.error.HTTPError("u", 404, "nope", {}, None)
+
+    monkeypatch.setattr(zi._CONNECTOR_OPENER, "open", not_zotero)
+    with pytest.raises(zi.ConnectorUnavailable, match="not as the Zotero connector"):
+        zi.connector_ping()
+
+
 def test_inject_warns_when_it_read_a_lagging_snapshot(tmp_path, monkeypatch,
                                                       capsys, connector):
     _corroborated(monkeypatch)
@@ -2261,7 +2300,7 @@ def _reconcile_args(tmp_path, **over):
 
 def _snap(**over):
     return {"works": [], "attachments": [], "zotero_db": "zotero.sqlite",
-            "read_mode": "ro", "account": "1", **over}
+            "read_mode": "ro", "account": "1", "library_id": 1, **over}
 
 
 def _staged_bib_paper(tmp_path, opt_in='{"apply": true, "user_id": "1"}'):
@@ -2345,6 +2384,8 @@ def test_reconcile_empty_apply_validates_the_opt_in(
     report = json.loads(out.read_text())
     assert report["apply_status"] == ("nothing" if problem == "valid" else "failed")
     assert ("apply_error" in report) == (problem != "valid")
+    if problem != "no_db":
+        assert report["library"]["read_mode"] == zi.READ_LIVE
     capsys.readouterr()
 
 
@@ -2399,7 +2440,9 @@ def test_reconcile_apply_requires_matching_project_opt_in(
 def test_reconcile_apply_reports_fresh_match_on_no_write_replay(
         tmp_path, monkeypatch, capsys):
     _staged_bib_paper(tmp_path)
-    reads = iter([_snap(read_mode="before"), _snap(read_mode="after")])
+    db = str(_zotero_file(tmp_path))
+    reads = iter([_snap(read_mode="before", zotero_db=db),
+                  _snap(read_mode="after", zotero_db=db)])
     monkeypatch.setattr(zi, "library_snapshot", lambda *a, **k: next(reads))
     monkeypatch.setattr(
         zi, "audit_one",
@@ -2421,10 +2464,11 @@ def test_reconcile_apply_reports_fresh_match_on_no_write_replay(
 def test_reconcile_apply_imports_only_corroborated_absent_pdf(
         tmp_path, monkeypatch, capsys):
     pdf = _staged_bib_paper(tmp_path)
+    db = str(_zotero_file(tmp_path))
     reads = []
 
     def snapshot(*a, **k):
-        reads.append(_snap())
+        reads.append(_snap(zotero_db=db))
         return reads[-1]
 
     monkeypatch.setattr(zi, "library_snapshot", snapshot)
@@ -2469,7 +2513,9 @@ def test_reconcile_apply_can_import_orphan_with_complete_pdf_metadata(
     (docs / "orphan.pdf").write_bytes(b"orphan bytes")
     (tmp_path / ".zotero-reconcile.json").write_text(
         '{"apply": true, "user_id": "1"}')
-    monkeypatch.setattr(zi, "library_snapshot", lambda *a, **k: _snap())
+    db = str(_zotero_file(tmp_path))
+    monkeypatch.setattr(zi, "library_snapshot",
+                        lambda *a, **k: _snap(zotero_db=db))
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda _: {
         "Title": "A Newly Acquired Paper", "Author": "Jane Smith",
@@ -2499,7 +2545,9 @@ def test_reconcile_apply_defers_orphan_without_metadata_once(
     (docs / "orphan.pdf").write_bytes(b"unreadable scan")
     (tmp_path / ".zotero-reconcile.json").write_text(
         '{"apply": true, "user_id": "1"}')
-    monkeypatch.setattr(zi, "library_snapshot", lambda *a, **k: _snap())
+    db = str(_zotero_file(tmp_path))
+    monkeypatch.setattr(zi, "library_snapshot",
+                        lambda *a, **k: _snap(zotero_db=db))
     monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda _: {})
     monkeypatch.setattr(zi, "cmd_inject", lambda _: pytest.fail("wrote orphan"))
@@ -2507,6 +2555,56 @@ def test_reconcile_apply_defers_orphan_without_metadata_once(
     report = json.loads(capsys.readouterr().out)
     assert report["summary"] == {"deferred": 1}
     assert report["apply_status"] == "deferred"
+
+
+def test_reconcile_apply_checks_the_destination_group_library(
+        tmp_path, monkeypatch, capsys, connector):
+    """A collection in a group sends items there, so the duplicate guard
+    must read that group, not the user library."""
+    pdf = _staged_bib_paper(
+        tmp_path, opt_in='{"apply": true, "user_id": "1", "collection": "GRPCOLL1"}')
+    db = _zotero_file(tmp_path, works=[
+        (11, 3, "GROUP011", {"title": "An Interesting Paper", "date": "2020"},
+         ["Smith"])],
+        attachments=[(21, 11, 3, "GRPATT21", "storage:x.pdf",
+                      zi.file_md5(pdf), 0)])
+    _quiet_pdf_tools(monkeypatch)
+    _corroborated(monkeypatch)
+    args = _reconcile_args(tmp_path, apply=True, zotero_db=str(db))
+    assert zi.cmd_reconcile(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    # Absent from the user library, identical in the destination group.
+    assert report["summary"] == {"identical": 1}
+    assert report["rows"][0]["zotero_key"] == "GROUP011"
+    assert report["applied"] == [], "the group already holds this file"
+    assert not _saves(connector)
+
+
+def test_reconcile_carries_the_snapshot_warning(tmp_path, monkeypatch, capsys):
+    _staged_bib_paper(tmp_path)
+    db = str(_zotero_file(tmp_path))
+    monkeypatch.setattr(zi, "library_snapshot",
+                        lambda *a, **k: _snap(zotero_db=db,
+                                              read_mode=zi.READ_SNAPSHOT))
+    _quiet_pdf_tools(monkeypatch)
+    _corroborated(monkeypatch)
+
+    def fake_inject(args):
+        print(json.dumps({"results": [{"status": "created"}],
+                          "warning": zi.SNAPSHOT_WARNING}))
+        return 0
+
+    monkeypatch.setattr(zi, "cmd_inject", fake_inject)
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path, apply=True)) == 0
+    assert json.loads(capsys.readouterr().out)["warning"] == zi.SNAPSHOT_WARNING
+
+
+def test_reconcile_invalid_root_still_writes_out(tmp_path, capsys):
+    out = tmp_path / "report.json"
+    args = _reconcile_args(tmp_path / "nope", out=str(out))
+    assert zi.cmd_reconcile(args) == 1
+    assert json.loads(out.read_text())["verdict"] == "unchecked"
+    capsys.readouterr()
 
 
 def test_reconcile_suggests_the_attach_edit_for_a_present_work(
