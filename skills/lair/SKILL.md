@@ -13,7 +13,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 
 ## Steps
 
-0. **Review session scope**: use today's commits and the current ticket state to identify work for steps 1–2. Always perform step 11: pending experiences are independent of new commits.
+0. **Review session scope**: use today's commits and the current ticket state to identify work for steps 1–2. Always perform steps 11 and 12: the reconcile proposal and pending experiences are independent of new commits.
 
 1. **Housekeeping** — run `/molt` (git sync, yawn, eager fix-now repairs, ticket creation).
 2. **Reflect on the session** — summarize work done. `git log --since="6am" --oneline` as starting point.
@@ -42,7 +42,15 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
        <!-- harness-extension-point -->
        Current-generation spelling: `gh api repos/<owner>/<repo> --jq .allow_auto_merge` to read it, `gh pr merge <N> --auto --merge` to arm it.
     e. After the PR merges, delete the throwaway branch (local and remote).
-11. **Suggest a hoard in the conclusion when relevant.** After completing
+11. **Propose the staging reconcile when `docs/` moved today.** Run
+    `"$IDH_ROOT/skills/lair/zotero-reconcile-trigger"` from the primary checkout
+    (the cwd after step 7b): an mtime scan, symlinks followed, for any file under
+    `docs/` modified since the start of the current day (`docs/` is git-ignored,
+    so git cannot see it). If it prints a line, include it in the final summary
+    as an offer of `/zotero reconcile`; the author accepts or not. No output, no
+    mention. Proposed, never run automatically; it does not belong in `/molt`
+    (ticket 1112).
+12. **Suggest a hoard in the conclusion when relevant.** After completing
     all lair work, count journal experiences not yet covered by an accepted
     report in `memory/hoards/`. An unmerged report does not mark experiences
     processed. Count inline, on the journal blobs against the accepted
@@ -63,11 +71,3 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     finish. Do not ask a question, wait for a response, launch hoard or mark
     the experiences processed. Below the
     threshold, omit this suggestion. No timer or automatic invocation.
-12. **Propose the staging reconcile when `docs/` moved today.** Run
-    `"$IDH_ROOT/skills/lair/zotero-reconcile-trigger"` from the project root: an
-    mtime scan for any file under `docs/` modified since the start of the current
-    day (`docs/` is git-ignored, so git cannot see it). If it prints a line,
-    include it in the final summary as an offer of `/zotero reconcile`; the author
-    accepts or not. No output, no mention. The reconcile is proposed, never run automatically: no Zotero access, no network here, and it does not belong in
-    `/molt` (the old molt step 1.8 ran it on every lair and stalled for minutes;
-    removed in PR #1434, ticket 1112).
