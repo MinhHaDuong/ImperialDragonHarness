@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Dream: carry verified quotations and locators verbatim
+Created: 2026-10-15
+Author: claude
+
+--- log ---
+2026-10-15T06:44Z claude created
+
+--- body ---
+## Context
+Nomination from the sen-causal-reading session (2026-10-15). The author wants
+the project's annotated bibliography (which sources are in `docs/`, their
+Zotero keys, read/unread status, verified page quotations) to live in project
+memory: verifications as journal entries, a consolidated topic file as the
+bibliography. Dream's pruning and merging may condense a quotation or a folio,
+which is exactly the content that must survive: a plausible wrong locator is
+the costly failure (`rules/zotero.md`).
+
+Decision taken: no "sources" special case in roar (a verification is a
+significant fact like any other) nor in dream; one general clause in dream
+covers every verified quotation, whatever the project.
+
+## Exit criteria
+- [ ] `skills/dream/SKILL.md` states that a quotation verified on the page,
+      with its locator (page, folio, note number), is carried verbatim into
+      topics and never paraphrased, condensed or merged away; a conflict
+      between two recorded locators is kept as an unresolved contradiction.
+- [ ] No new section, no source-specific branch in roar or dream.
+- [ ] Skill tests updated if they pin dream's wording; `make check` passes.
