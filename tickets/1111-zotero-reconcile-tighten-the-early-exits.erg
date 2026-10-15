@@ -6,6 +6,8 @@ Author: Minh Ha-Duong
 --- log ---
 2026-10-15T14:43Z Minh Ha-Duong created
 
+2026-10-15T16:14Z ChatGPT note Empty-run reports and apply preflight corrected; focused offline regression tests pass. Full suite remains unverified after automatic review blocked a broad run that could contact Zotero.
+
 --- body ---
 ## Context
 PR #1434 added an early exit to `scripts/zotero.py reconcile` when nothing is
@@ -25,8 +27,17 @@ flagged minor gaps (comment 6194717551):
   the zotero backfill test.
 
 ## Exit criteria
-- [ ] `--apply` validates the opt-in file and credentials even with nothing staged
-- [ ] Both early exits write `--out` when given, with the full report keys
-- [ ] Test: a staged file loads the index; test: `--apply` with nothing staged and a bad opt-in fails
-- [ ] One helper builds the early-exit report; reconcile test helpers live with the zotero tests
+- [x] `--apply` validates the opt-in file and credentials even with nothing staged
+- [x] Both early exits write `--out` when given, with the full report keys
+- [x] Test: a staged file loads the index; test: `--apply` with nothing staged and a bad opt-in fails
+- [x] One helper builds the early-exit report; reconcile test helpers live with the zotero tests
 - [ ] `make check` passes
+
+## Validation of the proposed fix
+
+19 focused offline tests passed, including both empty exits, output artifacts,
+invalid/missing opt-in, missing/mismatched write credentials, staged-file index
+loading, unchanged no-write replay and the relocated backfill shell test.
+Ruff and git diff --check pass. Full make check has not passed here: automatic
+approval review blocked the broad test run because it could contact Zotero.
+The ticket stays open pending full validation and review.

@@ -256,44 +256,6 @@ def test_prune_skips_untracked_duplicate(tmp_path):
     assert (repo / "tickets/0001-probe.erg").exists()
 
 
-def reconcile_blocks(text):
-    import re
-
-    return re.findall(r"```bash\n(.*?)\n\s*```", text, re.S)
-
-
-def stub_zotero(tmp_path, status):
-    root = tmp_path / "idh"
-    (root / "scripts").mkdir(parents=True)
-    (root / "scripts/zotero.py").write_text(f"import sys\nsys.exit({status})\n")
-    shim = tmp_path / "bin/zotero.py"
-    shim.parent.mkdir(parents=True)
-    shim.write_text(f"#!/bin/sh\nexit {status}\n")
-    shim.chmod(0o755)
-    proj = tmp_path / "proj"
-    (proj / "docs").mkdir(parents=True)
-    env = child_env()
-    env["IDH_ROOT"] = str(root)
-    env["TMPDIR"] = str(tmp_path)
-    env["PATH"] = f"{shim.parent}:{env['PATH']}"
-    return proj, env
-
-
-@pytest.mark.integration
-def test_reconcile_failure_propagates_and_path_announced(tmp_path):
-    """A failing reconcile must fail the block, and the report path is still named."""
-    text = (ROOT / "skills/zotero/references/backfill.md").read_text()
-    block = next(b for b in reconcile_blocks(text) if "reconcile . --out" in b)
-    proj, env = stub_zotero(tmp_path, 7)
-    r = subprocess.run(["bash", "-c", block], cwd=proj, env=env, text=True, capture_output=True)
-    assert r.returncode != 0, (r.returncode, r.stdout, r.stderr)
-    assert "reconcile report: " in r.stdout and "(exit 7)" in r.stdout
-    okdir = tmp_path / "ok"
-    okdir.mkdir()
-    proj2, env2 = stub_zotero(okdir, 0)
-    assert subprocess.run(["bash", "-c", block], cwd=proj2, env=env2).returncode == 0
-
-
 @pytest.mark.integration
 def test_probe_ignores_pr_subject_older_than_the_fork(tmp_path):
     """A historical main commit citing the same PR number is not a merge of this branch."""

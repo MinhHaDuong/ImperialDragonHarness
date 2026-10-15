@@ -2740,6 +2740,57 @@ def cmd_audit(args: argparse.Namespace) -> int:
     return 0
 
 
+def reconcile_apply_config(root: Path, user: str) -> dict[str, Any]:
+    """Read the explicit project opt-in without contacting Zotero."""
+    config = json.loads((root / ".zotero-reconcile.json").read_text())
+    if not isinstance(config, dict) or config.get("apply") is not True:
+        raise ValueError("apply must be true")
+    if str(config.get("user_id")) != str(user):
+        raise ValueError("configured user_id differs from target library")
+    return config
+
+
+def emit_reconcile_report(report: dict[str, Any], out: str | None) -> None:
+    """Write the full artifact and keep stdout compact when a path is given."""
+    if out:
+        Path(out).write_text(json.dumps(report, indent=2,
+                                       ensure_ascii=False) + "\n")
+    stdout_report = ({k: v for k, v in report.items() if k != "rows"}
+                     if out else report)
+    json.dump(stdout_report, sys.stdout, indent=2, ensure_ascii=False)
+    sys.stdout.write("\n")
+
+
+def reconcile_empty_report(root: Path, found: dict[str, Any],
+                           args: argparse.Namespace) -> int:
+    """Validate empty apply requests, but never rebuild an unused index."""
+    staging = [str(p.relative_to(root)) for p in found["staging_dirs"]
+               if p.is_dir()]
+    report = {"verdict": "checked" if staging or found["bib_files"] else "no_staging",
+              "root": str(root),
+              "bib_files": [str(p.relative_to(root)) for p in found["bib_files"]],
+              "staging_dirs": staging, "index_fetched": None,
+              "files": 0, "summary": {}, "actions": {}, "rows": [], "errors": []}
+    rc = 0
+    if getattr(args, "apply", False):
+        try:
+            user, _ = resolve_read_credentials(args)
+            reconcile_apply_config(root, user)
+            write_args = argparse.Namespace(
+                user_id=user, api_key=getattr(args, "rw_api_key", None))
+            write_user, _ = resolve_credentials(write_args)
+            if write_user != user:
+                raise ValueError("write credential targets another user")
+            report.update({"applied": [], "apply_status": "nothing"})
+        except (OSError, ValueError, TypeError, SystemExit) as exc:
+            report.update({"apply_error": str(exc), "apply_status": "failed"})
+            report["summary"]["apply_failed"] = 1
+            report["actions"]["apply_failed"] = "inspect error; no clean sweep"
+            rc = 1
+    emit_reconcile_report(report, args.out)
+    return rc
+
+
 def cmd_reconcile(args: argparse.Namespace) -> int:
     """Report by default; apply only with a matching project opt-in file."""
     root = Path(args.root).resolve()
@@ -2749,18 +2800,9 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
         sys.stdout.write("\n")
         return 1
     found = discover_reconcile_files(root)
-    if not found["bib_files"] and not any(d.is_dir() for d in found["staging_dirs"]):
-        json.dump({"verdict": "no_staging", "root": str(root.resolve()),
-                   "files": 0, "summary": {}, "rows": [], "errors": []}, sys.stdout)
-        sys.stdout.write("\n")
-        return 0
     if not (found["linked"] or found["orphans"] or found["errors"]):
-        # Nothing to compare: a stale cache would otherwise trigger a full
-        # Web API rebuild (minutes) to audit zero files.
-        json.dump({"verdict": "checked", "root": str(root),
-                   "files": 0, "summary": {}, "rows": [], "errors": []}, sys.stdout)
-        sys.stdout.write("\n")
-        return 0
+        # No remote comparison is needed for an empty staging area.
+        return reconcile_empty_report(root, found, args)
     user, key = resolve_read_credentials(args)
     idx = load_index(user, key, refresh=args.refresh)
     if idx is None:
@@ -2814,13 +2856,8 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
               "rows": rows, "errors": errors}
     apply_rc = 0
     if getattr(args, "apply", False):
-        config_path = root / ".zotero-reconcile.json"
         try:
-            config = json.loads(config_path.read_text())
-            if config.get("apply") is not True:
-                raise ValueError("apply must be true")
-            if str(config.get("user_id")) != str(user):
-                raise ValueError("configured user_id differs from target library")
+            config = reconcile_apply_config(root, user)
             if errors:
                 raise ValueError("discovery or audit is unchecked")
             with staging_locks(found["staging_dirs"]), injection_lock(user):
@@ -2925,13 +2962,7 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
             summary["apply_failed"] = 1
             report["actions"]["apply_failed"] = "inspect error; no clean sweep"
             apply_rc = 1
-    if args.out:
-        Path(args.out).write_text(json.dumps(report, indent=2,
-                                            ensure_ascii=False) + "\n")
-    stdout_report = ({k: v for k, v in report.items() if k != "rows"}
-                     if args.out else report)
-    json.dump(stdout_report, sys.stdout, indent=2, ensure_ascii=False)
-    sys.stdout.write("\n")
+    emit_reconcile_report(report, args.out)
     return 1 if errors or apply_rc else 0
 
 
