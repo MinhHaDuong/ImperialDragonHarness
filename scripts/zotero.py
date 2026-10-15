@@ -2754,6 +2754,13 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                    "files": 0, "summary": {}, "rows": [], "errors": []}, sys.stdout)
         sys.stdout.write("\n")
         return 0
+    if not (found["linked"] or found["orphans"] or found["errors"]):
+        # Nothing to compare: a stale cache would otherwise trigger a full
+        # Web API rebuild (minutes) to audit zero files.
+        json.dump({"verdict": "checked", "root": str(root),
+                   "files": 0, "summary": {}, "rows": [], "errors": []}, sys.stdout)
+        sys.stdout.write("\n")
+        return 0
     user, key = resolve_read_credentials(args)
     idx = load_index(user, key, refresh=args.refresh)
     if idx is None:

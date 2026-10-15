@@ -124,32 +124,6 @@ Run full repo housekeeping and act on every finding.
    relocated here: that is an operator decision (check 12 of the yawn
    names the knob).
 
-1.8. **Reconcile document staging with Zotero.** In the current project checkout,
-   run only when a `.bib` exists at the root or one level below, or `docs/`
-   exists. With neither, stay silent. Use the harness helper so unattended
-   `beat` and interactive `/lair` take the same path:
-
-   ```bash
-   if [ -d docs ] || find . -maxdepth 2 -name '*.bib' -type f -print -quit | grep -q .; then
-     out=$(mktemp "${TMPDIR:-/tmp}/zotero-reconcile.XXXXXX.json")
-     status=0
-     if [ -f .zotero-reconcile.json ]; then
-       python3 "$IDH_ROOT/scripts/zotero.py" reconcile . --apply --out "$out" || status=$?
-     else
-       python3 "$IDH_ROOT/scripts/zotero.py" reconcile . --out "$out" || status=$?
-     fi
-     echo "reconcile report: $out (exit $status)"
-     [ "$status" -eq 0 ]
-   fi
-   ```
-
-   The command is report-only unless this project carries an explicit
-   `.zotero-reconcile.json` containing `{"apply": true, "user_id": "<Zotero user ID>"}`.
-   An apply run takes locks, refreshes the Web API library, and imports only
-   absent PDFs whose metadata agrees with their own front matter. Surface
-   `unchecked`, `deferred`, and nonzero exit statuses; never read an empty
-   report as proof that the library is complete. Do not purge staging files.
-
 2. **Yawn.** Invoke /yawn. The probe (`project-state.py`)
    runs once inside yawn and covers all checks — do not re-run git
    commands already collected there. Parse the **Action plan** section from
