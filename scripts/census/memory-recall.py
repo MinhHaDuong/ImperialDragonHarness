@@ -9,9 +9,10 @@ because the index told it the body exists, when nothing in the conversation
 would have surfaced it.
 
 That event has a signature: a **working** session reads a memory body. A
-session that runs `/dream`, `/roar`, `/lair` or `/memory-sweep` reads bodies because
-maintaining them is its job, and counting those would measure the memory
-system's own housekeeping rather than its use. So sessions are split, and the
+session that runs `/hoard` (or historical `/dream`), `/roar`, `/lair` or
+`/memory-sweep` reads bodies because maintaining them is its job, and counting
+those would measure the memory system's own housekeeping rather than its use.
+So sessions are split, and the
 maintenance arm doubles as the positive control: if the probe cannot see reads
 there, it cannot see them anywhere, and a zero in the working arm would mean
 nothing.
@@ -61,8 +62,9 @@ MEM = re.compile(r"memory/([A-Za-z0-9_.-]+\.md)$")
 # longer branch anyway; both orders measured identical. The longer one is
 # listed first for the reader, not for the engine.
 # historical-skill: memory -> memory-sweep
-SKILL = re.compile(rb'"skill":\s*"(dream|roar|lair|memory-sweep|memory)"')
-CMD = re.compile(rb"<command-name>/?(dream|roar|lair|memory-sweep|memory)</command-name>")
+# historical-skill: dream -> hoard
+SKILL = re.compile(rb'"skill":\s*"(hoard|dream|roar|lair|memory-sweep|memory)"')
+CMD = re.compile(rb"<command-name>/?(hoard|dream|roar|lair|memory-sweep|memory)</command-name>")
 BASH = re.compile(rb'"name":\s*"Bash"\s*,\s*"input":\s*\{\s*"command":\s*"((?:[^"\\]|\\.){0,4000})"')
 BASH_MEM = re.compile(r"memory/((?:feedback|project|reference|user)[A-Za-z0-9_.-]*\.md)")
 

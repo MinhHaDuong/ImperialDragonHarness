@@ -14,3 +14,31 @@ Child of 1102. Migrate this harness project memory and active documentation/link
 
 ## Exit criteria
 - [ ] Harness uses memory/HOARD.md and memory/hoards/ exclusively for consolidation, links resolve and historical provenance remains verifiable. Compare preserved artifact bytes. make check passes. Split further before execution if PR reaches 15 paths.
+
+## Raid Plan and feasibility — 2026-10-15
+PASS: 12 content-bearing paths including this ticket: HOARD prompt, MEMORY
+index, four linked topics, test_dream_v8, test_memory_v8_pilot, current
+docs/memory-v8/README.md, runtime smoke document, and one factual correction
+journal. Six report R100 moves are byte-identical and carry no content edits.
+
+Use the project-scoped helper on this harness in its isolated worktree.
+Advance the prompt revision exactly once, preserve 1101's quotation contract,
+keep the index <=100 lines, and verify repeated migration is a no-op.
+Preserve all existing report, journal and ciphertext bytes and historical Git
+blob ledgers. Correct historical links by appending a factual journal entry
+recording the old/new paths and original blob IDs, never by editing sources.
+
+The relocated-clone test must still resolve every current index/topic/live
+document link. For explicitly inventoried archival sources only, validate
+declared historical relocations against Git blobs: moved reports must hash
+to their recorded original blobs; historical r1 prompt references must retain
+the accessible r1 blob while the current r2 prompt exists. A broken link
+without a declared relocation must still fail. This is provenance validation,
+not a runtime alias or an old-layout consolidation path. No blanket archive
+link exemption. Historical evaluation doc link repairs remain in 1109.
+
+First test: demonstrate the relocated clone fails only for the inventoried
+old targets, then verify the explicit provenance mapping and a negative
+unmapped broken-link fixture. Commit the migration before the clone test,
+which reads committed HEAD. Run affected memory/pilot/smoke tests, original
+blob comparisons, mechanical adherence and full make check.

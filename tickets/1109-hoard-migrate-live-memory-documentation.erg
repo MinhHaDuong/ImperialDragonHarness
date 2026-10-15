@@ -14,3 +14,21 @@ Child of 1102, split from 1106 to keep each PR below 15 content-bearing paths. M
 
 ## Exit criteria
 - [ ] Live docs/templates point to hoard, memory/HOARD.md and memory/hoards/; generated new-project conventions work and links resolve. Historical evidence remains unchanged. Relevant tests and make check pass.
+
+## Raid Plan and feasibility — 2026-10-15
+PASS: 9 paths including this ticket; 10 if the results test needs an edit.
+Live files: README.md manual memory/workflow paragraphs,
+docs/zotero-integration.md, docs/memory-v8/templates/AGENTS.md, and the
+template memory/topics/example.md. Historical links in the three deferred
+evaluation-protocol, evaluation-results and integration-review documents
+under docs/memory-v8 are prepared by ticket 1110 before migration; leave those
+documents to 1110. Preserve dated prose and quotes in the live documents. No
+report/journal content edits.
+
+Ticket 1110 prepares the historical citations and verifies the v8-r1 prompt's
+immutable blob provenance before this migration. Run relevant template tests
+and full make check. Current memory README
+and runtime smoke belong to 1106. Coordinate the root README generated
+catalog with 1105; edit only the remaining manual prose here. Stay within
+the rename/migration intent, without changing promotion authorization or
+introducing new memory policy.

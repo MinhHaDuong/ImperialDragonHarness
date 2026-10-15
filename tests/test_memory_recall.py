@@ -45,3 +45,30 @@ def test_patterns_do_not_match_an_unrelated_skill():
     a pass — the all-clear has to be distinguishable from 'I could not look'."""
     assert not mr.SKILL.search(b'"skill": "hunt"')
     assert not mr.CMD.search(b"<command-name>/hunt</command-name>")
+
+
+def test_trace_fixture_classifies_current_hoard_and_historical_dream(tmp_path):
+    """Current hoard and historical dream sessions both stay maintenance."""
+    hoard = tmp_path / "hoard.jsonl"
+    hoard.write_text(
+        '{"type":"assistant","message":{"content":[{"type":"tool_use",'
+        '"name":"Skill","input":{"skill":"hoard"}}]}}\n'
+    )
+    hoard_command = tmp_path / "hoard-command.jsonl"
+    hoard_command.write_text(
+        '{"type":"user","message":{"content":"<command-name>/hoard</command-name>"}}\n'
+    )
+    dream = tmp_path / "dream.jsonl"
+    dream.write_text(
+        '{"type":"user","message":{"content":"<command-name>/dream</command-name>"}}\n'
+    )
+    hunt = tmp_path / "hunt.jsonl"
+    hunt.write_text(
+        '{"type":"assistant","message":{"content":[{"type":"tool_use",'
+        '"name":"Skill","input":{"skill":"hunt"}}]}}\n'
+    )
+
+    assert mr.scan_file(str(hoard))["maintenance"] is True
+    assert mr.scan_file(str(hoard_command))["maintenance"] is True
+    assert mr.scan_file(str(dream))["maintenance"] is True
+    assert mr.scan_file(str(hunt))["maintenance"] is False

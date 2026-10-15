@@ -26,7 +26,7 @@ Every trial records, in its evidence document:
 - **The design** —
   [2026-09-10-dragon-memory-design.md](../2026-09-10-dragon-memory-design.md)
   (v8) at its blob revision on main at trial start.
-- **The DREAM prompt** — [memory/DREAM.md](../../memory/DREAM.md), currently
+- **The DREAM prompt** — [memory/DREAM.md](https://github.com/MinhHaDuong/ImperialDragonHarness/blob/4ed566b5d56b837593f6b19f1fb34a3f21f5910c/memory/DREAM.md), currently
   revision v8-r1 (2026-10-02); each dream trial names the revision it ran.
 - **The review contract** — whatever review machinery is live on main at trial
   time (today the
@@ -57,7 +57,7 @@ each row verbatim, with its expected result — and operationalized here.
 Expected: index, thèmes, journal et prompt restent lisibles.
 Setup: clone or copy the pilot repository to an arbitrary path outside its
 usual location. Observation: [MEMORY.md](../../memory/MEMORY.md), every
-indexed theme, the journal and [DREAM.md](../../memory/DREAM.md) are readable
+indexed theme, the journal and [DREAM.md](https://github.com/MinhHaDuong/ImperialDragonHarness/blob/4ed566b5d56b837593f6b19f1fb34a3f21f5910c/memory/DREAM.md) are readable
 through the clone and every relative link resolves. One trial;
 runtime-independent.
 
@@ -104,7 +104,7 @@ faits.
 Setup: one dream run whose journal pool contains at least two similar cases
 with opposite results. Observation: the accepted report in `memory/dreams/`
 (surface instance:
-[2026-10-02-pilot-first-dream.md](../../memory/dreams/2026-10-02-pilot-first-dream.md))
+[2026-10-02-pilot-first-dream.md](https://github.com/MinhHaDuong/ImperialDragonHarness/blob/fc4eea6901b0a0391f6f68cf51e360b2a3ae7ea3/memory/dreams/2026-10-02-pilot-first-dream.md))
 keeps both sources and the exception,
 distinguishes hypotheses from facts, and prunes nothing to force coherence.
 
@@ -199,7 +199,7 @@ Trials reuse the existing v8 surfaces; nothing new is instrumented:
   audience declared at capture; the journal is append-only.
 - **Consolidation evidence** = accepted dream reports in `memory/dreams/`
   (surface instance:
-  [2026-10-02-pilot-first-dream.md](../../memory/dreams/2026-10-02-pilot-first-dream.md))
+  [2026-10-02-pilot-first-dream.md](https://github.com/MinhHaDuong/ImperialDragonHarness/blob/fc4eea6901b0a0391f6f68cf51e360b2a3ae7ea3/memory/dreams/2026-10-02-pilot-first-dream.md))
   plus the resulting index state.
 - **Obedience evidence** = commit hashes on the trial branches (the absence
   of a rule proposal and of harness writes is inspectable in the diff), plus
@@ -238,7 +238,7 @@ They are excluded by commit reference (merge commits on main):
 - `d1c57bb3` — #1135, wave 3: three-runtime evidence (Claude Code, Codex, Pi).
 - The pilot's roar captures to date, merge `108c3cd7` (#1116),
   `12343611` (#1123), `8cd6c276` (#1126), `958a1867` (#1136), and the
-  [pilot first dream report](../../memory/dreams/2026-10-02-pilot-first-dream.md).
+  [pilot first dream report](https://github.com/MinhHaDuong/ImperialDragonHarness/blob/fc4eea6901b0a0391f6f68cf51e360b2a3ae7ea3/memory/dreams/2026-10-02-pilot-first-dream.md).
 
 Their observations may inform trial setup, but no result drawn from them
 counts toward any margin of this protocol. The first acceptance trial of
