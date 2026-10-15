@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-15T06:44Z claude created
+2026-10-15T07:07Z Codex note Author decision 2026-10-15: use hoard and release the historical library-name reservation; migrate DREAM.md to HOARD.md, dreams/ to hoards/ and references. No aliases or legacy runtime path. Automatic project migration belongs in hoard invocation, on its isolated branch, with dry-run, idempotence and conflict preservation.
 
 --- body ---
 ## Context
@@ -19,22 +20,45 @@ found, so the overload is a label and concept collision with the native
 consolidation, not a command shadowing. Cause of user confusion: two
 different consolidations, two different stores, one name.
 
-Candidate: `hoard` ("dragons in their lair, dreaming over the hoard").
-Caveat: `docs/2026-09-10-dragon-memory-design-nomenclature.md` reserves
+Chosen name: `hoard` (author decision, 2026-10-15).
+Historical context: `docs/2026-09-10-dragon-memory-design-nomenclature.md` reserves
 `hoard` for the memory library and its CLI verbs (`hoard assay`, `reckon`,
 `seal`, `sift`, `shed`, `disown`, `weigh`), and states "the pass is /dream".
 No code implements that library (no `hoard` file or package; memory v8
-docs do not use the word). The author decides whether the reservation
-stands; if it does, pick another draconic verb.
+docs do not use the word). The author releases that reservation for the skill.
+
+The author also chose `memory/HOARD.md` and `memory/hoards/`, with migration
+of existing files and references. No transition alias, compatibility symlink,
+dual-format operation or legacy entry point is retained.
+
+On explicit `/hoard <project>` invocation, the skill automatically migrates
+that project's old paths and references in its isolated project branch before
+consolidation. `--dry-run` describes the migration without writing. If an old
+path and its new counterpart both exist, stop with a visible conflict; never
+overwrite either. Migration preserves file contents and provenance, updates
+link targets and operational references, and is a no-op on an already migrated
+project. Detection of old paths serves only this one-way migration; subsequent
+consolidation uses the new paths exclusively.
 
 ## Exit criteria
-- [ ] Author decision recorded: `hoard`, or another name, and the fate of
-      the nomenclature reservation.
+- [x] Author decision recorded: `hoard`; historical library-name reservation
+      released; migrate to `memory/HOARD.md` and `memory/hoards/`; no aliases.
 - [ ] Skill directory, frontmatter `name`, every reference (16 files in
       skills, rules, tests, Makefile, scripts, hooks, adapters, profiles;
-      `lair` step 11, brood, roar) renamed in one commit; `memory/DREAM.md`
-      and `memory/dreams/` paths decided explicitly (rename or keep).
-- [ ] A transition alias `/dream` points to the new skill for one release,
-      then is removed by a dated follow-up.
+      `lair` step 11, brood, roar) migrated to the new name and paths. Recount
+      live references before implementation; the original 16-file estimate
+      is not a fixed inventory. Historical record contents remain preserved.
+- [ ] `/hoard` automatically migrates an old-format project in its isolated
+      branch before consolidation, including file moves and affected references.
+      No cross-project sweep runs merely because the skill is invoked.
+- [ ] Migration is idempotent, preserves contents/provenance and fails without
+      overwriting when old and new paths coexist; missing/unreadable inputs
+      are reported rather than treated as empty. Dry-run makes no writes.
+- [ ] No `/dream` alias, compatibility symlink, old-format consolidation path
+      or legacy runtime entry point remains after migration. Installed skill
+      registrations and active project links resolve to the new names/paths.
+- [ ] Migration verification covers a fresh new-format project, an old-format
+      project with linked reports, a repeated invocation, dry-run, and coexistence
+      conflicts, including preservation of report contents and provenance.
 - [ ] `make skills-catalog` regenerated; `make check-skills-drift` and
       `make check` pass.
