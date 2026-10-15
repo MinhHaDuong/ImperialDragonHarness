@@ -2,10 +2,12 @@
 Title: Hoard: classify current and historical memory-consolidation traces
 Created: 2026-10-15
 Author: reviewer
+Closed: trace labels implemented and verified
 
 --- log ---
 2026-10-15T08:02Z reviewer created
 2026-10-15T08:55Z reviewer note blocker 1105 closed — Blocked-by removed.
+2026-10-15T09:11Z reviewer closed — trace labels implemented and verified
 
 --- body ---
 
@@ -13,7 +15,7 @@ Author: reviewer
 Child of 1102. Trace readers must recognize current hoard invocations while retaining dream for historical data interpretation; this is not a runtime alias. Paths: scripts/trace-stats.py, scripts/census/memory-recall.py and corresponding existing tests, plus own ticket.
 
 ## Exit criteria
-- [ ] Add hoard classification with historical dream classification preserved. Behavioral trace fixtures distinguish both names and unrelated commands. No executable /dream alias is introduced; make check passes.
+- [x] Add hoard classification with historical dream classification preserved. Behavioral trace fixtures distinguish both names and unrelated commands. No executable /dream alias is introduced; make check passes.
 
 ## Raid Imagine, Plan and feasibility — 2026-10-15
 PASS. Add hoard to SKILL and CMD in scripts/census/memory-recall.py, and to
@@ -22,5 +24,7 @@ interpretation; do not create an invocation alias. Existing scan_file and
 mandated-tail fixtures should classify current hoard and historical dream as
 maintenance, and unrelated hunt as working. Red-first trace-shaped JSONL tests
 exercise behavior rather than matching implementation strings. Four source/test
-paths plus this ticket; no API or schema change. Wait for the declared 1105
-activation prerequisite, then run affected tests and the full check.
+paths plus this ticket; no API or schema change. The 1105 activation prerequisite
+merged as PR #1427 before implementation. Red-first `make check-fast` failed on
+the missing hoard classifications; it passed after the changes (970 passed).
+`make lint` passed (185 passed). The full `make check` remains the pre-PR gate.

@@ -132,12 +132,13 @@ MANDATED_PATH_RE = re.compile(r"/memory/|MEMORY\.md|STATE\.md")
 MANDATED_BASH_RE = re.compile(
     r"(?:^|&&|;|\|)\s*(?:git\s+(?:branch|worktree|fetch\s+--prune)|erg\s+close)\b"
 )
+# `dream` and `hoard` are the current and historical names in the corpus.
 # `memory` and `memory-sweep` are the same skill either side of the
 # 2026-09-16 rename; the corpus spans both, so both stay.
 # historical-skill: memory -> memory-sweep
 # `housekeeping` predates the housekeeping→molt rename in the same corpus.
 # historical-skill: housekeeping -> molt
-MANDATED_SKILLS = {"roar", "lair", "dream", "molt", "memory", "memory-sweep", "housekeeping"}
+MANDATED_SKILLS = {"roar", "lair", "hoard", "dream", "molt", "memory", "memory-sweep", "housekeeping"}
 PATH_TOOLS = {"Read", "Edit", "Write", "NotebookEdit"}
 
 
