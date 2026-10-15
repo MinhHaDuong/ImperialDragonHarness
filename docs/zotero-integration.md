@@ -107,7 +107,7 @@ Every mutating skill must:
 1. Never edit an existing item itself; nothing to back up, since the helper changes no stored item.
 2. Output a RIS file of the items it creates, kept even when creation succeeds.
 3. Edits to existing items are reported (item key, field, old → new) and applied by the author in the client.
-4. Dry-run by default; creating items requires an explicit flag or project opt-in.
+4. Preview before creating (`inject --dry-run`); unattended creation requires the project opt-in (`reconcile --apply` with `.zotero-reconcile.json`).
 5. In autonomous/background sessions: create only high-confidence new items; write low-confidence proposals to a RIS proposal file and stop. Never block waiting for input.
 
 ---
@@ -145,7 +145,7 @@ Prose names a skill's operation precisely; command names stay as they are, scope
 | Capability | Use case | Trigger |
 |---|---|---|
 | **Lint** — normalize field formats (date ISO 8601, DOI prefix, pages en-dash, language code) | archiveCIRED | First normalization ticket |
-| **Enrich** — fill missing fields from CrossRef / HAL / OpenAlex; outputs RIS | archiveCIRED | Unbacked — file on demand |
+| **Enrich** — fill missing fields from CrossRef / HAL / OpenAlex; outputs suggested edits for the author | archiveCIRED | Unbacked — file on demand |
 | ~~**Upload PDF**~~ — attach local archive files to existing Zotero stubs (authorize → multipart → register, idempotent on md5) | archiveCIRED | **Done 2026-08-19, reduced 2026-10-15** — `zotero.py attach --parent <itemKey> <file>...` (MR #760). The repair for an `audit` verdict of `work_present_no_file`, where `inject` would mint a duplicate. Since ticket 1113 it checks the item and the file and reports the by-hand step: the desktop connector cannot attach to an existing item. |
 | **Find PDF** — Unpaywall lookup + attach; jurisdiction gate before grey-web | archiveCIRED | Unbacked — file on demand |
 | **OCR** — scanned PDF → text attachment via Mistral | archiveCIRED | Unbacked — file on demand |

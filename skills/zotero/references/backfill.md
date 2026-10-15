@@ -5,8 +5,8 @@ change, and both are failure modes rather than conveniences.
 
 **Dedup must be possible at all.** Every lookup reads the desktop client's
 `zotero.sqlite`, afresh on each run (about 0.4 s for a 7,672-work library,
-measured 2026-10-15). On a machine with no desktop client that file does not exist, every
-lookup returns `verdict: "unchecked"`, and a backfill that reads "unchecked"
+measured 2026-10-15). On a machine with no desktop client that file does not
+exist, every lookup returns `verdict: "unchecked"`, and a backfill that reads "unchecked"
 as "absent" re-imports the entire library. Run the backfill where the
 desktop database lives; a clean negative then stays distinguishable from a
 lookup that could not run:
@@ -20,8 +20,8 @@ repository root and one level below it, follow their `file=` paths, and report
 both linked files and unlinked staging files. It uses the BibTeX metadata when
 matching linked files. The command is **report-only**: it never injects or
 attaches anything; rows whose work is present without a file come back in
-`suggested_edits` (item key, file) for the author to attach by hand. It uses `docs/` as the staging default only when no `.bib`
-exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
+`suggested_edits` (item key, file) for the author to attach by hand. It
+uses `docs/` as the staging default only when no `.bib` exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
 an empty clean report.
 
 ```bash

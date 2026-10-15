@@ -37,8 +37,9 @@ absorbed into `import`: a URL is one more input, probed by the skill's own
 `probe-url.py` script.
 
 `match` and `write` are shared plumbing, not user verbs: `match` serves
-import and audit both, and `write` is the durable-RIS step behind import. `references/helper-script.md` documents every subcommand and
-the guarantees of its output (`why` / `certainty` / `consulted` / `skipped`).
+import and audit both, and `write` is the durable-RIS step behind import.
+`references/helper-script.md` documents every subcommand and the guarantees
+of its output (`why` / `certainty` / `consulted` / `skipped`).
 
 Inside `import`: probe → match → write → inject. `probe` (or
 `probe-url.py` for URLs) extracts, `match` dedupes against the desktop
