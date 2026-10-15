@@ -29,7 +29,7 @@ are configured there. After API credits arrived, a Haiku-only wrapper
 `</dev/null`. The pi subagent extension links were dangling once and were
 repointed to release 1.1.0. On 2026-10-12 `scripts/pi-subagent-link` printed
 "nothing to link" and exited 0 while an npm-global pi existed elsewhere
-(ticket 1089, open). pi defaults were found resolving away from padme (to
+(ticket 1089, since closed by PR #1390). pi defaults were found resolving away from padme (to
 `openrouter/auto` on doudou, to a Hugging Face model on padme) because the
 default model was missing from the enabled or provider model lists.
 
@@ -78,7 +78,8 @@ the first reply under greedy decoding; the entry notes that the prompt carries
 the arm name. Provider limits interrupted runs repeatedly: OpenAI credits, the
 OpenRouter monthly cap, a vanished free endpoint, Hugging Face credits
 (2026-10-02) and the DashScope free quota (2026-10-12). On 2026-10-12 a
-provider 404 was scored OK by the arena runner (ticket 1087, open).
+provider 404 was scored OK by the arena runner (1087; subsequently transferred
+to the independent Arena repository, where its copy remains open).
 
 Routing rollout (tracker 1052, 2026-10-08/09). The deterministic
 `model-level` × `effort` chooser was removed in favour of the orchestrator
@@ -98,6 +99,26 @@ That these behaviours hold for later runtime versions, other models or other
 prompts is untested. The 195-minute gaze is one run; its cause is the entry's
 attribution, not a measurement. That the arm name in the prompt explains the
 greedy-decoding divergence is the entry's observation, not a tested cause.
+
+## Refresh: Pi linking and Arena separation (2026-10-13 to 2026-10-15)
+
+[PR #1390](../journal/2026/2026-10-14-raids-1080-1089-wrap-up.md) repaired
+Pi linking by resolving the actual launcher and discovering npm-global modules,
+while retaining managed-release precedence/fallback. Seven subprocess cases
+covered discovery, idempotence, missing/incomplete sources and wrapper
+stderr/argv/status. The optional route-cache wording dissent was dismissed
+under bounded scope, not repaired; the upstream installer issue was auto-closed
+under its contributor policy.
+
+[PR #1386](../journal/2026/2026-10-13-arena-separation-and-force-merge.md)
+separated Arena after hash-verifying 96 original files. Eight open tickets,
+including 1048 and 1087, retain their IDs there; the historical harness copies
+of those two closed as wontdo with transfer reasons. Historical routing numbers
+remain evidence, not a current harness-owned tournament. The
+[2026-10-15 integration record](../journal/2026/2026-10-15-raid-1101-1103-1104-integration-pending-attribution.md)
+records #1423 importing two author-selected provisional local candidates from
+pinned Arena evidence. Neither those candidates nor masked review identities
+establish a new model-performance finding here.
 
 ## Sources
 

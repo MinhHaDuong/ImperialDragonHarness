@@ -18,13 +18,13 @@ v8 repository memory. Pilot: [pilot.md](../docs/memory-v8/pilot.md). Provenance:
 
 ## Recent experiences
 
-- [PR 1374 merge](journal/2026/2026-10-13-pr1374-author-scope-revision-and-merge.md)
-- [Raid 1091/1092](journal/2026/2026-10-13-raid-1091-1092-and-gaze-1374.md)
+- [Roar remeasure](journal/2026/2026-10-14-roar-remeasure-1090.md)
+- [Hoard migration](journal/2026/2026-10-15-hoard-path-migration.md)
 
 ## Hoards
 
-- [Second hoard](hoards/2026-10-07-second-dream.md) — accepted.
 - [Third hoard](hoards/2026-10-13-third-dream.md) — accepted.
+- [Fourth hoard](hoards/2026-10-15-fourth-hoard.md) — under review.
 
 Search the journal for older or unprocessed experiences. The legacy index
 stays in Git history; each legacy reference note is linked from its topic.

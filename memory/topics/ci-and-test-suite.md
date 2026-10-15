@@ -81,6 +81,32 @@ replaces the forge's required checks after a review of the CI's content.
 `skills/merge/SKILL.md` after the resident-rules budget test refused it in
 `rules/git.md`.
 
+## Later measurements (2026-10-14 to 2026-10-15)
+
+The [read-back census](../journal/2026/2026-10-14-readback-rule-and-1090-merges.md)
+reported 379 separate read-back turns out of 15,496 main-thread turns (2.4%).
+Its three mutation categories total 1,001 despite a stated population of 1,036;
+the 35-mutation difference is unresolved. Of 26 inspected reissued mutations,
+none showed a silent failure; the original 2026-09-04 motivating failure was
+not re-probed. PR #1404 changed the rule to same-command read-back; this
+limited observation does not invalidate that rule.
+
+The [1090 remeasure](../journal/2026/2026-10-14-roar-remeasure-1090.md)
+withdraws the apparent 16 → 14 turn improvement: comparable October solo
+Claude Code medians were 10 before (53 roars), 12.5 after (14). Smaller start
+contexts predated 1084; causation was not isolated. The colocated saved
+`analysis-output.txt` uses broader before/after populations (104/13 solo)
+and is not an exact numeric reproduction of that October table. Later 1098
+savings remain unmeasured; see [cleanup](branch-cleanup-incidents.md).
+
+[Raids 1080/1089](../journal/2026/2026-10-14-raids-1080-1089-wrap-up.md)
+finished exact integrated-main checks at `fea2413a`: 1595 passed, 3 skipped,
+47.78 s. The [rename integration](../journal/2026/2026-10-15-raid-1101-1103-1104-integration-pending-attribution.md)
+records 1627 passed, 3 skipped, 50.26 s on `ec5571a7`; local container CI
+recorded 1620 passed, 10 skipped. These are different execution environments,
+not failed count reconciliation. Earlier pending CI statements in raw reports
+remain historical, with completed results recorded separately.
+
 ## Sources
 
 - [Suite economics](../journal/2026/2026-10-02-session-suite-economics.md)

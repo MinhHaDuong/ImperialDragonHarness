@@ -93,6 +93,22 @@ a connection between episodes, not an established cause: several also
 involve a direct-push refusal, a symlinked instruction file, or a missing
 `HOME` override.
 
+## Refresh: cwd and stale-worktree observations (2026-10-14)
+
+The [1077 episode](../journal/2026/2026-10-14-enterworktree-opt-in-dropped-1077.md)
+retired EnterWorktree, retaining plain-git isolation. A session restart reset
+cwd to primary and a relative edit reached main before being moved back to
+the branch. Historical entered-session refusals above do not describe the new
+un-entered path.
+
+The [1096 cleanup census](../journal/2026/2026-10-14-1096-split-and-session-cleanup.md)
+found live processes whose cwd was a deleted worktree, plus locks naming dead
+PIDs. The `{pid}` discriminator came from a transient shell, so it did not
+establish session liveness; the census used process cwds. Author-approved
+cleanup removed the specifically identified stale trees and merged branches,
+while retaining another session's open #1415 tree and the archived review
+branch. This was an authorized census, not task-local roar scope expanding.
+
 ## Sources
 
 - [Local main double-carried PR #1143's commits](../journal/2026/2026-10-02-local-main-double-carried-open-pr-commits.md)

@@ -41,11 +41,32 @@ and molt. The revision dropped generic ref enumeration and the
 delete-then-restore path, and merged on a code-review approval and the
 author's instruction, not a fresh verify-gate APPROVED. Its own roar then
 preserved one branch held by another session's locked worktree, because
-ownership was not established. Ticket 1090 (remeasure over ten roars) stays
-open; no performance result is claimed.
+ownership was not established. Ticket 1090 later closed in PR #1408 after the
+[remeasurement](../journal/2026/2026-10-14-roar-remeasure-1090.md): against
+a same-method October control, median solo Claude Code turns rose from 10
+(n=53) to 12.5 (n=14). The earlier 16 → 14 comparison used a mostly
+September baseline and does not establish savings.
 
 On 2026-10-12, removing the merged 1085 and 1086 worktrees, git's worktree
 guard refused the branch delete until dead-pid locks were unlocked.
+
+## Later exit and temporary-file evidence (2026-10-14)
+
+The [1098 exit-tail revision](../journal/2026/2026-10-14-roar-exit-check-1098.md)
+merged as #1409 after rebasing over #1407's retirement of EnterWorktree.
+Its roughly three-action exit tail is an estimate, not a measured saving;
+post-revision turn savings remain unmeasured in these sources. A local
+cross-family reviewer found that ordinary `git worktree remove` deletes
+ignored files. The author chose a wording correction and left scanning to
+1095. All three round-two external attempts failed; final approval disclosed
+DEGRADED coverage.
+
+The [1095 design panel](../journal/2026/2026-10-14-1095-design-panel-pr1399.md)
+confirmed that ignored `.tmp/` content is absent from the porcelain WIP check
+and can disappear with worktree removal. It also observed pre-WIP `.panel/`
+purging. The author selected session-history-assisted candidate reporting and
+worktree-owned `.tmp/`, with a disk warning and snapshot exclusion. PR #1399
+records the design, not completed implementation; 1095 remains deferred.
 
 ## Sources and exceptions
 
