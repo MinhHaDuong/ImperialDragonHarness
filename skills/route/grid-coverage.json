@@ -288,6 +288,47 @@
         "cost_observed": 10,
         "final": true
       }
+    },
+    "f1x": {
+      "family": "Qwen",
+      "role": "End-to-end single-agent execution only; no independent orchestrator, coder or reviewer-seat inference.",
+      "coverage": {
+        "expected": 10,
+        "evaluated": 10,
+        "failures": 0,
+        "pending": 0,
+        "experiment_complete": true,
+        "routing_provisional": true,
+        "mean_seat_median_score_10": 8.45,
+        "median_panel_sum_30": 23.0,
+        "median_minutes_all": 23.370833333333334,
+        "timing_flags": {
+          "unflagged": 8,
+          "uncertain-own-workers": 1,
+          "extra-prompt-text": 1
+        }
+      },
+      "evidence": "arena/docs/cycle3-readout.json sha256:b7a0dbebb366dd8c6c5af0ee65586d377aa900aaa942d09c8dc6d0d335cfcc09"
+    },
+    "f2m": {
+      "family": "Qwen",
+      "role": "End-to-end single-agent execution only; no independent orchestrator, coder or reviewer-seat inference.",
+      "coverage": {
+        "expected": 10,
+        "evaluated": 10,
+        "failures": 0,
+        "pending": 0,
+        "experiment_complete": true,
+        "routing_provisional": true,
+        "mean_seat_median_score_10": 8.15,
+        "median_panel_sum_30": 24.25,
+        "median_minutes_all": 14.491666666666667,
+        "timing_flags": {
+          "unflagged": 9,
+          "uncertain-own-workers": 1
+        }
+      },
+      "evidence": "arena/docs/cycle3-readout.json sha256:b7a0dbebb366dd8c6c5af0ee65586d377aa900aaa942d09c8dc6d0d335cfcc09"
     }
   }
 }
