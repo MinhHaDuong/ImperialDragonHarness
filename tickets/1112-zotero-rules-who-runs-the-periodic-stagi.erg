@@ -1,0 +1,22 @@
+%erg 0.1
+Title: Zotero rules: who runs the periodic staging reconcile
+Created: 2026-10-15
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-15T14:43Z Minh Ha-Duong created
+
+--- body ---
+## Context
+`rules/zotero.md` (§ Periodic sync + purge) says to reconcile staging to Zotero
+periodically. Until PR #1434, `/molt` step 1.8 did this on every `/lair`; that
+step was removed because it fired in any repository with `docs/` and stalled
+for minutes. Nothing now runs the reconcile on a schedule, so paper
+repositories lose automatic drift detection.
+
+Decision for the author: accept on-demand `/zotero reconcile` only and say so
+in the rule, or name a trigger scoped to paper repositories (for example the
+presence of `.zotero-reconcile.json`, or a step in a paper-repo skill).
+
+## Exit criteria
+- [ ] `rules/zotero.md` names who runs the reconcile and when, matching what the skills actually do
