@@ -2,9 +2,11 @@
 Title: Pin historical memory citations before Hoard path migration
 Created: 2026-10-15
 Author: reviewer
+Closed: historical citations pinned before path migration
 
 --- log ---
 2026-10-15T09:18Z reviewer created
+2026-10-15T09:23Z reviewer closed — historical citations pinned before path migration
 
 --- body ---
 
@@ -17,15 +19,15 @@ citations, revisions and recorded blob IDs. These are immutable archive links,
 not runtime paths or aliases.
 
 ## Exit criteria
-- [ ] Replace links to `memory/DREAM.md` and `memory/dreams/` artifacts in the
+- [x] Replace links to `memory/DREAM.md` and `memory/dreams/` artifacts in the
   three scoped documents with canonical GitHub permalinks at full immutable
   commits that contain the cited files. For the v8-r1 prompt, use commit
   `4ed566b5d56b837593f6b19f1fb34a3f21f5910c` and verify blob
   `6087a0b3f641bdc4cbeac595e87d174eb11bcbf5`.
-- [ ] Add a provenance test proving the prompt citation's full commit and
+- [x] Add a provenance test proving the prompt citation's full commit and
   permalink target match the actual Git blob. Keep all existing link tests
   strict; relevant tests and `make check` pass.
-- [ ] Update only the existing 1109 plan to record that these three historical
+- [x] Update only the existing 1109 plan to record that these three historical
   documents are prepared here; current documentation and templates remain in
   1109 after 1106.
 
@@ -49,5 +51,7 @@ test modules must remain strict for repository-relative targets.
 Verify all cited artifacts against local Git objects before editing; use
 historical commits containing exact blobs. Write the provenance fixture first,
 confirm it fails, update only the three scoped documents, the provenance test,
-and the 1109 plan note. Run focused citation tests, `make check-fast`, lint,
-then full `make check` at committed HEAD.
+and the 1109 plan note. Confirmed the red-first provenance fixture, validated
+nine immutable links against local Git objects, and ran focused citation tests
+(23 passed), `make check-fast` (970 passed), `make lint` (185 passed), and
+full `make check` at committed HEAD e049a51d (1623 passed, 3 skipped).
