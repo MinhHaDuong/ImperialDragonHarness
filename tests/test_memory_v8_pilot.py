@@ -110,6 +110,16 @@ def verified_archival_links(root):
     for source, old in archives:
         assert (root / source).is_file(), source
         assert old in old_paths, old
+        original_source = subprocess.run(
+            ["git", "-C", str(root), "show", f"{baseline}:{source}"],
+            check=True, capture_output=True, env=child_env(),
+        ).stdout
+        assert (root / source).read_bytes() == original_source, f"archival source changed: {source}"
+        original_targets = {
+            ((root / source).parent / target).resolve()
+            for target in relative_links(original_source.decode("utf-8"))
+        }
+        assert (root / old).resolve() in original_targets, f"historical link absent: {source}: {old}"
     return archives
 
 
@@ -192,8 +202,8 @@ def test_relocated_clone_remains_readable(tmp_path):
 
     Clone the repository, move the clone elsewhere, drop the origin remote —
     then read the memory surface with plain file access only: every relative
-    link in every Markdown file under memory/ and docs/memory-v8/ must
-    resolve inside the relocated clone.
+    link in every Markdown file under memory/ and docs/memory-v8/, plus
+    the live runtime-smoke document, must resolve inside the relocated clone.
     """
     checkout = tmp_path / "checkout"
     subprocess.run(
@@ -213,6 +223,7 @@ def test_relocated_clone_remains_readable(tmp_path):
     docs = [
         *sorted((relocated / "memory").rglob("*.md")),
         *sorted((relocated / "docs" / "memory-v8").glob("*.md")),
+        relocated / "docs" / "2026-10-02-memory-v8-runtime-smoke.md",
     ]
     assert docs
     encountered = set()
@@ -228,3 +239,30 @@ def test_relocated_clone_remains_readable(tmp_path):
     archive = relocated / "memory/journal/2026/2026-10-13-third-dream-index-duplication-and-merge.md"
     archive.write_text(archive.read_text() + "\n[negative control](unmapped-broken.md)\n")
     assert "unmapped-broken.md" in unresolved_links(relocated, archive, archival_links)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("mutation", ["source_bytes", "invented_link"])
+def test_archival_source_must_match_its_historical_bytes_and_link(tmp_path, mutation):
+    root = tmp_path / "clone"
+    subprocess.run(
+        ["git", "clone", "--quiet", "--no-hardlinks", str(REPO), str(root)],
+        check=True, env=child_env(),
+    )
+    _, mappings, archives = relocation_record(root)
+    source, old = next(iter(archives))
+    if mutation == "source_bytes":
+        journal = root / source
+        original = journal.read_bytes()
+        journal.write_bytes(original + b"\nA false historical statement.\n")
+        assert relative_links(journal.read_text()) == relative_links(original.decode("utf-8"))
+        error = "archival source changed"
+    else:
+        other = next(path for path, _, _ in mappings
+                     if path.startswith("memory/dreams/") and path != old)
+        record = root / MIGRATION_RECORD
+        record.write_text(record.read_text().replace(
+            f"| `{source}` | `{old}` |", f"| `{source}` | `{other}` |"))
+        error = "historical link absent"
+    with pytest.raises(AssertionError, match=error):
+        verified_archival_links(root)
