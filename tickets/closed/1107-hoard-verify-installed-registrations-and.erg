@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Hoard: verify installed registrations and parent integration
+Created: 2026-10-15
+Author: reviewer
+Closed: PRs #1427-1430 integrated; canonical registrations and full main integration verified
+
+--- log ---
+2026-10-15T07:30Z reviewer created
+2026-10-15T09:24Z reviewer note blocker 1106 closed — Blocked-by removed.
+2026-10-15T10:21Z reviewer closed — PRs #1427-1430 integrated; canonical registrations and full main integration verified
+
+--- body ---
+
+## Context
+Child of 1102. After canonical merge, migrate only demonstrably managed installed dream registrations to hoard using the active primary checkout. Do not scan or mutate other project memories. Validate discovery and absence of old runtime entrypoints. Integrate children and report any unavailable installation permissions.
+
+## Exit criteria
+- [x] Read back managed Claude/Pi/Codex registrations and active links; no old invocation alias remains. Full integration make check passes; parent 1102 closes only after integration review. No active registration points into a temporary worktree.
+
+Final integration also verifies1108 trace classification and1109 live docs/templates before parent1102 closure.
+
+## Final integration — 2026-10-15
+
+All product children are merged through ec5571a7dc4b1da3ff59aee5c9af59b56f352547 (PRs1426-1430), after the1101clarification and1424Yawn rename. Parent reviewed every child diff and the full reference union. Canonical integration make check:1627passed,3skipped,50.26s; catalog/drift pass. Project helper dry-run with AGENTS has zero moves/edits. Hoard and Yawn registrations in Claude/Codex/Pi report installed=true, canonical targets avoid worktrees, idhcheck ok, former managed Dream/healthcheck aliases absent. Raw phase/final-test evidence and hashes are preserved in memory/evidence/2026-10-15-raid-review-evidence.md; final facts in the wrap journal. This is integration closure, not memory consolidation or policy promotion.

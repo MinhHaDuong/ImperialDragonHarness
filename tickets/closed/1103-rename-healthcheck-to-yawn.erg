@@ -2,12 +2,14 @@
 Title: Rename healthcheck to yawn
 Created: 2026-10-15
 Author: claude
+Closed: PR #1424 merged; canonical yawn activation and all three registrations verified postmerge
 
 --- log ---
 2026-10-15T06:44Z claude created
 2026-10-15T07:07Z Codex note Author decision 2026-10-15: use yawn without a transition alias or legacy compatibility entry point; migrate live callers and installed registrations.
 2026-10-15T08:27Z reviewer note Author accepted staged validation on2026-10-15: merge the reviewed atomic rename, then activate and read back managed host registrations from synchronized canonical sources; keep1103open until verification. Exact answer: Oui, fusion puis activation vérifiée ; ticket ouvert jusque-là (recommandé). Size exception remains separate; no review waiver.
 2026-10-15T08:27Z reviewer note verify-reroll — round 1: ticket 1103 installed registrations remain pending
+2026-10-15T08:54Z reviewer closed — PR #1424 merged; canonical yawn activation and all three registrations verified postmerge
 
 --- body ---
 ## Context
@@ -22,7 +24,7 @@ compatibility entry point. Migrate live callers and installed registrations.
 ## Exit criteria
 - [x] Skill renamed `yawn`; every reference updated in one commit (15 files
       in skills, rules, tests, Makefile, scripts, hooks; molt calls it).
-- [ ] No `/healthcheck` alias or legacy compatibility entry point remains;
+- [x] No `/healthcheck` alias or legacy compatibility entry point remains;
       live callers and installed registrations use `yawn`.
 - [x] `make skills-catalog` regenerated; `make check-skills-drift` and
       `make check` pass.
@@ -41,3 +43,7 @@ PASS: actual skill/caller/test paths confirmed; installer canonical_source is ge
 Atomic-size exception approved by author: “Découper 1102 ; autoriser une PR atomique de plus de 15 fichiers pour 1103 (recommandé).” This exception covers size only; all normal gates and review remain required.
 
 Canonical skill, live callers, installer fixtures and catalog migrated together. Historical pilot evidence retains its original name. Host registrations remain pending canonical merge; activation/readback belongs to the parent raid and is documented in docs/adapter-operations.md. No host installation was performed from this worktree.
+
+## Postmerge activation — 2026-10-15
+
+Verified after canonical merge f8f150023679475735f9940993892ae145268be0: published PR 1424 comment IC_kwDORsAV3c8AAAABcNTiig at 2026-10-15T08:35:02Z records all three runtime registrations installed=true, bin/idh check ok, canonical yawn targets, and former managed healthcheck links absent. The public readback is preserved in memory/evidence/2026-10-15-raid-review-evidence.md#pr-1424. This completes the separately authorized activation stage; closure occurs only in this wrap branch after reading the evidence.
