@@ -14,3 +14,5 @@ Child of 1102. After canonical merge, migrate only demonstrably managed installe
 
 ## Exit criteria
 - [ ] Read back managed Claude/Pi/Codex registrations and active links; no old invocation alias remains. Full integration make check passes; parent 1102 closes only after integration review. No active registration points into a temporary worktree.
+
+Final integration also verifies1108 trace classification and1109 live docs/templates before parent1102 closure.

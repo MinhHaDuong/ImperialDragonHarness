@@ -1,0 +1,26 @@
+%erg 0.1
+Title: Hoard: classify current and historical memory-consolidation traces
+Created: 2026-10-15
+Author: reviewer
+Blocked-by: 1105
+
+--- log ---
+2026-10-15T08:02Z reviewer created
+
+--- body ---
+
+## Context
+Child of 1102. Trace readers must recognize current hoard invocations while retaining dream for historical data interpretation; this is not a runtime alias. Paths: scripts/trace-stats.py, scripts/census/memory-recall.py and corresponding existing tests, plus own ticket.
+
+## Exit criteria
+- [ ] Add hoard classification with historical dream classification preserved. Behavioral trace fixtures distinguish both names and unrelated commands. No executable /dream alias is introduced; make check passes.
+
+## Raid Imagine, Plan and feasibility — 2026-10-15
+PASS. Add hoard to SKILL and CMD in scripts/census/memory-recall.py, and to
+MANDATED_SKILLS in scripts/trace-stats.py. Preserve dream for historical trace
+interpretation; do not create an invocation alias. Existing scan_file and
+mandated-tail fixtures should classify current hoard and historical dream as
+maintenance, and unrelated hunt as working. Red-first trace-shaped JSONL tests
+exercise behavior rather than matching implementation strings. Four source/test
+paths plus this ticket; no API or schema change. Wait for the declared 1105
+activation prerequisite, then run affected tests and the full check.

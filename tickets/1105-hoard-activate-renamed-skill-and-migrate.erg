@@ -14,3 +14,25 @@ Child of 1102. Rename canonical dream skill to hoard, update live skill callers 
 
 ## Exit criteria
 - [ ] Live skill/callers and focused tests use hoard; migration authority is narrow and separate from consolidation. make skills-catalog, check-skills-drift and make check pass. Keep PR below 15 paths; move documentation/memory work to 1106.
+
+## Raid Plan and feasibility — 2026-10-15
+PASS: 13 paths, conservatively counting the skill rename as two: the renamed
+skill, lair, brood, roar, AGENTS.md, README.md, test_dream_v8,
+test_lair_dream_suggestion, test_legacy_memory_retired,
+test_adapter_deployment, test_skill_seam, and this ticket. The canonical
+installer discovers directories generically. Preserve the 1101 quotation
+clause verbatim.
+
+Derive the helper root from the loaded skill. Preflight only the selected
+project; dry-run creates no writes or branches. A writing run migrates inside
+an isolated project branch, then consolidates using the new paths only.
+Migration may update inventoried active path and command references, including
+AGENTS.md; consolidation retains its memory-only authority boundary.
+
+The seam fixture invokes the real helper through a projected hoard skill from
+a different project cwd. Dry-run preserves bytes and refs; applying migration
+leaves a second project untouched. Real adapter fixtures install hoard across
+runtimes and verify that no canonical dream skill remains. Harness memory,
+documentation, trace classification and installed registrations remain in
+1106, 1109, 1108 and 1107 respectively. Run affected tests, catalog/drift,
+adherence and the full check.
