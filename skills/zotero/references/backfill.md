@@ -39,7 +39,7 @@ updates it first.
 For unattended import, the project owner opts in with a root-level
 `.zotero-reconcile.json` containing `{"apply": true, "user_id": "123456"}`
 (an optional `collection` key files created items there). Then run
-`reconcile . --apply`, or let `/molt` call it at the next maintenance. The
+`reconcile . --apply`; no maintenance skill runs it for you. The
 script locks staging and the user library, pulls a fresh index, and creates
 only absent PDFs with corroborated title/author metadata. Missing metadata,
 weak matches, ties, and discovery errors remain visible in `deferred` or
@@ -58,8 +58,8 @@ export mapping does not prove that a staged PDF was uploaded. The installed
 plugin roster was empty at review time. `zotero-mcp` would still need the
 same project discovery, duplicate guard, and durable replay state; adding it
 would increase moving parts for this workflow. The local Zotero connector API
-requires a running desktop client, whereas headless `/molt` must work without
-one. The helper therefore reuses the existing Web API index and upload path.
+requires a running desktop client, whereas an unattended `--apply` run must
+work without one. The helper therefore reuses the existing Web API index and upload path.
 
 `audit` classifies every staged file into five verdicts, and the distinction
 between the middle two decides what you do next:

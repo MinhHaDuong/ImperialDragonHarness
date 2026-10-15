@@ -230,31 +230,6 @@ def test_skills_call_the_script():
 
 
 @pytest.mark.integration
-def test_reconcile_path_is_per_run(tmp_path):
-    """Run molt step 1.8 twice with a stub zotero.py; the --out paths must differ."""
-    import re
-
-    section = MOLT.read_text().split("1.8. **Reconcile", 1)[1].split("2. **Yawn.**", 1)[0]
-    block = re.findall(r"```bash\n(.*?)\n\s*```", section, re.S)[0]
-    root = tmp_path / "idh"
-    (root / "scripts").mkdir(parents=True)
-    (root / "scripts/zotero.py").write_text(
-        "import sys, pathlib\n"
-        "args = sys.argv\n"
-        "pathlib.Path(sys.argv[0]).with_name('seen.txt').open('a').write(args[args.index('--out') + 1] + '\\n')\n"
-    )
-    proj = tmp_path / "proj"
-    (proj / "docs").mkdir(parents=True)
-    env = child_env()
-    env["IDH_ROOT"] = str(root)
-    env["TMPDIR"] = str(tmp_path)
-    for _ in range(2):
-        run("bash", "-c", block, cwd=proj, env=env)
-    seen = (root / "scripts/seen.txt").read_text().split()
-    assert len(seen) == 2 and seen[0] != seen[1]
-
-
-@pytest.mark.integration
 def test_probe_missing_branch_is_could_not_determine(tmp_path):
     """A git error (no such branch) is not 'not merged' and not a crash."""
     repo = make_repo(tmp_path)
@@ -281,11 +256,6 @@ def test_prune_skips_untracked_duplicate(tmp_path):
     assert (repo / "tickets/0001-probe.erg").exists()
 
 
-def reconcile_block():
-    section = MOLT.read_text().split("1.8. **Reconcile", 1)[1].split("2. **Yawn.**", 1)[0]
-    return reconcile_blocks(section)[0]
-
-
 def reconcile_blocks(text):
     import re
 
@@ -310,14 +280,10 @@ def stub_zotero(tmp_path, status):
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("which", ["molt", "backfill"])
-def test_reconcile_failure_propagates_and_path_announced(tmp_path, which):
+def test_reconcile_failure_propagates_and_path_announced(tmp_path):
     """A failing reconcile must fail the block, and the report path is still named."""
-    if which == "molt":
-        block = reconcile_block()
-    else:
-        text = (ROOT / "skills/zotero/references/backfill.md").read_text()
-        block = next(b for b in reconcile_blocks(text) if "reconcile . --out" in b)
+    text = (ROOT / "skills/zotero/references/backfill.md").read_text()
+    block = next(b for b in reconcile_blocks(text) if "reconcile . --out" in b)
     proj, env = stub_zotero(tmp_path, 7)
     r = subprocess.run(["bash", "-c", block], cwd=proj, env=env, text=True, capture_output=True)
     assert r.returncode != 0, (r.returncode, r.stdout, r.stderr)
