@@ -9,6 +9,8 @@ Blocked-by: 1100
 2026-10-14T19:45Z Minh Ha-Duong note Filed from the 1096 design discussion (answer 1); sequenced after the review layers are simplified.
 2026-10-14T20:26Z reviewer reviewer note Blocked-by moved from 1096 to 1100: 1096 now holds the design only, 1100 the implementation.
 
+2026-10-15T16:10Z ChatGPT note Author confirms extending latency work to tests, CI and orchestration waiting; phased measurement and pilot added.
+
 --- body ---
 ## Goal
 
@@ -61,3 +63,57 @@ the layers 1100 removes. Design ticket 1096 is closed.
       shown by its timestamps, phase by phase.
 - [ ] No seat is dropped silently: a missing seat appears as "no report",
       and a required one still blocks the merge (ESCALATE).
+
+
+## Author extension — test and validation waiting (2026-10-15)
+
+The author explicitly confirmed that Imperial Dragon Harness must also address
+time spent testing, following the climate-finance-het and JETP Observer
+discussion. Scope is total development feedback latency, not reviewer runtime
+alone. This extension records work, not a gate-policy change.
+
+### Evidence already available
+
+memory/topics/ci-and-test-suite.md records historical full-suite improvement
+from 81 s to 33 s, a 1 h 49 min stuck forge check (cause unknown), repeated
+local CI calls, and a ticket-only change taking over 13 minutes without
+per-step timing. These are dated observations, not current benchmarks.
+Makefile already separates check-fast, lint and full check; full pytest uses
+four workers when xdist is present. Local make check does not establish
+equivalence with the workflow's complete job set.
+
+### Phases
+
+1. Measure a representative contribution end to end: environment/bootstrap,
+   test collection and execution, lint/adherence, local CI, forge queue,
+   reviewer startup/collection, caller resumption and promotion/merge.
+   Include failed/interrupted attempts. Separate useful execution from
+   avoidable waiting; update historical timings before promising gains.
+2. Map touched components and shared dependencies to existing validations.
+   Pilot the smallest sufficient selection, reuse exact-revision evidence
+   where valid and remove measured duplicate runs. Do not create another
+   blanket gate, polling loop or configuration layer without demonstrated need.
+3. Evaluate batching expensive integration checks on immutable candidate
+   commits while agents continue working, then promoting only the validated
+   snapshot. Retain proportionate gaze and targeted tests before integration.
+   This is an option to evaluate alongside ticket 1045, not authorization to
+   bypass current required checks or deploy integration/main semantics.
+4. Demonstrate the selected pilot and compare total feedback/merge latency,
+   repeated runs and waiting with baseline; roll out in bounded child PRs.
+
+The measurement of existing test/CI waiting can start independently of 1100.
+The original reviewer-budget implementation still follows 1100; split a child
+ticket if needed rather than weakening that dependency silently.
+
+### Additional exit criteria
+
+- [ ] Current timings identify test execution, duplicate runs, queues and
+      orchestration idle time separately, including failures.
+- [ ] A representative pilot reduces demonstrated unnecessary waiting or
+      repeated work with no loss of relevant checks.
+- [ ] Shared dependency/configuration changes expand test selection correctly;
+      stale or missing evidence never counts as a pass.
+- [ ] Local-versus-forge coverage and reuse/promotion rules are explicit;
+      policy changes are reviewed before use.
+- [ ] Results report elapsed feedback time as well as CPU/test time; no
+      unmeasured speedup or new numerical budget is asserted.
