@@ -35,8 +35,13 @@ recommend `idh install`. `IDH_SKIP_VALIDATE=1` is an explicit, logged bypass.
 
 ## Rename activation: healthcheck to yawn (1103)
 
-Host registration migration is pending until the canonical rename merges.
-Run installation from the active primary checkout after it contains
+Host registration migration completed on 2026-10-15 after the canonical
+rename merged. Managed registrations were verified from the canonical primary
+checkout: Claude, Codex and Pi each reported yawn installed, the new targets
+resolved to canonical sources, and `bin/idh check` returned ok. The former
+managed healthcheck registrations were removed.
+
+For future installation or repair, use the active primary checkout after it contains
 `skills/yawn/SKILL.md`, then run `bin/idh check` and read back the managed
 skill projections for Claude Code, Codex and Pi. The installer discovers
 canonical names dynamically; no compatibility alias is provided.
