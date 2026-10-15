@@ -2,10 +2,12 @@
 Title: Rename dream to hoard, off the native auto-dream label
 Created: 2026-10-15
 Author: claude
+Closed: PRs #1426-1430 complete Hoard rename and migration; all children and final integration verified
 
 --- log ---
 2026-10-15T06:44Z claude created
 2026-10-15T07:07Z Codex note Author decision 2026-10-15: use hoard and release the historical library-name reservation; migrate DREAM.md to HOARD.md, dreams/ to hoards/ and references. No aliases or legacy runtime path. Automatic project migration belongs in hoard invocation, on its isolated branch, with dry-run, idempotence and conflict preservation.
+2026-10-15T10:21Z reviewer closed — PRs #1426-1430 complete Hoard rename and migration; all children and final integration verified
 
 --- body ---
 ## Context
@@ -43,24 +45,24 @@ consolidation uses the new paths exclusively.
 ## Exit criteria
 - [x] Author decision recorded: `hoard`; historical library-name reservation
       released; migrate to `memory/HOARD.md` and `memory/hoards/`; no aliases.
-- [ ] Skill directory, frontmatter `name`, every reference (16 files in
+- [x] Skill directory, frontmatter `name`, every reference (16 files in
       skills, rules, tests, Makefile, scripts, hooks, adapters, profiles;
       `lair` step 11, brood, roar) migrated to the new name and paths. Recount
       live references before implementation; the original 16-file estimate
       is not a fixed inventory. Historical record contents remain preserved.
-- [ ] `/hoard` automatically migrates an old-format project in its isolated
+- [x] `/hoard` automatically migrates an old-format project in its isolated
       branch before consolidation, including file moves and affected references.
       No cross-project sweep runs merely because the skill is invoked.
-- [ ] Migration is idempotent, preserves contents/provenance and fails without
+- [x] Migration is idempotent, preserves contents/provenance and fails without
       overwriting when old and new paths coexist; missing/unreadable inputs
       are reported rather than treated as empty. Dry-run makes no writes.
-- [ ] No `/dream` alias, compatibility symlink, old-format consolidation path
+- [x] No `/dream` alias, compatibility symlink, old-format consolidation path
       or legacy runtime entry point remains after migration. Installed skill
       registrations and active project links resolve to the new names/paths.
-- [ ] Migration verification covers a fresh new-format project, an old-format
+- [x] Migration verification covers a fresh new-format project, an old-format
       project with linked reports, a repeated invocation, dry-run, and coexistence
       conflicts, including preservation of report contents and provenance.
-- [ ] `make skills-catalog` regenerated; `make check-skills-drift` and
+- [x] `make skills-catalog` regenerated; `make check-skills-drift` and
       `make check` pass.
 
 ## Raid Imagine — 2026-10-15
@@ -68,3 +70,7 @@ Imagine: split approved by author on 2026-10-15. Tracker children: 1104 migratio
 
 ## Further bounded children — 2026-10-15
 1108 covers current/historical trace classification; 1109 covers current documentation/templates after 1106 actual memory migration. These preserve the original 1102 criteria and avoid oversized activation/memory PRs. 1107 final integration covers all children.
+
+## Final integration — 2026-10-15
+
+All product children are merged through ec5571a7dc4b1da3ff59aee5c9af59b56f352547 (PRs1426-1430), after the1101clarification and1424Yawn rename. Parent reviewed every child diff and the full reference union. Canonical integration make check:1627passed,3skipped,50.26s; catalog/drift pass. Project helper dry-run with AGENTS has zero moves/edits. Hoard and Yawn registrations in Claude/Codex/Pi report installed=true, canonical targets avoid worktrees, idhcheck ok, former managed Dream/healthcheck aliases absent. Raw phase/final-test evidence and hashes are preserved in memory/evidence/2026-10-15-raid-review-evidence.md; final facts in the wrap journal. This is integration closure, not memory consolidation or policy promotion.
