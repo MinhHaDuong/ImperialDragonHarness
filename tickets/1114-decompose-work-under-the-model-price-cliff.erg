@@ -1,0 +1,66 @@
+%erg 0.1
+Title: Decompose work so each worker stays under its model's price cliff
+Created: 2026-10-15
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-15T19:30Z Minh Ha-Duong created
+2026-10-15T19:30Z claude note Filed from an interactive discussion on Haiku 5.5 vs Luna @max value: the author asks that the harness decompose work so cheap workers stay inside their price zone.
+
+--- body ---
+## Context
+
+Haiku 5.5 costs 0.10/0.50 USD per M in/out up to 100K prompt tokens and
+0.50/2.50 above (`skills/route/routes.json`). Under 100K it is the best value
+of the routing grid (arena arm N: 22.5/30, 0.023 USD, 3.0 min median per
+ticket, tied with Luna @medium). Above it, the price is five times higher and
+Haiku loses that place. Luna's price does not depend on context length.
+
+External evidence (conference slide, 2026-10-15, Spring PetClinic migration,
+one project per model, no quality shown): Haiku 0.245 USD per M tokens vs
+Luna @max 0.020 USD per M, at identical list prices. Likely cause, not
+verified: long agentic sessions crossing 100K plus weaker cache reuse.
+
+Today the harness only states the cliff: a one-line rule in
+`skills/route/SKILL.md` and `routes-recommendations-claude-code.md` ("keep a
+Haiku worker under 100K prompt tokens"), and the 256K monster guard as a hard
+floor. Nothing estimates a worker's context before launch, nothing watches it
+while the worker runs, and the arena does not record peak context per leg.
+
+## Approach (audit before instrumenting)
+
+1. **Measure.** From existing transcripts (Claude Code subagents on doudou
+   and padme, arena legs N and L), the distribution of peak prompt tokens
+   per worker and the share of worker spend billed above 100K. If almost no
+   worker crosses 100K, close as a documented non-finding with no code.
+2. **Price cliffs as data.** `routes.json` carries, per model, the prompt
+   size where the price steps (`price_cliff_tokens`; null when flat). The
+   orchestrator's launch line states the estimated context and the budget.
+3. **Decompose at plan time.** `raid` (and `team-lead`) size each work packet
+   from its read manifest (files and sections the worker must read, bytes/4,
+   plus the system and tool overhead measured in step 1). A packet over
+   budget is split (per file or section, map then reduce) or promoted to a
+   model without the cliff, with the reason in the launch line. The 256K
+   guard stays the hard floor.
+4. **Hand off before the cliff.** A worker nearing its budget (about 85% of
+   the cliff) stops, writes a handoff note (state, files touched, next
+   step), and the orchestrator relaunches a fresh worker from that note.
+   Mechanism to choose after step 1: a Claude Code hook reading the
+   transcript usage, or a check in the headless wrappers (`pi -p`,
+   `codex exec`) reading their JSON usage.
+5. **Arena.** Record peak prompt tokens per leg, so cost per ticket can be
+   split into under-cliff and over-cliff parts.
+
+## Exit criteria
+
+- [ ] Step 1 measurement committed (script and summary), with the decision
+      to continue or to close as a non-finding
+- [ ] If continued: `price_cliff_tokens` in `routes.json`, read by the route
+      skill; launch line carries estimated context and budget
+- [ ] If continued: `raid` plan step sizes packets and splits or promotes
+      those over budget; one raid shows it working
+- [ ] If continued: the handoff-before-cliff mechanism, with a test that a
+      worker past the threshold hands off rather than continuing
+- [ ] Arena follow-up filed in the arena repository (peak context per leg;
+      paired Luna @max vs Haiku @medium on long tasks)
+- [ ] `make check` passes
