@@ -18,5 +18,13 @@ Decision for the author: accept on-demand `/zotero reconcile` only and say so
 in the rule, or name a trigger scoped to paper repositories (for example the
 presence of `.zotero-reconcile.json`, or a step in a paper-repo skill).
 
+## Decision (author, 2026-10-15, binding)
+The periodic staging reconcile is PROPOSED at /lair, never run automatically.
+Trigger: the project has a docs/ directory and some file under docs/ was added
+or modified since the start of the current day (mtime; docs/ is git-ignored per
+rules/zotero.md, so git cannot see it). Lair then proposes `/zotero reconcile`
+in its report; the author accepts or not. No trigger: silent. Cheap: mtime scan,
+no Zotero access, no network. Do not reintroduce molt step 1.8.
+
 ## Exit criteria
 - [ ] `rules/zotero.md` names who runs the reconcile and when, matching what the skills actually do

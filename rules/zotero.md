@@ -62,9 +62,14 @@ projects. Zotero is the system of record; git holds neither the sources nor the
   that was never extracted, so a nil result is not a negative finding.
 - **Project `.bib` files are also staging**, git-ignored, synced to Zotero. The
   `.bib` is provenance scaffolding, not the source of truth.
-- **Periodic sync + purge.** Reconcile staging to Zotero periodically (correct
-  item type, scraped metadata, file attachment), and **purge staging on
-  archival after publication** — Zotero retains everything.
+- **Periodic sync + purge.** Reconcile staging to Zotero (correct item type,
+  scraped metadata, file attachment) and **purge staging on archival after
+  publication** — Zotero retains everything. The reconcile is run by the author
+  on demand (`/zotero reconcile`) and is *proposed* by `/lair`, never run
+  automatically: when the project has a `docs/` directory and a file under it
+  has an mtime since the start of the current day, lair's final summary offers
+  it (`skills/lair/zotero-reconcile-trigger`, a cheap mtime scan with no Zotero
+  access and no network); otherwise lair is silent. `/molt` does not run it.
 - **Reports carry a page count** — pass `numPages` on the entry. The Zotero
   `report` type has no `numPages` field, so the `zotero` skill's import flow files it in Extra
   as the CSL variable `number-of-pages`; that is the correct home, not a

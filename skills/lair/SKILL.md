@@ -63,3 +63,11 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     finish. Do not ask a question, wait for a response, launch hoard or mark
     the experiences processed. Below the
     threshold, omit this suggestion. No timer or automatic invocation.
+12. **Propose the staging reconcile when `docs/` moved today.** Run
+    `"$IDH_ROOT/skills/lair/zotero-reconcile-trigger"` from the project root: an
+    mtime scan for any file under `docs/` modified since the start of the current
+    day (`docs/` is git-ignored, so git cannot see it). If it prints a line,
+    include it in the final summary as an offer of `/zotero reconcile`; the author
+    accepts or not. No output, no mention. The reconcile is proposed, never run automatically: no Zotero access, no network here, and it does not belong in
+    `/molt` (the old molt step 1.8 ran it on every lair and stalled for minutes;
+    removed in PR #1434, ticket 1112).

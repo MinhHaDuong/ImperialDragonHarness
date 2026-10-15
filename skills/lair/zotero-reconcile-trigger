@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Lair step 12 trigger: does the project's docs/ staging need a reconcile offer?
+# Usage: zotero-reconcile-trigger [project-root]   (default: current directory)
+# Prints one proposal line and exits 0 when a file under docs/ has an mtime
+# since the start of the current day; prints nothing otherwise. Never runs the
+# reconcile, never touches Zotero or the network (ticket 1112). docs/ is
+# git-ignored (rules/zotero.md), so git cannot see it: mtime only.
+set -euo pipefail
+root="${1:-.}"
+[ -d "$root/docs" ] || exit 0
+today="$(date +%Y-%m-%d) 00:00:00"
+hit="$(find "$root/docs" -type f -newermt "$today" -print -quit)"
+[ -n "$hit" ] || exit 0
+echo "docs/ changed today (e.g. ${hit#"$root"/}): run \`/zotero reconcile\`? (proposal only; accept or skip)"
