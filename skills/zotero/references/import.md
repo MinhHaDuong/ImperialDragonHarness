@@ -1,5 +1,16 @@
 # Importing one or more PDFs or URLs
 
+## What identification produces
+
+Every staged document, whatever its format (PDF, HTML, doc/docx/odt, epub,
+md, txt, image, …), yields one RIS record: title, authors, date, identifiers
+(DOI, ISBN, ISSN, arXiv, URL, handle) and the other Dublin Core fields the
+document supports (type, publisher, container, language, description,
+rights). The record is the contract; how to reach it is yours. Embedded
+metadata (PDF tags, HTML meta, document properties, front matter) is a lead,
+never a finding. A field that cannot be established stays empty, and a
+document that cannot be identified is reported, not guessed.
+
 ## Happy path
 
 1. `probe` each PDF with the helper script; for a URL, `probe-url.py` stages the document and extracts the same record shape (see URL intake below).

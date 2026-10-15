@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-10-15T14:43Z Minh Ha-Duong created
+2026-10-15T18:30Z Claude note Superseded by 1115: the library index and its cache are retired in favour of targeted lookups (local API first). Close when 1115 lands.
 
 --- body ---
 ## Context

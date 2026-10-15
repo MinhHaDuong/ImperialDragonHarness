@@ -1,0 +1,47 @@
+%erg 0.1
+Title: Zotero: local API first, targeted lookups, no library index
+Created: 2026-10-15
+Author: Claude
+
+--- log ---
+2026-10-15T17:55Z Claude created
+2026-10-15T18:30Z Claude note Rescoped after design discussion with Minh: local API first (launch Zotero if needed), Web API fallback, no cache, no whole-library pull, no direct sqlite read. Supersedes ticket 1113.
+
+--- body ---
+## Context
+`scripts/zotero.py`, the only backend of the `zotero` skill, answers "is this
+staged document already in Zotero?" by pulling the whole library from the Web
+API into a 24 h cache (`load_index` → `build_index`), or by reading the desktop
+`zotero.sqlite` directly. It never calls the client's local API
+(`127.0.0.1:23119/api/`). A stale cache costs a full rebuild: ticket 1113
+(killed at 300 s on doudou).
+
+## Design (decided 2026-10-15)
+- **Transport order.** Local API first; if the client is not running, launch
+  Zotero and wait a bounded time; then the Web API. Neither answers → the run
+  reports `unchecked` within a stated bound. The report records the source.
+- **No cache, no whole-library pull.** Each document is looked up from its
+  identification record (RIS: title, authors, date, ids; see
+  `skills/zotero/references/import.md`) by targeted queries: identifier,
+  then title/creator/year, then the candidates' children for attachment md5.
+- **md5 confirms, identity decides.** An md5 match is decisive where Zotero
+  stores the file unchanged; HTML snapshots and converted files are matched
+  on identity (URL/DOI, then title-authors-date).
+- **Direct sqlite reads are retired**: no contract. `probe`, `match` and
+  `dedup-report` move to the local API in a follow-up ticket.
+- **`--apply`** re-queries the candidates of the files it is about to write,
+  fresh from the Web API, under the injection lock (writes go to the server;
+  the local client lags until it syncs).
+- Transport library: stdlib vs `pyzotero` (`local=True` covers both APIs) is
+  open; decide on the first spike.
+
+## Exit criteria
+- [ ] Spike on doudou: the local API serves the queries above, attachment
+      items carry `md5`, and launching Zotero from the script is reliable
+      (and skipped without a display)
+- [ ] `audit` and `reconcile` use the transport order and targeted lookups;
+      every HTTP call has a timeout; the report names its source
+- [ ] `load_index`, `build_index`, `sync-index` and the index cache are removed
+- [ ] `docs/zotero-integration.md` §5 states the transport order
+- [ ] Ticket 1113 closed as superseded
+- [ ] `make check` passes
