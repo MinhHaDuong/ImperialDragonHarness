@@ -24,7 +24,7 @@ v8 repository memory. Pilot: [pilot.md](../docs/memory-v8/pilot.md). Provenance:
 ## Hoards
 
 - [Third hoard](hoards/2026-10-13-third-dream.md) — accepted.
-- [Fourth hoard](hoards/2026-10-15-fourth-hoard.md) — under review.
+- [Fourth hoard](hoards/2026-10-15-fourth-hoard.md) — accepted.
 
 Search the journal for older or unprocessed experiences. The legacy index
 stays in Git history; each legacy reference note is linked from its topic.

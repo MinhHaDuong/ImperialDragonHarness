@@ -196,7 +196,9 @@ def test_hoard_real_migration_from_another_project_cwd(tmp_path):
            "GIT_COMMITTER_NAME": "fixture", "GIT_COMMITTER_EMAIL": "fixture@example.invalid"}
 
     def git(root, *args):
-        return subprocess.run(["git", "-C", str(root), *args], check=True,
+        # Keep background maintenance from racing the fixture's byte snapshots.
+        return subprocess.run(["git", "-c", "maintenance.auto=false", "-c", "gc.auto=0",
+                               "-C", str(root), *args], check=True,
                               capture_output=True, text=True, env=env).stdout
 
     def bytes_in(root):
