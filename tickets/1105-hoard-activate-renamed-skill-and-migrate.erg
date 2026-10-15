@@ -1,0 +1,16 @@
+%erg 0.1
+Title: Hoard: activate renamed skill and migrate live harness callers
+Created: 2026-10-15
+Author: reviewer
+Blocked-by: 1104
+
+--- log ---
+2026-10-15T07:30Z reviewer created
+
+--- body ---
+
+## Context
+Child of 1102. Rename canonical dream skill to hoard, update live skill callers and registrations contract/tests, regenerate catalog. Invoke the migration helper on only the explicitly selected project in its isolated branch before consolidation; dry-run remains write-free. Preserve 1101 quotation clause. No alias, compatibility symlink or old-format consolidation entrypoint. Historical data interpretation may retain the old label.
+
+## Exit criteria
+- [ ] Live skill/callers and focused tests use hoard; migration authority is narrow and separate from consolidation. make skills-catalog, check-skills-drift and make check pass. Keep PR below 15 paths; move documentation/memory work to 1106.

@@ -2,10 +2,12 @@
 Title: Dream: carry verified quotations and locators verbatim
 Created: 2026-10-15
 Author: claude
+Closed: autoclosed — PR #1425
 
 --- log ---
 2026-10-15T06:44Z claude created
 2026-10-15T07:09Z Codex note Revalidated by the harness author on 2026-10-15: preserve verified quotations and locators verbatim through one general clause, without a sources-specific branch. Nomination provenance and harness authorization distinguished in Context.
+2026-10-15T07:55Z reviewer closed — autoclosed — PR #1425
 
 --- body ---
 ## Context
@@ -31,3 +33,12 @@ than a policy inferred from the originating project's experience.
       between two recorded locators is kept as an unresolved contradiction.
 - [ ] No new section, no source-specific branch in roar or dream.
 - [ ] Skill tests updated if they pin dream's wording; `make check` passes.
+
+## Raid Imagine — 2026-10-15
+Imagine: fresh author-revalidated premise. Add one general clause under Merging; no new section, source-specific branch or Roar change. No wording-pin test needed.
+
+## Raid Plan — 2026-10-15
+Actions: insert general verbatim quote/locator clause into current Merging bullet. Verification: semantic diff inspection and make check; no tautological wording test. Paths: skills/dream/SKILL.md plus own ticket. Dependency: complete before 1105 renames skill.
+
+## Raid feasibility — 2026-10-15
+PASS: actual skill/caller/test paths confirmed; installer canonical_source is generic. Seven shared annotation tickets counted in branch footprint. 1103 atomic size exception explicitly authorized. No three-PR registry contention: 1103 and 1105 activate sequentially; 1101 and 1104 finish before 1105. Baseline make check: 1592 passed, 3 skipped in 52.13s (existing primary venv; normal Git access).

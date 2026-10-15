@@ -21,6 +21,9 @@ Apply these to consolidated `memory/topics/` and the index:
   current memory. Record the reason and retained source references in the report.
 - **Merging:** combine duplicate or overlapping entries into one accurate record,
   preserving source links, conditions, exceptions and unresolved contradictions.
+  Carry quotations verified on the page and their locators (page, folio, note
+  number) verbatim into topics; never paraphrase, condense or merge them away.
+  Keep conflicting recorded locators as an unresolved contradiction.
 - **Refreshing:** update stale context that remains relevant using current
   evidence; flag uncertainty when it cannot be verified.
 

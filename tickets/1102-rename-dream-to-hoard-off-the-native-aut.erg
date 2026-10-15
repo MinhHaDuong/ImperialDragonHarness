@@ -62,3 +62,6 @@ consolidation uses the new paths exclusively.
       conflicts, including preservation of report contents and provenance.
 - [ ] `make skills-catalog` regenerated; `make check-skills-drift` and
       `make check` pass.
+
+## Raid Imagine — 2026-10-15
+Imagine: split approved by author on 2026-10-15. Tracker children: 1104 migration mechanism; 1105 atomic skill activation/live callers; 1106 harness memory/current docs migration; 1107 installed registrations and final integration. Preserve historical report/journal bytes and provenance. Blind-Spot: revise migrated prompt identity; preflight dangling/external symlinks; narrowly authorize migration reference updates without extending consolidation authority. These implement existing preservation/no-overwrite requirements.
