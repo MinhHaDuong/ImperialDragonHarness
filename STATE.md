@@ -29,7 +29,7 @@ Branch census 2026-10-14: remote branches are main, archive/review-1319-20261013
 Arena remains independent. Routing consumes the independent arena's reviewed evidence through docs/arena-integration.md. 17 journal entries on main are not yet covered by an accepted Dream.
 
 ## Next actions
-Continue from `erg ready tickets/`. Open PRs: #1415 (pytest-guard speed; its worktree explore-ci-speed-2014346 is locked with no session found running in it) and #1416 (roar journal, auto-merge armed).
+Continue from `erg ready tickets/`. Open PR: #1415 (pytest-guard speed; its worktree explore-ci-speed-2014346 is locked with no session found running in it). PR #1416 (roar journal) is merged.
 Zotero staging reconciliation could not run on 2026-10-14T20:36Z: no ZOTERO_USER_ID in the flag, environment or ~/.config/keys/zotero.env. Author-side Zotero actions below remain outstanding.
 
 ## Author actions

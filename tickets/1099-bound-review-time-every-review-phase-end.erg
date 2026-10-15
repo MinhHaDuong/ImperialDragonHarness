@@ -28,9 +28,9 @@ Unbroken reviews are already fast (JETP-observer #154: 1.8 min; #152:
 
 ## Sequencing
 
-Blocked by 1096 (simplify the review layers: gaze becomes the single review
+Blocked by 1100 (implement the simplified review layers: gaze becomes the single review
 skill, no second battery). Budgets are set on the simplified chain, not on
-the layers 1096 removes.
+the layers 1100 removes. Design ticket 1096 is closed.
 
 ## Scope
 
