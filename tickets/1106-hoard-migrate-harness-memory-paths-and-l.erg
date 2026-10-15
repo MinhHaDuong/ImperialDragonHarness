@@ -1,0 +1,16 @@
+%erg 0.1
+Title: Hoard: migrate harness memory paths and live documentation
+Created: 2026-10-15
+Author: reviewer
+Blocked-by: 1105
+
+--- log ---
+2026-10-15T07:30Z reviewer created
+
+--- body ---
+
+## Context
+Child of 1102. Migrate this harness project memory and active documentation/link targets using 1104. Keep accepted report and journal bytes unchanged, retain historical ledger references, advance prompt revision, and maintain index <=100 lines. Repair operational docs/templates without rewriting historical accounts.
+
+## Exit criteria
+- [ ] Harness uses memory/HOARD.md and memory/hoards/ exclusively for consolidation, links resolve and historical provenance remains verifiable. Compare preserved artifact bytes. make check passes. Split further before execution if PR reaches 15 paths.

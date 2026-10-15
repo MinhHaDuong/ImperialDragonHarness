@@ -1,0 +1,16 @@
+%erg 0.1
+Title: Hoard: verify installed registrations and parent integration
+Created: 2026-10-15
+Author: reviewer
+Blocked-by: 1106
+
+--- log ---
+2026-10-15T07:30Z reviewer created
+
+--- body ---
+
+## Context
+Child of 1102. After canonical merge, migrate only demonstrably managed installed dream registrations to hoard using the active primary checkout. Do not scan or mutate other project memories. Validate discovery and absence of old runtime entrypoints. Integrate children and report any unavailable installation permissions.
+
+## Exit criteria
+- [ ] Read back managed Claude/Pi/Codex registrations and active links; no old invocation alias remains. Full integration make check passes; parent 1102 closes only after integration review. No active registration points into a temporary worktree.

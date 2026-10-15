@@ -1,0 +1,15 @@
+%erg 0.1
+Title: Hoard: project memory migration helper and behavioral verification
+Created: 2026-10-15
+Author: reviewer
+
+--- log ---
+2026-10-15T07:30Z reviewer created
+
+--- body ---
+
+## Context
+Child of 1102. Implement a project-scoped one-way migration helper for memory/DREAM.md -> memory/HOARD.md and memory/dreams/ -> memory/hoards/. Preflight conflicts, unreadable inputs and filesystem indirection before writes; dry-run writes nothing; repeat is a no-op. Preserve journal/report bytes and provenance, update active reference/link targets, and give migrated prompt a new revision. Do not activate the rename yet.
+
+## Exit criteria
+- [ ] Behavioral fixtures cover fresh new format, old linked reports, repeated invocation, dry-run, both coexistence conflicts, dangling/external symlinks and unreadable inputs; verify byte/provenance preservation. Full make check passes.

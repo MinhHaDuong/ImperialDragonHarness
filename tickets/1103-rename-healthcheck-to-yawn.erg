@@ -24,3 +24,6 @@ compatibility entry point. Migrate live callers and installed registrations.
       live callers and installed registrations use `yawn`.
 - [ ] `make skills-catalog` regenerated; `make check-skills-drift` and
       `make check` pass.
+
+## Raid Imagine — 2026-10-15
+Imagine: author approved one atomic PR exceeding 15 files on 2026-10-15. Update live identifiers/callers/registrations; historical evidence retains former names. Installer discovers canonical skills dynamically; validate managed projections after canonical merge.
