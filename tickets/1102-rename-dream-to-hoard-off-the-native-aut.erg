@@ -1,0 +1,40 @@
+%erg 0.1
+Title: Rename dream to hoard, off the native auto-dream label
+Created: 2026-10-15
+Author: claude
+
+--- log ---
+2026-10-15T06:44Z claude created
+
+--- body ---
+## Context
+Nomination from the sen-causal-reading session (2026-10-15). The author does
+not want harness skills to overload runtime names and prefers draconic names
+for user-facing skills.
+
+Observed in Claude Code 2.1.300 (binary strings): `dream` is a native
+background task type (auto-dream memory consolidation, setting
+`autoDreamEnabled`, task label "dream"). No `/dream` slash command string was
+found, so the overload is a label and concept collision with the native
+consolidation, not a command shadowing. Cause of user confusion: two
+different consolidations, two different stores, one name.
+
+Candidate: `hoard` ("dragons in their lair, dreaming over the hoard").
+Caveat: `docs/2026-09-10-dragon-memory-design-nomenclature.md` reserves
+`hoard` for the memory library and its CLI verbs (`hoard assay`, `reckon`,
+`seal`, `sift`, `shed`, `disown`, `weigh`), and states "the pass is /dream".
+No code implements that library (no `hoard` file or package; memory v8
+docs do not use the word). The author decides whether the reservation
+stands; if it does, pick another draconic verb.
+
+## Exit criteria
+- [ ] Author decision recorded: `hoard`, or another name, and the fate of
+      the nomenclature reservation.
+- [ ] Skill directory, frontmatter `name`, every reference (16 files in
+      skills, rules, tests, Makefile, scripts, hooks, adapters, profiles;
+      `lair` step 11, brood, roar) renamed in one commit; `memory/DREAM.md`
+      and `memory/dreams/` paths decided explicitly (rename or keep).
+- [ ] A transition alias `/dream` points to the new skill for one release,
+      then is removed by a dated follow-up.
+- [ ] `make skills-catalog` regenerated; `make check-skills-drift` and
+      `make check` pass.

@@ -1,0 +1,21 @@
+%erg 0.1
+Title: Rename healthcheck to yawn
+Created: 2026-10-15
+Author: claude
+
+--- log ---
+2026-10-15T06:44Z claude created
+
+--- body ---
+## Context
+Nomination from the sen-causal-reading session (2026-10-15). `/healthcheck`
+is long to type and is the only non-draconic name among the session-hygiene
+skills (lair, molt, perch, roar). Proposed: `yawn`, four letters, the dragon
+waking and stretching before work. No existing use of `yawn` in the harness.
+
+## Exit criteria
+- [ ] Skill renamed `yawn`; every reference updated in one commit (15 files
+      in skills, rules, tests, Makefile, scripts, hooks; molt calls it).
+- [ ] Transition alias `/healthcheck` for one release, removal ticketed.
+- [ ] `make skills-catalog` regenerated; `make check-skills-drift` and
+      `make check` pass.
