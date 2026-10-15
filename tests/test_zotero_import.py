@@ -9,11 +9,14 @@ import hashlib
 import importlib.util
 import json
 import sqlite3
+import subprocess
 import sys
 import urllib.error
 from pathlib import Path
 
 import pytest
+
+from child_env import child_env
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 spec = importlib.util.spec_from_file_location("zotero_import", SCRIPTS / "zotero.py")
@@ -2151,6 +2154,113 @@ def test_reconcile_with_nothing_staged_skips_the_index(tmp_path, monkeypatch, ca
     assert report["verdict"] == "checked" and report["files"] == 0
 
 
+@pytest.mark.parametrize("staging", [False, True])
+def test_reconcile_empty_report_writes_out(tmp_path, monkeypatch, capsys, staging):
+    import argparse
+    if staging:
+        (tmp_path / "docs").mkdir()
+    monkeypatch.setattr(zi, "load_index",
+                        lambda *a, **k: pytest.fail("empty run loaded index"))
+    monkeypatch.setattr(zi, "resolve_read_credentials",
+                        lambda *a: pytest.fail("report-only empty run needs no key"))
+    out = tmp_path / "report.json"
+    args = argparse.Namespace(root=str(tmp_path), apply=False, refresh=False,
+                              out=str(out), user_id="1", api_key=None)
+    assert zi.cmd_reconcile(args) == 0
+    report = json.loads(out.read_text())
+    assert report["verdict"] == ("checked" if staging else "no_staging")
+    assert report["bib_files"] == []
+    assert report["staging_dirs"] == (["docs"] if staging else [])
+    assert report["index_fetched"] is None
+    assert report["actions"] == {} and report["rows"] == []
+    assert "rows" not in json.loads(capsys.readouterr().out)
+
+
+@pytest.mark.parametrize("staging", [False, True])
+@pytest.mark.parametrize("problem", ["missing", "invalid", "wrong_user", "no_read_key", "valid"])
+def test_reconcile_empty_apply_validates_without_index(
+        tmp_path, monkeypatch, capsys, staging, problem):
+    import argparse
+    if staging:
+        (tmp_path / "docs").mkdir()
+    if problem != "missing":
+        config = {"apply": True, "user_id": "2" if problem == "wrong_user" else "1"}
+        (tmp_path / ".zotero-reconcile.json").write_text(
+            "[]" if problem == "invalid" else json.dumps(config))
+
+    def read_credentials(_):
+        if problem == "no_read_key":
+            raise SystemExit("no ZOTERO_API_KEY")
+        return "1", "read"
+
+    monkeypatch.setattr(zi, "resolve_read_credentials", read_credentials)
+    # Nothing to write: like a no-write replay, no write key is required.
+    for name in ("load_index", "build_index", "cmd_inject", "resolve_credentials"):
+        monkeypatch.setattr(zi, name, lambda *a, **k: pytest.fail("empty apply did work"))
+    out = tmp_path / "report.json"
+    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
+                              out=str(out), user_id="1", api_key="read")
+    assert zi.cmd_reconcile(args) == (0 if problem == "valid" else 1)
+    report = json.loads(out.read_text())
+    assert report["apply_status"] == ("nothing" if problem == "valid" else "failed")
+    assert ("apply_error" in report) == (problem != "valid")
+    assert report["index_fetched"] is None
+    capsys.readouterr()
+
+
+def test_reconcile_apply_without_write_key_still_reports(
+        tmp_path, monkeypatch, capsys):
+    import argparse
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "paper.pdf").write_bytes(b"paper")
+    (tmp_path / "sources.bib").write_text(
+        "@article{one, title={An Interesting Paper}, "
+        "author={Smith, Jane}, year={2020}, file={docs/paper.pdf}}\n")
+    (tmp_path / ".zotero-reconcile.json").write_text(
+        '{"apply": true, "user_id": "1"}')
+    idx = {"works": [], "attachments": [], "fetched": "now"}
+    monkeypatch.setattr(zi, "INDEX_CACHE_DIR", tmp_path / "cache")
+    monkeypatch.setattr(zi, "ZOTERO_ENV_FILE", tmp_path / "no-env")
+    monkeypatch.delenv("ZOTERO_RW_API_KEY", raising=False)
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
+    monkeypatch.setattr(zi, "load_index", lambda *a, **k: idx)
+    monkeypatch.setattr(zi, "build_index", lambda *a, **k: idx)
+    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
+    monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
+    monkeypatch.setattr(zi, "pdfinfo", lambda _: {})
+    monkeypatch.setattr(zi, "corroborate_entry",
+                        lambda _: {"confidence": "corroborated"})
+    monkeypatch.setattr(zi, "cmd_inject", lambda _: pytest.fail("wrote without key"))
+    out = tmp_path / "report.json"
+    args = argparse.Namespace(root=str(tmp_path), apply=True, refresh=False,
+                              out=str(out), user_id="1", api_key="read",
+                              rw_api_key=None)
+    assert zi.cmd_reconcile(args) == 1
+    report = json.loads(out.read_text())
+    assert report["apply_status"] == "failed"
+    assert "ZOTERO_RW_API_KEY" in report["apply_error"]
+    capsys.readouterr()
+
+
+def test_reconcile_staged_file_loads_index(tmp_path, monkeypatch, capsys):
+    import argparse
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs/paper.pdf").write_bytes(b"staged")
+    calls = []
+    monkeypatch.setattr(zi, "resolve_read_credentials", lambda _: ("1", "read"))
+    def load(*a, **k):
+        calls.append(True)
+        return {"fetched": "now"}
+    monkeypatch.setattr(zi, "load_index", load)
+    monkeypatch.setattr(zi, "audit_one", lambda *a, **k: {"verdict": "identical"})
+    args = argparse.Namespace(root=str(tmp_path), apply=False, refresh=False,
+                              out=None, user_id="1", api_key="read")
+    assert zi.cmd_reconcile(args) == 0
+    assert calls == [True]
+    assert json.loads(capsys.readouterr().out)["files"] == 1
+
+
 def test_reconcile_apply_requires_matching_project_opt_in(
         tmp_path, monkeypatch, capsys):
     import argparse
@@ -2545,3 +2655,41 @@ def test_reconcile_file_output_keeps_stdout_compact_and_reports_ties(
     assert compact["summary"] == {"work_present_no_file": 1,
                                    "tied_parents": 1}
     assert "tied_parents" in compact["actions"]
+
+
+def reconcile_blocks(text):
+    import re
+
+    return re.findall(r"```bash\n(.*?)\n\s*```", text, re.S)
+
+
+def stub_zotero(tmp_path, status):
+    root = tmp_path / "idh"
+    (root / "scripts").mkdir(parents=True)
+    (root / "scripts/zotero.py").write_text(f"import sys\nsys.exit({status})\n")
+    shim = tmp_path / "bin/zotero.py"
+    shim.parent.mkdir(parents=True)
+    shim.write_text(f"#!/bin/sh\nexit {status}\n")
+    shim.chmod(0o755)
+    proj = tmp_path / "proj"
+    (proj / "docs").mkdir(parents=True)
+    env = child_env()
+    env["IDH_ROOT"] = str(root)
+    env["TMPDIR"] = str(tmp_path)
+    env["PATH"] = f"{shim.parent}:{env['PATH']}"
+    return proj, env
+
+
+@pytest.mark.integration
+def test_reconcile_failure_propagates_and_path_announced(tmp_path):
+    """A failing reconcile must fail the block, and the report path is still named."""
+    text = (SCRIPTS.parent / "skills/zotero/references/backfill.md").read_text()
+    block = next(b for b in reconcile_blocks(text) if "reconcile . --out" in b)
+    proj, env = stub_zotero(tmp_path, 7)
+    r = subprocess.run(["bash", "-c", block], cwd=proj, env=env, text=True, capture_output=True)
+    assert r.returncode != 0, (r.returncode, r.stdout, r.stderr)
+    assert "reconcile report: " in r.stdout and "(exit 7)" in r.stdout
+    okdir = tmp_path / "ok"
+    okdir.mkdir()
+    proj2, env2 = stub_zotero(okdir, 0)
+    assert subprocess.run(["bash", "-c", block], cwd=proj2, env=env2).returncode == 0
