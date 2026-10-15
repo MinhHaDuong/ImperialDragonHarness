@@ -67,17 +67,50 @@ def _snapshot(root, references):
     return result
 
 
-def _rewrite(data):
+def _rewrite(data, reference, moves, root):
+    """Rewrite moved targets relative to the reference file, without I/O."""
     text = data.decode("utf-8")
-    # Match complete path components and command tokens, never substrings such
-    # as daydreams/, /dreamlike, or DREAM.md.backup.
-    for pattern, replacement in (
-        (r"(?<![\w.-])DREAM\.md(?![\w.-])", "HOARD.md"),
-        (r"(?<![\w.-])dreams/", "hoards/"),
-        (r"(?<![\w.-])skills/dream(?=/|[^\w.-]|$)", "skills/hoard"),
-        (r"(?<![\w./-])/dream(?![\w./-])", "/hoard"),
-    ):
-        text = re.sub(pattern, replacement, text)
+    parent = root / Path(reference).parent
+
+    def moved_path(match):
+        token = match[0]
+        # Markdown destinations resolve from their file. Bare/code memory/
+        # spellings conventionally describe paths from the project root.
+        prefix = text[:match.start()]
+        link = re.search(r"\]\(\s*<?$|(?m:^\s{0,3}\[[^\]\n]+\]:\s*<?$)", prefix)
+        base = root if token.startswith("memory/") and not link else parent
+        target = Path(os.path.normpath(base / token))
+        for old, new in moves:
+            old_path = root / old
+            if target != old_path and not (
+                old == "memory/dreams" and old_path in target.parents
+            ):
+                continue
+            destination = root / new / target.relative_to(old_path)
+            if token.startswith("memory/") and not link:
+                result = destination.relative_to(root).as_posix()
+            elif token.startswith("/"):
+                result = str(destination)
+            else:
+                result = os.path.relpath(destination, parent)
+                if token.startswith("./"):
+                    result = "./" + result
+            if token.endswith("/"):
+                result += "/"
+            return result
+        return token
+
+    text = re.sub(
+        r"(?<![\w./:-])/?(?:[\w.-]+/)*(?:DREAM\.md(?![\w.-])|dreams/[\w./-]*)",
+        moved_path, text,
+    )
+    # Only the current skill directory/entrypoint is renamed. Retired helpers
+    # keep the path under which they historically existed.
+    text = re.sub(
+        r"(?<![\w./-])skills/dream(?:/SKILL\.md)?(?![\w/-]|\.(?!\s|$))",
+        lambda match: match[0].replace("skills/dream", "skills/hoard", 1), text,
+    )
+    text = re.sub(r"(?<![\w./-])/dream(?![\w./-])", "/hoard", text)
     return text.encode("utf-8")
 
 
@@ -127,11 +160,11 @@ def plan_migration(project, references=()):
                 data = before[name]
                 if data is None:
                     raise MigrationError(f"Reference is not a file: {name}")
-                edited = _rewrite(data)
+                edited = _rewrite(data, name, moves, root)
                 if edited != data:
                     edits[name] = edited
             if "memory/DREAM.md" in before:
-                text = _rewrite(before["memory/DREAM.md"]).decode("utf-8")
+                text = _rewrite(before["memory/DREAM.md"], "memory/DREAM.md", moves, root).decode("utf-8")
                 text, count = re.subn(
                     r"(?m)^(Prompt revision: v\d+-r)(\d+)(\b.*)$",
                     lambda match: match[1] + str(int(match[2]) + 1) + match[3], text)
@@ -151,7 +184,10 @@ def apply_migration(plan):
         raise MigrationError("Migration inputs changed since planning")
     if not plan.moves:
         return
-    stage = Path(tempfile.mkdtemp(prefix=".hoard-migrate-", dir=root))
+    try:
+        stage = Path(tempfile.mkdtemp(prefix=".hoard-migrate-", dir=root))
+    except OSError as error:
+        raise MigrationError(f"Cannot stage migration: {error}") from error
     undo = []
     failure = None
     residual = []

@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-15T07:30Z reviewer created
 2026-10-15T07:44Z reviewer note Implemented bounded helper and 17 behavioral tests; three concrete review findings corrected red-first. Full make check 1609 passed, 3 skipped; lint 185 passed. Required local Qwen migration-safety review pending; external reviewer unavailable.
+2026-10-15T08:06Z reviewer note Addressed review: restrict links to actually moved memory targets, preserve historical retired helper paths, wrap staging creation errors. Red-first20behavioral tests; full1612passed3skipped50.21s; lint185passed. Other-family review unavailable (two localQwen generations had no final report, then endpoint down); preserve DEGRADED evidence.
 
 --- body ---
 

@@ -193,8 +193,8 @@ def test_active_reference_tokens_have_path_boundaries(project):
     )
     expected = (
         "Run /hoard, then read skills/hoard/SKILL.md.\n"
-        "[prompt](HOARD.md) [nested](../HOARD.md)\n"
-        "[report](hoards/old.md) [nested](../hoards/old.md)\n"
+        "[prompt](HOARD.md) [nested](../DREAM.md)\n"
+        "[report](hoards/old.md) [nested](../dreams/old.md)\n"
         "Keep /dreamlike /dream-extra skills/dream-extra/SKILL.md "
         "daydreams/story.md OTHERDREAM.md DREAM.md.backup dreams-extra/file.md\n"
     )
@@ -207,3 +207,58 @@ def test_active_reference_tokens_have_path_boundaries(project):
     migrated = tree(project)
     migrate.apply_migration(migrate.plan_migration(project))
     assert tree(project) == migrated
+
+
+def test_unrelated_paths_and_urls_are_preserved(project):
+    (project / "docs/dreams").mkdir(parents=True)
+    (project / "docs/dreams/retained.md").write_text("retained")
+    (project / "docs/DREAM.md").write_text("unrelated prompt")
+    (project / "docs/memory/dreams").mkdir(parents=True)
+    (project / "docs/memory/dreams/retained.md").write_text("nested unrelated")
+    (project / "docs/active.md").write_text(
+        "[unrelated](memory/dreams/retained.md) [moved](../memory/dreams/old.md)\n")
+    references = (
+        "[other](../docs/dreams/retained.md) [prompt](../docs/DREAM.md)\n"
+        "[remote](https://example.org/memory/dreams/retained.md)\n"
+        "[actual](dreams/old.md)\n"
+    )
+    (project / "memory/MEMORY.md").write_text(references)
+    (project / "memory/topics/a.md").write_text(
+        "[prompt](../DREAM.md) [report](../dreams/old.md)\n")
+    before = tree(project)
+    migrate.apply_migration(migrate.plan_migration(project, ["docs/active.md"]))
+    assert (project / "docs/active.md").read_text() == (
+        "[unrelated](memory/dreams/retained.md) [moved](../memory/hoards/old.md)\n")
+    assert (project / "memory/MEMORY.md").read_text() == references.replace(
+        "(dreams/old.md)", "(hoards/old.md)")
+    assert (project / "memory/topics/a.md").read_text() == (
+        "[prompt](../HOARD.md) [report](../hoards/old.md)\n")
+    for name in ("docs/DREAM.md", "docs/dreams/retained.md"):
+        assert (project / name).read_bytes() == before[name]
+
+
+def test_retired_helpers_preserve_their_historical_identity(project):
+    actual_topic = (Path(SPEC.origin).parents[1] / "memory/topics/memory-v8-acceptance-trial.md").read_bytes()
+    (project / "memory/topics/history.md").write_bytes(actual_topic)
+    (project / "AGENTS.md").write_text(
+        "Use /dream and skills/dream/SKILL.md. Retired: "
+        "skills/dream/read-index.py skills/dream/commit.py skills/dream/provenance.py\n")
+    migrate.apply_migration(migrate.plan_migration(project, ["AGENTS.md"]))
+    assert (project / "memory/topics/history.md").read_bytes() == actual_topic
+    assert (project / "AGENTS.md").read_text() == (
+        "Use /hoard and skills/hoard/SKILL.md. Retired: "
+        "skills/dream/read-index.py skills/dream/commit.py skills/dream/provenance.py\n")
+
+
+def test_stage_directory_failure_is_reported_without_writes(project, monkeypatch):
+    before = tree(project)
+    plan = migrate.plan_migration(project)
+
+    def denied(**kwargs):
+        raise OSError("stage denied")
+
+    monkeypatch.setattr(migrate.tempfile, "mkdtemp", denied)
+    with pytest.raises(migrate.MigrationError, match="stage denied"):
+        migrate.apply_migration(plan)
+    assert tree(project) == before
+    assert not list(project.glob(".hoard-migrate-*"))
