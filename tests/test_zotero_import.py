@@ -1305,6 +1305,29 @@ def test_cmd_enrich_reports_the_edit_and_never_writes(tmp_path, capsys):
     assert db.read_bytes() == before
 
 
+def test_cmd_enrich_refuses_a_job_without_expect_title(tmp_path):
+    import argparse
+    jobs = tmp_path / "jobs.json"
+    jobs.write_text(json.dumps([{"item_key": "WORK0010", "expect_title": "",
+                                 "set": {"DOI": "10.1/x"}}]))
+    args = argparse.Namespace(jobs_file=str(jobs), overwrite=False,
+                              zotero_db=str(_zotero_file(tmp_path)),
+                              library="user")
+    with pytest.raises(SystemExit, match="no expect_title"):
+        zi.cmd_enrich(args)
+
+
+def test_inject_error_after_the_read_names_the_read_mode(tmp_path, monkeypatch,
+                                                         capsys, connector):
+    _corroborated(monkeypatch)
+    args = _inject_args(_zotero_file(tmp_path), [{"title": "T"}],
+                        collection="NOSUCHKY")
+    assert zi.cmd_inject(args) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert "not in zotero.sqlite" in out["error"]
+    assert out["read_mode"] == zi.READ_LIVE
+
+
 def test_cmd_attach_reports_the_by_hand_step(tmp_path, capsys):
     import argparse
     db = _zotero_file(tmp_path, works=[
@@ -2230,15 +2253,25 @@ def test_inject_refuses_a_guard_read_of_another_library(tmp_path, monkeypatch,
     assert not _saves(connector)
 
 
-def test_connector_ignores_proxy_settings(tmp_path, monkeypatch, capsys,
-                                          connector):
-    """The loopback check would be moot if a proxy relayed the PDF."""
+def test_connector_ignores_proxy_settings(monkeypatch, connector):
+    """The loopback check would be moot if a proxy relayed the PDF. urllib
+    reads the proxy variables when a handler is built, so the opener is
+    built here, under a proxy pointing at a dead port, and must still reach
+    the stub directly."""
     monkeypatch.setenv("http_proxy", "http://127.0.0.1:9")
     monkeypatch.setenv("HTTP_PROXY", "http://127.0.0.1:9")
     monkeypatch.delenv("no_proxy", raising=False)
     monkeypatch.delenv("NO_PROXY", raising=False)
+    monkeypatch.setattr(zi, "_CONNECTOR_OPENER", zi.connector_opener())
     zi.connector_ping()
     assert connector["calls"][-1][0] == "ping"
+
+
+def test_connector_does_not_follow_redirects():
+    import urllib.request
+    redirects = [h for h in zi.connector_opener().handlers
+                 if isinstance(h, urllib.request.HTTPRedirectHandler)]
+    assert redirects and all(isinstance(h, zi._NoRedirect) for h in redirects)
 
 
 def test_connector_ping_names_a_wrong_answer(monkeypatch, connector):

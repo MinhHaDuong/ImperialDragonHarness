@@ -2,6 +2,7 @@
 
 import hashlib
 import importlib.util
+import os
 from pathlib import Path
 import sqlite3
 import subprocess
@@ -168,7 +169,11 @@ def test_out_may_not_name_the_database(tmp_path):
     db = tmp_path / "zotero.sqlite"
     fixture_db(db)
     before = db.read_bytes()
-    for target in (db, Path(f"{db}-wal")):
+    hard = tmp_path / "innocent.json"
+    os.link(db, hard)
+    sym = tmp_path / "also-innocent.json"
+    sym.symlink_to(db)
+    for target in (db, hard, sym):
         args = argparse.Namespace(zotero_db=str(db), format="json", out=str(target))
         with pytest.raises(SystemExit, match="names the Zotero database"):
             zi.cmd_dedup_report(args)

@@ -1254,8 +1254,12 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
 
 # No proxy, no redirect: a loopback URL must stay on the loopback, whatever
 # http_proxy says and whatever the listener answers.
-_CONNECTOR_OPENER = urllib.request.build_opener(
-    urllib.request.ProxyHandler({}), _NoRedirect())
+def connector_opener() -> urllib.request.OpenerDirector:
+    return urllib.request.build_opener(urllib.request.ProxyHandler({}),
+                                       _NoRedirect())
+
+
+_CONNECTOR_OPENER = connector_opener()
 
 
 def connector_base() -> str:
@@ -1502,7 +1506,7 @@ def cmd_inject(args: argparse.Namespace) -> int:
                                  f"{snapshot.get('library_id')}, not the "
                                  f"destination {lib_id}")
         except (ValueError, sqlite3.Error) as exc:
-            emit_json({"error": str(exc)})
+            emit_json({"error": str(exc), "read_mode": mode})
             return 1
         finally:
             conn.close()
@@ -2221,8 +2225,11 @@ def cmd_dedup_report(args: argparse.Namespace) -> int:
             if args.format == "json" else duplicate_hash_html(report))
     if args.out:
         output = Path(args.out)
-        if output.resolve() in {Path(f"{db_path.resolve()}{suffix}")
-                                for suffix in ("", "-wal", "-shm", "-journal")}:
+        guarded = [Path(f"{db_path}{suffix}")
+                   for suffix in ("", "-wal", "-shm", "-journal")]
+        if output.exists() and any(g.exists() and os.path.samefile(output, g)
+                                   for g in guarded):
+            # samefile also catches a symlink or a hard link to the database.
             raise SystemExit("dedup-report: --out names the Zotero database")
         fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
