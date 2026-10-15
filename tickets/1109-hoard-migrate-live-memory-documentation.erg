@@ -14,3 +14,23 @@ Child of 1102, split from 1106 to keep each PR below 15 content-bearing paths. M
 
 ## Exit criteria
 - [ ] Live docs/templates point to hoard, memory/HOARD.md and memory/hoards/; generated new-project conventions work and links resolve. Historical evidence remains unchanged. Relevant tests and make check pass.
+
+## Raid Plan and feasibility — 2026-10-15
+PASS: 9 paths including this ticket; 10 if the results test needs an edit.
+Live files: README.md manual memory/workflow paragraphs,
+docs/zotero-integration.md, docs/memory-v8/templates/AGENTS.md, and the
+template memory/topics/example.md. Also repair moved report targets in the
+three deferred historical evaluation-protocol, evaluation-results and
+integration-review documents under docs/memory-v8. Preserve dated prose and
+quotes. Cite the historical v8-r1 prompt through an immutable full-commit
+Git permalink and retain its recorded blob identity; do not label current
+HOARD r2 as the historical r1 prompt. No report/journal content edits.
+
+First meaningful test: test_memory_v8_protocol's relative-link test must
+resolve targets and validate the immutable prompt citation. Existing
+evaluation-results link checks catch moved report targets. Run relevant
+template/protocol/results tests and full make check. Current memory README
+and runtime smoke belong to 1106. Coordinate the root README generated
+catalog with 1105; edit only the remaining manual prose here. Stay within
+the rename/migration intent, without changing promotion authorization or
+introducing new memory policy.
