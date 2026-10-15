@@ -2052,6 +2052,14 @@ def test_inject_fails_loudly_when_zotero_is_not_running(tmp_path, monkeypatch,
     assert "Zotero is not running" in json.loads(captured.out)["error"]
 
 
+def test_connector_url_must_stay_on_this_machine(monkeypatch):
+    monkeypatch.setattr(zi, "CONNECTOR_URL", "http://zotero.example.org:23119")
+    with pytest.raises(zi.ConnectorUnavailable, match="local-only"):
+        zi.connector_ping()
+    with pytest.raises(zi.ConnectorUnavailable, match="local-only"):
+        zi.connector_post("saveItems", {})
+
+
 def test_inject_needs_the_local_database(tmp_path, monkeypatch, capsys, connector):
     _corroborated(monkeypatch)
     args = _inject_args(tmp_path / "absent.sqlite", [{"title": "T"}])

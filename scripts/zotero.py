@@ -30,6 +30,7 @@ import subprocess
 import sys
 import unicodedata
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 from configparser import ConfigParser
@@ -1234,6 +1235,7 @@ def plan_enrichment(data: dict[str, Any], sets: dict[str, str],
 # saveSession.js in the Zotero 7 source.
 
 CONNECTOR_URL = os.environ.get("ZOTERO_CONNECTOR_URL", "http://127.0.0.1:23119")
+LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
 CONNECTOR_API_VERSION = "3"
 CONNECTOR_TIMEOUT = 60.0
 CONNECTOR_UPLOAD_TIMEOUT = 300.0
@@ -1241,6 +1243,19 @@ CONNECTOR_UPLOAD_TIMEOUT = 300.0
 
 class ConnectorUnavailable(RuntimeError):
     """The desktop connector did not answer: Zotero is not running."""
+
+
+def connector_base() -> str:
+    """The connector URL, refused unless it is on this machine.
+
+    The override exists for tests; a remote host would send item metadata
+    and PDFs off the machine, which a local-only helper must not do.
+    """
+    host = urllib.parse.urlsplit(CONNECTOR_URL).hostname
+    if host not in LOOPBACK_HOSTS:
+        raise ConnectorUnavailable(f"refusing non-local connector URL "
+                                   f"{CONNECTOR_URL}: the helper is local-only")
+    return CONNECTOR_URL
 
 
 def connector_post(endpoint: str, payload: dict[str, Any] | bytes, *,
@@ -1253,7 +1268,7 @@ def connector_post(endpoint: str, payload: dict[str, Any] | bytes, *,
     else:
         body = json.dumps(payload).encode()
         content_type = "application/json"
-    req = urllib.request.Request(f"{CONNECTOR_URL}/connector/{endpoint}",
+    req = urllib.request.Request(f"{connector_base()}/connector/{endpoint}",
                                  data=body, method="POST")
     req.add_header("Content-Type", content_type)
     req.add_header("X-Zotero-Connector-API-Version", CONNECTOR_API_VERSION)
@@ -1268,8 +1283,9 @@ def connector_post(endpoint: str, payload: dict[str, Any] | bytes, *,
 
 def connector_ping(timeout: float = 5.0) -> None:
     """Fail loudly unless the desktop connector answers."""
+    base = connector_base()
     try:
-        with urllib.request.urlopen(f"{CONNECTOR_URL}/connector/ping",
+        with urllib.request.urlopen(f"{base}/connector/ping",
                                     timeout=timeout) as resp:
             if resp.status == 200:
                 return
