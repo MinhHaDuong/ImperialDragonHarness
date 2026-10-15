@@ -1,6 +1,6 @@
 ---
 name: brood
-description: "Turn accepted Dream findings into project improvements and scoped harness nominations, on explicit request."
+description: "Turn accepted Hoard findings into project improvements and scoped harness nominations, on explicit request."
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "<project-repository> [harness=<repository>]"
@@ -8,15 +8,15 @@ argument-hint: "<project-repository> [harness=<repository>]"
 
 # Brood — evidence into improvements
 
-Brood is a separately requested post-Dream task. Resolve the project repository,
+Brood is a separately requested post-Hoard task. Resolve the project repository,
 its instructions and integration policy, the authorized scope and destination.
-An installed skill path is not a destination. Roar captures facts and Dream
+An installed skill path is not a destination. Roar captures facts and Hoard
 consolidates memory; neither invokes Brood or grants its authority. A memory merge request,
 repetition or general usefulness alone does not authorize crystallisation.
 
 ## Judge the evidence
 
-Read accepted Dream reports and their exact source revisions, relevant
+Read accepted Hoard reports and their exact source revisions, relevant
 consolidated topics, preserved journal episodes and unresolved conflicts.
 Record the revisions examined and unavailable/encrypted sources without guessing
 contents. Acceptance means reviewed consolidation, not proven effectiveness.
@@ -74,7 +74,7 @@ change in the ticket/merge request. Age or rule authority alone cannot justify d
 Preserve the journal append-only; corrections are new linked entries.
 
 Immediately before writing, compare source revisions with those examined.
-Re-read and reconcile concurrent Dream changes before applying dependent edits;
+Re-read and reconcile concurrent Hoard changes before applying dependent edits;
 never overwrite their conclusions from a stale snapshot. Unresolved conflicts
 stay visible. Keep the memory index within its project limit (v8: 100 lines).
 

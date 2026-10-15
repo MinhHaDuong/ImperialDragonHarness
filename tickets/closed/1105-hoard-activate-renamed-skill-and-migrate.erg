@@ -2,10 +2,14 @@
 Title: Hoard: activate renamed skill and migrate live harness callers
 Created: 2026-10-15
 Author: reviewer
+Closed: implemented
 
 --- log ---
 2026-10-15T07:30Z reviewer created
 2026-10-15T08:46Z reviewer note blocker 1104 closed — Blocked-by removed.
+2026-10-15T08:55Z reviewer closed — implemented
+
+2026-10-15T08:58Z Codex note Activation verified: 1620 passed, 3 skipped; fast 968, adherence 185, affected 25. Hoard projected-helper and three-runtime install cases share test_skill_seam.py; normal close also unblocks 1106/1108.
 
 --- body ---
 
@@ -13,7 +17,7 @@ Author: reviewer
 Child of 1102. Rename canonical dream skill to hoard, update live skill callers and registrations contract/tests, regenerate catalog. Invoke the migration helper on only the explicitly selected project in its isolated branch before consolidation; dry-run remains write-free. Preserve 1101 quotation clause. No alias, compatibility symlink or old-format consolidation entrypoint. Historical data interpretation may retain the old label.
 
 ## Exit criteria
-- [ ] Live skill/callers and focused tests use hoard; migration authority is narrow and separate from consolidation. make skills-catalog, check-skills-drift and make check pass. Keep PR below 15 paths; move documentation/memory work to 1106.
+- [x] Live skill/callers and focused tests use hoard; migration authority is narrow and separate from consolidation. make skills-catalog, check-skills-drift and make check pass. Keep PR below 15 paths; move documentation/memory work to 1106.
 
 ## Raid Plan and feasibility — 2026-10-15
 PASS: 13 paths, conservatively counting the skill rename as two: the renamed

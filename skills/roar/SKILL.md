@@ -206,7 +206,7 @@ push it and open **one PR**. Fast-track it through the
 project's required checks and enable auto-merge using its supported merge
 method. This is standing authorization for roar's bounded wrap-up bundle;
 no further confirmation is needed. Do not bypass failing checks or protected
-branch requirements. Dream, suggested in lair’s conclusion, remains a separately
+branch requirements. Hoard, suggested in lair’s conclusion, remains a separately
 invoked and reviewed workflow, launched in a new `/clear` session.
 A failed check or submission leaves the one branch preserved and reported.
 Do not wait for the bundle's checks: step 9's exit check lets the
