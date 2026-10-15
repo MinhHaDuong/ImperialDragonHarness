@@ -14,4 +14,5 @@ observations. A shared characteristic can connect episodes without proving cause
 Include relevant opposing outcomes, corrections and unresolved contradictions.
 Cite canonical decisions rather than maintaining competing prescriptions.
 Hoard may prune, merge or refresh this theme, preserving source episodes and
-recording the operation in its report. Rules govern memory, and are not edited.
+recording the operation in a report under `../hoards/`. The project prompt is
+`../HOARD.md`. Rules govern memory, and are not edited.

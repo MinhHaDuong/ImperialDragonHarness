@@ -74,7 +74,8 @@ cd ~/.agents
 If `~/.agents` already exists, inspect it first. Other checkout locations are
 supported by the portable registration contract: entry points resolve the
 checkout from their real location or an explicit root argument. Hoard uses
-project-local Markdown in v8, not the retired shared-store provenance
+project-local Markdown in v8: projects copy `memory/HOARD.md` and keep accepted
+reports under `memory/hoards/`, not in the retired shared-store provenance
 helper. The old helper handoff 1002 is closed WONTDO; safe capture and
 integration landed in 0988 (pinned helper + reproduction suite).
 
