@@ -2138,6 +2138,19 @@ def test_reconcile_discovers_nonstandard_bib_and_orphans(tmp_path):
     assert found["errors"] == []
 
 
+def test_reconcile_with_nothing_staged_skips_the_index(tmp_path, monkeypatch, capsys):
+    import argparse
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "notes.md").write_text("no staged documents")
+    monkeypatch.setattr(zi, "load_index",
+                        lambda *a, **k: pytest.fail("index loaded for zero files"))
+    args = argparse.Namespace(root=str(tmp_path), apply=False, refresh=False,
+                              out=None, user_id="1", api_key="read")
+    assert zi.cmd_reconcile(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["verdict"] == "checked" and report["files"] == 0
+
+
 def test_reconcile_apply_requires_matching_project_opt_in(
         tmp_path, monkeypatch, capsys):
     import argparse
