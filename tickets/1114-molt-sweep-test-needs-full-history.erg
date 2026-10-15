@@ -1,0 +1,26 @@
+%erg 0.1
+Title: molt sweep test fails opaquely in a shallow clone
+Created: 2026-10-15
+Author: Claude
+
+--- log ---
+2026-10-15T17:40Z Claude created
+
+--- body ---
+## Context
+`tests/test_molt_ticket_sweep.py::test_archive_stages_only_reported[old-erg]`
+and `[old-erg-preclosed]` read a historical `tickets/erg` with
+`git show 51ee49c:tickets/erg` (`OLD_ERG_REV`, helper `old_erg`). In a
+shallow clone that commit is absent, so both cases die with
+`CalledProcessError ... exit status 128`, which looks like a regression.
+
+Observed 2026-10-15 in a cloud session (clone depth 50) while reviewing
+PR #1437; the same two cases failed on `main`. CI is unaffected
+(`.github/workflows/CI.yml` checks out with `fetch-depth: 0`), but cloud
+sessions and worktrees made with `--depth` hit it on every full run.
+
+## Exit criteria
+- [ ] When `OLD_ERG_REV` is not in the object store, the two cases skip
+      with a reason naming the missing commit and the fix (`git fetch --unshallow`)
+- [ ] Unchanged behaviour with full history: both cases still run and pass
+- [ ] `make check` passes
