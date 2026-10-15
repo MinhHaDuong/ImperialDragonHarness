@@ -34,3 +34,6 @@ than a policy inferred from the originating project's experience.
 
 ## Raid Imagine — 2026-10-15
 Imagine: fresh author-revalidated premise. Add one general clause under Merging; no new section, source-specific branch or Roar change. No wording-pin test needed.
+
+## Raid Plan — 2026-10-15
+Actions: insert general verbatim quote/locator clause into current Merging bullet. Verification: semantic diff inspection and make check; no tautological wording test. Paths: skills/dream/SKILL.md plus own ticket. Dependency: complete before 1105 renames skill.
