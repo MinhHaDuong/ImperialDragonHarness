@@ -2,10 +2,12 @@
 Title: Dream: carry verified quotations and locators verbatim
 Created: 2026-10-15
 Author: claude
+Closed: autoclosed — PR #1425
 
 --- log ---
 2026-10-15T06:44Z claude created
 2026-10-15T07:09Z Codex note Revalidated by the harness author on 2026-10-15: preserve verified quotations and locators verbatim through one general clause, without a sources-specific branch. Nomination provenance and harness authorization distinguished in Context.
+2026-10-15T07:55Z reviewer closed — autoclosed — PR #1425
 
 --- body ---
 ## Context
