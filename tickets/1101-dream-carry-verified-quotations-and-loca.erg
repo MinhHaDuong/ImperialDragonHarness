@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-15T06:44Z claude created
+2026-10-15T07:09Z Codex note Revalidated by the harness author on 2026-10-15: preserve verified quotations and locators verbatim through one general clause, without a sources-specific branch. Nomination provenance and harness authorization distinguished in Context.
 
 --- body ---
 ## Context
@@ -16,9 +17,12 @@ bibliography. Dream's pruning and merging may condense a quotation or a folio,
 which is exactly the content that must survive: a plausible wrong locator is
 the costly failure (`rules/zotero.md`).
 
-Decision taken: no "sources" special case in roar (a verification is a
-significant fact like any other) nor in dream; one general clause in dream
-covers every verified quotation, whatever the project.
+The need was nominated by the sen-causal-reading project. The harness author
+confirmed the following solution in the harness discussion on 2026-10-15:
+no "sources" special case in roar (a verification is a significant fact like
+any other) nor in dream; one general clause in dream covers every verified
+quotation, whatever the project. This is an explicit harness decision rather
+than a policy inferred from the originating project's experience.
 
 ## Exit criteria
 - [ ] `skills/dream/SKILL.md` states that a quotation verified on the page,
