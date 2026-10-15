@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Zotero reconcile: tighten the early exits' contract
+Created: 2026-10-15
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-15T14:43Z Minh Ha-Duong created
+
+--- body ---
+## Context
+PR #1434 added an early exit to `scripts/zotero.py reconcile` when nothing is
+staged, next to the existing `no_staging` exit. The /gaze panel on that PR
+flagged minor gaps (comment 6194717551):
+
+- `reconcile --apply` with nothing staged returns `checked`, exit 0, without
+  validating `.zotero-reconcile.json` or the write credentials, so a broken
+  opt-in stays silent until a file is staged.
+- Neither early exit writes the `--out` file nor carries the full report keys
+  (`bib_files`, `staging_dirs`, `index_fetched`, `actions`); the snippet in
+  `skills/zotero/references/backfill.md` then announces an empty report path.
+- `test_reconcile_with_nothing_staged_skips_the_index` has no counter-case: a
+  staged PDF must still load the index, and `--apply` is uncovered.
+- The two early exits build near-identical output (one helper), and the
+  reconcile-block helpers in `tests/test_molt_ticket_sweep.py` now serve only
+  the zotero backfill test.
+
+## Exit criteria
+- [ ] `--apply` validates the opt-in file and credentials even with nothing staged
+- [ ] Both early exits write `--out` when given, with the full report keys
+- [ ] Test: a staged file loads the index; test: `--apply` with nothing staged and a bad opt-in fails
+- [ ] One helper builds the early-exit report; reconcile test helpers live with the zotero tests
+- [ ] `make check` passes
