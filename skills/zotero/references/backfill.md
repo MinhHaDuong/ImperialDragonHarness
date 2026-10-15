@@ -45,7 +45,8 @@ where `user_id` is the account the local Zotero is signed in to (an optional
 locks the staging directories and the Zotero data directory (advisory locks
 on the directories themselves, no lock files), re-reads `zotero.sqlite`, and
 creates only absent PDFs with corroborated title/author metadata, through the
-desktop connector. Missing metadata, weak matches, ties, and discovery errors
+desktop connector. The re-read covers the destination library, so with a
+group `collection` the duplicate check reads that group. Missing metadata, weak matches, ties, and discovery errors
 remain visible in `deferred` or `errors`; they cannot become an automatic
 write. Existing items are never edited: their fixes stay in
 `suggested_edits`. The default invocation stays report-only.
