@@ -9,6 +9,7 @@ Author: Minh Ha-Duong
 2026-10-15T16:14Z ChatGPT note Empty-run reports and apply preflight corrected; focused offline regression tests pass. Full suite remains unverified after automatic review blocked a broad run that could contact Zotero.
 
 2026-10-15T17:20Z Claude note Review fixes: restore executable bit; empty apply needs read credentials only, like a no-write replay; main path reports a missing write key instead of exiting.
+2026-10-15T21:09Z Claude note Superseded by 1113 (local-only helper). Kept: both early exits write --out with the full report keys, built by one helper (reconcile_report), and an empty --apply still validates the opt-in, now against the account the local Zotero is signed in to. Deleted with the Web API: read/write credential validation, the write-key preflight, index_fetched and the staged-file index-load test; the staged-file counter-case now asserts one library read.
 
 --- body ---
 ## Context
