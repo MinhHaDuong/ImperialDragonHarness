@@ -46,4 +46,4 @@ Canonical skill, live callers, installer fixtures and catalog migrated together.
 
 ## Postmerge activation — 2026-10-15
 
-Verified after canonical merge f8f150023679475735f9940993892ae145268be0: published PR 1424 comment IC_kwDORsAV3c8AAAABcNTiig at 2026-10-15T08:35:02Z records all three runtime registrations installed=true, bin/idh check ok, canonical yawn targets, and former managed healthcheck links absent. The public readback is preserved in memory/evidence/2026-10-15-raid-pr1424.md. This completes the separately authorized activation stage; closure occurs only in this wrap branch after reading the evidence.
+Verified after canonical merge f8f150023679475735f9940993892ae145268be0: published PR 1424 comment IC_kwDORsAV3c8AAAABcNTiig at 2026-10-15T08:35:02Z records all three runtime registrations installed=true, bin/idh check ok, canonical yawn targets, and former managed healthcheck links absent. The public readback is preserved in memory/evidence/2026-10-15-raid-review-evidence.md#pr-1424. This completes the separately authorized activation stage; closure occurs only in this wrap branch after reading the evidence.
