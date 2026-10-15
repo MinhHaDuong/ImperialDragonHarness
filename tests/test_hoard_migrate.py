@@ -289,3 +289,52 @@ def test_relative_skill_entrypoints_and_directory_targets(project):
     migrate.apply_migration(migrate.plan_migration(project))
     assert (project / "memory/MEMORY.md").read_text() == expected
     assert (project / "skills/dream/SKILL.md").read_text() == "canonical skill"
+
+
+@pytest.mark.parametrize("swap_ancestor", [False, True])
+def test_replaced_project_root_or_ancestor_refuses_outside_writes(project, swap_ancestor):
+    selected = project / "scope/selected"
+    selected.mkdir(parents=True)
+    migrate.shutil.copytree(project / "memory", selected / "memory")
+    plan = migrate.plan_migration(selected)
+    source = selected.parent if swap_ancestor else selected
+    outside = project / "outside"
+    original = project / "original"
+    migrate.shutil.copytree(source, outside)
+    source.rename(original)
+    source.symlink_to(outside, target_is_directory=True)
+    original_before = tree(original)
+    outside_before = tree(outside)
+    with pytest.raises(migrate.MigrationError, match="symlink"):
+        migrate.apply_migration(plan)
+    assert tree(original) == original_before
+    assert tree(outside) == outside_before
+    assert not list(outside.rglob(".hoard-migrate-*"))
+    assert not list(original.rglob(".hoard-migrate-*"))
+
+
+@pytest.mark.parametrize("new_prompt", [True, False])
+def test_mixed_prompt_and_report_layout_is_refused_without_writes(project, new_prompt):
+    if new_prompt:
+        (project / "memory/DREAM.md").rename(project / "memory/HOARD.md")
+    else:
+        (project / "memory/dreams").rename(project / "memory/hoards")
+    before = tree(project)
+    with pytest.raises(migrate.MigrationError, match="Mixed old/new"):
+        migrate.plan_migration(project)
+    assert tree(project) == before
+    assert not list(project.glob(".hoard-migrate-*"))
+
+
+def test_old_prompt_without_reports_can_migrate(project):
+    migrate.shutil.rmtree(project / "memory/dreams")
+    before = tree(project)
+    migrate.apply_migration(migrate.plan_migration(project))
+    assert b"memory/hoards/" in (project / "memory/HOARD.md").read_bytes()
+    assert not (project / "memory/DREAM.md").exists()
+    assert not (project / "memory/hoards").exists()
+    for name in ("memory/journal/old.md", "memory/journal/private.age"):
+        assert (project / name).read_bytes() == before[name]
+    after = tree(project)
+    migrate.apply_migration(migrate.plan_migration(project))
+    assert tree(project) == after

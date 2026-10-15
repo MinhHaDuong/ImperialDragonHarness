@@ -35,8 +35,17 @@ def _relative(value):
     return path
 
 
+def _check_root(root):
+    # Refuse indirection in the supplied root as well as beneath it.
+    if any(path.is_symlink() for path in (root, *root.parents)):
+        raise MigrationError("Project path contains a symlink")
+    if not root.is_dir() or not (root / "memory").is_dir():
+        raise MigrationError("Project must contain a memory directory")
+
+
 def _snapshot(root, references):
-    """Read through actual I/O; permission bits alone do not prove readability."""
+    """Read through actual I/O; recheck root indirection at every validation."""
+    _check_root(root)
     result = {}
 
     def visit(path):
@@ -116,13 +125,11 @@ def _rewrite(data, reference, moves, root):
 
 
 def plan_migration(project, references=()):
-    """Preflight without writes; references are an explicit active-file inventory."""
+    """Plan without writes. Default edits cover the prompt, index and Markdown
+    topics; references explicitly add active project-relative files. Historical
+    reports, journal entries and ciphertext are never rewritten.
+    """
     root = Path(project).absolute()
-    # Refuse indirection in the supplied root as well as beneath it.
-    if any(path.is_symlink() for path in (root, *root.parents)):
-        raise MigrationError("Project path contains a symlink")
-    if not root.is_dir() or not (root / "memory").is_dir():
-        raise MigrationError("Project must contain a memory directory")
     refs = tuple(str(_relative(value)) for value in references)
     for name in refs:
         if any(part in {".git", "journal", "dreams", "hoards"}
@@ -147,6 +154,16 @@ def plan_migration(project, references=()):
                 raise MigrationError(f"Wrong input type: {name}")
         if old in before:
             moves.append((old, new))
+    if (("memory/HOARD.md" in before and "memory/dreams" in before) or
+            ("memory/DREAM.md" in before and "memory/hoards" in before)):
+        raise MigrationError("Mixed old/new memory layout: prompt and reports disagree")
+    targets = list(moves)
+    if "memory/DREAM.md" in before and not any(
+        name in before for name in ("memory/dreams", "memory/hoards")
+    ):
+        # A project with no reports still needs the new output convention.
+        # This changes references only; no absent directory is created/moved.
+        targets.append(("memory/dreams", "memory/hoards"))
     edits = {}
     # Already-new projects are an exact no-op, including prompt revision.
     if moves:
@@ -161,11 +178,11 @@ def plan_migration(project, references=()):
                 data = before[name]
                 if data is None:
                     raise MigrationError(f"Reference is not a file: {name}")
-                edited = _rewrite(data, name, moves, root)
+                edited = _rewrite(data, name, targets, root)
                 if edited != data:
                     edits[name] = edited
             if "memory/DREAM.md" in before:
-                text = _rewrite(before["memory/DREAM.md"], "memory/DREAM.md", moves, root).decode("utf-8")
+                text = _rewrite(before["memory/DREAM.md"], "memory/DREAM.md", targets, root).decode("utf-8")
                 text, count = re.subn(
                     r"(?m)^(Prompt revision: v\d+-r)(\d+)(\b.*)$",
                     lambda match: match[1] + str(int(match[2]) + 1) + match[3], text)
@@ -231,10 +248,18 @@ def apply_migration(plan):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("project", type=Path)
-    parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--reference", action="append", default=[], metavar="RELATIVE_PATH")
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        epilog="By default, applies the migration and updates the prompt, "
+               "memory/MEMORY.md and Markdown topics. Reports, journal entries "
+               "and ciphertext retain their bytes. No Git operations are performed.",
+    )
+    parser.add_argument("project", type=Path, help="selected project repository to migrate")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="preflight and describe planned moves/edits without writing")
+    parser.add_argument("--reference", action="append", default=[], metavar="RELATIVE_PATH",
+                        help="add an active project-relative reference file to update; "
+                             "repeat for each additional file (defaults remain included)")
     args = parser.parse_args()
     try:
         plan = plan_migration(args.project, args.reference)
