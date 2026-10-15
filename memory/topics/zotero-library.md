@@ -31,6 +31,8 @@ safety contract does not cover every verb identically: `attach` creates with
 
 ## Sources and exceptions
 
+- [Préférence explicite pour l’API locale, 2026-10-14](../journal/2026/2026-10-14-zotero-local-api-preference.md) — l’utilisateur accepte qu’on lui demande d’ouvrir Zotero pour utiliser son API et gagner du temps.
+
 - [Zotero library](../reference_zotero.md) — scoped reference note, interpreted; no episode reconstructed.
 - [Zotero architecture session, PR #1143](../journal/2026/2026-10-02-zotero-interface-architecture-pr1143.md)
 - [Zotero train raid](../journal/2026/2026-10-04-zotero-train-breaker-and-the-review-it-cost.md)
