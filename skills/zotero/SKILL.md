@@ -55,7 +55,9 @@ nothing is kept on disk between runs but the local API key below. It never
 opens `zotero.sqlite`; merges happen in the desktop client. The local API is
 off until the author enables Zotero Settings > Advanced > "Allow other
 applications on this computer to communicate with Zotero"; until then the
-helper fails and names that setting. Reads need Zotero 7 or later, writes
+helper fails and names that setting. `ZOTERO_CONNECTOR_URL` points it at
+another loopback port; if something other than Zotero answers there, the
+error says so and names both the variable and the setting. Reads need Zotero 7 or later, writes
 Zotero 10.0 or later.
 
 Writes go through the same local API with a local API key, kept as

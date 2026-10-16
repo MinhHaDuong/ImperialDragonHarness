@@ -1484,6 +1484,17 @@ def test_local_api_disabled_names_the_setting(api_off_zotero, monkeypatch, capsy
     assert "disabled" in out["error"]
 
 
+def test_a_listener_that_is_not_zotero_is_named_with_both_remedies():
+    """What answers without Zotero's version header is named as not Zotero,
+    with the variable that points the helper elsewhere and the setting.
+    Pure: a non-Zotero listener would be a fake server, which the tests'
+    author decision rules out, so the message is checked as built."""
+    message = str(zi.not_zotero("http://127.0.0.1:8080", 404))
+    assert "something other than Zotero answers at http://127.0.0.1:8080" in message
+    assert "ZOTERO_CONNECTOR_URL" in message and "HTTP 404" in message
+    assert zi.LOCAL_API_SETTING in message
+
+
 @pytest.mark.integration
 def test_an_account_check_with_the_api_disabled_names_the_setting(
         api_off_zotero, monkeypatch):

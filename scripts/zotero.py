@@ -883,6 +883,16 @@ def read_all(z: zotero.Zotero, **params: Any) -> list[dict[str, Any]]:
         return z.everything(z.items(limit=PAGE, **params))
 
 
+def not_zotero(url: str, status: int) -> LocalAPIError:
+    """Something other than Zotero answers at `url`: the root of Zotero's
+    local API always sends an X-Zotero-Version header."""
+    return LocalAPIError(
+        f"something other than Zotero answers at {url} (HTTP {status}, no "
+        f"X-Zotero-Version header). Point ZOTERO_CONNECTOR_URL at Zotero "
+        f"(unset, it is {DEFAULT_ZOTERO_URL}) or free that port, and check "
+        f"that {LOCAL_API_SETTING} is enabled in Zotero.")
+
+
 def zotero_answers(timeout: float = 2.0) -> bool:
     """Does Zotero answer on its port? Its local API root answers with the
     client's version header; anything else listening there is an error."""
@@ -892,9 +902,7 @@ def zotero_answers(timeout: float = 2.0) -> bool:
     except httpx2.TransportError:
         return False
     if "x-zotero-version" not in resp.headers:
-        raise LocalAPIError(f"something answers at {zotero_url()} but not as "
-                            f"Zotero (HTTP {resp.status_code}); check that it "
-                            f"is Zotero")
+        raise not_zotero(zotero_url(), resp.status_code)
     if resp.status_code != 200:
         raise refusal(RuntimeError(resp.text or f"HTTP {resp.status_code}"))
     return True
