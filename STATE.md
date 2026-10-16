@@ -1,37 +1,35 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-15T19:59Z
-Housekeeping (molt) run: 2026-10-15T20:01Z
+Last updated: 2026-10-16T13:48Z
+Housekeeping (molt) run: 2026-10-16T13:50Z
 
 ## North star
 A reusable, science-backed personal harness for AI-assisted research across projects, machines and runtimes.
 
 ## Status
-<!-- generated 2026-10-15T19:59Z · as of 82ad5096 -->
+<!-- generated 2026-10-16T13:48Z · as of 99780e84 -->
 
-**Tickets:** 5 ready · 2 blocked — `erg ready tickets/` for full list
+**Tickets:** 2 ready · 2 blocked — `erg ready tickets/` for full list
   next: 1045 Local merge gate replaces the forge's required … · 1100 Implement review orchestration: gaze as the sin…
-**In flight:** 2 open PRs, oldest #1422 0d · CI main: failure
+**In flight:** no open PRs · CI main: success
 **Recent (first-parent):**
-  82ad5096 Merge pull request #1438 from MinhHaDuong/hoard-20261015
-  8feefc51 Merge pull request #1437 from MinhHaDuong/fix-1111-reconcile-empty-reports
-  e39653f4 Merge pull request #1436 from MinhHaDuong/housekeeping-20261015
+  99780e84 Merge pull request #1449 from MinhHaDuong/roar-20261016c
+  13f3d4b7 Merge pull request #1448 from MinhHaDuong/t1116-zotero-search-lookup
+  db9bcfe3 Merge pull request #1447 from MinhHaDuong/t1116-zotero-subcommands
 
 ## Ready work
-Ready: 1045 (local merge gate), 1100 (review orchestration implementation; file its planned children before implementation), 1111 and 1113 (superseded by, and implementing, the local-only stateless Zotero helper; both close with its merge request).
+Ready: 1045 (local merge gate), 1100 (review orchestration implementation; file its planned children before implementation).
 Blocked: 1099 waits on 1100. Deferred: 1095 (task-owned tmp cleanup and crash recovery).
 Arena work remains in the independent repository; see docs/arena-integration.md.
 
 ## Resume point
-The fourth Hoard is accepted through #1438. It consolidates 29 new journal sources into eight topics, retains measurement/attribution uncertainties, and keeps the index at 30 lines. Canonical Hoard/Yawn activation remains verified across Claude, Codex and Pi.
-Main at `82ad5096` passed `make check` on padme: 1640 passed, 3 skipped in 51.97s. Premerge local CI passed all ten jobs (container pytest 1633 passed, 10 skipped). Yawn's fast probe passed 987 tests. The postmerge forge run failed only the skill-seam byte snapshot: `.git/objects/maintenance.lock` vanished in an unrelated fixture. The housekeeping branch disables automatic Git maintenance for that fixture; its full gate passed 1640 tests, 3 skipped in 50.99s.
-Review attribution for #1423/#1425 remains pending because producer or initial reviewer context facts are unavailable; masked model pins remain masked. #1438 had no recorded review, so no review-attribution entry was invented.
-The task's hoard branch/worktree were removed after merge. The foreign Arena checkout `/tmp/arena-cycle3-routing` and locked CI worktree `explore-ci-speed-2014346` were retained. Housekeeping removed three orphan scratch directories (12 KB), retaining both live sessions. No other worktree or branch was deleted.
+The Zotero helper train is complete. #1441 made `scripts/zotero.py` local-only (pyzotero local client, writes through the local API, launch-or-nothing; Zotero 10.0+ and an "Always Allow" key) and closed 1111 and 1113. #1447 and #1448 closed 1116: subcommands named for what they do, lookups through Zotero's own search, exact identifiers asserted and title hits returned as candidates; the hand-rolled title scorer was cut (3,100 → 2,789 lines).
+Main at `99780e84`: forge CI green on #1447/#1448; yawn's fast probe passed 967 tests. Review identities for #1447/#1448: `memory/evidence/2026-10-16-review-identities-pr1447-1448.md`. Attribution for #1423/#1425 stays pending; do not fill it from aliases or guesses.
+Housekeeping 2026-10-16 deleted the merged local branches `roar-20261016{,b,c}` and `arena-cycle3-routing`; worktree GC removed `/tmp/arena-cycle3-routing` (upstream gone). Retained: locked `explore-ci-speed-2014346` and `review-1447`, local `review-1441-head` (squash-merged PR head), remote `ccr-*` cloud-session branches.
 
 ## Next actions
-Continue from `erg ready tickets/`. Other work has open PRs #1422 (morning factual capture) and #1431 (tentative review storage/delivery proposal for 1100); neither belongs to this session.
-Zotero staging reconciliation no longer runs in `/molt` or `/lair` (#1434): it fired in any repository with `docs/` and stalled over 5 min on a stale index. Run `/zotero check-staging` on demand in paper repositories. The 1111 implementation landed in #1437. Ticket 1113 replaces the Web API index with live reads through the running Zotero's local API (never `zotero.sqlite`; Zotero is launched when down, except in containers, else the command does nothing) and writes (creation, and edits with `--edit`) through the same API, so Zotero 10.0 or later and a local API key granted once with "Always Allow"; 1111 closes with it. 1112 closed in #1440: `/lair` proposes the reconcile, the author runs it. No library completeness claim or import was made.
-Review attribution pending for #1423/#1425 is durably documented in the raid journal; do not fill missing identities from aliases or guesses.
+Continue from `erg ready tickets/`. No PR is open.
+Run `/zotero check-staging` on demand in paper repositories; `/molt` and `/lair` only propose it.
 
 ## Author actions
 - Install the ILaaS consortium key in `~/.config/keys/ilaas.env`, then configure `models.json` (0977).
