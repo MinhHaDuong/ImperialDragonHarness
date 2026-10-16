@@ -81,7 +81,7 @@ between `work_present_with_file` and `work_present_no_file` decides what you do 
 | `work_present_no_file` | the item exists, no file attached | `suggest-attachments`, never `create-items` |
 | `candidates` | no identifier matched; Zotero's search found works with the title | judge them: same work, or another |
 | `absent` | looked up, not in the library | `create-items` |
-| `unidentified` | nothing to look it up by: no identifier, no title of three words | give it a `.bib` entry or an `Author1999-TitleWords` name, then check again |
+| `unidentified` | nothing to look it up by: no identifier, no title of three words of three letters or more | give it a `.bib` entry or an `Author1999-TitleWords` name, then check again |
 
 **`candidates` is a real answer, not a tuning failure.** The helper asserts
 a match only on an exact identifier (DOI, ISBN, arXiv id or handle equal to

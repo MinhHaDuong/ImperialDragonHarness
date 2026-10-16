@@ -125,6 +125,15 @@ def test_a_failing_pdfinfo_does_not_stop_a_staging_check(tmp_path, monkeypatch):
     assert zi.audit_one(pdf, zi.libraries())["verdict"] == "unidentified"
 
 
+def test_a_chapters_isbn_is_not_looked_up():
+    """A chapter carries its book's ISBN: looking it up would match the
+    book (Zotero is down here and is not asked)."""
+    res = zi.find_work(zi.libraries(), isbn="9780306406157",
+                       item_type="bookSection")
+    assert "isbn" not in res["consulted"] and res["verdict"] == "unchecked"
+    assert "isbn (the volume's, for a bookSection)" in res["skipped"]
+
+
 def test_a_short_title_is_skipped_not_searched():
     """"On Growth" would return any work at all: not a key that looked."""
     res = zi.find_work(zi.libraries(), title="On Growth")
@@ -173,6 +182,13 @@ def library(zotero_factory, tmp_path_factory):
                               creators=("Nozick",), date="1974"),
         "isbn": zotero.save("Handbook of Something", item_type="book",
                             date="2016", ISBN="978-0-13-468599-1"),
+        "arxiv_tagged": zotero.save("A Tagged Preprint",
+                                    extra="arXiv: 2403.00001 [cs.LG]"),
+        "arxiv_archive": zotero.save("An Archived Preprint", item_type="preprint",
+                                     archiveID="arXiv:2404.00002"),
+        "redirect": zotero.save("A Redirected Page", item_type="webpage",
+                                url="https://example.org/go?to=https://arxiv.org"
+                                    "/abs/2405.00003&h=hdl.handle.net/10419/999"),
         "chapter": zotero.save("A Chapter of the Handbook",
                                item_type="bookSection",
                                ISBN="978-0-13-468599-1"),
@@ -290,7 +306,7 @@ def test_an_isbn_matches_across_hyphenation_and_length(lib):
 
 
 @pytest.mark.integration
-def test_arxiv_ids_and_handles_are_found_in_extra_and_url(lib):
+def test_arxiv_ids_and_handles_are_found_in_their_own_fields(lib):
     keys, _ = lib
     assert [m["key"] for m in find(arxiv="2401.01234")["matches"]] == [keys["arxiv_extra"]]
     assert [m["key"] for m in find(arxiv="arXiv:2401.01234v2")["matches"]] == [
@@ -299,6 +315,22 @@ def test_arxiv_ids_and_handles_are_found_in_extra_and_url(lib):
     for supplied in ("10419/12345", "https://hdl.handle.net/10419/12345"):
         (m,) = find(handle=supplied)["matches"]
         assert m["key"] == keys["handle"] and m["why"] == ["handle"], supplied
+    assert [m["key"] for m in find(arxiv="2403.00001")["matches"]] == [
+        keys["arxiv_tagged"]], "an Extra line may carry a subject class"
+    assert [m["key"] for m in find(arxiv="2404.00002")["matches"]] == [
+        keys["arxiv_archive"]], "a preprint's archiveID is its own field"
+
+
+@pytest.mark.integration
+def test_an_identifier_inside_another_url_is_not_the_items(lib):
+    """A redirect URL embedding an arXiv or handle link is the page's own
+    URL, not that work's identifier."""
+    keys, _ = lib
+    z = zi.local_library()
+    returned = {w["key"] for w in zi.search_works(z, "user", "2405.00003")}
+    assert keys["redirect"] in returned, "positive control: the search sees it"
+    assert find(arxiv="2405.00003")["matches"] == []
+    assert find(handle="10419/999")["matches"] == []
 
 
 @pytest.mark.integration
@@ -437,6 +469,19 @@ def test_check_staging_uses_the_bib_doi_for_a_linked_file(lib, tmp_path):
                        "author": "Levin, John and Smith, Jane", "year": "1997"})
     assert result["zotero_key"] == keys["doi"] and result["why"] == ["doi"]
     assert result["verdict"] == "work_present_no_file"
+
+
+@pytest.mark.integration
+def test_check_staging_never_files_a_chapter_under_its_book(lib, tmp_path):
+    """An @incollection entry carries its volume's ISBN; the book holding
+    it is not the chapter, so --apply --edit must not attach to it."""
+    keys, _ = lib
+    pdf = make_pdf(tmp_path / "chapter.pdf", ["nothing useful"])
+    result = row(pdf, {"_type": "incollection", "title": "Some Chapter Title Here",
+                       "isbn": "978-0-13-468599-1"})
+    assert result["zotero_key"] != keys["isbn"]
+    assert result["verdict"] in ("absent", "candidates")
+    assert any(s.startswith("isbn (the volume's") for s in result["skipped"])
 
 
 @pytest.mark.integration

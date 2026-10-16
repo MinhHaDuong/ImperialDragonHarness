@@ -1176,6 +1176,7 @@ def entry_query(entry: dict[str, Any]) -> dict[str, Any]:
     handle_match = HDL_ANY_RE.search(url)
     return {"title": entry.get("title"), "doi": entry.get("doi"),
             "isbn": entry.get("isbn"),
+            "item_type": entry.get("type") or ENTRY_TYPE_DEFAULT,
             "arxiv": arxiv_match.group(1) if arxiv_match else None,
             "handle": handle_match.group(1) if handle_match else None}
 
@@ -1712,7 +1713,16 @@ def extra_lines(extra: str, label: str) -> list[str]:
     create-items) store an identifier a type has no field for in. A DOI
     elsewhere in Extra ("Comment on 10.1234/x") is another work's."""
     return [m.group(1) for m in re.finditer(
-        rf"(?im)^\s*{label}:\s*(\S+)\s*$", extra or "")]
+        rf"(?im)^\s*{label}:\s*(.+?)\s*$", extra or "")]
+
+
+ARXIV_URL_RE = re.compile(r"https?://(?:www\.)?arxiv\.org/(?:abs|pdf)/\S+",
+                          re.IGNORECASE)
+HANDLE_URL_RE = re.compile(r"https?://hdl\.handle\.net/\S+", re.IGNORECASE)
+
+
+def first_token(value: str) -> str:
+    return (value.split() or [""])[0]
 
 
 # A part of a volume carries the volume's ISBN, which identifies the volume,
@@ -1725,20 +1735,22 @@ ISBN_OF_A_VOLUME = {"bookSection", "conferencePaper", "encyclopediaArticle",
 # a substring in any field, an abstract citing the DOI included).
 IDENTIFIER_KEYS: tuple[tuple[str, Any, Any], ...] = (
     ("doi", lambda v: [d for d in [normal_doi(v)] if DOI_BARE_RE.fullmatch(d)],
-     lambda w, v: normal_doi(v) in {normal_doi(d) for d in
-                                    [w["DOI"], *extra_lines(w["extra"], "DOI")]
-                                    if d}),
+     lambda w, v: normal_doi(v) in {
+         normal_doi(first_token(d))
+         for d in [w["DOI"], *extra_lines(w["extra"], "DOI")] if d}),
     ("isbn", isbn_queries,
      lambda w, v: w["itemType"] not in ISBN_OF_A_VOLUME and bool(
          isbn13s(v) & isbn13s(" ".join([w["ISBN"],
                                         *extra_lines(w["extra"], "ISBN")])))),
     ("arxiv", lambda v: [a for a in [normal_arxiv(v)] if a],
      lambda w, v: normal_arxiv(v) in {
-         normal_arxiv(a) for a in [*extra_lines(w["extra"], "arXiv"),
-                                   w["url"]] if a} - {""}),
+         normal_arxiv(first_token(a))
+         for a in [*extra_lines(w["extra"], "arXiv"), w["archiveID"],
+                   w["url"] if ARXIV_URL_RE.fullmatch(w["url"]) else ""]
+         if a} - {""}),
     ("handle", lambda v: [h for h in [handle_path(v)]
                           if re.fullmatch(r"[^\s/:]+/\S+", h)],
-     lambda w, v: bool(HDL_ANY_RE.search(w["url"]))
+     lambda w, v: bool(HANDLE_URL_RE.fullmatch(w["url"]))
      and handle_path(v) == handle_path(w["url"])),
 )
 
@@ -1749,7 +1761,7 @@ KEYS = ("doi", "isbn", "arxiv", "handle", "title")
 def find_work(libs: list[tuple[str, zotero.Zotero]], *,
               doi: str | None = None, isbn: str | None = None,
               arxiv: str | None = None, handle: str | None = None,
-              title: str | None = None,
+              title: str | None = None, item_type: str | None = None,
               pdf_path: Path | None = None) -> dict[str, Any]:
     """Is this work in the libraries? Zotero's own search, key by key.
 
@@ -1784,6 +1796,10 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
                     "handle": handle}[label]
         if not supplied:
             skipped.append(f"{label} (none supplied)")
+            continue
+        if label == "isbn" and item_type in ISBN_OF_A_VOLUME:
+            # A chapter's ISBN is its book's: the book is not this work.
+            skipped.append(f"isbn (the volume's, for a {item_type})")
             continue
         sent = queries(supplied)
         if not sent:
@@ -2157,7 +2173,10 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
     res = find_work(libs, title=title,
                     doi=bib_entry.get("doi"), isbn=bib_entry.get("isbn"),
                     arxiv=bib_entry.get("arxiv"),
-                    handle=bib_entry.get("handle"), pdf_path=path)
+                    handle=bib_entry.get("handle"),
+                    item_type=BIB_TO_ZOTERO_TYPE.get(
+                        str(bib_entry.get("_type", "")).lower()),
+                    pdf_path=path)
     top = res["matches"][0] if res["matches"] else None
     # Six answers, not four. Collapsing title candidates into "absent" is
     # the expensive mistake in both directions: called present, a document
