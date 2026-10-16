@@ -886,6 +886,10 @@ def local_api():
                                 f"({exc})") from exc
     except (ze.ResourceNotFoundError, ze.LocalAPIKeyRequiredError):
         raise
+    except ze.FileDoesNotExistError as exc:
+        # A local file, not a refusal: the setting is not the cause.
+        raise LocalAPIError(f"the file to store cannot be read ({exc})"
+                            ) from exc
     except ze.UploadError as exc:
         # pyzotero raises it only when the upload POST cannot connect or
         # times out: a transport loss, not a refusal.
@@ -1231,6 +1235,10 @@ def attach_file(z: LocalLibrary, parent: str, path: Path) -> str:
         if done := saved():
             raise ZoteroUnavailable(f"{exc}; {done}") from exc
         raise
+    except OSError as exc:
+        done = saved()
+        raise LocalAPIError(f"could not read {path}: {exc}"
+                            + (f"; {done}" if done else "")) from exc
     if result.get("failure") or not result.get("success"):
         raise LocalAPIError(f"Zotero did not store {path.name}: {result}")
     return result["success"][0]["key"]
@@ -1436,6 +1444,11 @@ def inject_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
         pdf = Path(entry["pdf"]) if entry.get("pdf") else None
         if not force and (pdf is None or not pdf.is_file()):
             row["error"] = "no readable PDF for duplicate guard; use --force"
+            status = 1
+            continue
+        if entry.get("attach_pdf") and pdf is not None and not pdf.is_file():
+            # --force skips the duplicate guard, not the file to store.
+            row["error"] = f"PDF to attach not found: {pdf}"
             status = 1
             continue
         if not force:

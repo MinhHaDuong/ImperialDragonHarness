@@ -3155,3 +3155,25 @@ def test_a_zotero_url_carrying_credentials_is_refused(monkeypatch):
     monkeypatch.setenv("ZOTERO_CONNECTOR_URL", "http://user@localhost:23999")
     with pytest.raises(zi.LocalAPIError, match="credentials"):
         zi.zotero_base()
+
+
+def test_force_still_refuses_a_missing_pdf_before_creating_the_item(
+        tmp_path, monkeypatch):
+    created = []
+    monkeypatch.setattr(zi, "create_item",
+                        lambda *a, **k: created.append(a) or "K1")
+    entry = {"title": "A title", "pdf": str(tmp_path / "gone.pdf"),
+             "attach_pdf": True}
+    results, rc = zi.inject_entries([entry], [{}], [{"confidence": "low"}],
+                                    {}, None, None, force=True)
+    assert rc == 1 and not created
+    assert "not found" in results[0]["error"]
+    assert "key" not in results[0]
+
+
+def test_a_local_file_error_is_not_blamed_on_the_local_api_setting():
+    with pytest.raises(zi.LocalAPIError) as exc:
+        with zi.local_api():
+            raise ze.FileDoesNotExistError("/x/gone.pdf")
+    assert zi.LOCAL_API_SETTING not in str(exc.value)
+    assert "gone.pdf" in str(exc.value)
