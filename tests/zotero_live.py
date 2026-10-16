@@ -8,21 +8,24 @@ temporary directory:
 - a fresh profile (`-profile`), whose `user.js` moves the HTTP server to an
   ephemeral port (`extensions.zotero.httpServer.port`), enables or disables
   the local API (`extensions.zotero.httpServer.localAPI.enabled`) and turns
-  off sync and updates;
+  off sync and updates, and whose `localAPIKeys.json` holds one local API
+  key granted with "Always Allow" (the file Zotero itself writes when the
+  user answers its dialog), so writes are authorized without a dialog;
 - a fresh data directory (`-datadir`, read by Zotero.DataDirectory);
 - HOME, TMPDIR and the XDG directories pointed inside it, and `-no-remote`,
   so the client neither finds nor signals another Zotero. TMPDIR matters:
   Zotero stages its bundled translators in $TMPDIR/zotero, and two clients
   sharing it (two xdist workers, or a test client and the author's Zotero)
-  break each other's translator install, after which a connector import
-  hangs.
+  break each other's translator install.
 
-The author's profile, ~/Zotero and a Zotero on port 23119 are never read,
-written or contacted. When isolation cannot be guaranteed (a flatpak
-launcher, a temporary directory inside the real Zotero directories) or
-Zotero cannot run here (no installation, a container, CI, no display),
-the fixtures skip with the reason. Test items are created through the real
-connector; the tests read them back through the real local API.
+The helper is pointed at the client with ZOTERO_CONNECTOR_URL and at a key
+file of its own under the same directory with ZOTERO_LOCAL_KEY_FILE, never
+at ~/.config/keys. The author's profile, ~/Zotero and a Zotero on port 23119
+are never read, written or contacted. When isolation cannot be guaranteed (a
+flatpak launcher, a temporary directory inside the real Zotero directories)
+or Zotero cannot run here (no installation, a container, CI, no display),
+the fixtures skip with the reason. Test data is created through pyzotero's
+local client, the same library the helper uses, and read back through it.
 
 Each pytest process (each xdist worker) starts its own clients; they are
 stopped and their directories deleted at the end of the session.
@@ -37,6 +40,7 @@ pid and execs the real binary.
 import importlib.util
 import json
 import os
+import secrets
 import shlex
 import shutil
 import signal
@@ -45,12 +49,10 @@ import subprocess
 import sys
 import tempfile
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 import uuid
 from pathlib import Path
 
+import httpx2
 import pytest
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
@@ -60,8 +62,6 @@ DEFAULT_PORT = 23119
 # rest of the environment, HOME included, is replaced.
 PASSED_ENV = ("PATH", "DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY",
               "XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS")
-
-_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 def helper_module():
@@ -98,7 +98,8 @@ def why_not_here() -> str | None:
                 f"sandboxed client cannot be confined to a throwaway profile")
     home = Path.home()
     tmp = Path(tempfile.gettempdir()).resolve()
-    for real in (home / "Zotero", home / ".zotero", home / ".mozilla"):
+    for real in (home / "Zotero", home / ".zotero", home / ".mozilla",
+                 home / ".config" / "keys"):
         if tmp == real or real in tmp.parents:
             return f"temporary directory {tmp} lies inside {real}"
     return None
@@ -115,7 +116,8 @@ def zotero_version(binary: str) -> str:
     return "unknown"
 
 
-def write_profile(profile: Path, data: Path, port: int, local_api: bool) -> None:
+def write_profile(profile: Path, data: Path, port: int, local_api: bool,
+                  key: str) -> None:
     prefs = {
         "extensions.zotero.httpServer.enabled": True,
         "extensions.zotero.httpServer.port": port,
@@ -135,6 +137,11 @@ def write_profile(profile: Path, data: Path, port: int, local_api: bool) -> None
     profile.mkdir(parents=True, exist_ok=True)
     (profile / "user.js").write_text("".join(
         f"user_pref({json.dumps(k)}, {json.dumps(v)});\n" for k, v in prefs.items()))
+    # The key store Zotero writes when the user answers "Always Allow"
+    # (server_localAPI.js): this throwaway client trusts `key` from the start.
+    (profile / "localAPIKeys.json").write_text(json.dumps({"keys": [{
+        "key": key, "appName": "tests", "remember": True,
+        "createdAt": "2026-10-16T00:00:00Z"}]}))
 
 
 def isolated_env(home: Path) -> dict[str, str]:
@@ -152,29 +159,28 @@ def isolated_command(binary: str, profile: Path, data: Path) -> list[str]:
 
 
 def prepare(root: Path, port: int, local_api: bool = True
-            ) -> tuple[Path, Path, Path]:
-    """Lay out home, profile and data directory under `root`."""
+            ) -> tuple[Path, Path, Path, Path]:
+    """Lay out home, profile, data directory and the helper's key file under
+    `root`; the key file holds the key the profile trusts."""
     home, profile, data = root / "home", root / "profile", root / "data"
     (home / "tmp").mkdir(parents=True)
     data.mkdir(parents=True)
-    write_profile(profile, data, port, local_api)
-    return home, profile, data
+    key = secrets.token_hex(16)
+    write_profile(profile, data, port, local_api, key)
+    key_file = root / "keys" / "zotero-local.env"
+    key_file.parent.mkdir(mode=0o700)
+    key_file.write_text(f"ZOTERO_LOCAL_API_KEY={key}\n")
+    key_file.chmod(0o600)
+    return home, profile, data, key_file
 
 
 def answers(url: str, timeout: float = 2.0) -> bool:
-    """Is the client ready to save? The ping answers before the libraries
-    are loaded; getSelectedCollection answers 200 only once they are."""
+    """Does the client's local API root answer (any status)?"""
     try:
-        with _OPENER.open(f"{url}/connector/ping", timeout=timeout) as resp:
-            if b"Zotero is running" not in resp.read(4096):
-                return False
-        req = urllib.request.Request(f"{url}/connector/getSelectedCollection",
-                                     data=b"{}", method="POST",
-                                     headers={"Content-Type": "application/json"})
-        with _OPENER.open(req, timeout=timeout) as resp:
-            return resp.status == 200
-    except (urllib.error.URLError, OSError):
+        httpx2.get(f"{url}/api/", timeout=timeout, trust_env=False)
+    except httpx2.TransportError:
         return False
+    return True
 
 
 def stop_pid(pid: int) -> None:
@@ -210,7 +216,7 @@ def write_launch_wrapper(root: Path, binary: str, port: int,
     execs `binary` on a throwaway profile listening on `port`; (script, pid
     file). Put root/bin first on PATH to have the helper find it."""
     assert port != DEFAULT_PORT
-    home, profile, data = prepare(root, port, local_api)
+    home, profile, data, _key_file = prepare(root, port, local_api)
     env = " ".join(shlex.quote(f"{k}={v}") for k, v in isolated_env(home).items())
     command = " ".join(shlex.quote(a) for a in isolated_command(binary, profile, data))
     pidfile = root / "pid"
@@ -241,7 +247,7 @@ def stop_client(process: subprocess.Popen) -> None:
 
 
 class LiveZotero:
-    """One running throwaway client: its URL, version and seeding helpers."""
+    """One running throwaway client: its URL, key file and seeding helpers."""
 
     def __init__(self, root: Path, *, local_api: bool = True) -> None:
         zi = helper_module()
@@ -251,7 +257,8 @@ class LiveZotero:
         self.port = free_port()
         assert self.port != DEFAULT_PORT
         self.url = f"http://127.0.0.1:{self.port}"
-        home, self.profile, self.data = prepare(root, self.port, local_api)
+        home, self.profile, self.data, self.key_file = prepare(
+            root, self.port, local_api)
         self.log = root / "zotero.log"
         started = time.monotonic()
         with open(self.log, "wb") as log:
@@ -266,10 +273,15 @@ class LiveZotero:
                 pytest.skip(f"the throwaway Zotero {self.version} did not answer "
                             f"on {self.url} within {START_WAIT:.0f} s")
             time.sleep(0.2)
-        if local_api and not self._items_loaded(started):
-            self.stop()
-            pytest.skip(f"the throwaway Zotero {self.version} did not load its "
-                        f"items within {START_WAIT:.0f} s")
+        if local_api:
+            # The local API answers reads only once the client's initial item
+            # load is done; no test writes before that.
+            try:
+                self.client().items(limit=1)
+            except (httpx2.TransportError, OSError) as exc:
+                self.stop()
+                pytest.skip(f"the throwaway Zotero {self.version} did not load "
+                            f"its items: {exc}")
         self.startup = time.monotonic() - started
         # The data directory is the one given: the client did not fall back
         # to a default location.
@@ -278,30 +290,29 @@ class LiveZotero:
             pytest.skip("the throwaway Zotero ignored -datadir; isolation "
                         "not guaranteed")
 
-    def _items_loaded(self, started: float) -> bool:
-        """Wait for the client's initial item load: a local API read is
-        answered only once it is done. A connector save that arrives during
-        that load can leave it unfinished (Zotero 10.0.6), after which every
-        local API read hangs, so no test writes before this returns."""
-        try:
-            self.get("/api/users/0/items", limit=1,
-                     timeout=max(1.0, START_WAIT - (time.monotonic() - started)))
-        except (urllib.error.URLError, OSError):
-            return False
-        return True
-
     def stop(self) -> None:
         stop_client(self.process)
 
-    # -- reads (straight HTTP, independent of the helper) ------------------
+    def env(self) -> dict[str, str]:
+        """What points the helper at this client and its key file."""
+        return {"ZOTERO_CONNECTOR_URL": self.url,
+                "ZOTERO_LOCAL_KEY_FILE": str(self.key_file)}
 
-    def get(self, path: str, timeout: float = 60.0, **params) -> object:
-        url = f"{self.url}{path}"
-        if params:
-            url += "?" + urllib.parse.urlencode(params)
-        req = urllib.request.Request(url, headers={"Zotero-API-Version": "3"})
-        with _OPENER.open(req, timeout=timeout) as resp:
-            return json.loads(resp.read())
+    def client(self):
+        """pyzotero's local client for this Zotero's user library, with the
+        key this profile trusts."""
+        zi = helper_module()
+        z = zi.zotero.Zotero(0, "user", local=True,
+                             local_api_key=self.key_file.read_text()
+                             .strip().split("=", 1)[1],
+                             client=zi.http_client())
+        z.endpoint = f"{self.url}/api"
+        return z
+
+    # -- reads -------------------------------------------------------------
+
+    def item(self, key: str) -> dict:
+        return self.client().item(key)
 
     def find(self, title: str) -> dict:
         """The one top-level item with this title."""
@@ -310,100 +321,57 @@ class LiveZotero:
         return hits[0]
 
     def children(self, key: str) -> list[dict]:
-        return self.get(f"/api/users/0/items/{key}/children")
+        return self.client().children(key)
 
     def titled(self, title: str) -> list[dict]:
         """Every top-level item with this title (none, one or several)."""
-        return [i for i in self.get("/api/users/0/items/top", q=title)
+        z = self.client()
+        return [i for i in z.everything(z.top(q=title, limit=100))
                 if i["data"].get("title") == title]
 
-    def collection_key(self, name: str) -> str:
-        """The local API key of the one collection with this name."""
-        keys = [c["key"] for c in self.get("/api/users/0/collections")
-                if c["data"]["name"] == name]
-        assert len(keys) == 1, f"{len(keys)} collections named {name!r}"
-        return keys[0]
+    def versions(self) -> dict[str, int]:
+        """Every item's version: a write anywhere changes it."""
+        z = self.client()
+        return {i["key"]: i["version"] for i in z.everything(z.items(limit=100))}
 
-    # -- writes, through the real connector --------------------------------
-
-    def post(self, endpoint: str, body: bytes, content_type: str,
-             headers: dict[str, str] | None = None) -> tuple[int, bytes]:
-        req = urllib.request.Request(f"{self.url}/connector/{endpoint}",
-                                     data=body, method="POST")
-        req.add_header("Content-Type", content_type)
-        req.add_header("X-Zotero-Connector-API-Version", "3")
-        for name, value in (headers or {}).items():
-            req.add_header(name, value)
-        try:
-            with _OPENER.open(req, timeout=120) as resp:
-                return resp.status, resp.read()
-        except urllib.error.HTTPError as exc:
-            return exc.code, exc.read() or b""
+    # -- writes, through pyzotero's local client ---------------------------
 
     def save(self, title: str, *, item_type: str = "journalArticle",
              creators: tuple[str, ...] = (), pdf: Path | None = None,
-             pdfs: tuple[Path, ...] = (), target: str | None = None,
-             **fields) -> str:
-        """Create one item (and stored PDFs: `pdf`, then each of `pdfs`) as
-        a connector would; its key. Zotero renames each stored file after
-        the parent's metadata."""
-        session = uuid.uuid4().hex
-        item = {"id": "item0", "itemType": item_type, "title": title,
+             pdfs: tuple[Path, ...] = (), collection: str | None = None,
+             notes: tuple[str, ...] = (), **fields) -> str:
+        """Create one item, with stored copies of `pdf` then each of `pdfs`
+        and child `notes`; its key."""
+        z = self.client()
+        item = {"itemType": item_type, "title": title,
                 "creators": [{"creatorType": "author", "lastName": c,
                               "firstName": ""} for c in creators],
-                "attachments": [], "notes": [], "tags": [], **fields}
-        status, body = self.post("saveItems", json.dumps(
-            {"sessionID": session, "uri": "", "items": [item]}).encode(),
-            "application/json")
-        assert status == 201, (status, body)
-        if target:
-            status, body = self.post("updateSession", json.dumps(
-                {"sessionID": session, "target": target, "tags": []}).encode(),
-                "application/json")
-            assert status == 200, (status, body)
+                "collections": [collection] if collection else [], **fields}
+        created = z.create_items([item])
+        assert created["successful"], created
+        key = created["successful"]["0"]["key"]
         for file in ((pdf,) if pdf is not None else ()) + tuple(pdfs):
-            meta = {"sessionID": session, "parentItemID": "item0",
-                    "title": file.name, "url": file.resolve().as_uri()}
-            status, body = self.post("saveAttachment", file.read_bytes(),
-                                     "application/pdf",
-                                     {"X-Metadata": json.dumps(meta)})
-            assert status == 201, (status, body)
-        return self.find(title)["key"]
+            result = z.upload_attachments([{
+                "itemType": "attachment", "linkMode": "imported_file",
+                "title": file.name, "filename": str(file.resolve()),
+                "contentType": "application/pdf", "tags": [], "relations": {}}],
+                parentid=key)
+            assert result["success"], result
+        for note in notes:
+            assert z.create_items([{"itemType": "note", "parentItem": key,
+                                    "note": note}])["successful"]
+        return key
 
-    def collections(self, *names: str) -> dict[str, str]:
-        """Create nested collections names[0] > names[1] > ... with a Zotero
-        RDF import through the connector; {name: connector target id}.
-
-        The import lands in the collection selected in the client, and the
-        client then selects what it imported: successive calls nest.
-        """
-        return self._import_collections(names, nested=True)
-
-    def twin_collections(self, name: str) -> dict[str, str]:
-        """Two sibling collections both called `name`, in one import."""
-        return self._import_collections((name, name), nested=False)
-
-    def _import_collections(self, names: tuple[str, ...], nested: bool
-                            ) -> dict[str, str]:
-        tag = uuid.uuid4().hex[:8]
-        parts = []
-        for n, name in enumerate(names):
-            child = (f'<dcterms:hasPart rdf:resource="#c{n + 1}-{tag}"/>'
-                     if nested and n + 1 < len(names) else "")
-            parts.append(f'<z:Collection rdf:about="#c{n}-{tag}">'
-                         f'<dc:title>{name}</dc:title>{child}</z:Collection>')
-        rdf = ('<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"'
-               ' xmlns:z="http://www.zotero.org/namespaces/export#"'
-               ' xmlns:dc="http://purl.org/dc/elements/1.1/"'
-               ' xmlns:dcterms="http://purl.org/dc/terms/">'
-               + "".join(parts) + "</rdf:RDF>")
-        status, body = self.post(f"import?session={uuid.uuid4().hex}",
-                                 rdf.encode(), "text/plain")
-        assert status == 201, (status, body)
-        status, body = self.post("getSelectedCollection", b"{}",
-                                 "application/json")
-        targets = json.loads(body)["targets"]
-        return {t["name"]: t["id"] for t in targets if t["name"] in names}
+    def collections(self, *names: str) -> list[str]:
+        """Nested collections names[0] > names[1] > ...; their keys."""
+        z = self.client()
+        keys: list[str] = []
+        for name in names:
+            spec = {"name": name, "parentCollection": keys[-1] if keys else False}
+            created = z.create_collections([spec])
+            assert created["successful"], created
+            keys.append(created["successful"]["0"]["key"])
+        return keys
 
 
 class ZoteroFactory:
@@ -459,11 +427,16 @@ def zotero_binary() -> str:
     return helper_module().find_zotero_launcher()[0]
 
 
+def point_helper_at(zotero: LiveZotero, monkeypatch) -> LiveZotero:
+    for name, value in zotero.env().items():
+        monkeypatch.setenv(name, value)
+    return zotero
+
+
 @pytest.fixture
 def use_live(live_zotero, monkeypatch) -> LiveZotero:
     """Point the helper at the shared throwaway client for one test."""
-    monkeypatch.setenv("ZOTERO_CONNECTOR_URL", live_zotero.url)
-    return live_zotero
+    return point_helper_at(live_zotero, monkeypatch)
 
 
 def unique(text: str = "Work") -> str:

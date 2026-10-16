@@ -39,9 +39,10 @@ LONELY = b"a size nobody else has"
 
 
 @pytest.fixture(autouse=True)
-def zotero_down(monkeypatch):
+def zotero_down(monkeypatch, tmp_path):
     monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{free_port()}")
     monkeypatch.setenv("ZOTERO_NO_LAUNCH", "1")
+    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(tmp_path / "no-key.env"))
 
 
 def write_files(directory: Path) -> dict[str, Path]:
@@ -76,7 +77,7 @@ def library(zotero_factory, tmp_path_factory):
 @pytest.fixture
 def use_library(library, monkeypatch):
     zotero, keys = library
-    monkeypatch.setenv("ZOTERO_CONNECTOR_URL", zotero.url)
+    zotero_live.point_helper_at(zotero, monkeypatch)
     return zotero, keys
 
 
@@ -141,20 +142,15 @@ def test_a_uniquely_sized_file_is_never_hashed(tmp_path, monkeypatch):
     assert "lonely.pdf" not in hashed and "a.pdf" in hashed
 
 
-def item_versions(zotero) -> dict[str, int]:
-    return {i["key"]: i["data"]["version"]
-            for i in zotero.get("/api/users/0/items", limit=100)}
-
-
 @pytest.mark.integration
 def test_cli_report_is_escaped_linked_and_read_only(library, tmp_path):
     zotero, keys = library
     attachments = {key: zotero.children(key)
                    for key in (keys["shared"], keys["other"])}
-    before = item_versions(zotero)
+    before = zotero.versions()
     out = tmp_path / "report.html"
     env = child_env()
-    env.update(ZOTERO_CONNECTOR_URL=zotero.url, ZOTERO_NO_LAUNCH="1")
+    env.update(zotero.env(), ZOTERO_NO_LAUNCH="1")
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "dedup-report", "--out", str(out)],
         capture_output=True, text=True, check=True, env=env, stdin=subprocess.DEVNULL)
@@ -169,7 +165,7 @@ def test_cli_report_is_escaped_linked_and_read_only(library, tmp_path):
     assert "<Unsafe & title>" not in body
     assert keys["same_parent"] not in body and keys["lonely"] not in body
     assert out.stat().st_mode & 0o777 == 0o600
-    assert item_versions(zotero) == before, "the report only reads"
+    assert zotero.versions() == before, "the report only reads"
 
 
 @pytest.mark.integration

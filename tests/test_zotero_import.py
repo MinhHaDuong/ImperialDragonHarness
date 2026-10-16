@@ -22,12 +22,12 @@ import argparse
 import contextlib
 import fcntl
 import hashlib
-import http.server
 import json
 import os
 import shutil
 import socket
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -55,13 +55,16 @@ zi = zotero_live.helper_module()
 
 
 @pytest.fixture(autouse=True)
-def zotero_down(monkeypatch):
+def zotero_down(monkeypatch, tmp_path_factory):
     """Every test starts with nothing answering and nothing launchable,
     through the environment the helper honours: the Zotero URL is a closed
-    loopback port and ZOTERO_NO_LAUNCH is set. `use_live` points the URL at
-    the throwaway client instead."""
+    loopback port, ZOTERO_NO_LAUNCH is set, and the key file is a path of
+    the test's own that holds nothing (never ~/.config/keys). `use_live`
+    points the URL and the key file at the throwaway client instead."""
     monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{free_port()}")
     monkeypatch.setenv("ZOTERO_NO_LAUNCH", "1")
+    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE",
+                       str(tmp_path_factory.mktemp("keys") / "zotero-local.env"))
 
 
 def make_pdf(path: Path, lines: list[str], info: dict[str, str] | None = None
@@ -217,12 +220,11 @@ def test_cmd_write_emits_ris_file(tmp_path):
     assert "PY  - 2021" in body
 
 
-# ── zotero_matches over one library read ─────────────────────────────────────
+# ── the matcher over one library read ────────────────────────────────────────
 
 
 # File bytes whose md5 the fixture library reports for an attachment.
 SCAN_BYTES = b"scanned book pdf bytes"
-GROUP_BYTES = b"group library pdf bytes"
 CONTROL_BYTES = b"positive control pdf bytes"
 
 
@@ -273,46 +275,18 @@ def _build_library():
             "account": "1", "zotero": "memory", "source": zi.LIBRARY_SOURCE}
 
 
-def test_zotero_matches_doi_exact_match():
-    res = zi.zotero_matches(
-        _build_library(), doi="10.1/X", title=None, year="2020",
-        pdf_path=Path("paper.pdf"))
-    matches = _matches(res)
-    assert len(matches) == 1
-    m = matches[0]
-    assert m["key"] == "K10"
-    assert m["score"] == 105  # 100 doi + 5 year
-    assert "doi" in m["why"] and "year" in m["why"]
-    assert m["pdf_basename_match"] is True
-    assert m["attachments"][0]["filename"] == "paper.pdf"
+def test_doi_exact_match():
+    res = zi.library_matches(_build_library(), doi="10.1/X", year="2020",
+                             pdf_path=Path("paper.pdf"))
+    (m,) = _matches(res)
+    assert m["key"] == "K10" and m["why"] == ["doi"]
     assert m["certainty"] == "exact"
     assert res["verdict"] == "match"
 
 
-def test_zotero_matches_title_fuzzy_match():
-    res = zi.zotero_matches(
-        _build_library(), doi=None, title="Shallow Trees for Weather", year=None,
-        pdf_path=Path("x.pdf"))
-    ids = [m["key"] for m in _matches(res)]
-    assert "K11" in ids  # exact title → Jaccard 1.0 >= 0.6
-    assert "K10" not in ids
-    # A title-similarity hit is a guess, not a certainty.
-    assert res["verdict"] == "ambiguous"
-
-
-def test_zotero_matches_excludes_items_that_are_themselves_attachments():
-    res = zi.zotero_matches(
-        _build_library(), doi=None, title="Deep Learning for Climate", year=None,
-        pdf_path=Path("x.pdf"))
-    ids = [m["key"] for m in _matches(res)]
-    assert "K10" in ids
-    assert "K30" not in ids
-
-
-def test_zotero_matches_no_hit_returns_empty():
-    res = zi.zotero_matches(
-        _build_library(), doi="10.9/nope", title=None, year=None,
-        pdf_path=Path("x.pdf"))
+def test_no_hit_is_none_not_unchecked():
+    res = zi.library_matches(_build_library(), doi="10.9/nope",
+                             pdf_path=Path("x.pdf"))
     assert _matches(res) == []
     # Keys were consulted and found nothing — distinguishable from "unchecked".
     assert res["verdict"] == "none"
@@ -326,8 +300,7 @@ def test_pdf_recognised_by_content_hash_without_any_metadata(tmp_path):
     """A scanned PDF under garbage metadata is found by its content alone."""
     pdf = tmp_path / "anything.pdf"
     pdf.write_bytes(SCAN_BYTES)
-    res = zi.zotero_matches(_build_library(), doi=None, title=None, year=None,
-                            pdf_path=pdf)
+    res = zi.library_matches(_build_library(), pdf_path=pdf)
     matches = _matches(res)
     assert [m["key"] for m in matches] == ["K50"]
     assert matches[0]["why"] == ["storageHash"]
@@ -336,9 +309,8 @@ def test_pdf_recognised_by_content_hash_without_any_metadata(tmp_path):
 
 
 def test_pdf_recognised_by_filename_without_title_score():
-    res = zi.zotero_matches(
-        _build_library(), doi=None, title=None, year=None,
-        pdf_path=Path("convex-analysis-1970.pdf"))
+    res = zi.library_matches(_build_library(),
+                             pdf_path=Path("convex-analysis-1970.pdf"))
     matches = _matches(res)
     assert [m["key"] for m in matches] == ["K50"]
     assert matches[0]["why"] == ["filename"]
@@ -353,54 +325,20 @@ def test_parentless_attachment_stands_for_itself(tmp_path):
     idx["attachments"].append(_a("K99", None, "loose.pdf",
                                  hashlib.md5(b"loose file").hexdigest(),
                                  title="Loose PDF"))
-    res = zi.zotero_matches(idx, pdf_path=pdf)
-    assert [m["key"] for m in _matches(res)] == ["K99"]
-    assert _matches(res)[0]["title"] == "Loose PDF"
+    (m,) = _matches(zi.library_matches(idx, pdf_path=pdf))
+    assert m["orphan_attachment"] == "K99" and m["key"] is None
 
 
-# ── cascade: persistent identifiers beyond the DOI ───────────────────────────
+# ── cascade: (first author, year, title) — the pre-DOI book case ────────────
 
 
-def test_isbn_matches_despite_hyphenation_differences():
-    res = zi.zotero_matches(
-        _build_library(), doi=None, title=None, year=None, pdf_path=None,
-        isbn="9780134685991")
-    matches = _matches(res)
-    assert [m["key"] for m in matches] == ["K70"]
-    assert matches[0]["why"] == ["isbn"]
-    assert res["verdict"] == "match"
-
-
-def test_arxiv_id_matches_extra_field():
-    res = zi.zotero_matches(
-        _build_library(), doi=None, title=None, year=None, pdf_path=None,
-        arxiv="2401.01234")
-    matches = _matches(res)
-    assert [m["key"] for m in matches] == ["K90"]
-    assert matches[0]["why"] == ["arxiv"]
-
-
-def test_handle_matches_url_field():
-    res = zi.zotero_matches(
-        _build_library(), doi=None, title=None, year=None, pdf_path=None,
-        handle="https://hdl.handle.net/2027/abc")
-    matches = _matches(res)
-    assert [m["key"] for m in matches] == ["K91"]
-    assert matches[0]["why"] == ["handle"]
-
-
-# ── cascade: (first author, year, normalised title) — the pre-DOI book case ──
-
-
-def test_predoi_book_recognised_despite_casing_and_punctuation():
-    """A book with no DOI, already present under different casing/punctuation,
-    must be a CERTAIN match via the creator-year-title key — not a Jaccard
-    guess. If the non-DOI key is removed, the hit degrades to a weak title
-    match, the verdict flips to "ambiguous", and this test fails.
-    """
-    res = zi.zotero_matches(
-        _build_library(), doi=None, title="anarchy state and utopia",
-        year="1974", first_author="Robert Nozick", pdf_path=None)
+@pytest.mark.parametrize("author", ["Robert Nozick", "Nozick, Robert", "Nozick"])
+def test_predoi_book_recognised_despite_casing_and_punctuation(author):
+    """A book with no DOI, already present under different casing and
+    punctuation, is a strong match through the creator-year-title key, the
+    author given in any form."""
+    res = zi.library_matches(_build_library(), title="anarchy state and utopia",
+                             year="1974", first_author=author)
     matches = _matches(res)
     assert [m["key"] for m in matches] == ["K60"]
     assert matches[0]["why"] == ["creator-year-title"]
@@ -408,23 +346,9 @@ def test_predoi_book_recognised_despite_casing_and_punctuation():
     assert res["verdict"] == "match"
 
 
-# ── ambiguity is reported, never silently resolved ───────────────────────────
-
-
-def test_generic_title_shared_by_two_works_reports_ambiguous():
-    res = zi.zotero_matches(
-        _build_library(), doi=None, title="Convex Analysis", year=None,
-        pdf_path=None)
-    ids = {m["key"] for m in _matches(res)}
-    assert {"K61", "K62"} <= ids
-    assert all(m["certainty"] == "weak" for m in _matches(res))
-    assert res["verdict"] == "ambiguous"
-
-
 def test_no_keys_at_all_reports_unchecked_not_none():
     """"Found nothing" and "could not look" must stay distinguishable."""
-    res = zi.zotero_matches(
-        _build_library(), doi=None, title=None, year=None, pdf_path=None)
+    res = zi.library_matches(_build_library())
     assert _matches(res) == []
     assert res["verdict"] == "unchecked"
     assert res["consulted"] == []
@@ -437,20 +361,19 @@ def test_no_keys_at_all_reports_unchecked_not_none():
 def test_positive_control_canary_always_found(tmp_path):
     """Known-positive that must surface on every run, through each source."""
     idx = _build_library()
-    by_doi = zi.zotero_matches(idx, doi="10.9/control", pdf_path=None)
+    by_doi = zi.library_matches(idx, doi="10.9/control")
     assert [m["key"] for m in _matches(by_doi)] == ["K80"]
     assert by_doi["verdict"] == "match"
 
     pdf = tmp_path / "unrelated-name.pdf"
     pdf.write_bytes(CONTROL_BYTES)
-    by_hash = zi.zotero_matches(idx, pdf_path=pdf)
+    by_hash = zi.library_matches(idx, pdf_path=pdf)
     assert [m["key"] for m in _matches(by_hash)] == ["K80"]
     assert by_hash["verdict"] == "match"
 
-    by_name = zi.zotero_matches(idx, pdf_path=Path("control.pdf"))
+    by_name = zi.library_matches(idx, pdf_path=Path("control.pdf"))
     assert [m["key"] for m in _matches(by_name)] == ["K80"]
     assert by_name["verdict"] == "match"
-
 
 
 # ── Zotero API item mapping (inject) ─────────────────────────────────────────
@@ -469,7 +392,7 @@ def test_entry_to_zotero_item_journal_article():
     item = zi.entry_to_zotero_item(
         {"type": "JOUR", "title": "T", "authors": ["Jane Smith"], "year": 2015,
          "doi": "10.1/x", "journal": "Econometrica", "volume": "83",
-         "issue": "4", "pages": "1467-1495", "numPages": 29},
+         "issue": "4", "pages": "1467-1495", "numPages": 29}, owned,
     )
     assert item["itemType"] == "journalArticle"
     assert item["DOI"] == "10.1/x"
@@ -483,7 +406,7 @@ def test_entry_to_zotero_item_journal_article():
 def test_entry_to_zotero_item_book_numpages_and_isbn():
     item = zi.entry_to_zotero_item(
         {"type": "BOOK", "title": "B", "isbn": "978-0-13-468599-1",
-         "numPages": 300, "doi": "10.2/y"},
+         "numPages": 300, "doi": "10.2/y"}, owned,
     )
     assert item["itemType"] == "book"
     assert item["ISBN"] == "978-0-13-468599-1"
@@ -493,17 +416,17 @@ def test_entry_to_zotero_item_book_numpages_and_isbn():
 
 
 def test_entry_to_zotero_item_unknown_type_falls_back_to_document():
-    assert zi.entry_to_zotero_item({"type": "XXXX"})["itemType"] == "document"
+    assert zi.entry_to_zotero_item({"type": "XXXX"}, owned)["itemType"] == "document"
 
 
 # ── per-type field validity (the 400-from-Zotero class) ─────────────────────
 #
-# Snapshot of the valid field names per item type, read from
-# https://api.zotero.org/schema (schema version 42, consulted 2026-08-14).
-# Deliberately pinned HERE rather than imported from the module under test:
-# the guard below must not be checked against the same table the mapper uses,
-# or it proves nothing. `test_zotero_schema_snapshot_matches_the_real_client`
-# re-derives this from the live schema.
+# The mapper places each value by the running client's schema (pyzotero's
+# item_type_fields). The pure tests here hand it a snapshot of that schema,
+# the valid field names per item type (schema version 42, consulted
+# 2026-08-14), as plain data; `test_zotero_schema_snapshot_matches_the_real_
+# client` checks the snapshot against a real client, and `test_every_mapped_
+# type_is_accepted_by_a_real_client` saves every type the mapper produces.
 
 SCHEMA_42_FIELDS = {
     "journalArticle": (
@@ -586,6 +509,11 @@ SCHEMA_42_FIELDS = {
     ).split(),
 }
 
+def owned(item_type: str) -> frozenset[str]:
+    """The schema snapshot in the shape schema_fields() returns."""
+    return frozenset(SCHEMA_42_FIELDS[item_type])
+
+
 # Every input key the mapper knows how to place, all at once. Rendering this
 # for each item type is what exercises the whole cross-product.
 MAXIMAL_ENTRY = {
@@ -615,7 +543,7 @@ MAXIMAL_ENTRY = {
 
 
 def _render(ris_type: str) -> dict:
-    return zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": ris_type})
+    return zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": ris_type}, owned)
 
 
 def test_every_mapped_type_emits_only_fields_that_type_owns():
@@ -635,7 +563,7 @@ def test_every_mapped_type_emits_only_fields_that_type_owns():
 
 
 def test_unknown_ris_type_fallback_emits_only_document_fields():
-    item = zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": "XXXX"})
+    item = zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": "XXXX"}, owned)
     assert item["itemType"] == "document"
     bad = sorted(
         k for k in item
@@ -765,7 +693,7 @@ def test_previously_unmapped_codes_reach_their_type(ris_code, zot_type):
 
 def test_unrecognised_ris_code_records_what_it_degraded_from():
     """Degradation to `document` must leave a trace, not vanish."""
-    item = zi.entry_to_zotero_item({"type": "ZZZZ", "title": "T"})
+    item = zi.entry_to_zotero_item({"type": "ZZZZ", "title": "T"}, owned)
     assert item["itemType"] == "document"
     assert "Unmapped RIS type: ZZZZ" in item["extra"]
 
@@ -823,7 +751,7 @@ def test_rand_p69_memorandum_is_complete_in_one_pass():
         "number": "P-69",
         "genre": "RAND Paper",
         "numPages": 78,
-    })
+    }, owned)
     assert item == {
         "itemType": "report",
         "title": "Market Mechanisms and Maximization",
@@ -884,30 +812,34 @@ def test_known_entry_keys_pass_validation():
 
 @pytest.mark.integration
 def test_zotero_schema_snapshot_matches_the_real_client(use_live):
-    """Drift guard: the pinned tables against a real client's schema.
-
-    The throwaway Zotero answers /api/itemTypeFields for its own schema. A
-    failure means Zotero changed a type's field set; re-derive both this
-    snapshot and `ZOTERO_SLOT_FIELD` from that endpoint.
-    """
-    zi.check_local_api()
-    real = {t: {f["field"] for f in zi.api_json("itemTypeFields", {"itemType": t})}
-            for t in SCHEMA_42_FIELDS}
-
+    """Drift guard: the snapshot the pure tests use against a real client's
+    schema, through the helper's own schema_fields. A failure means Zotero
+    changed a type's field set; refresh the snapshot from it."""
+    real = zi.schema_fields(zi.local_library())
     for zot_type, pinned in SCHEMA_42_FIELDS.items():
-        assert set(pinned) == real[zot_type], f"{zot_type} field set drifted"
+        assert set(pinned) == real(zot_type), f"{zot_type} field set drifted"
 
-    for slot, prefs in zi.ZOTERO_SLOT_PREFERENCES.items():
-        derived = {t: field for t in SCHEMA_42_FIELDS
-                   for field in (next((p for p in prefs if p in real[t]), None),)
-                   if field}
-        assert zi.ZOTERO_SLOT_FIELD[slot] == derived, f"slot {slot} drifted"
+
+@pytest.mark.integration
+def test_every_mapped_type_is_accepted_by_a_real_client(use_live):
+    """The 400 class, end to end: every item the mapper builds from a
+    maximal entry, one per type, is saved by a real Zotero."""
+    real = zi.schema_fields(zi.local_library())
+    z = use_live.client()
+    types = sorted(zi.RIS_TO_ZOTERO_TYPE) + ["XXXX"]
+    items = [zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": t,
+                                      "title": unique_title()}, real)
+             for t in types]
+    result = z.create_items(items)
+    assert result["failed"] == {}, result["failed"]
+    assert len(result["successful"]) == len(types)
 
 
 # --- enrich: filling fields on an item that already exists ------------------
 #
-# enrich only reports: the decision of WHAT to suggest is where the mistakes
-# live, so that is what these lock down. Each
+# enrich writes only with --edit, and then only what it would suggest: the
+# decision of WHAT to suggest is where the mistakes live, so that is what
+# these lock down. Each
 # guard gets a red case, because a guard nobody has seen refuse is a guard
 # nobody has tested.
 
@@ -1007,7 +939,6 @@ def test_enrich_status_nonzero_on_a_missing_item():
     assert zi.enrich_status([{"status": "not found"}]) == 1
 
 
-
 # --------------------------------------------------------------------------
 # Reads through the local API of a real (throwaway) Zotero.
 # --------------------------------------------------------------------------
@@ -1016,17 +947,13 @@ def test_enrich_status_nonzero_on_a_missing_item():
 ABSENT_KEY = "ZZZZ2222"
 
 
-def _version(zotero, key):
-    return zotero.get(f"/api/users/0/items/{key}")["data"]["version"]
-
-
 @pytest.mark.integration
 def test_read_library_builds_the_snapshot_from_the_local_api(use_live, tmp_path):
     title, first, second, doi = (unique_title(), unique_surname(),
                                  unique_surname(), unique_doi())
     pdf = paper_pdf(tmp_path, title, first)
     key = use_live.save(title, creators=(first, second), pdf=pdf, DOI=doi,
-                        date="1999-07-01", notes=[{"note": "a child note"}])
+                        date="1999-07-01", notes=("a child note",))
     children = use_live.children(key)
     (note,) = [c for c in children if c["data"]["itemType"] == "note"]
     (att,) = [c for c in children if c["data"]["itemType"] == "attachment"]
@@ -1043,10 +970,10 @@ def test_read_library_builds_the_snapshot_from_the_local_api(use_live, tmp_path)
     stored = Path(record["path"])
     assert record == {
         "key": att["key"], "parent": key, "title": pdf.name,
-        "filename": att["data"]["filename"],
+        "filename": pdf.name,
         "md5": hashlib.md5(pdf.read_bytes()).hexdigest(),
         "size": pdf.stat().st_size, "path": str(stored),
-        "contentType": "application/pdf", "linkMode": "imported_url",
+        "contentType": "application/pdf", "linkMode": "imported_file",
         "library": "user"}
     # The stored copy, inside the throwaway data directory.
     assert stored.read_bytes() == pdf.read_bytes()
@@ -1057,10 +984,10 @@ def test_read_library_builds_the_snapshot_from_the_local_api(use_live, tmp_path)
 
 
 @pytest.mark.integration
-def test_read_library_pages_until_total_results(use_live, monkeypatch):
+def test_read_library_reads_every_page(use_live, monkeypatch):
     seeded = {use_live.save(unique_title()) for _ in range(5)}
     whole = zi.read_library()
-    monkeypatch.setattr(zi, "API_PAGE", 2)
+    monkeypatch.setattr(zi, "PAGE", 2)
     paged = zi.read_library()
     keys = [w["key"] for w in paged["works"]]
     assert len(keys) == len(set(keys)), "no page read twice"
@@ -1071,8 +998,8 @@ def test_read_library_pages_until_total_results(use_live, monkeypatch):
 
 
 @pytest.mark.integration
-def test_library_snapshot_matches_a_stored_file_end_to_end(use_live, tmp_path,
-                                                           monkeypatch):
+def test_a_live_read_matches_a_stored_file_end_to_end(use_live, tmp_path,
+                                                       monkeypatch):
     """Positive control for the whole read path: local API -> read -> match.
     Zotero 10 reports each stored file's md5, so only the probe is hashed."""
     title = unique_title()
@@ -1084,8 +1011,7 @@ def test_library_snapshot_matches_a_stored_file_end_to_end(use_live, tmp_path,
     real = zi.file_md5
     monkeypatch.setattr(zi, "file_md5", lambda p, *a: hashed.append(Path(p))
                         or real(p, *a))
-    snap = zi.library_snapshot()
-    res = zi.library_matches(snap, pdf_path=probe)
+    res = zi.library_matches(zi.read_library(), pdf_path=probe)
     assert res["verdict"] == "match"
     assert res["matches"][0]["key"] == key
     assert res["matches"][0]["why"] == ["storageHash"]
@@ -1120,48 +1046,76 @@ def test_unreported_md5_hashes_only_the_files_of_the_probes_size(
 
 
 @pytest.mark.integration
-def test_item_data_lists_every_field_the_type_owns(use_live):
+def test_item_fields_lists_every_field_the_type_owns(use_live):
     title = unique_title()
     key = use_live.save(title, creators=(unique_surname(),))
-    data = zi.item_data(key)
-    assert zi.item_data(ABSENT_KEY) is None
+    assert zi.find_item(ABSENT_KEY) is None
+    z, item = zi.find_item(key)
+    data = zi.item_fields(z, item)
     assert data["title"] == title and data["key"] == key
     assert data["itemType"] == "journalArticle"
     # Empty fields the type owns are filled in from itemTypeFields; a field
-    # the type does not own stays absent.
+    # the type does not own stays absent, and so does bookkeeping.
     assert data["DOI"] == "" and data["publisher"] == ""
     assert "numPages" not in data and "institution" not in data
+    assert "version" not in data and "collections" not in data
+
+
+def _enrich_args(key, title, *sets, edit=False):
+    return argparse.Namespace(jobs_file=None, item_key=key,
+                              expect_title=title.split()[0], overwrite=False,
+                              set=list(sets), library="user", edit=edit)
 
 
 @pytest.mark.integration
-def test_cmd_enrich_reports_the_edit_and_never_writes(use_live, capsys):
+def test_enrich_reports_the_edit_and_writes_nothing(use_live, capsys):
     title = unique_title()
     key = use_live.save(title, creators=(unique_surname(),),
                         url="https://old.example")
-    before = _version(use_live, key)
-    args = argparse.Namespace(jobs_file=None, item_key=key,
-                              expect_title=title.split()[0], overwrite=False,
-                              set=["DOI=10.2307/1907301", "url=https://new.example"],
-                              library="user")
+    before = use_live.item(key)["version"]
+    args = _enrich_args(key, title, "DOI=10.2307/1907301",
+                        "url=https://new.example", "version=99")
     assert zi.cmd_enrich(args) == 1  # the url conflict is refused
     out = json.loads(capsys.readouterr().out)
     row = out["results"][0]
     assert row["suggested"] == [{"itemKey": key, "field": "DOI",
                                  "old": "", "new": "10.2307/1907301"}]
-    assert "url" in row["refused"][0]
-    assert out["source"] == zi.LIBRARY_SOURCE
-    item = use_live.get(f"/api/users/0/items/{key}")["data"]
-    assert item["version"] == before and not item.get("DOI"), "enrich only reads"
-    assert item["url"] == "https://old.example"
+    assert any(r.startswith("url:") for r in row["refused"])
+    assert any(r.startswith("version:") for r in row["refused"])
+    assert out["source"] == zi.LIBRARY_SOURCE and out["edit"] is False
+    item = use_live.item(key)
+    assert item["version"] == before and not item["data"].get("DOI")
+    assert item["data"]["url"] == "https://old.example"
 
 
 @pytest.mark.integration
-def test_cmd_attach_reports_the_by_hand_step(use_live, tmp_path, capsys):
+def test_enrich_edit_writes_the_suggested_fields_only(use_live, capsys):
+    title = unique_title()
+    key = use_live.save(title, creators=(unique_surname(),),
+                        url="https://old.example")
+    args = _enrich_args(key, title, "DOI=10.2307/1907301",
+                        "url=https://new.example", edit=True)
+    assert zi.cmd_enrich(args) == 1  # the url conflict is still refused
+    out = json.loads(capsys.readouterr().out)
+    assert out["results"][0]["status"] == "written" and out["edit"] is True
+    data = use_live.item(key)["data"]
+    assert data["DOI"] == "10.2307/1907301"
+    assert data["url"] == "https://old.example", "a refused field is not written"
+    # Already correct now: a second --edit run has nothing to write.
+    args.set = ["DOI=10.2307/1907301"]
+    assert zi.cmd_enrich(args) == 0
+    assert json.loads(capsys.readouterr().out)["results"][0]["status"] == \
+        "nothing to change"
+
+
+@pytest.mark.integration
+def test_attach_reports_the_step_and_writes_nothing(use_live, tmp_path, capsys):
     key = use_live.save(unique_title(), creators=(unique_surname(),))
-    before = _version(use_live, key)
+    before = use_live.item(key)["version"]
     pdf = tmp_path / "Walley1991.pdf"
     pdf.write_bytes(b"%PDF")
-    args = argparse.Namespace(parent=key, file=[str(pdf)], library="user")
+    args = argparse.Namespace(parent=key, file=[str(pdf)], library="user",
+                              edit=False)
     assert zi.cmd_attach(args) == 0
     out = json.loads(capsys.readouterr().out)
     assert out["suggested"] == [{"itemKey": key, "field": "attachment",
@@ -1170,34 +1124,82 @@ def test_cmd_attach_reports_the_by_hand_step(use_live, tmp_path, capsys):
     args.parent = ABSENT_KEY
     assert zi.cmd_attach(args) == 1
     capsys.readouterr()
-    assert _version(use_live, key) == before and use_live.children(key) == []
+    assert use_live.item(key)["version"] == before
+    assert use_live.children(key) == []
+
+
+@pytest.mark.integration
+def test_attach_edit_stores_the_file_under_the_item(use_live, tmp_path, capsys):
+    key = use_live.save(unique_title(), creators=(unique_surname(),))
+    pdf = make_pdf(tmp_path / "Walley1991.pdf", [unique_title()])
+    args = argparse.Namespace(parent=key, file=[str(pdf)], library="user",
+                              edit=True)
+    assert zi.cmd_attach(args) == 0
+    (row,) = json.loads(capsys.readouterr().out)["attached"]
+    assert row["status"] == "attached"
+    (child,) = use_live.children(key)
+    assert child["key"] == row["attachment"]
+    assert child["data"]["md5"] == hashlib.md5(pdf.read_bytes()).hexdigest()
 
 
 @pytest.mark.integration
 def test_resolve_target_names_a_collection_and_its_library(use_live):
-    top, sub = unique_title(2), unique_title(2)
-    ids = use_live.collections(top, sub)
-    top_key, sub_key = use_live.collection_key(top), use_live.collection_key(sub)
-    assert zi.resolve_target("user", None) == ("L1", "user")
-    assert zi.resolve_target("user", sub_key) == (ids[sub], "user")
-    assert zi.resolve_target("user", top_key) == (ids[top], "user")
+    top, sub = use_live.collections(unique_title(2), unique_title(2))
+    assert zi.resolve_target("user", None) == "user"
+    assert zi.resolve_target("user", sub) == "user"
+    assert zi.resolve_target("all", top) == "user"
     with pytest.raises(ValueError, match="no single destination"):
         zi.resolve_target("all", None)
     with pytest.raises(ValueError, match="in no local library"):
         zi.resolve_target("user", ABSENT_KEY)
 
 
+@pytest.fixture(scope="session")
+def authz_zotero(zotero_factory):
+    """A client of its own for the authorization test, so the dialog it
+    leaves open cannot stall the shared one."""
+    return zotero_factory("authz")
+
+
 @pytest.mark.integration
-def test_resolve_target_refuses_an_ambiguous_collection_path(use_live):
-    """Two collections with one name at one level: the connector target
-    list names both alike, so neither is guessed."""
-    name = unique_title(2)
-    use_live.twin_collections(name)
-    keys = [c["key"] for c in use_live.get("/api/users/0/collections")
-            if c["data"]["name"] == name]
-    assert len(keys) == 2
-    with pytest.raises(ValueError, match="ambiguous"):
-        zi.resolve_target("user", keys[0])
+def test_a_write_without_a_key_asks_zotero_and_gives_up_in_bound(
+        authz_zotero, tmp_path, monkeypatch, capsys):
+    """No stored key: the helper asks Zotero for one (its Allow / Always
+    Allow / Deny dialog, here unanswered) for AUTHORIZE_WAIT seconds, then
+    writes nothing and stores nothing."""
+    zotero = zotero_live.point_helper_at(authz_zotero, monkeypatch)
+    title = unique_title()
+    key = zotero.save(title)
+    key_file = tmp_path / "keys" / "zotero-local.env"
+    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(key_file))
+    monkeypatch.setattr(zi, "AUTHORIZE_WAIT", 3.0)
+    started = time.monotonic()
+    rc = zi.cmd_enrich(_enrich_args(key, title, "DOI=10.1/nokey", edit=True))
+    # It waited for the dialog (positive control), then gave up in bound.
+    assert 3.0 <= time.monotonic() - started < 30
+    assert rc == 1
+    (row,) = json.loads(capsys.readouterr().out)["results"]
+    assert row["status"] == "not written"
+    assert "no local API key" in row["error"]
+    assert not zotero.item(key)["data"].get("DOI")
+    assert not key_file.exists()
+
+
+def test_the_key_file_is_private_and_never_printed(tmp_path, monkeypatch,
+                                                    capsys):
+    key_file = tmp_path / "keys" / "zotero-local.env"
+    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(key_file))
+    assert zi.stored_key() is None
+    zi.store_key("k" * 32)
+    assert zi.stored_key() == "k" * 32
+    assert key_file.stat().st_mode & 0o777 == 0o600
+    assert key_file.parent.stat().st_mode & 0o777 == 0o700
+    assert "k" * 32 not in capsys.readouterr().out
+
+
+def test_the_key_file_defaults_to_the_harness_keystore(monkeypatch):
+    monkeypatch.delenv("ZOTERO_LOCAL_KEY_FILE")
+    assert zi.key_file() == Path.home() / ".config" / "keys" / "zotero-local.env"
 
 
 # --------------------------------------------------------------------------
@@ -1332,7 +1334,7 @@ def test_no_installation_to_launch_does_nothing(tmp_path, monkeypatch):
 def test_local_api_disabled_names_the_setting(api_off_zotero, monkeypatch, capsys):
     """Zotero ships with the local API off: it answers 403 and the error
     names the setting to turn on."""
-    monkeypatch.setenv("ZOTERO_CONNECTOR_URL", api_off_zotero.url)
+    zotero_live.point_helper_at(api_off_zotero, monkeypatch)
     assert zi.cmd_match(_match_args()) == 1
     out = json.loads(capsys.readouterr().out)
     assert "Allow other applications on this computer" in out["error"]
@@ -1342,85 +1344,9 @@ def test_local_api_disabled_names_the_setting(api_off_zotero, monkeypatch, capsy
 @pytest.mark.integration
 def test_an_account_check_with_the_api_disabled_names_the_setting(
         api_off_zotero, monkeypatch):
-    monkeypatch.setenv("ZOTERO_CONNECTOR_URL", api_off_zotero.url)
+    zotero_live.point_helper_at(api_off_zotero, monkeypatch)
     with pytest.raises(zi.LocalAPIError, match="Allow other applications"):
         zi.local_account()
-
-
-# Something that is not Zotero, listening where the helper looks for it: a
-# real HTTP server answering a fixed reply. It never claims to be Zotero
-# (no "Zotero is running", no Zotero-API-Version header).
-
-@contextlib.contextmanager
-def stranger(status, body=b"", headers=()):
-    class Handler(http.server.BaseHTTPRequestHandler):
-        def log_message(self, *args):
-            pass
-
-        def do_GET(self):
-            self.send_response(status)
-            for name, value in headers:
-                self.send_header(name, value)
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
-
-        def do_POST(self):
-            self.rfile.read(int(self.headers.get("Content-Length") or 0))
-            self.do_GET()
-
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    try:
-        yield f"http://127.0.0.1:{server.server_port}"
-    finally:
-        server.shutdown()
-        server.server_close()
-
-
-@pytest.mark.integration
-def test_a_stranger_on_the_port_is_an_error_not_a_launch(monkeypatch):
-    """LocalAPIError, not ZoteroUnavailable: the helper never reached the
-    launch decision."""
-    with stranger(404, b"Not Found") as url:
-        monkeypatch.setenv("ZOTERO_CONNECTOR_URL", url)
-        with pytest.raises(zi.LocalAPIError, match="not as Zotero"):
-            zi.ensure_zotero()
-
-
-@pytest.mark.integration
-def test_a_200_that_is_not_zotero_is_a_stranger(monkeypatch):
-    with stranger(200, b"<html>some other service</html>",
-                  [("Content-Type", "text/html")]) as url:
-        monkeypatch.setenv("ZOTERO_CONNECTOR_URL", url)
-        with pytest.raises(zi.LocalAPIError, match="not as Zotero"):
-            zi.zotero_answers()
-
-
-@pytest.mark.integration
-def test_zotero_without_a_local_api_names_the_setting(monkeypatch):
-    """Zotero 6 has no /api/: it answers 404 there."""
-    with stranger(404, b"No endpoint found") as url:
-        monkeypatch.setenv("ZOTERO_CONNECTOR_URL", url)
-        with pytest.raises(zi.LocalAPIError, match="Zotero 7 or later") as exc:
-            zi.check_local_api()
-    assert "Allow other applications" in str(exc.value)
-
-
-@pytest.mark.integration
-def test_an_api_answer_without_the_api_version_names_the_setting(monkeypatch):
-    with stranger(200, b"hello") as url:
-        monkeypatch.setenv("ZOTERO_CONNECTOR_URL", url)
-        with pytest.raises(zi.LocalAPIError, match="Allow other applications"):
-            zi.check_local_api()
-
-
-@pytest.mark.integration
-def test_paging_without_total_results_fails_closed(monkeypatch):
-    with stranger(200, b"[]", [("Content-Type", "application/json")]) as url:
-        monkeypatch.setenv("ZOTERO_CONNECTOR_URL", url)
-        with pytest.raises(zi.LocalAPIError, match="unexpected local API answer"):
-            zi.api_items("users/0", "attachment")
 
 
 @pytest.mark.parametrize("marker,env,cgroup,expected", [
@@ -1945,7 +1871,6 @@ def test_corroborate_title_with_no_usable_tokens_is_unchecked():
 
 
 def test_library_matches_reports_the_filename_key_as_skipped_without_a_pdf():
-    """zotero_matches says so; library_matches must report the same split."""
     idx = _library([_work("W1", "Something Else Entirely Here")])
     res = zi.library_matches(idx, title="A Totally Unrelated Long Title",
                          first_author="Nobody")
@@ -1953,7 +1878,7 @@ def test_library_matches_reports_the_filename_key_as_skipped_without_a_pdf():
 
 
 # --------------------------------------------------------------------------
-# library_matches must consult the same identifier keys as zotero_matches.
+# library_matches must consult every persistent identifier key.
 # It once stopped at DOI, so an ISBN/arXiv/handle item fell through to weaker
 # keys: the silent negative the cascade exists to prevent.
 # --------------------------------------------------------------------------
@@ -2084,20 +2009,23 @@ def test_inject_skip_corroboration_lets_it_through(use_live, tmp_path, capsys):
     assert use_live.find(title)["data"]["creators"][0]["lastName"] == "Albers"
 
 
-def test_inject_dry_run_reports_corroboration(tmp_path, monkeypatch, capsys):
-    pdf = _pdf_with_text(tmp_path, "ok.pdf",
-                         "Coherent Measures of Risk\nPhilippe Artzner\n",
-                         monkeypatch)
+@pytest.mark.integration
+def test_inject_dry_run_reports_corroboration_and_creates_nothing(
+        use_live, tmp_path, capsys):
+    """The item JSON is built against the running client's schema, and
+    nothing is created."""
+    entry = _entry(tmp_path, type="RPRT", publisher="RAND", numPages=78)
     entries = tmp_path / "e.json"
-    entries.write_text(json.dumps([{
-        "type": "JOUR", "title": "Coherent Measures of Risk",
-        "authors": ["Artzner, Philippe"], "pdf": str(pdf)}]))
+    entries.write_text(json.dumps([entry]))
     args = argparse.Namespace(entries_json=None, entries_file=str(entries),
                               dry_run=True, skip_corroboration=False)
     assert zi.cmd_inject(args) == 0
     out = json.loads(capsys.readouterr().out)
     assert out["corroboration"][0]["confidence"] == "corroborated"
-    assert out["items"][0]["title"] == "Coherent Measures of Risk"
+    (item,) = out["items"]
+    assert item["title"] == entry["title"] and item["institution"] == "RAND"
+    assert item["extra"] == "number-of-pages: 78"
+    assert use_live.titled(entry["title"]) == []
 
 
 def test_inject_does_nothing_when_zotero_is_unavailable(capsys):
@@ -2113,29 +2041,28 @@ def test_inject_does_nothing_when_zotero_is_unavailable(capsys):
     assert "Nothing was done" in out["error"]
 
 
-def test_connector_url_must_stay_on_this_machine(monkeypatch):
+def test_the_zotero_url_must_stay_on_this_machine(monkeypatch):
     monkeypatch.setenv("ZOTERO_CONNECTOR_URL", "http://zotero.example.org:23119")
     with pytest.raises(zi.LocalAPIError, match="local-only"):
         zi.zotero_answers()
     with pytest.raises(zi.LocalAPIError, match="local-only"):
-        zi.connector_post("saveItems", {})
+        zi.local_library()
     with pytest.raises(zi.LocalAPIError, match="local-only"):
-        zi.api_json("users/0/items")
+        zi.local_account()
 
 
 @pytest.mark.integration
 def test_inject_files_into_a_collection_then_attaches(use_live, tmp_path, capsys):
-    """The item is moved to the collection before the file is attached, so
-    the PDF is stored once, where the item ends up."""
-    name = unique_title(2)
-    target = use_live.collections(name)[name]
-    key = use_live.collection_key(name)
+    """The item is created in the collection, then its PDF is stored under
+    it."""
+    (key,) = use_live.collections(unique_title(2))
     doi = unique_doi()
     entry = _entry(tmp_path, doi=doi, attach_pdf=True)
     assert zi.cmd_inject(_inject_args([entry], collection=key)) == 0
     out = json.loads(capsys.readouterr().out)
-    assert out["library"] == target and out["library_id"] == "user"
+    assert out["collection"] == key and out["library_id"] == "user"
     assert out["results"][0]["status"] == "created"
+    assert out["results"][0]["key"] == use_live.find(entry["title"])["key"]
     assert out["results"][0]["attachment"] == Path(entry["pdf"]).name
     item = use_live.find(entry["title"])
     assert item["data"]["DOI"] == doi
@@ -2270,7 +2197,7 @@ def test_no_request_goes_through_a_proxy(use_live, tmp_path, monkeypatch, capsys
         monkeypatch.delenv("NO_PROXY", raising=False)
         # Positive control: the probe can fire.
         with pytest.raises(OSError):
-            urllib.request.build_opener().open(f"{use_live.url}/connector/ping",
+            urllib.request.build_opener().open(f"{use_live.url}/api/",
                                                timeout=5)
         assert _wait_for(lambda: len(seen) == 1, timeout=5)
         assert seen[0].startswith(b"GET http://127.0.0.1:")
@@ -2278,7 +2205,7 @@ def test_no_request_goes_through_a_proxy(use_live, tmp_path, monkeypatch, capsys
 
         assert zi.ensure_zotero() == "running"
         assert key in {w["key"] for w in zi.read_library("all")["works"]}
-        assert zi.item_data(key)["title"] == title
+        assert zi.find_item(key)[1]["data"]["title"] == title
         assert zi.cmd_inject(_inject_args([entry])) == 0
         assert json.loads(capsys.readouterr().out)["results"][0]["attachment"]
         time.sleep(0.5)  # let a stray connection land before looking
@@ -2286,37 +2213,14 @@ def test_no_request_goes_through_a_proxy(use_live, tmp_path, monkeypatch, capsys
     assert use_live.children(use_live.find(entry["title"])["key"])
 
 
-def test_the_opener_has_no_proxy_handler_that_proxies(monkeypatch):
-    """Built under http_proxy, the opener still carries no proxy: without
-    ProxyHandler({}) urllib would install one from the environment."""
+def test_the_client_takes_no_proxy_and_follows_no_redirect(monkeypatch):
+    """Built under http_proxy, the client still ignores it, and it never
+    follows a redirect: a loopback URL stays on the loopback. pyzotero's
+    own default client follows redirects, so the helper hands it this one."""
     monkeypatch.setenv("http_proxy", "http://127.0.0.1:9")
-    proxies = [h for h in zi.connector_opener().handlers
-               if isinstance(h, urllib.request.ProxyHandler)]
-    assert all(not h.proxies for h in proxies)
-
-
-def test_connector_does_not_follow_redirects():
-    redirects = [h for h in zi.connector_opener().handlers
-                 if isinstance(h, urllib.request.HTTPRedirectHandler)]
-    assert redirects and all(isinstance(h, zi._NoRedirect) for h in redirects)
-
-
-@pytest.mark.integration
-def test_a_redirect_to_zotero_is_not_followed(use_live, monkeypatch):
-    """A listener on the Zotero URL that redirects to the real client:
-    the helper treats it as a stranger instead of following it."""
-    target = f"{use_live.url}/connector/ping"
-    with stranger(302, b"", [("Location", target)]) as url:
-        # Positive control: an ordinary opener follows it to a real Zotero.
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-        with opener.open(f"{url}/connector/ping", timeout=10) as resp:
-            assert b"Zotero is running" in resp.read()
-        monkeypatch.setenv("ZOTERO_CONNECTOR_URL", url)
-        with pytest.raises(zi.LocalAPIError, match=r"not as Zotero \(HTTP 302\)"):
-            zi.zotero_answers()
-        with pytest.raises(zi.LocalAPIError, match="HTTP 302"):
-            zi.api_json("users/0/items")
-        assert zi.connector_post("getSelectedCollection", {})[0] == 302
+    client = zi.local_library().client
+    assert client.trust_env is False and client.follow_redirects is False
+    assert zi.http_client().trust_env is False
 
 
 def test_reconcile_discovers_nonstandard_bib_and_orphans(tmp_path):
@@ -2564,7 +2468,7 @@ def test_reconcile_apply_reports_fresh_match_on_no_write_replay(
     copy = tmp_path / "stored-copy.pdf"
     copy.write_bytes(pdf.read_bytes())
     key = use_live.save(title, creators=(surname,), pdf=copy)
-    report, rc = _apply(tmp_path, zi.library_snapshot())
+    report, rc = _apply(tmp_path, zi.read_library())
     assert rc == 0
     assert report["summary"] == {"identical": 1}
     assert report["rows"][0]["verdict"] == "identical"
@@ -2579,7 +2483,7 @@ def test_reconcile_apply_reports_fresh_match_on_no_write_replay(
 def test_reconcile_apply_imports_a_corroborated_absent_pdf(use_live, tmp_path):
     title, surname = unique_title(), unique_surname()
     pdf = _staged_bib_paper(tmp_path, title=title, surname=surname)
-    report, rc = _apply(tmp_path, zi.library_snapshot())
+    report, rc = _apply(tmp_path, zi.read_library())
     assert rc == 0
     assert report["summary"] == {"injected": 1}
     assert report["apply_status"] == "applied"
@@ -2601,7 +2505,7 @@ def test_reconcile_apply_can_import_orphan_with_complete_pdf_metadata(
     paper_pdf(docs, title, f"Jane {surname}", info={
         "Title": title, "Author": f"Jane {surname}",
         "CreationDate": "D:20200101000000Z"})
-    report, rc = _apply(tmp_path, zi.library_snapshot())
+    report, rc = _apply(tmp_path, zi.read_library())
     assert rc == 0
     assert report["summary"] == {"injected": 1}
     item = use_live.find(title)
@@ -2657,6 +2561,42 @@ def test_reconcile_suggests_the_attach_edit_for_a_present_work(
     assert report["suggested_edits"] == [{"itemKey": key,
                                           "field": "attachment", "old": "",
                                           "new": f"docs/{pdf.name}"}]
+    assert use_live.children(key) == [], "the report only reads"
+
+
+@pytest.mark.integration
+def test_reconcile_apply_edit_stores_the_file_under_the_present_work(
+        use_live, tmp_path):
+    """--apply alone never touches an existing item; --apply --edit stores
+    the staged file under the one work that lacks it."""
+    title, surname = unique_title(), unique_surname()
+    key = use_live.save(title, creators=(surname,), date="2020")
+    pdf = _staged_bib_paper(tmp_path, title=title, surname=surname, year="2020")
+    found = zi.discover_reconcile_files(tmp_path)
+    config = json.loads(OPT_IN)
+    report, rc = zi.reconcile_apply(tmp_path, found, zi.read_library(), config,
+                                    argparse.Namespace(library="user", edit=False))
+    assert rc == 0 and report["summary"] == {"work_present_no_file": 1}
+    assert use_live.children(key) == []
+    report, rc = zi.reconcile_apply(tmp_path, found, zi.read_library(), config,
+                                    argparse.Namespace(library="user", edit=True))
+    assert rc == 0
+    assert report["summary"] == {"attached": 1}
+    assert report["apply_status"] == "applied"
+    (edit,) = report["edits"]
+    assert edit["status"] == "attached" and edit["itemKey"] == key
+    assert report["suggested_edits"] == []
+    (child,) = use_live.children(key)
+    assert child["data"]["md5"] == hashlib.md5(pdf.read_bytes()).hexdigest()
+
+
+def test_reconcile_edit_needs_apply(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["zotero.py", "reconcile", str(tmp_path),
+                                      "--edit"])
+    with pytest.raises(SystemExit) as exc:
+        zi.main()
+    assert exc.value.code == 2
+    assert "--edit needs --apply" in capsys.readouterr().err
 
 
 @pytest.mark.integration
