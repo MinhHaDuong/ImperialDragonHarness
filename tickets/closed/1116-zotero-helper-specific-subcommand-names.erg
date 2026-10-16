@@ -2,6 +2,7 @@
 Title: Zotero helper: specific subcommand names; split probe into extract and lookup
 Created: 2026-10-16
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1448
 
 --- log ---
 2026-10-16T06:39Z reviewer created
@@ -10,6 +11,7 @@ Author: Minh Ha-Duong
 2026-10-16T09:41Z reviewer note author accepted the three /gaze decisions of PR #1441 (Always Allow only, Zotero 10 floor, slow read fails visibly)
 2026-10-16T11:38Z reviewer note author decided "Oui pour tout": cut the hand-rolled match scoring (exact identifiers only, titles as candidates), `check-staging` approved, Zotero item types replace the RIS type codes
 2026-10-16T13:28Z reviewer note verify-reroll — round 1: unmapped biblatex part types (@bookinbook, @suppbook, @suppcollection, @suppperiodical) still match their volume by ISBN, against choice #4
+2026-10-16T13:36Z reviewer closed — autoclosed — PR #1448
 
 --- body ---
 
