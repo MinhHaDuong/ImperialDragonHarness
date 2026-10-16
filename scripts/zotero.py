@@ -1762,7 +1762,8 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
               doi: str | None = None, isbn: str | None = None,
               arxiv: str | None = None, handle: str | None = None,
               title: str | None = None, item_type: str | None = None,
-              pdf_path: Path | None = None) -> dict[str, Any]:
+              pdf_path: Path | None = None,
+              isbn_unusable: str | None = None) -> dict[str, Any]:
     """Is this work in the libraries? Zotero's own search, key by key.
 
     `matches` are the works whose own field carries a given identifier
@@ -1771,7 +1772,7 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
     Zotero's search returns for the title, for the caller to judge; they
     are never a match unless their stored file is `pdf_path` itself.
     "consulted" and "skipped" keep a clean negative apart from a lookup
-    that could not run.
+    that could not run. `isbn_unusable`, a reason, skips the ISBN.
     """
     consulted: list[str] = []
     skipped: list[str] = []
@@ -1800,6 +1801,9 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
         if label == "isbn" and item_type in ISBN_OF_A_VOLUME:
             # A chapter's ISBN is its book's: the book is not this work.
             skipped.append(f"isbn (the volume's, for a {item_type})")
+            continue
+        if label == "isbn" and isbn_unusable:
+            skipped.append(f"isbn ({isbn_unusable})")
             continue
         sent = queries(supplied)
         if not sent:
@@ -2172,13 +2176,17 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
     if len(re.findall(r"[^\W_]{3,}", title)) < TITLE_MIN_WORDS:
         # The filename carries the author's own naming intent.
         title = _filename_title(path)
+    bib_type = str(bib_entry.get("_type", "")).lower()
+    item_type = BIB_TO_ZOTERO_TYPE.get(bib_type)
     res = find_work(libs, title=title,
                     doi=bib_entry.get("doi"), isbn=bib_entry.get("isbn"),
                     arxiv=bib_entry.get("arxiv"),
                     handle=bib_entry.get("handle"),
-                    item_type=BIB_TO_ZOTERO_TYPE.get(
-                        str(bib_entry.get("_type", "")).lower()),
-                    pdf_path=path)
+                    item_type=item_type, pdf_path=path,
+                    # Fail closed: an unplaced type may be a part whose ISBN
+                    # is its volume's.
+                    isbn_unusable=None if item_type else
+                    f"unmapped .bib type @{bib_type}: part or volume unknown")
     top = res["matches"][0] if res["matches"] else None
     # Six answers, not four. Collapsing title candidates into "absent" is
     # the expensive mistake in both directions: called present, a document
@@ -2580,13 +2588,19 @@ def attach_present_works(root: Path, rows: list[dict[str, Any]],
     return rc
 
 
-# BibTeX entry types as Zotero item types, after Zotero's own BibTeX
-# translator; any other BibTeX type becomes `document`.
+# BibTeX and biblatex entry types as Zotero item types, after Zotero's own
+# BibTeX translator; any other type becomes `document`. Every part of a
+# volume maps to a type in ISBN_OF_A_VOLUME, every volume to `book`: an
+# unmapped type is never looked up by ISBN (audit_one).
 BIB_TO_ZOTERO_TYPE = {
     "article": "journalArticle", "book": "book", "inbook": "bookSection",
     "incollection": "bookSection", "inproceedings": "conferencePaper",
     "conference": "conferencePaper", "inreference": "encyclopediaArticle",
-    "proceedings": "book", "phdthesis": "thesis",
+    "bookinbook": "bookSection", "suppbook": "bookSection",
+    "suppcollection": "bookSection",
+    "proceedings": "book", "collection": "book", "reference": "book",
+    "mvbook": "book", "mvcollection": "book", "mvreference": "book",
+    "phdthesis": "thesis",
     "mastersthesis": "thesis", "techreport": "report",
     "unpublished": "manuscript"}
 

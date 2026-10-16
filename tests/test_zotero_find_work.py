@@ -134,6 +134,35 @@ def test_a_chapters_isbn_is_not_looked_up():
     assert "isbn (the volume's, for a bookSection)" in res["skipped"]
 
 
+VOLUME_BIB_TYPES = ("book", "proceedings", "collection", "reference",
+                    "mvbook", "mvcollection", "mvreference")
+
+
+def test_every_part_like_bib_type_is_a_part_and_no_volume_is():
+    """Choice #4: a part's ISBN identifies its volume. Every BibTeX type
+    mapped to a Zotero part type skips the ISBN; a volume type keeps it."""
+    for bib_type in ("incollection", "inbook", "inproceedings", "conference",
+                     "inreference", "bookinbook", "suppbook",
+                     "suppcollection"):
+        assert zi.BIB_TO_ZOTERO_TYPE[bib_type] in zi.ISBN_OF_A_VOLUME, bib_type
+    for bib_type in VOLUME_BIB_TYPES:
+        assert zi.BIB_TO_ZOTERO_TYPE[bib_type] not in zi.ISBN_OF_A_VOLUME, \
+            bib_type
+
+
+@pytest.mark.parametrize("bib_type", ["misc", "online", "suppperiodical", ""])
+def test_an_unmapped_bib_type_never_looks_its_isbn_up(tmp_path, bib_type):
+    """Fail closed: a .bib type the helper cannot place (@suppperiodical
+    among them) may be a part carrying its volume's ISBN (Zotero is down
+    here and is not asked)."""
+    path = tmp_path / "a.txt"
+    path.write_text("x")
+    res = zi.audit_one(path, zi.libraries(),
+                       bib_entry={"_type": bib_type, "isbn": "9780306406157"})
+    assert any(s.startswith("isbn (unmapped .bib type")
+               for s in res["skipped"]), res["skipped"]
+
+
 def test_a_short_title_is_skipped_not_searched():
     """"On Growth" would return any work at all: not a key that looked."""
     res = zi.find_work(zi.libraries(), title="On Growth")
@@ -486,18 +515,23 @@ def test_check_staging_never_files_a_chapter_under_its_book(lib, tmp_path):
 
 @pytest.mark.integration
 @pytest.mark.parametrize("bib_type", ["incollection", "inbook", "inproceedings",
-                                      "conference", "inreference"])
+                                      "conference", "inreference",
+                                      "bookinbook", "suppbook",
+                                      "suppcollection", "suppperiodical"])
 def test_no_part_like_bib_type_is_filed_under_its_volume(lib, tmp_path,
                                                          bib_type):
     keys, _ = lib
     pdf = make_pdf(tmp_path / "part.pdf", ["nothing useful"])
     result = row(pdf, {"_type": bib_type, "title": "Some Part Title Here",
                        "isbn": "978-0-13-468599-1"})
-    assert result["zotero_key"] != keys["isbn"], bib_type
-    # Positive control: as a book, the same ISBN finds the volume.
-    book = row(pdf, {"_type": "book", "title": "Some Part Title Here",
-                     "isbn": "978-0-13-468599-1"})
-    assert book["zotero_key"] == keys["isbn"]
+    # Mapped to a part type, or unmapped and failing closed (@suppperiodical).
+    assert any(s.startswith(("isbn (the volume's", "isbn (unmapped .bib type"))
+               for s in result["skipped"]), (bib_type, result["skipped"])
+    # Positive control: as a volume, the same ISBN finds the volume.
+    for volume in ("book", "proceedings"):
+        book = row(pdf, {"_type": volume, "title": "Some Part Title Here",
+                         "isbn": "978-0-13-468599-1"})
+        assert book["zotero_key"] == keys["isbn"], volume
 
 
 @pytest.mark.integration
