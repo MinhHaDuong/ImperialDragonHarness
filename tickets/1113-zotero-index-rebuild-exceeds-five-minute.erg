@@ -8,6 +8,7 @@ Author: Minh Ha-Duong
 2026-10-15T21:09Z Claude note Retitled and re-scoped per author decisions of 2026-10-15: local-only, stateless helper; Web API, keys, index cache and injection record removed; creation through the desktop connector.
 2026-10-16T05:51Z Claude note Author decisions of 2026-10-16 recorded: reads through the local API only, never sqlite; launch Zotero when it is down, else do nothing; containers do nothing. Exit criterion 2 restated accordingly.
 2026-10-16T06:31Z Claude note Author decision of 2026-10-16 recorded: tests run a real throwaway Zotero as a fixture or skip, no mock. Exit criterion 4 restated accordingly.
+2026-10-16T07:32Z reviewer note circuit-breaker — redirect: author chose plan A (pyzotero local client, no hand-rolled Zotero interface); test-rework worker stopped, WIP salvaged at 1fe8e333
 
 --- body ---
 ## Intent (author decisions, 2026-10-15)
