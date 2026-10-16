@@ -2,6 +2,7 @@
 Title: Zotero reconcile: tighten the early exits' contract
 Created: 2026-10-15
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1441
 
 --- log ---
 2026-10-15T14:43Z Minh Ha-Duong created
@@ -10,6 +11,7 @@ Author: Minh Ha-Duong
 
 2026-10-15T17:20Z Claude note Review fixes: restore executable bit; empty apply needs read credentials only, like a no-write replay; main path reports a missing write key instead of exiting.
 2026-10-15T21:09Z Claude note Superseded by 1113 (local-only helper). Kept: both early exits write --out with the full report keys, built by one helper (reconcile_report), and an empty --apply still validates the opt-in, now against the account the local Zotero is signed in to. Deleted with the Web API: read/write credential validation, the write-key preflight, index_fetched and the staged-file index-load test; the staged-file counter-case now asserts one library read.
+2026-10-16T09:37Z reviewer closed — autoclosed — PR #1441
 
 --- body ---
 ## Context
