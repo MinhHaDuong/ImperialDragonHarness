@@ -17,7 +17,6 @@ container) and waits; when it still does not answer, the command does
 nothing and says so (exit EXIT_UNAVAILABLE; `reconcile` exits 0 with verdict
 "zotero_unavailable").
 """
-from __future__ import annotations
 
 import argparse
 import contextlib
