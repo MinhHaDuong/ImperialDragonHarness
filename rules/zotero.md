@@ -3,7 +3,7 @@ paths:
   - "**/*.bib"
   - "**/*.ris"
   - "**/docs/**"
-last-reviewed: 2026-08-14
+last-reviewed: 2026-10-16
 ---
 # Zotero management
 
@@ -80,8 +80,8 @@ durable provenance is centralized in Zotero, where it persists and syncs.
 Staging is transient by design.
 
 One skill implements this workflow: `zotero` (verbs as arguments, PDF and URL
-intake alike) — fetch → stage in `docs/` → archive in Zotero (the item and its attachment, created through the local API) →
-record the citation.
+intake alike) — fetch → stage in `docs/` → archive in Zotero (the item and
+its attachment, created through the local API) → record the citation.
 
 This rule governs *source documents and bibliography staging*. It does not
 touch [git.md](./git.md)'s "commit handoff artifacts" rule: generated files a
