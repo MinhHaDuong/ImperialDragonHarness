@@ -8,7 +8,10 @@ it supersedes, which is backwards. (Measured once: nine items in one library
 held no DOI while the project `.bib` carried one for each.)
 
 The helper reads the item live through the running Zotero's local API and
-**reports** the edit; it never writes. The author applies it in the Zotero client.
+**reports** the edit. It writes the fields only with `--edit`, through the
+local API (Zotero 10.0 or later, with the local API key; see
+`references/helper-script.md`); without it, the author applies the edit in
+the Zotero client.
 
 ```bash
 zotero.py enrich --item-key XRWZU4DZ \
@@ -28,10 +31,11 @@ zotero.py enrich --item-key XRWZU4DZ \
   there is nothing to do.
 - Zotero field names are **case-sensitive** (`DOI`, not `doi`), and a field
   the item type does not own is refused with that reminder.
-- Each row lists `suggested` edits as `itemKey`, `field`, `old`, `new`. Hand
-  them to the author as a short table; in Zotero, open the item and set each
-  field. Re-run the same command afterwards: an applied edit comes back as
-  `nothing to change`, which is the read-back.
+- Each row lists `suggested` edits as `itemKey`, `field`, `old`, `new`. Show
+  them to the author as a short table first. Rerun with `--edit` to write
+  them (status `written`), or have the author set each field in Zotero. Re-run
+  the report afterwards: an applied edit comes back as `nothing to change`,
+  which is the read-back.
 - `--jobs-file` takes `[{item_key, expect_title, set:{…}}]` for a batch.
 - Exit code is non-zero when anything asked for cannot be suggested, **a
   refusal or a missing item included** — "ready to apply" and "declined every

@@ -5,10 +5,10 @@
 ## Principles
 
 - **Narrow, specialized skills** — narrow in domain, not in mode: one discipline per skill, verbs as arguments, modes share the machinery (harness precedent: the `reviewers` skill). The target surface is one `zotero` skill, not a prefixed family.
-- **Each skill chooses the transport best suited to its task** — the local HTTP API, the desktop connector, or a transport bundled with an MCP overlay — judged on liveness requirement, blast radius, durable artifacts, and dependency footprint.
+- **Each skill chooses the transport best suited to its task** — the local HTTP API or a transport bundled with an MCP overlay — judged on liveness requirement, blast radius, durable artifacts, and dependency footprint.
 - **For general work outside the skills**, the harness documents the interface options and lets the session choose. No option is a required dependency.
-- **Hard invariants, regardless of transport**: never write `zotero.sqlite`; merges and edits to existing items happen in the desktop client; creating items is previewed first (`--dry-run`) and leaves a durable RIS artifact.
-- **Local-only and stateless helper** (decided 2026-10-15, ticket 1113): `scripts/zotero.py` reaches no cloud service, holds no credential, and keeps no cache, index or record between runs.
+- **Hard invariants, regardless of transport**: never write `zotero.sqlite`; merges happen in the desktop client; edits to existing items are reported unless `--edit` is passed; creating items is previewed first (`--dry-run`) and leaves a durable RIS artifact.
+- **Local-only and stateless helper** (decided 2026-10-15, ticket 1113): `scripts/zotero.py` reaches no cloud service and keeps no cache, index or record between runs. Its only stored state is the local API key Zotero grants it (`~/.config/keys/zotero-local.env`, mode 600).
 - **API only, never sqlite** (decided 2026-10-16, ticket 1113): every library read goes through the running client's local API; the helper never opens `zotero.sqlite`. When Zotero is not up the helper tries to launch it; if it cannot, it does nothing. In a container it does nothing.
 - **KISS and YAGNI at all layers.**
 
@@ -64,19 +64,20 @@ Zotero exposes these surfaces on the author's machine; a transport is the path a
 | Surface | Client up? | Auth | Writes |
 |---|---|---|---|
 | Local `zotero.sqlite` (not used by the helper) | No | none | never (invariant) |
-| Desktop connector `127.0.0.1:23119/connector/` | Yes | none | creates new items and their attachments; cannot edit an existing item |
-| Local HTTP API `127.0.0.1:23119/api/` | Yes | key-free reads, once the user enables "Allow other applications on this computer to communicate with Zotero" (Settings > Advanced); writes need a grant in the client | yes, since Zotero 10 (the helper only reads) |
+| Local HTTP API `127.0.0.1:23119/api/` | Yes | key-free reads, once the user enables "Allow other applications on this computer to communicate with Zotero" (Settings > Advanced); writes need a local API key granted in the client (Allow / Always Allow / Deny) | yes, since Zotero 10.0 (the helper writes only through this surface) |
 
-The zotero skill chose local API reads + connector creation through
-Bash-callable Python scripts, and no cloud surface (ticket 1113; reads moved
-from sqlite to the local API on 2026-10-16):
+The zotero skill chose the local API for reads and writes through
+Bash-callable Python scripts (pyzotero's local client), and no cloud surface
+(ticket 1113; reads moved from sqlite to the local API on 2026-10-16, and
+writes from the connector to the local API under the plan-A decision the same
+day):
 
 - The safety contract is expressed as script flags (`--dry-run`, an explicit
-  `--apply` opt-in); the outputs are durable RIS/report artifacts, not
+  `--apply` opt-in, `--edit` for changes to existing items); the outputs are durable RIS/report artifacts, not
   ephemeral tool calls.
 - Every read is live: the duplicate guard sees what the client saved a second
   ago, where a sqlite snapshot of a running client could lag it.
-- Reads and creation need Zotero running. The helper launches it when it is
+- Reads and writes need Zotero running. The helper launches it when it is
   not (never in a container or headless runner, nor with `ZOTERO_NO_LAUNCH`
   set) and waits up to 90 s; when it
   still does not answer, the command does nothing, exits 75 (`EX_TEMPFAIL`),
@@ -89,10 +90,11 @@ from sqlite to the local API on 2026-10-16):
   client hash every stored file, which may take a while on a cold disk cache:
   not measured yet (no running client on the build host).
 
-Stdlib HTTP over a wrapper library is likewise the current choice, not a rule:
-`pyzotero` (v1.15.x) reaches the local API (`local=True`), ships a CLI, and an
-optional MCP server — a legitimate alternative transport for a future skill that
-wants its maintenance offloaded.
+The helper uses `pyzotero` (1.16) in local mode for every read and write, so it
+hand-rolls no Zotero interface. Writes need a key: on the first write, or on a
+401, Zotero shows an Allow / Always Allow / Deny dialog; only an "Always Allow"
+key is stored, and a one-time "Allow" key covers a single write, too few to
+store a PDF (an item, then a file).
 
 An MCP server (recommended overlay: **Zoteus** — see Annex A) is useful for
 interactive HITL retrieval: search, PDF passages, CSL citations, add-by-DOI.
@@ -102,10 +104,8 @@ It never appears in a skill's correctness path.
 
 The default destination and dedup scope is the user library. `inject --library
 <groupID>` or `--collection <key>` targets another editable library, e.g. a
-group the author can write to: the connector saves into the library selected in
-the Zotero window, then moves the item to the target, named by the client's
-internal id read from the connector's target list (the user library; a group
-by its name; a collection by its path of names; ambiguity is refused). A
+group the author can write to: the item is created directly in the target library (the collection's own
+library for `--collection`), whatever the Zotero window shows. A
 read-only group cannot be a destination. Validate the library selector early;
 fail fast on malformed input.
 
@@ -115,9 +115,9 @@ fail fast on malformed input.
 
 Every mutating skill must:
 
-1. Never edit an existing item itself; nothing to back up, since the helper changes no stored item.
+1. Never edit an existing item unless `--edit` is passed (`enrich`, `attach`, `reconcile --apply --edit`); without it the helper changes no stored item, so there is nothing to back up.
 2. Output a RIS file of the items it creates, kept even when creation succeeds.
-3. Edits to existing items are reported (item key, field, old → new) and applied by the author in the client.
+3. Edits to existing items are reported (item key, field, old → new) by default; they are written only with `--edit`, or applied by the author in the client.
 4. Preview before creating (`inject --dry-run`); unattended creation requires the project opt-in (`reconcile --apply` with `.zotero-reconcile.json`).
 5. In autonomous/background sessions: create only high-confidence new items; write low-confidence proposals to a RIS proposal file and stop. Never block waiting for input.
 
@@ -156,8 +156,8 @@ Prose names a skill's operation precisely; command names stay as they are, scope
 | Capability | Use case | Trigger |
 |---|---|---|
 | **Lint** — normalize field formats (date ISO 8601, DOI prefix, pages en-dash, language code) | archiveCIRED | First normalization ticket |
-| **Enrich** — fill missing fields from CrossRef / HAL / OpenAlex; outputs suggested edits for the author | archiveCIRED | Unbacked — file on demand |
-| ~~**Upload PDF**~~ — attach local archive files to existing Zotero stubs (authorize → multipart → register, idempotent on md5) | archiveCIRED | **Done 2026-08-19, reduced 2026-10-15** — `zotero.py attach --parent <itemKey> <file>...` (MR #760). The repair for an `audit` verdict of `work_present_no_file`, where `inject` would mint a duplicate. Since ticket 1113 it checks the item and the file and reports the by-hand step: the desktop connector cannot attach to an existing item. |
+| **Enrich** — fill missing fields from CrossRef / HAL / OpenAlex; outputs suggested edits, written only with `--edit` | archiveCIRED | Unbacked — file on demand |
+| ~~**Upload PDF**~~ — attach local archive files to existing Zotero stubs (authorize → multipart → register, idempotent on md5) | archiveCIRED | **Done 2026-08-19, reduced 2026-10-15** — `zotero.py attach --parent <itemKey> <file>...` (MR #760). The repair for an `audit` verdict of `work_present_no_file`, where `inject` would mint a duplicate. Since ticket 1113 it checks the item and the file and reports the attachment; `--edit` stores it through the local API (Zotero 10.0 or later). |
 | **Find PDF** — Unpaywall lookup + attach; jurisdiction gate before grey-web | archiveCIRED | Unbacked — file on demand |
 | **OCR** — scanned PDF → text attachment via Mistral | archiveCIRED | Unbacked — file on demand |
 | **Export** — filtered CSL-JSON or RIS by collection/tag/year | CIRED.digital, activity report | RAG schema finalized or report cycle starts |
@@ -197,7 +197,7 @@ Perishable inventory: tool names and versions rot; re-verify before relying on a
 - 54yyyu's `zotero-cli`; older edtechhub/jbaiter clients (web-API era, stale).
 
 **Web clients**
-- Raw HTTP against the desktop connector — what the harness scripts do, for creation only.
+- Raw HTTP against the desktop connector — not used by the harness scripts since ticket 1113.
 - Zotero's translation-server for identifier→metadata lookups.
 
 **Semantic retrieval** is search-works-for-zotero's lane (`~/CNRS/code/search-works-for-zotero`): requirements, experiments, and upstream contributions toward semantic search in Zotero. The harness builds nothing there and consumes the result through whatever transport wins.

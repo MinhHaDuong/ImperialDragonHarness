@@ -30,11 +30,11 @@ The task's hoard branch/worktree were removed after merge. The foreign Arena che
 
 ## Next actions
 Continue from `erg ready tickets/`. Other work has open PRs #1422 (morning factual capture) and #1431 (tentative review storage/delivery proposal for 1100); neither belongs to this session.
-Zotero staging reconciliation no longer runs in `/molt` or `/lair` (#1434): it fired in any repository with `docs/` and stalled over 5 min on a stale index. Run `/zotero reconcile` on demand in paper repositories. The 1111 implementation landed in #1437. Ticket 1113 replaces the Web API index with live reads through the running Zotero's local API (never `zotero.sqlite`; Zotero is launched when down, except in containers, else the command does nothing) and creation through the desktop connector; 1111 closes with it. 1112 closed in #1440: `/lair` proposes the reconcile, the author runs it. No library completeness claim or import was made.
+Zotero staging reconciliation no longer runs in `/molt` or `/lair` (#1434): it fired in any repository with `docs/` and stalled over 5 min on a stale index. Run `/zotero reconcile` on demand in paper repositories. The 1111 implementation landed in #1437. Ticket 1113 replaces the Web API index with live reads through the running Zotero's local API (never `zotero.sqlite`; Zotero is launched when down, except in containers, else the command does nothing) and writes (creation, and edits with `--edit`) through the same API, so Zotero 10.0 or later and a local API key granted once with "Always Allow"; 1111 closes with it. 1112 closed in #1440: `/lair` proposes the reconcile, the author runs it. No library completeness claim or import was made.
 Review attribution pending for #1423/#1425 is durably documented in the raid journal; do not fill missing identities from aliases or guesses.
 
 ## Author actions
 - Install the ILaaS consortium key in `~/.config/keys/ilaas.env`, then configure `models.json` (0977).
 - Rotate the six exposed bash-x values and the Albert key, deferred to October 2026.
-- Merge the 266 hash-duplicate clusters in the Zotero client via the report from `python3 scripts/zotero.py dedup-report --out /tmp/zotero-duplicates.html` (0485 closed; author-side chore).
+- Merge the 266 hash-duplicate clusters in the Zotero client via the report from `scripts/zotero.py dedup-report --out /tmp/zotero-duplicates.html` (0485 closed; author-side chore).
 - Zotero train residue: decide on the drifted vendored URL-intake copy in livre-milliards-climat; the 0485 byte-for-byte reproduction needs the live library.

@@ -23,7 +23,7 @@ actual merge and reuse `zotero.py` for a read-only report.
 ## Run
 
 ```bash
-python3 scripts/zotero.py dedup-report --out /tmp/zotero-duplicates.html
+scripts/zotero.py dedup-report --out /tmp/zotero-duplicates.html
 ```
 
 The report is local HTML with `zotero://select/library/items/<key>` links for
@@ -50,7 +50,7 @@ candidate pairs in the client before merging; no report row authorizes a merge.
 
 `tests/test_zotero_dedup_report.py` has a known-positive pair, a group-library
 decoy, a trashed parent, and repeated attachments under one parent, served by
-a stub of the local API with and without reported md5s. It checks links, HTML
+a real throwaway Zotero client (hashing for clients without md5s is tested over an in-memory read). It checks links, HTML
 escaping and that generating a report only reads. A live read-only run against
 the 2026-09-24 database snapshot (before the helper moved to the local API) yielded
 269 groups from 8,697 hashed attachments in My Library; the 2026-10-02 live run

@@ -20,7 +20,7 @@ repository root and one level below it, follow their `file=` paths, and report
 both linked files and unlinked staging files. It uses the BibTeX metadata when
 matching linked files. The command is **report-only by default**: without
 `--apply` it never injects or attaches anything; rows whose work is present without a file come back in
-`suggested_edits` (item key, file) for the author to attach by hand. It
+`suggested_edits` (item key, file), which `--apply --edit` stores. It
 uses `docs/` as the staging default only when no `.bib` exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
 an empty clean report.
 
@@ -47,11 +47,14 @@ directories and the user's runtime directory, or the home directory when
 `XDG_RUNTIME_DIR` is unset (advisory locks on the directories themselves, no
 lock files, given up after 10 min rather than hang), re-reads the library live, and
 creates only absent PDFs with corroborated title/author metadata, through the
-desktop connector. The re-read covers the destination library, so with a
+local API (it needs Zotero 10.0 or later and the local API key; see
+`references/helper-script.md`). The re-read covers the destination library, so with a
 group `collection` the duplicate check reads that group. Missing metadata, weak matches, ties, and discovery errors
 remain visible in `deferred` or `errors`; they cannot become an automatic
-write. Existing items are never edited: their fixes stay in
-`suggested_edits`. The default invocation stays report-only.
+write. Existing items are edited only with `--apply --edit`, which stores each
+staged file under the one existing item that lacks it (a tie is left for the
+author; `--edit` without `--apply` is an error). Without `--edit` their fixes
+stay in `suggested_edits`. The default invocation stays report-only.
 
 Nothing is recorded between runs. The duplicate guard in `inject` is the
 live read of the destination library plus a check of the batch against
@@ -93,12 +96,13 @@ comparison.
 
 **`work_present_no_file` is repaired by attaching, not by `inject`.**
 `inject` only ever creates items, so using it here mints a duplicate of a
-work the library already holds. The connector cannot attach to an existing
-item, so `attach` checks the item and the file and prints the by-hand step
-(in Zotero: Add Attachment → Attach Stored Copy of File):
+work the library already holds. `attach` checks the item and the file and
+reports the attachment; with `--edit` it stores a copy of the file under the
+item through the local API:
 
 ```bash
-zotero.py attach --parent <itemKey> docs/Walley1991.pdf
+zotero.py attach --parent <itemKey> docs/Walley1991.pdf          # report
+zotero.py attach --parent <itemKey> docs/Walley1991.pdf --edit   # store
 ```
 
 Before trusting an audit's negatives, run it against a case you know is
