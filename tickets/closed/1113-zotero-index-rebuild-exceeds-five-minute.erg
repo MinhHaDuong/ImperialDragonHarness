@@ -1,0 +1,120 @@
+%erg 0.1
+Title: Zotero helper: local-only and stateless
+Created: 2026-10-15
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #1441
+
+--- log ---
+2026-10-15T14:43Z Minh Ha-Duong created
+2026-10-15T21:09Z Claude note Retitled and re-scoped per author decisions of 2026-10-15: local-only, stateless helper; Web API, keys, index cache and injection record removed; creation through the desktop connector.
+2026-10-16T05:51Z Claude note Author decisions of 2026-10-16 recorded: reads through the local API only, never sqlite; launch Zotero when it is down, else do nothing; containers do nothing. Exit criterion 2 restated accordingly.
+2026-10-16T06:31Z Claude note Author decision of 2026-10-16 recorded: tests run a real throwaway Zotero as a fixture or skip, no mock. Exit criterion 4 restated accordingly.
+2026-10-16T07:32Z reviewer note circuit-breaker — redirect: author chose plan A (pyzotero local client, no hand-rolled Zotero interface); test-rework worker stopped, WIP salvaged at 1fe8e333
+2026-10-16T07:35Z reviewer note Author decision 4 (plan A, pyzotero) recorded verbatim; exit criteria 4-5 restated, criterion on hand-rolled components added. Local writes verified on Zotero 10.0.6 with a throwaway profile.
+2026-10-16T08:41Z reviewer note YAGNI sweep (PR #1441): pyzotero replaces the local API client and the connector writes; the live schema replaces the field table; bibtexparser 1.x replaces bib parsing; zotero_matches and relative linked-path resolution deleted. Kept, no fitting library: poppler wrapper, DOI-in-page-text finder, RIS writer, slot mapping, duplicate scoring, launch and container detection, directory flock.
+2026-10-16T09:37Z reviewer closed — autoclosed — PR #1441
+
+--- body ---
+## Intent (author decisions, 2026-10-15)
+`scripts/zotero.py` becomes local-only and stateless:
+
+- Remove every Zotero Web API path (item reads and writes, file upload,
+  enrichment writes), the API keys and their credential plumbing, the
+  library index cache and its sync subcommand, and the injection record kept
+  between runs. No local index, no cache, no record.
+- Reads: `zotero.sqlite` opened read-only on every call; dedup and matching
+  run against it. (Superseded on 2026-10-16, below: reads go through the
+  local API.)
+- Creating items with PDFs goes through the Zotero desktop connector
+  (`127.0.0.1:23119/connector/`). Zotero must be running; fail loudly when the
+  connector does not answer. Never write `zotero.sqlite`.
+- `enrich` and `reconcile --apply` cannot edit existing items: they report
+  the suggested edits (item key, field, old → new) for the author.
+- Ticket 1111 is superseded; what still applies is kept and 1111 closes in
+  the same PR.
+- Skill, references, `docs/zotero-integration.md`, `rules/zotero.md` and
+  `README.md` carry no Web API, key or index-cache instruction. The
+  "Periodic sync + purge" section of `rules/zotero.md` belongs to ticket 1112.
+
+## Author decisions, 2026-10-16 (binding, verbatim)
+1. "API ONLY, NEVER SQLITE." All library reads go through the Zotero 7 local
+   API (http://127.0.0.1:23119/api/, e.g. /api/users/0/items, groups via
+   /api/groups/<id>/...; read-only, no key). Remove every zotero.sqlite read
+   path: zotero_open, mode=ro/immutable fallback, read_mode, WAL refusal,
+   database discovery (ZOTERO_DATA_DIR, profile parsing), the
+   --out-names-the-database guards that only exist because of the db. The
+   duplicate check is then always live. Find out from Zotero's source/docs
+   how the local API exposes attachment file paths (needed by
+   attach/audit/reconcile) and the "allow other applications to communicate
+   with Zotero" setting; when the local API is disabled or answers
+   unexpectedly, fail with a clear message naming that setting. Still
+   stateless: no index, no cache, no ledger.
+2. Zotero not up: "If Zotero is not up, try launching it, and if you can't,
+   do nothing. Containers do nothing." So: when the connector/local API does
+   not answer, and we are NOT in a container, try to launch the desktop
+   Zotero (detached; find the binary on PATH / common install / flatpak) and
+   wait for it to answer within a stated bound. If it does not come up, do
+   nothing: no partial action, a clear message, a report status saying
+   Zotero was unavailable. In a container (detect /.dockerenv,
+   /run/.containerenv, cgroup hints, CI env, no display), never try to
+   launch: do nothing the same way. Choose exit codes so an unattended
+   reconcile treats "unavailable" as a clean no-op, not a crash, and
+   document the choice.
+
+## Author decision, 2026-10-16, tests (binding, verbatim)
+3. "In tests up Zotero as a fixture or skip -- no mock". So: no stub of the
+   local API or connector, no monkeypatched opener, launcher or
+   availability. Tests start a real Zotero desktop client on a throwaway
+   profile and data directory under tmp, on a non-default port with the
+   local API enabled, seed it through the real connector, and delete it
+   after the session; they never touch the author's profile, ~/Zotero or a
+   Zotero on 23119, and skip with a reason when isolation cannot be
+   guaranteed or no Zotero, display or non-container host is available.
+   "Zotero down" is tested for real (closed port, launching disabled by the
+   environment). Pure-logic tests that never talk to Zotero stay.
+
+## Author decision, 2026-10-16, plan A (binding, verbatim)
+4. "Plan A. On arrête le YAGNI massacre." Plan A: stop hand-rolling a
+   Zotero interface; use pyzotero (1.16.0: `Zotero(library_id,
+   library_type, local=True)` for the local API; local writes with a
+   user-approved local key from `authorize_local(app_name)`, Zotero
+   asking Allow / Always Allow / Deny; `local_api_key=` reuses a
+   remembered key). Zotero 10 stable accepts local writes. So: reads
+   and writes through pyzotero's local client; the connector path goes
+   if local writes work (verified 2026-10-16 on padme, Zotero 10.0.6,
+   throwaway profile: create, file upload, item update and collections
+   accepted; a keyless write refused 401). Edits to existing items apply
+   only with an explicit flag, report-only by default. The local key is
+   a credential under ~/.config/keys/ (mode 600), never printed; no other
+   state. Every remaining hand-rolled component is checked against the
+   package registry and replaced or deleted where a maintained library
+   or no caller covers it.
+
+## Original context
+2026-10-15, host doudou: `python3 scripts/zotero.py reconcile .` in report mode
+on the harness, with a library index cache older than 24 h (4.7 MB, written
+2026-10-14 15:21), was killed by `timeout 300` with no report. The time went
+into the Web API rebuild of that cache. Removing the cache removes the cost: a
+full read of the local library takes about 0.4 s (7,672 works, 9,451
+attachments, measured on doudou 2026-10-15).
+
+## Exit criteria
+- [ ] No Web API call, key, index cache or injection record remains live in
+      scripts/, skills/, rules/, docs/ or README.md
+- [ ] Reads go through the local API, live, per call; no zotero.sqlite read
+      path remains; a disabled or unexpected local API fails naming the
+      setting (restated 2026-10-16; was: sqlite read-only with an
+      immutable fallback and a read mode in every output)
+- [ ] Zotero down: launched (never in a container) within a stated bound,
+      else the command does nothing and reports Zotero unavailable;
+      `reconcile` then exits 0
+- [ ] `inject` creates items and PDFs through pyzotero's local client
+      and does nothing, saying so, when Zotero is unavailable; tests use a
+      real throwaway Zotero or skip, no mock (restated 2026-10-16 twice;
+      was: a local stub, then the desktop connector)
+- [ ] `enrich`, `attach` and `reconcile --apply` report edits to existing
+      items by default and write them only with an explicit flag
+      (restated 2026-10-16, plan A)
+- [ ] No hand-rolled Zotero client remains; each other kept hand-rolled
+      component is justified against the package registry in the PR
+- [ ] `make check` passes

@@ -2,11 +2,11 @@
 Title: Zotero helper: specific subcommand names; split probe into extract and lookup
 Created: 2026-10-16
 Author: Minh Ha-Duong
-Blocked-by: 1113
 
 --- log ---
 2026-10-16T06:39Z reviewer created
 2026-10-16T08:58Z reviewer note author accepted all five size-review decisions (merge audit/reconcile, Zotero search + rapidfuzz, drop RIS, JSON-only dedup report, pdf2doi offline evaluation)
+2026-10-16T09:37Z reviewer note blocker 1113 closed — Blocked-by removed.
 
 --- body ---
 

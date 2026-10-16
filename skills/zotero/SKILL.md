@@ -1,6 +1,6 @@
 ---
 name: zotero
-description: "Import one or more PDFs or URLs into Zotero, enrich existing items, or audit and reconcile the library — extract metadata, resolve identifiers online, dedupe against the library (desktop database or a cached Web API index), and inject items with their PDFs through the Zotero Web API (RIS file as fallback)."
+description: "Import one or more PDFs or URLs into Zotero, suggest enrichments to existing items, or audit and reconcile the library — extract metadata, resolve identifiers online, dedupe against the running Zotero's local API, and create items with their PDFs through its local API (RIS file as fallback)."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "import <pdf-or-url>... | enrich | audit <dir> | reconcile <repo> | dedup-report | attach"
@@ -22,11 +22,11 @@ A run uses exactly one verb. **Read the verb's file before acting.**
 | verb | does | file |
 |---|---|---|
 | `import` | one or more PDFs or URLs → new items with attachments | `references/import.md` |
-| `enrich` | fill missing fields on items that already exist | `references/enrichment.md` |
+| `enrich` | report missing fields on items that already exist; write them only with `--edit` | `references/enrichment.md` |
 | `audit` | report a staging directory or BibTeX-linked repository against the library | `references/backfill.md` |
-| `reconcile` | repair the staging ↔ library correspondence (report-only by default) | `references/backfill.md` |
+| `reconcile` | repair the staging ↔ library correspondence (report by default; `--apply` creates absent items, `--apply --edit` also stores files under existing items) | `references/backfill.md` |
 | `dedup-report` | hash-dedup report, library against itself (ticket 0485) | `docs/zotero-dedup-report.md` |
-| `attach` | upload files onto an item that already exists | declared, created on first need (YAGNI) |
+| `attach` | file a document onto an item that already exists (reports by default; stores it with `--edit`) | `references/backfill.md` |
 
 The former three modes dissolve into this surface: `import` and `enrichment`
 map to the `import` and `enrich` verbs, and the backfill mode splits between
@@ -37,25 +37,52 @@ absorbed into `import`: a URL is one more input, probed by the skill's own
 `probe-url.py` script.
 
 `match` and `write` are shared plumbing, not user verbs: `match` serves
-import and audit both, and `write` is the durable-RIS step behind import and
-enrich alike. `references/helper-script.md` documents every subcommand and
-the guarantees of its output (`why` / `certainty` / `consulted` / `skipped`).
+import and audit both, and `write` is the durable-RIS step behind import.
+`references/helper-script.md` documents every subcommand and the guarantees
+of its output (`why` / `certainty` / `consulted` / `skipped`).
 
-Inside `import`: probe → match → sync-index → inject. `probe` (or
-`probe-url.py` for URLs) extracts, `match` dedupes against the desktop
-database, `sync-index` supplies the cached Web API index when no desktop DB
-resolves, `write` emits the durable RIS artifact, and `inject` creates the
-items through the Web API. `references/import.md` carries the full contract.
+Inside `import`: probe → match → write → inject. `probe` (or
+`probe-url.py` for URLs) extracts, `match` dedupes against a live read of
+the library, `write` emits the durable RIS artifact, and `inject` creates the
+items through the Zotero local API. `references/import.md` carries
+the full contract.
 
 ## Safety contract
 
-Never write `zotero.sqlite` (read via `?immutable=1`); merges happen in the
-desktop client. Metadata mutations (`enrich` and its `write` step) follow
-backup → dry-run → apply, expressed as helper flags (`--dry-run`, `--apply`,
-`--overwrite`), and are guarded by `If-Unmodified-Since-Version`. `attach`
-creates: it uploads a new file with `If-None-Match: *` and guards no
-existing item's version. The RIS file is the durable
-artifact and remains the fallback when no read-write key resolves.
+The helper is local-only and stateless. Every library read goes through the
+running Zotero's local API (`127.0.0.1:23119/api/`, no key), live, and
+nothing is kept on disk between runs but the local API key below. It never
+opens `zotero.sqlite`; merges happen in the desktop client. The local API is
+off until the author enables Zotero Settings > Advanced > "Allow other
+applications on this computer to communicate with Zotero"; until then the
+helper fails and names that setting. `ZOTERO_CONNECTOR_URL` points it at
+another loopback port; if something other than Zotero answers there, the
+error says so and names both the variable and the setting. Reads need Zotero 7 or later, writes
+Zotero 10.0 or later.
+
+Writes go through the same local API with a local API key, kept as
+`ZOTERO_LOCAL_API_KEY=` in `~/.config/keys/zotero-local.env` (mode 600;
+`ZOTERO_LOCAL_KEY_FILE` overrides the path) and never printed. On the first
+write without a key, or on a 401, Zotero shows an Allow / Always Allow / Deny
+dialog and the helper waits up to 120 s for the answer. **Tell the user to
+answer "Always Allow"**: only that key is stored. A one-time "Allow" key covers
+one keyed write, and storing a PDF takes three (attachment item, upload
+authorization, upload registration), a batch one per write: for those the
+helper asks before writing anything and refuses an "Allow" answer, so nothing
+is written. An attachment counts as a stored file only when Zotero reports its
+md5 or size.
+`inject` creates new items and uploads their PDFs; `inject --dry-run` also
+needs Zotero running, because field placement uses the live schema. When Zotero is not running the helper
+launches it and waits; in a container, or with `ZOTERO_NO_LAUNCH` set, it
+never launches anything. If Zotero
+still does not answer, the command does nothing and says so (exit 75;
+`reconcile` exits 0 with verdict `zotero_unavailable`). Existing items are
+edited only with `--edit`: `enrich`, `attach` and `reconcile --apply` report
+the edit (item key, field, old → new) by default and write it only when
+`--edit` is passed (`reconcile`: `--apply --edit`; `--edit` alone is an
+error); `reconcile --apply` alone creates only the absent items. The
+RIS file is the durable artifact and remains the fallback when Zotero is not
+running.
 
 ## A scraped identifier is a hypothesis, not a finding
 
@@ -89,6 +116,6 @@ mismatch alone is not evidence of a wrong match.
 
 End your turn with:
 
-- One line per item (PDF or URL): title (orig) — `[type]` — item key (or fallback/xdg-open status) — duplicate verdict.
+- One line per item (PDF or URL): title (orig) — `[type]` — `created` (with the new item key) or fallback/xdg-open status — duplicate verdict.
 - The RIS file path (artifact, and the fallback import route).
 - A reminder about Zotero deduplication if any duplicate-risk entry was imported.

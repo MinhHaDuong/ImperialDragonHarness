@@ -1,36 +1,45 @@
 # Enrichment — completing an item that already exists
 
-`inject` creates; `enrich` completes. An item filed years ago under looser
-habits, or scraped from a translator that dropped a field, keeps its gap
-forever — `match` reports the item as present and the flow stops there. The
-result is a system of record less complete than the staging folder it
-supersedes, which is backwards. (Measured once: nine items in one library
+`inject` creates; `enrich` says what to complete. An item filed years ago
+under looser habits, or scraped from a translator that dropped a field, keeps
+its gap forever — `match` reports the item as present and the flow stops
+there. The result is a system of record less complete than the staging folder
+it supersedes, which is backwards. (Measured once: nine items in one library
 held no DOI while the project `.bib` carried one for each.)
 
+The helper reads the item live through the running Zotero's local API and
+**reports** the edit. It writes the fields only with `--edit`, through the
+local API (Zotero 10.0 or later, with the local API key; see
+`references/helper-script.md`); without it, the author applies the edit in
+the Zotero client.
+
 ```bash
-zotero.py enrich --item-key XRWZU4DZ \
+"$IDH_ROOT/scripts/zotero.py" enrich --item-key XRWZU4DZ \
   --expect-title "Optimum Utilization" --set DOI=10.2307/1907301
 ```
 
-- **Verify the value before writing it, on the landing page, not the status
-  code.** Copying a DOI from a `.bib` propagates whatever error is already
-  there. Resolve it (CrossRef for the metadata, then follow the DOI and read
-  where it lands) and confirm it names the work in hand.
+- **Verify the value before suggesting it, on the landing page, not the
+  status code.** Copying a DOI from a `.bib` propagates whatever error is
+  already there. Resolve it (CrossRef for the metadata, then follow the DOI
+  and read where it lands) and confirm it names the work in hand.
 - `--expect-title` is **required** and is the wrong-item guard: item keys are
-  opaque, so a transposed key otherwise enriches an unrelated work silently.
-  An item with no title is refused rather than written blind.
+  opaque, so a transposed key otherwise points the author at an unrelated
+  work. An item with no title is refused rather than reported blind.
 - A field already holding a **different** value is refused; `--overwrite`
   arbitrates. Correcting an empty field and replacing a curated one are not
-  the same act. A field already holding the requested value is skipped, not
-  rewritten — a no-op write bumps the version and shows as an edit in sync.
+  the same act. A field already holding the requested value is dropped:
+  there is nothing to do.
 - Zotero field names are **case-sensitive** (`DOI`, not `doi`), and a field
   the item type does not own is refused with that reminder.
-- The write is a `PATCH` of the named fields only, guarded by
-  `If-Unmodified-Since-Version`: a concurrent edit fails with 412 instead of
-  being silently overwritten. The item is then **read back** — a 204 says the
-  request was accepted, not that the stored value is what you meant.
-- `--jobs-file` takes `[{item_key, expect_title, set:{…}}]` for a batch.
-  `--dry-run` reports the planned patch without writing.
-- Exit code is non-zero when anything asked for did not happen, **a refusal
-  included** — "wrote everything" and "declined every field" must not share
-  an exit code.
+- Each row lists `suggested` edits as `itemKey`, `field`, `old`, `new`. Show
+  them to the author as a short table first. Rerun with `--edit` to write
+  them (status `written`), or have the author set each field in Zotero. Re-run
+  the report afterwards: an applied edit comes back as `nothing to change`,
+  which is the read-back.
+- `--jobs-file` takes `[{item_key, expect_title, set:{…}}]` for a batch. If
+  Zotero stops answering part-way through an `--edit` batch, the rows already
+  written are kept, the job in flight is `unknown` and the rest `not
+  attempted` (exit 1); a report-only batch has written nothing and exits 75.
+- Exit code is non-zero when anything asked for cannot be suggested, **a
+  refusal or a missing item included** — "ready to apply" and "declined every
+  field" must not share an exit code.

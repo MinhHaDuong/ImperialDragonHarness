@@ -23,18 +23,20 @@ actual merge and reuse `zotero.py` for a read-only report.
 ## Run
 
 ```bash
-python3 scripts/zotero.py dedup-report --out /tmp/zotero-duplicates.html
+scripts/zotero.py dedup-report --out /tmp/zotero-duplicates.html
 ```
 
 The report is local HTML with `zotero://select/library/items/<key>` links for
 each candidate parent and every matching attachment beneath it. The attachment
 filenames identify the exact files to review when a parent has several children.
-`--format json` provides the same data for inspection. The command reads only
-`zotero.sqlite` through the existing immutable connection,
-defaults to the user library, excludes trashed items, and refuses a nonempty
-write-ahead log because an immutable connection would otherwise miss pending
-changes. It never calls the Web API or mutates Zotero. The only optional write
-is the named report file.
+`--format json` provides the same data for inspection. The command reads the
+user library live through the running Zotero's local API (GET only; see
+`skills/zotero/references/helper-script.md` for the setting it needs and what
+happens when Zotero is not running) and excludes trashed items. It never
+opens `zotero.sqlite`, contacts no other service and never mutates Zotero.
+Zotero 10 reports each stored file's md5; with Zotero 7 to 9 the command
+hashes only the files whose size another stored file shares. The only
+optional write is the named report file, created readable by its owner only.
 
 The exact content hash is the match key. DOI, ISBN and title agreements among
 parents of the same item type are displayed as extra evidence. They are **not**
@@ -47,9 +49,10 @@ candidate pairs in the client before merging; no report row authorizes a merge.
 ## Verification
 
 `tests/test_zotero_dedup_report.py` has a known-positive pair, a group-library
-decoy, a trashed parent, and repeated attachments under one parent. It checks
-links, HTML escaping and that generating a report leaves the SQLite bytes
-unchanged. A live read-only run against the 2026-09-24 database snapshot yielded
+decoy, a trashed parent, and repeated attachments under one parent, served by
+a real throwaway Zotero client (hashing for clients without md5s is tested over an in-memory read). It checks links, HTML
+escaping and that generating a report only reads. A live read-only run against
+the 2026-09-24 database snapshot (before the helper moved to the local API) yielded
 269 groups from 8,697 hashed attachments in My Library; the 2026-10-02 live run
 at closure yielded 266. The author arbitrated a sample on 2026-10-02 and ticket
 0485 closed. The remaining clusters are merged by hand in the client (select

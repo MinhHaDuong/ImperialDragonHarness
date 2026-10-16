@@ -3,63 +3,64 @@
 A whole `docs/` folder is not the happy path repeated N times. Two things
 change, and both are failure modes rather than conveniences.
 
-**Dedup must be possible at all.** `probe` and `match` read the desktop
-client's `zotero.sqlite`. On a machine with no desktop client that file does
-not exist, every lookup returns `verdict: "unchecked"`, and a backfill that
-reads "unchecked" as "absent" re-imports the entire library. Sync the Web API
-index first — then `match` has a key to consult, and a clean negative stays
+**Dedup must be possible at all.** Every lookup reads the library live
+through the running Zotero's local API, once per run. When Zotero is not
+running the helper launches it; in a container, or when the launch fails,
+the command does nothing and reports Zotero unavailable. A backfill that read
+"could not look" as "absent" would re-import the entire library, so run it
+on the machine where Zotero lives; a clean negative then stays
 distinguishable from a lookup that could not run:
 
 ```bash
-zotero.py sync-index          # ~1 min per 10k items; re-pulls every time
-zotero.py audit docs/ --out /tmp/audit.json
+"$IDH_ROOT/scripts/zotero.py" audit docs/ --out /tmp/audit.json
 ```
 
 For projects with BibTeX, use `reconcile` to discover `.bib` files at the
 repository root and one level below it, follow their `file=` paths, and report
 both linked files and unlinked staging files. It uses the BibTeX metadata when
-matching linked files. The command is **report-only**: it never injects or
-attaches anything. It uses `docs/` as the staging default only when no `.bib`
-exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
+matching linked files. The command is **report-only by default**: without
+`--apply` it never injects or attaches anything; rows whose work is present without a file come back in
+`suggested_edits` (item key, file), which `--apply --edit` stores. It
+uses `docs/` as the staging default only when no `.bib` exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
 an empty clean report.
 
 ```bash
 out=$(mktemp "${TMPDIR:-/tmp}/zotero-reconcile.XXXXXX.json")
 status=0
-zotero.py reconcile . --out "$out" || status=$?
+"$IDH_ROOT/scripts/zotero.py" reconcile . --out "$out" || status=$?
 echo "reconcile report: $out (exit $status)"
 [ "$status" -eq 0 ]
 ```
 
 Resolve any `errors` and inspect `ambiguous` rows before taking action. An
 `absent` row is a proposal for a later, explicit import, not permission to
-auto-inject it. The command reuses the cached Web API index; `--refresh`
-updates it first.
+auto-inject it. Every early exit (nothing staged, Zotero unavailable) still
+writes `--out` with the same report keys. Zotero unavailable is a clean
+no-op: verdict `zotero_unavailable`, exit 0, nothing compared or created (exit 1 if discovery found errors, which stay listed).
 
-For unattended import, the project owner opts in with a root-level
-`.zotero-reconcile.json` containing `{"apply": true, "user_id": "123456"}`
-(an optional `collection` key files created items there). Then run
-`reconcile . --apply`; no maintenance skill runs it for you. The
-script locks staging and the user library, pulls a fresh index, and creates
-only absent PDFs with corroborated title/author metadata. Missing metadata,
-weak matches, ties, and discovery errors remain visible in `deferred` or
-`errors`; they cannot become an automatic write. The default invocation stays
-report-only. `inject` itself now consults the fresh index and append-only
-file-md5 ledger; use `--force` only after inspecting a legitimate exception.
-Successful creates enter the ledger before attachment upload so a failed
-upload can resume under the same Zotero parent. Writes are sent in at most
-50-item requests, and Zotero's `Backoff` / `Retry-After` headers are honored.
+For an opted-in import, the project owner adds a root-level
+`.zotero-reconcile.json` containing `{"apply": true, "user_id": "123456"}`,
+where `user_id` is the account the local Zotero is signed in to (an optional
+`collection` key files created items there). Then run `reconcile . --apply`;
+no maintenance skill runs it for you. The script locks the staging
+directories and the user's runtime directory, or the home directory when
+`XDG_RUNTIME_DIR` is unset (advisory locks on the directories themselves, no
+lock files, given up after 10 min rather than hang), re-reads the library live, and
+creates only absent PDFs with corroborated title/author metadata, through the
+local API (it needs Zotero 10.0 or later and the local API key; see
+`references/helper-script.md`). The re-read covers the destination library, so with a
+group `collection` the duplicate check reads that group. Missing metadata, weak matches, ties, and discovery errors
+remain visible in `deferred` or `errors`; they cannot become an automatic
+write. Existing items are edited only with `--apply --edit`, which stores each
+staged file under the one existing item that lacks it (a tie is left for the
+author; `--edit` without `--apply` is an error). Without `--edit` their fixes
+stay in `suggested_edits`. The default invocation stays report-only.
 
-The 2026-09-23 tooling review found no existing unattended replacement for
-this exact staging-to-library sweep. Zotero's native API supplies the actual
-write and attachment protocol, but does not discover project BibTeX or stage
-orphans. Better BibTeX is not installed in the checked Zotero profile and its
-export mapping does not prove that a staged PDF was uploaded. The installed
-plugin roster was empty at review time. `zotero-mcp` would still need the
-same project discovery, duplicate guard, and durable replay state; adding it
-would increase moving parts for this workflow. The local Zotero connector API
-requires a running desktop client, whereas an unattended `--apply` run must
-work without one. The helper therefore reuses the existing Web API index and upload path.
+Nothing is recorded between runs. The duplicate guard in `inject` is the
+live read of the destination library plus a check of the batch against
+itself; use `--force` only after inspecting a legitimate exception. A save
+that fails in transit stops the run; the next run's read sees the item if it
+was created.
 
 `audit` classifies every staged file into five verdicts, and the distinction
 between the middle two decides what you do next:
@@ -87,17 +88,21 @@ words of "Systems of inequalities involving convex functions" match any paper
 about linear inequalities — which filed a real Hoffman 1960 paper as a different
 Hoffman paper, at `strong`.
 
-**Content hash is the strongest key available**, and only the Web API index
-carries it: it survives renaming, re-filing and metadata drift, and it answers
-the question a staging directory actually asks — *is this exact file already
-stored?* Prefer it over any title comparison.
+**Content hash is the strongest key available** (`storageHash`, the md5 of
+each stored file, reported by Zotero 10 or computed here): it survives renaming, re-filing and
+metadata drift, and it answers the question a staging directory actually
+asks — *is this exact file already stored?* Prefer it over any title
+comparison.
 
-**`work_present_no_file` is repaired with `attach`, not `inject`.** `inject`
-only ever creates items, so using it here mints a duplicate of a work the
-library already holds:
+**`work_present_no_file` is repaired by attaching, not by `inject`.**
+`inject` only ever creates items, so using it here mints a duplicate of a
+work the library already holds. `attach` checks the item and the file and
+reports the attachment; with `--edit` it stores a copy of the file under the
+item through the local API:
 
 ```bash
-zotero.py attach --parent <itemKey> docs/Walley1991.pdf
+"$IDH_ROOT/scripts/zotero.py" attach --parent <itemKey> docs/Walley1991.pdf          # report
+"$IDH_ROOT/scripts/zotero.py" attach --parent <itemKey> docs/Walley1991.pdf --edit   # store
 ```
 
 Before trusting an audit's negatives, run it against a case you know is

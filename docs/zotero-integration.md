@@ -1,13 +1,15 @@
 # Zotero Integration — IDH Architecture
 
-**Status**: Draft — 2026-06-24, revised 2026-10-15
+**Status**: Draft — 2026-06-24, revised 2026-10-16
 
 ## Principles
 
 - **Narrow, specialized skills** — narrow in domain, not in mode: one discipline per skill, verbs as arguments, modes share the machinery (harness precedent: the `reviewers` skill). The target surface is one `zotero` skill, not a prefixed family.
-- **Each skill chooses the transport best suited to its task** — local database read, local HTTP API, Web API, or a transport bundled with an MCP overlay — judged on liveness requirement, blast radius, durable artifacts, and dependency footprint.
+- **Each skill chooses the transport best suited to its task** — the local HTTP API or a transport bundled with an MCP overlay — judged on liveness requirement, blast radius, durable artifacts, and dependency footprint.
 - **For general work outside the skills**, the harness documents the interface options and lets the session choose. No option is a required dependency.
-- **Hard invariants, regardless of transport**: never write `zotero.sqlite`; merges happen in the desktop client; every mutation follows backup → dry-run → apply with durable artifacts.
+- **Hard invariants, regardless of transport**: never write `zotero.sqlite`; merges happen in the desktop client; edits to existing items are reported unless `--edit` is passed; creating items is previewed first (`--dry-run`) and leaves a durable RIS artifact.
+- **Local-only and stateless helper** (decided 2026-10-15, ticket 1113): `scripts/zotero.py` reaches no cloud service and keeps no cache, index or record between runs. Its only stored state is the local API key Zotero grants it (`~/.config/keys/zotero-local.env`, mode 600).
+- **API only, never sqlite** (decided 2026-10-16, ticket 1113): every library read goes through the running client's local API; the helper never opens `zotero.sqlite`. When Zotero is not up the helper tries to launch it; if it cannot, it does nothing. In a container it does nothing.
 - **KISS and YAGNI at all layers.**
 
 ---
@@ -38,9 +40,9 @@ This has worked for 30+ years. Do not reconsider until a concrete pain point for
 
 ### 2. Shared mutation format: RIS
 
-RIS is the interchange format across all skills. Every mutating skill is a pure function: items in → corrected RIS out. A single apply step diffs the RIS against current Zotero state and writes the delta (PATCH/PUT with `If-Unmodified-Since-Version`).
+RIS is the interchange format across all skills. Every mutating skill is a pure function: items in → corrected RIS out. Applying a delta to existing items is the author's step in the desktop client; the helper reports it (item key, field, old → new).
 
-Skills compose by piping RIS: `lint | enrich | apply`. No shared framework needed beyond that contract.
+New items travel as RIS (`write`) and as the same entries JSON (`inject`); suggested edits to existing items travel as `{itemKey, field, old, new}` rows (`enrich`, `attach`, `reconcile`). No shared framework needed beyond those two contracts.
 
 ### 3. Export format: RIS or CSL-JSON only
 
@@ -57,39 +59,60 @@ authorization.
 
 ### 5. Transports are chosen per skill
 
-Zotero exposes three surfaces; a transport is the path a skill takes to them:
+Zotero exposes these surfaces on the author's machine; a transport is the path a skill takes to them:
 
 | Surface | Client up? | Auth | Writes |
 |---|---|---|---|
-| Local `zotero.sqlite`, read via `?immutable=1` | No | none | never (invariant) |
-| Local HTTP API `127.0.0.1:23119/api/` | Yes | key-free reads; user-granted key for writes | yes, since Zotero 10 (new since this doc's first draft) |
-| Web API v3 (cloud) | No | API key, rate-limited | yes, but **no merge endpoint anywhere** |
+| Local `zotero.sqlite` (not used by the helper) | No | none | never (invariant) |
+| Local HTTP API `127.0.0.1:23119/api/` | Yes | key-free reads, once the user enables "Allow other applications on this computer to communicate with Zotero" (Settings > Advanced); writes need a local API key granted in the client (Allow / Always Allow / Deny) | yes, since Zotero 10.0 (the helper writes only through this surface) |
 
-The zotero skill chose sqlite reads + Web API writes through Bash-callable Python
-scripts. That is a choice, not a rule — but it is the right one for it:
+The zotero skill chose the local API for reads and writes through
+Bash-callable Python scripts (pyzotero's local client), and no cloud surface
+(ticket 1113; reads moved from sqlite to the local API on 2026-10-16, and
+writes from the connector to the local API under the plan-A decision the same
+day):
 
-- The safety contract (backup → dry-run → apply) is expressed as script flags; the
-  outputs are durable RIS/report artifacts, not ephemeral tool calls.
-- Autonomous sessions (`raid`, `nightbeat`, `beat`) run headless; the sqlite path
-  needs no running client and no network.
-- The read pattern here is batch, not interactive item-by-item queries.
+- The safety contract is expressed as script flags (`--dry-run`, an explicit
+  `--apply` opt-in, `--edit` for changes to existing items); the outputs are durable RIS/report artifacts, not
+  ephemeral tool calls.
+- Every read is live: the duplicate guard sees what the client saved a second
+  ago, where a sqlite snapshot of a running client could lag it.
+- Reads and writes need Zotero running. The helper launches it when it is
+  not (never in a container or headless runner, nor with `ZOTERO_NO_LAUNCH`
+  set) and waits up to 90 s; when it
+  still does not answer, the helper stops the client it launched, the
+  command does nothing, exits 75 (`EX_TEMPFAIL`),
+  and `reconcile` reports verdict `zotero_unavailable` with exit 0 so an
+  unattended sweep reads it as a clean no-op. Autonomous sessions in a
+  container therefore never audit or reconcile.
+- Zotero 10 reports each stored file's md5 in the item JSON; with Zotero 7 to
+  9 the helper hashes a stored file only when its size equals a compared
+  file's. Listing the attachments of a large library on Zotero 10 makes the
+  client hash every stored file, which may take a while on a cold disk cache:
+  not measured yet (no running client on the build host).
 
-Stdlib HTTP over a wrapper library is likewise the current choice, not a rule:
-`pyzotero` (v1.15.x) reaches the Web API *and* the local API (`local=True`), ships
-a CLI, and an optional MCP server — a legitimate alternative transport for a
-future skill that wants its maintenance offloaded.
+The helper uses `pyzotero` (1.16) in local mode for every read and write, so it
+hand-rolls no Zotero interface. Writes need a key: on the first write, or on a
+401, Zotero shows an Allow / Always Allow / Deny dialog; only an "Always Allow"
+key is stored. A one-time "Allow" key covers one keyed write, too few to store
+a PDF (attachment item, upload authorization, upload registration) or to run a
+batch, so for those the helper asks before the first write and refuses an
+"Allow" answer, writing nothing. An attachment counts as a stored file only
+when Zotero reports its md5 or size: Zotero sends a file URL for every
+stored-file attachment, one created without its file included.
 
 An MCP server (recommended overlay: **Zoteus** — see Annex A) is useful for
 interactive HITL retrieval: search, PDF passages, CSL citations, add-by-DOI.
 It never appears in a skill's correctness path.
 
-**Credentials**: `~/.config/keys/<project>.env` as `KEY=VALUE`.
-
 ### 6. Multi-library access
 
-Own library: `users/{uid}`, writes allowed.
-
-Foreign group (Base R2DS, archiveCIRED group): `groups/{gid}`, **read-only**. Group-scoped API key required. Writes are always guarded to `users/{uid}`. Validate library string format early; fail fast on malformed input.
+The default destination and dedup scope is the user library. `inject --library
+<groupID>` or `--collection <key>` targets another editable library, e.g. a
+group the author can write to: the item is created directly in the target library (the collection's own
+library for `--collection`), whatever the Zotero window shows. A
+read-only group cannot be a destination. Validate the library selector early;
+fail fast on malformed input.
 
 ---
 
@@ -97,11 +120,11 @@ Foreign group (Base R2DS, archiveCIRED group): `groups/{gid}`, **read-only**. Gr
 
 Every mutating skill must:
 
-1. Fetch and save current state to `outputs/zotero-backups/<skill>-<ISO8601>.json` before writing.
-2. Output a RIS file of desired state; never write directly.
-3. Apply with `If-Unmodified-Since-Version` — reject on concurrent edit.
-4. Dry-run by default; `--apply` requires the backup path.
-5. In autonomous/background sessions: auto-apply only high-confidence changes; write low-confidence proposals to the RIS ledger and stop. Never block waiting for input.
+1. Never edit an existing item unless `--edit` is passed (`enrich`, `attach`, `reconcile --apply --edit`); without it the helper changes no stored item, so there is nothing to back up.
+2. Output a RIS file of the items it creates, kept even when creation succeeds.
+3. Edits to existing items are reported (item key, field, old → new) by default; they are written only with `--edit`, or applied by the author in the client.
+4. Preview before creating (`inject --dry-run`); unattended creation requires the project opt-in (`reconcile --apply` with `.zotero-reconcile.json`).
+5. In autonomous/background sessions: create only high-confidence new items; write low-confidence proposals to a RIS proposal file and stop. Never block waiting for input.
 
 ---
 
@@ -111,23 +134,23 @@ One skill named `zotero`, verbs as arguments — the command surface mirrors the
 
 | verb | does | backed by (today) |
 |---|---|---|
-| `import <pdf-or-url>...` | file or URL intake → new items with attachments | `inject`, `probe`, `match`, `sync-index`; URL probing via `probe-url.py` |
-| `enrich` | fill missing fields on existing items | `enrich`, `write` |
+| `import <pdf-or-url>...` | file or URL intake → new items with attachments | `inject`, `probe`, `match`; URL probing via `probe-url.py` |
+| `enrich` | report missing fields on existing items | `enrich` |
 | `audit` | report staging ↔ library drift | `audit` |
 | `reconcile` | repair the correspondence | `reconcile` |
 | `dedup-report` | hash-dedup report, library against itself | `dedup-report` (ticket 0485) |
-| `attach` | attachment upload to existing stubs | `attach` (MR #760); declared, created on first need |
+| `attach` | by-hand attachment of a file to an existing stub | `attach` (reports only since ticket 1113) |
 
 This surface ships as one skill — `zotero` (ticket 1018, landed 2026-10-03), driving `scripts/zotero.py`. The former two skills — zotero-import (file intake) and index-source (URL intake) — are consolidated into it. A URL is an input to `import`, not a separate verb or skill.
 
-The dedup cascade consults keys strongest-first — file content hash (`storageHash`), then persistent identifier (DOI, ISBN, arXiv, handle), then attachment filename, then first-author/year/normalised-title, with title Jaccard as last resort — and stops at the first key that fires. Scope defaults to the **user library**, since that is where `inject` writes; a copy sitting in a read-only group library does not count as already present. The verdict distinguishes `match` / `ambiguous` / `none` / `unchecked`, so "found nothing" and "could not look" stay apart. The RIS file is still written as the durable artifact and remains the fallback when no read-write key resolves.
+The dedup cascade consults keys strongest-first — file content hash (`storageHash`), then persistent identifier (DOI, ISBN, arXiv, handle), then attachment filename, then first-author/year/normalised-title, with title Jaccard as last resort — and stops at the first key that fires. Scope defaults to the **user library**, since that is where `inject` writes; a copy sitting in a read-only group library does not count as already present. The verdict distinguishes `match` / `ambiguous` / `none` / `unchecked`, so "found nothing" and "could not look" stay apart. The RIS file is still written as the durable artifact and remains the fallback when Zotero is not running.
 
 ## Vocabulary
 
 - **Zotero management** (formerly "EDM") — the discipline in `rules/zotero.md` is Zotero-specific: source documents, notes, and project `.bib` files are all staging flowing into Zotero, the system of record. The bare acronym EDM (elsewhere: Electronic Dance Music) is retired. Exception — the publications register: `Ha-Duong.bib` is its own master with Zotero downstream (decision 1); project `refs.bib` files are staging, `Ha-Duong.bib` is not.
 - **import** — intake into the library; a URL is an input, not a distinct concept. **index** is reserved for retrieval indexing — search-works-for-zotero's lane.
 - **hash-dedup report** — the attachment-content-hash duplication audit (`dedup-report`); "dedup" alone is ambiguous.
-- **attachment upload** — the `attach` capability; "attach" alone is a generic verb.
+- **attachment** — the `attach` capability: filing a document under an existing item; "attach" alone is a generic verb.
 
 Prose names a skill's operation precisely; command names stay as they are, scoped by the script or skill that carries them.
 
@@ -138,13 +161,13 @@ Prose names a skill's operation precisely; command names stay as they are, scope
 | Capability | Use case | Trigger |
 |---|---|---|
 | **Lint** — normalize field formats (date ISO 8601, DOI prefix, pages en-dash, language code) | archiveCIRED | First normalization ticket |
-| **Enrich** — fill missing fields from CrossRef / HAL / OpenAlex; outputs RIS | archiveCIRED | Unbacked — file on demand |
-| ~~**Upload PDF**~~ — attach local archive files to existing Zotero stubs (authorize → multipart → register, idempotent on md5) | archiveCIRED | **Done 2026-08-19** — `zotero.py attach --parent <itemKey> <file>...` (MR #760, delivered under the backend's former name). Exposes the three-step upload `upload_attachment()` already implemented; the repair for an `audit` verdict of `work_present_no_file`, where `inject` would mint a duplicate. |
+| **Enrich** — fill missing fields from CrossRef / HAL / OpenAlex; outputs suggested edits, written only with `--edit` | archiveCIRED | Unbacked — file on demand |
+| ~~**Upload PDF**~~ — attach local archive files to existing Zotero stubs (authorize → multipart → register, idempotent on md5) | archiveCIRED | **Done 2026-08-19, reduced 2026-10-15** — `zotero.py attach --parent <itemKey> <file>...` (MR #760). The repair for an `audit` verdict of `work_present_no_file`, where `inject` would mint a duplicate. Since ticket 1113 it checks the item and the file and reports the attachment; `--edit` stores it through the local API (Zotero 10.0 or later). |
 | **Find PDF** — Unpaywall lookup + attach; jurisdiction gate before grey-web | archiveCIRED | Unbacked — file on demand |
 | **OCR** — scanned PDF → text attachment via Mistral | archiveCIRED | Unbacked — file on demand |
 | **Export** — filtered CSL-JSON or RIS by collection/tag/year | CIRED.digital, activity report | RAG schema finalized or report cycle starts |
 | **Key sync** — import `Ha-Duong.bib` citation keys into Zotero Extra field | Publications list | Next homepage refresh; `update-publist` is the sanctioned write path |
-| **Dedup** — candidate pairs + HITL merge; auto-apply hash- and DOI-exact matches only | archiveCIRED, publications list | **Triggered 2026-08-14** — ticket 0485. See also ticket 0570: the same 269 clusters make `classify_matches()`'s untie-broken `exact` tier report one parent and drop the rest in silence. 269 clusters where one file md5 sits under distinct parents in the user library, none of them visible to Zotero's own Duplicate Items pane (it matches title/DOI/ISBN + creators + year, same item type, and never the file hash). Detection reads the local DB; the **merge belongs to the desktop client** — the Web API has no merge endpoint, and a Zotero merge is a client-side composite (move children, union collections and tags, trash the losers, write `dc:replaces` on the master; the library already carries 436 such relations). Ticket 0485 closed 2026-10-02: detector and report delivered and live-validated, sample arbitrated; residue — author merges in the client, right-click → Merge n Items. |
+| **Dedup** — candidate pairs + HITL merge; auto-apply hash- and DOI-exact matches only | archiveCIRED, publications list | **Triggered 2026-08-14** — ticket 0485. See also ticket 0570: the same 269 clusters make `classify_matches()`'s untie-broken `exact` tier report one parent and drop the rest in silence. 269 clusters where one file md5 sits under distinct parents in the user library, none of them visible to Zotero's own Duplicate Items pane (it matches title/DOI/ISBN + creators + year, same item type, and never the file hash). Detection reads the library through the local API; the **merge belongs to the desktop client** — no programmatic surface has a merge endpoint, and a Zotero merge is a client-side composite (move children, union collections and tags, trash the losers, write `dc:replaces` on the master; the library already carries 436 such relations). Ticket 0485 closed 2026-10-02: detector and report delivered and live-validated, sample arbitrated; residue — author merges in the client, right-click → Merge n Items. |
 
 Each capability rides one backend script; the library capability is the
 one `zotero` skill (verbs, reference files), no shared framework beyond the
@@ -171,7 +194,7 @@ Perishable inventory: tool names and versions rot; re-verify before relying on a
 - danielostrow/zotero-mcp-server, cookjohn, lit-lake, pyzotero's built-in optional MCP — smaller or less current.
 
 **Python libraries**
-- **pyzotero** (canonical, active) — Web API + local API (`local=True`), CLI, optional MCP server; one dependency covering three frontends.
+- **pyzotero** (canonical, active) — cloud and local API (`local=True`), CLI, optional MCP server; one dependency covering three frontends.
 - pyzolocal (local sqlite) — stale.
 
 **CLI clients**
@@ -179,7 +202,7 @@ Perishable inventory: tool names and versions rot; re-verify before relying on a
 - 54yyyu's `zotero-cli`; older edtechhub/jbaiter clients (web-API era, stale).
 
 **Web clients**
-- Raw HTTP against Web API v3 — what the harness scripts do.
+- Raw HTTP against the desktop connector — not used by the harness scripts since ticket 1113.
 - Zotero's translation-server for identifier→metadata lookups.
 
 **Semantic retrieval** is search-works-for-zotero's lane (`~/CNRS/code/search-works-for-zotero`): requirements, experiments, and upstream contributions toward semantic search in Zotero. The harness builds nothing there and consumes the result through whatever transport wins.
