@@ -59,19 +59,21 @@ off until the author enables Zotero Settings > Advanced > "Allow other
 applications on this computer to communicate with Zotero"; until then the
 helper fails and names that setting. `ZOTERO_CONNECTOR_URL` points it at
 another loopback port; if something other than Zotero answers there, the
-error says so and names both the variable and the setting. Reads need Zotero 7 or later, writes
-Zotero 10.0 or later.
+error says so and names both the variable and the setting. The helper needs
+Zotero 10 or later, reads and writes alike, and refuses an older client by
+name. Lookups ask Zotero's own search for each key; no command but
+`report-duplicates` reads the whole library. A read Zotero does not finish in
+time is reported as such (`zotero: "slow"`, verdict `zotero_slow` in
+`check-staging`, exit 74), never as Zotero unavailable.
 
 Writes go through the same local API with a local API key, kept as
 `ZOTERO_LOCAL_API_KEY=` in `~/.config/keys/zotero-local.env` (mode 600;
 `ZOTERO_LOCAL_KEY_FILE` overrides the path) and never printed. On the first
 write without a key, or on a 401, Zotero shows an Allow / Always Allow / Deny
-dialog and the helper waits up to 120 s for the answer. **Tell the user to
-answer "Always Allow"**: only that key is stored. A one-time "Allow" key covers
-one keyed write, and storing a PDF takes three (attachment item, upload
-authorization, upload registration), a batch one per write: for those the
-helper asks before writing anything and refuses an "Allow" answer, so nothing
-is written. An attachment counts as a stored file only when Zotero reports its
+dialog and the helper waits up to 120 s for the answer, before writing
+anything. **Tell the user to answer "Always Allow"**: the helper accepts and
+stores only that key. A one-time "Allow" answer is refused and nothing is
+written. An attachment counts as a stored file only when Zotero reports its
 md5 or size.
 `create-items` creates new items and uploads their PDFs; `create-items
 --dry-run` also needs Zotero running, because field placement uses the live schema. When Zotero is not running the helper

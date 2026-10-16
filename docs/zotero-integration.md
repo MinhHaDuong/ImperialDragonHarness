@@ -83,19 +83,19 @@ day):
   and `check-staging` reports verdict `zotero_unavailable` with exit 0 so an
   unattended sweep reads it as a clean no-op. Autonomous sessions in a
   container therefore never check staging.
-- Zotero 10 reports each stored file's md5 in the item JSON; with Zotero 7 to
-  9 the helper hashes a stored file only when its size equals a compared
-  file's. Listing the attachments of a large library on Zotero 10 makes the
-  client hash every stored file, which may take a while on a cold disk cache:
-  not measured yet (no running client on the build host).
+- Zotero 10 is the floor for the whole helper (decided 2026-10-16, ticket
+  1116): its item JSON reports each stored file's md5, and its local API
+  takes writes. Lookups ask Zotero's own search (`q`, `qmode=everything`)
+  per key and check the md5 of each work found, so only `report-duplicates`
+  lists every attachment, which makes the client hash every stored file: not
+  measured on the author's library yet. A read Zotero does not finish in
+  time is its own verdict (`zotero_slow`, exit 74), never "unavailable".
 
 The helper uses `pyzotero` (1.16) in local mode for every read and write, so it
 hand-rolls no Zotero interface. Writes need a key: on the first write, or on a
-401, Zotero shows an Allow / Always Allow / Deny dialog; only an "Always Allow"
-key is stored. A one-time "Allow" key covers one keyed write, too few to store
-a PDF (attachment item, upload authorization, upload registration) or to run a
-batch, so for those the helper asks before the first write and refuses an
-"Allow" answer, writing nothing. An attachment counts as a stored file only
+401, Zotero shows an Allow / Always Allow / Deny dialog; the helper accepts and
+stores only an "Always Allow" key (ticket 1116), and refuses a one-time
+"Allow" answer before writing anything. An attachment counts as a stored file only
 when Zotero reports its md5 or size: Zotero sends a file URL for every
 stored-file attachment, one created without its file included.
 
@@ -142,7 +142,7 @@ Ticket 1116 (2026-10-16) gave every subcommand a name that says what it does, wi
 
 This surface ships as one skill — `zotero` (ticket 1018, landed 2026-10-03), driving `scripts/zotero.py`. The former two skills — zotero-import (file intake) and index-source (URL intake) — are consolidated into it. A URL is an input to `import`, not a separate verb or skill.
 
-The dedup cascade consults keys strongest-first — file content hash (`storageHash`), then persistent identifier (DOI, ISBN, arXiv, handle), then attachment filename, then first-author/year/normalised-title, with title Jaccard as last resort — and stops at the first key that fires. Scope defaults to the **user library**, since that is where `create-items` writes; a copy sitting in a read-only group library does not count as already present. The verdict distinguishes `match` / `ambiguous` / `none` / `unchecked`, so "found nothing" and "could not look" stay apart. When Zotero is not running, nothing is created and the command says so.
+The duplicate lookup asks Zotero's own search, key by key, strongest first — persistent identifier (DOI, ISBN, arXiv, handle), then the first author's works scored for title similarity with rapidfuzz — and stops at the first key that fires; each work found is checked for a stored file with the same md5 (`storageHash`), which makes the hit exact (ticket 1116 replaced the in-memory cascade over a whole-library read, and dropped its attachment-filename key: Zotero's search does not see attachment filenames). Scope defaults to the **user library**, since that is where `create-items` writes; a copy sitting in a read-only group library does not count as already present. The verdict distinguishes `match` / `ambiguous` / `none` / `unchecked`, so "found nothing" and "could not look" stay apart. When Zotero is not running, nothing is created and the command says so.
 
 ## Vocabulary
 

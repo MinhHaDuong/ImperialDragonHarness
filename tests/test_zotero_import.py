@@ -164,57 +164,38 @@ def test_a_cited_works_doi_deep_in_the_page_is_not_the_documents_own():
 
 
 @contextlib.contextmanager
-def listener():
-    """A loopback port that accepts connections and counts them."""
-    sock = socket.socket()
-    sock.bind(("127.0.0.1", 0))
-    sock.listen(8)
-    sock.settimeout(0.2)
+def connections(monkeypatch):
+    """Every socket connection this process attempts, recorded (and let
+    through): the probe for "contacts nothing"."""
     seen = []
-    stop = threading.Event()
+    real = socket.socket.connect
 
-    def accept():
-        while not stop.is_set():
-            try:
-                conn, _ = sock.accept()
-            except OSError:
-                continue
-            seen.append(conn)
-            conn.close()
+    def connect(self, address):
+        seen.append(address)
+        return real(self, address)
 
-    thread = threading.Thread(target=accept, daemon=True)
-    thread.start()
-    try:
-        yield sock.getsockname()[1], seen
-    finally:
-        stop.set()
-        thread.join()
-        sock.close()
+    monkeypatch.setattr(socket.socket, "connect", connect)
+    yield seen
 
 
 @pytest.mark.integration
 def test_extract_metadata_never_contacts_zotero(tmp_path, monkeypatch, capsys):
-    """Extraction is input-format dependent and never needs Zotero: with a
-    listener on the Zotero URL, it reads the PDF and connects to nothing.
-    poppler is stubbed: CI runners have none, and this test is about the
-    network, not the PDF reader."""
+    """Extraction is input-format dependent and never needs Zotero: it
+    reads the PDF (poppler runs in a child process) and this process opens
+    no connection."""
     pdf = make_pdf(tmp_path / "paper.pdf", ["A Study of Things", "by Smith",
                                             "doi: 10.2222/own.2"])
-    monkeypatch.setattr(zi, "pdfinfo", lambda p: {"Pages": "1"})
-    monkeypatch.setattr(zi, "pdftotext_range", lambda p, a, b:
-                        "A Study of Things\nby Smith\ndoi: 10.2222/own.2\n")
-    with listener() as (port, seen):
-        monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{port}")
+    with connections(monkeypatch) as seen:
         rc = zi.cmd_extract_metadata(argparse.Namespace(pdf=[str(pdf)]))
-        # Positive control: the same URL does receive a lookup's request.
+        assert seen == []
+        # Positive control: a lookup's first step does try to connect.
         assert zi.zotero_answers(timeout=0.5) is False
-        time.sleep(0.3)
+        assert len(seen) == 1
     assert rc == 0
     (item,) = json.loads(capsys.readouterr().out)["items"]
     assert item["identifiers"]["doi"] == "10.2222/own.2"
     assert "A Study of Things" in item["first_pages_text"]
     assert "zotero_matches" not in item
-    assert len(seen) == 1, "only the control's request reached the listener"
 
 
 def test_extract_metadata_reports_a_missing_pdf(tmp_path, capsys):
@@ -360,163 +341,7 @@ def test_last_first_single_token_unchanged():
     assert zi.last_first("Plato") == "Plato"
 
 
-# ── the matcher over one library read ────────────────────────────────────────
-
-
-# File bytes whose md5 the fixture library reports for an attachment.
-SCAN_BYTES = b"scanned book pdf bytes"
-CONTROL_BYTES = b"positive control pdf bytes"
-
-
-def _matches(result):
-    return result["matches"]
-
-
-def _w(key, title, date="", creators=(), **fields):
-    base = {"key": key, "itemType": "journalArticle", "title": title,
-            "date": date, "creators": list(creators), "DOI": "", "ISBN": "",
-            "url": "", "extra": "", "archiveID": "", "number": ""}
-    base.update(fields)
-    return base
-
-
-def _a(key, parent, filename, md5=None, title=""):
-    return {"key": key, "parent": parent, "filename": filename, "md5": md5,
-            "contentType": "application/pdf", "linkMode": "imported_file",
-            "title": title, "path": None, "size": None}
-
-
-def _build_library():
-    """A user-library read carrying the keys whose absence used to hide the
-    matcher's defects: the attachment hash (content key), the attachment
-    filename, and the first creator (author-year-title key)."""
-    md5 = lambda b: hashlib.md5(b).hexdigest()  # noqa: E731
-    works = [
-        _w("K10", "Deep Learning for Climate", "2020-05-01", DOI="10.1/x"),
-        _w("K11", "Shallow Trees for Weather", "2019"),
-        # garbage metadata: only attachment evidence can recognise it
-        _w("K50", "Untitled scan 0001"),
-        _w("K60", "Anarchy, State, and Utopia", "1974", ("Nozick",)),
-        _w("K61", "Convex Analysis", "1970"),
-        _w("K62", "Convex Analysis", "1993"),
-        _w("K70", "Handbook of Something", "2016", ISBN="978-0-13-468599-1"),
-        _w("K80", "Positive Control Canary", "2021", DOI="10.9/control"),
-        _w("K90", "An Arxiv Preprint", extra="arXiv:2401.01234"),
-        _w("K91", "A Handle Report", url="https://hdl.handle.net/2027/abc"),
-    ]
-    attachments = [
-        _a("K20", "K10", "paper.pdf"),
-        # a child attachment whose title equals K10's: never a work
-        _a("K30", "K11", "child.pdf", title="Deep Learning for Climate"),
-        _a("K51", "K50", "convex-analysis-1970.pdf", md5(SCAN_BYTES)),
-        _a("K81", "K80", "control.pdf", md5(CONTROL_BYTES)),
-    ]
-    return {"works": works, "attachments": attachments, "library_id": "user",
-            "account": "1", "zotero": "memory", "source": zi.LIBRARY_SOURCE}
-
-
-def test_doi_exact_match():
-    res = zi.library_matches(_build_library(), doi="10.1/X", year="2020",
-                             pdf_path=Path("paper.pdf"))
-    (m,) = _matches(res)
-    assert m["key"] == "K10" and m["why"] == ["doi"]
-    assert m["certainty"] == "exact"
-    assert res["verdict"] == "match"
-
-
-def test_no_hit_is_none_not_unchecked():
-    res = zi.library_matches(_build_library(), doi="10.9/nope",
-                             pdf_path=Path("x.pdf"))
-    assert _matches(res) == []
-    # Keys were consulted and found nothing — distinguishable from "unchecked".
-    assert res["verdict"] == "none"
-    assert res["consulted"]
-
-
-# ── attachment evidence as a primary candidate source ────────────────────────
-
-
-def test_pdf_recognised_by_content_hash_without_any_metadata(tmp_path):
-    """A scanned PDF under garbage metadata is found by its content alone."""
-    pdf = tmp_path / "anything.pdf"
-    pdf.write_bytes(SCAN_BYTES)
-    res = zi.library_matches(_build_library(), pdf_path=pdf)
-    matches = _matches(res)
-    assert [m["key"] for m in matches] == ["K50"]
-    assert matches[0]["why"] == ["storageHash"]
-    assert matches[0]["certainty"] == "exact"
-    assert res["verdict"] == "match"
-
-
-def test_pdf_recognised_by_filename_without_title_score():
-    res = zi.library_matches(_build_library(),
-                             pdf_path=Path("convex-analysis-1970.pdf"))
-    matches = _matches(res)
-    assert [m["key"] for m in matches] == ["K50"]
-    assert matches[0]["why"] == ["filename"]
-    assert matches[0]["certainty"] == "strong"
-    assert res["verdict"] == "match"
-
-
-def test_parentless_attachment_stands_for_itself(tmp_path):
-    pdf = tmp_path / "loose.pdf"
-    pdf.write_bytes(b"loose file")
-    idx = _build_library()
-    idx["attachments"].append(_a("K99", None, "loose.pdf",
-                                 hashlib.md5(b"loose file").hexdigest(),
-                                 title="Loose PDF"))
-    (m,) = _matches(zi.library_matches(idx, pdf_path=pdf))
-    assert m["orphan_attachment"] == "K99" and m["key"] is None
-
-
-# ── cascade: (first author, year, title) — the pre-DOI book case ────────────
-
-
-@pytest.mark.parametrize("author", ["Robert Nozick", "Nozick, Robert", "Nozick"])
-def test_predoi_book_recognised_despite_casing_and_punctuation(author):
-    """A book with no DOI, already present under different casing and
-    punctuation, is a strong match through the creator-year-title key, the
-    author given in any form."""
-    res = zi.library_matches(_build_library(), title="anarchy state and utopia",
-                             year="1974", first_author=author)
-    matches = _matches(res)
-    assert [m["key"] for m in matches] == ["K60"]
-    assert matches[0]["why"] == ["creator-year-title"]
-    assert matches[0]["certainty"] == "strong"
-    assert res["verdict"] == "match"
-
-
-def test_no_keys_at_all_reports_unchecked_not_none():
-    """"Found nothing" and "could not look" must stay distinguishable."""
-    res = zi.library_matches(_build_library())
-    assert _matches(res) == []
-    assert res["verdict"] == "unchecked"
-    assert res["consulted"] == []
-    assert res["skipped"]  # every stage states why it could not look
-
-
-# ── positive control ─────────────────────────────────────────────────────────
-
-
-def test_positive_control_canary_always_found(tmp_path):
-    """Known-positive that must surface on every run, through each source."""
-    idx = _build_library()
-    by_doi = zi.library_matches(idx, doi="10.9/control")
-    assert [m["key"] for m in _matches(by_doi)] == ["K80"]
-    assert by_doi["verdict"] == "match"
-
-    pdf = tmp_path / "unrelated-name.pdf"
-    pdf.write_bytes(CONTROL_BYTES)
-    by_hash = zi.library_matches(idx, pdf_path=pdf)
-    assert [m["key"] for m in _matches(by_hash)] == ["K80"]
-    assert by_hash["verdict"] == "match"
-
-    by_name = zi.library_matches(idx, pdf_path=Path("control.pdf"))
-    assert [m["key"] for m in _matches(by_name)] == ["K80"]
-    assert by_name["verdict"] == "match"
-
-
-# ── Zotero API item mapping (inject) ─────────────────────────────────────────
+# ── Zotero API item mapping (create-items) ───────────────────────────────────
 
 
 def test_author_to_creator_splits_first_last():
@@ -914,7 +739,6 @@ def test_known_entry_keys_pass_validation():
                                  pdf="/tmp/x.pdf", attach_pdf=True)])
 
 
-
 @pytest.mark.integration
 def test_zotero_schema_snapshot_matches_the_real_client(use_live):
     """Drift guard: the snapshot the pure tests use against a real client's
@@ -1050,104 +874,6 @@ def test_enrich_status_nonzero_on_a_missing_item():
 
 # A well-formed item key no library holds.
 ABSENT_KEY = "ZZZZ2222"
-
-
-@pytest.mark.integration
-def test_read_library_builds_the_snapshot_from_the_local_api(use_live, tmp_path):
-    title, first, second, doi = (unique_title(), unique_surname(),
-                                 unique_surname(), unique_doi())
-    pdf = paper_pdf(tmp_path, title, first)
-    key = use_live.save(title, creators=(first, second), pdf=pdf, DOI=doi,
-                        date="1999-07-01", notes=("a child note",))
-    children = use_live.children(key)
-    (note,) = [c for c in children if c["data"]["itemType"] == "note"]
-    (att,) = [c for c in children if c["data"]["itemType"] == "attachment"]
-    lib = zi.read_library()
-    works = {w["key"]: w for w in lib["works"]}
-    work = works[key]
-    assert work["creators"] == [first, second]
-    assert work["DOI"] == doi and work["ISBN"] == ""
-    assert work["date"] == "1999-07-01" and work["title"] == title
-    assert note["key"] not in works, "a note is not a work"
-    atts = {a["key"]: a for a in lib["attachments"]}
-    assert note["key"] not in atts
-    record = atts[att["key"]]
-    stored = Path(record["path"])
-    assert record == {
-        "key": att["key"], "parent": key, "title": pdf.name,
-        "filename": pdf.name,
-        "md5": hashlib.md5(pdf.read_bytes()).hexdigest(),
-        "size": pdf.stat().st_size, "path": str(stored),
-        "contentType": "application/pdf", "linkMode": "imported_file",
-        "library": "user"}
-    # The stored copy, inside the throwaway data directory.
-    assert stored.read_bytes() == pdf.read_bytes()
-    assert stored.is_relative_to(use_live.data)
-    # Not signed in: the user library's JSON id is 0, which names no account.
-    assert lib["account"] is None and lib["library_id"] == "user"
-    assert lib["source"] == zi.LIBRARY_SOURCE and lib["zotero"] == use_live.url
-
-
-@pytest.mark.integration
-def test_read_library_reads_every_page(use_live, monkeypatch):
-    seeded = {use_live.save(unique_title()) for _ in range(5)}
-    whole = zi.read_library()
-    monkeypatch.setattr(zi, "PAGE", 2)
-    paged = zi.read_library()
-    keys = [w["key"] for w in paged["works"]]
-    assert len(keys) == len(set(keys)), "no page read twice"
-    assert set(keys) == {w["key"] for w in whole["works"]}
-    assert seeded <= set(keys)
-    assert ({a["key"] for a in paged["attachments"]}
-            == {a["key"] for a in whole["attachments"]})
-
-
-@pytest.mark.integration
-def test_a_live_read_matches_a_stored_file_end_to_end(use_live, tmp_path,
-                                                       monkeypatch):
-    """Positive control for the whole read path: local API -> read -> match.
-    Zotero 10 reports each stored file's md5, so only the probe is hashed."""
-    title = unique_title()
-    stored = paper_pdf(tmp_path, title, unique_surname())
-    key = use_live.save(title, pdf=stored)
-    probe = tmp_path / "local-copy-of-it.pdf"
-    probe.write_bytes(stored.read_bytes())
-    hashed = []
-    real = zi.file_md5
-    monkeypatch.setattr(zi, "file_md5", lambda p, *a: hashed.append(Path(p))
-                        or real(p, *a))
-    res = zi.library_matches(zi.read_library(), pdf_path=probe)
-    assert res["verdict"] == "match"
-    assert res["matches"][0]["key"] == key
-    assert res["matches"][0]["why"] == ["storageHash"]
-    assert res["source"] == zi.LIBRARY_SOURCE
-    assert hashed == [probe], "a reported md5 is trusted, never re-read"
-
-
-def test_unreported_md5_hashes_only_the_files_of_the_probes_size(
-        tmp_path, monkeypatch):
-    """Zotero 7-9 report no md5: the helper hashes a stored file only when
-    its size equals the probe's. Over an in-memory read of that shape."""
-    probe = tmp_path / "local-copy.pdf"
-    probe.write_bytes(b"%PDF stored bytes")
-    stored = tmp_path / "x.pdf"
-    stored.write_bytes(probe.read_bytes())
-    other = tmp_path / "other.pdf"
-    other.write_bytes(b"a file of another size entirely")
-    idx = {"works": [_w("WORK0010", "Stored Paper"), _w("WORK0011", "Other")],
-           "attachments": [
-               {**_a("ATTACH20", "WORK0010", "x.pdf"), "path": str(stored)},
-               {**_a("ATTACH21", "WORK0011", "other.pdf"), "path": str(other)}],
-           "library_id": "user", "account": None, "zotero": "memory",
-           "source": zi.LIBRARY_SOURCE}
-    hashed = []
-    real = zi.file_md5
-    monkeypatch.setattr(zi, "file_md5", lambda p, *a: hashed.append(Path(p).name)
-                        or real(p, *a))
-    res = zi.library_matches(idx, pdf_path=probe)
-    assert res["verdict"] == "match"
-    assert res["matches"][0]["key"] == "WORK0010"
-    assert "other.pdf" not in hashed and "x.pdf" in hashed
 
 
 @pytest.mark.integration
@@ -1307,7 +1033,8 @@ def test_a_key_dropped_part_way_reports_the_fileless_attachment(
     message says the attachment exists and may lack its file, never "nothing
     was written"; a later audit does not count that attachment as a file."""
     zotero = zotero_live.point_helper_at(one_time_zotero, monkeypatch)
-    key = zotero.save(unique_title(), creators=(unique_surname(),))
+    doi = unique_doi()
+    key = zotero.save(unique_title(), creators=(unique_surname(),), DOI=doi)
     key_file = tmp_path / "keys" / "zotero-local.env"
     key_file.parent.mkdir(mode=0o700)
     key_file.write_text(f"ZOTERO_LOCAL_API_KEY={zotero.one_time_key}\n")
@@ -1326,7 +1053,9 @@ def test_a_key_dropped_part_way_reports_the_fileless_attachment(
     assert f"attachment {child['key']} was created" in row["error"]
     assert "may lack its file" in row["error"]
     assert zi.NOTHING_WRITTEN not in row["error"]
-    assert key not in zi._library_views(zi.read_library())["parents_with_file"]
+    # A later lookup does not count that attachment as a stored file.
+    (match,) = zi.find_work(zi.libraries(), doi=doi)["matches"]
+    assert match["key"] == key and match["has_file"] is False
 
 
 @pytest.fixture(scope="session")
@@ -1377,58 +1106,35 @@ def test_a_throwaway_zotero_never_sees_the_authors_display(tmp_path, monkeypatch
     assert env["GDK_BACKEND"] == "x11"
 
 
-def test_an_always_allow_key_is_kept_and_a_one_time_key_is_not(
-        tmp_path, monkeypatch):
+def test_only_an_always_allow_key_is_accepted(tmp_path, monkeypatch):
     """Zotero's answer to its dialog, as pure logic: the dialog cannot be
     answered without a human, so the branches after it are tested here with
-    the answer Zotero sends, {"key", "remember"}, and a key file under tmp."""
-    key_file = tmp_path / "keys" / "zotero-local.env"
-    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(key_file))
-    z = zi.local_library()
-    zi.accept_key(z, {"key": "a" * 32, "remember": False}, lasting=False)
-    assert z.local_api_key == "a" * 32 and z.key_lasting is False
-    assert not key_file.exists(), "a one-time key is never stored"
-    zi.accept_key(z, {"key": "b" * 32, "remember": True}, lasting=True)
-    assert z.local_api_key == "b" * 32 and z.key_lasting is True
-    assert zi.stored_key() == "b" * 32
-    assert key_file.stat().st_mode & 0o777 == 0o600
-
-
-def test_a_one_time_key_is_refused_for_an_operation_of_several_writes(
-        tmp_path, monkeypatch):
+    the answer Zotero sends, {"key", "remember"}, and a key file under tmp.
+    A one-time "Allow" key is refused, kept nowhere and never used
+    (ticket 1116: "Always Allow" keys only)."""
     key_file = tmp_path / "keys" / "zotero-local.env"
     monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(key_file))
     z = zi.local_library()
     with pytest.raises(zi.KeyNotGranted, match="Always Allow") as exc:
-        zi.accept_key(z, {"key": "a" * 32, "remember": False}, lasting=True)
+        zi.accept_key(z, {"key": "a" * 32, "remember": False})
     assert str(exc.value).endswith(zi.NOTHING_WRITTEN)
-    assert z.local_api_key is None and not key_file.exists()
-    with pytest.raises(zi.KeyNotGranted, match="without its file"):
-        zi.accept_key(z, {"key": "a" * 32, "remember": False}, lasting=True,
-                      saved="attachment X was created under P without its file")
     assert "a" * 32 not in str(exc.value)
+    assert z.local_api_key is None and not key_file.exists()
+    with pytest.raises(zi.KeyNotGranted, match="may lack its file"):
+        zi.accept_key(z, {"key": "a" * 32, "remember": False},
+                      saved="attachment X was created under P and may lack "
+                            "its file")
+    zi.accept_key(z, {"key": "b" * 32, "remember": True})
+    assert z.local_api_key == "b" * 32
+    assert zi.stored_key() == "b" * 32
+    assert key_file.stat().st_mode & 0o777 == 0o600
 
 
-def test_an_attachment_without_its_file_is_not_a_stored_file():
-    """An imported attachment counts as a stored file only when Zotero shows
-    one: its md5 or its size. Zotero sends the enclosure URL (`path`) for
-    every stored-file attachment, so that alone is no evidence."""
-    def snapshot(**attachment):
-        return {"works": [{"key": "W1", "title": "A work", "DOI": "10.1/x",
-                           "creators": []}],
-                "attachments": [{"key": "A1", "parent": "W1",
-                                 "linkMode": "imported_file",
-                                 "contentType": "application/pdf",
-                                 "filename": "x.pdf", "md5": None,
-                                 "size": None, "path": "/s/A1/x.pdf",
-                                 **attachment}]}
-    (empty,) = zi.library_matches(snapshot(), doi="10.1/x")["matches"]
-    assert empty["has_file"] is False and empty["has_pdf"] is False
-    (stored,) = zi.library_matches(snapshot(md5="0" * 32),
-                                   doi="10.1/x")["matches"]
-    assert stored["has_file"] is True and stored["has_pdf"] is True
-    (sized,) = zi.library_matches(snapshot(size=1234), doi="10.1/x")["matches"]
-    assert sized["has_file"] is True, "Zotero 7-9 sends a size, not an md5"
+def test_no_one_time_key_code_is_left():
+    """Ticket 1116: the one-time-key path is deleted, not tested."""
+    text = (SCRIPTS / "zotero.py").read_text()
+    for gone in ("lasting", "key_lasting", "LocalLibrary"):
+        assert gone not in text, gone
 
 
 def test_the_key_file_is_private_and_never_printed(tmp_path, monkeypatch,
@@ -1703,53 +1409,6 @@ def test_container_detection(monkeypatch, marker, env, cgroup, expected):
 
 
 # --------------------------------------------------------------------------
-# Library snapshot: dedup over the in-memory library read.
-# --------------------------------------------------------------------------
-
-
-def _library(works=None, attachments=None):
-    return {"works": works or [], "attachments": attachments or [],
-            "library_id": "user", "account": "1", "zotero": "memory",
-            "source": zi.LIBRARY_SOURCE}
-
-
-def _work(key, title, date="1999", creators=("Artzner",), doi=""):
-    return {"key": key, "itemType": "journalArticle", "title": title,
-            "date": date, "DOI": doi, "ISBN": "", "url": "", "extra": "",
-            "creators": list(creators)}
-
-
-def _att(key, parent, filename="f.pdf", md5=None, ctype="application/pdf",
-         link="imported_file"):
-    return {"key": key, "parent": parent, "filename": filename, "md5": md5,
-            "contentType": ctype, "linkMode": link}
-
-
-def test_library_matches_content_hash_is_exact(tmp_path):
-    pdf = tmp_path / "paper.pdf"
-    pdf.write_bytes(b"%PDF-1.4 content")
-    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
-    idx = _library([_work("W1", "Coherent Measures of Risk")],
-                 [_att("A1", "W1", "paper.pdf", digest)])
-    res = zi.library_matches(idx, pdf_path=pdf)
-    assert res["verdict"] == "match"
-    assert res["matches"][0]["key"] == "W1"
-    assert res["matches"][0]["why"] == ["storageHash"]
-    assert res["matches"][0]["certainty"] == "exact"
-
-
-def test_library_matches_hash_beats_a_renamed_file(tmp_path):
-    """Content identity survives renaming."""
-    pdf = tmp_path / "MyOwnName-2024.pdf"
-    pdf.write_bytes(b"%PDF-1.4 body")
-    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
-    idx = _library([_work("W1", "Totally Different Recorded Title")],
-                 [_att("A1", "W1", "original-publisher-name.pdf", digest)])
-    res = zi.library_matches(idx, title="Totally Different Recorded Title", pdf_path=pdf)
-    assert res["matches"][0]["key"] == "W1"
-
-
-# --------------------------------------------------------------------------
 # Exact-tier ties (ticket 0570): two distinct records legitimately sharing one
 # attachment md5 — 269 such clusters measured in the user library
 # (docs/zotero-integration.md), none visible in Zotero's Duplicates pane.
@@ -1767,119 +1426,6 @@ def test_classify_matches_single_exact_still_matches():
     """The common case must not change (ticket 0570 invariant)."""
     assert zi.classify_matches([{"certainty": "exact"},
                                 {"certainty": "strong"}]) == "match"
-
-
-def _two_parent_library(pdf, md5s):
-    """Two records whose attachments carry the given md5 pair — the tie
-    fixture shared by the exact (same md5) and strong (same filename,
-    different md5) cases."""
-    return _library([_work("W1", "Working Paper Version"),
-                   _work("W2", "Journal Version")],
-                  [_att("A1", "W1", pdf.name, md5s[0]),
-                   _att("A2", "W2", pdf.name, md5s[1])])
-
-
-def test_library_matches_exact_md5_tie_names_both_parents(tmp_path):
-    pdf = tmp_path / "shared.pdf"
-    pdf.write_bytes(b"%PDF-1.4 same bytes")
-    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
-    idx = _two_parent_library(pdf, (digest, digest))
-    res = zi.library_matches(idx, pdf_path=pdf)
-    assert res["verdict"] == "ambiguous"
-    assert {m["key"] for m in res["matches"]} == {"W1", "W2"}
-
-
-def test_audit_exact_md5_tie_names_every_parent(tmp_path, monkeypatch):
-    """`identical` stays true — the file IS stored — but no tied parent may
-    disappear without a trace (neither in why nor in skipped)."""
-    pdf = tmp_path / "shared.pdf"
-    pdf.write_bytes(b"%PDF-1.4 same bytes")
-    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
-    idx = _two_parent_library(pdf, (digest, digest))
-    monkeypatch.setattr(zi, "_pdf_front_text", lambda p: "")
-    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
-    row = zi.audit_one(pdf, idx)
-    assert row["verdict"] == "identical"
-    named = {row["zotero_key"]} | {m["key"] for m in row.get("also_matches", [])}
-    assert named == {"W1", "W2"}
-
-
-def test_audit_strong_filename_tie_names_every_parent(tmp_path, monkeypatch):
-    """Same trap one tier down: two records with an equally-named attachment
-    leave matches[0] arbitrary — and `attach --parent` aimed at the wrong
-    one. Every tied parent is named."""
-    pdf = tmp_path / "paper.pdf"
-    pdf.write_bytes(b"%PDF-1.4 local bytes")
-    idx = _two_parent_library(pdf, ("md5-one", "md5-two"))
-    monkeypatch.setattr(zi, "_pdf_front_text", lambda p: "")
-    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
-    row = zi.audit_one(pdf, idx)
-    named = {row["zotero_key"]} | {m["key"] for m in row.get("also_matches", [])}
-    assert named == {"W1", "W2"}
-
-
-def test_library_matches_doi_exact():
-    idx = _library([_work("W1", "T", doi="10.1111/1467-9965.00068")])
-    res = zi.library_matches(idx, doi="10.1111/1467-9965.00068")
-    assert res["verdict"] == "match"
-    assert res["matches"][0]["why"] == ["doi"]
-
-
-def test_library_matches_doi_is_case_insensitive():
-    idx = _library([_work("W1", "T", doi="10.1111/ABC")])
-    assert zi.library_matches(idx, doi="10.1111/abc")["verdict"] == "match"
-
-
-def test_library_matches_creator_year_title():
-    idx = _library([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
-    res = zi.library_matches(idx, title="Coherent Measures of Risk", year="1999",
-                         first_author="Artzner")
-    assert res["verdict"] == "match"
-
-
-def test_library_matches_wrong_author_does_not_match():
-    idx = _library([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
-    res = zi.library_matches(idx, title="Coherent Measures of Risk", year="1999",
-                         first_author="Delbaen")
-    assert res["verdict"] == "none"
-
-
-def test_library_matches_empty_library_is_none_not_unchecked():
-    """A clean negative and a lookup that could not run are different answers."""
-    res = zi.library_matches(_library(), title="Some Long Distinctive Title Here",
-                         first_author="Nobody")
-    assert res["verdict"] == "none"
-    assert "creator-year-title" in res["consulted"]
-
-
-def test_library_matches_no_usable_key_is_unchecked():
-    res = zi.library_matches(_library([_work("W1", "T")]))
-    assert res["verdict"] == "unchecked"
-    assert res["consulted"] == []
-    assert res["skipped"]
-
-
-def test_library_matches_short_title_is_skipped_not_matched():
-    idx = _library([_work("W1", "On Growth", "1950", ("Solow",))])
-    res = zi.library_matches(idx, title="On Growth", first_author="Solow")
-    assert res["verdict"] == "unchecked"
-    assert any("too short" in s for s in res["skipped"])
-
-
-def test_library_matches_reports_missing_file_on_the_work():
-    """The present-but-no-file case is what `suggest-attachments` exists to repair."""
-    idx = _library([_work("W1", "Sraffa and von Neumann", "2001", ("Kurz",))], [])
-    res = zi.library_matches(idx, title="Sraffa and von Neumann", year="2001",
-                         first_author="Kurz")
-    assert res["matches"][0]["has_file"] is False
-
-
-def test_library_matches_linked_url_does_not_count_as_a_stored_file():
-    idx = _library([_work("W1", "Sraffa and von Neumann", "2001", ("Kurz",))],
-                 [_att("A1", "W1", "", None, "text/html", "linked_url")])
-    res = zi.library_matches(idx, title="Sraffa and von Neumann", year="2001",
-                         first_author="Kurz")
-    assert res["matches"][0]["has_file"] is False
 
 
 def test_filename_hints_parses_surnames_and_year():
@@ -1938,90 +1484,9 @@ def test_corroborate_is_accent_insensitive():
     assert out["confidence"] in ("corroborated", "weak")
 
 
-def test_library_views_separates_pdf_from_other_stored_files():
-    idx = _library([_work("W1", "T"), _work("W2", "U")],
-                 [_att("A1", "W1", "a.pdf", "d1", "application/pdf"),
-                  _att("A2", "W2", "b.docx", "d2",
-                       "application/vnd.openxmlformats-officedocument"
-                       ".wordprocessingml.document")])
-    v = zi._library_views(idx)
-    assert v["parents_with_pdf"] == {"W1"}
-    assert v["parents_with_file"] == {"W1", "W2"}
-
-
-def test_library_matches_scores_overlap_against_the_library_title():
-    """Extra document text may surface a true match, never manufacture one.
-
-    The denominator is the library title's own tokens, so a bigger bag of
-    document words cannot drag an unrelated item over the threshold.
-    """
-    idx = _library([_work("W1", "Method of Limits in the Theory of Index Numbers",
-                        "1969", ("Afriat",)),
-                  _work("W2", "An Entirely Unrelated Study of Something Else",
-                        "1969", ("Afriat",))])
-    res = zi.library_matches(idx, title="", year="1969", authors=["Afriat"],
-                         text="MethodOfLimits Index Numbers method of limits "
-                              "in the theory of index numbers")
-    assert [m["key"] for m in res["matches"]] == ["W1"]
-
-
-def test_library_matches_text_alone_is_enough_when_pdfinfo_title_is_junk():
-    """The real audit defect: pdfinfo reads 'PII: 0014-2921(69)90001-4'."""
-    idx = _library([_work("W1", "Methods of choosing equipment at "
-                              "Electricite de France", "1969", ("Bessiere",))])
-    junk = "PII: 0014-2921(69)90001-4"
-    res = zi.library_matches(idx, title=junk, year="1969", authors=["Bessiere"],
-                         text="Methods of choosing equipment at Electricite "
-                              "de France")
-    assert res["verdict"] == "match"
-
-
-def test_library_matches_no_title_and_no_text_is_unchecked():
-    idx = _library([_work("W1", "Anything At All Here", "1969", ("Afriat",))])
-    res = zi.library_matches(idx, year="1969", authors=["Afriat"])
-    assert res["verdict"] == "unchecked"
-    assert any("no title or text" in s for s in res["skipped"])
-
-
 # --------------------------------------------------------------------------
-# A title is a phrase, not a vocabulary. Scoring the whole document bag let
-# five ordinary words ("Systems of inequalities involving convex functions")
-# match any paper about linear inequalities — a real Hoffman 1960 paper was
-# filed as a different Hoffman paper at "strong".
+# The title block: where a title lives on page 1 (find-work's text evidence).
 # --------------------------------------------------------------------------
-
-
-def test_title_windows_group_consecutive_lines():
-    wins = zi._title_windows("Some Recent Applications\nof Linear Inequalities\nby Alan Hoffman")
-    joined = [w for w in wins if {"some", "recent", "applications"} <= w]
-    assert joined, "a single line must form a window"
-    assert any({"applications", "linear", "inequalities"} <= w for w in wins), \
-        "consecutive lines must form a window"
-
-
-def test_scattered_vocabulary_is_weak_not_strong():
-    idx = _library([_work("W1", "Systems of inequalities involving convex functions",
-                        "1957", ("Hoffman",))])
-    scattered = ("Some recent applications of the theory of linear\n"
-                 "inequalities to extremal combinatorial analysis\n"
-                 "by Alan J. Hoffman\n"
-                 "we consider systems of constraints\n"
-                 "the objective functions are convex\n"
-                 "involving several parameters\n")
-    res = zi.library_matches(idx, title="", year="1960", authors=["Hoffman"],
-                         text=scattered)
-    assert res["matches"], "the candidate should still surface"
-    assert res["matches"][0]["certainty"] == "weak"
-    assert res["verdict"] == "ambiguous"
-
-
-def test_title_on_one_line_is_strong():
-    idx = _library([_work("W1", "Systems of inequalities involving convex functions",
-                        "1957", ("Hoffman",))])
-    text = "Systems of inequalities involving convex functions\nby A. J. Hoffman"
-    res = zi.library_matches(idx, title="", year="1957", authors=["Hoffman"], text=text)
-    assert res["matches"][0]["certainty"] == "strong"
-    assert res["verdict"] == "match"
 
 
 def test_front_matter_keeps_only_the_title_block():
@@ -2032,59 +1497,6 @@ def test_front_matter_keeps_only_the_title_block():
 
 def test_front_matter_drops_blank_lines():
     assert zi._front_matter("\n\nA\n\n\nB\n", lines=2).splitlines() == ["A", "B"]
-
-
-def test_window_precision_separates_a_title_line_from_a_body_window():
-    """Same recall, different precision — only the title line is strong."""
-    idx = _library([_work("W1", "Systems of inequalities involving convex functions",
-                        "1957", ("Hoffman",))])
-    body = ("we consider systems of constraints\n"
-            "the objective functions are convex\n"
-            "involving several unrelated parameters\n")
-    title_line = "Systems of inequalities involving convex functions\n"
-    weak = zi.library_matches(idx, year="1957", authors=["Hoffman"], text=body)
-    strong = zi.library_matches(idx, year="1957", authors=["Hoffman"], text=title_line)
-    assert weak["matches"][0]["certainty"] == "weak"
-    assert strong["matches"][0]["certainty"] == "strong"
-
-
-def test_audit_verdicts_cover_every_certainty(tmp_path, monkeypatch):
-    """A weak hit must surface as `ambiguous`, never silently as `absent`."""
-    pdf = tmp_path / "Hoffman1960-x.pdf"
-    pdf.write_bytes(b"%PDF-1.4")
-    idx = _library([_work("W1", "Systems of inequalities involving convex functions",
-                        "1957", ("Hoffman",))])
-    monkeypatch.setattr(zi, "_pdf_front_text",
-                        lambda p: "we consider systems of constraints\n"
-                                  "the objective functions are convex\n"
-                                  "involving several unrelated parameters\n")
-    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
-    assert zi.audit_one(pdf, idx)["verdict"] == "ambiguous"
-
-
-def test_audit_verdict_absent_when_nothing_fires(tmp_path, monkeypatch):
-    pdf = tmp_path / "Nobody1999-x.pdf"
-    pdf.write_bytes(b"%PDF-1.4")
-    monkeypatch.setattr(zi, "_pdf_front_text", lambda p: "an unrelated document\n")
-    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
-    row = zi.audit_one(pdf, _library([_work("W1", "Something Else Entirely Here")]))
-    assert row["verdict"] == "absent"
-    assert row["consulted"], "absent must mean 'looked and found nothing'"
-
-
-def test_audit_verdict_identical_on_content_hash(tmp_path, monkeypatch):
-    pdf = tmp_path / "Any2020-x.pdf"
-    pdf.write_bytes(b"%PDF-1.4 unique bytes")
-    digest = hashlib.md5(pdf.read_bytes()).hexdigest()
-    idx = _library([_work("W1", "Whatever")], [_att("A1", "W1", "other.pdf", digest)])
-    monkeypatch.setattr(zi, "_pdf_front_text", lambda p: "")
-    monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
-    row = zi.audit_one(pdf, idx)
-    assert row["verdict"] == "identical"
-    # Ticket 0570 invariant: no also_matches key on the single-exact case.
-    assert "also_matches" not in row
-
-
 
 
 # --------------------------------------------------------------------------
@@ -2140,10 +1552,7 @@ def test_check_staging_one_unreadable_file_does_not_abort_the_batch(
     """Losing 288 rows because file 3 could not be read is the expensive
     failure: the unreadable file becomes an error, the others rows."""
     staging = tmp_path / "staging"
-    staging.mkdir()
-    names = [f"{uuid.uuid4().hex[:10]}.pdf" for _ in range(3)]
-    for name in names:
-        (staging / name).write_bytes(f"%PDF-1.4 {uuid.uuid4().hex}".encode())
+    names = [identifiable_pdf(staging).name for _ in range(3)]
     (staging / names[1]).chmod(0)
     out = tmp_path / "report.json"
     try:
@@ -2159,32 +1568,6 @@ def test_check_staging_one_unreadable_file_does_not_abort_the_batch(
     assert report["summary"]["absent"] == 2
     assert report["verdict"] == "unchecked"
     assert report["library"]["zotero"] == use_live.url
-
-
-def test_audit_one_reads_the_pdfinfo_title_of_a_scanned_pdf(
-        tmp_path, monkeypatch):
-    """pdfinfo reads container metadata; an empty text layer says nothing about it."""
-    pdf = tmp_path / "Artzner1999-x.pdf"
-    pdf.write_bytes(b"%PDF-1.4")
-    monkeypatch.setattr(zi, "_pdf_front_text", lambda p: "")
-    monkeypatch.setattr(zi, "pdfinfo",
-                        lambda p: {"Title": "Coherent Measures of Risk"})
-    idx = _library([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
-    row = zi.audit_one(pdf, idx)
-    assert row["verdict"] == "work_present_no_file"
-    assert row["zotero_key"] == "W1"
-
-
-def test_audit_one_survives_a_failing_pdfinfo(tmp_path, monkeypatch):
-    pdf = tmp_path / "Any1999-x.pdf"
-    pdf.write_bytes(b"%PDF-1.4")
-    monkeypatch.setattr(zi, "_pdf_front_text", lambda p: "")
-
-    def boom(p):
-        raise RuntimeError("pdfinfo timed out")
-
-    monkeypatch.setattr(zi, "pdfinfo", boom)
-    assert zi.audit_one(pdf, _library())["verdict"] == "absent"
 
 
 def test_corroborate_short_surname_does_not_match_inside_a_word():
@@ -2211,60 +1594,6 @@ def test_corroborate_title_with_no_usable_tokens_is_unchecked():
                          "an entirely unrelated document about turbines")
     assert out["confidence"] == "unchecked"
     assert out["reason"]
-
-
-def test_library_matches_reports_the_filename_key_as_skipped_without_a_pdf():
-    idx = _library([_work("W1", "Something Else Entirely Here")])
-    res = zi.library_matches(idx, title="A Totally Unrelated Long Title",
-                         first_author="Nobody")
-    assert any("filename" in s for s in res["skipped"])
-
-
-# --------------------------------------------------------------------------
-# library_matches must consult every persistent identifier key.
-# It once stopped at DOI, so an ISBN/arXiv/handle item fell through to weaker
-# keys: the silent negative the cascade exists to prevent.
-# --------------------------------------------------------------------------
-
-
-def _work_extra(key, title, extra="", url="", isbn=""):
-    w = _work(key, title)
-    w["extra"], w["url"], w["ISBN"] = extra, url, isbn
-    return w
-
-
-def test_library_matches_isbn_ignores_hyphenation():
-    idx = _library([_work_extra("W1", "A Book", isbn="978-0-262-03384-8")])
-    res = zi.library_matches(idx, isbn="9780262033848")
-    assert res["verdict"] == "match"
-    assert res["matches"][0]["why"] == ["isbn"]
-
-
-def test_library_matches_arxiv_from_extra():
-    idx = _library([_work_extra("W1", "A Preprint", extra="arXiv:2401.01234")])
-    res = zi.library_matches(idx, arxiv="2401.01234")
-    assert res["verdict"] == "match"
-    assert res["matches"][0]["why"] == ["arxiv"]
-
-
-def test_library_matches_arxiv_from_url():
-    idx = _library([_work_extra("W1", "A Preprint",
-                              url="https://arxiv.org/abs/2401.01234")])
-    assert zi.library_matches(idx, arxiv="2401.01234")["verdict"] == "match"
-
-
-def test_library_matches_handle_accepts_bare_or_full_url():
-    idx = _library([_work_extra("W1", "A Report",
-                              url="https://hdl.handle.net/10419/12345")])
-    for supplied in ("10419/12345", "https://hdl.handle.net/10419/12345"):
-        assert zi.library_matches(idx, handle=supplied)["verdict"] == "match", supplied
-
-
-def test_library_matches_reports_every_identifier_key_it_could_not_use():
-    """`skipped` must name each key, so "found nothing" stays legible."""
-    res = zi.library_matches(_library([_work("W1", "T")]), doi="10.1/x")
-    for label in ("isbn", "arxiv", "handle"):
-        assert any(s.startswith(label) for s in res["skipped"]), label
 
 
 def test_file_md5_matches_a_whole_file_read(tmp_path):
@@ -2298,7 +1627,6 @@ def test_corroborate_entry_flags_a_cited_works_metadata(tmp_path, monkeypatch):
 def test_corroborate_entry_without_a_pdf_is_unchecked():
     out = zi.corroborate_entry({"title": "T", "authors": ["A, B"]})
     assert out["confidence"] == "unchecked"
-
 
 
 def _inject_args(entries, **over):
@@ -2451,17 +1779,21 @@ def test_second_run_reads_the_library_afresh(use_live, tmp_path, capsys):
 
 @pytest.mark.integration
 @pytest.mark.parametrize("count,second", [(2, 1), (6, 5)])
-def test_inject_blocks_distinct_pdfs_with_same_doi_before_saving(
+def test_a_batch_creates_a_work_once_when_two_entries_share_a_doi(
         use_live, tmp_path, capsys, count, second):
+    """Entries are looked up and saved one at a time, live: the second
+    entry with the DOI finds the item the first one just created."""
     shared = unique_doi()
     entries = [_entry(tmp_path, doi=shared if n in (0, second) else unique_doi())
                for n in range(count)]
     assert zi.cmd_create_items(_inject_args(entries)) == 1
     out = json.loads(capsys.readouterr().out)
-    assert "same work" in out["results"][0]["error"]
-    assert "same work" in out["results"][second]["error"]
+    assert out["results"][0]["status"] == "created"
+    assert "duplicate" in out["results"][second]["error"]
+    assert out["results"][second]["matches"][0]["key"] == out["results"][0]["key"]
+    assert out["results"][second]["matches"][0]["why"] == ["doi"]
     created = {n for n, e in enumerate(entries) if use_live.titled(e["title"])}
-    assert created == set(range(count)) - {0, second}
+    assert created == set(range(count)) - {second}
 
 
 @pytest.mark.integration
@@ -2473,17 +1805,6 @@ def test_inject_allows_generic_title_when_author_or_year_differs(
     assert zi.cmd_create_items(_inject_args(entries)) == 0
     capsys.readouterr()
     assert len(use_live.titled(title)) == 2
-
-
-@pytest.mark.integration
-def test_inject_refuses_a_guard_read_of_another_library(use_live, tmp_path,
-                                                      capsys):
-    entry = _entry(tmp_path)
-    args = _inject_args([entry], _snapshot={"works": [], "attachments": [],
-                                            "library_id": "3"})
-    assert zi.cmd_create_items(args) == 1
-    assert "not the destination user" in json.loads(capsys.readouterr().out)["error"]
-    assert use_live.titled(entry["title"]) == []
 
 
 @contextlib.contextmanager
@@ -2547,7 +1868,8 @@ def test_no_request_goes_through_a_proxy(use_live, tmp_path, monkeypatch, capsys
         seen.clear()
 
         assert zi.ensure_zotero() == "running"
-        assert key in {w["key"] for w in zi.read_library("all")["works"]}
+        assert key in {w["key"] for w in zi.search_works(
+            zi.local_library(), "user", title)}
         assert zi.find_item(key)[1]["data"]["title"] == title
         assert zi.cmd_create_items(_inject_args([entry])) == 0
         assert json.loads(capsys.readouterr().out)["results"][0]["attachment"]
@@ -2587,7 +1909,6 @@ def test_check_staging_discovers_nonstandard_bib_and_orphans(tmp_path):
     assert found["errors"] == []
 
 
-
 def _reconcile_args(root, **over):
     base = dict(root=str(root), apply=False, out=None, library="user", dir=None)
     base.update(over)
@@ -2616,7 +1937,6 @@ def _staged_bib_paper(root, opt_in=OPT_IN, *, title=None, surname=None,
 
 def _quiet_pdf_tools(monkeypatch):
     monkeypatch.setattr(zi, "_pdf_front_text", lambda _: "")
-    monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda _: {})
 
 
@@ -2692,9 +2012,7 @@ def test_check_staging_empty_apply_checks_the_account(
 
 @pytest.mark.integration
 def test_check_staging_staged_file_reads_the_library(use_live, tmp_path, capsys):
-    (tmp_path / "docs").mkdir()
-    (tmp_path / "docs" / f"{uuid.uuid4().hex[:10]}.pdf").write_bytes(
-        f"staged {uuid.uuid4().hex}".encode())
+    identifiable_pdf(tmp_path / "docs")
     assert zi.cmd_check_staging(_reconcile_args(tmp_path)) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["verdict"] == "checked" and report["files"] == 1
@@ -2815,10 +2133,10 @@ def test_check_staging_apply_config_checks_the_account(tmp_path):
         zi.reconcile_apply_config(tmp_path, "2")
 
 
-def _apply(root, fresh, config=None):
-    """The apply step of a sweep, on a library read the caller made."""
+def _apply(root, config=None):
+    """The apply step of a sweep, into the user library."""
     found = zi.discover_reconcile_files(root)
-    return zi.reconcile_apply(root, found, fresh, config or json.loads(OPT_IN),
+    return zi.reconcile_apply(root, found, "user", config or json.loads(OPT_IN),
                               argparse.Namespace(library="user"))
 
 
@@ -2832,7 +2150,7 @@ def test_check_staging_apply_reports_fresh_match_on_no_write_replay(
     copy = tmp_path / "stored-copy.pdf"
     copy.write_bytes(pdf.read_bytes())
     key = use_live.save(title, creators=(surname,), pdf=copy)
-    report, rc = _apply(tmp_path, zi.read_library())
+    report, rc = _apply(tmp_path)
     assert rc == 0
     assert report["summary"] == {"identical": 1}
     assert report["rows"][0]["verdict"] == "identical"
@@ -2847,7 +2165,7 @@ def test_check_staging_apply_reports_fresh_match_on_no_write_replay(
 def test_check_staging_apply_imports_a_corroborated_absent_pdf(use_live, tmp_path):
     title, surname = unique_title(), unique_surname()
     pdf = _staged_bib_paper(tmp_path, title=title, surname=surname)
-    report, rc = _apply(tmp_path, zi.read_library())
+    report, rc = _apply(tmp_path)
     assert rc == 0
     assert report["summary"] == {"created": 1}
     assert report["apply_status"] == "applied"
@@ -2869,7 +2187,7 @@ def test_check_staging_apply_can_import_orphan_with_complete_pdf_metadata(
     paper_pdf(docs, title, f"Jane {surname}", info={
         "Title": title, "Author": f"Jane {surname}",
         "CreationDate": "D:20200101000000Z"})
-    report, rc = _apply(tmp_path, zi.read_library())
+    report, rc = _apply(tmp_path)
     assert rc == 0
     assert report["summary"] == {"created": 1}
     item = use_live.find(title)
@@ -2879,20 +2197,18 @@ def test_check_staging_apply_can_import_orphan_with_complete_pdf_metadata(
 
 
 def test_check_staging_apply_defers_orphan_without_metadata(tmp_path, monkeypatch):
-    """No metadata to corroborate: deferred, and with nothing to create the
-    apply never reaches Zotero (down here). Over an empty in-memory read."""
+    """Nothing to look it up by: unidentified, never absent, so nothing is
+    created; with no key, the lookup asks Zotero nothing (down here)."""
     docs = tmp_path / "docs"
     docs.mkdir()
     (docs / "orphan.pdf").write_bytes(b"unreadable scan")
     _quiet_pdf_tools(monkeypatch)
-    fresh = {"works": [], "attachments": [], "account": None,
-             "library_id": "user", "zotero": "memory", "source": zi.LIBRARY_SOURCE}
-    report, rc = _apply(tmp_path, fresh)
+    report, rc = _apply(tmp_path)
     assert rc == 0
-    assert report["summary"] == {"deferred": 1}
-    assert report["apply_status"] == "deferred"
-    assert report["deferred"] == [{"file": "docs/orphan.pdf",
-                                   "reason": "metadata needs manual corroboration"}]
+    assert report["summary"] == {"unidentified": 1}
+    assert report["actions"] == {"unidentified":
+                                 zi.RECONCILE_ACTIONS["unidentified"]}
+    assert report["apply_status"] == "nothing" and report["applied"] == []
 
 
 def test_the_staging_lock_leaves_no_file_behind(tmp_path):
@@ -2938,11 +2254,11 @@ def test_check_staging_apply_edit_stores_the_file_under_the_present_work(
     pdf = _staged_bib_paper(tmp_path, title=title, surname=surname, year="2020")
     found = zi.discover_reconcile_files(tmp_path)
     config = json.loads(OPT_IN)
-    report, rc = zi.reconcile_apply(tmp_path, found, zi.read_library(), config,
+    report, rc = zi.reconcile_apply(tmp_path, found, "user", config,
                                     argparse.Namespace(library="user", edit=False))
     assert rc == 0 and report["summary"] == {"work_present_no_file": 1}
     assert use_live.children(key) == []
-    report, rc = zi.reconcile_apply(tmp_path, found, zi.read_library(), config,
+    report, rc = zi.reconcile_apply(tmp_path, found, "user", config,
                                     argparse.Namespace(library="user", edit=True))
     assert rc == 0
     assert report["summary"] == {"attached": 1}
@@ -2968,8 +2284,7 @@ def test_check_staging_report_is_read_only_and_counts_both_directions(
         use_live, tmp_path, capsys):
     pdf = _staged_bib_paper(tmp_path, opt_in=None)
     title = zi._bib_entries(tmp_path / "sources.bib")[0]["title"]
-    (tmp_path / "docs" / f"{uuid.uuid4().hex[:10]}.pdf").write_bytes(
-        f"orphan {uuid.uuid4().hex}".encode())
+    identifiable_pdf(tmp_path / "docs")
     assert zi.cmd_check_staging(_reconcile_args(tmp_path)) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["summary"] == {"absent": 2}
@@ -2983,12 +2298,13 @@ def test_check_staging_file_output_keeps_stdout_compact_and_reports_ties(
         use_live, tmp_path, capsys):
     """Two records hold the same stored file: the staged copy is identical
     to both, and the tie reaches the summary."""
-    shared = make_pdf(tmp_path / "shared.pdf", [uuid.uuid4().hex])
-    first = use_live.save(unique_title(), pdf=shared)
-    second = use_live.save(unique_title(), pdf=shared)
+    title, surname = unique_title(), unique_surname()
+    shared = make_pdf(tmp_path / "shared.pdf", [title, uuid.uuid4().hex])
+    first = use_live.save(title, creators=(surname,), pdf=shared)
+    second = use_live.save(title, creators=(surname,), pdf=shared)
     docs = tmp_path / "docs"
     docs.mkdir()
-    (docs / f"{uuid.uuid4().hex[:10]}.pdf").write_bytes(shared.read_bytes())
+    (docs / f"{surname}2020-copy.pdf").write_bytes(shared.read_bytes())
     output = tmp_path / "report.json"
     assert zi.cmd_check_staging(_reconcile_args(tmp_path, out=str(output))) == 0
     compact = json.loads(capsys.readouterr().out)
@@ -3125,36 +2441,6 @@ def test_check_staging_does_not_read_symlinked_bib_outside_repository(
     assert found["errors"]
 
 
-
-def test_check_staging_uses_bib_metadata_for_linked_match(tmp_path, monkeypatch):
-    """The bib entry's DOI is what finds the work: the PDF says nothing."""
-    pdf = tmp_path / "paper.pdf"
-    pdf.write_bytes(b"paper")
-    monkeypatch.setattr(zi, "_pdf_front_text", lambda _: "")
-    monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
-    idx = _library([_work("W1", "A Recorded Title Unlike The Bib", "1990",
-                          ("Other",), doi="10.1234/test")])
-    row = zi.audit_one(pdf, idx, bib_entry={
-        "_key": "levin", "title": "Useful Paper", "doi": "10.1234/test",
-        "author": "Levin, John and Smith, Jane", "year": "1997"})
-    assert row["zotero_key"] == "W1" and row["why"] == ["doi"]
-    assert row["verdict"] == "work_present_no_file"
-
-
-@pytest.mark.parametrize("author", ["Levin, John and Smith, Jane",
-                                    "John Levin and Jane Smith"])
-def test_check_staging_normalizes_the_bib_first_author(tmp_path, monkeypatch, author):
-    """Either name order gives the surname the creator-year-title key needs."""
-    pdf = tmp_path / "paper.pdf"
-    pdf.write_bytes(b"paper")
-    monkeypatch.setattr(zi, "_pdf_front_text", lambda _: "")
-    monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
-    idx = _library([_work("W1", "Useful Paper On Something", "1997", ("Levin",))])
-    row = zi.audit_one(pdf, idx, bib_entry={
-        "author": author, "title": "Useful Paper On Something", "year": "1997"})
-    assert row["zotero_key"] == "W1" and row["why"] == ["creator-year-title"]
-
-
 def shell_blocks(text):
     import re
 
@@ -3197,14 +2483,11 @@ def test_check_staging_failure_propagates_and_path_announced(tmp_path):
     assert subprocess.run(["bash", "-c", block], cwd=proj2, env=env2).returncode == 0
 
 
-
 @pytest.mark.integration
 def test_local_account_of_a_signed_out_client_is_none(use_live, tmp_path):
-    """The user library's JSON id is 0, and the local API's refusal of
-    another user's data names no account ("use userID 0"): signed out, the
-    opt-in check fails closed."""
+    """The local API's refusal of another user's data names no account
+    ("use userID 0"): signed out, the opt-in check fails closed."""
     use_live.save(unique_title())
-    assert zi.read_library()["account"] is None
     assert zi.local_account() is None
     (tmp_path / ".zotero-reconcile.json").write_text(OPT_IN)
     with pytest.raises(ValueError, match="signed in to no account"):
@@ -3289,8 +2572,8 @@ def test_force_still_refuses_a_missing_pdf_before_creating_the_item(
                         lambda *a, **k: created.append(a) or "K1")
     entry = {"title": "A title", "pdf": str(tmp_path / "gone.pdf"),
              "attach_pdf": True}
-    results, rc = zi.inject_entries([entry], [{}], [{"confidence": "low"}],
-                                    {}, None, None, force=True)
+    results, rc = zi.create_entries([entry], [{}], [{"confidence": "low"}],
+                                    "user", None, force=True)
     assert rc == 1 and not created
     assert "not found" in results[0]["error"]
     assert "key" not in results[0]
@@ -3360,8 +2643,7 @@ def test_a_refused_key_stops_an_enrich_batch(monkeypatch):
     monkeypatch.setattr(zi, "write", write)
     jobs = [{"item_key": k, "expect_title": "T", "set": {"date": "2001"}}
             for k in ("A", "B", "C")]
-    results = zi.run_jobs(jobs, lambda j: zi.enrich_one(j, False, True,
-                                                        lasting=True),
+    results = zi.run_jobs(jobs, lambda j: zi.enrich_one(j, False, True),
                           wrote=True)
     assert len(asked) == 1
     assert [r["status"] for r in results] == ["not written", "not attempted",
@@ -3381,7 +2663,7 @@ def test_a_refused_key_stops_the_reconcile_attach_edits(tmp_path, monkeypatch):
              "path": f"{k}.pdf"} for k in ("A", "B", "C")]
     report = {"summary": {"work_present_no_file": 3}, "actions": {},
               "suggested_edits": []}
-    rc = zi.attach_present_works(tmp_path, rows, {"library_id": None}, report)
+    rc = zi.attach_present_works(tmp_path, rows, "user", report)
     assert rc == 1 and calls == ["A"]
     assert [e["status"] for e in report["edits"]] == ["failed", "not attempted",
                                                       "not attempted"]

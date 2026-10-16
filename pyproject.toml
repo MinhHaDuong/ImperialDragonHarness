@@ -35,10 +35,13 @@ dev = [
     # Attribution query: official inverse-beta primitive for fixed Jeffreys intervals.
     "scipy>=1.10,<2",
     # scripts/zotero.py: pyzotero's local client, the httpx2 client it is
-    # given (no proxy, no redirect), and BibTeX parsing for reconcile. Keep
-    # in step with the script's inline metadata (PEP 723): the skill runs it
+    # given (no proxy, no redirect), BibTeX parsing for check-staging,
+    # rapidfuzz for title similarity and isbnlib for ISBN forms. Keep in
+    # step with the script's inline metadata (PEP 723): the skill runs it
     # from other projects through `uv run --script`.
     "pyzotero>=1.16,<2",
     "httpx2>=2.13,<3",
     "bibtexparser>=1.4,<2",
+    "isbnlib>=3.10,<4",
+    "rapidfuzz>=3.9,<4",
 ]
