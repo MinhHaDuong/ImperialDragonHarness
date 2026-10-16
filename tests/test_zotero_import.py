@@ -3139,3 +3139,19 @@ def test_a_held_lock_times_out_instead_of_hanging(tmp_path):
 def test_the_lock_never_falls_back_to_a_shared_temp_dir(monkeypatch):
     monkeypatch.delenv("XDG_RUNTIME_DIR", raising=False)
     assert zi.library_lock_dir() == Path.home()
+
+
+# ── /gaze round 1 fixes (PR 1441) ───────────────────────────────────────────
+
+
+def test_a_zotero_url_carrying_credentials_is_refused(monkeypatch):
+    """A loopback URL with user:password@ is refused like a remote one, and
+    the refusal does not echo the password."""
+    monkeypatch.setenv("ZOTERO_CONNECTOR_URL",
+                       "http://user:s3cret@127.0.0.1:23999")
+    with pytest.raises(zi.LocalAPIError, match="credentials") as exc:
+        zi.zotero_base()
+    assert "s3cret" not in str(exc.value)
+    monkeypatch.setenv("ZOTERO_CONNECTOR_URL", "http://user@localhost:23999")
+    with pytest.raises(zi.LocalAPIError, match="credentials"):
+        zi.zotero_base()

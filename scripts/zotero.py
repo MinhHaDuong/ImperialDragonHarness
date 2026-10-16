@@ -805,14 +805,20 @@ def zotero_url() -> str:
 
 
 def zotero_base() -> str:
-    """The Zotero URL, refused unless it is on this machine.
+    """The Zotero URL, refused unless it is on this machine and carries no
+    credentials.
 
     The override serves a Zotero on another port, such as the tests'
     throwaway client; a remote host would send item metadata and PDFs off
     the machine, which a local-only helper must not do.
     """
     url = zotero_url()
-    host = urllib.parse.urlsplit(url).hostname
+    parts = urllib.parse.urlsplit(url)
+    if parts.username is not None or parts.password is not None:
+        # Never echoed: the userinfo is a credential.
+        raise LocalAPIError("refusing a Zotero URL that carries credentials "
+                            "(user:password@): the local API takes none")
+    host = parts.hostname
     if host not in LOOPBACK_HOSTS:
         raise LocalAPIError(f"refusing non-local Zotero URL {url}: "
                             f"the helper is local-only")
