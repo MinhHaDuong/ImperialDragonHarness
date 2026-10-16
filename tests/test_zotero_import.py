@@ -37,6 +37,7 @@ import uuid
 from pathlib import Path
 
 import pytest
+from pyzotero import errors as ze
 
 import zotero_live
 from child_env import child_env
@@ -1482,6 +1483,26 @@ def test_local_api_disabled_names_the_setting(api_off_zotero, monkeypatch, capsy
     out = json.loads(capsys.readouterr().out)
     assert "Allow other applications on this computer" in out["error"]
     assert "disabled" in out["error"]
+
+
+@pytest.mark.parametrize("error,expected", [
+    (ze.PreConditionFailedError("412 version mismatch"), "conflicting"),
+    (ze.ConflictError("409 library locked"), "conflicting"),
+    (ze.ServerIDMismatchError("412 server id"), "another Zotero instance"),
+    (ze.HTTPError("400 bad request"), "Zotero 10 or later"),
+])
+def test_a_refusal_names_its_own_cause(error, expected):
+    """A version conflict is not blamed on the Zotero version or setting."""
+    message = str(zi.refusal(error))
+    assert expected in message
+    if expected != "Zotero 10 or later":
+        assert zi.LOCAL_API_SETTING not in message
+
+
+def test_a_lost_upload_is_zotero_unavailable_not_a_refusal():
+    with pytest.raises(zi.ZoteroUnavailable, match="during an upload"):
+        with zi.local_api():
+            raise ze.UploadError("ConnectionError")
 
 
 def test_a_trailing_slash_in_the_zotero_url_is_dropped(monkeypatch):

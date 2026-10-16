@@ -853,12 +853,20 @@ def local_library(library: str = USER_LIBRARY, *,
 
 
 def refusal(exc: Exception) -> LocalAPIError:
-    """A local API refusal, naming the setting that usually causes it."""
+    """A local API refusal, naming its cause when the error tells it, else
+    the version floors and the setting that usually cause it."""
     text = str(exc).strip()
     if "Local API is not enabled" in text:
         return LocalAPIError(f"Zotero's local API is disabled. Enable "
                              f"{LOCAL_API_SETTING} and retry.")
     reason = text.splitlines()[-1] if text else type(exc).__name__
+    if isinstance(exc, ze.ServerIDMismatchError):
+        return LocalAPIError(f"another Zotero instance answers than the one "
+                             f"this run started with ({reason}); rerun")
+    if isinstance(exc, (ze.PreConditionFailedError, ze.ConflictError)):
+        return LocalAPIError(f"Zotero refused the write as conflicting: the "
+                             f"item or library changed since this run read "
+                             f"it ({reason}); rerun to read it again")
     return LocalAPIError(f"Zotero's local API refused the request ({reason}). "
                          f"Reads need Zotero 7 or later and writes Zotero 10 or "
                          f"later, with {LOCAL_API_SETTING} enabled.")
@@ -875,6 +883,11 @@ def local_api():
                                 f"({exc})") from exc
     except (ze.ResourceNotFoundError, ze.LocalAPIKeyRequiredError):
         raise
+    except ze.UploadError as exc:
+        # pyzotero raises it only when the upload POST cannot connect or
+        # times out: a transport loss, not a refusal.
+        raise ZoteroUnavailable(f"Zotero stopped answering at {zotero_url()} "
+                                f"during an upload ({exc})") from exc
     except ze.PyZoteroError as exc:
         raise refusal(exc) from exc
 
@@ -1207,9 +1220,14 @@ def attach_file(z: LocalLibrary, parent: str, path: Path) -> str:
         return (f"attachment {attachment['key']} was created under {parent} "
                 f"without its file; delete it in Zotero")
 
-    result = write(z, lambda: z.upload_attachments([attachment],
-                                                   parentid=parent),
-                   lasting=True, saved=saved)
+    try:
+        result = write(z, lambda: z.upload_attachments([attachment],
+                                                       parentid=parent),
+                       lasting=True, saved=saved)
+    except ZoteroUnavailable as exc:
+        if done := saved():
+            raise ZoteroUnavailable(f"{exc}; {done}") from exc
+        raise
     if result.get("failure") or not result.get("success"):
         raise LocalAPIError(f"Zotero did not store {path.name}: {result}")
     return result["success"][0]["key"]
