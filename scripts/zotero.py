@@ -2919,8 +2919,8 @@ def main() -> int:
     pr = sub.add_parser("check-staging",
                         help="compare staged files with the library: the "
                              "files .bib entries link (and unlinked ones), "
-                             "or every file of --dir; explicit opt-in to "
-                             "apply")
+                             "or every staging file under --dir; explicit "
+                             "opt-in to apply")
     pr.add_argument("root", nargs="?", default=".",
                     help="repository root (default: current directory)")
     pr.add_argument("--dir", help="check every staging file under this "
