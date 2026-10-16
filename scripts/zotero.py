@@ -1707,23 +1707,39 @@ def handle_path(raw: str) -> str:
     return (match.group(1) if match else raw).lower().rstrip("/")
 
 
+def extra_lines(extra: str, label: str) -> list[str]:
+    """The values of `label:` lines in an Extra field, the form Zotero (and
+    create-items) store an identifier a type has no field for in. A DOI
+    elsewhere in Extra ("Comment on 10.1234/x") is another work's."""
+    return [m.group(1) for m in re.finditer(
+        rf"(?im)^\s*{label}:\s*(\S+)\s*$", extra or "")]
+
+
+# A part of a volume carries the volume's ISBN, which identifies the volume,
+# not the part: another chapter of the same book is not this work.
+ISBN_OF_A_VOLUME = {"bookSection", "conferencePaper", "encyclopediaArticle",
+                    "dictionaryEntry"}
+
 # Each identifier key: the queries to send Zotero, and the check that a
-# returned work really carries the identifier (the quick search matches a
-# substring in any field, an abstract citing the DOI included).
+# returned work's own field carries the identifier (the quick search matches
+# a substring in any field, an abstract citing the DOI included).
 IDENTIFIER_KEYS: tuple[tuple[str, Any, Any], ...] = (
     ("doi", lambda v: [d for d in [normal_doi(v)] if DOI_BARE_RE.fullmatch(d)],
-     lambda w, v: normal_doi(v) in {normal_doi(w["DOI"])} | {
-         d.rstrip(".,;)").lower() for d in DOI_BARE_RE.findall(w["extra"])}),
+     lambda w, v: normal_doi(v) in {normal_doi(d) for d in
+                                    [w["DOI"], *extra_lines(w["extra"], "DOI")]
+                                    if d}),
     ("isbn", isbn_queries,
-     lambda w, v: bool(isbn13s(v) & isbn13s(f"{w['ISBN']} {w['extra']}"))),
+     lambda w, v: w["itemType"] not in ISBN_OF_A_VOLUME and bool(
+         isbn13s(v) & isbn13s(" ".join([w["ISBN"],
+                                        *extra_lines(w["extra"], "ISBN")])))),
     ("arxiv", lambda v: [a for a in [normal_arxiv(v)] if a],
      lambda w, v: normal_arxiv(v) in {
-         a.lower() for a in ARXIV_ANY_RE.findall(f"{w['extra']} {w['url']}")}),
+         normal_arxiv(a) for a in [*extra_lines(w["extra"], "arXiv"),
+                                   w["url"]] if a} - {""}),
     ("handle", lambda v: [h for h in [handle_path(v)]
                           if re.fullmatch(r"[^\s/:]+/\S+", h)],
-     lambda w, v: handle_path(v) in {
-         h.lower().rstrip("/")
-         for h in HDL_ANY_RE.findall(f"{w['extra']} {w['url']}")}),
+     lambda w, v: bool(HDL_ANY_RE.search(w["url"]))
+     and handle_path(v) == handle_path(w["url"])),
 )
 
 
@@ -2344,7 +2360,7 @@ def audit_sources(root: Path, found: dict[str, Any],
         except (ZoteroUnavailable, ZoteroSlow, LocalAPIError):
             raise
         except Exception as exc:
-            errors.append(f"cannot audit {path.relative_to(root)}: {exc}")
+            errors.append(f"cannot check {path.relative_to(root)}: {exc}")
             continue
         if "bib" in source:
             row.update({"source": "bib",

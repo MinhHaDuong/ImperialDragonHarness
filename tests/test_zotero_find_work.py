@@ -173,6 +173,13 @@ def library(zotero_factory, tmp_path_factory):
                               creators=("Nozick",), date="1974"),
         "isbn": zotero.save("Handbook of Something", item_type="book",
                             date="2016", ISBN="978-0-13-468599-1"),
+        "chapter": zotero.save("A Chapter of the Handbook",
+                               item_type="bookSection",
+                               ISBN="978-0-13-468599-1"),
+        "comment": zotero.save("A Comment", extra="Comment on 10.5555/orig.1"),
+        "doi_line": zotero.save("A Report With Its DOI in Extra",
+                                item_type="report",
+                                extra="Series: X\nDOI: 10.5555/InExtra.1"),
         "isbn10": zotero.save("Old Handbook", item_type="book",
                               ISBN="0306406152"),
         "arxiv_extra": zotero.save("An Arxiv Preprint",
@@ -245,6 +252,21 @@ def test_a_doi_quoted_in_an_abstract_is_not_the_items_doi(lib):
 
 
 @pytest.mark.integration
+def test_only_a_doi_line_in_extra_is_the_items_doi(lib):
+    """Extra holds a DOI the type has no field for as a `DOI:` line; a DOI
+    mentioned anywhere else there (a comment's target) is another work's,
+    and must not file that work's PDF under the comment."""
+    keys, _ = lib
+    (m,) = find(doi="10.5555/inextra.1")["matches"]
+    assert m["key"] == keys["doi_line"] and m["why"] == ["doi"]
+    z = zi.local_library()
+    returned = {w["key"] for w in zi.search_works(z, "user", "10.5555/orig.1")}
+    assert keys["comment"] in returned, "positive control: the search sees it"
+    res = find(doi="10.5555/orig.1")
+    assert res["matches"] == [] and res["verdict"] == "none"
+
+
+@pytest.mark.integration
 def test_no_hit_is_none_not_unchecked(lib):
     res = find(doi="10.5555/nowhere")
     assert res["matches"] == [] and res["verdict"] == "none"
@@ -256,6 +278,10 @@ def test_no_hit_is_none_not_unchecked(lib):
 @pytest.mark.integration
 def test_an_isbn_matches_across_hyphenation_and_length(lib):
     keys, _ = lib
+    # The chapter carries the volume's ISBN: it is not the volume.
+    returned = {w["key"] for w in zi.search_works(zi.local_library(), "user",
+                                                   "978-0-13-468599-1")}
+    assert keys["chapter"] in returned, "positive control: the search sees it"
     assert [m["key"] for m in find(isbn="9780134685991")["matches"]] == [keys["isbn"]]
     assert [m["key"] for m in find(isbn="0-13-468599-7")["matches"]] == [keys["isbn"]]
     assert zi.isbnlib.to_isbn10("9780134685991") == "0134685997"
