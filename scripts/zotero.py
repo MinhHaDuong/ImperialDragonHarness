@@ -1862,7 +1862,8 @@ def work_queries(args: argparse.Namespace) -> list[dict[str, Any]]:
     applied to several would describe them all as one. An extraction row
     with an error stays in the results, as an error."""
     flags = {"title": args.title, "doi": args.doi, "isbn": args.isbn,
-             "arxiv": args.arxiv, "handle": args.handle, "pdf": args.pdf}
+             "arxiv": args.arxiv, "handle": args.handle, "pdf": args.pdf,
+             "type": getattr(args, "type", None)}
     if not args.metadata:
         return [flags]
     try:
@@ -1893,6 +1894,7 @@ def work_queries(args: argparse.Namespace) -> list[dict[str, Any]]:
             raise BadQuery(f"--metadata {args.metadata}: identifiers and "
                            f"pdfinfo must be objects")
         work = {"title": pdfinfo_fields.get("Title"), "pdf": item.get("pdf"),
+                "type": None,
                 **{k: ids.get(k) for k in ("doi", "isbn", "arxiv", "handle")}}
         work.update({k: v for k, v in flags.items() if v})
         works.append(work)
@@ -1921,7 +1923,7 @@ def cmd_find_work(args: argparse.Namespace) -> int:
         return {"query": {k: v for k, v in work.items() if v},
                 **find_work(libs, doi=work["doi"], isbn=work["isbn"],
                             arxiv=work["arxiv"], handle=work["handle"],
-                            title=work["title"],
+                            title=work["title"], item_type=work["type"],
                             pdf_path=Path(work["pdf"]) if work["pdf"] else None)}
 
     def look() -> list[dict[str, Any]]:
@@ -2583,7 +2585,8 @@ def attach_present_works(root: Path, rows: list[dict[str, Any]],
 BIB_TO_ZOTERO_TYPE = {
     "article": "journalArticle", "book": "book", "inbook": "bookSection",
     "incollection": "bookSection", "inproceedings": "conferencePaper",
-    "proceedings": "conferencePaper", "phdthesis": "thesis",
+    "conference": "conferencePaper", "inreference": "encyclopediaArticle",
+    "proceedings": "book", "phdthesis": "thesis",
     "mastersthesis": "thesis", "techreport": "report",
     "unpublished": "manuscript"}
 
@@ -2688,6 +2691,9 @@ def main() -> int:
     pf.add_argument("--isbn", help="ISBN to exact-match (any hyphenation)")
     pf.add_argument("--arxiv", help="arXiv id to match (e.g. 2401.01234)")
     pf.add_argument("--handle", help="handle URL or hdl.handle.net path")
+    pf.add_argument("--type", help="the work's Zotero item type; a "
+                                   "bookSection or conferencePaper is not "
+                                   "looked up by its volume's ISBN")
     pf.add_argument("--pdf", help="PDF path: its content hash is compared "
                                   "with the files of each work found")
     add_library_args(pf, scope)

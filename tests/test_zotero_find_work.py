@@ -485,6 +485,35 @@ def test_check_staging_never_files_a_chapter_under_its_book(lib, tmp_path):
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize("bib_type", ["incollection", "inbook", "inproceedings",
+                                      "conference", "inreference"])
+def test_no_part_like_bib_type_is_filed_under_its_volume(lib, tmp_path,
+                                                         bib_type):
+    keys, _ = lib
+    pdf = make_pdf(tmp_path / "part.pdf", ["nothing useful"])
+    result = row(pdf, {"_type": bib_type, "title": "Some Part Title Here",
+                       "isbn": "978-0-13-468599-1"})
+    assert result["zotero_key"] != keys["isbn"], bib_type
+    # Positive control: as a book, the same ISBN finds the volume.
+    book = row(pdf, {"_type": "book", "title": "Some Part Title Here",
+                     "isbn": "978-0-13-468599-1"})
+    assert book["zotero_key"] == keys["isbn"]
+
+
+@pytest.mark.integration
+def test_find_work_type_flag_keeps_a_chapter_off_its_book(lib, capsys):
+    keys, _ = lib
+    base = dict(doi=None, isbn="978-0-13-468599-1", arxiv=None, handle=None,
+                title=None, pdf=None, library="user", metadata=None)
+    assert zi.cmd_find_work(argparse.Namespace(**base, type=None)) == 0
+    (as_book,) = json.loads(capsys.readouterr().out)["results"]
+    assert [m["key"] for m in as_book["matches"]] == [keys["isbn"]]
+    assert zi.cmd_find_work(argparse.Namespace(**base, type="bookSection")) == 0
+    (as_part,) = json.loads(capsys.readouterr().out)["results"]
+    assert as_part["matches"] == [] and as_part["verdict"] == "unchecked"
+
+
+@pytest.mark.integration
 def test_check_staging_searches_the_bib_title(lib, tmp_path):
     keys, _ = lib
     pdf = make_pdf(tmp_path / "paper.pdf", ["nothing useful"])
