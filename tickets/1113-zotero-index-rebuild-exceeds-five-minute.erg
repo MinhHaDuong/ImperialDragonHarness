@@ -10,6 +10,7 @@ Author: Minh Ha-Duong
 2026-10-16T06:31Z Claude note Author decision of 2026-10-16 recorded: tests run a real throwaway Zotero as a fixture or skip, no mock. Exit criterion 4 restated accordingly.
 2026-10-16T07:32Z reviewer note circuit-breaker — redirect: author chose plan A (pyzotero local client, no hand-rolled Zotero interface); test-rework worker stopped, WIP salvaged at 1fe8e333
 2026-10-16T07:35Z reviewer note Author decision 4 (plan A, pyzotero) recorded verbatim; exit criteria 4-5 restated, criterion on hand-rolled components added. Local writes verified on Zotero 10.0.6 with a throwaway profile.
+2026-10-16T08:41Z reviewer note YAGNI sweep (PR #1441): pyzotero replaces the local API client and the connector writes; the live schema replaces the field table; bibtexparser 1.x replaces bib parsing; zotero_matches and relative linked-path resolution deleted. Kept, no fitting library: poppler wrapper, DOI-in-page-text finder, RIS writer, slot mapping, duplicate scoring, launch and container detection, directory flock.
 
 --- body ---
 ## Intent (author decisions, 2026-10-15)
