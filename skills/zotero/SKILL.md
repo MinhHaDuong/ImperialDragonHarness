@@ -59,7 +59,8 @@ that setting.
 
 The only write is the creation of new items with their PDFs, through the
 desktop connector on the same port. When Zotero is not running the helper
-launches it and waits; in a container it never launches anything. If Zotero
+launches it and waits; in a container, or with `ZOTERO_NO_LAUNCH` set, it
+never launches anything. If Zotero
 still does not answer, the command does nothing and says so (exit 75;
 `reconcile` exits 0 with verdict `zotero_unavailable`). Existing items are never
 edited by the helper: `enrich`, `attach` and `reconcile` report the edit

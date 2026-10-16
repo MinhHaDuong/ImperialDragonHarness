@@ -77,7 +77,8 @@ from sqlite to the local API on 2026-10-16):
 - Every read is live: the duplicate guard sees what the client saved a second
   ago, where a sqlite snapshot of a running client could lag it.
 - Reads and creation need Zotero running. The helper launches it when it is
-  not (never in a container or headless runner) and waits up to 90 s; when it
+  not (never in a container or headless runner, nor with `ZOTERO_NO_LAUNCH`
+  set) and waits up to 90 s; when it
   still does not answer, the command does nothing, exits 75 (`EX_TEMPFAIL`),
   and `reconcile` reports verdict `zotero_unavailable` with exit 0 so an
   unattended sweep reads it as a clean no-op. Autonomous sessions in a
