@@ -1797,6 +1797,47 @@ def test_a_batch_creates_a_work_once_when_two_entries_share_a_doi(
 
 
 @pytest.mark.integration
+def test_a_batch_refuses_a_second_entry_carrying_the_same_file(
+        use_live, tmp_path, capsys):
+    """Zotero has no search by md5, so the batch remembers what it stored:
+    the same PDF under different metadata is not created twice."""
+    first = _entry(tmp_path, attach_pdf=True)
+    second = _entry(tmp_path, attach_pdf=True)
+    second["pdf"] = first["pdf"]
+    # The PDF names the first entry's work, so the second is contradicted;
+    # skipping that check leaves the file guard as the only one to fire.
+    assert zi.cmd_create_items(_inject_args([first, second],
+                                            skip_corroboration=True)) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert out["results"][0]["status"] == "created"
+    assert "same file as entry 0" in out["results"][1]["error"]
+    assert use_live.titled(second["title"]) == []
+
+
+def test_a_slow_create_items_inside_check_staging_apply_is_slow(
+        tmp_path, monkeypatch):
+    """create-items reports a slow read as a payload; the apply turns it
+    back into ZoteroSlow (verdict zotero_slow, exit 74), not apply_failed."""
+    def slow(args):
+        zi.emit_json({"zotero": "slow", "error": "timed out",
+                      "verdict": "unchecked"})
+        return zi.EXIT_SLOW
+
+    monkeypatch.setattr(zi, "cmd_create_items", slow)
+    monkeypatch.setattr(zi, "audit_sources", lambda root, found, libs: (
+        [{"verdict": "absent", "path": "docs/a.pdf"}], []))
+    monkeypatch.setattr(zi, "bib_to_inject_entry", lambda bib, path: {
+        "title": "T", "authors": ["A, B"], "year": "2020", "pdf": str(path)})
+    monkeypatch.setattr(zi, "corroborate_entry",
+                        lambda entry: {"confidence": "corroborated"})
+    found = {"linked": [], "orphans": [], "errors": [], "bib_files": [],
+             "staging_dirs": []}
+    with pytest.raises(zi.ZoteroSlow, match="timed out"):
+        zi.reconcile_apply(tmp_path, found, "user", json.loads(OPT_IN),
+                           argparse.Namespace(library="user"))
+
+
+@pytest.mark.integration
 def test_inject_allows_generic_title_when_author_or_year_differs(
         use_live, tmp_path, capsys):
     title = unique_title()

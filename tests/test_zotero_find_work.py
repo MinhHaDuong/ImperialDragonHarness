@@ -96,6 +96,12 @@ def test_a_distant_year_demotes_a_title_match_to_weak():
                               "2004", "1999") == "weak"
 
 
+def test_a_short_generic_stored_title_is_never_strong():
+    """A stored "Introduction" would otherwise be any paper's heading."""
+    assert zi.title_certainty("Introduction", None, "1 Introduction\nbody",
+                              "2020", "2020") == "weak"
+
+
 def test_an_unrelated_title_scores_nothing():
     assert zi.title_certainty("An Entirely Unrelated Study of Something Else",
                               None, "method of limits in the theory of index "
@@ -137,6 +143,32 @@ def test_no_key_at_all_is_unchecked_and_asks_zotero_nothing():
     for label in ("doi", "isbn", "arxiv", "handle", "creator-year-title",
                   "storageHash"):
         assert any(s.startswith(label) for s in res["skipped"]), label
+
+
+def test_an_invalid_isbn_is_skipped_not_consulted():
+    """No query to send: the ISBN key did not look, so it cannot vouch for
+    an entry being new (Zotero is down here and is not asked)."""
+    res = zi.find_work(zi.libraries(), isbn="ISBN 123")
+    assert "isbn" not in res["consulted"] and res["verdict"] == "unchecked"
+    assert any(s.startswith("isbn (not a valid") for s in res["skipped"])
+
+
+def test_the_default_scope_is_the_user_library_alone():
+    """A copy in a group library does not count as already present unless
+    the caller widens the scope (--library all or a groupID)."""
+    assert [lib for lib, _ in zi.libraries()] == ["user"]
+    assert [lib for lib, _ in zi.libraries("4242")] == ["4242"]
+
+
+def test_a_failing_pdfinfo_does_not_stop_a_staging_check(tmp_path, monkeypatch):
+    pdf = tmp_path / "scan.pdf"
+    pdf.write_bytes(b"%PDF-1.4")
+
+    def boom(path):
+        raise RuntimeError("pdfinfo timed out")
+
+    monkeypatch.setattr(zi, "pdfinfo", boom)
+    assert zi.audit_one(pdf, zi.libraries())["verdict"] == "unidentified"
 
 
 def test_a_title_alone_never_matches():
@@ -203,6 +235,8 @@ def library(zotero_factory, tmp_path_factory):
                               creators=("Afriat",), date="1969"),
         "afriat_other": zotero.save("An Entirely Unrelated Study of Something "
                                     "Else", creators=("Afriat",), date="1969"),
+        "garcia": zotero.save("Cien años de soledad", item_type="book",
+                              creators=("García Márquez",), date="1967"),
         "bessiere": zotero.save("Methods of choosing equipment at Électricité "
                                 "de France", creators=("Bessière",), date="1969"),
     }
@@ -282,10 +316,28 @@ def test_arxiv_ids_and_handles_are_found_in_extra_and_url(lib):
 @pytest.mark.parametrize("author", ["Robert Nozick", "Nozick, Robert", "Nozick"])
 def test_a_pre_doi_book_is_found_by_author_year_and_title(lib, author):
     keys, _ = lib
-    res = find(title="anarchy state and utopia", year="1974", first_author=author)
+    res = find(title="anarchy state and utopia", year="1974",
+               first_author=zi.first_author_surname(author))
     (m,) = res["matches"]
     assert m["key"] == keys["nozick"] and m["why"] == ["creator-year-title"]
     assert m["certainty"] == "strong" and res["verdict"] == "match"
+
+
+@pytest.mark.integration
+def test_a_two_word_surname_is_not_shortened_twice(lib, capsys):
+    """"García Márquez, Gabriel" is the surname "García Márquez": a second
+    shortening made it "Márquez", and the duplicate went unseen."""
+    keys, _ = lib
+    res = find(title="Cien años de soledad", year="1967",
+               first_author=zi.first_author_surname("García Márquez, Gabriel"))
+    assert [m["key"] for m in res["matches"]] == [keys["garcia"]]
+    args = argparse.Namespace(doi=None, isbn=None, arxiv=None, handle=None,
+                              title="Cien años de soledad", year="1967",
+                              author="García Márquez, Gabriel", pdf=None,
+                              library="user", metadata=None)
+    assert zi.cmd_find_work(args) == 0
+    (result,) = json.loads(capsys.readouterr().out)["results"]
+    assert result["verdict"] == "match"
 
 
 @pytest.mark.integration

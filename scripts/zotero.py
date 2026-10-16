@@ -1281,6 +1281,9 @@ def create_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
         for entry, check in zip(entries, checks)]
     z = local_library(lib_id)
     status = 0
+    # Zotero has no search by md5: a file this batch already stored is
+    # remembered here, so a second entry carrying it is refused.
+    stored: dict[str, int] = {}
 
     def stop(after: int, why: str) -> None:
         for row in results[after + 1:]:
@@ -1297,6 +1300,12 @@ def create_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
         if entry.get("attach_pdf") and pdf is not None and not pdf.is_file():
             # --force skips the duplicate guard, not the file to store.
             row["error"] = f"PDF to attach not found: {pdf}"
+            status = 1
+            continue
+        digest = file_md5(pdf) if pdf is not None and pdf.is_file() else None
+        if not force and digest in stored:
+            row["error"] = (f"same file as entry {stored[digest]} of this "
+                            f"batch; use --force")
             status = 1
             continue
         if not force:
@@ -1320,6 +1329,8 @@ def create_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
         try:
             row["key"] = create_item(z, items[n], collection)
             row["status"] = "created"
+            if digest:
+                stored[digest] = n
         except (ZoteroUnavailable, ZoteroSlow, LocalAPIError,
                 KeyNotGranted) as exc:
             # A save that failed in transit may still have reached Zotero.
@@ -1820,6 +1831,9 @@ def title_certainty(lib_title: str, title: str | None, text: str | None,
     lib = fold(lib_title)
     if not lib:
         return None
+    # A stored title too short to be distinctive ("Introduction") would be
+    # "strong" against any page that has that heading: a hint at most.
+    short = len(_title_tokens(lib_title)) < TITLE_MIN_TOKENS
     lines = [line for line in (fold(raw) for raw in (text or "").splitlines())
              if line]
     phrases = ([fold(title)] if fold(title) else []) + [
@@ -1833,8 +1847,8 @@ def title_certainty(lib_title: str, title: str | None, text: str | None,
 
     best = max((score(p) for p in phrases), default=0)
     ours, theirs = _year(year), _year(lib_date)
-    if best >= STRONG_TITLE and (ours is None or theirs is None
-                                 or abs(ours - theirs) <= 3):
+    if best >= STRONG_TITLE and not short and (ours is None or theirs is None
+                                               or abs(ours - theirs) <= 3):
         return "strong"
     bag = fold(f"{title or ''} {text or ''}")
     if best >= STRONG_TITLE or fuzz.token_set_ratio(lib, bag) >= WEAK_TITLE:
@@ -1851,6 +1865,10 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
               text: str | None = None,
               pdf_path: Path | None = None) -> dict[str, Any]:
     """Is this work in the libraries? Zotero's own search, key by key.
+
+    `first_author` is a surname, as first_author_surname() leaves it: a
+    second shortening would turn "García Márquez" into "Márquez", and the
+    stored creator would no longer match.
 
     Keys strongest first: a persistent identifier (DOI, ISBN, arXiv,
     handle), then the works of the given authors scored for title
@@ -1887,6 +1905,10 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
             continue
         if matches:
             continue
+        if not queries(supplied):
+            # Nothing to send (an ISBN with a bad check digit): not looked up.
+            skipped.append(f"{label} (not a valid {label}: {supplied})")
+            continue
         consulted.append(label)
         for lib in libs:
             for query in queries(supplied):
@@ -1896,8 +1918,8 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
 
     if not matches and (title or text):
         surnames = list(dict.fromkeys(
-            s for s in ([first_author_surname(first_author)] if first_author
-                        else []) + [a.split(",")[0] for a in authors or []]
+            s for s in ([first_author] if first_author else [])
+            + [a.split(",")[0] for a in authors or []]
             if _name_key(s)))
         if len(_title_tokens(title) | _title_tokens(text)) < TITLE_MIN_TOKENS:
             skipped.append("creator-year-title (title too short)")
@@ -2067,7 +2089,9 @@ def cmd_find_work(args: argparse.Namespace) -> int:
                 **find_work(libs, doi=work["doi"], isbn=work["isbn"],
                             arxiv=work["arxiv"], handle=work["handle"],
                             title=work["title"], year=work["year"],
-                            first_author=work["author"], text=work["text"],
+                            first_author=(first_author_surname(work["author"])
+                                          if work["author"] else None),
+                            text=work["text"],
                             pdf_path=Path(work["pdf"]) if work["pdf"] else None)}
 
     def look() -> list[dict[str, Any]]:
@@ -2351,7 +2375,7 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
                     authors=list(surnames),
                     pdf_path=path)
     top = res["matches"][0] if res["matches"] else None
-    # Five answers, not four. Collapsing a weak hit into "absent" is the
+    # Six answers, not four. Collapsing a weak hit into "absent" is the
     # expensive mistake in both directions: called present, a document is
     # skipped and its full text never lands; called absent, a duplicate item is
     # minted. A weak hit is neither finding — it is a document to look at, and
@@ -2677,6 +2701,10 @@ def reconcile_apply(root: Path, found: dict[str, Any], target_lib: str,
         with contextlib.redirect_stdout(captured):
             rc = cmd_create_items(inject_args)
         outcome = json.loads(captured.getvalue())
+        if outcome.get("zotero") == "slow":
+            raise ZoteroSlow(outcome.get("error", "create-items read slowly"))
+        if outcome.get("zotero") == "unavailable":
+            raise ZoteroUnavailable(outcome.get("error", "Zotero went away"))
         if "results" not in outcome:
             raise RuntimeError(outcome.get("error", "create-items failed"))
         report["applied"] = outcome["results"]

@@ -49,11 +49,13 @@ where `user_id` is the account the local Zotero is signed in to (an optional
 no maintenance skill runs it for you. The script locks the staging
 directories and the user's runtime directory, or the home directory when
 `XDG_RUNTIME_DIR` is unset (advisory locks on the directories themselves, no
-lock files, given up after 10 min rather than hang), re-reads the library live, and
+lock files, given up after 10 min rather than hang), looks every file up again, live, and
 creates only absent PDFs with corroborated title/author metadata, through the
 local API (it needs Zotero 10.0 or later and the local API key; see
-`references/helper-script.md`). The re-read covers the destination library, so with a
-group `collection` the duplicate check reads that group. Missing metadata, weak matches, ties, and discovery errors
+`references/helper-script.md`). The second lookup covers the destination library, so with a
+group `collection` the duplicate check searches that group. A read Zotero does
+not finish in time, at any step, is verdict `zotero_slow` with exit 74, never
+the clean no-op of `zotero_unavailable`. Missing metadata, weak matches, ties, and discovery errors
 remain visible in `deferred` or `errors`; they cannot become an automatic
 write. Existing items are edited only with `--apply --edit`, which stores each
 staged file under the one existing item that lacks it (a tie is left for the
