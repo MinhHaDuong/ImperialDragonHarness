@@ -5,7 +5,7 @@
 ## Principles
 
 - **Narrow, specialized skills** — narrow in domain, not in mode: one discipline per skill, verbs as arguments, modes share the machinery (harness precedent: the `reviewers` skill). The target surface is one `zotero` skill, not a prefixed family.
-- **Each skill chooses the transport best suited to its task** — local database read, the desktop connector, the local HTTP API, or a transport bundled with an MCP overlay — judged on liveness requirement, blast radius, durable artifacts, and dependency footprint.
+- **Each skill chooses the transport best suited to its task** — the local HTTP API, the desktop connector, or a transport bundled with an MCP overlay — judged on liveness requirement, blast radius, durable artifacts, and dependency footprint.
 - **For general work outside the skills**, the harness documents the interface options and lets the session choose. No option is a required dependency.
 - **Hard invariants, regardless of transport**: never write `zotero.sqlite`; merges and edits to existing items happen in the desktop client; creating items is previewed first (`--dry-run`) and leaves a durable RIS artifact.
 - **Local-only and stateless helper** (decided 2026-10-15, ticket 1113): `scripts/zotero.py` reaches no cloud service, holds no credential, and keeps no cache, index or record between runs.

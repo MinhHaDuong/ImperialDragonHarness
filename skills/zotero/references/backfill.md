@@ -18,8 +18,8 @@ zotero.py audit docs/ --out /tmp/audit.json
 For projects with BibTeX, use `reconcile` to discover `.bib` files at the
 repository root and one level below it, follow their `file=` paths, and report
 both linked files and unlinked staging files. It uses the BibTeX metadata when
-matching linked files. The command is **report-only**: it never injects or
-attaches anything; rows whose work is present without a file come back in
+matching linked files. The command is **report-only by default**: without
+`--apply` it never injects or attaches anything; rows whose work is present without a file come back in
 `suggested_edits` (item key, file) for the author to attach by hand. It
 uses `docs/` as the staging default only when no `.bib` exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
 an empty clean report.
@@ -43,8 +43,9 @@ For an opted-in import, the project owner adds a root-level
 where `user_id` is the account the local Zotero is signed in to (an optional
 `collection` key files created items there). Then run `reconcile . --apply`;
 no maintenance skill runs it for you. The script locks the staging
-directories and the user's runtime directory (advisory locks on the
-directories themselves, no lock files), re-reads the library live, and
+directories and the user's runtime directory, or the home directory when
+`XDG_RUNTIME_DIR` is unset (advisory locks on the directories themselves, no
+lock files, given up after 10 min rather than hang), re-reads the library live, and
 creates only absent PDFs with corroborated title/author metadata, through the
 desktop connector. The re-read covers the destination library, so with a
 group `collection` the duplicate check reads that group. Missing metadata, weak matches, ties, and discovery errors
