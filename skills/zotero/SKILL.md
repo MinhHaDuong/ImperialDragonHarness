@@ -23,7 +23,7 @@ A run uses exactly one verb. **Read the verb's file before acting.**
 |---|---|---|
 | `import` | one or more PDFs or URLs → new items with attachments | `references/import.md` |
 | `suggest-edits` | report missing fields on items that already exist; write them only with `--edit` | `references/enrichment.md` |
-| `check-staging` | compare staged files with the library — the files a repository's `.bib` links, or every file of `--dir` — and report; `--apply` creates absent items, `--apply --edit` also stores files under existing items | `references/backfill.md` |
+| `check-staging` | compare staged files with the library — the files a repository's `.bib` links, or every staging file under `--dir` — and report; `--apply` creates absent items, `--apply --edit` also stores files under existing items | `references/backfill.md` |
 | `report-duplicates` | hash-dedup JSON report, library against itself (ticket 0485) | `docs/zotero-report-duplicates.md` |
 | `suggest-attachments` | file a document onto an item that already exists (reports by default; stores it with `--edit`) | `references/backfill.md` |
 
