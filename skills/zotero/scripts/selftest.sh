@@ -37,7 +37,7 @@ check("highwire: journal title", d1.get("publication") == "Journal of Things")
 check("highwire: date", d1.get("date") == "2025/03/01")
 ids1 = m.find_identifiers("", d1.get("doi_meta", ""))
 check("highwire: doi", ids1.get("doi") == "10.1234/abc.2025.001")
-check("type JOUR (doi + journal)", m.suggest_type("text/html", "x.org", d1, ids1) == "JOUR")
+check("type journalArticle (doi + journal)", m.suggest_type("text/html", "x.org", d1, ids1) == "journalArticle")
 
 # 2. JSON-LD NewsArticle fills gaps
 html2 = """<html><head>
@@ -53,15 +53,15 @@ d2 = m.parse_html(html2)
 check("jsonld: headline title", d2.get("title") == "Big Climate News")
 check("jsonld: datePublished", d2.get("date", "").startswith("2024-11-24"))
 check("jsonld: 2 authors", d2.get("authors") == ["Aruna Chandrasekhar", "Daisy Dunne"])
-check("type WEB (news article, no doi)", m.suggest_type("text/html", "carbonbrief.org", d2, {}) == "WEB")
+check("type webpage (news article, no doi)", m.suggest_type("text/html", "carbonbrief.org", d2, {}) == "webpage")
 
 # 3. bare DOI + arXiv in free text
 ids3 = m.find_identifiers("see doi 10.21201/2025.000088 and arXiv: 2401.01234v2 here")
 check("free-text doi", ids3.get("doi") == "10.21201/2025.000088")
 check("free-text arxiv", ids3.get("arxiv") == "2401.01234v2")
 
-# 4. PDF mime → RPRT
-check("type RPRT (pdf)", m.suggest_type("application/pdf", "iea.org", {}, {}) == "RPRT")
+# 4. PDF mime → report
+check("type report (pdf)", m.suggest_type("application/pdf", "iea.org", {}, {}) == "report")
 
 # 5. slug is filesystem-safe
 check("slugify safe", m.slugify("COP29: Key outcomes (Baku)!") == "cop29-key-outcomes-baku")

@@ -355,7 +355,8 @@ def test_author_to_creator_single_name_uses_name_field():
 
 def test_entry_to_zotero_item_journal_article():
     item = zi.entry_to_zotero_item(
-        {"type": "JOUR", "title": "T", "authors": ["Jane Smith"], "year": 2015,
+        {"type": "journalArticle", "title": "T", "authors": ["Jane Smith"],
+         "year": 2015,
          "doi": "10.1/x", "journal": "Econometrica", "volume": "83",
          "issue": "4", "pages": "1467-1495", "numPages": 29}, owned,
     )
@@ -370,7 +371,7 @@ def test_entry_to_zotero_item_journal_article():
 
 def test_entry_to_zotero_item_book_numpages_and_isbn():
     item = zi.entry_to_zotero_item(
-        {"type": "BOOK", "title": "B", "isbn": "978-0-13-468599-1",
+        {"type": "book", "title": "B", "isbn": "978-0-13-468599-1",
          "numPages": 300, "doi": "10.2/y"}, owned,
     )
     assert item["itemType"] == "book"
@@ -380,8 +381,9 @@ def test_entry_to_zotero_item_book_numpages_and_isbn():
     assert item["DOI"] == "10.2/y"
 
 
-def test_entry_to_zotero_item_unknown_type_falls_back_to_document():
-    assert zi.entry_to_zotero_item({"type": "XXXX"}, owned)["itemType"] == "document"
+def test_entry_type_defaults_to_journal_article():
+    assert zi.entry_to_zotero_item({"title": "T"}, owned)["itemType"] == \
+        "journalArticle"
 
 
 # ── per-type field validity (the 400-from-Zotero class) ─────────────────────
@@ -475,7 +477,10 @@ SCHEMA_42_FIELDS = {
 }
 
 def owned(item_type: str) -> frozenset[str]:
-    """The schema snapshot in the shape schema_fields() returns."""
+    """The schema snapshot in the shape schema_fields() returns, refusing
+    a type it does not hold as schema_fields() refuses an unknown one."""
+    if item_type not in SCHEMA_42_FIELDS:
+        raise ValueError(f"entry type {item_type!r} is not a Zotero item type")
     return frozenset(SCHEMA_42_FIELDS[item_type])
 
 
@@ -507,15 +512,15 @@ MAXIMAL_ENTRY = {
 }
 
 
-def _render(ris_type: str) -> dict:
-    return zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": ris_type}, owned)
+def _render(item_type: str) -> dict:
+    return zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": item_type}, owned)
 
 
-def test_every_mapped_type_emits_only_fields_that_type_owns():
+def test_every_type_emits_only_fields_that_type_owns():
     """The defect class: a field posted to a type that lacks it is a 400."""
     offenders = {}
-    for ris_type, zot_type in zi.RIS_TO_ZOTERO_TYPE.items():
-        item = _render(ris_type)
+    for zot_type in SCHEMA_42_FIELDS:
+        item = _render(zot_type)
         assert item["itemType"] == zot_type
         bad = sorted(
             k for k in item
@@ -527,15 +532,12 @@ def test_every_mapped_type_emits_only_fields_that_type_owns():
     assert offenders == {}, f"invalid fields per type: {offenders}"
 
 
-def test_unknown_ris_type_fallback_emits_only_document_fields():
-    item = zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": "XXXX"}, owned)
-    assert item["itemType"] == "document"
-    bad = sorted(
-        k for k in item
-        if k not in ("itemType", "creators", "collections")
-        and k not in SCHEMA_42_FIELDS["document"]
-    )
-    assert bad == []
+def test_an_unknown_type_is_refused_not_degraded():
+    """Author decision 11: `type` is a Zotero item type. A RIS code or a
+    typo is refused, never silently filed as something else."""
+    for bad in ("JOUR", "XXXX", "journalarticle"):
+        with pytest.raises(ValueError, match="not a Zotero item type"):
+            zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": bad}, owned)
 
 
 def _placed_values(item: dict) -> set[str]:
@@ -552,11 +554,11 @@ def _placed_values(item: dict) -> set[str]:
     return placed
 
 
-def test_no_input_value_is_dropped_for_any_mapped_type():
+def test_no_input_value_is_dropped_for_any_type():
     """A value with no home on the target type lands in `extra`, never gone."""
     losses = {}
-    for ris_type, zot_type in zi.RIS_TO_ZOTERO_TYPE.items():
-        placed = _placed_values(_render(ris_type))
+    for zot_type in SCHEMA_42_FIELDS:
+        placed = _placed_values(_render(zot_type))
         missing = sorted(
             key for key, value in MAXIMAL_ENTRY.items()
             if key not in ("authors", "abstract") and str(value) not in placed
@@ -567,7 +569,7 @@ def test_no_input_value_is_dropped_for_any_mapped_type():
 
 
 def test_report_publisher_is_institution_and_numpages_goes_to_extra():
-    item = _render("RPRT")
+    item = _render("report")
     assert "publisher" not in item
     assert item["institution"] == "RAND Corporation"
     assert "numPages" not in item          # report has no numPages field
@@ -581,7 +583,7 @@ def test_report_publisher_is_institution_and_numpages_goes_to_extra():
 
 
 def test_thesis_publisher_becomes_university():
-    item = _render("THES")
+    item = _render("thesis")
     assert "publisher" not in item
     assert item["university"] == "RAND Corporation"
     assert item["numPages"] == "24"
@@ -589,7 +591,7 @@ def test_thesis_publisher_becomes_university():
 
 
 def test_manuscript_publisher_becomes_institution():
-    item = _render("MANSCPT")
+    item = _render("manuscript")
     assert "publisher" not in item
     assert item["institution"] == "RAND Corporation"
     assert item["numPages"] == "24"
@@ -597,19 +599,19 @@ def test_manuscript_publisher_becomes_institution():
 
 
 def test_conference_paper_container_is_proceedings_title():
-    item = _render("CONF")
+    item = _render("conferencePaper")
     assert item["proceedingsTitle"] == "Container Name"
     assert "seriesTitle" not in item
 
 
 def test_book_section_container_is_book_title():
-    item = _render("CHAP")
+    item = _render("bookSection")
     assert item["bookTitle"] == "Container Name"
     assert item["publisher"] == "RAND Corporation"
 
 
 def test_book_container_is_series_and_issue_goes_to_extra():
-    item = _render("BOOK")
+    item = _render("book")
     assert item["series"] == "Container Name"
     assert item["numPages"] == "24"
     assert "issue: 3" in item["extra"]
@@ -617,7 +619,7 @@ def test_book_container_is_series_and_issue_goes_to_extra():
 
 
 def test_document_fallback_routes_pagination_and_container_to_extra():
-    item = _render("GEN")
+    item = _render("document")
     assert item["publisher"] == "RAND Corporation"
     for label in ("container-title: Container Name", "volume: 12",
                   "issue: 3", "page: 11-24", "number-of-pages: 24",
@@ -625,37 +627,12 @@ def test_document_fallback_routes_pagination_and_container_to_extra():
         assert label in item["extra"]
 
 
-# ── entry type codes ─────────────────────────────────────────────────────────
-
-
-def test_every_mapped_zotero_type_has_a_pinned_field_set():
-    """Guard the guard: a new type must arrive with its schema snapshot."""
-    types = set(zi.RIS_TO_ZOTERO_TYPE.values()) | {"document"}
-    assert types - set(SCHEMA_42_FIELDS) == set()
-
-
-@pytest.mark.parametrize(("ris_code", "zot_type"), [
-    ("CPAPER", "conferencePaper"),
-    ("GOVDOC", "report"),
-    ("PAT", "patent"),
-    ("STAND", "standard"),
-    ("UNPB", "manuscript"),
-    ("WEB", "webpage"),
-])
-def test_previously_unmapped_codes_reach_their_type(ris_code, zot_type):
-    assert _render(ris_code)["itemType"] == zot_type
-
-
-def test_unrecognised_ris_code_records_what_it_degraded_from():
-    """Degradation to `document` must leave a trace, not vanish."""
-    item = zi.entry_to_zotero_item({"type": "ZZZZ", "title": "T"}, owned)
-    assert item["itemType"] == "document"
-    assert "Unmapped RIS type: ZZZZ" in item["extra"]
+# ── entry types ──────────────────────────────────────────────────────────────
 
 
 def test_patent_has_no_date_field_and_uses_issue_date():
     """`date` is not universal: patent carries issueDate instead."""
-    item = _render("PAT")
+    item = _render("patent")
     assert "date" not in item
     assert item["issueDate"] == "1949"
     assert item["patentNumber"] == "P-69"
@@ -663,7 +640,7 @@ def test_patent_has_no_date_field_and_uses_issue_date():
 
 
 def test_standard_maps_number_and_genre():
-    item = _render("STAND")
+    item = _render("standard")
     assert item["number"] == "P-69"
     assert item["type"] == "RAND Paper"
     assert item["publisher"] == "RAND Corporation"
@@ -671,19 +648,19 @@ def test_standard_maps_number_and_genre():
 
 
 def test_webpage_container_is_website_title():
-    item = _render("WEB")
+    item = _render("webpage")
     assert item["websiteTitle"] == "Container Name"
     assert item["websiteType"] == "RAND Paper"
     assert "ISBN: 978-0-13-468599-1" in item["extra"]
 
 
 def test_thesis_genre_is_thesis_type():
-    assert _render("THES")["thesisType"] == "RAND Paper"
+    assert _render("thesis")["thesisType"] == "RAND Paper"
 
 
 def test_conference_name_reaches_conference_paper_only():
-    assert _render("CONF")["conferenceName"] == "Annual Meeting"
-    assert "event-title: Annual Meeting" in _render("BOOK")["extra"]
+    assert _render("conferencePaper")["conferenceName"] == "Annual Meeting"
+    assert "event-title: Annual Meeting" in _render("book")["extra"]
 
 
 # ── acceptance: the memorandum that produced the original 400s ──────────────
@@ -697,7 +674,7 @@ def test_rand_p69_memorandum_is_complete_in_one_pass():
     produce the whole item.
     """
     item = zi.entry_to_zotero_item({
-        "type": "RPRT",
+        "type": "report",
         "title": "Market Mechanisms and Maximization",
         "authors": ["Paul A. Samuelson"],
         "year": 1949,
@@ -735,7 +712,7 @@ def test_unknown_entry_key_is_rejected_not_ignored():
 
 
 def test_known_entry_keys_pass_validation():
-    zi.validate_entry_keys([dict(MAXIMAL_ENTRY, type="RPRT",
+    zi.validate_entry_keys([dict(MAXIMAL_ENTRY, type="report",
                                  pdf="/tmp/x.pdf", attach_pdf=True)])
 
 
@@ -750,18 +727,28 @@ def test_zotero_schema_snapshot_matches_the_real_client(use_live):
 
 
 @pytest.mark.integration
-def test_every_mapped_type_is_accepted_by_a_real_client(use_live):
-    """The 400 class, end to end: every item the mapper builds from a
-    maximal entry, one per type, is saved by a real Zotero."""
+def test_every_zotero_type_is_accepted_by_a_real_client(use_live):
+    """The 400 class, end to end: for every work type the real client's
+    schema lists, the item the mapper builds from a maximal entry is saved
+    by that client, the title included (Zotero maps it onto caseName,
+    nameOfAct or subject)."""
     real = zi.schema_fields(zi.local_library())
     z = use_live.client()
-    types = sorted(zi.RIS_TO_ZOTERO_TYPE) + ["XXXX"]
+    types = sorted({t["itemType"] for t in z.item_types()} - zi.NOT_WORKS)
+    assert len(types) > len(SCHEMA_42_FIELDS), "positive control: the schema"
+    titles = {t: unique_title() for t in types}
     items = [zi.entry_to_zotero_item({**MAXIMAL_ENTRY, "type": t,
-                                      "title": unique_title()}, real)
+                                      "title": titles[t]}, real)
              for t in types]
     result = z.create_items(items)
     assert result["failed"] == {}, result["failed"]
     assert len(result["successful"]) == len(types)
+    saved = {i["data"]["itemType"]: i["data"]
+             for i in result["successful"].values()}
+    assert titles["case"] in saved["case"].values()
+    for not_a_work in sorted(zi.NOT_WORKS) + ["JOUR"]:
+        with pytest.raises(ValueError, match="not a Zotero item type"):
+            real(not_a_work)
 
 
 # --- enrich: filling fields on an item that already exists ------------------
@@ -1654,7 +1641,7 @@ def test_inject_refuses_contradicted_metadata(tmp_path, monkeypatch, capsys):
                          monkeypatch)
     entries = tmp_path / "e.json"
     entries.write_text(json.dumps([{
-        "type": "JOUR", "title": "Ronald Graham: laying the foundations of "
+        "type": "journalArticle", "title": "Ronald Graham: laying the foundations of "
                                  "online optimization",
         "authors": ["Albers, Susanne"], "pdf": str(pdf), "attach_pdf": True}]))
     args = _inject_args(None, entries_json=None, entries_file=str(entries))
@@ -1670,7 +1657,7 @@ def test_inject_skip_corroboration_lets_it_through(use_live, tmp_path, capsys):
     pdf = make_pdf(tmp_path / f"{uuid.uuid4().hex[:10]}.pdf",
                    ["The Basic George B. Dantzig", "Richard W. Cottle",
                     uuid.uuid4().hex])
-    args = _inject_args([{"type": "JOUR", "title": title,
+    args = _inject_args([{"type": "journalArticle", "title": title,
                           "authors": ["Albers, Susanne"], "year": "2020",
                           "pdf": str(pdf)}], skip_corroboration=True)
     assert zi.cmd_create_items(args) == 0
@@ -1685,7 +1672,7 @@ def test_inject_dry_run_reports_corroboration_and_creates_nothing(
         use_live, tmp_path, capsys):
     """The item JSON is built against the running client's schema, and
     nothing is created."""
-    entry = _entry(tmp_path, type="RPRT", publisher="RAND", numPages=78)
+    entry = _entry(tmp_path, type="report", publisher="RAND", numPages=78)
     entries = tmp_path / "e.json"
     entries.write_text(json.dumps([entry]))
     args = argparse.Namespace(entries_json=None, entries_file=str(entries),

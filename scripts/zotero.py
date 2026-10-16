@@ -42,7 +42,6 @@ import fcntl
 import hashlib
 import io
 import json
-import logging
 import mimetypes
 import os
 import re
@@ -300,38 +299,11 @@ def last_first(a: str) -> str:
 # `create-items` hands Zotero item JSON to pyzotero's local client, which
 # creates it as the client's own UI would.
 
-# An entry's `type` is a RIS type code (the vocabulary the skill's
-# classification table uses). A code outside this table becomes `document`,
-# with a warning and an Extra line naming the code, never silently.
-#
-# Correspondences follow Zotero's own RIS translator (translators/RIS.js,
-# `importTypeMap` + the inverted `exportTypeMap`) where it has an opinion, so
-# an item imported through this script and one imported through Zotero's
-# importer land on the same type. Two departures, both deliberate:
-#   STAND  the translator says `report`, but that line predates the `standard`
-#          item type; schema 42 has `standard`, and RIS STAND means Standard.
-#   UNPB   the translator has no entry, so it would fall through to its
-#          journalArticle default. Every neighbouring unpublished-work code it
-#          *does* map (INPR, UNPD, PAMP, UNBILL) goes to `manuscript`.
-ENTRY_TYPE_DEFAULT = "JOUR"
-RIS_TO_ZOTERO_TYPE = {
-    "JOUR": "journalArticle",
-    "BOOK": "book",
-    "THES": "thesis",
-    "RPRT": "report",
-    "GOVDOC": "report",
-    "CHAP": "bookSection",
-    "CONF": "conferencePaper",
-    "CPAPER": "conferencePaper",
-    "MANSCPT": "manuscript",
-    "UNPB": "manuscript",
-    "NEWS": "newspaperArticle",
-    "MGZN": "magazineArticle",
-    "PAT": "patent",
-    "STAND": "standard",
-    "WEB": "webpage",
-    "GEN": "document",
-}
+# An entry's `type` is a Zotero item type (`journalArticle`, `report`, ...),
+# checked against the running client's schema; an unknown one is refused.
+ENTRY_TYPE_DEFAULT = "journalArticle"
+# Item types that are not works.
+NOT_WORKS = {"attachment", "note", "annotation"}
 
 # Field placement is per item type. Zotero gives each type its own field set,
 # and a field the type does not own is refused on save (`'numPages' is not a
@@ -424,10 +396,19 @@ def author_to_creator(a: str) -> dict[str, str]:
 
 def schema_fields(z: zotero.Zotero) -> Any:
     """item type -> the fields it owns, from the running client's schema,
-    each type asked once per run."""
+    each type asked once per run; a type the schema does not know, or one
+    that is not a work, is refused."""
     known: dict[str, frozenset[str]] = {}
+    types: set[str] = set()
 
     def owned(item_type: str) -> frozenset[str]:
+        if not types:
+            with local_api():
+                types.update(t["itemType"] for t in z.item_types())
+        if item_type not in types - NOT_WORKS:
+            raise ValueError(f"entry type {item_type!r} is not a Zotero item "
+                             f"type; use one of "
+                             f"{', '.join(sorted(types - NOT_WORKS))}")
         if item_type not in known:
             with local_api():
                 known[item_type] = frozenset(
@@ -455,18 +436,11 @@ def place_slot(item: dict[str, Any], extra: list[str], slot: str, value: str,
 def entry_to_zotero_item(e: dict[str, Any], owned: Any) -> dict[str, Any]:
     """Zotero item JSON for one entry; `owned(item_type)` is the set of
     fields the type owns (schema_fields)."""
-    ris_ty = (e.get("type") or ENTRY_TYPE_DEFAULT).upper()
-    ty = RIS_TO_ZOTERO_TYPE.get(ris_ty, "document")
-    item: dict[str, Any] = {"itemType": ty}
+    item: dict[str, Any] = {"itemType": e.get("type") or ENTRY_TYPE_DEFAULT}
+    owned(item["itemType"])  # refuses an unknown type
     extra: list[str] = []
-    if ris_ty not in RIS_TO_ZOTERO_TYPE:
-        # Degrading to `document` is a lossy guess; say so in the log and
-        # leave the original code on the item so the downgrade is auditable
-        # from the library rather than invisible.
-        logging.warning("RIS type %r has no Zotero equivalent; "
-                        "importing as `document`", ris_ty)
-        extra.append(f"Unmapped RIS type: {ris_ty}")
-    # Universal fields — every type RIS_TO_ZOTERO_TYPE can produce owns these.
+    # Universal fields: every regular Zotero type owns them, and Zotero maps
+    # `title` onto a type's own title field (caseName, nameOfAct, subject).
     # `date` is NOT among them (patent has none); it goes through a slot.
     if t := e.get("title"):
         item["title"] = t
@@ -1219,7 +1193,7 @@ def cmd_create_items(args: argparse.Namespace) -> int:
         print(f"create-items: {exc}", file=sys.stderr)
         emit_json(slow_payload(exc))
         return EXIT_SLOW
-    except LocalAPIError as exc:
+    except (LocalAPIError, ValueError) as exc:
         print(f"create-items: {exc}", file=sys.stderr)
         emit_json({"error": str(exc)})
         return 1
@@ -2799,6 +2773,16 @@ def attach_present_works(root: Path, rows: list[dict[str, Any]],
     return rc
 
 
+# BibTeX entry types as Zotero item types, after Zotero's own BibTeX
+# translator; any other BibTeX type becomes `document`.
+BIB_TO_ZOTERO_TYPE = {
+    "article": "journalArticle", "book": "book", "inbook": "bookSection",
+    "incollection": "bookSection", "inproceedings": "conferencePaper",
+    "proceedings": "conferencePaper", "phdthesis": "thesis",
+    "mastersthesis": "thesis", "techreport": "report",
+    "unpublished": "manuscript"}
+
+
 def bib_to_inject_entry(bib: dict[str, Any], path: Path) -> dict[str, Any] | None:
     """Use curated BibTeX first; accept orphan PDF metadata only if complete."""
     info = pdfinfo(path) if path.suffix.lower() == ".pdf" else {}
@@ -2810,13 +2794,9 @@ def bib_to_inject_entry(bib: dict[str, Any], path: Path) -> dict[str, Any] | Non
         year = m.group() if m else ""
     if not (title and author and year and path.suffix.lower() == ".pdf"):
         return None
-    types = {"article": "JOUR", "book": "BOOK", "inbook": "CHAP",
-             "incollection": "CHAP", "inproceedings": "CONF",
-             "proceedings": "CONF", "phdthesis": "THES",
-             "mastersthesis": "THES", "techreport": "RPRT",
-             "misc": "GEN", "unpublished": "UNPB"}
     entry: dict[str, Any] = {
-        "type": types.get(str(bib.get("_type", "")).lower(), "GEN"),
+        "type": BIB_TO_ZOTERO_TYPE.get(str(bib.get("_type", "")).lower(),
+                                       "document"),
         "title": title, "authors": [a.strip() for a in author.split(" and ")],
         "year": year, "pdf": str(path), "attach_pdf": True}
     for source, target in (("doi", "doi"), ("isbn", "isbn"),

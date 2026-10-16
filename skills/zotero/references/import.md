@@ -24,13 +24,13 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 1. **Probe.** `python3 "$IDH_ROOT/skills/zotero/scripts/probe-url.py" <url>...`
    stages each document in `docs/` and prints a JSON record per URL:
    `staged_path`, `mime`, `page_count` (PDFs), `meta` (title/date/authors/
-   publication/publisher), `identifiers` (doi/arxiv/isbn), `suggested_ris_type`,
+   publication/publisher), `identifiers` (doi/arxiv/isbn), `suggested_type`,
    and `full_pdf_url` when an HTML landing page advertises a downloadable PDF.
 2. **Prefer the real document.** If `full_pdf_url` is present (institutional
    landing page → PDF), probe that too and attach the PDF, not the HTML overview.
 3. Resolve identifiers and refine the metadata as for a PDF (identifier
    resolution below), then classify the type **with judgment** — don't
-   rubber-stamp `suggested_ris_type`. The lazy failure is calling everything a
+   rubber-stamp `suggested_type`. The lazy failure is calling everything a
    web page.
 4. Continue on the shared path: `find-work` → `create-items` with
    `attach_pdf: true, pdf: <staged_path>` (works for HTML snapshots too), and
@@ -40,16 +40,16 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 
 ### Type classification (the brains)
 
-| Source nature | Zotero type | RIS code | Signals |
-|---|---|---|---|
-| Institutional / agency / think-tank PDF, official decision | Report | `RPRT` | PDF mime; `.org/.int/.gov` host; "report/paper/working paper" |
-| Peer-reviewed article | Journal Article | `JOUR` | DOI **and** a journal title (`citation_journal_title`) |
-| News / analysis / blog (incl. specialist online outlets) | Web Page | `WEB` | HTML; `og:type=article`; news/blog host |
-| Newspaper / magazine piece | `NEWS` / `MGZN` | only if you are confident; **biblatex `entrysubtype` does not survive Zotero import — prefer these type codes here, not `.bib`** |
-| Research note (own `*.md`) | Document | `GEN` | staged note, archived too |
+| Source nature | Entry `type` (Zotero item type) | Signals |
+|---|---|---|
+| Institutional / agency / think-tank PDF, official decision | `report` | PDF mime; `.org/.int/.gov` host; "report/paper/working paper" |
+| Peer-reviewed article | `journalArticle` | DOI **and** a journal title (`citation_journal_title`) |
+| News / analysis / blog (incl. specialist online outlets) | `webpage` | HTML; `og:type=article`; news/blog host |
+| Newspaper / magazine piece | `newspaperArticle` / `magazineArticle` | only if you are confident; **biblatex `entrysubtype` does not survive Zotero import — prefer these types here, not `.bib`** |
+| Research note (own `*.md`) | `document` | staged note, archived too |
 
 Reports carry `numPages`. Don't invent a type the page doesn't support; when a
-news site (e.g. Carbon Brief) is really just a web article, `WEB` is correct.
+news site (e.g. Carbon Brief) is really just a web article, `webpage` is correct.
 
 ### Anti-bitrot / fetch failures
 
@@ -61,7 +61,7 @@ substitution in the entry.
 
 ## Creating the items
 
-An entry's `type` is a RIS type code (the column above), the vocabulary the classification uses; no RIS file is written. `create-items` maps the entries JSON onto Zotero item JSON (type code → Zotero `itemType`; fields without a slot on the type, e.g. a DOI on a book, land in `extra`) and creates each item through Zotero's local API at `127.0.0.1:23119` (via pyzotero): the item is created in the destination library, in `--collection` when given, then the `attach_pdf` PDF is uploaded under it.
+An entry's `type` is a Zotero item type (the column above; default `journalArticle`), checked against the running client's schema: a name Zotero does not know, a RIS code such as `JOUR` included, is refused. `create-items` maps the entries JSON onto Zotero item JSON (fields without a slot on the type, e.g. a DOI on a book, land in `extra`) and creates each item through Zotero's local API at `127.0.0.1:23119` (via pyzotero): the item is created in the destination library, in `--collection` when given, then the `attach_pdf` PDF is uploaded under it.
 
 - **Zotero must answer.** When nothing answers, the helper launches Zotero (never in a container) and waits up to 90 s. If Zotero is still unavailable, nothing is saved and the output says so (`zotero: "unavailable"`, exit 75; a read Zotero does not finish in time is `zotero: "slow"`, exit 74). Exit 74 or 75 always means nothing was saved: when Zotero goes away after an entry was created, the run stops with exit 1 and the created rows. Enable Zotero Settings > Advanced > "Allow other applications on this computer to communicate with Zotero", or the helper fails naming that setting. Writing needs Zotero 10.0 or later and a local API key. On the first write without one, Zotero shows Allow / Always Allow / Deny: **tell the user to answer "Always Allow"** (the key is stored in `~/.config/keys/zotero-local.env`; the helper accepts no other answer, and a one-time "Allow" writes nothing). The helper asks before the first write and waits 120 s for the answer; with none, or a Deny, nothing is written.
 - **Destination.** `--library` (the user library by default, or a numeric groupID such as an editable group) or `--collection KEY` (whose own library it uses). The item is created there directly; the Zotero window's selection plays no part. A read-only group cannot be a destination.
@@ -77,7 +77,7 @@ An entry's `type` is a RIS type code (the column above), the vocabulary the clas
 - **Authors**: prefer canonical order from CrossRef/OpenLibrary when available; otherwise extract from the byline on page 1. Convert `"First Middle Last"` → `"Last, First Middle"` (the script does this automatically, but do it once if you're feeding the script the wrong way around). Institutions verbatim with a trailing comma so they aren't reordered.
 - **Page count**: include `numPages` for every entry. Only `book`, `thesis` and `manuscript` have a real `numPages` field; every other type — reports included — gets it in Extra as `number-of-pages`.
 - **Field placement is per item type**: a field the target type does not own is refused or dropped on save. `entry_to_zotero_item()` routes each value into the first slot field the type owns, read from the running Zotero's live schema (`/api/itemTypeFields`) — so `publisher` becomes `institution` on a report, `university` on a thesis, `journal` becomes `bookTitle` / `proceedingsTitle` / `series` / `seriesTitle` / `websiteTitle`, and even `year` is type-dependent (a patent has no `date` field, only `issueDate`). Anything with no home lands in Extra under its CSL name; nothing is dropped.
-- **Every type code reaches a real Zotero type.** `CPAPER`→conferencePaper, `GOVDOC`→report, `PAT`→patent, `STAND`→standard, `UNPB`→manuscript, `WEB`→webpage, following Zotero's own RIS translator. An unknown code still degrades to `document`, but logs a warning and records `Unmapped RIS type: <code>` in Extra — never silently.
+- **Every work type Zotero lists is accepted**, `patent`, `standard`, `case` and `statute` included: `title` lands in the type's own title field (`caseName`, `nameOfAct`, `subject`), Zotero's mapping. An unknown type is refused, never filed as something else.
 - **A report needs four fields the generic ones don't cover**: `publisher` (→ `institution`), `place`, `number` (→ `reportNumber`), `genre` (→ `reportType`). Supply all four and the item is complete in one `create-items`.
 - **PDF attachment**: pass `attach_pdf: true` plus the absolute `pdf` path. `create-items` uploads the file bytes through the local API, so Zotero stores a copy.
 - **Filename is a fallback only** for title/year/authors. If you used the filename, say so in your summary so the user knows to spot-check.
