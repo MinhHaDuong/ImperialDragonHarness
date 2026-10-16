@@ -1,0 +1,54 @@
+%erg 0.1
+Title: Zotero helper: specific subcommand names; split probe into extract and lookup
+Created: 2026-10-16
+Author: Minh Ha-Duong
+Blocked-by: 1113
+
+--- log ---
+2026-10-16T06:39Z reviewer created
+
+--- body ---
+
+## Context
+The subcommands of `scripts/zotero.py` carry unspecific names (`probe`,
+`match`, `audit`, `attach`, `inject`, `enrich`, `write`); the author asked for
+names that say what each does (2026-10-16). `probe` also does two unrelated
+things: it extracts metadata from a PDF and looks the work up in the library.
+
+Blocked by 1113 (PR #1441): it rewrites the same script, tests and docs to read
+through the Zotero local API only.
+
+## Author decisions (2026-10-16)
+- Rename the subcommands to specific names; the proposed table below was
+  approved ("better").
+- Split `probe`: "Extracting is different than looking up. For example,
+  extracting is input format dependant, while looking up is a local API call
+  (ensuring it is available, stateless, never direct sqlite, never web)."
+  - `extract-metadata`: input-format dependent (PDF today), never needs Zotero.
+  - `find-work`: library lookup through the local API only; ensures Zotero is
+    available (launch it or do nothing), stateless, never sqlite, never web.
+    It absorbs `match` and takes the extracted metadata as input.
+
+| Now | Does | New |
+|---|---|---|
+| `probe` | extract PDF metadata + library lookup | split: `extract-metadata`, `find-work` |
+| `match` | look a work up from given metadata | `find-work` |
+| `dedup-report` | read-only report of duplicate items | `report-duplicates` |
+| `audit` | compare a `docs/` staging directory with the library | `check-staging-dir` |
+| `reconcile` | compare `.bib`-linked staging files with the library | `check-bib-staging` |
+| `attach` | report how to file documents onto an existing item | `suggest-attachments` |
+| `write` | write a RIS file from JSON entries | `write-ris` |
+| `inject` | create items + PDFs through the desktop connector | `create-items` |
+| `enrich` | report missing fields on existing items | `suggest-edits` |
+
+## Open question for the author
+`audit` and `reconcile` overlap (both compare staging with the library, from a
+directory or from `.bib` links): merge them into one command with two input
+modes, or keep two? Decide before implementation.
+
+## Exit criteria
+- [ ] `probe` is replaced by `extract-metadata` (no Zotero access) and `find-work` (local API only); extraction output feeds the lookup
+- [ ] Every subcommand carries its new name; no alias for the old names
+- [ ] `skills/zotero/`, `skills/lair/` (the `/zotero reconcile` proposal), `rules/zotero.md`, docs and README use only the new names
+- [ ] Tests cover the split: extraction runs with Zotero down; lookup does nothing when Zotero is unavailable
+- [ ] `make check` passes
