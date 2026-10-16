@@ -3200,3 +3200,75 @@ def test_a_launched_zotero_that_answers_with_an_error_is_not_stopped(
     with pytest.raises(zi.LocalAPIError):
         zi.ensure_zotero()
     assert stopped == []
+
+
+def test_a_refused_key_stops_an_attach_batch(tmp_path, monkeypatch, capsys):
+    calls = []
+
+    def attach_file(z, parent, path):
+        calls.append(path)
+        raise zi.KeyNotGranted("Zotero refused a local API key (denied)")
+
+    monkeypatch.setattr(zi, "with_zotero", lambda command, read: (
+        (None, {"data": {"title": "T"}}), None))
+    monkeypatch.setattr(zi, "attach_file", attach_file)
+    pdfs = [str(make_pdf(tmp_path / f"f{i}.pdf", [f"p{i}"])) for i in range(3)]
+    rc = zi.cmd_attach(argparse.Namespace(parent="P1", file=pdfs,
+                                          library="user", edit=True))
+    rows = json.loads(capsys.readouterr().out)["attached"]
+    assert rc == 1 and len(calls) == 1
+    assert [r["status"] for r in rows] == ["failed", "not attempted",
+                                           "not attempted"]
+
+
+def test_a_refused_key_stops_an_enrich_batch(monkeypatch):
+    asked = []
+
+    def write(z, call, **kwargs):
+        asked.append(1)
+        raise zi.KeyNotGranted("Zotero refused a local API key (denied)")
+
+    monkeypatch.setattr(zi, "find_item", lambda key, library: (
+        None, {"key": key, "data": {"title": "T"}}))
+    monkeypatch.setattr(zi, "item_fields", lambda z, item: {
+        "key": item["key"], "itemType": "book", "title": "T", "date": ""})
+    monkeypatch.setattr(zi, "write", write)
+    jobs = [{"item_key": k, "expect_title": "T", "set": {"date": "2001"}}
+            for k in ("A", "B", "C")]
+    results = zi.run_jobs(jobs, lambda j: zi.enrich_one(j, False, True,
+                                                        lasting=True),
+                          wrote=True)
+    assert len(asked) == 1
+    assert [r["status"] for r in results] == ["not written", "not attempted",
+                                              "not attempted"]
+
+
+def test_a_refused_key_stops_the_reconcile_attach_edits(tmp_path, monkeypatch):
+    calls = []
+
+    def attach_file(z, parent, path):
+        calls.append(parent)
+        raise zi.KeyNotGranted("Zotero refused a local API key (denied)")
+
+    monkeypatch.setattr(zi, "local_library", lambda library_id=None: None)
+    monkeypatch.setattr(zi, "attach_file", attach_file)
+    rows = [{"verdict": "work_present_no_file", "zotero_key": k,
+             "path": f"{k}.pdf"} for k in ("A", "B", "C")]
+    report = {"summary": {"work_present_no_file": 3}, "actions": {},
+              "suggested_edits": []}
+    rc = zi.attach_present_works(tmp_path, rows, {"library_id": None}, report)
+    assert rc == 1 and calls == ["A"]
+    assert [e["status"] for e in report["edits"]] == ["failed", "not attempted",
+                                                      "not attempted"]
+
+
+def test_an_unanswered_key_dialog_is_not_reported_as_zotero_stopping(
+        monkeypatch):
+    def authorize_local(self, app_name):
+        raise zi.httpx2.ReadTimeout("timed out")
+
+    monkeypatch.setattr(zi.zotero.Zotero, "authorize_local", authorize_local)
+    with pytest.raises(zi.KeyNotGranted) as exc:
+        zi.authorize(zi.local_library())
+    assert "stopped answering" not in str(exc.value)
+    assert "unanswered" in str(exc.value)

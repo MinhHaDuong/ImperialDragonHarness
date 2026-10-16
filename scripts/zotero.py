@@ -1117,6 +1117,10 @@ class KeyNotGranted(RuntimeError):
 
 NOTHING_WRITTEN = "nothing was written"
 
+# A batch stops at the first key Zotero did not grant: asking again per row
+# would open one more dialog, and wait AUTHORIZE_WAIT, for each.
+KEY_NOT_ATTEMPTED = "not attempted after Zotero granted no key"
+
 
 def authorize(z: LocalLibrary, *, lasting: bool = False,
               saved: str | None = None) -> None:
@@ -1136,6 +1140,11 @@ def authorize(z: LocalLibrary, *, lasting: bool = False,
         with local_api():
             granted = asker.authorize_local(APP_NAME)
     except ZoteroUnavailable as exc:
+        if isinstance(exc.__cause__, httpx2.TimeoutException):
+            # Zotero is up; its dialog was not answered in time.
+            raise KeyNotGranted(f"Zotero gave no local API key: its dialog "
+                                f"went unanswered for {AUTHORIZE_WAIT:.0f} s; "
+                                f"{done}") from exc
         raise KeyNotGranted(f"Zotero gave no local API key within "
                             f"{AUTHORIZE_WAIT:.0f} s ({exc}); {done}") from exc
     except LocalAPIError as exc:
@@ -1600,9 +1609,13 @@ def enrich_one(job: dict[str, Any], overwrite: bool, edit: bool,
             write(z, lambda: z.update_item({**item["data"], **patch}),
                   lasting=lasting)
             row["status"] = "written"
-        except (LocalAPIError, KeyNotGranted) as exc:
+        except LocalAPIError as exc:
             row["status"] = "not written"
             row["error"] = str(exc)
+        except KeyNotGranted as exc:
+            row.update(status="not written", error=str(exc))
+            exc.row = row  # run_jobs reports it and stops the batch
+            raise
     return row
 
 
@@ -1649,11 +1662,19 @@ def run_jobs(jobs: list[dict[str, Any]], one: Any,
     """`one(job)` for each job, in order. When Zotero goes away part-way
     through a run that writes, the rows already done are kept, the job in
     flight is marked unknown and the rest not attempted; a read-only run
-    has done nothing, so ZoteroUnavailable passes through (exit 75)."""
+    has done nothing, so ZoteroUnavailable passes through (exit 75). A key
+    Zotero did not grant stops the run too: the rest are not attempted."""
     results: list[dict[str, Any]] = []
     for n, job in enumerate(jobs):
         try:
             results.append(one(job))
+        except KeyNotGranted as exc:
+            results.append(getattr(exc, "row", None) or {
+                "itemKey": job["item_key"], "status": "not written",
+                "error": str(exc)})
+            results += [{"itemKey": rest["item_key"], "status": "not attempted",
+                         "error": KEY_NOT_ATTEMPTED} for rest in jobs[n + 1:]]
+            break
         except ZoteroUnavailable as exc:
             if not wrote:
                 raise
@@ -2835,11 +2856,16 @@ def attach_present_works(root: Path, rows: list[dict[str, Any]],
     z = local_library(fresh["library_id"])
     report["edits"] = []
     rc = 0
+    refused = False
     for row in rows:
         if (row["verdict"] != "work_present_no_file" or row.get("also_matches")
                 or not row.get("zotero_key")):
             continue
         edit = {"itemKey": row["zotero_key"], "file": row["path"]}
+        if refused:
+            edit.update(status="not attempted", error=KEY_NOT_ATTEMPTED)
+            report["edits"].append(edit)
+            continue
         try:
             edit["attachment"] = attach_file(z, row["zotero_key"],
                                              root / row["path"])
@@ -2852,6 +2878,7 @@ def attach_present_works(root: Path, rows: list[dict[str, Any]],
             summary["failed_write"] = summary.get("failed_write", 0) + 1
             actions["failed_write"] = RECONCILE_ACTIONS["failed_write"]
             rc = 1
+            refused = isinstance(exc, KeyNotGranted)
         report["edits"].append(edit)
     report["suggested_edits"] = [
         e for e in report["suggested_edits"]
@@ -2905,6 +2932,7 @@ def cmd_attach(args: argparse.Namespace) -> int:
     z, item = found
     rc = 0
     rows = []
+    refused = False
     for f in args.file:
         p = Path(f)
         if not p.is_file():
@@ -2913,13 +2941,16 @@ def cmd_attach(args: argparse.Namespace) -> int:
             continue
         row = {"itemKey": args.parent, "field": "attachment", "old": "",
                "new": str(p.resolve())}
-        if args.edit:
+        if args.edit and refused:
+            row.update(status="not attempted", error=KEY_NOT_ATTEMPTED)
+        elif args.edit:
             try:
                 row["attachment"] = attach_file(z, args.parent, p)
                 row["status"] = "attached"
             except (ZoteroUnavailable, LocalAPIError, KeyNotGranted) as exc:
                 row.update(status="failed", error=str(exc))
                 rc = 1
+                refused = isinstance(exc, KeyNotGranted)
         rows.append(row)
     emit_json({"parent": args.parent, "title": item["data"].get("title"),
                "source": LIBRARY_SOURCE, "edit": args.edit,
