@@ -22,7 +22,11 @@ file under one directory of the repository, BibTeX or not:
 By default, it discovers `.bib` files at the repository root and one level
 below it, follows their `file=` paths, and reports both linked files and
 unlinked staging files. It uses the BibTeX metadata when matching linked
-files. The command is **report-only by default**: without
+files: a `.bib` entry type of a part of a volume (`@incollection`,
+`@inbook`, `@bookinbook`, `@inproceedings` and the like) is never looked up
+by its ISBN, which is the volume's, and neither is a type the helper does
+not map (`@misc`, `@suppperiodical`, a typo): it fails closed to the other
+identifiers and the title. The command is **report-only by default**: without
 `--apply` it never creates or attaches anything; rows whose work is present without a file come back in
 `suggested_edits` (item key, file), which `--apply --edit` stores. It
 uses `docs/` as the staging default only when no `.bib` exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
@@ -85,8 +89,9 @@ between `work_present_with_file` and `work_present_no_file` decides what you do 
 
 **`candidates` is a real answer, not a tuning failure.** The helper asserts
 a match only on an exact identifier (DOI, ISBN, arXiv id or handle equal to
-the item's own field) or on the stored file's md5; a title is never one
-(ticket 1116 removed the title scorer, author decision 2026-10-16). Collapsing
+the item's own field) or on the stored file's md5; a title is never one, and
+neither is the ISBN of a part of a volume (a book section, conference paper,
+encyclopedia article or dictionary entry), which identifies the volume. Collapsing
 candidates into one of their neighbours is expensive in both directions:
 called present, the document is skipped and its full text never lands;
 called absent, a duplicate item is minted. Five ordinary words such as
