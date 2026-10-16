@@ -41,6 +41,7 @@ import mimetypes
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -943,11 +944,32 @@ def find_zotero_launcher() -> list[str] | None:
     return None
 
 
-def launch_zotero(command: list[str]) -> None:
+def launch_zotero(command: list[str]) -> subprocess.Popen:
     """Start the desktop client detached; it outlives this process."""
-    subprocess.Popen(command, stdin=subprocess.DEVNULL,
-                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                     start_new_session=True)
+    return subprocess.Popen(command, stdin=subprocess.DEVNULL,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL, start_new_session=True)
+
+
+def stop_launched(process: subprocess.Popen) -> None:
+    """Stop a client this helper launched, its process group included.
+
+    Only the process the helper started itself, never a Zotero it found:
+    a launch that missed its deadline must not come up after the helper
+    has reported doing nothing.
+    """
+    for sig, wait in ((signal.SIGTERM, 10.0), (signal.SIGKILL, 5.0)):
+        try:
+            os.killpg(process.pid, sig)
+        except ProcessLookupError:
+            break
+        try:
+            process.wait(timeout=wait)
+            break
+        except subprocess.TimeoutExpired:
+            continue
+    with contextlib.suppress(ProcessLookupError):
+        os.killpg(process.pid, signal.SIGKILL)
 
 
 def ensure_zotero() -> str:
@@ -955,7 +977,8 @@ def ensure_zotero() -> str:
 
     When nothing answers, the desktop client is launched and given
     LAUNCH_WAIT seconds, except in a container or headless runner, where
-    nothing is launched. ZoteroUnavailable means nothing was done.
+    nothing is launched. A launch that does not answer in time is stopped.
+    ZoteroUnavailable means nothing was done.
     """
     if zotero_answers():
         return "running"
@@ -969,21 +992,24 @@ def ensure_zotero() -> str:
                                 "installation was found to launch. Start "
                                 "Zotero and retry; nothing was done.")
     try:
-        launch_zotero(command)
+        process = launch_zotero(command)
     except OSError as exc:
         raise ZoteroUnavailable(f"Zotero is not running and launching it "
                                 f"({' '.join(command)}) failed: {exc}. "
                                 f"Nothing was done.") from exc
     deadline = time.monotonic() + LAUNCH_WAIT
-    while not zotero_answers():
-        if time.monotonic() >= deadline:
-            # The launched client is left alone: killing a Zotero still
-            # opening its database risks more than a second start does.
-            raise ZoteroUnavailable(
-                f"Zotero was launched ({' '.join(command)}) but did not "
-                f"answer within {LAUNCH_WAIT:.0f} s; it may still be "
-                f"starting. Nothing was done.")
-        time.sleep(LAUNCH_POLL)
+    try:
+        while not zotero_answers():
+            if time.monotonic() >= deadline:
+                raise ZoteroUnavailable(
+                    f"Zotero was launched ({' '.join(command)}) but did not "
+                    f"answer within {LAUNCH_WAIT:.0f} s, so the helper "
+                    f"stopped it. Start Zotero and retry; nothing was done.")
+            time.sleep(LAUNCH_POLL)
+    except BaseException:
+        # Missed deadline, something else on the port, or an interrupt.
+        stop_launched(process)
+        raise
     return "launched"
 
 

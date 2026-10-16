@@ -80,7 +80,8 @@ day):
 - Reads and writes need Zotero running. The helper launches it when it is
   not (never in a container or headless runner, nor with `ZOTERO_NO_LAUNCH`
   set) and waits up to 90 s; when it
-  still does not answer, the command does nothing, exits 75 (`EX_TEMPFAIL`),
+  still does not answer, the helper stops the client it launched, the
+  command does nothing, exits 75 (`EX_TEMPFAIL`),
   and `reconcile` reports verdict `zotero_unavailable` with exit 0 so an
   unattended sweep reads it as a clean no-op. Autonomous sessions in a
   container therefore never audit or reconcile.

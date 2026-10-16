@@ -1295,10 +1295,11 @@ def test_zotero_is_launched_when_not_running(launch_wrapper, monkeypatch, capsys
 
 
 @pytest.mark.integration
-def test_a_launch_that_never_answers_gives_up_within_the_bound(
+def test_a_launch_that_never_answers_gives_up_and_stops_what_it_launched(
         launch_wrapper, monkeypatch):
     """The launched client listens elsewhere: the helper gives up after
-    LAUNCH_WAIT and leaves the client it started running."""
+    LAUNCH_WAIT and stops the client it started, so no Zotero comes up
+    after the helper reported doing nothing."""
     waited, actual = free_port(), free_port()
     assert waited != actual
     monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{waited}")
@@ -1306,14 +1307,15 @@ def test_a_launch_that_never_answers_gives_up_within_the_bound(
     monkeypatch.setattr(zi, "LAUNCH_POLL", 0.2)
     pidfile = launch_wrapper(actual)
     started = time.monotonic()
-    with pytest.raises(zi.ZoteroUnavailable, match="did not answer within"):
+    with pytest.raises(zi.ZoteroUnavailable, match="stopped it"):
         zi.ensure_zotero()
-    assert time.monotonic() - started < 3.0 + 5.0
-    assert _wait_for(lambda: pidfile.exists() and pidfile.read_text().strip())
+    assert time.monotonic() - started < 3.0 + 20.0
+    # Positive control: the helper did launch something, which wrote its pid.
+    assert pidfile.exists() and pidfile.read_text().strip()
     pid = int(pidfile.read_text())
-    os.kill(pid, 0)  # left alone, still running
-    # Positive control: what was launched is a Zotero, answering elsewhere.
-    assert _wait_for(lambda: zotero_live.answers(f"http://127.0.0.1:{actual}"))
+    with pytest.raises(ProcessLookupError):
+        os.kill(pid, 0)
+    assert not zotero_live.answers(f"http://127.0.0.1:{actual}")
 
 
 def test_no_installation_to_launch_does_nothing(tmp_path, monkeypatch):
