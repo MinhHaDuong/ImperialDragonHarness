@@ -195,9 +195,14 @@ def listener():
 @pytest.mark.integration
 def test_extract_metadata_never_contacts_zotero(tmp_path, monkeypatch, capsys):
     """Extraction is input-format dependent and never needs Zotero: with a
-    listener on the Zotero URL, it reads the PDF and connects to nothing."""
+    listener on the Zotero URL, it reads the PDF and connects to nothing.
+    poppler is stubbed: CI runners have none, and this test is about the
+    network, not the PDF reader."""
     pdf = make_pdf(tmp_path / "paper.pdf", ["A Study of Things", "by Smith",
                                             "doi: 10.2222/own.2"])
+    monkeypatch.setattr(zi, "pdfinfo", lambda p: {"Pages": "1"})
+    monkeypatch.setattr(zi, "pdftotext_range", lambda p, a, b:
+                        "A Study of Things\nby Smith\ndoi: 10.2222/own.2\n")
     with listener() as (port, seen):
         monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{port}")
         rc = zi.cmd_extract_metadata(argparse.Namespace(pdf=[str(pdf)]))
