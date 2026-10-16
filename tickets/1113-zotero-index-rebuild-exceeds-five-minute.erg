@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-10-15T14:43Z Minh Ha-Duong created
 2026-10-15T21:09Z Claude note Retitled and re-scoped per author decisions of 2026-10-15: local-only, stateless helper; Web API, keys, index cache and injection record removed; creation through the desktop connector.
+2026-10-16T05:51Z Claude note Author decisions of 2026-10-16 recorded: reads through the local API only, never sqlite; launch Zotero when it is down, else do nothing; containers do nothing. Exit criterion 2 restated accordingly.
 
 --- body ---
 ## Intent (author decisions, 2026-10-15)
@@ -16,7 +17,8 @@ Author: Minh Ha-Duong
   library index cache and its sync subcommand, and the injection record kept
   between runs. No local index, no cache, no record.
 - Reads: `zotero.sqlite` opened read-only on every call; dedup and matching
-  run against it.
+  run against it. (Superseded on 2026-10-16, below: reads go through the
+  local API.)
 - Creating items with PDFs goes through the Zotero desktop connector
   (`127.0.0.1:23119/connector/`). Zotero must be running; fail loudly when the
   connector does not answer. Never write `zotero.sqlite`.
@@ -27,6 +29,31 @@ Author: Minh Ha-Duong
 - Skill, references, `docs/zotero-integration.md`, `rules/zotero.md` and
   `README.md` carry no Web API, key or index-cache instruction. The
   "Periodic sync + purge" section of `rules/zotero.md` belongs to ticket 1112.
+
+## Author decisions, 2026-10-16 (binding, verbatim)
+1. "API ONLY, NEVER SQLITE." All library reads go through the Zotero 7 local
+   API (http://127.0.0.1:23119/api/, e.g. /api/users/0/items, groups via
+   /api/groups/<id>/...; read-only, no key). Remove every zotero.sqlite read
+   path: zotero_open, mode=ro/immutable fallback, read_mode, WAL refusal,
+   database discovery (ZOTERO_DATA_DIR, profile parsing), the
+   --out-names-the-database guards that only exist because of the db. The
+   duplicate check is then always live. Find out from Zotero's source/docs
+   how the local API exposes attachment file paths (needed by
+   attach/audit/reconcile) and the "allow other applications to communicate
+   with Zotero" setting; when the local API is disabled or answers
+   unexpectedly, fail with a clear message naming that setting. Still
+   stateless: no index, no cache, no ledger.
+2. Zotero not up: "If Zotero is not up, try launching it, and if you can't,
+   do nothing. Containers do nothing." So: when the connector/local API does
+   not answer, and we are NOT in a container, try to launch the desktop
+   Zotero (detached; find the binary on PATH / common install / flatpak) and
+   wait for it to answer within a stated bound. If it does not come up, do
+   nothing: no partial action, a clear message, a report status saying
+   Zotero was unavailable. In a container (detect /.dockerenv,
+   /run/.containerenv, cgroup hints, CI env, no display), never try to
+   launch: do nothing the same way. Choose exit codes so an unattended
+   reconcile treats "unavailable" as a clean no-op, not a crash, and
+   document the choice.
 
 ## Original context
 2026-10-15, host doudou: `python3 scripts/zotero.py reconcile .` in report mode
@@ -39,10 +66,16 @@ attachments, measured on doudou 2026-10-15).
 ## Exit criteria
 - [ ] No Web API call, key, index cache or injection record remains live in
       scripts/, skills/, rules/, docs/ or README.md
-- [ ] Reads open zotero.sqlite read-only per call; a locked database falls
-      back to the immutable snapshot and every output names its read mode
+- [ ] Reads go through the local API, live, per call; no zotero.sqlite read
+      path remains; a disabled or unexpected local API fails naming the
+      setting (restated 2026-10-16; was: sqlite read-only with an
+      immutable fallback and a read mode in every output)
+- [ ] Zotero down: launched (never in a container) within a stated bound,
+      else the command does nothing and reports Zotero unavailable;
+      `reconcile` then exits 0
 - [ ] `inject` creates items and PDFs through the desktop connector and
-      fails loudly when Zotero is not running; tests use a local stub
+      does nothing, saying so, when Zotero is unavailable; tests use a
+      local stub
 - [ ] `enrich`, `attach` and `reconcile --apply` report edits to existing
       items instead of writing them
 - [ ] `make check` passes
