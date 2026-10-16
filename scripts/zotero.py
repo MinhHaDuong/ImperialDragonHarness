@@ -1325,6 +1325,9 @@ def create_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
             except (ZoteroUnavailable, ZoteroSlow, LocalAPIError) as exc:
                 row["error"] = f"duplicate guard could not look: {exc}"
                 stop(n, "not attempted after the duplicate guard failed")
+                # 74/75 say "nothing was done": only true before any save.
+                if any(r.get("status") == "created" for r in results):
+                    return results, 1
                 return results, (EXIT_SLOW if isinstance(exc, ZoteroSlow)
                                  else EXIT_UNAVAILABLE
                                  if isinstance(exc, ZoteroUnavailable) else 1)

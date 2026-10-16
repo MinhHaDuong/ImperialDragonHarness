@@ -1810,6 +1810,35 @@ def test_a_batch_finds_its_own_work_by_author_year_and_title(
     assert len(use_live.titled(title)) == 1
 
 
+def test_a_guard_failing_after_a_save_is_not_reported_as_nothing_done(
+        tmp_path, monkeypatch):
+    """Entry 0 is created, then Zotero goes away during entry 1's lookup:
+    the run exits 1 with the created row, never 75 ("nothing was done"),
+    which check-staging --apply would turn into a clean no-op."""
+    calls = []
+
+    def lookup(libs, **kwargs):
+        calls.append(1)
+        if len(calls) > 1:
+            raise zi.ZoteroUnavailable("Zotero stopped answering")
+        return {"matches": [], "consulted": ["doi"]}
+
+    monkeypatch.setattr(zi, "find_work", lookup)
+    monkeypatch.setattr(zi, "create_item", lambda z, item, collection: "K1")
+    entries = [_entry(tmp_path, doi=unique_doi()) for _ in range(2)]
+    results, rc = zi.create_entries(entries, [{}, {}],
+                                    [{"confidence": "corroborated"}] * 2,
+                                    "user", None, force=False)
+    assert rc == 1
+    assert results[0]["status"] == "created"
+    assert "could not look" in results[1]["error"]
+    monkeypatch.setattr(zi, "find_work", lambda libs, **kw: (_ for _ in ()).throw(
+        zi.ZoteroUnavailable("down")))
+    _, rc = zi.create_entries(entries[:1], [{}], [{"confidence": "x"}],
+                              "user", None, force=False)
+    assert rc == zi.EXIT_UNAVAILABLE, "nothing saved: 75 is true"
+
+
 @pytest.mark.integration
 def test_a_held_lock_is_a_json_error_in_create_items(use_live, tmp_path,
                                                      monkeypatch, capsys):
