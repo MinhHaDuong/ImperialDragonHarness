@@ -34,4 +34,5 @@ dev = [
     "pytest-xdist>=3.8,<4",
     # Attribution query: official inverse-beta primitive for fixed Jeffreys intervals.
     "scipy>=1.10,<2",
+    "pyzotero>=1.16,<2",
 ]

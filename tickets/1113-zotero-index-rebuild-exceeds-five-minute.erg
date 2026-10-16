@@ -9,6 +9,7 @@ Author: Minh Ha-Duong
 2026-10-16T05:51Z Claude note Author decisions of 2026-10-16 recorded: reads through the local API only, never sqlite; launch Zotero when it is down, else do nothing; containers do nothing. Exit criterion 2 restated accordingly.
 2026-10-16T06:31Z Claude note Author decision of 2026-10-16 recorded: tests run a real throwaway Zotero as a fixture or skip, no mock. Exit criterion 4 restated accordingly.
 2026-10-16T07:32Z reviewer note circuit-breaker — redirect: author chose plan A (pyzotero local client, no hand-rolled Zotero interface); test-rework worker stopped, WIP salvaged at 1fe8e333
+2026-10-16T07:35Z reviewer note Author decision 4 (plan A, pyzotero) recorded verbatim; exit criteria 4-5 restated, criterion on hand-rolled components added. Local writes verified on Zotero 10.0.6 with a throwaway profile.
 
 --- body ---
 ## Intent (author decisions, 2026-10-15)
@@ -69,6 +70,23 @@ Author: Minh Ha-Duong
    "Zotero down" is tested for real (closed port, launching disabled by the
    environment). Pure-logic tests that never talk to Zotero stay.
 
+## Author decision, 2026-10-16, plan A (binding, verbatim)
+4. "Plan A. On arrête le YAGNI massacre." Plan A: stop hand-rolling a
+   Zotero interface; use pyzotero (1.16.0: `Zotero(library_id,
+   library_type, local=True)` for the local API; local writes with a
+   user-approved local key from `authorize_local(app_name)`, Zotero
+   asking Allow / Always Allow / Deny; `local_api_key=` reuses a
+   remembered key). Zotero 10 stable accepts local writes. So: reads
+   and writes through pyzotero's local client; the connector path goes
+   if local writes work (verified 2026-10-16 on padme, Zotero 10.0.6,
+   throwaway profile: create, file upload, item update and collections
+   accepted; a keyless write refused 401). Edits to existing items apply
+   only with an explicit flag, report-only by default. The local key is
+   a credential under ~/.config/keys/ (mode 600), never printed; no other
+   state. Every remaining hand-rolled component is checked against the
+   package registry and replaced or deleted where a maintained library
+   or no caller covers it.
+
 ## Original context
 2026-10-15, host doudou: `python3 scripts/zotero.py reconcile .` in report mode
 on the harness, with a library index cache older than 24 h (4.7 MB, written
@@ -87,10 +105,13 @@ attachments, measured on doudou 2026-10-15).
 - [ ] Zotero down: launched (never in a container) within a stated bound,
       else the command does nothing and reports Zotero unavailable;
       `reconcile` then exits 0
-- [ ] `inject` creates items and PDFs through the desktop connector and
-      does nothing, saying so, when Zotero is unavailable; tests use a
-      real throwaway Zotero or skip, no mock (restated 2026-10-16; was:
-      a local stub)
+- [ ] `inject` creates items and PDFs through pyzotero's local client
+      and does nothing, saying so, when Zotero is unavailable; tests use a
+      real throwaway Zotero or skip, no mock (restated 2026-10-16 twice;
+      was: a local stub, then the desktop connector)
 - [ ] `enrich`, `attach` and `reconcile --apply` report edits to existing
-      items instead of writing them
+      items by default and write them only with an explicit flag
+      (restated 2026-10-16, plan A)
+- [ ] No hand-rolled Zotero client remains; each other kept hand-rolled
+      component is justified against the package registry in the PR
 - [ ] `make check` passes
