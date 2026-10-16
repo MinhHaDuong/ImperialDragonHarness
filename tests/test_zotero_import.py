@@ -103,8 +103,8 @@ def make_pdf(path: Path, lines: list[str], info: dict[str, str] | None = None
 
 def paper_pdf(directory: Path, title: str, author: str, *,
               info: dict[str, str] | None = None) -> Path:
-    """A PDF whose front matter states `title` and `author`, so the
-    helper's corroboration finds both; its name and bytes are unique."""
+    """A PDF whose front matter states `title` and `author`; its name and
+    bytes are unique."""
     name = f"{uuid.uuid4().hex[:12]}.pdf"
     return make_pdf(directory / name, [title, f"by {author}",
                                        f"nonce {uuid.uuid4().hex}"], info)
@@ -220,9 +220,10 @@ def test_find_work_refuses_flags_over_several_extracted_works(tmp_path, capsys):
     file: the second would be reported as the first's work."""
     meta = _meta_file(tmp_path, _meta_item("10.1/a"), _meta_item("10.1/b"))
     assert zi.cmd_find_work(_match_args(doi=None, title="A Refined Title",
-                                        author="Smith", metadata=meta)) == 1
+                                        isbn="9780306406157",
+                                        metadata=meta)) == 1
     out = json.loads(capsys.readouterr().out)
-    assert "--author, --title would describe all 2 works" in out["error"]
+    assert "--isbn, --title would describe all 2 works" in out["error"]
     assert out["verdict"] == "unchecked"
 
 
@@ -251,11 +252,18 @@ def test_find_work_keeps_an_extraction_error_as_a_row(use_live, tmp_path, capsys
 
 
 def identifiable_pdf(directory: Path) -> Path:
-    """A staged PDF the lookup can look up: its name says the author and
-    year (Surname2020-...), its first line a unique title."""
+    """A staged PDF the lookup can look up: its name says the author, year
+    and a unique title (Surname2020-TitleWords.pdf), its first line the
+    same title."""
     directory.mkdir(parents=True, exist_ok=True)
-    return make_pdf(directory / f"{unique_surname()}2020-{uuid.uuid4().hex[:8]}.pdf",
-                    [unique_title(), f"nonce {uuid.uuid4().hex}"])
+    title = unique_title(3)
+    return make_pdf(directory / f"{unique_surname()}2020-{camel(title)}.pdf",
+                    [title, f"nonce {uuid.uuid4().hex}"])
+
+
+def camel(title: str) -> str:
+    """A title as a filename slug: "Ab Cd" -> "AbCd"."""
+    return "".join(title.split())
 
 
 @pytest.mark.integration
@@ -1168,7 +1176,7 @@ def test_the_key_file_defaults_to_the_harness_keystore(monkeypatch):
 
 def _match_args(**over):
     base = dict(doi="10.1/x", isbn=None, arxiv=None, handle=None, title=None,
-                year=None, author=None, pdf=None, library="user", metadata=None)
+                pdf=None, library="user", metadata=None)
     base.update(over)
     return argparse.Namespace(**base)
 
@@ -1405,85 +1413,25 @@ def test_container_detection(monkeypatch, marker, env, cgroup, expected):
 
 
 def test_classify_matches_exact_tie_is_ambiguous():
-    tie = [{"certainty": "exact"}, {"certainty": "exact"}]
-    assert zi.classify_matches(tie) == "ambiguous"
+    tie = [{"why": ["storageHash"]}, {"why": ["storageHash"]}]
+    assert zi.classify_matches(tie, []) == "ambiguous"
 
 
 def test_classify_matches_single_exact_still_matches():
-    """The common case must not change (ticket 0570 invariant)."""
-    assert zi.classify_matches([{"certainty": "exact"},
-                                {"certainty": "strong"}]) == "match"
+    """The common case must not change (ticket 0570 invariant), and title
+    candidates beside an exact match do not make it a tie."""
+    assert zi.classify_matches([{"why": ["doi"]}],
+                               [{"why": ["title"]}]) == "match"
+    assert zi.classify_matches([], [{"why": ["title"]}]) == "candidates"
+    assert zi.classify_matches([], []) == "none"
 
 
-def test_filename_hints_parses_surnames_and_year():
-    assert zi._filename_hints("Afriat1967IER-Afriat1967.pdf") == (["afriat"], "1967")
-    names, year = zi._filename_hints("BeraudNuma2024-Cournot-ch4.pdf")
-    assert names == ["beraud", "numa"] and year == "2024"
-
-
-def test_filename_hints_without_a_year():
-    names, year = zi._filename_hints("Bewley-Bewley2002.pdf")
-    assert year is None and "bewley" in names
-
-
-# --------------------------------------------------------------------------
-# corroborate(): a scraped identifier often belongs to a work the document
-# CITES. Resolving it returns clean, confident, wrong metadata.
-# --------------------------------------------------------------------------
-
-
-def test_corroborate_accepts_metadata_present_in_the_document():
-    doc = ("Mathematical Finance, Vol. 9, No. 3\n"
-           "COHERENT MEASURES OF RISK\nPHILIPPE ARTZNER, FREDDY DELBAEN")
-    out = zi.corroborate({"title": "Coherent Measures of Risk",
-                          "authors": ["Artzner, Philippe"]}, doc)
-    assert out["confidence"] == "corroborated"
-    assert out["first_author_found"] is True
-
-
-def test_corroborate_rejects_a_cited_works_metadata():
-    """The real failure: a Cottle PDF whose scraped DOI resolved to Albers."""
-    doc = ("The Basic George B. Dantzig\nRichard W. Cottle\n"
-           "Stanford University, 2012\nA memoir of linear programming")
-    out = zi.corroborate({"title": "Ronald Graham: laying the foundations of "
-                                   "online optimization",
-                          "authors": ["Albers, Susanne"]}, doc)
-    assert out["confidence"] == "contradicted"
-    assert "cited work" in out["reason"]
-
-
-def test_corroborate_flags_partial_agreement_as_weak():
-    doc = "Richard W. Cottle\nStanford\nsome unrelated running text here"
-    out = zi.corroborate({"title": "A Completely Different Title Altogether",
-                          "authors": ["Cottle, Richard"]}, doc)
-    assert out["confidence"] == "weak"
-
-
-def test_corroborate_without_text_is_unchecked_not_a_pass():
-    out = zi.corroborate({"title": "Anything", "authors": ["X, Y"]}, "")
-    assert out["confidence"] == "unchecked"
-
-
-def test_corroborate_is_accent_insensitive():
-    doc = "Ghouila-Houri, Existence d'une solution\nCRAS 1960"
-    out = zi.corroborate({"title": "Existence d'une solution",
-                          "authors": ["Ghouila-Houri, Alain"]}, doc)
-    assert out["confidence"] in ("corroborated", "weak")
-
-
-# --------------------------------------------------------------------------
-# The title block: where a title lives on page 1 (find-work's text evidence).
-# --------------------------------------------------------------------------
-
-
-def test_front_matter_keeps_only_the_title_block():
-    body = "\n".join(["TITLE LINE", "AUTHOR"] + [f"body line {i}" for i in range(80)])
-    fm = zi._front_matter(body, lines=3)
-    assert fm.splitlines() == ["TITLE LINE", "AUTHOR", "body line 0"]
-
-
-def test_front_matter_drops_blank_lines():
-    assert zi._front_matter("\n\nA\n\n\nB\n", lines=2).splitlines() == ["A", "B"]
+def test_filename_title_gives_surnames_and_slug_words():
+    assert zi._filename_title(Path("Afriat1967-MethodOfLimits.pdf")) == \
+        "Afriat Method Of Limits"
+    assert zi._filename_title(Path("BeraudNuma2024-Cournot-ch4.pdf")) == \
+        "Beraud Numa Cournot-ch4"
+    assert zi._filename_title(Path("scan0001.pdf")) == "scan0001"
 
 
 # --------------------------------------------------------------------------
@@ -1557,75 +1505,23 @@ def test_check_staging_one_unreadable_file_does_not_abort_the_batch(
     assert report["library"]["zotero"] == use_live.url
 
 
-def test_corroborate_short_surname_does_not_match_inside_a_word():
-    """`Li` inside `linear`/`published` is not evidence the author is Li."""
-    text = ("Published in a linear programming volume, this article "
-            "concerns entirely unrelated matters of policy analysis.")
-    out = zi.corroborate({"title": "Quantum Entanglement Of Distant Photons",
-                          "authors": ["Li, Wei"]}, text)
-    assert out["first_author_found"] is False
-    assert out["confidence"] == "contradicted"
-
-
-def test_corroborate_still_finds_a_surname_that_is_really_there():
-    out = zi.corroborate({"title": "Quantum Entanglement Of Distant Photons",
-                          "authors": ["Li, Wei"]},
-                         "Quantum entanglement of distant photons\nby Wei Li\n")
-    assert out["first_author_found"] is True
-    assert out["confidence"] == "corroborated"
-
-
-def test_corroborate_title_with_no_usable_tokens_is_unchecked():
-    """Nothing was checked, so the strongest negative verdict is wrong."""
-    out = zi.corroborate({"title": "Is On At", "authors": ["Smith, J"]},
-                         "an entirely unrelated document about turbines")
-    assert out["confidence"] == "unchecked"
-    assert out["reason"]
-
-
 def test_file_md5_matches_a_whole_file_read(tmp_path):
     p = tmp_path / "big.pdf"
     p.write_bytes(b"x" * (3 * (1 << 20) + 17))  # spans several chunks
     assert zi.file_md5(p) == hashlib.md5(p.read_bytes()).hexdigest()
 
 
-# --------------------------------------------------------------------------
-# corroborate() is now reachable: inject refuses metadata its own PDF denies.
-# --------------------------------------------------------------------------
-
-
-def _pdf_with_text(tmp_path, name, text, monkeypatch):
-    p = tmp_path / name
-    p.write_bytes(b"%PDF-1.4")
-    monkeypatch.setattr(zi, "pdftotext_range", lambda path, a, b: text)
-    return p
-
-
-def test_corroborate_entry_flags_a_cited_works_metadata(tmp_path, monkeypatch):
-    pdf = _pdf_with_text(tmp_path, "cottle.pdf",
-                         "The Basic George B. Dantzig\nRichard W. Cottle\n",
-                         monkeypatch)
-    out = zi.corroborate_entry({"title": "Ronald Graham: laying the foundations "
-                                         "of online optimization",
-                                "authors": ["Albers, Susanne"], "pdf": str(pdf)})
-    assert out["confidence"] == "contradicted"
-
-
-def test_corroborate_entry_without_a_pdf_is_unchecked():
-    out = zi.corroborate_entry({"title": "T", "authors": ["A, B"]})
-    assert out["confidence"] == "unchecked"
-
-
 def _inject_args(entries, **over):
     base = dict(entries_json=json.dumps(entries), entries_file=None,
                 collection=None, library="user",
-                dry_run=False, skip_corroboration=False, force=False)
+                dry_run=False, force=False)
     base.update(over)
     return argparse.Namespace(**base)
 
 
 def _entry(directory, title=None, surname=None, year="2020", **extra):
-    """An inject entry whose PDF's front matter corroborates it."""
+    """An inject entry whose PDF's front matter states its title and
+    author."""
     title = title or unique_title()
     surname = surname or unique_surname()
     pdf = paper_pdf(directory, title, surname)
@@ -1633,53 +1529,17 @@ def _entry(directory, title=None, surname=None, year="2020", **extra):
             "pdf": str(pdf), **extra}
 
 
-def test_inject_refuses_contradicted_metadata(tmp_path, monkeypatch, capsys):
-    """Refused before Zotero is asked: Zotero is down here, and the exit
-    status is the refusal's 1, not the unavailable 75."""
-    pdf = _pdf_with_text(tmp_path, "cottle.pdf",
-                         "The Basic George B. Dantzig\nRichard W. Cottle\n",
-                         monkeypatch)
-    entries = tmp_path / "e.json"
-    entries.write_text(json.dumps([{
-        "type": "journalArticle", "title": "Ronald Graham: laying the foundations of "
-                                 "online optimization",
-        "authors": ["Albers, Susanne"], "pdf": str(pdf), "attach_pdf": True}]))
-    args = _inject_args(None, entries_json=None, entries_file=str(entries))
-    rc = zi.cmd_create_items(args)
-    out = json.loads(capsys.readouterr().out)
-    assert rc == 1
-    assert out["error"] == "metadata contradicted by the document"
-
-
-@pytest.mark.integration
-def test_inject_skip_corroboration_lets_it_through(use_live, tmp_path, capsys):
-    title = unique_title()
-    pdf = make_pdf(tmp_path / f"{uuid.uuid4().hex[:10]}.pdf",
-                   ["The Basic George B. Dantzig", "Richard W. Cottle",
-                    uuid.uuid4().hex])
-    args = _inject_args([{"type": "journalArticle", "title": title,
-                          "authors": ["Albers, Susanne"], "year": "2020",
-                          "pdf": str(pdf)}], skip_corroboration=True)
-    assert zi.cmd_create_items(args) == 0
-    out = json.loads(capsys.readouterr().out)
-    assert out["results"][0]["status"] == "created"
-    assert out["results"][0]["corroboration"] == "contradicted"
-    assert use_live.find(title)["data"]["creators"][0]["lastName"] == "Albers"
-
-
-@pytest.mark.integration
-def test_inject_dry_run_reports_corroboration_and_creates_nothing(
-        use_live, tmp_path, capsys):
+def test_inject_dry_run_creates_nothing(use_live, tmp_path, capsys):
     """The item JSON is built against the running client's schema, and
     nothing is created."""
     entry = _entry(tmp_path, type="report", publisher="RAND", numPages=78)
     entries = tmp_path / "e.json"
     entries.write_text(json.dumps([entry]))
     args = argparse.Namespace(entries_json=None, entries_file=str(entries),
-                              dry_run=True, skip_corroboration=False)
+                              dry_run=True)
     assert zi.cmd_create_items(args) == 0
     out = json.loads(capsys.readouterr().out)
-    assert out["corroboration"][0]["confidence"] == "corroborated"
+    assert set(out) == {"items"}
     (item,) = out["items"]
     assert item["title"] == entry["title"] and item["institution"] == "RAND"
     assert item["extra"] == "number-of-pages: 78"
@@ -1784,16 +1644,19 @@ def test_a_batch_creates_a_work_once_when_two_entries_share_a_doi(
 
 
 @pytest.mark.integration
-def test_a_batch_finds_its_own_work_by_author_year_and_title(
+def test_a_batch_shows_its_own_work_as_a_title_candidate(
         use_live, tmp_path, capsys):
-    """No DOI: the second entry's live lookup finds the item the first just
-    created through creator-year-title."""
+    """No DOI: the second entry's live title search returns the item the
+    first just created, as a candidate to judge, and it is not created."""
     title, surname = unique_title(), unique_surname()
     entries = [_entry(tmp_path, title=title, surname=surname) for _ in range(2)]
     assert zi.cmd_create_items(_inject_args(entries)) == 1
     out = json.loads(capsys.readouterr().out)
     assert out["results"][0]["status"] == "created"
-    assert out["results"][1]["matches"][0]["why"] == ["creator-year-title"]
+    second = out["results"][1]
+    assert "matches" not in second and "examine the candidates" in second["error"]
+    assert second["candidates"][0]["key"] == out["results"][0]["key"]
+    assert second["candidates"][0]["why"] == ["title"]
     assert len(use_live.titled(title)) == 1
 
 
@@ -1808,21 +1671,19 @@ def test_a_guard_failing_after_a_save_is_not_reported_as_nothing_done(
         calls.append(1)
         if len(calls) > 1:
             raise zi.ZoteroUnavailable("Zotero stopped answering")
-        return {"matches": [], "consulted": ["doi"]}
+        return {"matches": [], "candidates": [], "consulted": ["doi"]}
 
     monkeypatch.setattr(zi, "find_work", lookup)
     monkeypatch.setattr(zi, "create_item", lambda z, item, collection: "K1")
     entries = [_entry(tmp_path, doi=unique_doi()) for _ in range(2)]
-    results, rc = zi.create_entries(entries, [{}, {}],
-                                    [{"confidence": "corroborated"}] * 2,
-                                    "user", None, force=False)
+    results, rc = zi.create_entries(entries, [{}, {}], "user", None,
+                                    force=False)
     assert rc == 1
     assert results[0]["status"] == "created"
     assert "could not look" in results[1]["error"]
     monkeypatch.setattr(zi, "find_work", lambda libs, **kw: (_ for _ in ()).throw(
         zi.ZoteroUnavailable("down")))
-    _, rc = zi.create_entries(entries[:1], [{}], [{"confidence": "x"}],
-                              "user", None, force=False)
+    _, rc = zi.create_entries(entries[:1], [{}], "user", None, force=False)
     assert rc == zi.EXIT_UNAVAILABLE, "nothing saved: 75 is true"
 
 
@@ -1847,10 +1708,7 @@ def test_a_batch_refuses_a_second_entry_carrying_the_same_file(
     first = _entry(tmp_path, attach_pdf=True)
     second = _entry(tmp_path, attach_pdf=True)
     second["pdf"] = first["pdf"]
-    # The PDF names the first entry's work, so the second is contradicted;
-    # skipping that check leaves the file guard as the only one to fire.
-    assert zi.cmd_create_items(_inject_args([first, second],
-                                            skip_corroboration=True)) == 1
+    assert zi.cmd_create_items(_inject_args([first, second])) == 1
     out = json.loads(capsys.readouterr().out)
     assert out["results"][0]["status"] == "created"
     assert "same file as entry 0" in out["results"][1]["error"]
@@ -1871,8 +1729,6 @@ def test_a_slow_create_items_inside_check_staging_apply_is_slow(
         [{"verdict": "absent", "path": "docs/a.pdf"}], []))
     monkeypatch.setattr(zi, "bib_to_inject_entry", lambda bib, path: {
         "title": "T", "authors": ["A, B"], "year": "2020", "pdf": str(path)})
-    monkeypatch.setattr(zi, "corroborate_entry",
-                        lambda entry: {"confidence": "corroborated"})
     found = {"linked": [], "orphans": [], "errors": [], "bib_files": [],
              "staging_dirs": []}
     with pytest.raises(zi.ZoteroSlow, match="timed out"):
@@ -1881,12 +1737,20 @@ def test_a_slow_create_items_inside_check_staging_apply_is_slow(
 
 
 @pytest.mark.integration
-def test_inject_allows_generic_title_when_author_or_year_differs(
+def test_a_shared_title_is_left_to_the_caller_then_forced(
         use_live, tmp_path, capsys):
+    """Two works may share a title (another year, another author). The
+    helper does not judge: the second is refused with the first as a
+    candidate, and the caller who judged them distinct passes --force."""
     title = unique_title()
-    entries = [_entry(tmp_path, title=title, year="2020"),
-               _entry(tmp_path, title=title, year="2021")]
-    assert zi.cmd_create_items(_inject_args(entries)) == 0
+    first = _entry(tmp_path, title=title, year="2020")
+    second = _entry(tmp_path, title=title, year="2021")
+    assert zi.cmd_create_items(_inject_args([first])) == 0
+    created = json.loads(capsys.readouterr().out)["results"][0]["key"]
+    assert zi.cmd_create_items(_inject_args([second])) == 1
+    (refused,) = json.loads(capsys.readouterr().out)["results"]
+    assert [c["key"] for c in refused["candidates"]] == [created]
+    assert zi.cmd_create_items(_inject_args([second], force=True)) == 0
     capsys.readouterr()
     assert len(use_live.titled(title)) == 2
 
@@ -2003,7 +1867,7 @@ OPT_IN = '{"apply": true, "user_id": "1"}'
 
 
 def _staged_bib_paper(root, opt_in=OPT_IN, *, title=None, surname=None,
-                      year="2020"):
+                      year="2020", doi=None):
     """docs/<unique>.pdf, cited with its metadata by sources.bib; the PDF's
     front matter states the same title and author."""
     title = title or unique_title()
@@ -2011,16 +1875,16 @@ def _staged_bib_paper(root, opt_in=OPT_IN, *, title=None, surname=None,
     docs = root / "docs"
     docs.mkdir(exist_ok=True)
     pdf = paper_pdf(docs, title, surname)
+    doi_field = f", doi={{{doi}}}" if doi else ""
     (root / "sources.bib").write_text(
         f"@article{{one, title={{{title}}}, author={{{surname}, Jane}}, "
-        f"year={{{year}}}, file={{docs/{pdf.name}}}}}\n")
+        f"year={{{year}}}{doi_field}, file={{docs/{pdf.name}}}}}\n")
     if opt_in is not None:
         (root / ".zotero-reconcile.json").write_text(opt_in)
     return pdf
 
 
 def _quiet_pdf_tools(monkeypatch):
-    monkeypatch.setattr(zi, "_pdf_front_text", lambda _: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda _: {})
 
 
@@ -2246,7 +2110,8 @@ def test_check_staging_apply_reports_fresh_match_on_no_write_replay(
 
 
 @pytest.mark.integration
-def test_check_staging_apply_imports_a_corroborated_absent_pdf(use_live, tmp_path):
+def test_check_staging_apply_imports_an_absent_pdf_its_bib_describes(
+        use_live, tmp_path):
     title, surname = unique_title(), unique_surname()
     pdf = _staged_bib_paper(tmp_path, title=title, surname=surname)
     report, rc = _apply(tmp_path)
@@ -2256,6 +2121,7 @@ def test_check_staging_apply_imports_a_corroborated_absent_pdf(use_live, tmp_pat
     (applied,) = report["applied"]
     assert applied["status"] == "created" and applied["file"] == f"docs/{pdf.name}"
     item = use_live.find(title)
+    assert item["data"]["itemType"] == "journalArticle"
     assert item["data"]["creators"][0]["lastName"] == surname
     assert item["data"]["date"] == "2020"
     (att,) = use_live.children(item["key"])
@@ -2263,8 +2129,10 @@ def test_check_staging_apply_imports_a_corroborated_absent_pdf(use_live, tmp_pat
 
 
 @pytest.mark.integration
-def test_check_staging_apply_can_import_orphan_with_complete_pdf_metadata(
+def test_check_staging_apply_defers_an_orphan_however_complete_its_pdfinfo(
         use_live, tmp_path):
+    """Only the author's .bib is trusted to create an item unattended:
+    pdfinfo and page text are what a cited work's metadata slips in by."""
     title, surname = unique_title(), unique_surname()
     docs = tmp_path / "docs"
     docs.mkdir()
@@ -2273,11 +2141,9 @@ def test_check_staging_apply_can_import_orphan_with_complete_pdf_metadata(
         "CreationDate": "D:20200101000000Z"})
     report, rc = _apply(tmp_path)
     assert rc == 0
-    assert report["summary"] == {"created": 1}
-    item = use_live.find(title)
-    assert item["data"]["creators"] == [{"creatorType": "author",
-                                         "firstName": "Jane",
-                                         "lastName": surname}]
+    assert report["summary"] == {"deferred": 1}
+    assert report["apply_status"] == "deferred" and report["applied"] == []
+    assert use_live.titled(title) == []
 
 
 def test_check_staging_apply_defers_orphan_without_metadata(tmp_path, monkeypatch):
@@ -2316,9 +2182,10 @@ def test_check_staging_invalid_root_still_writes_out(tmp_path, capsys):
 @pytest.mark.integration
 def test_check_staging_suggests_the_attach_edit_for_a_present_work(
         use_live, tmp_path, capsys):
-    title, surname = unique_title(), unique_surname()
-    key = use_live.save(title, creators=(surname,), date="2020")
-    pdf = _staged_bib_paper(tmp_path, title=title, surname=surname, year="2020")
+    title, surname, doi = unique_title(), unique_surname(), unique_doi()
+    key = use_live.save(title, creators=(surname,), date="2020", DOI=doi)
+    pdf = _staged_bib_paper(tmp_path, title=title, surname=surname, year="2020",
+                            doi=doi)
     assert zi.cmd_check_staging(_reconcile_args(tmp_path)) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["rows"][0]["verdict"] == "work_present_no_file"
@@ -2332,10 +2199,11 @@ def test_check_staging_suggests_the_attach_edit_for_a_present_work(
 def test_check_staging_apply_edit_stores_the_file_under_the_present_work(
         use_live, tmp_path):
     """--apply alone never touches an existing item; --apply --edit stores
-    the staged file under the one work that lacks it."""
-    title, surname = unique_title(), unique_surname()
-    key = use_live.save(title, creators=(surname,), date="2020")
-    pdf = _staged_bib_paper(tmp_path, title=title, surname=surname, year="2020")
+    the staged file under the one work that lacks it, found by its DOI."""
+    title, surname, doi = unique_title(), unique_surname(), unique_doi()
+    key = use_live.save(title, creators=(surname,), date="2020", DOI=doi)
+    pdf = _staged_bib_paper(tmp_path, title=title, surname=surname, year="2020",
+                            doi=doi)
     found = zi.discover_reconcile_files(tmp_path)
     config = json.loads(OPT_IN)
     report, rc = zi.reconcile_apply(tmp_path, found, "user", config,
@@ -2388,7 +2256,7 @@ def test_check_staging_file_output_keeps_stdout_compact_and_reports_ties(
     second = use_live.save(title, creators=(surname,), pdf=shared)
     docs = tmp_path / "docs"
     docs.mkdir()
-    (docs / f"{surname}2020-copy.pdf").write_bytes(shared.read_bytes())
+    (docs / f"{surname}2020-{camel(title)}.pdf").write_bytes(shared.read_bytes())
     output = tmp_path / "report.json"
     assert zi.cmd_check_staging(_reconcile_args(tmp_path, out=str(output))) == 0
     compact = json.loads(capsys.readouterr().out)
@@ -2656,8 +2524,7 @@ def test_force_still_refuses_a_missing_pdf_before_creating_the_item(
                         lambda *a, **k: created.append(a) or "K1")
     entry = {"title": "A title", "pdf": str(tmp_path / "gone.pdf"),
              "attach_pdf": True}
-    results, rc = zi.create_entries([entry], [{}], [{"confidence": "low"}],
-                                    "user", None, force=True)
+    results, rc = zi.create_entries([entry], [{}], "user", None, force=True)
     assert rc == 1 and not created
     assert "not found" in results[0]["error"]
     assert "key" not in results[0]

@@ -1,16 +1,17 @@
 """find-work and the lookups behind check-staging and create-items.
 
 Ticket 1116: the duplicate lookup asks Zotero's own search through the local
-API (`q`, `qmode=everything`) for each key and scores titles with rapidfuzz;
-no call reads the whole library. Author decision, 2026-10-16: "In tests up
-Zotero as a fixture or skip -- no mock". So:
+API (`q`, `qmode=everything`) for each key; the only match it asserts is an
+identifier equal to the hit's own field (or the hit holding the PDF's md5),
+and a title search returns candidates, never a match; no call reads the
+whole library. Author decision, 2026-10-16: "In tests up Zotero as a fixture
+or skip -- no mock". So:
 
 - the lookups run against a REAL Zotero desktop client on a throwaway
   profile, data directory, port and private display (tests/zotero_live.py),
   a client of its own seeded once for this module; those tests are marked
   `integration` and skip where that client cannot run;
-- the title scorer and the identifier forms are pure logic, tested here
-  without Zotero;
+- the identifier forms are pure logic, tested here without Zotero;
 - the autouse fixture leaves Zotero down (closed port, ZOTERO_NO_LAUNCH)
   for every other test.
 
@@ -34,15 +35,6 @@ zotero_factory = zotero_live.zotero_factory
 zi = zotero_live.helper_module()
 
 HOFFMAN = "Systems of inequalities involving convex functions"
-SCATTERED = ("Some recent applications of the theory of linear\n"
-             "inequalities to extremal combinatorial analysis\n"
-             "by Alan J. Hoffman\n"
-             "we consider systems of constraints\n"
-             "the objective functions are convex\n"
-             "involving several parameters\n")
-BODY = ("we consider systems of constraints\n"
-        "the objective functions are convex\n"
-        "involving several unrelated parameters\n")
 
 
 @pytest.fixture(autouse=True)
@@ -50,67 +42,6 @@ def zotero_down(monkeypatch, tmp_path):
     monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{free_port()}")
     monkeypatch.setenv("ZOTERO_NO_LAUNCH", "1")
     monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(tmp_path / "no-key.env"))
-
-
-# ── pure: the title scorer ───────────────────────────────────────────────────
-
-
-def test_a_title_on_one_line_is_strong():
-    text = f"{HOFFMAN}\nby A. J. Hoffman"
-    assert zi.title_certainty(HOFFMAN, None, text, "1957", "1957") == "strong"
-
-
-def test_scattered_vocabulary_is_weak_not_strong():
-    """The five ordinary words of the title, scattered through a paper
-    about linear inequalities, are a hint to look at, not the title."""
-    assert zi.title_certainty(HOFFMAN, None, SCATTERED, "1960", "1957") == "weak"
-
-
-def test_window_precision_separates_a_title_line_from_a_body_window():
-    assert zi.title_certainty(HOFFMAN, None, BODY, "1957", "1957") == "weak"
-    assert zi.title_certainty(HOFFMAN, None, HOFFMAN, "1957", "1957") == "strong"
-
-
-def test_a_body_paragraph_quoting_the_title_is_not_the_title():
-    quoted = (f"as Hoffman showed in {HOFFMAN} the results carry over to the "
-              f"general case with several further assumptions on the domain")
-    assert zi.title_certainty(HOFFMAN, None, quoted, None, "1957") == "weak"
-
-
-def test_casing_punctuation_and_accents_do_not_matter():
-    assert zi.title_certainty("Anarchy, State, and Utopia",
-                              "anarchy state and utopia", None,
-                              "1974", "1974") == "strong"
-    assert zi.title_certainty(
-        "Methods of choosing equipment at Électricité de France",
-        "PII: 0014-2921(69)90001-4",
-        "Methods of choosing equipment at Electricite de France",
-        "1969", "1969") == "strong"
-
-
-def test_a_distant_year_demotes_a_title_match_to_weak():
-    """A reprint or translation date (Kantorovich 1942 filed as 2004) is no
-    proof of a wrong match, and no proof of a right one either."""
-    assert zi.title_certainty("Coherent Measures of Risk",
-                              "Coherent Measures of Risk", None,
-                              "2004", "1999") == "weak"
-
-
-def test_a_short_generic_stored_title_is_never_strong():
-    """A stored "Introduction" would otherwise be any paper's heading."""
-    assert zi.title_certainty("Introduction", None, "1 Introduction\nbody",
-                              "2020", "2020") == "weak"
-
-
-def test_a_two_word_stored_title_can_still_be_strong():
-    assert zi.title_certainty("Being and Time", "Being and Time", None,
-                              "1927", "1927") == "strong"
-
-
-def test_an_unrelated_title_scores_nothing():
-    assert zi.title_certainty("An Entirely Unrelated Study of Something Else",
-                              None, "method of limits in the theory of index "
-                              "numbers", "1969", "1969") is None
 
 
 # ── pure: identifier forms ───────────────────────────────────────────────────
@@ -145,8 +76,7 @@ def test_no_key_at_all_is_unchecked_and_asks_zotero_nothing():
     res = zi.find_work(zi.libraries())
     assert res["verdict"] == "unchecked" and res["matches"] == []
     assert res["consulted"] == []
-    for label in ("doi", "isbn", "arxiv", "handle", "creator-year-title",
-                  "storageHash"):
+    for label in ("doi", "isbn", "arxiv", "handle", "title", "storageHash"):
         assert any(s.startswith(label) for s in res["skipped"]), label
 
 
@@ -195,16 +125,11 @@ def test_a_failing_pdfinfo_does_not_stop_a_staging_check(tmp_path, monkeypatch):
     assert zi.audit_one(pdf, zi.libraries())["verdict"] == "unidentified"
 
 
-def test_a_title_alone_never_matches():
-    res = zi.find_work(zi.libraries(), title="A Totally Unrelated Long Title")
-    assert res["verdict"] == "unchecked"
-    assert any("no author supplied" in s for s in res["skipped"])
-
-
-def test_a_short_title_is_skipped_not_matched():
-    res = zi.find_work(zi.libraries(), title="On Growth", first_author="Solow")
-    assert res["verdict"] == "unchecked"
-    assert any("too short" in s for s in res["skipped"])
+def test_a_short_title_is_skipped_not_searched():
+    """"On Growth" would return any work at all: not a key that looked."""
+    res = zi.find_work(zi.libraries(), title="On Growth")
+    assert res["verdict"] == "unchecked" and "title" not in res["consulted"]
+    assert any(s.startswith("title (fewer than") for s in res["skipped"])
 
 
 def test_the_helper_no_longer_reads_the_whole_library_per_lookup():
@@ -213,6 +138,18 @@ def test_the_helper_no_longer_reads_the_whole_library_per_lookup():
                  "def _surname_in_text", "def entry_identity_keys",
                  "def attachment_digest", "def entry_to_ris"):
         assert gone not in text, gone
+
+
+def test_no_scorer_is_left():
+    """Author decision 9 (2026-10-16): the helper asserts exact
+    identifiers only; title scoring, corroboration and the year window
+    are gone, and so is rapidfuzz."""
+    text = (Path(zi.__file__)).read_text()
+    for gone in ("rapidfuzz", "def title_certainty", "def corroborate",
+                 "skip-corroboration", "STRONG_TITLE", "abs(ours - theirs)"):
+        assert gone not in text, gone
+    pyproject = (Path(zi.__file__).parent.parent / "pyproject.toml").read_text()
+    assert "rapidfuzz" not in pyproject
 
 
 # ── live: a client of its own, seeded once ───────────────────────────────────
@@ -291,7 +228,7 @@ def test_a_doi_is_an_exact_match_whatever_its_case(lib):
         res = find(doi=doi)
         (m,) = res["matches"]
         assert m["key"] == keys["doi"] and m["why"] == ["doi"], doi
-        assert m["certainty"] == "exact" and res["verdict"] == "match"
+        assert res["verdict"] == "match"
         assert res["source"] == zi.LIBRARY_SOURCE
 
 
@@ -339,39 +276,45 @@ def test_arxiv_ids_and_handles_are_found_in_extra_and_url(lib):
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("author", ["Robert Nozick", "Nozick, Robert", "Nozick"])
-def test_a_pre_doi_book_is_found_by_author_year_and_title(lib, author):
+@pytest.mark.parametrize("title", ["anarchy state and utopia",
+                                   "Anarchy: State, and Utopia!"])
+def test_a_title_returns_candidates_never_a_match(lib, title):
+    """Author decision 9: a title hit is for the caller to judge. Words are
+    searched, so punctuation does not glue them together."""
     keys, _ = lib
-    res = find(title="anarchy state and utopia", year="1974",
-               first_author=zi.first_author_surname(author))
-    (m,) = res["matches"]
-    assert m["key"] == keys["nozick"] and m["why"] == ["creator-year-title"]
-    assert m["certainty"] == "strong" and res["verdict"] == "match"
+    res = find(title=title)
+    assert res["matches"] == [] and res["verdict"] == "candidates"
+    (c,) = [c for c in res["candidates"] if c["key"] == keys["nozick"]]
+    assert c["why"] == ["title"] and "certainty" not in c
+    assert "title" in res["consulted"]
 
 
 @pytest.mark.integration
-def test_a_two_word_surname_is_not_shortened_twice(lib, capsys):
-    """"García Márquez, Gabriel" is the surname "García Márquez": a second
-    shortening made it "Márquez", and the duplicate went unseen."""
+def test_the_same_title_is_still_only_a_candidate(lib):
+    """Even a stored title equal to the one given: no title is a match."""
     keys, _ = lib
-    res = find(title="Cien años de soledad", year="1967",
-               first_author=zi.first_author_surname("García Márquez, Gabriel"))
-    assert [m["key"] for m in res["matches"]] == [keys["garcia"]]
+    res = find(title=HOFFMAN)
+    assert res["verdict"] == "candidates" and res["matches"] == []
+    assert [c["key"] for c in res["candidates"]] == [keys["hoffman"]]
+
+
+@pytest.mark.integration
+def test_find_work_cli_reports_candidates(lib, capsys):
+    keys, _ = lib
     args = argparse.Namespace(doi=None, isbn=None, arxiv=None, handle=None,
-                              title="Cien años de soledad", year="1967",
-                              author="García Márquez, Gabriel", pdf=None,
+                              title="Cien años de soledad", pdf=None,
                               library="user", metadata=None)
     assert zi.cmd_find_work(args) == 0
     (result,) = json.loads(capsys.readouterr().out)["results"]
-    assert result["verdict"] == "match"
+    assert result["verdict"] == "candidates"
+    assert [c["key"] for c in result["candidates"]] == [keys["garcia"]]
 
 
 @pytest.mark.integration
-def test_the_wrong_author_finds_nothing(lib):
-    res = find(title="Coherent Measures of Risk", year="1999",
-               first_author="Delbaen")
-    assert res["verdict"] == "none"
-    assert "creator-year-title" in res["consulted"]
+def test_an_unknown_title_finds_nothing(lib):
+    res = find(title="Wholly Absent Treatise on Turbines")
+    assert res["verdict"] == "none" and res["candidates"] == []
+    assert "title" in res["consulted"]
 
 
 @pytest.mark.integration
@@ -379,35 +322,32 @@ def test_a_work_without_a_stored_file_says_so(lib):
     """The present-but-no-file case suggest-attachments repairs; a linked
     URL is not a stored file."""
     keys, _ = lib
-    (artzner,) = find(title="Coherent Measures of Risk", year="1999",
-                      first_author="Artzner")["matches"]
+    (artzner,) = find(title="Coherent Measures of Risk")["candidates"]
     assert artzner["key"] == keys["artzner"] and artzner["has_file"] is False
-    (kurz,) = find(title="Sraffa and von Neumann", year="2001",
-                   first_author="Kurz")["matches"]
+    (kurz,) = find(title="Sraffa and von Neumann")["candidates"]
     assert kurz["key"] == keys["kurz"] and kurz["has_file"] is False
 
 
 @pytest.mark.integration
 def test_a_renamed_copy_is_found_by_its_content(lib, tmp_path):
-    """Content identity survives renaming: the work found by its title
-    holds a stored file with the probe's md5."""
+    """Content identity survives renaming: a title candidate holding a
+    stored file with the probe's md5 is a match, the only one a title
+    search can lead to."""
     keys, files = lib
     probe = tmp_path / "MyOwnName-2024.pdf"
     shutil.copyfile(files["stored"], probe)
-    res = find(title="Totally Different Recorded Title", first_author="Renamer",
-               pdf_path=probe)
+    res = find(title="Totally Different Recorded Title", pdf_path=probe)
     (m,) = res["matches"]
-    assert m["key"] == keys["hash"] and m["why"] == ["storageHash",
-                                                     "creator-year-title"]
-    assert m["certainty"] == "exact" and m["has_pdf"] is True
+    assert m["key"] == keys["hash"] and m["why"] == ["storageHash", "title"]
+    assert res["verdict"] == "match" and m["has_pdf"] is True
     assert m["attachment"]["md5"] == hashlib.md5(probe.read_bytes()).hexdigest()
     assert "storageHash" in res["consulted"]
 
 
 @pytest.mark.integration
 def test_one_file_under_two_records_names_both(lib, tmp_path):
-    """Ticket 0570: two records legitimately sharing one file tie at the
-    exact tier; neither vanishes."""
+    """Ticket 0570: two records legitimately sharing one file tie; neither
+    vanishes."""
     keys, files = lib
     probe = tmp_path / "local.pdf"
     shutil.copyfile(files["shared"], probe)
@@ -415,39 +355,6 @@ def test_one_file_under_two_records_names_both(lib, tmp_path):
     assert res["verdict"] == "ambiguous"
     assert {m["key"] for m in res["matches"]} == {keys["tie_wp"], keys["tie_journal"]}
     assert all(m["why"][0] == "storageHash" for m in res["matches"])
-
-
-@pytest.mark.integration
-def test_more_document_text_never_manufactures_a_match(lib):
-    """Text widens what the document may say; the score is the library
-    title's, so an unrelated work of the same author stays out."""
-    keys, _ = lib
-    res = find(year="1969", authors=["Afriat"],
-               text="MethodOfLimits Index Numbers method of limits in the "
-                    "theory of index numbers")
-    assert [m["key"] for m in res["matches"]] == [keys["afriat"]]
-
-
-@pytest.mark.integration
-def test_front_matter_is_enough_when_the_pdfinfo_title_is_junk(lib):
-    keys, _ = lib
-    res = find(title="PII: 0014-2921(69)90001-4", year="1969",
-               authors=["Bessiere"],
-               text="Methods of choosing equipment at Electricite de France")
-    assert res["verdict"] == "match"
-    assert res["matches"][0]["key"] == keys["bessiere"]
-
-
-@pytest.mark.integration
-def test_a_scattered_vocabulary_is_ambiguous_and_a_title_line_matches(lib):
-    keys, _ = lib
-    weak = find(year="1960", authors=["Hoffman"], text=SCATTERED)
-    assert weak["matches"][0]["key"] == keys["hoffman"]
-    assert weak["matches"][0]["certainty"] == "weak"
-    assert weak["verdict"] == "ambiguous"
-    strong = find(year="1957", authors=["Hoffman"], text=HOFFMAN)
-    assert strong["matches"][0]["certainty"] == "strong"
-    assert strong["verdict"] == "match"
 
 
 # ── live: check-staging rows ─────────────────────────────────────────────────
@@ -458,23 +365,20 @@ def row(path, bib_entry=None):
 
 
 @pytest.mark.integration
-def test_check_staging_verdicts_cover_every_certainty(lib, tmp_path):
+def test_check_staging_verdicts_cover_every_answer(lib, tmp_path):
     keys, files = lib
-    identical = tmp_path / "Renamer2024-copy.pdf"
+    identical = tmp_path / "Renamer2024-TotallyDifferentRecordedTitle.pdf"
     shutil.copyfile(files["stored"], identical)
     assert row(identical)["verdict"] == "identical"
     assert "also_matches" not in row(identical)
 
     scanned = make_pdf(tmp_path / "Artzner1999-x.pdf", [],
                        {"Title": "Coherent Measures of Risk"})
-    present = row(scanned)
-    assert present["verdict"] == "work_present_no_file"
-    assert present["zotero_key"] == keys["artzner"]
+    judged = row(scanned)
+    assert judged["verdict"] == "candidates" and judged["zotero_key"] is None
+    assert [c["key"] for c in judged["candidates"]] == [keys["artzner"]]
 
-    weak = make_pdf(tmp_path / "Hoffman1960-x.pdf", BODY.splitlines())
-    assert row(weak)["verdict"] == "ambiguous"
-
-    absent = make_pdf(tmp_path / "Nobody1999-x.pdf",
+    absent = make_pdf(tmp_path / "Nobody1999-UnrelatedTurbineDocument.pdf",
                       ["An Unrelated Document About Turbines"])
     nothing = row(absent)
     assert nothing["verdict"] == "absent"
@@ -510,15 +414,13 @@ def test_check_staging_uses_the_bib_doi_for_a_linked_file(lib, tmp_path):
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("author", ["Artzner, Philippe and Delbaen, Freddy",
-                                    "Philippe Artzner and Freddy Delbaen"])
-def test_check_staging_normalizes_the_bib_first_author(lib, tmp_path, author):
+def test_check_staging_searches_the_bib_title(lib, tmp_path):
     keys, _ = lib
     pdf = make_pdf(tmp_path / "paper.pdf", ["nothing useful"])
-    result = row(pdf, {"author": author, "title": "Coherent Measures of Risk",
-                       "year": "1999"})
-    assert result["zotero_key"] == keys["artzner"]
-    assert result["why"] == ["creator-year-title"]
+    result = row(pdf, {"author": "Artzner, Philippe and Delbaen, Freddy",
+                       "title": "Coherent Measures of Risk", "year": "1999"})
+    assert result["verdict"] == "candidates"
+    assert [c["key"] for c in result["candidates"]] == [keys["artzner"]]
 
 
 @pytest.mark.integration
@@ -538,17 +440,18 @@ def test_every_request_of_a_staging_check_is_a_search(lib, tmp_path,
     monkeypatch.setattr(zi, "http_client", recording)
     docs = tmp_path / "docs"
     docs.mkdir()
-    make_pdf(docs / "Hoffman1957-systems.pdf", [HOFFMAN, "by A. J. Hoffman"])
-    make_pdf(docs / "Nobody1999-x.pdf", ["An Unrelated Document About Turbines"])
+    make_pdf(docs / "Hoffman1957-SystemsOfInequalities.pdf",
+             [HOFFMAN, "by A. J. Hoffman"])
+    make_pdf(docs / "Nobody1999-UnrelatedTurbineDocument.pdf",
+             ["An Unrelated Document About Turbines"])
     args = argparse.Namespace(root=str(tmp_path), dir="docs", out=None,
                               apply=False, edit=False, library="user")
     assert zi.cmd_check_staging(args) == 0
     report = json.loads(capsys.readouterr().out)
-    assert report["summary"] == {"work_present_no_file": 1, "absent": 1}
+    assert report["summary"] == {"candidates": 1, "absent": 1}
     find_args = argparse.Namespace(doi="10.5555/Deep.X", isbn=None, arxiv=None,
-                                   handle=None, title=HOFFMAN, year="1957",
-                                   author="Hoffman", pdf=None, library="user",
-                                   metadata=None)
+                                   handle=None, title=HOFFMAN, pdf=None,
+                                   library="user", metadata=None)
     assert zi.cmd_find_work(find_args) == 0
     capsys.readouterr()
     items = [u for u in sent if "/items" in u.path]
@@ -570,7 +473,8 @@ def test_a_slow_read_is_not_reported_as_unavailable(lib, tmp_path, monkeypatch,
     giving pyzotero's per-request timeout no time at all."""
     docs = tmp_path / "docs"
     docs.mkdir()
-    make_pdf(docs / "Hoffman1957-systems.pdf", [HOFFMAN, "by A. J. Hoffman"])
+    make_pdf(docs / "Hoffman1957-SystemsOfInequalities.pdf",
+             [HOFFMAN, "by A. J. Hoffman"])
     args = argparse.Namespace(root=str(tmp_path), dir="docs", out=None,
                               apply=False, edit=False, library="user")
     # Positive control: with the normal timeout the same run completes.
@@ -582,9 +486,8 @@ def test_a_slow_read_is_not_reported_as_unavailable(lib, tmp_path, monkeypatch,
     assert report["verdict"] == "zotero_slow"
     assert report["zotero"]["status"] == "slow"
     find_args = argparse.Namespace(doi="10.5555/Deep.X", isbn=None, arxiv=None,
-                                   handle=None, title=None, year=None,
-                                   author=None, pdf=None, library="user",
-                                   metadata=None)
+                                   handle=None, title=None, pdf=None,
+                                   library="user", metadata=None)
     assert zi.cmd_find_work(find_args) == zi.EXIT_SLOW
     out = json.loads(capsys.readouterr().out)
     assert out["zotero"] == "slow" and out["verdict"] == "unchecked"

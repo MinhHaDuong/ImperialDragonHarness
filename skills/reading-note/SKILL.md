@@ -27,7 +27,7 @@ Discipline: `rules/zotero.md`. Zotero is the system of record; `docs/` is stagin
   attaches the file; do not duplicate its lookups here.
 - **Metadata from the first page**, not from PDF metadata fields:
   `pdftotext -f 1 -l 1`. A DOI scraped from the text may be a cited work's;
-  corroborate it as the `zotero` skill describes before trusting it.
+  check it against the page as the `zotero` skill describes before trusting it.
 
 ## 2. Get the research context
 

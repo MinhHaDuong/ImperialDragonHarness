@@ -508,9 +508,10 @@ _LETTERS = str.maketrans("0123456789", "ghijklmnop")
 def unique_title(words: int = 4) -> str:
     """A title sharing no word with any other test's title.
 
-    The duplicate guard scores title-word overlap, so two titles with a
-    common stem ("Paper 1a2b", "Paper 3c4d") already read as a weak match;
-    every word here is random letters.
+    The duplicate guard's title search wants every word of the title as a
+    substring of some field of a work, so a word another test's work also
+    carries (in a title, a DOI, a hex nonce) can make it a candidate; every
+    word here is random letters.
     """
     return " ".join(uuid.uuid4().hex[:9].translate(_LETTERS).capitalize()
                     for _ in range(words))

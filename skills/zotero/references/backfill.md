@@ -36,7 +36,7 @@ echo "check-staging report: $out (exit $status)"
 [ "$status" -eq 0 ]
 ```
 
-Resolve any `errors` and inspect `ambiguous` rows before taking action. An
+Resolve any `errors` and judge the `candidates` rows before taking action. An
 `absent` row is a proposal for a later, explicit import, not permission to
 create it automatically. Every early exit (nothing staged, Zotero unavailable) still
 writes `--out` with the same report keys. Zotero unavailable is a clean
@@ -50,13 +50,16 @@ no maintenance skill runs it for you. The script locks the staging
 directories and the user's runtime directory, or the home directory when
 `XDG_RUNTIME_DIR` is unset (advisory locks on the directories themselves, no
 lock files, given up after 10 min rather than hang), looks every file up again, live, and
-creates only absent PDFs with corroborated title/author metadata, through the
+creates only the absent PDFs a `.bib` entry describes with a title, an author
+and a year, through the
 local API (it needs Zotero 10.0 or later and the local API key; see
 `references/helper-script.md`). The second lookup covers the destination library, so with a
 group `collection` the duplicate check searches that group. A read Zotero does
 not finish in time, at any step, is verdict `zotero_slow` with exit 74, never
-the clean no-op of `zotero_unavailable`. Missing metadata, weak matches, ties, and discovery errors
-remain visible in `deferred` or `errors`; they cannot become an automatic
+the clean no-op of `zotero_unavailable`. An orphan file however complete its
+pdfinfo (page text and pdfinfo are where a cited work's metadata slips in),
+title candidates, ties, and discovery errors
+remain visible in `deferred`, the rows or `errors`; they cannot become an automatic
 write. Existing items are edited only with `--apply --edit`, which stores each
 staged file under the one existing item that lacks it (a tie is left for the
 author; `--edit` without `--apply` is an error). Without `--edit` their fixes
@@ -76,26 +79,20 @@ between `work_present_with_file` and `work_present_no_file` decides what you do 
 | `identical` | this exact file is already stored (md5) | nothing |
 | `work_present_with_file` | the work is in Zotero with a different copy | nothing; report it |
 | `work_present_no_file` | the item exists, no file attached | `suggest-attachments`, never `create-items` |
-| `ambiguous` | a weak hit — neither present nor absent | look at it |
+| `candidates` | no identifier matched; Zotero's search found works with the title | judge them: same work, or another |
 | `absent` | looked up, not in the library | `create-items` |
-| `unidentified` | nothing to look it up by: no identifier, no author and title | give it a `.bib` entry or an `Author1999-title` name, then check again |
+| `unidentified` | nothing to look it up by: no identifier, no title of three words | give it a `.bib` entry or an `Author1999-TitleWords` name, then check again |
 
-**`ambiguous` is a real answer, not a tuning failure.** Collapsing a weak hit
-into one of its neighbours is expensive in both directions: called present, the
-document is skipped and its full text never lands; called absent, a duplicate
-item is minted. Over 289 files the strong verdicts of the earlier
-whole-library matcher agreed with a hand-built resolver exactly — 100/100
-`identical`, 169/169 `absent` — and every case where the two differed came
-back `ambiguous` (measured before ticket 1116 moved the lookup to Zotero's
-search; not re-measured since). That is the verdict earning its place:
-it is where the judgment is needed, and it is a dozen files, not three hundred.
-
-A title is matched as a **phrase, not a vocabulary**: the library title must be
-(nearly, by rapidfuzz) one phrase of the evidence — the title given, or up to
-three consecutive lines not much longer than it. Scoring the whole document bag instead lets the five ordinary
-words of "Systems of inequalities involving convex functions" match any paper
-about linear inequalities — which filed a real Hoffman 1960 paper as a different
-Hoffman paper, at `strong`.
+**`candidates` is a real answer, not a tuning failure.** The helper asserts
+a match only on an exact identifier (DOI, ISBN, arXiv id or handle equal to
+the item's own field) or on the stored file's md5; a title is never one
+(ticket 1116 removed the title scorer, author decision 2026-10-16). Collapsing
+candidates into one of their neighbours is expensive in both directions:
+called present, the document is skipped and its full text never lands;
+called absent, a duplicate item is minted. Five ordinary words such as
+"Systems of inequalities involving convex functions" once filed a real
+Hoffman 1960 paper as a different Hoffman paper; a candidate list puts that
+call in front of the reader instead.
 
 **Content hash is the strongest key available** (`storageHash`, the md5
 Zotero 10 reports for each stored file): it survives renaming, re-filing and

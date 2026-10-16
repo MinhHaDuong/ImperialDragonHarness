@@ -6,7 +6,6 @@
 #     "httpx2>=2.13,<3",
 #     "isbnlib>=3.10,<4",
 #     "pyzotero>=1.16,<2",
-#     "rapidfuzz>=3.9,<4",
 # ]
 # ///
 """Backend helper scripts/zotero.py for the zotero skill.
@@ -64,8 +63,6 @@ from bibtexparser.bibdatabase import UndefinedString
 from bibtexparser.bparser import BibTexParser
 from pyzotero import errors as ze
 from pyzotero import zotero
-from rapidfuzz import fuzz
-from rapidfuzz.utils import default_process
 
 DOI_BARE_RE = re.compile(r"\b10\.\d{4,9}/[-._;()/:A-Z0-9]+", re.IGNORECASE)
 # Anchor on doi.org/ or "DOI:" / "doi " preamble. Lets us prefer the document's
@@ -141,49 +138,28 @@ def find_identifier(front_text: str, back_text: str, subject: str
 
 # --- Deduplication -----------------------------------------------------------
 # find_work() asks the running Zotero's own search (the local API's `q`, in
-# `qmode=everything`) for each key, strongest first: a persistent identifier
-# (DOI, ISBN, arXiv, handle), then the given authors' works, whose titles
-# rapidfuzz scores against the title and front matter given. Every hit is
-# checked against the item's own fields, since the quick search matches a
-# substring anywhere, and its attachments are checked for the PDF's md5
-# (`storageHash`). No call reads the whole library. Scope defaults to the
-# user library because create-items writes there: a hit that lives only in a
-# group library must not suppress a creation missing from the destination.
+# `qmode=everything`) for each key the caller gives: DOI, ISBN, arXiv id,
+# handle, title. The one match it asserts is exact: a normalised identifier
+# equal to the hit's own field, or the hit holding a stored file with the
+# PDF's md5 (`storageHash`). A title search returns candidates for the caller
+# to judge, never a match. No call reads the whole library. Scope defaults to
+# the user library because create-items writes there: a hit that lives only
+# in a group library must not suppress a creation missing from the
+# destination.
 
 USER_LIBRARY = "user"
 ALL_LIBRARIES = "all"
 
 
-def first_author_surname(author: str) -> str:
-    return last_first(author).partition(",")[0].strip()
-
-
-SAFE_TIERS = ("exact", "strong")
-
-
-def top_tier_peers(matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """All candidates tied with matches[0] at its certainty tier — [] when
-    there are no matches or the top tier is not a safe one. The single
-    definition of "several candidates tie", shared by the verdict
-    (classify_matches) and the check-staging row (audit_one) so the two
-    cannot desync (ticket 0570)."""
-    if not matches or matches[0]["certainty"] not in SAFE_TIERS:
-        return []
-    return [m for m in matches if m["certainty"] == matches[0]["certainty"]]
-
-
-def classify_matches(matches: list[dict[str, Any]]) -> str:
-    """'match' when a safe key fired unambiguously; 'ambiguous' when only a
-    guess-level key fired or several exact/strong candidates tie; 'none'
-    otherwise. The exact tier ties like the strong one (ticket 0570): two
-    records legitimately share one attachment md5 — 269 such clusters in the
-    user library — and answering from matches[0] alone made the second vanish
-    without a trace."""
-    if not matches:
-        return "none"
-    # No safe tier fired → top_tier_peers is empty → "ambiguous", the same
-    # answer a tie gives; only a lone safe peer is a "match".
-    return "match" if len(top_tier_peers(matches)) == 1 else "ambiguous"
+def classify_matches(matches: list[dict[str, Any]],
+                     candidates: list[dict[str, Any]]) -> str:
+    """'match' for one exact match; 'ambiguous' for several, which tie
+    (ticket 0570: two records legitimately share one attachment md5, and
+    answering from matches[0] alone made the second vanish); 'candidates'
+    when only the title search answered; 'none' otherwise."""
+    if matches:
+        return "match" if len(matches) == 1 else "ambiguous"
+    return "candidates" if candidates else "none"
 
 
 def duplicate_hash_report(attachments: list[dict[str, Any]],
@@ -1061,30 +1037,6 @@ def attach_file(z: zotero.Zotero, parent: str, path: Path) -> str:
     return result["success"][0]["key"]
 
 
-def corroborate_entry(entry: dict[str, Any]) -> dict[str, Any]:
-    """Check one create-items entry's metadata against its own PDF's front matter.
-
-    This is where corroborate() has to bite. `create-items` is the step that makes
-    metadata permanent, and the failure it guards is silent by construction: a
-    DOI scraped from page text usually belongs to a work the document *cites*,
-    so the resolver returns a well-formed record for the wrong paper and every
-    later reader inherits it. Measured on a 158-PDF backfill, 77 of 116
-    machine-built drafts needed correction once someone read the page.
-    """
-    pdf = entry.get("pdf")
-    if not pdf or not entry.get("title"):
-        return {"confidence": "unchecked", "reason": "no pdf or no title"}
-    path = Path(pdf)
-    if not path.exists() or path.suffix.lower() != ".pdf":
-        return {"confidence": "unchecked", "reason": "no readable PDF"}
-    try:
-        text = pdftotext_range(path, 1, FIRST_PAGES)
-    except Exception as exc:
-        return {"confidence": "unchecked", "reason": f"{type(exc).__name__}"}
-    return corroborate({"title": entry.get("title"),
-                        "authors": entry.get("authors") or []}, text)
-
-
 def library_ids(library: str = USER_LIBRARY) -> list[str]:
     """The libraries a selector names: "user" is the signed-in user's
     library, a number is a groupID (as in zotero.org/groups/<groupID>),
@@ -1162,20 +1114,6 @@ def emit_json(payload: Any) -> None:
 
 def cmd_create_items(args: argparse.Namespace) -> int:
     entries = load_entries(args)
-    checks = [corroborate_entry(e) for e in entries]
-    if not args.skip_corroboration:
-        blocked = [(e, c) for e, c in zip(entries, checks)
-                   if c["confidence"] == "contradicted"]
-        if blocked:
-            emit_json({"error": "metadata contradicted by the document",
-                       "hint": "the identifier a resolver followed is probably "
-                               "a cited work's, not this document's; rebuild "
-                               "the metadata, or pass --skip-corroboration",
-                       "entries": [{"title": e.get("title"),
-                                    "pdf": e.get("pdf"), **c}
-                                   for e, c in blocked]})
-            return 1
-
     # check-staging --apply holds the lock and has made Zotero answer.
     locked = getattr(args, "_locked", False)
     library = getattr(args, "library", USER_LIBRARY)
@@ -1198,7 +1136,7 @@ def cmd_create_items(args: argparse.Namespace) -> int:
         emit_json({"error": str(exc)})
         return 1
     if args.dry_run:
-        emit_json({"items": items, "corroboration": checks})
+        emit_json({"items": items})
         return 0
     # The duplicate checks and the saves happen inside one critical section
     # on this machine, so two local runs cannot both create one work.
@@ -1221,7 +1159,7 @@ def cmd_create_items(args: argparse.Namespace) -> int:
         except (ValueError, LocalAPIError, OSError) as exc:
             emit_json({"error": str(exc)})
             return 1
-        results, status = create_entries(entries, items, checks, lib_id,
+        results, status = create_entries(entries, items, lib_id,
                                          collection, getattr(args, "force",
                                                              False))
     zotero_state = {EXIT_SLOW: "slow", EXIT_UNAVAILABLE: "unavailable"}
@@ -1231,36 +1169,26 @@ def cmd_create_items(args: argparse.Namespace) -> int:
     return status
 
 
-# The keys that identify a work; a lookup that consulted none of them has
-# no basis to call an entry new.
-IDENTITY_KEYS = frozenset({"doi", "isbn", "arxiv", "handle",
-                           "creator-year-title"})
-
-
 def entry_query(entry: dict[str, Any]) -> dict[str, Any]:
     """find_work's keys for one create-items entry."""
     url = str(entry.get("url") or "")
     arxiv_match = ARXIV_ANY_RE.search(url)
     handle_match = HDL_ANY_RE.search(url)
-    authors = entry.get("authors") or [""]
     return {"title": entry.get("title"), "doi": entry.get("doi"),
             "isbn": entry.get("isbn"),
             "arxiv": arxiv_match.group(1) if arxiv_match else None,
-            "handle": handle_match.group(1) if handle_match else None,
-            "year": str(entry.get("year") or ""),
-            "first_author": first_author_surname(str(authors[0]))}
+            "handle": handle_match.group(1) if handle_match else None}
 
 
 def create_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
-                   checks: list[dict[str, Any]], lib_id: str,
+                   lib_id: str,
                    collection: str | None,
                    force: bool) -> tuple[list[dict[str, Any]], int]:
     """Look each entry up in the destination library, then save it, one at a
     time: the lookups are live, so an entry for a work an earlier entry of
     the same batch just created finds it and is refused."""
-    results: list[dict[str, Any]] = [
-        {"title": entry.get("title"), "corroboration": check["confidence"]}
-        for entry, check in zip(entries, checks)]
+    results: list[dict[str, Any]] = [{"title": entry.get("title")}
+                                     for entry in entries]
     z = local_library(lib_id)
     status = 0
     # Zotero has no search by md5: a file this batch already stored is
@@ -1306,11 +1234,18 @@ def create_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
                                  else EXIT_UNAVAILABLE
                                  if isinstance(exc, ZoteroUnavailable) else 1)
             if found["matches"]:
-                row["error"] = "duplicate or ambiguous library match"
+                row["error"] = "already in the library: duplicate match"
                 row["matches"] = found["matches"][:5]
                 status = 1
                 continue
-            if not IDENTITY_KEYS & set(found["consulted"]):
+            if found["candidates"]:
+                # Never judged here: the caller looks, then passes --force.
+                row["error"] = ("works with this title are in the library; "
+                                "examine the candidates, then use --force")
+                row["candidates"] = found["candidates"][:5]
+                status = 1
+                continue
+            if not set(KEYS) & set(found["consulted"]):
                 row["error"] = ("insufficient work identity for duplicate "
                                 "guard; use --force")
                 status = 1
@@ -1557,19 +1492,13 @@ def cmd_extract_metadata(args: argparse.Namespace) -> int:
 # ---------------------------------------------------------------------------
 
 LIBRARY_SOURCE = "zotero local API (live)"
-# Titles with fewer distinctive words than this are too short to match on.
-TITLE_MIN_TOKENS = 3
-# rapidfuzz scores (0 to 100). A title phrase scoring STRONG_TITLE is the
-# same title; the evidence's words covering the title at WEAK_TITLE is a
-# hint to look at, never a match on its own.
-STRONG_TITLE = 90
-WEAK_TITLE = 60
-# A phrase may be this much longer than the title it contains: a line that
-# carries the title and little else, not a body paragraph quoting it.
-PHRASE_SLACK = 5 / 3
+# A title with fewer words of three letters or more is not searched: its
+# hits would be any work at all, and the key could vouch for nothing.
+TITLE_MIN_WORDS = 3
+# Title candidates returned per query: one page, never the whole library.
+CANDIDATES = 25
 WORK_FIELDS = ("title", "date", "DOI", "ISBN", "url", "extra", "archiveID",
                "number")
-NOT_WORKS = {"attachment", "note", "annotation"}
 
 
 def file_url_path(url: str | None) -> str | None:
@@ -1619,12 +1548,14 @@ def libraries(library: str = USER_LIBRARY) -> list[tuple[str, zotero.Zotero]]:
     return [(lib_id, local_library(lib_id)) for lib_id in library_ids(library)]
 
 
-def search_works(z: zotero.Zotero, lib_id: str, query: str
-                 ) -> list[dict[str, Any]]:
+def search_works(z: zotero.Zotero, lib_id: str, query: str,
+                 limit: int | None = None) -> list[dict[str, Any]]:
     """Top-level works matching `query` in any field or creator, through
-    Zotero's quick search (`qmode=everything`); trash excluded."""
+    Zotero's quick search (`qmode=everything`); trash excluded. Every page,
+    or the first `limit` hits."""
     with local_api():
-        items = z.everything(z.top(q=query, qmode="everything", limit=PAGE))
+        first = z.top(q=query, qmode="everything", limit=limit or PAGE)
+        items = first if limit else z.everything(first)
     return [work_record(i, lib_id) for i in items
             if i.get("data", {}).get("itemType") not in NOT_WORKS
             and not i.get("data", {}).get("parentItem")]
@@ -1727,20 +1658,7 @@ def fold(s: str | None) -> str:
     """Accent-, case- and punctuation-insensitive form, words single-spaced."""
     s = unicodedata.normalize("NFKD", s or "")
     s = "".join(c for c in s if not unicodedata.combining(c))
-    return " ".join(default_process(s).split())
-
-
-def _name_key(s: str) -> str:
-    return fold(s).replace(" ", "")
-
-
-_TITLE_STOP = {"the", "a", "an", "of", "and", "in", "on", "for", "to", "with",
-               "de", "la", "le", "les", "du", "des", "et", "un", "une"}
-
-
-def _title_tokens(s: str | None) -> set[str]:
-    """The distinctive words of a title: no stopwords, none under 3 letters."""
-    return {w for w in fold(s).split() if len(w) > 2 and w not in _TITLE_STOP}
+    return " ".join(re.findall(r"[^\W_]+", s.casefold()))
 
 
 # Both forms Zotero actually stores: "arXiv:2401.01234" in Extra, and an
@@ -1809,93 +1727,41 @@ IDENTIFIER_KEYS: tuple[tuple[str, Any, Any], ...] = (
 )
 
 
-def _year(value: str | None) -> int | None:
-    match = YEAR_RE.search(value or "")
-    return int(match.group(0)) if match else None
-
-
-def title_certainty(lib_title: str, title: str | None, text: str | None,
-                    year: str | None, lib_date: str | None) -> str | None:
-    """How surely the evidence names this library title: "strong", "weak"
-    or None.
-
-    Strong: the library title is (nearly) one phrase of the evidence — the
-    title given, or a window of up to three consecutive lines of the text —
-    and the years, when both are known, are within three. Scoring the whole
-    text as a bag of words instead let the five ordinary words of "Systems
-    of inequalities involving convex functions", scattered through a paper
-    about linear inequalities, file a real Hoffman 1960 paper as a
-    different Hoffman paper. That bag is still worth a look, so it is weak.
-    """
-    lib = fold(lib_title)
-    if not lib:
-        return None
-    # A stored title of one distinctive word ("Introduction") would be
-    # "strong" against any page that has that heading: a hint at most.
-    # Two words ("Being and Time") are distinctive enough.
-    short = len(_title_tokens(lib_title)) < 2
-    lines = [line for line in (fold(raw) for raw in (text or "").splitlines())
-             if line]
-    phrases = ([fold(title)] if fold(title) else []) + [
-        " ".join(lines[i:i + n]) for i in range(len(lines))
-        for n in (1, 2, 3) if i + n <= len(lines)]
-
-    def score(phrase: str) -> float:
-        if len(lib) <= len(phrase) <= PHRASE_SLACK * len(lib):
-            return fuzz.partial_ratio(lib, phrase)
-        return fuzz.ratio(lib, phrase)
-
-    best = max((score(p) for p in phrases), default=0)
-    ours, theirs = _year(year), _year(lib_date)
-    if best >= STRONG_TITLE and not short and (ours is None or theirs is None
-                                               or abs(ours - theirs) <= 3):
-        return "strong"
-    bag = fold(f"{title or ''} {text or ''}")
-    if best >= STRONG_TITLE or fuzz.token_set_ratio(lib, bag) >= WEAK_TITLE:
-        return "weak"
-    return None
+KEYS = ("doi", "isbn", "arxiv", "handle", "title")
 
 
 def find_work(libs: list[tuple[str, zotero.Zotero]], *,
               doi: str | None = None, isbn: str | None = None,
               arxiv: str | None = None, handle: str | None = None,
-              title: str | None = None, year: str | None = None,
-              first_author: str | None = None,
-              authors: list[str] | None = None,
-              text: str | None = None,
+              title: str | None = None,
               pdf_path: Path | None = None) -> dict[str, Any]:
     """Is this work in the libraries? Zotero's own search, key by key.
 
-    `first_author` is a surname, as first_author_surname() leaves it: a
-    second shortening would turn "García Márquez" into "Márquez", and the
-    stored creator would no longer match.
-
-    Keys strongest first: a persistent identifier (DOI, ISBN, arXiv,
-    handle), then the works of the given authors scored for title
-    similarity; the first key that fires ends the search. Each work found
-    is then checked for a stored copy of `pdf_path` (`storageHash`).
-    "consulted" and "skipped" are reported so a clean negative stays
-    distinguishable from a lookup that could not run.
-
-    `text` is evidence from the document itself (front matter, a filename
-    slug). It widens what the document may say, never what counts as a hit:
-    the score is always taken against the library title.
+    `matches` are the works whose own field carries a given identifier
+    (DOI, ISBN, arXiv id, handle), or that hold a stored copy of `pdf_path`
+    (`storageHash`): the only matches asserted. `candidates` are what
+    Zotero's search returns for the title, for the caller to judge; they
+    are never a match unless their stored file is `pdf_path` itself.
+    "consulted" and "skipped" keep a clean negative apart from a lookup
+    that could not run.
     """
     consulted: list[str] = []
     skipped: list[str] = []
-    matches: list[dict[str, Any]] = []
+    found: dict[str, dict[str, Any]] = {}
     owner: dict[str, tuple[str, zotero.Zotero]] = {}
 
-    def emit(work: dict[str, Any], why: str, certainty: str,
+    def emit(work: dict[str, Any], why: str,
              lib: tuple[str, zotero.Zotero]) -> None:
-        if any(m["key"] == work["key"] for m in matches):
+        if work["key"] in found:
+            if why != "title" and why not in found[work["key"]]["why"]:
+                found[work["key"]]["why"].append(why)
             return
         owner[work["key"]] = lib
-        matches.append({"key": work["key"], "why": [why],
-                        "certainty": certainty, "title": work["title"],
-                        "date": work["date"], "itemType": work["itemType"],
-                        "creators": work["creators"],
-                        "library": work["library"], "attachment": None})
+        found[work["key"]] = {
+            "key": work["key"], "why": [why], "title": work["title"],
+            "date": work["date"], "itemType": work["itemType"],
+            "creators": work["creators"], "library": work["library"],
+            "attachment": None}
 
     for label, queries, carries in IDENTIFIER_KEYS:
         supplied = {"doi": doi, "isbn": isbn, "arxiv": arxiv,
@@ -1903,114 +1769,53 @@ def find_work(libs: list[tuple[str, zotero.Zotero]], *,
         if not supplied:
             skipped.append(f"{label} (none supplied)")
             continue
-        if matches:
-            continue
-        if not queries(supplied):
+        sent = queries(supplied)
+        if not sent:
             # Nothing to send (an ISBN with a bad check digit): not looked up.
             skipped.append(f"{label} (not a valid {label}: {supplied})")
             continue
         consulted.append(label)
         for lib in libs:
-            for query in queries(supplied):
+            for query in sent:
                 for work in search_works(lib[1], lib[0], query):
                     if carries(work, supplied):
-                        emit(work, label, "exact", lib)
+                        emit(work, label, lib)
 
-    if not matches and (title or text):
-        surnames = list(dict.fromkeys(
-            s for s in ([first_author] if first_author else [])
-            + [a.split(",")[0] for a in authors or []]
-            if _name_key(s)))
-        if len(_title_tokens(title) | _title_tokens(text)) < TITLE_MIN_TOKENS:
-            skipped.append("creator-year-title (title too short)")
-        elif not surnames:
-            skipped.append("creator-year-title (no author supplied)")
-        else:
-            consulted.append("creator-year-title")
-            for lib in libs:
-                for surname in surnames:
-                    for work in search_works(lib[1], lib[0], surname):
-                        if _name_key(surname) not in {
-                                _name_key(c) for c in work["creators"]}:
-                            continue
-                        certainty = title_certainty(work["title"], title, text,
-                                                    year, work["date"])
-                        if certainty == "strong":
-                            emit(work, "creator-year-title", "strong", lib)
-                        elif certainty == "weak":
-                            emit(work, "title-overlap", "weak", lib)
-    elif not matches:
-        skipped.append("creator-year-title (no title or text supplied)")
+    words = re.findall(r"[^\W_]{3,}", title or "")
+    if not title:
+        skipped.append("title (none supplied)")
+    elif len(words) < TITLE_MIN_WORDS:
+        skipped.append(f"title (fewer than {TITLE_MIN_WORDS} words to search)")
+    else:
+        consulted.append("title")
+        # Words, not the title string: the quick search wants every word
+        # somewhere, and punctuation would glue a word to its neighbour.
+        for lib in libs:
+            for work in search_works(lib[1], lib[0], " ".join(words),
+                                     limit=CANDIDATES):
+                emit(work, "title", lib)
 
     digest = file_md5(pdf_path) if pdf_path and pdf_path.is_file() else None
     if digest is None:
         skipped.append("storageHash (no file on disk)")
-    elif not matches:
+    elif not found:
         skipped.append("storageHash (no work found to compare with)")
     else:
         consulted.append("storageHash")
-    for m in matches:
-        lib_id, z = owner[m["key"]]
-        evidence, same = file_evidence(z, lib_id, m["key"], digest)
-        m.update(evidence)
+    for key, hit in found.items():
+        lib_id, z = owner[key]
+        evidence, same = file_evidence(z, lib_id, key, digest)
+        hit.update(evidence)
         if same:
-            m.update(why=["storageHash"] + m["why"], certainty="exact",
-                     attachment=same)
-
-    order = {"exact": 0, "strong": 1, "weak": 2}
-    matches.sort(key=lambda m: ("storageHash" not in m["why"],
-                                order.get(m["certainty"], 3)))
-    verdict = classify_matches(matches) if consulted else "unchecked"
-    return {"matches": matches, "verdict": verdict,
+            hit.update(why=["storageHash"] + hit["why"], attachment=same)
+    matches = [h for h in found.values() if h["why"] != ["title"]]
+    candidates = [h for h in found.values() if h["why"] == ["title"]]
+    matches.sort(key=lambda m: "storageHash" not in m["why"])
+    verdict = (classify_matches(matches, candidates) if consulted
+               else "unchecked")
+    return {"matches": matches, "candidates": candidates, "verdict": verdict,
             "consulted": consulted, "skipped": skipped,
             "source": LIBRARY_SOURCE}
-
-
-def corroborate(resolved: dict[str, Any], document_text: str) -> dict[str, Any]:
-    """Does the metadata a resolver returned actually describe *this* document?
-
-    A DOI or arXiv id scraped from page text is often a *cited* work's, not the
-    document's own — resolving it yields clean, confident, wrong metadata that
-    nothing downstream questions. Cross-check the resolved record against the
-    document's own words: the first author's surname, as a whole word, and
-    most of the title's words should appear in the front matter.
-
-    Returns {"confidence": corroborated|weak|contradicted|unchecked, ...}.
-    Never decides on its own — it hands the caller a reason to look.
-    """
-    text = fold(document_text)
-    title = resolved.get("title") or ""
-    authors = resolved.get("authors") or []
-    if not text or not title:
-        return {"confidence": "unchecked",
-                "reason": "no document text or no resolved title"}
-    if not _title_tokens(title):
-        # Nothing distinctive to compare, so nothing was checked. Returning the
-        # strongest negative here accuses the resolver on no evidence.
-        return {"confidence": "unchecked",
-                "reason": "resolved title carries no distinctive words to check"}
-    title_score = fuzz.token_set_ratio(fold(title), text)
-    surname = fold(authors[0].split(",")[0]) if authors else ""
-    # Whole words only: "Li" is not in "published", nor "Ng" in "programming".
-    author_ok = bool(surname) and re.search(
-        rf"(?<![a-z0-9]){re.escape(surname)}(?![a-z0-9])", text) is not None
-    title_ok = title_score >= CORROBORATED_TITLE
-    if title_ok and (author_ok or not surname):
-        conf = "corroborated"
-    elif title_ok or author_ok:
-        conf = "weak"
-    else:
-        conf = "contradicted"
-    return {"confidence": conf, "title_score": round(title_score),
-            "first_author_found": author_ok,
-            "reason": ("resolved metadata does not appear in the document — "
-                       "the identifier is probably a cited work's"
-                       if conf == "contradicted" else "")}
-
-
-# The token-set score at which most of a title's words are in the document
-# (about 60% of them).
-CORROBORATED_TITLE = 70
 
 
 class BadQuery(ValueError):
@@ -2025,9 +1830,7 @@ def work_queries(args: argparse.Namespace) -> list[dict[str, Any]]:
     applied to several would describe them all as one. An extraction row
     with an error stays in the results, as an error."""
     flags = {"title": args.title, "doi": args.doi, "isbn": args.isbn,
-             "arxiv": args.arxiv, "handle": args.handle,
-             "author": args.author, "year": args.year, "pdf": args.pdf,
-             "text": None}
+             "arxiv": args.arxiv, "handle": args.handle, "pdf": args.pdf}
     if not args.metadata:
         return [flags]
     try:
@@ -2057,9 +1860,7 @@ def work_queries(args: argparse.Namespace) -> list[dict[str, Any]]:
         if not (isinstance(ids, dict) and isinstance(pdfinfo_fields, dict)):
             raise BadQuery(f"--metadata {args.metadata}: identifiers and "
                            f"pdfinfo must be objects")
-        work = {"title": pdfinfo_fields.get("Title"), "year": item.get("year_hint"),
-                "author": None, "pdf": item.get("pdf"),
-                "text": _front_matter(item.get("first_pages_text") or ""),
+        work = {"title": pdfinfo_fields.get("Title"), "pdf": item.get("pdf"),
                 **{k: ids.get(k) for k in ("doi", "isbn", "arxiv", "handle")}}
         work.update({k: v for k, v in flags.items() if v})
         works.append(work)
@@ -2085,13 +1886,10 @@ def cmd_find_work(args: argparse.Namespace) -> int:
         if "error" in work:
             return {"query": {"pdf": work["pdf"]}, "error": work["error"],
                     "verdict": "unchecked"}
-        return {"query": {k: v for k, v in work.items() if v and k != "text"},
+        return {"query": {k: v for k, v in work.items() if v},
                 **find_work(libs, doi=work["doi"], isbn=work["isbn"],
                             arxiv=work["arxiv"], handle=work["handle"],
-                            title=work["title"], year=work["year"],
-                            first_author=(first_author_surname(work["author"])
-                                          if work["author"] else None),
-                            text=work["text"],
+                            title=work["title"],
                             pdf_path=Path(work["pdf"]) if work["pdf"] else None)}
 
     def look() -> list[dict[str, Any]]:
@@ -2148,14 +1946,6 @@ def cmd_report_duplicates(args: argparse.Namespace) -> int:
     return 0
 
 
-def _pdf_front_text(pdf: Path) -> str:
-    try:
-        return pdftotext_range(pdf, 1, FIRST_PAGES)
-    except Exception:
-        return ""
-
-
-FRONT_MATTER_LINES = 25
 STAGING_EXTENSIONS = frozenset(
     {".pdf", ".html", ".htm", ".jpg", ".jpeg", ".png", ".djvu", ".epub"}
 )
@@ -2311,28 +2101,14 @@ def staged_files(root: Path, staging_dirs: set[Path], linked_paths: set[Path],
     return sorted(set(orphans))
 
 
-def _front_matter(text: str, lines: int = FRONT_MATTER_LINES) -> str:
-    """The title/author block at the head of page 1, not the body.
-
-    Matching against the whole body is what turns a title key into a false
-    positive: a library title like "Systems of inequalities involving convex
-    functions" is five ordinary words, every one of which appears in the body
-    of any paper about linear inequalities. A real Hoffman 1960 paper matched a
-    different Hoffman paper at "strong" that way. The title block is where a
-    title actually lives, so that is the only place worth looking for one.
-    """
-    out = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
-    return "\n".join(out[:lines])
-
-
-def _filename_hints(name: str) -> tuple[list[str], str | None]:
-    """Surnames and year encoded in a staging filename like 'Afriat1967-...'."""
-    prefix = name.split("-")[0]
-    m = re.match(r"^(.*?)((?:1[6-9]|20)\d\d)", prefix)
-    head = m.group(1) if m else prefix
-    year = m.group(2) if m else None
-    names = [_name_key(n) for n in re.findall(r"[A-Z][a-z]+|[A-Z]{2,}", head)]
-    return [n for n in names if len(n) > 2], year
+def _filename_title(path: Path) -> str:
+    """The words a staging filename like 'Afriat1967-MethodOfLimits.pdf'
+    gives to search by: its surnames and its slug, camelCase split."""
+    prefix, _, slug = path.stem.partition("-")
+    head = re.split(r"(?:1[6-9]|20)\d\d", prefix, maxsplit=1)[0]
+    names = re.findall(r"[A-Z][a-z]+|[A-Z]{2,}", head)
+    return " ".join(names + [re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ",
+                                    slug or path.stem)])
 
 
 def _pdf_info(pdf: Path) -> dict[str, str]:
@@ -2356,66 +2132,56 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
               bib_entry: dict[str, Any] | None = None) -> dict[str, Any]:
     """Look one staged file up in the libraries."""
     bib_entry = bib_entry or {}
-    is_pdf = path.suffix.lower() == ".pdf"
-    body = _pdf_front_text(path) if is_pdf else ""
-    info = _pdf_info(path) if is_pdf else {"Title": "", "Author": ""}
+    info = (_pdf_info(path) if path.suffix.lower() == ".pdf"
+            else {"Title": "", "Author": ""})
     title = str(bib_entry.get("title") or info["Title"])
-    # The filename slug carries the author's own naming intent; split camelCase
-    # so "MethodOfLimitsIndexNumbers" becomes words a title can match.
-    slug = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ",
-                  "-".join(path.stem.split("-")[1:]) or path.stem)
-    surnames, year = _filename_hints(path.name)
-    author = str(bib_entry.get("author") or info["Author"]).split(" and ", 1)[0]
-    res = find_work(libs, title=title, text=f"{slug}\n{_front_matter(body)}",
+    if len(re.findall(r"[^\W_]{3,}", title)) < TITLE_MIN_WORDS:
+        # The filename carries the author's own naming intent.
+        title = _filename_title(path)
+    res = find_work(libs, title=title,
                     doi=bib_entry.get("doi"), isbn=bib_entry.get("isbn"),
                     arxiv=bib_entry.get("arxiv"),
-                    handle=bib_entry.get("handle"),
-                    year=str(bib_entry.get("year") or year or ""),
-                    first_author=first_author_surname(author) if author else None,
-                    authors=list(surnames),
-                    pdf_path=path)
+                    handle=bib_entry.get("handle"), pdf_path=path)
     top = res["matches"][0] if res["matches"] else None
-    # Six answers, not four. Collapsing a weak hit into "absent" is the
-    # expensive mistake in both directions: called present, a document is
-    # skipped and its full text never lands; called absent, a duplicate item is
-    # minted. A weak hit is neither finding — it is a document to look at, and
-    # saying so is cheaper than any threshold tuned to hide it. And a file
-    # with no key to look it up by is "unidentified", never "absent": an
+    # Six answers, not four. Collapsing title candidates into "absent" is
+    # the expensive mistake in both directions: called present, a document
+    # is skipped and its full text never lands; called absent, a duplicate
+    # item is minted. Candidates are a document to look at. And a file with
+    # no key to look it up by is "unidentified", never "absent": an
     # all-clear indistinguishable from "could not look" is no check.
     if res["verdict"] == "unchecked":
         verdict = "unidentified"
     elif top and "storageHash" in top["why"]:
         verdict = "identical"
-    elif top and top["certainty"] in SAFE_TIERS:
+    elif top:
         verdict = ("work_present_with_file" if top.get("has_file")
                    else "work_present_no_file")
-    elif top:
-        verdict = "ambiguous"
+    elif res["candidates"]:
+        verdict = "candidates"
     else:
         verdict = "absent"
     row = {"file": path.name, "verdict": verdict,
            "zotero_key": top.get("key") if top else None,
            "zotero_title": top.get("title") if top else None,
            "why": top.get("why") if top else None,
-           "certainty": top.get("certainty") if top else None,
            "consulted": res["consulted"], "skipped": res["skipped"]}
-    # Top-tier tie (ticket 0570): the verdict stays what the best candidate
-    # supports ("identical" is still true — the file IS stored), but every
-    # parent tied at that tier is named; a clean answer that does not say it
-    # looked elsewhere is the fault this module exists to avoid. Applies to
-    # strong ties too — two records with an equally-named attachment leave
-    # matches[0] arbitrary, and `suggest-attachments --parent` aimed at the wrong one.
-    tied = top_tier_peers(res["matches"])
-    if len(tied) > 1:
+    if verdict == "candidates":
+        row["candidates"] = [{"key": c["key"], "title": c["title"],
+                              "date": c["date"], "creators": c["creators"]}
+                             for c in res["candidates"]]
+    # A tie (ticket 0570): the verdict stays what the first match supports
+    # ("identical" is still true: the file IS stored), but every other
+    # matching parent is named, so `suggest-attachments --parent` is not
+    # aimed at an arbitrary one.
+    if len(res["matches"]) > 1:
         row["also_matches"] = [
             {"key": m["key"], "title": m.get("title"), "why": m["why"]}
-            for m in tied[1:]
-        ]
+            for m in res["matches"][1:]]
     return row
 
 
 def count_verdicts(rows: list[dict[str, Any]]) -> dict[str, int]:
-    """Verdict counts, plus the top-tier ties a human reader must see."""
+    """Verdict counts, plus the ties a human reader must see."""
     summary: dict[str, int] = {}
     for row in rows:
         summary[row["verdict"]] = summary.get(row["verdict"], 0) + 1
@@ -2428,8 +2194,8 @@ def count_verdicts(rows: list[dict[str, Any]]) -> dict[str, int]:
     return summary
 
 
-TIED_ACTION = ("several records tie at the top tier (also_matches); pick one "
-               "before attaching by hand")
+TIED_ACTION = ("several records match (also_matches); pick one before "
+               "attaching by hand")
 
 
 RECONCILE_ACTIONS = {
@@ -2437,14 +2203,15 @@ RECONCILE_ACTIONS = {
     "work_present_with_file": "nothing; report the second copy",
     "work_present_no_file": "suggest-attachments: see suggested_edits, or "
                             "--apply --edit (never create-items)",
-    "ambiguous": "inspect; neither create nor skip",
+    "candidates": "judge the title candidates; neither create nor skip",
     "unidentified": "nothing to look it up by: give it a .bib entry, or name "
                     "it Author1999-title",
     "absent": "create-items, or --apply with the project opt-in",
     "error": "inspect unreadable file",
     "unchecked": "resolve discovery or check error",
     "tied_parents": TIED_ACTION,
-    "deferred": "supply and corroborate metadata",
+    "deferred": "give it a .bib entry with title, author and year, or "
+                "create-items",
     "created": "created in Zotero through its local API",
     "attached": "stored under the existing item (--edit)",
     "failed_write": "inspect the outcome in Zotero before retrying",
@@ -2659,7 +2426,8 @@ def cmd_check_staging(args: argparse.Namespace) -> int:
 def reconcile_apply(root: Path, found: dict[str, Any], target_lib: str,
                     config: dict[str, Any], args: argparse.Namespace
                     ) -> tuple[dict[str, Any], int]:
-    """Create corroborated absent PDFs, looked up again under the lock."""
+    """Create the absent PDFs a .bib entry describes, looked up again under
+    the lock."""
     rows, errors = audit_sources(root, found, libraries(target_lib))
     if errors:
         raise ValueError("discovery or check is unchecked")
@@ -2672,9 +2440,11 @@ def reconcile_apply(root: Path, found: dict[str, Any], target_lib: str,
             continue
         path = root / row["path"]
         entry = bib_to_inject_entry(entries.get(path.resolve(), {}), path)
-        if entry is None or corroborate_entry(entry)["confidence"] != "corroborated":
+        if entry is None:
             deferred.append({"file": row["path"],
-                             "reason": "metadata needs manual corroboration"})
+                             "reason": "no .bib entry with title, author and "
+                                       "year: nothing curated to create it "
+                                       "from"})
         else:
             jobs.append(entry)
             job_paths.append(row["path"])
@@ -2695,7 +2465,7 @@ def reconcile_apply(root: Path, found: dict[str, Any], target_lib: str,
         inject_args = argparse.Namespace(
             entries_json=json.dumps(jobs), entries_file=None,
             collection=config.get("collection"), library=target_lib,
-            dry_run=False, skip_corroboration=False, force=False,
+            dry_run=False, force=False,
             _locked=True)
         captured = io.StringIO()
         with contextlib.redirect_stdout(captured):
@@ -2784,14 +2554,11 @@ BIB_TO_ZOTERO_TYPE = {
 
 
 def bib_to_inject_entry(bib: dict[str, Any], path: Path) -> dict[str, Any] | None:
-    """Use curated BibTeX first; accept orphan PDF metadata only if complete."""
-    info = pdfinfo(path) if path.suffix.lower() == ".pdf" else {}
-    title = str(bib.get("title") or info.get("Title") or "").strip()
-    author = str(bib.get("author") or info.get("Author") or "").strip()
-    year = str(bib.get("year") or "").strip()
-    if not year:
-        m = YEAR_RE.search(str(info.get("CreationDate") or path.name))
-        year = m.group() if m else ""
+    """A create-items entry from the author's curated BibTeX entry, None
+    unless it gives a title, an author and a year for a PDF. Page text and
+    pdfinfo are never trusted to create an item unattended."""
+    title, author, year = (str(bib.get(k) or "").strip()
+                           for k in ("title", "author", "year"))
     if not (title and author and year and path.suffix.lower() == ".pdf"):
         return None
     entry: dict[str, Any] = {
@@ -2880,14 +2647,12 @@ def main() -> int:
                              "or the flags")
     pf.add_argument("--metadata", help="extract-metadata JSON: a file, or - "
                                        "for stdin; the flags override it")
-    pf.add_argument("--title", help="title (matched with --author; a title "
-                                    "alone never matches)")
+    pf.add_argument("--title", help="title to search: its hits are "
+                                    "candidates to judge, never a match")
     pf.add_argument("--doi", help="DOI to exact-match")
     pf.add_argument("--isbn", help="ISBN to exact-match (any hyphenation)")
     pf.add_argument("--arxiv", help="arXiv id to match (e.g. 2401.01234)")
     pf.add_argument("--handle", help="handle URL or hdl.handle.net path")
-    pf.add_argument("--author", help="first author (any format)")
-    pf.add_argument("--year", help="publication year")
     pf.add_argument("--pdf", help="PDF path: its content hash is compared "
                                   "with the files of each work found")
     add_library_args(pf, scope)
@@ -2911,7 +2676,7 @@ def main() -> int:
                                   "BibTeX-linked ones")
     pr.add_argument("--out", help="write the full JSON report to this path")
     pr.add_argument("--apply", action="store_true",
-                    help="create corroborated absent PDFs in Zotero, only "
+                    help="create the absent PDFs .bib entries describe, only "
                          "when the root has .zotero-reconcile.json with "
                          "apply=true and the user_id local Zotero is signed "
                          "in as")
@@ -2944,12 +2709,10 @@ def main() -> int:
     pi.add_argument("--dry-run", action="store_true",
                     help="print the Zotero item JSON (built against the "
                          "running client's schema), create nothing")
-    pi.add_argument("--skip-corroboration", action="store_true",
-                    help="create items even when the metadata is contradicted "
-                         "by the PDF's own front matter (default: refuse)")
     pi.add_argument("--force", action="store_true",
                     help="explicitly bypass the library and batch duplicate "
-                         "guard; use only after examining matches")
+                         "guard; use only after examining the matches and "
+                         "candidates")
     pi.set_defaults(func=cmd_create_items)
 
     pe = sub.add_parser("suggest-edits",
