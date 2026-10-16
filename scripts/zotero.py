@@ -2758,8 +2758,8 @@ def main() -> int:
     pm = sub.add_parser("match", help="refined Zotero dedup lookup (cascade: "
                                       "file hash, identifiers, filename, "
                                       "author-year-title, title overlap)")
-    pm.add_argument("--title", help="title (exact key with --author/--year; "
-                                    "fuzzy last resort alone)")
+    pm.add_argument("--title", help="title (matched with --author; a title "
+                                    "alone never matches)")
     pm.add_argument("--doi", help="DOI to exact-match")
     pm.add_argument("--isbn", help="ISBN to exact-match (any hyphenation)")
     pm.add_argument("--arxiv", help="arXiv id to match (e.g. 2401.01234)")
