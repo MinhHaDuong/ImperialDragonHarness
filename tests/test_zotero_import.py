@@ -2042,7 +2042,7 @@ def test_inject_does_nothing_when_zotero_is_unavailable(capsys):
 
 
 def test_the_zotero_url_must_stay_on_this_machine(monkeypatch):
-    monkeypatch.setenv("ZOTERO_CONNECTOR_URL", "http://zotero.example.org:23119")
+    monkeypatch.setenv("ZOTERO_CONNECTOR_URL", "http://zotero.example.org:24119")
     with pytest.raises(zi.LocalAPIError, match="local-only"):
         zi.zotero_answers()
     with pytest.raises(zi.LocalAPIError, match="local-only"):
