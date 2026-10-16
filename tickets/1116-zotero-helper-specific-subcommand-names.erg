@@ -6,6 +6,7 @@ Blocked-by: 1113
 
 --- log ---
 2026-10-16T06:39Z reviewer created
+2026-10-16T08:58Z reviewer note author accepted all five size-review decisions (merge audit/reconcile, Zotero search + rapidfuzz, drop RIS, JSON-only dedup report, pdf2doi offline evaluation)
 
 --- body ---
 
@@ -41,14 +42,34 @@ through the Zotero local API only.
 | `inject` | create items + PDFs through the desktop connector | `create-items` |
 | `enrich` | report missing fields on existing items | `suggest-edits` |
 
-## Open question for the author
-`audit` and `reconcile` overlap (both compare staging with the library, from a
-directory or from `.bib` links): merge them into one command with two input
-modes, or keep two? Decide before implementation.
+## Author decisions (2026-10-16, "oui à tout")
+Proposed after a size review of `scripts/zotero.py` (3,051 lines once PR #1441
+lands, -4% from main despite the pyzotero swap); the author accepted all five:
+1. Merge `audit` and `reconcile` into one command with two input modes (a
+   `docs/` directory, or the files linked from `.bib` entries).
+2. Replace the in-memory duplicate cascade (`library_matches`,
+   `_library_views`, `corroborate`, `_surname_in_text`,
+   `entry_identity_keys`) with Zotero's own search through the local API
+   (`q`, `qmode=everything`; present in Zotero 10's `server_localAPI.js`) for
+   DOI, ISBN and title, plus `rapidfuzz` for title similarity. No whole-library
+   read per call.
+3. Drop RIS writing (`write`, `entry_to_ris`): items are created in Zotero
+   directly. Update `rules/zotero.md` where it says to archive "RIS +
+   attachment".
+4. Drop the HTML output of `dedup-report`; JSON only.
+5. Evaluate `pdf2doi` for finding a PDF's own DOI, offline only; adopt it only
+   if it never touches the web, else keep the current extraction.
 
 ## Exit criteria
 - [ ] `probe` is replaced by `extract-metadata` (no Zotero access) and `find-work` (local API only); extraction output feeds the lookup
 - [ ] Every subcommand carries its new name; no alias for the old names
 - [ ] `skills/zotero/`, `skills/lair/` (the `/zotero reconcile` proposal), `rules/zotero.md`, docs and README use only the new names
 - [ ] Tests cover the split: extraction runs with Zotero down; lookup does nothing when Zotero is unavailable
+- [ ] `audit` and `reconcile` are one command with two input modes
+- [ ] Duplicate lookup uses Zotero's local-API search plus rapidfuzz; no whole-library read per call
+- [ ] No RIS writer; `rules/zotero.md` no longer prescribes RIS archiving
+- [ ] `dedup-report` (renamed) emits JSON only
+- [ ] `pdf2doi` evaluated offline: adopted with no web access, or rejected with the reason in the PR body
+- [ ] Before/after line counts of `scripts/zotero.py` reported; every kept hand-rolled piece justified
+- [ ] Live tests keep the private-Xvfb fixture: no Zotero window on the author's display
 - [ ] `make check` passes
