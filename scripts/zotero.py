@@ -1092,7 +1092,7 @@ def plan_enrichment(data: dict[str, Any], sets: dict[str, str],
 # desktop client, except in a container, and waits for it; when that fails
 # the command does nothing and says Zotero was unavailable.
 
-CONNECTOR_URL = os.environ.get("ZOTERO_CONNECTOR_URL", "http://127.0.0.1:23119")
+DEFAULT_ZOTERO_URL = "http://127.0.0.1:23119"
 LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
 CONNECTOR_API_VERSION = "3"
 LOCAL_API_VERSION = "3"
@@ -1139,17 +1139,24 @@ def connector_opener() -> urllib.request.OpenerDirector:
 _CONNECTOR_OPENER = connector_opener()
 
 
+def zotero_url() -> str:
+    """The Zotero URL: ZOTERO_CONNECTOR_URL, read on every call, else 23119."""
+    return os.environ.get("ZOTERO_CONNECTOR_URL") or DEFAULT_ZOTERO_URL
+
+
 def connector_base() -> str:
     """The Zotero URL, refused unless it is on this machine.
 
-    The override exists for tests; a remote host would send item metadata
-    and PDFs off the machine, which a local-only helper must not do.
+    The override serves a Zotero on another port, such as the tests'
+    throwaway client; a remote host would send item metadata and PDFs off
+    the machine, which a local-only helper must not do.
     """
-    host = urllib.parse.urlsplit(CONNECTOR_URL).hostname
+    url = zotero_url()
+    host = urllib.parse.urlsplit(url).hostname
     if host not in LOOPBACK_HOSTS:
-        raise LocalAPIError(f"refusing non-local Zotero URL {CONNECTOR_URL}: "
+        raise LocalAPIError(f"refusing non-local Zotero URL {url}: "
                             f"the helper is local-only")
-    return CONNECTOR_URL
+    return url
 
 
 def local_get(path: str, params: dict[str, Any] | None = None, *,
@@ -1169,7 +1176,7 @@ def local_get(path: str, params: dict[str, Any] | None = None, *,
     except urllib.error.HTTPError as exc:
         return exc.code, exc.headers, exc.read() or b""
     except (urllib.error.URLError, OSError) as exc:
-        raise ZoteroUnavailable(f"Zotero stopped answering at {CONNECTOR_URL} "
+        raise ZoteroUnavailable(f"Zotero stopped answering at {zotero_url()} "
                                 f"({exc})") from exc
 
 
@@ -1242,7 +1249,7 @@ def zotero_answers(timeout: float = 2.0) -> bool:
         return False
     # The connector's GET ping answers "Zotero is running" (server_connector.js).
     if status != 200 or b"Zotero is running" not in body:
-        raise LocalAPIError(f"something answers at {CONNECTOR_URL} but not as "
+        raise LocalAPIError(f"something answers at {zotero_url()} but not as "
                             f"Zotero (HTTP {status}); check that it is Zotero")
     return True
 
@@ -1255,7 +1262,10 @@ def check_local_api() -> None:
 
 
 def in_container() -> str | None:
-    """Why this looks like a container or a headless runner, else None."""
+    """Why Zotero must not be launched here, else None: a container, a
+    headless runner, or the explicit ZOTERO_NO_LAUNCH opt-out."""
+    if os.environ.get("ZOTERO_NO_LAUNCH"):
+        return "ZOTERO_NO_LAUNCH is set"
     for marker in ("/.dockerenv", "/run/.containerenv"):
         if os.path.exists(marker):
             return marker
@@ -1321,9 +1331,8 @@ def ensure_zotero() -> str:
     if not zotero_answers():
         reason = in_container()
         if reason:
-            raise ZoteroUnavailable(f"Zotero is not running, and this looks like "
-                                    f"a container ({reason}), so it is not "
-                                    f"launched. Nothing was done.")
+            raise ZoteroUnavailable(f"Zotero is not running and is not launched "
+                                    f"here ({reason}). Nothing was done.")
         command = find_zotero_launcher()
         if command is None:
             raise ZoteroUnavailable("Zotero is not running and no Zotero "
@@ -1827,7 +1836,7 @@ def cmd_enrich(args: argparse.Namespace) -> int:
     out, rc = with_zotero("enrich", run)
     if rc is not None:
         return rc
-    emit_json({"zotero": CONNECTOR_URL, "source": LIBRARY_SOURCE,
+    emit_json({"zotero": zotero_url(), "source": LIBRARY_SOURCE,
                "apply": "by hand in Zotero: open each item and set the field",
                **out})
     return enrich_status(out["results"])
@@ -1973,7 +1982,7 @@ def read_library(library: int | str = USER_LIBRARY) -> dict[str, Any]:
             attachments.append(_attachment_record(item, lib_id, prefix))
     return {"works": works, "attachments": attachments,
             "library_id": prefixes[0][0] if len(prefixes) == 1 else ALL_LIBRARIES,
-            "account": account, "zotero": CONNECTOR_URL,
+            "account": account, "zotero": zotero_url(),
             "source": LIBRARY_SOURCE}
 
 
@@ -2824,7 +2833,7 @@ def reconcile_empty_report(root: Path, found: dict[str, Any],
             reconcile_apply_config(root, None, check_account=False)
             ensure_zotero()
             account = local_account()
-            report["library"] = {"zotero": CONNECTOR_URL, "source": LIBRARY_SOURCE}
+            report["library"] = {"zotero": zotero_url(), "source": LIBRARY_SOURCE}
             reconcile_apply_config(root, account)
             report.update({"applied": [], "apply_status": "nothing"})
         except ZoteroUnavailable as exc:
