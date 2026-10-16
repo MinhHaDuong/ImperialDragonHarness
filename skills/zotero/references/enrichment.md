@@ -14,7 +14,7 @@ local API (Zotero 10.0 or later, with the local API key; see
 the Zotero client.
 
 ```bash
-zotero.py enrich --item-key XRWZU4DZ \
+"$IDH_ROOT/scripts/zotero.py" enrich --item-key XRWZU4DZ \
   --expect-title "Optimum Utilization" --set DOI=10.2307/1907301
 ```
 
@@ -36,7 +36,10 @@ zotero.py enrich --item-key XRWZU4DZ \
   them (status `written`), or have the author set each field in Zotero. Re-run
   the report afterwards: an applied edit comes back as `nothing to change`,
   which is the read-back.
-- `--jobs-file` takes `[{item_key, expect_title, set:{…}}]` for a batch.
+- `--jobs-file` takes `[{item_key, expect_title, set:{…}}]` for a batch. If
+  Zotero stops answering part-way through an `--edit` batch, the rows already
+  written are kept, the job in flight is `unknown` and the rest `not
+  attempted` (exit 1); a report-only batch has written nothing and exits 75.
 - Exit code is non-zero when anything asked for cannot be suggested, **a
   refusal or a missing item included** — "ready to apply" and "declined every
   field" must not share an exit code.

@@ -3021,7 +3021,9 @@ def helper_stand_in(tmp_path, status):
     with `status`: this tests the documented shell block, not Zotero."""
     root = tmp_path / "idh"
     (root / "scripts").mkdir(parents=True)
-    (root / "scripts/zotero.py").write_text(f"import sys\nsys.exit({status})\n")
+    helper = root / "scripts/zotero.py"
+    helper.write_text(f"#!/bin/sh\nexit {status}\n")
+    helper.chmod(0o755)
     shim = tmp_path / "bin/zotero.py"
     shim.parent.mkdir(parents=True)
     shim.write_text(f"#!/bin/sh\nexit {status}\n")

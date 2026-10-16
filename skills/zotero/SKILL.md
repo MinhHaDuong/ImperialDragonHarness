@@ -24,7 +24,7 @@ A run uses exactly one verb. **Read the verb's file before acting.**
 | `import` | one or more PDFs or URLs → new items with attachments | `references/import.md` |
 | `enrich` | report missing fields on items that already exist; write them only with `--edit` | `references/enrichment.md` |
 | `audit` | report a staging directory or BibTeX-linked repository against the library | `references/backfill.md` |
-| `reconcile` | repair the staging ↔ library correspondence (report by default; `--apply --edit` writes) | `references/backfill.md` |
+| `reconcile` | repair the staging ↔ library correspondence (report by default; `--apply` creates absent items, `--apply --edit` also stores files under existing items) | `references/backfill.md` |
 | `dedup-report` | hash-dedup report, library against itself (ticket 0485) | `docs/zotero-dedup-report.md` |
 | `attach` | file a document onto an item that already exists (reports by default; stores it with `--edit`) | `references/backfill.md` |
 

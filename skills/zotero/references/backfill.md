@@ -12,7 +12,7 @@ on the machine where Zotero lives; a clean negative then stays
 distinguishable from a lookup that could not run:
 
 ```bash
-zotero.py audit docs/ --out /tmp/audit.json
+"$IDH_ROOT/scripts/zotero.py" audit docs/ --out /tmp/audit.json
 ```
 
 For projects with BibTeX, use `reconcile` to discover `.bib` files at the
@@ -27,7 +27,7 @@ an empty clean report.
 ```bash
 out=$(mktemp "${TMPDIR:-/tmp}/zotero-reconcile.XXXXXX.json")
 status=0
-zotero.py reconcile . --out "$out" || status=$?
+"$IDH_ROOT/scripts/zotero.py" reconcile . --out "$out" || status=$?
 echo "reconcile report: $out (exit $status)"
 [ "$status" -eq 0 ]
 ```
@@ -101,8 +101,8 @@ reports the attachment; with `--edit` it stores a copy of the file under the
 item through the local API:
 
 ```bash
-zotero.py attach --parent <itemKey> docs/Walley1991.pdf          # report
-zotero.py attach --parent <itemKey> docs/Walley1991.pdf --edit   # store
+"$IDH_ROOT/scripts/zotero.py" attach --parent <itemKey> docs/Walley1991.pdf          # report
+"$IDH_ROOT/scripts/zotero.py" attach --parent <itemKey> docs/Walley1991.pdf --edit   # store
 ```
 
 Before trusting an audit's negatives, run it against a case you know is
