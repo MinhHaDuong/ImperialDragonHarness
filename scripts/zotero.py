@@ -52,6 +52,7 @@ from typing import Any
 
 import bibtexparser
 import httpx2
+from bibtexparser.bibdatabase import UndefinedString
 from bibtexparser.bparser import BibTexParser
 from pyzotero import errors as ze
 from pyzotero import zotero
@@ -2078,11 +2079,16 @@ def _bib_entries(path: Path) -> list[dict[str, Any]]:
     bibtexparser drops an entry it cannot parse (an unclosed brace, a field
     with no `=`) and carries on. A reconciliation sweep must not: the
     dropped entry might link the only staged file needing import, so an
-    entry count short of the `@type{` openings is an error.
+    entry count short of the `@type{` openings is an error, and so is a
+    value naming an undefined `@string` macro.
     """
     content = path.read_text(encoding="utf-8")
     parser = BibTexParser(common_strings=True, ignore_nonstandard_types=False)
-    entries = bibtexparser.loads(content, parser).entries
+    try:
+        entries = bibtexparser.loads(content, parser).entries
+    except UndefinedString as exc:
+        # A KeyError: left alone it would crash the sweep before --out.
+        raise ValueError(f"undefined @string macro {exc}") from exc
     declared = sum(1 for m in BIB_ENTRY_START.finditer(content)
                    if m.group(1).lower() not in BIB_NOT_ENTRIES)
     if declared != len(entries):

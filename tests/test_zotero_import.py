@@ -2394,6 +2394,26 @@ def test_reconcile_without_zotero_still_reports_discovery_errors(tmp_path, capsy
     capsys.readouterr()
 
 
+def test_reconcile_undefined_bib_macro_fails_closed_and_still_writes_out(
+        tmp_path, capsys):
+    """bibtexparser raises on an undefined @string macro (UndefinedString, a
+    KeyError): that file is a discovery error, not a crash, and --out is
+    still written with the full report."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "ok.pdf").write_bytes(b"ok")
+    (tmp_path / "refs.bib").write_text(
+        "@article{ok, title={T}, journal=undefmacro, file={docs/ok.pdf}}\n")
+    found = zi.discover_reconcile_files(tmp_path)
+    assert any("undefmacro" in e for e in found["errors"]), found["errors"]
+    out = tmp_path / "report.json"
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path, out=str(out))) == 1
+    report = json.loads(out.read_text())
+    assert report["verdict"] == "zotero_unavailable"
+    assert any("undefmacro" in e for e in report["errors"])
+    capsys.readouterr()
+
+
 def test_reconcile_empty_apply_without_zotero_is_a_clean_no_op(tmp_path, capsys):
     (tmp_path / ".zotero-reconcile.json").write_text(OPT_IN)
     out = tmp_path / "report.json"
