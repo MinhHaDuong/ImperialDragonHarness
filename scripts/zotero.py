@@ -145,7 +145,7 @@ def find_identifier(front_text: str, back_text: str, subject: str
 # (DOI, ISBN, arXiv, handle), then the first author's works, whose titles
 # rapidfuzz scores against the title and front matter given. Every hit is
 # checked against the item's own fields, since the quick search matches a
-# substring anywhere, and its attachments are checked for the probe's md5
+# substring anywhere, and its attachments are checked for the PDF's md5
 # (`storageHash`). No call reads the whole library. Scope defaults to the
 # user library because create-items writes there: a hit that lives only in a
 # group library must not suppress a creation missing from the destination.
@@ -1552,7 +1552,7 @@ def cmd_extract_metadata(args: argparse.Namespace) -> int:
 #
 # Content identity is the strongest key: it survives renaming, re-filing and
 # metadata drift. Zotero 10 reports each stored file's md5, which is compared
-# with the probe's for every work the search found; Zotero offers no search
+# with the staged file's for every work the search found; Zotero offers no search
 # by md5, so a stored copy under a work no other key finds goes unseen.
 # ---------------------------------------------------------------------------
 
