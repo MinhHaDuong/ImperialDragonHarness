@@ -1200,7 +1200,7 @@ def test_a_key_dropped_part_way_reports_the_fileless_attachment(
     """B1, reproduced: the helper holds a key Zotero honours for one write.
     Storing a file creates the attachment item (consuming the key), then the
     upload is refused. The helper asks again (unanswered here), and its
-    message says the attachment exists without its file, never "nothing
+    message says the attachment exists and may lack its file, never "nothing
     was written"; a later audit does not count that attachment as a file."""
     zotero = zotero_live.point_helper_at(one_time_zotero, monkeypatch)
     key = zotero.save(unique_title(), creators=(unique_surname(),))
@@ -1220,7 +1220,7 @@ def test_a_key_dropped_part_way_reports_the_fileless_attachment(
     assert child["data"]["linkMode"] == "imported_file"
     assert not child["data"].get("md5"), "the file never reached Zotero"
     assert f"attachment {child['key']} was created" in row["error"]
-    assert "without its file" in row["error"]
+    assert "may lack its file" in row["error"]
     assert zi.NOTHING_WRITTEN not in row["error"]
     assert key not in zi._library_views(zi.read_library())["parents_with_file"]
 

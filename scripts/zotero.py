@@ -1236,7 +1236,7 @@ def attach_file(z: LocalLibrary, parent: str, path: Path) -> str:
         if not attachment.get("key"):
             return None
         return (f"attachment {attachment['key']} was created under {parent} "
-                f"without its file; delete it in Zotero")
+                f"and may lack its file; check it in Zotero")
 
     try:
         result = write(z, lambda: z.upload_attachments([attachment],
