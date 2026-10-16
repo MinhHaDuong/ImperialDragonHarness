@@ -4,17 +4,22 @@
 Subcommands: probe, match, dedup-report, write, inject, enrich, audit,
 reconcile, attach.
 
-Local-only and stateless. Every read opens the desktop client's zotero.sqlite
-read-only, afresh, on each call; nothing is cached, indexed or logged to disk
-between runs. The only write path is the Zotero desktop connector
-(127.0.0.1:23119), which creates new items with their PDFs and needs Zotero
-running. Existing items are never edited here: `enrich`, `attach` and
+Local-only and stateless. Every library read goes through the running
+desktop client's local API (127.0.0.1:23119/api/, read-only, no key), live,
+on each call; zotero.sqlite is never opened, and nothing is cached, indexed
+or logged to disk between runs. The only write path is the Zotero desktop
+connector on the same port, which creates new items with their PDFs.
+Existing items are never edited here: `enrich`, `attach` and
 `reconcile --apply` report the edit for the author to make by hand.
+
+Zotero must be running. When it is not, the helper launches it (never in a
+container) and waits; when it still does not answer, the command does
+nothing and says so (exit EXIT_UNAVAILABLE; `reconcile` exits 0 with verdict
+"zotero_unavailable").
 """
 from __future__ import annotations
 
 import argparse
-import configparser
 import contextlib
 import fcntl
 import hashlib
@@ -25,15 +30,16 @@ import json
 import logging
 import os
 import re
-import sqlite3
+import shutil
 import subprocess
 import sys
+import tempfile
+import time
 import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
-from configparser import ConfigParser
 from pathlib import Path
 from typing import Any
 
@@ -109,102 +115,19 @@ def find_identifier(front_text: str, back_text: str, subject: str
     return out
 
 
-def find_zotero_db() -> Path | None:
-    env = os.environ.get("ZOTERO_DATA_DIR")
-    candidates: list[Path] = []
-    if env:
-        candidates.append(Path(env) / "zotero.sqlite")
-    candidates += [
-        Path.home() / "Zotero" / "zotero.sqlite",
-        Path.home() / "data" / "Zotero" / "zotero.sqlite",
-        Path.home() / "Documents" / "Zotero" / "zotero.sqlite",
-    ]
-    # Firefox-style profiles.ini may override dataDir.
-    profiles_ini = Path.home() / ".zotero" / "zotero" / "profiles.ini"
-    if profiles_ini.exists():
-        try:
-            cp = ConfigParser()
-            cp.read(profiles_ini)
-        except (OSError, configparser.Error):
-            cp = None
-        if cp is not None:
-            for section in cp.sections():
-                pth = cp.get(section, "Path", fallback=None)
-                if not pth:
-                    continue
-                is_relative = cp.getint(section, "IsRelative", fallback=1)
-                base = profiles_ini.parent if is_relative else Path("/")
-                prefs = (base / pth / "prefs.js")
-                if prefs.exists():
-                    m = re.search(
-                        r'user_pref\("extensions\.zotero\.dataDir",\s*"([^"]+)"\)',
-                        prefs.read_text(errors="replace"),
-                    )
-                    if m:
-                        candidates.append(Path(m.group(1)) / "zotero.sqlite")
-    for c in candidates:
-        if c.exists():
-            return c
-    return None
-
-
-# How long a read waits for Zotero to release its lock before falling back.
-READ_BUSY_TIMEOUT = 2.0
-READ_LIVE = "ro"
-READ_SNAPSHOT = "immutable"
-
-
-def zotero_open(db_path: Path, busy_timeout: float = READ_BUSY_TIMEOUT
-                ) -> tuple[sqlite3.Connection, str]:
-    """Open zotero.sqlite read-only: (connection, read mode).
-
-    `mode=ro` first, because it is the only mode that sees the write-ahead
-    log, where a running Zotero keeps its most recent writes until the next
-    checkpoint. A running client holds the database under an exclusive lock,
-    so that open fails after `busy_timeout`; the fallback is `immutable=1`,
-    which needs no lock but reads the main file alone and can therefore lag
-    the client. The mode is returned so every report can say which it got.
-    Neither mode can write.
-    """
-    uri = Path(db_path).resolve().as_uri()
-    try:
-        conn = sqlite3.connect(f"{uri}?mode=ro", uri=True, timeout=busy_timeout)
-        conn.execute("SELECT count(*) FROM sqlite_master").fetchone()
-        return conn, READ_LIVE
-    except sqlite3.OperationalError as exc:
-        logging.warning("zotero.sqlite cannot be read live (%s); reading the "
-                        "immutable snapshot, which can lag a running Zotero",
-                        exc)
-    return sqlite3.connect(f"{uri}?immutable=1", uri=True), READ_SNAPSHOT
-
-
 # --- Deduplication matcher --------------------------------------------------
 # Cascade, strongest key first: attachment content hash -> persistent
 # identifier (DOI, ISBN, arXiv, handle) -> attachment filename ->
 # (first author surname, year, normalised title) -> title Jaccard as last
 # resort. The cascade stops at the first key that fires; each hit reports
 # which key matched ("why") and how much to trust it ("certainty").
-# Scope defaults to the user library because injection writes there:
-# a hit that lives only in a read-only group library must not suppress an
-# injection that is genuinely missing from the destination.
+# It runs over one library read (read_library), whose scope defaults to the
+# user library because injection writes there: a hit that lives only in a
+# group library must not suppress an injection genuinely missing from the
+# destination.
 
 USER_LIBRARY = "user"
 ALL_LIBRARIES = "all"
-_NOT_DELETED = "itemID NOT IN (SELECT itemID FROM deletedItems)"
-
-
-def resolve_library_id(conn: sqlite3.Connection,
-                       library: int | str = USER_LIBRARY) -> int | None:
-    """Map the library selector to a libraryID; None means all libraries."""
-    if library == ALL_LIBRARIES:
-        return None
-    if isinstance(library, int):
-        return library
-    if isinstance(library, str) and library.isdigit():
-        return int(library)
-    row = conn.execute(
-        "SELECT libraryID FROM libraries WHERE type='user'").fetchone()
-    return row[0] if row else 1
 
 
 def first_author_surname(author: str) -> str:
@@ -227,171 +150,124 @@ def _attachment_basename(att_path: str) -> str:
     return tail.rsplit("/", 1)[-1]
 
 
-def _attachment_targets(cur: sqlite3.Cursor, lib_id: int | None, *,
-                        storage_hash: str | None = None,
-                        basename: str | None = None) -> set[int]:
-    """Top-level items owning an attachment that matches by hash or basename.
+def attachment_size(att: dict[str, Any]) -> int | None:
+    """Size of the stored file: the API's figure, else a stat of its path."""
+    if att.get("size") is not None:
+        return att["size"]
+    if att.get("path"):
+        try:
+            att["size"] = Path(att["path"]).stat().st_size
+        except OSError:
+            return None
+        return att["size"]
+    return None
 
-    A parentless attachment stands for itself. This is a primary candidate
-    source: it must never depend on any metadata score.
+
+def attachment_digest(att: dict[str, Any]) -> str | None:
+    """md5 of the stored file: the API's, else hashed here, once per run.
+
+    Zotero 10 reports the file's md5 in the item JSON; Zotero 7 to 9 report
+    none, so the file is read from the path the local API gave. The result
+    lives in this run's memory only.
     """
-    sql = ("SELECT a.itemID, a.parentItemID, a.path, a.storageHash "
-           "FROM itemAttachments a JOIN items ai ON ai.itemID = a.itemID "
-           f"WHERE a.{_NOT_DELETED}")
-    params: list[Any] = []
-    if lib_id is not None:
-        sql += " AND ai.libraryID = ?"
-        params.append(lib_id)
-    if storage_hash is not None:
-        sql += " AND LOWER(a.storageHash) = LOWER(?)"
-        params.append(storage_hash)
-    targets: set[int] = set()
-    for att_id, parent, path, _h in cur.execute(sql, params).fetchall():
-        if basename is not None and _attachment_basename(path or "") != basename:
-            continue
-        targets.add(parent or att_id)
-    return targets
+    if att.get("md5"):
+        return att["md5"]
+    if not att.get("path"):
+        return None
+    try:
+        att["md5"] = file_md5(Path(att["path"]))
+    except OSError:
+        return None
+    return att["md5"]
 
 
-def _field_lookup_sql(lib_id: int | None) -> tuple[str, str]:
-    """(sql, lib_clause) skeleton for one-field item lookups."""
-    lib_clause = " AND i.libraryID = ?" if lib_id is not None else ""
-    sql = ("SELECT i.itemID, v.value FROM items i "
-           "JOIN itemData d ON d.itemID = i.itemID "
-           "JOIN fields f ON f.fieldID = d.fieldID "
-           "JOIN itemDataValues v ON v.valueID = d.valueID "
-           f"WHERE i.{_NOT_DELETED}" + lib_clause)
-    return sql, lib_clause
+def attachments_with_content(idx: dict[str, Any], pdf: Path) -> list[dict[str, Any]]:
+    """Attachments whose stored file has the same bytes as `pdf`.
 
-
-def _identifier_targets(cur: sqlite3.Cursor, lib_id: int | None, *,
-                        doi: str | None, isbn: str | None,
-                        arxiv: str | None, handle: str | None
-                        ) -> dict[int, list[str]]:
-    """Items matching any persistent identifier, with the keys that fired."""
-    base, _ = _field_lookup_sql(lib_id)
-    lib_params: list[Any] = [lib_id] if lib_id is not None else []
-    hits: dict[int, list[str]] = {}
-
-    def add(item_id: int, key: str) -> None:
-        keys = hits.setdefault(item_id, [])
-        if key not in keys:
-            keys.append(key)
-
-    if doi:
-        for iid, _v in cur.execute(
-                base + " AND f.fieldName='DOI' AND LOWER(v.value)=LOWER(?)",
-                lib_params + [doi]).fetchall():
-            add(iid, "doi")
-    if isbn:
-        want = re.sub(r"[^0-9Xx]", "", isbn).upper()
-        for iid, v in cur.execute(
-                base + " AND f.fieldName='ISBN'", lib_params).fetchall():
-            stored = {re.sub(r"[^0-9Xx]", "", t).upper()
-                      for t in (v or "").replace(";", " ").split()}
-            if want in stored:
-                add(iid, "isbn")
-    if arxiv:
-        for iid, _v in cur.execute(
-                base + " AND f.fieldName IN ('extra','url','archiveID','number')"
-                       " AND v.value LIKE ?",
-                lib_params + [f"%{arxiv}%"]).fetchall():
-            add(iid, "arxiv")
-    if handle:
-        bare = handle.split("://")[-1]
-        for iid, _v in cur.execute(
-                base + " AND f.fieldName IN ('url','extra')"
-                       " AND v.value LIKE ?",
-                lib_params + [f"%{bare}%"]).fetchall():
-            add(iid, "handle")
+    A file is hashed only when its size equals the probe's, so a run hashes
+    the few candidates, not the library.
+    """
+    digest = file_md5(pdf)
+    size = pdf.stat().st_size
+    hits = []
+    for att in idx["attachments"]:
+        if att.get("md5"):
+            if att["md5"] == digest:
+                hits.append(att)
+        elif attachment_size(att) == size and attachment_digest(att) == digest:
+            hits.append(att)
     return hits
 
 
-def _item_fields(cur: sqlite3.Cursor,
-                 item_ids: list[int]) -> dict[int, dict[str, str | None]]:
-    """key/title/DOI/date per item, for match reporting and title comparison."""
-    if not item_ids:
-        return {}
-    qmarks = ",".join("?" * len(item_ids))
-    rows = cur.execute(
-        f"""
-        SELECT i.itemID, i.key,
-               MAX(CASE WHEN f.fieldName='title' THEN v.value END) AS title,
-               MAX(CASE WHEN f.fieldName='DOI' THEN v.value END)   AS doi,
-               MAX(CASE WHEN f.fieldName='date' THEN v.value END)  AS date
-        FROM items i
-        LEFT JOIN itemData d ON d.itemID = i.itemID
-        LEFT JOIN fields f   ON f.fieldID = d.fieldID
-        LEFT JOIN itemDataValues v ON v.valueID = d.valueID
-        WHERE i.itemID IN ({qmarks})
-        GROUP BY i.itemID
-        """,
-        item_ids,
-    ).fetchall()
-    return {iid: {"key": k, "title": t, "doi": d, "date": dt}
-            for iid, k, t, d, dt in rows}
+def _records(idx: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Works, plus parentless attachments, which stand for themselves."""
+    records = {w["key"]: w for w in idx["works"]}
+    for att in idx["attachments"]:
+        if not att.get("parent"):
+            records.setdefault(att["key"], {"key": att["key"],
+                                            "title": att.get("title", ""),
+                                            "creators": []})
+    return records
 
 
-def _creator_year_title_targets(cur: sqlite3.Cursor, lib_id: int | None,
-                                surname: str, year: str,
-                                title_norm: str) -> set[int]:
-    """Items whose first author, year, and normalised title all agree."""
-    sql = ("SELECT DISTINCT i.itemID FROM items i "
-           "JOIN itemCreators ic ON ic.itemID = i.itemID AND ic.orderIndex = 0 "
-           "JOIN creators c ON c.creatorID = ic.creatorID "
-           f"WHERE i.{_NOT_DELETED} AND LOWER(c.lastName) = LOWER(?)")
-    params: list[Any] = [surname]
-    if lib_id is not None:
-        sql += " AND i.libraryID = ?"
-        params.append(lib_id)
-    candidates = [r[0] for r in cur.execute(sql, params).fetchall()]
-    fields = _item_fields(cur, candidates)
+def _identifier_targets(works: list[dict[str, Any]], *, doi: str | None,
+                        isbn: str | None, arxiv: str | None,
+                        handle: str | None) -> dict[str, list[str]]:
+    """Works matching any persistent identifier, with the keys that fired."""
+    hits: dict[str, list[str]] = {}
+
+    def add(key: str, label: str) -> None:
+        keys = hits.setdefault(key, [])
+        if label not in keys:
+            keys.append(label)
+
+    want_isbn = re.sub(r"[^0-9Xx]", "", isbn).upper() if isbn else ""
+    bare_handle = handle.split("://")[-1] if handle else ""
+    for w in works:
+        if doi and (w.get("DOI") or "").casefold() == doi.casefold():
+            add(w["key"], "doi")
+        if want_isbn and want_isbn in {
+                re.sub(r"[^0-9Xx]", "", t).upper()
+                for t in (w.get("ISBN") or "").replace(";", " ").split()}:
+            add(w["key"], "isbn")
+        if arxiv and any(arxiv in (w.get(f) or "")
+                         for f in ("extra", "url", "archiveID", "number")):
+            add(w["key"], "arxiv")
+        if bare_handle and any(bare_handle in (w.get(f) or "")
+                               for f in ("url", "extra")):
+            add(w["key"], "handle")
+    return hits
+
+
+def _creator_year_title_targets(works: list[dict[str, Any]], surname: str,
+                                year: str, title_norm: str) -> set[str]:
+    """Works whose first author, year, and normalised title all agree."""
     return {
-        iid for iid in candidates
-        if (meta := fields.get(iid))
-        and meta["date"] and year in meta["date"]
-        and meta["title"] and _norm_title(meta["title"]) == title_norm
+        w["key"] for w in works
+        if w.get("creators") and w["creators"][0].casefold() == surname.casefold()
+        and w.get("date") and year in w["date"]
+        and w.get("title") and _norm_title(w["title"]) == title_norm
     }
 
 
-def _title_jaccard_hits(cur: sqlite3.Cursor, lib_id: int | None,
-                        title: str, year: str | None
-                        ) -> list[tuple[int, float]]:
-    """Last-resort fuzzy title overlap over top-level items. A guess."""
-    sql = ("SELECT i.itemID, "
-           "MAX(CASE WHEN f.fieldName='title' THEN v.value END) AS title "
-           "FROM items i "
-           "JOIN itemData d ON d.itemID = i.itemID "
-           "JOIN fields f   ON f.fieldID = d.fieldID "
-           "JOIN itemDataValues v ON v.valueID = d.valueID "
-           "LEFT JOIN itemAttachments a ON a.itemID = i.itemID "
-           "AND a.parentItemID IS NOT NULL "
-           f"WHERE i.{_NOT_DELETED} AND a.itemID IS NULL")
-    params: list[Any] = []
-    if lib_id is not None:
-        sql += " AND i.libraryID = ?"
-        params.append(lib_id)
-    if year:
-        sql += (" AND i.itemID IN (SELECT d3.itemID FROM itemData d3 "
-                "JOIN fields f3 ON f3.fieldID=d3.fieldID "
-                "JOIN itemDataValues v3 ON v3.valueID=d3.valueID "
-                "WHERE f3.fieldName='date' AND v3.value LIKE ?)")
-        params.append(f"%{year}%")
-    sql += " GROUP BY i.itemID"
-
+def _title_jaccard_hits(works: list[dict[str, Any]], title: str,
+                        year: str | None) -> list[tuple[str, float]]:
+    """Last-resort fuzzy title overlap over works. A guess."""
     def tok(s: str) -> set[str]:
         cleaned = re.sub(r"[^\w\s]", " ", s.lower(), flags=re.UNICODE)
         return {w for w in cleaned.split() if len(w) > 2}
 
     title_set = tok(title)
-    hits: list[tuple[int, float]] = []
-    for item_id, t in cur.execute(sql, params).fetchall():
-        b = tok(t or "")
+    hits: list[tuple[str, float]] = []
+    for w in works:
+        if year and year not in (w.get("date") or ""):
+            continue
+        b = tok(w.get("title") or "")
         if not title_set or not b:
             continue
         j = len(title_set & b) / len(title_set | b)
         if j >= 0.6:
-            hits.append((item_id, j))
+            hits.append((w["key"], j))
     return hits
 
 
@@ -424,7 +300,7 @@ def classify_matches(matches: list[dict[str, Any]]) -> str:
 
 
 def zotero_matches(
-    conn: sqlite3.Connection,
+    idx: dict[str, Any],
     *,
     doi: str | None = None,
     title: str | None = None,
@@ -434,9 +310,8 @@ def zotero_matches(
     arxiv: str | None = None,
     handle: str | None = None,
     first_author: str | None = None,
-    library: int | str = USER_LIBRARY,
 ) -> dict[str, Any]:
-    """Deduplicate one prospective item against the Zotero library.
+    """Deduplicate one prospective item against one library read.
 
     Returns {"matches": [...], "verdict": ..., "consulted": [...],
     "skipped": [...]}. The verdict is "match" (a safe key fired
@@ -445,24 +320,24 @@ def zotero_matches(
     (keys were consulted, nothing matched), or "unchecked" (no key could be
     consulted — distinguishable from a clean negative by design).
     """
-    cur = conn.cursor()
-    lib_id = resolve_library_id(conn, library)
+    works = idx["works"]
+    records = _records(idx)
     consulted: list[str] = []
     skipped: list[str] = []
-    found: dict[int, dict[str, Any]] = {}
+    found: dict[str, dict[str, Any]] = {}
 
-    def settle(stage: str, targets: dict[int, list[str]] | set[int],
+    def settle(stage: str, targets: dict[str, list[str]] | set[str],
                certainty: str, score: int) -> None:
-        for iid in targets:
-            why = targets[iid] if isinstance(targets, dict) else [stage]
-            found[iid] = {"why": why, "certainty": certainty, "score": score}
+        for key in targets:
+            why = targets[key] if isinstance(targets, dict) else [stage]
+            found[key] = {"why": why, "certainty": certainty, "score": score}
 
     # 1. Attachment content hash — exact, immune to metadata quality.
     if pdf_path is not None and pdf_path.is_file():
         consulted.append("storageHash")
-        digest = file_md5(pdf_path)
         settle("storageHash",
-               _attachment_targets(cur, lib_id, storage_hash=digest),
+               {a.get("parent") or a["key"]
+                for a in attachments_with_content(idx, pdf_path)},
                "exact", 100)
     else:
         skipped.append("storageHash: no readable PDF")
@@ -475,8 +350,8 @@ def zotero_matches(
     else:
         consulted.append("identifier")
         settle("identifier",
-               _identifier_targets(cur, lib_id, doi=doi, isbn=isbn,
-                                   arxiv=arxiv, handle=handle),
+               _identifier_targets(works, doi=doi, isbn=isbn, arxiv=arxiv,
+                                   handle=handle),
                "exact", 100)
 
     # 3. Attachment filename — still independent of any title score.
@@ -487,7 +362,8 @@ def zotero_matches(
     else:
         consulted.append("filename")
         settle("filename",
-               _attachment_targets(cur, lib_id, basename=pdf_path.name),
+               {a.get("parent") or a["key"] for a in idx["attachments"]
+                if a.get("filename") == pdf_path.name},
                "strong", 85)
 
     # 4. (first author surname, year, normalised title).
@@ -498,7 +374,7 @@ def zotero_matches(
     else:
         consulted.append("creator-year-title")
         settle("creator-year-title",
-               _creator_year_title_targets(cur, lib_id,
+               _creator_year_title_targets(works,
                                            first_author_surname(first_author),
                                            year, _norm_title(title)),
                "strong", 80)
@@ -510,23 +386,21 @@ def zotero_matches(
         skipped.append("title-jaccard: no title")
     else:
         consulted.append("title-jaccard")
-        for item_id, j in _title_jaccard_hits(cur, lib_id, title, year):
-            found[item_id] = {"why": [f"title~{j:.2f}"], "certainty": "weak",
-                              "score": int(j * 90)}
+        for key, j in _title_jaccard_hits(works, title, year):
+            found[key] = {"why": [f"title~{j:.2f}"], "certainty": "weak",
+                          "score": int(j * 90)}
 
-    fields = _item_fields(cur, list(found))
     matches: list[dict[str, Any]] = []
-    for iid, hit in found.items():
-        meta = fields.get(iid, {})
+    for key, hit in found.items():
+        meta = records.get(key, {})
         score, why = hit["score"], list(hit["why"])
         date = meta.get("date")
         # creator-year-title already encodes the year agreement.
         if year and date and year in date and "creator-year-title" not in why:
             score += 5
             why.append("year")
-        matches.append({"itemID": iid, "key": meta.get("key"),
-                        "title": meta.get("title"),
-                        "doi": meta.get("doi"), "date": date,
+        matches.append({"key": key, "title": meta.get("title"),
+                        "doi": meta.get("DOI"), "date": date,
                         "score": score, "why": why,
                         "certainty": hit["certainty"]})
 
@@ -535,84 +409,51 @@ def zotero_matches(
 
     # Decorate hits with attachment info.
     for m in matches:
-        atts = cur.execute(
-            """
-            SELECT a.path, a.contentType, fa.indexedPages, fa.totalPages
-            FROM itemAttachments a
-            LEFT JOIN fulltextItems fa ON fa.itemID = a.itemID
-            WHERE a.parentItemID = ?
-            """,
-            (m["itemID"],),
-        ).fetchall()
-        m["attachments"] = [
-            {"path": p, "contentType": ct, "indexedPages": ip, "totalPages": tp}
-            for (p, ct, ip, tp) in atts
-        ]
+        atts = [a for a in idx["attachments"] if a.get("parent") == m["key"]]
+        m["attachments"] = [{"key": a["key"], "filename": a.get("filename"),
+                             "contentType": a.get("contentType"),
+                             "path": a.get("path")} for a in atts]
         m["pdf_basename_match"] = bool(pdf_path) and any(
-            _attachment_basename(p or "") == pdf_path.name for (p, *_rest) in atts
-        )
+            a.get("filename") == pdf_path.name for a in atts)
 
     verdict = classify_matches(matches) if consulted else "unchecked"
     return {"matches": matches, "verdict": verdict,
             "consulted": consulted, "skipped": skipped}
 
 
-def duplicate_hash_report(conn: sqlite3.Connection) -> dict[str, Any]:
+def duplicate_hash_report(idx: dict[str, Any]) -> dict[str, Any]:
     """Find exact-file candidates under distinct parents in My Library.
 
     This is the library-to-library form of the matcher's strongest key,
     ``storageHash``. It reports candidates, never a merge decision: two
     records can deliberately carry the same file. Other bibliographic keys
     are shown as supporting evidence, not as a substitute for the hash.
+    A file is hashed here only when another stored file has its size.
     """
-    library_id = resolve_library_id(conn)
-    rows = conn.execute("""
-        SELECT LOWER(a.storageHash), a.parentItemID, ai.key, a.path,
-               a.contentType
-        FROM itemAttachments a
-        JOIN items ai ON ai.itemID = a.itemID
-        JOIN items p ON p.itemID = a.parentItemID
-        WHERE ai.libraryID = ? AND p.libraryID = ?
-          AND a.storageHash IS NOT NULL AND a.storageHash != ''
-          AND ai.itemID NOT IN (SELECT itemID FROM deletedItems)
-          AND p.itemID NOT IN (SELECT itemID FROM deletedItems)
-    """, (library_id, library_id)).fetchall()
-    by_hash: dict[str, dict[int, list[dict[str, str]]]] = {}
-    for digest, parent_id, attachment_key, path, content_type in rows:
-        by_hash.setdefault(digest, {}).setdefault(parent_id, []).append({
-            "key": attachment_key,
-            "filename": _attachment_basename(path or ""),
-            "content_type": content_type or "",
-        })
-    duplicated = {digest: parents for digest, parents in by_hash.items()
-                  if len(parents) > 1}
-    parent_ids = sorted({iid for parents in duplicated.values()
-                         for iid in parents})
-    metadata: dict[int, dict[str, str]] = {}
-    # Keep the query below SQLite's older 999-parameter default.
-    for start in range(0, len(parent_ids), 400):
-        ids = parent_ids[start:start + 400]
-        marks = ",".join("?" for _ in ids)
-        for iid, key, item_type, title, doi, isbn, date, surname in conn.execute(
-            f"""SELECT i.itemID, i.key, t.typeName,
-                       MAX(CASE WHEN f.fieldName='title' THEN v.value END),
-                       MAX(CASE WHEN f.fieldName='DOI' THEN v.value END),
-                       MAX(CASE WHEN f.fieldName='ISBN' THEN v.value END),
-                       MAX(CASE WHEN f.fieldName='date' THEN v.value END),
-                       (SELECT c.lastName FROM itemCreators ic
-                        JOIN creators c ON c.creatorID=ic.creatorID
-                        WHERE ic.itemID=i.itemID AND ic.orderIndex=0 LIMIT 1)
-                FROM items i JOIN itemTypes t ON t.itemTypeID=i.itemTypeID
-                LEFT JOIN itemData d ON d.itemID=i.itemID
-                LEFT JOIN fields f ON f.fieldID=d.fieldID
-                LEFT JOIN itemDataValues v ON v.valueID=d.valueID
-                WHERE i.itemID IN ({marks}) GROUP BY i.itemID""", ids):
-            metadata[iid] = {
-                "key": key, "item_type": item_type,
-                "title": title or "", "doi": doi or "",
-                "isbn": isbn or "", "date": date or "",
-                "first_author": surname or "",
-            }
+    works = {w["key"]: w for w in idx["works"]}
+    candidates = [a for a in idx["attachments"] if a.get("parent") in works]
+    sizes: dict[int, int] = {}
+    for att in candidates:
+        if (size := attachment_size(att)) is not None:
+            sizes[size] = sizes.get(size, 0) + 1
+    scanned = 0
+    by_hash: dict[str, dict[str, list[dict[str, str]]]] = {}
+    for att in candidates:
+        size = attachment_size(att)
+        if att.get("md5"):
+            digest = att["md5"]
+        elif size is not None and sizes[size] > 1:
+            digest = attachment_digest(att)
+        else:
+            # A unique size is a unique file: compared without hashing.
+            scanned += size is not None
+            continue
+        if not digest:
+            continue
+        scanned += 1
+        by_hash.setdefault(digest, {}).setdefault(att["parent"], []).append({
+            "key": att["key"], "filename": att.get("filename") or "",
+            "content_type": att.get("contentType") or ""})
 
     def signals(left: dict[str, str], right: dict[str, str]) -> list[str]:
         found = []
@@ -629,12 +470,18 @@ def duplicate_hash_report(conn: sqlite3.Connection) -> dict[str, Any]:
         return found
 
     clusters = []
-    for digest, parents in sorted(duplicated.items()):
+    for digest, parents in sorted(by_hash.items()):
+        if len(parents) < 2:
+            continue
         items = []
-        for iid in sorted(parents):
-            meta = metadata[iid]
-            items.append({**meta, "attachments": parents[iid],
-                          "url": f"zotero://select/library/items/{meta['key']}"})
+        for key in sorted(parents):
+            w = works[key]
+            items.append({"key": key, "item_type": w.get("itemType", ""),
+                          "title": w.get("title") or "", "doi": w.get("DOI") or "",
+                          "isbn": w.get("ISBN") or "", "date": w.get("date") or "",
+                          "first_author": (w.get("creators") or [""])[0],
+                          "attachments": parents[key],
+                          "url": f"zotero://select/library/items/{key}"})
         overlap = []
         for pos, left in enumerate(items):
             for right in items[pos + 1:]:
@@ -644,8 +491,8 @@ def duplicate_hash_report(conn: sqlite3.Connection) -> dict[str, Any]:
                                     "keys": shared})
         clusters.append({"hash": digest, "matched_by": "storageHash",
                          "items": items, "bibliographic_overlap": overlap})
-    return {"library_id": library_id,
-            "hashed_attachments_scanned": len(rows),
+    return {"library_id": idx.get("library_id"),
+            "hashed_attachments_scanned": scanned,
             "candidate_clusters": len(clusters),
             "clusters": clusters}
 
@@ -657,8 +504,8 @@ def duplicate_hash_html(report: dict[str, Any]) -> str:
              "<title>Zotero duplicate-file candidates</title>",
              "<h1>Zotero duplicate-file candidates</h1>",
              (f"<p>{report['candidate_clusters']} hash group(s) in My Library; "
-              f"{report['hashed_attachments_scanned']} hashed attachments scanned "
-              f"(read mode: {esc(str(report.get('read_mode')))}). "
+              f"{report['hashed_attachments_scanned']} stored attachments "
+              f"compared (read live from {esc(str(report.get('source')))}). "
               "These are candidates, not merge instructions.</p>"),
              ("<p>The match key is the attachment content hash. Additional "
               "bibliographic matches below are hints, not a claim that "
@@ -691,8 +538,7 @@ def duplicate_hash_html(report: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def probe_one(pdf: Path, conn: sqlite3.Connection | None,
-              library: int | str = USER_LIBRARY) -> dict[str, Any]:
+def probe_one(pdf: Path, idx: dict[str, Any] | None) -> dict[str, Any]:
     info = pdfinfo(pdf)
     try:
         page_count = int(info.get("Pages", "0"))
@@ -725,11 +571,11 @@ def probe_one(pdf: Path, conn: sqlite3.Connection | None,
         "year_hint": year,
         "filename": pdf.name,
     }
-    if conn is not None:
+    if idx is not None:
         out["zotero_matches"] = zotero_matches(
-            conn, doi=ids["doi"], isbn=ids["isbn"], arxiv=ids["arxiv"],
+            idx, doi=ids["doi"], isbn=ids["isbn"], arxiv=ids["arxiv"],
             handle=ids["handle"], title=pdfinfo_title, year=year,
-            pdf_path=pdf, library=library,
+            pdf_path=pdf,
         )
     else:
         out["zotero_matches"] = None
@@ -874,8 +720,8 @@ RIS_TO_ZOTERO_TYPE = {
 # rather than a vendored copy of the schema — 40 readable lines a reviewer can
 # check against the diff, where the schema is 385 KB of JSON that is 95%
 # irrelevant here and unreviewable in a merge request. The drift check lives
-# in the test suite's `slow` tier, which re-derives both tables from the
-# `itemTypeFields` table of the local zotero.sqlite.
+# in the test suite's `slow` tier: an opt-in live check that re-derives both
+# tables from the running client's local API (/api/itemTypeFields).
 
 # Preference order per slot: the first field the target type owns wins. Kept
 # beside the resolved table so the derivation is documented and re-runnable.
@@ -1227,24 +1073,55 @@ def plan_enrichment(data: dict[str, Any], sets: dict[str, str],
     return patch, refusals
 
 
-# --- Zotero desktop connector -----------------------------------------------
-# The only write path. The connector is the HTTP server the desktop client
-# runs for the browser extension; it saves new items (saveItems), attaches a
-# file to an item saved in the same session (saveAttachment) and moves the
-# session's items to a library or collection (updateSession). It cannot edit
-# an item that existed before the session, and it returns no item keys.
-# Protocol: chrome/content/zotero/xpcom/server/server_connector.js and
-# saveSession.js in the Zotero 7 source.
+# --- The running Zotero: local API (reads) and desktop connector (creation) --
+# Both live on the desktop client's HTTP server, 127.0.0.1:23119.
+#
+# Reads go through the local API (/api/, Zotero 7 or later), which mirrors
+# the Web API v3 read endpoints for the signed-in user (users/0) and their
+# groups (groups/<groupID>), needs no key for GET, and answers from the
+# running client, so every read is live. The user enables it under
+# LOCAL_API_SETTING; until then every /api/ request answers 403 "Local API is
+# not enabled". Source: chrome/content/zotero/xpcom/server/server_localAPI.js.
+#
+# Creation goes through the connector the browser extension uses: it saves
+# new items (saveItems), attaches a file to an item saved in the same session
+# (saveAttachment) and moves the session's items to a library or collection
+# (updateSession). It cannot edit an item that existed before the session,
+# and it returns no item keys. Source: server_connector.js and
+# saveSession.js.
+#
+# Zotero must be running. When nothing answers, ensure_zotero() launches the
+# desktop client, except in a container, and waits for it; when that fails
+# the command does nothing and says Zotero was unavailable.
 
 CONNECTOR_URL = os.environ.get("ZOTERO_CONNECTOR_URL", "http://127.0.0.1:23119")
 LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "::1"}
 CONNECTOR_API_VERSION = "3"
+LOCAL_API_VERSION = "3"
 CONNECTOR_TIMEOUT = 60.0
 CONNECTOR_UPLOAD_TIMEOUT = 300.0
+# A local API page. Zotero 10 hashes every stored file it lists, so a page
+# of attachments can take a while on a cold disk cache.
+API_PAGE = 200
+API_TIMEOUT = 300.0
+LOCAL_API_SETTING = ('Zotero Settings > Advanced > "Allow other applications '
+                     'on this computer to communicate with Zotero"')
+# How long a launched Zotero gets to answer, and how often it is asked.
+LAUNCH_WAIT = 90.0
+LAUNCH_POLL = 1.0
+# Exit status of a command that needed Zotero and found it unavailable: it
+# did nothing. EX_TEMPFAIL from sysexits.h, "try again later". `reconcile`
+# exits 0 instead, with verdict "zotero_unavailable", so an unattended sweep
+# reads the no-op as clean.
+EXIT_UNAVAILABLE = 75
 
 
-class ConnectorUnavailable(RuntimeError):
-    """The desktop connector did not answer: Zotero is not running."""
+class ZoteroUnavailable(RuntimeError):
+    """Zotero is not running and could not be launched: nothing was done."""
+
+
+class LocalAPIError(RuntimeError):
+    """Something answers on the Zotero port, but not as the local API."""
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -1263,16 +1140,200 @@ _CONNECTOR_OPENER = connector_opener()
 
 
 def connector_base() -> str:
-    """The connector URL, refused unless it is on this machine.
+    """The Zotero URL, refused unless it is on this machine.
 
     The override exists for tests; a remote host would send item metadata
     and PDFs off the machine, which a local-only helper must not do.
     """
     host = urllib.parse.urlsplit(CONNECTOR_URL).hostname
     if host not in LOOPBACK_HOSTS:
-        raise ConnectorUnavailable(f"refusing non-local connector URL "
-                                   f"{CONNECTOR_URL}: the helper is local-only")
+        raise LocalAPIError(f"refusing non-local Zotero URL {CONNECTOR_URL}: "
+                            f"the helper is local-only")
     return CONNECTOR_URL
+
+
+def local_get(path: str, params: dict[str, Any] | None = None, *,
+              timeout: float = API_TIMEOUT) -> tuple[int, Any, bytes]:
+    """GET one path on the local Zotero; (status, headers, body).
+
+    Raises ZoteroUnavailable when nothing answers.
+    """
+    url = f"{connector_base()}{path}"
+    if params:
+        url += "?" + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url, method="GET")
+    req.add_header("Zotero-API-Version", LOCAL_API_VERSION)
+    try:
+        with _CONNECTOR_OPENER.open(req, timeout=timeout) as resp:
+            return resp.status, resp.headers, resp.read()
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.headers, exc.read() or b""
+    except (urllib.error.URLError, OSError) as exc:
+        raise ZoteroUnavailable(f"Zotero stopped answering at {CONNECTOR_URL} "
+                                f"({exc})") from exc
+
+
+def _local_api_refusal(status: int, body: bytes) -> LocalAPIError:
+    text = body.decode("utf-8", "replace").strip()[:200]
+    if status == 403:
+        return LocalAPIError(f"Zotero's local API is disabled ({text or 'HTTP 403'}). "
+                             f"Enable {LOCAL_API_SETTING} and retry.")
+    return LocalAPIError(f"Zotero's local API answered HTTP {status} "
+                         f"({text or 'no body'}). It needs Zotero 7 or later "
+                         f"with {LOCAL_API_SETTING} enabled.")
+
+
+def api_json(path: str, params: dict[str, Any] | None = None) -> Any:
+    """One local API read: the decoded JSON, None on 404."""
+    status, _headers, body = local_get(f"/api/{path}", params)
+    if status == 404:
+        return None
+    if status != 200:
+        raise _local_api_refusal(status, body)
+    try:
+        return json.loads(body)
+    except ValueError as exc:
+        raise LocalAPIError(f"Zotero's local API sent non-JSON for /api/{path}; "
+                            f"check {LOCAL_API_SETTING}") from exc
+
+
+def api_items(prefix: str, item_type: str) -> list[dict[str, Any]]:
+    """Every item of one library matching an itemType filter, page by page.
+
+    Trashed items are not listed: the local API leaves them out unless
+    asked. `Total-Results` bounds the paging.
+    """
+    items: list[dict[str, Any]] = []
+    start = 0
+    while True:
+        status, headers, body = local_get(
+            f"/api/{prefix}/items",
+            {"itemType": item_type, "format": "json", "limit": API_PAGE,
+             "start": start})
+        if status != 200:
+            raise _local_api_refusal(status, body)
+        try:
+            page = json.loads(body)
+            total = int(headers.get("Total-Results", len(page)))
+        except (ValueError, TypeError) as exc:
+            raise LocalAPIError(f"unexpected local API answer for /api/{prefix}"
+                                f"/items; check {LOCAL_API_SETTING}") from exc
+        if not isinstance(page, list):
+            raise LocalAPIError(f"unexpected local API answer for /api/{prefix}"
+                                f"/items; check {LOCAL_API_SETTING}")
+        items.extend(page)
+        start += len(page)
+        if not page or start >= total:
+            return items
+
+
+def zotero_answers(timeout: float = 2.0) -> bool:
+    """Does the desktop client answer on its port? A stranger is an error."""
+    try:
+        with _CONNECTOR_OPENER.open(f"{connector_base()}/connector/ping",
+                                    timeout=timeout) as resp:
+            status = resp.status
+    except urllib.error.HTTPError as exc:
+        status = exc.code
+    except (urllib.error.URLError, OSError):
+        return False
+    if status != 200:
+        raise LocalAPIError(f"something answers at {CONNECTOR_URL} but not as "
+                            f"Zotero (HTTP {status}); check that it is Zotero")
+    return True
+
+
+def check_local_api() -> None:
+    """Fail with the setting's name unless /api/ answers as the local API."""
+    status, headers, body = local_get("/api/", timeout=CONNECTOR_TIMEOUT)
+    if status != 200 or not headers.get("Zotero-API-Version"):
+        raise _local_api_refusal(status, body)
+
+
+def in_container() -> str | None:
+    """Why this looks like a container or a headless runner, else None."""
+    for marker in ("/.dockerenv", "/run/.containerenv"):
+        if os.path.exists(marker):
+            return marker
+    if os.environ.get("container"):
+        return f"container={os.environ['container']}"
+    for name in ("CI", "GITHUB_ACTIONS", "GITLAB_CI", "BUILDKITE", "JENKINS_URL"):
+        if os.environ.get(name):
+            return f"{name} is set"
+    try:
+        cgroup = Path("/proc/1/cgroup").read_text()
+    except OSError:
+        cgroup = ""
+    for hint in ("docker", "kubepods", "containerd", "lxc", "podman", "libpod"):
+        if hint in cgroup:
+            return f"/proc/1/cgroup names {hint}"
+    if (sys.platform.startswith("linux") and not os.environ.get("DISPLAY")
+            and not os.environ.get("WAYLAND_DISPLAY")):
+        return "no display"
+    return None
+
+
+def find_zotero_launcher() -> list[str] | None:
+    """The command that starts the desktop client here, if one is installed."""
+    if found := shutil.which("zotero"):
+        return [found]
+    home = Path.home()
+    for candidate in (home / "Zotero_linux-x86_64" / "zotero",
+                      home / ".local" / "Zotero_linux-x86_64" / "zotero",
+                      home / ".local" / "share" / "zotero" / "zotero",
+                      Path("/opt/zotero/zotero"), Path("/usr/lib/zotero/zotero"),
+                      Path("/usr/local/bin/zotero"),
+                      Path("/Applications/Zotero.app/Contents/MacOS/zotero")):
+        if os.access(candidate, os.X_OK):
+            return [str(candidate)]
+    flatpak = shutil.which("flatpak")
+    if flatpak and subprocess.run([flatpak, "info", "org.zotero.Zotero"],
+                                  capture_output=True).returncode == 0:
+        return [flatpak, "run", "org.zotero.Zotero"]
+    return None
+
+
+def launch_zotero(command: list[str]) -> None:
+    """Start the desktop client detached; it outlives this process."""
+    subprocess.Popen(command, stdin=subprocess.DEVNULL,
+                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                     start_new_session=True)
+
+
+def ensure_zotero() -> str:
+    """Make sure Zotero answers: "running" or "launched".
+
+    When nothing answers, the desktop client is launched and given
+    LAUNCH_WAIT seconds, except in a container or headless runner, where
+    nothing is launched. ZoteroUnavailable means nothing was done.
+    """
+    state = "running"
+    if not zotero_answers():
+        reason = in_container()
+        if reason:
+            raise ZoteroUnavailable(f"Zotero is not running, and this looks like "
+                                    f"a container ({reason}), so it is not "
+                                    f"launched. Nothing was done.")
+        command = find_zotero_launcher()
+        if command is None:
+            raise ZoteroUnavailable("Zotero is not running and no Zotero "
+                                    "installation was found to launch. Start "
+                                    "Zotero and retry; nothing was done.")
+        launch_zotero(command)
+        deadline = time.monotonic() + LAUNCH_WAIT
+        while not zotero_answers():
+            if time.monotonic() >= deadline:
+                raise ZoteroUnavailable(
+                    f"Zotero was launched ({' '.join(command)}) but did not "
+                    f"answer within {LAUNCH_WAIT:.0f} s. Nothing was done.")
+            time.sleep(LAUNCH_POLL)
+        state = "launched"
+    check_local_api()
+    return state
+
+
+def unavailable_payload(exc: ZoteroUnavailable) -> dict[str, Any]:
+    return {"zotero": "unavailable", "error": str(exc), "verdict": "unchecked"}
 
 
 def connector_post(endpoint: str, payload: dict[str, Any] | bytes, *,
@@ -1296,26 +1357,6 @@ def connector_post(endpoint: str, payload: dict[str, Any] | bytes, *,
             return resp.status, resp.read()
     except urllib.error.HTTPError as exc:
         return exc.code, exc.read() or b""
-
-
-def connector_ping(timeout: float = 5.0) -> None:
-    """Fail loudly unless the desktop connector answers."""
-    base = connector_base()
-    try:
-        with _CONNECTOR_OPENER.open(f"{base}/connector/ping",
-                                    timeout=timeout) as resp:
-            if resp.status == 200:
-                return
-            status = resp.status
-    except urllib.error.HTTPError as exc:
-        status = exc.code
-    except (urllib.error.URLError, OSError) as exc:
-        raise ConnectorUnavailable(
-            f"Zotero is not running: no answer from the desktop connector at "
-            f"{CONNECTOR_URL} ({exc}). Start Zotero and retry.") from exc
-    raise ConnectorUnavailable(
-        f"something answers at {CONNECTOR_URL} but not as the Zotero "
-        f"connector (HTTP {status}); check that it is Zotero and retry")
 
 
 def connector_save(item: dict[str, Any], pdf: Path | None,
@@ -1410,29 +1451,105 @@ def entry_identity_keys(entry: dict[str, Any]) -> set[tuple[str, str]]:
     return keys
 
 
-def resolve_target(conn: sqlite3.Connection, library: int | str,
-                   collection: str | None) -> tuple[str, int]:
-    """(connector target, libraryID) for new items.
+def library_prefixes(library: int | str = USER_LIBRARY) -> list[tuple[str, str]]:
+    """(library id, local API prefix) pairs for a library selector.
+
+    "user" is the signed-in user's library, a number is a groupID (as in
+    zotero.org/groups/<groupID>), "all" is the user library and every group.
+    """
+    if library == ALL_LIBRARIES:
+        groups = api_json("users/0/groups") or []
+        return [(USER_LIBRARY, "users/0")] + [
+            (str(g["id"]), f"groups/{g['id']}") for g in groups]
+    if isinstance(library, int) or (isinstance(library, str) and library.isdigit()):
+        return [(str(library), f"groups/{library}")]
+    if library != USER_LIBRARY:
+        raise ValueError(f"--library {library!r}: use 'user', 'all' or a groupID")
+    return [(USER_LIBRARY, "users/0")]
+
+
+def library_lock_dir() -> Path:
+    """The directory whose flock serialises this user's check-and-create runs."""
+    runtime = os.environ.get("XDG_RUNTIME_DIR")
+    if runtime and Path(runtime).is_dir():
+        return Path(runtime)
+    return Path(tempfile.gettempdir())
+
+
+def _collection_path(prefix: str, key: str) -> list[str] | None:
+    """Names from the library root down to the collection, None if absent."""
+    names: list[str] = []
+    seen: set[str] = set()
+    while key and key not in seen:
+        seen.add(key)
+        coll = api_json(f"{prefix}/collections/{key}")
+        if coll is None:
+            return None if not names else names
+        data = coll.get("data", coll)
+        names.insert(0, data.get("name", ""))
+        key = data.get("parentCollection") or ""
+    return names
+
+
+def resolve_target(library: int | str, collection: str | None) -> tuple[str, str]:
+    """(connector target, library id) for new items.
 
     A collection key names its own library; otherwise the library selector
     does, the user library by default. "all" names no single destination.
+
+    The connector addresses targets by the client's internal ids ("L1",
+    "C42"), which the local API does not expose. They are read from the
+    connector's own target list (getSelectedCollection, editable libraries
+    only): the user library is L1 in every Zotero data directory, a group is
+    matched by its name, a collection by its path of names inside its
+    library. An absent or ambiguous match is refused, never guessed.
     """
-    if collection:
-        row = conn.execute("SELECT collectionID, libraryID FROM collections "
-                           "WHERE key = ?", (collection,)).fetchone()
-        if row is None:
-            raise ValueError(f"collection {collection!r} is not in zotero.sqlite")
-        return f"C{row[0]}", row[1]
-    lib_id = resolve_library_id(conn, library)
-    if lib_id is None:
+    if library == ALL_LIBRARIES and not collection:
         raise ValueError("--library all names no single destination library")
-    return f"L{lib_id}", lib_id
-
-
-SNAPSHOT_WARNING = (
-    "zotero.sqlite was read as an immutable snapshot because Zotero holds it "
-    "locked; items saved since its last checkpoint are invisible to the "
-    "duplicate guard. Check Zotero's Duplicate Items pane after the import.")
+    if collection:
+        home = next(((lib_id, prefix, path)
+                     for lib_id, prefix in library_prefixes(ALL_LIBRARIES)
+                     if (path := _collection_path(prefix, collection))), None)
+        if home is None:
+            raise ValueError(f"collection {collection!r} is in no local library")
+        lib_id, prefix, path = home
+    else:
+        (lib_id, prefix), = library_prefixes(library)
+        path = []
+    status, body = connector_post("getSelectedCollection", {})
+    try:
+        targets = json.loads(body)["targets"] if status == 200 else None
+    except (ValueError, KeyError, TypeError):
+        targets = None
+    if not isinstance(targets, list):
+        raise ValueError(f"the connector's target list is unreadable (HTTP {status})")
+    if lib_id == USER_LIBRARY:
+        roots = [n for n, t in enumerate(targets) if t.get("id") == "L1"]
+    else:
+        group = api_json(f"groups/{lib_id}") or {}
+        name = group.get("data", group).get("name")
+        roots = [n for n, t in enumerate(targets)
+                 if t.get("level") == 0 and t.get("id") != "L1"
+                 and t.get("name") == name]
+    if len(roots) != 1:
+        raise ValueError(f"library {lib_id} is {'ambiguous' if roots else 'not'} "
+                         f"an editable connector target")
+    root = roots[0]
+    if not path:
+        return targets[root]["id"], lib_id
+    hits, trail = [], []
+    for t in targets[root + 1:]:
+        level = t.get("level", 0)
+        if level == 0:
+            break
+        trail[level - 1:] = [t.get("name")]
+        if trail == path:
+            hits.append(t["id"])
+    if len(hits) != 1:
+        raise ValueError(f"collection {collection!r} ({' / '.join(path)}) is "
+                         f"{'ambiguous' if hits else 'not'} an editable "
+                         f"connector target")
+    return hits[0], lib_id
 
 
 def load_entries(args: argparse.Namespace) -> list[dict[str, Any]]:
@@ -1475,49 +1592,43 @@ def cmd_inject(args: argparse.Namespace) -> int:
         emit_json({"items": items, "corroboration": checks})
         return 0
 
-    db_path = resolve_db_path(getattr(args, "zotero_db", None))
-    if db_path is None:
-        emit_json({"error": "no local Zotero database: the duplicate guard and "
-                            "the destination both read zotero.sqlite"})
-        return 1
-    try:
-        connector_ping()
-    except ConnectorUnavailable as exc:
-        print(f"inject: {exc}", file=sys.stderr)
-        emit_json({"error": str(exc)})
-        return 1
-
     held = getattr(args, "_snapshot", None)
     library = getattr(args, "library", USER_LIBRARY)
     collection = getattr(args, "collection", None)
+    try:
+        if held is None:
+            ensure_zotero()
+    except ZoteroUnavailable as exc:
+        print(f"inject: {exc}", file=sys.stderr)
+        emit_json(unavailable_payload(exc))
+        return EXIT_UNAVAILABLE
+    except LocalAPIError as exc:
+        print(f"inject: {exc}", file=sys.stderr)
+        emit_json({"error": str(exc)})
+        return 1
     # Reconcile reads its snapshot under this same lock and hands it over;
     # a CLI inject takes the lock itself. Either way the duplicate check and
-    # the saves happen inside one critical section per Zotero data directory.
+    # the saves happen inside one critical section on this machine.
     lock = (contextlib.nullcontext() if held is not None
-            else directory_locks([db_path.parent]))
+            else directory_locks([library_lock_dir()]))
     with lock:
-        conn, mode = zotero_open(db_path)
         try:
-            target, lib_id = resolve_target(conn, library, collection)
-            snapshot = (held if held is not None
-                        else {**read_library(conn, lib_id), "read_mode": mode})
+            target, lib_id = resolve_target(library, collection)
+            snapshot = held if held is not None else read_library(lib_id)
             if snapshot.get("library_id") != lib_id:
                 raise ValueError(f"the duplicate guard read library "
                                  f"{snapshot.get('library_id')}, not the "
                                  f"destination {lib_id}")
-        except (ValueError, sqlite3.Error) as exc:
-            emit_json({"error": str(exc), "read_mode": mode})
+        except ZoteroUnavailable as exc:
+            emit_json(unavailable_payload(exc))
+            return EXIT_UNAVAILABLE
+        except (ValueError, LocalAPIError, urllib.error.URLError, OSError) as exc:
+            emit_json({"error": str(exc)})
             return 1
-        finally:
-            conn.close()
         results, status = inject_entries(entries, items, checks, snapshot,
                                          target, getattr(args, "force", False))
-    out: dict[str, Any] = {"library": target, "zotero_db": str(db_path),
-                           "read_mode": snapshot.get("read_mode"),
-                           "results": results}
-    if snapshot.get("read_mode") == READ_SNAPSHOT:
-        out["warning"] = SNAPSHOT_WARNING
-    emit_json(out)
+    emit_json({"library": target, "library_id": lib_id,
+               "zotero": snapshot.get("zotero"), "results": results})
     return status
 
 
@@ -1585,8 +1696,8 @@ def inject_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
             results[n].update(connector_save(items[n], pdf, target))
         except (urllib.error.URLError, OSError, RuntimeError) as exc:
             # A save that failed in transit may still have reached Zotero.
-            # Stop here. The next run reads the library again, but while
-            # Zotero runs that read can lag, so the item may not show yet.
+            # Stop here: the next run reads the library again, live, and
+            # sees the item if it was created.
             results[n]["error"] = f"create outcome unknown: {exc}"
             for m, _, _ in pending[pos + 1:]:
                 results[m]["error"] = "not attempted after an uncertain save"
@@ -1608,45 +1719,34 @@ def parse_set(pairs: list[str]) -> dict[str, str]:
     return out
 
 
-def item_data(conn: sqlite3.Connection, item_key: str,
+def item_data(item_key: str,
               library: int | str = USER_LIBRARY) -> dict[str, Any] | None:
-    """An item's fields as Zotero names them, read from zotero.sqlite.
+    """An item's fields as Zotero names them, read through the local API.
 
     Every field the item type owns is present, empty when unset, so
-    plan_enrichment can tell "empty" from "this type has no such field".
+    plan_enrichment can tell "empty" from "this type has no such field": the
+    item JSON omits empty fields, so the type's field list fills them in.
     """
-    lib_id = resolve_library_id(conn, library)
-    sql = ("SELECT i.itemID, i.key, i.itemTypeID, t.typeName FROM items i "
-           "JOIN itemTypes t ON t.itemTypeID = i.itemTypeID "
-           f"WHERE i.key = ? AND i.{_NOT_DELETED}")
-    params: list[Any] = [item_key]
-    if lib_id is not None:
-        sql += " AND i.libraryID = ?"
-        params.append(lib_id)
-    row = conn.execute(sql, params).fetchone()
-    if row is None:
-        return None
-    item_id, key, type_id, type_name = row
-    data: dict[str, Any] = {name: "" for (name,) in conn.execute(
-        "SELECT f.fieldName FROM itemTypeFields t "
-        "JOIN fields f ON f.fieldID = t.fieldID WHERE t.itemTypeID = ?",
-        (type_id,))}
-    data.update(dict(conn.execute(
-        "SELECT f.fieldName, v.value FROM itemData d "
-        "JOIN fields f ON f.fieldID = d.fieldID "
-        "JOIN itemDataValues v ON v.valueID = d.valueID WHERE d.itemID = ?",
-        (item_id,))))
-    data.update({"key": key, "itemType": type_name})
-    return data
+    for _lib_id, prefix in library_prefixes(library):
+        item = api_json(f"{prefix}/items/{urllib.parse.quote(item_key)}")
+        if item is None:
+            continue
+        data = dict(item.get("data", {}))
+        fields = api_json("itemTypeFields",
+                          {"itemType": data.get("itemType", "")}) or []
+        out: dict[str, Any] = {f["field"]: "" for f in fields if "field" in f}
+        out.update(data)
+        out.update({"key": item.get("key", item_key)})
+        return out
+    return None
 
 
-def enrich_one(conn: sqlite3.Connection, job: dict[str, Any],
-               overwrite: bool, library: int | str = USER_LIBRARY
-               ) -> dict[str, Any]:
+def enrich_one(job: dict[str, Any], overwrite: bool,
+               library: int | str = USER_LIBRARY) -> dict[str, Any]:
     """Suggest field edits on ONE existing item. See plan_enrichment."""
     item_key = job["item_key"]
     row: dict[str, Any] = {"itemKey": item_key}
-    data = item_data(conn, item_key, library)
+    data = item_data(item_key, library)
     if data is None:
         row["status"] = "not found"
         return row
@@ -1681,19 +1781,17 @@ def cmd_enrich(args: argparse.Namespace) -> int:
         if not isinstance(job["expect_title"], str) or not job["expect_title"]:
             raise SystemExit(f"job for {job['item_key']} has no expect_title")
 
-    db_path = resolve_db_path(args.zotero_db)
-    if db_path is None:
-        raise SystemExit("enrich: no local Zotero database found")
-    conn, mode = zotero_open(db_path)
-    try:
-        results = [enrich_one(conn, j, args.overwrite, args.library)
-                   for j in jobs]
-    finally:
-        conn.close()
-    emit_json({"zotero_db": str(db_path), "read_mode": mode,
+    def run() -> dict[str, Any]:
+        return {"results": [enrich_one(j, args.overwrite, args.library)
+                            for j in jobs]}
+
+    out, rc = with_zotero("enrich", run)
+    if rc is not None:
+        return rc
+    emit_json({"zotero": CONNECTOR_URL, "source": LIBRARY_SOURCE,
                "apply": "by hand in Zotero: open each item and set the field",
-               "results": results})
-    return enrich_status(results)
+               **out})
+    return enrich_status(out["results"])
 
 
 def enrich_status(results: list[dict[str, Any]]) -> int:
@@ -1709,16 +1807,26 @@ def enrich_status(results: list[dict[str, Any]]) -> int:
 
 # --- CLI -------------------------------------------------------------------
 
-def resolve_db_path(override: str | None) -> Path | None:
-    if override:
-        p = Path(override)
-        return p if p.exists() else None
-    return find_zotero_db()
+def with_zotero(command: str, read: Any) -> tuple[Any, int | None]:
+    """Run `read()` against a Zotero made to answer: (result, None), or
+    (None, exit status) after printing why nothing was done."""
+    try:
+        ensure_zotero()
+        return read(), None
+    except ZoteroUnavailable as exc:
+        print(f"{command}: {exc}", file=sys.stderr)
+        emit_json(unavailable_payload(exc))
+        return None, EXIT_UNAVAILABLE
+    except (LocalAPIError, ValueError) as exc:
+        print(f"{command}: {exc}", file=sys.stderr)
+        emit_json({"error": str(exc), "verdict": "unchecked"})
+        return None, 1
 
 
 def cmd_probe(args: argparse.Namespace) -> int:
-    db_path = resolve_db_path(args.zotero_db)
-    conn, mode = zotero_open(db_path) if db_path else (None, None)
+    idx, rc = with_zotero("probe", lambda: read_library(args.library))
+    if rc is not None:
+        return rc
     out: list[dict[str, Any]] = []
     for pdf_arg in args.pdf:
         pdf = Path(pdf_arg)
@@ -1726,114 +1834,132 @@ def cmd_probe(args: argparse.Namespace) -> int:
             out.append({"pdf": str(pdf), "error": "not found"})
             continue
         try:
-            out.append(probe_one(pdf, conn, args.library))
+            out.append(probe_one(pdf, idx))
         except Exception as exc:
             out.append({"pdf": str(pdf), "error": f"{type(exc).__name__}: {exc}"})
-    if conn is not None:
-        conn.close()
-    payload = {
-        "zotero_db": str(db_path) if db_path else None,
-        "zotero_lookup": db_path is not None,
-        "read_mode": mode,
-        "items": out,
-    }
-    json.dump(payload, sys.stdout, indent=2, ensure_ascii=False)
-    sys.stdout.write("\n")
+    emit_json({"zotero": idx["zotero"], "source": idx["source"],
+               "library_id": idx["library_id"], "items": out})
     return 0
 
 
 # ---------------------------------------------------------------------------
-# Library snapshot — the whole library in memory, read from zotero.sqlite
+# Library snapshot — the whole library in memory, read live from Zotero
 #
-# `audit`, `reconcile` and `inject` compare many files against the library.
-# One read of the works and attachments, held in memory for the run and then
-# dropped, serves them all; nothing is written to disk, so there is no cache
-# to go stale and nothing to rebuild.
+# `audit`, `reconcile`, `inject`, `probe`, `match` and `dedup-report` compare
+# files against the library. One read of the works and attachments through
+# the local API, held in memory for the run and then dropped, serves them
+# all; nothing is written to disk, so there is no cache to go stale and
+# nothing to rebuild.
 #
-# Each attachment carries its storageHash, the md5 of the stored file. It is
-# the strongest key available: content identity survives renaming, re-filing
-# and metadata drift, and it answers the only question a staging directory
-# really asks — is this exact file already stored in Zotero?
+# Each attachment carries what identifies its stored file: the md5 when
+# Zotero reports it, the size and the local path otherwise (hashed only when
+# a comparison needs it). Content identity is the strongest key available: it
+# survives renaming, re-filing and metadata drift, and it answers the only
+# question a staging directory really asks — is this exact file already
+# stored in Zotero?
 # ---------------------------------------------------------------------------
 
+LIBRARY_SOURCE = "zotero local API (live)"
 # Titles shorter than this carry too few distinctive tokens to match on.
 TITLE_MIN_TOKENS = 3
-LINK_MODES = {0: "imported_file", 1: "imported_url", 2: "linked_file",
-              3: "linked_url", 4: "embedded_image"}
-WORK_FIELDS = ("title", "date", "DOI", "ISBN", "url", "extra")
+WORK_FIELDS = ("title", "date", "DOI", "ISBN", "url", "extra", "archiveID",
+               "number")
+NOT_WORKS = {"attachment", "note", "annotation"}
 
 
-def read_library(conn: sqlite3.Connection,
-                 library: int | str = USER_LIBRARY) -> dict[str, Any]:
-    """Works and attachments of one library (or all), not deleted."""
-    lib_id = resolve_library_id(conn, library)
-    lib_clause = "" if lib_id is None else " AND i.libraryID = ?"
-    lib_params: list[Any] = [] if lib_id is None else [lib_id]
-    works: dict[int, dict[str, Any]] = {}
-    for item_id, key, type_name in conn.execute(
-            "SELECT i.itemID, i.key, t.typeName FROM items i "
-            "JOIN itemTypes t ON t.itemTypeID = i.itemTypeID "
-            f"WHERE i.{_NOT_DELETED}" + lib_clause
-            + " AND t.typeName NOT IN ('attachment', 'note', 'annotation')",
-            lib_params):
-        works[item_id] = {"key": key, "itemType": type_name, "creators": [],
-                          **{f: "" for f in WORK_FIELDS}}
-    marks = ",".join("?" * len(WORK_FIELDS))
-    for item_id, field, value in conn.execute(
-            "SELECT d.itemID, f.fieldName, v.value FROM itemData d "
-            "JOIN fields f ON f.fieldID = d.fieldID "
-            "JOIN itemDataValues v ON v.valueID = d.valueID "
-            f"WHERE f.fieldName IN ({marks})", WORK_FIELDS):
-        if item_id in works:
-            works[item_id][field] = value or ""
-    for item_id, last in conn.execute(
-            "SELECT ic.itemID, c.lastName FROM itemCreators ic "
-            "JOIN creators c ON c.creatorID = ic.creatorID "
-            "ORDER BY ic.itemID, ic.orderIndex"):
-        if item_id in works and last:
-            works[item_id]["creators"].append(last)
-    attachments = []
-    for key, parent, path, digest, content_type, link_mode in conn.execute(
-            "SELECT ai.key, p.key, a.path, a.storageHash, a.contentType, "
-            "a.linkMode FROM itemAttachments a "
-            "JOIN items ai ON ai.itemID = a.itemID "
-            "LEFT JOIN items p ON p.itemID = a.parentItemID "
-            f"WHERE a.{_NOT_DELETED}"
-            + ("" if lib_id is None else " AND ai.libraryID = ?"), lib_params):
-        attachments.append({
-            "key": key, "parent": parent,
-            "filename": _attachment_basename(path or ""),
-            "md5": (digest or "").lower() or None,
-            "contentType": content_type or "",
-            "linkMode": LINK_MODES.get(link_mode, str(link_mode)),
-        })
-    return {"works": list(works.values()), "attachments": attachments,
-            "library_id": lib_id}
-
-
-def library_snapshot(db_path: Path | None,
-                     library: int | str = USER_LIBRARY) -> dict[str, Any] | None:
-    """Read the library once for this run; None when there is no database."""
-    if db_path is None:
+def file_url_path(url: str | None) -> str | None:
+    """Local path of a file:// URL, None for anything else."""
+    if not url:
         return None
-    conn, mode = zotero_open(db_path)
-    try:
-        lib = read_library(conn, library)
-        account = local_account(conn)
-    finally:
-        conn.close()
-    return {**lib, "zotero_db": str(db_path), "read_mode": mode,
-            "account": account}
-
-
-def local_account(conn: sqlite3.Connection) -> str | None:
-    """The Zotero user id the desktop client is signed in as, if any."""
-    try:
-        row = conn.execute("SELECT value FROM settings WHERE setting = "
-                           "'account' AND key = 'userID'").fetchone()
-    except sqlite3.OperationalError:
+    parts = urllib.parse.urlsplit(url)
+    if parts.scheme != "file":
         return None
-    return str(row[0]) if row and row[0] is not None else None
+    return urllib.request.url2pathname(parts.path)
+
+
+def _attachment_record(item: dict[str, Any], lib_id: str,
+                       prefix: str) -> dict[str, Any]:
+    data = item.get("data", {})
+    link = data.get("linkMode") or ""
+    enclosure = item.get("links", {}).get("enclosure") or {}
+    path = file_url_path(enclosure.get("href"))
+    if link == "linked_file":
+        raw = data.get("path") or ""
+        if raw and Path(raw).is_absolute():
+            path = raw
+        elif raw:
+            # Relative to the linked-attachment base directory, which only
+            # the client knows: ask it for the file URL.
+            status, _h, body = local_get(
+                f"/api/{prefix}/items/{item['key']}/file/view/url")
+            if status == 200:
+                path = file_url_path(body.decode("utf-8", "replace").strip())
+    filename = data.get("filename") or _attachment_basename(data.get("path") or "")
+    return {"key": item["key"], "parent": data.get("parentItem") or None,
+            "title": data.get("title") or "", "filename": filename,
+            "md5": (data.get("md5") or "").lower() or None,
+            "size": enclosure.get("length"), "path": path,
+            "contentType": data.get("contentType") or "", "linkMode": link,
+            "library": lib_id}
+
+
+def read_library(library: int | str = USER_LIBRARY) -> dict[str, Any]:
+    """Works and attachments of one library (or all), not trashed.
+
+    `account` is the zotero.org user id the client is signed in as (the user
+    library's id in its item JSON), None when it cannot be told.
+    """
+    works: list[dict[str, Any]] = []
+    attachments: list[dict[str, Any]] = []
+    account = None
+    prefixes = library_prefixes(library)
+    for lib_id, prefix in prefixes:
+        for item in api_items(prefix, "-attachment"):
+            data = item.get("data", {})
+            if lib_id == USER_LIBRARY and item.get("library", {}).get("id"):
+                account = str(item["library"]["id"])
+            if data.get("itemType") in NOT_WORKS:
+                continue
+            works.append({
+                "key": item["key"], "itemType": data.get("itemType", ""),
+                "creators": [c.get("lastName") or c.get("name") or ""
+                             for c in data.get("creators", [])
+                             if c.get("lastName") or c.get("name")],
+                "library": lib_id,
+                **{f: str(data.get(f) or "") for f in WORK_FIELDS}})
+        for item in api_items(prefix, "attachment"):
+            if lib_id == USER_LIBRARY and item.get("library", {}).get("id"):
+                account = str(item["library"]["id"])
+            attachments.append(_attachment_record(item, lib_id, prefix))
+    return {"works": works, "attachments": attachments,
+            "library_id": prefixes[0][0] if len(prefixes) == 1 else ALL_LIBRARIES,
+            "account": account, "zotero": CONNECTOR_URL,
+            "source": LIBRARY_SOURCE}
+
+
+def library_snapshot(library: int | str = USER_LIBRARY) -> dict[str, Any]:
+    """Read the library once for this run."""
+    return read_library(library)
+
+
+# A user id no account has: the local API refuses it and names the real one.
+_FOREIGN_USER = "999999999999"
+
+
+def local_account(idx: dict[str, Any] | None = None) -> str | None:
+    """The zotero.org user id the client is signed in as, None if none.
+
+    The user library's items carry it. An empty library carries nothing, so
+    the local API is asked for another user's data, which it refuses with
+    "use userID 0 or <id>" naming the signed-in account (server_localAPI.js,
+    Zotero 7 to 10). No answer of that form reads as "not signed in", and
+    the opt-in check then refuses: it fails closed.
+    """
+    if idx and idx.get("account"):
+        return idx["account"]
+    status, _h, body = local_get(f"/api/users/{_FOREIGN_USER}/settings")
+    match = re.search(r"use userID 0 or (\d+)", body.decode("utf-8", "replace"))
+    return match.group(1) if status == 400 and match else None
 
 
 def file_md5(path: Path, chunk: int = 1 << 20) -> str:
@@ -1916,13 +2042,10 @@ def _isbn_key(raw: str) -> str:
 
 def _library_views(idx: dict[str, Any]) -> dict[str, Any]:
     works = {w["key"]: w for w in idx["works"]}
-    by_md5: dict[str, list[dict[str, Any]]] = {}
     by_filename: dict[str, list[dict[str, Any]]] = {}
     parents_with_file: set[str] = set()
     parents_with_pdf: set[str] = set()
     for a in idx["attachments"]:
-        if a.get("md5"):
-            by_md5.setdefault(a["md5"], []).append(a)
         if a.get("filename"):
             by_filename.setdefault(Path(a["filename"]).name, []).append(a)
         if a.get("parent") and str(a.get("linkMode", "")).startswith("imported"):
@@ -1953,7 +2076,7 @@ def _library_views(idx: dict[str, Any]) -> dict[str, Any]:
         w["_tokens"] = _title_tokens(w.get("title", ""))
         for c in w.get("creators", []):
             by_surname.setdefault(_name_key(c), []).append(w)
-    return {"works": works, "by_md5": by_md5, "by_filename": by_filename,
+    return {"works": works, "by_filename": by_filename,
             "by_doi": by_doi, "by_isbn": by_isbn, "by_arxiv": by_arxiv,
             "by_handle": by_handle, "by_surname": by_surname,
             "parents_with_file": parents_with_file,
@@ -2005,8 +2128,7 @@ def library_matches(idx: dict[str, Any], *, doi: str | None = None,
 
     if pdf_path and pdf_path.exists():
         consulted.append("storageHash")
-        digest = file_md5(pdf_path)
-        for a in v["by_md5"].get(digest, []):
+        for a in attachments_with_content(idx, pdf_path):
             if a.get("parent"):
                 emit(a["parent"], "storageHash", "exact", a)
             else:
@@ -2104,7 +2226,7 @@ def library_matches(idx: dict[str, Any], *, doi: str | None = None,
     verdict = classify_matches(matches) if consulted else "unchecked"
     return {"matches": matches, "verdict": verdict,
             "consulted": consulted, "skipped": skipped,
-            "source": "zotero.sqlite", "read_mode": idx.get("read_mode")}
+            "source": idx.get("source", LIBRARY_SOURCE)}
 
 
 def _surname_in_text(surname: str, text: str) -> bool:
@@ -2175,85 +2297,47 @@ def corroborate(resolved: dict[str, Any], document_text: str) -> dict[str, Any]:
 
 
 def cmd_match(args: argparse.Namespace) -> int:
-    db_path = resolve_db_path(args.zotero_db)
-    if db_path is None:
-        emit_json({"zotero_db": None, "matches": [], "verdict": "unchecked",
-                   "consulted": [], "skipped": ["no Zotero database found"]})
-        return 0
-    conn, mode = zotero_open(db_path)
-    try:
-        result = zotero_matches(
-            conn,
-            doi=args.doi,
-            isbn=args.isbn,
-            arxiv=args.arxiv,
-            handle=args.handle,
-            title=args.title,
-            year=args.year,
-            first_author=args.author,
-            pdf_path=Path(args.pdf) if args.pdf else None,
-            library=args.library,
-        )
-    finally:
-        conn.close()
-    emit_json({"zotero_db": str(db_path), "read_mode": mode, **result})
+    idx, rc = with_zotero("match", lambda: read_library(args.library))
+    if rc is not None:
+        return rc
+    result = zotero_matches(
+        idx,
+        doi=args.doi,
+        isbn=args.isbn,
+        arxiv=args.arxiv,
+        handle=args.handle,
+        title=args.title,
+        year=args.year,
+        first_author=args.author,
+        pdf_path=Path(args.pdf) if args.pdf else None,
+    )
+    emit_json({"zotero": idx["zotero"], "source": idx["source"],
+               "library_id": idx["library_id"], **result})
     return 0
 
 
-def write_report_file(output: Path, body: str, db_path: Path) -> None:
-    """Write a 0600 report, never onto the Zotero database or its companions.
-
-    Real paths are compared even when the file does not exist yet, so a
-    dangling symlink to `zotero.sqlite-wal` is refused; O_NOFOLLOW refuses a
-    symlink swapped in after that check; and the opened file is compared by
-    inode before it is truncated, which catches a hard link.
-    """
-    guarded = [Path(f"{db_path}{suffix}")
-               for suffix in ("", "-wal", "-shm", "-journal")]
-    refusal = "dedup-report: --out names the Zotero database"
-    if os.path.realpath(output) in {os.path.realpath(g) for g in guarded}:
-        raise SystemExit(refusal)
-    try:
-        fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW, 0o600)
-    except OSError as exc:
-        raise SystemExit(f"dedup-report: cannot open --out {output}: {exc}") from exc
+def write_report_file(output: Path, body: str) -> None:
+    """Write a report readable by its owner only."""
+    fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as stream:
-        opened = os.fstat(stream.fileno())
-        for g in guarded:
-            if g.exists():
-                st = g.stat()
-                if (st.st_dev, st.st_ino) == (opened.st_dev, opened.st_ino):
-                    raise SystemExit(refusal)
-        os.ftruncate(stream.fileno(), 0)
         os.fchmod(stream.fileno(), 0o600)
         stream.write(body)
 
 
 def cmd_dedup_report(args: argparse.Namespace) -> int:
     """Report existing-library duplicate-file candidates without Zotero writes."""
-    db_path = resolve_db_path(args.zotero_db)
-    if db_path is None:
-        raise SystemExit("dedup-report: no local Zotero database found")
-    conn, mode = zotero_open(db_path)
-    wal = Path(str(db_path) + "-wal")
-    if mode == READ_SNAPSHOT and wal.exists() and wal.stat().st_size:
-        # The live read failed, so the WAL is unreadable to us and may hold
-        # writes the snapshot misses: refuse rather than report on a lag.
-        conn.close()
-        raise SystemExit("dedup-report: Zotero holds the database locked with "
-                         "pending WAL writes; close Zotero and retry")
-    try:
-        conn.execute("PRAGMA query_only=ON")
-        report = {**duplicate_hash_report(conn), "read_mode": mode}
-    finally:
-        conn.close()
+    idx, rc = with_zotero("dedup-report", lambda: read_library(USER_LIBRARY))
+    if rc is not None:
+        return rc
+    report = {**duplicate_hash_report(idx), "zotero": idx["zotero"],
+              "source": idx["source"]}
     if not report["hashed_attachments_scanned"]:
-        raise SystemExit("dedup-report: no hashed attachments inspected; "
+        raise SystemExit("dedup-report: no stored attachment could be compared; "
                          "cannot call this an empty library")
     body = (json.dumps(report, indent=2, ensure_ascii=False) + "\n"
             if args.format == "json" else duplicate_hash_html(report))
     if args.out:
-        write_report_file(Path(args.out), body, db_path)
+        write_report_file(Path(args.out), body)
         print(f"dedup-report: {report['candidate_clusters']} candidate groups "
               f"written to {args.out}")
     else:
@@ -2533,11 +2617,9 @@ def cmd_audit(args: argparse.Namespace) -> int:
         # mistyped path should not be the one that prints a traceback.
         emit_json({"error": f"not a directory: {root}", "verdict": "unchecked"})
         return 1
-    idx = library_snapshot(resolve_db_path(args.zotero_db), args.library)
-    if idx is None:
-        emit_json({"error": "no local Zotero database found",
-                   "verdict": "unchecked"})
-        return 1
+    idx, rc = with_zotero("audit", lambda: library_snapshot(args.library))
+    if rc is not None:
+        return rc
     pats = args.ext or [".pdf", ".html", ".htm", ".jpg", ".jpeg", ".png", ".djvu", ".epub"]
     files = sorted(p for p in root.iterdir()
                    if p.is_file() and p.suffix.lower() in pats)
@@ -2562,8 +2644,8 @@ def cmd_audit(args: argparse.Namespace) -> int:
                "absent": "inject",
                "error": "unreadable; look at it",
                "tied_parents": TIED_ACTION}
-    out = {"directory": str(root.resolve()), "zotero_db": idx["zotero_db"],
-           "read_mode": idx["read_mode"],
+    out = {"directory": str(root.resolve()), "zotero": idx["zotero"],
+           "source": idx["source"], "library_id": idx["library_id"],
            "library_works": len(idx["works"]),
            "library_attachments": len(idx["attachments"]),
            "files": len(files), "summary": summary,
@@ -2572,8 +2654,8 @@ def cmd_audit(args: argparse.Namespace) -> int:
     if args.out:
         Path(args.out).write_text(json.dumps(out, indent=1, ensure_ascii=False))
     json.dump({k: out[k] for k in
-               ("directory", "zotero_db", "read_mode", "library_works", "files",
-                "summary", "actions")},
+               ("directory", "zotero", "source", "library_id", "library_works",
+                "files", "summary", "actions")},
               sys.stdout, indent=2)
     sys.stdout.write("\n")
     if not args.out:
@@ -2598,11 +2680,17 @@ RECONCILE_ACTIONS = {
 }
 
 
-def reconcile_apply_config(root: Path, account: str | None) -> dict[str, Any]:
-    """Read the explicit project opt-in; its user_id must be the local account."""
+def reconcile_apply_config(root: Path, account: str | None, *,
+                           check_account: bool = True) -> dict[str, Any]:
+    """Read the explicit project opt-in; its user_id must be the local account.
+
+    `check_account=False` checks the file alone, before Zotero is contacted.
+    """
     config = json.loads((root / ".zotero-reconcile.json").read_text())
     if not isinstance(config, dict) or config.get("apply") is not True:
         raise ValueError("apply must be true")
+    if not check_account:
+        return config
     if account is None:
         raise ValueError("the local Zotero is signed in to no account; "
                          "cannot check the configured user_id")
@@ -2648,11 +2736,25 @@ def emit_reconcile_report(report: dict[str, Any], out: str | None) -> None:
     emit_json({k: v for k, v in report.items() if k != "rows"} if out else report)
 
 
+def reconcile_unavailable(root: Path, found: dict[str, Any],
+                          exc: ZoteroUnavailable, out: str | None) -> int:
+    """Zotero could not be reached or launched: a clean no-op, exit 0.
+
+    Nothing was compared and nothing was created. The verdict says so, and
+    the exit status lets an unattended sweep move on instead of crashing.
+    """
+    report = reconcile_report(root, found, [], [], verdict="zotero_unavailable")
+    report["zotero"] = {"status": "unavailable", "reason": str(exc)}
+    print(f"reconcile: {exc}", file=sys.stderr)
+    emit_reconcile_report(report, out)
+    return 0
+
+
 def reconcile_empty_report(root: Path, found: dict[str, Any],
                            args: argparse.Namespace) -> int:
     """Nothing staged: no library read, but an apply still checks its opt-in.
 
-    The opt-in is checked against the local account, so a broken
+    The opt-in is checked against the signed-in account, so a broken
     `.zotero-reconcile.json` fails now instead of on the first staged file.
     """
     staged = any(p.is_dir() for p in found["staging_dirs"])
@@ -2662,18 +2764,15 @@ def reconcile_empty_report(root: Path, found: dict[str, Any],
     rc = 0
     if getattr(args, "apply", False):
         try:
-            db_path = resolve_db_path(getattr(args, "zotero_db", None))
-            if db_path is None:
-                raise ValueError("no local Zotero database found")
-            conn, mode = zotero_open(db_path)
-            try:
-                account = local_account(conn)
-            finally:
-                conn.close()
-            report["library"] = {"zotero_db": str(db_path), "read_mode": mode}
+            reconcile_apply_config(root, None, check_account=False)
+            ensure_zotero()
+            account = local_account()
+            report["library"] = {"zotero": CONNECTOR_URL, "source": LIBRARY_SOURCE}
             reconcile_apply_config(root, account)
             report.update({"applied": [], "apply_status": "nothing"})
-        except (OSError, ValueError, TypeError, sqlite3.Error) as exc:
+        except ZoteroUnavailable as exc:
+            return reconcile_unavailable(root, found, exc, args.out)
+        except (OSError, ValueError, TypeError, LocalAPIError) as exc:
             mark_apply_failed(report, exc)
             rc = 1
     emit_reconcile_report(report, args.out)
@@ -2716,44 +2815,38 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
         # Nothing staged: no library comparison is needed.
         return reconcile_empty_report(root, found, args)
     library = getattr(args, "library", USER_LIBRARY)
-    db_path = resolve_db_path(getattr(args, "zotero_db", None))
     try:
-        idx = library_snapshot(db_path, library)
-    except sqlite3.Error as exc:
-        idx, read_error = None, f"cannot read zotero.sqlite: {exc}"
-    else:
-        read_error = "no local Zotero database found"
-    if idx is None:
-        report = reconcile_report(root, found, [], found["errors"] + [read_error])
+        ensure_zotero()
+        idx = library_snapshot(library)
+    except ZoteroUnavailable as exc:
+        return reconcile_unavailable(root, found, exc, args.out)
+    except (LocalAPIError, ValueError) as exc:
+        report = reconcile_report(root, found, [], found["errors"] + [
+            f"cannot read the Zotero library: {exc}"])
         emit_reconcile_report(report, args.out)
         return 1
     rows, errors = audit_sources(root, found, idx)
     report = reconcile_report(root, found, rows, errors)
-    report["library"] = {"zotero_db": idx["zotero_db"],
-                         "read_mode": idx["read_mode"]}
+    report["library"] = {"zotero": idx["zotero"], "source": idx["source"],
+                         "library_id": idx["library_id"]}
     apply_rc = 0
     if getattr(args, "apply", False):
         try:
-            config = reconcile_apply_config(root, idx["account"])
+            config = reconcile_apply_config(root, local_account(
+                idx if idx["library_id"] == USER_LIBRARY else None))
             if errors:
                 raise ValueError("discovery or audit is unchecked")
-            db_path = Path(idx["zotero_db"])
-            with directory_locks(found["staging_dirs"] + [db_path.parent]):
+            with directory_locks(found["staging_dirs"] + [library_lock_dir()]):
                 # Re-read under the locks and keep them through the saves, so
                 # two local sweeps cannot both act on the same pre-lock read.
                 # The read covers the library the items will land in: a
                 # collection in a group is checked against that group.
-                conn, _ = zotero_open(db_path)
-                try:
-                    _, target_lib = resolve_target(conn, library,
-                                                   config.get("collection"))
-                finally:
-                    conn.close()
-                fresh = library_snapshot(db_path, target_lib)
+                _, target_lib = resolve_target(library, config.get("collection"))
+                fresh = library_snapshot(target_lib)
                 report, apply_rc = reconcile_apply(root, found, fresh, config,
                                                    args)
         except (OSError, ValueError, KeyError, TypeError, RuntimeError,
-                sqlite3.Error, urllib.error.URLError) as exc:
+                LocalAPIError, urllib.error.URLError) as exc:
             mark_apply_failed(report, exc)
             apply_rc = 1
     emit_reconcile_report(report, args.out)
@@ -2785,8 +2878,8 @@ def reconcile_apply(root: Path, found: dict[str, Any], fresh: dict[str, Any],
     # The displayed report describes the same locked, fresh read that decides
     # the writes; the earlier read can predate another sweep.
     report = reconcile_report(root, found, rows, [])
-    report["library"] = {"zotero_db": fresh["zotero_db"],
-                         "read_mode": fresh["read_mode"]}
+    report["library"] = {"zotero": fresh["zotero"], "source": fresh["source"],
+                         "library_id": fresh["library_id"]}
     summary, actions = report["summary"], report["actions"]
     report["deferred"] = deferred
     if deferred:
@@ -2800,7 +2893,7 @@ def reconcile_apply(root: Path, found: dict[str, Any], fresh: dict[str, Any],
             entries_json=json.dumps(jobs), entries_file=None,
             collection=config.get("collection"),
             library=getattr(args, "library", USER_LIBRARY),
-            zotero_db=fresh["zotero_db"], dry_run=False,
+            dry_run=False,
             skip_corroboration=False, force=False, _snapshot=fresh)
         captured = io.StringIO()
         with contextlib.redirect_stdout(captured):
@@ -2809,8 +2902,6 @@ def reconcile_apply(root: Path, found: dict[str, Any], fresh: dict[str, Any],
         if "results" not in outcome:
             raise RuntimeError(outcome.get("error", "inject failed"))
         report["applied"] = outcome["results"]
-        if outcome.get("warning"):
-            report["warning"] = outcome["warning"]
         for file, result in zip(job_paths, report["applied"]):
             result["file"] = file
             summary["absent"] -= 1
@@ -2869,16 +2960,11 @@ def cmd_attach(args: argparse.Namespace) -> int:
     did not create in the same session either, so this verifies the parent
     and the files and says what to do in Zotero.
     """
-    db_path = resolve_db_path(args.zotero_db)
-    if db_path is None:
-        raise SystemExit("attach: no local Zotero database found")
-    conn, mode = zotero_open(db_path)
-    try:
-        data = item_data(conn, args.parent, args.library)
-    finally:
-        conn.close()
+    data, rc = with_zotero("attach", lambda: item_data(args.parent, args.library))
+    if rc is not None:
+        return rc
     if data is None:
-        emit_json({"parent": args.parent, "read_mode": mode,
+        emit_json({"parent": args.parent, "source": LIBRARY_SOURCE,
                    "error": "item not found"})
         return 1
     rc = 0
@@ -2892,7 +2978,7 @@ def cmd_attach(args: argparse.Namespace) -> int:
         suggested.append({"itemKey": args.parent, "field": "attachment",
                           "old": "", "new": str(p.resolve())})
     emit_json({"parent": args.parent, "title": data.get("title"),
-               "read_mode": mode,
+               "source": LIBRARY_SOURCE,
                "apply": "in Zotero, select the item, then Add Attachment > "
                         "Attach Stored Copy of File (or drag the file onto it)",
                "suggested": suggested})
@@ -2900,7 +2986,6 @@ def cmd_attach(args: argparse.Namespace) -> int:
 
 
 def add_library_args(parser: argparse.ArgumentParser, help_scope: str) -> None:
-    parser.add_argument("--zotero-db", help="override Zotero sqlite path")
     parser.add_argument("--library", default=USER_LIBRARY, help=help_scope)
 
 
@@ -2908,7 +2993,7 @@ def main() -> int:
     p = argparse.ArgumentParser(prog="zotero.py")
     sub = p.add_subparsers(dest="cmd", required=True)
     scope = ("dedup scope: 'user' (default, the inject destination), 'all', "
-             "or a numeric libraryID")
+             "or a numeric groupID")
 
     pp = sub.add_parser("probe", help="extract metadata + Zotero dup hits")
     pp.add_argument("pdf", nargs="+")
@@ -2934,7 +3019,6 @@ def main() -> int:
 
     pd = sub.add_parser("dedup-report", help="read-only report of identical "
                         "attachments under distinct My Library items")
-    pd.add_argument("--zotero-db", help="override local Zotero sqlite path")
     pd.add_argument("--format", choices=("html", "json"), default="html")
     pd.add_argument("--out", help="write report to this file (else stdout)")
     pd.set_defaults(func=cmd_dedup_report)
@@ -2980,14 +3064,15 @@ def main() -> int:
 
     pi = sub.add_parser("inject",
                         help="create items (and attach PDFs) through the "
-                             "Zotero desktop connector; Zotero must be running")
+                             "Zotero desktop connector; Zotero is launched "
+                             "if it is not running")
     gi = pi.add_mutually_exclusive_group()
     gi.add_argument("--entries-json", help="inline JSON: array of entry dicts")
     gi.add_argument("--entries-file", help="path to JSON file with entries")
     pi.add_argument("--collection", help="collection key to file items under "
                                          "(its library is the destination)")
     add_library_args(pi, "destination and dedup scope: 'user' (default) or "
-                         "a numeric libraryID, e.g. an editable group")
+                         "a numeric groupID, e.g. an editable group")
     pi.add_argument("--dry-run", action="store_true",
                     help="print the Zotero item JSON, do not contact Zotero")
     pi.add_argument("--skip-corroboration", action="store_true",

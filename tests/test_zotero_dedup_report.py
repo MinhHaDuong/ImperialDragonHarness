@@ -1,17 +1,21 @@
-"""The existing-library report must find real cross-parent hash duplicates."""
+"""The existing-library report must find real cross-parent hash duplicates.
+
+The library is a stub of the running Zotero's local API (tests/zotero_stub.py);
+no test touches ~/Zotero or a running client.
+"""
 
 import hashlib
 import importlib.util
-import os
-from pathlib import Path
-import sqlite3
+import json
+import socket
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
 from child_env import child_env
-
+from zotero_stub import StubZotero
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "zotero.py"
@@ -21,59 +25,70 @@ sys.modules[spec.name] = zi
 spec.loader.exec_module(zi)
 
 
-def fixture_db(path: Path) -> None:
-    conn = sqlite3.connect(path)
-    conn.executescript("""
-        CREATE TABLE libraries (libraryID INTEGER PRIMARY KEY, type TEXT);
-        CREATE TABLE items (itemID INTEGER PRIMARY KEY, libraryID INT,
-                            itemTypeID INT, key TEXT);
-        CREATE TABLE itemTypes (itemTypeID INTEGER PRIMARY KEY, typeName TEXT);
-        CREATE TABLE itemAttachments (itemID INTEGER PRIMARY KEY,
-                 parentItemID INT, path TEXT, contentType TEXT, storageHash TEXT);
-        CREATE TABLE deletedItems (itemID INT);
-        CREATE TABLE fields (fieldID INTEGER PRIMARY KEY, fieldName TEXT);
-        CREATE TABLE itemData (itemID INT, fieldID INT, valueID INT);
-        CREATE TABLE itemDataValues (valueID INTEGER PRIMARY KEY, value TEXT);
-        CREATE TABLE creators (creatorID INTEGER PRIMARY KEY, lastName TEXT);
-        CREATE TABLE itemCreators (itemID INT, creatorID INT, orderIndex INT);
-        INSERT INTO libraries VALUES (1,'user'),(3,'group');
-        INSERT INTO itemTypes VALUES (1,'journalArticle'),(2,'attachment');
-        INSERT INTO items VALUES
-          (10,1,1,'PARENT10'),(11,1,1,'PARENT11'),
-          (12,1,1,'PARENT12'),(13,1,1,'TRASHED'),(50,3,1,'GROUP50'),
-          (20,1,2,'ATT20'),(21,1,2,'ATT21'),(22,1,2,'ATT22'),
-          (23,1,2,'ATT23'),(30,1,2,'ATT30'),(31,1,2,'ATT31'),
-          (51,3,2,'ATT51');
-        INSERT INTO deletedItems VALUES (13);
-        INSERT INTO fields VALUES (1,'title'),(2,'DOI');
-        INSERT INTO itemDataValues VALUES
-          (1,'<Unsafe & title>'),(2,'Different title'),(3,'10.1234/example');
-        INSERT INTO itemData VALUES
-          (10,1,1),(11,1,2),(10,2,3),(11,2,3);
-    """)
-    shared = hashlib.md5(b"known positive file").hexdigest()
-    same_parent = hashlib.md5(b"same parent only").hexdigest()
-    conn.executemany("INSERT INTO itemAttachments VALUES (?,?,?,?,?)", [
-        (20, 10, "storage:a.pdf", "application/pdf", shared),
-        (21, 11, "storage:b.pdf", "application/pdf", shared),
-        (22, 10, "storage:<unsafe & name>.pdf", "application/pdf", shared),
-        (23, 13, "storage:trashed.pdf", "application/pdf", shared),
-        (30, 12, "storage:d.pdf", "application/pdf", same_parent),
-        (31, 12, "storage:e.pdf", "application/pdf", same_parent),
-        (51, 50, "storage:group.pdf", "application/pdf", shared),
-    ])
-    conn.commit()
-    conn.close()
+@pytest.fixture(autouse=True)
+def no_real_zotero(monkeypatch):
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        port = sock.getsockname()[1]
+    monkeypatch.setattr(zi, "CONNECTOR_URL", f"http://127.0.0.1:{port}")
+    monkeypatch.setattr(zi, "launch_zotero",
+                        lambda cmd: pytest.fail(f"a test tried to launch {cmd}"))
+    monkeypatch.setattr(zi, "in_container", lambda: "test run")
 
 
-def test_known_cross_parent_pair_and_scope(tmp_path):
-    db = tmp_path / "zotero.sqlite"
-    fixture_db(db)
-    conn, _ = zi.zotero_open(db)
-    report = zi.duplicate_hash_report(conn)
-    conn.close()
+def fixture_library(tmp_path: Path, md5_reported: bool) -> StubZotero:
+    """Two parents share one file; one parent holds two copies of another;
+    a trashed parent and a group library hold the shared file too."""
+    stub = StubZotero()
+    files = {}
+    for name, content in (("a.pdf", b"known positive file"),
+                          ("b.pdf", b"known positive file"),
+                          ("<unsafe & name>.pdf", b"known positive file"),
+                          ("trashed.pdf", b"known positive file"),
+                          ("d.pdf", b"same parent only!!"),
+                          ("e.pdf", b"same parent only!!"),
+                          ("group.pdf", b"known positive file"),
+                          ("lonely.pdf", b"a size nobody else has")):
+        files[name] = tmp_path / name.replace("<", "").replace(">", "")
+        files[name].write_bytes(content)
+
+    def md5(name):
+        return hashlib.md5(files[name].read_bytes()).hexdigest() if md5_reported else None
+
+    stub.add_work("PARENT10", "<Unsafe & title>", DOI="10.1234/example")
+    stub.add_work("PARENT11", "Different title", DOI="10.1234/example")
+    stub.add_work("PARENT12", "Same parent")
+    stub.add_work("PARENT13", "Lonely")
+    stub.add_work("TRASHED", "Trashed", trashed=True)
+    for key, parent, name in (("ATT20", "PARENT10", "a.pdf"),
+                              ("ATT21", "PARENT11", "b.pdf"),
+                              ("ATT22", "PARENT10", "<unsafe & name>.pdf"),
+                              ("ATT23", "TRASHED", "trashed.pdf"),
+                              ("ATT30", "PARENT12", "d.pdf"),
+                              ("ATT31", "PARENT12", "e.pdf"),
+                              ("ATT32", "PARENT13", "lonely.pdf")):
+        stub.add_attachment(key, parent, path=files[name], filename=name,
+                            md5=md5(name))
+    stub.add_group(3, "Shared")
+    stub.add_work("GROUP50", "Group copy", prefix="groups/3")
+    stub.add_attachment("ATT51", "GROUP50", path=files["group.pdf"],
+                        prefix="groups/3", md5=md5("group.pdf"))
+    return stub
+
+
+@pytest.mark.parametrize("md5_reported", [True, False])
+def test_known_cross_parent_pair_and_scope(tmp_path, monkeypatch, md5_reported):
+    """Zotero 10 reports md5s; Zotero 7-9 do not, and the files are hashed
+    here. Either way the same single cluster comes out, and the group copy
+    and the trashed parent stay out of it."""
+    stub = fixture_library(tmp_path, md5_reported)
+    monkeypatch.setattr(zi, "CONNECTOR_URL", stub.start())
+    try:
+        report = zi.duplicate_hash_report(zi.read_library("user"))
+    finally:
+        stub.stop()
     assert report["candidate_clusters"] == 1
-    assert report["hashed_attachments_scanned"] == 5
+    assert report["hashed_attachments_scanned"] == 6
     group = report["clusters"][0]
     assert group["matched_by"] == "storageHash"
     assert [item["key"] for item in group["items"]] == ["PARENT10", "PARENT11"]
@@ -82,16 +97,33 @@ def test_known_cross_parent_pair_and_scope(tmp_path):
         {"items": ["PARENT10", "PARENT11"], "keys": ["doi"]}]
 
 
+def test_a_uniquely_sized_file_is_never_hashed(tmp_path, monkeypatch):
+    stub = fixture_library(tmp_path, md5_reported=False)
+    monkeypatch.setattr(zi, "CONNECTOR_URL", stub.start())
+    hashed = []
+    real = zi.file_md5
+    monkeypatch.setattr(zi, "file_md5",
+                        lambda p, *a: hashed.append(Path(p).name) or real(p, *a))
+    try:
+        zi.duplicate_hash_report(zi.read_library("user"))
+    finally:
+        stub.stop()
+    assert "lonely.pdf" not in hashed and "a.pdf" in hashed
+
+
 @pytest.mark.integration
 def test_cli_report_is_escaped_linked_and_read_only(tmp_path):
-    db = tmp_path / "zotero.sqlite"
-    fixture_db(db)
-    before = hashlib.sha256(db.read_bytes()).digest()
+    stub = fixture_library(tmp_path, md5_reported=True)
+    url = stub.start()
     out = tmp_path / "report.html"
-    result = subprocess.run(
-        [sys.executable, str(SCRIPT), "dedup-report", "--zotero-db", str(db),
-         "--out", str(out)], capture_output=True, text=True, check=True,
-        env=child_env())
+    env = child_env()
+    env.update(ZOTERO_CONNECTOR_URL=url, CI="1")  # CI: never launch a Zotero
+    try:
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT), "dedup-report", "--out", str(out)],
+            capture_output=True, text=True, check=True, env=env)
+    finally:
+        stub.stop()
     body = out.read_text()
     assert "1 candidate groups" in result.stdout
     assert "zotero://select/library/items/PARENT10" in body
@@ -105,79 +137,27 @@ def test_cli_report_is_escaped_linked_and_read_only(tmp_path):
     assert "&lt;Unsafe &amp; title&gt;" in body
     assert "<Unsafe & title>" not in body
     assert "GROUP50" not in body and "TRASHED" not in body
-    assert hashlib.sha256(db.read_bytes()).digest() == before
     assert out.stat().st_mode & 0o777 == 0o600
+    assert [c[0] for c in stub.calls if c[0] != "GET"] == [], "the report only reads"
 
 
-@pytest.mark.integration
-def test_cli_refuses_a_locked_database_with_pending_wal_writes(tmp_path):
-    """A running Zotero: the live read is locked out and the WAL holds writes
-    the immutable snapshot cannot see, so the report refuses."""
-    db = tmp_path / "zotero.sqlite"
-    fixture_db(db)
-    holder = sqlite3.connect(db)
-    holder.execute("PRAGMA journal_mode=WAL")
-    holder.execute("PRAGMA wal_autocheckpoint=0")
-    holder.execute("PRAGMA locking_mode=EXCLUSIVE")
-    holder.execute("INSERT INTO deletedItems VALUES (11)")
-    holder.commit()
-    try:
-        result = subprocess.run(
-            [sys.executable, str(SCRIPT), "dedup-report", "--zotero-db", str(db)],
-            capture_output=True, text=True, env=child_env())
-    finally:
-        holder.close()
-    assert result.returncode != 0
-    assert "pending WAL writes" in result.stderr
-
-
-@pytest.mark.integration
-def test_cli_reads_an_unlocked_wal_live(tmp_path):
-    """Zotero closed but un-checkpointed: mode=ro reads the WAL, no refusal."""
-    db = tmp_path / "zotero.sqlite"
-    fixture_db(db)
-    writer = sqlite3.connect(db)
-    writer.execute("PRAGMA journal_mode=WAL")
-    writer.execute("PRAGMA wal_autocheckpoint=0")
-    writer.execute("INSERT INTO deletedItems VALUES (11)")
-    writer.commit()
-    try:
-        result = subprocess.run(
-            [sys.executable, str(SCRIPT), "dedup-report", "--zotero-db", str(db),
-             "--format", "json"], capture_output=True, text=True, env=child_env())
-    finally:
-        writer.close()
-    assert result.returncode == 0, result.stderr
-    # Item 11 trashed in the WAL only: its cross-parent pair disappears.
-    assert '"candidate_clusters": 0' in result.stdout
-
-
-def test_report_names_its_read_mode(tmp_path, capsys):
+def test_report_names_its_source(tmp_path, monkeypatch, capsys):
     import argparse
-    db = tmp_path / "zotero.sqlite"
-    fixture_db(db)
-    args = argparse.Namespace(zotero_db=str(db), format="json", out=None)
-    assert zi.cmd_dedup_report(args) == 0
-    assert '"read_mode": "ro"' in capsys.readouterr().out
-    args.format = "html"
-    assert zi.cmd_dedup_report(args) == 0
-    assert "read mode: ro" in capsys.readouterr().out
+    stub = fixture_library(tmp_path, md5_reported=True)
+    monkeypatch.setattr(zi, "CONNECTOR_URL", stub.start())
+    try:
+        args = argparse.Namespace(format="json", out=None)
+        assert zi.cmd_dedup_report(args) == 0
+        assert json.loads(capsys.readouterr().out)["source"] == zi.LIBRARY_SOURCE
+        args.format = "html"
+        assert zi.cmd_dedup_report(args) == 0
+        assert "read live from zotero local API" in capsys.readouterr().out
+    finally:
+        stub.stop()
 
 
-def test_out_may_not_name_the_database(tmp_path):
+def test_report_without_zotero_does_nothing(capsys):
     import argparse
-    db = tmp_path / "zotero.sqlite"
-    fixture_db(db)
-    before = db.read_bytes()
-    hard = tmp_path / "innocent.json"
-    os.link(db, hard)
-    sym = tmp_path / "also-innocent.json"
-    sym.symlink_to(db)
-    dangling = tmp_path / "dangling.json"
-    dangling.symlink_to(f"{db}-wal")  # Zotero closed: no WAL file yet
-    for target in (db, hard, sym, dangling):
-        args = argparse.Namespace(zotero_db=str(db), format="json", out=str(target))
-        with pytest.raises(SystemExit, match="names the Zotero database"):
-            zi.cmd_dedup_report(args)
-    assert db.read_bytes() == before
-    assert not Path(f"{db}-wal").exists()
+    args = argparse.Namespace(format="json", out=None)
+    assert zi.cmd_dedup_report(args) == zi.EXIT_UNAVAILABLE
+    assert json.loads(capsys.readouterr().out)["zotero"] == "unavailable"
