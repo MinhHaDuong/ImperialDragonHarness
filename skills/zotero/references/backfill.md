@@ -36,7 +36,7 @@ Resolve any `errors` and inspect `ambiguous` rows before taking action. An
 `absent` row is a proposal for a later, explicit import, not permission to
 auto-inject it. Every early exit (nothing staged, Zotero unavailable) still
 writes `--out` with the same report keys. Zotero unavailable is a clean
-no-op: verdict `zotero_unavailable`, exit 0, nothing compared or created.
+no-op: verdict `zotero_unavailable`, exit 0, nothing compared or created (exit 1 if discovery found errors, which stay listed).
 
 For an opted-in import, the project owner adds a root-level
 `.zotero-reconcile.json` containing `{"apply": true, "user_id": "123456"}`,

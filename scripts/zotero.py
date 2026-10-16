@@ -2795,12 +2795,16 @@ def reconcile_unavailable(root: Path, found: dict[str, Any],
 
     Nothing was compared and nothing was created. The verdict says so, and
     the exit status lets an unattended sweep move on instead of crashing.
+    Discovery errors (a broken bib) do not depend on Zotero: they are still
+    reported, and exit 1.
     """
-    report = reconcile_report(root, found, [], [], verdict="zotero_unavailable")
+    errors = list(found["errors"])
+    report = reconcile_report(root, found, [], errors,
+                              verdict="zotero_unavailable")
     report["zotero"] = {"status": "unavailable", "reason": str(exc)}
     print(f"reconcile: {exc}", file=sys.stderr)
     emit_reconcile_report(report, out)
-    return 0
+    return 1 if errors else 0
 
 
 def reconcile_empty_report(root: Path, found: dict[str, Any],

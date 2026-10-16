@@ -2365,6 +2365,24 @@ def test_reconcile_without_zotero_is_a_clean_no_op_and_still_writes_out(
     assert "container" in capsys.readouterr().err
 
 
+def test_reconcile_without_zotero_still_reports_discovery_errors(tmp_path, capsys):
+    """A broken bib is the project's fault, not Zotero's: unavailable must not
+    turn it into a clean no-op."""
+    docs = tmp_path / "docs"
+    docs.mkdir()
+    (docs / "ok.pdf").write_bytes(b"ok")
+    (tmp_path / "sources.bib").write_text(
+        "@article{ok, file={docs/ok.pdf}}\n"
+        "@article{broken, file={docs/lost.pdf}\n"
+    )
+    out = tmp_path / "report.json"
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path, out=str(out))) == 1
+    report = json.loads(out.read_text())
+    assert report["verdict"] == "zotero_unavailable"
+    assert report["errors"]
+    capsys.readouterr()
+
+
 def test_reconcile_empty_apply_without_zotero_is_a_clean_no_op(tmp_path, capsys):
     (tmp_path / ".zotero-reconcile.json").write_text('{"apply": true, "user_id": "1"}')
     out = tmp_path / "report.json"
