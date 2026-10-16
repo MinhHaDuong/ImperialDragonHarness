@@ -3,13 +3,13 @@
 A whole `docs/` folder is not the happy path repeated N times. Two things
 change, and both are failure modes rather than conveniences.
 
-**Dedup must be possible at all.** Every lookup reads the desktop client's
-`zotero.sqlite`, afresh on each run (about 0.4 s for a 7,672-work library,
-measured 2026-10-15). On a machine with no desktop client that file does not
-exist, every lookup returns `verdict: "unchecked"`, and a backfill that reads "unchecked"
-as "absent" re-imports the entire library. Run the backfill where the
-desktop database lives; a clean negative then stays distinguishable from a
-lookup that could not run:
+**Dedup must be possible at all.** Every lookup reads the library live
+through the running Zotero's local API, once per run. When Zotero is not
+running the helper launches it; in a container, or when the launch fails,
+the command does nothing and reports Zotero unavailable. A backfill that read
+"could not look" as "absent" would re-import the entire library, so run it
+on the machine where Zotero lives; a clean negative then stays
+distinguishable from a lookup that could not run:
 
 ```bash
 zotero.py audit docs/ --out /tmp/audit.json
@@ -34,16 +34,17 @@ echo "reconcile report: $out (exit $status)"
 
 Resolve any `errors` and inspect `ambiguous` rows before taking action. An
 `absent` row is a proposal for a later, explicit import, not permission to
-auto-inject it. Every early exit (nothing staged, no database) still writes
-`--out` with the same report keys.
+auto-inject it. Every early exit (nothing staged, Zotero unavailable) still
+writes `--out` with the same report keys. Zotero unavailable is a clean
+no-op: verdict `zotero_unavailable`, exit 0, nothing compared or created.
 
 For an opted-in import, the project owner adds a root-level
 `.zotero-reconcile.json` containing `{"apply": true, "user_id": "123456"}`,
 where `user_id` is the account the local Zotero is signed in to (an optional
-`collection` key files created items there). Then, with Zotero running, run
-`reconcile . --apply`; no maintenance skill runs it for you. The script
-locks the staging directories and the Zotero data directory (advisory locks
-on the directories themselves, no lock files), re-reads `zotero.sqlite`, and
+`collection` key files created items there). Then run `reconcile . --apply`;
+no maintenance skill runs it for you. The script locks the staging
+directories and the user's runtime directory (advisory locks on the
+directories themselves, no lock files), re-reads the library live, and
 creates only absent PDFs with corroborated title/author metadata, through the
 desktop connector. The re-read covers the destination library, so with a
 group `collection` the duplicate check reads that group. Missing metadata, weak matches, ties, and discovery errors
@@ -52,13 +53,10 @@ write. Existing items are never edited: their fixes stay in
 `suggested_edits`. The default invocation stays report-only.
 
 Nothing is recorded between runs. The duplicate guard in `inject` is the
-fresh read of the library plus a check of the batch against itself; use
-`--force` only after inspecting a legitimate exception. While Zotero runs it
-holds `zotero.sqlite` locked, so that read is the immutable snapshot, which
-can miss the client's most recent saves (`read_mode: "immutable"` and a
-`warning` in the output). A save that fails in transit stops the run; look
-in Zotero before retrying, and check the *Duplicate Items* pane after a
-retried sweep.
+live read of the destination library plus a check of the batch against
+itself; use `--force` only after inspecting a legitimate exception. A save
+that fails in transit stops the run; the next run's read sees the item if it
+was created.
 
 `audit` classifies every staged file into five verdicts, and the distinction
 between the middle two decides what you do next:
@@ -86,8 +84,8 @@ words of "Systems of inequalities involving convex functions" match any paper
 about linear inequalities — which filed a real Hoffman 1960 paper as a different
 Hoffman paper, at `strong`.
 
-**Content hash is the strongest key available** (`storageHash`, the md5
-Zotero records for each stored file): it survives renaming, re-filing and
+**Content hash is the strongest key available** (`storageHash`, the md5 of
+each stored file, reported by Zotero 10 or computed here): it survives renaming, re-filing and
 metadata drift, and it answers the question a staging directory actually
 asks — *is this exact file already stored?* Prefer it over any title
 comparison.

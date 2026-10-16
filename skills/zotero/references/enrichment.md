@@ -7,8 +7,8 @@ there. The result is a system of record less complete than the staging folder
 it supersedes, which is backwards. (Measured once: nine items in one library
 held no DOI while the project `.bib` carried one for each.)
 
-The helper reads the item from the local `zotero.sqlite` and **reports** the
-edit; it never writes. The author applies it in the Zotero client.
+The helper reads the item live through the running Zotero's local API and
+**reports** the edit; it never writes. The author applies it in the Zotero client.
 
 ```bash
 zotero.py enrich --item-key XRWZU4DZ \

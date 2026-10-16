@@ -165,7 +165,7 @@ belong in the external keystore and are resolved by task-specific tools.
 | `/verify-adherence` | Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. |
 | `/verify-gate` | Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE with explicit evidence. Does not merge — the merge decision belongs to the caller. |
 | `/yawn` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
-| `/zotero` | Import one or more PDFs or URLs into Zotero, suggest enrichments to existing items, or audit and reconcile the library — extract metadata, resolve identifiers online, dedupe against the local desktop database, and create items with their PDFs through the running Zotero desktop connector (RIS file as fallback). |
+| `/zotero` | Import one or more PDFs or URLs into Zotero, suggest enrichments to existing items, or audit and reconcile the library — extract metadata, resolve identifiers online, dedupe against the running Zotero's local API, and create items with their PDFs through its desktop connector (RIS file as fallback). |
 
 <!-- skills:end -->
 

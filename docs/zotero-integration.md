@@ -1,6 +1,6 @@
 # Zotero Integration — IDH Architecture
 
-**Status**: Draft — 2026-06-24, revised 2026-10-15
+**Status**: Draft — 2026-06-24, revised 2026-10-16
 
 ## Principles
 
@@ -9,6 +9,7 @@
 - **For general work outside the skills**, the harness documents the interface options and lets the session choose. No option is a required dependency.
 - **Hard invariants, regardless of transport**: never write `zotero.sqlite`; merges and edits to existing items happen in the desktop client; creating items is previewed first (`--dry-run`) and leaves a durable RIS artifact.
 - **Local-only and stateless helper** (decided 2026-10-15, ticket 1113): `scripts/zotero.py` reaches no cloud service, holds no credential, and keeps no cache, index or record between runs.
+- **API only, never sqlite** (decided 2026-10-16, ticket 1113): every library read goes through the running client's local API; the helper never opens `zotero.sqlite`. When Zotero is not up the helper tries to launch it; if it cannot, it does nothing. In a container it does nothing.
 - **KISS and YAGNI at all layers.**
 
 ---
@@ -62,24 +63,30 @@ Zotero exposes these surfaces on the author's machine; a transport is the path a
 
 | Surface | Client up? | Auth | Writes |
 |---|---|---|---|
-| Local `zotero.sqlite`, opened `mode=ro` (or `immutable=1` while the client holds it locked) | No | none | never (invariant) |
+| Local `zotero.sqlite` (not used by the helper) | No | none | never (invariant) |
 | Desktop connector `127.0.0.1:23119/connector/` | Yes | none | creates new items and their attachments; cannot edit an existing item |
-| Local HTTP API `127.0.0.1:23119/api/` (not used by the helper) | Yes | key-free reads; writes need a grant in the client | yes, since Zotero 10 (new since this doc's first draft) |
+| Local HTTP API `127.0.0.1:23119/api/` | Yes | key-free reads, once the user enables "Allow other applications on this computer to communicate with Zotero" (Settings > Advanced); writes need a grant in the client | yes, since Zotero 10 (the helper only reads) |
 
-The zotero skill chose sqlite reads + connector creation through Bash-callable
-Python scripts, and no cloud surface (ticket 1113):
+The zotero skill chose local API reads + connector creation through
+Bash-callable Python scripts, and no cloud surface (ticket 1113; reads moved
+from sqlite to the local API on 2026-10-16):
 
 - The safety contract is expressed as script flags (`--dry-run`, an explicit
   `--apply` opt-in); the outputs are durable RIS/report artifacts, not
   ephemeral tool calls.
-- Reads need no running client and no network, so autonomous sessions (`raid`,
-  `nightbeat`, `beat`) can audit and reconcile headless. Creating items needs
-  Zotero running; a headless `reconcile --apply` reports the connector failure
-  and writes nothing.
-- A full library read takes about 0.4 s (7,672 works, measured on doudou
-  2026-10-15), so there is nothing to cache.
-- Reading the immutable snapshot while Zotero runs can lag the client's latest
-  writes; every output names its `read_mode`.
+- Every read is live: the duplicate guard sees what the client saved a second
+  ago, where a sqlite snapshot of a running client could lag it.
+- Reads and creation need Zotero running. The helper launches it when it is
+  not (never in a container or headless runner) and waits up to 90 s; when it
+  still does not answer, the command does nothing, exits 75 (`EX_TEMPFAIL`),
+  and `reconcile` reports verdict `zotero_unavailable` with exit 0 so an
+  unattended sweep reads it as a clean no-op. Autonomous sessions in a
+  container therefore never audit or reconcile.
+- Zotero 10 reports each stored file's md5 in the item JSON; with Zotero 7 to
+  9 the helper hashes a stored file only when its size equals a compared
+  file's. Listing the attachments of a large library on Zotero 10 makes the
+  client hash every stored file, which may take a while on a cold disk cache:
+  not measured yet (no running client on the build host).
 
 Stdlib HTTP over a wrapper library is likewise the current choice, not a rule:
 `pyzotero` (v1.15.x) reaches the local API (`local=True`), ships a CLI, and an
@@ -93,10 +100,13 @@ It never appears in a skill's correctness path.
 ### 6. Multi-library access
 
 The default destination and dedup scope is the user library. `inject --library
-<libraryID>` or `--collection <key>` targets another editable library, e.g. a
+<groupID>` or `--collection <key>` targets another editable library, e.g. a
 group the author can write to: the connector saves into the library selected in
-the Zotero window, then moves the item to the target. A read-only group cannot be
-a destination. Validate the library selector early; fail fast on malformed input.
+the Zotero window, then moves the item to the target, named by the client's
+internal id read from the connector's target list (the user library; a group
+by its name; a collection by its path of names; ambiguity is refused). A
+read-only group cannot be a destination. Validate the library selector early;
+fail fast on malformed input.
 
 ---
 
@@ -151,7 +161,7 @@ Prose names a skill's operation precisely; command names stay as they are, scope
 | **OCR** — scanned PDF → text attachment via Mistral | archiveCIRED | Unbacked — file on demand |
 | **Export** — filtered CSL-JSON or RIS by collection/tag/year | CIRED.digital, activity report | RAG schema finalized or report cycle starts |
 | **Key sync** — import `Ha-Duong.bib` citation keys into Zotero Extra field | Publications list | Next homepage refresh; `update-publist` is the sanctioned write path |
-| **Dedup** — candidate pairs + HITL merge; auto-apply hash- and DOI-exact matches only | archiveCIRED, publications list | **Triggered 2026-08-14** — ticket 0485. See also ticket 0570: the same 269 clusters make `classify_matches()`'s untie-broken `exact` tier report one parent and drop the rest in silence. 269 clusters where one file md5 sits under distinct parents in the user library, none of them visible to Zotero's own Duplicate Items pane (it matches title/DOI/ISBN + creators + year, same item type, and never the file hash). Detection reads the local DB; the **merge belongs to the desktop client** — no programmatic surface has a merge endpoint, and a Zotero merge is a client-side composite (move children, union collections and tags, trash the losers, write `dc:replaces` on the master; the library already carries 436 such relations). Ticket 0485 closed 2026-10-02: detector and report delivered and live-validated, sample arbitrated; residue — author merges in the client, right-click → Merge n Items. |
+| **Dedup** — candidate pairs + HITL merge; auto-apply hash- and DOI-exact matches only | archiveCIRED, publications list | **Triggered 2026-08-14** — ticket 0485. See also ticket 0570: the same 269 clusters make `classify_matches()`'s untie-broken `exact` tier report one parent and drop the rest in silence. 269 clusters where one file md5 sits under distinct parents in the user library, none of them visible to Zotero's own Duplicate Items pane (it matches title/DOI/ISBN + creators + year, same item type, and never the file hash). Detection reads the library through the local API; the **merge belongs to the desktop client** — no programmatic surface has a merge endpoint, and a Zotero merge is a client-side composite (move children, union collections and tags, trash the losers, write `dc:replaces` on the master; the library already carries 436 such relations). Ticket 0485 closed 2026-10-02: detector and report delivered and live-validated, sample arbitrated; residue — author merges in the client, right-click → Merge n Items. |
 
 Each capability rides one backend script; the library capability is the
 one `zotero` skill (verbs, reference files), no shared framework beyond the

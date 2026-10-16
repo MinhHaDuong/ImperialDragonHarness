@@ -1,6 +1,6 @@
 ---
 name: zotero
-description: "Import one or more PDFs or URLs into Zotero, suggest enrichments to existing items, or audit and reconcile the library — extract metadata, resolve identifiers online, dedupe against the local desktop database, and create items with their PDFs through the running Zotero desktop connector (RIS file as fallback)."
+description: "Import one or more PDFs or URLs into Zotero, suggest enrichments to existing items, or audit and reconcile the library — extract metadata, resolve identifiers online, dedupe against the running Zotero's local API, and create items with their PDFs through its desktop connector (RIS file as fallback)."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "import <pdf-or-url>... | enrich | audit <dir> | reconcile <repo> | dedup-report | attach"
@@ -42,22 +42,26 @@ import and audit both, and `write` is the durable-RIS step behind import.
 of its output (`why` / `certainty` / `consulted` / `skipped`).
 
 Inside `import`: probe → match → write → inject. `probe` (or
-`probe-url.py` for URLs) extracts, `match` dedupes against the desktop
-database, `write` emits the durable RIS artifact, and `inject` creates the
+`probe-url.py` for URLs) extracts, `match` dedupes against a live read of
+the library, `write` emits the durable RIS artifact, and `inject` creates the
 items through the Zotero desktop connector. `references/import.md` carries
 the full contract.
 
 ## Safety contract
 
-The helper is local-only and stateless. Every call reads `zotero.sqlite`
-afresh, read-only (`mode=ro`, or the `immutable=1` snapshot when a running
-Zotero holds the file locked; the output names which as `read_mode`), and
-keeps nothing on disk between runs. Never write `zotero.sqlite`; merges
-happen in the desktop client.
+The helper is local-only and stateless. Every library read goes through the
+running Zotero's local API (`127.0.0.1:23119/api/`, read-only, no key), live,
+and nothing is kept on disk between runs. It never opens `zotero.sqlite`;
+merges happen in the desktop client. The local API is off until the author
+enables Zotero Settings > Advanced > "Allow other applications on this
+computer to communicate with Zotero"; until then the helper fails and names
+that setting.
 
 The only write is the creation of new items with their PDFs, through the
-desktop connector at `127.0.0.1:23119`: Zotero must be running, and `inject`
-fails loudly when the connector does not answer. Existing items are never
+desktop connector on the same port. When Zotero is not running the helper
+launches it and waits; in a container it never launches anything. If Zotero
+still does not answer, the command does nothing and says so (exit 75;
+`reconcile` exits 0 with verdict `zotero_unavailable`). Existing items are never
 edited by the helper: `enrich`, `attach` and `reconcile` report the edit
 (item key, field, old → new) for the author to make in the client;
 `reconcile --apply` creates only the absent items. The
