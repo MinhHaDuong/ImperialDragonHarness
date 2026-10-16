@@ -4,11 +4,10 @@ Author decision, 2026-10-16: "In tests up Zotero as a fixture or skip --
 no mock". The library read is a REAL Zotero desktop client on a throwaway
 profile (tests/zotero_live.py), a client of its own seeded once for this
 module, since the report covers the whole library; those tests are marked
-`integration` and skip where the client cannot run. The hashing logic for
-clients that report no md5 (Zotero 7 to 9) is tested over an in-memory read
-built by hand. The autouse fixture leaves Zotero down (closed port,
-ZOTERO_NO_LAUNCH) for every other test. No test touches ~/Zotero, the
-author's profile or port 23119.
+`integration` and skip where the client cannot run. Zotero 10, the floor,
+reports each stored file's md5, so nothing is hashed here. The autouse
+fixture leaves Zotero down (closed port, ZOTERO_NO_LAUNCH) for every other
+test. No test touches ~/Zotero, the author's profile or port 23119.
 """
 
 import argparse
@@ -94,51 +93,42 @@ def check_cluster(report, shared, other):
 
 
 @pytest.mark.integration
-def test_known_cross_parent_pair(use_library):
+def test_known_cross_parent_pair(use_library, capsys):
     """Zotero 10 reports each stored file's md5: one cluster, the two
     parents sharing the file; the parent with two copies of its own file
     is no cluster."""
     _, keys = use_library
-    report = zi.duplicate_hash_report(zi.read_library("user"))
-    check_cluster(report, keys["shared"], keys["other"])
+    assert zi.cmd_report_duplicates(argparse.Namespace(out=None)) == 0
+    check_cluster(json.loads(capsys.readouterr().out), keys["shared"],
+                  keys["other"])
 
 
-def memory_library(directory: Path) -> dict:
-    """The same library as an in-memory read from a client that reports no
-    md5 (Zotero 7 to 9): each stored file has a path, nothing else."""
-    files = write_files(directory)
-    works = [{"key": key, "itemType": "journalArticle", "title": title,
-              "DOI": doi, "ISBN": "", "date": "", "creators": []}
-             for key, title, doi in (("PARENT10", "<Unsafe & title>", "10.1234/example"),
-                                     ("PARENT11", "Different title", "10.1234/example"),
-                                     ("PARENT12", "Same parent", ""),
-                                     ("PARENT13", "Lonely", ""))]
-    attachments = [{"key": key, "parent": parent, "filename": name,
-                    "md5": None, "size": None, "path": str(files[name]),
-                    "contentType": "application/pdf", "linkMode": "imported_file"}
-                   for key, parent, name in (("ATT20", "PARENT10", "a.pdf"),
-                                             ("ATT21", "PARENT11", "b.pdf"),
-                                             ("ATT22", "PARENT10", "unsafe.pdf"),
-                                             ("ATT30", "PARENT12", "d.pdf"),
-                                             ("ATT31", "PARENT12", "e.pdf"),
-                                             ("ATT32", "PARENT13", "lonely.pdf"))]
-    return {"works": works, "attachments": attachments, "library_id": "user",
-            "account": None, "zotero": "memory", "source": zi.LIBRARY_SOURCE}
+@pytest.fixture(scope="module")
+def trash_client(zotero_factory):
+    """A client of its own: the trash would change the shared one's counts.
+    Module-scoped, so it starts before the autouse fixture sets
+    ZOTERO_NO_LAUNCH, like `library`."""
+    return zotero_factory("dedup_trash")
 
 
-def test_unreported_md5s_are_hashed_here(tmp_path):
-    report = zi.duplicate_hash_report(memory_library(tmp_path))
-    check_cluster(report, "PARENT10", "PARENT11")
-
-
-def test_a_uniquely_sized_file_is_never_hashed(tmp_path, monkeypatch):
-    idx = memory_library(tmp_path)
-    hashed = []
-    real = zi.file_md5
-    monkeypatch.setattr(zi, "file_md5",
-                        lambda p, *a: hashed.append(Path(p).name) or real(p, *a))
-    zi.duplicate_hash_report(idx)
-    assert "lonely.pdf" not in hashed and "a.pdf" in hashed
+@pytest.mark.integration
+def test_a_trashed_parent_is_no_candidate(trash_client, monkeypatch, capsys,
+                                          tmp_path):
+    """A parent in the trash is left out, its stored copy with it."""
+    zotero = zotero_live.point_helper_at(trash_client, monkeypatch)
+    files = write_files(tmp_path)
+    kept = (zotero.save("Kept one", pdf=files["a.pdf"]),
+            zotero.save("Kept two", pdf=files["b.pdf"]))
+    trashed = zotero.save("Trashed copy", pdf=files["unsafe.pdf"])
+    z = zotero.client()
+    item = z.item(trashed)
+    item["data"]["deleted"] = 1
+    assert z.update_item(item["data"])
+    assert zi.cmd_report_duplicates(argparse.Namespace(out=None)) == 0
+    report = json.loads(capsys.readouterr().out)
+    (cluster,) = report["clusters"]
+    assert {i["key"] for i in cluster["items"]} == set(kept)
+    assert trashed not in json.dumps(report)
 
 
 @pytest.mark.integration

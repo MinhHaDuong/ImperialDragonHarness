@@ -3,8 +3,9 @@
 A whole `docs/` folder is not the happy path repeated N times. Two things
 change, and both are failure modes rather than conveniences.
 
-**Dedup must be possible at all.** Every lookup reads the library live
-through the running Zotero's local API, once per run. When Zotero is not
+**Dedup must be possible at all.** Every lookup asks the running Zotero's
+own search, through its local API, live, per file; no lookup reads the whole
+library. When Zotero is not
 running the helper launches it; in a container, or when the launch fails,
 the command does nothing and reports Zotero unavailable. A backfill that read
 "could not look" as "absent" would re-import the entire library, so run it
@@ -21,7 +22,11 @@ file under one directory of the repository, BibTeX or not:
 By default, it discovers `.bib` files at the repository root and one level
 below it, follows their `file=` paths, and reports both linked files and
 unlinked staging files. It uses the BibTeX metadata when matching linked
-files. The command is **report-only by default**: without
+files: a `.bib` entry type of a part of a volume (`@incollection`,
+`@inbook`, `@bookinbook`, `@inproceedings` and the like) is never looked up
+by its ISBN, which is the volume's, and neither is a type the helper does
+not map (`@misc`, `@suppperiodical`, a typo): it fails closed to the other
+identifiers and the title. The command is **report-only by default**: without
 `--apply` it never creates or attaches anything; rows whose work is present without a file come back in
 `suggested_edits` (item key, file), which `--apply --edit` stores. It
 uses `docs/` as the staging default only when no `.bib` exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
@@ -35,7 +40,7 @@ echo "check-staging report: $out (exit $status)"
 [ "$status" -eq 0 ]
 ```
 
-Resolve any `errors` and inspect `ambiguous` rows before taking action. An
+Resolve any `errors` and judge the `candidates` rows before taking action. An
 `absent` row is a proposal for a later, explicit import, not permission to
 create it automatically. Every early exit (nothing staged, Zotero unavailable) still
 writes `--out` with the same report keys. Zotero unavailable is a clean
@@ -48,54 +53,59 @@ where `user_id` is the account the local Zotero is signed in to (an optional
 no maintenance skill runs it for you. The script locks the staging
 directories and the user's runtime directory, or the home directory when
 `XDG_RUNTIME_DIR` is unset (advisory locks on the directories themselves, no
-lock files, given up after 10 min rather than hang), re-reads the library live, and
-creates only absent PDFs with corroborated title/author metadata, through the
+lock files, given up after 10 min rather than hang), looks every file up again, live, and
+creates only the absent PDFs a `.bib` entry describes with a title, an author
+and a year, through the
 local API (it needs Zotero 10.0 or later and the local API key; see
-`references/helper-script.md`). The re-read covers the destination library, so with a
-group `collection` the duplicate check reads that group. Missing metadata, weak matches, ties, and discovery errors
-remain visible in `deferred` or `errors`; they cannot become an automatic
+`references/helper-script.md`). The second lookup covers the destination library, so with a
+group `collection` the duplicate check searches that group. A read Zotero does
+not finish in time, at any step, is verdict `zotero_slow` with exit 74, never
+the clean no-op of `zotero_unavailable`. An orphan file however complete its
+pdfinfo (page text and pdfinfo are where a cited work's metadata slips in),
+title candidates, ties, and discovery errors
+remain visible in `deferred`, the rows or `errors`; they cannot become an automatic
 write. Existing items are edited only with `--apply --edit`, which stores each
 staged file under the one existing item that lacks it (a tie is left for the
 author; `--edit` without `--apply` is an error). Without `--edit` their fixes
 stay in `suggested_edits`. The default invocation stays report-only.
 
-Nothing is recorded between runs. The duplicate guard in `create-items` is the
-live read of the destination library plus a check of the batch against
-itself; use `--force` only after inspecting a legitimate exception. A save
+Nothing is recorded between runs. The duplicate guard in `create-items` is a
+live lookup in the destination library just before each entry is saved, one
+at a time, so the batch is checked against itself too; use `--force` only after inspecting a legitimate exception. A save
 that fails in transit stops the run; the next run's read sees the item if it
 was created.
 
-`check-staging` classifies every staged file into five verdicts, and the distinction
-between the middle two decides what you do next:
+`check-staging` classifies every staged file into six verdicts, and the distinction
+between `work_present_with_file` and `work_present_no_file` decides what you do next:
 
 | verdict | meaning | action |
 |---|---|---|
 | `identical` | this exact file is already stored (md5) | nothing |
 | `work_present_with_file` | the work is in Zotero with a different copy | nothing; report it |
 | `work_present_no_file` | the item exists, no file attached | `suggest-attachments`, never `create-items` |
-| `ambiguous` | a weak hit — neither present nor absent | look at it |
-| `absent` | not in the library | `create-items` |
+| `candidates` | no identifier matched; Zotero's search found works with the title | judge them: same work, or another |
+| `absent` | looked up, not in the library | `create-items` |
+| `unidentified` | nothing to look it up by: no identifier, no title of three words of three letters or more | give it a `.bib` entry or an `Author1999-TitleWords` name, then check again |
 
-**`ambiguous` is a real answer, not a tuning failure.** Collapsing a weak hit
-into one of its neighbours is expensive in both directions: called present, the
-document is skipped and its full text never lands; called absent, a duplicate
-item is minted. Over 289 files the strong verdicts agreed with a hand-built
-resolver exactly — 100/100 `identical`, 169/169 `absent` — and every case where
-the two differed came back `ambiguous`. That is the verdict earning its place:
-it is where the judgment is needed, and it is a dozen files, not three hundred.
+**`candidates` is a real answer, not a tuning failure.** The helper asserts
+a match only on an exact identifier (DOI, ISBN, arXiv id or handle equal to
+the item's own field) or on the stored file's md5; a title is never one, and
+neither is the ISBN of a part of a volume (a book section, conference paper,
+encyclopedia article or dictionary entry), which identifies the volume. Collapsing
+candidates into one of their neighbours is expensive in both directions:
+called present, the document is skipped and its full text never lands;
+called absent, a duplicate item is minted. Five ordinary words such as
+"Systems of inequalities involving convex functions" once filed a real
+Hoffman 1960 paper as a different Hoffman paper; a candidate list puts that
+call in front of the reader instead.
 
-A title is matched as a **phrase, not a vocabulary**: the library title's words
-must co-occur within a few consecutive lines *and* make up most of what those
-lines contain. Scoring the whole document bag instead lets the five ordinary
-words of "Systems of inequalities involving convex functions" match any paper
-about linear inequalities — which filed a real Hoffman 1960 paper as a different
-Hoffman paper, at `strong`.
-
-**Content hash is the strongest key available** (`storageHash`, the md5 of
-each stored file, reported by Zotero 10 or computed here): it survives renaming, re-filing and
+**Content hash is the strongest key available** (`storageHash`, the md5
+Zotero 10 reports for each stored file): it survives renaming, re-filing and
 metadata drift, and it answers the question a staging directory actually
-asks — *is this exact file already stored?* Prefer it over any title
-comparison.
+asks — *is this exact file already stored?* Zotero has no search by md5, so
+the hash is compared with the files of each work another key found: a stored
+copy under a work nothing else finds goes unseen, and a file with nothing to
+look it up by is `unidentified`, never `absent`.
 
 **`work_present_no_file` is repaired by attaching, not by `create-items`.**
 `create-items` only ever creates items, so using it here mints a duplicate of a

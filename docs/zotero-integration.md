@@ -83,19 +83,19 @@ day):
   and `check-staging` reports verdict `zotero_unavailable` with exit 0 so an
   unattended sweep reads it as a clean no-op. Autonomous sessions in a
   container therefore never check staging.
-- Zotero 10 reports each stored file's md5 in the item JSON; with Zotero 7 to
-  9 the helper hashes a stored file only when its size equals a compared
-  file's. Listing the attachments of a large library on Zotero 10 makes the
-  client hash every stored file, which may take a while on a cold disk cache:
-  not measured yet (no running client on the build host).
+- Zotero 10 is the floor for the whole helper (decided 2026-10-16, ticket
+  1116): its item JSON reports each stored file's md5, and its local API
+  takes writes. Lookups ask Zotero's own search (`q`, `qmode=everything`)
+  per key and check the md5 of each work found, so only `report-duplicates`
+  lists every attachment, which makes the client hash every stored file: not
+  measured on the author's library yet. A read Zotero does not finish in
+  time is its own verdict (`zotero_slow`, exit 74), never "unavailable".
 
 The helper uses `pyzotero` (1.16) in local mode for every read and write, so it
 hand-rolls no Zotero interface. Writes need a key: on the first write, or on a
-401, Zotero shows an Allow / Always Allow / Deny dialog; only an "Always Allow"
-key is stored. A one-time "Allow" key covers one keyed write, too few to store
-a PDF (attachment item, upload authorization, upload registration) or to run a
-batch, so for those the helper asks before the first write and refuses an
-"Allow" answer, writing nothing. An attachment counts as a stored file only
+401, Zotero shows an Allow / Always Allow / Deny dialog; the helper accepts and
+stores only an "Always Allow" key (ticket 1116), and refuses a one-time
+"Allow" answer before writing anything. An attachment counts as a stored file only
 when Zotero reports its md5 or size: Zotero sends a file URL for every
 stored-file attachment, one created without its file included.
 
@@ -142,7 +142,7 @@ Ticket 1116 (2026-10-16) gave every subcommand a name that says what it does, wi
 
 This surface ships as one skill — `zotero` (ticket 1018, landed 2026-10-03), driving `scripts/zotero.py`. The former two skills — zotero-import (file intake) and index-source (URL intake) — are consolidated into it. A URL is an input to `import`, not a separate verb or skill.
 
-The dedup cascade consults keys strongest-first — file content hash (`storageHash`), then persistent identifier (DOI, ISBN, arXiv, handle), then attachment filename, then first-author/year/normalised-title, with title Jaccard as last resort — and stops at the first key that fires. Scope defaults to the **user library**, since that is where `create-items` writes; a copy sitting in a read-only group library does not count as already present. The verdict distinguishes `match` / `ambiguous` / `none` / `unchecked`, so "found nothing" and "could not look" stay apart. When Zotero is not running, nothing is created and the command says so.
+The duplicate lookup asks Zotero's own search for each key given: a persistent identifier (DOI, ISBN, arXiv, handle) and the title. The only match it asserts is exact: an identifier equal to the hit's own field (a labelled line counts in Extra, a DOI merely mentioned there does not, and the ISBN a book section, conference paper, encyclopedia article or dictionary entry shares with its volume never counts), or a stored file with the same md5 (`storageHash`) under a work found. Title hits come back as candidates for the author or the calling agent to judge, never as a match (ticket 1116 replaced the in-memory cascade over a whole-library read, dropped its attachment-filename key, since Zotero's search does not see attachment filenames, then, by author decision, the title scorer and the corroboration check). Scope defaults to the **user library**, since that is where `create-items` writes; a copy sitting in a read-only group library does not count as already present. The verdict distinguishes `match` / `ambiguous` / `candidates` / `none` / `unchecked`, so "found nothing" and "could not look" stay apart. When Zotero is not running, nothing is created and the command says so.
 
 ## Vocabulary
 
@@ -166,7 +166,7 @@ Prose names a skill's operation precisely; command names stay as they are, scope
 | **OCR** — scanned PDF → text attachment via Mistral | archiveCIRED | Unbacked — file on demand |
 | **Export** — filtered CSL-JSON or RIS by collection/tag/year | CIRED.digital, activity report | RAG schema finalized or report cycle starts |
 | **Key sync** — import `Ha-Duong.bib` citation keys into Zotero Extra field | Publications list | Next homepage refresh; `update-publist` is the sanctioned write path |
-| **Dedup** — candidate pairs + HITL merge; auto-apply hash- and DOI-exact matches only | archiveCIRED, publications list | **Triggered 2026-08-14** — ticket 0485. See also ticket 0570: the same 269 clusters make `classify_matches()`'s untie-broken `exact` tier report one parent and drop the rest in silence. 269 clusters where one file md5 sits under distinct parents in the user library, none of them visible to Zotero's own Duplicate Items pane (it matches title/DOI/ISBN + creators + year, same item type, and never the file hash). Detection reads the library through the local API; the **merge belongs to the desktop client** — no programmatic surface has a merge endpoint, and a Zotero merge is a client-side composite (move children, union collections and tags, trash the losers, write `dc:replaces` on the master; the library already carries 436 such relations). Ticket 0485 closed 2026-10-02: detector and report delivered and live-validated, sample arbitrated; residue — author merges in the client, right-click → Merge n Items. |
+| **Dedup** — candidate pairs + HITL merge; auto-apply hash- and DOI-exact matches only | archiveCIRED, publications list | **Triggered 2026-08-14** — ticket 0485. See also ticket 0570: the same 269 clusters made `classify_matches()` report one parent and drop the rest in silence, until ties became `ambiguous`. 269 clusters where one file md5 sits under distinct parents in the user library, none of them visible to Zotero's own Duplicate Items pane (it matches title/DOI/ISBN + creators + year, same item type, and never the file hash). Detection reads the library through the local API; the **merge belongs to the desktop client** — no programmatic surface has a merge endpoint, and a Zotero merge is a client-side composite (move children, union collections and tags, trash the losers, write `dc:replaces` on the master; the library already carries 436 such relations). Ticket 0485 closed 2026-10-02: detector and report delivered and live-validated, sample arbitrated; residue — author merges in the client, right-click → Merge n Items. |
 
 Each capability rides one backend script; the library capability is the
 one `zotero` skill (verbs, reference files), no shared framework beyond the

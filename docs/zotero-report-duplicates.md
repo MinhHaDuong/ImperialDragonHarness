@@ -35,8 +35,9 @@ user library live through the running Zotero's local API (GET only; see
 `skills/zotero/references/helper-script.md` for the setting it needs and what
 happens when Zotero is not running) and excludes trashed items. It never
 opens `zotero.sqlite`, contacts no other service and never mutates Zotero.
-Zotero 10 reports each stored file's md5; with Zotero 7 to 9 the command
-hashes only the files whose size another stored file shares. The only
+It reads the attachments once, then only the parents whose files collide.
+Zotero 10, the helper's floor, reports each stored file's md5, which is all
+the command compares: a linked file, which has none, is not compared. The only
 optional write is the named report file, created readable by its owner only.
 
 The exact content hash is the match key. DOI, ISBN and title agreements among
@@ -49,10 +50,9 @@ candidate pairs in the client before merging; no report row authorizes a merge.
 
 ## Verification
 
-`tests/test_zotero_report_duplicates.py` has a known-positive pair and
-repeated attachments under one parent, served by a real throwaway Zotero
-client (hashing for clients without md5s is tested over an in-memory read).
-It checks the links and that generating a report only reads. A live read-only run against
+`tests/test_zotero_report_duplicates.py` has a known-positive pair, repeated
+attachments under one parent and a trashed parent, served by real throwaway
+Zotero clients. It checks the links and that generating a report only reads. A live read-only run against
 the 2026-09-24 database snapshot (before the helper moved to the local API) yielded
 269 groups from 8,697 hashed attachments in My Library; the 2026-10-02 live run
 at closure yielded 266. The author arbitrated a sample on 2026-10-02 and ticket

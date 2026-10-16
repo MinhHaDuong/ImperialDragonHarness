@@ -40,8 +40,8 @@ itself and never contacts Zotero, `find-work` looks the work up in the
 library through the local API only (it takes `extract-metadata`'s output, and
 the refined metadata as flags), and `create-items` creates the items through
 the same API. `references/helper-script.md` documents every subcommand and
-the guarantees of its output (`why` / `certainty` / `consulted` /
-`skipped`).
+the guarantees of its output (`matches` / `candidates` / `why` /
+`consulted` / `skipped`).
 
 Inside `import`: extract-metadata → find-work → create-items.
 `extract-metadata` (or `probe-url.py` for URLs) extracts, `find-work` dedupes
@@ -59,19 +59,21 @@ off until the author enables Zotero Settings > Advanced > "Allow other
 applications on this computer to communicate with Zotero"; until then the
 helper fails and names that setting. `ZOTERO_CONNECTOR_URL` points it at
 another loopback port; if something other than Zotero answers there, the
-error says so and names both the variable and the setting. Reads need Zotero 7 or later, writes
-Zotero 10.0 or later.
+error says so and names both the variable and the setting. The helper needs
+Zotero 10 or later, reads and writes alike, and refuses an older client by
+name. Lookups ask Zotero's own search for each key; no command but
+`report-duplicates` reads the whole library. A read Zotero does not finish in
+time is reported as such (`zotero: "slow"`, verdict `zotero_slow` in
+`check-staging`, exit 74), never as Zotero unavailable.
 
 Writes go through the same local API with a local API key, kept as
 `ZOTERO_LOCAL_API_KEY=` in `~/.config/keys/zotero-local.env` (mode 600;
 `ZOTERO_LOCAL_KEY_FILE` overrides the path) and never printed. On the first
 write without a key, or on a 401, Zotero shows an Allow / Always Allow / Deny
-dialog and the helper waits up to 120 s for the answer. **Tell the user to
-answer "Always Allow"**: only that key is stored. A one-time "Allow" key covers
-one keyed write, and storing a PDF takes three (attachment item, upload
-authorization, upload registration), a batch one per write: for those the
-helper asks before writing anything and refuses an "Allow" answer, so nothing
-is written. An attachment counts as a stored file only when Zotero reports its
+dialog and the helper waits up to 120 s for the answer, before writing
+anything. **Tell the user to answer "Always Allow"**: the helper accepts and
+stores only that key. A one-time "Allow" answer is refused and nothing is
+written. An attachment counts as a stored file only when Zotero reports its
 md5 or size.
 `create-items` creates new items and uploads their PDFs; `create-items
 --dry-run` also needs Zotero running, because field placement uses the live schema. When Zotero is not running the helper
@@ -96,19 +98,15 @@ well-formed, confident, wrong metadata that nothing downstream questions. In a
 Ronald Graham, a Parise–Ozdaglar item filed as Diaconis & Janson 2007, and a
 Le Cadre item filed as Foti 2018.
 
-So corroborate every resolved record against the document's own words before
-accepting it:
-
-```python
-corroborate(resolved, first_pages_text)
-# -> {"confidence": "corroborated" | "weak" | "contradicted" | "unchecked", ...}
-```
-
-`contradicted` means the resolved title and first author do not appear in the
-document — discard the resolution and rebuild the metadata from the text, the
-filename, and a web search. Cross-check against the project `.bib` where one
-exists: it is curated by the author, so it corroborates, though it can be terse
-or stale and does not replace reading the page.
+So check every resolved record against the document's own words before
+accepting it: read the first page (`first_pages_text` in `extract-metadata`'s
+output) and confirm that the resolved title and first author are this
+document's. The helper does not score this for you: the judgment is yours. When the resolved title and first
+author do not appear on the page, the identifier is a cited work's: discard
+the resolution and rebuild the metadata from the text, the filename, and a
+web search. Cross-check against the project `.bib` where one exists: it is
+curated by the author, so it confirms, though it can be terse or stale and
+does not replace reading the page.
 
 The same discipline applies to the year: a `date` on the Zotero item can be a
 reprint or translation date (Kantorovich 1942 recorded as 2004), so a year

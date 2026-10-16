@@ -201,16 +201,18 @@ def find_identifiers(text: str, doi_meta: str = "") -> dict:
 
 
 def suggest_type(mime: str, host: str, meta: dict, ids: dict) -> str:
-    """Heuristic RIS type — the model overrides with judgment (see SKILL.md).
+    """Heuristic Zotero item type — the model overrides with judgment (see
+    SKILL.md).
 
-    JOUR if it looks like a journal article (DOI + a journal title); RPRT for a
-    PDF (institutional report is the common case); WEB otherwise (news/analysis).
+    journalArticle if it looks like one (DOI + a journal title); report for a
+    PDF (institutional report is the common case); webpage otherwise
+    (news/analysis).
     """
     if ids.get("doi") and meta.get("publication"):
-        return "JOUR"
+        return "journalArticle"
     if "pdf" in mime:
-        return "RPRT"
-    return "WEB"
+        return "report"
+    return "webpage"
 
 
 def probe_one(url: str, staging: Path, timeout: int) -> dict:
@@ -247,7 +249,7 @@ def probe_one(url: str, staging: Path, timeout: int) -> dict:
         text = pi.get("first_text", "")
     rec["meta"] = meta
     rec["identifiers"] = find_identifiers(text or "", meta.get("doi_meta", ""))
-    rec["suggested_ris_type"] = suggest_type(rec["mime"], host, meta, rec["identifiers"])
+    rec["suggested_type"] = suggest_type(rec["mime"], host, meta, rec["identifiers"])
     if meta.get("pdf_url") and not is_pdf:
         rec["full_pdf_url"] = meta["pdf_url"]
     return rec

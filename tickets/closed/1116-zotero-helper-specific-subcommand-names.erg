@@ -2,12 +2,16 @@
 Title: Zotero helper: specific subcommand names; split probe into extract and lookup
 Created: 2026-10-16
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1448
 
 --- log ---
 2026-10-16T06:39Z reviewer created
 2026-10-16T08:58Z reviewer note author accepted all five size-review decisions (merge audit/reconcile, Zotero search + rapidfuzz, drop RIS, JSON-only dedup report, pdf2doi offline evaluation)
 2026-10-16T09:37Z reviewer note blocker 1113 closed — Blocked-by removed.
 2026-10-16T09:41Z reviewer note author accepted the three /gaze decisions of PR #1441 (Always Allow only, Zotero 10 floor, slow read fails visibly)
+2026-10-16T11:38Z reviewer note author decided "Oui pour tout": cut the hand-rolled match scoring (exact identifiers only, titles as candidates), `check-staging` approved, Zotero item types replace the RIS type codes
+2026-10-16T13:28Z reviewer note verify-reroll — round 1: unmapped biblatex part types (@bookinbook, @suppbook, @suppcollection, @suppperiodical) still match their volume by ISBN, against choice #4
+2026-10-16T13:36Z reviewer closed — autoclosed — PR #1448
 
 --- body ---
 
@@ -68,14 +72,41 @@ lands, -4% from main despite the pyzotero swap); the author accepted all five:
 8. A slow or timed-out library read is a visible failure, distinct from
    "Zotero unavailable": an unattended reconcile must not exit 0 on it.
 
+## Author decisions (2026-10-16, "Oui pour tout")
+9. Cut the hand-rolled match scoring: `find-work` and every caller return
+   Zotero's local-API search results per key (DOI, ISBN, arXiv/handle,
+   title), and the only match the helper asserts is EXACT equality of a
+   normalised identifier against the hit's own field. Delete rapidfuzz title
+   scoring, `corroborate` and its rebuild, the ±3-year rule, and any
+   verification/scorer layer; title hits are returned as candidates for the
+   author or calling agent to judge, never auto-matched. Remove rapidfuzz
+   from dependencies if nothing else needs it. Keep the safety property that
+   a cited work's DOI is never attached to the wrong item: with
+   exact-identifier-only matching and no auto-match on titles, state in the
+   PR body how that property now holds (or what is lost).
+   (Supersedes the rapidfuzz half of decision 2.)
+10. The merged command name `check-staging` is approved.
+11. Replace the entry `type` RIS codes with Zotero item types (the previous
+    worker estimated ~40 lines removed); RIS is gone, so the RIS vocabulary
+    goes too. Update the entry contract docs.
+
+Standing order: "sans réinventer la roue": before keeping any hand-rolled
+piece, use pyzotero/Zotero for it; report `scripts/zotero.py` line counts
+before (3,005 at 497b2b7c) and after, with a one-line justification for
+each kept hand-rolled piece.
+
 ## Exit criteria
 - [ ] `probe` is replaced by `extract-metadata` (no Zotero access) and `find-work` (local API only); extraction output feeds the lookup
-- [ ] Every subcommand carries its new name; no alias for the old names
+- [ ] Every subcommand carries its new name; no alias for the old names (`check-staging` approved)
 - [ ] `skills/zotero/`, `skills/lair/` (the `/zotero reconcile` proposal), `rules/zotero.md`, docs and README use only the new names
 - [ ] Tests cover the split: extraction runs with Zotero down; lookup does nothing when Zotero is unavailable
 - [ ] `audit` and `reconcile` are one command with two input modes
-- [ ] Duplicate lookup uses Zotero's local-API search plus rapidfuzz; no whole-library read per call
+- [ ] Duplicate lookup uses Zotero's local-API search per key; no whole-library read per call
+- [ ] The only asserted match is exact equality of a normalised identifier against the hit's own field; title hits are candidates, never auto-matched
+- [ ] No rapidfuzz title scoring, no `corroborate` (nor its rebuild), no ±3-year rule, no scorer layer; rapidfuzz gone from the dependencies if nothing else needs it
+- [ ] PR body states how "a cited work's DOI is never attached to the wrong item" now holds, or what is lost
 - [ ] No RIS writer; `rules/zotero.md` no longer prescribes RIS archiving
+- [ ] An entry's `type` is a Zotero item type; no RIS type code is left in the helper or the entry contract docs
 - [ ] `dedup-report` (renamed) emits JSON only
 - [ ] `pdf2doi` evaluated offline: adopted with no web access, or rejected with the reason in the PR body
 - [ ] Before/after line counts of `scripts/zotero.py` reported; every kept hand-rolled piece justified
