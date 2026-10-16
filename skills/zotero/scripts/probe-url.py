@@ -8,8 +8,8 @@ page count. Emits one JSON record per URL on stdout.
 
 Stdlib only — nothing to install. The model reads the records, resolves
 identifiers online when present, picks the Zotero item type with judgment, then
-hands attachments + metadata to $IDH_ROOT/scripts/zotero.py (match,
-RIS write, inject through Zotero's local API). This is the URL intake of the zotero skill's import verb (the
+hands attachments + metadata to $IDH_ROOT/scripts/zotero.py (find-work,
+then create-items through Zotero's local API). This is the URL intake of the zotero skill's import verb (the
 former index-source skill, absorbed 2026-10-03, ticket 1018); it implements
 the Zotero-management workflow (docs/ staging -> Zotero)."""
 

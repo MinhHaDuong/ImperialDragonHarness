@@ -2080,21 +2080,43 @@ def corroborate(resolved: dict[str, Any], document_text: str) -> dict[str, Any]:
                        if conf == "contradicted" else "")}
 
 
+class BadQuery(ValueError):
+    """find-work's input cannot say which works to look up."""
+
+
 def work_queries(args: argparse.Namespace) -> list[dict[str, Any]]:
     """The works to look up: each item of extract-metadata's output
     (--metadata, a file or - for stdin), else one work from the flags. A
     flag overrides the extracted value, so a refined title replaces the
-    pdfinfo one."""
+    pdfinfo one; that needs a metadata file of one work, since flags
+    applied to several would describe them all as one. An extraction row
+    with an error stays in the results, as an error."""
     flags = {"title": args.title, "doi": args.doi, "isbn": args.isbn,
              "arxiv": args.arxiv, "handle": args.handle,
              "author": args.author, "year": args.year, "pdf": args.pdf}
     if not args.metadata:
         return [flags]
-    text = (sys.stdin.read() if args.metadata == "-"
-            else Path(args.metadata).read_text(encoding="utf-8"))
+    try:
+        text = (sys.stdin.read() if args.metadata == "-"
+                else Path(args.metadata).read_text(encoding="utf-8"))
+        items = json.loads(text)["items"]
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise BadQuery(f"--metadata {args.metadata}: not extract-metadata "
+                       f"output ({type(exc).__name__}: {exc})") from exc
+    if not isinstance(items, list) or not items:
+        raise BadQuery(f"--metadata {args.metadata}: no work to look up")
+    overrides = sorted(k for k, v in flags.items() if v)
+    if overrides and len(items) > 1:
+        raise BadQuery(f"--{', --'.join(overrides)} would describe all "
+                       f"{len(items)} works of --metadata as one; give a "
+                       f"metadata file of one work, or no flag")
     works = []
-    for item in json.loads(text).get("items", []):
+    for item in items:
+        if not isinstance(item, dict):
+            raise BadQuery(f"--metadata {args.metadata}: an item is not an "
+                           f"object")
         if "error" in item:
+            works.append({"error": item["error"], "pdf": item.get("pdf")})
             continue
         ids = item.get("identifiers") or {}
         pdfinfo_fields = item.get("pdfinfo") or {}
@@ -2108,12 +2130,21 @@ def work_queries(args: argparse.Namespace) -> list[dict[str, Any]]:
 
 def cmd_find_work(args: argparse.Namespace) -> int:
     """Is this work already in the library? Local API only."""
-    works = work_queries(args)
+    try:
+        works = work_queries(args)
+    except BadQuery as exc:
+        print(f"find-work: {exc}", file=sys.stderr)
+        emit_json({"error": str(exc), "verdict": "unchecked"})
+        return 1
     idx, rc = with_zotero("find-work", lambda: read_library(args.library))
     if rc is not None:
         return rc
     results = []
     for work in works:
+        if "error" in work:
+            results.append({"query": {"pdf": work["pdf"]}, "error": work["error"],
+                            "verdict": "unchecked"})
+            continue
         result = library_matches(
             idx, doi=work["doi"], isbn=work["isbn"], arxiv=work["arxiv"],
             handle=work["handle"], title=work["title"], year=work["year"],
@@ -2123,7 +2154,7 @@ def cmd_find_work(args: argparse.Namespace) -> int:
                         **result})
     emit_json({"zotero": idx["zotero"], "source": idx["source"],
                "library_id": idx["library_id"], "results": results})
-    return 0
+    return int(any("error" in r for r in results))
 
 
 def write_report_file(output: Path, body: str) -> None:
@@ -2443,7 +2474,7 @@ RECONCILE_ACTIONS = {
     "unchecked": "resolve discovery or check error",
     "tied_parents": TIED_ACTION,
     "deferred": "supply and corroborate metadata",
-    "injected": "created in Zotero through its local API",
+    "created": "created in Zotero through its local API",
     "attached": "stored under the existing item (--edit)",
     "failed_write": "inspect the outcome in Zotero before retrying",
     "apply_failed": "inspect error; no clean sweep",
@@ -2589,7 +2620,12 @@ def cmd_check_staging(args: argparse.Namespace) -> int:
         return 1
     found = (discover_directory(root, Path(args.dir)) if args.dir
              else discover_reconcile_files(root))
-    if not (found["linked"] or found["orphans"] or found["errors"]):
+    if not (found["linked"] or found["orphans"]):
+        if found["errors"]:
+            # Nothing to compare, and discovery failed: say so, without Zotero.
+            emit_reconcile_report(
+                reconcile_report(root, found, [], found["errors"]), args.out)
+            return 1
         # Nothing staged: no library comparison is needed.
         return reconcile_empty_report(root, found, args)
     library = getattr(args, "library", USER_LIBRARY)
@@ -2690,8 +2726,8 @@ def reconcile_apply(root: Path, found: dict[str, Any], fresh: dict[str, Any],
             if result.get("status") == "created" and not (
                     result.get("error") or result.get("attachment_error")
                     or result.get("transport_error")):
-                summary["injected"] = summary.get("injected", 0) + 1
-                actions["injected"] = RECONCILE_ACTIONS["injected"]
+                summary["created"] = summary.get("created", 0) + 1
+                actions["created"] = RECONCILE_ACTIONS["created"]
             else:
                 summary["failed_write"] = summary.get("failed_write", 0) + 1
                 actions["failed_write"] = RECONCILE_ACTIONS["failed_write"]
@@ -2704,7 +2740,7 @@ def reconcile_apply(root: Path, found: dict[str, Any], fresh: dict[str, Any],
     report["apply_status"] = (
         "partial" if summary.get("failed_write") else
         "deferred" if deferred else
-        "applied" if summary.get("injected") or summary.get("attached")
+        "applied" if summary.get("created") or summary.get("attached")
         else "nothing")
     return report, rc
 

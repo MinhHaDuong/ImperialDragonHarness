@@ -218,6 +218,76 @@ def test_extract_metadata_reports_a_missing_pdf(tmp_path, capsys):
     assert json.loads(capsys.readouterr().out)["items"][0]["error"] == "not found"
 
 
+def _meta_file(tmp_path, *items):
+    meta = tmp_path / "meta.json"
+    meta.write_text(json.dumps({"items": list(items)}))
+    return str(meta)
+
+
+def _meta_item(doi):
+    return {"pdf": None, "identifiers": {"doi": doi}, "pdfinfo": {},
+            "year_hint": None, "first_pages_text": ""}
+
+
+def test_find_work_refuses_flags_over_several_extracted_works(tmp_path, capsys):
+    """A refined --title for one PDF must not describe every PDF of the
+    file: the second would be reported as the first's work."""
+    meta = _meta_file(tmp_path, _meta_item("10.1/a"), _meta_item("10.1/b"))
+    assert zi.cmd_find_work(_match_args(doi=None, title="A Refined Title",
+                                        author="Smith", metadata=meta)) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert "--author, --title would describe all 2 works" in out["error"]
+    assert out["verdict"] == "unchecked"
+
+
+@pytest.mark.parametrize("content", ["not json", '{"no": "items"}',
+                                     '{"items": []}', '{"items": [1]}'])
+def test_find_work_reports_unusable_metadata_as_json(tmp_path, capsys, content):
+    meta = tmp_path / "meta.json"
+    meta.write_text(content)
+    assert zi.cmd_find_work(_match_args(doi=None, metadata=str(meta))) == 1
+    assert json.loads(capsys.readouterr().out)["verdict"] == "unchecked"
+    assert zi.cmd_find_work(_match_args(doi=None,
+                                        metadata=str(tmp_path / "gone"))) == 1
+    assert "not extract-metadata output" in json.loads(
+        capsys.readouterr().out)["error"]
+
+
+@pytest.mark.integration
+def test_find_work_keeps_an_extraction_error_as_a_row(use_live, tmp_path, capsys):
+    meta = _meta_file(tmp_path, {"pdf": "/x/missing.pdf", "error": "not found"},
+                      _meta_item(unique_doi()))
+    assert zi.cmd_find_work(_match_args(doi=None, metadata=meta)) == 1
+    first, second = json.loads(capsys.readouterr().out)["results"]
+    assert first["error"] == "not found" and first["verdict"] == "unchecked"
+    assert second["verdict"] == "none"
+
+
+def identifiable_pdf(directory: Path) -> Path:
+    """A staged PDF the lookup can look up: its name says the author and
+    year (Surname2020-...), its first line a unique title."""
+    directory.mkdir(parents=True, exist_ok=True)
+    return make_pdf(directory / f"{unique_surname()}2020-{uuid.uuid4().hex[:8]}.pdf",
+                    [unique_title(), f"nonce {uuid.uuid4().hex}"])
+
+
+@pytest.mark.integration
+def test_check_staging_dir_apply_needs_the_root_opt_in(use_live, tmp_path,
+                                                       capsys):
+    """--dir --apply writes only with the root's opt-in file; without it
+    the apply fails and nothing is created."""
+    pdf = identifiable_pdf(tmp_path / "scans")
+    args = _dir_args(tmp_path, "scans")
+    args.apply = True
+    assert zi.cmd_check_staging(args) == 1
+    report = json.loads(capsys.readouterr().out)
+    assert report["apply_status"] == "failed"
+    assert ".zotero-reconcile.json" in report["apply_error"]
+    assert report["summary"]["absent"] == 1
+    title = zi.pdftotext_range(pdf, 1, 1).splitlines()[0].strip()
+    assert use_live.titled(title) == []
+
+
 def test_find_work_does_nothing_when_zotero_is_unavailable(tmp_path, capsys):
     """The lookup ensures Zotero is available: down and not launchable
     (ZOTERO_NO_LAUNCH), it does nothing and says so, even when fed
@@ -2015,7 +2085,8 @@ def test_check_staging_dir_missing_is_a_json_error_not_a_traceback(
     assert zi.cmd_check_staging(_dir_args(tmp_path, "nope")) == 1
     out = json.loads(capsys.readouterr().out)
     assert any("not a directory" in e for e in out["errors"])
-    assert out["verdict"] == "zotero_unavailable"
+    assert out["verdict"] == "unchecked"
+    assert "zotero" not in out, "nothing to compare: Zotero was not asked"
 
 
 def test_check_staging_dir_outside_the_root_is_refused(tmp_path, capsys):
@@ -2640,7 +2711,8 @@ def test_check_staging_without_zotero_still_reports_discovery_errors(tmp_path, c
     out = tmp_path / "report.json"
     assert zi.cmd_check_staging(_reconcile_args(tmp_path, out=str(out))) == 1
     report = json.loads(out.read_text())
-    assert report["verdict"] == "zotero_unavailable"
+    # Nothing could be compared: unchecked, without asking Zotero.
+    assert report["verdict"] == "unchecked" and "zotero" not in report
     assert report["errors"]
     capsys.readouterr()
 
@@ -2660,7 +2732,7 @@ def test_check_staging_undefined_bib_macro_fails_closed_and_still_writes_out(
     out = tmp_path / "report.json"
     assert zi.cmd_check_staging(_reconcile_args(tmp_path, out=str(out))) == 1
     report = json.loads(out.read_text())
-    assert report["verdict"] == "zotero_unavailable"
+    assert report["verdict"] == "unchecked"
     assert any("undefmacro" in e for e in report["errors"])
     capsys.readouterr()
 
@@ -2756,7 +2828,7 @@ def test_check_staging_apply_imports_a_corroborated_absent_pdf(use_live, tmp_pat
     pdf = _staged_bib_paper(tmp_path, title=title, surname=surname)
     report, rc = _apply(tmp_path, zi.read_library())
     assert rc == 0
-    assert report["summary"] == {"injected": 1}
+    assert report["summary"] == {"created": 1}
     assert report["apply_status"] == "applied"
     (applied,) = report["applied"]
     assert applied["status"] == "created" and applied["file"] == f"docs/{pdf.name}"
@@ -2778,7 +2850,7 @@ def test_check_staging_apply_can_import_orphan_with_complete_pdf_metadata(
         "CreationDate": "D:20200101000000Z"})
     report, rc = _apply(tmp_path, zi.read_library())
     assert rc == 0
-    assert report["summary"] == {"injected": 1}
+    assert report["summary"] == {"created": 1}
     item = use_live.find(title)
     assert item["data"]["creators"] == [{"creatorType": "author",
                                          "firstName": "Jane",

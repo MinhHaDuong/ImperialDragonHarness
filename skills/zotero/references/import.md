@@ -6,7 +6,7 @@
 2. Read the extracted first/last-page text. Synthesize title, authors, year. Pick up DOI / ISBN / handle / arXiv ID surfaced by the script.
 3. **If a strong identifier is present**, resolve it online (CrossRef for DOI, OpenLibrary for ISBN, arXiv API for arXiv ID) and prefer the canonical metadata returned.
 4. **If no identifier is present**, search the web for `"<title>" <first author> <year>` to confirm the metadata before writing.
-5. Run `find-work` against the library with the extraction (`--metadata`) and the *refined* title, authors and year as flags (the extracted title is the often-garbage pdfinfo one — don't rely on it).
+5. Run `find-work` for each PDF against the library, with its own extraction (`--metadata`, one PDF per file) and the *refined* title, authors and year as flags (the extracted title is the often-garbage pdfinfo one — don't rely on it). The flags are refused over a file of several PDFs.
 6. If duplicates exist, **warn the user and ask** before importing. Default is import-with-warning; remind to dedupe inside Zotero.
 7. Translate the title to English. Put it in the **Short Title** field (`shortTitle`, which Zotero calls "Short Title" / abbreviated title).
 8. Write the entries JSON to a file next to the first item, then `create-items --entries-file` it; the helper launches Zotero if it is not running. When Zotero is unavailable (exit 75, `zotero: "unavailable"`), do nothing more: report the entries file for a later `create-items`.

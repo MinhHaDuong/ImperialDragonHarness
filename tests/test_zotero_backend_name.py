@@ -227,10 +227,25 @@ def test_no_live_citations_of_retired_skill_names():
 
 # A run line or invocation naming a retired subcommand: `zotero.py audit`,
 # `"$IDH_ROOT/scripts/zotero.py" reconcile`, `/zotero reconcile`.
+_RETIRED = "(?:" + "|".join(sorted(RETIRED_VERBS)) + ")"
+# Options may come first (`zotero.py --x reconcile`), the name may be quoted
+# (`zotero.py "audit"`), and a hyphenated word (`audit-trail`) is no name.
 RETIRED_INVOCATION = re.compile(
-    r"zotero\.py\"?\s+(?:" + "|".join(sorted(RETIRED_VERBS)) + r")\b"
-    r"|/zotero\s+(?:" + "|".join(sorted(RETIRED_VERBS)) + r")\b"
+    r"zotero\.py[\"']?\s+(?:--?[\w-]+(?:[= ]\S+)?\s+)*[\"']?" + _RETIRED
+    + r"(?![\w-])"
+    r"|/zotero\s+[\"']?" + _RETIRED + r"(?![\w-])"
 )
+
+
+def test_the_retired_invocation_pattern_fires_and_spares():
+    """Positive and negative controls for the sweep below."""
+    for line in ('zotero.py audit docs/', '"$IDH_ROOT/scripts/zotero.py" reconcile .',
+                 "zotero.py --library user inject --dry-run",
+                 "zotero.py 'enrich' --item-key K", "run `/zotero reconcile`"):
+        assert RETIRED_INVOCATION.search(line), line
+    for line in ("zotero.py check-staging --dir docs", "zotero.py audit-trail",
+                 "/zotero import x.pdf", "zotero.py find-work --doi D"):
+        assert not RETIRED_INVOCATION.search(line), line
 
 
 @pytest.mark.adherence
