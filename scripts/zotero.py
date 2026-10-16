@@ -848,8 +848,8 @@ def refusal(exc: Exception) -> LocalAPIError:
                              f"{LOCAL_API_SETTING} and retry.")
     reason = text.splitlines()[-1] if text else type(exc).__name__
     return LocalAPIError(f"Zotero's local API refused the request ({reason}). "
-                         f"It needs Zotero 7 or later with {LOCAL_API_SETTING} "
-                         f"enabled.")
+                         f"Reads need Zotero 7 or later and writes Zotero 10 or "
+                         f"later, with {LOCAL_API_SETTING} enabled.")
 
 
 @contextlib.contextmanager
