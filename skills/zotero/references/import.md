@@ -2,16 +2,15 @@
 
 ## Happy path
 
-1. `probe` each PDF with the helper script; for a URL, `probe-url.py` stages the document and extracts the same record shape (see URL intake below).
+1. `extract-metadata` each PDF with the helper script (it never needs Zotero); for a URL, `probe-url.py` stages the document and extracts the same record shape (see URL intake below).
 2. Read the extracted first/last-page text. Synthesize title, authors, year. Pick up DOI / ISBN / handle / arXiv ID surfaced by the script.
 3. **If a strong identifier is present**, resolve it online (CrossRef for DOI, OpenLibrary for ISBN, arXiv API for arXiv ID) and prefer the canonical metadata returned.
 4. **If no identifier is present**, search the web for `"<title>" <first author> <year>` to confirm the metadata before writing.
-5. Run `match` against the library using the *refined* title (probe's naïve match uses the often-garbage pdfinfo title — don't rely on it).
+5. Run `find-work` against the library with the extraction (`--metadata`) and the *refined* title, authors and year as flags (the extracted title is the often-garbage pdfinfo one — don't rely on it).
 6. If duplicates exist, **warn the user and ask** before importing. Default is import-with-warning; remind to dedupe inside Zotero.
 7. Translate the title to English. Put it in the **Short Title** field (`shortTitle`, which Zotero calls "Short Title" / abbreviated title).
-8. `write` one combined RIS file alongside the first item — the durable import artifact, kept even when injection succeeds.
-9. `inject` the same entries JSON; the helper launches Zotero if it is not running. On a per-entry error, fall back to `xdg-open` on the RIS file and say so. When Zotero is unavailable (exit 75, `zotero: "unavailable"`), do nothing more: report the RIS path for a later import.
-10. Verify: the inject output reports `status: "created"` per entry (plus `attachment` when `attach_pdf` was set). Each created entry carries its item `key`, plus `attachment_error` when Zotero refused the PDF, or `transport_error` when Zotero stopped answering after creating the item (the PDF may be missing or its attachment empty). Reads are live, so a `match` straight after an import sees the new item.
+8. Write the entries JSON to a file next to the first item, then `create-items --entries-file` it; the helper launches Zotero if it is not running. When Zotero is unavailable (exit 75, `zotero: "unavailable"`), do nothing more: report the entries file for a later `create-items`.
+9. Verify: the `create-items` output reports `status: "created"` per entry (plus `attachment` when `attach_pdf` was set). Each created entry carries its item `key`, plus `attachment_error` when Zotero refused the PDF, or `transport_error` when Zotero stopped answering after creating the item (the PDF may be missing or its attachment empty). Reads are live, so a `find-work` straight after an import sees the new item.
 
 ## URL intake
 
@@ -33,7 +32,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    resolution below), then classify the type **with judgment** — don't
    rubber-stamp `suggested_ris_type`. The lazy failure is calling everything a
    web page.
-4. Continue on the shared path: `match` → `write` → `inject` with
+4. Continue on the shared path: `find-work` → `create-items` with
    `attach_pdf: true, pdf: <staged_path>` (works for HTML snapshots too), and
    optionally append a biblatex entry to the project `references.bib` so
    `@key` is citable now (provenance note = URL + "Document archivé dans
@@ -46,7 +45,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 | Institutional / agency / think-tank PDF, official decision | Report | `RPRT` | PDF mime; `.org/.int/.gov` host; "report/paper/working paper" |
 | Peer-reviewed article | Journal Article | `JOUR` | DOI **and** a journal title (`citation_journal_title`) |
 | News / analysis / blog (incl. specialist online outlets) | Web Page | `WEB` | HTML; `og:type=article`; news/blog host |
-| Newspaper / magazine piece | `NEWS` / `MGZN` | only if you are confident; **biblatex `entrysubtype` does not survive Zotero import — prefer RIS codes here, not `.bib`** |
+| Newspaper / magazine piece | `NEWS` / `MGZN` | only if you are confident; **biblatex `entrysubtype` does not survive Zotero import — prefer these type codes here, not `.bib`** |
 | Research note (own `*.md`) | Document | `GEN` | staged note, archived too |
 
 Reports carry `numPages`. Don't invent a type the page doesn't support; when a
@@ -60,11 +59,11 @@ source** that carries the same facts (another outlet, the publisher's own page,
 a reputable roundup) and probe that — exactly as a human would. Note the
 substitution in the entry.
 
-## Injection
+## Creating the items
 
-`inject` maps the same entries JSON onto Zotero item JSON (RIS type → Zotero `itemType`; fields without a slot on the type, e.g. a DOI on a book, land in `extra`) and creates each item through Zotero's local API at `127.0.0.1:23119` (via pyzotero): the item is created in the destination library, in `--collection` when given, then the `attach_pdf` PDF is uploaded under it.
+An entry's `type` is a RIS type code (the column above), the vocabulary the classification uses; no RIS file is written. `create-items` maps the entries JSON onto Zotero item JSON (type code → Zotero `itemType`; fields without a slot on the type, e.g. a DOI on a book, land in `extra`) and creates each item through Zotero's local API at `127.0.0.1:23119` (via pyzotero): the item is created in the destination library, in `--collection` when given, then the `attach_pdf` PDF is uploaded under it.
 
-- **Zotero must answer.** When nothing answers, the helper launches Zotero (never in a container) and waits up to 90 s. If Zotero is still unavailable, nothing is saved and the output says so (`zotero: "unavailable"`, exit 75). Enable Zotero Settings > Advanced > "Allow other applications on this computer to communicate with Zotero", or the helper fails naming that setting. Writing needs Zotero 10.0 or later and a local API key. On the first write without one, Zotero shows Allow / Always Allow / Deny: **tell the user to answer "Always Allow"** (the key is stored in `~/.config/keys/zotero-local.env`; a one-time "Allow" covers one keyed write, and an inject of more than one item, or of an item with its PDF, makes several, so the helper asks before the first write and refuses an "Allow" answer, writing nothing). The helper waits 120 s for the answer; with none, or a Deny, nothing is written.
+- **Zotero must answer.** When nothing answers, the helper launches Zotero (never in a container) and waits up to 90 s. If Zotero is still unavailable, nothing is saved and the output says so (`zotero: "unavailable"`, exit 75). Enable Zotero Settings > Advanced > "Allow other applications on this computer to communicate with Zotero", or the helper fails naming that setting. Writing needs Zotero 10.0 or later and a local API key. On the first write without one, Zotero shows Allow / Always Allow / Deny: **tell the user to answer "Always Allow"** (the key is stored in `~/.config/keys/zotero-local.env`; a one-time "Allow" covers one keyed write, and a `create-items` run of more than one item, or of an item with its PDF, makes several, so the helper asks before the first write and refuses an "Allow" answer, writing nothing). The helper waits 120 s for the answer; with none, or a Deny, nothing is written.
 - **Destination.** `--library` (the user library by default, or a numeric groupID such as an editable group) or `--collection KEY` (whose own library it uses). The item is created there directly; the Zotero window's selection plays no part. A read-only group cannot be a destination.
 - **Duplicate guard.** Before saving, each entry is matched against a live read of the **destination library** through the local API (content hash, identifiers, filename, author-year-title) and against the rest of the batch; a copy in another library does not count; any hit is refused unless `--force`. Nothing is recorded between runs: a re-run relies on that read, which sees everything the client has saved.
 - A save that fails in transit may still have reached Zotero, so the run stops there and marks the rest not attempted (`"not attempted after a failed save"`, or `"not attempted after Zotero stopped"` when Zotero went away during a PDF upload); inspect Zotero before retrying.
@@ -73,14 +72,14 @@ substitution in the entry.
 
 ## Field-mapping rules
 
-- **Title** in the document's original language (RIS `TI`).
-- **Short Title** = English translation of the title (RIS `ST`). Generate it yourself if the document doesn't supply one.
+- **Title** in the document's original language (`title`).
+- **Short Title** = English translation of the title (`shortTitle`). Generate it yourself if the document doesn't supply one.
 - **Authors**: prefer canonical order from CrossRef/OpenLibrary when available; otherwise extract from the byline on page 1. Convert `"First Middle Last"` → `"Last, First Middle"` (the script does this automatically, but do it once if you're feeding the script the wrong way around). Institutions verbatim with a trailing comma so they aren't reordered.
-- **Page count**: include `numPages` for every entry. On the RIS path (`write`), monograph-like types (BOOK, THES, RPRT, CHAP, MANSCPT) emit it as `SP` and everything else as a `pages:N` keyword (RIS has no per-type "total pages" slot for journal articles). On the `inject` path, only `book`, `thesis` and `manuscript` have a real `numPages` field; every other type — reports included — gets it in Extra as `number-of-pages`.
-- **Field placement is per item type** on the `inject` path: a field the target type does not own is refused or dropped on save. `entry_to_zotero_item()` routes each value into the first slot field the type owns, read from the running Zotero's live schema (`/api/itemTypeFields`) — so `publisher` becomes `institution` on a report, `university` on a thesis, `journal` becomes `bookTitle` / `proceedingsTitle` / `series` / `seriesTitle` / `websiteTitle`, and even `year` is type-dependent (a patent has no `date` field, only `issueDate`). Anything with no home lands in Extra under its CSL name; nothing is dropped.
-- **Every accepted RIS code reaches a real Zotero type.** `CPAPER`→conferencePaper, `GOVDOC`→report, `PAT`→patent, `STAND`→standard, `UNPB`→manuscript, `WEB`→webpage, following Zotero's own RIS translator. A code outside the accepted set still degrades to `document`, but logs a warning and records `Unmapped RIS type: <code>` in Extra — never silently.
-- **A report needs four fields the generic ones don't cover**: `publisher` (→ `institution`), `place`, `number` (→ `reportNumber`), `genre` (→ `reportType`). Supply all four and the item is complete in one `inject`.
-- **PDF attachment**: pass `attach_pdf: true` plus the absolute `pdf` path. `inject` uploads the file bytes through the local API, so Zotero stores a copy; on the RIS fallback Zotero respects the user's *Linked Attachments* preference ("Yes — let Zotero copy it").
+- **Page count**: include `numPages` for every entry. Only `book`, `thesis` and `manuscript` have a real `numPages` field; every other type — reports included — gets it in Extra as `number-of-pages`.
+- **Field placement is per item type**: a field the target type does not own is refused or dropped on save. `entry_to_zotero_item()` routes each value into the first slot field the type owns, read from the running Zotero's live schema (`/api/itemTypeFields`) — so `publisher` becomes `institution` on a report, `university` on a thesis, `journal` becomes `bookTitle` / `proceedingsTitle` / `series` / `seriesTitle` / `websiteTitle`, and even `year` is type-dependent (a patent has no `date` field, only `issueDate`). Anything with no home lands in Extra under its CSL name; nothing is dropped.
+- **Every type code reaches a real Zotero type.** `CPAPER`→conferencePaper, `GOVDOC`→report, `PAT`→patent, `STAND`→standard, `UNPB`→manuscript, `WEB`→webpage, following Zotero's own RIS translator. An unknown code still degrades to `document`, but logs a warning and records `Unmapped RIS type: <code>` in Extra — never silently.
+- **A report needs four fields the generic ones don't cover**: `publisher` (→ `institution`), `place`, `number` (→ `reportNumber`), `genre` (→ `reportType`). Supply all four and the item is complete in one `create-items`.
+- **PDF attachment**: pass `attach_pdf: true` plus the absolute `pdf` path. `create-items` uploads the file bytes through the local API, so Zotero stores a copy.
 - **Filename is a fallback only** for title/year/authors. If you used the filename, say so in your summary so the user knows to spot-check.
 
 ## Identifier resolution
@@ -95,7 +94,7 @@ If the network call fails or returns no useful payload, fall back to the documen
 
 ## Duplicate handling
 
-After refined `match`, classify each item by the `verdict`:
+After the refined `find-work`, classify each item by the `verdict`:
 
 - **`verdict: "none"`** → import normally.
 - **`verdict: "match"`** → already present in the destination library (`why` names the key: `storageHash`, `doi`, `isbn`, `arxiv`, `handle`, `filename`, `creator-year-title`). Default: **skip**, tell the user, ask if they want to import anyway (e.g. to refresh metadata). Exception: if the hit has **no attachment** and the key was metadata-level (not `storageHash`/`filename`), the PDF itself is missing from Zotero — default: **import** so the PDF lands, warning that this creates a duplicate item the user should merge.

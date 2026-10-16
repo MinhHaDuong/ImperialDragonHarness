@@ -62,22 +62,28 @@ EXCLUDED_NAMES = (
     "trace-compact-audit-2026-06.md",
 )
 
-# The nine backend verbs (ticket 1018: subcommand names are the verbs).
+# The backend subcommands (ticket 1116: names that say what each does;
+# `probe` split into extraction and lookup, `audit` and `reconcile` merged,
+# the RIS writer dropped).
 VERBS = {
-    "probe",
-    "match",
-    "dedup-report",
-    "audit",
-    "reconcile",
-    "attach",
-    "write",
-    "inject",
-    "enrich",
+    "extract-metadata",
+    "find-work",
+    "report-duplicates",
+    "check-staging",
+    "suggest-attachments",
+    "create-items",
+    "suggest-edits",
 }
 
-# The verb-router surface (ticket 1018 wave B): what a user types after the
-# skill name. `attach` is declared, created on first need (YAGNI).
-ROUTER_VERBS = ("import", "enrich", "audit", "reconcile", "dedup-report", "attach")
+# The retired names: no alias may answer to them (ticket 1116).
+RETIRED_VERBS = {"probe", "match", "dedup-report", "audit", "reconcile",
+                 "attach", "write", "inject", "enrich"}
+
+# The verb-router surface: what a user types after the skill name. `import`
+# is the skill's own workflow over extract-metadata, find-work and
+# create-items; every other verb is a backend subcommand.
+ROUTER_VERBS = ("import", "suggest-edits", "check-staging",
+                "report-duplicates", "suggest-attachments")
 
 # The consolidated skill.
 ZOTERO_SKILL = ROOT / "skills" / "zotero" / "SKILL.md"
@@ -142,17 +148,19 @@ def test_no_live_citations_of_retired_backend():
 
 
 @pytest.mark.adherence
-def test_zotero_backend_answers_all_ten_verbs():
+def test_zotero_backend_answers_exactly_its_verbs():
     backend = ROOT / "scripts" / "zotero.py"
     assert backend.is_file(), (
         "scripts/zotero.py is missing (ticket 1018 wave A rename)"
     )
     text = backend.read_text(encoding="utf-8")
     parsers = set(re.findall(r"add_parser\(\s*[\"']([^\"']+)[\"']", text))
-    missing = VERBS - parsers
-    assert not missing, (
-        f"scripts/zotero.py is missing subcommand(s): {sorted(missing)}"
+    assert parsers == VERBS, (
+        f"scripts/zotero.py subcommands {sorted(parsers)} are not "
+        f"{sorted(VERBS)}"
     )
+    assert "aliases" not in text, "no alias for a retired name (ticket 1116)"
+    assert not parsers & RETIRED_VERBS
 
 
 @pytest.mark.adherence
@@ -214,4 +222,22 @@ def test_no_live_citations_of_retired_skill_names():
         "Live citation(s) of the retired Zotero skill names (ticket 1018 "
         "wave B — consolidated into the `zotero` skill):\n"
         + "\n".join(offenders)
+    )
+
+
+# A run line or invocation naming a retired subcommand: `zotero.py audit`,
+# `"$IDH_ROOT/scripts/zotero.py" reconcile`, `/zotero reconcile`.
+RETIRED_INVOCATION = re.compile(
+    r"zotero\.py\"?\s+(?:" + "|".join(sorted(RETIRED_VERBS)) + r")\b"
+    r"|/zotero\s+(?:" + "|".join(sorted(RETIRED_VERBS)) + r")\b"
+)
+
+
+@pytest.mark.adherence
+def test_no_live_invocation_of_a_retired_subcommand():
+    offenders = [f"{name}:{lineno}: {line.strip()}"
+                 for name, lineno, line in _matches(RETIRED_INVOCATION)]
+    assert not offenders, (
+        "Live invocation(s) of a retired zotero.py subcommand (ticket "
+        "1116):\n" + "\n".join(offenders)
     )

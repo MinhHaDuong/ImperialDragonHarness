@@ -3,8 +3,8 @@
 Author decision, 2026-10-16: "In tests up Zotero as a fixture or skip --
 no mock". There is no stand-in for Zotero here. Each test is one of:
 
-- pure logic that never talks to Zotero: identifier extraction, RIS and
-  item mapping, the matcher over an in-memory library built by hand,
+- pure logic that never talks to Zotero: identifier extraction, entry-to-item
+  mapping, the matcher over an in-memory library built by hand,
   report shapes, BibTeX discovery;
 - a test against a REAL Zotero desktop client on a throwaway profile, data
   directory and port (tests/zotero_live.py), marked `integration`, which
@@ -22,6 +22,7 @@ import argparse
 import contextlib
 import fcntl
 import hashlib
+import io
 import json
 import os
 import shutil
@@ -151,74 +152,121 @@ def test_find_identifier_collects_all():
     assert ids["handle"] == "https://hdl.handle.net/2027/abc"
 
 
-# ── RIS emission ─────────────────────────────────────────────────────────────
+def test_a_cited_works_doi_deep_in_the_page_is_not_the_documents_own():
+    """pdf2doi (evaluated offline for ticket 1116) returns the first DOI in
+    the text, a reference-list one included; this extraction does not."""
+    front = "A Study of Things\nby Smith\n" + "filler line\n" * 80 + \
+            "References\nJones 2001, 10.1111/cited.1\n"
+    assert zi.find_doi(front, "", "") is None
 
 
-def test_author_to_ris_reorders_first_last():
-    assert zi.author_to_ris("Jane Smith") == "Smith, Jane"
+# ── the probe split: extract-metadata, then find-work ────────────────────────
 
 
-def test_author_to_ris_keeps_comma_form():
-    assert zi.author_to_ris("Smith, Jane") == "Smith, Jane"
+@contextlib.contextmanager
+def listener():
+    """A loopback port that accepts connections and counts them."""
+    sock = socket.socket()
+    sock.bind(("127.0.0.1", 0))
+    sock.listen(8)
+    sock.settimeout(0.2)
+    seen = []
+    stop = threading.Event()
+
+    def accept():
+        while not stop.is_set():
+            try:
+                conn, _ = sock.accept()
+            except OSError:
+                continue
+            seen.append(conn)
+            conn.close()
+
+    thread = threading.Thread(target=accept, daemon=True)
+    thread.start()
+    try:
+        yield sock.getsockname()[1], seen
+    finally:
+        stop.set()
+        thread.join()
+        sock.close()
 
 
-def test_author_to_ris_single_token_unchanged():
-    assert zi.author_to_ris("Plato") == "Plato"
+@pytest.mark.integration
+def test_extract_metadata_never_contacts_zotero(tmp_path, monkeypatch, capsys):
+    """Extraction is input-format dependent and never needs Zotero: with a
+    listener on the Zotero URL, it reads the PDF and connects to nothing."""
+    pdf = make_pdf(tmp_path / "paper.pdf", ["A Study of Things", "by Smith",
+                                            "doi: 10.2222/own.2"])
+    with listener() as (port, seen):
+        monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{port}")
+        rc = zi.cmd_extract_metadata(argparse.Namespace(pdf=[str(pdf)]))
+        # Positive control: the same URL does receive a lookup's request.
+        assert zi.zotero_answers(timeout=0.5) is False
+        time.sleep(0.3)
+    assert rc == 0
+    (item,) = json.loads(capsys.readouterr().out)["items"]
+    assert item["identifiers"]["doi"] == "10.2222/own.2"
+    assert "A Study of Things" in item["first_pages_text"]
+    assert "zotero_matches" not in item
+    assert len(seen) == 1, "only the control's request reached the listener"
 
 
-def test_entry_to_ris_basic_journal():
-    ris = zi.entry_to_ris(
-        {"title": "A Paper", "authors": ["Jane Smith"], "year": "2020", "doi": "10.1/x"}
-    )
-    assert "TY  - JOUR" in ris
-    assert "TI  - A Paper" in ris
-    assert "AU  - Smith, Jane" in ris
-    assert "PY  - 2020" in ris
-    assert "DO  - 10.1/x" in ris
-    assert ris.rstrip().endswith("ER  -")
+def test_extract_metadata_reports_a_missing_pdf(tmp_path, capsys):
+    rc = zi.cmd_extract_metadata(argparse.Namespace(pdf=[str(tmp_path / "x.pdf")]))
+    assert rc == 1
+    assert json.loads(capsys.readouterr().out)["items"][0]["error"] == "not found"
 
 
-def test_entry_to_ris_invalid_type_falls_back_to_jour():
-    assert "TY  - JOUR" in zi.entry_to_ris({"type": "BOGUS", "title": "T"})
+def test_find_work_does_nothing_when_zotero_is_unavailable(tmp_path, capsys):
+    """The lookup ensures Zotero is available: down and not launchable
+    (ZOTERO_NO_LAUNCH), it does nothing and says so, even when fed
+    extract-metadata output."""
+    meta = tmp_path / "meta.json"
+    meta.write_text(json.dumps({"items": [{"pdf": None, "identifiers": {
+        "doi": "10.1/x"}, "pdfinfo": {}, "year_hint": None}]}))
+    assert zi.cmd_find_work(_match_args(doi=None, metadata=str(meta))) == \
+        zi.EXIT_UNAVAILABLE
+    assert json.loads(capsys.readouterr().out)["zotero"] == "unavailable"
 
 
-def test_entry_to_ris_splits_page_range():
-    ris = zi.entry_to_ris({"title": "T", "pages": "10-20"})
-    assert "SP  - 10" in ris
-    assert "EP  - 20" in ris
+@pytest.mark.integration
+def test_extraction_output_feeds_the_lookup(use_live, tmp_path, monkeypatch,
+                                            capsys):
+    """extract-metadata | find-work --metadata -: the DOI the PDF states is
+    the one looked up, and the flags override the extracted values."""
+    doi = unique_doi()
+    title = unique_title()
+    key = use_live.save(title, DOI=doi)
+    pdf = make_pdf(tmp_path / "paper.pdf", [title, f"doi: {doi}"])
+    assert zi.cmd_extract_metadata(argparse.Namespace(pdf=[str(pdf)])) == 0
+    extracted = capsys.readouterr().out
+    monkeypatch.setattr(sys, "stdin", io.StringIO(extracted))
+    assert zi.cmd_find_work(_match_args(doi=None, metadata="-")) == 0
+    (result,) = json.loads(capsys.readouterr().out)["results"]
+    assert result["verdict"] == "match"
+    assert result["matches"][0]["key"] == key
+    assert result["query"]["doi"] == doi
+    meta = tmp_path / "meta.json"
+    meta.write_text(extracted)
+    assert zi.cmd_find_work(_match_args(doi=unique_doi(), metadata=str(meta))) == 0
+    (result,) = json.loads(capsys.readouterr().out)["results"]
+    assert result["verdict"] == "none", "the --doi flag replaced the extracted DOI"
 
 
-def test_entry_to_ris_numpages_monograph_maps_to_sp():
-    ris = zi.entry_to_ris({"type": "BOOK", "title": "T", "numPages": "300"})
-    assert "SP  - 300" in ris
+# ── author names ─────────────────────────────────────────────────────────────
 
 
-def test_entry_to_ris_numpages_nonmonograph_maps_to_keyword():
-    ris = zi.entry_to_ris({"type": "JOUR", "title": "T", "numPages": "12"})
-    assert "KW  - pages:12" in ris
+def test_last_first_reorders_first_last():
+    assert zi.last_first("Jane Smith") == "Smith, Jane"
 
 
-def test_entry_to_ris_abstract_whitespace_collapsed():
-    ris = zi.entry_to_ris({"title": "T", "abstract": "line one\n  line   two"})
-    assert "AB  - line one line two" in ris
+def test_last_first_keeps_comma_form():
+    assert zi.last_first("Smith, Jane") == "Smith, Jane"
 
 
-# ── cmd_write ────────────────────────────────────────────────────────────────
-
-
-def test_cmd_write_emits_ris_file(tmp_path):
-    import argparse
-
-    out = tmp_path / "out.ris"
-    args = argparse.Namespace(
-        entries_json='[{"title": "One", "year": "2021"}]',
-        entries_file=None,
-        out=str(out),
-    )
-    assert zi.cmd_write(args) == 0
-    body = out.read_text()
-    assert "TI  - One" in body
-    assert "PY  - 2021" in body
+def test_last_first_single_token_unchanged():
+    assert zi.last_first("Plato") == "Plato"
 
 
 # ── the matcher over one library read ────────────────────────────────────────
@@ -661,17 +709,7 @@ def test_document_fallback_routes_pagination_and_container_to_extra():
         assert label in item["extra"]
 
 
-# ── RIS code coverage (the silent-downgrade class) ──────────────────────────
-
-
-def test_every_accepted_ris_code_maps_to_a_zotero_type():
-    """A code `write` accepts must not collapse to `document` on `inject`.
-
-    The silent counterpart of the 400 class: no error, no trace, just a
-    generic item where a patent or a standard was meant.
-    """
-    unmapped = sorted(zi.RIS_VALID_TYPES - set(zi.RIS_TO_ZOTERO_TYPE))
-    assert unmapped == [], f"accepted RIS codes with no Zotero type: {unmapped}"
+# ── entry type codes ─────────────────────────────────────────────────────────
 
 
 def test_every_mapped_zotero_type_has_a_pinned_field_set():
@@ -739,7 +777,7 @@ def test_rand_p69_memorandum_is_complete_in_one_pass():
     """Samuelson, *Market Mechanisms and Maximization*, RAND P-69 (1949).
 
     The import that took two 400s and then needed a hand-written PATCH for
-    institution / reportNumber / place / reportType. One `inject` must now
+    institution / reportNumber / place / reportType. One `create-items` must now
     produce the whole item.
     """
     item = zi.entry_to_zotero_item({
@@ -771,31 +809,6 @@ def test_rand_p69_memorandum_is_complete_in_one_pass():
 
 
 # ── entry key validation ────────────────────────────────────────────────────
-
-
-def test_ris_path_drops_no_input_value_either():
-    """Adding entry keys must not create a silent loss on the RIS side.
-
-    `write` accepts the same entries as `inject`; a key only the API path
-    reads would vanish from the RIS artifact without a word.
-    """
-    losses = {}
-    for ris_code in sorted(zi.RIS_VALID_TYPES):
-        ris = zi.entry_to_ris({**MAXIMAL_ENTRY, "type": ris_code})
-        values = {line.split("  - ", 1)[1].split(":", 1)[-1].strip()
-                  for line in ris.splitlines() if "  - " in line}
-        values |= {line.split("  - ", 1)[1].strip()
-                   for line in ris.splitlines() if "  - " in line}
-        missing = sorted(
-            key for key, value in MAXIMAL_ENTRY.items()
-            # authors are reordered, abstract collapsed, a page range is
-            # split across SP/EP, numPages competes with it on monographs
-            if key not in ("authors", "abstract", "pages", "numPages")
-            and str(value) not in values
-        )
-        if missing:
-            losses[ris_code] = missing
-    assert losses == {}, f"values absent from the RIS artifact: {losses}"
 
 
 def test_unknown_entry_key_is_rejected_not_ignored():
@@ -1076,7 +1089,7 @@ def test_enrich_reports_the_edit_and_writes_nothing(use_live, capsys):
     before = use_live.item(key)["version"]
     args = _enrich_args(key, title, "DOI=10.2307/1907301",
                         "url=https://new.example", "version=99")
-    assert zi.cmd_enrich(args) == 1  # the url conflict is refused
+    assert zi.cmd_suggest_edits(args) == 1  # the url conflict is refused
     out = json.loads(capsys.readouterr().out)
     row = out["results"][0]
     assert row["suggested"] == [{"itemKey": key, "field": "DOI",
@@ -1096,7 +1109,7 @@ def test_enrich_edit_writes_the_suggested_fields_only(use_live, capsys):
                         url="https://old.example")
     args = _enrich_args(key, title, "DOI=10.2307/1907301",
                         "url=https://new.example", edit=True)
-    assert zi.cmd_enrich(args) == 1  # the url conflict is still refused
+    assert zi.cmd_suggest_edits(args) == 1  # the url conflict is still refused
     out = json.loads(capsys.readouterr().out)
     assert out["results"][0]["status"] == "written" and out["edit"] is True
     data = use_live.item(key)["data"]
@@ -1104,7 +1117,7 @@ def test_enrich_edit_writes_the_suggested_fields_only(use_live, capsys):
     assert data["url"] == "https://old.example", "a refused field is not written"
     # Already correct now: a second --edit run has nothing to write.
     args.set = ["DOI=10.2307/1907301"]
-    assert zi.cmd_enrich(args) == 0
+    assert zi.cmd_suggest_edits(args) == 0
     assert json.loads(capsys.readouterr().out)["results"][0]["status"] == \
         "nothing to change"
 
@@ -1117,13 +1130,13 @@ def test_attach_reports_the_step_and_writes_nothing(use_live, tmp_path, capsys):
     pdf.write_bytes(b"%PDF")
     args = argparse.Namespace(parent=key, file=[str(pdf)], library="user",
                               edit=False)
-    assert zi.cmd_attach(args) == 0
+    assert zi.cmd_suggest_attachments(args) == 0
     out = json.loads(capsys.readouterr().out)
     assert out["suggested"] == [{"itemKey": key, "field": "attachment",
                                  "old": "", "new": str(pdf.resolve())}]
     assert out["source"] == zi.LIBRARY_SOURCE
     args.parent = ABSENT_KEY
-    assert zi.cmd_attach(args) == 1
+    assert zi.cmd_suggest_attachments(args) == 1
     capsys.readouterr()
     assert use_live.item(key)["version"] == before
     assert use_live.children(key) == []
@@ -1135,7 +1148,7 @@ def test_attach_edit_stores_the_file_under_the_item(use_live, tmp_path, capsys):
     pdf = make_pdf(tmp_path / "Walley1991.pdf", [unique_title()])
     args = argparse.Namespace(parent=key, file=[str(pdf)], library="user",
                               edit=True)
-    assert zi.cmd_attach(args) == 0
+    assert zi.cmd_suggest_attachments(args) == 0
     (row,) = json.loads(capsys.readouterr().out)["attached"]
     assert row["status"] == "attached"
     (child,) = use_live.children(key)
@@ -1175,7 +1188,7 @@ def test_a_write_without_a_key_asks_zotero_and_gives_up_in_bound(
     monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(key_file))
     monkeypatch.setattr(zi, "AUTHORIZE_WAIT", 3.0)
     started = time.monotonic()
-    rc = zi.cmd_enrich(_enrich_args(key, title, "DOI=10.1/nokey", edit=True))
+    rc = zi.cmd_suggest_edits(_enrich_args(key, title, "DOI=10.1/nokey", edit=True))
     # It waited for the dialog (positive control), then gave up in bound.
     assert 3.0 <= time.monotonic() - started < 30
     assert rc == 1
@@ -1212,7 +1225,7 @@ def test_a_key_dropped_part_way_reports_the_fileless_attachment(
     pdf = make_pdf(tmp_path / "Walley1991.pdf", [unique_title()])
     args = argparse.Namespace(parent=key, file=[str(pdf)], library="user",
                               edit=True)
-    assert zi.cmd_attach(args) == 1
+    assert zi.cmd_suggest_attachments(args) == 1
     (row,) = json.loads(capsys.readouterr().out)["attached"]
     assert row["status"] == "failed"
     # Positive control: the one-time key did buy one write, the attachment.
@@ -1243,7 +1256,7 @@ def test_storing_a_file_without_a_key_asks_before_writing_anything(
     monkeypatch.setattr(zi, "AUTHORIZE_WAIT", 3.0)
     pdf = make_pdf(tmp_path / "Walley1991.pdf", [unique_title()])
     started = time.monotonic()
-    assert zi.cmd_attach(argparse.Namespace(
+    assert zi.cmd_suggest_attachments(argparse.Namespace(
         parent=key, file=[str(pdf)], library="user", edit=True)) == 1
     assert 3.0 <= time.monotonic() - started < 30
     (row,) = json.loads(capsys.readouterr().out)["attached"]
@@ -1371,13 +1384,13 @@ def test_the_key_file_defaults_to_the_harness_keystore(monkeypatch):
 
 def _match_args(**over):
     base = dict(doi="10.1/x", isbn=None, arxiv=None, handle=None, title=None,
-                year=None, author=None, pdf=None, library="user")
+                year=None, author=None, pdf=None, library="user", metadata=None)
     base.update(over)
     return argparse.Namespace(**base)
 
 
 def test_unavailable_with_launching_opted_out_does_nothing(capsys):
-    assert zi.cmd_match(_match_args()) == zi.EXIT_UNAVAILABLE
+    assert zi.cmd_find_work(_match_args()) == zi.EXIT_UNAVAILABLE
     captured = capsys.readouterr()
     out = json.loads(captured.out)
     assert out["zotero"] == "unavailable" and out["verdict"] == "unchecked"
@@ -1391,7 +1404,7 @@ def test_unavailable_in_a_ci_runner_does_nothing(monkeypatch, capsys):
     monkeypatch.setenv("CI", "true")
     reason = zi.in_container()
     assert reason
-    assert zi.cmd_match(_match_args()) == zi.EXIT_UNAVAILABLE
+    assert zi.cmd_find_work(_match_args()) == zi.EXIT_UNAVAILABLE
     out = json.loads(capsys.readouterr().out)
     assert reason in out["error"] and "Nothing was done" in out["error"]
 
@@ -1451,9 +1464,10 @@ def test_zotero_is_launched_when_not_running(launch_wrapper, monkeypatch, capsys
             "/dev/null"}
     assert zi.ensure_zotero() == "running"
     assert _wait_for(lambda: zotero_live.answers(f"http://127.0.0.1:{port}"))
-    assert zi.cmd_match(_match_args(doi=unique_doi())) == 0
+    assert zi.cmd_find_work(_match_args(doi=unique_doi())) == 0
     out = json.loads(capsys.readouterr().out)
-    assert out["verdict"] == "none" and out["zotero"] == f"http://127.0.0.1:{port}"
+    assert out["results"][0]["verdict"] == "none"
+    assert out["zotero"] == f"http://127.0.0.1:{port}"
 
 
 @pytest.mark.integration
@@ -1499,7 +1513,7 @@ def test_local_api_disabled_names_the_setting(api_off_zotero, monkeypatch, capsy
     """Zotero ships with the local API off: it answers 403 and the error
     names the setting to turn on."""
     zotero_live.point_helper_at(api_off_zotero, monkeypatch)
-    assert zi.cmd_match(_match_args()) == 1
+    assert zi.cmd_find_work(_match_args()) == 1
     out = json.loads(capsys.readouterr().out)
     assert "Allow other applications on this computer" in out["error"]
     assert "disabled" in out["error"]
@@ -1691,7 +1705,7 @@ def test_audit_exact_md5_tie_names_every_parent(tmp_path, monkeypatch):
     pdf.write_bytes(b"%PDF-1.4 same bytes")
     digest = hashlib.md5(pdf.read_bytes()).hexdigest()
     idx = _two_parent_library(pdf, (digest, digest))
-    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+    monkeypatch.setattr(zi, "_pdf_front_text", lambda p: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
     row = zi.audit_one(pdf, idx)
     assert row["verdict"] == "identical"
@@ -1706,7 +1720,7 @@ def test_audit_strong_filename_tie_names_every_parent(tmp_path, monkeypatch):
     pdf = tmp_path / "paper.pdf"
     pdf.write_bytes(b"%PDF-1.4 local bytes")
     idx = _two_parent_library(pdf, ("md5-one", "md5-two"))
-    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+    monkeypatch.setattr(zi, "_pdf_front_text", lambda p: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
     row = zi.audit_one(pdf, idx)
     named = {row["zotero_key"]} | {m["key"] for m in row.get("also_matches", [])}
@@ -1762,7 +1776,7 @@ def test_library_matches_short_title_is_skipped_not_matched():
 
 
 def test_library_matches_reports_missing_file_on_the_work():
-    """The present-but-no-file case is what `attach` exists to repair."""
+    """The present-but-no-file case is what `suggest-attachments` exists to repair."""
     idx = _library([_work("W1", "Sraffa and von Neumann", "2001", ("Kurz",))], [])
     res = zi.library_matches(idx, title="Sraffa and von Neumann", year="2001",
                          first_author="Kurz")
@@ -1949,7 +1963,7 @@ def test_audit_verdicts_cover_every_certainty(tmp_path, monkeypatch):
     pdf.write_bytes(b"%PDF-1.4")
     idx = _library([_work("W1", "Systems of inequalities involving convex functions",
                         "1957", ("Hoffman",))])
-    monkeypatch.setattr(zi, "_pdf_probe_text",
+    monkeypatch.setattr(zi, "_pdf_front_text",
                         lambda p: "we consider systems of constraints\n"
                                   "the objective functions are convex\n"
                                   "involving several unrelated parameters\n")
@@ -1960,7 +1974,7 @@ def test_audit_verdicts_cover_every_certainty(tmp_path, monkeypatch):
 def test_audit_verdict_absent_when_nothing_fires(tmp_path, monkeypatch):
     pdf = tmp_path / "Nobody1999-x.pdf"
     pdf.write_bytes(b"%PDF-1.4")
-    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "an unrelated document\n")
+    monkeypatch.setattr(zi, "_pdf_front_text", lambda p: "an unrelated document\n")
     monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
     row = zi.audit_one(pdf, _library([_work("W1", "Something Else Entirely Here")]))
     assert row["verdict"] == "absent"
@@ -1972,7 +1986,7 @@ def test_audit_verdict_identical_on_content_hash(tmp_path, monkeypatch):
     pdf.write_bytes(b"%PDF-1.4 unique bytes")
     digest = hashlib.md5(pdf.read_bytes()).hexdigest()
     idx = _library([_work("W1", "Whatever")], [_att("A1", "W1", "other.pdf", digest)])
-    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+    monkeypatch.setattr(zi, "_pdf_front_text", lambda p: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda p: {})
     row = zi.audit_one(pdf, idx)
     assert row["verdict"] == "identical"
@@ -1988,33 +2002,51 @@ def test_audit_verdict_identical_on_content_hash(tmp_path, monkeypatch):
 # --------------------------------------------------------------------------
 
 
-def _audit_args(directory, **kw):
-    return argparse.Namespace(directory=str(directory), out=kw.get("out"),
-                              ext=None, library="user")
+def _dir_args(root, directory, **kw):
+    return argparse.Namespace(root=str(root), dir=str(directory),
+                              out=kw.get("out"), apply=False, edit=False,
+                              library="user")
 
 
-def test_cmd_audit_missing_directory_is_a_json_error_not_a_traceback(
+def test_check_staging_dir_missing_is_a_json_error_not_a_traceback(
         tmp_path, capsys):
-    """A mistyped path degrades like every other subcommand, rc 1 + JSON,
-    before Zotero is asked (it is down here, which would read 75)."""
-    assert zi.cmd_audit(_audit_args(tmp_path / "nope")) == 1
+    """A mistyped --dir is a discovery error, reported before Zotero is
+    asked (it is down here): unchecked, rc 1, JSON."""
+    assert zi.cmd_check_staging(_dir_args(tmp_path, "nope")) == 1
     out = json.loads(capsys.readouterr().out)
-    assert "not a directory" in out["error"]
+    assert any("not a directory" in e for e in out["errors"])
+    assert out["verdict"] == "zotero_unavailable"
 
 
-def test_cmd_audit_file_instead_of_directory_is_a_json_error(tmp_path, capsys):
-    f = tmp_path / "one.pdf"
-    f.write_bytes(b"%PDF-1.4")
-    assert zi.cmd_audit(_audit_args(f)) == 1
-    assert "not a directory" in json.loads(capsys.readouterr().out)["error"]
+def test_check_staging_dir_outside_the_root_is_refused(tmp_path, capsys):
+    root = tmp_path / "repo"
+    (tmp_path / "elsewhere").mkdir()
+    root.mkdir()
+    assert zi.cmd_check_staging(_dir_args(root, "../elsewhere")) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert any("outside repository" in e for e in out["errors"])
+
+
+def test_check_staging_dir_mode_reads_no_bib(tmp_path):
+    """--dir checks every staging file of that directory, nested ones
+    included, and ignores the repository's BibTeX."""
+    (tmp_path / "refs.bib").write_text("@article{a, title={T}, file={docs/a.pdf}}\n")
+    scans = tmp_path / "scans" / "1960"
+    scans.mkdir(parents=True)
+    (scans / "Hoffman1960.pdf").write_bytes(b"%PDF-1.4")
+    (scans / "notes.txt").write_text("not a staging extension")
+    found = zi.discover_directory(tmp_path, Path("scans"))
+    assert found["bib_files"] == [] and found["linked"] == []
+    assert found["orphans"] == [(scans / "Hoffman1960.pdf").resolve()]
+    assert found["errors"] == []
 
 
 @pytest.mark.integration
 @pytest.mark.skipif(os.geteuid() == 0, reason="root reads an unreadable file")
-def test_cmd_audit_one_unreadable_file_does_not_abort_the_batch(
+def test_check_staging_one_unreadable_file_does_not_abort_the_batch(
         use_live, tmp_path, capsys):
     """Losing 288 rows because file 3 could not be read is the expensive
-    failure: the unreadable file becomes an error row."""
+    failure: the unreadable file becomes an error, the others rows."""
     staging = tmp_path / "staging"
     staging.mkdir()
     names = [f"{uuid.uuid4().hex[:10]}.pdf" for _ in range(3)]
@@ -2023,18 +2055,18 @@ def test_cmd_audit_one_unreadable_file_does_not_abort_the_batch(
     (staging / names[1]).chmod(0)
     out = tmp_path / "report.json"
     try:
-        assert zi.cmd_audit(_audit_args(staging, out=str(out))) == 0
+        assert zi.cmd_check_staging(_dir_args(tmp_path, "staging",
+                                              out=str(out))) == 1
     finally:
         (staging / names[1]).chmod(0o600)
     capsys.readouterr()
     report = json.loads(out.read_text())
-    assert len(report["rows"]) == 3
-    bad = next(r for r in report["rows"] if r["file"] == names[1])
-    assert bad["verdict"] == "error"
-    assert "Permission denied" in bad["error"]
+    assert len(report["rows"]) == 2
+    assert any(names[1] in e and "Permission denied" in e
+               for e in report["errors"])
     assert report["summary"]["absent"] == 2
-    assert "error" in report["actions"]
-    assert report["zotero"] == use_live.url
+    assert report["verdict"] == "unchecked"
+    assert report["library"]["zotero"] == use_live.url
 
 
 def test_audit_one_reads_the_pdfinfo_title_of_a_scanned_pdf(
@@ -2042,7 +2074,7 @@ def test_audit_one_reads_the_pdfinfo_title_of_a_scanned_pdf(
     """pdfinfo reads container metadata; an empty text layer says nothing about it."""
     pdf = tmp_path / "Artzner1999-x.pdf"
     pdf.write_bytes(b"%PDF-1.4")
-    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+    monkeypatch.setattr(zi, "_pdf_front_text", lambda p: "")
     monkeypatch.setattr(zi, "pdfinfo",
                         lambda p: {"Title": "Coherent Measures of Risk"})
     idx = _library([_work("W1", "Coherent Measures of Risk", "1999", ("Artzner",))])
@@ -2054,7 +2086,7 @@ def test_audit_one_reads_the_pdfinfo_title_of_a_scanned_pdf(
 def test_audit_one_survives_a_failing_pdfinfo(tmp_path, monkeypatch):
     pdf = tmp_path / "Any1999-x.pdf"
     pdf.write_bytes(b"%PDF-1.4")
-    monkeypatch.setattr(zi, "_pdf_probe_text", lambda p: "")
+    monkeypatch.setattr(zi, "_pdf_front_text", lambda p: "")
 
     def boom(p):
         raise RuntimeError("pdfinfo timed out")
@@ -2206,7 +2238,7 @@ def test_inject_refuses_contradicted_metadata(tmp_path, monkeypatch, capsys):
                                  "online optimization",
         "authors": ["Albers, Susanne"], "pdf": str(pdf), "attach_pdf": True}]))
     args = _inject_args(None, entries_json=None, entries_file=str(entries))
-    rc = zi.cmd_inject(args)
+    rc = zi.cmd_create_items(args)
     out = json.loads(capsys.readouterr().out)
     assert rc == 1
     assert out["error"] == "metadata contradicted by the document"
@@ -2221,7 +2253,7 @@ def test_inject_skip_corroboration_lets_it_through(use_live, tmp_path, capsys):
     args = _inject_args([{"type": "JOUR", "title": title,
                           "authors": ["Albers, Susanne"], "year": "2020",
                           "pdf": str(pdf)}], skip_corroboration=True)
-    assert zi.cmd_inject(args) == 0
+    assert zi.cmd_create_items(args) == 0
     out = json.loads(capsys.readouterr().out)
     assert out["results"][0]["status"] == "created"
     assert out["results"][0]["corroboration"] == "contradicted"
@@ -2238,7 +2270,7 @@ def test_inject_dry_run_reports_corroboration_and_creates_nothing(
     entries.write_text(json.dumps([entry]))
     args = argparse.Namespace(entries_json=None, entries_file=str(entries),
                               dry_run=True, skip_corroboration=False)
-    assert zi.cmd_inject(args) == 0
+    assert zi.cmd_create_items(args) == 0
     out = json.loads(capsys.readouterr().out)
     assert out["corroboration"][0]["confidence"] == "corroborated"
     (item,) = out["items"]
@@ -2252,7 +2284,7 @@ def test_inject_does_nothing_when_zotero_is_unavailable(capsys):
     clear message, and the unavailable status."""
     args = _inject_args([{"title": "New Paper", "authors": ["Smith, Jane"],
                           "year": "2020"}])
-    assert zi.cmd_inject(args) == zi.EXIT_UNAVAILABLE
+    assert zi.cmd_create_items(args) == zi.EXIT_UNAVAILABLE
     captured = capsys.readouterr()
     out = json.loads(captured.out)
     assert out["zotero"] == "unavailable"
@@ -2277,7 +2309,7 @@ def test_inject_files_into_a_collection_then_attaches(use_live, tmp_path, capsys
     (key,) = use_live.collections(unique_title(2))
     doi = unique_doi()
     entry = _entry(tmp_path, doi=doi, attach_pdf=True)
-    assert zi.cmd_inject(_inject_args([entry], collection=key)) == 0
+    assert zi.cmd_create_items(_inject_args([entry], collection=key)) == 0
     out = json.loads(capsys.readouterr().out)
     assert out["collection"] == key and out["library_id"] == "user"
     assert out["results"][0]["status"] == "created"
@@ -2293,7 +2325,7 @@ def test_inject_files_into_a_collection_then_attaches(use_live, tmp_path, capsys
 @pytest.mark.integration
 def test_inject_error_after_the_read_is_structured(use_live, tmp_path, capsys):
     entry = _entry(tmp_path)
-    assert zi.cmd_inject(_inject_args([entry], collection=ABSENT_KEY)) == 1
+    assert zi.cmd_create_items(_inject_args([entry], collection=ABSENT_KEY)) == 1
     assert "in no local library" in json.loads(capsys.readouterr().out)["error"]
     assert use_live.titled(entry["title"]) == []
 
@@ -2304,7 +2336,7 @@ def test_inject_refuses_a_work_already_in_the_library(use_live, tmp_path, capsys
     title = unique_title()
     key = use_live.save(title, creators=("Smith",), DOI=doi)
     entry = _entry(tmp_path, title=title, surname="Smith", doi=doi)
-    assert zi.cmd_inject(_inject_args([entry])) == 1
+    assert zi.cmd_create_items(_inject_args([entry])) == 1
     out = json.loads(capsys.readouterr().out)
     assert "duplicate" in out["results"][0]["error"]
     assert out["results"][0]["matches"][0]["key"] == key
@@ -2318,7 +2350,7 @@ def test_second_run_reads_the_library_afresh(use_live, tmp_path, capsys):
     title, surname, doi = unique_title(), unique_surname(), unique_doi()
     for n in range(2):
         entry = _entry(tmp_path, title=title, surname=surname, doi=doi)
-        assert zi.cmd_inject(_inject_args([entry])) == (0 if n == 0 else 1)
+        assert zi.cmd_create_items(_inject_args([entry])) == (0 if n == 0 else 1)
         result = json.loads(capsys.readouterr().out)
         if n == 1:
             assert "duplicate" in result["results"][0]["error"]
@@ -2332,7 +2364,7 @@ def test_inject_blocks_distinct_pdfs_with_same_doi_before_saving(
     shared = unique_doi()
     entries = [_entry(tmp_path, doi=shared if n in (0, second) else unique_doi())
                for n in range(count)]
-    assert zi.cmd_inject(_inject_args(entries)) == 1
+    assert zi.cmd_create_items(_inject_args(entries)) == 1
     out = json.loads(capsys.readouterr().out)
     assert "same work" in out["results"][0]["error"]
     assert "same work" in out["results"][second]["error"]
@@ -2346,7 +2378,7 @@ def test_inject_allows_generic_title_when_author_or_year_differs(
     title = unique_title()
     entries = [_entry(tmp_path, title=title, year="2020"),
                _entry(tmp_path, title=title, year="2021")]
-    assert zi.cmd_inject(_inject_args(entries)) == 0
+    assert zi.cmd_create_items(_inject_args(entries)) == 0
     capsys.readouterr()
     assert len(use_live.titled(title)) == 2
 
@@ -2357,7 +2389,7 @@ def test_inject_refuses_a_guard_read_of_another_library(use_live, tmp_path,
     entry = _entry(tmp_path)
     args = _inject_args([entry], _snapshot={"works": [], "attachments": [],
                                             "library_id": "3"})
-    assert zi.cmd_inject(args) == 1
+    assert zi.cmd_create_items(args) == 1
     assert "not the destination user" in json.loads(capsys.readouterr().out)["error"]
     assert use_live.titled(entry["title"]) == []
 
@@ -2425,7 +2457,7 @@ def test_no_request_goes_through_a_proxy(use_live, tmp_path, monkeypatch, capsys
         assert zi.ensure_zotero() == "running"
         assert key in {w["key"] for w in zi.read_library("all")["works"]}
         assert zi.find_item(key)[1]["data"]["title"] == title
-        assert zi.cmd_inject(_inject_args([entry])) == 0
+        assert zi.cmd_create_items(_inject_args([entry])) == 0
         assert json.loads(capsys.readouterr().out)["results"][0]["attachment"]
         time.sleep(0.5)  # let a stray connection land before looking
         assert seen == [], "a request went through the proxy"
@@ -2442,7 +2474,7 @@ def test_the_client_takes_no_proxy_and_follows_no_redirect(monkeypatch):
     assert zi.http_client().trust_env is False
 
 
-def test_reconcile_discovers_nonstandard_bib_and_orphans(tmp_path):
+def test_check_staging_discovers_nonstandard_bib_and_orphans(tmp_path):
     docs = tmp_path / "docs"
     docs.mkdir()
     linked = docs / "linked.pdf"
@@ -2465,7 +2497,7 @@ def test_reconcile_discovers_nonstandard_bib_and_orphans(tmp_path):
 
 
 def _reconcile_args(root, **over):
-    base = dict(root=str(root), apply=False, out=None, library="user")
+    base = dict(root=str(root), apply=False, out=None, library="user", dir=None)
     base.update(over)
     return argparse.Namespace(**base)
 
@@ -2491,28 +2523,28 @@ def _staged_bib_paper(root, opt_in=OPT_IN, *, title=None, surname=None,
 
 
 def _quiet_pdf_tools(monkeypatch):
-    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
+    monkeypatch.setattr(zi, "_pdf_front_text", lambda _: "")
     monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
     monkeypatch.setattr(zi, "pdfinfo", lambda _: {})
 
 
-def test_reconcile_with_nothing_staged_skips_the_library(tmp_path, capsys):
+def test_check_staging_with_nothing_staged_skips_the_library(tmp_path, capsys):
     """Zotero is down here: a "checked" verdict, not "zotero_unavailable",
     shows it was never asked."""
     (tmp_path / "docs").mkdir()
     (tmp_path / "docs" / "notes.md").write_text("no staged documents")
-    assert zi.cmd_reconcile(_reconcile_args(tmp_path)) == 0
+    assert zi.cmd_check_staging(_reconcile_args(tmp_path)) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["verdict"] == "checked" and report["files"] == 0
 
 
 @pytest.mark.parametrize("staging", [False, True])
-def test_reconcile_empty_report_writes_out_with_the_full_keys(
+def test_check_staging_empty_report_writes_out_with_the_full_keys(
         tmp_path, capsys, staging):
     if staging:
         (tmp_path / "docs").mkdir()
     out = tmp_path / "report.json"
-    assert zi.cmd_reconcile(_reconcile_args(tmp_path, out=str(out))) == 0
+    assert zi.cmd_check_staging(_reconcile_args(tmp_path, out=str(out))) == 0
     report = json.loads(out.read_text())
     assert report["verdict"] == ("checked" if staging else "no_staging")
     assert report["bib_files"] == []
@@ -2533,13 +2565,13 @@ def _empty_apply(root, staging, problem):
         (root / ".zotero-reconcile.json").write_text(
             "[]" if problem == "invalid" else json.dumps(config))
     out = root / "report.json"
-    rc = zi.cmd_reconcile(_reconcile_args(root, apply=True, out=str(out)))
+    rc = zi.cmd_check_staging(_reconcile_args(root, apply=True, out=str(out)))
     return rc, json.loads(out.read_text())
 
 
 @pytest.mark.parametrize("staging", [False, True])
 @pytest.mark.parametrize("problem", ["missing", "invalid"])
-def test_reconcile_empty_apply_checks_the_opt_in_file_first(
+def test_check_staging_empty_apply_checks_the_opt_in_file_first(
         tmp_path, capsys, staging, problem):
     """A broken opt-in fails before Zotero is asked: Zotero is down here,
     yet the verdict is not "zotero_unavailable"."""
@@ -2553,7 +2585,7 @@ def test_reconcile_empty_apply_checks_the_opt_in_file_first(
 @pytest.mark.integration
 @pytest.mark.parametrize("staging", [False, True])
 @pytest.mark.parametrize("problem", ["wrong_user", "valid"])
-def test_reconcile_empty_apply_checks_the_account(
+def test_check_staging_empty_apply_checks_the_account(
         use_live, tmp_path, capsys, staging, problem):
     """A well-formed opt-in is checked against the account Zotero is
     signed in as; the throwaway client is signed in to none, so even the
@@ -2567,11 +2599,11 @@ def test_reconcile_empty_apply_checks_the_account(
 
 
 @pytest.mark.integration
-def test_reconcile_staged_file_reads_the_library(use_live, tmp_path, capsys):
+def test_check_staging_staged_file_reads_the_library(use_live, tmp_path, capsys):
     (tmp_path / "docs").mkdir()
     (tmp_path / "docs" / f"{uuid.uuid4().hex[:10]}.pdf").write_bytes(
         f"staged {uuid.uuid4().hex}".encode())
-    assert zi.cmd_reconcile(_reconcile_args(tmp_path)) == 0
+    assert zi.cmd_check_staging(_reconcile_args(tmp_path)) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["verdict"] == "checked" and report["files"] == 1
     assert report["library"]["zotero"] == use_live.url
@@ -2579,14 +2611,14 @@ def test_reconcile_staged_file_reads_the_library(use_live, tmp_path, capsys):
 
 
 @pytest.mark.parametrize("apply", [False, True])
-def test_reconcile_without_zotero_is_a_clean_no_op_and_still_writes_out(
+def test_check_staging_without_zotero_is_a_clean_no_op_and_still_writes_out(
         tmp_path, capsys, apply):
     """Unavailable is not a crash: exit 0, verdict zotero_unavailable,
     nothing compared, nothing created, and --out still written."""
     _staged_bib_paper(tmp_path)
     out = tmp_path / "report.json"
     args = _reconcile_args(tmp_path, out=str(out), apply=apply)
-    assert zi.cmd_reconcile(args) == 0
+    assert zi.cmd_check_staging(args) == 0
     report = json.loads(out.read_text())
     assert report["verdict"] == "zotero_unavailable"
     assert report["zotero"]["status"] == "unavailable"
@@ -2595,7 +2627,7 @@ def test_reconcile_without_zotero_is_a_clean_no_op_and_still_writes_out(
     assert "ZOTERO_NO_LAUNCH" in capsys.readouterr().err
 
 
-def test_reconcile_without_zotero_still_reports_discovery_errors(tmp_path, capsys):
+def test_check_staging_without_zotero_still_reports_discovery_errors(tmp_path, capsys):
     """A broken bib is the project's fault, not Zotero's: unavailable must not
     turn it into a clean no-op."""
     docs = tmp_path / "docs"
@@ -2606,14 +2638,14 @@ def test_reconcile_without_zotero_still_reports_discovery_errors(tmp_path, capsy
         "@article{broken, file={docs/lost.pdf}\n"
     )
     out = tmp_path / "report.json"
-    assert zi.cmd_reconcile(_reconcile_args(tmp_path, out=str(out))) == 1
+    assert zi.cmd_check_staging(_reconcile_args(tmp_path, out=str(out))) == 1
     report = json.loads(out.read_text())
     assert report["verdict"] == "zotero_unavailable"
     assert report["errors"]
     capsys.readouterr()
 
 
-def test_reconcile_undefined_bib_macro_fails_closed_and_still_writes_out(
+def test_check_staging_undefined_bib_macro_fails_closed_and_still_writes_out(
         tmp_path, capsys):
     """bibtexparser raises on an undefined @string macro (UndefinedString, a
     KeyError): that file is a discovery error, not a crash, and --out is
@@ -2626,28 +2658,28 @@ def test_reconcile_undefined_bib_macro_fails_closed_and_still_writes_out(
     found = zi.discover_reconcile_files(tmp_path)
     assert any("undefmacro" in e for e in found["errors"]), found["errors"]
     out = tmp_path / "report.json"
-    assert zi.cmd_reconcile(_reconcile_args(tmp_path, out=str(out))) == 1
+    assert zi.cmd_check_staging(_reconcile_args(tmp_path, out=str(out))) == 1
     report = json.loads(out.read_text())
     assert report["verdict"] == "zotero_unavailable"
     assert any("undefmacro" in e for e in report["errors"])
     capsys.readouterr()
 
 
-def test_reconcile_empty_apply_without_zotero_is_a_clean_no_op(tmp_path, capsys):
+def test_check_staging_empty_apply_without_zotero_is_a_clean_no_op(tmp_path, capsys):
     (tmp_path / ".zotero-reconcile.json").write_text(OPT_IN)
     out = tmp_path / "report.json"
-    assert zi.cmd_reconcile(_reconcile_args(tmp_path, out=str(out), apply=True)) == 0
+    assert zi.cmd_check_staging(_reconcile_args(tmp_path, out=str(out), apply=True)) == 0
     assert json.loads(out.read_text())["verdict"] == "zotero_unavailable"
     capsys.readouterr()
 
 
 @pytest.mark.integration
-def test_reconcile_with_the_local_api_disabled_is_unchecked(
+def test_check_staging_with_the_local_api_disabled_is_unchecked(
         api_off_zotero, tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("ZOTERO_CONNECTOR_URL", api_off_zotero.url)
     _staged_bib_paper(tmp_path)
     out = tmp_path / "report.json"
-    assert zi.cmd_reconcile(_reconcile_args(tmp_path, out=str(out))) == 1
+    assert zi.cmd_check_staging(_reconcile_args(tmp_path, out=str(out))) == 1
     report = json.loads(out.read_text())
     assert report["verdict"] == "unchecked"
     assert any("Allow other applications" in e for e in report["errors"])
@@ -2655,7 +2687,7 @@ def test_reconcile_with_the_local_api_disabled_is_unchecked(
 
 
 @pytest.mark.integration
-def test_reconcile_apply_refuses_without_the_signed_in_account(
+def test_check_staging_apply_refuses_without_the_signed_in_account(
         use_live, tmp_path, capsys):
     """--apply needs the project opt-in AND its user_id to be the account
     Zotero is signed in as. The throwaway client is signed in to none:
@@ -2663,19 +2695,19 @@ def test_reconcile_apply_refuses_without_the_signed_in_account(
     pdf = _staged_bib_paper(tmp_path, opt_in=None)
     title = zi._bib_entries(tmp_path / "sources.bib")[0]["title"]
     args = _reconcile_args(tmp_path, apply=True)
-    assert zi.cmd_reconcile(args) == 1
+    assert zi.cmd_check_staging(args) == 1
     report = json.loads(capsys.readouterr().out)
     assert "apply_error" in report and report["apply_status"] == "failed"
     assert report["summary"]["absent"] == 1
     (tmp_path / ".zotero-reconcile.json").write_text(OPT_IN)
-    assert zi.cmd_reconcile(args) == 1
+    assert zi.cmd_check_staging(args) == 1
     report = json.loads(capsys.readouterr().out)
     assert "signed in to no account" in report["apply_error"]
     assert report["rows"][0]["path"] == f"docs/{pdf.name}"
     assert use_live.titled(title) == []
 
 
-def test_reconcile_apply_config_checks_the_account(tmp_path):
+def test_check_staging_apply_config_checks_the_account(tmp_path):
     opt_in = tmp_path / ".zotero-reconcile.json"
     opt_in.write_text('{"apply": true, "user_id": "2"}')
     assert zi.reconcile_apply_config(tmp_path, "2")["user_id"] == "2"
@@ -2698,7 +2730,7 @@ def _apply(root, fresh, config=None):
 
 
 @pytest.mark.integration
-def test_reconcile_apply_reports_fresh_match_on_no_write_replay(
+def test_check_staging_apply_reports_fresh_match_on_no_write_replay(
         use_live, tmp_path):
     """The file is already stored: the fresh read says identical, nothing
     is created."""
@@ -2719,7 +2751,7 @@ def test_reconcile_apply_reports_fresh_match_on_no_write_replay(
 
 
 @pytest.mark.integration
-def test_reconcile_apply_imports_a_corroborated_absent_pdf(use_live, tmp_path):
+def test_check_staging_apply_imports_a_corroborated_absent_pdf(use_live, tmp_path):
     title, surname = unique_title(), unique_surname()
     pdf = _staged_bib_paper(tmp_path, title=title, surname=surname)
     report, rc = _apply(tmp_path, zi.read_library())
@@ -2736,7 +2768,7 @@ def test_reconcile_apply_imports_a_corroborated_absent_pdf(use_live, tmp_path):
 
 
 @pytest.mark.integration
-def test_reconcile_apply_can_import_orphan_with_complete_pdf_metadata(
+def test_check_staging_apply_can_import_orphan_with_complete_pdf_metadata(
         use_live, tmp_path):
     title, surname = unique_title(), unique_surname()
     docs = tmp_path / "docs"
@@ -2753,7 +2785,7 @@ def test_reconcile_apply_can_import_orphan_with_complete_pdf_metadata(
                                          "lastName": surname}]
 
 
-def test_reconcile_apply_defers_orphan_without_metadata(tmp_path, monkeypatch):
+def test_check_staging_apply_defers_orphan_without_metadata(tmp_path, monkeypatch):
     """No metadata to corroborate: deferred, and with nothing to create the
     apply never reaches Zotero (down here). Over an empty in-memory read."""
     docs = tmp_path / "docs"
@@ -2780,21 +2812,21 @@ def test_the_staging_lock_leaves_no_file_behind(tmp_path):
     assert sorted(p.name for p in tmp_path.iterdir()) == ["docs"]
 
 
-def test_reconcile_invalid_root_still_writes_out(tmp_path, capsys):
+def test_check_staging_invalid_root_still_writes_out(tmp_path, capsys):
     out = tmp_path / "report.json"
     args = _reconcile_args(tmp_path / "nope", out=str(out))
-    assert zi.cmd_reconcile(args) == 1
+    assert zi.cmd_check_staging(args) == 1
     assert json.loads(out.read_text())["verdict"] == "unchecked"
     capsys.readouterr()
 
 
 @pytest.mark.integration
-def test_reconcile_suggests_the_attach_edit_for_a_present_work(
+def test_check_staging_suggests_the_attach_edit_for_a_present_work(
         use_live, tmp_path, capsys):
     title, surname = unique_title(), unique_surname()
     key = use_live.save(title, creators=(surname,), date="2020")
     pdf = _staged_bib_paper(tmp_path, title=title, surname=surname, year="2020")
-    assert zi.cmd_reconcile(_reconcile_args(tmp_path)) == 0
+    assert zi.cmd_check_staging(_reconcile_args(tmp_path)) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["rows"][0]["verdict"] == "work_present_no_file"
     assert report["suggested_edits"] == [{"itemKey": key,
@@ -2804,7 +2836,7 @@ def test_reconcile_suggests_the_attach_edit_for_a_present_work(
 
 
 @pytest.mark.integration
-def test_reconcile_apply_edit_stores_the_file_under_the_present_work(
+def test_check_staging_apply_edit_stores_the_file_under_the_present_work(
         use_live, tmp_path):
     """--apply alone never touches an existing item; --apply --edit stores
     the staged file under the one work that lacks it."""
@@ -2829,8 +2861,8 @@ def test_reconcile_apply_edit_stores_the_file_under_the_present_work(
     assert child["data"]["md5"] == hashlib.md5(pdf.read_bytes()).hexdigest()
 
 
-def test_reconcile_edit_needs_apply(tmp_path, monkeypatch, capsys):
-    monkeypatch.setattr(sys, "argv", ["zotero.py", "reconcile", str(tmp_path),
+def test_check_staging_edit_needs_apply(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["zotero.py", "check-staging", str(tmp_path),
                                       "--edit"])
     with pytest.raises(SystemExit) as exc:
         zi.main()
@@ -2839,22 +2871,22 @@ def test_reconcile_edit_needs_apply(tmp_path, monkeypatch, capsys):
 
 
 @pytest.mark.integration
-def test_reconcile_report_is_read_only_and_counts_both_directions(
+def test_check_staging_report_is_read_only_and_counts_both_directions(
         use_live, tmp_path, capsys):
     pdf = _staged_bib_paper(tmp_path, opt_in=None)
     title = zi._bib_entries(tmp_path / "sources.bib")[0]["title"]
     (tmp_path / "docs" / f"{uuid.uuid4().hex[:10]}.pdf").write_bytes(
         f"orphan {uuid.uuid4().hex}".encode())
-    assert zi.cmd_reconcile(_reconcile_args(tmp_path)) == 0
+    assert zi.cmd_check_staging(_reconcile_args(tmp_path)) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["summary"] == {"absent": 2}
     assert {r["source"] for r in report["rows"]} == {"bib", "orphan"}
-    assert report["actions"] == {"absent": "inject only with explicit apply"}
+    assert report["actions"] == {"absent": zi.RECONCILE_ACTIONS["absent"]}
     assert use_live.titled(title) == [], f"{pdf.name} was not imported"
 
 
 @pytest.mark.integration
-def test_reconcile_file_output_keeps_stdout_compact_and_reports_ties(
+def test_check_staging_file_output_keeps_stdout_compact_and_reports_ties(
         use_live, tmp_path, capsys):
     """Two records hold the same stored file: the staged copy is identical
     to both, and the tie reaches the summary."""
@@ -2865,7 +2897,7 @@ def test_reconcile_file_output_keeps_stdout_compact_and_reports_ties(
     docs.mkdir()
     (docs / f"{uuid.uuid4().hex[:10]}.pdf").write_bytes(shared.read_bytes())
     output = tmp_path / "report.json"
-    assert zi.cmd_reconcile(_reconcile_args(tmp_path, out=str(output))) == 0
+    assert zi.cmd_check_staging(_reconcile_args(tmp_path, out=str(output))) == 0
     compact = json.loads(capsys.readouterr().out)
     full = json.loads(output.read_text())
     assert "rows" not in compact
@@ -2876,7 +2908,7 @@ def test_reconcile_file_output_keeps_stdout_compact_and_reports_ties(
         first, second}
 
 
-def test_reconcile_uses_docs_default_only_without_bib(tmp_path):
+def test_check_staging_uses_docs_default_only_without_bib(tmp_path):
     docs = tmp_path / "docs"
     docs.mkdir()
     only = docs / "only.pdf"
@@ -2889,7 +2921,7 @@ def test_reconcile_uses_docs_default_only_without_bib(tmp_path):
     assert found["errors"], "a bib with no staging path cannot report clean"
 
 
-def test_reconcile_discovers_one_level_bib_and_better_bibtex_path(tmp_path):
+def test_check_staging_discovers_one_level_bib_and_better_bibtex_path(tmp_path):
     refs = tmp_path / "refs"
     docs = tmp_path / "docs"
     refs.mkdir()
@@ -2904,7 +2936,7 @@ def test_reconcile_discovers_one_level_bib_and_better_bibtex_path(tmp_path):
     assert found["errors"] == []
 
 
-def test_reconcile_duplicate_bib_file_link_is_not_two_import_proposals(tmp_path):
+def test_check_staging_duplicate_bib_file_link_is_not_two_import_proposals(tmp_path):
     docs = tmp_path / "docs"
     docs.mkdir()
     pdf = docs / "one.pdf"
@@ -2918,7 +2950,7 @@ def test_reconcile_duplicate_bib_file_link_is_not_two_import_proposals(tmp_path)
     assert any("multiple BibTeX" in e for e in found["errors"])
 
 
-def test_reconcile_scans_staging_root_beyond_linked_subdirectory(tmp_path):
+def test_check_staging_scans_staging_root_beyond_linked_subdirectory(tmp_path):
     nested = tmp_path / "docs" / "section"
     nested.mkdir(parents=True)
     linked = nested / "linked.pdf"
@@ -2933,7 +2965,7 @@ def test_reconcile_scans_staging_root_beyond_linked_subdirectory(tmp_path):
     assert found["staging_dirs"] == [tmp_path / "docs"]
 
 
-def test_reconcile_without_bib_finds_nested_staging_orphan(tmp_path):
+def test_check_staging_without_bib_finds_nested_staging_orphan(tmp_path):
     nested = tmp_path / "docs" / "section"
     nested.mkdir(parents=True)
     orphan = nested / "orphan.pdf"
@@ -2941,7 +2973,7 @@ def test_reconcile_without_bib_finds_nested_staging_orphan(tmp_path):
     assert zi.discover_reconcile_files(tmp_path)["orphans"] == [orphan]
 
 
-def test_reconcile_symlinked_staging_directory_is_unchecked(tmp_path):
+def test_check_staging_symlinked_staging_directory_is_unchecked(tmp_path):
     docs = tmp_path / "docs"
     docs.mkdir()
     external = tmp_path.parent / "reconcile-external"
@@ -2953,7 +2985,7 @@ def test_reconcile_symlinked_staging_directory_is_unchecked(tmp_path):
     assert not found["orphans"]
 
 
-def test_reconcile_unclosed_bib_entry_is_not_a_clean_prefix(tmp_path):
+def test_check_staging_unclosed_bib_entry_is_not_a_clean_prefix(tmp_path):
     docs = tmp_path / "docs"
     docs.mkdir()
     (docs / "ok.pdf").write_bytes(b"ok")
@@ -2965,7 +2997,7 @@ def test_reconcile_unclosed_bib_entry_is_not_a_clean_prefix(tmp_path):
     assert found["errors"], "an unclosed trailing entry must fail closed"
 
 
-def test_reconcile_malformed_file_field_is_not_silently_dropped(tmp_path):
+def test_check_staging_malformed_file_field_is_not_silently_dropped(tmp_path):
     docs = tmp_path / "docs"
     docs.mkdir()
     (docs / "ok.pdf").write_bytes(b"ok")
@@ -2977,7 +3009,7 @@ def test_reconcile_malformed_file_field_is_not_silently_dropped(tmp_path):
     assert found["errors"], "malformed file field must fail closed"
 
 
-def test_reconcile_does_not_scan_file_outside_repository(tmp_path):
+def test_check_staging_does_not_scan_file_outside_repository(tmp_path):
     outside = tmp_path.parent / "external.pdf"
     (tmp_path / "refs.bib").write_text(
         f"@article{{one, file={{{outside}}}}}\n"
@@ -2988,7 +3020,7 @@ def test_reconcile_does_not_scan_file_outside_repository(tmp_path):
     assert found["errors"]
 
 
-def test_reconcile_does_not_read_symlinked_bib_outside_repository(
+def test_check_staging_does_not_read_symlinked_bib_outside_repository(
         tmp_path, monkeypatch):
     external = tmp_path.parent / "external-sources.bib"
     external.write_text("@article{one, file={docs/secret.pdf}}\n")
@@ -3001,11 +3033,11 @@ def test_reconcile_does_not_read_symlinked_bib_outside_repository(
 
 
 
-def test_reconcile_uses_bib_metadata_for_linked_match(tmp_path, monkeypatch):
+def test_check_staging_uses_bib_metadata_for_linked_match(tmp_path, monkeypatch):
     """The bib entry's DOI is what finds the work: the PDF says nothing."""
     pdf = tmp_path / "paper.pdf"
     pdf.write_bytes(b"paper")
-    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
+    monkeypatch.setattr(zi, "_pdf_front_text", lambda _: "")
     monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
     idx = _library([_work("W1", "A Recorded Title Unlike The Bib", "1990",
                           ("Other",), doi="10.1234/test")])
@@ -3018,11 +3050,11 @@ def test_reconcile_uses_bib_metadata_for_linked_match(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize("author", ["Levin, John and Smith, Jane",
                                     "John Levin and Jane Smith"])
-def test_reconcile_normalizes_the_bib_first_author(tmp_path, monkeypatch, author):
+def test_check_staging_normalizes_the_bib_first_author(tmp_path, monkeypatch, author):
     """Either name order gives the surname the creator-year-title key needs."""
     pdf = tmp_path / "paper.pdf"
     pdf.write_bytes(b"paper")
-    monkeypatch.setattr(zi, "_pdf_probe_text", lambda _: "")
+    monkeypatch.setattr(zi, "_pdf_front_text", lambda _: "")
     monkeypatch.setattr(zi, "_pdf_title", lambda _: "")
     idx = _library([_work("W1", "Useful Paper On Something", "1997", ("Levin",))])
     row = zi.audit_one(pdf, idx, bib_entry={
@@ -3030,7 +3062,7 @@ def test_reconcile_normalizes_the_bib_first_author(tmp_path, monkeypatch, author
     assert row["zotero_key"] == "W1" and row["why"] == ["creator-year-title"]
 
 
-def reconcile_blocks(text):
+def shell_blocks(text):
     import re
 
     return re.findall(r"```bash\n(.*?)\n\s*```", text, re.S)
@@ -3058,14 +3090,14 @@ def helper_stand_in(tmp_path, status):
 
 
 @pytest.mark.integration
-def test_reconcile_failure_propagates_and_path_announced(tmp_path):
-    """A failing reconcile must fail the block, and the report path is still named."""
+def test_check_staging_failure_propagates_and_path_announced(tmp_path):
+    """A failing check-staging must fail the block, and the report path is still named."""
     text = (SCRIPTS.parent / "skills/zotero/references/backfill.md").read_text()
-    block = next(b for b in reconcile_blocks(text) if "reconcile . --out" in b)
+    block = next(b for b in shell_blocks(text) if "check-staging . --out" in b)
     proj, env = helper_stand_in(tmp_path, 7)
     r = subprocess.run(["bash", "-c", block], cwd=proj, env=env, text=True, capture_output=True)
     assert r.returncode != 0, (r.returncode, r.stdout, r.stderr)
-    assert "reconcile report: " in r.stdout and "(exit 7)" in r.stdout
+    assert "check-staging report: " in r.stdout and "(exit 7)" in r.stdout
     okdir = tmp_path / "ok"
     okdir.mkdir()
     proj2, env2 = helper_stand_in(okdir, 0)
@@ -3112,7 +3144,7 @@ def test_a_launcher_that_cannot_execute_is_unavailable_not_a_crash(
         zi.ensure_zotero()
     _staged_bib_paper(tmp_path)
     out = tmp_path / "report.json"
-    assert zi.cmd_reconcile(_reconcile_args(tmp_path, out=str(out))) == 0
+    assert zi.cmd_check_staging(_reconcile_args(tmp_path, out=str(out))) == 0
     assert json.loads(out.read_text())["verdict"] == "zotero_unavailable"
     capsys.readouterr()
 
@@ -3213,7 +3245,7 @@ def test_a_refused_key_stops_an_attach_batch(tmp_path, monkeypatch, capsys):
         (None, {"data": {"title": "T"}}), None))
     monkeypatch.setattr(zi, "attach_file", attach_file)
     pdfs = [str(make_pdf(tmp_path / f"f{i}.pdf", [f"p{i}"])) for i in range(3)]
-    rc = zi.cmd_attach(argparse.Namespace(parent="P1", file=pdfs,
+    rc = zi.cmd_suggest_attachments(argparse.Namespace(parent="P1", file=pdfs,
                                           library="user", edit=True))
     rows = json.loads(capsys.readouterr().out)["attached"]
     assert rc == 1 and len(calls) == 1

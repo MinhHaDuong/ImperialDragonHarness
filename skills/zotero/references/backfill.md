@@ -11,37 +11,40 @@ the command does nothing and reports Zotero unavailable. A backfill that read
 on the machine where Zotero lives; a clean negative then stays
 distinguishable from a lookup that could not run:
 
+`check-staging` has two input modes. With `--dir`, it checks every staging
+file under one directory of the repository, BibTeX or not:
+
 ```bash
-"$IDH_ROOT/scripts/zotero.py" audit docs/ --out /tmp/audit.json
+"$IDH_ROOT/scripts/zotero.py" check-staging . --dir docs --out /tmp/staging.json
 ```
 
-For projects with BibTeX, use `reconcile` to discover `.bib` files at the
-repository root and one level below it, follow their `file=` paths, and report
-both linked files and unlinked staging files. It uses the BibTeX metadata when
-matching linked files. The command is **report-only by default**: without
-`--apply` it never injects or attaches anything; rows whose work is present without a file come back in
+By default, it discovers `.bib` files at the repository root and one level
+below it, follows their `file=` paths, and reports both linked files and
+unlinked staging files. It uses the BibTeX metadata when matching linked
+files. The command is **report-only by default**: without
+`--apply` it never creates or attaches anything; rows whose work is present without a file come back in
 `suggested_edits` (item key, file), which `--apply --edit` stores. It
 uses `docs/` as the staging default only when no `.bib` exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
 an empty clean report.
 
 ```bash
-out=$(mktemp "${TMPDIR:-/tmp}/zotero-reconcile.XXXXXX.json")
+out=$(mktemp "${TMPDIR:-/tmp}/zotero-staging.XXXXXX.json")
 status=0
-"$IDH_ROOT/scripts/zotero.py" reconcile . --out "$out" || status=$?
-echo "reconcile report: $out (exit $status)"
+"$IDH_ROOT/scripts/zotero.py" check-staging . --out "$out" || status=$?
+echo "check-staging report: $out (exit $status)"
 [ "$status" -eq 0 ]
 ```
 
 Resolve any `errors` and inspect `ambiguous` rows before taking action. An
 `absent` row is a proposal for a later, explicit import, not permission to
-auto-inject it. Every early exit (nothing staged, Zotero unavailable) still
+create it automatically. Every early exit (nothing staged, Zotero unavailable) still
 writes `--out` with the same report keys. Zotero unavailable is a clean
 no-op: verdict `zotero_unavailable`, exit 0, nothing compared or created (exit 1 if discovery found errors, which stay listed).
 
 For an opted-in import, the project owner adds a root-level
 `.zotero-reconcile.json` containing `{"apply": true, "user_id": "123456"}`,
 where `user_id` is the account the local Zotero is signed in to (an optional
-`collection` key files created items there). Then run `reconcile . --apply`;
+`collection` key files created items there). Then run `check-staging . --apply`;
 no maintenance skill runs it for you. The script locks the staging
 directories and the user's runtime directory, or the home directory when
 `XDG_RUNTIME_DIR` is unset (advisory locks on the directories themselves, no
@@ -56,22 +59,22 @@ staged file under the one existing item that lacks it (a tie is left for the
 author; `--edit` without `--apply` is an error). Without `--edit` their fixes
 stay in `suggested_edits`. The default invocation stays report-only.
 
-Nothing is recorded between runs. The duplicate guard in `inject` is the
+Nothing is recorded between runs. The duplicate guard in `create-items` is the
 live read of the destination library plus a check of the batch against
 itself; use `--force` only after inspecting a legitimate exception. A save
 that fails in transit stops the run; the next run's read sees the item if it
 was created.
 
-`audit` classifies every staged file into five verdicts, and the distinction
+`check-staging` classifies every staged file into five verdicts, and the distinction
 between the middle two decides what you do next:
 
 | verdict | meaning | action |
 |---|---|---|
 | `identical` | this exact file is already stored (md5) | nothing |
 | `work_present_with_file` | the work is in Zotero with a different copy | nothing; report it |
-| `work_present_no_file` | the item exists, no file attached | `attach`, never `inject` |
+| `work_present_no_file` | the item exists, no file attached | `suggest-attachments`, never `create-items` |
 | `ambiguous` | a weak hit — neither present nor absent | look at it |
-| `absent` | not in the library | `inject` |
+| `absent` | not in the library | `create-items` |
 
 **`ambiguous` is a real answer, not a tuning failure.** Collapsing a weak hit
 into one of its neighbours is expensive in both directions: called present, the
@@ -94,17 +97,17 @@ metadata drift, and it answers the question a staging directory actually
 asks — *is this exact file already stored?* Prefer it over any title
 comparison.
 
-**`work_present_no_file` is repaired by attaching, not by `inject`.**
-`inject` only ever creates items, so using it here mints a duplicate of a
-work the library already holds. `attach` checks the item and the file and
+**`work_present_no_file` is repaired by attaching, not by `create-items`.**
+`create-items` only ever creates items, so using it here mints a duplicate of a
+work the library already holds. `suggest-attachments` checks the item and the file and
 reports the attachment; with `--edit` it stores a copy of the file under the
 item through the local API:
 
 ```bash
-"$IDH_ROOT/scripts/zotero.py" attach --parent <itemKey> docs/Walley1991.pdf          # report
-"$IDH_ROOT/scripts/zotero.py" attach --parent <itemKey> docs/Walley1991.pdf --edit   # store
+"$IDH_ROOT/scripts/zotero.py" suggest-attachments --parent <itemKey> docs/Walley1991.pdf          # report
+"$IDH_ROOT/scripts/zotero.py" suggest-attachments --parent <itemKey> docs/Walley1991.pdf --edit   # store
 ```
 
-Before trusting an audit's negatives, run it against a case you know is
+Before trusting a check's negatives, run it against a case you know is
 positive — a guard whose "all clear" is indistinguishable from "I could not
 look" is not a guard. `consulted` / `skipped` in every result exist for that.
