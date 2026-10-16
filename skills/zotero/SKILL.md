@@ -101,8 +101,7 @@ Le Cadre item filed as Foti 2018.
 So check every resolved record against the document's own words before
 accepting it: read the first page (`first_pages_text` in `extract-metadata`'s
 output) and confirm that the resolved title and first author are this
-document's. The helper does not score this for you (ticket 1116 removed its
-title scorer): the judgment is yours. When the resolved title and first
+document's. The helper does not score this for you: the judgment is yours. When the resolved title and first
 author do not appear on the page, the identifier is a cited work's: discard
 the resolution and rebuild the metadata from the text, the filename, and a
 web search. Cross-check against the project `.bib` where one exists: it is
