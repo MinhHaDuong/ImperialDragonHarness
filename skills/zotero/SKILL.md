@@ -63,8 +63,12 @@ Writes go through the same local API with a local API key, kept as
 `ZOTERO_LOCAL_KEY_FILE` overrides the path) and never printed. On the first
 write without a key, or on a 401, Zotero shows an Allow / Always Allow / Deny
 dialog and the helper waits up to 120 s for the answer. **Tell the user to
-answer "Always Allow"**: only that key is stored, and a one-time "Allow" key
-covers a single write, which cannot store a PDF (item, then file: two writes).
+answer "Always Allow"**: only that key is stored. A one-time "Allow" key covers
+one keyed write, and storing a PDF takes three (attachment item, upload
+authorization, upload registration), a batch one per write: for those the
+helper asks before writing anything and refuses an "Allow" answer, so nothing
+is written. An attachment counts as a stored file only when Zotero reports its
+md5 or size.
 `inject` creates new items and uploads their PDFs; `inject --dry-run` also
 needs Zotero running, because field placement uses the live schema. When Zotero is not running the helper
 launches it and waits; in a container, or with `ZOTERO_NO_LAUNCH` set, it

@@ -827,8 +827,15 @@ def http_client(timeout: float = WRITE_TIMEOUT) -> httpx2.Client:
                          timeout=timeout)
 
 
-def local_library(library: str = USER_LIBRARY, *, key: str | None = None,
-                  timeout: float = WRITE_TIMEOUT) -> zotero.Zotero:
+class LocalLibrary(zotero.Zotero):
+    """pyzotero's local client, knowing whether its key outlasts one write:
+    a one-time "Allow" key is consumed by the first keyed request Zotero
+    accepts, an "Always Allow" key is not."""
+    key_lasting = False
+
+
+def local_library(library: str = USER_LIBRARY, *,
+                  timeout: float = WRITE_TIMEOUT) -> LocalLibrary:
     """pyzotero's local client for one library: "user" or a groupID."""
     if library == USER_LIBRARY:
         lib_id, lib_type = "0", "user"
@@ -836,8 +843,8 @@ def local_library(library: str = USER_LIBRARY, *, key: str | None = None,
         lib_id, lib_type = str(library), "group"
     else:
         raise ValueError(f"--library {library!r}: use 'user', 'all' or a groupID")
-    z = zotero.Zotero(lib_id, lib_type, local=True, local_api_key=key,
-                      client=http_client(timeout), upload_timeout=timeout)
+    z = LocalLibrary(lib_id, lib_type, local=True,
+                     client=http_client(timeout), upload_timeout=timeout)
     # pyzotero's local endpoint is fixed at 23119; the URL may say otherwise.
     z.endpoint = f"{zotero_base()}/api"
     return z
@@ -1072,16 +1079,24 @@ def store_key(key: str) -> None:
 
 
 class KeyNotGranted(RuntimeError):
-    """Zotero did not grant a local API key: nothing was written."""
+    """Zotero did not grant a usable local API key; the message says what,
+    if anything, the refused operation had already stored."""
 
 
-def authorize(z: zotero.Zotero) -> None:
+NOTHING_WRITTEN = "nothing was written"
+
+
+def authorize(z: LocalLibrary, *, lasting: bool = False,
+              saved: str | None = None) -> None:
     """Ask Zotero for a key through its Allow / Always Allow / Deny dialog.
 
     The answer is awaited AUTHORIZE_WAIT seconds. "Always Allow" keys are
-    stored; an "Allow" key serves this run only, and Zotero consumes it with
-    the first write that succeeds.
+    stored. An "Allow" key is one-time: Zotero consumes it with the first
+    keyed request it accepts, so it is refused for a `lasting` operation
+    (several keyed requests) before anything is sent. `saved` is what the
+    operation had already stored, for the messages.
     """
+    done = saved or NOTHING_WRITTEN
     asker = zotero.Zotero(z.library_id, z.library_type.rstrip("s"), local=True,
                           client=http_client(AUTHORIZE_WAIT))
     asker.endpoint = z.endpoint
@@ -1090,13 +1105,27 @@ def authorize(z: zotero.Zotero) -> None:
             granted = asker.authorize_local(APP_NAME)
     except ZoteroUnavailable as exc:
         raise KeyNotGranted(f"Zotero gave no local API key within "
-                            f"{AUTHORIZE_WAIT:.0f} s ({exc}); nothing was "
-                            f"written") from exc
+                            f"{AUTHORIZE_WAIT:.0f} s ({exc}); {done}") from exc
     except LocalAPIError as exc:
-        raise KeyNotGranted(f"Zotero refused a local API key ({exc}); nothing "
-                            f"was written") from exc
-    z.local_api_key = granted["key"]
-    if granted.get("remember"):
+        raise KeyNotGranted(f"Zotero refused a local API key ({exc}); "
+                            f"{done}") from exc
+    accept_key(z, granted, lasting=lasting, saved=saved)
+
+
+def accept_key(z: LocalLibrary, granted: dict[str, Any], *, lasting: bool,
+               saved: str | None = None) -> None:
+    """Take Zotero's answer {"key", "remember"}: refuse a one-time key for a
+    lasting operation, else hand the key to `z`, and keep it on disk only
+    when it was granted with "Always Allow"."""
+    done = saved or NOTHING_WRITTEN
+    remember = bool(granted.get("remember"))
+    if lasting and not remember:
+        raise KeyNotGranted(
+            f'Zotero granted a one-time key ("Allow"), which covers a single '
+            f'write, and this operation makes several. Rerun and answer '
+            f'"Always Allow"; {done}')
+    z.local_api_key, z.key_lasting = granted["key"], remember
+    if remember:
         try:
             store_key(granted["key"])
         except OSError as exc:
@@ -1105,31 +1134,43 @@ def authorize(z: zotero.Zotero) -> None:
                   f"will ask again on the next run", file=sys.stderr)
 
 
-def write(z: zotero.Zotero, call: Any) -> Any:
-    """Run one pyzotero write; without a valid key, ask for one, once.
+def write(z: LocalLibrary, call: Any, *, lasting: bool = False,
+          saved: Any = lambda: None) -> Any:
+    """Run one pyzotero write operation; without a valid key, ask once.
 
-    A 401 means the write was refused before anything was saved, so the
-    retry cannot create a second copy.
+    `lasting` marks an operation of several keyed requests: storing a file
+    takes three (the attachment item, the upload authorization, the upload
+    registration), and a batch takes one per write. A one-time key cannot
+    carry it, so one is asked for, and refused, before anything is sent.
+    A 401 can still come part-way (a stored key Zotero no longer knows):
+    `saved()` then says what the attempt had stored, None for nothing, and
+    the messages repeat it.
     """
     if not z.local_api_key:
         z.local_api_key = stored_key()
+        z.key_lasting = z.local_api_key is not None
+    if lasting and not z.key_lasting:
+        authorize(z, lasting=True)
     for attempt in (1, 2):
         try:
             with local_api():
                 return call()
         except ze.LocalAPIKeyRequiredError as exc:
+            done = saved()
             if attempt == 2:
-                raise KeyNotGranted(f"Zotero refused the new local API key; "
-                                    f"nothing was written ({exc})") from exc
-            authorize(z)
+                raise KeyNotGranted(f"Zotero refused the new local API key "
+                                    f"({exc}); {done or NOTHING_WRITTEN}"
+                                    ) from exc
+            authorize(z, lasting=lasting, saved=done)
     return None
 
 
-def create_item(z: zotero.Zotero, item: dict[str, Any],
-                collection: str | None) -> str:
-    """Create one item, in `collection` when given; its key."""
+def create_item(z: LocalLibrary, item: dict[str, Any],
+                collection: str | None, *, lasting: bool = False) -> str:
+    """Create one item, in `collection` when given; its key. `lasting`:
+    more writes follow in this run (see write)."""
     payload = {**item, "collections": [collection] if collection else []}
-    result = write(z, lambda: z.create_items([payload]))
+    result = write(z, lambda: z.create_items([payload]), lasting=lasting)
     if not result.get("successful"):
         failed = next(iter((result.get("failed") or {}).values()), {})
         raise LocalAPIError(f"Zotero did not create the item: "
@@ -1137,15 +1178,28 @@ def create_item(z: zotero.Zotero, item: dict[str, Any],
     return next(iter(result["successful"].values()))["key"]
 
 
-def attach_file(z: zotero.Zotero, parent: str, path: Path) -> str:
-    """Store a copy of `path` under item `parent`; the attachment's key."""
+def attach_file(z: LocalLibrary, parent: str, path: Path) -> str:
+    """Store a copy of `path` under item `parent`; the attachment's key.
+
+    pyzotero records the attachment's key in `attachment` once Zotero has
+    created it, and a retry with that key resumes at the upload instead of
+    creating a second attachment.
+    """
     attachment = {"itemType": "attachment", "linkMode": "imported_file",
                   "title": path.name, "filename": str(path.resolve()),
                   "contentType": mimetypes.guess_type(path.name)[0]
                   or "application/octet-stream",
                   "tags": [], "relations": {}}
+
+    def saved() -> str | None:
+        if not attachment.get("key"):
+            return None
+        return (f"attachment {attachment['key']} was created under {parent} "
+                f"without its file; delete it in Zotero")
+
     result = write(z, lambda: z.upload_attachments([attachment],
-                                                   parentid=parent))
+                                                   parentid=parent),
+                   lasting=True, saved=saved)
     if result.get("failure") or not result.get("success"):
         raise LocalAPIError(f"Zotero did not store {path.name}: {result}")
     return result["success"][0]["key"]
@@ -1394,10 +1448,15 @@ def inject_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
         pending = [(n, entry, digest) for n, entry, digest in pending
                    if "error" not in results[n]]
 
+    # One write per item and three per file: a run of more than one needs a
+    # key that outlasts a write, asked for before the first.
+    writes = sum(1 + 3 * bool(entry.get("attach_pdf") and entry.get("pdf"))
+                 for _, entry, _ in pending)
     for pos, (n, entry, _digest) in enumerate(pending):
         row = results[n]
         try:
-            row["key"] = create_item(z, items[n], collection)
+            row["key"] = create_item(z, items[n], collection,
+                                     lasting=writes > 1)
             row["status"] = "created"
         except (ZoteroUnavailable, LocalAPIError, KeyNotGranted) as exc:
             # A save that failed in transit may still have reached Zotero.
@@ -1468,7 +1527,8 @@ NOT_FIELDS = {"key", "itemType"}
 
 
 def enrich_one(job: dict[str, Any], overwrite: bool, edit: bool,
-               library: str = USER_LIBRARY) -> dict[str, Any]:
+               library: str = USER_LIBRARY, *,
+               lasting: bool = False) -> dict[str, Any]:
     """Suggest field edits on ONE existing item; write them with `edit`.
     See plan_enrichment for the guards."""
     item_key = job["item_key"]
@@ -1491,7 +1551,8 @@ def enrich_one(job: dict[str, Any], overwrite: bool, edit: bool,
     row["status"] = "suggested" if patch else "nothing to change"
     if edit and patch:
         try:
-            write(z, lambda: z.update_item({**item["data"], **patch}))
+            write(z, lambda: z.update_item({**item["data"], **patch}),
+                  lasting=lasting)
             row["status"] = "written"
         except (LocalAPIError, KeyNotGranted) as exc:
             row["status"] = "not written"
@@ -1519,8 +1580,10 @@ def cmd_enrich(args: argparse.Namespace) -> int:
             raise SystemExit(f"job for {job['item_key']} has no expect_title")
 
     def run() -> dict[str, Any]:
+        # A batch of edits is a sequence: refuse a one-time key up front.
         return {"results": [enrich_one(j, args.overwrite, args.edit,
-                                       args.library) for j in jobs]}
+                                       args.library, lasting=len(jobs) > 1)
+                            for j in jobs]}
 
     out, rc = with_zotero("enrich", run)
     if rc is not None:
@@ -1799,7 +1862,12 @@ def _library_views(idx: dict[str, Any]) -> dict[str, Any]:
     for a in idx["attachments"]:
         if a.get("filename"):
             by_filename.setdefault(Path(a["filename"]).name, []).append(a)
-        if a.get("parent") and str(a.get("linkMode", "")).startswith("imported"):
+        # A stored file only when Zotero shows one: its md5 (Zotero 10) or
+        # its size (enclosure.length, sent only when the file is on disk).
+        # The enclosure URL alone is no evidence: Zotero sends it for every
+        # stored-file attachment, one created without its file included.
+        if (a.get("parent") and str(a.get("linkMode", "")).startswith("imported")
+                and (a.get("md5") or a.get("size") is not None)):
             parents_with_file.add(a["parent"])
             if a.get("contentType") == "application/pdf":
                 parents_with_pdf.add(a["parent"])

@@ -94,8 +94,12 @@ day):
 The helper uses `pyzotero` (1.16) in local mode for every read and write, so it
 hand-rolls no Zotero interface. Writes need a key: on the first write, or on a
 401, Zotero shows an Allow / Always Allow / Deny dialog; only an "Always Allow"
-key is stored, and a one-time "Allow" key covers a single write, too few to
-store a PDF (an item, then a file).
+key is stored. A one-time "Allow" key covers one keyed write, too few to store
+a PDF (attachment item, upload authorization, upload registration) or to run a
+batch, so for those the helper asks before the first write and refuses an
+"Allow" answer, writing nothing. An attachment counts as a stored file only
+when Zotero reports its md5 or size: Zotero sends a file URL for every
+stored-file attachment, one created without its file included.
 
 An MCP server (recommended overlay: **Zoteus** — see Annex A) is useful for
 interactive HITL retrieval: search, PDF passages, CSL citations, add-by-DOI.

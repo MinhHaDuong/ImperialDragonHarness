@@ -117,7 +117,7 @@ def zotero_version(binary: str) -> str:
 
 
 def write_profile(profile: Path, data: Path, port: int, local_api: bool,
-                  key: str) -> None:
+                  key: str, one_time_key: str | None = None) -> None:
     prefs = {
         "extensions.zotero.httpServer.enabled": True,
         "extensions.zotero.httpServer.port": port,
@@ -139,9 +139,14 @@ def write_profile(profile: Path, data: Path, port: int, local_api: bool,
         f"user_pref({json.dumps(k)}, {json.dumps(v)});\n" for k, v in prefs.items()))
     # The key store Zotero writes when the user answers "Always Allow"
     # (server_localAPI.js): this throwaway client trusts `key` from the start.
-    (profile / "localAPIKeys.json").write_text(json.dumps({"keys": [{
-        "key": key, "appName": "tests", "remember": True,
-        "createdAt": "2026-10-16T00:00:00Z"}]}))
+    # A `one_time_key` is stored as the "Allow" answer stores one: Zotero
+    # consumes it with the first keyed request it accepts.
+    keys = [{"key": key, "appName": "tests", "remember": True,
+             "createdAt": "2026-10-16T00:00:00Z"}]
+    if one_time_key:
+        keys.append({"key": one_time_key, "appName": "tests", "remember": False,
+                     "createdAt": "2026-10-16T00:00:00Z"})
+    (profile / "localAPIKeys.json").write_text(json.dumps({"keys": keys}))
 
 
 def isolated_env(home: Path) -> dict[str, str]:
@@ -158,15 +163,15 @@ def isolated_command(binary: str, profile: Path, data: Path) -> list[str]:
     return [binary, "-profile", str(profile), "-datadir", str(data), "-no-remote"]
 
 
-def prepare(root: Path, port: int, local_api: bool = True
-            ) -> tuple[Path, Path, Path, Path]:
+def prepare(root: Path, port: int, local_api: bool = True,
+            one_time_key: str | None = None) -> tuple[Path, Path, Path, Path]:
     """Lay out home, profile, data directory and the helper's key file under
     `root`; the key file holds the key the profile trusts."""
     home, profile, data = root / "home", root / "profile", root / "data"
     (home / "tmp").mkdir(parents=True)
     data.mkdir(parents=True)
     key = secrets.token_hex(16)
-    write_profile(profile, data, port, local_api, key)
+    write_profile(profile, data, port, local_api, key, one_time_key)
     key_file = root / "keys" / "zotero-local.env"
     key_file.parent.mkdir(mode=0o700)
     key_file.write_text(f"ZOTERO_LOCAL_API_KEY={key}\n")
@@ -249,7 +254,8 @@ def stop_client(process: subprocess.Popen) -> None:
 class LiveZotero:
     """One running throwaway client: its URL, key file and seeding helpers."""
 
-    def __init__(self, root: Path, *, local_api: bool = True) -> None:
+    def __init__(self, root: Path, *, local_api: bool = True,
+                 one_time_key: bool = False) -> None:
         zi = helper_module()
         self.binary = zi.find_zotero_launcher()[0]
         self.version = zotero_version(self.binary)
@@ -257,8 +263,10 @@ class LiveZotero:
         self.port = free_port()
         assert self.port != DEFAULT_PORT
         self.url = f"http://127.0.0.1:{self.port}"
+        # A key the profile trusts for one write only, never in key_file.
+        self.one_time_key = secrets.token_hex(16) if one_time_key else None
         home, self.profile, self.data, self.key_file = prepare(
-            root, self.port, local_api)
+            root, self.port, local_api, self.one_time_key)
         self.log = root / "zotero.log"
         started = time.monotonic()
         with open(self.log, "wb") as log:
@@ -381,13 +389,14 @@ class ZoteroFactory:
         self.base = base
         self.clients: dict[str, LiveZotero] = {}
 
-    def __call__(self, name: str = "main", *, local_api: bool = True
-                 ) -> LiveZotero:
+    def __call__(self, name: str = "main", *, local_api: bool = True,
+                 one_time_key: bool = False) -> LiveZotero:
         if name not in self.clients:
             if reason := why_not_here():
                 pytest.skip(reason)
             self.clients[name] = LiveZotero(self.base / name,
-                                            local_api=local_api)
+                                            local_api=local_api,
+                                            one_time_key=one_time_key)
         return self.clients[name]
 
     def close(self) -> None:

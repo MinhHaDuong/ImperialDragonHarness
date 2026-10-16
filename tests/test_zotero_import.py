@@ -1185,6 +1185,127 @@ def test_a_write_without_a_key_asks_zotero_and_gives_up_in_bound(
     assert not key_file.exists()
 
 
+@pytest.fixture(scope="session")
+def one_time_zotero(zotero_factory):
+    """A client of its own whose profile also trusts a one-time key, the
+    kind Zotero's "Allow" answer stores, so the dialog the test leaves open
+    cannot stall the shared client."""
+    return zotero_factory("one_time", one_time_key=True)
+
+
+@pytest.mark.integration
+def test_a_key_dropped_part_way_reports_the_fileless_attachment(
+        one_time_zotero, tmp_path, monkeypatch, capsys):
+    """B1, reproduced: the helper holds a key Zotero honours for one write.
+    Storing a file creates the attachment item (consuming the key), then the
+    upload is refused. The helper asks again (unanswered here), and its
+    message says the attachment exists without its file, never "nothing
+    was written"; a later audit does not count that attachment as a file."""
+    zotero = zotero_live.point_helper_at(one_time_zotero, monkeypatch)
+    key = zotero.save(unique_title(), creators=(unique_surname(),))
+    key_file = tmp_path / "keys" / "zotero-local.env"
+    key_file.parent.mkdir(mode=0o700)
+    key_file.write_text(f"ZOTERO_LOCAL_API_KEY={zotero.one_time_key}\n")
+    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(key_file))
+    monkeypatch.setattr(zi, "AUTHORIZE_WAIT", 3.0)
+    pdf = make_pdf(tmp_path / "Walley1991.pdf", [unique_title()])
+    args = argparse.Namespace(parent=key, file=[str(pdf)], library="user",
+                              edit=True)
+    assert zi.cmd_attach(args) == 1
+    (row,) = json.loads(capsys.readouterr().out)["attached"]
+    assert row["status"] == "failed"
+    # Positive control: the one-time key did buy one write, the attachment.
+    (child,) = zotero.children(key)
+    assert child["data"]["linkMode"] == "imported_file"
+    assert not child["data"].get("md5"), "the file never reached Zotero"
+    assert f"attachment {child['key']} was created" in row["error"]
+    assert "without its file" in row["error"]
+    assert zi.NOTHING_WRITTEN not in row["error"]
+    assert key not in zi._library_views(zi.read_library())["parents_with_file"]
+
+
+@pytest.fixture(scope="session")
+def upfront_zotero(zotero_factory):
+    """A client of its own for the up-front key request."""
+    return zotero_factory("upfront")
+
+
+@pytest.mark.integration
+def test_storing_a_file_without_a_key_asks_before_writing_anything(
+        upfront_zotero, tmp_path, monkeypatch, capsys):
+    """A file takes several keyed writes, so the key is asked for before
+    the first (the dialog, unanswered here): nothing is created."""
+    zotero = zotero_live.point_helper_at(upfront_zotero, monkeypatch)
+    key = zotero.save(unique_title(), creators=(unique_surname(),))
+    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE",
+                       str(tmp_path / "keys" / "zotero-local.env"))
+    monkeypatch.setattr(zi, "AUTHORIZE_WAIT", 3.0)
+    pdf = make_pdf(tmp_path / "Walley1991.pdf", [unique_title()])
+    started = time.monotonic()
+    assert zi.cmd_attach(argparse.Namespace(
+        parent=key, file=[str(pdf)], library="user", edit=True)) == 1
+    assert 3.0 <= time.monotonic() - started < 30
+    (row,) = json.loads(capsys.readouterr().out)["attached"]
+    assert row["status"] == "failed"
+    assert "no local API key" in row["error"]
+    assert row["error"].endswith(zi.NOTHING_WRITTEN)
+    assert zotero.children(key) == []
+
+
+def test_an_always_allow_key_is_kept_and_a_one_time_key_is_not(
+        tmp_path, monkeypatch):
+    """Zotero's answer to its dialog, as pure logic: the dialog cannot be
+    answered without a human, so the branches after it are tested here with
+    the answer Zotero sends, {"key", "remember"}, and a key file under tmp."""
+    key_file = tmp_path / "keys" / "zotero-local.env"
+    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(key_file))
+    z = zi.local_library()
+    zi.accept_key(z, {"key": "a" * 32, "remember": False}, lasting=False)
+    assert z.local_api_key == "a" * 32 and z.key_lasting is False
+    assert not key_file.exists(), "a one-time key is never stored"
+    zi.accept_key(z, {"key": "b" * 32, "remember": True}, lasting=True)
+    assert z.local_api_key == "b" * 32 and z.key_lasting is True
+    assert zi.stored_key() == "b" * 32
+    assert key_file.stat().st_mode & 0o777 == 0o600
+
+
+def test_a_one_time_key_is_refused_for_an_operation_of_several_writes(
+        tmp_path, monkeypatch):
+    key_file = tmp_path / "keys" / "zotero-local.env"
+    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(key_file))
+    z = zi.local_library()
+    with pytest.raises(zi.KeyNotGranted, match="Always Allow") as exc:
+        zi.accept_key(z, {"key": "a" * 32, "remember": False}, lasting=True)
+    assert str(exc.value).endswith(zi.NOTHING_WRITTEN)
+    assert z.local_api_key is None and not key_file.exists()
+    with pytest.raises(zi.KeyNotGranted, match="without its file"):
+        zi.accept_key(z, {"key": "a" * 32, "remember": False}, lasting=True,
+                      saved="attachment X was created under P without its file")
+    assert "a" * 32 not in str(exc.value)
+
+
+def test_an_attachment_without_its_file_is_not_a_stored_file():
+    """An imported attachment counts as a stored file only when Zotero shows
+    one: its md5 or its size. Zotero sends the enclosure URL (`path`) for
+    every stored-file attachment, so that alone is no evidence."""
+    def snapshot(**attachment):
+        return {"works": [{"key": "W1", "title": "A work", "DOI": "10.1/x",
+                           "creators": []}],
+                "attachments": [{"key": "A1", "parent": "W1",
+                                 "linkMode": "imported_file",
+                                 "contentType": "application/pdf",
+                                 "filename": "x.pdf", "md5": None,
+                                 "size": None, "path": "/s/A1/x.pdf",
+                                 **attachment}]}
+    (empty,) = zi.library_matches(snapshot(), doi="10.1/x")["matches"]
+    assert empty["has_file"] is False and empty["has_pdf"] is False
+    (stored,) = zi.library_matches(snapshot(md5="0" * 32),
+                                   doi="10.1/x")["matches"]
+    assert stored["has_file"] is True and stored["has_pdf"] is True
+    (sized,) = zi.library_matches(snapshot(size=1234), doi="10.1/x")["matches"]
+    assert sized["has_file"] is True, "Zotero 7-9 sends a size, not an md5"
+
+
 def test_the_key_file_is_private_and_never_printed(tmp_path, monkeypatch,
                                                     capsys):
     key_file = tmp_path / "keys" / "zotero-local.env"
