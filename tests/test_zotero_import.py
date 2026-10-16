@@ -181,10 +181,14 @@ def connections(monkeypatch):
 @pytest.mark.integration
 def test_extract_metadata_never_contacts_zotero(tmp_path, monkeypatch, capsys):
     """Extraction is input-format dependent and never needs Zotero: it
-    reads the PDF (poppler runs in a child process) and this process opens
-    no connection."""
+    reads the PDF and this process opens no connection. poppler is stubbed:
+    CI runners have none, and this test is about the network, not the PDF
+    reader."""
     pdf = make_pdf(tmp_path / "paper.pdf", ["A Study of Things", "by Smith",
                                             "doi: 10.2222/own.2"])
+    monkeypatch.setattr(zi, "pdfinfo", lambda p: {"Pages": "1"})
+    monkeypatch.setattr(zi, "pdftotext_range", lambda p, a, b:
+                        "A Study of Things\nby Smith\ndoi: 10.2222/own.2\n")
     with connections(monkeypatch) as seen:
         rc = zi.cmd_extract_metadata(argparse.Namespace(pdf=[str(pdf)]))
         assert seen == []
