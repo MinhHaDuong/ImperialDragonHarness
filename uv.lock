@@ -461,6 +461,8 @@ source = { virtual = "." }
 
 [package.dev-dependencies]
 dev = [
+    { name = "bibtexparser" },
+    { name = "httpx2" },
     { name = "jsonschema" },
     { name = "openai" },
     { name = "pytest" },
@@ -478,6 +480,8 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "bibtexparser", specifier = ">=1.4,<2" },
+    { name = "httpx2", specifier = ">=2.13,<3" },
     { name = "jsonschema", specifier = ">=4.10,<5" },
     { name = "openai", specifier = ">=2,<3" },
     { name = "pytest", specifier = ">=8,<10" },
