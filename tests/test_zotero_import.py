@@ -1253,6 +1253,26 @@ def test_storing_a_file_without_a_key_asks_before_writing_anything(
     assert zotero.children(key) == []
 
 
+@pytest.mark.integration
+def test_a_throwaway_zotero_never_sees_the_authors_display(tmp_path, monkeypatch):
+    """Author's order (2026-10-16): no Zotero window or key dialog on the
+    author's screen. The client's environment carries a private Xvfb display
+    and none of the caller's display, Wayland or session-bus variables."""
+    if shutil.which("Xvfb") is None:
+        pytest.skip("no Xvfb here")
+    private = zotero_live.private_display()
+    caller = ":4242" if private != ":4242" else ":4343"
+    for name, value in (("DISPLAY", caller), ("WAYLAND_DISPLAY", "wayland-0"),
+                        ("XAUTHORITY", "/home/x/.Xauthority"),
+                        ("DBUS_SESSION_BUS_ADDRESS", "unix:path=/run/user/1/bus")):
+        monkeypatch.setenv(name, value)
+    env = zotero_live.isolated_env(tmp_path / "home")
+    assert env["DISPLAY"] == private != caller
+    for name in ("WAYLAND_DISPLAY", "XAUTHORITY", "DBUS_SESSION_BUS_ADDRESS"):
+        assert name not in env
+    assert env["GDK_BACKEND"] == "x11"
+
+
 def test_an_always_allow_key_is_kept_and_a_one_time_key_is_not(
         tmp_path, monkeypatch):
     """Zotero's answer to its dialog, as pure logic: the dialog cannot be

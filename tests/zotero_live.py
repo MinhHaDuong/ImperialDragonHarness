@@ -37,6 +37,7 @@ adds the throwaway profile, data directory and environment, records its
 pid and execs the real binary.
 """
 
+import atexit
 import importlib.util
 import json
 import os
@@ -58,10 +59,51 @@ import pytest
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 START_WAIT = 60.0
 DEFAULT_PORT = 23119
-# Variables the client needs to reach the display and the session bus; the
-# rest of the environment, HOME included, is replaced.
-PASSED_ENV = ("PATH", "DISPLAY", "WAYLAND_DISPLAY", "XAUTHORITY",
-              "XDG_RUNTIME_DIR", "DBUS_SESSION_BUS_ADDRESS")
+# The only variable taken from the caller. The author's display, Wayland
+# socket, X authority and session bus never reach a throwaway client: it
+# draws on a private Xvfb (author's order, 2026-10-16: no Zotero windows or
+# key dialogs on the author's screen).
+PASSED_ENV = ("PATH",)
+_XVFB: subprocess.Popen | None = None
+_XVFB_DISPLAY: str | None = None
+
+
+def private_display() -> str:
+    """A private Xvfb display for this test session, started once; skips the
+    test when none can be started. Never the caller's DISPLAY."""
+    global _XVFB, _XVFB_DISPLAY
+    if _XVFB_DISPLAY is not None and _XVFB is not None and _XVFB.poll() is None:
+        return _XVFB_DISPLAY
+    xvfb = shutil.which("Xvfb")
+    if xvfb is None:
+        pytest.skip("no Xvfb: a throwaway Zotero never draws on the author's display")
+    read_fd, write_fd = os.pipe()
+    _XVFB = subprocess.Popen(
+        [xvfb, "-displayfd", str(write_fd), "-nolisten", "tcp",
+         "-screen", "0", "1280x800x24"],
+        pass_fds=(write_fd,), stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        start_new_session=True, env={"PATH": os.environ.get("PATH", "")})
+    os.close(write_fd)
+    with os.fdopen(read_fd) as pipe:
+        number = pipe.readline().strip()
+    if not number.isdigit():
+        stop_xvfb()
+        pytest.skip("Xvfb did not report a display number")
+    _XVFB_DISPLAY = f":{number}"
+    atexit.register(stop_xvfb)
+    return _XVFB_DISPLAY
+
+
+def stop_xvfb() -> None:
+    global _XVFB, _XVFB_DISPLAY
+    if _XVFB is not None and _XVFB.poll() is None:
+        _XVFB.terminate()
+        try:
+            _XVFB.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            _XVFB.kill()
+    _XVFB, _XVFB_DISPLAY = None, None
 
 
 def helper_module():
@@ -90,6 +132,8 @@ def why_not_here() -> str | None:
     reason = zi.in_container()
     if reason:
         return f"no real Zotero in this environment ({reason})"
+    if shutil.which("Xvfb") is None:
+        return "no Xvfb: a throwaway Zotero never draws on the author's display"
     command = zi.find_zotero_launcher()
     if command is None:
         return "no Zotero installation found by the helper's launch discovery"
@@ -151,7 +195,11 @@ def write_profile(profile: Path, data: Path, port: int, local_api: bool,
 
 def isolated_env(home: Path) -> dict[str, str]:
     env = {k: os.environ[k] for k in PASSED_ENV if k in os.environ}
-    env.update(HOME=str(home), TMPDIR=str(home / "tmp"),
+    runtime = home / "run"
+    runtime.mkdir(mode=0o700, parents=True, exist_ok=True)
+    env.update(DISPLAY=private_display(), GDK_BACKEND="x11",
+               MOZ_ENABLE_WAYLAND="0", XDG_RUNTIME_DIR=str(runtime),
+               HOME=str(home), TMPDIR=str(home / "tmp"),
                XDG_CONFIG_HOME=str(home / ".config"),
                XDG_DATA_HOME=str(home / ".local" / "share"),
                XDG_CACHE_HOME=str(home / ".cache"), MOZ_NO_REMOTE="1",
@@ -402,6 +450,7 @@ class ZoteroFactory:
     def close(self) -> None:
         for client in self.clients.values():
             client.stop()
+        stop_xvfb()
         shutil.rmtree(self.base, ignore_errors=True)
 
 
