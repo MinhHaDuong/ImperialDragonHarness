@@ -2815,3 +2815,157 @@ def test_local_account_of_an_empty_library_comes_from_the_api(zotero, tmp_path):
     (tmp_path / ".zotero-reconcile.json").write_text('{"apply": true, "user_id": "1"}')
     with pytest.raises(ValueError, match="signed in to no account"):
         zi.reconcile_apply_config(tmp_path, zi.local_account())
+
+
+# --------------------------------------------------------------------------
+# Review round 4: failure paths fail closed or do nothing.
+# --------------------------------------------------------------------------
+
+
+def test_a_launcher_that_cannot_execute_is_unavailable_not_a_crash(
+        tmp_path, monkeypatch, capsys):
+    def broken(command):
+        raise PermissionError(13, "Permission denied", command[0])
+
+    monkeypatch.setattr(zi, "in_container", lambda: None)
+    monkeypatch.setattr(zi, "find_zotero_launcher", lambda: [str(tmp_path / "zotero")])
+    monkeypatch.setattr(zi, "launch_zotero", broken)
+    with pytest.raises(zi.ZoteroUnavailable, match="launching it .* failed"):
+        zi.ensure_zotero()
+    _staged_bib_paper(tmp_path)
+    out = tmp_path / "report.json"
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path, out=str(out))) == 0
+    assert json.loads(out.read_text())["verdict"] == "zotero_unavailable"
+    capsys.readouterr()
+
+
+def test_a_hanging_flatpak_query_is_bounded(monkeypatch):
+    def hang(cmd, **kw):
+        assert kw.get("timeout"), "flatpak info must be bounded"
+        raise subprocess.TimeoutExpired(cmd, kw["timeout"])
+
+    monkeypatch.setattr(zi.shutil, "which",
+                        lambda name: "/usr/bin/flatpak" if name == "flatpak" else None)
+    monkeypatch.setattr(zi.os, "access", lambda *a: False)
+    monkeypatch.setattr(zi.subprocess, "run", hang)
+    assert zi.find_zotero_launcher() is None
+
+
+def test_paging_without_total_results_fails_closed(monkeypatch):
+    monkeypatch.setattr(zi, "local_get", lambda *a, **k: (200, {}, b"[]"))
+    with pytest.raises(zi.LocalAPIError, match="unexpected local API answer"):
+        zi.api_items("users/0", "attachment")
+
+
+def test_a_page_larger_than_asked_fails_closed(monkeypatch):
+    big = json.dumps([{"key": str(n)} for n in range(zi.API_PAGE + 1)]).encode()
+    monkeypatch.setattr(zi, "local_get",
+                        lambda *a, **k: (200, {"Total-Results": "9999"}, big))
+    with pytest.raises(zi.LocalAPIError):
+        zi.api_items("users/0", "attachment")
+
+
+def test_a_200_that_is_not_zotero_is_a_stranger(monkeypatch):
+    import contextlib
+    import io
+
+    class Stranger:
+        def open(self, *a, **k):
+            body = io.BytesIO(b"<html>some other service</html>")
+            body.status = 200
+            return contextlib.nullcontext(body)
+
+    monkeypatch.setattr(zi, "_CONNECTOR_OPENER", Stranger())
+    with pytest.raises(zi.LocalAPIError, match="not as Zotero"):
+        zi.zotero_answers()
+
+
+def test_a_wrong_api_version_header_names_the_setting(monkeypatch):
+    monkeypatch.setattr(zi, "local_get", lambda *a, **k: (
+        200, {"Zotero-API-Version": "yes"}, b"hello"))
+    with pytest.raises(zi.LocalAPIError, match="Allow other applications"):
+        zi.check_local_api()
+
+
+def test_a_file_url_with_a_host_is_not_a_local_path():
+    assert zi.file_url_path("file:///home/u/x.pdf") == "/home/u/x.pdf"
+    assert zi.file_url_path("file://localhost/home/u/x.pdf") == "/home/u/x.pdf"
+    assert zi.file_url_path("file://server/share/x.pdf") is None
+    assert zi.file_url_path("https://example.org/x.pdf") is None
+
+
+def test_a_collection_key_in_two_libraries_is_refused(zotero):
+    _group_with_collections(zotero)
+    zotero.add_collection("GRPCOLL1", "Climate", target="C9")
+    with pytest.raises(ValueError, match="several libraries"):
+        zi.resolve_target("user", "GRPCOLL1")
+
+
+def test_a_held_lock_times_out_instead_of_hanging(tmp_path):
+    import fcntl
+    import os
+    fd = os.open(tmp_path, os.O_RDONLY)
+    fcntl.flock(fd, fcntl.LOCK_EX)
+    try:
+        # flock locks are per open file description: a second open contends.
+        with pytest.raises(OSError, match="locked by another run"):
+            with zi.directory_locks([tmp_path], wait=0.3):
+                pass
+    finally:
+        os.close(fd)
+
+
+def test_the_lock_never_falls_back_to_a_shared_temp_dir(monkeypatch):
+    monkeypatch.delenv("XDG_RUNTIME_DIR", raising=False)
+    assert zi.library_lock_dir() == Path.home()
+
+
+def test_an_unexpected_account_answer_names_the_setting(monkeypatch):
+    monkeypatch.setattr(zi, "local_get", lambda *a, **k: (403, {}, b"Forbidden"))
+    with pytest.raises(zi.LocalAPIError, match="Allow other applications"):
+        zi.local_account()
+
+
+def test_a_connector_lost_after_the_save_reports_the_item_created(
+        tmp_path, monkeypatch, capsys, zotero):
+    _corroborated(monkeypatch)
+    real_post = zi.connector_post
+
+    def flaky(endpoint, *a, **k):
+        if endpoint == "saveAttachment":
+            raise zi.urllib.error.URLError("connection reset")
+        return real_post(endpoint, *a, **k)
+
+    monkeypatch.setattr(zi, "connector_post", flaky)
+    entries = []
+    for n in range(2):
+        pdf = tmp_path / f"p{n}.pdf"
+        pdf.write_bytes(f"distinct {n}".encode())
+        entries.append({"title": f"Article {n}", "authors": ["Smith, Jane"],
+                        "year": "2020", "pdf": str(pdf), "attach_pdf": True})
+    assert zi.cmd_inject(_inject_args(entries)) == 1
+    out = json.loads(capsys.readouterr().out)
+    first, second = out["results"]
+    assert first["status"] == "created" and "transport_error" in first
+    assert "not attempted" in second["error"]
+    assert len(_saves(zotero)) == 1
+
+
+def test_zotero_vanishing_before_apply_saves_is_a_clean_no_op(
+        tmp_path, monkeypatch, capsys):
+    _staged_bib_paper(tmp_path)
+    reads = iter([_snap()])
+
+    def snapshot(*a, **k):
+        try:
+            return next(reads)
+        except StopIteration:
+            raise zi.ZoteroUnavailable("Zotero stopped answering") from None
+
+    _fake_zotero(monkeypatch, snapshot)
+    _quiet_pdf_tools(monkeypatch)
+    monkeypatch.setattr(zi, "cmd_inject", lambda _: pytest.fail("wrote"))
+    out = tmp_path / "report.json"
+    assert zi.cmd_reconcile(_reconcile_args(tmp_path, apply=True, out=str(out))) == 0
+    assert json.loads(out.read_text())["verdict"] == "zotero_unavailable"
+    capsys.readouterr()

@@ -32,7 +32,6 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
 import time
 import unicodedata
 import urllib.error
@@ -1108,6 +1107,8 @@ LOCAL_API_SETTING = ('Zotero Settings > Advanced > "Allow other applications '
 # How long a launched Zotero gets to answer, and how often it is asked.
 LAUNCH_WAIT = 90.0
 LAUNCH_POLL = 1.0
+# How long a check-and-create run waits for another one to finish.
+LOCK_WAIT = 600.0
 # Exit status of a command that needed Zotero and found it unavailable: it
 # did nothing. EX_TEMPFAIL from sysexits.h, "try again later". `reconcile`
 # exits 0 instead, with verdict "zotero_unavailable", so an unattended sweep
@@ -1213,11 +1214,13 @@ def api_items(prefix: str, item_type: str) -> list[dict[str, Any]]:
             raise _local_api_refusal(status, body)
         try:
             page = json.loads(body)
-            total = int(headers.get("Total-Results", len(page)))
-        except (ValueError, TypeError) as exc:
+            total = int(headers["Total-Results"])
+        except (ValueError, TypeError, KeyError) as exc:
+            # No total, no way to know the read is whole: a partial read
+            # would let the duplicate guard miss an item. Fail closed.
             raise LocalAPIError(f"unexpected local API answer for /api/{prefix}"
                                 f"/items; check {LOCAL_API_SETTING}") from exc
-        if not isinstance(page, list):
+        if not isinstance(page, list) or len(page) > API_PAGE:
             raise LocalAPIError(f"unexpected local API answer for /api/{prefix}"
                                 f"/items; check {LOCAL_API_SETTING}")
         items.extend(page)
@@ -1232,11 +1235,13 @@ def zotero_answers(timeout: float = 2.0) -> bool:
         with _CONNECTOR_OPENER.open(f"{connector_base()}/connector/ping",
                                     timeout=timeout) as resp:
             status = resp.status
+            body = resp.read(4096)
     except urllib.error.HTTPError as exc:
-        status = exc.code
+        status, body = exc.code, b""
     except (urllib.error.URLError, OSError):
         return False
-    if status != 200:
+    # The connector's GET ping answers "Zotero is running" (server_connector.js).
+    if status != 200 or b"Zotero is running" not in body:
         raise LocalAPIError(f"something answers at {CONNECTOR_URL} but not as "
                             f"Zotero (HTTP {status}); check that it is Zotero")
     return True
@@ -1245,7 +1250,7 @@ def zotero_answers(timeout: float = 2.0) -> bool:
 def check_local_api() -> None:
     """Fail with the setting's name unless /api/ answers as the local API."""
     status, headers, body = local_get("/api/", timeout=CONNECTOR_TIMEOUT)
-    if status != 200 or not headers.get("Zotero-API-Version"):
+    if status != 200 or headers.get("Zotero-API-Version") != LOCAL_API_VERSION:
         raise _local_api_refusal(status, body)
 
 
@@ -1286,9 +1291,15 @@ def find_zotero_launcher() -> list[str] | None:
         if os.access(candidate, os.X_OK):
             return [str(candidate)]
     flatpak = shutil.which("flatpak")
-    if flatpak and subprocess.run([flatpak, "info", "org.zotero.Zotero"],
-                                  capture_output=True).returncode == 0:
-        return [flatpak, "run", "org.zotero.Zotero"]
+    if flatpak:
+        try:
+            found_app = subprocess.run([flatpak, "info", "org.zotero.Zotero"],
+                                       capture_output=True,
+                                       timeout=10).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            found_app = False
+        if found_app:
+            return [flatpak, "run", "org.zotero.Zotero"]
     return None
 
 
@@ -1318,13 +1329,21 @@ def ensure_zotero() -> str:
             raise ZoteroUnavailable("Zotero is not running and no Zotero "
                                     "installation was found to launch. Start "
                                     "Zotero and retry; nothing was done.")
-        launch_zotero(command)
+        try:
+            launch_zotero(command)
+        except OSError as exc:
+            raise ZoteroUnavailable(f"Zotero is not running and launching it "
+                                    f"({' '.join(command)}) failed: {exc}. "
+                                    f"Nothing was done.") from exc
         deadline = time.monotonic() + LAUNCH_WAIT
         while not zotero_answers():
             if time.monotonic() >= deadline:
+                # The launched client is left alone: killing a Zotero still
+                # opening its database risks more than a second start does.
                 raise ZoteroUnavailable(
                     f"Zotero was launched ({' '.join(command)}) but did not "
-                    f"answer within {LAUNCH_WAIT:.0f} s. Nothing was done.")
+                    f"answer within {LAUNCH_WAIT:.0f} s; it may still be "
+                    f"starting. Nothing was done.")
             time.sleep(LAUNCH_POLL)
         state = "launched"
     check_local_api()
@@ -1378,13 +1397,25 @@ def connector_save(item: dict[str, Any], pdf: Path | None,
         raise RuntimeError(f"saveItems answered HTTP {status}: "
                            f"{body.decode('utf-8', 'replace')[:200]}")
     row: dict[str, Any] = {"session": session, "status": "created"}
+    try:
+        _finish_session(row, session, pdf, target)
+    except (urllib.error.URLError, OSError) as exc:
+        # The item exists; only the move or the file is in doubt.
+        row["transport_error"] = (f"created, then the connector stopped "
+                                  f"answering: {exc}")
+    return row
+
+
+def _finish_session(row: dict[str, Any], session: str, pdf: Path | None,
+                    target: str | None) -> None:
+    """Move the session's item to `target`, then attach `pdf` to it."""
     if target:
         status, body = connector_post("updateSession", {
             "sessionID": session, "target": target, "tags": []})
         if status != 200:
             row["target_error"] = (f"updateSession answered HTTP {status}: "
                                    f"{body.decode('utf-8', 'replace')[:200]}")
-            return row
+            return
     if pdf is not None:
         metadata = {"sessionID": session, "parentItemID": "item0",
                     "title": pdf.name, "url": pdf.resolve().as_uri()}
@@ -1399,7 +1430,6 @@ def connector_save(item: dict[str, Any], pdf: Path | None,
                 f"{body.decode('utf-8', 'replace')[:200]}")
         else:
             row["attachment"] = pdf.name
-    return row
 
 
 def corroborate_entry(entry: dict[str, Any]) -> dict[str, Any]:
@@ -1468,11 +1498,13 @@ def library_prefixes(library: int | str = USER_LIBRARY) -> list[tuple[str, str]]
 
 
 def library_lock_dir() -> Path:
-    """The directory whose flock serialises this user's check-and-create runs."""
+    """The directory whose flock serialises this user's check-and-create runs:
+    the per-user runtime directory, else the home directory, never a shared
+    temp directory other users lock too."""
     runtime = os.environ.get("XDG_RUNTIME_DIR")
     if runtime and Path(runtime).is_dir():
         return Path(runtime)
-    return Path(tempfile.gettempdir())
+    return Path.home()
 
 
 def _collection_path(prefix: str, key: str) -> list[str] | None:
@@ -1506,12 +1538,15 @@ def resolve_target(library: int | str, collection: str | None) -> tuple[str, str
     if library == ALL_LIBRARIES and not collection:
         raise ValueError("--library all names no single destination library")
     if collection:
-        home = next(((lib_id, prefix, path)
-                     for lib_id, prefix in library_prefixes(ALL_LIBRARIES)
-                     if (path := _collection_path(prefix, collection))), None)
-        if home is None:
+        homes = [(lib_id, path)
+                 for lib_id, prefix in library_prefixes(ALL_LIBRARIES)
+                 if (path := _collection_path(prefix, collection))]
+        if not homes:
             raise ValueError(f"collection {collection!r} is in no local library")
-        lib_id, prefix, path = home
+        if len(homes) > 1:
+            raise ValueError(f"collection key {collection!r} exists in several "
+                             f"libraries ({', '.join(h[0] for h in homes)})")
+        (lib_id, path), = homes
     else:
         (lib_id, prefix), = library_prefixes(library)
         path = []
@@ -1702,6 +1737,11 @@ def inject_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
                 results[m]["error"] = "not attempted after an uncertain save"
             status = 1
             break
+        if results[n].get("transport_error"):
+            for m, _, _ in pending[pos + 1:]:
+                results[m]["error"] = "not attempted after the connector stopped"
+            status = 1
+            break
         if results[n].get("attachment_error") or results[n].get("target_error"):
             status = 1
     return results, status
@@ -1871,7 +1911,8 @@ def file_url_path(url: str | None) -> str | None:
     if not url:
         return None
     parts = urllib.parse.urlsplit(url)
-    if parts.scheme != "file":
+    # A host in the URL (file://server/share) is not a path on this machine.
+    if parts.scheme != "file" or parts.netloc not in ("", "localhost"):
         return None
     return urllib.request.url2pathname(parts.path)
 
@@ -1957,8 +1998,11 @@ def local_account(idx: dict[str, Any] | None = None) -> str | None:
     if idx and idx.get("account"):
         return idx["account"]
     status, _h, body = local_get(f"/api/users/{_FOREIGN_USER}/settings")
-    match = re.search(r"use userID 0 or (\d+)", body.decode("utf-8", "replace"))
-    return match.group(1) if status == 400 and match else None
+    text = body.decode("utf-8", "replace")
+    if status != 400 or "use userID 0" not in text:
+        raise _local_api_refusal(status, body)
+    match = re.search(r"use userID 0 or (\d+)", text)
+    return match.group(1) if match else None
 
 
 def file_md5(path: Path, chunk: int = 1 << 20) -> str:
@@ -1972,11 +2016,12 @@ def file_md5(path: Path, chunk: int = 1 << 20) -> str:
 
 
 @contextlib.contextmanager
-def directory_locks(directories: list[Path]):
+def directory_locks(directories: list[Path], wait: float = LOCK_WAIT):
     """One advisory flock per directory, in stable order.
 
     The lock is taken on the directory itself, so it leaves no file behind
-    and dies with the process.
+    and dies with the process. A lock not obtained within `wait` seconds
+    raises OSError rather than hang an unattended run.
     """
     with contextlib.ExitStack() as stack:
         for directory in sorted({Path(d).resolve() for d in directories}):
@@ -1984,7 +2029,16 @@ def directory_locks(directories: list[Path]):
                 continue
             fd = os.open(directory, os.O_RDONLY)
             stack.callback(os.close, fd)
-            fcntl.flock(fd, fcntl.LOCK_EX)
+            deadline = time.monotonic() + wait
+            while True:
+                try:
+                    fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if time.monotonic() >= deadline:
+                        raise OSError(f"{directory} is locked by another run "
+                                      f"for over {wait:.0f} s") from None
+                    time.sleep(0.2)
             stack.callback(fcntl.flock, fd, fcntl.LOCK_UN)
         yield
 
@@ -2844,6 +2898,10 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                 fresh = library_snapshot(target_lib)
                 report, apply_rc = reconcile_apply(root, found, fresh, config,
                                                    args)
+        except ZoteroUnavailable as exc:
+            # Gone before anything was created (a vanishing connector during
+            # the saves is reported per entry by inject): a clean no-op.
+            return reconcile_unavailable(root, found, exc, args.out)
         except (OSError, ValueError, KeyError, TypeError, RuntimeError,
                 LocalAPIError, urllib.error.URLError) as exc:
             mark_apply_failed(report, exc)
@@ -2906,7 +2964,7 @@ def reconcile_apply(root: Path, found: dict[str, Any], fresh: dict[str, Any],
             summary["absent"] -= 1
             if result.get("status") == "created" and not (
                     result.get("error") or result.get("attachment_error")
-                    or result.get("target_error")):
+                    or result.get("target_error") or result.get("transport_error")):
                 summary["injected"] = summary.get("injected", 0) + 1
                 actions["injected"] = RECONCILE_ACTIONS["injected"]
             else:
