@@ -359,7 +359,7 @@ def duplicate_hash_html(report: dict[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def probe_one(pdf: Path, idx: dict[str, Any] | None) -> dict[str, Any]:
+def probe_one(pdf: Path, idx: dict[str, Any]) -> dict[str, Any]:
     info = pdfinfo(pdf)
     try:
         page_count = int(info.get("Pages", "0"))
@@ -392,14 +392,11 @@ def probe_one(pdf: Path, idx: dict[str, Any] | None) -> dict[str, Any]:
         "year_hint": year,
         "filename": pdf.name,
     }
-    if idx is not None:
-        out["zotero_matches"] = library_matches(
-            idx, doi=ids["doi"], isbn=ids["isbn"], arxiv=ids["arxiv"],
-            handle=ids["handle"], title=pdfinfo_title, year=year,
-            pdf_path=pdf,
-        )
-    else:
-        out["zotero_matches"] = None
+    out["zotero_matches"] = library_matches(
+        idx, doi=ids["doi"], isbn=ids["isbn"], arxiv=ids["arxiv"],
+        handle=ids["handle"], title=pdfinfo_title, year=year,
+        pdf_path=pdf,
+    )
     return out
 
 
