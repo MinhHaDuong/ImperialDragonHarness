@@ -44,6 +44,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 import unicodedata
 import urllib.parse
@@ -1042,14 +1043,32 @@ def stored_key() -> str | None:
 
 
 def store_key(key: str) -> None:
-    """Keep a key granted with "Always Allow": mode 600, directory 700."""
+    """Keep a key granted with "Always Allow": mode 600, directory 700.
+
+    The key is written to a fresh temporary file (O_EXCL, never through a
+    planted name) and renamed over the key file; a key file that is a
+    symlink, or a directory another user owns, is refused.
+    """
     path = key_file()
-    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    tmp = path.with_name(f".{path.name}.{os.getpid()}")
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w", encoding="utf-8") as stream:
-        stream.write(f"{KEY_VARIABLE}={key}\n")
-    os.replace(tmp, path)
+    parent = path.parent
+    parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if path.is_symlink():
+        raise OSError(f"refusing to write the key through the symlink {path}")
+    info = parent.stat()
+    if info.st_uid != os.getuid():
+        raise OSError(f"refusing to write the key into {parent}: another "
+                      f"user owns it")
+    if info.st_mode & 0o077:
+        parent.chmod(0o700)
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", dir=parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            stream.write(f"{KEY_VARIABLE}={key}\n")
+        os.replace(tmp, path)
+    except BaseException:
+        with contextlib.suppress(FileNotFoundError):
+            os.unlink(tmp)
+        raise
 
 
 class KeyNotGranted(RuntimeError):
@@ -1078,7 +1097,12 @@ def authorize(z: zotero.Zotero) -> None:
                             f"was written") from exc
     z.local_api_key = granted["key"]
     if granted.get("remember"):
-        store_key(granted["key"])
+        try:
+            store_key(granted["key"])
+        except OSError as exc:
+            # The key still serves this run; Zotero asks again next time.
+            print(f"zotero.py: the granted key was not kept ({exc}); Zotero "
+                  f"will ask again on the next run", file=sys.stderr)
 
 
 def write(z: zotero.Zotero, call: Any) -> Any:

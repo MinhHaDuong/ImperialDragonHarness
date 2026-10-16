@@ -1197,6 +1197,26 @@ def test_the_key_file_is_private_and_never_printed(tmp_path, monkeypatch,
     assert "k" * 32 not in capsys.readouterr().out
 
 
+def test_the_key_is_never_written_through_a_symlink(tmp_path, monkeypatch):
+    keys = tmp_path / "keys"
+    keys.mkdir(mode=0o755)
+    elsewhere = tmp_path / "elsewhere.env"
+    elsewhere.write_text("untouched\n")
+    (keys / "zotero-local.env").symlink_to(elsewhere)
+    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(keys / "zotero-local.env"))
+    with pytest.raises(OSError, match="symlink"):
+        zi.store_key("k" * 32)
+    assert elsewhere.read_text() == "untouched\n"
+    assert [p.name for p in keys.iterdir()] == ["zotero-local.env"]
+    # Positive control: the same directory, no symlink, takes the key and is
+    # made private.
+    (keys / "zotero-local.env").unlink()
+    zi.store_key("k" * 32)
+    assert zi.stored_key() == "k" * 32
+    assert keys.stat().st_mode & 0o777 == 0o700
+    assert not (keys / "zotero-local.env").is_symlink()
+
+
 def test_the_key_file_defaults_to_the_harness_keystore(monkeypatch):
     monkeypatch.delenv("ZOTERO_LOCAL_KEY_FILE")
     assert zi.key_file() == Path.home() / ".config" / "keys" / "zotero-local.env"
