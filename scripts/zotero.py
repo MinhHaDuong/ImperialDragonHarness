@@ -801,8 +801,10 @@ class LocalAPIError(RuntimeError):
 
 
 def zotero_url() -> str:
-    """The Zotero URL: ZOTERO_CONNECTOR_URL, read on every call, else 23119."""
-    return os.environ.get("ZOTERO_CONNECTOR_URL") or DEFAULT_ZOTERO_URL
+    """The Zotero URL: ZOTERO_CONNECTOR_URL, read on every call, else 23119.
+    A trailing slash is dropped, so paths join without a `//`."""
+    return (os.environ.get("ZOTERO_CONNECTOR_URL")
+            or DEFAULT_ZOTERO_URL).rstrip("/")
 
 
 def zotero_base() -> str:

@@ -1484,6 +1484,12 @@ def test_local_api_disabled_names_the_setting(api_off_zotero, monkeypatch, capsy
     assert "disabled" in out["error"]
 
 
+def test_a_trailing_slash_in_the_zotero_url_is_dropped(monkeypatch):
+    monkeypatch.setenv("ZOTERO_CONNECTOR_URL", "http://127.0.0.1:8080/")
+    assert zi.zotero_url() == "http://127.0.0.1:8080"
+    assert zi.local_library().endpoint == "http://127.0.0.1:8080/api"
+
+
 def test_a_listener_that_is_not_zotero_is_named_with_both_remedies():
     """What answers without Zotero's version header is named as not Zotero,
     with the variable that points the helper elsewhere and the setting.
