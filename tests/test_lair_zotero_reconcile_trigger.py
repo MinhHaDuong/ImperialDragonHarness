@@ -18,7 +18,7 @@ def run(project: Path) -> str:
 def test_fresh_docs_file_fires(tmp_path):
     (tmp_path / "docs").mkdir()
     (tmp_path / "docs" / "new.pdf").write_text("x")
-    assert "/zotero reconcile" in run(tmp_path)
+    assert "/zotero check-staging" in run(tmp_path)
 
 
 def test_old_docs_file_is_silent(tmp_path):
@@ -48,7 +48,7 @@ def test_midnight_exact_file_fires(tmp_path):
     f.write_text("x")
     midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
     os.utime(f, (midnight, midnight))
-    assert "/zotero reconcile" in run(tmp_path)
+    assert "/zotero check-staging" in run(tmp_path)
 
 
 def test_symlinked_staging_file_fires(tmp_path):
@@ -56,14 +56,14 @@ def test_symlinked_staging_file_fires(tmp_path):
     (tmp_path / "target").mkdir()
     (tmp_path / "target" / "new.pdf").write_text("x")
     (tmp_path / "docs" / "new.pdf").symlink_to("../target/new.pdf")
-    assert "/zotero reconcile" in run(tmp_path)
+    assert "/zotero check-staging" in run(tmp_path)
 
 
 def test_symlinked_docs_dir_fires(tmp_path):
     (tmp_path / "elsewhere").mkdir()
     (tmp_path / "elsewhere" / "new.pdf").write_text("x")
     (tmp_path / "docs").symlink_to("elsewhere")
-    assert "/zotero reconcile" in run(tmp_path)
+    assert "/zotero check-staging" in run(tmp_path)
 
 
 def test_trigger_step_is_reachable():

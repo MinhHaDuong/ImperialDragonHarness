@@ -15,4 +15,4 @@ root="${1:-.}"
 since="$(date -d "$(date +%F) 00:00:00 1 second ago" '+%Y-%m-%d %H:%M:%S')"
 hit="$(find -L "$root/docs" -type f -newermt "$since" -print -quit 2>/dev/null || true)"
 [ -n "$hit" ] || exit 0
-echo "docs/ changed today (e.g. ${hit#"$root"/}): run \`/zotero reconcile\`? (proposal only; accept or skip)"
+echo "docs/ changed today (e.g. ${hit#"$root"/}): run \`/zotero check-staging\`? (proposal only; accept or skip)"

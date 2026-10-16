@@ -13,7 +13,6 @@ author's profile or port 23119.
 
 import argparse
 import hashlib
-import html
 import json
 import subprocess
 import sys
@@ -143,42 +142,44 @@ def test_a_uniquely_sized_file_is_never_hashed(tmp_path, monkeypatch):
 
 
 @pytest.mark.integration
-def test_cli_report_is_escaped_linked_and_read_only(library, tmp_path):
+def test_cli_report_is_json_linked_and_read_only(library, tmp_path):
     zotero, keys = library
     attachments = {key: zotero.children(key)
                    for key in (keys["shared"], keys["other"])}
     before = zotero.versions()
-    out = tmp_path / "report.html"
+    out = tmp_path / "report.json"
     env = child_env()
     env.update(zotero.env(), ZOTERO_NO_LAUNCH="1")
     result = subprocess.run(
-        [sys.executable, str(SCRIPT), "dedup-report", "--out", str(out)],
+        [sys.executable, str(SCRIPT), "report-duplicates", "--out", str(out)],
         capture_output=True, text=True, check=True, env=env, stdin=subprocess.DEVNULL)
-    body = out.read_text()
+    report = json.loads(out.read_text())
     assert "1 candidate groups" in result.stdout
+    (cluster,) = report["clusters"]
+    listed = {item["key"]: {a["key"] for a in item["attachments"]}
+              for item in cluster["items"]}
     for parent, children in attachments.items():
-        assert f"zotero://select/library/items/{parent}" in body
-        for child in children:
-            assert f"zotero://select/library/items/{child['key']}" in body
-            assert html.escape(child["data"]["filename"]) in body
-    assert "&lt;Unsafe &amp; title&gt;" in body
-    assert "<Unsafe & title>" not in body
-    assert keys["same_parent"] not in body and keys["lonely"] not in body
+        assert {c["key"] for c in children} <= listed[parent]
+        assert next(i for i in cluster["items"] if i["key"] == parent)["url"] == \
+            f"zotero://select/library/items/{parent}"
+    assert keys["same_parent"] not in listed and keys["lonely"] not in listed
     assert out.stat().st_mode & 0o777 == 0o600
     assert zotero.versions() == before, "the report only reads"
 
 
 @pytest.mark.integration
 def test_report_names_its_source(use_library, capsys):
-    args = argparse.Namespace(format="json", out=None)
-    assert zi.cmd_dedup_report(args) == 0
+    assert zi.cmd_report_duplicates(argparse.Namespace(out=None)) == 0
     assert json.loads(capsys.readouterr().out)["source"] == zi.LIBRARY_SOURCE
-    args.format = "html"
-    assert zi.cmd_dedup_report(args) == 0
-    assert "read live from zotero local API" in capsys.readouterr().out
+
+
+def test_the_report_has_no_html_format():
+    """Ticket 1116: JSON only."""
+    assert not hasattr(zi, "duplicate_hash_html")
+    assert '"--format"' not in SCRIPT.read_text()
 
 
 def test_report_without_zotero_does_nothing(capsys):
-    args = argparse.Namespace(format="json", out=None)
-    assert zi.cmd_dedup_report(args) == zi.EXIT_UNAVAILABLE
+    args = argparse.Namespace(out=None)
+    assert zi.cmd_report_duplicates(args) == zi.EXIT_UNAVAILABLE
     assert json.loads(capsys.readouterr().out)["zotero"] == "unavailable"

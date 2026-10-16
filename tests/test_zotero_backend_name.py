@@ -62,22 +62,28 @@ EXCLUDED_NAMES = (
     "trace-compact-audit-2026-06.md",
 )
 
-# The nine backend verbs (ticket 1018: subcommand names are the verbs).
+# The backend subcommands (ticket 1116: names that say what each does;
+# `probe` split into extraction and lookup, `audit` and `reconcile` merged,
+# the RIS writer dropped).
 VERBS = {
-    "probe",
-    "match",
-    "dedup-report",
-    "audit",
-    "reconcile",
-    "attach",
-    "write",
-    "inject",
-    "enrich",
+    "extract-metadata",
+    "find-work",
+    "report-duplicates",
+    "check-staging",
+    "suggest-attachments",
+    "create-items",
+    "suggest-edits",
 }
 
-# The verb-router surface (ticket 1018 wave B): what a user types after the
-# skill name. `attach` is declared, created on first need (YAGNI).
-ROUTER_VERBS = ("import", "enrich", "audit", "reconcile", "dedup-report", "attach")
+# The retired names: no alias may answer to them (ticket 1116).
+RETIRED_VERBS = {"probe", "match", "dedup-report", "audit", "reconcile",
+                 "attach", "write", "inject", "enrich"}
+
+# The verb-router surface: what a user types after the skill name. `import`
+# is the skill's own workflow over extract-metadata, find-work and
+# create-items; every other verb is a backend subcommand.
+ROUTER_VERBS = ("import", "suggest-edits", "check-staging",
+                "report-duplicates", "suggest-attachments")
 
 # The consolidated skill.
 ZOTERO_SKILL = ROOT / "skills" / "zotero" / "SKILL.md"
@@ -142,17 +148,19 @@ def test_no_live_citations_of_retired_backend():
 
 
 @pytest.mark.adherence
-def test_zotero_backend_answers_all_ten_verbs():
+def test_zotero_backend_answers_exactly_its_verbs():
     backend = ROOT / "scripts" / "zotero.py"
     assert backend.is_file(), (
         "scripts/zotero.py is missing (ticket 1018 wave A rename)"
     )
     text = backend.read_text(encoding="utf-8")
     parsers = set(re.findall(r"add_parser\(\s*[\"']([^\"']+)[\"']", text))
-    missing = VERBS - parsers
-    assert not missing, (
-        f"scripts/zotero.py is missing subcommand(s): {sorted(missing)}"
+    assert parsers == VERBS, (
+        f"scripts/zotero.py subcommands {sorted(parsers)} are not "
+        f"{sorted(VERBS)}"
     )
+    assert "aliases" not in text, "no alias for a retired name (ticket 1116)"
+    assert not parsers & RETIRED_VERBS
 
 
 @pytest.mark.adherence
@@ -214,4 +222,52 @@ def test_no_live_citations_of_retired_skill_names():
         "Live citation(s) of the retired Zotero skill names (ticket 1018 "
         "wave B — consolidated into the `zotero` skill):\n"
         + "\n".join(offenders)
+    )
+
+
+# A run line or invocation naming a retired subcommand: `zotero.py audit`,
+# `"$IDH_ROOT/scripts/zotero.py" reconcile`, `/zotero reconcile`.
+_RETIRED = "(?:" + "|".join(sorted(RETIRED_VERBS)) + ")"
+# Options may come first (`zotero.py --x reconcile`), the name may be quoted
+# (`zotero.py "audit"`), and a hyphenated word (`audit-trail`) is no name.
+RETIRED_INVOCATION = re.compile(
+    r"zotero\.py[\"']?\s+(?:--?[\w-]+(?:[= ]\S+)?\s+)*[\"']?" + _RETIRED
+    + r"(?![\w-])"
+    r"|/zotero\s+[\"']?" + _RETIRED + r"(?![\w-])"
+)
+
+
+def test_the_retired_invocation_pattern_fires_and_spares():
+    """Positive and negative controls for the sweep below."""
+    for line in ('zotero.py audit docs/', '"$IDH_ROOT/scripts/zotero.py" reconcile .',
+                 "zotero.py --library user inject --dry-run",
+                 "zotero.py 'enrich' --item-key K", "run `/zotero reconcile`"):
+        assert RETIRED_INVOCATION.search(line), line
+    assert RETIRED_INVOCATION.search(re.sub(r"\\\n\s*", " ",
+                                            "zotero.py \\\n    audit docs/"))
+    for line in ("zotero.py check-staging --dir docs", "zotero.py audit-trail",
+                 "/zotero import x.pdf", "zotero.py find-work --doi D"):
+        assert not RETIRED_INVOCATION.search(line), line
+
+
+@pytest.mark.adherence
+def test_no_live_invocation_of_a_retired_subcommand():
+    offenders = [f"{name}:{lineno}: {line.strip()}"
+                 for name, lineno, line in _matches(RETIRED_INVOCATION)]
+    # A run line continued with a backslash puts the name on the next line.
+    for path in _surface_files():
+        if path.resolve() == SELF or _is_excluded(path):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        joined = re.sub(r"\\\n\s*", " ", text)
+        if joined != text:
+            offenders += [f"{path.relative_to(ROOT).as_posix()}: {m.group(0)}"
+                          for m in RETIRED_INVOCATION.finditer(joined)
+                          if m.group(0) not in text]  # found only joined
+    assert not offenders, (
+        "Live invocation(s) of a retired zotero.py subcommand (ticket "
+        "1116):\n" + "\n".join(offenders)
     )

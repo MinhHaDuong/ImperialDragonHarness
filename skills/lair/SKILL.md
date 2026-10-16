@@ -47,7 +47,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     (the cwd after step 7b): an mtime scan, symlinks followed, for any file under
     `docs/` modified since the start of the current day (`docs/` is git-ignored,
     so git cannot see it). If it prints a line, include it in the final summary
-    as an offer of `/zotero reconcile`; the author accepts or not. No output, no
+    as an offer of `/zotero check-staging`; the author accepts or not. No output, no
     mention. Proposed, never run automatically; it does not belong in `/molt`
     (ticket 1112).
 12. **Suggest a hoard in the conclusion when relevant.** After completing

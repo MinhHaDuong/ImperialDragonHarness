@@ -23,13 +23,14 @@ actual merge and reuse `zotero.py` for a read-only report.
 ## Run
 
 ```bash
-scripts/zotero.py dedup-report --out /tmp/zotero-duplicates.html
+scripts/zotero.py report-duplicates --out /tmp/zotero-duplicates.json
 ```
 
-The report is local HTML with `zotero://select/library/items/<key>` links for
-each candidate parent and every matching attachment beneath it. The attachment
+The report is JSON (the HTML form was dropped in ticket 1116), with a
+`zotero://select/library/items/<key>` link for each candidate parent and the
+key and filename of every matching attachment beneath it. The attachment
 filenames identify the exact files to review when a parent has several children.
-`--format json` provides the same data for inspection. The command reads the
+The command reads the
 user library live through the running Zotero's local API (GET only; see
 `skills/zotero/references/helper-script.md` for the setting it needs and what
 happens when Zotero is not running) and excludes trashed items. It never
@@ -48,10 +49,10 @@ candidate pairs in the client before merging; no report row authorizes a merge.
 
 ## Verification
 
-`tests/test_zotero_dedup_report.py` has a known-positive pair, a group-library
-decoy, a trashed parent, and repeated attachments under one parent, served by
-a real throwaway Zotero client (hashing for clients without md5s is tested over an in-memory read). It checks links, HTML
-escaping and that generating a report only reads. A live read-only run against
+`tests/test_zotero_report_duplicates.py` has a known-positive pair and
+repeated attachments under one parent, served by a real throwaway Zotero
+client (hashing for clients without md5s is tested over an in-memory read).
+It checks the links and that generating a report only reads. A live read-only run against
 the 2026-09-24 database snapshot (before the helper moved to the local API) yielded
 269 groups from 8,697 hashed attachments in My Library; the 2026-10-02 live run
 at closure yielded 266. The author arbitrated a sample on 2026-10-02 and ticket

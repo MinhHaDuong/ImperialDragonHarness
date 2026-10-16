@@ -1,8 +1,8 @@
 # Enrichment — completing an item that already exists
 
-`inject` creates; `enrich` says what to complete. An item filed years ago
+`create-items` creates; `suggest-edits` says what to complete. An item filed years ago
 under looser habits, or scraped from a translator that dropped a field, keeps
-its gap forever — `match` reports the item as present and the flow stops
+its gap forever — `find-work` reports the item as present and the flow stops
 there. The result is a system of record less complete than the staging folder
 it supersedes, which is backwards. (Measured once: nine items in one library
 held no DOI while the project `.bib` carried one for each.)
@@ -14,7 +14,7 @@ local API (Zotero 10.0 or later, with the local API key; see
 the Zotero client.
 
 ```bash
-"$IDH_ROOT/scripts/zotero.py" enrich --item-key XRWZU4DZ \
+"$IDH_ROOT/scripts/zotero.py" suggest-edits --item-key XRWZU4DZ \
   --expect-title "Optimum Utilization" --set DOI=10.2307/1907301
 ```
 

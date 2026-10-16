@@ -1,9 +1,9 @@
 ---
 name: zotero
-description: "Import one or more PDFs or URLs into Zotero, suggest enrichments to existing items, or audit and reconcile the library — extract metadata, resolve identifiers online, dedupe against the running Zotero's local API, and create items with their PDFs through its local API (RIS file as fallback)."
+description: "Import one or more PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, or report duplicate files — extract metadata, resolve identifiers online, find the work through the running Zotero's local API, and create items with their PDFs through it."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "import <pdf-or-url>... | enrich | audit <dir> | reconcile <repo> | dedup-report | attach"
+argument-hint: "import <pdf-or-url>... | suggest-edits | check-staging [<repo>] [--dir <dir>] | report-duplicates | suggest-attachments"
 ---
 
 Discipline: `rules/zotero.md` — Zotero is the system of record, `docs/` and `.bib` are git-ignored staging. It is no longer resident in every session (ticket 0572); read it before working outside the verb files. A cited page number is read on the page, never interpolated from an extraction (the rule carries the discipline).
@@ -22,30 +22,32 @@ A run uses exactly one verb. **Read the verb's file before acting.**
 | verb | does | file |
 |---|---|---|
 | `import` | one or more PDFs or URLs → new items with attachments | `references/import.md` |
-| `enrich` | report missing fields on items that already exist; write them only with `--edit` | `references/enrichment.md` |
-| `audit` | report a staging directory or BibTeX-linked repository against the library | `references/backfill.md` |
-| `reconcile` | repair the staging ↔ library correspondence (report by default; `--apply` creates absent items, `--apply --edit` also stores files under existing items) | `references/backfill.md` |
-| `dedup-report` | hash-dedup report, library against itself (ticket 0485) | `docs/zotero-dedup-report.md` |
-| `attach` | file a document onto an item that already exists (reports by default; stores it with `--edit`) | `references/backfill.md` |
+| `suggest-edits` | report missing fields on items that already exist; write them only with `--edit` | `references/enrichment.md` |
+| `check-staging` | compare staged files with the library — the files a repository's `.bib` links, or every staging file under `--dir` — and report; `--apply` creates absent items, `--apply --edit` also stores files under existing items | `references/backfill.md` |
+| `report-duplicates` | hash-dedup JSON report, library against itself (ticket 0485) | `docs/zotero-report-duplicates.md` |
+| `suggest-attachments` | file a document onto an item that already exists (reports by default; stores it with `--edit`) | `references/backfill.md` |
 
-The former three modes dissolve into this surface: `import` and `enrichment`
-map to the `import` and `enrich` verbs, and the backfill mode splits between
-`audit` and `reconcile` — a staging sweep is not the import happy path
-repeated N times, which is why `references/backfill.md` stays as the shared
-reference for those two verbs. The former index-source skill (URL intake) is
-absorbed into `import`: a URL is one more input, probed by the skill's own
-`probe-url.py` script.
+The former three modes dissolve into this surface: `import` and enrichment
+map to the `import` and `suggest-edits` verbs, and the backfill mode is
+`check-staging` — a staging sweep is not the import happy path repeated N
+times, which is why `references/backfill.md` stays its reference. The former
+index-source skill (URL intake) is absorbed into `import`: a URL is one more
+input, probed by the skill's own `probe-url.py` script.
 
-`match` and `write` are shared plumbing, not user verbs: `match` serves
-import and audit both, and `write` is the durable-RIS step behind import.
-`references/helper-script.md` documents every subcommand and the guarantees
-of its output (`why` / `certainty` / `consulted` / `skipped`).
+`extract-metadata`, `find-work` and `create-items` are the plumbing of
+`import`, not user verbs: `extract-metadata` reads what a PDF says about
+itself and never contacts Zotero, `find-work` looks the work up in the
+library through the local API only (it takes `extract-metadata`'s output, and
+the refined metadata as flags), and `create-items` creates the items through
+the same API. `references/helper-script.md` documents every subcommand and
+the guarantees of its output (`why` / `certainty` / `consulted` /
+`skipped`).
 
-Inside `import`: probe → match → write → inject. `probe` (or
-`probe-url.py` for URLs) extracts, `match` dedupes against a live read of
-the library, `write` emits the durable RIS artifact, and `inject` creates the
-items through the Zotero local API. `references/import.md` carries
-the full contract.
+Inside `import`: extract-metadata → find-work → create-items.
+`extract-metadata` (or `probe-url.py` for URLs) extracts, `find-work` dedupes
+against a live read of the library, and `create-items` creates the items
+through the Zotero local API. `references/import.md` carries the full
+contract.
 
 ## Safety contract
 
@@ -71,18 +73,18 @@ authorization, upload registration), a batch one per write: for those the
 helper asks before writing anything and refuses an "Allow" answer, so nothing
 is written. An attachment counts as a stored file only when Zotero reports its
 md5 or size.
-`inject` creates new items and uploads their PDFs; `inject --dry-run` also
-needs Zotero running, because field placement uses the live schema. When Zotero is not running the helper
+`create-items` creates new items and uploads their PDFs; `create-items
+--dry-run` also needs Zotero running, because field placement uses the live schema. When Zotero is not running the helper
 launches it and waits; in a container, or with `ZOTERO_NO_LAUNCH` set, it
 never launches anything. If Zotero
 still does not answer, the command does nothing and says so (exit 75;
-`reconcile` exits 0 with verdict `zotero_unavailable`). Existing items are
-edited only with `--edit`: `enrich`, `attach` and `reconcile --apply` report
-the edit (item key, field, old → new) by default and write it only when
-`--edit` is passed (`reconcile`: `--apply --edit`; `--edit` alone is an
-error); `reconcile --apply` alone creates only the absent items. The
-RIS file is the durable artifact and remains the fallback when Zotero is not
-running.
+`check-staging` exits 0 with verdict `zotero_unavailable`). Existing items
+are edited only with `--edit`: `suggest-edits`, `suggest-attachments` and
+`check-staging --apply` report the edit (item key, field, old → new) by
+default and write it only when `--edit` is passed (`check-staging`: `--apply
+--edit`; `--edit` alone is an error); `check-staging --apply` alone creates
+only the absent items. When Zotero is not running nothing is created, and
+the entries JSON is what to rerun later.
 
 ## A scraped identifier is a hypothesis, not a finding
 
@@ -116,6 +118,6 @@ mismatch alone is not evidence of a wrong match.
 
 End your turn with:
 
-- One line per item (PDF or URL): title (orig) — `[type]` — `created` (with the new item key) or fallback/xdg-open status — duplicate verdict.
-- The RIS file path (artifact, and the fallback import route).
+- One line per item (PDF or URL): title (orig) — `[type]` — `created` (with the new item key) or the reason it was not — duplicate verdict.
+- When Zotero was unavailable, the path of the entries JSON to rerun `create-items` with.
 - A reminder about Zotero deduplication if any duplicate-risk entry was imported.

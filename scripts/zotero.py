@@ -9,22 +9,26 @@
 # ///
 """Backend helper scripts/zotero.py for the zotero skill.
 
-Subcommands: probe, match, dedup-report, write, inject, enrich, audit,
-reconcile, attach.
+Subcommands: extract-metadata, find-work, report-duplicates, check-staging,
+suggest-attachments, create-items, suggest-edits.
+
+`extract-metadata` reads a PDF and never needs Zotero; every other
+subcommand talks to the running Zotero.
 
 Local-only and stateless, on top of pyzotero's local client. Every library
 read goes through the running desktop client's local API (127.0.0.1:23119,
 no key), live, on each call; zotero.sqlite is never opened, and nothing is
 cached, indexed or logged to disk between runs. Writes go through the same
 local API with a local API key the user grants once in Zotero (kept in
-key_file(), mode 600, never printed). `inject` creates new items with their
-PDFs; `enrich`, `attach` and `reconcile --apply` edit existing items only
-with --edit, and otherwise report the edit.
+key_file(), mode 600, never printed). `create-items` creates new items with
+their PDFs; `suggest-edits`, `suggest-attachments` and `check-staging
+--apply` edit existing items only with --edit, and otherwise report the
+edit.
 
 Zotero must be running. When it is not, the helper launches it (never in a
 container) and waits; when it still does not answer, the command does
-nothing and says so (exit EXIT_UNAVAILABLE; `reconcile` exits 0 with verdict
-"zotero_unavailable").
+nothing and says so (exit EXIT_UNAVAILABLE; `check-staging` exits 0 with
+verdict "zotero_unavailable").
 
 Run it as an executable: the shebang has uv install the dependencies above.
 """
@@ -33,7 +37,6 @@ import argparse
 import contextlib
 import fcntl
 import hashlib
-import html
 import io
 import json
 import logging
@@ -146,7 +149,7 @@ ALL_LIBRARIES = "all"
 
 
 def first_author_surname(author: str) -> str:
-    return author_to_ris(author).partition(",")[0].strip()
+    return last_first(author).partition(",")[0].strip()
 
 
 def _norm_title(s: str) -> str:
@@ -318,48 +321,8 @@ def duplicate_hash_report(idx: dict[str, Any]) -> dict[str, Any]:
             "clusters": clusters}
 
 
-def duplicate_hash_html(report: dict[str, Any]) -> str:
-    """Local, reviewable candidate list; all library strings are escaped."""
-    esc = html.escape
-    lines = ["<!doctype html>", '<html lang="en"><meta charset="utf-8">',
-             "<title>Zotero duplicate-file candidates</title>",
-             "<h1>Zotero duplicate-file candidates</h1>",
-             (f"<p>{report['candidate_clusters']} hash group(s) in My Library; "
-              f"{report['hashed_attachments_scanned']} stored attachments "
-              f"compared (read live from {esc(str(report.get('source')))}). "
-              "These are candidates, not merge instructions.</p>"),
-             ("<p>The match key is the attachment content hash. Additional "
-              "bibliographic matches below are hints, not a claim that "
-              "Zotero's Duplicates pane displayed the group.</p>")]
-    for number, cluster in enumerate(report["clusters"], 1):
-        lines.append(f"<section><h2>{number}. hash {esc(cluster['hash'])}</h2><ul>")
-        for item in cluster["items"]:
-            title = item["title"] or "(untitled)"
-            details = ", ".join(x for x in (item["item_type"], item["date"],
-                                            item["doi"]) if x)
-            lines.append(
-                f'<li><a href="{esc(item["url"], quote=True)}">'
-                f'{esc(title)}</a> — {esc(details)}<ul>')
-            for attachment in item["attachments"]:
-                attachment_url = ("zotero://select/library/items/"
-                                  + attachment["key"])
-                filename = attachment["filename"] or attachment["key"]
-                lines.append(
-                    f'<li><a href="{esc(attachment_url, quote=True)}">'
-                    f'{esc(filename)}</a></li>')
-            lines.append("</ul></li>")
-        lines.append("</ul>")
-        if cluster["bibliographic_overlap"]:
-            hints = "; ".join(
-                f"{esc(', '.join(pair['keys']))} ({esc(' / '.join(pair['items']))})"
-                for pair in cluster["bibliographic_overlap"])
-            lines.append(f"<p>Additional bibliographic matches: {hints}</p>")
-        lines.append("</section>")
-    lines.append("</html>")
-    return "\n".join(lines) + "\n"
-
-
-def probe_one(pdf: Path, idx: dict[str, Any]) -> dict[str, Any]:
+def extract_one(pdf: Path) -> dict[str, Any]:
+    """Metadata of one PDF from its own bytes: no Zotero, no network."""
     info = pdfinfo(pdf)
     try:
         page_count = int(info.get("Pages", "0"))
@@ -371,15 +334,12 @@ def probe_one(pdf: Path, idx: dict[str, Any]) -> dict[str, Any]:
         text_back = pdftotext_range(
             pdf, max(page_count - LAST_PAGES + 1, FIRST_PAGES + 1), page_count,
         )
-    ids = find_identifier(text_front, text_back, info.get("Subject") or "")
-    # pdfinfo Title is often a LaTeX template artefact; agent re-extracts from text.
-    pdfinfo_title = info.get("Title") or None
     year = None
     if "CreationDate" in info:
         ym = YEAR_RE.search(info["CreationDate"])
         if ym:
             year = ym.group(0)
-    out: dict[str, Any] = {
+    return {
         "pdf": str(pdf.resolve()),
         "pdf_size": pdf.stat().st_size,
         "page_count": page_count,
@@ -388,29 +348,15 @@ def probe_one(pdf: Path, idx: dict[str, Any]) -> dict[str, Any]:
                                              "CreationDate", "ModDate", "Pages")},
         "first_pages_text": text_front,
         "last_pages_text": text_back,
-        "identifiers": ids,
+        "identifiers": find_identifier(text_front, text_back,
+                                       info.get("Subject") or ""),
         "year_hint": year,
         "filename": pdf.name,
     }
-    out["zotero_matches"] = library_matches(
-        idx, doi=ids["doi"], isbn=ids["isbn"], arxiv=ids["arxiv"],
-        handle=ids["handle"], title=pdfinfo_title, year=year,
-        pdf_path=pdf,
-    )
-    return out
 
 
-# --- RIS writing -----------------------------------------------------------
-
-RIS_TYPE_DEFAULT = "JOUR"
-RIS_VALID_TYPES = {
-    "JOUR", "BOOK", "CHAP", "CONF", "CPAPER", "THES", "RPRT", "GEN",
-    "GOVDOC", "NEWS", "MGZN", "MANSCPT", "PAT", "STAND", "UNPB", "WEB",
-}
-MONOGRAPH_TYPES = {"BOOK", "THES", "RPRT", "CHAP", "MANSCPT", "STAND", "PAT"}
-
-
-def author_to_ris(a: str) -> str:
+def last_first(a: str) -> str:
+    """"First Last" as "Last, First"; a name with a comma, or one word, as is."""
     a = a.strip()
     if "," in a:
         return a
@@ -420,83 +366,13 @@ def author_to_ris(a: str) -> str:
     return a
 
 
-def entry_to_ris(e: dict[str, Any]) -> str:
-    ty = (e.get("type") or RIS_TYPE_DEFAULT).upper()
-    if ty not in RIS_VALID_TYPES:
-        ty = RIS_TYPE_DEFAULT
-    lines = [f"TY  - {ty}"]
-    if t := e.get("title"):
-        lines.append(f"TI  - {t}")
-    if st := e.get("shortTitle"):
-        lines.append(f"ST  - {st}")
-    for a in e.get("authors") or []:
-        lines.append(f"AU  - {author_to_ris(a)}")
-    if y := e.get("year"):
-        lines.append(f"PY  - {y}")
-    if d := e.get("doi"):
-        lines.append(f"DO  - {d}")
-    if isbn := e.get("isbn"):
-        lines.append(f"SN  - {isbn}")
-    if url := e.get("url"):
-        lines.append(f"UR  - {url}")
-    if j := e.get("journal"):
-        lines.append(f"T2  - {j}")
-    if v := e.get("volume"):
-        lines.append(f"VL  - {v}")
-    if iss := e.get("issue"):
-        lines.append(f"IS  - {iss}")
-    if pages := e.get("pages"):
-        sp, _, ep = pages.partition("-")
-        if sp:
-            lines.append(f"SP  - {sp.strip()}")
-        if ep:
-            lines.append(f"EP  - {ep.strip()}")
-    # Zotero's "Number of Pages" only maps from RIS SP on monograph types.
-    if (n := e.get("numPages")) and not e.get("pages"):
-        if ty in MONOGRAPH_TYPES:
-            lines.append(f"SP  - {n}")
-        else:
-            lines.append(f"KW  - pages:{n}")
-    if pub := e.get("publisher"):
-        lines.append(f"PB  - {pub}")
-    # Tags below follow Zotero's RIS translator field map (translators/RIS.js).
-    # `CY` is its default for place, except conferencePaper, exported as `C1`.
-    if place := e.get("place"):
-        lines.append(f"{'C1' if ty in ('CONF', 'CPAPER') else 'CY'}  - {place}")
-    if ed := e.get("edition"):
-        lines.append(f"ET  - {ed}")
-    if genre := e.get("genre"):
-        lines.append(f"M3  - {genre}")
-    # No unambiguous tag exists for these. `SN` already carries the ISBN
-    # above, and Zotero reads a second `SN` as reportNumber/ISSN depending on
-    # type — emitting one would silently overwrite or be misread. `M1` and
-    # `SV` split seriesNumber by type, and conferenceName has no import tag at
-    # all. Keyword lines keep the value visible and searchable in Zotero
-    # instead, reusing the convention this function already applies to an
-    # orphaned page count.
-    for key in ("issn", "number", "seriesNumber", "conferenceName"):
-        if val := e.get(key):
-            lines.append(f"KW  - {key}:{val}")
-    if lang := e.get("language"):
-        lines.append(f"LA  - {lang}")
-    if ab := e.get("abstract"):
-        lines.append("AB  - " + " ".join(ab.split()))
-    if e.get("attach_pdf") and (p := e.get("pdf")):
-        lines.append(f"L1  - file://{Path(p).resolve()}")
-    lines.append("ER  - ")
-    return "\n".join(lines) + "\n"
-
-
 # --- Zotero item JSON --------------------------------------------------------
-# `inject` hands Zotero item JSON to pyzotero's local client, which creates
-# it as the client's own UI would. `write` stays as artifact and fallback.
+# `create-items` hands Zotero item JSON to pyzotero's local client, which
+# creates it as the client's own UI would.
 
-# Every code in RIS_VALID_TYPES must appear here. A code `write` accepts but
-# `inject` cannot resolve used to collapse into `document` without a word —
-# no 400, no log line, just a generic item where a patent was meant, which is
-# harder to notice than the error it replaces. Six such codes existed
-# (CPAPER, GOVDOC, PAT, STAND, UNPB, WEB); `test_every_accepted_ris_code_maps
-# _to_a_zotero_type` now keeps the two sets in step.
+# An entry's `type` is a RIS type code (the vocabulary the skill's
+# classification table uses). A code outside this table becomes `document`,
+# with a warning and an Extra line naming the code, never silently.
 #
 # Correspondences follow Zotero's own RIS translator (translators/RIS.js,
 # `importTypeMap` + the inverted `exportTypeMap`) where it has an opinion, so
@@ -507,6 +383,7 @@ def entry_to_ris(e: dict[str, Any]) -> str:
 #   UNPB   the translator has no entry, so it would fall through to its
 #          journalArticle default. Every neighbouring unpublished-work code it
 #          *does* map (INPR, UNPD, PAMP, UNBILL) goes to `manuscript`.
+ENTRY_TYPE_DEFAULT = "JOUR"
 RIS_TO_ZOTERO_TYPE = {
     "JOUR": "journalArticle",
     "BOOK": "book",
@@ -585,7 +462,7 @@ ZOTERO_SLOT_EXTRA_LABEL: dict[str, str] = {
     "ISSN": "ISSN",
 }
 
-# Every key an entry may carry, across both the RIS and the inject path. An
+# Every key an entry may carry. An
 # unrecognised key is refused rather than ignored: a misspelt `reportNmbr`
 # that silently does nothing is the same defect class as a field the mapper
 # drops, and the caller has no way to notice it.
@@ -607,7 +484,7 @@ def validate_entry_keys(entries: list[dict[str, Any]]) -> None:
 
 
 def author_to_creator(a: str) -> dict[str, str]:
-    a = author_to_ris(a)  # normalize to "Last, First"
+    a = last_first(a)  # normalize to "Last, First"
     last, _, first = a.partition(",")
     if first.strip():
         return {"creatorType": "author", "firstName": first.strip(),
@@ -648,7 +525,7 @@ def place_slot(item: dict[str, Any], extra: list[str], slot: str, value: str,
 def entry_to_zotero_item(e: dict[str, Any], owned: Any) -> dict[str, Any]:
     """Zotero item JSON for one entry; `owned(item_type)` is the set of
     fields the type owns (schema_fields)."""
-    ris_ty = (e.get("type") or RIS_TYPE_DEFAULT).upper()
+    ris_ty = (e.get("type") or ENTRY_TYPE_DEFAULT).upper()
     ty = RIS_TO_ZOTERO_TYPE.get(ris_ty, "document")
     item: dict[str, Any] = {"itemType": ty}
     extra: list[str] = []
@@ -705,7 +582,7 @@ def plan_enrichment(data: dict[str, Any], sets: dict[str, str],
 
     Returns (fields to change, refusals). A refusal is a reason NOT to suggest
     a given field; the caller reports every one of them and suggests the rest.
-    Nothing here writes: `enrich --edit` writes the returned fields.
+    Nothing here writes: `suggest-edits --edit` writes the returned fields.
 
     Three guards, in the order they catch real mistakes:
 
@@ -783,7 +660,7 @@ APP_NAME = "zotero.py (agent harness)"
 # The variable holding the local API key in key_file().
 KEY_VARIABLE = "ZOTERO_LOCAL_API_KEY"
 # Exit status of a command that needed Zotero and found it unavailable: it
-# did nothing. EX_TEMPFAIL from sysexits.h, "try again later". `reconcile`
+# did nothing. EX_TEMPFAIL from sysexits.h, "try again later". `check-staging`
 # exits 0 instead, with verdict "zotero_unavailable", so an unattended sweep
 # reads the no-op as clean.
 EXIT_UNAVAILABLE = 75
@@ -1256,9 +1133,9 @@ def attach_file(z: LocalLibrary, parent: str, path: Path) -> str:
 
 
 def corroborate_entry(entry: dict[str, Any]) -> dict[str, Any]:
-    """Check one inject entry's metadata against its own PDF's front matter.
+    """Check one create-items entry's metadata against its own PDF's front matter.
 
-    This is where corroborate() has to bite. `inject` is the step that makes
+    This is where corroborate() has to bite. `create-items` is the step that makes
     metadata permanent, and the failure it guards is silent by construction: a
     DOI scraped from page text usually belongs to a work the document *cites*,
     so the resolver returns a well-formed record for the wrong paper and every
@@ -1378,7 +1255,7 @@ def emit_json(payload: Any) -> None:
     sys.stdout.write("\n")
 
 
-def cmd_inject(args: argparse.Namespace) -> int:
+def cmd_create_items(args: argparse.Namespace) -> int:
     entries = load_entries(args)
     checks = [corroborate_entry(e) for e in entries]
     if not args.skip_corroboration:
@@ -1403,19 +1280,19 @@ def cmd_inject(args: argparse.Namespace) -> int:
         owned = schema_fields(local_library())
         items = [entry_to_zotero_item(e, owned) for e in entries]
     except ZoteroUnavailable as exc:
-        print(f"inject: {exc}", file=sys.stderr)
+        print(f"create-items: {exc}", file=sys.stderr)
         emit_json(unavailable_payload(exc))
         return EXIT_UNAVAILABLE
     except LocalAPIError as exc:
-        print(f"inject: {exc}", file=sys.stderr)
+        print(f"create-items: {exc}", file=sys.stderr)
         emit_json({"error": str(exc)})
         return 1
     if args.dry_run:
         emit_json({"items": items, "corroboration": checks})
         return 0
-    # Reconcile reads its snapshot under this same lock and hands it over;
-    # a CLI inject takes the lock itself. Either way the duplicate check and
-    # the saves happen inside one critical section on this machine.
+    # check-staging --apply reads its snapshot under this same lock and hands
+    # it over; a CLI create-items takes the lock itself. Either way the
+    # duplicate check and the saves happen inside one critical section.
     lock = (contextlib.nullcontext() if held is not None
             else directory_locks([library_lock_dir()]))
     with lock:
@@ -1619,7 +1496,7 @@ def enrich_one(job: dict[str, Any], overwrite: bool, edit: bool,
     return row
 
 
-def cmd_enrich(args: argparse.Namespace) -> int:
+def cmd_suggest_edits(args: argparse.Namespace) -> int:
     """Report the edits; write them only with --edit."""
     if args.jobs_file:
         jobs = json.loads(Path(args.jobs_file).read_text())
@@ -1645,7 +1522,7 @@ def cmd_enrich(args: argparse.Namespace) -> int:
                                        args.library, lasting=len(jobs) > 1),
             wrote=args.edit)}
 
-    out, rc = with_zotero("enrich", run)
+    out, rc = with_zotero("suggest-edits", run)
     if rc is not None:
         return rc
     emit_json({"zotero": zotero_url(), "source": LIBRARY_SOURCE,
@@ -1688,7 +1565,7 @@ def run_jobs(jobs: list[dict[str, Any]], one: Any,
 
 
 def enrich_status(results: list[dict[str, Any]]) -> int:
-    """Exit code for an enrich run. Non-zero when anything asked for cannot
+    """Exit code for a suggest-edits run. Non-zero when anything asked for cannot
     be suggested or written — a refusal or a missing item included. A run
     that refused every field and one that suggested every field must not
     return the same code, or the caller cannot tell "ready" from "declined
@@ -1717,30 +1594,28 @@ def with_zotero(command: str, read: Any) -> tuple[Any, int | None]:
         return None, 1
 
 
-def cmd_probe(args: argparse.Namespace) -> int:
-    idx, rc = with_zotero("probe", lambda: read_library(args.library))
-    if rc is not None:
-        return rc
+def cmd_extract_metadata(args: argparse.Namespace) -> int:
+    """What each PDF says about itself. Input-format dependent (PDF), and
+    never contacts Zotero: its output is find-work's input."""
     out: list[dict[str, Any]] = []
     for pdf_arg in args.pdf:
         pdf = Path(pdf_arg)
-        if not pdf.exists():
+        if not pdf.is_file():
             out.append({"pdf": str(pdf), "error": "not found"})
             continue
         try:
-            out.append(probe_one(pdf, idx))
+            out.append(extract_one(pdf))
         except Exception as exc:
             out.append({"pdf": str(pdf), "error": f"{type(exc).__name__}: {exc}"})
-    emit_json({"zotero": idx["zotero"], "source": idx["source"],
-               "library_id": idx["library_id"], "items": out})
-    return 0
+    emit_json({"items": out})
+    return int(any("error" in row for row in out))
 
 
 # ---------------------------------------------------------------------------
 # Library snapshot — the whole library in memory, read live from Zotero
 #
-# `audit`, `reconcile`, `inject`, `probe`, `match` and `dedup-report` compare
-# files against the library. One read of the works and attachments through
+# `check-staging`, `create-items`, `find-work` and `report-duplicates`
+# compare files against the library. One read of the works and attachments through
 # the local API, held in memory for the run and then dropped, serves them
 # all; nothing is written to disk, so there is no cache to go stale and
 # nothing to rebuild.
@@ -2205,24 +2080,89 @@ def corroborate(resolved: dict[str, Any], document_text: str) -> dict[str, Any]:
                        if conf == "contradicted" else "")}
 
 
-def cmd_match(args: argparse.Namespace) -> int:
-    idx, rc = with_zotero("match", lambda: read_library(args.library))
+class BadQuery(ValueError):
+    """find-work's input cannot say which works to look up."""
+
+
+def work_queries(args: argparse.Namespace) -> list[dict[str, Any]]:
+    """The works to look up: each item of extract-metadata's output
+    (--metadata, a file or - for stdin), else one work from the flags. A
+    flag overrides the extracted value, so a refined title replaces the
+    pdfinfo one; that needs a metadata file of one work, since flags
+    applied to several would describe them all as one. An extraction row
+    with an error stays in the results, as an error."""
+    flags = {"title": args.title, "doi": args.doi, "isbn": args.isbn,
+             "arxiv": args.arxiv, "handle": args.handle,
+             "author": args.author, "year": args.year, "pdf": args.pdf}
+    if not args.metadata:
+        return [flags]
+    try:
+        text = (sys.stdin.read() if args.metadata == "-"
+                else Path(args.metadata).read_text(encoding="utf-8"))
+        items = json.loads(text)["items"]
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise BadQuery(f"--metadata {args.metadata}: not extract-metadata "
+                       f"output ({type(exc).__name__}: {exc})") from exc
+    if not isinstance(items, list) or not items:
+        raise BadQuery(f"--metadata {args.metadata}: no work to look up")
+    overrides = sorted(k for k, v in flags.items() if v)
+    if overrides and len(items) > 1:
+        raise BadQuery(f"--{', --'.join(overrides)} would describe all "
+                       f"{len(items)} works of --metadata as one; give a "
+                       f"metadata file of one work, or no flag")
+    works = []
+    for item in items:
+        if not isinstance(item, dict):
+            raise BadQuery(f"--metadata {args.metadata}: an item is not an "
+                           f"object")
+        if "error" in item:
+            works.append({"error": item["error"], "pdf": item.get("pdf")})
+            continue
+        ids = item.get("identifiers") or {}
+        pdfinfo_fields = item.get("pdfinfo") or {}
+        if not (isinstance(ids, dict) and isinstance(pdfinfo_fields, dict)):
+            raise BadQuery(f"--metadata {args.metadata}: identifiers and "
+                           f"pdfinfo must be objects")
+        work = {"title": pdfinfo_fields.get("Title"), "year": item.get("year_hint"),
+                "author": None, "pdf": item.get("pdf"),
+                **{k: ids.get(k) for k in ("doi", "isbn", "arxiv", "handle")}}
+        work.update({k: v for k, v in flags.items() if v})
+        works.append(work)
+    return works
+
+
+def cmd_find_work(args: argparse.Namespace) -> int:
+    """Is this work already in the library? Local API only."""
+    try:
+        works = work_queries(args)
+    except BadQuery as exc:
+        print(f"find-work: {exc}", file=sys.stderr)
+        emit_json({"error": str(exc), "verdict": "unchecked"})
+        return 1
+    if all("error" in work for work in works):
+        # Nothing to look up: Zotero is neither asked nor launched.
+        emit_json({"results": [{"query": {"pdf": w["pdf"]}, "error": w["error"],
+                                "verdict": "unchecked"} for w in works]})
+        return 1
+    idx, rc = with_zotero("find-work", lambda: read_library(args.library))
     if rc is not None:
         return rc
-    result = library_matches(
-        idx,
-        doi=args.doi,
-        isbn=args.isbn,
-        arxiv=args.arxiv,
-        handle=args.handle,
-        title=args.title,
-        year=args.year,
-        first_author=args.author,
-        pdf_path=Path(args.pdf) if args.pdf else None,
-    )
+    results = []
+    for work in works:
+        if "error" in work:
+            results.append({"query": {"pdf": work["pdf"]}, "error": work["error"],
+                            "verdict": "unchecked"})
+            continue
+        result = library_matches(
+            idx, doi=work["doi"], isbn=work["isbn"], arxiv=work["arxiv"],
+            handle=work["handle"], title=work["title"], year=work["year"],
+            first_author=work["author"],
+            pdf_path=Path(work["pdf"]) if work["pdf"] else None)
+        results.append({"query": {k: v for k, v in work.items() if v},
+                        **result})
     emit_json({"zotero": idx["zotero"], "source": idx["source"],
-               "library_id": idx["library_id"], **result})
-    return 0
+               "library_id": idx["library_id"], "results": results})
+    return int(any("error" in r for r in results))
 
 
 def write_report_file(output: Path, body: str) -> None:
@@ -2233,37 +2173,28 @@ def write_report_file(output: Path, body: str) -> None:
         stream.write(body)
 
 
-def cmd_dedup_report(args: argparse.Namespace) -> int:
-    """Report existing-library duplicate-file candidates without Zotero writes."""
-    idx, rc = with_zotero("dedup-report", lambda: read_library(USER_LIBRARY))
+def cmd_report_duplicates(args: argparse.Namespace) -> int:
+    """Report existing-library duplicate-file candidates, as JSON, without
+    Zotero writes."""
+    idx, rc = with_zotero("report-duplicates", lambda: read_library(USER_LIBRARY))
     if rc is not None:
         return rc
     report = {**duplicate_hash_report(idx), "zotero": idx["zotero"],
               "source": idx["source"]}
     if not report["hashed_attachments_scanned"]:
-        raise SystemExit("dedup-report: no stored attachment could be compared; "
-                         "cannot call this an empty library")
-    body = (json.dumps(report, indent=2, ensure_ascii=False) + "\n"
-            if args.format == "json" else duplicate_hash_html(report))
+        raise SystemExit("report-duplicates: no stored attachment could be "
+                         "compared; cannot call this an empty library")
+    body = json.dumps(report, indent=2, ensure_ascii=False) + "\n"
     if args.out:
         write_report_file(Path(args.out), body)
-        print(f"dedup-report: {report['candidate_clusters']} candidate groups "
-              f"written to {args.out}")
+        print(f"report-duplicates: {report['candidate_clusters']} candidate "
+              f"groups written to {args.out}")
     else:
         sys.stdout.write(body)
     return 0
 
 
-def cmd_write(args: argparse.Namespace) -> int:
-    entries = load_entries(args)
-    body = "".join(entry_to_ris(e) for e in entries)
-    out = Path(args.out)
-    out.write_text(body)
-    print(str(out.resolve()))
-    return 0
-
-
-def _pdf_probe_text(pdf: Path) -> str:
+def _pdf_front_text(pdf: Path) -> str:
     try:
         return pdftotext_range(pdf, 1, FIRST_PAGES)
     except Exception:
@@ -2379,6 +2310,32 @@ def discover_reconcile_files(root: Path) -> dict[str, Any]:
         staging_dirs.add(root / "docs")
     elif not staging_dirs:
         errors.append("BibTeX files found but no staging directory could be inferred")
+    return {"bib_files": bib_files, "linked": linked,
+            "orphans": staged_files(root, staging_dirs, linked_paths, errors),
+            "errors": errors, "staging_dirs": sorted(staging_dirs)}
+
+
+def discover_directory(root: Path, directory: Path) -> dict[str, Any]:
+    """The --dir mode: every staging file under `directory`, no BibTeX."""
+    root, directory = root.resolve(), (root / directory).resolve()
+    errors: list[str] = []
+    if not directory.is_relative_to(root):
+        errors.append(f"staging directory outside repository: {directory}")
+        dirs: set[Path] = set()
+    elif not directory.is_dir():
+        errors.append(f"not a directory: {directory}")
+        dirs = set()
+    else:
+        dirs = {directory}
+    return {"bib_files": [], "linked": [],
+            "orphans": staged_files(root, dirs, set(), errors),
+            "errors": errors, "staging_dirs": sorted(dirs)}
+
+
+def staged_files(root: Path, staging_dirs: set[Path], linked_paths: set[Path],
+                 errors: list[str]) -> list[Path]:
+    """Staging files under `staging_dirs` no BibTeX entry links; a file or
+    directory reaching outside `root` is an error, not a row."""
     orphans: list[Path] = []
     for directory in sorted(staging_dirs):
         if not directory.is_dir():
@@ -2397,9 +2354,7 @@ def discover_reconcile_files(root: Path) -> dict[str, Any]:
                 errors.append(f"staged file outside repository: {path}")
             elif resolved not in linked_paths:
                 orphans.append(resolved)
-    return {"bib_files": bib_files, "linked": linked,
-            "orphans": sorted(set(orphans)), "errors": errors,
-            "staging_dirs": sorted(staging_dirs)}
+    return sorted(set(orphans))
 
 
 def _front_matter(text: str, lines: int = FRONT_MATTER_LINES) -> str:
@@ -2446,7 +2401,7 @@ def audit_one(path: Path, idx: dict[str, Any],
     """Reconcile one staged file against the library snapshot."""
     bib_entry = bib_entry or {}
     is_pdf = path.suffix.lower() == ".pdf"
-    body = _pdf_probe_text(path) if is_pdf else ""
+    body = _pdf_front_text(path) if is_pdf else ""
     title = str(bib_entry.get("title") or (_pdf_title(path) if is_pdf else ""))
     # The filename slug carries the author's own naming intent; split camelCase
     # so "MethodOfLimitsIndexNumbers" becomes words a title can match.
@@ -2488,7 +2443,7 @@ def audit_one(path: Path, idx: dict[str, Any],
     # parent tied at that tier is named; a clean answer that does not say it
     # looked elsewhere is the fault this module exists to avoid. Applies to
     # strong ties too — two records with an equally-named attachment leave
-    # matches[0] arbitrary, and `attach --parent` aimed at the wrong one.
+    # matches[0] arbitrary, and `suggest-attachments --parent` aimed at the wrong one.
     tied = top_tier_peers(res["matches"])
     if len(tied) > 1:
         row["also_matches"] = [
@@ -2516,77 +2471,18 @@ TIED_ACTION = ("several records tie at the top tier (also_matches); pick one "
                "before attaching by hand")
 
 
-def cmd_audit(args: argparse.Namespace) -> int:
-    """Reconcile a staging directory against the library — the count check.
-
-    zotero.md requires checking docs/ staging *and* Zotero before declaring a
-    source missing or present. Doing that by hand over a few hundred files is
-    where the miscounts come from; this is the mechanical form.
-    """
-    root = Path(args.directory)
-    if not root.is_dir():
-        # Every other subcommand degrades to structured JSON and rc 1; a
-        # mistyped path should not be the one that prints a traceback.
-        emit_json({"error": f"not a directory: {root}", "verdict": "unchecked"})
-        return 1
-    idx, rc = with_zotero("audit", lambda: read_library(args.library))
-    if rc is not None:
-        return rc
-    pats = args.ext or [".pdf", ".html", ".htm", ".jpg", ".jpeg", ".png", ".djvu", ".epub"]
-    files = sorted(p for p in root.iterdir()
-                   if p.is_file() and p.suffix.lower() in pats)
-    rows: list[dict[str, Any]] = []
-    for p in files:
-        try:
-            rows.append(audit_one(p, idx))
-        except Exception as exc:
-            # pdfinfo and pdftotext run under a 30 s timeout and a corrupt file
-            # makes them fail; losing the other 288 rows, the JSON, and --out
-            # to that is the expensive outcome. A row saying so keeps the batch.
-            rows.append({"file": p.name, "verdict": "error", "error": str(exc),
-                         "zotero_key": None, "zotero_title": None,
-                         "why": None, "certainty": None,
-                         "consulted": [], "skipped": []})
-    summary = count_verdicts(rows)
-    actions = {"identical": "nothing",
-               "work_present_with_file": "nothing; report the second copy",
-               "work_present_no_file": "attach --parent <key> [--edit] "
-                                       "(never inject)",
-               "ambiguous": "look: weak hit, neither present nor absent",
-               "absent": "inject",
-               "error": "unreadable; look at it",
-               "tied_parents": TIED_ACTION}
-    out = {"directory": str(root.resolve()), "zotero": idx["zotero"],
-           "source": idx["source"], "library_id": idx["library_id"],
-           "library_works": len(idx["works"]),
-           "library_attachments": len(idx["attachments"]),
-           "files": len(files), "summary": summary,
-           "actions": {k: actions[k] for k in summary if k in actions},
-           "rows": rows}
-    if args.out:
-        Path(args.out).write_text(json.dumps(out, indent=1, ensure_ascii=False))
-    json.dump({k: out[k] for k in
-               ("directory", "zotero", "source", "library_id", "library_works",
-                "files", "summary", "actions")},
-              sys.stdout, indent=2)
-    sys.stdout.write("\n")
-    if not args.out:
-        json.dump(rows, sys.stdout, indent=1, ensure_ascii=False)
-        sys.stdout.write("\n")
-    return 0
-
-
 RECONCILE_ACTIONS = {
     "identical": "nothing",
     "work_present_with_file": "nothing; report the second copy",
-    "work_present_no_file": "attach: see suggested_edits, or --apply --edit",
-    "ambiguous": "inspect; neither inject nor skip",
-    "absent": "inject only with explicit apply",
+    "work_present_no_file": "suggest-attachments: see suggested_edits, or "
+                            "--apply --edit (never create-items)",
+    "ambiguous": "inspect; neither create nor skip",
+    "absent": "create-items, or --apply with the project opt-in",
     "error": "inspect unreadable file",
-    "unchecked": "resolve discovery or audit error",
+    "unchecked": "resolve discovery or check error",
     "tied_parents": TIED_ACTION,
     "deferred": "supply and corroborate metadata",
-    "injected": "created in Zotero through its local API",
+    "created": "created in Zotero through its local API",
     "attached": "stored under the existing item (--edit)",
     "failed_write": "inspect the outcome in Zotero before retrying",
     "apply_failed": "inspect error; no clean sweep",
@@ -2616,7 +2512,7 @@ def reconcile_apply_config(root: Path, account: str | None, *,
 def reconcile_report(root: Path, found: dict[str, Any], rows: list[dict[str, Any]],
                      errors: list[str], verdict: str | None = None
                      ) -> dict[str, Any]:
-    """The one report shape every reconcile exit writes, early or not."""
+    """The one report shape every check-staging exit writes, early or not."""
     summary = count_verdicts(rows)
     if errors:
         summary["unchecked"] = len(errors)
@@ -2662,7 +2558,7 @@ def reconcile_unavailable(root: Path, found: dict[str, Any],
     report = reconcile_report(root, found, [], errors,
                               verdict="zotero_unavailable")
     report["zotero"] = {"status": "unavailable", "reason": str(exc)}
-    print(f"reconcile: {exc}", file=sys.stderr)
+    print(f"check-staging: {exc}", file=sys.stderr)
     emit_reconcile_report(report, out)
     return 1 if errors else 0
 
@@ -2720,15 +2616,29 @@ def audit_sources(root: Path, found: dict[str, Any], idx: dict[str, Any]
     return rows, errors
 
 
-def cmd_reconcile(args: argparse.Namespace) -> int:
-    """Report by default; apply only with a matching project opt-in file."""
+def cmd_check_staging(args: argparse.Namespace) -> int:
+    """Compare staged files with the library: the files the repository's
+    BibTeX links (and the unlinked ones beside them), or with --dir every
+    file of one directory. Report by default; apply only with a matching
+    project opt-in file."""
     root = Path(args.root).resolve()
     if not root.is_dir():
         emit_reconcile_report({"verdict": "unchecked",
                                "error": f"not a directory: {root}"}, args.out)
         return 1
-    found = discover_reconcile_files(root)
-    if not (found["linked"] or found["orphans"] or found["errors"]):
+    if args.dir is not None and not args.dir.strip():
+        # An empty variable must not widen --dir to the whole repository.
+        emit_reconcile_report({"verdict": "unchecked",
+                               "error": "--dir is empty"}, args.out)
+        return 1
+    found = (discover_directory(root, Path(args.dir)) if args.dir
+             else discover_reconcile_files(root))
+    if not (found["linked"] or found["orphans"]):
+        if found["errors"]:
+            # Nothing to compare, and discovery failed: say so, without Zotero.
+            emit_reconcile_report(
+                reconcile_report(root, found, [], found["errors"]), args.out)
+            return 1
         # Nothing staged: no library comparison is needed.
         return reconcile_empty_report(root, found, args)
     library = getattr(args, "library", USER_LIBRARY)
@@ -2764,7 +2674,7 @@ def cmd_reconcile(args: argparse.Namespace) -> int:
                                                    args)
         except ZoteroUnavailable as exc:
             # Gone before anything was created (Zotero vanishing during the
-            # saves is reported per entry by inject): a clean no-op.
+            # saves is reported per entry by create-items): a clean no-op.
             return reconcile_unavailable(root, found, exc, args.out)
         except (OSError, ValueError, KeyError, TypeError, RuntimeError,
                 LocalAPIError) as exc:
@@ -2818,10 +2728,10 @@ def reconcile_apply(root: Path, found: dict[str, Any], fresh: dict[str, Any],
             skip_corroboration=False, force=False, _snapshot=fresh)
         captured = io.StringIO()
         with contextlib.redirect_stdout(captured):
-            rc = cmd_inject(inject_args)
+            rc = cmd_create_items(inject_args)
         outcome = json.loads(captured.getvalue())
         if "results" not in outcome:
-            raise RuntimeError(outcome.get("error", "inject failed"))
+            raise RuntimeError(outcome.get("error", "create-items failed"))
         report["applied"] = outcome["results"]
         for file, result in zip(job_paths, report["applied"]):
             result["file"] = file
@@ -2829,8 +2739,8 @@ def reconcile_apply(root: Path, found: dict[str, Any], fresh: dict[str, Any],
             if result.get("status") == "created" and not (
                     result.get("error") or result.get("attachment_error")
                     or result.get("transport_error")):
-                summary["injected"] = summary.get("injected", 0) + 1
-                actions["injected"] = RECONCILE_ACTIONS["injected"]
+                summary["created"] = summary.get("created", 0) + 1
+                actions["created"] = RECONCILE_ACTIONS["created"]
             else:
                 summary["failed_write"] = summary.get("failed_write", 0) + 1
                 actions["failed_write"] = RECONCILE_ACTIONS["failed_write"]
@@ -2843,7 +2753,7 @@ def reconcile_apply(root: Path, found: dict[str, Any], fresh: dict[str, Any],
     report["apply_status"] = (
         "partial" if summary.get("failed_write") else
         "deferred" if deferred else
-        "applied" if summary.get("injected") or summary.get("attached")
+        "applied" if summary.get("created") or summary.get("attached")
         else "nothing")
     return report, rc
 
@@ -2915,14 +2825,15 @@ def bib_to_inject_entry(bib: dict[str, Any], path: Path) -> dict[str, Any] | Non
     return entry
 
 
-def cmd_attach(args: argparse.Namespace) -> int:
+def cmd_suggest_attachments(args: argparse.Namespace) -> int:
     """File documents onto an EXISTING item: report, or store with --edit.
 
-    The repair for `work_present_no_file`. `inject` cannot do it, because it
+    The repair for `work_present_no_file`. `create-items` cannot do it: it
     only creates items, and creating a second item to carry the file is how
     duplicates are born.
     """
-    found, rc = with_zotero("attach", lambda: find_item(args.parent, args.library))
+    found, rc = with_zotero("suggest-attachments",
+                            lambda: find_item(args.parent, args.library))
     if rc is not None:
         return rc
     if found is None:
@@ -2971,64 +2882,62 @@ def add_edit_arg(parser: argparse.ArgumentParser, help_text: str) -> None:
 def main() -> int:
     p = argparse.ArgumentParser(prog="zotero.py")
     sub = p.add_subparsers(dest="cmd", required=True)
-    scope = ("dedup scope: 'user' (default, the inject destination), 'all', "
-             "or a numeric groupID")
+    scope = ("dedup scope: 'user' (default, the create-items destination), "
+             "'all', or a numeric groupID")
 
-    pp = sub.add_parser("probe", help="extract metadata + Zotero dup hits")
-    pp.add_argument("pdf", nargs="+")
-    add_library_args(pp, scope)
-    pp.set_defaults(func=cmd_probe)
+    px = sub.add_parser("extract-metadata",
+                        help="what each PDF says about itself: identifiers, "
+                             "text, pdfinfo; never contacts Zotero")
+    px.add_argument("pdf", nargs="+")
+    px.set_defaults(func=cmd_extract_metadata)
 
-    pm = sub.add_parser("match", help="refined Zotero dedup lookup (cascade: "
-                                      "file hash, identifiers, filename, "
-                                      "author-year-title, title overlap)")
-    pm.add_argument("--title", help="title (matched with --author; a title "
+    pf = sub.add_parser("find-work",
+                        help="is this work already in the library? Zotero's "
+                             "local API only; reads extract-metadata output "
+                             "or the flags")
+    pf.add_argument("--metadata", help="extract-metadata JSON: a file, or - "
+                                       "for stdin; the flags override it")
+    pf.add_argument("--title", help="title (matched with --author; a title "
                                     "alone never matches)")
-    pm.add_argument("--doi", help="DOI to exact-match")
-    pm.add_argument("--isbn", help="ISBN to exact-match (any hyphenation)")
-    pm.add_argument("--arxiv", help="arXiv id to match (e.g. 2401.01234)")
-    pm.add_argument("--handle", help="handle URL or hdl.handle.net path")
-    pm.add_argument("--author", help="first author (any format); with --year "
-                                     "and --title forms the pre-DOI book key")
-    pm.add_argument("--year", help="publication year")
-    pm.add_argument("--pdf", help="PDF path: content hash when the file "
+    pf.add_argument("--doi", help="DOI to exact-match")
+    pf.add_argument("--isbn", help="ISBN to exact-match (any hyphenation)")
+    pf.add_argument("--arxiv", help="arXiv id to match (e.g. 2401.01234)")
+    pf.add_argument("--handle", help="handle URL or hdl.handle.net path")
+    pf.add_argument("--author", help="first author (any format)")
+    pf.add_argument("--year", help="publication year")
+    pf.add_argument("--pdf", help="PDF path: content hash when the file "
                                   "exists, attachment filename either way")
-    add_library_args(pm, scope)
-    pm.set_defaults(func=cmd_match)
+    add_library_args(pf, scope)
+    pf.set_defaults(func=cmd_find_work)
 
-    pd = sub.add_parser("dedup-report", help="read-only report of identical "
-                        "attachments under distinct My Library items")
-    pd.add_argument("--format", choices=("html", "json"), default="html")
-    pd.add_argument("--out", help="write report to this file (else stdout)")
-    pd.set_defaults(func=cmd_dedup_report)
+    pd = sub.add_parser("report-duplicates",
+                        help="read-only JSON report of identical stored files "
+                             "under distinct My Library items")
+    pd.add_argument("--out", help="write the report to this file (else stdout)")
+    pd.set_defaults(func=cmd_report_duplicates)
 
-    pa = sub.add_parser("audit",
-                        help="reconcile a staging directory against the "
-                             "library: identical / present-with-file / "
-                             "present-no-file / ambiguous / absent")
-    pa.add_argument("directory")
-    pa.add_argument("--out", help="write the full per-file report to this path")
-    pa.add_argument("--ext", nargs="*", help="extensions to audit "
-                                             "(default: documents)")
-    add_library_args(pa, scope)
-    pa.set_defaults(func=cmd_audit)
-
-    pr = sub.add_parser("reconcile", help="report BibTeX-linked staging files "
-                        "and unlinked orphans; explicit opt-in to apply")
+    pr = sub.add_parser("check-staging",
+                        help="compare staged files with the library: the "
+                             "files .bib entries link (and unlinked ones), "
+                             "or every staging file under --dir; explicit "
+                             "opt-in to apply")
     pr.add_argument("root", nargs="?", default=".",
                     help="repository root (default: current directory)")
+    pr.add_argument("--dir", help="check every staging file under this "
+                                  "directory of the root instead of the "
+                                  "BibTeX-linked ones")
     pr.add_argument("--out", help="write the full JSON report to this path")
     pr.add_argument("--apply", action="store_true",
                     help="create corroborated absent PDFs in Zotero, only "
-                         "when the project has "
-                         ".zotero-reconcile.json with apply=true and the "
-                         "user_id local Zotero is signed in as")
+                         "when the root has .zotero-reconcile.json with "
+                         "apply=true and the user_id local Zotero is signed "
+                         "in as")
     add_edit_arg(pr, "with --apply, also store each staged file under the "
                      "one existing item that lacks it")
     add_library_args(pr, scope)
-    pr.set_defaults(func=cmd_reconcile)
+    pr.set_defaults(func=cmd_check_staging)
 
-    pt = sub.add_parser("attach",
+    pt = sub.add_parser("suggest-attachments",
                         help="report how to file documents onto an EXISTING "
                              "item (the present-no-file case); writes only "
                              "with --edit")
@@ -3036,16 +2945,9 @@ def main() -> int:
     pt.add_argument("file", nargs="+")
     add_edit_arg(pt, "store the files under the item (default: report)")
     add_library_args(pt, scope)
-    pt.set_defaults(func=cmd_attach)
+    pt.set_defaults(func=cmd_suggest_attachments)
 
-    pw = sub.add_parser("write", help="write combined RIS file from JSON entries")
-    pw.add_argument("--out", required=True, help="output RIS path")
-    g = pw.add_mutually_exclusive_group()
-    g.add_argument("--entries-json", help="inline JSON: array of entry dicts")
-    g.add_argument("--entries-file", help="path to JSON file with entries")
-    pw.set_defaults(func=cmd_write)
-
-    pi = sub.add_parser("inject",
+    pi = sub.add_parser("create-items",
                         help="create items (and attach PDFs) through the "
                              "Zotero local API; Zotero is launched "
                              "if it is not running")
@@ -3065,13 +2967,13 @@ def main() -> int:
     pi.add_argument("--force", action="store_true",
                     help="explicitly bypass the library and batch duplicate "
                          "guard; use only after examining matches")
-    pi.set_defaults(func=cmd_inject)
+    pi.set_defaults(func=cmd_create_items)
 
-    pe = sub.add_parser("enrich",
+    pe = sub.add_parser("suggest-edits",
                         help="report missing fields on EXISTING items for the "
                              "author; writes them only with --edit")
     ge = pe.add_mutually_exclusive_group(required=True)
-    ge.add_argument("--item-key", help="the item to enrich")
+    ge.add_argument("--item-key", help="the item to complete")
     ge.add_argument("--jobs-file",
                     help="path to JSON: array of {item_key, expect_title, "
                          "set:{field: value}}")
@@ -3086,12 +2988,12 @@ def main() -> int:
                          "DIFFERENT value; without it those are refused")
     add_edit_arg(pe, "write the suggested fields (default: report)")
     add_library_args(pe, scope)
-    pe.set_defaults(func=cmd_enrich)
+    pe.set_defaults(func=cmd_suggest_edits)
 
     args = p.parse_args()
-    if args.cmd == "enrich" and args.item_key and not args.expect_title:
+    if args.cmd == "suggest-edits" and args.item_key and not args.expect_title:
         p.error("--expect-title is required with --item-key")
-    if args.cmd == "reconcile" and args.edit and not args.apply:
+    if args.cmd == "check-staging" and args.edit and not args.apply:
         p.error("--edit needs --apply")
     return args.func(args)
 

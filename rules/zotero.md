@@ -3,7 +3,7 @@ paths:
   - "**/*.bib"
   - "**/*.ris"
   - "**/docs/**"
-last-reviewed: 2026-08-14
+last-reviewed: 2026-10-16
 ---
 # Zotero management
 
@@ -65,7 +65,7 @@ projects. Zotero is the system of record; git holds neither the sources nor the
 - **Periodic sync + purge.** Reconcile staging to Zotero (correct item type,
   scraped metadata, file attachment) and **purge staging on archival after
   publication** — Zotero retains everything. The reconcile is run by the author
-  on demand (`/zotero reconcile`) and is *proposed* by `/lair`, never run
+  on demand (`/zotero check-staging`) and is *proposed* by `/lair`, never run
   automatically: when the project has a `docs/` directory and a file under it
   has an mtime since the start of the current day, lair's final summary offers
   it (`skills/lair/zotero-reconcile-trigger`, a cheap mtime scan with no Zotero
@@ -80,8 +80,8 @@ durable provenance is centralized in Zotero, where it persists and syncs.
 Staging is transient by design.
 
 One skill implements this workflow: `zotero` (verbs as arguments, PDF and URL
-intake alike) — fetch → stage in `docs/` → archive in Zotero (RIS + attachment) →
-record the citation.
+intake alike) — fetch → stage in `docs/` → archive in Zotero (the item and
+its attachment, created through the local API) → record the citation.
 
 This rule governs *source documents and bibliography staging*. It does not
 touch [git.md](./git.md)'s "commit handoff artifacts" rule: generated files a
