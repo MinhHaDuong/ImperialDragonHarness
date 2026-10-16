@@ -243,6 +243,8 @@ def test_the_retired_invocation_pattern_fires_and_spares():
                  "zotero.py --library user inject --dry-run",
                  "zotero.py 'enrich' --item-key K", "run `/zotero reconcile`"):
         assert RETIRED_INVOCATION.search(line), line
+    assert RETIRED_INVOCATION.search(re.sub(r"\\\n\s*", " ",
+                                            "zotero.py \\\n    audit docs/"))
     for line in ("zotero.py check-staging --dir docs", "zotero.py audit-trail",
                  "/zotero import x.pdf", "zotero.py find-work --doi D"):
         assert not RETIRED_INVOCATION.search(line), line
@@ -252,6 +254,19 @@ def test_the_retired_invocation_pattern_fires_and_spares():
 def test_no_live_invocation_of_a_retired_subcommand():
     offenders = [f"{name}:{lineno}: {line.strip()}"
                  for name, lineno, line in _matches(RETIRED_INVOCATION)]
+    # A run line continued with a backslash puts the name on the next line.
+    for path in _surface_files():
+        if path.resolve() == SELF or _is_excluded(path):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        joined = re.sub(r"\\\n\s*", " ", text)
+        if joined != text:
+            offenders += [f"{path.relative_to(ROOT).as_posix()}: {m.group(0)}"
+                          for m in RETIRED_INVOCATION.finditer(joined)
+                          if m.group(0) not in text]  # found only joined
     assert not offenders, (
         "Live invocation(s) of a retired zotero.py subcommand (ticket "
         "1116):\n" + "\n".join(offenders)

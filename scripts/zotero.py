@@ -2120,6 +2120,9 @@ def work_queries(args: argparse.Namespace) -> list[dict[str, Any]]:
             continue
         ids = item.get("identifiers") or {}
         pdfinfo_fields = item.get("pdfinfo") or {}
+        if not (isinstance(ids, dict) and isinstance(pdfinfo_fields, dict)):
+            raise BadQuery(f"--metadata {args.metadata}: identifiers and "
+                           f"pdfinfo must be objects")
         work = {"title": pdfinfo_fields.get("Title"), "year": item.get("year_hint"),
                 "author": None, "pdf": item.get("pdf"),
                 **{k: ids.get(k) for k in ("doi", "isbn", "arxiv", "handle")}}
@@ -2135,6 +2138,11 @@ def cmd_find_work(args: argparse.Namespace) -> int:
     except BadQuery as exc:
         print(f"find-work: {exc}", file=sys.stderr)
         emit_json({"error": str(exc), "verdict": "unchecked"})
+        return 1
+    if all("error" in work for work in works):
+        # Nothing to look up: Zotero is neither asked nor launched.
+        emit_json({"results": [{"query": {"pdf": w["pdf"]}, "error": w["error"],
+                                "verdict": "unchecked"} for w in works]})
         return 1
     idx, rc = with_zotero("find-work", lambda: read_library(args.library))
     if rc is not None:
@@ -2617,6 +2625,11 @@ def cmd_check_staging(args: argparse.Namespace) -> int:
     if not root.is_dir():
         emit_reconcile_report({"verdict": "unchecked",
                                "error": f"not a directory: {root}"}, args.out)
+        return 1
+    if args.dir is not None and not args.dir.strip():
+        # An empty variable must not widen --dir to the whole repository.
+        emit_reconcile_report({"verdict": "unchecked",
+                               "error": "--dir is empty"}, args.out)
         return 1
     found = (discover_directory(root, Path(args.dir)) if args.dir
              else discover_reconcile_files(root))

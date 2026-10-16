@@ -240,8 +240,9 @@ def test_find_work_refuses_flags_over_several_extracted_works(tmp_path, capsys):
     assert out["verdict"] == "unchecked"
 
 
-@pytest.mark.parametrize("content", ["not json", '{"no": "items"}',
-                                     '{"items": []}', '{"items": [1]}'])
+@pytest.mark.parametrize("content", [
+    "not json", '{"no": "items"}', '{"items": []}', '{"items": [1]}',
+    '{"items": [{"identifiers": ["10.1/x"]}]}', '{"items": [{"pdfinfo": "T"}]}'])
 def test_find_work_reports_unusable_metadata_as_json(tmp_path, capsys, content):
     meta = tmp_path / "meta.json"
     meta.write_text(content)
@@ -286,6 +287,21 @@ def test_check_staging_dir_apply_needs_the_root_opt_in(use_live, tmp_path,
     assert report["summary"]["absent"] == 1
     title = zi.pdftotext_range(pdf, 1, 1).splitlines()[0].strip()
     assert use_live.titled(title) == []
+
+
+def test_find_work_of_only_extraction_errors_asks_zotero_nothing(
+        tmp_path, capsys, monkeypatch):
+    meta = _meta_file(tmp_path, {"pdf": "/x/missing.pdf", "error": "not found"})
+    monkeypatch.setattr(zi, "ensure_zotero", lambda: pytest.fail("Zotero asked"))
+    assert zi.cmd_find_work(_match_args(doi=None, metadata=meta)) == 1
+    (row,) = json.loads(capsys.readouterr().out)["results"]
+    assert row["error"] == "not found" and row["verdict"] == "unchecked"
+
+
+def test_check_staging_refuses_an_empty_dir(tmp_path, capsys):
+    """`--dir "$UNSET"` must not become the whole repository."""
+    assert zi.cmd_check_staging(_dir_args(tmp_path, "")) == 1
+    assert json.loads(capsys.readouterr().out)["error"] == "--dir is empty"
 
 
 def test_find_work_does_nothing_when_zotero_is_unavailable(tmp_path, capsys):
