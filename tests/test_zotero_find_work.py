@@ -102,6 +102,11 @@ def test_a_short_generic_stored_title_is_never_strong():
                               "2020", "2020") == "weak"
 
 
+def test_a_two_word_stored_title_can_still_be_strong():
+    assert zi.title_certainty("Being and Time", "Being and Time", None,
+                              "1927", "1927") == "strong"
+
+
 def test_an_unrelated_title_scores_nothing():
     assert zi.title_certainty("An Entirely Unrelated Study of Something Else",
                               None, "method of limits in the theory of index "
@@ -151,6 +156,25 @@ def test_an_invalid_isbn_is_skipped_not_consulted():
     res = zi.find_work(zi.libraries(), isbn="ISBN 123")
     assert "isbn" not in res["consulted"] and res["verdict"] == "unchecked"
     assert any(s.startswith("isbn (not a valid") for s in res["skipped"])
+
+
+@pytest.mark.parametrize("key,value", [
+    ("doi", " "), ("doi", "doi:"), ("doi", "https://doi.org/"),
+    ("arxiv", " "), ("arxiv", "arXiv:"), ("handle", "https://hdl.handle.net/"),
+    ("handle", "x")])
+def test_a_blank_identifier_is_skipped_not_consulted(key, value):
+    """Nothing to search for: an empty query would match everything or
+    nothing, and either way the key did not look."""
+    res = zi.find_work(zi.libraries(), **{key: value})
+    assert key not in res["consulted"] and res["verdict"] == "unchecked"
+
+
+def test_arxiv_ids_are_normalised():
+    for raw in ("2401.01234", "arXiv:2401.01234", "arXiv:2401.01234v2",
+                "https://arxiv.org/abs/2401.01234v3", "2401.01234V1"):
+        assert zi.normal_arxiv(raw) == "2401.01234", raw
+    assert zi.normal_arxiv("hep-th/9901001") == "hep-th/9901001"
+    assert zi.normal_arxiv("not an id") == ""
 
 
 def test_the_default_scope_is_the_user_library_alone():
@@ -306,6 +330,8 @@ def test_an_isbn_matches_across_hyphenation_and_length(lib):
 def test_arxiv_ids_and_handles_are_found_in_extra_and_url(lib):
     keys, _ = lib
     assert [m["key"] for m in find(arxiv="2401.01234")["matches"]] == [keys["arxiv_extra"]]
+    assert [m["key"] for m in find(arxiv="arXiv:2401.01234v2")["matches"]] == [
+        keys["arxiv_extra"]]
     assert [m["key"] for m in find(arxiv="2402.05678")["matches"]] == [keys["arxiv_url"]]
     for supplied in ("10419/12345", "https://hdl.handle.net/10419/12345"):
         (m,) = find(handle=supplied)["matches"]
@@ -519,8 +545,14 @@ def test_every_request_of_a_staging_check_is_a_search(lib, tmp_path,
     assert zi.cmd_check_staging(args) == 0
     report = json.loads(capsys.readouterr().out)
     assert report["summary"] == {"work_present_no_file": 1, "absent": 1}
+    find_args = argparse.Namespace(doi="10.5555/Deep.X", isbn=None, arxiv=None,
+                                   handle=None, title=HOFFMAN, year="1957",
+                                   author="Hoffman", pdf=None, library="user",
+                                   metadata=None)
+    assert zi.cmd_find_work(find_args) == 0
+    capsys.readouterr()
     items = [u for u in sent if "/items" in u.path]
-    assert items, "positive control: the run did read items"
+    assert items, "positive control: the runs did read items"
     for url in items:
         assert ("q" in url.params or "itemKey" in url.params
                 or url.path.endswith("/children")), str(url)

@@ -30,7 +30,8 @@ edit.
 Zotero must be running. When it is not, the helper launches it (never in a
 container) and waits; when it still does not answer, the command does
 nothing and says so (exit EXIT_UNAVAILABLE; `check-staging` exits 0 with
-verdict "zotero_unavailable").
+verdict "zotero_unavailable"). A read Zotero accepts and does not finish in
+time is not that: exit EXIT_SLOW, `check-staging` verdict "zotero_slow".
 
 Run it as an executable: the shebang has uv install the dependencies above.
 """
@@ -142,7 +143,7 @@ def find_identifier(front_text: str, back_text: str, subject: str
 # --- Deduplication -----------------------------------------------------------
 # find_work() asks the running Zotero's own search (the local API's `q`, in
 # `qmode=everything`) for each key, strongest first: a persistent identifier
-# (DOI, ISBN, arXiv, handle), then the first author's works, whose titles
+# (DOI, ISBN, arXiv, handle), then the given authors' works, whose titles
 # rapidfuzz scores against the title and front matter given. Every hit is
 # checked against the item's own fields, since the quick search matches a
 # substring anywhere, and its attachments are checked for the PDF's md5
@@ -1229,7 +1230,12 @@ def cmd_create_items(args: argparse.Namespace) -> int:
     # on this machine, so two local runs cannot both create one work.
     lock = (contextlib.nullcontext() if locked
             else directory_locks([library_lock_dir()]))
-    with lock:
+    with contextlib.ExitStack() as held:
+        try:
+            held.enter_context(lock)
+        except OSError as exc:  # another run held the lock too long
+            emit_json({"error": str(exc)})
+            return 1
         try:
             lib_id = resolve_target(library, collection)
         except ZoteroUnavailable as exc:
@@ -1244,8 +1250,10 @@ def cmd_create_items(args: argparse.Namespace) -> int:
         results, status = create_entries(entries, items, checks, lib_id,
                                          collection, getattr(args, "force",
                                                              False))
+    zotero_state = {EXIT_SLOW: "slow", EXIT_UNAVAILABLE: "unavailable"}
     emit_json({"library_id": lib_id, "collection": collection,
-               "zotero": zotero_url(), "results": results})
+               "zotero": zotero_state.get(status, zotero_url()),
+               "results": results})
     return status
 
 
@@ -1302,7 +1310,9 @@ def create_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
             row["error"] = f"PDF to attach not found: {pdf}"
             status = 1
             continue
-        digest = file_md5(pdf) if pdf is not None and pdf.is_file() else None
+        # Only a file this entry stores; a PDF used as evidence alone is not.
+        digest = (file_md5(pdf) if entry.get("attach_pdf") and pdf is not None
+                  and pdf.is_file() else None)
         if not force and digest in stored:
             row["error"] = (f"same file as entry {stored[digest]} of this "
                             f"batch; use --force")
@@ -1315,7 +1325,9 @@ def create_entries(entries: list[dict[str, Any]], items: list[dict[str, Any]],
             except (ZoteroUnavailable, ZoteroSlow, LocalAPIError) as exc:
                 row["error"] = f"duplicate guard could not look: {exc}"
                 stop(n, "not attempted after the duplicate guard failed")
-                return results, 1
+                return results, (EXIT_SLOW if isinstance(exc, ZoteroSlow)
+                                 else EXIT_UNAVAILABLE
+                                 if isinstance(exc, ZoteroUnavailable) else 1)
             if found["matches"]:
                 row["error"] = "duplicate or ambiguous library match"
                 row["matches"] = found["matches"][:5]
@@ -1786,6 +1798,15 @@ def isbn_queries(isbn: str) -> list[str]:
     return sorted(forms)
 
 
+def normal_arxiv(raw: str) -> str:
+    """An arXiv id, from a bare id, `arXiv:` form or arxiv.org URL, without
+    its version suffix; "" when there is none."""
+    match = ARXIV_ANY_RE.search(raw) or re.fullmatch(
+        r"\s*((?:\d{4}\.\d{4,5})|(?:[a-z-]+/\d{7}))(?:v\d+)?\s*", raw,
+        re.IGNORECASE)
+    return match.group(1).lower() if match else ""
+
+
 def handle_path(raw: str) -> str:
     match = HDL_ANY_RE.search(raw)
     return (match.group(1) if match else raw).lower().rstrip("/")
@@ -1795,15 +1816,16 @@ def handle_path(raw: str) -> str:
 # returned work really carries the identifier (the quick search matches a
 # substring in any field, an abstract citing the DOI included).
 IDENTIFIER_KEYS: tuple[tuple[str, Any, Any], ...] = (
-    ("doi", lambda v: [normal_doi(v)],
+    ("doi", lambda v: [d for d in [normal_doi(v)] if DOI_BARE_RE.fullmatch(d)],
      lambda w, v: normal_doi(v) in {normal_doi(w["DOI"])} | {
          d.rstrip(".,;)").lower() for d in DOI_BARE_RE.findall(w["extra"])}),
     ("isbn", isbn_queries,
      lambda w, v: bool(isbn13s(v) & isbn13s(f"{w['ISBN']} {w['extra']}"))),
-    ("arxiv", lambda v: [v.strip()],
-     lambda w, v: v.strip().lower() in {
+    ("arxiv", lambda v: [a for a in [normal_arxiv(v)] if a],
+     lambda w, v: normal_arxiv(v) in {
          a.lower() for a in ARXIV_ANY_RE.findall(f"{w['extra']} {w['url']}")}),
-    ("handle", lambda v: [handle_path(v)],
+    ("handle", lambda v: [h for h in [handle_path(v)]
+                          if re.fullmatch(r"[^\s/:]+/\S+", h)],
      lambda w, v: handle_path(v) in {
          h.lower().rstrip("/")
          for h in HDL_ANY_RE.findall(f"{w['extra']} {w['url']}")}),
@@ -1831,9 +1853,10 @@ def title_certainty(lib_title: str, title: str | None, text: str | None,
     lib = fold(lib_title)
     if not lib:
         return None
-    # A stored title too short to be distinctive ("Introduction") would be
+    # A stored title of one distinctive word ("Introduction") would be
     # "strong" against any page that has that heading: a hint at most.
-    short = len(_title_tokens(lib_title)) < TITLE_MIN_TOKENS
+    # Two words ("Being and Time") are distinctive enough.
+    short = len(_title_tokens(lib_title)) < 2
     lines = [line for line in (fold(raw) for raw in (text or "").splitlines())
              if line]
     phrases = ([fold(title)] if fold(title) else []) + [

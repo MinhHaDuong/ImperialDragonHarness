@@ -1797,6 +1797,33 @@ def test_a_batch_creates_a_work_once_when_two_entries_share_a_doi(
 
 
 @pytest.mark.integration
+def test_a_batch_finds_its_own_work_by_author_year_and_title(
+        use_live, tmp_path, capsys):
+    """No DOI: the second entry's live lookup finds the item the first just
+    created through creator-year-title."""
+    title, surname = unique_title(), unique_surname()
+    entries = [_entry(tmp_path, title=title, surname=surname) for _ in range(2)]
+    assert zi.cmd_create_items(_inject_args(entries)) == 1
+    out = json.loads(capsys.readouterr().out)
+    assert out["results"][0]["status"] == "created"
+    assert out["results"][1]["matches"][0]["why"] == ["creator-year-title"]
+    assert len(use_live.titled(title)) == 1
+
+
+@pytest.mark.integration
+def test_a_held_lock_is_a_json_error_in_create_items(use_live, tmp_path,
+                                                     monkeypatch, capsys):
+    @contextlib.contextmanager
+    def held(directories, wait=0):
+        raise OSError("locked by another run for over 600 s")
+        yield
+
+    monkeypatch.setattr(zi, "directory_locks", held)
+    assert zi.cmd_create_items(_inject_args([_entry(tmp_path)])) == 1
+    assert "locked by another run" in json.loads(capsys.readouterr().out)["error"]
+
+
+@pytest.mark.integration
 def test_a_batch_refuses_a_second_entry_carrying_the_same_file(
         use_live, tmp_path, capsys):
     """Zotero has no search by md5, so the batch remembers what it stored:
