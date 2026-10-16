@@ -7,6 +7,7 @@ Author: Minh Ha-Duong
 2026-10-15T14:43Z Minh Ha-Duong created
 2026-10-15T21:09Z Claude note Retitled and re-scoped per author decisions of 2026-10-15: local-only, stateless helper; Web API, keys, index cache and injection record removed; creation through the desktop connector.
 2026-10-16T05:51Z Claude note Author decisions of 2026-10-16 recorded: reads through the local API only, never sqlite; launch Zotero when it is down, else do nothing; containers do nothing. Exit criterion 2 restated accordingly.
+2026-10-16T06:31Z Claude note Author decision of 2026-10-16 recorded: tests run a real throwaway Zotero as a fixture or skip, no mock. Exit criterion 4 restated accordingly.
 
 --- body ---
 ## Intent (author decisions, 2026-10-15)
@@ -55,6 +56,18 @@ Author: Minh Ha-Duong
    reconcile treats "unavailable" as a clean no-op, not a crash, and
    document the choice.
 
+## Author decision, 2026-10-16, tests (binding, verbatim)
+3. "In tests up Zotero as a fixture or skip -- no mock". So: no stub of the
+   local API or connector, no monkeypatched opener, launcher or
+   availability. Tests start a real Zotero desktop client on a throwaway
+   profile and data directory under tmp, on a non-default port with the
+   local API enabled, seed it through the real connector, and delete it
+   after the session; they never touch the author's profile, ~/Zotero or a
+   Zotero on 23119, and skip with a reason when isolation cannot be
+   guaranteed or no Zotero, display or non-container host is available.
+   "Zotero down" is tested for real (closed port, launching disabled by the
+   environment). Pure-logic tests that never talk to Zotero stay.
+
 ## Original context
 2026-10-15, host doudou: `python3 scripts/zotero.py reconcile .` in report mode
 on the harness, with a library index cache older than 24 h (4.7 MB, written
@@ -75,7 +88,8 @@ attachments, measured on doudou 2026-10-15).
       `reconcile` then exits 0
 - [ ] `inject` creates items and PDFs through the desktop connector and
       does nothing, saying so, when Zotero is unavailable; tests use a
-      local stub
+      real throwaway Zotero or skip, no mock (restated 2026-10-16; was:
+      a local stub)
 - [ ] `enrich`, `attach` and `reconcile --apply` report edits to existing
       items instead of writing them
 - [ ] `make check` passes
