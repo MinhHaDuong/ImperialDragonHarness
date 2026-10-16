@@ -3177,3 +3177,26 @@ def test_a_local_file_error_is_not_blamed_on_the_local_api_setting():
             raise ze.FileDoesNotExistError("/x/gone.pdf")
     assert zi.LOCAL_API_SETTING not in str(exc.value)
     assert "gone.pdf" in str(exc.value)
+
+
+def test_a_launched_zotero_that_answers_with_an_error_is_not_stopped(
+        monkeypatch):
+    """The launched client answered (local API disabled): the user is told
+    to enable the setting in it, so it must stay open."""
+    answers = iter([False])
+
+    def zotero_answers():
+        try:
+            return next(answers)
+        except StopIteration:
+            raise zi.LocalAPIError("Zotero's local API is disabled") from None
+
+    stopped = []
+    monkeypatch.setattr(zi, "zotero_answers", zotero_answers)
+    monkeypatch.setattr(zi, "in_container", lambda: None)
+    monkeypatch.setattr(zi, "find_zotero_launcher", lambda: ["zotero"])
+    monkeypatch.setattr(zi, "launch_zotero", lambda command: "PROC")
+    monkeypatch.setattr(zi, "stop_launched", stopped.append)
+    with pytest.raises(zi.LocalAPIError):
+        zi.ensure_zotero()
+    assert stopped == []

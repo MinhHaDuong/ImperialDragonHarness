@@ -1044,8 +1044,10 @@ def ensure_zotero() -> str:
                     f"answer within {LAUNCH_WAIT:.0f} s, so the helper "
                     f"stopped it. Start Zotero and retry; nothing was done.")
             time.sleep(LAUNCH_POLL)
-    except BaseException:
-        # Missed deadline, something else on the port, or an interrupt.
+    except (ZoteroUnavailable, KeyboardInterrupt):
+        # Missed deadline or an interrupt: the launch never answered. A
+        # client that answered with an error (local API disabled) stays
+        # open, since the message asks the user to change its setting.
         stop_launched(process)
         raise
     return "launched"
