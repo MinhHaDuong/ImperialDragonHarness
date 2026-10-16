@@ -1609,9 +1609,10 @@ def cmd_enrich(args: argparse.Namespace) -> int:
 
     def run() -> dict[str, Any]:
         # A batch of edits is a sequence: refuse a one-time key up front.
-        return {"results": [enrich_one(j, args.overwrite, args.edit,
-                                       args.library, lasting=len(jobs) > 1)
-                            for j in jobs]}
+        return {"results": run_jobs(
+            jobs, lambda j: enrich_one(j, args.overwrite, args.edit,
+                                       args.library, lasting=len(jobs) > 1),
+            wrote=args.edit)}
 
     out, rc = with_zotero("enrich", run)
     if rc is not None:
@@ -1623,6 +1624,28 @@ def cmd_enrich(args: argparse.Namespace) -> int:
 
 
 EDIT_HINT = "report only: rerun with --edit to write, or edit by hand in Zotero"
+
+
+def run_jobs(jobs: list[dict[str, Any]], one: Any,
+             wrote: bool) -> list[dict[str, Any]]:
+    """`one(job)` for each job, in order. When Zotero goes away part-way
+    through a run that writes, the rows already done are kept, the job in
+    flight is marked unknown and the rest not attempted; a read-only run
+    has done nothing, so ZoteroUnavailable passes through (exit 75)."""
+    results: list[dict[str, Any]] = []
+    for n, job in enumerate(jobs):
+        try:
+            results.append(one(job))
+        except ZoteroUnavailable as exc:
+            if not wrote:
+                raise
+            results.append({"itemKey": job["item_key"], "status": "unknown",
+                            "error": f"write outcome unknown: {exc}"})
+            results += [{"itemKey": rest["item_key"], "status": "not attempted",
+                         "error": "not attempted after Zotero stopped"}
+                        for rest in jobs[n + 1:]]
+            break
+    return results
 
 
 def enrich_status(results: list[dict[str, Any]]) -> int:

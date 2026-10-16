@@ -1505,6 +1505,24 @@ def test_a_lost_upload_is_zotero_unavailable_not_a_refusal():
             raise ze.UploadError("ConnectionError")
 
 
+def test_an_edit_batch_keeps_its_written_rows_when_zotero_goes_away():
+    """Pure batching logic, with a plain function as the per-job step:
+    Zotero stopping at the second of three jobs keeps the first row."""
+    jobs = [{"item_key": k} for k in ("A", "B", "C")]
+
+    def one(job):
+        if job["item_key"] == "B":
+            raise zi.ZoteroUnavailable("gone")
+        return {"itemKey": job["item_key"], "status": "written"}
+
+    rows = zi.run_jobs(jobs, one, wrote=True)
+    assert [(r["itemKey"], r["status"]) for r in rows] == [
+        ("A", "written"), ("B", "unknown"), ("C", "not attempted")]
+    assert zi.enrich_status(rows) == 1
+    with pytest.raises(zi.ZoteroUnavailable):
+        zi.run_jobs(jobs, one, wrote=False)
+
+
 def test_a_trailing_slash_in_the_zotero_url_is_dropped(monkeypatch):
     monkeypatch.setenv("ZOTERO_CONNECTOR_URL", "http://127.0.0.1:8080/")
     assert zi.zotero_url() == "http://127.0.0.1:8080"
