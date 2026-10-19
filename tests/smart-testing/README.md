@@ -40,8 +40,8 @@ Testmon tracks executed Python. The companion pytest plugin records explicit
 project file reads, including Python source read as text, during setup, call and
 teardown. Collection reads belong to their test module; reads made while importing a
 shared Python module conservatively affect the eligible suite. A changed known
-input reruns its consumer modules with Testmon disabled, then native Python
-selection runs normally. A failed consumer remains stale and is retried. Tests
+input reruns its consumer modules with selection disabled while refreshing
+Testmon coverage, then native Python selection handles remaining affected tests. A failed consumer remains stale and is retried. Tests
 can run twice when both their Python and data inputs change; no private Testmon
 API or second selection framework is involved.
 

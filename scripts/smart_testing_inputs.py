@@ -14,10 +14,11 @@ import tempfile
 
 import pytest
 
-SCOPE = 'all-tiers-v2'
+SCOPE = 'all-tiers-v3'
 
 EXCLUDED = {'.git', '.venv', '.smart-testing', '.pytest_cache', '.panel', '.tmp', '__pycache__'}
 REFERENCE_FILES = {'tests/smart-testing/reference.json', 'tests/smart-testing/reference.sql'}
+MONITOR_FILES = {Path(__file__).resolve(), Path(__file__).with_name('smart_testing.py').resolve()}
 
 
 def invocation_fingerprint():
@@ -164,7 +165,7 @@ class FileReads:
                 filename = (frame.f_globals.get('__file__') or frame.f_code.co_filename)
                 if frame.f_code.co_name == '<module>' and Path(filename).is_absolute():
                     owner = Path(filename).resolve()
-                    if owner.is_relative_to(self.root) and not EXCLUDED.intersection(
+                    if owner not in MONITOR_FILES and owner.is_relative_to(self.root) and not EXCLUDED.intersection(
                             owner.relative_to(self.root).parts):
                         if owner.relative_to(self.root).as_posix() != consumer:
                             consumer = '*'

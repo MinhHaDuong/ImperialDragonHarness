@@ -554,3 +554,40 @@ def test_pytest_environment_change_cannot_reuse_incompatible_success(smart_repos
     test.write_text(test.read_text().replace('assert False', 'assert True'))
     _assert_passed(_smart_run(root, pytest_addopts='--runxfail'))
     _assert_unchanged(_smart_run(root, pytest_addopts='--runxfail'))
+
+
+@pytest.mark.integration
+def test_data_forced_run_updates_python_coverage_without_losing_other_modules(smart_repository, tmp_path):
+    root = smart_repository
+    for name in ('branch_a', 'branch_b'):
+        (root / f'{name}.py').write_text('def value():\n    return 1\n')
+    (root / 'tests/test_case.py').write_text(
+        'from pathlib import Path\n'
+        'def test_branch():\n'
+        '    if Path("fixture.txt").read_text() == "1":\n'
+        '        from branch_a import value\n'
+        '    else:\n'
+        '        from branch_b import value\n'
+        '    assert value() == 1\n')
+    marker = tmp_path / 'unrelated-ran'
+    (root / 'tests/test_other.py').write_text(
+        'from pathlib import Path\ndef test_other():\n'
+        f'    Path({str(marker)!r}).write_text("ran")\n')
+    learned = _smart_run(root, '--refresh')
+    assert learned.returncode == 0, learned.stdout + learned.stderr
+    assert '2 passed' in learned.stdout
+    assert marker.exists()
+    marker.unlink()
+    (root / 'fixture.txt').write_text('2')
+    _assert_passed(_smart_run(root))
+    assert not marker.exists(), 'Learning a forced module must retain unrelated cached tests.'
+    branch = root / 'branch_b.py'
+    branch.write_text('def value():\n    return 2\n')
+    failed = _smart_run(root)
+    assert failed.returncode == 1, failed.stdout + failed.stderr
+    assert '1 failed' in failed.stdout
+    assert not marker.exists()
+    branch.write_text('def value():\n    return 1\n')
+    _assert_passed(_smart_run(root))
+    _assert_unchanged(_smart_run(root))
+    assert not marker.exists()

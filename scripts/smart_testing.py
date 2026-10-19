@@ -125,7 +125,7 @@ def main():
             paths = [] if '*' in changed else sorted(changed)
             LOG.info('Changed recorded file inputs: checking %s',
                      ', '.join(paths) if paths else 'the project suite')
-            status = run_tests(paths, database, inputs, ['--no-testmon'])
+            status = run_tests(paths, database, inputs, ['--testmon', '--testmon-noselect'])
             if status == 5:
                 # Consumer modules can lose their cacheable tests.
                 state = load_state(inputs)
