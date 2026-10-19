@@ -2,9 +2,11 @@
 Title: erg-pr-merge: handle unavailable branch-rule inspection in direct fallback
 Created: 2026-10-19
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1454
 
 --- log ---
 2026-10-19T06:01Z Minh Ha-Duong created
+2026-10-19T07:32Z reviewer closed — autoclosed — PR #1454
 
 --- body ---
 ## Context
@@ -48,9 +50,9 @@ Keep the existing failing-check and pending-check refusal cases green.
 
 ## Verification
 
-- [ ] `tests/test_erg_pr_merge.sh` covers the denied-inspection success path and
+- [x] `tests/test_erg_pr_merge.sh` covers the denied-inspection success path and
       the ordinary merge refusal path.
-- [ ] The ticket-only PR gate (`erg check` and the cross-PR ticket collision
+- [x] The ticket-only PR gate (`erg check` and the cross-PR ticket collision
       check) passes.
 
 ## Invariants
@@ -61,8 +63,45 @@ Keep the existing failing-check and pending-check refusal cases green.
 
 ## Exit criteria
 
-- [ ] A GitHub plan/permission 403 during branch-rule inspection no longer
+- [x] A GitHub plan/permission 403 during branch-rule inspection no longer
       prevents a normal, non-admin merge when the forge accepts it.
-- [ ] If the forge rejects that merge, `/merge` reports the refusal and leaves
+- [x] If the forge rejects that merge, `/merge` reports the refusal and leaves
       the PR unmerged; no rules or checks are bypassed.
-- [ ] The regression tests and ticket-only PR gate pass.
+- [x] The regression tests and ticket-only PR gate pass.
+
+## Raid Imagine — 2026-10-19
+
+Premise confirmed in `no_checks_required`: either inspection failure currently
+aborts despite an explicitly empty rollup and mergeable PR. Preserve all exit
+criteria. Prefer recognizing HTTP 403 only, delegating enforcement to ordinary
+non-admin merge; other API errors and malformed successful data remain refusals.
+No library dependency or new abstraction is needed. Estimated implementation:
+under one author-hour, no new service spend.
+
+Blind-spot pass: include simultaneous denial of both endpoints as reported,
+alongside individual endpoint cases and forge refusal. No intent change.
+
+## Raid Plan — 2026-10-19
+
+1. First red test: stub both inspection endpoints with nonzero HTTP 403;
+   require successful ordinary merge with empty rollup and no admin argument.
+2. Capture inspection diagnostics; recognize HTTP 403 specifically, preserve
+   successful-payload validation and non-403 failure refusal. Continue normal
+   merge enforcement when inspection is denied.
+3. Cover each endpoint alone, both denied, direct forge refusal, non-403 errors,
+   and mixed denied/known-required or malformed responses. Retain failing,
+   pending and null-rollup controls. Assert recoverable ticket close on refusal.
+4. Update fallback documentation; run affected regressions, adherence, ticket
+   gate/collision check and full project gate before opening PR.
+
+Dependencies: none. Planned paths: this ticket, merge helper, merge SKILL.md,
+merge shell regression test (4 paths, below review breaker). Tests assert
+observable merge attempts/refusals rather than internal implementation shape.
+
+## Raid Feasibility — 2026-10-19
+
+PASS: source seams and stub environment allowlist verified; no dependencies or
+shared registries; four planned content-bearing paths. Implementation constraint:
+inspect both outcomes so one denied endpoint cannot hide known required checks
+or malformed successful data from the other. Non-403 failures remain refusals.
+Baseline merge-helper shell suite passes. Full baseline gate recorded separately.
