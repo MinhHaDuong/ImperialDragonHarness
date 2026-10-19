@@ -304,8 +304,18 @@ def _native_calls(record):
         call_id = payload.get("call_id")
         name = str(payload.get("name", "")).casefold()
         arguments = payload.get("arguments")
-        if call_id and name in {"bash", "shell", "terminal", "exec_command"} and isinstance(arguments, str):
-            calls.append((call_id, "codex", arguments))
+        if call_id and name in {"bash", "shell", "terminal", "exec_command"}:
+            command = None
+            if isinstance(arguments, dict):
+                command = arguments.get("cmd") or arguments.get("command")
+            elif isinstance(arguments, str):
+                try:
+                    parsed = json.loads(arguments)
+                except ValueError:
+                    parsed = None
+                command = (parsed.get("cmd") or parsed.get("command")) if isinstance(parsed, dict) else arguments
+            if isinstance(command, str):
+                calls.append((call_id, "codex", command))
 
     def walk(value):
         if isinstance(value, dict):
@@ -357,7 +367,15 @@ def _explicit_exit_zero(value):
         return any(_explicit_exit_zero(child) for child in value.values())
     if isinstance(value, list):
         return any(_explicit_exit_zero(child) for child in value)
-    return isinstance(value, str) and bool(EXIT_ZERO.search(value))
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except ValueError:
+            parsed = None
+        if parsed is not None:
+            return _explicit_exit_zero(parsed)
+        return bool(EXIT_ZERO.search(value))
+    return False
 
 
 def _explicit_nonzero(value):
@@ -367,7 +385,15 @@ def _explicit_nonzero(value):
         return any(_explicit_nonzero(child) for child in value.values())
     if isinstance(value, list):
         return any(_explicit_nonzero(child) for child in value)
-    return isinstance(value, str) and bool(EXIT_NONZERO.search(value))
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except ValueError:
+            parsed = None
+        if parsed is not None:
+            return _explicit_nonzero(parsed)
+        return bool(EXIT_NONZERO.search(value))
+    return False
 
 
 def _unambiguous_creation(command, candidate, home):

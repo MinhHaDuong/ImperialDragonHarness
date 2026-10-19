@@ -131,8 +131,8 @@ def test_codex_creation_requires_matching_call_id_and_explicit_zero_exit(tmp_pat
     history.write_text(
         json.dumps({"type": "session_meta", "payload": {"id": "creator"}}) + "\n"
         + json.dumps({"type": "response_item", "payload": {
-            "type": "function_call", "call_id": "call-ok", "name": "bash",
-            "arguments": f"mkdir -p {target}",
+            "type": "function_call", "call_id": "call-ok", "name": "exec_command",
+            "arguments": json.dumps({"cmd": f"mkdir -p {target}", "workdir": str(tmp_path)}),
         }}) + "\n"
         + json.dumps({"type": "response_item", "payload": {
             "type": "function_call_output", "call_id": "other-call",
@@ -140,7 +140,7 @@ def test_codex_creation_requires_matching_call_id_and_explicit_zero_exit(tmp_pat
         }}) + "\n"
         + json.dumps({"type": "response_item", "payload": {
             "type": "function_call_output", "call_id": "call-ok",
-            "output": {"exit_code": 0},
+            "output": json.dumps({"exit_code": 0, "stdout": "", "stderr": ""}),
         }}) + "\n"
     )
     found = report.attribute_histories(
