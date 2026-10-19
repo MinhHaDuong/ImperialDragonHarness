@@ -1,4 +1,6 @@
 ---
+metadata:
+  category: publication
 name: choose-venue
 description: "Choose where to submit a paper: shortlist journals, or conferences, by fit and diamond open access."
 disable-model-invocation: false

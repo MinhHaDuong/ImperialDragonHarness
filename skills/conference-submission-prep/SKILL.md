@@ -1,4 +1,6 @@
 ---
+metadata:
+  category: publication
 name: conference-submission-prep
 description: "Prepare a humanities and social sciences conference submission from its call for papers."
 ---
