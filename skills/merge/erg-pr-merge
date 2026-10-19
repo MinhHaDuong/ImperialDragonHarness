@@ -432,7 +432,7 @@ try_auto_merge() {
 # are known on the base. A denied inspection delegates unknown requirements
 # to ordinary forge enforcement. The branch endpoint covers legacy protection;
 # effective branch rules cover repository and organization rulesets.
-# (tickets 0200/0871)
+# (tickets 0200/0871/1117)
 no_checks_required() {
     local pr_now branch_now rules_now inspection_denied=0
     local api_error_file api_error api_status
@@ -462,9 +462,9 @@ no_checks_required() {
         ' >/dev/null \
             || die "base branch has required checks or returned invalid protection data — aborting merge"
     elif [[ "$api_error" == *"(HTTP 403)"* ]]; then
-        # A failed paginated call can already have emitted successful pages.
+        # A failed inspection may have emitted incomplete response data.
         # Accept only an empty body or one ordinary API error object; partial
-        # response pages and unknown payloads must not hide known requirements.
+        # response data and unknown payloads must not hide known requirements.
         if [[ -n "$branch_now" ]]; then
             echo "$branch_now" | jq -se '
                 length == 1 and (.[0] | type == "object" and

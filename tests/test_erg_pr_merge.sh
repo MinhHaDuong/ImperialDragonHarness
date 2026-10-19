@@ -137,7 +137,10 @@ case "$1 $2" in
   "api repos/{owner}/{repo}/branches/$STUB_BASE")
     if [[ "${STUB_INSPECTION_WARNING:-0}" == "1" ]]; then echo "stub: successful API warning" >&2; fi
     if [[ "${STUB_LEGACY_HTTP:-0}" != "0" ]]; then
-      echo '{"message":"Inspection unavailable","documentation_url":"https://docs.github.com/rest","status":"403"}'
+      if [[ "${STUB_HTTP_EMPTY:-0}" != "1" ]]; then
+        jq -cn --arg status "${STUB_LEGACY_HTTP}" --argjson extra "${STUB_HTTP_EXTRA:-0}" \
+          '{message:"Inspection unavailable",documentation_url:"https://docs.github.com/rest",status:$status} + (if $extra == 1 then {unexpected:true} else {} end)'
+      fi
       echo "gh: inspection unavailable (HTTP ${STUB_LEGACY_HTTP})" >&2; exit 1
     fi
     if [[ "${STUB_LEGACY_MALFORMED:-0}" == "1" ]]; then
@@ -152,7 +155,10 @@ case "$1 $2" in
     if [[ "${STUB_INSPECTION_WARNING:-0}" == "1" ]]; then echo "stub: successful API warning" >&2; fi
     if [[ "${STUB_RULE_HTTP:-0}" != "0" ]]; then
       if [[ "${STUB_RULE_PARTIAL:-0}" == "1" ]]; then echo '[{"type":"required_status_checks","parameters":{"required_status_checks":[{"context":"required"}]}}]'; fi
-      echo '{"message":"Inspection unavailable","documentation_url":"https://docs.github.com/rest","status":"403"}'
+      if [[ "${STUB_HTTP_EMPTY:-0}" != "1" ]]; then
+        jq -cn --arg status "${STUB_RULE_HTTP}" --argjson extra "${STUB_HTTP_EXTRA:-0}" \
+          '{message:"Inspection unavailable",documentation_url:"https://docs.github.com/rest",status:$status} + (if $extra == 1 then {unexpected:true} else {} end)'
+      fi
       echo "gh: inspection unavailable (HTTP ${STUB_RULE_HTTP})" >&2; exit 1
     fi
     if [[ "${STUB_RULE_MALFORMED:-0}" == "1" ]]; then
@@ -275,6 +281,8 @@ run_merge() {  # $1 body, $2 title, $3+ script args (default: 42)
       STUB_LEGACY_HTTP="${STUB_LEGACY_HTTP:-0}" \
       STUB_RULE_HTTP="${STUB_RULE_HTTP:-0}" \
       STUB_RULE_PARTIAL="${STUB_RULE_PARTIAL:-0}" \
+      STUB_HTTP_EMPTY="${STUB_HTTP_EMPTY:-0}" \
+      STUB_HTTP_EXTRA="${STUB_HTTP_EXTRA:-0}" \
       STUB_DIRECT_REFUSED="${STUB_DIRECT_REFUSED:-0}" \
       STUB_LEGACY_REQUIRED="${STUB_LEGACY_REQUIRED:-0}" \
       STUB_LEGACY_MALFORMED="${STUB_LEGACY_MALFORMED:-0}" \
@@ -666,34 +674,38 @@ fi
 
 # Ticket 1117: permission/plan denial delegates only unknown requirements to
 # ordinary forge enforcement. Known requirements and invalid data still refuse.
-for scenario in both legacy rule warning partial refused legacy500 rule500 legacy404 rule401 denied-required-rule denied-malformed-rule denied-required-legacy denied-malformed-legacy; do
+for scenario in both empty legacy rule warning partial extra mixed-rule500 mixed-legacy500 refused legacy500 rule500 legacy404 rule401 denied-required-rule denied-malformed-rule denied-required-legacy denied-malformed-legacy; do
     seed_repo "inspection-$scenario" 1117
     MLOG="$WORK/inspection-$scenario.log"; : > "$MLOG"
     BODY_DENIED=$'Summary.\n\n**Ticket:** tickets/1117-fixture.erg\n'
     legacy_http=0; rule_http=0; required_legacy=0; required_rule=0
-    malformed_legacy=0; malformed_rule=0; refused=0; expect_success=0; warning=0; partial=0
+    malformed_legacy=0; malformed_rule=0; refused=0; expect_success=0; warning=0; partial=0; empty=0; extra=0; reason="could not inspect"
     case "$scenario" in
         both) legacy_http=403; rule_http=403; expect_success=1 ;;
+        empty) legacy_http=403; rule_http=403; empty=1; expect_success=1 ;;
+        extra) legacy_http=403; extra=1; reason="partial or invalid" ;;
+        mixed-rule500) legacy_http=403; rule_http=500 ;;
+        mixed-legacy500) legacy_http=500; rule_http=403 ;;
         legacy) legacy_http=403; expect_success=1 ;;
         rule) rule_http=403; expect_success=1 ;;
-        partial) rule_http=403; partial=1 ;;
+        partial) rule_http=403; partial=1; reason="partial or invalid" ;;
         warning) warning=1; expect_success=1 ;;
         refused) legacy_http=403; rule_http=403; refused=1 ;;
         legacy500) legacy_http=500 ;;
         rule500) rule_http=500 ;;
         legacy404) legacy_http=404 ;;
         rule401) rule_http=401 ;;
-        denied-required-rule) legacy_http=403; required_rule=1 ;;
-        denied-malformed-rule) legacy_http=403; malformed_rule=1 ;;
-        denied-required-legacy) rule_http=403; required_legacy=1 ;;
-        denied-malformed-legacy) rule_http=403; malformed_legacy=1 ;;
+        denied-required-rule) legacy_http=403; required_rule=1; reason="check" ;;
+        denied-malformed-rule) legacy_http=403; malformed_rule=1; reason="invalid" ;;
+        denied-required-legacy) rule_http=403; required_legacy=1; reason="check" ;;
+        denied-malformed-legacy) rule_http=403; malformed_legacy=1; reason="invalid" ;;
     esac
     result=0
     out=$(STUB_AUTO_FAILS=1 STUB_STATE=OPEN STUB_MERGE_LOG="$MLOG" \
         STUB_LEGACY_HTTP="$legacy_http" STUB_RULE_HTTP="$rule_http" \
         STUB_LEGACY_REQUIRED="$required_legacy" STUB_RULE_REQUIRED="$required_rule" \
         STUB_LEGACY_MALFORMED="$malformed_legacy" STUB_RULE_MALFORMED="$malformed_rule" \
-        STUB_DIRECT_REFUSED="$refused" STUB_INSPECTION_WARNING="$warning" STUB_RULE_PARTIAL="$partial" \
+        STUB_DIRECT_REFUSED="$refused" STUB_INSPECTION_WARNING="$warning" STUB_RULE_PARTIAL="$partial" STUB_HTTP_EMPTY="$empty" STUB_HTTP_EXTRA="$extra" \
         run_merge "$BODY_DENIED" "ticket(1117): inspection $scenario" 2>&1) || result=$?
     direct=0
     if grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then direct=1; fi
@@ -712,7 +724,7 @@ for scenario in both legacy rule warning partial refused legacy500 rule500 legac
                 && grep -v -- '--auto' "$MLOG" | grep -q -- '--merge'; then
                 echo "PASS: forge refusal reports error; closed ticket remains retryable"
             else echo "FAIL: retry failed, skipped merge, or added another close commit"; fail=1; fi
-        elif [[ "$scenario" != refused && "$direct" == 0 ]]; then
+        elif [[ "$scenario" != refused && "$direct" == 0 && "$out" == *"$reason"* ]]; then
             echo "PASS: $scenario refuses direct merge"
         else echo "FAIL: $scenario unexpected merge attempt/result: $out"; fail=1; fi
     else echo "FAIL: $scenario unexpected merge attempt/result: $out"; fail=1; fi
@@ -1340,4 +1352,4 @@ if [[ "$n1" -eq 1 && "$n2" -eq 1 ]] && closed_has 0303; then
 else echo "FAIL: re-run changed the branch (commits $n1 -> $n2)"; fail=1; fi
 
 if (( fail )); then exit 1; fi
-echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto race handled, pending checks arm auto-merge (1082), drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip, output-rewrite-tolerant guards"
+echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto race handled, pending checks arm auto-merge (1082), denied inspections delegate without bypass (1117), drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip, output-rewrite-tolerant guards"

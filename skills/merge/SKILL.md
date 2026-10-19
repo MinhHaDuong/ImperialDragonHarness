@@ -127,27 +127,26 @@ blanket-fall back to a plain forge merge. (Moved here from `rules/git.md`,
 which is resident in every session: a recovery procedure belongs with the
 command it recovers.)
 
-- **"close: no ticket found" on a retry.** The FIRST run already closed,
-  archived and pushed the close commit — the script is *not* idempotent past
-  that step. Do not re-run it and do not hand-close the ticket: the close
-  commit is already on the branch, so finish with a direct forge merge once CI
-  is green.
+- **"close: no ticket found" on a retry.** If the claimed ticket is absent
+  from both `tickets/` and `tickets/closed/`, stop and inspect the branch and
+  claim before retrying. An already archived ticket with a `Closed:` header
+  is handled automatically: the script skips closing it again.
 - **"auto-merge is unavailable and N check(s) are pending".** The close commit
   is already pushed and the script did not wait. Ask `erg-pr-status` at the
   next step; once the checks are done and green, re-run the script (a re-run
   after the close commit adds no second close) or finish with a direct forge
   merge. Do not loop on the status command.
-- **Empty rollup on a repo with no checks.** The script merges directly after
-  one read when the base has no required checks (legacy protection and rulesets
-  both inspected when available); with known required checks it refuses instead.
-  If an inspection endpoint returns HTTP 403 (including permission or plan
-  restrictions), it
-  validates the other endpoint and attempts an ordinary, non-admin merge when
-  no known required checks prevent it. GitHub enforces any unseen requirements;
-  a forge refusal is reported and the pushed ticket close remains retryable.
-  Other inspection errors, partial response pages before a denial, and malformed
-  successful data still refuse. This retry applies to a forge refusal after the
-  close was pushed, rather than the separate `close: no ticket found` symptom.
+- **Empty rollup and unavailable requirement inspection.** With a mergeable
+  PR and an explicit empty rollup, the script inspects legacy protection and
+  effective rules. Known required checks refuse. HTTP 403 (including permission
+  or plan restrictions) permits an ordinary merge attempt without `--admin`
+  after validating the other endpoint. This delegates unseen requirements to
+  the forge's ordinary enforcement, including its configured actor permissions.
+  The script adds no bypass. Other API errors, partial response pages,
+  unexpected denial bodies, and malformed successful data still refuse.
+  If the forge refuses, its error is reported and the close commit stays pushed.
+  Once the blocking requirement is resolved, re-run `erg-pr-merge N`; an
+  archived closed ticket is skipped, so the retry adds no second close commit.
 - **"must run from PR branch" after a fast-forward.** HEAD is detached after
   `merge --ff-only`: `git checkout <branch>`, then retry.
 - **Force-push denied, branch already pushed.** Rebasing rewrites the branch's
