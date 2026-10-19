@@ -12,6 +12,8 @@ Author: Minh Ha-Duong
 2026-10-19T10:05Z reviewer review-fix Applied the round-1 batch: default preflight preserves `.panel` while `.tmp` exists until removal-mode citation coverage runs; hunt re-registers after handed-over branch setup; Roar and molt document retention and pending outcomes. Removed the prose-only hunt test; behavioral registration controls remain. Restic host criterion and own-reviewed-PR criterion remain unchecked; Padme/Doudou host evidence is pending.
 2026-10-19T10:07Z reviewer review-fix-validation `make check` passed (1,742 passed, 3 skipped); `make lint` passed (186 passed); Roar close-and-clean shell controls passed; ticket validation and `git diff --check` passed. Host-specific restic validation and round-2 review remain pending.
 
+2026-10-19T11:40Z reviewer note Final source validation: 1749 passed, 3 skipped; lint 186 passed; Padme local CI on 208c3bff passed all 10 jobs with no skips. Rebased onto current main at 57fef96c; code safety review remains clear. Proposed host exclusions passed isolated controls, but actual deployment is blocked on explicit Padme destination approval and Doudou interactive sudo.
+
 --- body ---
 ## Context
 
@@ -34,16 +36,31 @@ Implement the author's adopted Design 2 from `docs/discussions/2026-10-14-1095-d
 
 ### Restic rollout evidence and control recipe
 
-Host deployment is outside this harness worktree. The inspected Padme restic
-exclude source is `/etc/restic/excludes.txt` (installed from
-`tools/restic-excludes.txt`); it currently lacks a `.tmp` directory rule. The
-active backup roots include the operator's home directory, `/data`, and `/etc`. Doudou could
-not be reached for inspection; its previously recorded backup mechanism is a
-separate `snapshot.sh`/`EXCLUDES` setup, so restic status there is unknown.
-Neither host is marked verified or changed by this ticket.
+Host deployment is outside this harness worktree. Padme's active
+`/etc/restic/excludes.txt` links to the Padme repository's
+`tools/restic-excludes.txt`. The prepared one-line `.tmp` exclusion is commit
+`bbb064f` in that repository. Actual restic 0.16.4 controls against an isolated
+local repository showed that the baseline includes both ordinary and `.tmp`
+fixture files; the proposed exclusion retains the ordinary file and excludes
+`.tmp`. The repository was unchanged and no snapshots were created. This
+validates the proposed configuration, not an active deployment.
 
-After the host owner adds a directory-component rule ` .tmp/ ` (without the
-spaces) to that host's existing exclude file, make an isolated fixture with
+Doudou was reached and its actual mechanism is Btrfs snapshots through
+`/usr/local/sbin/snapshot.sh`, not restic. A prepared patch removes `.tmp`
+directories only from the new snapshot before sealing it read-only. It applies
+to the inspected installed script and passes `bash -n`. Fixture controls retain
+the live source, ordinary snapshot data and an outside symlink target while
+removing nested snapshot `.tmp` content. No production snapshot was run.
+
+Deployment remains pending: automatic approval review rejected the Padme push
+for insufficient explicit authorization of the external destination; Doudou
+requires interactive sudo authentication. Neither actual host configuration
+has changed. A single clarification asks for explicit Padme authorization and
+the Doudou installation route. Local prepared evidence is
+`/tmp/1095-restic-validation.json`, `/tmp/1095-doudou-host-validation.txt`
+and `/tmp/1095-host-deployment-evidence.md`; these local artifacts are not
+claimed as durable installed-host verification.
+After the host owner adds a directory-component rule `.tmp` to that host's existing exclude file, make an isolated fixture with
 `fixture/project/.tmp/control.bin` and `fixture/project/control.bin`, then run
 the host's normal restic environment against the fixture using the actual
 exclude file:
