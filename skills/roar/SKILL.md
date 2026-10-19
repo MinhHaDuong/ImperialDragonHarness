@@ -308,17 +308,23 @@ worktree go once the branch is pushed and auto-merge is armed.
        open with auto-merge armed. It then syncs local `main`, best effort.
        `PREFLIGHT: DIRTY` → commit (or `$IDH_ROOT/scripts/worktree-salvage.sh`)
        and re-run; the preflight removes only `.panel/` and `build/panel-head/`
-       review scratch and refuses every other uncommitted file, including an
-       uncommitted ticket draft (tickets 0174, 0948).
+       review scratch when no `.tmp/` exists, and refuses every other
+       uncommitted file, including an uncommitted ticket draft (tickets 0174,
+       0948). If `.tmp/` exists, ordinary preflight preserves `.panel/` verdicts
+       until the citation-aware removal check has run.
 
     b. `EXIT: READY` → `cd` to the main checkout, then run the `after-exit`
        command the report prints (run as `"$ROAR_DIR/close-and-clean.sh" …`;
        the READY line prints it bare), adding step 10's remote target.
-       `after-exit --remove-worktree` unlocks the tree (hunt locks it) and
-       runs `git worktree remove`. Git refuses a tree with modified or
-       untracked files, and the branch survives removal, so no commit is
-       lost; ignored files are deleted with the tree, as with any
-       `git worktree remove` (scan for them: ticket 1095). Never `--force`.
+       `after-exit --remove-worktree` runs the removal-mode `.tmp/` gate before
+       unlocking the tree (hunt locks it) and running `git worktree remove`.
+       The gate requires merged ancestry and clear, readable citation coverage
+       across PR bodies, branch commits, and verdicts. A citation, unreadable
+       source, or uncertain ancestry retains `.tmp/` and the worktree; report
+       `KEEP-PENDING` with the reason. A clear gate prints `.tmp/` size before
+       removal. Git refuses a tree with modified or untracked files, and the
+       branch survives removal, so no commit is lost; ignored files are deleted
+       with the tree. Never `--force`.
        An armed bundle is named in step 11 as pending forge integration; it
        does not block the `/clear` verdict, and a later roar reports its
        merge request if a check fails.

@@ -110,7 +110,10 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 4. In a handed-over worktree, create or checkout the ticket branch (step 3 already made it otherwise):
    ```bash
    git switch -c t$ARGUMENTS-short-description
+   python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" register "$W"
    ```
+   Registration is idempotent; run it after branch setup for both newly
+   created and handed-over worktrees.
 5. Read the files listed in **Relevant files**.
 6. Write the first test from the **Test** section of the ticket.
 7. Run `make check-fast` — confirm the test fails.

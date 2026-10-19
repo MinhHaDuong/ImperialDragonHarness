@@ -80,9 +80,13 @@ Run full repo housekeeping and act on every finding.
    (lock = in use, mirroring step 0; only a dead-pid harness lock is
    unlocked, so the rails decide), any
    tree with uncommitted changes other than `.panel/` and `build/panel-head/`
-   review scratch, and the one it runs from. After the live/lock checks it
-   purges only those two scratch paths, then reports and retains every other
-   WIP file by name (ticket 0948). It never `rm -rf`s a whole worktree and
+   review scratch, and the one it runs from. Before clearing review scratch,
+   each candidate with `.tmp/` must pass the merged-ancestry and readable
+   citation gate across PR bodies, branch commits, and verdicts. A hit or
+   unknown source retains `.tmp/` and the worktree as pending; eligible removal
+   reports `.tmp/` size first. `.tmp/` is never purged independently. After
+   that gate it purges only the two review-scratch paths, then reports and
+   retains every other WIP file by name (ticket 0948). It never `rm -rf`s a whole worktree and
    stays silent when there is nothing to report — but it also **reports
    (never removes) "husk" dirs** under `.claude/worktrees/` that are no longer
    registered worktrees (a session base cwd deregistered mid-session), so a
@@ -194,7 +198,7 @@ Run full repo housekeeping and act on every finding.
      ```
    - **Worktree guard**: if the branch is prefixed with `+` in `git branch` output, a
      worktree is checked out on it. Skip if the worktree is dirty (uncommitted changes).
-     If the worktree is clean, run `"$IDH_ROOT/scripts/worktree-exit-preflight.sh" --removal --branch <branch> <path>` first. If it blocks, retain the worktree and report the missing evidence or citation. Remove only after it passes.
+     If the worktree is clean, run `"$IDH_ROOT/scripts/worktree-exit-preflight.sh" --removal --branch <branch> <path>` first. When `.tmp/` exists, this gate requires merged ancestry and clear, readable citation coverage across PR bodies, branch commits, and verdicts, then prints its size before removal. A citation hit, unreadable source, or uncertain ancestry keeps `.tmp/` and the worktree; report it as pending with the reason. `.tmp/` is never separately purged. Remove the worktree only after the gate passes.
    - **Safe delete**: use `git branch -d <branch>` (not `-D`) — this fails safely if
      the branch has unmerged commits, providing a final safety net.
 

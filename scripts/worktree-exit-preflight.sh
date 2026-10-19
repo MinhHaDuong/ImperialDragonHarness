@@ -38,9 +38,11 @@ fi
 
 # `.tmp/` is ignored by common Git metadata, so status alone cannot protect it.
 # Inspect it before any legacy review-scratch cleanup; never delete it here.
+preserve_panel=0
 if [ -e "$root/.tmp" ] || [ -L "$root/.tmp" ]; then
     mode=preflight
     [ "$removal" -eq 0 ] || mode=removal
+    [ "$removal" -eq 1 ] || preserve_panel=1
     args=()
     [ -z "$branch" ] || args+=(--branch "$branch")
     if ! python3 "$(dirname "$0")/worktree-tmp-guard.py" "$mode" "$root" "$root" "${args[@]}"; then
@@ -62,7 +64,7 @@ tracked_base=$(git -C "$path" ls-files -- build/panel-head 2>/dev/null) || {
 
 # Review reports and the temporary base checkout are command-owned scratch.
 # Remove only these named paths, then apply the original complete status gate.
-if [ -z "$tracked_panel" ]; then
+if [ "$preserve_panel" -eq 0 ] && [ -z "$tracked_panel" ]; then
     rm -rf -- "$path/.panel"
 fi
 if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then

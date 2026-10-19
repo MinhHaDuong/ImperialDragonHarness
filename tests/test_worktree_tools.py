@@ -706,6 +706,40 @@ def test_preflight_reports_ignored_tmp_without_purging_it(origin):
     assert (wt / ".tmp" / "cache.bin").exists()
 
 
+def test_preflight_preserves_cited_panel_until_removal_gate(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-preflight-cited-panel")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "evidence.txt").write_text("evidence\n")
+    verdict = wt / ".panel" / "42" / "review.md"
+    verdict.parent.mkdir(parents=True)
+    verdict.write_text("This review cites `.tmp/evidence.txt`.\n")
+    make_branch_gone(remote, primary, "agent-preflight-cited-panel")
+
+    preflight = _preflight(wt)
+    assert preflight.returncode != 0
+    assert verdict.exists()
+
+    fake_bin = primary.parent / "fake-gh-bin"
+    fake_bin.mkdir()
+    gh = fake_bin / "gh"
+    gh.write_text("#!/bin/sh\nprintf '%s\\n' '[]'\n")
+    gh.chmod(0o755)
+    env = child_env()
+    env["PATH"] = f"{fake_bin}:{env.get('PATH', '')}"
+    removal = subprocess.run(
+        [str(SCRIPTS / "worktree-exit-preflight.sh"), "--removal",
+         "--branch", "agent-preflight-cited-panel", str(wt)],
+        capture_output=True, text=True, env=env,
+    )
+
+    assert removal.returncode != 0
+    assert "citation found" in removal.stdout.lower()
+    assert verdict.exists()
+    assert (wt / ".tmp" / "evidence.txt").exists()
+
+
 def test_preflight_blocks_tracked_tmp_even_if_worktree_is_clean(origin):
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-preflight-tracked-tmp", dirty=False)
