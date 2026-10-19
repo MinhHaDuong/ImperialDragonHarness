@@ -13,7 +13,8 @@ oversize context, uncleared content, or a cross-family need).
 |---|---|---|---|
 | Search, extraction, triage, bulk reading | `haiku` | Anthropic | under 100K prompt tokens |
 | Mechanical checks, smoke runs | `haiku` | Anthropic | cheap to verify |
-| Ordinary implementation | `sonnet` | Anthropic | default coder |
+| Ordinary implementation, interactive | `sonnet` @high | Anthropic | default coder; never @medium for code |
+| Implementation run unattended | `haiku` @high | Anthropic | provisional (arena 1098): Opus-level, ~1/8 cost, slow |
 | Ordinary review | `sonnet` | Anthropic | same family: replication, not independence |
 | Hard implementation, cross-cutting judgment | `opus` | Anthropic | |
 | One-shot deep problem, adversarial judgment | `fable` | Anthropic | never orchestration or bulk |
@@ -39,10 +40,23 @@ oversize context, uncleared content, or a cross-family need).
   multiplies by 5 above that. Quality tied with Luna on the arena sample
   (10 of 10 tickets, n = 10, not a ranking). If the task exceeds 100K prompt
   tokens, split it, or promote to `sonnet` and state why in the launch line.
-- Ordinary implementation and review: `sonnet`.
+- Ordinary implementation and review: `sonnet` at effort high.
+- Unattended implementation (batches, overnight): `haiku` at effort high.
+  On the arena 1098 sweep (ten coding tickets, one run per cell) it matched
+  `opus` @medium (mean 22.6 vs 24.5/30, paired median difference 0) at
+  about one eighth of the cost, but took about 6 minutes per ticket, half of
+  it running tests.
+- Effort for code: high, not medium. Haiku and Sonnet both lost about 4-5
+  points out of 30 at medium (they stop verifying); xhigh added nothing over
+  high for Haiku at about 4x the cost. Opus defaults to medium: keep it there.
+- Setting effort from Claude Code: the `Agent` call has no effort parameter.
+  Use an agent definition whose frontmatter pins `effort:`, or `Workflow`
+  `agent()` with `opts.effort`. An unpinned child runs at the model's API
+  default (medium for Haiku and Opus, high for Sonnet).
 - Hard implementation, cross-cutting judgment: `opus`.
 - One-shot deep problems and adversarial judgment: `fable`. Not for
-  orchestration or bulk work.
+  orchestration or bulk work: as a coding worker at @low it matched `opus`
+  @medium at 1.7x the cost (arena 1098).
 - Out of Claude Code, Luna (`codex exec -m gpt-6-luna`) is the cheap
   alternative when a different family is wanted.
 

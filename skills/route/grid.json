@@ -1,6 +1,6 @@
 {
   "_comment": "Cumulative arena identities; preliminary 0188 excluded. Model failures score 0/30 with consumed time/cost retained. Infrastructure failures and incomplete panels stay pending. Numeric fields are refreshed from the arena directory by $ARENA_ROOT/scripts/tournament-analysis.py --grid (earlier arms: arena:docs/2026-10-06-tournament-corrected-summary.json; arm n, Haiku 5.5: arena:docs/tournament-graphs/haiku55-results.csv). `family` is the model lineage, independent of provider or door. Local electricity converted at 1.08 USD/EUR; hosted API USD. Per-arm coverage and role notes: grid-coverage.json, keyed by arm.",
-  "updated": "2026-10-15",
+  "updated": "2026-10-19",
   "grid": [
     {
       "model": "claude-opus-5-5",
@@ -167,6 +167,24 @@
       "quality_metric": "Median over tickets of arithmetic-corrected panel sums /30 (legacy routing-grid scale).",
       "time": "14.49 min (flagged mixed series; descriptive)",
       "cost": "0.0360 USD (600 W estimate)"
+    },
+    {
+      "model": "claude-haiku-5-5",
+      "effort": "high",
+      "quality": "24.50 (provisional, failures=0/10, tariff-applied)",
+      "time": "5.61 min",
+      "cost": "0.0709 USD",
+      "arm": "hh",
+      "family": "Anthropic"
+    },
+    {
+      "model": "claude-sonnet-5-5",
+      "effort": "high",
+      "quality": "21.25 (provisional, failures=0/10, tariff-applied)",
+      "time": "2.94 min",
+      "cost": "0.3597 USD",
+      "arm": "sh",
+      "family": "Anthropic"
     }
   ],
   "clusters": {
@@ -219,5 +237,6 @@
     "GPU state",
     "provider rate limits"
   ],
-  "cycle3_note": "The two current-work candidate rows use median corrected panel sums /30 for compatibility. The author-facing mean of seat medians /10 is in grid-coverage.json. Legacy rows and cluster assignments are unchanged; cycle3 does not revalidate their old arithmetic or establish a universal cross-model ranking."
+  "cycle3_note": "The two current-work candidate rows use median corrected panel sums /30 for compatibility. The author-facing mean of seat medians /10 is in grid-coverage.json. Legacy rows and cluster assignments are unchanged; cycle3 does not revalidate their old arithmetic or establish a universal cross-model ranking.",
+  "sweep_1098_note": "Rows hh and sh are author-selected current-work candidates from arena ticket 1098 (2026-10-18): one run per cell on the ten cycle-3 tickets, Pi 1.3.0 pin, same panel, medians of tariff-applied panel sums /30, provisional until 1098 closes. Legacy Anthropic rows d/d2/g/n carry reported (pre-tariff) medians until 1093 ships (corrected n 19.5, g 18.75, d2 20.25, d 26.5). Full eight-arm evidence stays in arena: docs/2026-10-18-1098-results.json."
 }
