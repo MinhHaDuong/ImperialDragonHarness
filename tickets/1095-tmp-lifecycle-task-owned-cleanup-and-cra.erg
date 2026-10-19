@@ -10,6 +10,7 @@ Author: Minh Ha-Duong
 2026-10-14T17:37Z reviewer note Doudou measured after it came back up (docs/discussions/2026-10-14-1095-seats/d3-doudou.md): attribution 5/6 by path, 6/6 with tilde variants; 2.9G of task temporaries in ~/.cache. Design 3 mapped against the ticket's lifecycle points.
 2026-10-14T17:42Z reviewer note Author decided 2026-10-14 (recorded in docs/discussions/2026-10-14-1095-design.md, Answers): Design 3 settled; Pi no-session children listed as unattributed; Design 2 adopted now with blocking citation check and crashed trees keeping .tmp/; session-start disk warning plus restic .tmp/ exclude; padme t2093/t2094 passed to climate-finance-het by the author. Implementation child tickets still to be filed.
 2026-10-19T09:19Z reviewer 2026-10-19T09:19Z Minh Ha-Duong note The initial 00:00Z child-tracker timestamp was a placeholder; this correction records the actual implementation start date/time while preserving the original log entry.
+2026-10-19T12:01Z reviewer Codex note Added completed ticket 1120 to the child tracker; parent 1095 remains open for union review of report and lifecycle children.
 
 --- body ---
 ## Context
@@ -31,7 +32,7 @@ context: closed 0854 (session scratch), 0300/0303 (temporary worktree scope).
 - Design 3 report-only scan/history attribution at roar and lair; Pi no-session children remain unattributed.
 - Design 2 worktree-owned `.tmp/` adopted, with fail-closed citation checks; crashed/unmerged trees retain scratch.
 - Session-start low-disk warning for `/tmp` and `/home`, and restic `.tmp/` exclude with host dry-run.
-- Child implementation contracts: 1118 and 1119 (Blocked-by 1118).
+- Child implementation contracts: 1118 and 1119 (Blocked-by 1118), plus 1120 for bounded report profiling and honest partial attribution.
 
 ## Discussion archive
 

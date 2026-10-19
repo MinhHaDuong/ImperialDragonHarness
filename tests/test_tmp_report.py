@@ -55,6 +55,40 @@ def test_history_attribution_supports_home_spellings_and_redacts_secrets(tmp_pat
     assert "tmp-t2043" in matches[0]["excerpt"]
 
 
+def test_path_matcher_preserves_flat_alternation_leftmost_longest_matches():
+    candidates = {
+        "/tmp/a": "short",
+        "/tmp/a-long": "long",
+        "/tmp/ab": "sibling",
+        "$HOME/.cache/a": "dollar-home",
+        "~/.cache/a": "tilde-home",
+    }
+    flat = report.re.compile(
+        "|".join(report.re.escape(spelling) for spelling in sorted(candidates, key=len, reverse=True))
+    )
+    factored = report._path_matcher(candidates)
+    samples = (
+        "/tmp/a-long /tmp/a /tmp/ab",
+        "prefix /tmp/ab then /tmp/a-longest",
+        "$HOME/.cache/a and ~/.cache/a",
+        "/tmp/ab/tmp/a-long",
+        "no candidate here",
+    )
+
+    assert [
+        [(match.span(), match.group()) for match in flat.finditer(text)] for text in samples
+    ] == [
+        [(match.span(), match.group()) for match in factored.finditer(text)] for text in samples
+    ]
+
+
+def test_path_matcher_handles_long_valid_path_spellings():
+    spelling = "/tmp/" + "x" * 1200
+    matcher = report._path_matcher({spelling: "candidate"})
+
+    assert matcher.search("before " + spelling + " after").group() == spelling
+
+
 def test_disk_warning_uses_free_fraction_and_names_both_mounts():
     result = report.disk_warnings({
         "/tmp": {"total": 100, "free": 5},
@@ -97,6 +131,68 @@ def test_codemeta_and_pi_session_records_carry_identity_to_later_events(tmp_path
     )[str(target)]
     assert {match["session"] for match in found} == {"codex-thread", "pi-session"}
     assert all("arguments" not in match["excerpt"] for match in found)
+
+
+def test_attribution_fast_path_keeps_escaped_path_matches_and_session_identity(tmp_path):
+    target = tmp_path / ".cache" / "tmp-escaped"
+    history = tmp_path / "history.jsonl"
+    encoded_target = str(target).replace("/", r"\u002f")
+    history.write_text(
+        json.dumps({"message": "unrelated record"}) + "\n"
+        + '{"sessionId":"escaped-session","message":"see ' + encoded_target + '"}\n'
+    )
+
+    found = report.attribute_histories(
+        [{"path": str(target), "mtime": 0}], [history], home=tmp_path
+    )[str(target)]
+
+    assert len(found) == 1
+    assert found[0]["session"] == "escaped-session"
+    assert found[0]["evidence"] == "mention"
+
+
+def test_attribution_fast_path_preserves_nested_identity_and_pid_shapes(tmp_path):
+    target = tmp_path / "tmp-identity-shapes"
+    history = tmp_path / "history.jsonl"
+    history.write_text(
+        json.dumps({"metadata": {"id": "metadata-owner"}}) + "\n"
+        + json.dumps({"session_meta": {"id": "session-meta-owner"}}) + "\n"
+        + json.dumps({"sessionMeta": {"id": "camel-owner"}}) + "\n"
+        + json.dumps({"pid": 123}) + "\n"
+        + json.dumps({"payload": {"id": "payload-owner"}}) + "\n"
+        + json.dumps({"message": f"see {target}"}) + "\n"
+    )
+
+    found = report.attribute_histories(
+        [{"path": str(target), "mtime": 0}], [history], home=tmp_path
+    )[str(target)]
+
+    assert found[0]["session"] == "payload-owner"
+    assert found[0]["pid"] == 123
+
+
+def test_attribution_budget_returns_positive_evidence_and_incomplete_status(tmp_path):
+    target = tmp_path / "tmp-mentioned"
+    history = tmp_path / "history.jsonl"
+    history.write_text(
+        json.dumps({"sessionId": "owner"}) + "\n"
+        + json.dumps({"message": f"see {target}"}) + "\n"
+        + "".join(json.dumps({"message": "unrelated"}) + "\n" for _ in range(126))
+    )
+    os.utime(history, (100, 100))
+    clock_values = iter((0.0, 0.0, 2.0))
+    status = {}
+
+    found = report.attribute_histories(
+        [{"path": str(target), "mtime": 0}], [history], home=tmp_path,
+        scan_status=status, time_budget_seconds=1.0, clock=lambda: next(clock_values),
+    )[str(target)]
+
+    assert [match["evidence"] for match in found] == ["mention"]
+    assert status == {
+        "complete": False, "files_scanned": 0, "files_total": 1,
+        "partial_file": True, "unreadable_files": 0, "budget_seconds": 1.0,
+    }
 
 
 def test_roar_scope_keeps_descendant_agents_and_excludes_reporter():
@@ -151,10 +247,11 @@ def test_codex_roar_scope_reads_old_ancestry_metadata_but_bounds_old_citations(t
     )
     os.utime(current_history, (100, 100))
     ancestry = {}
+    scan_status = {}
 
     found = report.attribute_histories(
         [{"path": str(target), "mtime": 50}], [old_history, current_history],
-        home=tmp_path, session_parents=ancestry,
+        home=tmp_path, session_parents=ancestry, scan_status=scan_status,
     )[str(target)]
     scoped = report.scope_history(
         found, "roar", "owner", "reporter", session_parents=ancestry,
@@ -163,6 +260,8 @@ def test_codex_roar_scope_reads_old_ancestry_metadata_but_bounds_old_citations(t
     assert ancestry == {"child": "owner", "grandchild": "child"}
     assert [item["session"] for item in scoped] == ["grandchild"]
     assert all(item["file"] != str(old_history) for item in found)
+    assert scan_status["complete"] is True
+    assert scan_status["files_scanned"] == scan_status["files_total"] == 2
 
 
 def test_build_report_scopes_grandchild_through_old_no_hit_metadata_and_excludes_reporter(tmp_path, monkeypatch):
@@ -246,6 +345,36 @@ def test_codex_creation_requires_matching_call_id_and_explicit_zero_exit(tmp_pat
     assert created["session"] == "creator"
     assert created["call_line"] == 2
     assert created["line"] == 4
+
+
+def test_native_creation_lookup_selects_exact_candidate_among_many(tmp_path):
+    target = tmp_path / "tmp-owned"
+    sibling = tmp_path / "tmp-owned-sibling"
+    history = tmp_path / "codex.jsonl"
+    history.write_text(
+        json.dumps({"type": "session_meta", "payload": {"id": "creator"}}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {
+            "type": "function_call", "call_id": "call-exact", "name": "exec_command",
+            "arguments": json.dumps({"cmd": f"mkdir -p {target}"}),
+        }}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {
+            "type": "function_call_output", "call_id": "call-exact",
+            "output": {"exit_code": 0},
+        }}) + "\n"
+    )
+
+    found = report.attribute_histories(
+        [
+            {"path": str(target), "mtime": 0},
+            {"path": str(sibling), "mtime": 0},
+            *({"path": str(tmp_path / f"candidate-{index}"), "mtime": 0} for index in range(100)),
+        ],
+        [history],
+        home=tmp_path,
+    )
+
+    assert [item["evidence"] for item in found[str(target)]].count("created") == 1
+    assert not any(item["evidence"] == "created" for item in found[str(sibling)])
 
 
 def test_claude_creation_requires_native_result_id_and_exit_zero(tmp_path):
@@ -373,6 +502,36 @@ def test_build_report_returns_after_enriching_candidates(tmp_path, monkeypatch):
     assert result["candidates"][0]["path"] == str(root / "candidate")
 
 
+def test_partial_history_report_marks_missing_attribution_unknown(tmp_path, monkeypatch):
+    root = tmp_path / "tmp"
+    (root / "candidate").mkdir(parents=True)
+    (root / "candidate" / "file").write_bytes(b"x" * 1024)
+    monkeypatch.setattr(report, "_default_roots", lambda _repo: [root])
+    monkeypatch.setattr(report, "history_files", lambda *_a, **_k: ([], []))
+
+    def partial_attribution(candidates, _files, _home, _unreadable, _parents, scan_status, time_budget_seconds):
+        scan_status.update({
+            "complete": False, "files_scanned": 1, "files_total": 2,
+            "partial_file": False, "unreadable_files": 0,
+            "budget_seconds": time_budget_seconds,
+        })
+        return {item["path"]: [] for item in candidates}
+
+    monkeypatch.setattr(report, "attribute_histories", partial_attribution)
+    monkeypatch.setattr(report, "_references", lambda candidates, _repo: {
+        item["path"]: {"git_log": False, "pull_requests": [], "verdict_files": []}
+        for item in candidates
+    })
+    monkeypatch.setattr(report, "disk_readings", lambda: {})
+    monkeypatch.setattr(report, "infer_test_provenance", lambda *_a: None)
+
+    result = report.build_report("codex", "roar", "owner", tmp_path, floor_bytes=1)
+
+    assert result["history_scan"]["complete"] is False
+    assert result["candidates"][0]["attribution"] == "unknown"
+    assert "unmatched candidates and Roar ancestry are unknown" in report._format(result)
+
+
 def test_build_report_surfaces_unreadable_discovered_history_file(tmp_path, monkeypatch):
     root = tmp_path / "tmp"
     (root / "candidate").mkdir(parents=True)
@@ -398,6 +557,27 @@ def test_build_report_surfaces_unreadable_discovered_history_file(tmp_path, monk
     result = report.build_report("codex", "lair", None, str(tmp_path), floor_bytes=1)
 
     assert result["history_unreadable"] == [str(history)]
+
+
+def test_build_report_marks_unreadable_history_root_as_incomplete(tmp_path, monkeypatch):
+    root = tmp_path / "tmp"
+    (root / "candidate").mkdir(parents=True)
+    (root / "candidate" / "file").write_bytes(b"x" * 1024)
+    missing_history_root = tmp_path / "unreadable-history-root"
+    monkeypatch.setattr(report, "_default_roots", lambda _repo: [root])
+    monkeypatch.setattr(report, "history_files", lambda *_a, **_k: ([], [missing_history_root]))
+    monkeypatch.setattr(report, "_references", lambda candidates, _repo: {
+        item["path"]: {"git_log": False, "pull_requests": [], "verdict_files": []}
+        for item in candidates
+    })
+    monkeypatch.setattr(report, "disk_readings", lambda: {})
+    monkeypatch.setattr(report, "infer_test_provenance", lambda *_a: None)
+
+    result = report.build_report("codex", "lair", None, tmp_path, floor_bytes=1)
+
+    assert result["history_scan"]["complete"] is False
+    assert result["candidates"][0]["attribution"] == "unknown"
+    assert "unreadable=1" in report._format(result)
 
 
 def test_scan_aggregates_worktree_tmp_and_deduplicates_nested_roots(tmp_path):
