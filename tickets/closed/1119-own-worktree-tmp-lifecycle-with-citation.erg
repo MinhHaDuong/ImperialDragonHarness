@@ -2,6 +2,7 @@
 Title: Own worktree .tmp lifecycle with citation gate and restic exclusion
 Created: 2026-10-19
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1457
 
 --- log ---
 2026-10-19T00:00Z Minh Ha-Duong created Child implementation contract for 1095 Design 2 safeguards
@@ -15,6 +16,7 @@ Author: Minh Ha-Duong
 2026-10-19T11:40Z reviewer note Final source validation: 1749 passed, 3 skipped; lint 186 passed; Padme local CI on 208c3bff passed all 10 jobs with no skips. Rebased onto current main at 57fef96c; code safety review remains clear. Proposed host exclusions passed isolated controls, but actual deployment is blocked on explicit Padme destination approval and Doudou interactive sudo.
 
 2026-10-19T11:49Z reviewer note Padme host PR 108 merged at aeb0acd; installed restic exclusion control passed with ordinary fixture retained, .tmp excluded, unchanged isolated repository and zero snapshots. Doudou identified Btrfs mechanism remains unchanged by explicit author reservation; no universal backup-host verification is claimed.
+2026-10-19T11:59Z reviewer closed — autoclosed — PR #1457
 
 --- body ---
 ## Context
