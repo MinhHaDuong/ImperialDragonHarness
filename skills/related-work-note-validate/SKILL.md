@@ -1,4 +1,5 @@
 ---
+category: research
 name: related-work-note-validate
 description: "Re-resolve every DOI/URL/eprint in a related-work-note's Bibliography. Append a provenance line to Methods. One-line verdict to stdout (PASS / WARN / FAIL)."
 disable-model-invocation: false

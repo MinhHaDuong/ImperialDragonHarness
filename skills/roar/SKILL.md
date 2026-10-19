@@ -1,4 +1,5 @@
 ---
+category: session
 name: roar
 description: "Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches."
 disable-model-invocation: false

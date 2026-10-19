@@ -1,4 +1,5 @@
 ---
+category: runtime-review
 name: review-pr-prose
 description: "Simulated peer review panel for manuscript prose. Spins discipline-specific agents for multi-perspective review."
 disable-model-invocation: false

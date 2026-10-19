@@ -1,4 +1,5 @@
 ---
+category: runtime-review
 name: route
 description: "Model routing: performance grid, route cache, triage, clusters. The single home for which model serves which work."
 disable-model-invocation: false
