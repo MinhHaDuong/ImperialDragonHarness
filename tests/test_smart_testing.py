@@ -1,5 +1,6 @@
 """Portable SQL reference and conservative external-input invalidation."""
 import json
+import hashlib
 import re
 import shutil
 import sys
@@ -411,7 +412,7 @@ def test_shared_fixture_and_early_conftest_inputs_invalidate_all_consumers(smart
 
 
 @pytest.mark.integration
-def test_external_entry_uses_workload_discovery_and_own_scripts_package(smart_repository):
+def test_external_entry_uses_workload_discovery_and_own_scripts_package(smart_repository, tmp_path):
     root = smart_repository
     (root / 'checks').mkdir()
     (root / 'tests/test_case.py').rename(root / 'checks/test_case.py')
@@ -421,17 +422,27 @@ def test_external_entry_uses_workload_discovery_and_own_scripts_package(smart_re
     test = root / 'checks/test_case.py'
     test.write_text(test.read_text() + '\nfrom scripts.workload import VALUE\n'
                     'def test_own_scripts():\n    assert VALUE == "workload"\n')
-    entry = Path(__file__).resolve().parents[1] / 'scripts/smart_testing.py'
+    frozen = tmp_path / 'frozen-harness'
+    frozen.mkdir()
+    for source in (Path(__file__).resolve().parents[1] / 'scripts').glob('smart_testing*.py'):
+        shutil.copy2(source, frozen / source.name)
+    before = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in frozen.iterdir()}
+    entry = frozen / 'smart_testing.py'
     command = [sys.executable, str(entry), '--root', str(root)]
     env = child_env()
     for key in ('TESTMON_DATAFILE', 'PYTEST_ADDOPTS', 'PYTEST_PLUGINS'):
         env.pop(key, None)
+    env.pop('PYTHONDONTWRITEBYTECODE', None)
+    env.pop('PYTHONPYCACHEPREFIX', None)
     def run(*args):
         return subprocess.run(command + list(args), cwd=root, env=env,
                               capture_output=True, text=True, timeout=40)
     learned = run('--refresh')
     assert learned.returncode == 0, learned.stdout + learned.stderr
     assert '2 passed' in learned.stdout
+    after = {p.relative_to(frozen).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
+             for p in frozen.rglob('*') if p.is_file()}
+    assert after == before, 'The selected frozen harness must remain byte-for-byte unchanged.'
     _assert_unchanged(run())
     assert (root / '.smart-testing/testmon.db').exists()
     assert (root / 'tests/smart-testing/reference.json').exists()

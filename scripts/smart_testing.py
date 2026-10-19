@@ -16,7 +16,13 @@ import tempfile
 SPEC = importlib.util.spec_from_file_location(
     'idh_smart_testing_inputs', Path(__file__).with_name('smart_testing_inputs.py'))
 PLUGIN = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(PLUGIN)
+# Loading a helper must not write bytecode into an immutable harness snapshot.
+_BYTECODE_SETTING = sys.dont_write_bytecode
+sys.dont_write_bytecode = True
+try:
+    SPEC.loader.exec_module(PLUGIN)
+finally:
+    sys.dont_write_bytecode = _BYTECODE_SETTING
 SCOPE = PLUGIN.SCOPE
 changed_consumers = PLUGIN.changed_consumers
 load_state = PLUGIN.load_state
