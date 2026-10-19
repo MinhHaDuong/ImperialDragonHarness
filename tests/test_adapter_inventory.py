@@ -20,6 +20,7 @@ along with an unchanged support claim.
 
 import json
 import subprocess
+import sys
 
 import pytest
 from pathlib import Path
@@ -34,12 +35,25 @@ def inventory():
     return json.loads(INVENTORY.read_text())
 
 
-def collect_nodeids():
-    """All pytest nodeids in this suite, resolved once per run, normalized so
-    a function-level pointer matches its parametrizations (the inventory names
-    tests at function granularity; parametrization is the suite's business)."""
+def referenced_modules(doc):
+    return sorted({entry["test"].split("::", 1)[0]
+                   for entry in doc["assertions"]
+                   if entry["evidence_kind"] in ("static-test", "local-probe")})
+
+
+def collect_nodeids(doc):
+    """Collect only referenced modules; unrelated tests cannot affect coverage.
+
+    Keep real pytest discovery, including parametrization and collection hooks.
+    Normalize function pointers as the inventory names functions, not cases.
+    """
+    modules = referenced_modules(doc)
+    if not modules:
+        return set()
     out = subprocess.run(
-        ["python3", "-m", "pytest", "tests/", "--collect-only", "-q"],
+        [sys.executable, "-m", "pytest",
+         *(str(REPO / module) for module in modules), "--collect-only", "-q"],
+        cwd=REPO,
         capture_output=True, text=True, timeout=120, check=True,
         env=child_env(),
     ).stdout
@@ -79,7 +93,8 @@ def inconsistencies(doc, nodeids):
 
 @pytest.mark.integration  # collect_nodeids() runs a pytest --collect-only subprocess
 def test_every_assertion_is_covered():
-    problems = inconsistencies(inventory(), collect_nodeids())
+    doc = inventory()
+    problems = inconsistencies(doc, collect_nodeids(doc))
     assert problems == [], "uncovered or inconsistent inventory entries"
 
 
@@ -121,3 +136,29 @@ def test_no_vibe_behavioral_assertion_exists_yet():
         assert entry["harness"] != "vibe", (
             f"{entry['id']} claims Vibe behavior; no Vibe slice has run"
         )
+
+
+@pytest.mark.integration
+def test_collection_is_scoped_and_still_detects_a_removed_reference(tmp_path, monkeypatch):
+    """Unrelated broken tests cannot affect inventory; a broken pointer must."""
+    monkeypatch.setattr(sys.modules[__name__], "REPO", tmp_path)
+    (tmp_path / "pytest.ini").write_text("[pytest]\n")
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    target = tests / "test_referenced.py"
+    target.write_text(
+        "import pytest\n@pytest.mark.parametrize('value', [1, 2])\n"
+        "def test_present(value):\n    assert value\n"
+    )
+    (tests / "test_unrelated.py").write_text("this is invalid Python!\n")
+    doc = {"assertions": [{"id": "probe", "evidence_kind": "static-test",
+                           "test": "tests/test_referenced.py::test_present"}],
+           "canonical_sources": {}}
+    nodeids = collect_nodeids(doc)
+    assert inconsistencies(doc, nodeids) == []
+    target.write_text("def test_renamed():\n    pass\n")
+    assert any("does not exist" in problem
+               for problem in inconsistencies(doc, collect_nodeids(doc)))
+    target.unlink()
+    with pytest.raises(subprocess.CalledProcessError):
+        collect_nodeids(doc)

@@ -64,6 +64,11 @@ process reads: declare indirect inputs explicitly.
 Tests that depend on live services, installed external tools or Git history use
 `smart_always` and run on every invocation. Their module list is retained in the
 private state and portable reference. A successful refresh includes them too.
+The inventory check collects only modules named by its evidence pointers and
+records those modules and its collection helpers as file inputs. Seat-runner's
+source/stub tests are a separate cacheable case; its Git reference sweep and real
+container check remain live. The stub tests use a fixture aider installation,
+so their coverage does not depend on whether a developer installed aider.
 Changes to project pytest configuration invalidate the eligible suite. Shared
 fixtures and initial conftest reads are shared dependencies. An older cache or
 recorder scope is upgraded by learning all eligible tiers once. The pytest

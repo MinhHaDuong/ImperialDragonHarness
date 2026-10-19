@@ -77,6 +77,7 @@ three harnesses within nine days.
 
 - `static-test` — a unit test in `tests/test_perch_pilot.py`.
 - `local-probe` — the real CLI answered, offline and with **no model call**,
+  through Claude Code initialization, Codex prompt inspection or Pi command listing,
   under a negative control (clean profile: absent) and a positive one
   (installed: present). `tests/test_perch_discovery.py`; it skips when the CLI
   is not installed, so CI depends on no paid model and no mutable service.

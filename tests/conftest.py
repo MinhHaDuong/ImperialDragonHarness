@@ -3,6 +3,8 @@
 Cost markers describe runtime; these declarations describe cache eligibility.
 Normal pytest runs execute exactly the same tests with or without these marks.
 """
+import json
+
 import pytest
 
 
@@ -41,9 +43,9 @@ ALWAYS = {
     ('test_local_ci_negative_controls.py', 'test_every_guard_catches_its_violation'),
     ('test_ruff.py', 'test_ruff_version_satisfies_pinned_range'),
     ('test_track_changes_pdf.py', 'test_render_end_to_end'),
-    ('test_adapter_inventory.py', 'test_every_assertion_is_covered'),
     ('test_memory_v8_protocol.py', 'test_protocol_pins_historical_dream_prompt_blob'),
     *{('test_perch_discovery.py', name) for name in (
+        'test_a_clean_claude_profile_gains_perch_only_after_install',
         'test_a_clean_codex_profile_gains_perch_only_after_install',
         'test_a_clean_pi_profile_gains_perch_only_after_install',
         'test_pi_reads_perch_through_the_neutral_home_symlink',
@@ -58,13 +60,27 @@ def pytest_collection_modifyitems(items):
     for item in items:
         key = (item.path.name, getattr(item, 'originalname', item.name))
         inputs = MODULE_INPUTS.get(key[0], ()) + TEST_INPUTS.get(key, ())
+        if key == ('test_adapter_inventory.py', 'test_every_assertion_is_covered'):
+            inventory = 'adapters/pilot-support.json'
+            doc = json.loads((item.config.rootpath / inventory).read_text())
+            inputs += (inventory, 'tests/child_env.py', 'tests/tracked_tree.py',
+                       'adapters/perch.py',
+                       'scripts/skill_frontmatter.py', *doc['canonical_sources'].values(),
+                       *{entry['test'].split('::', 1)[0] for entry in doc['assertions']
+                         if entry['evidence_kind'] in ('static-test', 'local-probe')})
+        section = getattr(item, 'callspec', None)
+        section = section.params.get('section') if section else None
+        if key[0] == 'test_bash_suites.py' and section == 'deterministic':
+            inputs = ('tests/test_seat_runner.sh', 'skills/coaching/seat-runner.sh',
+                      'skills/coaching/seat-runner/**/*')
         if inputs:
             item.add_marker(pytest.mark.smart_inputs(*inputs))
         script = getattr(item, 'callspec', None)
         script = script.params.get('script') if script else None
-        git_case = script is not None and script.name in {
-            'test_benchmark_board.sh', 'test_seat_runner.sh',
-        }
+        git_case = script is not None and (
+            script.name == 'test_benchmark_board.sh'
+            or (script.name == 'test_seat_runner.sh' and section != 'deterministic')
+        )
         if key in ALWAYS or git_case:
             item.add_marker(pytest.mark.smart_always)
     yield

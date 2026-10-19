@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Tests for skills/coaching/seat-runner.sh — the ticket-0217 OS-contained reviewer seat.
 #
-# Two tiers, both in one suite (test_bash_suites.py runs it as one integration
-# subprocess, 120s budget):
+# Independently selectable sections: deterministic, references, containment.
+# No argument runs all sections; pytest selects each section separately.
+# Source/stub checks are cacheable; Git-index and container checks stay live.
+# Each pytest subprocess has a 120s budget:
 #   1. source-inspection checks (no podman) — flag presence, the network-deny
 #      posture (--network=none present, --network=host absent), the timeout
 #      wrapper, and that the relay/Containerfile artifacts exist. These catch a
@@ -71,6 +73,21 @@ assert_absent() {  # label needle haystack
     if [[ "$3" == *"$2"* ]]; then fail "$1 (found forbidden: $2)"; else pass "$1"; fi
 }
 
+finish() {
+    echo "Results: ${PASS} passed, ${FAIL} failed"
+    [ "$FAIL" -eq 0 ] || return 1
+    [ "$PASS" -gt 0 ] || return 77
+}
+
+check_deterministic() (
+    # Every podman invocation below is stubbed. A fixture aider installation
+    # makes the scrub tests run even on machines without an ambient aider.
+    mkdir -p "$WORK/aider-venv/bin"
+    : > "$WORK/aider-venv/pyvenv.cfg"
+    printf '#!/bin/sh\nexit 0\n' > "$WORK/aider-venv/bin/aider"
+    chmod +x "$WORK/aider-venv/bin/aider"
+    ln -s "$(command -v python3)" "$WORK/aider-venv/bin/python"
+    export PATH="$WORK/aider-venv/bin:$PATH"
 # ── tier 1: source inspection (no podman needed) ─────────────────────────────
 [ -f "$SR" ] || { echo "FAIL: skills/coaching/seat-runner.sh missing (rename not done)"; echo "Results: 0 passed, 1 failed"; exit 1; }
 SRC="$(cat "$SR")"
@@ -128,17 +145,6 @@ if command -v python3 >/dev/null; then
     fi
 fi
 [ -f "$CONTAINERFILE" ] && pass "Containerfile exists" || fail "Containerfile exists"
-
-# ── reference sweep: the old prototype name is gone outside tickets/ ──────────
-# This suite mentions the old name in its own sweep pattern; exclude it and the
-# append-only ticket history (which keeps the historical name deliberately).
-# Scoped to TRACKED files via git grep — immune to nested runtime worktrees
-# and other untracked staging dirs (e.g. leftover .claude/worktrees/ siblings
-# on a primary checkout) that a plain `grep -r .` would wander into.
-stale="$(git -C "$REPO_ROOT" grep -l "seat-runner-prototype" \
-    -- '*.sh' '*.md' '*.py' '*.yml' '*.json' \
-    2>/dev/null | grep -v -e '^tickets/' -e '^tests/test_seat_runner.sh$' || true)"
-if [ -z "$stale" ]; then pass "no seat-runner-prototype refs outside tickets/"; else fail "stale seat-runner-prototype refs: $stale"; fi
 
 # ── tier 2a: timeout behaviour (stubbed podman; no image needed) ─────────────
 if command -v python3 >/dev/null && command -v timeout >/dev/null; then
@@ -636,6 +642,25 @@ else
     echo "SKIP: python3 absent — reasoning-shape probe tests"
 fi
 
+    finish
+)
+
+check_references() (
+# ── reference sweep: the old prototype name is gone outside tickets/ ──────────
+# This suite mentions the old name in its own sweep pattern; exclude it and the
+# append-only ticket history (which keeps the historical name deliberately).
+# Scoped to TRACKED files via git grep — immune to nested runtime worktrees
+# and other untracked staging dirs (e.g. leftover .claude/worktrees/ siblings
+# on a primary checkout) that a plain `grep -r .` would wander into.
+stale="$(git -C "$REPO_ROOT" grep -l "seat-runner-prototype" \
+    -- '*.sh' '*.md' '*.py' '*.yml' '*.json' \
+    2>/dev/null | grep -v -e '^tickets/' -e '^tests/test_seat_runner.sh$' || true)"
+if [ -z "$stale" ]; then pass "no seat-runner-prototype refs outside tickets/"; else fail "stale seat-runner-prototype refs: $stale"; fi
+
+    finish
+)
+
+check_containment() (
 # ── tier 2b: real containment self-test (podman + image) ─────────────────────
 if ! command -v podman >/dev/null; then
     echo "SKIP: podman absent — containment self-test"
@@ -657,8 +682,17 @@ else
     assert_contains "self-test proves ~/.local scoped" "scoped to CLI venv" "$st_err"
 fi
 
-echo ""
-echo "Results: ${PASS} passed, ${FAIL} failed"
-[ "$FAIL" -eq 0 ] || exit 1
-# Zero checks ran: exit 77 so the runner reports a skip, not a pass.
-[ "$PASS" -gt 0 ] || exit 77
+    finish
+)
+
+case "${1:-all}" in
+    deterministic) check_deterministic ;;
+    references) check_references ;;
+    containment) check_containment ;;
+    all)
+        check_deterministic
+        check_references
+        check_containment || { rc=$?; [ "$rc" -eq 77 ] || exit "$rc"; }
+        ;;
+    *) echo "usage: $0 [deterministic|references|containment|all]" >&2; exit 2 ;;
+esac
