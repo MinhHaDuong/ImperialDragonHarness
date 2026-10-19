@@ -430,11 +430,12 @@ try_auto_merge() {
 
 # Direct merge is allowed on an EMPTY PR rollup only when no required checks
 # are known on the base. A denied inspection delegates unknown requirements
-# to ordinary forge enforcement. GitHub's branch endpoint
-# covers legacy protection; effective branch rules cover repository and
-# organization rulesets. (tickets 0200/0871)
+# to ordinary forge enforcement. The branch endpoint covers legacy protection;
+# effective branch rules cover repository and organization rulesets.
+# (tickets 0200/0871)
 no_checks_required() {
     local pr_now branch_now rules_now inspection_denied=0
+    local api_error_file api_error api_status
     pr_now=$(gh pr view "$PR" --json mergeable,statusCheckRollup) \
         || die "could not inspect PR checks after registration retries — aborting merge"  # harness-extension-point
     echo "$pr_now" | jq -e '.mergeable == "MERGEABLE"' >/dev/null \
@@ -442,7 +443,13 @@ no_checks_required() {
     echo "$pr_now" | jq -e '(.statusCheckRollup | type == "array") and (.statusCheckRollup | length == 0)' >/dev/null \
         || die "PR check rollup is unavailable or not empty after checks failed to register — aborting merge"
 
-    if branch_now=$(gh api "repos/{owner}/{repo}/branches/${BASE_BRANCH}" 2>&1); then  # harness-extension-point
+    api_error_file=$(mktemp) || die "could not capture inspection diagnostics"
+    api_status=0
+    branch_now=$(gh api "repos/{owner}/{repo}/branches/${BASE_BRANCH}" 2>"$api_error_file") || api_status=$?  # harness-extension-point
+    api_error=$(cat "$api_error_file")
+    rm -f -- "$api_error_file"
+    [[ -z "$api_error" ]] || printf '%s\n' "$api_error" >&2
+    if (( api_status == 0 )); then
         echo "$branch_now" | jq -e '
             .protection.required_status_checks as $required |
             if .protected == false and $required == null then true
@@ -454,30 +461,54 @@ no_checks_required() {
             else false end
         ' >/dev/null \
             || die "base branch has required checks or returned invalid protection data — aborting merge"
-    elif [[ "$branch_now" == *"(HTTP 403)"* ]]; then
-        echo "$branch_now" >&2
+    elif [[ "$api_error" == *"(HTTP 403)"* ]]; then
+        # A failed paginated call can already have emitted successful pages.
+        # Accept only an empty body or one ordinary API error object; partial
+        # response pages and unknown payloads must not hide known requirements.
+        if [[ -n "$branch_now" ]]; then
+            echo "$branch_now" | jq -se '
+                length == 1 and (.[0] | type == "object" and
+                    (.message | type == "string") and
+                    (.status == null or (.status | tostring) == "403") and
+                    (keys - ["message", "documentation_url", "status"] | length == 0))
+            ' >/dev/null || die "partial or invalid inspection response with HTTP 403 — aborting merge"
+        fi
         inspection_denied=1
     else
-        echo "$branch_now" >&2
         die "could not inspect base branch protection — aborting merge"  # harness-extension-point
     fi
 
-    if rules_now=$(gh api "repos/{owner}/{repo}/rules/branches/${BASE_BRANCH}" --paginate 2>&1); then  # harness-extension-point
+    api_error_file=$(mktemp) || die "could not capture inspection diagnostics"
+    api_status=0
+    rules_now=$(gh api "repos/{owner}/{repo}/rules/branches/${BASE_BRANCH}" --paginate 2>"$api_error_file") || api_status=$?  # harness-extension-point
+    api_error=$(cat "$api_error_file")
+    rm -f -- "$api_error_file"
+    [[ -z "$api_error" ]] || printf '%s\n' "$api_error" >&2
+    if (( api_status == 0 )); then
         echo "$rules_now" | jq -se '
             length > 0 and all(.[]; type == "array") and
             all(.[][] | select(.type == "required_status_checks");
                 (.parameters.required_status_checks | type == "array" and length == 0))
         ' >/dev/null \
             || die "base branch rules require checks or returned invalid check data — aborting merge"
-    elif [[ "$rules_now" == *"(HTTP 403)"* ]]; then
-        echo "$rules_now" >&2
+    elif [[ "$api_error" == *"(HTTP 403)"* ]]; then
+        # A failed paginated call can already have emitted successful pages.
+        # Accept only an empty body or one ordinary API error object; partial
+        # response pages and unknown payloads must not hide known requirements.
+        if [[ -n "$rules_now" ]]; then
+            echo "$rules_now" | jq -se '
+                length == 1 and (.[0] | type == "object" and
+                    (.message | type == "string") and
+                    (.status == null or (.status | tostring) == "403") and
+                    (keys - ["message", "documentation_url", "status"] | length == 0))
+            ' >/dev/null || die "partial or invalid inspection response with HTTP 403 — aborting merge"
+        fi
         inspection_denied=1
     else
-        echo "$rules_now" >&2
         die "could not inspect effective branch rules — aborting merge"  # harness-extension-point
     fi
     if (( inspection_denied )); then
-        echo "Branch-rule inspection denied (HTTP 403); ordinary merge will enforce configured requirements."
+        echo "Base-branch requirement inspection denied (HTTP 403); ordinary merge will enforce configured requirements."
     else
         echo "PR is MERGEABLE with an empty rollup and no required checks; merging directly."
     fi

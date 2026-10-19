@@ -139,12 +139,15 @@ command it recovers.)
   merge. Do not loop on the status command.
 - **Empty rollup on a repo with no checks.** The script merges directly after
   one read when the base has no required checks (legacy protection and rulesets
-  both inspected); with required checks configured it refuses instead. If an
-  inspection endpoint returns HTTP 403 (permission or plan restriction), it
+  both inspected when available); with known required checks it refuses instead.
+  If an inspection endpoint returns HTTP 403 (including permission or plan
+  restrictions), it
   validates the other endpoint and attempts an ordinary, non-admin merge when
   no known required checks prevent it. GitHub enforces any unseen requirements;
   a forge refusal is reported and the pushed ticket close remains retryable.
-  Other inspection errors and malformed successful data still refuse.
+  Other inspection errors, partial response pages before a denial, and malformed
+  successful data still refuse. This retry applies to a forge refusal after the
+  close was pushed, rather than the separate `close: no ticket found` symptom.
 - **"must run from PR branch" after a fast-forward.** HEAD is detached after
   `merge --ff-only`: `git checkout <branch>`, then retry.
 - **Force-push denied, branch already pushed.** Rebasing rewrites the branch's
