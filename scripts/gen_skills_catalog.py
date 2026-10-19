@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate the skills catalog from SKILL.md frontmatter.
 
-Prints sorted Markdown rows for skills-catalog.md. Replaces the bash
+Prints grouped markdown tables for skills-catalog.md. Replaces the bash
 wrapper gen-skills-catalog.sh (ticket 0531): the wrapper only fed a python
 heredoc through an environment variable, and it was what made the shared
 frontmatter extraction (scripts/skill_frontmatter.py) impossible to import.
@@ -18,8 +18,19 @@ from pathlib import Path
 import skill_frontmatter
 
 
+CATEGORIES = {
+    "build": "Build and ship",
+    "session": "Session and maintenance",
+    "memory": "Memory and learning",
+    "runtime-review": "Runtime and review support",
+    "research": "Research and bibliography",
+    "writing": "Writing and presentation",
+    "publication": "Submission and publication",
+}
+
+
 def catalog_lines(root: str = ".") -> list[str]:
-    """The sorted markdown table rows — the importable seam the sibling
+    """The grouped Markdown catalog lines — the importable seam the sibling
     callers (update-skills-catalog.py, check-skills-drift.py) use directly,
     instead of forking python to re-split printed stdout."""
     catalog = []
@@ -41,20 +52,35 @@ def catalog_lines(root: str = ".") -> list[str]:
             continue
         # Collapse the line breaks of a folded/multi-line description into
         # one table row.
-        catalog.append((name, " ".join(description.split())))
+        metadata = meta.get("metadata")
+        category = metadata.get("category") if isinstance(metadata, dict) else None
+        if category not in CATEGORIES:
+            raise ValueError(f"{skill_file}: missing or unknown category {category!r}")
+        catalog.append((category, name, " ".join(description.split())))
 
-    catalog.sort(key=lambda entry: entry[0])
-
-    # Escape pipes so a description cannot open a new table column.
-    return ["| `/{}` | {} |".format(name, description.replace("|", "\\|"))
-            for name, description in catalog]
+    lines = []
+    current_family = None
+    for category, title in CATEGORIES.items():
+        entries = sorted((name, desc) for cat, name, desc in catalog if cat == category)
+        if not entries:
+            continue
+        if lines:
+            lines.append("")
+        family = "Generalist" if category in {"build", "session", "memory", "runtime-review"} else "Research"
+        if family != current_family:
+            lines.extend([f"## {family}", ""])
+            current_family = family
+        lines.extend([f"### {title}", "", "| Command | Description |",
+                      "|---------|-------------|"])
+        lines.extend("| `/{}` | {} |".format(name, desc.replace("|", "\\|"))
+                     for name, desc in entries)
+    return lines
 
 
 def catalog_document(root: str = ".") -> str:
     return (
         "# Skills catalog\n\n"
         "<!-- Generated from skills/*/SKILL.md; run make skills-catalog. -->\n\n"
-        "| Command | Description |\n|---------|-------------|\n"
         + "\n".join(catalog_lines(root)) + "\n"
     )
 
