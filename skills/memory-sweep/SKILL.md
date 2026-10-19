@@ -1,5 +1,6 @@
 ---
-category: memory
+metadata:
+  category: memory
 name: memory-sweep
 description: "Review a project's repository memory for stale or contradictory claims."
 disable-model-invocation: false

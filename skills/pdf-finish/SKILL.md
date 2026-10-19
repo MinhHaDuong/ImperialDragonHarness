@@ -1,5 +1,6 @@
 ---
-category: writing
+metadata:
+  category: writing
 name: pdf-finish
 description: "Finishing pass on a PDF deliverable before it leaves the workshop — journal submission, preprint deposit, personal page, report handoff. Keyword: finition."
 disable-model-invocation: false
