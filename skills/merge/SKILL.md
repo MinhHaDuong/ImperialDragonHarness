@@ -1,4 +1,5 @@
 ---
+category: build
 name: merge
 description: "Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI)."
 user-invocable: true

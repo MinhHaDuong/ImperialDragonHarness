@@ -1,4 +1,5 @@
 ---
+category: session
 name: lair
 description: "End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session."
 disable-model-invocation: false

@@ -1,4 +1,5 @@
 ---
+category: memory
 name: hoard
 description: "Consolidate one project's repository memory without proposing rules."
 user-invocable: true

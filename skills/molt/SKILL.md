@@ -1,4 +1,5 @@
 ---
+category: session
 name: molt
 description: "Repo housekeeping — git sync, yawn, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps."
 user-invocable: true
