@@ -2,14 +2,19 @@
 
 Loaded only by smart_testing.py, in disposable pytest child processes.
 """
+import fnmatch
+from functools import cache
 import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 import tempfile
 
 import pytest
+
+SCOPE = 'all-tiers-v1'
 
 EXCLUDED = {'.git', '.venv', '.smart-testing', '.pytest_cache', '.panel', '.tmp', '__pycache__'}
 REFERENCE_FILES = {'tests/smart-testing/reference.json', 'tests/smart-testing/reference.sql'}
@@ -33,8 +38,30 @@ def save_state(path, state):
         Path(temporary).unlink(missing_ok=True)
 
 
+@cache
+def tracked_paths(root):
+    return [os.fsdecode(name) for name in subprocess.check_output(
+        ['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'],
+        cwd=root).split(b'\0') if name]
+
+
+def glob_members(root, pattern):
+    patterns = {pattern, pattern.replace('/**/', '/')}
+    if pattern.startswith('**/'):
+        patterns.add(pattern[3:])
+    return sorted({name for name in tracked_paths(root)
+                   if not EXCLUDED.intersection(Path(name).parts)
+                   and name not in REFERENCE_FILES
+                   and any(fnmatch.fnmatchcase(name, item) for item in patterns)})
+
+
 def fingerprint(root, name, stats):
     """Hash known inputs only, reusing content hashes while stat identity holds."""
+    if name.startswith('glob:'):
+        digest = hashlib.sha256()
+        for member in glob_members(root, name[5:]):
+            digest.update(member.encode() + b'\0' + fingerprint(root, member, stats).encode())
+        return digest.hexdigest()
     path = root / name
     try:
         info = path.stat()
@@ -78,8 +105,16 @@ class FileReads:
         self.observed = {}
         self.busy = False
         self.executed = set()
+        self.collected = set()
+        self.always = set()
+        for name in ('tests/conftest.py', 'pytest.ini'):
+            if (root / name).is_file():
+                self.observed.setdefault('*', {})[name] = fingerprint(root, name, self.state['stats'])
 
     def audit(self, event, args):
+        if event == 'subprocess.Popen' and self.consumer and not self.busy:
+            self.record_command(args[1], args[2])
+            return
         if event != 'open' or self.consumer is None or self.busy:
             return
         name, mode, flags = args
@@ -130,6 +165,42 @@ class FileReads:
         finally:
             self.busy = False
 
+    def record_command(self, command, cwd):
+        if not isinstance(command, (list, tuple)):
+            return  # Shell-string indirect inputs use explicit declarations.
+        directory = Path(cwd) if cwd else Path.cwd()
+        paths = [directory / os.fsdecode(arg) for arg in command
+                 if isinstance(arg, (str, bytes))]
+        if '-m' in command:
+            index = command.index('-m') + 1
+            if index < len(command):
+                module = directory / str(command[index]).replace('.', '/')
+                paths.extend([module.with_suffix('.py'), module / '__main__.py'])
+        self.busy = True
+        try:
+            for path in paths:
+                path = Path(os.path.abspath(path))
+                try:
+                    project_file = path.is_relative_to(self.root) and path.is_file()
+                except (OSError, ValueError):
+                    continue  # Code strings and other argv values are not filenames.
+                if project_file:
+                    name = path.relative_to(self.root).as_posix()
+                    if not EXCLUDED.intersection(Path(name).parts) and name not in REFERENCE_FILES:
+                        self.observed.setdefault(self.consumer, {})[name] = fingerprint(
+                            self.root, name, self.state['stats'])
+        finally:
+            self.busy = False
+
+    @pytest.hookimpl(hookwrapper=True, trylast=True)
+    def pytest_collection_modifyitems(self, items):
+        for item in items:
+            consumer = item.path.relative_to(self.root).as_posix()
+            self.collected.add(consumer)
+            if item.get_closest_marker('smart_always'):
+                self.always.add(consumer)
+        yield
+
     @pytest.hookimpl(hookwrapper=True)
     def pytest_make_collect_report(self, collector):
         previous = self.consumer
@@ -143,15 +214,31 @@ class FileReads:
     def pytest_runtest_protocol(self, item):
         self.consumer = item.path.relative_to(self.root).as_posix()
         self.executed.add(self.consumer)
+        self.busy = True
+        try:
+            for marker in item.iter_markers('smart_inputs'):
+                for pattern in marker.args:
+                    name = 'glob:' + pattern if any(char in pattern for char in '*?[') else pattern
+                    self.observed.setdefault(self.consumer, {})[name] = fingerprint(
+                        self.root, name, self.state['stats'])
+        finally:
+            self.busy = False
         yield
         self.consumer = None
 
     def pytest_sessionfinish(self, session, exitstatus):
         self.consumer = None
-        if exitstatus != 0:
+        if exitstatus not in (0, 5):
             return  # Failed consumers must remain stale and run again next time.
+        self.state['always'] = sorted(consumer for consumer in (
+            (set(self.state.get('always', [])) - self.collected) | self.always)
+            if (self.root / consumer).is_file())
+        if exitstatus == 5:
+            save_state(self.path, self.state)
+            return
         complete = os.environ.get('SMART_TESTING_COMPLETE')
         if complete == 'all':
+            self.state['scope'] = os.environ['SMART_TESTING_SCOPE']
             self.state['inputs'] = {'*': self.observed.get('*', {})}
         if complete in {'all', 'modules'}:
             for consumer in self.executed:
@@ -160,12 +247,17 @@ class FileReads:
             if consumer == '*' or consumer in self.executed:
                 self.state['inputs'].setdefault(consumer, {}).update(inputs)
         known = set().union(*(set(inputs) for inputs in self.state['inputs'].values()))
+        for name in list(known):
+            if name.startswith('glob:'):
+                known.update(glob_members(self.root, name[5:]))
         self.state['stats'] = {name: stamp for name, stamp in self.state['stats'].items()
                                if name in known}
         save_state(self.path, self.state)
 
 
 def pytest_configure(config):
+    config.addinivalue_line('markers', 'smart_always: run on every smart invocation (live external state)')
+    config.addinivalue_line('markers', 'smart_inputs(*paths): additional file/glob inputs, including child reads')
     state_path = os.environ.get('SMART_TESTING_INPUTS')
     if state_path:
         recorder = FileReads(Path(config.rootpath).resolve(), Path(state_path))

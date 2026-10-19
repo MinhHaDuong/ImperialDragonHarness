@@ -60,7 +60,7 @@ check-tests:
 
 check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check-tests
 
-# Opt-in fast loop; reference refresh is deliberately explicit.
+# Opt-in affected-test loop; reference refresh is deliberately explicit.
 .PHONY: smart-test smart-refresh
 smart-test:
 	$(RUN) python3 -m scripts.smart_testing

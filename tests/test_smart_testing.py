@@ -139,12 +139,8 @@ def test_python_source_read_as_data_invalidates_consumer(smart_repository):
 def test_unrelated_text_change_keeps_native_selection(smart_repository):
     root = smart_repository
     (root / 'unrelated.md').write_text('An unrelated working note.\n')
-    (root / 'tests/test_excluded.py').write_text(
-        'from pathlib import Path\nimport pytest\n'
-        'DATA = Path("unrelated.md").read_text()\n'
-        '@pytest.mark.integration\ndef test_data():\n    assert DATA\n')
     _assert_passed(_smart_run(root, '--refresh'))
-    (root / 'unrelated.md').write_text('Only an excluded consumer reads this.\n')
+    (root / 'unrelated.md').write_text('An unrelated note changed.\n')
     _assert_unchanged(_smart_run(root))
 
 
@@ -288,3 +284,99 @@ def test_imported_module_initializer_function_invalidates_all_readers(smart_repo
     assert result.returncode == 1, result.stdout + result.stderr
     assert 'test_b' in result.stdout
     assert '1 failed, 1 passed' in result.stdout
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('tier', ['slow', 'integration', 'adherence'])
+def test_all_cost_tiers_reuse_and_invalidate(smart_repository, tier):
+    root = smart_repository
+    test = root / 'tests/test_case.py'
+    test.write_text('import pytest\n' + test.read_text().replace(
+        'def test_value():', f'@pytest.mark.{tier}\ndef test_value():'))
+    _assert_passed(_smart_run(root, '--refresh'))
+    _assert_unchanged(_smart_run(root))
+    (root / 'fixture.txt').write_text('2')
+    result = _smart_run(root)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert '1 failed' in result.stdout
+
+
+@pytest.mark.integration
+def test_live_opt_out_runs_even_when_cached_code_is_unchanged(smart_repository, tmp_path):
+    root = smart_repository
+    external = tmp_path / 'external.txt'
+    external.write_text('yes')
+    (root / 'tests/test_live.py').write_text(
+        'from pathlib import Path\nimport pytest\n'
+        '@pytest.mark.smart_always\ndef test_live():\n'
+        f'    assert Path({str(external)!r}).read_text() == "yes"\n')
+    assert _smart_run(root, '--refresh').returncode == 0
+    _assert_passed(_smart_run(root))  # Only the live test runs again.
+    external.write_text('no')
+    result = _smart_run(root)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert '1 failed' in result.stdout
+
+
+@pytest.mark.integration
+def test_deleted_live_module_is_removed_from_manifest(smart_repository):
+    root = smart_repository
+    live = root / 'tests/test_live.py'
+    live.write_text('import pytest\n@pytest.mark.smart_always\ndef test_live():\n    pass\n')
+    assert _smart_run(root, '--refresh').returncode == 0
+    live.unlink()
+    _assert_unchanged(_smart_run(root))
+    state = json.loads((root / '.smart-testing/inputs.json').read_text())
+    assert state['always'] == []
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('module_command', [False, True])
+def test_child_entrypoint_changes_invalidate(smart_repository, module_command):
+    root = smart_repository
+    (root / 'child.py').write_text('print("yes")\n')
+    arguments = "[sys.executable, '-m', 'child']" if module_command else "[sys.executable, 'child.py']"
+    (root / 'tests/test_case.py').write_text(
+        'import subprocess\nimport sys\nimport pytest\n'
+        '@pytest.mark.integration\ndef test_child():\n'
+        f'    assert subprocess.check_output({arguments}).strip() == b"yes"\n')
+    _assert_passed(_smart_run(root, '--refresh'))
+    _assert_unchanged(_smart_run(root))
+    (root / 'child.py').write_text('print("no")\n')
+    result = _smart_run(root)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert '1 failed' in result.stdout
+
+
+@pytest.mark.integration
+def test_declared_child_inputs_include_new_glob_members(smart_repository):
+    root = smart_repository
+    (root / 'assets').mkdir()
+    (root / 'assets/a.txt').write_text('yes')
+    (root / 'child.py').write_text(
+        'from pathlib import Path\n'
+        'assert all(p.read_text() == "yes" for p in Path("assets").glob("*.txt"))\n')
+    (root / 'tests/test_case.py').write_text(
+        'import subprocess\nimport sys\nimport pytest\n'
+        '@pytest.mark.smart_inputs("assets/*.txt")\n'
+        '@pytest.mark.slow\ndef test_child():\n'
+        '    subprocess.run([sys.executable, "child.py"], check=True)\n')
+    _assert_passed(_smart_run(root, '--refresh'))
+    _assert_unchanged(_smart_run(root))
+    (root / 'assets/b.txt').write_text('no')
+    result = _smart_run(root)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert '1 failed' in result.stdout
+
+
+@pytest.mark.integration
+def test_expanding_old_fast_cache_learns_new_scope(smart_repository):
+    root = smart_repository
+    _assert_passed(_smart_run(root, '--refresh'))
+    state_path = root / '.smart-testing/inputs.json'
+    state = json.loads(state_path.read_text())
+    state.pop('scope')
+    state_path.write_text(json.dumps(state))
+    _assert_passed(_smart_run(root))
+    assert json.loads(state_path.read_text())['scope'] == smart.SCOPE
+    _assert_unchanged(_smart_run(root))
