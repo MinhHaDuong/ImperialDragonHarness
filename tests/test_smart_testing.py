@@ -6,6 +6,8 @@ import subprocess
 
 import pytest
 
+from child_env import child_env
+
 spec = importlib.util.spec_from_file_location(
     'smart_testing', Path(__file__).resolve().parents[1] / 'scripts/smart_testing.py')
 smart = importlib.util.module_from_spec(spec)
@@ -38,10 +40,10 @@ def test_bad_dump_does_not_publish_database(tmp_path):
 
 @pytest.mark.integration
 def test_external_inputs_include_untracked_and_deleted_data(tmp_path):
-    subprocess.run(['git', 'init', '-q', str(tmp_path)], check=True)
+    subprocess.run(['git', 'init', '-q', str(tmp_path)], check=True, env=child_env())
     data = tmp_path / 'fixture.txt'
     data.write_text('a')
-    subprocess.run(['git', 'add', 'fixture.txt'], cwd=tmp_path, check=True)
+    subprocess.run(['git', 'add', 'fixture.txt'], cwd=tmp_path, check=True, env=child_env())
     first = smart.external_inputs(tmp_path)
     data.write_text('b')
     assert smart.external_inputs(tmp_path) != first
