@@ -114,7 +114,6 @@ def test_claude_specific_lines_need_claude_project_dir(tmp_path):
     other = run(tmp_path, proj, None).stdout
     assert "Worktree isolation is enabled" not in other
     assert "claude-code.md" not in other
-    assert "effortLevel" not in other
     claude = run(tmp_path, proj, proj).stdout
     assert "Worktree isolation is enabled" in claude
-    assert "effortLevel" in claude
+    assert "effort level" not in claude

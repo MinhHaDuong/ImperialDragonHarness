@@ -10,8 +10,8 @@ conversations, explanations or naming rationale.
 # Session start
 
 Enter the worktree before answering (exceptions and naming: `claude-code.md`),
-then open with the phase label and one self-presentation line — model, effort,
-posture.
+then open with the phase label and one self-presentation line — model, effort level
+when the runtime states it, posture.
 
 At session start, check disk headroom on `/tmp` and `/home` with
 `python3 "$IDH_ROOT/scripts/tmp_report.py" --disk-warning`. Claude Code's

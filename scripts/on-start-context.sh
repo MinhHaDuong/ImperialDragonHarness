@@ -41,15 +41,6 @@ if [ -n "$_disk_output" ]; then
     printf '%s\n' "$_disk_output"
 fi
 
-# Surface the effort setting for the session's self-presentation line
-# (rules/workflow.md § Session Start): the model knows its own name but has
-# no other channel to the effortLevel setting. Read the live user settings,
-# not a checkout copy. The file is Claude Code's, so only Claude Code reads it.
-if [ -n "$_claude" ]; then
-    _effort=$(jq -r '.effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/null) || _effort=""
-    echo "Session effort level (settings.json effortLevel): ${_effort:-unknown}"
-fi
-
 _script_dir="$(cd "$(dirname "$0")" && pwd)"
 
 # Ask for a project-level coherence pass only when the project has its own
