@@ -43,7 +43,7 @@ RETIRED_SKILL = re.compile(
     r"|`" + SKILL_NAME + "`"
 )
 
-# Live surfaces the sweeps cover; STATE.md and the catalog README are live
+# Live surfaces the sweeps cover; STATE.md and skills-catalog.md are live
 # pointer files.
 SURFACES = ("skills", "rules", "docs", "tests", "scripts")
 

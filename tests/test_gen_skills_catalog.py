@@ -1,4 +1,4 @@
-"""Pin the catalog seam: what gen_skills_catalog prints is what README
+"""Pin the catalog seam: what gen_skills_catalog prints is what skills-catalog.md
 publishes in a public repo. Private skills are symlinked into skills/
 (gitignored) — the runtime discovers them, but repo files carry no pointers
 to them; a catalog that globs through the symlinks publishes their

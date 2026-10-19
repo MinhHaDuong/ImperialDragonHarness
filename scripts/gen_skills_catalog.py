@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate the skills catalog from SKILL.md frontmatter.
 
-Prints a sorted markdown table suitable for README.md. Replaces the bash
+Prints sorted Markdown rows for skills-catalog.md. Replaces the bash
 wrapper gen-skills-catalog.sh (ticket 0531): the wrapper only fed a python
 heredoc through an environment variable, and it was what made the shared
 frontmatter extraction (scripts/skill_frontmatter.py) impossible to import.
