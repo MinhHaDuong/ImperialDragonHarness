@@ -6,7 +6,12 @@ refactor of either adapter cannot drop it silently.
 """
 
 import json
+import subprocess
 from pathlib import Path
+
+import pytest
+
+from child_env import child_env
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -43,11 +48,8 @@ def test_claude_session_start_runs_context_and_sync_as_separate_hooks():
     assert (REPO / "scripts/on-start-sync.sh").is_file()
 
 
+@pytest.mark.integration
 def test_sync_hook_sets_hookspath_silently_and_is_inert_without_a_project(tmp_path):
-    import subprocess
-
-    from child_env import child_env
-
     script = REPO / "scripts/on-start-sync.sh"
     repo = tmp_path / "proj"
     (repo / "hooks").mkdir(parents=True)
