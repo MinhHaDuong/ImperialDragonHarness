@@ -37,7 +37,7 @@ def test_history_attribution_supports_home_spellings_and_redacts_secrets(tmp_pat
     history.write_text(json.dumps({
         "sessionId": "session-positive",
         "cwd": str(tmp_path),
-        "message": {"content": f"mkdir -p $HOME/.cache/tmp-t2043 API_TOKEN=supersecret"},
+        "message": {"content": "mkdir -p $HOME/.cache/tmp-t2043 API_TOKEN=supersecret"},
     }) + "\n")
 
     matches = report.find_history_mentions(
@@ -83,7 +83,7 @@ def test_codemeta_and_pi_session_records_carry_identity_to_later_events(tmp_path
     codex = tmp_path / "codex.jsonl"
     codex.write_text(
         json.dumps({"type": "session_meta", "payload": {"id": "codex-thread", "cwd": str(tmp_path)}}) + "\n"
-        + json.dumps({"type": "response_item", "payload": {"arguments": f"cat $HOME/.cache/tmp-owned"}}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {"arguments": "cat $HOME/.cache/tmp-owned"}}) + "\n"
     )
     pi = tmp_path / "pi.jsonl"
     pi.write_text(

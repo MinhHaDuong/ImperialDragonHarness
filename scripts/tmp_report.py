@@ -107,7 +107,7 @@ def scan_candidates(roots, known_cache_names=None):
             try:
                 if entry.is_symlink():
                     continue
-                st = entry.stat(follow_symlinks=False)
+                entry.stat(follow_symlinks=False)
             except OSError:
                 unreadable.append(str(path))
                 continue
@@ -427,7 +427,6 @@ def _default_roots(repo):
     roots = [temp, Path("/tmp"), home / ".cache"]
     common = subprocess.run(["git", "-C", str(repo), "rev-parse", "--path-format=absolute", "--git-common-dir"], capture_output=True, text=True)
     if common.returncode == 0:
-        primary = Path(common.stdout.strip()).parent
         listing = subprocess.run(["git", "-C", str(repo), "worktree", "list", "--porcelain"], capture_output=True, text=True)
         if listing.returncode == 0:
             for line in listing.stdout.splitlines():
