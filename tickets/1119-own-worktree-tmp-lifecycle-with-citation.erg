@@ -14,6 +14,8 @@ Author: Minh Ha-Duong
 
 2026-10-19T11:40Z reviewer note Final source validation: 1749 passed, 3 skipped; lint 186 passed; Padme local CI on 208c3bff passed all 10 jobs with no skips. Rebased onto current main at 57fef96c; code safety review remains clear. Proposed host exclusions passed isolated controls, but actual deployment is blocked on explicit Padme destination approval and Doudou interactive sudo.
 
+2026-10-19T11:49Z reviewer note Padme host PR 108 merged at aeb0acd; installed restic exclusion control passed with ordinary fixture retained, .tmp excluded, unchanged isolated repository and zero snapshots. Doudou identified Btrfs mechanism remains unchanged by explicit author reservation; no universal backup-host verification is claimed.
+
 --- body ---
 ## Context
 
@@ -36,30 +38,28 @@ Implement the author's adopted Design 2 from `docs/discussions/2026-10-14-1095-d
 
 ### Restic rollout evidence and control recipe
 
-Host deployment is outside this harness worktree. Padme's active
-`/etc/restic/excludes.txt` links to the Padme repository's
-`tools/restic-excludes.txt`. The prepared one-line `.tmp` exclusion is commit
-`bbb064f` in that repository. Actual restic 0.16.4 controls against an isolated
-local repository showed that the baseline includes both ordinary and `.tmp`
-fixture files; the proposed exclusion retains the ordinary file and excludes
-`.tmp`. The repository was unchanged and no snapshots were created. This
-validates the proposed configuration, not an active deployment.
+Padme's actual restic exclusion is deployed: host-configuration PR 108 merged
+as `aeb0acd`, and active `/etc/restic/excludes.txt` resolves to the merged
+`tools/restic-excludes.txt` containing `.tmp`. An isolated restic 0.16.4 dry run
+using that installed file retained the ordinary fixture file and excluded its
+`.tmp` neighbor. The pre-deployment baseline included both. The isolated
+repository remained unchanged and zero snapshots were created. No production
+backup wrapper was run.
 
-Doudou was reached and its actual mechanism is Btrfs snapshots through
-`/usr/local/sbin/snapshot.sh`, not restic. A prepared patch removes `.tmp`
-directories only from the new snapshot before sealing it read-only. It applies
-to the inspected installed script and passes `bash -n`. Fixture controls retain
-the live source, ordinary snapshot data and an outside symlink target while
-removing nested snapshot `.tmp` content. No production snapshot was run.
+Doudou's identified active backup mechanism uses Btrfs snapshots through
+`snapshot.sh` and `prune-snapshots.sh`, with enabled snapshot and prune timers.
+A bounded inspection found `/usr/bin/restic` installed but no `/etc/restic` or
+matching user units. This establishes the identified mechanism, not universal
+absence of other restic configuration. The prepared snapshot-only `.tmp`
+patch passed four fixture controls and remains uninstalled: the author
+explicitly reserves that separate Btrfs policy decision. It is not claimed as
+verified deployment or as a requirement to mutate every backup engine.
 
-Deployment remains pending: automatic approval review rejected the Padme push
-for insufficient explicit authorization of the external destination; Doudou
-requires interactive sudo authentication. Neither actual host configuration
-has changed. A single clarification asks for explicit Padme authorization and
-the Doudou installation route. Local prepared evidence is
-`/tmp/1095-restic-validation.json`, `/tmp/1095-doudou-host-validation.txt`
-and `/tmp/1095-host-deployment-evidence.md`; these local artifacts are not
-claimed as durable installed-host verification.
+Local detailed controls and deployment observations are recorded in
+`/tmp/1095-host-deployment-evidence.md`; this ticket retains the durable
+installed-host result and its limits. The `.tmp` restic exclusion and the
+control recipe below remain the requirement for any configured restic host.
+
 After the host owner adds a directory-component rule `.tmp` to that host's existing exclude file, make an isolated fixture with
 `fixture/project/.tmp/control.bin` and `fixture/project/control.bin`, then run
 the host's normal restic environment against the fixture using the actual
@@ -94,6 +94,6 @@ unrelated repository operations.
 - [x] Removal is fail-closed on citation hits, unreadable evidence, uncertain merge ancestry, and every existing safety rail.
 - [x] Normal eligible removal reports `.tmp/` size before deletion.
 - [x] The repo documents the required `.tmp` restic exclude and a control dry-run recipe.
-- [ ] Restic exclusion is configured and dry-run verified on every available configured host; unavailable/external hosts remain explicitly pending.
+- [x] Restic exclusion is configured and dry-run verified on every available configured host; unavailable/external hosts remain explicitly pending.
 - [x] Targeted integration tests, `make check`, and `make lint` pass.
 - [ ] Ticket 1119 closes in its own reviewed PR after 1118; tracker 1095 closes only after union integration review.
