@@ -75,10 +75,12 @@ def smart_repository(tmp_path):
     return root
 
 
-def _smart_run(root, *arguments, bytecode=False):
+def _smart_run(root, *arguments, bytecode=False, pytest_addopts=None):
     env = child_env()
     for key in ('TESTMON_DATAFILE', 'PYTEST_ADDOPTS', 'PYTEST_PLUGINS'):
         env.pop(key, None)
+    if pytest_addopts is not None:
+        env['PYTEST_ADDOPTS'] = pytest_addopts
     if bytecode:
         env.pop('PYTHONDONTWRITEBYTECODE', None)
     else:
@@ -529,3 +531,26 @@ def test_information_only_run_cannot_succeed_as_test_feedback(smart_repository):
     result = _smart_run(root)
     assert result.returncode != 0, result.stdout + result.stderr
     assert 'did not complete a test session' in result.stderr
+
+
+@pytest.mark.integration
+def test_pytest_environment_change_cannot_reuse_incompatible_success(smart_repository):
+    root = smart_repository
+    (root / 'tests/test_case.py').write_text(
+        'import os\nimport pytest\n@pytest.mark.xfail(reason="control")\n'
+        'def test_bad():\n'
+        '    os.environ["PYTEST_ADDOPTS"] = "--runxfail"\n'
+        '    assert False\n')
+    learned = _smart_run(root, '--refresh')
+    assert learned.returncode == 0, learned.stdout + learned.stderr
+    assert '1 xfailed' in learned.stdout
+    _assert_unchanged(_smart_run(root))
+    failed = _smart_run(root, pytest_addopts='--runxfail')
+    assert failed.returncode == 1, failed.stdout + failed.stderr
+    assert '1 failed' in failed.stdout
+    repeated = _smart_run(root, pytest_addopts='--runxfail')
+    assert repeated.returncode == 1, repeated.stdout + repeated.stderr
+    test = root / 'tests/test_case.py'
+    test.write_text(test.read_text().replace('assert False', 'assert True'))
+    _assert_passed(_smart_run(root, pytest_addopts='--runxfail'))
+    _assert_unchanged(_smart_run(root, pytest_addopts='--runxfail'))

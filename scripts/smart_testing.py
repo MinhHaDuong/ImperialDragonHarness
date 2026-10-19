@@ -21,6 +21,7 @@ SCOPE = PLUGIN.SCOPE
 changed_consumers = PLUGIN.changed_consumers
 load_state = PLUGIN.load_state
 save_state = PLUGIN.save_state
+invocation_fingerprint = PLUGIN.invocation_fingerprint
 MARKERS = 'not smart_always'
 LOG = logging.getLogger(__name__)
 
@@ -46,7 +47,8 @@ def run_tests(paths, database, inputs, selection, markers=MARKERS):
     receipt.unlink(missing_ok=True)
     env = dict(os.environ, TESTMON_DATAFILE=str(database),
                SMART_TESTING_INPUTS=str(inputs), SMART_TESTING_SCOPE=SCOPE,
-               SMART_TESTING_ROOT=str(root), SMART_TESTING_SESSION=str(receipt))
+               SMART_TESTING_ROOT=str(root), SMART_TESTING_SESSION=str(receipt),
+               SMART_TESTING_ENVIRONMENT=invocation_fingerprint())
     complete = markers != 'smart_always' and (
         '--no-testmon' in selection or '--testmon-noselect' in selection)
     env['SMART_TESTING_COMPLETE'] = ('all' if not paths else 'modules') if complete else ''
@@ -68,7 +70,9 @@ def run_tests(paths, database, inputs, selection, markers=MARKERS):
 def prepare(database, inputs, reference):
     """A local DB owns its own baseline; reference-only changes never replace it."""
     if database.exists() and inputs.exists():
-        return load_state(inputs).get('scope') != SCOPE
+        state = load_state(inputs)
+        return (state.get('scope') != SCOPE
+                or state.get('pytest_environment') != invocation_fingerprint())
     partial = database.exists() or inputs.exists()
     if partial:
         LOG.info('Incomplete private state; learning the selected suite once.')
@@ -81,9 +85,10 @@ def prepare(database, inputs, reference):
         if reference.get('schema') == 3 and reference.get('scope') == SCOPE:
             restore(dump, database)
             save_state(inputs, {'inputs': reference['inputs'], 'stats': {},
-                                'always': reference.get('always', []), 'scope': SCOPE})
+                                'always': reference.get('always', []), 'scope': SCOPE,
+                                'pytest_environment': reference.get('pytest_environment')})
             LOG.info('Restored reference; Testmon will check environment compatibility.')
-            return False
+            return reference.get('pytest_environment') != invocation_fingerprint()
     LOG.info('No compatible reference; learning the selected suite once.')
     save_state(inputs, {'inputs': {}, 'stats': {}, 'always': []})
     return True
@@ -153,6 +158,7 @@ def main():
         save_state(reference / 'reference.json', {
             'schema': 3, 'scope': SCOPE, 'inputs': state['inputs'],
             'always': state.get('always', []),
+            'pytest_environment': state['pytest_environment'],
             'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip(),
         })
         fd, temporary = tempfile.mkstemp(dir=reference)

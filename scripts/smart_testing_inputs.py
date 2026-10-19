@@ -20,6 +20,13 @@ EXCLUDED = {'.git', '.venv', '.smart-testing', '.pytest_cache', '.panel', '.tmp'
 REFERENCE_FILES = {'tests/smart-testing/reference.json', 'tests/smart-testing/reference.sql'}
 
 
+def invocation_fingerprint():
+    """Fingerprint pytest invocation policy without exporting raw option values."""
+    values = {name: os.environ.get(name, '') for name in (
+        'PYTEST_ADDOPTS', 'PYTEST_PLUGINS', 'PYTEST_DISABLE_PLUGIN_AUTOLOAD')}
+    return hashlib.sha256(json.dumps(values, sort_keys=True).encode()).hexdigest()
+
+
 def load_state(path):
     if not path.exists():
         return {'inputs': {}, 'stats': {}}
@@ -101,6 +108,7 @@ class FileReads:
         self.root = root
         self.path = path
         self.state = load_state(path)
+        self.invocation = os.environ.get('SMART_TESTING_ENVIRONMENT')
         self.consumer = None
         self.observed = {}
         self.busy = False
@@ -251,6 +259,7 @@ class FileReads:
         complete = os.environ.get('SMART_TESTING_COMPLETE')
         if complete == 'all':
             self.state['scope'] = os.environ['SMART_TESTING_SCOPE']
+            self.state['pytest_environment'] = self.invocation
             self.state['inputs'] = {'*': self.observed.get('*', {})}
         if complete in {'all', 'modules'}:
             for consumer in self.executed:

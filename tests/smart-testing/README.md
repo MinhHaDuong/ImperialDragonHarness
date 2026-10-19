@@ -65,7 +65,9 @@ Tests that depend on live services, installed external tools or Git history use
 private state and portable reference. A successful refresh includes them too.
 Changes to project pytest configuration invalidate the eligible suite. Shared
 fixtures and initial conftest reads are shared dependencies. An older cache or
-recorder scope is upgraded by learning all eligible tiers once.
+recorder scope is upgraded by learning all eligible tiers once. The pytest
+selection/plugin environment is fingerprinted too; changing it learns a fresh
+baseline. Exported metadata contains its hash, not raw environment values.
 
 The helper explicitly includes all cost tiers, overriding default `-m` filters.
 Other partial-selection/dry-run options (`-k`, `--lf`, collect-only, deselect,
