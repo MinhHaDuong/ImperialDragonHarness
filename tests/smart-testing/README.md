@@ -5,6 +5,9 @@ In this harness, run `uv sync --frozen`, then `make smart-test`.
 For another pytest project, run from that project's checkout, using its Python
 and dependencies and the selected harness's entry point:
 
+Git must be installed and the workload must be a Git checkout: declared glob
+membership uses tracked and unignored paths, and exports record the source commit.
+
 ```sh
 uv run --with pytest-testmon==2.2.0 python "$IDH_ROOT/scripts/smart_testing.py" --root "$PWD"
 ```

@@ -701,6 +701,44 @@ def test_detailed_tool_version_caches_discovery_and_invalidates_upgrade(
     assert 'build B' not in state and 'tool 1.0.0' not in state
 
 
+@pytest.mark.integration
+@pytest.mark.parametrize('directory', ['testmon', '_pytest'])
+def test_workload_directory_names_do_not_hide_reads(smart_repository, directory):
+    root = smart_repository
+    destination = root.parent / directory / 'project'
+    destination.parent.mkdir()
+    shutil.move(root, destination)
+    _assert_passed(_smart_run(destination, '--refresh'))
+    _assert_unchanged(_smart_run(destination))
+    (destination / 'fixture.txt').write_text('2')
+    for _ in range(2):
+        failed = _smart_run(destination)
+        assert failed.returncode == 1, failed.stdout + failed.stderr
+
+
+@pytest.mark.integration
+def test_broken_installed_tool_does_not_reuse_missing_skip(smart_repository, tmp_path):
+    root = smart_repository
+    tool = tmp_path / 'idh-broken-cli'
+    (root / 'tests/test_case.py').write_text(
+        'import pytest, shutil, subprocess\n'
+        f'@pytest.mark.smart_inputs({"version:" + str(tool)!r})\n'
+        'def test_discovery():\n'
+        f'    tool = {str(tool)!r}\n'
+        '    if not shutil.which(tool):\n'
+        '        pytest.skip("not installed")\n'
+        '    subprocess.run([tool, "--version"], check=True)\n')
+    learned = _smart_run(root, '--refresh')
+    assert learned.returncode == 0, learned.stdout + learned.stderr
+    assert '1 skipped' in learned.stdout
+    _assert_unchanged(_smart_run(root))
+    tool.write_text('#!/nonexistent/idh-interpreter\n')
+    tool.chmod(0o755)
+    for _ in range(2):
+        failed = _smart_run(root)
+        assert failed.returncode == 1, failed.stdout + failed.stderr
+
+
 @pytest.mark.parametrize('answer', ['failed', 'empty', 'timeout'])
 def test_unreadable_version_never_certifies_an_unchanged_tool(monkeypatch, answer):
     plugin = smart.PLUGIN

@@ -8,13 +8,14 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
 
 import pytest
 
-SCOPE = 'all-tiers-v4'
+SCOPE = 'all-tiers-v5'
 
 EXCLUDED = {'.git', '.venv', '.smart-testing', '.pytest_cache', '.panel', '.tmp', '__pycache__'}
 REFERENCE_FILES = {'tests/smart-testing/reference.json', 'tests/smart-testing/reference.sql'}
@@ -85,7 +86,10 @@ def version_fingerprint(name):
                 result.stdout.hex(), result.stderr.hex(),
             ]).encode()).hexdigest()
     except FileNotFoundError:
-        return 'missing'
+        # An existing launcher can fail because its interpreter is missing.
+        # Only a command absent from executable lookup is stable absence.
+        if shutil.which(command) is None:
+            return 'missing'
     except (OSError, subprocess.TimeoutExpired):
         pass
     return 'unavailable:' + os.urandom(16).hex()
@@ -164,8 +168,10 @@ class FileReads:
         frame = sys._getframe(1)
         while frame:
             caller = (frame.f_globals.get('__file__') or frame.f_code.co_filename)
+            module = frame.f_globals.get('__name__', '')
             if ('importlib._bootstrap' in caller or caller.endswith('/importlib/_bootstrap_external.py')
-                    or '/_pytest/' in caller or '/testmon/' in caller):
+                    or module in ('_pytest', 'testmon')
+                    or module.startswith(('_pytest.', 'testmon.'))):
                 return
             if caller != __file__ and Path(caller).is_absolute():
                 origin = Path(caller).resolve()
