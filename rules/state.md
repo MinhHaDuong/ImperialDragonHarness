@@ -28,8 +28,10 @@ no STATE.md edit.
 **Live counts at session start.** `scripts/on-start.sh` prints one line of
 open and ready ticket counts, computed from local `erg` at read time, so the
 session still sees them without a committed copy. Only runtimes whose
-session-start hook runs `on-start.sh` see that line: Claude Code does; Codex
-and Pi do not yet wire one (ticket 1122).
+session-start hook runs `on-start.sh` see that line: Claude Code (SessionStart
+hook), Codex (`SessionStart` in `adapters/codex/hooks.json`) and Pi (the
+`session_start` handler in `adapters/pi/extensions/idh-guard.ts`, delivered with
+the first user turn) all do.
 
 **Line budget:** total ≤ 40 lines. History lives in `git log`.
 

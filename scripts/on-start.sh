@@ -13,6 +13,15 @@ set -euo pipefail
 # runtime (or a bare shell) called this script.
 _claude=${CLAUDE_PROJECT_DIR:+1}
 
+# Decision (ticket 1122): the blocks below keyed on CLAUDE_PROJECT_DIR alone
+# stay Claude-only, with no working-directory fallback. The coherence prompt and
+# resident census describe Claude's .claude/ loading and "worktree entry"; the
+# memory index is already reached from AGENTS.md ("read memory/MEMORY.md at
+# task start") in Codex and Pi; the sync report has no producer without the
+# post-cutoff sync, and that sync plus `core.hooksPath` mutate repository state,
+# which needs a runtime-given project root, not a guessed working directory.
+# Codex and Pi get the runtime-neutral lines: host, disk, loader, ticket counts.
+
 # Worktree instruction (it cites rules/claude-code.md) — Claude Code only, and
 # skipped in automated night-sweep runs
 if [[ -n "$_claude" && -z "${CLAUDE_NIGHT_SWEEP:-}" ]]; then
