@@ -26,6 +26,10 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
      --scope lair --repo "$(git rev-parse --show-toplevel)" --session-id "$SESSION_ID" \
      --exclude-session-id "$SESSION_ID"
    ```
+   History attribution has a 20-second default budget. If the report says
+   history attribution is partial, unmatched candidates have unknown history
+   attribution; rerun with `--history-budget-seconds 0` when exhaustive history
+   evidence is needed.
    The helper checks all available runtime histories, reports candidates and
    unattributed paths, and performs no cleanup. The reporting session is
    excluded from citation attribution, so candidates mentioned only by it

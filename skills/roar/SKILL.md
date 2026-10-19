@@ -85,6 +85,10 @@ default branch — there are no remote branches nor merge requests to inspect.
      --scope roar --repo "$PROJECT_REPO" --session-id "$SESSION_ID" \
      --exclude-session-id "$SESSION_ID"
    ```
+   History attribution has a 20-second default budget. If the report says
+   history attribution is partial, unmatched candidates and descendant scope
+   are unknown; rerun with `--history-budget-seconds 0` when exhaustive history
+   evidence is needed.
    The helper scans candidates across its configured host-wide roots. When
    session flags are supplied, history attribution is limited to this session
    and linked child sessions. A candidate without a scoped history match may

@@ -13,6 +13,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 DEFAULT_CACHE_EXCLUDES = {
@@ -259,6 +260,57 @@ def _spellings(candidate: Path, home: Path):
     return sorted(variants, key=len, reverse=True)
 
 
+def _path_matcher(spelling_to_candidate):
+    """Compile literal path spellings as a factored trie expression.
+
+    The old flat alternation ordered longer strings first. Keeping a terminal
+    empty branch after child branches preserves that longest-match behavior
+    when one candidate spelling is a prefix of another.
+    """
+    terminal = object()
+    trie = {}
+    for spelling in spelling_to_candidate:
+        node = trie
+        for char in spelling:
+            node = node.setdefault(char, {})
+        node[terminal] = None
+
+    patterns = {}
+    stack = [(trie, False)]
+    while stack:
+        node, visited = stack.pop()
+        if not visited:
+            stack.append((node, True))
+            stack.extend(
+                (child, False)
+                for char, child in reversed(tuple(node.items()))
+                if char is not terminal
+            )
+            continue
+        branches = [
+            re.escape(char) + patterns[id(child)]
+            for char, child in node.items()
+            if char is not terminal
+        ]
+        if terminal in node:
+            branches.append("")
+        if len(branches) == 1:
+            patterns[id(node)] = branches[0]
+        else:
+            patterns[id(node)] = "(?:" + "|".join(branches) + ")"
+
+    return re.compile(patterns[id(trie)])
+
+
+_HISTORY_IDENTITY_MARKERS = (
+    '"sessionId"', '"session_id"', '"thread_id"', '"threadId"', '"agentId"',
+    '"parent_thread_id"', '"parentSessionId"', '"parent_session_id"',
+    '"id"', '"pid"', '"metadata"', '"session_meta"', '"sessionMeta"',
+)
+_HISTORY_SESSION_RECORD = re.compile(r'"type"\s*:\s*"session(?:_meta)?"')
+_HISTORY_RESULT_MARKERS = ('"function_call_output"', '"tool_result"')
+
+
 def find_history_mentions(candidate, files, home=None, candidate_mtime=0):
     """Return bounded, redacted history references newer than candidate mtime."""
     candidate = Path(candidate).expanduser()
@@ -398,29 +450,45 @@ def _explicit_nonzero(value):
 
 def _unambiguous_creation(command, candidate, home):
     """True only for a single direct mkdir/touch targeting this exact path."""
+    target = _creation_target(command, home)
+    return target is not None and target == candidate.expanduser()
+
+
+def _creation_target(command, home):
+    """Return the one exact target of a safe direct mkdir/touch command."""
     if any(char in command for char in "\n;&|<>`"):
-        return False
+        return None
     try:
         words = shlex.split(command)
     except ValueError:
-        return False
+        return None
     if not words or words[0] not in {"mkdir", "touch"}:
-        return False
+        return None
     paths = [word for word in words[1:] if not word.startswith("-")]
     if len(paths) != 1:
-        return False
+        return None
     target = paths[0]
     normalized = target.replace("$HOME", str(home), 1)
     if normalized.startswith("~/"):
         normalized = str(home / normalized[2:])
-    return Path(normalized).expanduser() == candidate.expanduser()
+    return Path(normalized).expanduser()
 
 
-def attribute_histories(candidates, files, home=None, unreadable=None, session_parents=None):
+def attribute_histories(
+    candidates, files, home=None, unreadable=None, session_parents=None,
+    scan_status=None, time_budget_seconds=20.0, clock=time.monotonic,
+):
     """Read each relevant history once and attribute all candidate path hits."""
     home = Path(home or Path.home()).expanduser()
     unreadable = unreadable if unreadable is not None else []
     session_parents = session_parents if session_parents is not None else {}
+    scan_status = scan_status if scan_status is not None else {}
+    if time_budget_seconds is not None and time_budget_seconds < 0:
+        raise ValueError("history time budget must be non-negative or None")
+    deadline = clock() + time_budget_seconds if time_budget_seconds else None
+    files_total = len(files)
+    files_scanned = 0
+    partial_file = False
     all_spellings = {}
     mtimes = {}
     for item in candidates:
@@ -429,16 +497,49 @@ def attribute_histories(candidates, files, home=None, unreadable=None, session_p
         for spelling in _spellings(path, home):
             all_spellings[spelling] = str(path)
     if not all_spellings:
+        scan_status.update({
+            "complete": True, "files_scanned": files_total,
+            "files_total": files_total, "partial_file": False,
+            "unreadable_files": len(unreadable),
+            "budget_seconds": time_budget_seconds,
+        })
         return {}
-    matcher = re.compile("|".join(re.escape(s) for s in sorted(all_spellings, key=len, reverse=True)))
+    matcher = _path_matcher(all_spellings)
     results = {key: [] for key in mtimes}
+    oldest_candidate_mtime = min(mtimes.values())
+    candidate_keys_by_path = {}
+    for key in mtimes:
+        candidate_keys_by_path.setdefault(Path(key).expanduser(), []).append(key)
     for file in files:
+        if deadline is not None and clock() >= deadline:
+            break
+        file_complete = False
         try:
             file_mtime = file.stat().st_mtime
             active_session = active_parent = active_pid = None
             pending_calls = {}
             with file.open(encoding="utf-8", errors="replace") as stream:
                 for line_no, raw in enumerate(stream, 1):
+                    if line_no % 128 == 0 and deadline is not None and clock() >= deadline:
+                        partial_file = True
+                        break
+                    # Most history records contain neither a candidate path nor
+                    # session ancestry. Avoid decoding and recursively walking
+                    # those records. A backslash may encode a path/key in JSON,
+                    # so those records take the full parser path.
+                    raw_keys = None
+                    if "\\" not in raw:
+                        raw_keys = {
+                            all_spellings[match.group(0)]
+                            for match in matcher.finditer(raw)
+                        }
+                        has_identity = (
+                            any(marker in raw for marker in _HISTORY_IDENTITY_MARKERS)
+                            or _HISTORY_SESSION_RECORD.search(raw) is not None
+                        )
+                        has_result = any(marker in raw for marker in _HISTORY_RESULT_MARKERS)
+                        if not raw_keys and not has_identity and not has_result:
+                            continue
                     try:
                         record = json.loads(raw)
                     except (ValueError, TypeError):
@@ -451,15 +552,17 @@ def attribute_histories(candidates, files, home=None, unreadable=None, session_p
                         session_parents[session] = parent
                     # Older histories still supply their native session graph,
                     # but do not contribute candidate citations or commands.
-                    if file_mtime < min(mtimes.values()):
+                    if file_mtime < oldest_candidate_mtime:
                         continue
-                    joined = "\n".join(_strings(record))
-                    keys = {all_spellings[m.group(0)] for m in matcher.finditer(joined)}
+                    keys = raw_keys
+                    if keys is None or keys:
+                        joined = "\n".join(_strings(record))
+                        keys = {all_spellings[m.group(0)] for m in matcher.finditer(joined)}
+                    else:
+                        joined = ""
                     for call_id, kind, command in _native_calls(record):
-                        targets = {
-                            key for key in mtimes
-                            if _unambiguous_creation(command, Path(key), home)
-                        }
+                        target = _creation_target(command, home)
+                        targets = candidate_keys_by_path.get(target, ()) if target is not None else ()
                         pending_calls[call_id] = (kind, targets, active_session, active_parent, active_pid, line_no)
                     for call_id, kind, success in _native_results(record):
                         pending = pending_calls.pop(call_id, None)
@@ -494,9 +597,24 @@ def attribute_histories(candidates, files, home=None, unreadable=None, session_p
                             "pid": active_pid, "evidence": evidence,
                             "excerpt": _safe_excerpt(Path(key)),
                         })
+                else:
+                    file_complete = True
         except OSError:
             unreadable.append(str(file))
+            file_complete = True
             continue
+        if file_complete:
+            files_scanned += 1
+        if partial_file:
+            break
+    scan_status.update({
+        "complete": files_scanned == files_total and not unreadable and not partial_file,
+        "files_scanned": files_scanned,
+        "files_total": files_total,
+        "partial_file": partial_file,
+        "unreadable_files": len(unreadable),
+        "budget_seconds": time_budget_seconds,
+    })
     return results
 
 
@@ -674,17 +792,25 @@ def infer_test_provenance(path, repo):
     return None
 
 
-def build_report(runtime, scope, session_id, repo, floor_bytes=0, exclude_session_id=None):
+def build_report(
+    runtime, scope, session_id, repo, floor_bytes=0, exclude_session_id=None,
+    history_budget_seconds=20.0,
+):
     home = Path.home()
     scanned = scan_candidates(_default_roots(repo))
     candidates = [item for item in scanned["candidates"] if item["bytes"] >= floor_bytes]
     histories, history_unreadable = history_files(home, with_unreadable=True)
     unreadable_history_files = []
     session_parents = {}
+    history_scan = {}
     history_index = attribute_histories(
-        candidates, histories, home, unreadable_history_files, session_parents
+        candidates, histories, home, unreadable_history_files, session_parents,
+        scan_status=history_scan, time_budget_seconds=history_budget_seconds,
     )
     history_unreadable = sorted(set(history_unreadable + unreadable_history_files))
+    if history_unreadable:
+        history_scan["complete"] = False
+        history_scan["unreadable_locations"] = len(history_unreadable)
     references = _references(candidates, repo)
     for item in candidates:
         path = Path(item["path"])
@@ -705,7 +831,9 @@ def build_report(runtime, scope, session_id, repo, floor_bytes=0, exclude_sessio
             ticket_state = "closed" if any((Path(repo) / "tickets" / "closed").glob(f"{ticket}-*.erg")) else "open" if any((Path(repo) / "tickets").glob(f"{ticket}-*.erg")) else "missing"
         item.update({
             "history": matches,
-            "attribution": "attributed" if matches else "unattributed",
+            "attribution": "attributed" if matches else (
+                "unattributed" if history_scan.get("complete", True) else "unknown"
+            ),
             "ticket_hint": ticket,
             "ticket_state": ticket_state,
             "references": references.get(item["path"], {"git_log": "unknown", "pull_requests": "unknown", "verdict_files": "unknown"}),
@@ -714,12 +842,21 @@ def build_report(runtime, scope, session_id, repo, floor_bytes=0, exclude_sessio
         "runtime": runtime, "scope": scope, "session_id": session_id,
         "candidates": candidates, "unreadable": scanned["unreadable"],
         "history_unreadable": history_unreadable,
+        "history_scan": history_scan,
         "disk": disk_readings(),
     }
 
 
 def _format(report):
     lines = [f"Temporary report ({report['runtime']}, {report['scope']})"]
+    history_scan = report.get("history_scan")
+    if history_scan and not history_scan.get("complete", True):
+        lines.append(
+            "  history attribution is partial: scanned "
+            f"{history_scan['files_scanned']} of {history_scan['files_total']} history files; "
+            f"unreadable={history_scan.get('unreadable_locations', history_scan.get('unreadable_files', 0))}; "
+            "unmatched candidates and Roar ancestry are unknown"
+        )
     for mount, reading in report["disk"].items():
         if reading is None:
             lines.append(f"  {mount}: free space unknown (could not inspect mount)")
@@ -752,6 +889,10 @@ def main(argv=None):
     parser.add_argument("--exclude-session-id", help="Exclude a known report-generator session from attribution")
     parser.add_argument("--repo", default=".")
     parser.add_argument("--floor-bytes", type=int, default=1024 * 1024)
+    parser.add_argument(
+        "--history-budget-seconds", type=float, default=20.0,
+        help="Bound history attribution (default: 20 seconds); use 0 for exhaustive scanning",
+    )
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--disk-warning", action="store_true", help="Print low-space warnings only")
     args = parser.parse_args(argv)
@@ -761,7 +902,12 @@ def main(argv=None):
         return 0
     if not args.runtime or not args.scope:
         parser.error("--runtime and --scope are required unless --disk-warning is used")
-    report = build_report(args.runtime, args.scope, args.session_id, args.repo, args.floor_bytes, args.exclude_session_id)
+    if args.history_budget_seconds < 0:
+        parser.error("--history-budget-seconds must be non-negative")
+    report = build_report(
+        args.runtime, args.scope, args.session_id, args.repo, args.floor_bytes,
+        args.exclude_session_id, args.history_budget_seconds,
+    )
     print(json.dumps(report, sort_keys=True) if args.json else _format(report))
     return 0
 
