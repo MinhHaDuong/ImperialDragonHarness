@@ -1,0 +1,39 @@
+%erg 0.1
+Title: Wire session-start hooks in Codex and Pi adapters to call on-start.sh
+Created: 2026-10-19
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-19T20:16Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Ticket 1121 moved live ticket counts out of STATE.md and into
+`scripts/on-start.sh`, which prints them at session start. Only Claude Code
+runs that script today (SessionStart hook via the adapter plugin). Codex and
+Pi sessions therefore see no ticket counts, and none of the other startup
+context the script assembles (disk headroom, loader reminder).
+
+1121 made the script runtime-neutral where it was safe: the ticket counts use
+the working directory when `CLAUDE_PROJECT_DIR` is unset, and the
+Claude-specific lines (worktree instruction citing rules/claude-code.md,
+effort read from ~/.claude/settings.json) print only when
+`CLAUDE_PROJECT_DIR` is set.
+
+## Scope
+1. First confirm, per runtime, that Codex and Pi expose a session-start event
+   whose output reaches the model as context (documented event, measured on
+   the installed version). If a runtime has none, record that and stop for
+   that runtime; the wrapper's pre-launch probe is not a substitute, since its
+   stdout goes to the terminal, not the conversation.
+2. Wire the event to `scripts/on-start.sh` in `adapters/codex/` and/or
+   `adapters/pi/`.
+3. Revisit the blocks still keyed on `CLAUDE_PROJECT_DIR` alone (coherence
+   prompt, memory-index injection, local-main sync report, the post-cutoff
+   git hooks and sync): decide whether each should fall back to the working
+   directory or the runtime's own project variable.
+
+## Exit criteria
+- [ ] Session-start event confirmed or ruled out for Codex and for Pi, with evidence
+- [ ] Where one exists, a session in that runtime shows the live ticket-counts line
+- [ ] rules/state.md no longer says Codex and Pi do not wire a hook (or names the runtime that cannot)

@@ -2,9 +2,11 @@
 Title: STATE Status block stops storing ticket counts
 Created: 2026-10-19
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1478
 
 --- log ---
 2026-10-19T19:51Z Minh Ha-Duong created
+2026-10-19T20:20Z reviewer closed — autoclosed — PR #1478
 
 --- body ---
 ## Context
@@ -37,6 +39,21 @@ what only a human writes (blockers, decisions, next actions in prose).
   `state-metrics` extension point is also read-time.
 - Before removing lines, grep the harness for readers of the block
   (`/yawn` docs-freshness check, `/perch`, `/lair`, `tests/test_refresh_state.py`).
+
+## Implementation decisions (author, 2026-10-19)
+- No new script: `scripts/refresh-STATE.py` and `tests/test_refresh_state.py`
+  are retired. `scripts/on-start.sh` prints one declarative line of open and
+  ready counts from local `tickets/erg` (project = `CLAUDE_PROJECT_DIR`, else
+  the working directory); silent without `tickets/erg` or when erg fails; no
+  forge call.
+- The `state-metrics` extension point is dropped with the generated block.
+- Claude-specific lines of on-start.sh (worktree instruction, effort from
+  ~/.claude/settings.json) print only under Claude Code.
+- `/lair` step 10 regenerates nothing; `/yawn` drops the count check and
+  flags a legacy generated block instead.
+- Readers swept: rules/state.md, /lair, /yawn, STATE.md, both tests.
+  `/perch` and `/dashboard` never parsed the block.
+- Codex and Pi do not yet run on-start.sh: follow-up ticket 1122.
 
 ## Exit criteria
 - [ ] `refresh-STATE.py` no longer writes ticket counts, next picks, MRs or commits into STATE.md
