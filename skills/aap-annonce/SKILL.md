@@ -1,5 +1,6 @@
 ---
-category: publication
+metadata:
+  category: publication
 name: aap-annonce
 description: "Process a call-for-proposals announcement (AAP, appel à projets): file it, calendar deadlines, assess fit, propose three entry angles."
 ---

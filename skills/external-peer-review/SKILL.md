@@ -1,5 +1,6 @@
 ---
-category: writing
+metadata:
+  category: writing
 name: external-peer-review
 description: "Obtain independent external frontier-class peer reviews of a manuscript PDF; synthesize convergent findings into one verdict."
 user-invocable: true

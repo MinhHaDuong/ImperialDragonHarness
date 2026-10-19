@@ -1,5 +1,6 @@
 ---
-category: memory
+metadata:
+  category: memory
 name: coaching
 description: "Replay the frozen, already merged PR benchmark board through a contained reviewer seat and report read-only ground-truth diagnostics."
 argument-hint: "<model> [--endpoint URL] [--board FILE] [--credential-env NAME]"

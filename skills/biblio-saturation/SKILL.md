@@ -1,5 +1,6 @@
 ---
-category: research
+metadata:
+  category: research
 name: biblio-saturation
 description: "Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness."
 disable-model-invocation: false

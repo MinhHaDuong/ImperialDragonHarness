@@ -1,5 +1,6 @@
 ---
-category: session
+metadata:
+  category: session
 name: dashboard
 description: "Ticket dashboard: open tickets, branches and merge requests; full state plus a delta led by the ticket count."
 user-invocable: true
