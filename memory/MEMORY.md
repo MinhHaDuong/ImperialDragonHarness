@@ -18,6 +18,7 @@ v8 repository memory. Pilot: [pilot.md](../docs/memory-v8/pilot.md). Provenance:
 
 ## Recent experiences
 
+- [Temporary report timeout diagnosis](journal/2026/2026-10-19-tmp-report-timeout-diagnosis.md)
 - [Denied merge inspection](journal/2026/2026-10-19-merge-inspection-1117.md)
 
 - [Roar remeasure](journal/2026/2026-10-14-roar-remeasure-1090.md)
