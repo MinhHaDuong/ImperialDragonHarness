@@ -7,6 +7,7 @@ Author: Minh Ha-Duong
 2026-10-19T00:00Z Minh Ha-Duong created Child implementation contract for 1095 Design 2 safeguards
 2026-10-19T09:19Z reviewer 2026-10-19T09:19Z Minh Ha-Duong note The initial 00:00Z creation timestamp was a placeholder; implementation began at 09:19Z and the original log entry is preserved.
 2026-10-19T09:19Z reviewer note blocker 1118 closed — Blocked-by removed.
+2026-10-19T09:45Z reviewer Implementation complete: per-worktree .tmp registration and TMPDIR guidance; shared removal gate verifies WIP, branch/HEAD binding, integration ancestry, PR and numbered verdict citations, and reports size before eligible removal. Gaze, review-pr, molt, raid, roar, and GC removal paths are gated. Validation: make check 1740 passed, 3 skipped; make lint 186 passed; targeted integration 61 passed; close-and-clean shell passed. Padme restic exclude deployment/dry-run remains pending; Doudou was unavailable and its backup mechanism differs. Reviewer: /root/review_reporting, requested Luna high OpenAI same-family route; runtime model metadata unavailable and no other-family reviewer perspective. External publication awaits root coordination.
 
 --- body ---
 ## Context
@@ -69,9 +70,10 @@ unrelated repository operations.
 
 ## Exit criteria
 
-- [ ] Worktree `.tmp/` is ignored only through the common info/exclude and retained by the report.
-- [ ] Removal is fail-closed on citation hits, unreadable evidence, uncertain merge ancestry, and every existing safety rail.
-- [ ] Normal eligible removal reports `.tmp/` size before deletion.
-- [ ] The repo documents the required `.tmp` restic exclude and a control dry-run recipe. Host deployment and dry-run are recorded per host; any unavailable/external host remains a concrete open follow-up and is not claimed verified.
-- [ ] Targeted tests and the declared repository check pass.
+- [x] Worktree `.tmp/` is ignored only through the common info/exclude and retained by the report.
+- [x] Removal is fail-closed on citation hits, unreadable evidence, uncertain merge ancestry, and every existing safety rail.
+- [x] Normal eligible removal reports `.tmp/` size before deletion.
+- [x] The repo documents the required `.tmp` restic exclude and a control dry-run recipe.
+- [ ] Restic exclusion is configured and dry-run verified on every available configured host; unavailable/external hosts remain explicitly pending.
+- [x] Targeted integration tests, `make check`, and `make lint` pass.
 - [ ] Ticket 1119 closes in its own reviewed PR after 1118; tracker 1095 closes only after union integration review.
