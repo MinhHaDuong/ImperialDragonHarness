@@ -353,6 +353,21 @@ def test_gaze_refuses_unreviewable_prs():
     assert "rules/workflow.md" in setup
     assert "ESCALATE" in setup and "before spawning" in setup
     assert "--force-approve" in setup
+    # The waiver hatch lifts only the file-count stop; the PR-body declaration
+    # and the --waive-breaker flag are both named where the breaker lives.
+    assert "--waive-breaker" in setup, "gaze setup lost the --waive-breaker hatch"
+    assert "Review-scope: indivisible" in setup, (
+        "gaze setup lost the PR-body Review-scope declaration"
+    )
+    # The workflow rule and the gaze breaker must agree on both hatches.
+    assert "skills/gaze/SKILL.md" in workflow and "waiver" in workflow, (
+        "rules/workflow.md must name the waiver hatch and point at gaze setup"
+    )
+    # --force-approve must say it runs no review, not merely skip the gate.
+    force = VERIFY.split("## `--force-approve`", 1)[1].split("## Not in scope", 1)[0]
+    assert "no reviewer battery" in force, (
+        "the --force-approve section must state it skips review"
+    )
 
     circuits = VERIFY.split("## Circuit breakers", 1)[1].split("## Telemetry", 1)[0]
     output = VERIFY.split("## Output shape", 1)[1]
