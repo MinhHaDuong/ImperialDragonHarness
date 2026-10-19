@@ -40,15 +40,6 @@
       "why": "Portable Bash environment loader"
     },
     {
-      "path": "~/.claude/CLAUDE.md",
-      "target": "$IDH_ROOT/AGENTS.md",
-      "runtimes": [
-        "claude"
-      ],
-      "required": true,
-      "why": "Personal harness instructions"
-    },
-    {
       "path": "~/.codex/hooks.json",
       "target": "$IDH_ROOT/adapters/codex/hooks.json",
       "runtimes": [
