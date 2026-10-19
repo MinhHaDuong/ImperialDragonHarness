@@ -9,6 +9,12 @@ import pytest
 
 
 MODULE_INPUTS = {
+    'test_perch_discovery.py': (
+        'version:claude', 'version:codex', 'version:pi',
+        'version:$PERCH_CLAUDE_BIN', 'version:$PERCH_CODEX_BIN', 'version:$PERCH_PI_BIN',
+        'adapters/perch.py', 'adapters/pilot-support.json',
+        'scripts/skill_frontmatter.py', 'skills/perch/SKILL.md', 'tests/child_env.py',
+    ),
     'test_bash_suites.py': (
         'tests/*.sh', 'tests/fixtures/*', 'scripts/**/*', 'skills/**/*',
         'hooks/*', 'tickets/erg', 'tickets/.ergrc', 'rules/**/*',
@@ -44,14 +50,6 @@ ALWAYS = {
     ('test_ruff.py', 'test_ruff_version_satisfies_pinned_range'),
     ('test_track_changes_pdf.py', 'test_render_end_to_end'),
     ('test_memory_v8_protocol.py', 'test_protocol_pins_historical_dream_prompt_blob'),
-    *{('test_perch_discovery.py', name) for name in (
-        'test_a_clean_claude_profile_gains_perch_only_after_install',
-        'test_a_clean_codex_profile_gains_perch_only_after_install',
-        'test_a_clean_pi_profile_gains_perch_only_after_install',
-        'test_pi_reads_perch_through_the_neutral_home_symlink',
-        'test_uninstall_takes_perch_back_out_of_a_pi_profile',
-        'test_the_recorded_probe_command_is_the_one_that_ran',
-    )},
 }
 
 

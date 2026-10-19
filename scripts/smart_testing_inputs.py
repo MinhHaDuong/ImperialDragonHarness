@@ -63,8 +63,38 @@ def glob_members(root, pattern):
                    and any(fnmatch.fnmatchcase(name, item) for item in patterns)})
 
 
+@cache
+def version_fingerprint(name):
+    """One full version response per invocation; failed probes stay stale.
+
+    An optional $NAME resolves an executable override from the environment.
+    Store only hashes, never the response or environment value.
+    """
+    if name.startswith('$') and name[1:] not in os.environ:
+        return 'unset'
+    command = os.environ[name[1:]] if name.startswith('$') else name
+    if not command:
+        return 'unavailable:' + os.urandom(16).hex()
+    try:
+        result = subprocess.run(
+            [command, '--version'], capture_output=True, timeout=10,
+            env={key: value for key, value in os.environ.items() if key != 'BASH_ENV'},
+        )
+        if result.returncode == 0 and (result.stdout.strip() or result.stderr.strip()):
+            return hashlib.sha256(json.dumps([
+                result.stdout.hex(), result.stderr.hex(),
+            ]).encode()).hexdigest()
+    except FileNotFoundError:
+        return 'missing'
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    return 'unavailable:' + os.urandom(16).hex()
+
+
 def fingerprint(root, name, stats):
     """Hash known inputs only, reusing content hashes while stat identity holds."""
+    if name.startswith('version:'):
+        return version_fingerprint(name[len('version:'):])
     if name.startswith('glob:'):
         digest = hashlib.sha256()
         for member in glob_members(root, name[5:]):
@@ -236,7 +266,9 @@ class FileReads:
         try:
             for marker in item.iter_markers('smart_inputs'):
                 for pattern in marker.args:
-                    name = 'glob:' + pattern if any(char in pattern for char in '*?[') else pattern
+                    name = ('glob:' + pattern
+                            if not pattern.startswith('version:')
+                            and any(char in pattern for char in '*?[') else pattern)
                     self.observed.setdefault(self.consumer, {})[name] = fingerprint(
                         self.root, name, self.state['stats'])
         finally:
@@ -294,7 +326,7 @@ def pytest_load_initial_conftests(early_config):
 
 def pytest_configure(config):
     config.addinivalue_line('markers', 'smart_always: run on every smart invocation (live external state)')
-    config.addinivalue_line('markers', 'smart_inputs(*paths): additional file/glob inputs, including child reads')
+    config.addinivalue_line('markers', 'smart_inputs(*paths): additional file/glob or version:COMMAND inputs, including child reads')
     if not os.environ.get('SMART_TESTING_INPUTS'):
         return
     option = config.option

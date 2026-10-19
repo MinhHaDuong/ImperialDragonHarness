@@ -61,7 +61,15 @@ file hashes are reused. Direct subprocess file arguments and local Python `-m`
 entry points are recorded automatically. This does not trace arbitrary child
 process reads: declare indirect inputs explicitly.
 
-Tests that depend on live services, installed external tools or Git history use
+`smart_inputs("version:pi")` fingerprints the full stdout/stderr returned by
+`pi --version`, once per helper/pytest process. `version:$VARIABLE` also tracks an
+optional executable override. Only hashes are exported. Failed or empty probes
+stay stale. This trusts the tool's detailed version response to identify its
+installation; code changed without changing that response is outside this
+contract. Perch's installation tests use these declarations for Claude Code,
+Codex and Pi, so unchanged installations do not repeat discovery queries.
+
+Tests that depend on live services, unversioned external tools or Git history use
 `smart_always` and run on every invocation. Their module list is retained in the
 private state and portable reference. A successful refresh includes them too.
 The inventory check collects only modules named by its evidence pointers and

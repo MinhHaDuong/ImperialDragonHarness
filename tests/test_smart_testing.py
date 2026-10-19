@@ -1,5 +1,6 @@
 """Portable SQL reference and conservative external-input invalidation."""
 import json
+import os
 import hashlib
 import re
 import shutil
@@ -611,3 +612,88 @@ def test_data_forced_run_updates_python_coverage_without_losing_other_modules(sm
     _assert_passed(_smart_run(root))
     _assert_unchanged(_smart_run(root))
     assert not marker.exists()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('environment_override', [False, True])
+def test_detailed_tool_version_caches_discovery_and_invalidates_upgrade(
+    smart_repository, tmp_path, monkeypatch, environment_override,
+):
+    root = smart_repository
+    tool = tmp_path / 'idh-fake-cli'
+    release = tmp_path / 'release.txt'
+    result = tmp_path / 'discovery.txt'
+    release.write_text('build A')
+    result.write_text('yes')
+    tool.write_text(
+        '#!/bin/sh\nif [ "$1" = --version ]; then\n'
+        '  echo "tool 1.0.0"\n'
+        f'  cat "{release}" >&2\n'
+        f'else cat "{result}"; fi\n')
+    tool.chmod(0o755)
+    monkeypatch.setenv('PATH', f"{tmp_path}:{os.environ['PATH']}")
+    declaration = 'version:idh-fake-cli'
+    if environment_override:
+        monkeypatch.setenv('IDH_TEST_CLI', str(tool))
+        declaration = 'version:$IDH_TEST_CLI'
+    else:
+        monkeypatch.delenv('IDH_TEST_CLI', raising=False)
+    (root / 'tests/test_case.py').write_text(
+        'import os, subprocess, pytest\n'
+        f'@pytest.mark.smart_inputs({declaration!r})\n'
+        'def test_discovery():\n'
+        '    env = {k:v for k,v in os.environ.items() if k != "BASH_ENV"}\n'
+        '    output = subprocess.check_output(\n'
+        '        [os.environ.get("IDH_TEST_CLI", "idh-fake-cli"), "discover"], env=env)\n'
+        '    assert output.strip() == b"yes"\n')
+    launcher = tool.read_bytes()
+    _assert_passed(_smart_run(root, '--refresh'))
+    _assert_unchanged(_smart_run(root))
+    # Exercise both private learning and restored portable version baselines.
+    if environment_override:
+        shutil.rmtree(root / '.smart-testing')
+    # The shortcut and semantic version stay unchanged; the detailed build changes.
+    release.write_text('build B')
+    result.write_text('no')
+    failed = _smart_run(root)
+    assert failed.returncode == 1, failed.stdout + failed.stderr
+    assert _smart_run(root).returncode == 1  # failure cannot bless the new version
+    assert tool.read_bytes() == launcher
+    result.write_text('yes')
+    _assert_passed(_smart_run(root))
+    _assert_unchanged(_smart_run(root))
+    state = (root / '.smart-testing/inputs.json').read_text()
+    assert 'build B' not in state and 'tool 1.0.0' not in state
+
+
+@pytest.mark.parametrize('answer', ['failed', 'empty', 'timeout'])
+def test_unreadable_version_never_certifies_an_unchanged_tool(monkeypatch, answer):
+    plugin = smart.PLUGIN
+    plugin.version_fingerprint.cache_clear()
+    calls = []
+
+    def probe(*args, **kwargs):
+        calls.append(args)
+        if answer == 'timeout':
+            raise subprocess.TimeoutExpired('tool', 10)
+        return subprocess.CompletedProcess(args[0], 1 if answer == 'failed' else 0, b'', b'')
+
+    monkeypatch.setattr(plugin.subprocess, 'run', probe)
+    first = plugin.version_fingerprint('idh-tool')
+    assert plugin.version_fingerprint('idh-tool') == first
+    assert len(calls) == 1  # one probe per invocation
+    plugin.version_fingerprint.cache_clear()  # next invocation
+    assert plugin.version_fingerprint('idh-tool') != first
+    assert len(calls) == 2
+    plugin.version_fingerprint.cache_clear()
+
+
+def test_absent_executable_override_differs_from_an_empty_override(monkeypatch):
+    plugin = smart.PLUGIN
+    plugin.version_fingerprint.cache_clear()
+    monkeypatch.delenv('IDH_TEST_VERSION_OVERRIDE', raising=False)
+    absent = plugin.version_fingerprint('$IDH_TEST_VERSION_OVERRIDE')
+    monkeypatch.setenv('IDH_TEST_VERSION_OVERRIDE', '')
+    plugin.version_fingerprint.cache_clear()
+    assert plugin.version_fingerprint('$IDH_TEST_VERSION_OVERRIDE') != absent
+    plugin.version_fingerprint.cache_clear()
