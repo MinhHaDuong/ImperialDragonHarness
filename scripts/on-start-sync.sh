@@ -22,9 +22,12 @@ fi
 # through on-start-context.sh if it needs attention.
 # Write via tmp + mv: concurrent session starts share the common dir, and an
 # atomic rename keeps the report whole (last-writer-wins, never interleaved).
-_gcd=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || _gcd=""
+_gcd=$(git rev-parse --git-common-dir 2>/dev/null) || _gcd=""
+case "$_gcd" in /*|"") ;; *) _gcd="$PWD/$_gcd" ;; esac
+_tmo=""
+command -v timeout >/dev/null 2>&1 && _tmo="timeout 60"
 if [ -n "$_gcd" ]; then
-    ( { timeout 60 "$_script_dir/sync-local-main.sh" "$CLAUDE_PROJECT_DIR" \
+    ( { $_tmo "$_script_dir/sync-local-main.sh" "$CLAUDE_PROJECT_DIR" \
           > "$_gcd/sync-local-main.last.$$" 2>&1 \
         && mv -f "$_gcd/sync-local-main.last.$$" "$_gcd/sync-local-main.last" \
         || rm -f "$_gcd/sync-local-main.last.$$"; } & )
