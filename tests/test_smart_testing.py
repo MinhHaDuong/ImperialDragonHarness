@@ -103,6 +103,37 @@ def _assert_unchanged(result):
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize('new_member', [False, True])
+def test_shared_source_inventory_consumers_invalidate(smart_repository, new_member):
+    root = smart_repository
+    tests = Path(__file__).parent
+    (root / 'tests/test_case.py').unlink()
+    for name in ('conftest.py', 'repo_sources.py'):
+        shutil.copy2(tests / name, root / 'tests' / name)
+    # The first guard primes the real shared cache. Only the second guard
+    # checks the mutation, so first-reader attribution cannot mask a skip.
+    (root / 'tests/test_deps_declared.py').write_text(
+        'from repo_sources import source_texts\n'
+        'def test_third_party_imports_are_declared():\n'
+        '    assert source_texts()\n')
+    (root / 'tests/test_skill_frontmatter.py').write_text(
+        'from repo_sources import source_texts\n'
+        'def test_frontmatter_regex_has_single_definition():\n'
+        '    assert all(text != "BROKEN" for _, text in source_texts())\n')
+    source = root / 'scripts/control.txt'
+    source.write_text('clean')
+    result = _smart_run(root, '--refresh')
+    assert result.returncode == 0, result.stdout + result.stderr
+    _assert_unchanged(_smart_run(root))
+    changed = root / 'scripts/new-member.txt' if new_member else source
+    changed.write_text('BROKEN')
+    for _ in range(2):
+        result = _smart_run(root)
+        assert result.returncode == 1, result.stdout + result.stderr
+        assert 'test_frontmatter_regex_has_single_definition' in result.stdout
+
+
+@pytest.mark.integration
 def test_reference_adoption_checks_private_input_baseline(smart_repository, tmp_path):
     root = smart_repository
     _assert_passed(_smart_run(root, '--refresh'))

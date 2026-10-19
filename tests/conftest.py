@@ -7,6 +7,8 @@ import json
 
 import pytest
 
+from repo_sources import SCAN_DIRS
+
 
 MODULE_INPUTS = {
     'test_perch_discovery.py': (
@@ -36,6 +38,12 @@ MODULE_INPUTS = {
     'test_memory_v8_protocol.py': ('docs/**/*', 'memory/**/*', 'skills/**/*'),
 }
 TEST_INPUTS = {
+    # source_texts() is shared and memoized: audit reads reach only its first
+    # caller, so each guard must declare the inventory it actually consumes.
+    ('test_deps_declared.py', 'test_third_party_imports_are_declared'): tuple(
+        f'{directory}/**/*' for directory in SCAN_DIRS),
+    ('test_skill_frontmatter.py', 'test_frontmatter_regex_has_single_definition'): tuple(
+        f'{directory}/**/*' for directory in SCAN_DIRS),
     ('test_ruff.py', 'test_ruff'): ('**/*.py', '.ruff.toml'),
     ('test_check_agnostic.py', 'test_real_skills_pass_agnostic_gate'): ('skills/**/*',),
     ('test_check_agnostic.py', 'test_real_scripts_dir_is_agnostic'): ('scripts/**/*',),

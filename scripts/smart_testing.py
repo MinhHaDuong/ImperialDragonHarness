@@ -115,6 +115,8 @@ def main():
     parser.add_argument('--pytest', action='store_true', help=argparse.SUPPRESS)
     args, pytest_args = parser.parse_known_args()
     if args.pytest:
+        # Import only inside the child bootstrap: the parent must not import
+        # pytest before switching to the workload root and starting its runner.
         import pytest
         return pytest.main(pytest_args, plugins=[PLUGIN])
     if pytest_args:

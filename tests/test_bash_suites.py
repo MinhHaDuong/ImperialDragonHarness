@@ -13,6 +13,7 @@ A shell suite signals failure with a non-zero exit code (the suites use
 assertion failure for debugging.
 """
 
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -121,8 +122,6 @@ def test_stall_reproduction_without_age_is_skip_not_pass(tmp_path):
 @pytest.mark.integration
 def test_seat_runner_live_sections_preserve_failure_and_skip(tmp_path):
     """Splitting the suite must keep tracked-reference failures and absent-image skips."""
-    import shutil
-
     tests = tmp_path / "tests"
     tests.mkdir()
     script = tests / "test_seat_runner.sh"
