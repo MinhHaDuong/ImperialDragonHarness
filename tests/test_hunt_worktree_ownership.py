@@ -114,3 +114,12 @@ def test_headless_pattern_pointer_present():
         "step 3 must point ad hoc orchestrators at the `claude -p \"/hunt <id>\"` "
         "headless pattern, instead of hand-typed ownership contracts"
     )
+
+
+def test_hunt_registers_worktree_tmp_and_documents_per_command_tmpdir():
+    step3 = step3_text()
+    assert '"$IDH_ROOT/scripts/worktree-tmp-guard.py" register "$W"' in step3
+    assert '"$R/scripts/worktree-tmp-guard.py"' not in step3
+    assert "per-command `TMPDIR" in step3
+    assert "never session-wide" in step3
+    assert "Evidence stays outside `.tmp/`" in step3

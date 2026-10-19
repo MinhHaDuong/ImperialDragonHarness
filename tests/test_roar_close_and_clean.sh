@@ -34,7 +34,7 @@ _check_true() { # <label> <cmd...>
 # PATH for hermetic children: real tools by symlink, plus a gh stub. `nogh`
 # omits the stub (and gh itself) for the could-not-look case.
 TOOLS="$T/tools"; mkdir -p "$TOOLS"
-for t in bash git jq date awk grep sed sort cat mkdir rm mv ls head tail tr cut wc dirname basename realpath readlink printf env uname find xargs mktemp touch; do
+for t in bash git jq python3 date awk grep sed sort cat mkdir rm mv ls head tail tr cut wc dirname basename realpath readlink printf env uname find xargs mktemp touch; do
     p=$(command -v "$t" 2>/dev/null || true); [ -n "$p" ] && ln -sf "$p" "$TOOLS/$t"
 done
 STUBS="$T/stubs"; mkdir -p "$STUBS"
@@ -580,6 +580,18 @@ git -C "$L" -c user.email=t@t -c user.name=t merge -q --no-ff -m "merge task" ta
 run "$SCRIPT" --phase exit-check
 _check_rc "exit-check no forge, merged: ready" 0 "$rc"
 _check_says "exit-check no forge, merged: verdict" "$out" "EXIT: READY"
+
+# Actual removal uses the same fail-closed .tmp disposal gate as GC.
+git -C "$T/ec-local/repo" worktree add -q -b tmp-task "$T/ec-local/tmp-wt" main 2>/dev/null
+git -C "$T/ec-local/tmp-wt" -c user.email=t@t -c user.name=t commit -q --allow-empty -m "tmp-task clean"
+git -C "$T/ec-local/repo" -c user.email=t@t -c user.name=t merge -q --no-ff -m "merge tmp-task" tmp-task
+python3 "$REPO/scripts/worktree-tmp-guard.py" register "$T/ec-local/tmp-wt"
+mkdir -p "$T/ec-local/tmp-wt/.tmp"; echo cache > "$T/ec-local/tmp-wt/.tmp/cache.bin"
+cd "$T/ec-local/repo"
+run "$SCRIPT" --phase after-exit --remove-worktree "$T/ec-local/tmp-wt"
+_check_rc "close-and-clean removes integrated .tmp only after citation gate" 0 "$rc"
+_check_says "close-and-clean prints .tmp size before removal" "$out" "1 files"
+_check_true "close-and-clean removal removes worktree-owned .tmp" test ! -d "$T/ec-local/tmp-wt"
 
 # Author decision (ticket 1098): a main checkout parked on another branch does
 # not block the exit. The tree goes; branch -d then keeps the branch, reported.

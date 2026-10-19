@@ -190,6 +190,12 @@ terminal verdict.
 ```bash
 review_tree="$primary_root/.claude/worktrees/review-<pr-number>"
 if [ -d "$review_tree" ]; then
+    # Read verdicts before deleting panel files. Citation or ancestry uncertainty
+    # keeps both the candidate .tmp and its review evidence in place.
+    if [ -e "$review_tree/.tmp" ] || [ -L "$review_tree/.tmp" ]; then
+        python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" removal \
+            "$primary_root" "$review_tree" --branch "$PR_BRANCH" || exit 1
+    fi
     tracked_panel=$(git -C "$review_tree" ls-files -- ".panel/<pr-number>") || exit 2
     tracked_base=$(git -C "$review_tree" ls-files -- build/panel-head) || exit 2
     [ -n "$tracked_panel" ] || rm -rf -- "$review_tree/.panel/<pr-number>"
@@ -197,7 +203,8 @@ if [ -d "$review_tree" ]; then
         rm -rf -- "$review_tree/build/panel-head"
     fi
     rmdir -- "$review_tree/.panel" 2>/dev/null || true
-    if ! "$IDH_ROOT/scripts/worktree-exit-preflight.sh" "$review_tree"; then
+    # Detached review trees without provable branch ancestry retain .tmp.
+    if ! "$IDH_ROOT/scripts/worktree-exit-preflight.sh" --removal --branch "$PR_BRANCH" "$review_tree"; then
         echo "/gaze cleanup blocked: real WIP remains in $review_tree" >&2
         exit 1
     fi

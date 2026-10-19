@@ -194,7 +194,7 @@ Run full repo housekeeping and act on every finding.
      ```
    - **Worktree guard**: if the branch is prefixed with `+` in `git branch` output, a
      worktree is checked out on it. Skip if the worktree is dirty (uncommitted changes).
-     If the worktree is clean, remove it first with `git worktree remove <path>`.
+     If the worktree is clean, run `"$IDH_ROOT/scripts/worktree-exit-preflight.sh" --removal --branch <branch> <path>` first. If it blocks, retain the worktree and report the missing evidence or citation. Remove only after it passes.
    - **Safe delete**: use `git branch -d <branch>` (not `-D`) — this fails safely if
      the branch has unmerged commits, providing a final safety net.
 

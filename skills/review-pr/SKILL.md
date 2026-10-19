@@ -313,6 +313,14 @@ For a successful standalone review, run this from the review worktree (replace
 ```bash
 worktree=$(git rev-parse --show-toplevel) || exit 2
 panel="$worktree/.panel/<pr-number>"
+# Check scratch citations before removing the verdict directory. A detached
+# tree or unavailable coverage source retains the worktree and its artifacts.
+if [ -e "$worktree/.tmp" ] || [ -L "$worktree/.tmp" ]; then
+    branch=$(git -C "$worktree" symbolic-ref --quiet --short HEAD) || branch=""
+    [ -n "$branch" ] || { echo "review-pr: .tmp removal gate cannot identify a branch; retaining artifacts" >&2; exit 1; }
+    python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" removal \
+        "$worktree" "$worktree" --branch "$branch" || exit 1
+fi
 tracked_panel=$(git -C "$worktree" ls-files -- ".panel/<pr-number>") || exit 2
 tracked_base=$(git -C "$worktree" ls-files -- build/panel-head) || exit 2
 [ -n "$tracked_panel" ] || rm -rf -- "$panel"
@@ -320,6 +328,12 @@ if [ ! -L "$worktree/build" ] && [ -z "$tracked_base" ]; then
     rm -rf -- "$worktree/build/panel-head"
 fi
 rmdir -- "$worktree/.panel" 2>/dev/null || true
+# The caller may remove the worktree only after the full .tmp disposal gate.
+# A detached tree with .tmp is retained when branch proof is unavailable.
+branch=$(git -C "$worktree" symbolic-ref --quiet --short HEAD) || branch=""
+args=(--removal)
+[ -z "$branch" ] || args+=(--branch "$branch")
+"$IDH_ROOT/scripts/worktree-exit-preflight.sh" "${args[@]}" "$worktree" || exit 1
 ```
 
 Do not gitignore `.panel/` in adopter repos. With an ignore rule, default

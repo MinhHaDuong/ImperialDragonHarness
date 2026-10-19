@@ -28,6 +28,33 @@ Implement the author's adopted Design 2 from `docs/discussions/2026-10-14-1095-d
 4. Require actual merged ancestry proof for `.tmp/` disposal; an upstream marked `[gone]` is insufficient. Print `.tmp/` file count and allocated size before an otherwise-authorized removal. Keep live, locked, WIP, upstream-present, ancestry-uncertain, and crashed/unmerged worktrees.
 5. Add a restic exclusion for `.tmp/` and validate it with a dry run on each configured host; record unavailable host checks explicitly rather than claiming universal validation.
 
+### Restic rollout evidence and control recipe
+
+Host deployment is outside this harness worktree. The inspected Padme restic
+exclude source is `/etc/restic/excludes.txt` (installed from
+`tools/restic-excludes.txt`); it currently lacks a `.tmp` directory rule. The
+active backup roots include the operator's home directory, `/data`, and `/etc`. Doudou could
+not be reached for inspection; its previously recorded backup mechanism is a
+separate `snapshot.sh`/`EXCLUDES` setup, so restic status there is unknown.
+Neither host is marked verified or changed by this ticket.
+
+After the host owner adds a directory-component rule ` .tmp/ ` (without the
+spaces) to that host's existing exclude file, make an isolated fixture with
+`fixture/project/.tmp/control.bin` and `fixture/project/control.bin`, then run
+the host's normal restic environment against the fixture using the actual
+exclude file:
+
+```bash
+restic backup --dry-run --verbose --exclude-file=/etc/restic/excludes.txt /path/to/fixture
+```
+
+The output must show the ordinary `control.bin` included and the `.tmp`
+`control.bin` excluded. Capture host name, exclude-file path and rule, command
+exit status, and the two path results in the rollout record; never copy
+repository credentials or raw service configuration into the ticket. Do not
+run the installed backup wrapper for this control, since it may perform
+unrelated repository operations.
+
 ## Test
 
 - First write ordering controls: WIP plus `.tmp/x` survives GC and preflight; citation hit blocks; inaccessible citation evidence blocks; a genuinely merged tree is removed only after all rails and prints a size line; `[gone]` without ancestry proof, live/locked/upstream-present trees remain; tracked `.tmp` is WIP; absent common exclude is WIP.

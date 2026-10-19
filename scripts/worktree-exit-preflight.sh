@@ -14,6 +14,17 @@ set -euo pipefail
 # Arg: worktree path (default: current directory).
 # Exit 0 silently when clean. Exit 1 with a listing on stderr when dirty.
 
+removal=0
+branch=""
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --removal) removal=1; shift ;;
+        --branch) [ "$#" -ge 2 ] || exit 2; branch="$2"; shift 2 ;;
+        --) shift; break ;;
+        -*) echo "worktree-exit-preflight: unknown option: $1" >&2; exit 2 ;;
+        *) break ;;
+    esac
+done
 path="${1:-.}"
 [ -d "$path" ] || { echo "worktree-exit-preflight: not a directory: $path" >&2; exit 2; }
 root=$(git -C "$path" rev-parse --show-toplevel 2>/dev/null) || {
@@ -23,6 +34,19 @@ root=$(git -C "$path" rev-parse --show-toplevel 2>/dev/null) || {
 if [ "$(realpath "$path")" != "$(realpath "$root")" ]; then
     echo "worktree-exit-preflight: expected worktree root: $path" >&2
     exit 2
+fi
+
+# `.tmp/` is ignored by common Git metadata, so status alone cannot protect it.
+# Inspect it before any legacy review-scratch cleanup; never delete it here.
+if [ -e "$root/.tmp" ] || [ -L "$root/.tmp" ]; then
+    mode=preflight
+    [ "$removal" -eq 0 ] || mode=removal
+    args=()
+    [ -z "$branch" ] || args+=(--branch "$branch")
+    if ! python3 "$(dirname "$0")/worktree-tmp-guard.py" "$mode" "$root" "$root" "${args[@]}"; then
+        echo "worktree-exit-preflight: .tmp safety check failed — leaving the worktree in place" >&2
+        exit 2
+    fi
 fi
 
 # Inspect both pathspecs successfully before deleting either one. A failed
