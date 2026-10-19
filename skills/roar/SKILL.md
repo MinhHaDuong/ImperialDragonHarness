@@ -74,6 +74,23 @@ default branch — there are no remote branches nor merge requests to inspect.
 ## Reflect and update
 
 1. **Reflect**: what worked, what didn't, what was surprising.
+   **Temporary-candidate report (ticket 1118):** before disposing this
+   session, run the report-only host scan for the current runtime and session.
+   Resolve the repo root as above; supply the exact runtime and session id from
+   the live session metadata (do not infer an id from a path):
+   ```bash
+   RUNTIME=codex       # set to the exact runtime: claude, codex or pi
+   SESSION_ID='id-from-live-session-metadata'
+   python3 "$IDH_ROOT/scripts/tmp_report.py" --runtime "$RUNTIME" \
+     --scope roar --repo "$PROJECT_REPO" --session-id "$SESSION_ID"
+   ```
+   The helper searches all available runtime histories, limits candidates to
+   this session and linked child sessions, and prints unattributed candidates
+   separately. If the runtime or session id cannot be established, pass the
+   known runtime and omit `--session-id`; the report then makes no ownership
+   attribution. It never deletes candidate data. Treat history matches as
+   citations, not proof of creation, and do not copy raw history commands into
+   the wrap-up.
 2. **Review completed merges**: identify each reviewed merged PR from the
    project's git history and forge, then capture its review attribution in
    step 3. Report a capture failure if the review trail lacks required facts.

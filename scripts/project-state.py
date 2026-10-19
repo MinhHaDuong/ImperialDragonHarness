@@ -10,6 +10,7 @@ from pathlib import Path
 
 from git_utils import _default_branch
 from session_scratch import scan as _scratch_scan
+from tmp_report import disk_readings as _disk_readings, disk_warnings as _disk_warnings
 
 THRESHOLD_HOURS = 12.0
 # Orphan session directories reported per run. The count and the total are
@@ -375,6 +376,14 @@ def session_scratch_state(project):
     }
 
 
+def disk_space_state(project):
+    """Warn at healthcheck time when temporary or home storage is nearly full."""
+    del project
+    readings = _disk_readings()
+    warnings = _disk_warnings(readings)
+    return {"readings": readings, "warnings": warnings, "status": "warn" if warnings else "ok"}
+
+
 def pr_state(project):
     r = run(
         ["gh", "pr", "list", "--json", "number,title,headRefName", "--limit", "50"],
@@ -422,6 +431,7 @@ def main():
         "hooks": hooks_state,
         "prs": pr_state,
         "session_scratch": session_scratch_state,
+        "disk_space": disk_space_state,
     }
 
     with ThreadPoolExecutor(max_workers=len(collectors)) as pool:

@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Report temporary candidates and session attribution at roar and lair
+Created: 2026-10-19
+Author: Minh Ha-Duong
+Closed: implemented
+
+--- log ---
+2026-10-19T00:00Z Minh Ha-Duong created Child implementation contract for 1095 Design 3 and session-start disk warning
+2026-10-19T09:19Z reviewer 2026-10-19T09:19Z Minh Ha-Duong note The initial 00:00Z creation timestamp was a placeholder; implementation began at 09:19Z and the original log entry is preserved.
+2026-10-19T09:19Z reviewer closed — implemented
+
+--- body ---
+## Context
+
+Implement the selected report-only design from `docs/discussions/2026-10-14-1095-design.md`: scan likely temporary locations, attribute candidate paths to local runtime histories where evidence exists, and report at roar/lair. The session-start healthcheck warns when `/tmp` or `/home` is low on space. This is a child of tracker 1095; it must not delete candidate content.
+
+## Relevant files
+
+- `scripts/session_scratch.py` and healthcheck implementation -- existing scanning and startup check
+- `skills/roar/SKILL.md`, `skills/lair/SKILL.md` -- lifecycle invocation points
+- `tests/` -- fixture-based tests for all supported readers and report scopes
+- `docs/discussions/2026-10-14-1095-design.md` -- settled behavior and limits
+
+## Actions
+
+1. Add one report-only helper for `${TMPDIR:-/tmp}`, `~/.cache` excluding known tool caches, runtime scratch roots, and registered worktree `.tmp/` directories. Deduplicate overlapping roots, rank candidates by allocated bytes, and report unreadable paths separately.
+2. Add optional structured history readers for Claude, Codex and Pi. Search only histories newer than candidate mtime; support absolute, `~` and `$HOME` spellings; exclude the currently running report session. Redact command excerpts and label mention, attempted, created and inferred evidence distinctly. Pi `--no-session` children remain unattributed.
+3. Report candidate path/bytes, excerpt and source file/line when safe, session identity, liveness (`live`, `unknown`, `confirmed exited`), ticket-name hint, and references from PR bodies, verdict files or branch commits. Keep unattributed candidates visible. Roar scopes to current session and nested agents; lair scopes to the host.
+4. Add a session-start warning for low free space on `/tmp` and `/home` without blocking startup.
+5. Invoke the report from roar and lair, passing runtime and scope explicitly.
+
+## Test
+
+- First write positive-control tests for each history format, including a tilde-spelled candidate path, a nonexistent path, secret-bearing command redaction, a live creator, a cited candidate, and a Pi no-session/unattributed candidate.
+- Verify scan deduplication, known-cache exclusion, unreadable-root reporting, allocated-byte ordering, and the startup warning threshold with temporary fixture roots.
+
+## Invariants
+
+- Reporting only: no delete, move, chmod, or cleanup operation.
+- History hits are evidence of citation, not proof of creation; misses never prove no owner.
+- Never emit raw credential-bearing history excerpts.
+- No generic age- or name-based deletion, and no behavior change to existing WIP/liveness guards.
+
+## Exit criteria
+
+- [ ] Roar and lair produce the documented report with explicit runtime and scope.
+- [ ] All supported readers pass positive controls and preserve uncertainty labels.
+- [ ] Startup healthcheck warns for low `/tmp` and `/home` space without blocking.
+- [ ] Targeted tests and the declared repository check pass.
+- [ ] Ticket 1118 closes in its own reviewed PR; tracker 1095 remains open until the full child union is integrated and reviewed.

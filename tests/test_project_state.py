@@ -274,3 +274,13 @@ def test_hooks_state_wired_into_collectors():
     assert '"hooks": hooks_state' in source, (
         "hooks_state must be a collector so the yawn skill sees it"
     )
+
+
+def test_disk_space_state_warns_without_blocking(monkeypatch):
+    monkeypatch.setattr(ps, "_disk_readings", lambda: {
+        "/tmp": {"total": 100, "free": 5},
+        "/home": {"total": 1000, "free": 400},
+    })
+    out = ps.disk_space_state(Path("/proj"))
+    assert out["status"] == "warn"
+    assert out["warnings"] == ["/tmp has 5% free"]

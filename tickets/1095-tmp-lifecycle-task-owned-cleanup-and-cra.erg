@@ -2,7 +2,6 @@
 Title: Tmp lifecycle: task-owned cleanup and crash recovery across runtimes
 Created: 2026-10-14
 Author: Minh Ha-Duong
-Label: deferred
 
 --- log ---
 2026-10-14T09:33Z Minh Ha-Duong created
@@ -10,6 +9,7 @@ Label: deferred
 2026-10-14T17:32Z reviewer note Author proposed Design 3 (report-only scan with session-history attribution at roar and lair); portability and evidence assessed it, recorded in docs/discussions/2026-10-14-1095-design.md. Questions revised; still awaiting answers.
 2026-10-14T17:37Z reviewer note Doudou measured after it came back up (docs/discussions/2026-10-14-1095-seats/d3-doudou.md): attribution 5/6 by path, 6/6 with tilde variants; 2.9G of task temporaries in ~/.cache. Design 3 mapped against the ticket's lifecycle points.
 2026-10-14T17:42Z reviewer note Author decided 2026-10-14 (recorded in docs/discussions/2026-10-14-1095-design.md, Answers): Design 3 settled; Pi no-session children listed as unattributed; Design 2 adopted now with blocking citation check and crashed trees keeping .tmp/; session-start disk warning plus restic .tmp/ exclude; padme t2093/t2094 passed to climate-finance-het by the author. Implementation child tickets still to be filed.
+2026-10-19T09:19Z reviewer 2026-10-19T09:19Z Minh Ha-Duong note The initial 00:00Z child-tracker timestamp was a placeholder; this correction records the actual implementation start date/time while preserving the original log entry.
 
 --- body ---
 ## Context
@@ -26,7 +26,14 @@ registered worktrees via worktree-gc.sh. Those mechanisms do not account for
 arbitrary command/test temporary directories across runtimes. Existing
 context: closed 0854 (session scratch), 0300/0303 (temporary worktree scope).
 
-## Discussion to resume
+## Settled implementation
+
+- Design 3 report-only scan/history attribution at roar and lair; Pi no-session children remain unattributed.
+- Design 2 worktree-owned `.tmp/` adopted, with fail-closed citation checks; crashed/unmerged trees retain scratch.
+- Session-start low-disk warning for `/tmp` and `/home`, and restic `.tmp/` exclude with host dry-run.
+- Child implementation contracts: 1118 and 1119 (Blocked-by 1118).
+
+## Discussion archive
 
 Decide an ownership/lifecycle contract for task-created temporaries. Candidate
 points: source cleanup at command/test completion (finally/trap/temporary
@@ -39,9 +46,7 @@ No generic age-based rm of /tmp.
 
 ## Exit criteria
 
-- [ ] Resume discussion with the author; record chosen lifecycle points and
-      ownership/retention policy, with current mechanism references.
-- [ ] Define a concrete bounded implementation plan and verification for
-      normal completion, crash recovery and preservation of live/WIP resources;
-      create implementation child tickets if the decision needs them.
+- [x] Record chosen lifecycle points and ownership/retention policy in the Answers and Settled implementation sections.
+- [x] Define bounded implementation and verification in child tickets 1118 and 1119; 1119 depends on 1118.
+- [ ] Integrate and review the union of both child implementations; preserve all liveness, WIP, citation and evidence guards.
 

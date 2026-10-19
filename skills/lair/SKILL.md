@@ -17,6 +17,18 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 
 1. **Housekeeping** — run `/molt` (git sync, yawn, eager fix-now repairs, ticket creation).
 2. **Reflect on the session** — summarize work done. `git log --since="6am" --oneline` as starting point.
+   Then run the report-only temporary-candidate scan for the host, using the
+   exact current runtime name and session id from its live metadata:
+   ```bash
+   RUNTIME=codex       # set to the exact runtime: claude, codex or pi
+   SESSION_ID='id-from-live-session-metadata'
+   python3 "$IDH_ROOT/scripts/tmp_report.py" --runtime "$RUNTIME" \
+     --scope lair --repo "$(git rev-parse --show-toplevel)" --session-id "$SESSION_ID"
+   ```
+   The helper checks all available runtime histories, reports candidates and
+   unattributed paths, and performs no cleanup. A path citation is not proof of
+   creation. Do not copy raw history commands into the handoff. If the session
+   id is unavailable, omit it and report no ownership attribution.
 3. **Log session metrics** — run `"$IDH_ROOT/skills/lair/log-agent-metrics"` with: `<session_id> session <total_tokens> <tool_uses> <duration_ms> <model> <project>`. Estimate tokens from conversation length if exact count unavailable.
 4. **Push all branches** — no local-only work overnight. `git branch` → ensure each non-main branch is pushed to origin.
 5. **Commit WIP if needed** — uncommitted work gets `wip:` prefix, committed to the current branch, and pushed.

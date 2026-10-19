@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Own worktree .tmp lifecycle with citation gate and restic exclusion
+Created: 2026-10-19
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-19T00:00Z Minh Ha-Duong created Child implementation contract for 1095 Design 2 safeguards
+2026-10-19T09:19Z reviewer 2026-10-19T09:19Z Minh Ha-Duong note The initial 00:00Z creation timestamp was a placeholder; implementation began at 09:19Z and the original log entry is preserved.
+2026-10-19T09:19Z reviewer note blocker 1118 closed — Blocked-by removed.
+
+--- body ---
+## Context
+
+Implement the author's adopted Design 2 from `docs/discussions/2026-10-14-1095-design.md` after child 1118 supplies the report foundation. Worktree-local `.tmp/` may hold disposable caches and logs; evidence stays in commits, DVC or the PR. A candidate citation in a PR body, verdict file or branch commit blocks worktree removal. A crashed, unmerged tree retains `.tmp/` indefinitely and remains visible to child 1118's report.
+
+## Relevant files
+
+- `skills/hunt/SKILL.md` and runtime worktree instructions -- declare `.tmp/` use and common info/exclude registration
+- `scripts/worktree-gc.sh`, `scripts/worktree-exit-preflight.sh` -- cleanup ordering and removal controls
+- `scripts/session_scratch.py` / child 1118 report helper -- expose retained `.tmp/` candidates
+- host restic configuration -- host-specific exclude and dry-run evidence
+
+## Actions
+
+1. Document `.tmp/` as worktree-owned disposable scratch, per-command `TMPDIR` only, with evidence retention outside it.
+2. Register `/.tmp/` in common git `info/exclude` at hunt/worktree creation; tracked `.tmp/` content or missing exclusion remains WIP.
+3. Add a fail-closed citation check before removal that searches PR bodies, verdict files and branch commits. Any match or inaccessible citation source blocks removal. Never purge `.tmp/` before WIP/citation checks.
+4. Require actual merged ancestry proof for `.tmp/` disposal; an upstream marked `[gone]` is insufficient. Print `.tmp/` file count and allocated size before an otherwise-authorized removal. Keep live, locked, WIP, upstream-present, ancestry-uncertain, and crashed/unmerged worktrees.
+5. Add a restic exclusion for `.tmp/` and validate it with a dry run on each configured host; record unavailable host checks explicitly rather than claiming universal validation.
+
+## Test
+
+- First write ordering controls: WIP plus `.tmp/x` survives GC and preflight; citation hit blocks; inaccessible citation evidence blocks; a genuinely merged tree is removed only after all rails and prints a size line; `[gone]` without ancestry proof, live/locked/upstream-present trees remain; tracked `.tmp` is WIP; absent common exclude is WIP.
+- Verify restic dry-run includes the expected excluded `.tmp/` path while a neighboring non-excluded control remains included.
+
+## Invariants
+
+- Never use generic temp deletion, age rules, or `tNNNN-*` name-based deletion.
+- Any uncertain liveness, citation coverage, or source accessibility keeps the tree and its `.tmp/`.
+- Do not put evidence in `.tmp/`; do not delete current or foreign worktrees.
+- Host-local restic validation must identify the host and actual configuration evidence.
+
+## Exit criteria
+
+- [ ] Worktree `.tmp/` is ignored only through the common info/exclude and retained by the report.
+- [ ] Removal is fail-closed on citation hits, unreadable evidence, uncertain merge ancestry, and every existing safety rail.
+- [ ] Normal eligible removal reports `.tmp/` size before deletion.
+- [ ] The repo documents the required `.tmp` restic exclude and a control dry-run recipe. Host deployment and dry-run are recorded per host; any unavailable/external host remains a concrete open follow-up and is not claimed verified.
+- [ ] Targeted tests and the declared repository check pass.
+- [ ] Ticket 1119 closes in its own reviewed PR after 1118; tracker 1095 closes only after union integration review.

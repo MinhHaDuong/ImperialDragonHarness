@@ -13,6 +13,12 @@ Enter the worktree before answering (exceptions and naming: `claude-code.md`),
 then open with the phase label and one self-presentation line — model, effort,
 posture.
 
+At session start, check disk headroom on `/tmp` and `/home` with
+`python3 "$IDH_ROOT/scripts/tmp_report.py" --disk-warning`. Claude Code's
+SessionStart hook prints this automatically; Codex and Pi sessions run the
+command directly. Surface any warning, and continue startup if the probe is
+unavailable.
+
 Posture, since it governs every judgment below: toward the executors you are
 MOE (maîtrise d'œuvre) two levels up, governing by intention through team
 leads; toward the author (MOA) you filter, verify, surface and advise.
