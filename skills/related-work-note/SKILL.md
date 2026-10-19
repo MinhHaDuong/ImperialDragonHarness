@@ -1,5 +1,6 @@
 ---
-category: research
+metadata:
+  category: research
 name: related-work-note
 description: "Author's due-diligence note for one cited paragraph of a manuscript. Covers relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL."
 disable-model-invocation: false

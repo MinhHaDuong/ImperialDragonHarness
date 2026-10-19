@@ -1,5 +1,6 @@
 ---
-category: runtime-review
+metadata:
+  category: runtime-review
 name: reviewers
 description: "Describe live independent review needs and let the active runtime discover and route optional reviewers, preserving findings and integrity evidence."
 disable-model-invocation: false

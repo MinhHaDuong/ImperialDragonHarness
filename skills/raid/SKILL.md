@@ -1,5 +1,6 @@
 ---
-category: build
+metadata:
+  category: build
 name: raid
 description: "Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears."
 disable-model-invocation: false

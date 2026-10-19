@@ -1,5 +1,6 @@
 ---
-category: writing
+metadata:
+  category: writing
 name: slides
 description: "Make or review a talk's slide deck: build a beamer deck from a written text, or critique an existing deck with prioritized fixes. Keywords: diaporama, présentation."
 disable-model-invocation: false
