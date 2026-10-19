@@ -1,4 +1,4 @@
-"""Session start prints live ticket counts; STATE.md stores none (ticket 1121).
+"""Session start prints live ticket counts; STATE.md stores none.
 
 `scripts/on-start-context.sh` computes open and ready counts from the project's local
 `tickets/erg` at read time and prints one declarative line. The project is

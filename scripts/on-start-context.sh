@@ -1,30 +1,15 @@
 #!/bin/bash
 set -euo pipefail
-# Session-start context printer: stdout becomes conversation context. It has no
-# side effects; the repository-mutating half is on-start-sync.sh. Claude Code runs
-# it at every SessionStart; another runtime may call it too (ticket 1122), so the Claude-specific
-# lines below are guarded by _claude and stay silent elsewhere.
-#
-# NOTE: a project's non-secret .env settings reach bash subprocesses via BASH_ENV
-# (settings.json → env.BASH_ENV → scripts/bash-env.sh), which strict-parses them
-# and loads no credential: consumers read ~/.config/keys at point of use (0945).
-# Do NOT use CLAUDE_ENV_FILE either: it inlines KEY=VALUE in argv, leaking to ps -ef.
+# Session-start context printer: stdout becomes conversation context, and the
+# script has no side effects (repository upkeep is on-start-sync.sh). Claude
+# Code, Codex and Pi all run it. Lines keyed on CLAUDE_PROJECT_DIR, which only
+# Claude Code's hook runner sets, stay silent elsewhere: they describe Claude's
+# .claude/ loading, and no runtime-given project root means no guessing one.
+# Do not use CLAUDE_ENV_FILE here: it inlines KEY=VALUE in argv, visible in ps.
 
-# Claude Code's hook runner sets CLAUDE_PROJECT_DIR; its absence means another
-# runtime (or a bare shell) called this script.
 _claude=${CLAUDE_PROJECT_DIR:+1}
 
-# Decision (ticket 1122): the blocks below keyed on CLAUDE_PROJECT_DIR alone
-# stay Claude-only, with no working-directory fallback. The coherence prompt and
-# resident census describe Claude's .claude/ loading and "worktree entry"; the
-# memory index is already reached from AGENTS.md ("read memory/MEMORY.md at
-# task start") in Codex and Pi; the sync report has no producer without the
-# post-cutoff sync, and that sync plus `core.hooksPath` mutate repository state,
-# which needs a runtime-given project root, not a guessed working directory.
-# Codex and Pi get the runtime-neutral lines: host, disk, loader, ticket counts.
-
-# Worktree instruction (it cites rules/claude-code.md) — Claude Code only, and
-# skipped in automated night-sweep runs
+# Worktree instruction: Claude Code only, skipped in automated night sweeps.
 if [[ -n "$_claude" && -z "${CLAUDE_NIGHT_SWEEP:-}" ]]; then
     echo "Worktree isolation is enabled for this project: code, data and configuration are worked in the conversation's own worktree, created with plain git and entered by cd before anything else (rules/claude-code.md § Entering the session); manuscript prose in a paper repo is edited in place in the author's checkout (rules/git.md § Prose workpackages). A session opening on /hunt triages the ticket first (skills/hunt/SKILL.md)."
 fi
@@ -51,29 +36,16 @@ if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
     "$_script_dir/prompt-project-coherence.sh" "$CLAUDE_PROJECT_DIR" || true
 fi
 
-# Check the harness loader (ticket 0983) is in the user's shell config: its
-# refusing stubs stay in place unless shell-init.sh loads fully, so a missing
-# or broken checkout cannot leave the runtimes unwrapped. A bare `source`
-# line would skip silently. `_idh_refuse` marks the current block;
-# `_idh_unreachable` marks the round-1 block still installed until the
-# post-merge refresh (tests/test_projection_validator.py pins both).
+# Remind when the harness loader is missing from the shell config. A bare
+# `source` line would skip silently if the checkout broke; the loader's refusing
+# stubs do not. `_idh_refuse` and `_idh_unreachable` are the two marker names
+# an installed block carries.
 if ! grep -qE "_idh_refuse|_idh_unreachable" "$HOME/.bashrc" "$HOME/.zshrc" 2>/dev/null; then
     echo "SETUP REMINDER: the harness loader is not in your shell config. Run ${_script_dir%/scripts}/bin/idh install (it writes $_script_dir/bashrc-loader.sh into ~/.bashrc; remove any bare shell-init.sh source line)."
 fi
 
-# The harness-rules index is NOT cat-ed here: the runtime already loads every
-# `~/.claude/rules/**.md` into the system prompt (mechanism isolated
-# 2026-09-09, see rules/README.md), so cat-ing the index served a second copy
-# of a file that was already resident. An adapter on a runtime without that
-# auto-load is what must inject it — that is the adapter's job, not this
-# hook's (tickets 0800, 0802).
-
 # Inject the harness memory index only into sessions whose project is this
-# harness repository (or one of its worktrees). Until the v8 pilot (ticket
-# 0920) this cat-ed the index into every Claude Code session, including
-# unrelated projects — cross-project pooling that v8's project-local scope
-# retires here; another project's memory belongs to its own AGENTS.md.
-# Still budgeted by the resident census (hook channel).
+# harness repository or one of its worktrees (same git common dir).
 if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
     _mem_gcd=$(git -C "$CLAUDE_PROJECT_DIR" rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || _mem_gcd=""
     _mem_harness=$(git -C "$_script_dir/.." rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || _mem_harness=""
@@ -82,11 +54,9 @@ if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
     fi
 fi
 
-# Live ticket counts, computed now (ticket 1121): STATE.md stores no derived
-# number, so the session sees the counts without a committed copy that every
-# ticket close makes stale. Runtime-neutral: the project is the working
-# directory when CLAUDE_PROJECT_DIR is unset. Local erg only, no forge call;
-# silent when the project has no tickets/ or erg, or when erg fails.
+# Live ticket counts, computed now so STATE.md need not store them. The project
+# is the working directory when CLAUDE_PROJECT_DIR is unset. Local erg only, no
+# forge call; silent when the project has no tickets/ or erg, or when erg fails.
 _proj=${CLAUDE_PROJECT_DIR:-$PWD}
 # Bound erg only where `timeout` exists (absent on stock macOS).
 _tmo=""
@@ -106,7 +76,7 @@ fi
 # Surface the previous session start's local-main sync report when it needed
 # attention (dirty overlap, divergence, refusal). A clean fast-forward — and a
 # routine offline "fetch failed — skipped" — stays silent: only the outcomes
-# that need a human decision reach the conversation. (ticket 0277)
+# that need a human decision reach the conversation.
 if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
     # --git-common-dir is relative to -C on older git; anchor it.
     _gcd=$(git -C "$CLAUDE_PROJECT_DIR" rev-parse --git-common-dir 2>/dev/null) || _gcd=""

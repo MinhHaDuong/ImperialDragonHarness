@@ -1,4 +1,4 @@
-"""Codex and Pi wire a session-start event to scripts/on-start-context.sh (ticket 1122).
+"""Codex and Pi wire a session-start event to scripts/on-start-context.sh.
 
 Both runtimes were measured on the installed versions (Codex 0.163.0, Pi 1.3.0):
 the event fires and the text reaches the model. This pins the wiring so a

@@ -20,7 +20,7 @@
  * -> the harness checkout), so realpath of the self module resolves to the
  * canonical tree and scripts/guard-destructive-bash.sh is found under it.
  *
- * Session start (ticket 1122): the same extension also carries the session
+ * Session start: the same extension also carries the session
  * context. Pi has a `session_start` event but no hook whose stdout becomes
  * context, so on a fresh session it runs `scripts/on-start-context.sh` itself and
  * queues the stdout as a custom message delivered with the next user turn
