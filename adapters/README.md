@@ -184,7 +184,9 @@ turn enforcement into advice:
   `~/.pi/agent/extensions/`.
   The same extension also runs `scripts/on-start-context.sh` on `session_start`,
   and Codex's `hooks.json` carries a `SessionStart` entry for it: session
-  context, not part of the guard.
+  context, not part of the guard. The Claude Code plugin runs two
+  `SessionStart` hooks: `on-start-context.sh` (prints context) and
+  `on-start-sync.sh` (sets `core.hooksPath`, backgrounds the local-main sync).
   Any future `pi --print` driver must assert the served provider:
   [pi/README.md](pi/README.md) (ticket 0979).
 

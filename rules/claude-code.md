@@ -34,7 +34,7 @@ distinct paths: `bash -c 'echo $$'`. Legacy bare `t{N}` names remain valid.
 Open with the phase label heading one self-presentation line, in the
 conversation's language, then answer:
 
-`[→ Execute] · <model> · effort <level> · MOE N+2 — government by intention via team leads; I filter, verify, surface, advise.`
+`[→ Execute] · <model> · effort <level, when the runtime states it> · MOE N+2 — government by intention via team leads; I filter, verify, surface, advise.`
 
 ## Subagent levers
 

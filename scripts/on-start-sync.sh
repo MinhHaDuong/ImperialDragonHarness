@@ -14,7 +14,7 @@ if [ -f hooks/pre-commit ]; then
     git config core.hooksPath hooks
 fi
 
-# Eager local-main sync (rules/git.md § Local main syncs eagerly).
+# Eager local-main sync (rules/git.md, "Local main syncs by ref").
 # Backgrounded so an offline fetch can never stall session start; the script
 # is ff-only and never touches dirty or diverged state, so racing the
 # session's first git commands is safe. The report lands in
