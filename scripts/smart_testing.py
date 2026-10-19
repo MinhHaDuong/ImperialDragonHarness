@@ -11,6 +11,8 @@ import subprocess
 import sys
 import tempfile
 
+import pytest
+
 # Load the sibling plugin by file, without adding the harness repository to the
 # workload's import path or competing with its own `scripts` package.
 SPEC = importlib.util.spec_from_file_location(
@@ -115,9 +117,6 @@ def main():
     parser.add_argument('--pytest', action='store_true', help=argparse.SUPPRESS)
     args, pytest_args = parser.parse_known_args()
     if args.pytest:
-        # Import only inside the child bootstrap: the parent must not import
-        # pytest before switching to the workload root and starting its runner.
-        import pytest
         return pytest.main(pytest_args, plugins=[PLUGIN])
     if pytest_args:
         parser.error('unrecognized arguments: ' + ' '.join(pytest_args))

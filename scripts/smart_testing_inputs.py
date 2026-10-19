@@ -1,6 +1,6 @@
 """Record repository file reads that execution coverage cannot observe.
 
-Loaded only by smart_testing.py, in disposable pytest child processes.
+Loaded by smart_testing.py; recording runs in disposable pytest children.
 """
 import fnmatch
 from functools import cache
