@@ -82,15 +82,19 @@ default branch — there are no remote branches nor merge requests to inspect.
    RUNTIME=codex       # set to the exact runtime: claude, codex or pi
    SESSION_ID='id-from-live-session-metadata'
    python3 "$IDH_ROOT/scripts/tmp_report.py" --runtime "$RUNTIME" \
-     --scope roar --repo "$PROJECT_REPO" --session-id "$SESSION_ID"
+     --scope roar --repo "$PROJECT_REPO" --session-id "$SESSION_ID" \
+     --exclude-session-id "$SESSION_ID"
    ```
    The helper searches all available runtime histories, limits candidates to
    this session and linked child sessions, and prints unattributed candidates
-   separately. If the runtime or session id cannot be established, pass the
-   known runtime and omit `--session-id`; the report then makes no ownership
-   attribution. It never deletes candidate data. Treat history matches as
-   citations, not proof of creation, and do not copy raw history commands into
-   the wrap-up.
+   separately. The reporting session is excluded from citation attribution
+   while its child graph remains available; candidates mentioned only by the
+   current session remain unattributed. If the runtime or session id cannot be
+   established, pass the known runtime and omit both session flags. It never
+   deletes candidate data. A citation is not proof of creation; `created`
+   appears only for a matching native Claude/Codex call and result id, explicit
+   zero exit status, and one direct command targeting the exact candidate. Do
+   not copy raw history commands into the wrap-up.
 2. **Review completed merges**: identify each reviewed merged PR from the
    project's git history and forge, then capture its review attribution in
    step 3. Report a capture failure if the review trail lacks required facts.

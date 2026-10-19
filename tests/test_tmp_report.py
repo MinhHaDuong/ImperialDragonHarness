@@ -49,7 +49,7 @@ def test_history_attribution_supports_home_spellings_and_redacts_secrets(tmp_pat
 
     assert matches
     assert matches[0]["session"] == "session-positive"
-    assert matches[0]["evidence"] in {"attempted", "created", "mention"}
+    assert matches[0]["evidence"] == "attempted"
     assert "supersecret" not in matches[0]["excerpt"]
     assert "tmp-t2043" in matches[0]["excerpt"]
 
@@ -125,17 +125,74 @@ def test_missing_disk_mount_is_reported_as_unknown(monkeypatch, capsys):
     assert capsys.readouterr().out == "Disk headroom warning: /home free space unknown (could not inspect mount) (threshold: 10% free)\n"
 
 
-def test_created_label_requires_structured_success(tmp_path):
+def test_codex_creation_requires_matching_call_id_and_explicit_zero_exit(tmp_path):
     target = tmp_path / "tmp-created"
     history = tmp_path / "codex.jsonl"
     history.write_text(
         json.dumps({"type": "session_meta", "payload": {"id": "creator"}}) + "\n"
-        + json.dumps({"type": "function_call_output", "payload": {"arguments": f"mkdir -p {target}", "exit_code": 0}}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {
+            "type": "function_call", "call_id": "call-ok", "name": "bash",
+            "arguments": f"mkdir -p {target}",
+        }}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {
+            "type": "function_call_output", "call_id": "other-call",
+            "output": {"exit_code": 0},
+        }}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {
+            "type": "function_call_output", "call_id": "call-ok",
+            "output": {"exit_code": 0},
+        }}) + "\n"
     )
     found = report.attribute_histories(
         [{"path": str(target), "mtime": 0}], [history], home=tmp_path
     )[str(target)]
-    assert found[0]["evidence"] == "created"
+    created = next(item for item in found if item["evidence"] == "created")
+    assert created["session"] == "creator"
+    assert created["call_line"] == 2
+    assert created["line"] == 4
+
+
+def test_claude_creation_requires_native_result_id_and_exit_zero(tmp_path):
+    target = tmp_path / "tmp-claude-created"
+    history = tmp_path / "claude.jsonl"
+    history.write_text(
+        json.dumps({"type": "assistant", "sessionId": "claude-creator", "message": {"content": [
+            {"type": "tool_use", "id": "toolu-ok", "name": "Bash", "input": {"command": f"mkdir -p {target}"}},
+        ]}}) + "\n"
+        + json.dumps({"type": "user", "message": {"content": [
+            {"type": "tool_result", "tool_use_id": "wrong-id", "is_error": False, "content": "exit code 0"},
+        ]}}) + "\n"
+        + json.dumps({"type": "user", "message": {"content": [
+            {"type": "tool_result", "tool_use_id": "toolu-ok", "is_error": False, "content": "exit code 0"},
+        ]}}) + "\n"
+    )
+    found = report.attribute_histories(
+        [{"path": str(target), "mtime": 0}], [history], home=tmp_path
+    )[str(target)]
+    created = next(item for item in found if item["evidence"] == "created")
+    assert created["session"] == "claude-creator"
+    assert created["call_line"] == 1
+    assert created["line"] == 3
+
+
+def test_compound_or_nonzero_creation_commands_remain_attempts(tmp_path):
+    target = tmp_path / "tmp-attempted"
+    history = tmp_path / "codex.jsonl"
+    history.write_text(
+        json.dumps({"type": "response_item", "payload": {
+            "type": "function_call", "call_id": "call-fail", "name": "bash",
+            "arguments": f"mkdir -p {target} && echo done",
+        }}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {
+            "type": "function_call_output", "call_id": "call-fail",
+            "output": {"exit_code": 1},
+        }}) + "\n"
+    )
+    found = report.attribute_histories(
+        [{"path": str(target), "mtime": 0}], [history], home=tmp_path
+    )[str(target)]
+    assert found
+    assert all(item["evidence"] != "created" for item in found)
 
 
 def test_nested_codex_subagent_parent_link_is_extracted():

@@ -5,12 +5,11 @@ This command is deliberately observational. It never deletes, moves, or changes
 permissions on candidate paths. A history match means a session cited the path;
 it does not establish that the session created it.
 """
-from __future__ import annotations
-
 import argparse
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -25,6 +24,8 @@ SECRET_ASSIGNMENT = re.compile(
 )
 BEARER = re.compile(r"(?i)(\bbearer\s+)[A-Za-z0-9._~+/-]+=*")
 TOKEN_SHAPE = re.compile(r"\b(?:sk-[A-Za-z0-9_-]{8,}|gh[pousr]_[A-Za-z0-9_]{12,})\b")
+EXIT_ZERO = re.compile(r"(?i)\b(?:exit(?:ed)?(?:\s+with)?\s+code|exit_code)\s*[:=]?\s*0\b")
+EXIT_NONZERO = re.compile(r"(?i)\b(?:exit(?:ed)?(?:\s+with)?\s+code|exit_code)\s*[:=]?\s*[1-9][0-9]*\b")
 CANDIDATE_NAME = re.compile(r"(?:^|/)t([0-9]{1,5})(?:[-_/]|$)")
 CREATE_COMMAND = re.compile(r"(?i)(?:\bmkdir\b|\bmktemp\b|\btouch\b|\bopen\s*\(|\bwrite(?:_text|_bytes)?\s*\()")
 ATTEMPT_COMMAND = re.compile(r"(?i)(?:\bTMPDIR\s*=|\bcd\s+|\bcp\b|\bmv\b|\brm\b|\btee\b|\bredirection)")
@@ -295,6 +296,100 @@ def find_history_mentions(candidate, files, home=None, candidate_mtime=0):
     return matches
 
 
+def _native_calls(record):
+    """Return (call id, runtime kind, command) from native tool-call records."""
+    calls = []
+    payload = record.get("payload") if isinstance(record, dict) else None
+    if isinstance(payload, dict) and payload.get("type") == "function_call":
+        call_id = payload.get("call_id")
+        name = str(payload.get("name", "")).casefold()
+        arguments = payload.get("arguments")
+        if call_id and name in {"bash", "shell", "terminal", "exec_command"} and isinstance(arguments, str):
+            calls.append((call_id, "codex", arguments))
+
+    def walk(value):
+        if isinstance(value, dict):
+            if value.get("type") == "tool_use" and value.get("id"):
+                name = str(value.get("name", "")).casefold()
+                inputs = value.get("input")
+                command = inputs.get("command") if isinstance(inputs, dict) else None
+                if name in {"bash", "shell", "terminal"} and isinstance(command, str):
+                    calls.append((value["id"], "claude", command))
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+
+    walk(record)
+    return calls
+
+
+def _native_results(record):
+    """Return (call id, runtime kind, success) for explicit native results."""
+    results = []
+    payload = record.get("payload") if isinstance(record, dict) else None
+    if isinstance(payload, dict) and payload.get("type") == "function_call_output" and payload.get("call_id"):
+        output = payload.get("output")
+        success = _explicit_exit_zero(output) and not _explicit_nonzero(output)
+        results.append((payload["call_id"], "codex", success))
+
+    def walk(value):
+        if isinstance(value, dict):
+            if value.get("type") == "tool_result" and value.get("tool_use_id"):
+                content = value.get("content")
+                success = value.get("is_error") is False and _explicit_exit_zero(content) and not _explicit_nonzero(content)
+                results.append((value["tool_use_id"], "claude", success))
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+
+    walk(record)
+    return results
+
+
+def _explicit_exit_zero(value):
+    if isinstance(value, dict):
+        if any(value.get(key) == 0 and isinstance(value.get(key), int) for key in ("exit_code", "returncode")):
+            return True
+        return any(_explicit_exit_zero(child) for child in value.values())
+    if isinstance(value, list):
+        return any(_explicit_exit_zero(child) for child in value)
+    return isinstance(value, str) and bool(EXIT_ZERO.search(value))
+
+
+def _explicit_nonzero(value):
+    if isinstance(value, dict):
+        if any(isinstance(value.get(key), int) and value.get(key) != 0 for key in ("exit_code", "returncode")):
+            return True
+        return any(_explicit_nonzero(child) for child in value.values())
+    if isinstance(value, list):
+        return any(_explicit_nonzero(child) for child in value)
+    return isinstance(value, str) and bool(EXIT_NONZERO.search(value))
+
+
+def _unambiguous_creation(command, candidate, home):
+    """True only for a single direct mkdir/touch targeting this exact path."""
+    if any(char in command for char in "\n;&|<>`"):
+        return False
+    try:
+        words = shlex.split(command)
+    except ValueError:
+        return False
+    if not words or words[0] not in {"mkdir", "touch"}:
+        return False
+    paths = [word for word in words[1:] if not word.startswith("-")]
+    if len(paths) != 1:
+        return False
+    target = paths[0]
+    normalized = target.replace("$HOME", str(home), 1)
+    if normalized.startswith("~/"):
+        normalized = str(home / normalized[2:])
+    return Path(normalized).expanduser() == candidate.expanduser()
+
+
 def attribute_histories(candidates, files, home=None):
     """Read each relevant history once and attribute all candidate path hits."""
     home = Path(home or Path.home()).expanduser()
@@ -315,6 +410,7 @@ def attribute_histories(candidates, files, home=None):
             if file_mtime < min(mtimes.values()):
                 continue
             active_session = active_parent = active_pid = None
+            pending_calls = {}
             with file.open(encoding="utf-8", errors="replace") as stream:
                 for line_no, raw in enumerate(stream, 1):
                     try:
@@ -327,10 +423,37 @@ def attribute_histories(candidates, files, home=None):
                     active_pid = pid or active_pid
                     joined = "\n".join(_strings(record))
                     keys = {all_spellings[m.group(0)] for m in matcher.finditer(joined)}
+                    for call_id, kind, command in _native_calls(record):
+                        targets = {
+                            key for key in mtimes
+                            if _unambiguous_creation(command, Path(key), home)
+                        }
+                        pending_calls[call_id] = (kind, targets, active_session, active_parent, active_pid, line_no)
+                    for call_id, kind, success in _native_results(record):
+                        pending = pending_calls.pop(call_id, None)
+                        if not pending:
+                            continue
+                        call_kind, targets, call_session, call_parent, call_pid, call_line = pending
+                        if kind != call_kind or not success:
+                            continue
+                        for key in targets:
+                            results[key].append({
+                                "file": str(file), "line": line_no,
+                                "call_line": call_line, "session": call_session,
+                                "parent": call_parent, "pid": call_pid,
+                                "evidence": "created",
+                                "excerpt": _safe_excerpt(Path(key)),
+                            })
                     for key in keys:
                         if file_mtime < mtimes[key]:
                             continue
-                        evidence = "created" if CREATE_COMMAND.search(joined) and _successful(record) else "attempted" if CREATE_COMMAND.search(joined) or ATTEMPT_COMMAND.search(joined) else "mention"
+                        created_result = any(
+                            item["file"] == str(file) and item["line"] == line_no and item["evidence"] == "created"
+                            for item in results[key]
+                        )
+                        if created_result:
+                            continue
+                        evidence = "attempted" if CREATE_COMMAND.search(joined) or ATTEMPT_COMMAND.search(joined) else "mention"
                         results[key].append({
                             "file": str(file), "line": line_no,
                             "session": active_session, "parent": active_parent,
@@ -340,19 +463,6 @@ def attribute_histories(candidates, files, home=None):
         except OSError:
             continue
     return results
-
-
-def _successful(record):
-    """Only explicit structured success can upgrade an attempt to creation."""
-    if not isinstance(record, dict):
-        return False
-    payload = record.get("payload") if isinstance(record.get("payload"), dict) else {}
-    for value in (record, payload):
-        if value.get("exit_code") == 0 or value.get("returncode") == 0 or value.get("success") is True:
-            return True
-        if value.get("status") in {"success", "completed"} and value.get("is_error") is False:
-            return True
-    return False
 
 
 def session_liveness(session, pid=None, proc_root=Path("/proc")):
@@ -573,7 +683,8 @@ def _format(report):
         if item["truncated"]:
             lines.append("    byte count is a lower bound (walk truncated or unreadable)")
         for match in item["history"]:
-            lines.append(f"    {match['evidence']} {match['file']}:{match['line']} session={match['session'] or 'unknown'} liveness={match['liveness']}: {match['excerpt']}")
+            call_line = f" (call line {match['call_line']})" if match.get("call_line") else ""
+            lines.append(f"    {match['evidence']} {match['file']}:{match['line']}{call_line} session={match['session'] or 'unknown'} liveness={match['liveness']}: {match['excerpt']}")
         lines.append(f"    references: PRs={item['references']['pull_requests']} verdicts={item['references']['verdict_files']} git-log={item['references']['git_log']}")
     if report["unreadable"]:
         lines.append(f"  could not read {len(report['unreadable'])} entries")
