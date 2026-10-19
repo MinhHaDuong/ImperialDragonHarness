@@ -1,0 +1,41 @@
+%erg 0.1
+Title: Simplify on-start.sh: split context from sync, portable and history-free
+Created: 2026-10-19
+Author: reviewer
+
+--- log ---
+2026-10-19T20:49Z reviewer created
+
+--- body ---
+## Context
+After ticket 1122, `scripts/on-start.sh` serves three runtimes (Claude Code,
+Codex, Pi). It still mixes context printing with repository mutation behind an
+`exec >/dev/null` cutoff, reads Claude's settings for the effort line, uses
+GNU-only calls, and carries history commentary and ticket-number trails.
+
+## Scope
+Separate commits, in this order:
+1. Split: `scripts/on-start-context.sh` is a pure context printer (no side
+   effects, no stdout cutoff); `scripts/on-start-sync.sh` holds the
+   `core.hooksPath` set and the backgrounded `sync-local-main.sh` run, and is
+   registered as a second Claude `SessionStart` hook. Rewire the Claude adapter
+   hooks.json, adapters/codex/hooks.json, adapters/pi/extensions/idh-guard.ts,
+   the tests that pin `on-start.sh`, and the rules/docs that name it.
+2. Drop the effort line; reword rules/workflow.md's self-presentation to
+   "effort level when the runtime states it".
+3. Portability: `uname -n` for `hostname -s`; `timeout` only when
+   `command -v timeout` finds it; `grep -qE` without the redundant `-l`; check
+   whether erg prints a bare count; avoid `git rev-parse --path-format` where a
+   plain form works.
+4. Delete history commentary and ticket-number trails; keep one-line whys for
+   odd-looking guards.
+5. Collapse the project-root idiom (`_claude`, `CLAUDE_PROJECT_DIR`, `_proj`)
+   into one `_proj` derived once, and drop the memory-index injection after
+   confirming Claude loads AGENTS.md in the sessions where the injection fires.
+
+## Exit criteria
+- [ ] Context script output byte-identical to today's on a Claude run, minus the effort line and memory index
+- [ ] Sync and hooksPath behaviour unchanged, now from its own hook
+- [ ] No test or doc still names the retired `on-start.sh`
+- [ ] Context script runs under a shell without `timeout` and `hostname`
+- [ ] AGENTS.md loading confirmed before the memory block is removed
