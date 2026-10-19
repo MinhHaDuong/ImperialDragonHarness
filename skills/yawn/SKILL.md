@@ -64,7 +64,9 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
      whose status contradicts a doc reference.)
    - **PR cross-check** — PRs described as pending but already merged/closed.
      Use `prs.items` from the probe. Skip if `prs.error`.
-   - **Count consistency** — "N open tickets" claims vs `tickets.open` from probe
+   - **Stored counts** — STATE.md stores no derived number (rules/state.md):
+     a legacy generated `## Status` block is a `warn`, fixed by replacing it
+     with the pointer line. Ticket counts are not compared: there are none.
    - **Stale forward promises** — resident skill and rule bodies are directive
      docs too. Grep `skills/*/SKILL.md` and `rules/` for `until the`, `not yet
      drafted`, `when converted`, `for now`, then confront each promise with the

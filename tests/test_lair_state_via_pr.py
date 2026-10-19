@@ -47,3 +47,11 @@ def test_step_10_routes_state_through_a_pr():
     assert "push" in text.lower(), (
         "lair step 10 must push the throwaway branch so the PR can be opened"
     )
+
+
+def test_step_10_regenerates_nothing():
+    """Ticket 1121: STATE.md stores no derived number, so step 10 runs no
+    generator; it bumps `Last updated:` and edits the hand sections."""
+    text = step_10()
+    assert "refresh-STATE" not in text
+    assert not (REPO / "scripts" / "refresh-STATE.py").exists()
