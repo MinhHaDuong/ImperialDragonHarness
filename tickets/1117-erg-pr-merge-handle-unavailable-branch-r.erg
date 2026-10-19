@@ -48,9 +48,9 @@ Keep the existing failing-check and pending-check refusal cases green.
 
 ## Verification
 
-- [ ] `tests/test_erg_pr_merge.sh` covers the denied-inspection success path and
+- [x] `tests/test_erg_pr_merge.sh` covers the denied-inspection success path and
       the ordinary merge refusal path.
-- [ ] The ticket-only PR gate (`erg check` and the cross-PR ticket collision
+- [x] The ticket-only PR gate (`erg check` and the cross-PR ticket collision
       check) passes.
 
 ## Invariants
@@ -61,11 +61,11 @@ Keep the existing failing-check and pending-check refusal cases green.
 
 ## Exit criteria
 
-- [ ] A GitHub plan/permission 403 during branch-rule inspection no longer
+- [x] A GitHub plan/permission 403 during branch-rule inspection no longer
       prevents a normal, non-admin merge when the forge accepts it.
-- [ ] If the forge rejects that merge, `/merge` reports the refusal and leaves
+- [x] If the forge rejects that merge, `/merge` reports the refusal and leaves
       the PR unmerged; no rules or checks are bypassed.
-- [ ] The regression tests and ticket-only PR gate pass.
+- [x] The regression tests and ticket-only PR gate pass.
 
 ## Raid Imagine — 2026-10-19
 

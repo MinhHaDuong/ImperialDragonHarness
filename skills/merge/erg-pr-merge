@@ -429,11 +429,12 @@ try_auto_merge() {
 }
 
 # Direct merge is allowed on an EMPTY PR rollup only when no required checks
-# exist on the base (a repository without checks). GitHub's branch endpoint
+# are known on the base. A denied inspection delegates unknown requirements
+# to ordinary forge enforcement. GitHub's branch endpoint
 # covers legacy protection; effective branch rules cover repository and
 # organization rulesets. (tickets 0200/0871)
 no_checks_required() {
-    local pr_now branch_now rules_now
+    local pr_now branch_now rules_now inspection_denied=0
     pr_now=$(gh pr view "$PR" --json mergeable,statusCheckRollup) \
         || die "could not inspect PR checks after registration retries — aborting merge"  # harness-extension-point
     echo "$pr_now" | jq -e '.mergeable == "MERGEABLE"' >/dev/null \
@@ -441,34 +442,51 @@ no_checks_required() {
     echo "$pr_now" | jq -e '(.statusCheckRollup | type == "array") and (.statusCheckRollup | length == 0)' >/dev/null \
         || die "PR check rollup is unavailable or not empty after checks failed to register — aborting merge"
 
-    branch_now=$(gh api "repos/{owner}/{repo}/branches/${BASE_BRANCH}") \
-        || die "could not inspect base branch protection — aborting merge"  # harness-extension-point
-    echo "$branch_now" | jq -e '
-        .protection.required_status_checks as $required |
-        if .protected == false and $required == null then true
-        elif (.protected | type) == "boolean" and ($required | type) == "object" then
-            ($required.contexts | type) == "array" and
-            ($required.checks | type) == "array" and
-            ($required.contexts | length) == 0 and
-            ($required.checks | length) == 0
-        else false end
-    ' >/dev/null \
-        || die "base branch has required checks or returned invalid protection data — aborting merge"
+    if branch_now=$(gh api "repos/{owner}/{repo}/branches/${BASE_BRANCH}" 2>&1); then  # harness-extension-point
+        echo "$branch_now" | jq -e '
+            .protection.required_status_checks as $required |
+            if .protected == false and $required == null then true
+            elif (.protected | type) == "boolean" and ($required | type) == "object" then
+                ($required.contexts | type) == "array" and
+                ($required.checks | type) == "array" and
+                ($required.contexts | length) == 0 and
+                ($required.checks | length) == 0
+            else false end
+        ' >/dev/null \
+            || die "base branch has required checks or returned invalid protection data — aborting merge"
+    elif [[ "$branch_now" == *"(HTTP 403)"* ]]; then
+        echo "$branch_now" >&2
+        inspection_denied=1
+    else
+        echo "$branch_now" >&2
+        die "could not inspect base branch protection — aborting merge"  # harness-extension-point
+    fi
 
-    rules_now=$(gh api "repos/{owner}/{repo}/rules/branches/${BASE_BRANCH}" --paginate) \
-        || die "could not inspect effective branch rules — aborting merge"  # harness-extension-point
-    echo "$rules_now" | jq -se '
-        length > 0 and all(.[]; type == "array") and
-        all(.[][] | select(.type == "required_status_checks");
-            (.parameters.required_status_checks | type == "array" and length == 0))
-    ' >/dev/null \
-        || die "base branch rules require checks or returned invalid check data — aborting merge"
-    echo "PR is MERGEABLE with an empty rollup and no required checks; merging directly."
+    if rules_now=$(gh api "repos/{owner}/{repo}/rules/branches/${BASE_BRANCH}" --paginate 2>&1); then  # harness-extension-point
+        echo "$rules_now" | jq -se '
+            length > 0 and all(.[]; type == "array") and
+            all(.[][] | select(.type == "required_status_checks");
+                (.parameters.required_status_checks | type == "array" and length == 0))
+        ' >/dev/null \
+            || die "base branch rules require checks or returned invalid check data — aborting merge"
+    elif [[ "$rules_now" == *"(HTTP 403)"* ]]; then
+        echo "$rules_now" >&2
+        inspection_denied=1
+    else
+        echo "$rules_now" >&2
+        die "could not inspect effective branch rules — aborting merge"  # harness-extension-point
+    fi
+    if (( inspection_denied )); then
+        echo "Branch-rule inspection denied (HTTP 403); ordinary merge will enforce configured requirements."
+    else
+        echo "PR is MERGEABLE with an empty rollup and no required checks; merging directly."
+    fi
 }
 
 # Fallback when the forge refuses auto-merge (repo setting off): decide from ONE
 # read of the rollup, never by waiting (ticket 1082). Empty rollup -> only a
-# repository without required checks may merge directly; any failing check
+# repository without known required checks may attempt ordinary merge; HTTP 403
+# inspection denials leave enforcement to the forge. Any failing check
 # refuses; a check still running refuses and points at erg-pr-status, because
 # without auto-merge nothing on the forge will merge the PR later and the
 # caller re-runs this script once the checks are done.
