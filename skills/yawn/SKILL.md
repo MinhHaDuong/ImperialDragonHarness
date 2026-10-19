@@ -24,7 +24,7 @@ First, run the mechanical probe to collect structured state:
 python3 "$IDH_ROOT/scripts/project-state.py" "$(git rev-parse --show-toplevel)" --tests
 ```
 
-Parse the JSON output. Use its fields to populate checks 1–12 below without re-running git commands — the probe covers everything through check 10 and check 12; only check 11 requires additional file reads. If the script is missing or fails, fall back to ad-hoc commands per check.
+Parse the JSON output. Use its fields to populate checks 1–12 below without re-running git commands — the probe covers everything through check 10 and checks 12–13; only check 11 requires additional file reads. If the script is missing or fails, fall back to ad-hoc commands per check.
 
 ## Checks
 
@@ -156,3 +156,8 @@ Omit a heading if it has no entries. If all checks are `ok`, omit the Action pla
 > **Contract** — `/molt` parses this section programmatically. The bold headings `**fix-now**`, `**open-ticket**`, `**skip**` are a stable interface; do not rename or reformat them.
 
 Once the Action plan is fully effected, propose: "Surface remaining nits?"
+
+13. **Disk headroom at session start** — from `disk_space`. Warn if either
+    `/tmp` or `/home` has less than 10% free, naming the mount and reported
+    percentage. A missing/unreadable mount is unknown, not healthy. This is an
+    advisory warning; it never blocks startup.

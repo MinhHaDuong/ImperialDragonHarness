@@ -15,6 +15,16 @@ fi
 
 echo "Running on host: $(hostname -s)"
 
+# Show low disk headroom before the rest of the startup context is assembled.
+# This is advisory: failure to inspect storage is visible, but never blocks.
+_disk_output=$(python3 "$(dirname "$0")/tmp_report.py" --disk-warning 2>&1) || {
+    echo "Disk headroom probe unavailable; check /tmp and /home manually."
+    _disk_output=""
+}
+if [ -n "$_disk_output" ]; then
+    printf '%s\n' "$_disk_output"
+fi
+
 # Surface the effort setting for the session's self-presentation line
 # (rules/workflow.md § Session Start): the model knows its own name but has
 # no other channel to the effortLevel setting. Read the live user settings,

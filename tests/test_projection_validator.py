@@ -15,6 +15,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from child_env import child_env
 
 REPO = Path(__file__).resolve().parent.parent
 MANIFEST = json.loads((REPO / "adapters" / "projections.json").read_text())
@@ -36,6 +37,7 @@ VALIDATOR = _load_validator()
 def _checkout(root: Path) -> Path:
     for rel in (
         "scripts/validate-projections.py",
+        "scripts/tmp_report.py",
         "scripts/shell-init.sh",
         "scripts/on-start.sh",
         "scripts/on-end.sh",
@@ -288,6 +290,70 @@ def test_negative_control_healthy_home_launches_unchanged(world, runtime):
     assert r.returncode == 0, r.stderr
     assert f"LAUNCHED {runtime}" in r.stdout and "--version" in r.stdout
     assert r.stderr == ""
+
+
+@pytest.mark.integration
+def test_claude_session_start_prints_low_disk_warning(tmp_path):
+    fakebin = tmp_path / "bin"
+    fakebin.mkdir()
+    python = fakebin / "python3"
+    python.write_text(
+        "#!/bin/sh\n"
+        "case \"$*\" in *--disk-warning*) echo 'Disk headroom warning: /tmp has 5% free (threshold: 10% free)' ;; esac\n"
+    )
+    python.chmod(0o755)
+    home = tmp_path / "home"
+    home.mkdir()
+    env = child_env()
+    env.update({"HOME": str(home), "PATH": f"{fakebin}:{os.environ['PATH']}"})
+    result = subprocess.run(
+        ["bash", str(REPO / "scripts/on-start.sh")], cwd=REPO, env=env,
+        capture_output=True, text=True,
+    )
+    assert result.returncode == 0
+    assert "Disk headroom warning: /tmp has 5% free" in result.stdout
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("runtime", ["codex", "pi"])
+def test_codex_and_pi_print_disk_warning_before_launch(world, runtime):
+    python = world["fakebin"] / "python3"
+    python.write_text(
+        "#!/bin/sh\n"
+        "case \"$*\" in\n"
+        "  *tmp_report.py*--disk-warning*) echo 'Disk headroom warning: /tmp has 5% free (threshold: 10% free)'; exit 0 ;;\n"
+        "  *) exec /usr/bin/python3 \"$@\" ;;\n"
+        "esac\n"
+    )
+    python.chmod(0o755)
+
+    result = launch(world, runtime)
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.index("Disk headroom warning:") < result.stdout.index(f"LAUNCHED {runtime}")
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("runtime", ["codex", "pi"])
+def test_disk_probe_failure_does_not_block_or_change_runtime_status(world, runtime):
+    python = world["fakebin"] / "python3"
+    python.write_text(
+        "#!/bin/sh\n"
+        "case \"$*\" in\n"
+        "  *tmp_report.py*--disk-warning*) exit 23 ;;\n"
+        "  *) exec /usr/bin/python3 \"$@\" ;;\n"
+        "esac\n"
+    )
+    python.chmod(0o755)
+    launcher = world["fakebin"] / runtime
+    launcher.write_text(f'#!/bin/sh\necho "LAUNCHED {runtime} $*"\nexit 7\n')
+    launcher.chmod(0o755)
+
+    result = launch(world, runtime)
+
+    assert result.returncode == 7
+    assert f"LAUNCHED {runtime}" in result.stdout
+    assert "Disk headroom probe unavailable" in result.stderr
 
 
 @pytest.mark.integration
