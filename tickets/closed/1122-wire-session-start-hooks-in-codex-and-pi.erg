@@ -2,9 +2,11 @@
 Title: Wire session-start hooks in Codex and Pi adapters to call on-start.sh
 Created: 2026-10-19
 Author: Minh Ha-Duong
+Closed: done
 
 --- log ---
 2026-10-19T20:16Z Minh Ha-Duong created
+2026-10-19T20:35Z reviewer closed — done
 
 --- body ---
 ## Context

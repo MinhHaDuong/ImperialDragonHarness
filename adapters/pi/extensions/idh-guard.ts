@@ -19,6 +19,14 @@
  * reached through a projected symlink (~/.pi/agent/extensions/idh-guard.ts
  * -> the harness checkout), so realpath of the self module resolves to the
  * canonical tree and scripts/guard-destructive-bash.sh is found under it.
+ *
+ * Session start (ticket 1122): the same extension also carries the session
+ * context. Pi has a `session_start` event but no hook whose stdout becomes
+ * context, so on a fresh session it runs `scripts/on-start.sh` itself and
+ * queues the stdout as a custom message delivered with the next user turn
+ * (`deliverAs: "nextTurn"`; measured on Pi 1.3.0 to reach the model). The
+ * script's Claude-only lines stay silent because CLAUDE_PROJECT_DIR is
+ * removed from its environment. Fail-open: nothing is injected on any failure.
  */
 
 import { spawnSync } from "node:child_process";
@@ -29,13 +37,15 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const GUARD_RELATIVE = join("scripts", "guard-destructive-bash.sh");
 const GUARD_TIMEOUT_MS = 5000;
+const ON_START_RELATIVE = join("scripts", "on-start.sh");
+const ON_START_TIMEOUT_MS = 30000;
 
 /** Walk up from this file until the harness root that carries the guard. */
-function guardPath(): string | null {
+function guardPath(relative: string = GUARD_RELATIVE): string | null {
 	try {
 		let dir = dirname(realpathSync(fileURLToPath(import.meta.url)));
 		for (let i = 0; i < 6; i += 1) {
-			const candidate = join(dir, GUARD_RELATIVE);
+			const candidate = join(dir, relative);
 			if (existsSync(candidate)) return candidate;
 			const parent = dirname(dir);
 			if (parent === dir) break;
@@ -48,6 +58,32 @@ function guardPath(): string | null {
 }
 
 export default function (pi: ExtensionAPI): void {
+	pi.on("session_start", async (event) => {
+		// "reload", "resume" and "fork" keep the context the model already has.
+		if (event.reason !== "startup" && event.reason !== "new") return;
+		const script = guardPath(ON_START_RELATIVE);
+		if (!script) return;
+		try {
+			const env = { ...process.env };
+			delete env.CLAUDE_PROJECT_DIR;
+			const result = spawnSync("bash", [script], {
+				cwd: process.cwd(),
+				env,
+				timeout: ON_START_TIMEOUT_MS,
+				encoding: "utf8" as const,
+				stdio: ["ignore", "pipe", "ignore"],
+			});
+			const text = typeof result.stdout === "string" ? result.stdout.trim() : "";
+			if (result.error || result.status !== 0 || !text) return;
+			pi.sendMessage(
+				{ customType: "idh-session-start", content: text, display: false },
+				{ deliverAs: "nextTurn" },
+			);
+		} catch {
+			/* fail-open */
+		}
+	});
+
 	pi.on("tool_call", async (event) => {
 		if (event.toolName !== "bash") return undefined;
 		const command = (event.input as { command?: unknown }).command;
