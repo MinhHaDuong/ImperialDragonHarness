@@ -1,4 +1,5 @@
 ---
+category: writing
 name: cut-prose
 description: "Cut a document to a word or page budget by removing whole passages before condensing anything. Use for a manuscript trim, a reviewer-mandated length cut, or a slot-limited abstract."
 disable-model-invocation: false

@@ -1,4 +1,5 @@
 ---
+category: research
 name: critical-lit-review
 description: "Critical literature review (état de l'art) in history of economics and STS: object, actors, controversies."
 disable-model-invocation: false

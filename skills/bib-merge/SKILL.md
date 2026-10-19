@@ -1,4 +1,5 @@
 ---
+category: research
 name: bib-merge
 description: "Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries."
 disable-model-invocation: false
