@@ -1,0 +1,11 @@
+# PR 1457 review-attribution capture status
+
+Status: pending; no `kind: review-attribution` record was written because required identity facts are missing from the durable trail.
+
+PR 1457 merged on 2026-10-19 at integration commit `02ea9472`; its source head was `0ac93399b1f1470dd738f5b926f1bedfad3feca3` on `t1119-own-worktree-tmp-citation`.
+
+The public round-one synthesis ([review](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1457#pullrequestreview-5569895810)) reports five perspectives on a requested `gpt-6-luna@high` OpenAI route, with no cross-family perspective available. It records a red-team request-changes finding at `scripts/worktree-exit-preflight.sh:43` (adopted and fixed), a handover-registration finding at `skills/hunt/SKILL.md:113` (adopted), and documentation findings at `skills/roar/SKILL.md:319` and `skills/molt/SKILL.md:83` (adopted). The scope finding about host-specific restic evidence was retained in the ticket and its limits. The external-writer race was informational and not adopted. The public round-two synthesis ([review](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1457#pullrequestreview-5570170785)) reports four perspectives approved and a red-team comment fixed; it also records a final regression check and no remaining findings. Individual raw seat reports and the identity of each reused context are not in the public trail.
+
+A separate Sol formal gate comment ([gate](https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1457#issuecomment-6266551825)) names the seat `sol_finish_1457` and reports a requested Sol/medium route, same-family review, two addressed verifiable minors, one adopted handover consideration and one informational writer-race consideration. It explicitly says the provider-qualified served model pin and runtime-observed effort were unavailable. The comment does not map each of its two verifiable minors to a separate fixed-line finding record.
+
+The writer's full provider-qualified model ID, model version if exposed, and effort are not present in the durable trail. The requested Luna route is not evidence of the writer identity. The review aliases and requested effort are not substituted for observed pins or effort. These missing facts, along with the absent raw per-seat reports, prevent a complete fixed-line attribution record.
