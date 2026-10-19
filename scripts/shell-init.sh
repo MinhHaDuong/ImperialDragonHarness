@@ -58,6 +58,16 @@ _idh_preflight() {
   python3 "$v" "$1"
 }
 
+# Advisory only: a failed disk probe must never block an otherwise valid launch.
+_idh_disk_warning() {
+  local output
+  output=$(python3 "$_IDH_ROOT/scripts/tmp_report.py" --disk-warning 2>&1) || {
+    echo "Disk headroom probe unavailable; check /tmp and /home manually." >&2
+    return 0
+  }
+  [ -z "$output" ] || printf '%s\n' "$output"
+}
+
 # `function NAME {`, never `NAME() {`: an alias of the same name (e.g.
 # alias codex='codex --approve-for-me') is expanded inside `NAME()` and makes
 # this file a syntax error. The alias still applies at the prompt, then calls
@@ -72,11 +82,13 @@ function claude {
 
 function codex {
   _idh_preflight codex || return
+  _idh_disk_warning
   command codex "$@"
 }
 
 function pi {
   _idh_preflight pi || return
+  _idh_disk_warning
   command pi "$@"
 }
 

@@ -416,10 +416,11 @@ def _unambiguous_creation(command, candidate, home):
     return Path(normalized).expanduser() == candidate.expanduser()
 
 
-def attribute_histories(candidates, files, home=None, unreadable=None):
+def attribute_histories(candidates, files, home=None, unreadable=None, session_parents=None):
     """Read each relevant history once and attribute all candidate path hits."""
     home = Path(home or Path.home()).expanduser()
     unreadable = unreadable if unreadable is not None else []
+    session_parents = session_parents if session_parents is not None else {}
     all_spellings = {}
     mtimes = {}
     for item in candidates:
@@ -434,8 +435,6 @@ def attribute_histories(candidates, files, home=None, unreadable=None):
     for file in files:
         try:
             file_mtime = file.stat().st_mtime
-            if file_mtime < min(mtimes.values()):
-                continue
             active_session = active_parent = active_pid = None
             pending_calls = {}
             with file.open(encoding="utf-8", errors="replace") as stream:
@@ -448,6 +447,12 @@ def attribute_histories(candidates, files, home=None, unreadable=None):
                     active_session = session or active_session
                     active_parent = parent or active_parent
                     active_pid = pid or active_pid
+                    if session and parent:
+                        session_parents[session] = parent
+                    # Older histories still supply their native session graph,
+                    # but do not contribute candidate citations or commands.
+                    if file_mtime < min(mtimes.values()):
+                        continue
                     joined = "\n".join(_strings(record))
                     keys = {all_spellings[m.group(0)] for m in matcher.finditer(joined)}
                     for call_id, kind, command in _native_calls(record):
@@ -516,7 +521,7 @@ def session_liveness(session, pid=None, proc_root=Path("/proc")):
     return "unknown"
 
 
-def scope_history(matches, scope, session_id=None, exclude_session_id=None):
+def scope_history(matches, scope, session_id=None, exclude_session_id=None, session_parents=None):
     """Filter attribution to a roar session tree or retain all lair evidence."""
     matches = [m for m in matches if not exclude_session_id or m.get("session") != exclude_session_id]
     if scope != "roar":
@@ -524,9 +529,14 @@ def scope_history(matches, scope, session_id=None, exclude_session_id=None):
     if not session_id:
         return []
     relevant = {session_id}
+    session_parents = session_parents or {}
     changed = True
     while changed:
         changed = False
+        for child, parent in session_parents.items():
+            if parent in relevant and child not in relevant:
+                relevant.add(child)
+                changed = True
         for match in matches:
             if match.get("parent") in relevant and match.get("session") and match["session"] not in relevant:
                 relevant.add(match["session"])
@@ -670,12 +680,18 @@ def build_report(runtime, scope, session_id, repo, floor_bytes=0, exclude_sessio
     candidates = [item for item in scanned["candidates"] if item["bytes"] >= floor_bytes]
     histories, history_unreadable = history_files(home, with_unreadable=True)
     unreadable_history_files = []
-    history_index = attribute_histories(candidates, histories, home, unreadable_history_files)
+    session_parents = {}
+    history_index = attribute_histories(
+        candidates, histories, home, unreadable_history_files, session_parents
+    )
     history_unreadable = sorted(set(history_unreadable + unreadable_history_files))
     references = _references(candidates, repo)
     for item in candidates:
         path = Path(item["path"])
-        matches = scope_history(history_index.get(item["path"], []), scope, session_id, exclude_session_id)
+        matches = scope_history(
+            history_index.get(item["path"], []), scope, session_id,
+            exclude_session_id, session_parents,
+        )
         if not matches:
             inferred = infer_test_provenance(path, repo)
             if inferred:

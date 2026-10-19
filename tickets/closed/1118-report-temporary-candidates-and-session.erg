@@ -10,6 +10,7 @@ Closed: implemented
 2026-10-19T09:19Z reviewer closed — implemented
 2026-10-19T10:01Z reviewer note Round-1 review completed on PR #1456 (five-seat panel); reviewer route requested Luna high. Available evidence supports same-family OpenAI perspectives; runtime identity/model metadata was unavailable, and no other-family perspective was available, so reviewer independence was degraded. Applied freshness and disk-format regression fixes plus corrected Roar scope wording; final full checks pending.
 2026-10-19T10:03Z reviewer note Final verification: `make check` passed (1,726 passed, 3 skipped); `make lint` passed (186 passed); `git diff --check` and ticket validation passed.
+2026-10-19T11:01Z reviewer verify-reroll — round 1: preserve session ancestry independently of candidate citations
 
 --- body ---
 ## Context

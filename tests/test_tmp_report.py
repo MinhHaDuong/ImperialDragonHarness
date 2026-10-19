@@ -111,6 +111,101 @@ def test_roar_scope_keeps_descendant_agents_and_excludes_reporter():
     assert [item["session"] for item in scoped] == ["owner", "child", "grandchild"]
 
 
+def test_codex_roar_scope_retains_ancestry_without_intermediary_candidate_hits(tmp_path):
+    target = tmp_path / ".cache/tmp-owned"
+    history = tmp_path / "codex.jsonl"
+    history.write_text(
+        json.dumps({"type": "session_meta", "payload": {"id": "owner"}}) + "\n"
+        + json.dumps({"type": "session_meta", "payload": {"id": "child", "parent_thread_id": "owner"}}) + "\n"
+        + json.dumps({"type": "session_meta", "payload": {"id": "grandchild", "parent_thread_id": "child"}}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {"arguments": f"cat {target}"}}) + "\n"
+    )
+    os.utime(history, (100, 100))
+    ancestry = {}
+
+    found = report.attribute_histories(
+        [{"path": str(target), "mtime": 50}], [history], home=tmp_path,
+        session_parents=ancestry,
+    )[str(target)]
+    scoped = report.scope_history(
+        found, "roar", "owner", "reporter", session_parents=ancestry,
+    )
+
+    assert ancestry == {"child": "owner", "grandchild": "child"}
+    assert [item["session"] for item in scoped] == ["grandchild"]
+
+
+def test_codex_roar_scope_reads_old_ancestry_metadata_but_bounds_old_citations(tmp_path):
+    target = tmp_path / ".cache/tmp-owned"
+    old_history = tmp_path / "old-codex.jsonl"
+    old_history.write_text(
+        json.dumps({"type": "session_meta", "payload": {"id": "owner"}}) + "\n"
+        + json.dumps({"type": "session_meta", "payload": {"id": "child", "parent_thread_id": "owner"}}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {"arguments": f"cat {target}"}}) + "\n"
+    )
+    os.utime(old_history, (10, 10))
+    current_history = tmp_path / "current-codex.jsonl"
+    current_history.write_text(
+        json.dumps({"type": "session_meta", "payload": {"id": "grandchild", "parent_thread_id": "child"}}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {"arguments": f"cat {target}"}}) + "\n"
+    )
+    os.utime(current_history, (100, 100))
+    ancestry = {}
+
+    found = report.attribute_histories(
+        [{"path": str(target), "mtime": 50}], [old_history, current_history],
+        home=tmp_path, session_parents=ancestry,
+    )[str(target)]
+    scoped = report.scope_history(
+        found, "roar", "owner", "reporter", session_parents=ancestry,
+    )
+
+    assert ancestry == {"child": "owner", "grandchild": "child"}
+    assert [item["session"] for item in scoped] == ["grandchild"]
+    assert all(item["file"] != str(old_history) for item in found)
+
+
+def test_build_report_scopes_grandchild_through_old_no_hit_metadata_and_excludes_reporter(tmp_path, monkeypatch):
+    target = tmp_path / ".cache/tmp-owned"
+    owner_history = tmp_path / "owner.jsonl"
+    owner_history.write_text(
+        json.dumps({"type": "session_meta", "payload": {"id": "owner"}}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {"arguments": f"cat {target}"}}) + "\n"
+    )
+    child_history = tmp_path / "child.jsonl"
+    child_history.write_text(
+        json.dumps({"type": "session_meta", "payload": {"id": "child", "parent_thread_id": "owner"}}) + "\n"
+    )
+    reporter_history = tmp_path / "reporter.jsonl"
+    reporter_history.write_text(
+        json.dumps({"type": "session_meta", "payload": {"id": "reporter", "parent_thread_id": "owner"}}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {"arguments": f"cat {target}"}}) + "\n"
+    )
+    grandchild_history = tmp_path / "grandchild.jsonl"
+    grandchild_history.write_text(
+        json.dumps({"type": "session_meta", "payload": {"id": "grandchild", "parent_thread_id": "child"}}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {"arguments": f"cat {target}"}}) + "\n"
+    )
+    for path, mtime in ((owner_history, 10), (child_history, 10), (reporter_history, 100), (grandchild_history, 100)):
+        os.utime(path, (mtime, mtime))
+
+    monkeypatch.setattr(report, "scan_candidates", lambda _roots: {
+        "candidates": [{"path": str(target), "mtime": 50, "bytes": 1}], "unreadable": []
+    })
+    histories = [owner_history, child_history, reporter_history, grandchild_history]
+    monkeypatch.setattr(report, "history_files", lambda _home, with_unreadable=False: (histories, []) if with_unreadable else histories)
+    monkeypatch.setattr(report, "_references", lambda _candidates, _repo: {})
+    monkeypatch.setattr(report, "disk_readings", lambda: {})
+
+    result = report.build_report(
+        "codex", "roar", "owner", tmp_path, exclude_session_id="reporter"
+    )
+
+    matches = result["candidates"][0]["history"]
+    assert [item["session"] for item in matches] == ["grandchild"]
+    assert matches[0]["file"] == str(grandchild_history)
+
+
 def test_disk_warning_cli_surfaces_only_low_mounts(monkeypatch, capsys):
     monkeypatch.setattr(report, "disk_readings", lambda: {
         "/tmp": {"total": 100, "free": 5},

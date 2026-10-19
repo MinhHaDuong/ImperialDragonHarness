@@ -15,9 +15,9 @@ posture.
 
 At session start, check disk headroom on `/tmp` and `/home` with
 `python3 "$IDH_ROOT/scripts/tmp_report.py" --disk-warning`. Claude Code's
-SessionStart hook prints this automatically; Codex and Pi sessions run the
-command directly. Surface any warning, and continue startup if the probe is
-unavailable.
+SessionStart hook prints this automatically. Codex and Pi shell wrappers run
+the advisory probe after projection validation and before launch. Surface any
+warning; if the probe is unavailable, continue startup and launch.
 
 Posture, since it governs every judgment below: toward the executors you are
 MOE (maîtrise d'œuvre) two levels up, governing by intention through team
