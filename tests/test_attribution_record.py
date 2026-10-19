@@ -5,6 +5,7 @@ import json
 import re
 import sys
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -142,7 +143,7 @@ def test_malformed_optional_facts_never_capture(tmp_path, fact):
     subprocess.run(["git", "init", "--quiet", str(project)], env=child_env(), check=True)
     text = RECORD.replace("  finding:", "  finding :") if fact == "finding" else RECORD + (
         "defect-confirmed : scripts/missed.py:31 · source: post-merge-fix · pr: 1200\n")
-    result = subprocess.run(["python3", str(SCRIPT), "--capture", str(project), "--audience", "public"],
+    result = subprocess.run([sys.executable, str(SCRIPT), "--capture", str(project), "--audience", "public"],
                             input=text, text=True, capture_output=True, env=child_env())
     assert result.returncode != 0
     assert "malformed" in result.stderr
@@ -153,12 +154,12 @@ def test_malformed_optional_facts_never_capture(tmp_path, fact):
 def test_capture_round_trip_and_invalid_record_writes_nothing(tmp_path):
     project = tmp_path / "project"
     subprocess.run(["git", "init", "--quiet", str(project)], env=child_env(), check=True)
-    command = ["python3", str(SCRIPT), "--capture", str(project), "--audience", "public"]
+    command = [sys.executable, str(SCRIPT), "--capture", str(project), "--audience", "public"]
     captured = subprocess.run(command, input=RECORD, text=True, capture_output=True, env=child_env())
     assert captured.returncode == 0, captured.stderr
     entries = list(project.glob("memory/journal/*/*-review-attribution-pr1164.md"))
     assert len(entries) == 1
-    parsed = subprocess.run(["python3", str(SCRIPT), str(entries[0])], text=True,
+    parsed = subprocess.run([sys.executable, str(SCRIPT), str(entries[0])], text=True,
                             capture_output=True, env=child_env(), check=True)
     assert len(json.loads(parsed.stdout)["reviewers"]) == 3
     bad = subprocess.run(command, input=RECORD.replace("1164", "1165").replace(" · status: failed", ""),
@@ -200,10 +201,10 @@ def test_masked_capture_query_round_trip(tmp_path):
     project = tmp_path / 'project'
     subprocess.run(['git', 'init', '--quiet', str(project)], env=child_env(), check=True)
     text = RECORD.replace('model=example/writer-v1', MASK)
-    captured = subprocess.run(['python3', str(SCRIPT), '--capture', str(project), '--audience', 'public'],
+    captured = subprocess.run([sys.executable, str(SCRIPT), '--capture', str(project), '--audience', 'public'],
                               input=text, text=True, capture_output=True, env=child_env())
     assert captured.returncode == 0, captured.stderr
-    queried = subprocess.run(['python3', str(ROOT / 'scripts/attribution_query.py'), str(project), '--json'],
+    queried = subprocess.run([sys.executable, str(ROOT / 'scripts/attribution_query.py'), str(project), '--json'],
                              text=True, capture_output=True, env=child_env(), check=True)
     data = json.loads(queried.stdout)
     assert data['records']['valid'] == data['records']['runtime_masked'] == 1
