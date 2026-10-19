@@ -1,6 +1,27 @@
 # Smart testing (opt-in)
 
-Run `uv sync --frozen`, then `make smart-test`. Testmon selects affected
+In this harness, run `uv sync --frozen`, then `make smart-test`.
+
+For another pytest project, run from that project's checkout, using its Python
+and dependencies and the selected harness's entry point:
+
+```sh
+uv run --with pytest-testmon==2.2.0 python "$IDH_ROOT/scripts/smart_testing.py" --root "$PWD"
+```
+
+Resolve `IDH_ROOT` from the loaded harness, including a frozen arena snapshot;
+do not point it at a different live installation. The helper defaults to the
+current working directory and uses the project's configured pytest discovery
+(`testpaths` included). It neither imports the harness's `scripts` package into
+the workload nor changes `PYTHONPATH`. State stays in the workload's
+`.smart-testing/`; `--refresh` exports to its `tests/smart-testing/` directory.
+Projects declare their own indirect inputs and live-state opt-outs in conftest;
+the harness declarations are not injected into other projects. Non-pytest checks
+retain their existing commands. Use the normal project check when smart testing
+reports unsupported selection or parallel pytest options; a test failure is a
+failure and must be fixed, not bypassed.
+
+ Testmon selects affected
 Python tests across all cost tiers and updates its private database after execution. A fresh checkout
 restores the committed SQL and recorded file inputs. If no compatible reference
 exists, or the Python/package environment changed, the tool learns the eligible suite
@@ -42,8 +63,15 @@ process reads: declare indirect inputs explicitly.
 Tests that depend on live services, installed external tools or Git history use
 `smart_always` and run on every invocation. Their module list is retained in the
 private state and portable reference. A successful refresh includes them too.
-Changes to the declaration policy invalidate the eligible suite. An older
-fast-only cache is upgraded by learning all eligible tiers once.
+Changes to project pytest configuration invalidate the eligible suite. Shared
+fixtures and initial conftest reads are shared dependencies. An older cache or
+recorder scope is upgraded by learning all eligible tiers once.
+
+The helper explicitly includes all cost tiers, overriding default `-m` filters.
+Other partial-selection/dry-run options (`-k`, `--lf`, collect-only, deselect,
+ignore) and xdist execution are rejected before a cache can be certified.
+Required project plugins and other addopts are preserved. A cold empty suite is
+not treated as a successful warm deselection.
 
 This is development feedback, not merge certification. Undeclared filesystem
 queries, environment variables, external services and files outside the checkout

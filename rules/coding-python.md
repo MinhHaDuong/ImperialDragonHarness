@@ -30,6 +30,16 @@ Dependencies: **always `uv sync`** (never pip). `uv run python scripts/...` to e
 
 - Tests live in `tests/test_<module>.py`. A new script or changed behavior starts with a test.
 - `make check-fast`: fast tier only (`-m "not slow and not integration and not adherence"`), < 30 s — run during development.
+- For repeated pytest feedback, use the selected harness's smart-testing helper
+  from the project checkout: `uv run --with pytest-testmon==2.2.0 python
+  "$IDH_ROOT/scripts/smart_testing.py" --root "$PWD"`. Resolve `IDH_ROOT` from
+  the loaded harness, including a frozen arena version, rather than another
+  live checkout. It caches all cost tiers; project `smart_inputs` declarations
+  cover indirect file reads and `smart_always` marks live-state tests. See
+  [smart testing](../tests/smart-testing/README.md) for the dependency boundary.
+  Preserve the initial failing-test confirmation and explicit final gates.
+  Unsupported pytest options or unavailable tooling use the existing project
+  check; actual failing tests must be fixed.
 - `make lint`: adherence tier only (`-m adherence`) — ruff / mypy / hygiene / contracts.
 - `make check`: everything — the default pre-PR gate. A project's AGENTS.md may declare a lighter merge gate (e.g. `check-fast` + `lint`) when an ex-post full-suite run on main covers the slow tiers; the project contract wins (climate-finance-het, 2026-07-28). A project may also declare `.idh-checks.json` for a path-scoped doc gate; unmapped paths and Python code still use the full gate, and its PR must quote selected and skipped targets. No coverage is lost by tiering a test slower; `make check` still runs it, per PR or ex post.
 - **pytest spawn failure under the rtk hook.** If `pytest` or `python3 -m pytest` dies under the rtk Bash hook with `Failed to spawn process: No such file or directory (os error 2)`, run it as `rtk proxy python3 -m pytest …` to bypass the rewrite. rtk has no command-passthrough knob (checked `~/.config/rtk/config.toml`, 2026-07-11), so this is the standing workaround. The spawn error can also mean the pytest shim itself is broken — a stale pipx venv after a Python upgrade leaves `~/.local/bin/pytest` pointing at a deleted interpreter; `pipx list` confirms it, `pipx reinstall-all` fixes it.

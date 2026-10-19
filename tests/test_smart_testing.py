@@ -380,3 +380,152 @@ def test_expanding_old_fast_cache_learns_new_scope(smart_repository):
     _assert_passed(_smart_run(root))
     assert json.loads(state_path.read_text())['scope'] == smart.SCOPE
     _assert_unchanged(_smart_run(root))
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('source', ['session_fixture', 'early_conftest'])
+def test_shared_fixture_and_early_conftest_inputs_invalidate_all_consumers(smart_repository, source):
+    root = smart_repository
+    (root / 'tests/test_case.py').unlink()
+    (root / 'fixture.txt').write_text('yes')
+    setup = 'from pathlib import Path\nimport pytest\n'
+    if source == 'session_fixture':
+        setup += ('@pytest.fixture(scope="session")\ndef data():\n'
+                  '    return Path("fixture.txt").read_text()\n')
+    else:
+        setup += ('DATA = Path("fixture.txt").read_text()\n'
+                  '@pytest.fixture\ndef data():\n    return DATA\n')
+    (root / 'tests/conftest.py').write_text(setup)
+    for name, condition in [('a', 'in ("yes", "no")'), ('b', '== "yes"')]:
+        (root / f'tests/test_{name}.py').write_text(
+            f'def test_{name}(data):\n    assert data {condition}\n')
+    learned = _smart_run(root, '--refresh')
+    assert learned.returncode == 0, learned.stdout + learned.stderr
+    assert '2 passed' in learned.stdout
+    (root / 'fixture.txt').write_text('no')
+    result = _smart_run(root)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert 'test_b' in result.stdout
+
+
+@pytest.mark.integration
+def test_external_entry_uses_workload_discovery_and_own_scripts_package(smart_repository):
+    root = smart_repository
+    (root / 'checks').mkdir()
+    (root / 'tests/test_case.py').rename(root / 'checks/test_case.py')
+    (root / 'pytest.ini').write_text('[pytest]\ntestpaths = checks\n')
+    (root / 'scripts/__init__.py').write_text('')
+    (root / 'scripts/workload.py').write_text('VALUE = "workload"\n')
+    test = root / 'checks/test_case.py'
+    test.write_text(test.read_text() + '\nfrom scripts.workload import VALUE\n'
+                    'def test_own_scripts():\n    assert VALUE == "workload"\n')
+    entry = Path(__file__).resolve().parents[1] / 'scripts/smart_testing.py'
+    command = [sys.executable, str(entry), '--root', str(root)]
+    env = child_env()
+    for key in ('TESTMON_DATAFILE', 'PYTEST_ADDOPTS', 'PYTEST_PLUGINS'):
+        env.pop(key, None)
+    def run(*args):
+        return subprocess.run(command + list(args), cwd=root, env=env,
+                              capture_output=True, text=True, timeout=40)
+    learned = run('--refresh')
+    assert learned.returncode == 0, learned.stdout + learned.stderr
+    assert '2 passed' in learned.stdout
+    _assert_unchanged(run())
+    assert (root / '.smart-testing/testmon.db').exists()
+    assert (root / 'tests/smart-testing/reference.json').exists()
+    (root / 'fixture.txt').write_text('2')
+    result = run()
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert 'assert 2 == 1' in result.stdout
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('option', [
+    '-k test_value', '-n 2', '--lf', '--collect-only',
+    '--deselect tests/test_case.py::test_value', '--ignore tests/test_case.py',
+    '--setup-only', '--setup-plan', '--fixtures', '--fixtures-per-test',
+])
+def test_partial_or_parallel_addopts_cannot_publish_full_cache(smart_repository, option):
+    root = smart_repository
+    with (root / 'pytest.ini').open('a') as config:
+        config.write(f'addopts = {option}\n')
+    result = _smart_run(root, '--refresh')
+    assert result.returncode != 0, result.stdout + result.stderr
+    assert 'smart-test does not support' in result.stderr
+    assert not (root / 'tests/smart-testing/reference.json').exists()
+
+
+@pytest.mark.integration
+def test_cold_empty_suite_is_not_success(smart_repository):
+    root = smart_repository
+    (root / 'tests/test_case.py').unlink()
+    result = _smart_run(root)
+    assert result.returncode == 5, result.stdout + result.stderr
+    state = json.loads((root / '.smart-testing/inputs.json').read_text())
+    assert state.get('scope') != smart.SCOPE
+
+
+@pytest.mark.integration
+def test_cold_live_only_suite_runs_then_keeps_running(smart_repository):
+    root = smart_repository
+    (root / 'tests/test_case.py').write_text(
+        'import pytest\n@pytest.mark.smart_always\ndef test_live():\n    assert False\n')
+    failed = _smart_run(root)
+    assert failed.returncode == 1, failed.stdout + failed.stderr
+    assert '1 failed' in failed.stdout
+    test = root / 'tests/test_case.py'
+    test.write_text(test.read_text().replace('assert False', 'assert True'))
+    _assert_passed(_smart_run(root))
+    _assert_passed(_smart_run(root))
+    test.write_text(test.read_text().replace('assert True', 'assert False'))
+    failed = _smart_run(root)
+    assert failed.returncode == 1, failed.stdout + failed.stderr
+
+
+@pytest.mark.integration
+def test_default_marker_filter_cannot_hide_slow_failure(smart_repository):
+    root = smart_repository
+    with (root / 'pytest.ini').open('a') as config:
+        config.write('addopts = -m "not slow"\n')
+    test = root / 'tests/test_case.py'
+    test.write_text('import pytest\n@pytest.mark.slow\ndef test_bad():\n    assert False\n')
+    failed = _smart_run(root, '--refresh')
+    assert failed.returncode == 1, failed.stdout + failed.stderr
+    assert '1 failed' in failed.stdout
+    assert not (root / 'tests/smart-testing/reference.json').exists()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('new_policy', ['pytest.ini', 'nested_conftest'])
+def test_new_pytest_policy_cannot_hide_uncached_failure(smart_repository, new_policy):
+    root = smart_repository
+    (root / 'pytest.ini').unlink()
+    checks = root / 'checks'
+    checks.mkdir()
+    (root / 'tests/test_case.py').unlink()
+    (checks / 'test_case.py').write_text(
+        'import pytest\n@pytest.mark.xfail(reason="control")\n'
+        'def test_bad():\n    assert False\n')
+    learned = _smart_run(root, '--refresh')
+    assert learned.returncode == 0, learned.stdout + learned.stderr
+    assert '1 xfailed' in learned.stdout
+    _assert_unchanged(_smart_run(root))
+    if new_policy == 'pytest.ini':
+        (root / 'pytest.ini').write_text('[pytest]\naddopts = --runxfail\n')
+    else:
+        (checks / 'conftest.py').write_text(
+            'def pytest_configure(config):\n    config.option.runxfail = True\n')
+    failed = _smart_run(root)
+    assert failed.returncode == 1, failed.stdout + failed.stderr
+    assert '1 failed' in failed.stdout
+
+
+@pytest.mark.integration
+def test_information_only_run_cannot_succeed_as_test_feedback(smart_repository):
+    root = smart_repository
+    _assert_passed(_smart_run(root, '--refresh'))
+    with (root / 'pytest.ini').open('a') as config:
+        config.write('addopts = --help\n')
+    result = _smart_run(root)
+    assert result.returncode != 0, result.stdout + result.stderr
+    assert 'did not complete a test session' in result.stderr

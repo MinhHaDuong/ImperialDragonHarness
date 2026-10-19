@@ -14,7 +14,7 @@ import tempfile
 
 import pytest
 
-SCOPE = 'all-tiers-v1'
+SCOPE = 'all-tiers-v2'
 
 EXCLUDED = {'.git', '.venv', '.smart-testing', '.pytest_cache', '.panel', '.tmp', '__pycache__'}
 REFERENCE_FILES = {'tests/smart-testing/reference.json', 'tests/smart-testing/reference.sql'}
@@ -107,9 +107,10 @@ class FileReads:
         self.executed = set()
         self.collected = set()
         self.always = set()
-        for name in ('tests/conftest.py', 'pytest.ini'):
-            if (root / name).is_file():
-                self.observed.setdefault('*', {})[name] = fingerprint(root, name, self.state['stats'])
+        for name in ('conftest.py', 'pytest.ini', '.pytest.ini', 'pytest.toml',
+                     '.pytest.toml', 'pyproject.toml', 'setup.cfg', 'tox.ini',
+                     'glob:**/conftest.py'):
+            self.observed.setdefault('*', {})[name] = fingerprint(root, name, self.state['stats'])
 
     def audit(self, event, args):
         if event == 'subprocess.Popen' and self.consumer and not self.busy:
@@ -211,6 +212,14 @@ class FileReads:
         self.consumer = previous
 
     @pytest.hookimpl(hookwrapper=True)
+    def pytest_fixture_setup(self, fixturedef):
+        previous = self.consumer
+        if fixturedef.scope != 'function':
+            self.consumer = '*'
+        yield
+        self.consumer = previous
+
+    @pytest.hookimpl(hookwrapper=True)
     def pytest_runtest_protocol(self, item):
         self.consumer = item.path.relative_to(self.root).as_posix()
         self.executed.add(self.consumer)
@@ -228,6 +237,9 @@ class FileReads:
 
     def pytest_sessionfinish(self, session, exitstatus):
         self.consumer = None
+        receipt = os.environ.get('SMART_TESTING_SESSION')
+        if receipt:
+            Path(receipt).write_text(str(int(exitstatus)))
         if exitstatus not in (0, 5):
             return  # Failed consumers must remain stale and run again next time.
         self.state['always'] = sorted(consumer for consumer in (
@@ -255,11 +267,34 @@ class FileReads:
         save_state(self.path, self.state)
 
 
+@pytest.hookimpl(hookwrapper=True, tryfirst=True)
+def pytest_load_initial_conftests(early_config):
+    state_path = os.environ.get('SMART_TESTING_INPUTS')
+    recorder = None
+    if state_path:
+        root = Path(os.environ.get('SMART_TESTING_ROOT', early_config.rootpath)).resolve()
+        recorder = FileReads(root, Path(state_path))
+        sys.addaudithook(recorder.audit)
+        early_config.pluginmanager.register(recorder, 'smart-file-reads')
+        recorder.consumer = '*'  # Initial conftest globals can feed any test.
+    yield
+    if recorder:
+        recorder.consumer = None
+
+
 def pytest_configure(config):
     config.addinivalue_line('markers', 'smart_always: run on every smart invocation (live external state)')
     config.addinivalue_line('markers', 'smart_inputs(*paths): additional file/glob inputs, including child reads')
-    state_path = os.environ.get('SMART_TESTING_INPUTS')
-    if state_path:
-        recorder = FileReads(Path(config.rootpath).resolve(), Path(state_path))
-        sys.addaudithook(recorder.audit)
-        config.pluginmanager.register(recorder, 'smart-file-reads')
+    if not os.environ.get('SMART_TESTING_INPUTS'):
+        return
+    option = config.option
+    incompatible = ('keyword', 'lf', 'stepwise', 'stepwise_skip', 'deselect',
+                    'collectonly', 'ignore', 'ignore_glob', 'numprocesses',
+                    'setuponly', 'setupplan', 'showfixtures', 'show_fixtures_per_test')
+    narrowed = [name for name in incompatible if getattr(option, name, None)]
+    if getattr(option, 'dist', 'no') != 'no':
+        narrowed.append('dist')
+    if narrowed:
+        raise pytest.UsageError(
+            'smart-test does not support partial or parallel pytest options: '
+            + ', '.join(narrowed) + '; use the normal project check instead')
