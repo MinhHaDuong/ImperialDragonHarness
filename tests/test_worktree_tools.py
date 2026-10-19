@@ -250,6 +250,22 @@ def test_gc_keeps_tmp_cited_by_candidate_verdict(origin):
     assert str(wt) in _worktree_paths(primary)
 
 
+def test_gc_blocks_unreadable_registered_verdict_parent(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-tmp-cross-verdict")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+    (primary / ".panel").symlink_to(primary / "missing-panel-target")
+    make_branch_gone(remote, primary, "agent-tmp-cross-verdict")
+
+    response = [{"number": 42, "title": "work", "body": "No scratch citation."}]
+    res = _gc(primary, gh_response=__import__("json").dumps(response))
+    assert "verdict directory is unavailable" in res.stderr.lower()
+    assert (wt / ".tmp" / "cache.bin").exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
 def test_removal_guard_rejects_branch_mismatch(origin):
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-branch-mismatch")

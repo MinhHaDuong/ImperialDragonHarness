@@ -235,8 +235,7 @@ def citation_sources(repo: Path, worktree: Path, branch: str) -> list[tuple[str,
             raise Blocked(f"could not inspect registered worktree {tree}: {exc}") from exc
         if not stat.S_ISDIR(tree_info.st_mode):
             raise Blocked(f"registered worktree is unavailable: {tree}")
-        for number in numbers:
-            roots.extend((tree / ".panel" / number, tree / ".review" / number))
+        roots.extend(registered_verdict_roots(tree, numbers))
     for path, text in verdict_contents(roots):
         sources.append((str(path), text))
     return sources
@@ -259,6 +258,22 @@ def candidate_verdict_roots(worktree: Path) -> list[Path]:
                     roots.append(entry)
         except OSError as exc:
             raise Blocked(f"could not enumerate candidate verdicts under {parent}: {exc}") from exc
+    return roots
+
+
+def registered_verdict_roots(worktree: Path, numbers: list[str]) -> list[Path]:
+    roots: list[Path] = []
+    for name in (".panel", ".review"):
+        parent = worktree / name
+        try:
+            info = parent.lstat()
+        except FileNotFoundError:
+            continue
+        except OSError as exc:
+            raise Blocked(f"could not inspect verdict directory {parent}: {exc}") from exc
+        if stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode):
+            raise Blocked(f"verdict directory is unavailable: {parent}")
+        roots.extend(parent / number for number in numbers)
     return roots
 
 
