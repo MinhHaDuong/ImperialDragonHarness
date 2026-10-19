@@ -1,29 +1,16 @@
 #!/usr/bin/env python3
-"""Update skills catalog in README.md from generated catalog lines."""
+"""Generate the root skills-catalog.md from skill frontmatter."""
 
-import re
+from pathlib import Path
 
 import gen_skills_catalog
 
 
 def main():
-    catalog_lines = "\n".join(gen_skills_catalog.catalog_lines("."))
-
-    # Read current README
-    with open("README.md", "r") as f:
-        content = f.read()
-
-    # Replace content between sentinels
-    pattern = r"(<!-- skills:begin -->\n\n\| Command \| Description \|\n\|------+\|\-+\|\n)(.*?)(<!-- skills:end -->)"
-    replacement = r"\1" + catalog_lines + r"\n\n\3"
-
-    new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
-
-    # Write back
-    with open("README.md", "w") as f:
-        f.write(new_content)
-
-    print("Done. Updated README.md with current skills catalog.")
+    Path("skills-catalog.md").write_text(
+        gen_skills_catalog.catalog_document("."), encoding="utf-8"
+    )
+    print("Done. Updated skills-catalog.md.")
 
 
 if __name__ == "__main__":

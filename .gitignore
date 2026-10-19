@@ -7,6 +7,9 @@
 !uv.lock
 !.ruff.toml
 !README.md
+!INSTALL.md
+!CONTRIBUTING.md
+!skills-catalog.md
 !STATE.md
 !ROADMAP.md
 !AGENTS.md

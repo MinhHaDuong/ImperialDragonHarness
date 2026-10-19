@@ -1,40 +1,20 @@
 #!/usr/bin/env python3
-"""Check if skills catalog in README.md is in sync with SKILL.md files."""
+"""Check the generated root skills catalog, including grouping and order."""
 
-import re
+from pathlib import Path
 import sys
 
 import gen_skills_catalog
 
 
 def main():
-    # Generate expected catalog
-    expected = set(gen_skills_catalog.catalog_lines("."))
-
-    # Extract actual catalog from README
-    with open("README.md", "r") as f:
-        content = f.read()
-
-    match = re.search(
-        r"<!-- skills:begin -->\n\n\| Command \| Description \|\n\|------+\|\-+\|\n(.*?)\n\n<!-- skills:end -->",
-        content,
-        re.DOTALL,
-    )
-    if match:
-        actual_block = match.group(1)
-        actual = set(
-            line for line in actual_block.split("\n") if line.strip().startswith("|")
-        )
-    else:
-        actual = set()
-
-    if expected == actual:
+    path = Path("skills-catalog.md")
+    actual = path.read_text(encoding="utf-8") if path.exists() else None
+    if actual == gen_skills_catalog.catalog_document("."):
         print("OK: Skills catalog is in sync.")
-        sys.exit(0)
-    else:
-        print("DRIFT DETECTED: skills catalog in README.md is out of sync")
-        print("Run 'make skills-catalog' to regenerate")
-        sys.exit(1)
+        return
+    print("DRIFT DETECTED: run 'make skills-catalog' to regenerate skills-catalog.md")
+    sys.exit(1)
 
 
 if __name__ == "__main__":
