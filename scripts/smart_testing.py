@@ -75,6 +75,12 @@ def run_tests(paths, database, inputs, selection, markers=MARKERS):
 
 def prepare(database, inputs, reference):
     """A local DB owns its own baseline; reference-only changes never replace it."""
+    database.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with (database.parent / '.gitignore').open('x') as ignored:
+            ignored.write('*\n')
+    except FileExistsError:
+        pass
     if database.exists() and inputs.exists():
         state = load_state(inputs)
         return (state.get('scope') != SCOPE

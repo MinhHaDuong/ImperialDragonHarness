@@ -14,7 +14,8 @@ do not point it at a different live installation. The helper defaults to the
 current working directory and uses the project's configured pytest discovery
 (`testpaths` included). It neither imports the harness's `scripts` package into
 the workload nor changes `PYTHONPATH`. State stays in the workload's
-`.smart-testing/`; `--refresh` exports to its `tests/smart-testing/` directory.
+`.smart-testing/`, which ignores its own contents without editing the project
+ignore file; `--refresh` exports to its `tests/smart-testing/` directory.
 Projects declare their own indirect inputs and live-state opt-outs in conftest;
 the harness declarations are not injected into other projects. Non-pytest checks
 retain their existing commands. Use the normal project check when smart testing

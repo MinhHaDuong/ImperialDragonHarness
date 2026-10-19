@@ -422,6 +422,13 @@ def test_external_entry_uses_workload_discovery_and_own_scripts_package(smart_re
     test = root / 'checks/test_case.py'
     test.write_text(test.read_text() + '\nfrom scripts.workload import VALUE\n'
                     'def test_own_scripts():\n    assert VALUE == "workload"\n')
+    ignore = root / '.gitignore'
+    ignore.write_text(ignore.read_text().replace('.smart-testing/\n', ''))
+    probe = root / '.smart-testing/probe'
+    probe.parent.mkdir()
+    probe.write_text('private')
+    status_command = ['git', '-C', str(root), 'status', '--porcelain', '--', '.smart-testing']
+    assert subprocess.check_output(status_command, env=child_env()).strip()
     frozen = tmp_path / 'frozen-harness'
     frozen.mkdir()
     for source in (Path(__file__).resolve().parents[1] / 'scripts').glob('smart_testing*.py'):
@@ -443,6 +450,8 @@ def test_external_entry_uses_workload_discovery_and_own_scripts_package(smart_re
     after = {p.relative_to(frozen).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
              for p in frozen.rglob('*') if p.is_file()}
     assert after == before, 'The selected frozen harness must remain byte-for-byte unchanged.'
+    assert not subprocess.check_output(status_command, env=child_env()).strip(), (
+        'Private cache state must not enter the workload submission.')
     _assert_unchanged(run())
     assert (root / '.smart-testing/testmon.db').exists()
     assert (root / 'tests/smart-testing/reference.json').exists()
