@@ -14,7 +14,7 @@
 #      (3 new notes, 1 edited note, 2 index lines) plus an origin advance over
 #      the same paths: today's script refuses and leaves every byte in place;
 #   2. visible reporting — the refusal surfaces at session start
-#      (scripts/on-start.sh re-echoes the sync report);
+#      (scripts/on-start-context.sh re-echoes the sync report);
 #   3. treatment — capture at roar commits entries on a wrap-up branch through
 #      origin instead of dirtying the host: the same host fast-forwards the
 #      next night, and the note set is byte-identical across the reproduction
@@ -29,7 +29,7 @@ cd "$(dirname "$0")/.."
 REPO="$PWD"
 CAPTURE="$REPO/scripts/memory-capture.sh"
 SYNC="$REPO/scripts/sync-local-main.sh"
-ONSTART="$REPO/scripts/on-start.sh"
+ONSTART="$REPO/scripts/on-start-context.sh"
 
 fail=0
 SANDBOX=$(mktemp -d)
@@ -138,7 +138,7 @@ else
 fi
 
 # Arm 2 — the refusal is reported where the author sees it: session start.
-# on-start.sh's background eager sync writes its report to
+# on-start-context.sh's background eager sync writes its report to
 # <git-common-dir>/sync-local-main.last; the next session start echoes it back
 # when it needed attention (ticket 0277). Plant the control arm's refusal as
 # that report and run a real session start against the host.

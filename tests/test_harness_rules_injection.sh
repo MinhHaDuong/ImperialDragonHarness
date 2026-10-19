@@ -2,14 +2,14 @@
 # Regression test for the rules loading contract (tickets 0042, 0151, 0572).
 #
 # History, and the reason this file was rewritten on 2026-09-09: it used to
-# assert that on-start.sh emits the rules INDEX and not the rule BODIES, and it
+# assert that on-start-context.sh emits the rules INDEX and not the rule BODIES, and it
 # passed for months while the runtime loaded 18 of the 19 bodies into the system
 # prompt on its own. The hook was the only channel it could see, so its all-clear
 # and "I could not look" were the same output — the failure mode the harness
 # names in tickets/AGENTS.md and in ticket 0875.
 #
 # The contract it now guards:
-#   1. on-start.sh emits neither bodies nor the index — the runtime auto-loads
+#   1. on-start-context.sh emits neither bodies nor the index — the runtime auto-loads
 #      `~/.claude/rules/**.md` itself, so anything the hook prints is a second
 #      copy (rules/README.md § how they load).
 #   2. Every rule file the index lists as conditional actually carries the
@@ -27,7 +27,7 @@ fail=0
 # (settings.json, jq, git); CLAUDE_PROJECT_DIR is deliberately NOT passed, so
 # the hook runs its no-project stdout path exactly as it does under pytest's
 # loader-cleared child env.
-out=$(env -i HOME="$HOME" PATH="$PATH" bash scripts/on-start.sh 2>&1 || true)
+out=$(env -i HOME="$HOME" PATH="$PATH" bash scripts/on-start-context.sh 2>&1 || true)
 
 # 1. Rule-body sentences must not appear in hook output. One distinctive
 #    sentence per file; these are resident by other means, never by this hook.
@@ -47,8 +47,8 @@ for needle in "${body_strings[@]}"; do
 done
 
 # 2. The index must not be cat-ed either: the runtime already loads it.
-if grep -qE '^[^#]*cat[^#]*rules/README\.md' scripts/on-start.sh; then
-  echo "FAIL: scripts/on-start.sh cats rules/README.md — the runtime already"
+if grep -qE '^[^#]*cat[^#]*rules/README\.md' scripts/on-start-context.sh; then
+  echo "FAIL: scripts/on-start-context.sh cats rules/README.md — the runtime already"
   echo "      loads it as a resident rule; cat-ing it serves a second copy"
   fail=1
 fi

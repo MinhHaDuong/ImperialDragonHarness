@@ -182,7 +182,7 @@ turn enforcement into advice:
   fail-open doctrine is carried, not Pi's handler fail-safe (which would
   block on any breakage). Install: symlink into
   `~/.pi/agent/extensions/`.
-  The same extension also runs `scripts/on-start.sh` on `session_start`,
+  The same extension also runs `scripts/on-start-context.sh` on `session_start`,
   and Codex's `hooks.json` carries a `SessionStart` entry for it: session
   context, not part of the guard.
   Any future `pi --print` driver must assert the served provider:

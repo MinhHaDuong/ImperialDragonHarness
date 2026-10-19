@@ -10,7 +10,7 @@ model, and only one was watched:
 * **auto-load** — the runtime walks ``rules/**.md`` and keeps every body whose
   frontmatter declares no ``paths:``.
 * **import** — ``AGENTS.md`` and, transitively, every ``@path`` line in it.
-* **hook** — ``scripts/on-start.sh`` prints files, and hook stdout is context.
+* **hook** — ``scripts/on-start-context.sh`` prints files, and hook stdout is context.
 
 Two more are resident but not files-in-full: a skill and a subagent contribute
 their ``name`` plus ``description``, never their body. That is the
@@ -59,7 +59,7 @@ CHARS_PER_TOKEN = 2.8
 
 IMPORT_LINE = re.compile(r"^@(\S+)", re.MULTILINE)
 
-# Files scripts/on-start.sh prints into the session. Kept as a literal list
+# Files scripts/on-start-context.sh prints into the session. Kept as a literal list
 # rather than parsed out of the shell: a regex over a hook script that stops
 # matching reports "no hook channel" and "I could not read the hook" with the
 # same silence, and this guard exists because that class of blind spot is what

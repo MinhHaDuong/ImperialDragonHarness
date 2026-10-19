@@ -6,7 +6,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook\" on-start.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook\" on-start-context.sh",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/idh-hook\" on-start-sync.sh",
             "timeout": 30
           }
         ]

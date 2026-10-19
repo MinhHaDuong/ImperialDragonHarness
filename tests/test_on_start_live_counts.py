@@ -1,6 +1,6 @@
 """Session start prints live ticket counts; STATE.md stores none (ticket 1121).
 
-`scripts/on-start.sh` computes open and ready counts from the project's local
+`scripts/on-start-context.sh` computes open and ready counts from the project's local
 `tickets/erg` at read time and prints one declarative line. The project is
 `CLAUDE_PROJECT_DIR`, else the working directory, so another runtime calling
 the script gets the same line. It stays silent when the project has no
@@ -20,7 +20,7 @@ from child_env import child_env
 pytestmark = pytest.mark.integration
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPT = REPO / "scripts" / "on-start.sh"
+SCRIPT = REPO / "scripts" / "on-start-context.sh"
 
 FAKE_ERG = """#!/bin/sh
 case "$1" in

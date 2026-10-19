@@ -17,7 +17,7 @@ from child_env import child_env
 pytestmark = pytest.mark.integration
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPT = REPO / "scripts" / "on-start.sh"
+SCRIPT = REPO / "scripts" / "on-start-context.sh"
 SENTINEL = "Search the journal for older or unprocessed experiences."
 
 

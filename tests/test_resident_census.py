@@ -59,9 +59,9 @@ BUDGETS = {
     # topic, journal and reference surface, so it can no longer fit the
     # legacy 500-char stub (measured 2007 chars at the close of 0920,
     # headroom 93). In exchange the hook channel stopped being
-    # cross-project: scripts/on-start.sh now injects it only into sessions
+    # cross-project: scripts/on-start-context.sh now injects it only into sessions
     # whose project is this harness repository, so no other session pays it.
-    "hook": 2100,  # memory/MEMORY.md, printed by scripts/on-start.sh
+    "hook": 2100,  # memory/MEMORY.md, printed by scripts/on-start-context.sh
     "memory": 14500,  # the largest per-project index; only one is resident
     "skills": 7000,  # tracked cards; local cards are supplemental (1091)
     "agents": 800,  # name + description of every agents/*.md

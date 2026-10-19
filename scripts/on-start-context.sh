@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
-# Session-start hook. Claude Code runs it at every SessionStart; another
-# runtime may call it too (ticket 1122), so the Claude-specific
+# Session-start context printer: stdout becomes conversation context. It has no
+# side effects; the repository-mutating half is on-start-sync.sh. Claude Code runs
+# it at every SessionStart; another runtime may call it too (ticket 1122), so the Claude-specific
 # lines below are guarded by _claude and stay silent elsewhere.
 #
 # NOTE: a project's non-secret .env settings reach bash subprocesses via BASH_ENV
@@ -118,31 +119,4 @@ if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
        && grep -qE 'untouched|diverged|refused' "$_sync_report" 2>/dev/null; then
         echo "Local-main sync (previous session start): $(cat "$_sync_report")"
     fi
-fi
-
-# --- Nothing below this line may produce stdout (hook output = conversation context) ---
-exec >/dev/null 2>&1
-
-# Everything below requires a project directory
-[ -n "${CLAUDE_PROJECT_DIR:-}" ] && cd "$CLAUDE_PROJECT_DIR" || exit 0
-
-# Activate project git hooks if a pre-commit hook exists
-if [ -f hooks/pre-commit ]; then
-    git config core.hooksPath hooks
-fi
-
-# Eager local-main sync (rules/git.md § Local main syncs eagerly).
-# Backgrounded so an offline fetch can never stall session start; the script
-# is ff-only and never touches dirty or diverged state, so racing the
-# session's first git commands is safe. The report lands in
-# <git-common-dir>/sync-local-main.last (we are past the stdout cutoff);
-# the next session start surfaces it above the cutoff if it needs attention.
-# Write via tmp + mv: concurrent session starts share the common dir, and an
-# atomic rename keeps the report whole (last-writer-wins, never interleaved).
-_gcd=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || _gcd=""
-if [ -n "$_gcd" ]; then
-    ( { timeout 60 "$_script_dir/sync-local-main.sh" "$CLAUDE_PROJECT_DIR" \
-          > "$_gcd/sync-local-main.last.$$" 2>&1 \
-        && mv -f "$_gcd/sync-local-main.last.$$" "$_gcd/sync-local-main.last" \
-        || rm -f "$_gcd/sync-local-main.last.$$"; } & )
 fi

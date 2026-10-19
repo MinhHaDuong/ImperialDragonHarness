@@ -25,10 +25,10 @@ them — live numbers are read when needed from `erg ready tickets/`,
 bumps `Last updated:` and prunes the hand sections. A ticket-closing PR needs
 no STATE.md edit.
 
-**Live counts at session start.** `scripts/on-start.sh` prints one line of
+**Live counts at session start.** `scripts/on-start-context.sh` prints one line of
 open and ready ticket counts, computed from local `erg` at read time, so the
 session still sees them without a committed copy. Only runtimes whose
-session-start hook runs `on-start.sh` see that line: Claude Code (SessionStart
+session-start hook runs `on-start-context.sh` see that line: Claude Code (SessionStart
 hook), Codex (`SessionStart` in `adapters/codex/hooks.json`) and Pi (the
 `session_start` handler in `adapters/pi/extensions/idh-guard.ts`, delivered with
 the first user turn) all do.
