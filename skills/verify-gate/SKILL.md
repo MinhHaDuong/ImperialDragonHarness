@@ -199,8 +199,8 @@ against the diff, as one `per_exit_criterion` row named `indivisibility waiver`:
 - Any `blocking` adherence violation → REROLL (round 1) / ESCALATE (round 2).
 - Any `scope_overflow` entry with suggested disposition ESCALATE → ESCALATE.
 - A recorded waiver whose `indivisibility waiver` row is MISSING → REROLL (round 1)
-  / ESCALATE (round 2), as any MISSING criterion. A waiver from an undeclared
-  source, or growth past the recorded size without a fresh reason → ESCALATE.
+  / ESCALATE (round 2), as any MISSING criterion. A waiver whose declarer is
+  not `author` or `interactive session`, or growth past the recorded size without a fresh reason → ESCALATE.
 - `scope_overflow` entries with all suggested dispositions TICKETED → does not block
   APPROVED. Caller handles ticket creation and PR annotation.
 - All lists empty AND all criteria ADDRESSED → APPROVED.

@@ -655,3 +655,27 @@ def test_waiver_flags_multi_ticket():
     assert "multi_ticket" in section, (
         "a waiver beside two or more close claims must be flagged as multi_ticket"
     )
+
+
+def test_waiver_declarer_is_recorded_and_passed_to_the_gate():
+    """Adherence finding (blocking): verify-gate requires a declarer, but the
+    recording step and the phase-6 launch prompt never carried one, so every
+    waived PR escalated as un-reviewable."""
+    assert "declarer" in _waiver_section(), (
+        "the Recording paragraph of § Waiver must record the declarer"
+    )
+    assert "declarer" in _gate_block(), (
+        "the phase-6 waiver record must pass the declarer to the gate"
+    )
+
+
+def test_verify_gate_wording_and_no_overpromise():
+    vg = _normalize((SKILLS / "verify-gate" / "SKILL.md").read_text())
+    assert "undeclared source" not in vg, "verify-gate names an undefined term"
+    assert re.search(r"declarer[^.]*ESCALATE", vg), (
+        "verify-gate must tie a non-author declarer to ESCALATE"
+    )
+    wf = _normalize((REPO / "rules" / "workflow.md").read_text())
+    assert "reviewed in full" not in wf, (
+        "rules/workflow.md over-promises: round >= 2 scopes Agent C"
+    )

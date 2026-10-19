@@ -350,7 +350,8 @@ diff does not bear is a MISSING criterion.
 
 **Recording.** Read in phase 1, before any battery spawns, so the stop is
 never discovered after the work. Record the waiver with `pr_files`, `pr_lines`,
-the reason and its source (flag or body line) in the PR comment, and set the
+the reason, its source (flag or body line) and its declarer (`author` or
+`interactive session`) in the PR comment, and set the
 verdict header to `circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)`.
 The waiver record also rides in the phase 6 launch prompt (§ 6. Gate), so the
 verdict-time size re-check reads the same recorded size.
@@ -648,7 +649,7 @@ written verdict artifact), with its model chosen per launch from the `route` ski
 `$primary_root/.claude/worktrees/review-<pr-number>` (the equivalent fork call is
 `/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`);
 the PR number, this run's `gate_session_id`, and the review worktree path ride
-in the launch prompt, and so does the waiver record (`waiver: none`, or the recorded reason, `pr_files`, `pr_lines` and source) — the seat's containment rails (read-only except the
+in the launch prompt, and so does the waiver record (`waiver: none`, or the recorded reason, `pr_files`, `pr_lines`, source and declarer) — the seat's containment rails (read-only except the
 REROLL bump, `git -C` discipline with no `cd` into or out of another tree, no
 commits/pushes/branches/PRs, banned working-tree overwrites, the
 `tickets/*.erg` write ban, the NOT-RUN refusal anchored on the review
