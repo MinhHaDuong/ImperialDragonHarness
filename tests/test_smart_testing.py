@@ -702,8 +702,9 @@ def test_absent_executable_override_differs_from_an_empty_override(monkeypatch):
 @pytest.mark.integration
 @pytest.mark.parametrize('package_entry', [False, True])
 @pytest.mark.parametrize('change_initializer', [False, True])
+@pytest.mark.parametrize('bytes_invocation', [False, True])
 def test_src_layout_child_modules_and_initializers_invalidate(
-    smart_repository, package_entry, change_initializer,
+    smart_repository, package_entry, change_initializer, bytes_invocation,
 ):
     root = smart_repository
     package = root / 'src/workload'
@@ -718,7 +719,12 @@ def test_src_layout_child_modules_and_initializers_invalidate(
         'def test_child():\n'
         '    env = {k:v for k,v in os.environ.items() if k != "BASH_ENV"}\n'
         '    env["PYTHONPATH"] = str(Path.cwd() / "src")\n'
-        f'    output = subprocess.check_output([sys.executable, "-m", {module!r}], env=env)\n'
+        f'    command = [sys.executable, "-m", {module!r}]\n'
+        '    cwd = str(Path.cwd())\n'
+        + ('    command = [os.fsencode(arg) for arg in command]\n'
+           '    env = {os.fsencode(k):os.fsencode(v) for k,v in env.items()}\n'
+           '    cwd = os.fsencode(cwd)\n' if bytes_invocation else '')
+        + '    output = subprocess.check_output(command, env=env, cwd=cwd)\n'
         '    assert output.strip() == b"yes"\n')
     _assert_passed(_smart_run(root, '--refresh'))
     _assert_unchanged(_smart_run(root))
@@ -729,3 +735,26 @@ def test_src_layout_child_modules_and_initializers_invalidate(
     result = _smart_run(root)
     assert result.returncode == 1, result.stdout + result.stderr
     assert _smart_run(root).returncode == 1
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('shadow', ['src/workload/__init__.py', 'src/workload.py', 'workload.py'])
+def test_new_module_or_initializer_shadowing_a_child_namespace_invalidates(
+    smart_repository, shadow,
+):
+    root = smart_repository
+    package = root / 'src/workload'
+    package.mkdir(parents=True)
+    (package / 'entry.py').write_text('print("yes")\n')
+    (root / 'tests/test_case.py').write_text(
+        'import os, subprocess, sys\nfrom pathlib import Path\n'
+        'def test_child():\n'
+        '    env = {k:v for k,v in os.environ.items() if k != "BASH_ENV"}\n'
+        '    env["PYTHONPATH"] = str(Path.cwd() / "src")\n'
+        '    output = subprocess.check_output([sys.executable, "-m", "workload.entry"], env=env)\n'
+        '    assert output.strip() == b"yes"\n')
+    _assert_passed(_smart_run(root, '--refresh'))
+    _assert_unchanged(_smart_run(root))
+    (root / shadow).write_text('raise RuntimeError("new import shadow")\n')
+    result = _smart_run(root)
+    assert result.returncode == 1, result.stdout + result.stderr

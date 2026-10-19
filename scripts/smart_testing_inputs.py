@@ -208,14 +208,17 @@ class FileReads:
     def record_command(self, command, cwd, environment):
         if not isinstance(command, (list, tuple)):
             return  # Shell-string indirect inputs use explicit declarations.
-        directory = Path(cwd).absolute() if cwd else Path.cwd()
-        paths = [directory / os.fsdecode(arg) for arg in command
-                 if isinstance(arg, (str, bytes))]
+        command = [os.fsdecode(arg) if isinstance(arg, (str, bytes)) else None
+                   for arg in command]
+        directory = Path(os.fsdecode(cwd)).absolute() if cwd else Path.cwd()
+        paths = [directory / arg for arg in command if arg is not None]
+        module_paths = set()
         if '-m' in command:
             index = command.index('-m') + 1
             if index < len(command):
-                environment = os.environ if environment is None else environment
-                pythonpath = os.fsdecode(environment.get('PYTHONPATH', ''))
+                environment = dict(os.environ if environment is None else environment)
+                pythonpath = os.fsdecode(environment.get(
+                    'PYTHONPATH', environment.get(b'PYTHONPATH', b'')))
                 # Respect src/ and other child search roots without importing
                 # the package (which could execute its initialization).
                 roots = [directory, *(directory / part for part in pythonpath.split(os.pathsep)),
@@ -223,15 +226,19 @@ class FileReads:
                 parts = str(command[index]).split('.')
                 for base in roots:
                     module = base.joinpath(*parts)
-                    paths.extend([module.with_suffix('.py'), module / '__main__.py'])
-                    paths.extend(base.joinpath(*parts[:level], '__init__.py')
-                                 for level in range(1, len(parts) + 1))
+                    module_paths.add(module / '__main__.py')
+                    for level in range(1, len(parts) + 1):
+                        prefix = base.joinpath(*parts[:level])
+                        module_paths.update([prefix.with_suffix('.py'), prefix / '__init__.py'])
+        module_paths = {Path(os.path.abspath(path)) for path in module_paths}
+        paths.extend(module_paths)
         self.busy = True
         try:
             for path in paths:
                 path = Path(os.path.abspath(path))
                 try:
-                    project_file = path.is_relative_to(self.root) and path.is_file()
+                    project_file = path.is_relative_to(self.root) and (
+                        path in module_paths or path.is_file())
                 except (OSError, ValueError):
                     continue  # Code strings and other argv values are not filenames.
                 if project_file:
