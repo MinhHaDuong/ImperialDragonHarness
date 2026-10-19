@@ -1,4 +1,5 @@
 ---
+category: session
 name: yawn
 description: "Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent."
 disable-model-invocation: false
