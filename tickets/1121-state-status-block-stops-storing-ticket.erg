@@ -1,0 +1,46 @@
+%erg 0.1
+Title: STATE Status block stops storing ticket counts
+Created: 2026-10-19
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-19T19:51Z Minh Ha-Duong created
+
+--- body ---
+## Context
+`scripts/refresh-STATE.py` (run by `/lair`) writes ticket counts, "next"
+picks and recent commits into the tracked `## Status` block of STATE.md
+(`rules/state.md`). Every PR that closes or unblocks a ticket makes those
+numbers stale on merge, and every parallel PR then touches the same lines.
+
+Incident, sen-causal-reading, 2026-10-19: PR #20 (close of 0025) was sent
+back by `/verify-gate` (REROLL, round 1) for one reason only, STATE.md:38
+still reading "18 open · 8 ready" instead of 17/7. The gate cited the 0007
+close commit f2df2c8, which had hand-edited that line, as precedent; the
+simplify seat said the block is generated and must not be hand-edited.
+Reviewers disagree, and each ticket close costs a review round over a
+number a script computes in milliseconds.
+
+## Decision (author, 2026-10-19)
+Option 1: STATE.md stops storing derived counts. Live numbers come from
+`erg ready tickets/`, `erg list` and `/dashboard` when needed. STATE keeps
+what only a human writes (blockers, decisions, next actions in prose).
+
+## Design notes
+- STATE.md is injected at session start by a hook (`rules/state.md`).
+  Preferred shape: the hook (or `refresh-STATE.py --print`) computes the
+  counts and appends them to the injected context at read time, so sessions
+  still see the numbers without any committed copy.
+- Volatile items to drop from the committed block: open/ready counts,
+  awaiting-author and next picks, open MRs and CI verdict, last commits.
+  A pointer line to the commands replaces them. Decide whether the
+  `state-metrics` extension point is also read-time.
+- Before removing lines, grep the harness for readers of the block
+  (`/yawn` docs-freshness check, `/perch`, `/lair`, `tests/test_refresh_state.py`).
+
+## Exit criteria
+- [ ] `refresh-STATE.py` no longer writes ticket counts, next picks, MRs or commits into STATE.md
+- [ ] Session start still shows live ticket counts, computed at read time
+- [ ] `rules/state.md` and `/lair` describe the new contract; `/yawn` no longer flags count drift
+- [ ] Tests updated; `make check` passes
+- [ ] A ticket-closing PR in a project repo needs no STATE.md edit to pass review
