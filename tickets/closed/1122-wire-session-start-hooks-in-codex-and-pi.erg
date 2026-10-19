@@ -8,6 +8,7 @@ Closed: done
 2026-10-19T20:16Z Minh Ha-Duong created
 2026-10-19T20:35Z reviewer closed — done
 2026-10-19T20:38Z reviewer note evidence — host padme: Codex 0.163.0 SessionStart hook output reaches the model (random marker quoted back in a throwaway CODEX_HOME; live ticket-counts line quoted with the real wiring). Pi 1.3.0: session_start event only, no context-hook, so idh-guard.ts runs on-start.sh and queues it deliverAs nextTurn; counts line quoted back in a pi -p run.
+2026-10-19T20:44Z reviewer note verify-reroll — round 1: rules/workflow.md cites "ticket 1122" (resident-rules test fails)
 
 --- body ---
 ## Context

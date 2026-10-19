@@ -31,7 +31,7 @@ session still sees them without a committed copy. Only runtimes whose
 session-start hook runs `on-start.sh` see that line: Claude Code (SessionStart
 hook), Codex (`SessionStart` in `adapters/codex/hooks.json`) and Pi (the
 `session_start` handler in `adapters/pi/extensions/idh-guard.ts`, delivered with
-the first user turn) all do (ticket 1122).
+the first user turn) all do.
 
 **Line budget:** total ≤ 40 lines. History lives in `git log`.
 
