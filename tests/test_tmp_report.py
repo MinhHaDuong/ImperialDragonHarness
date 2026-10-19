@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -193,6 +194,45 @@ def test_compound_or_nonzero_creation_commands_remain_attempts(tmp_path):
     )[str(target)]
     assert found
     assert all(item["evidence"] != "created" for item in found)
+
+
+def test_successful_creation_is_not_attributed_before_candidate_mtime(tmp_path):
+    older = tmp_path / "tmp-older"
+    newer = tmp_path / "tmp-newer"
+    history = tmp_path / "codex.jsonl"
+    history.write_text(
+        json.dumps({"type": "session_meta", "payload": {"id": "creator"}}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {
+            "type": "function_call", "call_id": "call-newer", "name": "exec_command",
+            "arguments": json.dumps({"cmd": f"mkdir -p {newer}"}),
+        }}) + "\n"
+        + json.dumps({"type": "response_item", "payload": {
+            "type": "function_call_output", "call_id": "call-newer",
+            "output": {"exit_code": 0},
+        }}) + "\n"
+    )
+    os.utime(history, (50, 50))
+
+    found = report.attribute_histories(
+        [
+            {"path": str(older), "mtime": 1},
+            {"path": str(newer), "mtime": 100},
+        ],
+        [history],
+        home=tmp_path,
+    )
+
+    assert not any(item["evidence"] == "created" for item in found[str(older)])
+    assert all(item["evidence"] != "created" for item in found[str(newer)])
+
+
+def test_format_renders_unreadable_disk_usage_as_unknown():
+    rendered = report._format({
+        "runtime": "codex", "scope": "lair", "disk": {"/tmp": None},
+        "candidates": [], "unreadable": [],
+    })
+
+    assert "/tmp: free space unknown (could not inspect mount)" in rendered
 
 
 def test_boolean_is_not_an_explicit_exit_status():

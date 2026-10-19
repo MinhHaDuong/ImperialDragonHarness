@@ -85,12 +85,14 @@ default branch — there are no remote branches nor merge requests to inspect.
      --scope roar --repo "$PROJECT_REPO" --session-id "$SESSION_ID" \
      --exclude-session-id "$SESSION_ID"
    ```
-   The helper searches all available runtime histories, limits candidates to
-   this session and linked child sessions, and prints unattributed candidates
-   separately. The reporting session is excluded from citation attribution
-   while its child graph remains available; candidates mentioned only by the
-   current session remain unattributed. If the runtime or session id cannot be
-   established, pass the known runtime and omit both session flags. It never
+   The helper scans candidates across its configured host-wide roots. When
+   session flags are supplied, history attribution is limited to this session
+   and linked child sessions; candidates without a match in that scoped
+   history remain visible as unattributed. The reporting session is excluded
+   from citation attribution while its child graph remains available;
+   candidates mentioned only by the current session remain unattributed. If
+   the runtime or session id cannot be established, pass the known runtime and
+   omit both session flags. It never
    deletes candidate data. A citation is not proof of creation; `created`
    appears only for a matching native Claude/Codex call and result id, explicit
    zero exit status, and one direct command targeting the exact candidate. Do

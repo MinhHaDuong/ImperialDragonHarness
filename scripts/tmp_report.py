@@ -464,6 +464,8 @@ def attribute_histories(candidates, files, home=None, unreadable=None):
                         if kind != call_kind or not success:
                             continue
                         for key in targets:
+                            if file_mtime < mtimes[key]:
+                                continue
                             results[key].append({
                                 "file": str(file), "line": line_no,
                                 "call_line": call_line, "session": call_session,
@@ -703,6 +705,9 @@ def build_report(runtime, scope, session_id, repo, floor_bytes=0, exclude_sessio
 def _format(report):
     lines = [f"Temporary report ({report['runtime']}, {report['scope']})"]
     for mount, reading in report["disk"].items():
+        if reading is None:
+            lines.append(f"  {mount}: free space unknown (could not inspect mount)")
+            continue
         total, free = reading["total"], reading["free"]
         if total:
             lines.append(f"  {mount}: {free * 100 // total}% free")
