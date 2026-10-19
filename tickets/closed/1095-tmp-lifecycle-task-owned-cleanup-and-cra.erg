@@ -2,6 +2,7 @@
 Title: Tmp lifecycle: task-owned cleanup and crash recovery across runtimes
 Created: 2026-10-14
 Author: Minh Ha-Duong
+Closed: closed at roar
 
 --- log ---
 2026-10-14T09:33Z Minh Ha-Duong created
@@ -11,6 +12,8 @@ Author: Minh Ha-Duong
 2026-10-14T17:42Z reviewer note Author decided 2026-10-14 (recorded in docs/discussions/2026-10-14-1095-design.md, Answers): Design 3 settled; Pi no-session children listed as unattributed; Design 2 adopted now with blocking citation check and crashed trees keeping .tmp/; session-start disk warning plus restic .tmp/ exclude; padme t2093/t2094 passed to climate-finance-het by the author. Implementation child tickets still to be filed.
 2026-10-19T09:19Z reviewer 2026-10-19T09:19Z Minh Ha-Duong note The initial 00:00Z child-tracker timestamp was a placeholder; this correction records the actual implementation start date/time while preserving the original log entry.
 2026-10-19T12:01Z reviewer Codex note Added completed ticket 1120 to the child tracker; parent 1095 remains open for union review of report and lifecycle children.
+2026-10-19T12:13Z reviewer Codex note PR #1460 merged after #1456 and #1457; all three tracked children are closed. The Sol combined union gate approved final head 0bfd97e4, and root verified merged tree 29ce25ce is identical to that source tree. Exact-main checks: make check 1757 passed/3 skipped; make lint 186 passed. Report-attribution review captures for PR #1457 and #1460 remain pending where provider pins and observed effort are absent.
+2026-10-19T12:14Z reviewer closed — closed at roar
 
 --- body ---
 ## Context
@@ -49,5 +52,5 @@ No generic age-based rm of /tmp.
 
 - [x] Record chosen lifecycle points and ownership/retention policy in the Answers and Settled implementation sections.
 - [x] Define bounded implementation and verification in child tickets 1118 and 1119; 1119 depends on 1118.
-- [ ] Integrate and review the union of both child implementations; preserve all liveness, WIP, citation and evidence guards.
+- [x] Integrate and review the union of both child implementations; preserve all liveness, WIP, citation and evidence guards.
 

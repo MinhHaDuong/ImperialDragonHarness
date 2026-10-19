@@ -17,6 +17,7 @@ Closed: autoclosed — PR #1457
 
 2026-10-19T11:49Z reviewer note Padme host PR 108 merged at aeb0acd; installed restic exclusion control passed with ordinary fixture retained, .tmp excluded, unchanged isolated repository and zero snapshots. Doudou identified Btrfs mechanism remains unchanged by explicit author reservation; no universal backup-host verification is claimed.
 2026-10-19T11:59Z reviewer closed — autoclosed — PR #1457
+2026-10-19T12:13Z reviewer note PR #1457 merged after child 1118; the self-delivery and tracker-order criterion is now satisfied.
 
 --- body ---
 ## Context
@@ -98,4 +99,4 @@ unrelated repository operations.
 - [x] The repo documents the required `.tmp` restic exclude and a control dry-run recipe.
 - [x] Restic exclusion is configured and dry-run verified on every available configured host; unavailable/external hosts remain explicitly pending.
 - [x] Targeted integration tests, `make check`, and `make lint` pass.
-- [ ] Ticket 1119 closes in its own reviewed PR after 1118; tracker 1095 closes only after union integration review.
+- [x] Ticket 1119 closes in its own reviewed PR after 1118; tracker 1095 closes only after union integration review.
