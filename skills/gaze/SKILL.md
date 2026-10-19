@@ -1,4 +1,6 @@
 ---
+metadata:
+  category: build
 name: gaze
 description: "Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller."
 disable-model-invocation: false

@@ -1,4 +1,6 @@
 ---
+metadata:
+  category: writing
 name: message-framing
 description: "Frame the central message of a talk, abstract or article before drafting it."
 ---
