@@ -70,6 +70,7 @@ echo "exit=$?"  # expect BLOCKED and exit=2; a clean control exits=0
 Inside Codex, run `/hooks`, review and trust the installed definition.
 Untrusted or modified definitions are silently skipped in headless use.
 Re-trust whenever the definition changes, then probe the dirty control again.
+The `SessionStart` entry (ticket 1122) changed `hooks.json`: an existing Codex install must re-trust it once, after the checkout holding the change is synced.
 Invocation-local trust bypass is smoke-test evidence only, not persistent
 deployment. Claude/Codex/Pi guard controls recorded for PR1091 used temporary
 profiles and did not deploy into the user's live profiles.
