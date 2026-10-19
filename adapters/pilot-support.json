@@ -122,6 +122,19 @@
       "result": "pass"
     },
     {
+      "id": "claude-personal-skill-discovery",
+      "slice": "perch",
+      "harness": "claude",
+      "harness_version": "2.1.303",
+      "assertion": "A clean Claude Code profile does not list perch; after install it appears in the initialization command list with its canonical description. No user prompt or model request is sent; the temporary profile has no inherited credentials and its API endpoint is disabled.",
+      "source_concept": "skill discovery",
+      "native_expression": "$HOME/.claude/skills/perch",
+      "disposition": "harness-specific",
+      "evidence_kind": "local-probe",
+      "test": "tests/test_perch_discovery.py::test_a_clean_claude_profile_gains_perch_only_after_install",
+      "result": "pass"
+    },
+    {
       "id": "codex-neutral-home-discovery",
       "slice": "perch",
       "harness": "codex",

@@ -1,4 +1,4 @@
-"""Does a clean Codex or Pi profile actually discover perch? (ticket 0802)
+"""Does a clean Claude Code, Codex or Pi profile actually discover perch? (ticket 0802)
 
 The ticket asks for checks that fail because a clean profile cannot find the
 skill, and then pass through the native installation mechanism. A structural
@@ -7,6 +7,7 @@ against a harness that ignores the directory entirely.
 
 So each harness is asked, offline and with no model call:
 
+* Claude Code lists commands through initialization, without a user prompt.
 * Codex renders the model-visible prompt with ``codex debug prompt-input``;
   a discovered skill appears in its ``<skills_instructions>`` block.
 * Pi answers ``get_commands`` over its RPC mode; a discovered skill appears as
@@ -27,6 +28,7 @@ Integration tier: subprocesses, and each probe takes seconds.
 
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -80,6 +82,33 @@ def _env(home: Path, **extra: str) -> dict[str, str]:
     return env
 
 
+def _claude_commands(home: Path) -> list[dict]:
+    # SDK initialization lists commands before any user prompt/model request.
+    # Use an empty profile, no inherited credentials, and a disabled API route.
+    env = {
+        "PATH": os.environ["PATH"], "HOME": str(home),
+        "CLAUDE_CONFIG_DIR": str(home / ".claude"),
+        "DISABLE_AUTOUPDATER": "1", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+        "ANTHROPIC_BASE_URL": "http://127.0.0.1:9",
+    }
+    done = subprocess.run(
+        ["claude", "--print", "--input-format", "stream-json",
+         "--output-format", "stream-json", "--verbose", "--no-session-persistence",
+         "--setting-sources", "user"],
+        input=json.dumps({"type": "control_request", "request_id": "discovery",
+                          "request": {"subtype": "initialize"}}) + "\n",
+        capture_output=True, text=True, timeout=TIMEOUT, env=env,
+    )
+    assert done.returncode == 0, "Claude initialization failed"
+    for line in done.stdout.splitlines():
+        message = json.loads(line)
+        if message.get("type") == "control_response":
+            response = message["response"]
+            assert response["subtype"] == "success", "Claude initialization refused"
+            return response["response"]["commands"]
+    raise AssertionError("no Claude initialization response")
+
+
 def _codex_prompt(home: Path) -> str:
     done = subprocess.run(
         ["codex", "debug", "prompt-input"],
@@ -110,6 +139,18 @@ def _pi_commands(home: Path) -> list[dict]:
             assert payload["success"], payload
             return payload["data"]["commands"]
     raise AssertionError(f"no get_commands response in: {done.stdout[:2000]}")
+
+
+@pytest.mark.skipif(shutil.which("claude") is None, reason="claude CLI not installed")
+def test_a_clean_claude_profile_gains_perch_only_after_install(profile):
+    before = {command["name"] for command in _claude_commands(profile)}
+    assert "perch" not in before, "negative control failed: perch already there"
+    assert before, "positive control: Claude must list built-in commands"
+    perch.install("claude", "perch")
+    after = {command["name"]: command for command in _claude_commands(profile)}
+    assert "perch" in after
+    canonical = perch.frontmatter(REPO / "skills" / "perch" / "SKILL.md")
+    assert after["perch"]["description"].startswith(canonical["description"])
 
 
 @pytest.mark.skipif(shutil.which("codex") is None, reason="codex CLI not installed")

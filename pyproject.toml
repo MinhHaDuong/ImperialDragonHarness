@@ -43,4 +43,5 @@ dev = [
     "httpx2>=2.13,<3",
     "bibtexparser>=1.4,<2",
     "isbnlib>=3.10,<4",
+    "pytest-testmon==2.2.0",
 ]

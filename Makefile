@@ -59,3 +59,11 @@ check-tests:
 	$(RUN) python3 -m pytest tests/ $(if $(HAVE_XDIST),-n 4)
 
 check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check-tests
+
+# Opt-in affected-test loop; reference refresh is deliberately explicit.
+.PHONY: smart-test smart-refresh
+smart-test:
+	$(RUN) python3 -m scripts.smart_testing
+
+smart-refresh:
+	$(RUN) python3 -m scripts.smart_testing --refresh

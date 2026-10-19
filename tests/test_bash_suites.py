@@ -13,6 +13,7 @@ A shell suite signals failure with a non-zero exit code (the suites use
 assertion failure for debugging.
 """
 
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -28,10 +29,10 @@ SH_SUITES = sorted(TESTS_DIR.glob("test_*.sh"))
 SKIP_EXIT = 77  # automake convention: the suite ran zero checks
 
 
-def run_shell_suite(script: Path, cwd: Path = TESTS_DIR.parent):
+def run_shell_suite(script: Path, cwd: Path = TESTS_DIR.parent, section=None):
     """Run one suite: exit 0 passes, 77 skips (SKIP lines as reason), else fails."""
     result = subprocess.run(
-        ["bash", str(script)],
+        ["bash", str(script), *([section] if section else [])],
         cwd=cwd,
         capture_output=True,
         text=True,
@@ -51,10 +52,15 @@ def run_shell_suite(script: Path, cwd: Path = TESTS_DIR.parent):
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("script", SH_SUITES, ids=lambda p: p.name)
-def test_shell_suite(script: Path):
+@pytest.mark.parametrize("script,section", [
+    pytest.param(script, section, id=script.name + (f":{section}" if section else ""))
+    for script in SH_SUITES
+    for section in (("deterministic", "references", "containment")
+                    if script.name == "test_seat_runner.sh" else (None,))
+])
+def test_shell_suite(script: Path, section):
     """Each tests/*.sh suite must exit 0, or 77 when it ran no check (skip)."""
-    run_shell_suite(script)
+    run_shell_suite(script, section=section)
 
 
 def test_at_least_one_shell_suite_discovered():
@@ -111,3 +117,33 @@ def test_stall_reproduction_without_age_is_skip_not_pass(tmp_path):
     assert not shutil.which("age", path=env["PATH"])
     assert result.returncode == 77, (result.returncode, result.stdout, result.stderr)
     assert "ALL PASS" not in result.stdout
+
+
+@pytest.mark.integration
+def test_seat_runner_live_sections_preserve_failure_and_skip(tmp_path):
+    """Splitting the suite must keep tracked-reference failures and absent-image skips."""
+    tests = tmp_path / "tests"
+    tests.mkdir()
+    script = tests / "test_seat_runner.sh"
+    shutil.copy2(TESTS_DIR / script.name, script)
+    env = child_env()
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, env=env)
+    run_shell_suite(script, cwd=tmp_path, section="references")
+    forbidden = tmp_path / "stale.md"
+    forbidden.write_text("seat-runner-" + "prototype\n")
+    subprocess.run(["git", "add", "stale.md"], cwd=tmp_path, check=True, env=env)
+    with pytest.raises(AssertionError, match="exited 1"):
+        run_shell_suite(script, cwd=tmp_path, section="references")
+
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    podman = bindir / "podman"
+    podman.write_text("#!/bin/sh\nexit 1\n")
+    podman.chmod(0o755)
+    result = subprocess.run(
+        ["bash", str(script), "containment"], cwd=tmp_path,
+        capture_output=True, text=True, env={**env, "PATH": f"{bindir}:{env['PATH']}"},
+        timeout=10,
+    )
+    assert result.returncode == SKIP_EXIT, result.stdout + result.stderr
+    assert "image localhost/seat-runner:v1 absent" in result.stdout
