@@ -422,7 +422,7 @@ def test_expanding_old_fast_cache_learns_new_scope(smart_repository):
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize('source', ['session_fixture', 'early_conftest'])
+@pytest.mark.parametrize('source', ['session_fixture', 'early_conftest', 'nested_conftest'])
 def test_shared_fixture_and_early_conftest_inputs_invalidate_all_consumers(smart_repository, source):
     root = smart_repository
     (root / 'tests/test_case.py').unlink()
@@ -434,13 +434,18 @@ def test_shared_fixture_and_early_conftest_inputs_invalidate_all_consumers(smart
     else:
         setup += ('DATA = Path("fixture.txt").read_text()\n'
                   '@pytest.fixture\ndef data():\n    return DATA\n')
-    (root / 'tests/conftest.py').write_text(setup)
+    directory = root / 'tests'
+    if source == 'nested_conftest':
+        directory /= 'nested'
+        directory.mkdir()
+    (directory / 'conftest.py').write_text(setup)
     for name, condition in [('a', 'in ("yes", "no")'), ('b', '== "yes"')]:
-        (root / f'tests/test_{name}.py').write_text(
+        (directory / f'test_{name}.py').write_text(
             f'def test_{name}(data):\n    assert data {condition}\n')
     learned = _smart_run(root, '--refresh')
     assert learned.returncode == 0, learned.stdout + learned.stderr
     assert '2 passed' in learned.stdout
+    _assert_unchanged(_smart_run(root))
     (root / 'fixture.txt').write_text('no')
     result = _smart_run(root)
     assert result.returncode == 1, result.stdout + result.stderr

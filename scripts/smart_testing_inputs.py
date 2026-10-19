@@ -15,7 +15,7 @@ import tempfile
 
 import pytest
 
-SCOPE = 'all-tiers-v5'
+SCOPE = 'all-tiers-v6'
 
 EXCLUDED = {'.git', '.venv', '.smart-testing', '.pytest_cache', '.panel', '.tmp', '__pycache__'}
 REFERENCE_FILES = {'tests/smart-testing/reference.json', 'tests/smart-testing/reference.sql'}
@@ -268,8 +268,10 @@ class FileReads:
     def pytest_make_collect_report(self, collector):
         previous = self.consumer
         path = collector.path
+        # Directory collection imports nested conftests; their initialized
+        # data can feed every test beneath them, like initial conftest data.
         self.consumer = path.relative_to(self.root).as_posix() if (
-            path.suffix == '.py' and path.is_relative_to(self.root)) else None
+            path.suffix == '.py' and path.is_relative_to(self.root)) else '*'
         yield
         self.consumer = previous
 
