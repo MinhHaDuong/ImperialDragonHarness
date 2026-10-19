@@ -1,0 +1,68 @@
+%erg 0.1
+Title: erg-pr-merge: handle unavailable branch-rule inspection in direct fallback
+Created: 2026-10-19
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-19T06:01Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+On 2026-10-19, `/merge` for climate-finance-het PR #1946 closed and pushed
+the claimed ticket, then GitHub rejected auto-merge because the repository has
+auto-merge disabled. The direct-merge fallback found an empty check rollup and
+a mergeable PR, but aborted while inspecting `main` protection and effective
+branch rules: both GitHub API calls returned HTTP 403 with a plan-gate message.
+The author reports that this private repository has no classic branch
+protection or rulesets and that the account is Pro. A normal `gh pr merge
+--merge` succeeded afterwards.
+
+`erg-pr-merge` therefore treated an unavailable inspection endpoint as a hard
+stop even though a normal forge merge was possible. The API error is not
+reliable evidence that rules exist or that required checks are configured. The
+fallback should rely on the forge's ordinary merge enforcement when inspection
+is denied, without bypassing rules or checks. Keep refusals for failing or
+pending checks, and never use `--admin`.
+
+## Relevant files
+
+- `skills/merge/erg-pr-merge` — direct-merge fallback and branch-rule inspection
+- `skills/merge/SKILL.md` — documented fallback behavior
+- `tests/test_erg_pr_merge.sh` — stubbed forge regression coverage
+
+## Actions
+
+1. Define a safe fallback for permission/plan-gated branch-rule inspection.
+2. Let the ordinary GitHub merge operation enforce any configured requirements;
+   report its refusal clearly if a required check or rule blocks the merge.
+3. Preserve the existing behavior for failing checks, pending checks, and
+   unavailable or malformed PR status data. Do not use an administrator bypass.
+
+## Test
+
+Add a stubbed forge case where the rollup is empty, branch-protection/rules
+inspection returns HTTP 403, and an ordinary merge succeeds. Add a negative
+control showing that a forge refusal still fails without using an admin bypass.
+Keep the existing failing-check and pending-check refusal cases green.
+
+## Verification
+
+- [ ] `tests/test_erg_pr_merge.sh` covers the denied-inspection success path and
+      the ordinary merge refusal path.
+- [ ] The ticket-only PR gate (`erg check` and the cross-PR ticket collision
+      check) passes.
+
+## Invariants
+
+- No `--admin` or other bypass of the forge's configured merge requirements.
+- Failing and pending status checks continue to prevent direct merge.
+- Ticket close handling remains recoverable if a forge merge attempt fails.
+
+## Exit criteria
+
+- [ ] A GitHub plan/permission 403 during branch-rule inspection no longer
+      prevents a normal, non-admin merge when the forge accepts it.
+- [ ] If the forge rejects that merge, `/merge` reports the refusal and leaves
+      the PR unmerged; no rules or checks are bypassed.
+- [ ] The regression tests and ticket-only PR gate pass.
