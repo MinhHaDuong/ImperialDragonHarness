@@ -552,3 +552,106 @@ def test_gaze_reviewer_and_gate_prompts_ban_overwrites_and_require_not_run():
         "phase 6: the gate launch no longer names the gate-seat profile "
         "whose contract carries the containment rails"
     )
+
+
+# --- ticket 1125: waiver reaches the gate, the gate judges indivisibility ---
+
+WAIVER_HEADING = "#### Waiver"
+WAIVER_HEADER = (
+    "circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)"
+)
+
+
+def _gate_block() -> str:
+    return _normalize(VERIFY.split("### 6. Gate", 1)[1].split("## Branch on verdict", 1)[0])
+
+
+def _waiver_section() -> str:
+    return _normalize(
+        VERIFY.split(WAIVER_HEADING, 1)[1].split("### 2–4.", 1)[0]
+    ) if WAIVER_HEADING in VERIFY else ""
+
+
+def test_phase6_launch_prompt_carries_the_waiver():
+    """The verdict-time size re-check runs in the gate seat, so the waiver must
+    travel into the phase-6 launch prompt as an input, beside the PR number."""
+    gate = _gate_block()
+    assert re.search(r"launch prompt[^.]*waiver", gate), (
+        "phase 6: the waiver record (reason, pr_files, pr_lines) must ride in "
+        "the gate launch prompt, or the seat re-checks size without it"
+    )
+    assert "waiver: none" in gate or "waiver record" in gate, (
+        "phase 6 must name the waiver record as a prompt input, with an explicit "
+        "value when no waiver was recorded"
+    )
+
+
+def test_verify_gate_takes_waiver_as_input_and_judges_indivisibility():
+    """The gate must judge whether the stated indivisibility reason holds: a
+    waived PR that holds an independent change which could land alone is not
+    indivisible, and must not be APPROVED on the waiver."""
+    vg = _normalize((SKILLS / "verify-gate" / "SKILL.md").read_text())
+    assert "waiver" in vg, "verify-gate: waiver is not a declared input"
+    assert "indivisib" in vg, (
+        "verify-gate must carry an indivisibility criterion for a recorded waiver"
+    )
+    assert "pure rename" in vg and "rewire" in vg, (
+        "the indivisibility criterion must name what counts: a pure rename or rewire"
+    )
+    assert "could land alone" in vg, (
+        "the indivisibility criterion must name the failure: an independent change "
+        "that could land alone"
+    )
+
+
+def test_waiver_declaration_authority_is_named():
+    """Only the author, or an interactive session the author runs, may declare a
+    waiver. An orchestrator or headless run never writes the flag or the body line."""
+    gate_skill = _normalize(VERIFY)
+    section = _waiver_section()
+    assert section, f"gaze SKILL.md has no `{WAIVER_HEADING}` heading to resolve § Waiver"
+    assert re.search(r"may declare", section), (
+        "the waiver section must name who may declare a waiver"
+    )
+    assert "interactive" in section and "author" in section, (
+        "the waiver section must name the author and the interactive session as "
+        "the only declarers"
+    )
+    assert re.search(r"headless|orchestrator", section), (
+        "the waiver section must exclude headless or orchestrator runs"
+    )
+    assert "may declare" in gate_skill
+
+
+def test_waiver_header_has_one_format():
+    """The waived header is the same template in Setup and in Output shape."""
+    norm = _normalize(VERIFY)
+    assert norm.count(WAIVER_HEADER) >= 2, (
+        "the waived circuit_breaker header must be written identically in Setup "
+        "and Output shape"
+    )
+    loose = re.findall(r"circuit_breaker: waived \([^)]*\)", norm)
+    assert loose and all(h == WAIVER_HEADER for h in loose), (
+        f"waived circuit_breaker header drifted: {sorted(set(loose))}"
+    )
+
+
+def test_waiver_pointer_resolves_to_a_heading():
+    norm = _normalize(VERIFY)
+    assert WAIVER_HEADING in VERIFY, "the Waiver rules need a real `#### Waiver` heading"
+    assert "§ Waiver" in norm, "the pointers into the waiver rules were removed"
+    assert re.search(r"^#### Waiver$", VERIFY, re.M)
+
+
+def test_waiver_does_not_cover_growth_without_a_fresh_reason():
+    section = _waiver_section()
+    assert "fresh reason" in section, (
+        "a waiver covers the recorded size only; growth past it needs a fresh reason"
+    )
+
+
+def test_waiver_flags_multi_ticket():
+    section = _waiver_section()
+    assert "multi_ticket" in section, (
+        "a waiver beside two or more close claims must be flagged as multi_ticket"
+    )

@@ -288,21 +288,7 @@ fi
   loudly under the existing override contract; record the waived breaker and
   size in its PR comment. `--force-approve` runs no review at all (§ `--force-approve`);
   a waiver below is the way to keep review on an oversized PR.
-- **Waiver.** The 15-file count is a decomposition signal, not a hard wall.
-  When a change is genuinely indivisible (a mechanical rename and rewire, for
-  example, that cannot be split without leaving the tree broken), the author
-  lifts only the file-count stop by either of two declarations, read in phase 1
-  before any battery spawns so the stop is never discovered after the work:
-  - `--waive-breaker <reason>` on the `/gaze` invocation; or
-  - a line `Review-scope: indivisible — <reason>` in the PR body, matching the
-    close-claim line grammar (a non-empty reason after the em dash or a hyphen).
-  A waived run is otherwise unchanged: the tier battery, simplify and the
-  phase 6 gate run in full. Record the waiver with `pr_files`, `pr_lines` and
-  the reason in the PR comment, and set the verdict header to
-  `circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)`.
-  A waiver recorded in round 1 holds in every later round, including the
-  verdict-time re-check. The waiver never changes `pr_files`, the tier band
-  rules, or the battery floor.
+- A recorded waiver (`--waive-breaker` or the PR-body `Review-scope: indivisible` line) lifts only this stop; its rules are in § Waiver below.
 
 - ESCALATE with a clear message, and do not proceed, only if a close claim names a nonexistent ticket file or the PR body, diff or comments cannot be located. A missing ticket with no claim and no reference is not an escalation.
 
@@ -342,6 +328,40 @@ substantial rewrite: the round's diff touches files the last review did not
 cover, or changes more than roughly half of its lines. Then Agent C runs the
 full panel for this round — scoping is ignored. The derived round number
 itself is never mutated; only the scoping decision changes.
+
+#### Waiver
+
+The 15-file count is a decomposition signal, not a hard wall. A waiver lifts
+only the file-count stop. It never lifts the battery, simplify, the phase 6
+gate or any other breaker.
+
+**Who may declare.** Only the author, or an interactive `/gaze` session the
+author runs, may declare a waiver. The two declarations are `--waive-breaker
+<reason>` on the `/gaze` invocation and a PR-body line
+`Review-scope: indivisible — <reason>`, which the author or an interactive
+session writes. A headless or orchestrator run, and a coder agent, never write
+either. The gate treats a waiver whose declarer is not the author or an
+interactive session as no waiver at all.
+
+**What the reason must claim.** The change cannot be split: it is a pure rename
+or rewire, with no independent change that could land alone. The phase 6 gate
+judges this against the diff (`verify-gate` § Indivisibility); a reason the
+diff does not bear is a MISSING criterion.
+
+**Recording.** Read in phase 1, before any battery spawns, so the stop is
+never discovered after the work. Record the waiver with `pr_files`, `pr_lines`,
+the reason and its source (flag or body line) in the PR comment, and set the
+verdict header to `circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)`.
+The waiver record also rides in the phase 6 launch prompt (§ 6. Gate), so the
+verdict-time size re-check reads the same recorded size.
+
+**Scope.** A waiver covers the size recorded in phase 1. If the verdict-time
+diff grows past that size, the growth is not covered: it needs a fresh reason
+from an authorised declarer, or the verdict is `circuit_breaker: un-reviewable`
+and ESCALATE. A waiver beside two or more close claims is flagged as
+`multi_ticket` for disposition, as in the preflight above. Tier, band and the
+battery floor are unchanged by a waiver. A round-1 waiver holds in later rounds
+for the size it recorded.
 
 ### 2–4. Read-only review fan-out (parallel)
 
@@ -628,7 +648,7 @@ written verdict artifact), with its model chosen per launch from the `route` ski
 `$primary_root/.claude/worktrees/review-<pr-number>` (the equivalent fork call is
 `/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`);
 the PR number, this run's `gate_session_id`, and the review worktree path ride
-in the launch prompt — the seat's containment rails (read-only except the
+in the launch prompt, and so does the waiver record (`waiver: none`, or the recorded reason, `pr_files`, `pr_lines` and source) — the seat's containment rails (read-only except the
 REROLL bump, `git -C` discipline with no `cd` into or out of another tree, no
 commits/pushes/branches/PRs, banned working-tree overwrites, the
 `tickets/*.erg` write ban, the NOT-RUN refusal anchored on the review
@@ -663,7 +683,7 @@ breaker (`pr_files >= 15`, the phase-1 threshold) — a round-2 fix can grow a
 14-file PR past it after the phase-1 check has passed; if the diff against
 main now meets the breaker and no waiver is recorded (§ Waiver), report `circuit_breaker: un-reviewable` in the
 verdict comment and rule ESCALATE, never APPROVED. A recorded waiver keeps the
-verdict header `circuit_breaker: waived (...)` and does not block APPROVED on size. Decision: any MISSING criterion, any unresolved human comment, any
+verdict header `circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)` and does not block APPROVED on size, but growth past the recorded size needs a fresh reason (§ Waiver). Decision: any MISSING criterion, any unresolved human comment, any
 unresolved `verifiable:` minor, any unapplied must-fix, any blocking adherence,
 or any `scope_overflow` with disposition ESCALATE → REROLL (round 1) / ESCALATE
 (round 2); all lists empty and all criteria ADDRESSED → APPROVED. Round 3 is
@@ -771,7 +791,7 @@ Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 
   this is the `rules/workflow.md` 15+ file monster threshold. Name the breaker
   in the verdict comment and mention `multi_ticket` when multiple close claims
   add a decomposition signal. A waiver (`--waive-breaker` or the PR-body
-  `Review-scope: indivisible` line, § Setup) lifts only this stop and the battery runs.
+  `Review-scope: indivisible` line, § Waiver) lifts only this stop and the battery runs.
   `--force-approve` can override it loudly, without review.
 - Any of phases 2–5 errors or times out → ESCALATE (do not silently skip). Exception: phase 5 (simplify) intentionally skipped when adherence is blocking — this is not an error.
 - Fix agent timeout (10 min) → ESCALATE.
@@ -885,7 +905,7 @@ final report is the signal.
 round: <n>
 tier: tiny|small|full
 risk_band: high|low|normal
-circuit_breaker: un-reviewable | waived (<pr_files> / <pr_lines> — <reason>) | none
+circuit_breaker: un-reviewable | waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>) | none
 multi_ticket: <distinct close-claim IDs> | none (non-blocking below breaker)
 adherence: PASS|FAIL — <n_blocking> blocking | skipped (un-reviewable) | skipped (battery NOT-RUN)
 review: <n_comments_posted> | skipped (tier: tiny) | skipped (un-reviewable) | skipped (battery NOT-RUN)
