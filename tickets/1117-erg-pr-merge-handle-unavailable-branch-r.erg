@@ -95,3 +95,11 @@ alongside individual endpoint cases and forge refusal. No intent change.
 Dependencies: none. Planned paths: this ticket, merge helper, merge SKILL.md,
 merge shell regression test (4 paths, below review breaker). Tests assert
 observable merge attempts/refusals rather than internal implementation shape.
+
+## Raid Feasibility — 2026-10-19
+
+PASS: source seams and stub environment allowlist verified; no dependencies or
+shared registries; four planned content-bearing paths. Implementation constraint:
+inspect both outcomes so one denied endpoint cannot hide known required checks
+or malformed successful data from the other. Non-403 failures remain refusals.
+Baseline merge-helper shell suite passes. Full baseline gate recorded separately.
