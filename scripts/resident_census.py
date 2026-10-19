@@ -4,13 +4,12 @@
 ``tests/test_rules_resident_budget.py`` capped ``rules/`` and nothing else,
 because ``rules/`` was the channel whose mechanism had just been isolated. It
 is not the only one: measured against ``/context``, the guarded set was 54% of
-what the session actually carried. Three channels put text in front of the
+what the session actually carried. Two channels put full text in front of the
 model, and only one was watched:
 
 * **auto-load** — the runtime walks ``rules/**.md`` and keeps every body whose
   frontmatter declares no ``paths:``.
 * **import** — ``AGENTS.md`` and, transitively, every ``@path`` line in it.
-* **hook** — ``scripts/on-start-context.sh`` prints files, and hook stdout is context.
 
 Two more are resident but not files-in-full: a skill and a subagent contribute
 their ``name`` plus ``description``, never their body. That is the
@@ -59,14 +58,7 @@ CHARS_PER_TOKEN = 2.8
 
 IMPORT_LINE = re.compile(r"^@(\S+)", re.MULTILINE)
 
-# Files scripts/on-start-context.sh prints into the session. Kept as a literal list
-# rather than parsed out of the shell: a regex over a hook script that stops
-# matching reports "no hook channel" and "I could not read the hook" with the
-# same silence, and this guard exists because that class of blind spot is what
-# left three channels unwatched.
-HOOK_INJECTED = ("memory/MEMORY.md",)
-
-CHANNELS = ("rules", "import", "hook", "memory", "skills", "agents")
+CHANNELS = ("rules", "import", "memory", "skills", "agents")
 
 
 @dataclass(frozen=True)
@@ -168,14 +160,6 @@ def _rel(path: Path, root: Path) -> str:
         return str(path.relative_to(root.resolve()))
     except ValueError:  # an @import reaching outside the checkout
         return str(path)
-
-
-def hook_entries(root: Path) -> list[Entry]:
-    return [
-        Entry("hook", name, len((root / name).read_text(encoding="utf-8")))
-        for name in HOOK_INJECTED
-        if (root / name).is_file()
-    ]
 
 
 def memory_entries(root: Path) -> list[Entry]:
@@ -298,7 +282,6 @@ def census(root: Path) -> list[Entry]:
     return [
         *rules_entries(root),
         *import_entries(root),
-        *hook_entries(root),
         *memory_entries(root),
         *skill_entries(root),
         *agent_entries(root),
