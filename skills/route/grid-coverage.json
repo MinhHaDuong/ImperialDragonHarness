@@ -329,6 +329,42 @@
         }
       },
       "evidence": "arena/docs/cycle3-readout.json sha256:b7a0dbebb366dd8c6c5af0ee65586d377aa900aaa942d09c8dc6d0d335cfcc09"
+    },
+    "hh": {
+      "family": "Anthropic",
+      "role": "Arena 1098 provisional current-work candidate (claude-haiku-5-5 @high): mean 22.60/30 vs opus @medium 24.45 on the same tickets; 1.86 USD and 73 min over ten tickets. Effort verified on the wire.",
+      "coverage": {
+        "expected": 10,
+        "evaluated": 10,
+        "ok": 10,
+        "failures": 0,
+        "pending": 0,
+        "quality_median": 24.5,
+        "quality_mean": 22.6,
+        "seconds_median": 336.55,
+        "cost_usd_median": 0.07095,
+        "time_observed": 10,
+        "cost_observed": 10,
+        "final": false
+      }
+    },
+    "sh": {
+      "family": "Anthropic",
+      "role": "Arena 1098 provisional current-work candidate (claude-sonnet-5-5 @high): mean 22.60/30 vs opus @medium 24.45 on the same tickets; 6.81 USD and 38 min over ten tickets. Effort verified on the wire.",
+      "coverage": {
+        "expected": 10,
+        "evaluated": 10,
+        "ok": 10,
+        "failures": 0,
+        "pending": 0,
+        "quality_median": 21.25,
+        "quality_mean": 22.6,
+        "seconds_median": 176.14999999999998,
+        "cost_usd_median": 0.3597,
+        "time_observed": 10,
+        "cost_observed": 10,
+        "final": false
+      }
     }
   }
 }
