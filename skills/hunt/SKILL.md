@@ -110,7 +110,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 4. In a handed-over worktree, create or checkout the ticket branch (step 3 already made it otherwise):
    ```bash
    git switch -c t$ARGUMENTS-short-description
-   python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" register "$W"
+   python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" register "$(git rev-parse --show-toplevel)"
    ```
    Registration is idempotent; run it after branch setup for both newly
    created and handed-over worktrees.
