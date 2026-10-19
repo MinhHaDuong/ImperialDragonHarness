@@ -1,15 +1,21 @@
 #!/bin/bash
 set -euo pipefail
-# SessionStart hook: enforce worktree isolation.
-# Runs at the beginning of every Claude Code session.
+# Session-start hook. Claude Code runs it at every SessionStart; another
+# runtime may call it too (ticket 1122), so the Claude-specific
+# lines below are guarded by _claude and stay silent elsewhere.
 #
 # NOTE: a project's non-secret .env settings reach bash subprocesses via BASH_ENV
 # (settings.json → env.BASH_ENV → scripts/bash-env.sh), which strict-parses them
 # and loads no credential: consumers read ~/.config/keys at point of use (0945).
 # Do NOT use CLAUDE_ENV_FILE either: it inlines KEY=VALUE in argv, leaking to ps -ef.
 
-# Worktree instruction — skip in automated night-sweep runs
-if [[ -z "${CLAUDE_NIGHT_SWEEP:-}" ]]; then
+# Claude Code's hook runner sets CLAUDE_PROJECT_DIR; its absence means another
+# runtime (or a bare shell) called this script.
+_claude=${CLAUDE_PROJECT_DIR:+1}
+
+# Worktree instruction (it cites rules/claude-code.md) — Claude Code only, and
+# skipped in automated night-sweep runs
+if [[ -n "$_claude" && -z "${CLAUDE_NIGHT_SWEEP:-}" ]]; then
     echo "Worktree isolation is enabled for this project: code, data and configuration are worked in the conversation's own worktree, created with plain git and entered by cd before anything else (rules/claude-code.md § Entering the session); manuscript prose in a paper repo is edited in place in the author's checkout (rules/git.md § Prose workpackages). A session opening on /hunt triages the ticket first (skills/hunt/SKILL.md)."
 fi
 
@@ -28,9 +34,11 @@ fi
 # Surface the effort setting for the session's self-presentation line
 # (rules/workflow.md § Session Start): the model knows its own name but has
 # no other channel to the effortLevel setting. Read the live user settings,
-# not a checkout copy.
-_effort=$(jq -r '.effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/null) || _effort=""
-echo "Session effort level (settings.json effortLevel): ${_effort:-unknown}"
+# not a checkout copy. The file is Claude Code's, so only Claude Code reads it.
+if [ -n "$_claude" ]; then
+    _effort=$(jq -r '.effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/null) || _effort=""
+    echo "Session effort level (settings.json effortLevel): ${_effort:-unknown}"
+fi
 
 _script_dir="$(cd "$(dirname "$0")" && pwd)"
 
@@ -69,6 +77,24 @@ if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
     _mem_harness=$(git -C "$_script_dir/.." rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || _mem_harness=""
     if [ -n "$_mem_gcd" ] && [ "$_mem_gcd" = "$_mem_harness" ]; then
         cat "$_script_dir/../memory/MEMORY.md" 2>/dev/null || true
+    fi
+fi
+
+# Live ticket counts, computed now (ticket 1121): STATE.md stores no derived
+# number, so the session sees the counts without a committed copy that every
+# ticket close makes stale. Runtime-neutral: the project is the working
+# directory when CLAUDE_PROJECT_DIR is unset. Local erg only, no forge call;
+# silent when the project has no tickets/ or erg, or when erg fails.
+_proj=${CLAUDE_PROJECT_DIR:-$PWD}
+if [ -d "$_proj/tickets" ] && [ -x "$_proj/tickets/erg" ]; then
+    _ready=$(cd "$_proj" && timeout 10 tickets/erg ready tickets/ 2>/dev/null \
+        | sed -nE -e 's/^Ready tickets \(([0-9]+)\):?$/\1/p' \
+                  -e 's/^No ready tickets found\.$/0/p') || _ready=""
+    _open=$(cd "$_proj" && timeout 10 tickets/erg list tickets/ 2>/dev/null \
+        | sed -nE -e 's/^Open tickets \(([0-9]+)\):?$/\1/p' \
+                  -e 's/^No open tickets found\.$/0/p') || _open=""
+    if [ -n "$_ready" ] && [ -n "$_open" ]; then
+        echo "Live ticket counts at session start: ${_open} open, ${_ready} ready (\`tickets/erg ready tickets/\` lists the ready ones; STATE.md stores no counts)."
     fi
 fi
 
