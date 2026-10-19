@@ -134,6 +134,24 @@ def test_shared_source_inventory_consumers_invalidate(smart_repository, new_memb
 
 
 @pytest.mark.integration
+def test_lair_missing_generator_input_invalidates_when_created(smart_repository):
+    root = smart_repository
+    for name in ('conftest.py', 'repo_sources.py'):
+        shutil.copy2(Path(__file__).parent / name, root / 'tests' / name)
+    (root / 'tests/test_case.py').unlink()
+    (root / 'tests/test_lair_state_via_pr.py').write_text(
+        'from pathlib import Path\n'
+        'def test_step_10_regenerates_nothing():\n'
+        '    assert not Path("scripts/refresh-STATE.py").exists()\n')
+    _assert_passed(_smart_run(root, '--refresh'))
+    _assert_unchanged(_smart_run(root))
+    (root / 'scripts/refresh-STATE.py').write_text('# reintroduced generator\n')
+    for _ in range(2):
+        failed = _smart_run(root)
+        assert failed.returncode == 1, failed.stdout + failed.stderr
+
+
+@pytest.mark.integration
 def test_reference_adoption_checks_private_input_baseline(smart_repository, tmp_path):
     root = smart_repository
     _assert_passed(_smart_run(root, '--refresh'))

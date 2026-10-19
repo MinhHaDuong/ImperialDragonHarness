@@ -51,6 +51,9 @@ TEST_INPUTS = {
     ('test_agent_profiles.py', 'test_pi_translation_template_exists'): (
         'adapters/pi/agents/code-reviewer.md',
     ),
+    ('test_lair_state_via_pr.py', 'test_step_10_regenerates_nothing'): (
+        'scripts/refresh-STATE.py',
+    ),
 }
 ALWAYS = {
     ('test_probe_memory_symlink.py', 'test_live_probe_control_fires'),
