@@ -712,7 +712,7 @@ def test_preflight_preserves_cited_panel_until_removal_gate(origin):
     _ignore_worktree_tmp(primary)
     (wt / ".tmp").mkdir()
     (wt / ".tmp" / "evidence.txt").write_text("evidence\n")
-    verdict = wt / ".panel" / "42" / "review.md"
+    verdict = wt / ".panel" / "manual" / "review.md"
     verdict.parent.mkdir(parents=True)
     verdict.write_text("This review cites `.tmp/evidence.txt`.\n")
     make_branch_gone(remote, primary, "agent-preflight-cited-panel")

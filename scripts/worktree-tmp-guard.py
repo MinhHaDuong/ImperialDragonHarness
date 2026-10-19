@@ -252,12 +252,9 @@ def candidate_verdict_roots(worktree: Path) -> list[Path]:
             raise Blocked(f"could not inspect candidate verdict directory {parent}: {exc}") from exc
         if stat.S_ISLNK(parent_info.st_mode) or not stat.S_ISDIR(parent_info.st_mode):
             raise Blocked(f"candidate verdict directory is unavailable: {parent}")
-        try:
-            for entry in parent.iterdir():
-                if entry.name.isdecimal():
-                    roots.append(entry)
-        except OSError as exc:
-            raise Blocked(f"could not enumerate candidate verdicts under {parent}: {exc}") from exc
+        # Removal purges the whole candidate root, including nonnumeric/manual
+        # verdict directories and files directly under .panel or .review.
+        roots.append(parent)
     return roots
 
 
