@@ -1,4 +1,6 @@
 ---
+metadata:
+  category: research
 name: reading-note
 description: "Critical reading note (note de lecture) on one article or book, filed in Zotero."
 disable-model-invocation: false

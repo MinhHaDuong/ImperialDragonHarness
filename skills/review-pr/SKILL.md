@@ -1,4 +1,6 @@
 ---
+metadata:
+  category: runtime-review
 name: review-pr
 description: "Multi-perspective code review with parallel agents. Covers correctness, consistency, scope, red team, and doc propagation."
 disable-model-invocation: false
