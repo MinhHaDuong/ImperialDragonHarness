@@ -78,3 +78,20 @@ under one author-hour, no new service spend.
 
 Blind-spot pass: include simultaneous denial of both endpoints as reported,
 alongside individual endpoint cases and forge refusal. No intent change.
+
+## Raid Plan — 2026-10-19
+
+1. First red test: stub both inspection endpoints with nonzero HTTP 403;
+   require successful ordinary merge with empty rollup and no admin argument.
+2. Capture inspection diagnostics; recognize HTTP 403 specifically, preserve
+   successful-payload validation and non-403 failure refusal. Continue normal
+   merge enforcement when inspection is denied.
+3. Cover each endpoint alone, both denied, direct forge refusal, non-403 errors,
+   and mixed denied/known-required or malformed responses. Retain failing,
+   pending and null-rollup controls. Assert recoverable ticket close on refusal.
+4. Update fallback documentation; run affected regressions, adherence, ticket
+   gate/collision check and full project gate before opening PR.
+
+Dependencies: none. Planned paths: this ticket, merge helper, merge SKILL.md,
+merge shell regression test (4 paths, below review breaker). Tests assert
+observable merge attempts/refusals rather than internal implementation shape.
