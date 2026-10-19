@@ -362,7 +362,7 @@ def _native_results(record):
 
 def _explicit_exit_zero(value):
     if isinstance(value, dict):
-        if any(value.get(key) == 0 and isinstance(value.get(key), int) for key in ("exit_code", "returncode")):
+        if any(type(value.get(key)) is int and value.get(key) == 0 for key in ("exit_code", "returncode")):
             return True
         return any(_explicit_exit_zero(child) for child in value.values())
     if isinstance(value, list):
@@ -380,7 +380,7 @@ def _explicit_exit_zero(value):
 
 def _explicit_nonzero(value):
     if isinstance(value, dict):
-        if any(isinstance(value.get(key), int) and value.get(key) != 0 for key in ("exit_code", "returncode")):
+        if any(type(value.get(key)) is int and value.get(key) != 0 for key in ("exit_code", "returncode")):
             return True
         return any(_explicit_nonzero(child) for child in value.values())
     if isinstance(value, list):
@@ -416,9 +416,10 @@ def _unambiguous_creation(command, candidate, home):
     return Path(normalized).expanduser() == candidate.expanduser()
 
 
-def attribute_histories(candidates, files, home=None):
+def attribute_histories(candidates, files, home=None, unreadable=None):
     """Read each relevant history once and attribute all candidate path hits."""
     home = Path(home or Path.home()).expanduser()
+    unreadable = unreadable if unreadable is not None else []
     all_spellings = {}
     mtimes = {}
     for item in candidates:
@@ -487,6 +488,7 @@ def attribute_histories(candidates, files, home=None):
                             "excerpt": _safe_excerpt(Path(key)),
                         })
         except OSError:
+            unreadable.append(str(file))
             continue
     return results
 
@@ -665,7 +667,9 @@ def build_report(runtime, scope, session_id, repo, floor_bytes=0, exclude_sessio
     scanned = scan_candidates(_default_roots(repo))
     candidates = [item for item in scanned["candidates"] if item["bytes"] >= floor_bytes]
     histories, history_unreadable = history_files(home, with_unreadable=True)
-    history_index = attribute_histories(candidates, histories, home)
+    unreadable_history_files = []
+    history_index = attribute_histories(candidates, histories, home, unreadable_history_files)
+    history_unreadable = sorted(set(history_unreadable + unreadable_history_files))
     references = _references(candidates, repo)
     for item in candidates:
         path = Path(item["path"])

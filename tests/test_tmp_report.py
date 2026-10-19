@@ -195,6 +195,11 @@ def test_compound_or_nonzero_creation_commands_remain_attempts(tmp_path):
     assert all(item["evidence"] != "created" for item in found)
 
 
+def test_boolean_is_not_an_explicit_exit_status():
+    assert not report._explicit_exit_zero({"exit_code": False})
+    assert not report._explicit_exit_zero({"exit_code": True})
+
+
 def test_nested_codex_subagent_parent_link_is_extracted():
     session, parent, _pid = report._identity({
         "type": "response_item",
@@ -231,6 +236,33 @@ def test_build_report_returns_after_enriching_candidates(tmp_path, monkeypatch):
 
     assert len(result["candidates"]) == 1
     assert result["candidates"][0]["path"] == str(root / "candidate")
+
+
+def test_build_report_surfaces_unreadable_discovered_history_file(tmp_path, monkeypatch):
+    root = tmp_path / "tmp"
+    (root / "candidate").mkdir(parents=True)
+    (root / "candidate" / "file").write_bytes(b"x" * 1024)
+    history = tmp_path / "unreadable.jsonl"
+    history.write_text("{}\n")
+    monkeypatch.setattr(report, "_default_roots", lambda _repo: [root])
+    monkeypatch.setattr(report, "history_files", lambda *_a, **_k: ([history], []))
+    monkeypatch.setattr(report, "_references", lambda candidates, _repo: {
+        item["path"]: {"git_log": False, "pull_requests": [], "verdict_files": []}
+        for item in candidates
+    })
+    monkeypatch.setattr(report, "disk_readings", lambda: {})
+    monkeypatch.setattr(report, "infer_test_provenance", lambda *_a: None)
+    original_open = Path.open
+
+    def deny_history(path, *args, **kwargs):
+        if path == history:
+            raise PermissionError("fixture history is unreadable")
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", deny_history)
+    result = report.build_report("codex", "lair", None, str(tmp_path), floor_bytes=1)
+
+    assert result["history_unreadable"] == [str(history)]
 
 
 def test_scan_aggregates_worktree_tmp_and_deduplicates_nested_roots(tmp_path):

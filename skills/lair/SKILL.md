@@ -33,7 +33,8 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
    only for a matching native Claude/Codex call and result id, explicit zero
    exit status, and one direct command targeting the exact candidate. Do not
    copy raw history commands into the handoff. If the session id is unavailable,
-   omit both session flags and report no ownership attribution.
+   omit both session flags; the helper cannot exclude its own session in that
+   case, so treat any matching citation as uncertain and do not infer ownership.
 3. **Log session metrics** — run `"$IDH_ROOT/skills/lair/log-agent-metrics"` with: `<session_id> session <total_tokens> <tool_uses> <duration_ms> <model> <project>`. Estimate tokens from conversation length if exact count unavailable.
 4. **Push all branches** — no local-only work overnight. `git branch` → ensure each non-main branch is pushed to origin.
 5. **Commit WIP if needed** — uncommitted work gets `wip:` prefix, committed to the current branch, and pushed.
