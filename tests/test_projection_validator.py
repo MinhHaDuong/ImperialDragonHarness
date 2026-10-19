@@ -136,7 +136,8 @@ def test_manifest_declares_one_guard_per_runtime():
         if e["required"]
         for rt in e["runtimes"]
     }
-    assert ("~/.claude/CLAUDE.md", "claude") in required
+    assert ("~/.claude/skills/claude-code", "claude") in required
+    assert all(e["path"] != "~/.claude/CLAUDE.md" for e in MANIFEST["entries"])
     assert ("~/.codex/hooks.json", "codex") in required
     assert ("~/.pi/agent/extensions/idh-guard.ts", "pi") in required
 
@@ -240,12 +241,12 @@ def test_absent_optional_entry_passes_but_a_dangling_one_does_not(world):
 
 
 def test_foreign_real_directory_is_never_overwritten_blind(world):
-    (world["home"] / ".claude/CLAUDE.md").unlink()
-    (world["home"] / ".claude/CLAUDE.md").mkdir()
+    (world["home"] / ".claude/skills/claude-code").unlink()
+    (world["home"] / ".claude/skills/claude-code").mkdir()
     r = validate(world, "claude")
     assert r.returncode == 1
     assert "run `idh install` from a plain terminal" in r.stderr
-    link = world["home"] / ".claude/CLAUDE.md"
+    link = world["home"] / ".claude/skills/claude-code"
     assert str(link) not in r.stderr
     assert link.is_dir()
 
@@ -360,7 +361,7 @@ def test_disk_probe_failure_does_not_block_or_change_runtime_status(world, runti
 @pytest.mark.parametrize(
     "runtime,rel",
     [
-        ("claude", ".claude/CLAUDE.md"),
+        ("claude", ".claude/skills/claude-code"),
         ("codex", ".local/bin/idh-hook"),
         ("pi", ".pi/agent/extensions/idh-guard.ts"),
     ],
@@ -702,4 +703,12 @@ def test_an_operator_script_under_claude_scripts_is_not_claimed(world):
     ]}]}
     path.write_text(json.dumps(doc))
 
+    assert validate(world, "claude").returncode == 0
+
+
+def test_claude_does_not_require_or_register_global_instructions(world):
+    global_instructions = world["home"] / ".claude/CLAUDE.md"
+    assert not global_instructions.exists()
+    assert validate(world, "claude").returncode == 0
+    global_instructions.symlink_to(world["tmp"] / "foreign-instructions")
     assert validate(world, "claude").returncode == 0
