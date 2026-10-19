@@ -23,11 +23,11 @@ MODULE_INPUTS = {
         'commands/**/*', 'bin/*', 'README.md', 'STATE.md',
     ),
     'test_on_start_memory_injection.py': (
-        'memory/MEMORY.md', 'scripts/on-start.sh', 'scripts/prompt-project-coherence.sh',
+        'memory/MEMORY.md', 'scripts/on-start-context.sh', 'scripts/prompt-project-coherence.sh',
         'scripts/tmp_report.py', 'scripts/sync-local-main.sh',
     ),
     'test_project_coherence_prompt.py': (
-        'scripts/on-start.sh', 'scripts/prompt-project-coherence.sh',
+        'scripts/on-start-context.sh', 'scripts/prompt-project-coherence.sh',
         'scripts/tmp_report.py', 'scripts/sync-local-main.sh',
     ),
     'test_hook_launchers.py': (

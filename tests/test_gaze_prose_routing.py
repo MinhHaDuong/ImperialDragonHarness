@@ -198,7 +198,7 @@ def test_0902_replay_of_the_ticket_shapes():
     s812 = [
         "scripts/on-end.sh",
         "settings.shared.json",
-        "scripts/on-start.sh",
+        "scripts/on-start-context.sh",
         "skills/merge/SKILL.md",
         "rules/workflow.md",
         "Makefile",

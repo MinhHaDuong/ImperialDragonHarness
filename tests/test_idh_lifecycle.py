@@ -520,7 +520,7 @@ def test_install_removes_stale_harness_hooks_from_live_settings(machine):
         '[ -x "$HOME/.local/bin/idh-hook" ] || { echo "IDH: hook '
         'launcher missing; run <checkout>/bin/idh install from a '
         'plain terminal" >&2; exit 2; }; exec '
-        '"$HOME/.local/bin/idh-hook" on-start.sh'
+        '"$HOME/.local/bin/idh-hook" on-start-context.sh'
     )
     operator_command = {"type": "command", "command": "echo operator-owned"}
     # One block MIXES a harness command with an operator command — Claude
@@ -583,7 +583,7 @@ def test_install_refuses_to_strand_a_machine_on_zero_guards(machine):
     settings = home / ".claude" / "settings.json"
     doc = json.loads(settings.read_text())
     doc["hooks"] = {"SessionStart": [{"matcher": "", "hooks": [
-        {"type": "command", "command": 'bash "$HOME/.claude/scripts/on-start.sh"', "timeout": 30}
+        {"type": "command", "command": 'bash "$HOME/.claude/scripts/on-start-context.sh"', "timeout": 30}
     ]}]}
     settings.write_text(json.dumps(doc))
 
@@ -606,7 +606,7 @@ def test_install_refuses_removal_when_the_plugin_payload_is_broken(machine):
     settings = home / ".claude" / "settings.json"
     doc = json.loads(settings.read_text())
     doc["hooks"] = {"SessionStart": [{"matcher": "", "hooks": [
-        {"type": "command", "command": 'bash "$HOME/.claude/scripts/on-start.sh"', "timeout": 30}
+        {"type": "command", "command": 'bash "$HOME/.claude/scripts/on-start-context.sh"', "timeout": 30}
     ]}]}
     settings.write_text(json.dumps(doc))
 

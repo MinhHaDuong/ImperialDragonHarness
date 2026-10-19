@@ -18,7 +18,7 @@ def start(project: Path, home: Path) -> str:
     env = os.environ.copy()
     env.update(CLAUDE_PROJECT_DIR=str(project), HOME=str(home), BASH_ENV="")
     return subprocess.check_output(
-        ["bash", str(ROOT / "scripts/on-start.sh")],
+        ["bash", str(ROOT / "scripts/on-start-context.sh")],
         env=env,
         text=True,
         stderr=subprocess.DEVNULL,

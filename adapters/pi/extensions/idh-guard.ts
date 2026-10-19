@@ -20,9 +20,9 @@
  * -> the harness checkout), so realpath of the self module resolves to the
  * canonical tree and scripts/guard-destructive-bash.sh is found under it.
  *
- * Session start (ticket 1122): the same extension also carries the session
+ * Session start: the same extension also carries the session
  * context. Pi has a `session_start` event but no hook whose stdout becomes
- * context, so on a fresh session it runs `scripts/on-start.sh` itself and
+ * context, so on a fresh session it runs `scripts/on-start-context.sh` itself and
  * queues the stdout as a custom message delivered with the next user turn
  * (`deliverAs: "nextTurn"`; measured on Pi 1.3.0 to reach the model). The
  * script's Claude-only lines stay silent because CLAUDE_PROJECT_DIR is
@@ -37,7 +37,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const GUARD_RELATIVE = join("scripts", "guard-destructive-bash.sh");
 const GUARD_TIMEOUT_MS = 5000;
-const ON_START_RELATIVE = join("scripts", "on-start.sh");
+const ON_START_RELATIVE = join("scripts", "on-start-context.sh");
 const ON_START_TIMEOUT_MS = 30000;
 
 /** Walk up from this file until the harness root that carries the guard. */

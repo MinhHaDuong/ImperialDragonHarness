@@ -39,7 +39,7 @@ def _checkout(root: Path) -> Path:
         "scripts/validate-projections.py",
         "scripts/tmp_report.py",
         "scripts/shell-init.sh",
-        "scripts/on-start.sh",
+        "scripts/on-start-context.sh",
         "scripts/on-end.sh",
         "scripts/guard-destructive-bash.sh",
         "scripts/bashrc-loader.sh",
@@ -308,7 +308,7 @@ def test_claude_session_start_prints_low_disk_warning(tmp_path):
     env = child_env()
     env.update({"HOME": str(home), "PATH": f"{fakebin}:{os.environ['PATH']}"})
     result = subprocess.run(
-        ["bash", str(REPO / "scripts/on-start.sh")], cwd=REPO, env=env,
+        ["bash", str(REPO / "scripts/on-start-context.sh")], cwd=REPO, env=env,
         capture_output=True, text=True,
     )
     assert result.returncode == 0
@@ -573,7 +573,7 @@ def test_session_start_reminds_only_when_the_loader_is_absent(
     home.mkdir()
     (home / ".bashrc").write_text(bashrc)
     r = subprocess.run(
-        ["bash", str(REPO / "scripts" / "on-start.sh")],
+        ["bash", str(REPO / "scripts" / "on-start-context.sh")],
         env={"HOME": str(home), "PATH": "/usr/bin:/bin"},
         cwd=tmp_path,
         capture_output=True,
@@ -596,7 +596,7 @@ STALE_HARNESS_HOOK = {
             "command": (
                 '[ -x "$HOME/.local/bin/idh-hook" ] || { echo "IDH: hook launcher '
                 'missing; run <checkout>/bin/idh install from a plain terminal" '
-                '>&2; exit 2; }; exec "$HOME/.local/bin/idh-hook" on-start.sh'
+                '>&2; exit 2; }; exec "$HOME/.local/bin/idh-hook" on-start-context.sh'
             ),
             "timeout": 30,
         }

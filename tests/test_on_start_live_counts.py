@@ -1,6 +1,6 @@
-"""Session start prints live ticket counts; STATE.md stores none (ticket 1121).
+"""Session start prints live ticket counts; STATE.md stores none.
 
-`scripts/on-start.sh` computes open and ready counts from the project's local
+`scripts/on-start-context.sh` computes open and ready counts from the project's local
 `tickets/erg` at read time and prints one declarative line. The project is
 `CLAUDE_PROJECT_DIR`, else the working directory, so another runtime calling
 the script gets the same line. It stays silent when the project has no
@@ -10,6 +10,7 @@ The same module checks the portability guard: without `CLAUDE_PROJECT_DIR`
 (another runtime, or a bare shell) the Claude-specific lines stay silent.
 """
 
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -20,7 +21,7 @@ from child_env import child_env
 pytestmark = pytest.mark.integration
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPT = REPO / "scripts" / "on-start.sh"
+SCRIPT = REPO / "scripts" / "on-start-context.sh"
 
 FAKE_ERG = """#!/bin/sh
 case "$1" in
@@ -114,7 +115,30 @@ def test_claude_specific_lines_need_claude_project_dir(tmp_path):
     other = run(tmp_path, proj, None).stdout
     assert "Worktree isolation is enabled" not in other
     assert "claude-code.md" not in other
-    assert "effortLevel" not in other
     claude = run(tmp_path, proj, proj).stdout
     assert "Worktree isolation is enabled" in claude
-    assert "effortLevel" in claude
+    assert "effort level" not in claude
+
+
+def test_runs_without_timeout_and_hostname(tmp_path):
+    """A host with neither tool (stock macOS lacks `timeout`) still gets the
+    host line and the counts."""
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    for tool in ("bash", "sh", "sed", "grep", "git", "python3", "dirname",
+                 "uname", "cat"):
+        found = shutil.which(tool)
+        assert found, tool
+        (bindir / tool).symlink_to(found)
+    proj = project(tmp_path, FAKE_ERG)
+    env = child_env()
+    env["HOME"] = str(tmp_path / "home")
+    env["PATH"] = str(bindir)
+    env.pop("CLAUDE_PROJECT_DIR", None)
+    r = subprocess.run(
+        [str(bindir / "bash"), str(SCRIPT)], cwd=proj, env=env,
+        capture_output=True, text=True, input="{}",
+    )
+    assert r.returncode == 0, r.stderr
+    assert "Running on host: " in r.stdout
+    assert "5 open, 2 ready" in r.stdout

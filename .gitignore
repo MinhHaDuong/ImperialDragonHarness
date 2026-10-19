@@ -61,7 +61,7 @@ tickets/tools/go/*.test
 # Makefile for harness targets (skills catalog, checks, etc.)
 !Makefile
 
-# Git hooks — tracked so all machines pick them up via on-start.sh
+# Git hooks — tracked so all machines pick them up via on-start-sync.sh
 !hooks/
 !hooks/**
 

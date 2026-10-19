@@ -5,7 +5,7 @@
 # registered under the runtime's skills/ is
 # auto-discovered on the next session. When the live settings.json ALSO
 # carries a copy of the same hooks, both sources fire: every guard runs
-# twice, on-start.sh backgrounds its git sync twice, and the log lines
+# twice, on-start-sync.sh backgrounds its git sync twice, and the log lines
 # double. The symlink this script creates is therefore the switch, and the
 # switch refuses to close while the live file would double-fire.
 #
@@ -169,7 +169,7 @@ case "${1:-activate}" in
         cat >&2 <<MSG
 adapter: refusing to activate — $LIVE still carries a hooks block.
 
-Both sources would fire: every guard twice, on-start.sh's git sync twice.
+Both sources would fire: every guard twice, on-start-sync.sh's git sync twice.
 Remove the "hooks" key from $LIVE (it is your file, outside the repository by
 design; this script will not edit it), then run this again.
 MSG

@@ -70,7 +70,7 @@ PROSE_FORMATS = {"tex", "qmd", "md", "txt"}
 # RISK_HIGH_GLOBS is the review-pr width registry (the ``pipeline_paths`` list
 # in skills/review-pr/panel-width.json, in order) plus the two classes the
 # ticket names that the registry lacks: ``hooks/**`` (top-level; holds
-# hooks/pre-commit, the main-branch guard activated by scripts/on-start.sh)
+# hooks/pre-commit, the main-branch guard activated by scripts/on-start-sync.sh)
 # and ``settings*.json`` (root shared settings; the slash-less glob matches on
 # the basename at any depth). It is held as a constant, not read from
 # panel-width.json, because a read from scripts/ would invert the repo's

@@ -2,9 +2,8 @@
 
 ``test_rules_resident_budget.py`` capped the auto-loaded rule bodies. Measured
 against ``/context`` on 2026-09-10, that was 54% of what a session actually
-carried: ``AGENTS.md`` and its ``@`` imports, the file the SessionStart hook
-prints, the project memory index, and the resident frontmatter of every skill
-and subagent were all outside it. A ratchet on the watched half is an
+carried: ``AGENTS.md`` and its ``@`` imports, the project memory index, and
+the resident frontmatter of every skill and subagent were all outside it. A ratchet on the watched half is an
 invitation for the growth to happen in the other half.
 
 Each budget is set at the measured value plus thin headroom, deliberately:
@@ -50,18 +49,14 @@ BUDGETS = {
     # docs/memory-v8/pilot.md, with the template as the reference, so the
     # budget moves to the measured value plus thin headroom instead.
     "import": 4500,  # canonical harness instructions and supporting references
-    # Both lowered 2026-09-10 by the title-only index pass: the index line is a
+    # Lowered 2026-09-10 by the title-only index pass: the index line is a
     # title and a link, the trailing hook having been a third copy of a sentence
     # the body already carries as `name:` and `description:`. 47 indexes went
     # 198 636 -> 111 021 chars; the largest 26 531 -> 14 061, and the harness
     # index 950 -> 367. Lowering these is the deliverable of that pass.
     # Raised 2026-10-02 (ticket 0920): the v8 pilot index links the real
     # topic, journal and reference surface, so it can no longer fit the
-    # legacy 500-char stub (measured 2007 chars at the close of 0920,
-    # headroom 93). In exchange the hook channel stopped being
-    # cross-project: scripts/on-start.sh now injects it only into sessions
-    # whose project is this harness repository, so no other session pays it.
-    "hook": 2100,  # memory/MEMORY.md, printed by scripts/on-start.sh
+    # legacy 500-char stub.
     "memory": 14500,  # the largest per-project index; only one is resident
     "skills": 7000,  # tracked cards; local cards are supplemental (1091)
     "agents": 800,  # name + description of every agents/*.md
@@ -72,7 +67,6 @@ BUDGETS = {
 FLOORS = {
     "rules": 10000,
     "import": 500,
-    "hook": 100,
     "memory": 1000,
     "skills": 1000,
     "agents": 100,
