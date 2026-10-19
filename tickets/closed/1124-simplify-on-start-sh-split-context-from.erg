@@ -2,9 +2,11 @@
 Title: Simplify on-start.sh: split context from sync, portable and history-free
 Created: 2026-10-19
 Author: reviewer
+Closed: autoclosed — PR #1482
 
 --- log ---
 2026-10-19T20:49Z reviewer created
+2026-10-19T21:14Z reviewer closed — autoclosed — PR #1482
 
 --- body ---
 ## Context
