@@ -697,3 +697,35 @@ def test_absent_executable_override_differs_from_an_empty_override(monkeypatch):
     plugin.version_fingerprint.cache_clear()
     assert plugin.version_fingerprint('$IDH_TEST_VERSION_OVERRIDE') != absent
     plugin.version_fingerprint.cache_clear()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('package_entry', [False, True])
+@pytest.mark.parametrize('change_initializer', [False, True])
+def test_src_layout_child_modules_and_initializers_invalidate(
+    smart_repository, package_entry, change_initializer,
+):
+    root = smart_repository
+    package = root / 'src/workload'
+    package.mkdir(parents=True)
+    initializer = package / '__init__.py'
+    initializer.write_text('VALUE = "yes"\n')
+    entry = package / ('__main__.py' if package_entry else 'entry.py')
+    entry.write_text('from . import VALUE\nprint(VALUE)\n')
+    module = 'workload' if package_entry else 'workload.entry'
+    (root / 'tests/test_case.py').write_text(
+        'import os, subprocess, sys\nfrom pathlib import Path\n'
+        'def test_child():\n'
+        '    env = {k:v for k,v in os.environ.items() if k != "BASH_ENV"}\n'
+        '    env["PYTHONPATH"] = str(Path.cwd() / "src")\n'
+        f'    output = subprocess.check_output([sys.executable, "-m", {module!r}], env=env)\n'
+        '    assert output.strip() == b"yes"\n')
+    _assert_passed(_smart_run(root, '--refresh'))
+    _assert_unchanged(_smart_run(root))
+    if change_initializer:
+        initializer.write_text('VALUE = "no"\n')
+    else:
+        entry.write_text('print("no")\n')
+    result = _smart_run(root)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert _smart_run(root).returncode == 1

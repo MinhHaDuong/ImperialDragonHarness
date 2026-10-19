@@ -125,6 +125,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    This uses the selected harness helper against the project's checkout and
    Python environment, with all cost tiers eligible. Follow its
    [input declarations and live-state boundaries](../../tests/smart-testing/README.md).
+   Configure indirect inputs for data-backed/subprocess suites before using
+   cached feedback; preserve the project's data preparation and environment.
    Keep the direct failing-test confirmation in step 7. If the helper reports
    unsupported pytest options or is unavailable, retain the existing loop check;
    a test failure is not a reason to bypass it. Non-pytest checks and the

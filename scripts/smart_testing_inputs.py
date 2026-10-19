@@ -14,7 +14,7 @@ import tempfile
 
 import pytest
 
-SCOPE = 'all-tiers-v3'
+SCOPE = 'all-tiers-v4'
 
 EXCLUDED = {'.git', '.venv', '.smart-testing', '.pytest_cache', '.panel', '.tmp', '__pycache__'}
 REFERENCE_FILES = {'tests/smart-testing/reference.json', 'tests/smart-testing/reference.sql'}
@@ -153,7 +153,7 @@ class FileReads:
 
     def audit(self, event, args):
         if event == 'subprocess.Popen' and self.consumer and not self.busy:
-            self.record_command(args[1], args[2])
+            self.record_command(args[1], args[2], args[3])
             return
         if event != 'open' or self.consumer is None or self.busy:
             return
@@ -205,17 +205,27 @@ class FileReads:
         finally:
             self.busy = False
 
-    def record_command(self, command, cwd):
+    def record_command(self, command, cwd, environment):
         if not isinstance(command, (list, tuple)):
             return  # Shell-string indirect inputs use explicit declarations.
-        directory = Path(cwd) if cwd else Path.cwd()
+        directory = Path(cwd).absolute() if cwd else Path.cwd()
         paths = [directory / os.fsdecode(arg) for arg in command
                  if isinstance(arg, (str, bytes))]
         if '-m' in command:
             index = command.index('-m') + 1
             if index < len(command):
-                module = directory / str(command[index]).replace('.', '/')
-                paths.extend([module.with_suffix('.py'), module / '__main__.py'])
+                environment = os.environ if environment is None else environment
+                pythonpath = os.fsdecode(environment.get('PYTHONPATH', ''))
+                # Respect src/ and other child search roots without importing
+                # the package (which could execute its initialization).
+                roots = [directory, *(directory / part for part in pythonpath.split(os.pathsep)),
+                         *(directory / part for part in sys.path)]
+                parts = str(command[index]).split('.')
+                for base in roots:
+                    module = base.joinpath(*parts)
+                    paths.extend([module.with_suffix('.py'), module / '__main__.py'])
+                    paths.extend(base.joinpath(*parts[:level], '__init__.py')
+                                 for level in range(1, len(parts) + 1))
         self.busy = True
         try:
             for path in paths:

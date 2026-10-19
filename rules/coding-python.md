@@ -37,7 +37,9 @@ Dependencies: **always `uv sync`** (never pip). `uv run python scripts/...` to e
   live checkout. It caches all cost tiers; project `smart_inputs` declarations
   cover indirect file reads and `smart_always` marks live-state tests. See
   [smart testing](../tests/smart-testing/README.md) for the dependency boundary.
-  Preserve the initial failing-test confirmation and explicit final gates.
+  Configure indirect inputs before trusting cached data-backed or subprocess
+  tests. Preserve project data preparation, environment settings, the initial
+  failing-test confirmation and explicit final gates.
   Unsupported pytest options or unavailable tooling use the existing project
   check; actual failing tests must be fixed.
 - `make lint`: adherence tier only (`-m adherence`) — ruff / mypy / hygiene / contracts.

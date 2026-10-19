@@ -58,8 +58,14 @@ control eligibility. `tests/conftest.py` declares indirect child-process inputs
 with `smart_inputs(*paths)` (literal paths or globs). Glob membership is checked
 against Git's tracked and unignored file inventory on every invocation; unchanged
 file hashes are reused. Direct subprocess file arguments and local Python `-m`
-entry points are recorded automatically. This does not trace arbitrary child
-process reads: declare indirect inputs explicitly.
+entry points and package initializers are recorded automatically, including
+`src/` layouts found through the child PYTHONPATH and project search roots.
+This does not trace the child's transitive imports: declare those source inputs
+when they are not already covered. This does not trace arbitrary child
+process reads: declare indirect inputs explicitly. Globs use Git-tracked and
+unignored paths, so ignored DVC outputs need exact-path declarations (including
+missing expected files) or live opt-outs. A `.dvc` pointer alone cannot detect
+bytes becoming available after a pull.
 
 `smart_inputs("version:pi")` fingerprints the full stdout/stderr returned by
 `pi --version`, once per helper/pytest process. `version:$VARIABLE` also tracks an
