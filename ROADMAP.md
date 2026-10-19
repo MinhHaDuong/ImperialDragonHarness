@@ -1,37 +1,45 @@
 # Imperial Dragon Harness — Roadmap
 
-The reference clone is `~/.agents`. The harness must work from any checkout
-location, with runtime resources registered through their native mechanisms.
-Tickets hold acceptance criteria; [STATE.md](STATE.md) holds the resume point.
+This roadmap is forward looking, strategic level only. [STATE.md](STATE.md) holds the current tactical handoff, `tickets/` the acceptance criteria and implementation decisions.
 
-## Priorities
+## North star
 
-| Workstream | Next work | Completion evidence |
+A reusable, science-backed personal harness for AI-assisted research across
+projects, machines and runtimes.
+
+## Current priorities
+
+| Workstream | Next step | Completion evidence |
 |---|---|---|
-| Portable installation — 0999 | Complete; parent closed after integration review in #1104. Native packaging and opt-in host setup are future design work | Fresh/relocated registration, preserved profiles and runtime smoke landed in #1091; integration review recorded in #1104 |
-| Memory v8 — 0909 | Convention 0911/inventory 0917 (#1102), pilot 0920 (#1109), capture 0988, dreaming 0910/0916 and acceptance trials 0918 all delivered — trials verdict **No global rollout** ([evaluation results](docs/memory-v8/evaluation-results.md)). 0913 dispatch is complete; per-project migration and legacy retirement remain with the child tickets listed in [the dispatch record](docs/memory-v8/0913-dispatch.md) | Adopting projects migrate to v8; replaced mechanisms retired per project |
-| Reviewer attribution — 1004 | Record capture, backfill, read surfaces and teardown are delivered through PR1222; 1032/1009 are closed. The original-criteria integration audit 1004 is complete, with evidence published in PR #1235 | Explicit 33-merge coverage, fixed-line records for reviewed PRs, retained typed runtime mask and supported unreviewed classifications; surfaces report scores and correlation |
-| Runtime policy — 0974/0938 | 0974 is closed, superseded by 1052; grid-based routing landed under 1052. Named portable profiles (0938), detached child reviewer pattern (1017) and spawn trust (1021) are delivered. The 0980 fixed-seat audit closed WONTDO in PR1222 | Runtime mappings and capability limits tested; spawn success implies the agent exists |
-| Verification workflow | 0990 background Gaze verdict, 0902 tiers and 0879 malformed-log handling are delivered; 0205 and its seven trial dispositions are historical evidence | Reproductions fail before fixes and pass afterward |
-| Claude adapter — 0887 | 0887 plugin skills-dir: what it can carry, measured; activated 2026-10-05 — plugin is the single hook source, absence-mode check enforces it | Fresh-session guard evidence with preserved user configuration |
-| Raid annotations — 1016 | One shared base commit for wave annotations; branches must not fork divergent annotation copies | Wave annotations converge on one base commit |
-| Zotero interface — 1018 | Consolidation: one `zotero` skill with verbs as arguments, backend `scripts/zotero.py`; `index-source` absorbed as import-of-URL. Hygiene rider 1020 (stale `~/.idh` references in scripts and agnostic gate comments) is complete in PR #1153 | One `zotero` skill in the catalog, `index-source` gone, catalog in sync; no live `~/.idh` references |
+| Local merge gate — 1045 | Settle the open trust and execution decisions, then implement the local gate | Revision-bound check records, enforced merge checks and a forge-outage rehearsal; full criteria in the ticket |
+| Review orchestration — 1100 | File the planned children before implementation; move review planning into Hunt and consolidate review entry through Gaze | Reuse of valid review evidence, rejection of stale proof, updated callers and integration review |
+| Bounded review — 1099 | After 1100, bound every review phase | Review phases end within their declared budgets; full criteria in the ticket |
 
-Brood 0888 is delivered in PR #1187: explicit post-Dream project improvements,
-local proofs of concept and nomination-only harness handoff; the separate harness
-implementor evaluates, generalizes and validates. See [the evaluation](docs/memory-v8/brood-evaluation.md).
+These are the three open tickets as of 2026-10-19. Use `erg ready tickets/`
+and `erg ls tickets/` for the live queue.
 
-The academic skill integration is complete. Memory experiment tickets 0375,
-0908, 0912, 0914, 0915, 0919, 0921, 0922, 0925 and 0926 are closed: their
-recorded outcomes include completed trials and scopes superseded by memory v8.
-Project-side follow-ups remain with the adopting repositories. See
-`erg ready tickets/` for ready work and `erg list tickets/` for the complete open set.
+## Next: testing subsystem
 
-## Installation boundary
+After review orchestration, bounded review and the local CI gate, rework test
+selection to run only the tests required by a change. Investigate AST-based
+dependency analysis alongside the existing scoped checks; measure saved
+runtime and missed regressions against the full suite before adopting it.
+Keep conservative fallback coverage where dependencies cannot be resolved.
 
-`~/.agents` is the default location, not a path API. Runtime profiles stay
-independently owned. The old relocation/cutover tickets 0978 and 0986 are
-closed WONTDO; their probes remain historical evidence.
+Design this together with review on an integration branch: establish which
+revision and combined changes each test run and review cover, when evidence
+can be reused, and which interactions require fresh validation before merging
+to main. Test selection and review must assess the integrated result.
 
-See [the installation guide](docs/idh-install-strategy.md) for the current
-installer limits and the target registration contract.
+This is the next design workstream, not yet an implementation ticket.
+
+## Moving targets
+
+- **Portable installation:** registration and integration are delivered.
+  Native packaging and opt-in host setup remain future design work. See the
+  [installation strategy](docs/idh-install-strategy.md).
+- **Runtime portability:** extend measured support rather than presume parity.
+  Current evidence is in [pilot-support.json](adapters/pilot-support.json)
+  and the [operations runbook](docs/adapter-operations.md).
+- **Review and code:** as agents and runtimes get smarter at doing general work,
+  we can remove the non-specialized harness parts.
