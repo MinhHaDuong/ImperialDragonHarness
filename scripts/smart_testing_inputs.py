@@ -113,7 +113,7 @@ def fingerprint(root, name, stats):
                                     + path.read_bytes()).hexdigest()
         else:
             digest = 'not-a-file'
-    except FileNotFoundError:
+    except (FileNotFoundError, NotADirectoryError):
         stamp, digest = None, 'missing'
     stats[name] = [stamp, digest]
     return digest
@@ -208,7 +208,7 @@ class FileReads:
     def record_command(self, command, cwd, environment):
         if not isinstance(command, (list, tuple)):
             return  # Shell-string indirect inputs use explicit declarations.
-        command = [os.fsdecode(arg) if isinstance(arg, (str, bytes)) else None
+        command = [os.fsdecode(arg) if isinstance(arg, (str, bytes, os.PathLike)) else None
                    for arg in command]
         directory = Path(os.fsdecode(cwd)).absolute() if cwd else Path.cwd()
         paths = [directory / arg for arg in command if arg is not None]
@@ -226,7 +226,7 @@ class FileReads:
                 parts = str(command[index]).split('.')
                 for base in roots:
                     module = base.joinpath(*parts)
-                    module_paths.add(module / '__main__.py')
+                    module_paths.update([module / '__main__.py', module / '__main__' / '__init__.py'])
                     for level in range(1, len(parts) + 1):
                         prefix = base.joinpath(*parts[:level])
                         module_paths.update([prefix.with_suffix('.py'), prefix / '__init__.py'])

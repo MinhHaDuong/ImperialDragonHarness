@@ -335,13 +335,17 @@ def test_deleted_live_module_is_removed_from_manifest(smart_repository):
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize('module_command', [False, True])
-def test_child_entrypoint_changes_invalidate(smart_repository, module_command):
+@pytest.mark.parametrize('entrypoint', ['script', 'path', 'module'])
+def test_child_entrypoint_changes_invalidate(smart_repository, entrypoint):
     root = smart_repository
     (root / 'child.py').write_text('print("yes")\n')
-    arguments = "[sys.executable, '-m', 'child']" if module_command else "[sys.executable, 'child.py']"
+    arguments = {
+        'module': "[sys.executable, '-m', 'child']",
+        'script': "[sys.executable, 'child.py']",
+        'path': "[sys.executable, Path('child.py')]",
+    }[entrypoint]
     (root / 'tests/test_case.py').write_text(
-        'import subprocess\nimport sys\nimport pytest\n'
+        'import subprocess\nimport sys\nimport pytest\nfrom pathlib import Path\n'
         '@pytest.mark.integration\ndef test_child():\n'
         f'    assert subprocess.check_output({arguments}).strip() == b"yes"\n')
     _assert_passed(_smart_run(root, '--refresh'))
@@ -738,7 +742,9 @@ def test_src_layout_child_modules_and_initializers_invalidate(
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize('shadow', ['src/workload/__init__.py', 'src/workload.py', 'workload.py'])
+@pytest.mark.parametrize('shadow', [
+    'src/workload/__init__.py', 'src/workload.py', 'workload.py', 'nonpackage-file',
+])
 def test_new_module_or_initializer_shadowing_a_child_namespace_invalidates(
     smart_repository, shadow,
 ):
@@ -746,6 +752,8 @@ def test_new_module_or_initializer_shadowing_a_child_namespace_invalidates(
     package = root / 'src/workload'
     package.mkdir(parents=True)
     (package / 'entry.py').write_text('print("yes")\n')
+    if shadow == 'nonpackage-file':
+        (root / 'workload').write_text('unrelated extensionless file')
     (root / 'tests/test_case.py').write_text(
         'import os, subprocess, sys\nfrom pathlib import Path\n'
         'def test_child():\n'
@@ -755,6 +763,29 @@ def test_new_module_or_initializer_shadowing_a_child_namespace_invalidates(
         '    assert output.strip() == b"yes"\n')
     _assert_passed(_smart_run(root, '--refresh'))
     _assert_unchanged(_smart_run(root))
-    (root / shadow).write_text('raise RuntimeError("new import shadow")\n')
+    target = package / 'entry.py' if shadow == 'nonpackage-file' else root / shadow
+    target.write_text('raise RuntimeError("new import shadow")\n')
+    result = _smart_run(root)
+    assert result.returncode == 1, result.stdout + result.stderr
+
+
+@pytest.mark.integration
+def test_new_main_package_shadowing_a_child_package_entry_invalidates(smart_repository):
+    root = smart_repository
+    package = root / 'src/workload'
+    package.mkdir(parents=True)
+    (package / '__init__.py').write_text('')
+    (package / '__main__.py').write_text('print("yes")\n')
+    (root / 'tests/test_case.py').write_text(
+        'import os, subprocess, sys\nfrom pathlib import Path\n'
+        'def test_child():\n'
+        '    env = {k:v for k,v in os.environ.items() if k != "BASH_ENV"}\n'
+        '    env["PYTHONPATH"] = str(Path.cwd() / "src")\n'
+        '    output = subprocess.check_output([sys.executable, "-m", "workload"], env=env)\n'
+        '    assert output.strip() == b"yes"\n')
+    _assert_passed(_smart_run(root, '--refresh'))
+    _assert_unchanged(_smart_run(root))
+    (package / '__main__').mkdir()
+    (package / '__main__/__init__.py').write_text('')
     result = _smart_run(root)
     assert result.returncode == 1, result.stdout + result.stderr
