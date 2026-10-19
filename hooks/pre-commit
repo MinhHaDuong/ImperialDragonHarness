@@ -56,14 +56,14 @@ fi
 # --- erg-source-guard ---
 
 # --- skills-catalog-guard ---
-# When any skills/*/SKILL.md is staged, regenerate README.md skills catalog.
+# When any skills/*/SKILL.md is staged, regenerate skills-catalog.md skills catalog.
 skills_changed=$(git diff --cached --name-only | grep '^skills/.*/SKILL\.md$' || true)
 if [ -n "$skills_changed" ]; then
     if ! make skills-catalog; then
         echo "ERROR: make skills-catalog failed — commit aborted" >&2
         exit 1
     fi
-    git add README.md
+    git add skills-catalog.md
 fi
 # --- skills-catalog-guard ---
 

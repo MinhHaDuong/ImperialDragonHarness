@@ -106,6 +106,7 @@ def _surface_files():
             yield path
     yield ROOT / "STATE.md"
     yield ROOT / "README.md"
+    yield ROOT / "skills-catalog.md"
 
 
 def _is_excluded(path):

@@ -11,7 +11,7 @@ git -C "$TMPDIR" config user.email "test@example.com"
 git -C "$TMPDIR" config user.name "Test"
 
 mkdir -p "$TMPDIR/skills/foo"
-cat > "$TMPDIR/README.md" <<'RDME'
+cat > "$TMPDIR/skills-catalog.md" <<'RDME'
 <!-- skills:begin -->
 
 | Command | Description |
@@ -29,7 +29,7 @@ SKL
 mkdir -p "$TMPDIR/scripts"
 cat > "$TMPDIR/Makefile" <<'MK'
 skills-catalog:
-	date >> README.md
+	date >> skills-catalog.md
 MK
 
 mkdir -p "$TMPDIR/.git/hooks"
@@ -43,10 +43,10 @@ git -C "$TMPDIR" commit -q -m "init"
 echo "test edit" >> "$TMPDIR/skills/foo/SKILL.md"
 git -C "$TMPDIR" add skills/foo/SKILL.md
 git -C "$TMPDIR" commit -q -m "test: stage SKILL.md"
-if git -C "$TMPDIR" show --name-only HEAD | grep -q 'README.md'; then
-    echo "PASS: README.md was auto-staged when SKILL.md changed"
+if git -C "$TMPDIR" show --name-only HEAD | grep -q 'skills-catalog.md'; then
+    echo "PASS: skills-catalog.md was auto-staged when SKILL.md changed"
 else
-    echo "FAIL: README.md was not auto-staged"
+    echo "FAIL: skills-catalog.md was not auto-staged"
     fail=1
 fi
 
@@ -54,11 +54,11 @@ fi
 echo "something" > "$TMPDIR/unrelated.txt"
 git -C "$TMPDIR" add unrelated.txt
 git -C "$TMPDIR" commit -q -m "test: non-SKILL.md change"
-if git -C "$TMPDIR" show --name-only HEAD | grep -q 'README.md'; then
-    echo "FAIL: README.md was spuriously staged for a non-SKILL.md change"
+if git -C "$TMPDIR" show --name-only HEAD | grep -q 'skills-catalog.md'; then
+    echo "FAIL: skills-catalog.md was spuriously staged for a non-SKILL.md change"
     fail=1
 else
-    echo "PASS: README.md not staged for unrelated change"
+    echo "PASS: skills-catalog.md not staged for unrelated change"
 fi
 
 # Test 3: pre-commit hook must not carry the stale 'Run make build first' text.

@@ -50,6 +50,15 @@ def catalog_lines(root: str = ".") -> list[str]:
             for name, description in catalog]
 
 
+def catalog_document(root: str = ".") -> str:
+    return (
+        "# Skills catalog\n\n"
+        "<!-- Generated from skills/*/SKILL.md; run make skills-catalog. -->\n\n"
+        "| Command | Description |\n|---------|-------------|\n"
+        + "\n".join(catalog_lines(root)) + "\n"
+    )
+
+
 def main(root: str = ".") -> None:
     for line in catalog_lines(root):
         print(line)
