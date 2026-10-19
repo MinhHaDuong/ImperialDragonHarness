@@ -1,5 +1,6 @@
 ---
-category: writing
+metadata:
+  category: writing
 name: typography-finish
 description: "Fine typography pass for a rendered text deliverable at finalization, after its wording is frozen. Handles French or English spacing by output format; never applies to drafts."
 disable-model-invocation: false

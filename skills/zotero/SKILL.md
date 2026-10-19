@@ -1,5 +1,6 @@
 ---
-category: research
+metadata:
+  category: research
 name: zotero
 description: "Import one or more PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, or report duplicate files — extract metadata, resolve identifiers online, find the work through the running Zotero's local API, and create items with their PDFs through it."
 disable-model-invocation: false

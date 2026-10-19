@@ -1,5 +1,6 @@
 ---
-category: memory
+metadata:
+  category: memory
 name: trace-doctor
 description: "Monthly survey of Claude Code session-trace economics — cost census, hypothesis statistics, and a ranked cost-saving recommendation report, cross-referenced against tickets. Never auto-applies changes; files tickets for actionable findings."
 user-invocable: true

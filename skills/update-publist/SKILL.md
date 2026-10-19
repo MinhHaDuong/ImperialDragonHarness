@@ -1,5 +1,6 @@
 ---
-category: publication
+metadata:
+  category: publication
 name: update-publist
 description: "Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call."
 disable-model-invocation: true
