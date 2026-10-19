@@ -15,6 +15,8 @@ def test_standalone_review_pr_cleans_only_after_verified_post():
     assert "embedded by /gaze" in cleanup
     assert "leave the panel" in cleanup.lower()
     assert "do not gitignore" in cleanup.lower()
+    assert 'worktree-exit-preflight.sh" "${args[@]}" "$worktree"' in cleanup
+    assert cleanup.index('worktree-tmp-guard.py" removal') < cleanup.index('rm -rf -- "$panel"')
 
 
 def test_gaze_owns_delegated_panel_cleanup_on_every_exit():
@@ -25,7 +27,8 @@ def test_gaze_owns_delegated_panel_cleanup_on_every_exit():
     assert '"$review_tree/build/panel-head"' in cleanup
     assert "after" in cleanup.lower() and "consumed" in cleanup.lower()
     assert "circuit-breaker" in cleanup.lower()
-    assert 'worktree-exit-preflight.sh" "$review_tree"' in cleanup
+    assert 'worktree-exit-preflight.sh" --removal --branch "$PR_BRANCH" "$review_tree"' in cleanup
+    assert cleanup.index('worktree-tmp-guard.py" removal') < cleanup.index('rm -rf -- "$review_tree/.panel/<pr-number>"')
     assert 'git -C "$primary_root" worktree remove "$review_tree"' in cleanup
     assert 'worktree remove "$review_tree" --force' not in cleanup
     assert "leave the review worktree" in " ".join(cleanup.lower().split())

@@ -365,6 +365,18 @@ remove_worktree() {
     if [ "$path" = "$here" ]; then
         note "WORKTREE: REFUSED $path is the current checkout — cd to the main checkout first"; bump 1; return 0
     fi
+    if [ -e "$path/.tmp" ] || [ -L "$path/.tmp" ]; then
+        local branch tmp_rc=0 tmp_report
+        branch=$(git -C "$path" symbolic-ref --quiet --short HEAD) || branch=""
+        local tmp_args=(--removal)
+        [ -z "$branch" ] || tmp_args+=(--branch "$branch")
+        tmp_report=$("$IDH_ROOT/scripts/worktree-exit-preflight.sh" "${tmp_args[@]}" "$path") || tmp_rc=$?
+        [ -z "$tmp_report" ] || while IFS= read -r line; do note "WORKTREE-TMP: $line"; done <<< "$tmp_report"
+        if [ "$tmp_rc" -ne 0 ]; then
+            note "WORKTREE: KEEP-PENDING .tmp safety gate did not pass; worktree retained"
+            bump 1; return 0
+        fi
+    fi
     git worktree unlock "$path" >/dev/null 2>&1 || true   # hunt locks its tree
     if git worktree remove -- "$path" >/dev/null 2>&1; then
         note "WORKTREE: REMOVED $path"

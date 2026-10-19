@@ -37,10 +37,10 @@ pytestmark = [
 ]
 
 
-def run(args, cwd=None, check=True):
+def run(args, cwd=None, check=True, env=None):
     return subprocess.run(
         args, cwd=cwd, check=check, capture_output=True, text=True,
-        env=child_env(),
+        env=child_env() if env is None else env,
     )
 
 
@@ -82,9 +82,43 @@ def make_agent_worktree(primary, name, *, dirty=False, push=True):
 
 
 def make_branch_gone(remote, primary, name):
-    """Delete the branch on the remote and prune so the local branch reads [gone]."""
+    """Merge into main, delete the topic ref, and prune so it reads [gone]."""
+    git(primary, "merge", "--no-ff", "-m", f"merge {name}", name)
+    git(primary, "push", "origin", "main")
     git(remote, "update-ref", "-d", f"refs/heads/{name}")
     git(primary, "fetch", "--prune", "origin")
+
+
+def delete_branch_without_merge(remote, primary, name):
+    """Produce `[gone]` without integration, the fail-closed control."""
+    git(remote, "update-ref", "-d", f"refs/heads/{name}")
+    git(primary, "fetch", "--prune", "origin")
+
+
+def _ignore_worktree_tmp(primary):
+    common = Path(git(primary, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
+    exclude = common / "info" / "exclude"
+    exclude.parent.mkdir(parents=True, exist_ok=True)
+    with exclude.open("a") as stream:
+        stream.write("\n/.tmp/\n")
+
+
+def _gc(primary, *, gh_response="[]", gh_exit=0):
+    fake_bin = primary.parent / "fake-bin"
+    fake_bin.mkdir(exist_ok=True)
+    gh = fake_bin / "gh"
+    gh.write_text(
+        "#!/usr/bin/env python3\n"
+        "import os, sys\n"
+        "sys.stdout.write(os.environ.get('TEST_GH_RESPONSE', '[]'))\n"
+        "sys.exit(int(os.environ.get('TEST_GH_EXIT', '0')))\n"
+    )
+    gh.chmod(0o755)
+    env = child_env()
+    env["PATH"] = f"{fake_bin}:{env.get('PATH', '')}"
+    env["TEST_GH_RESPONSE"] = gh_response
+    env["TEST_GH_EXIT"] = str(gh_exit)
+    return run([str(SCRIPTS / "worktree-gc.sh"), str(primary)], env=env)
 
 
 # --------------------------------------------------------------------------- #
@@ -127,9 +161,20 @@ def test_salvage_missing_arg_errors(origin):
 # worktree-gc.sh
 # --------------------------------------------------------------------------- #
 
-def _gc(primary):
-    return run([str(SCRIPTS / "worktree-gc.sh"), str(primary)])
+def test_hunt_tmp_exclude_registration_uses_shared_git_metadata(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-tmp-register", push=False)
+    helper = SCRIPTS / "worktree-tmp-guard.py"
 
+    first = run(["python3", str(helper), "register", str(wt)], check=False)
+    second = run(["python3", str(helper), "register", str(wt)], check=False)
+    assert first.returncode == 0 and second.returncode == 0
+    common = Path(git(wt, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
+    rules = (common / "info" / "exclude").read_text().splitlines()
+    assert rules.count("/.tmp/") == 1
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "ignored.txt").write_text("scratch\n")
+    assert git(wt, "status", "--porcelain", "--untracked-files=all").stdout.strip() == ""
 
 def _worktree_paths(primary):
     out = git(primary, "worktree", "list", "--porcelain").stdout
@@ -155,6 +200,175 @@ def test_gc_keeps_dirty_worktree(origin):
     res = _gc(primary)
     assert res.returncode == 0
     assert "skip agent-wip (uncommitted WIP)" in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_keeps_excluded_tmp_when_other_wip_exists(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-tmp-and-wip")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+    (wt / "unfinished.txt").write_text("deliverable\n")
+    make_branch_gone(remote, primary, "agent-tmp-and-wip")
+
+    res = _gc(primary)
+    assert "skip agent-tmp-and-wip (uncommitted WIP)" in res.stdout
+    assert (wt / ".tmp" / "cache.bin").exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_keeps_tmp_cited_by_pr_body(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-tmp-pr-citation")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "audit.json").write_text("evidence\n")
+    make_branch_gone(remote, primary, "agent-tmp-pr-citation")
+
+    body = [{"number": 42, "title": "work", "body": "Review evidence: `.tmp/audit.json`"}]
+    res = _gc(primary, gh_response=__import__("json").dumps(body))
+    assert "citation" in res.stdout.lower()
+    assert (wt / ".tmp" / "audit.json").exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_keeps_tmp_cited_by_candidate_verdict(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-tmp-verdict-citation")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "audit.json").write_text("evidence\n")
+    (wt / ".panel" / "42").mkdir(parents=True)
+    (wt / ".panel" / "42" / "gate.md").write_text("Reviewed `.tmp/audit.json`.\n")
+    make_branch_gone(remote, primary, "agent-tmp-verdict-citation")
+
+    res = _gc(primary, gh_response="[]")
+    assert "citation" in res.stdout.lower()
+    assert (wt / ".tmp" / "audit.json").exists()
+    assert (wt / ".panel" / "42" / "gate.md").exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_blocks_unreadable_registered_verdict_parent(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-tmp-cross-verdict")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+    (primary / ".panel").symlink_to(primary / "missing-panel-target")
+    make_branch_gone(remote, primary, "agent-tmp-cross-verdict")
+
+    response = [{"number": 42, "title": "work", "body": "No scratch citation."}]
+    res = _gc(primary, gh_response=__import__("json").dumps(response))
+    assert "verdict directory is unavailable" in res.stderr.lower()
+    assert (wt / ".tmp" / "cache.bin").exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_removal_guard_rejects_branch_mismatch(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-branch-mismatch")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+
+    res = run([
+        "python3", str(SCRIPTS / "worktree-tmp-guard.py"), "removal",
+        str(primary), str(wt), "--branch", "main",
+    ], check=False)
+    assert res.returncode == 2
+    assert "does not match" in res.stderr
+    assert (wt / ".tmp" / "cache.bin").exists()
+
+
+def test_gc_keeps_tmp_cited_by_topic_commit(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-tmp-commit-citation")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "audit.json").write_text("evidence\n")
+    git(wt, "commit", "--allow-empty", "-m", "preserve .tmp/audit.json evidence")
+    git(wt, "push", "origin", "agent-tmp-commit-citation")
+    make_branch_gone(remote, primary, "agent-tmp-commit-citation")
+
+    res = _gc(primary)
+    assert "citation" in res.stdout.lower()
+    assert (wt / ".tmp" / "audit.json").exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_keeps_tmp_if_citation_source_is_unavailable(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-tmp-source-unavailable")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+    make_branch_gone(remote, primary, "agent-tmp-source-unavailable")
+
+    res = _gc(primary, gh_exit=1)
+    assert "could not inspect citation sources" in res.stderr.lower()
+    assert (wt / ".tmp" / "cache.bin").exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_keeps_gone_branch_without_integration_ancestry(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-gone-unmerged")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+    delete_branch_without_merge(remote, primary, "agent-gone-unmerged")
+
+    res = _gc(primary)
+    assert "not proven integrated" in (res.stdout + res.stderr).lower()
+    assert (wt / ".tmp" / "cache.bin").exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_counts_and_reports_tmp_before_eligible_removal(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-gone-with-tmp")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "one.bin").write_bytes(b"12345")
+    make_branch_gone(remote, primary, "agent-gone-with-tmp")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    line = next(line for line in res.stdout.splitlines() if ".tmp/" in line)
+    assert "1 files" in line and "bytes" in line
+    assert res.stdout.index(line) < res.stdout.index("removed agent-gone-with-tmp")
+    assert str(wt) not in _worktree_paths(primary)
+
+
+def test_gc_treats_tracked_tmp_as_wip_even_when_clean(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-tracked-tmp")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "tracked.txt").write_text("retained\n")
+    git(wt, "add", "-f", ".tmp/tracked.txt")
+    git(wt, "commit", "-m", "track temp output")
+    git(wt, "push", "origin", "agent-tracked-tmp")
+    make_branch_gone(remote, primary, "agent-tracked-tmp")
+
+    res = _gc(primary)
+    assert "tracked .tmp content" in res.stderr.lower() or "uncommitted wip" in res.stdout.lower()
+    assert (wt / ".tmp" / "tracked.txt").exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_keeps_tmp_as_wip_when_common_exclude_is_missing(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-unexcluded-tmp")
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+    make_branch_gone(remote, primary, "agent-unexcluded-tmp")
+
+    res = _gc(primary)
+    assert "common info/exclude lacks" in res.stderr
+    assert (wt / ".tmp" / "cache.bin").exists()
     assert str(wt) in _worktree_paths(primary)
 
 
@@ -477,6 +691,80 @@ def test_preflight_passes_on_clean_worktree(origin):
     assert res.returncode == 0
     assert res.stdout == ""
     assert res.stderr == ""
+
+
+def test_preflight_reports_ignored_tmp_without_purging_it(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-preflight-tmp", dirty=False)
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+
+    res = _preflight(wt)
+    assert res.returncode == 0
+    assert ".tmp/" in res.stdout and "1 files" in res.stdout and "bytes" in res.stdout
+    assert (wt / ".tmp" / "cache.bin").exists()
+
+
+def test_preflight_preserves_cited_panel_until_removal_gate(origin):
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-preflight-cited-panel")
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "evidence.txt").write_text("evidence\n")
+    verdict = wt / ".panel" / "manual" / "review.md"
+    verdict.parent.mkdir(parents=True)
+    verdict.write_text("This review cites `.tmp/evidence.txt`.\n")
+    make_branch_gone(remote, primary, "agent-preflight-cited-panel")
+
+    preflight = _preflight(wt)
+    assert preflight.returncode != 0
+    assert verdict.exists()
+
+    fake_bin = primary.parent / "fake-gh-bin"
+    fake_bin.mkdir()
+    gh = fake_bin / "gh"
+    gh.write_text("#!/bin/sh\nprintf '%s\\n' '[]'\n")
+    gh.chmod(0o755)
+    env = child_env()
+    env["PATH"] = f"{fake_bin}:{env.get('PATH', '')}"
+    removal = subprocess.run(
+        [str(SCRIPTS / "worktree-exit-preflight.sh"), "--removal",
+         "--branch", "agent-preflight-cited-panel", str(wt)],
+        capture_output=True, text=True, env=env,
+    )
+
+    assert removal.returncode != 0
+    assert "citation found" in removal.stdout.lower()
+    assert verdict.exists()
+    assert (wt / ".tmp" / "evidence.txt").exists()
+
+
+def test_preflight_blocks_tracked_tmp_even_if_worktree_is_clean(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-preflight-tracked-tmp", dirty=False)
+    _ignore_worktree_tmp(primary)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "retained.txt").write_text("tracked\n")
+    git(wt, "add", "-f", ".tmp/retained.txt")
+    git(wt, "commit", "-m", "track temporary path")
+
+    res = _preflight(wt)
+    assert res.returncode != 0
+    assert "tracked .tmp content" in res.stderr.lower()
+    assert (wt / ".tmp" / "retained.txt").exists()
+
+
+def test_preflight_missing_common_exclude_keeps_tmp_as_wip(origin):
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-preflight-unexcluded-tmp", dirty=False)
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+
+    res = _preflight(wt)
+    assert res.returncode != 0
+    assert "common info/exclude lacks the /.tmp/ rule" in res.stderr
+    assert (wt / ".tmp" / "cache.bin").exists()
 
 
 def test_preflight_purges_review_scratch_and_passes(origin):

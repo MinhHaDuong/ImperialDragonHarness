@@ -85,6 +85,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    R=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
    W=$R/.claude/worktrees/t$ARGUMENTS-<pid>
    git worktree add "$W" -b t$ARGUMENTS-short-description origin/main
+   python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" register "$W"
    git worktree lock --reason "hunt t$ARGUMENTS (pid <owner-pid>)" "$W"
    cd "$W"
    ```
@@ -102,10 +103,17 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    Choose the model of each launched worker per launch, from the `route` skill grid
    (`skills/route/SKILL.md`); seats that must be independent follow
    `skills/route/references/decorrelation.md` ("The launch line").
+   Use per-command `TMPDIR` settings such as `TMPDIR="$W/.tmp" <command>`;
+   do not export TMPDIR for the session; never session-wide export it. `.tmp/` is ignored through common Git
+   `info/exclude`, remains owned by the worktree, and is never purged separately.
+   Evidence stays outside `.tmp/`; deliverables stay outside `.tmp/` too.
 4. In a handed-over worktree, create or checkout the ticket branch (step 3 already made it otherwise):
    ```bash
    git switch -c t$ARGUMENTS-short-description
+   python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" register "$(git rev-parse --show-toplevel)"
    ```
+   Registration is idempotent; run it after branch setup for both newly
+   created and handed-over worktrees.
 5. Read the files listed in **Relevant files**.
 6. Write the first test from the **Test** section of the ticket.
 7. Run `make check-fast` — confirm the test fails.

@@ -1,0 +1,101 @@
+%erg 0.1
+Title: Own worktree .tmp lifecycle with citation gate and restic exclusion
+Created: 2026-10-19
+Author: Minh Ha-Duong
+Closed: autoclosed — PR #1457
+
+--- log ---
+2026-10-19T00:00Z Minh Ha-Duong created Child implementation contract for 1095 Design 2 safeguards
+2026-10-19T09:19Z reviewer 2026-10-19T09:19Z Minh Ha-Duong note The initial 00:00Z creation timestamp was a placeholder; implementation began at 09:19Z and the original log entry is preserved.
+2026-10-19T09:19Z reviewer note blocker 1118 closed — Blocked-by removed.
+2026-10-19T09:45Z reviewer Implementation complete: per-worktree .tmp registration and TMPDIR guidance; shared removal gate verifies WIP, branch/HEAD binding, integration ancestry, PR and numbered verdict citations, and reports size before eligible removal. Gaze, review-pr, molt, raid, roar, and GC removal paths are gated. Validation: make check 1740 passed, 3 skipped; make lint 186 passed; targeted integration 61 passed; close-and-clean shell passed. Padme restic exclude deployment/dry-run remains pending; Doudou was unavailable and its backup mechanism differs. Reviewer: /root/review_reporting, requested Luna high OpenAI same-family route; runtime model metadata unavailable and no other-family reviewer perspective. External publication awaits root coordination.
+2026-10-19T09:47Z reviewer Stacked pull request #1457 opened against t1095-tmp-attribution after final checks and review. Host restic deployment/dry-run remains open; this ticket and parent tracker 1095 were not closed.
+2026-10-19T10:05Z reviewer review-fix Applied the round-1 batch: default preflight preserves `.panel` while `.tmp` exists until removal-mode citation coverage runs; hunt re-registers after handed-over branch setup; Roar and molt document retention and pending outcomes. Removed the prose-only hunt test; behavioral registration controls remain. Restic host criterion and own-reviewed-PR criterion remain unchecked; Padme/Doudou host evidence is pending.
+2026-10-19T10:07Z reviewer review-fix-validation `make check` passed (1,742 passed, 3 skipped); `make lint` passed (186 passed); Roar close-and-clean shell controls passed; ticket validation and `git diff --check` passed. Host-specific restic validation and round-2 review remain pending.
+
+2026-10-19T11:40Z reviewer note Final source validation: 1749 passed, 3 skipped; lint 186 passed; Padme local CI on 208c3bff passed all 10 jobs with no skips. Rebased onto current main at 57fef96c; code safety review remains clear. Proposed host exclusions passed isolated controls, but actual deployment is blocked on explicit Padme destination approval and Doudou interactive sudo.
+
+2026-10-19T11:49Z reviewer note Padme host PR 108 merged at aeb0acd; installed restic exclusion control passed with ordinary fixture retained, .tmp excluded, unchanged isolated repository and zero snapshots. Doudou identified Btrfs mechanism remains unchanged by explicit author reservation; no universal backup-host verification is claimed.
+2026-10-19T11:59Z reviewer closed — autoclosed — PR #1457
+
+--- body ---
+## Context
+
+Implement the author's adopted Design 2 from `docs/discussions/2026-10-14-1095-design.md` after child 1118 supplies the report foundation. Worktree-local `.tmp/` may hold disposable caches and logs; evidence stays in commits, DVC or the PR. A candidate citation in a PR body, verdict file or branch commit blocks worktree removal. A crashed, unmerged tree retains `.tmp/` indefinitely and remains visible to child 1118's report.
+
+## Relevant files
+
+- `skills/hunt/SKILL.md` and runtime worktree instructions -- declare `.tmp/` use and common info/exclude registration
+- `scripts/worktree-gc.sh`, `scripts/worktree-exit-preflight.sh` -- cleanup ordering and removal controls
+- `scripts/session_scratch.py` / child 1118 report helper -- expose retained `.tmp/` candidates
+- host restic configuration -- host-specific exclude and dry-run evidence
+
+## Actions
+
+1. Document `.tmp/` as worktree-owned disposable scratch, per-command `TMPDIR` only, with evidence retention outside it.
+2. Register `/.tmp/` in common git `info/exclude` at hunt/worktree creation; tracked `.tmp/` content or missing exclusion remains WIP.
+3. Add a fail-closed citation check before removal that searches PR bodies, verdict files and branch commits. Any match or inaccessible citation source blocks removal. Never purge `.tmp/` before WIP/citation checks.
+4. Require actual merged ancestry proof for `.tmp/` disposal; an upstream marked `[gone]` is insufficient. Print `.tmp/` file count and allocated size before an otherwise-authorized removal. Keep live, locked, WIP, upstream-present, ancestry-uncertain, and crashed/unmerged worktrees.
+5. Add a restic exclusion for `.tmp/` and validate it with a dry run on each configured host; record unavailable host checks explicitly rather than claiming universal validation.
+
+### Restic rollout evidence and control recipe
+
+Padme's actual restic exclusion is deployed: host-configuration PR 108 merged
+as `aeb0acd`, and active `/etc/restic/excludes.txt` resolves to the merged
+`tools/restic-excludes.txt` containing `.tmp`. An isolated restic 0.16.4 dry run
+using that installed file retained the ordinary fixture file and excluded its
+`.tmp` neighbor. The pre-deployment baseline included both. The isolated
+repository remained unchanged and zero snapshots were created. No production
+backup wrapper was run.
+
+Doudou's identified active backup mechanism uses Btrfs snapshots through
+`snapshot.sh` and `prune-snapshots.sh`, with enabled snapshot and prune timers.
+A bounded inspection found `/usr/bin/restic` installed but no `/etc/restic` or
+matching user units. This establishes the identified mechanism, not universal
+absence of other restic configuration. The prepared snapshot-only `.tmp`
+patch passed four fixture controls and remains uninstalled: the author
+explicitly reserves that separate Btrfs policy decision. It is not claimed as
+verified deployment or as a requirement to mutate every backup engine.
+
+Local detailed controls and deployment observations are recorded in
+`/tmp/1095-host-deployment-evidence.md`; this ticket retains the durable
+installed-host result and its limits. The `.tmp` restic exclusion and the
+control recipe below remain the requirement for any configured restic host.
+
+After the host owner adds a directory-component rule `.tmp` to that host's existing exclude file, make an isolated fixture with
+`fixture/project/.tmp/control.bin` and `fixture/project/control.bin`, then run
+the host's normal restic environment against the fixture using the actual
+exclude file:
+
+```bash
+restic backup --dry-run --verbose --exclude-file=/etc/restic/excludes.txt /path/to/fixture
+```
+
+The output must show the ordinary `control.bin` included and the `.tmp`
+`control.bin` excluded. Capture host name, exclude-file path and rule, command
+exit status, and the two path results in the rollout record; never copy
+repository credentials or raw service configuration into the ticket. Do not
+run the installed backup wrapper for this control, since it may perform
+unrelated repository operations.
+
+## Test
+
+- First write ordering controls: WIP plus `.tmp/x` survives GC and preflight; citation hit blocks; inaccessible citation evidence blocks; a genuinely merged tree is removed only after all rails and prints a size line; `[gone]` without ancestry proof, live/locked/upstream-present trees remain; tracked `.tmp` is WIP; absent common exclude is WIP.
+- Verify restic dry-run includes the expected excluded `.tmp/` path while a neighboring non-excluded control remains included.
+
+## Invariants
+
+- Never use generic temp deletion, age rules, or `tNNNN-*` name-based deletion.
+- Any uncertain liveness, citation coverage, or source accessibility keeps the tree and its `.tmp/`.
+- Do not put evidence in `.tmp/`; do not delete current or foreign worktrees.
+- Host-local restic validation must identify the host and actual configuration evidence.
+
+## Exit criteria
+
+- [x] Worktree `.tmp/` is ignored only through the common info/exclude and retained by the report.
+- [x] Removal is fail-closed on citation hits, unreadable evidence, uncertain merge ancestry, and every existing safety rail.
+- [x] Normal eligible removal reports `.tmp/` size before deletion.
+- [x] The repo documents the required `.tmp` restic exclude and a control dry-run recipe.
+- [x] Restic exclusion is configured and dry-run verified on every available configured host; unavailable/external hosts remain explicitly pending.
+- [x] Targeted integration tests, `make check`, and `make lint` pass.
+- [ ] Ticket 1119 closes in its own reviewed PR after 1118; tracker 1095 closes only after union integration review.
