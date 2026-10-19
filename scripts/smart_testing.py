@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Portable, opt-in Testmon memory for the fast development loop."""
+"""Portable, optimistic Testmon memory for the fast development loop."""
 import argparse
-import hashlib
-import importlib.metadata
 import json
+import logging
 import os
 from pathlib import Path
 import sqlite3
@@ -11,33 +10,13 @@ import subprocess
 import sys
 import tempfile
 
+from scripts.smart_testing_inputs import changed_consumers, load_state, save_state
+
 ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / 'tests/smart-testing'
 CACHE = ROOT / '.smart-testing'
 MARKERS = 'not integration and not slow and not adherence'
-
-
-def environment():
-    return {
-        'python': list(sys.version_info[:3]),
-        'packages': sorted((d.metadata['Name'].lower(), d.version)
-                           for d in importlib.metadata.distributions()),
-    }
-
-
-def external_inputs(root):
-    """Testmon cannot observe reads of shell, prose, configuration or data."""
-    paths = subprocess.check_output(
-        ['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'],
-        cwd=root).decode().split('\0')
-    digest = hashlib.sha256()
-    for name in sorted(set(paths) - {''}):
-        if name.endswith('.py') or name.startswith('tests/smart-testing/'):
-            continue
-        path = root / name
-        digest.update(name.encode() + b'\0')
-        digest.update(path.read_bytes() if path.is_file() else b'<missing>')
-    return digest.hexdigest()
+LOG = logging.getLogger(__name__)
 
 
 def restore(dump, database):
@@ -55,52 +34,90 @@ def restore(dump, database):
         Path(name).unlink(missing_ok=True)
 
 
+def run_tests(paths, database, inputs, selection):
+    env = dict(os.environ, TESTMON_DATAFILE=str(database),
+               SMART_TESTING_INPUTS=str(inputs))
+    complete = '--no-testmon' in selection or '--testmon-noselect' in selection
+    env['SMART_TESTING_COMPLETE'] = ('all' if paths == ['tests/'] else 'modules') if complete else ''
+    env['PATH'] = str(Path(sys.executable).parent) + os.pathsep + env.get('PATH', '')
+    command = [sys.executable, '-m', 'pytest', *paths, '-m', MARKERS,
+               '-p', 'scripts.smart_testing_inputs', *selection]
+    return subprocess.run(command, env=env, check=False).returncode
+
+
+def prepare(database, inputs):
+    """A local DB owns its own baseline; reference-only changes never replace it."""
+    if database.exists() and inputs.exists():
+        return
+    partial = database.exists() or inputs.exists()
+    if partial:
+        LOG.info('Incomplete private state; learning the fast tier once.')
+        database.unlink(missing_ok=True)
+        inputs.unlink(missing_ok=True)
+    metadata = REFERENCE / 'reference.json'
+    dump = REFERENCE / 'reference.sql'
+    if not partial and metadata.exists() and dump.exists():
+        reference = json.loads(metadata.read_text())
+        if reference.get('schema') == 2 and reference.get('scope') == MARKERS:
+            restore(dump, database)
+            save_state(inputs, {'inputs': reference['inputs'], 'stats': {}})
+            LOG.info('Restored reference; Testmon will check environment compatibility.')
+            return
+    LOG.info('No compatible reference; learning the fast tier once.')
+    save_state(inputs, {'inputs': {}, 'stats': {}})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--refresh', action='store_true',
-                        help='explicitly run all fast tests and publish a reference')
+                        help='run the fast tier and export portable state')
     args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO, format='smart-test: %(message)s')
     os.chdir(ROOT)
-    metadata = REFERENCE / 'reference.json'
-    dump = REFERENCE / 'reference.sql'
     database = CACHE / 'testmon.db'
-    current = json.loads(json.dumps(environment()))
+    inputs = CACHE / 'inputs.json'
+    prepare(database, inputs)
     if not args.refresh:
-        if not metadata.exists() or not dump.exists():
-            parser.error('No reference. Run make smart-refresh explicitly.')
-        reference = json.loads(metadata.read_text())
-        if reference['environment'] != current:
-            parser.error('Environment differs from reference; use the locked environment or explicitly refresh.')
-        if reference['external_inputs'] != external_inputs(ROOT):
-            parser.error('Non-Python inputs changed; run make check-fast explicitly (Testmon cannot track these reads).')
-        if not database.exists():
-            restore(dump, database)
-    else:
-        CACHE.mkdir(exist_ok=True)
-        database.unlink(missing_ok=True)
-    env = dict(os.environ, TESTMON_DATAFILE=str(database))
-    # Children invoking python3 receive the same environment as their parent.
-    env['PATH'] = str(Path(sys.executable).parent) + os.pathsep + env.get('PATH', '')
-    command = [sys.executable, '-m', 'pytest', 'tests/', '-m', MARKERS,
-               '--testmon', '--testmon-noselect' if args.refresh else '--testmon-forceselect']
-    result = subprocess.run(command, env=env, check=False)
-    # Pytest uses 5 when Testmon deselects every unchanged test.
-    if result.returncode == 5 and not args.refresh:
+        state = load_state(inputs)
+        changed = changed_consumers(ROOT, state)
+        save_state(inputs, state)  # Retain stat/hash memoization, not learned baselines.
+        if changed:
+            paths = ['tests/'] if '*' in changed else sorted(changed)
+            LOG.info('Changed recorded file inputs: checking %s', ', '.join(paths))
+            status = run_tests(paths, database, inputs, ['--no-testmon'])
+            if status == 5:
+                # Consumers can move out of the fast tier or lose their tests.
+                state = load_state(inputs)
+                for consumer in changed:
+                    state['inputs'].pop(consumer, None)
+                save_state(inputs, state)
+            elif status:
+                return status
+    selection = ['--testmon', '--testmon-noselect' if args.refresh else '--testmon-forceselect']
+    status = run_tests(['tests/'], database, inputs, selection)
+    # All native-selected tests can be excluded by the fast-tier marker.
+    if status == 5 and not args.refresh:
         return 0
-    if result.returncode:
-        return result.returncode
+    if status:
+        return status
     if args.refresh:
         REFERENCE.mkdir(exist_ok=True)
         with sqlite3.connect(database) as connection:
             version = connection.execute('PRAGMA user_version').fetchone()[0]
-            dump.write_text(f'PRAGMA user_version={version};\n'
-                            + '\n'.join(connection.iterdump()) + '\n')
-        metadata.write_text(json.dumps({
-            'environment': current,
-            'external_inputs': external_inputs(ROOT),
+            dump = f'PRAGMA user_version={version};\n' + '\n'.join(connection.iterdump()) + '\n'
+        state = load_state(inputs)
+        # These are transport artifacts; local learned state remains authoritative.
+        save_state(REFERENCE / 'reference.json', {
+            'schema': 2, 'scope': MARKERS, 'inputs': state['inputs'],
             'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode().strip(),
-            'scope': MARKERS,
-        }, indent=2) + '\n')
+        })
+        fd, temporary = tempfile.mkstemp(dir=REFERENCE)
+        try:
+            with os.fdopen(fd, 'w') as stream:
+                stream.write(dump)
+            os.replace(temporary, REFERENCE / 'reference.sql')
+        finally:
+            Path(temporary).unlink(missing_ok=True)
     return 0
 
 

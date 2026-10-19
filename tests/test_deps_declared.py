@@ -94,8 +94,10 @@ def third_party_imports() -> dict[str, frozenset[str]]:
     """Map of top-level third-party module name → files importing it."""
     stdlib = set(sys.stdlib_module_names)
     # A sibling imported via sys.path manipulation (beat, git_utils, …) is
-    # local, not third-party: local means a scanned-file stem.
+    # local, not third-party: local means a scanned-file stem or package.
     locals_ = {Path(rel).stem for rel, _ in python_sources()}
+    locals_.update(Path(rel).parts[0] for rel, _ in python_sources()
+                   if rel.endswith('/__init__.py'))
     found: dict[str, set[str]] = {}
     for rel, text in python_sources():
         tree = ast.parse(text, filename=rel)
@@ -113,6 +115,14 @@ def third_party_imports() -> dict[str, frozenset[str]]:
                 found.setdefault(top, set()).add(rel)
     # Frozen: the result is cached and shared by both tests below.
     return {module: frozenset(files) for module, files in found.items()}
+
+
+def test_scanner_distinguishes_local_packages_from_third_party(monkeypatch):
+    monkeypatch.setattr(sys.modules[__name__], 'python_sources', lambda: (
+        ('local_tools/__init__.py', ''),
+        ('run.py', 'import local_tools\nimport undeclared_sdk\n'),
+    ))
+    assert third_party_imports.__wrapped__() == {'undeclared_sdk': frozenset({'run.py'})}
 
 
 def _normalize(name: str) -> str:

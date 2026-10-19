@@ -63,7 +63,7 @@ check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agn
 # Opt-in fast loop; reference refresh is deliberately explicit.
 .PHONY: smart-test smart-refresh
 smart-test:
-	$(RUN) python3 scripts/smart_testing.py
+	$(RUN) python3 -m scripts.smart_testing
 
 smart-refresh:
-	$(RUN) python3 scripts/smart_testing.py --refresh
+	$(RUN) python3 -m scripts.smart_testing --refresh
