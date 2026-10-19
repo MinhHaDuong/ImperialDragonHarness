@@ -23,28 +23,14 @@ relevant themes before acting; search themes and the journal with `rg` or
 `grep` when recall is needed, and again if the task changes materially.
 Missing memory does not block work; report a known incomplete installation.
 
-At roar, commit significant facts here; uncleared material only as encrypted `.age`;
-preserve journal entries and link corrections from new entries. Do not derive
-lessons, propose rules, or write into the harness for another project; HOARD
-separately prunes, merges and refreshes themes, preserving sources. MEMORY.md
-is at most 100 lines; no automatic rule proposals or timer.
+## Skills catalog
 
-## Skills Catalog
+The skills catalog in `skills-catalog.md` is auto-generated from `skills/*/SKILL.md` frontmatter.
 
-The skills catalog in `README.md` is auto-generated from `skills/*/SKILL.md` frontmatter.
-
-**When you add, rename, or remove a skill:**
-
-```bash
-make skills-catalog    # Regenerate README.md catalog
-```
-
-**To detect drift:**
-
-```bash
-make check-skills-drift  # Fails if README.md is out of sync
-```
-
+Set each skill’s `metadata.category` frontmatter to a key in
+`scripts/gen_skills_catalog.py`. After changing a skill’s name, description
+or category, or adding or removing a skill, run `make skills-catalog`.
+Check generated catalog drift with `make check-skills-drift`.
 
 ## Agent profiles
 
@@ -66,7 +52,12 @@ instructions. Crystallisation is a separate task requiring an explicit user
 request, including the intended destination. Repetition, general usefulness and
 acceptance of a memory PR do not grant that authorization. Explicit Brood may
 implement project improvements; a named harness receives nominations only,
-until separately authorized implementation. Sources remain append-only.
+until separately authorized implementation.
+
+At Roar, commit significant facts; do not derive lessons. Hoard prunes, merges
+and refreshes themes while preserving sources. Journal entries remain
+append-only; link corrections from new entries. Keep MEMORY.md at most
+100 lines; no automatic rule proposals or timer.
 
 On explicit Hoard invocation, one-way migration may mechanically update
 inventoried active path/command references in the selected project's isolated
