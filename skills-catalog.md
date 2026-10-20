@@ -19,12 +19,12 @@
 | Command | Description |
 |---------|-------------|
 | `/dashboard` | Ticket dashboard: open tickets, branches and merge requests; full state plus a delta led by the ticket count. |
-| `/lair` | End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session. |
-| `/molt` | Repo housekeeping — git sync, yawn, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps. |
-| `/perch` | Mid-session orientation — summarize what's done, surface unresolved points. Assesses clear-readiness and offers to do the work if conditions are right. |
+| `/lair` | End-of-day wrap-up: housekeeping, push branches, run tests, refresh STATE, offer an autonomous session. Not for one merged task (/roar) or a mid-session check (/perch). |
+| `/molt` | Repo housekeeping that acts: git sync, yawn, fix-now repairs, tickets for findings. Safe interactively or in automated sweeps. Not for a read-only check (/yawn). |
+| `/perch` | Mid-session orientation: summarize what's done, surface unresolved points, assess clear-readiness. Not for end-of-day (/lair) or post-merge (/roar) wrap-up. |
 | `/release` | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |
-| `/roar` | Post-task wrap-up. Reflects on completed work, updates project state, cleans up branches. |
-| `/yawn` | Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent. |
+| `/roar` | Post-task wrap-up after a merge: reflect, capture significant facts, update state, clean task branches. Not for consolidating (/hoard), auditing memory (/memory-sweep) or ending the day (/lair). |
+| `/yawn` | Read-only repo healthcheck: git hygiene, test status, freshness of status and directive docs; degrades without project conventions. Not for repair or tickets (/molt). |
 
 ### Memory and learning
 
@@ -32,8 +32,8 @@
 |---------|-------------|
 | `/brood` | Turn accepted Hoard findings into project improvements and scoped harness nominations, on explicit request. |
 | `/coaching` | Replay the frozen, already merged PR benchmark board through a contained reviewer seat and report read-only ground-truth diagnostics. |
-| `/hoard` | Consolidate one project's repository memory without proposing rules. |
-| `/memory-sweep` | Review a project's repository memory for stale or contradictory claims. |
+| `/hoard` | Consolidate one project's repository memory without proposing rules. Use to tidy accumulated memory; not for new facts (/roar) or staleness audits (/memory-sweep). |
+| `/memory-sweep` | Review a project's repository memory for stale or contradicted claims. Use when memory may have drifted; not for consolidating (/hoard) or new facts (/roar). |
 | `/trace-doctor` | Monthly survey of Claude Code session-trace economics: cost census, hypothesis statistics, ranked cost-saving report cross-referenced to tickets. Never auto-applies; files tickets for findings. |
 
 ### Runtime and review support
@@ -66,7 +66,7 @@
 |---------|-------------|
 | `/cut-prose` | Cut a document to a word or page budget by removing whole passages before condensing anything. Use for a manuscript trim, a reviewer-mandated length cut, or a slot-limited abstract. |
 | `/external-peer-review` | Obtain independent external frontier-class peer reviews of a manuscript PDF; synthesize convergent findings into one verdict. |
-| `/message-framing` | Frame the central message of a talk, abstract or article before drafting it. |
+| `/message-framing` | Frame the central message of a talk, abstract or article before drafting it. Not for cutting a text (/cut-prose) or building a deck (/slides). |
 | `/pdf-finish` | Finishing pass on a PDF deliverable before it leaves the workshop — journal submission, preprint deposit, personal page, report handoff. Keyword: finition. |
 | `/slides` | Make or review a talk's slide deck: build a beamer deck from a written text, or critique an existing deck with prioritized fixes. Keywords: diaporama, présentation. |
 | `/track-changes-pdf` | Render a revision-marked PDF of a LaTeX manuscript between two git refs, marking insertions and deletions via latexdiff. Closes the annotate-reply-apply loop of journal revise-and-resubmit rounds. |
@@ -78,7 +78,7 @@
 |---------|-------------|
 | `/aap-annonce` | Process a call-for-proposals announcement (AAP, appel à projets): file it, calendar deadlines, assess fit, propose three entry angles. |
 | `/choose-venue` | Choose where to submit a paper: shortlist journals, or conferences, by fit and diamond open access. |
-| `/conference-submission-prep` | Prepare a humanities and social sciences conference submission from its call for papers. |
+| `/conference-submission-prep` | Prepare a humanities and social sciences conference submission from its call for papers. Use once venue and message are set; not for those (/choose-venue, /message-framing). |
 | `/ingest-decision-letter` | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check mapping every remark to a ticket: one deterministic Revise-and-Resubmit intake pass. |
 | `/submission-event` | Classify a manuscript submission event (submitted, resubmitted, accepted, published) by its object's external register; propagate to the homepage publications list (works) or CNRS secretariat roadmap (work in progress), never both automatically. |
 | `/update-publist` | Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |

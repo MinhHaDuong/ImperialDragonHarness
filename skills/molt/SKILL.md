@@ -2,7 +2,7 @@
 metadata:
   category: session
 name: molt
-description: "Repo housekeeping — git sync, yawn, eager fix-now repairs, and ticket creation for open-ticket findings. Safe to call interactively or from automated sweeps."
+description: "Repo housekeeping that acts: git sync, yawn, fix-now repairs, tickets for findings. Safe interactively or in automated sweeps. Not for a read-only check (/yawn)."
 user-invocable: true
 argument-hint:
 ---

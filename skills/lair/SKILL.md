@@ -2,7 +2,7 @@
 metadata:
   category: session
 name: lair
-description: "End-of-day session wrap-up. Runs housekeeping, pushes branches, runs tests, refreshes STATE, offers autonomous session."
+description: "End-of-day wrap-up: housekeeping, push branches, run tests, refresh STATE, offer an autonomous session. Not for one merged task (/roar) or a mid-session check (/perch)."
 disable-model-invocation: false
 user-invocable: true
 ---

@@ -2,7 +2,7 @@
 metadata:
   category: session
 name: yawn
-description: "Repo healthcheck — git hygiene, test status, and deep freshness verification of status/directive docs. Gracefully degrades when project-specific conventions (git-erg tickets, STATE.md, etc.) are absent."
+description: "Read-only repo healthcheck: git hygiene, test status, freshness of status and directive docs; degrades without project conventions. Not for repair or tickets (/molt)."
 disable-model-invocation: false
 user-invocable: true
 argument-hint:
