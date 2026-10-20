@@ -6,7 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-20T08:22Z reviewer created
 2026-10-20T15:15Z reviewer rescoped per author-approved decisions (advisor-reviewed 2026-10-20): storage-independent evidence core, not blocked on git-erg 0272.
-2026-10-20T15:40Z reviewer reviewer note implemented on branch t1142-evidence-core: scripts/review_evidence.py and verify-gate review evidence section
+2026-10-20T15:40Z reviewer note implemented on branch t1142-evidence-core: scripts/review_evidence.py and verify-gate review evidence section
 
 --- body ---
 ## Context

@@ -113,6 +113,8 @@ A comment is UNRESOLVED if none of the above applies.
 Seat reports are repository files under `tickets/reviews/<base>..<head>/`, one
 per seat execution, written by the controller with
 `review_evidence.py record`. The gate never reads a seat's verdict from prose.
+Run the three steps sequentially: the plan line decides whether steps 2 and 3
+apply, and step 2 needs its seats.
 
 1. **Plan.** Read the review plan line hunt keeps in the merge-request body:
    `Review plan: risk=<trivial|ordinary|high> seats=<seat>,<seat> producer-family=<family>`.
