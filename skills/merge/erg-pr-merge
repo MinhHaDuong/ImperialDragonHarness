@@ -173,12 +173,15 @@ BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
 # CommonMark rules: an opener is 3+ backticks or 3+ tildes (a backtick info
 # string may not contain a backtick); the closer must reuse the opener's
 # character, be at least as long, carry nothing but whitespace, and sit at
-# most 3 columns deeper than the opener (a deeper run is code content, so it
-# cannot free the fenced lines below it). Looser than CommonMark on one point:
-# an opener may sit at any indentation, so a fence nested in a list item stays
-# a fence and its example lines stay inert; the cost is that a 4-space-indented
-# code line shaped like a fence hides what follows, which can drop a claim but
-# never makes fenced text live. Lines of an open fence are buffered until the
+# most 3 columns in (a deeper run is code content, not a closer). Tabs advance
+# to the next multiple of 4. One deviation from CommonMark remains: container
+# indentation is not tracked, so an opener may sit at any column and a fence
+# nested in a list item stays a fence; its closer may then sit up to 3 columns
+# deeper than the opener, which can end such a fence earlier than CommonMark
+# would and free a fenced line. A fence-shaped code line indented 4+ columns
+# outside any container opens a fence here (CommonMark: code) and can hide the
+# lines after it, dropping a claim or, if never closed, refusing the merge.
+# Lines of an open fence are buffered until the
 # closer or EOF decides between F and U.
 fence_map() {
     awk '
