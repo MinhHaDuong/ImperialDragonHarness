@@ -107,9 +107,20 @@ def test_forge_review_fails_closed(over):
     assert not ok and reason
 
 
+DONE = {"hasNextPage": False, "endCursor": None}
+
+
+def forge_payload(reviews=(), comments=(), threads=(), more=None):
+    page = lambda nodes, key: {"nodes": list(nodes),
+                               "pageInfo": {"hasNextPage": more == key, "endCursor": "c"}}
+    return {"data": {"repository": {"pullRequest": {
+        "reviews": page(reviews, "reviews"), "comments": page(comments, "comments"),
+        "reviewThreads": page(threads, "reviewThreads")}}}}
+
+
 def test_forge_reviews_are_classified_from_graphql():
-    payload = {"data": {"repository": {"pullRequest": {
-        "reviews": {"nodes": [
+    payload = forge_payload(
+        reviews=[
             {"__typename": "PullRequestReview", "author": {"login": "MinhHaDuong", "id": HUMAN_ID},
              "lastEditedAt": None, "state": "APPROVED", "commit": {"oid": "a" * 40}},
             {"__typename": "PullRequestReview",
@@ -117,12 +128,11 @@ def test_forge_reviews_are_classified_from_graphql():
              "lastEditedAt": None, "state": "COMMENTED", "commit": {"oid": "a" * 40}},
             {"__typename": "PullRequestReview", "author": {"login": "mallory", "id": "U_x"},
              "lastEditedAt": None, "state": "APPROVED", "commit": {"oid": "a" * 40}},
-        ]},
-        "comments": {"nodes": [
+        ],
+        comments=[
             {"__typename": "IssueComment", "author": {"login": "MinhHaDuong", "id": HUMAN_ID},
              "lastEditedAt": "2026-10-20T00:00:00Z"},
-        ]},
-    }}}}
+        ])
     rows = re_mod.classify_forge(payload, "github.com")
     roles = [(r["login"], r["status"]) for r in rows]
     assert ("MinhHaDuong", "human: ran") in roles
@@ -130,6 +140,44 @@ def test_forge_reviews_are_classified_from_graphql():
     assert ("mallory", "rejected") in roles
     edited = [r for r in rows if r["object_type"] == "IssueComment"]
     assert edited[0]["status"] == "rejected"
+
+
+def test_inline_review_thread_comments_are_read():
+    thread = {"isResolved": False, "comments": {"pageInfo": DONE, "nodes": [
+        {"__typename": "PullRequestReviewComment",
+         "author": {"login": "copilot-pull-request-reviewer", "id": COPILOT_ID},
+         "lastEditedAt": None, "path": "scripts/x.py"}]}}
+    rows = re_mod.classify_forge(forge_payload(threads=[thread]), "github.com")
+    assert [(r["object_type"], r["status"], r["resolved"]) for r in rows] == [
+        ("PullRequestReviewComment", "copilot: ran", False)]
+
+
+@pytest.mark.parametrize("more", ["reviews", "comments", "reviewThreads"])
+def test_truncated_forge_read_fails_closed(more):
+    with pytest.raises(re_mod.ForgeReadError):
+        re_mod.classify_forge(forge_payload(more=more), "github.com")
+    thread = {"isResolved": True, "comments": {"pageInfo": {"hasNextPage": True}, "nodes": []}}
+    with pytest.raises(re_mod.ForgeReadError):
+        re_mod.classify_forge(forge_payload(threads=[thread]), "github.com")
+
+
+def _forge_cli(monkeypatch, returncode, stdout):
+    import types
+    monkeypatch.setattr(re_mod.subprocess, "run", lambda *a, **k: types.SimpleNamespace(
+        returncode=returncode, stdout=stdout, stderr="boom"))
+    args = types.SimpleNamespace(forge_repo="o/n", pr=1, host="github.com")
+    return re_mod.cmd_forge(args)
+
+
+def test_forge_exit_codes_separate_a_failed_read_from_a_rejected_row(monkeypatch):
+    mallory = {"__typename": "PullRequestReview", "author": {"login": "m", "id": "U_x"},
+               "lastEditedAt": None}
+    assert _forge_cli(monkeypatch, 1, "") == re_mod.EXIT_READ_FAILED
+    truncated = json.dumps(forge_payload(more="reviews"))
+    assert _forge_cli(monkeypatch, 0, truncated) == re_mod.EXIT_READ_FAILED
+    assert _forge_cli(monkeypatch, 0, json.dumps(forge_payload(reviews=[mallory]))) == 1
+    assert _forge_cli(monkeypatch, 0, json.dumps(forge_payload())) == 0
+    assert re_mod.EXIT_READ_FAILED not in (0, 1, 2)
 
 
 # --- criteria hash and risk floor -----------------------------------------

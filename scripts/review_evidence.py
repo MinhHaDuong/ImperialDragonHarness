@@ -124,11 +124,35 @@ def admit_forge_review(review: dict) -> tuple[bool, str]:
     return True, role
 
 
+class ForgeReadError(ValueError):
+    """The forge answer is incomplete or unreadable: evidence missing, not rejected."""
+
+
+def _page(connection: dict, what: str) -> list[dict]:
+    """Nodes of one connection; a further page or no page info fails closed."""
+    info = connection.get("pageInfo")
+    if not isinstance(info, dict) or info.get("hasNextPage") is not False:
+        raise ForgeReadError(f"{what}: more than one page or no page info")
+    return connection["nodes"]
+
+
 def classify_forge(payload: dict, host: str) -> list[dict]:
-    """Rows `{login, object_type, status, reason, state, commit}` from a GraphQL payload."""
-    pr = payload["data"]["repository"]["pullRequest"]
+    """Rows `{login, object_type, status, reason, state, commit, resolved}` from a payload.
+
+    Reads reviews, conversation comments and inline review-thread comments.
+    Raises ForgeReadError when any of them is truncated.
+    """
+    try:
+        pr = payload["data"]["repository"]["pullRequest"]
+        nodes = [(n, None) for n in _page(pr["reviews"], "reviews")]
+        nodes += [(n, None) for n in _page(pr["comments"], "comments")]
+        for thread in _page(pr["reviewThreads"], "reviewThreads"):
+            nodes += [(n, thread.get("isResolved"))
+                      for n in _page(thread["comments"], "thread comments")]
+    except (KeyError, TypeError) as exc:
+        raise ForgeReadError(f"unexpected forge payload: {exc!r}") from exc
     rows = []
-    for node in pr["reviews"]["nodes"] + pr["comments"]["nodes"]:
+    for node, resolved in nodes:
         author = node.get("author") or {}
         ok, why = admit_forge_review({
             "forge_host": host, "actor_id": author.get("id"),
@@ -137,7 +161,8 @@ def classify_forge(payload: dict, host: str) -> list[dict]:
         rows.append({
             "login": author.get("login", "<deleted>"), "object_type": node.get("__typename"),
             "status": f"{why}: ran" if ok else "rejected", "reason": "" if ok else why,
-            "state": node.get("state", ""), "commit": (node.get("commit") or {}).get("oid", "")})
+            "state": node.get("state", ""), "commit": (node.get("commit") or {}).get("oid", ""),
+            "resolved": resolved})
     return rows
 
 
@@ -367,12 +392,16 @@ def cmd_gate(args: argparse.Namespace) -> int:
     return 0 if ok else 1
 
 
+EXIT_READ_FAILED = 3  # forge read failed or truncated: Missing Data, not a rejection
 FORGE_QUERY = """query($owner:String!,$name:String!,$pr:Int!){repository(owner:$owner,name:$name){
 pullRequest(number:$pr){
-reviews(first:100){nodes{__typename author{login ... on User{id} ... on Bot{id}}
- lastEditedAt state commit{oid}}}
-comments(first:100){nodes{__typename author{login ... on User{id} ... on Bot{id}}
- lastEditedAt}}}}}"""
+reviews(first:100){pageInfo{hasNextPage endCursor}
+ nodes{__typename author{login ... on User{id} ... on Bot{id}} lastEditedAt state commit{oid}}}
+comments(first:100){pageInfo{hasNextPage endCursor}
+ nodes{__typename author{login ... on User{id} ... on Bot{id}} lastEditedAt}}
+reviewThreads(first:100){pageInfo{hasNextPage endCursor}
+ nodes{isResolved comments(first:100){pageInfo{hasNextPage endCursor}
+  nodes{__typename author{login ... on User{id} ... on Bot{id}} lastEditedAt path}}}}}}}"""
 
 
 def cmd_forge(args: argparse.Namespace) -> int:
@@ -383,10 +412,16 @@ def cmd_forge(args: argparse.Namespace) -> int:
         capture_output=True, text=True, timeout=60)
     if out.returncode != 0:
         print(f"forge: read failed, evidence invalid: {out.stderr.strip()}")
-        return 1
-    rows = classify_forge(json.loads(out.stdout), args.host)
+        return EXIT_READ_FAILED
+    try:
+        rows = classify_forge(json.loads(out.stdout), args.host)
+    except (ForgeReadError, json.JSONDecodeError) as exc:
+        print(f"forge: read incomplete, evidence invalid: {exc}")
+        return EXIT_READ_FAILED
     for r in rows:
         extra = f" {r['state']} at {r['commit'][:12]}" if r["commit"] else ""
+        if r["resolved"] is not None:
+            extra += " resolved" if r["resolved"] else " unresolved"
         why = f" ({r['reason']})" if r["reason"] else ""
         print(f"{r['status']} {r['login']} {r['object_type']}{extra}{why}")
     return 1 if any(r["status"] == "rejected" for r in rows) else 0

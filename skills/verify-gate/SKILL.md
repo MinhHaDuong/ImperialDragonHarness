@@ -130,12 +130,15 @@ apply, and step 2 needs its seats.
    requires one seat from another family than the producer's.
 3. **Forge reviews.** Run
    `python3 "$IDH_ROOT/scripts/review_evidence.py" forge <owner/name> <merge-request>`.
-   Only the pinned actors are admitted, and only unedited: rows read
-   `human: ran` or `copilot: ran`. These are binding comments under
-   non-negotiable 3, never seats, never reused, never counted toward
-   independence. A `rejected` row (unknown actor, edited, unreadable) never
-   counts as proof; its findings still bind like any other comment. A failed
-   forge read is `Missing Data`: ESCALATE.
+   It reads reviews, conversation comments and inline review-thread comments
+   (with their resolved flag). Only the pinned actors are admitted, and only
+   unedited: rows read `human: ran` or `copilot: ran`. These are binding
+   comments under non-negotiable 3, never seats, never reused, never counted
+   toward independence. Exit 0: every row admitted. Exit 1: at least one
+   `rejected` row (unknown actor, edited or edit status unknown); it never
+   counts as proof, and its findings still bind like any other comment.
+   Exit 3: the forge read failed or came back truncated (more than one page),
+   so the comment set is unknown: `Missing Data`, ESCALATE.
 
 ## Scope containment
 
