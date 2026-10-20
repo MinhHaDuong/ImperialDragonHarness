@@ -29,6 +29,11 @@ STALE_LAYOUT = re.compile(r"\.idh(?!-)")
 # any other path, or a surviving line that no longer carries one of its
 # substrings, is a new live reference: red.
 PROVENANCE = {
+    # Containment self-test (0217; moved from skills/ with the coaching
+    # demotion, 1140): the sandbox must block secret reads from every location, retired ones included.
+    "coaching/seat-runner.sh": (
+        "'/.idh/scripts/bash-env.sh",
+    ),
     # The 0984 probe emulates the pre-retirement layout in a disposable HOME
     # (a .idh symlink over the real checkout); the rig name is a fixture, not
     # a pointer at the live layout.
@@ -54,11 +59,6 @@ PROVENANCE = {
 # Provenance for skills/ (ticket 1025): path relative to skills/ -> substrings
 # each surviving line must carry. Same path-scoped keying as PROVENANCE.
 SKILLS_PROVENANCE = {
-    # Containment self-test (0217): the sandbox must block secret reads from
-    # every location, retired ones included.
-    "coaching/seat-runner.sh": (
-        "'/.idh/scripts/bash-env.sh",
-    ),
     # The erg-pr-merge comment must stay accurate to the live operator-owned
     # settings, which still carry the retired-layout allow rule as a legacy
     # alias for migrated installs; quoting the rule means quoting its path.
