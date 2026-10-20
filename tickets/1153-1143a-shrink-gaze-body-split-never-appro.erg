@@ -1,0 +1,20 @@
+%erg 0.1
+Title: 1143a: shrink gaze (body split, never-APPROVED, delete old battery)
+Created: 2026-10-20
+Author: reviewer
+
+--- log ---
+2026-10-20T15:12Z reviewer created
+
+--- body ---
+## Context
+Child 2a of tracker 1100, split from tracker 1143 on 2026-10-20. Plan of record: docs/discussions/2026-10-14-1096-design.md. Parent: 1143. No dependency on 1142: this is the shrink, it needs none of 1142's layout.
+
+## Scope
+Split gaze's body into a core plus references; gaze never returns APPROVED ("gaze reviews, verify-gate gates"); delete the old battery and `agents/gaze-pr-review.md` with no alias; update callers (hunt, raid, merge, verify-gate, dashboard).
+
+## Exit criteria
+- [ ] A test shows gaze never returns APPROVED; verify-gate remains the gate
+- [ ] The old battery and `agents/gaze-pr-review.md` are gone with no alias; callers (hunt, raid, merge, verify-gate, dashboard) updated and grep-proven
+- [ ] Gaze's body is split into a core plus references so it stops being a 57 KB resident-on-invoke document (this also satisfies ticket 1131's gaze part and unblocks ticket 1130's gaze history removal)
+- [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker, else split
