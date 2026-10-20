@@ -49,13 +49,15 @@ The script reads close intent from the PR **body** only — never the title:
   `NNNN, MMMM` or `#NNNN`.
 - `Ticket: none` — the PR closes nothing.
 - With no recognised `Ticket` line, the PR closes nothing (same as
-  `Ticket: none`); a line the grammar cannot read is not a claim. Only a
-  malformed `Ticket: tickets/...` path errors.
+  `Ticket: none`); a line the grammar cannot read is not a claim. A
+  malformed `Ticket: tickets/...` path errors, as does the unclosed-fence
+  case below.
 - Ticket lines inside Markdown code fences are examples and are ignored.
   A fence closes only on a run of the opener's character (backtick or tilde)
   at least as long as the opener, so a `~~~` line inside a backtick fence
-  stays fenced. Ticket paths outside fences that cannot be parsed cause an
-  error.
+  stays fenced. Any indentation opens or closes a fence (looser than
+  CommonMark, so a fence nested in a list item stays a fence). Ticket paths
+  outside fences that cannot be parsed cause an error.
 - An **unclosed** fence whose remaining text holds a `Ticket:` or
   `Ticket-ref:` line with a `tickets/` path or a short ID refuses the merge
   and names the line: the claim would otherwise be silently dropped or read

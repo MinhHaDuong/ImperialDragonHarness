@@ -1392,8 +1392,10 @@ else echo "FAIL: fenced Ticket line leaked into claims"; echo "$out33"; fail=1; 
 # Ticket line stays inert — long form, short form, and the normalizer; (b) a
 # shorter backtick run does not close a longer one; (c) an unclosed fence whose
 # tail holds a claim-shaped line refuses the merge rather than silently dropping
-# (CommonMark) or silently honouring (no fence tracking) that line; (d) an
-# unclosed fence with no claim in its tail still merges, the earlier claim live.
+# (CommonMark) or silently honouring (no fence tracking) that line; (d) prose
+# that merely starts with "ticket" in an unclosed fence is not claim-shaped and
+# does not refuse; (e) an unclosed fence with no claim in its tail still merges,
+# the earlier claim live.
 seed_repo tildeinbacktick 0320
 if out34=$(run_merge $'Example:\n```markdown\n~~~\n**Ticket:** tickets/0320-fixture.erg\n~~~\n```\nTicket: none\n' 'docs: tilde in backtick' 2>&1) \
    && ! closed_has 0320; then

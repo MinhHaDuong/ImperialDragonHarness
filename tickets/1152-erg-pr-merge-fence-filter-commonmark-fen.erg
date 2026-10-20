@@ -7,6 +7,7 @@ Author: reviewer
 2026-10-20T14:34Z reviewer created
 2026-10-20T16:00Z coder shared fence_map tracker; unclosed fence with a claim-shaped tail refuses the merge
 2026-10-20T16:40Z coder criterion 2 left open: refusal replaces "yields the claim", pending author sign-off (PR #1518 review)
+2026-10-20T17:10Z coder roar check-close-claims.sh shares the tracker (copy, kept identical by test); its audit reads unclosed-fence lines as live
 
 --- body ---
 ## Context
