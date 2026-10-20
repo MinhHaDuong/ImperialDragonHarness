@@ -288,7 +288,7 @@ it). Verify file-sharing PRs sequentially to avoid concurrent-fix collisions.
 Respect the max-concurrent-agents cap (see `rules/claude-code.md` § Subagent
 levers). When the runtime's nesting blocks the inline run — a raid is itself
 an agent orchestration, and child sessions do not inherit the agent connector
-(PRs #1060/#1061, #1129-#1132); detect it by the inline run
+(PRs #1060/#1061, #1129-#1132; ticket 1017); detect it by the inline run
 reporting `battery: NOT-RUN — cause: no-agent-tool`, `depth`, or `guard`,
 or by a known absent agent connector — substitute one detached, headless, non-interactive
 CLI session per PR per the detached-seat contract
