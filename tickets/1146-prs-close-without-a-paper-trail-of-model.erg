@@ -1,0 +1,17 @@
+%erg 0.1
+Title: PRs close without a paper trail of model, effort and step
+Created: 2026-10-20
+Author: reviewer
+
+--- log ---
+2026-10-20T10:50Z reviewer created
+
+--- body ---
+## Context
+Recurring complaint (author, 2026-10-20): merged PRs carry no record of which model ran at which effort level for which step (plan, execute, each review seat, gate, roar). Evidence of the pattern: review attribution for PR 1466 lives only in the unmerged PR 1481; several main commits carry no Co-Authored-By trailer; `memory/evidence/review-attribution-pr14xx-pending.md` files accumulate as stopgaps. Unknown yet: where the loss happens (the runtime does not state effort, the route record is never written, or it is written outside the PR).
+
+## Exit criteria
+- [ ] Inventory of where model, effort and step identity is available per step (runtime, route cache, verdict artifacts, commit trailers) and where it is lost; unstated effort is recorded as "not stated", never guessed
+- [ ] One mandatory attribution record per merged PR, at a fixed place that lands with the PR (PR body block or file in the branch), listing step, model, effort, route and independence basis
+- [ ] `/merge` (or its gate) refuses or warns when the record is absent; positive control: a PR without it is flagged
+- [ ] Backfill decision for the pending attribution files (e.g. PR 1481) stated: land, fold into the new mechanism, or drop
