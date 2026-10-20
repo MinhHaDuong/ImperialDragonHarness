@@ -1386,5 +1386,53 @@ if out33=$(run_merge $'Summary.\n\n**Ticket:** tickets/0313-fixture.erg\n\n'"$FE
     echo "PASS: a Ticket line inside the attribution fence is not read as a close claim"
 else echo "FAIL: fenced Ticket line leaked into claims"; echo "$out33"; fail=1; fi
 
+# ── Case 34: CommonMark fence tracking for close claims (ticket 1152).
+# A closing fence must reuse the opener's character and be at least as long.
+# (a) a `~~~` line inside a backtick fence does not close it, so the fenced
+# Ticket line stays inert — long form, short form, and the normalizer; (b) a
+# shorter backtick run does not close a longer one; (c) an unclosed fence whose
+# tail holds a claim-shaped line refuses the merge rather than silently dropping
+# (CommonMark) or silently honouring (no fence tracking) that line; (d) an
+# unclosed fence with no claim in its tail still merges, the earlier claim live.
+seed_repo tildeinbacktick 0320
+if out34=$(run_merge $'Example:\n```markdown\n~~~\n**Ticket:** tickets/0320-fixture.erg\n~~~\n```\nTicket: none\n' 'docs: tilde in backtick' 2>&1) \
+   && ! closed_has 0320; then
+    echo "PASS: a ~~~ line inside a backtick fence keeps the fenced Ticket line inert"
+else echo "FAIL: ~~~ inside a backtick fence turned a fenced Ticket line into a live claim"; echo "$out34"; fail=1; fi
+
+seed_repo tildeshort 0321
+: > "$PATCHF"
+if out34=$(STUB_PATCH_FILE="$PATCHF" run_merge $'```\n~~~\n**Ticket:** 0321\n~~~\n```\nTicket: none\n' 'docs: short in fence' 2>&1) \
+   && ! closed_has 0321 && [[ ! -s "$PATCHF" ]]; then
+    echo "PASS: a fenced short claim behind ~~~ is neither normalized nor closed"
+else echo "FAIL: fenced short claim behind ~~~ was normalized or closed"; echo "$out34"; cat "$PATCHF"; fail=1; fi
+
+seed_repo tildenorm 0322
+: > "$PATCHF"
+if out34=$(STUB_PATCH_FILE="$PATCHF" run_merge $'**Ticket:** 0322\n\n```\n~~~\n**Ticket:** 0322\n~~~\n```\n' 'ticket(0322): norm' 2>&1) \
+   && closed_has 0322 && grep -qx '\*\*Ticket:\*\* tickets/0322-fixture.erg' "$PATCHF" \
+   && grep -qx '\*\*Ticket:\*\* 0322' "$PATCHF"; then
+    echo "PASS: the normalizer rewrites the live short claim and leaves the fenced one verbatim"
+else echo "FAIL: normalizer rewrote a fenced short claim or missed the live one"; echo "$out34"; cat "$PATCHF"; fail=1; fi
+
+seed_repo shortcloser 0323
+if out34=$(run_merge $'````markdown\n```\n**Ticket:** tickets/0323-fixture.erg\n```\n````\nTicket: none\n' 'docs: nested fence' 2>&1) \
+   && ! closed_has 0323; then
+    echo "PASS: a shorter backtick run does not close a longer fence"
+else echo "FAIL: a shorter backtick run closed a longer fence"; echo "$out34"; fail=1; fi
+
+seed_repo unclosedfence 0324
+if out34=$(run_merge $'Summary.\n\n```attribution\nkind: review-attribution\n\n**Ticket:** tickets/0324-fixture.erg\n' 'ticket(0324): unclosed' 2>&1); then
+    echo "FAIL: an unclosed fence before a real Ticket line merged (claim dropped or fenced text honoured)"; echo "$out34"; fail=1
+elif [[ "$out34" == *'unclosed fence'* && "$out34" == *'0324'* ]] && ! closed_has 0324; then
+    echo "PASS: an unclosed fence hiding a Ticket line refuses the merge and names the line"
+else echo "FAIL: unclosed fence refusal missing or ticket touched"; echo "$out34"; fail=1; fi
+
+seed_repo unclosedtail 0325
+if out34=$(run_merge $'**Ticket:** tickets/0325-fixture.erg\n\n```attribution\nkind: review-attribution\n' 'ticket(0325): tail' 2>&1) \
+   && closed_has 0325; then
+    echo "PASS: an unclosed fence with no claim in its tail still merges the earlier claim"
+else echo "FAIL: an unclosed claim-free fence blocked the merge"; echo "$out34"; fail=1; fi
+
 if (( fail )); then exit 1; fi
 echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto race handled, pending checks arm auto-merge (1082), denied inspections delegate without bypass (1117), drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip, output-rewrite-tolerant guards"
