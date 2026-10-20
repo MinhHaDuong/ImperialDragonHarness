@@ -121,6 +121,12 @@ not create tickets or edit the PR body — the caller handles disposition.
 
 Never rebase or amend commits to excise scope creep.
 
+**Comment-only hunks never block.** A hunk confined to comments (LaTeX `%`, code
+comments, Markdown/HTML comments) is never a scope or authorisation blocker, even
+under a path the brief marked protected (e.g. "do not edit `rapport/`"): record it
+as a `nofollow:` minor, no `scope_overflow` entry. Typeset text and argument
+changes keep the guard. An exception the caller states in the PR body counts as granted.
+
 ## Verdict shape
 
 ```yaml
