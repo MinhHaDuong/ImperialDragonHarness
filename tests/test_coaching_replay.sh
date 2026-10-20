@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-REPLAY="$ROOT/skills/coaching/replay.sh"
+REPLAY="$ROOT/scripts/coaching/replay.sh"
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
 cat > "$WORK/board.yml" <<'YAML'
 board:

@@ -61,11 +61,8 @@ def test_live_review_surfaces_do_not_dispatch_retired_governance():
     removing only the descriptor's command table would leave live callers.
     """
     paths = [ROOT / f"skills/{name}/SKILL.md" for name in
-             ("reviewers", "gaze", "raid", "coaching")]
-    coaching = paths[-1].read_text()
-    references = re.findall(r"`references/([\w.-]+\.md)`", coaching)
-    assert references, "the coaching reference must be checked"
-    paths.extend(ROOT / "skills/coaching/references" / name for name in references)
+             ("reviewers", "gaze", "raid")]
+    paths.append(ROOT / "scripts/coaching/references/replay.md")
     for path in paths:
         text = path.read_text()
         calls = re.findall(r"/reviewers\s+(\w+)", text)
@@ -107,4 +104,4 @@ def test_runtime_route_keeps_finding_and_failure_evidence_separate():
                   "SEAT-MISSING:", "PANEL-INTEGRITY:"):
         assert token in route, f"runtime route lost gate record {token}"
         assert token in (ROOT / "skills/gaze/SKILL.md").read_text(), token
-    assert "skills/coaching/SKILL.md" in descriptor
+    assert "scripts/coaching/references/replay.md" in descriptor

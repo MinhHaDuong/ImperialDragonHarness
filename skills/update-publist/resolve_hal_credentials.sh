@@ -41,7 +41,7 @@
 # eval'd. Reaching the `.` at all still requires prior write access to the
 # keystore, which is the trust boundary the harness already assumes; the
 # isolation bounds what such code can reach, it does not stop it running.
-# Retained implementation of the same idiom: skills/coaching/replay.sh
+# Retained implementation of the same idiom: scripts/coaching/replay.sh
 # `_keystore_value`.
 #
 # WHY THE PROVIDER FILE IS AN ARGUMENT AND NOT AN ENVIRONMENT OVERRIDE.

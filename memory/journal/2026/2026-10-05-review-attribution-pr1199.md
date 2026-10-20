@@ -3,18 +3,18 @@ pr: 1199 · merged 2026-10-05 · project: .agents
 writer: runtime=codex · model=openai/gpt-6-sol · effort=medium
 reviewer: seat=pre-pr-semantic-adherence · runtime=codex · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=original-parent-composition-initial · runtime=codex · model=openai/gpt-6.1-sol · status: ran
-  finding: consider · skills/coaching/replay.sh:46 · adopted: yes
+  finding: consider · scripts/coaching/replay.sh:46 · adopted: yes
 reviewer: seat=original-parent-composition-currentness · runtime=codex · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=correctness-panel-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
-  finding: verifiable · skills/coaching/replay.sh:312 · adopted: yes
+  finding: verifiable · scripts/coaching/replay.sh:312 · adopted: yes
 reviewer: seat=consistency-panel-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
-  finding: verifiable · skills/coaching/SKILL.md:9 · adopted: yes
-  finding: verifiable · skills/coaching/references/replay.md:3 · adopted: yes
+  finding: verifiable · scripts/coaching/SKILL.md:9 · adopted: yes
+  finding: verifiable · scripts/coaching/references/replay.md:3 · adopted: yes
 reviewer: seat=scope-panel-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=red-team-panel-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=doc-propagation-root-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
-  finding: verifiable · skills/coaching/SKILL.md:9 · adopted: yes
-  finding: verifiable · skills/coaching/references/replay.md:3 · adopted: yes
+  finding: verifiable · scripts/coaching/SKILL.md:9 · adopted: yes
+  finding: verifiable · scripts/coaching/references/replay.md:3 · adopted: yes
 reviewer: seat=native-initial-local · runtime=codex-cli-0.159.3 · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=correctness-round2-currentness · runtime=codex · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=consistency-round2-currentness · runtime=codex · model=openai/gpt-6.1-sol · status: ran

@@ -80,8 +80,8 @@ def pytest_collection_modifyitems(items):
         section = getattr(item, 'callspec', None)
         section = section.params.get('section') if section else None
         if key[0] == 'test_bash_suites.py' and section == 'deterministic':
-            inputs = ('tests/test_seat_runner.sh', 'skills/coaching/seat-runner.sh',
-                      'skills/coaching/seat-runner/**/*')
+            inputs = ('tests/test_seat_runner.sh', 'scripts/coaching/seat-runner.sh',
+                      'scripts/coaching/seat-runner/**/*')
         if inputs:
             item.add_marker(pytest.mark.smart_inputs(*inputs))
         script = getattr(item, 'callspec', None)

@@ -19,7 +19,7 @@ Residual1009 teardown defect found during1004 original integration criterion(f):
 - [x] Every non-comment board data byte remains unchanged; retained board integrity and coaching replay checks pass.
 
 ## Actions / Imagine / Plan
-Bounded factual comment correction only in skills/coaching/benchmark-board.yml. Preserve every ground-truth entry and historical source ticket reference. Compare before/after with comment-only lines removed; no tautological prose test. Reuse board integrity and coaching replay checks. No library, abstraction or registry change needed. Original1004 scope preserved by this separate residual-child disposition.
+Bounded factual comment correction only in scripts/coaching/benchmark-board.yml. Preserve every ground-truth entry and historical source ticket reference. Compare before/after with comment-only lines removed; no tautological prose test. Reuse board integrity and coaching replay checks. No library, abstraction or registry change needed. Original1004 scope preserved by this separate residual-child disposition.
 
 ## Feasibility
 PASS: existing board and replay documented and tested. Three content paths including this ticket and the parent Imagine annotation, no keys or API dependencies.

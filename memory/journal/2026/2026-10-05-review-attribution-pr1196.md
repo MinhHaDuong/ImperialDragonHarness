@@ -4,12 +4,12 @@ writer: runtime=codex · model=openai/gpt-6-luna · effort=low
 reviewer: seat=correctness-initial-capacity-failure · runtime=codex · model=openai/gpt-6-sol · status: failed
 reviewer: seat=correctness-replacement · runtime=codex · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=consistency-panel · runtime=codex · model=openai/gpt-6-sol · status: ran
-  finding: verifiable · skills/coaching/seat-runner.sh:37 · adopted: yes
+  finding: verifiable · scripts/coaching/seat-runner.sh:37 · adopted: yes
 reviewer: seat=doc-propagation-panel · runtime=codex · model=openai/gpt-6.1-sol · status: ran
-  finding: verifiable · skills/coaching/seat-runner.sh:37 · adopted: yes
+  finding: verifiable · scripts/coaching/seat-runner.sh:37 · adopted: yes
 reviewer: seat=native-initial-local · runtime=codex-cli-0.159.3 · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=portable-simplification-initial · runtime=codex · model=openai/gpt-6.1-sol · status: ran
-  finding: verifiable · skills/coaching/seat-runner.sh:37 · adopted: yes
+  finding: verifiable · scripts/coaching/seat-runner.sh:37 · adopted: yes
 reviewer: seat=portable-simplification-final-confirmation · runtime=codex · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=criterion-gate · runtime=codex · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=wave-composition · runtime=codex · model=openai/gpt-6.1-sol · status: ran

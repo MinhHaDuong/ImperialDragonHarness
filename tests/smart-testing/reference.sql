@@ -417,7 +417,7 @@ INSERT INTO "file_fp" VALUES(562,'tests/test_raid_invokes_hunt.py',X'AD48A9BF91A
 INSERT INTO "file_fp" VALUES(563,'tests/test_raid_invokes_hunt.py',X'AD48A9BF69FBBC80',NULL,'4d6950a967ad7b33b0b3fdfc255c435e61f71f5b');
 INSERT INTO "file_fp" VALUES(564,'scripts/census/memory-recall.py',X'0A5AB8746B3C0679',NULL,'ddb724120b5858ff0b93f45fa1e125410fc9ca7f');
 INSERT INTO "file_fp" VALUES(565,'tests/test_memory_recall.py',X'73430D71B7CBB903',NULL,'058b1aee0226ae5734c24b4ec6eef2811d22fdad');
-INSERT INTO "file_fp" VALUES(566,'skills/coaching/seat-runner/direct-client.py',X'4819DF8DAB685612',NULL,'7fd223968d00555d9a5c52e2a5508e04377c2fae');
+INSERT INTO "file_fp" VALUES(566,'scripts/coaching/seat-runner/direct-client.py',X'4819DF8DAB685612',NULL,'7fd223968d00555d9a5c52e2a5508e04377c2fae');
 INSERT INTO "file_fp" VALUES(567,'tests/test_padme_direct_client.py',X'2BA575AB2F1E923B',NULL,'1322412f8507f1db7cb9345642cc4c7e4a3e5386');
 INSERT INTO "file_fp" VALUES(568,'tests/test_raid_phase6_gaze_verdict.py',X'DD9C9319B257FBBE26B630D4F8517EB942F689FD',NULL,'2a0785cb5c4b76bc03026c2ee032d254af1a4103');
 INSERT INTO "file_fp" VALUES(569,'tests/test_raid_phase6_gaze_verdict.py',X'DD9C9319B257FBBED534136F12E470B8',NULL,'2a0785cb5c4b76bc03026c2ee032d254af1a4103');

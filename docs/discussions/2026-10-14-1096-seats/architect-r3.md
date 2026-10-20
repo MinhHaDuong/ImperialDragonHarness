@@ -35,7 +35,7 @@ After 3a: review-pr gone, executable callers repointed; text mentions in 3b's fi
 After 3b: live tree consistent for code; prose still via review-pr-prose until child 4 (live, not linted).
 
 ## (f) Lint scope
-Live paths: skills/ tests/ profiles/ agents/ adapters/ scripts/ rules/ README.md. Pattern review-pr(?!-prose) from 3b; review-pr-prose from child 4. Exempt: history paths per author's list. Exemption marker for scripts parsing historical traces, following scripts/trace-stats.py:122-124 (`# historical-skill: verify -> gaze`); coaching benchmark titles (skills/coaching/benchmark-board.yml:133) need the marker or exemption as data. Gaze never retired, not linted.
+Live paths: skills/ tests/ profiles/ agents/ adapters/ scripts/ rules/ README.md. Pattern review-pr(?!-prose) from 3b; review-pr-prose from child 4. Exempt: history paths per author's list. Exemption marker for scripts parsing historical traces, following scripts/trace-stats.py:122-124 (`# historical-skill: verify -> gaze`); coaching benchmark titles (scripts/coaching/benchmark-board.yml:133) need the marker or exemption as data. Gaze never retired, not linted.
 
 ## (g) Price
 1: 3 agent-h, 0.4 author-h; 2: 3, 0.4; 3a: 2, 0.3; 3b: 1, 0.2; measured raid: —, 0.25; 4a+4b: 2.5, 0.4. Through 3b ≈ 9 agent-h, 1.3 author-h; total ≈ 11.5 agent-h, 2 author-h. Seat USD roughly flat.

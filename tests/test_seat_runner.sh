@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for skills/coaching/seat-runner.sh — the ticket-0217 OS-contained reviewer seat.
+# Tests for scripts/coaching/seat-runner.sh — the ticket-0217 OS-contained reviewer seat.
 #
 # Independently selectable sections: deterministic, references, containment.
 # No argument runs all sections; pytest selects each section separately.
@@ -50,9 +50,9 @@ fi
 unset _hermetic_probe
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-SR="${REPO_ROOT}/skills/coaching/seat-runner.sh"
-RELAY="${REPO_ROOT}/skills/coaching/seat-runner/net-relay.py"
-CONTAINERFILE="${REPO_ROOT}/skills/coaching/seat-runner/Containerfile"
+SR="${REPO_ROOT}/scripts/coaching/seat-runner.sh"
+RELAY="${REPO_ROOT}/scripts/coaching/seat-runner/net-relay.py"
+CONTAINERFILE="${REPO_ROOT}/scripts/coaching/seat-runner/Containerfile"
 IMAGE="localhost/seat-runner:v1"
 PASS=0; FAIL=0
 WORK="$(mktemp -d)"; trap 'rm -rf "$WORK"' EXIT
@@ -89,7 +89,7 @@ check_deterministic() (
     ln -s "$(command -v python3)" "$WORK/aider-venv/bin/python"
     export PATH="$WORK/aider-venv/bin:$PATH"
 # ── tier 1: source inspection (no podman needed) ─────────────────────────────
-[ -f "$SR" ] || { echo "FAIL: skills/coaching/seat-runner.sh missing (rename not done)"; echo "Results: 0 passed, 1 failed"; exit 1; }
+[ -f "$SR" ] || { echo "FAIL: scripts/coaching/seat-runner.sh missing (rename not done)"; echo "Results: 0 passed, 1 failed"; exit 1; }
 SRC="$(cat "$SR")"
 
 assert_contains "self-test-only flag exists"        "--self-test-only" "$SRC"
