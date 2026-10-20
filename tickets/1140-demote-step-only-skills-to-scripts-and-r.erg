@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-20T08:18Z reviewer created
+2026-10-20T10:10Z reviewer note doudou count 2026-10-20: typography-finish 2 tool/0 typed, update-publist 2 tool/1 typed (keeps its skill status), bib-merge, related-work-note-validate, coaching 0/0 on both hosts; criterion 1 satisfied for the three zero-use skills and typography-finish
 
 --- body ---
 ## Context
@@ -23,7 +24,7 @@ About 780 resident characters in all.
 Not candidates, by the same evidence: `verify-adherence`, `verify-gate`, `review-pr`, `reviewers`, `review-pr-prose` are loaded by agents constantly (agent-facing); `route` is a model-only reference card. `review-pr` retires under 1100.
 
 ## Exit criteria
-- [ ] Read-only direct-use count of the five candidates on doudou (ssh), reported with a positive control; any candidate a user types there stays a skill
+- [x] Read-only direct-use count of the five candidates on doudou (ssh), reported with a positive control; any candidate a user types there stays a skill  (done 2026-10-20: doudou 233 folders, positive control gaze 530/0, hunt 229/41, roar 202/282; update-publist typed once and stays a skill)
 - [ ] Each remaining candidate becomes a script if its work is mechanical, else a runbook under its owning skill's `runbooks/`, else a reference file; its parent skill points at the new home
 - [ ] Callers, tests and docs naming the old `/skill` still resolve (grep proves it); no test is weakened
 - [ ] `make skills-catalog` run; `make check-skills-drift` clean; the resident skills census drops by the removed cards and the budget is lowered to the measured value plus thin headroom (lowering a budget is the deliverable of a trimming pass)
