@@ -9,6 +9,7 @@ Author: reviewer
 2026-10-20T16:40Z coder criterion 2 left open: refusal replaces "yields the claim", pending author sign-off (PR #1518 review)
 2026-10-20T17:10Z coder roar check-close-claims.sh shares the tracker (copy, kept identical by test); its audit reads unclosed-fence lines as live
 2026-10-20T17:50Z coder closer may sit at most 3 columns deeper than its opener (PR #1518 round 3); tracker now serves five readers, not three
+2026-10-20T16:14Z reviewer note verify-reroll — round 1: fence closer depth must be absolute (<=3 cols) and tab stops must advance to the next multiple of 4; criterion 2 needs author sign-off
 
 --- body ---
 ## Context
