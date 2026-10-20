@@ -1,0 +1,17 @@
+%erg 0.1
+Title: 1146 child C: fold the pending attribution files into the new record
+Created: 2026-10-20
+Author: reviewer
+Blocked-by: 1149
+
+--- log ---
+2026-10-20T13:17Z reviewer created
+
+--- body ---
+## Context
+Child C of tracker 1146 (exit criterion 4). Author decision 2026-10-20: fold, not drop. The pending files on main under `memory/evidence/review-attribution-pr14{56,57,60}-pending.md` convert to the extended schema once child B defines it. Journal entries stay append-only: link corrections from new entries.
+
+## Exit criteria
+- [ ] Each pending file for PRs 1456, 1457 and 1460 is represented in the extended schema, with unknown identities left as unknown
+- [ ] The pending files are linked from the new records, not rewritten or deleted
+- [ ] The validator passes on every converted record

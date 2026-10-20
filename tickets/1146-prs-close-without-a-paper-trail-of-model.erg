@@ -15,3 +15,10 @@ Recurring complaint (author, 2026-10-20): merged PRs carry no record of which mo
 - [ ] One mandatory attribution record per merged PR, at a fixed place that lands with the PR (PR body block or file in the branch), listing step, model, effort, route and independence basis
 - [ ] `/merge` (or its gate) refuses or warns when the record is absent; positive control: a PR without it is flagged
 - [ ] Backfill decision for the pending attribution files (e.g. PR 1481) stated: land, fold into the new mechanism, or drop
+
+## Children
+- 1148 inventory of where identity is lost (exit 1)
+- 1149 PR-body attribution block and /merge warning (exits 2-3), blocked by 1148
+- 1150 fold pending attribution files (exit 4), blocked by 1149
+
+Decisions 2026-10-20: warn at /merge, record in the PR body, fold the pending files. Transcript recovery stays out (ticket 1142 and the 1145-era steers). This ticket closes after the integration review.
