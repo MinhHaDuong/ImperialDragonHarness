@@ -2,9 +2,11 @@
 Title: Make review attribution capture complete: recover seat identity from transcripts, record it at verdict time
 Created: 2026-10-20
 Author: reviewer
+Closed: superseded — transcript recovery stays out (1146 decision); forward path is ticket 1155
 
 --- log ---
 2026-10-20T10:38Z reviewer created
+2026-10-20T19:22Z reviewer closed — superseded — transcript recovery stays out (1146 decision); forward path is ticket 1155
 
 --- body ---
 ## Context
