@@ -212,11 +212,15 @@ def exempt_paths(repo: Path, base: str, head: str) -> list[str]:
 def patch_id(repo: Path, base: str, head: str) -> str:
     """`git patch-id --stable`, joined with the verbatim id so whitespace counts."""
     excludes = [f":(exclude,literal){p}" for p in exempt_paths(repo, base, head)]
-    diff = git(repo, "diff", "--binary", "--no-renames", "--no-ext-diff", "--no-textconv",
-               base, head, "--", ".", *excludes) + "\n"
-    if not diff.strip():
+    # Raw bytes end to end: stripping the diff would erase whitespace on its last line.
+    diff = subprocess.run(
+        ["git", "-C", str(repo), "diff", "--binary", "--no-renames", "--no-ext-diff",
+         "--no-textconv", base, head, "--", ".", *excludes],
+        check=True, capture_output=True, timeout=60).stdout
+    if not diff:
         return "empty"
-    ids = [git(repo, "patch-id", flag, stdin=diff).split()[0]
+    ids = [subprocess.run(["git", "-C", str(repo), "patch-id", flag], input=diff, check=True,
+                          capture_output=True, timeout=60).stdout.split()[0].decode()
            for flag in ("--stable", "--verbatim")]
     return "+".join(ids)
 

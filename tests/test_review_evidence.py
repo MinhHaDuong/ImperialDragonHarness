@@ -379,3 +379,13 @@ def test_gate_without_a_plan_row_fails_closed(repo, policy):
     out = run_cli(repo, policy, "gate", "--seat", "correctness")
     assert out.returncode != 0
     assert "unstated" not in out.stdout
+
+
+@pytest.mark.integration
+def test_trailing_whitespace_on_the_final_diff_line_changes_identity(repo, policy):
+    """The diff is hashed byte for byte: no strip of its last line."""
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    commit(repo, "app.py", "def f():\n    return 1 \n", "trailing space on the last line")
+    gate = run_gate(repo, policy, "--seat", "correctness")
+    assert gate.returncode != 0 and "stale" in gate.stdout
