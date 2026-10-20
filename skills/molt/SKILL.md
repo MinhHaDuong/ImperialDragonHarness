@@ -45,8 +45,8 @@ Run full repo housekeeping and act on every finding.
    `erg check tickets/` inside `housekeeping-git.sh`, and `erg ready` inside the
    step-2 yawn probe (`project-state.py` prefers `which erg`). A stale
    installed binary produces *false* violations on tickets using format the old
-   binary predates — six bogus folder/header hits on closed tickets carrying the
-   newer `Label:` header, 2026-06-04 — and an autonomous sweep would file
+   binary predates (for example bogus hits on closed tickets carrying the
+   newer `Label:` header), and an autonomous sweep would file
    tickets on them.
 
    ```bash
@@ -75,9 +75,8 @@ Run full repo housekeeping and act on every finding.
    ```bash
    "$IDH_ROOT/scripts/worktree-gc.sh"
    ```
-   The script enforces the active-session rails itself (ticket 0355 — on
-   2026-07-13 a rail-less GC removed two live sessions' base worktrees, whose
-   merged-and-pruned branches read `[gone]` while sessions still sat in them):
+   The script enforces the active-session rails itself (merged-and-pruned branches read `[gone]` while
+   sessions still sit in them):
    it skips any worktree that is a live process's cwd, any locked worktree
    (lock = in use, mirroring step 0; only a dead-pid harness lock is
    unlocked, so the rails decide), any
@@ -88,28 +87,25 @@ Run full repo housekeeping and act on every finding.
    unknown source retains `.tmp/` and the worktree as pending; eligible removal
    reports `.tmp/` size first. `.tmp/` is never purged independently. After
    that gate it purges only the two review-scratch paths, then reports and
-   retains every other WIP file by name (ticket 0948). It never `rm -rf`s a whole worktree and
+   retains every other WIP file by name. It never `rm -rf`s a whole worktree and
    stays silent when there is nothing to report — but it also **reports
    (never removes) "husk" dirs** under `.claude/worktrees/` that are no longer
    registered worktrees (a session base cwd deregistered mid-session), so a
    `worktree-gc: husk …` line breaks the silence without anything being
    cleaned. That output is informational; report-only is the PERMANENT design
-   (ticket 0338 closed the removal-heuristic question — remote sessions are
-   structurally undetectable, so no complete liveness signal exists) — do NOT
-   re-file. See tickets 0169, 0195, 0325, 0338. **A worktree the
+   (remote sessions are structurally undetectable, so no complete liveness
+   signal exists) — do NOT re-file. **A worktree the
    GC skips for uncommitted changes is a signal, not just an obstacle:** diff
    it before moving on — orphaned WIP may be a closed ticket's dropped
    exit-criteria deliverable (`erg-pr-merge` autocloses on the `**Ticket:**`
-   line unconditionally; 2026-06-16 ticket 0609's mandated test sat
-   uncommitted after PR #1111 closed it with only the data fix). If so,
+   line unconditionally). If so,
    preserve (`wip(NNNN):` commit + push) and open a follow-up ticket.
 
 1.7. **Sweep orphan session scratch directories.** Every session gets a scratch
    directory under the user's temp root and nothing but the `SessionEnd` hook
    removes one, so a crash, a kill, or a session that predates the hook leaves
    it behind — charged to the user's temp quota until the next fill kills the
-   Bash tool in every session at once (2026-09-06: three sessions, then a
-   reboot; ticket 0854).
+   Bash tool in every session at once.
 
    ```bash
    python3 "$IDH_ROOT/scripts/session_scratch.py" --sweep
@@ -222,8 +218,3 @@ Run full repo housekeeping and act on every finding.
 
 Step 1 cuts a `housekeeping-<date>` branch from origin/main before any commits,
 and step 6 pushes it and opens a merge request. All fixes land via that merge, never directly on main.
-
-The skill once had a second mode, driven by `BEAT_HOUSEKEEPING_BRANCH`, in which
-`beat.py` cut the branch and decided what to do with it afterwards. Ticket 0882
-removed the nightbeat block, so that variable is never set and the branch above
-is the only path.

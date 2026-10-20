@@ -46,7 +46,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    interactive hunt was triaged by that hunt before it was spawned, so re-reading
    the tells buys nothing. A raid, though, picks its own targets and no
    interactive hunt precedes them. `erg ready` already skip-lists the label
-   (`tickets/.ergrc`), and raid Phase 1 screens its own targets ([[0390]]);
+   (`tickets/.ergrc`), and raid Phase 1 screens its own targets;
    neither is a second triage here.
    - **Needs-human triage.** Read the ticket for these tells, mostly mechanical: a
      `Label: needs-human` header; exit criteria carrying decision verbs (decide,
@@ -144,14 +144,13 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
     Skill(skill: "review-pr", args: <pr-number>)
     ```
     Follow the contract the skill loader returns; do not paraphrase or inline its
-    steps (mirrors raid Phase 5's mechanical `Skill(hunt)` invocation, ticket 0293).
+    steps (mirrors raid Phase 5's mechanical `Skill(hunt)` invocation).
     Each pass through the 11–12 loop is one **review round**. Do not pass a round
     number: `/review-pr` derives its own round from the merge request's posted
     review history and scopes the panel accordingly — round 1 uses the
     configured small-diff width from `skills/review-pr/panel-width.json`
     (Correctness only when eligible; `review:standard` requests all five
     perspectives), while later rounds re-run only perspectives that objected
-    plus a regression check (§ Round scoping in `skills/review-pr/SKILL.md`,
-    ticket 0377).
+    plus a regression check (§ Round scoping in `skills/review-pr/SKILL.md`).
 12. Fix all comments regardless of severity. Per fix cycle, run `make check-fast` plus the tests implicated by the comments — not the full suite. If any cycle's fix touches code outside the fast tier, run the full `make check` once, in addition — not on every cycle.
 13. Repeat 11–12 up to 3 times, i.e. up to round 3. If still not clean, escalate (see workflow rules).
