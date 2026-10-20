@@ -5,16 +5,28 @@ Author: reviewer
 
 --- log ---
 2026-10-20T08:22Z reviewer created
+2026-10-20T15:15Z reviewer rescoped per author-approved decisions (advisor-reviewed 2026-10-20): storage-independent evidence core, not blocked on git-erg 0272.
 
 --- body ---
 ## Context
 Child 1 of tracker 1100 (about 3.5 agent-h, 0.5 author-h). Plan of record: docs/discussions/2026-10-14-1096-design.md, sections "Answers" and "Round 3". Evidence core of the review orchestration: valid evidence is reused, no second battery on an unchanged diff; verify-gate stays the separate final check.
 
-## Scope (from the 1100 plan table)
-Forge actor contract (allow-list of three pinned actor IDs, fail closed); shared reuse script; verify-gate stale and no-report checks; seat table; risk floor (the higher of path and ticket-text matches); report hashes in the block; behavioural regression tests.
+Supersedes the round-3 table row per the 2026-10-15 decisions in docs/discussions/2026-10-14-1096-design.md.
+
+## Scope
+A storage-independent evidence core. It is NOT blocked on git-erg 0272.
+
+- Pure decision function: (base, head, `git patch-id --stable` of the diff, criteria hash, policy version) -> `reuse | re-run | stale`. It reads and writes repo files under `tickets/reviews/<base>..<head>/`.
+- Storage is repo files, not forge comment blocks. The earlier "report hashes in the block" item is dropped.
+- The `.dyne` plan file is OUT of 1142. Hunt keeps the plan in the PR body until 0272 lands; a later child maps it to Dyne (delivery phase 4).
+- Actor allow-list (three pinned actor IDs, fail closed) applies only to reviews READ FROM THE FORGE (Copilot, human comments). Controller-written repo reports are trusted; no signing. Accepted residual risk: a same-branch coder can write a plausible report, and execution metadata is the only tell.
+- Reuse rule: reuse only if the patch-id is identical and the criteria hash and policy version are unchanged. Never reuse checks, gate or adherence results. Commits adding only non-executable files under `tickets/reviews/` do not invalidate.
+- Policy version covers: the review skills, the decorrelation/independence rules, the reuse script's own hash, and the seat prompts (`agents/*-seat.md`, review perspectives). It does not cover all of `rules/`.
+- Shared reuse script, verify-gate stale and no-report checks, seat table, risk floor (the higher of path and ticket-text matches), behavioural regression tests.
 
 ## Exit criteria
-- [ ] Reuse script and actor contract in place; an unknown actor fails closed
+- [ ] Decision function and reuse script in place, deciding reuse / re-run / stale from the five inputs; reads and writes `tickets/reviews/<base>..<head>/`; an unknown forge actor fails closed
+- [ ] Reuse refused on a changed patch-id, criteria hash or policy version; checks, gate and adherence results are never reused; a commit adding only non-executable files under `tickets/reviews/` does not invalidate
 - [ ] verify-gate rejects a stale or missing report and still blocks missing criteria, unresolved blocking findings (Copilot's included) and absent required proof
 - [ ] Regression scenarios: unchanged-head reuse without duplicate reviewers, proportionate re-review after relevant changes, rejection of stale or missing proof; they test behavior, not wording alone
 - [ ] Coordinate with ticket 1126 (verify-gate comment-only scope narrowing) so the two edits to verify-gate do not collide

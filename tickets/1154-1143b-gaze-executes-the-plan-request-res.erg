@@ -1,0 +1,22 @@
+%erg 0.1
+Title: 1143b: gaze executes the plan (request/response files)
+Created: 2026-10-20
+Author: reviewer
+Blocked-by: 1142
+
+--- log ---
+2026-10-20T15:12Z reviewer created
+
+--- body ---
+## Context
+Child 2b of tracker 1100, split from tracker 1143 on 2026-10-20. Plan of record: docs/discussions/2026-10-14-1096-design.md, author decisions of 2026-10-15 (request/response contract). Parent: 1143. Needs 1142's evidence core and `tickets/reviews/` layout.
+
+## Scope
+Gaze executes the review plan: inline, transport preflight with detached fallback, controller-written request/response files (frozen request, then returned report plus execution metadata; one artifact per execution), validated return schema; `mode=code|prose|both`; review-pr's code panel becomes the code mode; portable simplify is a declared seat.
+
+## Exit criteria
+- [ ] Gaze writes the frozen request before dispatch and is the sole writer of the final artifact; the controller validates the returned report against the schema and appends it without rewriting the request
+- [ ] Transport preflight with detached fallback; execution failure or interruption is distinct from the review verdict
+- [ ] `mode=code|prose|both` works; review-pr's code panel is the code mode
+- [ ] Gaze consumes 1142's reuse decision and does not dispatch duplicate reviewers on an unchanged diff
+- [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker, else split

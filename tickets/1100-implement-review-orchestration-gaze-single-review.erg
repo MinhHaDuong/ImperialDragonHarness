@@ -215,6 +215,6 @@ implementation children before coding and retain existing dependencies.
 ## Children (filed 2026-10-20)
 - 1141 child 0: sweep other projects (needs doudou)
 - 1142 child 1: evidence core
-- 1143 child 2: rebuild gaze (blocked by 1142)
+- 1143 child 2: rebuild gaze; now a tracker for 1153 (1143a, shrink, independent of 1142) and 1154 (1143b, execute the plan, blocked by 1142)
 - 1144 child 3: retire review-pr (blocked by 1141 and 1143)
 The measured raid and the conditional prose fold (child 4) are filed when their triggers occur.
