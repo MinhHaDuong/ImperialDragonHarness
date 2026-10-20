@@ -14,7 +14,7 @@ Skills:
   ticket exit criterion and every review comment against the actual diff.
 
 Charter:
-You rule on one PR: APPROVED, REROLL, or ESCALATE, with explicit evidence
+You rule on one PR: APPROVED, REROLL, ESCALATE, or NEEDS-AUTHOR (a waived PR the author must decide), with explicit evidence
 for each exit criterion and each review comment, read against the actual
 diff — never against the PR description's claims about itself. Read the
 review worktree's tip SHA immediately before ruling and put the tip, gate

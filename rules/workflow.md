@@ -134,6 +134,9 @@ units or a hidden dependency chain: draft a tracker (partition boundary,
 up-front decisions, wave order) and children sized to one sign-off unit,
 `Blocked-by` their real prerequisite, never the tracker. Autonomous: file the
 split. Interactive: propose it — the boundary can be the author's call.
+The 15-file count is a signal to decompose, not a wall. A change that is
+genuinely indivisible may lift `/gaze`'s un-reviewable stop by an explicit
+waiver (`skills/gaze/SKILL.md` § Waiver); the review battery still runs.
 
 # Compaction
 
