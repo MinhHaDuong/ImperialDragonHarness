@@ -241,6 +241,37 @@ def _is_dangling_link(target: Path, skill: str) -> bool:
     return Path(os.readlink(target)).parts[-2:] == ("skills", skill)
 
 
+def _points_into_harness_skills(link: Path) -> bool:
+    """Does this link's text name a ``.agents/skills/`` directory?
+
+    ``_is_dangling_link`` only checks the ``skills/<name>`` tail, which a
+    foreign checkout (``~/code/arena/skills/arena``) shares. Pruning without
+    a skill name needs the stricter test: the target sits under the harness's
+    own ``.agents/skills``, wherever that checkout was.
+    """
+    parts = Path(os.path.normpath(os.readlink(link))).parts
+    return any(a == ".agents" and b == "skills" for a, b in zip(parts, parts[1:]))
+
+
+def prune_dangling(harness: str) -> list[str]:
+    """Remove links in a skills root whose harness skill no longer exists.
+
+    ``uninstall`` cannot name a skill that left the repo, so removed or
+    renamed skills would otherwise leave their links behind for good.
+    Foreign dangling links and live links are left alone.
+    """
+    root = target_path(harness, "x").parent
+    if not root.is_dir():
+        return []
+    messages = []
+    for entry in sorted(root.iterdir()):
+        if entry.is_symlink() and not entry.exists() and _points_into_harness_skills(entry):
+            was = os.readlink(entry)
+            _unlink(entry)
+            messages.append(f"{harness}: pruned dangling link {entry} -> {was}")
+    return messages
+
+
 def status(harness: str, skill: str) -> dict:
     target = target_path(harness, skill)
     present = os.path.lexists(target) and _is_canonical(target, skill)
@@ -492,6 +523,15 @@ def main(argv: list[str] | None = None) -> int:
                 if not moves:
                     print("no old skill links to retarget")
                 return 0
+            if args.command == "install":
+                # Codex and Pi share a root; sweep each physical root once.
+                swept = set()
+                for harness in targets:
+                    root = target_path(harness, "x").parent
+                    if root not in swept:
+                        swept.add(root)
+                        for message in prune_dangling(harness):
+                            print(message)
             for skill in skills:
                 for harness in targets:
                     if args.command == "install":
