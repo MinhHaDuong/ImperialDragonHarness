@@ -84,7 +84,7 @@ The ambient environment is **no longer consulted**: a `HAL_ID` or
 `HAL_PASSWORD` already exported in the shell does not take precedence and has
 no effect at all. That is deliberate. Their presence used to depend on the
 `KEYS=` selection in force, and a project `KEYS=` **replaces** the harness one
-rather than adding to it (ticket 0360), so the deposit failed as an ordinary
+rather than adding to it, so the deposit failed as an ordinary
 HAL auth error whenever it was run from a project whose `.env` carried its own
 `KEYS=` line. Point-of-use resolution bypasses that layer, so there is nothing
 left to probe for before starting: the resolver itself fails loud and named,
@@ -126,10 +126,10 @@ curl -s 'https://api.archives-ouvertes.fr/search/hal/?q=authIdHal_s:minh-ha-duon
 ```
 
 Standard values for this author:
-- Structure: `#struct-1380080` (CIRED). **Verified against the HAL ref API,
-  2026-07-27** — a fork of this skill carried `struct-1002424`, which
-  resolves to ECOSYS, an unrelated laboratory. Do not "correct" this id
-  from another document; re-verify it instead:
+- Structure: `#struct-1380080` (CIRED). **Verified against the HAL ref API**
+  — a fork of this skill carried `struct-1002424`, which resolves to ECOSYS,
+  an unrelated laboratory. Do not "correct" this id from another document;
+  re-verify it instead:
   `curl -s 'https://api.archives-ouvertes.fr/ref/structure/?q=docid:1380080&fl=docid,name_s,acronym_s&wt=json'`
 - ORCID: `0000-0001-9988-2100`
 - idhal: `minh-ha-duong`

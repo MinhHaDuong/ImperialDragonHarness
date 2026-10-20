@@ -6,7 +6,7 @@ Launch forms are in `routes.json` under `launch_doors.codex`.
 ## What Codex can reach
 
 - Under a ChatGPT-account login only OpenAI models run. `codex exec -m
-  claude-haiku-5-5` returns HTTP 400 (ticket 1063, 2026-10-08). Codex has no
+  claude-haiku-5-5` returns HTTP 400. Codex has no
   Anthropic door. A custom provider with an Anthropic key was not tested.
 - Therefore this runtime has no cross-family door of its own. A review seat
   from another family is a headless CLI that is not Codex (`claude -p`,
