@@ -15,7 +15,7 @@ Memory neighbours, none of them lifecycle skills proper:
 
 | Skill | Question it answers | Writes |
 |-------|---------------------|--------|
-| `/roar` capture step | what significant fact did this task produce? | append to the journal |
+| `/roar` capture (steps 2-3, `runbooks/capture.md`) | what significant fact did this task produce? | append to the journal |
 | `/hoard` | how do I tidy accumulated memory, stale claims included? | pruned and merged topics, index |
 
 ## Choosing between neighbours
