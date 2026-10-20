@@ -2,11 +2,13 @@
 Title: 1146 child B: per-PR attribution block in the PR body and a /merge warning
 Created: 2026-10-20
 Author: reviewer
+Closed: autoclosed — PR #1517
 
 --- log ---
 2026-10-20T13:17Z reviewer created
 2026-10-20T13:45Z reviewer note blocker 1148 closed — Blocked-by removed.
 2026-10-20T14:05Z reviewer orchestrator decomposed: criteria 2 and 4 moved to 1151 to stay under the 15-file /gaze breaker
+2026-10-20T14:34Z reviewer closed — autoclosed — PR #1517
 
 --- body ---
 ## Context
