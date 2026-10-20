@@ -8,7 +8,7 @@ Launch forms are in `routes.json` under `launch_doors.vibe`.
 - Vibe is Mistral-served (the `mistral` route). It has no model flag on the
   command line: the model comes from the agent (`--agent <name>`) or the
   configuration.
-- Headless `vibe -p` denies file tools (ticket 1017), so it cannot serve as a
+- Headless `vibe -p` denies file tools, so it cannot serve as a
   detached review seat. Record such a seat as `no report`; never simulate it.
 - Run from a trusted folder (`--trust`), or project configuration such as
   `AGENTS.md` is ignored.

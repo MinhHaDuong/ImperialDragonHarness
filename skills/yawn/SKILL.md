@@ -44,7 +44,7 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
      bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" merged-probe <branch>
      ```
      Exit 0 means the branch landed on main: ancestry (`git merge-base --is-ancestor`) or, as an equal second signal, the merge request number from the ticket's `Closed:` header appearing as `(#N)` in a subject on main. Emit one fix-now bullet per matching branch: `Delete local branch \`<branch>\` (closed ticket <NNNN>, merged into main)`.
-     Note: the merge-request-subject signal stays because ancestry misses squash merges made before 2026-05-25, which left no ancestry; the probe tries both.
+     Note: the merge-request-subject signal stays because ancestry misses squash merges in the past, which left no ancestry; the probe tries both.
    - **Closed-ticket branches** where the merge probe exits 1 (not merged) or 2 (`could-not-determine`: the branch maps to no ticket or the ticket records no merge request number, or `tickets/` or erg is missing): flag as cleanup candidate for manual review, not fix-now. Exit 2 is never a deletion.
 5. **Worktrees** — from `worktrees`. Flag entries with `locked: true` whose lock pid is no longer running. For each worktree, also run:
    ```bash
@@ -72,8 +72,8 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
      drafted`, `when converted`, `for now`, then confront each promise with the
      decision behind it: a study voided, a ticket closed wontfix, work never
      scheduled. Such text reads as pending work and agents act on it — a flag
-     from an A/B cancelled on 2026-07-14 was still being recommended as a live
-     cost lever two months later (PR #856). Judgment call, deliberately
+     from a cancelled A/B was still being recommended as a live
+     cost lever two months later. Judgment call, deliberately
      unguarded: report the stale ones, never auto-edit.
 12. **Session scratch (host-level)** — from `session_scratch`. The one check
     that is not about this repo: every session gets a scratch directory under
@@ -86,8 +86,7 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
       cap is *inferred* from the init system's default per-user share, because
       the quota tools cannot read a tmpfs quota. Say "inferred cap", never
       "quota reads". A fill here is not cosmetic. It kills the Bash tool with
-      EDQUOT in every session of that user at once (2026-09-06, three sessions
-      and a reboot; ticket 0854).
+      EDQUOT in every session of that user at once.
     - **Truncation** — read `session_scratch.truncated` before quoting any byte
       figure. When it is true the directory walk stopped at its entry ceiling,
       so `root_bytes` and `orphan_bytes` are a floor rather than a total; the

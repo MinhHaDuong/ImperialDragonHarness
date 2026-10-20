@@ -49,8 +49,8 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     a. Preflight from inside the worktree: `"$IDH_ROOT/scripts/worktree-exit-preflight.sh"` (purges `.panel/` and `build/panel-head/` review scratch, then refuses on any other uncommitted/untracked state; tickets 0174 and 0948). If it blocks, finish step 5/6 (commit WIP, handoff notes) and re-run.
     b. `cd` to the primary checkout (`dirname "$(git rev-parse --path-format=absolute --git-common-dir)"`). All remaining steps run on main.
 8. **Hygiene sweep**:
-   - Stale worktrees were GC'd by `/molt` at step 1 (housekeeping owns worktree GC; the script's rails protect active sessions — ticket 0355). Here, just `git worktree prune` for leftover admin entries of already-deleted dirs.
-   - **A worktree the GC skipped for uncommitted changes is a signal, not just an obstacle**: diff it and ask "is this a closed ticket's dropped deliverable?" — `erg-pr-merge` autocloses on the `**Ticket:**` line unconditionally, so a PR can close a ticket having landed only part of the work, leaving the rest as orphaned WIP (2026-06-16: ticket 0609's mandated adherence test sat uncommitted for weeks after PR #1111 autoclosed 0609 with only the data fix). Preserve it (`wip(NNNN):` commit + push), then re-ticket and execute; never silently discard. Verify any recovered test actually runs — uncommitted WIP may never have been linted/executed.
+   - Stale worktrees were GC'd by `/molt` at step 1 (housekeeping owns worktree GC; the script's rails protect active sessions). Here, just `git worktree prune` for leftover admin entries of already-deleted dirs.
+   - **A worktree the GC skipped for uncommitted changes is a signal, not just an obstacle**: diff it and ask "is this a closed ticket's dropped deliverable?" — `erg-pr-merge` autocloses on the `**Ticket:**` line unconditionally, so a PR can close a ticket having landed only part of the work, leaving the rest as orphaned WIP. Preserve it (`wip(NNNN):` commit + push), then re-ticket and execute; never silently discard. Verify any recovered test actually runs — uncommitted WIP may never have been linted/executed.
    - `git branch -a` → delete stale remote branches
    - Check for orphan tickets and stale merge requests
 9. **Full test suite** — `make check` on main. New failures → open ticket. Known failures → confirm ticket still open.
@@ -62,7 +62,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
        - Auto-merge available and enabled on the repo → enable it on the merge request; it lands on its own once the forge's requirements are met.
        - Otherwise → fall back to the repo's own proportionality path (a "trivial review" label where one exists, plus a single review), then merge directly.
 
-       Both halves are load-bearing. This step named auto-merge alone for months; in a consumer repo where that setting was off, a session following it literally stopped at the open merge request and handed the author the merge (2026-09-10). Whatever had landed the earlier STATE refreshes there, it was never auto-merge — and nothing in the step said to check. A step that names one mechanism without a probe assumes every repo shares one configuration, and fails silently in the direction of extra author work.
+       Both halves are load-bearing. This step named auto-merge alone; in a consumer repo where that setting was off, a session following it literally stopped at the open merge request and handed the author the merge. Whatever had landed the earlier STATE refreshes there, it was never auto-merge — and nothing in the step said to check. A step that names one mechanism without a probe assumes every repo shares one configuration, and fails silently in the direction of extra author work.
        <!-- harness-extension-point -->
        Current-generation spelling: `gh api repos/<owner>/<repo> --jq .allow_auto_merge` to read it, `gh pr merge <N> --auto --merge` to arm it.
     e. After the PR merges, delete the throwaway branch (local and remote).
@@ -73,7 +73,6 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     so git cannot see it). If it prints a line, include it in the final summary
     as an offer of `/zotero check-staging`; the author accepts or not. No output, no
     mention. Proposed, never run automatically; it does not belong in `/molt`
-    (ticket 1112).
 12. **Suggest a hoard in the conclusion when relevant.** After completing
     all lair work, count journal experiences not yet covered by an accepted
     report in `memory/hoards/`. An unmerged report does not mark experiences

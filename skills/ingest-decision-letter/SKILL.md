@@ -33,8 +33,8 @@ thread and save its text to a file first, then proceed exactly as for a text
 file. Do not build the intake around any one mail tool — the archived text file
 is the interface.
 
-Once located, **archive first** (next step): the 2026-06-18 intake wasted a whole
-search re-hunting comments that had already been filed. The archive is the
+Once located, **archive first** (next step): re-hunting comments already filed wastes a
+whole search. The archive is the
 single source of truth; never send the author back to a mailbox to re-find them.
 
 ## Steps
@@ -74,8 +74,7 @@ single source of truth; never send the author back to a mailbox to re-find them.
    everything around it is mechanical.
 
 4. **Dedupe atomic-vs-remark.** A reviewer's numbered points often restate one
-   underlying remark (the 2026-06-18 letter reconciled 60 atomic comments down to
-   56 remarks). `dedupe` folds duplicates and any record you tagged with
+   underlying remark. `dedupe` folds duplicates and any record you tagged with
    `atomic_of` into its parent, so the distinct-remark count is deterministic:
    ```
    "$IDH_ROOT/skills/ingest-decision-letter/ingest_letter.py" dedupe \

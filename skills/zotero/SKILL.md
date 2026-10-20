@@ -8,7 +8,7 @@ user-invocable: true
 argument-hint: "import <pdf-or-url>... | suggest-edits | check-staging [<repo>] [--dir <dir>] | report-duplicates | suggest-attachments"
 ---
 
-Discipline: `rules/zotero.md` — Zotero is the system of record, `docs/` and `.bib` are git-ignored staging. It is no longer resident in every session (ticket 0572); read it before working outside the verb files. A cited page number is read on the page, never interpolated from an extraction (the rule carries the discipline).
+Discipline: `rules/zotero.md` — Zotero is the system of record, `docs/` and `.bib` are git-ignored staging. It is no longer resident in every session; read it before working outside the verb files. A cited page number is read on the page, never interpolated from an extraction (the rule carries the discipline).
 
 # Zotero
 
@@ -26,7 +26,7 @@ A run uses exactly one verb. **Read the verb's file before acting.**
 | `import` | one or more PDFs or URLs → new items with attachments | `references/import.md` |
 | `suggest-edits` | report missing fields on items that already exist; write them only with `--edit` | `references/enrichment.md` |
 | `check-staging` | compare staged files with the library — the files a repository's `.bib` links, or every staging file under `--dir` — and report; `--apply` creates absent items, `--apply --edit` also stores files under existing items | `references/backfill.md` |
-| `report-duplicates` | hash-dedup JSON report, library against itself (ticket 0485) | `docs/zotero-report-duplicates.md` |
+| `report-duplicates` | hash-dedup JSON report, library against itself | `docs/zotero-report-duplicates.md` |
 | `suggest-attachments` | file a document onto an item that already exists (reports by default; stores it with `--edit`) | `references/backfill.md` |
 
 The former three modes dissolve into this surface: `import` and enrichment

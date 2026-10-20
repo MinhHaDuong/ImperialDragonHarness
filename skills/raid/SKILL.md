@@ -87,13 +87,12 @@ explicit-ID shape covers an author typing it and a program building it alike,
 and this skill cannot tell them apart. The autonomous caller that used to exist
 was safe for a reason that lived upstream of here, not in this phase: its
 candidates came from `erg ready`, which already applies the skip filter. That
-caller was removed with the nightbeat block (ticket 0882), so there is none
-today — and any future one that synthesizes IDs some other way needs its own
+caller no longer exists, so there is none today — and any future one that synthesizes IDs some other way needs its own
 screen before it reaches this carve-out.
 
 If EVERY discovered ticket is skip-labelled, the run returns those batched
 decision lists rather than an empty-run report. One question round the author
-can answer in a single pass is the deliverable (decided 2026-07-28, ticket 0390).
+can answer in a single pass is the deliverable.
 
 Apply the monster-ticket checklist (`rules/workflow.md` § Autonomous action) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
 
@@ -203,10 +202,10 @@ After committing the final annotation, run `git pull --rebase origin main`, then
 record `WAVE_BASE="$(git rev-parse HEAD)"` in the raid log. Per-phase annotation
 commits stay as they are — WAVE_BASE is simply their last commit — so every wave
 ticket annotation is an ancestor of it and all wave branches fork from one
-shared, mergeable base. Patch-equivalent commits are not merge-equivalent: the
-2026-10-02 raid carried the same annotation patch as 26c8ab73 (native) and
-635cf70c (cherry-pick), and every pair of wave PRs holding different SHAs of
-that one patch collided on the ticket files at merge time.
+shared, mergeable base. Patch-equivalent commits are not merge-equivalent: a
+raid that carried the same annotation patch natively and by cherry-pick saw every
+pair of wave PRs holding different SHAs of that one patch collide on the ticket
+files at merge time.
 
 ## Phase 5.0: Land coordination PR (cross-cutting registries)
 
@@ -216,9 +215,7 @@ dispatch keys, config-file conventions). If ≤2 PRs touch it, skip — a manual
 rebase is cheaper than the coordination overhead.
 
 **Why**: when N parallel PRs each append to the same cross-cutting set, the
-rebase onto sibling-merged main silently drops each PR's own addition. Wave 2
-(SOTA-adapter raid, 2026-05-20) needed a resurrection agent for 3 of 4 merges
-because of this.
+rebase onto sibling-merged main silently drops each PR's own addition.
 
 **How**: before opening any Wave-N PR, open one tiny PR that adds ALL of the
 wave's entries to the shared registries at once, and merge it first. Each
@@ -274,8 +271,7 @@ Skill(skill: "hunt", args: "<id>")
 It then follows the contract the skill loader returns. The agent prompt must NOT
 paraphrase, summarize, or inline hunt's steps; the versioned `skills/hunt/SKILL.md`
 is the single live execution contract, and the loader supplies it fresh on every
-run. (A prose paraphrase is exactly what drifted between the aedist Wave A and
-Wave B prompts, 2026-06-11/12: the contract lived in prompt-writing memory
+run. (A prose paraphrase drifts: the contract then lives in prompt-writing memory
 instead of the skill.) The agent pushes its branch and opens a merge request as
 hunt's flow dictates.
 
@@ -296,7 +292,7 @@ an agent orchestration, and child sessions do not inherit the agent connector
 reporting `battery: NOT-RUN — cause: no-agent-tool`, `depth`, or `guard`,
 or by a known absent agent connector — substitute one detached, headless, non-interactive
 CLI session per PR per the detached-seat contract
-(`skills/review-pr/SKILL.md` § Detached-seat substitution, ticket 1017): cwd
+(`skills/review-pr/SKILL.md` § Detached-seat substitution): cwd
 pinned to the PR's worktree, prompt embedding `/gaze <pr-number>` plus the
 caller prerequisites and the containment rails (no merges, no writes outside
 the PR branch); the result is observed by polling the written verdict
