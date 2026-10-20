@@ -41,7 +41,7 @@ candidates conflict.
 <!-- harness-extension-point: on GitHub, `gh pr view --json number` resolves
 the current branch's PR number. -->
 
-One skill, one PR, one decision: APPROVED / REROLL / ESCALATE. **Does not
+One skill, one PR, one decision: APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR. **Does not
 merge** — the merge decision belongs to the caller (the human or the raid).
 Only one live `/gaze` may run on a PR at a time; the caller keeps to that
 (`rules/workflow.md` § Delegation). A past verdict is evidence, not authority
@@ -123,9 +123,9 @@ treat it as a non-result: do **not** relaunch the reviewer battery. Wait for
 the background reviewer notifications, then run `/verify-gate <pr>
 worktree=$primary_root/.claude/worktrees/review-<pr-number>` directly to produce the verdict from their outputs.
 A waived PR can come back `NEEDS-AUTHOR`: a real verdict, not APPROVED, never merged by the
-recovery run, and left for the author. The gate reads the waiver record from the PR's
-posted comments itself, so this recovery needs no extra argument, and an un-waived PR of
-15 or more files is ESCALATE on this path too.
+recovery run, and left for the author. On this path the gate reads the waiver only from an already-posted waived `circuit_breaker` header in the PR's comments,
+so the recovery needs no extra argument. If none was posted, a
+waived 15+ file PR is ESCALATE there (fail-safe), not NEEDS-AUTHOR, and so is an un-waived one.
 
 **Fork liveness.** Once the phase 2–4 review comment has posted on the PR, the
 caller must see the phase-6 verdict (returned or posted as a PR comment), or
@@ -184,7 +184,7 @@ fi
 
 ## Review scratch cleanup
 
-On every exit path (APPROVED, REROLL-escalated, ESCALATE, circuit-breaker
+On every exit path (APPROVED, REROLL-escalated, ESCALATE, NEEDS-AUTHOR, circuit-breaker
 abort), after Agent C and the gate have consumed their artifacts, remove this
 run's review scratch before removing the worktree.
 The embedded `/review-pr` Agent C leaves the panel for this step. Do not run
@@ -361,7 +361,7 @@ the phase 6 launch prompt (§ 6. Gate).
 
 **Scope.** Growth is measured against the earliest posted waived header, not the
 phase-1 recount of a later round, because a recount absorbs the very growth it
-should catch. Growth past that baseline needs a fresh reason, or the verdict is
+should catch. Growth past that baseline makes the PR un-reviewable: the verdict is
 `circuit_breaker: un-reviewable` and ESCALATE. A waiver beside two or more close
 claims is flagged as `multi_ticket` for disposition, as in the preflight above.
 Tier, band and the battery floor are unchanged by a waiver.
@@ -686,7 +686,7 @@ breaker (`pr_files >= 15`, the phase-1 threshold) — a round-2 fix can grow a
 14-file PR past it after the phase-1 check has passed; if the diff against
 main now meets the breaker and no waiver is recorded (§ Waiver), report `circuit_breaker: un-reviewable` in the
 verdict comment and rule ESCALATE, never APPROVED. A recorded waiver keeps the
-verdict header `circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)` and never yields APPROVED: a passing waived PR is NEEDS-AUTHOR, and growth past the earliest posted size needs a fresh reason (§ Waiver). Decision: any MISSING criterion, any unresolved human comment, any
+verdict header `circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)` and never yields APPROVED: a passing waived PR is NEEDS-AUTHOR, and growth past the earliest posted size is `un-reviewable` and ESCALATE (§ Waiver). Decision: any MISSING criterion, any unresolved human comment, any
 unresolved `verifiable:` minor, any unapplied must-fix, any blocking adherence,
 or any `scope_overflow` with disposition ESCALATE → REROLL (round 1) / ESCALATE
 (round 2); all lists empty and all criteria ADDRESSED → APPROVED. Round 3 is
@@ -744,7 +744,7 @@ breaker.
 
 ## Containment postcondition
 
-On **every** exit path (APPROVED, REROLL-escalated, ESCALATE, circuit-breaker
+On **every** exit path (APPROVED, REROLL-escalated, ESCALATE, NEEDS-AUTHOR, circuit-breaker
 abort), after removing the review worktree and before returning control to
 the caller — the caller must see this report before any merge step:
 

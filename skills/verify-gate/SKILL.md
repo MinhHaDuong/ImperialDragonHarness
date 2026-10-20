@@ -2,7 +2,7 @@
 metadata:
   category: build
 name: verify-gate
-description: "Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE with explicit evidence. Does not merge — the merge decision belongs to the caller."
+description: "Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR with explicit evidence. Does not merge — the merge decision belongs to the caller."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pr-number> [worktree=<path>]"
@@ -175,7 +175,7 @@ the diff alone, as one `per_exit_criterion` row named `indivisibility waiver`:
 - **Size.** The growth baseline is the earliest posted `circuit_breaker: waived (...)`
   header on the PR, not the phase-1 recount of this round (a recount absorbs the
   growth it should catch). The verdict-time `pr_files` and `pr_lines` must not exceed
-  that baseline. Growth past it needs a fresh reason; without one, the verdict is
+  that baseline. Growth past it makes the PR un-reviewable: the verdict is
   `circuit_breaker: un-reviewable` and ESCALATE.
 - **Multi-ticket.** Two or more close claims beside a waiver are recorded as
   `multi_ticket` with a non-blocking disposition, as in the preflight.
@@ -202,7 +202,7 @@ the diff alone, as one `per_exit_criterion` row named `indivisibility waiver`:
 - Any `scope_overflow` entry with suggested disposition ESCALATE → ESCALATE.
 - A recorded waiver whose `indivisibility waiver` row is MISSING → REROLL (round 1)
   / ESCALATE (round 2), as any MISSING criterion. Growth past the earliest posted
-  waived size without a fresh reason → ESCALATE.
+  waived size → ESCALATE (un-reviewable).
 - A recorded waiver with the indivisibility row ADDRESSED and every other list empty
   → NEEDS-AUTHOR, never APPROVED.
 - A PR with `pr_files >= 15` content-bearing files and no waiver record → ESCALATE

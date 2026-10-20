@@ -651,9 +651,45 @@ def test_waiver_baseline_is_earliest_posted_header_not_recount():
     assert "earliest posted" in _waiver_section()
 
 
-def test_waiver_does_not_cover_growth_without_a_fresh_reason():
-    assert "fresh reason" in _indivisibility_section()
-    assert "fresh reason" in _waiver_section()
+def test_waiver_growth_past_baseline_is_escalate_with_no_fresh_reason_escape():
+    for text in (_indivisibility_section(), _waiver_section(), VERIFY, VERIFY_GATE):
+        assert "fresh reason" not in text
+    assert "ESCALATE" in _indivisibility_section()
+    assert "un-reviewable" in _indivisibility_section()
+
+
+def test_approved_rule_requires_no_recorded_waiver():
+    assert ", with no recorded waiver" in VERIFY_GATE
+
+
+def test_gaze_branch_on_verdict_has_needs_author_bullet():
+    branch = _normalize(VERIFY.split("## Branch on verdict", 1)[1].split("## Containment", 1)[0])
+    assert "- **NEEDS-AUTHOR**" in branch
+    assert "Never post `verify: approved`" in branch
+
+
+def test_raid_never_merges_needs_author_on_own_authority():
+    raid = _normalize(RAID)
+    assert "never merges it on its own authority" in raid
+    assert re.search(r"NEEDS-AUTHOR[^.]*not merge-eligible", raid)
+
+
+def test_needs_author_in_every_verdict_and_exit_enumeration():
+    norm = _normalize(VERIFY)
+    exits = re.findall(r"every(?:\*\*)? exit path \(([^)]*)\)", norm)
+    assert len(exits) == 2, exits
+    for e in exits:
+        assert "NEEDS-AUTHOR" in e, e
+    assert "APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR" in norm.split("One skill, one PR", 1)[1][:80]
+    desc = VERIFY_GATE.split("description:", 1)[1].splitlines()[0]
+    assert "NEEDS-AUTHOR" in desc
+
+
+def test_gaze_recovery_waiver_read_only_from_posted_header():
+    rec = _normalize(VERIFY.split("**Caller-side recovery.**", 1)[1].split("**Fork liveness.**", 1)[0])
+    assert "already-posted waived `circuit_breaker` header" in rec
+    assert "ESCALATE there" in rec
+    assert "NEEDS-AUTHOR" in rec
 
 
 def test_waiver_header_has_one_format():
