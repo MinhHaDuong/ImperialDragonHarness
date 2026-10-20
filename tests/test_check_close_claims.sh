@@ -185,6 +185,34 @@ out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bas
 _check_rc "fenced claim example is ignored" 0 "$rc"
 _check_says "fenced example is counted as no-close" "$out" "0 close claim(s) across 0 PR(s), 1 explicit no-close"
 
+# Ticket 1152: the sweep shares erg-pr-merge's fence tracker. A `~~~` line
+# inside a backtick fence does not close it, so the fenced claim stays inert.
+jq -n --arg merged "$RECENT" --arg body $'Example:\n```markdown\n~~~\n**Ticket:** tickets/0001-dropped.erg\n~~~\n```\nTicket: none\n' \
+    '[{number:115,title:"tilde in backtick",mergedAt:$merged,body:$body}]' > "$repo/prs.json"
+out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "a ~~~ line inside a backtick fence keeps its claim inert" 0 "$rc"
+_check_lacks "…and nothing is reported dropped" "$out" "DROPPED"
+
+# An unclosed fence must not hide a claim from the audit: erg-pr-merge refuses
+# such a body, so a merged one came by another route and is exactly the case
+# this sweep exists to name.
+jq -n --arg merged "$RECENT" --arg body $'Summary.\n\n```attribution\nkind: review-attribution\n\n**Ticket:** tickets/0001-dropped.erg\n' \
+    '[{number:116,title:"unclosed fence",mergedAt:$merged,body:$body}]' > "$repo/prs.json"
+out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "a claim after an unclosed fence is audited" 1 "$rc"
+_check_says "…and named as dropped" "$out" "DROPPED: PR #116 claims ticket 0001"
+
+# The tracker is copied, not sourced (each skill script stays standalone), so
+# the two copies must stay byte-identical.
+_fence_map_body() { sed -n '/^fence_map() {$/,/^}$/p' "$1"; }
+merge_fm=$(_fence_map_body skills/merge/erg-pr-merge)
+roar_fm=$(_fence_map_body "$SCRIPT")
+if [ -n "$merge_fm" ] && [ "$merge_fm" = "$roar_fm" ]; then
+    echo "PASS: fence_map is identical in erg-pr-merge and check-close-claims.sh"
+else
+    echo "FAIL: fence_map copies differ or are missing"; fail=1
+fi
+
 # --- 3. The mergedAt window is real, not assumed --------------------------
 cat > "$repo/prs.json" <<EOF
 [{"number":120,"title":"merged long ago","mergedAt":"$OLD",
