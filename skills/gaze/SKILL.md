@@ -677,7 +677,7 @@ must-fix simplify finding is APPLIED (diff shows it) or has a validated
 rationale. Any `blocking` adherence violation → REROLL. Run `git log
 origin/main..origin/<branch> --stat` (two-dot) and report files not traceable
 to an exit criterion as `scope_overflow` (report only — never rebase/amend to
-excise). At verdict time, re-check the content-bearing file count (the phase-1
+excise); comment-only hunks are exempt (`skills/verify-gate/SKILL.md` § Scope containment: recorded as `nofollow:`, no `scope_overflow`). At verdict time, re-check the content-bearing file count (the phase-1
 rule: `git diff --name-status -M` for the roster, cross-referenced with
 `git diff --numstat -M`: A/M/D count 1; renames count 1 iff additions +
 deletions > 0, otherwise 0; R100 alone is insufficient because similarity
@@ -688,7 +688,7 @@ main now meets the breaker and no waiver is recorded (§ Waiver), report `circui
 verdict comment and rule ESCALATE, never APPROVED. A recorded waiver keeps the
 verdict header `circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)` and never yields APPROVED: a passing waived PR is NEEDS-AUTHOR, and growth past the earliest posted size is `un-reviewable` and ESCALATE (§ Waiver). Decision: any MISSING criterion, any unresolved human comment, any
 unresolved `verifiable:` minor, any unapplied must-fix, any blocking adherence,
-or any `scope_overflow` with disposition ESCALATE → REROLL (round 1) / ESCALATE
+or any `scope_overflow` (comment-only hunks excepted, `skills/verify-gate/SKILL.md` § Scope containment) with disposition ESCALATE → REROLL (round 1) / ESCALATE
 (round 2); all lists empty and all criteria ADDRESSED → APPROVED. Round 3 is
 forbidden. On REROLL include `reroll_bump:` in the verdict — value `note
 verify-reroll — round {n}: {top unresolved criterion}`, never `none` — only
