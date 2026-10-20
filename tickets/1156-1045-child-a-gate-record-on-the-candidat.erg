@@ -1,0 +1,19 @@
+%erg 0.1
+Title: 1045 child A: gate record on the candidate commit and /merge refusal
+Created: 2026-10-20
+Author: reviewer
+
+--- log ---
+2026-10-20T19:23Z reviewer created
+
+--- body ---
+## Context
+Child A of tracker 1045. Author decisions 2026-10-20 (defaults of the Fable advice): the record is a git note on the candidate merge commit (outside the tree; dyne adapts later); built in the harness as a stand-in, since git-erg 0272/0273 are not landed; the gate runs the 7 forge-required checks minus skill-lint, grep-e-guard and status-verb-guard (retirement candidates, docs/2026-10-14-ci-content-review.md) plus the skills-catalog drift check. Reuse `scripts/attribution_record.py` vocabulary for the actor; a record is a statement that can be traced, not proof.
+
+## Exit criteria
+- [ ] A record on the candidate merge commit (built first, so merge-time effects such as `erg close` are inside what was checked) names time, actor, host, revision, command and its scope, and tool versions
+- [ ] The gate's check set is as decided above; the choice is written in the record's scope field
+- [ ] `/merge` refuses a branch with no record on its candidate commit, and a positive control shows it accepts one; the latest entry for a subject decides
+- [ ] The merge is made in the background once the gate passes (forge auto-merge), so waiting costs no attention
+- [ ] Nothing here requires a particular agent runtime
+- [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker, else split
