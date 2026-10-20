@@ -1,0 +1,30 @@
+%erg 0.1
+Title: Reimagine STATE.md management in molt and lair
+Created: 2026-10-20
+Author: reviewer
+Closed: autoclosed — PR #1496
+
+--- log ---
+2026-10-20T06:54Z reviewer created
+2026-10-20T07:04Z reviewer branch-name finding: confirmed, a real mismatch but below the severity floor, so no follow-up ticket. scripts/project-state.py:92 lists local branches matching claude/housekeeping-*; molt step 1 cuts housekeeping-$(date -u +%Y%m%d), which never matches, so yawn's tidying state cannot fire for molt branches (the prefix is a leftover of the retired beat naming, tickets 0072/0220). Effect is limited to an advisory yawn warn lost while a sweep PR is in flight; age/needed/clean still come from git log --grep=housekeeping and work. Fix when touched: match housekeeping-* (and drop the claude/ prefix) in project-state.py and the yawn line. Not fixed in this PR.
+2026-10-20T07:17Z reviewer closed — autoclosed — PR #1496
+
+--- body ---
+## Context
+Reimagine request from the author, 2026-10-20. Observed facts, not yet a design:
+- STATE.md is 11 lines, hand-written, no derived numbers (`rules/state.md`, ticket 1121). It carries two timestamps, `Last updated:` and `Housekeeping:`.
+- Two writers. `/molt` step 6 stamps the housekeeping time and commits it; `/lair` step 10 branches, bumps `Last updated:`, prunes, opens a PR and lands it. Each is a full branch-PR-CI cycle for what is mostly a timestamp.
+- `rules/state.md` assigns the hand sections to the author; `/lair` edits them.
+- yawn's housekeeping age comes from `git log --grep=housekeeping` (`scripts/project-state.py`), not from the STATE.md stamp, so molt's stamp feeds nothing mechanical.
+- yawn looks for branches `claude/housekeeping-*`, while molt cuts `housekeeping-<date>`; the in-flight `tidying` state may never fire. Cause not established; check.
+
+## Decision (author, 2026-10-20)
+Options 1 and 2 as corrected. (a) Drop molt's STATE stamp and the `Housekeeping:` line: it feeds nothing, since yawn's housekeeping age comes from `git log --grep=housekeeping` and nothing in scripts or skills reads that line. (b) KEEP `Last updated:`: STATE.md is loaded at every session start and the line shows handoff freshness at a glance. Bump it only in the same change that edits a hand section, so a quiet day produces no STATE PR. Option 3 (proposed-only handoff by the author) is out of scope and stays the author's later call.
+
+## Exit criteria
+- [ ] molt: step 6 (Timestamp) and the STATE-timestamp mention in the step-0 guard and the Branch discipline paragraph removed; step 6.5 still opens the housekeeping PR whenever real commits exist; numbering consistent with every reference to it elsewhere (grep skills/, tests/, docs/ for `step 6`, `6.5`)
+- [ ] STATE.md: the `Housekeeping:` line removed
+- [ ] lair step 10: the STATE refresh runs only when a hand section changes; `Last updated:` is bumped in that same change; if nothing changed, lair opens no STATE PR and reports "STATE unchanged"
+- [ ] rules/state.md matches (its `Last updated:` sentence, its template, last-reviewed date), and tests/test_lair_state_via_pr.py plus any test pinning molt's step 6 are updated to the new behaviour, not weakened
+- [ ] The yawn/molt branch-name question is answered in a ticket log note with evidence (scripts/project-state.py matches `claude/housekeeping-*`, molt cuts `housekeeping-$(date -u +%Y%m%d)`); a follow-up ticket only if it passes the severity floor; not fixed in this PR
+- [ ] `make skills-catalog` run if any description changed (none should); `make check-skills-drift` clean; make check green

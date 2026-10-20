@@ -1,7 +1,6 @@
 # Imperial Dragon Harness — State
 
 Last updated: 2026-10-19T17:30Z
-Housekeeping: 2026-10-19T17:30Z.
 
 Live counts: `erg ready tickets/` · `erg list` · `/dashboard`.
 

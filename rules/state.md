@@ -1,7 +1,7 @@
 ---
 paths:
   - "STATE.md"
-last-reviewed: 2026-10-19
+last-reviewed: 2026-10-20
 ---
 
 # STATE.md
@@ -22,7 +22,9 @@ picks, open merge requests, CI verdicts or recent commits: every merge made
 them stale and every parallel PR collided on them. One pointer line replaces
 them — live numbers are read when needed from `erg ready tickets/`,
 `erg list` and `/dashboard`. Nothing regenerates STATE.md; `/lair` step 10
-bumps `Last updated:` and prunes the hand sections. A ticket-closing PR needs
+edits and prunes the hand sections only when one changes, and bumps
+`Last updated:` in that same change (a quiet day opens no STATE PR; `/molt`
+writes no stamp). A ticket-closing PR needs
 no STATE.md edit.
 
 **Live counts at session start.** `scripts/on-start-context.sh` prints one line of

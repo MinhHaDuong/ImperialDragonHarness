@@ -55,3 +55,12 @@ def test_step_10_regenerates_nothing():
     text = step_10()
     assert "refresh-STATE" not in text
     assert not (REPO / "scripts" / "refresh-STATE.py").exists()
+
+
+def test_step_10_runs_only_when_a_hand_section_changes():
+    """Ticket 1138: no STATE PR on a quiet day; `Last updated:` is bumped in
+    the same change that edits a hand section."""
+    text = step_10()
+    assert "only when a hand section changes" in text
+    assert "STATE unchanged" in text
+    assert "in that same change" in text

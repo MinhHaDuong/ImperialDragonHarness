@@ -54,9 +54,9 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
    - `git branch -a` → delete stale remote branches
    - Check for orphan tickets and stale merge requests
 9. **Full test suite** — `make check` on main. New failures → open ticket. Known failures → confirm ticket still open.
-10. **Refresh STATE.md** on a throwaway branch, landed through the normal PR gate (main is branch-protected — there is no direct-push-to-main path, and STATE.md is not special-cased; rules/git.md):
+10. **Refresh STATE.md** only when a hand section changes (blockers, next actions, milestones); if nothing changed, open no branch or PR and report "STATE unchanged". Otherwise use a throwaway branch, landed through the normal PR gate (main is branch-protected — there is no direct-push-to-main path, and STATE.md is not special-cased; rules/git.md):
     a. `git checkout -b housekeeping-state-YYYY-MM-DD main`
-    b. Bump `Last updated:` and hand-edit the sections (blockers, next actions, milestones) — no changelog, and no ticket counts, picks, MRs or commits: STATE.md stores no derived number (rules/state.md).
+    b. Hand-edit the sections and bump `Last updated:` in that same change (blockers, next actions, milestones) — no changelog, and no ticket counts, picks, MRs or commits: STATE.md stores no derived number (rules/state.md).
     c. Prune: delete items checked off before this session.
     d. Commit, push the branch, open a merge request (`Ticket: none`), then **land it yourself** — a STATE refresh is the agent's own output with no blast radius, and handing the author a merge to perform is what this step exists to avoid. Which mechanism lands it is a per-repo fact: **read it from the forge, never assume it.**
        - Auto-merge available and enabled on the repo → enable it on the merge request; it lands on its own once the forge's requirements are met.
