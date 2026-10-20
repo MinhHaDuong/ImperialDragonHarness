@@ -10,12 +10,15 @@ Single orientation file, loaded at session start via hook. Hard cap: **40 lines 
 
 ## Structure
 
-Every section is hand-written:
+`## North star` is the author's and rarely changes. The other `##` sections are
+maintained by the agent, at wrap-up through `/lair` step 10, and the author may edit
+them too. The line cap controls their growth. "Hand sections" below means these
+narrative sections: neither derived numbers nor the North star.
 
 | Section | Content | Who edits |
 |---------|---------|-----------|
 | `## North star` | One paragraph — the core argument, rarely changes | Author |
-| Any additional `##` sections | Milestones, blockers, incidents, decisions, next actions in prose — author adds as needed | Author |
+| Any additional `##` sections | Milestones, blockers, incidents, decisions, next actions in prose | `/lair` (agent); the author may edit |
 
 **No derived numbers (ticket 1121).** STATE.md stores no ticket counts, next
 picks, open merge requests, CI verdicts or recent commits: every merge made
