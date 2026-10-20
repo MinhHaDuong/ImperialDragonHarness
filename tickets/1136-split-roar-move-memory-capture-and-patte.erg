@@ -5,15 +5,20 @@ Author: reviewer
 
 --- log ---
 2026-10-20T06:54Z reviewer created
+2026-10-20T08:12Z reviewer note design-decision delegated by the author to a Fable advisor 2026-10-20; option B-prime (ember, prowl, roar/references/close-and-clean.md); replaces the ticket's read-only-proposal-then-author-confirms step
 
 --- body ---
 ## Context
 Child of 1131 (oversized skills). `skills/roar/SKILL.md` is 27 KB and does at least five jobs with different triggers and costs: reflect, capture significant project experiences, sweep the codebase for the same anti-pattern, close the ticket and verify its close claims, clean up the completed task. Its memory capture overlaps `hoard` and `memory-sweep`. Author decision 2026-10-20: split it. Skill names stay dragon-themed.
 
 ## Exit criteria
-- [ ] Read-only proposal first: the boundary (what stays in `roar`, what moves, the new skill names) with a size estimate per skill; the author confirms before the move
+- [x] Boundary proposal: satisfied by the Fable advisor decision delegated by the author 2026-10-20 (option B-prime). `roar` keeps pre-check, step 1, step 6 and steps 7-11 (numbers pinned); steps 2-3 (capture) move to `/ember`, steps 4-5 (sweep) to `/prowl`; roar's helper-mechanics prose moves to the non-skill file `skills/roar/references/close-and-clean.md`
 - [ ] `roar` keeps the post-task close-and-clean path: pre-check, close, close-claim check, tracking-ticket check, exit worktree, own-task cleanup, report
 - [ ] Memory capture and the similar-pattern sweep live outside `roar`, each with a description saying when to use it and which neighbour to use instead
 - [ ] Callers of `roar` (raid, hunt, merge, lair, tests) still reach what they relied on; grep proves it
+- [ ] Skills census paid first (PR 1 trims the `submission-event`, `zotero`, `ingest-decision-letter` descriptions); `BUDGETS['skills']` set to the measured value plus <=60 (PR 2)
 - [ ] `make skills-catalog` run; `make check-skills-drift` clean
 - [ ] No retirement of any skill; `roar` shrinks by more than half
+
+## Budget argument (resident census)
+`scripts/resident_census.py` sums name+description of every skills/*/SKILL.md and ignores `disable-model-invocation`, so a new skill always costs resident characters (census was 6,993 of 7,000). Splitting roar's 26.6 KB body into roar/ember/prowl trades about 9 KB of invocation payload for two resident cards (~340 chars). Three over-long cards were trimmed first (PR 1). The budget is raised in PR 2 to the measured value plus thin headroom, as for 0920; the number is recorded in the test comment.
