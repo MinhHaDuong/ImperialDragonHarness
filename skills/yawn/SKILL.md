@@ -158,6 +158,15 @@ Omit a heading if it has no entries. If all checks are `ok`, omit the Action pla
 
 > **Contract** — `/molt` parses this section programmatically. The bold headings `**fix-now**`, `**open-ticket**`, `**skip**` are a stable interface; do not rename or reformat them.
 
+Last line of the report, only when the Action plan holds at least one `fix-now`
+or `open-ticket` entry (a `skip`-only plan gets none), outside the headings above:
+
+```
+Next move: `/molt` effects the fix-now entries and files tickets for the open-ticket entries.
+```
+
+An all-ok run emits no Action plan and no suggestion.
+
 Once the Action plan is fully effected, propose: "Surface remaining nits?"
 
 13. **Disk headroom at session start** — from `disk_space`. Warn if either
