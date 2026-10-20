@@ -61,7 +61,7 @@ Report stdout/stderr verbatim. If the script exits non-zero, stop and show the e
 A killed or failed `erg-pr-merge` run (non-zero exit after its rebase) can
 leave the PR-branch worktree with a stale pre-rebase index: staged diffs that
 appear to re-open closed tickets and revert prose. That is not WIP — run
-`git reset --hard HEAD` in that worktree before any salvage or gc decision
+`git reset --hard HEAD` in that worktree before any salvage or gc decision.
 
 Merge is queued via auto-merge at once, **whether or not checks are still running**: the forge gates on the required checks and merges when they pass, so the script neither refuses on pending checks nor waits for them. A **failing** check is still a refusal, before anything is closed or queued. Where auto-merge is disabled the script reads the checks once and merges directly only if every check is done; pending checks there stop it with a pointer to the status command, never a wait.
 

@@ -72,7 +72,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     `docs/` modified since the start of the current day (`docs/` is git-ignored,
     so git cannot see it). If it prints a line, include it in the final summary
     as an offer of `/zotero check-staging`; the author accepts or not. No output, no
-    mention. Proposed, never run automatically; it does not belong in `/molt`
+    mention. Proposed, never run automatically; it does not belong in `/molt`.
 12. **Suggest a hoard in the conclusion when relevant.** After completing
     all lair work, count journal experiences not yet covered by an accepted
     report in `memory/hoards/`. An unmerged report does not mark experiences
