@@ -1,0 +1,18 @@
+%erg 0.1
+Title: Split oversized skills into a core plus references
+Created: 2026-10-20
+Author: Minh Ha-Duong
+Blocked-by: 1100
+
+--- log ---
+2026-10-20T06:32Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Line counts on origin/main: gaze 951, raid 509, roar 422, review-pr about 350, verify-adherence about 320. Each is read in full per run. `zotero`, `slides` and `route` already use `references/` to load detail on demand. In gaze the title says "six-phase", the description names four steps, and it calls `/review`, which is not a skill.
+
+## Exit criteria
+- [ ] gaze, raid and roar split into a core of at most about 150 lines plus `references/` files read at the phase that needs them
+- [ ] Behaviour unchanged: one gaze dry run on a merged PR and one roar dry run give the same verdict and artifacts as before
+- [ ] gaze title, description and phase list agree; the `/review` mention is fixed or removed
+- [ ] Blocked until 1100 reshapes gaze; raid and roar need not wait and may land first

@@ -1,0 +1,17 @@
+%erg 0.1
+Title: Prune dangling skill symlinks in ~/.claude/skills
+Created: 2026-10-20
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-20T06:32Z Minh Ha-Duong created
+
+--- body ---
+## Context
+`~/.claude/skills` holds five symlinks whose targets no longer exist: arena, dream, healthcheck, index-source, zotero-import (the last was renamed zotero). Observed 2026-10-20 on doudou; cause not yet established (projection does not prune links to removed skills, or the links predate the removal).
+
+## Exit criteria
+- [ ] Cause identified (`scripts/adapter-claude-code-activate.sh`, `adapters/lifecycle.py`)
+- [ ] Activation removes links into `.agents/skills/` whose target is gone, and reports them
+- [ ] A test builds a dangling link and sees it pruned; a live link and a foreign link are left alone
+- [ ] The five links are gone on doudou and the check is run on padme

@@ -1,0 +1,18 @@
+%erg 0.1
+Title: Move incident, ticket and version history out of skill bodies
+Created: 2026-10-20
+Author: Minh Ha-Duong
+Blocked-by: 1100
+
+--- log ---
+2026-10-20T06:32Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Skill bodies carry history that the rules say belongs in memory and tickets (`rules/git.md`, `rules/workflow.md`). Counts on origin/main at 95dfc077, grep for `ticket NNNN`: gaze 16, roar 5, molt 5, raid 4; also dated incident notes and runtime-version pins (for example "Claude Code 2.1.218") in gaze, email, roar, raid, infrastructure, submission-event, molt, yawn. These cost tokens on every run and go stale.
+
+## Exit criteria
+- [ ] Each rule keeps its imperative; the incident or ticket number behind it moves to the ticket or a memory note, or is dropped
+- [ ] Version pins removed, or replaced by a behaviour statement a test can check
+- [ ] Byte-compare of the rendered catalog unchanged except for intended edits
+- [ ] gaze is handled after 1100 child 2 so the two edits do not collide

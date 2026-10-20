@@ -1,0 +1,23 @@
+%erg 0.1
+Title: Skills audit 2026-10-20: tracker
+Created: 2026-10-20
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-20T06:32Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Read-only audit of the 45 harness skills on 2026-10-20, from the Sen causal-reading project session (mechanical checks only: frontmatter, links, descriptions, size, history grep; skill logic not reviewed). Total about 386 KB; `gaze` alone is about 57 KB.
+
+## Children
+- 1128 dangling symlinks in ~/.claude/skills
+- 1129 description trigger and exclusion clauses
+- 1130 history out of skill bodies
+- 1131 oversized skills into core plus references
+- 1132 session-lifecycle skills disambiguation
+
+## Exit criteria
+- [ ] Children 1128-1132 closed or consciously dropped
+- [ ] Integration review: `make skills-catalog` and `make check-skills-drift` clean
+- [ ] Out of scope: the gaze rebuild itself (ticket 1100)

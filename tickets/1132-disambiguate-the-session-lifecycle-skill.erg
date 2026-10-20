@@ -1,0 +1,16 @@
+%erg 0.1
+Title: Disambiguate the session-lifecycle skills
+Created: 2026-10-20
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-20T06:32Z Minh Ha-Duong created
+
+--- body ---
+## Context
+lair, perch, roar, molt and yawn overlap: molt calls yawn, lair also does housekeeping, tests and STATE refresh, perch assesses clear-readiness. None says when to prefer a neighbour. hoard, memory-sweep and roar's capture step share the same ground on project memory.
+
+## Exit criteria
+- [ ] One short decision table (trigger, scope, writes, who calls whom) in each of the five skills, or one shared reference they link
+- [ ] Any pair found to be redundant is named with a keep, merge or retire recommendation; no retirement in this ticket
+- [ ] Catalog regenerated and drift check clean
