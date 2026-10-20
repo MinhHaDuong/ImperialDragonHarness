@@ -76,7 +76,7 @@ Read from the tree, not from claims:
 - Amended procedures: the v8 reading section is merged into the harness
   `AGENTS.md` (§ Project memory, linking `memory/MEMORY.md` with read,
   capture and DREAM boundaries); roar's capture discipline names
-  `scripts/memory-capture.sh` (`skills/roar/SKILL.md`); lair step 12 counts
+  `scripts/memory-capture.sh` (`skills/roar/runbooks/capture.md`); lair step 12 counts
   journal blob ids against the accepted reports' ledgers and only suggests
   a separate dream at five uncovered experiences
   (`skills/lair/SKILL.md`); the pilot declaration
