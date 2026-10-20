@@ -169,5 +169,5 @@ review did not cover, or rewrites more than roughly half of it, run the full
 panel for this round — scoping is ignored, and the derived round number itself
 is untouched. The accepting reviewers accepted different prose.
 
-This mirrors § Round scoping in `skills/review-pr/SKILL.md` (ticket 0377); keep
+This mirrors § Round scoping in `skills/review-pr/SKILL.md`; keep
 the two in sync.

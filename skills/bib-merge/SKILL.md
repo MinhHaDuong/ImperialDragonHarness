@@ -34,7 +34,6 @@ flag conflicts, append new ones, report everything.
 - **Local .bib is staging.** The canonical library is Zotero. At
   manuscript submission, the author imports refs.bib into Zotero
   and attaches PDFs. This skill does not automate that step
-  (see ticket 0013).
 
 ## Input
 

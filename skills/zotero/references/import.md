@@ -15,7 +15,7 @@
 ## URL intake
 
 A URL is an input to `import`, not a separate flow (the former index-source
-skill is absorbed here, deprecated 2026-10-03, ticket 1018). The probe script
+skill is absorbed here). The probe script
 is the mechanical half; you are the brains: resolve identifiers, classify the
 type, clean the metadata.
 
@@ -98,7 +98,7 @@ After the refined `find-work`, classify each item by the `verdict`:
 
 - **`verdict: "none"`** → import normally.
 - **`verdict: "match"`** → already present in the destination library (`why` names the keys: `storageHash` first when the stored file is the same, then `doi`, `isbn`, `arxiv` or `handle`, the identifier the item's own field carries). Default: **skip**, tell the user, ask if they want to import anyway (e.g. to refresh metadata). Exception: if the hit has **no file** (`has_file: false`), the PDF itself is missing from Zotero — default: **import** so the PDF lands, warning that this creates a duplicate item the user should merge.
-- **`verdict: "ambiguous"`** (several matches tie, e.g. two records legitimately sharing one attachment md5, ticket 0570) → show them to the user and ask. Never silently match, never silently skip.
+- **`verdict: "ambiguous"`** (several matches tie, e.g. two records legitimately sharing one attachment md5) → show them to the user and ask. Never silently match, never silently skip.
 - **`verdict: "candidates"`** (no identifier matched; Zotero's search returned works for the title, under `candidates`) → judge them yourself against the document: same work, another edition, or another work sharing the title. The helper never makes this call. Same work → skip or attach; distinct → import with `--force`; unsure → ask the user.
 - **`verdict: "unchecked"`** → no key could be consulted (Zotero unavailable, or no usable metadata). Say so explicitly — this is not a clean negative.
 
