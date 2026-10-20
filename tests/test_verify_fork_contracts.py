@@ -693,3 +693,108 @@ def test_verify_gate_wording_and_no_overpromise():
     assert "undeclared source" not in vg
     wf = _normalize((REPO / "rules" / "workflow.md").read_text())
     assert "reviewed in full" not in wf
+
+
+# --- ticket 1125 (round 4, N1): verify-gate owns the un-reviewable breaker ---
+
+GATE_SEAT = (REPO / "profiles" / "gate-seat" / "PROFILE.md").read_text()
+
+
+def _section_raw(text: str, pattern: str) -> str:
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        m = re.match(r"^(#{1,6})\s+(.*)$", line)
+        if m and re.search(pattern, m.group(2), re.I):
+            level = len(m.group(1))
+            body = []
+            for nxt in lines[i + 1:]:
+                h = re.match(r"^(#{1,6})\s", nxt)
+                if h and len(h.group(1)) <= level:
+                    break
+                body.append(nxt)
+            return "\n".join(body)
+    return ""
+
+
+def _bullets(text: str, pattern: str) -> list[str]:
+    """Each top-level `- ` bullet of the matching section, unwrapped to one line."""
+    out: list[str] = []
+    cur: str | None = None
+    for ln in _section_raw(text, pattern).split("\n"):
+        if ln.startswith("- "):
+            if cur is not None:
+                out.append(cur)
+            cur = ln[2:]
+        elif cur is not None and ln.startswith("  "):
+            cur += " " + ln.strip()
+        else:
+            if cur is not None:
+                out.append(cur)
+            cur = None
+    if cur is not None:
+        out.append(cur)
+    return [_normalize(b) for b in out]
+
+
+def _find(bullets: list[str], *needles: str) -> str | None:
+    for b in bullets:
+        if all(n in b for n in needles):
+            return b
+    return None
+
+
+def test_verify_gate_breaker_escalates_unwaived_monster_pr():
+    """The gate counts the files itself: >= 15 with no waiver record is ESCALATE,
+    whatever the caller passed, so a recovery run cannot approve an oversized PR."""
+    bullets = _bullets(VERIFY_GATE, r"^circuit breakers$")
+    b = _find(bullets, "pr_files >= 15", "no waiver record", "ESCALATE", "un-reviewable")
+    assert b, "verify-gate Circuit breakers lost the un-waived 15-file ESCALATE bullet"
+
+
+def test_verify_gate_breaker_routes_waived_pr_to_needs_author():
+    bullets = _bullets(VERIFY_GATE, r"^circuit breakers$")
+    b = _find(bullets, "waiver record", "Indivisibility", "NEEDS-AUTHOR", "never APPROVED")
+    assert b, "verify-gate Circuit breakers lost the waived-PR NEEDS-AUTHOR bullet"
+
+
+def test_verify_gate_reads_waiver_from_pr_history_when_caller_omits_it():
+    """Every invocation path (gaze recovery, liveness expiry, standalone) must hold
+    the check: with no record passed, the gate reads the earliest posted waived header."""
+    bullets = _bullets(VERIFY_GATE, r"^circuit breakers$")
+    b = _find(bullets, "earliest posted", "circuit_breaker: waived", "PR comments")
+    assert b, "verify-gate must read the waiver from the PR's earliest posted header"
+
+
+def test_verify_gate_decision_rules_pin_the_waiver_branches():
+    bullets = _bullets(VERIFY_GATE, r"^decision rules$")
+    assert _find(bullets, "pr_files >= 15", "no waiver", "ESCALATE"), (
+        "decision rules lost the un-waived size ESCALATE"
+    )
+    assert _find(bullets, "waiver", "NEEDS-AUTHOR", "never APPROVED"), (
+        "decision rules lost the waived NEEDS-AUTHOR bullet"
+    )
+
+
+def test_gaze_recovery_recipe_names_needs_author_and_never_approved():
+    recovery = _normalize(
+        VERIFY.split("**Caller-side recovery.**", 1)[1].split("**Fork liveness.**", 1)[0]
+    )
+    assert "NEEDS-AUTHOR" in recovery, (
+        "gaze caller-side recovery must name NEEDS-AUTHOR as a verdict it can receive"
+    )
+    assert "not APPROVED" in recovery, (
+        "gaze caller-side recovery must say a waived stalled PR is not APPROVED"
+    )
+
+
+def test_gate_seat_profile_lists_needs_author():
+    charter = _normalize(GATE_SEAT.split("Charter:", 1)[1])
+    assert "NEEDS-AUTHOR" in charter, "gate-seat charter must list NEEDS-AUTHOR"
+
+
+def test_resident_rules_do_not_cite_tickets_for_this_change():
+    for name in ("workflow.md", "git.md", "claude-code.md", "guards.md"):
+        text = (REPO / "rules" / name).read_text()
+        assert not re.search(r"\(ticket \d{4}\)|ticket 1125|\b1125\b", text), (
+            f"rules/{name} cites a ticket number"
+        )

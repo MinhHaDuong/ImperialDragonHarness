@@ -205,6 +205,8 @@ the diff alone, as one `per_exit_criterion` row named `indivisibility waiver`:
   waived size without a fresh reason → ESCALATE.
 - A recorded waiver with the indivisibility row ADDRESSED and every other list empty
   → NEEDS-AUTHOR, never APPROVED.
+- A PR with `pr_files >= 15` content-bearing files and no waiver record → ESCALATE
+  (un-reviewable), counted by the gate itself on every invocation path.
 - `scope_overflow` entries with all suggested dispositions TICKETED → does not block
   APPROVED. Caller handles ticket creation and PR annotation.
 - All lists empty AND all criteria ADDRESSED, with no recorded waiver → APPROVED.
@@ -298,6 +300,20 @@ current round = count + 1.
 - PR body lacks test plan → not a gate-level failure, but recorded as a nit.
 - Gate cannot access commit timestamps → ESCALATE (cannot distinguish pre/post comment changes).
 - Contradictory signals between phases 2–5 → ESCALATE (no silent resolution).
+- Un-reviewable breaker: the gate counts the content-bearing files itself, from
+  `git diff --name-status -M` and `git diff --numstat -M` (the phase-1 rule). When
+  `pr_files >= 15` and there is no waiver record, the verdict is ESCALATE with
+  `circuit_breaker: un-reviewable`. The gate does not trust the caller's count or the
+  caller's omission of the breaker.
+- Waived PR: when a waiver record is present, run § Indivisibility. If the
+  indivisibility row is ADDRESSED and nothing else blocks, the verdict is
+  NEEDS-AUTHOR, never APPROVED; a MISSING row follows the usual REROLL / ESCALATE
+  rule. Growth past the earliest posted waived size → ESCALATE (un-reviewable).
+- Waiver source: when the caller passes no waiver record, the gate reads it from the
+  PR comments, taking the earliest posted `circuit_breaker: waived (...)` header. It
+  does so on every invocation path, including the caller-side recovery and
+  fork-liveness recipes in `/gaze`, so the check holds whether or not the caller
+  hands the record over.
 
 ## Not in scope
 

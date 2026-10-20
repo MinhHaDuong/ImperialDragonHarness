@@ -118,10 +118,14 @@ site is bound by the fork contract whether it is this skill's own or a
 sub-agent's.
 
 **Caller-side recovery.** If `/gaze <pr>` ever returns a bare fan-out
-narration with no `## /verify-gate verdict` block (APPROVED/REROLL/ESCALATE),
+narration with no `## /verify-gate verdict` block (APPROVED/REROLL/ESCALATE/NEEDS-AUTHOR),
 treat it as a non-result: do **not** relaunch the reviewer battery. Wait for
 the background reviewer notifications, then run `/verify-gate <pr>
 worktree=$primary_root/.claude/worktrees/review-<pr-number>` directly to produce the verdict from their outputs.
+A waived PR can come back `NEEDS-AUTHOR`: a real verdict, not APPROVED, never merged by the
+recovery run, and left for the author. The gate reads the waiver record from the PR's
+posted comments itself, so this recovery needs no extra argument, and an un-waived PR of
+15 or more files is ESCALATE on this path too.
 
 **Fork liveness.** Once the phase 2–4 review comment has posted on the PR, the
 caller must see the phase-6 verdict (returned or posted as a PR comment), or
