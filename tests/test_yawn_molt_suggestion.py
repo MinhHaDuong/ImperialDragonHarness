@@ -25,19 +25,28 @@ def test_suggestion_follows_action_plan_and_contract_note():
 
 
 def test_suggestion_is_conditional_on_fix_now_or_open_ticket():
-    text = body()
-    rule = text[text.index(SUGGESTION) - 600 : text.index(SUGGESTION) + 600]
-    assert "fix-now" in rule and "open-ticket" in rule
+    text = " ".join(body().split())
+    assert (
+        "only when the Action plan holds at least one `fix-now` "
+        "or `open-ticket` entry (a `skip`-only plan gets none)"
+    ) in text
 
 
 def test_all_ok_path_emits_no_plan_and_no_suggestion():
     text = body()
     assert "If all checks are `ok`, omit the Action plan entirely" in text
-    assert "no suggestion" in text
+    assert "An all-ok run emits no Action plan and no suggestion." in text
 
 
 def test_contract_headings_untouched():
     text = body()
     for heading in ("**fix-now**", "**open-ticket**", "**skip**"):
         assert text.count(f"\n{heading}\n") == 1
-    assert SUGGESTION not in text.split("## Action plan")[1].split("```")[1]
+    # The suggestion sits in its own fence, after the plan format block closes.
+    plan = text.index("```\n## Action plan")
+    plan_close = text.index("\n```\n", plan + 4) + len("\n```\n")
+    pos = text.index(SUGGESTION)
+    assert plan_close < pos
+    between = text[plan_close:pos]
+    assert between.count("```") == 1  # only the suggestion's own opening fence
+    assert between.rstrip().endswith("```")
