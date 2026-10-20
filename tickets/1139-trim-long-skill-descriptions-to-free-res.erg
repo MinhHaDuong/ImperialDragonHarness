@@ -1,0 +1,17 @@
+%erg 0.1
+Title: Trim long skill descriptions to free resident budget (child of 1129)
+Created: 2026-10-20
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-20T07:03Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Child of 1129. The nine routing clauses of 1129 must fit under the resident skills budget of 7000 characters, which stood at 6865 on main. Seven existing descriptions are long and carry filler; trimming them is a pure shrink that changes no meaning, and lands first so the clauses (next PR) fit without raising the budget. Affected: ingest-decision-letter, related-work-note, submission-event, trace-doctor, track-changes-pdf, verify-gate, zotero.
+
+## Exit criteria
+- [ ] Resident census skills chars measured with `scripts/resident_census.py`: before 6865, after 6541 (-324)
+- [ ] Triggers and meaning preserved; ingest-decision-letter keeps the word "coverage" in its first sentence (its test)
+- [ ] Only `description:` lines of the seven skills change, plus regenerated `skills-catalog.md`
+- [ ] `make skills-catalog` run; `make check-skills-drift` and `make check` pass
