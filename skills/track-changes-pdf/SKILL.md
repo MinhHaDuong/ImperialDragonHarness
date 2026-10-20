@@ -2,7 +2,7 @@
 metadata:
   category: writing
 name: track-changes-pdf
-description: "Render a revision-marked PDF of a LaTeX manuscript between two git refs, highlighting insertions and deletions via latexdiff. Closes the annotate-reply-apply loop for journal revise-and-resubmit rounds."
+description: "Render a revision-marked PDF of a LaTeX manuscript between two git refs, marking insertions and deletions via latexdiff. Closes the annotate-reply-apply loop of journal revise-and-resubmit rounds."
 user-invocable: true
 disable-model-invocation: false
 argument-hint: "--old-ref <tag/branch/commit> [--new-ref HEAD] --main-tex <path/to/main.tex> --output <marked.pdf> [--repo .]"

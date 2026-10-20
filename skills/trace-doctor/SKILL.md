@@ -2,7 +2,7 @@
 metadata:
   category: memory
 name: trace-doctor
-description: "Monthly survey of Claude Code session-trace economics — cost census, hypothesis statistics, and a ranked cost-saving recommendation report, cross-referenced against tickets. Never auto-applies changes; files tickets for actionable findings."
+description: "Monthly survey of Claude Code session-trace economics: cost census, hypothesis statistics, ranked cost-saving report cross-referenced to tickets. Never auto-applies; files tickets for findings."
 user-invocable: true
 argument-hint: "[--days N]"
 ---
