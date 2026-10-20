@@ -15,3 +15,18 @@ Part 2 of ticket 1149 (tracker 1146), split off by the orchestrator so each PR s
 ## Exit criteria
 - [ ] The orchestrator and /gaze append their lines to the PR-body block as each step finishes
 - [ ] /roar copies the block into the journal instead of rebuilding it from decayed evidence
+
+## Imagine annotation (raid 2026-10-20)
+Verdict PROCEED; exit criteria unchanged. Premise holds: nothing writes the block yet, so the part-1 /merge warning fires on every PR.
+- Simplest path: two pure-text modes on `scripts/attribution_record.py` (`--append LINE` stdin->stdout, create-if-absent; `--extract --merged DATE` replacing `pending`). `gh` calls stay in the calling shell. Logic in the helper with tests, not SKILL.md prose (1152 showed fence edits written as prose go wrong).
+- Appended block must be closed, plain three-backtick fences at column 0, so `parse_pr_body` and 1152's `fence_map` agree; an unclosed fence now refuses the merge.
+- Roar's lenient `--capture` rejects `merged pending`; extract must substitute the merge date.
+- Only the controller appends (seats return identity). Effort stays `not-stated` unless set at launch.
+- gaze edit stays a short paragraph (tickets 1153/1154 will split gaze SKILL.md).
+- Out of scope, noted: hand-run /hunt PRs get no plan/execute lines; seat identity is self-reported (1146's wider concern).
+
+## Blind-spot findings (fold into the plan)
+1. Nobody in-repo owns PR creation: define who seeds the block (create-if-absent in `--append`; raid appends only after the PR exists).
+2. `erg-pr-merge` normalization PATCHes the body from a snapshot taken earlier; a gate line appended in between would be lost. Check, and re-fetch before patching if so.
+3. No compare-and-swap on the body: append, read back, retry once if the line is missing.
+4. Roar must read the final body via `gh pr view <N>` on the merged PR, not the commit message.
