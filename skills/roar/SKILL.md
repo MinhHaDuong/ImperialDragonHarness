@@ -26,7 +26,6 @@ When the working directory is not a git repository (manuscripts, data
 folders): skip the pre-check and steps 7-10; run steps 1-6 and 11.
 The step-4 sweep records findings in the project's notes instead of erg tickets. State
 explicitly which steps were skipped and why.
-(Precedent: Œconomia manuscript wrap-up, 2026-07-07.)
 
 ## Pre-check
 
@@ -76,7 +75,7 @@ default branch — there are no remote branches nor merge requests to inspect.
 ## Reflect and update
 
 1. **Reflect**: what worked, what didn't, what was surprising.
-   **Temporary-candidate report (ticket 1118):** before disposing this
+   **Temporary-candidate report:** before disposing this
    session, run the report-only host scan for the current runtime and session.
    Resolve the repo root as above; supply the exact runtime and session id from
    the live session metadata (do not infer an id from a path):
@@ -117,7 +116,7 @@ default branch — there are no remote branches nor merge requests to inspect.
    Resolve the project repository first. Use the single
    wrap-up branch/worktree described below. Capture only there; never in the
    harness because the loaded skill lives there. There is no private companion
-   store — the encrypted-in-repo policy (author decision 2026-10-02, PR #1112)
+   store — the encrypted-in-repo policy
    supersedes it: judge the audience at capture, before the first byte is
    written, and material not cleared for the repository's public audience
    enters that same repository as age ciphertext through the project's pinned
@@ -210,13 +209,11 @@ default branch — there are no remote branches nor merge requests to inspect.
    `merge-base --is-ancestor HEAD refs/remotes/origin/main` exits 0 both when your branch is
    merged and when the checkout is simply *behind* main, so a green pre-check is
    no evidence the tree carries main's content — and a sweep run there reports
-   on files main no longer has (2026-09-10: this step read a guard script that
-   PR #869 had deleted minutes earlier, and would have returned a confident
-   wrong answer had the deletion not been known). Enumerate with
+   on files main no longer has. Enumerate with
    `git ls-tree -r --name-only refs/remotes/origin/main -- <dir>` and read with
    `git show refs/remotes/origin/main:<path>` — never `git checkout <ref> -- <path>`, which
    writes the index.
- Record qualifying follow-up tickets in the single wrap-up branch: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then include it in the wrap-up commit — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit (see ticket 0174). Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
+ Record qualifying follow-up tickets in the single wrap-up branch: `tickets/erg new "<title>"`, fill the body, `erg validate` it, then include it in the wrap-up commit — don't skip the commit; an uncommitted draft is destroyed by step 9's worktree exit. Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
 5. **Report related findings** from the sweep. Do not turn experiences into
    unsolicited standing tests, rule proposals or crystallisation tickets.
 6. **Update project docs** if pipeline, data contract, or methodology changed.
@@ -274,8 +271,7 @@ worktree go once the branch is pushed and auto-merge is armed.
    - `CLAIMS`: a PR body's `**Ticket:**` line is executed by `erg-pr-merge`,
      not by the forge. Any other route — a bare forge-CLI merge, the forge's
      web UI, another machine, another session — lands the code and drops the
-     claim with no output, and `erg check` passes either way (git-erg PR #334,
-     2026-09-10: ticket 0276's fix sat on main while 0276 stayed open). The
+     claim with no output, and `erg check` passes either way. The
      findings are `DROPPED` (ticket exists, no `Closed:` header) or
      `UNRESOLVED` (no such ticket here — renumbered, or this checkout is
      behind). The script never repairs a `DROPPED`: do it with
@@ -284,7 +280,7 @@ worktree go once the branch is pushed and auto-merge is armed.
      the `Closed:` header being *present*, so it is blind to a ticket that was
      never closed at all.
 8. **Check for tracking ticket**: if the closed ticket has a parent, check whether all sibling sub-tickets are now closed.
-    - All closed → integration review: re-read all child diffs, run full test suite, verify exit criteria, and run a **repo-wide union sweep for the change class** (stale refs, moved/renamed paths) — a green suite does not exercise the build graph, so a dangling build reference survives every per-PR check. It is caught only by grepping the whole tree for the class of change at integration, not per-PR. (2026-07-11, 0240 reorg: a merged `.mk` prerequisite kept a moved script's old flat path; per-move greps and green `make check-fast` all passed — only the integration union grep found it.)
+    - All closed → integration review: re-read all child diffs, run full test suite, verify exit criteria, and run a **repo-wide union sweep for the change class** (stale refs, moved/renamed paths) — a green suite does not exercise the build graph, so a dangling build reference survives every per-PR check. It is caught only by grepping the whole tree for the class of change at integration, not per-PR.
     - Any open → do nothing, tracker stays open.
 
     The script's `TRACKER: INTEGRATION-REVIEW-DUE <parent>` line is this
@@ -298,7 +294,7 @@ worktree go once the branch is pushed and auto-merge is armed.
     session or agent holds stays; it is left to `/molt` or `worktree-gc`.
 
     a. From inside the worktree, after the last wrap-up commit, run the exit
-       check (ticket 1098). Pass `--bundle-branch` only for the `roar-*`
+       check. Pass `--bundle-branch` only for the `roar-*`
        wrap-up branch this run created after the task merge, never the task
        branch or a reused branch:
 
@@ -315,8 +311,7 @@ worktree go once the branch is pushed and auto-merge is armed.
        `PREFLIGHT: DIRTY` → commit (or `$IDH_ROOT/scripts/worktree-salvage.sh`)
        and re-run; the preflight removes only `.panel/` and `build/panel-head/`
        review scratch when no `.tmp/` exists, and refuses every other
-       uncommitted file, including an uncommitted ticket draft (tickets 0174,
-       0948). If `.tmp/` exists, ordinary preflight preserves `.panel/` verdicts
+       uncommitted file, including an uncommitted ticket draft. If `.tmp/` exists, ordinary preflight preserves `.panel/` verdicts
        until the citation-aware removal check has run.
 
     b. `EXIT: READY` → `cd` to the main checkout, then run the `after-exit`
@@ -416,7 +411,6 @@ worktree go once the branch is pushed and auto-merge is armed.
 Note: STATE.md is updated on main during `/lair`, not here. Worktree GC
 belongs to housekeeping (`/molt`), not here: roar exits and disposes of its
 OWN merged worktree (step 9) and touches nothing outside it. A repo-wide GC
-from roar removed worktrees that were live session base cwds (2026-07-13,
-ticket 0355 — a merged-and-pruned branch reads `[gone]` even while sessions
-still sit in the tree), stranding those sessions in unregistered husk dirs
-where git silently resolves to the primary checkout.
+from roar would remove worktrees that are live session base cwds (a
+merged-and-pruned branch reads `[gone]` even while sessions still sit in the
+tree), stranding those sessions in unregistered husk dirs.
