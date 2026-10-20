@@ -19,7 +19,7 @@ is reached in each runtime. Launch doors are two: a subagent inside the
 current CLI (Claude Code, Pi, Codex), and a headless CLI started from bash
 with a given model (`claude -p`, `pi --print`, `codex exec`, `vibe -p`).
 Recipes are scattered (`skills/hunt`, `skills/review-pr:151-186`,
-`docs/trace-ab-2026-06.md:105`, `scripts/coaching/seat-runner.sh`).
+`docs/trace-ab-2026-06.md:105`, `skills/coaching/seat-runner.sh`).
 
 ## Scope
 - `skills/route/routes.json`: launch doors by runtime (Claude Code, Pi,

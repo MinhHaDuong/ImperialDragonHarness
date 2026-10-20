@@ -316,7 +316,7 @@ harness.
   ships, so the grid gets a dated entry. It depends on 1024, and each replay is
   bounded by the spend caps pre-registered there.
 - **The grid is a data file, not prose.** The skill-text scanner reads only
-  `skills/**/*.md`, and `scripts/coaching/benchmark-board.yml` is a precedent for a
+  `skills/**/*.md`, and `skills/coaching/benchmark-board.yml` is a precedent for a
   data file beside a skill. Entries need a source and a date; the tournament says
   its own verdict is time-stamped, not eternal.
 - **The state cache is machine- and environment-specific and is not committed.** A

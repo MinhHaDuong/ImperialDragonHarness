@@ -25,7 +25,7 @@ Necessary bounded child of 1030 (approved attribution design sections 8–10). T
 Retirement should preserve the copied helpers and their origin facts while keeping current read pointers useful. Replace current implementation references with the retained coaching equivalents only where the actual symbol/idiom exists. Keep external peer review's original ticket 0393 origin alongside the current `_keystore_value` reference. Remove the obsolete test-suite name from the SKIP convention description. Frozen board data and historical incident records stay unchanged.
 
 ## Actions / Plan
-Inspect the five actual comments and retained `scripts/coaching/replay.sh` symbols. Update comments/docstring only. The preliminary tree must remain operational with the old machinery still present; final retirement belongs to original 1030. Use existing retained behavior tests and reference/catalog checks, then declared adherence and full project gate through raid-gate. No comment-mirroring regression tests.
+Inspect the five actual comments and retained `skills/coaching/replay.sh` symbols. Update comments/docstring only. The preliminary tree must remain operational with the old machinery still present; final retirement belongs to original 1030. Use existing retained behavior tests and reference/catalog checks, then declared adherence and full project gate through raid-gate. No comment-mirroring regression tests.
 
 ## Test
 Existing keys-diff and HAL credential resolver shell suites; padme direct-client, coaching replay, retained seat-runner and benchmark-board suites; skill reference pointers and catalog drift. Inspect the Python diff to ensure only its docstring changes. Required full make check remains the final pre-publication gate.

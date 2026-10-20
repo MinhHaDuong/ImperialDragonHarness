@@ -20,7 +20,7 @@ Move frozen labeled board and contained offline replay into a thin coaching skil
 - [ ] A coaching invocation replays the same frozen board and preserves diagnostics; board/containment tests pass at new paths; no ground-truth entries lost.
 
 ## Relevant files / size boundary
-scripts/coaching/SKILL.md, replay engine, board, moved seat-runner tree, affected replay tests/references. Pure unchanged relocations count zero; modified paths plus ticket/tests must stay below15.
+skills/coaching/SKILL.md, replay engine, board, moved seat-runner tree, affected replay tests/references. Pure unchanged relocations count zero; modified paths plus ticket/tests must stay below15.
 
 ## Actions
 Inspect actual inventory, choose minimal relocation/deletion preserving approved intent; independent review and projectchecks. Further split if15+contentpaths.

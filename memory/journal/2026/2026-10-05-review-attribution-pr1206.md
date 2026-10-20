@@ -5,7 +5,7 @@ reviewer: seat=correctness-panel-round1 · runtime=codex · model=openai/gpt-6.1
 reviewer: seat=consistency-panel-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=scope-panel-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=red-team-panel-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
-  finding: verifiable · scripts/coaching/references/replay.md:39 · adopted: yes
+  finding: verifiable · skills/coaching/references/replay.md:39 · adopted: yes
 reviewer: seat=doc-propagation-root-round1 · runtime=codex · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=native-initial · runtime=codex-cli-0.160.0 · model=openai/gpt-6.1-sol · status: ran
 reviewer: seat=red-team-local-correction-confirmation · runtime=codex · model=openai/gpt-6.1-sol · status: ran

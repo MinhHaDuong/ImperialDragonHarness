@@ -40,7 +40,7 @@ reviewed_tip: 43d71a1d4a6ba73b29da953f838786c8e9c37936
   - ADDRESSED — `skills/biblio-saturation/SKILL.md:2-3` in `43d71a1d4a6ba73b29da953f838786c8e9c37936`; nested `metadata.category` is exactly `research`.
   - ADDRESSED — `skills/brood/SKILL.md:2-3` in `43d71a1d4a6ba73b29da953f838786c8e9c37936`; nested `metadata.category` is exactly `memory`.
   - ADDRESSED — `skills/choose-venue/SKILL.md:2-3` in `43d71a1d4a6ba73b29da953f838786c8e9c37936`; nested `metadata.category` is exactly `publication`.
-  - ADDRESSED — `scripts/coaching/SKILL.md:2-3` in `43d71a1d4a6ba73b29da953f838786c8e9c37936`; nested `metadata.category` is exactly `memory`.
+  - ADDRESSED — `skills/coaching/SKILL.md:2-3` in `43d71a1d4a6ba73b29da953f838786c8e9c37936`; nested `metadata.category` is exactly `memory`.
   - ADDRESSED — `skills/conference-submission-prep/SKILL.md:2-3` in `43d71a1d4a6ba73b29da953f838786c8e9c37936`; nested `metadata.category` is exactly `publication`.
   - ADDRESSED — `skills/critical-lit-review/SKILL.md:2-3` in `43d71a1d4a6ba73b29da953f838786c8e9c37936`; nested `metadata.category` is exactly `research`.
   - ADDRESSED — `skills/cut-prose/SKILL.md:2-3` in `43d71a1d4a6ba73b29da953f838786c8e9c37936`; nested `metadata.category` is exactly `writing`.
