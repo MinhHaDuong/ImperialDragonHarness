@@ -1,0 +1,17 @@
+%erg 0.1
+Title: Skill history removal A: zotero, bib-merge and prose-side skills
+Created: 2026-10-20
+Author: reviewer
+
+--- log ---
+2026-10-20T06:54Z reviewer created
+
+--- body ---
+## Context
+Group A of the split of PR #1489 (ticket 1130, tracker), which /gaze stopped at the 15-file un-reviewable breaker. Bodies-only removal of incident, ticket-number and date history from: bib-merge, cut-prose, ingest-decision-letter, pdf-finish, related-work-note, review-pr-prose, submission-event, zotero (SKILL.md and references/import.md). Siblings: 1133 (A), 1134 (B), 1135 (C).
+
+## Exit criteria
+- [ ] Only group A files change; each rule keeps its imperative
+- [ ] No edit to skills/gaze/ and no frontmatter edit
+- [ ] `skills-catalog.md` unchanged and `make check-skills-drift` clean
+- [ ] `make check` passes
