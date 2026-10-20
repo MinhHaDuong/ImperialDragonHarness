@@ -2,10 +2,12 @@
 Title: Demote step-only skills to scripts and runbooks (child of 1131)
 Created: 2026-10-20
 Author: reviewer
+Closed: autoclosed — PR #1514
 
 --- log ---
 2026-10-20T08:18Z reviewer created
 2026-10-20T10:10Z reviewer note doudou count 2026-10-20: typography-finish 2 tool/0 typed, update-publist 2 tool/1 typed (keeps its skill status), bib-merge, related-work-note-validate, coaching 0/0 on both hosts; criterion 1 satisfied for the three zero-use skills and typography-finish
+2026-10-20T14:51Z reviewer closed — autoclosed — PR #1514
 
 --- body ---
 ## Context

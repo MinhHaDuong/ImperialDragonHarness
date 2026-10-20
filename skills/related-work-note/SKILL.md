@@ -116,6 +116,8 @@ inclusion/exclusion rule, freshness cutoff, preprint policy,
 grey-literature policy (if applicable), identifier resolution log,
 LLM-assist disclosure.
 
+Citation re-resolution of a finished note: `runbooks/validate.md` (formerly `/related-work-note-validate`).
+
 ## Author verification checklist
 - [ ] Read each cited primary source (not just abstract)
 - [ ] Confirmed claim-to-citation mapping

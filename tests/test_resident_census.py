@@ -58,7 +58,11 @@ BUDGETS = {
     # topic, journal and reference surface, so it can no longer fit the
     # legacy 500-char stub.
     "memory": 14500,  # the largest per-project index; only one is resident
-    "skills": 7000,  # tracked cards; local cards are supplemental (1091)
+    # Lowered 2026-10-20 (ticket 1140): coaching became a script and three
+    # step-only skills (typography-finish, bib-merge, related-work-note-validate)
+    # became runbooks; with the lifecycle trim of 1132, 6993 -> 6120 chars
+    # measured. The budget is that plus thin headroom.
+    "skills": 6200,  # tracked cards; local cards are supplemental (1091)
     "agents": 800,  # name + description of every agents/*.md
 }
 
