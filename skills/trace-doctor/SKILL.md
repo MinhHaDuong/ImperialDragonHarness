@@ -99,9 +99,7 @@ Report `inherited_turns_dropped` from the compact-audit summary alongside H8.
 It counts turns a forked or resumed session replayed from its parent, which the
 audit attributes to the parent only. A non-zero count is normal; a *large* one
 means the window is fork-heavy, so H8's run count reflects fewer distinct
-sessions than `agents_in_window` suggests. Comparing an H8 figure against any
-census taken before 2026-07-27 compares against an inflated number — that run
-overstated recoverable spend by 27% on the same corpus.
+sessions than `agents_in_window` suggests. An H8 figure from an older census may be inflated by the same effect.
 
 ## 3. Cross-reference existing tickets
 

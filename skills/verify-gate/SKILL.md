@@ -76,7 +76,7 @@ history (see "Standalone invocation"), never passed by the caller.
 against cwd, and a `context: fork` invocation does **not** inherit the
 caller's cwd. The caller must pass `worktree=<path>` and the gate must `cd`
 into it first — running from the session worktree will read whatever branch
-happens to be checked out there and produce wrong results (ticket 0193).
+happens to be checked out there and produce wrong results.
 
 **Isolation**:
 - When called from `/gaze`, the `worktree=` argument names the isolated
@@ -228,7 +228,7 @@ If `round == 2` and any trigger fires → upgrade to ESCALATE. Never a third rou
 
 Every REROLL or ESCALATE verdict carries a `root_cause_class` — a shared label
 for *why* the gate is bouncing (source: arXiv:2604.21965 §5.3, reframed for the
-harness, ticket 0291). This is a labeling convention, like the minor tags, not a
+harness). This is a labeling convention, like the minor tags, not a
 mechanical detector; assign it when you author the verdict.
 
 - **Agent Error** — the implementer misread the ticket or a rule. E.g. wired
