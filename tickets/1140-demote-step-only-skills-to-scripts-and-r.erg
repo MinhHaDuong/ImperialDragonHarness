@@ -1,0 +1,30 @@
+%erg 0.1
+Title: Demote step-only skills to scripts and runbooks (child of 1131)
+Created: 2026-10-20
+Author: reviewer
+
+--- log ---
+2026-10-20T08:18Z reviewer created
+
+--- body ---
+## Context
+Child of 1131. Author rule 2026-10-20: only user-facing skills get a resident description card and a draconic name; internal steps are scripts > runbooks > reference. A class sweep found skills whose only invocation path is a parent skill running them as a mechanical step.
+
+Evidence, with its limits. Static: the caller graph over `skills/*/SKILL.md` (a parent names the skill as `/name`). Dynamic: Skill-tool calls and typed slash commands counted across the 199 trace folders under `~/.claude/projects` on padme (probe positive control: gaze 427, hunt 385, review-pr 607, roar 153 calls). A zero here is a zero on padme only: doudou and other hosts were not read, so the prose and research skills are not proven unused.
+
+Candidates (0 calls and 0 typed commands on padme; a parent calls each; card cost = name+description in the resident skills census, budget 7000 with ~7 chars spare):
+- `typography-finish` (177 chars): only `pdf-finish` calls it.
+- `update-publist` (138): only `submission-event` calls it; model invocation disabled; helper scripts already exist.
+- `bib-merge` (171): only `conference-submission-prep` calls it; mechanical dedupe and append.
+- `related-work-note-validate` (158): no caller; mechanical DOI re-resolution with a PASS/WARN/FAIL line.
+- `coaching` (135): only `reviewers` calls it; a benchmark-replay utility with no invocation flags.
+About 780 resident characters in all.
+
+Not candidates, by the same evidence: `verify-adherence`, `verify-gate`, `review-pr`, `reviewers`, `review-pr-prose` are loaded by agents constantly (agent-facing); `route` is a model-only reference card. `review-pr` retires under 1100.
+
+## Exit criteria
+- [ ] Read-only direct-use count of the five candidates on doudou (ssh), reported with a positive control; any candidate a user types there stays a skill
+- [ ] Each remaining candidate becomes a script if its work is mechanical, else a runbook under its owning skill's `runbooks/`, else a reference file; its parent skill points at the new home
+- [ ] Callers, tests and docs naming the old `/skill` still resolve (grep proves it); no test is weakened
+- [ ] `make skills-catalog` run; `make check-skills-drift` clean; the resident skills census drops by the removed cards and the budget is lowered to the measured value plus thin headroom (lowering a budget is the deliverable of a trimming pass)
+- [ ] Skills outside this list are not touched; the other zero-use skills stay until their hosts are counted

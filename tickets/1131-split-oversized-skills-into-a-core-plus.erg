@@ -19,3 +19,4 @@ Line counts on origin/main: gaze 951, raid 509, roar 422, review-pr about 350, v
 
 ## Children
 - 1136 split roar (memory capture and pattern sweep out)
+- 1140 demote step-only skills to scripts and runbooks
