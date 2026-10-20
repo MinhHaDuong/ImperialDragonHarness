@@ -2,9 +2,11 @@
 Title: Add use-when and not-for clauses to ambiguous skill descriptions
 Created: 2026-10-20
 Author: Minh Ha-Duong
+Closed: PRs #1495 (trim, 1139) and #1488 (nine routing clauses) merged; census 7000, drift clean
 
 --- log ---
 2026-10-20T06:32Z Minh Ha-Duong created
+2026-10-20T07:58Z reviewer closed — PRs #1495 (trim, 1139) and #1488 (nine routing clauses) merged; census 7000, drift clean
 
 --- body ---
 ## Context
