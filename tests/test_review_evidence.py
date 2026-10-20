@@ -173,6 +173,9 @@ def test_risk_floor_is_the_higher_of_paths_and_ticket_text():
 
 # --- repository scenarios --------------------------------------------------
 
+# Same exit criteria as TICKET; its context names nothing high-risk.
+REPO_TICKET = TICKET.replace("Touches verify-gate.", "Touches app.py.")
+
 def git(repo, *args):
     return subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True,
                           text=True, env=child_env()).stdout.strip()
@@ -199,7 +202,7 @@ def repo(tmp_path):
     git(r, "config", "user.email", "t@example.com")
     git(r, "config", "user.name", "T")
     commit(r, "README.md", "hello\n", "init")
-    commit(r, "tickets/0001-x.erg", TICKET, "ticket")
+    commit(r, "tickets/0001-x.erg", REPO_TICKET, "ticket")
     git(r, "switch", "-q", "-c", "feature")
     commit(r, "app.py", "def f():\n    return 1\n", "feature")
     return r
@@ -218,6 +221,10 @@ def run_cli(repo, policy, *args):
         ["python3", str(SCRIPT), *args, "--repo", str(repo), "--base", "main",
          "--policy-root", str(policy), "--ticket", str(repo / "tickets/0001-x.erg")],
         capture_output=True, text=True, env=child_env())
+
+
+def run_gate(repo, policy, *args, risk="ordinary"):
+    return run_cli(repo, policy, "gate", "--risk", risk, *args)
 
 
 def record_seat(repo, policy, seat, family="Anthropic", verdict="approve", kind="review"):
@@ -257,7 +264,7 @@ def test_unchanged_head_reuses_without_dispatching_duplicates(repo, policy):
     plan = run_cli(repo, policy, "plan", "--seat", "correctness", "--seat", "red-team")
     assert plan.returncode == 0, plan.stderr
     assert json.loads(plan.stdout)["dispatch"] == []
-    gate = run_cli(repo, policy, "gate", "--seat", "correctness", "--seat", "red-team")
+    gate = run_gate(repo, policy, "--seat", "correctness", "--seat", "red-team")
     assert gate.returncode == 0, gate.stdout + gate.stderr
     assert "seat correctness: reused" in gate.stdout
 
@@ -270,7 +277,7 @@ def test_rebase_onto_unrelated_main_keeps_reuse(repo, policy):
     commit(repo, "other.txt", "unrelated\n", "main moves")
     git(repo, "switch", "-q", "feature")
     git(repo, "rebase", "-q", "main")
-    gate = run_cli(repo, policy, "gate", "--seat", "correctness")
+    gate = run_gate(repo, policy, "--seat", "correctness")
     assert gate.returncode == 0, gate.stdout + gate.stderr
 
 
@@ -281,7 +288,7 @@ def test_relevant_change_re_reviews_only_what_went_stale(repo, policy):
     commit(repo, "app.py", "def f():\n    return 2\n", "fix")
     plan = json.loads(run_cli(repo, policy, "plan", "--seat", "correctness").stdout)
     assert plan["dispatch"] == ["correctness"]
-    gate = run_cli(repo, policy, "gate", "--seat", "correctness")
+    gate = run_gate(repo, policy, "--seat", "correctness")
     assert gate.returncode != 0
     assert "seat correctness: stale" in gate.stdout
 
@@ -291,7 +298,7 @@ def test_whitespace_only_code_change_invalidates(repo, policy):
     record_seat(repo, policy, "correctness")
     commit_reports(repo)
     commit(repo, "app.py", "def f():\n  return 1\n", "reindent")
-    assert run_cli(repo, policy, "gate", "--seat", "correctness").returncode != 0
+    assert run_gate(repo, policy, "--seat", "correctness").returncode != 0
 
 
 @pytest.mark.integration
@@ -299,7 +306,7 @@ def test_executable_file_under_reviews_invalidates(repo, policy):
     record_seat(repo, policy, "correctness")
     commit_reports(repo)
     commit(repo, "tickets/reviews/hook.sh", "#!/bin/sh\n", "sneak", mode=0o755)
-    gate = run_cli(repo, policy, "gate", "--seat", "correctness")
+    gate = run_gate(repo, policy, "--seat", "correctness")
     assert gate.returncode != 0 and "stale" in gate.stdout
 
 
@@ -308,17 +315,17 @@ def test_criteria_and_policy_changes_invalidate(repo, policy):
     record_seat(repo, policy, "correctness")
     commit_reports(repo)
     (policy / "skills" / "gaze" / "SKILL.md").write_text("gaze v2\n")
-    assert "policy-version" in run_cli(repo, policy, "gate", "--seat", "correctness").stdout
+    assert "policy-version" in run_gate(repo, policy, "--seat", "correctness").stdout
     (policy / "skills" / "gaze" / "SKILL.md").write_text("gaze v1\n")
     commit(repo, "tickets/0001-x.erg", TICKET.replace("Second", "Third"), "rescope")
-    assert "criteria-hash" in run_cli(repo, policy, "gate", "--seat", "correctness").stdout
+    assert "criteria-hash" in run_gate(repo, policy, "--seat", "correctness").stdout
 
 
 @pytest.mark.integration
 def test_gate_rejects_missing_report_and_never_reuses_checks(repo, policy):
     record_seat(repo, policy, "adherence", kind="adherence")
     commit_reports(repo)
-    gate = run_cli(repo, policy, "gate", "--seat", "correctness", "--seat", "adherence")
+    gate = run_gate(repo, policy, "--seat", "correctness", "--seat", "adherence")
     assert gate.returncode != 0
     assert "seat correctness: no-report" in gate.stdout
     assert "seat adherence: no-report" in gate.stdout
@@ -343,6 +350,7 @@ def test_gate_high_row_needs_red_team_and_another_family(repo, policy):
 def test_gate_prints_floor_and_refuses_an_under_rated_plan(repo, policy):
     record_seat(repo, policy, "correctness")
     commit_reports(repo)
+    commit(repo, "tickets/0001-x.erg", TICKET, "context names verify-gate")  # criteria unchanged
     gate = run_cli(repo, policy, "gate", "--seat", "correctness", "--risk", "ordinary")
     assert "risk: ordinary / floor: high" in gate.stdout  # the ticket text names verify-gate
     assert gate.returncode != 0
@@ -361,3 +369,13 @@ def test_changes_verdict_dominates_whatever_the_report_order(monkeypatch, order)
     monkeypatch.setattr(re_mod, "load_reports", lambda *a: reports)
     row = re_mod.seat_rows(Path("."), inputs(), ["correctness"])[0]
     assert row["status"] == "ran" and row["header"]["verdict"] == "changes"
+
+
+@pytest.mark.integration
+def test_gate_without_a_plan_row_fails_closed(repo, policy):
+    """No 'risk: unstated' pass: a gate run must name the plan row."""
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    out = run_cli(repo, policy, "gate", "--seat", "correctness")
+    assert out.returncode != 0
+    assert "unstated" not in out.stdout

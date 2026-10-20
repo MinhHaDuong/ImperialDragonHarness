@@ -355,9 +355,9 @@ def cmd_gate(args: argparse.Namespace) -> int:
         args.repo, "diff", "--name-status", "--no-renames", current.base, current.head
     ).splitlines() if line]
     floor = risk_floor(changes, ticket)
-    print(f"risk: {args.risk or 'unstated'} / floor: {floor['floor']} "
+    print(f"risk: {args.risk} / floor: {floor['floor']} "
           f"(paths: {floor['paths']}, ticket: {floor['ticket']})")
-    if args.risk and ROWS.index(args.risk) < ROWS.index(floor["floor"]):
+    if ROWS.index(args.risk) < ROWS.index(floor["floor"]):
         print("risk: plan row is below the floor")
         ok = False
     return 0 if ok else 1
@@ -421,7 +421,8 @@ def main() -> int:
         p.add_argument("--seat", action="append", default=[], required=True)
         p.set_defaults(fn=fn)
         if name == "gate":
-            p.add_argument("--risk", choices=ROWS)
+            p.add_argument("--risk", choices=ROWS, required=True,
+                           help="plan row; refused when below the computed floor")
             p.add_argument("--producer-family")
     fg = sub.add_parser("forge", help="admit forge-read reviews by pinned actor")
     fg.add_argument("forge_repo", help="owner/name")
