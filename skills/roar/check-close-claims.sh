@@ -113,7 +113,7 @@ fence_map() {
     function fence(line,   c, n) {
         find = 0
         while ((c = substr(line, 1, 1)) == " " || c == "\t") {
-            find += (c == "\t") ? 4 : 1
+            find += (c == "\t") ? 4 - (find % 4) : 1
             line = substr(line, 2)
         }
         if (c != "`" && c != "~") return 0
@@ -132,7 +132,7 @@ fence_map() {
             next
         }
         buf[++nbuf] = $0
-        if (fence($0) && fch == och && flen >= olen && find - oind <= 3 \
+        if (fence($0) && fch == och && flen >= olen && find <= (oind <= 3 ? 3 : oind + 3) \
             && frest ~ /^[ \t\r]*$/) {
             for (i = 1; i <= nbuf; i++) print "F\t" buf[i]
             open = 0

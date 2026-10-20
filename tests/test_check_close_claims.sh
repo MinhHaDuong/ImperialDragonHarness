@@ -202,6 +202,26 @@ out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bas
 _check_rc "a claim after an unclosed fence is audited" 1 "$rc"
 _check_says "…and named as dropped" "$out" "DROPPED: PR #116 claims ticket 0001"
 
+# Closer indentation is an absolute 3-column limit (opener at 2, closer-like
+# line at 5; opener at 3, closer-like line at 4): the claim stays fenced.
+# Removing the indent rule must turn this red.
+jq -n --arg merged "$RECENT" --arg body $'  ```\n     ```\n**Ticket:** tickets/0001-dropped.erg\n  ```\nTicket: none\n' \
+    '[{number:117,title:"deep closer",mergedAt:$merged,body:$body}]' > "$repo/prs.json"
+out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "a 5-column fence-like line does not close a 2-column fence" 0 "$rc"
+jq -n --arg merged "$RECENT" --arg body $'   ```\n    ```\nTicket: tickets/0001-dropped.erg\n   ```\nTicket: none\n' \
+    '[{number:118,title:"deep closer 3",mergedAt:$merged,body:$body}]' > "$repo/prs.json"
+out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "a 4-space fence-like line does not close a 3-column fence" 0 "$rc"
+
+# Tabs advance to the next multiple of 4: space+tab closer is 7 columns and
+# validly closes a list-nested fence, so the claim after it is live.
+jq -n --arg merged "$RECENT" --arg body $'1.  item\n\n    ```\n \t   ```\n\nTicket: tickets/0001-dropped.erg\n' \
+    '[{number:119,title:"mixed tab",mergedAt:$merged,body:$body}]' > "$repo/prs.json"
+out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "a space+tab closer closes a list-nested fence" 1 "$rc"
+_check_says "…and the live claim is audited" "$out" "DROPPED: PR #119 claims ticket 0001"
+
 # The tracker is copied, not sourced (each skill script stays standalone), so
 # the two copies must stay byte-identical.
 _fence_map_body() { sed -n '/^fence_map() {$/,/^}$/p' "$1"; }

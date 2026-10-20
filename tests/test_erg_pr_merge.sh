@@ -1395,7 +1395,11 @@ else echo "FAIL: fenced Ticket line leaked into claims"; echo "$out33"; fail=1; 
 # (CommonMark) or silently honouring (no fence tracking) that line; (d) prose
 # that merely starts with "ticket" in an unclosed fence is not claim-shaped and
 # does not refuse; (e) an unclosed fence with no claim in its tail still merges,
-# the earlier claim live.
+# the earlier claim live; (f) a closer measured against an absolute 3-column
+# limit: a fence-like line at 4+ columns is content after an opener at 2 or 3
+# columns (not only relative to the opener); (g) tabs advance to the next
+# multiple of 4, so a space+tab closer in a list-nested fence counts 7 columns;
+# (h) a closer indented 4+ columns past a column-0 opener is content.
 seed_repo tildeinbacktick 0320
 if out34=$(run_merge $'Example:\n```markdown\n~~~\n**Ticket:** tickets/0320-fixture.erg\n~~~\n```\nTicket: none\n' 'docs: tilde in backtick' 2>&1) \
    && ! closed_has 0320; then
@@ -1428,6 +1432,24 @@ if out34=$(run_merge $'```\n    ```\n**Ticket:** tickets/0327-fixture.erg\n```\n
    && ! closed_has 0327; then
     echo "PASS: a fence-like line indented 4+ columns past the opener is content, not a closer"
 else echo "FAIL: an over-indented fence line closed the fence and freed a fenced claim"; echo "$out34"; fail=1; fi
+
+seed_repo depthopen2 0328
+if out34=$(run_merge $'  ```\n     ```\n**Ticket:** tickets/0328-fixture.erg\n  ```\nTicket: none\n' 'docs: opener at 2' 2>&1) \
+   && ! closed_has 0328; then
+    echo "PASS: a fence-like line at 5 columns does not close a fence opened at 2"
+else echo "FAIL: closer depth measured relative to a 2-column opener freed a fenced claim"; echo "$out34"; fail=1; fi
+
+seed_repo depthopen3 0329
+if out34=$(run_merge $'   ```\n    ```\nTicket: tickets/0329-fixture.erg\n   ```\nTicket: none\n' 'docs: opener at 3' 2>&1) \
+   && ! closed_has 0329; then
+    echo "PASS: a 4-space fence-like line does not close a fence opened at 3"
+else echo "FAIL: a 4-space line closed a 3-column fence and freed a fenced claim"; echo "$out34"; fail=1; fi
+
+seed_repo tabmix 0330
+if out34=$(run_merge $'1.  item\n\n    ```\n \t   ```\n\nTicket: tickets/0330-fixture.erg\n' 'ticket(0330): tabs' 2>&1) \
+   && closed_has 0330; then
+    echo "PASS: a space+tab closer (7 columns) validly closes a list-nested fence; the claim after it is live"
+else echo "FAIL: tab stop miscounted; the closer was rejected and the live claim swallowed"; echo "$out34"; fail=1; fi
 
 seed_repo unclosedfence 0324
 if out34=$(run_merge $'Summary.\n\n```attribution\nkind: review-attribution\n\n**Ticket:** tickets/0324-fixture.erg\n' 'ticket(0324): unclosed' 2>&1); then
