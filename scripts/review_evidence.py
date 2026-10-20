@@ -247,6 +247,16 @@ def load_reports(repo: Path) -> list[tuple[Path, dict]]:
     return out
 
 
+def _rank(row: dict) -> tuple[int, int, int]:
+    """Order candidate rows: any usable report beats stale beats none; among usable
+    reports a `changes` verdict dominates (findings stand), then `ran` beats `reused`.
+    Independent of report file order, so seat-10 vs seat-2 cannot mask a verdict."""
+    usable = row["status"] in ("ran", "reused")
+    return (2 if usable else 1 if row["status"] == "stale" else 0,
+            int(usable and row["header"].get("verdict") == "changes"),
+            int(row["status"] == "ran"))
+
+
 def seat_rows(repo: Path, current: Inputs, seats: list[str]) -> list[dict]:
     """Per required seat: ran | reused | stale | no-report, with the backing report."""
     reports = load_reports(repo)
@@ -259,13 +269,15 @@ def seat_rows(repo: Path, current: Inputs, seats: list[str]) -> list[dict]:
                 continue
             action, reason = decide(header, current)
             if action == REUSE:
-                status = "ran" if header["head"] == current.head else "reused"
-                if best["status"] != "ran":
-                    best = {"seat": seat, "status": status, "reason": reason, "path": path,
-                            "header": header}
-            elif action == STALE and best["status"] == "no-report":
-                best = {"seat": seat, "status": "stale", "reason": reason, "path": path,
-                        "header": header}
+                status = "ran" if header.get("head") == current.head else "reused"
+            elif action == STALE:
+                status = "stale"
+            else:
+                continue
+            row = {"seat": seat, "status": status, "reason": reason, "path": path,
+                   "header": header}
+            if _rank(row) > _rank(best):
+                best = row
         rows.append(best)
     return rows
 

@@ -346,3 +346,18 @@ def test_gate_prints_floor_and_refuses_an_under_rated_plan(repo, policy):
     gate = run_cli(repo, policy, "gate", "--seat", "correctness", "--risk", "ordinary")
     assert "risk: ordinary / floor: high" in gate.stdout  # the ticket text names verify-gate
     assert gate.returncode != 0
+
+
+# --- seat table ------------------------------------------------------------
+
+def _seat_report(n, **over):
+    return (Path(f"tickets/reviews/r/correctness-{n}.md"), record(**over))
+
+
+@pytest.mark.parametrize("order", [("approve", "changes"), ("changes", "approve")])
+def test_changes_verdict_dominates_whatever_the_report_order(monkeypatch, order):
+    """seat-10 sorts before seat-2: an earlier approve must not mask a recorded changes."""
+    reports = [_seat_report(n, verdict=v) for n, v in zip((10, 2), order)]
+    monkeypatch.setattr(re_mod, "load_reports", lambda *a: reports)
+    row = re_mod.seat_rows(Path("."), inputs(), ["correctness"])[0]
+    assert row["status"] == "ran" and row["header"]["verdict"] == "changes"
