@@ -104,17 +104,55 @@ ticket_state() {
     echo absent
 }
 
+# Fence tracker shared with skills/merge/erg-pr-merge (ticket 1152): tags each
+# line `L` live, `F` inside a closed fence, `U` inside a fence never closed.
+# Copied rather than sourced so each skill script stays standalone;
+# tests/test_check_close_claims.sh keeps the two copies byte-identical.
+fence_map() {
+    awk '
+    function fence(line,   c, n) {
+        find = 0
+        while ((c = substr(line, 1, 1)) == " " || c == "\t") {
+            find += (c == "\t") ? 4 - (find % 4) : 1
+            line = substr(line, 2)
+        }
+        if (c != "`" && c != "~") return 0
+        n = 0
+        while (substr(line, n + 1, 1) == c) n++
+        if (n < 3) return 0
+        fch = c; flen = n; frest = substr(line, n + 1)
+        return 1
+    }
+    {
+        if (!open) {
+            if (fence($0) && !(fch == "`" && index(frest, "`"))) {
+                open = 1; och = fch; olen = flen; oind = find; nbuf = 0
+                buf[++nbuf] = $0
+            } else print "L\t" $0
+            next
+        }
+        buf[++nbuf] = $0
+        if (fence($0) && fch == och && flen >= olen && find <= (oind <= 3 ? 3 : oind + 3) \
+            && frest ~ /^[ \t\r]*$/) {
+            for (i = 1; i <= nbuf; i++) print "F\t" buf[i]
+            open = 0
+        }
+    }
+    END { if (open) for (i = 1; i <= nbuf; i++) print "U\t" buf[i] }
+    '
+}
+
 while IFS='|' read -r num title_b64 body_b64; do
     [ -n "$num" ] || continue
     title=$(printf '%s' "$title_b64" | base64 -d 2>/dev/null || true)
     body=$(printf '%s' "$body_b64" | base64 -d 2>/dev/null || true)
 
-    # Match erg-pr-merge: ignore fenced examples and fold case once before
-    # interpreting either the path or the ID.
-    claim_body=$(printf '%s\n' "$body" | awk '
-        /^[[:space:]]*```/ || /^[[:space:]]*~~~/ { fenced = !fenced; next }
-        !fenced { print }
-    ' | tr '[:upper:]' '[:lower:]')
+    # Match erg-pr-merge: ignore lines in closed fences and fold case once
+    # before interpreting either the path or the ID. Lines of an unclosed fence
+    # stay in: erg-pr-merge refuses a body whose unclosed fence hides a claim,
+    # so a merged one came by another route, and an audit errs toward naming it.
+    claim_body=$(printf '%s\n' "$body" | fence_map | sed -n 's/^[LU]\t//p' \
+        | tr '[:upper:]' '[:lower:]')
     ids=$(printf '%s\n' "$claim_body" | grep -oP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/(closed/)?\K[0-9]{4}(?![0-9])' | sort -u || true)
     claim_lines=$(printf '%s\n' "$claim_body" | grep -P '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/' || true)
     if [ -n "$claim_lines" ] && printf '%s\n' "$claim_lines" | grep -qPv '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/(closed/)?[0-9]{4}(?![0-9])'; then

@@ -167,6 +167,72 @@ fi
 
 BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
 
+# One fence tracker for every close-claim reader (ticket 1152). It tags each
+# line of stdin: `L<TAB>` live text, `F<TAB>` inside a closed fence (fence lines
+# included), `U<TAB>` inside a fence never closed before the end of the body.
+# CommonMark rules: an opener is 3+ backticks or 3+ tildes (a backtick info
+# string may not contain a backtick); the closer must reuse the opener's
+# character, be at least as long, carry nothing but whitespace, and sit at
+# most 3 columns in (a deeper run is code content, not a closer). Tabs advance
+# to the next multiple of 4. One deviation from CommonMark remains: container
+# indentation is not tracked, so an opener may sit at any column and a fence
+# nested in a list item stays a fence; its closer may then sit up to 3 columns
+# deeper than the opener, which can end such a fence earlier than CommonMark
+# would and free a fenced line. A fence-shaped code line indented 4+ columns
+# outside any container opens a fence here (CommonMark: code) and can hide the
+# lines after it, dropping a claim or, if never closed, refusing the merge.
+# Lines of an open fence are buffered until the
+# closer or EOF decides between F and U.
+fence_map() {
+    awk '
+    function fence(line,   c, n) {
+        find = 0
+        while ((c = substr(line, 1, 1)) == " " || c == "\t") {
+            find += (c == "\t") ? 4 - (find % 4) : 1
+            line = substr(line, 2)
+        }
+        if (c != "`" && c != "~") return 0
+        n = 0
+        while (substr(line, n + 1, 1) == c) n++
+        if (n < 3) return 0
+        fch = c; flen = n; frest = substr(line, n + 1)
+        return 1
+    }
+    {
+        if (!open) {
+            if (fence($0) && !(fch == "`" && index(frest, "`"))) {
+                open = 1; och = fch; olen = flen; oind = find; nbuf = 0
+                buf[++nbuf] = $0
+            } else print "L\t" $0
+            next
+        }
+        buf[++nbuf] = $0
+        if (fence($0) && fch == och && flen >= olen && find <= (oind <= 3 ? 3 : oind + 3) \
+            && frest ~ /^[ \t\r]*$/) {
+            for (i = 1; i <= nbuf; i++) print "F\t" buf[i]
+            open = 0
+        }
+    }
+    END { if (open) for (i = 1; i <= nbuf; i++) print "U\t" buf[i] }
+    '
+}
+live_lines() { fence_map | sed -n 's/^L\t//p'; }
+
+# An unclosed fence is ambiguous: CommonMark (and the forge's rendering) makes
+# it swallow the rest of the body, which silently drops a real claim written
+# after it; ignoring it would honour fenced text as a live claim. Neither is
+# safe, so when its tail holds a claim-shaped line, refuse before any write and
+# let the author close the fence. Claim-shaped means a `tickets/` path or a
+# lone 4-digit ID after `Ticket:` or `Ticket-ref:` — slightly wider than the
+# readers below (which act on `Ticket-ref:` only with a path), erring toward
+# refusal; prose such as `Ticket sales rose` or `Ticket: none` is not.
+# A tail without one follows CommonMark.
+UNCLOSED_CLAIMS=$(printf '%s\n' "$BODY" | fence_map | sed -n 's/^U\t//p' \
+    | grep -iP '^\*{0,2}ticket(-ref)?:?\*{0,2}:?\s*(tickets/|[0-9]{4}(?=\s*$))' || true)
+if [[ -n "$UNCLOSED_CLAIMS" ]]; then
+    die "unclosed fence in PR #${PR} body hides claim-shaped line(s): $(printf '%s' "$UNCLOSED_CLAIMS" | tr '\n' ' ')— close the fence (same character, at least as long as the opener) and retry"
+fi
+
 # Short-form claims: `Ticket: NNNN` (bold or not) states the intent without
 # ambiguity, so normalize it instead of refusing. Each short ID must resolve to
 # exactly one tickets/NNNN-*.erg or tickets/closed/NNNN-*.erg; zero or several
@@ -176,10 +242,7 @@ BODY=$(echo "$PR_JSON" | jq -r '.body // ""')
 # (same strict regex, run on merged bodies) needs no change. Only a 4-digit ID
 # alone after `Ticket:` qualifies — `0312-foo`, `0312, 0313`, `#1326` or a
 # `chore(1075)` title never do.
-SHORT_IDS=$(printf '%s\n' "$BODY" | awk '
-    /^[[:space:]]*```/ || /^[[:space:]]*~~~/ { fenced = !fenced; next }
-    !fenced { print }
-' | grep -ioP '^\*{0,2}ticket:?\*{0,2}:?\s*\K[0-9]{4}(?=\s*$)' | sort -u || true)
+SHORT_IDS=$(printf '%s\n' "$BODY" | live_lines | grep -ioP '^\*{0,2}ticket:?\*{0,2}:?\s*\K[0-9]{4}(?=\s*$)' | sort -u || true)
 if [[ -n "$SHORT_IDS" ]]; then
     NEW_BODY="$BODY"
     for sid in $SHORT_IDS; do
@@ -190,9 +253,9 @@ if [[ -n "$SHORT_IDS" ]]; then
             echo "erg-pr-merge: short claim 'Ticket: $sid' matches ${#hits[@]} ticket files — not normalized" >&2
             continue
         fi
-        NEW_BODY=$(printf '%s' "$NEW_BODY" | SID="$sid" CANON="${hits[0]}" perl -pe '
-            if (/^\s*(```|~~~)/) { $f = !$f; next }
-            s{^(\*{0,2}ticket:?\*{0,2}:?\s*)$ENV{SID}(?=\s*$)}{$1$ENV{CANON}}i unless $f;
+        NEW_BODY=$(printf '%s\n' "$NEW_BODY" | fence_map | SID="$sid" CANON="${hits[0]}" perl -pe '
+            unless (s/^L\t//) { s/^[FU]\t//; next }
+            s{^(\*{0,2}ticket:?\*{0,2}:?\s*)$ENV{SID}(?=\s*$)}{$1$ENV{CANON}}i;
         ')
     done
     if [[ "$NEW_BODY" != "$BODY" ]]; then
@@ -229,10 +292,7 @@ fi
 # the loop below. Ignore Markdown fenced examples: they are documentation,
 # not instructions to close a ticket. Fold case before matching so the filter
 # and extracted ID always agree (the git-erg 0255 grammar).
-CLAIM_BODY=$(printf '%s\n' "$BODY" | awk '
-    /^[[:space:]]*```/ || /^[[:space:]]*~~~/ { fenced = !fenced; next }
-    !fenced { print }
-' | tr '[:upper:]' '[:lower:]')
+CLAIM_BODY=$(printf '%s\n' "$BODY" | live_lines | tr '[:upper:]' '[:lower:]')
 TICKET_IDS=$(printf '%s\n' "$CLAIM_BODY" | grep -oP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/(closed/)?\K[0-9]{4}(?![0-9])' | sort -u || true)
 
 # No-close markers: a PR may reference a ticket without closing it

@@ -49,10 +49,24 @@ The script reads close intent from the PR **body** only — never the title:
   `NNNN, MMMM` or `#NNNN`.
 - `Ticket: none` — the PR closes nothing.
 - With no recognised `Ticket` line, the PR closes nothing (same as
-  `Ticket: none`); a line the grammar cannot read is not a claim. Only a
-  malformed `Ticket: tickets/...` path errors.
+  `Ticket: none`); a line the grammar cannot read is not a claim. A
+  malformed `Ticket: tickets/...` path errors, as does the unclosed-fence
+  case below.
 - Ticket lines inside Markdown code fences are examples and are ignored.
-  Ticket paths outside fences that cannot be parsed cause an error.
+  A fence closes only on a run of the opener's character (backtick or tilde)
+  at least as long as the opener, so a `~~~` line inside a backtick fence
+  stays fenced; the closer carries nothing after the run but whitespace, and
+  a backtick opener's info string may not contain a backtick. A closer sits
+  at most 3 columns in (for an opener at 3 columns or less) and tabs advance
+  to the next multiple of 4. Deviation from CommonMark: container indentation
+  is not tracked, so an opener may sit at any column and a fence nested in a
+  list item stays a fence, its closer allowed up to 3 columns deeper than the
+  opener; a fence-shaped code line indented 4+ columns outside any container
+  also opens a fence and can hide what follows. Ticket paths outside fences that cannot be parsed cause an error.
+- An **unclosed** fence whose remaining text holds a `Ticket:` or
+  `Ticket-ref:` line with a `tickets/` path or a short ID refuses the merge
+  and names the line: the claim would otherwise be silently dropped or read
+  from fenced text. Close the fence and re-run.
 - Title prefixes like `chore(0216):` are subject references — they **never**
   close anything.
 
@@ -183,7 +197,11 @@ and how many it found unhonoured (`DROPPED` or `UNRESOLVED`). A zero finding
 count is not an all-clear when zero PRs or zero claims were parsed; check the
 window and any unrecognised bodies. The test suite gives this detector a
 positive control: a merged PR claiming an open ticket must be named and cause
-exit 1. `Ticket-ref:` is excluded.
+exit 1. `Ticket-ref:` is excluded. It reads fences with the same tracker as
+this script, except that lines of an unclosed fence count as live: such a body
+could only have merged by another route, so the audit names its path claims.
+Short-ID claims (`Ticket: NNNN`) are not audited; they land in the
+unrecognised count.
 
 ## Manual chore-close — when a PR merged without this script
 

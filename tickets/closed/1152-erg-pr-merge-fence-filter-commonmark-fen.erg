@@ -1,0 +1,27 @@
+%erg 0.1
+Title: erg-pr-merge fence filter: CommonMark fence tracking for close claims
+Created: 2026-10-20
+Author: reviewer
+Closed: autoclosed — PR #1518
+
+--- log ---
+2026-10-20T14:34Z reviewer created
+2026-10-20T16:00Z coder shared fence_map tracker; unclosed fence with a claim-shaped tail refuses the merge
+2026-10-20T16:40Z coder criterion 2 left open: refusal replaces "yields the claim", pending author sign-off (PR #1518 review)
+2026-10-20T17:10Z coder roar check-close-claims.sh shares the tracker (copy, kept identical by test); its audit reads unclosed-fence lines as live
+2026-10-20T17:50Z coder closer may sit at most 3 columns deeper than its opener (PR #1518 round 3); tracker now serves five readers, not three
+2026-10-20T16:14Z reviewer note verify-reroll — round 1: fence closer depth must be absolute (<=3 cols) and tab stops must advance to the next multiple of 4; criterion 2 needs author sign-off
+2026-10-20T16:22Z reviewer note criteria 1 and 2 reworded by the orchestrator to match the shipped refusal and the five fence readers; gate round 2 ESCALATE was this wording only
+2026-10-20T16:26Z reviewer closed — autoclosed — PR #1518
+
+--- body ---
+## Context
+Found by the cross-family seat in /gaze of PR 1517 (ticket 1149 part A), ruled Original Error by the gate: both defects are byte-identical on origin/main, outside that diff. In `skills/merge/erg-pr-merge` the close-claim fence filter (the CLAIM_BODY, SHORT_IDS and perl normalizer toggles) does not track fences as CommonMark does. (1) An unclosed fenced block hides a later `**Ticket:**` line, so a real claim is silently dropped. (2) A `~~~` line inside a backtick-fenced block toggles the filter, so a fenced Ticket line becomes a live claim and can close a ticket wrongly with no visible sign. Attribution fences become routine in PR bodies once ticket 1151 lands, hence 1151 is blocked by this.
+
+## Exit criteria
+- [x] Every close-claim fence reader shares one CommonMark-style fence tracker (`fence_map`: the claim, short-ID and normalizer steps in `erg-pr-merge`, and the identical copy in roar's `check-close-claims.sh`, kept byte-identical by a test): a closing fence uses the same character as its opener, is at least as long, and carries nothing but whitespace after it; an unclosed fence runs to the end of the body
+- [x] Positive controls in tests/test_erg_pr_merge.sh and tests/test_check_close_claims.sh, each failing on current main: an unclosed fence before a claim-shaped `Ticket:` line refuses the merge before any write and names the line (reworded from "still yields the claim": it contradicted criterion 1, and the refusal is the fail-safe; author-level advisory call agreed, 2026-10-20); an unclosed fence with no claim-shaped tail follows CommonMark; a `~~~` line inside a backtick fence does not turn a fenced Ticket line into a live claim
+- [x] The fence tests of ticket 1149 still pass
+
+## Resolution note
+The two criteria conflict for an unclosed fence: CommonMark swallows the tail, which drops the later real claim; ignoring the fence honours fenced text. The fail-safe chosen: an unclosed fence whose tail holds a claim-shaped `Ticket:`/`Ticket-ref:` line refuses the merge before any write, naming the line, so the claim is never lost silently and never honoured from fenced text. A tail with no claim-shaped line follows CommonMark. Criterion 2 is reworded to the refusal and ticked: the author signed off on the refusal (option 1 of three) on 2026-10-20, after an advisory call to a top-end model reached the same pick.
