@@ -348,7 +348,7 @@ def cmd_record(args: argparse.Namespace) -> int:
         n += 1
     header = {
         "review-evidence": FORMAT, "kind": args.kind, "seat": args.seat,
-        "verdict": args.verdict, "family": args.family, "worker": args.worker,
+        "verdict": args.verdict, "family": args.family.casefold(), "worker": args.worker,
         "base": current.base, "head": current.head, "patch-id": current.patch_id,
         "criteria-hash": current.criteria_hash, "policy-version": current.policy_version,
         "recorded": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -386,8 +386,9 @@ def cmd_gate(args: argparse.Namespace) -> int:
         print(f"seat {r['seat']}: {r['status']}{verdict} - {r['reason']}{where}")
         ok &= r["status"] in ("ran", "reused")
     if args.risk == "high":
+        producer = (args.producer_family or "").casefold()
         other = [r for r in rows if r["status"] in ("ran", "reused")
-                 and r["header"].get("family") not in (None, "", "unknown", args.producer_family)]
+                 and r["header"].get("family", "").casefold() not in ("", "unknown", producer)]
         if args.producer_family and other:
             r = other[0]
             how = "" if r["status"] == "ran" else f", inherited from {r['header']['head'][:12]}"

@@ -391,7 +391,7 @@ def test_gate_high_row_needs_red_team_and_another_family(repo, policy):
     commit_reports(repo)
     gate = run_cli(repo, policy, *args)
     assert gate.returncode == 0, gate.stdout
-    assert "independent: OpenAI" in gate.stdout
+    assert "independent: openai" in gate.stdout
 
 
 @pytest.mark.integration
@@ -452,3 +452,16 @@ def test_reports_are_read_from_the_head_commit_not_the_working_tree(repo, policy
     git(repo, "commit", "-q", "-m", "symlinked report")
     out = run_gate(repo, policy, "--seat", "red-team")
     assert "seat red-team: no-report" in out.stdout
+
+
+@pytest.mark.integration
+def test_family_comparison_is_case_insensitive(repo, policy):
+    """'anthropic' and 'Anthropic' are one family: no independence by spelling."""
+    record_seat(repo, policy, "correctness", family="Anthropic")
+    record_seat(repo, policy, "red-team", family="ANTHROPIC")
+    commit_reports(repo)
+    out = run_gate(repo, policy, "--seat", "correctness", "--producer-family", "anthropic",
+                   risk="high")
+    assert out.returncode != 0 and "independence: missing" in out.stdout
+    report = next((repo / "tickets" / "reviews").glob("*/red-team-1.md"))
+    assert re_mod.parse_report(report.read_text())["family"] == "anthropic"
