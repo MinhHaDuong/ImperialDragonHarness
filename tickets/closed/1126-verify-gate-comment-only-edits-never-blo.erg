@@ -2,9 +2,11 @@
 Title: verify-gate: comment-only edits never block on authorisation scope
 Created: 2026-10-20
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1505
 
 --- log ---
 2026-10-20T05:34Z Minh Ha-Duong created
+2026-10-20T08:31Z reviewer closed — autoclosed — PR #1505
 
 --- body ---
 ## Context
