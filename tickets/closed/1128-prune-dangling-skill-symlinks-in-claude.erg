@@ -2,11 +2,13 @@
 Title: Prune dangling skill symlinks in ~/.claude/skills
 Created: 2026-10-20
 Author: Minh Ha-Duong
+Closed: PR #1487 merged; dangling links on doudou removed by hand 2026-10-20, padme clean
 
 --- log ---
 2026-10-20T06:32Z Minh Ha-Duong created
 2026-10-20T06:42Z reviewer Cause: install() only links per skill; nothing pruned links of skills removed/renamed, and uninstall cannot name them (main() calls canonical_source on a skill that no longer exists). Fix: perch.prune_dangling run at install over each harness root. Doudou cleanup not doable from padme.
 2026-10-20T06:47Z reviewer note verify-reroll — round 1: OSError in prune_dangling escapes main() as a traceback
+2026-10-20T06:57Z reviewer closed — PR #1487 merged; dangling links on doudou removed by hand 2026-10-20, padme clean
 
 --- body ---
 ## Context
