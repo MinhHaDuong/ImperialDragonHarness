@@ -2,6 +2,7 @@
 Title: erg-pr-merge fence filter: CommonMark fence tracking for close claims
 Created: 2026-10-20
 Author: reviewer
+Closed: autoclosed — PR #1518
 
 --- log ---
 2026-10-20T14:34Z reviewer created
@@ -11,6 +12,7 @@ Author: reviewer
 2026-10-20T17:50Z coder closer may sit at most 3 columns deeper than its opener (PR #1518 round 3); tracker now serves five readers, not three
 2026-10-20T16:14Z reviewer note verify-reroll — round 1: fence closer depth must be absolute (<=3 cols) and tab stops must advance to the next multiple of 4; criterion 2 needs author sign-off
 2026-10-20T16:22Z reviewer note criteria 1 and 2 reworded by the orchestrator to match the shipped refusal and the five fence readers; gate round 2 ESCALATE was this wording only
+2026-10-20T16:26Z reviewer closed — autoclosed — PR #1518
 
 --- body ---
 ## Context
