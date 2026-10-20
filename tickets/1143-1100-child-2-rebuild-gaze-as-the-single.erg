@@ -1,0 +1,21 @@
+%erg 0.1
+Title: 1100 child 2: rebuild gaze as the single review entry
+Created: 2026-10-20
+Author: reviewer
+Blocked-by: 1142
+
+--- log ---
+2026-10-20T08:22Z reviewer created
+
+--- body ---
+## Context
+Child 2 of tracker 1100 (about 3.5 agent-h, 0.4 author-h). Plan of record: docs/discussions/2026-10-14-1096-design.md. Order follows the 1100 plan table (after child 1); confirm in the design document that child 2 needs the evidence core before starting, and drop the Blocked-by line if it does not.
+
+## Scope (from the 1100 plan table)
+Gaze rebuilt as the review entry: inline, transport preflight with detached fallback, controller-written artifacts, validated return schema; `mode=code|prose|both`; gaze never returns APPROVED ("gaze reviews, verify-gate gates"); review-pr's code panel becomes the code mode; the old battery and `agents/gaze-pr-review.md` are deleted; portable simplify is a declared seat.
+
+## Exit criteria
+- [ ] A test shows gaze never returns APPROVED; verify-gate remains the gate
+- [ ] The old battery and `agents/gaze-pr-review.md` are gone with no alias; callers (hunt, raid, merge, verify-gate, dashboard) updated and grep-proven
+- [ ] Gaze's body is split into a core plus references so it stops being a 57 KB resident-on-invoke document (this also satisfies ticket 1131's gaze part and unblocks ticket 1130's gaze history removal)
+- [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker, else split

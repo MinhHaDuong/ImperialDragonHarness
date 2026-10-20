@@ -1,0 +1,21 @@
+%erg 0.1
+Title: 1100 child 1: review evidence core (actor contract, reuse script, gate stale checks)
+Created: 2026-10-20
+Author: reviewer
+
+--- log ---
+2026-10-20T08:22Z reviewer created
+
+--- body ---
+## Context
+Child 1 of tracker 1100 (about 3.5 agent-h, 0.5 author-h). Plan of record: docs/discussions/2026-10-14-1096-design.md, sections "Answers" and "Round 3". Evidence core of the review orchestration: valid evidence is reused, no second battery on an unchanged diff; verify-gate stays the separate final check.
+
+## Scope (from the 1100 plan table)
+Forge actor contract (allow-list of three pinned actor IDs, fail closed); shared reuse script; verify-gate stale and no-report checks; seat table; risk floor (the higher of path and ticket-text matches); report hashes in the block; behavioural regression tests.
+
+## Exit criteria
+- [ ] Reuse script and actor contract in place; an unknown actor fails closed
+- [ ] verify-gate rejects a stale or missing report and still blocks missing criteria, unresolved blocking findings (Copilot's included) and absent required proof
+- [ ] Regression scenarios: unchanged-head reuse without duplicate reviewers, proportionate re-review after relevant changes, rejection of stale or missing proof; they test behavior, not wording alone
+- [ ] Coordinate with ticket 1126 (verify-gate comment-only scope narrowing) so the two edits to verify-gate do not collide
+- [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker, else split
