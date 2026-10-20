@@ -16,8 +16,7 @@ Memory neighbours, none of them lifecycle skills proper:
 | Skill | Question it answers | Writes |
 |-------|---------------------|--------|
 | `/roar` capture step | what significant fact did this task produce? | append to the journal |
-| `/memory-sweep` | which recorded claims have gone stale? | dated corrections, topic edits |
-| `/hoard` | how do I tidy accumulated memory? | pruned and merged topics, index |
+| `/hoard` | how do I tidy accumulated memory, stale claims included? | pruned and merged topics, index |
 
 ## Choosing between neighbours
 
@@ -25,8 +24,8 @@ Memory neighbours, none of them lifecycle skills proper:
 - Repo needs acting on → `/molt`; never hand-run yawn's fix-now list.
 - A PR just merged → `/roar`. The day is over → `/lair`. Roar never does
   repo-wide cleanup; lair never records task facts.
-- Memory feels stale → `/memory-sweep`; memory feels bloated → `/hoard`;
-  something new just happened → `/roar`.
+- Memory feels stale or bloated → `/hoard`; something new just happened →
+  `/roar`.
 
 ## Redundancy review (recommendations only; nothing retired here)
 
@@ -38,6 +37,5 @@ Memory neighbours, none of them lifecycle skills proper:
   `/molt`, which already ran in step 1: **trim** lair step 8 to the leftovers
   molt cannot see.
 - `/roar` and `/lair` both reflect: **keep**, scopes differ (one task, one day).
-- `/memory-sweep` (32 lines) and `/hoard` both prune stale memory:
-  **merge candidate**, as a `--audit` mode of hoard. The resident card saved
-  is the argument; the cost is a longer hoard. Decide in a separate ticket.
+- `/memory-sweep` and `/hoard` overlapped on pruning stale memory: **retired**
+  by ticket 1147 (0 typed uses on padme and doudou); `/hoard` keeps the job.
