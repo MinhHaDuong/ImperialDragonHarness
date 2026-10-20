@@ -348,6 +348,10 @@ For each wave, merge APPROVED PRs one at a time. A PR is merge-eligible if:
 Any ESCALATE verdict (from exit criteria, review comments, or scope overflow) stops
 the PR — it stays open for human review.
 
+A `NEEDS-AUTHOR` verdict (a waived un-reviewable breaker whose indivisibility holds) is
+not merge-eligible without the author: surface it to the author and leave the PR open.
+The raid never merges it on its own authority.
+
 This phase runs immediately after the execute/verify forks return, so the shell
 cwd may sit in a foreign worktree. Before the first branch-mutating git below,
 confirm the tree: `git rev-parse --show-toplevel` must equal the session worktree

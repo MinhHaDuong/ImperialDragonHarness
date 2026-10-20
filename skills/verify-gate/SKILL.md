@@ -65,9 +65,9 @@ Either:
 - `<pr-number>` (standalone mode): the gate resolves ticket, diff, comments itself.
 - A structured bundle from `/gaze` (preferred): `{pr, ticket, diff, phase_outputs}`.
 - The waiver record from `/gaze`, when one exists: `waiver: none`, or the declared
-  reason, `pr_files`, `pr_lines`, the source (`flag` or `body line`) and the
-  declarer (`author` or `interactive session`). It is an input the gate judges, not
-  a verdict it may take on trust (see § Indivisibility).
+  reason, `pr_files`, `pr_lines`, the source (`flag` or `body line`), and the earliest
+  posted `circuit_breaker: waived (...)` header on the PR. The gate judges the claim
+  from the diff, not from who declared it (see § Indivisibility).
 
 Both paths produce the same verdict shape. Round is always derived from PR comment
 history (see "Standalone invocation"), never passed by the caller.
@@ -124,11 +124,11 @@ Never rebase or amend commits to excise scope creep.
 ## Verdict shape
 
 ```yaml
-verdict: APPROVED | REROLL | ESCALATE
+verdict: APPROVED | REROLL | ESCALATE | NEEDS-AUTHOR
 round: 1 | 2
 pr: <pr-number>
 ticket: <ticket-id>
-waiver: none | {reason, pr_files, pr_lines, source, declarer}
+waiver: none | {reason, pr_files, pr_lines, source}
 per_exit_criterion:
   - criterion: "<verbatim>"
     status: ADDRESSED | MISSING
@@ -164,22 +164,24 @@ second_round_needed:   # only if REROLL
 ## Indivisibility (recorded waiver)
 
 Runs only when the waiver record is not `none`. A waiver lifts the un-reviewable
-file-count stop for a change that cannot be split. The gate judges that claim
-against the diff, as one `per_exit_criterion` row named `indivisibility waiver`:
+file-count stop for a change that cannot be split. The gate judges the claim from
+the diff alone, as one `per_exit_criterion` row named `indivisibility waiver`:
 
-- **Declarer.** The declarer must be `author` or `interactive session`. Any other
-  declarer is no waiver: the verdict is `circuit_breaker: un-reviewable` and
-  ESCALATE.
-- **Reason holds.** Every changed file is a pure rename or a rewire of a
-  reference to a renamed path or symbol, and no changed file carries an
-  independent change that could land alone (a fix, a feature, a separate
-  content edit). Cite the classified files as evidence. A single file that could
-  land alone is MISSING, with its file:line.
-- **Size.** The verdict-time `pr_files` and `pr_lines` must not exceed the recorded
-  size. Growth past it needs a fresh reason from an authorised declarer; without
-  one, the verdict is `circuit_breaker: un-reviewable` and ESCALATE.
+- **Reason holds.** Every changed file is a pure rename or a rewire of a reference
+  to a renamed path or symbol, and no changed file carries an independent change
+  that could land alone (a fix, a feature, a separate content edit). Cite the
+  classified files as evidence. A file that could land alone is MISSING, with its
+  file:line.
+- **Size.** The growth baseline is the earliest posted `circuit_breaker: waived (...)`
+  header on the PR, not the phase-1 recount of this round (a recount absorbs the
+  growth it should catch). The verdict-time `pr_files` and `pr_lines` must not exceed
+  that baseline. Growth past it needs a fresh reason; without one, the verdict is
+  `circuit_breaker: un-reviewable` and ESCALATE.
 - **Multi-ticket.** Two or more close claims beside a waiver are recorded as
   `multi_ticket` with a non-blocking disposition, as in the preflight.
+- **Verdict.** A waiver never yields APPROVED. When every other criterion passes and
+  the indivisibility row is ADDRESSED, the verdict is `NEEDS-AUTHOR`: the author
+  decides whether to merge. A MISSING row follows the usual REROLL / ESCALATE rule.
 
 ## Decision rules
 
@@ -199,11 +201,13 @@ against the diff, as one `per_exit_criterion` row named `indivisibility waiver`:
 - Any `blocking` adherence violation → REROLL (round 1) / ESCALATE (round 2).
 - Any `scope_overflow` entry with suggested disposition ESCALATE → ESCALATE.
 - A recorded waiver whose `indivisibility waiver` row is MISSING → REROLL (round 1)
-  / ESCALATE (round 2), as any MISSING criterion. A waiver whose declarer is
-  not `author` or `interactive session`, or growth past the recorded size without a fresh reason → ESCALATE.
+  / ESCALATE (round 2), as any MISSING criterion. Growth past the earliest posted
+  waived size without a fresh reason → ESCALATE.
+- A recorded waiver with the indivisibility row ADDRESSED and every other list empty
+  → NEEDS-AUTHOR, never APPROVED.
 - `scope_overflow` entries with all suggested dispositions TICKETED → does not block
   APPROVED. Caller handles ticket creation and PR annotation.
-- All lists empty AND all criteria ADDRESSED → APPROVED.
+- All lists empty AND all criteria ADDRESSED, with no recorded waiver → APPROVED.
 
 **On REROLL**: write no ticket file — run no `erg log`, ever. Emit the bump line
 in the verdict as a `reroll_bump:` field: `note verify-reroll — round {n}: {top unresolved criterion}`.

@@ -554,12 +554,32 @@ def test_gaze_reviewer_and_gate_prompts_ban_overwrites_and_require_not_run():
     )
 
 
-# --- ticket 1125: waiver reaches the gate, the gate judges indivisibility ---
+# --- ticket 1125 (round 3): the waiver is judged from the diff; NEEDS-AUTHOR ---
 
-WAIVER_HEADING = "#### Waiver"
+VERIFY_GATE = (SKILLS / "verify-gate" / "SKILL.md").read_text()
+RAID = (SKILLS / "raid" / "SKILL.md").read_text()
 WAIVER_HEADER = (
     "circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)"
 )
+
+
+def _section(text: str, pattern: str) -> str:
+    """Body of the first markdown heading whose title matches `pattern`, up to
+    the next heading of the same or a higher level. Heading renames only need
+    the pattern updated; the test still reads the section, not a fixed string."""
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        m = re.match(r"^(#{1,6})\s+(.*)$", line)
+        if m and re.search(pattern, m.group(2), re.I):
+            level = len(m.group(1))
+            body = []
+            for nxt in lines[i + 1:]:
+                h = re.match(r"^(#{1,6})\s", nxt)
+                if h and len(h.group(1)) <= level:
+                    break
+                body.append(nxt)
+            return _normalize("\n".join(body))
+    return ""
 
 
 def _gate_block() -> str:
@@ -567,115 +587,109 @@ def _gate_block() -> str:
 
 
 def _waiver_section() -> str:
-    return _normalize(
-        VERIFY.split(WAIVER_HEADING, 1)[1].split("### 2–4.", 1)[0]
-    ) if WAIVER_HEADING in VERIFY else ""
+    return _section(VERIFY, r"waiver")
+
+
+def _indivisibility_section() -> str:
+    return _section(VERIFY_GATE, r"indivisib")
+
+
+def _force_approve_section() -> str:
+    return _section(VERIFY, r"force-approve")
 
 
 def test_phase6_launch_prompt_carries_the_waiver():
-    """The verdict-time size re-check runs in the gate seat, so the waiver must
-    travel into the phase-6 launch prompt as an input, beside the PR number."""
     gate = _gate_block()
     assert re.search(r"launch prompt[^.]*waiver", gate), (
-        "phase 6: the waiver record (reason, pr_files, pr_lines) must ride in "
-        "the gate launch prompt, or the seat re-checks size without it"
+        "phase 6: the waiver record must ride in the gate launch prompt"
     )
-    assert "waiver: none" in gate or "waiver record" in gate, (
-        "phase 6 must name the waiver record as a prompt input, with an explicit "
-        "value when no waiver was recorded"
+    assert "waiver: none" in gate or "waiver record" in gate
+
+
+def test_verify_gate_takes_waiver_as_input_and_judges_the_diff():
+    vg = _normalize(VERIFY_GATE)
+    assert "waiver" in vg
+    ind = _indivisibility_section()
+    assert ind, "verify-gate has no indivisibility section (heading matching 'indivisib')"
+    assert "pure rename or a rewire" in ind, "the indivisibility bullet lost its pure-rename/rewire test"
+    assert "could land alone" in ind, "the indivisibility bullet lost its independent-change test"
+    assert "MISSING" in ind, "a failing indivisibility reason must be a MISSING criterion"
+    assert "multi_ticket" in ind, "the indivisibility section lost its multi-ticket rule"
+
+
+def test_waiver_is_judged_from_the_diff_not_the_declarer():
+    """Author decision: the gate judges the diff. No declarer authority claim and
+    no declarer field anywhere in the waiver contract."""
+    for name, text in (("gaze", VERIFY), ("verify-gate", VERIFY_GATE)):
+        assert "declarer" not in text, f"{name} still carries a declarer claim or field"
+    assert "declarer" not in _gate_block()
+
+
+def test_waived_verdict_is_needs_author():
+    assert "NEEDS-AUTHOR" in _indivisibility_section(), (
+        "a waived verdict must be marked NEEDS-AUTHOR in the indivisibility section"
+    )
+    assert re.search(r"verdict: APPROVED \| REROLL \| ESCALATE \| NEEDS-AUTHOR", VERIFY_GATE), (
+        "verify-gate verdict shape must list NEEDS-AUTHOR"
+    )
+    assert "NEEDS-AUTHOR" in _normalize(VERIFY), "gaze must branch on NEEDS-AUTHOR"
+
+
+def test_raid_phase7_refuses_needs_author_without_the_author():
+    raid = _normalize(RAID)
+    phase7 = raid.split("## Phase 7: Merge", 1)[1].split("For each eligible PR", 1)[0]
+    assert "NEEDS-AUTHOR" in phase7, "raid Phase 7 eligibility must name NEEDS-AUTHOR"
+    assert re.search(r"NEEDS-AUTHOR[^.]*not merge-eligible", phase7), (
+        "raid Phase 7: a NEEDS-AUTHOR verdict must be stated as not merge-eligible"
     )
 
 
-def test_verify_gate_takes_waiver_as_input_and_judges_indivisibility():
-    """The gate must judge whether the stated indivisibility reason holds: a
-    waived PR that holds an independent change which could land alone is not
-    indivisible, and must not be APPROVED on the waiver."""
-    vg = _normalize((SKILLS / "verify-gate" / "SKILL.md").read_text())
-    assert "waiver" in vg, "verify-gate: waiver is not a declared input"
-    assert "indivisib" in vg, (
-        "verify-gate must carry an indivisibility criterion for a recorded waiver"
-    )
-    assert "pure rename" in vg and "rewire" in vg, (
-        "the indivisibility criterion must name what counts: a pure rename or rewire"
-    )
-    assert "could land alone" in vg, (
-        "the indivisibility criterion must name the failure: an independent change "
-        "that could land alone"
-    )
-
-
-def test_waiver_declaration_authority_is_named():
-    """Only the author, or an interactive session the author runs, may declare a
-    waiver. An orchestrator or headless run never writes the flag or the body line."""
-    gate_skill = _normalize(VERIFY)
-    section = _waiver_section()
-    assert section, f"gaze SKILL.md has no `{WAIVER_HEADING}` heading to resolve § Waiver"
-    assert re.search(r"may declare", section), (
-        "the waiver section must name who may declare a waiver"
-    )
-    assert "interactive" in section and "author" in section, (
-        "the waiver section must name the author and the interactive session as "
-        "the only declarers"
-    )
-    assert re.search(r"headless|orchestrator", section), (
-        "the waiver section must exclude headless or orchestrator runs"
-    )
-    assert "may declare" in gate_skill
-
-
-def test_waiver_header_has_one_format():
-    """The waived header is the same template in Setup and in Output shape."""
-    norm = _normalize(VERIFY)
-    assert norm.count(WAIVER_HEADER) >= 2, (
-        "the waived circuit_breaker header must be written identically in Setup "
-        "and Output shape"
-    )
-    loose = re.findall(r"circuit_breaker: waived \([^)]*\)", norm)
-    assert loose and all(h == WAIVER_HEADER for h in loose), (
-        f"waived circuit_breaker header drifted: {sorted(set(loose))}"
-    )
-
-
-def test_waiver_pointer_resolves_to_a_heading():
-    norm = _normalize(VERIFY)
-    assert WAIVER_HEADING in VERIFY, "the Waiver rules need a real `#### Waiver` heading"
-    assert "§ Waiver" in norm, "the pointers into the waiver rules were removed"
-    assert re.search(r"^#### Waiver$", VERIFY, re.M)
+def test_waiver_baseline_is_earliest_posted_header_not_recount():
+    ind = _indivisibility_section()
+    assert "earliest posted" in ind, "growth must be measured from the earliest posted waived header"
+    assert "not the phase-1 recount" in ind, "the baseline must not be the phase-1 recount"
+    assert "earliest posted" in _waiver_section()
 
 
 def test_waiver_does_not_cover_growth_without_a_fresh_reason():
-    section = _waiver_section()
-    assert "fresh reason" in section, (
-        "a waiver covers the recorded size only; growth past it needs a fresh reason"
-    )
+    assert "fresh reason" in _indivisibility_section()
+    assert "fresh reason" in _waiver_section()
+
+
+def test_waiver_header_has_one_format():
+    norm = _normalize(VERIFY)
+    assert norm.count(WAIVER_HEADER) >= 2, "waived header must match in Setup and Output shape"
+    loose = re.findall(r"circuit_breaker: waived \([^)]*\)", norm)
+    assert loose and all(h == WAIVER_HEADER for h in loose), sorted(set(loose))
 
 
 def test_waiver_flags_multi_ticket():
-    section = _waiver_section()
-    assert "multi_ticket" in section, (
-        "a waiver beside two or more close claims must be flagged as multi_ticket"
-    )
+    assert "multi_ticket" in _waiver_section()
 
 
-def test_waiver_declarer_is_recorded_and_passed_to_the_gate():
-    """Adherence finding (blocking): verify-gate requires a declarer, but the
-    recording step and the phase-6 launch prompt never carried one, so every
-    waived PR escalated as un-reviewable."""
-    assert "declarer" in _waiver_section(), (
-        "the Recording paragraph of § Waiver must record the declarer"
-    )
-    assert "declarer" in _gate_block(), (
-        "the phase-6 waiver record must pass the declarer to the gate"
-    )
+def test_force_approve_runs_no_gate_and_output_marks_unrun_phases():
+    text = VERIFY
+    assert "would-have-been" not in text, "--force-approve must not promise a gate verdict"
+    assert "no reviewer battery" in _force_approve_section()
+    template = text.split("## /gaze actions", 1)[1].split("## /verify-gate verdict", 1)[0]
+    for phase in ("adherence:", "review:", "review-pr:", "simplify:", "battery:", "gate:"):
+        line = next(ln for ln in template.splitlines() if ln.startswith(phase))
+        assert "skipped (--force-approve)" in line, f"{phase} must show skipped (--force-approve)"
+
+
+def test_argument_hint_and_invariants_name_waive_breaker():
+    fm = VERIFY.split("---", 2)[1]
+    assert "--waive-breaker" in fm, "argument-hint must name --waive-breaker"
+    inv = _section(VERIFY, r"^invariants$|invariants")
+    assert "--waive-breaker" in inv, "Invariants must name --waive-breaker"
+
+
+def test_gaze_has_no_waiver_declarer_authority_claim():
+    assert "The gate treats a waiver" not in VERIFY
 
 
 def test_verify_gate_wording_and_no_overpromise():
-    vg = _normalize((SKILLS / "verify-gate" / "SKILL.md").read_text())
-    assert "undeclared source" not in vg, "verify-gate names an undefined term"
-    assert re.search(r"declarer[^.]*ESCALATE", vg), (
-        "verify-gate must tie a non-author declarer to ESCALATE"
-    )
+    vg = _normalize(VERIFY_GATE)
+    assert "undeclared source" not in vg
     wf = _normalize((REPO / "rules" / "workflow.md").read_text())
-    assert "reviewed in full" not in wf, (
-        "rules/workflow.md over-promises: round >= 2 scopes Agent C"
-    )
+    assert "reviewed in full" not in wf

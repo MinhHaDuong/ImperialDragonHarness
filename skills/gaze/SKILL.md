@@ -5,7 +5,7 @@ name: gaze
 description: "Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<pr-number>"
+argument-hint: "<pr-number> [--waive-breaker <reason>] [--force-approve <reason>]"
 context: fork
 # Background by intent: /gaze is long-running, and a raid wave gates several PRs
 # at once — backgrounding the orchestrator is what lets those run concurrently.
@@ -61,6 +61,9 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 - The fix loop between rounds makes commits on the PR branch; no changes to other branches.
 - `--force-approve` is supported for explicit human override; it is logged loudly in the
   PR comments and the skill transcript.
+- `--waive-breaker <reason>` lifts only the un-reviewable file-count stop. The battery,
+  simplify and the phase 6 gate still run, and a waived PR that passes is NEEDS-AUTHOR,
+  never APPROVED (§ Waiver).
 - **Cross-repo prerequisite**: the caller must ensure cwd is the target project before
   invoking `/gaze`. The skill and its sub-skills (`/verify-gate`, `/simplify`, etc.)
   use `gh` and `git` commands that resolve against cwd.
@@ -333,36 +336,31 @@ itself is never mutated; only the scoping decision changes.
 
 The 15-file count is a decomposition signal, not a hard wall. A waiver lifts
 only the file-count stop. It never lifts the battery, simplify, the phase 6
-gate or any other breaker.
+gate or any other breaker, and it never yields APPROVED: a waived PR that
+passes is NEEDS-AUTHOR, and only the author decides to merge it.
 
-**Who may declare.** Only the author, or an interactive `/gaze` session the
-author runs, may declare a waiver. The two declarations are `--waive-breaker
-<reason>` on the `/gaze` invocation and a PR-body line
-`Review-scope: indivisible — <reason>`, which the author or an interactive
-session writes. A headless or orchestrator run, and a coder agent, never write
-either. The gate treats a waiver whose declarer is not the author or an
-interactive session as no waiver at all.
+**Declaring.** `--waive-breaker <reason>` on the `/gaze` invocation, or a
+PR-body line `Review-scope: indivisible — <reason>`. The author writes either.
+The gate does not check who wrote it; it judges the diff (`verify-gate`
+§ Indivisibility).
 
 **What the reason must claim.** The change cannot be split: it is a pure rename
-or rewire, with no independent change that could land alone. The phase 6 gate
-judges this against the diff (`verify-gate` § Indivisibility); a reason the
-diff does not bear is a MISSING criterion.
+or rewire, with no independent change that could land alone. A reason the diff
+does not bear is a MISSING criterion at the gate.
 
-**Recording.** Read in phase 1, before any battery spawns, so the stop is
-never discovered after the work. Record the waiver with `pr_files`, `pr_lines`,
-the reason, its source (flag or body line) and its declarer (`author` or
-`interactive session`) in the PR comment, and set the
+**Recording.** Read in phase 1, before any battery spawns, so the stop is never
+discovered after the work. Record the waiver with `pr_files`, `pr_lines`, the
+reason and its source (flag or body line) in the PR comment, and set the
 verdict header to `circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)`.
-The waiver record also rides in the phase 6 launch prompt (§ 6. Gate), so the
-verdict-time size re-check reads the same recorded size.
+The round-1 header is the baseline for growth. The waiver record also rides in
+the phase 6 launch prompt (§ 6. Gate).
 
-**Scope.** A waiver covers the size recorded in phase 1. If the verdict-time
-diff grows past that size, the growth is not covered: it needs a fresh reason
-from an authorised declarer, or the verdict is `circuit_breaker: un-reviewable`
-and ESCALATE. A waiver beside two or more close claims is flagged as
-`multi_ticket` for disposition, as in the preflight above. Tier, band and the
-battery floor are unchanged by a waiver. A round-1 waiver holds in later rounds
-for the size it recorded.
+**Scope.** Growth is measured against the earliest posted waived header, not the
+phase-1 recount of a later round, because a recount absorbs the very growth it
+should catch. Growth past that baseline needs a fresh reason, or the verdict is
+`circuit_breaker: un-reviewable` and ESCALATE. A waiver beside two or more close
+claims is flagged as `multi_ticket` for disposition, as in the preflight above.
+Tier, band and the battery floor are unchanged by a waiver.
 
 ### 2–4. Read-only review fan-out (parallel)
 
@@ -649,7 +647,7 @@ written verdict artifact), with its model chosen per launch from the `route` ski
 `$primary_root/.claude/worktrees/review-<pr-number>` (the equivalent fork call is
 `/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`);
 the PR number, this run's `gate_session_id`, and the review worktree path ride
-in the launch prompt, and so does the waiver record (`waiver: none`, or the recorded reason, `pr_files`, `pr_lines`, source and declarer) — the seat's containment rails (read-only except the
+in the launch prompt, and so does the waiver record (`waiver: none`, or the recorded reason, `pr_files`, `pr_lines` and source; growth is judged against the earliest posted waived header) — the seat's containment rails (read-only except the
 REROLL bump, `git -C` discipline with no `cd` into or out of another tree, no
 commits/pushes/branches/PRs, banned working-tree overwrites, the
 `tickets/*.erg` write ban, the NOT-RUN refusal anchored on the review
@@ -684,7 +682,7 @@ breaker (`pr_files >= 15`, the phase-1 threshold) — a round-2 fix can grow a
 14-file PR past it after the phase-1 check has passed; if the diff against
 main now meets the breaker and no waiver is recorded (§ Waiver), report `circuit_breaker: un-reviewable` in the
 verdict comment and rule ESCALATE, never APPROVED. A recorded waiver keeps the
-verdict header `circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)` and does not block APPROVED on size, but growth past the recorded size needs a fresh reason (§ Waiver). Decision: any MISSING criterion, any unresolved human comment, any
+verdict header `circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)` and never yields APPROVED: a passing waived PR is NEEDS-AUTHOR, and growth past the earliest posted size needs a fresh reason (§ Waiver). Decision: any MISSING criterion, any unresolved human comment, any
 unresolved `verifiable:` minor, any unapplied must-fix, any blocking adherence,
 or any `scope_overflow` with disposition ESCALATE → REROLL (round 1) / ESCALATE
 (round 2); all lists empty and all criteria ADDRESSED → APPROVED. Round 3 is
@@ -694,7 +692,7 @@ after the live `verdict` state check; never run `erg log` (the gate writes no
 ticket file); then post the PR verdict comment. Return:
 
 ```yaml
-verdict: APPROVED | REROLL | ESCALATE
+verdict: APPROVED | REROLL | ESCALATE | NEEDS-AUTHOR
 per_exit_criterion: [...]
 unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
@@ -732,6 +730,9 @@ breaker.
   **Fork execution contract**), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
   re-spawning the read-only gate Agent** (review worktree `$primary_root/.claude/worktrees/review-<pr-number>`, as in
   phase 6) with `round=2` — not a fork invocation.
+- **NEEDS-AUTHOR** (a waived breaker whose indivisibility holds and whose other criteria pass) → post a
+  PR comment marked `NEEDS-AUTHOR` with the waiver record and the indivisibility evidence. Never post
+  `verify: approved`. End the skill. The caller does not merge without the author.
 - **REROLL, round 2** → upgrade to ESCALATE (no third round). Post a PR comment with the
   still-unresolved items and the gate's rationale. End the skill.
 - **ESCALATE** → post a PR comment tagged `/gaze stopped:` listing what needs human
@@ -792,7 +793,8 @@ Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 
   this is the `rules/workflow.md` 15+ file monster threshold. Name the breaker
   in the verdict comment and mention `multi_ticket` when multiple close claims
   add a decomposition signal. A waiver (`--waive-breaker` or the PR-body
-  `Review-scope: indivisible` line, § Waiver) lifts only this stop and the battery runs.
+  `Review-scope: indivisible` line, § Waiver) lifts only this stop and the battery runs;
+  a passing waived PR is NEEDS-AUTHOR.
   `--force-approve` can override it loudly, without review.
 - Any of phases 2–5 errors or times out → ESCALATE (do not silently skip). Exception: phase 5 (simplify) intentionally skipped when adherence is blocking — this is not an error.
 - Fix agent timeout (10 min) → ESCALATE.
@@ -908,19 +910,19 @@ tier: tiny|small|full
 risk_band: high|low|normal
 circuit_breaker: un-reviewable | waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>) | none
 multi_ticket: <distinct close-claim IDs> | none (non-blocking below breaker)
-adherence: PASS|FAIL — <n_blocking> blocking | skipped (un-reviewable) | skipped (battery NOT-RUN)
-review: <n_comments_posted> | skipped (tier: tiny) | skipped (un-reviewable) | skipped (battery NOT-RUN)
-review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (un-reviewable) | skipped (battery NOT-RUN)
+adherence: PASS|FAIL — <n_blocking> blocking | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
+review: <n_comments_posted> | skipped (tier: tiny) | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
+review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
 review-pr scope: one seat | proportional panel | five perspectives | scoped: <objecting perspectives> + regression (omit if Agent C did not run)
 panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
-battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable)
-simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (prose workpackage) | skipped (un-reviewable)
+battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable) | skipped (--force-approve)
+simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (prose workpackage) | skipped (un-reviewable) | skipped (--force-approve)
 fix agent: <n_commits> commits (round 2 only, omit if round 1)
 gate: ran | skipped (un-reviewable) | skipped (--force-approve) | skipped (gate launch failure — see battery NOT-RUN)
 
 ## /verify-gate verdict
 
-verdict: APPROVED|REROLL|ESCALATE (direct setup ESCALATE when un-reviewable)
+verdict: APPROVED|REROLL|ESCALATE|NEEDS-AUTHOR (direct setup ESCALATE when un-reviewable)
 gate_session_id: <this run's id>
 review_worktree_path: <absolute review tree path>
 ruled_tip_sha: <full SHA read from review tree at verdict time>
@@ -940,5 +942,6 @@ Rationale:
 telemetry: tier=<tiny|small|full> risk_band=<high|low|normal> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
 
-On `--force-approve`, Part A is annotated `FORCE-APPROVED by <reason>`
-and Part B shows the gate's would-have-been verdict before override.
+On `--force-approve`, the verdict comment is annotated `FORCE-APPROVED by <reason>`.
+No gate verdict exists to show: under `--force-approve` no gate runs, and every
+unrun phase reads `skipped (--force-approve)` above.
