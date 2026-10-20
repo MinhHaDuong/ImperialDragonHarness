@@ -2,7 +2,7 @@
 metadata:
   category: research
 name: zotero
-description: "Import one or more PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, or report duplicate files — extract metadata, resolve identifiers online, find the work through the running Zotero's local API, and create items with their PDFs through it."
+description: "Import PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, or report duplicate files: extract metadata, resolve identifiers, create items with PDFs through the running Zotero's local API."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "import <pdf-or-url>... | suggest-edits | check-staging [<repo>] [--dir <dir>] | report-duplicates | suggest-attachments"

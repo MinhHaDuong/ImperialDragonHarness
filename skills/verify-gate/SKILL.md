@@ -2,7 +2,7 @@
 metadata:
   category: build
 name: verify-gate
-description: "Anti-rubber-stamp merge gate. Validates every ticket exit criterion and every review comment against the actual diff. Emits APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR with explicit evidence. Does not merge — the merge decision belongs to the caller."
+description: "Anti-rubber-stamp merge gate: checks every ticket exit criterion and review comment against the diff. Emits APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR with evidence. Does not merge."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pr-number> [worktree=<path>]"
