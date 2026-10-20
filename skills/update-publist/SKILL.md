@@ -126,9 +126,10 @@ curl -s 'https://api.archives-ouvertes.fr/search/hal/?q=authIdHal_s:minh-ha-duon
 ```
 
 Standard values for this author:
-- Structure: `#struct-1380080` (CIRED). **Verified against the HAL ref API** — a fork of this skill carried `struct-1002424`, which
-  resolves to ECOSYS, an unrelated laboratory. Do not "correct" this id
-  from another document; re-verify it instead:
+- Structure: `#struct-1380080` (CIRED). **Verified against the HAL ref API**
+  — a fork of this skill carried `struct-1002424`, which resolves to ECOSYS,
+  an unrelated laboratory. Do not "correct" this id from another document;
+  re-verify it instead:
   `curl -s 'https://api.archives-ouvertes.fr/ref/structure/?q=docid:1380080&fl=docid,name_s,acronym_s&wt=json'`
 - ORCID: `0000-0001-9988-2100`
 - idhal: `minh-ha-duong`
