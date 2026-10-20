@@ -1,0 +1,22 @@
+%erg 0.1
+Title: 1100 child 3: retire review-pr in one merge wave
+Created: 2026-10-20
+Author: reviewer
+Blocked-by: 1141
+Blocked-by: 1143
+
+--- log ---
+2026-10-20T08:22Z reviewer created
+
+--- body ---
+## Context
+Child 3 of tracker 1100 (about 3.5 agent-h, 0.5 author-h). Plan of record: docs/discussions/2026-10-14-1096-design.md. Retires `review-pr` in one merge wave once child 0's project PRs are merged and gaze (child 2) has absorbed its code panel.
+
+## Scope (from the 1100 plan table)
+Move what remains of review-pr, fix its `IDH_ROOT` handling, update hunt and references, add the retired-name lint over live paths (fails on any live reference to `review-pr`), installed-link cleanup, and a read-only audit of installed registrations. No alias.
+
+## Exit criteria
+- [ ] `review-pr` is retired with no alias and the retired-name lint fails on any live reference
+- [ ] Installed links to the retired name are removed on padme and doudou; the read-only audit of installed registrations is reported
+- [ ] Child 0's project PRs are merged first
+- [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker, else split
