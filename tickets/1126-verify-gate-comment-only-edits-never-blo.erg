@@ -1,0 +1,39 @@
+%erg 0.1
+Title: verify-gate: comment-only edits never block on authorisation scope
+Created: 2026-10-20
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-20T05:34Z Minh Ha-Duong created
+
+--- body ---
+## Context
+sen-causal-reading PR #25 (ticket 0026), 2026-10-20: `/verify-gate` round 2
+returned ESCALATE partly because a fix agent deleted one stray word ("les")
+from a LaTeX comment in `rapport/equivalence.tex`. The gate classed it as an
+unauthorised `rapport/` prose edit ("FX1-scope ... blocking until
+authorised"). The comment never reaches the PDF. The raid brief had said "do
+not edit rapport/"; the main session's later message allowing reference and
+comment fixes did not count as author authorisation. The author called the
+block absurd. The brief side is fixed in project memory; this ticket is the
+gate side.
+
+Under the severity floor (rules/workflow.md: when a guard misfires, prefer
+deleting or narrowing it over growing it), the fix narrows the guard.
+
+## Decision (author, 2026-10-20)
+A change confined to comments (LaTeX `%`, code comments, Markdown/HTML
+comments) is never a scope or authorisation blocker. At most it is recorded
+as `nofollow:`.
+
+## Design notes
+- Scope containment and adherence-scope checks: when a hunk touches only
+  comment lines in a protected prose path, record it, do not block.
+- Also consider: an exception the caller grants during a run should be
+  recognised when stated in the PR body, so it need not reach the author.
+- Keep the guard for typeset text and argument changes.
+
+## Exit criteria
+- [ ] verify-gate (and any adherence scope rule it relies on) treats comment-only hunks in protected paths as non-blocking
+- [ ] A test or worked example: a `%`-comment edit under a protected path yields no blocker; a typeset-sentence edit still does
+- [ ] `make check` passes
