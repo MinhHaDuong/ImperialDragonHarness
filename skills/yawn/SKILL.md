@@ -12,6 +12,8 @@ Bounded, mostly mechanical audit work; choose the worker per the `route` skill (
 
 # Yawn — repository healthcheck
 
+Neighbouring skills and when to prefer each: [session-lifecycle](../lair/references/session-lifecycle.md).
+
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
 Run a healthcheck on the current repository. Report results concisely — one line per check, flag anything abnormal.

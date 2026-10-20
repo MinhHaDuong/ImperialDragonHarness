@@ -9,6 +9,8 @@ user-invocable: true
 
 # Lair — end-of-day wrap-up
 
+Neighbouring skills and when to prefer each: `references/session-lifecycle.md`.
+
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
 Run when the user ends a work session ("done for today", "let's stop", "wrap up").
