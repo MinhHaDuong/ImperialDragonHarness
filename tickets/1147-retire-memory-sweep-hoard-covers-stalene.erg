@@ -1,0 +1,18 @@
+%erg 0.1
+Title: Retire memory-sweep: hoard covers staleness, nobody types it
+Created: 2026-10-20
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-20T11:07Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Child of 1127 (skills audit). `/memory-sweep` is the former `/memory`, renamed 2026-09-16. Evidence on 2026-10-20: 0 typed commands on padme (199 trace folders) and doudou (233); one model-initiated Skill call on padme (2026-10-01); controls fire (roar 89/83 and 152/223, gaze 128 and 207). Author decision: keep `/hoard` (needed to build topics for several projects); `/memory-sweep` is a leftover.
+`/hoard` already prunes outdated and superseded entries, merges, refreshes themes and keeps unresolved contradictions, so the staleness audit is covered.
+
+## Exit criteria
+- [ ] `skills/memory-sweep/` removed; `hoard` description states that it also prunes stale or contradicted claims; `roar` description and `roar/runbooks/capture.md` no longer name the retired skill
+- [ ] `scripts/census/memory-recall.py`, `scripts/trace-stats.py` and their tests keep the historical name, so old traces still count
+- [ ] `make skills-catalog` run; `make check-skills-drift` and `make check-fast` clean
+- [ ] Resident skills census budget left to 1140, which lowers it once for all removed cards
