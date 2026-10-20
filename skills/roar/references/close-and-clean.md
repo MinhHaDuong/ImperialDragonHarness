@@ -7,7 +7,7 @@ When roar reads this: steps 7, 9 and 10, for what `close-and-clean.sh` checks an
 Exit 0 clean, 1 findings, 2 could-not-look (never an all-clear: a
 `tickets/` whose `erg` does not run, an unreadable forge or a failed fetch
 all give 2; a repo with no `tickets/` directory at all gets an explicit
-`skipped` line for CLOSE and CLAIMS, per the prerequisite policy above). Omit
+`skipped` line for CLOSE and CLAIMS, per the prerequisite policy in the Pre-check section of roar's SKILL.md). Omit
 `--ticket` when there is none. Not in a worktree: use `--phase all` with step 10's explicit
 cleanup targets and skip step 9. With no targets, cleanup deletes no branches. Its report lines:
 

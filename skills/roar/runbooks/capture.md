@@ -17,7 +17,7 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
    judgment, inferred lessons, rule proposals or interpreted memories.
 
    Resolve the project repository first. Use the single
-   wrap-up branch/worktree described below. Capture only there; never in the
+   wrap-up branch/worktree described in the bundle section of SKILL.md. Capture only there; never in the
    harness because the loaded skill lives there. There is no private companion
    store — the encrypted-in-repo policy
    supersedes it: judge the audience at capture, before the first byte is
