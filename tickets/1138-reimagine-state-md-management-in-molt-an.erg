@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Reimagine STATE.md management in molt and lair
+Created: 2026-10-20
+Author: reviewer
+
+--- log ---
+2026-10-20T06:54Z reviewer created
+
+--- body ---
+## Context
+Reimagine request from the author, 2026-10-20. Observed facts, not yet a design:
+- STATE.md is 11 lines, hand-written, no derived numbers (`rules/state.md`, ticket 1121). It carries two timestamps, `Last updated:` and `Housekeeping:`.
+- Two writers. `/molt` step 6 stamps the housekeeping time and commits it; `/lair` step 10 branches, bumps `Last updated:`, prunes, opens a PR and lands it. Each is a full branch-PR-CI cycle for what is mostly a timestamp.
+- `rules/state.md` assigns the hand sections to the author; `/lair` edits them.
+- yawn's housekeeping age comes from `git log --grep=housekeeping` (`scripts/project-state.py`), not from the STATE.md stamp, so molt's stamp feeds nothing mechanical.
+- yawn looks for branches `claude/housekeeping-*`, while molt cuts `housekeeping-<date>`; the in-flight `tidying` state may never fire. Cause not established; check.
+
+## Options to price (Imagine; the author picks)
+1. Drop molt's STATE stamp and the `Housekeeping:` line; molt's PR then exists only when it fixed something. About 1 agent-h, saves a PR per molt run.
+2. Also drop `Last updated:` (`git log -1 STATE.md` is the truth) and make lair edit STATE.md only when a hand section changes. About 1.5 agent-h more, removes the second timestamp PR.
+3. Turn lair step 10 into a proposed handoff diff the author applies or merges, honouring the author-owned rule. Cheaper in policy, costs author time each day.
+Recommended by the orchestrator: 1 then 2. Each option needs its probability and price confirmed against the real lair and molt run frequency (`/trace-doctor`).
+
+## Exit criteria
+- [ ] Imagine note choosing one option, with its price and what it changes in `rules/state.md`, molt, lair and the yawn probe
+- [ ] The branch-name mismatch between yawn and molt is confirmed or ruled out
+- [ ] After the author confirms the option: molt, lair, `rules/state.md` and any test updated in one change; catalog and drift check clean

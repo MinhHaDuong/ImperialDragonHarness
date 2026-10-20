@@ -16,3 +16,6 @@ Line counts on origin/main: gaze 951, raid 509, roar 422, review-pr about 350, v
 - [ ] Behaviour unchanged: one gaze dry run on a merged PR and one roar dry run give the same verdict and artifacts as before
 - [ ] gaze title, description and phase list agree; the `/review` mention is fixed or removed
 - [ ] Blocked until 1100 reshapes gaze; raid and roar need not wait and may land first
+
+## Children
+- 1136 split roar (memory capture and pattern sweep out)

@@ -1,0 +1,18 @@
+%erg 0.1
+Title: yawn names /molt as the next move when it finds fix-now or open-ticket items
+Created: 2026-10-20
+Author: reviewer
+
+--- log ---
+2026-10-20T06:54Z reviewer created
+
+--- body ---
+## Context
+`/yawn` reports and ends with an Action plan; the author forgets that `/molt` is the skill that acts on it (author, 2026-10-20). The contract headings `**fix-now**`, `**open-ticket**`, `**skip**` stay unchanged: `/molt` parses them.
+
+## Exit criteria
+- [ ] When the Action plan has any `fix-now` or `open-ticket` entry, yawn's last line names `/molt` as the next move and says what it will do with those entries
+- [ ] Nothing is added when every check is `ok` (no Action plan, no suggestion)
+- [ ] The suggestion sits outside the parsed headings and the Action plan contract note is untouched
+- [ ] A test pins the suggestion line and its absence on an all-ok run
+- [ ] Lands after the ticket-1130 PRs that edit yawn's body, to avoid colliding with them
