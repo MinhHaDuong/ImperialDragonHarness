@@ -2,11 +2,13 @@
 Title: Split roar: move memory capture and pattern sweep into their own skills
 Created: 2026-10-20
 Author: reviewer
+Closed: autoclosed — PR #1503
 
 --- log ---
 2026-10-20T06:54Z reviewer created
 2026-10-20T08:15Z reviewer note design revised 2026-10-20: capture and sweep become runbooks under skills/roar/runbooks/ (author rule: only user-facing skills are skills; internals are scripts > runbooks > reference); no new skills, no census change
 2026-10-20T08:24Z reviewer reviewer note exit criteria amended after /gaze: runbooks under skills/roar/runbooks/ replace 'new skill names'; author confirmed the revised design 2026-10-20 (only user-facing skills are skills; internals are scripts > runbooks > reference)
+2026-10-20T08:31Z reviewer closed — autoclosed — PR #1503
 
 --- body ---
 ## Context
