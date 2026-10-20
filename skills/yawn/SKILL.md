@@ -2,7 +2,7 @@
 metadata:
   category: session
 name: yawn
-description: "Read-only repo healthcheck: git hygiene, test status, freshness of status and directive docs; degrades without project conventions. Not for repair or tickets (/molt)."
+description: "Repo healthcheck, reports first, fixes on request: git hygiene, test status, doc freshness; degrades without project conventions. Not for unprompted fixes (/molt)."
 disable-model-invocation: false
 user-invocable: true
 argument-hint:

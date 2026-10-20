@@ -20,11 +20,11 @@
 |---------|-------------|
 | `/dashboard` | Ticket dashboard: open tickets, branches and merge requests; full state plus a delta led by the ticket count. |
 | `/lair` | End-of-day wrap-up: housekeeping, push branches, run tests, refresh STATE, offer an autonomous session. Not for one merged task (/roar) or a mid-session check (/perch). |
-| `/molt` | Repo housekeeping that acts: git sync, yawn, fix-now repairs, tickets for findings. Safe interactively or in automated sweeps. Not for a read-only check (/yawn). |
+| `/molt` | Repo housekeeping that acts: git sync, yawn, fix-now repairs, tickets for findings. Safe interactively or in automated sweeps. Not for a plain check (/yawn). |
 | `/perch` | Mid-session orientation: summarize what's done, surface unresolved points, assess clear-readiness. Not for end-of-day (/lair) or post-merge (/roar) wrap-up. |
 | `/release` | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |
 | `/roar` | Post-task wrap-up after a merge: reflect, capture significant facts, update state, clean task branches. Not for consolidating (/hoard), auditing memory (/memory-sweep) or ending the day (/lair). |
-| `/yawn` | Read-only repo healthcheck: git hygiene, test status, freshness of status and directive docs; degrades without project conventions. Not for repair or tickets (/molt). |
+| `/yawn` | Repo healthcheck, reports first, fixes on request: git hygiene, test status, doc freshness; degrades without project conventions. Not for unprompted fixes (/molt). |
 
 ### Memory and learning
 
