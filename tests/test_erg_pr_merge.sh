@@ -1126,7 +1126,7 @@ seed_repo staleoverride 0282
 BODY23=$'Summary.\n\n**Ticket:** tickets/0299-fixture.erg\n'
 if out23=$(ERG_PR_MERGE_ALLOW_MISSING_TICKET=1 run_merge "$BODY23" "ticket(0299): override" 2>&1); then
     o_miss=0
-    echo "$out23" | grep -qi 'warning' || { echo "  no warning emitted under override"; o_miss=1; }
+    echo "$out23" | grep -qi 'absent from tickets/' || { echo "  no warning emitted under override"; o_miss=1; }
     if closed_has 0299; then echo "  0299 wrongly closed under override"; o_miss=1; fi
     if (( o_miss )); then echo "FAIL: override path wrong"; fail=1
     else echo "PASS: override warns and skips the absent ticket, merge proceeds"; fi
@@ -1350,6 +1350,41 @@ n2=$(git -C "$REPO" rev-list --count "$BASE..$BRANCH")
 if [[ "$n1" -eq 1 && "$n2" -eq 1 ]] && closed_has 0303; then
     echo "PASS: re-run after the close commit does not close twice"
 else echo "FAIL: re-run changed the branch (commits $n1 -> $n2)"; fail=1; fi
+
+# ── Case 33: attribution block (ticket 1149) — warn, never refuse.
+# (a) positive control: a body without the block warns "missing" and the claim
+# still closes; (b) a valid block silences the warning; (c) a line without
+# effort= is invalid; (d) a ticket-claim line inside the fence is not a claim.
+BLOCK33=$'```attribution\nkind: review-attribution\npr: 42 · merged pending · project: fixture\nwriter: step=execute · runtime=fixture · model=example/writer-v1 · effort=not-stated · route=sonnet · independence=not-stated\nreviewer: step=review · seat=correctness · runtime=fixture · model=example/reviewer-v1 · effort=medium · route=opus · independence=cross-family · status: ran\n```\n'
+seed_repo attrmissing 0310
+BODY33=$'Summary.\n\n**Ticket:** tickets/0310-fixture.erg\n'
+if out33=$(run_merge "$BODY33" "ticket(0310): attr" 2>&1); then
+    a_miss=0
+    closed_has 0310 || { echo "  claim not closed despite missing block"; a_miss=1; }
+    echo "$out33" | grep -q 'warning: attribution block missing' || { echo "  no missing-block warning"; a_miss=1; }
+    if (( a_miss )); then echo "FAIL: missing attribution block not warned or merge refused"; fail=1
+    else echo "PASS: body without attribution block warns 'missing' and still closes"; fi
+else echo "FAIL: missing attribution block must not refuse the merge"; fail=1; fi
+
+seed_repo attrvalid 0311
+if out33=$(run_merge "${BODY33/0310/0311}"$'\n'"$BLOCK33" "ticket(0311): attr" 2>&1) \
+   && closed_has 0311 && ! echo "$out33" | grep -q 'attribution block'; then
+    echo "PASS: valid attribution block raises no warning"
+else echo "FAIL: valid attribution block warned or merge failed"; echo "$out33"; fail=1; fi
+
+seed_repo attrinvalid 0312
+BAD33="${BLOCK33/ · effort=medium/}"
+if out33=$(run_merge $'Summary.\n\n**Ticket:** tickets/0312-fixture.erg\n\n'"$BAD33" "ticket(0312): attr" 2>&1) \
+   && closed_has 0312 && echo "$out33" | grep -q 'warning: attribution block invalid'; then
+    echo "PASS: block lacking effort= warns 'invalid' and still closes"
+else echo "FAIL: invalid attribution block not warned"; echo "$out33"; fail=1; fi
+
+seed_repo attrfence 0313
+FENCE33=$'```attribution\nkind: review-attribution\n**Ticket:** tickets/0399-fixture.erg\n```\n'
+if out33=$(run_merge $'Summary.\n\n**Ticket:** tickets/0313-fixture.erg\n\n'"$FENCE33" "ticket(0313): attr" 2>&1) \
+   && closed_has 0313 && ! echo "$out33" | grep -q '0399'; then
+    echo "PASS: a Ticket line inside the attribution fence is not read as a close claim"
+else echo "FAIL: fenced Ticket line leaked into claims"; echo "$out33"; fail=1; fi
 
 if (( fail )); then exit 1; fi
 echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto race handled, pending checks arm auto-merge (1082), denied inspections delegate without bypass (1117), drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip, output-rewrite-tolerant guards"

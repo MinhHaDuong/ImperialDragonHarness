@@ -168,6 +168,46 @@ Read-side counts distinguish syntactically `valid`, `runtime_masked` and
 and emits a warning. This state does not excuse other missing required facts
 or authorize an identity inferred from an alias or third-party recollection.
 
+### Per-PR block in the PR body (1149)
+
+The same fixed lines may also live in a fenced `attribution` block in the PR
+body, appended step by step so the record exists before the merge instead of
+being rebuilt afterwards from decayed evidence. `erg-pr-merge` parses it in
+**strict** mode and warns (never refuses) when it is missing or invalid; the
+journal reader stays **lenient** so every earlier record keeps parsing.
+
+Added fields, in either the `model=` or the runtime-masked form:
+
+- `step=` plan, execute, roar on `writer:` lines; review, gate on `reviewer:`
+  lines (attempt status lines). Several `writer:` lines are allowed when each
+  carries a distinct `step=`; `record["writer"]` is the `step=execute` line, or
+  the lone unstepped line of an older record. The gate is not a reviewer: the
+  read surface skips `step=gate` attempts rather than scoring it as a reviewer
+  that found nothing.
+- `effort=` now allowed on reviewer lines. The one spelling of an unstated
+  value is `not-stated` (a single token, never "not stated"). For a native
+  subagent, effort is the value requested at launch or `not-stated`, never an
+  observation.
+- `route=` the route token the launcher chose (single token).
+- `independence=` same-family, cross-family or not-stated (assumption: this
+  three-value vocabulary is enough to start; the basis lives in
+  `skills/route/references/decorrelation.md`).
+
+Strict mode requires `step`, `effort`, `route` and `independence` on every
+identity line, one `step=execute` writer line, and accepts `merged pending`
+in the `pr:` line (the merge date is unknown until merge). Nothing is inferred:
+`model-state=runtime-masked` with its evidence anchor stays valid.
+
+```attribution
+kind: review-attribution
+pr: 1149 · merged pending · project: .agents
+writer: step=plan · runtime=<id> · model=<provider/id> · effort=not-stated · route=<token> · independence=<basis>
+writer: step=execute · runtime=<id> · model-state=runtime-masked · model-evidence=<path>:<line> · effort=not-stated · route=<token> · independence=<basis>
+reviewer: step=review · seat=<name> · runtime=<id> · model=<provider/id> · effort=medium · route=<token> · independence=cross-family · status: ran
+  finding: verifiable · <path>:<line> · adopted: yes
+reviewer: step=gate · seat=gate · runtime=<id> · model=<provider/id> · effort=not-stated · route=<token> · independence=same-family · status: ran
+```
+
 ### Valid capture example (synthetic fixture)
 
 This is a parseable example, not evidence of an actual review. Never copy its

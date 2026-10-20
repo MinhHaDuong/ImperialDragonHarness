@@ -333,3 +333,12 @@ def test_pr1209_reused_contexts_preserve_attempts_without_self_pairs(monkeypatch
     assert len({frozenset((pair['a']['seat'], pair['b']['seat']))
                 for pair in data['pairs']}) == 21
     assert all(pair['a']['seat'] != pair['b']['seat'] for pair in data['pairs'])
+
+
+def test_gate_attempt_is_not_scored_as_a_reviewer(monkeypatch):
+    query = load_query(monkeypatch)
+    text = record(1, [('A', 'ran', [('x:1', True)])]).replace(
+        'reviewer: seat=A', 'reviewer: step=review · seat=A') + (
+        'reviewer: step=gate · seat=gate · runtime=native · model=p/reviewer · status: ran\n')
+    attempts = query.game_attempts(query.parse_record(text))
+    assert {identity[0] for identity in attempts} == {'A'}

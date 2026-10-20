@@ -1,0 +1,22 @@
+%erg 0.1
+Title: 1146 child B: per-PR attribution block in the PR body and a /merge warning
+Created: 2026-10-20
+Author: reviewer
+Closed: autoclosed — PR #1517
+
+--- log ---
+2026-10-20T13:17Z reviewer created
+2026-10-20T13:45Z reviewer note blocker 1148 closed — Blocked-by removed.
+2026-10-20T14:05Z reviewer orchestrator decomposed: criteria 2 and 4 moved to 1151 to stay under the 15-file /gaze breaker
+2026-10-20T14:34Z reviewer closed — autoclosed — PR #1517
+
+--- body ---
+## Context
+Child B of tracker 1146 (exit criteria 2 and 3). Author decisions 2026-10-20: the record lives in a fenced `attribution` block in the PR body (`erg-pr-merge` already reads the body); `/merge` warns, never refuses, on a missing or invalid block. Extend the existing schema (`docs/2026-10-02-reviewer-attribution-design.md` section 4, `scripts/attribution_record.py`) rather than inventing a new one. Estimated 10-12 files, under the /gaze 15-file breaker.
+
+## Exit criteria
+- [x] Schema extended: a step field (plan, execute, review, gate, roar), an effort field on every identity line with `not-stated` valid, `route=` and `independence=`; parser and its tests updated
+- [x] Moved to 1151 (writers append the block)
+- [x] `erg-pr-merge` runs the parser on the PR-body block and warns when it is missing or invalid; positive control: a test with a PR body lacking the block asserts the warning fires
+- [x] Moved to 1151 (roar copies the block)
+- [x] No identity is inferred: runtime-masked stays a valid state

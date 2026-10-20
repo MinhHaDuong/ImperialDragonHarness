@@ -1,0 +1,17 @@
+%erg 0.1
+Title: 1149 part 2: writers append the block and roar copies it
+Created: 2026-10-20
+Author: reviewer
+Blocked-by: 1152
+
+--- log ---
+2026-10-20T14:05Z reviewer created
+2026-10-20T14:34Z reviewer note blocker 1149 closed — Blocked-by removed.
+
+--- body ---
+## Context
+Part 2 of ticket 1149 (tracker 1146), split off by the orchestrator so each PR stays under the /gaze 15-file breaker. Part 1 (1149) ships the schema, the parser's `--pr-body` mode and the `erg-pr-merge` warning.
+
+## Exit criteria
+- [ ] The orchestrator and /gaze append their lines to the PR-body block as each step finishes
+- [ ] /roar copies the block into the journal instead of rebuilding it from decayed evidence
