@@ -1,14 +1,14 @@
 # Cold coaching replay
 
-Resolve the helper from the runtime-supplied path of the loaded coaching
-`SKILL.md` and invoke it in the same shell call, from any project directory:
+Run the helper from the harness root, from any project directory (formerly
+the `/coaching` skill; now a script, demoted under ticket 1140):
 
 ```bash
-IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"
-"$IDH_ROOT/skills/coaching/replay.sh" MODEL
+IDH_ROOT="${IDH_ROOT:-$HOME/.agents}"
+"$IDH_ROOT/scripts/coaching/replay.sh" MODEL
 ```
 
-Replace `<loaded-SKILL.md>` with its actual absolute path and `MODEL` with the
+Replace `MODEL` with the
 candidate model ID. Optional flags are `--endpoint URL`, `--board FILE`,
 `--repo DIR`, `--credential-env NAME`, and `--name LABEL`. The helper runs the
 frozen board of merged PRs.
@@ -37,3 +37,9 @@ with a diagnostic on stderr and no result row.
 
 The helper writes only temporary findings and removes them on exit. It never
 edits the board, tickets, or logs.
+
+The replay invokes the contained `seat-runner.sh` once per board PR and prints a
+result only after every PR has completed with a valid summary; treat any nonzero
+exit as an incomplete replay. It reads the board and already merged repository
+revisions. It does not log trial tickets, change a reviewer roster, or make a
+promotion decision.

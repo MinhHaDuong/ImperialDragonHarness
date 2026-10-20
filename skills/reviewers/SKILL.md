@@ -24,5 +24,5 @@ findings and any unavailable perspective. Optional external review is fail-open;
 unavailable evidence must remain visible and must never count as approval.
 
 For read-only replay of the frozen, already merged benchmark board, use
-`skills/coaching/SKILL.md` (`/coaching`). Live routing does not manage trial
+`scripts/coaching/references/replay.md` (the replay script). Live routing does not manage trial
 records or reviewer promotions.
