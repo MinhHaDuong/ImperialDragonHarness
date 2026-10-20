@@ -107,7 +107,7 @@ def test_canonical_template_parses_verbatim(reader):
 
 
 def test_roar_requires_reviewed_merge_capture_and_visible_failure():
-    roar = (ROOT / "skills" / "roar" / "SKILL.md").read_text()
+    roar = (ROOT / "skills" / "roar" / "runbooks" / "capture.md").read_text()
     capture = roar.split("**Capture review attribution for every reviewed merged PR**")[1]
     assert "attribution_record.py\" --capture" in capture
     assert "capture failure" in capture
@@ -120,7 +120,8 @@ def test_roar_capture_command_works_in_fresh_unrelated_shell(tmp_path):
     project = tmp_path / "unrelated-project"
     subprocess.run(["git", "init", "--quiet", str(project)], env=child_env(), check=True)
     skill = ROOT / "skills" / "roar" / "SKILL.md"
-    capture = skill.read_text().split("Validate the complete record before writing:")[1]
+    runbook = ROOT / "skills" / "roar" / "runbooks" / "capture.md"
+    capture = runbook.read_text().split("Validate the complete record before writing:")[1]
     command = next(command for command in re.findall(r"`([^`]+)`", capture)
                    if 'attribution_record.py" --capture' in command)
     command = command.replace("<loaded-SKILL.md>", str(skill))

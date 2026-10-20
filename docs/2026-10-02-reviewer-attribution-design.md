@@ -91,7 +91,7 @@ precedent is verify-gate being its own skill inside the gaze loop.
 
 ## 4. The attribution record
 
-A dedicated journal-entry kind written by roar step 3 whenever the merged PR
+A dedicated journal-entry kind written by roar step 3 (runbooks/capture.md) whenever the merged PR
 was reviewed. Fixed grep-able lines carry the facts; prose is allowed only
 for context. Findings carry repository-relative `path:line` anchors (the
 frozen board's basename convention is narrower and stays board-only) so
@@ -199,8 +199,8 @@ companion or native store.
 
 1. **During review (unchanged, free):** the runtime reviews its own way;
    external routes optional via the descriptor skill.
-2. **At wrap-up:** roar step 3 writes the attribution record.
-3. **After merge, when a fix lands:** roar step 4's sweep ("review the fix
+2. **At wrap-up:** roar step 3 (runbooks/capture.md) writes the attribution record.
+3. **After merge, when a fix lands:** roar step 4 (runbooks/sweep.md)'s sweep ("review the fix
    just completed — grep for the same anti-pattern") gains one hook: a
    post-merge fix on lines a past review covered backfills
    a `defect-confirmed` event line in that PR's attribution record. This is

@@ -65,6 +65,10 @@ scan_files=(
     "$ROOT/skills/merge/SKILL.md"
     "$ROOT/skills/raid/SKILL.md"
     "$ROOT/skills/roar/SKILL.md"
+    "$ROOT/skills/roar/runbooks/capture.md"
+    "$ROOT/skills/roar/runbooks/sweep.md"
+    "$ROOT/skills/roar/runbooks/tmp-report.md"
+    "$ROOT/skills/roar/references/close-and-clean.md"
 )
 pat='(^|[^[:alnum:]_-])sleep[[:space:]]+[0-9$"]|pgrep -|--watch|(^|[[:space:]])timeout[[:space:]]+[0-9$]|(^|[[:space:];])(while|until)[^;]*;[[:space:]]*do'
 for f in "${scan_files[@]}"; do
