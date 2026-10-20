@@ -465,3 +465,13 @@ def test_family_comparison_is_case_insensitive(repo, policy):
     assert out.returncode != 0 and "independence: missing" in out.stdout
     report = next((repo / "tickets" / "reviews").glob("*/red-team-1.md"))
     assert re_mod.parse_report(report.read_text())["family"] == "anthropic"
+
+
+@pytest.mark.integration
+def test_risk_floor_reads_non_ascii_paths(repo, policy):
+    """git quotes non-ASCII paths unless -z: rules/café.md must still hit rules/."""
+    commit(repo, "rules/café.md", "x\n", "accented rule")
+    out = run_cli(repo, policy, "risk-floor")
+    assert json.loads(out.stdout)["paths"] == "high", out.stdout + out.stderr
+    gate = run_gate(repo, policy, "--seat", "correctness")
+    assert "floor: high (paths: high" in gate.stdout

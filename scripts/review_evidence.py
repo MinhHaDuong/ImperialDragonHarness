@@ -329,6 +329,15 @@ def seat_rows(repo: Path, current: Inputs, seats: list[str]) -> list[dict]:
 
 # --- subcommands -----------------------------------------------------------
 
+def name_status(repo: Path, current: Inputs) -> list[tuple[str, str]]:
+    """(status, path) pairs, NUL-separated so non-ASCII paths arrive unquoted."""
+    raw = subprocess.run(["git", "-C", str(repo), "diff", "--name-status", "-z",
+                          "--no-renames", current.base, current.head],
+                         check=True, capture_output=True, timeout=60).stdout.decode()
+    fields = raw.split("\0")
+    return list(zip(fields[0::2], fields[1::2]))
+
+
 def range_dir(repo: Path, current: Inputs) -> Path:
     short = [git(repo, "rev-parse", "--short=7", sha) for sha in (current.base, current.head)]
     return repo / REVIEWS_DIR / f"{short[0]}..{short[1]}"
@@ -397,10 +406,7 @@ def cmd_gate(args: argparse.Namespace) -> int:
             print("independence: missing other-family seat at the high row")
             ok = False
     ticket = args.ticket.read_text() if args.ticket else None
-    changes = [tuple(line.split("\t", 1)) for line in git(
-        args.repo, "diff", "--name-status", "--no-renames", current.base, current.head
-    ).splitlines() if line]
-    floor = risk_floor(changes, ticket)
+    floor = risk_floor(name_status(args.repo, current), ticket)
     print(f"risk: {args.risk} / floor: {floor['floor']} "
           f"(paths: {floor['paths']}, ticket: {floor['ticket']})")
     if ROWS.index(args.risk) < ROWS.index(floor["floor"]):
@@ -446,10 +452,8 @@ def cmd_forge(args: argparse.Namespace) -> int:
 
 def cmd_risk_floor(args: argparse.Namespace) -> int:
     current = current_inputs(args)
-    changes = [tuple(line.split("\t", 1)) for line in git(
-        args.repo, "diff", "--name-status", "--no-renames", current.base, current.head
-    ).splitlines() if line]
-    print(json.dumps(risk_floor(changes, args.ticket.read_text() if args.ticket else None)))
+    ticket = args.ticket.read_text() if args.ticket else None
+    print(json.dumps(risk_floor(name_status(args.repo, current), ticket)))
     return 0
 
 
