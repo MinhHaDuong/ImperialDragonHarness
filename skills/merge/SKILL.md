@@ -55,9 +55,11 @@ The script reads close intent from the PR **body** only — never the title:
 - Ticket lines inside Markdown code fences are examples and are ignored.
   A fence closes only on a run of the opener's character (backtick or tilde)
   at least as long as the opener, so a `~~~` line inside a backtick fence
-  stays fenced. Any indentation opens or closes a fence (looser than
-  CommonMark, so a fence nested in a list item stays a fence). Ticket paths
-  outside fences that cannot be parsed cause an error.
+  stays fenced; the closer carries nothing after the run but whitespace, and
+  a backtick opener's info string may not contain a backtick. An opener may
+  sit at any indentation (looser than CommonMark, so a fence nested in a list
+  item stays a fence); a closer more than 3 columns deeper than its opener is
+  content. Ticket paths outside fences that cannot be parsed cause an error.
 - An **unclosed** fence whose remaining text holds a `Ticket:` or
   `Ticket-ref:` line with a `tickets/` path or a short ID refuses the merge
   and names the line: the claim would otherwise be silently dropped or read
@@ -192,7 +194,11 @@ and how many it found unhonoured (`DROPPED` or `UNRESOLVED`). A zero finding
 count is not an all-clear when zero PRs or zero claims were parsed; check the
 window and any unrecognised bodies. The test suite gives this detector a
 positive control: a merged PR claiming an open ticket must be named and cause
-exit 1. `Ticket-ref:` is excluded.
+exit 1. `Ticket-ref:` is excluded. It reads fences with the same tracker as
+this script, except that lines of an unclosed fence count as live: such a body
+could only have merged by another route, so the audit names its path claims.
+Short-ID claims (`Ticket: NNNN`) are not audited; they land in the
+unrecognised count.
 
 ## Manual chore-close — when a PR merged without this script
 

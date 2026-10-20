@@ -111,8 +111,11 @@ ticket_state() {
 fence_map() {
     awk '
     function fence(line,   c, n) {
-        sub(/^[ \t]+/, "", line)
-        c = substr(line, 1, 1)
+        find = 0
+        while ((c = substr(line, 1, 1)) == " " || c == "\t") {
+            find += (c == "\t") ? 4 : 1
+            line = substr(line, 2)
+        }
         if (c != "`" && c != "~") return 0
         n = 0
         while (substr(line, n + 1, 1) == c) n++
@@ -123,13 +126,14 @@ fence_map() {
     {
         if (!open) {
             if (fence($0) && !(fch == "`" && index(frest, "`"))) {
-                open = 1; och = fch; olen = flen; nbuf = 0
+                open = 1; och = fch; olen = flen; oind = find; nbuf = 0
                 buf[++nbuf] = $0
             } else print "L\t" $0
             next
         }
         buf[++nbuf] = $0
-        if (fence($0) && fch == och && flen >= olen && frest ~ /^[ \t\r]*$/) {
+        if (fence($0) && fch == och && flen >= olen && find - oind <= 3 \
+            && frest ~ /^[ \t\r]*$/) {
             for (i = 1; i <= nbuf; i++) print "F\t" buf[i]
             open = 0
         }

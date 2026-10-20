@@ -1423,6 +1423,12 @@ if out34=$(run_merge $'````markdown\n```\n**Ticket:** tickets/0323-fixture.erg\n
     echo "PASS: a shorter backtick run does not close a longer fence"
 else echo "FAIL: a shorter backtick run closed a longer fence"; echo "$out34"; fail=1; fi
 
+seed_repo indentedcloser 0327
+if out34=$(run_merge $'```\n    ```\n**Ticket:** tickets/0327-fixture.erg\n```\nTicket: none\n' 'docs: indented closer' 2>&1) \
+   && ! closed_has 0327; then
+    echo "PASS: a fence-like line indented 4+ columns past the opener is content, not a closer"
+else echo "FAIL: an over-indented fence line closed the fence and freed a fenced claim"; echo "$out34"; fail=1; fi
+
 seed_repo unclosedfence 0324
 if out34=$(run_merge $'Summary.\n\n```attribution\nkind: review-attribution\n\n**Ticket:** tickets/0324-fixture.erg\n' 'ticket(0324): unclosed' 2>&1); then
     echo "FAIL: an unclosed fence before a real Ticket line merged (claim dropped or fenced text honoured)"; echo "$out34"; fail=1
