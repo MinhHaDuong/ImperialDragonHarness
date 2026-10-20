@@ -2,10 +2,12 @@
 Title: 1146 child A: inventory of where model, effort and step identity is lost
 Created: 2026-10-20
 Author: reviewer
+Closed: autoclosed — PR #1516
 
 --- log ---
 2026-10-20T13:17Z reviewer created
 2026-10-20T13:38Z reviewer inventory written: docs/2026-10-20-attribution-identity-inventory.md (table, PR 1466 positive control, overlap with 1142/1143/1145)
+2026-10-20T13:45Z reviewer closed — autoclosed — PR #1516
 
 --- body ---
 ## Context
