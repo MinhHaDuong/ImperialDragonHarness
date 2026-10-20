@@ -6,13 +6,14 @@ Author: reviewer
 --- log ---
 2026-10-20T06:54Z reviewer created
 2026-10-20T08:15Z reviewer note design revised 2026-10-20: capture and sweep become runbooks under skills/roar/runbooks/ (author rule: only user-facing skills are skills; internals are scripts > runbooks > reference); no new skills, no census change
+2026-10-20T08:24Z reviewer reviewer note exit criteria amended after /gaze: runbooks under skills/roar/runbooks/ replace 'new skill names'; author confirmed the revised design 2026-10-20 (only user-facing skills are skills; internals are scripts > runbooks > reference)
 
 --- body ---
 ## Context
 Child of 1131 (oversized skills). `skills/roar/SKILL.md` is 27 KB and does at least five jobs with different triggers and costs: reflect, capture significant project experiences, sweep the codebase for the same anti-pattern, close the ticket and verify its close claims, clean up the completed task. Its memory capture overlaps `hoard` and `memory-sweep`. Author decision 2026-10-20: split it. Skill names stay dragon-themed.
 
 ## Exit criteria
-- [ ] Read-only proposal first: the boundary (what stays in `roar`, what moves, the new skill names) with a size estimate per skill; the author confirms before the move
+- [ ] Read-only proposal first: the boundary (what stays in `roar`, what moves to runbooks under `skills/roar/runbooks/`) with a size estimate per file; the author confirmed the revised design on 2026-10-20 (rule: only user-facing skills are skills; internals are scripts > runbooks > reference)
 - [ ] `roar` keeps the post-task close-and-clean path: pre-check, close, close-claim check, tracking-ticket check, exit worktree, own-task cleanup, report
 - [ ] Memory capture and the similar-pattern sweep live outside roar's SKILL.md as runbooks, each with a one-line when-to-use header, and roar's steps point at them
 - [ ] Callers of `roar` (raid, hunt, merge, lair, tests) still reach what they relied on; grep proves it
