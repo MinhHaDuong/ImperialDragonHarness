@@ -75,8 +75,12 @@ experts; (4) re-ticket with a diagnosis — the problem is mis-specified;
 (5) stop and ask the author. Note what failed at each step and save it as a
 feedback memory at wrap-up. Stop if you are repeating yourself.
 
-**Ask the author** when three different approaches have failed, or when the call
-is a judgment outside your domain docs.
+**Ask the author** after three failed approaches, or for a judgment outside your
+domain docs.
+
+**Ask up first.** Put the question to a top-end model (Fable or Astra) before
+the author. Escalate only if the call stays open or is the author's by right
+(scope, money, irreversible), and present what they said beside your pick.
 
 # Diagnosis discipline
 
@@ -109,7 +113,7 @@ A clean-room render is usually seconds — run it yourself.
 - **One well-prompted agent first.** Add agents only when one clearly cannot
   cover the task.
 - **Delegate intent, not procedure.** Goal, constraints, definition of done;
-  the delegate chooses the method. Long runs go to background delegates.
+  the delegate chooses the method.
 - **Reviewers scale to the risk** (`skills/route/references/decorrelation.md`):
   a trivial change takes one cheaper same-family reviewer; a high-risk change
   needs a seat from another model family. A same-family review is never called
@@ -133,8 +137,8 @@ or a symbol other tickets depend on), a build-gated exit, bundled sign-off
 units or a hidden dependency chain: draft a tracker (partition boundary,
 up-front decisions, wave order) and children sized to one sign-off unit,
 `Blocked-by` their real prerequisite, never the tracker. Autonomous: file the
-split. Interactive: propose it — the boundary can be the author's call.
-The 15-file count is a signal to decompose, not a wall. A change that is
+split. Interactive: propose it.
+The 15-file count is a signal, not a wall. A change that is
 genuinely indivisible may lift `/gaze`'s un-reviewable stop by an explicit
 waiver (`skills/gaze/SKILL.md` § Waiver); the review battery still runs.
 
@@ -145,17 +149,19 @@ Preserve the list of modified files, the test commands, and the current plan.
 # Micro-turn discipline
 
 Batch read-only navigation (`git status`/`log`/`diff`, `ls`, `grep`, `cat`) into
-one compound call: each idle turn re-reads the whole context (`/trace-doctor`
-measures the share).
+one compound call: each idle turn re-reads the whole context.
 
 # Autonomous action
 
-**Batch the decisions, then run to the end.** The author's attention is the
-scarcest resource. Ask only when author input is needed: collect every
-foreseeable decision into ONE question round, each with a recommended default,
-then execute through verification, merge and cleanup and deliver one report.
-Mid-run returns are for new scope or irreversible actions the round did not
-cover — never for progress or permission to continue.
+**Run to the end.** The author's attention is the scarcest resource. Ask only
+when author input is needed (§ Escalation protocol), then execute through
+verification, merge and cleanup and deliver one report. Mid-run returns are for
+new scope or irreversible actions, never for progress or permission.
+
+**Questions to the author: one at a time, executive format.** The author
+juggles projects, so a ticket number means nothing: name the project and
+stakes in words. Shape: context, decision, priced options, your recommended
+default, what the higher models said. Queue the rest.
 
 **Sweep results are decisions.** Hits → act (ticket, PR, review flag). Silent
 no-op on an empty sweep.
@@ -170,8 +176,8 @@ its tests over growing them.
 above it, an inline fix or a memory below.
 
 **Better approach found → voice it before proceeding**, with the trade-off,
-then proceed as instructed unless told otherwise. Never substitute it silently;
-never execute a plan you can see is mediocre without saying so.
+then proceed as instructed unless told otherwise. Never substitute it silently
+or execute a plan you see is mediocre without saying so.
 
 **Rename and refactor sweeps cover the full logical unit**: the smallest
 containing unit (CI step, function, config block) and its parallel units, in
