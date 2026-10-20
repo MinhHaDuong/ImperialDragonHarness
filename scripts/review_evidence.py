@@ -17,6 +17,7 @@ Ticket 1142; design in docs/discussions/2026-10-14-1096-design.md.
 import argparse
 import hashlib
 import json
+import logging
 import re
 import subprocess
 import sys
@@ -33,6 +34,7 @@ REVIEWS_DIR = "tickets/reviews"
 # A commit that only adds such files under REVIEWS_DIR does not move the identity.
 REPORT_SUFFIXES = (".md", ".json", ".txt")
 HARNESS_ROOT = Path(__file__).resolve().parents[1]
+log = logging.getLogger("review_evidence")
 
 # Forge actors whose reviews may be read as evidence or binding findings:
 # the three accounts that posted reviews across 22 repositories in the census
@@ -513,10 +515,11 @@ def main() -> int:
     fg.set_defaults(fn=cmd_forge)
     sub.add_parser("risk-floor", parents=[common]).set_defaults(fn=cmd_risk_floor)
     args = parser.parse_args()
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
     try:
         return args.fn(args)
     except (subprocess.CalledProcessError, OSError, ValueError) as exc:
-        print(f"review-evidence: {exc}", file=sys.stderr)
+        log.error("review-evidence: %s", exc)
         return 2
 
 
