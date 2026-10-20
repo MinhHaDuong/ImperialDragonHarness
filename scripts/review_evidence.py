@@ -1,0 +1,429 @@
+#!/usr/bin/env python3
+"""Review evidence core: record reports, decide reuse, gate stale or missing proof.
+
+Reports are repository files under `tickets/reviews/<base>..<head>/`, one per
+seat execution, written by the controller. A report is reused only while the
+five identity inputs hold: the merge base and head it names may move, but the
+patch-id of the diff, the ticket's exit-criteria hash and the review policy
+version must not change. Check, gate and adherence results are never reused.
+
+Forge-read reviews (human, Copilot) are admitted only from three pinned actor
+IDs and only when the forge reports them unedited; anything else fails closed.
+
+Subcommands: `identity`, `record`, `plan`, `gate`, `forge`, `risk-floor`.
+Ticket 1142; design in docs/discussions/2026-10-14-1096-design.md.
+"""
+
+import argparse
+import hashlib
+import json
+import re
+import subprocess
+import sys
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+
+REUSE, RERUN, STALE = "reuse", "re-run", "stale"
+NEVER_REUSED_KINDS = frozenset({"check", "gate", "adherence"})
+KINDS = ("review", *sorted(NEVER_REUSED_KINDS))
+VERDICTS = ("approve", "changes", "no-report")
+FORMAT = "1"
+REVIEWS_DIR = "tickets/reviews"
+# A commit that only adds such files under REVIEWS_DIR does not move the identity.
+REPORT_SUFFIXES = (".md", ".json", ".txt")
+HARNESS_ROOT = Path(__file__).resolve().parents[1]
+
+# Forge actors whose reviews may be read as evidence or binding findings:
+# the three accounts that posted reviews across 22 repositories in the census
+# of 2026-10-14 (docs/discussions/2026-10-14-1096-seats/evidence-review-authors.json).
+# Node IDs, not logins: a login can be renamed and re-registered.
+FORGE_ACTORS = {
+    ("github.com", "MDQ6VXNlcjE4NDc1MjA4"): "human",    # MinhHaDuong
+    ("github.com", "BOT_kgDOCnlnWA"): "copilot",        # copilot-pull-request-reviewer
+    ("github.com", "BOT_kgDOC9w8XQ"): "copilot",        # copilot-swe-agent
+}
+FORGE_OBJECTS = frozenset({"PullRequestReview", "PullRequestReviewComment", "IssueComment"})
+
+# Review policy: what a seat's judgment depends on. Not all of rules/.
+POLICY_GLOBS = (
+    "skills/review-pr/**/*",
+    "skills/review-pr-prose/**/*",
+    "skills/gaze/**/*",
+    "skills/route/references/decorrelation.md",
+    "scripts/review_evidence.py",
+    "agents/*-seat.md",
+    "agents/code-reviewer.md",
+    "agents/prose-reviewer.md",
+    "agents/gaze-pr-review.md",
+    "profiles/*-seat/**/*",
+    "profiles/code-reviewer/**/*",
+    "profiles/prose-reviewer/**/*",
+)
+
+ROWS = ("trivial", "ordinary", "high")
+# High-risk classes of skills/route/references/decorrelation.md: rules and
+# guards, merge and release gates, credentials, deletion or migration.
+HIGH_RISK_PATHS = re.compile(
+    r"^(rules/|hooks/|skills/(merge|verify-gate|verify-adherence|release|gaze)/"
+    r"|scripts/(guard-|raid-gate|raid_gate|review_evidence))"
+    r"|(^|/)guard[^/]*$|credential|secret|(^|/)\.env|(^|/)keys?/",
+    re.IGNORECASE)
+HIGH_RISK_TEXT = re.compile(
+    r"\brules/|\bguards?\b|\bmerge gate|\brelease gate|\bverify-gate\b|\bcredentials?\b"
+    r"|\bsecrets?\b|\bapi keys?\b|\bdelet(e|es|ion|ing)\b|\bmigrat(e|es|ion|ing)\b",
+    re.IGNORECASE)
+
+
+@dataclass(frozen=True)
+class Inputs:
+    base: str
+    head: str
+    patch_id: str
+    criteria_hash: str
+    policy_version: str
+
+
+# --- pure core -------------------------------------------------------------
+
+def decide(record: dict | None, current: Inputs) -> tuple[str, str]:
+    """Return (reuse | re-run | stale, reason) for one recorded seat execution.
+
+    `reuse` means the evidence still describes the current diff, whatever its
+    verdict: findings on an identical diff stand until the diff changes, so a
+    seat that requested changes is not dispatched again on the same patch.
+    """
+    if record is None:
+        return RERUN, "no report"
+    if record.get("kind") in NEVER_REUSED_KINDS:
+        return RERUN, f"{record['kind']} results are never reused"
+    changed = [key for key in ("patch-id", "criteria-hash", "policy-version")
+               if record.get(key) != getattr(current, key.replace("-", "_"))]
+    if changed:
+        return STALE, f"{', '.join(changed)} changed"
+    if record.get("verdict") not in ("approve", "changes"):
+        return RERUN, "no report"
+    origin = record.get("head", "")
+    if origin == current.head:
+        return REUSE, "same head"
+    return REUSE, f"same patch-id, from head {origin[:12]}"
+
+
+def admit_forge_review(review: dict) -> tuple[bool, str]:
+    """Admit a forge-read review by pinned actor; fail closed on anything else.
+
+    Returns (True, role) or (False, reason).
+    """
+    role = FORGE_ACTORS.get((review.get("forge_host"), review.get("actor_id")))
+    if role is None:
+        return False, "actor not on the allow-list"
+    if review.get("object_type") not in FORGE_OBJECTS:
+        return False, f"object type {review.get('object_type')!r} not admitted"
+    if review.get("edited") is not False:
+        return False, "edited after posting, or edit status unknown"
+    return True, role
+
+
+def classify_forge(payload: dict, host: str) -> list[dict]:
+    """Rows `{login, object_type, status, reason, state, commit}` from a GraphQL payload."""
+    pr = payload["data"]["repository"]["pullRequest"]
+    rows = []
+    for node in pr["reviews"]["nodes"] + pr["comments"]["nodes"]:
+        author = node.get("author") or {}
+        ok, why = admit_forge_review({
+            "forge_host": host, "actor_id": author.get("id"),
+            "object_type": node.get("__typename"),
+            "edited": node.get("lastEditedAt") is not None})
+        rows.append({
+            "login": author.get("login", "<deleted>"), "object_type": node.get("__typename"),
+            "status": f"{why}: ran" if ok else "rejected", "reason": "" if ok else why,
+            "state": node.get("state", ""), "commit": (node.get("commit") or {}).get("oid", "")})
+    return rows
+
+
+def criteria_hash(ticket_text: str | None) -> str:
+    """Hash the Exit criteria section, ignoring checkbox state and other sections."""
+    if ticket_text is None:
+        return "none"
+    match = re.search(r"^## Exit criteria\s*$(.*?)(?=^## |\Z)", ticket_text, re.M | re.S)
+    if not match:
+        return "none"
+    lines = []
+    for line in match.group(1).splitlines():
+        line = re.sub(r"^-\s*\[[ xX]\]\s*", "- ", line.strip())
+        if line:
+            lines.append(line)
+    return hashlib.sha256("\n".join(lines).encode()).hexdigest()[:16]
+
+
+def risk_floor(changes: list[tuple[str, str]], ticket_text: str | None) -> dict:
+    """The floor is the higher of the path match and the ticket-text match.
+
+    `changes` is (status, path) from a no-rename name-status diff. Deleting a
+    non-ticket file counts as deletion; closing a ticket does not.
+    """
+    def hit(status: str, path: str) -> bool:
+        if path.startswith(f"{REVIEWS_DIR}/"):
+            return False
+        if status == "D" and not path.startswith("tickets/"):
+            return True
+        return bool(HIGH_RISK_PATHS.search(path))
+    paths = "high" if any(hit(s, p) for s, p in changes) else "trivial"
+    ticket = "high" if ticket_text and HIGH_RISK_TEXT.search(ticket_text) else "trivial"
+    floor = max(paths, ticket, key=ROWS.index)
+    return {"paths": paths, "ticket": ticket, "floor": floor}
+
+
+def parse_report(text: str) -> dict:
+    """Header fields of a report; an unreadable header returns {}."""
+    lines = text.splitlines()
+    if not lines or lines[0] != "---" or "---" not in lines[1:]:
+        return {}
+    fields = {}
+    for line in lines[1:lines.index("---", 1)]:
+        key, sep, value = line.partition(": ")
+        if not sep:
+            return {}
+        fields[key] = value
+    return fields if fields.get("review-evidence") == FORMAT else {}
+
+
+# --- repository reads ------------------------------------------------------
+
+def git(repo: Path, *args: str, stdin: str | None = None) -> str:
+    return subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True,
+                          text=True, input=stdin, timeout=60).stdout.strip()
+
+
+def exempt_paths(repo: Path, base: str, head: str) -> list[str]:
+    """Plain report files added under REVIEWS_DIR: outside the reviewed identity."""
+    raw = subprocess.run(["git", "-C", str(repo), "diff", "--raw", "-z", "--no-renames",
+                          base, head], check=True, capture_output=True, timeout=60).stdout
+    fields = raw.decode().split("\0")
+    exempt = []
+    for meta, path in zip(fields[0::2], fields[1::2]):
+        parts = meta.split()
+        if (len(parts) == 5 and parts[4] == "A" and parts[1] == "100644"
+                and path.startswith(f"{REVIEWS_DIR}/") and path.endswith(REPORT_SUFFIXES)):
+            exempt.append(path)
+    return exempt
+
+
+def patch_id(repo: Path, base: str, head: str) -> str:
+    """`git patch-id --stable`, joined with the verbatim id so whitespace counts."""
+    excludes = [f":(exclude,literal){p}" for p in exempt_paths(repo, base, head)]
+    diff = git(repo, "diff", "--binary", "--no-renames", "--no-ext-diff", "--no-textconv",
+               base, head, "--", ".", *excludes) + "\n"
+    if not diff.strip():
+        return "empty"
+    ids = [git(repo, "patch-id", flag, stdin=diff).split()[0]
+           for flag in ("--stable", "--verbatim")]
+    return "+".join(ids)
+
+
+def policy_version(root: Path) -> str:
+    digest = hashlib.sha256()
+    files = sorted({p for g in POLICY_GLOBS for p in root.glob(g) if p.is_file()})
+    for path in files:
+        digest.update(f"{path.relative_to(root)}\0".encode())
+        digest.update(hashlib.sha256(path.read_bytes()).digest())
+    return digest.hexdigest()[:16]
+
+
+def current_inputs(args: argparse.Namespace) -> Inputs:
+    head = git(args.repo, "rev-parse", args.head)
+    base = git(args.repo, "merge-base", args.base, head)
+    ticket = args.ticket.read_text() if args.ticket else None
+    return Inputs(base, head, patch_id(args.repo, base, head), criteria_hash(ticket),
+                  policy_version(args.policy_root))
+
+
+def load_reports(repo: Path) -> list[tuple[Path, dict]]:
+    out = []
+    for path in sorted((repo / REVIEWS_DIR).glob("*/*.md")):
+        header = parse_report(path.read_text())
+        if header:
+            out.append((path, header))
+    return out
+
+
+def seat_rows(repo: Path, current: Inputs, seats: list[str]) -> list[dict]:
+    """Per required seat: ran | reused | stale | no-report, with the backing report."""
+    reports = load_reports(repo)
+    rows = []
+    for seat in seats:
+        best = {"seat": seat, "status": "no-report", "reason": "no report", "path": None,
+                "header": {}}
+        for path, header in reports:
+            if header.get("seat") != seat:
+                continue
+            action, reason = decide(header, current)
+            if action == REUSE:
+                status = "ran" if header["head"] == current.head else "reused"
+                if best["status"] != "ran":
+                    best = {"seat": seat, "status": status, "reason": reason, "path": path,
+                            "header": header}
+            elif action == STALE and best["status"] == "no-report":
+                best = {"seat": seat, "status": "stale", "reason": reason, "path": path,
+                        "header": header}
+        rows.append(best)
+    return rows
+
+
+# --- subcommands -----------------------------------------------------------
+
+def range_dir(repo: Path, current: Inputs) -> Path:
+    short = [git(repo, "rev-parse", "--short=7", sha) for sha in (current.base, current.head)]
+    return repo / REVIEWS_DIR / f"{short[0]}..{short[1]}"
+
+
+def cmd_identity(args: argparse.Namespace) -> int:
+    print(json.dumps(current_inputs(args).__dict__, indent=1))
+    return 0
+
+
+def cmd_record(args: argparse.Namespace) -> int:
+    current = current_inputs(args)
+    folder = range_dir(args.repo, current)
+    folder.mkdir(parents=True, exist_ok=True)
+    n = 1
+    while (folder / f"{args.seat}-{n}.md").exists():
+        n += 1
+    header = {
+        "review-evidence": FORMAT, "kind": args.kind, "seat": args.seat,
+        "verdict": args.verdict, "family": args.family, "worker": args.worker,
+        "base": current.base, "head": current.head, "patch-id": current.patch_id,
+        "criteria-hash": current.criteria_hash, "policy-version": current.policy_version,
+        "recorded": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    body = sys.stdin.read()
+    path = folder / f"{args.seat}-{n}.md"
+    path.write_text("---\n" + "".join(f"{k}: {v}\n" for k, v in header.items())
+                    + "---\n\n" + body)
+    print(path)
+    return 0
+
+
+def cmd_plan(args: argparse.Namespace) -> int:
+    current = current_inputs(args)
+    rows = seat_rows(args.repo, current, args.seat)
+    print(json.dumps({
+        "head": current.head,
+        "dispatch": [r["seat"] for r in rows if r["status"] in ("stale", "no-report")],
+        "seats": {r["seat"]: {"status": r["status"], "reason": r["reason"]} for r in rows},
+    }, indent=1))
+    return 0
+
+
+def cmd_gate(args: argparse.Namespace) -> int:
+    current = current_inputs(args)
+    seats = list(dict.fromkeys(args.seat + (["red-team"] if args.risk == "high" else [])))
+    rows = seat_rows(args.repo, current, seats)
+    ok = True
+    print(f"REVIEW-EVIDENCE: base {current.base} head {current.head} "
+          f"patch-id {current.patch_id} criteria-hash {current.criteria_hash} "
+          f"policy-version {current.policy_version}")
+    for r in rows:
+        where = f" {r['path'].relative_to(args.repo)}" if r["path"] else ""
+        verdict = f" ({r['header']['verdict']})" if r["header"] else ""
+        print(f"seat {r['seat']}: {r['status']}{verdict} - {r['reason']}{where}")
+        ok &= r["status"] in ("ran", "reused")
+    if args.risk == "high":
+        other = [r for r in rows if r["status"] in ("ran", "reused")
+                 and r["header"].get("family") not in (None, "", "unknown", args.producer_family)]
+        if args.producer_family and other:
+            r = other[0]
+            how = "" if r["status"] == "ran" else f", inherited from {r['header']['head'][:12]}"
+            print(f"independent: {r['header']['family']} seat {r['seat']}{how}")
+        else:
+            print("independence: missing other-family seat at the high row")
+            ok = False
+    ticket = args.ticket.read_text() if args.ticket else None
+    changes = [tuple(line.split("\t", 1)) for line in git(
+        args.repo, "diff", "--name-status", "--no-renames", current.base, current.head
+    ).splitlines() if line]
+    floor = risk_floor(changes, ticket)
+    print(f"risk: {args.risk or 'unstated'} / floor: {floor['floor']} "
+          f"(paths: {floor['paths']}, ticket: {floor['ticket']})")
+    if args.risk and ROWS.index(args.risk) < ROWS.index(floor["floor"]):
+        print("risk: plan row is below the floor")
+        ok = False
+    return 0 if ok else 1
+
+
+FORGE_QUERY = """query($owner:String!,$name:String!,$pr:Int!){repository(owner:$owner,name:$name){
+pullRequest(number:$pr){
+reviews(first:100){nodes{__typename author{login ... on User{id} ... on Bot{id}}
+ lastEditedAt state commit{oid}}}
+comments(first:100){nodes{__typename author{login ... on User{id} ... on Bot{id}}
+ lastEditedAt}}}}}"""
+
+
+def cmd_forge(args: argparse.Namespace) -> int:
+    owner, name = args.forge_repo.split("/", 1)
+    out = subprocess.run(
+        ["gh", "api", "graphql", "--hostname", args.host, "-f", f"query={FORGE_QUERY}",
+         "-F", f"owner={owner}", "-F", f"name={name}", "-F", f"pr={args.pr}"],
+        capture_output=True, text=True, timeout=60)
+    if out.returncode != 0:
+        print(f"forge: read failed, evidence invalid: {out.stderr.strip()}")
+        return 1
+    rows = classify_forge(json.loads(out.stdout), args.host)
+    for r in rows:
+        extra = f" {r['state']} at {r['commit'][:12]}" if r["commit"] else ""
+        why = f" ({r['reason']})" if r["reason"] else ""
+        print(f"{r['status']} {r['login']} {r['object_type']}{extra}{why}")
+    return 1 if any(r["status"] == "rejected" for r in rows) else 0
+
+
+def cmd_risk_floor(args: argparse.Namespace) -> int:
+    current = current_inputs(args)
+    changes = [tuple(line.split("\t", 1)) for line in git(
+        args.repo, "diff", "--name-status", "--no-renames", current.base, current.head
+    ).splitlines() if line]
+    print(json.dumps(risk_floor(changes, args.ticket.read_text() if args.ticket else None)))
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = parser.add_subparsers(dest="cmd", required=True)
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--repo", type=Path, default=Path.cwd())
+    common.add_argument("--base", default="origin/main", help="base ref; the merge base is used")
+    common.add_argument("--head", default="HEAD")
+    common.add_argument("--ticket", type=Path, help="ticket file whose exit criteria are hashed")
+    common.add_argument("--policy-root", type=Path, default=HARNESS_ROOT,
+                        help="harness checkout whose review policy is hashed")
+    sub.add_parser("identity", parents=[common]).set_defaults(fn=cmd_identity)
+    rec = sub.add_parser("record", parents=[common], help="write a report read from stdin")
+    rec.add_argument("--seat", required=True)
+    rec.add_argument("--kind", choices=KINDS, default="review")
+    rec.add_argument("--verdict", choices=VERDICTS, required=True)
+    rec.add_argument("--family", default="unknown")
+    rec.add_argument("--worker", default="unknown")
+    rec.set_defaults(fn=cmd_record)
+    for name, fn in (("plan", cmd_plan), ("gate", cmd_gate)):
+        p = sub.add_parser(name, parents=[common])
+        p.add_argument("--seat", action="append", default=[], required=True)
+        p.set_defaults(fn=fn)
+        if name == "gate":
+            p.add_argument("--risk", choices=ROWS)
+            p.add_argument("--producer-family")
+    fg = sub.add_parser("forge", help="admit forge-read reviews by pinned actor")
+    fg.add_argument("forge_repo", help="owner/name")
+    fg.add_argument("pr", type=int)
+    fg.add_argument("--host", default="github.com")
+    fg.set_defaults(fn=cmd_forge)
+    sub.add_parser("risk-floor", parents=[common]).set_defaults(fn=cmd_risk_floor)
+    args = parser.parse_args()
+    try:
+        return args.fn(args)
+    except (subprocess.CalledProcessError, OSError, ValueError) as exc:
+        print(f"review-evidence: {exc}", file=sys.stderr)
+        return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())
