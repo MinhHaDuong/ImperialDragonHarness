@@ -23,7 +23,7 @@
 | `/molt` | Repo housekeeping that acts: git sync, yawn, fix-now repairs, tickets for findings. Safe interactively or in automated sweeps. Not for a plain check (/yawn). |
 | `/perch` | Mid-session orientation: summarize what's done, surface unresolved points, assess clear-readiness. Not for end-of-day (/lair) or post-merge (/roar) wrap-up. |
 | `/release` | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |
-| `/roar` | Post-task wrap-up after a merge: reflect, capture significant facts, update state, clean task branches. Not for consolidating (/hoard), auditing memory (/memory-sweep) or ending the day (/lair). |
+| `/roar` | Post-task wrap-up after a merge: reflect, capture significant facts, update state, clean task branches. Not for consolidating or auditing memory (/hoard) or ending the day (/lair). |
 | `/yawn` | Repo healthcheck, reports first, fixes on request: git hygiene, test status, doc freshness; degrades without project conventions. Not for unprompted fixes (/molt). |
 
 ### Memory and learning
@@ -32,8 +32,7 @@
 |---------|-------------|
 | `/brood` | Turn accepted Hoard findings into project improvements and scoped harness nominations, on explicit request. |
 | `/coaching` | Replay the frozen, already merged PR benchmark board through a contained reviewer seat and report read-only ground-truth diagnostics. |
-| `/hoard` | Consolidate one project's repository memory without proposing rules. Use to tidy accumulated memory; not for new facts (/roar) or staleness audits (/memory-sweep). |
-| `/memory-sweep` | Review a project's repository memory for stale or contradicted claims. Use when memory may have drifted; not for consolidating (/hoard) or new facts (/roar). |
+| `/hoard` | Consolidate one project's repository memory, pruning stale or contradicted claims, without proposing rules. Use to tidy accumulated memory; not for new facts (/roar). |
 | `/trace-doctor` | Monthly survey of Claude Code session-trace economics: cost census, hypothesis statistics, ranked cost-saving report cross-referenced to tickets. Never auto-applies; files tickets for findings. |
 
 ### Runtime and review support
