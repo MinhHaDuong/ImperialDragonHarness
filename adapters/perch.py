@@ -242,15 +242,17 @@ def _is_dangling_link(target: Path, skill: str) -> bool:
 
 
 def _points_into_harness_skills(link: Path) -> bool:
-    """Does this link's text name a ``.agents/skills/`` directory?
+    """Does this link's text end in ``.agents/skills/<link name>``?
 
     ``_is_dangling_link`` only checks the ``skills/<name>`` tail, which a
     foreign checkout (``~/code/arena/skills/arena``) shares. Pruning without
-    a skill name needs the stricter test: the target sits under the harness's
-    own ``.agents/skills``, wherever that checkout was.
+    a skill name needs the stricter test: the target is the harness's own
+    ``.agents/skills/<name>``, wherever that checkout was. Matching the tail
+    rather than any substring keeps ``.agents/skills/x/sub`` or a link whose
+    name differs from its target out of the sweep.
     """
     parts = Path(os.path.normpath(os.readlink(link))).parts
-    return any(a == ".agents" and b == "skills" for a, b in zip(parts, parts[1:]))
+    return parts[-3:] == (".agents", "skills", link.name)
 
 
 def prune_dangling(harness: str) -> list[str]:
@@ -258,17 +260,26 @@ def prune_dangling(harness: str) -> list[str]:
 
     ``uninstall`` cannot name a skill that left the repo, so removed or
     renamed skills would otherwise leave their links behind for good.
-    Foreign dangling links and live links are left alone.
+    Foreign dangling links and live links are left alone. A link that cannot
+    be removed (a read-only root) does not stop the sweep: the rest are
+    pruned, then one Refusal reports what went and what stayed.
     """
     root = target_path(harness, "x").parent
     if not root.is_dir():
         return []
     messages = []
+    failures = []
     for entry in sorted(root.iterdir()):
         if entry.is_symlink() and not entry.exists() and _points_into_harness_skills(entry):
             was = os.readlink(entry)
-            _unlink(entry)
+            try:
+                _unlink(entry)
+            except OSError as exc:
+                failures.append(f"{harness}: could not prune dangling link {entry}: {exc}")
+                continue
             messages.append(f"{harness}: pruned dangling link {entry} -> {was}")
+    if failures:
+        raise Refusal("\n".join(messages + failures))
     return messages
 
 
