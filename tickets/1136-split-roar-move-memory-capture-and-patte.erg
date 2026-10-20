@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-20T06:54Z reviewer created
+2026-10-20T08:15Z reviewer note design revised 2026-10-20: capture and sweep become runbooks under skills/roar/runbooks/ (author rule: only user-facing skills are skills; internals are scripts > runbooks > reference); no new skills, no census change
 
 --- body ---
 ## Context
@@ -13,7 +14,7 @@ Child of 1131 (oversized skills). `skills/roar/SKILL.md` is 27 KB and does at le
 ## Exit criteria
 - [ ] Read-only proposal first: the boundary (what stays in `roar`, what moves, the new skill names) with a size estimate per skill; the author confirms before the move
 - [ ] `roar` keeps the post-task close-and-clean path: pre-check, close, close-claim check, tracking-ticket check, exit worktree, own-task cleanup, report
-- [ ] Memory capture and the similar-pattern sweep live outside `roar`, each with a description saying when to use it and which neighbour to use instead
+- [ ] Memory capture and the similar-pattern sweep live outside roar's SKILL.md as runbooks, each with a one-line when-to-use header, and roar's steps point at them
 - [ ] Callers of `roar` (raid, hunt, merge, lair, tests) still reach what they relied on; grep proves it
 - [ ] `make skills-catalog` run; `make check-skills-drift` clean
 - [ ] No retirement of any skill; `roar` shrinks by more than half
