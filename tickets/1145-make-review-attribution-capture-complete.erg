@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Make review attribution capture complete: recover seat identity from transcripts, record it at verdict time
+Created: 2026-10-20
+Author: reviewer
+
+--- log ---
+2026-10-20T10:38Z reviewer created
+
+--- body ---
+## Context
+Author, 2026-10-20: "I am tired of gaps." Review-attribution records (`runbooks/capture.md`, contract `docs/2026-10-02-reviewer-attribution-design.md` § 4) could not be written for seven merged PRs in one session: #1487, #1492, #1495, #1496, #1500, #1503, #1505. Every record needs the writer's provider-qualified model id and effort, and one reviewer line per attempt with its verbatim model id, effort and status. Roar reads these from the review trail, and the trail does not hold them.
+
+## Observed (cause of each gap, not yet one root cause)
+- The gate verdict comments name seats and give an alias at best ("same family (sonnet)"); the contract forbids rebuilding a verbatim id from an alias.
+- Seat reports live under `.panel/` in review worktrees that `/gaze` removes when it ends, so the detail is gone before roar runs.
+- The orchestrating session knows the `model` parameter it passed (`sonnet`, `fable`) and never sees an effort level; the runtime states neither in the task notification.
+- Some `/gaze` runs read the diff inline and launch no seats, so there is no reviewer attempt to name (the contract needs a `skipped` line, which the comments do not carry).
+
+## Positive evidence that the data exists (probe on padme, 2026-10-20)
+Subagent transcripts under `~/.claude/projects/<project>/<session>/subagents/agent-<id>.jsonl` (the `tasks/<id>.output` links) carry `"model":"claude-fable-5-1"` with `"effort":"low"` for the independent read of #1503, and for a `/gaze` run that spawned seats: `claude-opus-5-5` and `claude-sonnet-5-5` with `"effort":"medium"`, mixed with bare aliases `sonnet` and `haiku` (launch parameters, not resolved ids). A second probed run printed no model field at all; whether that is a missing transcript, another format or another retention is not established. Retention of the transcripts is unknown. A zero in this probe supports only the tested scope.
+
+## Options (priced; the author picks)
+1. Roar-time recovery script: `scripts/attribution_from_transcripts.py` reads the session's subagent transcripts, maps each run to a PR (launch description, the `/gaze <N>` prompt, the ruled tip sha in the verdict comment) and prints the identity facts the record needs, marking anything it cannot establish as a visible gap with the reason (transcript absent, unmapped run). About 2 agent-h; independent of every other ticket. Probability it closes most gaps: high for runs whose transcript exists; weak for the mapping.
+2. Write-time ledger: the controller that launches seats (gaze, verify-gate) appends a machine-readable seat table to its verdict comment at the moment each seat finishes: role, runtime, verbatim model id and effort read from that seat's own transcript, status ran/failed/skipped, ruled tip, report hash, findings as path:line. Retention then no longer depends on transcripts. About 3 agent-h; overlaps the seat table and report hashes already in the scope of ticket 1142 and the controller-written artifacts of ticket 1143, so fold the fields into their exit criteria instead of building a second mechanism.
+3. Writer side: when the orchestrator closes an executor, it reads the executor's transcript for model and effort and adds an `Authored-by:` line to the PR body (commit trailers carry only a display name today). About 1 agent-h.
+Recommended by the orchestrator: 1 now (it works on today's evidence), 2 folded into 1142/1143, 3 with 1. Ask the author to confirm; price is agent-hours only.
+
+## Exit criteria
+- [ ] The probe is repeated with a positive control: a known `/gaze` run whose seats and models are listed independently, and the recovery reproduces them exactly
+- [ ] A run on this session's seven PRs (transcripts permitting) either produces complete, validated records through `scripts/attribution_record.py --capture` or names each remaining gap with its reason
+- [ ] Roar's capture runbook says to run the recovery first; an unavoidable gap is reported with the missing fact and the reason, never silently omitted
+- [ ] Seat reports are no longer lost with the review worktree (stored with the verdict, or the ledger carries their hashes and findings)
+- [ ] The seat-table fields are added to the exit criteria of 1142 and 1143; no duplicate mechanism is built
+- [ ] Retention of subagent transcripts is established (how long they live, what prunes them), and the answer is recorded here
+- [ ] Skipped and inline-only `/gaze` runs are recorded as `skipped` attempts, not omitted
