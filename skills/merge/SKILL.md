@@ -52,7 +52,14 @@ The script reads close intent from the PR **body** only — never the title:
   `Ticket: none`); a line the grammar cannot read is not a claim. Only a
   malformed `Ticket: tickets/...` path errors.
 - Ticket lines inside Markdown code fences are examples and are ignored.
-  Ticket paths outside fences that cannot be parsed cause an error.
+  A fence closes only on a run of the opener's character (backtick or tilde)
+  at least as long as the opener, so a `~~~` line inside a backtick fence
+  stays fenced. Ticket paths outside fences that cannot be parsed cause an
+  error.
+- An **unclosed** fence whose remaining text holds a `Ticket:` or
+  `Ticket-ref:` line with a `tickets/` path or a short ID refuses the merge
+  and names the line: the claim would otherwise be silently dropped or read
+  from fenced text. Close the fence and re-run.
 - Title prefixes like `chore(0216):` are subject references — they **never**
   close anything.
 

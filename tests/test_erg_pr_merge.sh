@@ -1428,6 +1428,12 @@ elif [[ "$out34" == *'unclosed fence'* && "$out34" == *'0324'* ]] && ! closed_ha
     echo "PASS: an unclosed fence hiding a Ticket line refuses the merge and names the line"
 else echo "FAIL: unclosed fence refusal missing or ticket touched"; echo "$out34"; fail=1; fi
 
+seed_repo unclosedprose 0326
+if out34=$(run_merge $'**Ticket:** tickets/0326-fixture.erg\n\n```text\nTicket sales increased\nticket_count: 3\nTicket: none\n' 'ticket(0326): prose' 2>&1) \
+   && closed_has 0326; then
+    echo "PASS: ticket-like prose in an unclosed fence is not claim-shaped and does not refuse"
+else echo "FAIL: ticket-like prose in an unclosed fence refused the merge"; echo "$out34"; fail=1; fi
+
 seed_repo unclosedtail 0325
 if out34=$(run_merge $'**Ticket:** tickets/0325-fixture.erg\n\n```attribution\nkind: review-attribution\n' 'ticket(0325): tail' 2>&1) \
    && closed_has 0325; then

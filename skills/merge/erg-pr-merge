@@ -212,9 +212,12 @@ live_lines() { fence_map | sed -n 's/^L\t//p'; }
 # it swallow the rest of the body, which silently drops a real claim written
 # after it; ignoring it would honour fenced text as a live claim. Neither is
 # safe, so when its tail holds a claim-shaped line, refuse before any write and
-# let the author close the fence. A tail without one follows CommonMark.
+# let the author close the fence. Claim-shaped means what the readers below
+# would act on: a `tickets/` path or a lone 4-digit short ID after `Ticket:` or
+# `Ticket-ref:` — prose such as `Ticket sales rose` or `Ticket: none` is not.
+# A tail without one follows CommonMark.
 UNCLOSED_CLAIMS=$(printf '%s\n' "$BODY" | fence_map | sed -n 's/^U\t//p' \
-    | grep -iP '^\*{0,2}ticket(-ref)?:?\*{0,2}:?\s*\S' || true)
+    | grep -iP '^\*{0,2}ticket(-ref)?:?\*{0,2}:?\s*(tickets/|[0-9]{4}(?=\s*$))' || true)
 if [[ -n "$UNCLOSED_CLAIMS" ]]; then
     die "unclosed fence in PR #${PR} body hides claim-shaped line(s): $(printf '%s' "$UNCLOSED_CLAIMS" | tr '\n' ' ')— close the fence (same character, at least as long as the opener) and retry"
 fi

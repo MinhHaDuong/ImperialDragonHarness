@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-20T14:34Z reviewer created
 2026-10-20T16:00Z coder shared fence_map tracker; unclosed fence with a claim-shaped tail refuses the merge
+2026-10-20T16:40Z coder criterion 2 left open: refusal replaces "yields the claim", pending author sign-off (PR #1518 review)
 
 --- body ---
 ## Context
@@ -13,8 +14,8 @@ Found by the cross-family seat in /gaze of PR 1517 (ticket 1149 part A), ruled O
 
 ## Exit criteria
 - [x] The three toggles share one CommonMark-style fence tracker: a closing fence must use the same character as the opener and be at least as long; an unclosed fence runs to the end of the body
-- [x] Positive controls in tests/test_erg_pr_merge.sh: an unclosed attribution fence before a real Ticket line still yields the claim; a `~~~` line inside a backtick fence does not turn a fenced Ticket line into a live claim; each fails on current main
+- [ ] Positive controls in tests/test_erg_pr_merge.sh: an unclosed attribution fence before a real Ticket line still yields the claim; a `~~~` line inside a backtick fence does not turn a fenced Ticket line into a live claim; each fails on current main
 - [x] The fence tests of ticket 1149 still pass
 
 ## Resolution note
-The two criteria conflict for an unclosed fence: CommonMark swallows the tail, which drops the later real claim; ignoring the fence honours fenced text. The fail-safe chosen: an unclosed fence whose tail holds a claim-shaped `Ticket:`/`Ticket-ref:` line refuses the merge before any write, naming the line, so the claim is never lost silently and never honoured from fenced text. A tail with no claim-shaped line follows CommonMark.
+The two criteria conflict for an unclosed fence: CommonMark swallows the tail, which drops the later real claim; ignoring the fence honours fenced text. The fail-safe chosen: an unclosed fence whose tail holds a claim-shaped `Ticket:`/`Ticket-ref:` line refuses the merge before any write, naming the line, so the claim is never lost silently and never honoured from fenced text. A tail with no claim-shaped line follows CommonMark. Criterion 2 stays unticked: its "still yields the claim" wording needs the author's amendment or sign-off for the refusal.
