@@ -1,0 +1,19 @@
+%erg 0.1
+Title: 1146 child A: inventory of where model, effort and step identity is lost
+Created: 2026-10-20
+Author: reviewer
+Closed: autoclosed — PR #1516
+
+--- log ---
+2026-10-20T13:17Z reviewer created
+2026-10-20T13:38Z reviewer inventory written: docs/2026-10-20-attribution-identity-inventory.md (table, PR 1466 positive control, overlap with 1142/1143/1145)
+2026-10-20T13:45Z reviewer closed — autoclosed — PR #1516
+
+--- body ---
+## Context
+Child A of tracker 1146 (exit criterion 1). Imagine pass (2026-10-20) already located the main loss point: identity is captured after the merge by /roar from evidence that has decayed (`.panel/` reports vanish with the review worktree; the schema has one `writer:` line and rejects `effort` on reviewer lines). Roughly 1 agent-h, documents only, about 2 files.
+
+## Exit criteria
+- [x] A document table, one row per step (plan, execute, each review seat, gate, roar): what identity (model, effort, route, independence basis) the runtime exposes, where, and where it is lost today; unstated effort recorded as "not stated", never guessed
+- [x] Positive control: the table reproduces the known PR 1466 facts (root Codex writer id and effort unavailable; external CLI seats expose the model, effort only as the requested flag)
+- [x] Overlap with the transcript-recovery and seat-table work (ticket 1142 seat table, the 1145-era steers) named, one owner per job

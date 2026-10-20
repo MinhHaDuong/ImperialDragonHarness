@@ -2,10 +2,10 @@
 Title: 1146 child B: per-PR attribution block in the PR body and a /merge warning
 Created: 2026-10-20
 Author: reviewer
-Blocked-by: 1148
 
 --- log ---
 2026-10-20T13:17Z reviewer created
+2026-10-20T13:45Z reviewer note blocker 1148 closed — Blocked-by removed.
 
 --- body ---
 ## Context
