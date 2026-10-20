@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-20T08:22Z reviewer created
 2026-10-20T10:42Z reviewer coder sweep 2026-10-20 (git grep over primary checkouts; positive control .agents: padme 708 hits/223 files, doudou 693/216). Hosts padme and doudou both reachable. Live-wording PRs (MinhHaDuong repos): maiba#58, aedist-technical-report#1179, climate-finance-het#1977, livre-milliards-climat#3, search-works-for-zotero#637, Tracing-Kieu#174. History-only hits left as written (journals, closed tickets, dated reviews, data): JETP-observer, cadens, sen-causal-reading, padme, git-erg, polycentric_activity, climate-finance-het agentic-paper.qmd. Zero hits: zoteus, Strata, llm_benchmarks, fuzzy-corpus, archiveCIRED, others. Open: arena has no remote, runner.py:166 prompt names /review-pr panels (benchmark prompt, author call); hermes-agent (NousResearch) skipped as third-party. PRs not merged; criteria 3 open.
+2026-10-20T19:22Z reviewer note Author-approved drops (2026-10-20, Fable advice): livre-milliards-climat#3 stays closed (repo has no PR flow; wording is historically true until a no-PR review path exists); arena runner.py prompt left as is (benchmark prompt, no remote). Criterion 3 satisfied for those two; aedist#1179 and the doudou re-probe remain.
 
 --- body ---
 ## Context

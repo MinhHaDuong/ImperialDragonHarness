@@ -1,0 +1,18 @@
+%erg 0.1
+Title: Forward-path attribution: gaze result and review record list every seat (route, family, status)
+Created: 2026-10-20
+Author: reviewer
+
+--- log ---
+2026-10-20T19:22Z reviewer created
+
+--- body ---
+## Context
+Successor of ticket 1145 (closed as superseded, 2026-10-20). Author decision of 2026-10-20 (1146): transcript recovery stays out. PR #1528 merged with a capture failure: the /gaze verdict named "agents=6, same model family" and no seats, so no reviewer lines could be written. Advice (Fable, 2026-10-20): the forward path is the write-time ledger that PR #1521 (ticket 1142) already introduces, `scripts/review_evidence.py` records under `tickets/reviews/<base>..<head>/`. Verbatim model ids stay `model-state=runtime-masked` unless the runtime states them.
+
+## Exit criteria
+- [ ] The review record written at verdict time carries, per seat: role, route alias, family, status `ran|reused|failed|skipped`, ruled tip, report hash and findings as path:line
+- [ ] Gaze's result block lists every seat (including skipped and inline-only runs as `skipped`), so roar can write reviewer lines without recovery
+- [ ] Seat reports no longer vanish with the review worktree (stored with the record, or hashes and findings carried by it)
+- [ ] Positive control: a known /gaze run whose seats are listed independently is reproduced exactly by the record
+- [ ] Blocked by #1521 and the 1153 stack (#1522-#1524) landing; coordinate with ticket 1154
