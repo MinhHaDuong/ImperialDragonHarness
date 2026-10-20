@@ -47,7 +47,7 @@ larger than the evidence, the contribution type named.
 
 Length over budget: `/cut-prose`. Citations: only those that carry the
 argument, in the venue's style; a new reference goes through
-`/related-work-note`, then `/bib-merge`.
+`/related-work-note`, then `runbooks/bib-merge.md`.
 
 ## 3. Review before sending
 

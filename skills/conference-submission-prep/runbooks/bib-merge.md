@@ -1,18 +1,8 @@
----
-metadata:
-  category: research
-name: bib-merge
-description: "Merge approved Bibliography entries from a related-work-note into the project's refs.bib. Dedupes, flags conflicts, appends new entries. Never rewrites existing entries."
-disable-model-invocation: false
-user-invocable: true
-argument-hint: "<note-file-path> [<refs-bib-path>] [--dry-run]"
----
-
-# Bibliography merge
+# Bibliography merge (runbook)
 
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
-Merge the ```bibtex fence from a `related-work-note`'s Bibliography
+The work is the script `$IDH_ROOT/scripts/bib-merge.py`; this runbook holds its constraints. Merge the ```bibtex fence from a `related-work-note`'s Bibliography
 section into a local `refs.bib`. Dedupe against existing entries,
 flag conflicts, append new ones, report everything.
 

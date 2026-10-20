@@ -1,14 +1,4 @@
----
-metadata:
-  category: research
-name: related-work-note-validate
-description: "Re-resolve every DOI/URL/eprint in a related-work-note's Bibliography. Append a provenance line to Methods. One-line verdict to stdout (PASS / WARN / FAIL)."
-disable-model-invocation: false
-user-invocable: true
-argument-hint: "<note-file-path>"
----
-
-# Related-work-note validator
+# Related-work-note validator (runbook)
 
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 

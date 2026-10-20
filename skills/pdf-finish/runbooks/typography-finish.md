@@ -1,16 +1,6 @@
----
-metadata:
-  category: writing
-name: typography-finish
-description: "Fine typography pass for a rendered text deliverable at finalization, after its wording is frozen. Handles French or English spacing by output format; never applies to drafts."
-disable-model-invocation: false
-user-invocable: true
-argument-hint: "<rendered-deliverable-path>"
----
+# Fine typography at finalization (runbook)
 
-# Fine typography at finalization
-
-Use this skill when the author asks for a typography pass or a rendered text
+Run this from `pdf-finish` finalization, or when the author asks for a typography pass or a rendered text
 deliverable is entering finalization. Check the language of the text, its markup
 and the actual renderer. Apply the pass to the deliverable or its final render
 source only after wording is frozen. Do not retrofit source notes or drafts.
