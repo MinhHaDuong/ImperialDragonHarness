@@ -723,6 +723,11 @@ breaker.
 
 ## Branch on verdict
 
+- **Attribution (ticket 1151).** After each review seat and the gate return,
+  the controller appends that seat's `reviewer: step=review|gate` line (with
+  its `finding:` lines) to the PR body through
+  `attribution_record.py --append-pr <pr> --append '<lines>'` (`$IDH_ROOT/scripts/`).
+  Seats never edit the body; a failed append is reported, not skipped.
 - **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence. End
   the skill. The caller merges.
 - **REROLL, round 1** → spawn a fix subagent that creates and locks its own worktree on the PR branch (`git worktree add <path> <PR_BRANCH>`, then `git worktree lock` as in hunt step 3) —

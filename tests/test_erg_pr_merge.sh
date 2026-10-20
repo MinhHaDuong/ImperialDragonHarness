@@ -169,7 +169,11 @@ case "$1 $2" in
   "api repos/{owner}/{repo}/pulls/$STUB_PR")
     # Short-claim normalization: PATCH stores the body, a GET reads it back.
     if [[ "$*" == *"PATCH"* ]]; then
-      jq -r '.body' > "$STUB_PATCH_FILE"; echo '{}'
+      jq -r '.body' > "$STUB_PATCH_FILE"; touch "$STUB_PATCH_FILE.done"; echo '{}'
+    elif [[ -n "${STUB_FRESH_BODY:-}" && ! -e "$STUB_PATCH_FILE.done" ]]; then
+      printf '%s\n' "$STUB_FRESH_BODY"   # body as edited on the forge since the snapshot
+    elif [[ ! -e "$STUB_PATCH_FILE.done" ]]; then
+      printf '%s\n' "$STUB_BODY"   # not yet rewritten: the forge still holds the original body
     else
       cat "$STUB_PATCH_FILE"
     fi ;;
@@ -263,6 +267,7 @@ ERG
 
 run_merge() {  # $1 body, $2 title, $3+ script args (default: 42)
     # cwd is $REPO unless RUN_MERGE_CWD overrides it (Case 29 runs from $WORK).
+    rm -f "${STUB_PATCH_FILE:-/dev/null}.done"   # each run starts with the body unrewritten
     ( cd "${RUN_MERGE_CWD:-$REPO}"
       (( $# >= 3 )) || set -- "$1" "$2" 42
       PATH="$STUBDIR:$PATH" \
@@ -1469,6 +1474,15 @@ if out34=$(run_merge $'**Ticket:** tickets/0325-fixture.erg\n\n```attribution\nk
    && closed_has 0325; then
     echo "PASS: an unclosed fence with no claim in its tail still merges the earlier claim"
 else echo "FAIL: an unclosed claim-free fence blocked the merge"; echo "$out34"; fail=1; fi
+
+seed_repo freshbody 0328
+: > "$PATCHF"; rm -f "$PATCHF.done"
+FRESH=$'**Ticket:** 0328\n\n```attribution\nkind: review-attribution\nwriter: appended-after-snapshot\n```\n'
+if out35=$(STUB_FRESH_BODY="$FRESH" STUB_PATCH_FILE="$PATCHF" run_merge $'**Ticket:** 0328\n' 'ticket(0328): fresh' 2>&1) \
+   && closed_has 0328 && grep -qx 'writer: appended-after-snapshot' "$PATCHF" \
+   && grep -qx '\*\*Ticket:\*\* tickets/0328-fixture.erg' "$PATCHF"; then
+    echo "PASS: the normalization PATCH re-fetches the body, so a line appended after the snapshot survives (1151)"
+else echo "FAIL: normalization PATCH wrote back a stale body"; echo "$out35"; cat "$PATCHF"; fail=1; fi
 
 if (( fail )); then exit 1; fi
 echo "PASS: erg-pr-merge closes ALL Ticket lines, single-ticket unchanged, dedup safe, strays unswept, sibling edits staged, --auto race handled, pending checks arm auto-merge (1082), denied inspections delegate without bypass (1117), drafts readied, cosmetic merge failures tolerated, local main synced once the merge lands, in_worktree() identity-tightened (incl. name-collision guard), close claim cross-checked against branch tip, output-rewrite-tolerant guards"

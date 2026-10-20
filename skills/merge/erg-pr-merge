@@ -244,20 +244,35 @@ fi
 # `chore(1075)` title never do.
 SHORT_IDS=$(printf '%s\n' "$BODY" | live_lines | grep -ioP '^\*{0,2}ticket:?\*{0,2}:?\s*\K[0-9]{4}(?=\s*$)' | sort -u || true)
 if [[ -n "$SHORT_IDS" ]]; then
-    NEW_BODY="$BODY"
-    for sid in $SHORT_IDS; do
-        shopt -s nullglob
-        hits=(tickets/"$sid"-*.erg tickets/closed/"$sid"-*.erg)
-        shopt -u nullglob
-        if (( ${#hits[@]} != 1 )); then
-            echo "erg-pr-merge: short claim 'Ticket: $sid' matches ${#hits[@]} ticket files — not normalized" >&2
-            continue
+    normalize_short() {  # $1 body -> body with each resolvable short claim made canonical
+        local nb="$1" sid hits
+        for sid in $SHORT_IDS; do
+            shopt -s nullglob
+            hits=(tickets/"$sid"-*.erg tickets/closed/"$sid"-*.erg)
+            shopt -u nullglob
+            if (( ${#hits[@]} != 1 )); then
+                echo "erg-pr-merge: short claim 'Ticket: $sid' matches ${#hits[@]} ticket files — not normalized" >&2
+                continue
+            fi
+            nb=$(printf '%s\n' "$nb" | fence_map | SID="$sid" CANON="${hits[0]}" perl -pe '
+                unless (s/^L\t//) { s/^[FU]\t//; next }
+                s{^(\*{0,2}ticket:?\*{0,2}:?\s*)$ENV{SID}(?=\s*$)}{$1$ENV{CANON}}i;
+            ')
+        done
+        printf '%s\n' "$nb"
+    }
+    NEW_BODY=$(normalize_short "$BODY")
+    if [[ "$NEW_BODY" != "$BODY" ]]; then
+        # Re-fetch right before the whole-body PATCH (ticket 1151): the raid orchestrator and
+        # /gaze append attribution lines to this body while the merge runs, and a PATCH built
+        # from the earlier snapshot would erase them. Normalize the fresh body instead.
+        FRESH=$(gh api "repos/{owner}/{repo}/pulls/${PR}" --jq '.body // ""') \
+            || die "could not re-fetch PR #${PR} body before the Ticket rewrite"  # harness-extension-point
+        if [[ "$FRESH" != "$BODY" ]]; then
+            BODY="$FRESH"
+            NEW_BODY=$(normalize_short "$BODY")
         fi
-        NEW_BODY=$(printf '%s\n' "$NEW_BODY" | fence_map | SID="$sid" CANON="${hits[0]}" perl -pe '
-            unless (s/^L\t//) { s/^[FU]\t//; next }
-            s{^(\*{0,2}ticket:?\*{0,2}:?\s*)$ENV{SID}(?=\s*$)}{$1$ENV{CANON}}i;
-        ')
-    done
+    fi
     if [[ "$NEW_BODY" != "$BODY" ]]; then
         echo "Normalizing short Ticket claim(s) in PR #${PR} body to canonical paths..."
         jq -n --arg body "$NEW_BODY" '{body:$body}' \

@@ -298,3 +298,134 @@ def test_lenient_mode_keeps_old_records_and_refuses_pending(reader):
 def test_canonical_template_is_not_strict_valid(reader):
     with pytest.raises(ValueError):
         reader.parse_record(RECORD, strict=True)
+
+
+# ── Writers append the block, roar extracts it (ticket 1151) ─────────────────
+PLAN = ("writer: step=plan · runtime=fixture · model=example/planner-v1 · effort=not-stated"
+        " · route=opus · independence=not-stated")
+EXECUTE = ("writer: step=execute · runtime=fixture · model=example/writer-v1 · effort=not-stated"
+           " · route=sonnet · independence=not-stated")
+REVIEW = ("reviewer: step=review · seat=correctness · runtime=fixture · model=example/reviewer-v1"
+          " · effort=not-stated · route=opus · independence=cross-family · status: ran")
+GATE = ("reviewer: step=gate · seat=gate · runtime=fixture · model=example/gate-v1"
+        " · effort=not-stated · route=opus · independence=same-family · status: ran")
+
+
+def run_append(body, line, *extra):
+    return subprocess.run([sys.executable, str(SCRIPT), "--append", line, *extra], input=body,
+                          text=True, capture_output=True, env=child_env())
+
+
+def test_append_creates_closed_plain_block_when_absent(reader):
+    result = run_append("Summary.\n", PLAN, "--pr", "1151", "--project", ".agents")
+    assert result.returncode == 0, result.stderr
+    lines = result.stdout.splitlines()
+    assert lines.count("```attribution") == 1 and lines.count("```") == 1
+    assert "kind: review-attribution" in lines
+    assert "pr: 1151 · merged pending · project: .agents" in lines
+    assert lines.index(PLAN) < lines.index("```")
+    assert result.stdout.startswith("Summary.\n")
+
+
+def test_append_without_block_needs_pr_and_project():
+    result = run_append("Summary.\n", PLAN)
+    assert result.returncode == 1 and "--pr" in result.stderr
+
+
+def test_append_into_existing_block_keeps_one_block_and_order(reader):
+    body = run_append("Summary.\n", PLAN, "--pr", "1151", "--project", ".agents").stdout
+    for line in (EXECUTE, REVIEW, GATE):
+        body = run_append(body, line).stdout
+    assert body.count("```attribution") == 1
+    record = reader.parse_pr_body(body)
+    assert [w["step"] for w in record["steps"]] == ["plan", "execute"]
+    assert [r["step"] for r in record["reviewers"]] == ["review", "gate"]
+    assert run_pr_body(body).stdout == "ok\n"
+
+
+def test_append_multiline_reviewer_with_finding(reader):
+    body = run_append("", PLAN, "--pr", "9", "--project", "p").stdout
+    body = run_append(body, EXECUTE).stdout
+    finding = "  finding: verifiable · scripts/example.py:12 · adopted: yes"
+    body = run_append(body, REVIEW + "\n" + finding).stdout
+    assert reader.parse_pr_body(body)["reviewers"][0]["findings"][0]["adopted"] is True
+
+
+def test_append_refuses_unclosed_or_duplicate_block(reader):
+    assert run_append(BLOCK_BODY.rsplit("```", 1)[0], GATE).returncode == 1
+    assert run_append(BLOCK_BODY + BLOCK_BODY, GATE).returncode == 1
+
+
+@pytest.mark.integration
+def test_extract_swaps_pending_for_merge_date_and_feeds_capture(reader):
+    result = subprocess.run([sys.executable, str(SCRIPT), "--extract", "--merged", "2026-10-21"],
+                            input=BLOCK_BODY, text=True, capture_output=True, env=child_env())
+    assert result.returncode == 0, result.stderr
+    assert "merged 2026-10-21" in result.stdout and "pending" not in result.stdout
+    assert result.stdout.startswith("kind: review-attribution\n")
+    assert reader.parse_record(result.stdout)["merged"] == "2026-10-21"
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("body,args", [
+    ("no block\n", ["--merged", "2026-10-21"]),
+    (BLOCK_BODY, ["--merged", "soon"]),
+    (BLOCK_BODY.replace("step=execute", "step=plan"), ["--merged", "2026-10-21"]),
+])
+def test_extract_fails_loud(body, args):
+    result = subprocess.run([sys.executable, str(SCRIPT), "--extract", *args], input=body,
+                            text=True, capture_output=True, env=child_env())
+    assert result.returncode == 1 and result.stdout == ""
+
+
+def gh_stub(tmp_path, drop):
+    """A gh whose PR body lives in a file; the first `drop` PATCHes are silently lost."""
+    store = tmp_path / "body"
+    store.write_text("Summary.\n")
+    stub = tmp_path / "bin" / "gh"
+    stub.parent.mkdir()
+    stub.write_text(f"""#!/usr/bin/env bash
+if [[ "$*" == *PATCH* ]]; then
+  echo patch >> {tmp_path}/patches
+  if (( $(wc -l < {tmp_path}/patches) <= {drop} )); then cat >/dev/null; echo '{{}}'; exit 0; fi
+  jq -r .body > {store}; echo '{{}}'
+else cat {store}; fi
+""")
+    stub.chmod(0o755)
+    return store, stub.parent
+
+
+def run_append_pr(bin_dir, line):
+    env = child_env() | {"PATH": f"{bin_dir}:{child_env()['PATH']}"}
+    return subprocess.run([sys.executable, str(SCRIPT), "--append-pr", "1151", "--append", line,
+                           "--project", ".agents"], text=True, capture_output=True, env=env)
+
+
+def test_append_pr_reads_back(tmp_path):
+    store, bin_dir = gh_stub(tmp_path, drop=0)
+    assert run_append_pr(bin_dir, PLAN).returncode == 0
+    assert PLAN in store.read_text()
+
+
+def test_append_pr_retries_once_when_write_is_lost(tmp_path):
+    store, bin_dir = gh_stub(tmp_path, drop=1)
+    result = run_append_pr(bin_dir, PLAN)
+    assert result.returncode == 0, result.stderr
+    assert PLAN in store.read_text()
+    assert (tmp_path / "patches").read_text().count("patch") == 2
+
+
+def test_append_pr_fails_loud_when_both_writes_are_lost(tmp_path):
+    store, bin_dir = gh_stub(tmp_path, drop=2)
+    result = run_append_pr(bin_dir, PLAN)
+    assert result.returncode == 1 and "lost" in result.stderr
+    assert (tmp_path / "patches").read_text().count("patch") == 2
+
+
+def test_skills_wire_the_helper_modes():
+    roar = (ROOT / "skills" / "roar" / "runbooks" / "capture.md").read_text()
+    assert "--extract" in roar and "gh pr view" in roar
+    raid = (ROOT / "skills" / "raid" / "SKILL.md").read_text()
+    assert "--append-pr" in raid
+    gaze = (ROOT / "skills" / "gaze" / "SKILL.md").read_text()
+    assert "--append-pr" in gaze

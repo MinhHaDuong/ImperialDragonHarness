@@ -176,6 +176,78 @@ def capture_record(text, record, repository, audience):
     return result.stdout.strip()
 
 
+OPEN = re.compile(r"```attribution\s*")
+CLOSE = re.compile(r"```\s*")
+
+
+def append_line(body, line, pr=None, project=None):
+    """Return the PR body with LINE (one or more lines) appended inside the attribution block.
+
+    The block is created, closed and at column 0, when the body has none; the same
+    fence shapes parse_pr_body reads, so writer and reader agree (ticket 1151).
+    """
+    line = line.strip("\n")
+    if not line.strip():
+        raise ValueError("nothing to append")
+    lines = body.splitlines()
+    opens = [i for i, text in enumerate(lines) if OPEN.fullmatch(text)]
+    if not opens:
+        if pr is None or not project:
+            raise ValueError("the body has no attribution block: --pr and --project are needed to create it")
+        header = ["```attribution", "kind: review-attribution", f"pr: {int(pr)} · merged pending · project: {project}"]
+        lead = [*lines, ""] if lines else []
+        return "\n".join([*lead, *header, line, "```"]) + "\n"
+    if len(opens) > 1:
+        raise ValueError(f"{len(opens)} attribution blocks; exactly one is allowed")
+    for i in range(opens[0] + 1, len(lines)):
+        if CLOSE.fullmatch(lines[i]):
+            return "\n".join([*lines[:i], line, *lines[i:]]) + "\n"
+    raise ValueError(f"attribution block opened at line {opens[0] + 1} is never closed")
+
+
+def extract_record(body, merged):
+    """Return the block as a lenient, capturable record with `pending` replaced by the merge date."""
+    datetime.date.fromisoformat(merged)
+    parse_pr_body(body)  # strict: exactly one closed block, every line well formed
+    inside, text = False, []
+    for line in body.splitlines():
+        if not inside:
+            inside = bool(OPEN.fullmatch(line))
+        elif CLOSE.fullmatch(line):
+            break
+        else:
+            text.append(line)
+    text = "\n".join(text) + "\n"
+    text = re.sub(r"^(pr: [1-9][0-9]* · merged )pending", rf"\g<1>{merged}", text, count=1, flags=re.M)
+    parse_record(text)  # what --capture will accept
+    return text
+
+
+def gh(*args, stdin=None):
+    result = subprocess.run(["gh", *args], input=stdin, text=True, capture_output=True)
+    if result.returncode:
+        raise ValueError(f"gh {args[0]} failed: {result.stderr.strip()}")
+    return result.stdout
+
+
+def append_to_pr(pr, line, project):
+    """Append to the live PR body, read back, and retry once if the line is missing.
+
+    The forge has no compare-and-swap: a concurrent whole-body PATCH can drop the line,
+    so every attempt re-fetches the body and the read-back is the only evidence.
+    """
+    wanted = line.strip("\n").splitlines()
+    for _ in range(2):
+        body = gh("pr", "view", str(pr), "--json", "body", "--jq", ".body // \"\"")
+        new = append_line(body, line, pr=pr, project=project)
+        gh("api", f"repos/{{owner}}/{{repo}}/pulls/{pr}", "-X", "PATCH", "--input", "-",
+           stdin=json.dumps({"body": new}))
+        seen = gh("api", f"repos/{{owner}}/{{repo}}/pulls/{pr}", "--jq", ".body // \"\"").splitlines()
+        if all(item in seen for item in wanted):
+            return
+    raise ValueError(f"PR #{pr} body lost the appended line twice; append it by hand")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("record", nargs="?", type=Path, help="record file; default stdin")
@@ -183,7 +255,32 @@ def main():
     parser.add_argument("--audience", choices=("public", "private"), help="explicit audience judgment for capture")
     parser.add_argument("--pr-body", action="store_true",
                         help="read a PR body from stdin; print ok, missing or invalid: <reason> (exit 0 only on ok)")
+    parser.add_argument("--append", metavar="LINE", help="read a PR body on stdin, print it with LINE added to the attribution block (created if absent)")
+    parser.add_argument("--append-pr", type=int, metavar="PR", help="with --append: edit the live PR body through gh, read back, retry once")
+    parser.add_argument("--pr", type=int, help="PR number for a block --append creates")
+    parser.add_argument("--project", help="project name for a block --append creates")
+    parser.add_argument("--extract", action="store_true",
+                        help="read a merged PR body on stdin, print its block as a record for --capture (needs --merged)")
+    parser.add_argument("--merged", metavar="DATE", help="merge date (YYYY-MM-DD) replacing pending in --extract")
     args = parser.parse_args()
+    if args.append is not None or args.extract:
+        if args.record or args.capture or args.audience or args.pr_body or (args.append is not None and args.extract):
+            parser.error("--append and --extract take no other mode")
+        try:
+            if args.extract:
+                if not args.merged:
+                    parser.error("--extract requires --merged DATE")
+                sys.stdout.write(extract_record(sys.stdin.read(), args.merged))
+            elif args.append_pr:
+                append_to_pr(args.append_pr, args.append, args.project)
+            else:
+                sys.stdout.write(append_line(sys.stdin.read(), args.append, args.pr, args.project))
+        except ValueError as error:
+            LOG.error("attribution-record: %s", error)
+            return 1
+        return 0
+    if args.append_pr or args.merged:
+        parser.error("--append-pr needs --append; --merged needs --extract")
     if args.pr_body:
         if args.record or args.capture or args.audience:
             parser.error("--pr-body reads stdin and takes no other mode")
