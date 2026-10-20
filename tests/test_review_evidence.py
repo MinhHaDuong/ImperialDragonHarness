@@ -437,3 +437,18 @@ def test_trailing_whitespace_on_the_final_diff_line_changes_identity(repo, polic
     commit(repo, "app.py", "def f():\n    return 1 \n", "trailing space on the last line")
     gate = run_gate(repo, policy, "--seat", "correctness")
     assert gate.returncode != 0 and "stale" in gate.stdout
+
+
+@pytest.mark.integration
+def test_reports_are_read_from_the_head_commit_not_the_working_tree(repo, policy):
+    """An uncommitted report, or a committed symlink to one, proves nothing."""
+    report = record_seat(repo, policy, "correctness")
+    assert "seat correctness: no-report" in run_gate(repo, policy, "--seat", "correctness").stdout
+    outside = repo / "outside.md"
+    outside.write_text(report.read_text().replace("seat: correctness", "seat: red-team"))
+    link = report.parent / "red-team-1.md"
+    link.symlink_to("../../../outside.md")
+    git(repo, "add", str(link.relative_to(repo)))
+    git(repo, "commit", "-q", "-m", "symlinked report")
+    out = run_gate(repo, policy, "--seat", "red-team")
+    assert "seat red-team: no-report" in out.stdout

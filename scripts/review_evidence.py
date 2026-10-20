@@ -267,12 +267,28 @@ def current_inputs(args: argparse.Namespace) -> Inputs:
                   policy_version(args.policy_root))
 
 
-def load_reports(repo: Path) -> list[tuple[Path, dict]]:
+def load_reports(repo: Path, head: str) -> list[tuple[Path, dict]]:
+    """Reports committed at `head`: regular blobs `REVIEWS_DIR/<range>/<file>.md`.
+
+    The working tree is never read, so an untracked file, a symlink or an
+    executable cannot stand in for a recorded report.
+    """
+    raw = subprocess.run(["git", "-C", str(repo), "ls-tree", "-r", "-z", head, "--",
+                          f"{REVIEWS_DIR}/"], check=True, capture_output=True,
+                         timeout=60).stdout.decode()
     out = []
-    for path in sorted((repo / REVIEWS_DIR).glob("*/*.md")):
-        header = parse_report(path.read_text())
+    for entry in filter(None, raw.split("\0")):
+        meta, path = entry.split("\t", 1)
+        mode, kind, oid = meta.split()
+        parts = path.split("/")
+        if (mode != "100644" or kind != "blob" or len(parts) != 4
+                or not path.endswith(".md")):
+            continue
+        blob = subprocess.run(["git", "-C", str(repo), "cat-file", "blob", oid], check=True,
+                              capture_output=True, timeout=60).stdout
+        header = parse_report(blob.decode(errors="replace"))
         if header:
-            out.append((path, header))
+            out.append((Path(path), header))
     return out
 
 
@@ -288,7 +304,7 @@ def _rank(row: dict) -> tuple[int, int, int]:
 
 def seat_rows(repo: Path, current: Inputs, seats: list[str]) -> list[dict]:
     """Per required seat: ran | reused | stale | no-report, with the backing report."""
-    reports = load_reports(repo)
+    reports = load_reports(repo, current.head)
     rows = []
     for seat in seats:
         best = {"seat": seat, "status": "no-report", "reason": "no report", "path": None,
@@ -365,7 +381,7 @@ def cmd_gate(args: argparse.Namespace) -> int:
           f"patch-id {current.patch_id} criteria-hash {current.criteria_hash} "
           f"policy-version {current.policy_version}")
     for r in rows:
-        where = f" {r['path'].relative_to(args.repo)}" if r["path"] else ""
+        where = f" {r['path']}" if r["path"] else ""
         verdict = f" ({r['header']['verdict']})" if r["header"] else ""
         print(f"seat {r['seat']}: {r['status']}{verdict} - {r['reason']}{where}")
         ok &= r["status"] in ("ran", "reused")
