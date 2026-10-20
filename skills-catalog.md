@@ -58,7 +58,7 @@
 | `/reading-note` | Critical reading note (note de lecture) on one article or book, filed in Zotero. |
 | `/related-work-note` | Due-diligence note for one cited paragraph of a manuscript: relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL. |
 | `/related-work-note-validate` | Re-resolve every DOI/URL/eprint in a related-work-note's Bibliography. Append a provenance line to Methods. One-line verdict to stdout (PASS / WARN / FAIL). |
-| `/zotero` | Import PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, or report duplicate files: extract metadata, resolve identifiers, create items with PDFs through the running Zotero's local API. |
+| `/zotero` | Import PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, or report duplicate files via the local API. |
 
 ### Writing and presentation
 
@@ -79,6 +79,6 @@
 | `/aap-annonce` | Process a call-for-proposals announcement (AAP, appel à projets): file it, calendar deadlines, assess fit, propose three entry angles. |
 | `/choose-venue` | Choose where to submit a paper: shortlist journals, or conferences, by fit and diamond open access. |
 | `/conference-submission-prep` | Prepare a humanities and social sciences conference submission from its call for papers. Use once venue and message are set; not for those (/choose-venue, /message-framing). |
-| `/ingest-decision-letter` | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check mapping every remark to a ticket: one deterministic Revise-and-Resubmit intake pass. |
-| `/submission-event` | Classify a manuscript submission event (submitted, resubmitted, accepted, published) by its object's external register; propagate to the homepage publications list (works) or CNRS secretariat roadmap (work in progress), never both automatically. |
+| `/ingest-decision-letter` | Ingest a journal decision letter and reviewer comments into a remark ledger with a coverage check mapping every remark to a ticket: one Revise-and-Resubmit intake pass. |
+| `/submission-event` | Classify a manuscript submission event (submitted, resubmitted, accepted, published) and propagate it to the homepage publications list or the CNRS roadmap, never both. |
 | `/update-publist` | Add or update a publication on the personal page and deposit on HAL via SWORD. Gated on user payload review before any outward API call. |

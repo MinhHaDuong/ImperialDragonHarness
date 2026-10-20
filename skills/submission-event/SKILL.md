@@ -2,7 +2,7 @@
 metadata:
   category: publication
 name: submission-event
-description: "Classify a manuscript submission event (submitted, resubmitted, accepted, published) by its object's external register; propagate to the homepage publications list (works) or CNRS secretariat roadmap (work in progress), never both automatically."
+description: "Classify a manuscript submission event (submitted, resubmitted, accepted, published) and propagate it to the homepage publications list or the CNRS roadmap, never both."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<paper> <event: submitted|resubmitted|accepted|published>"
