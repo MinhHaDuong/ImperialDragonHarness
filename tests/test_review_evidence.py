@@ -111,8 +111,10 @@ DONE = {"hasNextPage": False, "endCursor": None}
 
 
 def forge_payload(reviews=(), comments=(), threads=(), more=None):
-    page = lambda nodes, key: {"nodes": list(nodes),
-                               "pageInfo": {"hasNextPage": more == key, "endCursor": "c"}}
+    def page(nodes, key):
+        return {"nodes": list(nodes),
+                "pageInfo": {"hasNextPage": more == key, "endCursor": "c"}}
+
     return {"data": {"repository": {"pullRequest": {
         "reviews": page(reviews, "reviews"), "comments": page(comments, "comments"),
         "reviewThreads": page(threads, "reviewThreads")}}}}
