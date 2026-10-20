@@ -3,6 +3,7 @@
 import importlib.util
 import json
 import re
+import sys
 import subprocess
 from pathlib import Path
 
@@ -223,3 +224,77 @@ def test_pr1211_preserves_all_original_attempts_and_draft(reader):
         line for line in normalized.splitlines() if line.startswith("  finding:")]
     assert "HOME-clobber incident" in text
     assert text.count("#pullrequestreview-") == 3
+
+
+# ── Per-PR attribution block (ticket 1149) ───────────────────────────────────
+BLOCK_BODY = """Summary.
+
+```attribution
+kind: review-attribution
+pr: 1149 · merged pending · project: .agents
+writer: step=plan · runtime=fixture · model=example/planner-v1 · effort=not-stated · route=opus · independence=not-stated
+writer: step=execute · runtime=fixture · model-state=runtime-masked · model-evidence=docs/evidence.md:3 · effort=not-stated · route=sonnet · independence=not-stated
+reviewer: step=review · seat=correctness · runtime=fixture · model=example/reviewer-v1 · effort=medium · route=opus · independence=cross-family · status: ran
+  finding: verifiable · scripts/example.py:12 · adopted: yes
+reviewer: step=gate · seat=gate · runtime=fixture · model=example/gate-v1 · effort=not-stated · route=opus · independence=same-family · status: ran
+```
+"""
+
+
+def run_pr_body(body):
+    return subprocess.run([sys.executable, str(SCRIPT), "--pr-body"], input=body, text=True,
+                          capture_output=True, env=child_env())
+
+
+def test_pr_body_block_parses_strict_with_steps_and_masked_writer(reader):
+    record = reader.parse_pr_body(BLOCK_BODY)
+    assert record["merged"] == "pending"
+    assert record["writer"]["step"] == "execute"
+    assert [w["step"] for w in record["steps"]] == ["plan", "execute"]
+    assert reader.runtime_masked(record)
+    assert [r["step"] for r in record["reviewers"]] == ["review", "gate"]
+    result = run_pr_body(BLOCK_BODY)
+    assert (result.returncode, result.stdout) == (0, "ok\n")
+
+
+def test_pr_body_without_block_is_missing_not_ok():
+    result = run_pr_body("Summary only.\n")
+    assert (result.returncode, result.stdout) == (1, "missing\n")
+
+
+@pytest.mark.parametrize("old,new", [
+    (" · effort=medium", ""),
+    (" · route=opus · independence=cross-family", " · independence=cross-family"),
+    (" · independence=same-family", ""),
+    ("step=review · ", ""),
+    ("independence=same-family", "independence=maybe"),
+    ("effort=medium", "effort=not stated"),
+    ("step=gate", "step=plan"),
+    ("step=execute", "step=plan"),
+    ("merged pending", "merged soon"),
+])
+def test_pr_body_strict_rejects_incomplete_lines(reader, old, new):
+    assert old in BLOCK_BODY
+    with pytest.raises(ValueError):
+        reader.parse_pr_body(BLOCK_BODY.replace(old, new))
+    assert run_pr_body(BLOCK_BODY.replace(old, new)).stdout.startswith("invalid: ")
+
+
+def test_pr_body_requires_exactly_one_closed_block(reader):
+    with pytest.raises(ValueError, match="2 attribution blocks"):
+        reader.parse_pr_body(BLOCK_BODY + BLOCK_BODY)
+    with pytest.raises(ValueError, match="never closed"):
+        reader.parse_pr_body(BLOCK_BODY.rsplit("```", 1)[0])
+
+
+def test_lenient_mode_keeps_old_records_and_refuses_pending(reader):
+    assert reader.parse_record(RECORD)["steps"] == [reader.parse_record(RECORD)["writer"]]
+    with pytest.raises(ValueError):
+        reader.parse_record(RECORD.replace("merged 2026-10-03", "merged pending"))
+    with pytest.raises(ValueError, match="distinct step"):
+        reader.parse_record(RECORD.replace("\nreviewer", "\nwriter: runtime=x · model=a/b · effort=low\nreviewer", 1))
+
+
+def test_canonical_template_is_not_strict_valid(reader):
+    with pytest.raises(ValueError):
+        reader.parse_record(RECORD, strict=True)

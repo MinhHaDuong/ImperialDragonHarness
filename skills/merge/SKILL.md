@@ -56,6 +56,16 @@ The script reads close intent from the PR **body** only — never the title:
 - Title prefixes like `chore(0216):` are subject references — they **never**
   close anything.
 
+## Attribution block warning
+
+The script also parses the PR body's single fenced `attribution` block
+(the attribution parser in `--pr-body` mode; design section 4) and prints
+`erg-pr-merge: warning: attribution block missing`, `... invalid: <reason>` or
+`... unchecked: <cause>` on stderr. It **never refuses** on this: a missing or
+invalid block costs the record, not the merge. `unchecked` means the parser
+could not run, which is not an all-clear. Surface the warning in your report
+and let the author decide whether to complete the block before merging.
+
 Report stdout/stderr verbatim. If the script exits non-zero, stop and show the error.
 
 A killed or failed `erg-pr-merge` run (non-zero exit after its rebase) can

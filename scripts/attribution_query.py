@@ -149,6 +149,8 @@ def game_attempts(record):
     identities = {}
     labels = set(record['defect_labels'])
     for attempt in record['reviewers']:
+        if attempt.get('step') == 'gate':
+            continue  # the gate verifies; it is not scored as a reviewer that found nothing
         key = identity_key(attempt, REVIEWER_FIELDS)
         entry = identities.setdefault(key, {'attempts': Counter(), 'anchors': set(), 'findings': []})
         entry['attempts'][attempt['status']] += 1

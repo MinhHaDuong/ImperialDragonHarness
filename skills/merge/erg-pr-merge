@@ -207,6 +207,22 @@ if [[ -n "$SHORT_IDS" ]]; then
     fi
 fi
 
+# Attribution block (ticket 1149): the PR body carries a fenced `attribution`
+# block recording who planned, wrote, reviewed and gated the change. Warn, never
+# refuse: a missing or invalid block costs the record, not the merge. "unchecked"
+# is its own wording so "could not look" never reads as an all-clear.
+ATTR_PARSER="$(cd "$(dirname "$0")" && pwd)/../../scripts/attribution_record.py"
+ATTR_STATE="unchecked: parser not found at $ATTR_PARSER"
+if [[ -f "$ATTR_PARSER" ]]; then
+    ATTR_OUT=$(printf '%s\n' "$BODY" | python3 "$ATTR_PARSER" --pr-body 2>/dev/null) && ATTR_RC=0 || ATTR_RC=$?
+    case "$ATTR_OUT" in
+        ok) ATTR_STATE="" ;;
+        missing|"invalid: "*) ATTR_STATE="$ATTR_OUT" ;;
+        *) ATTR_STATE="unchecked: parser exited $ATTR_RC without a verdict" ;;
+    esac
+fi
+[[ -z "$ATTR_STATE" ]] || echo "erg-pr-merge: warning: attribution block $ATTR_STATE" >&2
+
 # Accept both tickets/NNNN and tickets/closed/NNNN with the usual Ticket prefix.
 # A PR may bundle several tickets — collect ALL matching lines. `sort -u` is
 # load-bearing: a duplicated ID would re-close an already-archived ticket in
