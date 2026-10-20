@@ -9,6 +9,8 @@ argument-hint:
 
 # Perch — mid-session position check
 
+Neighbouring skills and when to prefer each: [session-lifecycle](../lair/references/session-lifecycle.md).
+
 Read-only report from conversation context. Run at any point to re-orient.
 
 ## Steps

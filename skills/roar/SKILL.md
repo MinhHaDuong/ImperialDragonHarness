@@ -9,6 +9,8 @@ user-invocable: true
 
 # Roar — post-task wrap-up
 
+Neighbouring skills and when to prefer each: [session-lifecycle](../lair/references/session-lifecycle.md).
+
 `[Execute → Reflect]`
 
 Run after the branch has been merged. Do not skip steps.
