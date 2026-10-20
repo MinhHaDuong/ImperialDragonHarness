@@ -8,6 +8,7 @@ Author: Claude
 2026-10-06T08:39Z Claude note The "created" time above was estimated, not read: it is later than the real creation (the PR merged before 08:39Z). Added the trust principle (no open door, traceability instead), the parallel and background-merge criteria, and where the local CI runs.
 2026-10-06T08:46Z Claude note Reframed traceability. The author meant tracing agents that get around the CI with git options, not who ran it. Added criteria for the credentials, a journal of updates to main, and a sweep of main; made the design runtime-neutral (git and the forge, no agent-runtime hook as its basis).
 2026-10-14T16:06Z reviewer note CI content review done (prerequisite), recorded as docs/2026-10-14-ci-content-review.md instead of a ticket at the author's request. Ruleset facts confirmed (7 required checks, no bypass; also non-strict); check-adapter-hooks retired 2026-10-05; make check lacks 7 CI jobs; CI lacks the skills-catalog drift check. Retirement candidates: skill-lint, grep-e-guard, status-verb-guard. No misfire found. Exit criterion 1 ticked.
+2026-10-20T19:23Z reviewer note Decisions 2026-10-20 recorded (defaults of Fable advice); split into children 1156, 1157, 1158 under the monster-ticket rule.
 
 --- body ---
 ## Context
@@ -124,3 +125,16 @@ review as its own ticket; this one is blocked on its outcome.
 - [ ] The ruleset change is made by the author, and the day the forge is down is
       rehearsed once (a PR merged with the forge's runners unavailable or
       unconsulted).
+
+## Decisions 2026-10-20 (author: "1045 default", on the Fable advice)
+1. The record is a git note on the candidate merge commit; dyne adapts later.
+2. Built in the harness first as a stand-in; git-erg 0272/0273 are not landed.
+3. The gate runs the 7 required checks minus skill-lint, grep-e-guard and status-verb-guard, plus the skills-catalog drift check.
+4. The forge ruleset keeps its required checks until the rehearsal criterion passes, then the author removes them. The ruleset change stays the author's act.
+5. The credentials agent sessions use lose ruleset-edit rights; a forge setting, so the author's act, not an agent's.
+
+## Children
+- 1156 child A: gate record and `/merge` refusal (exits: record, `/merge` refusal, background merge)
+- 1157 child B: main-update guard (exits: journal hook, refusal hook, sweep), blocked by 1156
+- 1158 child C: parallel local checks (exit: parallelism)
+- Left on this tracker: the author's two forge acts (credentials, ruleset change after the rehearsal) and the one-day forge-down rehearsal. The tracker closes after the integration review.

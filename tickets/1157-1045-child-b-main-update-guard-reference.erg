@@ -1,0 +1,19 @@
+%erg 0.1
+Title: 1045 child B: main-update guard (reference-transaction journal, refusal hook, periodic sweep)
+Created: 2026-10-20
+Author: reviewer
+Blocked-by: 1156
+
+--- log ---
+2026-10-20T19:23Z reviewer created
+
+--- body ---
+## Context
+Child B of tracker 1045. Blocked by child A (the hook refuses an update of `main` that carries no gate record). Trap known in advance: this repository sets `core.hooksPath=hooks`, so a hook placed in `.git/hooks` never runs; a client that overrides `core.hooksPath` defeats the hook, which is why the sweep exists. Only git and the forge's API; no agent-runtime hook is the basis.
+
+## Exit criteria
+- [ ] A `reference-transaction` hook journals every update of `main`: time, OS user, host, command lines of the process chain, git identity
+- [ ] The hook refuses an update of `main` that is not a gated merge, verified from a second worktree; its installation is verified under `core.hooksPath`
+- [ ] A periodic sweep checks that each commit that entered `main` is the merge of a PR whose required checks were green (or, once built, of a gate record) and reports any that is not
+- [ ] Nothing here requires a particular agent runtime
+- [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker, else split

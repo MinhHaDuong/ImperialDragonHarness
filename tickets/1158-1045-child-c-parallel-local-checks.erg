@@ -1,0 +1,16 @@
+%erg 0.1
+Title: 1045 child C: parallel local checks
+Created: 2026-10-20
+Author: reviewer
+
+--- log ---
+2026-10-20T19:23Z reviewer created
+
+--- body ---
+## Context
+Child C of tracker 1045, independent of children A and B. The local checks run their jobs in parallel. This host reports 24 threads and 12 cores (a 32-core upgrade is on order, not delivered). One infrastructure failure was seen when two runners shared the host; cause not established (a clash of container names is a hypothesis).
+
+## Exit criteria
+- [ ] Local checks run their jobs in parallel with concurrency `min(jobs, nproc / 2)`, each job in its own clone
+- [ ] The negative controls are re-run under parallelism before it is called safe, and the earlier infrastructure failure is reproduced or ruled out with evidence
+- [ ] PR under the 15-file breaker, else split
