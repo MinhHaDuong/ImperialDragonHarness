@@ -58,7 +58,7 @@ def test_verify_threads_worktree_path_to_subskills():
     branch the raid had left it) instead of /tmp/review-<pr>. The path must
     travel as an explicit argument.
     """
-    for name in ("/verify-adherence", "/review-pr", "/simplify", "/verify-gate"):
+    for name in ("/verify-adherence", "/review-pr", "/simplify"):
         invocation_lines = [
             line for line in VERIFY.splitlines() if name in line and "worktree=" in line
         ]
@@ -101,14 +101,6 @@ def test_erg_pr_merge_stages_no_blanket_tickets_dir():
 def _normalize(text: str) -> str:
     """Collapse runs of whitespace so newline-wrapped sentences match."""
     return re.sub(r"\s+", " ", text)
-
-
-def test_gaze_has_no_runtime_isolation_parameter():
-    """Ticket 1076: skills stay portable, so no Claude-only `isolation:`
-    parameter; the REROLL fix agent creates its own locked worktree."""
-    norm = _normalize(VERIFY)
-    assert 'isolation: "worktree"' not in norm
-    assert "creates and locks its own worktree" in norm
 
 
 def test_gaze_battery_not_run_names_cause():
@@ -186,7 +178,7 @@ def test_output_shape_lines_define_battery_not_run_value():
     assert block is not None, (
         "gaze/SKILL.md: output-shape actions block lost the panel integrity line"
     )
-    for name in ("adherence:", "review:", "review-pr:"):
+    for name in ("adherence:", "review-pr:"):
         lines = [ln for ln in block.splitlines() if ln.strip().startswith(name)]
         assert lines, f"gaze/SKILL.md: output-shape block lost the {name} line"
         assert "skipped (battery NOT-RUN)" in lines[0], (
@@ -194,112 +186,6 @@ def test_output_shape_lines_define_battery_not_run_value():
             "battery that could not launch — it must enumerate "
             "`skipped (battery NOT-RUN)`"
         )
-
-
-def test_gate_rechecks_size_breaker_at_verdict_time():
-    """V2 (round 1): `pr_files >= 15` was evaluated only at phase 1, before
-    re-entry — a round-2 fix can grow a 14-file PR past the breaker with the
-    gate never re-checking it. The embedded phase-6 gate procedure must
-    re-check the content-bearing file count against the breaker at verdict time and
-    report `circuit_breaker: un-reviewable` if it is exceeded."""
-    gate = VERIFY.split("### 6. Gate", 1)[1].split("## Branch on verdict", 1)[0]
-    norm = _normalize(gate)
-    assert re.search(r"re-check\w* the content-bearing file count", norm), (
-        "gaze/SKILL.md: the phase-6 gate procedure must re-check the "
-        "changed-file count at verdict time, not only at phase 1"
-    )
-    assert "circuit_breaker: un-reviewable" in norm, (
-        "gaze/SKILL.md: the phase-6 gate re-check must report "
-        "`circuit_breaker: un-reviewable` when the breaker is exceeded"
-    )
-    m = re.search(r"pr_files\s*>=\s*(\d+)", norm)
-    assert m, (
-        "gaze/SKILL.md: the phase-6 gate re-check must name the breaker "
-        "threshold it re-checks (`pr_files >= <n>`)"
-    )
-    setup = VERIFY.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
-    breaker = re.search(r"pr_files\s*>=\s*(\d+)", setup)
-    assert breaker, "gaze setup lost its pr_files un-reviewable breaker"
-    assert m.group(1) == breaker.group(1), (
-        f"the phase-6 gate re-check threshold ({m.group(1)}) drifted from "
-        f"gaze setup's breaker ({breaker.group(1)})"
-    )
-
-
-def test_gaze_tier_recorded_in_telemetry_and_output_shape():
-    """The graduated battery tier (ticket 0320) must be auditable: the per-run
-    tier has to surface in BOTH the verdict-footer telemetry template and the
-    `## /gaze actions` output-shape template, so a reviewer can read which
-    battery ran from the posted comment. We assert the token in each rendered
-    template, not the tier-definition prose — the prose can be reworded, but the
-    machine-visible telemetry field is the contract."""
-    # 1. Verdict-footer template — the section under "### Verdict footer".
-    _, _, footer_after = VERIFY.partition("### Verdict footer")
-    assert footer_after, "gaze/SKILL.md: no `### Verdict footer` section found"
-    footer_section = footer_after.split("###", 1)[0]
-    footer_telemetry = [
-        line for line in footer_section.splitlines() if "telemetry:" in line and "wall=" in line
-    ]
-    assert footer_telemetry, (
-        "gaze/SKILL.md: no `telemetry: … wall=…` template in the verdict-footer section"
-    )
-    assert any("tier" in line for line in footer_telemetry), (
-        "gaze/SKILL.md: verdict-footer telemetry template does not carry a "
-        "`tier` field (ticket 0320 exit criterion — tiering must be auditable)"
-    )
-
-    # 2. Output-shape template — the fenced block after "## Output shape".
-    _, _, after = VERIFY.partition("## Output shape")
-    assert after, "gaze/SKILL.md: no `## Output shape` section found"
-    fenced = re.findall(r"```(.*?)```", after, re.DOTALL)
-    assert fenced, "gaze/SKILL.md: no fenced template under `## Output shape`"
-    assert any("tier" in block for block in fenced), (
-        "gaze/SKILL.md: `## /gaze actions` output-shape template does not carry "
-        "a `tier` field (ticket 0320 exit criterion)"
-    )
-
-
-def test_gaze_raises_tier_on_high_risk_paths():
-    """Size and risk are two axes (ticket 0902): the disk-free `--risk` band
-    moves the size tier by one rung — raise on high, lower on low, clamped at
-    full and floored at tiny — and the rule must say so where the tier is
-    computed. The battery never drops below Agent A + Agent C + the phase-6
-    gate, and the 15+ files un-reviewable breaker is checked before the band.
-    """
-    setup = VERIFY.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
-    norm = _normalize(setup)
-    # The third cwd-anchored predicate call — disk-free, so no refusal.
-    assert (
-        'cd $primary_root/.claude/worktrees/review-<pr-number> && python3 '
-        '"$IDH_ROOT/scripts/prose_predicate.py" --risk' in norm
-    ), "gaze setup must run the cwd-anchored `--risk` band call"
-    # The rung moves, both directions, with the clamp and the floor.
-    for rung in ("tiny → small", "small → full", "full → small", "small → tiny"):
-        assert rung in norm, f"gaze setup dropped the band rung move {rung!r}"
-    assert "clamped at" in norm and "floored at" in norm, (
-        "gaze setup must state the clamp (full) and the floor (tiny)"
-    )
-    # The invariant battery floor, at every tier and band.
-    assert "Agent A + Agent C + the phase-6 gate" in norm, (
-        "gaze setup dropped the battery floor invariant"
-    )
-    # Breaker precedence: the 15+ files breaker pre-empts the band — its
-    # ESCALATE fires before any battery spawns, so a band never sets a
-    # battery tier on an un-reviewable PR.
-    assert "never sets a battery tier" in norm, (
-        "gaze setup must state the 15+ files breaker pre-empts the band — a "
-        "band never sets a battery tier on an un-reviewable PR"
-    )
-    # Risk raises the internal battery, not optional external participation.
-    for name in ("Agent B", "/simplify"):
-        assert name in norm, f"gaze setup dropped the band side effect {name!r}"
-    assert "external reviewer panel fires" not in norm, (
-        "a risk-band raise must not automatically dispatch external review"
-    )
-    # The two-axes statement, so a later reader does not collapse them.
-    assert "two axes" in norm, (
-        "gaze setup must state size and risk are two axes, never collapsed"
-    )
 
 
 def test_gaze_risk_band_recorded_in_telemetry_and_output_shape():
@@ -365,7 +251,7 @@ def test_gaze_refuses_unreviewable_prs():
     )
     # --force-approve must say it runs no review, not merely skip the gate.
     force = VERIFY.split("## `--force-approve`", 1)[1].split("## Not in scope", 1)[0]
-    assert "no reviewer battery" in force, (
+    assert "no reviewer" in force, (
         "the --force-approve section must state it skips review"
     )
 
@@ -531,11 +417,7 @@ def test_gaze_reviewer_and_gate_prompts_ban_overwrites_and_require_not_run():
     profile, so the contract (not the skill body) must carry them."""
     norm = _normalize(VERIFY)
     battery = norm.split("### 2–4.", 1)[1].split("### 5.", 1)[0]
-    gate = norm.split("### 6. Gate", 1)[1].split("## Branch on verdict", 1)[0]
-    gate_contract = _normalize(
-        (REPO / "profiles" / "gate-seat" / "PROFILE.md").read_text(encoding="utf-8")
-    )
-    for name, sec in (("phases 2-4", battery), ("phase 6", gate_contract)):
+    for name, sec in (("phases 2-4", battery),):
         assert "git checkout <ref> --" in sec, f"{name}: no destructive-checkout ban"
         assert "git show <ref>:<path>" in sec, f"{name}: no read-only alternative named"
         assert "NOT-RUN" in sec, f"{name}: no refusal on unreachable review tree"
@@ -547,10 +429,6 @@ def test_gaze_reviewer_and_gate_prompts_ban_overwrites_and_require_not_run():
         )
     assert 'git -C "$primary_root' in battery, (
         "phases 2-4: no git -C reach contract against the primary_root path"
-    )
-    assert "the gate-seat profile" in gate, (
-        "phase 6: the gate launch no longer names the gate-seat profile "
-        "whose contract carries the containment rails"
     )
 
 
@@ -582,10 +460,6 @@ def _section(text: str, pattern: str) -> str:
     return ""
 
 
-def _gate_block() -> str:
-    return _normalize(VERIFY.split("### 6. Gate", 1)[1].split("## Branch on verdict", 1)[0])
-
-
 def _waiver_section() -> str:
     return _section(VERIFY, r"waiver")
 
@@ -596,14 +470,6 @@ def _indivisibility_section() -> str:
 
 def _force_approve_section() -> str:
     return _section(VERIFY, r"force-approve")
-
-
-def test_phase6_launch_prompt_carries_the_waiver():
-    gate = _gate_block()
-    assert re.search(r"launch prompt[^.]*waiver", gate), (
-        "phase 6: the waiver record must ride in the gate launch prompt"
-    )
-    assert "waiver: none" in gate or "waiver record" in gate
 
 
 def test_verify_gate_takes_waiver_as_input_and_judges_the_diff():
@@ -622,7 +488,6 @@ def test_waiver_is_judged_from_the_diff_not_the_declarer():
     no declarer field anywhere in the waiver contract."""
     for name, text in (("gaze", VERIFY), ("verify-gate", VERIFY_GATE)):
         assert "declarer" not in text, f"{name} still carries a declarer claim or field"
-    assert "declarer" not in _gate_block()
 
 
 def test_waived_verdict_is_needs_author():
@@ -632,7 +497,7 @@ def test_waived_verdict_is_needs_author():
     assert re.search(r"verdict: APPROVED \| REROLL \| ESCALATE \| NEEDS-AUTHOR", VERIFY_GATE), (
         "verify-gate verdict shape must list NEEDS-AUTHOR"
     )
-    assert "NEEDS-AUTHOR" in _normalize(VERIFY), "gaze must branch on NEEDS-AUTHOR"
+    assert "NEEDS-AUTHOR" in _normalize(VERIFY), "gaze must name the NEEDS-AUTHOR outcome the gate rules"
 
 
 def test_raid_phase7_refuses_needs_author_without_the_author():
@@ -662,25 +527,18 @@ def test_approved_rule_requires_no_recorded_waiver():
     assert ", with no recorded waiver" in VERIFY_GATE
 
 
-def test_gaze_branch_on_verdict_has_needs_author_bullet():
-    branch = _normalize(VERIFY.split("## Branch on verdict", 1)[1].split("## Containment", 1)[0])
-    assert "- **NEEDS-AUTHOR**" in branch
-    assert "Never post `verify: approved`" in branch
-
-
 def test_raid_never_merges_needs_author_on_own_authority():
     raid = _normalize(RAID)
     assert "never merges it on its own authority" in raid
     assert re.search(r"NEEDS-AUTHOR[^.]*not merge-eligible", raid)
 
 
-def test_needs_author_in_every_verdict_and_exit_enumeration():
+def test_gaze_returns_no_gate_verdict():
     norm = _normalize(VERIFY)
     exits = re.findall(r"every(?:\*\*)? exit path \(([^)]*)\)", norm)
-    assert len(exits) == 2, exits
+    assert exits, "cleanup must name its exit paths"
     for e in exits:
-        assert "NEEDS-AUTHOR" in e, e
-    assert "APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR" in norm.split("One skill, one PR", 1)[1][:80]
+        assert "APPROVED" not in e and "NEEDS-AUTHOR" not in e, e
     desc = VERIFY_GATE.split("description:", 1)[1].splitlines()[0]
     assert "NEEDS-AUTHOR" in desc
 
@@ -689,7 +547,6 @@ def test_gaze_recovery_waiver_read_only_from_posted_header():
     rec = _normalize(VERIFY.split("**Caller-side recovery.**", 1)[1].split("**Fork liveness.**", 1)[0])
     assert "already-posted waived `circuit_breaker` header" in rec
     assert "ESCALATE there" in rec
-    assert "NEEDS-AUTHOR" in rec
 
 
 def test_waiver_header_has_one_format():
@@ -706,9 +563,9 @@ def test_waiver_flags_multi_ticket():
 def test_force_approve_runs_no_gate_and_output_marks_unrun_phases():
     text = VERIFY
     assert "would-have-been" not in text, "--force-approve must not promise a gate verdict"
-    assert "no reviewer battery" in _force_approve_section()
-    template = text.split("## /gaze actions", 1)[1].split("## /verify-gate verdict", 1)[0]
-    for phase in ("adherence:", "review:", "review-pr:", "simplify:", "battery:", "gate:"):
+    assert "no reviewer" in _force_approve_section()
+    template = text.split("## /gaze result", 1)[1].split("Unresolved review comments", 1)[0]
+    for phase in ("adherence:", "review-pr:", "simplify:", "battery:"):
         line = next(ln for ln in template.splitlines() if ln.startswith(phase))
         assert "skipped (--force-approve)" in line, f"{phase} must show skipped (--force-approve)"
 
@@ -808,18 +665,6 @@ def test_verify_gate_decision_rules_pin_the_waiver_branches():
     )
     assert _find(bullets, "waiver", "NEEDS-AUTHOR", "never APPROVED"), (
         "decision rules lost the waived NEEDS-AUTHOR bullet"
-    )
-
-
-def test_gaze_recovery_recipe_names_needs_author_and_never_approved():
-    recovery = _normalize(
-        VERIFY.split("**Caller-side recovery.**", 1)[1].split("**Fork liveness.**", 1)[0]
-    )
-    assert "NEEDS-AUTHOR" in recovery, (
-        "gaze caller-side recovery must name NEEDS-AUTHOR as a verdict it can receive"
-    )
-    assert "not APPROVED" in recovery, (
-        "gaze caller-side recovery must say a waived stalled PR is not APPROVED"
     )
 
 

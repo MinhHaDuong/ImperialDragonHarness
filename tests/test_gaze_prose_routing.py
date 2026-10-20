@@ -22,7 +22,6 @@ skill text that must name it:
 
 import importlib.util
 import json
-import re
 from pathlib import Path
 
 import pytest
@@ -219,29 +218,3 @@ def test_0902_replay_of_the_ticket_shapes():
     # **/fixtures/** matches nested.
     assert mod.risk_band(["slides/docs/x.md"]) == "normal"
     assert mod.risk_band(["tests/fixtures/f.json"]) == "low"
-    # Text ratchet: § 1. Setup states the raise rung (house-style U+2192).
-    setup = GAZE.read_text(encoding="utf-8")
-    setup = setup.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
-    assert "tiny → small" in re.sub(r"\s+", " ", setup), (
-        "gaze § 1. Setup must state the high-band raise rung tiny → small"
-    )
-
-
-def test_agent_b_is_handed_the_resolved_axes():
-    """Agent B is told the doctype and language, never left to infer them.
-
-    Routing settles which *panel* reviews a diff; it does not settle which
-    *rulebook* the reviewer holds it to. Told nothing, `/review` picks one by
-    inference — it read `rules/doctype/book.md` on a manuscript whose manifest
-    declares `techreport` (audit of 2026-08-17, MR 136).
-    """
-    text = GAZE.read_text(encoding="utf-8")
-    marker = "**Agent B — built-in review**"
-    assert marker in text, "gaze Agent B clause moved — update this test"
-    clause = text.split(marker)[1].split("**Agent C — PR review**")[0]
-    assert '"$IDH_ROOT/scripts/prose_predicate.py" --axes' in clause, (
-        "Agent B must be handed the resolved axes, not left to infer them"
-    )
-    assert "review-<pr-number>" in clause, (
-        "the axes call reads the disk, so it must be cwd-anchored like routing"
-    )
