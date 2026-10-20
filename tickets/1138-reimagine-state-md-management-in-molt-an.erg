@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-20T06:54Z reviewer created
+2026-10-20T07:04Z reviewer branch-name finding: confirmed, a real mismatch but below the severity floor, so no follow-up ticket. scripts/project-state.py:92 lists local branches matching claude/housekeeping-*; molt step 1 cuts housekeeping-$(date -u +%Y%m%d), which never matches, so yawn's tidying state cannot fire for molt branches (the prefix is a leftover of the retired beat naming, tickets 0072/0220). Effect is limited to an advisory yawn warn lost while a sweep PR is in flight; age/needed/clean still come from git log --grep=housekeeping and work. Fix when touched: match housekeeping-* (and drop the claude/ prefix) in project-state.py and the yawn line. Not fixed in this PR.
 
 --- body ---
 ## Context

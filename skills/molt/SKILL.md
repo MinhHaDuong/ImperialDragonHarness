@@ -37,7 +37,7 @@ Run full repo housekeeping and act on every finding.
    Re-run housekeeping after that session exits.
    ```
 
-   Do not proceed past step 0. The fix-now deletions and STATE timestamp commit would race with the other session's uncommitted work.
+   Do not proceed past step 0. The fix-now deletions would race with the other session's uncommitted work.
 
 0.7. **Freshen the erg binary (before any erg check).** Refresh the installed
    `erg` *before* step 1's git phase, because both erg-driven surfaces a sweep
@@ -214,17 +214,14 @@ Run full repo housekeeping and act on every finding.
 
 5. **Log `skip` items.** One line each, no action.
 
-6. **Timestamp.** Update STATE.md to note the housekeeping run UTC date and time, commit it.
-
-6.5. **Open merge request.** If any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and enable auto-merge so it lands after CI. If no commits were created: `git switch main && git branch -d housekeeping-$(date -u +%Y%m%d)` and skip the merge request.
+6. **Open merge request.** If any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and enable auto-merge so it lands after CI. If no commits were created: `git switch main && git branch -d housekeeping-$(date -u +%Y%m%d)` and skip the merge request.
 
 7. **Report.** Summarize what you did.
 
 ## Branch discipline
 
 Step 1 cuts a `housekeeping-<date>` branch from origin/main before any commits,
-and step 6.5 pushes it and opens a merge request. All fixes — including the
-STATE timestamp — land via that merge, never directly on main.
+and step 6 pushes it and opens a merge request. All fixes land via that merge, never directly on main.
 
 The skill once had a second mode, driven by `BEAT_HOUSEKEEPING_BRANCH`, in which
 `beat.py` cut the branch and decided what to do with it afterwards. Ticket 0882

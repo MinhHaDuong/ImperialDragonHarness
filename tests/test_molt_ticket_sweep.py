@@ -291,3 +291,13 @@ def test_run_helper_strips_bash_env(tmp_path, monkeypatch):
     monkeypatch.setenv("BASH_ENV", str(loader))
     run("bash", "-c", "true", cwd=tmp_path)
     assert not marker.exists()
+
+
+def test_molt_writes_no_state_stamp():
+    """Ticket 1138: molt stamps nothing in STATE.md; its PR exists only when
+    the run produced commits."""
+    skill = (Path(__file__).resolve().parents[1] / "skills" / "molt" / "SKILL.md").read_text()
+    assert "**Timestamp.**" not in skill
+    assert "STATE timestamp" not in skill
+    assert "6.5" not in skill
+    assert "**Open merge request.** If any commits were created" in skill
