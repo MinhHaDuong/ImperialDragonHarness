@@ -356,6 +356,7 @@ def test_append_refuses_unclosed_or_duplicate_block(reader):
     assert run_append(BLOCK_BODY + BLOCK_BODY, GATE).returncode == 1
 
 
+@pytest.mark.integration
 def test_extract_swaps_pending_for_merge_date_and_feeds_capture(reader):
     result = subprocess.run([sys.executable, str(SCRIPT), "--extract", "--merged", "2026-10-21"],
                             input=BLOCK_BODY, text=True, capture_output=True, env=child_env())
@@ -365,6 +366,7 @@ def test_extract_swaps_pending_for_merge_date_and_feeds_capture(reader):
     assert reader.parse_record(result.stdout)["merged"] == "2026-10-21"
 
 
+@pytest.mark.integration
 @pytest.mark.parametrize("body,args", [
     ("no block\n", ["--merged", "2026-10-21"]),
     (BLOCK_BODY, ["--merged", "soon"]),
