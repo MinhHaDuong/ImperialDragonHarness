@@ -47,7 +47,7 @@ This pointer does not register or load MCP tools.
 
 **biblatex** (not BibTeX) compiled with **biber**. Local `.bib` is
 staging; the canonical library is **Zotero**. Import into Zotero at
-manuscript submission (see ticket 0013).
+manuscript submission.
 
 BibTeX template (aligned with `~/CNRS/html/src/Ha-Duong.bib`):
 

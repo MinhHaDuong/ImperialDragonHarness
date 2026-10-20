@@ -10,10 +10,8 @@ argument-hint: "<document-path> <word-or-page-budget>"
 
 # Cutting prose to a budget
 
-Was `rules/prose/cutting.md`, resident in every session until 2026-09-09; its
-trigger is a task, not a file, so it is a skill (ticket 0572). The one-line
-pointer in `rules/prose/_all.md` — injected on every prose edit — is what makes
-it discoverable mid-cut.
+The one-line pointer in `rules/prose/_all.md` — injected on every prose edit —
+is what makes this skill discoverable mid-cut.
 
 The default failure mode is condensation-only: every passage shortened in
 place, none questioned. **Remove whole before you condense.** It is cheaper
@@ -36,7 +34,7 @@ place, none questioned. **Remove whole before you condense.** It is cheaper
 
 ## Why this order
 
-On a real data-paper trim (2026-07-24) a condensation-only plan was rejected by
+On a real data-paper trim, a condensation-only plan was rejected by
 the author in favour of asking first "which weak or distracting parts can be
 removed whole?" The whole-removal pass found 633 of a 1 240-word target in seven
 passage cuts — the largest being analysis results smuggled into the introduction

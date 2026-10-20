@@ -10,15 +10,11 @@ argument-hint: "<paper> <event: submitted|resubmitted|accepted|published>"
 
 # Submission events — propagate to the external registers
 
-Was `rules/submission-events.md`, resident in every session until 2026-09-09;
-its trigger is a task, not a file, so it is a skill (ticket 0572).
-
 When a manuscript's submission state changes, the repo side — STATE, tickets,
 tags, submission branch — is not the whole bookkeeping. Two registers live
 outside git and go stale unless the relevant one is updated in the same
 session. Consider both as part of the wrap-up; they are author-visible
-deliverables, not chores to defer (author directive, 2026-07-29, after a
-revision-1 resubmission where both had to be asked for after the fact).
+deliverables, not chores to defer.
 
 ## Which register — and/or, never automatically both
 
@@ -32,7 +28,7 @@ not the other:
   when a contract is signed or the piece is accepted, not when the envelope
   leaves.
 
-Worked example (2026-09-09): two book-proposal dossiers went to publishers.
+Worked example: two book-proposal dossiers went to publishers.
 The roadmap row moved from "dossiers prêts" to "envoyés le 9 septembre 2026";
 `Ha-Duong.bib` was deliberately left alone. Announcing a book that may never be
 contracted creates a public debt that is later repaid in silence.
@@ -64,4 +60,4 @@ manuscripts only.
 **Verify every link you write on its landing page, not on its status code.**
 Fetch each DOI or URL entering a register and confirm it lands on the intended
 *version*: a DOI can return 200 while resolving to the previous deposit. One
-revision-1 homepage shipped a link to v1.1 and needed a hotfix (2026-07-29).
+revision-1 homepage shipped a link to v1.1 and needed a hotfix.

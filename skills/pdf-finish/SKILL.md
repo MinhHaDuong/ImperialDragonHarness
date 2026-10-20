@@ -10,9 +10,6 @@ argument-hint: "<pdf-or-manuscript-path>"
 
 # PDF finishing
 
-Was `rules/pdf-finishing.md`, resident in every session until 2026-09-09; its
-trigger is a task, not a file, so it is a skill (ticket 0572).
-
 **When.** The author asks for it, or a deliverable enters finalization —
 submission, deposit, upload imminent — and you propose it. **Never during
 drafts**: while content moves, pagination polish is churn. This pass
@@ -25,9 +22,8 @@ rules avoid hand-inserting spaces that LaTeX already produces.
 ## 1. Automate first, paginate by hand never
 
 Layout intent belongs in the header or config, declared once — not in
-hand-inserted `\newpage` rounds that any upstream edit re-opens (cost of
-skipping: eight interactive re-render rounds on one page-perso variant,
-2026-07-22). For a Quarto/LaTeX build, the standard knobs:
+hand-inserted `\newpage` rounds that any upstream edit re-opens.
+For a Quarto/LaTeX build, the standard knobs:
 
 - **Sections on fresh pages** (long-form ≥ 20 pp):
   `\usepackage{titlesec}` + `\newcommand{\sectionbreak}{\clearpage}`.
@@ -66,4 +62,4 @@ A named or deposit variant (HAL, page perso) is a script that applies string
 transforms to the shared source, renders, and reverts — apply, render, restore.
 Archive the script beside the release artifacts so the variant is reproducible.
 Reference implementation: `releases/hal_variant.py` in the Œconomia climate
-finance paper (2026-07-22).
+finance paper.

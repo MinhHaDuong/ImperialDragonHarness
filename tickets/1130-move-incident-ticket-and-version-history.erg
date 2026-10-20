@@ -16,3 +16,16 @@ Skill bodies carry history that the rules say belongs in memory and tickets (`ru
 - [ ] Version pins removed, or replaced by a behaviour statement a test can check
 - [ ] Byte-compare of the rendered catalog unchanged except for intended edits
 - [ ] gaze is handled after 1100 child 2 so the two edits do not collide
+
+## Tracker (split of PR #1489)
+/gaze stopped the single 21-file PR at the 15-file breaker. Children, one PR each:
+- 1133: group A, zotero, bib-merge and prose-side skills
+- 1134: group B, pipeline skills (hunt, raid, merge, roar, lair, molt, yawn)
+- 1135: group C, route recommendations, verify-gate, trace-doctor, update-publist
+
+Deferred, not in any child:
+- gaze history waits on 1100 (exit criterion 4)
+- frontmatter version pins in review-pr, verify-adherence, review-pr-prose and verify-gate belong to ticket 1129's lane
+- yawn output section: another change is coming separately
+
+Close this tracker after the integration review, not on the last child merging.
