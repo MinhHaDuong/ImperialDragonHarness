@@ -11,10 +11,10 @@ Author: Minh Ha-Duong
 39 of 48 skill descriptions carry no trigger phrase. Only directory, email, infrastructure, cut-prose, slides, pdf-finish and typography-finish say when to use them. For skills the model may invoke itself, the description is the only routing signal. Weakest: hoard (84 characters), memory-sweep, message-framing, conference-submission-prep, lair, perch, molt, yawn.
 
 ## Exit criteria
-- [ ] Each model-invocable skill description states "Use when" and, where a neighbour exists, "Not for / use X instead"
+- [ ] The nine ambiguous skills named here (hoard, memory-sweep, roar, message-framing, conference-submission-prep, lair, perch, molt, yawn) each state "Use when" and, where a neighbour exists, "Not for / use X instead"; the remaining skills are out of scope here
 - [ ] hoard, memory-sweep and roar descriptions separate consolidate, refresh and capture
 - [ ] `make skills-catalog` run; `make check-skills-drift` passes
 - [ ] No model or tier names added (route owns them)
 
 ## Children
-- tickets/1139-trim-long-skill-descriptions-to-free-res.erg: pure-shrink trim of seven long descriptions, lands first (PR #1495); this ticket closes with the nine routing clauses.
+- tickets/closed/1139-trim-long-skill-descriptions-to-free-res.erg: pure-shrink trim of seven long descriptions, lands first (PR #1495); this ticket closes with the nine routing clauses.
