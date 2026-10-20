@@ -22,7 +22,8 @@ rules avoid hand-inserting spaces that LaTeX already produces.
 ## 1. Automate first, paginate by hand never
 
 Layout intent belongs in the header or config, declared once — not in
-hand-inserted `\newpage` rounds that any upstream edit re-opens. For a Quarto/LaTeX build, the standard knobs:
+hand-inserted `\newpage` rounds that any upstream edit re-opens.
+For a Quarto/LaTeX build, the standard knobs:
 
 - **Sections on fresh pages** (long-form ≥ 20 pp):
   `\usepackage{titlesec}` + `\newcommand{\sectionbreak}{\clearpage}`.

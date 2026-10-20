@@ -34,8 +34,7 @@ file. Do not build the intake around any one mail tool — the archived text fil
 is the interface.
 
 Once located, **archive first** (next step): re-hunting comments already filed wastes a
-whole search. The archive is the
-single source of truth; never send the author back to a mailbox to re-find them.
+whole search. The archive is the single source of truth; never send the author back to a mailbox to re-find them.
 
 ## Steps
 

@@ -8,7 +8,7 @@ user-invocable: true
 argument-hint: "import <pdf-or-url>... | suggest-edits | check-staging [<repo>] [--dir <dir>] | report-duplicates | suggest-attachments"
 ---
 
-Discipline: `rules/zotero.md` — Zotero is the system of record, `docs/` and `.bib` are git-ignored staging. It is no longer resident in every session; read it before working outside the verb files. A cited page number is read on the page, never interpolated from an extraction (the rule carries the discipline).
+Discipline: `rules/zotero.md` — Zotero is the system of record, `docs/` and `.bib` are git-ignored staging. Read it before working outside the verb files. A cited page number is read on the page, never interpolated from an extraction (the rule carries the discipline).
 
 # Zotero
 
