@@ -114,8 +114,8 @@ belongs with the command it recovers.)
   shows `-` for every commit but `is-ancestor` is false — that ancestry check
   is `/roar`'s pre-check, and it is what confirms a squash-merge through the
   forge before a branch gets deleted.
-- **After an APPROVED `/gaze`, sync before merging.** `/gaze` may have pushed
-  fixes from its own review worktree since the caller last fetched:
+- **After `/gaze` and an APPROVED `/verify-gate`, sync before merging.** `/gaze`
+  (its simplify phase) may have pushed fixes from its own review worktree since the caller last fetched:
   `git fetch origin && git merge --ff-only origin/<branch>` first, or a stale
   rebase silently drops the verify fix.
 - **Run the local CI on padme when it is reachable.** `"$IDH_ROOT/scripts/local-ci.sh"`

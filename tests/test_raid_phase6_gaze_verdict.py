@@ -183,3 +183,12 @@ def test_phase4_flags_planned_pr_size():
         f"Phase 4's restated threshold ({m.group(1)}+ files) drifted from "
         f"gaze's breaker (pr_files >= {breaker.group(1)})"
     )
+
+
+def test_phase6_runs_verify_gate_after_gaze():
+    """Gaze reviews and never approves (ticket 1153): raid must run
+    /verify-gate itself and take APPROVED only from it, on the branch tip."""
+    norm = " ".join(_per_ticket().split())
+    assert "then `/verify-gate`" in norm or "`/verify-gate <pr-number>" in norm
+    assert "never returns APPROVED" in norm
+    assert "`reviewed_head_sha`" in norm

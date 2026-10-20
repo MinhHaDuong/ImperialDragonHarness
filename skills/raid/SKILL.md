@@ -32,7 +32,7 @@ does not configure spawned children.
   neither done nor split, a review of a scientific argument, a design review of
   a critical feature. Never a standing setting of the orchestrator or a
   fan-out member.
-- **Per-ticket `/gaze`:** follows its own launch choices.
+- **Per-ticket `/gaze` and `/verify-gate`:** follow their own launch choices.
 
 ## Balance rule
 
@@ -286,12 +286,14 @@ launch) with
 It creates the closed block if absent, re-fetches the body, reads it back and
 retries once; a non-zero exit is a visible capture failure, not a silent skip.
 
-## Phase 6: Verify (per-ticket `/gaze`)
+## Phase 6: Verify (per-ticket `/gaze`, then `/verify-gate`)
 
 Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence and integrity.
 
-**Per-ticket:** run `/gaze` on every merge request — the orchestrator itself
-runs it inline, one per PR (an inline run is serial; only the detached shape
+**Per-ticket:** run `/gaze` on every merge request, then `/verify-gate` on the
+head it reviewed. Gaze reviews and never returns APPROVED; the gate rules
+APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR. The orchestrator itself
+runs them inline, one per PR (an inline run is serial; only the detached shape
 below adds concurrency, and disjoint-file PRs may run concurrently through
 it). Verify file-sharing PRs sequentially to avoid concurrent-fix collisions.
 Respect the max-concurrent-agents cap (see `rules/claude-code.md` § Subagent
@@ -304,13 +306,17 @@ CLI session per PR per the detached-seat contract
 (`skills/review-pr/SKILL.md` § Detached-seat substitution): cwd
 pinned to the PR's worktree, prompt embedding `/gaze <pr-number>` plus the
 caller prerequisites and the containment rails (no merges, no writes outside
-the PR branch); the result is observed by polling the written verdict
-artifact — the `## /verify-gate verdict` PR comment per the output shape of
-`skills/gaze/SKILL.md`, accepted only when its `ruled_tip_sha` matches the
-branch tip — under that contract's bounded wait, never a spawn exit status,
-and the structured verdict must return to the orchestrator. A REROLL
-bump/fix runs in the PR's worktree so its commits land on the PR branch,
-never on main mid-wave. Phase 7 merges stay strictly sequential.
+the PR branch); the result is observed by polling the written artifact — the
+`## /gaze result` PR comment per the output shape in
+`skills/gaze/SKILL.md` § Output shape, accepted only when its `reviewed_head_sha`
+matches the branch tip — under that contract's bounded wait, never a spawn exit status,
+and the structured result must return to the orchestrator. Then run
+`/verify-gate <pr-number> worktree=<review tree>` the same way; its verdict is
+accepted only when its `ruled_tip_sha` matches the branch tip. On `FINDINGS` or
+a REROLL, a coder fixes the listed items in the PR's worktree so its commits
+land on the PR branch, never on main mid-wave, and the REROLL bump is posed per
+`skills/verify-gate/SKILL.md`; the gate allows two rounds, a third escalates.
+Phase 7 merges stay strictly sequential.
 
 **Per-wave:** after all per-ticket `/gaze` runs complete, launch one integration-review
 subagent (read-only; worker chosen per § Model policy) to check:
@@ -324,7 +330,7 @@ subagent (read-only; worker chosen per § Model policy) to check:
   conflicting lines carry identical prose; conflicts elsewhere are ordinary.
 
 Wave-level findings go to the human as a wave-summary comment; they do not block
-individual `/gaze` verdicts.
+individual `/gaze` results and `/verify-gate` verdicts.
 
 ## Phase 7: Merge (sequential per-wave)
 
