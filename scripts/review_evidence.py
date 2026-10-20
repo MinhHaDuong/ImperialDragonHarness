@@ -63,10 +63,15 @@ POLICY_GLOBS = (
 
 ROWS = ("trivial", "ordinary", "high")
 # High-risk classes of skills/route/references/decorrelation.md: rules and
-# guards, merge and release gates, credentials, deletion or migration.
+# guards, merge and release gates, credentials, deletion or migration; plus
+# the review policy itself and what runs or configures the gates (CI,
+# runtime settings, Makefile, agent instructions).
 HIGH_RISK_PATHS = re.compile(
-    r"^(rules/|hooks/|skills/(merge|verify-gate|verify-adherence|release|gaze)/"
-    r"|scripts/(guard-|raid-gate|raid_gate|review_evidence))"
+    r"^(rules/|hooks/|skills/(merge|verify-gate|verify-adherence|release|gaze|review-pr)/"
+    r"|scripts/(guard-|raid-gate|raid_gate|review_evidence)"
+    r"|skills/route/references/decorrelation\.md$|profiles/code-reviewer/"
+    r"|agents/code-reviewer\.md$|\.github/workflows/|\.claude/settings\.json$)"
+    r"|(^|/)(Makefile|AGENTS\.md)$"
     r"|(^|/)guard[^/]*$|credential|secret|(^|/)\.env|(^|/)keys?/",
     re.IGNORECASE)
 HIGH_RISK_TEXT = re.compile(
@@ -157,7 +162,8 @@ def classify_forge(payload: dict, host: str) -> list[dict]:
         ok, why = admit_forge_review({
             "forge_host": host, "actor_id": author.get("id"),
             "object_type": node.get("__typename"),
-            "edited": node.get("lastEditedAt") is not None})
+            # An absent field is unknown edit status: count it as edited.
+            "edited": node.get("lastEditedAt", "absent") is not None})
         rows.append({
             "login": author.get("login", "<deleted>"), "object_type": node.get("__typename"),
             "status": f"{why}: ran" if ok else "rejected", "reason": "" if ok else why,
@@ -391,7 +397,7 @@ def cmd_gate(args: argparse.Namespace) -> int:
           f"policy-version {current.policy_version}")
     for r in rows:
         where = f" {r['path']}" if r["path"] else ""
-        verdict = f" ({r['header']['verdict']})" if r["header"] else ""
+        verdict = f" ({r['header'].get('verdict', '?')})" if r["header"] else ""
         print(f"seat {r['seat']}: {r['status']}{verdict} - {r['reason']}{where}")
         ok &= r["status"] in ("ran", "reused")
     if args.risk == "high":
@@ -400,7 +406,8 @@ def cmd_gate(args: argparse.Namespace) -> int:
                  and r["header"].get("family", "").casefold() not in ("", "unknown", producer)]
         if args.producer_family and other:
             r = other[0]
-            how = "" if r["status"] == "ran" else f", inherited from {r['header']['head'][:12]}"
+            origin = r["header"].get("head", "<unknown head>")[:12]
+            how = "" if r["status"] == "ran" else f", inherited from {origin}"
             print(f"independent: {r['header']['family']} seat {r['seat']}{how}")
         else:
             print("independence: missing other-family seat at the high row")
@@ -457,6 +464,21 @@ def cmd_risk_floor(args: argparse.Namespace) -> int:
     return 0
 
 
+def header_value(value: str) -> str:
+    """A report header field: one line, so it cannot inject another field."""
+    if "\n" in value or "\r" in value:
+        raise argparse.ArgumentTypeError("must be a single line")
+    return value
+
+
+def seat_name(value: str) -> str:
+    """A seat names a report file: no path separator, no parent reference."""
+    header_value(value)
+    if not value or "/" in value or "\\" in value or ".." in value:
+        raise argparse.ArgumentTypeError("must not contain '/' or '..'")
+    return value
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -470,11 +492,11 @@ def main() -> int:
                         help="harness checkout whose review policy is hashed")
     sub.add_parser("identity", parents=[common]).set_defaults(fn=cmd_identity)
     rec = sub.add_parser("record", parents=[common], help="write a report read from stdin")
-    rec.add_argument("--seat", required=True)
+    rec.add_argument("--seat", required=True, type=seat_name)
     rec.add_argument("--kind", choices=KINDS, default="review")
     rec.add_argument("--verdict", choices=VERDICTS, required=True)
-    rec.add_argument("--family", default="unknown")
-    rec.add_argument("--worker", default="unknown")
+    rec.add_argument("--family", default="unknown", type=header_value)
+    rec.add_argument("--worker", default="unknown", type=header_value)
     rec.set_defaults(fn=cmd_record)
     for name, fn in (("plan", cmd_plan), ("gate", cmd_gate)):
         p = sub.add_parser(name, parents=[common])
