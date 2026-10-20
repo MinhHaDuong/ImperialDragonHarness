@@ -2,7 +2,7 @@
 metadata:
   category: memory
 name: memory-sweep
-description: "Review a project's repository memory for stale or contradictory claims."
+description: "Review a project's repository memory for stale or contradicted claims. Use when memory may have drifted; not for consolidating (/hoard) or new facts (/roar)."
 disable-model-invocation: false
 user-invocable: true
 ---

@@ -2,7 +2,7 @@
 metadata:
   category: memory
 name: hoard
-description: "Consolidate one project's repository memory without proposing rules."
+description: "Consolidate one project's repository memory without proposing rules. Use to tidy accumulated memory; not for new facts (/roar) or staleness audits (/memory-sweep)."
 user-invocable: true
 ---
 
