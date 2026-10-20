@@ -49,6 +49,14 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
    A failed authentication is a named failed attempt, not a clean review.
    No initial `defect-confirmed:` placeholder is written.
 
+   When the merged PR body carries an `attribution` block (ticket 1151), copy
+   it instead of rebuilding it: read the final body with `gh pr view <N> --json
+   body --jq .body` on the merged PR (not the commit message, which predates
+   late appends) and pipe it through
+   `attribution_record.py --extract --merged <merge-date>`, which swaps
+   `pending` for the merge date; stream its output to `--capture` below.
+   Complete only what the block lacks, from the review trail.
+
    Read identities, attempt outcomes and adoption decisions from the actual
    review trail (session outputs or durable PR review comments), never from
    memory or the example template. Do not reconstruct a full model id from an

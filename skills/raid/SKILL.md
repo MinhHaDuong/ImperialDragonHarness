@@ -277,6 +277,15 @@ hunt's flow dictates.
 
 Wait for wave to complete.
 
+**Attribution lines (ticket 1151).** Only the orchestrator writes the PR-body
+`attribution` block; seats return their identity and never edit the body. Once
+a wave PR exists, append the `writer: step=plan` and `writer: step=execute`
+lines (identity as the seats reported it, effort `not-stated` unless set at
+launch) with
+`python3 "$IDH_ROOT/scripts/attribution_record.py" --append-pr <pr> --append '<line>' --project <name>`.
+It creates the closed block if absent, re-fetches the body, reads it back and
+retries once; a non-zero exit is a visible capture failure, not a silent skip.
+
 ## Phase 6: Verify (per-ticket `/gaze`)
 
 Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence and integrity.

@@ -13,8 +13,8 @@ Author: reviewer
 Part 2 of ticket 1149 (tracker 1146), split off by the orchestrator so each PR stays under the /gaze 15-file breaker. Part 1 (1149) ships the schema, the parser's `--pr-body` mode and the `erg-pr-merge` warning.
 
 ## Exit criteria
-- [ ] The orchestrator and /gaze append their lines to the PR-body block as each step finishes
-- [ ] /roar copies the block into the journal instead of rebuilding it from decayed evidence
+- [x] The orchestrator and /gaze append their lines to the PR-body block as each step finishes
+- [x] /roar copies the block into the journal instead of rebuilding it from decayed evidence
 
 ## Imagine annotation (raid 2026-10-20)
 Verdict PROCEED; exit criteria unchanged. Premise holds: nothing writes the block yet, so the part-1 /merge warning fires on every PR.
