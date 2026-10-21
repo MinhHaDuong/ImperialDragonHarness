@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-21T14:52Z reviewer created
+2026-10-21T16:13Z reviewer reviewer note 2026-10-21 positive control run (criterion 1): after the first gated merge (PR 1596, merge commit 1b18e9e8, passing record on the candidate fb252e88), 'python3 scripts/main_sweep.py --repo . --max-count 4 --fetch' reports 1b18e9e8 as 'finding no-record', exactly like the three merges made before the gate (PRs 1568, 1569, 1599). So the mismatch is real: the sweep reads the note on the forge's merge commit, the record is on the deterministic candidate. Also: 'make main-sweep' (8-day range, one forge lookup per commit) did not finish in 200 s (rc 124) while --max-count 4 took 7 s, which supports deleting the forge-check path (the other 1179 criterion). Fix per this ticket: rebuild the candidate from the merge commit's two parents and read the note there.
 
 --- body ---
 ## Context
