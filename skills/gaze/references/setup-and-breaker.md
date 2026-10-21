@@ -64,8 +64,7 @@ always carry; the round is that count plus one.
 An unchanged diff does **not** reset scoping. Reset happens only on a
 substantial rewrite: the diff touches files the last review did not cover, or
 changes more than roughly half of its lines. Then the full panel runs for this
-round and scoping is ignored. A perspective missing from a panel is re-seated,
-not re-paneled (phase 6).
+round and scoping is ignored.
 
 #### Waiver
 

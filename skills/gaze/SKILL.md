@@ -162,23 +162,15 @@ next: REVIEWED → the caller closes the ticket on the branch, then runs /verify
 - `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still
   checks every exit criterion and review comment against the diff.
 - `panel_integrity: DEGRADED` (the review panel did not launch, or a selected
-  or required perspective has no report at the bounded deadline) means a phase
+  or required perspective has no report after its one retry) means a phase
   2–5 is unresolved, so the result is `ESCALATE` (§ Circuit breakers), whatever
   the perspectives that did report found; it never reads as REVIEWED. A failed
   optional external reviewer is fail-open (§ External reviewer panel) and does
   not count. The `PANEL-INTEGRITY:` line is carried verbatim in the result comment.
-- **Re-seat, not re-panel.** When a panel is missing a perspective (a seat
-  did not report, or a re-review after a fix launched no seats), launch only
-  the missing perspectives and those whose last verdict objected, plus
-  review-pr's one regression check, each on the diff since the head the last
-  full panel reviewed; the other perspectives keep their verdicts. The panel is DEGRADED only if a re-seated perspective still
-  has no report at the bounded deadline. A re-seat round does not count as a
-  new round: its posted review is marked `re-seat`, and the next round scopes
-  from the last full panel's verdict roster. The controller reads that prior
-  panel state (roster and reviewed head) from the review-pr review posted on
-  the PR, trusting only comments by the PR owner or the review bot. A
-  high-risk band still needs its cross-family seat
-  (`skills/route/references/decorrelation.md`).
+- **One retry.** A perspective with no report at the bounded deadline is re-run
+  once, alone, over the whole PR, through review-pr's ordinary launch and
+  within the same round. The panel is DEGRADED, hence ESCALATE, only if that
+  retry also has no report.
 
 Run the cleanup and containment (`references/cleanup.md`) first, then post the
 result as one PR comment (§ Output shape) before returning: cleanup can

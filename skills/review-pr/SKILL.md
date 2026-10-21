@@ -239,11 +239,6 @@ be rolled back, and the review this round posts still increments it.
 An explicit `review:standard` request is also a reset exception and runs all
 five perspectives.
 
-**Re-seat.** A perspective missing from the panel, whether its seat did not
-report or none launched after a fix, is re-seated on the delta under gaze
-phase 6 (`skills/gaze/SKILL.md`); a re-seat is not counted when deriving the
-round.
-
 Model pins are unaffected: scoping changes *which* perspectives run, never
 which model runs them (`rules/claude-code.md` § Subagent levers and
 `rules/workflow.md` § Delegation).
@@ -271,7 +266,8 @@ whether five reviewers approved in silence or none of them ever started.
 
 Never wait unbounded, and never extend the deadline to avoid recording a gap.
 Proceed to synthesis with what landed, carrying the gap forward by name.
-If any perspective is `no report`, write and post a `PANEL-INTEGRITY: DEGRADED`
+A `no report` perspective is re-run once, alone, in this round (gaze phase
+6). If it still has no report, write and post a `PANEL-INTEGRITY: DEGRADED`
 line naming it; set `dissent: unavailable` instead of `dissent: none`.
 
 ## Synthesis

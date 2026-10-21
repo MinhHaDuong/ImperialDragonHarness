@@ -487,22 +487,21 @@ def test_degraded_panel_maps_to_escalate():
     assert "A `panel integrity: DEGRADED` line goes with `result: ESCALATE`" in output
 
 
-RESEAT_RULE = re.compile(
-    r"launch\s+only\s+the\s+missing\s+perspectives\s+and\s+those\s+whose\s+last"
-    r"\s+verdict\s+objected,\s+plus\s+review-pr's\s+one\s+regression\s+check"
-)
+RETRY_RULE = "is re-run once, alone, over the whole PR"
 
 
-def test_missing_perspective_is_reseated_not_repaneled():
-    """PR 1557: a panel missing a perspective re-seats only the missing and
-    objecting perspectives plus one regression check (PRs 1553 and 1471 escalated every re-gaze after a
-    fix). Negative control: the contract without the sentence fails."""
-    def has_rule(text: str) -> bool:
-        phase6 = text.split("### 6. Return the review result", 1)[1]
-        return bool(RESEAT_RULE.search(re.split(r"\n#{2,3} ", phase6, maxsplit=1)[0]))
+def _has_retry_rule(text: str) -> bool:
+    phase6 = text.split("### 6. Return the review result", 1)[1]
+    phase6 = re.split(r"\n#{2,3} ", phase6, maxsplit=1)[0]
+    return RETRY_RULE in " ".join(phase6.split())
 
-    assert has_rule(GAZE)
-    assert not has_rule(RESEAT_RULE.sub("re-run the full panel", GAZE))
+
+def test_missing_perspective_is_retried_once_before_degraded():
+    """PR 1557: a perspective with no report is re-run once before the panel
+    is DEGRADED. Negative control: phase 6 without the bullet fails."""
+    assert _has_retry_rule(GAZE)
+    dropped = re.sub(r"- \*\*One retry\.\*\*.*?(?=\n\n|\n- )", "", GAZE, flags=re.S)
+    assert dropped != GAZE and not _has_retry_rule(dropped)
 
 
 def test_result_is_posted_after_cleanup():
