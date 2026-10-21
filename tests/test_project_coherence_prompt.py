@@ -74,7 +74,7 @@ def test_worktree_instruction_carries_the_prose_exception(tmp_path):
     """0968: the startup line must state the harness rule by kind of work.
 
     It said "every conversation works in its own worktree", contradicting
-    rules/git.md § Prose workpackages, so a paper repo that edits prose in the
+    rules/git.md § Prose workpackages (since moved), so a paper repo that edits prose in the
     author's checkout (livre) opened every session on an instruction its own
     AGENTS.md overruled. No per-repo pass: the rule is by kind of work.
     """
@@ -84,4 +84,4 @@ def test_worktree_instruction_carries_the_prose_exception(tmp_path):
     assert "Worktree isolation is enabled" in output
     assert "every conversation works in its own worktree" not in output
     assert "manuscript prose" in output and "in place" in output
-    assert "git.md § Prose workpackages" in output
+    assert "rules/prose/workpackages.md" in output

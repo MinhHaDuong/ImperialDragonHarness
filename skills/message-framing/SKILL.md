@@ -21,7 +21,7 @@ Run it sequentially, in one conversation with the author: each step narrows
 the next, and nothing here is worth delegating.
 
 1. **Context.** Ask one question at a time, after asking up
-   (`rules/workflow.md` § Autonomous action), and queue the rest: format (talk
+   (`rules/workflow.md` § Escalation protocol, § Autonomous action), and queue the rest: format (talk
    length, abstract word limit, article type), function (inform, convince,
    report, open a discussion), audience (expertise, what they already believe),
    constraints (what must not be said or spoiled). Read the source material

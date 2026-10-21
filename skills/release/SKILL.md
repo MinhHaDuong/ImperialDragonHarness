@@ -106,7 +106,7 @@ explicit human go-ahead.
   diagnostic) if **no** such URL is found, so a missing URL surfaces
   immediately. An already-current URL is a normal match: the helper prints its
   count and exits 0 (idempotent no-op).
-- Commit the change on a release branch, never on main: `release(<tag>): update download URL to <tag>`. Land it with `/merge` and sync local main, so the `HEAD` signed in step 5 is the merged commit.
+- Commit the change on a release branch, never on main: `release(<tag>): update download URL to <tag>`. Land it with `/merge`, sync local main and sign from that main, so the `HEAD` in step 5 is the merged commit.
 
 ## 5. GPG signing pause (human-only)
 

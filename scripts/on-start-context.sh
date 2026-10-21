@@ -12,7 +12,7 @@ _proj=${CLAUDE_PROJECT_DIR:-}
 
 # Worktree instruction: Claude Code only, skipped in automated night sweeps.
 if [[ -n "$_proj" && -z "${CLAUDE_NIGHT_SWEEP:-}" ]]; then
-    echo "Worktree isolation is enabled for this project: code, data and configuration are worked in the conversation's own worktree, created with plain git and entered by cd before anything else (rules/claude-code.md § Entering the session); manuscript prose in a paper repo is edited in place in the author's checkout (rules/git.md § Prose workpackages). A session opening on /hunt triages the ticket first (skills/hunt/SKILL.md)."
+    echo "Worktree isolation is enabled for this project: code, data and configuration are worked in the conversation's own worktree, created with plain git and entered by cd before anything else (rules/claude-code.md § Entering the session); manuscript prose in a paper repo is edited in place in the author's checkout (rules/prose/workpackages.md). A session opening on /hunt triages the ticket first (skills/hunt/SKILL.md)."
 fi
 
 _host=$(uname -n)
