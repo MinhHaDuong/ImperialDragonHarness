@@ -192,7 +192,7 @@ def test_positive_control_a_slow_repeated_gate_fires(tmp_path, project):
     _slow_repeated(root, project)
     lines = pt.survey(root, project, days=7, now=NOW)
     assert len(lines) == 1
-    assert "make check-fast" in lines[0] and "4" in lines[0] and "/pulse" in lines[0]
+    assert "make check-fast" in lines[0] and "ran 4x" in lines[0] and "/pulse" in lines[0]
 
 
 def test_a_clean_trace_is_silent(tmp_path, project):
@@ -241,6 +241,66 @@ def test_the_survey_names_at_most_three_gates(tmp_path, project):
     _trace(_project_dir(root, project) / "s1.jsonl", calls)
     lines = pt.survey(root, project, days=7, now=NOW)
     assert len(lines) == 4 and "1 more" in lines[-1]
+
+
+def _raw(path: Path, lines: list) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(x if isinstance(x, str) else json.dumps(x) for x in lines) + "\n")
+
+
+def test_partial_blindness_is_said_not_silent(tmp_path, project):
+    root = tmp_path / "traces"
+    directory = _project_dir(root, project)
+    _trace(directory / "s1.jsonl", [_call("make check-fast", 8)])
+    (directory / "gone.jsonl").symlink_to(directory / "does-not-exist.jsonl")
+    (line,) = pt.survey(root, project, days=7, now=NOW)
+    assert line.startswith("pulse: checked 1 sessions") and "1 unreadable" in line
+
+
+@pytest.mark.parametrize("bad", [
+    ["tool_use"],
+    {"type": "assistant", "timestamp": "2026-10-21T11:00:00Z", "message": "tool_use"},
+    {"timestamp": "2026-10-21T11:00:00Z", "message": {"content": [
+        {"type": "tool_use", "id": "a", "name": "Bash", "input": "make check"}]}},
+    {"timestamp": "2026-10-21T11:00:00", "message": {"content": [
+        {"type": "tool_use", "id": "a", "name": "Bash", "input": {"command": "make check"}}]}},
+])
+def test_wrong_shape_lines_count_as_unreadable_and_never_crash(tmp_path, project, bad):
+    root = tmp_path / "traces"
+    directory = _project_dir(root, project)
+    _trace(directory / "s1.jsonl", [_call("make check-fast", 8)])
+    _raw(directory / "bad.jsonl", [bad])
+    assert pt.collect(root, project, days=7, now=NOW).unreadable == 1
+    (line,) = pt.survey(root, project, days=7, now=NOW)
+    assert "1 unreadable" in line
+
+
+def test_a_sibling_project_with_the_same_prefix_is_not_the_project(tmp_path, project):
+    root = tmp_path / "traces"
+    sibling = project.parent / (project.name + "-old")
+    sibling.mkdir()
+    _trace(_project_dir(root, sibling) / "s1.jsonl", [_call("make check-fast", 999)])
+    assert pt.collect(root, project, days=7, now=NOW).foreground == []
+
+
+def test_all_unpaired_gate_calls_say_could_not_tell(tmp_path, project):
+    root = tmp_path / "traces"
+    _trace(_project_dir(root, project) / "s1.jsonl",
+           [_call("make check-fast", 0, unpaired=True, days_ago=0.1 * (i + 1)) for i in range(3)])
+    (line,) = pt.survey(root, project, days=7, now=NOW)
+    assert "unpaired 3" in line and "--pattern" not in line and "recognised no" not in line
+
+
+def test_negative_durations_are_counted(tmp_path, project):
+    root = tmp_path / "traces"
+    _trace(_project_dir(root, project) / "s1.jsonl", [_call("make check-fast", -5)])
+    assert pt.collect(root, project, days=7, now=NOW).dropped == 1
+
+
+@pytest.mark.parametrize("command", [
+    "make latest-data", "make contest", "make attestation", "make checkout-data"])
+def test_gate_words_inside_other_words_are_not_gates(command):
+    assert pt.gate_classes(command) == []
 
 
 # --- the command line -------------------------------------------------------

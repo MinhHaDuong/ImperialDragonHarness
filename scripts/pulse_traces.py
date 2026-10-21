@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-GATE_TARGET = re.compile(r"check|test|lint|smart")
+GATE_TARGET = re.compile(r"(?:^|[-_])(?:check|tests?|lint|smart)(?:$|[-_])")
 ENV_ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=")
 TRANSPARENT = {"time", "nohup", "nice", "command", "exec", "env", "rtk", "proxy"}
 UV_VALUE_FLAGS = {"--with", "--extra", "--group", "--python", "-p", "--project",
@@ -64,6 +64,7 @@ class Collected:
     sessions: int
     directories: int
     unreadable: int = 0
+    dropped: int = 0  # negative durations
 
 
 def encode_project(path: Path) -> str:
@@ -200,7 +201,7 @@ def project_directories(root: Path, project: Path) -> list[Path]:
     prefixes = {encode_project(project), encode_project(project.resolve())}
     return sorted(
         entry for entry in root.iterdir()
-        if entry.is_dir() and any(entry.name == p or entry.name.startswith(p + "-") for p in prefixes)
+        if entry.is_dir() and any(entry.name == p or entry.name.startswith(p + "--claude-worktrees-") for p in prefixes)
     )
 
 
@@ -225,11 +226,12 @@ def _blocks(line: str) -> tuple[datetime | None, list[dict]]:
     return _parse_time(event.get("timestamp")), blocks
 
 
-def _read_session(path: Path, since: datetime, extra: tuple[str, ...]) -> tuple[list[Row], int, int, bool]:
+def _read_session(path: Path, since: datetime, extra: tuple[str, ...]) -> tuple[list[Row], int, int, bool, int]:
     pending: dict[str, tuple[datetime, str, str, bool]] = {}
     rows: list[Row] = []
     background = 0
     active = False
+    dropped = 0
     for line in path.read_text(errors="replace").splitlines():
         when, blocks = _blocks(line)
         if when is None:
@@ -251,7 +253,9 @@ def _read_session(path: Path, since: datetime, extra: tuple[str, ...]) -> tuple[
                 seconds = (when - start).total_seconds()
                 if seconds >= 0:
                     rows.append(Row(gate, seconds, command, path.stem, start))
-    return rows, background, len(pending), active
+                else:
+                    dropped += 1
+    return rows, background, len(pending), active, dropped
 
 
 def collect(root: Path, project: Path, days: float, now: datetime | None = None,
@@ -266,13 +270,14 @@ def collect(root: Path, project: Path, days: float, now: datetime | None = None,
             try:
                 if path.stat().st_mtime < stale_before:
                     continue
-                rows, background, unpaired, active = _read_session(path, since, tuple(extra))
-            except OSError:
+                rows, background, unpaired, active, dropped = _read_session(path, since, tuple(extra))
+            except (OSError, AttributeError, TypeError, ValueError):
                 result.unreadable += 1
                 continue
             result.foreground += rows
             result.background += background
             result.unpaired += unpaired
+            result.dropped += dropped
             result.sessions += active
     return result
 
@@ -323,6 +328,10 @@ def survey(root: Path, project: Path, days: float, now: datetime | None = None,
     if not collected.sessions:
         return [f"pulse: not checked (no session traces with shell activity for "
                 f"{project.name} under {root} in the last {days:g}d)"]
+    if not collected.foreground and not collected.background and collected.unpaired:
+        return [f"pulse: checked {collected.sessions} sessions in {project.name} but could not tell: "
+                f"every gate call lacked a result (unpaired {collected.unpaired}, "
+                f"{collected.unreadable} unreadable)"]
     if not collected.foreground and not collected.background:
         return [f"pulse: checked {collected.sessions} sessions in {project.name} and recognised no test "
                 f"or gate command; a project-specific gate name needs --pattern"]
@@ -338,6 +347,10 @@ def survey(root: Path, project: Path, days: float, now: datetime | None = None,
     if len(flagged) > LINES_SHOWN:
         extra_count = len(flagged) - LINES_SHOWN
         flagged = flagged[:LINES_SHOWN] + [f"pulse: {extra_count} more gate(s) over the same thresholds"]
+    if not flagged and (collected.unreadable or collected.unpaired or collected.dropped):
+        flagged = [f"pulse: checked {collected.sessions} sessions in {project.name}, "
+                   f"{collected.unreadable} unreadable, {collected.unpaired} unpaired, "
+                   f"{collected.dropped} dropped; the check was partial"]
     return flagged
 
 
