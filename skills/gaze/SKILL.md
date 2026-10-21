@@ -62,6 +62,7 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 - Never returns APPROVED: a test pins it (`tests/test_gaze_never_approves.py`).
   `REVIEWED` means no blocking finding on the reviewed head, nothing more.
 - Does not run `/verify-gate`. The caller runs it after gaze, and again after any fix.
+  The review worktree is removed before gaze returns; the gate creates its own.
 - Does not merge. The result is structured output; the merge decision belongs to the caller.
 - The only commits gaze makes on the PR branch are the bounded phase 5 simplify fixes; no changes to other branches.
 - `--force-approve` is supported for explicit human override; it skips the review and
@@ -125,11 +126,13 @@ whether it is this skill's own or a sub-agent's.
 narration with no `result:` block (REVIEWED/FINDINGS/ESCALATE), treat it as a
 non-result: do **not** relaunch the reviewer battery. Wait for the background
 reviewer notifications and read the review comment they posted on the merge
-request; with that in hand, run `/verify-gate <pr>
-worktree=$primary_root/.claude/worktrees/review-<pr-number>`. The gate reads a
+request. That comment is evidence, not a gaze result: without an accepted gaze
+result there is no gate. Re-run `/gaze <pr>` once if the liveness window below
+allows it; otherwise park the PR and ESCALATE to the author, as `raid` and
+`merge` do for a missing result. Once a result is accepted, the gate reads a
 waiver only from an already-posted waived `circuit_breaker` header in the PR's
-comments, so the recovery needs no extra argument. If none was posted, a waived
-15+ file PR is ESCALATE there (fail-safe), as is an un-waived one.
+comments; if none was posted, a waived 15+ file PR is ESCALATE there
+(fail-safe), as is an un-waived one.
 
 **Fork liveness.** Once the review comment has posted on the PR, the caller must
 see the gaze result (returned or posted as a PR comment) within
@@ -143,10 +146,10 @@ result, review worktree mtime frozen).
 
 **On window expiry, do not re-run phases 2–5.** Check three completion markers:
 (1) a posted gaze result comment, (2) branch-tip motion on the PR branch, (3) the
-review worktree's file mtime. All stale/absent → invoke `/verify-gate` directly,
-with the same invocation form as **Caller-side recovery** (one recipe, stated
-once). The fallback skips only the redundant phase 2–5 re-execution; verify-gate
-runs at full rigor.
+review worktree's file mtime. All stale/absent → no accepted gaze result, so no gate: park the PR and
+ESCALATE to the author (the window is spent, so no re-run). The check skips only
+the redundant phase 2–5 re-execution; it never substitutes a direct
+`/verify-gate` for the missing result.
 
 ## Phases
 
@@ -539,13 +542,15 @@ panel_integrity: COMPLETE | DEGRADED — <PANEL-INTEGRITY: line>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable) | skipped (--force-approve)
 circuit_breaker: un-reviewable | waived (...) | none
 multi_ticket: <distinct close-claim IDs> | none
-next: REVIEWED or FINDINGS → the caller fixes any FINDINGS, then runs /verify-gate <pr-number> on reviewed_head_sha; ESCALATE (including battery: NOT-RUN or skipped (--force-approve)) → no gate: the caller resolves the cause or re-runs /gaze
+next: REVIEWED or FINDINGS → the caller fixes any FINDINGS, then runs /verify-gate <pr-number> repo=<caller's checkout> on reviewed_head_sha; ESCALATE (including battery: NOT-RUN or skipped (--force-approve)) → no gate: the caller resolves the cause or re-runs /gaze, else the author decides
 ```
 
 - `ESCALATE`: the breaker fired, the battery could not run (`battery: NOT-RUN`),
   any phase 2–5 errored or timed out, or the workspace could not be restored.
   `--force-approve` is ESCALATE too, with `battery: skipped (--force-approve)`:
   nothing was reviewed (§ `--force-approve`).
+  The review did not complete: the caller runs no gate and the PR goes to the
+  author.
 - `FINDINGS`: any blocking adherence violation, any `request-changes` or
   `major` review verdict, any unresolved `verifiable:` minor, any simplify
   must-fix not applied. List them; the caller fixes (a coder on the PR
@@ -641,7 +646,8 @@ git -C <primary-repo-root> status --porcelain
 
 ## Circuit breakers
 
-- Close claim names a ticket file that does not exist → ESCALATE. A PR with
+- Close claim names a ticket file that does not exist (neither `tickets/<id>-*.erg`
+  nor `tickets/closed/<id>-*.erg`; a caller may close before gating) → ESCALATE. A PR with
   no ticket at all is not a breaker.
 - `pr_files >= 15` (content-bearing files, phase-1 rule) without a waiver → ESCALATE as
   `un-reviewable` before the review; this is the `rules/workflow.md` 15+ file
@@ -720,7 +726,7 @@ Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]
 Adherence: PASS | FAIL (<count>)
 
-next: REVIEWED or FINDINGS → the caller fixes any FINDINGS, then runs /verify-gate <pr-number> on reviewed_head_sha; ESCALATE (including battery: NOT-RUN or skipped (--force-approve)) → no gate: the caller resolves the cause or re-runs /gaze
+next: REVIEWED or FINDINGS → the caller fixes any FINDINGS, then runs /verify-gate <pr-number> repo=<caller's checkout> on reviewed_head_sha; ESCALATE (including battery: NOT-RUN or skipped (--force-approve)) → no gate: the caller resolves the cause or re-runs /gaze, else the author decides
 
 telemetry: risk_band=<high|low|normal> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
