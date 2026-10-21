@@ -152,7 +152,7 @@ actor uses the attribution vocabulary (`runtime=… · model=… · effort=…`,
 `--model`, `--effort` or `MERGE_GATE_RUNTIME`, `MERGE_GATE_MODEL`,
 `MERGE_GATE_EFFORT`; nothing detects or requires an agent runtime. A record
 is a traceable statement, not proof. The forge's notes ref is authoritative:
-a `--no-push` record lasts only until the next fetch. `merge-gate.py check --base … --head …`
+a `--no-push` trial record goes to `refs/notes/gate-local`, is never pushed and never admits a merge. `merge-gate.py check --base … --head …`
 answers 0 pass, 1 fail, 2 missing, 3 could not read.
 
 **Background merge.** The wait is the gate run itself, so the caller starts

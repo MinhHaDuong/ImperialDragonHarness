@@ -761,8 +761,10 @@ gate_merge() {
     [[ "$IN_WORKTREE" -eq 1 ]] || flags+=(--delete-branch)
     echo "Gate record passes on ${head}; merging."
     gh pr merge "$PR" "${flags[@]}" || true  # harness-extension-point
-    state=$(gh pr view "$PR" --json state --jq '.state' 2>/dev/null || echo UNKNOWN)  # harness-extension-point
-    [[ "$state" == "MERGED" ]] || die "PR #${PR} reads ${state} after the merge call, not MERGED — check 'gh pr view $PR'"
+    state=$(gh pr view "$PR" --json state,headRefOid --jq '.state + " " + .headRefOid' 2>/dev/null || echo UNKNOWN)  # harness-extension-point
+    [[ "${state%% *}" == "MERGED" ]] || die "PR #${PR} reads ${state%% *} after the merge call, not MERGED — check 'gh pr view $PR'"
+    [[ "${state#* }" == "$head" ]] \
+        || die "PR #${PR} merged with head ${state#* }, not the gated head ${head}: not a gated merge — report it"
 }
 
 echo "Queueing merge for PR #${PR}..."

@@ -47,6 +47,7 @@ case "$1 $2" in
       if [[ -n "${STUB_ARMED:-}" && ! -e "$STUB_DIR/disarmed" ]]; then echo yes; else echo no; fi; exit 0
     fi
     if [[ "$args" == *"autoMergeRequest"* ]]; then echo no; exit 0; fi
+    if [[ "$args" == *"state,headRefOid"* ]]; then echo "${STUB_STATE:-MERGED} ${STUB_MERGED_HEAD:-$STUB_HEAD}"; exit 0; fi
     if [[ "$args" == *"--jq"* && "$args" == *"state"* ]]; then echo "${STUB_STATE:-MERGED}"; exit 0; fi
     jq -n --arg h "$STUB_BRANCH" --arg body "${STUB_BODY:-Ticket: none}" --argjson r "${STUB_ROLLUP:-[]}" \
       '{number:42,headRefName:$h,baseRefName:"main",mergeable:"MERGEABLE",statusCheckRollup:$r,body:$body,isDraft:false,title:"fixture"}'
@@ -271,3 +272,11 @@ def test_success_means_merged_not_armed(fixture):
     result = merge(work, stub, STUB_STATE="OPEN")
     assert result.returncode == 1
     assert "not MERGED" in result.stderr
+
+
+def test_merged_with_another_head_is_not_a_gated_merge(fixture):
+    work, stub = fixture
+    record(work)
+    result = merge(work, stub, STUB_MERGED_HEAD="0" * 40)
+    assert result.returncode == 1
+    assert "not a gated merge" in result.stderr

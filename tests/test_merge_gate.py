@@ -268,3 +268,53 @@ def test_unicode_line_boundaries_cannot_forge_an_entry(repo, module, sep):
 def test_bad_versions_declaration_fails_before_any_check(repo):
     set_base_config(repo, json.dumps({**CONFIG, "versions": [{"name": "git"}]}))
     assert gate(repo, "enabled", "--base", "main").returncode == 3
+
+
+@pytest.mark.parametrize("sep", ["\x85", " ", " ", "\x0b", "\t", "\x1b"])
+def test_separator_at_the_end_of_a_value_is_refused(repo, module, sep):
+    with pytest.raises(ValueError):
+        module.format_entry({f: "x" for f in module.FIELDS} | {"actor": f"runtime=x{sep}"})
+    env = {**child_env(), "MERGE_GATE_EFFORT": f"standard{sep}"}
+    assert gate(repo, "run", "--no-push", "--base", "main", "--head", "feature", env=env).returncode == 3
+
+
+def test_no_push_record_is_never_published(repo):
+    head = git(repo, "rev-parse", "feature")
+    git(repo, "notes", "--ref=gate", "add", "-m", "hand-made note", head)
+    assert gate(repo, "run", "--no-push", "--base", "main", "--head", "feature").returncode == 0
+    assert gate(repo, "check", "--no-fetch", "--base", "main", "--head", "feature").returncode == 2
+    assert gate(repo, "check", "--no-fetch", "--local", "--base", "main", "--head", "feature").returncode == 0
+    assert gate(repo, "run", "--base", "main", "--head", "feature").returncode == 0
+    git(repo, "fetch", "-q", "origin", "refs/notes/gate:refs/notes/probe")
+    listed = git(repo, "notes", "--ref=refs/notes/probe", "list").splitlines()
+    assert len(listed) == 1, listed
+    candidate = gate(repo, "candidate", "--base", "main", "--head", "feature").stdout.strip()
+    published = git(repo, "notes", "--ref=refs/notes/probe", "show", candidate)
+    assert published.count("merge-gate-record: v1") == 1
+
+
+@pytest.mark.parametrize(
+    "check",
+    [
+        {"name": "trailing ", "argv": ["true"]},
+        {"name": "ctl\x1b", "argv": ["true"]},
+        {"name": "tab-argv", "argv": ["sh", "-c", "true\t"]},
+        {"name": "esc-argv", "argv": ["echo", "\x1b[1m"]},
+    ],
+)
+def test_bad_check_declaration_fails_before_any_check_runs(repo, tmp_path, check):
+    marker = tmp_path / "ran"
+    config = {**CONFIG, "checks": [{"name": "first", "argv": ["touch", str(marker)]}, check]}
+    set_base_config(repo, json.dumps(config))
+    assert gate(repo, "enabled", "--base", "main").returncode == 3
+    assert gate(repo, "run", "--no-push", "--base", "main", "--head", "feature").returncode == 3
+    assert not marker.exists()
+
+
+def test_tool_version_output_is_sanitized(repo):
+    config = {**CONFIG, "versions": [{"name": "tool", "argv": ["printf", "\\033[1mv1\\0132\\n"]}]}
+    set_base_config(repo, json.dumps(config))
+    result = gate(repo, "run", "--no-push", "--base", "main", "--head", "feature")
+    assert result.returncode == 0, result.stderr
+    line = next(ln for ln in result.stdout.splitlines() if ln.startswith("versions: "))
+    assert "\x1b" not in line and "v1 2" in line

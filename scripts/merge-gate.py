@@ -19,8 +19,9 @@ error, never off. This file is the one home of the record format (FIELDS,
 format_entry, parse_note, decide): other readers adapt to it.
 
 The remote's notes ref is authoritative: `run` and `check` overwrite the local
-refs/notes/gate with it first, so a `--no-push` record survives only until the
-next fetch.
+refs/notes/gate with it first (and drop it when the remote has none). A
+`--no-push` record goes to refs/notes/gate-local, which is never pushed and is
+read only by `check --local`: a merge rests on a published record.
 
 Exit codes of `check`: 0 pass, 1 fail or stale scope, 2 no record, 3 error.
 `enabled`: 0 on, 1 off, 3 error. Any unexpected exception exits 3.
@@ -42,6 +43,9 @@ from pathlib import Path
 
 LOG = logging.getLogger("merge-gate")
 NOTES_REF = "refs/notes/gate"
+LOCAL_REF = "refs/notes/gate-local"  # --no-push records: never pushed, read by `check --local` only
+# Characters that end a line for some reader: every C0 control, DEL, NEL, LS, PS.
+LINE_BREAKERS = frozenset(chr(c) for c in range(32)) | {"\x7f", "\x85", "\u2028", "\u2029"}
 CONFIG_PATH = ".merge-gate.json"
 HEADER = "merge-gate-record: v1"
 FIELDS = ("result", "time", "actor", "host", "revision", "command", "scope", "versions")
@@ -82,10 +86,13 @@ def format_entry(fields):
 
 
 def single_line(value):
-    """No control character and no Unicode line boundary (VT, FF, FS-RS, NEL, LS, PS)."""
-    return isinstance(value, str) and len(value.splitlines()) <= 1 and not any(
-        ord(c) < 32 or ord(c) == 127 for c in value
-    )
+    """No control character and no Unicode line boundary, anywhere in the value."""
+    return isinstance(value, str) and not any(c in LINE_BREAKERS for c in value)
+
+
+def sanitize(text):
+    """Captured tool output: line boundaries and controls become spaces."""
+    return "".join(" " if c in LINE_BREAKERS else c for c in text).strip()
 
 
 def parse_note(text):
@@ -218,6 +225,11 @@ def load_config(base):
         )
     ):
         raise GateError(f'invalid {CONFIG_PATH} at base: "checks" must be a list of {{name, argv}}')
+    for item in checks:
+        if item["name"] != item["name"].strip() or not item["name"] or not single_line(item["name"]):
+            raise GateError(f"invalid {CONFIG_PATH} at base: check name {item['name']!r} has edge spaces or controls")
+        if not all(single_line(a) for a in item["argv"]):
+            raise GateError(f"invalid {CONFIG_PATH} at base: argv of {item['name']!r} holds a control character")
     versions = config.get("versions", [])
     if not isinstance(versions, list) or not all(
         isinstance(v, dict)
@@ -228,6 +240,8 @@ def load_config(base):
         for v in versions
     ):
         raise GateError(f'invalid {CONFIG_PATH} at base: "versions" must be a list of {{name, argv}}')
+    if not single_line(config["scope"]) or not all(single_line(v["name"]) for v in versions):
+        raise GateError(f"invalid {CONFIG_PATH} at base: scope or version names hold a control character")
     return config
 
 
@@ -242,9 +256,14 @@ def resolve(args):
 
 
 def fetch_notes(remote):
-    """Make the local notes ref the remote's: the remote is the record of authority."""
+    """Make the local notes ref the remote's: the remote is the record of authority.
+
+    When the remote has none, the local ref is dropped too, so a later push
+    publishes only its own entry, never a stale or hand-made local note.
+    """
     probe = git("ls-remote", "--exit-code", remote, NOTES_REF, check=False)
     if probe.returncode == 2:
+        git("update-ref", "-d", NOTES_REF, check=False)
         return False
     if probe.returncode:
         raise GateError(f"cannot read {NOTES_REF} on {remote}: {probe.stderr.strip()}")
@@ -252,19 +271,24 @@ def fetch_notes(remote):
     return True
 
 
-def read_note(oid):
-    shown = git("notes", f"--ref={NOTES_REF}", "show", oid, check=False)
+def read_note(oid, ref=NOTES_REF):
+    shown = git("notes", f"--ref={ref}", "show", oid, check=False)
     return shown.stdout if shown.returncode == 0 else ""
 
 
 def append_and_push(oid, text, remote):
-    """Append one entry and push; on a lost race, refetch and append once more."""
+    """Append one entry and push; on a lost race, refetch and append once more.
+
+    Without a remote (--no-push) the entry goes to LOCAL_REF, which is never
+    pushed: a trial record cannot ride along with a later published one.
+    """
+    if not remote:
+        git("notes", f"--ref={LOCAL_REF}", "append", "-m", text, oid)
+        return
     for attempt in (1, 2):
         if remote:
             fetch_notes(remote)
         git("notes", f"--ref={NOTES_REF}", "append", "-m", text, oid)
-        if not remote:
-            return
         push = git("push", "-q", remote, f"{NOTES_REF}:{NOTES_REF}", check=False)
         if push.returncode == 0:
             return
@@ -280,8 +304,8 @@ def first_line(argv, cwd):
         proc = subprocess.run(argv, cwd=cwd, capture_output=True, text=True)
     except OSError:
         return "absent"
-    lines = (proc.stdout or proc.stderr).strip().splitlines()
-    return lines[0].strip() if lines else "unknown"
+    first = (proc.stdout or proc.stderr).strip().split("\n", 1)[0]
+    return sanitize(first) or "unknown"
 
 
 def run_checks(config, cwd):
@@ -306,6 +330,9 @@ def cmd_run(args):
         raise GateError(f"gate is off at base {args.base}: no {CONFIG_PATH} with gate=on")
     oid = candidate(base, head)
     actor = actor_line(args.runtime, args.model, args.effort)
+    command = f"merge-gate run --base {args.base} --head {args.head}"
+    if not single_line(actor) or not single_line(command):
+        raise ValueError("actor or command holds a line break or control character")  # before any check runs
     started = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     with tempfile.TemporaryDirectory(prefix="merge-gate-") as tmp:
         tree = Path(tmp) / "candidate"
@@ -322,7 +349,7 @@ def cmd_run(args):
             "actor": actor,
             "host": socket.gethostname(),
             "revision": revision_line(oid, base, head),
-            "command": f"merge-gate run --base {args.base} --head {args.head}",
+            "command": command,
             "scope": scope_line(config),
             "versions": versions or NOT_STATED,
             "checks": results,
@@ -343,7 +370,8 @@ def cmd_check(args):
     if not args.no_fetch and not fetch_notes(args.remote):
         sys.stdout.write(f"missing: {args.remote} has no {NOTES_REF}; no record on candidate {oid}\n")
         return MISSING
-    code, reason = decide(parse_note(read_note(oid)), oid, scope_line(config))
+    text = read_note(oid) + ("\n" + read_note(oid, LOCAL_REF) if args.local else "")
+    code, reason = decide(parse_note(text), oid, scope_line(config))
     sys.stdout.write(reason + "\n")
     return code
 
@@ -374,9 +402,10 @@ def parser():
             s.add_argument("--remote", default="origin", help="where refs/notes/gate lives")
         if name == "check":
             s.add_argument("--no-fetch", action="store_true", help="read the local notes ref only")
+            s.add_argument("--local", action="store_true", help="also read --no-push records (never for a merge)")
         if name == "run":
             s.add_argument(
-                "--no-push", action="store_true", help="record locally only; the next fetch of the notes ref overwrites it"
+                "--no-push", action="store_true", help="record in refs/notes/gate-local only; never pushed"
             )
             s.add_argument("--runtime", default=os.environ.get("MERGE_GATE_RUNTIME", ""))
             s.add_argument("--model", default=os.environ.get("MERGE_GATE_MODEL", ""))
