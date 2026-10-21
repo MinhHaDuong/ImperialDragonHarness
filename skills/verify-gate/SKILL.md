@@ -66,8 +66,10 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 
 ## Input
 
-Either:
-- `<pr-number>` alone: the gate resolves ticket, diff, comments itself.
+Always `<pr-number> repo=<path>`. Without `repo=`, STOP and emit
+`verdict: ESCALATE` with rationale "no repo argument": a fork has no cwd to
+fall back on. With that minimum the gate resolves ticket, diff and comments
+itself. Optionally:
 - The caller's bundle (preferred): `/gaze`'s returned result block
   (`reviewed_head_sha`, unresolved lists, adherence, panel integrity), with
   `{pr, ticket}`.
@@ -94,9 +96,11 @@ returns, so a later gate run cannot rely on it.
 
 ```bash
 PR_BRANCH=<head branch resolved from the forge for <pr-number>>
+# <session-id>: the caller's session=, else the standalone UUID generated now;
+# <round>: derived from PR comments (§ Gate sessions) before the tree exists.
 primary_root=$(git -C "<repo-path>" rev-parse --show-toplevel) || exit 1
 primary_root="${primary_root%%/.claude/worktrees/*}"
-gate_tree="$primary_root/.claude/worktrees/gate-<pr-number>"
+gate_tree="$primary_root/.claude/worktrees/gate-<pr-number>-<session-id>-r<round>"
 git -C "$primary_root" fetch origin "$PR_BRANCH" || exit 1
 if ! git -C "$primary_root" worktree add --detach "$gate_tree" origin/"$PR_BRANCH" || ! test -d "$gate_tree"; then
     echo "verify-gate: cannot create isolated gate worktree for PR <pr-number>" >&2
@@ -105,7 +109,8 @@ fi
 ```
 
 On every exit path, after the verdict comment posts: `git -C "$primary_root"
-worktree remove "$gate_tree"`. The gate writes nothing in it, so a plain
+worktree remove "$gate_tree"`. The session and round suffix keeps a
+round-1 tree left behind by a refused removal from blocking round 2. The gate writes nothing in it, so a plain
 remove suffices; a refusal is reported in the verdict, never forced.
 
 ## Evidence discovery
