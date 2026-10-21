@@ -15,7 +15,7 @@ Orchestration with ordinary judgment; choose workers per the `route` skill (`ski
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
 A raid does not redefine skills. It calls `/hunt`,
-`/review-pr`, `/roar`, etc. Its job is sequencing, wave management,
+`/gaze`, `/roar`, etc. Its job is sequencing, wave management,
 and enforcing invariants.
 
 ## Model policy
@@ -303,7 +303,7 @@ an agent orchestration, and child sessions do not inherit the agent connector
 reporting `battery: NOT-RUN — cause: no-agent-tool`, `depth`, or `guard`,
 or by a known absent agent connector — substitute one detached, headless, non-interactive
 CLI session per PR per the detached-seat contract
-(`skills/review-pr/SKILL.md` § Detached-seat substitution): cwd
+(`skills/gaze/references/panel.md` § Detached-seat substitution): cwd
 pinned to the PR's worktree, prompt embedding `/gaze <pr-number>` plus the
 caller prerequisites and the containment rails (no merges, no writes outside
 the PR branch); the result is observed by polling the written artifact — the

@@ -48,7 +48,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    those targets match the actual changed paths. Python code, unmapped paths, or a
    project without a map require the full gate; never label a scoped pass full.
 3. **Review comments are load-bearing.** Every review comment (from `/review`,
-   `/review-pr`, human authors, Copilot) is either ADDRESSED (commit changed the cited file, OR
+   the `/gaze` panel, human authors, Copilot) is either ADDRESSED (commit changed the cited file, OR
    the comment was marked resolved, OR a ticket was opened with the rationale) or
    UNRESOLVED. No "I'll get to it later."
 4. **Simplify findings are load-bearing.** Every must-fix from `/simplify` or Gaze’s portable equivalent is either
@@ -58,8 +58,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    is a REROLL trigger.
 6. **Two rounds max.** Round 1 is initial gate. Round 2 is post-fix re-gate. Round 3 is
    forbidden — escalate.
-7. **Tagged minors are mandatory.** Review comments from `/review-pr` and
-   `/review-pr-prose` at the minor/suggestion tier must carry one of `verifiable:`,
+7. **Tagged minors are mandatory.** Review comments from the `/gaze` code and
+   prose panels at the minor/suggestion tier must carry one of `verifiable:`,
    `consider:`, or `nofollow:`. Untagged minors and ambiguous "X might break" /
    "this could cause Y" phrasings are refused — the gate does not triage hedges. See
    "Minor tag handling" below.
@@ -255,9 +255,9 @@ the diff alone, as one `per_exit_criterion` row named `indivisibility waiver`:
 
 - Any `MISSING` in `per_exit_criterion` → REROLL (round 1) / ESCALATE (round 2).
 - Any `UNRESOLVED` review comment from a human author → REROLL (round 1) / ESCALATE (round 2).
-- Any `UNRESOLVED` review comment from `/review-pr` labelled severity ≥ medium →
+- Any `UNRESOLVED` review comment from the `/gaze` panel labelled severity ≥ medium →
   REROLL (round 1) / ESCALATE (round 2).
-  Severity triggers apply to blockers (request-changes). Tagged minors are triaged by tag, not severity.
+  Severity triggers apply to `blocking` findings. Tagged minors are triaged by tag, not severity.
 - Any unresolved `verifiable:` minor (failing assertion still reproduces) → treated as
   blocker-adjacent: REROLL (round 1) / ESCALATE (round 2).
 - `consider:` minors are informational. They appear in the verdict comment but do not
@@ -318,7 +318,7 @@ APPROVED verdicts do not carry this field.
 
 ## Minor tag handling
 
-Tag definitions live in `/review-pr` (canonical source). Gate treatment:
+Tag definitions live in `skills/gaze/references/panel.md` § Finding tags (canonical source). Gate treatment:
 
 - `verifiable:` → blocker-adjacent. Unresolved → REROLL.
 - `consider:` → informational, surfaced but never bounces.
@@ -426,5 +426,5 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
 ## Not in scope
 
 - **Merging.** The gate does not merge; that decision belongs to the caller.
-- **Re-running tests.** The gate reads results; phase 1 of `/verify-adherence` runs them.
+- **Re-running tests.** The gate reads results; phase 1 of `/verify-adherence` runs them. Review runs targeted tests only; the full suite runs once, on the merge candidate (`skills/gaze/references/panel.md`, Synthesis step 4).
 - **Acting on scope overflow.** The gate detects and reports; the caller tickets and annotates.

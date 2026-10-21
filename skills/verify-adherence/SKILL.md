@@ -335,7 +335,7 @@ This ratchet is the whole point. Do not accept `semantic_findings` as a steady s
 
 ## Not in scope
 
-- Writing style / AI-tells (handled by `/review-pr-prose` and `config/ai-tells.yml`).
+- Writing style / AI-tells (handled by the `/gaze` prose panel and `config/ai-tells.yml`).
 - Ticket format (enforced by pre-commit hook).
 - Git branch naming (enforced by pre-commit hook).
 - Merging decisions. This skill never affects merge state.
