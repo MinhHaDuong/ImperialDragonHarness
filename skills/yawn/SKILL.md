@@ -50,7 +50,7 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
    - **Closed-ticket branches** where the merge probe exits 1 (not merged) or 2 (`could-not-determine`: the branch maps to no ticket or the ticket records no merge request number, or `tickets/` or erg is missing): flag as cleanup candidate for manual review, not fix-now. Exit 2 is never a deletion.
 5. **Worktrees** — from `worktrees`. Flag entries with `locked: true` whose lock pid is no longer running. For each worktree, also run:
    ```bash
-   git log <worktree-head>..<main-head> --oneline | wc -l
+   git rev-list --count <worktree-head>..<main-head>
    ```
    If the count is > 0, flag as `warn`: "worktree `<name>` is N commits behind main — filesystem state (tickets/, docs/) may be stale relative to main".
 6. **Working tree** — from `git.clean` / `git.dirty_files`. List uncommitted files if dirty.
@@ -135,7 +135,7 @@ After the table (and any stale-findings list), add a one-line summary verdict.
 After the verdict, if any findings are warn or fail, emit an **Action plan** section.
 Classify every finding into exactly one of three categories:
 
-- `fix-now` — trivial, no branch needed, reversible, no design decision: do it in the
+- `fix-now` — trivial, no ticket needed, reversible, no design decision: do it in the
   current session immediately after the user says "do it"
 - `open-ticket` — multi-file, needs a branch, requires a design decision, or worth
   tracking across sessions: create a ticket. Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.

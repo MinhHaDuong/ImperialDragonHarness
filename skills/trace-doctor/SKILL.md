@@ -70,7 +70,7 @@ stop.
 
 If `trace-pr-join.py` changed `docs/trace-pr-join-2026-06.csv` (the join
 resolved new PRs), that single cache file is the *only* tracked artifact this
-run may commit; commit it with a named add:
+run may commit; commit it on a branch landed through a merge request, with a named add:
 
 ```bash
 git add docs/trace-pr-join-2026-06.csv    # the newly resolved rows only
