@@ -66,7 +66,13 @@ Adherence: PASS | FAIL (<count>)
 next: REVIEWED → the caller closes the ticket on the branch, then runs /verify-gate <pr-number> repo=<caller's checkout> session=<uuid> on the current branch head, which is reviewed_head_sha plus at most that ticket-close commit (one re-gate at most, /verify-gate § Gate sessions: a fix asked by the round-1 gate is re-gated once on the new head with the same session=, without a new gaze run); FINDINGS → the caller fixes them and re-runs /gaze on the new head: a head gaze did not review is never gated; ESCALATE (including battery: NOT-RUN or skipped (--force-approve), or a DEGRADED panel) → no gate and no merge: the review never completed, and the PR goes to the author, who decides
 
 telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
+seat: <role> · runtime=<id> · family=<family> · route=<token> · model=<id as the launch reported it | not observed> · status: ran|failed|skipped
 ```
+
+One `seat:` line per review seat launched or planned, retries included, at
+column 0 in exactly this shape: `/roar` writes the PR body's `reviewer:` lines
+from them (`attribution_record.py --seats-pr`, ticket 1155), and a seat missing
+here is a capture failure. A requested model name is not an observed id.
 
 On `--force-approve`, the comment is annotated `FORCE-APPROVED by <reason>`.
 
