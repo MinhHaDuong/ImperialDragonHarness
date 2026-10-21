@@ -360,7 +360,7 @@ def test_gaze_agent_a_launch_names_the_adherence_seat_profile():
     gaze = GAZE.read_text(encoding="utf-8")
     launch = " ".join(
         gaze.split("**Agent A — adherence**", 1)[1]
-        .split("**Agent B — built-in review**", 1)[0]
+        .split("**Native `/review` and `/simplify`**", 1)[0]
         .split()
     )
     assert "the adherence-seat profile" in launch, (
@@ -375,26 +375,6 @@ def test_gaze_agent_a_launch_names_the_adherence_seat_profile():
     assert 'Skill(skill: "verify-adherence"' in launch, (
         "the live Skill(verify-adherence) invocation contract stays verbatim "
         "in the Agent A launch block"
-    )
-
-
-def test_gaze_gate_launch_names_the_gate_seat_profile():
-    """The phase 6 gate launch names the gate-seat profile and its contract;
-    the embedded gate procedure below the launch stays in the skill."""
-    gaze = GAZE.read_text(encoding="utf-8")
-    launch = " ".join(
-        gaze.split("### 6. Gate", 1)[1]
-        .split("Embedded gate procedure:", 1)[0]
-        .split()
-    )
-    assert "the gate-seat profile" in launch, (
-        "the phase 6 gate launch block must name the gate-seat profile it "
-        "launches (agents/gate-seat.md)"
-    )
-    assert "agents/gate-seat.md" in launch
-    assert "profiles/gate-seat/PROFILE.md" in launch, (
-        "the gate launch block must point at the contract that owns the "
-        "containment rails"
     )
 
 
@@ -419,12 +399,9 @@ def test_prose_panel_launches_name_the_prose_reviewer_profile():
     )
 
 def test_coder_profile_conversions():
-    """The two inventory coder sites (gaze REROLL fix, raid wave execution)
-    launch the named coder profile; task materials ride in the prompt."""
-    gaze = (REPO / "skills" / "gaze" / "SKILL.md").read_text(encoding="utf-8")
-    reroll = gaze.split("- **REROLL, round 1**", 1)[1].split("- **REROLL, round 2**", 1)[0]
-    assert "coder profile" in reroll and "agents/coder.md" in reroll
-    assert "profiles/coder/PROFILE.md" in reroll
+    """The inventory coder site (raid wave execution) launches the named
+    coder profile; task materials ride in the prompt. Gaze no longer fixes:
+    it reviews, and the caller's coder acts on its FINDINGS."""
     raid = (REPO / "skills" / "raid" / "SKILL.md").read_text(encoding="utf-8")
     wave = raid.split("For each wave, launch agents", 1)[1].split(
         "The execute-agent contract", 1

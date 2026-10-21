@@ -7,17 +7,13 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_agent_c_launch_grants_nested_agent_tool():
+def test_review_pr_is_invoked_directly_without_a_wrapper_agent():
     gaze = (ROOT / "skills/gaze/SKILL.md").read_text()
-    profile = ROOT / "agents/gaze-pr-review.md"
-    assert profile.exists(), "Agent C needs a named profile with an explicit tool grant"
-    frontmatter = profile.read_text().split("---", 2)[1]
-    tools = re.search(r"^tools:\s*(.+)$", frontmatter, re.MULTILINE)
-    assert tools and "Agent" in [item.strip() for item in tools.group(1).split(",")]
+    assert not (ROOT / "agents/gaze-pr-review.md").exists()
+    assert "gaze-pr-review" not in gaze
     agent_c = gaze.split("**Agent C — PR review**", 1)[1].split(
         "Wait for all spawned agents", 1
     )[0]
-    assert "subagent_type: gaze-pr-review" in agent_c
     assert "missing at the bounded collection deadline" in agent_c
 
 

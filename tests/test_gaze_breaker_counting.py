@@ -57,17 +57,8 @@ def test_breaker_bullet_names_content_bearing():
 
 
 @pytest.mark.adherence
-def test_verdict_time_recheck_uses_the_phase1_rule():
-    text = GAZE.read_text(encoding="utf-8")
-    recheck = text.split("At verdict time, re-check", 1)[1].split(
-        "if the diff against", 1
-    )[0]
-    assert "content-bearing" in recheck, (
-        "the verdict-time re-check (0990) must count content-bearing files "
-        "per the phase-1 rule — a round-2 fix of pure renames must not "
-        "re-fire the breaker"
-    )
-    m = re.search(r"pr_files\s*>=\s*(\d+)", text)
+def test_breaker_threshold_is_fifteen():
+    m = re.search(r"pr_files\s*>=\s*(\d+)", GAZE.read_text(encoding="utf-8"))
     assert m and m.group(1) == "15", "the 15 threshold itself is untouched"
 
 

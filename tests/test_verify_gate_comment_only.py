@@ -32,12 +32,6 @@ def test_no_self_granted_pr_body_exception():
 
 
 @pytest.mark.adherence
-def test_gaze_points_to_comment_only_carve_out():
-    gaze = (Path(__file__).resolve().parent.parent / "skills" / "gaze" / "SKILL.md").read_text()
-    assert gaze.count("verify-gate/SKILL.md` § Scope containment") >= 2
-
-
-@pytest.mark.adherence
 def test_typeset_text_stays_guarded():
     t = _section()
     assert "Typeset text and argument changes keep the guard" in t

@@ -2,10 +2,10 @@
 Title: 1153b: callers own the gate (sessions, close-before-gating, ruled tip)
 Created: 2026-10-21
 Author: reviewer
-Blocked-by: 1160
 
 --- log ---
 2026-10-21T06:55Z reviewer created
+2026-10-21T08:34Z reviewer note blocker 1160 closed — Blocked-by removed.
 
 --- body ---
 ## Context
