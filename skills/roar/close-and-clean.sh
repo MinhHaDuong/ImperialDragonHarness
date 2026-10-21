@@ -269,8 +269,9 @@ resolve_base() { # <label>
 
 # ── Step 9: exit check, one call before leaving the worktree (ticket 1098) ─────
 # READY means: the tree is clean and its work is integrated (or is the wrap-up
-# bundle: pushed, with auto-merge armed or, on a gated base, a passing gate
-# record on its candidate). The caller then cds to the main checkout and lets
+# bundle: pushed, with auto-merge armed or, on a gated base, its merge request
+# OPEN with a passing gate record, or MERGED; a gated one stays pending in
+# step 11 until MERGED). The caller then cds to the main checkout and lets
 # after-exit remove the tree: no `remove`, no `discard_changes` (ticket 1097).
 bundle_armed() { # <head oid>
     local answer armed rc=0
@@ -283,16 +284,28 @@ bundle_armed() { # <head oid>
     if [ "$answer" != "$(printf '%s\t%s' "$1" "refs/heads/$BUNDLE")" ]; then
         note "EXIT: KEEP-PENDING bundle $BUNDLE on origin differs from HEAD — push it"; bump 1; return 1
     fi
-    # Gated base (ticket 1156): nothing is armed there; the durable state is a
-    # passing gate record on the bundle's candidate, and the caller's
-    # background command (gate run, then the merge helper) lands it. Fail closed: an
-    # unreadable declaration or record is COULD-NOT-LOOK, never "ungated".
-    local gate="$IDH_ROOT/scripts/merge-gate.py" grc=0 crc=0
+    # Gated base (ticket 1156): nothing is armed there. The bundle may leave
+    # its worktree once its merge request reads OPEN with a passing gate
+    # record on its candidate (the caller's background command, gate run then
+    # merge helper, lands it), or reads MERGED. Until MERGED it stays a pending
+    # item in step 11: if the helper later stops on a moved base, nothing else
+    # holds the merge. Fail closed: an unreadable declaration, record or
+    # merge request is COULD-NOT-LOOK, never "ungated" or "ready".
+    local gate="${CLOSE_AND_CLEAN_MERGE_GATE:-$IDH_ROOT/scripts/merge-gate.py}" grc=0 crc=0 state
     python3 "$gate" enabled --base "$base_tip" >/dev/null 2>&1 || grc=$?
     case "$grc" in
-        0)  python3 "$gate" check --base "$base_tip" --head "$1" >/dev/null 2>&1 || crc=$?
+        0)  # <!-- harness-extension-point --> forge read-back of the merge request
+            state=$(gh pr view "$BUNDLE" --json state --jq '.state' 2>/dev/null) || {
+                note "EXIT: COULD-NOT-LOOK cannot read the merge request for $BUNDLE"; bump 2; return 1;
+            }
+            case "$state" in
+                MERGED) note "EXIT: bundle $BUNDLE merged"; return 0 ;;
+                OPEN) ;;
+                *) note "EXIT: KEEP-PENDING merge request for $BUNDLE is not open (${state:-none})"; bump 1; return 1 ;;
+            esac
+            python3 "$gate" check --base "$base_tip" --head "$1" >/dev/null 2>&1 || crc=$?
             case "$crc" in
-                0) note "EXIT: bundle $BUNDLE pushed, gate record passes on its candidate"; return 0 ;;
+                0) note "EXIT: bundle $BUNDLE pushed, merge request open, gate record passes — PENDING until it reads MERGED (step 11)"; return 0 ;;
                 1|2) note "EXIT: KEEP-PENDING bundle $BUNDLE has no passing gate record — record it"; bump 1; return 1 ;;
                 *) note "EXIT: COULD-NOT-LOOK cannot read the gate record for $BUNDLE"; bump 2; return 1 ;;
             esac ;;

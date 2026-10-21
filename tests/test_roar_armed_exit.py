@@ -45,7 +45,10 @@ def test_bundle_exception_excludes_task_and_reused_branches():
 def test_failed_bundle_is_surfaced_by_roar_not_molt():
     step9 = _step9()
     assert "in step 11" in step9 and "does not block" in step9
-    assert "a later roar reports its merge request" in step9
+    # No later roar re-checks a bundle (ticket 1156 review): the text must not
+    # promise one, and a gated bundle stays pending until it reads MERGED.
+    assert "a later roar reports" not in step9
+    assert "nothing re-checks" in step9 and "until it reads MERGED" in step9
 
 
 def test_task_branch_still_needs_ancestry():

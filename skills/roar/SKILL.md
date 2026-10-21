@@ -178,10 +178,13 @@ base, once a passing gate record covers the bundle's candidate.
        `after-exit --remove-worktree` runs the removal-mode `.tmp/` gate before
        unlocking the tree (hunt locks it) and running `git worktree remove`.
        The removal gate's rules (step 9b): `references/close-and-clean.md`. Never `--force`.
-       An armed bundle (on a gated base: one with a passing gate record) is
-       named in step 11 as pending forge integration; it
-       does not block the `/clear` verdict, and a later roar reports its
-       merge request if a check fails.
+       An auto-merge-armed bundle is named in step 11 as pending forge
+       integration and does not block the `/clear` verdict; nothing re-checks
+       it later, so a check that fails afterwards shows only on its merge
+       request. On a gated base the exit check needs the merge request OPEN
+       with a passing gate record (or MERGED), and the bundle stays a pending
+       item in step 11 until it reads MERGED: if the background merge stops
+       (a moved base), nothing else lands it.
 
     c. `EXIT: KEEP-PENDING` or exit 2 → `cd` to the main checkout, no
        removal, and report the kept tree and the pending integration in
@@ -220,11 +223,11 @@ base, once a passing gate record covers the bundle's candidate.
     Pending means anything this step reports as pending: an unmerged PR,
     running CI, an agent still running, a visible pending capture or
     unintegrated capture branch (step 3), a kept worktree or unpushed or
-    failed bundle (step 9), or an unresolved close claim (step 7). A wrap-up
-    bundle that passed step 9's exit check does not block the verdict: its
-    content is pushed, and either auto-merge is armed or, on a gated base, a
-    passing gate record covers it and the caller's background command merges
-    it; the verdict line names its merge request. When nothing is pending, say
+    failed bundle (step 9), or an unresolved close claim (step 7). An
+    auto-merge-armed wrap-up bundle that passed step 9's exit check does not
+    block the verdict: its content is pushed and the forge will merge it, so
+    the verdict line names its merge request. On a gated base a bundle not
+    yet MERGED is pending: name it, and do not say "safe to `/clear`". When nothing is pending, say
     "State saved — safe to `/clear`"; otherwise name each pending item, since
     only then has roar written everything durable. Advise `/clear`, never
     `/compact`.
