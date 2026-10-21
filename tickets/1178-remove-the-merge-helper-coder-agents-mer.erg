@@ -2,7 +2,6 @@
 Title: Remove the merge helper: coder agents merge with gh pr merge; the gate record and the sweep carry the verification
 Created: 2026-10-21
 Author: reviewer
-Blocked-by: 1179
 
 --- log ---
 2026-10-21T14:40Z reviewer created
@@ -11,6 +10,7 @@ Blocked-by: 1179
 2026-10-21T14:45Z reviewer note Cutover and dependents: step (a) adds a commit, so an already APPROVED PR's head changes after review; the helper exits 2 there (erg-pr-merge:454, 517-519), the recipe should say re-gate. scripts/enumerate-merges.py recovers a merge's ticket from the exact close-commit text 'ticket(N): close and archive — PR #N' and refuses branch names (enumerate-merges.py:12-15, 38-47; feeds attribution_query.py:234): the recipe's close commit must keep that text, or the enumerator changes in the same PR. Dependents beyond the listed skills: scripts/census/permissions.py, check-cross-pr-ticket-collision.sh, enumerate-merges.py, verify-gate, yawn, rules/git.md:9 and :23, rules/workflow.md:131, the standing allow rule for the bare helper (gh pr merge must be allowed), tests test_verify_fork_contracts.py, test_skill_blanket_add.py, test_stale_idh_layout.py, test_worktree_predicate_ratchet.py, test_close_claim_grammar.sh (runs the helper as a fixture) and tests/smart-testing/reference.json. About 27 live files: over the 15-file breaker, so split recipe and deletion as the last criterion says.
 2026-10-21T14:45Z reviewer note Verification the sweep still lacks: skills/roar/check-close-claims.sh is not called by /lair step 8 today, defaults to --limit 30 (about 1.8 days at about 16.7 PRs/day, derived from ticket 1081's 400 PRs over 24 days), does not audit short 'Ticket: NNNN' claims, and joins from claims so a PR with no claim is invisible. A body edited after approval defeats a record on an unchanged head. Suggest a child criterion: wire the sweep into /lair with a raised limit, and name who rechecks body claims before merge. Cost measured once: test_erg_pr_merge.sh 32 s under 4-worker load (local, not CI); three helper suites total 1,902 lines beside the 842-line helper. This decision supersedes the design note's 'blocked on 1045' premise; the note's remaining value is its edge-case tables.
 2026-10-21T15:23Z reviewer reviewer note Author decision 2026-10-21 ("YES", asked: once the helper is deleted a merge without a record is caught only afterwards by the sweep; do you accept a finding after the fact as the whole gate?): accepted. Work starts after the activation PR 1569 has landed and ticket 1179's positive control has run (the sweep reads a forge merge's record). Criteria extended below with the duties the design note docs/2026-10-21-merge-helper-retirement-design.md hands off. Two PRs: the recipe in skills/merge/SKILL.md first, the deletion second.
+2026-10-21T17:02Z reviewer note blocker 1179 closed — Blocked-by removed.
 
 --- body ---
 ## Context

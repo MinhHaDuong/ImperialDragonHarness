@@ -1,19 +1,17 @@
-"""Periodic sweep of main (ticket 1157, tracker 1045).
+"""Daily audit of main: does each commit that entered it carry a gate receipt?
 
-Each commit that entered main must be a gated merge: either it carries a gate
-record (ticket 1156's note in refs/notes/gate), or it is the merge commit of a
-PR whose required checks were green on the forge. The sweep reports both
-facts for every commit and flags the rest. The forge is faked here; the git
-side is a real scratch repository.
+Ticket 1179 (after 1157, tracker 1045). The receipt is the merge gate's note
+in refs/notes/gate on the deterministic candidate commit (scripts/merge-gate.py).
+The forge's merge commit is a different object, so the audit rebuilds the
+candidate from the merge's two parents and reads the note there. Every case
+runs the script on a scratch repository whose receipts are written by the
+real merge gate; no forge is involved.
 """
 
-import importlib.util
-import json
 import os
-import re
-import shutil
-import sys
 import subprocess
+import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -24,236 +22,236 @@ pytestmark = pytest.mark.integration
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "main_sweep.py"
-HOOK = ROOT / "hooks" / "reference-transaction"
+GATE = ROOT / "scripts" / "merge-gate.py"
+GATE_JSON = '{"gate": "on", "scope": "s", "checks": [{"name": "t", "argv": ["%s"]}]}\n'
+DAYS_AGO_3 = "@%d +0000" % (int(time.time()) - 3 * 86400)
 
 
-@pytest.fixture(scope="module")
-def sweep():
-    spec = importlib.util.spec_from_file_location("main_sweep", SCRIPT)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def _env():
+def _env(**extra):
     env = {k: v for k, v in child_env().items() if not k.startswith("GIT_")}
     env.update(
         GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1",
         GIT_AUTHOR_NAME="F", GIT_AUTHOR_EMAIL="f@example.invalid",
         GIT_COMMITTER_NAME="F", GIT_COMMITTER_EMAIL="f@example.invalid",
     )
+    env.update(extra)
     return env
 
 
-def git(cwd, *args):
+def git(cwd, *args, **extra):
     return subprocess.run(
         ["git", "-C", str(cwd), *args], capture_output=True, text=True,
-        env=_env(), check=True,
+        env=_env(**extra), check=True,
     ).stdout.strip()
 
 
-class FakeForge:
-    def __init__(self, pulls=None, checks=None, required=(), fail=()):
-        self.pulls = pulls or {}      # merge sha -> (number, head sha)
-        self.checks = checks or {}    # head sha -> {name: conclusion}
-        self.required = list(required)
-        self.fail = set(fail)
-
-    def merged_pull(self, sha):
-        if sha in self.fail:
-            raise self.error("forge unreachable")
-        if sha in self.pulls:
-            number, head = self.pulls[sha]
-            return {"number": number, "head_sha": head}, []
-        return None, []
-
-    def check_conclusions(self, head_sha):
-        return dict(self.checks.get(head_sha, {}))
-
-    def required_checks(self):
-        return self.required, "fixture"
+def audit(repo, *args):
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), "--ref", "main", *args],
+        capture_output=True, text=True, env=_env(), cwd=repo,
+    )
 
 
 @pytest.fixture
-def repo(tmp_path, sweep):
-    FakeForge.error = sweep.ForgeError
+def repo(tmp_path):
+    """Root commit 3 days old, then the gate turned on today; a bare origin takes receipts."""
     r = tmp_path / "r"
     git(tmp_path, "init", "-q", "-b", "main", str(r))
-    shas = {}
-    for name in ("base", "gated", "green", "red", "direct", "unknown"):
-        git(r, "commit", "-q", "--allow-empty", "-m", name)
-        shas[name] = git(r, "rev-parse", "HEAD")
-    return r, shas
+    git(r, "commit", "-q", "--allow-empty", "-m", "init", GIT_COMMITTER_DATE=DAYS_AGO_3)
+    gate(r, "true")
+    origin = tmp_path / "origin.git"
+    git(tmp_path, "init", "-q", "--bare", "-b", "main", str(origin))
+    git(r, "remote", "add", "origin", str(origin))
+    git(r, "push", "-q", "origin", "main")
+    return r
 
 
-def _forge(shas):
-    return FakeForge(
-        pulls={
-            shas["green"]: (11, "h-green"),
-            shas["red"]: (12, "h-red"),
-        },
-        checks={
-            "h-green": {"pytest-guard": "success", "validate-tickets": "success"},
-            "h-red": {"pytest-guard": "failure", "validate-tickets": "success"},
-        },
-        required=["pytest-guard", "validate-tickets"],
-        fail=[shas["unknown"]],
+def gate(r, check, message="gate on"):
+    """Declare the gate on main with one check command (`true` passes, `false` fails)."""
+    (r / ".merge-gate.json").write_text(GATE_JSON % check)
+    git(r, "add", "-A")
+    git(r, "commit", "-q", "-m", message)
+
+
+def commit(r, name, **extra):
+    (r / name).write_text(name + "\n")
+    git(r, "add", "-A")
+    git(r, "commit", "-q", "-m", name, **extra)
+    return git(r, "rev-parse", "HEAD")
+
+
+def branch(r, name):
+    git(r, "switch", "-q", "-c", name, "main")
+    commit(r, name)
+    git(r, "switch", "-q", "main")
+
+
+def receipt(r, name, expect=0):
+    """The real merge gate writes a receipt on the candidate (main + name)."""
+    proc = subprocess.run(
+        [sys.executable, str(GATE), "run", "--base", "main", "--head", name],
+        capture_output=True, text=True, env=_env(), cwd=r,
     )
+    assert proc.returncode == expect, proc.stderr
 
 
-def test_gate_notes_ref_is_shared_with_the_hook(sweep):
-    hook_ref = re.search(r"^GATE_NOTES_REF=(\S+)", HOOK.read_text(), re.M).group(1)
-    assert sweep.GATE_NOTES_REF == hook_ref == "refs/notes/gate"
+def forge_merge(r, *names, **extra):
+    """A --no-ff merge with the forge's metadata, not the candidate's."""
+    env = dict(GIT_AUTHOR_NAME="Forge", GIT_COMMITTER_NAME="Forge", **extra)
+    git(r, "merge", "-q", "--no-ff", *names, "-m", "Merge pull request", **env)
+    return git(r, "rev-parse", "HEAD")
 
 
-def test_each_commit_is_classified_and_both_facts_reported(repo, sweep):
-    r, shas = repo
-    # Fixture stand-in for ticket 1156's record writer.
-    git(r, "notes", f"--ref={sweep.GATE_NOTES_REF}", "add", "-m", "fixture record", shas["gated"])
-    results = {res["subject"]: res for res in sweep.sweep(
-        r, sweep.first_parent_commits(r, "main", max_count=5), _forge(shas))}
-    assert set(results) == {"gated", "green", "red", "direct", "unknown"}
-    assert results["gated"]["status"] == "ok" and results["gated"]["gate_record"]
-    assert results["green"]["status"] == "ok" and results["green"]["pr"] == 11
-    assert results["green"]["gate_record"] is False
-    assert results["green"]["checks"] == "green"
-    assert results["red"]["status"] == "finding"
-    assert "pytest-guard" in results["red"]["reason"]
-    assert results["direct"]["status"] == "finding"
-    assert "no merged PR" in results["direct"]["reason"]
-    assert results["unknown"]["status"] == "unknown"
+def line_of(proc, sha):
+    [line] = [x for x in proc.stdout.splitlines() if sha[:12] in x]
+    return line
 
 
-def test_a_gate_record_stands_even_when_the_forge_cannot_be_read(repo, sweep):
-    r, shas = repo
-    git(r, "notes", f"--ref={sweep.GATE_NOTES_REF}", "add", "-m", "fixture", shas["unknown"])
-    [res] = sweep.sweep(r, [shas["unknown"]], _forge(shas))
-    assert res["status"] == "ok" and res["gate_record"]
-    assert res["checks"] == "unknown"
+def test_a_forge_merge_with_a_receipt_on_its_candidate_reads_as_ok(repo):
+    branch(repo, "a")
+    receipt(repo, "a")
+    merge = forge_merge(repo, "a")
+    proc = audit(repo)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert line_of(proc, merge).startswith("ok")
 
 
-def test_a_missing_required_check_is_not_green(repo, sweep):
-    r, shas = repo
-    forge = _forge(shas)
-    forge.checks["h-green"].pop("validate-tickets")
-    [res] = sweep.sweep(r, [shas["green"]], forge)
-    assert res["status"] == "finding" and "validate-tickets" in res["reason"]
+def test_a_receipt_made_on_another_base_is_a_finding(repo):
+    branch(repo, "a")
+    receipt(repo, "a")
+    branch(repo, "b")
+    forge_merge(repo, "b")  # main moved after a's receipt was written
+    merge = forge_merge(repo, "a")
+    proc = audit(repo)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert line_of(proc, merge).startswith("finding")
 
 
-def test_without_a_required_list_every_run_must_pass(repo, sweep):
-    r, shas = repo
-    forge = _forge(shas)
-    forge.required = []
-    [green] = sweep.sweep(r, [shas["green"]], forge)
-    [red] = sweep.sweep(r, [shas["red"]], forge)
-    assert green["status"] == "ok" and red["status"] == "finding"
+def test_a_merge_without_a_receipt_is_a_finding(repo):
+    branch(repo, "a")
+    merge = forge_merge(repo, "a")
+    proc = audit(repo)
+    assert proc.returncode == 1
+    assert line_of(proc, merge).startswith("finding")
 
 
-def test_exit_code_separates_findings_from_could_not_look(sweep):
-    assert sweep.exit_code([{"status": "ok"}]) == 0
-    assert sweep.exit_code([{"status": "ok"}, {"status": "unknown"}]) == 2
-    assert sweep.exit_code([{"status": "unknown"}, {"status": "finding"}]) == 1
-    assert sweep.exit_code([]) == 2  # an empty sweep looked at nothing
-    assert sweep.exit_code([{"status": "ok"}], ["range cut"]) == 2
-    assert sweep.exit_code([{"status": "finding"}], ["range cut"]) == 1
+def test_a_failing_receipt_is_a_finding(repo):
+    gate(repo, "false", "gate with a failing check")
+    branch(repo, "a")
+    receipt(repo, "a", expect=1)
+    merge = forge_merge(repo, "a")
+    proc = audit(repo)
+    assert proc.returncode == 1
+    assert line_of(proc, merge).startswith("finding")
 
 
-def test_report_names_every_finding(repo, sweep):
-    r, shas = repo
-    results = sweep.sweep(r, [shas["red"], shas["direct"]], _forge(shas))
-    text = sweep.render(results, "fixture")
-    assert shas["red"][:12] in text and shas["direct"][:12] in text
-    assert json.loads(sweep.render(results, "fixture", as_json=True))["results"]
+def test_a_merge_whose_tree_differs_from_the_candidate_is_a_finding(repo):
+    branch(repo, "a")
+    receipt(repo, "a")
+    git(repo, "merge", "-q", "--no-ff", "--no-commit", "a")
+    (repo / "extra").write_text("not gated\n")
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "Merge a, edited")
+    merge = git(repo, "rev-parse", "HEAD")
+    proc = audit(repo)
+    assert proc.returncode == 1
+    assert line_of(proc, merge).startswith("finding")
 
 
-def _cli(repo, *args, path=None):
-    env = _env()
-    if path is not None:
-        env["PATH"] = path
-    return subprocess.run(
-        [sys.executable, str(SCRIPT), "--repo", str(repo), *args],
-        capture_output=True, text=True, env=env,
-    )
+def test_an_octopus_merge_on_a_two_parent_receipt_is_a_finding(repo):
+    branch(repo, "a")
+    receipt(repo, "a")
+    git(repo, "switch", "-q", "-c", "c", "main")
+    git(repo, "commit", "-q", "--allow-empty", "-m", "c")  # same tree as the candidate
+    git(repo, "switch", "-q", "main")
+    merge = forge_merge(repo, "a", "c")
+    proc = audit(repo)
+    assert proc.returncode == 1
+    assert line_of(proc, merge).startswith("finding")
 
 
-def test_no_tools_on_path_is_could_not_look(repo):
-    r, _ = repo
-    proc = _cli(r, "--ref", "main", path="")
+def test_a_single_parent_commit_reads_its_own_note(repo):
+    direct = commit(repo, "direct")
+    assert line_of(audit(repo), direct).startswith("finding")
+    git(repo, "notes", "--ref=refs/notes/gate", "add", "-m", "record", direct)
+    assert line_of(audit(repo), direct).startswith("ok")
+
+
+def test_an_orphan_commit_at_the_tip_is_a_finding(repo):
+    git(repo, "switch", "-q", "--orphan", "orphan")
+    git(repo, "checkout", "main", "--", ".merge-gate.json")
+    git(repo, "commit", "-q", "-m", "orphan")
+    orphan = git(repo, "rev-parse", "HEAD")
+    git(repo, "update-ref", "refs/heads/main", orphan)
+    proc = audit(repo)
+    assert proc.returncode == 1
+    assert line_of(proc, orphan).startswith("finding")
+
+
+def test_the_summary_is_one_line_naming_the_first_finding(repo):
+    branch(repo, "a")
+    receipt(repo, "a")
+    forge_merge(repo, "a")
+    branch(repo, "b")
+    merge = forge_merge(repo, "b")
+    proc = audit(repo, "--summary")
+    assert proc.returncode == 1
+    assert proc.stdout.splitlines() == [
+        f"main audit: 3 commits in the last 24 h, 1 without a gate receipt: {merge[:12]}"
+    ]
+
+
+def test_commits_older_than_24_hours_below_the_window_are_left_out(repo):
+    init = git(repo, "rev-list", "--max-parents=0", "main")
+    proc = audit(repo)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert init[:12] not in proc.stdout and "gate on" in proc.stdout
+
+
+def test_an_old_dated_commit_does_not_hide_the_commits_below_it(repo):
+    direct = commit(repo, "direct")  # dated now, no receipt
+    commit(repo, "backdated", GIT_COMMITTER_DATE=DAYS_AGO_3)
+    branch(repo, "a")
+    receipt(repo, "a")
+    forge_merge(repo, "a")
+    proc = audit(repo)
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert line_of(proc, direct).startswith("finding")
+
+
+@pytest.mark.parametrize("cap", [["--max-count", "1"], ["--time-limit", "0"]])
+def test_a_range_cut_by_a_cap_says_so_and_exits_2(repo, cap):
+    branch(repo, "a")
+    receipt(repo, "a")
+    forge_merge(repo, "a")
+    proc = audit(repo, "--summary", *cap)
     assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert "range cut" in proc.stdout
+
+
+def test_a_failed_fetch_is_could_not_look(repo, tmp_path):
+    git(repo, "remote", "set-url", "origin", str(tmp_path / "missing.git"))
+    assert audit(repo, "--fetch").returncode == 2
+
+
+def test_an_unreadable_declaration_is_could_not_look(repo):
+    (repo / ".merge-gate.json").write_text("{not json")
+    git(repo, "commit", "-q", "-am", "broken declaration")
+    assert audit(repo).returncode == 2
 
 
 def test_an_unknown_ref_is_could_not_look(repo):
-    r, _ = repo
-    proc = _cli(r, "--ref", "origin/main", "--required", "x")
-    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert audit(repo, "--ref", "no-such-branch").returncode == 2
 
 
-def test_a_failed_fetch_is_could_not_look(repo):
-    r, _ = repo  # no origin remote: the fetch fails
-    proc = _cli(r, "--fetch", "--ref", "main", "--required", "x")
-    assert proc.returncode == 2
-    assert "fetch" in proc.stderr
+def test_a_cap_below_one_is_refused(repo):
+    assert audit(repo, "--max-count", "0").returncode == 2
 
 
-def test_malformed_forge_output_is_could_not_look(repo, tmp_path):
-    r, _ = repo
-    bindir = tmp_path / "bin"
-    bindir.mkdir()
-    fake = bindir / "gh"
-    fake.write_text("#!/bin/sh\necho 'not json'\n")
-    fake.chmod(0o755)
-    gitdir = str(Path(shutil.which("git")).parent)
-    proc = _cli(r, "--ref", "main", "--max-count", "3", path=f"{bindir}:{gitdir}")
-    assert proc.returncode == 2, proc.stdout + proc.stderr
-    assert "finding " not in proc.stdout
-
-
-def test_a_range_cut_by_max_count_is_not_an_all_clear(repo, sweep):
-    r, shas = repo
-    green = {sha: (n, "h-green") for n, sha in enumerate(shas.values())}
-    forge = FakeForge(pulls=green, checks={"h-green": {"c": "success"}}, required=["c"])
-    args = sweep.parse_args(["--repo", str(r), "--ref", "main", "--max-count", "3"])
-    assert sweep.run(args, forge) == 2
-    args = sweep.parse_args(["--repo", str(r), "--ref", "main", "--max-count", "50"])
-    assert sweep.run(args, forge) == 0
-
-
-def _with_origin(r, tmp_path):
-    origin = tmp_path / "origin.git"
-    git(tmp_path, "clone", "-q", "--bare", str(r), str(origin))
-    git(r, "remote", "add", "origin", str(origin))
-    return origin
-
-
-def _all_green(shas):
-    pulls = {sha: (n, "h") for n, sha in enumerate(shas.values())}
-    return FakeForge(pulls=pulls, checks={"h": {"c": "success"}}, required=["c"])
-
-
-def test_no_notes_on_origin_is_not_stale(repo, sweep, tmp_path):
-    r, shas = repo
-    _with_origin(r, tmp_path)
-    args = sweep.parse_args(["--repo", str(r), "--fetch", "--ref", "origin/main"])
-    assert sweep.run(args, _all_green(shas)) == 0
-
-
-def test_a_failed_notes_fetch_is_could_not_look(repo, sweep, tmp_path, capsys):
-    r, shas = repo
-    origin = _with_origin(r, tmp_path)
-    git(origin, "notes", f"--ref={sweep.GATE_NOTES_REF}", "add", "-m", "rec", shas["base"])
-    lock = Path(git(r, "rev-parse", "--git-common-dir"))
-    lock = (r / lock if not lock.is_absolute() else lock) / "refs" / "notes" / "gate.lock"
-    lock.parent.mkdir(parents=True, exist_ok=True)
-    lock.write_text("")  # a held lock makes the notes fetch fail
-    args = sweep.parse_args(["--repo", str(r), "--fetch", "--ref", "origin/main"])
-    assert sweep.run(args, _all_green(shas)) == 2
-    assert "incomplete: fetch of refs/notes/gate failed" in capsys.readouterr().out
-    lock.unlink()
-    assert sweep.run(args, _all_green(shas)) == 0
-
-
-def test_an_empty_range_says_so(repo, sweep, capsys):
-    r, shas = repo
-    args = sweep.parse_args(["--repo", str(r), "--ref", "main..main"])
-    assert sweep.run(args, _all_green(shas)) == 2
-    assert "incomplete: empty range" in capsys.readouterr().out
+def test_a_repository_without_a_gate_prints_nothing(tmp_path):
+    r = tmp_path / "plain"
+    git(tmp_path, "init", "-q", "-b", "main", str(r))
+    git(r, "commit", "-q", "--allow-empty", "-m", "no gate")
+    for args in ([], ["--summary"], ["--fetch"]):
+        proc = audit(r, *args)
+        assert (proc.returncode, proc.stdout) == (0, ""), proc.stderr
