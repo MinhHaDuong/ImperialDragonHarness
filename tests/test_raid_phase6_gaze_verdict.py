@@ -183,3 +183,119 @@ def test_phase4_flags_planned_pr_size():
         f"Phase 4's restated threshold ({m.group(1)}+ files) drifted from "
         f"gaze's breaker (pr_files >= {breaker.group(1)})"
     )
+
+
+GAZE_RESULT = "the `## /gaze result` PR comment"
+ESCALATE_STOP = (
+    "A gaze result of ESCALATE, or no accepted result (missing at the end of the "
+    "bounded wait, or its `reviewed_head_sha` stale against the branch tip), means "
+    "the gate is not run: the review never completed, and the PR goes to the author."
+)
+SCOPE = (
+    "The comparison is made on the reviewed head, before the raid adds its own fix and "
+    "ticket-close commits; those commits do not void the result."
+)
+GATE_RUN = "Only on a gaze result of REVIEWED, or FINDINGS once fixed, run `/verify-gate <pr-number>"
+
+
+def _gaze_then_gate_violations(per_ticket: str) -> list[str]:
+    """What is wrong with raid's gaze-then-gate sequence (empty when right)."""
+    norm = " ".join(per_ticket.split())
+    bad = []
+    for name, sentence in (("gaze result", GAZE_RESULT), ("ESCALATE stop", ESCALATE_STOP), ("gate run", GATE_RUN), ("tip scope", SCOPE)):
+        if sentence not in norm:
+            bad.append(f"missing {name}")
+    if not bad and not (norm.index(GAZE_RESULT) < norm.index(ESCALATE_STOP) < norm.index(GATE_RUN)):
+        bad.append("order is not gaze result, ESCALATE stop, gate")
+    return bad
+
+
+def test_phase6_runs_verify_gate_after_gaze():
+    """Gaze reviews and never approves (ticket 1153): raid takes the gaze
+    result first, runs no gate on ESCALATE or a missing/stale result, and only
+    then runs /verify-gate (/gaze 1523: a review that never completed must not
+    reach a gate that could rule APPROVED)."""
+    assert _gaze_then_gate_violations(_per_ticket()) == []
+
+
+def test_phase6_sequence_check_fails_when_a_sentence_goes():
+    """Negative controls: removing either sentence, or swapping the order,
+    must fail the check above."""
+    norm = " ".join(_per_ticket().split())
+    assert _gaze_then_gate_violations(norm.replace(ESCALATE_STOP, ""))
+    assert _gaze_then_gate_violations(norm.replace(GAZE_RESULT, ""))
+    assert _gaze_then_gate_violations(norm.replace(GATE_RUN, ""))
+    swapped = norm.replace(ESCALATE_STOP, "").replace(GATE_RUN, GATE_RUN + " " + ESCALATE_STOP)
+    assert _gaze_then_gate_violations(swapped) == ["order is not gaze result, ESCALATE stop, gate"]
+
+
+def test_phase6_tip_scope_is_pinned():
+    """The gaze-result freshness check covers the reviewed head only, not the
+    caller's own later commits (gaze round 1)."""
+    norm = " ".join(_per_ticket().split())
+    assert _gaze_then_gate_violations(norm.replace(SCOPE, "")) == ["missing tip scope"]
+
+
+def test_merge_orders_sync_before_close_and_gates_only_approved():
+    """merge: fetch + ff-sync precedes the close-commit push; the prerequisite
+    names APPROVED and fetches before comparing origin/<branch>."""
+    merge = " ".join((ROOT / "skills" / "merge" / "SKILL.md").read_text().split())
+    sync = merge.index("git fetch origin && git merge --ff-only origin/<branch>")
+    close = merge.index("**Close the ticket on the branch before gating.**")
+    assert sync < close
+    assert "Only APPROVED on that tip merges." in merge
+    assert "read after `git fetch origin`" in merge
+    assert "judged before the caller adds its own fix and ticket-close commits" in merge
+
+
+def test_phase6_fix_loop_keeps_the_old_gaze_guards():
+    """Gaze's fix-agent contract was deleted with its gate phase (ticket 1153);
+    its guards move to raid, which now owns the fix-and-regate loop. Wording is
+    pinned verbatim from the pre-1153 gaze body."""
+    norm = " ".join(_per_ticket().split())
+    for guard in (
+        "Fix agent gets ≤10 min.",
+        "Fix agent timeout (10 min) → ESCALATE.",
+        "TDD discipline still applies: add a failing test for any behavioural fix before coding.",
+        "Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix.",
+        "on a must-fix finding → ESCALATE (no silent resolution).",
+        "Strict rule: **only** the listed items.",
+    ):
+        assert guard in norm, guard
+
+
+def test_denial_recovery_respects_the_gate_budget():
+    """The merge-permission-denial recovery must not reopen Phase 6 after two
+    gate rounds (second union review, ticket 1153): it parks and escalates."""
+    text = " ".join(RAID.read_text().split())
+    recovery = text.split("### Merge-permission denial", 1)[1].split("###", 1)[0]
+    assert (
+        "When the gate budget is exhausted, run no further gate or fix: park the PR and escalate to the author"
+        in recovery
+    )
+    assert (
+        "parks the PR and escalates to the author instead of sending it back through Phase 6"
+        in " ".join(_per_ticket().split())
+    )
+    assert "gaze phase outputs 2–5" in " ".join(_per_ticket().split())
+
+
+def test_phase6_cites_an_existing_output_shape():
+    """PR 1539 review: skills/gaze/references/output.md does not exist; the
+    output shape lives in skills/gaze/SKILL.md § Output shape."""
+    text = RAID.read_text()
+    assert "skills/gaze/references/output.md" not in text
+    assert "`skills/gaze/SKILL.md` § Output shape" in " ".join(_per_ticket().split())
+    assert "## Output shape" in (ROOT / "skills" / "gaze" / "SKILL.md").read_text()
+
+
+def test_phase7_checks_local_remote_and_ruled_tip_before_the_helper():
+    """PR 1539 review: erg-pr-merge pushes HEAD, so 'pushes no close commit'
+    holds only when local HEAD, origin/<branch> and ruled_tip_sha agree,
+    checked after a fetch."""
+    phase7 = " ".join(_slice("## Phase 7: Merge", "### Merge-permission denial").split())
+    assert (
+        "`git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>` "
+        "== the gate's `ruled_tip_sha`" in phase7
+    )
+    assert "pushes no close commit, and merges" not in phase7

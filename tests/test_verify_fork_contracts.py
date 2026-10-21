@@ -69,11 +69,81 @@ def test_verify_threads_worktree_path_to_subskills():
 
 def test_subskills_document_worktree_argument():
     """Each gaze sub-skill must cd into the worktree path it receives."""
-    for skill in ("verify-adherence", "verify-gate", "review-pr", "review-pr-prose"):
+    for skill in ("verify-adherence", "review-pr", "review-pr-prose"):
         text = (SKILLS / skill / "SKILL.md").read_text()
         assert "worktree=" in text, (
             f"skills/{skill}/SKILL.md: does not document the worktree= argument"
         )
+
+
+def _gate_calls_with_worktree(text: str) -> list[str]:
+    """Gate invocations passing worktree=, over whitespace-normalized text so a
+    wrapped call is seen. A call runs to the closing backtick or sentence end."""
+    norm = " ".join(text.split())
+    return [m.group(0) for m in re.finditer(r"/verify-gate <pr[^`]*", norm) if "worktree=" in m.group(0)]
+
+
+def test_verify_gate_owns_its_worktree():
+    """Gaze removes its review tree before returning (cleanup.md), so the gate
+    cannot be handed it: every gate run creates and removes its own tree, and
+    no caller passes `worktree=` to the gate (ticket 1153)."""
+    gate = (SKILLS / "verify-gate" / "SKILL.md").read_text()
+    iso = gate.split("**Isolation — the gate owns its checkout.**", 1)[1].split("## ", 1)[0]
+    assert 'worktree add --detach "$gate_tree"' in iso
+    assert 'worktree remove "$gate_tree"' in iso
+    assert "worktree=" not in gate
+    callers = [VERIFY, (SKILLS / "raid" / "SKILL.md").read_text(),
+               (SKILLS / "merge" / "SKILL.md").read_text()]
+    for text in callers:
+        assert not _gate_calls_with_worktree(text)
+    # Negative controls: a wrapped invocation must be caught too.
+    assert _gate_calls_with_worktree("run `/verify-gate <pr>\n  repo=x worktree=y`")
+    assert _gate_calls_with_worktree("run /verify-gate <pr> repo=x worktree=y")
+    assert "worktree remove" in VERIFY, "gaze still removes its review tree"
+
+
+def test_merge_gates_the_head_that_merges():
+    """The caller closes the ticket on the branch before gating, so /merge's
+    prerequisite is one equality: ruled tip == origin/<branch> at merge time.
+    The helper then pushes nothing, because it skips a ticket already closed
+    and archived; the gate reads exit criteria from tickets/closed/ (ticket
+    1153, third union review)."""
+    merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
+    assert "Close the ticket on the branch before gating." in merge
+    assert (
+        "the gate's verdict is APPROVED and the gate's `ruled_tip_sha` equals `git rev-parse "
+        "origin/<branch>` at merge time, read after `git fetch origin`; otherwise "
+        "re-gate, do not merge." in merge
+    )
+    assert "PRs gated before this rule (#1522, #1523)" in merge
+    assert "rev-list --count <ruled>" not in merge
+    # Premise: the helper skips an already closed and archived ticket.
+    assert 'compgen -G "tickets/closed/${tid}-*.erg"' in ERG_PR_MERGE
+    assert "is already closed and archived." in ERG_PR_MERGE
+    gate = " ".join((SKILLS / "verify-gate" / "SKILL.md").read_text().split())
+    assert "`tickets/<id>-*.erg` **or** `tickets/closed/<id>-*.erg`" in gate
+    raid = " ".join((SKILLS / "raid" / "SKILL.md").read_text().split())
+    assert "Close before gating:" in raid
+    assert "closes the PR's ticket on the PR branch" in raid
+
+
+def test_gate_sessions_are_caller_owned_and_capped_on_every_path():
+    """Gaze no longer calls the gate, so the gate must not key its round cap on
+    a gaze caller: a raid calling it directly would land in the old standalone
+    override and run a third round (ticket 1153, union review blocker 2)."""
+    gate = (SKILLS / "verify-gate" / "SKILL.md").read_text()
+    norm = " ".join(gate.split())
+    assert "standalone-override" not in gate
+    assert "From `/gaze`" not in gate
+    assert "called by `/gaze`" not in norm and "from /gaze" not in norm.lower()
+    sessions = " ".join(gate.split("## Gate sessions", 1)[1].split("\n## ", 1)[0].split())
+    assert "Round > 2 → immediate ESCALATE, whoever calls" in sessions
+    assert "does not reset the count" in sessions
+    assert "there is no standalone override" in sessions
+    assert "`session=<uuid>`" in sessions
+    raid = " ".join((SKILLS / "raid" / "SKILL.md").read_text().split())
+    assert "session=<uuid>" in raid
+    assert "never runs the gate a third time" in raid
 
 
 def test_verify_has_containment_postcondition():
@@ -714,3 +784,64 @@ def test_verify_gate_recounts_the_breaker_itself():
     assert "does not trust the caller's count" in breakers
     rules = gate.split("## Decision rules", 1)[1].split("## ", 1)[0]
     assert "counted by the gate itself on every invocation path" in rules
+
+
+def test_ruled_tip_field_has_one_name_across_gate_and_callers():
+    """/gaze 1523: posted verdicts carry `ruled_tip_sha:` while merge and raid
+    read `Ruled tip SHA`. The name the gate posts is the name callers read."""
+    gate = (SKILLS / "verify-gate" / "SKILL.md").read_text()
+    posted = gate.split("2. PR comment posted", 1)[1].split("```", 2)[1]
+    names = re.findall(r"^\s*([\w ]+): <full commit SHA", posted, re.MULTILINE)
+    assert len(names) == 1, names
+    field = names[0].strip()
+    assert re.search(rf"^{field}: <full commit SHA", gate.split("## Verdict shape", 1)[1], re.MULTILINE)
+    spelling = re.compile(r"ruled[ _-]?tip[ _-]?sha", re.IGNORECASE)
+    for name in ("merge", "raid", "dashboard", "verify-gate"):
+        text = (SKILLS / name / "SKILL.md").read_text()
+        found = set(spelling.findall(text))
+        assert found == {field}, (name, found)
+    assert f"the gate's `{field}` equals `git rev-parse" in (SKILLS / "merge" / "SKILL.md").read_text()
+
+
+def test_merge_checks_three_way_tip_equality_and_conditional_push():
+    """PR 1539 review: erg-pr-merge always runs `git push origin HEAD`, so
+    'pushes nothing' holds only when HEAD == origin/<branch> == ruled tip,
+    read after a fetch."""
+    merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
+    assert "git push origin HEAD" in ERG_PR_MERGE  # premise
+    assert (
+        "`git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>` "
+        "== the gate's `ruled_tip_sha`" in merge
+    )
+    assert "so it pushes no commit of its own" not in merge
+    assert "so the retry pushes nothing" not in merge
+    assert "pushes nothing only when that three-way equality holds" in merge
+
+
+def test_merge_accepted_gaze_result_is_not_tautological():
+    """PR 1539 review: 'Accepted' mirrors raid — present and not stale
+    against the branch tip."""
+    merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
+    assert "its `reviewed_head_sha` is the reviewed head" not in merge
+    assert "its `reviewed_head_sha` is not stale against the branch tip" in merge
+
+
+def test_dashboard_allows_only_the_documented_close_exception():
+    dash = " ".join((SKILLS / "dashboard" / "SKILL.md").read_text().split())
+    assert "a later ticket-close commit from the merge helper is normal" not in dash
+    assert "#1522, #1523" in dash
+
+
+def test_git_rule_rebases_before_round_one_gate_and_syncs_after_gaze():
+    rule = " ".join((REPO / "rules" / "git.md").read_text().split())
+    assert "syncs after `/gaze`" in rule
+    assert "before the round-1 `/verify-gate`" in rule
+    assert "a later rebase changes the ruled tip and spends the PR's single re-gate" in rule
+
+
+def test_gate_tree_is_per_session_and_round_and_repo_is_required():
+    gate = (SKILLS / "verify-gate" / "SKILL.md").read_text()
+    assert 'gate-<pr-number>"' not in gate
+    assert 'gate_tree="$primary_root/.claude/worktrees/gate-<pr-number>-<session-id>-r<round>"' in gate
+    assert "`<pr-number>` alone" not in gate
+    assert '"no repo argument"' in gate

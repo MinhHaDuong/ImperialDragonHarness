@@ -411,3 +411,20 @@ def test_next_depends_on_the_result_and_templates_agree():
     assert "no gate" in escalate and "/verify-gate" not in escalate
     assert "NOT-RUN" in escalate and "skipped (--force-approve)" in escalate
     assert "/verify-gate" in core_next.split("ESCALATE", 1)[0]
+
+
+def test_next_gates_the_current_head_once_and_escalate_goes_to_the_author():
+    """PR 1539 review: the caller gates the current branch head after its
+    fixes and the ticket close, not reviewed_head_sha; the one re-gate is
+    /verify-gate § Gate sessions; ESCALATE goes to the author with no
+    unbounded /gaze re-run (same wording as raid and merge)."""
+    core_next = _next_lines()[0]
+    gate_part, escalate = core_next.split("ESCALATE", 1)
+    assert "on reviewed_head_sha" not in core_next
+    assert "the current branch head after any fixes and the ticket close" in gate_part
+    assert "§ Gate sessions" in gate_part
+    assert "re-runs /gaze" not in escalate
+    assert "the review never completed, and the PR goes to the author" in escalate
+    invariants = _section("## Invariants")
+    assert "again after any fix" not in invariants
+    assert "the single re-gate (`/verify-gate` § Gate sessions)" in " ".join(invariants.split())

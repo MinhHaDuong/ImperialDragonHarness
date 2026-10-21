@@ -19,7 +19,9 @@
 #   1.5 Cross-check each claim against the branch tip: abort if the claimed
 #      ticket file is absent (force-replaced branch, PR #522); warn on a
 #      title/claim disagreement. Override: ERG_PR_MERGE_ALLOW_MISSING_TICKET=1
-#   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push (always)
+#   2. erg close NNNN "autoclosed — PR #N" + git add + commit + push
+#      (skipped when the ticket is already closed on the branch: the normal
+#      case after close-before-gating)
 #   3. Queue auto-merge via the forge CLI (pending checks are fine: the forge
 #      gates on them); if auto-merge is disabled, merge directly only when the
 #      one-shot rollup read shows every check done. Never waits: ask
