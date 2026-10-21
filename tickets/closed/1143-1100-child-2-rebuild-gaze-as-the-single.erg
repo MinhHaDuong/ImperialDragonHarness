@@ -2,12 +2,15 @@
 Title: 1100 child 2: rebuild gaze as the single review entry
 Created: 2026-10-20
 Author: reviewer
+Closed: tracker complete: 1153 merged and integrated; 1154 closed as superseded, its design deferred to the dyne format (author, 2026-10-21)
 
 --- log ---
 2026-10-20T08:22Z reviewer created
 2026-10-20T15:15Z reviewer split into 1153 (1143a, shrink, no dependency on 1142) and 1154 (1143b, execute the plan, blocked by 1142); this ticket is now a tracker.
 2026-10-21T09:09Z reviewer note blocker 1153 closed — Blocked-by removed.
 2026-10-21T14:55Z reviewer note blocker 1154 closed — Blocked-by removed.
+2026-10-21T15:31Z reviewer reviewer note 2026-10-21 closing at the author's word. Integration review of 1153 done on main earlier today (criteria 1 to 4 verified, make check 2053 passed, 4 skipped); child 1154 closed as superseded and deferred to the dyne format, so there is nothing to integrate for it. Criterion 4 (request and response files) is deferred, not met.
+2026-10-21T15:31Z reviewer closed — tracker complete: 1153 merged and integrated; 1154 closed as superseded, its design deferred to the dyne format (author, 2026-10-21)
 
 --- body ---
 ## Context
@@ -21,9 +24,9 @@ Child 2 of tracker 1100 (about 3.5 agent-h, 0.4 author-h). Plan of record: docs/
 Gaze rebuilt as the review entry: inline, transport preflight with detached fallback, controller-written artifacts, validated return schema; `mode=code|prose|both`; gaze never returns APPROVED ("gaze reviews, verify-gate gates"); review-pr's code panel becomes the code mode; the old battery and `agents/gaze-pr-review.md` are deleted; portable simplify is a declared seat.
 
 ## Exit criteria (carried over; each is met by the child named)
-- [ ] A test shows gaze never returns APPROVED; verify-gate remains the gate (1153)
-- [ ] The old battery and `agents/gaze-pr-review.md` are gone with no alias; callers (hunt, raid, merge, verify-gate, dashboard) updated and grep-proven (1153)
-- [ ] Gaze's body is split into a core plus references so it stops being a 57 KB resident-on-invoke document (this also satisfies ticket 1131's gaze part and unblocks ticket 1130's gaze history removal) (1153)
-- [ ] Gaze executes the plan through controller-written request/response files, with transport preflight, detached fallback and a validated return schema (1154)
-- [ ] Catalog regenerated and drift check clean in each child PR; each PR under the 15-file breaker, else split
-- [ ] Integration of 1153 and 1154 verified before this tracker closes
+- [x] A test shows gaze never returns APPROVED; verify-gate remains the gate (1153)
+- [x] The old battery and `agents/gaze-pr-review.md` are gone with no alias; callers (hunt, raid, merge, verify-gate, dashboard) updated and grep-proven (1153)
+- [x] Gaze's body is split into a core plus references so it stops being a 57 KB resident-on-invoke document (this also satisfies ticket 1131's gaze part and unblocks ticket 1130's gaze history removal) (1153)
+- [x] Gaze executes the plan through controller-written request/response files, with transport preflight, detached fallback and a validated return schema (1154): DEFERRED to the dyne format by the author on 2026-10-21; 1154 closed as superseded, design kept on tracker 1100
+- [x] Catalog regenerated and drift check clean in each child PR; each PR under the 15-file breaker, else split
+- [x] Integration of 1153 and 1154 verified before this tracker closes
