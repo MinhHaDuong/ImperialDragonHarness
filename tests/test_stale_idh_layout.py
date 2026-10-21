@@ -58,15 +58,7 @@ PROVENANCE = {
 
 # Provenance for skills/ (ticket 1025): path relative to skills/ -> substrings
 # each surviving line must carry. Same path-scoped keying as PROVENANCE.
-SKILLS_PROVENANCE = {
-    # The erg-pr-merge comment must stay accurate to the live operator-owned
-    # settings, which still carry the retired-layout allow rule as a legacy
-    # alias for migrated installs; quoting the rule means quoting its path.
-    # The line is legitimate ONLY as that legacy-alias record.
-    "merge/erg-pr-merge": (
-        "legacy alias",
-    ),
-}
+SKILLS_PROVENANCE: dict[str, tuple[str, ...]] = {}
 
 
 def _stale_matches_under(root):

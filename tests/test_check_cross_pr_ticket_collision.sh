@@ -5,7 +5,7 @@
 # add the same ticket ID and every per-branch check passes. This script fails a
 # PR whose added ticket ID is also added by another open PR.
 #
-# Method mirrors tests/test_erg_pr_merge.sh: a self-contained temp repo, a `gh`
+# Method (from the retired merge-helper suite): a self-contained temp repo, a `gh`
 # stub first on PATH dispatching on "$1 $2", canned responses from STUB_* env
 # vars, and the real script run against it. The `gh api ... --jq` call is stubbed
 # to emit filenames directly (emulating gh's built-in jq), matching what the

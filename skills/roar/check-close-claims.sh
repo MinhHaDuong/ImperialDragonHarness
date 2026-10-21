@@ -107,8 +107,6 @@ ticket_state() {
 
 # Fence tracker of the merge recipe's claim grammar (ticket 1152): tags each
 # line `L` live, `F` inside a closed fence, `U` inside a fence never closed.
-# Copied rather than sourced so each skill script stays standalone;
-# tests/test_check_close_claims.sh keeps the two copies byte-identical.
 fence_map() {
     awk '
     function fence(line,   c, n) {

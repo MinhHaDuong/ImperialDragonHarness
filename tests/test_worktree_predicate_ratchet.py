@@ -3,7 +3,7 @@
 A `[ -f .git ]` test — "this dir has a `.git` FILE, so it must be a linked
 worktree" — is the weak class shape: it also fires on a submodule and on any
 ad-hoc worktree outside the harness convention, and trusts the path blindly.
-It bit erg-pr-merge (fixed, 0301) and two sibling guards (fixed, 0308;
+It bit the merge helper (fixed, 0301; retired by ticket 1178) and two sibling guards (fixed, 0308;
 both since deleted by ticket 0976).
 The correct detection resolves git's own dirs (`git rev-parse
 --absolute-git-dir` vs `--git-common-dir`) or verifies the harness
@@ -42,12 +42,7 @@ WEAK_PREDICATE = re.compile(r"""-[fe][ \t]+["'${}]*[\w./{}-]*\.git\b""")
 # explanatory comment that names the old weak check to warn against it — none is
 # live code. Shrinks only when such a comment is removed; a NEW hit (live or
 # comment) that is not listed here fails the ratchet.
-ALLOWLIST: set[tuple[str, str]] = {
-    (
-        "skills/merge/erg-pr-merge",
-        "# `[ -f .git ]`: that matched ANY dir with a `.git` FILE — a submodule, or a",
-    ),
-}
+ALLOWLIST: set[tuple[str, str]] = set()
 
 SCAN_ROOTS = ("scripts", "skills")
 

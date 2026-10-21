@@ -1,8 +1,8 @@
 # Close claims and edge cases
 
 When `/merge` reads this: step 0 (parsing the body), step 1 (closing), a
-merge that skipped step 1, and the checklist of cases the merge helper
-script used to handle.
+merge that skipped step 1, and the checklist of cases the retired merge
+helper handled (ticket 1178).
 
 ## Ticket lines in the body
 
@@ -62,7 +62,7 @@ claims, which is why step 0 normalizes them.
 
 ## Edge-case checklist
 
-Each duty the merge helper script carried, and where it lives in the recipe.
+Each duty the retired merge helper carried, and where it lives in the recipe.
 
 | Case | Where |
 |---|---|
