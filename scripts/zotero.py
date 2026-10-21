@@ -2035,20 +2035,54 @@ def _bib_file_values(value: str) -> list[str]:
     return paths
 
 
-def discover_reconcile_files(root: Path) -> dict[str, Any]:
-    """Find BibTeX-linked staging files and orphans without touching Zotero.
+def project_bib_paths(root: Path) -> list[str]:
+    """`bib_paths` of `.zotero-reconcile.json`: the bibliographies the
+    project names itself. Absent file or key: none. Not a list of strings:
+    ValueError, so a typo cannot silently fall back to the default."""
+    config_file = root / ".zotero-reconcile.json"
+    if not config_file.is_file():
+        return []
+    config = json.loads(config_file.read_text())
+    paths = config.get("bib_paths", []) if isinstance(config, dict) else []
+    if not isinstance(paths, list) or not all(
+            isinstance(p, str) and p.strip() for p in paths):
+        raise ValueError(".zotero-reconcile.json: bib_paths must be a list "
+                         "of file paths")
+    return paths
 
-    A BibTeX file may sit at the repository root or one directory below it.
-    Only paths within the repository are scanned. If BibTeX exists but carries
-    no usable staging path, report that uncertainty instead of defaulting to
-    `docs/` and pretending the sweep looked everywhere.
-    """
-    root = root.resolve()
-    bib_files = sorted(set(root.glob("*.bib")) | set(root.glob("*/*.bib")))
+
+def named_bib_files(root: Path, names: list[str],
+                    errors: list[str]) -> set[Path]:
+    """The bibliographies named by --bib or `bib_paths`, relative to the
+    root; one that is missing or leaves the repository is an error."""
+    found: set[Path] = set()
+    for name in names:
+        bib = (root / name).resolve()
+        if not bib.is_relative_to(root):
+            errors.append(f"BibTeX file outside repository: {name}")
+        elif not bib.is_file():
+            errors.append(f"BibTeX file not found: {name}")
+        else:
+            found.add(bib)
+    return found
+
+
+def _under_skipped_dir(path: Path, base: Path) -> bool:
+    """True when `path` sits below a directory of `base` named `_...`."""
+    return any(part.startswith("_") for part in path.relative_to(base).parts[:-1])
+
+
+def link_bib_entries(root: Path, bib_files: list[Path], errors: list[str],
+                     only_under: Path | None = None,
+                     skip_underscore: bool = False
+                     ) -> tuple[list[dict[str, Any]], set[Path], set[Path]]:
+    """(linked, linked_paths, staging_dirs) from the `file=` fields of
+    `bib_files`. With `only_under`, entries linking elsewhere are ignored.
+    Like the orphans, a linked file with an extension the helper does not read
+    is left out, and with `skip_underscore` so is one below a `_...` directory."""
     linked: list[dict[str, Any]] = []
     linked_paths: set[Path] = set()
     staging_dirs: set[Path] = set()
-    errors: list[str] = []
     for bib in bib_files:
         if not bib.resolve().is_relative_to(root):
             errors.append(f"BibTeX file outside repository: {bib.relative_to(root)}")
@@ -2065,6 +2099,8 @@ def discover_reconcile_files(root: Path) -> dict[str, Any]:
                          [root / candidate, bib.parent / candidate])
                 resolved = next((p.resolve() for p in paths if p.is_file()),
                                 paths[0].resolve())
+                if only_under is not None and not resolved.is_relative_to(only_under):
+                    continue
                 if not resolved.is_relative_to(root):
                     errors.append(f"file path outside repository: {bib.relative_to(root)} "
                                   f"entry {entry.get('_key', '?')}")
@@ -2075,6 +2111,11 @@ def discover_reconcile_files(root: Path) -> dict[str, Any]:
                                   f"file: {relative}")
                 else:
                     staging_dirs.add(root / relative.parts[0])
+                if resolved.suffix.lower() not in STAGING_EXTENSIONS:
+                    continue
+                if skip_underscore and len(relative.parts) > 1 and _under_skipped_dir(
+                        resolved, only_under or root / relative.parts[0]):
+                    continue
                 if not resolved.is_file():
                     errors.append(f"missing file: {resolved.relative_to(root)} "
                                   f"in {bib.relative_to(root)}")
@@ -2086,19 +2127,48 @@ def discover_reconcile_files(root: Path) -> dict[str, Any]:
                 linked.append({"path": resolved, "bib": bib,
                                "key": entry.get("_key", ""), "entry": entry})
                 linked_paths.add(resolved)
+    return linked, linked_paths, staging_dirs
+
+
+def discover_reconcile_files(root: Path, bib_names: list[str] | None = None,
+                             skip_underscore: bool = False) -> dict[str, Any]:
+    """Find BibTeX-linked staging files and orphans without touching Zotero.
+
+    A BibTeX file may sit at the repository root or one directory below it,
+    or be named (`bib_names`: --bib, `bib_paths`) wherever it sits in the
+    repository. Only paths within the repository are scanned. If BibTeX
+    exists but carries no usable staging path, report that uncertainty
+    instead of defaulting to `docs/` and pretending the sweep looked
+    everywhere.
+    """
+    root = root.resolve()
+    errors: list[str] = []
+    by_target: dict[Path, Path] = {}
+    for bib in (sorted(named_bib_files(root, bib_names or [], errors))
+                + sorted(root.glob("*.bib")) + sorted(root.glob("*/*.bib"))):
+        by_target.setdefault(bib.resolve(), bib)  # a symlink read once
+    bib_files = sorted(by_target.values())
+    linked, linked_paths, staging_dirs = link_bib_entries(
+        root, bib_files, errors, None, skip_underscore)
     if not bib_files:
         staging_dirs.add(root / "docs")
     elif not staging_dirs:
         errors.append("BibTeX files found but no staging directory could be inferred")
     return {"bib_files": bib_files, "linked": linked,
-            "orphans": staged_files(root, staging_dirs, linked_paths, errors),
+            "orphans": staged_files(root, staging_dirs, linked_paths, errors,
+                                    skip_underscore),
             "errors": errors, "staging_dirs": sorted(staging_dirs)}
 
 
-def discover_directory(root: Path, directory: Path) -> dict[str, Any]:
-    """The --dir mode: every staging file under `directory`, no BibTeX."""
+def discover_directory(root: Path, directory: Path,
+                       bib_names: list[str] | None = None,
+                       skip_underscore: bool = False) -> dict[str, Any]:
+    """The --dir mode: every staging file under `directory`. Named
+    bibliographies (--bib, `bib_paths`) describe the files they link there;
+    without any, no BibTeX is read."""
     root, directory = root.resolve(), (root / directory).resolve()
     errors: list[str] = []
+    bib_files = sorted(named_bib_files(root, bib_names or [], errors))
     if not directory.is_relative_to(root):
         errors.append(f"staging directory outside repository: {directory}")
         dirs: set[Path] = set()
@@ -2107,15 +2177,21 @@ def discover_directory(root: Path, directory: Path) -> dict[str, Any]:
         dirs = set()
     else:
         dirs = {directory}
-    return {"bib_files": [], "linked": [],
-            "orphans": staged_files(root, dirs, set(), errors),
+    linked, linked_paths, _ = (link_bib_entries(root, bib_files, errors, directory,
+                                     skip_underscore)
+                               if dirs else ([], set(), set()))
+    return {"bib_files": bib_files, "linked": linked,
+            "orphans": staged_files(root, dirs, linked_paths, errors,
+                                    skip_underscore),
             "errors": errors, "staging_dirs": sorted(dirs)}
 
 
 def staged_files(root: Path, staging_dirs: set[Path], linked_paths: set[Path],
-                 errors: list[str]) -> list[Path]:
+                 errors: list[str], skip_underscore: bool = False) -> list[Path]:
     """Staging files under `staging_dirs` no BibTeX entry links; a file or
-    directory reaching outside `root` is an error, not a row."""
+    directory reaching outside `root` is an error, not a row. With
+    `skip_underscore`, a file below a directory named `_...` (say
+    `_superseded/`) is not staged."""
     orphans: list[Path] = []
     for directory in sorted(staging_dirs):
         if not directory.is_dir():
@@ -2128,6 +2204,8 @@ def staged_files(root: Path, staging_dirs: set[Path], linked_paths: set[Path],
                 errors.append(f"cannot scan symlinked staging directory: {path}")
                 continue
             if not path.is_file() or path.suffix.lower() not in STAGING_EXTENSIONS:
+                continue
+            if skip_underscore and _under_skipped_dir(path, directory):
                 continue
             resolved = path.resolve()
             if not resolved.is_relative_to(root):
@@ -2415,8 +2493,14 @@ def cmd_check_staging(args: argparse.Namespace) -> int:
         emit_reconcile_report({"verdict": "unchecked",
                                "error": "--dir is empty"}, args.out)
         return 1
-    found = (discover_directory(root, Path(args.dir)) if args.dir
-             else discover_reconcile_files(root))
+    skip = bool(getattr(args, "skip_underscore_dirs", False))
+    try:
+        bib_names = project_bib_paths(root) + list(getattr(args, "bib", None) or [])
+    except (OSError, ValueError) as exc:
+        emit_reconcile_report({"verdict": "unchecked", "error": str(exc)}, args.out)
+        return 1
+    found = (discover_directory(root, Path(args.dir), bib_names, skip) if args.dir
+             else discover_reconcile_files(root, bib_names, skip))
     if not (found["linked"] or found["orphans"]):
         if found["errors"]:
             # Nothing to compare, and discovery failed: say so, without Zotero.
@@ -2727,6 +2811,14 @@ def main() -> int:
     pr.add_argument("--dir", help="check every staging file under this "
                                   "directory of the root instead of the "
                                   "BibTeX-linked ones")
+    pr.add_argument("--bib", action="append", metavar="PATH",
+                    help="a BibTeX file of the root to read besides the "
+                         "default ones (repeatable; also `bib_paths` in "
+                         ".zotero-reconcile.json); with --dir it describes "
+                         "the files it links under that directory")
+    pr.add_argument("--skip-underscore-dirs", action="store_true",
+                    help="leave out files below a directory whose name "
+                         "starts with an underscore (e.g. _superseded/)")
     pr.add_argument("--out", help="write the full JSON report to this path")
     pr.add_argument("--apply", action="store_true",
                     help="create the absent PDFs .bib entries describe, only "

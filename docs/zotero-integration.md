@@ -134,7 +134,7 @@ One skill named `zotero`, verbs as arguments — the command surface mirrors the
 |---|---|---|
 | `import <pdf-or-url>...` | file or URL intake → new items with attachments | `extract-metadata`, `find-work`, `create-items`; URL probing via `probe-url.py` |
 | `suggest-edits` | report missing fields on existing items | `suggest-edits` |
-| `check-staging` | report staging ↔ library drift, `.bib`-linked files or one directory; repair it with `--apply` | `check-staging` (merges the former two verbs, ticket 1116) |
+| `check-staging` | report staging ↔ library drift, `.bib`-linked files or one directory; repair it with `--apply`; `--bib` names a bibliography anywhere, `--skip-underscore-dirs` leaves out `_superseded/`-style folders | `check-staging` (merges the former two verbs, ticket 1116) |
 | `report-duplicates` | hash-dedup report, library against itself, JSON | `report-duplicates` (ticket 0485) |
 | `suggest-attachments` | by-hand attachment of a file to an existing stub | `suggest-attachments` (reports only since ticket 1113) |
 
