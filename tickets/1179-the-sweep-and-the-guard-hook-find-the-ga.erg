@@ -38,4 +38,13 @@ there. That also gives the right answer when the base moved after the record was
       unchanged.
 - [ ] The guard doc (`docs/2026-10-21-main-update-guard.md`) states how a forge merge is
       matched to its record.
+- [ ] Delete the sweep's forge-check path (author's question and decision direction, 2026-10-21: GitHub
+      is a sync host, GitHub Actions is disabled, the ruleset requiring checks is disabled, so no new
+      merge has forge check runs): `GhForge.required_checks`, `check_conclusions`, `_checks_verdict`,
+      the required-names read from rulesets, and their tests; keep only what the gate record needs. The
+      sweep becomes git-only (no `gh`), which also removes the cron PATH worry of its guide.
+- [ ] The sweep's range starts at the commit that activated the gate (the merge of PR 1569) instead of
+      a rolling 8 days, so merges before the activation are not reported as findings; a `--since <sha>`
+      option stays for the author. A positive control shows a pre-activation merge is out of range and a
+      post-activation merge without a record is a finding.
 - [ ] Nothing here requires a particular agent runtime; PR under the 15-file breaker.
