@@ -248,6 +248,71 @@ def append_to_pr(pr, line, project):
     raise ValueError(f"PR #{pr} body lost the appended line twice; append it by hand")
 
 
+SEAT = re.compile(r"seat: (\S+) · runtime=(\S+) · family=(\S+) · route=(\S+) · model=([^·]+?) · status: (ran|failed|skipped)")
+NOT_OBSERVED = "not observed"
+
+
+def seat_lines(results, body, masked_evidence=None):
+    """Return (reviewer lines to append, capture failures) from gaze result comments (ticket 1155).
+
+    Every `seat:` line of the results is one review attempt. A seat the body's block already
+    carries (gaze appends live, ticket 1151) is not repeated; a body seat the list misses, a
+    list with no seat, or an unobserved model without --masked-evidence is a capture failure.
+    """
+    seats, failures = [], []
+    for line in results.splitlines():
+        if line.startswith("seat: "):
+            match = SEAT.fullmatch(line.strip())
+            if match:
+                seats.append(match.groups())
+            else:
+                failures.append(f"malformed seat line: {line}")
+    if not seats:
+        return [], failures + ["the review result lists no seat"]
+    present = {}
+    for line in body.splitlines():
+        if line.startswith("reviewer: step=review · "):
+            name = identity(line[10:]).get("seat")
+            present[name] = present.get(name, 0) + 1
+    lines = []
+    for seat, runtime, _family, route, model, status in seats:
+        if present.get(seat):
+            present[seat] -= 1
+            continue
+        if model != NOT_OBSERVED:
+            model_field = f"model={model}"
+        elif masked_evidence:
+            model_field = f"model-state=runtime-masked · model-evidence={anchor(masked_evidence)}"
+        else:
+            failures.append(f"seat {seat}: model not observed (pass --masked-evidence path:line)")
+            continue
+        line = (f"reviewer: step=review · seat={seat} · runtime={runtime} · {model_field}"
+                f" · effort=not-stated · route={route} · independence=not-stated · status: {status}")
+        identity(line[10:], strict=True)
+        lines.append(line)
+    failures += [f"seat {name} is in the PR body but not in the review result" for name, n in present.items() if n]
+    return lines, failures
+
+
+def append_seats(args):
+    """--seats FILE prints the stdin body with the lines; --seats-pr PR edits the live body."""
+    if args.seats_pr:
+        results = gh("pr", "view", str(args.seats_pr), "--json", "comments", "--jq",
+                     '[.comments[].body | select(startswith("## /gaze result"))] | join("\\n")')
+        body = gh("pr", "view", str(args.seats_pr), "--json", "body", "--jq", ".body // \"\"")
+    else:
+        results, body = args.seats.read_text(), sys.stdin.read()
+    lines, failures = seat_lines(results, body, args.masked_evidence)
+    if args.seats_pr:
+        if lines:
+            append_to_pr(args.seats_pr, "\n".join(lines), args.project)
+    else:
+        sys.stdout.write(append_line(body, "\n".join(lines), args.pr, args.project) if lines else body)
+    for failure in failures:
+        LOG.error("attribution-record: capture failure: %s", failure)
+    return 1 if failures else 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("record", nargs="?", type=Path, help="record file; default stdin")
@@ -262,7 +327,21 @@ def main():
     parser.add_argument("--extract", action="store_true",
                         help="read a merged PR body on stdin, print its block as a record for --capture (needs --merged)")
     parser.add_argument("--merged", metavar="DATE", help="merge date (YYYY-MM-DD) replacing pending in --extract")
+    parser.add_argument("--seats", type=Path, metavar="RESULT",
+                        help="gaze result comment(s) file; print the stdin PR body with the seats' reviewer lines added")
+    parser.add_argument("--seats-pr", type=int, metavar="PR",
+                        help="as --seats, reading the PR's gaze result comments and editing its live body")
+    parser.add_argument("--masked-evidence", metavar="PATH:LINE",
+                        help="with --seats: evidence anchor for seats whose model was not observed")
     args = parser.parse_args()
+    if args.seats or args.seats_pr:
+        if args.record or args.capture or args.pr_body or args.append is not None or args.extract:
+            parser.error("--seats takes no other mode")
+        try:
+            return append_seats(args)
+        except ValueError as error:
+            LOG.error("attribution-record: %s", error)
+            return 1
     if args.append is not None or args.extract:
         if args.record or args.capture or args.audience or args.pr_body or (args.append is not None and args.extract):
             parser.error("--append and --extract take no other mode")
