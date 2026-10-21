@@ -2,7 +2,7 @@
 
 Two layers of coverage:
 
-- **Contract ratchets + toolchain-absent behaviour** (fast tier, no LaTeX):
+- **Bundled helper + toolchain-absent behaviour** (fast tier, no LaTeX):
   the skill bundles its helper, its description stays searchable, and the
   helper degrades with a clear, actionable message when latexdiff or a
   compiler is missing.
@@ -38,7 +38,7 @@ def skill_text() -> str:
     return SKILL.read_text()
 
 
-# --- Contract ratchets (fast) -------------------------------------------------
+# --- Bundled helper (fast) ----------------------------------------------------
 
 def test_bundled_script_exists():
     assert SCRIPT.exists(), "track-changes-pdf must bundle track_changes_pdf.py"

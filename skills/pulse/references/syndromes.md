@@ -56,4 +56,4 @@ Read only the entries your differential points to. Each gives the symptom, the u
 
 - **Causes.** Each wording change in a skill, rule or doc shipped with a test asserting its phrase is present; review rounds asked for "a ratchet"; a retired guard's tests outlived it.
 - **Evidence.** Test files that read only Markdown and assert `"<phrase>" in text`; prose PRs whose test file changed in step with the sentence; review rounds spent on test wording.
-- **Do not.** Count them as coverage, cut them all at once (some pin an interface string or a past incident, see *Thin the wording pins*), or answer with a guard on the tests: guard management belongs to this skill.
+- **Do not.** Count them as coverage, cut them all at once (some pin an interface string or a past incident, see *Thin the wording pins*), or answer with a guard on the tests: guard management (adding, removing or judging a test or check that guards a rule or another test) belongs to this skill.

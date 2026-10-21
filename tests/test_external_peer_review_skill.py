@@ -1,4 +1,4 @@
-"""external-peer-review bundles a portable script and documents its contract.
+"""external-peer-review bundles a portable script that resolves its credential safely.
 
 The skill solicits real external model reviews of a PDF and synthesizes them.
 These tests pin the bundled script's portability invariants (no project-specific
