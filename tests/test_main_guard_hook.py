@@ -226,34 +226,52 @@ def test_second_worktree_behaves_the_same(repos, mode, allowed):
 
 def _candidate(repo, parent_branch="side"):
     """A --no-ff merge of a branch into main, built without moving main."""
-    tree = rev(repo, f"{parent_branch}^{{tree}}")
+    tree = git(repo, "merge-tree", "--write-tree", "main", parent_branch).stdout.split()[0]
     main = rev(repo, "main")
     side = rev(repo, parent_branch)
     return git(repo, "commit-tree", tree, "-p", main, "-p", side, "-m", "Merge side").stdout.strip()
 
 
-@pytest.mark.parametrize("with_note", [True, False])
-def test_enforce_accepts_a_gated_merge_only_with_its_record(repos, with_note):
+def _gate_on(work, check):
+    """Declare the merge gate on main (warn mode lets this commit through)."""
+    (work / ".merge-gate.json").write_text(
+        '{"gate": "on", "scope": "s", "checks": [{"name": "t", "argv": ["%s"]}]}\n' % check)
+    git(work, "add", "-A")
+    git(work, "commit", "-q", "-m", "gate on")
+
+
+def _receipt(wt2):
+    """The real merge gate records its run on the candidate of (main, side)."""
+    return subprocess.run(
+        ["python3", str(GATE), "run", "--base", "main", "--head", "side"],
+        capture_output=True, text=True, env=_env(), cwd=wt2,
+    ).returncode
+
+
+@pytest.mark.parametrize("case", ["passing", "none", "failing", "edited-tree", "octopus"])
+def test_enforce_accepts_a_merge_only_with_a_passing_receipt_on_its_candidate(repos, case):
     work, wt2 = repos["work"], repos["wt2"]
+    _gate_on(work, "false" if case == "failing" else "true")
     git(work, "config", "idh.mainGuard", "enforce")
     git(work, "switch", "-q", "--detach")
     (wt2 / "feature").write_text("feature\n")
     git(wt2, "add", "-A")
     git(wt2, "commit", "-q", "-m", "feature")
-    cand = _candidate(wt2)  # other metadata than the gate's candidate, as a plain merge
-    if with_note:  # the record sits on the gate's candidate of the same two parents
-        gate_cand = subprocess.run(
-            ["python3", str(GATE), "candidate", "--base", "main", "--head", "side"],
-            capture_output=True, text=True, env=_env(), cwd=wt2, check=True,
-        ).stdout.strip()
-        assert gate_cand != cand
-        git(wt2, "notes", f"--ref={GATE_NOTES_REF}", "add", "-m", "fixture gate record", gate_cand)
+    if case != "none":
+        assert _receipt(wt2) == (1 if case == "failing" else 0)
+    merge = _candidate(wt2)  # other metadata than the gate's candidate, as a plain merge
+    if case == "edited-tree":
+        tree = rev(wt2, "side^{tree}")  # parents of the receipt, content of another tree
+        merge = git(wt2, "commit-tree", tree, "-p", "main", "-p", "side", "-m", "edited").stdout.strip()
+    if case == "octopus":
+        other = git(wt2, "commit-tree", rev(wt2, "main^{tree}"), "-p", "main", "-m", "other").stdout.strip()
+        merge = git(wt2, "commit-tree", rev(wt2, f"{merge}^{{tree}}"), "-p", "main", "-p", "side",
+                    "-p", other, "-m", "octopus").stdout.strip()
     old = rev(wt2, "main")
-    proc = git(wt2, "update-ref", "refs/heads/main", cand, old, check=False)
-    assert (proc.returncode == 0) is with_note, proc.stderr
-    if with_note:
-        rec = [r for r in journal(wt2) if r["phase"] == "prepared"][-1]
-        assert rec["decision"] == "gate-record" and rec["action"] == "allowed"
+    proc = git(wt2, "update-ref", "refs/heads/main", merge, old, check=False)
+    assert (proc.returncode == 0) is (case == "passing"), proc.stderr
+    rec = [r for r in journal(wt2) if r["phase"] == "prepared"][-1]
+    assert rec["decision"] == ("gate-record" if case == "passing" else "not-gated")
 
 
 def test_a_record_on_a_stale_candidate_does_not_pass(repos):

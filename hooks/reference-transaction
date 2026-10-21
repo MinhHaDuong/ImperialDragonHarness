@@ -21,10 +21,11 @@
 #                plain `fetch origin main:main` moves main in a transaction of
 #                its own, before origin/main). Covers scripts/sync-local-main.sh,
 #                `git pull` and the forge's merges coming home.
-#   gate-record  the new tip is a merge whose first parent is the current
-#                main and whose candidate, rebuilt from its two parents by
-#                scripts/merge-gate.py, carries a gate record (a note in
-#                refs/notes/gate, written by ticket 1156's merge gate).
+#   gate-record  the new tip is a two-parent merge whose first parent is the
+#                current main, whose tree is that of the candidate rebuilt
+#                from its parents by scripts/merge-gate.py, and whose
+#                candidate carries a passing gate record (refs/notes/gate,
+#                written by ticket 1156's merge gate).
 # Everything else (a local commit on main, a reset, branch -f, a deletion) is
 # not gated. One deletion cannot be refused: `delete main <old>` through
 # `update-ref --stdin` reaches the hook exactly as a `verify` does; it is
@@ -68,14 +69,18 @@ fi
 case "$git_argv" in *" fetch "*) ;; *) origin_new="" ;; esac
 case "$git_argv" in *" --stdin "*) stdin_tx=1 ;; *) stdin_tx=0 ;; esac
 
-# The gate receipt of merge $1: a non-empty note on the candidate that
-# scripts/merge-gate.py (its one builder) rebuilds from the merge's two
-# parents, so a merge made with other metadata than the candidate's (a plain
-# `git merge --no-ff`) finds the receipt too (ticket 1179).
+# The gate receipt of merge $1, through scripts/merge-gate.py beside hooks/
+# (the one builder of the candidate and reader of the record; ticket 1179):
+# exactly two parents, the tree of the candidate rebuilt from them, and a
+# passing record on that candidate. A merge made with other metadata than the
+# candidate's (a plain `git merge --no-ff`) passes; an edited tree, an octopus
+# or a failing record does not. Without the script nothing passes this way.
 gate_record_present() {
-    cand=$(python3 "$(dirname "$0")/../scripts/merge-gate.py" candidate \
-        --base "$1^1" --head "$1^2" 2>/dev/null) || return 1
-    [ -n "$(git notes --ref="$GATE_NOTES_REF" show "$cand" 2>/dev/null)" ]
+    git rev-parse -q --verify "$1^3" >/dev/null 2>&1 && return 1
+    gate_tool="$(dirname "$0")/../scripts/merge-gate.py"
+    cand=$(python3 "$gate_tool" candidate --base "$1^1" --head "$1^2" 2>/dev/null) || return 1
+    [ "$(git rev-parse -q --verify "$cand^{tree}")" = "$(git rev-parse -q --verify "$1^{tree}")" ] || return 1
+    python3 "$gate_tool" check --no-fetch --base "$1^1" --head "$1^2" >/dev/null 2>&1
 }
 
 # The url as FETCH_HEAD prints it: no user@, no trailing / or .git.
