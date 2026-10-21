@@ -86,7 +86,7 @@ restated in this launch block. Its FIRST action is to invoke the live contract:
 
 <!-- harness-extension-point: runtime skill-loader invocation. -->
 ```
-Skill(skill: "verify-adherence", args: "<branch> worktree=$primary_root/.claude/worktrees/review-<pr-number>")
+Skill(skill: "verify-adherence", args: "<branch> worktree=$primary_root/.claude/worktrees/review-<pr-number> semantic=caller")
 ```
 
 Substitute the resolved branch and absolute review-worktree path in the args.
@@ -94,12 +94,37 @@ Pass through `trace=<path>` when the caller supplied it. Do not embed or
 reimplement the verification steps here: the skill loader supplies the current
 procedure, including project-runner discovery, reference resolution, and trace
 checks. Wait for completion and return its structured verdict unchanged:
-`adherence: PASS|FAIL`, plus `mechanical_failures`, `semantic_findings`
-(each with `severity: blocking|nit`), and `untested_rules`. The orchestrator's
-early-exit reads `adherence` and the count of `blocking` findings. Propagate
-ESCALATE, a timeout, or an unparseable result as an infrastructure failure;
-never replace a missing verdict with PASS. Write the result to Agent A's
-phase artifact using the same completion protocol as the other reviewers.
+`adherence: PASS|FAIL`, plus `semantic_review`, `mechanical_failures`,
+`semantic_findings` (each with `severity: blocking|nit`), and
+`untested_rules`. Propagate ESCALATE, a timeout, or an unparseable result as
+an infrastructure failure; never replace a missing verdict with PASS. Write
+the result to Agent A's phase artifact using the same completion protocol as
+the other reviewers.
+
+**Gaze launches the semantic worker (ticket 1173).** `semantic=caller` keeps
+the seat read-only: it returns `semantic_review.status: delegated` with the
+applicability decision and `rule_sources`, and launches nothing. When that
+artifact lands with `adherence: PASS` and `applicable: true`, or the changed
+files include an instruction file, gaze launches one semantic worker itself, sequentially after the seat
+because it needs the seat's `rule_sources`: one background subagent writing `adherence-semantic.md` under the same
+artifact protocol and bounded poll, given the inputs and prompt of
+verify-adherence § 3 and the seat's `rule_sources`. Choose its model from the
+`route` skill. Record its observed worker id, route and launch evidence when
+it starts. Then fold the two returns, always, whether or not a worker was
+launched:
+
+```
+python3 "$IDH_ROOT/scripts/adherence_verdict.py" --seat <adherence.md> [--worker <adherence-semantic.md> --worker-id <id> --route <route> --launch-evidence <record> --completion-evidence <artifact path>] --changed <the PR's changed paths, always, never omitted or empty>
+```
+
+Its stdout is the adherence verdict gaze uses everywhere downstream; exit 1 is
+FAIL. The script fails any instruction-file diff without a completed, valid
+worker report as `adherence-infrastructure`, so a skipped phase cannot read as
+PASS; that infrastructure FAIL is unresolved phase 2 and gaze ESCALATEs.
+Exit 2 (unreadable seat or worker artifact, or an omitted or empty
+`--changed`) is an infrastructure failure, treated like
+`adherence-infrastructure` (ESCALATE), never a PASS or an ordinary FAIL. The
+script reads the last yaml fence of each artifact. The early-exit reads the merged `adherence` and its count of `blocking` findings.
 
 **Native `/review` and `/simplify`** are optional adapter seats, never the
 basis of the review. Phase 5 uses native `/simplify` when available and the
