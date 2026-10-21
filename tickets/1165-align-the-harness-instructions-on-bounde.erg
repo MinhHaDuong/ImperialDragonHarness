@@ -41,7 +41,7 @@ ticket) describes a homegrown waiter (systemd transient unit, one recorded outco
 live push, resume or pull). Parked, no code. It matters only if the aligned
 instructions leave Codex or Pi unable to resume after a wait; reopen it then.
 The Stopguard design (docs/2026-10-21-stopguard-design.md, tracker 1164) reads
-the same wait registry for its rule 2 and cites the "Waiting" paragraph this
+the same wait registry for its rule 2 and will cite the "Waiting" paragraph this
 ticket adds.
 
 ## Exit criteria

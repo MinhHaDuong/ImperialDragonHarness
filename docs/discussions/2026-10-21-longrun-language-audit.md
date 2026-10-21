@@ -4,8 +4,9 @@ Status: findings and proposed edits, 2026-10-21. No rule or skill was edited;
 another session revises the instructions. Companion to
 `2026-10-21-await-external-design.md` (the parked waiter design).
 
-Rebased on `origin/main` `b557aedb` (2026-10-21). No alignment edit had landed
-on waiting: no `adapters/runtime-hints.md`, no "Waiting" section, and
+Baselines in this note differ by read time; the Imagine-time redo (ticket 1165)
+supersedes all of them. First read: `origin/main` `b557aedb` (2026-10-21), where
+no alignment edit had landed on waiting: no `adapters/runtime-hints.md`, no "Waiting" section, and
 `rules/git.md:24` still says "wait for CI". Every quoted contradiction still
 reads as quoted. Lines that moved: merge/SKILL.md:96-100 is now :98, the padme
 line is :148, `rules/authoring-skills.md` "sequential-blocking" is :39, and
@@ -49,10 +50,9 @@ main; the rest are from the older tree. Rebase before editing.
 
 Recorded so the redo at Imagine time (ticket 1165) starts from them.
 
-- **R1 is fixed in a PR, not on main yet.** PR #1552 conditions the
+- **R1 is fixed on main.** PR #1552 (merge `04346aa7`) conditions the
   queued-merge wait on the runtime waking the session when a background command
-  exits, and the wait test pins the new condition. If it has merged, R1 is
-  closed; if not, the wording on main still parks a Codex caller.
+  exits, and the wait test pins the new condition. R1 is closed.
 - **Probe facts the instructions must respect.** Headless Claude Code hangs on
   a bare `&` child until killed (use the runtime's background facility or a
   detached unit, never a bare child). A Codex background terminal finishes
@@ -229,8 +229,8 @@ two do not land as competing lines.
 
 ## Where the hints list lives
 
-The four resident rule files total 17 789 characters against a cap of 17 800
-(`tests/test_rules_resident_budget.py:56`), so 11 characters remain, and
+The four resident rule files total 17 799 characters against a cap of 17 800
+(`tests/test_rules_resident_budget.py:56`), so 1 character remains, and
 raising the cap is a ticket. A new unconditional rules file would be resident
 too. Recommendation: `adapters/runtime-hints.md`, loaded on demand and not
 scanned by the agnostic checker. Resident cost: the § Waiting paragraph (about
