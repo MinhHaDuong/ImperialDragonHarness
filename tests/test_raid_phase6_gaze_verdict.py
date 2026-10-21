@@ -185,13 +185,44 @@ def test_phase4_flags_planned_pr_size():
     )
 
 
+GAZE_RESULT = "the `## /gaze result` PR comment"
+ESCALATE_STOP = (
+    "A gaze result of ESCALATE, or no accepted result (missing at the end of the "
+    "bounded wait, or its `reviewed_head_sha` stale against the branch tip), means "
+    "the gate is not run: the review never completed, and the PR goes to the author."
+)
+GATE_RUN = "Only on a gaze result of REVIEWED, or FINDINGS once fixed, run `/verify-gate <pr-number>"
+
+
+def _gaze_then_gate_violations(per_ticket: str) -> list[str]:
+    """What is wrong with raid's gaze-then-gate sequence (empty when right)."""
+    norm = " ".join(per_ticket.split())
+    bad = []
+    for name, sentence in (("gaze result", GAZE_RESULT), ("ESCALATE stop", ESCALATE_STOP), ("gate run", GATE_RUN)):
+        if sentence not in norm:
+            bad.append(f"missing {name}")
+    if not bad and not (norm.index(GAZE_RESULT) < norm.index(ESCALATE_STOP) < norm.index(GATE_RUN)):
+        bad.append("order is not gaze result, ESCALATE stop, gate")
+    return bad
+
+
 def test_phase6_runs_verify_gate_after_gaze():
-    """Gaze reviews and never approves (ticket 1153): raid must run
-    /verify-gate itself and take APPROVED only from it, on the branch tip."""
+    """Gaze reviews and never approves (ticket 1153): raid takes the gaze
+    result first, runs no gate on ESCALATE or a missing/stale result, and only
+    then runs /verify-gate (/gaze 1523: a review that never completed must not
+    reach a gate that could rule APPROVED)."""
+    assert _gaze_then_gate_violations(_per_ticket()) == []
+
+
+def test_phase6_sequence_check_fails_when_a_sentence_goes():
+    """Negative controls: removing either sentence, or swapping the order,
+    must fail the check above."""
     norm = " ".join(_per_ticket().split())
-    assert "then `/verify-gate`" in norm or "`/verify-gate <pr-number>" in norm
-    assert "never returns APPROVED" in norm
-    assert "`reviewed_head_sha`" in norm
+    assert _gaze_then_gate_violations(norm.replace(ESCALATE_STOP, ""))
+    assert _gaze_then_gate_violations(norm.replace(GAZE_RESULT, ""))
+    assert _gaze_then_gate_violations(norm.replace(GATE_RUN, ""))
+    swapped = norm.replace(ESCALATE_STOP, "").replace(GATE_RUN, GATE_RUN + " " + ESCALATE_STOP)
+    assert _gaze_then_gate_violations(swapped) == ["order is not gaze result, ESCALATE stop, gate"]
 
 
 def test_phase6_fix_loop_keeps_the_old_gaze_guards():
