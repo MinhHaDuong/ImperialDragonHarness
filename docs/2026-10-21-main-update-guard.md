@@ -73,8 +73,9 @@ linked worktree.
 ### Bypass boundary
 
 Setting `git -c core.hooksPath=/dev/null …`, editing the hook, or writing
-`FETCH_HEAD` by hand defeats the hook. Following the merge-gate spec §4.4, the
-guard stops accidents. It does not stop intent. The sweep covers the rest.
+`FETCH_HEAD` by hand defeats the hook. Following the merge-gate spec
+([`docs/2026-10-05-merge-gate-spec.md`](2026-10-05-merge-gate-spec.md),
+"Holding the line on `main`"), the guard stops accidents. It does not stop intent. The sweep covers the rest.
 
 ## The sweep: `scripts/main_sweep.py`
 

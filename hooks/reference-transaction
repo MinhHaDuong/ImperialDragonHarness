@@ -31,6 +31,8 @@
 # worktrees: $(git rev-parse --git-common-dir)/idh/main-journal.jsonl
 #
 # POSIX sh, git and /proc or ps only: no agent runtime is involved.
+# No `set -e` on purpose: a failing journal step must not turn into a
+# refused ref update (tests/test_main_guard_hook.py pins this).
 
 phase=$1
 MAIN_REF=refs/heads/main
