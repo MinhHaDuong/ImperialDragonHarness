@@ -30,8 +30,7 @@ directory: collection assumes launcher and seats share a filesystem.
    entry as reported or `no report`: a seat that only *returned* its findings
    reported to nobody. A `no report` seat gets the one retry of phase 6; never
    extend the deadline to hide a gap. A seat still missing after it is
-   **missing, not clear**: `PANEL-INTEGRITY: DEGRADED — missing perspective
-   report: <name>` and `dissent: unavailable`.
+   **missing, not clear**, recorded as § 2–4 Panel integrity says.
 
 The code perspectives, from which the orchestrator picks:
 
@@ -46,10 +45,9 @@ The code perspectives, from which the orchestrator picks:
 **Fan-out preflight.** Check that the delegation tool is available before
 launching. Spawn success is not a guarantee the agent exists: under a silent
 child cap a spawn returned success for seats that never listed
-(merge request #1143). When
-the runtime can list agents, poll that list; the manifest and the landed
-artifacts are the source of truth for what ran. Never run the perspectives
-sequentially yourself. When the tool is absent because this fork is itself a
+(merge request #1143). When the runtime can list agents, poll that list; the
+manifest and the landed artifacts are the source of truth for what ran. A
+failed launch is handled as § 2–4 Panel integrity says. When the tool is absent because this fork is itself a
 child, use the detached-seat substitution below; if nothing can launch, that
 is a battery NOT-RUN (§ 2–4).
 
@@ -57,7 +55,7 @@ is a battery NOT-RUN (§ 2–4).
 
 A child session does not inherit the runtime's agent connector. Substitute one
 detached, headless, non-interactive CLI process per seat, launched from the
-orchestrating session, never sequential self-review: a `claude -p "<prompt>"`
+orchestrating session: a `claude -p "<prompt>"`
 style invocation qualifies (measured working); a headless `vibe -p` session
 cannot serve, its permission policy denies it file tools. Embed the whole seat
 contract in the prompt: perspective, exit criteria, anchor HEAD, changed-file
@@ -79,9 +77,13 @@ budget or past the deadline is `no report`, never simulated.
 4. **Targeted tests only.** Gaze's seats, the adherence seat and `/verify-gate`
    run only the tests of the files the diff touches; none runs the full suite,
    which runs once, on the merge candidate, as the project's declared gate.
+   Where the project declares `.idh-checks.json`, the targeted run is its scoped
+   gate (`$IDH_ROOT/scripts/scoped-check.py`) and the review quotes its
+   `selected:` and `skipped:` lines, never calling a scoped pass full.
 5. **Write `<panel>/review.md` before posting**, so findings survive a forge
    outage or a failed post.
-6. **Post a single review** on the merge request, each finding attributed to its
+6. **Re-run the anchor first**, `python3 "$IDH_ROOT/scripts/review-anchor.py" <pr-number> --worktree "$review_tree"`: a nonzero `REVIEW-ANCHOR:` means the branch moved during review, so do not post.
+   **Post a single review** on the merge request, each finding attributed to its
    seat, with what ran, by which family, and why.
 7. **Verify it landed**: count the reviews before and after posting; if the
    count did not grow, the round did not happen. Say so and name
