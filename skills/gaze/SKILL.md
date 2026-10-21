@@ -187,7 +187,7 @@ fi
   - PR body, full diff, all existing review comments, all inline comments, all commit
     messages on the branch.
 - Check CI status for the merge request if the forge exposes it. If the forge CLI or API is unavailable, skip gracefully — CI status is informational only. If checks are configured and any are failing, note this in the setup summary; do not block on it (reviewer decides).
-- First run `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the battery: do not review an empty or wrong-tree diff or approve it. Carry its HEAD and changed-file roster into every review prompt.
+- First run `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the battery: do not review an empty or wrong-tree diff. Carry its HEAD and changed-file roster into every review prompt.
 - Compute PR size rename-aware: `pr_lines` = total insertions + deletions from `git diff origin/main...HEAD --stat`; `pr_files` = the CONTENT-BEARING entry count from `git diff --name-status -M origin/main...HEAD` — added, modified, and deleted each count 1; cross-reference rename entries with `git diff --numstat -M origin/main...HEAD`: a rename counts 1 iff its additions + deletions > 0, otherwise 0 (a genuinely content-free pure rename has zero line change in rename-aware numstat; R100 alone is insufficient because the similarity index ignores line order) — pure renames add no review load, and counting them via `--no-renames` inflates consolidation diffs past the breaker on arithmetic (ticket 1026, observed on PRs #1178/#1179).
 
   Size has one use: the un-reviewable breaker below. It selects no battery
@@ -543,12 +543,17 @@ next: run /verify-gate <pr-number> on reviewed_head_sha
 
 - `ESCALATE`: the breaker fired, the battery could not run (`battery: NOT-RUN`),
   any phase 2–5 errored or timed out, or the workspace could not be restored.
+  `--force-approve` is ESCALATE too, with `battery: skipped (--force-approve)`:
+  nothing was reviewed (§ `--force-approve`).
 - `FINDINGS`: any blocking adherence violation, any `request-changes` or
   `major` review verdict, any unresolved `verifiable:` minor, any simplify
   must-fix not applied. List them; the caller fixes (a coder on the PR
   branch, scoped to the list) and re-runs gaze or goes straight to the gate.
 - `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still
   checks every exit criterion and review comment against the diff.
+- `panel_integrity: DEGRADED` is a note on the result, not a fourth value: the
+  result follows the rules above, and the `PANEL-INTEGRITY:` line is carried
+  verbatim for the gate.
 
 Post the result as one PR comment (§ Output shape), then run the
 cleanup and containment (§ Cleanup and containment) before returning.
@@ -681,9 +686,10 @@ caller monitors it (§ Fork execution contract).
 
 Explicit human override. Usage: `/gaze <pr-number> --force-approve <reason>`.
 
-- Skips review: it spawns no reviewer battery (phases 2–5). Nothing in this run is
-  reviewed; the only review the PR has is whatever an earlier round already
-  posted, possibly none.
+- `--force-approve` returns `result: ESCALATE` with `battery: skipped (--force-approve)`;
+  nothing is reviewed, so REVIEWED is unavailable. The PR comment carries
+  `/gaze: force-approved — reason: <reason>` and `FORCE-APPROVED by <reason>`;
+  `/verify-gate` reads them as "no review was run", never as a pass.
 - Posts a loud PR comment: `/gaze: force-approved — reason: <reason>`. It lists
   the outputs of phases 2–5 that exist, so reviewers see what was waived.
 - Logs the override in the skill transcript.

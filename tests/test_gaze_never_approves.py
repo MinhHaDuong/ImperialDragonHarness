@@ -78,13 +78,6 @@ ALLOWED_LINES = (
         'Waiver).'
     ),
     (
-        '- First run `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number>'
-        ' --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A '
-        'nonzero `REVIEW-ANCHOR:` result stops the battery: do not review an '
-        'empty or wrong-tree diff or approve it. Carry its HEAD and changed-file '
-        'roster into every review prompt.'
-    ),
-    (
         'The 15-file count is a decomposition signal, not a hard wall. A waiver '
         'lifts only the file-count stop. It never lifts the review, simplify or '
         'any other breaker, and gaze never approves a waived PR: the caller '
@@ -125,6 +118,13 @@ ALLOWED_LINES = (
     (
         '- `REVIEWED`: none of the above. It is not an approval: `/verify-gate` '
         'still checks every exit criterion and review comment against the diff.'
+    ),
+    (
+        '- `--force-approve` returns `result: ESCALATE` with `battery: skipped '
+        '(--force-approve)`; nothing is reviewed, so REVIEWED is unavailable. The'
+        ' PR comment carries `/gaze: force-approved — reason: <reason>` and '
+        '`FORCE-APPROVED by <reason>`; `/verify-gate` reads them as "no review '
+        'was run", never as a pass.'
     ),
     (
         '- Posts a loud PR comment: `/gaze: force-approved — reason: <reason>`. '

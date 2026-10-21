@@ -251,7 +251,7 @@ def test_gaze_refuses_unreviewable_prs():
     )
     # --force-approve must say it runs no review, not merely skip the gate.
     force = VERIFY.split("## `--force-approve`", 1)[1].split("## Not in scope", 1)[0]
-    assert "no reviewer" in force, (
+    assert "nothing is reviewed" in _normalize(force), (
         "the --force-approve section must state it skips review"
     )
 
@@ -563,11 +563,32 @@ def test_waiver_flags_multi_ticket():
 def test_force_approve_runs_no_gate_and_output_marks_unrun_phases():
     text = VERIFY
     assert "would-have-been" not in text, "--force-approve must not promise a gate verdict"
-    assert "no reviewer" in _force_approve_section()
+    assert "nothing is reviewed" in _normalize(_force_approve_section())
     template = text.split("## /gaze result", 1)[1].split("Unresolved review comments", 1)[0]
     for phase in ("adherence:", "review-pr:", "simplify:", "battery:"):
         line = next(ln for ln in template.splitlines() if ln.startswith(phase))
         assert "skipped (--force-approve)" in line, f"{phase} must show skipped (--force-approve)"
+
+
+FORCED_RESULT = (
+    "`--force-approve` returns `result: ESCALATE` with `battery: skipped (--force-approve)`; "
+    "nothing is reviewed, so REVIEWED is unavailable."
+)
+
+
+def _forced_result_stated(section: str) -> bool:
+    return FORCED_RESULT in _normalize(section)
+
+
+def test_force_approve_returns_escalate_never_reviewed():
+    """/gaze 1538 item 3: the flag skips the whole battery, so its result is
+    ESCALATE, never REVIEWED (which means reviewed with no blocking finding).
+    The result rules of phase 6 say the same."""
+    assert _forced_result_stated(_force_approve_section())
+    assert "`--force-approve` is ESCALATE too" in _normalize(VERIFY)
+    # Negative control: the check fails once the sentence is gone.
+    norm = _normalize(_force_approve_section())
+    assert not _forced_result_stated(norm.replace(FORCED_RESULT, ""))
 
 
 def test_argument_hint_and_invariants_name_waive_breaker():
