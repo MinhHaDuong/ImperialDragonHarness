@@ -31,7 +31,7 @@ result, with phase 5 never running. This orphaned real runs, each forcing the
 caller to relaunch a duplicate reviewer battery.
 
 **Bound every wait, and record what did not arrive.** An agent missing at the
-deadline is missing, not clear: name it in the result and treat its phase as
+deadline, after the review panel's one retry (phase 6), is missing, not clear: name it in the result and treat its phase as
 unresolved. Never extend a deadline to avoid recording a gap.
 
 **The contract applies recursively.** Any nested fan-out performed on `/gaze`'s

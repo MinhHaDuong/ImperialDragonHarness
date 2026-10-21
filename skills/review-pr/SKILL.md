@@ -75,8 +75,9 @@ separate containers, the shared medium has to become the forge itself (each
 reviewer posting its own comment, the launcher synthesizing from them) — that
 inverts the outage behaviour below, so it is a trade to decide, not to assume.
 
-A perspective still missing at the deadline is **missing, not clear**. Name it
-in the posted review and leave it unresolved for the next round.
+A perspective still missing after its one retry (§ Collection) is **missing,
+not clear**. Name it in the posted review and leave it unresolved for the next
+round.
 
 ## Setup
 
