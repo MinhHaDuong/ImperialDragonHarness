@@ -2,6 +2,7 @@
 Title: Remove the merge helper: coder agents merge with gh pr merge; the gate record and the sweep carry the verification
 Created: 2026-10-21
 Author: reviewer
+Closed: autoclosed — PR #1619
 
 --- log ---
 2026-10-21T14:40Z reviewer created
@@ -12,6 +13,7 @@ Author: reviewer
 2026-10-21T15:23Z reviewer reviewer note Author decision 2026-10-21 ("YES", asked: once the helper is deleted a merge without a record is caught only afterwards by the sweep; do you accept a finding after the fact as the whole gate?): accepted. Work starts after the activation PR 1569 has landed and ticket 1179's positive control has run (the sweep reads a forge merge's record). Criteria extended below with the duties the design note docs/2026-10-21-merge-helper-retirement-design.md hands off. Two PRs: the recipe in skills/merge/SKILL.md first, the deletion second.
 2026-10-21T17:02Z reviewer note blocker 1179 closed — Blocked-by removed.
 2026-10-21T17:23Z reviewer reviewer note sweep first run before the deletion (criterion 'sweep wired with a positive control'): 'python3 scripts/main_sweep.py --fetch --summary' at origin/main c7674ead read 'Main audit: 89 commits in the last 24 h, 0 without a gate receipt' (rc 0). Positive control on the live repository: an unreferenced, never-pushed single-parent commit 7e5b85ca built on c7674ead with 'git commit-tree', swept with '--ref 7e5b85ca --max-count 2', read 'finding 7e5b85ca [single-parent commit without a note]' with c7674ead ok (rc 2, range cut by the cap). The audit sees a commit without a record.
+2026-10-21T17:38Z reviewer closed — autoclosed — PR #1619
 
 --- body ---
 ## Context
