@@ -56,7 +56,10 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
    and pipe it through
    `attribution_record.py --extract --merged <merge-date>`, which swaps
    `pending` for the merge date; stream its output to `--capture` below.
-   Complete only what the block lacks, from the review trail.
+   Complete only what the block lacks, from the review trail. First run
+   `attribution_record.py --seats-pr <N>` (ticket 1155): it appends the
+   `reviewer:` lines the `/gaze result` comments' `seat:` lists name and the
+   block lacks, and exits 1 naming each capture failure; report them.
 
    Read identities, attempt outcomes and adoption decisions from the actual
    review trail (session outputs or durable PR review comments), never from
