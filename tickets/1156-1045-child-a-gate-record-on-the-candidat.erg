@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-20T19:23Z reviewer created
 2026-10-21T12:31Z reviewer note Delivered in two PRs. #1564 (Ticket-ref) claims the machinery: the record on the candidate with every field (criterion 1), the check-set scope field (2, the set itself declared in #1569), /merge refusal with positive control (3), runtime neutrality (5). #1569 (close claim) claims activation: .merge-gate.json, the light record, the caller edits (raid, roar, lair, molt, merge) and catalog/breaker (6). Background merge (criterion 4) is the caller's one background command, gate run then merge helper, re-recorded on exit 2; the helper never waits (1082) and never arms forge auto-merge; forge check conclusions are information only on a gated base (author direction 2026-10-21).
+2026-10-21T14:33Z reviewer note The light record named in the 12:31Z entry was dropped from #1569 (orchestrator, KISS): with make check at about 76 s (PR #1583) every gated merge runs the full declared set, ticket-only PRs included.
 
 --- body ---
 ## Context
