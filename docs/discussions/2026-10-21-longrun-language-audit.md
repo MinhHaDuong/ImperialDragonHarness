@@ -4,6 +4,16 @@ Status: findings and proposed edits, 2026-10-21. No rule or skill was edited;
 another session revises the instructions. Companion to
 `2026-10-21-await-external-design.md` (the parked waiter design).
 
+Rebased on `origin/main` `b557aedb` (2026-10-21). No alignment edit had landed
+on waiting: no `adapters/runtime-hints.md`, no "Waiting" section, and
+`rules/git.md:24` still says "wait for CI". Every quoted contradiction still
+reads as quoted. Lines that moved: merge/SKILL.md:96-100 is now :98, the padme
+line is :148, `rules/authoring-skills.md` "sequential-blocking" is :39, and
+raid/SKILL.md:491 also says "make check on main". Two additions: the same
+"sequential-blocking" wording sits in biblio-saturation/SKILL.md:41 and
+external-peer-review/SKILL.md:29 (extend C6 to both), and
+gaze/references/battery.md:166 has another "Wait for all" (extend G7).
+
 Method: an Opus read of rules/, skills/ (SKILL.md and references), AGENTS.md,
 profiles/, agents/, adapters docs, and script headers. It read a checkout at
 `0bb38be4`, 48 commits behind `origin/main` at the time. For files that moved
