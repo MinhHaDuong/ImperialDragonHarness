@@ -32,6 +32,24 @@ For an existing installation:
 - `./bin/idh status` reports installation and repository state.
 - `./bin/idh sync` fast-forwards or names the changes preventing it.
 
+## Platform contract
+
+The harness targets Linux (systemd, `/proc`, GNU coreutils, `fcntl.flock`,
+XDG paths); macOS and Windows are unsupported, and WSL2 is unverified.
+Evidence: every CI job runs on `ubuntu-latest`, `ci-local/` runs podman, and
+`tickets/erg` is a Linux x86-64 binary. Assumptions already committed:
+
+- `/proc`: `scripts/worktree-gc.sh` snapshots live process cwds from
+  `/proc/[0-9]*/cwd`, and some tests read `/proc` too.
+- GNU-only flags: `readlink -f` (for example `scripts/bashrc-loader.sh`)
+  and `sha256sum` (`scripts/memory-capture.sh`), plus `stat -c` in
+  `tests/test_memory_capture.sh`, are used without a fallback.
+- Hardcoded mounts: `scripts/tmp_report.py` reads disk headroom for `/tmp`
+  and `/home` only.
+- Inferred quota: `scripts/session_scratch.py` assumes systemd's default
+  tmpfs `/tmp` and caps each user at 80% of it; the cap is inferred, never
+  measured.
+
 ## Runtime support
 
 The reference clone lives at `~/.agents`. The installation strategy uses

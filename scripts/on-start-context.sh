@@ -48,9 +48,7 @@ fi
 # Live ticket counts, computed now so STATE.md need not store them. The project
 # is the working directory when there is no project root. Local erg only, no
 # forge call; silent when the project has no tickets/ or erg, or when erg fails.
-# Bound erg only where `timeout` exists (absent on stock macOS).
-_tmo=""
-command -v timeout >/dev/null 2>&1 && _tmo="timeout 10"
+_tmo="timeout 10"
 if [ -x "${_proj:-.}/tickets/erg" ]; then
     _ready=$(cd "${_proj:-.}" && $_tmo tickets/erg ready tickets/ 2>/dev/null \
         | sed -nE -e 's/^Ready tickets \(([0-9]+)\):?$/\1/p' \

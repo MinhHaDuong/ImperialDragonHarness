@@ -1402,7 +1402,6 @@ def test_container_detection(monkeypatch, marker, env, cgroup, expected):
     real_read = Path.read_text
     monkeypatch.setattr(Path, "read_text", lambda self, *a, **k: (
         cgroup if str(self) == "/proc/1/cgroup" else real_read(self, *a, **k)))
-    monkeypatch.setattr(zi.sys, "platform", "linux")
     reason = zi.in_container()
     assert (reason is None) if expected is None else (expected in reason)
 

@@ -730,8 +730,7 @@ def in_container() -> str | None:
     for hint in ("docker", "kubepods", "containerd", "lxc", "podman", "libpod"):
         if hint in cgroup:
             return f"/proc/1/cgroup names {hint}"
-    if (sys.platform.startswith("linux") and not os.environ.get("DISPLAY")
-            and not os.environ.get("WAYLAND_DISPLAY")):
+    if not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
         return "no display"
     return None
 
@@ -745,8 +744,7 @@ def find_zotero_launcher() -> list[str] | None:
                       home / ".local" / "Zotero_linux-x86_64" / "zotero",
                       home / ".local" / "share" / "zotero" / "zotero",
                       Path("/opt/zotero/zotero"), Path("/usr/lib/zotero/zotero"),
-                      Path("/usr/local/bin/zotero"),
-                      Path("/Applications/Zotero.app/Contents/MacOS/zotero")):
+                      Path("/usr/local/bin/zotero")):
         if os.access(candidate, os.X_OK):
             return [str(candidate)]
     flatpak = shutil.which("flatpak")
