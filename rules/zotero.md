@@ -84,6 +84,6 @@ intake alike) — fetch → stage in `docs/` → archive in Zotero (the item and
 its attachment, created through the local API) → record the citation.
 
 This rule governs *source documents and bibliography staging*. It does not
-touch [git.md](./git.md)'s "commit handoff artifacts" rule: generated files a
+touch [prose/workpackages.md](./prose/workpackages.md)'s "Don't gitignore handoff artifacts" rule: generated files a
 downstream workpackage consumes (figures, tables, `\input`ed macros) are
 durable state and stay tracked. No contradiction — different object classes.
