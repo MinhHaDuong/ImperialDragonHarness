@@ -431,11 +431,12 @@ For each eligible PR, sequentially within the wave:
    Runtime permission rules must authorize the resolved helper path. Use
    `-C` to select the worktree for every Git and forge operation.
    The merge is queued, not necessarily landed: pending checks are normal.
-   Ask the outcome once with `"$IDH_ROOT/skills/merge/erg-pr-status" -C <worktree-path> <pr-number>`
-   (exit 0 merged, 1 failed, 2 pending, 3 unreadable) — no loop, no sleep, no
-   foreground wait. Pending is not a failure: move on, and ask again once before
-   Phase 8 for each PR still pending; a PR still pending then is listed as
-   queued in the briefing, not as merged.
+   Read the outcome with `"$IDH_ROOT/skills/merge/erg-pr-status" -C <worktree-path> <pr-number>`
+   (exit 0 merged, 1 failed, 2 pending, 3 unreadable). Pending is not a
+   failure: wait as `skills/merge/SKILL.md` § Waiting for a queued merge
+   prescribes (one bounded background command) and move on to the next PR
+   meanwhile; a PR still pending when that wait ends is listed as queued in the
+   briefing, not as merged.
 5. If merge fails (conflict, CI regression), or the status reads failed, ESCALATE — leave a PR comment and move to the next PR.
    A *permission denial* on the merge call is not a merge failure — handle it
    per § Merge-permission denial below, not by ESCALATE.
@@ -480,7 +481,8 @@ After all waves, in one compound so the `cd` persists across the rebase:
 
 After all merges, from the updated main branch, run `/roar` for each
 PR whose `erg-pr-status` answered merged (exit 0); a pending PR gets its
-`/roar` at a later step, once asked again. The roar pre-check (`git merge-base --is-ancestor
+`/roar` when its bounded wait (`skills/merge/SKILL.md` § Waiting for a queued
+merge) reports it merged. The roar pre-check (`git merge-base --is-ancestor
 HEAD origin/main`) passes because HEAD is main after the pull.
 
 ## Mid-session checkpoint (~50% effort)

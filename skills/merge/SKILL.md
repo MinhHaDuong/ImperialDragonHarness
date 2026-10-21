@@ -186,10 +186,10 @@ command it recovers.)
   claim before retrying. An already archived ticket with a `Closed:` header
   is handled automatically: the script skips closing it again.
 - **"auto-merge is unavailable and N check(s) are pending".** The close commit
-  is already pushed and the script did not wait. Ask `erg-pr-status` at the
-  next step; once the checks are done and green, re-run the script (a re-run
-  after the close commit adds no second close) or finish with a direct forge
-  merge. Do not loop on the status command.
+  is already pushed and the script did not wait. Wait on `erg-pr-status` per
+  § Waiting for a queued merge; once it reports the checks done and green,
+  re-run the script (a re-run after the close commit adds no second close) or
+  finish with a direct forge merge.
 - **Empty rollup and unavailable requirement inspection.** With a mergeable
   PR and an explicit empty rollup, the script inspects legacy protection and
   effective rules. Known required checks refuse. HTTP 403 (including permission
@@ -260,10 +260,10 @@ it runs `"$IDH_ROOT/scripts/sync-local-main.sh"` on the base branch
 (rules/git.md § Local main syncs eagerly) — no manual sync step. Two outputs
 still need action:
 
-- "Merge not yet landed" — the usual case when checks were pending. Ask
-  `erg-pr-status` once at the next step; on exit 0 run
-  `"$IDH_ROOT/scripts/sync-local-main.sh"`; on 2 carry on and ask again later;
-  on 1 report the failure.
+- "Merge not yet landed" — the usual case when checks were pending. Wait on
+  `erg-pr-status` per § Waiting for a queued merge; on exit 0 run
+  `"$IDH_ROOT/scripts/sync-local-main.sh"`; on 1 report the failure; still 2
+  when the bound expires, report the PR as pending.
 - "left untouched" in the sync report — dirty overlap or divergence where the
   base branch is checked out; report it to the caller rather than forcing.
 

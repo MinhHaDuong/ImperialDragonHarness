@@ -10,7 +10,8 @@
 #      and waiting for the forge) — a normal state, not an error
 #   3  unreadable: the forge could not be read (no verdict)
 #
-# It never waits, retries or polls. The caller asks again at its next step.
+# It never waits, retries or polls itself. The caller's one bounded background
+# wait polls it (skills/merge/SKILL.md § Waiting for a queued merge).
 # Needs only bash, the forge CLI and jq (what erg-pr-merge already needs); no
 # GNU-only flags. Without PR_NUMBER it reads the PR of the checked-out branch.
 set -euo pipefail

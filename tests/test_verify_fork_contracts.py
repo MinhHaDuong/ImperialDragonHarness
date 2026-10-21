@@ -898,3 +898,12 @@ def test_queued_merge_wait_is_one_bounded_background_command():
     assert "§ Waiting for a queued merge" in roar
     assert "never ask the author to wait or to re-run `/roar`" in roar
     assert "the user or a later step re-runs" not in roar
+    # Every other place that described the outcome read points at the wait.
+    raid = _normalize((SKILLS / "raid" / "SKILL.md").read_text())
+    status = (SKILLS / "merge" / "erg-pr-status").read_text()
+    for name, text in (("merge", merge), ("raid", raid), ("roar", roar), ("erg-pr-status", status)):
+        for stale in ("ask again later", "ask again once before", "once asked again",
+                      "Do not loop on the status command", "The caller asks again at its next step"):
+            assert stale not in text, (name, stale)
+    assert "§ Waiting for a queued merge" in raid
+    assert "§ Waiting for a queued merge" in status
