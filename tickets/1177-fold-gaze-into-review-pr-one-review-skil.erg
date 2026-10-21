@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Fold gaze into review-pr: one review skill, the gate keys on a review on the head
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T13:24Z reviewer created
+
+--- body ---
+## Context
+At the author's request on 2026-10-21 ("do we even need the gaze skill?"). `/gaze`
+orchestrates three other things: `/review-pr` (the seats), `/verify-adherence`
+and the runtime's own simplify. What it adds: one entry point; the head anchor;
+one result comment (REVIEWED, FINDINGS or ESCALATE, with a `next:` line) that
+`/verify-gate` requires for the head; the 15-file un-reviewable breaker with its
+waiver; a fork contract; cleanup of the review worktree; and the never-APPROVED
+property pinned by `tests/test_gaze_never_approves.py`.
+
+Cost seen on 2026-10-21: nested forks that could not launch seats, a duplicate
+run colliding with one in flight, escalations for a degraded panel, about three
+gaze runs per pull request since PR 1550, and 48 KB of text across `SKILL.md` and
+five references. The findings came from the review-pr seats. On `main`, `gaze`
+appears in 15 files under `skills/`, 7 under `scripts/`, 2 under `rules/` and 33
+under `tests/` (67 under `docs/`, which stay as history).
+
+Author stance, decided the same day: trust the orchestrator (no floor, no
+category; it picks seats and tools, may use its runtime's own verify and simplify
+or none, and is told it has the external reviewer tools); always verify (the gate
+rules; the integration check on the merge candidate); monitor (journal, sweep,
+runs per pull request). Ticket 1176 deletes the width, depth, scoping and risk
+machinery first.
+
+## Exit criteria
+- [ ] Fable's review of the fold is recorded in the ticket log (the smallest
+      version, what is lost, the one risk that would say don't), and the decision
+      to fold or keep is written down with the author's name on it.
+- [ ] If folded: `/review-pr` carries the surviving rules in a few lines: the head
+      anchor, the 15-file breaker and its waiver, the never-APPROVED rule, the
+      DEGRADED and retry-once lines, and the result contract the gate reads.
+- [ ] `/verify-gate` keys on a review on the head, not on a gaze result; raid
+      phase 6, merge and hunt call the review skill directly. Adherence stays its
+      own skill; simplify stays a runtime tool the orchestrator may use or skip.
+- [ ] `skills/gaze/` is removed, with its fork contract, output template and
+      cleanup file; `tests/test_gaze_*` are deleted or moved to the surviving
+      skill; the never-APPROVED test keeps its frozen allowlist.
+- [ ] A grep for the old name across `skills/`, `scripts/`, `rules/` and `tests/`
+      is empty; `docs/` keeps history. Catalog regenerated; drift check clean.
+- [ ] The run count per pull request over the next 20 is recorded against the
+      2026-10-21 figure of about three.
+- [ ] Nothing here requires a particular agent runtime.
