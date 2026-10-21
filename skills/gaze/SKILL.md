@@ -80,8 +80,8 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
   computed on a stale base is partially void. `/gaze` does not rebase the
   branch itself; that is a caller-side step, not a phase here.
 - **Quiet-branch prerequisite**: never start `/gaze` while that branch's coding
-  lead is still live. The gate reviews a head the lead may move under it, and
-  the gate's fix loop would then commit on top of work in flight.
+  lead is still live. Gaze reviews a head the lead may move under it, and
+  its phase 5 simplify fixes would then commit on top of work in flight.
 
 
 ## Fork execution contract
@@ -137,7 +137,6 @@ Gaze ends here; it runs no gate. Read the phase outputs and return:
 ```yaml
 result: REVIEWED | FINDINGS | ESCALATE
 reviewed_head_sha: <full SHA read from the review worktree after phase 5>
-review_worktree_path: <absolute path; removed before return, audit only>
 unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
 adherence: PASS | FAIL (<n blocking>)

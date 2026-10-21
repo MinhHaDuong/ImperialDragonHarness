@@ -389,8 +389,8 @@ def test_gaze_liveness_fallback_names_verify_gate_not_a_rerun():
     assert "/verify-gate" in norm, (
         "gaze/SKILL.md: liveness fallback does not name the direct /verify-gate call"
     )
-    assert "verdict comment" in norm, (
-        "gaze/SKILL.md: liveness fallback omits the verdict-comment marker"
+    assert "posted gaze result comment" in norm, (
+        "gaze/SKILL.md: liveness fallback omits the result-comment marker"
     )
     assert "branch-tip" in norm, (
         "gaze/SKILL.md: liveness fallback omits the branch-tip-motion marker"
@@ -740,3 +740,17 @@ def test_resident_rules_do_not_cite_tickets_for_this_change():
         assert not re.search(r"\(ticket \d{4}\)|ticket 1125|\b1125\b", text), (
             f"rules/{name} cites a ticket number"
         )
+
+
+def test_verify_gate_recounts_the_breaker_itself():
+    """Gaze's verdict-time recount went with its gate phase (ticket 1153); the
+    gate's own recount is what still stops an oversized PR at merge time."""
+    gate = " ".join((SKILLS / "verify-gate" / "SKILL.md").read_text().split())
+    breakers = gate.split("## Circuit breakers", 1)[1].split("## Not in scope", 1)[0]
+    assert "the gate counts the content-bearing files itself" in breakers
+    assert "`git diff --name-status -M`" in breakers
+    assert "`git diff --numstat -M`" in breakers
+    assert "`pr_files >= 15`" in breakers
+    assert "does not trust the caller's count" in breakers
+    rules = gate.split("## Decision rules", 1)[1].split("## ", 1)[0]
+    assert "counted by the gate itself on every invocation path" in rules

@@ -13,7 +13,7 @@ exit preflight must pass after scratch removal: if it reports other WIP, leave
 the review worktree registered and surface those file names as ESCALATE to the
 caller. Never force-remove a tree with real uncommitted files. A failed
 preflight or normal worktree removal is a cleanup failure, not a successful
-terminal verdict.
+terminal result.
 
 ```bash
 review_tree="$primary_root/.claude/worktrees/review-<pr-number>"
@@ -59,7 +59,7 @@ git -C <primary-repo-root> status --porcelain
 
 - **Foreign files** (anything this run did not deliberately create —
   especially stray `tickets/*.erg`) → remove or restore them, and flag the
-  contamination in the verdict comment. Do not leave them for a later
+  contamination in the result comment. Do not leave them for a later
   `git add` to sweep.
 - **Unexpected branch** → switch back to the entry branch and flag it. Never
   end the skill with the session worktree on a different branch than it was
@@ -69,5 +69,5 @@ git -C <primary-repo-root> status --porcelain
   anchor the corrective switch — `git -C <session-worktree> switch <entry-branch>`,
   not a bare `git switch` against an assumed cwd (rules/git.md § anchor across
   a forked-skill boundary).
-- Anything that cannot be restored cleanly → downgrade the verdict to
+- Anything that cannot be restored cleanly → downgrade the result to
   ESCALATE; a contaminated workspace must not feed a merge.
