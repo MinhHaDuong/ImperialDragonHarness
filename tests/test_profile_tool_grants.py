@@ -2,7 +2,7 @@
 
 A 14-day transcript scan found 74 "No such tool available: Skill" failures: a
 profile told the delegate to call Skill while its agent definition did not
-grant it. The cause was one missing grant plus three profiles that assumed it.
+grant it. The suspected cause was one missing grant plus three profiles that assumed it.
 These checks pin those facts without parsing prose; a prose lint was tried and
 withdrawn after two independent reviews kept defeating it (see ticket 1167's
 log and the structured-declaration follow-up).

@@ -8,7 +8,7 @@ Author: reviewer
 
 --- body ---
 ## Context
-Ticket 1167 fixed the grants behind 74 "No such tool available: Skill" subagent failures (`docs/2026-10-21-velocity-friction-scan.md`). It first tried a lint that parsed profile prose for tool instructions. Two independent cross-family reviews (gpt-6-astra, high effort) each requested changes, the second reproducing 15 more defects; regex over English has no fixed point, so the lint was withdrawn from the PR (see the 1167 log). What remains guarded is only the exact facts: `adherence-seat` grants Skill, and the three read-only seats' profiles say they have no Skill tool.
+Ticket 1167 addressed a grant mismatch behind the 74 "No such tool available: Skill" subagent failures (the scan counts them but does not attribute them to individual seats; effectiveness is measured under 1170) (`docs/2026-10-21-velocity-friction-scan.md`). It first tried a lint that parsed profile prose for tool instructions. Two independent cross-family reviews (gpt-6-astra, high effort) each requested changes, the second reproducing 15 more defects; regex over English has no fixed point, so the lint was withdrawn from the PR (see the 1167 log). What remains guarded is only the exact facts: `adherence-seat` grants Skill, and the three read-only seats' profiles say they have no Skill tool.
 
 The invariant belongs in a declared header, not in parsed sentences. Each `profiles/<name>/PROFILE.md` declares the tools it needs on one machine-read line, for example `Requires-tools: Read, Bash, Skill`; a test asserts the declaration is a subset of the tools in `agents/<name>.md`, and that a profile whose shell lacks Skill contains no `Skill(` call. No English parsing.
 
