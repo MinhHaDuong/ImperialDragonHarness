@@ -54,6 +54,14 @@ For each: when it fits, its prerequisite, what to check first, how to verify, ho
 - **Fits.** A slow first run per session (see *collect*: first-of-session against later).
 - **Check first.** Whether each new worktree rebuilds its environment from scratch, and whether the package cache and the environments share a filesystem so links are possible.
 
+## Thin the wording pins
+
+- **Fits.** Tests whose only assertion is that a phrase appears in a skill, rule or doc. The gain is fewer two-file wording changes, not time.
+- **Keep.** Behaviour tests; structural invariants (frontmatter, catalog, links and pointers that must resolve, files that must stay absent, personal-data and agnostic checks); interface strings another program or skill consumes (a script path, a verdict token, a heading a parser reads); tests tied to a named past incident, frozen allowlists included.
+- **Cut.** Pure phrase pins: whole files when only pins, single tests where a file mixes. One line of reason per deletion; search the repository for anything that imports the file's helpers or names the file.
+- **Bound.** One batch per merge request, under the file breaker; test count and gate time before and after on one host; a reviewer samples the cuts against the keep classes. Further batches are further PRs.
+- **Undo.** Revert the batch.
+
 ## Not remedies
 
 Deleting tests to save time; a rule telling every agent to use a cache; selection in a merge gate; blanket retries; raising a timeout to hide a slow gate.

@@ -51,3 +51,9 @@ Read only the entries your differential points to. Each gives the symptom, the u
 
 - **Evidence.** In a sample of commits, look for deleted test files or functions, new unconditional skip markers, fewer assertions, widened tolerances. Hand-read the hits: most are refactors and spec changes.
 - **Treat.** A short sentence in the commit body for any deletion or loosening. A ban on changing tests with code would hit a third of commits to prevent an event that a history sample did not show.
+
+## A testbase that pins prose
+
+- **Causes.** Each wording change in a skill, rule or doc shipped with a test asserting its phrase is present; review rounds asked for "a ratchet"; a retired guard's tests outlived it.
+- **Evidence.** Test files that read only Markdown and assert `"<phrase>" in text`; prose PRs whose test file changed in step with the sentence; review rounds spent on test wording.
+- **Do not.** Count them as coverage, or cut them all at once: some pin an interface string or a past incident (see *Thin the wording pins*).
