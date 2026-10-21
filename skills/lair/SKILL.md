@@ -112,6 +112,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     of `main` in the last 24 h, the `warned` count and `idh.mainGuard`; nothing
     once the mode is `enforce` and nothing was refused; a `main-guard: not
     checked` line when the journal is missing or unreadable, which must be
-    passed on. Switching to enforce is the author's act: never run `git config
+    passed on; if the command itself fails, report `main-guard: not checked
+    (command failed)`. Switching to enforce is the author's act: never run `git config
     idh.mainGuard`, ask a question, open a ticket or wait. Remove this step
     when ticket 1180 closes.
