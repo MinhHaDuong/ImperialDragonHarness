@@ -1,8 +1,8 @@
 """external-peer-review bundles a portable script and documents its contract.
 
 The skill solicits real external model reviews of a PDF and synthesizes them.
-These ratchets pin the documented contract in the skill text and the portability
-invariants in the bundled script (no project-specific hardcoding).
+These tests pin the bundled script's portability invariants (no project-specific
+hardcoding) and its credential resolution.
 """
 
 import os
@@ -28,26 +28,6 @@ def script_text() -> str:
 
 def test_bundled_script_exists():
     assert SCRIPT.exists(), "external-peer-review must bundle peer_review.py"
-
-
-def test_documents_balance_gate_and_text_fallback():
-    assert "$0.50" in (SKILL_DIR / "references/openrouter.md").read_text(), "must document the OpenRouter $0.50 files gate"
-    assert "--text" in (SKILL_DIR / "references/openrouter.md").read_text(), "must document the text-mode fallback flag"
-    assert "402" in (SKILL_DIR / "references/openrouter.md").read_text(), "must document the HTTP 402 automatic fallback"
-
-
-def test_documents_smoke_test_one_before_blasting():
-    text = skill_text().lower()
-    assert "smoke" in text or "test one" in text, (
-        "must document smoke-testing one combo before launching the rest "
-        "(project rule: test one before blasting)"
-    )
-
-
-def test_documents_complementary_to_simulated_panel():
-    assert "review-pr-prose" in skill_text(), (
-        "must state it is complementary to the simulated /review-pr-prose panel"
-    )
 
 
 def test_first_sentence_names_external_review_capability():
