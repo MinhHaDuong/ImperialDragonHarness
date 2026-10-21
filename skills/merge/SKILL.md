@@ -82,7 +82,7 @@ reads and writes in its own spelling.
    `tickets/closed/` with a `Closed:` header:
    ```bash
    "${ERG:-tickets/erg}" close <id> "autoclosed — PR #N"
-   "${ERG:-tickets/erg}" archive <id>
+   "${ERG:-tickets/erg}" archive <id> || true  # an erg whose close already archives answers "no ticket found"
    git add -u tickets/ && git add tickets/closed/<id>-*.erg
    ```
    then one commit for all of them, `git commit -m "ticket(<ids>): close and
