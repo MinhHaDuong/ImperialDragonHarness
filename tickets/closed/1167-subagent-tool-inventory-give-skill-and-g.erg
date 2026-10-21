@@ -2,13 +2,14 @@
 Title: Subagent tool inventory: give Skill and Grep to every profile that needs them
 Created: 2026-10-21
 Author: reviewer
-Closed: criteria 1-2 met; the later-window check moved to 1170
+Closed: criterion 1 met; criterion 2 narrowed to exact grant tests, structured declaration moved to 1175; the later-window check moved to 1170
 
 --- log ---
 2026-10-21T10:06Z reviewer created
 2026-10-21T10:10Z reviewer reviewer note Daily series shows the no-such-tool class rising, 26 on 2026-10-20 and 14 on 2026-10-21 against 0 to 8 earlier; this is now the live ticket of the first three
 2026-10-21T10:35Z reviewer closed — criteria 1-2 met; criterion 3 (later-window scan) not checkable at merge
 2026-10-21T10:37Z reviewer reviewer note Criterion 3 (later-window scan) removed as unverifiable at merge; trace-doctor follows the treatment itself under 1170
+2026-10-21T12:17Z reviewer reviewer note Author decision 2026-10-21 (option B, after Fable advised it at P 0.75): criterion 2 narrowed. The prose lint failed two independent reviews (gpt-6-astra high; round 2 reproduced 15 defects) and was withdrawn; an exact test pins adherence-seat's Skill grant and the three read-only seats' 'no Skill tool' lines. The structured declaration is filed as 1175
 
 --- body ---
 ## Context
@@ -18,6 +19,6 @@ Either the profile that needs the tool carries it, or the brief tells the delega
 
 ## Exit criteria
 - [x] Each profile in `profiles/` that instructs a Skill or Grep call has the tool, or its brief names the substitute
-- [x] A test or lint fails when a profile text calls a tool its definition lacks
+- [x] Exact test that adherence-seat grants Skill and that the three read-only seats say they have none (the prose lint was withdrawn after two failed independent reviews; the structured declaration is ticket 1175)
 
 Post-merge verification is not an exit criterion here: ticket 1170 (trace-doctor treatment follow-up) reports this class before and after the merge date.

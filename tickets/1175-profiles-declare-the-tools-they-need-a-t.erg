@@ -1,0 +1,22 @@
+%erg 0.1
+Title: Profiles declare the tools they need; a test compares the declaration to the grants
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T12:17Z reviewer created
+
+--- body ---
+## Context
+Ticket 1167 fixed the grants behind 74 "No such tool available: Skill" subagent failures (`docs/2026-10-21-velocity-friction-scan.md`). It first tried a lint that parsed profile prose for tool instructions. Two independent cross-family reviews (gpt-6-astra, high effort) each requested changes, the second reproducing 15 more defects; regex over English has no fixed point, so the lint was withdrawn from the PR (see the 1167 log). What remains guarded is only the exact facts: `adherence-seat` grants Skill, and the three read-only seats' profiles say they have no Skill tool.
+
+The invariant belongs in a declared header, not in parsed sentences. Each `profiles/<name>/PROFILE.md` declares the tools it needs on one machine-read line, for example `Requires-tools: Read, Bash, Skill`; a test asserts the declaration is a subset of the tools in `agents/<name>.md`, and that a profile whose shell lacks Skill contains no `Skill(` call. No English parsing.
+
+Cost to price before starting: it touches the five profiles, the test and the profile conventions, and adds a contract every profile author must know. Estimate: 2 coder-hours plus one cross-family review of the diff. Also decide whether skills that brief subagents (the other plausible source of the original failures, not established) need the same declaration.
+
+## Exit criteria
+- [ ] A documented one-line declaration in every `profiles/*/PROFILE.md`
+- [ ] A test fails when a declaration names a tool its shell does not grant, with a positive control per tool class
+- [ ] The test fails when a profile adds a `Skill(` call while its shell lacks Skill
+- [ ] The conventions for profile authors state the declaration (one place)
+- [ ] Out of scope: parsing prose for tool instructions
