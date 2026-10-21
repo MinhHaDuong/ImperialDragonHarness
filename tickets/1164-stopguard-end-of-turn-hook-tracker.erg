@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Stopguard: end-of-turn hook tracker
+Created: 2026-10-21
+Author: reviewer
+Label: deferred
+
+--- log ---
+2026-10-21T08:26Z reviewer created
+2026-10-21T08:26Z reviewer label deferred
+2026-10-21T08:26Z reviewer Design reviewed (Fable, Astra, KISS); deferred by the author, no work before the deferral is lifted
+
+--- body ---
+## Context
+A hook that runs when an agent ends its turn, on Claude Code, Codex and Pi, to observe and later refuse two bad stops: a question to the author with no ask-up, and a wait with nothing tracked to wake the agent. Design, reviews and plan: `docs/2026-10-21-stopguard-design.md` (reviewed by Fable, Astra and a KISS pass). The end-of-turn mechanism was smoke-tested headless on all three harnesses on 2026-10-21.
+
+Deferred by the author on 2026-10-21: no implementation, and no phase 1 work, until the deferral is lifted. Children are filed when it is lifted, not before.
+
+Related: the waiter that gives rule 2 a pass condition is designed in another session (`docs/discussions/2026-10-21-await-external-design.md` on branch `explore-await-external-*`, uncommitted). It owns the wait registry; this tracker owns the only Stop-hook implementation.
+
+## Children (to file at lift time, one sign-off unit each)
+- phase 1: close the design's smoke gaps; runner, two rules, dry only, spool, three adapters (3.5 agent h, 0.3 author h)
+- phase 2: weekly report and git-visible report path (0.5, 0.25)
+- phase 3: Claude Code replay harness; gate G1 (2, 0.25)
+- phase 3b: Codex and Pi replay, after G1 (1.5, 0.1)
+- phase 4: hand-labeling, held-out precision (0.5, 1.5)
+- phase 5: enforce stage, marker line in `rules/workflow.md`, Pi followUp (1.5, 0.5)
+
+## Exit criteria
+- [ ] Phases 1-3 done, or consciously dropped at gate G1 (fewer than about 5 measured bad stops per week for Claude Code: keep telemetry only)
+- [ ] Per-rule decision recorded: enforce, or retire, with the held-out precision
+- [ ] Out of scope: the waiter itself, headless workers, subagent stops
