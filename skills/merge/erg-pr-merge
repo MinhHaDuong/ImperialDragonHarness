@@ -27,6 +27,14 @@
 #      one-shot rollup read shows every check done. Never waits: ask
 #      erg-pr-status for the outcome (exit 0 merged, 1 failed, 2 pending).
 #   4. If not in worktree: git checkout base && git pull --rebase
+#
+# Gated base (ticket 1156): when the base branch carries `.merge-gate.json`
+# with gate=on, step 3 changes. The latest refs/notes/gate record on the
+# candidate merge commit (merge-gate.py) is the gate: fail refuses (1), none
+# or stale for this head exits 2 (re-run the gate). Forge check conclusions
+# are information only there. Forge auto-merge is never armed (one found armed
+# is disarmed), the merge is pinned to the gated head, and success means the
+# PR re-reads as MERGED.
 
 set -euo pipefail
 
@@ -131,6 +139,30 @@ settle_mergeable() {
     echo "$state"
 }
 
+# Gate declaration, read from the BASE (ticket 1156): the base fixes whether the
+# gate is on and which checks run; a declaration lands with the PR that adds it.
+# Fail closed: only a confirmed absence (ls-tree answers, and lists nothing) or
+# an explicit "gate": "off" leaves the gate off; an inspection error refuses.
+# The fetch is unconditional because only the fresh base can say whether the
+# base is gated; a stale tracking ref could miss a declaration just landed.
+GATE_TOOL="$(cd "$(dirname "$0")" && pwd)/../../scripts/merge-gate.py"
+GATE_ON=0
+git fetch -q origin "$BASE_BRANCH" || die "could not fetch origin/${BASE_BRANCH}"
+# Presence is an exact line match, not "any output": a framing proxy that adds a
+# banner to git's stdout must not turn absence into presence (ticket 0333).
+GATE_DECL=$(git ls-tree --name-only "origin/${BASE_BRANCH}" -- .merge-gate.json) \
+    || die "could not inspect origin/${BASE_BRANCH} for a .merge-gate.json — not merging"
+if grep -qxF '.merge-gate.json' <<<"$GATE_DECL"; then
+    [[ -f "$GATE_TOOL" ]] || die "base declares a merge gate but $GATE_TOOL is missing — not merging"
+    GATE_RC=0
+    python3 "$GATE_TOOL" enabled --base "origin/${BASE_BRANCH}" || GATE_RC=$?
+    case "$GATE_RC" in
+        0) GATE_ON=1 ;;
+        1) ;;
+        *) die "could not read the base's .merge-gate.json — not merging" ;;
+    esac
+fi
+
 MERGEABLE=$(echo "$PR_JSON" | jq -r '.mergeable')
 if [[ "$MERGEABLE" == "UNKNOWN" ]]; then
     MERGEABLE=$(settle_mergeable)
@@ -140,19 +172,25 @@ if [[ "$MERGEABLE" != "MERGEABLE" ]]; then
 fi
 
 FAILING=$(echo "$PR_JSON" | jq -r '
-    [.statusCheckRollup[]? | select(.conclusion == "FAILURE" or .conclusion == "TIMED_OUT")]
-    | length')
-if [[ "$FAILING" -gt 0 ]]; then
+    [.statusCheckRollup[]? | objects | select(.conclusion == "FAILURE" or .conclusion == "TIMED_OUT")]
+    | length' 2>/dev/null || echo "?")
+# On a gated base the record is the gate and forge conclusions are information
+# only (author direction 2026-10-21: the forge is a host, CI is not a gate;
+# ticket 1174 runs forge CI on push to main only). Elsewhere a failure refuses.
+if [[ "$GATE_ON" -eq 1 ]]; then
+    [[ "$FAILING" == "0" ]] || echo "Note: the forge reports ${FAILING} failing check(s) on this PR — information only on a gated base."
+elif [[ "$FAILING" != "0" ]]; then
     die "CI has ${FAILING} failing check(s) — fix before merging"
 fi
 
 PENDING=$(echo "$PR_JSON" | jq -r '
     [.statusCheckRollup[]? | select(.status != "COMPLETED" and .status != null)]
     | length')
-if [[ "$PENDING" -gt 0 ]]; then
-    # Not a refusal (ticket 1082): the forge's own auto-merge gates on the
+if [[ "$PENDING" -gt 0 && "$GATE_ON" -eq 0 ]]; then
+    # Not a refusal (ticket 1082): the forge's own auto-merge gates on its
     # required checks, so arm it now and let the caller ask erg-pr-status later.
-    echo "CI has ${PENDING} check(s) pending — arming auto-merge; the forge merges when required checks pass."
+    # With no required checks the forge merges at once: gate such a base.
+    echo "CI has ${PENDING} check(s) pending — arming auto-merge; the forge waits only for checks it requires (none: it merges at once)."
 fi
 
 # A draft PR is rejected by both auto-merge ("Pull Request is still a draft")
@@ -413,6 +451,12 @@ fi
 
 # ── Step 2: close ticket (only if erg project and ticket found) ───────────────
 
+# On a gated base the record must cover the head that merges, close included
+# (ticket 1156): a close commit made here changes the candidate, so the run
+# stops after pushing it and asks for a gate run on the new head. Closing the
+# ticket on the branch before gating (SKILL.md § Before merging) avoids that.
+HEAD_BEFORE_CLOSE=$(git rev-parse HEAD)
+
 ERG=${ERG:-erg}
 if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; then
     CLOSED_LIST=""
@@ -469,6 +513,10 @@ if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; 
     git push origin HEAD
 elif [[ -n "$TICKET_IDS" ]]; then
     echo "Note: ticket(s) ${TICKET_IDS//$'\n'/, } found but no erg available — skipping close"
+fi
+if [[ "$GATE_ON" -eq 1 && "$(git rev-parse HEAD)" != "$HEAD_BEFORE_CLOSE" ]]; then
+    echo "Close commit $(git rev-parse HEAD) pushed; the gate record must cover it. Run the gate on that head, then re-run this script (the re-run adds no second close)." >&2
+    exit 2
 fi
 
 # ── Step 3: queue auto-merge via forge CLI (works in worktrees and on VMs) ────
@@ -672,6 +720,53 @@ sync_local_base() {
     return 0
 }
 
+# Gated merge (ticket 1156). The passing record on the candidate (base tip +
+# this head) is the gate; forge check conclusions neither gate nor delay it
+# (author direction 2026-10-21; forge CI runs on push to main only, ticket
+# 1174). Forge auto-merge is never used: with no required checks the forge
+# CLI's --auto merges at once, and an armed auto-merge could land a later head
+# the record does not cover, so one found armed is disarmed first. Success means
+# the PR re-reads as MERGED, never "auto-merge armed". Exit 2: the record is
+# missing or stale for this head, re-run the gate. Residual window: the base
+# can move between the record check and the forge's merge (seconds); the
+# main-update sweep of ticket 1157 notices that after the fact.
+gate_merge() {
+    local head base rc armed state
+    local -a flags
+    git fetch -q origin "$BASE_BRANCH" "$PR_BRANCH" || die "could not fetch origin"
+    head=$(git rev-parse HEAD)
+    [[ "$head" == "$(git rev-parse "origin/${PR_BRANCH}")" ]] \
+        || die "local HEAD ${head} is not origin/${PR_BRANCH}: push or sync, then gate and merge that head"
+    base=$(git rev-parse "origin/${BASE_BRANCH}")
+    rc=0
+    python3 "$GATE_TOOL" check --base "$base" --head "$head" || rc=$?
+    case "$rc" in
+        0) ;;
+        2) echo "No gate record on the candidate merge of ${head} into ${BASE_BRANCH} ${base}: run python3 ${GATE_TOOL} run --base origin/${BASE_BRANCH} --head ${head} (from this checkout), then re-run. A moved ${BASE_BRANCH} needs a new record." >&2
+           exit 2 ;;
+        1) die "the latest gate record on the candidate does not pass (above) — fix, re-run the gate, then merge" ;;
+        *) die "could not read the gate record (above) — not merging" ;;
+    esac
+    armed=$(gh pr view "$PR" --json autoMergeRequest --jq 'if .autoMergeRequest == null then "no" else "yes" end') \
+        || die "could not read whether auto-merge is armed — not merging"  # harness-extension-point
+    if [[ "$armed" != "no" ]]; then
+        echo "Auto-merge is armed on PR #${PR}; disarming it before the pinned merge."
+        gh pr merge "$PR" --disable-auto >/dev/null \
+            || die "could not disarm auto-merge — not merging"  # harness-extension-point
+        armed=$(gh pr view "$PR" --json autoMergeRequest --jq 'if .autoMergeRequest == null then "no" else "yes" end') \
+            || die "could not re-read auto-merge — not merging"  # harness-extension-point
+        [[ "$armed" == "no" ]] || die "auto-merge is still armed after disarming — not merging"
+    fi
+    flags=(--merge --match-head-commit "$head")
+    [[ "$IN_WORKTREE" -eq 1 ]] || flags+=(--delete-branch)
+    echo "Gate record passes on ${head}; merging."
+    gh pr merge "$PR" "${flags[@]}" || true  # harness-extension-point
+    state=$(gh pr view "$PR" --json state,headRefOid --jq '.state + " " + .headRefOid' 2>/dev/null || echo UNKNOWN)  # harness-extension-point
+    [[ "${state%% *}" == "MERGED" ]] || die "PR #${PR} reads ${state%% *} after the merge call, not MERGED — check 'gh pr view $PR'"
+    [[ "${state#* }" == "$head" ]] \
+        || die "PR #${PR} merged with head ${state#* }, not the gated head ${head}: not a gated merge — report it"
+}
+
 echo "Queueing merge for PR #${PR}..."
 # cwd cannot change between here and Step 4 (no `cd` on this path), so the
 # identity predicate's answer is invariant for the rest of the run — compute
@@ -683,7 +778,12 @@ else
     MERGE_FLAGS=(--merge --auto --delete-branch)
 fi
 
-if try_auto_merge; then
+if [[ "$GATE_ON" -eq 1 ]]; then
+    gate_merge
+    AUTO_QUEUED=0
+    MERGE_LANDED=1
+    sync_local_base
+elif try_auto_merge; then
     echo "Merge queued; lands when required checks pass."
     AUTO_QUEUED=1
     if merge_landed_now; then

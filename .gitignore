@@ -6,6 +6,7 @@
 !pyproject.toml
 !uv.lock
 !.ruff.toml
+!.merge-gate.json
 !README.md
 !INSTALL.md
 !CONTRIBUTING.md

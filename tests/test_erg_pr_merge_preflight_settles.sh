@@ -39,6 +39,8 @@ git -C "$WORK/repo" config user.name Test
 git -C "$WORK/repo" config commit.gpgsign false
 git -C "$WORK/repo" commit -q --allow-empty -m init
 git -C "$WORK/repo" branch -M main
+# A self origin: the helper fetches origin/<base> to read its gate declaration (ticket 1156).
+git -C "$WORK/repo" remote add origin "$WORK/repo"
 git -C "$WORK/repo" switch -q -c pr-test
 BRANCH=pr-test
 export BRANCH
