@@ -99,6 +99,7 @@ against the old code.
 - Every script starts with `set -euo pipefail` unless there is an explicit reason not to.
 - Functions that intentionally return non-zero use `return 0` explicitly or are called with `|| true` at the call site.
 - Pipe chains: if a failing middle stage is acceptable, isolate it: `result=$(cmd1 | cmd2) || true`.
+- Test a command's own exit status before the next step depends on it (`cmd >log 2>&1; rc=$?`): in `cmd | tail`, `$?` is `tail`'s, so a failed rebase goes unseen before the push.
 
 ## BASH_ENV / hook scripts: test via a real subprocess, never source-in-shell
 
