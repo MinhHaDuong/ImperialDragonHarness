@@ -1,0 +1,48 @@
+%erg 0.1
+Title: 1045 child D: run each check once; gaze and gate read the result
+Created: 2026-10-21
+Author: reviewer
+Blocked-by: 1156
+
+--- log ---
+2026-10-21T11:28Z reviewer created
+
+--- body ---
+## Context
+Child D of tracker 1045. The same checks run several times on nearly the same
+content. Observed on PR 1557 (2026-10-21), from the seat reports: the coder's
+`make check`, `/gaze`'s `make check` or targeted tests, the adherence seat's
+`make lint` and tests, `/verify-gate`'s re-run of the targeted file, and the
+forge's CI (10 jobs) on the branch, again on a second push, and on `main` after
+the merge. Four or five runs per head, repeated every fix round. Wall time per
+layer was not measured.
+
+The forge ruleset `main-required-checks` was disabled by the author on
+2026-10-21, but `.github/workflows/CI.yml` still runs on every push, so runners
+are spent on a result nothing reads.
+
+The one run that is not redundant is the one on the merge candidate commit
+(`erg close`, a rebase onto a moved `main`, merge-time hook effects): that is
+the gate record of child A (1156). Blocked by it, since the other skills can
+read a result only once the record exists.
+
+## Exit criteria
+- [ ] Measure first: wall time of each layer for one representative PR (coder,
+      `/gaze`, adherence seat, `/verify-gate`, forge CI), written in the ticket
+      log. The trim below is sized from that, not from this estimate.
+- [ ] One authoritative full run: the child A gate on the candidate commit. Its
+      record carries the result.
+- [ ] `/gaze` and `/verify-gate` read the record, or the last result for the same
+      tree, instead of re-running the full suite; each keeps a targeted run of the
+      files the diff touches. A missing or stale record falls back to running the
+      checks, never to skipping them.
+- [ ] Coders run the scoped gate (`.idh-checks.json`) while working; the full run
+      happens once.
+- [ ] The forge workflow is trimmed to the jobs the local gate does not cover, or
+      kept as a late safety net that nothing waits on, with the choice written
+      down. Ask Fable before changing `CI.yml`.
+- [ ] A negative control shows a stale record is not trusted (the tree changed
+      after the record), and a positive control shows a fresh one is.
+- [ ] Nothing here requires a particular agent runtime.
+- [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker,
+      else split.
