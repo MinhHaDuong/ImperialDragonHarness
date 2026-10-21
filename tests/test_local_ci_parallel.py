@@ -37,6 +37,48 @@ def test_pool_runs_every_item_and_counts_failures(tmp_path):
     assert sorted((tmp_path / "seen").read_text().split()) == ["a", "c", "d"]
 
 
+def test_pool_failure_count_is_exact_over_many_short_items(tmp_path):
+    # The count comes from one status file per item, not from wait -n's status, which
+    # can read 127 when jobs end together and over-reported failures on a loaded host.
+    script = (
+        "f() { sleep 0.0$((RANDOM % 3)); case $1 in 3|7|11|19) return 1;; esac; }; "
+        "for r in $(seq 10); do run_pool 4 f $(seq 24); echo $pool_failed; done | sort | uniq -c"
+    )
+    assert _bash(script).split() == ["10", "4"]
+
+
+def test_pool_keeps_errexit_live_inside_the_pooled_function(tmp_path):
+    # Callers run under set -e; a failing command mid-body must stop the function.
+    script = (
+        f'set -e; f() {{ false; echo reached >> {tmp_path}/seen; }}; '
+        "run_pool 2 f a; echo $pool_failed"
+    )
+    assert _bash(script) == "1"
+    assert not (tmp_path / "seen").exists()
+
+
+def test_pool_counts_a_job_killed_before_it_wrote_its_status():
+    script = (
+        "f() { case $1 in 2) kill -9 $BASHPID;; 3) return 1;; esac; }; "
+        "run_pool 4 f 1 2 3 4; echo $pool_failed"
+    )
+    assert _bash(script) == "2"
+
+
+def test_pool_with_no_items_fails_nothing():
+    assert _bash("pool_failed=9; run_pool 4 true; echo $pool_failed") == "0"
+
+
+def test_pool_does_not_wait_for_the_callers_other_background_jobs(tmp_path):
+    # The podman service is a background job of the caller and must outlive the pool.
+    script = (
+        "sleep 30 & svc=$!; f() { :; }; "
+        "start=$SECONDS; run_pool 2 f a b c d; "
+        "echo $((SECONDS - start)); kill $svc"
+    )
+    assert int(_bash(script)) < 10
+
+
 def test_tagged_workflow_renames_only_the_workflow(tmp_path):
     src = tmp_path / "CI.yml"
     src.write_text("name: CI\non: push\njobs:\n  a:\n    name: keep\n")
