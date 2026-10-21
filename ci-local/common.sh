@@ -60,7 +60,7 @@ pool_failed=0
 run_pool() {
     local limit=$1 fn=$2 item running=0 i=0 dir f pids=()
     shift 2
-    dir=$(mktemp -d) || return 1
+    dir=$(mktemp -d "${work:-${TMPDIR:-/tmp}}/pool.XXXXXX") || return 1
     for item in "$@"; do
         if [ "$running" -ge "$limit" ]; then
             # Throttle only. wait -n's status is not trusted: it can report 127 when
@@ -68,18 +68,21 @@ run_pool() {
             wait -n 2>/dev/null || true
             running=$((running - 1))
         fi
-        ( rc=0; "$fn" "$item" || rc=$?; echo "$rc" > "$dir/$i" ) &
+        # Plain command, so the caller's set -e stays live inside $fn; the EXIT trap
+        # records the status either way. A job killed outright leaves no file.
+        ( trap 'echo $? > "$dir/$i"' EXIT; "$fn" "$item" ) &
         pids+=("$!")
         running=$((running + 1))
         i=$((i + 1))
     done
     # Exact completion: wait on this pool's own pids, never on the caller's other
     # background jobs (the podman service must keep running).
-    for item in "${pids[@]}"; do wait "$item" 2>/dev/null || true; done
+    for item in ${pids[@]+"${pids[@]}"}; do wait "$item" 2>/dev/null || true; done
     # Exact failure count: one status file per item, written by the job itself.
     pool_failed=0
-    for f in "$dir"/*; do
-        [ "$(cat "$f" 2>/dev/null)" = 0 ] || pool_failed=$((pool_failed + 1))
+    # Counted over every index: a missing file (job killed) is a failure.
+    for ((f = 0; f < i; f++)); do
+        [ "$(cat "$dir/$f" 2>/dev/null)" = 0 ] || pool_failed=$((pool_failed + 1))
     done
     rm -rf "$dir"
 }

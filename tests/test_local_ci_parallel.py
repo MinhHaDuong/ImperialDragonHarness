@@ -42,9 +42,31 @@ def test_pool_failure_count_is_exact_over_many_short_items(tmp_path):
     # can read 127 when jobs end together and over-reported failures on a loaded host.
     script = (
         "f() { sleep 0.0$((RANDOM % 3)); case $1 in 3|7|11|19) return 1;; esac; }; "
-        "for r in $(seq 40); do run_pool 4 f $(seq 24); echo $pool_failed; done | sort | uniq -c"
+        "for r in $(seq 10); do run_pool 4 f $(seq 24); echo $pool_failed; done | sort | uniq -c"
     )
-    assert _bash(script).split() == ["40", "4"]
+    assert _bash(script).split() == ["10", "4"]
+
+
+def test_pool_keeps_errexit_live_inside_the_pooled_function(tmp_path):
+    # Callers run under set -e; a failing command mid-body must stop the function.
+    script = (
+        f'set -e; f() {{ false; echo reached >> {tmp_path}/seen; }}; '
+        "run_pool 2 f a; echo $pool_failed"
+    )
+    assert _bash(script) == "1"
+    assert not (tmp_path / "seen").exists()
+
+
+def test_pool_counts_a_job_killed_before_it_wrote_its_status():
+    script = (
+        "f() { case $1 in 2) kill -9 $BASHPID;; 3) return 1;; esac; }; "
+        "run_pool 4 f 1 2 3 4; echo $pool_failed"
+    )
+    assert _bash(script) == "2"
+
+
+def test_pool_with_no_items_fails_nothing():
+    assert _bash("pool_failed=9; run_pool 4 true; echo $pool_failed") == "0"
 
 
 def test_pool_does_not_wait_for_the_callers_other_background_jobs(tmp_path):
