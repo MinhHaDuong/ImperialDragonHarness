@@ -308,7 +308,7 @@ pinned to the PR's worktree, prompt embedding `/gaze <pr-number>` plus the
 caller prerequisites and the containment rails (no merges, no writes outside
 the PR branch); the result is observed by polling the written artifact — the
 `## /gaze result` PR comment per the output shape in
-`skills/gaze/references/output.md` § Output shape, accepted only when its `reviewed_head_sha`
+`skills/gaze/SKILL.md` § Output shape, accepted only when its `reviewed_head_sha`
 matches the branch tip — under that contract's bounded wait, never a spawn exit status,
 and the structured result must return to the orchestrator.
 A gaze result of ESCALATE, or no accepted result (missing at the end of the
