@@ -1,0 +1,40 @@
+%erg 0.1
+Title: Thin the wording-pin tests: first bounded batch, and the remedy in pulse's toolkit
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T15:05Z reviewer created
+
+--- body ---
+## Context
+At the author's request (2026-10-21, "dispatch the wording-pin test cutter"): the test suite has many
+tests that only pin a sentence of a skill or rule ("this phrase is in that file"). A rough count
+(a grep for `assert ... in <text>` shapes, not a measurement): 57 of 161 test files. They make every
+wording change a two-file change, and they drove several review rounds on 2026-10-21 (PR 1557 took six
+heads). The harness's own rule applies: when a guard misfires, prefer deleting the guard and its tests
+to growing them (`rules/workflow.md`, severity floor).
+
+Not a new skill: the testing doctor `/pulse` exists. This ticket delivers (1) the first bounded cut and
+(2) the remedy and its syndrome as short entries in `skills/pulse/references/toolkit.md` and
+`syndromes.md` (references: no resident cost; the skill card budget has about 4 characters spare).
+
+## Exit criteria
+- [ ] Classify the pin-style tests in one list (in the PR body): KEEP behaviour tests; structural
+      invariants (frontmatter, catalog, personal data, agnostic checks); tests tied to a real past
+      incident, named by ticket or PR (for example the frozen never-APPROVED allowlist in
+      `tests/test_gaze_never_approves.py`); CUT tests whose only assertion is that a phrase
+      appears in a skill, rule or doc, with no behaviour behind it.
+- [ ] One bounded batch is cut: at most 15 files in the PR, deleted whole where the file is only pins,
+      trimmed where a file mixes pins and behaviour. Each deletion has a one-line reason in the PR body.
+- [ ] A check per cut that nothing else depended on it: the full suite passes; a test that imported a
+      helper from a deleted test file is repaired; no remaining test or script references a deleted
+      test by name (`git grep`).
+- [ ] Measured: test count and `make check` wall time before and after, from the same host, in the PR body.
+- [ ] `skills/pulse/references/syndromes.md` gets a syndrome ("a testbase that pins prose") and
+      `references/toolkit.md` a remedy ("thin the wording pins": the keep and cut classes above, a bounded
+      batch per PR, a reason per deletion, a reviewer samples the cuts); a few lines each.
+- [ ] No frozen allowlist, incident-tied test or behaviour test is weakened; the PR body lists what was
+      deliberately left.
+- [ ] Nothing here requires a particular agent runtime; PR under the 15-file breaker (further batches are
+      further PRs, not part of this ticket).
