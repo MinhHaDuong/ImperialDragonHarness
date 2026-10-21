@@ -18,12 +18,16 @@ pytestmark = pytest.mark.adherence
 REPO = Path(__file__).resolve().parents[1]
 
 # Tool-use forms only: "Write(", "Write tool", "use/call/run the Write".
-_USE = r"\b{0}\(|\b{0} tool\b|\b(?:use|call|run|invoke)\s+(?:the\s+)?{0}\b"
+_USE = r"\b{0}\(|\b{0} tool\b|\b(?i:use|call|run)\s+(?:the\s+)?{0}\b"
 
 # tool -> pattern that means "this text tells the reader to call it".
+# Regex lints stay heuristic. Negated sentences ("Never use the Grep tool",
+# "Do not call Edit(file)", "The Write tool is unavailable") are knowingly
+# flagged unless the same sentence contains `no <Tool> tool`: "Never use the
+# Grep tool; search with Bash instead." stays flagged.
 INSTRUCTS = {
     "Skill": re.compile(
-        r"\bSkill\(|\binvoke\b"
+        r"\bSkill\(|\binvoke\b[^.]*?\bskill\b"
         r"|\b(?:load|run|use|call|follow)\b[^.\n]*?(?<![/\w])skill\b(?!\.md|s)",
         re.I,
     ),
@@ -31,8 +35,30 @@ INSTRUCTS = {
     "Glob": re.compile(_USE.format("Glob")),
     "Edit": re.compile(_USE.format("Edit")),
     "Write": re.compile(_USE.format("Write")),
-    "Agent": re.compile(r"\bAgent\(|\bAgent tool\b"),
+    "Agent": re.compile(_USE.format("Agent")),
 }
+
+_PATH = re.compile(r"[\w.\-]*/[\w./\-]+")
+_BLOCK_START = re.compile(r"^\s*(?:[-*+|>#]|\d+[.)]\s)")
+
+
+def sentences(text: str) -> list[str]:
+    """Sentences with backticks dropped, file paths masked, lines joined."""
+    text = _PATH.sub("PATH", text.replace("`", ""))
+    blocks: list[str] = []
+    fresh = True
+    for line in text.splitlines():
+        if not line.strip():
+            fresh = True
+        elif fresh or _BLOCK_START.match(line):
+            blocks.append(line.strip())
+            fresh = False
+        else:
+            blocks[-1] += " " + line.strip()
+    out: list[str] = []
+    for block in blocks:
+        out += re.split(r"(?<=[.!?])\s+", block)
+    return [x for x in out if x]
 
 
 def granted(shell_text: str):
@@ -54,7 +80,7 @@ def missing_tools(shell_text: str, profile_text: str) -> list[str]:
         if tool not in tools
         and any(
             pat.search(line) and f"no {tool} tool" not in line
-            for line in profile_text.splitlines()
+            for line in sentences(profile_text)
         )
     ]
 
@@ -104,6 +130,32 @@ def test_bare_english_word_is_not_a_tool_call():  # row (c)
     assert missing_tools(shell, "Write the report in French.") == []
     assert missing_tools(shell, "Use the Write tool for the report.") == ["Write"]
     assert missing_tools(shell, "Call Edit(file) now.") == ["Edit"]
+
+
+ROWS = [
+    ("Call `Grep` to search the repository.", ["Grep"]),
+    ("Use `Glob` to find the Python files.", ["Glob"]),
+    ("Use `Edit` to replace the incorrect line.", ["Edit"]),
+    ("Use `Write` to save the report.", ["Write"]),
+    ("Load skills/hunt/SKILL.md using the Skill tool.", ["Skill"]),
+    ("Load the\nhunt skill with the Skill tool.", ["Skill"]),
+    ("Invoke Bash to run the tests.", []),
+    ("Invoke Read to open the profile contract.", []),
+    ("Invoke the hunt skill.", ["Skill"]),
+    ("Use Agent to launch a reviewer.", ["Agent"]),
+    ("Never use the Grep tool; search with Bash instead.", ["Grep"]),
+    ("Read the SKILL.md at skills/hunt/SKILL.md.", []),
+    ("See `skills/hunt/SKILL.md`.", []),
+    ("Skills:", []),
+    ("Load the hunt skill first and follow it.", ["Skill"]),
+    ("You have no Skill tool: read it with Read.\n\nCall Skill(hunt).", ["Skill"]),
+]
+
+
+@pytest.mark.parametrize("text,expected", ROWS)
+def test_review_rows(text, expected):
+    shell = "---\nname: x\ntools: Read, Bash\n---\n"
+    assert missing_tools(shell, text) == expected
 
 
 def test_granted_fails_clearly_without_frontmatter():  # row (d)
