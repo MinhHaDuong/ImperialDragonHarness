@@ -8,6 +8,7 @@ Label: deferred
 2026-10-21T08:26Z reviewer created
 2026-10-21T08:26Z reviewer label deferred
 2026-10-21T08:26Z reviewer Design reviewed (Fable, Astra, KISS); deferred by the author, no work before the deferral is lifted
+2026-10-21T10:06Z reviewer reviewer note Velocity scan 2026-10-21 (docs/2026-10-21-velocity-friction-scan.md) found 2,038 wait-regex matches (upper bound) and about 43 hook-blocked sleeps in 14 days. The wait-replacement idea is already in hand: bounded background waits landed in ce2965be, 70b39b0a, 6b39fd9c, and the waiter design in docs/discussions/2026-10-21-await-external-design.md owns the registry. No new ticket; re-measure the wait count after the waiter lands.
 
 --- body ---
 ## Context
