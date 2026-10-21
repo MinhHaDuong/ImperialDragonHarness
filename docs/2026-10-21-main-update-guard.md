@@ -96,23 +96,36 @@ Each of these defeats the hook with enforce on:
 - writing `FETCH_HEAD` by hand;
 - moving `refs/remotes/origin/main` in one command, then main to it in another;
 - adding a note in `refs/notes/gate` by hand on a merge built on main: any
-  note counts until ticket 1156's record carries checks the hook can read. Following the merge-gate spec
+  note counts until ticket 1156's record carries checks the hook can read;
+- making the command line look like a fetch while moving `origin/main` and
+  main in one transaction, for example `git update-ref -m ' fetch ' --stdin`,
+  or `git fetch . +X:refs/remotes/origin/main +X:refs/heads/main`. The hook
+  reads the command line, so a deliberate imitation passes; only intent
+  reaches it, and more heuristics would not close it.
+
+Following the merge-gate spec
 ([`docs/2026-10-05-merge-gate-spec.md`](2026-10-05-merge-gate-spec.md),
-"Holding the line on `main`"), the guard stops accidents. It does not stop intent. The sweep covers the rest.
+"Holding the line on `main`"), the guard stops accidents. It does not stop
+intent. The sweep covers the rest.
 
 ## The sweep: `scripts/main_sweep.py`
 
 For each first-parent commit of `origin/main` it reports two facts: whether a
 gate record is present, and the PR whose merge commit it is, with that PR's
-required check conclusions on its head. The required check names come from the
-rulesets on main, read even when disabled. The author disabled
-`main-required-checks` on 2026-10-21 (see the ticket 1045 log). A commit is `ok` when it has a record or green checks, a
-`finding` when it has neither, and `unknown` when the forge could not be read
-and no record decides. Exit codes: 0 all ok, 1 a finding, 2 could not look.
-"Could not look" covers a failed `--fetch`, an unknown ref, missing `gh` or
-git, malformed forge output, unreadable required check names, an empty range,
-and a range cut by `--max-count` (default 100; `make main-sweep` uses 1000).
-The report names each cause on an `incomplete:` line.
+required check conclusions on its head. It reads check runs only, not legacy
+commit statuses. The required check names come from the rulesets on main, read
+even when disabled; `main-required-checks` was disabled by the author on
+2026-10-21.
+
+A commit is `ok` when it has a record or green checks, a `finding` when it has
+neither, and `unknown` when the forge could not be read and no record decides.
+Exit codes: 0 all ok, 1 a finding, 2 could not look. A finding wins: exit 1
+even when causes of "could not look" are also present. "Could not look" covers
+a failed `--fetch` of main or of the gate records, an unknown ref, missing
+`gh` or git, malformed forge output, unreadable required check names, an empty
+range, and a range cut by `--max-count` (default 100; `make main-sweep` uses
+1000). The report names each cause on an `incomplete:` line, for example
+`incomplete: empty range: no commit to sweep`.
 
 ```sh
 make main-sweep                                   # last 8 days, fetches main and the notes
@@ -120,11 +133,13 @@ python3 scripts/main_sweep.py --max-count 200 --json
 ```
 
 Periodic run, runtime-free, for example from the author's crontab on the
-authority host. The report goes into the mail, so a finding arrives with its
-commits named:
+authority host. It runs `make main-sweep`, so its flags stay those of the
+Makefile, and the report goes into the mail, so a finding arrives with its
+commits named (make exits non-zero for both a finding and "could not look";
+the report says which):
 
 ```cron
-17 6 * * * cd ~/.agents && { python3 scripts/main_sweep.py --fetch --since "8 days ago" --max-count 1000 > /tmp/main-sweep.txt 2>&1 || mail -s "main sweep: exit $?" "$USER" < /tmp/main-sweep.txt; }
+17 6 * * * cd ~/.agents && f=$(mktemp) && { make -s main-sweep > "$f" 2>&1 || mail -s "main sweep: not clean" "$USER" < "$f"; rm -f "$f"; }
 ```
 
 Choosing the schedule and where a finding goes (a mail, a ticket, a molt step)
