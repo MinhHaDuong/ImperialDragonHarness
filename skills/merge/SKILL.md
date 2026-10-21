@@ -97,13 +97,14 @@ is a normal answer, not an error**.
 
 **Waiting for a queued merge.** The caller waits itself and finishes the chain
 itself (raid: the per-PR roar; roar: its merged-branch pre-check and cleanup).
-Where the runtime runs background commands, it starts exactly one background
-command with a hard time bound of about 25 minutes, which polls this
+Where the runtime wakes the session when a background command exits, it starts
+exactly one background command with a hard time bound of about 25 minutes, which polls this
 single-read status command at an interval inside the command and exits as soon
 as the status is no longer pending; the runtime wakes the caller on exit, and
 the caller continues from the status it reads. Never ask the author to wait or
 to re-run later; never a fixed-delay timer (it waits past the event); never an
-unbounded or foreground loop. A runtime without background commands asks once
+unbounded or foreground loop. A runtime that cannot wake the session on exit
+(it has no background commands, or runs them without waking the model) asks once
 at its next step and reports the PR as pending. A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
 
 ## Before merging

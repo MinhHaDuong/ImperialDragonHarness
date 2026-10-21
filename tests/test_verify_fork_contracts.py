@@ -883,6 +883,7 @@ def test_queued_merge_wait_is_one_bounded_background_command():
     merge = _normalize((SKILLS / "merge" / "SKILL.md").read_text())
     wait = merge.split("**Waiting for a queued merge.**", 1)[1].split("**", 1)[0]
     for phrase in (
+        "Where the runtime wakes the session when a background command exits",
         "exactly one background command with a hard time bound of about 25 minutes",
         "polls this single-read status command at an interval inside the command",
         "exits as soon as the status is no longer pending",
@@ -890,9 +891,15 @@ def test_queued_merge_wait_is_one_bounded_background_command():
         "Never ask the author to wait or to re-run later",
         "never a fixed-delay timer",
         "never an unbounded or foreground loop",
-        "A runtime without background commands asks once",
+        "A runtime that cannot wake the session on exit",
+        "asks once at its next step and reports the PR as pending",
     ):
         assert phrase in wait, phrase
+    # Running background commands is not enough: a runtime can run them and
+    # never wake the model, which would leave the chain parked (probed on Codex
+    # and Pi, 2026-10-21). The condition is the wake-up, not the facility.
+    assert "Where the runtime runs background commands" not in wait
+    assert "A runtime without background commands" not in wait
     assert "never loops, sleeps or watches" not in merge
     roar = _normalize((SKILLS / "roar" / "SKILL.md").read_text())
     assert "§ Waiting for a queued merge" in roar
