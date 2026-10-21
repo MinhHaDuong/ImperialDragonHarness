@@ -54,7 +54,7 @@ circuit_breaker: un-reviewable | waived (<pr_files> content-bearing files / <pr_
 multi_ticket: <distinct close-claim IDs> | none (non-blocking below breaker)
 adherence: PASS|FAIL — <n_blocking> blocking | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
 review-pr: <n_comments_posted> | skipped (adherence blocking) | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
-review-pr scope: one seat | proportional panel | five perspectives | scoped: <objecting perspectives> + regression (omit if review-pr did not run)
+review-pr seats: <perspective> (<family>), ... — <why these> (omit if review-pr did not run)
 panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable) | skipped (--force-approve)
 simplify: <n_fixes_applied> | skipped (adherence blocking) | skipped (prose workpackage) | skipped (un-reviewable) | skipped (--force-approve)

@@ -61,8 +61,7 @@ re-invokes the MAIN loop, not the fork, so a fork that stops polling returns at
 launch and orphans its reviewers (ticket 0250; see **Fork execution
 contract**). Once all return, collect their structured outputs. Choose the model of each launched worker per launch, from the `route` skill grid
 (`skills/route/SKILL.md`); seats that must be independent follow
-`skills/route/references/decorrelation.md` ("The launch line"): scale to the risk; a high-risk PR needs one
-cross-family detached seat, else `no report` and `PANEL-INTEGRITY: DEGRADED`.
+`skills/route/references/decorrelation.md` ("The launch line").
 
 Seat defaults are guidance, not pins; raise a seat when the change warrants it:
 
@@ -163,14 +162,10 @@ tickets — carries no doctype and stays on the code panel, which is the panel
 the audit measured as correct for it (ticket 0550). `prose` →
 `/review-pr-prose`; `code` → `/review-pr`.
 
-**What the review skill owns; gaze passes it nothing but the PR and tree.**
-Panel width is review-pr's: `skills/review-pr/panel-width.json` (`max_lines`,
-`max_files`, `pipeline_paths`) picks Correctness only for a qualifying round-1
-code diff and at least Correctness + Consistency otherwise; `review:standard`
-or a Correctness concern widens it to all five. It also owns the round number
-and § Round scoping for a repeat review, the detached-seat substitution, the
-project gate run, minor tags (`verifiable:` / `consider:` / `nofollow:`) and
-the single posted review. Gaze passes no round number and no perspective list.
+**What the review skill owns.** Gaze passes it the PR, the tree and the
+perspectives it chose (§ 2–5 in `skills/gaze/SKILL.md`). The review skill owns
+the detached-seat substitution, the project gate run, minor tags
+(`verifiable:` / `consider:` / `nofollow:`) and the single posted review.
 
 Inside the review skill the selected perspective agents launch in parallel,
 each writing its own artifact, and the skill polls them against its manifest under a bounded

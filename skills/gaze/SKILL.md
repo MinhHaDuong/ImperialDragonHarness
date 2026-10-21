@@ -121,13 +121,19 @@ fi
 # invocation and runs from the fork's own cwd, not review-<pr> — see its note.)
 ```
 
-Then follow `references/setup-and-breaker.md`: collection, the anchor check, the un-reviewable breaker, round scoping and the waiver.
+Then follow `references/setup-and-breaker.md`: collection, the anchor check, the un-reviewable breaker and the waiver.
 
 <!-- inline: references/setup-and-breaker.md -->
 
 ### 2–5. Review and simplify
 
 Adherence, the review panel and simplify run as laid out in `references/battery.md`, which also holds the optional external reviewer panel. The review panel is `/review-pr` (code) or `/review-pr-prose` (manuscript), invoked directly with the review worktree; there is no gaze-specific reviewer agent and no size tier.
+
+**Which perspectives run** is the orchestrator's call: it picks them, and how
+deep, from its own judgment of the change, a repeat run included, and hands
+them to the review skill. The result comment states what ran, by which model
+family, and why (§ Output shape); independence is defined in
+`skills/route/references/decorrelation.md`.
 
 <!-- inline: references/battery.md -->
 
