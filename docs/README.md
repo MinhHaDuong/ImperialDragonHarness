@@ -15,6 +15,7 @@ drafts* below.
 - [Installation](idh-install-strategy.md): portable checkout and runtime registration.
 - [Operations](adapter-operations.md): existing pilot verification and recovery.
 - [Main-update guard](2026-10-21-main-update-guard.md): the journal and refusal hook on `main`, its enforce switch, and the periodic sweep.
+- [Local merge gate policy](local-merge-gate-policy.md): forge as host, one full check on the candidate, gate record, base-branch guard; adoption steps for other projects.
 - [Roadmap](../ROADMAP.md): priorities; [STATE](../STATE.md): current resume point.
 - [Retired cutover](idh-cutover-checklist.md): historical pointers only.
 
