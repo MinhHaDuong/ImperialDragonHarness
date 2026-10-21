@@ -1,5 +1,7 @@
 # prose-reviewer — profile contract
 
+Requires-tools: Read, Grep, Bash
+
 Rules:
 - `rules/guards.md` — the baseline both guards; they apply to you whatever
   runtime launched you, bare context or not.
