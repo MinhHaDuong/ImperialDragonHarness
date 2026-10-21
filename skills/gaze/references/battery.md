@@ -106,7 +106,7 @@ the seat read-only: it returns `semantic_review.status: delegated` with the
 applicability decision and `rule_sources`, and launches nothing. When that
 artifact lands with `adherence: PASS` and `applicable: true`, or the changed
 files include an instruction file, gaze launches one semantic worker itself, sequentially after the seat because it needs the seat's `rule_sources`:
-one background Agent call writing `adherence-semantic.md` under the same
+one background subagent writing `adherence-semantic.md` under the same
 artifact protocol and bounded poll, given the inputs and prompt of
 verify-adherence § 3 and the seat's `rule_sources`. Choose its model from the
 `route` skill. Record its observed worker id, route and launch evidence when

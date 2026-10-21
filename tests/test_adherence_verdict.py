@@ -97,6 +97,14 @@ def test_declared_rule_source_in_diff_requires_the_phase():
     assert out["adherence"] == "FAIL"
 
 
+def test_applicable_seat_without_reason_fails_cleanly():
+    s = seat()
+    del s["semantic_review"]["reason"]
+    out = av.merge(s, None, ["scripts/foo.py"], {})
+    assert out["adherence"] == "FAIL"
+    assert out["escalation"] == "adherence-infrastructure"
+
+
 def test_worker_without_launch_identity_fails():
     out = av.merge(seat(), worker(), ["AGENTS.md"], {})
     assert out["adherence"] == "FAIL"

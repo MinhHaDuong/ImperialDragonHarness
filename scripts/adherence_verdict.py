@@ -83,6 +83,7 @@ def merge(seat: dict, report: dict | None, changed: list[str],
         return out
 
     sr["applicable"] = True
+    sr.setdefault("reason", "seat declared the semantic review applicable")
     if touched:
         sr["reason"] = f"diff touches instruction files: {', '.join(touched)}"
     if sr.get("status") == "ran" and all(sr.get(k) for k in IDENTITY_KEYS):
