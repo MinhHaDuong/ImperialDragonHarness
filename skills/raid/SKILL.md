@@ -389,7 +389,7 @@ declines an APPROVED PR's merge.
 <!-- inline: references/merge-permission-denial.md -->
 
 After all waves, in one compound so the `cd` persists across the rebase:
-`cd <session-worktree> && git checkout main && git pull --rebase origin main`, then
+`cd <session-worktree> && "$IDH_ROOT/scripts/sync-local-main.sh" . main`, then
 `make check`. New failures → revert last merge + ticket.
 
 ## Phase 8: Celebrate (per-merged-PR)
