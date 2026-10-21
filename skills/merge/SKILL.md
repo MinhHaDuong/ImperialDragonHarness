@@ -93,11 +93,18 @@ Queued is not merged. To learn the outcome, ask once with
 `"$IDH_ROOT/skills/merge/erg-pr-status" [-C WORKTREE] N`: exit 0 merged, 1
 failed (a check failed, or the PR closed unmerged), 2 pending, 3 the forge
 could not be read. It reads the forge a single time and never waits; **pending
-is a normal answer, not an error**. The caller asks again at its next step
-(raid: before the per-PR roar; roar: before its merged-branch pre-check) and
-never loops, sleeps or watches in the meantime. A runtime may wrap that one
-command in its own background wake-up as an optimisation; correctness never
-depends on it. A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
+is a normal answer, not an error**.
+
+**Waiting for a queued merge.** The caller waits itself and finishes the chain
+itself (raid: the per-PR roar; roar: its merged-branch pre-check and cleanup).
+Where the runtime runs background commands, it starts exactly one background
+command with a hard time bound of about 25 minutes, which polls this
+single-read status command at an interval inside the command and exits as soon
+as the status is no longer pending; the runtime wakes the caller on exit, and
+the caller continues from the status it reads. Never ask the author to wait or
+to re-run later; never a fixed-delay timer (it waits past the event); never an
+unbounded or foreground loop. A runtime without background commands asks once
+at its next step and reports the PR as pending. A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
 
 ## Before merging
 
@@ -135,11 +142,6 @@ belongs with the command it recovers.)
   Immediately before `erg-pr-merge`, run `git fetch origin`, then
   `git rev-parse HEAD` == `git rev-parse origin/<branch>` == the gate's
   `ruled_tip_sha`; any mismatch means sync or re-gate, never merge.
-  **Documented exception:** PRs gated before this rule (#1522, #1523) merge
-  with the helper's own ticket-only close commit on top of the ruled tip — one
-  `ticket(<id>): close and archive — PR #<n>` commit whose `git diff
-  --no-renames --name-only <ruled> origin/<branch>` lists only `tickets/`
-  paths. Nothing else qualifies.
 - **A gaze result of ESCALATE (or none accepted) means no gate and no merge:**
   the review never completed, and the PR goes to the author. "Accepted" means a
   result is present and its `reviewed_head_sha` is not stale against the branch
@@ -184,10 +186,10 @@ command it recovers.)
   claim before retrying. An already archived ticket with a `Closed:` header
   is handled automatically: the script skips closing it again.
 - **"auto-merge is unavailable and N check(s) are pending".** The close commit
-  is already pushed and the script did not wait. Ask `erg-pr-status` at the
-  next step; once the checks are done and green, re-run the script (a re-run
-  after the close commit adds no second close) or finish with a direct forge
-  merge. Do not loop on the status command.
+  is already pushed and the script did not wait. Wait on `erg-pr-status` per
+  § Waiting for a queued merge; once it reports the checks done and green,
+  re-run the script (a re-run after the close commit adds no second close) or
+  finish with a direct forge merge.
 - **Empty rollup and unavailable requirement inspection.** With a mergeable
   PR and an explicit empty rollup, the script inspects legacy protection and
   effective rules. Known required checks refuse. HTTP 403 (including permission
@@ -258,10 +260,10 @@ it runs `"$IDH_ROOT/scripts/sync-local-main.sh"` on the base branch
 (rules/git.md § Local main syncs eagerly) — no manual sync step. Two outputs
 still need action:
 
-- "Merge not yet landed" — the usual case when checks were pending. Ask
-  `erg-pr-status` once at the next step; on exit 0 run
-  `"$IDH_ROOT/scripts/sync-local-main.sh"`; on 2 carry on and ask again later;
-  on 1 report the failure.
+- "Merge not yet landed" — the usual case when checks were pending. Wait on
+  `erg-pr-status` per § Waiting for a queued merge; on exit 0 run
+  `"$IDH_ROOT/scripts/sync-local-main.sh"`; on 1 report the failure; still 2
+  when the bound expires, report the PR as pending.
 - "left untouched" in the sync report — dirty overlap or divergence where the
   base branch is checked out; report it to the caller rather than forcing.
 

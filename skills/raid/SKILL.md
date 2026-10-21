@@ -314,9 +314,13 @@ and the structured result must return to the orchestrator.
 A gaze result of ESCALATE, or no accepted result (missing at the end of the
 bounded wait, or its `reviewed_head_sha` stale against the branch tip), means
 the gate is not run: the review never completed, and the PR goes to the author.
-The comparison is made on the reviewed head, before the raid adds its own fix and
-ticket-close commits; those commits do not void the result.
-Only on a gaze result of REVIEWED, or FINDINGS once fixed, run
+The comparison is made on the reviewed head, before the raid adds its
+ticket-close commit or the fix for a gate's round-1 REROLL; those two do not
+void the result (the round-2 re-gate rules the fix). A FINDINGS fix does: it
+moves the head past what gaze reviewed, so gaze runs again on the new head.
+On FINDINGS the fix agent fixes the listed items and the raid re-runs `/gaze` on
+the new head before any gate: a head gaze did not review is never gated.
+Only on a gaze result of REVIEWED run
 `/verify-gate <pr-number> repo=<PR's worktree> session=<uuid>` the same way (gaze has removed
 its review tree by then; the gate checks out the PR head in a worktree of its
 own and removes it, while the raid keeps the PR's worktree until gating ends);
@@ -349,11 +353,13 @@ writes on completion. Fix agent gets ≤10 min. The agent works under:
 - Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix. A mapped doc-only fix uses `python3 "$IDH_ROOT/scripts/scoped-check.py"` and quotes selected and skipped targets; Python code and unmapped changes use the full `make check`.
 - Push commits to the PR branch; do not open new PRs.
 
-Then re-gate once with the same `session=`. Breakers on this loop:
+After a FINDINGS fix, re-run `/gaze` on the new head; after a round-1 REROLL fix,
+re-gate once with the same `session=`. Breakers on this loop:
 
 - Fix agent timeout (10 min) → ESCALATE.
 - Gate disagrees with the gaze phase outputs 2–5 on a must-fix finding → ESCALATE (no silent resolution).
 - Two REROLL rounds reached → ESCALATE.
+- FINDINGS again after the re-run `/gaze` → ESCALATE (one fix round per review).
 
 Phase 7 merges stay strictly sequential.
 
@@ -425,11 +431,12 @@ For each eligible PR, sequentially within the wave:
    Runtime permission rules must authorize the resolved helper path. Use
    `-C` to select the worktree for every Git and forge operation.
    The merge is queued, not necessarily landed: pending checks are normal.
-   Ask the outcome once with `"$IDH_ROOT/skills/merge/erg-pr-status" -C <worktree-path> <pr-number>`
-   (exit 0 merged, 1 failed, 2 pending, 3 unreadable) — no loop, no sleep, no
-   foreground wait. Pending is not a failure: move on, and ask again once before
-   Phase 8 for each PR still pending; a PR still pending then is listed as
-   queued in the briefing, not as merged.
+   Read the outcome with `"$IDH_ROOT/skills/merge/erg-pr-status" -C <worktree-path> <pr-number>`
+   (exit 0 merged, 1 failed, 2 pending, 3 unreadable). Pending is not a
+   failure: wait as `skills/merge/SKILL.md` § Waiting for a queued merge
+   prescribes (one bounded background command) and move on to the next PR
+   meanwhile; a PR still pending when that wait ends is listed as queued in the
+   briefing, not as merged.
 5. If merge fails (conflict, CI regression), or the status reads failed, ESCALATE — leave a PR comment and move to the next PR.
    A *permission denial* on the merge call is not a merge failure — handle it
    per § Merge-permission denial below, not by ESCALATE.
@@ -474,7 +481,8 @@ After all waves, in one compound so the `cd` persists across the rebase:
 
 After all merges, from the updated main branch, run `/roar` for each
 PR whose `erg-pr-status` answered merged (exit 0); a pending PR gets its
-`/roar` at a later step, once asked again. The roar pre-check (`git merge-base --is-ancestor
+`/roar` when its bounded wait (`skills/merge/SKILL.md` § Waiting for a queued
+merge) reports it merged. The roar pre-check (`git merge-base --is-ancestor
 HEAD origin/main`) passes because HEAD is main after the pull.
 
 ## Mid-session checkpoint (~50% effort)

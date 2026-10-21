@@ -115,7 +115,7 @@ def test_merge_gates_the_head_that_merges():
         "origin/<branch>` at merge time, read after `git fetch origin`; otherwise "
         "re-gate, do not merge." in merge
     )
-    assert "PRs gated before this rule (#1522, #1523)" in merge
+    assert "#1522" not in merge and "Documented exception" not in merge
     assert "rev-list --count <ruled>" not in merge
     # Premise: the helper skips an already closed and archived ticket.
     assert 'compgen -G "tickets/closed/${tid}-*.erg"' in ERG_PR_MERGE
@@ -826,10 +826,13 @@ def test_merge_accepted_gaze_result_is_not_tautological():
     assert "its `reviewed_head_sha` is not stale against the branch tip" in merge
 
 
-def test_dashboard_allows_only_the_documented_close_exception():
+def test_dashboard_requires_ruled_tip_equal_to_the_head():
+    """The 1153 stack merged with delta 0, so the dashboard names no
+    historical exception: ruled_tip_sha must equal the branch head."""
     dash = " ".join((SKILLS / "dashboard" / "SKILL.md").read_text().split())
     assert "a later ticket-close commit from the merge helper is normal" not in dash
-    assert "#1522, #1523" in dash
+    assert "#1522" not in dash and "exception" not in dash
+    assert "`ruled_tip_sha` equal to the branch head (a mismatch is a finding)" in dash
 
 
 def test_git_rule_rebases_before_round_one_gate_and_syncs_after_gaze():
@@ -845,3 +848,62 @@ def test_gate_tree_is_per_session_and_round_and_repo_is_required():
     assert 'gate_tree="$primary_root/.claude/worktrees/gate-<pr-number>-<session-id>-r<round>"' in gate
     assert "`<pr-number>` alone" not in gate
     assert '"no repo argument"' in gate
+
+
+NO_REVIEW_NO_GATE = "**No gate without a completed review.**"
+
+
+def _no_review_no_gate(gate: str) -> bool:
+    norm = _normalize(gate)
+    if NO_REVIEW_NO_GATE not in norm:
+        return False
+    para = norm.split(NO_REVIEW_NO_GATE, 1)[1].split(" - **", 1)[0]
+    return all(s in para for s in (
+        "Standalone or from a caller",
+        "latest posted `## /gaze result` is ESCALATE",
+        "no gaze result was accepted for the current head",
+        "the gate answers ESCALATE without ruling the criteria",
+    ))
+
+
+def test_gate_refuses_a_head_without_a_completed_review():
+    """Post-merge follow-up: the gate itself, not only its callers, refuses to
+    rule when gaze escalated or no result covers the current head."""
+    sessions = VERIFY_GATE.split("## Gate sessions", 1)[1].split("\n## ", 1)[0]
+    assert _no_review_no_gate(sessions)
+    # Negative control: removing the paragraph fails the check.
+    start = sessions.index("- **No gate without a completed review.**")
+    end = sessions.index("\n\n", start)
+    assert not _no_review_no_gate(sessions[:start] + sessions[end:])
+
+
+def test_queued_merge_wait_is_one_bounded_background_command():
+    """Author request: the caller waits for a queued merge itself, with one
+    bounded background command, and never hands the wait to the author."""
+    merge = _normalize((SKILLS / "merge" / "SKILL.md").read_text())
+    wait = merge.split("**Waiting for a queued merge.**", 1)[1].split("**", 1)[0]
+    for phrase in (
+        "exactly one background command with a hard time bound of about 25 minutes",
+        "polls this single-read status command at an interval inside the command",
+        "exits as soon as the status is no longer pending",
+        "the runtime wakes the caller on exit",
+        "Never ask the author to wait or to re-run later",
+        "never a fixed-delay timer",
+        "never an unbounded or foreground loop",
+        "A runtime without background commands asks once",
+    ):
+        assert phrase in wait, phrase
+    assert "never loops, sleeps or watches" not in merge
+    roar = _normalize((SKILLS / "roar" / "SKILL.md").read_text())
+    assert "§ Waiting for a queued merge" in roar
+    assert "never ask the author to wait or to re-run `/roar`" in roar
+    assert "the user or a later step re-runs" not in roar
+    # Every other place that described the outcome read points at the wait.
+    raid = _normalize((SKILLS / "raid" / "SKILL.md").read_text())
+    status = (SKILLS / "merge" / "erg-pr-status").read_text()
+    for name, text in (("merge", merge), ("raid", raid), ("roar", roar), ("erg-pr-status", status)):
+        for stale in ("ask again later", "ask again once before", "once asked again",
+                      "Do not loop on the status command", "The caller asks again at its next step"):
+            assert stale not in text, (name, stale)
+    assert "§ Waiting for a queued merge" in raid
+    assert "§ Waiting for a queued merge" in status

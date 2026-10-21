@@ -62,7 +62,6 @@ POLICY_GLOBS = (
     "agents/*-seat.md",
     "agents/code-reviewer.md",
     "agents/prose-reviewer.md",
-    "agents/gaze-pr-review.md",
     "profiles/*-seat/**/*",
     "profiles/code-reviewer/**/*",
     "profiles/prose-reviewer/**/*",

@@ -192,10 +192,12 @@ ESCALATE_STOP = (
     "the gate is not run: the review never completed, and the PR goes to the author."
 )
 SCOPE = (
-    "The comparison is made on the reviewed head, before the raid adds its own fix and "
-    "ticket-close commits; those commits do not void the result."
+    "The comparison is made on the reviewed head, before the raid adds its "
+    "ticket-close commit or the fix for a gate's round-1 REROLL; those two do not "
+    "void the result (the round-2 re-gate rules the fix). A FINDINGS fix does: it "
+    "moves the head past what gaze reviewed, so gaze runs again on the new head."
 )
-GATE_RUN = "Only on a gaze result of REVIEWED, or FINDINGS once fixed, run `/verify-gate <pr-number>"
+GATE_RUN = "Only on a gaze result of REVIEWED run `/verify-gate <pr-number>"
 
 
 def _gaze_then_gate_violations(per_ticket: str) -> list[str]:
@@ -299,3 +301,12 @@ def test_phase7_checks_local_remote_and_ruled_tip_before_the_helper():
         "== the gate's `ruled_tip_sha`" in phase7
     )
     assert "pushes no close commit, and merges" not in phase7
+
+
+def test_phase6_findings_are_re_reviewed_before_any_gate():
+    """A FINDINGS fix moves the head past what gaze reviewed: raid re-runs
+    /gaze on the new head before any gate, and a second FINDINGS escalates."""
+    norm = " ".join(_per_ticket().split())
+    assert "the raid re-runs `/gaze` on the new head before any gate" in norm
+    assert "After a FINDINGS fix, re-run `/gaze` on the new head" in norm
+    assert "FINDINGS again after the re-run `/gaze` → ESCALATE" in norm

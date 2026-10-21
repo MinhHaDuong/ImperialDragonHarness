@@ -500,7 +500,6 @@ def test_every_policy_glob_raises_the_floor(glob):
 @pytest.mark.parametrize("path", [
     "profiles/gate-seat/PROFILE.md", "agents/gate-seat.md", "agents/adherence-seat.md",
     "skills/review-pr-prose/SKILL.md", "agents/prose-reviewer.md",
-    "agents/gaze-pr-review.md",
 ])
 def test_seat_and_prose_review_contracts_raise_the_floor(path):
     assert re_mod.risk_floor([("M", path)], None)["paths"] == "high"

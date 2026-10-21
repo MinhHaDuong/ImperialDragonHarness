@@ -48,8 +48,6 @@ say so in one line, then print the full state anyway.
 
 For each merge request new or changed since the last call, read its diff,
 checks and `/verify-gate` verdicts, sequentially, and report findings against
-its stated claims: ticket line in path form, `ruled_tip_sha` versus the tip
-(they must match; the only exception is the documented one in
-`skills/merge/SKILL.md`, PRs #1522, #1523 with one ticket-only helper close
-commit on top), test gaps, rules relaxed. Report only; fixes belong to the session doing the work or to
+its stated claims: ticket line in path form, `ruled_tip_sha` equal to the
+branch head (a mismatch is a finding), test gaps, rules relaxed. Report only; fixes belong to the session doing the work or to
 the author.
