@@ -10,6 +10,10 @@ if [ $# -eq 0 ]; then
     set -- scripts/*.sh
 fi
 
+for f in "$@"; do
+    [ -r "$f" ] && [ -f "$f" ] || { echo "FAIL: cannot read $f"; exit 2; }
+done
+
 missing=$(grep -L 'set -euo pipefail' "$@" | grep -Ev 'shell-init\.sh|bashrc-loader\.sh|bash-env\.sh' || true)
 if [ -n "$missing" ]; then
     echo "FAIL: missing set -euo pipefail in:"
