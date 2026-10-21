@@ -228,7 +228,12 @@ retains its round requirements.
 reviews, using the same `"$IDH_ROOT/scripts/prose_predicate.py"` verdict as
 phases 2–4. Skip these code-review routes on prose panels.
 If selected, route reviews concurrently with phases 2–4 and collect completed
-evidence before the result within the run's deadline. Record the actual reviewer,
+evidence before the result within the run's deadline. Run a headless CLI reader
+(`codex exec`, `claude -p`, `pi -p`) through
+`python3 "$IDH_ROOT/scripts/seat_clock.py" run --cap 600 --out <panel>/<name>.md -- <cli...>`:
+it is killed at the cap and its line, `reported in <s>s` or `no report (timed
+out after 600s)`, goes in the result's `seat times:` line; on `no report` WARN,
+continue and say so. Record the actual reviewer,
 route, independence basis, exact reviewed revisions and raw report. A dispatch
 is not completion; a changed head requires current review evidence.
 

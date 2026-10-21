@@ -54,6 +54,7 @@ multi_ticket: <distinct close-claim IDs> | none (non-blocking)
 adherence: PASS|FAIL — <n_blocking> blocking | skipped (--force-approve) | skipped (battery NOT-RUN)
 panel: <n_comments_posted> | skipped (adherence blocking) | skipped (--force-approve) | skipped (battery NOT-RUN)
 panel seats: <perspective> (<family>): clear|concerns|blocking|no report, ... — <why these> (omit if the panel did not run)
+seat times: <`seat_clock.py roster` lines, `; `-joined: each seat's wall time, `no report (timed out after <s>s)`, `no report (failed to start)` or `no report`> (omit if no seat launched)
 panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (--force-approve)
 review_groups: <group> ← <seats>, ... | one (whole diff)
