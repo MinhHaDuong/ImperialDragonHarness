@@ -5,7 +5,7 @@ name: gaze
 description: "Review one merge request: adherence check, code or prose review panel, simplify. Returns REVIEWED / FINDINGS / ESCALATE and never APPROVED; the merge gate is /verify-gate, run by the caller. Does not merge."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<pr-number> [--waive-breaker <reason>] [--force-approve <reason>]"
+argument-hint: "<pr-number> [--force-approve <reason>]"
 context: fork
 # Background by intent: /gaze is long-running, and a raid wave gates several PRs
 # at once — backgrounding the orchestrator is what lets those run concurrently.
@@ -69,9 +69,6 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 - `--force-approve` is supported for explicit human override; it skips the review and
   is logged loudly in the PR comments and the skill transcript. It is an override
   record, not a verdict.
-- `--waive-breaker <reason>` lifts only the un-reviewable file-count stop. The battery
-  and simplify still run; gaze records the waiver and the caller passes it to
-  `/verify-gate`, which rules NEEDS-AUTHOR (§ Waiver).
 - **Cross-repo prerequisite**: the caller must ensure cwd is the target project before
   invoking `/gaze`. The skill and its sub-skills (`/verify-adherence`, `/simplify`, etc.)
   use `gh` and `git` commands that resolve against cwd.
@@ -121,7 +118,7 @@ fi
 # invocation and runs from the fork's own cwd, not review-<pr> — see its note.)
 ```
 
-Then follow `references/setup-and-breaker.md`: collection, the anchor check, the un-reviewable breaker and the waiver.
+Then follow `references/setup-and-breaker.md`: collection, the anchor check and the close-claim preflight.
 
 <!-- inline: references/setup-and-breaker.md -->
 
@@ -134,6 +131,13 @@ deep, from its own judgment of the change, a repeat run included, and hands
 them to the review skill. The result comment states what ran, by which model
 family, and why (§ Output shape); independence is defined in
 `skills/route/references/decorrelation.md`.
+
+**Review groups.** No file count stops a review. When the diff is large, the
+orchestrator partitions it into review groups, by directory or concern, of
+about 400 changed lines or fewer each, and assigns seats per group; a small
+diff is one group. The result lists the groups and which seat read which
+(`review_groups:`). A group no seat read makes the result FINDINGS, never
+REVIEWED, and the result names the unread group.
 
 <!-- inline: references/battery.md -->
 
@@ -152,13 +156,13 @@ unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
 adherence: PASS | FAIL (<n blocking>)
 panel_integrity: COMPLETE | DEGRADED — <PANEL-INTEGRITY: line>
-battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable) | skipped (--force-approve)
-circuit_breaker: un-reviewable | waived (...) | none
+battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (--force-approve)
+review_groups: <group> ← <seats>, ... | one (whole diff)
 multi_ticket: <distinct close-claim IDs> | none
 next: REVIEWED → the caller closes the ticket on the branch, then runs /verify-gate <pr-number> repo=<caller's checkout> session=<uuid> on the current branch head, which is reviewed_head_sha plus at most that ticket-close commit (one re-gate at most, /verify-gate § Gate sessions: a fix asked by the round-1 gate is re-gated once on the new head with the same session=, without a new gaze run); FINDINGS → the caller fixes them and re-runs /gaze on the new head: a head gaze did not review is never gated; ESCALATE (including battery: NOT-RUN or skipped (--force-approve), or a DEGRADED panel) → no gate and no merge: the review never completed, and the PR goes to the author, who decides
 ```
 
-- `ESCALATE`: the breaker fired, the battery could not run (`battery: NOT-RUN`),
+- `ESCALATE`: a circuit breaker fired, the battery could not run (`battery: NOT-RUN`),
   any phase 2–5 errored or timed out, or the workspace could not be restored.
   `--force-approve` is ESCALATE too, with `battery: skipped (--force-approve)`:
   nothing was reviewed (§ `--force-approve`). So is a DEGRADED panel (below).
@@ -166,7 +170,7 @@ next: REVIEWED → the caller closes the ticket on the branch, then runs /verify
   author.
 - `FINDINGS`: any blocking adherence violation, any `blocking` seat
   verdict, any unresolved `verifiable:` minor, any simplify
-  must-fix not applied. List them; the caller fixes (a coder on the PR
+  must-fix not applied, an unread review group (§ 2–5). List them; the caller fixes (a coder on the PR
   branch, scoped to the list) and re-runs gaze on the new head. FINDINGS never
   go straight to the gate: the fixed head is one gaze did not review.
 - `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still
@@ -204,12 +208,6 @@ On every exit path run `references/cleanup.md`: remove this run's review scratch
 - Close claim names a ticket file that does not exist (neither `tickets/<id>-*.erg`
   nor `tickets/closed/<id>-*.erg`; a caller may close before gating) → ESCALATE. A PR with
   no ticket at all is not a breaker.
-- `pr_files >= 15` (content-bearing files, phase-1 rule) without a waiver → ESCALATE as
-  `un-reviewable` before the review; this is the `rules/workflow.md` 15+ file
-  monster threshold. Name the breaker in the comment and mention `multi_ticket`
-  when multiple close claims add a decomposition signal. A waiver
-  (`--waive-breaker` or the PR-body `Review-scope: indivisible` line, § Waiver) lifts only this stop. `--force-approve` can
-  override it loudly, without review.
 - Any of phases 2–5 errors or times out → ESCALATE (do not silently skip).
   Exception: simplify intentionally skipped when adherence is blocking.
 - Telemetry thresholds (`## Telemetry`).

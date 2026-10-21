@@ -8,9 +8,8 @@ merged on author decision with Phase 6 contributing only escalations. Phase 6
 must prescribe a launch shape the harness honours — the orchestrator runs
 /gaze itself, or a detached headless non-interactive CLI session whose verdict
 returns by artifact polling — and a REROLL bump/fix must land its commits on
-the PR branch, never on main mid-wave. Phase 4 must also see the /gaze
-un-reviewable breaker while splitting is still cheap. Text-grep only → fast
-tier, no marker.
+the PR branch, never on main mid-wave. Text-grep only → fast tier, no
+marker.
 """
 
 import re
@@ -39,10 +38,6 @@ def _per_ticket() -> str:
     head, sep, _ = phase6.partition("**Per-wave:**")
     assert sep, "Phase 6 per-wave header missing (cannot bound the per-ticket part)"
     return head
-
-
-def _phase4() -> str:
-    return _slice("## Phase 4: Verify feasibility", "## Phase 5.0")
 
 
 def test_phase6_gaze_launch_returns_a_verdict():
@@ -131,58 +126,6 @@ def test_phase6_substitution_trigger_names_detection_causes():
             f"{cause!r} beside the battery NOT-RUN signal — a NOT-RUN run "
             "with an unnamed cause would not trigger the detached fallback"
         )
-
-
-def test_phase4_flags_planned_pr_size():
-    """Phase 4 must compare each planned PR's file count with the /gaze breaker.
-
-    The 15-file breaker fired only at gaze phase 1 on PR #1060 — after the
-    wave was already executed. Phase 4 must see it while splitting is still
-    cheap: WARN plus a proposed split before Phase 5 spawns executors.
-    """
-    phase4 = _phase4()
-    norm = re.sub(r"\s+", " ", phase4)
-    # A planned-PR file-count bullet, referencing the breaker (not restating
-    # its mechanics) and the section that owns the threshold.
-    assert "un-reviewable" in norm, (
-        "Phase 4 must reference the /gaze un-reviewable breaker for planned-PR sizing"
-    )
-    assert "skills/gaze/SKILL.md" in norm, (
-        "Phase 4 must reference the breaker where it lives — skills/gaze/SKILL.md — "
-        "not restate its mechanics"
-    )
-    assert "WARN" in norm and "split" in norm, (
-        "Phase 4 must prescribe WARN plus a proposed split for a planned PR "
-        "reaching the breaker"
-    )
-    assert "before Phase 5" in norm, (
-        "The WARN + split must be proposed before Phase 5 spawns executors — "
-        "the breaker is cheap to act on at planning time only"
-    )
-    # The restated "(N+ files" number must equal the rules/workflow.md
-    # threshold — catches restated-and-drifted (PR #1060 hit 16 files against
-    # a breaker nobody in Phases 3-4 compared with).
-    m = re.search(r"\((\d+)\+ files", norm)
-    assert m, "Phase 4's size bullet must carry its (N+ files) number so drift is pinnable"
-    workflow = (ROOT / "rules" / "workflow.md").read_text()
-    discipline = workflow.split("# Ticket discipline for multi-PR work", 1)[1]
-    discipline = discipline.split("# Compaction", 1)[0]
-    w = re.search(r"(\d+)\+ files", discipline)
-    assert w, "rules/workflow.md Ticket discipline section lost its N+ files threshold"
-    assert m.group(1) == w.group(1), (
-        f"Phase 4's restated threshold ({m.group(1)}+ files) drifted from "
-        f"rules/workflow.md's ({w.group(1)}+ files)"
-    )
-    # The authoritative breaker lives in gaze phase 1 Setup — pin all three
-    # statements of the threshold to one number.
-    gaze = (ROOT / "skills" / "gaze" / "SKILL.md").read_text()
-    setup = gaze.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
-    breaker = re.search(r"pr_files\s*>=\s*(\d+)", setup)
-    assert breaker, "gaze setup lost its pr_files un-reviewable breaker"
-    assert m.group(1) == breaker.group(1), (
-        f"Phase 4's restated threshold ({m.group(1)}+ files) drifted from "
-        f"gaze's breaker (pr_files >= {breaker.group(1)})"
-    )
 
 
 GAZE_RESULT = "the `## /gaze result` PR comment"

@@ -50,14 +50,14 @@ Post a single top-level PR comment at end of skill. No interim
 
 result: REVIEWED|FINDINGS|ESCALATE
 reviewed_head_sha: <full SHA read from the review tree after phase 5>
-circuit_breaker: un-reviewable | waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>) | none
-multi_ticket: <distinct close-claim IDs> | none (non-blocking below breaker)
-adherence: PASS|FAIL — <n_blocking> blocking | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
-panel: <n_comments_posted> | skipped (adherence blocking) | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
+multi_ticket: <distinct close-claim IDs> | none (non-blocking)
+adherence: PASS|FAIL — <n_blocking> blocking | skipped (--force-approve) | skipped (battery NOT-RUN)
+panel: <n_comments_posted> | skipped (adherence blocking) | skipped (--force-approve) | skipped (battery NOT-RUN)
 panel seats: <perspective> (<family>): clear|concerns|blocking|no report, ... — <why these> (omit if the panel did not run)
 panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
-battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable) | skipped (--force-approve)
-simplify: <n_fixes_applied> | skipped (adherence blocking) | skipped (prose workpackage) | skipped (un-reviewable) | skipped (--force-approve)
+battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (--force-approve)
+review groups: <group> ← <seats>, ... | one (whole diff)
+simplify: <n_fixes_applied> | skipped (adherence blocking) | skipped (prose workpackage) | skipped (--force-approve)
 
 Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]

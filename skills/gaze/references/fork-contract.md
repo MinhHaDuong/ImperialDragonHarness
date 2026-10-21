@@ -47,10 +47,7 @@ reviewer notifications and read the review comment they posted on the merge
 request. That comment is evidence, not a gaze result: without an accepted gaze
 result there is no gate. Re-run `/gaze <pr>` once if the liveness window below
 allows it; otherwise park the PR and ESCALATE to the author, as `raid` and
-`merge` do for a missing result. Once a result is accepted, the gate reads a
-waiver only from an already-posted waived `circuit_breaker` header in the PR's
-comments; if none was posted, a waived 15+ file PR is ESCALATE there
-(fail-safe), as is an un-waived one.
+`merge` do for a missing result.
 
 **Fork liveness.** Once the review comment has posted on the PR, the caller must
 see the gaze result (returned or posted as a PR comment) within
