@@ -125,9 +125,10 @@ review as its own ticket; this one is blocked on its outcome.
 - [ ] A hook refuses an update of `main` that is not a gated merge, verified from
       a second worktree, and its installation is verified under
       `core.hooksPath`.
-- [ ] The ruleset change is made by the author, and the day the forge is down is
+- [x] The ruleset change is made by the author, and the day the forge is down is
       rehearsed once (a PR merged with the forge's runners unavailable or
-      unconsulted).
+      unconsulted). Moot: the author disabled the ruleset on 2026-10-21 (see log);
+      no rehearsal is owed.
 
 ## Decisions 2026-10-20 (author: "1045 default", on the Fable advice)
 1. The record is a git note on the candidate merge commit; dyne adapts later.
