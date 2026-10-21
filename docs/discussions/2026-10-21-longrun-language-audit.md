@@ -173,27 +173,28 @@ Proposed content of `adapters/runtime-hints.md § Waiting`, filled from the
 ```text
 Background command, wakes the session on exit
   Claude Code: Bash run_in_background
-  Codex: background terminal (runs, no wake on exit; the result is read at the next turn)
+  Codex: exec_command + write_stdin (session id; pull within the turn). Probed: a background terminal runs but does not wake the model on exit
   Pi: none native; pi-longrun bg_start + bg_wait (unaudited, 3rd party) or pi-patty-bg-tasks run_in_background (unaudited)
 
 Deadline on the command itself (all runtimes)
   Claude Code: timeout <s> <command>
-  Codex: timeout <s> <command>
+  Codex: timeout <s> <command>   (yield_time_ms only sets when control returns; it does not stop the process)
   Pi: timeout <s> <command>   (bash tool has no default timeout)
 
 Wake the session from outside (the waiter design, parked)
   Claude Code: background blocker that waits on outcome.json
-  Codex: codex queue --thread $CODEX_THREAD_ID --message <text>   (needs the app-server daemon; from a sandboxed shell needs an execpolicy allow rule)
+  Codex: codex queue --thread $CODEX_THREAD_ID --message <text>   (probed; needs the app-server daemon; from a sandboxed shell needs an execpolicy allow rule)
+  Codex: functions.exec cell + notify() + functions.wait   (self-reported, within the turn only, not a durable callback)
   Pi: extension sendMessage({triggerTurn: true}) or deliverAs: "followUp"   (unproven here)
 
 Wait on a background subagent
   Claude Code: the completion notifies the main loop
-  Codex: agent.wait in bounded slices
+  Codex: agent.wait in bounded slices; sub-agent completion messages reach the parent (self-reported; needs authorization to delegate; alive turn only)
   Pi: subagent tool (synchronous)
 
 No wake-up available: fallback
   Claude Code: n/a
-  Codex: read the result once at the next step
+  Codex: read the result once at the next step (write_stdin on the session id)
   Pi: read the result once at the next step
 
 Fork or child poll (the runtime never wakes it)
@@ -207,6 +208,13 @@ Spawn and list subagents; concurrency cap
   Pi: subagent
 ```
 
+Codex rows marked self-reported come from the model describing its own tools
+(2026-10-21), not from a probe. Its account agrees with the probe on the point
+that matters: nothing wakes it after the turn ends. Its pattern for a PR
+automerge or an external review: a bounded watcher with a command-level
+`timeout`, a final state of MERGED, closed unmerged, or deadline reached (pending),
+and a reviewer that writes a temporary file and renames it on completion.
+
 ## Not checked
 
 The audit did not read tickets/, memory/ beyond filenames, most of docs/ and
@@ -214,5 +222,6 @@ of scripts/ usage text, `peer_review.py`, or the adapters' TypeScript beyond a
 grep. Unverified: whether Claude Code's foreground-sleep block also catches a
 `sleep` inside `timeout bash -c`; whether a team-lead subagent is woken by its
 own background children; whether Codex and Pi ignore the `background:`
-frontmatter key; the Codex entries `agent.wait` and `agent.spawn` come from the
-skills' own text and were not exercised.
+frontmatter key; the Codex entries `agent.wait`, `agent.spawn`, `notify()`,
+`functions.wait` and sub-agent completion messages come from the skills' text or
+from Codex's own description and were not exercised.
