@@ -2,11 +2,13 @@
 Title: Fold review-pr into gaze: one review skill, the user-facing dragon name survives
 Created: 2026-10-21
 Author: reviewer
+Closed: duplicate of 1144 (1100 child 3): the author decided days ago that gaze is the single review skill and review-pr is retired; filed in error without reading tracker 1100; refinements moved to 1144
 
 --- log ---
 2026-10-21T13:24Z reviewer created
 
 2026-10-21T14:00Z reviewer note Decision by the author ("go", 2026-10-21): the survivor is gaze, and review-pr folds into it. Reasons: only user-facing skills get dragon names and resident cards (author decision 2026-10-20), the review-pr card frees resident budget, review-pr resembles built-in review commands, and the gate keeps keying on the gaze result so verify-gate does not change. Fable (2026-10-21) advised the opposite direction without the naming constraint; its list of what survives and its one risk (the never-approves allowlist) stand.
+2026-10-21T14:04Z reviewer closed — duplicate of 1144 (1100 child 3): the author decided days ago that gaze is the single review skill and review-pr is retired; filed in error without reading tracker 1100; refinements moved to 1144
 
 --- body ---
 ## Context

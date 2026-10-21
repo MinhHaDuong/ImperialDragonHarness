@@ -7,6 +7,7 @@ Blocked-by: 1143
 
 --- log ---
 2026-10-20T08:22Z reviewer created
+2026-10-21T14:04Z reviewer reviewer note 2026-10-21 refinements from the author's decisions of the day (ticket 1177, closed as a duplicate of this child): gaze survives as the user-facing name and review-pr and review-pr-prose fold into it as references (no alias, retired-name lint stays); the per-seat verdict words become clear, concerns and blocking so approve words stay out of skills/gaze and the frozen never-APPROVED allowlist is not weakened (stop and ask if it cannot stay frozen); the result comment stays '## /gaze result' and verify-gate, raid, merge and hunt keep calling /gaze; run after ticket 1176 merges since both edit the review skill; the 15-file breaker, the head anchor, retry-once and DEGRADED lines stay in gaze at one line each.
 
 --- body ---
 ## Context

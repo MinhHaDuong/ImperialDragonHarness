@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-20T15:12Z reviewer created
 2026-10-21T05:13Z reviewer note blocker 1142 closed — Blocked-by removed.
+2026-10-21T14:04Z reviewer reviewer note 2026-10-21 scope question for the author: the 'gaze executes the plan (request/response files)' design is superseded in this form by the decision to trust the orchestrator (no hunt-owned plan, no floor, no category; ticket 1176). Close as superseded, or keep a reduced version (controller-written result comment only)? Not decided here.
 
 --- body ---
 ## Context
