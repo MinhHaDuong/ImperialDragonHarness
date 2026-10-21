@@ -25,7 +25,7 @@ Offered: A share one fixture repo across the 73 tests; B tier the file out of th
 
 ## Intervention
 
-Branch `explore-pulse-2723369`: commit `fa1ed1d4` retires `scripts/smart_testing.py`, `scripts/smart_testing_inputs.py`, `tests/test_smart_testing.py`, `tests/smart-testing/`, the Makefile targets, the `.gitignore` lines, the `pytest-testmon` pin and lock entry, the smart half of `tests/conftest.py`, the pulse toolkit section and the pulse test that guarded it. 74 tests removed. Commit `0c109083` sets the full gate to `-n 8`.
+Branch `explore-pulse-2723369`: the commit "tests: retire the smart-testing helper; it costs 38% of the gate" retires `scripts/smart_testing.py`, `scripts/smart_testing_inputs.py`, `tests/test_smart_testing.py`, `tests/smart-testing/`, the Makefile targets, the `.gitignore` lines, the `pytest-testmon` pin and lock entry, the smart half of `tests/conftest.py`, the pulse toolkit section and the pulse test that guarded it. 74 tests removed. The commit "make: run the full gate on 8 xdist workers" sets the full gate to `-n 8`.
 
 ## Verification
 

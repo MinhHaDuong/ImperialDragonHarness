@@ -53,7 +53,8 @@ check-agnostic-rules:
 # -n 8: the 1011 worker-safety audit covered -n 4 (81s -> 38.6s); a pulse visit
 # re-measured at load 7-9 with the smart-testing helper retired, three trials
 # each, identical 2094 passed / 4 skipped, 46.9s mean at -n 4 -> 33.8s at -n 8.
-# check-fast and lint are deliberately serial (both sit at the pytest
+# CI keeps its own -n 4 (.github/workflows/CI.yml): the forge runner's cores
+# were not measured. check-fast and lint are deliberately serial (both sit at the pytest
 # boot+collection floor).
 # Falls back to serial when pytest-xdist is not installed (probe: import xdist).
 HAVE_XDIST := $(shell $(RUN) python3 -c 'import xdist' 2>/dev/null && echo yes)
