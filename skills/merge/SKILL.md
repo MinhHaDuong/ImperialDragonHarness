@@ -242,16 +242,16 @@ command it recovers.)
   from both `tickets/` and `tickets/closed/`, stop and inspect the branch and
   claim before retrying. An already archived ticket with a `Closed:` header
   is handled automatically: the script skips closing it again.
-- **Gated base: "no gate record on the candidate".** No record, or the base
-  moved since it was written: run `merge-gate.py run --base origin/<base>
-  --head HEAD` from the PR checkout, then re-run the script.
-- **Gated base: "close commit … pushed; the gate record must cover it".** The
-  run closed the ticket itself; record that new head, then re-run (no second
-  close). Closing before gating avoids it.
+- **Gated base, exit 2: "No gate record on the candidate" or "Close commit …
+  pushed".** No record for this head: none written, the base moved, or the
+  run closed the ticket itself. Run `merge-gate.py run --base origin/<base>
+  --head HEAD` from the PR checkout, then the script again (no second close).
+  Closing before gating avoids the last case.
 - **Gated base: "the latest gate record … does not pass".** A check failed, or
   the record names another scope; fix, record again, re-run.
-- **Gated base: exit 2.** Not a bounce: forge checks pending (or none reported
-  yet), nothing queued; the bounded background re-run of § Gated base.
+- **Gated base: "auto-merge is still armed" or "reads … not MERGED".** The
+  helper would not disarm a stray auto-merge, or the pinned merge did not
+  land; read the PR on the forge before anything else.
 - **Gated base: "could not inspect" or "could not read the base's
   .merge-gate.json".** Fail-closed refusals; repair the declaration or the
   fetch, never remove the file to get through.

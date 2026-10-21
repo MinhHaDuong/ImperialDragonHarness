@@ -110,8 +110,8 @@ After completing the ticket checks in steps 7–8, commit the complete bundle,
 push it and open **one PR**. Fast-track it: on a gated base
 (`skills/merge/SKILL.md` § Gated base) write its gate record (a bundle that
 touches only light paths gets the light record, validate-tickets alone) and
-start the one bounded background command that re-runs the merge helper while
-it exits 2; elsewhere pass the project's required checks and enable auto-merge
+run the merge helper, both as one background command (exit 2: record again
+on the new head); elsewhere pass the project's required checks and enable auto-merge
 using its supported merge method. This is standing authorization for roar's bounded wrap-up bundle;
 no further confirmation is needed. Do not bypass failing checks or protected
 branch requirements. Hoard, suggested in lair’s conclusion, remains a separately

@@ -283,8 +283,8 @@ bundle_armed() { # <head oid>
         note "EXIT: KEEP-PENDING bundle $BUNDLE on origin differs from HEAD — push it"; bump 1; return 1
     fi
     # Gated base (ticket 1156): nothing is armed there; the durable state is a
-    # passing gate record on the bundle's candidate, and the caller's bounded
-    # background re-run of the merge helper lands it. Fail closed: an
+    # passing gate record on the bundle's candidate, and the caller's
+    # background command (gate run, then the merge helper) lands it. Fail closed: an
     # unreadable declaration or record is COULD-NOT-LOOK, never "ungated".
     local gate="$IDH_ROOT/scripts/merge-gate.py" grc=0 crc=0
     python3 "$gate" enabled --base "$base_tip" >/dev/null 2>&1 || grc=$?
