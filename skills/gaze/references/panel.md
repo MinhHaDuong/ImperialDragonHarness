@@ -63,6 +63,9 @@ roster, the `<panel>/<perspective>.md` path, and the read-only rails (writes
 nothing outside its artifact, posts nothing, holds no credentials). Pin the cwd
 to the review worktree, pass deny-rules as one quoted string, and request the
 model pin; a CLI that cannot enforce it records that limitation in the report.
+Launch each one through `python3 "$IDH_ROOT/scripts/seat_clock.py" run --cap 600
+--out <panel>/<perspective>.md -- <cli...>`, which kills it at the cap and
+records `no report (timed out after 600s)`.
 Completion is observed by the polling above, never by the spawn's success. Cap
 concurrent seats to the runtime's child cap and stagger launches; a seat beyond
 budget or past the deadline is `no report`, never simulated.
@@ -91,6 +94,9 @@ budget or past the deadline is `no report`, never simulated.
 8. **Verdict roster**, one line per manifest entry: `clear`, `concerns`,
    `blocking` or `no report`. A crashed seat and a clear seat are opposite
    outcomes and never share a spelling; `no report` is unresolved.
+   `python3 "$IDH_ROOT/scripts/seat_clock.py" roster <panel>` gives each seat's
+   wall time or failure (`timed out`, `failed to start`, `no report`); carry its
+   lines into the result's `seat times:` line.
 
 #### Finding tags
 
