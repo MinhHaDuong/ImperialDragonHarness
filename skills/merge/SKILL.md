@@ -87,7 +87,53 @@ leave the PR-branch worktree with a stale pre-rebase index: staged diffs that
 appear to re-open closed tickets and revert prose. That is not WIP — run
 `git reset --hard HEAD` in that worktree before any salvage or gc decision.
 
-Merge is queued via auto-merge at once, **whether or not checks are still running**: the forge gates on the required checks and merges when they pass, so the script neither refuses on pending checks nor waits for them. A **failing** check is still a refusal, before anything is closed or queued. Where auto-merge is disabled the script reads the checks once and merges directly only if every check is done; pending checks there stop it with a pointer to the status command, never a wait.
+## Gated base: the gate record
+
+A base branch whose tree carries `.merge-gate.json` with `"gate": "on"` is
+**gated** (ticket 1156; this harness is). The declaration is read from the
+base, never the branch, so a branch cannot switch off the gate that rules it.
+On a gated base the script:
+
+1. refuses unless the latest entry of the `refs/notes/gate` note on the
+   **candidate** — the `--no-ff` merge of the branch head into the current
+   base tip, rebuilt deterministically on any host — says `pass` for the
+   declared check set (`scope`). No record, a failing latest entry, a record
+   for another scope, a moved base or a close commit made by this run all
+   refuse; re-run the gate on the new candidate;
+2. never arms forge auto-merge: the forge requires no checks any more, and its
+   CLI's auto flag merges a mergeable PR at once, before the checks it reports
+   have finished;
+3. reads the forge checks once: failing refuses; pending exits **2** with
+   nothing queued (it never waits itself);
+4. merges with the head pinned (`--match-head-commit`).
+
+Write the record from the PR branch checkout, after the ticket close commit:
+
+```bash
+python3 "$IDH_ROOT/scripts/merge-gate.py" run --base origin/main --head HEAD
+```
+
+It builds the candidate, runs the declared checks in a throwaway worktree of
+it, appends an entry (result, time, actor, host, revision, command, scope,
+versions, one line per check) to the note and pushes `refs/notes/gate`. The
+actor uses the attribution vocabulary (`runtime=… · model=… · effort=…`,
+`not-stated` when unstated; a person states `runtime=human`), from `--runtime`,
+`--model`, `--effort` or `MERGE_GATE_RUNTIME`, `MERGE_GATE_MODEL`,
+`MERGE_GATE_EFFORT`; nothing detects or requires an agent runtime. A record
+is a traceable statement, not proof. `merge-gate.py check --base … --head …`
+answers 0 pass, 1 fail, 2 missing, 3 could not read.
+
+**Background merge.** Once the record passes, the caller starts one
+background command with a hard bound of about 25 minutes that re-runs
+`erg-pr-merge -C WORKTREE N` at an interval while it exits 2, and stops on
+any other exit: the merge happens when the forge checks finish, and a re-run
+adds no second close. The base may still move in the seconds between the
+last record check and the forge's merge; the main-update sweep (ticket 1157)
+is what notices that after the fact.
+
+## Ungated base
+
+Merge is queued via auto-merge at once, **whether or not checks are still running**: the forge gates on the required checks and merges when they pass, so the script neither refuses on pending checks nor waits for them. A **failing** check is still a refusal, before anything is closed or queued. Where auto-merge is disabled the script reads the checks once and merges directly only if every check is done; pending checks there stop it with a pointer to the status command, never a wait. Where the base requires no checks at all, auto-merge has nothing to wait for and the PR merges at once, pending checks included: gate such a base (§ Gated base).
 
 Queued is not merged. To learn the outcome, ask once with
 `"$IDH_ROOT/skills/merge/erg-pr-status" [-C WORKTREE] N`: exit 0 merged, 1
@@ -148,12 +194,11 @@ belongs with the command it recovers.)
   result is present and its `reviewed_head_sha` is not stale against the branch
   tip (as in `/raid` Phase 6), judged before the caller adds its own fix and
   ticket-close commits; those commits do not void it.
-- **Run the local CI on padme when it is reachable.** `"$IDH_ROOT/scripts/local-ci.sh"`
-  reproduces the forge's checks; run it on padme, over ssh from
-  another host, and when padme is unreachable run it where you are and name the
-  host in the report (the script prints it). The image is the same, so the
-  result is equivalent: this chooses a machine, it never replaces the forge's
-  required checks, which still gate the merge.
+- **Run the gate on padme when it is reachable.** On a gated base, write the
+  record (§ Gated base) on padme, over ssh from another host; when padme is
+  unreachable run it where you are: the record names the host.
+  `"$IDH_ROOT/scripts/local-ci.sh"` still reproduces every forge job in the
+  forge's image, for a check outside the gate's set.
 
 ## Merge conflict recovery
 
