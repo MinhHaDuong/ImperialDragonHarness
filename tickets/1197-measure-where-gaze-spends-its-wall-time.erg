@@ -1,0 +1,34 @@
+%erg 0.1
+Title: Measure where gaze spends its wall time
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T20:20Z reviewer created
+
+--- body ---
+## Context
+/gaze is slow, and the author wants it discussed at the next /pulse visit.
+Evidence and agenda: memory note `project_pulse_gaze_visit_agenda.md` (host
+padme, traces of 2026-10-21, 28 days).
+
+READ from traces: 115 gaze forks, median 4.9 min, p90 14.1, max 39.9, about
+750 min total. In the 12 slowest runs (255 min), 254 min were idle gaps over
+2 min, each after a Bash poll for a reviewer, simplify or fix-agent artifact.
+Phases run serially (reviewers, Agent C, simplify, fix agent).
+
+MEASURED on the gaze of PR 1629: tool time 71 s of the first 159 s, 60 s of it
+one poll for the adherence seat; about 10 orchestrator turns of 3-12 s before
+the first seat launched; the orchestrator also did its own pre-review (diff
+read, conftest grep, targeted pytest) duplicating the seats. Totals: 218.5 s
+and 94,864 subagent tokens, then 135.3 s and 84,831; 4 Sonnet seats each.
+
+Not established: serial phases versus one slow seat (no per-seat durations);
+whether simplify and fix run only on findings; host contention in long runs.
+Cause is open; do not act on a fix before these are measured.
+
+## Exit criteria
+- [ ] Per-seat and per-phase durations for the slowest recent gaze runs, labelled READ or derived, with the host named
+- [ ] Verdict on the three unknowns above, each backed by a direct measurement
+- [ ] Priced options (author-hours, USD, minutes saved) for: faster orchestrator model, one-call setup script, dropping the orchestrator pre-review; one recommended
+- [ ] Findings brought to the /pulse visit; any fix filed as its own child ticket
