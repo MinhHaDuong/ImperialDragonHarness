@@ -2,10 +2,14 @@
 Title: 1100 child 1: review evidence core (actor contract, reuse script, gate stale checks)
 Created: 2026-10-20
 Author: reviewer
+Closed: autoclosed — PR #1521
 
 --- log ---
 2026-10-20T08:22Z reviewer created
 2026-10-20T15:15Z reviewer rescoped per author-approved decisions (advisor-reviewed 2026-10-20): storage-independent evidence core, not blocked on git-erg 0272.
+2026-10-20T15:40Z reviewer note implemented on branch t1142-evidence-core: scripts/review_evidence.py and verify-gate review evidence section
+2026-10-20T19:48Z reviewer note verify-reroll — round 1: verify-gate still blocks unresolved blocking findings (seat_rows lets an earlier approve mask a recorded changes verdict; gate without --risk fails open)
+2026-10-21T05:13Z reviewer closed — autoclosed — PR #1521
 
 --- body ---
 ## Context

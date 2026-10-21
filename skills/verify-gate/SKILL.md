@@ -30,6 +30,8 @@ The last line of defence before merge. A gate with teeth: **cannot approve witho
 concrete per-criterion evidence**. Designed to be called by `/gaze` at phase 6, but
 standalone-callable for debugging.
 
+For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill.
+
 ## Non-negotiables
 
 1. **No rubber-stamp.** "CI ran" / "the simplify pass ran" / "all tests pass" are NOT
@@ -43,7 +45,7 @@ standalone-callable for debugging.
    those targets match the actual changed paths. Python code, unmapped paths, or a
    project without a map require the full gate; never label a scoped pass full.
 3. **Review comments are load-bearing.** Every review comment (from `/review`,
-   `/review-pr`, human authors) is either ADDRESSED (commit changed the cited file, OR
+   `/review-pr`, human authors, Copilot) is either ADDRESSED (commit changed the cited file, OR
    the comment was marked resolved, OR a ticket was opened with the rationale) or
    UNRESOLVED. No "I'll get to it later."
 4. **Simplify findings are load-bearing.** Every must-fix from `/simplify` or Gaze’s portable equivalent is either
@@ -106,6 +108,38 @@ For each review comment, the gate searches:
 
 A comment is UNRESOLVED if none of the above applies.
 
+## Review evidence
+
+Seat reports are repository files under `tickets/reviews/<base>..<head>/`, one
+per seat execution, written by the controller with
+`review_evidence.py record`. The gate never reads a seat's verdict from prose.
+Run the three steps sequentially: the plan line decides whether steps 2 and 3
+apply, and step 2 needs its seats.
+
+1. **Plan.** Read the review plan line hunt keeps in the merge-request body:
+   `Review plan: risk=<trivial|ordinary|high> seats=<seat>,<seat> producer-family=<family>`.
+   Without a plan line and without any report on the branch, record
+   `review_evidence: legacy` and judge the review comments as above; stop here.
+2. **Seat table.** In the review worktree, run
+   `python3 "$IDH_ROOT/scripts/review_evidence.py" gate --repo <review-worktree> --base origin/<base-branch> --ticket <ticket-file> --risk <row> --producer-family <family> --seat <seat>` (one `--seat` per planned seat).
+   Copy its `seat`, `independent`/`independence` and `risk` lines into the
+   verdict. A seat is `ran` (report on this head), `reused` (same patch-id,
+   criteria hash and policy version, from an earlier head, which it names),
+   `stale` or `no-report`. Check, gate and adherence results are never reused:
+   they always re-run on the delivered head. The high row adds `red-team` and
+   requires one seat from another family than the producer's.
+3. **Forge reviews.** Run
+   `python3 "$IDH_ROOT/scripts/review_evidence.py" forge <owner/name> <merge-request>`.
+   It reads reviews, conversation comments and inline review-thread comments
+   (with their resolved flag). Only the pinned actors are admitted, and only
+   unedited: rows read `human: ran` or `copilot: ran`. These are binding
+   comments under non-negotiable 3, never seats, never reused, never counted
+   toward independence. Exit 0: every row admitted. Exit 1: at least one
+   `rejected` row (unknown actor, edited or edit status unknown); it never
+   counts as proof, and its findings still bind like any other comment.
+   Exit 3: the forge read failed or came back truncated (more than one page),
+   so the comment set is unknown: `Missing Data`, ESCALATE.
+
 ## Scope containment
 
 After verifying exit criteria (completeness), the gate checks containment:
@@ -159,6 +193,11 @@ scope_overflow:
   - file: <path>
     reason: "<not traceable to exit criterion>"
     suggested_disposition: TICKETED | ESCALATE
+review_evidence: legacy | {seats, independence, risk, forge}
+  # seats: "seat <name>: ran|reused|stale|no-report (<verdict>) - <reason> <report>"
+  # independence: "independent: <family> seat <name>[, inherited from <head>]" or "missing"
+  # risk: "risk: <plan row> / floor: <floor row>"
+  # forge: "human: ran <login> ..." | "copilot: ran <login> ..." | "rejected <login> ... (<reason>)"
 rationale: |
   <strongest remaining reviewer attack; if APPROVED, why evidence holds>
 root_cause_class: Agent Error | Extractor Error | Original Error | Missing Data | Other  # required on REROLL/ESCALATE
@@ -205,6 +244,11 @@ the diff alone, as one `per_exit_criterion` row named `indivisibility waiver`:
 - Any `NOT_APPLIED` must-fix simplify finding without rationale → REROLL (round 1) /
   ESCALATE (round 2).
 - Any `blocking` adherence violation → REROLL (round 1) / ESCALATE (round 2).
+- Any `stale` seat, a missing other-family seat at the high row, or a plan row
+  below the risk floor → REROLL (round 1) / ESCALATE (round 2).
+- Any planned seat with `no-report` → ESCALATE. There is no merge with a recorded gap.
+- A seat that ran or was reused with verdict `changes` keeps its findings
+  load-bearing: they follow the review-comment rules above.
 - Any `scope_overflow` entry with suggested disposition ESCALATE → ESCALATE.
 - A recorded waiver whose `indivisibility waiver` row is MISSING → REROLL (round 1)
   / ESCALATE (round 2), as any MISSING criterion. Growth past the earliest posted
@@ -292,6 +336,7 @@ current round = count + 1.
    Exit criteria: <addressed>/<total>  Review: <unresolved>  Simplify: <unresolved>
    Adherence: <blocking>  Scope overflow: <files> (<ticketed>/<escalate>)
    Minors: verifiable:<n> consider:<n> nofollow:<n> malformed:<n>
+   Evidence: <legacy | ran:<n> reused:<n> stale:<n> no-report:<n>>  <risk line>  <independence line>
    Top reasons (if not APPROVED): <ranked list>
    Rationale: <paragraph>
    ```
