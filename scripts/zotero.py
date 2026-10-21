@@ -2067,11 +2067,19 @@ def named_bib_files(root: Path, names: list[str],
     return found
 
 
+def _under_skipped_dir(path: Path, base: Path) -> bool:
+    """True when `path` sits below a directory of `base` named `_...`."""
+    return any(part.startswith("_") for part in path.relative_to(base).parts[:-1])
+
+
 def link_bib_entries(root: Path, bib_files: list[Path], errors: list[str],
-                     only_under: Path | None = None
+                     only_under: Path | None = None,
+                     skip_underscore: bool = False
                      ) -> tuple[list[dict[str, Any]], set[Path], set[Path]]:
     """(linked, linked_paths, staging_dirs) from the `file=` fields of
-    `bib_files`. With `only_under`, entries linking elsewhere are ignored."""
+    `bib_files`. With `only_under`, entries linking elsewhere are ignored.
+    Like the orphans, a linked file with an extension the helper does not read
+    is left out, and with `skip_underscore` so is one below a `_...` directory."""
     linked: list[dict[str, Any]] = []
     linked_paths: set[Path] = set()
     staging_dirs: set[Path] = set()
@@ -2103,6 +2111,11 @@ def link_bib_entries(root: Path, bib_files: list[Path], errors: list[str],
                                   f"file: {relative}")
                 else:
                     staging_dirs.add(root / relative.parts[0])
+                if resolved.suffix.lower() not in STAGING_EXTENSIONS:
+                    continue
+                if skip_underscore and len(relative.parts) > 1 and _under_skipped_dir(
+                        resolved, only_under or root / relative.parts[0]):
+                    continue
                 if not resolved.is_file():
                     errors.append(f"missing file: {resolved.relative_to(root)} "
                                   f"in {bib.relative_to(root)}")
@@ -2130,9 +2143,13 @@ def discover_reconcile_files(root: Path, bib_names: list[str] | None = None,
     """
     root = root.resolve()
     errors: list[str] = []
-    bib_files = sorted(set(root.glob("*.bib")) | set(root.glob("*/*.bib"))
-                       | named_bib_files(root, bib_names or [], errors))
-    linked, linked_paths, staging_dirs = link_bib_entries(root, bib_files, errors)
+    by_target: dict[Path, Path] = {}
+    for bib in (sorted(named_bib_files(root, bib_names or [], errors))
+                + sorted(root.glob("*.bib")) + sorted(root.glob("*/*.bib"))):
+        by_target.setdefault(bib.resolve(), bib)  # a symlink read once
+    bib_files = sorted(by_target.values())
+    linked, linked_paths, staging_dirs = link_bib_entries(
+        root, bib_files, errors, None, skip_underscore)
     if not bib_files:
         staging_dirs.add(root / "docs")
     elif not staging_dirs:
@@ -2160,7 +2177,8 @@ def discover_directory(root: Path, directory: Path,
         dirs = set()
     else:
         dirs = {directory}
-    linked, linked_paths, _ = (link_bib_entries(root, bib_files, errors, directory)
+    linked, linked_paths, _ = (link_bib_entries(root, bib_files, errors, directory,
+                                     skip_underscore)
                                if dirs else ([], set(), set()))
     return {"bib_files": bib_files, "linked": linked,
             "orphans": staged_files(root, dirs, linked_paths, errors,
@@ -2187,9 +2205,7 @@ def staged_files(root: Path, staging_dirs: set[Path], linked_paths: set[Path],
                 continue
             if not path.is_file() or path.suffix.lower() not in STAGING_EXTENSIONS:
                 continue
-            if skip_underscore and any(
-                    part.startswith("_")
-                    for part in path.relative_to(directory).parts[:-1]):
+            if skip_underscore and _under_skipped_dir(path, directory):
                 continue
             resolved = path.resolve()
             if not resolved.is_relative_to(root):

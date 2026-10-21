@@ -107,6 +107,46 @@ def test_underscore_directories_are_reported_unless_skipped(tmp_path):
         zi.discover_reconcile_files(root, [DEEP_BIB], True))
 
 
+def _link(root, *files):
+    bib = root / "refs.bib"
+    bib.write_text("".join(
+        "@article{k%d, title={T}, file={%s}}\n" % (i, f)
+        for i, f in enumerate(files)))
+    return bib
+
+
+def test_skip_underscore_dirs_also_drops_linked_files(tmp_path):
+    root = project(tmp_path)
+    _link(root, "docs/articles/_superseded/old2001.pdf",
+          "docs/articles/ghost2020.pdf")
+    for found in (
+            zi.discover_directory(root, Path("docs/articles"), ["refs.bib"], True),
+            zi.discover_reconcile_files(root, None, True)):
+        assert [p["path"].name for p in found["linked"]] == ["ghost2020.pdf"]
+        assert "old2001.pdf" not in names(found)
+    kept = zi.discover_reconcile_files(root, None, False)
+    assert {p["path"].name for p in kept["linked"]} == {
+        "old2001.pdf", "ghost2020.pdf"}
+
+
+def test_a_linked_markdown_file_is_never_reported(tmp_path):
+    root = project(tmp_path)
+    (root / "docs" / "articles" / "note.md").write_text("# note")
+    _link(root, "docs/articles/note.md", "docs/articles/ghost2020.pdf")
+    found = zi.discover_reconcile_files(root)
+    assert [p["path"].name for p in found["linked"]] == ["ghost2020.pdf"]
+    assert found["errors"] == []
+
+
+def test_a_symlinked_bib_named_too_is_read_once(tmp_path):
+    root = project(tmp_path)
+    real = _link(root, "docs/articles/ghost2020.pdf")
+    (root / "deliverables" / "link.bib").symlink_to(real)
+    found = zi.discover_reconcile_files(root, ["deliverables/link.bib"])
+    assert [p["path"].name for p in found["linked"]] == ["ghost2020.pdf"]
+    assert found["errors"] == []
+
+
 def test_the_bib_title_reaches_the_lookup_and_an_undescribed_key_is_unidentified(
         tmp_path, monkeypatch, capsys):
     """Through cmd_check_staging, with the library lookup stubbed at its
