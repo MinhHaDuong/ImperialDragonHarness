@@ -848,3 +848,30 @@ def test_gate_tree_is_per_session_and_round_and_repo_is_required():
     assert 'gate_tree="$primary_root/.claude/worktrees/gate-<pr-number>-<session-id>-r<round>"' in gate
     assert "`<pr-number>` alone" not in gate
     assert '"no repo argument"' in gate
+
+
+NO_REVIEW_NO_GATE = "**No gate without a completed review.**"
+
+
+def _no_review_no_gate(gate: str) -> bool:
+    norm = _normalize(gate)
+    if NO_REVIEW_NO_GATE not in norm:
+        return False
+    para = norm.split(NO_REVIEW_NO_GATE, 1)[1].split(" - **", 1)[0]
+    return all(s in para for s in (
+        "Standalone or from a caller",
+        "latest posted `## /gaze result` is ESCALATE",
+        "no gaze result was accepted for the current head",
+        "the gate answers ESCALATE without ruling the criteria",
+    ))
+
+
+def test_gate_refuses_a_head_without_a_completed_review():
+    """Post-merge follow-up: the gate itself, not only its callers, refuses to
+    rule when gaze escalated or no result covers the current head."""
+    sessions = VERIFY_GATE.split("## Gate sessions", 1)[1].split("\n## ", 1)[0]
+    assert _no_review_no_gate(sessions)
+    # Negative control: removing the paragraph fails the check.
+    start = sessions.index("- **No gate without a completed review.**")
+    end = sessions.index("\n\n", start)
+    assert not _no_review_no_gate(sessions[:start] + sessions[end:])

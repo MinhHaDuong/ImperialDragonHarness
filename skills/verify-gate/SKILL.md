@@ -355,6 +355,14 @@ The caller owns the gate session; gaze has no part in it.
 - **Caller enforcement.** The caller invokes the gate at most twice per
   session: round 1, then one re-gate after the fix. Raid never launches a
   third run and never opens a new session to escape the cap.
+- **No gate without a completed review.** Standalone or from a caller, the gate
+  is not run when the PR's latest posted `## /gaze result` is ESCALATE, or when no
+  gaze result was accepted for the current head (its `reviewed_head_sha` is
+  stale). The only documented caller paths past a moved head are the caller's
+  ticket-close commit on top of `reviewed_head_sha` and the round-2 re-gate of
+  the fix for a round-1 REROLL (`skills/raid/SKILL.md` § Phase 6,
+  `skills/merge/SKILL.md`). Otherwise the gate answers ESCALATE without ruling
+  the criteria, and the author decides.
 
 Uses existing PR state only when no gaze result is passed (no phase 2-5 outputs).
 Isolation is the same on every path (§ Isolation: own worktree, removed on exit).
