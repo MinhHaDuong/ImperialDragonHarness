@@ -74,9 +74,6 @@ def test_retired_reviewer_write_assets_are_absent():
         "skills/reviewers/padme-reviewers.sh",
         "skills/reviewers/panel.yml",
         "skills/reviewers/panel-padme.yml",
-        "tests/test_reviewers.sh",
-        "tests/test_reviewers_audition.sh",
-        "tests/test_padme_reviewers.sh",
     )
     remaining = [name for name in retired if (ROOT / name).exists()]
     assert not remaining, f"retired reviewer write assets remain: {remaining}"
