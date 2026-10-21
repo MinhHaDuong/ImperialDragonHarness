@@ -65,11 +65,11 @@ def test_lock_reason_matches_gc_dead_pid_rail():
 
 
 def test_shared_and_explore_worktrees_still_forbidden():
-    """The 2026-06-11 shared-worktree protection is intact."""
+    """The shared-worktree protection is intact."""
     step3 = step3_text()
     assert "explore-*" in step3, "step 3 must still forbid `explore-*` worktrees"
-    assert "2026-06-11" in step3, (
-        "the 2026-06-11 shared-worktree incident rationale must stay in step 3"
+    assert "stranded" in step3, (
+        "the shared-worktree incident rationale must stay in step 3"
     )
     assert "not owned" in step3.lower(), (
         "step 3 must still name the not-owned case for shared/explore worktrees"

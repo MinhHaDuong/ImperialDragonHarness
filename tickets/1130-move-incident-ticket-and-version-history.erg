@@ -2,10 +2,10 @@
 Title: Move incident, ticket and version history out of skill bodies
 Created: 2026-10-20
 Author: Minh Ha-Duong
-Blocked-by: 1100
 
 --- log ---
 2026-10-20T06:32Z Minh Ha-Duong created
+2026-10-21T19:10Z reviewer note raid-premise-check — measured 2026-10-21 on main c7674ead+: children 1133, 1134, 1135 are closed; gaze/verify-gate/raid/roar/merge/hunt/lair/molt/yawn/trace-doctor/update-publist/verify-adherence now hold about a dozen history references in all (gaze 3: tickets 0193/0300/1151; raid 2: 1151, PR numbers with 1017; merge 2: 1156, raid 234/235 PR 998; verify-gate 1: 0250; verify-adherence 2: 0250, 1173; hunt 1 dated incident; yawn 1 example; lair 2 name 1180 on purpose until it closes). Residual scope = those lines only; Blocked-by 1100 dropped: its dependency was gaze after 1100 child 2 and 1143/1144 are closed. One coder, raid lines left to 1131's raid split.
 
 --- body ---
 ## Context
