@@ -32,11 +32,11 @@ read a result only once the record exists.
       log. The trim below is sized from that, not from this estimate.
 - [ ] One authoritative full run: the child A gate on the candidate commit. Its
       record carries the result.
-- [ ] `/gaze` and `/verify-gate` read the gate record, or the last result for the
-      same tree, instead of re-running the full suite (the forge-conclusion step
-      is split out to child E, 1172); each keeps a targeted run of the files the
-      diff touches. A missing or stale record falls back to running the checks,
-      never to skipping them.
+- [ ] `/gaze`, the adherence seat and `/verify-gate` run only targeted tests of
+      the files the diff touches; none of them runs the full suite. The full suite
+      runs once, on the merge candidate (the gate of child A). Ticket 1172 (reading
+      the forge's conclusion for a head) was closed as superseded by this rule on
+      2026-10-21, at the author's request.
 - [ ] Coders run the scoped gate (`.idh-checks.json`) while working; the full run
       happens once.
 - [ ] The forge workflow is trimmed to the jobs the local gate does not cover, or
