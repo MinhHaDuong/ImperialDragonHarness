@@ -2,11 +2,13 @@
 Title: Forward-path attribution: gaze result and review record list every seat (route, family, status)
 Created: 2026-10-20
 Author: reviewer
+Closed: autoclosed — PR #1615
 
 --- log ---
 2026-10-20T19:22Z reviewer created
 2026-10-21T15:29Z reviewer reviewer note 2026-10-21 rescoped and blocked by 1144 at the author's word: one result-comment list of seats (role, family, model id as observed) and the roar lines written from it; the per-seat record, report hashes and stored reports are dropped (trust the orchestrator, ticket 1176).
 2026-10-21T16:58Z reviewer note blocker 1144 closed — Blocked-by removed.
+2026-10-21T18:28Z reviewer closed — autoclosed — PR #1615
 
 --- body ---
 ## Context
