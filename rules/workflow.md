@@ -59,8 +59,8 @@ for an intentional primary-repo mutation. Everything lands via branch + PR —
 STATE, tickets, config, memory included. On `main` with source or data to
 change, stop and switch to a branch (prose exception: `git.md`).
 
-**Project memory:** write only in the assigned project's worktree or explicit
-private companion, never the installed harness. A refused write stays pending;
+**Project memory:** write only in the assigned project's worktree (uncleared
+material stays encrypted there), never the installed harness. A refused write stays pending;
 do not retry outside the project (boundary: AGENTS.md § Project memory boundary).
 
 **Parked-cwd trap.** Before creating the worktree, check `basename "$(git rev-parse --show-toplevel)"` is the
@@ -78,8 +78,8 @@ feedback memory at wrap-up. Stop if you are repeating yourself.
 **Ask the author** after three failed approaches, or for a judgment outside your
 domain docs.
 
-**Ask up first.** Put the question to a top-end model (Fable or Astra) before
-the author. Escalate only if the call stays open or is the author's by right
+**Ask up first.** Put the question to an advisor model (the route skill picks
+which) before the author. Escalate only if the call stays open or is the author's by right
 (scope, money, irreversible), and present what they said beside your pick.
 
 # Diagnosis discipline

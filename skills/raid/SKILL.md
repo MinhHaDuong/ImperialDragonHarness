@@ -27,7 +27,7 @@ does not configure spawned children.
 
 - **Execute:** the coder profile (`agents/coder.md`); cheaper workers for
   bounded tasks.
-- **Advisor:** the strongest available advisor as a one-shot call with a
+- **Advisor:** an advisor model as a one-shot call with a
   self-contained brief on a deep, well-defined problem: a ticket that can be
   neither done nor split, a review of a scientific argument, a design review of
   a critical feature. Never a standing setting of the orchestrator or a
@@ -388,9 +388,12 @@ declines an APPROVED PR's merge.
 
 <!-- inline: references/merge-permission-denial.md -->
 
-After all waves, in one compound so the `cd` persists across the rebase:
-`cd <session-worktree> && git checkout main && git pull --rebase origin main`, then
-`make check`. New failures → revert last merge + ticket.
+After all waves, in one compound so the `cd` persists across the sync:
+`cd <session-worktree> && "$IDH_ROOT/scripts/sync-local-main.sh" . main`, then
+`make check` in a checkout of the synced main (the primary checkout, or a
+throwaway `git worktree add --detach <dir> main`). The sync script always exits 0
+and leaves a diverged main untouched: read its output, and stop if a line says
+`left untouched`, `diverged` or `skipped`. New failures → revert last merge + ticket.
 
 ## Phase 8: Celebrate (per-merged-PR)
 

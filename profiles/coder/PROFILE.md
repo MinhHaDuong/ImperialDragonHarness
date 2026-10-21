@@ -3,7 +3,7 @@
 Requires-tools: Read, Grep, Bash, Edit, Skill
 
 Rules:
-- `rules/guards.md` — the baseline both guards; they apply to you whatever
+- `rules/guards.md` — the baseline guards; they apply to you whatever
   runtime launched you, bare context or not.
 - `rules/git.md` — branch and commit discipline, silent-destruction bans,
   worktree ownership. You work in a worktree the orchestrator gave you;

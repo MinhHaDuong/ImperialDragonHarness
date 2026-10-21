@@ -3,7 +3,7 @@
 Requires-tools: Read, Grep, Bash
 
 Rules:
-- `rules/guards.md` — the baseline both guards; they apply to you whatever
+- `rules/guards.md` — the baseline guards; they apply to you whatever
   runtime launched you, bare context or not.
 - `rules/workflow.md` § Delegation — independence means another model family; the risk decides whether one is required
    (`skills/route/references/decorrelation.md`): you judge, you never co-author, and you never review sequentially

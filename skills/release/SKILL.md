@@ -73,9 +73,11 @@ needs a sentence; flag inter-doc tensions). If absent, degrade to a light
 pass: do the stated-vs-guarded comparison on whatever convention docs and
 test suites the repo has.
 
-Each agent files **one ticket per finding** via `tickets/erg new`, with a severity
-of HIGH / MEDIUM / LOW in the title or body. If there is no `tickets/`
-directory, the agent prints its findings to output instead of filing.
+Each agent files a ticket via `tickets/erg new` for every finding that meets the
+severity floor of `rules/workflow.md` (blocks a merge, corrupts state, or bites
+the science), with a severity of HIGH / MEDIUM / LOW in the title or body;
+findings below the floor go in the consolidated summary only. If there is no
+`tickets/` directory, the agent prints its findings to output instead of filing.
 
 After all three return, print a **consolidated summary**: count of findings by
 severity, grouped by agent.
@@ -104,7 +106,7 @@ explicit human go-ahead.
   diagnostic) if **no** such URL is found, so a missing URL surfaces
   immediately. An already-current URL is a normal match: the helper prints its
   count and exits 0 (idempotent no-op).
-- Commit the change: `release(<tag>): update download URL to <tag>`.
+- Commit the change on a release branch, never on main: `release(<tag>): update download URL to <tag>`. Land it with `/merge`, sync local main and sign from that main, so the `HEAD` in step 5 is the merged commit.
 
 ## 5. GPG signing pause (human-only)
 

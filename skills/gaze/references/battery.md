@@ -34,7 +34,7 @@ at ESCALATE, never APPROVED (gaze returns no approval at all).
 Every reviewer agent's prompt:
 - opens with `TASK DIRECTIVE — execute now`, naming the single sub-skill
   procedure it runs and the PR;
-- forbids commits, pushes, new branches, new PRs, and any write to
+- forbids `add`, commits, pushes, new branches, new PRs, and any write to
   `tickets/*.erg` (read-only role);
 - runs every git read as
   `git -C "$primary_root/.claude/worktrees/review-<pr-number>" ...` —
@@ -68,8 +68,9 @@ Seat defaults are guidance, not pins; raise a seat when the change warrants it:
 | Seat | Default worker class | When to raise |
 |---|---|---|
 | adherence, scope, docs-propagation, consistency | cheap cluster | a rule is subtle or the diff is large |
-| correctness | mid-size model | high-risk or cross-cutting change |
-| red team | mid-size model | high-risk change: another family (`decorrelation.md`) |
+| correctness | cheap cluster | high-risk or cross-cutting change |
+| red team | cheap cluster | high-risk change: another family (`decorrelation.md`) |
+
 
 **Agent A — adherence** (`/verify-adherence <branch> worktree=<absolute-review-worktree>`).
 **Label-skip:** if the PR carries the
@@ -179,10 +180,9 @@ Wait for all spawned agents to complete. Collect their structured outputs.
 **Prose-skip:** when the diff routed prose (the same
 `"$IDH_ROOT/scripts/prose_predicate.py"` verdict the phase 2–4 panel choice used), skip
 this phase and log `simplify: skipped (prose workpackage)` in the telemetry
-phase line. Motive: this phase may commit to the PR branch, and `rules/git.md`
-§ Prose workpackages forbids autonomous edits to a manuscript — an autonomous
-change to prose goes through its own branch + merge request for the author to
-arbitrate, never through a review-phase auto-fix (ticket 0550: two runs on the
+phase line. Motive: this phase may commit to the PR branch, and `rules/prose/workpackages.md`
+sends an autonomous manuscript change through its own PR, never concurrently
+with interactive editing of that file (ticket 0550: two runs on the
 same file decided this in opposite directions the same day; the rule now
 exists). Otherwise, after 2–4 land their comments (and the early-exit check passes),
 perform one of these routes. Record `simplify route: native|portable`.

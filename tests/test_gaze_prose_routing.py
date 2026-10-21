@@ -148,8 +148,8 @@ def test_simplify_prose_guard_documented():
     assert "simplify: skipped (prose workpackage)" in section, (
         "the prose skip must log like the tier skips"
     )
-    assert "Prose workpackages" in section and "rules/git.md" in section, (
-        "the guard must cite rules/git.md § Prose workpackages as its motive"
+    assert "rules/prose/workpackages.md" in section, (
+        "the guard must cite rules/prose/workpackages.md as its motive"
     )
 
 

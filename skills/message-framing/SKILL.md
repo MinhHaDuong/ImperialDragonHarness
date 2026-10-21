@@ -18,13 +18,14 @@ in one sentence — not a topic, not a summary, not three findings joined by
 ## The pass, in order
 
 Run it sequentially, in one conversation with the author: each step narrows
-the next, and nothing here is worth delegating.
+the next, and no step is worth delegating to a worker.
 
-1. **Context.** Ask two or three questions at a time, not a questionnaire:
-   format (talk length, abstract word limit, article type), function (inform,
-   convince, report, open a discussion), audience (expertise, what they already
-   believe), constraints (what must not be said or spoiled). Read the source
-   material first so the questions are ones only the author can answer.
+1. **Context.** Ask one question at a time, after asking up
+   (`rules/workflow.md` § Escalation protocol, § Autonomous action), and queue the rest: format (talk
+   length, abstract word limit, article type), function (inform, convince,
+   report, open a discussion), audience (expertise, what they already believe),
+   constraints (what must not be said or spoiled). Read the source material
+   first so the questions are ones only the author can answer.
 2. **Candidates.** Draft three to five candidate messages from the source, each
    a one-sentence claim. Reject topics outright ("the history of X" names a
    field, not a message).

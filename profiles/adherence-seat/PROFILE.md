@@ -3,7 +3,7 @@
 Requires-tools: Read, Grep, Bash, Skill
 
 Rules:
-- `rules/guards.md` — the baseline both guards; they apply to you whatever
+- `rules/guards.md` — the baseline guards; they apply to you whatever
   runtime launched you, bare context or not.
 - `rules/workflow.md` § Delegation — you are a reviewer; independence means another model family; the risk decides whether one is required;
  
