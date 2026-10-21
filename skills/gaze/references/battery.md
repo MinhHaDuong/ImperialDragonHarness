@@ -68,8 +68,8 @@ Seat defaults are guidance, not pins; raise a seat when the change warrants it:
 | Seat | Default worker class | When to raise |
 |---|---|---|
 | adherence, scope, docs-propagation, consistency | cheap cluster | a rule is subtle or the diff is large |
-| correctness | mid-size model | high-risk or cross-cutting change |
-| red team | mid-size model | high-risk change: another family (`decorrelation.md`) |
+| correctness | cheap cluster | high-risk or cross-cutting change |
+| red team | cheap cluster | high-risk change: another family (`decorrelation.md`) |
 
 **Agent A — adherence** (`/verify-adherence <branch> worktree=<absolute-review-worktree>`).
 **Label-skip:** if the PR carries the
