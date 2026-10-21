@@ -31,7 +31,7 @@ A failed candidate sends the pull request back to stage 1; it then passes throug
 stages 2, 3 and 5 again. That is the only case where the full set runs twice.
 A pure documentation, ticket or memory diff gets a light record (the ticket
 validator only), so the trace stays uniform and the cost stays small. **Pending**
-(ticket 1171 and the activation pull request of ticket 1156; ticket 1172, reading the forge's result for a head, is paused because this flow makes it unnecessary).
+(ticket 1171 and the activation pull request of ticket 1156; ticket 1172, reading the forge's result for a head, is paused at the author's request because this flow makes it unnecessary).
 
 ## Forge settings
 
@@ -94,6 +94,15 @@ validator only), so the trace stays uniform and the cost stays small. **Pending*
   every statement of it and hand the delegate the list.
 - Thin the test suite on a schedule: tests that only pin wording are the first to
   cut. The testing doctor skill (`/pulse`) holds the remedy. **Pending.**
+
+## Direction
+
+The forge stays the central origin: one place to pull from, and the host for
+backup, coordination and publication. There is no plan to move merging off it.
+Some of what lives on the forge today is temporary and is expected to move into
+git, pinned to a revision, as the dyne format arrives (git-erg tickets 0270,
+0272, 0273): the verdicts and review results now posted as pull-request comments,
+and the review threads. The gate record is already a git note for that reason.
 
 ## Adopting this in another project
 
