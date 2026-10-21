@@ -30,7 +30,9 @@ start_service
 ensure_image
 
 base=$(git rev-parse HEAD)
-printf '{"pull_request":{"number":0,"base":{"ref":"main"}},"number":0}\n' > "$work/event.json"
+# CI.yml is run under workflow_dispatch, its trigger that needs no push (it has
+# no pull_request trigger, ticket 1174); the event carries no payload.
+printf '{}\n' > "$work/event.json"
 # Everything below derives from $base, not from the live checkout: a commit or an
 # edit made while the guards run must not leak into a late case.
 git show "$base:.github/workflows/CI.yml" > "$work/CI.base.yml"
@@ -82,7 +84,7 @@ run_case() {
     git add -A
     git -c user.name=probe -c user.email=probe@example.invalid commit -q --no-verify -m "probe $job" \
         || { echo "$job: INJECTION PRODUCED NO CHANGE" > "$work/$job.out"; return 1; }
-    if DOCKER_HOST="unix://$sock" group_run "$job" act pull_request -W "$work/workflow.yml" --pull=false --bind -e "$work/event.json" \
+    if DOCKER_HOST="unix://$sock" group_run "$job" act workflow_dispatch -W "$work/workflow.yml" --pull=false --bind -e "$work/event.json" \
             -P "ubuntu-latest=$image" -j "$job" > "$work/$job.log" 2>&1; then
         echo "$job: NOT CAUGHT (job passed)" > "$work/$job.out"
         return 1
