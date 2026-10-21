@@ -32,6 +32,23 @@ identifiers and the title. The command is **report-only by default**: without
 uses `docs/` as the staging default only when no `.bib` exists. A `.bib` with no usable staging path yields `verdict: unchecked`, not
 an empty clean report.
 
+A project whose bibliography sits deeper, or whose staged files are named by
+BibTeX key (`michaelowa2011.pdf`: no title words to look up), names it with
+`--bib PATH` (repeatable) or a `bib_paths` list in `.zotero-reconcile.json`;
+the default discovery still runs beside it. Under `--dir`, a named `.bib`
+describes the files its `file=` fields link inside that directory, and the
+entry's title, DOI and type are what the lookup uses. A keyed file that no
+`.bib` describes stays `unidentified`; it is never guessed from its name.
+`--skip-underscore-dirs` leaves out files below a directory whose name
+starts with `_` (`_superseded/`); without it every directory is checked.
+The helper reads only `.pdf .html .htm .jpg .jpeg .png .djvu .epub`; Markdown
+transcriptions are out of scope and never reported.
+
+```bash
+"$IDH_ROOT/scripts/zotero.py" check-staging . --dir docs/articles \
+  --bib deliverables/_shared/bibliography/main.bib --skip-underscore-dirs
+```
+
 ```bash
 out=$(mktemp "${TMPDIR:-/tmp}/zotero-staging.XXXXXX.json")
 status=0

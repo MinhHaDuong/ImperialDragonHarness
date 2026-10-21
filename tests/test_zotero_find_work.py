@@ -558,6 +558,41 @@ def test_check_staging_searches_the_bib_title(lib, tmp_path):
 
 
 @pytest.mark.integration
+def test_a_named_bib_identifies_files_named_by_bibkey(lib, tmp_path,
+                                                      monkeypatch, capsys):
+    """Ticket 1195 on a live client. Positive control: a stored PDF filed
+    under a bibkey name, described by a .bib three levels down, is found
+    (identical: the stored copy's md5), not unidentified. Negative control:
+    a described file with no Zotero item is absent. A bibkey file the .bib
+    does not describe stays unidentified."""
+    _, files = lib
+    articles = tmp_path / "docs" / "articles"
+    (articles / "_superseded").mkdir(parents=True)
+    shutil.copyfile(files["stored"], articles / "michaelowa2011.pdf")
+    make_pdf(articles / "nothere2012.pdf", ["A Wholly Absent Document"])
+    make_pdf(articles / "ghost2020.pdf", ["page 1"])
+    shutil.copyfile(files["stored"], articles / "_superseded" / "old2001.pdf")
+    bib = tmp_path / "deliverables" / "_shared" / "bibliography" / "main.bib"
+    bib.parent.mkdir(parents=True)
+    bib.write_text(
+        "@article{michaelowa2011, title={Totally Different Recorded Title},"
+        " year={2024}, file={docs/articles/michaelowa2011.pdf}}\n"
+        "@article{nothere2012, title={Turbine Maintenance Intervals Revisited"
+        " Entirely}, year={2012}, file={docs/articles/nothere2012.pdf}}\n")
+    args = argparse.Namespace(
+        root=str(tmp_path), dir="docs/articles", out=None, apply=False,
+        edit=False, library="user", skip_underscore_dirs=True,
+        bib=["deliverables/_shared/bibliography/main.bib"])
+    assert zi.cmd_check_staging(args) == 0
+    report = json.loads(capsys.readouterr().out)
+    verdicts = {r["file"]: r["verdict"] for r in report["rows"]}
+    assert verdicts["michaelowa2011.pdf"] in ("identical", "work_present_with_file")
+    assert verdicts["nothere2012.pdf"] == "absent"
+    assert verdicts["ghost2020.pdf"] == "unidentified"
+    assert "old2001.pdf" not in verdicts
+
+
+@pytest.mark.integration
 def test_every_request_of_a_staging_check_is_a_search(lib, tmp_path,
                                                        monkeypatch, capsys):
     """No whole-library read per call: every items request a check-staging

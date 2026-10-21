@@ -5,7 +5,7 @@ name: zotero
 description: "Import PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, or report duplicate files: extract metadata, resolve identifiers, create items with PDFs through the running Zotero's local API."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "import <pdf-or-url>... | suggest-edits | check-staging [<repo>] [--dir <dir>] | report-duplicates | suggest-attachments"
+argument-hint: "import <pdf-or-url>... | suggest-edits | check-staging [<repo>] [--dir <dir>] [--bib <file>] [--skip-underscore-dirs] | report-duplicates | suggest-attachments"
 ---
 
 Discipline: `rules/zotero.md` — Zotero is the system of record, `docs/` and `.bib` are git-ignored staging. Read it before working outside the verb files. A cited page number is read on the page, never interpolated from an extraction (the rule carries the discipline).
@@ -25,7 +25,7 @@ A run uses exactly one verb. **Read the verb's file before acting.**
 |---|---|---|
 | `import` | one or more PDFs or URLs → new items with attachments | `references/import.md` |
 | `suggest-edits` | report missing fields on items that already exist; write them only with `--edit` | `references/enrichment.md` |
-| `check-staging` | compare staged files with the library — the files a repository's `.bib` links, or every staging file under `--dir` — and report; `--apply` creates absent items, `--apply --edit` also stores files under existing items | `references/backfill.md` |
+| `check-staging` | compare staged files with the library — the files a repository's `.bib` links, or every staging file under `--dir`, with `.bib` files named by `--bib`, skipping `_` directories on request; PDF, HTML, image, DjVu and EPUB files only, not Markdown — and report; `--apply` creates absent items, `--apply --edit` also stores files under existing items | `references/backfill.md` |
 | `report-duplicates` | hash-dedup JSON report, library against itself | `docs/zotero-report-duplicates.md` |
 | `suggest-attachments` | file a document onto an item that already exists (reports by default; stores it with `--edit`) | `references/backfill.md` |
 
