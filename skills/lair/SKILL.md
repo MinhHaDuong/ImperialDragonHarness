@@ -118,7 +118,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     when ticket 1180 closes.
 15. **Report merges without a gate receipt.** From the primary checkout, run
     `python3 "$IDH_ROOT/scripts/main_sweep.py" --fetch --summary` and carry its
-    one line into the final summary unchanged: `main audit: N merges in the
+    one line into the final summary unchanged: `main audit: N commits in the
     last 24 h, M without a gate receipt: <first sha>`. It prints nothing when
     the base declares no gate; a line ending `range cut …` or a `main audit:
     not checked (…)` line must be passed on, since silence would read as an
