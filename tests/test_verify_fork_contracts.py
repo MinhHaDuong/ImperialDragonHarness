@@ -22,7 +22,6 @@ SKILLS = REPO / "skills"
 
 VERIFY = (SKILLS / "gaze" / "SKILL.md").read_text()
 TELEMETRY = (SKILLS / "gaze" / "telemetry.yml").read_text()
-ERG_PR_MERGE = (SKILLS / "merge" / "erg-pr-merge").read_text()
 
 
 def fork_skill_files() -> list[Path]:
@@ -105,8 +104,8 @@ def test_verify_gate_owns_its_worktree():
 def test_merge_gates_the_head_that_merges():
     """The caller closes the ticket on the branch before gating, so /merge's
     prerequisite is one equality: ruled tip == origin/<branch> at merge time.
-    The helper then pushes nothing, because it skips a ticket already closed
-    and archived; the gate reads exit criteria from tickets/closed/ (ticket
+    The recipe's close step then finds the ticket already closed and archived
+    and adds no commit; the gate reads exit criteria from tickets/closed/ (ticket
     1153, third union review)."""
     merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
     assert "Close the ticket on the branch before gating." in merge
@@ -117,9 +116,6 @@ def test_merge_gates_the_head_that_merges():
     )
     assert "#1522" not in merge and "Documented exception" not in merge
     assert "rev-list --count <ruled>" not in merge
-    # Premise: the helper skips an already closed and archived ticket.
-    assert 'compgen -G "tickets/closed/${tid}-*.erg"' in ERG_PR_MERGE
-    assert "is already closed and archived." in ERG_PR_MERGE
     gate = " ".join((SKILLS / "verify-gate" / "SKILL.md").read_text().split())
     assert "`tickets/<id>-*.erg` **or** `tickets/closed/<id>-*.erg`" in gate
     raid = " ".join((SKILLS / "raid" / "SKILL.md").read_text().split())
@@ -151,21 +147,6 @@ def test_verify_has_containment_postcondition():
     branch switches before any merge step (ticket 0193 action 2)."""
     assert "## Containment postcondition" in VERIFY
     assert "git status --porcelain" in VERIFY
-
-
-def test_erg_pr_merge_stages_no_blanket_tickets_dir():
-    """`git add tickets/` swept a stash-resurrected stray file into PR #242's
-    close commit. Staging must name the exact paths erg close/archive touched.
-    Comment mentions are fine — only a command-position whole-directory add
-    is banned."""
-    offenders = [
-        line.strip()
-        for line in ERG_PR_MERGE.splitlines()
-        if re.match(r"^\s*git add\s+(--all\s+)?(--\s+)?tickets/?\s*($|2>|\|)", line)
-    ]
-    assert not offenders, "erg-pr-merge still stages the whole tickets/ dir: " + (
-        "; ".join(offenders)
-    )
 
 
 def _normalize(text: str) -> str:
@@ -557,11 +538,10 @@ def test_ruled_tip_field_has_one_name_across_gate_and_callers():
 
 
 def test_merge_checks_three_way_tip_equality_and_conditional_push():
-    """PR 1539 review: erg-pr-merge always runs `git push origin HEAD`, so
+    """PR 1539 review: the close step runs `git push origin HEAD`, so
     'pushes nothing' holds only when HEAD == origin/<branch> == ruled tip,
     read after a fetch."""
     merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
-    assert "git push origin HEAD" in ERG_PR_MERGE  # premise
     assert (
         "`git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>` "
         "== the gate's `ruled_tip_sha`" in merge
@@ -660,10 +640,8 @@ def test_queued_merge_wait_is_one_bounded_background_command():
     assert "the user or a later step re-runs" not in roar
     # Every other place that described the outcome read points at the wait.
     raid = _normalize((SKILLS / "raid" / "SKILL.md").read_text())
-    status = (SKILLS / "merge" / "erg-pr-status").read_text()
-    for name, text in (("merge", merge), ("raid", raid), ("roar", roar), ("erg-pr-status", status)):
+    for name, text in (("merge", merge), ("raid", raid), ("roar", roar)):
         for stale in ("ask again later", "ask again once before", "once asked again",
                       "Do not loop on the status command", "The caller asks again at its next step"):
             assert stale not in text, (name, stale)
     assert "§ Waiting for a queued merge" in raid
-    assert "§ Waiting for a queued merge" in status
