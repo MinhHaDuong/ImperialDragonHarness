@@ -216,3 +216,44 @@ def test_a_range_cut_by_max_count_is_not_an_all_clear(repo, sweep):
     assert sweep.run(args, forge) == 2
     args = sweep.parse_args(["--repo", str(r), "--ref", "main", "--max-count", "50"])
     assert sweep.run(args, forge) == 0
+
+
+def _with_origin(r, tmp_path):
+    origin = tmp_path / "origin.git"
+    git(tmp_path, "clone", "-q", "--bare", str(r), str(origin))
+    git(r, "remote", "add", "origin", str(origin))
+    return origin
+
+
+def _all_green(shas):
+    pulls = {sha: (n, "h") for n, sha in enumerate(shas.values())}
+    return FakeForge(pulls=pulls, checks={"h": {"c": "success"}}, required=["c"])
+
+
+def test_no_notes_on_origin_is_not_stale(repo, sweep, tmp_path):
+    r, shas = repo
+    _with_origin(r, tmp_path)
+    args = sweep.parse_args(["--repo", str(r), "--fetch", "--ref", "origin/main"])
+    assert sweep.run(args, _all_green(shas)) == 0
+
+
+def test_a_failed_notes_fetch_is_could_not_look(repo, sweep, tmp_path, capsys):
+    r, shas = repo
+    origin = _with_origin(r, tmp_path)
+    git(origin, "notes", f"--ref={sweep.GATE_NOTES_REF}", "add", "-m", "rec", shas["base"])
+    lock = Path(git(r, "rev-parse", "--git-common-dir"))
+    lock = (r / lock if not lock.is_absolute() else lock) / "refs" / "notes" / "gate.lock"
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    lock.write_text("")  # a held lock makes the notes fetch fail
+    args = sweep.parse_args(["--repo", str(r), "--fetch", "--ref", "origin/main"])
+    assert sweep.run(args, _all_green(shas)) == 2
+    assert "incomplete: fetch of refs/notes/gate failed" in capsys.readouterr().out
+    lock.unlink()
+    assert sweep.run(args, _all_green(shas)) == 0
+
+
+def test_an_empty_range_says_so(repo, sweep, capsys):
+    r, shas = repo
+    args = sweep.parse_args(["--repo", str(r), "--ref", "main..main"])
+    assert sweep.run(args, _all_green(shas)) == 2
+    assert "incomplete: empty range" in capsys.readouterr().out

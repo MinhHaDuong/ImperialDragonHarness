@@ -9,15 +9,16 @@ For each first-parent commit of main it reports two facts:
   * gate record: a note in refs/notes/gate on the commit (ticket 1156's record;
     only its presence is read here, its format is 1156's);
   * forge: the PR whose merge commit it is, and whether that PR's required
-    checks concluded green on its head.
+    checks concluded green on its head. Check runs only: legacy commit
+    statuses are not read.
 A commit is `ok` when either fact holds (the record first: the forge's
-required-checks ruleset was disabled on 2026-10-21, so forge status alone is no
+required-checks ruleset was disabled by the author on 2026-10-21, so forge status alone is no
 longer a gate), a `finding` when neither does, and `unknown` when the forge
 could not be read and no record decides it.
 
 Exit 0: every commit ok. 1: at least one finding. 2: the sweep could not look
-in full and found nothing: the forge or git was unreadable, `--fetch` failed,
-the ref is unknown, the range was empty or cut by --max-count, or the required
+in full and found nothing: the forge or git was unreadable, `--fetch` failed
+(main, or the gate records), the ref is unknown, the range was empty or cut by --max-count, or the required
 check names could not be read. A sweep that could not look must not read as an
 all-clear.
 """
@@ -236,15 +237,31 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
 
+def fetch_gate_notes(repo: Path) -> list[str]:
+    """Fetch the gate records; return the reasons they may be stale, if any.
+
+    Origin carrying no notes ref yet is not stale: there is nothing to fetch.
+    """
+    probe = _git(repo, "ls-remote", "--exit-code", "origin", GATE_NOTES_REF, check=False)
+    if probe.returncode == 2:  # origin has no such ref
+        return []
+    if probe.returncode != 0:
+        return [f"could not list {GATE_NOTES_REF} on origin: gate records may be stale"]
+    proc = _git(repo, "fetch", "--quiet", "origin",
+                f"+{GATE_NOTES_REF}:{GATE_NOTES_REF}", check=False)
+    if proc.returncode != 0:
+        return [f"fetch of {GATE_NOTES_REF} failed: gate records may be stale"]
+    return []
+
+
 def run(args: argparse.Namespace, forge=None) -> int:
     incomplete: list[str] = []
     if args.fetch:
-        for refspec in ("main", f"+{GATE_NOTES_REF}:{GATE_NOTES_REF}"):
-            proc = _git(args.repo, "fetch", "--quiet", "origin", refspec, check=False)
-            if proc.returncode != 0 and refspec == "main":
-                log.error("could not look: fetch of origin main failed: %s", proc.stderr.strip())
-                return 2
-            # A missing notes ref on origin is normal until ticket 1156 pushes one.
+        proc = _git(args.repo, "fetch", "--quiet", "origin", "main", check=False)
+        if proc.returncode != 0:
+            log.error("could not look: fetch of origin main failed: %s", proc.stderr.strip())
+            return 2
+        incomplete += fetch_gate_notes(args.repo)
     commits = first_parent_commits(args.repo, args.ref, args.since,
                                    args.max_count + 1 if args.max_count else None)
     if args.max_count and len(commits) > args.max_count:
@@ -260,6 +277,8 @@ def run(args: argparse.Namespace, forge=None) -> int:
         except ForgeError as exc:
             required, source = [], "unreadable: every run must be green"
             incomplete.append(f"required check names unreadable ({exc})")
+    if not commits:
+        incomplete.append("empty range: no commit to sweep")
     results = sweep(args.repo, commits, forge, required)
     for reason in incomplete:
         log.warning("%s", reason)
