@@ -1,0 +1,60 @@
+%erg 0.1
+Title: Remove the merge helper: coder agents merge with gh pr merge; the gate record and the sweep carry the verification
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T14:40Z reviewer created
+
+--- body ---
+## Context
+The author's decision on 2026-10-21: remove the merge helper `skills/merge/erg-pr-merge`
+(842 lines) and its status reader `erg-pr-status` (56 lines). Coder agents know
+`gh pr merge`. This follows the stance "trust, always verify, monitor".
+
+What the helper does today, so nothing is lost by accident:
+1. Refuses to run off the pull request's own branch.
+2. Closes the linked ticket on the branch (`erg close`, archive) and pushes that
+   commit, so the close claim is not dropped.
+3. Marks a draft pull request ready.
+4. Asks the forge to merge when required checks pass (auto-merge), with a fallback
+   for the "N of N required status checks are expected" race (PR 1533). Moot since
+   the ruleset requiring checks is disabled.
+5. Prints the queue state; `erg-pr-status` reads the outcome (exit 0 merged, 1 failed,
+   2 pending, 3 unreadable), used by the bounded background watcher.
+6. Syncs local `main` after the merge.
+7. On a gated base (PR 1564, activated by PR 1569): refuses without a passing gate
+   record, never arms auto-merge, merges pinned to the gated head, and requires the
+   pull request to read back MERGED at that head.
+
+The helper never was the enforcement: the web button and `gh pr merge` bypass it
+(red-team note on PR 1564). The enforcement that stands is the guard hook in
+enforce mode (a local `main` update without a gate note) and the sweep (commits on
+`main` without a record, after the fact).
+
+## Exit criteria
+- [ ] `skills/merge/` keeps `SKILL.md` as a short recipe a coder agent follows with
+      plain commands: (a) on the pull request branch, close the linked ticket
+      (`erg close`) and push that commit when a `**Ticket:**` claim exists;
+      (b) on a base that declares a gate, write the record first
+      (`scripts/merge-gate.py run`) and read `check`'s exit code (0 pass, anything
+      else: do not merge); (c) `gh pr merge --merge --match-head-commit <sha>` for the
+      head that was reviewed and gated; (d) read the pull request back, require
+      MERGED at that head, and sync local `main`.
+- [ ] `erg-pr-merge`, `erg-pr-status`, their tests (`test_erg_pr_merge.sh`,
+      `test_erg_pr_merge_preflight_settles.sh`, `test_erg_pr_merge_gate.py`,
+      `test_erg_pr_status.sh`) and the references to them in raid, roar, lair, molt,
+      hunt, gaze and the roar exit check are removed or rewritten to the recipe; a grep
+      for the two names across `skills/`, `scripts/`, `rules/`, `profiles/` and
+      `tests/` is empty (`docs/` keeps history).
+- [ ] The bounded background wait (one command, hard bound, exits when the pull
+      request is no longer pending) is written once in the merge recipe with a
+      two-line `gh pr view` loop; callers point to it.
+- [ ] The gate's own pieces stay: `scripts/merge-gate.py` (`run`, `check`, `enabled`)
+      and `.merge-gate.json`; `roar`'s gated exit check keeps reading the record.
+- [ ] The cost is stated in the PR body: no mechanical refusal on the merge path any
+      more; the guard hook (enforce mode) and the sweep catch a merge without a record
+      afterwards.
+- [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker (split
+      into the recipe rewrite and the deletion if it is over).
+- [ ] Nothing here requires a particular agent runtime.
