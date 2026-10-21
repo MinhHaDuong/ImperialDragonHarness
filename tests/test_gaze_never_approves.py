@@ -456,20 +456,35 @@ def test_next_depends_on_the_result_and_templates_agree():
 
 
 def test_next_gates_the_current_head_once_and_escalate_goes_to_the_author():
-    """PR 1539 review: the caller gates the current branch head after its
-    fixes and the ticket close, not reviewed_head_sha; the one re-gate is
-    /verify-gate § Gate sessions; ESCALATE goes to the author with no
-    unbounded /gaze re-run (same wording as raid and merge)."""
+    """PR 1539 review, then the post-merge follow-up: only REVIEWED goes to the
+    gate, on the current head (reviewed_head_sha plus at most the ticket-close
+    commit); FINDINGS are fixed and re-reviewed by /gaze on the new head, never
+    gated unreviewed; the one re-gate is /verify-gate § Gate sessions; ESCALATE
+    goes to the author with no unbounded /gaze re-run (same wording as raid)."""
     core_next = _next_lines()[0]
     gate_part, escalate = core_next.split("ESCALATE", 1)
     assert "on reviewed_head_sha" not in core_next
-    assert "the current branch head after any fixes and the ticket close" in gate_part
+    reviewed, findings = gate_part.split("FINDINGS", 1)
+    assert "/verify-gate" in reviewed
+    assert "reviewed_head_sha plus at most that ticket-close commit" in reviewed
+    assert "/verify-gate" not in findings and "re-runs /gaze on the new head" in findings
     assert "§ Gate sessions" in gate_part
     assert "re-runs /gaze" not in escalate
     assert "the review never completed, and the PR goes to the author" in escalate
     invariants = _section("## Invariants")
     assert "again after any fix" not in invariants
     assert "the single re-gate (`/verify-gate` § Gate sessions)" in " ".join(invariants.split())
+
+
+def test_degraded_panel_maps_to_escalate():
+    """Follow-up to the 1153 stack: a DEGRADED panel (a perspective with no
+    report, or the panel not launched) is an unresolved phase, so ESCALATE;
+    it can never read as REVIEWED. Stated in phase 6 and the output shape."""
+    rules = " ".join(_section("### 6. Return the review result").split())
+    assert "means a phase 2–5 is unresolved, so the result is `ESCALATE`" in rules
+    assert "it never reads as REVIEWED" in rules
+    output = " ".join(GAZE.split("## Output shape", 1)[1].split())
+    assert "A `panel integrity: DEGRADED` line goes with `result: ESCALATE`" in output
 
 
 def test_result_is_posted_after_cleanup():

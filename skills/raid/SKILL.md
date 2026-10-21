@@ -316,7 +316,9 @@ bounded wait, or its `reviewed_head_sha` stale against the branch tip), means
 the gate is not run: the review never completed, and the PR goes to the author.
 The comparison is made on the reviewed head, before the raid adds its own fix and
 ticket-close commits; those commits do not void the result.
-Only on a gaze result of REVIEWED, or FINDINGS once fixed, run
+On FINDINGS the fix agent fixes the listed items and the raid re-runs `/gaze` on
+the new head before any gate: a head gaze did not review is never gated.
+Only on a gaze result of REVIEWED run
 `/verify-gate <pr-number> repo=<PR's worktree> session=<uuid>` the same way (gaze has removed
 its review tree by then; the gate checks out the PR head in a worktree of its
 own and removes it, while the raid keeps the PR's worktree until gating ends);
@@ -349,11 +351,13 @@ writes on completion. Fix agent gets ≤10 min. The agent works under:
 - Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix. A mapped doc-only fix uses `python3 "$IDH_ROOT/scripts/scoped-check.py"` and quotes selected and skipped targets; Python code and unmapped changes use the full `make check`.
 - Push commits to the PR branch; do not open new PRs.
 
-Then re-gate once with the same `session=`. Breakers on this loop:
+After a FINDINGS fix, re-run `/gaze` on the new head; after a round-1 REROLL fix,
+re-gate once with the same `session=`. Breakers on this loop:
 
 - Fix agent timeout (10 min) → ESCALATE.
 - Gate disagrees with the gaze phase outputs 2–5 on a must-fix finding → ESCALATE (no silent resolution).
 - Two REROLL rounds reached → ESCALATE.
+- FINDINGS again after the re-run `/gaze` → ESCALATE (one fix round per review).
 
 Phase 7 merges stay strictly sequential.
 

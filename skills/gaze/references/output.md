@@ -66,9 +66,12 @@ Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]
 Adherence: PASS | FAIL (<count>)
 
-next: REVIEWED or FINDINGS → the caller fixes any FINDINGS and closes the ticket on the branch, then runs /verify-gate <pr-number> repo=<caller's checkout> session=<uuid> on the current branch head after any fixes and the ticket close (one re-gate at most, /verify-gate § Gate sessions); ESCALATE (including battery: NOT-RUN or skipped (--force-approve)) → no gate and no merge: the review never completed, and the PR goes to the author, who decides
+next: REVIEWED → the caller closes the ticket on the branch, then runs /verify-gate <pr-number> repo=<caller's checkout> session=<uuid> on the current branch head, which is reviewed_head_sha plus at most that ticket-close commit (one re-gate at most, /verify-gate § Gate sessions); FINDINGS → the caller fixes them and re-runs /gaze on the new head: a head gaze did not review is never gated; ESCALATE (including battery: NOT-RUN or skipped (--force-approve), or a DEGRADED panel) → no gate and no merge: the review never completed, and the PR goes to the author, who decides
 
 telemetry: risk_band=<high|low|normal> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
 
 On `--force-approve`, the comment is annotated `FORCE-APPROVED by <reason>`.
+
+A `panel integrity: DEGRADED` line goes with `result: ESCALATE` (phase 6), never
+with REVIEWED: a perspective without a report is an unresolved phase.

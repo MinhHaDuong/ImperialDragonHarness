@@ -145,24 +145,28 @@ panel_integrity: COMPLETE | DEGRADED — <PANEL-INTEGRITY: line>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable) | skipped (--force-approve)
 circuit_breaker: un-reviewable | waived (...) | none
 multi_ticket: <distinct close-claim IDs> | none
-next: REVIEWED or FINDINGS → the caller fixes any FINDINGS and closes the ticket on the branch, then runs /verify-gate <pr-number> repo=<caller's checkout> session=<uuid> on the current branch head after any fixes and the ticket close (one re-gate at most, /verify-gate § Gate sessions); ESCALATE (including battery: NOT-RUN or skipped (--force-approve)) → no gate and no merge: the review never completed, and the PR goes to the author, who decides
+next: REVIEWED → the caller closes the ticket on the branch, then runs /verify-gate <pr-number> repo=<caller's checkout> session=<uuid> on the current branch head, which is reviewed_head_sha plus at most that ticket-close commit (one re-gate at most, /verify-gate § Gate sessions); FINDINGS → the caller fixes them and re-runs /gaze on the new head: a head gaze did not review is never gated; ESCALATE (including battery: NOT-RUN or skipped (--force-approve), or a DEGRADED panel) → no gate and no merge: the review never completed, and the PR goes to the author, who decides
 ```
 
 - `ESCALATE`: the breaker fired, the battery could not run (`battery: NOT-RUN`),
   any phase 2–5 errored or timed out, or the workspace could not be restored.
   `--force-approve` is ESCALATE too, with `battery: skipped (--force-approve)`:
-  nothing was reviewed (§ `--force-approve`).
+  nothing was reviewed (§ `--force-approve`). So is a DEGRADED panel (below).
   The review did not complete: the caller runs no gate and the PR goes to the
   author.
 - `FINDINGS`: any blocking adherence violation, any `request-changes` or
   `major` review verdict, any unresolved `verifiable:` minor, any simplify
   must-fix not applied. List them; the caller fixes (a coder on the PR
-  branch, scoped to the list) and re-runs gaze or goes straight to the gate.
+  branch, scoped to the list) and re-runs gaze on the new head. FINDINGS never
+  go straight to the gate: the fixed head is one gaze did not review.
 - `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still
   checks every exit criterion and review comment against the diff.
-- `panel_integrity: DEGRADED` is a note on the result, not a fourth value: the
-  result follows the rules above, and the `PANEL-INTEGRITY:` line is carried
-  verbatim in the result comment.
+- `panel_integrity: DEGRADED` (the review panel did not launch, or a selected
+  or required perspective has no report at the bounded deadline) means a phase
+  2–5 is unresolved, so the result is `ESCALATE` (§ Circuit breakers), whatever
+  the perspectives that did report found; it never reads as REVIEWED. A failed
+  optional external reviewer is fail-open (§ External reviewer panel) and does
+  not count. The `PANEL-INTEGRITY:` line is carried verbatim in the result comment.
 
 Run the cleanup and containment (`references/cleanup.md`) first, then post the
 result as one PR comment (§ Output shape) before returning: cleanup can
