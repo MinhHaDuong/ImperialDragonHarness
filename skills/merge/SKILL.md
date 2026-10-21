@@ -80,60 +80,16 @@ invalid block costs the record, not the merge. `unchecked` means the parser
 could not run, which is not an all-clear. Surface the warning in your report
 and let the author decide whether to complete the block before merging.
 
-Report stdout/stderr verbatim. If the script exits non-zero, stop and show the error.
+Report stdout/stderr verbatim. If the script exits non-zero, stop and show the error, with one exception: on a gated base, exit **2** means the gate record passes and forge checks are pending, nothing queued; it starts the bounded re-run of § Gated base, not a stop.
 
 A killed or failed `erg-pr-merge` run (non-zero exit after its rebase) can
 leave the PR-branch worktree with a stale pre-rebase index: staged diffs that
 appear to re-open closed tickets and revert prose. That is not WIP — run
 `git reset --hard HEAD` in that worktree before any salvage or gc decision.
 
-## Gated base: the gate record
+## Queueing and waiting
 
-A base branch whose tree carries `.merge-gate.json` with `"gate": "on"` is
-**gated** (ticket 1156; this harness is). The declaration is read from the
-base, never the branch, so a branch cannot switch off the gate that rules it.
-On a gated base the script:
-
-1. refuses unless the latest entry of the `refs/notes/gate` note on the
-   **candidate** — the `--no-ff` merge of the branch head into the current
-   base tip, rebuilt deterministically on any host — says `pass` for the
-   declared check set (`scope`). No record, a failing latest entry, a record
-   for another scope, a moved base or a close commit made by this run all
-   refuse; re-run the gate on the new candidate;
-2. never arms forge auto-merge: the forge requires no checks any more, and its
-   CLI's auto flag merges a mergeable PR at once, before the checks it reports
-   have finished;
-3. reads the forge checks once: failing refuses; pending exits **2** with
-   nothing queued (it never waits itself);
-4. merges with the head pinned (`--match-head-commit`).
-
-Write the record from the PR branch checkout, after the ticket close commit:
-
-```bash
-python3 "$IDH_ROOT/scripts/merge-gate.py" run --base origin/main --head HEAD
-```
-
-It builds the candidate, runs the declared checks in a throwaway worktree of
-it, appends an entry (result, time, actor, host, revision, command, scope,
-versions, one line per check) to the note and pushes `refs/notes/gate`. The
-actor uses the attribution vocabulary (`runtime=… · model=… · effort=…`,
-`not-stated` when unstated; a person states `runtime=human`), from `--runtime`,
-`--model`, `--effort` or `MERGE_GATE_RUNTIME`, `MERGE_GATE_MODEL`,
-`MERGE_GATE_EFFORT`; nothing detects or requires an agent runtime. A record
-is a traceable statement, not proof. `merge-gate.py check --base … --head …`
-answers 0 pass, 1 fail, 2 missing, 3 could not read.
-
-**Background merge.** Once the record passes, the caller starts one
-background command with a hard bound of about 25 minutes that re-runs
-`erg-pr-merge -C WORKTREE N` at an interval while it exits 2, and stops on
-any other exit: the merge happens when the forge checks finish, and a re-run
-adds no second close. The base may still move in the seconds between the
-last record check and the forge's merge; the main-update sweep (ticket 1157)
-is what notices that after the fact.
-
-## Ungated base
-
-Merge is queued via auto-merge at once, **whether or not checks are still running**: the forge gates on the required checks and merges when they pass, so the script neither refuses on pending checks nor waits for them. A **failing** check is still a refusal, before anything is closed or queued. Where auto-merge is disabled the script reads the checks once and merges directly only if every check is done; pending checks there stop it with a pointer to the status command, never a wait. Where the base requires no checks at all, auto-merge has nothing to wait for and the PR merges at once, pending checks included: gate such a base (§ Gated base).
+On an **ungated** base, merge is queued via auto-merge at once, **whether or not checks are still running**: the forge gates on the required checks and merges when they pass, so the script neither refuses on pending checks nor waits for them. A **failing** check is still a refusal, before anything is closed or queued. Where auto-merge is disabled the script reads the checks once and merges directly only if every check is done; pending checks there stop it with a pointer to the status command, never a wait. Where the base requires no checks at all, auto-merge has nothing to wait for and the PR merges at once, pending checks included: gate such a base (§ Gated base).
 
 Queued is not merged. To learn the outcome, ask once with
 `"$IDH_ROOT/skills/merge/erg-pr-status" [-C WORKTREE] N`: exit 0 merged, 1
@@ -151,7 +107,59 @@ the caller continues from the status it reads. Never ask the author to wait or
 to re-run later; never a fixed-delay timer (it waits past the event); never an
 unbounded or foreground loop. A runtime that cannot wake the session on exit
 (it has no background commands, or runs them without waking the model) asks once
-at its next step and reports the PR as pending. A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
+at its next step and reports the PR as pending.
+
+A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging, gated base or not — invoking `/merge` is explicit intent to merge.
+
+## Gated base: the gate record
+
+A base branch whose tree carries `.merge-gate.json` with `"gate": "on"` is
+**gated** (ticket 1156). The declaration is read from the base: the base fixes
+whether the gate is on, which checks run and their commands; the code those
+commands execute comes from the branch. No file, or an explicit
+`"gate": "off"`, is ungated; any other declaration, or a failure to inspect
+the base, refuses. On a gated base the script:
+
+1. refuses unless the latest entry of the `refs/notes/gate` note on the
+   **candidate** — the `--no-ff` merge of the branch head into the current
+   base tip, rebuilt deterministically on any host — says `pass` for the
+   declared check set (`scope`). No record, a failing latest entry, a record
+   for another scope or a moved base all refuse: re-run the gate on the new
+   candidate. A close commit this run makes changes the candidate, so the run
+   pushes it and refuses; close the ticket on the branch before gating
+   (§ Before merging) and this never happens;
+2. never arms forge auto-merge: the forge requires no checks any more, and its
+   CLI's auto flag merges a mergeable PR at once, before the checks it reports
+   have finished;
+3. reads the forge checks once. Only an explicit success is green: a failing,
+   errored, cancelled or unreadable check refuses; pending checks, or none
+   reported yet, exit **2** with nothing queued (it never waits itself);
+4. merges with the head pinned (`--match-head-commit`).
+
+Write the record from the PR branch checkout, after the ticket close commit:
+
+```bash
+python3 "$IDH_ROOT/scripts/merge-gate.py" run --base origin/main --head HEAD
+```
+
+It builds the candidate, runs the declared checks in a throwaway worktree of
+it, appends an entry (result, time, actor, host, revision, command, scope,
+versions, one line per check) to the note and pushes `refs/notes/gate`. The
+actor uses the attribution vocabulary (`runtime=… · model=… · effort=…`,
+`not-stated` when unstated; a person states `runtime=human`), from `--runtime`,
+`--model`, `--effort` or `MERGE_GATE_RUNTIME`, `MERGE_GATE_MODEL`,
+`MERGE_GATE_EFFORT`; nothing detects or requires an agent runtime. A record
+is a traceable statement, not proof. The forge's notes ref is authoritative:
+a `--no-push` record lasts only until the next fetch. `merge-gate.py check --base … --head …`
+answers 0 pass, 1 fail, 2 missing, 3 could not read.
+
+**Background merge.** Once the record passes, the caller waits as in
+§ Queueing and waiting, except that its one bounded background command re-runs
+`erg-pr-merge -C WORKTREE N` at an interval while it exits 2, and stops on any
+other exit: the merge happens when the forge checks finish, and a re-run
+adds no second close. The base may still move in the seconds between the
+last record check and the forge's merge; the main-update sweep (ticket 1157)
+is what notices that after the fact.
 
 ## Before merging
 

@@ -140,12 +140,20 @@ settle_mergeable() {
     echo "$state"
 }
 
-# Gate declaration, read from the BASE (ticket 1156): a branch cannot switch off
-# the gate that rules it, and a declaration lands with the PR that adds it.
+# Gate declaration, read from the BASE (ticket 1156): the base fixes whether the
+# gate is on and which checks run; a declaration lands with the PR that adds it.
+# Fail closed: only a confirmed absence (ls-tree answers, and lists nothing) or
+# an explicit "gate": "off" leaves the gate off; an inspection error refuses.
+# The fetch is unconditional because only the fresh base can say whether the
+# base is gated; a stale tracking ref could miss a declaration just landed.
 GATE_TOOL="$(cd "$(dirname "$0")" && pwd)/../../scripts/merge-gate.py"
 GATE_ON=0
 git fetch -q origin "$BASE_BRANCH" || die "could not fetch origin/${BASE_BRANCH}"
-if git cat-file -e "origin/${BASE_BRANCH}:.merge-gate.json" 2>/dev/null; then
+# Presence is an exact line match, not "any output": a framing proxy that adds a
+# banner to git's stdout must not turn absence into presence (ticket 0333).
+GATE_DECL=$(git ls-tree --name-only "origin/${BASE_BRANCH}" -- .merge-gate.json) \
+    || die "could not inspect origin/${BASE_BRANCH} for a .merge-gate.json — not merging"
+if grep -qxF '.merge-gate.json' <<<"$GATE_DECL"; then
     [[ -f "$GATE_TOOL" ]] || die "base declares a merge gate but $GATE_TOOL is missing — not merging"
     GATE_RC=0
     python3 "$GATE_TOOL" enabled --base "origin/${BASE_BRANCH}" || GATE_RC=$?
@@ -175,9 +183,10 @@ PENDING=$(echo "$PR_JSON" | jq -r '
     [.statusCheckRollup[]? | select(.status != "COMPLETED" and .status != null)]
     | length')
 if [[ "$PENDING" -gt 0 && "$GATE_ON" -eq 0 ]]; then
-    # Not a refusal (ticket 1082): the forge's own auto-merge gates on the
+    # Not a refusal (ticket 1082): the forge's own auto-merge gates on its
     # required checks, so arm it now and let the caller ask erg-pr-status later.
-    echo "CI has ${PENDING} check(s) pending — arming auto-merge; the forge merges when required checks pass."
+    # With no required checks the forge merges at once: gate such a base.
+    echo "CI has ${PENDING} check(s) pending — arming auto-merge; the forge waits only for checks it requires (none: it merges at once)."
 fi
 
 # A draft PR is rejected by both auto-merge ("Pull Request is still a draft")
@@ -438,6 +447,12 @@ fi
 
 # ── Step 2: close ticket (only if erg project and ticket found) ───────────────
 
+# On a gated base the record must cover the head that merges, close included
+# (ticket 1156): a close commit made here changes the candidate, so the run
+# stops after pushing it and asks for a gate run on the new head. Closing the
+# ticket on the branch before gating (SKILL.md § Before merging) avoids that.
+HEAD_BEFORE_CLOSE=$(git rev-parse HEAD)
+
 ERG=${ERG:-erg}
 if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; then
     CLOSED_LIST=""
@@ -494,6 +509,9 @@ if [[ -n "$TICKET_IDS" ]] && [[ -d tickets ]] && command -v "$ERG" &>/dev/null; 
     git push origin HEAD
 elif [[ -n "$TICKET_IDS" ]]; then
     echo "Note: ticket(s) ${TICKET_IDS//$'\n'/, } found but no erg available — skipping close"
+fi
+if [[ "$GATE_ON" -eq 1 && "$(git rev-parse HEAD)" != "$HEAD_BEFORE_CLOSE" ]]; then
+    die "close commit $(git rev-parse HEAD) pushed; the gate record must cover it. Run the gate on that head, then re-run this script (the re-run adds no second close)."
 fi
 
 # ── Step 3: queue auto-merge via forge CLI (works in worktrees and on VMs) ────
@@ -719,7 +737,7 @@ gate_merge() {
     python3 "$GATE_TOOL" check --base "$base" --head "$head" || rc=$?
     case "$rc" in
         0) ;;
-        2) die "no gate record on the candidate merge of ${head} into ${BASE_BRANCH} ${base} — run: python3 ${GATE_TOOL} run --base origin/${BASE_BRANCH} --head ${head} (from this checkout), then re-run. A close commit made by this run, or a moved ${BASE_BRANCH}, needs a new record." ;;
+        2) die "no gate record on the candidate merge of ${head} into ${BASE_BRANCH} ${base} — run: python3 ${GATE_TOOL} run --base origin/${BASE_BRANCH} --head ${head} (from this checkout), then re-run. A moved ${BASE_BRANCH} needs a new record." ;;
         1) die "the latest gate record on the candidate does not pass (above) — fix, re-run the gate, then merge" ;;
         *) die "could not read the gate record (above) — not merging" ;;
     esac
@@ -727,9 +745,31 @@ gate_merge() {
         || die "could not read the forge checks — not merging"  # harness-extension-point
     rhead=$(echo "$roll" | jq -r '.headRefOid')
     [[ "$rhead" == "$head" ]] || die "forge head ${rhead} is not the gated head ${head} — not merging"
-    failing=$(echo "$roll" | jq -r '[.statusCheckRollup[]? | select(.conclusion == "FAILURE" or .conclusion == "TIMED_OUT")] | length')
-    [[ "$failing" -eq 0 ]] || die "CI has ${failing} failing check(s) — fix before merging"
-    pending=$(echo "$roll" | jq -r '[.statusCheckRollup[]? | select(.status != "COMPLETED" and .status != null)] | length')
+    # Classify each reported check; only an explicit success is green. A check
+    # run (status/conclusion) is green on SUCCESS, NEUTRAL or SKIPPED once
+    # COMPLETED; a legacy status context (state) only on SUCCESS. Anything
+    # else, unknown shapes included, is failing or pending, never green.
+    verdicts=$(echo "$roll" | jq -r '
+        if (.statusCheckRollup | type) != "array" then "unreadable"
+        elif (.statusCheckRollup | length) == 0 then "none"
+        else .statusCheckRollup[] |
+            if type != "object" then "fail"
+            elif has("state") and .state != null then
+                (if .state == "SUCCESS" then "ok"
+                 elif .state == "PENDING" or .state == "EXPECTED" then "pending"
+                 else "fail" end)
+            elif .status != "COMPLETED" then "pending"
+            elif .conclusion == "SUCCESS" or .conclusion == "NEUTRAL" or .conclusion == "SKIPPED" then "ok"
+            else "fail" end
+        end') || die "could not parse the forge checks — not merging"
+    [[ "$verdicts" != "unreadable" ]] || die "the forge returned no readable check list — not merging"
+    failing=$(grep -cx fail <<<"$verdicts" || true)
+    [[ "$failing" -eq 0 ]] || die "CI has ${failing} failing, errored or cancelled check(s) — fix before merging"
+    if [[ "$verdicts" == "none" ]]; then
+        echo "Gate record passes; the forge reports no checks on ${head} yet — not merging, nothing queued (exit 2 = pending)."
+        exit 2
+    fi
+    pending=$(grep -cx pending <<<"$verdicts" || true)
     if [[ "$pending" -gt 0 ]]; then
         echo "Gate record passes; ${pending} forge check(s) pending — not merging, nothing queued. Re-run this script once they finish (exit 2 = pending)."
         exit 2

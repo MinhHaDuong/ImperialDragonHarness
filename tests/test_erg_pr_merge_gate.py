@@ -9,6 +9,7 @@ arming forge auto-merge (which, with no required checks, would merge at once).
 
 import json
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -23,6 +24,20 @@ HELPER = ROOT / "skills" / "merge" / "erg-pr-merge"
 GATE = ROOT / "scripts" / "merge-gate.py"
 CONFIG = {"gate": "on", "scope": "fixture-set", "checks": [{"name": "always-pass", "argv": ["true"]}]}
 
+GREEN = '[{"status":"COMPLETED","conclusion":"SUCCESS"}]'
+TICKET = """%erg 0.1
+Title: Fixture ticket
+Created: 2026-10-21
+Author: test
+
+--- log ---
+2026-10-21T00:00Z test created
+
+--- body ---
+## Context
+Fixture.
+"""
+
 GH_STUB = r"""#!/usr/bin/env bash
 set -euo pipefail
 args="$*"
@@ -36,7 +51,7 @@ case "$1 $2" in
     fi
     if [[ "$args" == *"autoMergeRequest"* ]]; then echo no; exit 0; fi
     if [[ "$args" == *"--jq"* && "$args" == *"state"* ]]; then echo MERGED; exit 0; fi
-    jq -n --arg h "$STUB_BRANCH" --arg body "Ticket: none" --argjson r "${STUB_ROLLUP:-[]}" \
+    jq -n --arg h "$STUB_BRANCH" --arg body "${STUB_BODY:-Ticket: none}" --argjson r "${STUB_ROLLUP:-[]}" \
       '{number:42,headRefName:$h,baseRefName:"main",mergeable:"MERGEABLE",statusCheckRollup:$r,body:$body,isDraft:false,title:"fixture"}'
     exit 0 ;;
   "pr merge") echo "$args" >> "$STUB_DIR/merge.log"; exit 0 ;;
@@ -59,6 +74,9 @@ def fixture(tmp_path):
     for key, value in (("user.email", "t@example.com"), ("user.name", "Fixture"), ("commit.gpgsign", "false")):
         git(work, "config", key, value)
     (work / ".merge-gate.json").write_text(json.dumps(CONFIG), encoding="utf-8")
+    (work / "tickets").mkdir()
+    shutil.copy(ROOT / "tickets" / "erg", work / "tickets" / "erg")
+    (work / "tickets" / "0001-fixture.erg").write_text(TICKET, encoding="utf-8")
     git(work, "add", ".")
     git(work, "commit", "-q", "-m", "base")
     git(work, "remote", "add", "origin", str(origin))
@@ -82,6 +100,8 @@ def merge(work, stub, *args, **env):
         "STUB_BRANCH": "feature",
         "STUB_HEAD": git(work, "rev-parse", "feature"),
         "ERG_PR_MERGE_SYNC": "/bin/true",
+        "ERG": str(work / "tickets" / "erg"),
+        "STUB_ROLLUP": GREEN,
         **env,
     }
     return subprocess.run(["bash", str(HELPER), *args, "42"], cwd=work, capture_output=True, text=True, env=full)
@@ -192,3 +212,81 @@ def test_gate_off_base_keeps_forge_auto_merge(fixture):
     result = merge(work, stub)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "--auto" in merge_log(stub)
+
+
+@pytest.mark.parametrize(
+    "rollup",
+    [
+        '[{"state":"ERROR"}]',
+        '[{"state":"FAILURE"}]',
+        '[{"status":"COMPLETED","conclusion":"CANCELLED"}]',
+        '[{"status":"COMPLETED","conclusion":null}]',
+        '[{"status":"COMPLETED","conclusion":"SUCCESS"},"junk"]',
+    ],
+)
+def test_non_green_forge_checks_refuse(fixture, rollup):
+    work, stub = fixture
+    record(work)
+    result = merge(work, stub, STUB_ROLLUP=rollup)
+    assert result.returncode not in (0, 2), result.stdout + result.stderr
+    assert merge_log(stub) == ""
+
+
+@pytest.mark.parametrize("rollup", ["[]", '[{"state":"PENDING"}]', '[{"state":"EXPECTED"}]'])
+def test_empty_or_pending_status_is_pending(fixture, rollup):
+    work, stub = fixture
+    record(work)
+    result = merge(work, stub, STUB_ROLLUP=rollup)
+    assert result.returncode == 2, result.stdout + result.stderr
+    assert merge_log(stub) == ""
+
+
+def test_null_rollup_refuses(fixture):
+    work, stub = fixture
+    record(work)
+    result = merge(work, stub, STUB_ROLLUP="null")
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert merge_log(stub) == ""
+
+
+def test_inspection_failure_is_not_absence(fixture):
+    work, stub = fixture
+    record(work)
+    shim = stub / "git"
+    real = shutil.which("git")
+    shim.write_text(f'#!/usr/bin/env bash\n[[ "$1" == ls-tree ]] && exit 128\nexec {real} "$@"\n', encoding="utf-8")
+    shim.chmod(0o755)
+    result = merge(work, stub)
+    assert result.returncode == 1
+    assert "could not inspect" in result.stderr
+    assert merge_log(stub) == ""
+
+
+def test_close_at_merge_time_needs_a_gate_run_on_the_close_commit(fixture):
+    work, stub = fixture
+    record(work)
+    body = "**Ticket:** tickets/0001-fixture.erg"
+    first = merge(work, stub, STUB_BODY=body)
+    assert first.returncode == 1, first.stdout + first.stderr
+    assert "close commit" in first.stderr
+    assert merge_log(stub) == ""
+    assert (work / "tickets" / "closed" / "0001-fixture.erg").exists()
+    assert git(work, "rev-parse", "HEAD") == git(work, "rev-parse", "origin/feature")
+    record(work)
+    second = merge(work, stub, STUB_BODY=body)
+    assert second.returncode == 0, second.stdout + second.stderr
+    assert "--match-head-commit" in merge_log(stub)
+    assert git(work, "log", "--oneline", "-3", "feature").count("close and archive") == 1
+
+
+def test_ticket_closed_before_gating_merges_in_one_run(fixture):
+    work, stub = fixture
+    erg = str(work / "tickets" / "erg")
+    subprocess.run([erg, "close", "0001", "done"], cwd=work, check=True, capture_output=True, env=child_env())
+    git(work, "add", "-A", "tickets")
+    git(work, "commit", "-q", "-m", "close 0001")
+    git(work, "push", "-q", "origin", "feature")
+    record(work)
+    result = merge(work, stub, STUB_BODY="**Ticket:** tickets/closed/0001-fixture.erg")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "--match-head-commit" in merge_log(stub)
