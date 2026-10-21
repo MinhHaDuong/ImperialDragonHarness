@@ -9,6 +9,7 @@ Author: Claude
 2026-10-06T08:46Z Claude note Reframed traceability. The author meant tracing agents that get around the CI with git options, not who ran it. Added criteria for the credentials, a journal of updates to main, and a sweep of main; made the design runtime-neutral (git and the forge, no agent-runtime hook as its basis).
 2026-10-14T16:06Z reviewer note CI content review done (prerequisite), recorded as docs/2026-10-14-ci-content-review.md instead of a ticket at the author's request. Ruleset facts confirmed (7 required checks, no bypass; also non-strict); check-adapter-hooks retired 2026-10-05; make check lacks 7 CI jobs; CI lacks the skills-catalog drift check. Retirement candidates: skill-lint, grep-e-guard, status-verb-guard. No misfire found. Exit criterion 1 ticked.
 2026-10-20T19:23Z reviewer note Decisions 2026-10-20 recorded (defaults of Fable advice); split into children 1156, 1157, 1158 under the monster-ticket rule.
+2026-10-21T11:28Z reviewer note The author disabled the forge ruleset main-required-checks (enforcement=disabled) on 2026-10-21: forge CI no longer blocks merges and the gate record of child 1156 is the only merge check. The rehearsal criterion (a PR merged with the forge's runners unavailable or unconsulted) and decision 4's 'remove the required checks after the rehearsal' are moot.
 
 --- body ---
 ## Context
