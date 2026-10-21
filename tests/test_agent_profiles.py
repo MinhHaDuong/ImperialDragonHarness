@@ -136,8 +136,8 @@ def test_coder_contract_pins_git_discipline_and_hunt_reference():
 def test_contract_skills_sections_name_the_invokable_contracts():
     skills_of = {
         "coder": "skills/hunt/SKILL.md",
-        "code-reviewer": "skills/review-pr/SKILL.md",
-        "prose-reviewer": "skills/review-pr-prose/SKILL.md",
+        "code-reviewer": "skills/gaze/references/panel.md",
+        "prose-reviewer": "skills/gaze/references/prose-panel.md",
         "gate-seat": "skills/verify-gate/SKILL.md",
         "adherence-seat": "skills/verify-adherence/SKILL.md",
     }
@@ -200,46 +200,6 @@ def test_no_two_agent_shells_share_a_description():
         descriptions[description] = path
 
 
-# Wave 2 pilot (ticket 0938 Actions step 4): the review-pr five-perspective
-# launch section names the code-reviewer profile instead of restating the
-# seat rails per launch. The detached-seat substitution section keeps its
-# inline embedding by design (inventory) and stays outside these pins.
-REVIEW_PR = REPO / "skills" / "review-pr" / "SKILL.md"
-
-
-def test_review_pr_launch_names_the_code_reviewer_profile():
-    """The parallel-spawn block launches the named profile whose contract
-    carries the seat rails; perspective and materials ride in the prompt."""
-    review = REVIEW_PR.read_text(encoding="utf-8")
-    launch = " ".join(
-        review.split("Spin multiple agents", 1)[1]
-        .split("**Fan-out preflight:**", 1)[0]
-        .split()
-    )
-    assert "the code-reviewer profile" in launch, (
-        "the review-pr launch block must name the code-reviewer profile it "
-        "launches (agents/code-reviewer.md)"
-    )
-    assert "agents/code-reviewer.md" in launch
-    assert "profiles/code-reviewer/PROFILE.md" in launch, (
-        "the launch block must point at the contract that owns the seat rails"
-    )
-    assert "perspective" in launch and "anchor" in launch, (
-        "perspective and anchor materials stay in the launch prompt"
-    )
-
-
-def test_review_pr_no_longer_restates_the_seat_rails():
-    """The seat rails are the contract's, not the skill body's. The pinned
-    phrases are the removed 'Each agent runs' restatement and the launch
-    sentence's discipline re-embedding (whitespace-normalized: both span
-    line breaks in the removed text)."""
-    flat = " ".join(REVIEW_PR.read_text(encoding="utf-8").split())
-    assert "Evaluate from its assigned perspective" not in flat
-    assert "Decide a verdict: **approve**, **comment**, or **request-changes**" not in flat
-    assert "the `.part`-then-rename discipline" not in flat
-
-
 def test_code_reviewer_contract_carries_the_report_format():
     """The rails removed from the skill body must live in the contract:
     confidence per finding, the verdict enum, and the verifiable/consider/
@@ -250,7 +210,7 @@ def test_code_reviewer_contract_carries_the_report_format():
         .split()
     )
     assert "confidence" in text.lower()
-    for verdict in ("approve", "comment", "request-changes"):
+    for verdict in ("clear", "concerns", "blocking"):
         assert verdict in text, f"contract verdict enum missing {verdict}"
     for tag in ("verifiable:", "consider:", "nofollow:"):
         assert tag in text, f"contract minor-finding tag {tag} missing"
@@ -349,7 +309,6 @@ def test_pi_template_body_is_the_shell_pointer_plus_one_provenance_comment():
 # wave-2 pattern. Each pin slices to its launch block only — a stray
 # profile mention elsewhere in the skill must not satisfy it.
 GAZE = REPO / "skills" / "gaze" / "SKILL.md"
-PROSE = REPO / "skills" / "review-pr-prose" / "SKILL.md"
 
 
 def test_gaze_agent_a_launch_names_the_adherence_seat_profile():
@@ -378,26 +337,6 @@ def test_gaze_agent_a_launch_names_the_adherence_seat_profile():
     )
 
 
-def test_prose_panel_launches_name_the_prose_reviewer_profile():
-    """The panel recruitment step launches every seat as the
-    prose-reviewer profile; the role and rulebook ride in the prompt, the
-    editorial-brief auditor stays inline by inventory."""
-    prose = PROSE.read_text(encoding="utf-8")
-    launch = " ".join(
-        prose.split("3. Recruit the panel", 1)[1]
-        .split("## The seats are", 1)[0]
-        .split()
-    )
-    assert "the prose-reviewer profile" in launch, (
-        "the review-pr-prose launch step must name the prose-reviewer "
-        "profile it launches (agents/prose-reviewer.md)"
-    )
-    assert "agents/prose-reviewer.md" in launch
-    assert "profiles/prose-reviewer/PROFILE.md" in launch, (
-        "the prose launch step must point at the contract that owns the "
-        "seat rails"
-    )
-
 def test_coder_profile_conversions():
     """The inventory coder site (raid wave execution) launches the named
     coder profile; task materials ride in the prompt. Gaze no longer fixes:
@@ -414,7 +353,7 @@ def test_hunt_detach_profile_carries_skill_and_agent_tools():
     """The executor hunt step 2b detaches must be able to run the hunt flow.
 
     Its first action is ``Skill(skill: "hunt", ...)`` and the flow launches
-    reviewers and /review-pr seats; a profile without Skill and Agent stops at
+    reviewers and panel seats; a profile without Skill and Agent stops at
     once (ticket 1075, observed on ticket 1046).
     """
     hunt = (REPO / "skills" / "hunt" / "SKILL.md").read_text(encoding="utf-8")

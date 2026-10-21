@@ -94,7 +94,7 @@ ALLOWED_LINES = (
         'If the battery cannot be launched at all — the runtime refuses the '
         'spawn, the agent connector is absent, or the spawn-depth limit is hit — '
         'first attempt the detached-seat substitution documented in '
-        '`skills/review-pr/SKILL.md`; if that also cannot run, emit a one-line '
+        '`references/panel.md`; if that also cannot run, emit a one-line '
         '`battery: NOT-RUN — cause: <guard|no-agent-tool|depth>` in the result '
         'comment. The boundary with the seat-level signal: no seat launched at '
         'all is a battery NOT-RUN; seats launched but reports missing stays '
@@ -376,8 +376,8 @@ def test_verify_gate_remains_the_gate():
 
 
 def test_agent_c_has_one_launch_mode():
-    """Agent C is a direct /review-pr or /review-pr-prose invocation; no wrapper
-    agent carries an embedded copy of the panel (/gaze 1522 blocker B1)."""
+    """Agent C is the panel gaze launches itself; no wrapper agent carries an
+    embedded copy of it (/gaze 1522 blocker B1)."""
     agent_c = GAZE.split("**Agent C — PR review**", 1)[1].split(
         "Wait for all spawned agents", 1
     )[0]
@@ -417,7 +417,7 @@ def test_review_panel_has_no_unlisted_skip_path():
     enumerated result values. A new skip path must change this test."""
     assert "every PR gets adherence, the review panel and simplify" in GAZE
     template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
-    line = next(ln for ln in template.splitlines() if ln.startswith("review-pr:"))
+    line = next(ln for ln in template.splitlines() if ln.startswith("panel:"))
     values = {v.strip() for v in line.split(":", 1)[1].split("|")}
     assert values == {
         "<n_comments_posted>",
@@ -502,10 +502,6 @@ def test_missing_perspective_is_retried_once_before_degraded():
     assert _has_retry_rule(GAZE)
     dropped = re.sub(r"- \*\*One retry\.\*\*.*?(?=\n\n|\n- )", "", GAZE, flags=re.S)
     assert dropped != GAZE and not _has_retry_rule(dropped)
-    review_pr = (ROOT / "skills" / "review-pr" / "SKILL.md").read_text(encoding="utf-8")
-    collection = review_pr.split("\n## Collection", 1)[1].split("\n## ", 1)[0]
-    assert "is re-run once, alone, over the whole PR" in " ".join(collection.split())
-    assert "is re-run once" not in review_pr.replace(collection, "")
 
 
 def test_result_is_posted_after_cleanup():

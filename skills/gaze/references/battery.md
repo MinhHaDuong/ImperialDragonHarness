@@ -4,9 +4,9 @@ Loaded from `skills/gaze/SKILL.md` § 2–5.
 
 ### 2–4. Read-only review fan-out (parallel)
 
-Agent A (adherence) and the optional adapter seats run as **Agent-spawned
-sub-agents, not `context: fork` invocations** (ticket 0216); Agent C is a direct
-invocation of the review skill (below). A fork does not inherit this skill's cwd or
+Agent A (adherence), the panel seats of Agent C and the optional adapter seats
+run as **Agent-spawned sub-agents, not `context: fork` invocations** (ticket
+0216). A fork does not inherit this skill's cwd or
 conversation, so it lands in the session worktree on whatever branch is
 checked out there — that is how a drifted fork pushed a stray branch and
 opened rogue PR #243 (ticket 0193). Spawning an Agent fixes this
@@ -23,7 +23,7 @@ agents.
 If the battery cannot be launched at all — the runtime refuses the
 spawn, the agent connector is absent, or the spawn-depth limit is hit — first
 attempt the detached-seat substitution documented in
-`skills/review-pr/SKILL.md`; if that also cannot run, emit a one-line
+`references/panel.md`; if that also cannot run, emit a one-line
 `battery: NOT-RUN — cause: <guard|no-agent-tool|depth>` in the result
 comment. The boundary with the seat-level signal: no seat launched at all is
 a battery NOT-RUN; seats launched but reports missing stays seat-level
@@ -51,8 +51,8 @@ Every reviewer agent's prompt:
 - ends by **returning a single structured block as its final message**, which
   the orchestrator parses to branch.
 
-Spawn the applicable agents (Agent A and any adapter seats; not Agent C, which
-is invoked directly) **in a single message, as parallel background
+Spawn the applicable agents (Agent A, the panel seats and any adapter seats)
+**in a single message, as parallel background
 Agent calls**, each writing its result to the phase artifact path — the single message runs them
 concurrently, and the bounded poll on those artifacts is what makes this fork wait
 before it proceeds. Keep polling until every artifact lands: a fork's
@@ -141,14 +141,13 @@ refusal semantics as the routing call below, since this reads the disk too.
 Routing picks which panel reviews the diff; the axes tell the reviewer which
 rulebook to hold it to.
 
-**Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
-or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`).
-This is the one launch mode: gaze invokes the review skill directly with the
-review worktree, never through a spawned wrapper agent carrying an embedded
-copy of the panel. There is no gaze-specific reviewer agent; the invoking
-fork's own toolset supplies the delegation capability.
+**Agent C — PR review** (the panel, `references/panel.md`; on a prose diff
+also `references/prose-panel.md`). This is the one launch mode: gaze launches
+the seats itself, as the code-reviewer or prose-reviewer profile, with the
+perspectives it chose (§ 2–5); there is no separate review skill and no
+gaze-specific reviewer agent.
 
-**Route first.** Choose the skill by the shared prose predicate, anchored in the
+**Route first.** Choose the panel by the shared prose predicate, anchored in the
 review worktree — the predicate reads the disk (manifest walk-up,
 `\documentclass` sniff), so a parked cwd would return a plausible, wrong
 verdict. Run
@@ -159,29 +158,17 @@ sniff; one manuscript flips a mixed diff), `code` otherwise. It refuses any
 path that does not exist under that cwd (exit 2, no verdict) — treat a
 refusal as a routing error to fix, never as `code`. Process prose — notes,
 tickets — carries no doctype and stays on the code panel, which is the panel
-the audit measured as correct for it (ticket 0550). `prose` →
-`/review-pr-prose`; `code` → `/review-pr`.
+the audit measured as correct for it (ticket 0550).
 
-**What the review skill owns.** Gaze passes it the PR, the tree and the
-perspectives it chose (§ 2–5 in `skills/gaze/SKILL.md`). The review skill owns
-the detached-seat substitution, the project gate run, minor tags
-(`verifiable:` / `consider:` / `nofollow:`) and the single posted review.
-
-Inside the review skill the selected perspective agents launch in parallel,
-each writing its own artifact, and the skill polls them against its manifest under a bounded
-deadline before it synthesizes; gaze's fork waits on the skill's return, so
-the fork contract holds one layer down.
-
-**Panel integrity in gaze's result.** If the review skill itself cannot launch,
-or reports that the Agent tool is unavailable or a spawn failed, gaze does not
-substitute its own sequential review: it records the failure, marks the review
-unresolved and claims no completed review round. Carry the exact
-`PANEL-INTEGRITY:` line the skill posted (`PANEL-INTEGRITY: DEGRADED — Agent
-tool unavailable or spawn failed; selected perspectives not run`, or `missing
-perspective report: <name>` for a perspective still missing at the bounded collection deadline) and its `dissent: unavailable` into the /gaze result comment, and use
-`panel integrity: DEGRADED` there. Never write `dissent: none` for this path.
-When the invoking toolset lacks the Agent tool, the review skill first applies
-the detached-seat substitution in skills/review-pr/SKILL.md instead of degrading.
+**Panel integrity in gaze's result.** If the seats cannot launch, the Agent tool
+is unavailable or a spawn failed, gaze does not substitute its own sequential
+review: it records the failure, marks the review unresolved and claims no
+completed review round. Post the exact `PANEL-INTEGRITY:` line
+(`PANEL-INTEGRITY: DEGRADED — Agent tool unavailable or spawn failed; selected
+perspectives not run`, or `missing perspective report: <name>` for a seat still
+missing at the bounded collection deadline) and `dissent: unavailable` in the
+panel review and the /gaze result comment, with `panel integrity: DEGRADED`
+there. Never write `dissent: none` for this path.
 
 Wait for all spawned agents to complete. Collect their structured outputs.
 

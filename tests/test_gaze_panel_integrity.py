@@ -7,7 +7,7 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_review_pr_is_invoked_directly_without_a_wrapper_agent():
+def test_panel_is_launched_without_a_wrapper_agent():
     gaze = (ROOT / "skills/gaze/SKILL.md").read_text()
     assert not (ROOT / "agents/gaze-pr-review.md").exists()
     assert "gaze-pr-review" not in gaze
@@ -19,35 +19,15 @@ def test_review_pr_is_invoked_directly_without_a_wrapper_agent():
 
 def test_agent_c_missing_fanout_is_visible_in_both_pr_comments():
     gaze = (ROOT / "skills/gaze/SKILL.md").read_text()
-    review = (ROOT / "skills/review-pr/SKILL.md").read_text()
     agent_c = gaze.split("**Agent C — PR review**", 1)[1].split(
         "Wait for all spawned agents", 1
     )[0]
-    for text in (agent_c, review):
-        assert "PANEL-INTEGRITY:" in text
-        assert "dissent: unavailable" in text
-        assert "Agent tool" in text
-        assert "post" in text.lower()
+    assert "PANEL-INTEGRITY:" in agent_c
+    assert "dissent: unavailable" in agent_c
+    assert "Agent tool" in agent_c
+    assert "post" in agent_c.lower()
     output = gaze.split("## Output shape", 1)[1]
     assert "panel integrity:" in output
-
-
-def test_review_pr_does_not_substitute_sequential_self_review():
-    review = (ROOT / "skills/review-pr/SKILL.md").read_text()
-    assert "do not run the perspectives sequentially yourself" in review
-    assert "no report" in review
-    assert "PANEL-INTEGRITY:" in review
-
-
-def test_preflight_does_not_trust_spawn_success():
-    review = (ROOT / "skills/review-pr/SKILL.md").read_text()
-    preflight = review.split("**Fan-out preflight:**", 1)[1].split(
-        "The remaining review content", 1
-    )[0]
-    assert "not a guarantee the agent exists" in preflight
-    assert "agent.list" in preflight
-    assert "source of truth" in preflight
-    assert "#1143" in preflight
 
 
 def test_live_review_surfaces_do_not_dispatch_retired_governance():

@@ -6,8 +6,10 @@ Loaded from `skills/gaze/SKILL.md`; runs on every exit path.
 
 On every exit path (REVIEWED, FINDINGS, ESCALATE, circuit-breaker abort), after the review panel has consumed its artifacts, remove this
 run's review scratch before removing the worktree.
-The `/review-pr` run leaves the panel for this step. Do not run
+The panel (`references/panel.md`) leaves its artifacts for this step. Do not run
 this while perspective agents are still writing: cancel or wait for them first.
+Do not gitignore `.panel/` in adopter repos: an ignore rule hides a missed
+cleanup from the worktree gates.
 If the review worktree was never created, there is nothing to clean up. The
 exit preflight must pass after scratch removal: if it reports other WIP, leave
 the review worktree registered and surface those file names as ESCALATE to the

@@ -58,7 +58,7 @@ def test_verify_threads_worktree_path_to_subskills():
     branch the raid had left it) instead of /tmp/review-<pr>. The path must
     travel as an explicit argument.
     """
-    for name in ("/verify-adherence", "/review-pr", "/simplify"):
+    for name in ("/verify-adherence", "/simplify"):
         invocation_lines = [
             line for line in VERIFY.splitlines() if name in line and "worktree=" in line
         ]
@@ -69,7 +69,7 @@ def test_verify_threads_worktree_path_to_subskills():
 
 def test_subskills_document_worktree_argument():
     """Each gaze sub-skill must cd into the worktree path it receives."""
-    for skill in ("verify-adherence", "review-pr", "review-pr-prose"):
+    for skill in ("verify-adherence",):
         text = (SKILLS / skill / "SKILL.md").read_text()
         assert "worktree=" in text, (
             f"skills/{skill}/SKILL.md: does not document the worktree= argument"
@@ -176,7 +176,7 @@ def _normalize(text: str) -> str:
 def test_gaze_battery_not_run_names_cause():
     """Ticket 0990: a battery that cannot launch at all must say so in one
     line naming the cause, composed AFTER the detached-seat substitution —
-    first attempt the substitution documented in skills/review-pr/SKILL.md,
+    first attempt the substitution documented in references/panel.md,
     and only if that also cannot run emit the battery NOT-RUN line. The line
     is a launch failure, distinct from review findings and from seat-level
     PANEL-INTEGRITY (whose name is unchanged); findings are never fabricated
@@ -185,9 +185,9 @@ def test_gaze_battery_not_run_names_cause():
         "### 5. Simplify", 1
     )[0]
     norm = _normalize(battery)
-    assert "detached-seat substitution" in norm and "skills/review-pr/SKILL.md" in norm, (
+    assert "detached-seat substitution" in norm and "references/panel.md" in norm, (
         "gaze/SKILL.md: the battery section must first attempt the detached-seat "
-        "substitution documented in skills/review-pr/SKILL.md before declaring "
+        "substitution documented in references/panel.md before declaring "
         "the battery NOT-RUN"
     )
     assert re.search(
@@ -238,7 +238,7 @@ def test_gaze_battery_not_run_names_cause():
 
 
 def test_output_shape_lines_define_battery_not_run_value():
-    """reviewsub#1 (round 1): the adherence/review/review-pr output-shape
+    """reviewsub#1 (round 1): the adherence/review/panel output-shape
     lines enumerated no value for a battery that could not launch — a
     NOT-RUN run had to fabricate a count or write out-of-enum. Each of the
     three lines must carry `skipped (battery NOT-RUN)` as an option."""
@@ -248,7 +248,7 @@ def test_output_shape_lines_define_battery_not_run_value():
     assert block is not None, (
         "gaze/SKILL.md: output-shape actions block lost the panel integrity line"
     )
-    for name in ("adherence:", "review-pr:"):
+    for name in ("adherence:", "panel:"):
         lines = [ln for ln in block.splitlines() if ln.strip().startswith(name)]
         assert lines, f"gaze/SKILL.md: output-shape block lost the {name} line"
         assert "skipped (battery NOT-RUN)" in lines[0], (
@@ -597,7 +597,7 @@ def test_force_approve_runs_no_gate_and_output_marks_unrun_phases():
     assert "would-have-been" not in text, "--force-approve must not promise a gate verdict"
     assert "nothing is reviewed" in _normalize(_force_approve_section())
     template = text.split("## /gaze result", 1)[1].split("Unresolved review comments", 1)[0]
-    for phase in ("adherence:", "review-pr:", "simplify:", "battery:"):
+    for phase in ("adherence:", "panel:", "simplify:", "battery:"):
         line = next(ln for ln in template.splitlines() if ln.startswith(phase))
         assert "skipped (--force-approve)" in line, f"{phase} must show skipped (--force-approve)"
 

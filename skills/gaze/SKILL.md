@@ -54,7 +54,7 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 
 - Raid Phase 6 (per-ticket review before the gate).
 - Any time an author wants a full-depth check on a single PR before asking for merge.
-- **Do NOT** use for quick sanity — use `/review` or `/review-pr` directly.
+- **Do NOT** use for quick sanity — use the native `/review` directly.
 
 ## Invariants
 
@@ -73,7 +73,7 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
   and simplify still run; gaze records the waiver and the caller passes it to
   `/verify-gate`, which rules NEEDS-AUTHOR (§ Waiver).
 - **Cross-repo prerequisite**: the caller must ensure cwd is the target project before
-  invoking `/gaze`. The skill and its sub-skills (`/review-pr`, `/simplify`, etc.)
+  invoking `/gaze`. The skill and its sub-skills (`/verify-adherence`, `/simplify`, etc.)
   use `gh` and `git` commands that resolve against cwd.
 - **Branch-currency prerequisite**: the caller rebases the PR branch onto current
   `origin/main` and force-pushes with lease before invoking (`rules/git.md`
@@ -127,7 +127,7 @@ Then follow `references/setup-and-breaker.md`: collection, the anchor check, the
 
 ### 2–5. Review and simplify
 
-Adherence, the review panel and simplify run as laid out in `references/battery.md`, which also holds the optional external reviewer panel. The review panel is `/review-pr` (code) or `/review-pr-prose` (manuscript), invoked directly with the review worktree; there is no gaze-specific reviewer agent and no size tier.
+Adherence, the review panel and simplify run as laid out in `references/battery.md`, which also holds the optional external reviewer panel. Gaze runs the review panel itself: the seat protocol and the code panel are `references/panel.md`, the prose panel `references/prose-panel.md`; there is no separate review skill and no size tier.
 
 **Which perspectives run** is the orchestrator's call: it picks them, and how
 deep, from its own judgment of the change, a repeat run included, and hands
@@ -136,6 +136,10 @@ family, and why (§ Output shape); independence is defined in
 `skills/route/references/decorrelation.md`.
 
 <!-- inline: references/battery.md -->
+
+<!-- inline: references/panel.md -->
+
+<!-- inline: references/prose-panel.md -->
 
 ### 6. Return the review result
 
@@ -160,8 +164,8 @@ next: REVIEWED → the caller closes the ticket on the branch, then runs /verify
   nothing was reviewed (§ `--force-approve`). So is a DEGRADED panel (below).
   The review did not complete: the caller runs no gate and the PR goes to the
   author.
-- `FINDINGS`: any blocking adherence violation, any `request-changes` or
-  `major` review verdict, any unresolved `verifiable:` minor, any simplify
+- `FINDINGS`: any blocking adherence violation, any `blocking` seat
+  verdict, any unresolved `verifiable:` minor, any simplify
   must-fix not applied. List them; the caller fixes (a coder on the PR
   branch, scoped to the list) and re-runs gaze on the new head. FINDINGS never
   go straight to the gate: the fixed head is one gaze did not review.
@@ -174,8 +178,8 @@ next: REVIEWED → the caller closes the ticket on the branch, then runs /verify
   optional external reviewer is fail-open (§ External reviewer panel) and does
   not count. The `PANEL-INTEGRITY:` line is carried verbatim in the result comment.
 - **One retry.** A perspective with no report at the bounded deadline is re-run
-  once, alone, over the whole PR, through review-pr's ordinary launch in its
-  collection step, before synthesis and posting, so the round does not
+  once, alone, over the whole PR, through the panel's ordinary launch
+  (`references/panel.md`), before synthesis and posting, so the round does not
   advance. The panel is DEGRADED, hence ESCALATE, only if that retry also has
   no report.
 
