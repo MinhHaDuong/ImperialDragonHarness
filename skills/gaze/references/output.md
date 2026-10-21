@@ -10,11 +10,9 @@ Each phase emits start/end lines: `[verify] phase=<name> start=<ISO> / end=<ISO>
 
 ### Verdict footer (PR comment)
 
-Appended to the result comment: `telemetry: risk_band=<high|low|normal> wall=<s>s agents=<n> tokens=<in+out> cost~=$<usd>`
+Appended to the result comment: `telemetry: wall=<s>s agents=<n> tokens=<in+out> cost~=$<usd>`
 
-Fields: `risk_band`
-(path-risk band from the phase-1 `--risk` call — `high|low|normal`), `wall`
-(phase 1 to result), `agents` (sub-agent count), `tokens` (sum, use `na` for
+Fields: `wall` (phase 1 to result), `agents` (sub-agent count), `tokens` (sum, use `na` for
 missing), `cost~=` (best-effort USD, `na` if incomplete).
 
 ### Thresholds
@@ -52,7 +50,6 @@ Post a single top-level PR comment at end of skill. No interim
 
 result: REVIEWED|FINDINGS|ESCALATE
 reviewed_head_sha: <full SHA read from the review tree after phase 5>
-risk_band: high|low|normal
 circuit_breaker: un-reviewable | waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>) | none
 multi_ticket: <distinct close-claim IDs> | none (non-blocking below breaker)
 adherence: PASS|FAIL — <n_blocking> blocking | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
@@ -68,7 +65,7 @@ Adherence: PASS | FAIL (<count>)
 
 next: REVIEWED → the caller closes the ticket on the branch, then runs /verify-gate <pr-number> repo=<caller's checkout> session=<uuid> on the current branch head, which is reviewed_head_sha plus at most that ticket-close commit (one re-gate at most, /verify-gate § Gate sessions: a fix asked by the round-1 gate is re-gated once on the new head with the same session=, without a new gaze run); FINDINGS → the caller fixes them and re-runs /gaze on the new head: a head gaze did not review is never gated; ESCALATE (including battery: NOT-RUN or skipped (--force-approve), or a DEGRADED panel) → no gate and no merge: the review never completed, and the PR goes to the author, who decides
 
-telemetry: risk_band=<high|low|normal> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
+telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
 
 On `--force-approve`, the comment is annotated `FORCE-APPROVED by <reason>`.

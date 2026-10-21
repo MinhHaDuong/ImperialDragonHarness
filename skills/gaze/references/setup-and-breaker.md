@@ -15,11 +15,7 @@ Loaded from `skills/gaze/SKILL.md` § 1. Setup, after the isolation script has r
 - Compute PR size rename-aware: `pr_lines` = total insertions + deletions from `git diff origin/main...HEAD --stat`; `pr_files` = the CONTENT-BEARING entry count from `git diff --name-status -M origin/main...HEAD` — added, modified, and deleted each count 1; cross-reference rename entries with `git diff --numstat -M origin/main...HEAD`: a rename counts 1 iff its additions + deletions > 0, otherwise 0 (a genuinely content-free pure rename has zero line change in rename-aware numstat; R100 alone is insufficient because the similarity index ignores line order) — pure renames add no review load, and counting them via `--no-renames` inflates consolidation diffs past the breaker on arithmetic (ticket 1026, observed on PRs #1178/#1179).
 
   Size has one use: the un-reviewable breaker below. It selects no battery
-  tier; every PR gets adherence, the review panel and simplify. Panel width is
-  review-pr's own decision (`skills/review-pr/panel-width.json`, `review:standard`).
-  Compute the path-risk band once, for the comment, with
-  `cd $primary_root/.claude/worktrees/review-<pr-number> && python3 "$IDH_ROOT/scripts/prose_predicate.py" --risk <changed files>`
-  (`high|low|normal`); it is carried to `/verify-gate`, never used to skip a phase here.
+  tier; every PR gets adherence, the review panel and simplify.
 
 - **Preflight before spawning phases 2–5.** Count distinct ticket close-claims
   from the PR **body**, using the same line grammar as `erg-pr-merge`: bold or
