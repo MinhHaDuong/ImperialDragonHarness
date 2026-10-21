@@ -69,11 +69,29 @@ def test_verify_threads_worktree_path_to_subskills():
 
 def test_subskills_document_worktree_argument():
     """Each gaze sub-skill must cd into the worktree path it receives."""
-    for skill in ("verify-adherence", "verify-gate", "review-pr", "review-pr-prose"):
+    for skill in ("verify-adherence", "review-pr", "review-pr-prose"):
         text = (SKILLS / skill / "SKILL.md").read_text()
         assert "worktree=" in text, (
             f"skills/{skill}/SKILL.md: does not document the worktree= argument"
         )
+
+
+def test_verify_gate_owns_its_worktree():
+    """Gaze removes its review tree before returning (cleanup.md), so the gate
+    cannot be handed it: every gate run creates and removes its own tree, and
+    no caller passes `worktree=` to the gate (ticket 1153)."""
+    gate = (SKILLS / "verify-gate" / "SKILL.md").read_text()
+    iso = gate.split("**Isolation — the gate owns its checkout.**", 1)[1].split("## ", 1)[0]
+    assert 'worktree add --detach "$gate_tree"' in iso
+    assert 'worktree remove "$gate_tree"' in iso
+    assert "worktree=" not in gate
+    callers = [VERIFY, (SKILLS / "raid" / "SKILL.md").read_text(),
+               (SKILLS / "merge" / "SKILL.md").read_text()]
+    for text in callers:
+        for line in text.splitlines():
+            if "/verify-gate <pr" in line:
+                assert "worktree=" not in line, line
+    assert "worktree remove" in VERIFY, "gaze still removes its review tree"
 
 
 def test_verify_has_containment_postcondition():

@@ -311,8 +311,10 @@ the PR branch); the result is observed by polling the written artifact — the
 `skills/gaze/SKILL.md` § Output shape, accepted only when its `reviewed_head_sha`
 matches the branch tip — under that contract's bounded wait, never a spawn exit status,
 and the structured result must return to the orchestrator. Then run
-`/verify-gate <pr-number> worktree=<review tree>` the same way; its verdict is
-accepted only when its `ruled_tip_sha` matches the branch tip. On `FINDINGS` or
+`/verify-gate <pr-number> repo=<PR's worktree>` the same way (gaze has removed
+its review tree by then; the gate checks out the PR head in a worktree of its
+own and removes it, while the raid keeps the PR's worktree until gating ends);
+its verdict is accepted only when its `ruled_tip_sha` matches the branch tip. On `FINDINGS` or
 a REROLL, a coder fixes the listed items in the PR's worktree so its commits
 land on the PR branch, never on main mid-wave, and the REROLL bump is posed per
 `skills/verify-gate/SKILL.md`; the gate allows two rounds, a third escalates.

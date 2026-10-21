@@ -44,8 +44,8 @@ whether it is this skill's own or a sub-agent's.
 narration with no `result:` block (REVIEWED/FINDINGS/ESCALATE), treat it as a
 non-result: do **not** relaunch the reviewer battery. Wait for the background
 reviewer notifications and read the review comment they posted on the merge
-request; with that in hand, run `/verify-gate <pr>
-worktree=$primary_root/.claude/worktrees/review-<pr-number>`. The gate reads a
+request; with that in hand, run `/verify-gate <pr> repo=<caller's checkout>`;
+the gate creates its own worktree on the PR head. The gate reads a
 waiver only from an already-posted waived `circuit_breaker` header in the PR's
 comments, so the recovery needs no extra argument. If none was posted, a waived
 15+ file PR is ESCALATE there (fail-safe), as is an un-waived one.

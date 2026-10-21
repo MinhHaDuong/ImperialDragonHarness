@@ -62,6 +62,7 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 - Never returns APPROVED: a test pins it (`tests/test_gaze_never_approves.py`).
   `REVIEWED` means no blocking finding on the reviewed head, nothing more.
 - Does not run `/verify-gate`. The caller runs it after gaze, and again after any fix.
+  The review worktree is removed before gaze returns; the gate creates its own.
 - Does not merge. The result is structured output; the merge decision belongs to the caller.
 - The only commits gaze makes on the PR branch are the bounded phase 5 simplify fixes; no changes to other branches.
 - `--force-approve` is supported for explicit human override; it skips the review and
@@ -136,14 +137,14 @@ Gaze ends here; it runs no gate. Read the phase outputs and return:
 ```yaml
 result: REVIEWED | FINDINGS | ESCALATE
 reviewed_head_sha: <full SHA read from the review worktree after phase 5>
-review_worktree_path: <absolute path>
+review_worktree_path: <absolute path; removed before return, audit only>
 unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
 adherence: PASS | FAIL (<n blocking>)
 panel_integrity: COMPLETE | DEGRADED — <PANEL-INTEGRITY: line>
 circuit_breaker: un-reviewable | waived (...) | none
 multi_ticket: <distinct close-claim IDs> | none
-next: run /verify-gate <pr-number> on reviewed_head_sha
+next: run /verify-gate <pr-number> repo=<caller's checkout>; the gate checks out the PR head itself
 ```
 
 - `ESCALATE`: the breaker fired, the battery could not run (`battery: NOT-RUN`),

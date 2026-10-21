@@ -114,7 +114,9 @@ belongs with the command it recovers.)
   shows `-` for every commit but `is-ancestor` is false — that ancestry check
   is `/roar`'s pre-check, and it is what confirms a squash-merge through the
   forge before a branch gets deleted.
-- **After `/gaze` and an APPROVED `/verify-gate`, sync before merging.** `/gaze`
+- **After `/gaze` and an APPROVED `/verify-gate`, sync before merging.** Run the
+  gate as `/verify-gate <pr> repo=<this worktree>`; it gates a worktree of its
+  own, so merge only the tip its `Ruled tip SHA` names. `/gaze`
   (its simplify phase) may have pushed fixes from its own review worktree since the caller last fetched:
   `git fetch origin && git merge --ff-only origin/<branch>` first, or a stale
   rebase silently drops the verify fix.

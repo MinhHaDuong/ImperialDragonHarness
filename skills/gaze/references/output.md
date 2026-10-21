@@ -53,7 +53,7 @@ Post a single top-level PR comment at end of skill. No interim
 result: REVIEWED|FINDINGS|ESCALATE
 round: <n>
 reviewed_head_sha: <full SHA read from the review tree after phase 5>
-review_worktree_path: <absolute review tree path>
+review_worktree_path: <absolute review tree path; removed before return, audit only>
 risk_band: high|low|normal
 circuit_breaker: un-reviewable | waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>) | none
 multi_ticket: <distinct close-claim IDs> | none (non-blocking below breaker)
@@ -68,7 +68,7 @@ Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]
 Adherence: PASS | FAIL (<count>)
 
-next: run /verify-gate <pr-number>; gaze is not a gate and does not approve
+next: run /verify-gate <pr-number> repo=<caller's checkout>; gaze is not a gate and does not approve
 
 telemetry: risk_band=<high|low|normal> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
