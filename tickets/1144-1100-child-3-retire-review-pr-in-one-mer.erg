@@ -2,13 +2,13 @@
 Title: 1100 child 3: retire review-pr in one merge wave
 Created: 2026-10-20
 Author: reviewer
-Blocked-by: 1141
 
 --- log ---
 2026-10-20T08:22Z reviewer created
 2026-10-21T14:04Z reviewer reviewer note 2026-10-21 refinements from the author's decisions of the day (ticket 1177, closed as a duplicate of this child): gaze survives as the user-facing name and review-pr and review-pr-prose fold into it as references (no alias, retired-name lint stays); the per-seat verdict words become clear, concerns and blocking so approve words stay out of skills/gaze and the frozen never-APPROVED allowlist is not weakened (stop and ask if it cannot stay frozen); the result comment stays '## /gaze result' and verify-gate, raid, merge and hunt keep calling /gaze; run after ticket 1176 merges since both edit the review skill; the 15-file breaker, the head anchor, retry-once and DEGRADED lines stay in gaze at one line each.
 2026-10-21T15:29Z reviewer reviewer note 2026-10-21 absorbs ticket 1171: seats run only targeted tests, the full suite runs once on the merge candidate (criterion added). Ticket 1155 (attribution of seats) is blocked by this one.
 2026-10-21T15:31Z reviewer note blocker 1143 closed — Blocked-by removed.
+2026-10-21T16:12Z reviewer note blocker 1141 closed — Blocked-by removed.
 
 --- body ---
 ## Context
