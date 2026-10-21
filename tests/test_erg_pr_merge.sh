@@ -62,9 +62,11 @@ case "$1 $2" in
         fi
         echo "MERGEABLE"; exit 0
       fi
+      if [[ "$args" == *"--json id"* ]]; then echo "PR_NODE_ID"; exit 0; fi
       # merge_took_effect probe: --json state,autoMergeRequest --jq '...' →
       # emit the pre-evaluated "yes"/"no" the script's jq would produce.
       if [[ "$args" == *"autoMergeRequest"* ]]; then
+        if [[ -n "${STUB_ARMED_FILE:-}" && -e "$STUB_ARMED_FILE" ]]; then echo yes; exit 0; fi
         echo "${STUB_MERGE_EFFECT:-no}"; exit 0
       fi
       # wait_for_merged probe: --json state --jq '.state' (ticket 0277)
@@ -106,6 +108,12 @@ case "$1 $2" in
           exit 1
         fi
       fi
+      # Checks not yet registered on the freshly pushed head: gh attempts a direct
+      # merge and the forge answers that every required check is still expected.
+      if [[ "${STUB_AUTO_EXPECTED_ALWAYS:-0}" == "1" ]]; then
+        echo "stub: 7 of 7 required status checks are expected. (mergePullRequest)" >&2
+        exit 1
+      fi
       if [[ "${STUB_AUTO_FAILS:-0}" == "1" ]]; then
         echo "stub: auto-merge not allowed for this repository" >&2
         exit 1
@@ -115,6 +123,11 @@ case "$1 $2" in
       echo "stub: required rule blocks merge" >&2; exit 1
     fi
     echo "stub: merged $3"; exit 0 ;;
+  "api graphql")
+    echo "$*" >> "${STUB_GRAPHQL_LOG:-/dev/null}"
+    if [[ "${STUB_GRAPHQL_FAILS:-0}" == "1" ]]; then echo "stub: graphql refused" >&2; exit 1; fi
+    [[ -n "${STUB_ARMED_FILE:-}" ]] && : > "$STUB_ARMED_FILE"
+    echo '{"data":{}}'; exit 0 ;;
   "pr checks")
     echo "$*" >> "${STUB_CHECKS_LOG:-/dev/null}"
     if [[ "${STUB_CHECKS_RED:-0}" == "1" ]]; then
@@ -278,6 +291,10 @@ run_merge() {  # $1 body, $2 title, $3+ script args (default: 42)
       STUB_MERGE_LOG="${STUB_MERGE_LOG:-/dev/null}" \
       STUB_CHECKS_LOG="${STUB_CHECKS_LOG:-/dev/null}" \
       STUB_AUTO_NOTMERGEABLE_ONCE="${STUB_AUTO_NOTMERGEABLE_ONCE:-}" \
+      STUB_AUTO_EXPECTED_ALWAYS="${STUB_AUTO_EXPECTED_ALWAYS:-0}" \
+      STUB_ARMED_FILE="${STUB_ARMED_FILE:-}" \
+      STUB_GRAPHQL_LOG="${STUB_GRAPHQL_LOG:-/dev/null}" \
+      STUB_GRAPHQL_FAILS="${STUB_GRAPHQL_FAILS:-0}" \
       STUB_MERGEABLE_UNKNOWN_ONCE="${STUB_MERGEABLE_UNKNOWN_ONCE:-}" \
       STUB_CHECKS_NOCHECKS_ONCE="${STUB_CHECKS_NOCHECKS_ONCE:-}" \
       STUB_CHECKS_NOCHECKS_ALWAYS="${STUB_CHECKS_NOCHECKS_ALWAYS:-0}" \
@@ -632,6 +649,45 @@ if STUB_AUTO_FAILS=0 STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
     else echo "PASS: --auto retried after mergeability settles; no spurious fallback"; fi
 else
     echo "FAIL: erg-pr-merge exited non-zero on post-push recompute race"; fail=1
+fi
+
+# ════════════════════════════════════════════════════════════════════════════
+# Case 13b: checks not yet registered on the freshly pushed head. `gh pr merge
+# --auto` tries a direct merge and the forge answers "N of N required status
+# checks are expected". That is a pending PR, not an unavailable feature: the
+# script arms auto-merge through the API at once, never watches checks, never
+# issues a direct merge, and returns.
+# ════════════════════════════════════════════════════════════════════════════
+seed_repo expected 0232
+MLOG="$WORK/merge13b.log"; CLOG="$WORK/checks13b.log"; GLOG="$WORK/graphql13b.log"
+ARMED="$WORK/armed13b"; rm -f "$ARMED"
+: > "$MLOG"; : > "$CLOG"; : > "$GLOG"
+BODY13B=$'Summary.\n\n**Ticket:** tickets/0232-fixture.erg\n'
+if STUB_AUTO_EXPECTED_ALWAYS=1 STUB_ARMED_FILE="$ARMED" STUB_GRAPHQL_LOG="$GLOG" \
+   STUB_MERGE_LOG="$MLOG" STUB_CHECKS_LOG="$CLOG" \
+   run_merge "$BODY13B" "ticket(0232): expected" >/dev/null 2>&1; then
+    rc_miss=0
+    grep -q 'enablePullRequestAutoMerge' "$GLOG" || { echo "  auto-merge was not armed through the API"; rc_miss=1; }
+    grep -q -- '--watch' "$CLOG" && { echo "  watched checks instead of arming"; rc_miss=1; }
+    direct=$(grep -v -- '--auto' "$MLOG" | grep -c 'pr merge' || true)
+    [[ "$direct" -eq 0 ]] || { echo "  issued $direct direct merge(s)"; rc_miss=1; }
+    if (( rc_miss )); then echo "FAIL: unregistered-checks race not armed"; fail=1
+    else echo "PASS: auto-merge armed via API when checks are not yet registered"; fi
+else
+    echo "FAIL: erg-pr-merge exited non-zero on the unregistered-checks race"; fail=1
+fi
+# Negative control: when the API arming is refused too, the script reaches the
+# unavailable path (which decides from ONE rollup read, as before) instead of
+# reporting a queued merge it never armed.
+rm -f "$ARMED"; : > "$MLOG"; : > "$GLOG"
+seed_repo expected2 0233
+out=$(STUB_AUTO_EXPECTED_ALWAYS=1 STUB_GRAPHQL_FAILS=1 STUB_ARMED_FILE="$ARMED" STUB_GRAPHQL_LOG="$GLOG" \
+   STUB_MERGE_LOG="$MLOG" \
+   run_merge $'Summary.\n\n**Ticket:** tickets/0233-fixture.erg\n' "ticket(0233): expected2" 2>&1) || true
+if grep -q 'enablePullRequestAutoMerge' "$GLOG" && echo "$out" | grep -q 'Auto-merge unavailable'; then
+    echo "PASS: refused API arming falls through to the unavailable path"
+else
+    echo "FAIL: refused API arming did not reach the unavailable path"; fail=1
 fi
 
 # ════════════════════════════════════════════════════════════════════════════

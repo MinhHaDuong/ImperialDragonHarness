@@ -497,6 +497,20 @@ merge_took_effect() {
     [[ "$s" == "yes" ]]
 }
 
+# Arm auto-merge through the API when the forge CLI's `--auto` tried a direct
+# merge the forge refused. Right after the close-commit push the new head has no
+# checks registered yet, so the CLI sees nothing pending, attempts
+# mergePullRequest and gets "N of N required status checks are expected". The PR is only waiting on CI, not
+# unmergeable: enablePullRequestAutoMerge succeeds on a pending PR and the forge
+# merges when the checks pass. Never waits; the readback proves it took effect.
+arm_auto_merge() {
+    local node  # harness-extension-point
+    node=$(gh pr view "$PR" --json id --jq '.id' 2>/dev/null) || return 1  # harness-extension-point
+    gh api graphql -f id="$node" -f query='mutation($id: ID!) { enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: MERGE}) { clientMutationId } }' \
+        >/dev/null 2>&1 || return 1  # harness-extension-point
+    merge_took_effect
+}
+
 # Queue --auto, retrying once after the post-push mergeability recompute
 # settles. The close-commit push leaves the forge's --auto merge failing with
 # "Pull Request is not mergeable" transiently; the exit code alone cannot tell
@@ -508,6 +522,10 @@ try_auto_merge() {
     err=$(gh pr merge "$PR" "${MERGE_FLAGS[@]}" 2>&1) && { echo "$err"; return 0; }  # harness-extension-point
     merge_took_effect && { echo "$err"; echo "gh exited non-zero but merge/auto-merge is in effect (cosmetic error) — continuing."; return 0; }
     echo "$err" >&2
+    if echo "$err" | grep -qiE 'required status checks? (is|are) expected'; then
+        echo "Checks not registered on the new head yet — arming auto-merge directly; the forge merges when they pass."
+        arm_auto_merge && return 0
+    fi
     if echo "$err" | grep -qiE 'not mergeable|base branch was modified'; then
         echo "Post-push mergeability recompute in flight — waiting for it to settle..."
         state=$(settle_mergeable)
