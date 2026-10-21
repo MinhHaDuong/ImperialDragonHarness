@@ -634,3 +634,10 @@ def test_gate_producer_family_is_stripped(repo, policy):
     assert out.returncode == 0, out.stdout + out.stderr
     assert "independent: openai seat red-team" in out.stdout
 
+
+@pytest.mark.parametrize("path", [
+    "adapters/pi/agents/code-reviewer.md", "skills/route/SKILL.md",
+    "scripts/review-pr-anchor.py", "scripts/panel-manifest-check.py",
+])
+def test_review_machinery_raises_the_floor(path):
+    assert re_mod.risk_floor([("M", path)], None)["paths"] == "high"
