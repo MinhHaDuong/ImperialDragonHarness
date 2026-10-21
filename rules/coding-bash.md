@@ -127,8 +127,7 @@ out=$(env -i HOME="$tmphome" BASH_ENV="$PWD/scripts/bash-env.sh" \
 
 `env -i` gives a known-empty base env (so an inherited variable can't mask a
 bug), `HOME=` points at a crafted fixture, and `BASH_ENV=` exercises the exact
-mechanism the caller triggers. Enforced by
-`tests/test_bash_env_tested_via_subprocess.sh`.
+mechanism the caller triggers.
 
 ### Unsetting a variable in the parent does not unset it in the child
 
@@ -164,9 +163,3 @@ Two consequences, and the second is the one that bites quietly:
 Verify with a **fake sentinel** loader, never the real key: point `BASH_ENV` at
 a script exporting a recognisable dummy, run the suite, and grep the output for
 the dummy. Verifying with the real key is how you leak it a second time.
-
-Reference implementation: `tests/test_bash_tests_are_hermetic.sh` enforces this
-section mechanically across every `tests/test_*.sh` — each `bash -c` child must
-be spawned under `env -i`, or the suite must clear `BASH_ENV` for all of them.
-It is a textual scanner, so its header names the shapes it cannot see; read
-that list before treating a PASS as proof.
