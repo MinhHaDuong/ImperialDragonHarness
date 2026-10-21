@@ -27,7 +27,7 @@ counterfactuals note does.
 
 ## 1. Survey
 
-Run the four committed, standard-library-only scripts with the harness's
+Run the five committed, standard-library-only scripts with the harness's
 `python3` interpreter. They do not require a package-manager environment.
 All intermediate outputs go to a scratch
 directory; nothing here is tracked. `$ARGUMENTS` (e.g. `--days 14`) passes
@@ -39,12 +39,14 @@ HARNESS_DIR="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"
 cd "$HARNESS_DIR"                                         # cache paths below are repo-relative
 SCRATCH=$(mktemp -d)
 
-# Census and compaction advisory are independent full-corpus walks (neither
-# consumes the other's output) — run them concurrently.
+# Census, compaction advisory and friction scan are independent full-corpus walks (none
+# consumes another's output) — run them concurrently.
 python3 "$HARNESS_DIR/scripts/trace-stats.py" $ARGUMENTS \
   --output "$SCRATCH/census.csv" --json > "$SCRATCH/census-summary.json" &
 python3 "$HARNESS_DIR/scripts/trace-compact-audit.py" $ARGUMENTS \
   --output "$SCRATCH/compact-audit-rows.csv" --json > "$SCRATCH/compact-audit.json" &
+python3 "$HARNESS_DIR/scripts/trace-friction.py" $ARGUMENTS \
+  --output "$SCRATCH/friction-daily.csv" --json > "$SCRATCH/friction.json" &
 wait
 
 # Forge join: reads AND writes the accumulating committed cache (do not create a
@@ -62,7 +64,7 @@ python3 "$HARNESS_DIR/scripts/trace-hypotheses.py" \
   --output "$SCRATCH/hypotheses.json"
 ```
 
-Parse `$SCRATCH/hypotheses.json` and `$SCRATCH/census-summary.json`. If the
+Parse `$SCRATCH/hypotheses.json`, `$SCRATCH/census-summary.json` and `$SCRATCH/friction.json`. If the
 census is empty (no agents in the window), report "no traces in window" and
 stop.
 
@@ -101,6 +103,30 @@ audit attributes to the parent only. A non-zero count is normal; a *large* one
 means the window is fork-heavy, so H8's run count reflects fewer distinct
 sessions than `agents_in_window` suggests. An H8 figure from an older census
 may be inflated by the same effect.
+
+### Velocity (friction) section
+
+Cost does not rank turns and wall-clock, so report velocity separately, from
+`friction.json`, ranked in **hours**, not dollars (method and caveats:
+`docs/2026-10-21-velocity-friction-scan.md`):
+
+1. **Tool wall-clock over 30 s, by tool** (`slow_by_tool_hours_upper_bound`),
+   largest first. Every duration is tool_use to tool_result, so it includes
+   permission waits and background commands: label each figure "upper bound".
+   `AskUserQuestion` hours are the author's own latency, not tool friction;
+   list them apart.
+2. **Wait commands** (`wait_commands`, `wait_hours_upper_bound`). The regex is
+   tightened but still counts keywords quoted in heredocs: say "upper bound".
+3. **Tool errors by cause** (`errors_by_cause`: worktree guard, no such tool,
+   write outside worktree, other) with `error_hours_upper_bound`.
+
+Always show the **daily series** (`daily`, or `friction-daily.csv`) beside any
+period total, and state the current rate (last 3 days) of each cause next to
+its window total. A class that stopped (zero for days) is history, not a
+lever; a class that is rising is the finding. Price only what the series
+shows still happening. "Other" errors are a residual: do not name a cause for
+it without reading samples. Findings enter step 3 like any lever; this
+section never applies a fix.
 
 ## 3. Cross-reference existing tickets
 
@@ -159,5 +185,5 @@ git commit -m "chore(trace-doctor): open N tickets from monthly survey"
 Report:
 
 ```
-trace-doctor: surveyed {days}d window — {agents} agents, ${total} shadow, {uncovered} uncovered levers, {ticketed} tickets opened
+trace-doctor: surveyed {days}d window — {agents} agents, ${total} shadow, {slow_h}h tool tail (upper bound), {uncovered} uncovered levers, {ticketed} tickets opened
 ```
