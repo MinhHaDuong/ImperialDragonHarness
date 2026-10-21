@@ -2,8 +2,8 @@
 
 Ticket 1157, child B of tracker 1045. Two parts. The first is a git hook that
 journals every update of `refs/heads/main` and can refuse one. The second is a
-periodic sweep that reports any commit that reached `main` without a gated
-merge. Both use only git and the forge's API, so they work the same under any
+daily audit that reports any commit that reached `main` in the last 24 hours
+without a gate receipt. Both use only git, so they work the same under any
 agent runtime and for a human.
 
 ## The hook: `hooks/reference-transaction`
@@ -29,10 +29,12 @@ aborts the update.
 - by fast-forward to the main tip this worktree just fetched from `origin`
   (`FETCH_HEAD`), because a plain `git fetch origin main:main` moves main in
   its own transaction before it updates `origin/main`;
-- onto a merge commit (two parents or more) whose first parent is the current
-  main and which carries a gate record, a note in `refs/notes/gate` (ticket
-  1156). Only the note's presence is read here, by `gate_record_present`; the
-  note's format belongs to ticket 1156.
+- onto a merge commit whose first parent is the current main and whose gate
+  receipt exists: a note in `refs/notes/gate` (ticket 1156) on the candidate
+  that `scripts/merge-gate.py candidate` rebuilds from the merge's two
+  parents (see "Matching a merge to its receipt" below). Only the note's
+  presence is read here, by `gate_record_present`; the note's format belongs
+  to ticket 1156.
 
 Any other update is not gated, including a local commit on main, a reset, a
 deletion or a rewind. A `verify` of main inside `git update-ref --stdin` is not
@@ -95,8 +97,9 @@ Each of these defeats the hook with enforce on:
 - `git -c core.hooksPath=/dev/null …`, or editing the hook;
 - writing `FETCH_HEAD` by hand;
 - moving `refs/remotes/origin/main` in one command, then main to it in another;
-- adding a note in `refs/notes/gate` by hand on a merge built on main: any
-  note counts until ticket 1156's record carries checks the hook can read;
+- adding a note in `refs/notes/gate` by hand on the candidate of a merge built
+  on main: any note counts until ticket 1156's record carries checks the hook
+  can read;
 - making the command line look like a fetch while moving `origin/main` and
   main in one transaction, for example `git update-ref -m ' fetch ' --stdin`,
   or `git fetch . +X:refs/remotes/origin/main +X:refs/heads/main`. The hook
@@ -106,41 +109,48 @@ Each of these defeats the hook with enforce on:
 Following the merge-gate spec
 ([`docs/2026-10-05-merge-gate-spec.md`](2026-10-05-merge-gate-spec.md),
 "Holding the line on `main`"), the guard stops accidents. It does not stop
-intent. The sweep covers the rest.
+intent. The audit covers the rest.
 
-## The sweep: `scripts/main_sweep.py`
+## Matching a merge to its receipt
 
-For each first-parent commit of `origin/main` it reports two facts: whether a
-gate record is present, and the PR whose merge commit it is, with that PR's
-required check conclusions on its head. It reads check runs only, not legacy
-commit statuses. The required check names come from the rulesets on main, read
-even when disabled; `main-required-checks` was disabled by the author on
-2026-10-21.
+The merge gate writes its receipt on the candidate: the `--no-ff` merge of
+the branch head into the base tip, built with fixed author, committer, date
+and message, so any host rebuilds the same object id from the same two
+parents. The forge's merge commit M has the same parents and tree but other
+metadata, so it is another object and carries no note. For a merge M with
+parents (P1, P2), the hook and the audit rebuild the candidate from (P1, P2)
+with `candidate()` of `scripts/merge-gate.py`, the one builder, and read the
+note there. A receipt made before the base moved names the candidate of the
+old base tip; the candidate of (P1, P2) then has no note, and the merge is a
+finding.
 
-A commit is `ok` when it has a record or green checks, a `finding` when it has
-neither, and `unknown` when the forge could not be read and no record decides.
-Exit codes: 0 all ok, 1 a finding, 2 could not look. A finding wins: exit 1
-even when causes of "could not look" are also present. "Could not look" covers
-a failed `--fetch` of main or of the gate records, an unknown ref, missing
-`gh` or git, malformed forge output, unreadable required check names, an empty
-range, and a range cut by `--max-count` (default 100; `make main-sweep` uses
-1000). The report names each cause on an `incomplete:` line, for example
-`incomplete: empty range: no commit to sweep`.
+## The audit: `scripts/main_sweep.py`
+
+Stateless and git-only: no forge read, no watermark, no stored state. It
+reads the repository it runs in, so any project that adopts the gate can run
+it, and prints nothing when the tip of `--ref` (default `origin/main`)
+declares no gate (`.merge-gate.json` absent or `"gate": "off"`).
+
+For each first-parent commit of `--ref` committed in the last 24 hours it
+prints one line:
+- `ok`: a merge whose rebuilt candidate carries a receipt whose latest entry
+  passes under the scope its first parent declares, or a single-parent commit
+  with a note on itself;
+- `finding`: no receipt (none, or made on another base tip), a failing or
+  out-of-scope receipt, or a candidate that cannot be rebuilt;
+- `ungated`: its first parent declared no gate, so the commit predates it.
+
+Exit codes: 0 no finding, 1 a finding, 2 could not look in full. The window
+has a hard cap (`--max-count`, default 200) and a time limit (`--time-limit`,
+default 60 s); hitting either prints `range cut at …` and exits 2, whatever it
+found. A failed `--fetch` or an unreadable declaration also exits 2.
 
 ```sh
-make main-sweep                                   # last 8 days, fetches main and the notes
-python3 scripts/main_sweep.py --max-count 200 --json
+make main-sweep                          # fetches main and the receipts, then audits
+python3 scripts/main_sweep.py --summary  # one line, as the end-of-day wrap-up carries it
 ```
 
-Periodic run, runtime-free, for example from the author's crontab on the
-authority host. It runs `make main-sweep`, so its flags stay those of the
-Makefile, and the report goes into the mail, so a finding arrives with its
-commits named (make exits non-zero for both a finding and "could not look";
-the report says which):
-
-```cron
-17 6 * * * cd ~/.agents && f=$(mktemp) && { make -s main-sweep > "$f" 2>&1 || mail -s "main sweep: not clean" "$USER" < "$f"; rm -f "$f"; }
-```
-
-Choosing the schedule and where a finding goes (a mail, a ticket, a molt step)
-is left to the author.
+It never runs in the merge path: not among the gate's checks, not in the
+merge helper. The end-of-day wrap-up (`/lair`) runs it with `--summary` and
+carries its line, `main audit: N merges in the last 24 h, M without a gate
+receipt: <first>`; otherwise it runs by hand.
