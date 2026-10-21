@@ -415,10 +415,12 @@ For each eligible PR, sequentially within the wave:
    into it, and do not delete and re-checkout the branch.
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
 4. Run `"$IDH_ROOT/skills/merge/erg-pr-merge" -C <worktree-path> <pr-number>`
-   only when the gate's `ruled_tip_sha` equals `git rev-parse origin/<branch>`.
-   Close before gating: Phase 6 closed the ticket on the branch before the
-   round-1 gate, so the helper finds it in `tickets/closed/`, pushes no close
-   commit, and merges via GitHub API.
+   only after `git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>`
+   == the gate's `ruled_tip_sha` (HEAD read with `-C <worktree-path>`); any
+   mismatch means no merge. Close before gating: Phase 6 closed the ticket on
+   the branch before the round-1 gate, so the helper finds it in
+   `tickets/closed/` and adds no close commit; its `git push origin HEAD` pushes
+   nothing only when that three-way equality holds. It merges via GitHub API.
    <!-- harness-extension-point -->
    Runtime permission rules must authorize the resolved helper path. Use
    `-C` to select the worktree for every Git and forge operation.

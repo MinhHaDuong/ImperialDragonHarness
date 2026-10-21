@@ -123,13 +123,18 @@ belongs with the command it recovers.)
   `erg close <id> "<reason>"`, `erg archive <id>`, `git add -u tickets/`,
   `git add tickets/closed/<file>`, commit, push. The gate then rules a head
   that already contains the close, and `erg-pr-merge` skips a ticket already in
-  `tickets/closed/` with a `Closed:` header, so it pushes no commit of its own.
+  `tickets/closed/` with a `Closed:` header. The helper still runs
+  `git push origin HEAD`, so it pushes nothing only when that three-way
+  equality holds (next item); an unpushed local commit would ride along.
 - **Merge prerequisite: the gate's verdict is APPROVED and
   the gate's `ruled_tip_sha` equals `git rev-parse origin/<branch>` at merge
   time, read after `git fetch origin`; otherwise re-gate, do not merge.** Only APPROVED on that tip merges. Run the
   gate as `/verify-gate <pr> repo=<this worktree> session=<uuid>` (one session
   per PR, two rounds at most: `/verify-gate` § Gate sessions); a re-gate past
   that budget is ESCALATE to the author, never a third run.
+  Immediately before `erg-pr-merge`, run `git fetch origin`, then
+  `git rev-parse HEAD` == `git rev-parse origin/<branch>` == the gate's
+  `ruled_tip_sha`; any mismatch means sync or re-gate, never merge.
   **Documented exception:** PRs gated before this rule (#1522, #1523) merge
   with the helper's own ticket-only close commit on top of the ruled tip — one
   `ticket(<id>): close and archive — PR #<n>` commit whose `git diff
@@ -191,10 +196,11 @@ command it recovers.)
   The script adds no bypass. Other API errors, partial response pages,
   unexpected denial bodies, and malformed successful data still refuse.
   If the forge refuses, its error is reported. Once the blocking requirement is
-  resolved, re-run `erg-pr-merge N`; an archived closed ticket is skipped, so
-  the retry pushes nothing and the ruled tip still equals `origin/<branch>`
-  (under the documented exception, the one helper close commit is already on
-  top and the retry adds no second).
+  resolved, re-run `erg-pr-merge N` after the same `git fetch origin` and
+  three-way check; an archived closed ticket is skipped, and the retry pushes
+  nothing only when that three-way equality holds (under the documented
+  exception, the one helper close commit is already on top and the retry adds
+  no second).
 - **"must run from PR branch" after a fast-forward.** HEAD is detached after
   `merge --ff-only`: `git checkout <branch>`, then retry.
 - **Force-push denied, branch already pushed.** Rebasing rewrites the branch's
