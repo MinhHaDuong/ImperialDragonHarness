@@ -10,12 +10,20 @@ in refs/notes/gate, then pushes that ref. `check` reads the note and lets the
 latest entry for the candidate decide. A record is a traceable statement of
 what was run, when, by whom, on which host: not proof.
 
-The check set comes from `.merge-gate.json` at the base revision, so a branch
-cannot change the set it is gated by; a change of set takes effect once merged.
-This file is the one home of the record format (FIELDS, format_entry,
-parse_note, decide): other readers adapt to it.
+The declaration `.merge-gate.json` is read at the base revision: the base
+fixes whether the gate is on, which checks run and their commands; the code
+those commands execute comes from the candidate, hence from the branch. A
+change of declaration takes effect once merged. Only an explicit
+`"gate": "off"`, or no file at all, means off; anything else unrecognised is an
+error, never off. This file is the one home of the record format (FIELDS,
+format_entry, parse_note, decide): other readers adapt to it.
+
+The remote's notes ref is authoritative: `run` and `check` overwrite the local
+refs/notes/gate with it first, so a `--no-push` record survives only until the
+next fetch.
 
 Exit codes of `check`: 0 pass, 1 fail or stale scope, 2 no record, 3 error.
+`enabled`: 0 on, 1 off, 3 error. Any unexpected exception exits 3.
 """
 
 import argparse
@@ -64,6 +72,10 @@ def format_entry(fields):
     missing = [f for f in FIELDS if not fields.get(f)]
     if missing:
         raise ValueError("record entry lacks " + ", ".join(missing))
+    values = [fields[key] for key in FIELDS] + list(fields.get("checks", []))
+    if any("\n" in v or "\r" in v for v in values):
+        # A line break in a free-text value (actor, command) would start a forged entry.
+        raise ValueError("record values may not contain a line break")
     lines = [HEADER] + [f"{key}: {fields[key]}" for key in FIELDS]
     lines += [f"check: {line}" for line in fields.get("checks", [])]
     return "\n".join(lines) + "\n"
@@ -162,11 +174,39 @@ def candidate(base, head):
 
 
 def load_config(base):
-    shown = git("show", f"{base}:{CONFIG_PATH}", check=False)
-    if shown.returncode:
+    """The base's declaration when the gate is on; None when off; GateError otherwise.
+
+    Off means no file at base (confirmed by ls-tree, not inferred from an error)
+    or an explicit "gate": "off". Any other shape fails closed.
+    """
+    listed = git("ls-tree", "--name-only", base, "--", CONFIG_PATH).stdout.splitlines()
+    if CONFIG_PATH not in listed:
         return None
-    config = json.loads(shown.stdout)
-    return config if config.get("gate") == "on" else None
+    try:
+        config = json.loads(git("show", f"{base}:{CONFIG_PATH}").stdout)
+    except json.JSONDecodeError as exc:
+        raise GateError(f"invalid {CONFIG_PATH} at base: {exc}") from exc
+    if not isinstance(config, dict) or config.get("gate") not in ("on", "off"):
+        raise GateError(f'invalid {CONFIG_PATH} at base: "gate" must be "on" or "off"')
+    if config["gate"] == "off":
+        return None
+    checks = config.get("checks")
+    if not isinstance(config.get("scope"), str) or not config["scope"].strip():
+        raise GateError(f'invalid {CONFIG_PATH} at base: "scope" must name the check set')
+    if (
+        not isinstance(checks, list)
+        or not checks
+        or not all(
+            isinstance(c, dict)
+            and isinstance(c.get("name"), str)
+            and isinstance(c.get("argv"), list)
+            and c["argv"]
+            and all(isinstance(a, str) for a in c["argv"])
+            for c in checks
+        )
+    ):
+        raise GateError(f'invalid {CONFIG_PATH} at base: "checks" must be a list of {{name, argv}}')
+    return config
 
 
 def resolve(args):
@@ -227,9 +267,12 @@ def run_checks(config, cwd):
     for item in config["checks"]:
         start = time.monotonic()
         LOG.info("check %s: %s", item["name"], " ".join(item["argv"]))
-        proc = subprocess.run(item["argv"], cwd=cwd)
-        verdict = "pass" if proc.returncode == 0 else f"fail(exit {proc.returncode})"
-        ok = ok and proc.returncode == 0
+        try:
+            code = subprocess.run(item["argv"], cwd=cwd).returncode
+            verdict = "pass" if code == 0 else f"fail(exit {code})"
+        except OSError as exc:
+            code, verdict = 127, f"fail(cannot run: {exc.strerror or exc})"
+        ok = ok and code == 0
         results.append(f"{item['name']} {verdict} {time.monotonic() - start:.1f}s :: {' '.join(item['argv'])}")
     return ok, results
 
@@ -310,7 +353,9 @@ def parser():
         if name == "check":
             s.add_argument("--no-fetch", action="store_true", help="read the local notes ref only")
         if name == "run":
-            s.add_argument("--no-push", action="store_true", help="record locally, do not push the note")
+            s.add_argument(
+                "--no-push", action="store_true", help="record locally only; the next fetch of the notes ref overwrites it"
+            )
             s.add_argument("--runtime", default=os.environ.get("MERGE_GATE_RUNTIME", ""))
             s.add_argument("--model", default=os.environ.get("MERGE_GATE_MODEL", ""))
             s.add_argument("--effort", default=os.environ.get("MERGE_GATE_EFFORT", ""))
@@ -324,6 +369,9 @@ def main(argv=None):
         return args.func(args)
     except (GateError, ValueError) as exc:
         LOG.error("%s", exc)
+        return ERROR
+    except Exception as exc:  # fail closed: an unexpected error must never read as "off" or "fail"
+        LOG.error("unexpected %s: %s", type(exc).__name__, exc)
         return ERROR
 
 

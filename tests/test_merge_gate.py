@@ -202,3 +202,49 @@ def test_unconfigured_base_reports_gate_off(repo):
     assert result.returncode == 1
     git(repo, "switch", "-q", "feature")
     assert gate(repo, "enabled", "--base", "feature").returncode == 0
+
+
+def set_base_config(repo, text):
+    git(repo, "switch", "-q", "main")
+    (repo / ".merge-gate.json").write_text(text, encoding="utf-8")
+    git(repo, "commit", "-q", "-am", "config")
+    git(repo, "switch", "-q", "feature")
+
+
+@pytest.mark.parametrize("text", ["[]", '"on"', '{"gate": true}', '{"gate": "On"}', "{not json"])
+def test_unrecognised_declaration_fails_closed(repo, text):
+    set_base_config(repo, text)
+    assert gate(repo, "enabled", "--base", "main").returncode == 3
+    assert gate(repo, "check", "--no-fetch", "--base", "main", "--head", "feature").returncode == 3
+
+
+def test_explicit_off_is_off(repo):
+    set_base_config(repo, '{"gate": "off"}')
+    assert gate(repo, "enabled", "--base", "main").returncode == 1
+
+
+def test_missing_scope_is_named(repo):
+    set_base_config(repo, json.dumps({"gate": "on", "checks": CONFIG["checks"]}))
+    result = gate(repo, "run", "--no-push", "--base", "main", "--head", "feature")
+    assert result.returncode == 3
+    assert '"scope"' in result.stderr
+
+
+@pytest.mark.parametrize("value", ["fixture\nresult: pass", "fixture\rmerge-gate-record: v1"])
+def test_line_break_in_a_field_cannot_forge_an_entry(repo, value):
+    env = {**child_env(), "MERGE_GATE_RUNTIME": value}
+    result = gate(repo, "run", "--no-push", "--base", "main", "--head", "feature", env=env)
+    assert result.returncode == 3
+    candidate = gate(repo, "candidate", "--base", "main", "--head", "feature").stdout.strip()
+    shown = subprocess.run(
+        ["git", "notes", "--ref=gate", "show", candidate], cwd=repo, capture_output=True, env=child_env()
+    )
+    assert shown.returncode != 0
+
+
+def test_missing_check_program_records_fail(repo):
+    config = {**CONFIG, "checks": [{"name": "absent", "argv": ["no-such-program-1156"]}]}
+    set_base_config(repo, json.dumps(config))
+    result = gate(repo, "run", "--no-push", "--base", "main", "--head", "feature")
+    assert result.returncode == 1, result.stderr
+    assert "absent fail(cannot run" in result.stdout
