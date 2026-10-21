@@ -2,11 +2,13 @@
 Title: Session-start banner names the worktree root to cut out-of-tree writes
 Created: 2026-10-21
 Author: reviewer
+Closed: Premise expired: zero out-of-tree Write errors on each day 2026-10-15..21 (author decision to close)
 
 --- log ---
 2026-10-21T10:06Z reviewer created
 2026-10-21T10:10Z reviewer reviewer note Daily series shows zero out-of-tree Write errors since 2026-10-15; the baseline of 59 is history. Re-measure before any work; close if still zero
 2026-10-21T10:32Z reviewer reviewer note Raid premise check 2026-10-21: still zero out-of-tree Write errors on each day 10-15..10-21; the probe fired 10-07..10-14. Premise expired, not executed; returned to the author to close or keep
+2026-10-21T10:33Z reviewer closed — Premise expired: zero out-of-tree Write errors on each day 2026-10-15..21 (author decision to close)
 
 --- body ---
 ## Context

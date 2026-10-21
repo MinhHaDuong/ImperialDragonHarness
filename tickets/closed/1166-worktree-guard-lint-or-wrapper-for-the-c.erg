@@ -2,11 +2,13 @@
 Title: Worktree guard: lint or wrapper for the command forms it refuses
 Created: 2026-10-21
 Author: reviewer
+Closed: Premise expired: zero worktree-guard refusals on each day 2026-10-15..21 (author decision to close)
 
 --- log ---
 2026-10-21T10:06Z reviewer created
 2026-10-21T10:10Z reviewer reviewer note Daily series (docs/2026-10-21-velocity-friction-scan.md § Trend) shows zero guard refusals on every day from 2026-10-15 on, with Bash volume above 2,000 a day; the 14-day total of about 1,270 is history. Before any work: re-measure, find what changed, then close this ticket if the rate stays near zero
 2026-10-21T10:32Z reviewer reviewer note Raid premise check 2026-10-21: re-measured through 10-21, still zero guard refusals on each of the 7 days 10-15..10-21 (2,000+ Bash calls a day); the probe fired 10-07..10-14. Premise expired, not executed; returned to the author to close or keep
+2026-10-21T10:33Z reviewer closed — Premise expired: zero worktree-guard refusals on each day 2026-10-15..21 (author decision to close)
 
 --- body ---
 ## Context
