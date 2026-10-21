@@ -15,7 +15,7 @@
 # tip's tickets/ directly, in plain git. And sibling OPEN PRs, via the forge.
 #
 # Forge coupling is confined to three calls, each marked `# harness-extension-point`
-# (the isolation idiom used in skills/merge/erg-pr-merge): resolving the source
+# (the harness's forge-isolation idiom): resolving the source
 # repository, listing open PRs and fetching a PR's changed files. Everything else is forge-agnostic git + text.
 #
 # Environment (all optional; defaults suit GitHub Actions `pull_request`):

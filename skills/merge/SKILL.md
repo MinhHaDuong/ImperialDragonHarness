@@ -108,7 +108,7 @@ reads and writes in its own spelling.
    from this checkout, then `check` again. 1 fail or stale scope, 3 unreadable:
    do not merge. Re-recording after the base moved is mechanical and spends no
    review round: the head, and so the verdict, did not change.
-5. **Disarm.** On a gated base never arm auto-merge: with nothing required it
+5. **Disarm (gated base only).** Never arm auto-merge: with nothing required it
    merges at once, and an armed request could land a later head than the
    record covers. Read `gh pr view N --json autoMergeRequest -q '.autoMergeRequest != null'`; <!-- harness-extension-point -->
    on `true`, run `gh pr merge N --disable-auto` and read again; still armed: <!-- harness-extension-point -->
@@ -120,11 +120,12 @@ reads and writes in its own spelling.
    base: `gh pr merge N --merge --auto`, or without `--auto` where the repo <!-- harness-extension-point -->
    has auto-merge off and every check is done.
 7. **Read back (d).**
-   `gh pr view N --json state,headRefOid -q '.state + " " + .headRefOid'` <!-- harness-extension-point -->
-   must read `MERGED <the head of step 3>`. MERGED at another head is not a
-   gated merge: report it. OPEN with auto-merge armed (ungated base) is
-   queued: § Waiting for a queued merge. The exit code of the merge command
-   alone proves nothing either way.
+   `gh pr view N --json state,headRefOid,autoMergeRequest -q '"\(.state) \(.headRefOid) \(if .autoMergeRequest then "queued" else "-" end)"'` <!-- harness-extension-point -->
+   must read `MERGED <the head of step 3> -`. MERGED at another head is not a
+   gated merge: report it. `OPEN … queued` (ungated base) is
+   queued: § Waiting for a queued merge; `OPEN … -` is not queued. A read that
+   fails or prints nothing is unreadable: stop and report, never re-run the
+   merge. The exit code of the merge command alone proves nothing either way.
 8. **Sync.** `"$IDH_ROOT/scripts/sync-local-main.sh" . <base>`. A "left
    untouched" line (dirty overlap or divergence where the base is checked
    out) goes in the report, never forced; never a hand-rolled
@@ -150,6 +151,7 @@ the audit of `main` notices that afterwards.
 
 **Waiting for a queued merge.** The caller waits itself and finishes the chain
 itself (raid: the per-PR roar; roar: its merged-branch pre-check and cleanup).
+Step 7's read-back is the single-read status command.
 Where the runtime wakes the session when a background command exits, it starts
 exactly one background command with a hard time bound of about 25 minutes, which polls this
 single-read status command at an interval inside the command and exits as soon
@@ -162,7 +164,7 @@ at its next step and reports the PR as pending.
 
 ```bash
 end=$((SECONDS + 1500)); while [ "$SECONDS" -lt "$end" ] && [ "$(gh pr view N --json state,autoMergeRequest -q '.state == "OPEN" and .autoMergeRequest != null')" = true ]; do sleep 60; done  # <!-- harness-extension-point -->
-gh pr view N --json state -q .state  # MERGED: sync (step 8); CLOSED: failed; OPEN: pending at the bound, or auto-merge dropped by a failed check <!-- harness-extension-point -->
+gh pr view N --json state -q .state  # MERGED: sync (step 8); CLOSED: failed; OPEN: still queued at the bound (a failing check leaves auto-merge armed: read the checks) or not queued <!-- harness-extension-point -->
 ```
 
 ## Merge conflict recovery

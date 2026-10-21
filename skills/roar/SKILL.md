@@ -22,6 +22,11 @@ and Pi may load a symlink under `.agents/skills`. The resolved directory holds
 roar's helpers; its grandparent is the IDH checkout. Keep the project working
 directory unchanged.
 
+```bash
+ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
+IDH_ROOT="$(cd -P "$(dirname "$ROAR_SKILL_MD")/../.." && pwd -P)"
+```
+
 ## Non-git projects
 
 When the working directory is not a git repository (manuscripts, data
@@ -31,20 +36,15 @@ explicitly which steps were skipped and why.
 
 ## Pre-check
 
-If the merge was only queued (checks were pending), ask the outcome once:
-
-```bash
-ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
-IDH_ROOT="$(cd -P "$(dirname "$ROAR_SKILL_MD")/../.." && pwd -P)"
-"$IDH_ROOT/skills/merge/erg-pr-status" N
-```
-
-Exit 0 merged, proceed; 2 pending, wait as `skills/merge/SKILL.md` § Waiting
+If the merge was only queued (checks were pending), read the outcome once
+with the merge recipe's read-back (`skills/merge/SKILL.md` § The recipe,
+step 7). MERGED, proceed; `OPEN … queued`, wait as `skills/merge/SKILL.md` § Waiting
 for a queued merge prescribes (one background command bounded at about 25
-minutes, polling this status inside it), then continue this pre-check and the
+minutes, polling that read inside it), then continue this pre-check and the
 cleanup yourself when it wakes you; never ask the author to wait or to re-run
 `/roar`. Only a runtime that cannot wake the session when a background command
-exits stops and reports the merge as pending. 1 failed, report it. Then verify the branch has been merged before proceeding:
+exits stops and reports the merge as pending. CLOSED, `OPEN … -` (nothing
+queued) or an unreadable read: report it, never re-run the merge. Then verify the branch has been merged before proceeding:
 ```bash
 ROAR_BASE_RC=0
 git symbolic-ref -q refs/remotes/origin/main >/dev/null 2>&1 || ROAR_BASE_RC=$?
@@ -109,8 +109,8 @@ Start this branch before the first write; all writes stay inside the project.
 After completing the ticket checks in steps 7–8, commit the complete bundle,
 push it and open **one PR**. Fast-track it: on a gated base
 (`skills/merge/SKILL.md` § Gated base) write its gate record and
-merge per `skills/merge/SKILL.md` § Gated base, both as one background command (exit 2: record again
-on the new head); elsewhere pass the project's required checks and enable auto-merge
+merge by the recipe, both as one background command (a record missing
+after the base moved: record again on the same head); elsewhere pass the project's required checks and enable auto-merge
 using its supported merge method. This is standing authorization for roar's bounded wrap-up bundle;
 no further confirmation is needed. Do not bypass failing checks or protected
 branch requirements. Hoard, suggested in lair’s conclusion, remains a separately

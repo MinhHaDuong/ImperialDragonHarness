@@ -10,7 +10,7 @@ one JSON object per line carrying project, PR, and merge facts:
      "pr": int|null, "merge_sha": str, "merged": str}
 
 Branch is parsed from the GitHub-shaped merge subject; ticket is recovered by
-scanning the merge's second-parent commit range for the erg-pr-merge close
+scanning the merge's second-parent commit range for the merge recipe's close
 commit, NOT from the branch name (real branch names such as
 ``worktree-agent-a31bf6655c104744e`` carry misleading digits).
 
@@ -35,9 +35,10 @@ import sys
 # GitHub-shaped merge subject: "Merge pull request #123 from owner/branch-name".
 PR_SUBJECT_RE = re.compile(r"^Merge pull request #(\d+) from [^/]+/(.+)$")
 
-# erg-pr-merge writes its close commit as exactly
+# The merge recipe (skills/merge/SKILL.md, step 1) writes its close commit as
+# exactly
 #   ticket(<id>[, <id>...]): close and archive — PR #<n>
-# (skills/merge/erg-pr-merge ~line 228; CLOSED_LIST joins IDs with ", ").
+# (IDs joined with ", ").
 # Anchor on the whole "close and archive … PR #<n>" template, NOT just the
 # ticket(...) prefix: ordinary ticket-FILING commits also start "ticket(NNNN):",
 # so a PR with no close commit (Ticket: none, non-erg merge) would otherwise

@@ -14,8 +14,8 @@ cleanup targets and skip step 9. With no targets, cleanup deletes no branches. I
 - `CLOSE: ALREADY-CLOSED` is the usual case after `/merge`;
   `CLOSED-UNCOMMITTED` means it closed and archived the ticket and you must
   commit that in the wrap-up bundle.
-- `CLAIMS`: a PR body's `**Ticket:**` line is executed by `erg-pr-merge`,
-  not by the forge. Any other route — a bare forge-CLI merge, the forge's
+- `CLAIMS`: a PR body's `**Ticket:**` line is executed by the merge recipe's
+  close step, not by the forge. Any other route — a bare forge-CLI merge, the forge's
   web UI, another machine, another session — lands the code and drops the
   claim with no output, and `erg check` passes either way. The
   findings are `DROPPED` (ticket exists, no `Closed:` header) or

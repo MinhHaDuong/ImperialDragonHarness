@@ -25,7 +25,7 @@ def dead_paths(body: str) -> list[str]:
     """Absolute paths the rule names that do not exist.
 
     A trailing `:*` is the prefix-match syntax of the permission grammar, not
-    part of the path. Reading it as one reported the live `erg-pr-merge` script
+    part of the path. Reading it as one reported a live helper script
     as dead on the first run -- the kind of false positive that discredits a
     whole sweep, so it is stripped before any path is probed.
     """

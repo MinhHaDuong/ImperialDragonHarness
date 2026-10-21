@@ -99,8 +99,8 @@ Run full repo housekeeping and act on every finding.
    signal exists) — do NOT re-file. **A worktree the
    GC skips for uncommitted changes is a signal, not just an obstacle:** diff
    it before moving on — orphaned WIP may be a closed ticket's dropped
-   exit-criteria deliverable (`erg-pr-merge` autocloses on the `**Ticket:**`
-   line unconditionally). If so,
+   exit-criteria deliverable (a `**Ticket:**` claim closes its ticket at merge
+   whatever landed). If so,
    preserve (`wip(NNNN):` commit + push) and open a follow-up ticket.
 
 1.7. **Sweep orphan session scratch directories.** Every session gets a scratch
@@ -212,7 +212,7 @@ Run full repo housekeeping and act on every finding.
 
 5. **Log `skip` items.** One line each, no action.
 
-6. **Open merge request.** If any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and land it: on a gated base write the gate record and merge per `skills/merge/SKILL.md` § Gated base, as one background command (its exit 2 means record again on the new head); elsewhere enable auto-merge so it lands after CI. If no commits were created: `git switch main && git branch -d housekeeping-$(date -u +%Y%m%d)` and skip the merge request.
+6. **Open merge request.** If any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and land it: on a gated base write the gate record and merge by the recipe (`skills/merge/SKILL.md` § Gated base), as one background command (a record missing after the base moved: record again on the same head); elsewhere enable auto-merge so it lands after CI. If no commits were created: `git switch main && git branch -d housekeeping-$(date -u +%Y%m%d)` and skip the merge request.
 
 7. **Report.** Summarize what you did.
 
