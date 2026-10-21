@@ -182,7 +182,7 @@ Wait for all spawned agents to complete. Collect their structured outputs.
 this phase and log `simplify: skipped (prose workpackage)` in the telemetry
 phase line. Motive: this phase may commit to the PR branch, and `rules/prose/workpackages.md`
 sends an autonomous manuscript change through its own PR, never concurrently
-with interactive editing of that file, so never through a review-phase auto-fix (ticket 0550: two runs on the
+with interactive editing of that file (ticket 0550: two runs on the
 same file decided this in opposite directions the same day; the rule now
 exists). Otherwise, after 2–4 land their comments (and the early-exit check passes),
 perform one of these routes. Record `simplify route: native|portable`.

@@ -18,7 +18,7 @@ in one sentence — not a topic, not a summary, not three findings joined by
 ## The pass, in order
 
 Run it sequentially, in one conversation with the author: each step narrows
-the next, and nothing here is worth delegating.
+the next, and no step is worth delegating to a worker.
 
 1. **Context.** Ask one question at a time, after asking up
    (`rules/workflow.md` § Escalation protocol, § Autonomous action), and queue the rest: format (talk
