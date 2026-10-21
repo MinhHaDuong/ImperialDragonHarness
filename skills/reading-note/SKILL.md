@@ -36,7 +36,8 @@ Discipline: `rules/zotero.md`. Zotero is the system of record; `docs/` is stagin
 The Research relevance section needs the author's question. Read it from the
 project before asking: the scoping document of a `critical-lit-review` run,
 the brief a delegating skill passed in, the manuscript, `STATE.md`. Ask the
-author only for what none of these states, in one round.
+author only for what none of these states, one question at a time, after
+asking up (`rules/workflow.md` § Autonomous action).
 
 ## 3. Write the note
 
