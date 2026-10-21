@@ -1,0 +1,23 @@
+%erg 0.1
+Title: Trace-doctor treatment follow-up: read each fix's history and report its before/after
+Created: 2026-10-21
+Author: reviewer
+Blocked-by: 1169
+
+--- log ---
+2026-10-21T10:34Z reviewer created
+2026-10-21T10:34Z reviewer reviewer note Filed on the author's instruction after the 1167 review: an exit criterion that only a later scan can check is replaced by trace-doctor doing that scan itself
+
+--- body ---
+
+## Context
+A fix to a friction class (tickets 1167 for the "no such tool" errors; 1166 and 1168 were closed on an expired premise) cannot be verified when it merges: the evidence arrives in the days after. The 2026-10-21 scan also showed that period totals hid a class that had already stopped (`docs/2026-10-21-velocity-friction-scan.md` § Trend). Trace-doctor should therefore catch up by itself: each run reads the history of every treatment and reports whether its class moved.
+
+A treatment is a closed ticket that names the error class it treats and records a baseline in its log. Trace-doctor finds it in `tickets/closed/` and takes its merge date from git history (`git log` on the ticket path), then compares the daily series from `scripts/trace-friction.py` (ticket 1169) before and after that date. Depends on 1169.
+
+## Exit criteria
+- [ ] A small, documented convention for a ticket to name the class it treats and its baseline, readable by the script; applied to 1167
+- [ ] `skills/trace-doctor/SKILL.md` reports, for each treatment with a merge date, the class rate over the days before and after, with the day counts, and one verdict: improved, unchanged, worse, or too few days after the merge (fewer than 7)
+- [ ] A treatment whose class has no baseline or no days in the window is listed as unmeasured, never as improved
+- [ ] Positive control in the test: a fixture where the class stops on the merge date reads improved, and a fixture where it does not reads unchanged
+- [ ] Out of scope: closing or reopening any ticket; the report only proposes
