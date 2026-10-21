@@ -3,18 +3,19 @@
 
 `run` launches one headless reader (any CLI: `codex exec`, `claude -p`, `pi -p`)
 under a hard cap, then kills its whole process group. A seat that writes its own
-report to `--out` keeps it; otherwise the reader's stdout, captured in
+report to `--out` during this run keeps it (a past run's file does not count); otherwise the reader's stdout, captured in
 `<out>.stdout`, becomes the report on a clean exit. Either way one line is
 printed and saved to `<out>.status`: `<seat>: reported in <s>s`, or `<seat>: no
 report (timed out after <cap>s | failed to start | failed, exit <n>, <s>s |
 empty output, <s>s)`. Exit 0 when reported, 1 otherwise; the caller continues.
 
-`roster <panel>` prints one line per seat of `<panel>/manifest.txt`: its status
-line when `run` wrote one after the manifest (and the report exists if the line
-says reported), else `reported in <s>s` from the report's mtime less
-the manifest's (the manifest is written just before launch), else `no report`.
-Status lines of seats outside the manifest (optional external readers) follow.
-Exit 1 when a manifest seat has no report.
+`roster <panel>` prints one line per seat of `<panel>/manifest.txt`. Only files
+newer than the manifest count (the panel directory is reused across rounds): the
+seat's status line from `run` (if it says reported, the report must be fresh too),
+else `reported in <s>s` from the report's mtime less the manifest's (the
+manifest is written just before launch), else `no report`. Fresh status lines of
+seats outside the manifest (optional external readers) follow. Exit 1 when a
+manifest seat has no report or the manifest lists no seat.
 """
 
 import argparse
@@ -43,7 +44,7 @@ def run_seat(cap: int, out: Path, command: list[str]) -> tuple[bool, str]:
     # The reader's stdout goes beside the report, never onto it: a seat that
     # writes <out>.part and renames it to <out> itself keeps its report.
     captured = out.with_name(out.name + '.stdout')
-    started = time.monotonic()
+    started, launched = time.monotonic(), time.time() - 1  # 1 s for filesystem stamp granularity
     try:
         with captured.open('wb') as stdout, out.with_name(out.name + '.log').open('wb') as stderr:
             try:
@@ -61,7 +62,7 @@ def run_seat(cap: int, out: Path, command: list[str]) -> tuple[bool, str]:
         return False, f'no report (timed out after {cap}s)'
     kill_group(child.pid)  # reap anything the reader left running
     wall = round(time.monotonic() - started)
-    if out.exists():
+    if out.exists() and out.stat().st_mtime >= launched:  # a past run's report does not count
         return True, f'reported in {wall}s'
     if code != 0:
         return False, f'no report (failed, exit {code}, {wall}s)'
@@ -76,23 +77,26 @@ def roster(panel: Path) -> tuple[bool, list[str]]:
     launched = manifest.stat().st_mtime
     seats = [line.split('\t')[0] for line in manifest.read_text(encoding='utf-8-sig').splitlines()
              if line.strip() and not line.startswith('#')]
-    def fresh(status: Path) -> bool:  # a status older than the manifest is a past run's
-        return status.exists() and status.stat().st_mtime >= launched
+    if not seats:
+        return False, ['no seats in manifest']
 
-    complete, lines = True, []
-    for seat in seats:
+    def fresh(path: Path) -> bool:  # a file older than the manifest is a past round's
+        return path.exists() and path.stat().st_mtime >= launched
+
+    def seat_line(seat: str) -> str:
         status, report = panel / f'{seat}.md.status', panel / f'{seat}.md'
         line = status.read_text().strip() if fresh(status) else ''
-        if line and (': reported in ' not in line or report.exists()):
-            lines.append(line)
-        elif report.exists():
-            lines.append(f'{seat}: reported in {round(report.stat().st_mtime - launched)}s')
-        else:
-            lines.append(f'{seat}: no report')
-        complete = complete and ': reported in ' in lines[-1]
-    extras = sorted(p for p in panel.glob('*.md.status')
-                    if p.name.removesuffix('.md.status') not in seats and fresh(p))
-    lines += [p.read_text().strip() for p in extras]
+        if line and (': reported in ' not in line or fresh(report)):
+            return line
+        if fresh(report):
+            return f'{seat}: reported in {round(report.stat().st_mtime - launched)}s'
+        return f'{seat}: no report'
+
+    lines = [seat_line(seat) for seat in seats]
+    complete = all(': reported in ' in line for line in lines)
+    extras = sorted(name for p in panel.glob('*.md.status')
+                    if (name := p.name.removesuffix('.md.status')) not in seats and fresh(p))
+    lines += [seat_line(name) for name in extras]
     return complete, lines
 
 

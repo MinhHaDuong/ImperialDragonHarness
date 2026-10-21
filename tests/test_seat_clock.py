@@ -69,6 +69,35 @@ def test_missing_output_directory_is_a_no_report_line(tmp_path):
     assert 'Traceback' not in result.stderr
 
 
+def test_report_from_a_past_round_is_no_report(tmp_path):
+    manifest = tmp_path / 'manifest.txt'
+    manifest.write_text('a\tm\tf\tr\nb\tm\tf\tr\n')
+    launched = manifest.stat().st_mtime
+    (tmp_path / 'a.md').write_text('verdict: clear\n')
+    os.utime(tmp_path / 'a.md', (launched - 600, launched - 600))
+    (tmp_path / 'b.md').write_text('verdict: clear\n')
+    os.utime(tmp_path / 'b.md', (launched + 42, launched + 42))
+    result = run('roster', str(tmp_path))
+    assert result.returncode == 1
+    assert result.stdout.splitlines() == ['a: no report', 'b: reported in 42s']
+
+
+def test_empty_manifest_is_not_a_complete_panel(tmp_path):
+    (tmp_path / 'manifest.txt').write_text('# no seats\n')
+    result = run('roster', str(tmp_path))
+    assert result.returncode == 1
+    assert result.stdout.strip() == 'no seats in manifest'
+
+
+def test_leftover_report_does_not_rescue_a_failed_run(tmp_path):
+    out = tmp_path / 'a.md'
+    out.write_text('verdict: clear (past round)\n')
+    os.utime(out, (time.time() - 600, time.time() - 600))
+    result = run('run', '--cap', '5', '--out', str(out), '--', 'bash', '-c', 'exit 3')
+    assert result.returncode == 1
+    assert result.stdout.startswith('a: no report (failed, exit 3, ')
+
+
 def test_roster_names_every_manifest_seat(tmp_path):
     manifest = tmp_path / 'manifest.txt'
     manifest.write_text('correctness\tm\tf\tr\nscope\tm\tf\tr\nred-team\tm\tf\tr\n')
