@@ -826,10 +826,13 @@ def test_merge_accepted_gaze_result_is_not_tautological():
     assert "its `reviewed_head_sha` is not stale against the branch tip" in merge
 
 
-def test_dashboard_allows_only_the_documented_close_exception():
+def test_dashboard_requires_ruled_tip_equal_to_the_head():
+    """The 1153 stack merged with delta 0, so the dashboard names no
+    historical exception: ruled_tip_sha must equal the branch head."""
     dash = " ".join((SKILLS / "dashboard" / "SKILL.md").read_text().split())
     assert "a later ticket-close commit from the merge helper is normal" not in dash
-    assert "#1522, #1523" in dash
+    assert "#1522" not in dash and "exception" not in dash
+    assert "`ruled_tip_sha` equal to the branch head (a mismatch is a finding)" in dash
 
 
 def test_git_rule_rebases_before_round_one_gate_and_syncs_after_gaze():
