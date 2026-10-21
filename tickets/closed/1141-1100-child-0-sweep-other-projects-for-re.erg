@@ -2,18 +2,21 @@
 Title: 1100 child 0: sweep other projects for retired review-pr and gaze-as-gate wording
 Created: 2026-10-20
 Author: reviewer
+Closed: sweep complete: padme + doudou inventoried; live-wording PRs merged or author-dropped
 
 --- log ---
 2026-10-20T08:22Z reviewer created
 2026-10-20T10:42Z reviewer coder sweep 2026-10-20 (git grep over primary checkouts; positive control .agents: padme 708 hits/223 files, doudou 693/216). Hosts padme and doudou both reachable. Live-wording PRs (MinhHaDuong repos): maiba#58, aedist-technical-report#1179, climate-finance-het#1977, livre-milliards-climat#3, search-works-for-zotero#637, Tracing-Kieu#174. History-only hits left as written (journals, closed tickets, dated reviews, data): JETP-observer, cadens, sen-causal-reading, padme, git-erg, polycentric_activity, climate-finance-het agentic-paper.qmd. Zero hits: zoteus, Strata, llm_benchmarks, fuzzy-corpus, archiveCIRED, others. Open: arena has no remote, runner.py:166 prompt names /review-pr panels (benchmark prompt, author call); hermes-agent (NousResearch) skipped as third-party. PRs not merged; criteria 3 open.
 2026-10-20T19:22Z reviewer note Author-approved drops (2026-10-20, Fable advice): livre-milliards-climat#3 stays closed (repo has no PR flow; wording is historically true until a no-PR review path exists); arena runner.py prompt left as is (benchmark prompt, no remote). Criterion 3 satisfied for those two; aedist#1179 and the doudou re-probe remain.
+2026-10-21T16:12Z reviewer note doudou re-probe 2026-10-21 (reachable; positive control .agents 181 hits). Remaining hits are stale local copies of already-repointed repos (search-works-for-zotero#637, maiba#58 merged), git-erg closed-ticket history, third-party .codex plugins. aedist#1179 merged 2026-10-21 (CI green, wording-only diff). All criteria met.
+2026-10-21T16:12Z reviewer closed — sweep complete: padme + doudou inventoried; live-wording PRs merged or author-dropped
 
 --- body ---
 ## Context
 Child 0 of tracker 1100, table row 0 (about 1.5 agent-h, 0.5 author-h). Plan of record: docs/discussions/2026-10-14-1096-design.md, sections "Answers" and "Round 3". Review-pr, review-pr-prose and gaze-as-gate wording must be repointed to gaze plus verify-gate in every project that still uses them before review-pr is retired (child 3).
 
 ## Exit criteria
-- [ ] Read-only inventory, on padme and on doudou, of the projects whose skills, rules, tickets or AGENTS files name `review-pr`, `review-pr-prose` or treat gaze as the gate; hosts that are unreachable are named, never assumed clean (positive control: the inventory finds the harness's own known references)
-- [ ] One PR per affected project repointing the wording to gaze plus verify-gate; writes are authorized for this purpose only; no stub skill, no alias
-- [ ] Each PR merged or consciously dropped by the author, listed in the tracker
-- [ ] Doudou is part of the sweep: run it once doudou is up
+- [x] Read-only inventory, on padme and on doudou, of the projects whose skills, rules, tickets or AGENTS files name `review-pr`, `review-pr-prose` or treat gaze as the gate; hosts that are unreachable are named, never assumed clean (positive control: the inventory finds the harness's own known references)
+- [x] One PR per affected project repointing the wording to gaze plus verify-gate; writes are authorized for this purpose only; no stub skill, no alias
+- [x] Each PR merged or consciously dropped by the author, listed in the tracker
+- [x] Doudou is part of the sweep: run it once doudou is up
