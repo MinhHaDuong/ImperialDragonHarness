@@ -48,6 +48,12 @@ def test_the_wrap_up_suggests_the_expert_and_never_runs_it():
     assert "pulse: not checked" in step, "silence must not read as an all-clear"
 
 
+def test_the_hoard_step_does_not_end_the_wrap_up_before_the_pulse_step():
+    lair = (REPO / "skills" / "lair" / "SKILL.md").read_text()
+    hoard = lair.split("12. **Suggest a hoard", 1)[1].split("13. **Suggest a testing", 1)[0]
+    assert "Then\n    finish" not in hoard and "Then finish" not in hoard
+
+
 def test_only_hunt_and_the_wrap_up_mention_the_expert():
     """Nothing else may grow a path to the expert: hunt names it as the place to take a symptom."""
     mentioning = {

@@ -92,8 +92,8 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
       report is still new, and a changed blob is new again.
     With **5 or more new experiences**, include in the final summary:
     “N nouvelles expériences depuis le dernier rapport accepté. Follow-up suggéré :
-    `/hoard <project-repository>` dans une nouvelle session `/clear`.” Then
-    finish. Do not ask a question, wait for a response, launch hoard or mark
+    `/hoard <project-repository>` dans une nouvelle session `/clear`.” Do not
+    ask a question, wait for a response, launch hoard or mark
     the experiences processed. Below the
     threshold, omit this suggestion. No timer or automatic invocation.
 13. **Suggest a testing consultation when the traces show a speed bump.**
