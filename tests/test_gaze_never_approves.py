@@ -3,10 +3,13 @@
 Gaze must never return, post or promise APPROVED: that word is a gate verdict,
 ruled by `/verify-gate` on the head gaze reviewed.
 
-No classifier decides which mention is harmless. Every line, fenced line and
-table cell of the gaze contract that names a gate verdict must be one of ALLOWED_LINES,
-verbatim. A new or edited mention fails until a reviewer reads it and adds it
-here. Two classifiers in a row were bypassed by an added instruction.
+No classifier decides which mention is harmless. The gaze contract is cut into
+logical units (a paragraph, list item or heading with its wrapped lines joined;
+each fenced line; each table cell), and every unit that names a gate verdict must be one of
+ALLOWED_LINES, verbatim. Units, not physical lines: rewriting the unflagged
+continuation of a wrapped sentence changes its unit and fails. A new or
+edited mention fails until a reviewer reads it and adds it here. Two
+classifiers in a row were bypassed by an added instruction.
 
 The vocabulary covers the gate's verdict words and alternate approval language
 ("LGTM", "ship it", "good to merge", "green light", "sign-off", "passes the
@@ -17,7 +20,7 @@ Limit of the approach: it is lexical. An instruction that approves without any
 listed word ("tell the caller it can go ahead") passes. Such a semantic
 negative control cannot be caught by a word list; it is left to the reviewers
 of any change to the gaze contract, whom the allowlist forces to read every
-verdict-bearing line.
+verdict-bearing unit.
 """
 
 import re
@@ -38,29 +41,112 @@ GATE_TOKEN = re.compile(
     r"|\bverdict\s*:|\b(?:result|status)\s*[:=]\s*(?:ok|okay|pass(?:ed)?|green|clean|lgtm)\b",
     re.I,
 )
-# The override flag's name and this test's name are not verdicts; a line that
-# names only them is not a verdict line.
-OVERRIDE_NAME = re.compile(
-    r"force-approved?|test_gaze_never_approves", re.I
-)
+# Only the exact flag `--force-approve` and this test's filename are exempt;
+# the posted override markers (`/gaze: force-approved`, `FORCE-APPROVED by`)
+# are verdict-bearing units and must be allowlisted like any other.
+OVERRIDE_NAME = re.compile(r"--force-approve\b(?!d)|test_gaze_never_approves")
 RESULT_VALUES = {"REVIEWED", "FINDINGS", "ESCALATE"}
 
 # Every verdict-bearing line of the expanded contract, read and accepted.
 ALLOWED_LINES = (
-    'description: "Review one merge request: adherence check, code or prose review panel, simplify. Returns REVIEWED / FINDINGS / ESCALATE and never APPROVED; the merge gate is /verify-gate, run by the caller. Does not merge."',
-    "reviews; `/verify-gate` gates.** Gaze never returns APPROVED, REROLL or",
-    "NEEDS-AUTHOR: those are gate verdicts, ruled by the caller's `/verify-gate`",
-    "- Never returns APPROVED: a test pins it (`tests/test_gaze_never_approves.py`).",
-    "`/verify-gate`, which rules NEEDS-AUTHOR (§ Waiver).",
-    '- First run `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the battery: do not review an empty or wrong-tree diff or approve it. Carry its HEAD and changed-file roster into every review prompt.',
-    "breaker, and gaze never approves a waived PR: the caller passes the waiver",
-    "record to `/verify-gate`, which rules NEEDS-AUTHOR on a passing waived PR, and",
-    "at ESCALATE, never APPROVED (gaze returns no approval at all).",
-    "review's approval. It returns the reviewed SHA, paths examined, and actionable",
-    "- `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still",
-    "next: run /verify-gate <pr-number>; gaze is not a gate and does not approve",
-    "- **Gating.** `/verify-gate` rules APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR.",
-    "- Is an override record, not a verdict and not a gate pass: `/verify-gate`",
+    (
+        'description: "Review one merge request: adherence check, code or prose '
+        'review panel, simplify. Returns REVIEWED / FINDINGS / ESCALATE and never'
+        ' APPROVED; the merge gate is /verify-gate, run by the caller. Does not '
+        'merge."'
+    ),
+    (
+        'One skill, one PR, one review result: REVIEWED / FINDINGS / ESCALATE. '
+        '**Gaze reviews; `/verify-gate` gates.** Gaze never returns APPROVED, '
+        "REROLL or NEEDS-AUTHOR: those are gate verdicts, ruled by the caller's "
+        '`/verify-gate` run on the reviewed head. **Does not merge** — the merge '
+        'decision belongs to the caller (the human or the raid). Only one live '
+        '`/gaze` may run on a PR at a time; the caller keeps to that '
+        '(`rules/workflow.md` § Delegation). A past verdict is evidence, not '
+        'authority to overwrite or call it fabricated: inspect its gate identity '
+        'and ruled tip.'
+    ),
+    (
+        '- Never returns APPROVED: a test pins it '
+        '(`tests/test_gaze_never_approves.py`). `REVIEWED` means no blocking '
+        'finding on the reviewed head, nothing more.'
+    ),
+    (
+        '- `--waive-breaker <reason>` lifts only the un-reviewable file-count '
+        'stop. The battery and simplify still run; gaze records the waiver and '
+        'the caller passes it to `/verify-gate`, which rules NEEDS-AUTHOR (§ '
+        'Waiver).'
+    ),
+    (
+        '- First run `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number>'
+        ' --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A '
+        'nonzero `REVIEW-ANCHOR:` result stops the battery: do not review an '
+        'empty or wrong-tree diff or approve it. Carry its HEAD and changed-file '
+        'roster into every review prompt.'
+    ),
+    (
+        'The 15-file count is a decomposition signal, not a hard wall. A waiver '
+        'lifts only the file-count stop. It never lifts the review, simplify or '
+        'any other breaker, and gaze never approves a waived PR: the caller '
+        'passes the waiver record to `/verify-gate`, which rules NEEDS-AUTHOR on '
+        'a passing waived PR, and only the author decides to merge it.'
+    ),
+    (
+        'If the battery cannot be launched at all — the runtime refuses the '
+        'spawn, the agent connector is absent, or the spawn-depth limit is hit — '
+        'first attempt the detached-seat substitution documented in '
+        '`skills/review-pr/SKILL.md`; if that also cannot run, emit a one-line '
+        '`battery: NOT-RUN — cause: <guard|no-agent-tool|depth>` in the result '
+        'comment. The boundary with the seat-level signal: no seat launched at '
+        'all is a battery NOT-RUN; seats launched but reports missing stays '
+        'seat-level `PANEL-INTEGRITY:` (whose name is unchanged). The NOT-RUN '
+        'line names a launch failure, not a review finding: never fabricate '
+        'findings. The result is capped at ESCALATE, never APPROVED (gaze returns'
+        ' no approval at all).'
+    ),
+    (
+        '- **Native command absent:** launch a separate reviewer through the '
+        'active runtime (model chosen per launch from the `route` skill), using '
+        'the phase artifact and bounded-wait contract above. Give it the explicit'
+        ' PR number, review tree, base ref, anchor HEAD and changed-file roster. '
+        'It runs the review-anchor check before and after examining `git -C '
+        '<review-tree> diff origin/<base>...HEAD` and the relevant surrounding '
+        'code or instructions. It must look for unnecessary complexity, '
+        'duplication, opportunities to reuse existing mechanisms, and safe '
+        'simplifications that preserve behavior and ticket intent. This is a '
+        "distinct simplification pass, not reuse of a general review's approval. "
+        'It returns the reviewed SHA, paths examined, and actionable findings '
+        'with severity, location, proposed change and rationale; or a CLEAN '
+        'verdict explaining the concrete candidates considered and why they need '
+        'no change. An absent reviewer, timeout, anchor mismatch, wrong diff or '
+        'missing evidence means this phase is unresolved and triggers the '
+        'existing breaker; absence of the slash command alone does not.'
+    ),
+    (
+        '- `REVIEWED`: none of the above. It is not an approval: `/verify-gate` '
+        'still checks every exit criterion and review comment against the diff.'
+    ),
+    (
+        '- Posts a loud PR comment: `/gaze: force-approved — reason: <reason>`. '
+        'It lists the outputs of phases 2–5 that exist, so reviewers see what was'
+        ' waived.'
+    ),
+    (
+        '- Is an override record, not a verdict and not a gate pass: '
+        '`/verify-gate` still rules, and still does not merge.'
+    ),
+    (
+        'next: run /verify-gate <pr-number>; gaze is not a gate and does not '
+        'approve'
+    ),
+    (
+        'On `--force-approve`, the comment is annotated `FORCE-APPROVED by '
+        '<reason>`.'
+    ),
+    (
+        '- **Gating.** `/verify-gate` rules APPROVED / REROLL / ESCALATE / '
+        'NEEDS-AUTHOR.'
+    ),
 )
 
 # Each must fail the check, injected into the contract.
@@ -81,6 +167,14 @@ NEGATIVE_CONTROLS = (
     "Post the result as good to merge.",
     "status: green",
     "Give the PR a green light.",
+    # the posted override marker is not an exemption (/gaze 1538 B2)
+    "Return FORCE-APPROVED to the caller.",
+)
+
+# /gaze 1538 B1: the unflagged continuation of an allowlisted wrapped sentence.
+CONTINUATION = (
+    "checks every exit criterion and review comment against the diff.",
+    "is skipped for this result; the caller merges directly.",
 )
 
 
@@ -89,18 +183,50 @@ def _raw(path: Path) -> str:
         return fh.read()
 
 
-def verdict_lines(text: str) -> list[str]:
-    """Every stripped line or table cell that names a gate verdict."""
-    found = []
+
+
+UNIT_START = re.compile(r"^(?:#{1,6} |[-*+] |\d+\. |> |<!--)")
+
+
+def units(text: str) -> list[str]:
+    """Logical units: a paragraph, list item, quote line or heading with its
+    wrapped lines joined by one space; each fenced line; each table cell."""
+    out, block, fenced = [], [], False
+    if text.startswith("---\n"):  # YAML frontmatter: one unit per key line
+        front, _, text = text[4:].partition("\n---\n")
+        out += [ln.strip() for ln in front.splitlines() if ln.strip()]
+
+    def flush():
+        if block:
+            out.append(" ".join(block))
+            block.clear()
+
     for line in text.splitlines():
         stripped = line.strip()
-        cells = (
-            [c.strip() for c in stripped.strip("|").split("|")]
-            if stripped.startswith("|")
-            else [stripped]
-        )
-        found += [c for c in cells if GATE_TOKEN.search(OVERRIDE_NAME.sub("", c))]
-    return found
+        if stripped.startswith("```"):
+            flush()
+            fenced = not fenced
+            continue
+        if fenced:
+            if stripped:
+                out.append(stripped)
+        elif not stripped:
+            flush()
+        elif stripped.startswith("|"):
+            flush()
+            out += [c.strip() for c in stripped.strip("|").split("|") if c.strip()]
+        elif UNIT_START.match(stripped) or stripped.startswith("#"):
+            flush()
+            block.append(stripped)
+        else:
+            block.append(stripped)
+    flush()
+    return out
+
+
+def verdict_lines(text: str) -> list[str]:
+    """Every logical unit that names a gate verdict."""
+    return [u for u in units(text) if GATE_TOKEN.search(OVERRIDE_NAME.sub("", u))]
 
 
 def gate_verdict_violations(text: str) -> list[str]:
@@ -130,6 +256,17 @@ def test_negative_controls_fail():
     assert gate_verdict_violations("```\nverdict: REVIEWED\n```\n")
 
 
+def test_rewritten_continuation_line_fails():
+    """/gaze 1538 B1: the second physical line of an allowlisted sentence names
+    no verdict; rewriting it must still fail, because units are sentences."""
+    old, new = CONTINUATION
+    assert GAZE.count(old) == 1
+    assert not GATE_TOKEN.search(new), "the control must not add a verdict word"
+    assert gate_verdict_violations(GAZE.replace(old, new))
+
+
+
+
 def _section(heading: str) -> str:
     body = GAZE.split(heading, 1)[1]
     return re.split(r"\n#{2,3} ", body, maxsplit=1)[0]
@@ -155,6 +292,8 @@ def test_gaze_states_it_never_approves_and_does_not_gate():
     assert "Gaze\nreviews; `/verify-gate` gates" in GAZE
     assert "never returns APPROVED" in GAZE
     assert "Does not run `/verify-gate`" in GAZE
+
+
 
 
 def test_moved_sections_are_present():
