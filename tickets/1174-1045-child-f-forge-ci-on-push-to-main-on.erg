@@ -1,0 +1,38 @@
+%erg 0.1
+Title: 1045 child F: forge CI on push to main only, keep local-ci and the PR-only collision check working
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T11:53Z reviewer created
+
+--- body ---
+## Context
+Child F of tracker 1045, at the author's request on 2026-10-21 ("drop the
+pull_request trigger"). The forge ruleset requiring checks is disabled; the gate
+is local (children A and B). `.github/workflows/CI.yml` still runs the full
+workflow on every push to every pull request (74 of the latest 100 runs were
+`pull_request` events, 26 were pushes to `main`), at no cash cost (public repo)
+but with no reader. The push-to-`main` run is kept: it is the ex-post record of
+when `main` went red, on a second environment (a clean forge runner, not padme),
+and the sweep of child B can read it.
+
+Not a two-line edit, found when preparing it: `scripts/local-ci.sh` and
+`scripts/local-ci-negative-controls.sh` run the workflow with
+`act pull_request`, so removing the `pull_request:` trigger makes `act` find no
+workflow. And the job `cross-pr-ticket-collision` runs only on a pull_request
+event (it needs the PR number and the base ref), so it would stop running.
+
+## Exit criteria
+- [ ] `CI.yml` triggers are `push` to `main` and `workflow_dispatch`; no
+      `pull_request` trigger on the full workflow.
+- [ ] `scripts/local-ci.sh` and `scripts/local-ci-negative-controls.sh` keep
+      working: they invoke the workflow through the surviving trigger, and their
+      tests pass (`tests/test_local_ci_*.py`), with the negative controls re-run
+      where docker is available (say which ran and which were skipped).
+- [ ] `cross-pr-ticket-collision` keeps running on pull requests: moved to its own
+      small workflow file triggered by `pull_request` (it takes seconds), with the
+      job removed from `CI.yml`; its local run still works. State the choice
+      (separate workflow vs. fold the check into the gate's check set) in the PR.
+- [ ] The PR body says how to turn the forge CI back on per pull request.
+- [ ] No other workflow behaviour changes; PR under the 15-file breaker.
