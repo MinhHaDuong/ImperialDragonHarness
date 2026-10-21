@@ -75,8 +75,9 @@ separate containers, the shared medium has to become the forge itself (each
 reviewer posting its own comment, the launcher synthesizing from them) — that
 inverts the outage behaviour below, so it is a trade to decide, not to assume.
 
-A perspective still missing at the deadline is **missing, not clear**. Name it
-in the posted review and leave it unresolved for the next round.
+A perspective still missing after its one retry (§ Collection) is **missing,
+not clear**. Name it in the posted review and leave it unresolved for the next
+round.
 
 ## Setup
 
@@ -265,9 +266,12 @@ that merely gathers whatever files exist returns the same empty-handed success
 whether five reviewers approved in silence or none of them ever started.
 
 Never wait unbounded, and never extend the deadline to avoid recording a gap.
-Proceed to synthesis with what landed, carrying the gap forward by name.
-If any perspective is `no report`, write and post a `PANEL-INTEGRITY: DEGRADED`
-line naming it; set `dissent: unavailable` instead of `dissent: none`.
+A `no report` perspective is re-run once, alone, over the whole PR with the
+brief of its missed launch, before synthesis and posting, so the round does not
+advance. The retry is a second window of the same bound, not
+an extension of the first, and happens once. If it still has no report, proceed
+to synthesis with what landed, carrying the gap forward by name: write and post a
+`PANEL-INTEGRITY: DEGRADED` line naming it; set `dissent: unavailable` instead of `dissent: none`.
 
 ## Synthesis
 

@@ -487,6 +487,27 @@ def test_degraded_panel_maps_to_escalate():
     assert "A `panel integrity: DEGRADED` line goes with `result: ESCALATE`" in output
 
 
+RETRY_RULE = "is re-run once, alone, over the whole PR"
+
+
+def _has_retry_rule(text: str) -> bool:
+    phase6 = text.split("### 6. Return the review result", 1)[1]
+    phase6 = re.split(r"\n#{2,3} ", phase6, maxsplit=1)[0]
+    return RETRY_RULE in " ".join(phase6.split())
+
+
+def test_missing_perspective_is_retried_once_before_degraded():
+    """PR 1557: a perspective with no report is re-run once before the panel
+    is DEGRADED. Negative control: phase 6 without the bullet fails."""
+    assert _has_retry_rule(GAZE)
+    dropped = re.sub(r"- \*\*One retry\.\*\*.*?(?=\n\n|\n- )", "", GAZE, flags=re.S)
+    assert dropped != GAZE and not _has_retry_rule(dropped)
+    review_pr = (ROOT / "skills" / "review-pr" / "SKILL.md").read_text(encoding="utf-8")
+    collection = review_pr.split("\n## Collection", 1)[1].split("\n## ", 1)[0]
+    assert "is re-run once, alone, over the whole PR" in " ".join(collection.split())
+    assert "is re-run once" not in review_pr.replace(collection, "")
+
+
 def test_result_is_posted_after_cleanup():
     """Cleanup can downgrade the result to ESCALATE (references/cleanup.md), so
     the result comment is posted after it, not before."""

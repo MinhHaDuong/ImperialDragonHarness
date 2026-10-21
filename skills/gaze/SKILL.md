@@ -162,11 +162,16 @@ next: REVIEWED → the caller closes the ticket on the branch, then runs /verify
 - `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still
   checks every exit criterion and review comment against the diff.
 - `panel_integrity: DEGRADED` (the review panel did not launch, or a selected
-  or required perspective has no report at the bounded deadline) means a phase
+  or required perspective has no report after its one retry) means a phase
   2–5 is unresolved, so the result is `ESCALATE` (§ Circuit breakers), whatever
   the perspectives that did report found; it never reads as REVIEWED. A failed
   optional external reviewer is fail-open (§ External reviewer panel) and does
   not count. The `PANEL-INTEGRITY:` line is carried verbatim in the result comment.
+- **One retry.** A perspective with no report at the bounded deadline is re-run
+  once, alone, over the whole PR, through review-pr's ordinary launch in its
+  collection step, before synthesis and posting, so the round does not
+  advance. The panel is DEGRADED, hence ESCALATE, only if that retry also has
+  no report.
 
 Run the cleanup and containment (`references/cleanup.md`) first, then post the
 result as one PR comment (§ Output shape) before returning: cleanup can
