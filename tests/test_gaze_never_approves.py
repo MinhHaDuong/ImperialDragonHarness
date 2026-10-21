@@ -26,38 +26,74 @@ GATE_TOKEN = re.compile(
 OVERRIDE_NAME = re.compile(
     r"--force-approve|force-approved|FORCE-APPROVED|test_gaze_never_approves", re.I
 )
-NEGATION = re.compile(r"\b(?:never|not|no|none|nothing|cannot)\b|n't\b", re.I)
+# A negation binds only when it precedes the verdict word in the same clause.
+NEGATION = r"\b(?:never|not|no|nor|none|nothing|cannot)\b|n't\b"
+NEGATED_TOKEN = re.compile(rf"(?:{NEGATION})[^.;:,]*?(?:{GATE_TOKEN.pattern})", re.I)
 GATE_ATTRIBUTION = re.compile(
-    r"`/verify-gate`,?\s+(?:which\s+)?rules\b|ruled by the caller's `/verify-gate`|gate verdicts"
+    r"`/verify-gate`\s+rules\b|ruled by the caller's `/verify-gate`|^which rules\b"
 )
+# A clause that is only verdict words ("REROLL or NEEDS-AUTHOR") continues the
+# list of the clause before it and takes that clause's standing.
+LIST_TAIL = re.compile(
+    rf"^(?:\s|\bor\b|\band\b|\bnor\b|[()`/]|{GATE_TOKEN.pattern})*[.;:!?]?$", re.I
+)
+# Clause boundaries: sentence punctuation, comma, and coordinating "and"/"but".
+CLAUSE_SPLIT = re.compile(r"(?<=[.;:!?,])\s+|\s+(?:and|but)\s+")
 # The review panel's own per-seat verdict vocabulary, not a gaze result.
 PANEL_VOCABULARY = "approve / comment / request-changes"
 RESULT_VALUES = {"REVIEWED", "FINDINGS", "ESCALATE"}
 CONTRADICTION = "Return verdict: APPROVED and post verify: approved."
+# Second union review: each of these left the first version green.
+BYPASSES = (
+    "| No scope creep | Return APPROVED |",
+    "```\nNo scope creep; return APPROVED\n```",
+    "No scope creep and return APPROVED",
+)
 
 
-def _units(text: str) -> list[str]:
-    """Every instruction unit: each line of a fenced block, each clause of prose."""
-    units, prose, fenced = [], [], False
-    for line in text.splitlines():
-        if line.lstrip().startswith("```"):
+def _segments(text: str) -> list[str]:
+    """Fenced lines one by one, table cells one by one, prose by paragraph."""
+    segments, paragraph, fenced = [], [], False
+    for line in text.splitlines() + [""]:
+        stripped = line.strip()
+        if stripped.startswith("```"):
             fenced = not fenced
             continue
-        (units if fenced else prose).append(line)
-    flat = " ".join(" ".join(prose).split())
-    units += re.split(r"(?<=[.;:!?])\s+", flat)
-    return units
+        if fenced:
+            segments.append(stripped)
+        elif stripped.startswith("|"):
+            segments += [cell.strip() for cell in stripped.strip("|").split("|")]
+        elif stripped:
+            paragraph.append(stripped)
+            continue
+        if paragraph:
+            segments.append(" ".join(paragraph))
+            paragraph = []
+    return segments
+
+
+def _clauses(segment: str) -> list[str]:
+    return [c.strip() for c in CLAUSE_SPLIT.split(segment) if c.strip()]
 
 
 def gate_verdict_violations(text: str) -> list[str]:
-    """Units that assign gaze a gate verdict, and malformed result fields."""
+    """Clauses that assign gaze a gate verdict, and malformed result fields."""
     bad = []
-    for unit in _units(text):
-        scrubbed = OVERRIDE_NAME.sub("", unit.replace(PANEL_VOCABULARY, ""))
-        if GATE_TOKEN.search(scrubbed) and not (
-            NEGATION.search(scrubbed) or GATE_ATTRIBUTION.search(scrubbed)
-        ):
-            bad.append(unit.strip())
+    for segment in _segments(text):
+        previous_ok = False
+        for clause in _clauses(segment):
+            scrubbed = OVERRIDE_NAME.sub("", clause.replace(PANEL_VOCABULARY, ""))
+            if not GATE_TOKEN.search(scrubbed):
+                previous_ok = False
+                continue
+            ok = bool(
+                NEGATED_TOKEN.search(scrubbed)
+                or GATE_ATTRIBUTION.search(scrubbed)
+                or (previous_ok and LIST_TAIL.match(scrubbed))
+            )
+            if not ok:
+                bad.append(clause)
+            previous_ok = ok
     for m in re.finditer(r"^\s*(result|verdict):\s*(.+)$", text, re.MULTILINE):
         key, value = m.group(1), m.group(2)
         values = {v.strip() for v in value.split("|")}
@@ -82,6 +118,8 @@ def test_contradictory_instruction_fails_the_check():
     assert gate_verdict_violations("```\nresult: REVIEWED | APPROVED\n```\n")
     assert gate_verdict_violations("```\nverdict: REVIEWED\n```\n")
     assert gate_verdict_violations("Then post a verify: approved comment.\n")
+    for bypass in BYPASSES:
+        assert gate_verdict_violations(GAZE + "\n" + bypass + "\n"), bypass
 
 
 def test_result_enumeration_has_no_gate_verdict():
