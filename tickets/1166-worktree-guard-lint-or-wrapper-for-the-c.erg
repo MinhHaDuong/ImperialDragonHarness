@@ -1,0 +1,19 @@
+%erg 0.1
+Title: Worktree guard: lint or wrapper for the command forms it refuses
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T10:06Z reviewer created
+
+--- body ---
+## Context
+The worktree-isolation guard refuses many Bash command forms: `git -C` with a computed value, `cd` to the shared checkout, `rtk git` with substitutions, git redirected to the shared checkout. The 14-day scan (`docs/2026-10-21-velocity-friction-scan.md`) counts about 1,270 such refusals, roughly 41% of all Bash errors, each a wasted turn. The guard is correct to refuse; the cost is that agents learn the allowed forms only by being refused.
+
+Options to price before choosing: a `wt-git` wrapper the guard allows; a pre-flight lint that rewrites or warns; a refusal message that names the allowed form. Estimate: 4 author-hours, about 70% chance of removing most refusals. Measure the before/after with the scan prototype.
+
+## Exit criteria
+- [ ] Chosen mechanism recorded with the two rejected ones and why
+- [ ] The top five refusal forms in the scan are either allowed through the mechanism or refused with a message naming the allowed form
+- [ ] Re-run of the scan over a later 14-day window shows guard refusals below half the baseline of about 1,270, or the shortfall explained
+- [ ] Guard still refuses git aimed at another worktree (positive control)

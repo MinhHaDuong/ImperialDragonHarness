@@ -1,0 +1,17 @@
+%erg 0.1
+Title: Session-start banner names the worktree root to cut out-of-tree writes
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T10:06Z reviewer created
+
+--- body ---
+## Context
+59 Write calls in the 14-day scan failed with "writes are limited to the worktree", and Read reports 17 "File does not exist" errors from cwd confusion (`docs/2026-10-21-velocity-friction-scan.md`). `rules/workflow.md` already says to use worktree-rooted paths; the agent still starts from the primary path in the transcript context.
+
+Idea: the SessionStart hook prints the worktree root as a declarative line ("This session writes under <root>"), per `rules/claude-code.md` § Hook output. Estimate: 1 author-hour, about 50% chance of halving these errors. The root changes after the worktree is created, so check whether the hook can know it at start or must re-print after the `cd`.
+
+## Exit criteria
+- [ ] Declarative root line present in session context after the worktree is entered
+- [ ] Write-outside-worktree errors in a later window are below half of 59 per 14 days, or the shortfall explained
