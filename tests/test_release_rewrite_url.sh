@@ -13,7 +13,7 @@ set -euo pipefail
 # `bash "$HELPER"`, and such a child inherits BASH_ENV — re-running the
 # project .env loader inside the very process whose exit-code contract is
 # under test. Nothing here reads project .env values, so clear the loader
-# suite-wide (tests/test_bash_tests_are_hermetic.sh).
+# suite-wide (rules/coding-bash.md).
 export BASH_ENV=
 
 cd "$(dirname "$0")/.."

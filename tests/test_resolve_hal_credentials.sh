@@ -21,7 +21,7 @@
 # scripts/bash-env.sh, and a plain `bash -c` also inherits any ambient HAL
 # credential. Either can mask the fixture and print a real secret on failure.
 # `env -i` is the remedy
-# tests/test_bash_tests_are_hermetic.sh enforces, and this suite uses it
+# rules/coding-bash.md names, and this suite uses it
 # uniformly rather than the suite-wide `export BASH_ENV=` exemption.
 #
 # TWO DIFFERENT ISOLATION LAYERS, AND WHICH CASE TESTS WHICH. The `env -i` on

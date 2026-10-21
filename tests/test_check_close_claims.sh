@@ -18,7 +18,7 @@ set -euo pipefail
 # `bash "$SCRIPT"`, and such a child inherits BASH_ENV — re-running the
 # project .env loader inside the very process whose verdicts are under test.
 # Nothing here reads project .env values, so clear the loader suite-wide
-# (tests/test_bash_tests_are_hermetic.sh) rather than annotate every spawn.
+# (rules/coding-bash.md) rather than annotate every spawn.
 export BASH_ENV=
 
 cd "$(dirname "$0")/.."

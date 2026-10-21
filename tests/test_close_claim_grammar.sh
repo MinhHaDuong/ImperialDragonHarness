@@ -12,7 +12,7 @@ set -euo pipefail
 # `bash "$script"` / `bash "$CHECKER"`, and such children inherit BASH_ENV —
 # re-running the project .env loader inside the very processes under test.
 # Nothing here reads project .env values, so clear the loader suite-wide
-# (tests/test_bash_tests_are_hermetic.sh).
+# (rules/coding-bash.md).
 export BASH_ENV=
 
 cd "$(dirname "$0")/.."

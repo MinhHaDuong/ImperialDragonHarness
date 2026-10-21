@@ -5,7 +5,7 @@ set -euo pipefail
 # `bash "$ROOT/skills/merge/erg-pr-merge"`, and such a child inherits BASH_ENV —
 # re-running the project .env loader inside the very process whose preflight
 # verdicts are under test. Nothing here reads project .env values, so clear
-# the loader suite-wide (tests/test_bash_tests_are_hermetic.sh).
+# the loader suite-wide (rules/coding-bash.md).
 export BASH_ENV=
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WORK=$(mktemp -d)
