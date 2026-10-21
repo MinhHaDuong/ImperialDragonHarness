@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Testing expert skill (/pulse): on-demand consultation, never auto-invoked, with a lair speedbump report
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T06:53Z reviewer created
+2026-10-21T06:54Z reviewer branch t1159-2978370; design agreed in session, building skill, scripts and lair step
+
+--- body ---
+## Context
+A session on 2026-10-21 asked whether the harness has smart testing (diff analysis,
+coverage map, red/green cache). Findings, measured or sampled in that session:
+- Three partial mechanisms exist (testmon helper, `scoped-check`, review evidence)
+  with no shared key; only the harness repo has the testmon helper wired.
+- `rules/coding-python.md` and `skills/hunt` instruct agents unconditionally to use
+  the testmon helper. For suites that read files, shell out or use data, an
+  undeclared read gives a stale green; two sibling projects have 54 and 12
+  subprocess-spawning test files and 214 and 67 file-reading ones.
+- The useful interventions found were project-specific and cheap (a serial fast
+  tier that never used the worker plugin it already depends on; one 45 s test on the
+  fast path; a worktree measured without its data deselecting 750 tests instead of
+  81, which made a 272 s tier look like 12.6 s). A recipe cannot carry that; a
+  consultation can.
+- Session traces carry timestamps on tool calls and results, so command wall time
+  is derivable (827 test/gate calls in 400 traces, 615 paired).
+
+Author decision: do not instruct agents unconditionally; build a testing expert,
+modelled on a doctor's visit, never called automatically. At `lair` a script
+reflects on speed bumps and suggests calling the expert.
+
+## Scope
+- `skills/pulse/`: the consultation (intake, chart review, examination, differential,
+  confirmation, treatment plan, intervention, follow-up), with references for the
+  usual syndromes and the toolkit. `disable-model-invocation: true`.
+- `scripts/pulse_traces.py` (collect, survey) and `scripts/pulse_profile.py`
+  (profile, whatif, compare): standard-library evidence tools.
+- Wording removal: `rules/coding-python.md` and `skills/hunt` stop instructing the
+  testmon helper; it stays available as one remedy the expert may propose.
+- `lair`: a report-only step that runs the survey and suggests the consultation.
+- Not in scope: gate semantics, `/verify-gate`, any change to a project's targets.
+
+## Exit criteria
+- [ ] `rules/coding-python.md` and `skills/hunt/SKILL.md` no longer tell agents to run the testmon helper; a test pins the absence
+- [ ] `/pulse` exists, is not model-invocable, and its first sentence is plain function; catalog regenerated, drift clean
+- [ ] The consultation covers history, symptoms, triage, evidence by script, diagnosis, remediation and verification by re-measurement or simulation; tests pin the contract
+- [ ] `pulse_traces.py survey` fires on a synthetic slow-gate trace (positive control), stays silent on a clean one, and says "not checked" when it cannot look
+- [ ] `pulse_profile.py` reproduces a known tail concentration and its worker lower bound from a fixture
+- [ ] `lair` suggests the consultation from the survey, never runs it
+- [ ] `make check` passes; adherence self-gate recorded; PR under the 15-file breaker, else split
