@@ -1,6 +1,6 @@
 # Imperial Dragon Harness — State
 
-Last updated: 2026-10-20T16:45Z
+Last updated: 2026-10-21
 
 Live counts: `erg ready tickets/` · `erg list` · `/dashboard`.
 
@@ -8,4 +8,6 @@ Live counts: `erg ready tickets/` · `erg list` · `/dashboard`.
 Attribution #1423/#1425 unresolved; do not infer missing identities.
 Original doc-refresh snapshot pushed as WIP; newer implementation is merged.
 Interpreter fix #1471 remains open, separate work.
-Attribution paper trail, tracker 1146: 1148 (identity inventory), 1149 (schema + /merge warning) and 1152 (fence tracker) are merged; 1151 (writers append the block, roar copies it) is in a raid (tmux raid1151, padme); 1150 (fold pending attribution files) follows 1151; 1146 closes after the integration review.
+Attribution paper trail, tracker 1146: closed. Writers append the PR-body block, roar extracts it, pending files are folded. Forward path (gaze result and gate record) is 1155.
+Gaze rebuild, tracker 1143: the evidence core 1142 is merged; 1153 (gaze reviews, never APPROVED; callers run /verify-gate) is in review, then 1154.
+Decisions on 1045 are recorded; children 1156-1158 are filed.
