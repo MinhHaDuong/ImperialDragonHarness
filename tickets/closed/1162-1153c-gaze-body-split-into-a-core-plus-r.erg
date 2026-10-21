@@ -2,10 +2,12 @@
 Title: 1153c: gaze body split into a core plus references
 Created: 2026-10-21
 Author: reviewer
-Blocked-by: 1161
+Closed: done — PR #1540
 
 --- log ---
 2026-10-21T06:55Z reviewer created
+2026-10-21T09:09Z reviewer note blocker 1161 closed — Blocked-by removed.
+2026-10-21T09:09Z reviewer closed — done — PR #1540
 
 --- body ---
 ## Context

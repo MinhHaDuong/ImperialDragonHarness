@@ -2,10 +2,12 @@
 Title: 1143a: shrink gaze (body split, never-APPROVED, delete old battery)
 Created: 2026-10-20
 Author: reviewer
+Closed: done — integration review 2026-10-21: children 1160, 1161, 1162 merged (PRs 1538, 1539, 1540) at their ruled tips; criteria verified on main
 
 --- log ---
 2026-10-20T15:12Z reviewer created
 2026-10-21T06:55Z reviewer note Re-sliced into children 1160, 1161, 1162 (Fable advice, 2026-10-21); old PRs 1522-1524 and 1535 superseded.
+2026-10-21T09:09Z reviewer closed — done — integration review 2026-10-21: children 1160, 1161, 1162 merged (PRs 1538, 1539, 1540) at their ruled tips; criteria verified on main
 
 --- body ---
 ## Context
