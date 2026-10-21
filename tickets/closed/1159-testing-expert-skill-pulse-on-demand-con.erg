@@ -2,11 +2,13 @@
 Title: Testing expert skill (/pulse): on-demand consultation, never auto-invoked, with a lair speedbump report
 Created: 2026-10-21
 Author: reviewer
+Closed: closed at roar
 
 --- log ---
 2026-10-21T06:53Z reviewer created
 2026-10-21T06:54Z reviewer branch t1159-2978370; design agreed in session, building skill, scripts and lair step
 2026-10-21T08:35Z reviewer note verify-reroll — round 1: survey stays silent on partial blindness (unreadable or wrong-shape traces) instead of saying it could not look; fixed in f6382d62, gate APPROVED round 2
+2026-10-21T09:24Z reviewer closed — closed at roar
 
 --- body ---
 ## Context
