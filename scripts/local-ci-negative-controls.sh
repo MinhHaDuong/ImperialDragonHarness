@@ -67,7 +67,7 @@ inject() {
 }
 
 if [ "$#" -gt 0 ]; then
-    cases=("$@")
+    mapfile -t cases < <(dedupe_args "$@")
 else
     cases=(validate-tickets skill-lint agnostic-guard status-verb-guard personal-data-guard pipefail-guard grep-e-guard tab-ifs-guard pytest-guard)
 fi

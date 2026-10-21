@@ -124,7 +124,7 @@ if [ "$listed" != "$defined" ]; then
     exit 2
 fi
 if [ "$#" -gt 0 ]; then
-    jobs=("$@")
+    mapfile -t jobs < <(dedupe_args "$@")
     for job in "${jobs[@]}"; do
         grep -qxF "$job" <<< "$defined" || { echo "local-ci: unknown job '$job'" >&2; exit 2; }
     done
