@@ -323,6 +323,26 @@ sessions): it generates one UUID per PR before round 1, passes the same
 `session=` to round 1 and to the single re-gate after the fix, and never runs
 the gate a third time or opens a second session for the PR. A round-2 REROLL
 is ESCALATE; ESCALATE and NEEDS-AUTHOR go to the author.
+
+**Fix-and-regate (caller-owned; formerly gaze's fix-agent contract).** On
+`FINDINGS` or a round-1 REROLL, the raid spawns the fix agent — the **coder
+profile** (`agents/coder.md`, whose contract is `profiles/coder/PROFILE.md`;
+the model is chosen per launch from the `route` skill) — in the PR's worktree,
+feeding it the unresolved lists (review comments, simplify findings, adherence
+violations, per-exit-criterion gaps) as input, and waits for the artifact it
+writes on completion. Fix agent gets ≤10 min. The agent works under:
+
+- Strict rule: **only** the listed items. No scope creep. No "while I'm here" edits.
+- TDD discipline still applies: add a failing test for any behavioural fix before coding.
+- Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix. A mapped doc-only fix uses `python3 "$IDH_ROOT/scripts/scoped-check.py"` and quotes selected and skipped targets; Python code and unmapped changes use the full `make check`.
+- Push commits to the PR branch; do not open new PRs.
+
+Then re-gate once with the same `session=`. Breakers on this loop:
+
+- Fix agent timeout (10 min) → ESCALATE.
+- Gate disagrees with the `/gaze` reviewers (its phases 2–5) on a must-fix finding → ESCALATE (no silent resolution).
+- Two REROLL rounds reached → ESCALATE.
+
 Phase 7 merges stay strictly sequential.
 
 **Per-wave:** after all per-ticket `/gaze` runs complete, launch one integration-review

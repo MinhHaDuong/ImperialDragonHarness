@@ -192,3 +192,19 @@ def test_phase6_runs_verify_gate_after_gaze():
     assert "then `/verify-gate`" in norm or "`/verify-gate <pr-number>" in norm
     assert "never returns APPROVED" in norm
     assert "`reviewed_head_sha`" in norm
+
+
+def test_phase6_fix_loop_keeps_the_old_gaze_guards():
+    """Gaze's fix-agent contract was deleted with its gate phase (ticket 1153);
+    its guards move to raid, which now owns the fix-and-regate loop. Wording is
+    pinned verbatim from the pre-1153 gaze body."""
+    norm = " ".join(_per_ticket().split())
+    for guard in (
+        "Fix agent gets ≤10 min.",
+        "Fix agent timeout (10 min) → ESCALATE.",
+        "TDD discipline still applies: add a failing test for any behavioural fix before coding.",
+        "Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix.",
+        "on a must-fix finding → ESCALATE (no silent resolution).",
+        "Strict rule: **only** the listed items.",
+    ):
+        assert guard in norm, guard
