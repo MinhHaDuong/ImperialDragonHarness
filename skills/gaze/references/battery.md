@@ -160,6 +160,8 @@ unresolved and claims no completed review round. Carry the exact
 tool unavailable or spawn failed; selected perspectives not run`, or `missing
 perspective report: <name>` for a perspective still missing at the bounded collection deadline) and its `dissent: unavailable` into the /gaze result comment, and use
 `panel integrity: DEGRADED` there. Never write `dissent: none` for this path.
+When the invoking toolset lacks the Agent tool, the review skill first applies
+the detached-seat substitution in skills/review-pr/SKILL.md instead of degrading.
 
 Wait for all spawned agents to complete. Collect their structured outputs.
 
