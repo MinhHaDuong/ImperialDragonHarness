@@ -12,7 +12,7 @@ from child_env import child_env
 from run_checked import run_checked
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts" / "review-pr-anchor.py"
+SCRIPT = ROOT / "scripts" / "review-anchor.py"
 
 
 def git(cwd, *args):

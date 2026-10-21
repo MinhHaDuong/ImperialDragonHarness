@@ -2,7 +2,6 @@
 Title: Bound review time: every review phase ends within budget
 Created: 2026-10-14
 Author: Minh Ha-Duong
-Blocked-by: 1144
 
 --- log ---
 2026-10-14T19:43Z Minh Ha-Duong created
@@ -11,6 +10,7 @@ Blocked-by: 1144
 
 2026-10-15T16:10Z ChatGPT note Author confirms extending latency work to tests, CI and orchestration waiting; phased measurement and pilot added.
 2026-10-21T15:34Z reviewer reviewer note 2026-10-21 rescoped at the author's word and Blocked-by moved from tracker 1100 to its real prerequisite 1144: most items were fixed or made moot the same day (the startup failures, the test and validation waiting by PR 1583 and tracker 1045, the seat machinery by ticket 1176); three items stay (measure the seats, cap the external reader, never drop a seat silently).
+2026-10-21T16:58Z reviewer note blocker 1144 closed — Blocked-by removed.
 
 --- body ---
 ## Goal

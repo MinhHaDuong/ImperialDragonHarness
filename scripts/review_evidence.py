@@ -49,13 +49,11 @@ FORGE_OBJECTS = frozenset({"PullRequestReview", "PullRequestReviewComment", "Iss
 
 # Review policy: what a seat's judgment depends on. Not all of rules/.
 POLICY_GLOBS = (
-    "skills/review-pr/**/*",
-    "skills/review-pr-prose/**/*",
     "skills/gaze/**/*",
     "skills/route/references/decorrelation.md",
     "skills/route/SKILL.md",
     "scripts/review_evidence.py",
-    "scripts/review-pr-anchor.py",
+    "scripts/review-anchor.py",
     "scripts/panel-manifest-check.py",
     "adapters/*/agents/*",
     "agents/*-seat.md",
