@@ -2,11 +2,11 @@
 Title: 1045 child: observe the main-update guard, then turn enforce on
 Created: 2026-10-21
 Author: reviewer
-Blocked-by: 1179
 
 --- log ---
 2026-10-21T15:00Z reviewer created
 2026-10-21T15:53Z reviewer note blocker 1156 closed — Blocked-by removed.
+2026-10-21T17:02Z reviewer note blocker 1179 closed — Blocked-by removed.
 
 --- body ---
 ## Context
