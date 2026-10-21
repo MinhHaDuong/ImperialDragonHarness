@@ -30,7 +30,7 @@ Every trial records, in its evidence document:
   revision v8-r1 (2026-10-02); each dream trial names the revision it ran.
 - **The review contract** — whatever review machinery is live on main at trial
   time (today the
-  [review-pr skill](../../skills/review-pr/SKILL.md) with the
+  [gaze review panel](../../skills/gaze/references/panel.md) with the
   [reviewers skill](../../skills/reviewers/SKILL.md)), recorded **at its
   then-current blob revision** per trial. It is a versioned input, not a fixed
   mechanism; a trial run after the contract changed records the new revision,
