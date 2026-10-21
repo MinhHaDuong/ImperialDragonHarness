@@ -1,0 +1,41 @@
+%erg 0.1
+Title: The sweep and the guard hook find the gate record of a forge merge by rebuilding the candidate from the merge's parents
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T14:52Z reviewer created
+
+--- body ---
+## Context
+Found on 2026-10-21 by a read-only reading of tickets 1178 and 1156 with the design note
+of PR 1588 and the merged code (reading, not yet run). The gate record is a git note on
+the candidate commit: the `--no-ff` merge of the branch head into the base tip, built
+deterministically with fixed metadata (`scripts/merge-gate.py`). The guard hook
+(`hooks/reference-transaction`, PR 1566) and the sweep (`scripts/main_sweep.py`) look for a
+note on the commit that actually enters `main`, with `git notes show <sha>`. When the
+forge merges the pull request, the merge commit it creates is a different object from the
+candidate (other author, date and message), so a gated merge that went through the forge
+would carry no record on the commit the sweep reads: every gated merge reads "no record".
+The two PRs were built in parallel against the agreed contract "note on the candidate
+commit, ref `refs/notes/gate`", and the integration was never exercised.
+
+Idea of the fix (the coder decides): for a merge commit M on `main` with parents (P1, P2),
+rebuild the candidate from (P1, P2) with the same deterministic function and look the note up
+there. That also gives the right answer when the base moved after the record was written
+(the candidate of (new P1, P2) has no note: a stale record is a finding, as intended).
+
+## Exit criteria
+- [ ] A positive control first, run before any change: take the first gated merge
+      once the activation PR (1569) has landed, run `make main-sweep`, and record in the
+      ticket log whether the sweep reads that merge as "gate record" or as a finding.
+- [ ] If the mismatch is real: the sweep and the hook's gated-merge test rebuild the
+      candidate from the merge commit's two parents and read the note there; one function
+      builds the candidate, shared with `scripts/merge-gate.py` (no second implementation).
+- [ ] Tests: a merge made with different metadata than the candidate (as the forge does) reads
+      as gated when a record exists for (P1, P2); the same merge reads as a finding when the
+      base moved (P1 differs) or no record exists; a fast-forward or single-parent commit is
+      unchanged.
+- [ ] The guard doc (`docs/2026-10-21-main-update-guard.md`) states how a forge merge is
+      matched to its record.
+- [ ] Nothing here requires a particular agent runtime; PR under the 15-file breaker.
