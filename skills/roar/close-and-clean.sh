@@ -287,8 +287,8 @@ bundle_armed() { # <head oid>
     # Gated base (ticket 1156): nothing is armed there. The bundle may leave
     # its worktree once its merge request reads OPEN with a passing gate
     # record on its candidate (the caller's background command, gate run then
-    # merge helper, lands it), or reads MERGED. Until MERGED it stays a pending
-    # item in step 11: if the helper later stops on a moved base, nothing else
+    # the merge recipe, lands it), or reads MERGED. Until MERGED it stays a pending
+    # item in step 11: if the merge later stops on a moved base, nothing else
     # holds the merge. Fail closed: an unreadable declaration, record or
     # merge request is COULD-NOT-LOOK, never "ungated" or "ready".
     local gate="${CLOSE_AND_CLEAN_MERGE_GATE:-$IDH_ROOT/scripts/merge-gate.py}" grc=0 crc=0 state

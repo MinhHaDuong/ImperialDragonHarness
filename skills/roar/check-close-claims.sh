@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Report merged PRs whose `**Ticket:**` close claim was never executed (ticket 0903).
 #
-# The close claim in a PR body is honoured by `erg-pr-merge`, not by the forge.
+# The close claim in a PR body is honoured by the merge recipe's close step
+# (skills/merge/SKILL.md), not by the forge.
 # Any other merge route — a bare forge-CLI merge, the forge's web UI, another
 # machine, another session — lands the code and drops the claim with no output.
 # `erg check` passes either way, so the dropped close and a clean merge leave
@@ -104,7 +105,7 @@ ticket_state() {
     echo absent
 }
 
-# Fence tracker shared with skills/merge/erg-pr-merge (ticket 1152): tags each
+# Fence tracker of the merge recipe's claim grammar (ticket 1152): tags each
 # line `L` live, `F` inside a closed fence, `U` inside a fence never closed.
 # Copied rather than sourced so each skill script stays standalone;
 # tests/test_check_close_claims.sh keeps the two copies byte-identical.
@@ -147,9 +148,9 @@ while IFS='|' read -r num title_b64 body_b64; do
     title=$(printf '%s' "$title_b64" | base64 -d 2>/dev/null || true)
     body=$(printf '%s' "$body_b64" | base64 -d 2>/dev/null || true)
 
-    # Match erg-pr-merge: ignore lines in closed fences and fold case once
+    # Match the recipe's grammar: ignore lines in closed fences and fold case once
     # before interpreting either the path or the ID. Lines of an unclosed fence
-    # stay in: erg-pr-merge refuses a body whose unclosed fence hides a claim,
+    # stay in: the recipe stops on a body whose unclosed fence hides a claim,
     # so a merged one came by another route, and an audit errs toward naming it.
     claim_body=$(printf '%s\n' "$body" | fence_map | sed -n 's/^[LU]\t//p' \
         | tr '[:upper:]' '[:lower:]')
@@ -208,9 +209,9 @@ if [ "$UNRECOGNISED" -gt 0 ]; then
     # span (`Ticket: none`), which the anchored regex does not reach. Harmless
     # while it only hides no-close markers; worth a look if the count climbs,
     # because the same anchoring would hide a backticked close claim too. The
-    # regex deliberately matches erg-pr-merge's rather than being loosened: a
-    # looser one would read the syntax EXAMPLES in this repo's own docs as
-    # claims, and erg-pr-merge refuses a backticked claim loudly anyway.
+    # regex deliberately matches the recipe's grammar rather than being
+    # loosened: a looser one would read the syntax EXAMPLES in this repo's own
+    # docs as claims.
     echo "check-close-claims: ${UNRECOGNISED} PR(s) carried no recognised Ticket line — see the note in this script before widening the regex." >&2
 fi
 
