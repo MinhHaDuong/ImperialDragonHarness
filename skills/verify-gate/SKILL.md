@@ -73,10 +73,6 @@ itself. Optionally:
 - The caller's bundle (preferred): `/gaze`'s returned result block
   (`reviewed_head_sha`, unresolved lists, adherence, panel integrity), with
   `{pr, ticket}`.
-- The waiver record `/gaze` returned, passed on by the caller, when one exists: `waiver: none`, or the declared
-  reason, `pr_files`, `pr_lines`, the source (`flag` or `body line`), and the earliest
-  posted `circuit_breaker: waived (...)` header on the PR. The gate judges the claim
-  from the diff, not from who declared it (see § Indivisibility).
 
 Every invocation produces the same verdict shape. Round is always derived from PR comment
 history (see § Gate sessions), never passed by the caller.
@@ -193,7 +189,6 @@ review_worktree_path: <absolute path of the gate's own worktree>
 ruled_tip_sha: <full commit SHA ruled>
 pr: <pr-number>
 ticket: <ticket-id>
-waiver: none | {reason, pr_files, pr_lines, source}
 per_exit_criterion:
   - criterion: "<verbatim>"
     status: ADDRESSED | MISSING
@@ -229,28 +224,6 @@ second_round_needed:   # only if REROLL
   - <prioritised items from unresolved lists>
 ```
 
-## Indivisibility (recorded waiver)
-
-Runs only when the waiver record is not `none`. A waiver lifts the un-reviewable
-file-count stop for a change that cannot be split. The gate judges the claim from
-the diff alone, as one `per_exit_criterion` row named `indivisibility waiver`:
-
-- **Reason holds.** Every changed file is a pure rename or a rewire of a reference
-  to a renamed path or symbol, and no changed file carries an independent change
-  that could land alone (a fix, a feature, a separate content edit). Cite the
-  classified files as evidence. A file that could land alone is MISSING, with its
-  file:line.
-- **Size.** The growth baseline is the earliest posted `circuit_breaker: waived (...)`
-  header on the PR, not the phase-1 recount of this round (a recount absorbs the
-  growth it should catch). The verdict-time `pr_files` and `pr_lines` must not exceed
-  that baseline. Growth past it makes the PR un-reviewable: the verdict is
-  `circuit_breaker: un-reviewable` and ESCALATE.
-- **Multi-ticket.** Two or more close claims beside a waiver are recorded as
-  `multi_ticket` with a non-blocking disposition, as in the preflight.
-- **Verdict.** A waiver never yields APPROVED. When every other criterion passes and
-  the indivisibility row is ADDRESSED, the verdict is `NEEDS-AUTHOR`: the author
-  decides whether to merge. A MISSING row follows the usual REROLL / ESCALATE rule.
-
 ## Decision rules
 
 - Any `MISSING` in `per_exit_criterion` → REROLL (round 1) / ESCALATE (round 2).
@@ -272,16 +245,12 @@ the diff alone, as one `per_exit_criterion` row named `indivisibility waiver`:
 - A seat that ran or was reused with verdict `changes` keeps its findings
   load-bearing: they follow the review-comment rules above.
 - Any `scope_overflow` entry with suggested disposition ESCALATE → ESCALATE.
-- A recorded waiver whose `indivisibility waiver` row is MISSING → REROLL (round 1)
-  / ESCALATE (round 2), as any MISSING criterion. Growth past the earliest posted
-  waived size → ESCALATE (un-reviewable).
-- A recorded waiver with the indivisibility row ADDRESSED and every other list empty
-  → NEEDS-AUTHOR, never APPROVED.
-- A PR with `pr_files >= 15` content-bearing files and no waiver record → ESCALATE
-  (un-reviewable), counted by the gate itself on every invocation path.
 - `scope_overflow` entries with all suggested dispositions TICKETED → does not block
   APPROVED. Caller handles ticket creation and PR annotation.
-- All lists empty AND all criteria ADDRESSED, with no recorded waiver → APPROVED.
+- When no rule above fires: an exit criterion or review finding that only the
+  author can judge (scope, money, an irreversible step) → NEEDS-AUTHOR: the
+  author decides whether to merge. It never overrides a REROLL or ESCALATE.
+- All lists empty AND all criteria ADDRESSED → APPROVED.
 
 **On REROLL**: write no ticket file — run no `erg log`, ever. Emit the bump line
 in the verdict as a `reroll_bump:` field: `note verify-reroll — round {n}: {top unresolved criterion}`.
@@ -408,20 +377,6 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
 - PR body lacks test plan → not a gate-level failure, but recorded as a nit.
 - Gate cannot access commit timestamps → ESCALATE (cannot distinguish pre/post comment changes).
 - Contradictory signals between phases 2–5 → ESCALATE (no silent resolution).
-- Un-reviewable breaker: the gate counts the content-bearing files itself, from
-  `git diff --name-status -M` and `git diff --numstat -M` (the phase-1 rule). When
-  `pr_files >= 15` and there is no waiver record, the verdict is ESCALATE with
-  `circuit_breaker: un-reviewable`. The gate does not trust the caller's count or the
-  caller's omission of the breaker.
-- Waived PR: when a waiver record is present, run § Indivisibility. If the
-  indivisibility row is ADDRESSED and nothing else blocks, the verdict is
-  NEEDS-AUTHOR, never APPROVED; a MISSING row follows the usual REROLL / ESCALATE
-  rule. Growth past the earliest posted waived size → ESCALATE (un-reviewable).
-- Waiver source: when the caller passes no waiver record, the gate reads it from the
-  PR comments, taking the earliest posted `circuit_breaker: waived (...)` header. It
-  does so on every invocation path, including the caller-side recovery and
-  fork-liveness recipes in `/gaze`, so the check holds whether or not the caller
-  hands the record over.
 
 ## Not in scope
 

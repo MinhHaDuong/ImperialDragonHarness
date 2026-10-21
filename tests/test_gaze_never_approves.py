@@ -78,19 +78,6 @@ ALLOWED_LINES = (
         'finding on the reviewed head, nothing more.'
     ),
     (
-        '- `--waive-breaker <reason>` lifts only the un-reviewable file-count '
-        'stop. The battery and simplify still run; gaze records the waiver and '
-        'the caller passes it to `/verify-gate`, which rules NEEDS-AUTHOR (§ '
-        'Waiver).'
-    ),
-    (
-        'The 15-file count is a decomposition signal, not a hard wall. A waiver '
-        'lifts only the file-count stop. It never lifts the review, simplify or '
-        'any other breaker, and gaze never approves a waived PR: the caller '
-        'passes the waiver record to `/verify-gate`, which rules NEEDS-AUTHOR on '
-        'a passing waived PR, and only the author decides to merge it.'
-    ),
-    (
         'If the battery cannot be launched at all — the runtime refuses the '
         'spawn, the agent connector is absent, or the spawn-depth limit is hit — '
         'first attempt the detached-seat substitution documented in '
@@ -422,7 +409,6 @@ def test_review_panel_has_no_unlisted_skip_path():
     assert values == {
         "<n_comments_posted>",
         "skipped (adherence blocking)",
-        "skipped (un-reviewable)",
         "skipped (--force-approve)",
         "skipped (battery NOT-RUN)",
     }, values

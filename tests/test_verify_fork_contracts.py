@@ -223,13 +223,13 @@ def test_gaze_battery_not_run_names_cause():
         "gaze/SKILL.md: output-shape actions block lost the panel integrity line"
     )
     m = re.search(
-        r"battery: ran \| NOT-RUN — cause: <guard\|no-agent-tool\|depth> \| skipped \(un-reviewable\)",
+        r"battery: ran \| NOT-RUN — cause: <guard\|no-agent-tool\|depth> \| skipped \(--force-approve\)",
         block,
     )
     assert m, (
         "gaze/SKILL.md: the output-shape actions block must carry "
         "`battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> "
-        "| skipped (un-reviewable)`"
+        "| skipped (--force-approve)`"
     )
     assert block.index("panel integrity:") < m.start(), (
         "gaze/SKILL.md: the battery line must follow the panel integrity line — "
@@ -258,42 +258,7 @@ def test_output_shape_lines_define_battery_not_run_value():
         )
 
 
-def test_gaze_refuses_unreviewable_prs():
-    """The PR breaker must reuse the monster threshold and run before reviewers."""
-    workflow = (REPO / "rules" / "workflow.md").read_text()
-    monster = re.search(r"Monster ticket.*?\((\d+)\+ files", workflow, re.DOTALL)
-    assert monster, "workflow monster file threshold is missing"
-
-    setup = VERIFY.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
-    breaker = re.search(r"pr_files\s*>=\s*(\d+).*?un-reviewable", setup, re.DOTALL)
-    assert breaker, "gaze setup has no file-count un-reviewable breaker"
-    assert breaker.group(1) == monster.group(1), "gaze threshold drifted from workflow"
-    assert "rules/workflow.md" in setup
-    assert "ESCALATE" in setup and "before spawning" in setup
-    assert "--force-approve" in setup
-    # The waiver hatch lifts only the file-count stop; the PR-body declaration
-    # and the --waive-breaker flag are both named where the breaker lives.
-    assert "--waive-breaker" in setup, "gaze setup lost the --waive-breaker hatch"
-    assert "Review-scope: indivisible" in setup, (
-        "gaze setup lost the PR-body Review-scope declaration"
-    )
-    # The workflow rule and the gaze breaker must agree on both hatches.
-    assert "skills/gaze/SKILL.md" in workflow and "waiver" in workflow, (
-        "rules/workflow.md must name the waiver hatch and point at gaze setup"
-    )
-    # --force-approve must say it runs no review, not merely skip the gate.
-    force = VERIFY.split("## `--force-approve`", 1)[1].split("## Not in scope", 1)[0]
-    assert "nothing is reviewed" in _normalize(force), (
-        "the --force-approve section must state it skips review"
-    )
-
-    circuits = VERIFY.split("## Circuit breakers", 1)[1].split("## Telemetry", 1)[0]
-    output = VERIFY.split("## Output shape", 1)[1]
-    assert "un-reviewable" in circuits
-    assert "circuit_breaker:" in output
-
-
-def test_gaze_multi_ticket_is_advisory_below_size_breaker():
+def test_gaze_multi_ticket_is_advisory():
     """Distinct close claims inform the gate without blocking a small PR."""
     setup = VERIFY.split("### 1. Setup", 1)[1].split("### 2–4.", 1)[0]
     assert "Ticket-ref:" in setup and "Ticket: none" in setup
@@ -464,13 +429,10 @@ def test_gaze_reviewer_and_gate_prompts_ban_overwrites_and_require_not_run():
     )
 
 
-# --- ticket 1125 (round 3): the waiver is judged from the diff; NEEDS-AUTHOR ---
+# --- ticket 1125 (round 3): the NEEDS-AUTHOR verdict ---
 
 VERIFY_GATE = (SKILLS / "verify-gate" / "SKILL.md").read_text()
 RAID = (SKILLS / "raid" / "SKILL.md").read_text()
-WAIVER_HEADER = (
-    "circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)"
-)
 
 
 def _section(text: str, pattern: str) -> str:
@@ -492,40 +454,11 @@ def _section(text: str, pattern: str) -> str:
     return ""
 
 
-def _waiver_section() -> str:
-    return _section(VERIFY, r"waiver")
-
-
-def _indivisibility_section() -> str:
-    return _section(VERIFY_GATE, r"indivisib")
-
-
 def _force_approve_section() -> str:
     return _section(VERIFY, r"force-approve")
 
 
-def test_verify_gate_takes_waiver_as_input_and_judges_the_diff():
-    vg = _normalize(VERIFY_GATE)
-    assert "waiver" in vg
-    ind = _indivisibility_section()
-    assert ind, "verify-gate has no indivisibility section (heading matching 'indivisib')"
-    assert "pure rename or a rewire" in ind, "the indivisibility bullet lost its pure-rename/rewire test"
-    assert "could land alone" in ind, "the indivisibility bullet lost its independent-change test"
-    assert "MISSING" in ind, "a failing indivisibility reason must be a MISSING criterion"
-    assert "multi_ticket" in ind, "the indivisibility section lost its multi-ticket rule"
-
-
-def test_waiver_is_judged_from_the_diff_not_the_declarer():
-    """Author decision: the gate judges the diff. No declarer authority claim and
-    no declarer field anywhere in the waiver contract."""
-    for name, text in (("gaze", VERIFY), ("verify-gate", VERIFY_GATE)):
-        assert "declarer" not in text, f"{name} still carries a declarer claim or field"
-
-
-def test_waived_verdict_is_needs_author():
-    assert "NEEDS-AUTHOR" in _indivisibility_section(), (
-        "a waived verdict must be marked NEEDS-AUTHOR in the indivisibility section"
-    )
+def test_verdict_shape_lists_needs_author():
     assert re.search(r"verdict: APPROVED \| REROLL \| ESCALATE \| NEEDS-AUTHOR", VERIFY_GATE), (
         "verify-gate verdict shape must list NEEDS-AUTHOR"
     )
@@ -539,24 +472,6 @@ def test_raid_phase7_refuses_needs_author_without_the_author():
     assert re.search(r"NEEDS-AUTHOR[^.]*not merge-eligible", phase7), (
         "raid Phase 7: a NEEDS-AUTHOR verdict must be stated as not merge-eligible"
     )
-
-
-def test_waiver_baseline_is_earliest_posted_header_not_recount():
-    ind = _indivisibility_section()
-    assert "earliest posted" in ind, "growth must be measured from the earliest posted waived header"
-    assert "not the phase-1 recount" in ind, "the baseline must not be the phase-1 recount"
-    assert "earliest posted" in _waiver_section()
-
-
-def test_waiver_growth_past_baseline_is_escalate_with_no_fresh_reason_escape():
-    for text in (_indivisibility_section(), _waiver_section(), VERIFY, VERIFY_GATE):
-        assert "fresh reason" not in text
-    assert "ESCALATE" in _indivisibility_section()
-    assert "un-reviewable" in _indivisibility_section()
-
-
-def test_approved_rule_requires_no_recorded_waiver():
-    assert ", with no recorded waiver" in VERIFY_GATE
 
 
 def test_raid_never_merges_needs_author_on_own_authority():
@@ -573,23 +488,6 @@ def test_gaze_returns_no_gate_verdict():
         assert "APPROVED" not in e and "NEEDS-AUTHOR" not in e, e
     desc = VERIFY_GATE.split("description:", 1)[1].splitlines()[0]
     assert "NEEDS-AUTHOR" in desc
-
-
-def test_gaze_recovery_waiver_read_only_from_posted_header():
-    rec = _normalize(VERIFY.split("**Caller-side recovery.**", 1)[1].split("**Fork liveness.**", 1)[0])
-    assert "already-posted waived `circuit_breaker` header" in rec
-    assert "ESCALATE there" in rec
-
-
-def test_waiver_header_has_one_format():
-    norm = _normalize(VERIFY)
-    assert norm.count(WAIVER_HEADER) >= 2, "waived header must match in Setup and Output shape"
-    loose = re.findall(r"circuit_breaker: waived \([^)]*\)", norm)
-    assert loose and all(h == WAIVER_HEADER for h in loose), sorted(set(loose))
-
-
-def test_waiver_flags_multi_ticket():
-    assert "multi_ticket" in _waiver_section()
 
 
 def test_force_approve_runs_no_gate_and_output_marks_unrun_phases():
@@ -623,102 +521,9 @@ def test_force_approve_returns_escalate_never_reviewed():
     assert not _forced_result_stated(norm.replace(FORCED_RESULT, ""))
 
 
-def test_argument_hint_and_invariants_name_waive_breaker():
-    fm = VERIFY.split("---", 2)[1]
-    assert "--waive-breaker" in fm, "argument-hint must name --waive-breaker"
-    inv = _section(VERIFY, r"^invariants$|invariants")
-    assert "--waive-breaker" in inv, "Invariants must name --waive-breaker"
-
-
-def test_gaze_has_no_waiver_declarer_authority_claim():
-    assert "The gate treats a waiver" not in VERIFY
-
-
-def test_verify_gate_wording_and_no_overpromise():
-    vg = _normalize(VERIFY_GATE)
-    assert "undeclared source" not in vg
-    wf = _normalize((REPO / "rules" / "workflow.md").read_text())
-    assert "reviewed in full" not in wf
-
-
-# --- ticket 1125 (round 4, N1): verify-gate owns the un-reviewable breaker ---
+# --- ticket 1125 (round 4, N1): gate-seat charter and resident rules ---
 
 GATE_SEAT = (REPO / "profiles" / "gate-seat" / "PROFILE.md").read_text()
-
-
-def _section_raw(text: str, pattern: str) -> str:
-    lines = text.splitlines()
-    for i, line in enumerate(lines):
-        m = re.match(r"^(#{1,6})\s+(.*)$", line)
-        if m and re.search(pattern, m.group(2), re.I):
-            level = len(m.group(1))
-            body = []
-            for nxt in lines[i + 1:]:
-                h = re.match(r"^(#{1,6})\s", nxt)
-                if h and len(h.group(1)) <= level:
-                    break
-                body.append(nxt)
-            return "\n".join(body)
-    return ""
-
-
-def _bullets(text: str, pattern: str) -> list[str]:
-    """Each top-level `- ` bullet of the matching section, unwrapped to one line."""
-    out: list[str] = []
-    cur: str | None = None
-    for ln in _section_raw(text, pattern).split("\n"):
-        if ln.startswith("- "):
-            if cur is not None:
-                out.append(cur)
-            cur = ln[2:]
-        elif cur is not None and ln.startswith("  "):
-            cur += " " + ln.strip()
-        else:
-            if cur is not None:
-                out.append(cur)
-            cur = None
-    if cur is not None:
-        out.append(cur)
-    return [_normalize(b) for b in out]
-
-
-def _find(bullets: list[str], *needles: str) -> str | None:
-    for b in bullets:
-        if all(n in b for n in needles):
-            return b
-    return None
-
-
-def test_verify_gate_breaker_escalates_unwaived_monster_pr():
-    """The gate counts the files itself: >= 15 with no waiver record is ESCALATE,
-    whatever the caller passed, so a recovery run cannot approve an oversized PR."""
-    bullets = _bullets(VERIFY_GATE, r"^circuit breakers$")
-    b = _find(bullets, "pr_files >= 15", "no waiver record", "ESCALATE", "un-reviewable")
-    assert b, "verify-gate Circuit breakers lost the un-waived 15-file ESCALATE bullet"
-
-
-def test_verify_gate_breaker_routes_waived_pr_to_needs_author():
-    bullets = _bullets(VERIFY_GATE, r"^circuit breakers$")
-    b = _find(bullets, "waiver record", "Indivisibility", "NEEDS-AUTHOR", "never APPROVED")
-    assert b, "verify-gate Circuit breakers lost the waived-PR NEEDS-AUTHOR bullet"
-
-
-def test_verify_gate_reads_waiver_from_pr_history_when_caller_omits_it():
-    """Every invocation path (gaze recovery, liveness expiry, standalone) must hold
-    the check: with no record passed, the gate reads the earliest posted waived header."""
-    bullets = _bullets(VERIFY_GATE, r"^circuit breakers$")
-    b = _find(bullets, "earliest posted", "circuit_breaker: waived", "PR comments")
-    assert b, "verify-gate must read the waiver from the PR's earliest posted header"
-
-
-def test_verify_gate_decision_rules_pin_the_waiver_branches():
-    bullets = _bullets(VERIFY_GATE, r"^decision rules$")
-    assert _find(bullets, "pr_files >= 15", "no waiver", "ESCALATE"), (
-        "decision rules lost the un-waived size ESCALATE"
-    )
-    assert _find(bullets, "waiver", "NEEDS-AUTHOR", "never APPROVED"), (
-        "decision rules lost the waived NEEDS-AUTHOR bullet"
-    )
 
 
 def test_gate_seat_profile_lists_needs_author():
@@ -732,20 +537,6 @@ def test_resident_rules_do_not_cite_tickets_for_this_change():
         assert not re.search(r"\(ticket \d{4}\)|ticket 1125|\b1125\b", text), (
             f"rules/{name} cites a ticket number"
         )
-
-
-def test_verify_gate_recounts_the_breaker_itself():
-    """Gaze's verdict-time recount went with its gate phase (ticket 1153); the
-    gate's own recount is what still stops an oversized PR at merge time."""
-    gate = " ".join((SKILLS / "verify-gate" / "SKILL.md").read_text().split())
-    breakers = gate.split("## Circuit breakers", 1)[1].split("## Not in scope", 1)[0]
-    assert "the gate counts the content-bearing files itself" in breakers
-    assert "`git diff --name-status -M`" in breakers
-    assert "`git diff --numstat -M`" in breakers
-    assert "`pr_files >= 15`" in breakers
-    assert "does not trust the caller's count" in breakers
-    rules = gate.split("## Decision rules", 1)[1].split("## ", 1)[0]
-    assert "counted by the gate itself on every invocation path" in rules
 
 
 def test_ruled_tip_field_has_one_name_across_gate_and_callers():

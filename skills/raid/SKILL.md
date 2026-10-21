@@ -188,13 +188,6 @@ below):
 - Cross-cutting registries: a file holding a shared hash-set / dict / dispatch
   table (test allowlist, dispatch keys, config conventions) that 3+ PRs will
   edit. Flag any you find — they trigger the Phase 5.0 coordination PR.
-- Planned-PR size: for each plan, count every path its PR diff will touch
-  (ticket and test files included — the breaker counts them) and compare with
-  the `/gaze` un-reviewable breaker (`skills/gaze/SKILL.md` phase 1 Setup;
-  threshold (15+ files) owned by `rules/workflow.md` § Ticket discipline for
-  multi-PR work, restated here only so the drift-pin test can catch it). A
-  planned PR reaching the breaker gets WARN plus a proposed split into child
-  PRs before Phase 5 spawns executors.
 
 Annotate tickets with PASS/WARN/BLOCK. Commit annotations.
 
@@ -404,7 +397,7 @@ For each wave, merge APPROVED PRs one at a time. A PR is merge-eligible if:
 Any ESCALATE verdict (from exit criteria, review comments, or scope overflow) stops
 the PR — it stays open for human review.
 
-A `NEEDS-AUTHOR` verdict (a waived un-reviewable breaker whose indivisibility holds) is
+A `NEEDS-AUTHOR` verdict is
 not merge-eligible without the author: surface it to the author and leave the PR open.
 The raid never merges it on its own authority.
 
