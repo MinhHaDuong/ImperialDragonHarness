@@ -2,10 +2,10 @@
 Title: Split oversized skills into a core plus references
 Created: 2026-10-20
 Author: Minh Ha-Duong
-Blocked-by: 1100
 
 --- log ---
 2026-10-20T06:32Z Minh Ha-Duong created
+2026-10-21T19:10Z reviewer note raid-premise-check — measured 2026-10-21: gaze 951 -> 230 lines (1143 and 1144 folded review-pr), roar 422 -> 240 plus runbooks (1136), verify-gate 385, raid 571 still read in full and has no references/. Residual scope: split raid into a core plus references read at the phase that needs them (and move its history lines out, taking 1130's raid share); gaze, roar and verify-gate are judged by the author's 'about 150 lines' only if still worth it after raid. Blocked-by 1100 dropped (gaze already reshaped).
 
 --- body ---
 ## Context
