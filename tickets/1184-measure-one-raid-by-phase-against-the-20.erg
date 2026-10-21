@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Measure one raid by phase against the 20-minute review budget
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T17:56Z reviewer created
+
+--- body ---
+## Context
+Child of ticket 1099 (bound review time), carrying its exit criterion 3, a measurement that can only
+be taken after 1099 lands: 1099 adds `scripts/seat_clock.py` (a 600 s cap on headless readers and a
+`roster` of each seat's wall time or failure) and the `seat times:` line of the `/gaze` result comment.
+The author's window is 20 minutes from first review to merge; raids 1080 and 1089 took 79 and 59
+(docs/discussions/2026-10-14-1096-design.md, "What the evidence says about the 20-minute window").
+Not blocked by 1099 in the DAG: it simply has nothing to measure until 1099 is merged.
+
+## How to measure
+Take the next raid (or hunt) after 1099 merges that runs `/gaze` with a panel. For one of its PRs, from
+the forge timestamps and the posted `/gaze` result comments, write the timeline: first review start,
+each `/gaze` round (its `seat times:` line, i.e. `seat_clock.py roster` output, and its `telemetry:
+wall=`), each `/verify-gate` round, fix rounds, merge. Attribute every minute to a phase (seat runs,
+timed-out or missing seats, retries, fix rounds, gate, waiting); label derived numbers as derived.
+
+## Exit criteria
+- [ ] One raid PR's closing time (first review to merge) is broken down by phase from the recorded
+      `seat times:` lines and forge timestamps, and reported against the 20-minute window.
+- [ ] Every seat that ran appears with its wall time or its failure; a gap in the record is named,
+      not filled.
+- [ ] No new numerical budget is asserted beyond 1099's 600 s reader cap; the report says whether
+      the window was met and which phase dominated.

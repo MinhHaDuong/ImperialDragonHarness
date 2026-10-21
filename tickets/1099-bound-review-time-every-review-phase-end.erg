@@ -11,6 +11,8 @@ Author: Minh Ha-Duong
 2026-10-15T16:10Z ChatGPT note Author confirms extending latency work to tests, CI and orchestration waiting; phased measurement and pilot added.
 2026-10-21T15:34Z reviewer reviewer note 2026-10-21 rescoped at the author's word and Blocked-by moved from tracker 1100 to its real prerequisite 1144: most items were fixed or made moot the same day (the startup failures, the test and validation waiting by PR 1583 and tracker 1045, the seat machinery by ticket 1176); three items stay (measure the seats, cap the external reader, never drop a seat silently).
 2026-10-21T16:58Z reviewer note blocker 1144 closed — Blocked-by removed.
+2026-10-21T17:56Z reviewer reviewer note exit criterion 3 (one raid measured by phase) is a post-landing measurement this PR cannot deliver (/verify-gate REROLL on PR 1616); handed to child 1184, criterion amended to point at it
+2026-10-21T17:56Z reviewer reviewer note filed child 1184 (measure one raid by phase against the 20-minute window, after 1099 lands)
 
 --- body ---
 ## Goal
@@ -66,8 +68,9 @@ What stays, three items:
 - [ ] The review result lists, per seat, its wall time or its failure (shared with ticket 1155).
 - [ ] The external reader has a hard cap and records `no report (timed out)`; a test or a stubbed run
       shows the caller continuing.
-- [ ] One raid is broken down by phase from the recorded lines, and its closing time (first review to
-      merge) is reported against the author's 20-minute window; no new numerical budget is asserted
-      beyond the reader's cap.
+- [ ] The raid measurement is handed off: delivered by child 1184 after this lands (one raid broken
+      down by phase from the recorded lines, its closing time reported against the author's 20-minute
+      window, no new numerical budget beyond the reader's cap). This PR files 1184; it cannot measure
+      a raid that runs on code not yet merged.
 - [ ] No seat is dropped silently: a missing seat appears as `no report`.
 - [ ] Nothing here requires a particular agent runtime.
