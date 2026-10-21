@@ -93,11 +93,18 @@ Queued is not merged. To learn the outcome, ask once with
 `"$IDH_ROOT/skills/merge/erg-pr-status" [-C WORKTREE] N`: exit 0 merged, 1
 failed (a check failed, or the PR closed unmerged), 2 pending, 3 the forge
 could not be read. It reads the forge a single time and never waits; **pending
-is a normal answer, not an error**. The caller asks again at its next step
-(raid: before the per-PR roar; roar: before its merged-branch pre-check) and
-never loops, sleeps or watches in the meantime. A runtime may wrap that one
-command in its own background wake-up as an optimisation; correctness never
-depends on it. A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
+is a normal answer, not an error**.
+
+**Waiting for a queued merge.** The caller waits itself and finishes the chain
+itself (raid: the per-PR roar; roar: its merged-branch pre-check and cleanup).
+Where the runtime runs background commands, it starts exactly one background
+command with a hard time bound of about 25 minutes, which polls this
+single-read status command at an interval inside the command and exits as soon
+as the status is no longer pending; the runtime wakes the caller on exit, and
+the caller continues from the status it reads. Never ask the author to wait or
+to re-run later; never a fixed-delay timer (it waits past the event); never an
+unbounded or foreground loop. A runtime without background commands asks once
+at its next step and reports the PR as pending. A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging — invoking `/merge` is explicit intent to merge.
 
 ## Before merging
 

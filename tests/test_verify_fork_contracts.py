@@ -875,3 +875,26 @@ def test_gate_refuses_a_head_without_a_completed_review():
     start = sessions.index("- **No gate without a completed review.**")
     end = sessions.index("\n\n", start)
     assert not _no_review_no_gate(sessions[:start] + sessions[end:])
+
+
+def test_queued_merge_wait_is_one_bounded_background_command():
+    """Author request: the caller waits for a queued merge itself, with one
+    bounded background command, and never hands the wait to the author."""
+    merge = _normalize((SKILLS / "merge" / "SKILL.md").read_text())
+    wait = merge.split("**Waiting for a queued merge.**", 1)[1].split("**", 1)[0]
+    for phrase in (
+        "exactly one background command with a hard time bound of about 25 minutes",
+        "polls this single-read status command at an interval inside the command",
+        "exits as soon as the status is no longer pending",
+        "the runtime wakes the caller on exit",
+        "Never ask the author to wait or to re-run later",
+        "never a fixed-delay timer",
+        "never an unbounded or foreground loop",
+        "A runtime without background commands asks once",
+    ):
+        assert phrase in wait, phrase
+    assert "never loops, sleeps or watches" not in merge
+    roar = _normalize((SKILLS / "roar" / "SKILL.md").read_text())
+    assert "§ Waiting for a queued merge" in roar
+    assert "never ask the author to wait or to re-run `/roar`" in roar
+    assert "the user or a later step re-runs" not in roar
