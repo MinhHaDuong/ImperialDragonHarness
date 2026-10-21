@@ -3,9 +3,11 @@ Title: 1045 child D: run each check once; gaze and gate read the result
 Created: 2026-10-21
 Author: reviewer
 Blocked-by: 1156
+Closed: folded into 1144 at the author's word (2026-10-21): the rule becomes one criterion of the fold; the full suite now takes about a minute, so the repeated runs cost far less than when 1171 was filed
 
 --- log ---
 2026-10-21T11:28Z reviewer created
+2026-10-21T15:29Z reviewer closed — folded into 1144 at the author's word (2026-10-21): the rule becomes one criterion of the fold; the full suite now takes about a minute, so the repeated runs cost far less than when 1171 was filed
 
 --- body ---
 ## Context

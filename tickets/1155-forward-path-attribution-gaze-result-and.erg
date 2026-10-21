@@ -2,17 +2,25 @@
 Title: Forward-path attribution: gaze result and review record list every seat (route, family, status)
 Created: 2026-10-20
 Author: reviewer
+Blocked-by: 1144
 
 --- log ---
 2026-10-20T19:22Z reviewer created
+2026-10-21T15:29Z reviewer reviewer note 2026-10-21 rescoped and blocked by 1144 at the author's word: one result-comment list of seats (role, family, model id as observed) and the roar lines written from it; the per-seat record, report hashes and stored reports are dropped (trust the orchestrator, ticket 1176).
 
 --- body ---
 ## Context
 Successor of ticket 1145 (closed as superseded, 2026-10-20). Author decision of 2026-10-20 (1146): transcript recovery stays out. PR #1528 merged with a capture failure: the /gaze verdict named "agents=6, same model family" and no seats, so no reviewer lines could be written. Advice (Fable, 2026-10-20): the forward path is the write-time ledger that PR #1521 (ticket 1142) already introduces, `scripts/review_evidence.py` records under `tickets/reviews/<base>..<head>/`. Verbatim model ids stay `model-state=runtime-masked` unless the runtime states them.
 
 ## Exit criteria
-- [ ] The review record written at verdict time carries, per seat: role, route alias, family, status `ran|reused|failed|skipped`, ruled tip, report hash and findings as path:line
-- [ ] Gaze's result block lists every seat (including skipped and inline-only runs as `skipped`), so roar can write reviewer lines without recovery
-- [ ] Seat reports no longer vanish with the review worktree (stored with the record, or hashes and findings carried by it)
-- [ ] Positive control: a known /gaze run whose seats are listed independently is reproduced exactly by the record
-- [ ] Blocked by #1521 and the 1153 stack (#1522-#1524) landing; coordinate with ticket 1154
+Rescoped by the author's decision on 2026-10-21 (trust the orchestrator; no per-seat record, floor or plan:
+tickets 1176 and 1144). The point of the ticket stands: a review result must say which seats ran, so that
+`/roar` can write the reviewer lines.
+- [ ] The review result comment lists each seat that ran, with its role, its model family and the model id as
+      observed from the launch (or `not observed`), and says which seats were skipped or failed.
+- [ ] `/roar` appends the `reviewer:` attribution lines to the PR body from that list, without recovering
+      anything from transcripts (decision 1146 of 2026-10-20 stands), and states a capture failure when the
+      list is missing a seat.
+- [ ] Positive control: a review whose seats are listed independently is reproduced exactly by the appended
+      lines.
+- [ ] Done after ticket 1144 (the fold of `review-pr` into `gaze`), since both define the result contract.
