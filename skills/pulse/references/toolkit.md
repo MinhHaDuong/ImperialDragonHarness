@@ -62,6 +62,7 @@ For each: when it fits, its prerequisite, what to check first, how to verify, ho
 - **Bound.** One batch per merge request, within its file limit (15 in the harness). Further batches are further merge requests.
 - **Verify.** The full gate passes; test count and gate time before and after, on one host; a reviewer samples the cuts against the keep classes.
 - **Undo.** Revert the batch.
+- **No guards on guards.** Add no test, check or rule whose subject is another test or guard (a file that must stay deleted, a negative control required of every test, a scan of the tests). Adding, removing and judging guards is this skill's work, nowhere else.
 
 ## Not remedies
 
