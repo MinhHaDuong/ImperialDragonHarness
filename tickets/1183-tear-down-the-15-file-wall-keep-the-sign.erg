@@ -5,6 +5,9 @@ Author: reviewer
 
 --- log ---
 2026-10-21T16:43Z reviewer created
+2026-10-21T16:52Z reviewer note regret trigger: a large PR merges after a REVIEWED whose seats read only the surface, and a blocker surfaces on main that a split would have caught; the signal is a /roar entry naming a post-merge blocker on a PR whose gaze result lists a review group over the ~400-line cap or a group with no seat. On that signal, revisit (git revert of the deletion commit restores the wall whole).
+2026-10-21T16:52Z reviewer note delete-list correction: scripts/raid-breaker.py and tests/test_raid_breaker_gate.py are the raid loop breaker (live gate vs silent executor), not the file count; kept. Deleted instead: the file-count breaker in gaze setup/SKILL/output/fork-contract, verify-gate's own recount and Indivisibility section, raid's planned-PR size bullet, and their tests.
+2026-10-21T16:52Z reviewer note allowlist (tests/test_gaze_never_approves.py) 13 -> 11, orchestrator-approved: removed exactly the two units the deletion removes, the '--waive-breaker <reason> lifts only the un-reviewable file-count stop...' bullet and the § Waiver opening 'The 15-file count is a decomposition signal, not a hard wall. A waiver lifts only the file-count stop...'; nothing added, no pattern loosened.
 
 --- body ---
 ## Context
