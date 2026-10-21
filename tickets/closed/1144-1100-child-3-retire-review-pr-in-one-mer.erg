@@ -2,6 +2,7 @@
 Title: 1100 child 3: retire review-pr in one merge wave
 Created: 2026-10-20
 Author: reviewer
+Closed: autoclosed — PR #1609
 
 --- log ---
 2026-10-20T08:22Z reviewer created
@@ -9,6 +10,7 @@ Author: reviewer
 2026-10-21T15:29Z reviewer reviewer note 2026-10-21 absorbs ticket 1171: seats run only targeted tests, the full suite runs once on the merge candidate (criterion added). Ticket 1155 (attribution of seats) is blocked by this one.
 2026-10-21T15:31Z reviewer note blocker 1143 closed — Blocked-by removed.
 2026-10-21T16:12Z reviewer note blocker 1141 closed — Blocked-by removed.
+2026-10-21T16:58Z reviewer closed — autoclosed — PR #1609
 
 --- body ---
 ## Context
