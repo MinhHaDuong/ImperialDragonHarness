@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Thin the wording-pin tests: second batch (the hermetic twins, the bash-env test, the hunt budget test) and the pointer repairs
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T16:14Z reviewer created
+
+--- body ---
+## Context
+Second batch of ticket 1181 (closed with PR 1596, which cut 25 tests and added the pulse syndrome and
+remedy). The author approved four more cuts on 2026-10-21 under "no second-order guards; guard
+management is pulse work"; they did not fit under the 15-file breaker with the first batch. The cutter's
+half-written worktree is `.claude/worktrees/t1181-hermetic-1332850` (uncommitted).
+
+## Exit criteria
+- [ ] Delete `tests/test_python_tests_are_hermetic.py` (ticket 0940; scans every Python test) and its shell
+      twin `tests/test_bash_tests_are_hermetic.sh`, `tests/test_bash_env_tested_via_subprocess.sh` (ticket
+      0351; asserts other tests run `bash-env.sh` in a subprocess) and `tests/test_hunt_test_budget.py`
+      (ticket 0376; pins that skills name a test-run budget). Reasons in the PR body; the history is the
+      2026-07-27 credential leak that led to the hermetic tests and the 22 killed runs behind 0376.
+- [ ] Repair the pointers that named them: `rules/coding-bash.md` (the "reference implementation" pointer,
+      about lines 131 and 168 to 171; fix by deletion where possible, the resident rules budget only
+      shrinks), the `tests/child_env.py` docstring, and the nine shell tests whose comments name the bash
+      hermetic suite. A search for the four file names finds nothing live afterwards (the generated
+      smart-testing cache is exempt).
+- [ ] Keep first-order tests untouched: `test_index_source_selftest.sh`, `test_test_quality.py`,
+      `test_smart_testing.py`, `test_main_guard_hook.py`, `test_check_pipefail.py`.
+- [ ] PR under the 15-file breaker (a second PR for the nine shell comments if needed); tests collected and
+      `make check` time before and after in the PR body.
+- [ ] No test, check or rule is added whose subject is another test or guard.
