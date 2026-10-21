@@ -58,21 +58,30 @@ tagged_workflow() {
 # number of failed calls via $pool_failed. Each call must report through files.
 pool_failed=0
 run_pool() {
-    local limit=$1 fn=$2 item running=0
+    local limit=$1 fn=$2 item running=0 i=0 dir f pids=()
     shift 2
-    pool_failed=0
+    dir=$(mktemp -d) || return 1
     for item in "$@"; do
         if [ "$running" -ge "$limit" ]; then
-            wait -n || pool_failed=$((pool_failed + 1))
+            # Throttle only. wait -n's status is not trusted: it can report 127 when
+            # two jobs end together, and counting that as a failure over-reported.
+            wait -n 2>/dev/null || true
             running=$((running - 1))
         fi
-        "$fn" "$item" &
+        ( rc=0; "$fn" "$item" || rc=$?; echo "$rc" > "$dir/$i" ) &
+        pids+=("$!")
         running=$((running + 1))
+        i=$((i + 1))
     done
-    while [ "$running" -gt 0 ]; do
-        wait -n || pool_failed=$((pool_failed + 1))
-        running=$((running - 1))
+    # Exact completion: wait on this pool's own pids, never on the caller's other
+    # background jobs (the podman service must keep running).
+    for item in "${pids[@]}"; do wait "$item" 2>/dev/null || true; done
+    # Exact failure count: one status file per item, written by the job itself.
+    pool_failed=0
+    for f in "$dir"/*; do
+        [ "$(cat "$f" 2>/dev/null)" = 0 ] || pool_failed=$((pool_failed + 1))
     done
+    rm -rf "$dir"
 }
 
 # Print the arguments one per line, first occurrence only, order kept. A job named
