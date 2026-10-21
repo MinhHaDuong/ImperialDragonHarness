@@ -2,10 +2,12 @@
 # Run the repository's CI workflow locally, job by job, with `act` in podman.
 #
 # The workflow file stays the single definition of the checks; this script only
-# supplies what a forge runner would: a clean clone, a runner image, a
-# pull_request event and, when a forge is reachable, a token. Usage:
+# supplies what a forge runner would: a clean clone, a runner image, an event
+# and, when a forge is reachable, a token. CI.yml runs under workflow_dispatch,
+# its trigger that needs no push (it has no pull_request trigger, ticket 1174);
+# ticket-collision.yml, when present, runs under a pull_request event. Usage:
 #
-#   scripts/local-ci.sh [job ...]     # default: every job of the workflow
+#   scripts/local-ci.sh [job ...]     # default: every job of both workflows
 #
 # What is tested: the COMMITTED HEAD of the current checkout, cloned fresh. An
 # uncommitted change is not tested (a warning says so). The forge tests the
@@ -34,6 +36,7 @@
 set -euo pipefail
 
 workflow=.github/workflows/CI.yml
+collision_workflow=.github/workflows/ticket-collision.yml
 root=$(git rev-parse --show-toplevel)
 # A repository with no workflow has intentionally opted out of CI. Check this
 # before project-local runner files or container tools are needed.
@@ -109,20 +112,43 @@ if [ "$forge" -eq 1 ]; then
 fi
 printf '{"pull_request":{"number":%s,"base":{"ref":"%s"}},"number":%s}\n' "$pr" "$base" "$pr" > "$work/event.json"
 
-act_in_clone() { (cd "$clone" && DOCKER_HOST="unix://$sock" act pull_request "$@"); }
-
-# The job list must be the workflow's, not whatever discovery printed: a run
-# that selects no jobs, or fewer than the workflow defines, checks nothing.
-defined=$(python3 -c 'import sys, yaml; print("\n".join(sorted(yaml.safe_load(open(sys.argv[1]))["jobs"])))' "$clone/$workflow")
-needs_forge=$(python3 -c 'import sys, json, yaml; j = yaml.safe_load(open(sys.argv[1]))["jobs"]; print("\n".join(k for k, v in j.items() if "secrets." in json.dumps(v)))' "$clone/$workflow")
-listing=$(act_in_clone -l 2> "$work/list.log") || { echo "local-ci: act -l failed: $(cat "$work/list.log")" >&2; exit 2; }
-listed=$(awk 'NR>1 && NF {print $2}' <<< "$listing" | sort)
-if [ "$listed" != "$defined" ]; then
-    echo "local-ci: act lists a different job set than the workflow defines; refusing to report a pass" >&2
-    echo "  workflow defines: $(tr '\n' ' ' <<< "$defined")" >&2
-    echo "  act lists:        $(tr '\n' ' ' <<< "$listed")" >&2
-    exit 2
+# Each workflow file with the event it is run under: one a workflow still
+# accepts, or act selects none of its jobs.
+workflows=("$workflow")
+events=(workflow_dispatch)
+if [ -e "$clone/$collision_workflow" ]; then
+    workflows+=("$collision_workflow")
+    events+=(pull_request)
 fi
+
+# The job list must be the workflows', not whatever discovery printed: a run
+# that selects no jobs, or fewer than the workflows define, checks nothing.
+# Each job maps to the index of its workflow, whose tagged copy is
+# $work/workflow-<index>.yml.
+declare -A wf_of=()
+defined=
+needs_forge=
+for i in "${!workflows[@]}"; do
+    wf=${workflows[$i]}
+    wf_jobs=$(python3 -c 'import sys, yaml; print("\n".join(sorted(yaml.safe_load(open(sys.argv[1]))["jobs"])))' "$clone/$wf")
+    needs_forge+=$(python3 -c 'import sys, json, yaml; j = yaml.safe_load(open(sys.argv[1]))["jobs"]; print("\n".join(k for k, v in j.items() if "secrets." in json.dumps(v)))' "$clone/$wf")$'\n'
+    listing=$( (cd "$clone" && DOCKER_HOST="unix://$sock" act "${events[$i]}" -W "$wf" -l) 2> "$work/list.log") \
+        || { echo "local-ci: act -l failed on $wf: $(cat "$work/list.log")" >&2; exit 2; }
+    listed=$(awk 'NR>1 && NF {print $2}' <<< "$listing" | sort)
+    if [ "$listed" != "$wf_jobs" ]; then
+        echo "local-ci: act lists a different job set for $wf under ${events[$i]} than the workflow defines; refusing to report a pass" >&2
+        echo "  workflow defines: $(tr '\n' ' ' <<< "$wf_jobs")" >&2
+        echo "  act lists:        $(tr '\n' ' ' <<< "$listed")" >&2
+        exit 2
+    fi
+    while IFS= read -r job; do
+        [ -z "${wf_of[$job]+x}" ] || { echo "local-ci: job '$job' is defined in two workflows" >&2; exit 2; }
+        wf_of[$job]=$i
+    done <<< "$wf_jobs"
+    defined+="$wf_jobs"$'\n'
+    tagged_workflow "$clone/$wf" "$work/workflow-$i.yml" "r$$"
+done
+defined=${defined%$'\n'}
 if [ "$#" -gt 0 ]; then
     mapfile -t jobs < <(dedupe_args "$@")
     for job in "${jobs[@]}"; do
@@ -135,10 +161,9 @@ fi
 # Each job runs in its own clone, in parallel, at most min(jobs, nproc / 2) at
 # a time. A job writes its verdict to $work/<job>.rc and its log to
 # $work/<job>.log; the report below is printed in job order, not finish order.
-tagged_workflow "$clone/$workflow" "$work/workflow.yml" "r$$"
 
 run_job() {
-    local job=$1 jclone="$work/clone-$1" rc=0
+    local job=$1 jclone="$work/clone-$1" rc=0 i=${wf_of[$1]}
     if [ "$forge" -eq 0 ] && grep -qxF "$job" <<< "$needs_forge"; then
         echo skip > "$work/$job.rc"
         return 0
@@ -148,8 +173,8 @@ run_job() {
         git -C "$jclone" remote set-url origin "$origin"
         git -C "$jclone" fetch --quiet origin
     fi
-    group_run "$job" timeout 1800 bash -c 'cd "$1" && shift && DOCKER_HOST="unix://$1" act pull_request -W "$6" --pull=false --bind -e "$2" --secret-file "$3" -P "ubuntu-latest=$4" -j "$5"' _ \
-        "$jclone" "$sock" "$work/event.json" "$secrets" "$image" "$job" "$work/workflow.yml" > "$work/$job.log" 2>&1 || rc=$?
+    group_run "$job" timeout 1800 bash -c 'cd "$1" && shift && DOCKER_HOST="unix://$1" act "$7" -W "$6" --pull=false --bind -e "$2" --secret-file "$3" -P "ubuntu-latest=$4" -j "$5"' _ \
+        "$jclone" "$sock" "$work/event.json" "$secrets" "$image" "$job" "$work/workflow-$i.yml" "${events[$i]}" > "$work/$job.log" 2>&1 || rc=$?
     echo "$rc" > "$work/$job.rc"
     rm -rf "$jclone"
 }

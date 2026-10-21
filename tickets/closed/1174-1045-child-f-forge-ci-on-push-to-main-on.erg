@@ -2,9 +2,11 @@
 Title: 1045 child F: forge CI on push to main only, keep local-ci and the PR-only collision check working
 Created: 2026-10-21
 Author: reviewer
+Closed: autoclosed — PR #1571
 
 --- log ---
 2026-10-21T11:53Z reviewer created
+2026-10-21T12:44Z reviewer closed — autoclosed — PR #1571
 
 --- body ---
 ## Context

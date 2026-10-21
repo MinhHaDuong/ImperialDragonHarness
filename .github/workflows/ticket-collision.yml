@@ -1,0 +1,29 @@
+name: ticket-collision
+
+# The one PR-only check, kept on pull requests when the full CI.yml stopped
+# running there (ticket 1174): it takes seconds and reads the forge, which the
+# local gate cannot replace. scripts/local-ci.sh also runs this file, under a
+# pull_request event, when it has forge access.
+on:
+  pull_request:
+
+jobs:
+  cross-pr-ticket-collision:
+    # Guards the optimistic-ID trap (git-erg#282) across OPEN PRs: fails a PR
+    # whose newly-added ticket ID is also added by another open PR. Needs the
+    # PR's number and the base ref, hence pull_request only.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Full history so `origin/<base>` resolves for the added-ticket diff.
+          fetch-depth: 0
+      - name: Check for cross-PR ticket-ID collisions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE_REF: origin/${{ github.base_ref }}
+          SELF_PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: bash scripts/check-cross-pr-ticket-collision.sh
