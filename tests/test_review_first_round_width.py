@@ -38,7 +38,9 @@ def test_callers_preserve_first_round_width_and_override():
 
 def test_gaze_always_runs_agent_c_and_defers_width_to_review_pr():
     gaze = GAZE.read_text()
-    agent_c = gaze.split("**Agent C — PR review**", 1)[1].split("Otherwise route", 1)[0]
+    # Both ends must exist, or the slice silently grows to the whole file.
+    assert "**Agent C — PR review**" in gaze and "Wait for all spawned agents" in gaze
+    agent_c = gaze.split("**Agent C — PR review**", 1)[1].split("Wait for all spawned agents", 1)[0]
     assert "tier" not in agent_c.lower()
     assert "panel-width.json" in agent_c
     assert "regardless of the risk" not in agent_c
