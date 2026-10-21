@@ -142,11 +142,6 @@ belongs with the command it recovers.)
   Immediately before `erg-pr-merge`, run `git fetch origin`, then
   `git rev-parse HEAD` == `git rev-parse origin/<branch>` == the gate's
   `ruled_tip_sha`; any mismatch means sync or re-gate, never merge.
-  **Documented exception:** PRs gated before this rule (#1522, #1523) merge
-  with the helper's own ticket-only close commit on top of the ruled tip — one
-  `ticket(<id>): close and archive — PR #<n>` commit whose `git diff
-  --no-renames --name-only <ruled> origin/<branch>` lists only `tickets/`
-  paths. Nothing else qualifies.
 - **A gaze result of ESCALATE (or none accepted) means no gate and no merge:**
   the review never completed, and the PR goes to the author. "Accepted" means a
   result is present and its `reviewed_head_sha` is not stale against the branch

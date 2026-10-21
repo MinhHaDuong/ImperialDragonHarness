@@ -115,7 +115,7 @@ def test_merge_gates_the_head_that_merges():
         "origin/<branch>` at merge time, read after `git fetch origin`; otherwise "
         "re-gate, do not merge." in merge
     )
-    assert "PRs gated before this rule (#1522, #1523)" in merge
+    assert "#1522" not in merge and "Documented exception" not in merge
     assert "rev-list --count <ruled>" not in merge
     # Premise: the helper skips an already closed and archived ticket.
     assert 'compgen -G "tickets/closed/${tid}-*.erg"' in ERG_PR_MERGE
