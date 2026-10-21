@@ -1,0 +1,16 @@
+%erg 0.1
+Title: 1153a: gaze never returns APPROVED, old battery deleted
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T06:55Z reviewer created
+
+--- body ---
+## Context
+Child of tracker 1153 (itself child 2a of tracker 1100). Re-slice of the gaze shrink by criterion, 2026-10-21, after the four-PR stack (#1522 to #1524, #1535) proved ungateable as a whole: the installed verify-gate escalates 15 or more files and its waiver row only covers pure renames. Plan of record: docs/discussions/2026-10-14-1096-design.md. The final tree of the three children must be byte-identical to the frozen stack tip cdd9d4f6.
+
+## Exit criteria
+- [ ] Gaze reviews and never returns APPROVED; verify-gate remains the gate: `tests/test_gaze_never_approves.py` proves it with a frozen allowlist of verdict-mentioning lines, the result enum and negative controls, including alternate approval language ("LGTM, ship it", "verdict: ok")
+- [ ] The old tier battery and `agents/gaze-pr-review.md` are deleted with no alias (grep-proven outside closed tickets and historical discussions)
+- [ ] PR under the 15-file breaker; catalog regenerated and drift check clean

@@ -1,0 +1,18 @@
+%erg 0.1
+Title: 1153b: callers own the gate (sessions, close-before-gating, ruled tip)
+Created: 2026-10-21
+Author: reviewer
+Blocked-by: 1160
+
+--- log ---
+2026-10-21T06:55Z reviewer created
+
+--- body ---
+## Context
+Child of tracker 1153, blocked by 1160 (stack order). The callers of gaze and verify-gate must agree on one contract once gaze stops gating.
+
+## Exit criteria
+- [ ] raid, merge, hunt, dashboard, verify-gate and rules/git.md agree: no gate after a gaze ESCALATE or a missing or stale result; callers own gate sessions (one UUID per PR, same `session=` on round 1 and the single re-gate, one two-round cap on every path including the permission-denial recovery); the gate makes its own worktree
+- [ ] The caller closes the ticket on the branch before gating, and the merge prerequisite is one line: the gate's `ruled_tip_sha` equals the branch head, else re-gate; one field name everywhere
+- [ ] raid owns the fix-and-regate loop with gaze's old guards (10-minute timeout, red test first, test budget with pre-push gate, ESCALATE when the gate disagrees with the reviewers)
+- [ ] grep-proven: no live caller still keys on an APPROVED gaze; PR under the 15-file breaker; catalog drift clean
