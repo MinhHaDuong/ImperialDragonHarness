@@ -50,3 +50,9 @@ def test_failed_bundle_is_surfaced_by_roar_not_molt():
 
 def test_task_branch_still_needs_ancestry():
     assert 'merge-base --is-ancestor "$head" "$base_tip"' in _function("exit_check")
+
+
+def test_gated_bundle_exit_reads_the_gate_record_and_fails_closed():
+    probe = _function("bundle_armed")
+    assert 'merge-gate.py' in probe and '"$gate" enabled' in probe and '"$gate" check' in probe
+    assert "COULD-NOT-LOOK cannot read the base's merge-gate declaration" in probe

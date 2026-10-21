@@ -107,15 +107,19 @@ branch after the task merge. Do not create separate ticket, docs or memory PRs.
 Start this branch before the first write; all writes stay inside the project.
 
 After completing the ticket checks in steps 7–8, commit the complete bundle,
-push it and open **one PR**. Fast-track it through the
-project's required checks and enable auto-merge using its supported merge
-method. This is standing authorization for roar's bounded wrap-up bundle;
+push it and open **one PR**. Fast-track it: on a gated base
+(`skills/merge/SKILL.md` § Gated base) write its gate record (a bundle that
+touches only light paths gets the light record, validate-tickets alone) and
+start the one bounded background command that re-runs the merge helper while
+it exits 2; elsewhere pass the project's required checks and enable auto-merge
+using its supported merge method. This is standing authorization for roar's bounded wrap-up bundle;
 no further confirmation is needed. Do not bypass failing checks or protected
 branch requirements. Hoard, suggested in lair’s conclusion, remains a separately
 invoked and reviewed workflow, launched in a new `/clear` session.
 A failed check or submission leaves the one branch preserved and reported.
 Do not wait for the bundle's checks: step 9's exit check lets the
-worktree go once the branch is pushed and auto-merge is armed.
+worktree go once the branch is pushed and auto-merge is armed, or, on a gated
+base, once a passing gate record covers the bundle's candidate.
 
 ## Close and clean up
 

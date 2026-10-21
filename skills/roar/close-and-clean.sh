@@ -282,6 +282,22 @@ bundle_armed() { # <head oid>
     if [ "$answer" != "$(printf '%s\t%s' "$1" "refs/heads/$BUNDLE")" ]; then
         note "EXIT: KEEP-PENDING bundle $BUNDLE on origin differs from HEAD — push it"; bump 1; return 1
     fi
+    # Gated base (ticket 1156): nothing is armed there; the durable state is a
+    # passing gate record on the bundle's candidate, and the caller's bounded
+    # background re-run of the merge helper lands it. Fail closed: an
+    # unreadable declaration or record is COULD-NOT-LOOK, never "ungated".
+    local gate="$IDH_ROOT/scripts/merge-gate.py" grc=0 crc=0
+    python3 "$gate" enabled --base "$base_tip" >/dev/null 2>&1 || grc=$?
+    case "$grc" in
+        0)  python3 "$gate" check --base "$base_tip" --head "$1" >/dev/null 2>&1 || crc=$?
+            case "$crc" in
+                0) note "EXIT: bundle $BUNDLE pushed, gate record passes on its candidate"; return 0 ;;
+                1|2) note "EXIT: KEEP-PENDING bundle $BUNDLE has no passing gate record — record it"; bump 1; return 1 ;;
+                *) note "EXIT: COULD-NOT-LOOK cannot read the gate record for $BUNDLE"; bump 2; return 1 ;;
+            esac ;;
+        1)  ;;
+        *)  note "EXIT: COULD-NOT-LOOK cannot read the base's merge-gate declaration"; bump 2; return 1 ;;
+    esac
     # <!-- harness-extension-point --> forge read-back of the merge request
     armed=$(gh pr view "$BUNDLE" --json state,autoMergeRequest \
         --jq 'select(.state == "OPEN" and .autoMergeRequest != null) | "armed"' 2>/dev/null) || {
