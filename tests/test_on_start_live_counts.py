@@ -120,13 +120,13 @@ def test_claude_specific_lines_need_claude_project_dir(tmp_path):
     assert "effort level" not in claude
 
 
-def test_runs_without_timeout_and_hostname(tmp_path):
-    """A host with neither tool (stock macOS lacks `timeout`) still gets the
+def test_runs_with_minimal_path(tmp_path):
+    """A host whose PATH holds only the tools the script names still gets the
     host line and the counts."""
     bindir = tmp_path / "bin"
     bindir.mkdir()
     for tool in ("bash", "sh", "sed", "grep", "git", "python3", "dirname",
-                 "uname", "cat"):
+                 "uname", "cat", "timeout"):
         found = shutil.which(tool)
         assert found, tool
         (bindir / tool).symlink_to(found)
