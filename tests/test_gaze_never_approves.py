@@ -503,8 +503,9 @@ def test_missing_perspective_is_retried_once_before_degraded():
     dropped = re.sub(r"- \*\*One retry\.\*\*.*?(?=\n\n|\n- )", "", GAZE, flags=re.S)
     assert dropped != GAZE and not _has_retry_rule(dropped)
     review_pr = (ROOT / "skills" / "review-pr" / "SKILL.md").read_text(encoding="utf-8")
-    preflight = " ".join(review_pr.split("**Fan-out preflight:**", 1)[1].split())
-    assert "`no report` and retry it once" in preflight
+    collection = review_pr.split("\n## Collection", 1)[1].split("\n## ", 1)[0]
+    assert "is re-run once, alone, over the whole PR" in " ".join(collection.split())
+    assert "is re-run once" not in review_pr.replace(collection, "")
 
 
 def test_result_is_posted_after_cleanup():

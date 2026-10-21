@@ -126,8 +126,7 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
    unlaunched — `no report`, never a simulated verdict; the manifest and the
    landed `.md` artifacts, not the spawn return values, are the source of truth
    for what ran.
-   Keep every unlaunched manifest entry as `no report` and retry it once
-   (§ Collection) before recording anything. If it still did not launch, write
+   Keep every unlaunched manifest entry as `no report`. Write
    `PANEL-INTEGRITY: DEGRADED — Agent tool unavailable or spawn failed;
    selected perspectives not run` and `dissent: unavailable` into
    `<panel>/review.md`, post them in the single PR review, and return them in
@@ -269,7 +268,7 @@ whether five reviewers approved in silence or none of them ever started.
 Never wait unbounded, and never extend the deadline to avoid recording a gap.
 A `no report` perspective is re-run once, alone, over the whole PR with the
 brief of its missed launch, before synthesis and posting, so the round does not
-advance (see /gaze phase 6). The retry is a second window of the same bound, not
+advance. The retry is a second window of the same bound, not
 an extension of the first, and happens once. If it still has no report, proceed
 to synthesis with what landed, carrying the gap forward by name: write and post a
 `PANEL-INTEGRITY: DEGRADED` line naming it; set `dissent: unavailable` instead of `dissent: none`.

@@ -153,13 +153,12 @@ deadline before it synthesizes; gaze's fork waits on the skill's return, so
 the fork contract holds one layer down.
 
 **Panel integrity in gaze's result.** If the review skill itself cannot launch,
-or reports that the Agent tool is unavailable or a spawn failed after its one
-retry, gaze does not
+or reports that the Agent tool is unavailable or a spawn failed, gaze does not
 substitute its own sequential review: it records the failure, marks the review
 unresolved and claims no completed review round. Carry the exact
 `PANEL-INTEGRITY:` line the skill posted (`PANEL-INTEGRITY: DEGRADED — Agent
 tool unavailable or spawn failed; selected perspectives not run`, or `missing
-perspective report: <name>` for a perspective still missing at the bounded collection deadline of its one retry, phase 6) and its `dissent: unavailable` into the /gaze result comment, and use
+perspective report: <name>` for a perspective still missing at the bounded collection deadline) and its `dissent: unavailable` into the /gaze result comment, and use
 `panel integrity: DEGRADED` there. Never write `dissent: none` for this path.
 When the invoking toolset lacks the Agent tool, the review skill first applies
 the detached-seat substitution in skills/review-pr/SKILL.md instead of degrading.
