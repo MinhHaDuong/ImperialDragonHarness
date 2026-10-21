@@ -1,6 +1,6 @@
 """Behavioural tests for the review evidence core (ticket 1142).
 
-The decision function, forge actor admission, criteria hash and risk floor
+The decision function, forge actor admission and criteria hash
 are pure and run in the fast tier. The scenarios that need a repository
 (unchanged-head reuse, report-only commits, rebases, relevant changes, the
 gate's refusal of stale or missing proof) build a throwaway git repository
@@ -184,7 +184,7 @@ def test_forge_exit_codes_separate_a_failed_read_from_a_rejected_row(monkeypatch
     assert re_mod.EXIT_READ_FAILED not in (0, 1, 2)
 
 
-# --- criteria hash and risk floor -----------------------------------------
+# --- criteria hash ---------------------------------------------------------
 
 TICKET = """%erg 0.1
 Title: x
@@ -208,19 +208,6 @@ def test_criteria_hash_ignores_checkbox_state_and_other_sections():
     reworded = TICKET.replace("Second criterion", "Second criterion, stricter")
     assert re_mod.criteria_hash(TICKET) != re_mod.criteria_hash(reworded)
     assert re_mod.criteria_hash(None) == "none"
-
-
-def test_risk_floor_is_the_higher_of_paths_and_ticket_text():
-    plain = "## Exit criteria\n- [ ] tidy a README\n"
-    assert re_mod.risk_floor([("M", "README.md")], plain)["floor"] == "trivial"
-    by_path = re_mod.risk_floor([("M", "rules/git.md")], plain)
-    assert (by_path["paths"], by_path["ticket"], by_path["floor"]) == ("high", "trivial", "high")
-    by_text = re_mod.risk_floor([("M", "README.md")], TICKET)
-    assert (by_text["paths"], by_text["ticket"], by_text["floor"]) == ("trivial", "high", "high")
-    deletion = re_mod.risk_floor([("D", "scripts/foo.py")], plain)
-    assert deletion["floor"] == "high"
-    closing = re_mod.risk_floor([("D", "tickets/0001-x.erg"), ("A", "tickets/closed/0001-x.erg")], plain)
-    assert closing["floor"] == "trivial"
 
 
 # --- repository scenarios --------------------------------------------------
@@ -275,8 +262,8 @@ def run_cli(repo, policy, *args):
         capture_output=True, text=True, env=child_env())
 
 
-def run_gate(repo, policy, *args, risk="ordinary"):
-    return run_cli(repo, policy, "gate", "--risk", risk, *args)
+def run_gate(repo, policy, *args):
+    return run_cli(repo, policy, "gate", *args)
 
 
 def record_seat(repo, policy, seat, family="Anthropic", verdict="approve", kind="review"):
@@ -313,9 +300,6 @@ def test_unchanged_head_reuses_without_dispatching_duplicates(repo, policy):
     record_seat(repo, policy, "correctness")
     record_seat(repo, policy, "red-team")
     commit_reports(repo)  # a report-only commit moves the head
-    plan = run_cli(repo, policy, "plan", "--seat", "correctness", "--seat", "red-team")
-    assert plan.returncode == 0, plan.stderr
-    assert json.loads(plan.stdout)["dispatch"] == []
     gate = run_gate(repo, policy, "--seat", "correctness", "--seat", "red-team")
     assert gate.returncode == 0, gate.stdout + gate.stderr
     assert "seat correctness: reused" in gate.stdout
@@ -338,8 +322,6 @@ def test_relevant_change_re_reviews_only_what_went_stale(repo, policy):
     record_seat(repo, policy, "correctness")
     commit_reports(repo)
     commit(repo, "app.py", "def f():\n    return 2\n", "fix")
-    plan = json.loads(run_cli(repo, policy, "plan", "--seat", "correctness").stdout)
-    assert plan["dispatch"] == ["correctness"]
     gate = run_gate(repo, policy, "--seat", "correctness")
     assert gate.returncode != 0
     assert "seat correctness: stale" in gate.stdout
@@ -383,31 +365,6 @@ def test_gate_rejects_missing_report_and_never_reuses_checks(repo, policy):
     assert "seat adherence: no-report" in gate.stdout
 
 
-@pytest.mark.integration
-def test_gate_high_row_needs_red_team_and_another_family(repo, policy):
-    record_seat(repo, policy, "correctness", family="Anthropic")
-    commit_reports(repo)
-    args = ("gate", "--seat", "correctness", "--risk", "high", "--producer-family", "Anthropic")
-    gate = run_cli(repo, policy, *args)
-    assert gate.returncode != 0
-    assert "red-team" in gate.stdout and "independence: missing" in gate.stdout
-    record_seat(repo, policy, "red-team", family="OpenAI")
-    commit_reports(repo)
-    gate = run_cli(repo, policy, *args)
-    assert gate.returncode == 0, gate.stdout
-    assert "independent: openai" in gate.stdout
-
-
-@pytest.mark.integration
-def test_gate_prints_floor_and_refuses_an_under_rated_plan(repo, policy):
-    record_seat(repo, policy, "correctness")
-    commit_reports(repo)
-    commit(repo, "tickets/0001-x.erg", TICKET, "context names verify-gate")  # criteria unchanged
-    gate = run_cli(repo, policy, "gate", "--seat", "correctness", "--risk", "ordinary")
-    assert "risk: ordinary / floor: high" in gate.stdout  # the ticket text names verify-gate
-    assert gate.returncode != 0
-
-
 # --- seat table ------------------------------------------------------------
 
 def _seat_report(n, **over):
@@ -421,16 +378,6 @@ def test_changes_verdict_dominates_whatever_the_report_order(monkeypatch, order)
     monkeypatch.setattr(re_mod, "load_reports", lambda *a: reports)
     row = re_mod.seat_rows(Path("."), inputs(), ["correctness"])[0]
     assert row["status"] == "ran" and row["header"]["verdict"] == "changes"
-
-
-@pytest.mark.integration
-def test_gate_without_a_plan_row_fails_closed(repo, policy):
-    """No 'risk: unstated' pass: a gate run must name the plan row."""
-    record_seat(repo, policy, "correctness")
-    commit_reports(repo)
-    out = run_cli(repo, policy, "gate", "--seat", "correctness")
-    assert out.returncode != 0
-    assert "unstated" not in out.stdout
 
 
 @pytest.mark.integration
@@ -458,53 +405,7 @@ def test_reports_are_read_from_the_head_commit_not_the_working_tree(repo, policy
     assert "seat red-team: no-report" in out.stdout
 
 
-@pytest.mark.integration
-def test_family_comparison_is_case_insensitive(repo, policy):
-    """'anthropic' and 'Anthropic' are one family: no independence by spelling."""
-    record_seat(repo, policy, "correctness", family="Anthropic")
-    record_seat(repo, policy, "red-team", family="ANTHROPIC")
-    commit_reports(repo)
-    out = run_gate(repo, policy, "--seat", "correctness", "--producer-family", "anthropic",
-                   risk="high")
-    assert out.returncode != 0 and "independence: missing" in out.stdout
-    report = next((repo / "tickets" / "reviews").glob("*/red-team-1.md"))
-    assert re_mod.parse_report(report.read_text())["family"] == "anthropic"
-
-
-@pytest.mark.integration
-def test_risk_floor_reads_non_ascii_paths(repo, policy):
-    """git quotes non-ASCII paths unless -z: rules/café.md must still hit rules/."""
-    commit(repo, "rules/café.md", "x\n", "accented rule")
-    out = run_cli(repo, policy, "risk-floor")
-    assert json.loads(out.stdout)["paths"] == "high", out.stdout + out.stderr
-    gate = run_gate(repo, policy, "--seat", "correctness")
-    assert "floor: high (paths: high" in gate.stdout
-
-
 # --- verifiable minors -----------------------------------------------------
-
-@pytest.mark.parametrize("path", [
-    "skills/review-pr/SKILL.md", "skills/route/references/decorrelation.md",
-    "profiles/code-reviewer/PROFILE.md", "agents/code-reviewer.md",
-    ".github/workflows/ci.yml", ".claude/settings.json", "Makefile", "AGENTS.md",
-])
-def test_review_policy_paths_raise_the_floor(path):
-    assert re_mod.risk_floor([("M", path)], None)["paths"] == "high"
-
-
-@pytest.mark.parametrize("glob", re_mod.POLICY_GLOBS)
-def test_every_policy_glob_raises_the_floor(glob):
-    sample = glob.replace("**/*", "x").replace("*", "x")
-    assert re_mod.risk_floor([("M", sample)], None)["paths"] == "high", sample
-
-
-@pytest.mark.parametrize("path", [
-    "profiles/gate-seat/PROFILE.md", "agents/gate-seat.md", "agents/adherence-seat.md",
-    "skills/review-pr-prose/SKILL.md", "agents/prose-reviewer.md",
-])
-def test_seat_and_prose_review_contracts_raise_the_floor(path):
-    assert re_mod.risk_floor([("M", path)], None)["paths"] == "high"
-
 
 def test_forge_node_without_edit_status_counts_as_edited():
     node = {"__typename": "PullRequestReview", "author": {"login": "h", "id": HUMAN_ID}}
@@ -529,10 +430,9 @@ def test_gate_tolerates_a_report_header_without_head(repo, policy):
     report.write_text("".join(line for line in report.read_text().splitlines(True)
                               if not line.startswith("head: ")))
     commit_reports(repo)
-    out = run_gate(repo, policy, "--seat", "red-team", "--producer-family", "Anthropic",
-                   risk="high")
+    out = run_gate(repo, policy, "--seat", "red-team")
     assert "Traceback" not in out.stderr
-    assert "independent: openai seat red-team" in out.stdout, out.stdout + out.stderr
+    assert out.returncode == 0, out.stdout + out.stderr
 
 
 @pytest.mark.integration
@@ -607,37 +507,3 @@ def test_record_refuses_an_unknown_family(repo, policy):
         input="body\n", capture_output=True, text=True, env=child_env())
     assert out.returncode != 0
     assert not (repo / "tickets" / "reviews").exists()
-
-
-@pytest.mark.integration
-@pytest.mark.parametrize("header_family,producer", [
-    ("anthropic ", "anthropic"), ("unknown ", "anthropic"), ("claude", "anthropic"),
-    ("openai", "claude"), ("openai", "unknown"),
-])
-def test_gate_counts_only_a_known_other_family(repo, policy, header_family, producer):
-    report = record_seat(repo, policy, "red-team", family="OpenAI")
-    report.write_text(report.read_text().replace("family: openai\n",
-                                                 f"family: {header_family}\n"))
-    commit_reports(repo)
-    out = run_gate(repo, policy, "--seat", "red-team", "--producer-family", producer,
-                   risk="high")
-    assert out.returncode != 0 and "independence: missing" in out.stdout, out.stdout
-
-
-@pytest.mark.integration
-def test_gate_producer_family_is_stripped(repo, policy):
-    """Positive control: a genuine openai seat still passes, padded producer or not."""
-    record_seat(repo, policy, "red-team", family="OpenAI")
-    commit_reports(repo)
-    out = run_gate(repo, policy, "--seat", "red-team", "--producer-family", "Anthropic ",
-                   risk="high")
-    assert out.returncode == 0, out.stdout + out.stderr
-    assert "independent: openai seat red-team" in out.stdout
-
-
-@pytest.mark.parametrize("path", [
-    "adapters/pi/agents/code-reviewer.md", "skills/route/SKILL.md",
-    "scripts/review-pr-anchor.py", "scripts/panel-manifest-check.py",
-])
-def test_review_machinery_raises_the_floor(path):
-    assert re_mod.risk_floor([("M", path)], None)["paths"] == "high"

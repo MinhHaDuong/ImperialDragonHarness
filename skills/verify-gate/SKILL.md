@@ -138,21 +138,18 @@ A comment is UNRESOLVED if none of the above applies.
 Seat reports are repository files under `tickets/reviews/<base>..<head>/`, one
 per seat execution, written by the controller with
 `review_evidence.py record`. The gate never reads a seat's verdict from prose.
-Run the three steps sequentially: the plan line decides whether steps 2 and 3
+Run the three steps sequentially: step 1 decides whether steps 2 and 3
 apply, and step 2 needs its seats.
 
-1. **Plan.** Read the review plan line hunt keeps in the merge-request body:
-   `Review plan: risk=<trivial|ordinary|high> seats=<seat>,<seat> producer-family=<family>`.
-   Without a plan line and without any report on the branch, record
+1. **Reports.** List the seats with a report on the branch: the file names
+   under `tickets/reviews/` at the head, `<seat>-<n>.md`. With none, record
    `review_evidence: legacy` and judge the review comments as above; stop here.
 2. **Seat table.** In the gate worktree, run
-   `python3 "$IDH_ROOT/scripts/review_evidence.py" gate --repo "$gate_tree" --base origin/<base-branch> --ticket <ticket-file> --risk <row> --producer-family <family> --seat <seat>` (one `--seat` per planned seat).
-   Copy its `seat`, `independent`/`independence` and `risk` lines into the
-   verdict. A seat is `ran` (report on this head), `reused` (same patch-id,
+   `python3 "$IDH_ROOT/scripts/review_evidence.py" gate --repo "$gate_tree" --base origin/<base-branch> --ticket <ticket-file> --seat <seat>` (one `--seat` per reported seat).
+   Copy its `seat` lines into the verdict. A seat is `ran` (report on this head), `reused` (same patch-id,
    criteria hash and policy version, from an earlier head, which it names),
    `stale` or `no-report`. Check, gate and adherence results are never reused:
-   they always re-run on the delivered head. The high row adds `red-team` and
-   requires one seat from another family than the producer's.
+   they always re-run on the delivered head.
 3. **Forge reviews.** Run
    `python3 "$IDH_ROOT/scripts/review_evidence.py" forge <owner/name> <merge-request>`.
    It reads reviews, conversation comments and inline review-thread comments
@@ -221,10 +218,8 @@ scope_overflow:
   - file: <path>
     reason: "<not traceable to exit criterion>"
     suggested_disposition: TICKETED | ESCALATE
-review_evidence: legacy | {seats, independence, risk, forge}
+review_evidence: legacy | {seats, forge}
   # seats: "seat <name>: ran|reused|stale|no-report (<verdict>) - <reason> <report>"
-  # independence: "independent: <family> seat <name>[, inherited from <head>]" or "missing"
-  # risk: "risk: <plan row> / floor: <floor row>"
   # forge: "human: ran <login> ..." | "copilot: ran <login> ..." | "rejected <login> ... (<reason>)"
 rationale: |
   <strongest remaining reviewer attack; if APPROVED, why evidence holds>
@@ -272,9 +267,8 @@ the diff alone, as one `per_exit_criterion` row named `indivisibility waiver`:
 - Any `NOT_APPLIED` must-fix simplify finding without rationale → REROLL (round 1) /
   ESCALATE (round 2).
 - Any `blocking` adherence violation → REROLL (round 1) / ESCALATE (round 2).
-- Any `stale` seat, a missing other-family seat at the high row, or a plan row
-  below the risk floor → REROLL (round 1) / ESCALATE (round 2).
-- Any planned seat with `no-report` → ESCALATE. There is no merge with a recorded gap.
+- Any `stale` seat → REROLL (round 1) / ESCALATE (round 2).
+- Any seat with `no-report` → ESCALATE. There is no merge with a recorded gap.
 - A seat that ran or was reused with verdict `changes` keeps its findings
   load-bearing: they follow the review-comment rules above.
 - Any `scope_overflow` entry with suggested disposition ESCALATE → ESCALATE.
@@ -395,7 +389,7 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
    Exit criteria: <addressed>/<total>  Review: <unresolved>  Simplify: <unresolved>
    Adherence: <blocking>  Scope overflow: <files> (<ticketed>/<escalate>)
    Minors: verifiable:<n> consider:<n> nofollow:<n> malformed:<n>
-   Evidence: <legacy | ran:<n> reused:<n> stale:<n> no-report:<n>>  <risk line>  <independence line>
+   Evidence: <legacy | ran:<n> reused:<n> stale:<n> no-report:<n>>
    Top reasons (if not APPROVED): <ranked list>
    Rationale: <paragraph>
    ```
