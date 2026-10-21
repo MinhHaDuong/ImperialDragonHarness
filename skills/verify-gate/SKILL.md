@@ -363,8 +363,15 @@ The caller owns the gate session; gaze has no part in it.
   the fix for a round-1 REROLL (`skills/raid/SKILL.md` § Phase 6,
   `skills/merge/SKILL.md`). Otherwise the gate answers ESCALATE without ruling
   the criteria, and the author decides.
+  When the caller passes no gaze result, the gate reads the latest
+  `## /gaze result` comment posted on the PR (the artifact raid polls) and
+  applies this check to it. A refusal spends no gate round: the gate returns
+  ESCALATE to its caller and posts, if anything, a comment headed
+  `/verify-gate refused: no completed review`, never the
+  `/verify-gate round=<n> verdict=<V>` header that round derivation counts.
 
-Uses existing PR state only when no gaze result is passed (no phase 2-5 outputs).
+Uses existing PR state for the criteria once that check passes (no phase 2-5
+outputs are passed).
 Isolation is the same on every path (§ Isolation: own worktree, removed on exit).
 
 ## Output destinations
