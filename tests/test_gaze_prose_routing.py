@@ -218,3 +218,20 @@ def test_0902_replay_of_the_ticket_shapes():
     # **/fixtures/** matches nested.
     assert mod.risk_band(["slides/docs/x.md"]) == "normal"
     assert mod.risk_band(["tests/fixtures/f.json"]) == "low"
+
+
+def test_native_review_seat_is_handed_the_resolved_axes():
+    """The native `/review` seat is told the doctype and language, never left to infer them.
+
+    Routing settles which *panel* reviews a diff; it does not settle which
+    *rulebook* the reviewer holds it to. Told nothing, `/review` picks one by
+    inference: it read `rules/doctype/book.md` on a manuscript whose manifest
+    declares `techreport` (audit of 2026-08-17, MR 136). The guard moved from
+    gaze's body to `references/battery.md` with the body split (ticket 1153).
+    """
+    text = (REPO / "skills" / "gaze" / "references" / "battery.md").read_text(encoding="utf-8")
+    marker = "**Hand native `/review` the resolved axes"
+    assert marker in text, "axes clause missing from battery.md"
+    clause = text.split(marker)[1].split("**Agent C")[0]
+    assert '"$IDH_ROOT/scripts/prose_predicate.py" --axes' in clause
+    assert "review-<pr-number>" in clause, "the axes call reads the disk, so it must be cwd-anchored"

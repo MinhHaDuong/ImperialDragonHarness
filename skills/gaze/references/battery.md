@@ -104,6 +104,17 @@ basis of the review. Phase 5 uses native `/simplify` when available and the
 portable procedure below otherwise, both directly invoked (ticket 0349) and both
 targeting the explicit review worktree and PR branch.
 
+**Hand native `/review` the resolved axes; it guesses without them.**
+`/review` checks prose against a house rulebook and, told nothing, picks one by
+inference: on a manuscript merge request it read `rules/doctype/book.md` where
+the project manifest declares `techreport` (audit of 2026-08-17, MR 136).
+Before spawning that seat, run
+`cd $primary_root/.claude/worktrees/review-<pr-number> && python3 "$IDH_ROOT/scripts/prose_predicate.py" --axes <changed files>`
+and carry its lines verbatim into the wrap prompt. Same cwd anchoring and same
+refusal semantics as the routing call below, since this reads the disk too.
+Routing picks which panel reviews the diff; the axes tell the reviewer which
+rulebook to hold it to.
+
 **Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
 or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`).
 Invoke it directly with the review worktree; it owns its perspective
