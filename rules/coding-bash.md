@@ -127,8 +127,7 @@ out=$(env -i HOME="$tmphome" BASH_ENV="$PWD/scripts/bash-env.sh" \
 
 `env -i` gives a known-empty base env (so an inherited variable can't mask a
 bug), `HOME=` points at a crafted fixture, and `BASH_ENV=` exercises the exact
-mechanism the caller triggers. Enforced by
-`tests/test_bash_env_tested_via_subprocess.sh`.
+mechanism the caller triggers.
 
 ### Unsetting a variable in the parent does not unset it in the child
 
