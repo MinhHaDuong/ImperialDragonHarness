@@ -78,15 +78,3 @@ def test_hunt_review_fix_loop_names_a_test_budget():
     )
 
 
-def test_gaze_fix_agent_contract_names_a_test_budget():
-    """The Fix-agent contract must name check-fast and bound full-check reruns."""
-    text = GAZE.read_text(encoding="utf-8")
-    block = _block(text, "## Fix-agent contract", "Push commits to the PR branch")
-    assert "check-fast" in block, (
-        "gaze's Fix-agent contract must name `make check-fast` as the fix "
-        "agent's test gate"
-    )
-    assert any(kw in block for kw in BUDGET_KEYWORDS), (
-        "gaze's Fix-agent contract must bound full `make check` to a "
-        "one-time/budgeted case before push, not per fix"
-    )

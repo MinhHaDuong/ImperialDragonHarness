@@ -2,7 +2,7 @@
 metadata:
   category: build
 name: gaze
-description: "Run the full per-PR verification loop (adherence + review + review-pr + simplify), then gate through /verify-gate. Bounces the PR for at most one retry. Does not merge — the merge decision belongs to the caller."
+description: "Review one merge request: adherence check, code or prose review panel, simplify. Returns REVIEWED / FINDINGS / ESCALATE and never APPROVED; the merge gate is /verify-gate, run by the caller. Does not merge."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pr-number> [--waive-breaker <reason>] [--force-approve <reason>]"
@@ -17,7 +17,7 @@ context: fork
 background: true
 ---
 
-# Gaze — verify PR $ARGUMENTS, six-phase loop with anti-rubber-stamp gate
+# Gaze — review PR $ARGUMENTS (gaze reviews, verify-gate gates)
 
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
@@ -41,31 +41,37 @@ candidates conflict.
 <!-- harness-extension-point: on GitHub, `gh pr view --json number` resolves
 the current branch's PR number. -->
 
-One skill, one PR, one decision: APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR. **Does not
-merge** — the merge decision belongs to the caller (the human or the raid).
+One skill, one PR, one review result: REVIEWED / FINDINGS / ESCALATE. **Gaze
+reviews; `/verify-gate` gates.** Gaze never returns APPROVED, REROLL or
+NEEDS-AUTHOR: those are gate verdicts, ruled by the caller's `/verify-gate`
+run on the reviewed head. **Does not merge** — the merge decision belongs to
+the caller (the human or the raid).
 Only one live `/gaze` may run on a PR at a time; the caller keeps to that
 (`rules/workflow.md` § Delegation). A past verdict is evidence, not authority
 to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 
 ## When to use
 
-- Raid Phase 6 (per-ticket verification before merge).
+- Raid Phase 6 (per-ticket review before the gate).
 - Any time an author wants a full-depth check on a single PR before asking for merge.
 - **Do NOT** use for quick sanity — use `/review` or `/review-pr` directly.
 
 ## Invariants
 
 - Runs on exactly one PR.
-- Two gate rounds maximum. Third round is forbidden — escalate instead.
-- Does not merge. The verdict is structured output; the merge decision belongs to the caller.
-- The fix loop between rounds makes commits on the PR branch; no changes to other branches.
-- `--force-approve` is supported for explicit human override; it is logged loudly in the
-  PR comments and the skill transcript.
-- `--waive-breaker <reason>` lifts only the un-reviewable file-count stop. The battery,
-  simplify and the phase 6 gate still run, and a waived PR that passes is NEEDS-AUTHOR,
-  never APPROVED (§ Waiver).
+- Never returns APPROVED: a test pins it (`tests/test_gaze_never_approves.py`).
+  `REVIEWED` means no blocking finding on the reviewed head, nothing more.
+- Does not run `/verify-gate`. The caller runs it after gaze, and again after any fix.
+- Does not merge. The result is structured output; the merge decision belongs to the caller.
+- The only commits gaze makes on the PR branch are the bounded phase 5 simplify fixes; no changes to other branches.
+- `--force-approve` is supported for explicit human override; it skips the review and
+  is logged loudly in the PR comments and the skill transcript. It is an override
+  record, not a verdict.
+- `--waive-breaker <reason>` lifts only the un-reviewable file-count stop. The battery
+  and simplify still run; gaze records the waiver and the caller passes it to
+  `/verify-gate`, which rules NEEDS-AUTHOR (§ Waiver).
 - **Cross-repo prerequisite**: the caller must ensure cwd is the target project before
-  invoking `/gaze`. The skill and its sub-skills (`/verify-gate`, `/simplify`, etc.)
+  invoking `/gaze`. The skill and its sub-skills (`/review-pr`, `/simplify`, etc.)
   use `gh` and `git` commands that resolve against cwd.
 - **Branch-currency prerequisite**: the caller rebases the PR branch onto current
   `origin/main` and force-pushes with lease before invoking (`rules/git.md`
@@ -73,8 +79,9 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
   computed on a stale base is partially void. `/gaze` does not rebase the
   branch itself; that is a caller-side step, not a phase here.
 - **Quiet-branch prerequisite**: never start `/gaze` while that branch's coding
-  lead is still live. The gate reviews a head the lead may move under it, and
-  the gate's fix loop would then commit on top of work in flight.
+  lead is still live. Gaze reviews a head the lead may move under it, and
+  its phase 5 simplify fixes would then commit on top of work in flight.
+
 
 ## Fork execution contract
 
@@ -85,15 +92,15 @@ launch parameter to pass; earlier revisions of this contract named one, and a
 lever that does not exist cannot be the thing holding a phase together.
 
 What is true is the first sentence: the fork survives only while it keeps
-calling tools. So every agent this skill spawns — the phase 2–4 reviewers, the
-phase 6 gate, the REROLL fix agent — is launched in the background and then
+calling tools. So every agent this skill spawns (the phase 2–5 reviewers and
+the review panel's perspective agents) is launched in the background and then
 **waited for by polling an artifact it writes**, in one bounded loop. The wait
 itself is the tool call that keeps the fork alive.
 
 Each spawned agent is therefore told, in its prompt, to write its result to a
-named path under `<worktree>/.panel/<pr-number>/` — writing to `<name>.md.part`
+named path under `<worktree>/.panel/<pr-number>/`, writing to `<name>.md.part`
 and renaming to `<name>.md`, so a half-written file never carries the final
-name — and the roster of expected names is written down *before* launching. A
+name. The roster of expected names is written down *before* launching. A
 waiter that just gathers whatever files appear cannot tell an agent that
 finished silently from one that never started; comparing against a roster
 written in advance can.
@@ -101,54 +108,45 @@ written in advance can.
 Without this, the failure is silent and total: the fork ends its turn at the
 launch, the completions re-invoke the **MAIN loop**, and the fork's last message
 is a fan-out narration ("reviewers are running in parallel…") instead of a
-verdict, with phases 5–6 never running. This orphaned two real gate runs, each forcing the caller to relaunch a
-duplicate reviewer battery, and did it again on two consecutive `/review-pr`
-rounds where ten reviewers returned real
-verdicts and the merge request carried none of them.
+result, with phase 5 never running. This orphaned real runs, each forcing the
+caller to relaunch a duplicate reviewer battery.
 
 **Bound every wait, and record what did not arrive.** An agent missing at the
-deadline is missing, not clear: name it in the verdict and treat its phase as
+deadline is missing, not clear: name it in the result and treat its phase as
 unresolved. Never extend a deadline to avoid recording a gap.
 
 **The contract applies recursively.** Any nested fan-out performed on `/gaze`'s
-behalf — a reviewer Agent (e.g. Agent C) that itself spins a panel of
-perspective agents — inherits this same rule: the inner launch must be waited for by
-polling an artifact too, or the orphan failure simply moves one layer down. A launch
-site is bound by the fork contract whether it is this skill's own or a
-sub-agent's.
+behalf, such as the review panel's perspective agents, inherits this same rule:
+the inner launch must be waited for by polling an artifact too, or the orphan
+failure simply moves one layer down. A launch site is bound by the fork contract
+whether it is this skill's own or a sub-agent's.
 
 **Caller-side recovery.** If `/gaze <pr>` ever returns a bare fan-out
-narration with no `## /verify-gate verdict` block (APPROVED/REROLL/ESCALATE/NEEDS-AUTHOR),
-treat it as a non-result: do **not** relaunch the reviewer battery. Wait for
-the background reviewer notifications, then run `/verify-gate <pr>
-worktree=$primary_root/.claude/worktrees/review-<pr-number>` directly to produce the verdict from their outputs.
-A waived PR can come back `NEEDS-AUTHOR`: a real verdict, not APPROVED, never merged by the
-recovery run, and left for the author. On this path the gate reads the waiver only from an already-posted waived `circuit_breaker` header in the PR's comments,
-so the recovery needs no extra argument. If none was posted, a
-waived 15+ file PR is ESCALATE there (fail-safe), not NEEDS-AUTHOR, and so is an un-waived one.
+narration with no `result:` block (REVIEWED/FINDINGS/ESCALATE), treat it as a
+non-result: do **not** relaunch the reviewer battery. Wait for the background
+reviewer notifications and read the review comment they posted on the merge
+request; with that in hand, run `/verify-gate <pr>
+worktree=$primary_root/.claude/worktrees/review-<pr-number>`. The gate reads a
+waiver only from an already-posted waived `circuit_breaker` header in the PR's
+comments, so the recovery needs no extra argument. If none was posted, a waived
+15+ file PR is ESCALATE there (fail-safe), as is an un-waived one.
 
-**Fork liveness.** Once the phase 2–4 review comment has posted on the PR, the
-caller must see the phase-6 verdict (returned or posted as a PR comment), or
-the orchestrator's posed `reroll_bump` line on the PR branch, within
+**Fork liveness.** Once the review comment has posted on the PR, the caller must
+see the gaze result (returned or posted as a PR comment) within
 `fork_liveness_seconds` (`skills/gaze/telemetry.yml`, env override
-`GAZE_LIVENESS_WINDOW_S`; default 1200s / ~20 min) — same knob pattern as the
-wall/token thresholds in § Telemetry. Two independent stalls landed in exactly
-this window, both silent: 2026-07-11 (memory
-`feedback_agent_stall_watchdog_recovery`) and 2026-07-13 (raid 291-245, PR
-#551, where the review comment posted, then ~30 min of quiet: no simplify
-commit, no verdict, review worktree mtime frozen).
+`GAZE_LIVENESS_WINDOW_S`; default 1200s / ~20 min), same knob pattern as the
+wall/token thresholds in § Telemetry. Two independent stalls landed
+in exactly this window, both silent: 2026-07-11 (memory
+`feedback_agent_stall_watchdog_recovery`) and 2026-07-13 (raid 291-245, PR #551:
+the review comment posted, then ~30 min of quiet, no simplify commit, no
+result, review worktree mtime frozen).
 
 **On window expiry, do not re-run phases 2–5.** Check three completion markers:
-(1) a posted verdict comment, (2) branch-tip motion on the PR branch, (3) the
-review worktree's file mtime. All stale/absent → invoke `/verify-gate`
-directly, with the same invocation form as **Caller-side recovery** above
-(one recipe, stated once), and continue the normal round
-flow from its verdict. On REROLL, the caller poses the returned `reroll_bump`
-using the rule in phase 6: commit it onto the PR branch with the fix, or defer
-to merge time; never run `erg log` against main mid-wave. The returned verdict
-itself is liveness evidence even when posing is deferred. The fallback skips only
-the redundant phase 2–5 re-execution — verify-gate runs at full rigor and the
-two-round cap is unaffected.
+(1) a posted gaze result comment, (2) branch-tip motion on the PR branch, (3) the
+review worktree's file mtime. All stale/absent → invoke `/verify-gate` directly,
+with the same invocation form as **Caller-side recovery** (one recipe, stated
+once). The fallback skips only the redundant phase 2–5 re-execution; verify-gate
+runs at full rigor.
 
 ## Phases
 
@@ -169,56 +167,15 @@ PR_BRANCH=<resolved-branch-name>
 primary_root=$(git rev-parse --show-toplevel)
 primary_root="${primary_root%%/.claude/worktrees/*}"   # strip if we run from a session worktree
 review_tree="$primary_root/.claude/worktrees/review-<pr-number>"
-# A fresh id for this run; the phase 6 gate names it in its verdict comment.
-gate_session_id=$(python3 -c 'import uuid; print(uuid.uuid4())')
 git fetch origin "$PR_BRANCH" || exit 1
 if ! git worktree add "$review_tree" origin/"$PR_BRANCH" || ! test -d "$review_tree"; then
     echo "gaze: cannot create isolated review worktree for PR <pr-number>; refusing to fall back into the invoking tree" >&2
     exit 1
 fi
-# The reviewer agents (review worktree via git -C) and the REROLL fix agent run inside
+# The reviewer agents (review worktree via git -C) run inside
 # $primary_root/.claude/worktrees/review-<pr-number>; the main repo is never
 # switched, never dirtied. (Exception: phase 5 /simplify is still a direct
-# invocation and runs from the fork's own cwd, not review-<pr> — see its note below.)
-```
-
-## Review scratch cleanup
-
-On every exit path (APPROVED, REROLL-escalated, ESCALATE, NEEDS-AUTHOR, circuit-breaker
-abort), after Agent C and the gate have consumed their artifacts, remove this
-run's review scratch before removing the worktree.
-The embedded `/review-pr` Agent C leaves the panel for this step. Do not run
-this while perspective agents are still writing: cancel or wait for them first.
-If the review worktree was never created, there is nothing to clean up. The
-exit preflight must pass after scratch removal: if it reports other WIP, leave
-the review worktree registered and surface those file names as ESCALATE to the
-caller. Never force-remove a tree with real uncommitted files. A failed
-preflight or normal worktree removal is a cleanup failure, not a successful
-terminal verdict.
-
-```bash
-review_tree="$primary_root/.claude/worktrees/review-<pr-number>"
-if [ -d "$review_tree" ]; then
-    # Read verdicts before deleting panel files. Citation or ancestry uncertainty
-    # keeps both the candidate .tmp and its review evidence in place.
-    if [ -e "$review_tree/.tmp" ] || [ -L "$review_tree/.tmp" ]; then
-        python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" removal \
-            "$primary_root" "$review_tree" --branch "$PR_BRANCH" || exit 1
-    fi
-    tracked_panel=$(git -C "$review_tree" ls-files -- ".panel/<pr-number>") || exit 2
-    tracked_base=$(git -C "$review_tree" ls-files -- build/panel-head) || exit 2
-    [ -n "$tracked_panel" ] || rm -rf -- "$review_tree/.panel/<pr-number>"
-    if [ ! -L "$review_tree/build" ] && [ -z "$tracked_base" ]; then
-        rm -rf -- "$review_tree/build/panel-head"
-    fi
-    rmdir -- "$review_tree/.panel" 2>/dev/null || true
-    # Detached review trees without provable branch ancestry retain .tmp.
-    if ! "$IDH_ROOT/scripts/worktree-exit-preflight.sh" --removal --branch "$PR_BRANCH" "$review_tree"; then
-        echo "/gaze cleanup blocked: real WIP remains in $review_tree" >&2
-        exit 1
-    fi
-    git -C "$primary_root" worktree remove "$review_tree" || exit 1
-fi
+# invocation and runs from the fork's own cwd, not review-<pr> — see its note.)
 ```
 
 - Abort if not mergeable or if there are open merge conflicts.
@@ -230,47 +187,15 @@ fi
   - PR body, full diff, all existing review comments, all inline comments, all commit
     messages on the branch.
 - Check CI status for the merge request if the forge exposes it. If the forge CLI or API is unavailable, skip gracefully — CI status is informational only. If checks are configured and any are failing, note this in the setup summary; do not block on it (reviewer decides).
-- First run `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the battery: do not classify an empty or wrong-tree diff as tiny or approve it. Carry its HEAD and changed-file roster into every review prompt.
-- Compute PR size rename-aware: `pr_lines` = total insertions + deletions from `git diff origin/main...HEAD --stat`; `pr_files` = the CONTENT-BEARING entry count from `git diff --name-status -M origin/main...HEAD` — added, modified, and deleted each count 1; cross-reference rename entries with `git diff --numstat -M origin/main...HEAD`: a rename counts 1 iff its additions + deletions > 0, otherwise 0 (a genuinely content-free pure rename has zero line change in rename-aware numstat; R100 alone is insufficient because the similarity index ignores line order) — pure renames add no review load, and counting them via `--no-renames` inflates consolidation diffs past the breaker on arithmetic (ticket 1026, observed on PRs #1178/#1179). Classify the battery **tier**:
-  Before classifying, check the PR label, PR body, and linked ticket body for
-  `review:standard`. An explicit request selects the **full** tier even when
-  the size thresholds below would select tiny or small; it also directs Agent C
-  to run all five perspectives.
-  - **tiny** — `pr_lines ≤ 20` and `pr_files ≤ 2` and this is round 1.
-  - **small** — `pr_lines ≤ 150` and `pr_files ≤ 5` and this is round 1 (and not already tiny).
-  - **full** — everything else, and any round ≥ 2. The **tiny** and **small** tiers are round-1 classifications only; a round ≥ 2 is never tiny or small.
+- First run `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the battery: do not review an empty or wrong-tree diff or approve it. Carry its HEAD and changed-file roster into every review prompt.
+- Compute PR size rename-aware: `pr_lines` = total insertions + deletions from `git diff origin/main...HEAD --stat`; `pr_files` = the CONTENT-BEARING entry count from `git diff --name-status -M origin/main...HEAD` — added, modified, and deleted each count 1; cross-reference rename entries with `git diff --numstat -M origin/main...HEAD`: a rename counts 1 iff its additions + deletions > 0, otherwise 0 (a genuinely content-free pure rename has zero line change in rename-aware numstat; R100 alone is insufficient because the similarity index ignores line order) — pure renames add no review load, and counting them via `--no-renames` inflates consolidation diffs past the breaker on arithmetic (ticket 1026, observed on PRs #1178/#1179).
 
-  The tier selects which reviewer agents run (see §§ 2–4, 5); phase 6 (`/verify-gate`) is **invariant** — it runs at every tier, never reduced. Per-tier battery:
-  - **tiny** → Agent A + Agent C + phase 6 gate. Skip Agent B (`/review`) and phase 5 (`/simplify`); Agent C still supplies a review seat.
-  - **small** → Agent A + Agent B + Agent C + phase 5 (`/simplify`) + phase 6 gate.
-  - **full**, round 1 → the complete battery below, unchanged; an explicit
-    `review:standard` request runs all five Agent C perspectives.
-  - **full**, round ≥ 2 (i.e. the merge request already carries a prior Agent C review) → Agent A + Agent B + phase 5 (`/simplify`) + phase 6 gate; Agent C is scoped per § Round scoping below.
-  Carry the resolved `tier` into the telemetry footer and the output-shape template (see § Telemetry, § Output shape).
-  Size and risk are two axes, never collapsed
-  into one. The 15+ files un-reviewable breaker pre-empts the band — its
-  ESCALATE fires before any battery spawns, so a band never sets a battery
-  tier on an un-reviewable PR. Classify the changed-file
-  roster with a third, cwd-anchored call — it reads no disk (pure
-  path-pattern match), so the missing-path refusal does not apply, and
-  deleted or renamed paths still get a band:
-  `cd $primary_root/.claude/worktrees/review-<pr-number> && python3 "$IDH_ROOT/scripts/prose_predicate.py" --risk <changed files>` — it prints
-  the path-risk **band**: `high` if any file matches a pipeline or guard path
-  (`scripts/**`, `skills/**`, `rules/**`, `hooks/**`, `settings*.json`, and
-  the rest of the `panel-width.json` registry); `low` only if every file
-  matches `docs/**`, `*.bib`, or `**/fixtures/**`; `normal` otherwise.
-  Combine band and tier on the round-1 size classification only — a round ≥ 2
-  stays **full**, and an explicit `review:standard` pre-empts both:
-  - band `high` → raise one rung: tiny → small, small → full — clamped at
-    `full`.
-  - band `low` → lower one rung: full → small, small → tiny — floored at
-    `tiny`; the battery never drops below Agent A + Agent C + the phase-6
-    gate, at every tier and every band.
-  - band `normal` → unchanged.
-  A tiny → small raise arms Agent B and phase 5 (`/simplify`); the
-  internal battery follows the tier. Optional external review follows
-  § External reviewer panel. What this closes is the battery
-  tier, not panel width: the 0392 width gate already reads `pipeline_paths`.
+  Size has one use: the un-reviewable breaker below. It selects no battery
+  tier; every PR gets adherence, the review panel and simplify. Panel width is
+  review-pr's own decision (`skills/review-pr/panel-width.json`, `review:standard`).
+  Compute the path-risk band once, for the comment, with
+  `cd $primary_root/.claude/worktrees/review-<pr-number> && python3 "$IDH_ROOT/scripts/prose_predicate.py" --risk <changed files>`
+  (`high|low|normal`); it is carried to `/verify-gate`, never used to skip a phase here.
 
 - **Preflight before spawning phases 2–5.** Count distinct ticket close-claims
   from the PR **body**, using the same line grammar as `erg-pr-merge`: bold or
@@ -278,18 +203,17 @@ fi
   `Ticket: none`, and repeated claims for one ID do not. For example, extract
   IDs with `grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' | sort -u`.
   If the count is two or more, record `multi_ticket: <IDs>` as a **non-blocking**
-  finding for phase 6 to disposition. Below the size breaker, continue the normal review;
+  finding for `/verify-gate` to disposition. Below the size breaker, continue the normal review;
   genuinely bundled tickets are permitted by `rules/git.md` § Merging.
 - If `pr_files >= 15` and no waiver is recorded (see **Waiver** below), the PR exceeds the **15+ content-bearing files** monster threshold
   borrowed from `rules/workflow.md` § Ticket discipline for multi-PR work. Return ESCALATE
-  immediately, before spawning any phase 2–5 reviewer battery or phase 6 gate,
+  immediately, before spawning any phase 2–5 reviewer,
   with `circuit_breaker: un-reviewable` and reason
   `un-reviewable: <pr_files> content-bearing files / <pr_lines> lines — split before review`.
   When `multi_ticket` is present, add that the combined tickets are a
-  decomposition signal. Post the normal two-section verdict comment with the
-  breaker and `gate: skipped (un-reviewable)` visible. In that comment's
-  `/verify-gate verdict` section, mark the direct setup ESCALATE and its
-  unrun criterion checks explicitly; do not imply phase 6 produced a verdict.
+  decomposition signal. Post the result comment with the
+  breaker and `battery: skipped (un-reviewable)` visible; the caller's
+  `/verify-gate` re-counts the files itself and ESCALATEs the same way.
   Cleanup and containment
   still run. An explicit `--force-approve <reason>` overrides this breaker
   loudly under the existing override contract; record the waived breaker and
@@ -301,75 +225,61 @@ fi
 
 #### Round scoping
 
-**Supersedes the #562 clause.** A round ≥ 2 still resolves to the **full**
-tier, but its Agent C no longer re-runs the whole five-perspective panel by
-default. Agent C re-runs the perspectives that objected in the previous round
-plus one regression check over the cleared ones, per § Round scoping in
-`skills/review-pr/SKILL.md` (ticket 0377). #562's lesson was that a round-2
-battery was needed on an unchanged diff. That lesson is preserved by keeping
-Agents A and B, phase 5, and the phase 6 gate at full strength every round.
-What it does *not* justify is re-paying for perspectives that had nothing to
-say.
+A repeat `/gaze` on a merge request that already carries a prior review-pr
+review does not re-run the whole five-perspective panel by default: review-pr
+re-runs the perspectives that objected plus one regression check over the
+cleared ones (§ Round scoping in `skills/review-pr/SKILL.md`, ticket 0377).
+Adherence and simplify run at full strength every time.
 
-**Reachable trigger.** The only entry into this branch is a *caller-level*
-repeat `/gaze` on a merge request that already carries a prior Agent C
-review: that invocation re-enters phase 1, reclassifies the tier, and finds a
-review history. gaze's internal REROLL re-entry never reaches here — it
-re-runs the **gate only** (§ Branch on verdict) and never returns to phase 1,
-so round scoping neither widens nor narrows it. Two different counters share
-the word "round", and they never interact: the REROLL round-1/round-2 cap
-counts gaze's own internal fix-and-regate attempts *within* one invocation,
-while the round scoped here counts the Agent C reviews posted on the merge
-request *across* invocations.
-
-**gaze does not compute the round.** It reads only whether a prior Agent C
-review exists — a boolean from the merge request's review history, enough to
-select the scoped branch — and passes no round number to Agent C. Agent C's
-embedded procedure derives the round itself, exactly as § Round scoping in
-`skills/review-pr/SKILL.md` prescribes: count the reviews this skill
-previously posted on the merge request, identifiable by the verdict roster
-those reviews always carry; the round is that count plus one.
+**gaze does not compute the round.** It reads only whether a prior review-pr
+review exists (a boolean from the merge request's review history) and passes no
+round number. review-pr derives the round itself: count the reviews it
+previously posted on the merge request, identifiable by the verdict roster they
+always carry; the round is that count plus one.
 
 An unchanged diff does **not** reset scoping. Reset happens only on a
-substantial rewrite: the round's diff touches files the last review did not
-cover, or changes more than roughly half of its lines. Then Agent C runs the
-full panel for this round — scoping is ignored. The derived round number
-itself is never mutated; only the scoping decision changes.
+substantial rewrite: the diff touches files the last review did not cover, or
+changes more than roughly half of its lines. Then the full panel runs for this
+round and scoping is ignored.
 
 #### Waiver
 
 The 15-file count is a decomposition signal, not a hard wall. A waiver lifts
-only the file-count stop. It never lifts the battery, simplify, the phase 6
-gate or any other breaker, and it never yields APPROVED: a waived PR that
-passes is NEEDS-AUTHOR, and only the author decides to merge it.
+only the file-count stop. It never lifts the review, simplify or any other
+breaker, and gaze never approves a waived PR: the caller passes the waiver
+record to `/verify-gate`, which rules NEEDS-AUTHOR on a passing waived PR, and
+only the author decides to merge it.
 
 **Declaring.** `--waive-breaker <reason>` on the `/gaze` invocation, or a
 PR-body line `Review-scope: indivisible — <reason>`. The author writes either.
-The gate does not check who wrote it; it judges the diff (`verify-gate`
-§ Indivisibility).
+Gaze does not check who wrote it; the gate judges the diff (`verify-gate`
+§ Indivisibility). The change must be indivisible: a pure rename or rewire with
+no independent change that could land alone.
 
-**What the reason must claim.** The change cannot be split: it is a pure rename
-or rewire, with no independent change that could land alone. A reason the diff
-does not bear is a MISSING criterion at the gate.
-
-**Recording.** Read in phase 1, before any battery spawns, so the stop is never
-discovered after the work. Record the waiver with `pr_files`, `pr_lines`, the
-reason and its source (flag or body line) in the PR comment, and set the
-verdict header to `circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)`.
-The round-1 header is the baseline for growth. The waiver record also rides in
-the phase 6 launch prompt (§ 6. Gate).
+**Recording.** Read in phase 1, before any reviewer spawns. Record the waiver
+with `pr_files`, `pr_lines`, the reason and its source (flag or body line) in the
+PR comment, and set the header to
+`circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)`.
+The round-1 header is the baseline for growth.
 
 **Scope.** Growth is measured against the earliest posted waived header, not the
 phase-1 recount of a later round, because a recount absorbs the very growth it
-should catch. Growth past that baseline makes the PR un-reviewable: the verdict is
-`circuit_breaker: un-reviewable` and ESCALATE. A waiver beside two or more close
-claims is flagged as `multi_ticket` for disposition, as in the preflight above.
-Tier, band and the battery floor are unchanged by a waiver.
+should catch. Growth past that baseline makes the PR un-reviewable:
+`circuit_breaker: un-reviewable`, ESCALATE. A waiver beside two or more close
+claims is flagged as `multi_ticket`, as in the preflight above. Every later
+comment of a waived PR repeats the header
+`circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)`
+so the gate reads one format.
+
+### 2–5. Review and simplify
+
+The review panel is `/review-pr` (code) or `/review-pr-prose` (manuscript), invoked directly with the review worktree; there is no gaze-specific reviewer agent and no size tier.
 
 ### 2–4. Read-only review fan-out (parallel)
 
-These phases run as **Agent-spawned sub-agents, not `context: fork`
-invocations** (ticket 0216). A fork does not inherit this skill's cwd or
+Agent A (adherence) and the optional adapter seats run as **Agent-spawned
+sub-agents, not `context: fork` invocations** (ticket 0216); Agent C is a direct
+invocation of the review skill (below). A fork does not inherit this skill's cwd or
 conversation, so it lands in the session worktree on whatever branch is
 checked out there — that is how a drifted fork pushed a stray branch and
 opened rogue PR #243 (ticket 0193). Spawning an Agent fixes this
@@ -379,7 +289,7 @@ operates on the existing review worktree
 (created in phase 1) via `git -C` — never assume the spawned agent's
 own cwd is the review tree; how a runtime sets a spawned agent's cwd
 is not portable, `git -C` is (ticket 0853). Waiting on a written artifact, not on a return value, is
-load-bearing, not incidental — see **Fork execution contract** below: this
+load-bearing, not incidental — see **Fork execution contract** above: this
 skill runs as a `context: fork`, and a fork cannot wait on background
 agents.
 
@@ -387,17 +297,12 @@ If the battery cannot be launched at all — the runtime refuses the
 spawn, the agent connector is absent, or the spawn-depth limit is hit — first
 attempt the detached-seat substitution documented in
 `skills/review-pr/SKILL.md`; if that also cannot run, emit a one-line
-`battery: NOT-RUN — cause: <guard|no-agent-tool|depth>` in the verdict
+`battery: NOT-RUN — cause: <guard|no-agent-tool|depth>` in the result
 comment. The boundary with the seat-level signal: no seat launched at all is
 a battery NOT-RUN; seats launched but reports missing stays seat-level
 `PANEL-INTEGRITY:` (whose name is unchanged). The NOT-RUN line names a launch
-failure, not a review finding: never fabricate findings — the gate reports
-the criteria unverified, and the verdict is capped at ESCALATE, never
-APPROVED. When the phase-6 gate itself cannot launch — under the same
-causes: the runtime refuses the spawn, the agent connector is
-absent, or the spawn-depth limit is hit — the gaze orchestrator emits the
-capped verdict directly with `gate: skipped (gate launch failure — see
-battery NOT-RUN)` and the criteria reported unverified — never fabricated.
+failure, not a review finding: never fabricate findings. The result is capped
+at ESCALATE, never APPROVED (gaze returns no approval at all).
 
 Every reviewer agent's prompt:
 - opens with `TASK DIRECTIVE — execute now`, naming the single sub-skill
@@ -414,12 +319,13 @@ Every reviewer agent's prompt:
 - refuses and reports NOT-RUN if the review worktree is unreachable, or
   its HEAD differs from the anchor HEAD carried in the prompt — it never
   falls back to the session cwd;
-- imperatively embeds the sub-skill's operating procedure (the steps below),
-  except Agent A, which invokes the live adherence contract as specified below;
+- carries its procedure: Agent A invokes the live adherence contract as
+  specified below; the portable simplify reviewer gets the phase 5 steps;
 - ends by **returning a single structured block as its final message**, which
   the orchestrator parses to branch.
 
-Spawn the applicable agents **in a single message, as parallel background
+Spawn the applicable agents (Agent A and any adapter seats; not Agent C, which
+is invoked directly) **in a single message, as parallel background
 Agent calls**, each writing its result to the phase artifact path — the single message runs them
 concurrently, and the bounded poll on those artifacts is what makes this fork wait
 before it proceeds. Keep polling until every artifact lands: a fork's
@@ -436,7 +342,7 @@ Seat defaults are guidance, not pins; raise a seat when the change warrants it:
 | Seat | Default worker class | When to raise |
 |---|---|---|
 | adherence, scope, docs-propagation, consistency | cheap cluster | a rule is subtle or the diff is large |
-| correctness, gate | mid-size model | high-risk or cross-cutting change |
+| correctness | mid-size model | high-risk or cross-cutting change |
 | red team | mid-size model | high-risk change: another family (`decorrelation.md`) |
 
 **Agent A — adherence** (`/verify-adherence <branch> worktree=<absolute-review-worktree>`).
@@ -468,82 +374,33 @@ ESCALATE, a timeout, or an unparseable result as an infrastructure failure;
 never replace a missing verdict with PASS. Write the result to Agent A's
 phase artifact using the same completion protocol as the other reviewers.
 
-**Agent B — built-in review** (`/review`). **Tier-skip:** skip this agent when
-the tier is **tiny** and log `review: skipped (tier: tiny)` in the setup
-summary; it runs on the **small** and **full** tiers. This is a built-in slash command
-whose procedure cannot be embedded as text, so it is **Agent-WRAPped, not
-embedded**: spawn a read-only Agent on the review worktree `$primary_root/.claude/worktrees/review-<pr-number>`
-(all git via `git -C`), same containment rails, whose prompt first runs `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`, then invokes `/review` on the PR, then runs the same anchor command again. Any nonzero result is `review: FAILED — REVIEW-ANCHOR`, never a clean verdict. Supply the first anchor's HEAD and changed-file roster to `/review` and require it to examine the explicit `git -C "$primary_root/.claude/worktrees/review-<pr-number>" diff origin/<base>...HEAD`. Compare its result to the roster: an empty-diff answer, a different branch or HEAD, or a result with no concrete analysis of the listed changed files is `review: FAILED — wrong or unverified diff`. Record the named reason in Agent B's phase artifact and the final verdict; never convert this failure into an approval. **Hand it the resolved axes; it guesses without
-them.** `/review` checks prose against a house rulebook, and told nothing it
-picks one by inference — on a manuscript merge request it read
-`rules/doctype/book.md` where the project manifest declares `techreport`
-(audit of 2026-08-17, MR 136). Before spawning, run
+**Native `/review` and `/simplify`** are optional adapter seats, never the
+basis of the review. Phase 5 uses native `/simplify` when available and the
+portable procedure below otherwise, both directly invoked (ticket 0349) and both
+targeting the explicit review worktree and PR branch.
+
+**Hand native `/review` the resolved axes; it guesses without them.**
+`/review` checks prose against a house rulebook and, told nothing, picks one by
+inference: on a manuscript merge request it read `rules/doctype/book.md` where
+the project manifest declares `techreport` (audit of 2026-08-17, MR 136).
+Before spawning that seat, run
 `cd $primary_root/.claude/worktrees/review-<pr-number> && python3 "$IDH_ROOT/scripts/prose_predicate.py" --axes <changed files>`
 and carry its lines verbatim into the wrap prompt. Same cwd anchoring and same
-refusal semantics as the routing call below — this reads the disk too. Note
-what the two calls settle: routing picks *which panel* reviews the diff, the
-axes tell the reviewer *which rulebook* to hold it to. Agent B keeps running on
-prose either way; the audit found it earning its seat there — a rebuilt PDF
-with its link integrity checked on MR 136, and a catch the prose panel missed
-on MR 138. What it lacked was the rulebook, not the mandate. Phase 5 uses the native `/simplify` command when available, or the portable
-procedure below when that command is absent. The native route remains a direct
-invocation (ticket 0349); both routes target the explicit review worktree and
-PR branch, including when the invoking session lives in a sibling worktree.
-
+refusal semantics as the routing call below, since this reads the disk too.
+Routing picks which panel reviews the diff; the axes tell the reviewer which
+rulebook to hold it to.
 
 **Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
 or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`).
-Launch Agent C with `subagent_type: gaze-pr-review` from
-`agents/gaze-pr-review.md`. Its explicit `tools: Agent, ...` grant is required:
-the inner perspective fan-out cannot be inferred from the outer Agent's tools.
-If Agent C itself cannot launch, record the same panel integrity failure in
-the /gaze verdict comment, mark Agent C unresolved, and do not claim a completed
-review round.
-Before launching perspectives, Agent C checks that the `Agent` tool is in its
-own available toolset and that a spawn call succeeds. A missing tool, depth
-limit, or denied spawn is a panel integrity failure, not permission to replace
-independent perspectives with sequential self-review. Write the selected roster
-to the manifest and mark each unlaunched perspective `no report`. Post the
-review on the PR with `PANEL-INTEGRITY: DEGRADED — Agent tool unavailable or
-spawn failed; selected perspectives not run` and `dissent: unavailable`;
-return those same lines in Agent C's structured block. The /gaze orchestrator
-must carry the exact `PANEL-INTEGRITY:` line into its final verdict comment
-and use `panel integrity: DEGRADED` in the actions section. Never write
-`dissent: none` for this path. When Agent C's own toolset lacks the
-`Agent` tool, apply the detached-seat substitution in
-skills/review-pr/SKILL.md instead of degrading.
-If a launched perspective is still missing at the bounded collection deadline,
-name it as `no report`, post and return `PANEL-INTEGRITY: DEGRADED — missing
-perspective report: <name>`, and use `dissent: unavailable` there too.
-**Width-gate:** run Agent C at every tier. For round-1 code diffs, read
-`$IDH_ROOT/skills/review-pr/panel-width.json` and apply its
-`max_lines`, `max_files`, and `pipeline_paths` to `git diff --numstat
---no-renames origin/<base>...HEAD` in the review worktree. A diff within both
-limits and with no pipeline path gets Correctness only. A binary count, missing
-base, or unreadable config selects the proportional panel, with at least
-Correctness + Consistency even if the risk description is trivial. `review:standard`
-in the PR label/body or linked ticket body selects all five code perspectives
-even for a tiny diff. A Correctness reviewer concern or low confidence adds
-the other four perspectives before synthesis. The gaze battery tier controls
-Agents A/B and simplify, but never overrides this Agent C width decision;
-when the merge request already carries a prior Agent C
-review (the caller-level repeat `/gaze` case), run the panel scoped per
-§ Round scoping — only the perspectives whose previous verdict was
-comment/request-changes (prose: minor/major), plus one regression agent
-running a single regression check over all the cleared ones, unless the diff
-was substantially rewritten, in which case the full panel runs for this round
-and scoping is ignored. Do **not** state a round number — gaze computes none.
-Instead, have the embedded procedure instruct the spawned agent to derive the
-round itself (count the reviews this skill previously posted on the merge
-request, identifiable by the verdict roster they always carry; the round is
-that count plus one), read the previous round's verdict roster, build the
-scoped perspective list from it, and record the reason for each inclusion.
-Spell that derivation out: the spawned agent does not read this file or
-`skills/review-pr/SKILL.md`, so an unstated rule does not reach it.
-Otherwise route by the shared prose predicate, anchored in the review
-worktree — the predicate reads the disk (manifest walk-up, `\documentclass`
-sniff), so a parked cwd would return a plausible, wrong verdict, the failure
-mode this ticket exists to close. Run
+This is the one launch mode: gaze invokes the review skill directly with the
+review worktree, never through a spawned wrapper agent carrying an embedded
+copy of the panel. There is no gaze-specific reviewer agent; the invoking
+fork's own toolset supplies the delegation capability.
+
+**Route first.** Choose the skill by the shared prose predicate, anchored in the
+review worktree — the predicate reads the disk (manifest walk-up,
+`\documentclass` sniff), so a parked cwd would return a plausible, wrong
+verdict. Run
 `cd $primary_root/.claude/worktrees/review-<pr-number> && python3 "$IDH_ROOT/scripts/prose_predicate.py" <changed files>`
 — it prints `prose` when any changed file resolves to a `doctype` (from the
 project's `.claude/rules-map.toml` manifest, else the `\documentclass`
@@ -551,49 +408,39 @@ sniff; one manuscript flips a mixed diff), `code` otherwise. It refuses any
 path that does not exist under that cwd (exit 2, no verdict) — treat a
 refusal as a routing error to fix, never as `code`. Process prose — notes,
 tickets — carries no doctype and stays on the code panel, which is the panel
-the audit measured as correct for it (ticket 0550). Spawn a read-only Agent on the review worktree `$primary_root/.claude/worktrees/review-<pr-number>`
-(all git via `git -C`), whose embedded procedure is: read the linked ticket's exit criteria and the
-diff, assess risk, apply the Width-gate for round-1 code, and run the selected
-perspective set in parallel —
-**code:** correctness, consistency, scope, red-team, doc-propagation (trivial →
-correctness only when Width-gate qualifies; otherwise at least +consistency;
-scripts or other pipeline paths → +doc-propagation;
-substantial → all five); **prose:** discipline panel sized to the change,
-always including an adversarial referee and an AI-tells auditor that scans the
-full text against `config/ai-tells.yml`. Each perspective reports
-confidence and a verdict (approve / comment / request-changes for code; accept
-/ minor / major for prose).
-If the round-1 code panel was reduced to Correctness only and that reviewer
-raises a concern or low confidence, add the other four perspectives and
-collect their reports before synthesis. An explicit `review:standard` request
-also forces all five code perspectives. Synthesize: preserve dissent verbatim,
-dedupe, and run the project's declared gate. With `.idh-checks.json`, use
-`python3 "$IDH_ROOT/scripts/scoped-check.py"` and carry `selected:` and `skipped:`
-into the review; without a map, run `make check`. A scoped pass is not a full
-gate claim. Every non-blocker (minor) finding **must** carry exactly one tag
-prefix — `verifiable:` (a reproducible failing assertion is attached),
-`consider:` (hypothesis, no enforcement), or `nofollow:` (noted, not pursued);
-hedged "might break X" phrasing is forbidden — produce the assertion or
-downgrade to `consider:`. Blockers (request-changes / major) are untagged.
-Post the single review on the PR and return the synthesized findings (blockers
-+ tagged minors) as the structured block. This inner panel is itself a fan-out:
-Agent C must launch its perspective agents in one message, each writing its
-own artifact, and poll those artifacts until every one has landed
-returns before it synthesizes — the fork contract applies recursively (see
-**Fork execution contract**; ticket 0263, `/gaze 479`, 2026-07-11). Embed in
-its prompt the 30-second live-state polling rule above; if the PR stops,
-cancel its perspective agents and return the phase/state line without posting
-a review.
+the audit measured as correct for it (ticket 0550). `prose` →
+`/review-pr-prose`; `code` → `/review-pr`.
+
+**What the review skill owns; gaze passes it nothing but the PR and tree.**
+Panel width is review-pr's: `skills/review-pr/panel-width.json` (`max_lines`,
+`max_files`, `pipeline_paths`) picks Correctness only for a qualifying round-1
+code diff and at least Correctness + Consistency otherwise; `review:standard`
+or a Correctness concern widens it to all five. It also owns the round number
+and § Round scoping for a repeat review, the detached-seat substitution, the
+project gate run, minor tags (`verifiable:` / `consider:` / `nofollow:`) and
+the single posted review. Gaze passes no round number and no perspective list.
+
+Inside the review skill the selected perspective agents launch in parallel,
+each writing its own artifact, and the skill polls them against its manifest under a bounded
+deadline before it synthesizes; gaze's fork waits on the skill's return, so
+the fork contract holds one layer down.
+
+**Panel integrity in gaze's result.** If the review skill itself cannot launch,
+or reports that the Agent tool is unavailable or a spawn failed, gaze does not
+substitute its own sequential review: it records the failure, marks the review
+unresolved and claims no completed review round. Carry the exact
+`PANEL-INTEGRITY:` line the skill posted (`PANEL-INTEGRITY: DEGRADED — Agent
+tool unavailable or spawn failed; selected perspectives not run`, or `missing
+perspective report: <name>` for a perspective still missing at the bounded collection deadline) and its `dissent: unavailable` into the /gaze result comment, and use
+`panel integrity: DEGRADED` there. Never write `dissent: none` for this path.
+When the invoking toolset lacks the Agent tool, the review skill first applies
+the detached-seat substitution in skills/review-pr/SKILL.md instead of degrading.
 
 Wait for all spawned agents to complete. Collect their structured outputs.
 
-**Early-exit check**: if the adherence agent returned any `blocking` violations, skip phase 5 (simplify). Blocking adherence guarantees a REROLL; simplify tokens would be wasted. Log `simplify: skipped (adherence blocking)` in the telemetry phase line.
+**Early-exit check**: if the adherence agent returned any `blocking` violations, skip phase 5 (simplify). Blocking adherence guarantees FINDINGS; simplify tokens would be wasted. Log `simplify: skipped (adherence blocking)` in the telemetry phase line.
 
 ### 5. Simplify (sequential)
-
-**Tier-skip:** when the tier is **tiny**, skip this phase and log
-`simplify: skipped (tier: tiny)` in the telemetry phase line; it runs on the
-**small** and **full** tiers.
 
 **Prose-skip:** when the diff routed prose (the same
 `"$IDH_ROOT/scripts/prose_predicate.py"` verdict the phase 2–4 panel choice used), skip
@@ -626,131 +473,138 @@ perform one of these routes. Record `simplify route: native|portable`.
 For either route, the orchestrator applies bounded fixes only to the PR branch
 in the explicit review tree, or records an evidence-backed disposition for each
 finding. Run affected checks for changes, commit and push fixes, and wait for
-completion before phase 6 reads state. After any fixes, anchor the final HEAD
+completion before the result is read. After any fixes, anchor the final HEAD
 again and have the simplification reviewer confirm the dispositions against
 that head; update the artifact with the final reviewed SHA. A moved head without
 this confirmation leaves the pass unresolved. Feed all findings and dispositions
-(or the evidenced CLEAN result), route, and reviewed SHA to verify-gate. The
+(or the evidenced CLEAN result), route, and reviewed SHA in the result. The
 same must-fix rules apply to both routes; no portable route silently skips or
-weakens the phase. Existing tiny/prose/adherence skips above remain unchanged.
+weakens the phase. The prose and adherence skips above remain unchanged.
 
-### 6. Gate (the non-rubber-stamp step)
+### External reviewer panel (optional, beside phases 2–4)
 
-Pass this run's `gate_session_id` and `review_tree` to the gate agent. It must
-read the tip SHA from the review worktree immediately before ruling and
-put all three values in its PR verdict comment. If the worktree is unavailable,
-its HEAD cannot be read, or its HEAD differs from the anchor HEAD carried in
-the prompt, the gate agent refuses and reports NOT-RUN — it never falls back
-to the session cwd — and the orchestrator ESCALATEs without posting an approval.
+External, decorrelated review is optional evidence routed by the active
+runtime. When useful or requested, describe the expertise, capability and
+independence needs through `skills/reviewers/SKILL.md` and read its live-route
+reference. The runtime discovers available reviewers and chooses an appropriate
+route; no fixed roster, provider or gateway is required. The internal battery
+retains its round requirements.
 
-The gate also runs as an **Agent-spawned sub-agent, not a `context: fork`**
-(ticket 0216) — same rationale as phases 2–4. The launch is **the gate-seat
-profile** (`agents/gate-seat.md`), whose contract is
-`profiles/gate-seat/PROFILE.md` — spawn one seat (waited for by polling its
-written verdict artifact), with its model chosen per launch from the `route` skill, operating on the review worktree
-`$primary_root/.claude/worktrees/review-<pr-number>` (the equivalent fork call is
-`/verify-gate <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`);
-the PR number, this run's `gate_session_id`, and the review worktree path ride
-in the launch prompt, and so does the waiver record (`waiver: none`, or the recorded reason, `pr_files`, `pr_lines` and source; growth is judged against the earliest posted waived header) — the seat's containment rails (read-only except the
-REROLL bump, `git -C` discipline with no `cd` into or out of another tree, no
-commits/pushes/branches/PRs, banned working-tree overwrites, the
-`tickets/*.erg` write ban, the NOT-RUN refusal anchored on the review
-worktree) are the contract's and are not restated in this launch block. The
-gate's only write-shaped output is the verdict itself: the reroll-bump line
-travels in the verdict's `reroll_bump:` field (and its PR verdict comment);
-the orchestrator poses the line, the gate never runs `erg log` (ticket 0879).
-The agent's
-prompt embeds the gate procedure
-imperatively and returns the YAML verdict block below as its **final message**;
-the orchestrator parses `verdict` to branch.
+**Scope and collection.** Optional external code review applies to code
+reviews, using the same `"$IDH_ROOT/scripts/prose_predicate.py"` verdict as
+phases 2–4. Skip these code-review routes on prose panels.
+If selected, route reviews concurrently with phases 2–4 and collect completed
+evidence before the result within the run's deadline. Record the actual reviewer,
+route, independence basis, exact reviewed revisions and raw report. A dispatch
+is not completion; a changed head requires current review evidence.
 
-Embedded gate procedure: for **every** ticket exit criterion, emit
-ADDRESSED/MISSING with concrete evidence — a commit SHA + file:line that
-touched the cited file, a matching test_id, or a posted rationale; "CI ran" /
-"tests pass" is **not** evidence. For **every** review comment (from the phase
-2–4 agents or a human), mark ADDRESSED (a post-comment commit changed the cited
-file, OR the comment is resolved, OR a follow-up ticket is referenced) or
-UNRESOLVED. Tagged minors are triaged by tag, not severity: `verifiable:`
-unresolved → blocker-adjacent (REROLL); `consider:` informational; `nofollow:`
-muted; untagged minors → `malformed_minors` (round 2 → ESCALATE). Every
-must-fix simplify finding is APPLIED (diff shows it) or has a validated
-rationale. Any `blocking` adherence violation → REROLL. Run `git log
-origin/main..origin/<branch> --stat` (two-dot) and report files not traceable
-to an exit criterion as `scope_overflow` (report only — never rebase/amend to
-excise); comment-only hunks are exempt (`skills/verify-gate/SKILL.md` § Scope containment: recorded as `nofollow:`, no `scope_overflow`). At verdict time, re-check the content-bearing file count (the phase-1
-rule: `git diff --name-status -M` for the roster, cross-referenced with
-`git diff --numstat -M`: A/M/D count 1; renames count 1 iff additions +
-deletions > 0, otherwise 0; R100 alone is insufficient because similarity
-ignores line order) against the
-breaker (`pr_files >= 15`, the phase-1 threshold) — a round-2 fix can grow a
-14-file PR past it after the phase-1 check has passed; if the diff against
-main now meets the breaker and no waiver is recorded (§ Waiver), report `circuit_breaker: un-reviewable` in the
-verdict comment and rule ESCALATE, never APPROVED. A recorded waiver keeps the
-verdict header `circuit_breaker: waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>)` and never yields APPROVED: a passing waived PR is NEEDS-AUTHOR, and growth past the earliest posted size is `un-reviewable` and ESCALATE (§ Waiver). Decision: any MISSING criterion, any unresolved human comment, any
-unresolved `verifiable:` minor, any unapplied must-fix, any blocking adherence,
-or any `scope_overflow` (comment-only hunks excepted, `skills/verify-gate/SKILL.md` § Scope containment) with disposition ESCALATE → REROLL (round 1) / ESCALATE
-(round 2); all lists empty and all criteria ADDRESSED → APPROVED. Round 3 is
-forbidden. On REROLL include `reroll_bump:` in the verdict — value `note
-verify-reroll — round {n}: {top unresolved criterion}`, never `none` — only
-after the live `verdict` state check; never run `erg log` (the gate writes no
-ticket file); then post the PR verdict comment. Return:
+**Disposition.** Pass `verifiable:` / `consider:` findings and their supporting
+evidence in the result as panel comments. `/verify-gate` dispositions external findings
+identically to internal ones: only verifiable-class findings may bounce;
+suggestions are noted-not-blocking. Optional participation does not waive a
+returned finding.
+
+**Panel integrity.** No suitable reviewer, a timeout or a failed route is a
+visible limitation. WARN and continue the required internal battery;
+optional external review is fail-open. Preserve `SEAT-FAILED:` /
+`SEAT-MISSING:` records and the `PANEL-INTEGRITY:` headline verbatim in the
+`/gaze` comment's panel section. These are coverage records, not findings to
+disposition. Distinguish a completed clean review from absent evidence; an
+unavailable route must never be reported as independent agreement. Record
+external review as not selected when none was requested or attempted.
+
+**Forge automated reviewer** (ticket 0206): `/verify-gate`'s comment-validation
+step includes the forge's automated reviewer (e.g. a requested Copilot
+review), when present. Its findings are dispositioned like any panel
+comment: correctness-class only may bounce, style is noted-not-blocking.
+The seat is **on-demand**: a PR nobody requested it on is simply a PR
+without that seat, with no warning and no wait. Only when a request WAS
+made (the bot appears in the PR's requested or completed reviewers) and
+its review is still pending while everything else is ready: bounded wait
+of a few minutes, then proceed with a logged WARN — fail-open.
+<!-- harness-extension-point: requested-reviewer detection is
+`gh pr view <pr> --json reviewRequests,reviews` on GitHub. -->
+
+### 6. Return the review result
+
+Gaze ends here; it runs no gate. Read the phase outputs and return:
 
 ```yaml
-verdict: APPROVED | REROLL | ESCALATE | NEEDS-AUTHOR
-per_exit_criterion: [...]
+result: REVIEWED | FINDINGS | ESCALATE
+reviewed_head_sha: <full SHA read from the review worktree after phase 5>
 unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
-unresolved_adherence_violations: [...]
-multi_ticket: <distinct close-claim IDs and non-blocking disposition> | none
-reroll_bump: <the exact line to pose, "note verify-reroll — round {n}: {top unresolved criterion}"> | none (REROLL only — the gate writes nothing)
-rationale: <paragraph>
-round: 1 | 2
-gate_session_id: <this run's id>
-review_worktree_path: <absolute path>
-ruled_tip_sha: <full SHA read from review worktree at verdict time>
+adherence: PASS | FAIL (<n blocking>)
+panel_integrity: COMPLETE | DEGRADED — <PANEL-INTEGRITY: line>
+circuit_breaker: un-reviewable | waived (...) | none
+multi_ticket: <distinct close-claim IDs> | none
+next: run /verify-gate <pr-number> on reviewed_head_sha
 ```
 
-The orchestrator poses the `reroll_bump` line — it never runs `erg log`
-against `main` mid-wave, where it would collide at the insertion point with
-the branch's own ticket commits (ticket 0879, the 1016 collision class):
-commit it onto the PR branch together with the REROLL fix, or defer to merge
-time.
+- `ESCALATE`: the breaker fired, the battery could not run (`battery: NOT-RUN`),
+  any phase 2–5 errored or timed out, or the workspace could not be restored.
+- `FINDINGS`: any blocking adherence violation, any `request-changes` or
+  `major` review verdict, any unresolved `verifiable:` minor, any simplify
+  must-fix not applied. List them; the caller fixes (a coder on the PR
+  branch, scoped to the list) and re-runs gaze or goes straight to the gate.
+- `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still
+  checks every exit criterion and review comment against the diff.
 
-If phase 1 reported `multi_ticket`, carry it into the gate's findings and
-disposition each close-claimed ticket's exit criteria. The finding alone is
-non-blocking; it never changes APPROVED to REROLL or ESCALATE below the size
-breaker.
+Post the result as one PR comment (§ Output shape), then run the
+cleanup and containment (§ Cleanup and containment) before returning.
 
-## Branch on verdict
+**Attribution (ticket 1151).** After each review seat returns, the controller
+appends that seat's `reviewer: step=review` line (with its `finding:` lines) to
+the PR body through `attribution_record.py --append-pr <pr> --append '<lines>'`
+(`$IDH_ROOT/scripts/`). Seats never edit the body; a failed append is reported,
+not skipped.
 
-- **Attribution (ticket 1151).** After each review seat and the gate return,
-  the controller appends that seat's `reviewer: step=review|gate` line (with
-  its `finding:` lines) to the PR body through
-  `attribution_record.py --append-pr <pr> --append '<lines>'` (`$IDH_ROOT/scripts/`).
-  Seats never edit the body; a failed append is reported, not skipped.
-- **APPROVED** → post a "verify: approved" comment on the PR summarising the evidence. End
-  the skill. The caller merges.
-- **REROLL, round 1** → spawn a fix subagent that creates and locks its own worktree on the PR branch (`git worktree add <path> <PR_BRANCH>`, then `git worktree lock` as in hunt step 3) —
-  the **coder profile** (`agents/coder.md`, whose contract is
-  `profiles/coder/PROFILE.md`; the model is chosen per launch from the
-  `route` skill, no frontmatter pin) —
-  waited for by polling
-  the artifact it writes on completion (so this fork survives until it pushes — see
-  **Fork execution contract**), feeding it the unresolved lists as input. Fix agent gets ≤10 min. On push, **re-enter phase 6 by
-  re-spawning the read-only gate Agent** (review worktree `$primary_root/.claude/worktrees/review-<pr-number>`, as in
-  phase 6) with `round=2` — not a fork invocation.
-- **NEEDS-AUTHOR** (a waived breaker whose indivisibility holds and whose other criteria pass) → post a
-  PR comment marked `NEEDS-AUTHOR` with the waiver record and the indivisibility evidence. Never post
-  `verify: approved`. End the skill. The caller does not merge without the author.
-- **REROLL, round 2** → upgrade to ESCALATE (no third round). Post a PR comment with the
-  still-unresolved items and the gate's rationale. End the skill.
-- **ESCALATE** → post a PR comment tagged `/gaze stopped:` listing what needs human
-  judgment. End the skill.
+## Cleanup and containment
+
+On every exit path remove this run's review scratch and the review worktree, then check the containment postcondition (cwd, branch, foreign files) and report it before returning control.
+
+## Review scratch cleanup
+
+On every exit path (REVIEWED, FINDINGS, ESCALATE, circuit-breaker abort), after the review panel has consumed its artifacts, remove this
+run's review scratch before removing the worktree.
+The `/review-pr` run leaves the panel for this step. Do not run
+this while perspective agents are still writing: cancel or wait for them first.
+If the review worktree was never created, there is nothing to clean up. The
+exit preflight must pass after scratch removal: if it reports other WIP, leave
+the review worktree registered and surface those file names as ESCALATE to the
+caller. Never force-remove a tree with real uncommitted files. A failed
+preflight or normal worktree removal is a cleanup failure, not a successful
+terminal result.
+
+```bash
+review_tree="$primary_root/.claude/worktrees/review-<pr-number>"
+if [ -d "$review_tree" ]; then
+    # Read verdicts before deleting panel files. Citation or ancestry uncertainty
+    # keeps both the candidate .tmp and its review evidence in place.
+    if [ -e "$review_tree/.tmp" ] || [ -L "$review_tree/.tmp" ]; then
+        python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" removal \
+            "$primary_root" "$review_tree" --branch "$PR_BRANCH" || exit 1
+    fi
+    tracked_panel=$(git -C "$review_tree" ls-files -- ".panel/<pr-number>") || exit 2
+    tracked_base=$(git -C "$review_tree" ls-files -- build/panel-head) || exit 2
+    [ -n "$tracked_panel" ] || rm -rf -- "$review_tree/.panel/<pr-number>"
+    if [ ! -L "$review_tree/build" ] && [ -z "$tracked_base" ]; then
+        rm -rf -- "$review_tree/build/panel-head"
+    fi
+    rmdir -- "$review_tree/.panel" 2>/dev/null || true
+    # Detached review trees without provable branch ancestry retain .tmp.
+    if ! "$IDH_ROOT/scripts/worktree-exit-preflight.sh" --removal --branch "$PR_BRANCH" "$review_tree"; then
+        echo "/gaze cleanup blocked: real WIP remains in $review_tree" >&2
+        exit 1
+    fi
+    git -C "$primary_root" worktree remove "$review_tree" || exit 1
+fi
+```
+
 
 ## Containment postcondition
 
-On **every** exit path (APPROVED, REROLL-escalated, ESCALATE, NEEDS-AUTHOR, circuit-breaker
-abort), after removing the review worktree and before returning control to
+On **every** exit path (REVIEWED, FINDINGS, ESCALATE, circuit-breaker abort), after removing the review worktree and before returning control to
 the caller — the caller must see this report before any merge step:
 
 ```bash
@@ -766,7 +620,7 @@ git -C <primary-repo-root> status --porcelain
 
 - **Foreign files** (anything this run did not deliberately create —
   especially stray `tickets/*.erg`) → remove or restore them, and flag the
-  contamination in the verdict comment. Do not leave them for a later
+  contamination in the result comment. Do not leave them for a later
   `git add` to sweep.
 - **Unexpected branch** → switch back to the entry branch and flag it. Never
   end the skill with the session worktree on a different branch than it was
@@ -776,44 +630,25 @@ git -C <primary-repo-root> status --porcelain
   anchor the corrective switch — `git -C <session-worktree> switch <entry-branch>`,
   not a bare `git switch` against an assumed cwd (rules/git.md § anchor across
   a forked-skill boundary).
-- Anything that cannot be restored cleanly → downgrade the verdict to
+- Anything that cannot be restored cleanly → downgrade the result to
   ESCALATE; a contaminated workspace must not feed a merge.
-
-## Fix-agent contract
-
-The subagent spawned on REROLL receives:
-
-- Worktree path (PR branch already checked out).
-- Unresolved lists from the gate verdict (review comments, simplify findings, adherence
-  violations, per-exit-criterion gaps).
-- Strict rule: **only** the listed items. No scope creep. No "while I'm here" edits.
-- TDD discipline still applies: add a failing test for any behavioural fix before coding.
-- Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix. A mapped doc-only fix uses `python3 "$IDH_ROOT/scripts/scoped-check.py"` and quotes selected and skipped targets; Python code and unmapped changes use the full `make check`.
-
-Push commits to the PR branch; do not open new PRs. Trigger re-entry into phase 6.
 
 ## Circuit breakers
 
 - Close claim names a ticket file that does not exist → ESCALATE. A PR with
-  no ticket at all is not a breaker: the gate reviews it against the PR body
-  (`/verify-gate` § Circuit breakers).
+  no ticket at all is not a breaker.
 - `pr_files >= 15` (content-bearing files, phase-1 rule) without a waiver → ESCALATE as
-  `un-reviewable` before the reviewer battery;
-  this is the `rules/workflow.md` 15+ file monster threshold. Name the breaker
-  in the verdict comment and mention `multi_ticket` when multiple close claims
-  add a decomposition signal. A waiver (`--waive-breaker` or the PR-body
-  `Review-scope: indivisible` line, § Waiver) lifts only this stop and the battery runs;
-  a passing waived PR is NEEDS-AUTHOR.
-  `--force-approve` can override it loudly, without review.
-- Any of phases 2–5 errors or times out → ESCALATE (do not silently skip). Exception: phase 5 (simplify) intentionally skipped when adherence is blocking — this is not an error.
-- Fix agent timeout (10 min) → ESCALATE.
-- Gate disagrees with phase 2–5 on a must-fix finding → ESCALATE (no silent resolution).
-- Two REROLL rounds reached → ESCALATE.
-- Telemetry thresholds (see `## Telemetry`).
+  `un-reviewable` before the review; this is the `rules/workflow.md` 15+ file
+  monster threshold. Name the breaker in the comment and mention `multi_ticket`
+  when multiple close claims add a decomposition signal. A waiver
+  (`--waive-breaker` or the PR-body `Review-scope: indivisible` line, § Waiver) lifts only this stop. `--force-approve` can
+  override it loudly, without review.
+- Any of phases 2–5 errors or times out → ESCALATE (do not silently skip).
+  Exception: simplify intentionally skipped when adherence is blocking.
+- Telemetry thresholds (`## Telemetry`).
 
-On **every** circuit-breaker exit (not only ESCALATE): run the
-`## Review scratch cleanup` procedure before returning so the main repo is
-never left in a partial state.
+On **every** exit (not only ESCALATE) run § Cleanup and containment before
+returning, so the main repo is never left in a partial state.
 
 ## Telemetry
 
@@ -823,11 +658,11 @@ Each phase emits start/end lines: `[verify] phase=<name> start=<ISO> / end=<ISO>
 
 ### Verdict footer (PR comment)
 
-Appended to verdict comment: `telemetry: tier=<tiny|small|full> risk_band=<high|low|normal> wall=<s>s agents=<n> tokens=<in+out> cost~=$<usd>`
+Appended to the result comment: `telemetry: risk_band=<high|low|normal> wall=<s>s agents=<n> tokens=<in+out> cost~=$<usd>`
 
-Fields: `tier` (battery tier from phase 1 — `tiny|small|full`), `risk_band`
+Fields: `risk_band`
 (path-risk band from the phase-1 `--risk` call — `high|low|normal`), `wall`
-(phase-1 to verdict), `agents` (sub-agent count), `tokens` (sum, use `na` for
+(phase 1 to result), `agents` (sub-agent count), `tokens` (sum, use `na` for
 missing), `cost~=` (best-effort USD, `na` if incomplete).
 
 ### Thresholds
@@ -846,111 +681,49 @@ caller monitors it (§ Fork execution contract).
 
 Explicit human override. Usage: `/gaze <pr-number> --force-approve <reason>`.
 
-- Skips review: it spawns no reviewer battery (phases 2–5) and runs no phase 6
-  gate. Nothing in this run is reviewed or verified; the only review the PR has
-  is whatever an earlier round already posted, possibly none.
+- Skips review: it spawns no reviewer battery (phases 2–5). Nothing in this run is
+  reviewed; the only review the PR has is whatever an earlier round already
+  posted, possibly none.
 - Posts a loud PR comment: `/gaze: force-approved — reason: <reason>`. It lists
   the outputs of phases 2–5 that exist, so reviewers see what was waived.
 - Logs the override in the skill transcript.
-- Still does not merge.
-
-## Not in scope
-
-- **Wave-level integration review.** Verify one PR at a time. Post-merge
-  integration review of a batch is `/roar` step 8 — child diffs re-read and the
-  full suite run once every child has merged.
-- **Merging.** Ever. That is the caller's job.
-
-## External reviewer panel
-
-External, decorrelated review is optional evidence routed by the active
-runtime. When useful or requested, describe the expertise, capability and
-independence needs through `skills/reviewers/SKILL.md` and read its live-route
-reference. The runtime discovers available reviewers and chooses an appropriate
-route; no fixed roster, provider or gateway is required. The internal battery
-and phase-6 gate retain their existing tier and round requirements.
-
-**Scope and collection.** Optional external code review applies to small/full
-CODE reviews, using the same `"$IDH_ROOT/scripts/prose_predicate.py"` verdict as
-phases 2–4. Skip these code-review routes on tiny tiers and prose panels.
-If selected, route reviews concurrently with phases 2–4 and collect completed
-evidence before phase 6 within the run's deadline. Record the actual reviewer,
-route, independence basis, exact reviewed revisions and raw report. A dispatch
-is not completion; a changed head requires current review evidence.
-
-**Disposition.** Pass `verifiable:` / `consider:` findings and their supporting
-evidence to phase 6 as panel comments. The gate dispositions external findings
-identically to internal ones: only verifiable-class findings may bounce;
-suggestions are noted-not-blocking. Optional participation does not waive a
-returned finding.
-
-**Panel integrity.** No suitable reviewer, a timeout or a failed route is a
-visible limitation. WARN and continue the required internal battery and gate;
-optional external review is fail-open. Preserve `SEAT-FAILED:` /
-`SEAT-MISSING:` records and the `PANEL-INTEGRITY:` headline verbatim in the
-`/gaze` comment's panel section. These are coverage records, not findings to
-disposition. Distinguish a completed clean review from absent evidence; an
-unavailable route must never be reported as independent agreement. Record
-external review as not selected when none was requested or attempted.
-
-**Forge automated reviewer** (ticket 0206): the gate's comment-validation
-step includes the forge's automated reviewer (e.g. a requested Copilot
-review), when present. Its findings are dispositioned like any panel
-comment: correctness-class only may bounce, style is noted-not-blocking.
-The seat is **on-demand**: a PR nobody requested it on is simply a PR
-without that seat, with no warning and no wait. Only when a request WAS
-made (the bot appears in the PR's requested or completed reviewers) and
-its review is still pending while everything else is ready: bounded wait
-of a few minutes, then proceed with a logged WARN — fail-open.
-<!-- harness-extension-point: requested-reviewer detection is
-`gh pr view <pr> --json reviewRequests,reviews` on GitHub. -->
+- Is an override record, not a verdict and not a gate pass: `/verify-gate`
+  still rules, and still does not merge.
 
 ## Output shape
 
-Post a single top-level PR comment at end of skill. Two sections,
-always both present. No interim "started"/"finished" chatter — the
-final report is the signal.
+Post a single top-level PR comment at end of skill. No interim
+"started"/"finished" chatter; the final report is the signal.
 
 ```
-## /gaze actions
+## /gaze result
 
-round: <n>
-tier: tiny|small|full
+result: REVIEWED|FINDINGS|ESCALATE
+reviewed_head_sha: <full SHA read from the review tree after phase 5>
 risk_band: high|low|normal
 circuit_breaker: un-reviewable | waived (<pr_files> content-bearing files / <pr_lines> lines — <reason>) | none
 multi_ticket: <distinct close-claim IDs> | none (non-blocking below breaker)
 adherence: PASS|FAIL — <n_blocking> blocking | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
-review: <n_comments_posted> | skipped (tier: tiny) | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
-review-pr: <n_comments_posted> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
-review-pr scope: one seat | proportional panel | five perspectives | scoped: <objecting perspectives> + regression (omit if Agent C did not run)
+review-pr: <n_comments_posted> | skipped (adherence blocking) | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
+review-pr scope: one seat | proportional panel | five perspectives | scoped: <objecting perspectives> + regression (omit if review-pr did not run)
 panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable) | skipped (--force-approve)
-simplify: <n_fixes_applied> | skipped (tier: tiny) | skipped (adherence blocking) | skipped (prose workpackage) | skipped (un-reviewable) | skipped (--force-approve)
-fix agent: <n_commits> commits (round 2 only, omit if round 1)
-gate: ran | skipped (un-reviewable) | skipped (--force-approve) | skipped (gate launch failure — see battery NOT-RUN)
-
-## /verify-gate verdict
-
-verdict: APPROVED|REROLL|ESCALATE|NEEDS-AUTHOR (direct setup ESCALATE when un-reviewable)
-gate_session_id: <this run's id>
-review_worktree_path: <absolute review tree path>
-ruled_tip_sha: <full SHA read from review tree at verdict time>
-reroll_bump: <exact returned note verify-reroll line; include on REROLL, omit otherwise>
-
-Exit criteria:
-- <criterion 1>: ADDRESSED — <evidence>
-- <criterion 2>: MISSING — <gap>
+simplify: <n_fixes_applied> | skipped (adherence blocking) | skipped (prose workpackage) | skipped (un-reviewable) | skipped (--force-approve)
 
 Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]
 Adherence: PASS | FAIL (<count>)
 
-Rationale:
-<paragraph>
+next: run /verify-gate <pr-number>; gaze is not a gate and does not approve
 
-telemetry: tier=<tiny|small|full> risk_band=<high|low|normal> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
+telemetry: risk_band=<high|low|normal> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
 
-On `--force-approve`, the verdict comment is annotated `FORCE-APPROVED by <reason>`.
-No gate verdict exists to show: under `--force-approve` no gate runs, and every
-unrun phase reads `skipped (--force-approve)` above.
+On `--force-approve`, the comment is annotated `FORCE-APPROVED by <reason>`.
+
+## Not in scope
+
+- **Gating.** `/verify-gate` rules APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR.
+- **Fixing.** A coder on the PR branch acts on `FINDINGS`; gaze only commits phase 5 simplify fixes.
+- **Wave-level integration review.** Post-merge integration review of a batch is `/roar` step 8.
+- **Merging.** Ever. That is the caller's job.
