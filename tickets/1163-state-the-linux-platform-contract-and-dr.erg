@@ -1,0 +1,62 @@
+%erg 0.1
+Title: State the Linux platform contract and drop macOS shims
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T07:52Z reviewer created
+
+--- body ---
+
+## Context
+The harness is Linux in practice and says nothing about it. `INSTALL.md:39`
+("Portability is measured, not presumed") concerns runtimes (Claude Code,
+Codex, Pi), not operating systems. Evidence of the de facto contract:
+`runs-on: ubuntu-latest` on every job seen in `.github/workflows/CI.yml`;
+`ci-local/` runs podman; tests and `scripts/worktree-gc.sh` read `/proc`;
+`tickets/erg` is Linux x86-64 only. A sweep (read-only, shallow: five tool
+calls, greps cut by head limits) found about 15 to 45 lines of
+macOS-motivated code, so the value is in stating the contract once, and
+deleting the little that serves macOS.
+
+Motivation: a portable-wait design (docs/discussions/2026-10-21-await-external-design.md,
+on branch explore-await-external-*) commits to systemd; the same commitment
+should be written down instead of rediscovered per script.
+
+## Exit criteria
+- [ ] `INSTALL.md` states the platform contract in one line: "The harness
+  targets Linux (systemd, `/proc`, GNU coreutils, `fcntl.flock`, XDG paths);
+  macOS and Windows are unsupported, and WSL2 is unverified."
+- [ ] `scripts/on-start-context.sh:51-53`: call `timeout` unconditionally, and
+  rewrite `tests/test_on_start_live_counts.py::test_runs_without_timeout_and_hostname`
+  (lines ~122-150) so the host-line check with a minimal PATH remains.
+- [ ] `scripts/zotero.py:733,749`: drop the macOS app candidate and the
+  `sys.platform` test.
+- [ ] Note the already-committed assumptions where they live, without code
+  change: `/proc` (scripts/worktree-gc.sh:38-47 and tests), GNU-only
+  `readlink -f`, `stat -c`, `sha256sum`, hardcoded `/tmp` and `/home` mounts
+  (scripts/tmp_report.py:667,678), the inferred systemd tmpfs quota
+  (scripts/session_scratch.py:60-66). One sentence each is enough.
+- [ ] `make check` passes; quote `selected:` and `skipped:` if the scoped gate
+  runs.
+
+## Out of scope, maybe later
+- Trim macOS and Fedora install hints in
+  `skills/track-changes-pdf/track_changes_pdf.py:55,76` (about 4 lines, user
+  text only).
+- Replace the hand-rolled podman socket start, poll and kill in
+  `ci-local/common.sh:18-24` with a transient systemd unit (about 15 lines,
+  estimated). Needs a probe first: does a user systemd manager exist in the CI
+  container and on contributors' machines? The dedicated `podman system
+  service` exists to keep `CONTAINERS_CONF` (keep-id) out of the default
+  podman, and a unit needs the same isolation.
+- `tests/test_zotero_import.py:1258`: drop the `/proc/<pid>/fd` guard (1 line).
+- Skip: `scripts/zotero.py:1057-1064` and `adapters/lifecycle.py:51` (XDG
+  fallbacks also serve cron and containers); leak guards and CRLF handling,
+  which are not about the OS; `fcntl.flock`, which works on macOS too.
+
+## Not checked by the sweep
+`Makefile`, `hooks/pre-commit`, `bin/idh-hook`, `docs/adapter-operations.md`,
+`settings.shared.json`, and `ci-local/` beyond `common.sh`; WSL2 behaviour; the
+GNU flags each script depends on. Re-run the grep before editing, since the
+sweep's `head` limits may have hidden later matches.
