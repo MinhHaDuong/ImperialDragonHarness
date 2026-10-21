@@ -437,8 +437,7 @@ For each eligible PR, sequentially within the wave:
    nothing, ignores forge check conclusions and merges pinned to the gated
    head; its exit is the outcome (0 merged). Exit 2 means no record for this
    head (an earlier merge in the wave moved the base): record again, run again.
-   On an ungated base:
-   The merge is queued, not necessarily landed: pending checks are normal.
+   **Ungated base:** the merge is queued, not necessarily landed: pending checks are normal.
    Read the outcome with `"$IDH_ROOT/skills/merge/erg-pr-status" -C <worktree-path> <pr-number>`
    (exit 0 merged, 1 failed, 2 pending, 3 unreadable). Pending is not a
    failure: wait as `skills/merge/SKILL.md` § Waiting for a queued merge

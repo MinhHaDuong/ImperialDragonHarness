@@ -268,8 +268,9 @@ resolve_base() { # <label>
 }
 
 # ── Step 9: exit check, one call before leaving the worktree (ticket 1098) ─────
-# READY means: the tree is clean and its work is integrated (or is the armed
-# wrap-up bundle). The caller then cds to the main checkout and lets
+# READY means: the tree is clean and its work is integrated (or is the wrap-up
+# bundle: pushed, with auto-merge armed or, on a gated base, a passing gate
+# record on its candidate). The caller then cds to the main checkout and lets
 # after-exit remove the tree: no `remove`, no `discard_changes` (ticket 1097).
 bundle_armed() { # <head oid>
     local answer armed rc=0

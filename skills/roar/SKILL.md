@@ -108,8 +108,7 @@ Start this branch before the first write; all writes stay inside the project.
 
 After completing the ticket checks in steps 7–8, commit the complete bundle,
 push it and open **one PR**. Fast-track it: on a gated base
-(`skills/merge/SKILL.md` § Gated base) write its gate record (a bundle that
-touches only light paths gets the light record, validate-tickets alone) and
+(`skills/merge/SKILL.md` § Gated base) write its gate record and
 run the merge helper, both as one background command (exit 2: record again
 on the new head); elsewhere pass the project's required checks and enable auto-merge
 using its supported merge method. This is standing authorization for roar's bounded wrap-up bundle;
@@ -179,7 +178,8 @@ base, once a passing gate record covers the bundle's candidate.
        `after-exit --remove-worktree` runs the removal-mode `.tmp/` gate before
        unlocking the tree (hunt locks it) and running `git worktree remove`.
        The removal gate's rules (step 9b): `references/close-and-clean.md`. Never `--force`.
-       An armed bundle is named in step 11 as pending forge integration; it
+       An armed bundle (on a gated base: one with a passing gate record) is
+       named in step 11 as pending forge integration; it
        does not block the `/clear` verdict, and a later roar reports its
        merge request if a check fails.
 
@@ -220,10 +220,11 @@ base, once a passing gate record covers the bundle's candidate.
     Pending means anything this step reports as pending: an unmerged PR,
     running CI, an agent still running, a visible pending capture or
     unintegrated capture branch (step 3), a kept worktree or unpushed or
-    failed bundle (step 9), or an unresolved close claim (step 7). An auto-merge-armed
-    wrap-up bundle that passed step 9's exit check does not block the
-    verdict: its content is pushed and the forge will merge it, so the
-    verdict line names its merge request. When nothing is pending, say
+    failed bundle (step 9), or an unresolved close claim (step 7). A wrap-up
+    bundle that passed step 9's exit check does not block the verdict: its
+    content is pushed, and either auto-merge is armed or, on a gated base, a
+    passing gate record covers it and the caller's background command merges
+    it; the verdict line names its merge request. When nothing is pending, say
     "State saved — safe to `/clear`"; otherwise name each pending item, since
     only then has roar written everything durable. Advise `/clear`, never
     `/compact`.
