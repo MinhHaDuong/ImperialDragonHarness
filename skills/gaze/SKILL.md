@@ -61,7 +61,8 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 - Runs on exactly one PR.
 - Never returns APPROVED: a test pins it (`tests/test_gaze_never_approves.py`).
   `REVIEWED` means no blocking finding on the reviewed head, nothing more.
-- Does not run `/verify-gate`. The caller runs it after gaze, and again after any fix.
+- Does not run `/verify-gate`. The caller runs it after gaze on the current branch head,
+  and at most once more after a fix: the single re-gate (`/verify-gate` § Gate sessions).
   The review worktree is removed before gaze returns; the gate creates its own.
 - Does not merge. The result is structured output; the merge decision belongs to the caller.
 - The only commits gaze makes on the PR branch are the bounded phase 5 simplify fixes; no changes to other branches.
@@ -542,7 +543,7 @@ panel_integrity: COMPLETE | DEGRADED — <PANEL-INTEGRITY: line>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable) | skipped (--force-approve)
 circuit_breaker: un-reviewable | waived (...) | none
 multi_ticket: <distinct close-claim IDs> | none
-next: REVIEWED or FINDINGS → the caller fixes any FINDINGS, then runs /verify-gate <pr-number> repo=<caller's checkout> on reviewed_head_sha; ESCALATE (including battery: NOT-RUN or skipped (--force-approve)) → no gate: the caller resolves the cause or re-runs /gaze, else the author decides
+next: REVIEWED or FINDINGS → the caller fixes any FINDINGS and closes the ticket on the branch, then runs /verify-gate <pr-number> repo=<caller's checkout> session=<uuid> on the current branch head after any fixes and the ticket close (one re-gate at most, /verify-gate § Gate sessions); ESCALATE (including battery: NOT-RUN or skipped (--force-approve)) → no gate and no merge: the review never completed, and the PR goes to the author, who decides
 ```
 
 - `ESCALATE`: the breaker fired, the battery could not run (`battery: NOT-RUN`),
@@ -726,7 +727,7 @@ Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]
 Adherence: PASS | FAIL (<count>)
 
-next: REVIEWED or FINDINGS → the caller fixes any FINDINGS, then runs /verify-gate <pr-number> repo=<caller's checkout> on reviewed_head_sha; ESCALATE (including battery: NOT-RUN or skipped (--force-approve)) → no gate: the caller resolves the cause or re-runs /gaze, else the author decides
+next: REVIEWED or FINDINGS → the caller fixes any FINDINGS and closes the ticket on the branch, then runs /verify-gate <pr-number> repo=<caller's checkout> session=<uuid> on the current branch head after any fixes and the ticket close (one re-gate at most, /verify-gate § Gate sessions); ESCALATE (including battery: NOT-RUN or skipped (--force-approve)) → no gate and no merge: the review never completed, and the PR goes to the author, who decides
 
 telemetry: risk_band=<high|low|normal> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
