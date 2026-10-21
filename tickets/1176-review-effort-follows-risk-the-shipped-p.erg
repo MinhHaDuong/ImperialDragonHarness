@@ -1,0 +1,57 @@
+%erg 0.1
+Title: Review effort follows risk: the shipped panel-width rules are not applied to docs-only and mechanical PRs
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T12:47Z reviewer created
+
+--- body ---
+## Context
+The author's question on 2026-10-21 was whether gaze effort is proportional to
+the risk. The design was settled earlier and is shipped: ticket 0902 (2026-10-03)
+made the path-risk band a second axis next to size; `skills/review-pr/SKILL.md`
+step 3 reads `skills/review-pr/panel-width.json` (Correctness only for at most
+30 lines in at most 2 files and no pipeline path) and § Proportional depth maps
+risk to seats (trivial: Correctness; standard: + Consistency; scripts: + Doc
+propagation; substantial: all five). This ticket is not a new design. It fixes
+that the shipped rules are not applied.
+
+Evidence (2026-10-21, from the posted results and seat reports):
+- PR 1568: two files of prose, 126 lines, band `low` in the gaze result; six seats
+  ran (adherence, correctness, consistency, scope, doc propagation, red team),
+  over several heads. A docs-only diff above 30 lines falls out of the
+  "Correctness only" width and lands in a judged "proportional panel".
+- PR 1471: 47 lines, mechanical interpreter swap in tests; five gaze runs, two
+  of them escalations for a degraded panel.
+- PR 1557 (33 lines, a wording rule in `skills/`), PR 1553 (docs and a ticket): four
+  and three runs. `panel-width.json` treats every `skills/**` path as a pipeline
+  path, so a wording fix is priced like code that decides what merges.
+- Gaze's own text (`references/setup-and-breaker.md`) says the band is carried to the
+  gate and "never used to skip a phase"; the band no longer scales the battery.
+  Whether the earlier ticket 0902 rule (a low band lowers one rung) was dropped in
+  the gaze shrink or earlier is not established.
+- Where the full panel was worth it: PR 1564 (merge gate) and PR 1566 (guard hook)
+  found real fail-open defects.
+
+## Exit criteria
+- [ ] Re-read ticket 0902 and the shipped width and depth rules, and record in the
+      ticket log what is in force and what the gaze shrink dropped, if anything.
+- [ ] The seat set is chosen by an objective rule from three inputs the skill can
+      compute: the path-risk band, the size, and the kind of change (documentation
+      or tests only; skill, rule or workflow wording; code or hooks that can fail
+      open). Documentation-only and mechanical test-only diffs: at most
+      Correctness and Consistency, whatever their size. Wording changes in skills
+      and rules: Correctness and Consistency. Red team only on code that can fail
+      open (merge, gate, hooks, deletion, credentials). The cross-family read stays
+      for that last kind.
+- [ ] `skills/review-pr/panel-width.json` stops treating every `skills/**` and
+      `rules/**` path as a pipeline path; the kind of change decides.
+- [ ] The posted result and the review comment name the inputs and the chosen set,
+      so the trail shows why the effort was what it was.
+- [ ] One test per kind (documentation, wording, code) pins the chosen seat set,
+      and a negative control shows a gate or hook diff still gets the full panel.
+- [ ] A count of gaze runs per PR over the next 20 PRs is recorded in the ticket,
+      against the 2026-10-21 figure of about three runs per PR since PR 1550.
+- [ ] Nothing here requires a particular agent runtime; the cross-family seat
+      stays a role, not a model name.
