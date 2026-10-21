@@ -90,19 +90,6 @@ def test_phase6_gaze_launch_returns_a_verdict():
     )
 
 
-def test_phase6_launch_reason_cites_the_nesting_defect():
-    """The reason line must cite the observed failures and 1017's contract."""
-    norm = re.sub(r"\s+", " ", _per_ticket())
-    assert "#1060" in norm and "#1132" in norm, (
-        "Phase 6's reason must cite the observed nesting failures "
-        "(PRs #1060/#1061, #1129-#1132)"
-    )
-    assert "1017" in norm, (
-        "Phase 6 must cite ticket 1017's detached-seat contract for the "
-        "fallback launch shape"
-    )
-
-
 def test_phase6_substitution_trigger_names_detection_causes():
     """The detached fallback must trigger on every battery NOT-RUN cause.
 

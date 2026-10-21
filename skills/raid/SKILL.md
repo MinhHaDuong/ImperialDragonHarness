@@ -270,7 +270,7 @@ hunt's flow dictates.
 
 Wait for wave to complete.
 
-**Attribution lines (ticket 1151).** Only the orchestrator writes the PR-body
+**Attribution lines.** Only the orchestrator writes the PR-body
 `attribution` block; seats return their identity and never edit the body. Once
 a wave PR exists, append the `writer: step=plan` and `writer: step=execute`
 lines (identity as the seats reported it, effort `not-stated` unless set at
@@ -291,8 +291,8 @@ below adds concurrency, and disjoint-file PRs may run concurrently through
 it). Verify file-sharing PRs sequentially to avoid concurrent-fix collisions.
 Respect the max-concurrent-agents cap (see `rules/claude-code.md` § Subagent
 levers). When the runtime's nesting blocks the inline run — a raid is itself
-an agent orchestration, and child sessions do not inherit the agent connector
-(PRs #1060/#1061, #1129-#1132; ticket 1017); detect it by the inline run
+an agent orchestration, and child sessions do not inherit the agent connector;
+detect it by the inline run
 reporting `battery: NOT-RUN — cause: no-agent-tool`, `depth`, or `guard`,
 or by a known absent agent connector — substitute one detached, headless, non-interactive
 CLI session per PR per the detached-seat contract
