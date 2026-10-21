@@ -59,8 +59,8 @@ for an intentional primary-repo mutation. Everything lands via branch + PR —
 STATE, tickets, config, memory included. On `main` with source or data to
 change, stop and switch to a branch (prose exception: `git.md`).
 
-**Project memory:** write only in the assigned project's worktree or explicit
-private companion, never the installed harness. A refused write stays pending;
+**Project memory:** write only in the assigned project's worktree (uncleared
+material stays encrypted there), never the installed harness. A refused write stays pending;
 do not retry outside the project (boundary: AGENTS.md § Project memory boundary).
 
 **Parked-cwd trap.** Before creating the worktree, check `basename "$(git rev-parse --show-toplevel)"` is the
