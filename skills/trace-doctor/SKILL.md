@@ -128,6 +128,27 @@ shows still happening. "Other" errors are a residual: do not name a cause for
 it without reading samples. Findings enter step 3 like any lever; this
 section never applies a fix.
 
+### Treatment follow-up section
+
+After the velocity section, report whether each past fix moved its error
+class. Closed tickets declare `Treats:` and `Baseline:` body lines
+(convention: `docs/trace-treatments.md`); the script dates each merge from git
+history and compares the class's daily rate before and after, from the same
+`friction.json`:
+
+```bash
+python3 "$HARNESS_DIR/scripts/trace-treatments.py" \
+  --friction-json "$SCRATCH/friction.json"
+```
+
+Show one row per treatment: ticket, class, merge date, rate and day count
+before and after, and the verdict (`improved`, `unchanged`, `worse`,
+`too_few_days` under 7 days after the merge, `unmeasured`). Report
+`unmeasured` as unmeasured, never as improved. A `worse` or `unchanged`
+verdict enters step 3 as a lever proposal; this section never closes or
+reopens a ticket. Treatments need a window reaching the merge date: widen
+`--days` if the merge is older than the survey.
+
 ## 3. Cross-reference existing tickets
 
 For each actionable finding, decide whether it is already owned. Search open
