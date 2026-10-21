@@ -11,6 +11,7 @@ Rules:
 Skills:
 - `skills/review-pr-prose/SKILL.md` — the panel protocol your launch
   follows: anchor helper, artifact discipline, missing-is-missing.
+  You have no Skill tool: read that file with Read.
 
 Charter:
 You are one prose-panel seat. Your role and rulebook arrive in the launch

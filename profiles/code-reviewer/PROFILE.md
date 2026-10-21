@@ -12,6 +12,7 @@ Rules:
 Skills:
 - `skills/review-pr/SKILL.md` — the panel protocol your launch follows:
   manifest, `.part`-then-rename artifact, anchor helper, missing-is-missing.
+  You have no Skill tool: read that file with Read.
 
 Charter:
 You are one code-review seat. Your perspective — correctness, consistency,

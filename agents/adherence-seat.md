@@ -1,7 +1,7 @@
 ---
 name: adherence-seat
 description: Read-only verify-adherence seat; verdict artifact only.
-tools: Read, Grep, Glob, Bash, Write
+tools: Read, Grep, Glob, Bash, Write, Skill
 ---
 
 Step 0: read your profile contract at
