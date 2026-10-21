@@ -1,0 +1,28 @@
+%erg 0.1
+Title: zotero check-staging: let a project name its bibliography; skip underscore directories
+Created: 2026-10-21
+Author: HDMX-coding-agent
+
+--- log ---
+2026-10-21T18:26Z HDMX-coding-agent created
+
+--- body ---
+## Context
+
+Nomination from the project climate-finance-het, author-authorized deposit, 2026-10-21. Observed on doudou with the Zotero 10 local API up: `zotero.py check-staging . --dir docs/articles` reports 88 of 192 staged files `unidentified`. They are named by BibTeX key (`michaelowa2011.pdf`, `blei2003.pdf`). The project's `deliverables/_shared/bibliography/main.bib` links them (191 `file = {docs/articles/<key>.pdf}` entries, also gated by that project's `tests/test_cited_works_available.py`), so renaming the files is not an option for the project.
+
+Cause, read from code and not yet reproduced by a run: `discover_reconcile_files` globs `*.bib` and `*/*.bib` only (`scripts/zotero.py`, about line 2047), so a `.bib` three levels down is never read, and the filename carries no title words for the lookup. A test copy of that `main.bib` at a temporary root was attempted and refused by the session's permission layer, so the claim "the bibliography would identify them" is untested. Separate matter, not explained here: `weikmans_roberts2019.pdf` comes back `candidates`.
+
+## Requests
+
+1. Let the project name its bibliography: `--bib PATH` (repeatable) and/or a `bib_paths` key in `.zotero-reconcile.json`; keep the default discovery.
+2. `--dir` recurses with `rglob`, so `docs/articles/_superseded/` is checked too. Offer an exclusion, or skip directories whose name starts with an underscore.
+3. The skill examines `.pdf .html .htm .jpg .jpeg .png .djvu .epub` only. If Markdown transcriptions are out of scope, say so in the skill text.
+
+## Exit criteria
+
+- [ ] Positive control first: `michaelowa2011.pdf` is stored in Zotero (PDF attachment of item QAJG2QQ2); with the bibliography supplied it returns `work_present_with_file` or `identical`, never `unidentified`
+- [ ] Negative control: a `.bib` entry with no Zotero item returns `absent`
+- [ ] A file whose name is a bibkey and that the supplied `.bib` does not describe stays `unidentified`, not guessed
+- [ ] `_superseded/` files are not reported when the exclusion is on
+- [ ] `skills/zotero/` text and `references/backfill.md` describe the option
