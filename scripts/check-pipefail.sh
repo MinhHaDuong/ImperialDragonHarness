@@ -2,7 +2,7 @@
 # Guard: every hook script carries `set -euo pipefail`.
 # Usage: check-pipefail.sh [file ...]   (default: scripts/*.sh)
 # Moved out of the CI workflow's inline step (ticket 1156) so the forge job and
-# the local merge gate (.merge-gate.json) run one definition, not two copies.
+# a merge-gate declaration can run one definition, not two copies.
 # Sourced helpers, which must not change the caller's shell options, are exempt.
 set -euo pipefail
 

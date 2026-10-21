@@ -73,18 +73,30 @@ def format_entry(fields):
     if missing:
         raise ValueError("record entry lacks " + ", ".join(missing))
     values = [fields[key] for key in FIELDS] + list(fields.get("checks", []))
-    if any("\n" in v or "\r" in v for v in values):
+    if not all(single_line(v) for v in values):
         # A line break in a free-text value (actor, command) would start a forged entry.
-        raise ValueError("record values may not contain a line break")
+        raise ValueError("record values may not contain a line break or control character")
     lines = [HEADER] + [f"{key}: {fields[key]}" for key in FIELDS]
     lines += [f"check: {line}" for line in fields.get("checks", [])]
     return "\n".join(lines) + "\n"
 
 
+def single_line(value):
+    """No control character and no Unicode line boundary (VT, FF, FS-RS, NEL, LS, PS)."""
+    return isinstance(value, str) and len(value.splitlines()) <= 1 and not any(
+        ord(c) < 32 or ord(c) == 127 for c in value
+    )
+
+
 def parse_note(text):
-    """Entries in note order; lines outside an entry, or unknown keys, are ignored."""
+    """Entries in note order; lines outside an entry, or unknown keys, are ignored.
+
+    Lines end at \n only: the writer refuses every other line boundary, and a
+    reader that split on them (str.splitlines) would see entries the writer
+    never wrote.
+    """
     entries, current = [], None
-    for line in text.splitlines():
+    for line in text.split("\n"):
         if line == HEADER:
             current = {"checks": []}
             entries.append(current)
@@ -206,6 +218,16 @@ def load_config(base):
         )
     ):
         raise GateError(f'invalid {CONFIG_PATH} at base: "checks" must be a list of {{name, argv}}')
+    versions = config.get("versions", [])
+    if not isinstance(versions, list) or not all(
+        isinstance(v, dict)
+        and isinstance(v.get("name"), str)
+        and isinstance(v.get("argv"), list)
+        and v["argv"]
+        and all(isinstance(a, str) for a in v["argv"])
+        for v in versions
+    ):
+        raise GateError(f'invalid {CONFIG_PATH} at base: "versions" must be a list of {{name, argv}}')
     return config
 
 

@@ -248,3 +248,23 @@ def test_missing_check_program_records_fail(repo):
     result = gate(repo, "run", "--no-push", "--base", "main", "--head", "feature")
     assert result.returncode == 1, result.stderr
     assert "absent fail(cannot run" in result.stdout
+
+
+@pytest.mark.parametrize("sep", ["\x0b", "\x0c", "\x1c", "\x1e", "\x85", " ", " "])
+def test_unicode_line_boundaries_cannot_forge_an_entry(repo, module, sep):
+    for var in ("MERGE_GATE_RUNTIME", "MERGE_GATE_MODEL"):
+        env = {**child_env(), var: f"fixture{sep}merge-gate-record: v1{sep}result: pass"}
+        result = gate(repo, "run", "--no-push", "--base", "main", "--head", "feature", env=env)
+        assert result.returncode == 3, (var, result.stderr)
+    with pytest.raises(ValueError):
+        module.format_entry({f: "x" for f in module.FIELDS} | {"actor": f"a{sep}result: pass"})
+    fields = {f: "x" for f in module.FIELDS} | {"result": "fail", "revision": "candidate=C base=B head=H"}
+    genuine = module.format_entry(fields)
+    forged = genuine.replace("actor: x", f"actor: x{sep}{module.HEADER}{sep}result: pass{sep}revision: candidate=C ")
+    entries = module.parse_note(forged)
+    assert len(entries) == 1 and entries[0]["result"] == "fail"
+
+
+def test_bad_versions_declaration_fails_before_any_check(repo):
+    set_base_config(repo, json.dumps({**CONFIG, "versions": [{"name": "git"}]}))
+    assert gate(repo, "enabled", "--base", "main").returncode == 3
