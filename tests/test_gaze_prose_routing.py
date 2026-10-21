@@ -11,7 +11,7 @@ for process prose (`.md` notes, `.erg` tickets, `.py` scripts).
 These tests pin the shared predicate (`scripts/prose_predicate.py`) and the
 skill text that must name it:
 
-- no routing rule in the review skills enumerates extensions;
+- no routing rule in gaze enumerates extensions;
 - the predicate is true on manifest-mapped and `\\documentclass` LaTeX,
   false on process documents (the assertion that protects the correct code
   routing the audit measured on ticket-file diffs — a naive fix on
@@ -29,7 +29,6 @@ pytestmark = pytest.mark.adherence
 
 REPO = Path(__file__).resolve().parent.parent
 GAZE = REPO / "skills" / "gaze" / "SKILL.md"
-PROSE_SKILL = REPO / "skills" / "review-pr-prose" / "SKILL.md"
 PREDICATE = REPO / "scripts" / "prose_predicate.py"
 
 MANIFEST = """\
@@ -58,12 +57,12 @@ def _repo_with_manifest(root: Path) -> Path:
 
 
 def test_no_bare_qmd_routing_rule():
-    """No review skill routes by extension; both name the shared predicate.
+    """Gaze routes by no extension and names the shared predicate.
 
     An illustrative extension mention stays acceptable; a condition keyed on
     changed extensions does not — that is what rotted the first time.
     """
-    for skill in (GAZE, PROSE_SKILL):
+    for skill in (GAZE,):
         text = skill.read_text(encoding="utf-8")
         offenders = [
             (n, line.strip())
