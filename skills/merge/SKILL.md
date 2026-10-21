@@ -80,7 +80,7 @@ invalid block costs the record, not the merge. `unchecked` means the parser
 could not run, which is not an all-clear. Surface the warning in your report
 and let the author decide whether to complete the block before merging.
 
-Report stdout/stderr verbatim. If the script exits non-zero, stop and show the error, with one exception: on a gated base, exit **2** means the gate record passes and forge checks are pending, nothing queued; it starts the bounded re-run of § Gated base, not a stop.
+Report stdout/stderr verbatim. If the script exits non-zero, stop and show the error, with one exception: on a gated base, exit **2** means the gate record is missing or stale for this head (none yet, a moved base, or the run's own close commit): run the gate on that head, then run the script again (§ Gated base).
 
 A killed or failed `erg-pr-merge` run (non-zero exit after its rebase) can
 leave the PR-branch worktree with a stale pre-rebase index: staged diffs that
@@ -120,21 +120,23 @@ commands execute comes from the branch. No file, or an explicit
 `"gate": "off"`, is ungated; any other declaration, or a failure to inspect
 the base, refuses. On a gated base the script:
 
-1. refuses unless the latest entry of the `refs/notes/gate` note on the
-   **candidate** — the `--no-ff` merge of the branch head into the current
-   base tip, rebuilt deterministically on any host — says `pass` for the
-   declared check set (`scope`). No record, a failing latest entry, a record
-   for another scope or a moved base all refuse: re-run the gate on the new
-   candidate. A close commit this run makes changes the candidate, so the run
-   pushes it and refuses; close the ticket on the branch before gating
-   (§ Before merging) and this never happens;
-2. never arms forge auto-merge: the forge requires no checks any more, and its
-   CLI's auto flag merges a mergeable PR at once, before the checks it reports
-   have finished;
-3. reads the forge checks once. Only an explicit success is green: a failing,
-   errored, cancelled or unreadable check refuses; pending checks, or none
-   reported yet, exit **2** with nothing queued (it never waits itself);
-4. merges with the head pinned (`--match-head-commit`).
+1. takes the latest entry of the `refs/notes/gate` note on the **candidate**
+   — the `--no-ff` merge of the branch head into the current base tip,
+   rebuilt deterministically on any host — as the gate. A failing entry, or one
+   for another scope, refuses (exit 1). No entry for this candidate, because
+   none was written, the base moved, or a close commit this run made changed
+   the candidate, exits **2**: run the gate on the current head, then the
+   script again. Closing the ticket on the branch before gating
+   (§ Before merging) avoids the last case;
+2. does not read, wait for, or stop on forge check conclusions: the record is
+   the gate (author direction 2026-10-21: the forge is a host, CI is not a
+   gate; forge CI runs on push to main only, ticket 1174). A forge failure is
+   printed as information;
+3. never uses forge auto-merge: with no required checks its CLI's auto flag
+   merges at once, and an armed auto-merge could land a later head the record
+   does not cover; one found armed is disarmed first, or the run refuses;
+4. merges with the head pinned (`--match-head-commit`) and succeeds only when
+   the PR then reads MERGED.
 
 Write the record from the PR branch checkout, after the ticket close commit:
 
@@ -153,13 +155,14 @@ is a traceable statement, not proof. The forge's notes ref is authoritative:
 a `--no-push` record lasts only until the next fetch. `merge-gate.py check --base … --head …`
 answers 0 pass, 1 fail, 2 missing, 3 could not read.
 
-**Background merge.** Once the record passes, the caller waits as in
-§ Queueing and waiting, except that its one bounded background command re-runs
-`erg-pr-merge -C WORKTREE N` at an interval while it exits 2, and stops on any
-other exit: the merge happens when the forge checks finish, and a re-run
-adds no second close. The base may still move in the seconds between the
-last record check and the forge's merge; the main-update sweep (ticket 1157)
-is what notices that after the fact.
+**Background merge.** The wait is the gate run itself, so the caller starts
+one background command that records and merges:
+`merge-gate.py run --base origin/<base> --head HEAD && erg-pr-merge -C WORKTREE N`.
+Exit 2 from the helper means record again on the new head and repeat, once;
+a second exit 2 (the base keeps moving) goes in the report. A re-run adds no
+second close. The base may still move in the seconds between the record
+check and the forge's merge; the main-update sweep (ticket 1157) notices that
+after the fact.
 
 ## Before merging
 

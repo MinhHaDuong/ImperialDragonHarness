@@ -43,18 +43,21 @@ set -euo pipefail
 args="$*"
 case "$1 $2" in
   "pr view")
-    if [[ "$args" == *"headRefOid,statusCheckRollup"* ]]; then
-      n=$(cat "$STUB_DIR/reads" 2>/dev/null || echo 0); echo $((n + 1)) > "$STUB_DIR/reads"
-      if (( n < ${STUB_PENDING_READS:-0} )); then roll='[{"status":"IN_PROGRESS","conclusion":null}]'
-      else roll="${STUB_ROLLUP:-[]}"; fi
-      jq -n --arg h "$STUB_HEAD" --argjson r "$roll" '{headRefOid:$h,statusCheckRollup:$r}'; exit 0
+    if [[ "$args" == *"--json autoMergeRequest"* ]]; then
+      if [[ -n "${STUB_ARMED:-}" && ! -e "$STUB_DIR/disarmed" ]]; then echo yes; else echo no; fi; exit 0
     fi
     if [[ "$args" == *"autoMergeRequest"* ]]; then echo no; exit 0; fi
-    if [[ "$args" == *"--jq"* && "$args" == *"state"* ]]; then echo MERGED; exit 0; fi
+    if [[ "$args" == *"--jq"* && "$args" == *"state"* ]]; then echo "${STUB_STATE:-MERGED}"; exit 0; fi
     jq -n --arg h "$STUB_BRANCH" --arg body "${STUB_BODY:-Ticket: none}" --argjson r "${STUB_ROLLUP:-[]}" \
       '{number:42,headRefName:$h,baseRefName:"main",mergeable:"MERGEABLE",statusCheckRollup:$r,body:$body,isDraft:false,title:"fixture"}'
     exit 0 ;;
-  "pr merge") echo "$args" >> "$STUB_DIR/merge.log"; exit 0 ;;
+  "pr merge")
+    if [[ "$args" == *"--disable-auto"* ]]; then
+      echo "$args" >> "$STUB_DIR/disarm.log"
+      [[ "${STUB_DISARM_FAILS:-0}" == 1 ]] && exit 1
+      : > "$STUB_DIR/disarmed"; exit 0
+    fi
+    echo "$args" >> "$STUB_DIR/merge.log"; exit 0 ;;
   *) echo "stub gh: unexpected: $args" >&2; exit 1 ;;
 esac
 """
@@ -126,8 +129,8 @@ def record(work):
 def test_refuses_without_a_record(fixture):
     work, stub = fixture
     result = merge(work, stub)
-    assert result.returncode != 0
-    assert "no gate record" in result.stderr
+    assert result.returncode == 2
+    assert "No gate record" in result.stderr
     assert merge_log(stub) == ""
 
 
@@ -158,35 +161,6 @@ def test_failing_latest_entry_refuses(fixture):
     assert merge_log(stub) == ""
 
 
-def test_pending_forge_checks_without_wait_do_not_merge(fixture):
-    work, stub = fixture
-    record(work)
-    result = merge(work, stub, STUB_PENDING_READS="5")
-    assert result.returncode == 2, result.stdout + result.stderr
-    assert "pending" in result.stdout
-    assert merge_log(stub) == ""
-
-
-def test_rerun_merges_once_forge_checks_complete(fixture):
-    work, stub = fixture
-    record(work)
-    done = '[{"status":"COMPLETED","conclusion":"SUCCESS"}]'
-    first = merge(work, stub, STUB_PENDING_READS="1", STUB_ROLLUP=done)
-    assert first.returncode == 2, first.stdout + first.stderr
-    assert merge_log(stub) == ""
-    second = merge(work, stub, STUB_PENDING_READS="1", STUB_ROLLUP=done)
-    assert second.returncode == 0, second.stdout + second.stderr
-    assert "--match-head-commit" in merge_log(stub)
-
-
-def test_failing_forge_check_refuses(fixture):
-    work, stub = fixture
-    record(work)
-    result = merge(work, stub, STUB_ROLLUP='[{"status":"COMPLETED","conclusion":"FAILURE"}]')
-    assert result.returncode == 1
-    assert merge_log(stub) == ""
-
-
 def test_base_moved_after_gating_refuses(fixture):
     work, stub = fixture
     record(work)
@@ -197,8 +171,8 @@ def test_base_moved_after_gating_refuses(fixture):
     git(work, "push", "-q", "origin", "main")
     git(work, "switch", "-q", "feature")
     result = merge(work, stub)
-    assert result.returncode != 0
-    assert "no gate record" in result.stderr
+    assert result.returncode == 2
+    assert "No gate record" in result.stderr
     assert merge_log(stub) == ""
 
 
@@ -212,41 +186,6 @@ def test_gate_off_base_keeps_forge_auto_merge(fixture):
     result = merge(work, stub)
     assert result.returncode == 0, result.stdout + result.stderr
     assert "--auto" in merge_log(stub)
-
-
-@pytest.mark.parametrize(
-    "rollup",
-    [
-        '[{"state":"ERROR"}]',
-        '[{"state":"FAILURE"}]',
-        '[{"status":"COMPLETED","conclusion":"CANCELLED"}]',
-        '[{"status":"COMPLETED","conclusion":null}]',
-        '[{"status":"COMPLETED","conclusion":"SUCCESS"},"junk"]',
-    ],
-)
-def test_non_green_forge_checks_refuse(fixture, rollup):
-    work, stub = fixture
-    record(work)
-    result = merge(work, stub, STUB_ROLLUP=rollup)
-    assert result.returncode not in (0, 2), result.stdout + result.stderr
-    assert merge_log(stub) == ""
-
-
-@pytest.mark.parametrize("rollup", ["[]", '[{"state":"PENDING"}]', '[{"state":"EXPECTED"}]'])
-def test_empty_or_pending_status_is_pending(fixture, rollup):
-    work, stub = fixture
-    record(work)
-    result = merge(work, stub, STUB_ROLLUP=rollup)
-    assert result.returncode == 2, result.stdout + result.stderr
-    assert merge_log(stub) == ""
-
-
-def test_null_rollup_refuses(fixture):
-    work, stub = fixture
-    record(work)
-    result = merge(work, stub, STUB_ROLLUP="null")
-    assert result.returncode == 1, result.stdout + result.stderr
-    assert merge_log(stub) == ""
 
 
 def test_inspection_failure_is_not_absence(fixture):
@@ -267,8 +206,8 @@ def test_close_at_merge_time_needs_a_gate_run_on_the_close_commit(fixture):
     record(work)
     body = "**Ticket:** tickets/0001-fixture.erg"
     first = merge(work, stub, STUB_BODY=body)
-    assert first.returncode == 1, first.stdout + first.stderr
-    assert "close commit" in first.stderr
+    assert first.returncode == 2, first.stdout + first.stderr
+    assert "Close commit" in first.stderr
     assert merge_log(stub) == ""
     assert (work / "tickets" / "closed" / "0001-fixture.erg").exists()
     assert git(work, "rev-parse", "HEAD") == git(work, "rev-parse", "origin/feature")
@@ -290,3 +229,45 @@ def test_ticket_closed_before_gating_merges_in_one_run(fixture):
     result = merge(work, stub, STUB_BODY="**Ticket:** tickets/closed/0001-fixture.erg")
     assert result.returncode == 0, result.stdout + result.stderr
     assert "--match-head-commit" in merge_log(stub)
+
+
+@pytest.mark.parametrize(
+    "rollup",
+    [
+        '[{"status":"COMPLETED","conclusion":"FAILURE"}]',
+        '[{"status":"IN_PROGRESS","conclusion":null}]',
+        "[]",
+        "null",
+    ],
+)
+def test_forge_conclusions_are_information_only_on_a_gated_base(fixture, rollup):
+    work, stub = fixture
+    record(work)
+    result = merge(work, stub, STUB_ROLLUP=rollup)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "--match-head-commit" in merge_log(stub)
+
+
+def test_armed_auto_merge_is_disarmed_before_the_pinned_merge(fixture):
+    work, stub = fixture
+    record(work)
+    result = merge(work, stub, STUB_ARMED="1")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "--disable-auto" in (stub / "disarm.log").read_text(encoding="utf-8")
+    assert "--match-head-commit" in merge_log(stub)
+
+
+def test_armed_auto_merge_that_cannot_be_disarmed_refuses(fixture):
+    work, stub = fixture
+    record(work)
+    result = merge(work, stub, STUB_ARMED="1", STUB_DISARM_FAILS="1")
+    assert result.returncode == 1
+    assert merge_log(stub) == ""
+
+
+def test_success_means_merged_not_armed(fixture):
+    work, stub = fixture
+    record(work)
+    result = merge(work, stub, STUB_STATE="OPEN")
+    assert result.returncode == 1
+    assert "not MERGED" in result.stderr
