@@ -61,6 +61,7 @@ review-pr scope: one seat | proportional panel | five perspectives | scoped: <ob
 panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable) | skipped (--force-approve)
 simplify: <n_fixes_applied> | skipped (adherence blocking) | skipped (prose workpackage) | skipped (un-reviewable) | skipped (--force-approve)
+forge_ci: <the forge_ci: line review-pr quoted: verdict, workflow, head, conclusion> → targeted <files> | full gate | not read (<reason>)
 
 Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]

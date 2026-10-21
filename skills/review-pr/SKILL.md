@@ -279,6 +279,18 @@ to synthesis with what landed, carrying the gap forward by name: write and post 
 2. **Triage by confidence** — investigate low-confidence findings before posting.
 3. **Deduplicate** findings across agents.
 4. **Run tests**: use the project's declared gate. For a mapped doc-only diff, run `python3 "$IDH_ROOT/scripts/scoped-check.py"` and include both `selected:` and `skipped:` in the review; Python code, unmapped paths, and projects without `.idh-checks.json` run `make check`.
+   **The forge's check conclusion for the head spares that full run** (ticket 1172;
+   `/gaze` and `/verify-gate` point here). First run
+   `python3 "$IDH_ROOT/scripts/forge_ci.py" status <owner/name> <full head sha> --workflow <workflow file running the project's full gate>`
+   (harness: `.github/workflows/CI.yml`). Exit 0, green for this exact head: run
+   only the test files `python3 "$IDH_ROOT/scripts/forge_ci.py" targets origin/<base> --repo-dir <review tree>`
+   lists, with the project's test runner, plus any gate check the workflow does not
+   run (harness: `make check-skills-drift`). Any other exit (pending, failed,
+   missing, unreadable, green only for an older head) runs the gate above: never
+   read as green, never a skip. No such workflow: skip the read. Quote its
+   `forge_ci:` line and the targeted files in the review. Limits: the conclusion
+   covers the branch head, not the merge candidate (ticket 1156), and nothing
+   waits on the forge, so this only avoids repeating a result that exists.
 5. **Write the synthesis to `<panel>/review.md` before posting it.** Findings then
    survive a forge outage, a fork that dies mid-step, and a failed post. A review
    that exists only inside a tool call's arguments is gone the moment that call

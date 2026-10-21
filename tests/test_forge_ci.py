@@ -136,3 +136,16 @@ def test_targets_lists_tests_naming_a_changed_path(tmp_path):
     assert "tests/test_other.py" in picked  # a changed test file runs itself
     assert "tests/helper.py" not in picked
 
+
+
+def test_skills_route_the_full_run_through_the_helper():
+    """The rule lives once, in review-pr's run-tests step; gaze and gate point to it."""
+    review = (ROOT / "skills/review-pr/SKILL.md").read_text()
+    assert "forge_ci.py\" status" in review and "forge_ci.py\" targets" in review
+    for rel in ("skills/verify-gate/SKILL.md", "skills/gaze/references/setup-and-breaker.md"):
+        text = (ROOT / rel).read_text()
+        assert "review-pr` § Synthesis step 4" in text, rel
+        assert "forge_ci.py\" status" not in text, f"{rel} restates the rule"
+    for rel in ("skills/gaze/SKILL.md", "skills/gaze/references/output.md",
+                "skills/verify-gate/SKILL.md"):
+        assert "forge_ci:" in (ROOT / rel).read_text(), f"{rel} does not report what it read"

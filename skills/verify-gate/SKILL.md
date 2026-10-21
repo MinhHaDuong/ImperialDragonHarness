@@ -38,7 +38,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 ## Non-negotiables
 
 1. **No rubber-stamp.** "CI ran" / "the simplify pass ran" / "all tests pass" are NOT
-   evidence. Evidence must cite the *change* (commit SHA + file:line) or the *test*
+   evidence. A green forge conclusion only spares a repeated full run; it closes
+   no criterion. Evidence must cite the *change* (commit SHA + file:line) or the *test*
    (test_id) that closes the gap.
 2. **Exit criteria are contract.** Every item in the ticket's "Exit criteria" section must
    get an explicit ADDRESSED/MISSING verdict with evidence. A missing criterion cannot be
@@ -151,7 +152,10 @@ apply, and step 2 needs its seats.
    verdict. A seat is `ran` (report on this head), `reused` (same patch-id,
    criteria hash and policy version, from an earlier head, which it names),
    `stale` or `no-report`. Check, gate and adherence results are never reused:
-   they always re-run on the delivered head. The high row adds `red-team` and
+   they always re-run on the delivered head; that check run follows
+   `/review-pr` § Synthesis step 4, where only a green forge conclusion for
+   that exact head spares the full run. Copy its `forge_ci:` line into the
+   verdict. The high row adds `red-team` and
    requires one seat from another family than the producer's.
 3. **Forge reviews.** Run
    `python3 "$IDH_ROOT/scripts/review_evidence.py" forge <owner/name> <merge-request>`.
@@ -222,6 +226,7 @@ scope_overflow:
     reason: "<not traceable to exit criterion>"
     suggested_disposition: TICKETED | ESCALATE
 review_evidence: legacy | {seats, independence, risk, forge}
+forge_ci: <verdict workflow head conclusion> → targeted <files> | full gate | not read (<reason>)
   # seats: "seat <name>: ran|reused|stale|no-report (<verdict>) - <reason> <report>"
   # independence: "independent: <family> seat <name>[, inherited from <head>]" or "missing"
   # risk: "risk: <plan row> / floor: <floor row>"

@@ -144,6 +144,7 @@ adherence: PASS | FAIL (<n blocking>)
 panel_integrity: COMPLETE | DEGRADED — <PANEL-INTEGRITY: line>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable) | skipped (--force-approve)
 circuit_breaker: un-reviewable | waived (...) | none
+forge_ci: <verdict workflow head conclusion> → targeted | full gate | not read (/review-pr § Synthesis step 4)
 multi_ticket: <distinct close-claim IDs> | none
 next: REVIEWED → the caller closes the ticket on the branch, then runs /verify-gate <pr-number> repo=<caller's checkout> session=<uuid> on the current branch head, which is reviewed_head_sha plus at most that ticket-close commit (one re-gate at most, /verify-gate § Gate sessions: a fix asked by the round-1 gate is re-gated once on the new head with the same session=, without a new gaze run); FINDINGS → the caller fixes them and re-runs /gaze on the new head: a head gaze did not review is never gated; ESCALATE (including battery: NOT-RUN or skipped (--force-approve), or a DEGRADED panel) → no gate and no merge: the review never completed, and the PR goes to the author, who decides
 ```
