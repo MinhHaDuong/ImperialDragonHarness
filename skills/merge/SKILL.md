@@ -114,18 +114,23 @@ belongs with the command it recovers.)
   shows `-` for every commit but `is-ancestor` is false — that ancestry check
   is `/roar`'s pre-check, and it is what confirms a squash-merge through the
   forge before a branch gets deleted.
-- **After `/gaze` and an APPROVED `/verify-gate`, sync before merging.** Run the
-  gate as `/verify-gate <pr> repo=<this worktree> session=<uuid>`
-  (one session per PR, two rounds at most: `/verify-gate` § Gate sessions); it gates a worktree of its
-  own. Its `Ruled tip SHA` must equal the PR head *before* `erg-pr-merge` runs
-  (`git rev-parse origin/<branch>`); otherwise re-gate, do not merge. The one
-  post-gate change allowed is the helper's own ticket-close commit, and only
-  if it touches nothing outside `tickets/` (the move to `tickets/closed/` and
-  the `Blocked-by` edits on dependents). Checkable after the helper pushes:
-  `git merge-base --is-ancestor <ruled> origin/<branch>`, `git rev-list --count
-  <ruled>..origin/<branch>` is 0 or 1, and `git diff --name-only <ruled>
-  origin/<branch>` lists only `tickets/` paths. Anything else on top of the
-  ruled tip voids the verdict. `/gaze`
+- **Close the ticket on the branch before gating.** Before the round-1
+  `/verify-gate`, the caller closes each claimed ticket on the PR branch:
+  `erg close <id> "<reason>"`, `erg archive <id>`, `git add -u tickets/`,
+  `git add tickets/closed/<file>`, commit, push. The gate then rules a head
+  that already contains the close, and `erg-pr-merge` skips a ticket already in
+  `tickets/closed/` with a `Closed:` header, so it pushes no commit of its own.
+- **Merge prerequisite: the gate's `Ruled tip SHA` equals `git rev-parse
+  origin/<branch>` at merge time; otherwise re-gate, do not merge.** Run the
+  gate as `/verify-gate <pr> repo=<this worktree> session=<uuid>` (one session
+  per PR, two rounds at most: `/verify-gate` § Gate sessions); a re-gate past
+  that budget is ESCALATE to the author, never a third run.
+  **Documented exception:** PRs gated before this rule (#1522, #1523) merge
+  with the helper's own ticket-only close commit on top of the ruled tip — one
+  `ticket(<id>): close and archive — PR #<n>` commit whose `git diff
+  --no-renames --name-only <ruled> origin/<branch>` lists only `tickets/`
+  paths. Nothing else qualifies.
+- **After `/gaze` and an APPROVED `/verify-gate`, sync before merging.** `/gaze`
   (its simplify phase) may have pushed fixes from its own review worktree since the caller last fetched:
   `git fetch origin && git merge --ff-only origin/<branch>` first, or a stale
   rebase silently drops the verify fix.
@@ -180,9 +185,11 @@ command it recovers.)
   the forge's ordinary enforcement, including its configured actor permissions.
   The script adds no bypass. Other API errors, partial response pages,
   unexpected denial bodies, and malformed successful data still refuse.
-  If the forge refuses, its error is reported and the close commit stays pushed.
-  Once the blocking requirement is resolved, re-run `erg-pr-merge N`; an
-  archived closed ticket is skipped, so the retry adds no second close commit.
+  If the forge refuses, its error is reported. Once the blocking requirement is
+  resolved, re-run `erg-pr-merge N`; an archived closed ticket is skipped, so
+  the retry pushes nothing and the ruled tip still equals `origin/<branch>`
+  (under the documented exception, the one helper close commit is already on
+  top and the retry adds no second).
 - **"must run from PR branch" after a fast-forward.** HEAD is detached after
   `merge --ff-only`: `git checkout <branch>`, then retry.
 - **Force-push denied, branch already pushed.** Rebasing rewrites the branch's

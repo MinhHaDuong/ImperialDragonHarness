@@ -382,7 +382,11 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
   PR body's stated intent and test plan stand in for exit criteria; record a
   `no_ticket` nit.
 - A close claim naming a ticket file that does not exist → ESCALATE (dangling
-  claim; `/merge` would fail on it).
+  claim; `/merge` would fail on it). Resolve the claim in the gate worktree as
+  `tickets/<id>-*.erg` **or** `tickets/closed/<id>-*.erg`, as `erg-pr-merge`
+  does: callers close the ticket on the branch before gating, so a closed,
+  archived ticket is the normal case and its exit criteria are read from
+  `tickets/closed/`. Only neither path existing is dangling.
 - PR body lacks test plan → not a gate-level failure, but recorded as a nit.
 - Gate cannot access commit timestamps → ESCALATE (cannot distinguish pre/post comment changes).
 - Contradictory signals between phases 2–5 → ESCALATE (no silent resolution).

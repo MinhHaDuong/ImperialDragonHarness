@@ -94,21 +94,28 @@ def test_verify_gate_owns_its_worktree():
     assert "worktree remove" in VERIFY, "gaze still removes its review tree"
 
 
-def test_merge_allows_only_the_ticket_close_commit_after_the_gate():
-    """/merge compares the gate's ruled tip with the PR head before
-    erg-pr-merge adds its close commit, and admits that commit only while it
-    stays inside tickets/ (second union review, ticket 1153)."""
+def test_merge_gates_the_head_that_merges():
+    """The caller closes the ticket on the branch before gating, so /merge's
+    prerequisite is one equality: ruled tip == origin/<branch> at merge time.
+    The helper then pushes nothing, because it skips a ticket already closed
+    and archived; the gate reads exit criteria from tickets/closed/ (ticket
+    1153, third union review)."""
     merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
-    assert "must equal the PR head *before* `erg-pr-merge` runs" in merge
-    for check in (
-        "git merge-base --is-ancestor <ruled> origin/<branch>",
-        "git rev-list --count <ruled>..origin/<branch>` is 0 or 1",
-        "git diff --name-only <ruled> origin/<branch>` lists only `tickets/` paths",
-    ):
-        assert check in merge, check
-    # The helper's close commit stages tickets/ paths only, so the rule holds.
-    staged = [ln.strip() for ln in ERG_PR_MERGE.splitlines() if re.match(r"\s*git add\b", ln)]
-    assert staged and all("tickets/" in ln for ln in staged), staged
+    assert "Close the ticket on the branch before gating." in merge
+    assert (
+        "the gate's `Ruled tip SHA` equals `git rev-parse origin/<branch>` at merge "
+        "time; otherwise re-gate, do not merge." in merge
+    )
+    assert "PRs gated before this rule (#1522, #1523)" in merge
+    assert "rev-list --count <ruled>" not in merge
+    # Premise: the helper skips an already closed and archived ticket.
+    assert 'compgen -G "tickets/closed/${tid}-*.erg"' in ERG_PR_MERGE
+    assert "is already closed and archived." in ERG_PR_MERGE
+    gate = " ".join((SKILLS / "verify-gate" / "SKILL.md").read_text().split())
+    assert "`tickets/<id>-*.erg` **or** `tickets/closed/<id>-*.erg`" in gate
+    raid = " ".join((SKILLS / "raid" / "SKILL.md").read_text().split())
+    assert "Close before gating:" in raid
+    assert "closes the PR's ticket on the PR branch" in raid
 
 
 def test_gate_sessions_are_caller_owned_and_capped_on_every_path():

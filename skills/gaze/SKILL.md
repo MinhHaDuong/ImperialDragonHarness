@@ -173,7 +173,8 @@ On every exit path run `references/cleanup.md`: remove this run's review scratch
 
 ## Circuit breakers
 
-- Close claim names a ticket file that does not exist → ESCALATE. A PR with
+- Close claim names a ticket file that does not exist (neither `tickets/<id>-*.erg`
+  nor `tickets/closed/<id>-*.erg`; a caller may close before gating) → ESCALATE. A PR with
   no ticket at all is not a breaker.
 - `pr_files >= 15` (content-bearing files, phase-1 rule) without a waiver → ESCALATE as
   `un-reviewable` before the review; this is the `rules/workflow.md` 15+ file

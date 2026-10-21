@@ -318,6 +318,9 @@ its verdict is accepted only when its `ruled_tip_sha` matches the branch tip. On
 a REROLL, a coder fixes the listed items in the PR's worktree so its commits
 land on the PR branch, never on main mid-wave, and the REROLL bump is posed per
 `skills/verify-gate/SKILL.md`; the gate allows two rounds, a third escalates.
+Before the round-1 gate the raid closes the PR's ticket on the PR branch
+(`skills/merge/SKILL.md` § close the ticket on the branch before gating), so the
+gate rules the head that will merge.
 The raid owns each PR's gate session (`skills/verify-gate/SKILL.md` § Gate
 sessions): it generates one UUID per PR before round 1, passes the same
 `session=` to round 1 and to the single re-gate after the fix, and never runs
@@ -405,8 +408,11 @@ For each eligible PR, sequentially within the wave:
    directly: take its path from the agent's completion notification. Do not check out or `cd`
    into it, and do not delete and re-checkout the branch.
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
-4. Run `"$IDH_ROOT/skills/merge/erg-pr-merge" -C <worktree-path> <pr-number>`.
-   This atomically closes the ticket and merges via GitHub API.
+4. Run `"$IDH_ROOT/skills/merge/erg-pr-merge" -C <worktree-path> <pr-number>`
+   only when the gate's `Ruled tip SHA` equals `git rev-parse origin/<branch>`.
+   Close before gating: Phase 6 closed the ticket on the branch before the
+   round-1 gate, so the helper finds it in `tickets/closed/`, pushes no close
+   commit, and merges via GitHub API.
    <!-- harness-extension-point -->
    Runtime permission rules must authorize the resolved helper path. Use
    `-C` to select the worktree for every Git and forge operation.
