@@ -157,3 +157,12 @@ def test_duplicate_tool_use_ids_counted_once(tmp_path):
         os.utime(p, (now.timestamp(), now.timestamp()))
     s = tf.run_scan(tmp_path, 28, now=now)
     assert s["totals"]["errors"] == 4
+
+
+def test_naive_timestamp_counted_as_utc(tmp_path):
+    rows = [
+        _use("x1", "Bash", f"{DAY1}T10:00:00", command="false"),
+        _res("x1", f"{DAY1}T10:00:01", "Exit code 1"),
+    ]
+    s = _scan(tmp_path, rows)
+    assert s["totals"]["errors"] == 1

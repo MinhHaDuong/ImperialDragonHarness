@@ -7,6 +7,7 @@ Closed: done
 --- log ---
 2026-10-21T10:06Z reviewer created
 2026-10-21T10:34Z reviewer closed — done
+2026-10-21T10:59Z reviewer note verify-reroll — round 1: unresolved verifiable minors (naive-timestamp TypeError in _parse_ts; stale prototype/regex text in docs/2026-10-21-velocity-friction-scan.md lines 4, 11)
 
 --- body ---
 ## Context

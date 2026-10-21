@@ -82,9 +82,10 @@ def _parse_ts(s) -> datetime | None:
     if not isinstance(s, str):
         return None
     try:
-        return datetime.fromisoformat(s.replace("Z", "+00:00"))
+        ts = datetime.fromisoformat(s.replace("Z", "+00:00"))
     except ValueError:
         return None
+    return ts if ts.tzinfo else ts.replace(tzinfo=timezone.utc)
 
 
 def _result_text(content) -> str:
