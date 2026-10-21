@@ -2,9 +2,11 @@
 Title: 1045 child E: gaze and gate read the forge CI result for the head
 Created: 2026-10-21
 Author: reviewer
+Closed: superseded: the flow runs the full suite once on the merge candidate and seats run only targeted tests, so there is no forge result to read; PR 1565 closed unmerged; the useful rule moved to ticket 1171
 
 --- log ---
 2026-10-21T11:31Z reviewer created
+2026-10-21T12:38Z reviewer closed — superseded: the flow runs the full suite once on the merge candidate and seats run only targeted tests, so there is no forge result to read; PR 1565 closed unmerged; the useful rule moved to ticket 1171
 
 --- body ---
 ## Context
