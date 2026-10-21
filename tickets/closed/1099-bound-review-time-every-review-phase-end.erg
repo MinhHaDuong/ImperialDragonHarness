@@ -2,6 +2,7 @@
 Title: Bound review time: every review phase ends within budget
 Created: 2026-10-14
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1616
 
 --- log ---
 2026-10-14T19:43Z Minh Ha-Duong created
@@ -13,6 +14,7 @@ Author: Minh Ha-Duong
 2026-10-21T16:58Z reviewer note blocker 1144 closed — Blocked-by removed.
 2026-10-21T17:56Z reviewer reviewer note exit criterion 3 (one raid measured by phase) is a post-landing measurement this PR cannot deliver (/verify-gate REROLL on PR 1616); handed to child 1184, criterion amended to point at it
 2026-10-21T17:56Z reviewer reviewer note filed child 1184 (measure one raid by phase against the 20-minute window, after 1099 lands)
+2026-10-21T18:00Z reviewer closed — autoclosed — PR #1616
 
 --- body ---
 ## Goal
