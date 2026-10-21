@@ -10,7 +10,7 @@
 |---------|-------------|
 | `/gaze` | Review one merge request: adherence check, code or prose review panel, simplify. Returns REVIEWED / FINDINGS / ESCALATE and never APPROVED; the merge gate is /verify-gate, run by the caller. Does not merge. |
 | `/hunt` | Begin work on a ticket — creates a worktree and writes the first test. |
-| `/merge` | Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI). |
+| `/merge` | Merge a pull request with plain commands: close the claimed ticket on its branch, check the gate record on a gated base, merge pinned to that head, read it back, sync local main. A recipe any runtime follows. |
 | `/raid` | Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears. |
 | `/verify-gate` | Anti-rubber-stamp merge gate: checks every ticket exit criterion and review comment against the diff. Emits APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR with evidence. Does not merge. |
 
