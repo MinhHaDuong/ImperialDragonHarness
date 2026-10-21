@@ -2,6 +2,7 @@
 Title: Tear down the 15-file wall: keep the signal, delete the hard stops and waiver, review large diffs in groups
 Created: 2026-10-21
 Author: reviewer
+Closed: autoclosed — PR #1614
 
 --- log ---
 2026-10-21T16:43Z reviewer created
@@ -10,6 +11,7 @@ Author: reviewer
 2026-10-21T16:52Z reviewer note allowlist (tests/test_gaze_never_approves.py) 13 -> 11, orchestrator-approved: removed exactly the two units the deletion removes, the '--waive-breaker <reason> lifts only the un-reviewable file-count stop...' bullet and the § Waiver opening 'The 15-file count is a decomposition signal, not a hard wall. A waiver lifts only the file-count stop...'; nothing added, no pattern loosened.
 2026-10-21T16:56Z reviewer note skills/gaze/references/setup-and-breaker.md keeps its name: it now holds collection, the anchor check, the close-claim preflight and the missing-ticket stop, no size breaker; a rename is a wider sweep (inline pointers, tests, docs) and is left for a later change.
 2026-10-21T17:11Z reviewer NEEDS-AUTHOR kept as the generic author-decides exit after its waiver producer was deleted; one Decision-rules line in verify-gate gives it a trigger, ordered after REROLL/ESCALATE (gaze 2026-10-21 must-fix).
+2026-10-21T17:19Z reviewer closed — autoclosed — PR #1614
 
 --- body ---
 ## Context
