@@ -2,11 +2,14 @@
 Title: 1143b: gaze executes the plan (request/response files)
 Created: 2026-10-20
 Author: reviewer
+Closed: superseded: deferred to the dyne format; the hunt-owned plan and the request/response files do not fit the trust-the-orchestrator decision of 2026-10-21 (ticket 1176); the design stays recorded in tracker 1100 and docs/discussions/2026-10-14-1096-design.md
 
 --- log ---
 2026-10-20T15:12Z reviewer created
 2026-10-21T05:13Z reviewer note blocker 1142 closed — Blocked-by removed.
 2026-10-21T14:04Z reviewer reviewer note 2026-10-21 scope question for the author: the 'gaze executes the plan (request/response files)' design is superseded in this form by the decision to trust the orchestrator (no hunt-owned plan, no floor, no category; ticket 1176). Close as superseded, or keep a reduced version (controller-written result comment only)? Not decided here.
+2026-10-21T14:55Z reviewer reviewer note Author decision 2026-10-21 ("Close, it is only deferring"): the request and response files, the controller-validated schema and the tracked tickets/reviews artifacts are deferred, not dropped. They belong with the dyne format (tracker 1100 phases 3 to 5; git-erg tickets 0271 to 0275). Today's trail is the gaze result comment and the review comments on the forge, temporary until then. Closed as superseded by the trust-the-orchestrator decision of the same day (ticket 1176) and by the policy in docs/local-merge-gate-policy.md section Direction.
+2026-10-21T14:55Z reviewer closed — superseded: deferred to the dyne format; the hunt-owned plan and the request/response files do not fit the trust-the-orchestrator decision of 2026-10-21 (ticket 1176); the design stays recorded in tracker 1100 and docs/discussions/2026-10-14-1096-design.md
 
 --- body ---
 ## Context

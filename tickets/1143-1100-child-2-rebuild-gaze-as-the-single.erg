@@ -2,12 +2,12 @@
 Title: 1100 child 2: rebuild gaze as the single review entry
 Created: 2026-10-20
 Author: reviewer
-Blocked-by: 1154
 
 --- log ---
 2026-10-20T08:22Z reviewer created
 2026-10-20T15:15Z reviewer split into 1153 (1143a, shrink, no dependency on 1142) and 1154 (1143b, execute the plan, blocked by 1142); this ticket is now a tracker.
 2026-10-21T09:09Z reviewer note blocker 1153 closed — Blocked-by removed.
+2026-10-21T14:55Z reviewer note blocker 1154 closed — Blocked-by removed.
 
 --- body ---
 ## Context
