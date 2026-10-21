@@ -1,0 +1,19 @@
+%erg 0.1
+Title: Gaze launches the semantic adherence worker itself when the seat cannot
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T11:41Z reviewer created
+
+--- body ---
+## Context
+Gaze's adherence phase 3 (the semantic read of instruction-file changes) needs a worker. The adherence seat (`agents/adherence-seat.md`) cannot launch one, by design, so the phase did not run and gaze returned ESCALATE twice on PR 1559 (heads c7047ada and b3e08d00), blocking the merge of ticket 1167. On PR 1560 in the same raid gaze launched a separate Sonnet worker for the same phase and reached REVIEWED, so the outcome varies between runs. Gaze noted it will recur for every PR that touches instruction files.
+
+Two repairs to price before choosing: gaze itself launches the phase-3 worker and hands the seat only the mechanical part; or the seat gains a launch tool. The first keeps the seat read-only. Estimate: 1 coder-hour, about 80% to remove the variance.
+
+## Exit criteria
+- [ ] A PR touching an instruction file reaches a gaze verdict with the semantic phase run, without relying on the run happening to launch a worker
+- [ ] A test or fixture fails when the phase is skipped while an instruction file is in the diff (positive control)
+- [ ] The adherence seat's read-only contract is unchanged, or the change is justified in the ticket
+- [ ] Out of scope: waiving the phase for any PR
