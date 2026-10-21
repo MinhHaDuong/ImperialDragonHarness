@@ -28,6 +28,13 @@ SH_SUITES = sorted(TESTS_DIR.glob("test_*.sh"))
 
 SKIP_EXIT = 77  # automake convention: the suite ran zero checks
 
+# Suites split into independently runnable sections, one pytest case each so
+# xdist can spread them (a section builds its own repositories).
+SHELL_SECTIONS = {
+    "test_seat_runner.sh": ("deterministic", "references", "containment"),
+    "test_roar_close_and_clean.sh": ("cleanup", "tickets", "exit"),
+}
+
 
 def run_shell_suite(script: Path, cwd: Path = TESTS_DIR.parent, section=None):
     """Run one suite: exit 0 passes, 77 skips (SKIP lines as reason), else fails."""
@@ -55,8 +62,7 @@ def run_shell_suite(script: Path, cwd: Path = TESTS_DIR.parent, section=None):
 @pytest.mark.parametrize("script,section", [
     pytest.param(script, section, id=script.name + (f":{section}" if section else ""))
     for script in SH_SUITES
-    for section in (("deterministic", "references", "containment")
-                    if script.name == "test_seat_runner.sh" else (None,))
+    for section in SHELL_SECTIONS.get(script.name, (None,))
 ])
 def test_shell_suite(script: Path, section):
     """Each tests/*.sh suite must exit 0, or 77 when it ran no check (skip)."""

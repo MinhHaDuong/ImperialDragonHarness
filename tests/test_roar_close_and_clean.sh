@@ -66,6 +66,15 @@ make_world() { # <dir>: bare origin + clone; sets W. Branches given as args are 
 has_local() { git -C "$W" rev-parse --verify -q "refs/heads/$1" >/dev/null; }
 has_remote() { [ -n "$(git -C "$W" ls-remote --heads origin "$1")" ]; }
 
+wrapped() {
+    local wd="$1"; shift
+    out=$(env -i PATH="$wd:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?
+}
+
+# Independently selectable sections (run in parallel by test_bash_suites.py):
+# cleanup (after-exit branch scoping), tickets (close, claims, preflight), exit
+# (exit-check and worktree removal). Each builds its own repositories.
+section_cleanup() {
 # Explicit targets carry the full merged-PR head oid, obtained before cleanup.
 local_target() { echo "$1=$(G rev-parse --verify "refs/heads/$1^{commit}")"; }
 remote_target() { echo "$1=$(G rev-parse --verify "refs/remotes/origin/$1^{commit}")"; }
@@ -220,10 +229,6 @@ run "$SCRIPT" --phase after-exit --local-branch "$(local_target completed)"
 _check_rc "HEAD behind integration: Git refusal reported" 1 "$rc"
 _check_true "HEAD behind integration: branch retained" has_local completed
 
-wrapped() {
-    local wd="$1"; shift
-    out=$(env -i PATH="$wd:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?
-}
 # Inspection errors checking the alias must not be read as "unconfigured".
 make_world "$T/upstream-alias-unreadable" completed; cd "$W"
 G push -qu origin completed
@@ -362,6 +367,9 @@ run "$SCRIPT" --phase after-exit --local-branch "$(local_target completed)"
 _check_rc "local-only repository cleanup" 0 "$rc"
 _check_true "local-only foreign remains" has_local foreign
 
+}
+
+section_tickets() {
 # no tickets/erg at all (the aedist-technical-report case)
 make_world "$T/c9"; cd "$W"
 run "$SCRIPT" --phase before-exit --ticket 0001
@@ -443,6 +451,9 @@ WRAP
 done
 cd "$W"
 
+}
+
+section_exit() {
 # ── exit-check and worktree removal (ticket 1098) ───────────────────────────
 # A linked worktree WT on branch <b>, one commit of work, pushed.
 exit_world() { # <dir> <branch>: sets W (main checkout) and WT
@@ -611,5 +622,15 @@ _check_true "after-exit primary parked: branch kept, nothing lost" has_local tas
 
 # SKILL.md leaves the worktree through exit-check, cd and after-exit (step 9)
 _check_true "SKILL.md step 9 runs the exit-check phase" grep -q -- '--phase exit-check' "$REPO/skills/roar/SKILL.md"
+
+}
+
+case "${1:-all}" in
+    cleanup) section_cleanup ;;
+    tickets) section_tickets ;;
+    exit) section_exit ;;
+    all) section_cleanup; section_tickets; section_exit ;;
+    *) echo "usage: $0 [cleanup|tickets|exit|all]" >&2; exit 2 ;;
+esac
 
 exit $fail
