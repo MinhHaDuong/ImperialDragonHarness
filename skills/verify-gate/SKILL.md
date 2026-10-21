@@ -186,6 +186,9 @@ changes keep the guard.
 ```yaml
 verdict: APPROVED | REROLL | ESCALATE | NEEDS-AUTHOR
 round: 1 | 2
+gate_session_id: <uuid>
+review_worktree_path: <absolute path of the gate's own worktree>
+ruled_tip_sha: <full commit SHA ruled>
 pr: <pr-number>
 ticket: <ticket-id>
 waiver: none | {reason, pr_files, pr_lines, source}
@@ -360,13 +363,14 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
    none (standalone), generate a fresh UUID. The review worktree path is the gate's
    own `$gate_tree`. Immediately before ruling, read the full tip SHA with
    `git -C "$gate_tree" rev-parse HEAD`; stop with ESCALATE if this fails.
-   These are audit fields.
+   These are audit fields, posted under the same snake_case keys as the
+   structured verdict: callers (raid, `/merge`, dashboard) read `ruled_tip_sha`.
 
    ```
    /verify-gate round=<n> verdict=<V>
-   Gate session id: <UUID from the caller's session=, or standalone UUID>
-   Review worktree path: <absolute path of the gate's own worktree>
-   Ruled tip SHA: <full commit SHA read from that worktree>
+   gate_session_id: <UUID from the caller's session=, or standalone UUID>
+   review_worktree_path: <absolute path of the gate's own worktree>
+   ruled_tip_sha: <full commit SHA read from that worktree>
    reroll_bump: <exact returned note verify-reroll line; include on REROLL, omit otherwise>
    Exit criteria: <addressed>/<total>  Review: <unresolved>  Simplify: <unresolved>
    Adherence: <blocking>  Scope overflow: <files> (<ticketed>/<escalate>)

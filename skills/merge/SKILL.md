@@ -120,7 +120,7 @@ belongs with the command it recovers.)
   `git add tickets/closed/<file>`, commit, push. The gate then rules a head
   that already contains the close, and `erg-pr-merge` skips a ticket already in
   `tickets/closed/` with a `Closed:` header, so it pushes no commit of its own.
-- **Merge prerequisite: the gate's `Ruled tip SHA` equals `git rev-parse
+- **Merge prerequisite: the gate's `ruled_tip_sha` equals `git rev-parse
   origin/<branch>` at merge time; otherwise re-gate, do not merge.** Run the
   gate as `/verify-gate <pr> repo=<this worktree> session=<uuid>` (one session
   per PR, two rounds at most: `/verify-gate` § Gate sessions); a re-gate past

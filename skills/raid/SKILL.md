@@ -409,7 +409,7 @@ For each eligible PR, sequentially within the wave:
    into it, and do not delete and re-checkout the branch.
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
 4. Run `"$IDH_ROOT/skills/merge/erg-pr-merge" -C <worktree-path> <pr-number>`
-   only when the gate's `Ruled tip SHA` equals `git rev-parse origin/<branch>`.
+   only when the gate's `ruled_tip_sha` equals `git rev-parse origin/<branch>`.
    Close before gating: Phase 6 closed the ticket on the branch before the
    round-1 gate, so the helper finds it in `tickets/closed/`, pushes no close
    commit, and merges via GitHub API.

@@ -103,7 +103,7 @@ def test_merge_gates_the_head_that_merges():
     merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
     assert "Close the ticket on the branch before gating." in merge
     assert (
-        "the gate's `Ruled tip SHA` equals `git rev-parse origin/<branch>` at merge "
+        "the gate's `ruled_tip_sha` equals `git rev-parse origin/<branch>` at merge "
         "time; otherwise re-gate, do not merge." in merge
     )
     assert "PRs gated before this rule (#1522, #1523)" in merge
@@ -754,3 +754,20 @@ def test_verify_gate_recounts_the_breaker_itself():
     assert "does not trust the caller's count" in breakers
     rules = gate.split("## Decision rules", 1)[1].split("## ", 1)[0]
     assert "counted by the gate itself on every invocation path" in rules
+
+
+def test_ruled_tip_field_has_one_name_across_gate_and_callers():
+    """/gaze 1523: posted verdicts carry `ruled_tip_sha:` while merge and raid
+    read `Ruled tip SHA`. The name the gate posts is the name callers read."""
+    gate = (SKILLS / "verify-gate" / "SKILL.md").read_text()
+    posted = gate.split("2. PR comment posted", 1)[1].split("```", 2)[1]
+    names = re.findall(r"^\s*([\w ]+): <full commit SHA", posted, re.MULTILINE)
+    assert len(names) == 1, names
+    field = names[0].strip()
+    assert re.search(rf"^{field}: <full commit SHA", gate.split("## Verdict shape", 1)[1], re.MULTILINE)
+    spelling = re.compile(r"ruled[ _-]?tip[ _-]?sha", re.IGNORECASE)
+    for name in ("merge", "raid", "dashboard", "verify-gate"):
+        text = (SKILLS / name / "SKILL.md").read_text()
+        found = set(spelling.findall(text))
+        assert found == {field}, (name, found)
+    assert f"the gate's `{field}` equals `git rev-parse" in (SKILLS / "merge" / "SKILL.md").read_text()
