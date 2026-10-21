@@ -170,8 +170,9 @@ next: REVIEWED → the caller closes the ticket on the branch, then runs /verify
   author.
 - `FINDINGS`: any blocking adherence violation, any `blocking` seat
   verdict, any unresolved `verifiable:` minor, any simplify
-  must-fix not applied, an unread review group (§ 2–5). List them; the caller fixes (a coder on the PR
-  branch, scoped to the list) and re-runs gaze on the new head. FINDINGS never
+  must-fix not applied, an unread review group (§ 2–5). List them; the
+  caller fixes (a coder on the PR branch, scoped to the list) and re-runs gaze
+  on the new head. FINDINGS never
   go straight to the gate: the fixed head is one gaze did not review.
 - `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still
   checks every exit criterion and review comment against the diff.

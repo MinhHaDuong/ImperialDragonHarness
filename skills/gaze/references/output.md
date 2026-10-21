@@ -56,7 +56,7 @@ panel: <n_comments_posted> | skipped (adherence blocking) | skipped (--force-app
 panel seats: <perspective> (<family>): clear|concerns|blocking|no report, ... — <why these> (omit if the panel did not run)
 panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (--force-approve)
-review groups: <group> ← <seats>, ... | one (whole diff)
+review_groups: <group> ← <seats>, ... | one (whole diff)
 simplify: <n_fixes_applied> | skipped (adherence blocking) | skipped (prose workpackage) | skipped (--force-approve)
 
 Unresolved review comments: [list or "none"]

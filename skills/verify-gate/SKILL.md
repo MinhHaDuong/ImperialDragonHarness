@@ -247,6 +247,8 @@ second_round_needed:   # only if REROLL
 - Any `scope_overflow` entry with suggested disposition ESCALATE → ESCALATE.
 - `scope_overflow` entries with all suggested dispositions TICKETED → does not block
   APPROVED. Caller handles ticket creation and PR annotation.
+- An exit criterion or review finding that only the author can judge (scope,
+  money, an irreversible step) → NEEDS-AUTHOR: the author decides whether to merge.
 - All lists empty AND all criteria ADDRESSED → APPROVED.
 
 **On REROLL**: write no ticket file — run no `erg log`, ever. Emit the bump line
