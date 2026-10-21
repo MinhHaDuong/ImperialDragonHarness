@@ -311,7 +311,7 @@ or an explicitly justified inapplicable `skipped` status. Always emit
 
 After each run, if `semantic_findings` is non-empty:
 
-1. The caller (`/gaze` or author) opens a small follow-up ticket in the target repo:
+1. The caller (`/gaze` or author) opens a small follow-up ticket in the target repo when the finding meets the severity floor of `rules/workflow.md`; below it, the caller adds the test inline or drops the finding:
    "Mechanize adherence rule X per suggested_test."
 2. That ticket adds a test run by the declared adherence command (in an existing test file, or a
    new one) that asserts the rule mechanically.

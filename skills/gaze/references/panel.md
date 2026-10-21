@@ -116,5 +116,5 @@ until it has some.
 | Severity | Seat verdict |
 |---|---|
 | Breaks correctness (bug, data loss), or a defect this PR introduces | `blocking` |
-| Pre-existing but touched | `concerns`, plus a ticket |
+| Pre-existing but touched | `concerns`; a ticket only above the `rules/workflow.md` severity floor |
 | Pre-existing and untouched | investigate; ticket if warranted |
