@@ -212,7 +212,7 @@ Run full repo housekeeping and act on every finding.
 
 5. **Log `skip` items.** One line each, no action.
 
-6. **Open merge request.** If any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and land it after CI: on a gated base (`skills/merge/SKILL.md` § Gated base) write the gate record and run the merge helper, as one background command (its exit 2 means record again on the new head); elsewhere enable auto-merge. If no commits were created: `git switch main && git branch -d housekeeping-$(date -u +%Y%m%d)` and skip the merge request.
+6. **Open merge request.** If any commits were created in this run: push the branch (`git push -u origin HEAD`), open a merge request titled `chore: housekeeping sweep <date>`, include a `**Ticket:**` line only if a ticket tracks the run, and land it: on a gated base (`skills/merge/SKILL.md` § Gated base) write the gate record and run the merge helper, as one background command (its exit 2 means record again on the new head); elsewhere enable auto-merge so it lands after CI. If no commits were created: `git switch main && git branch -d housekeeping-$(date -u +%Y%m%d)` and skip the merge request.
 
 7. **Report.** Summarize what you did.
 

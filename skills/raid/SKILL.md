@@ -436,7 +436,9 @@ For each eligible PR, sequentially within the wave:
    both as one background command. The record is the gate: the helper arms
    nothing, ignores forge check conclusions and merges pinned to the gated
    head; its exit is the outcome (0 merged). Exit 2 means no record for this
-   head (an earlier merge in the wave moved the base): record again, run again.
+   head: usually the helper's own ticket-close commit changed the candidate
+   (close before gating avoids it), else an earlier merge in the wave moved
+   the base. Record again on the current head, run again.
    **Ungated base:** the merge is queued, not necessarily landed: pending checks are normal.
    Read the outcome with `"$IDH_ROOT/skills/merge/erg-pr-status" -C <worktree-path> <pr-number>`
    (exit 0 merged, 1 failed, 2 pending, 3 unreadable). Pending is not a
