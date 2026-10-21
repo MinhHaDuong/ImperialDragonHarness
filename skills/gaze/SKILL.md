@@ -168,9 +168,10 @@ next: REVIEWED → the caller closes the ticket on the branch, then runs /verify
   optional external reviewer is fail-open (§ External reviewer panel) and does
   not count. The `PANEL-INTEGRITY:` line is carried verbatim in the result comment.
 - **One retry.** A perspective with no report at the bounded deadline is re-run
-  once, alone, over the whole PR, through review-pr's ordinary launch and
-  within the same round. The panel is DEGRADED, hence ESCALATE, only if that
-  retry also has no report.
+  once, alone, over the whole PR, through review-pr's ordinary launch in its
+  collection step, before synthesis and posting, so the round does not
+  advance. The panel is DEGRADED, hence ESCALATE, only if that retry also has
+  no report.
 
 Run the cleanup and containment (`references/cleanup.md`) first, then post the
 result as one PR comment (§ Output shape) before returning: cleanup can
