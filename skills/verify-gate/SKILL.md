@@ -5,9 +5,10 @@ name: verify-gate
 description: "Anti-rubber-stamp merge gate: checks every ticket exit criterion and review comment against the diff. Emits APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR with evidence. Does not merge."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<pr-number> [worktree=<path>]"
+argument-hint: "<pr-number> repo=<path> [session=<uuid>]"
 context: fork
-# Foreground: /gaze phase 6 invokes this and must parse its verdict block before
+# Foreground: its caller (raid phase 6, or the author before /merge) invokes this
+# and must parse its verdict block before
 # branching. Claude Code 2.1.218 made `context: fork` skills background by
 # default; a fork cannot wait on a background completion (its turn ends when it
 # stops calling tools), so the default would orphan this phase — ticket 0250.
@@ -17,18 +18,20 @@ background: false
 # Verify gate — PR $ARGUMENTS
 
 > **TASK DIRECTIVE — execute now.** You are running `/verify-gate` on PR
-> `$ARGUMENTS` (a PR number, optionally followed by `round=2` and/or
-> `worktree=<path>`). This file is your operating procedure, not reference
-> documentation: resolve the PR and gate it immediately. If `worktree=<path>`
-> is present, `cd` into that path before any git or forge command — forked
-> sub-skills do not inherit the caller's cwd. If `$ARGUMENTS` does not
+> `$ARGUMENTS` (a PR number followed by `repo=<path>`, any checkout of the
+> target project). This file is your operating procedure, not reference
+> documentation: resolve the PR and gate it immediately. Create your own gate
+> worktree from `repo=<path>` (§ Isolation) and run every git and forge
+> command against it — forked sub-skills do not inherit the caller's cwd, and
+> no caller's tree is read for PR state. If `$ARGUMENTS` does not
 > contain a PR number, STOP and emit `verdict: ESCALATE` with rationale
 > "no PR argument" — do NOT infer a task from the environment (worktree
 > name, git status snapshot, ticket files, or the shared task list).
 
 The last line of defence before merge. A gate with teeth: **cannot approve without
-concrete per-criterion evidence**. Designed to be called by `/gaze` at phase 6, but
-standalone-callable for debugging.
+concrete per-criterion evidence**. Called by the PR's caller after `/gaze`
+returns: raid phase 6, or the author before `/merge`. Gaze never calls it. The
+caller owns the gate session (§ Gate sessions).
 
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill.
 
@@ -64,29 +67,46 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 ## Input
 
 Either:
-- `<pr-number>` (standalone mode): the gate resolves ticket, diff, comments itself.
-- A structured bundle from `/gaze` (preferred): `{pr, ticket, diff, phase_outputs}`.
-- The waiver record from `/gaze`, when one exists: `waiver: none`, or the declared
+- `<pr-number>` alone: the gate resolves ticket, diff, comments itself.
+- The caller's bundle (preferred): `/gaze`'s returned result block
+  (`reviewed_head_sha`, unresolved lists, adherence, panel integrity), with
+  `{pr, ticket}`.
+- The waiver record `/gaze` returned, passed on by the caller, when one exists: `waiver: none`, or the declared
   reason, `pr_files`, `pr_lines`, the source (`flag` or `body line`), and the earliest
   posted `circuit_breaker: waived (...)` header on the PR. The gate judges the claim
   from the diff, not from who declared it (see § Indivisibility).
 
-Both paths produce the same verdict shape. Round is always derived from PR comment
-history (see "Standalone invocation"), never passed by the caller.
+Every invocation produces the same verdict shape. Round is always derived from PR comment
+history (see § Gate sessions), never passed by the caller.
 
 **Cwd prerequisite**: the gate uses `gh` and `git` commands that resolve
 against cwd, and a `context: fork` invocation does **not** inherit the
-caller's cwd. The caller must pass `worktree=<path>` and the gate must `cd`
-into it first — running from the session worktree will read whatever branch
-happens to be checked out there and produce wrong results.
+caller's cwd. The caller passes `repo=<path>`, any checkout of the target
+project that the caller keeps until the gate returns (its session or PR
+worktree). The gate uses it only to locate the repository, never to read PR
+state: whatever branch is checked out there is irrelevant.
 
-**Isolation**:
-- When called from `/gaze`, the `worktree=` argument names the isolated
-  worktree that `/gaze` created in phase 1. `cd` into it; no additional
-  setup is needed.
-- When invoked **standalone** without `worktree=`, the gate must create its
-  own isolated worktree before reading PR state. See "Standalone invocation"
-  for the setup.
+**Isolation — the gate owns its checkout.** Every invocation, whoever the
+caller, creates a fresh detached worktree on the PR head, rules from it and
+removes it on exit. No caller hands the gate a tree, and the gate never reads
+a tree another skill created: `/gaze` removes its review worktree before it
+returns, so a later gate run cannot rely on it.
+
+```bash
+PR_BRANCH=<head branch resolved from the forge for <pr-number>>
+primary_root=$(git -C "<repo-path>" rev-parse --show-toplevel) || exit 1
+primary_root="${primary_root%%/.claude/worktrees/*}"
+gate_tree="$primary_root/.claude/worktrees/gate-<pr-number>"
+git -C "$primary_root" fetch origin "$PR_BRANCH" || exit 1
+if ! git -C "$primary_root" worktree add --detach "$gate_tree" origin/"$PR_BRANCH" || ! test -d "$gate_tree"; then
+    echo "verify-gate: cannot create isolated gate worktree for PR <pr-number>" >&2
+    exit 1   # verdict ESCALATE, root_cause_class: Missing Data
+fi
+```
+
+On every exit path, after the verdict comment posts: `git -C "$primary_root"
+worktree remove "$gate_tree"`. The gate writes nothing in it, so a plain
+remove suffices; a refusal is reported in the verdict, never forced.
 
 ## Evidence discovery
 
@@ -120,8 +140,8 @@ apply, and step 2 needs its seats.
    `Review plan: risk=<trivial|ordinary|high> seats=<seat>,<seat> producer-family=<family>`.
    Without a plan line and without any report on the branch, record
    `review_evidence: legacy` and judge the review comments as above; stop here.
-2. **Seat table.** In the review worktree, run
-   `python3 "$IDH_ROOT/scripts/review_evidence.py" gate --repo <review-worktree> --base origin/<base-branch> --ticket <ticket-file> --risk <row> --producer-family <family> --seat <seat>` (one `--seat` per planned seat).
+2. **Seat table.** In the gate worktree, run
+   `python3 "$IDH_ROOT/scripts/review_evidence.py" gate --repo "$gate_tree" --base origin/<base-branch> --ticket <ticket-file> --risk <row> --producer-family <family> --seat <seat>` (one `--seat` per planned seat).
    Copy its `seat`, `independent`/`independence` and `risk` lines into the
    verdict. A seat is `ran` (report on this head), `reused` (same patch-id,
    criteria hash and policy version, from an earlier head, which it names),
@@ -166,6 +186,9 @@ changes keep the guard.
 ```yaml
 verdict: APPROVED | REROLL | ESCALATE | NEEDS-AUTHOR
 round: 1 | 2
+gate_session_id: <uuid>
+review_worktree_path: <absolute path of the gate's own worktree>
+ruled_tip_sha: <full commit SHA ruled>
 pr: <pr-number>
 ticket: <ticket-id>
 waiver: none | {reason, pr_files, pr_lines, source}
@@ -267,7 +290,7 @@ The gate runs in an isolated checkout over a shared `main`; a mid-wave `erg log`
 on the ticket collides at the insertion point with the branch's own ticket
 commits. The orchestrator poses the line: committed onto the PR branch with the
 REROLL fix, or deferred to merge time.
-For a bare `/verify-gate` invocation outside raid/gaze, its caller owns posing
+For a `/verify-gate` invocation outside raid, its caller owns posing
 the returned `reroll_bump` by the same rule: on the PR branch with the fix, or
 at merge time. The caller never runs `erg log` against main mid-wave; the gate
 still writes no ticket file.
@@ -287,8 +310,9 @@ mechanical detector; assign it when you author the verdict.
   taxonomy" without naming which file it belongs in.
 - **Original Error** — a pre-existing bug the gate surfaces, unrelated to this
   diff. E.g. a broken test the branch merely runs into.
-- **Missing Data** — the gate lacked context or access. E.g. `worktree=` not
-  passed, so the diff could not be inspected.
+- **Missing Data** — the gate lacked context or access. E.g. `repo=` not
+  passed or the gate worktree could not be created, so the diff could not be
+  inspected.
 - **Other** — none of the above; state the reason in `rationale`.
 
 APPROVED verdicts do not carry this field.
@@ -305,33 +329,48 @@ Untagged minors go in `malformed_minors`; they do not bounce on their own.
 On round 2 any untagged minor still present → ESCALATE.
 The gate never authors hedged language — use `verifiable:` or `consider:`.
 
-## Standalone invocation
+## Gate sessions
 
-Callable without `/gaze`. Uses existing PR state only (no phase 2-5 outputs).
-Isolation setup is identical to `/gaze` phase 1 (create worktree, remove on exit).
+The caller owns the gate session; gaze has no part in it.
 
-**Round derivation:** count PR comments matching `/verify-gate round=N verdict=V`;
-current round = count + 1.
+- **Session id.** Before round 1 the caller generates one UUID for the PR's
+  gating sequence (`python3 -c 'import uuid; print(uuid.uuid4())'`) and passes
+  it as `session=<uuid>` on round 1 and on the round-2 re-gate after the fix.
+  Raid generates it per PR in phase 6; the author generates it before `/merge`.
+- **Standalone** means only that no `session=` was passed (an author's ad hoc
+  or debugging run): the gate generates a fresh UUID and records it. It changes
+  no rule below; there is no standalone override.
+- **Round derivation:** count PR comments matching `/verify-gate round=N verdict=V`,
+  across every session and caller; current round = count + 1. The caller never
+  passes the round.
+- **Two-round cap, every path.** Round > 2 → immediate ESCALATE, whoever calls
+  and whether or not a session id was passed. A fresh session id does not reset
+  the count. Past an ESCALATE the merge decision is the author's, not another
+  gate run's.
+- **Caller enforcement.** The caller invokes the gate at most twice per
+  session: round 1, then one re-gate after the fix. Raid never launches a
+  third run and never opens a new session to escape the cap.
 
-- From `/gaze`: round > 2 → immediate ESCALATE.
-- Standalone: round > 2 → warn and proceed as `standalone-override` (does not
-  unblock an ESCALATED `/gaze` sequence).
+Uses existing PR state only when no gaze result is passed (no phase 2-5 outputs).
+Isolation is the same on every path (§ Isolation: own worktree, removed on exit).
 
 ## Output destinations
 
-1. Structured verdict returned to caller (for `/gaze` consumption).
+1. Structured verdict returned to the caller (raid, or the author).
 2. PR comment posted with human-readable summary:
 
-   For a `/gaze` call, receive its `gate_session_id` and absolute review
-   worktree path. In standalone mode, generate a fresh UUID for this gate.
-   Immediately before ruling, read the full tip SHA with `git -C <review-worktree>
-   rev-parse HEAD`; stop with ESCALATE if this fails. These are audit fields.
+   Take the `gate_session_id` from the caller's `session=` argument; with
+   none (standalone), generate a fresh UUID. The review worktree path is the gate's
+   own `$gate_tree`. Immediately before ruling, read the full tip SHA with
+   `git -C "$gate_tree" rev-parse HEAD`; stop with ESCALATE if this fails.
+   These are audit fields, posted under the same snake_case keys as the
+   structured verdict: callers (raid, `/merge`, dashboard) read `ruled_tip_sha`.
 
    ```
    /verify-gate round=<n> verdict=<V>
-   Gate session id: <UUID from /gaze, or standalone UUID>
-   Review worktree path: <absolute path used for evidence>
-   Ruled tip SHA: <full commit SHA read from that worktree>
+   gate_session_id: <UUID from the caller's session=, or standalone UUID>
+   review_worktree_path: <absolute path of the gate's own worktree>
+   ruled_tip_sha: <full commit SHA read from that worktree>
    reroll_bump: <exact returned note verify-reroll line; include on REROLL, omit otherwise>
    Exit criteria: <addressed>/<total>  Review: <unresolved>  Simplify: <unresolved>
    Adherence: <blocking>  Scope overflow: <files> (<ticketed>/<escalate>)
@@ -347,7 +386,11 @@ current round = count + 1.
   PR body's stated intent and test plan stand in for exit criteria; record a
   `no_ticket` nit.
 - A close claim naming a ticket file that does not exist → ESCALATE (dangling
-  claim; `/merge` would fail on it).
+  claim; `/merge` would fail on it). Resolve the claim in the gate worktree as
+  `tickets/<id>-*.erg` **or** `tickets/closed/<id>-*.erg`, as `erg-pr-merge`
+  does: callers close the ticket on the branch before gating, so a closed,
+  archived ticket is the normal case and its exit criteria are read from
+  `tickets/closed/`. Only neither path existing is dangling.
 - PR body lacks test plan → not a gate-level failure, but recorded as a nit.
 - Gate cannot access commit timestamps → ESCALATE (cannot distinguish pre/post comment changes).
 - Contradictory signals between phases 2–5 → ESCALATE (no silent resolution).

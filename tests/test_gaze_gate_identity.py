@@ -31,7 +31,7 @@ def test_verdict_comment_names_gate_identity():
     template = VERIFY.read_text().split("2. PR comment posted", 1)[1].split(
         "## Circuit breakers", 1
     )[0]
-    for field in ("Gate session id:", "Review worktree path:", "Ruled tip SHA:"):
+    for field in ("gate_session_id:", "review_worktree_path:", "ruled_tip_sha:"):
         assert field in template
 
 
