@@ -27,7 +27,7 @@ GATE_TOKEN = re.compile(
 # The override flag's name and this test's name are not verdicts; a line that
 # names only them is not a verdict line.
 OVERRIDE_NAME = re.compile(
-    r"--force-approve|force-approved|FORCE-APPROVED|test_gaze_never_approves", re.I
+    r"force-approved?|test_gaze_never_approves", re.I
 )
 RESULT_VALUES = {"REVIEWED", "FINDINGS", "ESCALATE"}
 
@@ -118,6 +118,21 @@ def test_negative_controls_fail_in_core_and_in_a_reference():
             assert gate_verdict_violations(text), (where, control)
     assert gate_verdict_violations("```\nresult: REVIEWED | APPROVED\n```\n")
     assert gate_verdict_violations("```\nverdict: REVIEWED\n```\n")
+
+
+def test_raw_references_are_scanned_in_full():
+    """expand() drops each reference's first two paragraphs (the inliner strips
+    them), so a verdict there would escape the expanded scan: scan the raw
+    files whole too, and prove a paragraph-2 mention is caught."""
+    refs = {f"references/{r.name}": _raw(r) for r in REFERENCES}
+    for name, text in refs.items():
+        assert gate_verdict_violations(text) == [], name
+    core = _raw(GAZE_DIR / "SKILL.md")
+    for name, text in refs.items():
+        head, para2, rest = text.split("\n\n", 2)
+        planted = "\n\n".join((head, para2 + "\nReturn APPROVED", rest))
+        assert expand(core, refs | {name: planted}) == GAZE, "paragraph 2 is invisible to expand"
+        assert gate_verdict_violations(planted), name
 
 
 def _section(heading: str) -> str:
