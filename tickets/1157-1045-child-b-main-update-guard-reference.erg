@@ -6,6 +6,7 @@ Blocked-by: 1156
 
 --- log ---
 2026-10-20T19:23Z reviewer created
+2026-10-21T11:54Z reviewer Started in parallel with 1156 at the author's request, overriding Blocked-by: 1156 (PR #1566 reads the gate record by presence only, ref refs/notes/gate). PR #1566 ships the journal hook, an opt-in refusal and the sweep; refusal is on only with `git config idh.mainGuard enforce` (default warn). 1157 stays open until the author turns enforce on and a follow-up makes enforce the default; PR #1566 does not close it.
 
 --- body ---
 ## Context
