@@ -314,8 +314,10 @@ and the structured result must return to the orchestrator.
 A gaze result of ESCALATE, or no accepted result (missing at the end of the
 bounded wait, or its `reviewed_head_sha` stale against the branch tip), means
 the gate is not run: the review never completed, and the PR goes to the author.
-The comparison is made on the reviewed head, before the raid adds its own fix and
-ticket-close commits; those commits do not void the result.
+The comparison is made on the reviewed head, before the raid adds its
+ticket-close commit or the fix for a gate's round-1 REROLL; those two do not
+void the result (the round-2 re-gate rules the fix). A FINDINGS fix does: it
+moves the head past what gaze reviewed, so gaze runs again on the new head.
 On FINDINGS the fix agent fixes the listed items and the raid re-runs `/gaze` on
 the new head before any gate: a head gaze did not review is never gated.
 Only on a gaze result of REVIEWED run
