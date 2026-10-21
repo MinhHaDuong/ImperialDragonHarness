@@ -105,6 +105,7 @@ so they are not themselves discovered as suites.
 
 import ast
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -786,7 +787,7 @@ def test_a_python_child_passes_the_loader_to_its_grandchild(tmp_path, monkeypatc
         "print('LEAKY' if out.stdout else 'CLEAN')\n"
     )
     leaky = subprocess.run(
-        ["python3", "-c", grandchild], capture_output=True, text=True, timeout=60
+        [sys.executable, "-c", grandchild], capture_output=True, text=True, timeout=60
     )
     assert leaky.returncode == 0, "probe (0c) python child failed to run"
     assert "LEAKY" in leaky.stdout, (
@@ -802,7 +803,7 @@ def test_a_python_child_passes_the_loader_to_its_grandchild(tmp_path, monkeypatc
         "print('LEAKY' if out.stdout else 'CLEAN')\n"
     )
     clean = subprocess.run(
-        ["python3", "-c", hermetic_grandchild],
+        [sys.executable, "-c", hermetic_grandchild],
         env={**child_env(), "PYTHONPATH": str(TESTS_DIR)},
         capture_output=True,
         text=True,

@@ -31,6 +31,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -256,7 +257,7 @@ def test_invalid_utf8_from_a_cli_stays_inside_the_refusal_contract(
 def test_the_cli_reports_a_refusal_as_one_line_and_exit_two(tmp_path):
     mute = _fake_cli(tmp_path, "mutecodex", r"printf '\377\376\n'")
     done = subprocess.run(
-        ["python3", str(REPO / "bin" / "idh"), "check", "harness", "codex"],
+        [sys.executable, str(REPO / "bin" / "idh"), "check", "harness", "codex"],
         capture_output=True,
         text=True,
         timeout=TIMEOUT,

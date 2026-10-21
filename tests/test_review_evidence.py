@@ -12,6 +12,7 @@ import json
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -269,7 +270,7 @@ def policy(tmp_path):
 
 def run_cli(repo, policy, *args):
     return subprocess.run(
-        ["python3", str(SCRIPT), *args, "--repo", str(repo), "--base", "main",
+        [sys.executable, str(SCRIPT), *args, "--repo", str(repo), "--base", "main",
          "--policy-root", str(policy), "--ticket", str(repo / "tickets/0001-x.erg")],
         capture_output=True, text=True, env=child_env())
 
@@ -280,7 +281,7 @@ def run_gate(repo, policy, *args, risk="ordinary"):
 
 def record_seat(repo, policy, seat, family="Anthropic", verdict="approve", kind="review"):
     out = subprocess.run(
-        ["python3", str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+        [sys.executable, str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
          "--policy-root", str(policy), "--ticket", str(repo / "tickets/0001-x.erg"),
          "--seat", seat, "--kind", kind, "--verdict", verdict, "--family", family,
          "--worker", "test"],
@@ -543,7 +544,7 @@ def test_record_rejects_header_injection_and_path_escape(repo, policy, flag, val
     args = {"--seat": "correctness", "--worker": "t", "--family": "Anthropic"}
     args[flag] = value
     out = subprocess.run(
-        ["python3", str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+        [sys.executable, str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
          "--policy-root", str(policy), "--verdict", "approve",
          *[x for kv in args.items() for x in kv]],
         input="body\n", capture_output=True, text=True, env=child_env())
@@ -564,7 +565,7 @@ def test_header_value_refuses_every_line_boundary(sep):
 @pytest.mark.parametrize("sep", [" ", "\x85"])
 def test_record_refuses_unicode_line_separators(repo, policy, sep):
     out = subprocess.run(
-        ["python3", str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+        [sys.executable, str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
          "--policy-root", str(policy), "--seat", "adherence", "--kind", "adherence",
          "--verdict", "approve", "--family", "anthropic", "--worker", f"w{sep}kind: review"],
         input="body\n", capture_output=True, text=True, env=child_env())
@@ -600,7 +601,7 @@ def test_family_vocabulary_covers_the_route_grid():
 @pytest.mark.integration
 def test_record_refuses_an_unknown_family(repo, policy):
     out = subprocess.run(
-        ["python3", str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+        [sys.executable, str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
          "--policy-root", str(policy), "--seat", "red-team", "--verdict", "approve",
          "--family", "claude", "--worker", "t"],
         input="body\n", capture_output=True, text=True, env=child_env())

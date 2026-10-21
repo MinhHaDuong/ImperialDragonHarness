@@ -15,6 +15,7 @@ Each test spawns real git via subprocess, so the module is integration-tier.
 import json
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -80,7 +81,7 @@ def merge_pr(repo, *, pr, owner_branch, feature_commits, subject=None):
 
 def enumerate_merges(repo, since, project="testproj"):
     res = run(
-        ["python3", str(ENUMERATE), since, "--project", project],
+        [sys.executable, str(ENUMERATE), since, "--project", project],
         cwd=str(repo),
     )
     records = [json.loads(ln) for ln in res.stdout.splitlines() if ln.strip()]
@@ -311,14 +312,14 @@ def test_until_reference_can_target_another_ref(repo):
     main_sha = head(repo)
     git(repo, "switch", "feat-33")  # branch tip: below the merge commit
     res = run(
-        ["python3", str(ENUMERATE), base, "--until", main_sha, "--project", "proj"],
+        [sys.executable, str(ENUMERATE), base, "--until", main_sha, "--project", "proj"],
         cwd=str(repo),
     )
     records = [json.loads(ln) for ln in res.stdout.splitlines() if ln.strip()]
     assert len(records) == 1, res.stderr
     assert records[0]["branch"] == "until-ref"
     # Same command without --until sees nothing: proof the argument is load-bearing.
-    bare = run(["python3", str(ENUMERATE), base, "--project", "proj"], cwd=str(repo))
+    bare = run([sys.executable, str(ENUMERATE), base, "--project", "proj"], cwd=str(repo))
     assert bare.stdout.strip() == "", "fixture does not discriminate the two refs"
 
 
@@ -348,7 +349,7 @@ def test_value_option_followed_by_another_option_is_not_glued(repo):
     the error it already knows how to raise.
     """
     res = run(
-        ["python3", str(ENUMERATE), head(repo), "--project", "--until", "HEAD"],
+        [sys.executable, str(ENUMERATE), head(repo), "--project", "--until", "HEAD"],
         cwd=str(repo),
         check=False,
     )

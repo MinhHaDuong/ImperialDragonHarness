@@ -16,6 +16,7 @@ Exercises:
 
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -108,7 +109,7 @@ def _gc(primary, *, gh_response="[]", gh_exit=0):
     fake_bin.mkdir(exist_ok=True)
     gh = fake_bin / "gh"
     gh.write_text(
-        "#!/usr/bin/env python3\n"
+        f"#!{sys.executable}\n"
         "import os, sys\n"
         "sys.stdout.write(os.environ.get('TEST_GH_RESPONSE', '[]'))\n"
         "sys.exit(int(os.environ.get('TEST_GH_EXIT', '0')))\n"
@@ -166,8 +167,8 @@ def test_hunt_tmp_exclude_registration_uses_shared_git_metadata(origin):
     wt = make_agent_worktree(primary, "agent-tmp-register", push=False)
     helper = SCRIPTS / "worktree-tmp-guard.py"
 
-    first = run(["python3", str(helper), "register", str(wt)], check=False)
-    second = run(["python3", str(helper), "register", str(wt)], check=False)
+    first = run([sys.executable, str(helper), "register", str(wt)], check=False)
+    second = run([sys.executable, str(helper), "register", str(wt)], check=False)
     assert first.returncode == 0 and second.returncode == 0
     common = Path(git(wt, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
     rules = (common / "info" / "exclude").read_text().splitlines()
@@ -274,7 +275,7 @@ def test_removal_guard_rejects_branch_mismatch(origin):
     (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
 
     res = run([
-        "python3", str(SCRIPTS / "worktree-tmp-guard.py"), "removal",
+        sys.executable, str(SCRIPTS / "worktree-tmp-guard.py"), "removal",
         str(primary), str(wt), "--branch", "main",
     ], check=False)
     assert res.returncode == 2
