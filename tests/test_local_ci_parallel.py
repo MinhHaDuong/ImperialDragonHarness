@@ -43,3 +43,19 @@ def test_tagged_workflow_renames_only_the_workflow(tmp_path):
     dst = tmp_path / "out.yml"
     _bash(f"tagged_workflow {src} {dst} r42")
     assert dst.read_text() == "name: CI-r42\non: push\njobs:\n  a:\n    name: keep\n"
+
+
+def test_dedupe_args_keeps_first_occurrence_in_order():
+    assert _bash("dedupe_args b a b c a").split() == ["b", "a", "c"]
+    assert _bash("dedupe_args") == ""
+
+
+def test_kill_groups_reaches_the_whole_group(tmp_path):
+    script = (
+        f"work={tmp_path}; "
+        f"group_run j bash -c 'sleep 30 & echo $! > {tmp_path}/child; wait' & "
+        f"for _ in $(seq 50); do [ -s {tmp_path}/child ] && break; sleep 0.1; done; "
+        "kill_groups; wait; "
+        f"sleep 0.2; kill -0 $(cat {tmp_path}/child) 2>/dev/null && echo alive || echo dead"
+    )
+    assert _bash(script) == "dead"

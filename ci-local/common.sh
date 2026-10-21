@@ -74,3 +74,31 @@ run_pool() {
         running=$((running - 1))
     done
 }
+
+# Print the arguments one per line, first occurrence only, order kept. A job named
+# twice would otherwise run twice in parallel on one container name.
+dedupe_args() {
+    [ "$#" -eq 0 ] || printf '%s\n' "$@" | awk '!seen[$0]++'
+}
+
+# Run a command as the leader of its own process group, so a signal can reach
+# act and its children and not only the shell around them. The group id is
+# recorded in $work/<name>.pgid for kill_groups. Usage: group_run NAME CMD...
+group_run() {
+    local name=$1 pid
+    shift
+    setsid "$@" &
+    pid=$!
+    echo "$pid" > "$work/$name.pgid"
+    wait "$pid"
+}
+
+# Kill every recorded group. Called by the INT/TERM trap before the EXIT trap
+# removes $work and stops the podman service, so no act is orphaned.
+kill_groups() {
+    local f
+    for f in "$work"/*.pgid; do
+        [ -e "$f" ] || continue
+        kill -- "-$(cat "$f")" 2>/dev/null || true
+    done
+}
