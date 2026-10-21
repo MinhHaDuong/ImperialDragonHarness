@@ -301,3 +301,75 @@ def test_other_refs_are_ignored(repos):
     proc = git(wt2, "commit", "-q", "-m", "x")
     assert "main-guard" not in proc.stderr
     assert journal(wt2) == []
+
+
+def _stdin(repo, script, check=False):
+    return subprocess.run(
+        ["git", "-C", str(repo), "update-ref", "--stdin"], input=script,
+        capture_output=True, text=True, env=_env(), check=check,
+    )
+
+
+@pytest.mark.parametrize("mode", ["enforce", "warn"])
+def test_a_verify_of_main_is_not_an_update(repos, mode):
+    """`verify main <old>` reaches the hook as "<old> <zero>", like a delete."""
+    wt2 = repos["wt2"]
+    git(wt2, "config", "idh.mainGuard", mode)
+    main = rev(wt2, "main")
+    proc = _stdin(wt2, f"verify refs/heads/main {main}\ncreate refs/heads/other {main}\n")
+    assert proc.returncode == 0, proc.stderr
+    assert rev(wt2, "other") == main and rev(wt2, "main") == main
+    assert "main-guard" not in proc.stderr
+    assert journal(wt2) == []
+
+
+def test_a_stdin_delete_of_main_is_journaled_and_warned(repos):
+    work, wt2 = repos["work"], repos["wt2"]
+    git(work, "config", "idh.mainGuard", "enforce")
+    git(work, "switch", "-q", "--detach")
+    main = rev(wt2, "main")
+    proc = _stdin(wt2, f"delete refs/heads/main {main}\n")
+    assert "deleted" in proc.stderr
+    assert git(wt2, "rev-parse", "-q", "--verify", "refs/heads/main", check=False).returncode != 0
+    rec = journal(wt2)[-1]
+    assert rec["decision"] == "deleted-unrefusable" and rec["phase"] == "committed"
+
+
+@pytest.mark.parametrize("how", ["update-ref", "branch"])
+def test_enforce_refuses_a_deletion_with_an_expected_old_value(repos, how):
+    work, wt2 = repos["work"], repos["wt2"]
+    git(work, "config", "idh.mainGuard", "enforce")
+    git(work, "switch", "-q", "--detach")
+    main = rev(wt2, "main")
+    if how == "update-ref":
+        proc = git(wt2, "update-ref", "-d", "refs/heads/main", main, check=False)
+    else:
+        proc = git(wt2, "branch", "-D", "main", check=False)
+    assert proc.returncode != 0
+    assert rev(wt2, "main") == main
+
+
+def test_moving_origin_main_alongside_main_is_not_a_pass(repos):
+    """Only a fetch may vouch for main with an origin/main of the same transaction."""
+    work, wt2 = repos["work"], repos["wt2"]
+    git(work, "config", "idh.mainGuard", "enforce")
+    (wt2 / "sneak").write_text("sneak\n")
+    git(wt2, "add", "-A")
+    git(wt2, "commit", "-q", "-m", "sneak")
+    sneak = rev(wt2, "HEAD")
+    before = rev(wt2, "main")
+    proc = _stdin(wt2, f"update refs/remotes/origin/main {sneak}\nupdate refs/heads/main {sneak}\n")
+    assert proc.returncode != 0
+    assert rev(wt2, "main") == before
+
+
+def test_a_record_on_a_single_parent_commit_does_not_pass(repos):
+    work, wt2 = repos["work"], repos["wt2"]
+    git(work, "config", "idh.mainGuard", "enforce")
+    git(work, "switch", "-q", "--detach")
+    tree = rev(wt2, "HEAD^{tree}")
+    main = rev(wt2, "main")
+    single = git(wt2, "commit-tree", tree, "-p", main, "-m", "not a merge").stdout.strip()
+    git(wt2, "notes", f"--ref={GATE_NOTES_REF}", "add", "-m", "fixture", single)
+    proc = git(wt2, "update-ref", "refs/heads/main", single, main, check=False)
+    assert proc.returncode != 0

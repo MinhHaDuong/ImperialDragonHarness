@@ -13,18 +13,21 @@
 #   off     journal only
 #
 # A gated update of main is one of:
-#   on-origin    the new tip is origin/main (as the same transaction may set
-#                it: `fetch --atomic origin main:main`), or a fast-forward to a
+#   on-origin    the new tip is origin/main (as a `fetch` transaction may set
+#                it: `fetch --atomic origin main:main`; from any other command
+#                only the origin/main already on disk counts), or a fast-forward to a
 #                commit already on origin/main, or a fast-forward to the main
 #                tip this worktree just fetched from origin (FETCH_HEAD: a
 #                plain `fetch origin main:main` moves main in a transaction of
 #                its own, before origin/main). Covers scripts/sync-local-main.sh,
 #                `git pull` and the forge's merges coming home.
-#   gate-record  the new tip carries a gate record (a note in refs/notes/gate,
-#                written by ticket 1156's merge gate) and its first parent is
-#                the current main.
+#   gate-record  the new tip is a merge (two parents or more) that carries a
+#                gate record (a note in refs/notes/gate, written by ticket
+#                1156's merge gate) and whose first parent is the current main.
 # Everything else (a local commit on main, a reset, branch -f, a deletion) is
-# not gated.
+# not gated. One deletion cannot be refused: `delete main <old>` through
+# `update-ref --stdin` reaches the hook exactly as a `verify` does; it is
+# journaled and warned about once committed.
 #
 # The journal never blocks: every journal step swallows its own errors, and
 # only an enforce-mode refusal exits non-zero. Journal file, shared by all
@@ -50,6 +53,19 @@ while read -r old new ref; do
     esac
 done
 [ -n "$main_updates" ] || exit 0
+
+# The git command that runs this transaction (the hook's parent), padded with
+# spaces for word matching. Read for two facts only: whether the transaction
+# came from `fetch` (only then is an origin/main value inside the same
+# transaction trusted) and whether it came from `update-ref --stdin` (where a
+# `verify` and a `delete` with an expected old value reach this hook alike).
+if [ -r "/proc/$PPID/cmdline" ]; then
+    git_argv=" $(tr '\000' ' ' < "/proc/$PPID/cmdline" 2>/dev/null) "
+else
+    git_argv=" $(ps -o args= -p "$PPID" 2>/dev/null) "
+fi
+case "$git_argv" in *" fetch "*) ;; *) origin_new="" ;; esac
+case "$git_argv" in *" --stdin "*) stdin_tx=1 ;; *) stdin_tx=0 ;; esac
 
 # The one reader of ticket 1156's record: presence of a non-empty note.
 gate_record_present() {
@@ -140,6 +156,7 @@ classify() {
         echo on-origin; return
     fi
     if gate_record_present "$2" &&
+       git rev-parse -q --verify "$2^2" >/dev/null 2>&1 &&
        [ "$(git rev-parse -q --verify "$2^1" 2>/dev/null)" = "$1" ]; then
         echo gate-record; return
     fi
@@ -156,6 +173,20 @@ printf '%s' "$main_updates" | {
         [ "$old" = "$new" ] && ! is_zero "$new" && continue
         decision=""
         action=""
+        if [ "$stdin_tx" = 1 ] && is_zero "$new" && ! is_zero "$old"; then
+            # `update-ref --stdin`: `verify main <old>` and `delete main <old>`
+            # both arrive as "<old> <zero>". A verify changes nothing, so
+            # stay out of the way at `prepared`; after the fact, main still
+            # existing means it was a verify. A deletion is journaled and
+            # warned about, but could not be refused.
+            [ "$phase" = committed ] && is_zero "$current" || continue
+            decision=deleted-unrefusable
+            [ "$mode" = off ] && action=allowed || action=warned
+            ( journal "$old" "$current" "$new" "$decision" "$action" ) >/dev/null 2>&1
+            [ "$action" = warned ] &&
+                echo "main-guard: warning: $MAIN_REF was deleted through update-ref --stdin; journaled, could not be refused." >&2
+            continue
+        fi
         if [ "$phase" = prepared ]; then
             decision=$(classify "$current" "$new" 2>/dev/null)
             [ -n "$decision" ] || decision=not-gated
