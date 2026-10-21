@@ -147,8 +147,9 @@ jobs:
           tmp=$(mktemp --suffix=.sh)
           echo '#!/bin/bash' > "$tmp"
           echo 'echo hello' >> "$tmp"
-          if bash scripts/check-pipefail.sh "$tmp"; then
-            echo "FAIL: guard did not catch missing pipefail"
+          rc=0; bash scripts/check-pipefail.sh "$tmp" || rc=$?
+          if [ "$rc" -ne 1 ]; then
+            echo "FAIL: guard did not catch missing pipefail (exit $rc, want 1)"
             exit 1
           fi
           echo "OK: guard catches missing pipefail"
