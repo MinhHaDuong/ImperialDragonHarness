@@ -408,37 +408,32 @@ confirm the tree: `git rev-parse --show-toplevel` must equal the session worktre
 
 For each eligible PR, sequentially within the wave:
 1. `git fetch origin` to pick up any prior merges.
-2. No checkout needed — `-C <path>` points the merge tool at a checkout that
-   already has the PR branch. An Execute agent's own worktree qualifies
+2. No checkout needed: run the recipe's commands against a checkout that
+   already has the PR branch (`git -C <worktree-path>`, the forge reads by PR
+   number). An Execute agent's own worktree qualifies
    directly: take its path from the agent's completion notification. Do not check out or `cd`
    into it, and do not delete and re-checkout the branch.
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
-4. Run `"$IDH_ROOT/skills/merge/erg-pr-merge" -C <worktree-path> <pr-number>`
+4. Merge by the recipe, `skills/merge/SKILL.md` § The recipe,
    only after `git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>`
    == the gate's `ruled_tip_sha` (HEAD read with `-C <worktree-path>`); any
    mismatch means no merge. Close before gating: Phase 6 closed the ticket on
-   the branch before the round-1 gate, so the helper finds it in
-   `tickets/closed/` and adds no close commit; its `git push origin HEAD` pushes
-   nothing only when that three-way equality holds. It merges via GitHub API.
-   <!-- harness-extension-point -->
-   Runtime permission rules must authorize the resolved helper path. Use
-   `-C` to select the worktree for every Git and forge operation.
+   the branch before the round-1 gate, so the recipe's close step finds it in
+   `tickets/closed/` and adds no close commit.
    **Gated base** (`.merge-gate.json` on the base, `skills/merge/SKILL.md`
-   § Gated base): before this call, write the gate record from the worktree
-   (`merge-gate.py run --base origin/<base> --head HEAD`), then merge per
-   `skills/merge/SKILL.md` § Gated base, both as one background command. The
-   record is the gate; the merge's exit is the outcome (0 merged). Exit 2
-   means no record for this head: usually the helper's own ticket-close commit changed the candidate
-   (close before gating avoids it), else an earlier merge in the wave moved
-   the base. Record again on the current head, run again.
-   **Ungated base:** the merge is queued, not necessarily landed: pending checks are normal.
-   Read the outcome with `"$IDH_ROOT/skills/merge/erg-pr-status" -C <worktree-path> <pr-number>`
-   (exit 0 merged, 1 failed, 2 pending, 3 unreadable). Pending is not a
+   § Gated base): the record check, the record run when it is missing, the
+   pinned merge and the read-back run as one background command. The record
+   is the gate; the read-back is the outcome (MERGED at the gated head).
+   A missing record after an earlier merge in the wave moved the base means
+   record again on the same head: mechanical, it spends no gate round. A
+   second miss goes in the briefing.
+   **Ungated base:** the merge may be queued, not landed: pending checks are normal.
+   Pending is not a
    failure: wait as `skills/merge/SKILL.md` § Waiting for a queued merge
    prescribes (one bounded background command) and move on to the next PR
    meanwhile; a PR still pending when that wait ends is listed as queued in the
    briefing, not as merged.
-5. If merge fails (conflict, CI regression), or the status reads failed, ESCALATE — leave a PR comment and move to the next PR.
+5. If merge fails (conflict, CI regression), or the read-back is not MERGED, ESCALATE — leave a PR comment and move to the next PR.
    A *permission denial* on the merge call is not a merge failure — handle it
    per § Merge-permission denial below, not by ESCALATE.
 
@@ -481,7 +476,7 @@ After all waves, in one compound so the `cd` persists across the rebase:
 ## Phase 8: Celebrate (per-merged-PR)
 
 After all merges, from the updated main branch, run `/roar` for each
-PR whose `erg-pr-status` answered merged (exit 0); a pending PR gets its
+PR whose read-back answered MERGED; a pending PR gets its
 `/roar` when its bounded wait (`skills/merge/SKILL.md` § Waiting for a queued
 merge) reports it merged. The roar pre-check (`git merge-base --is-ancestor
 HEAD origin/main`) passes because HEAD is main after the pull.

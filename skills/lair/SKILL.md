@@ -52,7 +52,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     b. `cd` to the primary checkout (`dirname "$(git rev-parse --path-format=absolute --git-common-dir)"`). All remaining steps run on main.
 8. **Hygiene sweep**:
    - Stale worktrees were GC'd by `/molt` at step 1 (housekeeping owns worktree GC; the script's rails protect active sessions). Here, just `git worktree prune` for leftover admin entries of already-deleted dirs.
-   - **A worktree the GC skipped for uncommitted changes is a signal, not just an obstacle**: diff it and ask "is this a closed ticket's dropped deliverable?" — `erg-pr-merge` autocloses on the `**Ticket:**` line unconditionally, so a PR can close a ticket having landed only part of the work, leaving the rest as orphaned WIP. Preserve it (`wip(NNNN):` commit + push), then re-ticket and execute; never silently discard. Verify any recovered test actually runs — uncommitted WIP may never have been linted/executed.
+   - **A worktree the GC skipped for uncommitted changes is a signal, not just an obstacle**: diff it and ask "is this a closed ticket's dropped deliverable?" — a `**Ticket:**` claim closes its ticket at merge whatever landed (the merge recipe's close step), so a PR can close a ticket having landed only part of the work, leaving the rest as orphaned WIP. Preserve it (`wip(NNNN):` commit + push), then re-ticket and execute; never silently discard. Verify any recovered test actually runs — uncommitted WIP may never have been linted/executed.
    - `git branch -a` → delete stale remote branches
    - Check for orphan tickets and stale merge requests
 9. **Full test suite** — `make check` on main. New failures → open ticket. Known failures → confirm ticket still open.
@@ -61,7 +61,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     b. Hand-edit the sections and bump `Last updated:` in that same change (blockers, next actions, milestones) — no changelog, and no ticket counts, picks, MRs or commits: STATE.md stores no derived number (rules/state.md).
     c. Prune: delete items checked off before this session, and prune further to stay within the cap (rules/state.md).
     d. Commit, push the branch, open a merge request (`Ticket: none`), then **land it yourself** — a STATE refresh is the agent's own output with no blast radius, and handing the author a merge to perform is what this step exists to avoid. Which mechanism lands it is a per-repo fact, never assumed: a `.merge-gate.json` on the base decides the gated path; otherwise **read the auto-merge setting from the forge.**
-       - Gated base (`.merge-gate.json`) → write the gate record and merge per `skills/merge/SKILL.md` § Gated base, as one background command; its exit 2 means record again on the new head. Never arm auto-merge there: with nothing required it merges at once.
+       - Gated base (`.merge-gate.json`) → write the gate record and merge by the recipe (`skills/merge/SKILL.md` § Gated base), as one background command; a record missing after the base moved means record again on the same head. Never arm auto-merge there: with nothing required it merges at once.
        - Auto-merge available and enabled on the repo → enable it on the merge request; it lands on its own once the forge's requirements are met.
        - Otherwise → fall back to the repo's own proportionality path (a "trivial review" label where one exists, plus a single review), then merge directly.
 

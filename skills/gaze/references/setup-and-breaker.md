@@ -15,7 +15,7 @@ Loaded from `skills/gaze/SKILL.md` § 1. Setup, after the isolation script has r
 - No size stops or tiers the review: every PR gets adherence, the review panel and simplify; a large diff is read in review groups (§ 2–5).
 
 - **Preflight before spawning phases 2–5.** Count distinct ticket close-claims
-  from the PR **body**, using the same line grammar as `erg-pr-merge`: bold or
+  from the PR **body**, using the merge recipe's line grammar (`skills/merge/references/claims.md`): bold or
   bare `Ticket: tickets/NNNN...` lines count; the title, `Ticket-ref:` lines,
   `Ticket: none`, and repeated claims for one ID do not. For example, extract
   IDs with `grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' | sort -u`.
