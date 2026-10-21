@@ -242,7 +242,47 @@ def load_config(base):
         raise GateError(f'invalid {CONFIG_PATH} at base: "versions" must be a list of {{name, argv}}')
     if not single_line(config["scope"]) or not all(single_line(v["name"]) for v in versions):
         raise GateError(f"invalid {CONFIG_PATH} at base: scope or version names hold a control character")
+    light_paths, light_checks = config.get("light_paths"), config.get("light_checks")
+    if (light_paths is None) != (light_checks is None):
+        raise GateError(f'invalid {CONFIG_PATH} at base: "light_paths" and "light_checks" go together')
+    if light_paths is not None:
+        names = {c["name"] for c in checks}
+        if (
+            not isinstance(light_paths, list)
+            or not light_paths
+            or not all(isinstance(x, str) and x.strip("/") for x in light_paths)
+            or not isinstance(light_checks, list)
+            or not light_checks
+            or not all(isinstance(x, str) and x in names for x in light_checks)
+        ):
+            raise GateError(
+                f'invalid {CONFIG_PATH} at base: "light_paths" must list paths, '
+                '"light_checks" names of declared checks'
+            )
     return config
+
+
+def is_light_path(path, light_paths):
+    """A light path is a listed file, or lies under a listed directory (trailing /)."""
+    return any(path.startswith(x) if x.endswith("/") else path == x for x in light_paths)
+
+
+def effective(config, base, oid):
+    """The check set this candidate is gated by: light only if EVERY changed path is light.
+
+    The changed paths are the candidate's diff against the base, renames split
+    into delete + add, so moving a script under docs/ still names the script.
+    An empty diff is not light. `run` and `check` both derive the set here, so a
+    light record can never admit a code change: its scope would not match.
+    """
+    if "light_paths" not in config:
+        return config
+    out = git("diff", "--name-only", "--no-renames", "-z", base, oid).stdout
+    paths = [x for x in out.split("\0") if x]
+    if not paths or not all(is_light_path(x, config["light_paths"]) for x in paths):
+        return config
+    light = [c for c in config["checks"] if c["name"] in config["light_checks"]]
+    return {**config, "scope": f"{config['scope']}/light", "checks": light}
 
 
 def resolve(args):
@@ -329,6 +369,7 @@ def cmd_run(args):
     if config is None:
         raise GateError(f"gate is off at base {args.base}: no {CONFIG_PATH} with gate=on")
     oid = candidate(base, head)
+    config = effective(config, base, oid)
     actor = actor_line(args.runtime, args.model, args.effort)
     command = f"merge-gate run --base {args.base} --head {args.head}"
     if not single_line(actor) or not single_line(command):
@@ -367,6 +408,7 @@ def cmd_check(args):
     if config is None:
         raise GateError(f"gate is off at base {args.base}")
     oid = candidate(base, head)
+    config = effective(config, base, oid)
     if not args.no_fetch and not fetch_notes(args.remote):
         sys.stdout.write(f"missing: {args.remote} has no {NOTES_REF}; no record on candidate {oid}\n")
         return MISSING
