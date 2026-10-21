@@ -14,6 +14,7 @@ drafts* below.
 - [Memory v8 templates and source inventory](memory-v8/README.md): documentary foundation; no runtime activation.
 - [Installation](idh-install-strategy.md): portable checkout and runtime registration.
 - [Operations](adapter-operations.md): existing pilot verification and recovery.
+- [Main-update guard](2026-10-21-main-update-guard.md): the journal and refusal hook on `main`, its enforce switch, and the periodic sweep.
 - [Roadmap](../ROADMAP.md): priorities; [STATE](../STATE.md): current resume point.
 - [Retired cutover](idh-cutover-checklist.md): historical pointers only.
 
