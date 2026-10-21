@@ -2,6 +2,7 @@
 Title: Review effort follows risk: the shipped panel-width rules are not applied to docs-only and mechanical PRs
 Created: 2026-10-21
 Author: reviewer
+Closed: delivered by PR 1578 and PR 1579; the 20-PR run count dropped at close by the author
 
 --- log ---
 2026-10-21T12:47Z reviewer created
@@ -9,6 +10,8 @@ Author: reviewer
 2026-10-21T12:51Z reviewer Fact-finding 2/3 (what the gaze shrink dropped): yes. PR 1155 (ticket 0902, commit 6f83fd1d) put band x size-tier into gaze phase 1: high raises one rung, low lowers one rung (floored at Agent A + Agent C + gate). Commit 90d5b60b in PR 1538 (merged 2026-10-21T08:51Z) deleted the size tier battery and with it both band rules, and replaced them with 'compute the band once, for the comment'. Panel width (0392) was never band-driven: it reads pipeline_paths only.
 2026-10-21T12:51Z reviewer Fact-finding 3/3 (review_evidence.py): gate-side reader exists (record/plan/gate/forge/risk-floor, 47 tests) but nothing produces its inputs: no skill writes the 'Review plan:' line (verify-gate says hunt keeps it; hunt has no such step) and no skill calls 'record'; tickets/reviews/ has never existed on main, hence 'review_evidence: legacy' on every PR. risk_floor = max(paths, ticket text); paths high on any non-ticket deletion, HIGH_RISK_PATHS (rules/, hooks/, gate skills, guard scripts, decorrelation, Makefile, AGENTS.md, settings.json, CI, secrets) or POLICY_GLOBS; ticket text high on a regex (rules/, guard, merge gate, verify-gate, credentials, secrets, delete*, migrat*) over the whole ticket file; only trivial or high is ever produced. 451 of 679 ticket files on this branch trip the text floor (measured with HIGH_RISK_TEXT here), 1176 included. A plan row below the floor: gate prints 'risk: plan row is below the floor', exits 1, verify-gate rules REROLL round 1 / ESCALATE round 2; the high row also adds red-team and needs a known other-family seat.
 2026-10-21T13:01Z reviewer scope changed by author decision 2026-10-21: trust the orchestrator; no floor, no category
+2026-10-21T16:03Z reviewer reviewer note 2026-10-21 closing at the author's word. Delivered: PR 1578 (risk machinery: floor, rows, ticket-text floor, plan-row checks, prose_predicate --risk; 495 lines deleted) and PR 1579 (width, depth and round scoping, panel-width.json and the tests that pinned them; 326 lines deleted; one paragraph added in skills/gaze/SKILL.md): 821 lines deleted, 78 added, 3 files deleted. The orchestrator chooses seats and depth and states what ran. The last criterion, a count of gaze runs per PR over the next 20 pull requests against about three per PR since PR 1550, is dropped at close; it can be taken from the result comments if wanted.
+2026-10-21T16:03Z reviewer closed — delivered by PR 1578 and PR 1579; the 20-PR run count dropped at close by the author
 
 --- body ---
 ## Context
@@ -43,21 +46,21 @@ Scope changed by author decision 2026-10-21: trust the orchestrator; no floor,
 no category. The earlier objective seat table and the path floor are dropped.
 - [x] Re-read ticket 0902 and the shipped width and depth rules, and record in the
       ticket log what is in force and what the gaze shrink dropped, if anything.
-- [ ] The mechanical risk machinery is deleted: the path floor and its
+- [x] The mechanical risk machinery (PR 1578) is deleted: the path floor and its
       constants, the ticket-text floor, the risk rows and the gate's
       plan-row checks in `review_evidence.py` and verify-gate; the path-risk
       band of `prose_predicate.py --risk` and gaze's call to it.
-- [ ] The width and depth machinery is deleted: `skills/review-pr/panel-width.json`,
+- [x] The width and depth machinery (PR 1579) is deleted: `skills/review-pr/panel-width.json`,
       review-pr's width step, § Proportional depth and § Round scoping (review-pr
       and review-pr-prose), gaze's round-scoping paragraph, and the tests that
       pin them.
-- [ ] One short paragraph in `skills/gaze/SKILL.md`, pointed to from review-pr:
+- [x] One short paragraph in `skills/gaze/SKILL.md`, pointed to from review-pr:
       the orchestrator chooses which perspectives run and how deep, a repeat run
       included; the result comment states what ran, by which family, and why.
-- [ ] Unchanged: the retry-once and DEGRADED → ESCALATE rules, the
+- [x] Unchanged: the retry-once and DEGRADED → ESCALATE rules, the
       independence rule in `rules/workflow.md` and `decorrelation.md`, the gaze
       allowlist at 13 units.
-- [ ] verify-gate no longer says hunt keeps a plan line.
-- [ ] `make check` green; net deletion reported in lines and files.
-- [ ] A count of gaze runs per PR over the next 20 PRs is recorded in the ticket,
+- [x] verify-gate no longer says hunt keeps a plan line.
+- [x] `make check` green; net deletion reported in lines and files.
+- [ ] DROPPED at close (author, 2026-10-21: "Close 1176 then"): a count of gaze runs per PR over the next 20 PRs is recorded in the ticket,
       against the 2026-10-21 figure of about three runs per PR since PR 1550.
