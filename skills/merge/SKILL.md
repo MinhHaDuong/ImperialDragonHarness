@@ -114,14 +114,19 @@ belongs with the command it recovers.)
   shows `-` for every commit but `is-ancestor` is false — that ancestry check
   is `/roar`'s pre-check, and it is what confirms a squash-merge through the
   forge before a branch gets deleted.
+- **After `/gaze`, sync before closing the ticket.** `/gaze` (its simplify
+  phase) may have pushed fixes from its own review worktree since the caller last
+  fetched: `git fetch origin && git merge --ff-only origin/<branch>` first, or a
+  stale rebase silently drops them and the close commit lands on the wrong base.
 - **Close the ticket on the branch before gating.** Before the round-1
   `/verify-gate`, the caller closes each claimed ticket on the PR branch:
   `erg close <id> "<reason>"`, `erg archive <id>`, `git add -u tickets/`,
   `git add tickets/closed/<file>`, commit, push. The gate then rules a head
   that already contains the close, and `erg-pr-merge` skips a ticket already in
   `tickets/closed/` with a `Closed:` header, so it pushes no commit of its own.
-- **Merge prerequisite: the gate's `ruled_tip_sha` equals `git rev-parse
-  origin/<branch>` at merge time; otherwise re-gate, do not merge.** Run the
+- **Merge prerequisite: the gate's verdict is APPROVED and
+  the gate's `ruled_tip_sha` equals `git rev-parse origin/<branch>` at merge
+  time, read after `git fetch origin`; otherwise re-gate, do not merge.** Only APPROVED on that tip merges. Run the
   gate as `/verify-gate <pr> repo=<this worktree> session=<uuid>` (one session
   per PR, two rounds at most: `/verify-gate` § Gate sessions); a re-gate past
   that budget is ESCALATE to the author, never a third run.
@@ -130,12 +135,10 @@ belongs with the command it recovers.)
   `ticket(<id>): close and archive — PR #<n>` commit whose `git diff
   --no-renames --name-only <ruled> origin/<branch>` lists only `tickets/`
   paths. Nothing else qualifies.
-- **A gaze result of ESCALATE (or none on the current tip) means no gate and no
-  merge:** the review never completed, and the PR goes to the author.
-- **After `/gaze` and an APPROVED `/verify-gate`, sync before merging.** `/gaze`
-  (its simplify phase) may have pushed fixes from its own review worktree since the caller last fetched:
-  `git fetch origin && git merge --ff-only origin/<branch>` first, or a stale
-  rebase silently drops the verify fix.
+- **A gaze result of ESCALATE (or none accepted) means no gate and no merge:**
+  the review never completed, and the PR goes to the author. "Accepted" means
+  its `reviewed_head_sha` is the reviewed head, judged before the caller adds its
+  own fix and ticket-close commits; those commits do not void it.
 - **Run the local CI on padme when it is reachable.** `"$IDH_ROOT/scripts/local-ci.sh"`
   reproduces the forge's checks; run it on padme, over ssh from
   another host, and when padme is unreachable run it where you are and name the

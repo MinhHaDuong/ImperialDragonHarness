@@ -191,6 +191,10 @@ ESCALATE_STOP = (
     "bounded wait, or its `reviewed_head_sha` stale against the branch tip), means "
     "the gate is not run: the review never completed, and the PR goes to the author."
 )
+SCOPE = (
+    "The comparison is made on the reviewed head, before the raid adds its own fix and "
+    "ticket-close commits; those commits do not void the result."
+)
 GATE_RUN = "Only on a gaze result of REVIEWED, or FINDINGS once fixed, run `/verify-gate <pr-number>"
 
 
@@ -198,7 +202,7 @@ def _gaze_then_gate_violations(per_ticket: str) -> list[str]:
     """What is wrong with raid's gaze-then-gate sequence (empty when right)."""
     norm = " ".join(per_ticket.split())
     bad = []
-    for name, sentence in (("gaze result", GAZE_RESULT), ("ESCALATE stop", ESCALATE_STOP), ("gate run", GATE_RUN)):
+    for name, sentence in (("gaze result", GAZE_RESULT), ("ESCALATE stop", ESCALATE_STOP), ("gate run", GATE_RUN), ("tip scope", SCOPE)):
         if sentence not in norm:
             bad.append(f"missing {name}")
     if not bad and not (norm.index(GAZE_RESULT) < norm.index(ESCALATE_STOP) < norm.index(GATE_RUN)):
@@ -223,6 +227,25 @@ def test_phase6_sequence_check_fails_when_a_sentence_goes():
     assert _gaze_then_gate_violations(norm.replace(GATE_RUN, ""))
     swapped = norm.replace(ESCALATE_STOP, "").replace(GATE_RUN, GATE_RUN + " " + ESCALATE_STOP)
     assert _gaze_then_gate_violations(swapped) == ["order is not gaze result, ESCALATE stop, gate"]
+
+
+def test_phase6_tip_scope_is_pinned():
+    """The gaze-result freshness check covers the reviewed head only, not the
+    caller's own later commits (gaze round 1)."""
+    norm = " ".join(_per_ticket().split())
+    assert _gaze_then_gate_violations(norm.replace(SCOPE, "")) == ["missing tip scope"]
+
+
+def test_merge_orders_sync_before_close_and_gates_only_approved():
+    """merge: fetch + ff-sync precedes the close-commit push; the prerequisite
+    names APPROVED and fetches before comparing origin/<branch>."""
+    merge = " ".join((ROOT / "skills" / "merge" / "SKILL.md").read_text().split())
+    sync = merge.index("git fetch origin && git merge --ff-only origin/<branch>")
+    close = merge.index("**Close the ticket on the branch before gating.**")
+    assert sync < close
+    assert "Only APPROVED on that tip merges." in merge
+    assert "read after `git fetch origin`" in merge
+    assert "judged before the caller adds its own fix and ticket-close commits" in merge
 
 
 def test_phase6_fix_loop_keeps_the_old_gaze_guards():

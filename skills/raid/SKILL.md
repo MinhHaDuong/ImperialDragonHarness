@@ -314,6 +314,8 @@ and the structured result must return to the orchestrator.
 A gaze result of ESCALATE, or no accepted result (missing at the end of the
 bounded wait, or its `reviewed_head_sha` stale against the branch tip), means
 the gate is not run: the review never completed, and the PR goes to the author.
+The comparison is made on the reviewed head, before the raid adds its own fix and
+ticket-close commits; those commits do not void the result.
 Only on a gaze result of REVIEWED, or FINDINGS once fixed, run
 `/verify-gate <pr-number> repo=<PR's worktree> session=<uuid>` the same way (gaze has removed
 its review tree by then; the gate checks out the PR head in a worktree of its

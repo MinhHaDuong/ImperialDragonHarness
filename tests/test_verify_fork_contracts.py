@@ -103,8 +103,9 @@ def test_merge_gates_the_head_that_merges():
     merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
     assert "Close the ticket on the branch before gating." in merge
     assert (
-        "the gate's `ruled_tip_sha` equals `git rev-parse origin/<branch>` at merge "
-        "time; otherwise re-gate, do not merge." in merge
+        "the gate's verdict is APPROVED and the gate's `ruled_tip_sha` equals `git rev-parse "
+        "origin/<branch>` at merge time, read after `git fetch origin`; otherwise "
+        "re-gate, do not merge." in merge
     )
     assert "PRs gated before this rule (#1522, #1523)" in merge
     assert "rev-list --count <ruled>" not in merge
