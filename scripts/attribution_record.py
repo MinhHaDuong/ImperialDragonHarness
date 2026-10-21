@@ -282,7 +282,7 @@ def seat_lines(results, body, masked_evidence=None):
         if model != NOT_OBSERVED:
             model_field = f"model={model}"
         elif masked_evidence:
-            model_field = f"model-state=runtime-masked · model-evidence={anchor(masked_evidence)}"
+            model_field = f"model-state=runtime-masked · model-evidence={masked_evidence}"
         else:
             failures.append(f"seat {seat}: model not observed (pass --masked-evidence path:line)")
             continue

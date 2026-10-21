@@ -124,3 +124,11 @@ def test_failures_are_logged_when_the_body_has_no_block(tmp_path):
     assert blockless.returncode == 1
     assert "capture failure: seat correctness" in blockless.stderr
     assert "--pr and --project" in blockless.stderr
+
+
+def test_bad_masked_evidence_fails_that_seat_only(tmp_path):
+    unobserved = RESULT.replace("model=anthropic/example-opus", "model=not observed")
+    result = run_seats(tmp_path, unobserved, BODY, "--masked-evidence", "../x:3")
+    assert result.returncode == 1
+    assert "capture failure: seat correctness" in result.stderr
+    assert reviewer_lines(result.stdout) == EXPECTED[1:]

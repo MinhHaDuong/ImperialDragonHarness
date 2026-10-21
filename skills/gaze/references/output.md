@@ -71,8 +71,8 @@ seat: <role> · runtime=<id> · family=<family> · route=<token> · model=<id as
 
 One `seat:` line per review seat launched or planned, retries included, at
 column 0 in exactly this shape (a role may hold spaces, never `·`, `=` or `:`): `/roar` writes the PR body's `reviewer:` lines
-from them (`attribution_record.py --seats-pr`, ticket 1155), and a seat missing
-here is a capture failure. A requested model name is not an observed id.
+from them (`attribution_record.py --seats-pr`, ticket 1155). A result with no
+`seat:` line, or a body `reviewer:` seat absent from it, is a capture failure. A requested model name is not an observed id.
 
 On `--force-approve`, the comment is annotated `FORCE-APPROVED by <reason>`.
 
