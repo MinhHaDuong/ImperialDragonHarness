@@ -141,9 +141,10 @@ belongs with the command it recovers.)
   --no-renames --name-only <ruled> origin/<branch>` lists only `tickets/`
   paths. Nothing else qualifies.
 - **A gaze result of ESCALATE (or none accepted) means no gate and no merge:**
-  the review never completed, and the PR goes to the author. "Accepted" means
-  its `reviewed_head_sha` is the reviewed head, judged before the caller adds its
-  own fix and ticket-close commits; those commits do not void it.
+  the review never completed, and the PR goes to the author. "Accepted" means a
+  result is present and its `reviewed_head_sha` is not stale against the branch
+  tip (as in `/raid` Phase 6), judged before the caller adds its own fix and
+  ticket-close commits; those commits do not void it.
 - **Run the local CI on padme when it is reachable.** `"$IDH_ROOT/scripts/local-ci.sh"`
   reproduces the forge's checks; run it on padme, over ssh from
   another host, and when padme is unreachable run it where you are and name the
