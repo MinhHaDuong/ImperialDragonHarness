@@ -20,7 +20,7 @@ work=$(mktemp -d)
 # shellcheck source=../ci-local/common.sh
 . "$here/common.sh"
 trap 'stop_service; rm -rf "$work"' EXIT
-trap 'kill $(jobs -p) 2>/dev/null; exit 130' INT TERM
+trap 'kill_groups; kill $(jobs -p) 2>/dev/null || true; exit 130' INT TERM
 
 for tool in act podman; do
     command -v "$tool" >/dev/null || { echo "local-ci-negative-controls: $tool not found" >&2; exit 2; }
@@ -82,7 +82,7 @@ run_case() {
     git add -A
     git -c user.name=probe -c user.email=probe@example.invalid commit -q --no-verify -m "probe $job" \
         || { echo "$job: INJECTION PRODUCED NO CHANGE" > "$work/$job.out"; return 1; }
-    if DOCKER_HOST="unix://$sock" act pull_request -W "$work/workflow.yml" --pull=false --bind -e "$work/event.json" \
+    if DOCKER_HOST="unix://$sock" group_run "$job" act pull_request -W "$work/workflow.yml" --pull=false --bind -e "$work/event.json" \
             -P "ubuntu-latest=$image" -j "$job" > "$work/$job.log" 2>&1; then
         echo "$job: NOT CAUGHT (job passed)" > "$work/$job.out"
         return 1

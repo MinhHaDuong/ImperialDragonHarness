@@ -51,7 +51,7 @@ work=$(mktemp -d)
 # shellcheck source=../ci-local/common.sh
 . "$here/common.sh"
 trap 'stop_service; rm -rf "$work"' EXIT
-trap 'kill $(jobs -p) 2>/dev/null; exit 130' INT TERM
+trap 'kill_groups; kill $(jobs -p) 2>/dev/null || true; exit 130' INT TERM
 
 for tool in act podman; do
     command -v "$tool" >/dev/null || { echo "local-ci: $tool not found" >&2; exit 2; }
@@ -148,7 +148,7 @@ run_job() {
         git -C "$jclone" remote set-url origin "$origin"
         git -C "$jclone" fetch --quiet origin
     fi
-    timeout 1800 bash -c 'cd "$1" && shift && DOCKER_HOST="unix://$1" act pull_request -W "$6" --pull=false --bind -e "$2" --secret-file "$3" -P "ubuntu-latest=$4" -j "$5"' _ \
+    group_run "$job" timeout 1800 bash -c 'cd "$1" && shift && DOCKER_HOST="unix://$1" act pull_request -W "$6" --pull=false --bind -e "$2" --secret-file "$3" -P "ubuntu-latest=$4" -j "$5"' _ \
         "$jclone" "$sock" "$work/event.json" "$secrets" "$image" "$job" "$work/workflow.yml" > "$work/$job.log" 2>&1 || rc=$?
     echo "$rc" > "$work/$job.rc"
     rm -rf "$jclone"
