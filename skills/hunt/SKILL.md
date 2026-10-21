@@ -79,9 +79,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    it for this ticket, or the spawner handed it to you by path with
    `git status --porcelain` printing nothing. A shared or `explore-*` worktree that
    may host a live session is **not owned**: a hunt must never rebase, branch, or
-   leave uncommitted files in it (2026-06-11: a hunt inherited an orchestration
-   session's worktree, rebased its branch, and stranded in-progress test edits
-   there). Otherwise create one with plain git under the primary checkout,
+   leave uncommitted files in it (a hunt that inherited an orchestration
+   session's worktree once rebased its branch and stranded in-progress test edits). Otherwise create one with plain git under the primary checkout,
    `<pid>` from `bash -c 'echo $$'` so parallel sessions get distinct paths:
    ```bash
    R=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")

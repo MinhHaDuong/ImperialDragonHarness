@@ -8,9 +8,8 @@ user-invocable: true
 argument-hint: "<branch> [worktree=<path>] [trace=<path>] [semantic=caller]"
 context: fork
 # Foreground: /gaze runs this as phase 2 (Agent A) and blocks on its structured
-# output. Claude Code 2.1.218 made `context: fork` skills background by default;
-# a fork cannot wait on a background completion, so the default would orphan
-# this phase — ticket 0250.
+# output. `context: fork` skills may default to background; a fork cannot wait
+# on a background completion, so the default would orphan this phase.
 background: false
 ---
 
@@ -51,8 +50,8 @@ review worktree prepared by the caller (`/gaze` phase 1). When present,
 all phases run from that path.
 
 `semantic=caller` hands the phase-3 worker launch to the caller. `/gaze`
-passes it because its adherence seat is read-only and holds no launch tool
-(ticket 1173). See § 3 for what the skill still owes in that mode.
+passes it because its adherence seat is read-only and holds no launch tool.
+See § 3 for what the skill still owes in that mode.
 
 ## Protocol
 

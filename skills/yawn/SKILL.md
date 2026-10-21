@@ -126,7 +126,7 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
 
 Use `ok` for normal status, `warn` for attention-needed, `fail` for problems, `skip` for gracefully-degraded checks (detail column explains why).
 
-If docs freshness is warn/fail, list each stale finding under the table as one bullet per finding, with the doc, line reference, and the fix (e.g., `STATE.md:39 — ticket 0095 listed as TODO but Status: closed (PR #259)`). This detail is the point of the deep check — do not compress it into a single line.
+If docs freshness is warn/fail, list each stale finding under the table as one bullet per finding, with the doc, line reference, and the fix (e.g., `STATE.md:39 — a ticket listed as TODO but Status: closed`). This detail is the point of the deep check — do not compress it into a single line.
 
 After the table (and any stale-findings list), add a one-line summary verdict.
 

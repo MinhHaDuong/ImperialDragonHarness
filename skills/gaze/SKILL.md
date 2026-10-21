@@ -9,7 +9,7 @@ argument-hint: "<pr-number> [--force-approve <reason>]"
 context: fork
 # Background by intent: /gaze is long-running, and a raid wave gates several PRs
 # at once — backgrounding the orchestrator is what lets those run concurrently.
-# This matches the Claude Code 2.1.218 default; pinned explicitly so a future
+# This matches the runtime default; pinned explicitly so a future
 # default flip cannot serialize a wave silently. Its own sub-skills and reviewer
 # agents are waited for by polling (see "Fork execution contract" below) — the
 # two are different axes: parallelism comes from concurrent tool calls inside one
@@ -29,9 +29,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 > task list).
 
 **Caller responsibility (before this fork is ever spawned).** The rule above
-binds the fork, which starts with no cwd and no conversation (ticket 0193 —
-a bare fork once guessed its target from ambient state and pushed a rogue
-PR). It does not mean the user must supply a bare number by hand every time.
+binds the fork, which starts with no cwd and no conversation (a bare fork once
+guessed its target from ambient state and pushed a rogue PR). It does not mean the user must supply a bare number by hand every time.
 The invoking session has a cwd and a conversation — when the user types
 `/gaze` with no argument, resolve the PR number *before* invoking this skill:
 query the forge for the PR associated with the current branch, or reuse a PR
@@ -102,7 +101,7 @@ root. The worktree is the isolation boundary; no main-repo checkout is ever need
 PR_BRANCH=<resolved-branch-name>
 
 # Step 2 — Resolve the primary repo root, then create the worktree under its
-# `.claude/worktrees/` namespace (ticket 0300), where the runtime's worktree
+# `.claude/worktrees/` namespace, where the runtime's worktree
 # isolation covers it like every other worktree; never under /tmp.
 primary_root=$(git rev-parse --show-toplevel)
 primary_root="${primary_root%%/.claude/worktrees/*}"   # strip if we run from a session worktree
@@ -192,7 +191,7 @@ Run the cleanup and containment (`references/cleanup.md`) first, then post the
 result as one PR comment (§ Output shape) before returning: cleanup can
 downgrade the result to ESCALATE, so the posted result comes after it.
 
-**Attribution (ticket 1151).** After each review seat returns, the controller
+**Attribution.** After each review seat returns, the controller
 appends that seat's `reviewer: step=review` line (with its `finding:` lines) to
 the PR body through `attribution_record.py --append-pr <pr> --append '<lines>'`
 (`$IDH_ROOT/scripts/`). Seats never edit the body; a failed append is reported,

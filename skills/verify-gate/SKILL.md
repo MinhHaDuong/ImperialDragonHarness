@@ -9,9 +9,9 @@ argument-hint: "<pr-number> repo=<path> [session=<uuid>]"
 context: fork
 # Foreground: its caller (raid phase 6, or the author before /merge) invokes this
 # and must parse its verdict block before
-# branching. Claude Code 2.1.218 made `context: fork` skills background by
-# default; a fork cannot wait on a background completion (its turn ends when it
-# stops calling tools), so the default would orphan this phase — ticket 0250.
+# branching. `context: fork` skills may default to background; a fork cannot
+# wait on a background completion (its turn ends when it stops calling tools),
+# so the default would orphan this phase.
 background: false
 ---
 

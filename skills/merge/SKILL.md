@@ -134,8 +134,8 @@ reads and writes in its own spelling.
 
 ## Gated base
 
-A base whose tree carries `.merge-gate.json` with `"gate": "on"` is gated
-(ticket 1156); the declaration is read from the base, the code its checks run
+A base whose tree carries `.merge-gate.json` with `"gate": "on"` is gated;
+the declaration is read from the base, the code its checks run
 comes from the branch. Steps 4 to 7 apply. `merge-gate.py run` builds the
 candidate (the `--no-ff` merge of the head into the base tip, rebuilt
 identically on any host), runs the declared checks on it in a throwaway
@@ -193,7 +193,7 @@ gh pr view N --json state -q .state  # MERGED: sync (step 8); CLOSED: failed; OP
   local diverges from the remote, and the step-1 close commit lands on the
   local rewrite with its push rejected. Check out the origin branch tip
   detached, `git cherry-pick <close-commit>`, fast-forward push, re-gate that
-  head (raid 234/235, PR #998).
+  head.
 - **Detached HEAD after `merge --ff-only`.** `git checkout <branch>`, then
   resume at step 0.
 - **A merge that skipped step 1** (the web button, another session): verify
