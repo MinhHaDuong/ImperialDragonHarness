@@ -50,23 +50,18 @@ check-agnostic-rules:
 	./scripts/check-agnostic.sh rules
 
 # Full gate (coding-python.md): the whole suite, integration + slow included.
-# -n 4 per the 1011 worker-safety audit: three parallel trials reproduced
-# the serial pass/skip counts exactly, 81s -> 38.6s. check-fast and lint are
-# deliberately serial (both sit at the pytest boot+collection floor).
+# -n 8: the 1011 worker-safety audit covered -n 4 (81s -> 38.6s); a pulse visit
+# re-measured at load 7-9 with the smart-testing helper retired, three trials
+# each, identical 2094 passed / 4 skipped, 46.9s mean at -n 4 -> 33.8s at -n 8.
+# CI keeps its own -n 4 (.github/workflows/CI.yml): the forge runner's cores
+# were not measured. check-fast and lint are deliberately serial (both sit at the pytest
+# boot+collection floor).
 # Falls back to serial when pytest-xdist is not installed (probe: import xdist).
 HAVE_XDIST := $(shell $(RUN) python3 -c 'import xdist' 2>/dev/null && echo yes)
 check-tests:
-	$(RUN) python3 -m pytest tests/ $(if $(HAVE_XDIST),-n 4)
+	$(RUN) python3 -m pytest tests/ $(if $(HAVE_XDIST),-n 8)
 
 check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check-tests
-
-# Opt-in affected-test loop; reference refresh is deliberately explicit.
-.PHONY: smart-test smart-refresh
-smart-test:
-	$(RUN) python3 -m scripts.smart_testing
-
-smart-refresh:
-	$(RUN) python3 -m scripts.smart_testing --refresh
 
 # Daily audit of main (tickets 1157, 1179): does each commit that entered
 # origin/main in the last 24 h carry a gate receipt? Exit 1 on a finding, 2 when

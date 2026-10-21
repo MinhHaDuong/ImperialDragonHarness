@@ -25,14 +25,6 @@ For each: when it fits, its prerequisite, what to check first, how to verify, ho
 - **Verify.** Dry-run on a docs-only diff, a code diff and a mixed diff; the code and mixed diffs must select the full gate.
 - **Undo.** Delete the map. Price: about 1–2 author-hours.
 
-## Selection by coverage (the testmon helper)
-
-- **Fits.** A long, code-backed fast tier in a development loop, run again and again.
-- **Prerequisite.** The tests' file reads are declared; no parallel workers; the suite's runtime exceeds what a rerun costs. See the helper's README (`tests/smart-testing/README.md` in the harness).
-- **Check first.** Timing: a tier that finishes in seconds gains nothing. Count how many tests read files, spawn child processes, use data or the network: each is a place a stale pass can hide.
-- **Do not.** Use it in a merge gate, or before the inputs are declared. Offered as a development aid only.
-- **Undo.** Delete the private state directory. Price: about 2 author-hours per project for declarations, plus an audit pass.
-
 ## Stage-level caching (pipeline stages, build stamps)
 
 - **Fits.** The cost is a data stage the tests exercise, not the tests themselves.
