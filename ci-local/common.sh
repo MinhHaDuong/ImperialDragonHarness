@@ -33,3 +33,72 @@ ensure_image() {
         podman build -q --label "ci-local.sha=$want" -t "$image" "$here" >/dev/null
     fi
 }
+
+# Concurrency for a batch of independent jobs: min(jobs, nproc / 2), at least 1.
+# Half the threads, because a job (pytest in particular) is itself multi-process.
+# LOCAL_CI_CONCURRENCY caps it lower or higher by hand.
+concurrency() {
+    local jobs=$1 cap
+    cap=${LOCAL_CI_CONCURRENCY:-$(( $(nproc) / 2 ))}
+    [ "$cap" -ge 1 ] || cap=1
+    [ "$jobs" -lt "$cap" ] && echo "$jobs" || echo "$cap"
+}
+
+# A copy of the workflow whose `name:` carries this runner's tag. act names the
+# job container act-<workflow>-<job>-<hash> and the hash is the same for every
+# runner, so two runners on the same job collided on the container name in the
+# one rootless podman storage (reproduced 2026-10-21; the clone path and the
+# separate podman services do not matter). Usage: tagged_workflow SRC DEST TAG
+tagged_workflow() {
+    sed "0,/^name: .*/s//name: CI-$3/" "$1" > "$2"
+    grep -q "^name: CI-$3\$" "$2" || { echo "local-ci: workflow has no top-level name: line to tag" >&2; return 1; }
+}
+
+# Run "$fn item" for every item, at most $limit at a time, then return the
+# number of failed calls via $pool_failed. Each call must report through files.
+pool_failed=0
+run_pool() {
+    local limit=$1 fn=$2 item running=0
+    shift 2
+    pool_failed=0
+    for item in "$@"; do
+        if [ "$running" -ge "$limit" ]; then
+            wait -n || pool_failed=$((pool_failed + 1))
+            running=$((running - 1))
+        fi
+        "$fn" "$item" &
+        running=$((running + 1))
+    done
+    while [ "$running" -gt 0 ]; do
+        wait -n || pool_failed=$((pool_failed + 1))
+        running=$((running - 1))
+    done
+}
+
+# Print the arguments one per line, first occurrence only, order kept. A job named
+# twice would otherwise run twice in parallel on one container name.
+dedupe_args() {
+    [ "$#" -eq 0 ] || printf '%s\n' "$@" | awk '!seen[$0]++'
+}
+
+# Run a command as the leader of its own process group, so a signal can reach
+# act and its children and not only the shell around them. The group id is
+# recorded in $work/<name>.pgid for kill_groups. Usage: group_run NAME CMD...
+group_run() {
+    local name=$1 pid
+    shift
+    setsid "$@" &
+    pid=$!
+    echo "$pid" > "$work/$name.pgid"
+    wait "$pid"
+}
+
+# Kill every recorded group. Called by the INT/TERM trap before the EXIT trap
+# removes $work and stops the podman service, so no act is orphaned.
+kill_groups() {
+    local f
+    for f in "$work"/*.pgid; do
+        [ -e "$f" ] || continue
+        kill -- "-$(cat "$f")" 2>/dev/null || true
+    done
+}
