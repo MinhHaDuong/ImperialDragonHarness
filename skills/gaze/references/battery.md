@@ -181,9 +181,8 @@ Wait for all spawned agents to complete. Collect their structured outputs.
 `"$IDH_ROOT/scripts/prose_predicate.py"` verdict the phase 2–4 panel choice used), skip
 this phase and log `simplify: skipped (prose workpackage)` in the telemetry
 phase line. Motive: this phase may commit to the PR branch, and `rules/prose/workpackages.md`
-forbids autonomous edits to a manuscript — an autonomous
-change to prose goes through its own branch + merge request for the author to
-arbitrate, never through a review-phase auto-fix (ticket 0550: two runs on the
+sends an autonomous manuscript change through its own PR, never concurrently
+with interactive editing of that file, so never through a review-phase auto-fix (ticket 0550: two runs on the
 same file decided this in opposite directions the same day; the rule now
 exists). Otherwise, after 2–4 land their comments (and the early-exit check passes),
 perform one of these routes. Record `simplify route: native|portable`.

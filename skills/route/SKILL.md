@@ -91,6 +91,9 @@ General recommendations:
   ÉCONOMIQUES cluster, by the author's ruling of 2026-10-21; the battery's
   "when to raise" column is the escalation, and it overrides the next line for
   those seats.
+- An advisor call (a one-shot question on a deep, well-defined problem: `raid`'s
+  Advisor role, `rules/workflow.md` § Ask up first) goes to ASSURANCE, from a
+  different family than the asker when the call is contested.
 - Concrete implementation goes to MILIEU SOLIDE; judgment, consistency or
   monster work to ASSURANCE. Uncleared content forces LOCAL/PRIVÉ. Ambiguous
   tasks wait for a human before any spend; when `rules/workflow.md` batches
