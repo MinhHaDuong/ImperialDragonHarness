@@ -74,4 +74,4 @@ smart-refresh:
 # from cron or by hand (docs/2026-10-21-main-update-guard.md).
 .PHONY: main-sweep
 main-sweep:
-	$(RUN) ./scripts/main_sweep.py --fetch --since "8 days ago"
+	$(RUN) ./scripts/main_sweep.py --fetch --since "8 days ago" --max-count 1000

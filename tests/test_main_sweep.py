@@ -11,6 +11,8 @@ import importlib.util
 import json
 import os
 import re
+import shutil
+import sys
 import subprocess
 from pathlib import Path
 
@@ -152,6 +154,8 @@ def test_exit_code_separates_findings_from_could_not_look(sweep):
     assert sweep.exit_code([{"status": "ok"}, {"status": "unknown"}]) == 2
     assert sweep.exit_code([{"status": "unknown"}, {"status": "finding"}]) == 1
     assert sweep.exit_code([]) == 2  # an empty sweep looked at nothing
+    assert sweep.exit_code([{"status": "ok"}], ["range cut"]) == 2
+    assert sweep.exit_code([{"status": "finding"}], ["range cut"]) == 1
 
 
 def test_report_names_every_finding(repo, sweep):
@@ -160,3 +164,55 @@ def test_report_names_every_finding(repo, sweep):
     text = sweep.render(results, "fixture")
     assert shas["red"][:12] in text and shas["direct"][:12] in text
     assert json.loads(sweep.render(results, "fixture", as_json=True))["results"]
+
+
+def _cli(repo, *args, path=None):
+    env = _env()
+    if path is not None:
+        env["PATH"] = path
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), "--repo", str(repo), *args],
+        capture_output=True, text=True, env=env,
+    )
+
+
+def test_no_tools_on_path_is_could_not_look(repo):
+    r, _ = repo
+    proc = _cli(r, "--ref", "main", path="")
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+
+
+def test_an_unknown_ref_is_could_not_look(repo):
+    r, _ = repo
+    proc = _cli(r, "--ref", "origin/main", "--required", "x")
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+
+
+def test_a_failed_fetch_is_could_not_look(repo):
+    r, _ = repo  # no origin remote: the fetch fails
+    proc = _cli(r, "--fetch", "--ref", "main", "--required", "x")
+    assert proc.returncode == 2
+    assert "fetch" in proc.stderr
+
+
+def test_malformed_forge_output_is_could_not_look(repo, tmp_path):
+    r, _ = repo
+    bindir = tmp_path / "bin"
+    bindir.mkdir()
+    fake = bindir / "gh"
+    fake.write_text("#!/bin/sh\necho 'not json'\n")
+    fake.chmod(0o755)
+    gitdir = str(Path(shutil.which("git")).parent)
+    proc = _cli(r, "--ref", "main", "--max-count", "3", path=f"{bindir}:{gitdir}")
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert "finding " not in proc.stdout
+
+
+def test_a_range_cut_by_max_count_is_not_an_all_clear(repo, sweep):
+    r, shas = repo
+    green = {sha: (n, "h-green") for n, sha in enumerate(shas.values())}
+    forge = FakeForge(pulls=green, checks={"h-green": {"c": "success"}}, required=["c"])
+    args = sweep.parse_args(["--repo", str(r), "--ref", "main", "--max-count", "3"])
+    assert sweep.run(args, forge) == 2
+    args = sweep.parse_args(["--repo", str(r), "--ref", "main", "--max-count", "50"])
+    assert sweep.run(args, forge) == 0

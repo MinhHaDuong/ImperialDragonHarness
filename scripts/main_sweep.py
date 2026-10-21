@@ -15,9 +15,11 @@ required-checks ruleset was disabled on 2026-10-21, so forge status alone is no
 longer a gate), a `finding` when neither does, and `unknown` when the forge
 could not be read and no record decides it.
 
-Exit 0: every commit ok. 1: at least one finding. 2: nothing could be judged
-for some commit (forge unreachable) or the range was empty: a sweep that could
-not look must not read as an all-clear.
+Exit 0: every commit ok. 1: at least one finding. 2: the sweep could not look
+in full and found nothing: the forge or git was unreadable, `--fetch` failed,
+the ref is unknown, the range was empty or cut by --max-count, or the required
+check names could not be read. A sweep that could not look must not read as an
+all-clear.
 """
 
 import argparse
@@ -69,47 +71,69 @@ class GhForge:
         self.repo = repo
 
     def _api(self, path: str):
-        proc = subprocess.run(
-            ["gh", "api", "-H", "Accept: application/vnd.github+json", path],
-            capture_output=True, text=True, cwd=self.repo,
-        )
+        try:
+            proc = subprocess.run(
+                ["gh", "api", "-H", "Accept: application/vnd.github+json", path],
+                capture_output=True, text=True, cwd=self.repo,
+            )
+        except OSError as exc:  # gh missing or not executable
+            raise ForgeError(f"gh api {path}: {exc}") from exc
         if proc.returncode != 0:
             raise ForgeError(f"gh api {path}: {proc.stderr.strip()[:200]}")
-        return json.loads(proc.stdout)
+        try:
+            return json.loads(proc.stdout)
+        except ValueError as exc:
+            raise ForgeError(f"gh api {path}: malformed output") from exc
+
+    def _parsed(self, what: str, parse):
+        """Run `parse`; an unexpected shape of forge data is a ForgeError."""
+        try:
+            return parse()
+        except (KeyError, TypeError, AttributeError) as exc:
+            raise ForgeError(f"{what}: unexpected forge data ({exc!r})") from exc
 
     def merged_pull(self, sha: str) -> tuple[dict | None, list[int]]:
         """(the merged PR whose merge commit is `sha`, other associated PR numbers)."""
         pulls = self._api(f"repos/{{owner}}/{{repo}}/commits/{sha}/pulls")
-        for pr in pulls:
-            if pr.get("merged_at") and pr.get("merge_commit_sha") == sha:
-                return {"number": pr["number"], "head_sha": pr["head"]["sha"]}, []
-        return None, [pr["number"] for pr in pulls if pr.get("merged_at")]
+
+        def parse():
+            for pr in pulls:
+                if pr.get("merged_at") and pr.get("merge_commit_sha") == sha:
+                    return {"number": pr["number"], "head_sha": pr["head"]["sha"]}, []
+            return None, [pr["number"] for pr in pulls if pr.get("merged_at")]
+        return self._parsed("pulls", parse)
 
     def check_conclusions(self, head_sha: str) -> dict[str, str | None]:
         """Latest conclusion per check name on `head_sha`."""
-        runs = self._api(
-            f"repos/{{owner}}/{{repo}}/commits/{head_sha}/check-runs?per_page=100"
-        )["check_runs"]
-        latest: dict[str, dict] = {}
-        for run in runs:
-            if run["name"] not in latest or run["id"] > latest[run["name"]]["id"]:
-                latest[run["name"]] = run
-        return {name: run.get("conclusion") for name, run in latest.items()}
+        data = self._api(f"repos/{{owner}}/{{repo}}/commits/{head_sha}/check-runs?per_page=100")
+
+        def parse():
+            latest: dict[str, dict] = {}
+            for run in data["check_runs"]:
+                if run["name"] not in latest or run["id"] > latest[run["name"]]["id"]:
+                    latest[run["name"]] = run
+            return {name: run.get("conclusion") for name, run in latest.items()}
+        return self._parsed("check-runs", parse)
 
     def required_checks(self) -> tuple[list[str], str]:
         """Required check names from the rulesets on main, enforced or not."""
         names: list[str] = []
         sources: list[str] = []
-        for summary in self._api("repos/{owner}/{repo}/rulesets"):
-            ruleset = self._api(f"repos/{{owner}}/{{repo}}/rulesets/{summary['id']}")
-            include = ruleset.get("conditions", {}).get("ref_name", {}).get("include", [])
-            if not {"~DEFAULT_BRANCH", "~ALL", "refs/heads/main"} & set(include):
-                continue
-            for rule in ruleset.get("rules", []):
-                if rule.get("type") == "required_status_checks":
-                    checks = rule["parameters"]["required_status_checks"]
-                    names += [c["context"] for c in checks]
-                    sources.append(f"{ruleset['name']} ({ruleset.get('enforcement')})")
+        summaries = self._api("repos/{owner}/{repo}/rulesets")
+        ids = self._parsed("rulesets", lambda: [s["id"] for s in summaries])
+        for ruleset_id in ids:
+            ruleset = self._api(f"repos/{{owner}}/{{repo}}/rulesets/{ruleset_id}")
+
+            def parse(ruleset=ruleset):
+                include = ruleset.get("conditions", {}).get("ref_name", {}).get("include", [])
+                if not {"~DEFAULT_BRANCH", "~ALL", "refs/heads/main"} & set(include):
+                    return
+                for rule in ruleset.get("rules", []):
+                    if rule.get("type") == "required_status_checks":
+                        checks = rule["parameters"]["required_status_checks"]
+                        names.extend(c["context"] for c in checks)
+                        sources.append(f"{ruleset['name']} ({ruleset.get('enforcement')})")
+            self._parsed("ruleset", parse)
         return sorted(set(names)), "ruleset " + ", ".join(sources) if sources else "none"
 
 
@@ -161,19 +185,23 @@ def sweep(repo: Path, commits: list[str], forge, required: list[str] | None = No
     return [classify(repo, sha, forge, required) for sha in commits]
 
 
-def exit_code(results: list[dict]) -> int:
+def exit_code(results: list[dict], incomplete: list[str] | None = None) -> int:
     statuses = {r["status"] for r in results}
     if "finding" in statuses:
         return 1
-    if not results or "unknown" in statuses:
+    if not results or "unknown" in statuses or incomplete:
         return 2
     return 0
 
 
-def render(results: list[dict], required_source: str, as_json: bool = False) -> str:
+def render(results: list[dict], required_source: str, as_json: bool = False,
+           incomplete: list[str] | None = None) -> str:
+    incomplete = incomplete or []
     if as_json:
-        return json.dumps({"required": required_source, "results": results}, indent=2)
+        return json.dumps({"required": required_source, "incomplete": incomplete,
+                           "results": results}, indent=2)
     lines = [f"main sweep: {len(results)} commit(s); required checks from {required_source}"]
+    lines += [f"incomplete: {reason}" for reason in incomplete]
     for r in results:
         pr = f"#{r['pr']}" if r["pr"] else "-"
         record = "record" if r["gate_record"] else "no-record"
@@ -201,11 +229,28 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.WARNING, format="main_sweep: %(message)s")
     args = parse_args(argv)
+    try:
+        return run(args)
+    except (OSError, subprocess.CalledProcessError) as exc:
+        log.error("could not look: %s", getattr(exc, "stderr", None) or exc)
+        return 2
+
+
+def run(args: argparse.Namespace, forge=None) -> int:
+    incomplete: list[str] = []
     if args.fetch:
-        _git(args.repo, "fetch", "--quiet", "origin", "main", check=False)
-        _git(args.repo, "fetch", "--quiet", "origin",
-             f"+{GATE_NOTES_REF}:{GATE_NOTES_REF}", check=False)
-    forge = GhForge(args.repo)
+        for refspec in ("main", f"+{GATE_NOTES_REF}:{GATE_NOTES_REF}"):
+            proc = _git(args.repo, "fetch", "--quiet", "origin", refspec, check=False)
+            if proc.returncode != 0 and refspec == "main":
+                log.error("could not look: fetch of origin main failed: %s", proc.stderr.strip())
+                return 2
+            # A missing notes ref on origin is normal until ticket 1156 pushes one.
+    commits = first_parent_commits(args.repo, args.ref, args.since,
+                                   args.max_count + 1 if args.max_count else None)
+    if args.max_count and len(commits) > args.max_count:
+        commits = commits[:args.max_count]
+        incomplete.append(f"range cut at --max-count {args.max_count}; older commits not swept")
+    forge = forge or GhForge(args.repo)
     if args.required is not None:
         required = [n for n in args.required.split(",") if n]
         source = "--required"
@@ -213,12 +258,13 @@ def main(argv: list[str] | None = None) -> int:
         try:
             required, source = forge.required_checks()
         except ForgeError as exc:
-            log.warning("required checks unreadable (%s); requiring every run green", exc)
             required, source = [], "unreadable: every run must be green"
-    commits = first_parent_commits(args.repo, args.ref, args.since, args.max_count)
+            incomplete.append(f"required check names unreadable ({exc})")
     results = sweep(args.repo, commits, forge, required)
-    sys.stdout.write(render(results, source, args.json) + "\n")
-    return exit_code(results)
+    for reason in incomplete:
+        log.warning("%s", reason)
+    sys.stdout.write(render(results, source, args.json, incomplete) + "\n")
+    return exit_code(results, incomplete)
 
 
 if __name__ == "__main__":
