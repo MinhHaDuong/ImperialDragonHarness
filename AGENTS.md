@@ -36,6 +36,13 @@ Check generated catalog drift with `make check-skills-drift`.
 
 Profile contracts live in `profiles/<name>/PROFILE.md`; shells point to them.
 
+Each profile declares the tools it needs on one line under its title,
+`Requires-tools: Read, Bash, Skill` (comma-separated tool names, exactly one
+such line). `tests/test_profile_tool_grants.py` requires the declaration to be a
+subset of the `tools:` grant in `agents/<name>.md`, and a profile whose shell
+lacks `Skill` to contain no `Skill(` call. The test reads only this line; it
+does not parse prose, so a new tool need is declared, not written around.
+
 For ticket operations, read and follow [tickets/AGENTS.md](tickets/AGENTS.md).
 For shell tooling conventions, read and follow [RTK.md](RTK.md).
 
