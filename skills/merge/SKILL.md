@@ -117,7 +117,15 @@ belongs with the command it recovers.)
 - **After `/gaze` and an APPROVED `/verify-gate`, sync before merging.** Run the
   gate as `/verify-gate <pr> repo=<this worktree> session=<uuid>`
   (one session per PR, two rounds at most: `/verify-gate` § Gate sessions); it gates a worktree of its
-  own, so merge only the tip its `Ruled tip SHA` names. `/gaze`
+  own. Its `Ruled tip SHA` must equal the PR head *before* `erg-pr-merge` runs
+  (`git rev-parse origin/<branch>`); otherwise re-gate, do not merge. The one
+  post-gate change allowed is the helper's own ticket-close commit, and only
+  if it touches nothing outside `tickets/` (the move to `tickets/closed/` and
+  the `Blocked-by` edits on dependents). Checkable after the helper pushes:
+  `git merge-base --is-ancestor <ruled> origin/<branch>`, `git rev-list --count
+  <ruled>..origin/<branch>` is 0 or 1, and `git diff --name-only <ruled>
+  origin/<branch>` lists only `tickets/` paths. Anything else on top of the
+  ruled tip voids the verdict. `/gaze`
   (its simplify phase) may have pushed fixes from its own review worktree since the caller last fetched:
   `git fetch origin && git merge --ff-only origin/<branch>` first, or a stale
   rebase silently drops the verify fix.
