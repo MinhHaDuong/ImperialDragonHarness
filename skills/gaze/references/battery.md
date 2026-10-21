@@ -105,8 +105,8 @@ the other reviewers.
 the seat read-only: it returns `semantic_review.status: delegated` with the
 applicability decision and `rule_sources`, and launches nothing. When that
 artifact lands with `adherence: PASS` and `applicable: true`, or the changed
-files include an instruction file, gaze launches one semantic worker itself, sequentially after the seat because it needs the seat's `rule_sources`:
-one background subagent writing `adherence-semantic.md` under the same
+files include an instruction file, gaze launches one semantic worker itself, sequentially after the seat
+because it needs the seat's `rule_sources`: one background subagent writing `adherence-semantic.md` under the same
 artifact protocol and bounded poll, given the inputs and prompt of
 verify-adherence § 3 and the seat's `rule_sources`. Choose its model from the
 `route` skill. Record its observed worker id, route and launch evidence when
@@ -120,12 +120,11 @@ python3 "$IDH_ROOT/scripts/adherence_verdict.py" --seat <adherence.md> [--worker
 Its stdout is the adherence verdict gaze uses everywhere downstream; exit 1 is
 FAIL. The script fails any instruction-file diff without a completed, valid
 worker report as `adherence-infrastructure`, so a skipped phase cannot read as
-PASS; that infrastructure FAIL is unresolved phase 2 and gaze ESCALATEs. The
+PASS; that infrastructure FAIL is unresolved phase 2 and gaze ESCALATEs.
 Exit 2 (unreadable seat or worker artifact, or an omitted or empty
 `--changed`) is an infrastructure failure, treated like
 `adherence-infrastructure` (ESCALATE), never a PASS or an ordinary FAIL. The
-script reads the last yaml fence of each artifact. The
-early-exit reads the merged `adherence` and its count of `blocking` findings.
+script reads the last yaml fence of each artifact. The early-exit reads the merged `adherence` and its count of `blocking` findings.
 
 **Native `/review` and `/simplify`** are optional adapter seats, never the
 basis of the review. Phase 5 uses native `/simplify` when available and the
