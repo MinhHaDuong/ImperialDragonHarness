@@ -1,0 +1,69 @@
+%erg 0.1
+Title: Align the harness instructions on bounded background waits
+Created: 2026-10-21
+Label: deferred
+Author: reviewer
+
+--- log ---
+2026-10-21T09:44Z reviewer created
+
+--- body ---
+
+## Context
+Harness text about long or external waits disagrees with itself and names one
+runtime's tools in portable files. The principle to align on: never block a
+turn on a foreground sleep, watch or poll loop; launch long or external work
+with the runtime's background facility and a deadline; act when it exits; read
+forge state once per step; where the runtime cannot wake the session, read the
+result once at the next step.
+
+Already done on main: the queued-merge wait (merge § Waiting for a queued
+merge, commits ce2965be and 70b39b0a, PR #1550) and its wake-up condition
+(PR #1552, open when this ticket was filed). Everything else is open.
+
+Facts that shape the work (probed 2026-10-21, Claude Code 2.1.306, Codex
+0.163.0, Pi 1.3.0): only Claude Code's `run_in_background` wakes the session
+when the command exits. Codex background terminals run but never start a turn;
+Pi has no background tool. A command bounded by `timeout` is the deadline on
+every runtime.
+
+## Evidence (redo at Imagine time)
+`docs/discussions/2026-10-21-longrun-language-audit.md` on branch
+`explore-await-external-1890811` (commit 4855a4bb, not merged to main):
+contradictions C1 to C7, gaps G1 to G12, runtime leaks A1 to A9, 18 proposed
+edits, a proposed hints list and its location. It read a tree 48 commits
+behind main and was only partly re-checked after the rebase; its line numbers
+and the merge-wait findings are stale. Rerun the audit against main when this
+ticket moves to Imagine, before trusting any line in it.
+
+## Parked alternative (not part of this ticket)
+`docs/discussions/2026-10-21-await-external-design.md`, same branch: a
+homegrown waiter (systemd transient unit, one recorded outcome, delivery by
+live push, resume or pull). Parked, no code. It matters only if the aligned
+instructions leave Codex or Pi unable to resume after a wait; reopen it then.
+The Stopguard design (docs/2026-10-21-stopguard-design.md, tracker 1164) reads
+the same wait registry for its rule 2 and cites the "Waiting" paragraph this
+ticket adds.
+
+## Exit criteria
+- [ ] The audit is redone against current main, and its contradictions, gaps
+  and runtime leaks are listed with fresh file:line.
+- [ ] `rules/workflow.md` carries a short Waiting paragraph stating the
+  principle, and `rules/git.md` no longer says "wait for CI" without a
+  mechanism. The resident rules stay within `RESIDENT_BUDGET` (trim, or a
+  separate budget decision).
+- [ ] One hints list, `RUNTIME: FUNCTIONNAME`, at a location chosen at Imagine
+  time (the audit proposes `adapters/runtime-hints.md`); skills point to it and
+  carry no runtime tool names.
+- [ ] Skills with an unbounded or undescribed wait are aligned: the pre-PR
+  gate, `make check` in lair, local CI on padme, headless seat launches,
+  release audits, team-lead executors, raid and review-pr seats, trace-doctor.
+  Each background command has a deadline.
+- [ ] Fork polling is a named exception: one bounded tool call, not one call
+  per check.
+- [ ] The agnostic checker catches the runtime tool names it now misses, or the
+  decision not to extend it is recorded.
+- [ ] Waits on Codex and Pi are tested or the gap is stated: the Codex
+  `functions.wait`, `notify()` and sub-agent completion paths were
+  self-reported, not exercised.
+- [ ] `make check` passes.
