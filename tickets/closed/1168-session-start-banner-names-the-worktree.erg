@@ -19,3 +19,7 @@ Idea: the SessionStart hook prints the worktree root as a declarative line ("Thi
 ## Exit criteria
 - [ ] Declarative root line present in session context after the worktree is entered
 - [ ] Write-outside-worktree errors in a later window are below half of 59 per 14 days, or the shortfall explained
+
+## Treatment
+Treats: write_outside_worktree
+Baseline: 2026-10-15=0 2026-10-16=0 2026-10-18=0 2026-10-19=0 2026-10-20=0 2026-10-21=0

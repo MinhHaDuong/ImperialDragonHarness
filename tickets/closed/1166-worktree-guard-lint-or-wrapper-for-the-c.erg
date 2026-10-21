@@ -21,3 +21,7 @@ Options to price before choosing: a `wt-git` wrapper the guard allows; a pre-fli
 - [ ] The top five refusal forms in the scan are either allowed through the mechanism or refused with a message naming the allowed form
 - [ ] Re-run of the scan over a later 14-day window shows guard refusals below half the baseline of about 1,270, or the shortfall explained
 - [ ] Guard still refuses git aimed at another worktree (positive control)
+
+## Treatment
+Treats: worktree_guard
+Baseline: 2026-10-15=0 2026-10-16=0 2026-10-18=0 2026-10-19=0 2026-10-20=0 2026-10-21=0
