@@ -235,7 +235,7 @@ def test_phase6_cites_an_existing_output_shape():
 
 
 def test_phase7_checks_local_remote_and_ruled_tip_before_the_helper():
-    """PR 1539 review: erg-pr-merge pushes HEAD, so 'pushes no close commit'
+    """PR 1539 review: the close step pushes HEAD, so 'pushes no close commit'
     holds only when local HEAD, origin/<branch> and ruled_tip_sha agree,
     checked after a fetch."""
     phase7 = " ".join(_slice("## Phase 7: Merge", "### Merge-permission denial").split())

@@ -20,7 +20,7 @@ Family rule: **a git command that printed nothing has not necessarily done nothi
 
 ## Merging
 
-- **Merge through `/merge`.** It reads merge settings at merge time (they drift), carries the close-claim syntax, syncs after `/gaze`, and holds the recoveries: a denied force-push, a direct forge merge that skipped a `**Ticket:**` claim (§ Dropped close-claim sweep), a multi-PR wave whose union must be verified and a conflict in a *generated* file, which is regenerated, never hand-merged (`/merge` § Merge conflict recovery). One ticket per PR unless they genuinely land together.
+- **Merge by the `/merge` recipe.** It reads merge settings at merge time (they drift), carries the close-claim syntax, syncs after `/gaze`, checks the gate record, and holds the recoveries: a denied force-push, a merge that skipped a `**Ticket:**` claim, a multi-PR wave whose union must be verified and a conflict in a *generated* file, which is regenerated, never hand-merged (`/merge` § Merge conflict recovery). One ticket per PR unless they genuinely land together.
 - **Rebase before every gate.** A verdict on a stale base is partly void. Rebase onto `origin/main`, force-push with lease, wait for CI — before the MR, before `/gaze`, before the round-1 `/verify-gate`; a later rebase changes the ruled tip and spends the PR's single re-gate.
 - **Anchor branch-mutating git after a fork returns.** The shell cwd may sit in another worktree: before the first `switch`/`checkout`/`merge`/`rebase`/`commit`/`push`/`reset` of that turn, check `git rev-parse --show-toplevel` or use `git -C <path>`.
 - **Remind the user of a merge left without its `/roar`.** Once, before you hand back.

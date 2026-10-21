@@ -2,7 +2,7 @@
 
 The script enumerates merge commits in <since-sha>..<until> and emits one JSON record per merge,
 recovering the branch from the GitHub-shaped merge subject and the ticket from
-the erg-pr-merge close commit inside the merge's second-parent range.
+the merge recipe's close commit inside the merge's second-parent range.
 
 The load-bearing case is anti-tautological: a PR whose branch name carries no
 ticket digits but whose range holds a close commit must still recover the
@@ -103,7 +103,7 @@ def test_ticket_from_close_commit_not_branch_name(repo):
         feature_commits=[("a.txt", "add feature")],
     )
     # Second PR: branch name has NO ticket digits, but the range carries an
-    # erg-pr-merge close commit -> ticket must come from the commit scan.
+    # merge recipe close commit -> ticket must come from the commit scan.
     merge_pr(
         repo,
         pr=7,
@@ -153,7 +153,7 @@ def test_filing_commit_not_mistaken_for_close(repo):
     """A ticket-FILING commit in a PR with no close commit must not attribute.
 
     Ordinary work commits also start "ticket(NNNN):" (the filing convention).
-    A raid's per-PR roar logs ticket null for a PR that carried no erg-pr-merge
+    A raid's per-PR roar logs ticket null for a PR that carried no merge-recipe
     close commit; the enumeration must match only the "close and archive — PR #"
     template, not any ticket(...) subject.
     """

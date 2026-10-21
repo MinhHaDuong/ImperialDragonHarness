@@ -59,10 +59,10 @@ STUB_VIEW_FAIL=1 check unreadable 3 "could not read" 'x'
 
 # ── no waiting constructs in the merge tooling or the skill text ─────────────
 # erg-pr-merge keeps ONE bounded mergeability settle (settle_mergeable, ticket
-# 0904); everything else must be free of waiting.
+# 0904); everything else must be free of waiting. skills/merge/SKILL.md is not
+# scanned: ticket 1178 writes the one bounded background wait there.
 scan_files=(
     "$ROOT/skills/merge/erg-pr-status"
-    "$ROOT/skills/merge/SKILL.md"
     "$ROOT/skills/raid/SKILL.md"
     "$ROOT/skills/roar/SKILL.md"
     "$ROOT/skills/roar/runbooks/capture.md"

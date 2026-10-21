@@ -4,7 +4,7 @@ PR #242 lost a stray file into a close commit because a skill instructed the
 blanket `git add` form in a shared checkout: any leftover under `tickets/`
 (stash residue, a crashed agent's draft, a cross-branch artifact) gets
 silently committed by the next skill run that follows those lines.
-`erg-pr-merge` itself was narrowed by PR #262, but the skill prose that agents
+The merge helper itself was narrowed by PR #262, but the skill prose that agents
 execute by hand was not. This test pins the narrowing so it cannot regress:
 command-position `git add` in `skills/*/SKILL.md` must name what it stages
 (a specific file, or `-u` for tracked edits only), never sweep a directory,

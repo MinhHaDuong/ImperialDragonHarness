@@ -2,100 +2,151 @@
 metadata:
   category: build
 name: merge
-description: "Atomically close the linked ticket(s) and merge a PR. Must be run from the PR head branch. Works in git worktrees and on VMs. GitHub-only (requires the GitHub CLI)."
+description: "Merge a pull request with plain commands: close the claimed ticket on its branch, check the gate record on a gated base, merge pinned to that head, read it back, sync local main. A recipe any runtime follows."
 user-invocable: true
-argument-hint: "[-C path] [pr-number]"
+argument-hint: "[pr-number]"
 ---
 
 # Merge $ARGUMENTS
 
+A recipe, not a script: you run each command yourself, from the merge
+request's own worktree on its head branch, and read each exit code on its
+own line, never the tail of a pipe. The safety lives in two retained pieces:
+the gate record (`$IDH_ROOT/scripts/merge-gate.py`, declared by the base's
+`.merge-gate.json`) and the audit of `main` (`$IDH_ROOT/scripts/main_sweep.py`,
+`/lair` step 15). Nothing refuses mechanically on the merge path any more: a
+merge without a record is caught afterwards, by the guard hook in enforce mode
+and by the audit.
+
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
-Run:
-```bash
-"$IDH_ROOT/skills/merge/erg-pr-merge" $ARGUMENTS
-```
+Close claims, short ids, fences, the attribution warning and the edge-case
+checklist live in `references/claims.md`; read it when the body carries a
+`Ticket` line you are unsure of, or a case below sends you there.
 
-**Cross-repo prerequisite**: the script operates on the checkout it runs in,
-with the PR branch checked out. Point it at a checkout in one of two ways:
+## Before merging
 
-- **`-C PATH` (preferred for agents)** — the script cds into `PATH` before any
-  git/gh/erg call. The portable invocation is
-  `"$IDH_ROOT/skills/merge/erg-pr-merge" -C WORKTREE N`.
-  <!-- harness-extension-point -->
-  Use the loaded skill's resolved checkout path; runtime permission rules
-  must authorize that path explicitly rather than depend on a retired alias.
-- **Implicit cwd** — with no `-C`, the script uses the current directory, so the
-  caller must `cd <project-path> && git fetch origin` and check out the PR branch
-  before the call.
+- **Merge method drifts per repo.** This harness repo disables squash, so the
+  recipe passes `--merge`. A repo whose branch protection is squash-only
+  rejects that flag — a method recorded in a note goes stale, so read the
+  repo's actual merge settings rather than trusting a cached one. Trust the
+  merge attempt over the flag: branch protection can bounce a method the forge
+  API still advertises. On a squash-merged branch, `git cherry` shows `-` for
+  every commit but `is-ancestor` is false — that ancestry check is `/roar`'s
+  pre-check, and it is what confirms a squash-merge through the forge before
+  a branch gets deleted.
+- **After `/gaze`, sync before closing the ticket.** `/gaze` (its simplify
+  phase) may have pushed fixes from its own review worktree since the caller last
+  fetched: `git fetch origin && git merge --ff-only origin/<branch>` first, or a
+  stale rebase silently drops them and the close commit lands on the wrong base.
+- **Close the ticket on the branch before gating.** Before the round-1
+  `/verify-gate`, close each claimed ticket on the branch (step 1 below), so
+  the gate rules a head that already contains the close and step 1 at merge
+  time finds nothing to do. A close commit pushed after the gate changes the
+  head: re-gate. A push pushes nothing only when that three-way equality holds
+  (next item); an unpushed local commit would ride along.
+- **Merge prerequisite: the gate's verdict is APPROVED and
+  the gate's `ruled_tip_sha` equals `git rev-parse origin/<branch>` at merge
+  time, read after `git fetch origin`; otherwise re-gate, do not merge.** Only APPROVED on that tip merges. Run the
+  gate as `/verify-gate <pr> repo=<this worktree> session=<uuid>` (one session
+  per PR, two rounds at most: `/verify-gate` § Gate sessions); a re-gate past
+  that budget is ESCALATE to the author, never a third run.
+  Immediately before the merge, run `git fetch origin`, then
+  `git rev-parse HEAD` == `git rev-parse origin/<branch>` == the gate's
+  `ruled_tip_sha`; any mismatch means sync or re-gate, never merge. The review
+  approval and the gate record belong to that same head.
+- **A gaze result of ESCALATE (or none accepted) means no gate and no merge:**
+  the review never completed, and the PR goes to the author. "Accepted" means a
+  result is present and its `reviewed_head_sha` is not stale against the branch
+  tip (as in `/raid` Phase 6), judged before the caller adds its own fix and
+  ticket-close commits; those commits do not void it.
+- **Run the gate record on padme when it is reachable**, over ssh from another
+  host; when padme is unreachable run it where you are: the record names the
+  host. `"$IDH_ROOT/scripts/local-ci.sh"` still reproduces every forge job in
+  the forge's image, for a check outside the gate's set.
 
-`-C` with a missing or non-directory path fails loudly before any other work.
+## The recipe
 
-## Ticket lines in the PR body
+`N` is the merge request, `<branch>` its head branch, `<base>` its base.
 
-The script reads close intent from the PR **body** only — never the title:
+<!-- harness-extension-point -->
+Forge commands below use the current forge CLI; another forge needs the same
+reads and writes in its own spelling.
 
-- `**Ticket:** tickets/NNNN-...` or `**Ticket:** tickets/closed/NNNN-...`
-  (bold or bare `Ticket:`) — a **close claim**: the named ticket is closed and
-  archived on merge. An already closed and archived ticket is accepted as a
-  clean no-op.
-- `Ticket-ref: tickets/NNNN-...` — references a ticket **without closing it**
-  (for annotating a deliberately-open ticket).
-- `Ticket: NNNN` (short form) — normalized, not refused: when exactly one
-  `tickets/NNNN-*.erg` or `tickets/closed/NNNN-*.erg` matches, the script
-  rewrites the body to the canonical path on the forge, reads it back, and
-  proceeds; zero or several matches fall through to the error below. Only a
-  4-digit ID alone after `Ticket:` qualifies — never `NNNN-slug`,
-  `NNNN, MMMM` or `#NNNN`.
-- `Ticket: none` — the PR closes nothing.
-- With no recognised `Ticket` line, the PR closes nothing (same as
-  `Ticket: none`); a line the grammar cannot read is not a claim. A
-  malformed `Ticket: tickets/...` path errors, as does the unclosed-fence
-  case below.
-- Ticket lines inside Markdown code fences are examples and are ignored.
-  A fence closes only on a run of the opener's character (backtick or tilde)
-  at least as long as the opener, so a `~~~` line inside a backtick fence
-  stays fenced; the closer carries nothing after the run but whitespace, and
-  a backtick opener's info string may not contain a backtick. A closer sits
-  at most 3 columns in (for an opener at 3 columns or less) and tabs advance
-  to the next multiple of 4. Deviation from CommonMark: container indentation
-  is not tracked, so an opener may sit at any column and a fence nested in a
-  list item stays a fence, its closer allowed up to 3 columns deeper than the
-  opener; a fence-shaped code line indented 4+ columns outside any container
-  also opens a fence and can hide what follows. Ticket paths outside fences that cannot be parsed cause an error.
-- An **unclosed** fence whose remaining text holds a `Ticket:` or
-  `Ticket-ref:` line with a `tickets/` path or a short ID refuses the merge
-  and names the line: the claim would otherwise be silently dropped or read
-  from fenced text. Close the fence and re-run.
-- Title prefixes like `chore(0216):` are subject references — they **never**
-  close anything.
+0. **Read it, on its branch.** `git rev-parse --abbrev-ref HEAD` must print
+   `<branch>`; otherwise stop. Read the request once:
+   `gh pr view N --json state,isDraft,headRefName,baseRefName,headRefOid,body` <!-- harness-extension-point -->
+   It must be OPEN. Parse the body's close claims (`references/claims.md`)
+   and run the attribution check there; its warning never refuses.
+1. **Close (a).** For each claimed ticket that is not already in
+   `tickets/closed/` with a `Closed:` header:
+   ```bash
+   "${ERG:-tickets/erg}" close <id> "autoclosed — PR #N"
+   "${ERG:-tickets/erg}" archive <id> || true  # an erg whose close already archives answers "no ticket found"
+   git add -u tickets/ && git add tickets/closed/<id>-*.erg
+   ```
+   then one commit for all of them, `git commit -m "ticket(<ids>): close and
+   archive — PR #N"` with the ids joined by `, `, and `git push origin HEAD`.
+   That message is the exact text `$IDH_ROOT/scripts/enumerate-merges.py`
+   reads to attribute the merge: do not reword it. A claimed ticket absent
+   from both directories: stop, the branch or the claim is wrong.
+   `-u` stages the dependents whose `Blocked-by` the close removed, never a
+   stray untracked file.
+2. **Ready.** A draft request is marked ready: `gh pr ready N` <!-- harness-extension-point -->
+   Asking for the merge is the intent to merge.
+3. **Same head.** `git fetch origin`, then the three-way equality of § Before
+   merging. Re-read the body and compare its close claims with the set the
+   gate ruled on: a body edited after approval is a stop and a re-gate.
+4. **Gate (b).** `python3 "$IDH_ROOT/scripts/merge-gate.py" enabled --base origin/<base>`
+   answers 0 gated, 1 ungated, 3 could not read (stop; never remove the file
+   to get through). On a gated base:
+   ```bash
+   python3 "$IDH_ROOT/scripts/merge-gate.py" check --base origin/<base> --head HEAD
+   ```
+   0 pass: go on. 2 no record for this candidate (none yet, or the base
+   moved): write it with `merge-gate.py run --base origin/<base> --head HEAD`
+   from this checkout, then `check` again. 1 fail or stale scope, 3 unreadable:
+   do not merge. Re-recording after the base moved is mechanical and spends no
+   review round: the head, and so the verdict, did not change.
+5. **Disarm.** On a gated base never arm auto-merge: with nothing required it
+   merges at once, and an armed request could land a later head than the
+   record covers. Read `gh pr view N --json autoMergeRequest -q '.autoMergeRequest != null'`; <!-- harness-extension-point -->
+   on `true`, run `gh pr merge N --disable-auto` and read again; still armed: <!-- harness-extension-point -->
+   do not merge.
+6. **Merge (c).** Gated base:
+   `gh pr merge N --merge --match-head-commit "$(git rev-parse HEAD)"`. <!-- harness-extension-point -->
+   Never `--auto`; never `--delete-branch` (it fails on the primary checkout's
+   lock on `main`; the forge deletes the branch where configured). Ungated
+   base: `gh pr merge N --merge --auto`, or without `--auto` where the repo <!-- harness-extension-point -->
+   has auto-merge off and every check is done.
+7. **Read back (d).**
+   `gh pr view N --json state,headRefOid -q '.state + " " + .headRefOid'` <!-- harness-extension-point -->
+   must read `MERGED <the head of step 3>`. MERGED at another head is not a
+   gated merge: report it. OPEN with auto-merge armed (ungated base) is
+   queued: § Waiting for a queued merge. The exit code of the merge command
+   alone proves nothing either way.
+8. **Sync.** `"$IDH_ROOT/scripts/sync-local-main.sh" . <base>`. A "left
+   untouched" line (dirty overlap or divergence where the base is checked
+   out) goes in the report, never forced; never a hand-rolled
+   `merge --ff-only` on the primary checkout, which advances whatever branch
+   is checked out there.
 
-## Attribution block warning
+## Gated base
 
-The script also parses the PR body's single fenced `attribution` block
-(the attribution parser in `--pr-body` mode; design section 4) and prints
-`erg-pr-merge: warning: attribution block missing`, `... invalid: <reason>` or
-`... unchecked: <cause>` on stderr. It **never refuses** on this: a missing or
-invalid block costs the record, not the merge. `unchecked` means the parser
-could not run, which is not an all-clear. Surface the warning in your report
-and let the author decide whether to complete the block before merging.
+A base whose tree carries `.merge-gate.json` with `"gate": "on"` is gated
+(ticket 1156); the declaration is read from the base, the code its checks run
+comes from the branch. Steps 4 to 7 apply. `merge-gate.py run` builds the
+candidate (the `--no-ff` merge of the head into the base tip, rebuilt
+identically on any host), runs the declared checks on it in a throwaway
+worktree, and pushes one entry to `refs/notes/gate`; its docstring is the one
+home of the record format and the actor fields. A `--no-push` trial record
+never admits a merge.
 
-Report stdout/stderr verbatim. If the script exits non-zero, stop and show the error, with one exception: on a gated base, exit **2** means the gate record is missing or stale for this head (none yet, a moved base, or the run's own close commit): run the gate on that head, then run the script again (§ Gated base).
-
-A killed or failed `erg-pr-merge` run (non-zero exit after its rebase) can
-leave the PR-branch worktree with a stale pre-rebase index: staged diffs that
-appear to re-open closed tickets and revert prose. That is not WIP — run
-`git reset --hard HEAD` in that worktree before any salvage or gc decision.
-
-## Queueing and waiting
-
-On an **ungated** base, merge is queued via auto-merge at once, **whether or not checks are still running**: the forge gates on the required checks and merges when they pass, so the script neither refuses on pending checks nor waits for them. A **failing** check is still a refusal, before anything is closed or queued. Where auto-merge is disabled the script reads the checks once and merges directly only if every check is done; pending checks there stop it with a pointer to the status command, never a wait. Where the base requires no checks at all, auto-merge has nothing to wait for and the PR merges at once, pending checks included: gate such a base (§ Gated base).
-
-Queued is not merged. To learn the outcome, ask once with
-`"$IDH_ROOT/skills/merge/erg-pr-status" [-C WORKTREE] N`: exit 0 merged, 1
-failed (a check failed, or the PR closed unmerged), 2 pending, 3 the forge
-could not be read. It reads the forge a single time and never waits; **pending
-is a normal answer, not an error**.
+**Background merge.** The wait is the record run, so steps 4 to 8 can run as
+one background command. A `check` that answers 2 again after
+one re-record (the base keeps moving) goes in the report, not into a loop.
+The base may still move in the seconds between `check` and the forge's merge;
+the audit of `main` notices that afterwards.
 
 **Waiting for a queued merge.** The caller waits itself and finishes the chain
 itself (raid: the per-PR roar; roar: its merged-branch pre-check and cleanup).
@@ -109,107 +160,10 @@ unbounded or foreground loop. A runtime that cannot wake the session on exit
 (it has no background commands, or runs them without waking the model) asks once
 at its next step and reports the PR as pending.
 
-A **draft** PR (roar/raid sweeps file bootstrap PRs as draft) is marked ready automatically before merging, gated base or not — invoking `/merge` is explicit intent to merge.
-
-## Gated base: the gate record
-
-A base branch whose tree carries `.merge-gate.json` with `"gate": "on"` is
-**gated** (ticket 1156). The declaration is read from the base: the base fixes
-whether the gate is on, which checks run and their commands; the code those
-commands execute comes from the branch. No file, or an explicit
-`"gate": "off"`, is ungated; any other declaration, or a failure to inspect
-the base, refuses. On a gated base the script:
-
-1. takes the latest entry of the `refs/notes/gate` note on the **candidate**
-   — the `--no-ff` merge of the branch head into the current base tip,
-   rebuilt deterministically on any host — as the gate. A failing entry, or one
-   for another scope, refuses (exit 1). No entry for this candidate, because
-   none was written, the base moved, or a close commit this run made changed
-   the candidate, exits **2**: run the gate on the current head, then the
-   script again. Closing the ticket on the branch before gating
-   (§ Before merging) avoids the last case;
-2. does not read, wait for, or stop on forge check conclusions: the record is
-   the gate (author direction 2026-10-21: the forge is a host, CI is not a
-   gate; forge CI runs on push to main only, ticket 1174). A forge failure is
-   printed as information;
-3. never uses forge auto-merge: with no required checks its CLI's auto flag
-   merges at once, and an armed auto-merge could land a later head the record
-   does not cover; one found armed is disarmed first, or the run refuses;
-4. merges with the head pinned (`--match-head-commit`) and succeeds only when
-   the PR then reads MERGED.
-
-Write the record from the PR branch checkout, after the ticket close commit:
-
 ```bash
-python3 "$IDH_ROOT/scripts/merge-gate.py" run --base origin/main --head HEAD
+end=$((SECONDS + 1500)); while [ "$SECONDS" -lt "$end" ] && [ "$(gh pr view N --json state,autoMergeRequest -q '.state == "OPEN" and .autoMergeRequest != null')" = true ]; do sleep 60; done  # <!-- harness-extension-point -->
+gh pr view N --json state -q .state  # MERGED: sync (step 8); CLOSED: failed; OPEN: pending at the bound, or auto-merge dropped by a failed check <!-- harness-extension-point -->
 ```
-
-It builds the candidate, runs the declared checks in a throwaway worktree of
-it, appends an entry (result, time, actor, host, revision, command, scope,
-versions, one line per check) to the note and pushes `refs/notes/gate`. The
-actor uses the attribution vocabulary (`runtime=… · model=… · effort=…`,
-`not-stated` when unstated; a person states `runtime=human`), from `--runtime`,
-`--model`, `--effort` or `MERGE_GATE_RUNTIME`, `MERGE_GATE_MODEL`,
-`MERGE_GATE_EFFORT`; nothing detects or requires an agent runtime. A record
-is a traceable statement, not proof. The forge's notes ref is authoritative:
-a `--no-push` trial record goes to `refs/notes/gate-local`, is never pushed and never admits a merge. `merge-gate.py check --base … --head …`
-answers 0 pass, 1 fail, 2 missing, 3 could not read.
-
-**Background merge.** The wait is the gate run itself, so the caller starts
-one background command that records and merges:
-`merge-gate.py run --base origin/<base> --head HEAD && erg-pr-merge -C WORKTREE N`.
-Exit 2 from the helper means record again on the new head and repeat, once;
-a second exit 2 (the base keeps moving) goes in the report. A re-run adds no
-second close. The base may still move in the seconds between the record
-check and the forge's merge; the main-update sweep (ticket 1157) notices that
-after the fact.
-
-## Before merging
-
-Two prerequisites the caller checks before invoking this script. (Moved here
-from `rules/git.md`, which is resident in every session: a recovery procedure
-belongs with the command it recovers.)
-
-- **Merge method drifts per repo.** This harness repo disables squash;
-  `MERGE_FLAGS` above hardcodes `--merge`. A repo whose branch protection is
-  squash-only rejects that flag — a method recorded in a note goes stale, so
-  read the repo's actual merge settings rather than trusting a cached one.
-  Trust the merge attempt over the flag: branch protection can bounce a method
-  the forge API still advertises. On a squash-merged branch, `git cherry`
-  shows `-` for every commit but `is-ancestor` is false — that ancestry check
-  is `/roar`'s pre-check, and it is what confirms a squash-merge through the
-  forge before a branch gets deleted.
-- **After `/gaze`, sync before closing the ticket.** `/gaze` (its simplify
-  phase) may have pushed fixes from its own review worktree since the caller last
-  fetched: `git fetch origin && git merge --ff-only origin/<branch>` first, or a
-  stale rebase silently drops them and the close commit lands on the wrong base.
-- **Close the ticket on the branch before gating.** Before the round-1
-  `/verify-gate`, the caller closes each claimed ticket on the PR branch:
-  `erg close <id> "<reason>"`, `erg archive <id>`, `git add -u tickets/`,
-  `git add tickets/closed/<file>`, commit, push. The gate then rules a head
-  that already contains the close, and `erg-pr-merge` skips a ticket already in
-  `tickets/closed/` with a `Closed:` header. The helper still runs
-  `git push origin HEAD`, so it pushes nothing only when that three-way
-  equality holds (next item); an unpushed local commit would ride along.
-- **Merge prerequisite: the gate's verdict is APPROVED and
-  the gate's `ruled_tip_sha` equals `git rev-parse origin/<branch>` at merge
-  time, read after `git fetch origin`; otherwise re-gate, do not merge.** Only APPROVED on that tip merges. Run the
-  gate as `/verify-gate <pr> repo=<this worktree> session=<uuid>` (one session
-  per PR, two rounds at most: `/verify-gate` § Gate sessions); a re-gate past
-  that budget is ESCALATE to the author, never a third run.
-  Immediately before `erg-pr-merge`, run `git fetch origin`, then
-  `git rev-parse HEAD` == `git rev-parse origin/<branch>` == the gate's
-  `ruled_tip_sha`; any mismatch means sync or re-gate, never merge.
-- **A gaze result of ESCALATE (or none accepted) means no gate and no merge:**
-  the review never completed, and the PR goes to the author. "Accepted" means a
-  result is present and its `reviewed_head_sha` is not stale against the branch
-  tip (as in `/raid` Phase 6), judged before the caller adds its own fix and
-  ticket-close commits; those commits do not void it.
-- **Run the gate on padme when it is reachable.** On a gated base, write the
-  record (§ Gated base) on padme, over ssh from another host; when padme is
-  unreachable run it where you are: the record names the host.
-  `"$IDH_ROOT/scripts/local-ci.sh"` still reproduces every forge job in the
-  forge's image, for a check outside the gate's set.
 
 ## Merge conflict recovery
 
@@ -231,111 +185,20 @@ belongs with the command it recovers.)
   to a scratch path, and grep the one value the other branch changed.
   Reproduces → commit. Reverts → your input is stale.
 
-## When the script bounces
+## When a step stops
 
-`erg-pr-merge` bounces in sequence, and each bounce has its own retry — never
-blanket-fall back to a plain forge merge. (Moved here from `rules/git.md`,
-which is resident in every session: a recovery procedure belongs with the
-command it recovers.)
-
-- **"close: no ticket found" on a retry.** If the claimed ticket is absent
-  from both `tickets/` and `tickets/closed/`, stop and inspect the branch and
-  claim before retrying. An already archived ticket with a `Closed:` header
-  is handled automatically: the script skips closing it again.
-- **Gated base, exit 2: "No gate record on the candidate" or "Close commit …
-  pushed".** No record for this head: none written, the base moved, or the
-  run closed the ticket itself. Run `merge-gate.py run --base origin/<base>
-  --head HEAD` from the PR checkout, then the script again (no second close).
-  Closing before gating avoids the last case.
-- **Gated base: "the latest gate record … does not pass".** A check failed, or
-  the record names another scope; fix, record again, re-run.
-- **Gated base: "auto-merge is still armed" or "reads … not MERGED".** The
-  helper would not disarm a stray auto-merge, or the pinned merge did not
-  land; read the PR on the forge before anything else.
-- **Gated base: "could not inspect" or "could not read the base's
-  .merge-gate.json".** Fail-closed refusals; repair the declaration or the
-  fetch, never remove the file to get through.
-- **"auto-merge is unavailable and N check(s) are pending".** The close commit
-  is already pushed and the script did not wait. Wait on `erg-pr-status` per
-  § Waiting for a queued merge; once it reports the checks done and green,
-  re-run the script (a re-run after the close commit adds no second close) or
-  finish with a direct forge merge.
-- **Empty rollup and unavailable requirement inspection.** With a mergeable
-  PR and an explicit empty rollup, the script inspects legacy protection and
-  effective rules. Known required checks refuse. HTTP 403 (including permission
-  or plan restrictions) permits an ordinary merge attempt without `--admin`
-  after validating the other endpoint. This delegates unseen requirements to
-  the forge's ordinary enforcement, including its configured actor permissions.
-  The script adds no bypass. Other API errors, partial response pages,
-  unexpected denial bodies, and malformed successful data still refuse.
-  If the forge refuses, its error is reported. Once the blocking requirement is
-  resolved, re-run `erg-pr-merge N` after the same `git fetch origin` and
-  three-way check; an archived closed ticket is skipped, and the retry pushes
-  nothing only when that three-way equality holds (under the documented
-  exception, the one helper close commit is already on top and the retry adds
-  no second).
-- **"must run from PR branch" after a fast-forward.** HEAD is detached after
-  `merge --ff-only`: `git checkout <branch>`, then retry.
-- **Force-push denied, branch already pushed.** Rebasing rewrites the branch's
-  SHAs, local diverges from the remote, and the script's own ticket-close
-  commit then lands on the local rewrite with its push rejected — leaving the
-  ticket closed and archived locally but the close commit unpushed; a re-run
-  fails "close: no ticket found". Recovery: check out the origin branch tip
-  detached, `git cherry-pick <close-commit>`, fast-forward push, then merge
-  directly (raid 234/235, PR #998).
-
-## Dropped close-claim sweep
-
-After a direct forge merge that bypassed this script, verify each `**Ticket:**`
-claim immediately: the ticket must be in `tickets/closed/` with a `Closed:`
-header. After a merge wave, run the wider sweep from the updated base checkout:
-
-```bash
-bash "$IDH_ROOT/skills/roar/check-close-claims.sh" --days 7 --limit 40
-```
-
-It reports how many merged PRs it examined, how many close claims it parsed,
-and how many it found unhonoured (`DROPPED` or `UNRESOLVED`). A zero finding
-count is not an all-clear when zero PRs or zero claims were parsed; check the
-window and any unrecognised bodies. The test suite gives this detector a
-positive control: a merged PR claiming an open ticket must be named and cause
-exit 1. `Ticket-ref:` is excluded. It reads fences with the same tracker as
-this script, except that lines of an unclosed fence count as live: such a body
-could only have merged by another route, so the audit names its path claims.
-Short-ID claims (`Ticket: NNNN`) are not audited; they land in the
-unrecognised count.
-
-## Manual chore-close — when a PR merged without this script
-
-First confirm no close commit rode the PR; if one did, the ticket is already
-closed and there is nothing to do. `erg close <ID> <reason>` edits the ticket
-file but does **not** stage its own edit, so `git add -u tickets/` BEFORE the
-`git mv` to `closed/` and the commit — otherwise the commit carries the rename
-with the pre-edit blob and silently drops the `Closed:` header (aedist PR #1008;
-a 100%-rename, 0-insertion commit is the tell). A later "no ticket found"
-bounce here means a review round already closed it — harmless, skip it.
-
-An `erg-pr-merge` mode taking only a PR number was considered for a head branch
-owned by another session. It would close on the caller's branch rather than
-putting the close commit on the reviewed PR, weakening the current atomic
-close-and-merge path. Keep the branch requirement and `-C` form; if the
-isolation guard still makes that branch unreachable, use a direct forge merge
-with the immediate verification and sweep above, then repair on a separate
-branch and PR.
-
-## After the merge lands
-
-The script reads the PR state once after queueing; when it already reads MERGED
-it runs `"$IDH_ROOT/scripts/sync-local-main.sh"` on the base branch
-(rules/git.md § Local main syncs eagerly) — no manual sync step. Two outputs
-still need action:
-
-- "Merge not yet landed" — the usual case when checks were pending. Wait on
-  `erg-pr-status` per § Waiting for a queued merge; on exit 0 run
-  `"$IDH_ROOT/scripts/sync-local-main.sh"`; on 1 report the failure; still 2
-  when the bound expires, report the PR as pending.
-- "left untouched" in the sync report — dirty overlap or divergence where the
-  base branch is checked out; report it to the caller rather than forcing.
-
-Do not substitute a hand-rolled `merge --ff-only` on the primary checkout:
-that advances whatever branch is checked out there.
+- **Force-push denied, branch already pushed.** A rebase rewrote the branch,
+  local diverges from the remote, and the step-1 close commit lands on the
+  local rewrite with its push rejected. Check out the origin branch tip
+  detached, `git cherry-pick <close-commit>`, fast-forward push, re-gate that
+  head (raid 234/235, PR #998).
+- **Detached HEAD after `merge --ff-only`.** `git checkout <branch>`, then
+  resume at step 0.
+- **A merge that skipped step 1** (the web button, another session): verify
+  each `**Ticket:**` claim at once, the ticket must be in `tickets/closed/`
+  with a `Closed:` header; repair on a separate branch and merge request
+  (`references/claims.md` § Repair). After a merge wave, run the wider sweep
+  from the updated base checkout:
+  `bash "$IDH_ROOT/skills/roar/check-close-claims.sh" --days 7 --limit 40`.
+  A zero finding count is not an all-clear when zero PRs or zero claims were
+  parsed.
