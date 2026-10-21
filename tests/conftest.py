@@ -4,6 +4,8 @@ Cost markers describe runtime; these declarations describe cache eligibility.
 Normal pytest runs execute exactly the same tests with or without these marks.
 """
 import json
+import re
+from pathlib import Path
 
 import pytest
 
@@ -93,3 +95,30 @@ def pytest_collection_modifyitems(items):
         if key in ALWAYS or git_case:
             item.add_marker(pytest.mark.smart_always)
     yield
+
+
+# --- gaze contract view -------------------------------------------------------
+# skills/gaze/SKILL.md is a core plus references/*.md (ticket 1153). The tests
+# pin the gaze *contract*, not its file layout, so reading the SKILL.md through
+# Path.read_text returns the contract with every `<!-- inline: references/x.md -->`
+# marker replaced by that reference's body (its H1 and intro line dropped).
+# Only this one path is affected; layout tests read the files directly through
+# other means (test_skill_reference_pointers.py walks the directory).
+_GAZE_SKILL = Path(__file__).resolve().parents[1] / "skills" / "gaze" / "SKILL.md"
+_INLINE = re.compile(r"<!-- inline: (references/[\w.-]+\.md) -->")
+_read_text = Path.read_text
+
+
+def _gaze_contract_read_text(self, *args, **kwargs):
+    text = _read_text(self, *args, **kwargs)
+    if self.resolve() != _GAZE_SKILL:
+        return text
+
+    def body(match: re.Match) -> str:
+        ref = _read_text(_GAZE_SKILL.parent / match.group(1), encoding="utf-8")
+        return ref.split("\n\n", 2)[2]
+
+    return _INLINE.sub(body, text)
+
+
+Path.read_text = _gaze_contract_read_text
