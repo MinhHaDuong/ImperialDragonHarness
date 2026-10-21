@@ -14,6 +14,30 @@ raid/SKILL.md:491 also says "make check on main". Two additions: the same
 external-peer-review/SKILL.md:29 (extend C6 to both), and
 gaze/references/battery.md:166 has another "Wait for all" (extend G7).
 
+Alignment has started on main (read after the rebase onto `bb1e3263`):
+`ce2965be` ("merge, roar: wait for a queued merge with one bounded background
+command") adds merge/SKILL.md § Waiting for a queued merge, and `70b39b0a`
+makes raid, merge and erg-pr-status follow it. Effect on this audit:
+
+- C2 (roar hands the re-run to the author) and C3 (merge "never loops" vs the
+  memory note) are resolved for the merge wait: one background command bound
+  at about 25 minutes polls the single-read status inside it, and the caller
+  finishes the chain itself. C4 (raid phase 7 vs phase 6) is resolved for the
+  merge wait only; the phase 6 seat polling and G7 remain.
+- C1 is half resolved: the skills now agree, `rules/git.md:24` still says
+  "wait for CI" with no mechanism.
+- Still open: C5 to C7, G1 to G10, G12, A1 to A9, and the hints list.
+- New risk R1, from the 2026-10-21 probes. The new text says "where the runtime
+  runs background commands ... the runtime wakes the caller on exit". Only
+  Claude Code does both. Codex runs background commands (terminals) but does
+  not wake the model; Pi has neither. A Codex agent reading the clause would
+  start the background command, end its turn, and never resume. Proposed
+  rewording: condition the clause on the runtime waking the session when a
+  background command exits (the capability the hints list names per runtime),
+  not on the runtime running background commands. The fallback clause then
+  covers Codex and Pi: ask once at the next step and report the PR as pending.
+  The wait test that pins the wording in merge and roar needs the same change.
+
 Method: an Opus read of rules/, skills/ (SKILL.md and references), AGENTS.md,
 profiles/, agents/, adapters docs, and script headers. It read a checkout at
 `0bb38be4`, 48 commits behind `origin/main` at the time. For files that moved
