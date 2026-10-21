@@ -4,7 +4,7 @@
 # one that is not a gated merge. git runs this hook for every ref transaction
 # (commit, fetch, update-ref, branch -f, reset, rebase, linked worktrees), and
 # `--no-verify` does not skip it. A client that overrides core.hooksPath does:
-# the periodic sweep (scripts/main_sweep.py) exists for that case.
+# the daily audit (scripts/main_sweep.py) exists for that case.
 #
 # Mode: `git config idh.mainGuard`
 #   warn    (default, also any unknown value) journal; a non-gated update gets
@@ -21,9 +21,10 @@
 #                plain `fetch origin main:main` moves main in a transaction of
 #                its own, before origin/main). Covers scripts/sync-local-main.sh,
 #                `git pull` and the forge's merges coming home.
-#   gate-record  the new tip is a merge (two parents or more) that carries a
-#                gate record (a note in refs/notes/gate, written by ticket
-#                1156's merge gate) and whose first parent is the current main.
+#   gate-record  the new tip is a merge whose first parent is the current
+#                main and whose candidate, rebuilt from its two parents by
+#                scripts/merge-gate.py, carries a gate record (a note in
+#                refs/notes/gate, written by ticket 1156's merge gate).
 # Everything else (a local commit on main, a reset, branch -f, a deletion) is
 # not gated. One deletion cannot be refused: `delete main <old>` through
 # `update-ref --stdin` reaches the hook exactly as a `verify` does; it is
@@ -40,7 +41,7 @@
 phase=$1
 MAIN_REF=refs/heads/main
 ORIGIN_REF=refs/remotes/origin/main
-GATE_NOTES_REF=refs/notes/gate   # shared with scripts/main_sweep.py
+GATE_NOTES_REF=refs/notes/gate   # NOTES_REF of scripts/merge-gate.py
 ZERO=0000000000000000000000000000000000000000
 
 main_updates=""
@@ -67,9 +68,14 @@ fi
 case "$git_argv" in *" fetch "*) ;; *) origin_new="" ;; esac
 case "$git_argv" in *" --stdin "*) stdin_tx=1 ;; *) stdin_tx=0 ;; esac
 
-# The one reader of ticket 1156's record: presence of a non-empty note.
+# The gate receipt of merge $1: a non-empty note on the candidate that
+# scripts/merge-gate.py (its one builder) rebuilds from the merge's two
+# parents, so a merge made with other metadata than the candidate's (a plain
+# `git merge --no-ff`) finds the receipt too (ticket 1179).
 gate_record_present() {
-    [ -n "$(git notes --ref="$GATE_NOTES_REF" show "$1" 2>/dev/null)" ]
+    cand=$(python3 "$(dirname "$0")/../scripts/merge-gate.py" candidate \
+        --base "$1^1" --head "$1^2" 2>/dev/null) || return 1
+    [ -n "$(git notes --ref="$GATE_NOTES_REF" show "$cand" 2>/dev/null)" ]
 }
 
 # The url as FETCH_HEAD prints it: no user@, no trailing / or .git.

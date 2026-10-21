@@ -24,6 +24,7 @@ pytestmark = pytest.mark.integration
 ROOT = Path(__file__).resolve().parents[1]
 HOOK = ROOT / "hooks" / "reference-transaction"
 SYNC = ROOT / "scripts" / "sync-local-main.sh"
+GATE = ROOT / "scripts" / "merge-gate.py"
 GATE_NOTES_REF = "refs/notes/gate"
 
 
@@ -71,6 +72,8 @@ def repos(tmp_path):
     git(tmp_path, "init", "-q", "-b", "main", str(seed))
     (seed / "hooks").mkdir()
     shutil.copy2(HOOK, seed / "hooks" / "reference-transaction")
+    (seed / "scripts").mkdir()
+    shutil.copy2(GATE, seed / "scripts" / "merge-gate.py")
     (seed / "README").write_text("seed\n")
     git(seed, "add", "-A")
     git(seed, "commit", "-q", "-m", "seed with hook")
@@ -237,9 +240,14 @@ def test_enforce_accepts_a_gated_merge_only_with_its_record(repos, with_note):
     (wt2 / "feature").write_text("feature\n")
     git(wt2, "add", "-A")
     git(wt2, "commit", "-q", "-m", "feature")
-    cand = _candidate(wt2)
-    if with_note:  # fixture stand-in for ticket 1156's record writer
-        git(wt2, "notes", f"--ref={GATE_NOTES_REF}", "add", "-m", "fixture gate record", cand)
+    cand = _candidate(wt2)  # other metadata than the gate's candidate, as a plain merge
+    if with_note:  # the record sits on the gate's candidate of the same two parents
+        gate_cand = subprocess.run(
+            ["python3", str(GATE), "candidate", "--base", "main", "--head", "side"],
+            capture_output=True, text=True, env=_env(), cwd=wt2, check=True,
+        ).stdout.strip()
+        assert gate_cand != cand
+        git(wt2, "notes", f"--ref={GATE_NOTES_REF}", "add", "-m", "fixture gate record", gate_cand)
     old = rev(wt2, "main")
     proc = git(wt2, "update-ref", "refs/heads/main", cand, old, check=False)
     assert (proc.returncode == 0) is with_note, proc.stderr
