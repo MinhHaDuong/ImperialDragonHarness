@@ -32,7 +32,7 @@ does not configure spawned children.
   neither done nor split, a review of a scientific argument, a design review of
   a critical feature. Never a standing setting of the orchestrator or a
   fan-out member.
-- **Per-ticket `/gaze`:** follows its own launch choices.
+- **Per-ticket `/gaze` and `/verify-gate`:** follow their own launch choices.
 
 ## Balance rule
 
@@ -286,12 +286,14 @@ launch) with
 It creates the closed block if absent, re-fetches the body, reads it back and
 retries once; a non-zero exit is a visible capture failure, not a silent skip.
 
-## Phase 6: Verify (per-ticket `/gaze`)
+## Phase 6: Verify (per-ticket `/gaze`, then `/verify-gate`)
 
 Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence and integrity.
 
-**Per-ticket:** run `/gaze` on every merge request — the orchestrator itself
-runs it inline, one per PR (an inline run is serial; only the detached shape
+**Per-ticket:** run `/gaze` on every merge request, then `/verify-gate` on the
+head it reviewed. Gaze reviews and never returns APPROVED; the gate rules
+APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR. The orchestrator itself
+runs them inline, one per PR (an inline run is serial; only the detached shape
 below adds concurrency, and disjoint-file PRs may run concurrently through
 it). Verify file-sharing PRs sequentially to avoid concurrent-fix collisions.
 Respect the max-concurrent-agents cap (see `rules/claude-code.md` § Subagent
@@ -304,13 +306,56 @@ CLI session per PR per the detached-seat contract
 (`skills/review-pr/SKILL.md` § Detached-seat substitution): cwd
 pinned to the PR's worktree, prompt embedding `/gaze <pr-number>` plus the
 caller prerequisites and the containment rails (no merges, no writes outside
-the PR branch); the result is observed by polling the written verdict
-artifact — the `## /verify-gate verdict` PR comment per the output shape of
-`skills/gaze/SKILL.md`, accepted only when its `ruled_tip_sha` matches the
-branch tip — under that contract's bounded wait, never a spawn exit status,
-and the structured verdict must return to the orchestrator. A REROLL
-bump/fix runs in the PR's worktree so its commits land on the PR branch,
-never on main mid-wave. Phase 7 merges stay strictly sequential.
+the PR branch); the result is observed by polling the written artifact — the
+`## /gaze result` PR comment per the output shape in
+`skills/gaze/references/output.md` § Output shape, accepted only when its `reviewed_head_sha`
+matches the branch tip — under that contract's bounded wait, never a spawn exit status,
+and the structured result must return to the orchestrator.
+A gaze result of ESCALATE, or no accepted result (missing at the end of the
+bounded wait, or its `reviewed_head_sha` stale against the branch tip), means
+the gate is not run: the review never completed, and the PR goes to the author.
+The comparison is made on the reviewed head, before the raid adds its own fix and
+ticket-close commits; those commits do not void the result.
+Only on a gaze result of REVIEWED, or FINDINGS once fixed, run
+`/verify-gate <pr-number> repo=<PR's worktree> session=<uuid>` the same way (gaze has removed
+its review tree by then; the gate checks out the PR head in a worktree of its
+own and removes it, while the raid keeps the PR's worktree until gating ends);
+its verdict is accepted only when its `ruled_tip_sha` matches the branch tip. On `FINDINGS` or
+a REROLL, a coder fixes the listed items in the PR's worktree so its commits
+land on the PR branch, never on main mid-wave, and the REROLL bump is posed per
+`skills/verify-gate/SKILL.md`; the gate allows two rounds, a third escalates.
+Before the round-1 gate the raid closes the PR's ticket on the PR branch
+(`skills/merge/SKILL.md` § close the ticket on the branch before gating), so the
+gate rules the head that will merge.
+The raid owns each PR's gate session (`skills/verify-gate/SKILL.md` § Gate
+sessions): it generates one UUID per PR before round 1, passes the same
+`session=` to round 1 and to the single re-gate after the fix, and never runs
+the gate a third time or opens a second session for the PR. A round-2 REROLL
+is ESCALATE; ESCALATE and NEEDS-AUTHOR go to the author. The same two-round
+budget binds the merge-permission-denial recovery (§ Merge-permission denial):
+once two gate rounds are posted on the PR, that recovery parks the PR and
+escalates to the author instead of sending it back through Phase 6.
+
+**Fix-and-regate (caller-owned; formerly gaze's fix-agent contract).** On
+`FINDINGS` or a round-1 REROLL, the raid spawns the fix agent — the **coder
+profile** (`agents/coder.md`, whose contract is `profiles/coder/PROFILE.md`;
+the model is chosen per launch from the `route` skill) — in the PR's worktree,
+feeding it the unresolved lists (review comments, simplify findings, adherence
+violations, per-exit-criterion gaps) as input, and waits for the artifact it
+writes on completion. Fix agent gets ≤10 min. The agent works under:
+
+- Strict rule: **only** the listed items. No scope creep. No "while I'm here" edits.
+- TDD discipline still applies: add a failing test for any behavioural fix before coding.
+- Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix. A mapped doc-only fix uses `python3 "$IDH_ROOT/scripts/scoped-check.py"` and quotes selected and skipped targets; Python code and unmapped changes use the full `make check`.
+- Push commits to the PR branch; do not open new PRs.
+
+Then re-gate once with the same `session=`. Breakers on this loop:
+
+- Fix agent timeout (10 min) → ESCALATE.
+- Gate disagrees with the gaze phase outputs 2–5 on a must-fix finding → ESCALATE (no silent resolution).
+- Two REROLL rounds reached → ESCALATE.
+
+Phase 7 merges stay strictly sequential.
 
 **Per-wave:** after all per-ticket `/gaze` runs complete, launch one integration-review
 subagent (read-only; worker chosen per § Model policy) to check:
@@ -324,7 +369,7 @@ subagent (read-only; worker chosen per § Model policy) to check:
   conflicting lines carry identical prose; conflicts elsewhere are ordinary.
 
 Wave-level findings go to the human as a wave-summary comment; they do not block
-individual `/gaze` verdicts.
+individual `/gaze` results and `/verify-gate` verdicts.
 
 ## Phase 7: Merge (sequential per-wave)
 
@@ -369,8 +414,11 @@ For each eligible PR, sequentially within the wave:
    directly: take its path from the agent's completion notification. Do not check out or `cd`
    into it, and do not delete and re-checkout the branch.
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
-4. Run `"$IDH_ROOT/skills/merge/erg-pr-merge" -C <worktree-path> <pr-number>`.
-   This atomically closes the ticket and merges via GitHub API.
+4. Run `"$IDH_ROOT/skills/merge/erg-pr-merge" -C <worktree-path> <pr-number>`
+   only when the gate's `ruled_tip_sha` equals `git rev-parse origin/<branch>`.
+   Close before gating: Phase 6 closed the ticket on the branch before the
+   round-1 gate, so the helper finds it in `tickets/closed/`, pushes no close
+   commit, and merges via GitHub API.
    <!-- harness-extension-point -->
    Runtime permission rules must authorize the resolved helper path. Use
    `-C` to select the worktree for every Git and forge operation.
@@ -398,8 +446,11 @@ or hand-merge around the guard.
    Describe the expertise, capability and independence needed to answer the
    objection. Let the runtime discover and route a suitable reviewer; record
    the actual identity, route, independence basis, reviewed base/head and
-   completed report. Disposition every returned finding through verify-gate;
-   a blocking finding sends the PR back through Phase 6. If fixes change the
+   completed report. While the PR's gate budget has a round left (fewer than
+   two `/verify-gate` rounds posted, § Phase 6), disposition every returned
+   finding through verify-gate; a blocking finding sends the PR back through
+   Phase 6. When the gate budget is exhausted, run no further gate or fix: park
+   the PR and escalate to the author with the findings (step 4). If fixes change the
    head, refresh the independent evidence before retrying. Preserve failed or
    missing review records and `PANEL-INTEGRITY:` verbatim in the external
    verdict record; they are coverage limitations, not findings to disposition.
