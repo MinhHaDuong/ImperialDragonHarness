@@ -114,13 +114,17 @@ it starts. Then fold the two returns, always, whether or not a worker was
 launched:
 
 ```
-python3 "$IDH_ROOT/scripts/adherence_verdict.py" --seat <adherence.md> [--worker <adherence-semantic.md> --worker-id <id> --route <route> --launch-evidence <record> --completion-evidence <artifact path>] --changed <changed files>
+python3 "$IDH_ROOT/scripts/adherence_verdict.py" --seat <adherence.md> [--worker <adherence-semantic.md> --worker-id <id> --route <route> --launch-evidence <record> --completion-evidence <artifact path>] --changed <the PR's changed paths, always, never omitted or empty>
 ```
 
 Its stdout is the adherence verdict gaze uses everywhere downstream; exit 1 is
 FAIL. The script fails any instruction-file diff without a completed, valid
 worker report as `adherence-infrastructure`, so a skipped phase cannot read as
 PASS; that infrastructure FAIL is unresolved phase 2 and gaze ESCALATEs. The
+Exit 2 (unreadable seat or worker artifact, or an omitted or empty
+`--changed`) is an infrastructure failure, treated like
+`adherence-infrastructure` (ESCALATE), never a PASS or an ordinary FAIL. The
+script reads the last yaml fence of each artifact. The
 early-exit reads the merged `adherence` and its count of `blocking` findings.
 
 **Native `/review` and `/simplify`** are optional adapter seats, never the
