@@ -235,7 +235,7 @@ divergent copies collide on `tickets/` at merge time.
 **How**: the orchestrator first rebases WAVE_BASE itself: create a temporary
 branch at OLD_WAVE_BASE and rebase it once onto the new main; its rebased tip
 is NEW_WAVE_BASE. Then move each wave branch inside its executor's existing
-worktree — the same `-C <worktree-path>` targeting Phase 7 uses. Quiesce the
+worktree — the same worktree Phase 7 runs the recipe in. Quiesce the
 executor first, then run
 `git -C <worktree-path> rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE` in that
 worktree, where the branch is already HEAD: no `<branch>` argument and no
@@ -433,7 +433,7 @@ For each eligible PR, sequentially within the wave:
    prescribes (one bounded background command) and move on to the next PR
    meanwhile; a PR still pending when that wait ends is listed as queued in the
    briefing, not as merged.
-5. If merge fails (conflict, CI regression), or the read-back is not MERGED, ESCALATE — leave a PR comment and move to the next PR.
+5. If merge fails (conflict, CI regression), or the read-back is CLOSED, or OPEN on a gated base, or unreadable, ESCALATE (an OPEN queued merge on an ungated base is pending, step 4) — leave a PR comment and move to the next PR.
    A *permission denial* on the merge call is not a merge failure — handle it
    per § Merge-permission denial below, not by ESCALATE.
 

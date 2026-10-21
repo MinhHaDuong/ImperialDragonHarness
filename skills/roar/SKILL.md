@@ -38,13 +38,13 @@ explicitly which steps were skipped and why.
 
 If the merge was only queued (checks were pending), read the outcome once
 with the merge recipe's read-back (`skills/merge/SKILL.md` § The recipe,
-step 7). MERGED, proceed; OPEN and still queued, wait as `skills/merge/SKILL.md` § Waiting
+step 7). MERGED, proceed; `OPEN … queued`, wait as `skills/merge/SKILL.md` § Waiting
 for a queued merge prescribes (one background command bounded at about 25
 minutes, polling that read inside it), then continue this pre-check and the
 cleanup yourself when it wakes you; never ask the author to wait or to re-run
 `/roar`. Only a runtime that cannot wake the session when a background command
-exits stops and reports the merge as pending. CLOSED, or OPEN with nothing
-queued, report it. Then verify the branch has been merged before proceeding:
+exits stops and reports the merge as pending. CLOSED, `OPEN … -` (nothing
+queued) or an unreadable read: report it, never re-run the merge. Then verify the branch has been merged before proceeding:
 ```bash
 ROAR_BASE_RC=0
 git symbolic-ref -q refs/remotes/origin/main >/dev/null 2>&1 || ROAR_BASE_RC=$?

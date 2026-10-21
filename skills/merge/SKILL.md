@@ -120,11 +120,12 @@ reads and writes in its own spelling.
    base: `gh pr merge N --merge --auto`, or without `--auto` where the repo <!-- harness-extension-point -->
    has auto-merge off and every check is done.
 7. **Read back (d).**
-   `gh pr view N --json state,headRefOid -q '.state + " " + .headRefOid'` <!-- harness-extension-point -->
-   must read `MERGED <the head of step 3>`. MERGED at another head is not a
-   gated merge: report it. OPEN with auto-merge armed (ungated base) is
-   queued: § Waiting for a queued merge. The exit code of the merge command
-   alone proves nothing either way.
+   `gh pr view N --json state,headRefOid,autoMergeRequest -q '"\(.state) \(.headRefOid) \(if .autoMergeRequest then "queued" else "-" end)"'` <!-- harness-extension-point -->
+   must read `MERGED <the head of step 3> -`. MERGED at another head is not a
+   gated merge: report it. `OPEN … queued` (ungated base) is
+   queued: § Waiting for a queued merge; `OPEN … -` is not queued. A read that
+   fails or prints nothing is unreadable: stop and report, never re-run the
+   merge. The exit code of the merge command alone proves nothing either way.
 8. **Sync.** `"$IDH_ROOT/scripts/sync-local-main.sh" . <base>`. A "left
    untouched" line (dirty overlap or divergence where the base is checked
    out) goes in the report, never forced; never a hand-rolled
