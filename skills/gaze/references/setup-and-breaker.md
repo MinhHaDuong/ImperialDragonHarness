@@ -64,10 +64,8 @@ always carry; the round is that count plus one.
 An unchanged diff does **not** reset scoping. Reset happens only on a
 substantial rewrite: the diff touches files the last review did not cover, or
 changes more than roughly half of its lines. Then the full panel runs for this
-round and scoping is ignored. At the other end, a fix of at most 50 changed
-lines in at most 5 files, all in the last panel's diff and none a policy path,
-is a delta re-review: no seats launch and the panel is COMPLETE (phase 6, which
-lists the five conditions); any condition unmet runs the panel.
+round and scoping is ignored. A perspective missing from a panel is re-seated,
+not re-paneled (phase 6).
 
 #### Waiver
 

@@ -167,24 +167,18 @@ next: REVIEWED → the caller closes the ticket on the branch, then runs /verify
   the perspectives that did report found; it never reads as REVIEWED. A failed
   optional external reviewer is fail-open (§ External reviewer panel) and does
   not count. The `PANEL-INTEGRITY:` line is carried verbatim in the result comment.
-- **Delta re-review.** A re-run after a small fix launches no seats, so no
-  selected perspective lacks a report and the panel is not DEGRADED: record
-  `panel_integrity: COMPLETE — delta re-review of <prior>..<head> (<lines>
-  lines, <files> files)` and return REVIEWED or FINDINGS on the merits
-  (adherence, simplify, and the delta read against the prior panel's open
-  findings). The controller checks all five conditions from
-  `git merge-base --is-ancestor` and `git diff --numstat <prior>..<head>`:
-  (1) the PR carries a COMPLETE review-pr panel whose `reviewed_head_sha` is
-  `<prior>` and an ancestor of the current head (a rebase breaks ancestry);
-  (2) the commits since change at most 50 lines (additions plus deletions) in
-  at most 5 files; (3) every delta file was in the prior panel's diff; (4) no
-  delta path is a policy path (`is_policy_path` in
-  `$IDH_ROOT/scripts/review_evidence.py`) and the delta does not raise the risk floor or
-  band to high; (5) the band is not raised against the prior panel's.
-  `<prior>` is the last head a panel reviewed, never the head of an earlier
-  delta re-review, so deltas do not chain under the cap. Any condition unmet
-  is a round-scoping reset (§ Round scoping): the panel runs, and a seat that
-  does not report makes it DEGRADED, so ESCALATE.
+- **Re-seat, not re-panel.** When a panel is missing a perspective (a seat
+  did not report, or a re-review after a fix launched no seats), launch only
+  the missing perspectives and those whose last verdict objected, each on the
+  diff since the head the last full panel reviewed; the other perspectives keep
+  their verdicts. The panel is DEGRADED only if a re-seated perspective still
+  has no report at the bounded deadline. A re-seat round does not count as a
+  new round: its posted review is marked `re-seat`, and the next round scopes
+  from the last full panel's verdict roster. The controller reads that prior
+  panel state (roster and reviewed head) from the review-pr review posted on
+  the PR, trusting only comments by the PR owner or the review bot. A
+  high-risk band still needs its cross-family seat
+  (`skills/route/references/decorrelation.md`).
 
 Run the cleanup and containment (`references/cleanup.md`) first, then post the
 result as one PR comment (§ Output shape) before returning: cleanup can

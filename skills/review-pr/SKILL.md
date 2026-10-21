@@ -239,14 +239,10 @@ be rolled back, and the review this round posts still increments it.
 An explicit `review:standard` request is also a reset exception and runs all
 five perspectives.
 
-**Delta re-review.** When the commits since the last head a panel reviewed
-change at most 50 lines in at most 5 files, all in that panel's diff, none a
-policy path and with no rise in risk band (the five conditions:
-`skills/gaze/SKILL.md` § 6), the round launches no seats: the controller reads
-the delta against the open findings, reports scope `delta (<prior>..<head>,
-<lines> lines, <files> files)` and writes `PANEL-INTEGRITY: COMPLETE — delta
-re-review`, since no selected perspective is missing. A finding the delta does
-not settle stays open. Any condition unmet runs the scoped or full panel above.
+**Re-seat.** A perspective missing from the panel, whether its seat did not
+report or none launched after a fix, is re-seated on the delta under gaze
+phase 6 (`skills/gaze/SKILL.md`); a re-seat is not counted when deriving the
+round.
 
 Model pins are unaffected: scoping changes *which* perspectives run, never
 which model runs them (`rules/claude-code.md` § Subagent levers and
