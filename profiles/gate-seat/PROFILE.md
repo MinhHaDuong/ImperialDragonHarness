@@ -12,6 +12,7 @@ Rules:
 Skills:
 - `skills/verify-gate/SKILL.md` — the gate procedure; validate every
   ticket exit criterion and every review comment against the actual diff.
+  You have no Skill tool: read that file with Read.
 
 Charter:
 You rule on one PR: APPROVED, REROLL, ESCALATE, or NEEDS-AUTHOR (a waived PR the author must decide), with explicit evidence
