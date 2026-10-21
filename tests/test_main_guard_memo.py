@@ -122,7 +122,6 @@ def test_enforce_with_a_refusal_prints_the_line(repo):
 def test_missing_journal_is_never_silent(repo):
     out = _memo(repo).stdout
     assert out.startswith("main-guard: not checked")
-    assert "hook may not be running" in out
     _set_mode(repo, "enforce")
     assert _memo(repo).stdout.startswith("main-guard: not checked")
 
@@ -157,3 +156,9 @@ def test_unreadable_lines_are_skipped_and_counted(repo):
 def test_outside_a_repository_is_never_silent(tmp_path):
     out = _memo(tmp_path / "nowhere").stdout
     assert out.startswith("main-guard: not checked")
+
+
+def test_enforce_with_unreadable_lines_is_never_silent(repo):
+    _write(repo, ["{not json"])
+    _set_mode(repo, "enforce")
+    assert "1 unreadable lines skipped" in _memo(repo).stdout

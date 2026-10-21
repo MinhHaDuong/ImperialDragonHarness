@@ -109,7 +109,7 @@ def memo(repo: Path, now: datetime, hours: float) -> str | None:
         return f"main-guard: not checked (journal unreadable: {exc}); ticket {TICKET}."
     mode = guard_mode(repo)
     counts = tally(lines, now - timedelta(hours=hours), now)
-    if mode == "enforce" and not counts.refused and not counts.warned:
+    if mode == "enforce" and not (counts.refused or counts.warned or counts.unreadable):
         return None
     line = (f"main-guard: {counts.updates} updates of main in the last {hours:g} h, "
             f"{counts.warned} warned, {counts.refused} refused, idh.mainGuard={mode}")
@@ -138,7 +138,7 @@ def main(argv: list[str] | None = None) -> int:
                         format="%(name)s: %(message)s")
     line = memo(args.repo, _now(args.now), args.hours)
     if line:
-        print(line)
+        print(line)  # the stdout line is the product lair carries, not a log
     return 0
 
 
