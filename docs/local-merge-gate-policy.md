@@ -2,9 +2,10 @@
 
 Status as of 2026-10-21. Written at the author's request so the policy can be
 adopted in other projects. Decided in tracker 1045. Today only the forge
-settings are in place (the light ruleset, no required checks); the gate record,
-the guard hook and the sweep are being built. Each unbuilt part is marked
-**pending** with its ticket.
+settings are in place (the light ruleset, no required checks, GitHub Actions
+disabled), together with the gate-record machinery, the guard hook and the sweep.
+The gate itself switches on when the activation pull request of ticket 1156
+merges. Each part still open is marked **pending** with its ticket.
 
 ## Principle
 
@@ -33,7 +34,7 @@ A failed candidate sends the pull request back to stage 1; it then passes throug
 stages 2, 3 and 5 again. That is the only case where the full set runs twice.
 A pure documentation, ticket or memory diff gets a light record (the ticket
 validator only), so the trace stays uniform and the cost stays small. **Pending**
-(ticket 1171 and the activation pull request of ticket 1156; ticket 1172, reading the forge's result for a head, is paused at the author's request because this flow makes it unnecessary).
+(ticket 1171 and the activation pull request of ticket 1156). Ticket 1172, reading the forge's result for a head, was closed as superseded by this flow.
 
 ## Forge settings
 
@@ -54,7 +55,8 @@ validator only), so the trace stays uniform and the cost stays small. **Pending*
 - **Forge CI on push to the default branch only** (no pull-request trigger): an
   ex post record of when the base went red, from a second, clean environment.
   A red base means the local gate let something through; the response is a fix
-  pull request, not a ticket. **Pending** (ticket 1174).
+  pull request, not a ticket. The author later disabled GitHub Actions altogether, so
+  no forge CI runs; GitHub is a sync host.
 
 ## The gate record
 
@@ -81,9 +83,11 @@ validator only), so the trace stays uniform and the cost stays small. **Pending*
   `core.hooksPath`; a client that overrides it defeats the hook, which is why the
   sweep exists.
 - A periodic sweep reports every commit that entered the base without a gate
-  record or green forge checks. It uses only git and the forge API and exits 2
-  when it could not look, never 0.
-- **Pending** (ticket 1157).
+  record and exits 2 when it could not look, never 0. It still reads forge check
+  runs for merges made before the gate; that path is to be deleted and the range
+  started at the activation commit. **Pending** (ticket 1179, which also matches a
+  forge merge commit to its record). The hook and the sweep are built (ticket 1157,
+  closed); turning `enforce` on follows an observation period (ticket 1180).
 
 ## Trust, verify, monitor
 
