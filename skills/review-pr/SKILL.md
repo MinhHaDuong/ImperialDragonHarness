@@ -267,10 +267,12 @@ that merely gathers whatever files exist returns the same empty-handed success
 whether five reviewers approved in silence or none of them ever started.
 
 Never wait unbounded, and never extend the deadline to avoid recording a gap.
-Proceed to synthesis with what landed, carrying the gap forward by name.
-A `no report` perspective is re-run once, alone, before synthesis and posting,
-so the round does not advance (rule: gaze phase 6). If it still has no report, write and post a `PANEL-INTEGRITY: DEGRADED`
-line naming it; set `dissent: unavailable` instead of `dissent: none`.
+A `no report` perspective is re-run once, alone, over the whole PR with the
+brief of its missed launch, before synthesis and posting, so the round does not
+advance (see /gaze phase 6). The retry is a second window of the same bound, not
+an extension of the first, and happens once. If it still has no report, proceed
+to synthesis with what landed, carrying the gap forward by name: write and post a
+`PANEL-INTEGRITY: DEGRADED` line naming it; set `dissent: unavailable` instead of `dissent: none`.
 
 ## Synthesis
 
