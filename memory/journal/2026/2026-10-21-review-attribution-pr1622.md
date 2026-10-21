@@ -1,0 +1,21 @@
+kind: review-attribution
+pr: 1622 · merged 2026-10-21 · project: ImperialDragonHarness
+writer: runtime=claude-code · model=anthropic/claude-sonnet-5-5 · effort=not-stated
+reviewer: step=review · seat=correctness · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=sonnet · independence=not-stated · status: ran
+reviewer: step=review · seat=consistency · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=sonnet · independence=not-stated · status: ran
+reviewer: step=review · seat=scope · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=sonnet · independence=not-stated · status: ran
+reviewer: step=review · seat=adherence · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=sonnet · independence=not-stated · status: ran
+reviewer: step=review · seat=adherence · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=sonnet · independence=not-stated · status: ran
+reviewer: step=review · seat=adherence-semantic · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=sonnet · independence=not-stated · status: ran
+reviewer: step=review · seat=consistency · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=sonnet · independence=not-stated · status: ran
+reviewer: step=review · seat=scope · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=sonnet · independence=not-stated · status: ran
+reviewer: step=review · seat=consistency · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=haiku · independence=not-stated · status: ran
+reviewer: step=review · seat=adherence-semantic · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=sonnet · independence=not-stated · status: ran
+reviewer: step=review · seat=simplify · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=haiku · independence=not-stated · status: ran
+reviewer: step=review · seat=adherence · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=haiku · independence=not-stated · status: ran
+reviewer: step=review · seat=adherence semantic worker · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=sonnet · independence=not-stated · status: ran
+reviewer: step=review · seat=correctness · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=sonnet · independence=not-stated · status: ran
+reviewer: step=review · seat=consistency · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=haiku · independence=not-stated · status: ran
+reviewer: step=review · seat=simplify · runtime=claude-code · model-state=runtime-masked · model-evidence=memory/evidence/2026-10-21-pr1622-review-trail.md:3 · effort=not-stated · route=haiku · independence=not-stated · status: ran
+reviewer: step=review · seat=correctness · runtime=claude-code · model=anthropic/claude-haiku-5-5 · effort=not-stated · route=haiku · independence=not-stated · status: ran
+reviewer: step=review · seat=adherence · runtime=claude-code · model=anthropic/claude-haiku-5-5 · effort=not-stated · route=haiku · independence=not-stated · status: ran
