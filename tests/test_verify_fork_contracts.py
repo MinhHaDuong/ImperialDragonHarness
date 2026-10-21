@@ -94,6 +94,25 @@ def test_verify_gate_owns_its_worktree():
     assert "worktree remove" in VERIFY, "gaze still removes its review tree"
 
 
+def test_gate_sessions_are_caller_owned_and_capped_on_every_path():
+    """Gaze no longer calls the gate, so the gate must not key its round cap on
+    a gaze caller: a raid calling it directly would land in the old standalone
+    override and run a third round (ticket 1153, union review blocker 2)."""
+    gate = (SKILLS / "verify-gate" / "SKILL.md").read_text()
+    norm = " ".join(gate.split())
+    assert "standalone-override" not in gate
+    assert "From `/gaze`" not in gate
+    assert "called by `/gaze`" not in norm and "from /gaze" not in norm.lower()
+    sessions = " ".join(gate.split("## Gate sessions", 1)[1].split("\n## ", 1)[0].split())
+    assert "Round > 2 → immediate ESCALATE, whoever calls" in sessions
+    assert "does not reset the count" in sessions
+    assert "there is no standalone override" in sessions
+    assert "`session=<uuid>`" in sessions
+    raid = " ".join((SKILLS / "raid" / "SKILL.md").read_text().split())
+    assert "session=<uuid>" in raid
+    assert "never runs the gate a third time" in raid
+
+
 def test_verify_has_containment_postcondition():
     """Post-gaze git-status check guards against foreign files and rogue
     branch switches before any merge step (ticket 0193 action 2)."""

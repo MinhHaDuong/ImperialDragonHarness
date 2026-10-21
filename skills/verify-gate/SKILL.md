@@ -5,9 +5,10 @@ name: verify-gate
 description: "Anti-rubber-stamp merge gate: checks every ticket exit criterion and review comment against the diff. Emits APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR with evidence. Does not merge."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<pr-number> repo=<path>"
+argument-hint: "<pr-number> repo=<path> [session=<uuid>]"
 context: fork
-# Foreground: /gaze phase 6 invokes this and must parse its verdict block before
+# Foreground: its caller (raid phase 6, or the author before /merge) invokes this
+# and must parse its verdict block before
 # branching. Claude Code 2.1.218 made `context: fork` skills background by
 # default; a fork cannot wait on a background completion (its turn ends when it
 # stops calling tools), so the default would orphan this phase — ticket 0250.
@@ -28,8 +29,9 @@ background: false
 > name, git status snapshot, ticket files, or the shared task list).
 
 The last line of defence before merge. A gate with teeth: **cannot approve without
-concrete per-criterion evidence**. Designed to be called by `/gaze` at phase 6, but
-standalone-callable for debugging.
+concrete per-criterion evidence**. Called by the PR's caller after `/gaze`
+returns: raid phase 6, or the author before `/merge`. Gaze never calls it. The
+caller owns the gate session (§ Gate sessions).
 
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill.
 
@@ -65,15 +67,17 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 ## Input
 
 Either:
-- `<pr-number>` (standalone mode): the gate resolves ticket, diff, comments itself.
-- A structured bundle from `/gaze` (preferred): `{pr, ticket, diff, phase_outputs}`.
-- The waiver record from `/gaze`, when one exists: `waiver: none`, or the declared
+- `<pr-number>` alone: the gate resolves ticket, diff, comments itself.
+- The caller's bundle (preferred): `/gaze`'s returned result block
+  (`reviewed_head_sha`, unresolved lists, adherence, panel integrity), with
+  `{pr, ticket}`.
+- The waiver record `/gaze` returned, passed on by the caller, when one exists: `waiver: none`, or the declared
   reason, `pr_files`, `pr_lines`, the source (`flag` or `body line`), and the earliest
   posted `circuit_breaker: waived (...)` header on the PR. The gate judges the claim
   from the diff, not from who declared it (see § Indivisibility).
 
 Both paths produce the same verdict shape. Round is always derived from PR comment
-history (see "Standalone invocation"), never passed by the caller.
+history (see § Gate sessions), never passed by the caller.
 
 **Cwd prerequisite**: the gate uses `gh` and `git` commands that resolve
 against cwd, and a `context: fork` invocation does **not** inherit the
@@ -283,7 +287,7 @@ The gate runs in an isolated checkout over a shared `main`; a mid-wave `erg log`
 on the ticket collides at the insertion point with the branch's own ticket
 commits. The orchestrator poses the line: committed onto the PR branch with the
 REROLL fix, or deferred to merge time.
-For a bare `/verify-gate` invocation outside raid/gaze, its caller owns posing
+For a `/verify-gate` invocation outside raid, its caller owns posing
 the returned `reroll_bump` by the same rule: on the PR branch with the fix, or
 at merge time. The caller never runs `erg log` against main mid-wave; the gate
 still writes no ticket file.
@@ -322,32 +326,45 @@ Untagged minors go in `malformed_minors`; they do not bounce on their own.
 On round 2 any untagged minor still present → ESCALATE.
 The gate never authors hedged language — use `verifiable:` or `consider:`.
 
-## Standalone invocation
+## Gate sessions
 
-Callable without `/gaze`. Uses existing PR state only (no phase 2-5 outputs).
+The caller owns the gate session; gaze has no part in it.
+
+- **Session id.** Before round 1 the caller generates one UUID for the PR's
+  gating sequence (`python3 -c 'import uuid; print(uuid.uuid4())'`) and passes
+  it as `session=<uuid>` on round 1 and on the round-2 re-gate after the fix.
+  Raid generates it per PR in phase 6; the author generates it before `/merge`.
+- **Standalone** means only that no `session=` was passed (an author's ad hoc
+  or debugging run): the gate generates a fresh UUID and records it. It changes
+  no rule below; there is no standalone override.
+- **Round derivation:** count PR comments matching `/verify-gate round=N verdict=V`,
+  across every session and caller; current round = count + 1. The caller never
+  passes the round.
+- **Two-round cap, every path.** Round > 2 → immediate ESCALATE, whoever calls
+  and whether or not a session id was passed. A fresh session id does not reset
+  the count. Past an ESCALATE the merge decision is the author's, not another
+  gate run's.
+- **Caller enforcement.** The caller invokes the gate at most twice per
+  session: round 1, then one re-gate after the fix. Raid never launches a
+  third run and never opens a new session to escape the cap.
+
+Uses existing PR state only when no gaze result is passed (no phase 2-5 outputs).
 Isolation is the same on every path (§ Isolation: own worktree, removed on exit).
-
-**Round derivation:** count PR comments matching `/verify-gate round=N verdict=V`;
-current round = count + 1.
-
-- From `/gaze`: round > 2 → immediate ESCALATE.
-- Standalone: round > 2 → warn and proceed as `standalone-override` (does not
-  unblock an ESCALATED `/gaze` sequence).
 
 ## Output destinations
 
-1. Structured verdict returned to caller (for `/gaze` consumption).
+1. Structured verdict returned to the caller (raid, or the author).
 2. PR comment posted with human-readable summary:
 
-   For a `/gaze` call, receive its `gate_session_id`. In standalone mode,
-   generate a fresh UUID for this gate. The review worktree path is the gate's
+   Take the `gate_session_id` from the caller's `session=` argument; with
+   none (standalone), generate a fresh UUID. The review worktree path is the gate's
    own `$gate_tree`. Immediately before ruling, read the full tip SHA with
    `git -C "$gate_tree" rev-parse HEAD`; stop with ESCALATE if this fails.
    These are audit fields.
 
    ```
    /verify-gate round=<n> verdict=<V>
-   Gate session id: <UUID from /gaze, or standalone UUID>
+   Gate session id: <UUID from the caller's session=, or standalone UUID>
    Review worktree path: <absolute path of the gate's own worktree>
    Ruled tip SHA: <full commit SHA read from that worktree>
    reroll_bump: <exact returned note verify-reroll line; include on REROLL, omit otherwise>
