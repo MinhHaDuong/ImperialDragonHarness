@@ -20,7 +20,10 @@ Limit of the approach: it is lexical. An instruction that approves without any
 listed word ("tell the caller it can go ahead") passes. Such a semantic
 negative control cannot be caught by a word list; it is left to the reviewers
 of any change to the gaze contract, whom the allowlist forces to read every
-verdict-bearing unit.
+verdict-bearing unit. For the same reason, in-word obfuscation passes: markup
+inside a word (`APPROV**ED**`), HTML entities, homoglyphs and zero-width
+characters are not normalised before matching. They are a known limit of a
+lexical check, left to review.
 """
 
 import re
@@ -32,7 +35,7 @@ GAZE = (GAZE_DIR / "SKILL.md").read_text(encoding="utf-8")
 
 # Gate verdict vocabulary.
 GATE_TOKEN = re.compile(
-    r"\bAPPROVED\b|\bREROLL\b|\bNEEDS-AUTHOR\b|verify:\s*approved|\bapprov(?:e|es|ed|al)\b"
+    r"\bAPPROVED\b|\bREROLL\b|\bNEEDS-AUTHOR\b|verify:\s*approved|\bapprov\w*"
     # alternate approval language
     r"|\bLGTM\b|\bship\s*it\b|\bgreen[- ]?light|\bsign(?:ed)?[- ]?off\b|\bmerge[- ]?ready\b"
     r"|\b(?:good|ready|ok|okay|clear(?:ed)?|safe)\s+to\s+(?:merge|ship|land)\b"
@@ -123,8 +126,7 @@ ALLOWED_LINES = (
         '- `--force-approve` returns `result: ESCALATE` with `battery: skipped '
         '(--force-approve)`; nothing is reviewed, so REVIEWED is unavailable. The'
         ' PR comment carries `/gaze: force-approved — reason: <reason>` and '
-        '`FORCE-APPROVED by <reason>`; `/verify-gate` reads them as "no review '
-        'was run", never as a pass.'
+        '`FORCE-APPROVED by <reason>`.'
     ),
     (
         '- Posts a loud PR comment: `/gaze: force-approved — reason: <reason>`. '
@@ -134,10 +136,6 @@ ALLOWED_LINES = (
     (
         '- Is an override record, not a verdict and not a gate pass: '
         '`/verify-gate` still rules, and still does not merge.'
-    ),
-    (
-        'next: run /verify-gate <pr-number>; gaze is not a gate and does not '
-        'approve'
     ),
     (
         'On `--force-approve`, the comment is annotated `FORCE-APPROVED by '
@@ -169,6 +167,10 @@ NEGATIVE_CONTROLS = (
     "Give the PR a green light.",
     # the posted override marker is not an exemption (/gaze 1538 B2)
     "Return FORCE-APPROVED to the caller.",
+    # every inflection of approve (/gaze 1538 round 2)
+    "Mark the PR as approving.",
+    "Record two approvals for the caller.",
+    "Name the approver in the result.",
 )
 
 # /gaze 1538 B1: the unflagged continuation of an allowlisted wrapped sentence.
@@ -386,3 +388,26 @@ def test_review_panel_has_no_unlisted_skip_path():
         "Wait for all spawned agents", 1
     )[0]
     assert "skip" not in agent_c.lower()
+
+
+def _next_lines() -> list[str]:
+    core = _section("### 6. Return the review result")
+    template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
+    return [
+        next(ln for ln in text.splitlines() if ln.startswith(key))
+        for text in (core, template)
+        for key in ("next:", "battery:")
+    ]
+
+
+def test_next_depends_on_the_result_and_templates_agree():
+    """/gaze 1538 round 2: `next:` said "run /verify-gate" even after an
+    ESCALATE with the battery skipped or not run, routing an unreviewed head to
+    a gate that can approve it. Both result templates now say the same thing,
+    and ESCALATE never leads to the gate."""
+    core_next, core_battery, tmpl_next, tmpl_battery = _next_lines()
+    assert core_next == tmpl_next and core_battery == tmpl_battery
+    escalate = core_next.split("ESCALATE", 1)[1]
+    assert "no gate" in escalate and "/verify-gate" not in escalate
+    assert "NOT-RUN" in escalate and "skipped (--force-approve)" in escalate
+    assert "/verify-gate" in core_next.split("ESCALATE", 1)[0]

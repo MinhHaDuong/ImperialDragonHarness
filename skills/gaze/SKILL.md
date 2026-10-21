@@ -536,9 +536,10 @@ unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
 adherence: PASS | FAIL (<n blocking>)
 panel_integrity: COMPLETE | DEGRADED — <PANEL-INTEGRITY: line>
+battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable) | skipped (--force-approve)
 circuit_breaker: un-reviewable | waived (...) | none
 multi_ticket: <distinct close-claim IDs> | none
-next: run /verify-gate <pr-number> on reviewed_head_sha
+next: REVIEWED or FINDINGS → the caller fixes any FINDINGS, then runs /verify-gate <pr-number> on reviewed_head_sha; ESCALATE (including battery: NOT-RUN or skipped (--force-approve)) → no gate: the caller resolves the cause or re-runs /gaze
 ```
 
 - `ESCALATE`: the breaker fired, the battery could not run (`battery: NOT-RUN`),
@@ -553,7 +554,7 @@ next: run /verify-gate <pr-number> on reviewed_head_sha
   checks every exit criterion and review comment against the diff.
 - `panel_integrity: DEGRADED` is a note on the result, not a fourth value: the
   result follows the rules above, and the `PANEL-INTEGRITY:` line is carried
-  verbatim for the gate.
+  verbatim in the result comment.
 
 Post the result as one PR comment (§ Output shape), then run the
 cleanup and containment (§ Cleanup and containment) before returning.
@@ -688,8 +689,7 @@ Explicit human override. Usage: `/gaze <pr-number> --force-approve <reason>`.
 
 - `--force-approve` returns `result: ESCALATE` with `battery: skipped (--force-approve)`;
   nothing is reviewed, so REVIEWED is unavailable. The PR comment carries
-  `/gaze: force-approved — reason: <reason>` and `FORCE-APPROVED by <reason>`;
-  `/verify-gate` reads them as "no review was run", never as a pass.
+  `/gaze: force-approved — reason: <reason>` and `FORCE-APPROVED by <reason>`.
 - Posts a loud PR comment: `/gaze: force-approved — reason: <reason>`. It lists
   the outputs of phases 2–5 that exist, so reviewers see what was waived.
 - Logs the override in the skill transcript.
@@ -720,7 +720,7 @@ Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]
 Adherence: PASS | FAIL (<count>)
 
-next: run /verify-gate <pr-number>; gaze is not a gate and does not approve
+next: REVIEWED or FINDINGS → the caller fixes any FINDINGS, then runs /verify-gate <pr-number> on reviewed_head_sha; ESCALATE (including battery: NOT-RUN or skipped (--force-approve)) → no gate: the caller resolves the cause or re-runs /gaze
 
 telemetry: risk_band=<high|low|normal> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```
