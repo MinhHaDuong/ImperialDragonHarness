@@ -9,6 +9,7 @@ and are `integration`.
 
 import importlib.util
 import json
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -576,4 +577,60 @@ def test_report_with_a_duplicate_header_key_is_not_trusted():
     text = (f"---\nreview-evidence: {re_mod.FORMAT}\nkind: adherence\nseat: a\n"
             "kind: review\n---\n\nbody\n")
     assert re_mod.parse_report(text) == {}
+
+
+@pytest.mark.parametrize("value,expected", [
+    ("anthropic ", "anthropic"), ("OpenAI", "openai"), (" Google", "google"),
+])
+def test_family_is_stripped_and_casefolded(value, expected):
+    assert re_mod.family_name(value) == expected
+
+
+@pytest.mark.parametrize("value", ["claude", "gpt", "", "x\nhead: y"])
+def test_family_outside_the_vocabulary_is_refused(value):
+    with pytest.raises(Exception):
+        re_mod.family_name(value)
+
+
+def test_family_vocabulary_covers_the_route_grid():
+    grid = (REPO_ROOT / "skills" / "route" / "grid.json").read_text()
+    found = {m.casefold() for m in re.findall(r'"family":\s*"([^"]+)"', grid)}
+    assert found and found <= re_mod.FAMILIES
+
+
+@pytest.mark.integration
+def test_record_refuses_an_unknown_family(repo, policy):
+    out = subprocess.run(
+        ["python3", str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+         "--policy-root", str(policy), "--seat", "red-team", "--verdict", "approve",
+         "--family", "claude", "--worker", "t"],
+        input="body\n", capture_output=True, text=True, env=child_env())
+    assert out.returncode != 0
+    assert not (repo / "tickets" / "reviews").exists()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("header_family,producer", [
+    ("anthropic ", "anthropic"), ("unknown ", "anthropic"), ("claude", "anthropic"),
+    ("openai", "claude"), ("openai", "unknown"),
+])
+def test_gate_counts_only_a_known_other_family(repo, policy, header_family, producer):
+    report = record_seat(repo, policy, "red-team", family="OpenAI")
+    report.write_text(report.read_text().replace("family: openai\n",
+                                                 f"family: {header_family}\n"))
+    commit_reports(repo)
+    out = run_gate(repo, policy, "--seat", "red-team", "--producer-family", producer,
+                   risk="high")
+    assert out.returncode != 0 and "independence: missing" in out.stdout, out.stdout
+
+
+@pytest.mark.integration
+def test_gate_producer_family_is_stripped(repo, policy):
+    """Positive control: a genuine openai seat still passes, padded producer or not."""
+    record_seat(repo, policy, "red-team", family="OpenAI")
+    commit_reports(repo)
+    out = run_gate(repo, policy, "--seat", "red-team", "--producer-family", "Anthropic ",
+                   risk="high")
+    assert out.returncode == 0, out.stdout + out.stderr
+    assert "independent: openai seat red-team" in out.stdout
 

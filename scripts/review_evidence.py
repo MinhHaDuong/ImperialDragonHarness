@@ -65,6 +65,11 @@ POLICY_GLOBS = (
 )
 
 ROWS = ("trivial", "ordinary", "high")
+# Model families that can prove independence: the grid `family` field of
+# skills/route/grid.json plus the cross-family doors of routes.json and the
+# families decorrelation.md names. "unknown" may be recorded, never counted.
+FAMILIES = frozenset({"anthropic", "openai", "google", "mistral", "deepseek", "glm",
+                      "qwen", "xiaomi"})
 # High-risk classes of skills/route/references/decorrelation.md: rules and
 # guards, merge and release gates, credentials, deletion or migration; plus
 # the review policy itself and what runs or configures the gates (CI,
@@ -371,7 +376,7 @@ def cmd_record(args: argparse.Namespace) -> int:
         n += 1
     header = {
         "review-evidence": FORMAT, "kind": args.kind, "seat": args.seat,
-        "verdict": args.verdict, "family": args.family.casefold(), "worker": args.worker,
+        "verdict": args.verdict, "family": args.family, "worker": args.worker,
         "base": current.base, "head": current.head, "patch-id": current.patch_id,
         "criteria-hash": current.criteria_hash, "policy-version": current.policy_version,
         "recorded": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -409,10 +414,10 @@ def cmd_gate(args: argparse.Namespace) -> int:
         print(f"seat {r['seat']}: {r['status']}{verdict} - {r['reason']}{where}")
         ok &= r["status"] in ("ran", "reused")
     if args.risk == "high":
-        producer = (args.producer_family or "").casefold()
+        producer = known_family(args.producer_family)
         other = [r for r in rows if r["status"] in ("ran", "reused")
-                 and r["header"].get("family", "").casefold() not in ("", "unknown", producer)]
-        if args.producer_family and other:
+                 and known_family(r["header"].get("family")) not in (None, producer)]
+        if producer and other:
             r = other[0]
             origin = r["header"].get("head", "<unknown head>")[:12]
             how = "" if r["status"] == "ran" else f", inherited from {origin}"
@@ -483,6 +488,21 @@ def header_value(value: str) -> str:
     return value
 
 
+def family_name(value: str) -> str:
+    """A family as recorded: stripped, casefolded, in FAMILIES or 'unknown'."""
+    family = header_value(value).strip().casefold()
+    if family != "unknown" and family not in FAMILIES:
+        raise argparse.ArgumentTypeError(
+            f"unknown family {value!r}; expected one of {', '.join(sorted(FAMILIES))}")
+    return family
+
+
+def known_family(value: str | None) -> str | None:
+    """A family that can count toward independence, or None (missing proof)."""
+    family = (value or "").strip().casefold()
+    return family if family in FAMILIES else None
+
+
 def seat_name(value: str) -> str:
     """A seat names a report file: no path separator, no parent reference."""
     header_value(value)
@@ -507,7 +527,7 @@ def main() -> int:
     rec.add_argument("--seat", required=True, type=seat_name)
     rec.add_argument("--kind", choices=KINDS, default="review")
     rec.add_argument("--verdict", choices=VERDICTS, required=True)
-    rec.add_argument("--family", default="unknown", type=header_value)
+    rec.add_argument("--family", default="unknown", type=family_name)
     rec.add_argument("--worker", default="unknown", type=header_value)
     rec.set_defaults(fn=cmd_record)
     for name, fn in (("plan", cmd_plan), ("gate", cmd_gate)):
