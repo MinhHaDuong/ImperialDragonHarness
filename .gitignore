@@ -92,6 +92,3 @@ skills/claude-code
 # Populated by the client at run time from the account's skill sync (ticket 0950); never shipped.
 skills/synced/
 
-# Private Testmon state; only the SQL reference travels with Git.
-.smart-testing/
-.testmondata*

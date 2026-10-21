@@ -2,8 +2,7 @@
 
 review-pr and review-pr-prose folded into /gaze with no alias: a live mention
 sends an agent to a skill that no longer exists, which it may then improvise.
-History is exempt (docs/, memory/, tickets/, projects/), and so is the
-smart-testing reference data, which records past test ids.
+History is exempt (docs/, memory/, tickets/, projects/).
 """
 
 import subprocess
@@ -33,5 +32,5 @@ def _grep(name: str, *pathspec: str) -> list[str]:
 def test_no_live_reference_to_a_retired_skill():
     for name in RETIRED:
         assert _grep(name, SELF) == [SELF], "positive control: the probe must see this file"
-        hits = _grep(name, *LIVE, ":!tests/smart-testing", f":!{SELF}")
+        hits = _grep(name, *LIVE, f":!{SELF}")
         assert hits == [], f"live references to retired skill {name}: {hits}"

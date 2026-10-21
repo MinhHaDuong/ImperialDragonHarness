@@ -60,14 +60,6 @@ check-tests:
 
 check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check-tests
 
-# Opt-in affected-test loop; reference refresh is deliberately explicit.
-.PHONY: smart-test smart-refresh
-smart-test:
-	$(RUN) python3 -m scripts.smart_testing
-
-smart-refresh:
-	$(RUN) python3 -m scripts.smart_testing --refresh
-
 # Daily audit of main (tickets 1157, 1179): does each commit that entered
 # origin/main in the last 24 h carry a gate receipt? Exit 1 on a finding, 2 when
 # it could not look in full. Git-only, never in the merge path

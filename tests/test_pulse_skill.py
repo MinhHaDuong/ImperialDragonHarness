@@ -16,7 +16,6 @@ sys.path.insert(0, str(REPO / "scripts"))
 import skill_frontmatter as sf  # noqa: E402
 
 SKILL = REPO / "skills" / "pulse" / "SKILL.md"
-HELPER_COMMAND = re.compile(r"smart_testing\.py|pytest-testmon")
 
 
 def test_the_expert_cannot_be_invoked_by_a_model():
@@ -24,14 +23,6 @@ def test_the_expert_cannot_be_invoked_by_a_model():
     assert meta["disable-model-invocation"] is True
     assert meta["user-invocable"] is True
     assert meta["name"] == "pulse"
-
-
-def test_no_rule_or_skill_instructs_agents_to_run_the_cache_helper():
-    offenders = []
-    for path in [REPO / "rules" / "coding-python.md", *sorted((REPO / "skills").glob("*/SKILL.md"))]:
-        if HELPER_COMMAND.search(path.read_text()):
-            offenders.append(str(path.relative_to(REPO)))
-    assert not offenders, f"unconditional testmon instruction came back in: {offenders}"
 
 
 def test_hunt_keeps_the_failing_test_confirmation_without_a_cache_shortcut():
