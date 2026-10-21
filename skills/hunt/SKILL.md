@@ -132,7 +132,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    a test failure is not a reason to bypass it. Non-pytest checks and the
    project's pre-PR gate remain as declared.
 9. Pre-PR self-gate: run `/verify-adherence <branch>` (the branch created in step 4).
-   - Clean → proceed to step 10. Note adherence passed in the merge-request description so `/gaze` can skip the mechanical phase on its next pass.
+   - Clean → proceed to step 10. Note adherence passed in the merge-request description so `/gaze` can skip the mechanical phase on its next pass (gaze reviews; `/verify-gate` gates).
    - Blockers → decide per blocker:
      - Cheap and mechanical (obvious fix, no design judgement) → fix in place, re-run `make check-fast` and `/verify-adherence`, then proceed only once clean. Up to 3 fix-and-recheck cycles; if still not clean after 3 rounds, escalate.
      - Otherwise → STOP. Do not open the PR. Escalate with the adherence report and the blocker list.
