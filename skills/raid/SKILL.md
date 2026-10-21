@@ -430,7 +430,15 @@ For each eligible PR, sequentially within the wave:
    <!-- harness-extension-point -->
    Runtime permission rules must authorize the resolved helper path. Use
    `-C` to select the worktree for every Git and forge operation.
-   The merge is queued, not necessarily landed: pending checks are normal.
+   **Gated base** (`.merge-gate.json` on the base, `skills/merge/SKILL.md`
+   § Gated base): before this call, write the gate record from the worktree
+   (`merge-gate.py run --base origin/<base> --head HEAD`), then merge per
+   `skills/merge/SKILL.md` § Gated base, both as one background command. The
+   record is the gate; the merge's exit is the outcome (0 merged). Exit 2
+   means no record for this head: usually the helper's own ticket-close commit changed the candidate
+   (close before gating avoids it), else an earlier merge in the wave moved
+   the base. Record again on the current head, run again.
+   **Ungated base:** the merge is queued, not necessarily landed: pending checks are normal.
    Read the outcome with `"$IDH_ROOT/skills/merge/erg-pr-status" -C <worktree-path> <pr-number>`
    (exit 0 merged, 1 failed, 2 pending, 3 unreadable). Pending is not a
    failure: wait as `skills/merge/SKILL.md` § Waiting for a queued merge

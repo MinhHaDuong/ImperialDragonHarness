@@ -536,6 +536,40 @@ _check_lacks "exit-check bundle closed merge request: not ready" "$out" "EXIT: R
 wrapped "$NOFORGE" --phase exit-check --bundle-branch roar-wrap
 _check_rc "exit-check bundle unreadable forge: could-not-look" 2 "$rc"
 _check_lacks "exit-check bundle unreadable forge: not ready" "$out" "EXIT: READY"
+# Gated base (ticket 1156): a stub merge-gate.py answers `enabled` and `check`
+# with fixed codes; the forge stub answers the merge request's state.
+gate_stub() { # <file> <enabled rc> <check rc>
+    printf 'import sys\nsys.exit(%s if sys.argv[1] == "enabled" else %s)\n' "$2" "$3" > "$1"
+}
+wrapped_gated() { # <gh dir> <gate stub> <args...>
+    local wd="$1" gs="$2"; shift 2
+    out=$(env -i PATH="$wd:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" CLOSE_AND_CLEAN_MERGE_GATE="$gs" GIT_CONFIG_GLOBAL=/dev/null bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?
+}
+OPENPR="$T/openpr";   forge_stub "$OPENPR"   '{"state":"OPEN","autoMergeRequest":null}'
+MERGEDPR="$T/merged"; forge_stub "$MERGEDPR" '{"state":"MERGED","autoMergeRequest":null}'
+for c in 0 1 2 3; do gate_stub "$T/gate-$c.py" 0 "$c"; done
+gate_stub "$T/gate-unreadable.py" 3 0
+wrapped_gated "$OPENPR" "$T/gate-0.py" --phase exit-check --bundle-branch roar-wrap
+_check_rc "gated bundle open, record passes: may leave" 0 "$rc"
+_check_says "gated bundle open, record passes: still pending until merged" "$out" "PENDING until it reads MERGED"
+wrapped_gated "$MERGEDPR" "$T/gate-2.py" --phase exit-check --bundle-branch roar-wrap
+_check_rc "gated bundle merged: ready" 0 "$rc"
+_check_says "gated bundle merged: verdict" "$out" "bundle roar-wrap merged"
+wrapped_gated "$CLOSEDPR" "$T/gate-0.py" --phase exit-check --bundle-branch roar-wrap
+_check_rc "gated bundle closed merge request, record passes: findings" 1 "$rc"
+_check_lacks "gated bundle closed merge request: not ready" "$out" "EXIT: READY"
+for c in 1 2; do
+    wrapped_gated "$OPENPR" "$T/gate-$c.py" --phase exit-check --bundle-branch roar-wrap
+    _check_rc "gated bundle open, record check $c: findings" 1 "$rc"
+    _check_lacks "gated bundle open, record check $c: not ready" "$out" "EXIT: READY"
+done
+wrapped_gated "$OPENPR" "$T/gate-3.py" --phase exit-check --bundle-branch roar-wrap
+_check_rc "gated bundle unreadable record: could-not-look" 2 "$rc"
+wrapped_gated "$OPENPR" "$T/gate-unreadable.py" --phase exit-check --bundle-branch roar-wrap
+_check_rc "gated bundle unreadable declaration: could-not-look" 2 "$rc"
+_check_lacks "gated bundle unreadable declaration: not ready" "$out" "EXIT: READY"
+wrapped_gated "$NOFORGE" "$T/gate-0.py" --phase exit-check --bundle-branch roar-wrap
+_check_rc "gated bundle unreadable forge: could-not-look" 2 "$rc"
 git -C "$WT" commit -q --allow-empty -m unpushed
 wrapped "$ARMED" --phase exit-check --bundle-branch roar-wrap
 _check_rc "exit-check bundle unpushed: findings" 1 "$rc"

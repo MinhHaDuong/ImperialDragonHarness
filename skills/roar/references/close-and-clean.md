@@ -31,7 +31,9 @@ cleanup targets and skip step 9. With no targets, cleanup deletes no branches. I
 It runs a fresh preflight (the step-7 result predates the wrap-up
 work), the bounded integration fetch, the ancestry check of HEAD, or
 for the bundle: its remote tip equals HEAD and its merge request is
-open with auto-merge armed. It then syncs local `main`, best effort.
+open with auto-merge armed or, on a gated base (`.merge-gate.json`), it
+reads OPEN with a passing gate record on its candidate merge commit, or
+MERGED; a gated bundle not yet MERGED stays pending in step 11. It then syncs local `main`, best effort.
 `PREFLIGHT: DIRTY` → commit (or `$IDH_ROOT/scripts/worktree-salvage.sh`)
 and re-run; the preflight removes only `.panel/` and `build/panel-head/`
 review scratch when no `.tmp/` exists, and refuses every other

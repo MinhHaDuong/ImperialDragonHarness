@@ -2,10 +2,13 @@
 Title: 1045 child A: gate record on the candidate commit and /merge refusal
 Created: 2026-10-20
 Author: reviewer
+Closed: autoclosed — PR #1569
 
 --- log ---
 2026-10-20T19:23Z reviewer created
 2026-10-21T12:31Z reviewer note Delivered in two PRs. #1564 (Ticket-ref) claims the machinery: the record on the candidate with every field (criterion 1), the check-set scope field (2, the set itself declared in #1569), /merge refusal with positive control (3), runtime neutrality (5). #1569 (close claim) claims activation: .merge-gate.json, the light record, the caller edits (raid, roar, lair, molt, merge) and catalog/breaker (6). Background merge (criterion 4) is the caller's one background command, gate run then merge helper, re-recorded on exit 2; the helper never waits (1082) and never arms forge auto-merge; forge check conclusions are information only on a gated base (author direction 2026-10-21).
+2026-10-21T14:33Z reviewer note The light record named in the 12:31Z entry was dropped from #1569 (orchestrator, KISS): with make check at about 76 s (PR #1583) every gated merge runs the full declared set, ticket-only PRs included.
+2026-10-21T15:53Z reviewer closed — autoclosed — PR #1569
 
 --- body ---
 ## Context
@@ -15,6 +18,6 @@ Child A of tracker 1045. Author decisions 2026-10-20 (defaults of the Fable advi
 - [ ] A record on the candidate merge commit (built first, so merge-time effects such as `erg close` are inside what was checked) names time, actor, host, revision, command and its scope, and tool versions
 - [ ] The gate's check set is as decided above; the choice is written in the record's scope field
 - [ ] `/merge` refuses a branch with no record on its candidate commit, and a positive control shows it accepts one; the latest entry for a subject decides
-- [ ] The merge is made in the background once the gate passes (forge auto-merge), so waiting costs no attention
+- [ ] The merge is made in the background once the gate passes, so waiting costs no attention: the caller's one background command runs the gate, then merges per skills/merge/SKILL.md § Gated base (forge auto-merge is not used: with no required checks it merges at once)
 - [ ] Nothing here requires a particular agent runtime
 - [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker, else split
