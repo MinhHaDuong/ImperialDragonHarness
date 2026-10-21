@@ -193,8 +193,8 @@ $ERG new "trace-doctor: <lever> — <one-line action>"
 - **Test**: how to confirm the lever moved next census
 - **Exit criteria**: the condition that retires the finding
 
-Commit the new tickets naming each file (never a blanket add in the shared
-`tickets/` checkout):
+Commit the new tickets on a branch landed through a merge request, naming each
+file (never a blanket add in the shared `tickets/` checkout):
 
 ```bash
 git add tickets/<id>-<slug>.erg          # name each new ticket file, one per add
