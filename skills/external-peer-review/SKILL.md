@@ -11,7 +11,7 @@ argument-hint: "<pdf-path> [reviewer needs or personas]"
 # External peer review
 
 Obtain actual independent reviews and present a cross-reviewer synthesis.
-This complements the simulated panel in `/review-pr-prose`.
+This complements the simulated prose panel of `/gaze`.
 
 1. **Locate the manuscript.** Resolve the PDF path and any requested review
    questions. If needed, use the project's build procedure to obtain the PDF.

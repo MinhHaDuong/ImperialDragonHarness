@@ -12,7 +12,7 @@ enforce was "launch foreground, `run_in_background: false`". The delegation
 tool has no such parameter: subagents always run in the background and notify
 the session. So the enforced remedy named a lever that does not exist, and the
 skills satisfied it by *saying the words*. The proof is this file's own record
-— it was green while `/review-pr` orphaned its panel on two consecutive rounds,
+— it was green while the review panel orphaned its seats on two consecutive rounds,
 ten reviewers returning real verdicts and the merge request carrying none of
 them. A guard that passes while the defect it exists to prevent is happening is
 measuring the wrong thing.
@@ -183,7 +183,7 @@ def test_failure_mode_documented():
 # The file-wide tests above passed while /gaze 479 (2026-07-11) still orphaned
 # its panel: gaze's Agent C paragraph told the inner fan-out to "run ... in
 # parallel" with no local concurrency directive, and the two sub-skills it
-# delegates to (review-pr, review-pr-prose — both `context: fork`) carried zero
+# delegated to (the code and prose review skills, both `context: fork`) carried zero
 # foreground language anywhere. A single foreground mention elsewhere in the
 # file satisfied the outer ratchet; the launch site itself stayed silent. This
 # ratchet is *local*: every paragraph that is a parallel-agent launch site must

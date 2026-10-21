@@ -51,7 +51,7 @@ argument, in the venue's style; a new reference goes through
 
 ## 3. Review before sending
 
-Run `/review-pr-prose` on the submission's merge request, or
+Run `/gaze` (prose panel) on the submission's merge request, or
 `/external-peer-review` on its PDF, and give the reviewers the call's
 criteria from step 1. Resolve convergent findings; report the rest to the
 author with a recommendation.

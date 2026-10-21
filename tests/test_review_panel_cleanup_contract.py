@@ -6,19 +6,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_standalone_review_pr_cleans_only_after_verified_post():
-    text = (ROOT / "skills/review-pr/SKILL.md").read_text()
-    cleanup = text.split("## Panel scratch cleanup", 1)[1]
-    assert "verified" in cleanup.lower()
-    assert 'rm -rf -- "$panel"' in cleanup
-    assert '"$worktree/build/panel-head"' in cleanup
-    assert "embedded by /gaze" in cleanup
-    assert "leave the panel" in cleanup.lower()
-    assert "do not gitignore" in cleanup.lower()
-    assert 'worktree-exit-preflight.sh" "${args[@]}" "$worktree"' in cleanup
-    assert cleanup.index('worktree-tmp-guard.py" removal') < cleanup.index('rm -rf -- "$panel"')
-
-
 def test_gaze_owns_delegated_panel_cleanup_on_every_exit():
     text = (ROOT / "skills/gaze/SKILL.md").read_text()
     cleanup = text.split("## Review scratch cleanup", 1)[1].split("\n## ", 1)[0]
