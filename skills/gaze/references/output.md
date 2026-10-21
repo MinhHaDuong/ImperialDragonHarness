@@ -66,7 +66,7 @@ Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]
 Adherence: PASS | FAIL (<count>)
 
-next: run /verify-gate <pr-number> repo=<caller's checkout>; gaze is not a gate and does not approve
+next: on REVIEWED, or FINDINGS once fixed, run /verify-gate <pr-number> repo=<caller's checkout>; on ESCALATE, no gate (author decides); gaze is not a gate and does not approve
 
 telemetry: risk_band=<high|low|normal> wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 ```

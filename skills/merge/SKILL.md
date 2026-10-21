@@ -130,6 +130,8 @@ belongs with the command it recovers.)
   `ticket(<id>): close and archive — PR #<n>` commit whose `git diff
   --no-renames --name-only <ruled> origin/<branch>` lists only `tickets/`
   paths. Nothing else qualifies.
+- **A gaze result of ESCALATE (or none on the current tip) means no gate and no
+  merge:** the review never completed, and the PR goes to the author.
 - **After `/gaze` and an APPROVED `/verify-gate`, sync before merging.** `/gaze`
   (its simplify phase) may have pushed fixes from its own review worktree since the caller last fetched:
   `git fetch origin && git merge --ff-only origin/<branch>` first, or a stale

@@ -44,7 +44,7 @@ ALLOWED_LINES = (
     "at ESCALATE, never APPROVED (gaze returns no approval at all).",
     "review's approval. It returns the reviewed SHA, paths examined, and actionable",
     "- `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still",
-    "next: run /verify-gate <pr-number> repo=<caller's checkout>; gaze is not a gate and does not approve",
+    "next: on REVIEWED, or FINDINGS once fixed, run /verify-gate <pr-number> repo=<caller's checkout>; on ESCALATE, no gate (author decides); gaze is not a gate and does not approve",
     "- **Gating.** `/verify-gate` rules APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR.",
 )
 

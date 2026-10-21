@@ -143,11 +143,13 @@ adherence: PASS | FAIL (<n blocking>)
 panel_integrity: COMPLETE | DEGRADED — <PANEL-INTEGRITY: line>
 circuit_breaker: un-reviewable | waived (...) | none
 multi_ticket: <distinct close-claim IDs> | none
-next: run /verify-gate <pr-number> repo=<caller's checkout>; the gate checks out the PR head itself
+next: on REVIEWED, or FINDINGS once fixed, run /verify-gate <pr-number> repo=<caller's checkout>; on ESCALATE, no gate: the author decides
 ```
 
 - `ESCALATE`: the breaker fired, the battery could not run (`battery: NOT-RUN`),
   any phase 2–5 errored or timed out, or the workspace could not be restored.
+  The review did not complete: the caller runs no gate and the PR goes to the
+  author.
 - `FINDINGS`: any blocking adherence violation, any `request-changes` or
   `major` review verdict, any unresolved `verifiable:` minor, any simplify
   must-fix not applied. List them; the caller fixes (a coder on the PR

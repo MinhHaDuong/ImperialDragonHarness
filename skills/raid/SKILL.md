@@ -310,7 +310,11 @@ the PR branch); the result is observed by polling the written artifact — the
 `## /gaze result` PR comment per the output shape in
 `skills/gaze/references/output.md` § Output shape, accepted only when its `reviewed_head_sha`
 matches the branch tip — under that contract's bounded wait, never a spawn exit status,
-and the structured result must return to the orchestrator. Then run
+and the structured result must return to the orchestrator.
+A gaze result of ESCALATE, or no accepted result (missing at the end of the
+bounded wait, or its `reviewed_head_sha` stale against the branch tip), means
+the gate is not run: the review never completed, and the PR goes to the author.
+Only on a gaze result of REVIEWED, or FINDINGS once fixed, run
 `/verify-gate <pr-number> repo=<PR's worktree> session=<uuid>` the same way (gaze has removed
 its review tree by then; the gate checks out the PR head in a worktree of its
 own and removes it, while the raid keeps the PR's worktree until gating ends);
