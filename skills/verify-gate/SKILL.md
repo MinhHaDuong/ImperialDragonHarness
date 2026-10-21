@@ -76,7 +76,7 @@ Either:
   posted `circuit_breaker: waived (...)` header on the PR. The gate judges the claim
   from the diff, not from who declared it (see § Indivisibility).
 
-Both paths produce the same verdict shape. Round is always derived from PR comment
+Every invocation produces the same verdict shape. Round is always derived from PR comment
 history (see § Gate sessions), never passed by the caller.
 
 **Cwd prerequisite**: the gate uses `gh` and `git` commands that resolve
