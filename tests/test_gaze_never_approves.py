@@ -489,13 +489,13 @@ def test_degraded_panel_maps_to_escalate():
 
 RESEAT_RULE = re.compile(
     r"launch\s+only\s+the\s+missing\s+perspectives\s+and\s+those\s+whose\s+last"
-    r"\s+verdict\s+objected"
+    r"\s+verdict\s+objected,\s+plus\s+review-pr's\s+one\s+regression\s+check"
 )
 
 
 def test_missing_perspective_is_reseated_not_repaneled():
     """PR 1557: a panel missing a perspective re-seats only the missing and
-    objecting perspectives (PRs 1553 and 1471 escalated every re-gaze after a
+    objecting perspectives plus one regression check (PRs 1553 and 1471 escalated every re-gaze after a
     fix). Negative control: the contract without the sentence fails."""
     def has_rule(text: str) -> bool:
         phase6 = text.split("### 6. Return the review result", 1)[1]

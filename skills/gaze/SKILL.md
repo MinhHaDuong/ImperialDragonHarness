@@ -169,9 +169,9 @@ next: REVIEWED → the caller closes the ticket on the branch, then runs /verify
   not count. The `PANEL-INTEGRITY:` line is carried verbatim in the result comment.
 - **Re-seat, not re-panel.** When a panel is missing a perspective (a seat
   did not report, or a re-review after a fix launched no seats), launch only
-  the missing perspectives and those whose last verdict objected, each on the
-  diff since the head the last full panel reviewed; the other perspectives keep
-  their verdicts. The panel is DEGRADED only if a re-seated perspective still
+  the missing perspectives and those whose last verdict objected, plus
+  review-pr's one regression check, each on the diff since the head the last
+  full panel reviewed; the other perspectives keep their verdicts. The panel is DEGRADED only if a re-seated perspective still
   has no report at the bounded deadline. A re-seat round does not count as a
   new round: its posted review is marked `re-seat`, and the next round scopes
   from the last full panel's verdict roster. The controller reads that prior
