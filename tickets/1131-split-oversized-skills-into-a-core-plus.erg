@@ -6,16 +6,17 @@ Author: Minh Ha-Duong
 --- log ---
 2026-10-20T06:32Z Minh Ha-Duong created
 2026-10-21T19:10Z reviewer note raid-premise-check — measured 2026-10-21: gaze 951 -> 230 lines (1143 and 1144 folded review-pr), roar 422 -> 240 plus runbooks (1136), verify-gate 385, raid 571 still read in full and has no references/. Residual scope: split raid into a core plus references read at the phase that needs them (and move its history lines out, taking 1130's raid share); gaze, roar and verify-gate are judged by the author's 'about 150 lines' only if still worth it after raid. Blocked-by 1100 dropped (gaze already reshaped).
+2026-10-21T19:21Z reviewer note amended 2026-10-21 by the author ('Amend'): the 'about 150 lines' target is dropped in favour of the exclusivity test that rules/authoring-skills.md states; raid core measured 571 -> 444 (all remaining phases are read on every run); the gaze and roar dry runs are replaced by a byte comparison, since neither skill is touched here; the gaze title and /review criteria are satisfied as written.
 
 --- body ---
 ## Context
 Line counts on origin/main: gaze 951, raid 509, roar 422, review-pr about 350, verify-adherence about 320. Each is read in full per run. `zotero`, `slides` and `route` already use `references/` to load detail on demand. In gaze the title says "six-phase", the description names four steps, and it calls `/review`, which is not a skill.
 
 ## Exit criteria
-- [ ] gaze, raid and roar split into a core of at most about 150 lines plus `references/` files read at the phase that needs them
-- [ ] Behaviour unchanged: one gaze dry run on a merged PR and one roar dry run give the same verdict and artifacts as before
-- [ ] gaze title, description and phase list agree; the `/review` mention is fixed or removed
-- [ ] Blocked until 1100 reshapes gaze; raid and roar need not wait and may land first
+- [ ] raid is split into a core plus `references/` files read at the phase that needs them: only branches a run uses sometimes move out (`rules/authoring-skills.md`: exclusivity, not length, is the test); measured 571 -> 444 lines in the core, seven references
+- [ ] Behaviour unchanged, shown by a byte comparison of core plus references against the old body (only intended edits differ) and the raid tests passing; gaze and roar were not touched here, so no dry run is owed
+- [x] gaze title, description and phase list agree; the `/review` mention is a deliberate pointer to the native command, so it stays
+- [x] gaze (951 -> 230 lines, tickets 1143/1144) and roar (422 -> 240 plus runbooks, ticket 1136) were shrunk by their own children; verify-gate (385) has no clean one-branch-of-many cut
 
 ## Children
 - 1136 split roar (memory capture and pattern sweep out)
