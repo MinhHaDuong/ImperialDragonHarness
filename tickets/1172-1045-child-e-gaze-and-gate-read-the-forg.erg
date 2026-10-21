@@ -1,0 +1,39 @@
+%erg 0.1
+Title: 1045 child E: gaze and gate read the forge CI result for the head
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T11:31Z reviewer created
+
+--- body ---
+## Context
+Child E of tracker 1045, split from child D (1171) on 2026-10-21 at the author's
+request, because it needs no gate record and removes repeated runs now. The same
+checks run four or five times per head (coder, `/gaze`, the adherence seat,
+`/verify-gate`, forge CI). The forge still runs `.github/workflows/CI.yml` on
+every push, so a conclusion for each head already exists, even though the ruleset
+`main-required-checks` was disabled on 2026-10-21 and nothing waits on it.
+
+Known limit: a forge conclusion is for the branch head, not the merge candidate;
+the candidate run is child A (1156). Known fact: with the ruleset disabled, the
+merge helper merges on arming without waiting for CI (PR 1561 merged five
+seconds before its last check finished), so this ticket does not make CI a gate.
+It only stops `/gaze` and `/verify-gate` from repeating a result that already
+exists.
+
+## Exit criteria
+- [ ] `/gaze` and `/verify-gate` read the forge's check conclusions for the PR
+      head commit (the exact head sha they review) and, when every job of the
+      workflow is complete and green, run only a targeted test run of the files
+      the diff touches instead of the full suite.
+- [ ] Pending, failed, missing, or older-than-head conclusions fall back to the
+      current full run; they are never read as green and never skipped. A positive
+      control (green for this head: no full run) and a negative control (green
+      for an older head, or pending: full run) are tested.
+- [ ] The skills name the capability ("the forge's check conclusion for a
+      commit"), not a tool, and require nothing of a particular agent runtime.
+- [ ] The result each skill reports names what it read (workflow, head sha,
+      conclusion) so the trail shows the run was not repeated and why.
+- [ ] `.github/workflows/CI.yml` is not changed here (trim is child D).
+- [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker.
