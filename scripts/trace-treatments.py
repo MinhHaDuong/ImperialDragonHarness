@@ -42,7 +42,9 @@ PAIR_RE = re.compile(r"(\d{4}-\d{2}-\d{2})=(\d+)")
 
 def parse_treatment(text: str) -> tuple[str | None, dict[str, int]]:
     """Return (class, {date: count}) from the declared body lines only."""
-    body = text.split("--- body ---", 1)[-1]
+    if "--- body ---" not in text:
+        raise ValueError("ticket has no '--- body ---' marker; cannot read Treats:")
+    body = text.split("--- body ---", 1)[1]
     m = TREATS_RE.search(body)
     b = BASELINE_RE.search(body)
     baseline = {d: int(n) for d, n in PAIR_RE.findall(b.group(1))} if b else {}

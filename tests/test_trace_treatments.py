@@ -98,6 +98,17 @@ def test_zero_baseline_and_zero_after_is_unchanged():
     assert r["verdict"] == "unchanged"
 
 
+def test_zero_baseline_with_errors_after_reads_worse_never_improved():
+    t = {
+        "id": "1",
+        "cls": "worktree_guard",
+        "baseline": {"2026-10-09": 0},
+        "merge": MERGE,
+    }
+    r = tt.evaluate(t, _daily("2026-10-11", [1] * 8, "worktree_guard"))
+    assert r["verdict"] == "worse"
+
+
 def test_parse_declared_fields_only():
     text = (
         "%erg 0.1\nTitle: x\n\n--- body ---\n## Treatment\n"
@@ -107,14 +118,29 @@ def test_parse_declared_fields_only():
     cls, base = tt.parse_treatment(text)
     assert cls == "no_such_tool"
     assert base == {"2026-10-20": 26, "2026-10-21": 14}
-    assert tt.parse_treatment("Title: plain\nthe no_such_tool class\n") == (None, {})
+    assert tt.parse_treatment("Title: p\n--- body ---\nthe no_such_tool class\n") == (
+        None,
+        {},
+    )
 
 
-def test_repo_declares_the_three_treatments():
+def test_repo_declares_exactly_one_treatment():
     found = {t["id"]: t["cls"] for t in tt.find_treatments(ROOT, ref=None)}
-    assert found["1167"] == "no_such_tool"
-    assert found["1166"] == "worktree_guard"
-    assert found["1168"] == "write_outside_worktree"
+    assert found == {"1167": "no_such_tool"}
+
+
+def test_causes_match_trace_friction():
+    spec_f = importlib.util.spec_from_file_location(
+        "trace_friction", ROOT / "scripts" / "trace-friction.py"
+    )
+    tf = importlib.util.module_from_spec(spec_f)
+    spec_f.loader.exec_module(tf)
+    assert tt.CAUSES == tuple(tf.CAUSES)
+
+
+def test_missing_body_marker_fails_clearly():
+    with pytest.raises(ValueError, match="--- body ---"):
+        tt.parse_treatment("Title: x\nTreats: no_such_tool\nBaseline: 2026-10-20=1\n")
 
 
 @pytest.mark.integration

@@ -13,12 +13,16 @@ Baseline: 2026-10-20=26 2026-10-21=14
 - `Baseline:` lists `date=errors` pairs, the daily count of that class on the
   days before the merge, taken from the friction series (the traces expire, so
   the baseline is copied into the ticket). Use the days just before the merge.
-  A class already at zero before the merge gets zeros: the verdict then reads
-  `unchanged`, which is the honest outcome.
+  A zero baseline can never read `improved`: with errors afterwards the
+  verdict is `worse`, with none it is `unchanged`. A ticket whose class was
+  already quiet applied no treatment and declares no `Treats:` line.
 
 The script `scripts/trace-treatments.py` reads these lines as declared fields
 only; it never parses prose. The merge date is the date of the first-parent
-commit on `origin/main` that added the ticket under `tickets/closed/`. Verdicts
+commit on the `--ref` branch (default `origin/main`) that added or renamed the
+ticket under `tickets/closed/`, read as its committer date; the first such
+commit wins. The baseline of 1167 (2026-10-20, 2026-10-21) includes the merge
+day itself, while the series after the merge starts the next day. Verdicts
 compare mean errors per day of the class (baseline days against series days
 strictly after the merge date): `improved` (after <= half of before), `worse`
 (after >= 1.5x before), `unchanged`, `too_few_days` (fewer than 7 days after),
