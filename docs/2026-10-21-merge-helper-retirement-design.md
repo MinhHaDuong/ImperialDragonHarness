@@ -5,6 +5,11 @@ Imagine session. v2 folded in an Opus review; v3 folds in Codex and Fable review
 (see "Review trail"). No code or test was changed. Files were read, not run;
 estimates are judgment calls unless marked measured.
 
+**Superseded in part by ticket 1178** (the author's decision, 2026-10-21, to remove
+the helper). Read the "blocked on 1045" premise and the D-delete/D-slim choice as
+history. What stays useful is the edge-case tables, the fact checks and the review
+trail; the findings that bear on 1178 are logged on the ticket.
+
 ## Why this note exists
 
 `tests/test_erg_pr_merge.sh` is the slowest item in a local `make check` (32 s; one
