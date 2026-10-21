@@ -125,7 +125,7 @@ def test_targets_lists_tests_naming_a_changed_path(tmp_path):
     _git(repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "base",
          "--allow-empty")
     base = subprocess.run(["git", "-C", str(repo), "rev-parse", "HEAD"], capture_output=True,
-                          text=True, check=True).stdout.strip()
+                          text=True, check=True, env=child_env()).stdout.strip()
     _git(repo, "add", ".")
     _git(repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "change")
     out = subprocess.run([sys.executable, str(SCRIPT), "targets", base, "--repo-dir", str(repo)],
