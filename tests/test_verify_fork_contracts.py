@@ -801,3 +801,47 @@ def test_ruled_tip_field_has_one_name_across_gate_and_callers():
         found = set(spelling.findall(text))
         assert found == {field}, (name, found)
     assert f"the gate's `{field}` equals `git rev-parse" in (SKILLS / "merge" / "SKILL.md").read_text()
+
+
+def test_merge_checks_three_way_tip_equality_and_conditional_push():
+    """PR 1539 review: erg-pr-merge always runs `git push origin HEAD`, so
+    'pushes nothing' holds only when HEAD == origin/<branch> == ruled tip,
+    read after a fetch."""
+    merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
+    assert "git push origin HEAD" in ERG_PR_MERGE  # premise
+    assert (
+        "`git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>` "
+        "== the gate's `ruled_tip_sha`" in merge
+    )
+    assert "so it pushes no commit of its own" not in merge
+    assert "so the retry pushes nothing" not in merge
+    assert "pushes nothing only when that three-way equality holds" in merge
+
+
+def test_merge_accepted_gaze_result_is_not_tautological():
+    """PR 1539 review: 'Accepted' mirrors raid — present and not stale
+    against the branch tip."""
+    merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
+    assert "its `reviewed_head_sha` is the reviewed head" not in merge
+    assert "its `reviewed_head_sha` is not stale against the branch tip" in merge
+
+
+def test_dashboard_allows_only_the_documented_close_exception():
+    dash = " ".join((SKILLS / "dashboard" / "SKILL.md").read_text().split())
+    assert "a later ticket-close commit from the merge helper is normal" not in dash
+    assert "#1522, #1523" in dash
+
+
+def test_git_rule_rebases_before_round_one_gate_and_syncs_after_gaze():
+    rule = " ".join((REPO / "rules" / "git.md").read_text().split())
+    assert "syncs after `/gaze`" in rule
+    assert "before the round-1 `/verify-gate`" in rule
+    assert "a later rebase changes the ruled tip and spends the PR's single re-gate" in rule
+
+
+def test_gate_tree_is_per_session_and_round_and_repo_is_required():
+    gate = (SKILLS / "verify-gate" / "SKILL.md").read_text()
+    assert 'gate-<pr-number>"' not in gate
+    assert 'gate_tree="$primary_root/.claude/worktrees/gate-<pr-number>-<session-id>-r<round>"' in gate
+    assert "`<pr-number>` alone" not in gate
+    assert '"no repo argument"' in gate

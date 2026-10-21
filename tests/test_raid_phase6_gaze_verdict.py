@@ -278,3 +278,24 @@ def test_denial_recovery_respects_the_gate_budget():
         in " ".join(_per_ticket().split())
     )
     assert "gaze phase outputs 2–5" in " ".join(_per_ticket().split())
+
+
+def test_phase6_cites_an_existing_output_shape():
+    """PR 1539 review: skills/gaze/references/output.md does not exist; the
+    output shape lives in skills/gaze/SKILL.md § Output shape."""
+    text = RAID.read_text()
+    assert "skills/gaze/references/output.md" not in text
+    assert "`skills/gaze/SKILL.md` § Output shape" in " ".join(_per_ticket().split())
+    assert "## Output shape" in (ROOT / "skills" / "gaze" / "SKILL.md").read_text()
+
+
+def test_phase7_checks_local_remote_and_ruled_tip_before_the_helper():
+    """PR 1539 review: erg-pr-merge pushes HEAD, so 'pushes no close commit'
+    holds only when local HEAD, origin/<branch> and ruled_tip_sha agree,
+    checked after a fetch."""
+    phase7 = " ".join(_slice("## Phase 7: Merge", "### Merge-permission denial").split())
+    assert (
+        "`git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>` "
+        "== the gate's `ruled_tip_sha`" in phase7
+    )
+    assert "pushes no close commit, and merges" not in phase7
