@@ -100,7 +100,11 @@ validator only), so the trace stays uniform and the cost stays small. **Pending*
 ## Direction
 
 The forge stays the central origin: one place to pull from, and the host for
-backup, coordination and publication. There is no plan to move merging off it.
+backup, coordination and publication. The host is GitHub, kept on purpose: most
+web development tools integrate with it, and the author does not want to give
+that up. There is no plan to move merging off it. A peer-to-peer git model or a
+self-hosted forge on the author's own machine is not ruled out; it is not
+planned either, and nothing here should depend on the host being GitHub.
 Some of what lives on the forge today is temporary and is expected to move into
 git, pinned to a revision, as the dyne format arrives (git-erg tickets 0270,
 0272, 0273): the verdicts and review results now posted as pull-request comments,
