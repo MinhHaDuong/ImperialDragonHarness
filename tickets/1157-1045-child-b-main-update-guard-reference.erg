@@ -6,6 +6,7 @@ Blocked-by: 1156
 
 --- log ---
 2026-10-20T19:23Z reviewer created
+2026-10-21T11:54Z reviewer Started in parallel with 1156 at the author's request, overriding Blocked-by: 1156 (PR #1566 reads the gate record by presence only, ref refs/notes/gate). PR #1566 ships the journal hook, an opt-in refusal and the sweep; refusal is on only with `git config idh.mainGuard enforce` (default warn). 1157 stays open until the author turns enforce on and a follow-up makes enforce the default; PR #1566 does not close it.
 
 --- body ---
 ## Context
@@ -13,7 +14,7 @@ Child B of tracker 1045. Blocked by child A (the hook refuses an update of `main
 
 ## Exit criteria
 - [ ] A `reference-transaction` hook journals every update of `main`: time, OS user, host, command lines of the process chain, git identity
-- [ ] The hook refuses an update of `main` that is not a gated merge, verified from a second worktree; its installation is verified under `core.hooksPath`
+- [ ] The hook refuses an update of `main` that is not a gated merge in enforce mode (opt-in per clone, `git config idh.mainGuard enforce`; the default is warn), verified from a second worktree; its installation is verified under `core.hooksPath`. Turning enforce on, and later making it the default, is the author's act; this ticket stays open until then
 - [ ] A periodic sweep checks that each commit that entered `main` is the merge of a PR whose required checks were green (or, once built, of a gate record) and reports any that is not
 - [ ] Nothing here requires a particular agent runtime
 - [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker, else split

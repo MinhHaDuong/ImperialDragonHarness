@@ -67,3 +67,11 @@ smart-test:
 
 smart-refresh:
 	$(RUN) python3 -m scripts.smart_testing --refresh
+
+# Main-update guard sweep (ticket 1157): every commit that entered origin/main
+# must carry a gate record or be a PR merge whose required checks were green.
+# Exit 1 on a finding, 2 when the forge could not be read. Runtime-free: run it
+# from cron or by hand (docs/2026-10-21-main-update-guard.md).
+.PHONY: main-sweep
+main-sweep:
+	$(RUN) ./scripts/main_sweep.py --fetch --since "8 days ago" --max-count 1000
