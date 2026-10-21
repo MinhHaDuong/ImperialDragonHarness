@@ -44,11 +44,13 @@ whether it is this skill's own or a sub-agent's.
 narration with no `result:` block (REVIEWED/FINDINGS/ESCALATE), treat it as a
 non-result: do **not** relaunch the reviewer battery. Wait for the background
 reviewer notifications and read the review comment they posted on the merge
-request; with that in hand, run `/verify-gate <pr> repo=<caller's checkout>`;
-the gate creates its own worktree on the PR head. The gate reads a
+request. That comment is evidence, not a gaze result: without an accepted gaze
+result there is no gate. Re-run `/gaze <pr>` once if the liveness window below
+allows it; otherwise park the PR and ESCALATE to the author, as `raid` and
+`merge` do for a missing result. Once a result is accepted, the gate reads a
 waiver only from an already-posted waived `circuit_breaker` header in the PR's
-comments, so the recovery needs no extra argument. If none was posted, a waived
-15+ file PR is ESCALATE there (fail-safe), as is an un-waived one.
+comments; if none was posted, a waived 15+ file PR is ESCALATE there
+(fail-safe), as is an un-waived one.
 
 **Fork liveness.** Once the review comment has posted on the PR, the caller must
 see the gaze result (returned or posted as a PR comment) within
@@ -62,7 +64,7 @@ result, review worktree mtime frozen).
 
 **On window expiry, do not re-run phases 2–5.** Check three completion markers:
 (1) a posted gaze result comment, (2) branch-tip motion on the PR branch, (3) the
-review worktree's file mtime. All stale/absent → invoke `/verify-gate` directly,
-with the same invocation form as **Caller-side recovery** (one recipe, stated
-once). The fallback skips only the redundant phase 2–5 re-execution; verify-gate
-runs at full rigor.
+review worktree's file mtime. All stale/absent → no accepted gaze result, so no gate: park the PR and
+ESCALATE to the author (the window is spent, so no re-run). The check skips only
+the redundant phase 2–5 re-execution; it never substitutes a direct
+`/verify-gate` for the missing result.
