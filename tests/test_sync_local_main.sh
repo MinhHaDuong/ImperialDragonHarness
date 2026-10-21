@@ -9,7 +9,7 @@ set -euo pipefail
 # project .env loader inside the very process whose sync behaviour is under
 # test, where an ambient value could mask it. Nothing in this suite reads
 # project .env values, so clear the loader suite-wide
-# (tests/test_bash_tests_are_hermetic.sh) rather than annotate 20+ spawns.
+# (rules/coding-bash.md) rather than annotate 20+ spawns.
 export BASH_ENV=
 
 cd "$(dirname "$0")/.."

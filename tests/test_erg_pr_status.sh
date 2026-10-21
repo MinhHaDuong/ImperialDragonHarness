@@ -4,7 +4,7 @@
 # part greps the merge tooling and the skills that call it for waiting
 # constructs (sleep, pgrep -, --watch, timeout, retry loops).
 set -euo pipefail
-# Hermetic children (ticket 0875): see tests/test_bash_tests_are_hermetic.sh.
+# Hermetic children (ticket 0875): see rules/coding-bash.md.
 export BASH_ENV=
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)

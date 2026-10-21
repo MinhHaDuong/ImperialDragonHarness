@@ -16,7 +16,7 @@ set -euo pipefail
 # `bash "$SCRIPT"` against stubbed git/gh, and such a child inherits BASH_ENV —
 # re-running the project .env loader inside the very process whose merge
 # decisions are under test. Nothing here reads project .env values, so clear
-# the loader suite-wide (tests/test_bash_tests_are_hermetic.sh).
+# the loader suite-wide (rules/coding-bash.md).
 export BASH_ENV=
 
 cd "$(dirname "$0")/.."
