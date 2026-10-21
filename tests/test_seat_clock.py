@@ -52,6 +52,23 @@ def test_failed_start_and_failed_exit_are_named(tmp_path):
     assert not (tmp_path / 'b.md').exists()
 
 
+def test_seat_that_writes_its_own_report_keeps_it(tmp_path):
+    out = tmp_path / 'correctness.md'
+    seat = (f'printf "verdict: clear\\n" > "{out}.part" && mv "{out}.part" "{out}" '
+            '&& echo "chatter after the report"')
+    result = run('run', '--cap', '20', '--out', str(out), '--', 'bash', '-c', seat)
+    assert result.returncode == 0
+    assert result.stdout.startswith('correctness: reported in ')
+    assert out.read_text() == 'verdict: clear\n'
+
+
+def test_missing_output_directory_is_a_no_report_line(tmp_path):
+    result = run('run', '--cap', '5', '--out', str(tmp_path / 'absent' / 'x.md'), '--', 'echo', 'hi')
+    assert result.returncode == 1
+    assert result.stdout.startswith('x: no report (')
+    assert 'Traceback' not in result.stderr
+
+
 def test_roster_names_every_manifest_seat(tmp_path):
     manifest = tmp_path / 'manifest.txt'
     manifest.write_text('correctness\tm\tf\tr\nscope\tm\tf\tr\nred-team\tm\tf\tr\n')
@@ -60,6 +77,10 @@ def test_roster_names_every_manifest_seat(tmp_path):
     os.utime(tmp_path / 'correctness.md', (launched + 95, launched + 95))
     (tmp_path / 'red-team.md.status').write_text('red-team: no report (timed out after 600s)\n')
     (tmp_path / 'xfam.md.status').write_text('xfam: reported in 300s\n')
+    (tmp_path / 'xfam.md').write_text('verdict: clear\n')
+    stale = tmp_path / 'scope.md.status'  # a past run's line, older than this manifest
+    stale.write_text('scope: reported in 10s\n')
+    os.utime(stale, (launched - 60, launched - 60))
     result = run('roster', str(tmp_path))
     assert result.returncode == 1  # a planned seat has no report
     assert result.stdout.splitlines() == [
