@@ -12,7 +12,7 @@ Rules:
 
 Skills:
 - `skills/gaze/references/prose-panel.md` — the panel protocol your launch
-  follows (with `skills/gaze/references/panel.md`): anchor helper, artifact discipline,
+  follows (with `skills/gaze/references/panel.md`): anchor HEAD, artifact discipline,
   missing-is-missing.
   You have no Skill tool: read that file with Read.
 

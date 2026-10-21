@@ -45,7 +45,8 @@ The code perspectives, from which the orchestrator picks:
 
 **Fan-out preflight.** Check that the delegation tool is available before
 launching. Spawn success is not a guarantee the agent exists: under a silent
-child cap a spawn returned success for seats that never listed (PR #1143). When
+child cap a spawn returned success for seats that never listed
+(merge request #1143). When
 the runtime can list agents, poll that list; the manifest and the landed
 artifacts are the source of truth for what ran. Never run the perspectives
 sequentially yourself. When the tool is absent because this fork is itself a

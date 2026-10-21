@@ -13,7 +13,7 @@ Rules:
 
 Skills:
 - `skills/gaze/references/panel.md` — the panel protocol your launch
-  follows: manifest, `.part`-then-rename artifact, anchor helper,
+  follows: manifest, `.part`-then-rename artifact, anchor HEAD,
   missing-is-missing. You have no Skill tool: read that file with Read.
 
 Charter:
