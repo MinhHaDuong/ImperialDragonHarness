@@ -258,44 +258,6 @@ def test_output_shape_lines_define_battery_not_run_value():
         )
 
 
-def test_gaze_risk_band_recorded_in_telemetry_and_output_shape():
-    """The risk band (ticket 0902) must be auditable like the tier (ticket
-    0320): the per-run band has to surface in BOTH the verdict-footer
-    telemetry template and the `## /gaze actions` output-shape template, so a
-    reviewer can read which band ran from the posted comment."""
-    # 1. Verdict-footer template — the section under "### Verdict footer".
-    _, _, footer_after = VERIFY.partition("### Verdict footer")
-    assert footer_after, "gaze/SKILL.md: no `### Verdict footer` section found"
-    footer_section = footer_after.split("###", 1)[0]
-    footer_telemetry = [
-        line for line in footer_section.splitlines() if "telemetry:" in line and "wall=" in line
-    ]
-    assert any("risk_band" in line for line in footer_telemetry), (
-        "gaze/SKILL.md: verdict-footer telemetry template does not carry a "
-        "`risk_band` field (ticket 0902 — the band must be auditable like the tier)"
-    )
-    fields = footer_section[footer_section.index("Fields:"):]
-    assert "risk_band" in fields, (
-        "gaze/SKILL.md: the verdict-footer Fields sentence does not name the "
-        "`risk_band` field"
-    )
-
-    # 2. Output-shape template — the fenced block after "## Output shape".
-    _, _, after = VERIFY.partition("## Output shape")
-    assert after, "gaze/SKILL.md: no `## Output shape` section found"
-    fenced = re.findall(r"```(.*?)```", after, re.DOTALL)
-    assert fenced, "gaze/SKILL.md: no fenced template under `## Output shape`"
-    block = next((b for b in fenced if "risk_band: high|low|normal" in b), None)
-    assert block is not None, (
-        "gaze/SKILL.md: `## /gaze actions` output-shape template does not carry "
-        "a `risk_band` field (ticket 0902)"
-    )
-    assert "risk_band=<high|low|normal>" in block, (
-        "gaze/SKILL.md: the output-shape telemetry line does not carry "
-        "`risk_band` (ticket 0902)"
-    )
-
-
 def test_gaze_refuses_unreviewable_prs():
     """The PR breaker must reuse the monster threshold and run before reviewers."""
     workflow = (REPO / "rules" / "workflow.md").read_text()

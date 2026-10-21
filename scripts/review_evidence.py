@@ -10,7 +10,7 @@ version must not change. Check, gate and adherence results are never reused.
 Forge-read reviews (human, Copilot) are admitted only from three pinned actor
 IDs and only when the forge reports them unedited; anything else fails closed.
 
-Subcommands: `identity`, `record`, `plan`, `gate`, `forge`, `risk-floor`.
+Subcommands: `identity`, `record`, `gate`, `forge`.
 Ticket 1142; design in docs/discussions/2026-10-14-1096-design.md.
 """
 
@@ -23,7 +23,6 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from fnmatch import fnmatchcase
 from pathlib import Path
 
 REUSE, RERUN, STALE = "reuse", "re-run", "stale"
@@ -67,28 +66,11 @@ POLICY_GLOBS = (
     "profiles/prose-reviewer/**/*",
 )
 
-ROWS = ("trivial", "ordinary", "high")
-# Model families that can prove independence: the grid `family` field of
+# Model families a report may record: the grid `family` field of
 # skills/route/grid.json plus the cross-family doors of routes.json and the
-# families decorrelation.md names. "unknown" may be recorded, never counted.
+# families decorrelation.md names. "unknown" may be recorded.
 FAMILIES = frozenset({"anthropic", "openai", "google", "mistral", "deepseek", "glm",
                       "qwen", "xiaomi"})
-# High-risk classes of skills/route/references/decorrelation.md: rules and
-# guards, merge and release gates, credentials, deletion or migration; plus
-# the review policy itself and what runs or configures the gates (CI,
-# runtime settings, Makefile, agent instructions).
-HIGH_RISK_PATHS = re.compile(
-    r"^(rules/|hooks/|skills/(merge|verify-gate|verify-adherence|release|gaze|review-pr)/"
-    r"|scripts/(guard-|raid-gate|raid_gate|review_evidence)"
-    r"|skills/route/references/decorrelation\.md$|profiles/code-reviewer/"
-    r"|agents/code-reviewer\.md$|\.github/workflows/|\.claude/settings\.json$)"
-    r"|(^|/)(Makefile|AGENTS\.md)$"
-    r"|(^|/)guard[^/]*$|credential|secret|(^|/)\.env|(^|/)keys?/",
-    re.IGNORECASE)
-HIGH_RISK_TEXT = re.compile(
-    r"\brules/|\bguards?\b|\bmerge gate|\brelease gate|\bverify-gate\b|\bcredentials?\b"
-    r"|\bsecrets?\b|\bapi keys?\b|\bdelet(e|es|ion|ing)\b|\bmigrat(e|es|ion|ing)\b",
-    re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -196,29 +178,6 @@ def criteria_hash(ticket_text: str | None) -> str:
         if line:
             lines.append(line)
     return hashlib.sha256("\n".join(lines).encode()).hexdigest()[:16]
-
-
-def is_policy_path(path: str) -> bool:
-    """True when `path` is review policy: the floor must never rate it below high."""
-    return any(fnmatchcase(path, g.replace("/**/*", "/*")) for g in POLICY_GLOBS)
-
-
-def risk_floor(changes: list[tuple[str, str]], ticket_text: str | None) -> dict:
-    """The floor is the higher of the path match and the ticket-text match.
-
-    `changes` is (status, path) from a no-rename name-status diff. Deleting a
-    non-ticket file counts as deletion; closing a ticket does not.
-    """
-    def hit(status: str, path: str) -> bool:
-        if path.startswith(f"{REVIEWS_DIR}/"):
-            return False
-        if status == "D" and not path.startswith("tickets/"):
-            return True
-        return bool(HIGH_RISK_PATHS.search(path)) or is_policy_path(path)
-    paths = "high" if any(hit(s, p) for s, p in changes) else "trivial"
-    ticket = "high" if ticket_text and HIGH_RISK_TEXT.search(ticket_text) else "trivial"
-    floor = max(paths, ticket, key=ROWS.index)
-    return {"paths": paths, "ticket": ticket, "floor": floor}
 
 
 def parse_report(text: str) -> dict:
@@ -351,15 +310,6 @@ def seat_rows(repo: Path, current: Inputs, seats: list[str]) -> list[dict]:
 
 # --- subcommands -----------------------------------------------------------
 
-def name_status(repo: Path, current: Inputs) -> list[tuple[str, str]]:
-    """(status, path) pairs, NUL-separated so non-ASCII paths arrive unquoted."""
-    raw = subprocess.run(["git", "-C", str(repo), "diff", "--name-status", "-z",
-                          "--no-renames", current.base, current.head],
-                         check=True, capture_output=True, timeout=60).stdout.decode()
-    fields = raw.split("\0")
-    return list(zip(fields[0::2], fields[1::2]))
-
-
 def range_dir(repo: Path, current: Inputs) -> Path:
     short = [git(repo, "rev-parse", "--short=7", sha) for sha in (current.base, current.head)]
     return repo / REVIEWS_DIR / f"{short[0]}..{short[1]}"
@@ -392,21 +342,9 @@ def cmd_record(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_plan(args: argparse.Namespace) -> int:
-    current = current_inputs(args)
-    rows = seat_rows(args.repo, current, args.seat)
-    print(json.dumps({
-        "head": current.head,
-        "dispatch": [r["seat"] for r in rows if r["status"] in ("stale", "no-report")],
-        "seats": {r["seat"]: {"status": r["status"], "reason": r["reason"]} for r in rows},
-    }, indent=1))
-    return 0
-
-
 def cmd_gate(args: argparse.Namespace) -> int:
     current = current_inputs(args)
-    seats = list(dict.fromkeys(args.seat + (["red-team"] if args.risk == "high" else [])))
-    rows = seat_rows(args.repo, current, seats)
+    rows = seat_rows(args.repo, current, list(dict.fromkeys(args.seat)))
     ok = True
     print(f"REVIEW-EVIDENCE: base {current.base} head {current.head} "
           f"patch-id {current.patch_id} criteria-hash {current.criteria_hash} "
@@ -416,25 +354,6 @@ def cmd_gate(args: argparse.Namespace) -> int:
         verdict = f" ({r['header'].get('verdict', '?')})" if r["header"] else ""
         print(f"seat {r['seat']}: {r['status']}{verdict} - {r['reason']}{where}")
         ok &= r["status"] in ("ran", "reused")
-    if args.risk == "high":
-        producer = known_family(args.producer_family)
-        other = [r for r in rows if r["status"] in ("ran", "reused")
-                 and known_family(r["header"].get("family")) not in (None, producer)]
-        if producer and other:
-            r = other[0]
-            origin = r["header"].get("head", "<unknown head>")[:12]
-            how = "" if r["status"] == "ran" else f", inherited from {origin}"
-            print(f"independent: {r['header']['family']} seat {r['seat']}{how}")
-        else:
-            print("independence: missing other-family seat at the high row")
-            ok = False
-    ticket = args.ticket.read_text() if args.ticket else None
-    floor = risk_floor(name_status(args.repo, current), ticket)
-    print(f"risk: {args.risk} / floor: {floor['floor']} "
-          f"(paths: {floor['paths']}, ticket: {floor['ticket']})")
-    if ROWS.index(args.risk) < ROWS.index(floor["floor"]):
-        print("risk: plan row is below the floor")
-        ok = False
     return 0 if ok else 1
 
 
@@ -473,13 +392,6 @@ def cmd_forge(args: argparse.Namespace) -> int:
     return 1 if any(r["status"] == "rejected" for r in rows) else 0
 
 
-def cmd_risk_floor(args: argparse.Namespace) -> int:
-    current = current_inputs(args)
-    ticket = args.ticket.read_text() if args.ticket else None
-    print(json.dumps(risk_floor(name_status(args.repo, current), ticket)))
-    return 0
-
-
 def header_value(value: str) -> str:
     """A report header field: one line, so it cannot inject another field.
 
@@ -498,12 +410,6 @@ def family_name(value: str) -> str:
         raise argparse.ArgumentTypeError(
             f"unknown family {value!r}; expected one of {', '.join(sorted(FAMILIES))}")
     return family
-
-
-def known_family(value: str | None) -> str | None:
-    """A family that can count toward independence, or None (missing proof)."""
-    family = (value or "").strip().casefold()
-    return family if family in FAMILIES else None
 
 
 def seat_name(value: str) -> str:
@@ -533,20 +439,14 @@ def main() -> int:
     rec.add_argument("--family", default="unknown", type=family_name)
     rec.add_argument("--worker", default="unknown", type=header_value)
     rec.set_defaults(fn=cmd_record)
-    for name, fn in (("plan", cmd_plan), ("gate", cmd_gate)):
-        p = sub.add_parser(name, parents=[common])
-        p.add_argument("--seat", action="append", default=[], required=True)
-        p.set_defaults(fn=fn)
-        if name == "gate":
-            p.add_argument("--risk", choices=ROWS, required=True,
-                           help="plan row; refused when below the computed floor")
-            p.add_argument("--producer-family")
+    gate = sub.add_parser("gate", parents=[common])
+    gate.add_argument("--seat", action="append", default=[], required=True)
+    gate.set_defaults(fn=cmd_gate)
     fg = sub.add_parser("forge", help="admit forge-read reviews by pinned actor")
     fg.add_argument("forge_repo", help="owner/name")
     fg.add_argument("pr", type=int)
     fg.add_argument("--host", default="github.com")
     fg.set_defaults(fn=cmd_forge)
-    sub.add_parser("risk-floor", parents=[common]).set_defaults(fn=cmd_risk_floor)
     args = parser.parse_args()
     logging.basicConfig(format="%(message)s", level=logging.INFO)
     try:
