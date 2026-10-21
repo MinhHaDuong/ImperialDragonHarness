@@ -22,6 +22,7 @@
 | `/lair` | End-of-day wrap-up: housekeeping, push branches, run tests, refresh STATE, offer an autonomous session. Not for one merged task (/roar) or a mid-session check (/perch). |
 | `/molt` | Repo housekeeping that acts: git sync, yawn, fix-now repairs, tickets for findings. Safe interactively or in automated sweeps. Not for a plain check (/yawn). |
 | `/perch` | Mid-session orientation: summarize what's done, surface unresolved points, assess clear-readiness. Not for end-of-day (/lair) or post-merge (/roar) wrap-up. |
+| `/pulse` | Testing expert for slow, flaky or stale test gates; author-called only. |
 | `/release` | Pre-release audit, GPG tag signing, and download-URL update for a target repo. Runs audits autonomously; pauses at the human-only signing step. |
 | `/roar` | Post-task wrap-up after a merge: reflect, capture significant facts, update state, clean task branches. Not for consolidating or auditing memory (/hoard) or ending the day (/lair). |
 | `/yawn` | Repo healthcheck, reports first, fixes on request: git hygiene, test status, doc freshness; degrades without project conventions. Not for unprompted fixes (/molt). |

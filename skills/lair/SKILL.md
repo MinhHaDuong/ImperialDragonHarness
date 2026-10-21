@@ -96,3 +96,12 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     finish. Do not ask a question, wait for a response, launch hoard or mark
     the experiences processed. Below the
     threshold, omit this suggestion. No timer or automatic invocation.
+13. **Suggest a testing consultation when the traces show a speed bump.**
+    From the primary checkout, run the survey over the last seven days:
+    `python3 "$IDH_ROOT/scripts/pulse_traces.py" survey --project "$(git rev-parse --show-toplevel)"`.
+    Carry what it prints into the final summary as an offer of `/pulse`; the
+    author accepts or not. It prints nothing when it read the traces and found
+    no gate that waited long, and a line starting `pulse: not checked` or
+    `pulse: checked` when it could not tell: pass that line on, since silence
+    would otherwise read as an all-clear. Proposed, never run automatically:
+    do not launch `/pulse`, ask a question or open a ticket for it.
