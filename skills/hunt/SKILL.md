@@ -120,17 +120,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 6. Write the first test from the **Test** section of the ticket.
 7. Run `make check-fast` — confirm the test fails.
 8. Announce `[Plan → Execute]`, then implement until `make check-fast` (or the affected test file alone) passes — that is the loop gate. The project's pre-PR gate runs once immediately before step 10 opens the PR — not per edit.
-   For a pytest project, prefer cached feedback during this edit loop:
-   `uv run --with pytest-testmon==2.2.0 python "$IDH_ROOT/scripts/smart_testing.py" --root "$PWD"`.
-   This uses the selected harness helper against the project's checkout and
-   Python environment, with all cost tiers eligible. Follow its
-   [input declarations and live-state boundaries](../../tests/smart-testing/README.md).
-   Configure indirect inputs for data-backed/subprocess suites before using
-   cached feedback; preserve the project's data preparation and environment.
-   Keep the direct failing-test confirmation in step 7. If the helper reports
-   unsupported pytest options or is unavailable, retain the existing loop check;
-   a test failure is not a reason to bypass it. Non-pytest checks and the
-   project's pre-PR gate remain as declared.
+   Do not swap a cached or selected result for step 7's failing-test confirmation or for the project's declared gates. A loop gate slow enough to hurt is a symptom to name in the handoff; the author decides whether to call `/pulse`.
 9. Pre-PR self-gate: run `/verify-adherence <branch>` (the branch created in step 4).
    - Clean → proceed to step 10. Note adherence passed in the merge-request description so `/gaze` can skip the mechanical phase on its next pass (gaze reviews; `/verify-gate` gates).
    - Blockers → decide per blocker:
