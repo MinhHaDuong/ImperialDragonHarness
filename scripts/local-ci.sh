@@ -71,7 +71,8 @@ start_service
 ensure_image
 
 # act's default copy drops .git, so run from a real clone bind-mounted into the
-# container. Origin points at the forge so `gh` resolves {owner}/{repo}.
+# container. This clone is also the start-of-run snapshot every job clones from,
+# so a commit made while the jobs run cannot change what a late job tests. Origin points at the forge so `gh` resolves {owner}/{repo}.
 clone="$work/clone"
 git clone --quiet --no-hardlinks "$root" "$clone"
 
@@ -142,7 +143,7 @@ run_job() {
         echo skip > "$work/$job.rc"
         return 0
     fi
-    git clone --quiet --no-hardlinks "$root" "$jclone"
+    git clone --quiet --no-hardlinks "$clone" "$jclone"
     if [ "$forge" -eq 1 ]; then
         git -C "$jclone" remote set-url origin "$origin"
         git -C "$jclone" fetch --quiet origin
