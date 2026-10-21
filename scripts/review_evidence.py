@@ -23,6 +23,7 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from fnmatch import fnmatchcase
 from pathlib import Path
 
 REUSE, RERUN, STALE = "reuse", "re-run", "stale"
@@ -189,6 +190,11 @@ def criteria_hash(ticket_text: str | None) -> str:
     return hashlib.sha256("\n".join(lines).encode()).hexdigest()[:16]
 
 
+def is_policy_path(path: str) -> bool:
+    """True when `path` is review policy: the floor must never rate it below high."""
+    return any(fnmatchcase(path, g.replace("/**/*", "/*")) for g in POLICY_GLOBS)
+
+
 def risk_floor(changes: list[tuple[str, str]], ticket_text: str | None) -> dict:
     """The floor is the higher of the path match and the ticket-text match.
 
@@ -200,7 +206,7 @@ def risk_floor(changes: list[tuple[str, str]], ticket_text: str | None) -> dict:
             return False
         if status == "D" and not path.startswith("tickets/"):
             return True
-        return bool(HIGH_RISK_PATHS.search(path))
+        return bool(HIGH_RISK_PATHS.search(path)) or is_policy_path(path)
     paths = "high" if any(hit(s, p) for s, p in changes) else "trivial"
     ticket = "high" if ticket_text and HIGH_RISK_TEXT.search(ticket_text) else "trivial"
     floor = max(paths, ticket, key=ROWS.index)

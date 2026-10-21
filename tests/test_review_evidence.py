@@ -490,6 +490,21 @@ def test_review_policy_paths_raise_the_floor(path):
     assert re_mod.risk_floor([("M", path)], None)["paths"] == "high"
 
 
+@pytest.mark.parametrize("glob", re_mod.POLICY_GLOBS)
+def test_every_policy_glob_raises_the_floor(glob):
+    sample = glob.replace("**/*", "x").replace("*", "x")
+    assert re_mod.risk_floor([("M", sample)], None)["paths"] == "high", sample
+
+
+@pytest.mark.parametrize("path", [
+    "profiles/gate-seat/PROFILE.md", "agents/gate-seat.md", "agents/adherence-seat.md",
+    "skills/review-pr-prose/SKILL.md", "agents/prose-reviewer.md",
+    "agents/gaze-pr-review.md",
+])
+def test_seat_and_prose_review_contracts_raise_the_floor(path):
+    assert re_mod.risk_floor([("M", path)], None)["paths"] == "high"
+
+
 def test_forge_node_without_edit_status_counts_as_edited():
     node = {"__typename": "PullRequestReview", "author": {"login": "h", "id": HUMAN_ID}}
     rows = re_mod.classify_forge(forge_payload(reviews=[node]), "github.com")
