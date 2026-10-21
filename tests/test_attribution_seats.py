@@ -99,3 +99,28 @@ def test_unobserved_model_needs_masked_evidence(tmp_path, reader):
         "model=anthropic/example-opus",
         "model-state=runtime-masked · model-evidence=docs/evidence.md:3")
     reader.parse_pr_body(masked.stdout)
+
+
+def test_multi_word_role_is_one_seat(tmp_path, reader):
+    result = run_seats(tmp_path, RESULT.replace("seat: correctness", "seat: Red team"), BODY)
+    assert result.returncode == 0, result.stderr
+    assert reviewer_lines(result.stdout)[0] == EXPECTED[0].replace("seat=correctness", "seat=Red team")
+    assert reader.parse_pr_body(result.stdout)["reviewers"][0]["seat"] == "Red team"
+
+
+def test_invalid_seat_identity_fails_that_seat_only(tmp_path):
+    result = run_seats(tmp_path, RESULT.replace("model=anthropic/example-opus", "model=opus"), BODY)
+    assert result.returncode == 1
+    assert "capture failure: seat correctness" in result.stderr
+    assert reviewer_lines(result.stdout) == EXPECTED[1:]
+
+
+def test_failures_are_logged_when_the_body_has_no_block(tmp_path):
+    result = run_seats(tmp_path, "## /gaze result\n\ntelemetry: agents=6\n", "Summary.\n")
+    assert result.returncode == 1
+    assert "no seat" in result.stderr
+    blockless = run_seats(tmp_path, RESULT.replace("model=anthropic/example-opus", "model=not observed"),
+                          "Summary.\n")
+    assert blockless.returncode == 1
+    assert "capture failure: seat correctness" in blockless.stderr
+    assert "--pr and --project" in blockless.stderr

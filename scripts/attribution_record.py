@@ -248,7 +248,7 @@ def append_to_pr(pr, line, project):
     raise ValueError(f"PR #{pr} body lost the appended line twice; append it by hand")
 
 
-SEAT = re.compile(r"seat: (\S+) · runtime=(\S+) · family=(\S+) · route=(\S+) · model=([^·]+?) · status: (ran|failed|skipped)")
+SEAT = re.compile(r"seat: ([^·=:]*[^\s·=:]) · runtime=(\S+) · family=(\S+) · route=(\S+) · model=([^·]+?) · status: (ran|failed|skipped)")
 NOT_OBSERVED = "not observed"
 
 
@@ -288,7 +288,11 @@ def seat_lines(results, body, masked_evidence=None):
             continue
         line = (f"reviewer: step=review · seat={seat} · runtime={runtime} · {model_field}"
                 f" · effort=not-stated · route={route} · independence=not-stated · status: {status}")
-        identity(line[10:], strict=True)
+        try:
+            identity(line[10:], strict=True)
+        except ValueError as error:
+            failures.append(f"seat {seat}: {error}")
+            continue
         lines.append(line)
     failures += [f"seat {name} is in the PR body but not in the review result" for name, n in present.items() if n]
     return lines, failures
@@ -303,13 +307,13 @@ def append_seats(args):
     else:
         results, body = args.seats.read_text(), sys.stdin.read()
     lines, failures = seat_lines(results, body, args.masked_evidence)
+    for failure in failures:
+        LOG.error("attribution-record: capture failure: %s", failure)
     if args.seats_pr:
         if lines:
             append_to_pr(args.seats_pr, "\n".join(lines), args.project)
     else:
         sys.stdout.write(append_line(body, "\n".join(lines), args.pr, args.project) if lines else body)
-    for failure in failures:
-        LOG.error("attribution-record: capture failure: %s", failure)
     return 1 if failures else 0
 
 

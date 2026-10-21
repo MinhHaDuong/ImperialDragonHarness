@@ -70,7 +70,7 @@ seat: <role> · runtime=<id> · family=<family> · route=<token> · model=<id as
 ```
 
 One `seat:` line per review seat launched or planned, retries included, at
-column 0 in exactly this shape: `/roar` writes the PR body's `reviewer:` lines
+column 0 in exactly this shape (a role may hold spaces, never `·`, `=` or `:`): `/roar` writes the PR body's `reviewer:` lines
 from them (`attribution_record.py --seats-pr`, ticket 1155), and a seat missing
 here is a capture failure. A requested model name is not an observed id.
 

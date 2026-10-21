@@ -49,6 +49,12 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
    A failed authentication is a named failed attempt, not a clean review.
    No initial `defect-confirmed:` placeholder is written.
 
+   Before reading the body, run `attribution_record.py --seats-pr <N>
+   --project <name>` (ticket 1155): it joins all the PR's `/gaze result`
+   comments, each `seat:` line one attempt, appends the `reviewer:` lines the
+   block lacks (creating the block if absent), and exits 1 naming each capture
+   failure; report them.
+
    When the merged PR body carries an `attribution` block (ticket 1151), copy
    it instead of rebuilding it: read the merged PR's final body from the forge,
    not the commit message, which predates late appends
@@ -56,10 +62,7 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
    and pipe it through
    `attribution_record.py --extract --merged <merge-date>`, which swaps
    `pending` for the merge date; stream its output to `--capture` below.
-   Complete only what the block lacks, from the review trail. First run
-   `attribution_record.py --seats-pr <N>` (ticket 1155): it appends the
-   `reviewer:` lines the `/gaze result` comments' `seat:` lists name and the
-   block lacks, and exits 1 naming each capture failure; report them.
+   Complete only what the block lacks, from the review trail.
 
    Read identities, attempt outcomes and adoption decisions from the actual
    review trail (session outputs or durable PR review comments), never from
