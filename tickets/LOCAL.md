@@ -19,6 +19,7 @@ Forge-specific calls are isolated behind `# harness-extension-point`.
 
 ## Close claims
 
-`erg-github verify` is not installed here. Close claims are enforced at merge by
-`erg-pr-merge`, which runs `erg close` on the ticket named in the PR's
-`**Ticket:**` line (`/merge`).
+`erg-github verify` is not installed here. Close claims are executed by the
+`/merge` recipe's close step, which runs `erg close` on the ticket named in the
+PR's `**Ticket:**` line, and audited afterwards by
+`skills/roar/check-close-claims.sh`.
