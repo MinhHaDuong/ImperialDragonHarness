@@ -27,7 +27,10 @@
 # Exit status: 0 all selected jobs passed (skips allowed unless strict);
 # 1 a job failed; 2 the setup or the job list is wrong; 3 the repository has no
 # workflow at HEAD, so there is nothing to run. `act -j` honours only the last
-# -j it is given, hence one invocation per job.
+# -j it is given, hence one invocation per job. Jobs run in parallel, at most
+# min(jobs, nproc / 2) at once (LOCAL_CI_CONCURRENCY overrides), each in its own
+# clone and under a per-runner workflow name so that two runners on one host
+# cannot collide on a container name (ci-local/common.sh).
 set -euo pipefail
 
 workflow=.github/workflows/CI.yml
@@ -48,7 +51,7 @@ work=$(mktemp -d)
 # shellcheck source=../ci-local/common.sh
 . "$here/common.sh"
 trap 'stop_service; rm -rf "$work"' EXIT
-trap 'exit 130' INT TERM
+trap 'kill $(jobs -p) 2>/dev/null; exit 130' INT TERM
 
 for tool in act podman; do
     command -v "$tool" >/dev/null || { echo "local-ci: $tool not found" >&2; exit 2; }
@@ -128,27 +131,49 @@ else
     mapfile -t jobs <<< "$defined"
 fi
 
+# Each job runs in its own clone, in parallel, at most min(jobs, nproc / 2) at
+# a time. A job writes its verdict to $work/<job>.rc and its log to
+# $work/<job>.log; the report below is printed in job order, not finish order.
+tagged_workflow "$clone/$workflow" "$work/workflow.yml" "r$$"
+
+run_job() {
+    local job=$1 jclone="$work/clone-$1" rc=0
+    if [ "$forge" -eq 0 ] && grep -qxF "$job" <<< "$needs_forge"; then
+        echo skip > "$work/$job.rc"
+        return 0
+    fi
+    git clone --quiet --no-hardlinks "$root" "$jclone"
+    if [ "$forge" -eq 1 ]; then
+        git -C "$jclone" remote set-url origin "$origin"
+        git -C "$jclone" fetch --quiet origin
+    fi
+    timeout 1800 bash -c 'cd "$1" && shift && DOCKER_HOST="unix://$1" act pull_request -W "$6" --pull=false --bind -e "$2" --secret-file "$3" -P "ubuntu-latest=$4" -j "$5"' _ \
+        "$jclone" "$sock" "$work/event.json" "$secrets" "$image" "$job" "$work/workflow.yml" > "$work/$job.log" 2>&1 || rc=$?
+    echo "$rc" > "$work/$job.rc"
+    rm -rf "$jclone"
+}
+
+n=$(concurrency "${#jobs[@]}")
+echo "local-ci: ${#jobs[@]} jobs, $n at a time"
+run_pool "$n" run_job "${jobs[@]}"
+
 passed=()
 failed=()
 skipped=()
 for job in "${jobs[@]}"; do
     echo "== $job"
-    if [ "$forge" -eq 0 ] && grep -qxF "$job" <<< "$needs_forge"; then
+    verdict=$(cat "$work/$job.rc" 2>/dev/null || echo missing)
+    if [ "$verdict" = skip ]; then
         echo "   SKIPPED (uses the forge's secrets; no forge access)"
         skipped+=("$job")
-        continue
-    fi
-    git -C "$clone" reset -q --hard HEAD
-    git -C "$clone" clean -qfdx
-    if timeout 1800 bash -c 'cd "$1" && shift && DOCKER_HOST="unix://$1" act pull_request --pull=false --bind -e "$2" --secret-file "$3" -P "ubuntu-latest=$4" -j "$5"' _ \
-            "$clone" "$sock" "$work/event.json" "$secrets" "$image" "$job" > "$work/$job.log" 2>&1; then
+    elif [ "$verdict" = 0 ]; then
         echo "   pass"
         # Counts let a pass be compared with the forge's, not just trusted.
         grep -E '[0-9]+ passed' "$work/$job.log" | tail -n 1 | sed 's/^.*| /   /' || true
         passed+=("$job")
     else
         echo "   FAIL (log tail)"
-        tail -n 25 "$work/$job.log" | sed 's/^/   | /'
+        tail -n 25 "$work/$job.log" 2>/dev/null | sed 's/^/   | /'
         failed+=("$job")
     fi
 done

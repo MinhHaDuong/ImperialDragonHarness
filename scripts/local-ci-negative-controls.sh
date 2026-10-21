@@ -8,9 +8,10 @@
 # this check "caught" nine violations while no job had run at all.
 #
 # Usage: scripts/local-ci-negative-controls.sh [job ...]   (default: all nine guards)
-# Exit 0 only if every selected guard caught its violation. One run produced an
-# infrastructure failure on one guard while a local-ci.sh run shared the host;
-# cause not established, so run them one at a time.
+# Exit 0 only if every selected guard caught its violation. The guards run in
+# parallel, at most min(guards, nproc / 2) at once, each in its own clone. An
+# earlier infrastructure failure beside a local-ci.sh run was a container-name
+# clash between the two runners (ci-local/common.sh, tagged_workflow).
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
@@ -19,7 +20,7 @@ work=$(mktemp -d)
 # shellcheck source=../ci-local/common.sh
 . "$here/common.sh"
 trap 'stop_service; rm -rf "$work"' EXIT
-trap 'exit 130' INT TERM
+trap 'kill $(jobs -p) 2>/dev/null; exit 130' INT TERM
 
 for tool in act podman; do
     command -v "$tool" >/dev/null || { echo "local-ci-negative-controls: $tool not found" >&2; exit 2; }
@@ -28,13 +29,14 @@ done
 start_service
 ensure_image
 
-git clone --quiet --no-hardlinks "$root" "$work/clone"
-cd "$work/clone"
 base=$(git rev-parse HEAD)
-skill=$(find skills -name SKILL.md | head -1)
 printf '{"pull_request":{"number":0,"base":{"ref":"main"}},"number":0}\n' > "$work/event.json"
+tagged_workflow "$root/.github/workflows/CI.yml" "$work/workflow.yml" "n$$"
 
+# inject runs inside the case's clone.
 inject() {
+    local skill
+    skill=$(find skills -name SKILL.md | head -1)
     case "$1" in
     validate-tickets)
         printf '%%erg 0.1\nTitle: dup\n' > tickets/0375-duplicate-id-probe.erg ;;
@@ -64,27 +66,34 @@ else
     cases=(validate-tickets skill-lint agnostic-guard status-verb-guard personal-data-guard pipefail-guard grep-e-guard tab-ifs-guard pytest-guard)
 fi
 
-fail=0
-for job in "${cases[@]}"; do
-    git reset -q --hard "$base"
-    git clean -qfdx
+# One case: its own clone, its verdict line in $work/<case>.out, 1 if not caught.
+run_case() {
+    local job=$1 clone="$work/clone-$1" step
+    git clone --quiet --no-hardlinks "$root" "$clone"
+    cd "$clone"
     inject "$job"
     git add -A
     git -c user.name=probe -c user.email=probe@example.invalid commit -q --no-verify -m "probe $job" \
-        || { echo "$job: INJECTION PRODUCED NO CHANGE"; fail=1; continue; }
-    if DOCKER_HOST="unix://$sock" act pull_request --pull=false --bind -e "$work/event.json" \
+        || { echo "$job: INJECTION PRODUCED NO CHANGE" > "$work/$job.out"; return 1; }
+    if DOCKER_HOST="unix://$sock" act pull_request -W "$work/workflow.yml" --pull=false --bind -e "$work/event.json" \
             -P "ubuntu-latest=$image" -j "$job" > "$work/$job.log" 2>&1; then
-        echo "$job: NOT CAUGHT (job passed)"
-        fail=1
-    else
-        step=$(grep -m1 -o 'Failure - Main .*' "$work/$job.log" | sed 's/ \[.*//' || true)
-        if [ -n "$step" ]; then
-            echo "$job: caught - $step"
-        else
-            echo "$job: INFRA FAILURE, not a verdict (log tail follows)"
-            tail -n 15 "$work/$job.log" | sed 's/^/   | /'
-            fail=1
-        fi
+        echo "$job: NOT CAUGHT (job passed)" > "$work/$job.out"
+        return 1
     fi
+    step=$(grep -m1 -o 'Failure - Main .*' "$work/$job.log" | sed 's/ \[.*//' || true)
+    if [ -n "$step" ]; then
+        echo "$job: caught - $step" > "$work/$job.out"
+    else
+        { echo "$job: INFRA FAILURE, not a verdict (log tail follows)"
+          tail -n 15 "$work/$job.log" | sed 's/^/   | /'; } > "$work/$job.out"
+        return 1
+    fi
+}
+
+n=$(concurrency "${#cases[@]}")
+echo "local-ci-negative-controls: ${#cases[@]} guards, $n at a time"
+run_pool "$n" run_case "${cases[@]}"
+for job in "${cases[@]}"; do
+    cat "$work/$job.out" 2>/dev/null || echo "$job: NO RESULT (case did not finish)"
 done
-exit "$fail"
+exit "$pool_failed"
