@@ -2,7 +2,7 @@
 Title: Bound review time: every review phase ends within budget
 Created: 2026-10-14
 Author: Minh Ha-Duong
-Blocked-by: 1100
+Blocked-by: 1144
 
 --- log ---
 2026-10-14T19:43Z Minh Ha-Duong created
@@ -10,6 +10,7 @@ Blocked-by: 1100
 2026-10-14T20:26Z reviewer reviewer note Blocked-by moved from 1096 to 1100: 1096 now holds the design only, 1100 the implementation.
 
 2026-10-15T16:10Z ChatGPT note Author confirms extending latency work to tests, CI and orchestration waiting; phased measurement and pilot added.
+2026-10-21T15:34Z reviewer reviewer note 2026-10-21 rescoped at the author's word and Blocked-by moved from tracker 1100 to its real prerequisite 1144: most items were fixed or made moot the same day (the startup failures, the test and validation waiting by PR 1583 and tracker 1045, the seat machinery by ticket 1176); three items stay (measure the seats, cap the external reader, never drop a seat silently).
 
 --- body ---
 ## Goal
@@ -30,90 +31,43 @@ Unbroken reviews are already fast (JETP-observer #154: 1.8 min; #152:
 
 ## Sequencing
 
-Blocked by 1100 (implement the simplified review layers: gaze becomes the single review
-skill, no second battery). Budgets are set on the simplified chain, not on
-the layers 1100 removes. Design ticket 1096 is closed.
+Blocked by 1144 (the fold of `review-pr` into `gaze`, child 3 of tracker 1100), the real prerequisite:
+budgets are set on the chain that survives, not on the layers 1100 and 1176 remove. The tracker 1100
+itself is not the blocker. Design ticket 1096 is closed.
 
-## Scope
+## Rescoped 2026-10-21 (author: "rescope 1099")
 
-1. Measure first. Timestamp every seat: launched, started, finished, failed
-   or timed out, including failed starts (today only Codex seats leave a
-   trace, through UUIDv7 session ids). Break one raid's closing time down
-   by phase. Current derived estimate: ~10 min before the first native seat
-   starts, ~15 min lost to a timed-out gate, ~17 min to completion.
-2. Fix the startup failures recorded on 1389/1390: the Claude CLI argument
-   error at launch, the thread limit when spawning native seats, native
-   review failing on a read-only file system.
-3. Bound timeouts: a budget per seat and per gate; on expiry, record
-   "no report" and move on, instead of discovering an exit-124 controller
-   or an interrupted gate later.
-4. Stop the isolation guard from dropping seats (7 PRs, the most frequent
-   recorded cause). Find why it refuses legitimate seats; prefer narrowing
-   or deleting a misfiring guard over growing it (rules/workflow.md).
+Since the ticket was written, these items were done or made moot, with the reason:
+- Startup failures on PRs 1389 and 1390 (Claude CLI argument error, native seat thread limit, read-only
+  file system): fixed by earlier work; not seen in the 2026-10-21 runs.
+- The isolation guard dropping seats: not seen on 2026-10-21; the guard-misfire rule (prefer deleting)
+  applies if it returns.
+- Test and validation waiting: `make check` fell from 353 s to 76 s (PR 1583, worktree-gc readlink);
+  local checks run in parallel (PRs 1534, 1548); the full suite runs once, on the merge candidate, in
+  the local gate (tracker 1045); forge CI no longer runs (Actions disabled on 2026-10-21). The author's
+  extension of 2026-10-15 (total development feedback latency) is therefore delivered by those tickets;
+  its phases are not repeated here.
+- Seat-selection machinery (width, depth, scoping, floor): deleted by ticket 1176; the orchestrator
+  chooses seats and depth.
+
+What stays, three items:
+1. **Measure the seats.** The review result states, per seat that ran, its wall time (or `timed out`,
+   `failed to start`, `skipped`), including failed starts. This is the same list ticket 1155 adds
+   (role, family, model id as observed); do it once there. One raid's closing time is broken down by
+   phase from these lines.
+2. **Cap the external reader.** The cross-family read run through `codex exec` has no cap in the skill; on
+   2026-10-21 it ran 25 minutes twice without output. A hard cap, set from the measured times, and a
+   `no report (timed out)` line in the result; the caller continues without it and says so.
+3. **Never drop a seat silently.** A planned seat that returns nothing is named in the result as
+   `no report`; a retry-once and the degraded rule are already in the review skill (PR 1557).
 
 ## Exit criteria
 
-- [ ] Per-phase timestamps, failed starts included, are recorded for every
-      review phase and seat.
-- [ ] Each review phase and seat has a budget; on expiry it records
-      "no report" rather than waiting.
-- [ ] The startup failures listed above no longer reproduce.
-- [ ] The isolation guard no longer drops legitimate seats, or is narrowed.
-- [ ] A full raid closes from first review to merge within 20 minutes,
-      shown by its timestamps, phase by phase.
-- [ ] No seat is dropped silently: a missing seat appears as "no report",
-      and a required one still blocks the merge (ESCALATE).
-
-
-## Author extension — test and validation waiting (2026-10-15)
-
-The author explicitly confirmed that Imperial Dragon Harness must also address
-time spent testing, following the climate-finance-het and JETP Observer
-discussion. Scope is total development feedback latency, not reviewer runtime
-alone. This extension records work, not a gate-policy change.
-
-### Evidence already available
-
-memory/topics/ci-and-test-suite.md records historical full-suite improvement
-from 81 s to 33 s, a 1 h 49 min stuck forge check (cause unknown), repeated
-local CI calls, and a ticket-only change taking over 13 minutes without
-per-step timing. These are dated observations, not current benchmarks.
-Makefile already separates check-fast, lint and full check; full pytest uses
-four workers when xdist is present. Local make check does not establish
-equivalence with the workflow's complete job set.
-
-### Phases
-
-1. Measure a representative contribution end to end: environment/bootstrap,
-   test collection and execution, lint/adherence, local CI, forge queue,
-   reviewer startup/collection, caller resumption and promotion/merge.
-   Include failed/interrupted attempts. Separate useful execution from
-   avoidable waiting; update historical timings before promising gains.
-2. Map touched components and shared dependencies to existing validations.
-   Pilot the smallest sufficient selection, reuse exact-revision evidence
-   where valid and remove measured duplicate runs. Do not create another
-   blanket gate, polling loop or configuration layer without demonstrated need.
-3. Evaluate batching expensive integration checks on immutable candidate
-   commits while agents continue working, then promoting only the validated
-   snapshot. Retain proportionate gaze and targeted tests before integration.
-   This is an option to evaluate alongside ticket 1045, not authorization to
-   bypass current required checks or deploy integration/main semantics.
-4. Demonstrate the selected pilot and compare total feedback/merge latency,
-   repeated runs and waiting with baseline; roll out in bounded child PRs.
-
-The measurement of existing test/CI waiting can start independently of 1100.
-The original reviewer-budget implementation still follows 1100; split a child
-ticket if needed rather than weakening that dependency silently.
-
-### Additional exit criteria
-
-- [ ] Current timings identify test execution, duplicate runs, queues and
-      orchestration idle time separately, including failures.
-- [ ] A representative pilot reduces demonstrated unnecessary waiting or
-      repeated work with no loss of relevant checks.
-- [ ] Shared dependency/configuration changes expand test selection correctly;
-      stale or missing evidence never counts as a pass.
-- [ ] Local-versus-forge coverage and reuse/promotion rules are explicit;
-      policy changes are reviewed before use.
-- [ ] Results report elapsed feedback time as well as CPU/test time; no
-      unmeasured speedup or new numerical budget is asserted.
+- [ ] The review result lists, per seat, its wall time or its failure (shared with ticket 1155).
+- [ ] The external reader has a hard cap and records `no report (timed out)`; a test or a stubbed run
+      shows the caller continuing.
+- [ ] One raid is broken down by phase from the recorded lines, and its closing time (first review to
+      merge) is reported against the author's 20-minute window; no new numerical budget is asserted
+      beyond the reader's cap.
+- [ ] No seat is dropped silently: a missing seat appears as `no report`.
+- [ ] Nothing here requires a particular agent runtime.
