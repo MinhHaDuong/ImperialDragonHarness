@@ -164,8 +164,9 @@ next: REVIEWED or FINDINGS → the caller fixes any FINDINGS and closes the tick
   result follows the rules above, and the `PANEL-INTEGRITY:` line is carried
   verbatim in the result comment.
 
-Post the result as one PR comment (§ Output shape), then run the
-the cleanup and containment (`references/cleanup.md`) before returning.
+Run the cleanup and containment (`references/cleanup.md`) first, then post the
+result as one PR comment (§ Output shape) before returning: cleanup can
+downgrade the result to ESCALATE, so the posted result comes after it.
 
 **Attribution (ticket 1151).** After each review seat returns, the controller
 appends that seat's `reviewer: step=review` line (with its `finding:` lines) to

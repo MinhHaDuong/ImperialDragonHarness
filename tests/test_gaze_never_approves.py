@@ -470,3 +470,13 @@ def test_next_gates_the_current_head_once_and_escalate_goes_to_the_author():
     invariants = _section("## Invariants")
     assert "again after any fix" not in invariants
     assert "the single re-gate (`/verify-gate` § Gate sessions)" in " ".join(invariants.split())
+
+
+def test_result_is_posted_after_cleanup():
+    """Cleanup can downgrade the result to ESCALATE (references/cleanup.md), so
+    the result comment is posted after it, not before."""
+    rules = " ".join(_section("### 6. Return the review result").split())
+    cleanup = rules.index("Run the cleanup and containment")
+    post = rules.index("then post the result as one PR comment")
+    assert cleanup < post
+    assert "Post the result as one PR comment (§ Output shape), then run" not in GAZE
