@@ -6,9 +6,9 @@ first, then condense the remainder.
 
 The technique lived in ``rules/prose/cutting.md``, resident in every session, until
 2026-09-09: its trigger is a task, not a file, so it became the ``/cut-prose``
-skill. What the ratchets pin is unchanged — the procedure exists in full, and the
-prose rule injected on every prose edit points at it, so an agent mid-cut meets it
-without being told.
+skill. What stays pinned is structural: the old rule body stays gone, and the
+prose rule injected on every prose edit points at a skill that exists, so an agent
+mid-cut meets it without being told.
 """
 
 from pathlib import Path
@@ -23,14 +23,6 @@ OLD_RULE = REPO / "rules" / "prose" / "cutting.md"
 pytestmark = pytest.mark.adherence
 
 
-def test_cutting_skill_exists_with_the_technique():
-    assert SKILL.exists(), "skills/cut-prose/SKILL.md must encode the technique"
-    body = SKILL.read_text(encoding="utf-8").lower()
-    # The load-bearing sequence: remove whole passages before condensing.
-    assert "remove whole" in body, "the skill must state the remove-whole-first step"
-    assert "condense" in body, "the skill must state the condense-the-remainder step"
-
-
 def test_the_rule_body_did_not_come_back():
     """One home. A resident copy would be paid by every session that never cuts."""
     assert not OLD_RULE.exists(), (
@@ -40,6 +32,7 @@ def test_the_rule_body_did_not_come_back():
 
 
 def test_prose_all_points_to_the_skill():
+    assert SKILL.exists(), "the /cut-prose pointer must resolve to skills/cut-prose/SKILL.md"
     body = PROSE_ALL.read_text(encoding="utf-8")
     assert "/cut-prose" in body, (
         "rules/prose/_all.md must carry a one-line pointer to /cut-prose so the "

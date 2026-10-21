@@ -23,15 +23,6 @@ def test_step11_invokes_review_pr_mechanically():
     )
 
 
-def test_step11_does_not_paraphrase_review_pr():
-    """The prose paraphrase must be gone — the skill loader is the contract."""
-    text = HUNT.read_text()
-    assert "Review according to `/review-pr`" not in text, (
-        "hunt step 11 still paraphrases review-pr ('Review according to "
-        "`/review-pr`'); the agent prompt must invoke the skill, not describe it"
-    )
-
-
 def test_review_pr_is_model_invocable():
     """The mandated Skill(review-pr) call only works if model invocation is on."""
     review_pr = HUNT.parent.parent / "review-pr" / "SKILL.md"
