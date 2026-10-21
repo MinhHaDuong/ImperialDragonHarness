@@ -221,7 +221,7 @@ def parse_report(text: str) -> dict:
     fields = {}
     for line in lines[1:lines.index("---", 1)]:
         key, sep, value = line.partition(": ")
-        if not sep:
+        if not sep or key in fields:  # a repeated key is a forged field
             return {}
         fields[key] = value
     return fields if fields.get("review-evidence") == FORMAT else {}
@@ -473,8 +473,12 @@ def cmd_risk_floor(args: argparse.Namespace) -> int:
 
 
 def header_value(value: str) -> str:
-    """A report header field: one line, so it cannot inject another field."""
-    if "\n" in value or "\r" in value:
+    """A report header field: one line, so it cannot inject another field.
+
+    One line as parse_report reads it: str.splitlines() also splits on
+    U+2028, U+2029, U+0085, \\v, \\f and \\x1c-\\x1e, not only \\n and \\r.
+    """
+    if len((value + "x").splitlines()) != 1:
         raise argparse.ArgumentTypeError("must be a single line")
     return value
 

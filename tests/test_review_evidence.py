@@ -549,3 +549,31 @@ def test_record_rejects_header_injection_and_path_escape(repo, policy, flag, val
         input="body\n", capture_output=True, text=True, env=child_env())
     assert out.returncode != 0
     assert not (repo / "tickets" / "reviews").exists()
+
+
+# --- reroll round 1: header injection, family vocabulary -------------------
+
+@pytest.mark.parametrize("sep", [" ", " ", "\x85", "\v", "\f", "\x1c", "\x1d", "\x1e"])
+def test_header_value_refuses_every_line_boundary(sep):
+    """str.splitlines() splits on these: a value holding one can forge a field."""
+    with pytest.raises(Exception):
+        re_mod.header_value(f"w{sep}kind: review")
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("sep", [" ", "\x85"])
+def test_record_refuses_unicode_line_separators(repo, policy, sep):
+    out = subprocess.run(
+        ["python3", str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+         "--policy-root", str(policy), "--seat", "adherence", "--kind", "adherence",
+         "--verdict", "approve", "--family", "anthropic", "--worker", f"w{sep}kind: review"],
+        input="body\n", capture_output=True, text=True, env=child_env())
+    assert out.returncode != 0
+    assert not (repo / "tickets" / "reviews").exists()
+
+
+def test_report_with_a_duplicate_header_key_is_not_trusted():
+    text = (f"---\nreview-evidence: {re_mod.FORMAT}\nkind: adherence\nseat: a\n"
+            "kind: review\n---\n\nbody\n")
+    assert re_mod.parse_report(text) == {}
+
