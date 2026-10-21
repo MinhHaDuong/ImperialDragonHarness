@@ -31,7 +31,13 @@ ensure_image
 
 base=$(git rev-parse HEAD)
 printf '{"pull_request":{"number":0,"base":{"ref":"main"}},"number":0}\n' > "$work/event.json"
-tagged_workflow "$root/.github/workflows/CI.yml" "$work/workflow.yml" "n$$"
+# Everything below derives from $base, not from the live checkout: a commit or an
+# edit made while the guards run must not leak into a late case.
+git show "$base:.github/workflows/CI.yml" > "$work/CI.base.yml"
+tagged_workflow "$work/CI.base.yml" "$work/workflow.yml" "n$$"
+snapshot="$work/snapshot"
+git clone --quiet --no-hardlinks "$root" "$snapshot"
+git -C "$snapshot" checkout --quiet --detach "$base"
 
 # inject runs inside the case's clone.
 inject() {
@@ -69,7 +75,8 @@ fi
 # One case: its own clone, its verdict line in $work/<case>.out, 1 if not caught.
 run_case() {
     local job=$1 clone="$work/clone-$1" step
-    git clone --quiet --no-hardlinks "$root" "$clone"
+    git clone --quiet --no-hardlinks "$snapshot" "$clone"
+    git -C "$clone" checkout --quiet --detach "$base"
     cd "$clone"
     inject "$job"
     git add -A
