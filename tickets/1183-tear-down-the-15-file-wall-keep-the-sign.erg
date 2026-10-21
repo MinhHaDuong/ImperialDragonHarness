@@ -1,0 +1,54 @@
+%erg 0.1
+Title: Tear down the 15-file wall: keep the signal, delete the hard stops and waiver, review large diffs in groups
+Created: 2026-10-21
+Author: reviewer
+
+--- log ---
+2026-10-21T16:43Z reviewer created
+
+--- body ---
+## Context
+The author asked on 2026-10-21 who defined the 15-file limit, why, and whether its cost is worth it, then
+asked Fable (option b) and said go. Origin: `rules/workflow.md` "Monster ticket" (2026-07-11, the author):
+15+ files is a signal to decompose, "a signal, not a wall", with a waiver. On 2026-09-23 gaze made it a hard
+stop (`fix(gaze): refuse unreviewable PR size before review`): 15 or more content-bearing files returns
+ESCALATE before any review unless a waiver says the change is indivisible; raid has a pre-flight count too.
+
+Evidence for: `memory/journal/2026/2026-10-04-zotero-train-breaker-and-the-review-it-cost.md` (a full panel on
+a parked big PR found a real introduced blocker). Evidence against: the same journal (the stop fired on
+rename arithmetic and the PR got zero independent review), and 2026-10-21: the review-pr fold became three
+stacked PRs, the gate activation two, the wording-pin cut two PRs and ticket 1182 two more; each merge into
+`main` now needs its own gate record (about 90 s), stacked PRs retarget after each merge, and review seats
+flagged half-consistent states between the pieces.
+
+Decision (author's, with Fable's advice): option (b). Keep the signal; delete the hard stops, the waiver and
+their tests; replace the count by a coverage rule on the output side. Not counting changed lines (it would
+misfire on generated files, fixtures and moved paragraphs as files did on renames); not deleting the
+workflow.md sentence.
+
+## Exit criteria
+- [ ] Delete, in one commit so a single revert restores everything: `skills/gaze/references/setup-and-breaker.md`
+      (the `pr_files` computation, the 15-file stop, § Waiver; keep what collection and the anchor check
+      still need, folded into the gaze skill or a smaller reference), `skills/gaze/SKILL.md` (`--waive-breaker`
+      in the argument hint and body, the `circuit_breaker: un-reviewable | waived` result field, the
+      file-count bullet of § Circuit breakers; keep `multi_ticket` and the missing-ticket breaker),
+      `skills/raid/SKILL.md` (the pre-flight count and split warning, the NEEDS-AUTHOR-via-waiver text;
+      keep the breakers for a missing ticket and an exhausted re-gate), `skills/verify-gate/SKILL.md` (the
+      NEEDS-AUTHOR-on-waiver rule and the `Review-scope: indivisible` line), the tests
+      `tests/test_gaze_breaker_counting.py` and `tests/test_raid_breaker_gate.py`, and any script that exists
+      only for the count (check `scripts/raid-breaker.py` is not also the loop breaker before removing it).
+- [ ] `rules/workflow.md`: the waiver cross-reference becomes one sentence: a large diff splits the review,
+      not necessarily the PR. The 15-file signal paragraph stays.
+- [ ] The replacement, stated once in gaze: when a diff is large the orchestrator partitions it into review
+      groups (by directory or concern, about 400 lines or fewer each), assigns seats per group, and the result
+      lists the groups and which seat read which. A group no seat read makes the result FINDINGS (never
+      REVIEWED), with the unread group named. No test pins this wording (no second-order guards).
+- [ ] A grep for the deleted names (`waive-breaker`, `un-reviewable`, `Review-scope: indivisible`,
+      `pr_files`, the two test names) across `skills/`, `scripts/`, `rules/`, `tests/` finds nothing live;
+      `docs/` keeps history. Catalog regenerated; drift check clean.
+- [ ] The regret trigger is recorded in the ticket log: a large PR merges after a REVIEWED whose seats read
+      the surface and a blocker surfaces on `main` that a split would have caught; the signal is a `/roar`
+      entry naming a post-merge blocker on a PR whose result lists a group over the cap or no seat for a group.
+- [ ] Because the wall is still standing while this lands, split the PR if it needs more than 14 files, never
+      a waiver; the deletion commit stays whole for rollback.
+- [ ] Nothing here requires a particular agent runtime.
