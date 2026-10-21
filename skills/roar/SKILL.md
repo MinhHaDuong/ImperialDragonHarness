@@ -43,8 +43,8 @@ Exit 0 merged, proceed; 2 pending, wait as `skills/merge/SKILL.md` § Waiting
 for a queued merge prescribes (one background command bounded at about 25
 minutes, polling this status inside it), then continue this pre-check and the
 cleanup yourself when it wakes you; never ask the author to wait or to re-run
-`/roar`. Only a runtime without background commands stops and reports the merge
-as pending. 1 failed, report it. Then verify the branch has been merged before proceeding:
+`/roar`. Only a runtime that cannot wake the session when a background command
+exits stops and reports the merge as pending. 1 failed, report it. Then verify the branch has been merged before proceeding:
 ```bash
 ROAR_BASE_RC=0
 git symbolic-ref -q refs/remotes/origin/main >/dev/null 2>&1 || ROAR_BASE_RC=$?
