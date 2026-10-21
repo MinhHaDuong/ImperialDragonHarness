@@ -1,0 +1,43 @@
+%erg 0.1
+Title: 1045 child: observe the main-update guard, then turn enforce on
+Created: 2026-10-21
+Author: reviewer
+Blocked-by: 1156
+Blocked-by: 1179
+
+--- log ---
+2026-10-21T15:00Z reviewer created
+
+--- body ---
+## Context
+Child of tracker 1045, filed at the author's request on 2026-10-21 so the ticket list shows the
+real state: the implementation of the main-update guard (ticket 1157, PR 1566) is done and is
+closed; what remains is an observation period and one act of the author. The hook ships in
+warn mode (`git config idh.mainGuard`, unset = warn): it journals every update of `main`
+and refuses nothing. `enforce` makes it refuse a not-gated update. Guide:
+`docs/2026-10-21-main-update-guard.md`.
+
+Observed on 2026-10-21, 14:00 to 15:00 UTC on one clone: 13 updates of `main`, all allowed as
+moves to `origin/main`, no `warned` line. Only one kind of flow (the sync after a merge) has run.
+
+## Exit criteria
+- [ ] The observation covers, on each machine where the author works, at least 10 more updates
+      of `main`, with each session type having touched `main` once: hunt, raid, roar, lair, molt.
+      Read the journal: `$(git rev-parse --git-common-dir)/idh/main-journal.jsonl`.
+- [ ] Zero `"action":"warned"` lines, or each one understood and either fixed or accepted in the
+      ticket log.
+- [ ] The first gated merge after the activation PR (ticket 1156) has been swept with
+      `make main-sweep`, and the sweep reads it as having a gate record (ticket 1179 holds
+      the fix if it does not).
+- [ ] The hook runs on every machine and worktree that matters: `git rev-parse --git-path
+      hooks/reference-transaction` prints `hooks/reference-transaction` and the file is executable.
+- [ ] The author runs `git -C ~/.agents config idh.mainGuard enforce` on each machine (the
+      author's act, not an agent's), and notes the date in the ticket log.
+- [ ] One week after enforce: the journal has no refused update that was legitimate; if any, say
+      what and back it out with `git config --unset idh.mainGuard`.
+- [ ] `/lair` carries a memo while this ticket is open (author's request 2026-10-21): at wrap-up it
+      prints one line from the main-update journal on this clone (updates of `main` in the last day,
+      `warned` count, current `idh.mainGuard` value) and, when the value is still unset or `warn`,
+      names this ticket. It never turns enforce on, opens a ticket or asks a question. It is removed
+      when this ticket closes. The edit waits for the activation PR 1569 to land, since both edit
+      `skills/lair/SKILL.md`.
