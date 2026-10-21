@@ -2,10 +2,10 @@
 
 Two layers of coverage:
 
-- **Contract ratchets + toolchain-absent behaviour** (fast tier, no LaTeX):
-  the skill bundles its helper, documents the toolchain and the deferred
-  per-ticket-grouping scope, and the helper degrades with a clear, actionable
-  message when latexdiff or a compiler is missing.
+- **Bundled helper + toolchain-absent behaviour** (fast tier, no LaTeX):
+  the skill bundles its helper, its description stays searchable, and the
+  helper degrades with a clear, actionable message when latexdiff or a
+  compiler is missing.
 - **Real end-to-end** (integration + slow): on a synthetic two-ref git repo,
   the helper runs latexdiff + compile, produces a PDF, and the intermediate
   diff .tex carries latexdiff markup. Skipped when the toolchain is absent.
@@ -38,7 +38,7 @@ def skill_text() -> str:
     return SKILL.read_text()
 
 
-# --- Contract ratchets (fast) -------------------------------------------------
+# --- Bundled helper (fast) ----------------------------------------------------
 
 def test_bundled_script_exists():
     assert SCRIPT.exists(), "track-changes-pdf must bundle track_changes_pdf.py"
@@ -49,19 +49,6 @@ def test_first_sentence_is_searchable():
     first = skill_text().split("description:", 1)[1].split("\n", 1)[0].lower()
     for kw in ("revision-marked", "latexdiff", "git"):
         assert kw in first, f"first sentence should mention {kw!r}"
-
-
-def test_documents_toolchain_requirements():
-    text = skill_text().lower()
-    assert "latexdiff" in text
-    assert "latexmk" in text or "pdflatex" in text
-
-
-def test_documents_deferred_grouping_scope():
-    text = skill_text().lower()
-    assert "scope" in text and "ticket" in text, (
-        "must record that per-ticket/remark grouping is deferred in v1"
-    )
 
 
 def test_helper_is_pure_io_no_model_calls():

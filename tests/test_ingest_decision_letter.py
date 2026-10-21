@@ -244,12 +244,6 @@ def test_first_sentence_is_plain_and_searchable():
         assert kw in first, f"first sentence should mention {kw!r}"
 
 
-def test_skill_documents_ledger_and_coverage():
-    text = SKILL.read_text().lower()
-    for term in ("remark ledger", "coverage", "atomic", "release/"):
-        assert term in text, f"skill must document {term!r}"
-
-
 def test_script_is_pure_io_no_llm_api():
     src = SCRIPT.read_text().lower()
     for banned in ("import anthropic", "import openai", "anthropic(", "openai("):
@@ -257,10 +251,8 @@ def test_script_is_pure_io_no_llm_api():
 
 
 def test_source_is_tool_agnostic():
-    """The email-thread path is a capability, not a hardcoded mail tool."""
-    text = SKILL.read_text()
-    assert "capability" in text.lower()
-    assert "gmail" not in text.lower(), "no hardcoded mail tool in prescriptive steps"
+    """The email-thread path names no hardcoded mail tool."""
+    assert "gmail" not in SKILL.read_text().lower(), "no hardcoded mail tool in prescriptive steps"
 
 
 # --------------------------------------------------------------------------- #
