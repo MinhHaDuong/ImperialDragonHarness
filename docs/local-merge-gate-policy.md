@@ -3,7 +3,7 @@
 Status as of 2026-10-21. Written at the author's request so the policy can be
 adopted in other projects. Decided in tracker 1045. Today only the forge
 settings are in place (the light ruleset, no required checks, GitHub Actions
-disabled), together with the gate-record machinery, the guard hook and the sweep.
+disabled), together with the gate-record machinery, the guard hook and the daily audit.
 The gate itself switches on when the activation pull request of ticket 1156
 merges. Each part still open is marked **pending** with its ticket.
 
@@ -81,13 +81,15 @@ validator only), so the trace stays uniform and the cost stays small. **Pending*
 - It can refuse an update that carries no gate record. That is off by default;
   `git config idh.mainGuard enforce` turns it on, per clone. Install it through
   `core.hooksPath`; a client that overrides it defeats the hook, which is why the
-  sweep exists.
-- A periodic sweep reports every commit that entered the base without a gate
-  record and exits 2 when it could not look, never 0. It still reads forge check
-  runs for merges made before the gate; that path is to be deleted and the range
-  started at the activation commit. **Pending** (ticket 1179, which also matches a
-  forge merge commit to its record). The hook and the sweep are built (ticket 1157,
-  closed); turning `enforce` on follows an observation period (ticket 1180).
+  audit exists. The hook runs `scripts/merge-gate.py` from beside the hooks
+  directory; without it no merge passes as gated.
+- A daily audit (`scripts/main_sweep.py`) reports every commit that entered the
+  base in the last 24 hours without a gate receipt, and exits 2 when it could
+  not look in full, never 0. It is git-only: for a forge merge it rebuilds the
+  candidate from the merge's two parents and reads the receipt there. It runs
+  from the end-of-day wrap-up and by hand, never in the merge path. The hook
+  and the audit are built (tickets 1157 and 1179); turning `enforce` on follows
+  an observation period (ticket 1180).
 
 ## Trust, verify, monitor
 
@@ -102,7 +104,7 @@ The stance behind the gate, written for projects that adopt it.
 - **Verify, always.** A reviewer never approves: only the gate rules. A review result applies
   to one head. The full integration check runs once, on the merge candidate, and writes the
   gate record.
-- **Monitor.** The guard journal, the sweep of commits that entered the base branch, the
+- **Monitor.** The guard journal, the daily audit of commits that entered the base branch, the
   review result comment (what ran, by which family, why) and the count of review runs per
   pull request show afterwards whether the trust was well placed.
 
@@ -141,7 +143,8 @@ and the review threads. The gate record is already a git note for that reason.
    leave the guard in warn mode until the journal has been read for a week.
 4. Trim the forge workflow to push on the default branch.
 5. Decide who turns `enforce` on; it is the author's act, not an agent's.
-6. Put the sweep on a schedule and read its first report.
+6. Run the daily audit from the end-of-day wrap-up, or by hand, and read its
+   first report.
 
 ## What this does not do
 

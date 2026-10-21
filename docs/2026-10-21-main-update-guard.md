@@ -29,12 +29,11 @@ aborts the update.
 - by fast-forward to the main tip this worktree just fetched from `origin`
   (`FETCH_HEAD`), because a plain `git fetch origin main:main` moves main in
   its own transaction before it updates `origin/main`;
-- onto a merge commit whose first parent is the current main and whose gate
-  receipt exists: a note in `refs/notes/gate` (ticket 1156) on the candidate
-  that `scripts/merge-gate.py candidate` rebuilds from the merge's two
-  parents (see "Matching a merge to its receipt" below). Only the note's
-  presence is read here, by `gate_record_present`; the note's format belongs
-  to ticket 1156.
+- onto a merge commit of exactly two parents whose first parent is the
+  current main, whose tree is that of the candidate `scripts/merge-gate.py
+  candidate` rebuilds from those parents, and whose candidate carries a
+  passing receipt in `refs/notes/gate` (ticket 1156), as `scripts/merge-gate.py
+  check --no-fetch` decides (see "Matching a merge to its receipt" below).
 
 Any other update is not gated, including a local commit on main, a reset, a
 deletion or a rewind. A `verify` of main inside `git update-ref --stdin` is not
@@ -91,15 +90,23 @@ test -x "$(git rev-parse --git-path hooks/reference-transaction)"
 `tests/test_main_guard_hook.py` checks this resolution in a clone and in a
 linked worktree.
 
+The hook runs `scripts/merge-gate.py` from beside its own directory
+(`hooks/../scripts/`) to rebuild a merge's candidate and read its receipt;
+the script and `python3` must be present there. Without them, no merge
+passes as gated: in `enforce` a local merge is refused (fails closed), in
+`warn` it is journaled and warned about. A hook copied alone into
+`.git/hooks`, with no `scripts/` beside it, therefore treats every gated
+merge as not gated; the on-origin path does not need the script.
+
 ### Bypass boundary
 
 Each of these defeats the hook with enforce on:
 - `git -c core.hooksPath=/dev/null …`, or editing the hook;
 - writing `FETCH_HEAD` by hand;
 - moving `refs/remotes/origin/main` in one command, then main to it in another;
-- adding a note in `refs/notes/gate` by hand on the candidate of a merge built
-  on main: any note counts until ticket 1156's record carries checks the hook
-  can read;
+- writing a passing record in `refs/notes/gate` by hand on the candidate of a
+  merge built on main: anyone can write a note, and a record is a statement,
+  not proof;
 - making the command line look like a fetch while moving `origin/main` and
   main in one transaction, for example `git update-ref -m ' fetch ' --stdin`,
   or `git fetch . +X:refs/remotes/origin/main +X:refs/heads/main`. The hook
@@ -118,32 +125,47 @@ the branch head into the base tip, built with fixed author, committer, date
 and message, so any host rebuilds the same object id from the same two
 parents. The forge's merge commit M has the same parents and tree but other
 metadata, so it is another object and carries no note. For a merge M with
-parents (P1, P2), the hook and the audit rebuild the candidate from (P1, P2)
-with `candidate()` of `scripts/merge-gate.py`, the one builder, and read the
-note there. A receipt made before the base moved names the candidate of the
-old base tip; the candidate of (P1, P2) then has no note, and the merge is a
-finding.
+exactly two parents (P1, P2), the hook and the audit rebuild the candidate
+from (P1, P2) with `candidate()` of `scripts/merge-gate.py`, the one builder,
+require M's tree to equal the candidate's, and let the latest entry on the
+candidate decide (`decide()`: pass, under the scope P1 declares). Matching by
+parents alone would let a merge with the gated parents but edited content, or
+an octopus with an extra parent, borrow a receipt. A receipt made before the
+base moved names the candidate of the old base tip; the candidate of (P1, P2)
+then has no note, and the merge is a finding.
 
 ## The audit: `scripts/main_sweep.py`
 
 Stateless and git-only: no forge read, no watermark, no stored state. It
 reads the repository it runs in, so any project that adopts the gate can run
 it, and prints nothing when the tip of `--ref` (default `origin/main`)
-declares no gate (`.merge-gate.json` absent or `"gate": "off"`).
+declares no gate (`.merge-gate.json` absent or `"gate": "off"`). With
+`--fetch`, main is fetched before that check, so the first run after a
+project turns the gate on sees it; the receipts are fetched only when the
+gate is on.
 
-For each first-parent commit of `--ref` committed in the last 24 hours it
-prints one line:
-- `ok`: a merge whose rebuilt candidate carries a receipt whose latest entry
-  passes under the scope its first parent declares, or a single-parent commit
-  with a note on itself;
+**Window.** Git records when a commit was made, not when it entered main;
+the committer date is the only clock, and it can be set by hand. The audit
+walks the newest `--max-count` first-parent commits of `--ref` (default 200)
+and covers every one from the tip down to the deepest one dated in the last
+24 hours. A backdated commit above a recent one is covered, and cannot hide
+the commits below it. A recent commit below more than `--max-count` older
+ones stays out of reach.
+
+Each covered commit gets one line:
+- `ok`: a two-parent merge whose tree is its rebuilt candidate's and whose
+  candidate carries a passing receipt, or a single-parent commit with a note
+  on itself;
 - `finding`: no receipt (none, or made on another base tip), a failing or
-  out-of-scope receipt, or a candidate that cannot be rebuilt;
+  out-of-scope receipt, a tree that differs from the candidate's, a merge of
+  more than two parents, a candidate that cannot be rebuilt, or a parentless
+  commit whose own tree declares the gate (an orphan pushed as main);
 - `ungated`: its first parent declared no gate, so the commit predates it.
 
-Exit codes: 0 no finding, 1 a finding, 2 could not look in full. The window
-has a hard cap (`--max-count`, default 200) and a time limit (`--time-limit`,
-default 60 s); hitting either prints `range cut at …` and exits 2, whatever it
-found. A failed `--fetch` or an unreadable declaration also exits 2.
+Exit codes: 0 no finding, 1 a finding, 2 could not look in full. Hitting the
+commit cap or the time limit (`--time-limit`, default 60 s) prints `range cut
+at …` and exits 2, whatever it found. A failed `--fetch`, an unreadable
+declaration or an unknown `--ref` also exits 2.
 
 ```sh
 make main-sweep                          # fetches main and the receipts, then audits
@@ -152,5 +174,6 @@ python3 scripts/main_sweep.py --summary  # one line, as the end-of-day wrap-up c
 
 It never runs in the merge path: not among the gate's checks, not in the
 merge helper. The end-of-day wrap-up (`/lair`) runs it with `--summary` and
-carries its line, `main audit: N merges in the last 24 h, M without a gate
-receipt: <first>`; otherwise it runs by hand.
+carries its line, `main audit: N commits in the last 24 h, M without a gate
+receipt: <first>`, where N counts every covered commit, merges and others;
+otherwise it runs by hand.
