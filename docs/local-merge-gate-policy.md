@@ -1,8 +1,10 @@
 # Local merge gate: policy and adoption guide
 
 Status as of 2026-10-21. Written at the author's request so the policy can be
-adopted in other projects. Decided in tracker 1045; the parts still being built
-are marked **pending** with their ticket.
+adopted in other projects. Decided in tracker 1045. Today only the forge
+settings are in place (the light ruleset, no required checks); the gate record,
+the guard hook and the sweep are being built. Each unbuilt part is marked
+**pending** with its ticket.
 
 ## Principle
 
@@ -72,7 +74,7 @@ validator only), so the trace stays uniform and the cost stays small. **Pending*
 ## The guard on the base branch
 
 - A `reference-transaction` hook journals every update of the base branch (time,
-  OS user, host, command lines of the process chain, git identity). It never
+  OS user, host, command lines of the process chain, and git identity). It never
   blocks and never fails loudly.
 - It can refuse an update that carries no gate record. That is off by default;
   `git config idh.mainGuard enforce` turns it on, per clone. Install it through
@@ -108,7 +110,7 @@ and the review threads. The gate record is already a git note for that reason.
 
 1. Create the light ruleset above; disable any required-checks ruleset only when
    the local gate is running and has been rehearsed once.
-2. Copy the gate script, the declaration file and the merge helper; list the
+2. Copy the gate script, the declaration file, and the merge helper; list the
    project's checks and its light paths (documentation, tickets, memory).
 3. Set `core.hooksPath` to the hooks directory and install the journal hook;
    leave the guard in warn mode until the journal has been read for a week.
