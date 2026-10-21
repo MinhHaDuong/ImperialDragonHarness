@@ -15,6 +15,7 @@ Closed: autoclosed — PR #1619
 2026-10-21T17:23Z reviewer reviewer note sweep first run before the deletion (criterion 'sweep wired with a positive control'): 'python3 scripts/main_sweep.py --fetch --summary' at origin/main c7674ead read 'Main audit: 89 commits in the last 24 h, 0 without a gate receipt' (rc 0). Positive control on the live repository: an unreferenced, never-pushed single-parent commit 7e5b85ca built on c7674ead with 'git commit-tree', swept with '--ref 7e5b85ca --max-count 2', read 'finding 7e5b85ca [single-parent commit without a note]' with c7674ead ok (rc 2, range cut by the cap). The audit sees a commit without a record.
 2026-10-21T17:38Z reviewer closed — autoclosed — PR #1619
 2026-10-21T18:36Z reviewer reviewer note residual after #1619: tickets/LOCAL.md:23 still says close claims are enforced at merge by erg-pr-merge; #1619 is at the 14-file cap, so the one-line fix (name the merge recipe's close step, skills/merge/SKILL.md step 1) goes in the next tickets/ change. Also left: tests/smart-testing/reference.json and reference.sql (generated baseline, refreshed by scripts/smart_testing.py --refresh).
+2026-10-21T18:48Z reviewer reviewer note the tickets/LOCAL.md residual noted above is fixed on this PR (#1619) after the file cap was lifted; only the generated smart-testing baseline still names the helper.
 
 --- body ---
 ## Context
