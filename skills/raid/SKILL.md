@@ -202,19 +202,10 @@ files at merge time.
 
 ## Phase 5.0: Land coordination PR (cross-cutting registries)
 
-**When**: 3+ PRs in a wave will edit the same file holding a shared
-hash-set / dict / dispatch registry (test allowlists like `VALID_ROUTES`,
-dispatch keys, config-file conventions). If ≤2 PRs touch it, skip — a manual
-rebase is cheaper than the coordination overhead.
+Only when 3+ PRs in a wave will edit one file holding a shared registry;
+otherwise skip. When, why and how: `references/coordination-pr.md`.
 
-**Why**: when N parallel PRs each append to the same cross-cutting set, the
-rebase onto sibling-merged main silently drops each PR's own addition.
-
-**How**: before opening any Wave-N PR, open one tiny PR that adds ALL of the
-wave's entries to the shared registries at once, and merge it first. Each
-Wave-N PR then makes a purely additive change (new file, new entry referencing
-a pre-registered key) without mutating the shared set. The coordination PR
-itself follows the normal verify/merge gates.
+<!-- inline: references/coordination-pr.md -->
 
 ## Phase 5: Execute (waves, worktree-isolated)
 
@@ -226,25 +217,11 @@ Group tickets into waves:
 spawn from the main checkout sitting at WAVE_BASE (Phase 4), never from
 whatever origin/main has drifted to since.
 
-**When**: origin/main advances mid-wave, after executors have already forked.
+**Mid-wave advance**: when origin/main advances after executors have forked,
+rebase WAVE_BASE once and move every wave branch onto it, per
+`references/wave-rebase.md`.
 
-**Why**: a branch forked before or after the advance carries a different SHA of
-the annotation commits, and patch-equivalent commits are not merge-equivalent —
-divergent copies collide on `tickets/` at merge time.
-
-**How**: the orchestrator first rebases WAVE_BASE itself: create a temporary
-branch at OLD_WAVE_BASE and rebase it once onto the new main; its rebased tip
-is NEW_WAVE_BASE. Then move each wave branch inside its executor's existing
-worktree — the same worktree Phase 7 runs the recipe in. Quiesce the
-executor first, then run
-`git -C <worktree-path> rebase --onto NEW_WAVE_BASE OLD_WAVE_BASE` in that
-worktree, where the branch is already HEAD: no `<branch>` argument and no
-checkout (a `<branch>`-argument rebase from the orchestrator checkout fails
-with "already used by worktree"). The rebase replays only the branch's own
-commits, so the shared annotation commits replay exactly
-once, never per-branch, and every branch carries the same objects. Push each
-rewritten branch with `git push --force-with-lease`, explicitly authorized for
-this rewrite of pushed branch SHAs. WAVE_BASE moves to NEW_WAVE_BASE.
+<!-- inline: references/wave-rebase.md -->
 
 **Refresh**: the Phase 4 recording is only the initial value. When a Phase 5.0
 coordination PR lands, or Wave N merges, re-record WAVE_BASE from the merged
@@ -270,7 +247,7 @@ hunt's flow dictates.
 
 Wait for wave to complete.
 
-**Attribution lines (ticket 1151).** Only the orchestrator writes the PR-body
+**Attribution lines.** Only the orchestrator writes the PR-body
 `attribution` block; seats return their identity and never edit the body. Once
 a wave PR exists, append the `writer: step=plan` and `writer: step=execute`
 lines (identity as the seats reported it, effort `not-stated` unless set at
@@ -290,20 +267,13 @@ runs them inline, one per PR (an inline run is serial; only the detached shape
 below adds concurrency, and disjoint-file PRs may run concurrently through
 it). Verify file-sharing PRs sequentially to avoid concurrent-fix collisions.
 Respect the max-concurrent-agents cap (see `rules/claude-code.md` § Subagent
-levers). When the runtime's nesting blocks the inline run — a raid is itself
-an agent orchestration, and child sessions do not inherit the agent connector
-(PRs #1060/#1061, #1129-#1132; ticket 1017); detect it by the inline run
-reporting `battery: NOT-RUN — cause: no-agent-tool`, `depth`, or `guard`,
-or by a known absent agent connector — substitute one detached, headless, non-interactive
-CLI session per PR per the detached-seat contract
-(`skills/gaze/references/panel.md` § Detached-seat substitution): cwd
-pinned to the PR's worktree, prompt embedding `/gaze <pr-number>` plus the
-caller prerequisites and the containment rails (no merges, no writes outside
-the PR branch); the result is observed by polling the written artifact — the
-`## /gaze result` PR comment per the output shape in
-`skills/gaze/SKILL.md` § Output shape, accepted only when its `reviewed_head_sha`
-matches the branch tip — under that contract's bounded wait, never a spawn exit status,
-and the structured result must return to the orchestrator.
+levers).
+When the runtime's nesting blocks the inline run, substitute one detached
+session per PR as `references/detached-gaze.md` prescribes: its trigger,
+launch shape and result acceptance.
+
+<!-- inline: references/detached-gaze.md -->
+
 A gaze result of ESCALATE, or no accepted result (missing at the end of the
 bounded wait, or its `reviewed_head_sha` stale against the branch tip), means
 the gate is not run: the review never completed, and the PR goes to the author.
@@ -333,26 +303,11 @@ budget binds the merge-permission-denial recovery (§ Merge-permission denial):
 once two gate rounds are posted on the PR, that recovery parks the PR and
 escalates to the author instead of sending it back through Phase 6.
 
-**Fix-and-regate (caller-owned; formerly gaze's fix-agent contract).** On
-`FINDINGS` or a round-1 REROLL, the raid spawns the fix agent — the **coder
-profile** (`agents/coder.md`, whose contract is `profiles/coder/PROFILE.md`;
-the model is chosen per launch from the `route` skill) — in the PR's worktree,
-feeding it the unresolved lists (review comments, simplify findings, adherence
-violations, per-exit-criterion gaps) as input, and waits for the artifact it
-writes on completion. Fix agent gets ≤10 min. The agent works under:
+**Fix-and-regate.** On `FINDINGS` or a round-1 REROLL, follow
+`references/fix-and-regate.md`: the fix agent's rules, the re-review or
+re-gate, and the loop's breakers.
 
-- Strict rule: **only** the listed items. No scope creep. No "while I'm here" edits.
-- TDD discipline still applies: add a failing test for any behavioural fix before coding.
-- Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix. A mapped doc-only fix uses `python3 "$IDH_ROOT/scripts/scoped-check.py"` and quotes selected and skipped targets; Python code and unmapped changes use the full `make check`.
-- Push commits to the PR branch; do not open new PRs.
-
-After a FINDINGS fix, re-run `/gaze` on the new head; after a round-1 REROLL fix,
-re-gate once with the same `session=`. Breakers on this loop:
-
-- Fix agent timeout (10 min) → ESCALATE.
-- Gate disagrees with the gaze phase outputs 2–5 on a must-fix finding → ESCALATE (no silent resolution).
-- Two REROLL rounds reached → ESCALATE.
-- FINDINGS again after the re-run `/gaze` → ESCALATE (one fix round per review).
+<!-- inline: references/fix-and-regate.md -->
 
 Phase 7 merges stay strictly sequential.
 
@@ -372,21 +327,10 @@ individual `/gaze` results and `/verify-gate` verdicts.
 
 ## Phase 7: Merge (sequential per-wave)
 
-**Token economy rule**: Any time a ticket must be created in any phase, create it
-with `tickets/erg new "<title>"` — never write the file directly or compute the
-next ID manually. `erg new` allocates the next free ID and writes a valid
-`%erg 0.1` file (preamble + `created` log line + empty body) race-safely; fill
-the body, then `erg validate tickets/<new-file>.erg` (file arg, not directory)
-and `erg check tickets/`, keeping mechanical work inside the tool where it belongs.
+**Creating a ticket** in any phase, or bundling a follow-up that a raid or
+review surfaced: `references/follow-up-tickets.md`.
 
-**Bundle follow-up tickets into the spawning PR.** When a raid or review
-surfaces a follow-up, create it via `tickets/erg new` and commit the `.erg` onto the
-current PR branch — the ticket only, never the fix. Reference it from the PR
-body (`Related follow-up: tickets/NNNN`, or `Scope overflow: tickets/NNNN` when
-it comes from a verify-gate verdict). The PR's `**Ticket:**` line still closes
-only its own ticket on merge; the bundled follow-up stays open. Never file the
-follow-up on a main checkout — main is read-only and may be dirty with parallel
-work.
+<!-- inline: references/follow-up-tickets.md -->
 
 For each wave, merge APPROVED PRs one at a time. A PR is merge-eligible if:
 - `/verify-gate` verdict is APPROVED (one REROLL allowed — Phase 6 handles this), AND
@@ -439,35 +383,10 @@ For each eligible PR, sequentially within the wave:
 
 ### Merge-permission denial: cure the objection with evidence
 
-The permission layer may decline an APPROVED PR's merge because the review
-is insufficiently independent of its author. Inspect the stated objection
-and the actual producer/reviewer identities; do not assume that a launched
-reviewer supplied independent evidence. Never weaken permissions, skip checks
-or hand-merge around the guard.
+Read `references/merge-permission-denial.md` when the permission layer
+declines an APPROVED PR's merge.
 
-1. Do not retry the denied call verbatim.
-2. Request independent review of the current PR head through the active
-   runtime, using `skills/reviewers/SKILL.md` and its live-route reference.
-   Describe the expertise, capability and independence needed to answer the
-   objection. Let the runtime discover and route a suitable reviewer; record
-   the actual identity, route, independence basis, reviewed base/head and
-   completed report. While the PR's gate budget has a round left (fewer than
-   two `/verify-gate` rounds posted, § Phase 6), disposition every returned
-   finding through verify-gate; a blocking finding sends the PR back through
-   Phase 6. When the gate budget is exhausted, run no further gate or fix: park
-   the PR and escalate to the author with the findings (step 4). If fixes change the
-   head, refresh the independent evidence before retrying. Preserve failed or
-   missing review records and `PANEL-INTEGRITY:` verbatim in the external
-   verdict record; they are coverage limitations, not findings to disposition.
-3. Only when completed independent evidence answers the stated objection and
-   findings have a clean disposition, post that evidence and its disposition
-   on the PR. Quote the verdict and this recovery contract in the transcript
-   and retry the merge once. A claimed route or empty response is insufficient.
-4. If independent evidence is unavailable or insufficient, or the retry is
-   denied, park the PR merge-ready, continue the wave, and name each parked
-   PR, the unresolved objection and deferred post-merge steps (cleanup +
-   per-PR roar) in the briefing. Optional external review's fail-open policy
-   does not waive a merge denial; do not bypass the permission layer.
+<!-- inline: references/merge-permission-denial.md -->
 
 After all waves, in one compound so the `cd` persists across the rebase:
 `cd <session-worktree> && git checkout main && git pull --rebase origin main`, then
@@ -515,57 +434,11 @@ Autonomous mode: ralph loop to next wave.
 
 ## Circuit breakers
 
-All three triggers below require the orchestrator to append a circuit-breaker
-note through `erg log <id> "note circuit-breaker — {reason}" <main-repo-tickets-dir>`
-to the **main-repo** `tickets/` directory (not the killed agent's worktree copy),
-and commit it before relaunching. `erg log` supplies the timestamp and author;
-never hand-write the entry. This circuit-breaker placement is separate from
-the verdict's `reroll_bump`, which is posed on the PR branch or at merge time.
+Read `references/circuit-breakers.md` before killing or relaunching an
+agent, when an executor may have stalled or timed out, when two agents edit
+one file on one branch, before redirecting a running agent, and when the
+same fix fails twice. From the first launch, record the time of each push
+and each observed change in each executor's worktree: the stall check needs
+them.
 
-**Killing a mid-execution agent — salvage WIP first.** Before any
-`git worktree remove` on a killed agent's worktree, salvage its work so it
-survives the deletion:
-
-```bash
-"$IDH_ROOT/scripts/worktree-salvage.sh" <worktree-path>
-```
-
-This commits everything on the agent's branch and pushes it. Nothing enforces
-the order, so keep it: salvage first, then run `"$IDH_ROOT/scripts/worktree-exit-preflight.sh" --removal --branch <branch> <worktree-path>`. If the guard blocks, retain the tree and surface the reason; otherwise `git worktree unlock` and `git worktree remove` (never
-`--force` over uncommitted changes). Relaunch the finisher on the **existing** branch with
-`git switch <branch>` (NOT `-c`) — if this follows a killed-agent fork, confirm
-the tree with `git rev-parse --show-toplevel` first (rules/git.md § anchor across
-a forked-skill boundary); it inspects the salvaged WIP via
-`git show --stat HEAD` before continuing rather than starting from scratch.
-Salvage is the FIRST step of any restart, not an afterthought.
-(memory: feedback_agent_stall_watchdog_recovery)
-
-**Agent timeout**: Record the time of each push and each observed change in
-the executor's worktree (compare status snapshots; an already-dirty tree does
-not prove recent progress). The ordinary stall window is 10 minutes since
-the latest of these. During a declared project gate, check the executor's
-worktree with `python3 "$IDH_ROOT/scripts/raid-breaker.py" --worktree <path>
---last-progress-epoch <epoch> --gate-max-seconds <seconds>` before killing it.
-`/hunt` runs the gate through `raid-gate.py`, whose short-lived heartbeat is
-keyed to this worktree. Another session's gate cannot excuse this executor,
-and a gate in another process namespace is still visible. A heartbeat older
-than 30 seconds is stale, not proof of a live gate. `GATE_RUNNING` suspends the ordinary window;
-it does not prove a pass. Set the project's maximum above a measured cold gate
-run (`gate_max_seconds` in `.idh-checks.json` when present), and record that
-budget in the raid log. `GATE_TIMEOUT` means salvage, then kill or escalate;
-never grant an unbounded exemption. On gate exit, record the exit time as the
-new progress point and resume the ordinary 10-minute window. `STALL` means
-salvage the worktree (above), then kill, split or relaunch with narrower scope.
-A WIP push after the red test improves salvage but does not exempt the later
-gate from this check. Bump reason: `agent timeout` or `gate timeout`.
-
-**Ping-pong detector**: If two agents edit the same file on the
-same branch, STOP. Reset to last known-good commit, relaunch ONE agent.
-Bump reason: `ping-pong on {file}`.
-
-**Redirect ban**: Do not use SendMessage to redirect a running
-agent. Kill and relaunch with corrected instructions.
-Bump reason: `redirect ban triggered`.
-
-**Escalation**: If the same fix fails twice, stop and leave a
-ticket comment with the two failed approaches.
+<!-- inline: references/circuit-breakers.md -->
