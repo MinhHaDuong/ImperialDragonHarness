@@ -4,8 +4,9 @@ Loaded from `skills/gaze/SKILL.md` § 2–5.
 
 ### 2–4. Read-only review fan-out (parallel)
 
-These phases run as **Agent-spawned sub-agents, not `context: fork`
-invocations** (ticket 0216). A fork does not inherit this skill's cwd or
+Agent A (adherence) and the optional adapter seats run as **Agent-spawned
+sub-agents, not `context: fork` invocations** (ticket 0216); Agent C is a direct
+invocation of the review skill (below). A fork does not inherit this skill's cwd or
 conversation, so it lands in the session worktree on whatever branch is
 checked out there — that is how a drifted fork pushed a stray branch and
 opened rogue PR #243 (ticket 0193). Spawning an Agent fixes this
@@ -45,12 +46,13 @@ Every reviewer agent's prompt:
 - refuses and reports NOT-RUN if the review worktree is unreachable, or
   its HEAD differs from the anchor HEAD carried in the prompt — it never
   falls back to the session cwd;
-- imperatively embeds the sub-skill's operating procedure (the steps below),
-  except Agent A, which invokes the live adherence contract as specified below;
+- carries its procedure: Agent A invokes the live adherence contract as
+  specified below; the portable simplify reviewer gets the phase 5 steps;
 - ends by **returning a single structured block as its final message**, which
   the orchestrator parses to branch.
 
-Spawn the applicable agents **in a single message, as parallel background
+Spawn the applicable agents (Agent A and any adapter seats; not Agent C, which
+is invoked directly) **in a single message, as parallel background
 Agent calls**, each writing its result to the phase artifact path — the single message runs them
 concurrently, and the bounded poll on those artifacts is what makes this fork wait
 before it proceeds. Keep polling until every artifact lands: a fork's
@@ -117,55 +119,15 @@ rulebook to hold it to.
 
 **Agent C — PR review** (`/review-pr <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`
 or `/review-pr-prose <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`).
-Invoke it directly with the review worktree; it owns its perspective
-fan-out and its detached-seat substitution. There is no gaze-specific reviewer
-agent: the invoking fork's own toolset supplies the delegation capability.
-If review-pr itself cannot launch, record the same panel integrity failure in
-the /gaze result comment, mark it unresolved, and do not claim a completed
-review round.
-Before launching perspectives, Agent C checks that the `Agent` tool is in its
-own available toolset and that a spawn call succeeds. A missing tool, depth
-limit, or denied spawn is a panel integrity failure, not permission to replace
-independent perspectives with sequential self-review. Write the selected roster
-to the manifest and mark each unlaunched perspective `no report`. Post the
-review on the PR with `PANEL-INTEGRITY: DEGRADED — Agent tool unavailable or
-spawn failed; selected perspectives not run` and `dissent: unavailable`;
-return those same lines in Agent C's structured block. The /gaze orchestrator
-must carry the exact `PANEL-INTEGRITY:` line into its final verdict comment
-and use `panel integrity: DEGRADED` in the actions section. Never write
-`dissent: none` for this path. When Agent C's own toolset lacks the
-`Agent` tool, apply the detached-seat substitution in
-skills/review-pr/SKILL.md instead of degrading.
-If a launched perspective is still missing at the bounded collection deadline,
-name it as `no report`, post and return `PANEL-INTEGRITY: DEGRADED — missing
-perspective report: <name>`, and use `dissent: unavailable` there too.
-**Width-gate:** run Agent C on every PR. For round-1 code diffs, read
-`$IDH_ROOT/skills/review-pr/panel-width.json` and apply its
-`max_lines`, `max_files`, and `pipeline_paths` to `git diff --numstat
---no-renames origin/<base>...HEAD` in the review worktree. A diff within both
-limits and with no pipeline path gets Correctness only. A binary count, missing
-base, or unreadable config selects the proportional panel, with at least
-Correctness + Consistency even if the risk description is trivial. `review:standard`
-in the PR label/body or linked ticket body selects all five code perspectives
-even for a tiny diff. A Correctness reviewer concern or low confidence adds
-the other four perspectives before synthesis. when the merge request already carries a prior Agent C
-review (the caller-level repeat `/gaze` case), run the panel scoped per
-§ Round scoping — only the perspectives whose previous verdict was
-comment/request-changes (prose: minor/major), plus one regression agent
-running a single regression check over all the cleared ones, unless the diff
-was substantially rewritten, in which case the full panel runs for this round
-and scoping is ignored. Do **not** state a round number — gaze computes none.
-Instead, have the embedded procedure instruct the spawned agent to derive the
-round itself (count the reviews this skill previously posted on the merge
-request, identifiable by the verdict roster they always carry; the round is
-that count plus one), read the previous round's verdict roster, build the
-scoped perspective list from it, and record the reason for each inclusion.
-Spell that derivation out: the spawned agent does not read this file or
-`skills/review-pr/SKILL.md`, so an unstated rule does not reach it.
-Otherwise route by the shared prose predicate, anchored in the review
-worktree — the predicate reads the disk (manifest walk-up, `\documentclass`
-sniff), so a parked cwd would return a plausible, wrong verdict, the failure
-mode this ticket exists to close. Run
+This is the one launch mode: gaze invokes the review skill directly with the
+review worktree, never through a spawned wrapper agent carrying an embedded
+copy of the panel. There is no gaze-specific reviewer agent; the invoking
+fork's own toolset supplies the delegation capability.
+
+**Route first.** Choose the skill by the shared prose predicate, anchored in the
+review worktree — the predicate reads the disk (manifest walk-up,
+`\documentclass` sniff), so a parked cwd would return a plausible, wrong
+verdict. Run
 `cd $primary_root/.claude/worktrees/review-<pr-number> && python3 "$IDH_ROOT/scripts/prose_predicate.py" <changed files>`
 — it prints `prose` when any changed file resolves to a `doctype` (from the
 project's `.claude/rules-map.toml` manifest, else the `\documentclass`
@@ -173,39 +135,31 @@ sniff; one manuscript flips a mixed diff), `code` otherwise. It refuses any
 path that does not exist under that cwd (exit 2, no verdict) — treat a
 refusal as a routing error to fix, never as `code`. Process prose — notes,
 tickets — carries no doctype and stays on the code panel, which is the panel
-the audit measured as correct for it (ticket 0550). Spawn a read-only Agent on the review worktree `$primary_root/.claude/worktrees/review-<pr-number>`
-(all git via `git -C`), whose embedded procedure is: read the linked ticket's exit criteria and the
-diff, assess risk, apply the Width-gate for round-1 code, and run the selected
-perspective set in parallel —
-**code:** correctness, consistency, scope, red-team, doc-propagation (trivial →
-correctness only when Width-gate qualifies; otherwise at least +consistency;
-scripts or other pipeline paths → +doc-propagation;
-substantial → all five); **prose:** discipline panel sized to the change,
-always including an adversarial referee and an AI-tells auditor that scans the
-full text against `config/ai-tells.yml`. Each perspective reports
-confidence and a verdict (approve / comment / request-changes for code; accept
-/ minor / major for prose).
-If the round-1 code panel was reduced to Correctness only and that reviewer
-raises a concern or low confidence, add the other four perspectives and
-collect their reports before synthesis. An explicit `review:standard` request
-also forces all five code perspectives. Synthesize: preserve dissent verbatim,
-dedupe, and run the project's declared gate. With `.idh-checks.json`, use
-`python3 "$IDH_ROOT/scripts/scoped-check.py"` and carry `selected:` and `skipped:`
-into the review; without a map, run `make check`. A scoped pass is not a full
-gate claim. Every non-blocker (minor) finding **must** carry exactly one tag
-prefix — `verifiable:` (a reproducible failing assertion is attached),
-`consider:` (hypothesis, no enforcement), or `nofollow:` (noted, not pursued);
-hedged "might break X" phrasing is forbidden — produce the assertion or
-downgrade to `consider:`. Blockers (request-changes / major) are untagged.
-Post the single review on the PR and return the synthesized findings (blockers
-+ tagged minors) as the structured block. This inner panel is itself a fan-out:
-Agent C must launch its perspective agents in one message, each writing its
-own artifact, and poll those artifacts until every one has landed
-returns before it synthesizes — the fork contract applies recursively (see
-**Fork execution contract**; ticket 0263, `/gaze 479`, 2026-07-11). Embed in
-its prompt the 30-second live-state polling rule above; if the PR stops,
-cancel its perspective agents and return the phase/state line without posting
-a review.
+the audit measured as correct for it (ticket 0550). `prose` →
+`/review-pr-prose`; `code` → `/review-pr`.
+
+**What the review skill owns; gaze passes it nothing but the PR and tree.**
+Panel width is review-pr's: `skills/review-pr/panel-width.json` (`max_lines`,
+`max_files`, `pipeline_paths`) picks Correctness only for a qualifying round-1
+code diff and at least Correctness + Consistency otherwise; `review:standard`
+or a Correctness concern widens it to all five. It also owns the round number
+and § Round scoping for a repeat review, the detached-seat substitution, the
+project gate run, minor tags (`verifiable:` / `consider:` / `nofollow:`) and
+the single posted review. Gaze passes no round number and no perspective list.
+
+Inside the review skill the selected perspective agents launch in parallel,
+each writing its own artifact, and the skill polls them against its manifest under a bounded
+deadline before it synthesizes; gaze's fork waits on the skill's return, so
+the fork contract holds one layer down.
+
+**Panel integrity in gaze's result.** If the review skill itself cannot launch,
+or reports that the Agent tool is unavailable or a spawn failed, gaze does not
+substitute its own sequential review: it records the failure, marks the review
+unresolved and claims no completed review round. Carry the exact
+`PANEL-INTEGRITY:` line the skill posted (`PANEL-INTEGRITY: DEGRADED — Agent
+tool unavailable or spawn failed; selected perspectives not run`, or `missing
+perspective report: <name>` for a perspective still missing at the bounded collection deadline) and its `dissent: unavailable` into the /gaze result comment, and use
+`panel integrity: DEGRADED` there. Never write `dissent: none` for this path.
 
 Wait for all spawned agents to complete. Collect their structured outputs.
 
@@ -250,9 +204,9 @@ that head; update the artifact with the final reviewed SHA. A moved head without
 this confirmation leaves the pass unresolved. Feed all findings and dispositions
 (or the evidenced CLEAN result), route, and reviewed SHA in the result. The
 same must-fix rules apply to both routes; no portable route silently skips or
-weakens the phase. Existing tiny/prose/adherence skips above remain unchanged.
+weakens the phase. The prose and adherence skips above remain unchanged.
 
-## External reviewer panel
+### External reviewer panel (optional, beside phases 2–4)
 
 External, decorrelated review is optional evidence routed by the active
 runtime. When useful or requested, describe the expertise, capability and
@@ -261,8 +215,8 @@ reference. The runtime discovers available reviewers and chooses an appropriate
 route; no fixed roster, provider or gateway is required. The internal battery
 retains its round requirements.
 
-**Scope and collection.** Optional external code review applies to small/full
-CODE reviews, using the same `"$IDH_ROOT/scripts/prose_predicate.py"` verdict as
+**Scope and collection.** Optional external code review applies to code
+reviews, using the same `"$IDH_ROOT/scripts/prose_predicate.py"` verdict as
 phases 2–4. Skip these code-review routes on prose panels.
 If selected, route reviews concurrently with phases 2–4 and collect completed
 evidence before the result within the run's deadline. Record the actual reviewer,

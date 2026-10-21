@@ -38,11 +38,10 @@ ALLOWED_LINES = (
     "NEEDS-AUTHOR: those are gate verdicts, ruled by the caller's `/verify-gate`",
     "- Never returns APPROVED: a test pins it (`tests/test_gaze_never_approves.py`).",
     "`/verify-gate`, which rules NEEDS-AUTHOR (§ Waiver).",
-    '- First run `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the battery: do not classify an empty or wrong-tree diff as tiny or approve it. Carry its HEAD and changed-file roster into every review prompt.',
+    '- First run `python3 "$IDH_ROOT/scripts/review-pr-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the battery: do not review an empty or wrong-tree diff or approve it. Carry its HEAD and changed-file roster into every review prompt.',
     "breaker, and gaze never approves a waived PR: the caller passes the waiver",
     "record to `/verify-gate`, which rules NEEDS-AUTHOR on a passing waived PR, and",
     "at ESCALATE, never APPROVED (gaze returns no approval at all).",
-    "confidence and a verdict (approve / comment / request-changes for code; accept",
     "review's approval. It returns the reviewed SHA, paths examined, and actionable",
     "- `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still",
     "next: run /verify-gate <pr-number> repo=<caller's checkout>; gaze is not a gate and does not approve",
@@ -195,3 +194,60 @@ def test_verify_gate_remains_the_gate():
     gate = (ROOT / "skills" / "verify-gate" / "SKILL.md").read_text(encoding="utf-8")
     desc = gate.split("description:", 1)[1].splitlines()[0]
     assert "APPROVED" in desc and "REROLL" in desc
+
+
+def test_agent_c_has_one_launch_mode():
+    """Agent C is a direct /review-pr or /review-pr-prose invocation; no wrapper
+    agent carries an embedded copy of the panel (/gaze 1522 blocker B1)."""
+    agent_c = GAZE.split("**Agent C — PR review**", 1)[1].split(
+        "Wait for all spawned agents", 1
+    )[0]
+    assert "This is the one launch mode" in agent_c
+    for gone in ("Spawn a read-only Agent", "embedded procedure", "Width-gate"):
+        assert gone not in GAZE, gone
+
+
+def test_phase_6_is_not_nested_under_a_reference_section():
+    """After inlining, no H2 may sit between ## Phases and phase 6."""
+    phases = GAZE.split("## Phases", 1)[1].split("### 6. Return the review result", 1)[
+        0
+    ]
+    assert not re.search(r"^## ", phases, re.MULTILINE), re.findall(
+        r"^## .*", phases, re.MULTILINE
+    )
+
+
+def test_reviewed_head_sha_is_read_after_phase_5():
+    """The result names the head the battery reviewed, read after simplify may
+    have pushed, not the head gaze started on."""
+    assert GAZE.index("### 5. Simplify") < GAZE.index("### 6. Return the review result")
+    template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
+    for text in (_section("### 6. Return the review result"), template):
+        line = next(
+            ln for ln in text.splitlines() if ln.startswith("reviewed_head_sha:")
+        )
+        assert "after phase 5" in line, line
+        assert "review_worktree_path" not in text, (
+            "gaze deletes that tree before returning"
+        )
+        assert not re.search(r"^round:", text, re.MULTILINE), "gaze computes no round"
+
+
+def test_review_panel_has_no_unlisted_skip_path():
+    """Every PR gets the review panel; the only ways it does not run are the
+    enumerated result values. A new skip path must change this test."""
+    assert "every PR gets adherence, the review panel and simplify" in GAZE
+    template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
+    line = next(ln for ln in template.splitlines() if ln.startswith("review-pr:"))
+    values = {v.strip() for v in line.split(":", 1)[1].split("|")}
+    assert values == {
+        "<n_comments_posted>",
+        "skipped (adherence blocking)",
+        "skipped (un-reviewable)",
+        "skipped (--force-approve)",
+        "skipped (battery NOT-RUN)",
+    }, values
+    agent_c = GAZE.split("**Agent C — PR review**", 1)[1].split(
+        "Wait for all spawned agents", 1
+    )[0]
+    assert "skip" not in agent_c.lower()
