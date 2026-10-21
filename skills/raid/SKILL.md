@@ -408,11 +408,11 @@ confirm the tree: `git rev-parse --show-toplevel` must equal the session worktre
 
 For each eligible PR, sequentially within the wave:
 1. `git fetch origin` to pick up any prior merges.
-2. No checkout needed: run the recipe's commands against a checkout that
-   already has the PR branch (`git -C <worktree-path>`, the forge reads by PR
-   number). An Execute agent's own worktree qualifies
-   directly: take its path from the agent's completion notification. Do not check out or `cd`
-   into it, and do not delete and re-checkout the branch.
+2. Run the recipe's commands inside the PR's own worktree, as one command
+   (`(cd <worktree-path> && ...)`, a subshell); `git -C <worktree-path>` is
+   for single reads. An Execute agent's own worktree qualifies
+   directly: take its path from the agent's completion notification. Never check the
+   branch out anywhere else, and do not delete and re-checkout the branch.
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
 4. Merge by the recipe, `skills/merge/SKILL.md` § The recipe,
    only after `git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>`
