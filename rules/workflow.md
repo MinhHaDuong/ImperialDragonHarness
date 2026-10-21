@@ -78,8 +78,8 @@ feedback memory at wrap-up. Stop if you are repeating yourself.
 **Ask the author** after three failed approaches, or for a judgment outside your
 domain docs.
 
-**Ask up first.** Put the question to a top-end model (Fable or Astra) before
-the author. Escalate only if the call stays open or is the author's by right
+**Ask up first.** Put the question to an advisor model (the route skill picks
+which) before the author. Escalate only if the call stays open or is the author's by right
 (scope, money, irreversible), and present what they said beside your pick.
 
 # Diagnosis discipline
