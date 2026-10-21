@@ -76,6 +76,13 @@ def test_subskills_document_worktree_argument():
         )
 
 
+def _gate_calls_with_worktree(text: str) -> list[str]:
+    """Gate invocations passing worktree=, over whitespace-normalized text so a
+    wrapped call is seen. A call runs to the closing backtick or sentence end."""
+    norm = " ".join(text.split())
+    return [m.group(0) for m in re.finditer(r"/verify-gate <pr[^`]*", norm) if "worktree=" in m.group(0)]
+
+
 def test_verify_gate_owns_its_worktree():
     """Gaze removes its review tree before returning (cleanup.md), so the gate
     cannot be handed it: every gate run creates and removes its own tree, and
@@ -88,9 +95,10 @@ def test_verify_gate_owns_its_worktree():
     callers = [VERIFY, (SKILLS / "raid" / "SKILL.md").read_text(),
                (SKILLS / "merge" / "SKILL.md").read_text()]
     for text in callers:
-        for line in text.splitlines():
-            if "/verify-gate <pr" in line:
-                assert "worktree=" not in line, line
+        assert not _gate_calls_with_worktree(text)
+    # Negative controls: a wrapped invocation must be caught too.
+    assert _gate_calls_with_worktree("run `/verify-gate <pr>\n  repo=x worktree=y`")
+    assert _gate_calls_with_worktree("run /verify-gate <pr> repo=x worktree=y")
     assert "worktree remove" in VERIFY, "gaze still removes its review tree"
 
 
