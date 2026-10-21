@@ -3,10 +3,13 @@ Title: 1045 child B: main-update guard (reference-transaction journal, refusal h
 Created: 2026-10-20
 Author: reviewer
 Blocked-by: 1156
+Closed: implementation merged (PR 1566); observation and the enforce switch moved to ticket 1180 at the author's request
 
 --- log ---
 2026-10-20T19:23Z reviewer created
 2026-10-21T11:54Z reviewer Started in parallel with 1156 at the author's request, overriding Blocked-by: 1156 (PR #1566 reads the gate record by presence only, ref refs/notes/gate). PR #1566 ships the journal hook, an opt-in refusal and the sweep; refusal is on only with `git config idh.mainGuard enforce` (default warn). 1157 stays open until the author turns enforce on and a follow-up makes enforce the default; PR #1566 does not close it.
+2026-10-21T15:00Z reviewer reviewer note Author decision 2026-10-21: the implementation is done and merged (PR 1566); criterion 2 is met in enforce mode, which is opt-in (git config idh.mainGuard enforce). The observation period and turning enforce on move to ticket 1180 so the ticket list shows the state. Closed.
+2026-10-21T15:00Z reviewer closed — implementation merged (PR 1566); observation and the enforce switch moved to ticket 1180 at the author's request
 
 --- body ---
 ## Context
