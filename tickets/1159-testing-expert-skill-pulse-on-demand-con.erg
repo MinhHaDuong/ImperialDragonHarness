@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-21T06:53Z reviewer created
 2026-10-21T06:54Z reviewer branch t1159-2978370; design agreed in session, building skill, scripts and lair step
+2026-10-21T08:35Z reviewer note verify-reroll — round 1: survey stays silent on partial blindness (unreadable or wrong-shape traces) instead of saying it could not look; fixed in f6382d62, gate APPROVED round 2
 
 --- body ---
 ## Context
@@ -34,17 +35,17 @@ reflects on speed bumps and suggests calling the expert.
   confirmation, treatment plan, intervention, follow-up), with references for the
   usual syndromes and the toolkit. `disable-model-invocation: true`.
 - `scripts/pulse_traces.py` (collect, survey) and `scripts/pulse_profile.py`
-  (profile, whatif, compare): standard-library evidence tools.
+  (profile with a worker bound, compare): standard-library evidence tools.
 - Wording removal: `rules/coding-python.md` and `skills/hunt` stop instructing the
   testmon helper; it stays available as one remedy the expert may propose.
 - `lair`: a report-only step that runs the survey and suggests the consultation.
 - Not in scope: gate semantics, `/verify-gate`, any change to a project's targets.
 
 ## Exit criteria
-- [ ] `rules/coding-python.md` and `skills/hunt/SKILL.md` no longer tell agents to run the testmon helper; a test pins the absence
-- [ ] `/pulse` exists, is not model-invocable, and its first sentence is plain function; catalog regenerated, drift clean
-- [ ] The consultation covers history, symptoms, triage, evidence by script, diagnosis, remediation and verification by re-measurement or simulation; tests pin the contract
-- [ ] `pulse_traces.py survey` fires on a synthetic slow-gate trace (positive control), stays silent on a clean one, and says "not checked" when it cannot look
-- [ ] `pulse_profile.py` reproduces a known tail concentration and its worker lower bound from a fixture
-- [ ] `lair` suggests the consultation from the survey, never runs it
-- [ ] `make check` passes; adherence self-gate recorded; PR under the 15-file breaker, else split
+- [x] `rules/coding-python.md` and `skills/hunt/SKILL.md` no longer tell agents to run the testmon helper; a test pins the absence
+- [x] `/pulse` exists, is not model-invocable, and its first sentence is plain function; catalog regenerated, drift clean
+- [x] The consultation covers history, symptoms, triage, evidence by script, diagnosis, remediation and verification by re-measurement or simulation; tests pin the contract
+- [x] `pulse_traces.py survey` fires on a synthetic slow-gate trace (positive control), stays silent on a clean one, and says "not checked" when it cannot look
+- [x] `pulse_profile.py` reproduces a known tail concentration and its worker lower bound from a fixture
+- [x] `lair` suggests the consultation from the survey, never runs it
+- [x] `make check` passes; adherence self-gate recorded; PR under the 15-file breaker, else split
