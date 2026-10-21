@@ -322,7 +322,10 @@ The raid owns each PR's gate session (`skills/verify-gate/SKILL.md` § Gate
 sessions): it generates one UUID per PR before round 1, passes the same
 `session=` to round 1 and to the single re-gate after the fix, and never runs
 the gate a third time or opens a second session for the PR. A round-2 REROLL
-is ESCALATE; ESCALATE and NEEDS-AUTHOR go to the author.
+is ESCALATE; ESCALATE and NEEDS-AUTHOR go to the author. The same two-round
+budget binds the merge-permission-denial recovery (§ Merge-permission denial):
+once two gate rounds are posted on the PR, that recovery parks the PR and
+escalates to the author instead of sending it back through Phase 6.
 
 **Fix-and-regate (caller-owned; formerly gaze's fix-agent contract).** On
 `FINDINGS` or a round-1 REROLL, the raid spawns the fix agent — the **coder
@@ -340,7 +343,7 @@ writes on completion. Fix agent gets ≤10 min. The agent works under:
 Then re-gate once with the same `session=`. Breakers on this loop:
 
 - Fix agent timeout (10 min) → ESCALATE.
-- Gate disagrees with the `/gaze` reviewers (its phases 2–5) on a must-fix finding → ESCALATE (no silent resolution).
+- Gate disagrees with the gaze phase outputs 2–5 on a must-fix finding → ESCALATE (no silent resolution).
 - Two REROLL rounds reached → ESCALATE.
 
 Phase 7 merges stay strictly sequential.
@@ -431,8 +434,11 @@ or hand-merge around the guard.
    Describe the expertise, capability and independence needed to answer the
    objection. Let the runtime discover and route a suitable reviewer; record
    the actual identity, route, independence basis, reviewed base/head and
-   completed report. Disposition every returned finding through verify-gate;
-   a blocking finding sends the PR back through Phase 6. If fixes change the
+   completed report. While the PR's gate budget has a round left (fewer than
+   two `/verify-gate` rounds posted, § Phase 6), disposition every returned
+   finding through verify-gate; a blocking finding sends the PR back through
+   Phase 6. When the gate budget is exhausted, run no further gate or fix: park
+   the PR and escalate to the author with the findings (step 4). If fixes change the
    head, refresh the independent evidence before retrying. Preserve failed or
    missing review records and `PANEL-INTEGRITY:` verbatim in the external
    verdict record; they are coverage limitations, not findings to disposition.

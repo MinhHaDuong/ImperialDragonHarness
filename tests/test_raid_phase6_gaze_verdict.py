@@ -208,3 +208,19 @@ def test_phase6_fix_loop_keeps_the_old_gaze_guards():
         "Strict rule: **only** the listed items.",
     ):
         assert guard in norm, guard
+
+
+def test_denial_recovery_respects_the_gate_budget():
+    """The merge-permission-denial recovery must not reopen Phase 6 after two
+    gate rounds (second union review, ticket 1153): it parks and escalates."""
+    text = " ".join(RAID.read_text().split())
+    recovery = text.split("### Merge-permission denial", 1)[1].split("###", 1)[0]
+    assert (
+        "When the gate budget is exhausted, run no further gate or fix: park the PR and escalate to the author"
+        in recovery
+    )
+    assert (
+        "parks the PR and escalates to the author instead of sending it back through Phase 6"
+        in " ".join(_per_ticket().split())
+    )
+    assert "gaze phase outputs 2–5" in " ".join(_per_ticket().split())
