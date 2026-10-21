@@ -33,6 +33,11 @@ wakes the model when the command exits. Probed 2026-10-21:
 | Codex 0.163.0 | "background terminal" (`/ps` to view, `/stop` to close) | No. The command ran to completion in an idle TUI and the model never started a turn. A `codex queue` doorbell at the command tail failed inside the sandbox ("failed to start embedded app server: Read-only file system"). |
 | Pi 1.3.0 | None. Tools are read, bash, edit, write, subagent; `subagent` is synchronous. A plain `&` child survives `pi -p` exit but nothing wakes. | No facility |
 
+Pi packages that add the missing facility exist (`pi-longrun`,
+`pi-patty-bg-tasks`, `@mjakl/pi-processes`, `pi-bg-run`); they are listed in
+`2026-10-21-longrun-language-audit.md`, read from their READMEs only and not
+audited.
+
 So an instruction to use the runtime's background facility is portable only in
 its first half (launch with a deadline, do not block). The wake-up exists on
 Claude Code alone. On Codex the model sees the result at its next turn, or via

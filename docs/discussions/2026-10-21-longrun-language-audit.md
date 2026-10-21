@@ -45,6 +45,44 @@ profiles/, agents/, adapters docs, and script headers. It read a checkout at
 verify-gate) it re-read `origin/main`. Line numbers marked *main:* are from
 main; the rest are from the older tree. Rebase before editing.
 
+## Findings since the audit ran
+
+Recorded so the redo at Imagine time (ticket 1165) starts from them.
+
+- **R1 is fixed in a PR, not on main yet.** PR #1552 conditions the
+  queued-merge wait on the runtime waking the session when a background command
+  exits, and the wait test pins the new condition. If it has merged, R1 is
+  closed; if not, the wording on main still parks a Codex caller.
+- **Probe facts the instructions must respect.** Headless Claude Code hangs on
+  a bare `&` child until killed (use the runtime's background facility or a
+  detached unit, never a bare child). A Codex background terminal finishes
+  without starting a turn. `codex queue` into a Codex thread starts a turn in
+  an idle TUI and, on a closed thread, through the managed app-server daemon;
+  from the sandboxed shell it fails (the embedded app server cannot start on a
+  read-only file system) unless an execpolicy allow rule runs it unsandboxed.
+  `codex exec resume` on a thread with an active writer is refused. `pi -p
+  --session` against a session open in the TUI hung instead of refusing.
+- **Pi has packages, none adopted.** Read from the READMEs only, not run, not
+  audited: `pi-longrun` (`bg_start`, `bg_wait` with wake conditions for exit, log
+  regex, file appearing or wall-clock time; jobs outlive Pi), `pi-patty-bg-tasks`
+  (`run_in_background` flag, monitors with a `timeout_ms` deadline, default 5
+  minutes, maximum 1 hour), `@mjakl/pi-processes` (wakes on process end or an
+  output pattern, explicit `wait`; it blocks bash commands that detach, such as
+  `&` and `setsid`, which would clash with a detached waiter), `pi-bg-run`
+  (wakes through `sendMessage` with `triggerTurn: true`). Whether any of them
+  wakes the model after the Pi session has exited is not established. Each is
+  third-party code with agent privileges, so adopting one needs a source audit
+  (about 1 to 2 hours per package, estimate).
+- **Codex's own account** (self-reported, not exercised) is in the hints note
+  below: `exec_command` and `write_stdin`, an exec cell with `notify()` and
+  `functions.wait`, and sub-agent completion messages, all inside a live turn.
+  It agrees with the probe that nothing wakes it after the turn ends.
+- **Cross-references.** Stopguard (`docs/2026-10-21-stopguard-design.md`,
+  tracker 1164) reads the wait registry of the parked design for its rule 2 and
+  should cite the new Waiting paragraph. The parked waiter design is in
+  `2026-10-21-await-external-design.md`; ticket 1165 tracks the alignment and
+  names that design as the fallback.
+
 ## Principle to align on
 
 1. Never block a turn on a foreground sleep, watch or poll loop.
