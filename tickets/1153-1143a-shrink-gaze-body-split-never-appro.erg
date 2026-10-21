@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-20T15:12Z reviewer created
+2026-10-21T06:55Z reviewer note Re-sliced into children 1160, 1161, 1162 (Fable advice, 2026-10-21); old PRs 1522-1524 and 1535 superseded.
 
 --- body ---
 ## Context
@@ -18,3 +19,10 @@ Split gaze's body into a core plus references; gaze never returns APPROVED ("gaz
 - [ ] The old battery and `agents/gaze-pr-review.md` are gone with no alias; callers (hunt, raid, merge, verify-gate, dashboard) updated and grep-proven
 - [ ] Gaze's body is split into a core plus references so it stops being a 57 KB resident-on-invoke document (this also satisfies ticket 1131's gaze part and unblocks ticket 1130's gaze history removal)
 - [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker, else split
+
+## Re-slice 2026-10-21
+The stack built for this ticket (#1522 to #1524, #1535) could not be gated: its criteria are only met across the stack, the installed verify-gate escalates 15 or more files and approves no waiver. Advice (Fable): re-slice by criterion. This ticket is now the tracker; children, in merge order:
+- 1160 (1153a): gaze never returns APPROVED, old battery deleted (criterion 1 and the deletion half of 2)
+- 1161 (1153b): callers own the gate (the callers half of 2)
+- 1162 (1153c): body split and catalog (3 and 4)
+The three children's final tree must equal the frozen stack tip cdd9d4f6. The tracker closes after the integration review (`/roar` step 8).

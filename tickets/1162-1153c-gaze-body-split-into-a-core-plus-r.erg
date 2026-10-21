@@ -1,0 +1,17 @@
+%erg 0.1
+Title: 1153c: gaze body split into a core plus references
+Created: 2026-10-21
+Author: reviewer
+Blocked-by: 1161
+
+--- log ---
+2026-10-21T06:55Z reviewer created
+
+--- body ---
+## Context
+Child of tracker 1153, blocked by 1161 (stack order). Gaze's body is one resident-on-invoke document of about 46 KB.
+
+## Exit criteria
+- [ ] Gaze's body is split into a core plus references (`fork-contract`, `setup-and-breaker`, `battery`, `cleanup`, `output`), a mechanical move proved by diffing the inlined view against the previous body; Agent C has one launch mode (direct `/review-pr`); the native `/review` seat is handed the resolved axes (2026-08-17 audit guard)
+- [ ] This also satisfies the gaze part of ticket 1131 and unblocks the gaze history removal of ticket 1130
+- [ ] PR under the 15-file breaker; catalog regenerated and drift check clean
