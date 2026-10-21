@@ -1,0 +1,25 @@
+{
+  "gate": "on",
+  "scope": "1045-decision-3",
+  "about": "Ticket 1045 decision 3 (2026-10-20): the seven formerly forge-required checks minus skill-lint, grep-e-guard and status-verb-guard, plus the skills-catalog drift check. Run by scripts/merge-gate.py on the candidate merge commit; read from the base revision. A candidate whose every changed path is light (tickets, memory, docs, STATE.md) is gated by the light checks only, under scope 1045-decision-3/light.",
+  "checks": [
+    {"name": "validate-tickets", "argv": ["tickets/erg", "check", "tickets/"]},
+    {"name": "agnostic-guard", "argv": ["bash", "scripts/check-agnostic.sh"]},
+    {"name": "pipefail-guard", "argv": ["bash", "scripts/check-pipefail.sh"]},
+    {"name": "pytest-guard", "argv": ["make", "check-tests"]},
+    {"name": "skills-drift", "argv": ["make", "check-skills-drift"]}
+  ],
+  "light_paths": ["tickets/", "memory/", "docs/", "STATE.md"],
+  "light_checks": ["validate-tickets"],
+  "versions": [
+    {"name": "git", "argv": ["git", "--version"]},
+    {"name": "python", "argv": ["uv", "run", "--frozen", "python3", "--version"]},
+    {"name": "bash", "argv": ["bash", "--version"]},
+    {"name": "grep", "argv": ["grep", "--version"]},
+    {"name": "awk", "argv": ["awk", "-W", "version"]},
+    {"name": "make", "argv": ["make", "--version"]},
+    {"name": "uv", "argv": ["uv", "--version"]},
+    {"name": "age", "argv": ["age", "--version"]},
+    {"name": "erg-blob", "argv": ["git", "hash-object", "tickets/erg"]}
+  ]
+}
