@@ -71,7 +71,6 @@ Seat defaults are guidance, not pins; raise a seat when the change warrants it:
 | correctness | cheap cluster | high-risk or cross-cutting change |
 | red team | cheap cluster | high-risk change: another family (`decorrelation.md`) |
 
-Every seat starts in the cheap cluster (`route`'s ÉCONOMIQUES class, the author's ruling of 2026-10-21): for the correctness and red-team seats this overrides `route`'s default of sending judgment work to ASSURANCE, and the last column is the escalation.
 
 **Agent A — adherence** (`/verify-adherence <branch> worktree=<absolute-review-worktree>`).
 **Label-skip:** if the PR carries the

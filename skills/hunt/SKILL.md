@@ -50,8 +50,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    neither is a second triage here.
    - **Needs-human triage.** Read the ticket for these tells, mostly mechanical: a
      `Label: needs-human` header; exit criteria carrying decision verbs (decide,
-     arbitrate, sign-off, choose among); manuscript prose as the deliverable, which
-     rules/prose/workpackages.md already reserves for author arbitration; a
+     arbitrate, sign-off, choose among); manuscript prose as the deliverable, whose
+     autonomous edits rules/prose/workpackages.md sends through a PR for the author to arbitrate; a
      premise resting on conflicting sources. On a hit, do not execute and write no
      code. Return ONE batched decision list to the author, each item with a
      recommended default, and end the turn. That return is a success outcome of the

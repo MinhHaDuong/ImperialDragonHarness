@@ -391,7 +391,9 @@ declines an APPROVED PR's merge.
 After all waves, in one compound so the `cd` persists across the rebase:
 `cd <session-worktree> && "$IDH_ROOT/scripts/sync-local-main.sh" . main`, then
 `make check` in a checkout of the synced main (the primary checkout, or a
-throwaway `git worktree add --detach <dir> main`). New failures → revert last merge + ticket.
+throwaway `git worktree add --detach <dir> main`). The sync script always exits 0
+and leaves a diverged main untouched: read its output, and stop if it reports
+a skipped or diverged main. New failures → revert last merge + ticket.
 
 ## Phase 8: Celebrate (per-merged-PR)
 
