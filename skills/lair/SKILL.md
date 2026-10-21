@@ -61,7 +61,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     b. Hand-edit the sections and bump `Last updated:` in that same change (blockers, next actions, milestones) — no changelog, and no ticket counts, picks, MRs or commits: STATE.md stores no derived number (rules/state.md).
     c. Prune: delete items checked off before this session, and prune further to stay within the cap (rules/state.md).
     d. Commit, push the branch, open a merge request (`Ticket: none`), then **land it yourself** — a STATE refresh is the agent's own output with no blast radius, and handing the author a merge to perform is what this step exists to avoid. Which mechanism lands it is a per-repo fact, never assumed: a `.merge-gate.json` on the base decides the gated path; otherwise **read the auto-merge setting from the forge.**
-       - Gated base (`.merge-gate.json`, `skills/merge/SKILL.md` § Gated base) → write the gate record and run the merge helper, as one background command; its exit 2 means record again on the new head. Never arm auto-merge there: with nothing required it merges at once.
+       - Gated base (`.merge-gate.json`) → write the gate record and merge per `skills/merge/SKILL.md` § Gated base, as one background command; its exit 2 means record again on the new head. Never arm auto-merge there: with nothing required it merges at once.
        - Auto-merge available and enabled on the repo → enable it on the merge request; it lands on its own once the forge's requirements are met.
        - Otherwise → fall back to the repo's own proportionality path (a "trivial review" label where one exists, plus a single review), then merge directly.
 

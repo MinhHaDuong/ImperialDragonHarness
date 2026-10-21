@@ -432,11 +432,10 @@ For each eligible PR, sequentially within the wave:
    `-C` to select the worktree for every Git and forge operation.
    **Gated base** (`.merge-gate.json` on the base, `skills/merge/SKILL.md`
    § Gated base): before this call, write the gate record from the worktree
-   (`merge-gate.py run --base origin/<base> --head HEAD`), then run the helper,
-   both as one background command. The record is the gate: the helper arms
-   nothing, ignores forge check conclusions and merges pinned to the gated
-   head; its exit is the outcome (0 merged). Exit 2 means no record for this
-   head: usually the helper's own ticket-close commit changed the candidate
+   (`merge-gate.py run --base origin/<base> --head HEAD`), then merge per
+   `skills/merge/SKILL.md` § Gated base, both as one background command. The
+   record is the gate; the merge's exit is the outcome (0 merged). Exit 2
+   means no record for this head: usually the helper's own ticket-close commit changed the candidate
    (close before gating avoids it), else an earlier merge in the wave moved
    the base. Record again on the current head, run again.
    **Ungated base:** the merge is queued, not necessarily landed: pending checks are normal.

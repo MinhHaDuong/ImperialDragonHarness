@@ -16,6 +16,6 @@ Child A of tracker 1045. Author decisions 2026-10-20 (defaults of the Fable advi
 - [ ] A record on the candidate merge commit (built first, so merge-time effects such as `erg close` are inside what was checked) names time, actor, host, revision, command and its scope, and tool versions
 - [ ] The gate's check set is as decided above; the choice is written in the record's scope field
 - [ ] `/merge` refuses a branch with no record on its candidate commit, and a positive control shows it accepts one; the latest entry for a subject decides
-- [ ] The merge is made in the background once the gate passes, so waiting costs no attention: the caller's one background command runs the gate, then the merge helper (forge auto-merge is not used: with no required checks it merges at once)
+- [ ] The merge is made in the background once the gate passes, so waiting costs no attention: the caller's one background command runs the gate, then merges per skills/merge/SKILL.md § Gated base (forge auto-merge is not used: with no required checks it merges at once)
 - [ ] Nothing here requires a particular agent runtime
 - [ ] Catalog regenerated and drift check clean; PR under the 15-file breaker, else split

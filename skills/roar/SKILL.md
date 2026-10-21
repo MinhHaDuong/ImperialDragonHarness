@@ -109,7 +109,7 @@ Start this branch before the first write; all writes stay inside the project.
 After completing the ticket checks in steps 7–8, commit the complete bundle,
 push it and open **one PR**. Fast-track it: on a gated base
 (`skills/merge/SKILL.md` § Gated base) write its gate record and
-run the merge helper, both as one background command (exit 2: record again
+merge per `skills/merge/SKILL.md` § Gated base, both as one background command (exit 2: record again
 on the new head); elsewhere pass the project's required checks and enable auto-merge
 using its supported merge method. This is standing authorization for roar's bounded wrap-up bundle;
 no further confirmation is needed. Do not bypass failing checks or protected
