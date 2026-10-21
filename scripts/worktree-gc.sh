@@ -36,15 +36,21 @@ skipped_live=0
 husks=0
 declare -a registered_paths=()
 
-# Liveness rail: snapshot every live process's cwd once (Linux /proc).
-# readlink fails on other users' entries and kernel threads — those are
-# skipped silently and the remaining rails still apply. readlink returns
-# fully resolved paths, so candidates are realpath'd before comparison.
+# Liveness rail: snapshot every live process's cwd once (Linux /proc), on the
+# first removal candidate — a quiet repo never pays for it. One readlink for
+# all entries, not one fork per process: a host with ~10k processes spent ~20 s
+# in the per-process loop. readlink fails on other users' entries and kernel
+# threads — it skips those, prints the rest (hence `|| true`), and the
+# remaining rails still apply. NUL-separated so a newline in a path cannot
+# split an entry. It returns fully resolved paths, so candidates are
+# realpath'd before comparison.
 declare -a live_cwds=()
-for _p in /proc/[0-9]*/cwd; do
-    _c=$(readlink "$_p" 2>/dev/null) || continue
-    live_cwds+=("$_c")
-done
+live_cwds_loaded=0
+load_live_cwds() {
+    [ "$live_cwds_loaded" -eq 1 ] && return 0
+    live_cwds_loaded=1
+    mapfile -d '' -t live_cwds < <(readlink -z -- /proc/[0-9]*/cwd 2>/dev/null || true)
+}
 
 path=""
 branch=""
@@ -91,6 +97,7 @@ flush() {
     # its branch's upstream says (checked only past the [gone] gate so a
     # quiet repo stays silent — live worktrees on live branches say nothing).
     local rpath lc
+    load_live_cwds
     rpath=$(realpath "$path" 2>/dev/null || echo "$path")
     for lc in "${live_cwds[@]:-}"; do
         [ -z "$lc" ] && continue
