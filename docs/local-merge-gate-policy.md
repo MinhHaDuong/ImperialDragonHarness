@@ -85,6 +85,23 @@ validator only), so the trace stays uniform and the cost stays small. **Pending*
   when it could not look, never 0.
 - **Pending** (ticket 1157).
 
+## Trust, verify, monitor
+
+The stance behind the gate, written for projects that adopt it.
+
+- **Trust.** The orchestrator that runs a review chooses which perspectives to run, how
+  deep, and with which tools: its runtime's own verify and simplify tools, the harness's
+  review skill, or none. It is told that external reviewer tools exist for a read from
+  another model family when it wants one. The harness fixes no floor and no category of
+  change. Mechanical work lives in scripts, not prose, so that a smaller model can follow
+  the skills.
+- **Verify, always.** A reviewer never approves: only the gate rules. A review result applies
+  to one head. The full integration check runs once, on the merge candidate, and writes the
+  gate record.
+- **Monitor.** The guard journal, the sweep of commits that entered the base branch, the
+  review result comment (what ran, by which family, why) and the count of review runs per
+  pull request show afterwards whether the trust was well placed.
+
 ## Review disciplines that go with it
 
 - Stop a review loop when a round finds no defect that is both absent on the base
