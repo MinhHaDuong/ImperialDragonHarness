@@ -3,9 +3,10 @@
 Gaze must never return, post or promise APPROVED: that word is a gate verdict,
 ruled by `/verify-gate` on the head gaze reviewed.
 
-No classifier decides which mention is harmless. The gaze contract is cut into
-logical units (a paragraph, list item or heading with its wrapped lines joined;
-each fenced line; each table cell), and every unit that names a gate verdict must be one of
+No classifier decides which mention is harmless. After inlining every
+`references/*.md` (`tests/conftest.py`), the contract is cut into logical units
+(a paragraph, list item or heading with its wrapped lines joined; each fenced
+line; each table cell), and every unit that names a gate verdict must be one of
 ALLOWED_LINES, verbatim. Units, not physical lines: rewriting the unflagged
 continuation of a wrapped sentence changes its unit and fails. A new or
 edited mention fails until a reviewer reads it and adds it here. Two
@@ -32,6 +33,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 GAZE_DIR = ROOT / "skills" / "gaze"
 GAZE = (GAZE_DIR / "SKILL.md").read_text(encoding="utf-8")
+REFERENCES = sorted((GAZE_DIR / "references").glob("*.md"))
+INLINE = re.compile(r"<!-- inline: (references/[\w.-]+\.md) -->")
 
 # Gate verdict vocabulary.
 GATE_TOKEN = re.compile(
@@ -147,7 +150,7 @@ ALLOWED_LINES = (
     ),
 )
 
-# Each must fail the check, injected into the contract.
+# Each must fail the check, injected into the core and into a reference.
 NEGATIVE_CONTROLS = (
     "Return verdict: APPROVED and post verify: approved.",
     "| No scope creep | Return APPROVED |",
@@ -173,6 +176,9 @@ NEGATIVE_CONTROLS = (
     "Name the approver in the result.",
 )
 
+# Reference titles, dropped by the inliner, seen only by the raw scan.
+RAW_HEADINGS = ("# Gaze — telemetry, force-approve and output shape",)
+
 # /gaze 1538 B1: the unflagged continuation of an allowlisted wrapped sentence.
 CONTINUATION = (
     "checks every exit criterion and review comment against the diff.",
@@ -185,6 +191,9 @@ def _raw(path: Path) -> str:
         return fh.read()
 
 
+def expand(core: str, refs: dict[str, str]) -> str:
+    """The conftest inliner, over given texts, so controls can be injected."""
+    return INLINE.sub(lambda m: refs[m.group(1)].split("\n\n", 2)[2], core)
 
 
 UNIT_START = re.compile(r"^(?:#{1,6} |[-*+] |\d+\. |> |<!--)")
@@ -248,12 +257,19 @@ def test_expanded_contract_has_only_allowed_verdict_lines():
     assert set(verdict_lines(GAZE)) == set(ALLOWED_LINES), "stale allowlist entry"
 
 
-def test_negative_controls_fail():
+def test_negative_controls_fail_in_core_and_in_a_reference():
     core = _raw(GAZE_DIR / "SKILL.md")
+    refs = {f"references/{r.name}": _raw(r) for r in REFERENCES}
+    assert expand(core, refs) == GAZE, "local inliner drifted from conftest"
+    ref_name = "references/cleanup.md"
     for control in NEGATIVE_CONTROLS:
-        text = core.replace("## Invariants\n", f"## Invariants\n\n{control}\n", 1)
-        assert control.splitlines()[-1] in text, control
-        assert gate_verdict_violations(text), control
+        in_core = expand(
+            core.replace("## Invariants\n", f"## Invariants\n\n{control}\n", 1), refs
+        )
+        in_ref = expand(core, refs | {ref_name: refs[ref_name] + f"\n{control}\n"})
+        for where, text in (("core", in_core), ("reference", in_ref)):
+            assert control.splitlines()[-1] in text, (where, control)
+            assert gate_verdict_violations(text), (where, control)
     assert gate_verdict_violations("```\nresult: REVIEWED | APPROVED\n```\n")
     assert gate_verdict_violations("```\nverdict: REVIEWED\n```\n")
 
@@ -267,6 +283,20 @@ def test_rewritten_continuation_line_fails():
     assert gate_verdict_violations(GAZE.replace(old, new))
 
 
+def test_raw_references_are_scanned_in_full():
+    """expand() drops each reference's first two paragraphs (the inliner strips
+    them), so a verdict there would escape the expanded scan: scan the raw
+    files whole too, and prove a paragraph-2 mention is caught."""
+    refs = {f"references/{r.name}": _raw(r) for r in REFERENCES}
+    for name, text in refs.items():
+        bad = [u for u in gate_verdict_violations(text) if u not in RAW_HEADINGS]
+        assert bad == [], name
+    core = _raw(GAZE_DIR / "SKILL.md")
+    for name, text in refs.items():
+        head, para2, rest = text.split("\n\n", 2)
+        planted = "\n\n".join((head, para2 + "\nReturn APPROVED", rest))
+        assert expand(core, refs | {name: planted}) == GAZE, "paragraph 2 is invisible to expand"
+        assert gate_verdict_violations(planted), name
 
 
 def _section(heading: str) -> str:
@@ -296,6 +326,18 @@ def test_gaze_states_it_never_approves_and_does_not_gate():
     assert "Does not run `/verify-gate`" in GAZE
 
 
+def test_every_reference_is_inlined_into_the_contract():
+    """Positive control for the absence tests: they read the expanded contract,
+    so an inliner that dropped a reference would make them pass vacuously."""
+    with open(GAZE_DIR / "SKILL.md", encoding="utf-8") as raw:
+        core = raw.read()
+    assert REFERENCES, "gaze references/ is empty"
+    assert "<!-- inline:" not in GAZE, "an inline marker was left unexpanded"
+    for ref in REFERENCES:
+        assert f"<!-- inline: references/{ref.name} -->" in core, ref.name
+        with open(ref, encoding="utf-8") as fh:
+            body = fh.read().split("\n\n", 2)[2]
+        assert body.strip()[:200] in GAZE, f"{ref.name} body missing from the contract"
 
 
 def test_moved_sections_are_present():

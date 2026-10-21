@@ -226,12 +226,12 @@ def test_native_review_seat_is_handed_the_resolved_axes():
     Routing settles which *panel* reviews a diff; it does not settle which
     *rulebook* the reviewer holds it to. Told nothing, `/review` picks one by
     inference: it read `rules/doctype/book.md` on a manuscript whose manifest
-    declares `techreport` (audit of 2026-08-17, MR 136). Agent B is gone
-    (ticket 1153); the guard now binds the optional native `/review` seat.
+    declares `techreport` (audit of 2026-08-17, MR 136). The guard moved from
+    gaze's body to `references/battery.md` with the body split (ticket 1153).
     """
-    text = GAZE.read_text(encoding="utf-8")
+    text = (REPO / "skills" / "gaze" / "references" / "battery.md").read_text(encoding="utf-8")
     marker = "**Hand native `/review` the resolved axes"
-    assert marker in text, "axes clause missing from gaze"
+    assert marker in text, "axes clause missing from battery.md"
     clause = text.split(marker)[1].split("**Agent C")[0]
     assert '"$IDH_ROOT/scripts/prose_predicate.py" --axes' in clause
     assert "review-<pr-number>" in clause, "the axes call reads the disk, so it must be cwd-anchored"
