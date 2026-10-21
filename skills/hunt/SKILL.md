@@ -135,12 +135,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
     ```
     Follow the contract the skill loader returns; do not paraphrase or inline its
     steps (mirrors raid Phase 5's mechanical `Skill(hunt)` invocation).
-    Each pass through the 11–12 loop is one **review round**. Do not pass a round
-    number: `/review-pr` derives its own round from the merge request's posted
-    review history and scopes the panel accordingly — round 1 uses the
-    configured small-diff width from `skills/review-pr/panel-width.json`
-    (Correctness only when eligible; `review:standard` requests all five
-    perspectives), while later rounds re-run only perspectives that objected
-    plus a regression check (§ Round scoping in `skills/review-pr/SKILL.md`).
+    Each pass through the 11–12 loop is one **review round**; which
+    perspectives run, and how deep, is the reviewer's call
+    (`skills/gaze/SKILL.md` § 2–5).
 12. Fix all comments regardless of severity. Per fix cycle, run `make check-fast` plus the tests implicated by the comments — not the full suite. If any cycle's fix touches code outside the fast tier, run the full `make check` once, in addition — not on every cycle.
 13. Repeat 11–12 up to 3 times, i.e. up to round 3. If still not clean, escalate (see workflow rules).

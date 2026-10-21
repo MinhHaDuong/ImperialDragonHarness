@@ -67,7 +67,7 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
 
 1. Identify the text: which of the diff's files are manuscripts per the shared prose predicate? Run `python3 "$IDH_ROOT/scripts/prose_predicate.py" <file>` from the merge request's checkout — the predicate reads the disk (manifest walk-up, `\documentclass` sniff), so the paths must exist under the cwd; it refuses a missing path (exit 2, no verdict) rather than guessing, and a refusal is a cwd error to fix, never an answer. It prints `prose` for a manuscript: a file with a resolved `doctype`, from the project's `.claude/rules-map.toml` manifest or the `\documentclass` sniff when no manifest exists. What is the target venue?
 2. Read the diff of the merge request.
-3. Recruit the panel: select roles appropriate for the venue and scope of changes. Always include an adversarial referee. Add a journal-specific expert if venue rules exist (check project rules). On round ≥ 2, scope the panel per § Round scoping below before launching it. Every launch is **the prose-reviewer profile** (`agents/prose-reviewer.md`), whose contract is `profiles/prose-reviewer/PROFILE.md`; the seat's role — adversarial referee, AI-tells auditor, or venue expert — the rulebook or axes it holds, the anchor HEAD, the changed-file roster, and the exact `<panel>/<reviewer>.md` path the seat writes ride in the launch prompt — the seat's role rails (read-only on the review tree, `git -C` discipline, report format) are the contract's and are not restated in this skill or in a launch prompt.
+3. Recruit the panel: select roles appropriate for the venue and scope of changes. Always include an adversarial referee. Add a journal-specific expert if venue rules exist (check project rules). Which reviewers run, and how deep, a repeat run included, is the caller's choice (`skills/gaze/SKILL.md` § 2–5), yours when run standalone; the AI-tells auditor runs every time, since revised passages are new surface for it. Every launch is **the prose-reviewer profile** (`agents/prose-reviewer.md`), whose contract is `profiles/prose-reviewer/PROFILE.md`; the seat's role — adversarial referee, AI-tells auditor, or venue expert — the rulebook or axes it holds, the anchor HEAD, the changed-file roster, and the exact `<panel>/<reviewer>.md` path the seat writes ride in the launch prompt — the seat's role rails (read-only on the review tree, `git -C` discipline, report format) are the contract's and are not restated in this skill or in a launch prompt.
 
 ## The seats are the prose-reviewer profile
 
@@ -121,9 +121,8 @@ Violations must cite the line. This agent has no other role — its table goes v
    success.
 8. Close with a verdict roster: one line per reviewer in the manifest, giving its
    verdict (accept / minor / major), including reviewers that accepted with
-   nothing to say, and **no report** for any that did not land. The next round
-   scopes itself from this roster (§ Round scoping): a `no report` reviewer is
-   unresolved and runs again. A reviewer that crashed and a reviewer that
+   nothing to say, and **no report** for any that did not land. A `no report`
+   reviewer is unresolved. A reviewer that crashed and a reviewer that
    accepted are opposite outcomes and must not share a spelling.
 
 ## Minor/suggestion tags (mandatory)
@@ -141,33 +140,3 @@ Rules:
 - Majors are not tagged; tags are for the minor/suggestion tier only.
 - The tag set is shared with `/review-pr` and `/verify-gate`. Keep all three in sync.
 
-## Proportional depth
-
-| Text change | Panel size |
-|---|---|
-| Typo, citation fix | Copy editor only |
-| Section rewrite | 3 agents (domain + adversarial + copy) |
-| Full paper draft | Full panel (5-6 agents) |
-| Submission-ready | Full panel + response-to-reviewers template |
-
-### Round scoping
-
-The table above prices **round 1**, which always runs the full panel for the
-change's size. Derive the round from the merge request itself: count the
-reviews this skill has already posted there; the round is that count plus one.
-No caller passes a round number.
-
-For round N > 1, re-run only the reviewers whose round N−1 verdict was
-**minor** or **major**, plus one regression agent running a single regression
-check over the whole accepting set — asked only whether the revisions since
-then broke what those reviewers accepted. The AI-tells auditor is exempt from scoping and runs every
-round: it scans the full text, so revised passages are new surface for it
-regardless of who objected last time.
-
-**Reset exception.** If the revision since the last review touches text the
-review did not cover, or rewrites more than roughly half of it, run the full
-panel for this round — scoping is ignored, and the derived round number itself
-is untouched. The accepting reviewers accepted different prose.
-
-This mirrors § Round scoping in `skills/review-pr/SKILL.md`; keep
-the two in sync.

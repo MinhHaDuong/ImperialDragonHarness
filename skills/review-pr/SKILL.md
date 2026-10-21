@@ -35,8 +35,6 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 Spin multiple agents in parallel, each with a distinct perspective, each in a fresh context. Choose the model of each launched worker per launch, from the `route` skill grid
 (`skills/route/SKILL.md`); seats that must be independent follow
 `skills/route/references/decorrelation.md` ("The launch line").
-A trivial change takes cheap same-family seats, a high-risk one needs one
-cross-family detached seat, else `no report` and `PANEL-INTEGRITY: DEGRADED`.
 
 **Concurrency contract (`rules/authoring-skills.md`): parallel-background,
 collected by polling.** This skill runs as a `context: fork` (see frontmatter),
@@ -85,22 +83,10 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
 
 1. **Read the issue** linked to the PR. Note the exit criteria.
 2. **Read the diff** of the merge request.
-3. **Determine round-1 panel width**, then assess risk level and proportional
-   depth (see below). Read `$IDH_ROOT/skills/review-pr/panel-width.json`;
-   its `max_lines`, `max_files`, and `pipeline_paths` are the configured
-   criterion. Use the PR base branch and `git diff --numstat --no-renames
-   origin/<base>...HEAD` in the review worktree. Sum added and deleted lines
-   and count changed files. A binary/unknown count, missing base, or unreadable
-   config chooses the proportional panel. On round 1, choose **Correctness only**
-   when both counts are within the configured maxima and no changed path
-   matches a `pipeline_paths` glob (treat `/**` as including every descendant).
-   Otherwise choose the proportional panel below, with at least Correctness +
-   Consistency even if the risk description is trivial. Record the counts, matched
-   pipeline paths, and chosen width in `<panel>/width.txt` and the posted
-   synthesis; `manifest.txt` keeps its four tab-separated columns; the width lives only in `width.txt`.
-   A `review:standard` label on the PR or the exact token `review:standard` in
-   its linked ticket body or PR body overrides the small-diff choice and runs
-   all five perspectives. The author can request that token at any time.
+3. **Choose the perspectives** from the table below and how deep to go: the
+   caller's choice when `/gaze` invokes this skill, yours when run standalone
+   (`skills/gaze/SKILL.md` § 2–5). Name what ran, by which family, and why in
+   the posted review.
 4. **Write the manifest, then launch the review agents** in parallel, in one
    message, per the concurrency contract above. Each launch is **the
    code-reviewer profile** (`agents/code-reviewer.md`), whose contract is
@@ -112,9 +98,8 @@ Before reading or posting a review, set `review_tree` to the absolute `worktree=
    block; the detached-seat substitution below intentionally restates the
    read-only rails in its prompts — a detached CLI seat cannot be relied on
    to read a shell. An agent that only *returns*
-   its findings has reported to a fork that is already gone. On round ≥ 2,
-   scope the set per § Round scoping below before launching, and let the
-   manifest list exactly that scoped set:
+   its findings has reported to a fork that is already gone. The manifest lists
+   exactly the chosen perspectives:
 
    **Fan-out preflight:** inspect your available tools for `Agent` before the
    launch. If it is absent, or a launch returns a depth-limit, permission, or
@@ -186,64 +171,6 @@ seat is `no report` with `PANEL-INTEGRITY`, never simulated.
 OS-sandboxed process per seat) — cite it, never require it, and never
 extend it for this substitution.
 
-### Proportional depth
-
-| PR risk | Agents |
-|---|---|
-| Trivial (typo, config) | Correctness only |
-| Standard | Correctness + Consistency |
-| Standard + scripts | + Doc propagation |
-| Substantial | All five |
-| High-risk (schema, methodology) | All five + domain experts |
-
-### Round scoping
-
-The table above prices the proportional panel. The mechanical width criterion
-in Setup selects Correctness only for a qualifying round-1 diff. Any concern
-from that reviewer (including low confidence or a suspected unseen failure)
-must **escalate** within round 1: add the other four perspectives to the
-manifest, run and collect them, then synthesize
-the complete roster before posting the review. Never post a single-seat
-approval while the reviewer requests escalation. If the author's
-`review:standard` request arrives after a single-seat review, the next review
-runs all five perspectives as a reset exception.
-
-Derive the round here, from the PR itself: count the reviews already posted by
-this skill on the merge request; the round is that count plus one. No caller
-passes a round number, and no caller is trusted to have counted — the PR's
-review history is the only source.
-
-**If the review history cannot be read, stop.** An unreachable forge makes the
-round unknown, and both guesses are wrong in their own direction: assuming
-round 1 re-runs a full panel over settled ground, assuming higher silently
-scopes perspectives out that never cleared. Report that the round could not be
-derived and why. Abstaining is the correct verdict when the input is missing.
-
-For round N > 1, re-run only:
-
-- the perspectives whose round N−1 verdict was **comment** or
-  **request-changes** — those are the ones with something outstanding; and
-- **one regression check**: a single regression agent covering all the perspectives that
-  cleared in round N−1, asked only whether the fixes since then broke anything
-  those perspectives had approved. One agent for the whole cleared set, not one
-  per perspective — it is a cheap sanity pass, not a re-review.
-
-A perspective that returned **approve** in round N−1 does not run again on its
-own; the regression check stands in for it.
-
-**Reset exception.** If the diff since the last review touches files that were
-not in it, or changes more than roughly half of its lines, the fixes are a
-rewrite rather than a patch — the cleared perspectives cleared different code.
-Run the full proportional panel for this round — scoping is ignored. The
-derived round number itself is untouched: the count of posted reviews cannot
-be rolled back, and the review this round posts still increments it.
-An explicit `review:standard` request is also a reset exception and runs all
-five perspectives.
-
-Model pins are unaffected: scoping changes *which* perspectives run, never
-which model runs them (`rules/claude-code.md` § Subagent levers and
-`rules/workflow.md` § Delegation).
-
 ## The seats are the code-reviewer profile
 
 Every seat launched above is the code-reviewer profile; what it does — how it
@@ -295,11 +222,9 @@ to synthesis with what landed, carrying the gap forward by name: write and post 
 8. **Close with a verdict roster** — one line per perspective in the manifest,
    giving its verdict (approve / comment / request-changes), including the
    perspectives that returned **approve** with nothing to say, and **no report**
-   for any that did not land. The next round scopes itself from this roster
-   (§ Round scoping): a `no report` perspective is unresolved and re-runs, exactly
-   like a `comment`. Silence must never scope a perspective out — a reviewer that
-   crashed and a reviewer that approved are opposite outcomes and cannot share a
-   spelling. Dedup (step 3) merges *findings*, never verdicts: a perspective whose
+   for any that did not land. A `no report` perspective is unresolved, exactly
+   like a `comment`: a reviewer that crashed and a reviewer that approved are
+   opposite outcomes and cannot share a spelling. Dedup (step 3) merges *findings*, never verdicts: a perspective whose
    only finding was deduped into another's still records its own comment verdict.
 
 ## Panel scratch cleanup

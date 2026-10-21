@@ -43,25 +43,6 @@ Loaded from `skills/gaze/SKILL.md` § 1. Setup, after the isolation script has r
 
 - ESCALATE with a clear message, and do not proceed, only if a close claim names a nonexistent ticket file or the PR body, diff or comments cannot be located. A missing ticket with no claim and no reference is not an escalation.
 
-#### Round scoping
-
-A repeat `/gaze` on a merge request that already carries a prior review-pr
-review does not re-run the whole five-perspective panel by default: review-pr
-re-runs the perspectives that objected plus one regression check over the
-cleared ones (§ Round scoping in `skills/review-pr/SKILL.md`, ticket 0377).
-Adherence and simplify run at full strength every time.
-
-**gaze does not compute the round.** It reads only whether a prior review-pr
-review exists (a boolean from the merge request's review history) and passes no
-round number. review-pr derives the round itself: count the reviews it
-previously posted on the merge request, identifiable by the verdict roster they
-always carry; the round is that count plus one.
-
-An unchanged diff does **not** reset scoping. Reset happens only on a
-substantial rewrite: the diff touches files the last review did not cover, or
-changes more than roughly half of its lines. Then the full panel runs for this
-round and scoping is ignored.
-
 #### Waiver
 
 The 15-file count is a decomposition signal, not a hard wall. A waiver lifts
