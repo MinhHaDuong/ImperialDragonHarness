@@ -1,0 +1,180 @@
+#!/bin/sh
+# --- main-update-guard --- (ticket 1157, tracker 1045)
+# Journals every update of refs/heads/main and, in enforce mode only, refuses
+# one that is not a gated merge. git runs this hook for every ref transaction
+# (commit, fetch, update-ref, branch -f, reset, rebase, linked worktrees), and
+# `--no-verify` does not skip it. A client that overrides core.hooksPath does:
+# the periodic sweep (scripts/main_sweep.py) exists for that case.
+#
+# Mode: `git config idh.mainGuard`
+#   warn    (default, also any unknown value) journal; a non-gated update gets
+#           a stderr warning and goes through
+#   enforce journal; a non-gated update is refused at the `prepared` phase
+#   off     journal only
+#
+# A gated update of main is one of:
+#   on-origin    the new tip is origin/main (as the same transaction may set
+#                it: `fetch --atomic origin main:main`), or a fast-forward to a
+#                commit already on origin/main, or a fast-forward to the main
+#                tip this worktree just fetched from origin (FETCH_HEAD: a
+#                plain `fetch origin main:main` moves main in a transaction of
+#                its own, before origin/main). Covers scripts/sync-local-main.sh,
+#                `git pull` and the forge's merges coming home.
+#   gate-record  the new tip carries a gate record (a note in refs/notes/gate,
+#                written by ticket 1156's merge gate) and its first parent is
+#                the current main.
+# Everything else (a local commit on main, a reset, branch -f, a deletion) is
+# not gated.
+#
+# The journal never blocks: every journal step swallows its own errors, and
+# only an enforce-mode refusal exits non-zero. Journal file, shared by all
+# worktrees: $(git rev-parse --git-common-dir)/idh/main-journal.jsonl
+#
+# POSIX sh, git and /proc or ps only: no agent runtime is involved.
+
+phase=$1
+MAIN_REF=refs/heads/main
+ORIGIN_REF=refs/remotes/origin/main
+GATE_NOTES_REF=refs/notes/gate   # shared with scripts/main_sweep.py
+ZERO=0000000000000000000000000000000000000000
+
+main_updates=""
+origin_new=""
+while read -r old new ref; do
+    case "$ref" in
+        "$MAIN_REF") main_updates="$main_updates$old $new
+" ;;
+        "$ORIGIN_REF") origin_new=$new ;;
+    esac
+done
+[ -n "$main_updates" ] || exit 0
+
+# The one reader of ticket 1156's record: presence of a non-empty note.
+gate_record_present() {
+    [ -n "$(git notes --ref="$GATE_NOTES_REF" show "$1" 2>/dev/null)" ]
+}
+
+# The url as FETCH_HEAD prints it: no user@, no trailing / or .git.
+norm_url() {
+    printf '%s' "$1" | sed -e 's|^\([a-z+]*://\)\{0,1\}[^@/]*@|\1|' -e 's|/$||' -e 's|\.git$||'
+}
+
+# $1 is the main tip this worktree last fetched from origin.
+fetched_from_origin() {
+    url=$(git remote get-url origin 2>/dev/null) || return 1
+    want="branch 'main' of $(norm_url "$url")"
+    fh=$(git rev-parse --git-path FETCH_HEAD 2>/dev/null) || return 1
+    [ -r "$fh" ] || return 1
+    # Fields are tab-separated and the middle one is often empty; a tab in
+    # IFS is whitespace and would merge it away, so split by hand.
+    while IFS= read -r line; do
+        sha=${line%%	*}
+        desc=${line##*	}
+        if [ "$sha" = "$1" ]; then
+            have="branch 'main' of $(norm_url "${desc#"branch 'main' of "}")"
+            [ "$have" = "$want" ] && return 0
+        fi
+    done < "$fh"
+    return 1
+}
+
+is_zero() {
+    case "$1" in *[!0]*) return 1 ;; *) return 0 ;; esac
+}
+
+json_str() {
+    printf '%s' "$1" | tr '\000-\037' ' ' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
+# Command lines of the process chain, from git (the hook's parent) upward.
+procs_json() {
+    pid=$PPID
+    depth=0
+    out=""
+    while [ -n "$pid" ] && [ "$pid" -gt 1 ] 2>/dev/null && [ "$depth" -lt 16 ]; do
+        if [ -r "/proc/$pid/cmdline" ]; then
+            cmd=$(tr '\000' ' ' < "/proc/$pid/cmdline")
+            ppid=$(sed -n 's/^PPid:[[:space:]]*//p' "/proc/$pid/status")
+        else
+            cmd=$(ps -o args= -p "$pid")
+            ppid=$(ps -o ppid= -p "$pid" | tr -d ' ')
+        fi
+        [ -n "$out" ] && out="$out,"
+        out="$out{\"pid\":$pid,\"cmd\":\"$(json_str "$cmd")\"}"
+        pid=$ppid
+        depth=$((depth + 1))
+    done
+    printf '[%s]' "$out"
+}
+
+journal() {
+    # $1 declared old, $2 actual current, $3 new, $4 decision, $5 action
+    common=$(git rev-parse --path-format=absolute --git-common-dir) || return 0
+    mkdir -p "$common/idh" || return 0
+    line="{\"time\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"phase\":\"$(json_str "$phase")\""
+    line="$line,\"ref\":\"$MAIN_REF\",\"old\":\"$1\",\"current\":\"$2\",\"new\":\"$3\""
+    line="$line,\"mode\":\"$(json_str "$mode")\",\"decision\":\"$4\",\"action\":\"$5\""
+    line="$line,\"user\":\"$(json_str "$(id -un)")\",\"uid\":\"$(id -u)\""
+    line="$line,\"host\":\"$(json_str "$(uname -n)")\",\"cwd\":\"$(json_str "$PWD")\""
+    line="$line,\"git_ident\":\"$(json_str "$(git var GIT_COMMITTER_IDENT)")\""
+    line="$line,\"procs\":$(procs_json)}"
+    printf '%s\n' "$line" >> "$common/idh/main-journal.jsonl"
+}
+
+classify() {
+    # $1 actual current, $2 new; prints on-origin | gate-record | not-gated
+    if is_zero "$2"; then echo not-gated; return; fi
+    tip=$origin_new
+    [ -n "$tip" ] || tip=$(git rev-parse -q --verify "$ORIGIN_REF")
+    if [ -n "$tip" ] && ! is_zero "$tip"; then
+        if [ "$2" = "$tip" ]; then echo on-origin; return; fi
+        if git merge-base --is-ancestor "$2" "$tip" 2>/dev/null &&
+           { is_zero "$1" || git merge-base --is-ancestor "$1" "$2" 2>/dev/null; }; then
+            echo on-origin; return
+        fi
+    fi
+    if fetched_from_origin "$2" &&
+       { is_zero "$1" || git merge-base --is-ancestor "$1" "$2" 2>/dev/null; }; then
+        echo on-origin; return
+    fi
+    if gate_record_present "$2" &&
+       [ "$(git rev-parse -q --verify "$2^1" 2>/dev/null)" = "$1" ]; then
+        echo gate-record; return
+    fi
+    echo not-gated
+}
+
+mode=$(git config --get idh.mainGuard 2>/dev/null)
+case "$mode" in enforce|warn|off) ;; *) mode=warn ;; esac
+
+status=0
+current=$(git rev-parse -q --verify "$MAIN_REF" 2>/dev/null) || current=$ZERO
+printf '%s' "$main_updates" | {
+    while read -r old new; do
+        [ "$old" = "$new" ] && ! is_zero "$new" && continue
+        decision=""
+        action=""
+        if [ "$phase" = prepared ]; then
+            decision=$(classify "$current" "$new" 2>/dev/null)
+            [ -n "$decision" ] || decision=not-gated
+            action=allowed
+            if [ "$decision" = not-gated ]; then
+                case "$mode" in
+                    enforce) action=refused ;;
+                    warn) action=warned ;;
+                esac
+            fi
+        fi
+        ( journal "$old" "$current" "$new" "$decision" "$action" ) >/dev/null 2>&1
+        case "$action" in
+            refused)
+                echo "main-guard: refused: update of $MAIN_REF ${current%"${current#???????}"}..${new%"${new#???????}"} is not a gated merge (idh.mainGuard=enforce)." >&2
+                echo "main-guard: main moves only to origin/main or to a merge carrying a gate record ($GATE_NOTES_REF). Land it via branch + PR." >&2
+                status=1 ;;
+            warned)
+                echo "main-guard: warning: update of $MAIN_REF ${current%"${current#???????}"}..${new%"${new#???????}"} is not a gated merge; journaled (idh.mainGuard=warn)." >&2 ;;
+        esac
+    done
+    exit $status
+}
+# --- main-update-guard ---
