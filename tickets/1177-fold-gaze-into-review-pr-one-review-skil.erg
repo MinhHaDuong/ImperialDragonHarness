@@ -1,10 +1,12 @@
 %erg 0.1
-Title: Fold gaze into review-pr: one review skill, the gate keys on a review on the head
+Title: Fold review-pr into gaze: one review skill, the user-facing dragon name survives
 Created: 2026-10-21
 Author: reviewer
 
 --- log ---
 2026-10-21T13:24Z reviewer created
+
+2026-10-21T14:00Z reviewer note Decision by the author ("go", 2026-10-21): the survivor is gaze, and review-pr folds into it. Reasons: only user-facing skills get dragon names and resident cards (author decision 2026-10-20), the review-pr card frees resident budget, review-pr resembles built-in review commands, and the gate keeps keying on the gaze result so verify-gate does not change. Fable (2026-10-21) advised the opposite direction without the naming constraint; its list of what survives and its one risk (the never-approves allowlist) stand.
 
 --- body ---
 ## Context
@@ -31,20 +33,11 @@ runs per pull request). Ticket 1176 deletes the width, depth, scoping and risk
 machinery first.
 
 ## Exit criteria
-- [ ] Fable's review of the fold is recorded in the ticket log (the smallest
-      version, what is lost, the one risk that would say don't), and the decision
-      to fold or keep is written down with the author's name on it.
-- [ ] If folded: `/review-pr` carries the surviving rules in a few lines: the head
-      anchor, the 15-file breaker and its waiver, the never-APPROVED rule, the
-      DEGRADED and retry-once lines, and the result contract the gate reads.
-- [ ] `/verify-gate` keys on a review on the head, not on a gaze result; raid
-      phase 6, merge and hunt call the review skill directly. Adherence stays its
-      own skill; simplify stays a runtime tool the orchestrator may use or skip.
-- [ ] `skills/gaze/` is removed, with its fork contract, output template and
-      cleanup file; `tests/test_gaze_*` are deleted or moved to the surviving
-      skill; the never-APPROVED test keeps its frozen allowlist.
-- [ ] A grep for the old name across `skills/`, `scripts/`, `rules/` and `tests/`
-      is empty; `docs/` keeps history. Catalog regenerated; drift check clean.
-- [ ] The run count per pull request over the next 20 is recorded against the
-      2026-10-21 figure of about three.
+- [x] Fable's review of the fold is recorded and the author decided (log line of 2026-10-21T14:00Z): gaze survives, review-pr folds into it.
+- [ ] The seat procedure of `/review-pr` (anchor, manifest, launch, collect, synthesize, detached-seat substitution) moves into `skills/gaze/references/`, replacing the overlapping part of `battery.md`; `review-pr-prose` becomes the prose branch of the same reference. The `review-pr` and `review-pr-prose` skill cards are removed (resident budget freed).
+- [ ] The per-seat verdict words become `clear`, `concerns` and `blocking`, so `approve*` words do not enter `skills/gaze/`; the never-APPROVED allowlist stays frozen at its size and is not weakened. If it cannot stay frozen, stop and ask.
+- [ ] The breaker (15 content-bearing files) and its waiver, the head anchor, the retry-once and DEGRADED lines stay in gaze at one line each; the result comment stays `## /gaze result`; `/verify-gate`, raid, merge and hunt keep calling `/gaze` unchanged except where they named `/review-pr` directly.
+- [ ] A grep for the old skill names across `skills/`, `scripts/`, `rules/`, `profiles/` and `tests/` is empty; `docs/` keeps history. Catalog regenerated; drift check clean.
+- [ ] Run after ticket 1176 merges (both edit the review skill); PR under the 15-file breaker, else split.
+- [ ] The run count per pull request over the next 20 is recorded against the 2026-10-21 figure of about three.
 - [ ] Nothing here requires a particular agent runtime.
