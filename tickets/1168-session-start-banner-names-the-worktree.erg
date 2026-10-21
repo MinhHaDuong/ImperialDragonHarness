@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-21T10:06Z reviewer created
+2026-10-21T10:10Z reviewer reviewer note Daily series shows zero out-of-tree Write errors since 2026-10-15; the baseline of 59 is history. Re-measure before any work; close if still zero
 
 --- body ---
 ## Context

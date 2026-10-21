@@ -5,12 +5,13 @@ Author: reviewer
 
 --- log ---
 2026-10-21T10:06Z reviewer created
+2026-10-21T10:10Z reviewer reviewer note Daily series (docs/2026-10-21-velocity-friction-scan.md § Trend) shows zero guard refusals on every day from 2026-10-15 on, with Bash volume above 2,000 a day; the 14-day total of about 1,270 is history. Before any work: re-measure, find what changed, then close this ticket if the rate stays near zero
 
 --- body ---
 ## Context
 The worktree-isolation guard refuses many Bash command forms: `git -C` with a computed value, `cd` to the shared checkout, `rtk git` with substitutions, git redirected to the shared checkout. The 14-day scan (`docs/2026-10-21-velocity-friction-scan.md`) counts about 1,270 such refusals, roughly 41% of all Bash errors, each a wasted turn. The guard is correct to refuse; the cost is that agents learn the allowed forms only by being refused.
 
-Options to price before choosing: a `wt-git` wrapper the guard allows; a pre-flight lint that rewrites or warns; a refusal message that names the allowed form. Estimate: 4 author-hours, about 70% chance of removing most refusals. Measure the before/after with the scan prototype.
+Options to price before choosing: a `wt-git` wrapper the guard allows; a pre-flight lint that rewrites or warns; a refusal message that names the allowed form. Estimate: 4 author-hours, about 70% chance of removing most refusals. Superseded by the log note: the rate is already near zero, re-measure first.
 
 ## Exit criteria
 - [ ] Chosen mechanism recorded with the two rejected ones and why

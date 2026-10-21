@@ -8,12 +8,12 @@ Author: reviewer
 
 --- body ---
 ## Context
-`trace-doctor` ranks levers by shadow dollars; the largest losses in the friction scan are turns and wall-clock, which cost does not rank (`docs/2026-10-21-velocity-friction-scan.md`, prototype `docs/2026-10-21-velocity-friction-scan.py`). The scan found guard refusals at about 41% of Bash errors, 2,979 Bash calls over 30 s, and 2,038 wait-regex matches, none of which the skill reports.
+`trace-doctor` ranks levers by shadow dollars; the largest losses in the friction scan are turns and wall-clock, which cost does not rank (`docs/2026-10-21-velocity-friction-scan.md`). The scan found guard refusals at about 41% of Bash errors, 2,979 Bash calls over 30 s, and 2,038 wait-regex matches, none of which the skill reports.
 
-Add a velocity section: tool-error rate by cause, the over-30 s tail by tool, wait-command counts, and turns per merged PR, ranked in hours rather than dollars. Promote the prototype to `scripts/trace-friction.py`; keep it standard-library-only and zero-LLM like the other four survey scripts. Estimate: 3 author-hours (1 to promote, 2 to wire into the report).
+Add a velocity section: tool-error rate by cause, the over-30 s tail by tool, wait-command counts, and turns per merged PR, ranked in hours rather than dollars. Write `scripts/trace-friction.py` from the method in the findings doc, with a daily series so a fixed class is seen to be fixed; keep it standard-library-only and zero-LLM like the other four survey scripts. Estimate: 3 author-hours (1 to write, 2 to wire into the report).
 
 ## Exit criteria
-- [ ] `scripts/trace-friction.py` replaces the prototype, with a test on a fixture transcript including a positive control per error class
+- [ ] `scripts/trace-friction.py` passes the ruff gate, with a test on a fixture transcript including a positive control per error class
 - [ ] `skills/trace-doctor/SKILL.md` runs it and reports a velocity section ranked in hours
 - [ ] Durations are labelled upper bounds where they include permission waits; the wait regex is tightened or its over-count stated
 - [ ] Out of scope: auto-applying any finding
