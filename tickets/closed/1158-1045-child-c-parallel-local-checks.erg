@@ -1,0 +1,19 @@
+%erg 0.1
+Title: 1045 child C: parallel local checks
+Created: 2026-10-20
+Author: reviewer
+Closed: parallel local checks merged (PR 1534, 1548); negative controls re-run under parallelism, one intermittent container-start error reproduced and accepted
+
+--- log ---
+2026-10-20T19:23Z reviewer created
+2026-10-21T15:31Z reviewer reviewer note 2026-10-21 closing at the author's word. Parallel local checks merged (PR 1534, fix PR 1548): concurrency min(jobs, nproc/2), one clone per job. Negative controls under parallelism: run by the 1174 coder on 2026-10-21 with the real local-ci on padme: all 9 guards caught their violation; one intermittent container-start error (crun devpts or uid_map) hit a different guard in each full parallel run and a rerun of that guard alone passed. So the earlier infrastructure failure is reproduced as intermittent, cause not established; accepted below the ticket floor (it does not block a merge or corrupt state).
+2026-10-21T15:31Z reviewer closed — parallel local checks merged (PR 1534, 1548); negative controls re-run under parallelism, one intermittent container-start error reproduced and accepted
+
+--- body ---
+## Context
+Child C of tracker 1045, independent of children A and B. The local checks run their jobs in parallel. This host reports 24 threads and 12 cores (a 32-core upgrade is on order, not delivered). One infrastructure failure was seen when two runners shared the host; cause not established (a clash of container names is a hypothesis).
+
+## Exit criteria
+- [ ] Local checks run their jobs in parallel with concurrency `min(jobs, nproc / 2)`, each job in its own clone
+- [ ] The negative controls are re-run under parallelism before it is called safe, and the earlier infrastructure failure is reproduced or ruled out with evidence
+- [ ] PR under the 15-file breaker, else split
