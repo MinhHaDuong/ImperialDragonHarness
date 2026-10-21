@@ -92,6 +92,21 @@ def test_real_write_guard_wordings_classified():
     assert tf.classify_error("Write", "File has not been read yet") == "other"
 
 
+def test_isolation_hook_wordings_classified():
+    wt = "/home/u/.claude/worktrees/t1"
+    sess = f"This session is isolated in the worktree {wt} but this command "
+    agent = f"This agent is isolated in the worktree {wt} but this command "
+    write = f"This session is isolated in the worktree {wt} so its writes are limited to the worktree"
+    assert tf.classify_error("Bash", sess + "names git in a form too complex") == (
+        "worktree_guard"
+    )
+    assert tf.classify_error("Bash", agent + "runs sed with a value computed") == (
+        "worktree_guard"
+    )
+    assert tf.classify_error("Write", write) == "write_outside_worktree"
+    assert tf.classify_error("Bash", write) == "worktree_guard"
+
+
 def test_daily_series_shows_class_stopping(tmp_path):
     s = _scan(tmp_path, _fixture_rows())
     day2 = next(d for d in s["daily"] if d["date"] == DAY2)
@@ -114,6 +129,10 @@ def test_wait_regex_positive_and_negative():
         "gh run watch 12",
         "gh pr checks 3 --watch",
         "x; until true; do :; done",
+        "while ! x; do sleep 5; done",
+        "if a; then sleep 2; fi",
+        "for i in 1 2; do sleep 3; done",
+        "timeout 9 sleep 5",
     ):
         assert tf.is_wait_command(cmd), cmd
     assert not tf.is_wait_command("echo asleep and untilled")

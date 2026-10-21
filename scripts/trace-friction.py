@@ -43,18 +43,22 @@ NO_SUCH_TOOL_RE = re.compile(r"No such tool available")
 GUARD_RE = re.compile(
     r"too complex to verify|shared[ -]checkout|Edit the worktree copy"
     r"|PreToolUse:[\w|]* ?hook error|worktree[- ](?:path )?(?:guard|isolation)"
-    r"|resolves to the main repo|hasn't isolated its changes",
+    r"|resolves to the main repo|hasn't isolated its changes"
+    r"|isolated in the worktree",
     re.IGNORECASE,
 )
 OUTSIDE_RE = re.compile(
     r"outside the (?:current |assigned )?worktree|Edit the worktree copy"
-    r"|resolves to the main repo|hasn't isolated its changes|Call EnterWorktree first",
+    r"|resolves to the main repo|hasn't isolated its changes|Call EnterWorktree first"
+    r"|writes are limited to",
     re.IGNORECASE,
 )
 # Tightened wait regex: a numeric sleep, a watch flag or subcommand, or an
-# `until` loop at command position. Quoted or heredoc text can still match.
+# `until` loop at command position, or after `do`/`then`/`else`/`timeout N`.
+# Quoted or heredoc text can still match.
 WAIT_RE = re.compile(
-    r"(?:^|[;&|(]\s*|\n\s*)(?:sleep\s+\d|until\s)"
+    r"(?:^|[;&|(]\s*|\n\s*|\b(?:do|then|else)\s+|\btimeout\s+\d+\w*\s+)"
+    r"(?:sleep\s+\d|until\s)"
     r"|--watch\b|\bgh\s+(?:run|pr\s+checks)\s+watch\b"
 )
 
