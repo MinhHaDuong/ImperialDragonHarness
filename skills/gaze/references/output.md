@@ -57,8 +57,8 @@ circuit_breaker: un-reviewable | waived (<pr_files> content-bearing files / <pr_
 multi_ticket: <distinct close-claim IDs> | none (non-blocking below breaker)
 adherence: PASS|FAIL — <n_blocking> blocking | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
 review-pr: <n_comments_posted> | skipped (adherence blocking) | skipped (un-reviewable) | skipped (--force-approve) | skipped (battery NOT-RUN)
-review-pr scope: one seat | proportional panel | five perspectives | scoped: <objecting perspectives> + regression (omit if review-pr did not run)
-panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
+review-pr scope: one seat | proportional panel | five perspectives | scoped: <objecting perspectives> + regression | delta (<prior>..<head>, <lines> lines, <files> files) (omit if review-pr did not run)
+panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded, or the delta re-review line>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (un-reviewable) | skipped (--force-approve)
 simplify: <n_fixes_applied> | skipped (adherence blocking) | skipped (prose workpackage) | skipped (un-reviewable) | skipped (--force-approve)
 
@@ -74,4 +74,5 @@ telemetry: risk_band=<high|low|normal> wall=<seconds>s agents=<n> tokens=<in+out
 On `--force-approve`, the comment is annotated `FORCE-APPROVED by <reason>`.
 
 A `panel integrity: DEGRADED` line goes with `result: ESCALATE` (phase 6), never
-with REVIEWED: a perspective without a report is an unresolved phase.
+with REVIEWED: a perspective without a report is an unresolved phase. A delta
+re-review launches no seats and is COMPLETE (phase 6).

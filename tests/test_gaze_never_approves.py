@@ -485,6 +485,59 @@ def test_degraded_panel_maps_to_escalate():
     assert "it never reads as REVIEWED" in rules
     output = " ".join(GAZE.split("## Output shape", 1)[1].split())
     assert "A `panel integrity: DEGRADED` line goes with `result: ESCALATE`" in output
+    # A delta re-review launches no seats: nothing is missing, so it is not
+    # DEGRADED (PRs 1553 and 1471 escalated on every re-gaze after a fix).
+    assert "launches no seats" in rules and "is not DEGRADED" in rules
+    assert "`panel_integrity: COMPLETE — delta re-review of <prior>..<head>" in rules
+    assert "return REVIEWED or FINDINGS on the merits" in rules
+    assert "A delta re-review launches no seats and is COMPLETE" in output
+
+
+def delta_rule_violations(text: str) -> list[str]:
+    """What the delta re-review paragraph of phase 6 must keep: bounded size,
+    one anchor (the last panel head, so deltas never chain), the policy-path
+    and band exclusions, and the reset to a full panel otherwise."""
+    section = text.split("### 6. Return the review result", 1)[1]
+    section = re.split(r"\n#{2,3} ", section, maxsplit=1)[0]
+    rule = " ".join(section.split("**Delta re-review.**", 1)[-1].split())
+    required = (
+        "launches no seats, so no selected perspective lacks a report and the "
+        "panel is not DEGRADED: record `panel_integrity: COMPLETE",
+        "an ancestor of the current head (a rebase breaks ancestry)",
+        "at most 50 lines (additions plus deletions) in at most 5 files",
+        "every delta file was in the prior panel's diff",
+        "no delta path is a policy path (`is_policy_path`",
+        "the band is not raised against the prior panel's",
+        "`<prior>` is the last head a panel reviewed, never the head of an "
+        "earlier delta re-review, so deltas do not chain under the cap",
+        "Any condition unmet is a round-scoping reset",
+        "makes it DEGRADED, so ESCALATE",
+    )
+    if "**Delta re-review.**" not in section:
+        return ["delta paragraph missing"]
+    return [r for r in required if r not in rule]
+
+
+def test_delta_re_review_is_bounded_and_single():
+    """The delta exception is bounded (size, files, policy paths, band) and
+    single (measured from the last panel head). Each clause is load-bearing:
+    deleting it must fail the check."""
+    assert delta_rule_violations(GAZE) == []
+    controls = (
+        "(4) no delta path is a policy path (`is_policy_path` in "
+        "`$IDH_ROOT/scripts/review_evidence.py`) and",
+        "launches no seats, so no selected perspective lacks a report and the "
+        "panel is not DEGRADED: record `panel_integrity: COMPLETE",
+        "never the head of an earlier delta re-review, so deltas do not chain "
+        "under the cap.",
+    )
+    for control in controls:
+        pattern = re.compile(r"\s+".join(map(re.escape, control.split())))
+        assert len(pattern.findall(GAZE)) == 1, control
+        assert delta_rule_violations(pattern.sub("", GAZE)), control
+    # the anchor counts in the reset sentence of § Round scoping agree
+    scoping = " ".join(GAZE.split("#### Round scoping", 1)[1].split("####", 1)[0].split())
+    assert "at most 50 changed lines in at most 5 files" in scoping
 
 
 def test_result_is_posted_after_cleanup():
