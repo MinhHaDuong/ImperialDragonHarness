@@ -11,6 +11,8 @@ La création d'un nouveau script de revue est justifiée. Il faut préserver l'a
 
 Cet audit ne modifie aucun skill, script de production, routage ou règle. Il ne constitue ni un essai de lecture scientifique sur manuscrit, ni une réplication du papier King–Worthington. « Draconique » qualifie le protocole ; aucun nouveau nom de commande n'est décidé.
 
+Le présent document conserve le constat initial. Les corrections et essais ultérieurs figurent dans [execution.md](execution.md). Pour reproduire les sondes avec les anciennes interfaces, utiliser le checkpoint d’audit `1206b23e`, dans un worktree jetable ; les sondes ne sont pas des tests de non-régression du code corrigé.
+
 ## Méthode et limites
 
 Lecture des 17 `SKILL.md`, de leurs références et runbooks métier, des helpers de revue, de bibliographie, de décision éditoriale et de PDF annoté, des contrats Zotero, ainsi que des règles de sources, prose et compilation. Lecture des contrats transversaux `route`, `reviewers` et workflow pour évaluer les dépendances.
@@ -47,7 +49,7 @@ Onze fichiers de tests existants : **356 passed, 1 skipped**, en 36,94 s sur pad
 
 **Priorité haute pour le nouveau script.**
 
-Preuves : [skill](../../../skills/external-peer-review/SKILL.md), [helper](../../../skills/external-peer-review/peer_review.py), [procédure OpenRouter](../../../skills/external-peer-review/references/openrouter.md). Dans le helper : `PERSONAS`, `DEFAULT_TASK`, `build_messages`, `review_one`, `main`.
+Preuves : [skill](../../../skills/external-peer-review/SKILL.md), [helper à la révision auditée](https://github.com/MinhHaDuong/ImperialDragonHarness/blob/b4b863c6/skills/external-peer-review/peer_review.py), [procédure OpenRouter à la révision auditée](https://github.com/MinhHaDuong/ImperialDragonHarness/blob/b4b863c6/skills/external-peer-review/references/openrouter.md). Dans le helper : `PERSONAS`, `DEFAULT_TASK`, `build_messages`, `review_one`, `main`.
 
 Le skill exige une revue non vide et la couverture du manuscrit. Le helper envoie une persona et une tâche courte. Il n'ajoute aucun outil de recherche web ni boucle de vérification, et n'impose pas la lecture ou la restitution d'éléments des annexes. Le repli automatique en texte conserve le même parcours alors que figures et équations peuvent ne plus être lisibles. Le mode est journalisé, mais la dégradation n'est pas un statut structuré qui borne les conclusions.
 
