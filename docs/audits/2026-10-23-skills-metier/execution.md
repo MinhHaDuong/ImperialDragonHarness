@@ -45,3 +45,11 @@ Essai public1 : article King–Worthington et annexe,38pages. Lecteur exécuté,
 Bibliographie1200 close sur critères fonctionnels/testés et avis sans constat restant de parsing ; intégration globale1198/1205 encore ouverte. Les logs historiques restent inchangés.
 
 Composition après corrections Astra/Fable : e3233985, make check complet **2156 passed,4 skipped**,31,28s. Astra a recontrôlé les quatre constats et exécuté57tests : tous résolus, validation bornée sans constat restant. L’essai2 et le retrait de l’ancien moteur restent des preuves distinctes en cours.
+
+## Retrait préparé, non encore intégré
+
+Les commits locaux cfb59cf6 et68150364 préparent le retrait : suppression de l’ancien exécuteur et de sa référence de transport, orchestration externe conservée comme contrat de lecteurs indépendants, préparation conférence raccordée au nouveau parcours ordinaire, extraction minimale du lecteur de provider encore consommé par la sonde mémoire, suppression du SDK inutilisé et de ses dépendances exclusives.90tests ciblés réussis,1sonde live optionnelle ignorée ;35contrôles de skills réussis. Le runner actuel ne sait appeler que le CLIClaude : aucune exécution multi-famille ou compatibilité Albert nouvelle n’est prétendue. Un autre mécanisme doit conserver les mêmes preuves, sinon perspective indisponible.
+
+Ces commits restent hors de la branche d’intégration jusqu’au succès du nouvel essai public ; le tracker demeure ouvert.
+
+Essai2 : lecteur validé,11constats ; vérificateur terminé mais contrôle refusé pour extraits assemblés avec points de suspension et source présentée accessible malgré une redirection seule. Les deux tentatives et leurs empreintes figurent dans trial-attempts.json. Le contrôle reste strict. Astra accepte une reprise bornée de la seule vérification dans un nouveau dossier, avec lecteur original revalidé et épinglé ; aucune réussite déclarée avant cet essai.
