@@ -99,13 +99,12 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    dies at once and would let `worktree-gc` unlock a live tree. If `$PPID`
    prints 1, the shell runs in a pid namespace (a sandboxed runtime) and the
    owner is not visible: write the reason without a pid,
-   `hunt t$ARGUMENTS (owner pid not visible)`, never `(pid 1)`. On the host
-   pid 1 is init, always alive; `worktree-gc` reads it as a stale lock and
-   may remove the tree under a live sandboxed session. A pid-less lock is
-   never reclaimed: `worktree-gc` skips it, and the tree is removed by hand
-   once the session ends. The lock marks it
-   in use for `worktree-gc` and molt while that pid lives; `worktree-gc` reclaims
-   it once the pid is dead (it parses `(pid N` from the reason). Work only there: absolute
+   `hunt t$ARGUMENTS (owner pid not visible)`, never `(pid 1)`, which on the
+   host names init. Neither is ever reclaimed: `worktree-gc` skips a pid-less
+   or pid-1 lock, so `/roar` removes the tree, or it is removed by hand once
+   the session ends. A lock with a real pid marks the tree in use for
+   `worktree-gc` and molt while that pid lives; `worktree-gc` reclaims it once
+   the pid is dead (it parses `(pid N` from the reason). Work only there: absolute
    paths under it, `git -C <worktree>` for git. Ad hoc orchestrators should not
    hand-type this contract: spawn the hunt headlessly with `claude -p "/hunt <id>" --model <token>`.
    Choose the model of each launched worker per launch, from the `route` skill grid

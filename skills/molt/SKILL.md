@@ -31,9 +31,10 @@ Run full repo housekeeping and act on every finding.
    ps -p <N> -o pid= 2>/dev/null
    ```
 
-   A recorded pid of 1 names no owner: inside a pid namespace `$PPID` reads 1,
-   and on the host pid 1 is init, always alive. Skip that lock here; step 1.5's
-   `worktree-gc.sh` treats it as stale.
+   A lock with no pid, or pid 1, names no owner: inside a pid namespace
+   `$PPID` reads 1, and on the host pid 1 is init, always alive. Do not abort
+   on it here; step 1.5's `worktree-gc.sh` leaves it in place, and the run
+   summary lists it for removal by hand once its session is known to be over.
 
    If **any** other locked worktree has a live PID, **stop immediately** — print:
 
@@ -84,8 +85,8 @@ Run full repo housekeeping and act on every finding.
    The script enforces the active-session rails itself (merged-and-pruned branches read `[gone]` while
    sessions still sit in them):
    it skips any worktree that is a live process's cwd, any locked worktree
-   (lock = in use, mirroring step 0; only a dead-pid harness lock is
-   unlocked, so the rails decide), any
+   (lock = in use, mirroring step 0; only a harness lock whose pid > 1 is
+   dead is unlocked, so the rails decide), any
    tree with uncommitted changes other than `.panel/` and `build/panel-head/`
    review scratch, and the one it runs from. Before clearing review scratch,
    each candidate with `.tmp/` must pass the merged-ancestry and readable

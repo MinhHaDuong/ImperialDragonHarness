@@ -5,9 +5,10 @@ set -euo pipefail
 # worktree) when ALL safety rails pass: the tree is clean (no uncommitted
 # changes), its branch is upstream-gone (merged + remote-deleted), it is
 # not the worktree this script is invoked from, it is not locked (a lock
-# whose recorded pid is live — no pid recorded, or no live pid — stays
-# untouched; only a dead-pid harness lock is unlocked so the rails can
-# proceed), and no live process has its cwd inside it. The last two rails
+# with no recorded pid, pid 1 or a live pid stays untouched; only a lock
+# whose pid > 1 is dead is unlocked so the rails can proceed), and no live
+# process has its cwd inside it. If the live-cwd scan reads nothing at all
+# (no python3, no /proc), nothing is removed. The last two rails
 # exist because "branch merged + tree clean" is the NORMAL state of a live
 # session between turns, not proof of abandonment: on 2026-07-13 this
 # script removed two worktrees that were live sessions' base cwds (their
@@ -15,7 +16,7 @@ set -euo pipefail
 # remotes), stranding those sessions in unregistered husk dirs where git
 # resolves to the primary checkout (ticket 0355). A lock is an in-use
 # marker (molt's active-session guard reads it that way) — never
-# unlock-and-remove blindly; a dead-pid lock is the one stale-marker
+# unlock-and-remove blindly; a dead-pid (> 1) lock is the one stale-marker
 # exception (2026-09-28, see the lock rail in flush()). A live process cwd
 # inside the tree is an active session: the claude CLI holds its cwd at the
 # session base for the session's life. `git worktree remove` only detaches
@@ -37,13 +38,12 @@ husks=0
 declare -a registered_paths=()
 
 # Liveness rail: snapshot every live process's cwd once (Linux /proc), on the
-# first removal candidate — a quiet repo never pays for it. One readlink for
-# all entries, not one fork per process: a host with ~10k processes spent ~20 s
-# in the per-process loop. readlink fails on other users' entries and kernel
-# threads — it skips those, prints the rest (hence `|| true`), and the
-# remaining rails still apply. NUL-separated so a newline in a path cannot
-# split an entry. It returns fully resolved paths, so candidates are
-# realpath'd before comparison.
+# first removal candidate — a quiet repo never pays for it. One python3 call
+# for all entries, not one fork per process: a host with ~10k processes spent
+# ~20 s in the per-process loop. Links it cannot read (other users' entries,
+# kernel threads) are skipped and the remaining rails still apply.
+# NUL-separated so a newline in a path cannot split an entry. It returns fully
+# resolved paths, so candidates are realpath'd before comparison.
 declare -a live_cwds=()
 live_cwds_loaded=0
 load_live_cwds() {
@@ -140,28 +140,26 @@ flush() {
         if [[ "$lock_reason" =~ \(pid\ ([0-9]+) ]]; then
             lock_pid="${BASH_REMATCH[1]}"
         fi
-        if [ -z "$lock_pid" ]; then
-            echo "worktree-gc: skip $base (locked — treated as in use)"
+        # Pid 1 names no owner either: `$PPID` reads 1 inside a pid
+        # namespace (a sandboxed runtime), whose session may still be live
+        # and invisible to the live-cwd rail. Skip it like a pid-less lock;
+        # such a tree is removed by hand once its session ends.
+        if [ -z "$lock_pid" ] || [ "$lock_pid" -le 1 ]; then
+            echo "worktree-gc: skip $base (locked${lock_pid:+, pid $lock_pid names no owner} — treated as in use)"
             skipped_locked=$((skipped_locked + 1))
             reset; return
         fi
-        # Pid 1 names no owner: `$PPID` reads 1 inside a pid namespace (a
-        # sandboxed runtime), and on the host pid 1 is init, always alive.
-        # Read as live it froze trees for good (2026-10-23): treat it as dead.
-        local stale_why="dead — stale marker"
-        if [ "$lock_pid" -le 1 ]; then
-            stale_why="names no owner — stale marker"
-        elif ps -p "$lock_pid" -o pid= >/dev/null 2>&1; then
+        if ps -p "$lock_pid" -o pid= >/dev/null 2>&1; then
             echo "worktree-gc: skip $base (locked, pid $lock_pid live — active session)"
             skipped_locked=$((skipped_locked + 1))
             reset; return
         fi
         if ! git -C "$repo" worktree unlock "$path" 2>/dev/null; then
-            echo "worktree-gc: skip $base (lock pid $lock_pid stale, unlock failed)" >&2
+            echo "worktree-gc: skip $base (lock pid $lock_pid dead, unlock failed)" >&2
             skipped_locked=$((skipped_locked + 1))
             reset; return
         fi
-        echo "worktree-gc: unlocked $base (lock pid $lock_pid $stale_why)"
+        echo "worktree-gc: unlocked $base (lock pid $lock_pid dead — stale marker)"
     fi
     # The worktree owns its ignored .tmp/ tree. Never purge it independently:
     # inspect common exclusion, tracked content, integration ancestry, citation

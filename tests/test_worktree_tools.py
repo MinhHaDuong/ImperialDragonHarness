@@ -899,11 +899,11 @@ def test_gc_unlocks_and_removes_dead_pid_locked_worktree(origin):
     assert str(wt) not in _worktree_paths(primary)
 
 
-def test_gc_treats_pid_1_lock_as_stale(origin):
+def test_gc_keeps_pid_1_locked_worktree(origin):
     """A lock recording pid 1 names no owner: inside a pid namespace (a
-    sandboxed runtime) `$PPID` reads 1, and on the host pid 1 is init, always
-    alive. Reading it as live froze four trees and aborted every molt
-    (2026-10-23, Codex locks of 2026-10-16). The GC treats it as dead."""
+    sandboxed runtime) `$PPID` reads 1, and that session may still be live
+    while the live-cwd rail cannot see it. The GC skips it like a pid-less
+    lock, even with the branch gone and the tree clean."""
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-pid1-lock", dirty=False)
     git(primary, "worktree", "lock", str(wt), "--reason",
@@ -912,9 +912,9 @@ def test_gc_treats_pid_1_lock_as_stale(origin):
 
     res = _gc(primary)
     assert res.returncode == 0
-    assert "unlocked agent-pid1-lock (lock pid 1 names no owner" in res.stdout
-    assert "removed agent-pid1-lock" in res.stdout
-    assert str(wt) not in _worktree_paths(primary)
+    assert "skip agent-pid1-lock (locked, pid 1 names no owner" in res.stdout
+    assert "removed agent-pid1-lock" not in res.stdout
+    assert str(wt) in _worktree_paths(primary)
 
 
 def test_gc_skips_removal_when_live_cwd_scan_reads_nothing(origin):
