@@ -18,6 +18,6 @@ First decide whether it should be a repository; the practice's branch-and-PR flo
 ## Exit criteria
 - [ ] pyproject.toml and a committed uv.lock describe the dependencies; no hand-kept requirements.txt
 - [ ] if a Makefile is added, it has no PYTHON variable and recipes that run Python tools go through the `RUN` prefix
-- [ ] no `pip install` in the README or docs/
+- [ ] no `pip install` in the Makefile, README or docs/
 - [ ] the repo's own tests or smoke command pass from a bare shell, output quoted in the PR or log
 - [ ] the alignment check of 1206 prints `ok` in ~/CNRS/code/ThinkTanksSurveyor
