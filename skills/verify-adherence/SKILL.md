@@ -228,7 +228,9 @@ independent follow `skills/route/references/decorrelation.md`. Give it:
   adheres to or violates it. Only flag concrete violations with file:line
   anchors. For every violation, suggest a grep pattern or test that could catch
   it mechanically next time. Return one YAML fence whose top-level keys are
-  `reviewed_rules` (each `{rule_section, evidence}`) and `semantic_findings`.
+  `reviewed_rules` (each `{rule_section, evidence}`) and `semantic_findings`
+  (each `{rule_section, concern, file, line, severity, suggested_test}`, file
+  and line as separate keys, severity `blocking` or `nit`).
   Review only: do not edit, add, commit, push, or mutate project/forge state."
 
 Wait for completion and validate the worker's returned report before emitting
@@ -252,7 +254,8 @@ prompt above, has it return the one YAML fence that prompt asks for, then folds 
 instruction file is in the diff and no completed, valid worker report is
 present. Without this argument the skill launches the worker itself, as above.
 
-Output findings: `{rule_section, concern, file:line, severity, suggested_test}`.
+Output findings: `{rule_section, concern, file, line, severity, suggested_test}`,
+file and line as separate keys (the fold rejects a `file: path:line` anchor).
 Each finding must have a concrete source anchor, severity `blocking` or `nit`,
 and a nonempty `suggested_test`. A clean report must still provide evidence
 for the reviewed rules; an empty/malformed response cannot stand for review.
