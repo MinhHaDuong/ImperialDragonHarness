@@ -2,6 +2,7 @@
 Title: Bibliographie : entrées non lues et dédoublonnage des DOI
 Created: 2026-10-23
 Author: Codex MOE
+Closed: Implemented and tested F2 parsing/DOI deduplication, portability and citation-check contracts; train integration remains1198/1205.
 
 --- log ---
 2026-10-23T09:11Z Codex MOE created
@@ -9,16 +10,19 @@ Author: Codex MOE
 2026-10-23T09:18Z Codex note Evidence: initial make check-fast reproduced all seven new failures (plus sandbox-only socket errors); focused bibliography 50 passed, elevated make check-fast 1223 passed, make lint 162 passed, and raid-gate.py -- make check 2106 passed/4 skipped in 34.84s. Logs /tmp/t1200-{red,green,lint,check}.log. Runtime native Codex worker /root/biblio_1200; exact inherited model/effort unavailable. Parent owns PR, independent review, coordinated close and integration; no merge or rebase performed.
 2026-10-23T09:37Z Codex note Portability follow-up: both helpers now use the established Zotero PEP 723/uv shebang pattern with their existing declared dependencies; runbooks invoke uv run --script directly, independent of paper cwd. Actual runtime smoke from /tmp/t1200-portability ran uv run --script /home/haduong/.agents/.claude/worktrees/t1200-metier/scripts/validate-refs.py note.md and uv run --script /home/haduong/.agents/.claude/worktrees/t1200-metier/scripts/bib-merge.py note.md refs.bib --dry-run, then both paths directly via shebang: all exit 0, dependencies installed in isolated script environments, validator counts1/1, merge reports DRY-RUN with original refs unchanged. No harness venv activation or HTTP fetch. Focused50 tests, ruff, and make lint162 tests pass.
 
+2026-10-23T10:15Z Codex MOE note Criteria verified by 50 focused tests, dependency-portability execution and named final reviews at 0121b6a6. Both reviewers found no remaining bibliography-parser issue; shared Zotero intake wording now corrected in the merge runbook. Whole-train validation and integration remain tracked by1198/1205.
+2026-10-23T09:50Z reviewer closed — Implemented and tested F2 parsing/DOI deduplication, portability and citation-check contracts; train integration remains1198/1205.
+
 --- body ---
 ## Context
 F2 : validate-refs ignore des entrées BibTeX valides ; bib-merge compare les DOI seulement à auteur/année égal et ne lit pas date.
 
 ## Exit criteria
-- [ ] Toute entrée plausible est analysée ou signalée explicitement non lue ; une entrée valide inline ou mixte ne disparaît pas du compte.
-- [ ] Un DOI identique est dédoublonné indépendamment de l’auteur/année ; date BibLaTeX et year sont compris ; les œuvres distinctes restent distinctes.
-- [ ] Le contrôle HTTP est décrit comme accessibilité et ne certifie pas identité ou soutien de l’affirmation ; la chaîne documente ces vérifications de fond séparément.
-- [ ] Préserver append-only et dry-run ; réutiliser un parseur/primitives existants ou une dépendance justifiée, sans nouvel empilement de regex.
-- [ ] Tests des cas reproduits F2, bibliographie mixte, date/year et sauvegarde des clés existantes.
+- [x] Toute entrée plausible est analysée ou signalée explicitement non lue ; une entrée valide inline ou mixte ne disparaît pas du compte.
+- [x] Un DOI identique est dédoublonné indépendamment de l’auteur/année ; date BibLaTeX et year sont compris ; les œuvres distinctes restent distinctes.
+- [x] Le contrôle HTTP est décrit comme accessibilité et ne certifie pas identité ou soutien de l’affirmation ; la chaîne documente ces vérifications de fond séparément.
+- [x] Préserver append-only et dry-run ; réutiliser un parseur/primitives existants ou une dépendance justifiée, sans nouvel empilement de regex.
+- [x] Tests des cas reproduits F2, bibliographie mixte, date/year et sauvegarde des clés existantes.
 
 ## Plan / first check
 Relevant files: scripts/{validate-refs.py,bib-merge.py}, tests/test_{validate_refs,bib_merge}.py, skills/related-work-note/runbooks/validate.md, skills/conference-submission-prep/runbooks/bib-merge.md. Ne pas modifier les cartes SKILL.md des autres lots. Test initial : une entrée inline valide doit être comptée.
