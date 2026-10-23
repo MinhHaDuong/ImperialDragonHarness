@@ -12,7 +12,7 @@ Closed: moved to askMinh tickets/0001 (git-erg installed there)
 ## Context
 ~/CNRS/code/askMinh is a git repo on branch master with no remote. It has requirements.txt, a Makefile with `PYTHON = venv/bin/python3` (a hand-made venv), no pyproject.toml and no uv.lock. Observed 2026-10-23: 4 uncommitted files in the working tree.
 
-Practice to reach: `rules/coding-python.md` (Environment principles and rules), tracked by 1206.
+Practice to reach: `rules/coding-python.md` (its "Environment principles" and "Environment rules" paragraphs), tracked by 1206.
 
 ## Constraints
 Do the work in a git worktree: the 4 uncommitted files are the author's and must stay untouched. No remote exists, so the change lands by a local branch merged by the author.

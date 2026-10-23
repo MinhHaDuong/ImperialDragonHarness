@@ -10,9 +10,9 @@ Closed: moved to fs-housekeeper tickets/0001 (git-erg installed there)
 
 --- body ---
 ## Context
-~/CNRS/code/fs-housekeeper is a git repo on branch main, clean, with an AGENTS.md and no remote. It already has pyproject.toml, uv.lock and a .venv. Its Makefile picks an interpreter with a `PYTHON :=` shell test (.venv/bin/python, else python3) three recipes run ruff, black and mypy through `uv run --isolated --with`, and two targets run `uv pip install -e`; its docs (CONTRIBUTING, INSTALL, PROJECT_OVERVIEW, QUICKSTART) say `pip install`. Observed 2026-10-23.
+~/CNRS/code/fs-housekeeper is a git repo on branch main, clean, with an AGENTS.md and no remote. It already has pyproject.toml, uv.lock and a .venv. Its Makefile picks an interpreter with a `PYTHON :=` shell test (.venv/bin/python, else python3); three recipes run ruff, black and mypy through `uv run --isolated --with`, and two targets run `uv pip install -e`; its docs (CONTRIBUTING, INSTALL, PROJECT_OVERVIEW, QUICKSTART) say `pip install`. Observed 2026-10-23.
 
-Practice to reach: `rules/coding-python.md` (Environment principles and rules), tracked by 1206.
+Practice to reach: `rules/coding-python.md` (its "Environment principles" and "Environment rules" paragraphs), tracked by 1206.
 
 ## Constraints
 Closest to aligned: replace the PYTHON detection by the RUN prefix, move ruff, black and mypy into the dev group of the lock, replace `uv pip install -e` by `uv sync`, and rewrite the pip instructions in the docs.

@@ -10,7 +10,7 @@ Author: Minh Ha-Duong
 ## Context
 ~/CNRS/code/ThinkTanksSurveyor is not a git repository (git reports none up to the /home mount point). It has both pyproject.toml and requirements.txt, no uv.lock and no Makefile; its README says `pip install`. Observed 2026-10-23.
 
-Practice to reach: `rules/coding-python.md` (Environment principles and rules), tracked by 1206.
+Practice to reach: `rules/coding-python.md` (its "Environment principles" and "Environment rules" paragraphs), tracked by 1206.
 
 ## Constraints
 First decide whether it should be a repository; the practice's branch-and-PR flow assumes one. If it stays unversioned, align it in place and say so in the log.
