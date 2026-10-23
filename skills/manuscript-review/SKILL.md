@@ -102,3 +102,14 @@ reviews can quote a manuscript and web traces contain queries: inspect all durab
 outputs before committing or publishing them. No artifact is automatically
 committed, uploaded or imported. A nonzero run retains its status and partial
 evidence; use a fresh attempt rather than editing it into apparent completeness.
+
+For failed verification after a valid reader, use `--resume-review <attempt>`
+with a fresh `--run` and the same inputs, revision, question, clearance and annex
+inventory/limitations. This excludes `--previous-run`. The runner checks original
+artifact hashes, revalidates the native reader stream at its original paths, and
+matches its saved payload, Markdown and trace. It refuses sources with an existing
+ledger. It copies the reader bundle unchanged and records `review.reuse.json`;
+only the verifier runs again. The new cycle explicitly combines the old reader's
+identity and evidence with a fresh verifier, preserving every earlier attempt.
+Fetch prompts demand one contiguous verbatim excerpt, without joined quotations
+or added ellipses; redirects without substantive content remain unavailable.

@@ -241,6 +241,93 @@ def test_verifier_retrieves_decisive_sources_without_gratuitous_search(manuscrip
                           manifest(), Path("/run"), "review")
 
 
+def reader_attempt(tmp_path):
+    original = tmp_path / "release/2026-10-23/review/original"
+    mr.create_run(original, None)
+    (original / "private/main").mkdir()
+    for name in ("input.pdf", "0001.txt", "0001.png"):
+        (original / "private/main" / name).write_text("Synthetic pinned " + name)
+    data = manifest()
+    data.update(clearance="public", revision="revision-1", question="Question",
+                annex_inventory="No annexes expected", missing_annexes=[], prompt_source_sha256="source")
+    data["documents"][0]["sha256"] = mr.digest(original / "private/main/input.pdf")
+    for kind in ("text", "image"):
+        page = data["documents"][0]["pages"][0]
+        page[kind + "_sha256"] = mr.digest(original / page[kind])
+    mr.write_json(original / "manifest.json", data)
+    raw = stream(review()).replace("/run/", str(original) + "/")
+    (original / "private/review.stream.jsonl").write_text(raw)
+    (original / "private/review.prompt.txt").write_text("Original reader prompt")
+    (original / "private/review.stderr.txt").write_text("")
+    (original / "reader-prompt.md").write_text("Original source adaptation")
+    payload, trace = mr.validate_stage(raw, 0, data, original, "review")
+    mr.write_json(original / "review.json", payload)
+    (original / "review.md").write_text(payload["review"] + "\n")
+    mr.write_json(original / "review.trace.json", mr.durable_trace(trace))
+    mr.write_json(original / "review.launch.json", {"requested_model": "original-model"})
+    mr.write_json(original / "review.termination.json", {"exit_code": 0})
+    mr.write_json(original / "status.json", {"status": "incomplete", "stage": "verify",
+        "artifacts": {str(p.relative_to(original)): mr.digest(p) for p in original.rglob("*") if p.is_file()}})
+    fresh = original.parent / "resumed"
+    mr.create_run(fresh, original)
+    return original, fresh, data
+
+
+def test_reuse_reader_preserves_original_bundle_identity_and_scope(tmp_path):
+    original, fresh, data = reader_attempt(tmp_path)
+    before = {str(p.relative_to(original)): p.read_bytes() for p in original.rglob("*") if p.is_file()}
+    assert mr.reuse_reader(original, fresh, data) == review()
+    assert (fresh / "private/review.stream.jsonl").read_bytes() == before["private/review.stream.jsonl"]
+    assert json.loads((fresh / "review.reuse.json").read_text())["observed_models"] == ["observed-model"]
+    assert before == {str(p.relative_to(original)): p.read_bytes() for p in original.rglob("*") if p.is_file()}
+
+
+@pytest.mark.parametrize("field", ["sha256", "question", "clearance", "revision", "missing_annexes", "annex_inventory"])
+def test_reuse_reader_refuses_changed_inputs_or_scope(tmp_path, field):
+    original, fresh, data = reader_attempt(tmp_path)
+    if field == "sha256":
+        data["documents"][0]["sha256"] = "changed"
+    else:
+        data[field] = "changed"
+    with pytest.raises(ValueError, match="scope|inputs"):
+        mr.reuse_reader(original, fresh, data)
+    assert not (fresh / "review.json").exists()
+
+
+@pytest.mark.parametrize("path", ["private/review.stream.jsonl", "review.json", "review.md",
+                                      "private/main/0001.png", "review.termination.json"])
+def test_reuse_reader_rejects_tampered_artifacts(tmp_path, path):
+    original, fresh, data = reader_attempt(tmp_path)
+    with (original / path).open("a") as handle:
+        handle.write("tampered")
+    with pytest.raises(ValueError, match="hash"):
+        mr.reuse_reader(original, fresh, data)
+
+
+def test_reuse_reader_rejects_existing_author_ledger(tmp_path):
+    original, fresh, data = reader_attempt(tmp_path)
+    (original / "ledger.jsonl").write_text('{"disposition":"accepted"}\n')
+    with pytest.raises(ValueError, match="ledger"):
+        mr.reuse_reader(original, fresh, data)
+
+
+@pytest.mark.parametrize("name", ["review.json", "review.md"])
+def test_reuse_reader_matches_saved_payload_to_raw_even_if_hash_refreshed(tmp_path, name):
+    original, fresh, data = reader_attempt(tmp_path)
+    path = original / name
+    if name.endswith(".json"):
+        changed = json.loads(path.read_text())
+        changed["findings"][0]["severity"] = "minor"
+        mr.write_json(path, changed)
+    else:
+        path.write_text(path.read_text() + "Unrecorded editorial change.\n")
+    status = json.loads((original / "status.json").read_text())
+    status["artifacts"][name] = mr.digest(path)
+    mr.write_json(original / "status.json", status)
+    with pytest.raises(ValueError, match="differs from original stream"):
+        mr.reuse_reader(original, fresh, data)
+
+
 def tiny_pdf(path):
     """Synthetic one-page PDF; exercise the real page extraction/render tools."""
     text = "BT /F1 12 Tf 72 720 Td (Synthetic manuscript claim X.) Tj ET"
@@ -317,3 +404,19 @@ def test_executable_cycle_retains_original_and_detects_truncated_verifier(tmp_pa
                               capture_output=True, text=True, timeout=30)
     assert repeated.returncode != 0
     assert (run / "review.md").read_bytes() == original
+    if truncate_verifier:
+        fresh = run.parent / "attempt-2"
+        before = {str(p.relative_to(run)): p.read_bytes() for p in run.rglob("*") if p.is_file()}
+        verify_path = tmp_path / "verify.jsonl"
+        verify_path.write_text(verify_path.read_text().replace(str(run), str(fresh)) + json.dumps(
+            {"type": "result", "subtype": "success", "is_error": False, "result": json.dumps(check)}) + "\n")
+        fake.write_text(fake.read_text().replace("sys.stdout.write(", "assert stage=='verify'\nsys.stdout.write("))
+        resumed = command.copy()
+        resumed[resumed.index("--run") + 1] = str(fresh)
+        result = subprocess.run([*resumed, "--resume-review", str(run)],
+                                env={**os.environ, "PATH": str(tmp_path) + os.pathsep + os.environ["PATH"]},
+                                capture_output=True, text=True, timeout=30)
+        assert result.returncode == 0, result.stderr
+        assert json.loads((fresh / "status.json").read_text())["status"] == "complete"
+        assert (fresh / "review.md").read_bytes() == original
+        assert before == {str(p.relative_to(run)): p.read_bytes() for p in run.rglob("*") if p.is_file()}
