@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Révision : dispositions motivées, ronde et manifeste préservé
+Created: 2026-10-23
+Author: Codex MOE
+
+--- log ---
+2026-10-23T09:11Z Codex MOE created
+
+--- body ---
+## Context
+F4 : couverture exige des tickets sans représenter une objection contestée ; univers global crée des orphelins étrangers à la ronde ; manifeste remplacé au second intake.
+
+## Exit criteria
+- [ ] Remarque acceptée, contestée avec motif, reportée ou déjà satisfaite représentable sans ticket factice ; couverture et résolution distinctes.
+- [ ] Univers de ronde explicite ; vérifier les références inconnues sans déclarer orphelins tous les autres tickets du projet.
+- [ ] Intakes successifs préservent manifeste/provenance ; sources originales et identifiants de remarques conservés.
+- [ ] Résolution reliée à preuve ou modification ; registre réutilisable pour revue IA sans schéma parallèle.
+- [ ] Aligner la promesse de PDF par ticket sur le scope réel v1 ; tests round-specific, contestation justifiée et deux intakes.
+
+## Plan / first check
+Relevant files: skills/ingest-decision-letter/{SKILL.md,ingest_letter.py}, tests/test_ingest_decision_letter.py. Test initial : deuxième intake laisse les deux entrées de provenance consultables. Préserver compatibilité des anciens registres ou migration explicite minimale.
+
+## Review
+KISS obligatoire. Astra et Fable valident les skills finaux ; le MOE conserve identités effectives, révisions et décisions. Aucun exécutant ne fusionne ni ne supprime l’ancien outil de sa propre initiative.

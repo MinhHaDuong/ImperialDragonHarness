@@ -1,0 +1,32 @@
+%erg 0.1
+Title: Train métier : revue vérifiée, bibliographie, révision et finition
+Created: 2026-10-23
+Author: Codex MOE
+
+--- log ---
+2026-10-23T09:11Z Codex MOE created
+
+--- body ---
+## Context
+Tracker intégrant les six constats F1–F6 de docs/audits/2026-10-23-skills-metier/README.md. Autorisation auteur : nouveau script indépendant de l’ancien, audit de la chaîne métier, exécution MOE autonome et validation des skills par Astra et Fable, consigne KISS.
+
+## Exit criteria
+- [ ] Tous les enfants listés ci-dessous sont livrés et leur intégration vérifiée ; aucun verdict manquant ne vaut validation.
+- [ ] Astra et Fable relisent les skills métier modifiés et le contrat du nouveau moteur, avec versions examinées et traces d’identité réelle ; leurs constats sont traités et conservés.
+- [ ] Le nouveau parcours réalise lecture, recherche, vérification et restitution sur un manuscrit réel ; le retrait de l’ancien est subordonné à un essai satisfaisant et au contrôle des appelants.
+- [ ] Pas de réécriture générale, framework de plugins, grille de scores ou nouveau routage imposé. Les fonctions existantes sont réutilisées et les rôles auteur/lecteur préservés.
+
+## Plan / first check
+Enfants indépendants en vague 1 : bibliographie, archivage, R&R, finition et interfaces de recherche. Nouveau moteur conçu après avis KISS Astra/Fable ; essai/intégration après convergence. Le MOE conserve les arbitrages et preuves ; les exécutants ne modifient pas les périmètres voisins.
+
+## Review
+KISS obligatoire. Astra et Fable valident les skills finaux ; le MOE conserve identités effectives, révisions et décisions. Aucun exécutant ne fusionne ni ne supprime l’ancien outil de sa propre initiative.
+
+## Train
+- 1199 — engine
+- 1200 — biblio
+- 1201 — zotero
+- 1202 — revision
+- 1203 — pdf
+- 1204 — search
+- 1205 — trial

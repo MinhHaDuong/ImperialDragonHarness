@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Recherche bibliographique : inconnus et interfaces explicites
+Created: 2026-10-23
+Author: Codex MOE
+
+--- log ---
+2026-10-23T09:11Z Codex MOE created
+
+--- body ---
+## Context
+F6 : risque de confondre source inaccessible et absence d’antériorité ; contrat de saturation pour registre/novelty appelé pour corpus entier ; outils/runtime présumés.
+
+## Exit criteria
+- [ ] Inconnu/inaccessible/angle empêché distincts de non-préemption ; aucun verdict de saturation complet sur couverture empêchée.
+- [ ] Passage explicite entre cadrage du corpus, consultation.csv, notes de lecture et saturation d’une revendication de lacune.
+- [ ] Capacités et parallélisme négociés selon runtime, sans exiger Workflow/ToolSearch ou huit places disponibles.
+- [ ] Recherche ciblée de références proches séparée d’une saturation complète ; supprimer les quotas décoratifs sans réduire les exigences de preuves.
+- [ ] Conserver diversité linguistique et disciplinaire, critique contradictoire et provenance ; validation des textes par Astra/Fable avec KISS.
+
+## Plan / first check
+Relevant files: skills/biblio-saturation/SKILL.md, skills/critical-lit-review/SKILL.md. Examen de cas : source majeure inaccessible, moteur indisponible, corpus sans nouveauté formulée, exécution à une seule place. Pas de script neuf si une clarification de contrat suffit.
+
+## Review
+KISS obligatoire. Astra et Fable valident les skills finaux ; le MOE conserve identités effectives, révisions et décisions. Aucun exécutant ne fusionne ni ne supprime l’ancien outil de sa propre initiative.
