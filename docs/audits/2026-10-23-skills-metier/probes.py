@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Read-only audit probes; fake APIs and temporary files, no model/network calls.
 
-Run from this checkout with its development Python:
+Run from audit checkpoint1206b23e (old source interfaces), with development Python:
     python docs/audits/2026-10-23-skills-metier/probes.py
 
 The intentionally defective outcomes describe the audited revision; this is
