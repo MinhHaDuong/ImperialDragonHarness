@@ -51,8 +51,13 @@ If neither exists, abort with: `ERROR: no refs.bib found`.
 **Step 2 — run the deduplication script (one Bash call)**
 
 ```
-uv run --project "$IDH_ROOT" --frozen python "$IDH_ROOT/scripts/bib-merge.py" <note-file> <refs.bib> [--dry-run]
+uv run --script "$IDH_ROOT/scripts/bib-merge.py" <note-file> <refs.bib> [--dry-run]
 ```
+
+The helper declares its runtime dependencies in PEP 723 metadata. `uv run
+--script` resolves them independently of the current paper repository and its
+Python environment; no harness virtualenv activation is needed. Directly
+executing the helper path uses the same uv entry point through its shebang.
 
 The script:
 - Extracts the ```bibtex fence from the note file automatically

@@ -37,8 +37,13 @@ multiple are present. Entries with none of these → unverifiable.
 ## Step 1 — run the validator script (exactly one Bash call)
 
 ```
-uv run --project "$IDH_ROOT" --frozen python "$IDH_ROOT/scripts/validate-refs.py" <note-file>
+uv run --script "$IDH_ROOT/scripts/validate-refs.py" <note-file>
 ```
+
+The helper declares its runtime dependencies in PEP 723 metadata. `uv run
+--script` resolves them independently of the current paper repository and its
+Python environment; no harness virtualenv activation is needed. Directly
+executing the helper path uses the same uv entry point through its shebang.
 
 The script:
 - Uses the existing `bibtexparser` dependency to parse inline, multiline and

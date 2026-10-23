@@ -1,10 +1,16 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "bibtexparser>=1.4,<2",
+# ]
+# ///
 """bib-merge.py — merge BibTeX entries into refs.bib with deduplication.
 
 Usage:
-    python3 bib-merge.py <new-entries-file> <refs.bib>
-    python3 bib-merge.py - <refs.bib>        # read new entries from stdin
-    python3 bib-merge.py <note-file> <refs.bib>  # extracts ```bibtex fence
+    uv run --script bib-merge.py <new-entries-file> <refs.bib>
+    uv run --script bib-merge.py - <refs.bib>        # read new entries from stdin
+    uv run --script bib-merge.py <note-file> <refs.bib>  # extracts ```bibtex fence
 
 The script reads BibTeX entries from <new-entries-file> (or stdin if '-'),
 deduplicates them against <refs.bib>, and appends non-duplicate entries to
