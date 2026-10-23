@@ -1,0 +1,23 @@
+%erg 0.1
+Title: Roar updates the trackers that cite the closed ticket
+Created: 2026-10-23
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-23T16:40Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Observed 2026-10-23, closing sen-causal-reading ticket 0083 (PR 87). Tracker 1206 here listed it as a child and had an exit criterion on it. `/roar` step 8 only runs when the closed ticket has a parent in its own store, and then only detects that every sibling is closed (`TRACKER: INTEGRATION-REVIEW-DUE`). It never updates the tracker's child line or exit criteria. The close script reported `RESULT: clean` while 1206 was stale; the author's reminder triggered the fix (PR 1639).
+
+`erg close` cannot do it: it only rewrites `Blocked-by` lines in the same store, the `Parent:` header, which `/roar` reads, resolves only inside one store, and the tracker's child list is free text, here in a different repository from the child.
+
+Filed at the author's request (2026-10-23: "Is updating trackers part of regular roar work? It should!", then "Pose un ticket seulement").
+
+## Proposal
+In `skills/roar/SKILL.md` step 8 and the `close-and-clean.sh` output: after the close, look in the harness tickets for open trackers whose `Children` section cites the closed ticket (repo name plus id), and put the child-line and exit-criterion update in the wrap-up bundle. The judgment of the wording stays with the agent; the script only reports the match.
+
+## Exit criteria
+- [ ] Closing a ticket that a tracker cites in another repository makes `/roar` name that tracker and update it in the bundle
+- [ ] A test with a tracker holding an external child
+- [ ] The single-repo parent case (`INTEGRATION-REVIEW-DUE`) still behaves as before
