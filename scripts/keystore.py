@@ -87,4 +87,3 @@ def keystore_value(provider: Path, name: str) -> str | None:
     if "\n" in value or "\r" in value:
         return None
     return value
-
