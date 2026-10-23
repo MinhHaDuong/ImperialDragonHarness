@@ -899,6 +899,75 @@ def test_gc_unlocks_and_removes_dead_pid_locked_worktree(origin):
     assert str(wt) not in _worktree_paths(primary)
 
 
+def test_gc_keeps_pid_1_locked_worktree(origin):
+    """A lock recording pid 1 names no owner: inside a pid namespace (a
+    sandboxed runtime) `$PPID` reads 1, and that session may still be live
+    while the live-cwd rail cannot see it. The GC skips it like a pid-less
+    lock, even with the branch gone and the tree clean."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-pid1-lock", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason",
+        "hunt t2204 (pid 1; observed tool-parent runtime)")
+    make_branch_gone(remote, primary, "agent-pid1-lock")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-pid1-lock (locked, pid 1 names no owner" in res.stdout
+    assert "removed agent-pid1-lock" not in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+    porcelain = git(primary, "worktree", "list", "--porcelain").stdout
+    assert f"worktree {wt}\n" in porcelain
+    assert "locked hunt t2204 (pid 1;" in porcelain
+
+
+@pytest.mark.parametrize("reason", [
+    "claude a (pid 4242) then claude b (pid 99999)",
+    "claude a (pid 4242) then claude b (pid)",
+    "claude a (pid 4242) then claude b (pid\t3)",
+    "claude a (pid\t3) then claude b (pid 4242)",
+    "claude agent (pid 4194305)",
+    "claude agent (pid 9999999)",
+    "claude agent (pid 12345678)",
+    "claude agent (pid 99999999999999999999)",
+])
+def test_gc_keeps_lock_with_ambiguous_or_out_of_range_pid(origin, reason):
+    """Two `(pid` groups or a pid past the pid_max ceiling (4194304) name no
+    owner the GC can check: read as no recorded pid and kept, never unlocked
+    as dead."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-odd-pid", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", reason)
+    make_branch_gone(remote, primary, "agent-odd-pid")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-odd-pid (locked — treated as in use)" in res.stdout
+    assert "integer expected" not in res.stderr
+    assert str(wt) in _worktree_paths(primary)
+    porcelain = git(primary, "worktree", "list", "--porcelain").stdout
+    # git C-quotes a reason holding a control character, so match the record.
+    assert "\nlocked " in porcelain
+
+
+def test_gc_skips_removal_when_live_cwd_scan_reads_nothing(origin):
+    """The live-cwd rail fails closed: a scan that returns no cwd at all
+    (here python3 exits 1) cannot rule out an active session, so the GC
+    keeps the tree instead of reading the silence as "nothing live"."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-blind", dirty=False)
+    make_branch_gone(remote, primary, "agent-blind")
+    fake_bin = primary.parent / "fake-bin"
+    fake_bin.mkdir(exist_ok=True)
+    py = fake_bin / "python3"
+    py.write_text("#!/bin/sh\nexit 1\n")
+    py.chmod(0o755)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-blind (live-cwd scan read nothing" in res.stderr
+    assert str(wt) in _worktree_paths(primary)
+
+
 def test_gc_keeps_live_pid_locked_worktree(origin):
     """The pid half of the lock rail: a harness lock whose recorded pid is
     live is an active session — skipped in place, never unlocked."""
