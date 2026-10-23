@@ -227,7 +227,10 @@ independent follow `skills/route/references/decorrelation.md`. Give it:
 - Prompt: "For each rule section, cite one piece of evidence that the diff either
   adheres to or violates it. Only flag concrete violations with file:line
   anchors. For every violation, suggest a grep pattern or test that could catch
-  it mechanically next time. Return findings and evidence for reviewed rules.
+  it mechanically next time. Return one YAML fence whose top-level keys are
+  `reviewed_rules` (each `{rule_section, evidence}`) and `semantic_findings`
+  (each `{rule_section, concern, file, line, severity, suggested_test}`, file
+  and line as separate keys, severity `blocking` or `nit`).
   Review only: do not edit, add, commit, push, or mutate project/forge state."
 
 Wait for completion and validate the worker's returned report before emitting
@@ -242,15 +245,18 @@ completed valid report cannot satisfy phase 3.
 **`semantic=caller`.** Do everything above except the launch: decide
 applicability, discover the rules, and record `semantic_review.status:
 delegated` with `applicable`, `reason` and `rule_sources`. Leave the identity
-fields null and emit `adherence` over phases 1.0 to 2 alone. A delegated status
-is a handoff, not a review. The caller launches the worker with the inputs and
-prompt above, has it return `reviewed_rules` (each `{rule_section, evidence}`)
-and `semantic_findings`, then folds both returns with
-`"$IDH_ROOT/scripts/adherence_verdict.py"`. That script fails the verdict whenever an
-instruction file is in the diff and no completed, valid worker report is
-present. Without this argument the skill launches the worker itself, as above.
+fields null and emit `adherence: PASS` or `FAIL` over phases 1.0 to 2 alone,
+never `PARTIAL` or a placeholder: the caller's fold reads any value but `PASS`
+as a failure. A delegated status is a handoff, not a review. The caller
+launches the worker with the inputs and prompt above, has it return the one
+YAML fence that prompt asks for, then folds both returns with
+`"$IDH_ROOT/scripts/adherence_verdict.py"`. That script fails the verdict
+whenever an instruction file is in the diff and no completed, valid worker
+report is present. Without this argument the skill launches the worker itself,
+as above.
 
-Output findings: `{rule_section, concern, file:line, severity, suggested_test}`.
+Output findings: the `semantic_findings` entries the prompt above specifies,
+file and line as separate keys (the fold rejects a finding with no `line` key).
 Each finding must have a concrete source anchor, severity `blocking` or `nit`,
 and a nonempty `suggested_test`. A clean report must still provide evidence
 for the reviewed rules; an empty/malformed response cannot stand for review.
@@ -300,7 +306,7 @@ untested_rules:
 Verdict mapping is mandatory: any mechanical failure or blocking semantic finding → adherence: FAIL.
 A required semantic review with status other than `ran` also fails with the
 infrastructure escalation above. The one exception is `delegated` under
-`semantic=caller`: that verdict is partial and stands only after the caller's
+`semantic=caller`: that verdict is provisional and stands only after the caller's
 merge (§ 3), which applies the same rule. PASS requires successful mechanical checks,
 no blocking semantic findings, and either a valid completed semantic worker
 or an explicitly justified inapplicable `skipped` status. Always emit
@@ -329,7 +335,7 @@ This ratchet is the whole point. Do not accept `semantic_findings` as a steady s
 - No `trace=<path>` argument supplied → skip phase 1.2 silently (the trace is an
   optional input, like `worktree=`; a standalone author pre-check has none).
 - Phase 1 fails to run (env broken) → ESCALATE; don't fall through.
-- Semantic subagent output lacks `file:line` or `suggested_test` → reject the output and
+- Semantic subagent output lacks `file`, `line` or `suggested_test` → reject the output and
   flag as adherence-infrastructure bug. Don't silently accept.
 
 ## Not in scope
