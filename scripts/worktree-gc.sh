@@ -62,7 +62,8 @@ idle_hours() {
 }
 
 # An owner-less tree counts as clean only if nothing is modified, untracked
-# or ignored, except regenerable caches and .tmp/ (its own guard decides).
+# or ignored, except regenerable caches (the root .venv/, rebuilt from the
+# lock, and tool caches anywhere) and .tmp/ (its own guard decides).
 # Ignored files count: a repo may ignore `*`, and `worktree remove` deletes
 # them. --no-optional-locks keeps this status from rewriting the index,
 # which would restart the tree's idle clock.
@@ -75,7 +76,7 @@ ownerless_tree_clean() {
         case "$line" in "!! "*) ;; *) return 1 ;; esac
         p="${line:3}"
         case "/$p" in
-            /.tmp/*|*/__pycache__/*|*/.pytest_cache/*|*/.ruff_cache/*|*/.mypy_cache/*) ;;
+            /.tmp/*|/.venv/*|*/__pycache__/*|*/.pytest_cache/*|*/.ruff_cache/*|*/.mypy_cache/*) ;;
             *) return 1 ;;
         esac
     done <<<"$out"

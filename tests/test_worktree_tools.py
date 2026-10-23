@@ -1090,7 +1090,8 @@ def test_gc_keeps_idle_ownerless_tree_holding_ignored_files(origin, scratch):
 
 def test_gc_reclaims_idle_ownerless_tree_holding_only_caches(origin):
     """Regenerable caches are not work: an owner-less tree holding only an
-    ignored __pycache__ is still reclaimed once idle."""
+    ignored __pycache__ and a root .venv (rebuilt from the lock) is still
+    reclaimed once idle."""
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-ownerless-cache", dirty=False)
     git(primary, "worktree", "lock", str(wt), "--reason", "hunt t10 (owner pid not visible)")
@@ -1098,6 +1099,8 @@ def test_gc_reclaims_idle_ownerless_tree_holding_only_caches(origin):
     _ignore_everything(primary)
     (wt / "__pycache__").mkdir()
     (wt / "__pycache__" / "m.cpython-311.pyc").write_bytes(b"\0")
+    (wt / ".venv" / "bin").mkdir(parents=True)
+    (wt / ".venv" / "bin" / "python").write_text("")
     _age_worktree_metadata(wt, 100)
 
     res = _gc(primary)
