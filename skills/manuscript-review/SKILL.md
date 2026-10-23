@@ -13,7 +13,8 @@ argument-hint: "<manuscript.pdf> [annexes]"
 One complete advisory review, then one source-aware verification pass. These
 steps are **sequential-blocking**: verification needs the original review; author
 decisions need both. Do not multiply readers before completing this cycle.
-The existing external-peer-review helper remains separate during coexistence.
+Independent-reader selection and synthesis belong to `external-peer-review`,
+which reuses this protocol.
 
 Choose the model of each launched worker per launch, from the `route` skill grid
 (`skills/route/SKILL.md`); seats that must be independent follow
@@ -60,6 +61,7 @@ Choose the model of each launched worker per launch, from the `route` skill grid
    contradictions or comparative experiments belong in this production path.
    Passage matching checks returned fetch-tool text, which may be processed by a
    model; it does not establish a match against the original source bytes.
+   Redirects count only when every hop has a matching observed fetch event.
 5. Use the **existing** ingest-decision-letter ledger for author decisions and
    coverage. Exported rows carry `round`, `disposition: null`, `reason: ""`,
    `resolution: "open"`, and `evidence`; do not invent decisions or close work.
@@ -79,6 +81,7 @@ CLI authentication stays with the CLI. No credentials or provider API adapter
 are implemented. Both passes use the explicit routed worker in fresh contexts;
 the verifier is a check, not an independent-family review. Observed model names
 come from CLI initialization/assistant metadata; absent identity stays absent.
+A resumed run preserves the original reader route and records its new verifier separately.
 
 Example, after routing and confirming the manuscript is public:
 
