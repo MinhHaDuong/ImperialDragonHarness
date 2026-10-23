@@ -5,6 +5,7 @@ Author: Codex MOE
 
 --- log ---
 2026-10-23T09:11Z Codex MOE created
+2026-10-23T09:19Z reviewer note Conception : un nouveau skill manuscript-review et un script indépendant ; une première route headless outillée et observable, sans framework/API de credentials. Prompt adapté depuis le supplément déjà archivé, recherche prouvée, quatre niveaux de contrôle des sources. Schéma R&R additif convenu avec1202 ; expérience A/B hors production.
 
 --- body ---
 ## Context
