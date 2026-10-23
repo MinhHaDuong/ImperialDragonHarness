@@ -237,3 +237,145 @@ def test_render_end_to_end(tmp_path):
     diff_src = diff_tex.read_text()
     assert "\\DIFadd" in diff_src, "insertions should be marked with \\DIFadd"
     assert "\\DIFdel" in diff_src, "deletions should be marked with \\DIFdel"
+
+
+@pytest.mark.parametrize("warning", [
+    "LaTeX Warning: There were undefined citations.",
+    "LaTeX Warning: There were undefined references.",
+    "Package natbib Warning: Citation `absent' on page 1 undefined",
+])
+def test_successful_compiler_with_unresolved_log_is_rejected(tmp_path, monkeypatch, warning):
+    mod = load_helper()
+    tex = tmp_path / "main-diff.tex"
+    tex.write_text("source")
+    def fake_compile(*args, **kwargs):
+        tex.with_suffix(".pdf").write_bytes(b"%PDF-fake")
+        tex.with_suffix(".log").write_text(warning)
+        return subprocess.CompletedProcess(args[0], 0, "", "")
+    monkeypatch.setattr(mod.subprocess, "run", fake_compile)
+    with pytest.raises(SystemExit, match="unresolved"):
+        mod.compile_pdf(["latexmk"], tmp_path, tex)
+
+
+def test_missing_build_log_is_not_success(tmp_path, monkeypatch):
+    mod = load_helper()
+    tex = tmp_path / "diff.tex"
+    tex.write_text("source")
+    def fake_compile(*args, **kwargs):
+        tex.with_suffix(".pdf").write_bytes(b"%PDF-fake")
+        return subprocess.CompletedProcess(args[0], 0, "", "")
+    monkeypatch.setattr(mod.subprocess, "run", fake_compile)
+    with pytest.raises(SystemExit, match="log"):
+        mod.compile_pdf(["latexmk"], tmp_path, tex)
+
+
+def test_pdflatex_bibliography_requires_latexmk(tmp_path, monkeypatch):
+    mod = load_helper()
+    tex = tmp_path / "diff.tex"
+    tex.write_text("source")
+    def fake_compile(*args, **kwargs):
+        tex.with_suffix(".pdf").write_bytes(b"%PDF-fake")
+        tex.with_suffix(".log").write_text("No warnings")
+        tex.with_suffix(".aux").write_text(r"\bibdata{library}")
+        return subprocess.CompletedProcess(args[0], 0, "", "")
+    monkeypatch.setattr(mod.subprocess, "run", fake_compile)
+    with pytest.raises(SystemExit, match="latexmk"):
+        mod.compile_pdf(["pdflatex"], tmp_path, tex)
+
+
+@pytest.mark.integration
+def test_pinned_ignored_bibliography_and_source_unchanged(tmp_path, monkeypatch):
+    import hashlib
+    mod = load_helper()
+    repo = tmp_path / "repo"
+    _make_two_ref_repo(repo)
+    (repo / ".gitignore").write_text("*.bib\n")
+    bib = repo / "library.bib"
+    bib.write_text("@book{test,title={Pinned book}}")
+    before = {p.name: p.read_bytes() for p in repo.iterdir() if p.is_file()}
+    pin = "library.bib=" + hashlib.sha256(bib.read_bytes()).hexdigest()
+    monkeypatch.setattr(mod, "require_latexdiff", lambda: "fake")
+    monkeypatch.setattr(mod, "resolve_compiler", lambda: ["fake"])
+    def diff(_, old, new, target):
+        assert (old.parent / "library.bib").read_bytes() == bib.read_bytes()
+        assert (new.parent / "library.bib").read_bytes() == bib.read_bytes()
+        target.write_text("diff")
+    def compile_(_, directory, tex, **kwargs):
+        pdf = tex.with_suffix(".pdf")
+        pdf.write_bytes(b"%PDF-test")
+        return pdf
+    monkeypatch.setattr(mod, "run_latexdiff", diff)
+    monkeypatch.setattr(mod, "compile_pdf", compile_)
+    result = mod.render(repo, "v1-submitted", "HEAD", "main.tex", tmp_path / "out.pdf",
+                        old_inputs=[pin], new_inputs=[pin])
+    assert result.exists()
+    assert before == {p.name: p.read_bytes() for p in repo.iterdir() if p.is_file()}
+    bib.write_text("changed host contents")
+    with pytest.raises(SystemExit, match="SHA-256"):
+        mod.render(repo, "v1-submitted", "HEAD", "main.tex", tmp_path / "bad.pdf",
+                   old_inputs=[pin], new_inputs=[pin])
+    assert not (tmp_path / "bad.pdf").exists()
+
+
+def test_missing_bibliography_refused_before_compilation(tmp_path, monkeypatch):
+    mod = load_helper()
+    tex = tmp_path / "diff.tex"
+    tex.write_text(r"\bibliography{missing}")
+    def forbidden(*args, **kwargs):
+        pytest.fail("compiler must not fall back to host bibliography lookup")
+    monkeypatch.setattr(mod.subprocess, "run", forbidden)
+    with pytest.raises(SystemExit, match="bibliography input"):
+        mod.compile_pdf(["latexmk"], tmp_path, tex)
+
+
+@pytest.mark.parametrize("pin", ["../escape.bib", "/escape.bib"])
+def test_supplement_rejects_escaping_destination(tmp_path, pin):
+    import hashlib
+    mod = load_helper()
+    source = tmp_path / "source.bib"
+    source.write_bytes(b"pinned")
+    spec = f"{pin}={hashlib.sha256(source.read_bytes()).hexdigest()}={source}"
+    with pytest.raises(SystemExit):
+        mod.add_inputs(tmp_path, tmp_path / "dest", [spec])
+
+
+def test_supplement_never_replaces_tracked_file(tmp_path):
+    import hashlib
+    mod = load_helper()
+    dest = tmp_path / "tree"
+    dest.mkdir()
+    existing = dest / "library.bib"
+    existing.write_bytes(b"tracked")
+    source = tmp_path / "library.bib"
+    source.write_bytes(b"supplement")
+    spec = "library.bib=" + hashlib.sha256(source.read_bytes()).hexdigest()
+    with pytest.raises(SystemExit, match="overwrite"):
+        mod.add_inputs(tmp_path, dest, [spec])
+    assert existing.read_bytes() == b"tracked"
+
+
+def test_distinct_old_new_supplements_use_explicit_sources(tmp_path):
+    import hashlib
+    mod = load_helper()
+    for side in ("old", "new"):
+        source = tmp_path / f"{side}.bib"
+        source.write_text(side)
+        digest = hashlib.sha256(source.read_bytes()).hexdigest()
+        mod.add_inputs(tmp_path, tmp_path / side, [f"library.bib={digest}={source}"])
+        assert (tmp_path / side / "library.bib").read_text() == side
+
+
+@pytest.mark.parametrize("compiler", ["latexmk", "pdflatex"])
+def test_clean_final_log_allows_pdf_and_cosmetic_warnings(tmp_path, monkeypatch, compiler):
+    mod = load_helper()
+    tex = tmp_path / "diff.tex"
+    tex.write_text("source")
+    calls = []
+    def fake_compile(cmd, **kwargs):
+        calls.append(cmd)
+        tex.with_suffix(".pdf").write_bytes(b"%PDF-fake")
+        tex.with_suffix(".log").write_text("Overfull box\nUnderfull box")
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+    monkeypatch.setattr(mod.subprocess, "run", fake_compile)
+    assert mod.compile_pdf([compiler], tmp_path, tex) == tex.with_suffix(".pdf")
+    assert len(calls) == (1 if compiler == "latexmk" else 2)

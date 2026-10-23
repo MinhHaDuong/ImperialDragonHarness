@@ -30,13 +30,17 @@ The bundled script is `"$IDH_ROOT/skills/track-changes-pdf/track_changes_pdf.py"
 ## How it works
 
 1. `git archive` extracts the whole tree at the old ref and at the new ref into
-   two temp directories (the full tree, so figures, `.bib`, and class files
-   resolve).
+   two isolated temporary directories. Only archived tracked files are included;
+   ignored/untracked bibliography, figures or other build inputs are absent.
+   Supply each missing input explicitly with a SHA-256 pin (see below).
 2. `latexdiff --flatten` compares the two main-tex sources — `--flatten`
    inlines `\input`/`\include` so a multi-file manuscript diffs correctly — and
    writes a marked-up `*-diff.tex` into the new tree.
 3. A LaTeX compiler (`latexmk` preferred, `pdflatex` fallback) builds the diff
-   `.tex` to PDF, which is copied to `--output`.
+   `.tex` to PDF. A fresh final build log is required; unresolved citations or
+   references reject delivery before anything is copied to `--output`.
+   The pdflatex fallback refuses documents needing BibTeX/Biber: install latexmk
+   and the required backend instead.
 
 ## Steps
 
@@ -55,14 +59,32 @@ The bundled script is `"$IDH_ROOT/skills/track-changes-pdf/track_changes_pdf.py"
        --main-tex manuscript/main.tex --output revision-marked.pdf
    ```
 
+   For an ignored bibliography or other missing build input, repeat
+   `--old-input 'PATH=SHA256[=SOURCE]'` and/or `--new-input` as needed. PATH is
+   relative to the extracted repository root; SOURCE defaults to `repo/PATH`
+   and may explicitly name a separate archived old/new file. Example:
+   ```
+   --old-input 'refs.bib=<64-hex-sha256>=/archive/submitted-refs.bib' \
+   --new-input 'refs.bib=<64-hex-sha256>=/archive/revised-refs.bib'
+   ```
+   Compute each hash from the intended version (e.g. `sha256sum`), retain the
+   command and files with the handoff, and verify the inventory against the
+   manuscript's build recipe. Hash mismatches and overwriting tracked inputs
+   are refused. The helper never silently imports the host working tree.
+   It logs resolved commit IDs and input hashes. This pins document inputs;
+   the installed TeX toolchain remains an external dependency.
+
 4. **Toolchain check.** The helper needs `latexdiff` and a LaTeX compiler
    (`latexmk` or `pdflatex`). If either is absent it stops with an actionable
    install message — relay it to the author rather than retrying. On
    Debian/Ubuntu: `texlive-extra-utils` provides latexdiff, `texlive-latex-extra`
    plus `latexmk` the compiler.
 
-5. **Hand off the PDF.** Report the output path and offer to open it for
-   annotation. The marked PDF is an author artifact, never a CI gate.
+5. **Hand off the PDF.** Only report success after the helper succeeds. On
+   failure, any pre-existing output is an earlier artifact, not this run's PDF.
+   Inspect rendered pages following `pdf-finish`; report the path, mechanical
+   checks, pages inspected and any remaining limits. A clean build log does not
+   establish good layout. The marked PDF is an author artifact, never a CI gate.
 
 ## Scope note (v1)
 
@@ -81,5 +103,8 @@ the source with a `\ticket{N}{...}` macro and colour by tag. Tracked in ticket
   request and touches no forge.
 - The helper is pure I/O — `git`, `latexdiff`, and a LaTeX compiler. No network,
   no model calls.
-- Determinism: the diff is a function of the two refs' sources. Re-running with
-  the same refs reproduces the same markup (compiler timestamps aside).
+- Reproduction requires the two resolved commits, all supplementary files and
+  their hashes, and a compatible installed toolchain. Archive those inputs.
+- All markup and compilation occur in isolated copies. An explicit Python
+  `workdir` must have no existing `old/` or `new/` directories; a reused build
+  directory is refused to prevent stale inputs or products.

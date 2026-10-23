@@ -6,6 +6,8 @@ Author: Codex MOE
 --- log ---
 2026-10-23T09:11Z Codex MOE created
 
+2026-10-23T10:30Z Codex note Red behavior probes reproduced successful compiler accepting unresolved citations, missing logs, bibliography fallback and absent ignored input interface; targeted tests then passed. Implemented explicit SHA-256-pinned old/new supplementary files, fresh build validation and isolated variant instructions. Parent retains PR and review integration.
+
 --- body ---
 ## Context
 F5 : contrôles de mise en page promis sans outil ; compilation accepte citations indéfinies ; bib ignorée absente de git archive ; variantes par mutation/restauration.
