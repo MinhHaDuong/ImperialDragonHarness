@@ -256,6 +256,13 @@ def _norm_text(text: str) -> str:
 # --------------------------------------------------------------------------- #
 # dedupe
 # --------------------------------------------------------------------------- #
+def _invalid_atomics(records: list[dict]) -> list[dict]:
+    """Only a distinct remark in the same round can cover an atomic child."""
+    parents = {(r.get("round", ""), r["id"]) for r in records if r["atomic_of"] is None}
+    return [r for r in records if r["atomic_of"] is not None
+            and (r.get("round", ""), r["atomic_of"]) not in parents]
+
+
 def dedupe(records: list[dict]) -> tuple[list[dict], dict]:
     """Collapse atomic sub-comments and duplicates into distinct remarks.
 
@@ -268,22 +275,14 @@ def dedupe(records: list[dict]) -> tuple[list[dict], dict]:
     ones carrying ``atomic_of`` set to their canonical id. Distinct remarks are
     the records whose ``atomic_of`` is null.
     """
-    known_ids = {r["id"] for r in records if r["id"]}
     canonical_by_text: dict[tuple[str, str], str] = {}
-    unknown_refs: list[str] = []
     out = []
     for rec in records:
         rec = dict(rec)
         ref = rec.get("atomic_of")
         if ref:
-            if ref in known_ids:
-                # Respect an explicit atomic_of that points at a known record.
-                out.append(rec)
-                continue
-            # Dangling atomic_of — likely a typo from the hand-edit step. Surface
-            # it and keep the record's stated (dangling) parent, rather than
-            # silently falling through and treating it as a distinct remark.
-            unknown_refs.append(rec["id"])
+            # Preserve stated references, including malformed ones, for repair.
+            # Validate against the final distinct parents after implicit folding.
             out.append(rec)
             continue
         key = (rec.get("round", ""), _norm_text(rec["text"]))
@@ -300,7 +299,7 @@ def dedupe(records: list[dict]) -> tuple[list[dict], dict]:
         "input": len(records),
         "remarks": len(remarks),
         "atomics": len(atomics),
-        "unknown_atomic_refs": sorted(unknown_refs),
+        "unknown_atomic_refs": sorted(r["id"] for r in _invalid_atomics(out)),
     }
     return out, summary
 
@@ -329,10 +328,10 @@ def coverage(records: list[dict], universe: set[str],
     recorded, not automatically verified for scientific sufficiency.
     """
     selected = [r for r in records if round_id is None or r.get("round", "") == round_id]
-    remarks = [r for r in selected if r["atomic_of"] is None]
+    invalid: set[str] = {r["id"] for r in _invalid_atomics(selected)}
+    remarks = [r for r in selected if r["atomic_of"] is None or r["id"] in invalid]
     mapping: dict[str, list[str]] = {}
     duplicate: set[str] = set()
-    invalid: set[str] = set()
     uncovered: set[str] = set()
     unresolved: set[str] = set()
     for r in remarks:

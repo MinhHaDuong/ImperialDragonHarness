@@ -380,3 +380,33 @@ def test_cli_segment_retains_archived_path(tmp_path):
     assert record["source"] == f"{source}:1"
     assert record["round"] == "r2"
     assert record["id"] == "r2:R1-01"
+
+
+@pytest.mark.parametrize("parent_round", ["r1", "r2"])
+def test_atomic_parent_must_be_distinct_and_in_same_round(parent_round):
+    parent = il._normalize_record({"id": "parent", "round": parent_round,
+                                   "disposition": "accepted"})
+    child = il._normalize_record({"id": "child", "round": "r2", "atomic_of": "parent"})
+    records = [parent, child]
+    out, summary = il.dedupe(records)
+    assert out[1]["atomic_of"] == "parent", "retain malformed reference for repair"
+    if parent_round == "r2":
+        assert summary["unknown_atomic_refs"] == []
+        assert il.coverage_ok(il.coverage(records, set(), round_id="r2"))
+    else:
+        assert summary["unknown_atomic_refs"] == ["child"]
+        for ledger in (records, out):
+            report = il.coverage(ledger, set(), round_id="r2")
+            assert report["remark_count"] == 1
+            assert report["uncovered_remarks"] == ["child"]
+            assert report["invalid_records"] == ["child"]
+            assert not il.coverage_ok(report)
+
+
+@pytest.mark.parametrize("parent_ref", ["missing", "child"])
+def test_coverage_rejects_dangling_or_self_atomic_without_dedupe(parent_ref):
+    child = il._normalize_record({"id": "child", "round": "r2", "atomic_of": parent_ref})
+    report = il.coverage([child], set(), round_id="r2")
+    assert report["remark_count"] == 1
+    assert report["invalid_records"] == ["child"]
+    assert not il.coverage_ok(report)

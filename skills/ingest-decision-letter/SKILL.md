@@ -83,7 +83,10 @@ whole search. The archive is the single source of truth; never send the author b
    ```
    Distinct remarks are the records whose `atomic_of` is null; folded atomics
    inherit their parent's coverage. Dedupe compares text within each round;
-   retain old records and IDs when adding a later round.
+   retain old records and IDs when adding a later round. An explicit `atomic_of`
+   must reference a distinct parent in the same round. Malformed references stay
+   in the ledger, appear in dedupe diagnostics, and fail coverage as visible
+   invalid remarks; coverage validates them even without a preceding dedupe.
 
 5. **Record the author's disposition.** Set `disposition` to `accepted`,
    `rejected`, `deferred`, or `already_addressed`; obtain the author's judgment,
