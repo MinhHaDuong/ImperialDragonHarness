@@ -100,7 +100,10 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    prints 1, the shell runs in a pid namespace (a sandboxed runtime) and the
    owner is not visible: write the reason without a pid,
    `hunt t$ARGUMENTS (owner pid not visible)`, never `(pid 1)`. On the host
-   pid 1 is init, which `worktree-gc` reads as no owner. The lock marks it
+   pid 1 is init, always alive; `worktree-gc` reads it as a stale lock and
+   may remove the tree under a live sandboxed session. A pid-less lock is
+   never reclaimed: `worktree-gc` skips it, and the tree is removed by hand
+   once the session ends. The lock marks it
    in use for `worktree-gc` and molt while that pid lives; `worktree-gc` reclaims
    it once the pid is dead (it parses `(pid N` from the reason). Work only there: absolute
    paths under it, `git -C <worktree>` for git. Ad hoc orchestrators should not
