@@ -195,3 +195,85 @@ def test_main_missing_refs_returns_1(tmp_path):
 def test_main_missing_input_returns_2(tmp_path):
     refs = _refs(tmp_path, "")
     assert bm.main(["bib-merge.py", str(tmp_path / "absent.bib"), str(refs)]) == 2
+
+
+def test_merge_doi_identity_ignores_author_and_year(tmp_path):
+    original = "@article{keepKey, author={Smith, J}, year={2020}, doi={10.1/X}}\n"
+    refs = _refs(tmp_path, original)
+    incoming = bm.parse_bibtex("@article{changed, author={Jones, A}, date={2021-04}, doi={https://doi.org/10.1/x}}")
+    report = bm.merge(incoming, bm.parse_bibtex(original), refs)
+    assert "[SKIPPED] @changed  (duplicate of @keepKey)" in report
+    assert refs.read_text() == original
+
+
+def test_date_year_fallback_preserves_distinct_works(tmp_path):
+    original = "@book{keepKey, author={Smith, J}, year={2020}, title={Shared title}}\n"
+    refs = _refs(tmp_path, original)
+    incoming = bm.parse_bibtex("@book{duplicate, author={Smith, J}, date={2020-04-01}, title={Shared title}}\n"
+                               "@book{distinct, author={Smith, J}, date={2021}, title={Shared title}}")
+    report = bm.merge(incoming, bm.parse_bibtex(original), refs)
+    assert "[SKIPPED] @duplicate  (duplicate of @keepKey)" in report
+    assert any("[ADDED] @distinct" in line for line in report)
+    assert refs.read_text().startswith(original)
+
+
+def test_doi_index_includes_entries_added_in_same_batch(tmp_path):
+    refs = _refs(tmp_path, "")
+    incoming = bm.parse_bibtex("@book{first, year={2020}, doi={10.1/x}}\n"
+                               "@book{second, date={2021}, doi={10.1/X}}")
+    report = bm.merge(incoming, [], refs)
+    assert "[SKIPPED] @second  (duplicate of @first)" in report
+
+
+def test_malformed_input_refuses_to_append(tmp_path, capsys):
+    original = "@book{keepKey, title={Keep}}\n"
+    refs = _refs(tmp_path, original)
+    incoming = tmp_path / "new.bib"
+    incoming.write_text("@book{valid, title={New}}\n@book{broken, title={unclosed}")
+    assert bm.main(["bib-merge.py", str(incoming), str(refs)]) == 3
+    assert "could not be parsed" in capsys.readouterr().err
+    assert refs.read_text() == original
+
+
+def test_new_entry_macros_are_materialized_without_changing_existing_bytes(tmp_path):
+    original = b"% retain CRLF and key\r\n@book{OriginalKey, title={Keep}}\r\n"
+    refs = tmp_path / "refs.bib"
+    refs.write_bytes(original)
+    incoming = bm.parse_bibtex('@string{label = "Expanded"}\n'
+                               '@online(newKey, title=label # " title", date={2021-01})')
+    bm.merge(incoming, bm.parse_bibtex(refs.read_text()), refs, dry_run=True)
+    assert refs.read_bytes() == original
+    bm.merge(incoming, bm.parse_bibtex(refs.read_text()), refs)
+    assert refs.read_bytes().startswith(original)
+    appended = bm.parse_bibtex(refs.read_text())
+    assert appended[1]["title"] == "Expanded title"
+    assert appended[1]["_key"] == "newKey"
+
+
+def test_unread_existing_entry_refuses_append(tmp_path, capsys):
+    original = "@book{keep, title={Keep}}\n@book{unread, broken}"
+    refs = _refs(tmp_path, original)
+    incoming = tmp_path / "new.bib"
+    incoming.write_text("@book{new, title={New}}")
+    assert bm.main(["bib-merge.py", str(incoming), str(refs)]) == 3
+    assert "could not be parsed" in capsys.readouterr().err
+    assert refs.read_text() == original
+
+
+def test_batch_duplicate_report_uses_final_renamed_key(tmp_path):
+    original = "@book{collision, author={Smith}, year={2020}, doi={10.1/old}}"
+    refs = _refs(tmp_path, original)
+    incoming = bm.parse_bibtex("@book{collision, author={Smith}, date={2020}, doi={10.1/new}}\n"
+                               "@book{duplicate, year={2021}, doi={10.1/new}}")
+    report = bm.merge(incoming, bm.parse_bibtex(original), refs)
+    renamed = next(line for line in report if line.startswith("[RENAMED->"))
+    key = renamed.split("->", 1)[1].split("]", 1)[0]
+    assert f"[SKIPPED] @duplicate  (duplicate of @{key})" in report
+
+
+def test_braced_author_names_keep_distinct_identities(tmp_path):
+    original = "@book{first, author={{Alpha}}, year={2020}, title={Shared title}}"
+    refs = _refs(tmp_path, original)
+    incoming = bm.parse_bibtex("@book{second, author={{Beta}}, date={2020}, title={Shared title}}")
+    report = bm.merge(incoming, bm.parse_bibtex(original), refs)
+    assert "[ADDED] @second" in report

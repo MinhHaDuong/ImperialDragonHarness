@@ -13,9 +13,12 @@ flag conflicts, append new ones, report everything.
   aborts with exit 1 — that's a project-setup decision.
 - **Never mutate existing entries.** If the note has a field the
   existing entry lacks, report it as a suggestion. Don't write it.
-- **Dedupe on author+year, confirm with DOI or title.**
-  Matching DOI → SKIPPED. Differing DOI → different work, suffix-bump
-  the key (RENAMED). No DOI → judge by title similarity (Jaccard ≥ 0.8).
+- **Check DOI globally, then author+year.** A normalized DOI match is
+  SKIPPED regardless of author or date differences, including within the new
+  batch. Otherwise group by first author and `year` (or the year of BibLaTeX
+  `date` when `year` is absent). Within that group, differing DOIs denote
+  different works; if either DOI is absent, use title similarity (Jaccard ≥ 0.8).
+  Rename only conflicting keys; preserve all existing entries and keys.
 - **Report suffix-bumps.** Every renamed key must be reported so
   the author can update `\cite{}` calls.
 - **Note file is read-only.** Never modify it.
@@ -24,6 +27,11 @@ flag conflicts, append new ones, report everything.
 - **Local .bib is staging.** The canonical library is Zotero. At
   manuscript submission, the author imports refs.bib into Zotero
   and attaches PDFs. This skill does not automate that step.
+
+Deduplication does not check work identity against external metadata, relevance
+to the manuscript, or support for a cited claim. Complete those checks from
+the source and record their evidence separately; an HTTP accessibility PASS
+from `validate-refs.py` does not certify them.
 
 ## Input
 
@@ -43,13 +51,18 @@ If neither exists, abort with: `ERROR: no refs.bib found`.
 **Step 2 — run the deduplication script (one Bash call)**
 
 ```
-python3 "$IDH_ROOT/scripts/bib-merge.py" <note-file> <refs.bib> [--dry-run]
+uv run --project "$IDH_ROOT" --frozen python "$IDH_ROOT/scripts/bib-merge.py" <note-file> <refs.bib> [--dry-run]
 ```
 
 The script:
 - Extracts the ```bibtex fence from the note file automatically
-- Parses all entries from both the fence and refs.bib
-- Deduplicates (author+year primary key; DOI or title confirmation)
+- Parses all entries from the fences and refs.bib using the existing
+  `bibtexparser` dependency, including inline entries, BibLaTeX `date` and
+  macros. Unread plausible entries or undefined macros abort with exit 3
+  before any append. A conservative entry-opening count can flag ambiguous
+  `@type{` text inside fields/comments; inspect it before retrying.
+- Serializes incoming entries only (expanding macros); existing bytes stay intact
+- Deduplicates (global DOI; author+year/date and title fallback)
 - Appends non-duplicate entries to refs.bib (unless --dry-run)
 - Prints a report to stdout
 
