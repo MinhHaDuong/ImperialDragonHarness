@@ -101,8 +101,9 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    owner is not visible: write the reason without a pid,
    `hunt t$ARGUMENTS (owner pid not visible)`, never `(pid 1)`, which on the
    host names init. `/roar` removes the tree when its integration is ready;
-   if the session dies first, `worktree-gc` reclaims either shape once two
-   things hold. First, the tree holds no work: no modified, untracked or
+   if the session dies first, `worktree-gc` reclaims either shape once its
+   branch is gone upstream (merged and pruned) and two more things hold.
+   First, the tree holds no work: no modified, untracked or
    ignored file (review scratch counts), except regenerable caches, the root
    `.venv/` and `.tmp/`, which has its own guard. Second, its git metadata
    (HEAD, index, reflog, lock) has not moved for 72 h; three days outlast a
