@@ -61,7 +61,8 @@ projects. Zotero is the system of record; git holds neither the sources nor the
   (`pdftoppm -png -scale-to 1500`) and read it. A grep cannot find a formula
   that was never extracted, so a nil result is not a negative finding.
 - **Project `.bib` files are also staging**, git-ignored, synced to Zotero. The
-  `.bib` is provenance scaffolding, not the source of truth.
+  `.bib` is provenance scaffolding, not the source of truth. A
+  cited-works-availability test guards it (`prose-adherence-tests.md`).
 - **Periodic sync + purge.** Reconcile staging to Zotero (correct item type,
   scraped metadata, file attachment) and **purge staging on archival after
   publication** — Zotero retains everything. The reconcile is run by the author
