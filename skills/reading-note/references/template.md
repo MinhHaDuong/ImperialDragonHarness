@@ -29,7 +29,7 @@ pages: ""
 doi: ""
 url: ""
 zotero_item: "<key of the work's item>"
-work_key: "<project corpus id, e.g. doi:… or openalex:W…; empty outside a corpus>"
+work_key: "<project corpus id, e.g. doi:… or openalex:W…; otherwise zotero:<library>:<work item key>>"
 open_access: "gold | green | hybrid | bronze | closed | unknown"
 oa_url: "<URL of the open copy, if any>"
 # --- reproducibility (empirical and quantitative works; "n/a" otherwise)

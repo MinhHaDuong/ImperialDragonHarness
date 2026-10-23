@@ -6,6 +6,8 @@ Author: Codex MOE
 --- log ---
 2026-10-23T09:11Z Codex MOE created
 
+2026-10-23T09:24Z Codex note Implemented attach-to-existing and concrete Markdown Document intake with source work_key provenance and live imported-file hash receipts; separate per-note inventory covers check-staging exclusions. Backend unchanged: inspected create_entries, entry_to_zotero_item, attach_file and file_evidence; arbitrary readable .md accepted, abstract mapped to abstractNote. 35 existing skill checks passed; direct venv catalog drift check passed (make wrapper blocked by cache/network). No live Zotero write claimed; parent owns full gate and Astra/Fable final review.
+
 --- body ---
 ## Context
 F3 : import recommande parfois de recréer la notice sans fichier ; backfill prescrit attachement. Notes Markdown requises mais exclues de check-staging ; chemin d’intake et moment d’import incohérents.

@@ -43,7 +43,10 @@ entry's title, DOI and type are what the lookup uses. A keyed file that no
 starts with `_` (`_superseded/`); without it every directory is checked.
 `check-staging` reads only `.pdf .html .htm .jpg .jpeg .png .djvu .epub`, linked
 or not; a `.md` file is never a row of its report. The reconcile staging rule in
-`rules/zotero.md` still covers `*.md` notes.
+`rules/zotero.md` still covers `*.md` notes. Reconcile those separately with
+the per-note inventory and live hash receipts in `references/import.md`,
+section Markdown research notes. Report both scopes before claiming all
+sources and notes archived.
 
 ```bash
 "$IDH_ROOT/scripts/zotero.py" check-staging . --dir docs/articles \
