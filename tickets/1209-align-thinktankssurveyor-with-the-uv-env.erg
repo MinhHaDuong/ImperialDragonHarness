@@ -8,7 +8,7 @@ Author: Minh Ha-Duong
 
 --- body ---
 ## Context
-~/CNRS/code/ThinkTanksSurveyor is not a git repository (git reports none up to the /home mount point). It has both pyproject.toml and requirements.txt, no uv.lock, and `pip install` in its Makefile or README. Observed 2026-10-23.
+~/CNRS/code/ThinkTanksSurveyor is not a git repository (git reports none up to the /home mount point). It has both pyproject.toml and requirements.txt, no uv.lock and no Makefile; its README says `pip install`. Observed 2026-10-23.
 
 Practice to reach: `rules/coding-python.md` (Environment principles and rules), tracked by 1206.
 
@@ -17,7 +17,7 @@ First decide whether it should be a repository; the practice's branch-and-PR flo
 
 ## Exit criteria
 - [ ] pyproject.toml and a committed uv.lock describe the dependencies; no hand-kept requirements.txt
-- [ ] the Makefile has no PYTHON variable; recipes that run Python tools go through the `RUN` prefix
-- [ ] no `pip install` in the Makefile or README
+- [ ] if a Makefile is added, it has no PYTHON variable and recipes that run Python tools go through the `RUN` prefix
+- [ ] no `pip install` in the README or docs/
 - [ ] the repo's own tests or smoke command pass from a bare shell, output quoted in the PR or log
 - [ ] the alignment check of 1206 prints `ok` in ~/CNRS/code/ThinkTanksSurveyor

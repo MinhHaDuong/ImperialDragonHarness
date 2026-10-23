@@ -8,7 +8,7 @@ Author: Minh Ha-Duong
 
 --- body ---
 ## Context
-~/CNRS/code/VN-Power-Scenario is a git repo on branch master. Its only remote, named `fork`, is github.com/alice-dub/VN-Power-Scenario, a collaborator's repository. It has requirements.txt, a Makefile with `PYTHON = python3`, no pyproject.toml and no uv.lock. Observed 2026-10-23: 22 uncommitted files.
+~/CNRS/code/VN-Power-Scenario is a git repo on branch master. It has two remotes: `origin`, the author's own github.com/MinhHaDuong/VN-Power-Scenario, and `fork`, github.com/alice-dub/VN-Power-Scenario, a collaborator's repository. It has requirements.txt, a Makefile with `PYTHON = python3`, no pyproject.toml and no uv.lock. Observed 2026-10-23: 22 uncommitted files.
 
 Practice to reach: `rules/coding-python.md` (Environment principles and rules), tracked by 1206.
 
@@ -18,6 +18,6 @@ Do not push to the `fork` remote or open anything in the collaborator's reposito
 ## Exit criteria
 - [ ] pyproject.toml and a committed uv.lock describe the dependencies; no hand-kept requirements.txt
 - [ ] the Makefile has no PYTHON variable; recipes that run Python tools go through the `RUN` prefix
-- [ ] no `pip install` in the Makefile or README
+- [ ] no `pip install` in the Makefile, README or docs/
 - [ ] the repo's own tests or smoke command pass from a bare shell, output quoted in the PR or log
 - [ ] the alignment check of 1206 prints `ok` in ~/CNRS/code/VN-Power-Scenario
