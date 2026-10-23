@@ -15,6 +15,7 @@ Exercises:
 """
 
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -1151,6 +1152,88 @@ def test_gc_restores_claimed_lock_when_removal_fails(origin):
     porcelain = git(primary, "worktree", "list", "--porcelain").stdout
     assert "locked hunt t12 (owner pid not visible)" in porcelain
     gitdir = Path(git(wt, "rev-parse", "--absolute-git-dir").stdout.strip())
+    assert not (gitdir / "locked.gc-claim").exists()
+
+
+def _git_wrapper(primary, body):
+    """A `git` on PATH that runs `body` (bash, with $real naming the real git)
+    before delegating; returns the extra_env that puts it ahead of _gc's fake gh."""
+    wrap = primary.parent / "wrapped-git"
+    wrap.mkdir()
+    (wrap / "git").write_text(
+        "#!/usr/bin/env bash\n"
+        f"real={shutil.which('git')}\n"
+        f"{body}\n"
+        'exec "$real" "$@"\n'
+    )
+    (wrap / "git").chmod(0o755)
+    fake_bin = primary.parent / "fake-bin"
+    return {"PATH": f"{wrap}:{fake_bin}:{os.environ.get('PATH', '')}"}
+
+
+@pytest.mark.parametrize("renewal", ["hunt t13 (pid 4242)", "hunt t13 (owner pid not visible)"])
+def test_gc_keeps_tree_whose_lock_is_renewed_before_the_claim(origin, renewal):
+    """A lock rewritten between the read and the claim, with another reason or
+    the same one (fresh, so no longer idle), is kept and left as written."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-renew", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t13 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-renew")
+    _age_worktree_metadata(wt, 100)
+    count = primary.parent / "rev-parse-count"
+    # The second --absolute-git-dir lookup is the claim's: renew the lock then.
+    env = _git_wrapper(primary, (
+        'if [[ " $* " == *" --absolute-git-dir "* ]]; then\n'
+        f'  n=$(( $(cat {count} 2>/dev/null || echo 0) + 1 )); echo $n > {count}\n'
+        '  if [ "$n" -eq 2 ]; then d=$("$real" "$@");'
+        f' printf %s {shlex.quote(renewal)} > "$d/locked"; echo "$d"; exit 0; fi\n'
+        'fi'
+    ))
+    res = _gc(primary, extra_env=env)
+    assert res.returncode == 0
+    assert "skip agent-ownerless-renew (lock changed since it was read" in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+    gitdir = Path(git(wt, "rev-parse", "--absolute-git-dir").stdout.strip())
+    assert (gitdir / "locked").read_text() == renewal
+    assert not (gitdir / "locked.gc-claim").exists()
+
+
+def test_gc_restores_orphan_claim_left_by_a_killed_run(origin):
+    """A run killed after its claim leaves `locked.gc-claim`: the next run puts
+    the lock back before reading lock state, so the tree reads locked."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-orphan", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t14 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-orphan")
+    gitdir = Path(git(wt, "rev-parse", "--absolute-git-dir").stdout.strip())
+    (gitdir / "locked").rename(gitdir / "locked.gc-claim")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "idle 0h < 72h" in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+    assert (gitdir / "locked").read_text().rstrip("\n") == "hunt t14 (owner pid not visible)"
+    assert not (gitdir / "locked.gc-claim").exists()
+
+
+def test_gc_restore_never_overwrites_a_lock_written_meanwhile(origin):
+    """If a new owner locks the tree while it is claimed, the refused removal
+    leaves that new lock in place, never the old owner-less one."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-newowner", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t15 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-newowner")
+    _age_worktree_metadata(wt, 100)
+    gitdir = Path(git(wt, "rev-parse", "--absolute-git-dir").stdout.strip())
+    env = _git_wrapper(primary, (
+        'for a in "$@"; do if [ "$a" = remove ]; then\n'
+        f'  printf %s "claude new (pid 4242)" > {gitdir / "locked"}; echo refused >&2; exit 128\n'
+        'fi; done'
+    ))
+    res = _gc(primary, extra_env=env)
+    assert res.returncode == 0
+    assert str(wt) in _worktree_paths(primary)
+    assert (gitdir / "locked").read_text() == "claude new (pid 4242)"
     assert not (gitdir / "locked.gc-claim").exists()
 
 
