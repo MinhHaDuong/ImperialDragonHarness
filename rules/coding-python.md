@@ -8,11 +8,13 @@ last-reviewed: 2026-10-22
 ## Python (3.10+) style
 
 - Run `ruff check` before committing: nothing lints on edit, and the ruff adherence test is the gate.
+- Type hints where they clarify intent; neither required everywhere nor refused. Skip where they add noise.
 - Built-in generics and `X | Y` unions (`list[str]`, `str | None`); never `typing.List`, `Dict`, `Tuple`, `Optional`, `Union`, and no `from __future__ import annotations`.
 - No ABC classes. Use Protocol for structural subtyping if needed.
 - Assertions at system boundaries. Trust internal code.
 - Every entry point gets argparse. If `__name__ == "__main__"` exists, it gets an `ArgumentParser`.
 - No hardcoded paths: inputs and `--output` are CLI parameters with defaults.
+- No `sys.path` hacks. Use proper packaging (`pyproject.toml`).
 - Logging, not print. Use `logging` module.
 
 ## Environment
