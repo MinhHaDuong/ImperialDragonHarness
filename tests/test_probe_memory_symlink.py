@@ -396,7 +396,7 @@ def test_rig_repo_ignores_an_inherited_git_dir(tmp_path, live, monkeypatch):
 
 def test_any_keystore_failure_means_no_key(monkeypatch, key_file):
     def broken():
-        raise SyntaxError("peer_review.py does not parse")
+        raise SyntaxError("keystore.py does not parse")
 
     monkeypatch.setattr(pm, "_keystore", broken)
     assert pm.resolve_api_key(key_file) is None
