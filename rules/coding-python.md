@@ -40,7 +40,7 @@ The cache is machine-local and rebuildable from `uv.lock`: keep `UV_CACHE_DIR` a
 ## Testing
 
 - Tests live in `tests/test_<module>.py`. A new script or changed behavior starts with a test.
-- When testins get too slow, suggests the `/pulse` test-doctor skill.
+- When tests get too slow, suggest the `/pulse` test-doctor skill.
 - The harness does not maintain reg/green test caches for smart test selection, but a project might.
 - `make check-fast`: fast tier only (`-m "not slow and not integration and not adherence"`), aim to stay under 10 s, it runs during development.
 - `make lint`: adherence tier only (`-m adherence`) — ruff / mypy / hygiene / contracts.
