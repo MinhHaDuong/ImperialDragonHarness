@@ -1,8 +1,15 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "bibtexparser>=1.4,<2",
+#     "requests>=2.28,<3",
+# ]
+# ///
 """validate-refs.py — check HTTP accessibility of every DOI/URL/eprint in a related-work-note.
 
 Usage:
-    python3 validate-refs.py <note-file>
+    uv run --script validate-refs.py <note-file>
 
 Parses the ## Bibliography section, extracts doi/url/eprint+eprinttype
 from BibTeX entries, and fetches each identifier via HTTP.
