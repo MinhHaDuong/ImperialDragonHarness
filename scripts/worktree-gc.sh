@@ -108,6 +108,13 @@ flush() {
     # quiet repo stays silent — live worktrees on live branches say nothing).
     local rpath lc
     load_live_cwds
+    # This script's own cwd is always readable, so an empty list means the
+    # scan failed (no python3, unreadable /proc), not that nothing is live.
+    if [ "${#live_cwds[@]}" -eq 0 ]; then
+        echo "worktree-gc: skip $base (live-cwd scan read nothing — cannot rule out an active session)" >&2
+        skipped_live=$((skipped_live + 1))
+        reset; return
+    fi
     rpath=$(realpath "$path" 2>/dev/null || echo "$path")
     for lc in "${live_cwds[@]:-}"; do
         [ -z "$lc" ] && continue

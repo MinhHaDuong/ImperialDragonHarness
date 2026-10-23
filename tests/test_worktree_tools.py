@@ -917,6 +917,25 @@ def test_gc_treats_pid_1_lock_as_stale(origin):
     assert str(wt) not in _worktree_paths(primary)
 
 
+def test_gc_skips_removal_when_live_cwd_scan_reads_nothing(origin):
+    """The live-cwd rail fails closed: a scan that returns no cwd at all
+    (here python3 exits 1) cannot rule out an active session, so the GC
+    keeps the tree instead of reading the silence as "nothing live"."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-blind", dirty=False)
+    make_branch_gone(remote, primary, "agent-blind")
+    fake_bin = primary.parent / "fake-bin"
+    fake_bin.mkdir(exist_ok=True)
+    py = fake_bin / "python3"
+    py.write_text("#!/bin/sh\nexit 1\n")
+    py.chmod(0o755)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-blind (live-cwd scan read nothing" in res.stderr
+    assert str(wt) in _worktree_paths(primary)
+
+
 def test_gc_keeps_live_pid_locked_worktree(origin):
     """The pid half of the lock rail: a harness lock whose recorded pid is
     live is an active session — skipped in place, never unlocked."""
