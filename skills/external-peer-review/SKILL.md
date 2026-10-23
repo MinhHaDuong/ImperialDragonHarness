@@ -32,7 +32,11 @@ no separate review executor or credential transport.
    fresh run directory per reader; retain preparation, raw review, tool-use
    evidence, verification and report. Confirm the run is complete before
    starting the remaining independent readers; a non-empty response alone is
-   insufficient.
+   insufficient. The current manuscript-review runner supports only the
+   Claude CLI route; a model flag does not add another provider. For a required
+   independent perspective beyond that route, the runtime may use another
+   available mechanism that fulfills the same input, tool-use, verification
+   and identity evidence contract. Otherwise report that perspective unavailable.
 4. **Collect remaining reviews, parallel-background when capacity allows.**
    Each follows the same manuscript-review contract in its own run directory.
    With one slot, run them sequentially. Do not expose one reader's findings
