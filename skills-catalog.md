@@ -61,7 +61,7 @@
 | Command | Description |
 |---------|-------------|
 | `/cut-prose` | Cut a document to a word or page budget by removing whole passages before condensing anything. Use for a manuscript trim, a reviewer-mandated length cut, or a slot-limited abstract. |
-| `/external-peer-review` | Obtain independent external frontier-class peer reviews of a manuscript PDF; synthesize convergent findings into one verdict. |
+| `/external-peer-review` | Obtain independent external peer reviews of a manuscript PDF; preserve dissent and synthesize verified findings. |
 | `/message-framing` | Frame the central message of a talk, abstract or article before drafting it. Not for cutting a text (/cut-prose) or building a deck (/slides). |
 | `/pdf-finish` | Finishing pass on a PDF deliverable before it leaves the workshop — journal submission, preprint deposit, personal page, report handoff. Keyword: finition. |
 | `/slides` | Make or review a talk's slide deck: build a beamer deck from a written text, or critique an existing deck with prioritized fixes. Keywords: diaporama, présentation. |
