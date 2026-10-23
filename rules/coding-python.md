@@ -22,7 +22,13 @@ Script structure:
 - **No `sys.path` hacks.** Use proper packaging (`pyproject.toml`).
 - **Logging, not print.** Use `logging` module.
 
-Environment: **uv, never pip.**
+Environment principles, which settle any case the rules below do not cover:
+1. Do not pollute the system: what the GitHub Ubuntu runner image lacks is exotic.
+2. uv, not pip.
+3. Commit to Linux, with no gratuitous incompatibility.
+4. The uv cache is machine-level state: never synced, never snapshotted.
+
+Environment rules: **uv, never pip.**
 - Dependencies live in `pyproject.toml` with `uv.lock` committed (`--frozen` fails without it); no `requirements.txt`. A repo that is not a package sets `[tool.uv] package = false`. `pytest`, `pytest-xdist` and a pinned `ruff` go in the `dev` group. `uv sync` builds the env, `uv run` executes (`uv run --script` for a script with inline metadata). A legacy repo (`requirements.txt`, hand-made venv) migrates when next touched.
 - A Python tool absent from the `ubuntu-latest` runner readme is exotic and comes from the lock, never from the system: it ships no `uv`, `ruff` or `pytest` (checked 2026-10-22). uv is the one exception; CI installs it with `astral-sh/setup-uv`, then `uv sync --locked`.
 - Makefile: one `RUN` prefix at the top, `$(RUN) <tool>` on each recipe line, no `PYTHON` variable (copy the harness Makefile's definition: bare inside an activated env or when uv is absent, `uv run --frozen` otherwise). Where `RUN` expands to `uv run`, it needs a synced env to beat the PATH: with `UV_NO_SYNC` set and no synced `.venv` it runs the ambient `ruff` or `pytest`, so a sandbox syncs once first. A build that only writes LaTeX or Quarto from handoff artifacts needs no `RUN` (see Build).
