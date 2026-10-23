@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Zotero et notes : unifier rattachement et reçus d’archivage
+Created: 2026-10-23
+Author: Codex MOE
+Closed: Attach-to-existing, note intake and live receipt contracts validated; backend unchanged.
+
+--- log ---
+2026-10-23T09:11Z Codex MOE created
+
+2026-10-23T09:24Z Codex note Implemented attach-to-existing and concrete Markdown Document intake with source work_key provenance and live imported-file hash receipts; separate per-note inventory covers check-staging exclusions. Backend unchanged: inspected create_entries, entry_to_zotero_item, attach_file and file_evidence; arbitrary readable .md accepted, abstract mapped to abstractNote. 35 existing skill checks passed; direct venv catalog drift check passed (make wrapper blocked by cache/network). No live Zotero write claimed; parent owns full gate and Astra/Fable final review.
+2026-10-23T10:00Z Codex MOE note Criteria verified: Zotero attachment/intake and Markdown-note receipts validated by Astra/Fable at0121b6a6; shared intake wording corrected. Backend unchanged. Complete union make check2156passed4skipped. Whole-train integration remains1198/1205.
+2026-10-23T10:00Z reviewer closed — Attach-to-existing, note intake and live receipt contracts validated; backend unchanged.
+
+--- body ---
+## Context
+F3 : import recommande parfois de recréer la notice sans fichier ; backfill prescrit attachement. Notes Markdown requises mais exclues de check-staging ; chemin d’intake et moment d’import incohérents.
+
+## Exit criteria
+- [x] Notice existante sans fichier : attachement à cette notice, sans doublon forcé ; consignes d’import/backfill cohérentes.
+- [x] Chemin concret pour archiver une note Markdown comme Document avec pièce jointe et lien à l’œuvre ; reçu de stockage vérifiable.
+- [x] La réconciliation des documents ne peut être présentée comme archivage complet des notes sans les avoir vérifiées ; une méthode explicite couvre les notes produites.
+- [x] Related-work-note et lecture utilisent le même moment d’archivage que le contrat Zotero ; pas de second catalogue bibliographique.
+- [x] Conserver les garanties existantes du backend, ne pas inventer de schéma de synchronisation ; tests uniquement si le comportement du helper change.
+
+## Plan / first check
+Relevant files: skills/zotero/, skills/reading-note/, skills/related-work-note/SKILL.md, scripts/zotero.py si nécessaire, tests Zotero. Le lot bibliographie possède les runbooks validate/bib-merge ; coordonner plutôt que les éditer.
+
+## Review
+KISS obligatoire. Astra et Fable valident les skills finaux ; le MOE conserve identités effectives, révisions et décisions. Aucun exécutant ne fusionne ni ne supprime l’ancien outil de sa propre initiative.

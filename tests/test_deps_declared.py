@@ -21,8 +21,7 @@ import through *each* extraction path before its "all declared" verdict is
 worth anything.
 
 Bundled skill Python shares this declaration contract (ticket 0950), including
-lazy imports: resolving credentials without the SDK does not make the SDK
-optional when the skill actually requests a review.
+lazy imports: importing inside a function does not make a dependency optional.
 """
 
 import ast
@@ -48,7 +47,6 @@ IMPORT_TO_DIST = {
 # unit test below instead.
 POSITIVE_CONTROLS = {
     "yaml": {"scripts/skill_frontmatter.py"},
-    "openai": {"skills/external-peer-review/peer_review.py"},
 }
 
 # Only a QUOTED delimiter (<<'EOF') guarantees the body is literal,
@@ -197,3 +195,12 @@ def test_third_party_imports_are_declared():
         "interpreter that happens to have them is not a contract "
         "(ticket 0530):\n  " + "\n  ".join(offenders)
     )
+
+
+def test_scanner_finds_lazy_imports(monkeypatch):
+    """An SDK imported only when called still belongs in the dependency scan."""
+    monkeypatch.setattr(sys.modules[__name__], 'python_sources', lambda: (
+        ('skills/example/run.py', 'def call():\n    import optional_sdk\n'),
+    ))
+    assert third_party_imports.__wrapped__() == {
+        'optional_sdk': frozenset({'skills/example/run.py'})}

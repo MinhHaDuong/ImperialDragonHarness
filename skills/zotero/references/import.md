@@ -97,9 +97,67 @@ If the network call fails or returns no useful payload, fall back to the documen
 After the refined `find-work`, classify each item by the `verdict`:
 
 - **`verdict: "none"`** → import normally.
-- **`verdict: "match"`** → already present in the destination library (`why` names the keys: `storageHash` first when the stored file is the same, then `doi`, `isbn`, `arxiv` or `handle`, the identifier the item's own field carries). Default: **skip**, tell the user, ask if they want to import anyway (e.g. to refresh metadata). Exception: if the hit has **no file** (`has_file: false`), the PDF itself is missing from Zotero — default: **import** so the PDF lands, warning that this creates a duplicate item the user should merge.
+- **`verdict: "match"`** → already present in the destination library (`why` names the keys: `storageHash` first when the stored file is the same, then `doi`, `isbn`, `arxiv` or `handle`, the identifier the item's own field carries). Default: **skip** creation. If the hit has **no file** (`has_file: false`), attach to that existing item with `suggest-attachments --parent <itemKey> <file>`; inspect the report, then add `--edit` to store it (see `references/backfill.md`). Metadata changes use `suggest-edits`, not a duplicate item. Never use `--force` merely to supply a missing attachment.
 - **`verdict: "ambiguous"`** (several matches tie, e.g. two records legitimately sharing one attachment md5) → show them to the user and ask. Never silently match, never silently skip.
 - **`verdict: "candidates"`** (no identifier matched; Zotero's search returned works for the title, under `candidates`) → judge them yourself against the document: same work, another edition, or another work sharing the title. The helper never makes this call. Same work → skip or attach; distinct → import with `--force`; unsure → ask the user.
 - **`verdict: "unchecked"`** → no key could be consulted (Zotero unavailable, or no usable metadata). Say so explicitly — this is not a clean negative.
 
 Always remind the user that Zotero's *Duplicate Items* view (left panel) is the place to merge afterwards.
+
+## Markdown research notes
+
+Run these steps **sequential-blocking**: the note needs the source item keys,
+and the storage receipt needs the completed upload. Archive sources at intake
+and the finished note when produced; do not wait for manuscript submission.
+A note is its own `document`, with its Markdown file stored under it. It does
+not inherit the source work's DOI as its own identifier.
+
+1. Stage the note in project-local `docs/`. Put the source Zotero library/key
+   and the corpus `work_key` in its metadata (use `zotero:<library>:<key>` when
+   there is no corpus id). For a paragraph note covering several works, list
+   their keys. These are provenance links, not a new bibliography or a native
+   Zotero relation created by the helper.
+2. Prepare an entries file beside it, using only supported helper fields.
+   Replace the example values with the real note author, date, title, absolute
+   file path and source keys. `abstract` preserves the same provenance on the
+   Document as `abstractNote`; `work_key` is not a supported top-level helper
+   field. The historical `pdf` / `attach_pdf` names also accept Markdown:
+   the helper uploads readable bytes and infers MIME from the filename.
+
+   ```json
+   [{"type":"document","title":"Reading note: Exact source title",
+     "authors":["Actual note author"],"year":"2026-10-23",
+     "abstract":"work_key: doi:10.example/source; source_items: user:ABCD1234",
+     "pdf":"/absolute/project/docs/AuthorYear_Title.md","attach_pdf":true}]
+   ```
+
+3. Resolve `IDH_ROOT` as above, then look up the **note title and file**, not
+   the source DOI. Judge title candidates as in Duplicate handling. An existing
+   note Document with no file gets `suggest-attachments --edit`; a different
+   saved version requires an explicit version decision, not a blind rerun.
+
+   ```bash
+   "$IDH_ROOT/scripts/zotero.py" find-work --type document \
+     --title "Reading note: Exact source title" \
+     --pdf /absolute/project/docs/AuthorYear_Title.md --library user
+   "$IDH_ROOT/scripts/zotero.py" create-items \
+     --entries-file /absolute/project/docs/note-entry.json --library user
+   ```
+
+4. Keep the creation output, then repeat that `find-work` command and retain
+   its live JSON as the storage receipt. Require the intended Document key in
+   `matches`, `why` containing `storageHash`, `has_file: true`, and a matching
+   `attachment` with `linkMode: imported_file` and key/md5 under it; inspect the Document in the client to confirm its type
+   and `abstractNote` provenance. Record library, source keys / `work_key`,
+   note key, attachment key, hash and verification date in the run's existing
+   output or handoff. `status: created` alone proves neither uploaded bytes
+   nor the provenance link. An unavailable read, missing hash match or upload
+   error leaves archiving pending; retain staging and inspect before retrying.
+
+`check-staging` excludes Markdown. To reconcile produced notes, enumerate the
+run's note paths (and staged `*.md` research notes in scope), repeat step 4 for
+**each** current file, and list stored / pending / unverifiable with its
+receipt or reason. Distinguish this note inventory from the document sweep;
+a clean PDF report cannot certify that the notes are archived. A changed note
+needs a fresh receipt for its current bytes. Keep this as archival evidence,
+not a second bibliographic catalogue.

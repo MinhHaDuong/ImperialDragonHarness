@@ -22,6 +22,8 @@ Example:
 """
 
 import argparse
+import hashlib
+import re
 import logging
 import shutil
 import subprocess
@@ -63,7 +65,7 @@ def resolve_compiler() -> list[str]:
     """Return the compile command prefix, or exit if no compiler is present.
 
     Prefers ``latexmk`` (handles multi-pass runs and the bibliography), falls
-    back to a two-pass ``pdflatex`` invocation handled by the caller.
+    back to two-pass ``pdflatex`` for documents without bibliography processing.
     """
     if shutil.which("latexmk"):
         return ["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error"]
@@ -183,13 +185,58 @@ def run_latexdiff(latexdiff: str, old_tex: Path, new_tex: Path, diff_tex: Path) 
     diff_tex.write_text(result.stdout)
 
 
-def compile_pdf(compiler: list[str], workdir: Path, diff_tex: Path) -> Path:
+def add_inputs(repo: Path, dest: Path, inputs: list[str]) -> None:
+    """Copy only explicitly named, SHA-256-pinned supplementary files."""
+    for item in inputs:
+        parts = item.split("=", 2)
+        if len(parts) < 2 or not re.fullmatch(r"[0-9a-fA-F]{64}", parts[1]):
+            raise SystemExit("supplementary input must be PATH=SHA256[=SOURCE]")
+        relative, expected = parts[:2]
+        target = contained_join(dest, relative)
+        source = Path(parts[2]) if len(parts) == 3 else repo / relative
+        try:
+            data = source.read_bytes()
+        except OSError as exc:
+            raise SystemExit(f"cannot read supplementary input {source}: {exc}") from exc
+        if hashlib.sha256(data).hexdigest() != expected.lower():
+            raise SystemExit(f"SHA-256 mismatch for supplementary input {source}")
+        if target.exists():
+            raise SystemExit(f"supplementary input would overwrite extracted path: {relative}")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        log.info("supplementary input %s SHA-256 %s", relative, expected.lower())
+
+
+def compile_pdf(compiler: list[str], workdir: Path, diff_tex: Path,
+                input_root: Path | None = None) -> Path:
     """Compile ``diff_tex`` in ``workdir``; return the produced PDF path.
 
-    latexmk resolves multi-pass and bibliography automatically. For the
-    pdflatex fallback, run twice so cross-references settle.
+    latexmk resolves multi-pass and bibliography automatically. The
+    pdflatex fallback is limited to documents without a bibliography processor.
+    A fresh final log must confirm that citations and references resolved.
     """
+    # Check literal bibliography declarations in latexdiff's flattened source.
+    # Missing files must not resolve accidentally from a host BIBINPUTS path.
+    input_root = (input_root or workdir).resolve()
+    source = re.sub(r"(?<!\\)%[^\n]*", "", diff_tex.read_text())
+    declarations = re.findall(
+        r"\\(?:bibliography|addbibresource)(?:\[[^\]]*\])?\s*\{([^}]+)\}", source
+    )
+    for declaration in declarations:
+        for resource in declaration.split(","):
+            relative = resource.strip()
+            if not relative.endswith(".bib"):
+                relative += ".bib"
+            resource_path = (workdir / relative).resolve()
+            if (Path(relative).is_absolute() or not resource_path.is_relative_to(input_root)
+                    or not resource_path.is_file()):
+                raise SystemExit(
+                    f"missing local bibliography input {relative!r}; "
+                    "include it in the pinned tree or supply --new-input"
+                )
     stem = diff_tex.stem
+    for suffix in (".pdf", ".log"):
+        (workdir / f"{stem}{suffix}").unlink(missing_ok=True)
     if compiler[0] == "latexmk":
         runs = [compiler + [diff_tex.name]]
     else:
@@ -203,14 +250,29 @@ def compile_pdf(compiler: list[str], workdir: Path, diff_tex: Path) -> Path:
             raise SystemExit(
                 f"LaTeX compilation failed ({cmd[0]}). Last lines of the log:\n{tail}"
             )
+        if compiler[0] != "latexmk":
+            aux_text = "\n".join(p.read_text(errors="replace") for p in workdir.rglob("*.aux"))
+            if r"\bibdata" in aux_text or (workdir / f"{stem}.bcf").exists():
+                raise ToolchainError(
+                    "bibliography processing requires latexmk and BibTeX/Biber; "
+                    "install latexmk and the required backend, then rerun."
+                )
+    build_log = workdir / f"{stem}.log"
+    if not build_log.is_file():
+        raise SystemExit(f"cannot validate PDF: compiler produced no log at {build_log}")
+    text = build_log.read_text(errors="replace")
+    if re.search(r"undefined (?:citations|references)|(?:Citation|Reference)[^\n]*undefined",
+                 text, re.IGNORECASE):
+        raise SystemExit("PDF rejected: unresolved citations or references in final LaTeX log")
     pdf = workdir / f"{stem}.pdf"
-    if not pdf.exists():
+    if not pdf.is_file() or pdf.stat().st_size == 0:
         raise SystemExit(f"compiler reported success but produced no PDF at {pdf}")
     return pdf
 
 
 def render(repo: Path, old_ref: str, new_ref: str, main_tex: str, output: Path,
-           workdir: Path | None = None) -> Path:
+           workdir: Path | None = None, old_inputs: list[str] | None = None,
+           new_inputs: list[str] | None = None) -> Path:
     """Render the revision-marked PDF; return the output path.
 
     ``main_tex`` is the manuscript path relative to the repository root.
@@ -242,8 +304,13 @@ def render(repo: Path, old_ref: str, new_ref: str, main_tex: str, output: Path,
     try:
         old_dir = workdir / "old"
         new_dir = workdir / "new"
+        if old_dir.exists() or new_dir.exists():
+            raise SystemExit("workdir must not contain old/ or new/; use a fresh workdir")
+        log.info("pinned refs old=%s new=%s", old_ref, new_ref)
         extract_ref(git, repo, old_ref, old_dir)
         extract_ref(git, repo, new_ref, new_dir)
+        add_inputs(repo, old_dir, old_inputs or [])
+        add_inputs(repo, new_dir, new_inputs or [])
 
         # Keep --main-tex inside the extracted tree (absolute/.. traversal guard).
         old_tex = contained_join(old_dir, main_tex)
@@ -252,7 +319,7 @@ def render(repo: Path, old_ref: str, new_ref: str, main_tex: str, output: Path,
         diff_tex = new_tex.with_name(f"{Path(main_tex).stem}-diff.tex")
         run_latexdiff(latexdiff, old_tex, new_tex, diff_tex)
 
-        pdf = compile_pdf(compiler, diff_tex.parent, diff_tex)
+        pdf = compile_pdf(compiler, diff_tex.parent, diff_tex, input_root=new_dir)
 
         output = output.resolve()
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -278,6 +345,11 @@ def build_parser() -> argparse.ArgumentParser:
                         help="Main .tex file, relative to the repository root.")
     parser.add_argument("--output", type=Path, required=True,
                         help="Path to write the revision-marked PDF.")
+    for side in ("old", "new"):
+        parser.add_argument(f"--{side}-input", action="append", default=[],
+                            metavar="PATH=SHA256[=SOURCE]",
+                            help="Pinned supplementary file; repeat for each missing input. "
+                                 "PATH is tree-relative; SOURCE defaults to repo/PATH.")
     parser.add_argument("-v", "--verbose", action="store_true",
                         help="Verbose logging.")
     return parser
@@ -295,6 +367,8 @@ def main(argv: list[str] | None = None) -> int:
         new_ref=args.new_ref,
         main_tex=args.main_tex,
         output=args.output,
+        old_inputs=args.old_input,
+        new_inputs=args.new_input,
     )
     return 0
 

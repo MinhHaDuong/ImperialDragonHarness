@@ -73,11 +73,15 @@ template cannot enforce:
 
 ## 4. Store it
 
+Run these steps **sequential-blocking**: each consumes the preceding output.
+
 1. Stage the note as `docs/<AuthorYear>_<ShortTitle>.md` (git-ignored staging).
-2. Archive it with `/zotero` import (URL intake) as its own **Document** item
-   (the research-note row of the type table in the skill's import reference),
-   titled `Reading note: <work title>`, with the work's
-   DOI or Zotero item key in the note's metadata block so the two link up.
+2. Archive it now as its own **Document** with stored Markdown, following
+   [Zotero Markdown intake](../zotero/references/import.md#markdown-research-notes).
+   Carry `work_key` and the source Zotero library/item key in the note metadata
+   and Document provenance; keep the live hash receipt (Document and attachment
+   keys). A creation response alone is not storage verification. If blocked,
+   report archiving pending and retain staging.
 3. When a `critical-lit-review` run delegated the note, also leave the path in
    the run's working directory it named.
 4. When the note belongs to a project corpus (`work_key` set) and the project
@@ -87,5 +91,5 @@ template cannot enforce:
 ## Output to the user
 
 One line: work title — Zotero item of the work — Zotero item of the note —
-full text read (yes / abstract only, why) — word count. Then the three findings
+archival receipt or pending reason — full text read (yes / abstract only, why) — word count. Then the three findings
 that matter most for the author's question, one line each.

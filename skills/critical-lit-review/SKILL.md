@@ -46,11 +46,13 @@ agreement on it before searching. It states:
 
 ## 2. Build the corpus
 
-- **Search with `biblio-saturation`**: its angle taxonomy (fields, languages,
-  gray literature, citation trails, recency) and its dryness criterion are the
-  search protocol. Seed it with the scoping document's object, axes and
-  languages, the author's own publications and frequent co-authors. Do not run
-  a separate ad hoc crawl.
+- **Corpus discovery** starts from `scoping.md`: turn its axes, fields,
+  languages, period and document types into a search plan, with the author's
+  publications and frequent co-authors as seeds. Use the diverse angle
+  taxonomy of `biblio-saturation` (including gray literature and citation
+  trails), without asking it to saturate a corpus as if it were a novelty
+  claim. Retain queries, interfaces/dates, yields and blocked angles; agree
+  a practical stop bound and assess coverage against the scoped object.
 - **Optional HAL transport**: [HAL Discovery MCP](../../docs/hal-discovery-mcp.md),
   activated only for this task; direct HAL API remains a fallback. This
   pointer does not register or load MCP tools.
@@ -59,7 +61,10 @@ agreement on it before searching. It states:
   never add records screened by one rule to a corpus filtered by another.
 - **Consultation table** (`consultation.csv`): one row per candidate, columns
   `id, found_by, type, authors, year, title, doi, url, keep, read_note,
-  justification`. The justification is short and names the scoping criterion
+  justification, access_status, access_attempts, zotero_item, note_item`.
+  `found_by` links to the search log; `access_status` distinguishes full text,
+  abstract only, inaccessible and not attempted; item columns hold library/key
+  and stay empty until stored. The justification is short and names the scoping criterion
   it applies.
 - **Full text** for kept sources follows the `rules/zotero.md` chain (`docs/` →
   Zotero → ISTEX → open web → author). A source is not inaccessible until that
@@ -67,26 +72,30 @@ agreement on it before searching. It states:
 - **Intake** of kept sources into Zotero goes through `/zotero import` (PDF or
   URL alike). Zotero, not the run directory, holds them.
 
-Corpus is complete when the seminal works, the last two or three years, the
-key methodological documents, every major institutional position and every
-main theoretical tradition are represented, and the saturation critic agrees.
+Assess corpus coverage against the agreed period, traditions, institutional
+positions, methods and current work within the cutoff. Record excluded and
+uncovered areas. A major inaccessible source or blocked search leaves that
+coverage partial; do not infer a literature gap from it. Corpus coverage is
+separate from the later saturation of a particular novelty claim.
 
 ## 3. Reading notes
 
 Select the works that warrant a full critical reading (`read_note` in the
 table): seminal works, direct precedents, methodological exemplars, one
 representative per position in each controversy, the author's own key
-publications. Usually fifteen to twenty-five.
+publications. Selection follows their analytical role, not a target count.
 
-Delegate each to `reading-note`; do not write notes inline. Launch the
-readers **parallel-background, in batches of at most 8**: the notes are
-independent of one another, and the batch bounds coordination overhead.
-Choose the worker per the `route` skill on every launch: a note is bulk
-interpretive work, and the synthesis below stays with the coordinating
-session. Each brief carries the
-citation, the staged full text or Zotero item, the scoping document, and why
-this work was selected (axis, controversy, position). Steps 4 to 6 start only
-when the whole batch has returned: they read across notes.
+Use `reading-note` for each selected work, passing its citation, full text or
+Zotero item, corpus id, scoping document, and selection reason (axis,
+controversy, position). Discover retrieval and delegation capabilities first.
+When delegation is available, readers run **parallel-background** within the
+runtime's capacity; choose workers through `route`. With one slot, invoke the
+same reading-note contract sequentially in the coordinating session. These
+notes are independent; steps 4 to 6 are **sequential-blocking**, starting when
+the selected notes have returned or their missing evidence is explicitly
+recorded. Update `consultation.csv` with read status and archived note item /
+receipt; inaccessible full text remains a coverage limit, never a fabricated
+reading note.
 
 ## 4. Map the actors
 
@@ -102,7 +111,7 @@ From the table and the notes:
 - **Coalitions**: who cites whom approvingly or critically, co-authorship,
   institutional partnerships, shared framings (efficiency against justice,
   technical against political).
-- **Profiles** for the ten to fifteen key actors: trajectory, disciplinary
+- **Profiles** for the actors central to the scoped question: trajectory, disciplinary
   home and frameworks, normative commitments, position in each debate and how
   it moved.
 
@@ -132,7 +141,13 @@ From the table and the notes:
   unapplied method. Keep it only if it is real (absent, not merely
   dispersed), documentable with available sources, tractable in the project's
   scope, and significant to a journal's readers. A lacuna claim is a novelty
-  claim: put it through `biblio-saturation` before the report states it.
+  claim: before stating it, pass `biblio-saturation` its exact proposed
+  wording and location, what would refute it, scoped fields/languages/period,
+  cutoff and effort bound, with `scoping.md`, `consultation.csv`, search logs
+  and relevant reading-note keys/receipts. Bring its candidate judgments and
+  coverage status back into the table and report. Unresolved precedents or
+  blocked angles require qualified wording or withholding the lacuna claim;
+  a review with no novelty claim needs no saturation verdict.
 
 ## 7. Report
 
@@ -166,6 +181,7 @@ Every cited work is already in Zotero from the intake in step 2; a project
 
 The run directory's files (`scoping.md`, `consultation.csv`, reading-note
 items, `report.md`, bibliography), one line each; the corpus funnel (pooled,
-kept, read); the saturation critic's verdict; the lacuna as stated; and any
-source that stayed inaccessible after the full zotero.md chain, with where it
+kept, read); corpus coverage and blocked angles; the claim-specific saturation
+assessment when run (otherwise not applicable); the lacuna as stated or
+withheld; and any source that stayed inaccessible after the full zotero.md chain, with where it
 failed.

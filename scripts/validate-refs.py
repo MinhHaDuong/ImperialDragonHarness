@@ -1,8 +1,15 @@
-#!/usr/bin/env python3
-"""validate-refs.py — resolve every DOI/URL/eprint in a related-work-note.
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "bibtexparser>=1.4,<2",
+#     "requests>=2.28,<3",
+# ]
+# ///
+"""validate-refs.py — check HTTP accessibility of every DOI/URL/eprint in a related-work-note.
 
 Usage:
-    python3 validate-refs.py <note-file>
+    uv run --script validate-refs.py <note-file>
 
 Parses the ## Bibliography section, extracts doi/url/eprint+eprinttype
 from BibTeX entries, and fetches each identifier via HTTP.
@@ -11,25 +18,26 @@ Per-entry output goes to stderr:
     [OK|WARN|FAIL] {key}: {resolved-url} ({status})
 
 Final verdict goes to stdout (single line, downstream-greppable):
-    PASS — {N} entries resolved
+    PASS — {N} entries accessible via HTTP
     WARN: {U} of {N} entries have no DOI/URL — {note-path}
     FAIL: {K} fetch failures — {note-path}
     ERROR: network issues ({K} consecutive failures) — {note-path}
 
 Exit codes:
     0   PASS or WARN (unverifiable entries but no fetch failures)
-    1   FAIL (at least one fetch returned non-200)
+    1   FAIL (at least one fetch failed or returned HTTP >= 400)
     2   ERROR (persistent network problems — escalate, do not mark as FAIL)
     3   usage or parse error (missing section, malformed input)
 """
-
-from __future__ import annotations
 
 import re
 import sys
 from pathlib import Path
 
+import bibtexparser
 import requests
+from bibtexparser.bibdatabase import UndefinedString
+from bibtexparser.bparser import BibTexParser
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -63,46 +71,35 @@ def _extract_bibliography_block(text: str) -> str:
     return m.group(1)
 
 
-def _split_entries(bib_block: str) -> list[tuple[str, str]]:
-    """Split BibTeX block into list of (key, raw_entry) pairs.
-
-    Limitation: closing } must appear at start of line. Entries whose
-    closing brace is inline (e.g. `  field = {v}} `) are silently skipped.
-    """
-    entries = []
-    # Match @type{key, ... } where } is at start of line
-    for m in re.finditer(
-        r"@\w+\{([^,\s]+)\s*,([^@]*?)^\}", bib_block, re.MULTILINE | re.DOTALL
-    ):
-        key = m.group(1).strip()
-        body = m.group(2)
-        entries.append((key, body))
-    return entries
+def _split_entries(bib_block: str) -> list[tuple[str, dict]]:
+    """Read all entries, refusing a silent partial parse."""
+    parser = BibTexParser(common_strings=True, ignore_nonstandard_types=False)
+    try:
+        entries = bibtexparser.loads(bib_block, parser).entries
+    except UndefinedString as exc:
+        raise ValueError(f"undefined @string macro {exc}") from exc
+    declared = sum(1 for m in re.finditer(r"@\s*(\w+)\s*[{(]", bib_block)
+                   if m.group(1).lower() not in {"string", "preamble", "comment"})
+    if declared != len(entries):
+        raise ValueError(f"{declared} declared BibTeX entries; {len(entries)} read — "
+                         "some entries could not be parsed (or ambiguous @type opening)")
+    return [(entry["ID"], entry) for entry in entries]
 
 
-def _field(body: str, name: str) -> str | None:
-    """Extract a BibTeX field value from an entry body (single-line or multi-line)."""
-    # Handles: field = {value}, field = "value", field = value,
-    pattern = rf"^\s*{name}\s*=\s*[{{\"']?(.*?)[}}\"']?\s*[,\n]"
-    m = re.search(pattern, body, re.IGNORECASE | re.MULTILINE)
-    if m:
-        return m.group(1).strip().rstrip("}")
-    return None
-
-
-def _build_url(key: str, body: str) -> tuple[str | None, str]:
-    """Return (url_to_fetch, identifier_type) for a BibTeX entry body.
+def _build_url(key: str, body: dict) -> tuple[str | None, str]:
+    """Return (url_to_fetch, identifier_type) for parsed BibTeX fields.
 
     Priority: doi > eprint (typed) > url. Returns (None, "none") if no
     identifier found.
     """
-    doi = _field(body, "doi")
+    doi = body.get("doi")
     if doi:
         doi = doi.strip()
         for prefix in (
             "https://doi.org/",
             "http://doi.org/",
             "http://dx.doi.org/",
+            "https://dx.doi.org/",
             "doi:",
         ):
             if doi.lower().startswith(prefix):
@@ -110,8 +107,8 @@ def _build_url(key: str, body: str) -> tuple[str | None, str]:
                 break
         return DOI_BASE + doi, "doi"
 
-    eprint = _field(body, "eprint")
-    eprinttype = (_field(body, "eprinttype") or "").lower()
+    eprint = body.get("eprint")
+    eprinttype = (body.get("eprinttype") or "").lower()
     if eprint:
         if eprinttype == "arxiv":
             return ARXIV_BASE + eprint, "arxiv"
@@ -126,7 +123,7 @@ def _build_url(key: str, body: str) -> tuple[str | None, str]:
             # Emit as-is; caller will mark WARN
             return None, "none"
 
-    url = _field(body, "url")
+    url = body.get("url")
     if url:
         return url, "url"
 
@@ -189,7 +186,11 @@ def main(argv: list[str]) -> int:
         print(f"error: no ## Methods section found in {note_path}", file=sys.stderr)
         return 3
 
-    entries = _split_entries(bib_block)
+    try:
+        entries = _split_entries(bib_block)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 3
     if not entries:
         print(f"WARN: 0 of 0 entries have no DOI/URL — {note_path}")
         return 0
@@ -238,7 +239,7 @@ def main(argv: list[str]) -> int:
         print(f"WARN: {n_warn} of {n_total} entries have no DOI/URL — {note_path}")
         return 0
     else:
-        print(f"PASS — {n_total} entries resolved")
+        print(f"PASS — {n_total} entries accessible via HTTP")
         return 0
 
 

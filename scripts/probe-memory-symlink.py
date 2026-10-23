@@ -22,8 +22,8 @@ non-zero, prints nothing or times out is "could not look", never a negative;
 a negative counts only when a clean launch and one retry both return it.
 
 Auth: ANTHROPIC_API_KEY resolved at run time from the keys directory through the
-harness keystore reader (`_keystore_value` in skills/external-peer-review/
-peer_review.py, which sources the provider file in a clean bash child), passed
+harness keystore reader (`keystore_value` in scripts/keystore.py, which
+sources the provider file in a clean bash child), passed
 in the child's environment only: never on argv, written to disk or printed. No key means the
 probe exits "could not look: no API key"; it never copies a credential file.
 The rig's `.claude.json` is a minimal file (an empty `projects` object, mode
@@ -107,16 +107,11 @@ def confirm_negative(measure) -> str:
 
 def _keystore():
     """The harness's one keystore reader, loaded where it lives (never copied)."""
-    src = (
-        Path(__file__).resolve().parent.parent
-        / "skills"
-        / "external-peer-review"
-        / "peer_review.py"
-    )
-    spec = importlib.util.spec_from_file_location("idh_peer_review_keystore", src)
+    src = Path(__file__).resolve().with_name("keystore.py")
+    spec = importlib.util.spec_from_file_location("idh_keystore", src)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    return mod._keystore_value
+    return mod.keystore_value
 
 
 def resolve_api_key(key_file: Path) -> str | None:

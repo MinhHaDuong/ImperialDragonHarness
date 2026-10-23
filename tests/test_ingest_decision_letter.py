@@ -10,6 +10,8 @@ editorial content is stored in this repo.
 """
 
 import importlib.util
+import io
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -286,3 +288,125 @@ def test_cli_end_to_end_segment_dedupe_coverage(tmp_path):
     )
     assert cov.returncode == 1, "unmapped ledger is not covered"
     assert '"orphan_tickets"' in cov.stdout
+
+
+def test_second_archive_preserves_provenance(tmp_path):
+    source = tmp_path / "review.txt"
+    source.write_text("first intake")
+    into = tmp_path / "release"
+    first = il.archive([source], into)["entries"][0]
+    source.write_text("second intake")
+    manifest = il.archive([source], into)
+    assert manifest["entries"][0] == first
+    assert len(manifest["entries"]) == 2
+    assert Path(first["archived"]).read_text() == "first intake"
+    assert json.loads((into / "manifest.json").read_text()) == manifest
+
+
+def test_dispositions_roundtrip_and_separate_resolution(tmp_path):
+    records = [il._normalize_record({
+        "id": f"R1-{i}", "disposition": disposition, "reason": "author rationale",
+        "resolution": "resolved" if disposition == "already_addressed" else "open",
+        "evidence": ["manuscript.tex:42"] if disposition == "already_addressed" else [],
+        "round": "r2",
+    }) for i, disposition in enumerate(
+        ["accepted", "rejected", "deferred", "already_addressed"])]
+    stream = io.StringIO()
+    il.write_ledger(records, stream)
+    ledger = tmp_path / "ledger.jsonl"
+    ledger.write_text(stream.getvalue())
+    assert il.read_ledger(ledger) == records
+    report = il.coverage(il.read_ledger(ledger), set(), round_id="r2")
+    assert il.coverage_ok(report)
+    assert report["unresolved_remarks"] == ["R1-0", "R1-1", "R1-2"]
+
+
+@pytest.mark.parametrize("fields", [
+    {"disposition": "rejected"}, {"disposition": "deferred"},
+    {"disposition": "invented"}, {"disposition": "already_addressed"},
+    {"disposition": "accepted", "resolution": "resolved"},
+])
+def test_invalid_decision_or_unproved_resolution_blocks_coverage(fields):
+    report = il.coverage([il._normalize_record({"id": "R1-01", **fields})], set())
+    assert not il.coverage_ok(report)
+    assert report["invalid_records"] == ["R1-01"]
+
+
+def test_round_universe_separate_from_project_ticket_existence():
+    records = [il._normalize_record({"id": "R1-01", "round": "r1", "tickets": ["0301"]}),
+               il._normalize_record({"id": "R1-01", "round": "r2", "tickets": ["0302"]})]
+    report = il.coverage(records, {"0302"}, existing_tickets={"0301", "0302", "0399"},
+                         round_id="r2")
+    assert il.coverage_ok(report)
+    assert report["remark_count"] == 1
+    report = il.coverage(records, {"0309"}, existing_tickets={"0301", "0302"}, round_id="r2")
+    assert report["unknown_ticket_refs"] == ["0309"]
+    assert report["out_of_round_ticket_refs"] == ["0302"]
+
+
+def test_round_segmentation_and_dedupe_keep_sources_and_ids():
+    first = il.segment("1. Same concern", "R1", "first.txt", round_id="r1")
+    second = il.segment("1. Same concern", "R1", "second.txt", round_id="r2")
+    out, summary = il.dedupe(first + second)
+    assert summary["remarks"] == 2
+    assert [r["id"] for r in out] == ["r1:R1-01", "r2:R1-01"]
+    assert [r["source"] for r in out] == ["first.txt:1", "second.txt:1"]
+
+
+@pytest.mark.integration
+def test_cli_round_universe_and_existence_index(tmp_path):
+    tickets = tmp_path / "tickets"
+    tickets.mkdir()
+    (tickets / "0301-round.erg").write_text("x")
+    (tickets / "0399-unrelated.erg").write_text("x")
+    ledger = tmp_path / "ledger.jsonl"
+    ledger.write_text(json.dumps({"id": "r1:R1-01", "round": "r1", "tickets": ["0301"]}))
+    result = subprocess.run([
+        sys.executable, str(SCRIPT), "coverage", str(ledger), "--round", "r1",
+        "--tickets", "0301", "--tickets-dir", str(tickets),
+    ], capture_output=True, text=True, env=child_env())
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert json.loads(result.stdout)["orphan_tickets"] == []
+
+
+@pytest.mark.integration
+def test_cli_segment_retains_archived_path(tmp_path):
+    source = tmp_path / "archived-review.txt"
+    source.write_text("1. Concern")
+    result = subprocess.run([
+        sys.executable, str(SCRIPT), "segment", str(source), "--reviewer", "R1", "--round", "r2",
+    ], capture_output=True, text=True, check=True, env=child_env())
+    record = json.loads(result.stdout)
+    assert record["source"] == f"{source}:1"
+    assert record["round"] == "r2"
+    assert record["id"] == "r2:R1-01"
+
+
+@pytest.mark.parametrize("parent_round", ["r1", "r2"])
+def test_atomic_parent_must_be_distinct_and_in_same_round(parent_round):
+    parent = il._normalize_record({"id": "parent", "round": parent_round,
+                                   "disposition": "accepted"})
+    child = il._normalize_record({"id": "child", "round": "r2", "atomic_of": "parent"})
+    records = [parent, child]
+    out, summary = il.dedupe(records)
+    assert out[1]["atomic_of"] == "parent", "retain malformed reference for repair"
+    if parent_round == "r2":
+        assert summary["unknown_atomic_refs"] == []
+        assert il.coverage_ok(il.coverage(records, set(), round_id="r2"))
+    else:
+        assert summary["unknown_atomic_refs"] == ["child"]
+        for ledger in (records, out):
+            report = il.coverage(ledger, set(), round_id="r2")
+            assert report["remark_count"] == 1
+            assert report["uncovered_remarks"] == ["child"]
+            assert report["invalid_records"] == ["child"]
+            assert not il.coverage_ok(report)
+
+
+@pytest.mark.parametrize("parent_ref", ["missing", "child"])
+def test_coverage_rejects_dangling_or_self_atomic_without_dedupe(parent_ref):
+    child = il._normalize_record({"id": "child", "round": "r2", "atomic_of": parent_ref})
+    report = il.coverage([child], set(), round_id="r2")
+    assert report["remark_count"] == 1
+    assert report["invalid_records"] == ["child"]
+    assert not il.coverage_ok(report)
