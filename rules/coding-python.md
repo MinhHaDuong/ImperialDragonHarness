@@ -1,7 +1,7 @@
 ---
 paths:
   - "**/*.py"
-last-reviewed: 2026-08-14
+last-reviewed: 2026-10-22
 ---
 # Coding Rules
 
@@ -22,9 +22,21 @@ Script structure:
 - **No `sys.path` hacks.** Use proper packaging (`pyproject.toml`).
 - **Logging, not print.** Use `logging` module.
 
-Dependencies: **always `uv sync`** (never pip). `uv run python scripts/...` to execute.
+Environment principles, which settle any case the rules below do not cover:
+1. Do not pollute the system: what the GitHub Ubuntu runner image lacks is exotic.
+2. uv, not pip.
+3. Commit to Linux, with no gratuitous incompatibility.
+4. The uv cache is machine-level state: never synced, never snapshotted.
 
-**Keep the uv cache and the project env linkable.** uv hardlinks wheels from its cache (`UV_CACHE_DIR`) into `.venv`. Hardlinks cannot cross filesystems, nor btrfs subvolumes: when cache and env sit on different ones uv falls back to copying the whole dependency closure (≈1.8 GB with torch) into every env — slow enough to make worktree creation time out and fail. Either keep the cache and the projects on the same subvolume, or set `UV_LINK_MODE=clone`: a reflink works across subvolumes of one btrfs filesystem (verified on padme, 2026-10-09: reflink OK, hardlink fails with cross-device). Never `UV_LINK_MODE=copy`. Across genuinely different filesystems neither works: put the env beside the cache and symlink `.venv` to it (symlinks cross filesystems). Pre-create the target first: a dangling `.venv` symlink makes `uv run` error.
+Environment rules: **uv, never pip.**
+- Dependencies live in `pyproject.toml` with `uv.lock` committed (`--frozen` fails without it); no hand-kept `requirements.txt` (a file generated from the lock, for a deliverable that needs one, is fine). A repo that is not a package sets `[tool.uv] package = false`. `pytest`, `pytest-xdist` and a pinned `ruff` go in the `dev` group. `uv sync` builds the env, `uv run` executes (`uv run --script` for a script with inline metadata). A legacy repo (`requirements.txt`, hand-made venv) migrates when next touched.
+- A Python tool absent from the `ubuntu-latest` runner readme is exotic and comes from the lock (or a script's inline metadata), never from the system: it ships no `uv`, `ruff` or `pytest` (actions/runner-images, `Ubuntu2404-Readme.md`, checked 2026-10-22; recheck when `ubuntu-latest` moves to 26.04). uv is the one exception; CI installs it with `astral-sh/setup-uv`, then `uv sync --locked`.
+- Makefile: one `RUN` prefix at the top, prefixing the actual command on each recipe line that runs Python (`$(RUN) python3 -m pytest`, `$(RUN) ./scripts/x.py`), no `PYTHON` variable (copy the harness Makefile's definition: bare inside an activated env, `uv run --frozen` otherwise; bare when uv is absent is a degraded mode where the locked tools must already be on PATH, not a second way to get them). Where `RUN` expands to `uv run`, it needs a synced env to beat the PATH: with `UV_NO_SYNC` set and no synced `.venv` it runs the ambient `ruff` or `pytest`, so a sandbox runs `uv sync` once first (`uv sync` itself ignores `UV_NO_SYNC`; tested on uv 0.11.28). A build that only writes LaTeX or Quarto from handoff artifacts needs no `RUN` (see Build).
+- Linux is the target. Use `pathlib`, `/` separators and `env` shebangs; a Linux-only tool needs a concrete need that no portable tool meets.
+
+The cache is machine-local and rebuildable from `uv.lock`: keep `UV_CACHE_DIR` and `.venv` out of any synced, snapshotted or backed-up tree by excluding them there (a symlink target included), which is host configuration, not repo content.
+
+**Keep the uv cache and the project env linkable.** uv hardlinks wheels from its cache (`UV_CACHE_DIR`) into `.venv`. Hardlinks cannot cross filesystems, nor btrfs subvolumes: when cache and env sit on different ones uv falls back to copying the whole dependency closure (≈1.8 GB with torch) into every env — slow enough to make worktree creation time out and fail. Either keep the cache and the projects on the same subvolume, or set `UV_LINK_MODE=clone`: a reflink works across subvolumes of one btrfs filesystem (verified on padme, 2026-10-09: reflink OK, hardlink fails with cross-device). Never `UV_LINK_MODE=copy`. Across genuinely different filesystems neither works: put the env beside the cache and symlink `.venv` to it (symlinks cross filesystems); that env falls under the same sync and snapshot exclusion as the cache. Pre-create the target first: a dangling `.venv` symlink makes `uv run` error.
 
 ## Testing
 
