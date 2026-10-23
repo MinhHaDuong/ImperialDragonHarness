@@ -44,3 +44,12 @@ make check complet du candidat `b9c27de5` : **2 179 réussis, 4 ignorés**, 33,5
 Coarse-ink 1.9.6 a été examiné à la demande de l’auteur : décision de ne pas remplacer ce moteur par un pipeline aux garanties différentes, aucune dépendance ajoutée. Voir coarse-ink.md. Un essai comparatif éventuel reste distinct de la production.
 
 Prochaine utilisation : un projet d’article de doudou choisi avec une révision et un périmètre de diffusion explicites. Le runner hébergé refuse le contenu non autorisé ; une perspective ou un backend non disponible reste déclaré indisponible. La qualité scientifique et l’amélioration du manuscrit ne sont pas établies par cet essai opérationnel.
+
+
+## Controller fixes after additional author-authorized pilots
+
+Commit `ef82a98deb3d2e51b8d94839eeca649a5cc40edb` removes duplicated criticism wording from newly generated responses: the runner derives the canonical ledger text from the original Markdown finding block. Valid legacy payloads remain readable. Native saved-PDF evidence now requires the exact matching fetch record, a later successful page Read in the same session, normalized confined cache path, byte-size receipt and preserved PDF/page hashes. Sources remain fail-closed; this is not cryptographic attestation at retrieval time.
+
+Regression cases reproduced the two failures before correction. Final verification: **65 focused tests passed; make check: 2199 passed, 4 skipped (35.02s)**. Full tests needed local socket permissions outside the filesystem sandbox. Astra (gpt-6-astra/high observed) and Fable (claude-fable-5-1 observed; high requested) both return CLEAR on the final bounded deltas, with limitations preserved in reviews/. These reviews do not replace gaze/verify-gate on the changed head. Prior merge-gate records are stale for this revision; PR remains draft.
+
+Project pilot manuscripts, scientific reviews, comparisons and raw traces are saved exclusively in their project repository, not this harness. No such content is included in this fix or its technical review records.
