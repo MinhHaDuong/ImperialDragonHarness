@@ -32,7 +32,7 @@ Read all 16 groups listed in `.panel/1633/groups.md`, including base versions of
 Ran the focused touched behavior suites:
 
 ```text
-/home/haduong/.agents/.venv/bin/python -m pytest -q \
+$IDH_ROOT/.venv/bin/python -m pytest -q \
   tests/test_manuscript_review.py tests/test_ingest_decision_letter.py \
   tests/test_bib_merge.py tests/test_validate_refs.py \
   tests/test_track_changes_pdf.py tests/test_keystore.py
@@ -76,7 +76,9 @@ semantic_review:
   route: native codex gpt-6-luna/medium
   launch_evidence: collaboration.spawn_agent /root/gaze1633_semantic; session_meta
     + latest turn_context
-  completion_evidence: /home/haduong/.agents/.claude/worktrees/review-1633/.panel/1633/adherence-semantic.md
+  completion_evidence: $REVIEW_TREE/.panel/1633/adherence-semantic.md
 mechanical_failures: []
 semantic_findings: []
 untested_rules: []
+
+Controller portability normalization: two absolute checkout prefixes in the raw report are rendered as $IDH_ROOT / $REVIEW_TREE; all findings and test outcomes remain unchanged. The original raw report is retained in the session scratch archive.
