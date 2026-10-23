@@ -30,7 +30,7 @@ Principles which settle any case the rules below do not cover:
 Environment rules: **uv, never pip.**
 - Dependencies live in `pyproject.toml` with `uv.lock` committed (`--frozen` fails without it); no hand-kept `requirements.txt` (a file generated from the lock, for a deliverable that needs one, is fine). A repo that is not a package sets `[tool.uv] package = false`. `pytest`, `pytest-xdist` and a pinned `ruff` go in the `dev` group. `uv sync` builds the env, `uv run` executes (`uv run --script` for a script with inline metadata). A legacy repo (`requirements.txt`, hand-made venv) migrates when next touched.
 - A Python tool absent from the `ubuntu-latest` runner readme is exotic and comes from the lock (or a script's inline metadata), never from the system: it ships no `uv`, `ruff` or `pytest` (actions/runner-images, `Ubuntu2404-Readme.md`, checked 2026-10-22; recheck when `ubuntu-latest` moves to 26.04). uv is the one exception; CI installs it with `astral-sh/setup-uv`, then `uv sync --locked`.
-- Makefile: one `RUN` prefix at the top, prefixing the actual command on each recipe line that runs Python (`$(RUN) python3 -m pytest`, `$(RUN) ./scripts/x.py`), no `PYTHON` variable (copy the harness Makefile's definition: bare inside an activated env, `uv run --frozen` otherwise; bare when uv is absent is a degraded mode where the locked tools must already be on PATH, not a second way to get them). Where `RUN` expands to `uv run`, it needs a synced env to beat the PATH: with `UV_NO_SYNC` set and no synced `.venv` it runs the ambient `ruff` or `pytest`, so a sandbox runs `uv sync` once first (`uv sync` itself ignores `UV_NO_SYNC`; tested on uv 0.11.28). A build that only writes LaTeX or Quarto from handoff artifacts needs no `RUN` (see Build).
+- Makefile: one `RUN` prefix at the top, prefixing the actual command on each recipe line that runs Python (`$(RUN) python3 -m pytest`, `$(RUN) ./scripts/x.py`), no `PYTHON` variable (copy the harness Makefile's definition: bare inside an activated env, `uv run --frozen` otherwise; bare when uv is absent is a degraded mode where the locked tools must already be on PATH, not a second way to get them). Where `RUN` expands to `uv run`, it needs a synced env to beat the PATH: with `UV_NO_SYNC` set and no synced `.venv` it runs the ambient `ruff` or `pytest`, so a sandbox runs `uv sync` once first (`uv sync` itself ignores `UV_NO_SYNC`; tested on uv 0.11.28). A build that only writes LaTeX or Quarto from handoff artifacts needs no `RUN` (see [make.md](./make.md)).
 - Linux is the target. Use `pathlib`, `/` separators and `env` shebangs; a Linux-only tool needs a concrete need that no portable tool meets.
 
 The cache is machine-local and rebuildable from `uv.lock`: keep `UV_CACHE_DIR` and `.venv` out of any synced, snapshotted or backed-up tree by excluding them there (a symlink target included), which is host configuration, not repo content.
@@ -58,16 +58,6 @@ def test_ruff():
     assert result.returncode == 0, result.stdout.decode()
 ```
 
-A project that maintains a bibliography (manuscript, report, docs) should also have a **cited-works-availability** test:
-assert every work cited in the prose resolves to a locally-stored fulltext (a `file=`/attachment whose PDF
-sits in the reference folder) or an explicit allowlist of the genuinely
-unattainable. This turns the scholarly-integrity norm "cite only what you keep
-locally" (`prose/_all.md`) into a mechanical gate. Keep the allowlist
-source-agnostic about *how* works are acquired — that is the author's call — and
-add a redundant-entry check so a work is removed from the list once its fulltext
-lands. Reference implementation: `tests/test_cited_works_available.py` +
-`config/no-fulltext-allowlist.txt` in climate-finance-het (ticket 0189).
-
 Classify each test by **cost**, not by the mechanism it happens to use:
 
 | Tier | Marker | Belongs here | Gate |
@@ -88,15 +78,6 @@ When writing new tests:
 Two patterns keep the fast tier honest — generalizable, adopt per project:
 - **Collection-time auto-mark** — a conftest hook marks any test whose module imports a heavy dependency `slow`, so the per-worker import tax never lands in the fast loop.
 - **Duration ratchet** — an `adherence` test fails when a fast-path test exceeds a recorded budget, catching heavy *compute* that no heavy *import* reveals.
-
-## Build (Make)
-
-- **One output per rule.** Each target should produce a known file so timestamps work.
-- **The target must be the exact path the recipe writes.** `make` checks the recipe's *exit code*, not whether the file appeared — so a tool that writes elsewhere leaves the rule "succeeding" (exit 0) with `$@` absent, silently breaking every downstream consumer and forcing an eternal rebuild. The trap bites when a tool ignores the output path you configured: Quarto's single-file `quarto render <f>.qmd` ignores the project `output-dir` and writes *next to the source*. Name the target where the tool actually writes, or `mv … $@` in the recipe (climate-finance-het deliverables/ reorg, 2026-07-10 — a Makefile-text test can't catch this; only a real build does).
-- **Sentinel stamps for dynamic outputs.** Use a stamp file when a script produces data-dependent filenames.
-- **No `.PHONY` for real work.** Use `.PHONY` only for aliases.
-- **No hand-curated data in the pipeline.** Every CSV/tex file referenced by slides or report must have a Makefile target that generates it from `measurements.jsonl` or another tracked source.
-- **Split the build by workpackage.** Analysis (Python/R, data access) and writing (LaTeX, Quarto) workpackages live in separate Makefiles. A writing-side build must produce the manuscript from handoff artifacts alone — no `uv run`, no data fetch. Enables clean-room builds and enforces the artifact discipline in [prose/workpackages.md](./prose/workpackages.md).
 
 ## Data pitfalls
 
