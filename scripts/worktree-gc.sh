@@ -136,9 +136,13 @@ flush() {
     # last on-disk copy of purged T2 memory; the lock blocked every GC
     # pass). A lock with no recorded pid is an opaque in-use marker: skip.
     if [ "$locked_flag" -eq 1 ]; then
+        # Exactly one `(pid N` with N of at most 7 digits (Linux pid_max is
+        # 4194304); a second group or an out-of-range number reads as no
+        # recorded pid, never as a dead one.
         local lock_pid=""
-        if [[ "$lock_reason" =~ \(pid\ ([0-9]+) ]]; then
-            lock_pid="${BASH_REMATCH[1]}"
+        if [[ "$lock_reason" =~ \(pid\ ([0-9]{1,7})([^0-9]|$) ]] &&
+           [[ "${lock_reason#*"(pid "}" != *"(pid "* ]]; then
+            lock_pid=$((10#${BASH_REMATCH[1]}))
         fi
         # Pid 1 names no owner either: `$PPID` reads 1 inside a pid
         # namespace (a sandboxed runtime), whose session may still be live

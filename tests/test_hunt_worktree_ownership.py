@@ -53,9 +53,9 @@ def test_lock_reason_matches_gc_dead_pid_rail():
     reclaims the tree, even when the owner is long dead.
     """
     gc = (REPO / "scripts" / "worktree-gc.sh").read_text()
-    m = re.search(r'=~ (\\\(pid\\ \(\[0-9\]\+\))', gc)
+    m = re.search(r'=~ \\\(pid\\ \(\[0-9\]\{1,7\}\)', gc)
     assert m, "could not locate worktree-gc's lock-pid regex"
-    regex = re.compile(r"\(pid ([0-9]+)")
+    regex = re.compile(r"\(pid ([0-9]{1,7})([^0-9]|$)")
     step3 = step3_text()
     r = re.search(r"worktree lock\s+--reason\s+\"([^\"]*)\"", step3)
     assert r, "recipe lock must carry --reason \"...\""

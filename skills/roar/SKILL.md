@@ -192,7 +192,9 @@ base, once a passing gate record covers the bundle's candidate.
 
     No-forge repo: the exit check compares against the local default branch.
     Skip this step if not in a worktree. A worktree a subagent created and
-    locked itself is left to `worktree-gc` once its branch is merged.
+    locked with its live pid is left to `worktree-gc` once its branch is
+    merged and that pid has exited; a lock naming no owner (no pid, or pid 1)
+    is removed here or by hand.
 10. **Clean only the completed task** — roar cleans only the completed task's
     explicitly identified closed-ticket/merged-PR branches and owned worktrees.
     Other branches and worktrees remain, even when merged. Repository-wide

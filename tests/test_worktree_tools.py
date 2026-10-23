@@ -915,6 +915,28 @@ def test_gc_keeps_pid_1_locked_worktree(origin):
     assert "skip agent-pid1-lock (locked, pid 1 names no owner" in res.stdout
     assert "removed agent-pid1-lock" not in res.stdout
     assert str(wt) in _worktree_paths(primary)
+    porcelain = git(primary, "worktree", "list", "--porcelain").stdout
+    assert f"worktree {wt}\n" in porcelain
+    assert "locked hunt t2204 (pid 1;" in porcelain
+
+
+@pytest.mark.parametrize("reason", [
+    "claude a (pid 4242) then claude b (pid 99999)",
+    "claude agent (pid 99999999999999999999)",
+])
+def test_gc_keeps_lock_with_ambiguous_or_out_of_range_pid(origin, reason):
+    """Two `(pid` groups or a pid past pid_max name no owner the GC can
+    check: read as no recorded pid and kept, never unlocked as dead."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-odd-pid", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", reason)
+    make_branch_gone(remote, primary, "agent-odd-pid")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-odd-pid (locked — treated as in use)" in res.stdout
+    assert "integer expected" not in res.stderr
+    assert str(wt) in _worktree_paths(primary)
 
 
 def test_gc_skips_removal_when_live_cwd_scan_reads_nothing(origin):
