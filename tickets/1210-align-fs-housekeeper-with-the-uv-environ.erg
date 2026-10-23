@@ -1,0 +1,23 @@
+%erg 0.1
+Title: Align fs-housekeeper with the uv environment practice
+Created: 2026-10-23
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-23T14:07Z Minh Ha-Duong created
+
+--- body ---
+## Context
+~/CNRS/code/fs-housekeeper is a git repo on branch main, clean, with an AGENTS.md and no remote. It already has pyproject.toml, uv.lock and a .venv. Its Makefile picks an interpreter with a `PYTHON :=` shell test (.venv/bin/python, else python3) and one recipe uses `uv run --isolated --with black black`; its docs say `pip install -e`. Observed 2026-10-23.
+
+Practice to reach: `rules/coding-python.md` (Environment principles and rules), tracked by 1206.
+
+## Constraints
+Closest to aligned: replace the PYTHON detection by the RUN prefix, move black into the dev group of the lock, and rewrite the pip instructions in the docs.
+
+## Exit criteria
+- [ ] pyproject.toml and a committed uv.lock describe the dependencies; no hand-kept requirements.txt
+- [ ] the Makefile has no PYTHON variable; recipes that run Python tools go through the `RUN` prefix
+- [ ] no `pip install` in the Makefile or README
+- [ ] the repo's own tests or smoke command pass from a bare shell, output quoted in the PR or log
+- [ ] the alignment check of 1206 prints `ok` in ~/CNRS/code/fs-housekeeper

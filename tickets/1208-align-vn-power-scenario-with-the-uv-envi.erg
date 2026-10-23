@@ -1,0 +1,23 @@
+%erg 0.1
+Title: Align VN-Power-Scenario with the uv environment practice
+Created: 2026-10-23
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-23T14:07Z Minh Ha-Duong created
+
+--- body ---
+## Context
+~/CNRS/code/VN-Power-Scenario is a git repo on branch master. Its only remote, named `fork`, is github.com/alice-dub/VN-Power-Scenario, a collaborator's repository. It has requirements.txt, a Makefile with `PYTHON = python3`, no pyproject.toml and no uv.lock. Observed 2026-10-23: 22 uncommitted files.
+
+Practice to reach: `rules/coding-python.md` (Environment principles and rules), tracked by 1206.
+
+## Constraints
+Do not push to the `fork` remote or open anything in the collaborator's repository without the author's go: whether the collaborator wants this change is the author's call. Work in a git worktree: the 22 uncommitted files stay untouched.
+
+## Exit criteria
+- [ ] pyproject.toml and a committed uv.lock describe the dependencies; no hand-kept requirements.txt
+- [ ] the Makefile has no PYTHON variable; recipes that run Python tools go through the `RUN` prefix
+- [ ] no `pip install` in the Makefile or README
+- [ ] the repo's own tests or smoke command pass from a bare shell, output quoted in the PR or log
+- [ ] the alignment check of 1206 prints `ok` in ~/CNRS/code/VN-Power-Scenario
