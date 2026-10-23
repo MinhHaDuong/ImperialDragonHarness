@@ -49,7 +49,17 @@ live_cwds_loaded=0
 load_live_cwds() {
     [ "$live_cwds_loaded" -eq 1 ] && return 0
     live_cwds_loaded=1
-    mapfile -d '' -t live_cwds < <(readlink -z -- /proc/[0-9]*/cwd 2>/dev/null || true)
+    # Not `readlink /proc/[0-9]*/cwd`: uutils readlink stops at the first
+    # unreadable link (/proc/1/cwd sorts first), so the batch returned no
+    # cwd at all and the live-session rail saw nothing (2026-10-23).
+    mapfile -d '' -t live_cwds < <(python3 -I -c '
+import glob, os, sys
+for link in glob.glob("/proc/[0-9]*/cwd"):
+    try:
+        sys.stdout.write(os.readlink(link) + "\0")
+    except OSError:
+        pass
+' 2>/dev/null || true)
 }
 
 path=""
