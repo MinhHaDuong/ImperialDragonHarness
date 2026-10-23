@@ -83,7 +83,7 @@ come from CLI initialization/assistant metadata; absent identity stays absent.
 Example, after routing and confirming the manuscript is public:
 
 ```bash
-python /absolute/path/to/skills/manuscript-review/manuscript_review.py \
+python3 /absolute/path/to/skills/manuscript-review/manuscript_review.py \
   --manuscript paper.pdf --annex supplement.pdf \
   --annex-inventory 'main paper and one supplement; none missing' \
   --revision '<commit-or-version>' --round round-1 \
