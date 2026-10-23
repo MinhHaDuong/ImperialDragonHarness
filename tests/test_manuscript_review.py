@@ -45,7 +45,7 @@ def review():
                 "R1-01 The central claim outruns the evidence." if h == "Key claims"
                 else "Specific assessment.") for h in mr.SECTIONS),
             "findings": [{"id": "R1-01", "text": "The central claim outruns the evidence.",
-                          "severity": "major", "uncertainty": "medium",
+                          "severity": "major", "uncertainty": "medium", "decisive_urls": [],
                           "evidence": [{"document": "main", "page": 1,
                                         "passage": "The manuscript claims X"}]}]}
 
@@ -139,6 +139,106 @@ def test_partial_reads_cannot_establish_page_coverage():
                                   '"file_path": "/run/private/main/0001.txt", "limit": 1')
     with pytest.raises(ValueError, match="coverage"):
         mr.validate_stage(raw, 0, manifest(), Path("/run"), "review")
+
+
+@pytest.mark.parametrize("case", ["empty", "extra", "unenumerated"])
+def test_markdown_criticisms_cannot_disappear_from_findings(case):
+    data = review()
+    if case == "empty":
+        data["findings"] = []
+    elif case == "extra":
+        data["review"] += "\nR1-02 Another major criticism omitted from the ledger."
+    else:
+        data["findings"] = []
+        data["review"] = data["review"].replace("R1-01 ", "")
+    with pytest.raises(ValueError, match="finding.*coverage|enumerat"):
+        mr.validate_stage(stream(data), 0, manifest(), Path("/run"), "review")
+
+
+def source_review(url="https://example.org/paper"):
+    data = review()
+    data["findings"][0]["text"] += " See " + url
+    data["review"] = data["review"].replace("The central claim outruns the evidence.",
+                                         data["findings"][0]["text"])
+    data["findings"][0]["decisive_urls"] = [url]
+    return data
+
+
+def source_check(url="https://example.org/paper"):
+    return {"finding_id": "R1-01", "factual_status": "confirmed", "severity": "major",
+            "uncertainty": "low", "reason": "Located manuscript and source passages",
+            "evidence": review()["findings"][0]["evidence"],
+            "sources": [{"url": url, "accessible": "yes", "identity": "yes", "relevant": "yes",
+                         "supports_claim": "yes", "passage": "Source passage", "locator": "p. 4"}]}
+
+
+def test_decisive_urls_require_declaration_and_actual_reader_retrieval():
+    data = source_review()
+    mr.validate_stage(stream(data), 0, manifest(), Path("/run"), "review")
+    data["findings"][0]["decisive_urls"] = []
+    with pytest.raises(ValueError, match="decisive"):
+        mr.validate_stage(stream(data), 0, manifest(), Path("/run"), "review")
+    with pytest.raises(ValueError, match="retrieval"):
+        mr.validate_stage(stream(source_review("https://unfetched.example/paper")), 0,
+                          manifest(), Path("/run"), "review")
+
+
+@pytest.mark.parametrize("case", ["empty", "unrelated", "unfetched"])
+def test_confirmed_criticism_requires_its_own_decisive_source_trace(case):
+    data, check = source_review(), source_check()
+    if case == "empty":
+        check["sources"] = []
+    elif case == "unrelated":
+        check["sources"][0]["url"] = "https://unrelated.example/paper"
+    else:
+        data = source_review("https://unfetched.example/paper")
+        check = source_check("https://unfetched.example/paper")
+    with pytest.raises(ValueError, match="decisive|fetch"):
+        mr.validate_stage(stream({"verification": [check]}), 0, manifest(), Path("/run"),
+                          "verify", data)
+
+
+def test_unavailable_decisive_source_retains_unknown_and_factual_uncertainty():
+    url = "https://unavailable.example/paper"
+    data, check = source_review(url), source_check(url)
+    check["factual_status"] = "unverifiable"
+    check["sources"][0].update(accessible="no", identity="yes", relevant="unknown",
+                               supports_claim="unknown", passage="", locator="",
+                               reason="Publisher metadata confirms identity; fulltext denied")
+    events = [json.loads(line) for line in stream({"verification": [check]}).splitlines()]
+    events[-1:-1] = [
+        {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "failed",
+            "name": "WebFetch", "input": {"url": url}}]}},
+        {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "failed",
+            "content": "Publisher access denied", "is_error": True}]}}]
+    raw = "\n".join(json.dumps(event) for event in events)
+    _, trace = mr.validate_stage(raw, 0, manifest(), Path("/run"), "verify", data)
+    assert trace["failed_tools"][0]["input"]["url"] == url
+    check["factual_status"] = "confirmed"
+    events[-1]["result"] = json.dumps({"verification": [check]})
+    with pytest.raises(ValueError, match="unverifiable"):
+        mr.validate_stage("\n".join(json.dumps(event) for event in events), 0,
+                          manifest(), Path("/run"), "verify", data)
+
+
+@pytest.mark.parametrize("manuscript_only", [False, True])
+def test_verifier_retrieves_decisive_sources_without_gratuitous_search(manuscript_only):
+    data, check = source_review(), source_check()
+    omitted = {"2"}  # Search is unnecessary when decisive URLs are already known.
+    if manuscript_only:
+        data = review()
+        check["sources"] = []
+        omitted.add("3")  # Manuscript-only finding needs no external retrieval.
+    events = [json.loads(line) for line in stream({"verification": [check]}).splitlines()]
+    events = [event for event in events if not any(
+        block.get("id", block.get("tool_use_id")) in omitted
+        for block in event.get("message", {}).get("content", []))]
+    raw = "\n".join(json.dumps(event) for event in events)
+    mr.validate_stage(raw, 0, manifest(), Path("/run"), "verify", data)
+    events[-1]["result"] = json.dumps(data)
+    with pytest.raises(ValueError, match="search and fetch"):
+        mr.validate_stage("\n".join(json.dumps(event) for event in events), 0,
+                          manifest(), Path("/run"), "review")
 
 
 def tiny_pdf(path):

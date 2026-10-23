@@ -38,18 +38,28 @@ Choose the model of each launched worker per launch, from the `route` skill grid
    of King–Worthington Appendix C. The runner launches one complete reviewer
    with reading and retrieval capabilities and then one bounded verifier.
    Native tool call/result events establish actual use; a claim that research
-   occurred is insufficient. Both stages must read all text and images and
-   search/fetch sources. Failed execution, missing terminal results, truncation,
+   occurred is insufficient. Both stages must read all text and images. The reader
+   must search and fetch; the verifier retrieves each declared decisive source and
+   searches when needed to locate evidence. Manuscript-only findings require no
+   external retrieval during verification. Failed execution, missing terminal results, truncation,
    missing page coverage or missing major-finding evidence leave the run
    incomplete and return nonzero. This checks execution, not scientific truth.
+   Markdown finding IDs and structured findings must cover each other; Key claims
+   enumerates the major findings, or states exactly `No major findings.`. Each
+   finding declares `decisive_urls` (empty only for manuscript-only criticism).
+   Those URLs require observed retrieval attempts in the reader trace and matching
+   verification sources for major findings; an unrelated fetch cannot substitute.
 4. Inspect `status.json`, original `review.md`, `review.json`, `verify.json`,
    source traces and `ledger.jsonl`. Keep the review unchanged, show factual
    corrections alongside it, and preserve scientific disagreement. Each major
    finding has located manuscript evidence plus distinct factuality, severity
    and uncertainty judgments; each decisive external source has separate
    accessibility, identity, relevance and claim-support checks and a retrieved
-   passage. Unavailable evidence stays unknown. No scores, masks, artificial
+   passage. Unavailable evidence needs an observed attempt and explicit reason;
+   support stays unknown and the affected finding remains unverifiable. No scores, masks, artificial
    contradictions or comparative experiments belong in this production path.
+   Passage matching checks returned fetch-tool text, which may be processed by a
+   model; it does not establish a match against the original source bytes.
 5. Use the **existing** ingest-decision-letter ledger for author decisions and
    coverage. Exported rows carry `round`, `disposition: null`, `reason: ""`,
    `resolution: "open"`, and `evidence`; do not invent decisions or close work.
