@@ -14,9 +14,11 @@ Exercises:
                                           draft (ticket 0174).
 """
 
+import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -902,8 +904,9 @@ def test_gc_unlocks_and_removes_dead_pid_locked_worktree(origin):
 def test_gc_keeps_pid_1_locked_worktree(origin):
     """A lock recording pid 1 names no owner: inside a pid namespace (a
     sandboxed runtime) `$PPID` reads 1, and that session may still be live
-    while the live-cwd rail cannot see it. The GC skips it like a pid-less
-    lock, even with the branch gone and the tree clean."""
+    while the live-cwd rail cannot see it. While its tree was active within
+    the idle threshold, the GC keeps it, even with the branch gone and the
+    tree clean."""
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-pid1-lock", dirty=False)
     git(primary, "worktree", "lock", str(wt), "--reason",
@@ -912,7 +915,7 @@ def test_gc_keeps_pid_1_locked_worktree(origin):
 
     res = _gc(primary)
     assert res.returncode == 0
-    assert "skip agent-pid1-lock (locked, pid 1 names no owner" in res.stdout
+    assert "skip agent-pid1-lock (locked, no visible owner, idle 0h < 72h" in res.stdout
     assert "removed agent-pid1-lock" not in res.stdout
     assert str(wt) in _worktree_paths(primary)
     porcelain = git(primary, "worktree", "list", "--porcelain").stdout
@@ -965,6 +968,60 @@ def test_gc_skips_removal_when_live_cwd_scan_reads_nothing(origin):
     res = _gc(primary)
     assert res.returncode == 0
     assert "skip agent-blind (live-cwd scan read nothing" in res.stderr
+    assert str(wt) in _worktree_paths(primary)
+
+
+def _age_worktree_metadata(wt, hours):
+    """Backdate the git metadata `worktree-gc` reads for idleness."""
+    gitdir = Path(git(wt, "rev-parse", "--absolute-git-dir").stdout.strip())
+    then = time.time() - hours * 3600
+    for name in ("HEAD", "index", "logs/HEAD", "locked"):
+        f = gitdir / name
+        if f.exists():
+            os.utime(f, (then, then))
+
+
+@pytest.mark.parametrize("reason", [
+    "hunt t2204 (pid 1; observed tool-parent runtime)",
+    "hunt t2204 (owner pid not visible)",
+])
+def test_gc_reclaims_idle_ownerless_harness_lock(origin, reason):
+    """A harness lock naming no owner is reclaimed once its tree has sat idle
+    past the threshold (72 h by default): the remaining rails decide, so a
+    sandboxed session that died without /roar leaves nothing to clean by hand."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-idle", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", reason)
+    make_branch_gone(remote, primary, "agent-ownerless-idle")
+    _age_worktree_metadata(wt, 100)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "unlocked agent-ownerless-idle (lock no visible owner, idle 100h" in res.stdout
+    assert "removed agent-ownerless-idle" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
+
+
+@pytest.mark.parametrize("reason", [
+    "keep: author review",
+    "hunt t1 (pid 1) and (pid 1)",
+    "hunt t1 (owner pid not visible) (pid)",
+    "claude agent (pid 0)",
+])
+def test_gc_keeps_idle_lock_that_is_not_a_harness_ownerless_shape(origin, reason):
+    """Only `(pid 1` alone or `(owner pid not visible)` alone is reclaimed by
+    age; a hand-made, ambiguous or pid-0 lock stays an opaque in-use marker,
+    however long the tree has been idle."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-opaque-lock", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", reason)
+    make_branch_gone(remote, primary, "agent-opaque-lock")
+    _age_worktree_metadata(wt, 1000)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-opaque-lock (locked" in res.stdout
+    assert "removed agent-opaque-lock" not in res.stdout
     assert str(wt) in _worktree_paths(primary)
 
 

@@ -48,7 +48,7 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
      Exit 0 means the branch landed on main: ancestry (`git merge-base --is-ancestor`) or, as an equal second signal, the merge request number from the ticket's `Closed:` header appearing as `(#N)` in a subject on main. Emit one fix-now bullet per matching branch: `Delete local branch \`<branch>\` (closed ticket <NNNN>, merged into main)`.
      Note: the merge-request-subject signal stays because ancestry misses squash merges in the past, which left no ancestry; the probe tries both.
    - **Closed-ticket branches** where the merge probe exits 1 (not merged) or 2 (`could-not-determine`: the branch maps to no ticket or the ticket records no merge request number, or `tickets/` or erg is missing): flag as cleanup candidate for manual review, not fix-now. Exit 2 is never a deletion.
-5. **Worktrees** — from `worktrees`. Flag entries with `locked: true` whose lock pid is no longer running, and those whose lock has no checkable pid (none, pid 1, several, or past pid_max): `worktree-gc` never reclaims them, so they are manual-removal candidates once their session is over. For each worktree, also run:
+5. **Worktrees** — from `worktrees`. Flag entries with `locked: true` whose lock pid is no longer running, and those whose lock has no checkable pid (none, pid 1, several, or past pid_max): `worktree-gc` reclaims the harness shapes (`(pid 1`, `(owner pid not visible)`) after 72 h idle and never the others, which are manual-removal candidates once their session is over. For each worktree, also run:
    ```bash
    git rev-list --count <worktree-head>..<main-head>
    ```
