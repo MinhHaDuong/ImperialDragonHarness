@@ -14,8 +14,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 
 Take a journal's **Revise-and-Resubmit** decision letter plus each reviewer's
 comments, archive them where they will not be lost, parse them into a structured
-**remark ledger**, and produce a **coverage check** that maps every remark to the
-ticket(s) addressing it — flagging uncovered remarks and orphan tickets. This is
+**remark ledger**, and produce a **coverage check** that records each author decision, any
+ticket(s) addressing it, and evidence of resolution. This is
 the *inverse* of `external-peer-review` / the `/gaze` prose panel: those review **our**
 manuscript; this ingests **the journal's** review of it.
 
@@ -52,18 +52,20 @@ whole search. The archive is the single source of truth; never send the author b
        --into <paper-repo>/release/<date>/
    ```
    PDFs are copied verbatim and a `.txt` sidecar of their text is written beside
-   them, so the archive stays greppable. A `manifest.json` records what landed.
+   them, so the archive stays greppable. A cumulative `manifest.json` preserves entries from earlier intakes;
+   repeated basenames get distinct archive paths. Segment the archived copies
+   (PDF text sidecars), so ledger sources remain tied to the original intake.
    Commit the archived text in the paper repo (it is durable tracked state).
 
 3. **Segment each reviewer into a candidate ledger.** Run `segment` once per
    reviewer — it splits the comments into candidate remarks with **stable ids**
-   (`R1-01`, `R1-02`, …) and source line locations. Re-running on the same input
+   (`r1:R1-01`, `r1:R1-02`, … with `--round r1`) and source line locations. Re-running on the same input
    yields the same ids, so the ledger is a stable anchor.
    ```
    "$IDH_ROOT/skills/ingest-decision-letter/ingest_letter.py" segment \
-       reviewer1.txt --reviewer R1 >  ledger.jsonl
+       <release-dir>/reviewer1.txt --reviewer R1 --round r1 > ledger.jsonl
    "$IDH_ROOT/skills/ingest-decision-letter/ingest_letter.py" segment \
-       reviewer2.txt --reviewer R2 >> ledger.jsonl
+       <release-dir>/reviewer2.txt --reviewer R2 --round r1 >> ledger.jsonl
    ```
    The segmenter is a deterministic first pass (it splits on enumeration markers,
    or on paragraphs when the reviewer did not number anything). **Then read the
@@ -80,40 +82,71 @@ whole search. The archive is the single source of truth; never send the author b
        ledger.jsonl > ledger.dedup.jsonl
    ```
    Distinct remarks are the records whose `atomic_of` is null; folded atomics
-   inherit their parent's coverage.
+   inherit their parent's coverage. Dedupe compares text within each round;
+   retain old records and IDs when adding a later round.
 
-5. **Create tickets, then map remarks to them.** Group the distinct remarks into
-   thematic tickets (one theme per ticket). Record the mapping **in the ledger**:
-   set each remark's `tickets` field to the list of ticket ids that address it.
-   Leave it `[]` for anything not yet ticketed — the coverage check will catch it.
+5. **Record the author's disposition.** Set `disposition` to `accepted`,
+   `rejected`, `deferred`, or `already_addressed`; obtain the author's judgment,
+   do not silently accept every objection. Set a nonempty `reason` for rejection
+   or deferral. Create thematic tickets for work that needs them and record their
+   IDs in `tickets`. A disposition represents a decision even without a ticket.
+   Set `resolution` to `resolved` only with nonempty `evidence` references to a
+   modification or supporting evidence (commit/path/line, analysis, or audit).
+   `already_addressed` requires that resolved state and evidence. A linked ticket
+   alone says nothing about resolution; evidence sufficiency still needs review.
 
-6. **Coverage check — one deterministic pass.** Cross-check the ledger against the
-   tickets that exist for this round:
+6. **Coverage check — one deterministic pass.** Supply the explicit ticket
+   universe for this round; `--tickets-dir` checks existence across the project
+   and does not add unrelated tickets to the universe:
    ```
    "$IDH_ROOT/skills/ingest-decision-letter/ingest_letter.py" coverage \
-       ledger.dedup.jsonl --tickets-dir tickets/
+       ledger.dedup.jsonl --round r1 --tickets 0301,0302 --tickets-dir tickets/
    ```
-   The report lists, and the command exits non-zero on, any of:
-   - **uncovered_remarks** — a remark no ticket addresses.
-   - **orphan_tickets** — a ticket in the universe that addresses no remark.
-   - **unknown_ticket_refs** — a ticket a remark points at that does not exist.
+   Use `--tickets ''` for a round with no tickets. The report lists, and exits 1 on,
+   `uncovered_remarks` (neither disposition nor legacy ticket mapping),
+   `invalid_records` (unknown disposition/state, missing required rationale or
+   evidence), `orphan_tickets` (unused round tickets), `unknown_ticket_refs`
+   (referenced or declared round tickets absent from the existence index),
+   `out_of_round_ticket_refs`, and `duplicate_ids`. Without `--tickets-dir`, the
+   explicit universe is also the existence index. `unresolved_remarks` is reported
+   separately and does **not** fail decision coverage. A clean coverage check is
+   therefore neither scientific approval nor proof that revision work is complete.
 
-   Iterate — add tickets, fix mappings — until the report is clean. That clean
-   pass replaces the two-or-three manual re-counts the old intake needed.
+## Ledger / consumer interface
 
-## Ledger schema
-
-One JSON object per line (JSONL):
+Reuse this JSONL ledger for journal or AI review; no second remark schema is
+needed. `read_ledger`, `write_ledger`, `dedupe`, and `coverage` preserve these fields:
 
 | Field | Meaning |
 |-------|---------|
-| `id` | stable `<reviewer>-<NN>`, document order |
+| `id` | stable `<round>:<reviewer>-<NN>` for newly segmented rounds |
+| `round` | round label, e.g. `r1`; absent legacy value becomes `""` |
 | `reviewer` | reviewer label, e.g. `R1` |
-| `category` | you assign: framing / method / data / literature / typo / … |
+| `category` | assigned framing / method / data / literature / typo / … |
 | `text` | verbatim remark text |
-| `source` | `<file>:<line>` where the remark starts |
-| `tickets` | list of ticket ids addressing this remark (`[]` = uncovered) |
-| `atomic_of` | parent remark id when this folds into another (`null` = distinct) |
+| `source` | archived source path and starting line |
+| `tickets` | list of ticket IDs addressing this remark; may be empty |
+| `atomic_of` | parent remark ID, or `null` for a distinct remark |
+| `disposition` | `accepted`, `rejected`, `deferred`, `already_addressed`, or `null` |
+| `reason` | author rationale; required for rejected/deferred |
+| `resolution` | `open` (default) or `resolved` |
+| `evidence` | list of reference strings; required for resolved/already_addressed |
+
+Example record for a justified disagreement without a fabricated ticket:
+```json
+{"id":"r1:R1-01","round":"r1","reviewer":"R1","category":"method","text":"Use method X.","source":"release/r1/reviewer1.txt:1","tickets":[],"atomic_of":null,"disposition":"rejected","reason":"X assumes independent observations; these are paired.","resolution":"resolved","evidence":["response.tex:42"]}
+```
+
+CLI consumers use `segment ... --round r1`, edit these known fields in the JSONL,
+then `coverage ... --round r1 --tickets ... [--tickets-dir ...]`. Coverage emits
+JSON on stdout and exits 0 for clean decision coverage, 1 for findings. Python
+consumers call `coverage(records, universe, existing_tickets=None, round_id=None)`
+and `coverage_ok(report)`. Old ledgers retain their IDs and ticket-based coverage;
+new fields receive empty/default values. When combining legacy rounds, assign
+`round` explicitly without renumbering existing IDs and check each round with
+`--round`. Unsupported extra fields are not retained: link external critique or
+review artifacts from `evidence` instead. Never overwrite an annotated ledger by
+re-segmenting its source.
 
 ## Notes
 
@@ -124,4 +157,5 @@ One JSON object per line (JSONL):
 - **Stable ids** make the ledger a durable anchor: re-segmenting the same source
   does not renumber remarks, so ticket references stay valid.
 - Companion skill `track-changes-pdf` (tracker 0265) closes the loop by rendering
-  a revision-marked PDF grouped by ticket; it lands separately.
+  one revision-marked PDF between two git refs. Its v1 does not group by
+  ticket; ledger evidence can reference the PDF and relevant manuscript locations.
