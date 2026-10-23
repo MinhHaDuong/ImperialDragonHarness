@@ -36,6 +36,7 @@ ImperialDragonHarness/      # reference clone: ~/.agents
 - [ROADMAP.md](ROADMAP.md) : development priorities.
 - [STATE.md](STATE.md) : current resume point.
 - [skills-catalog.md](skills-catalog.md) : for humans browsing, runtimes discover registered skills directly.
+- [Research workflow](docs/research-workflow.md) : choose the skills for literature, manuscript review, author decisions and PDF delivery.
 - [INSTALL.md](INSTALL.md) : setup, maintenance commands and runtime support.
 - [CONTRIBUTING.md](CONTRIBUTING.md) : development setup, checks and ticket workflow.
 
