@@ -33,3 +33,13 @@ Les barrières du dépôt sont conservées : tests métier puis gate complet, re
 ## Publication en attente d’autorisation
 
 Le contrôle automatique a refusé le push de la branche et la création d’une demande de fusion brouillon vers le dépôt GitHub, au motif d’une absence d’autorisation explicite pour ce contenu et cette destination. Une question précise a été transmise à l’auteur. Aucun contournement ni seconde tentative ; le travail se poursuit localement. Le refus ne concerne pas les relectures Astra/Fable explicitement demandées.
+
+## Reprise et validation finale initiale
+
+Push et demande de fusion brouillon explicitement autorisés par l’auteur ; PR1633 créée. Le refus automatique antérieur est levé par cette autorisation, pas contourné.
+
+Validation des skills sur0121b6a6 : Astra relève trois défauts mécaniques bloquants du moteur/registre et une contradiction Zotero ; Fable valide l’architecture avec limites et relève cette même contradiction et la nécessité de qualifier les passages WebFetch comme sorties potentiellement traitées. Avis et métadonnées dans reviews/. Coût CLI Fable final4,57409425USD, modèle observéclaude-fable-5-1. Les correctifs restent bornés, sans juge supplémentaire ni couche d’adaptation.
+
+Essai public1 : article King–Worthington et annexe,38pages. Lecteur exécuté,12constats produits. Vérificateur :76lectures texte/image et4WebFetch, mais pas deWebSearch. Exécution native terminée avec succès ; moteur retourne incomplete car son contrat exigeait encore recherche et récupération à chaque passe. L’essai reste inchangé, ne constitue pas un cycle achevé. Correction retenue : recherche obligatoire du lecteur ; vérificateur borné aux sources décisives, recherche lorsque nécessaire, couverture des récupérations conservée. Nouvel essai requis avec les champs corrigés ; aucune sortie simulée présentée comme preuve métier.
+
+Bibliographie1200 close sur critères fonctionnels/testés et avis sans constat restant de parsing ; intégration globale1198/1205 encore ouverte. Les logs historiques restent inchangés.

@@ -1,0 +1,23 @@
+{
+  "reviewed_head": "0121b6a61c85baaa94cad35fc2f9fa30484327ee",
+  "route": "claude -p --model fable --effort high; read-only tools",
+  "modelUsage": {
+    "claude-fable-5-1": {
+      "inputTokens": 194,
+      "outputTokens": 21190,
+      "cacheReadInputTokens": 854697,
+      "cacheCreationInputTokens": 164949,
+      "webSearchRequests": 0,
+      "costUSD": 4.57409425,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000,
+      "thinkingTokens": 12540,
+      "canonicalModel": "claude-fable-5-1",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "cost_usd": 4.57409425,
+  "effort": "high requested; not independently observed",
+  "is_merge_approval": false
+}
