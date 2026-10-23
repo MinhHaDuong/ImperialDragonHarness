@@ -2,9 +2,11 @@
 Title: Align ThinkTanksSurveyor with the uv environment practice
 Created: 2026-10-23
 Author: Minh Ha-Duong
+Closed: done 2026-10-23: ThinkTanksSurveyor is a git repo (main 8cb5d7d), uv-aligned, alignment check prints ok; no remote
 
 --- log ---
 2026-10-23T14:07Z Minh Ha-Duong created
+2026-10-23T17:11Z Minh Ha-Duong closed — done 2026-10-23: ThinkTanksSurveyor is a git repo (main 8cb5d7d), uv-aligned, alignment check prints ok; no remote
 
 --- body ---
 ## Context

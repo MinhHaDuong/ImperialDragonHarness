@@ -2,9 +2,11 @@
 Title: Align VN-Power-Scenario with the uv environment practice
 Created: 2026-10-23
 Author: Minh Ha-Duong
+Closed: dropped by the author 2026-10-23: VN-Power-Scenario left alone; draft PR 27 on its origin stays open, master check not ok, 11 regression tests need the author's decision
 
 --- log ---
 2026-10-23T14:07Z Minh Ha-Duong created
+2026-10-23T17:11Z Minh Ha-Duong closed — dropped by the author 2026-10-23: VN-Power-Scenario left alone; draft PR 27 on its origin stays open, master check not ok, 11 regression tests need the author's decision
 
 --- body ---
 ## Context
