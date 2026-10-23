@@ -24,9 +24,9 @@ flag conflicts, append new ones, report everything.
 - **Note file is read-only.** Never modify it.
 - **`--dry-run`** runs the full logic, prefixes report with
   `DRY-RUN:`, does not write.
-- **Local .bib is staging.** The canonical library is Zotero. At
-  manuscript submission, the author imports refs.bib into Zotero
-  and attaches PDFs. This skill does not automate that step.
+- **Local .bib is staging.** Zotero is the system of record from source
+  intake. Merge a citation view of already-intaken sources, reusing their
+  Zotero identities; this script does not import sources or attach PDFs.
 
 Deduplication does not check work identity against external metadata, relevance
 to the manuscript, or support for a cited claim. Complete those checks from
