@@ -31,7 +31,11 @@ Run full repo housekeeping and act on every finding.
    ps -p <N> -o pid= 2>/dev/null
    ```
 
-   If **any** locked worktree has a live PID, **stop immediately** — print:
+   A recorded pid of 1 names no owner: inside a pid namespace `$PPID` reads 1,
+   and on the host pid 1 is init, always alive. Skip that lock here; step 1.5's
+   `worktree-gc.sh` treats it as stale.
+
+   If **any** other locked worktree has a live PID, **stop immediately** — print:
 
    ```
    ⚠ Housekeeping aborted: another Claude session is active (pid <N>, branch <branch>).

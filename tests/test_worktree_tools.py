@@ -899,6 +899,24 @@ def test_gc_unlocks_and_removes_dead_pid_locked_worktree(origin):
     assert str(wt) not in _worktree_paths(primary)
 
 
+def test_gc_treats_pid_1_lock_as_stale(origin):
+    """A lock recording pid 1 names no owner: inside a pid namespace (a
+    sandboxed runtime) `$PPID` reads 1, and on the host pid 1 is init, always
+    alive. Reading it as live froze four trees and aborted every molt
+    (2026-10-23, Codex locks of 2026-10-16). The GC treats it as dead."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-pid1-lock", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason",
+        "hunt t2204 (pid 1; observed tool-parent runtime)")
+    make_branch_gone(remote, primary, "agent-pid1-lock")
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "unlocked agent-pid1-lock (lock pid 1 names no owner" in res.stdout
+    assert "removed agent-pid1-lock" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
+
+
 def test_gc_keeps_live_pid_locked_worktree(origin):
     """The pid half of the lock rail: a harness lock whose recorded pid is
     live is an active session — skipped in place, never unlocked."""

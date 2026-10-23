@@ -138,17 +138,23 @@ flush() {
             skipped_locked=$((skipped_locked + 1))
             reset; return
         fi
-        if ps -p "$lock_pid" -o pid= >/dev/null 2>&1; then
+        # Pid 1 names no owner: `$PPID` reads 1 inside a pid namespace (a
+        # sandboxed runtime), and on the host pid 1 is init, always alive.
+        # Read as live it froze trees for good (2026-10-23): treat it as dead.
+        local stale_why="dead — stale marker"
+        if [ "$lock_pid" -le 1 ]; then
+            stale_why="names no owner — stale marker"
+        elif ps -p "$lock_pid" -o pid= >/dev/null 2>&1; then
             echo "worktree-gc: skip $base (locked, pid $lock_pid live — active session)"
             skipped_locked=$((skipped_locked + 1))
             reset; return
         fi
         if ! git -C "$repo" worktree unlock "$path" 2>/dev/null; then
-            echo "worktree-gc: skip $base (lock pid $lock_pid dead, unlock failed)" >&2
+            echo "worktree-gc: skip $base (lock pid $lock_pid stale, unlock failed)" >&2
             skipped_locked=$((skipped_locked + 1))
             reset; return
         fi
-        echo "worktree-gc: unlocked $base (lock pid $lock_pid dead — stale marker)"
+        echo "worktree-gc: unlocked $base (lock pid $lock_pid $stale_why)"
     fi
     # The worktree owns its ignored .tmp/ tree. Never purge it independently:
     # inspect common exclusion, tracked content, integration ancestry, citation
