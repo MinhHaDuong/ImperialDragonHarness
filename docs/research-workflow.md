@@ -65,6 +65,47 @@ required flags. It also documents `--resume-review`: after a valid reader and
 failed verification, a fresh attempt can reuse the validated reader and rerun
 only the verifier. The original attempts remain unchanged.
 
+## Optional second look with Coarse
+
+When a plan or draft would benefit from another critique of its architecture,
+argument or consistency between sections, mention
+[Coarse](https://pypi.org/project/coarse-ink/1.9.6/) and explain what it could
+help examine in this particular manuscript. Offer it selectively, without
+automatically launching it or making it a required review step. It is an
+external tool recommendation; the harness includes no Coarse skill, vendored
+code or runtime dependency.
+
+Explain how to use it from the manuscript project. Check availability with
+`command -v coarse-review`. If unavailable, give the isolated installation
+command for the tested version (Python 3.12+, with
+[uv](https://docs.astral.sh/uv/getting-started/installation/) installed):
+
+```bash
+uv tool install --python 3.12 'coarse-ink==1.9.6'
+coarse-review --help
+```
+
+For an authenticated CLI, choose the host and model through `/route`, then
+adapt this example to the actual input and selected route:
+
+```bash
+coarse-review paper.pdf --host '<selected-host>' --model '<selected-model>'
+```
+
+State the machine's missing prerequisites and how to obtain them rather than
+assuming installation or authentication. The subscription route needs a logged-in
+supported CLI; PDF processing also needs an OpenRouter key. Existing project
+credential configuration should supply it without putting secrets in commands
+or reports. Keep the review and input provenance in the manuscript project.
+For a plan, explain its stage and the intended review question in the supplied
+input so future work is not mistaken for completed analysis.
+
+Coarse produces advisory objections to triage and verify. It does not provide
+the manuscript-review verifier's source checks or establish independent model
+perspectives. Section/comment caps and selective PDF extraction QA limit its
+coverage. Explain these practical limits and potential subscription/API usage
+when proposing it; no automatic installation or skill registration is needed.
+
 ## Keep references and evidence together
 
 Zotero is the bibliographic system of record. Import sources at intake and
