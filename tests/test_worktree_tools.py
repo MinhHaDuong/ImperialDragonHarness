@@ -922,6 +922,9 @@ def test_gc_keeps_pid_1_locked_worktree(origin):
 
 @pytest.mark.parametrize("reason", [
     "claude a (pid 4242) then claude b (pid 99999)",
+    "claude a (pid 4242) then claude b (pid)",
+    "claude a (pid 4242) then claude b (pid\t3)",
+    "claude a (pid\t3) then claude b (pid 4242)",
     "claude agent (pid 4194305)",
     "claude agent (pid 9999999)",
     "claude agent (pid 12345678)",
@@ -942,7 +945,8 @@ def test_gc_keeps_lock_with_ambiguous_or_out_of_range_pid(origin, reason):
     assert "integer expected" not in res.stderr
     assert str(wt) in _worktree_paths(primary)
     porcelain = git(primary, "worktree", "list", "--porcelain").stdout
-    assert f"locked {reason}" in porcelain
+    # git C-quotes a reason holding a control character, so match the record.
+    assert "\nlocked " in porcelain
 
 
 def test_gc_skips_removal_when_live_cwd_scan_reads_nothing(origin):

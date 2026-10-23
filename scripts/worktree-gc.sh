@@ -5,8 +5,9 @@ set -euo pipefail
 # worktree) when ALL safety rails pass: the tree is clean (no uncommitted
 # changes), its branch is upstream-gone (merged + remote-deleted), it is
 # not the worktree this script is invoked from, it is not locked (a lock
-# with no recorded pid, pid 1 or a live pid stays untouched; only a lock
-# whose pid > 1 is dead is unlocked so the rails can proceed), and no live
+# with a live pid or no checkable pid — none, pid 1, several, or past
+# pid_max — stays untouched; only a lock whose single pid > 1 is dead is
+# unlocked so the rails can proceed), and no live
 # process has its cwd inside it. If the live-cwd scan reads nothing at all
 # (no python3, no /proc), nothing is removed. The last two rails
 # exist because "branch merged + tree clean" is the NORMAL state of a live
@@ -141,7 +142,7 @@ flush() {
         # recorded pid, never as a dead one.
         local lock_pid=""
         if [[ "$lock_reason" =~ \(pid\ ([0-9]{1,7})([^0-9]|$) ]] &&
-           [[ "${lock_reason#*"(pid "}" != *"(pid "* ]]; then
+           [[ "${lock_reason#*"(pid"}" != *"(pid"* ]]; then
             lock_pid=$((10#${BASH_REMATCH[1]}))
             [ "$lock_pid" -le 4194304 ] || lock_pid=""
         fi

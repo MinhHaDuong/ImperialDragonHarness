@@ -31,8 +31,9 @@ Run full repo housekeeping and act on every finding.
    ps -p <N> -o pid= 2>/dev/null
    ```
 
-   A lock with no pid, or pid 1, names no owner: inside a pid namespace
-   `$PPID` reads 1, and on the host pid 1 is init, always alive. Do not abort
+   A lock with no checkable pid (none, pid 1, several, or past pid_max)
+   names no owner: inside a pid namespace `$PPID` reads 1, and on the host
+   pid 1 is init, always alive. Do not abort
    on it here; step 1.5's `worktree-gc.sh` leaves it in place and `/yawn`
    lists it for removal by hand once its session is known to be over.
 
