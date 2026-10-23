@@ -391,35 +391,43 @@ def test_reuse_reader_matches_saved_payload_to_raw_even_if_hash_refreshed(tmp_pa
         mr.reuse_reader(original, fresh, data)
 
 
-def tiny_pdf(path):
+def tiny_pdf(path, texts=None):
     """Synthetic one-page PDF; exercise the real page extraction/render tools."""
-    text = "BT /F1 12 Tf 72 720 Td (Synthetic manuscript claim X.) Tj ET"
+    texts = texts or ["Synthetic manuscript claim X."]
+    kids = " ".join(f"{4 + 2 * i} 0 R" for i in range(len(texts)))
     objects = ["<< /Type /Catalog /Pages 2 0 R >>",
-               "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-               "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
-               "/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
-               "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-               f"<< /Length {len(text)} >>\nstream\n{text}\nendstream"]
+               f"<< /Type /Pages /Kids [{kids}] /Count {len(texts)} >>",
+               "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+    for i, paragraph in enumerate(texts):
+        text = f"BT /F1 12 Tf 72 720 Td ({paragraph}) Tj ET"
+        objects.extend(["<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+                        f"/Resources << /Font << /F1 3 0 R >> >> /Contents {5 + 2 * i} 0 R >>",
+                        f"<< /Length {len(text)} >>\nstream\n{text}\nendstream"])
     data, offsets = "%PDF-1.4\n", []
     for number, body in enumerate(objects, 1):
         offsets.append(len(data))
         data += f"{number} 0 obj\n{body}\nendobj\n"
     start = len(data)
-    data += "xref\n0 6\n0000000000 65535 f \n"
+    data += f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n"
     data += "".join(f"{offset:010d} 00000 n \n" for offset in offsets)
-    data += f"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n{start}\n%%EOF\n"
+    data += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{start}\n%%EOF\n"
     path.write_text(data)
 
 
 @pytest.mark.integration
 @pytest.mark.parametrize("truncate_verifier", [False, True])
-def test_executable_cycle_retains_original_and_detects_truncated_verifier(tmp_path, truncate_verifier):
+@pytest.mark.parametrize("canonical_reader", [False, True])
+def test_executable_cycle_retains_original_and_detects_truncated_verifier(tmp_path, truncate_verifier, canonical_reader):
     if not all(shutil.which(tool) for tool in ("pdfinfo", "pdftotext", "pdftoppm")):
         pytest.skip("poppler tools unavailable")
     run = tmp_path / "release/2026-10-23/review/attempt-1"
     pdf = tmp_path / "paper.pdf"
     tiny_pdf(pdf)
     data = review()
+    if canonical_reader:
+        del data["findings"][0]["text"]
+        data["review"] = data["review"].replace("R1-01 The central claim outruns the evidence.",
+                                               "### R1-01\nThe central claim outruns the evidence.")
     check = {"verification": [{"finding_id": "R1-01", "factual_status": "unverifiable",
              "severity": "major", "uncertainty": "Synthetic test only", "reason": "Test fixture",
              "evidence": [{"document": "main", "page": 1, "passage": "Synthetic claim"}],
@@ -483,3 +491,117 @@ def test_executable_cycle_retains_original_and_detects_truncated_verifier(tmp_pa
         assert json.loads((fresh / "status.json").read_text())["status"] == "complete"
         assert (fresh / "review.md").read_bytes() == original
         assert before == {str(p.relative_to(run)): p.read_bytes() for p in run.rglob("*") if p.is_file()}
+
+
+def test_reader_uses_one_canonical_markdown_text_for_ledger():
+    data = review()
+    del data["findings"][0]["text"]
+    criticism = "**A precise criticism.**\n\nIts evidence and feasible remedy belong to the same finding."
+    data["review"] = data["review"].replace(
+        "R1-01 The central claim outruns the evidence.", "### R1-01\n" + criticism)
+    payload, _ = mr.validate_stage(stream(data), 0, manifest(), Path("/run"), "review")
+    assert payload["findings"][0]["text"] == criticism
+    assert payload["review"] == data["review"]
+    assert mr.ledger_records(payload, {"verification": []}, "round-1", "review.md")[0]["text"] == criticism
+
+
+@pytest.mark.parametrize("replacement", ["R1-01 only a reference, not a finding block", "### R1-01\n",
+    "### R1-01\nFirst\n### R1-01\nSecond"])
+def test_canonical_finding_needs_one_nonempty_heading_block(replacement):
+    data = review()
+    del data["findings"][0]["text"]
+    data["review"] = data["review"].replace("R1-01 The central claim outruns the evidence.", replacement)
+    with pytest.raises(ValueError, match="finding|empty"):
+        mr.validate_stage(stream(data), 0, manifest(), Path("/run"), "review")
+
+
+def pdf_source_stream(tmp_path, monkeypatch, case="valid"):
+    cache = tmp_path / "cache"
+    monkeypatch.setattr(mr, "CLI_PDF_CACHE", cache, raising=False)
+    cache.mkdir()
+    pdf = cache / ("../outside/native-session/tool-results/webfetch-source.pdf" if case == "outside-cache"
+                   else "project/native-session/tool-results/webfetch-source.pdf")
+    pdf.parent.mkdir(parents=True)
+    tiny_pdf(pdf, ["Synthetic manuscript claim X.", "An unread decisive passage."])
+    size = f"{pdf.stat().st_size / 1024:.1f}KB"
+    receipt = f"Cannot extract raw PDF.\n\n[Binary content (application/pdf, {size}) also saved to {pdf}]"
+    check = source_check()
+    check["sources"][0]["passage"] = "Synthetic manuscript claim X."
+    events = [json.loads(x) for x in stream({"verification": [check]}).splitlines()]
+    events[-1]["session_id"] = "native-session"
+    for event in events:
+        for block in event.get("message", {}).get("content", []):
+            if block.get("tool_use_id") == "3":
+                block["content"] = receipt if case != "no-receipt" else "No downloadable PDF receipt."
+    read_path = pdf if case != "unrelated" else pdf.with_name("webfetch-unrelated.pdf")
+    pages = "1"
+    if case == "unread":
+        check["sources"][0]["passage"] = "An unread decisive passage."
+    events[-1]["result"] = json.dumps({"verification": [check]})
+    read = [{"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "pdf-read",
+             "name": "Read", "input": {"file_path": str(read_path), "pages": pages}}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "pdf-read",
+             "is_error": case == "failed-read", "content": [
+                 {"type": "text", "text": f"PDF pages extracted: 1 page(s) from {read_path} ({size})"},
+                 {"type": "image", "source": {"type": "base64", "data": "native-image"}}]}]}}]
+    events[1:1] = read if case == "before-fetch" else []
+    if case != "before-fetch":
+        events[-1:-1] = read
+    if case == "changed-cache":
+        pdf.write_bytes(pdf.read_bytes() + b"changed" * 100)
+    if case == "wrong-session":
+        events[-1]["session_id"] = "another-session"
+    if case == "no-pages":
+        del read[0]["message"]["content"][0]["input"]["pages"]
+    if case == "no-images":
+        read[1]["message"]["content"][0]["content"].pop()
+    if case == "symlink":
+        real = pdf.with_name("actual.pdf")
+        pdf.rename(real)
+        pdf.symlink_to(real)
+    if case == "same-content-other-url":
+        # An unrelated earlier fetch must not supply the accepted URL's receipt.
+        for event in events:
+            for block in event.get("message", {}).get("content", []):
+                if block.get("id") == "3":
+                    block["input"]["url"] = "https://example.org/other"
+        events[-1:-1] = [
+            {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": "late-fetch",
+             "name": "WebFetch", "input": {"url": "https://example.org/paper"}}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": "late-fetch",
+             "content": receipt}]}}]
+
+    run = tmp_path / "run"
+    # Native manuscript reads must still refer to the pinned input paths.
+    raw = "\n".join(json.dumps(x) for x in events).replace("/run/private/", str(run / "private") + "/")
+    return raw, run, pdf
+
+
+def test_pdf_passage_requires_native_fetch_receipt_and_read_page(tmp_path, monkeypatch):
+    raw, run, pdf = pdf_source_stream(tmp_path, monkeypatch)
+    payload, trace = mr.validate_stage(raw, 0, manifest(), run, "verify", source_review())
+    receipt = payload["verification"][0]["sources"][0]["pdf_evidence"]
+    assert receipt["page"] == 1
+    assert receipt["pdf_sha256"] == mr.digest(pdf)
+    assert (run / receipt["pdf"]).read_bytes() == pdf.read_bytes()
+    assert "Synthetic manuscript claim X." in (run / receipt["text"]).read_text()
+    assert receipt["fetch_result_line"] < receipt["read_call_line"] < receipt["read_result_line"]
+    pdf.unlink()
+    assert (run / receipt["pdf"]).is_file(), "evidence must outlive the native cache"
+
+
+@pytest.mark.parametrize("case", ["no-receipt", "unrelated", "unread", "before-fetch", "failed-read",
+                                  "changed-cache", "wrong-session", "outside-cache", "no-pages", "no-images",
+                                  "symlink", "same-content-other-url"])
+def test_pdf_proof_rejects_unlinked_unread_or_changed_cache(tmp_path, monkeypatch, case):
+    raw, run, _ = pdf_source_stream(tmp_path, monkeypatch, case)
+    with pytest.raises(ValueError, match="passage|fetch"):
+        mr.validate_stage(raw, 0, manifest(), run, "verify", source_review())
+
+
+def test_existing_literal_legacy_reader_stays_replayable():
+    data = review()
+    data["review"] = data["review"].replace("R1-01 The central claim outruns the evidence.",
+        "### R1-01\nThe central claim outruns the evidence.\n### R1-01\nAnother legacy mention.")
+    payload, _ = mr.validate_stage(stream(data), 0, manifest(), Path("/run"), "review")
+    assert payload == data

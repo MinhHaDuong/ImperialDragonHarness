@@ -19,6 +19,7 @@ SECTIONS = ("Summary", "Strengths", "Key claims", "Specific comments",
             "Literature and data to engage", "Overall assessment")
 SOURCE_CHECKS = ("accessible", "identity", "relevant", "supports_claim")
 PROMPT = Path(__file__).parent / "references/reader-prompt.md"
+CLI_PDF_CACHE = Path.home() / ".claude/projects"
 
 
 def write_json(path, data):
@@ -140,7 +141,7 @@ def tool_text(content):
     return ""
 
 
-def fetched_texts(url, tools):
+def fetched_sources(url, tools):
     """Follow at most eight native, actually fetched redirect edges verbatim."""
     visited = set()
     for _ in range(9):
@@ -159,13 +160,78 @@ def fetched_texts(url, tools):
                     return []
                 targets.extend(reported)
             else:
-                texts.append(text)
+                texts.append(tool)
         if not targets:
             return texts
         if len(set(targets)) != 1:
             return []
         url = targets[0]
     return []
+
+
+def fetched_texts(url, tools):
+    return [tool_text(tool["content"]).strip() for tool in fetched_sources(url, tools)]
+
+
+def pdf_source_evidence(url, passage, tools, session, run):
+    """Snapshot only a native downloaded PDF subsequently read in this session."""
+    for fetch in fetched_sources(url, tools):
+        content = tool_text(fetch["content"]).strip()
+        receipt = re.search(r"\n\[Binary content \(application/pdf, ([0-9.]+)(B|KB|MB)\) "
+                            r"also saved to ([^\n]+\.pdf)\]$", content)
+        if not receipt or not session:
+            continue
+        cache = Path(receipt[3])
+        if (not cache.is_absolute() or not cache.is_relative_to(CLI_PDF_CACHE)
+                or cache != cache.resolve() or not cache.resolve().is_relative_to(CLI_PDF_CACHE.resolve())
+                or cache.parent.name != "tool-results" or cache.parent.parent.name != session
+                or not cache.name.startswith("webfetch-")
+                or any(p.is_symlink() for p in (cache, *cache.parents)) or not cache.is_file()):
+            continue
+        data = cache.read_bytes()
+        unit = {"B": 1, "KB": 1024, "MB": 1024 ** 2}[receipt[2]]
+        precision = len(receipt[1].partition(".")[2])
+        if not data.startswith(b"%PDF-") or round(len(data) / unit, precision) != float(receipt[1]):
+            continue
+        reads = [t for t in tools if t["name"] == "Read" and t["input"].get("file_path") == str(cache)
+                 and t["call_line"] > fetch["result_line"]
+                 and not any(k in t["input"] for k in ("limit", "offset"))]
+        if not reads:
+            continue
+        folder = run / "private/sources" / hashlib.sha256(data).hexdigest()
+        folder.mkdir(parents=True, exist_ok=True)
+        pinned = folder / "source.pdf"
+        if pinned.exists() and pinned.read_bytes() != data:
+            raise ValueError("source PDF snapshot changed")
+        if not pinned.exists():
+            pinned.write_bytes(data)
+        info = subprocess.run(["pdfinfo", str(pinned)], check=True, capture_output=True,
+                              text=True, timeout=60).stdout
+        count = int(re.search(r"^Pages:\s+(\d+)\s*$", info, re.M)[1])
+        for read in reads:
+            selection = re.fullmatch(r"(\d+)(?:-(\d+))?", str(read["input"].get("pages", "")))
+            if not selection:
+                continue
+            pages = range(int(selection[1]), min(int(selection[2] or selection[1]), count) + 1)
+            header = f"PDF pages extracted: {len(pages)} page(s) from {cache} ("
+            images = sum(b.get("type") == "image" for b in read["content"]
+                         if isinstance(b, dict)) if isinstance(read["content"], list) else 0
+            if not pages or pages.start < 1 or images != len(pages) or not tool_text(read["content"]).startswith(header):
+                continue
+            for page in pages:
+                text = subprocess.run(["pdftotext", "-f", str(page), "-l", str(page), str(pinned), "-"],
+                                      check=True, capture_output=True, text=True, timeout=60).stdout
+                if " ".join(passage.split()) not in " ".join(text.split()):
+                    continue
+                extracted = folder / f"page-{page}.txt"
+                extracted.write_text(text, encoding="utf-8")
+                return {"pdf": str(pinned.relative_to(run)), "pdf_sha256": digest(pinned),
+                        "text": str(extracted.relative_to(run)), "text_sha256": digest(extracted),
+                        "page": page, "url": url, "fetch_url": fetch["input"]["url"],
+                        "fetch_call_line": fetch["call_line"], "fetch_result_line": fetch["result_line"],
+                        "read_call_line": read["call_line"], "read_result_line": read["result_line"],
+                        "cache_path": str(cache), "session_id": session}
+    return None
 
 
 def cited_urls(text):
@@ -213,6 +279,10 @@ def validate_stage(raw, returncode, manifest, run, stage, review=None):
         findings = payload.get("findings")
         if not isinstance(findings, list):
             raise ValueError("missing findings array")
+        blocks = list(re.finditer(r"^### (R1-\d{2,})[ \t]*\n(.*?)(?=^### |^## |\Z)", text, re.M | re.S))
+        canonical = {block[1]: block[2].strip() for block in blocks}
+        if any("text" not in finding for finding in findings) and len(canonical) != len(blocks):
+            raise ValueError("duplicate finding heading")
         ids = set()
         declared_urls = set()
         retrieved_urls = {t["input"].get("url") for t in [*tools, *trace["failed_tools"]]
@@ -221,6 +291,8 @@ def validate_stage(raw, returncode, manifest, run, stage, review=None):
             if not re.fullmatch(r"R1-\d{2,}", finding.get("id", "")) or finding["id"] in ids:
                 raise ValueError("finding ids must be unique R1-NN")
             ids.add(finding["id"])
+            if "text" not in finding:
+                finding["text"] = canonical.get(finding["id"], "")
             if not finding.get("text") or finding.get("severity") not in ("major", "minor"):
                 raise ValueError("missing finding text/severity")
             if finding["id"] not in text or finding["text"] not in text:
@@ -264,6 +336,7 @@ def validate_stage(raw, returncode, manifest, run, stage, review=None):
             if len(source_urls) != len(set(source_urls)) or not required_urls.issubset(source_urls):
                 raise ValueError("verification sources must cover the finding's decisive URLs without duplicates")
             for source in check["sources"]:
+                source.pop("pdf_evidence", None)  # Only the controller may supply a receipt.
                 for name in SOURCE_CHECKS:
                     if source.get(name) not in ("yes", "no", "unknown"):
                         raise ValueError(f"source missing {name} check")
@@ -272,7 +345,11 @@ def validate_stage(raw, returncode, manifest, run, stage, review=None):
                     if not fetched or not source.get("passage") or not source.get("locator"):
                         raise ValueError("accessible source needs observed fetch, passage and locator")
                     if not any(" ".join(source["passage"].split()) in " ".join(text.split()) for text in fetched):
-                        raise ValueError("source passage absent from fetched tool result")
+                        receipt = pdf_source_evidence(source["url"], source["passage"], tools,
+                                                      trace["termination"].get("session_id"), run)
+                        if not receipt:
+                            raise ValueError("source passage absent from fetched tool result or observed PDF page")
+                        source["pdf_evidence"] = receipt
                 else:
                     attempted = any(t["name"] == "WebFetch" and t["input"].get("url") == source.get("url")
                                     for t in [*tools, *trace["failed_tools"]])
@@ -325,6 +402,9 @@ def brief(manifest, run, stage, question, review=None):
         "Copy that exact contiguous passage into sources.passage: never join quotes, insert ellipses, "
         "or alter punctuation. A redirect/URL-only response is not scientific content: follow it to "
         "retrieve substantive text or mark the declared source unavailable with unknown support. "
+        "For a native saved-PDF receipt, Read that exact downloaded PDF with explicit physical page ranges; "
+        "cite one contiguous text-layer passage from a page actually read. Retain the printed folio in locator. "
+        "The controller pins the PDF and checks the quote on those pages; image-only evidence stays unknown. "
         "Verify decisive sources from fetched passages. Never cite from memory. "
         "Do not claim complete coverage if a page is illegible; disclose losses. "
         "Return a single JSON object, no surrounding prose. Author question: " + question + "\n"
@@ -333,12 +413,14 @@ def brief(manifest, run, stage, question, review=None):
     if stage == "review":
         return PROMPT.read_text(encoding="utf-8") + "\n" + common + (
             'Return {"review": "Markdown with the six specified ## headings", "findings": [...]}. '
-            "Each finding: id R1-01 etc, text verbatim critical remark, severity major/minor, "
+            "Each finding metadata row: id R1-01 etc, severity major/minor, "
             'uncertainty with explanation, evidence [{"document": "main or annex-N", "page": 1, '
             '"passage": "located manuscript passage or figure description"}], '
             'decisive_urls ["https://source-used-for-this-finding"], or [] only for manuscript-only findings. '
             "Actually fetch every decisive URL; retain unsuccessful retrieval attempts. "
-            "Put each finding id and its full critical text in the Markdown review too. "
+            "Write each criticism ONCE in the Markdown, under its own exact heading `### R1-01` etc, "
+            "with the full critical text below. Do NOT include a text field in findings metadata: "
+            "the controller extracts the entire heading block verbatim for the ledger. "
             "Every criticism must be enumerated with its finding id, with no omitted structured rows. "
             "Key claims contains exactly the major finding ids; if none, its entire body must be "
             "'No major findings.'. Specific comments contains the minor findings. Declare every "
@@ -490,7 +572,7 @@ def run_review(args):
         status.update(status="complete", stage="author_decisions_pending", limitations=[
             "Completeness validates execution and structure, not scientific truth.",
             "Observed CLI model metadata is not provider attestation.",
-            "Fetch passages match returned tool text, which may be model-processed, not original source bytes.",
+            "Web passages match returned tool text; native PDF passages match snapshotted text-layer pages actually read.",
             *args.missing_annex,
             *[f"{doc['id']} p.{p['page']}: {p['loss']}" for doc in documents for p in doc["pages"] if p["loss"]],
         ])

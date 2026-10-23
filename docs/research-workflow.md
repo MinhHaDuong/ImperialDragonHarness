@@ -108,5 +108,8 @@ longer an executable entry point.
 Execution checks do not certify scientific truth. In particular, manuscript
 evidence is checked for valid page location and a nonempty passage, without
 mechanically establishing quotation fidelity. External passages are matched
-to retrieved tool text, which may itself be model-processed, rather than to
-original source bytes. The author retains the final scientific judgment.
+to retrieved tool text, which may itself be model-processed. For downloaded
+PDFs, an observed download and subsequent page read can instead support a
+match against a hashed snapshot's text layer; the matching page and native
+events are retained. Image-only passages remain unverified by that check.
+The author retains the final scientific judgment.

@@ -47,6 +47,10 @@ Choose the model of each launched worker per launch, from the `route` skill grid
    incomplete and return nonzero. This checks execution, not scientific truth.
    Markdown finding IDs and structured findings must cover each other; Key claims
    enumerates the major findings, or states exactly `No major findings.`. Each
+   criticism occupies one `### R1-NN` block; structured rows contain metadata,
+   not a second wording. The runner derives the ledger text from that block
+   without rewriting the raw report. Valid legacy rows with literal text remain readable.
+   Each
    finding declares `decisive_urls` (empty only for manuscript-only criticism).
    Those URLs require observed retrieval attempts in the reader trace and matching
    verification sources for major findings; an unrelated fetch cannot substitute.
@@ -62,6 +66,13 @@ Choose the model of each launched worker per launch, from the `route` skill grid
    Passage matching checks returned fetch-tool text, which may be processed by a
    model; it does not establish a match against the original source bytes.
    Redirects count only when every hop has a matching observed fetch event.
+   For a native saved-PDF receipt, the runner also accepts a subsequent successful
+   Read of that exact session-cache file with explicit physical pages. It snapshots
+   and hashes the PDF and matches the contiguous passage within an actually read
+   text-layer page. `pdf_evidence` records snapshot/page hashes and fetch/Read
+   stream locators, separately from the printed folio in `locator`. The snapshot
+   is taken during validation, not attested at network-retrieval time. Missing or
+   changed cache evidence and image-only passages cannot establish this match.
 5. Use the **existing** ingest-decision-letter ledger for author decisions and
    coverage. Exported rows carry `round`, `disposition: null`, `reason: ""`,
    `resolution: "open"`, and `evidence`; do not invent decisions or close work.
