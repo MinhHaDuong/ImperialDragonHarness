@@ -6,6 +6,7 @@ Author: Codex MOE
 --- log ---
 2026-10-23T09:11Z Codex MOE created
 2026-10-23T09:19Z reviewer note Conception : un nouveau skill manuscript-review et un script indépendant ; une première route headless outillée et observable, sans framework/API de credentials. Prompt adapté depuis le supplément déjà archivé, recherche prouvée, quatre niveaux de contrôle des sources. Schéma R&R additif convenu avec1202 ; expérience A/B hors production.
+2026-10-23T09:34Z Codex note Implémentation locale : nouveau skill manuscript-review et script indépendant, une route headless outillée puis une vérification bornée ; entrées/page-images épinglées, traces natives conservées, tentatives non écrasantes, décisions de l’auteur en attente dans le schéma1202 (preuves par références textuelles, identifiants préfixés par round). Prompt paraphrasé sourcé Appendix C, extensions IDH explicites ; ancien helper intact. Tests comportementaux rouges puis verts, cycle exécutable synthétique avec extraction/rendu réels et vérificateur tronqué. make check-fast :1246 réussis ; make lint :164 réussis ; make check :2129 réussis,4 ignorés. Essai public réel et validation finale Astra/Fable restent au superviseur ; aucune publication/merge.
 
 --- body ---
 ## Context
