@@ -106,7 +106,7 @@ def _ignore_worktree_tmp(primary):
         stream.write("\n/.tmp/\n")
 
 
-def _gc(primary, *, gh_response="[]", gh_exit=0):
+def _gc(primary, *, gh_response="[]", gh_exit=0, extra_env=None):
     fake_bin = primary.parent / "fake-bin"
     fake_bin.mkdir(exist_ok=True)
     gh = fake_bin / "gh"
@@ -121,6 +121,8 @@ def _gc(primary, *, gh_response="[]", gh_exit=0):
     env["PATH"] = f"{fake_bin}:{env.get('PATH', '')}"
     env["TEST_GH_RESPONSE"] = gh_response
     env["TEST_GH_EXIT"] = str(gh_exit)
+    env.pop("WORKTREE_GC_OWNERLESS_IDLE_HOURS", None)
+    env.update(extra_env or {})
     return run([str(SCRIPTS / "worktree-gc.sh"), str(primary)], env=env)
 
 
@@ -1007,11 +1009,16 @@ def test_gc_reclaims_idle_ownerless_harness_lock(origin, reason):
     "hunt t1 (pid 1) and (pid 1)",
     "hunt t1 (owner pid not visible) (pid)",
     "claude agent (pid 0)",
+    "claude agent (pid 4194305)",
+    "manual hold (pid 01)",
+    "manual hold (pid 1)",
+    "note: hunt t1 (owner pid not visible)",
 ])
 def test_gc_keeps_idle_lock_that_is_not_a_harness_ownerless_shape(origin, reason):
-    """Only `(pid 1` alone or `(owner pid not visible)` alone is reclaimed by
-    age; a hand-made, ambiguous or pid-0 lock stays an opaque in-use marker,
-    however long the tree has been idle."""
+    """Only the harness shapes are reclaimed by age: `(hunt|claude) … (pid 1`
+    digit-exact, or the whole reason `hunt t<id> (owner pid not visible)`. A
+    hand-made lookalike, an ambiguous, out-of-range or pid-0 lock stays an
+    opaque in-use marker, however long the tree has been idle."""
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-opaque-lock", dirty=False)
     git(primary, "worktree", "lock", str(wt), "--reason", reason)
@@ -1022,6 +1029,45 @@ def test_gc_keeps_idle_lock_that_is_not_a_harness_ownerless_shape(origin, reason
     assert res.returncode == 0
     assert "skip agent-opaque-lock (locked" in res.stdout
     assert "removed agent-opaque-lock" not in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+
+
+@pytest.mark.parametrize("scratch", ["work.txt", ".panel/1/review.md"])
+def test_gc_keeps_lock_of_idle_ownerless_tree_with_uncommitted_files(origin, scratch):
+    """Quiet git metadata is not proof a sandboxed session ended: one editing
+    files without git looks idle. A tree holding any uncommitted file, review
+    scratch included, keeps both its files and its lock, so the idle check
+    runs again on the next pass."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-wip", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t7 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-wip")
+    target = wt / scratch
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("in progress\n")
+    _age_worktree_metadata(wt, 100)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-ownerless-wip (locked, no visible owner, idle 100h, tree not clean" in res.stdout
+    assert target.exists()
+    porcelain = git(primary, "worktree", "list", "--porcelain").stdout
+    assert "locked hunt t7 (owner pid not visible)" in porcelain
+
+
+def test_gc_oversized_idle_threshold_falls_back_to_default(origin):
+    """A threshold too long to compare must not switch the idle check off:
+    it falls back to 72 h, so a tree idle 10 h keeps its owner-less lock."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-env", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t8 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-env")
+    _age_worktree_metadata(wt, 10)
+
+    res = _gc(primary, extra_env={"WORKTREE_GC_OWNERLESS_IDLE_HOURS": "99999999999999999999"})
+    assert res.returncode == 0
+    assert "idle 10h < 72h" in res.stdout
+    assert "integer expression expected" not in res.stderr
     assert str(wt) in _worktree_paths(primary)
 
 

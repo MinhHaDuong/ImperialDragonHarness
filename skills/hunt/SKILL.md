@@ -102,7 +102,9 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    `hunt t$ARGUMENTS (owner pid not visible)`, never `(pid 1)`, which on the
    host names init. `/roar` removes the tree when its integration is ready;
    if the session dies first, `worktree-gc` reclaims either shape once the
-   tree's git metadata has sat idle 72 h (`WORKTREE_GC_OWNERLESS_IDLE_HOURS`).
+   tree is clean and its git metadata (HEAD, index, reflog, lock) has not
+   moved for 72 h (`WORKTREE_GC_OWNERLESS_IDLE_HOURS`); the lock is lifted
+   only at removal.
    Any other lock without a checkable pid (several `(pid`, past 4194304, a
    hand-made lock) is never reclaimed. A lock with a real pid marks the tree in use for
    `worktree-gc` and molt while that pid lives; `worktree-gc` reclaims it once
