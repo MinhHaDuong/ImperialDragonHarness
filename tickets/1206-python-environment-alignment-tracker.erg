@@ -11,10 +11,10 @@ Author: Minh Ha-Duong
 Rule `rules/coding-python.md` (branch python-env-rules, commits b626fd56 and 7d4fd719) states one uv-based environment practice: dependencies in pyproject.toml with a committed uv.lock, no pip, one `RUN` prefix in the Makefile and no PYTHON variable. On 2026-10-23 the alignment check below ran on ten Python repos (the nine in ~/CNRS/code and sen-causal-reading): five print ok, five do not: sen-causal-reading (its own ticket 0083 and PR, in its own repo) and the four children below. Impact is real only for sen-causal-reading, where `project-state.py --tests` reports a false failure; the four children are deviations, not breakages, ticketed at the author's request (2026-10-23) although they sit under the severity floor.
 
 ## Children
-- 1207 askMinh
+- 1207 askMinh (moved: askMinh tickets/0001)
 - 1208 VN-Power-Scenario (third-party remote: author's decision needed before any push)
 - 1209 ThinkTanksSurveyor (not a git repository)
-- 1210 fs-housekeeper
+- 1210 fs-housekeeper (moved: fs-housekeeper tickets/0001)
 - sen-causal-reading: ticket 0083 in that repo, not tracked here
 
 ## Alignment check
