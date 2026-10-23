@@ -7,7 +7,7 @@
   {
     "id": "1199",
     "key": "engine",
-    "file": "tickets/1199-nouveau-moteur-de-revue-avec-recherche-e.erg"
+    "file": "tickets/closed/1199-nouveau-moteur-de-revue-avec-recherche-e.erg"
   },
   {
     "id": "1200",
@@ -37,6 +37,6 @@
   {
     "id": "1205",
     "key": "trial",
-    "file": "tickets/1205-essai-r-el-et-int-gration-du-nouveau-cyc.erg"
+    "file": "tickets/closed/1205-essai-r-el-et-int-gration-du-nouveau-cyc.erg"
   }
 ]

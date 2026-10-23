@@ -1,0 +1,39 @@
+{
+  "verified_at": "2026-10-23T10:44:22.200529+00:00",
+  "library": "user",
+  "source_items": [
+    "user:5IWA45WQ"
+  ],
+  "work_key": "zotero:user:5IWA45WQ",
+  "note_item": "QVBRSPVZ",
+  "itemType": "document",
+  "abstractNote_provenance_verified_via_local_API": true,
+  "files": {
+    "note": {
+      "filename": "IDH_Peerless2026_review_verified_attempt4.md",
+      "attachment_key": "F5AJGQH2",
+      "md5": "1ea91cbece7b19c4b23ad00324d97aff",
+      "sha256": "fb44d053d8af0afb010a94516f75d3f9e54040569e67f9844d78f0fe4ae23965",
+      "size": 40409,
+      "linkMode": "imported_file",
+      "live_match_why": [
+        "storageHash",
+        "title"
+      ]
+    },
+    "evidence_archive": {
+      "filename": "IDH_Peerless2026_review-evidence.tar.xz",
+      "attachment_key": "CZVL4QLQ",
+      "md5": "20f5fd24e3b5e6a8381b55a5d0545933",
+      "sha256": "b3693f234d4d11c2b3c6c982b18006bfc33a9f24f051d800f962f5222277952a",
+      "size": 72008360,
+      "linkMode": "imported_file",
+      "live_match_why": [
+        "storageHash",
+        "title"
+      ]
+    }
+  },
+  "author_decisions": "11 pending; no manuscript change",
+  "limits": "Storage/execution receipt, not scientific truth or manuscript improvement validation."
+}
