@@ -1,0 +1,22 @@
+{
+  "reviewed_head": "b9c27de5587d303b52c7a55e5e539676ebdb2eca",
+  "scope": "Source fidelity only, public supplement staged inside allowed review workspace",
+  "modelUsage": {
+    "claude-fable-5-1": {
+      "inputTokens": 66,
+      "outputTokens": 4073,
+      "cacheReadInputTokens": 196599,
+      "cacheCreationInputTokens": 26497,
+      "webSearchRequests": 0,
+      "costUSD": 0.7833997500000001,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000,
+      "thinkingTokens": 2980,
+      "canonicalModel": "claude-fable-5-1",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "effort": "high requested, not independently observed",
+  "cost_usd": 0.7833997500000001
+}

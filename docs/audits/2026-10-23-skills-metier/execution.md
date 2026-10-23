@@ -1,55 +1,46 @@
-# Train métier 1198 — exécution MOE
+# Train métier 1198 — exécution et preuves
 
-Base commune de la première vague : `1206b23e`. Tracker 1198, enfants 1199–1205. Autorisation auteur : train complet, exécution autonome sous supervision MOE, validation des skills par Astra et Fable avec KISS.
+Autorisation auteur : train complet sous supervision MOE autonome ; validation des skills par Astra et Fable avec KISS. Push et brouillon GitHub explicitement autorisés après le refus automatique initial. PR 1633 ; tracker 1198 ouvert jusqu’à la revue d’intégration après fusion.
 
-## Conception
+## Résultat métier
 
-- Astra : `gpt-6-astra`, OpenAI, high, route native avec contexte neuf ; identité confirmée par turn_context. Avis de conception reçu, pas validation finale.
-- Fable : `claude-fable-5-1`, Anthropic, high demandé, porte `claude -p --model fable`, outils Read/Glob/Grep seulement, permission dontAsk ; identité confirmée par modelUsage. Avis reçu, pas validation finale. Coût rapporté par le CLI : 4,9408085 USD.
-- Les deux avis portent sur `1206b23e`. Sources originales déjà acquises et archivées avant ce train. Les sorties Fable et leur métadonnée sont conservées dans `reviews/` ; l’avis Astra est consigné avec sa provenance.
+Un lecteur complet, une vérification bornée des critiques majeures, puis les décisions de l’auteur dans le registre R&R existant. Le protocole de production adapte Appendix C ; les scores, masques et comparaisons expérimentales restent hors parcours. Les17skills ont été examinés ; les corrections ciblent les six constats initiaux, sans réécriture générale ni nouveau catalogue documentaire.
 
-Décisions MOE : une seule revue complète avant toute multiplication des lecteurs ; conservation des recherches réellement exécutées ; schéma R&R commun ; protocole de production distinct des comparaisons expérimentales ; aucun framework ni nouvelle gestion de credentials.
+Les lots bibliographie, Zotero/notes, révision, PDF et recherche sont livrés. L’essai public complet est réussi ; le candidat de retrait est adopté seulement après ce succès. Ancien exécuteur et référence OpenRouter supprimés, appelants migrés ; la revue externe indépendante reste un contrat explicite, avec limite réelle du runner actuel à un CLI. Le lecteur de provider encore utilisé par la sonde mémoire est extrait sans framework ; le SDK inutilisé et ses dépendances exclusives sont retirés. Voir retirement-inventory.md.
 
-Champs R&R convenus avec 1202 : round, disposition (accepted/rejected/deferred/already_addressed/null), reason, resolution (open/resolved), evidence (références). Les constats factuels et extraits restent dans les artefacts de vérification auxquels evidence renvoie. Les deux vocabulaires proposés par les lecteurs ne seront pas implémentés en parallèle.
+## Validations et identités
 
-## Exécutants
+- Exécutants : Codex natif, gpt-6.1-sol/medium, worktrees isolés ; supervision gpt-6.1-sol/low. Même famille, aucune indépendance scientifique revendiquée.
+- Astra : gpt-6-astra/high confirmé dans turn_context. Conception `1206b23e`, constats `0121b6a6`, corrections validées e3233985, reprise18e2a29f et candidat final b9c27de5587d303b52c7a55e5e539676ebdb2eca.100 tests ciblés réussis,1 sonde live optionnelle ignorée. Même fournisseur que le superviseur.
+- Fable : claude-fable-5-1 confirmé par modelUsage, high demandé sans attestation indépendante de l’effort. Conception `1206b23e`, validation `0121b6a6` avec corrections bornées, puis validation finale b9c27de5 sans constat bloquant. Relecture de fidélité à Appendix C : aucun écart matériel. La première lecture du PDF hors espace autorisé avait été refusée ; une copie publique dans le worktree a permis cet addendum. Les limites de lecture sont conservées dans son avis.
+- Les quatre constats initiaux Astra sont résolus : critiques omises du registre, sources décisives non contrôlées, atomiques entre rondes, import Zotero retardé. Le texte WebFetch est explicitement une sortie potentiellement traitée, pas les octets originaux.
+- Simplifications Fable : recherche gratuite du vérificateur supprimée ; category laissé vide, gravité conservée dans review/verify ; identifiants existants conservés car la couverture utilise round. Pas de nouvelle taxonomie ou architecture. Le blanc EOF signalé par Astra est supprimé sans changement fonctionnel après b9c27de5.
 
-Tous les exécutants ci-dessous : `gpt-6.1-sol`, OpenAI, medium, contexte neuf, code ordinaire borné ; worktrees distincts ; aucune autorité de fusion. Validation finale des skills encore à obtenir.
+Avis bruts et métadonnées dans reviews/. La validation des skills ne remplace ni l’essai réel ni gaze/verify-gate.
 
-- 1200 bibliographie : t1200-biblio-integrity ; réutilisation de bibtexparser, tests des défauts avant correction.
-- 1202 registre de révision : t1202-revision-ledger ; contrat additif convenu avant le moteur.
-- 1203 finition/PDF : t1203-pdf-product ; contrôles du produit, entrées explicites épinglées, pas d’analyseur de mise en page.
+## Essai public réel
 
-Les barrières du dépôt sont conservées : tests métier puis gate complet, revue et verify-gate avant fusion. Les erreurs de sockets ou caches dues au bac à sable ne sont pas requalifiées en défaut de code ni en passage réussi.
+Source : King–Worthington,22 octobre 2026 ; manuscrit 15 pages et supplément 23 pages. Les PDF originaux et le protocole sont déjà archivés sous Zotero user:5IWA45WQ, note source CA22TVTN. Empreinte du supplément confirmée par le superviseur ; les procédures de jugement des annexes D/E ne sont pas copiées dans la production.
 
-## Première composition vérifiée
+| Tentative | Résultat conservé |
+|---|---|
+|1|Incomplète : vérificateur natif terminé avec lectures/récupérations, mais absence de WebSearch alors exigée sans nécessité. Contrat corrigé.|
+|2|Lecteur validé,11 remarques ; vérification refusée pour extraits assemblés.|
+|3|Lecteur 2 réutilisé, nouveau vérificateur ; extraits continus corrects, mais contrôle canonique rejetant un article effectivement récupéré après redirections. Diagnostic corrigé après examen des traces.|
+|4|Cycle complet sous le contrôle corrigé, auteur en attente ; lecteur 2 revalidé et conservé, nouveau vérificateur.|
 
-- 1200 intégré par c3ba3a68 ; 1202 par 3f19a22c ; 1203 par e8c94112.
-- Gate complet sur cette composition : **2130 passed, 4 skipped**, 32,76 s. Le premier gate sur la base documentaire avait rencontré trois erreurs de fixture Zotero401 ; les gates suivants des lots et de leur composition passent. Cause de cet incident initial non isolée ; aucun changement Zotero opportuniste.
-- Lecture de code intermédiaire par Luna/OpenAI/medium : aucun constat dans les trois lots, sans nouvelle exécution des tests. Même famille que les exécutants ; ne remplace pas la validation Astra/Fable.
-- 1201 intégré par eb865394 ; 1204 par dcb6a99b. Backend Zotero inchangé ; contrôles documentaires et35tests existants réussis côté exécutant.
-- 1199 en implémentation dans son worktree, selon les deux avis KISS et le schéma de1202. Essai réel et validation des skills finaux toujours ouverts.
+Le correctif des redirections suit seulement les sauts natifs observés avec URL exacte, borne et refus des cycles/ambiguïtés. Le contrôle de sous-chaîne reste strict. Le format indenté réel est couvert par deux régressions reproduites rouges puis vertes. Une revalidation en lecture seule de 3 passe les cinq contrôles ; son statut historique reste incomplet.
 
-## Publication en attente d’autorisation
+Le cycle 4 fournit11 remarques. Le vérificateur confirme quatre critiques majeures et signale la cinquième comme mauvaise lecture, ramenée mineure. Ces jugements restent advisory, sans arbitrage scientifique humain. Les 11 dispositions sont nulles ; la couverture du registre indique 11 attentes et aucun enregistrement invalide. Aucun manuscrit réécrit, aucune décision inventée.
 
-Le contrôle automatique a refusé le push de la branche et la création d’une demande de fusion brouillon vers le dépôt GitHub, au motif d’une absence d’autorisation explicite pour ce contenu et cette destination. Une question précise a été transmise à l’auteur. Aucun contournement ni seconde tentative ; le travail se poursuit localement. Le refus ne concerne pas les relectures Astra/Fable explicitement demandées.
+trial-attempts.json conserve entrées, empreintes, vrais appels/outils et identités ; trial3-revalidation.json décrit le contrôle en lecture seule ; trial-ledger-handoff.json constate le transfert au registre. Deux lectures ont été produites, les deux reprises réutilisent la deuxième ; ce ne sont pas quatre revues indépendantes. Les coûts des lecteurs réutilisés ne doivent pas être additionnés comme nouveaux appels.
 
-## Reprise et validation finale initiale
+## Archivage et contrôles
 
-Push et demande de fusion brouillon explicitement autorisés par l’auteur ; PR1633 créée. Le refus automatique antérieur est levé par cette autorisation, pas contourné.
+La note complète avec revue originale et vérification séparée est Zotero user:QVBRSPVZ, pièce jointe Markdown F5AJGQH2. L’archive des quatre tentatives, incluant sources, images, prompts et streams bruts, est jointe CZVL4QLQ. Deux lectures vivantes par storageHash confirment les octets importés ; type Document et abstractNote de provenance vérifiés par API locale. archive-receipt.json conserve les empreintes, clés et limites. Les fichiers complets restent dans Zotero, pas sur GitHub ; aucune matière privée de doudou utilisée.
 
-Validation des skills sur0121b6a6 : Astra relève trois défauts mécaniques bloquants du moteur/registre et une contradiction Zotero ; Fable valide l’architecture avec limites et relève cette même contradiction et la nécessité de qualifier les passages WebFetch comme sorties potentiellement traitées. Avis et métadonnées dans reviews/. Coût CLI Fable final4,57409425USD, modèle observéclaude-fable-5-1. Les correctifs restent bornés, sans juge supplémentaire ni couche d’adaptation.
+make check complet du candidat `b9c27de5` : **2 179 réussis, 4 ignorés**, 33,50 s. Les contrôles intermédiaires et régressions de chaque lot sont dans les tickets et avis. Le premier contrôle documentaire avait rencontré trois erreurs de fixture Zotero 401 ; les contrôles suivants passent, cause initiale non isolée. Pas de réparation backend opportuniste.
 
-Essai public1 : article King–Worthington et annexe,38pages. Lecteur exécuté,12constats produits. Vérificateur :76lectures texte/image et4WebFetch, mais pas deWebSearch. Exécution native terminée avec succès ; moteur retourne incomplete car son contrat exigeait encore recherche et récupération à chaque passe. L’essai reste inchangé, ne constitue pas un cycle achevé. Correction retenue : recherche obligatoire du lecteur ; vérificateur borné aux sources décisives, recherche lorsque nécessaire, couverture des récupérations conservée. Nouvel essai requis avec les champs corrigés ; aucune sortie simulée présentée comme preuve métier.
+Coarse-ink 1.9.6 a été examiné à la demande de l’auteur : décision de ne pas remplacer ce moteur par un pipeline aux garanties différentes, aucune dépendance ajoutée. Voir coarse-ink.md. Un essai comparatif éventuel reste distinct de la production.
 
-Bibliographie1200 close sur critères fonctionnels/testés et avis sans constat restant de parsing ; intégration globale1198/1205 encore ouverte. Les logs historiques restent inchangés.
-
-Composition après corrections Astra/Fable : e3233985, make check complet **2156 passed,4 skipped**,31,28s. Astra a recontrôlé les quatre constats et exécuté57tests : tous résolus, validation bornée sans constat restant. L’essai2 et le retrait de l’ancien moteur restent des preuves distinctes en cours.
-
-## Retrait préparé, non encore intégré
-
-Les commits locaux cfb59cf6 et68150364 préparent le retrait : suppression de l’ancien exécuteur et de sa référence de transport, orchestration externe conservée comme contrat de lecteurs indépendants, préparation conférence raccordée au nouveau parcours ordinaire, extraction minimale du lecteur de provider encore consommé par la sonde mémoire, suppression du SDK inutilisé et de ses dépendances exclusives.90tests ciblés réussis,1sonde live optionnelle ignorée ;35contrôles de skills réussis. Le runner actuel ne sait appeler que le CLIClaude : aucune exécution multi-famille ou compatibilité Albert nouvelle n’est prétendue. Un autre mécanisme doit conserver les mêmes preuves, sinon perspective indisponible.
-
-Ces commits restent hors de la branche d’intégration jusqu’au succès du nouvel essai public ; le tracker demeure ouvert.
-
-Essai2 : lecteur validé,11constats ; vérificateur terminé mais contrôle refusé pour extraits assemblés avec points de suspension et source présentée accessible malgré une redirection seule. Les deux tentatives et leurs empreintes figurent dans trial-attempts.json. Le contrôle reste strict. Astra accepte une reprise bornée de la seule vérification dans un nouveau dossier, avec lecteur original revalidé et épinglé ; aucune réussite déclarée avant cet essai.
+Prochaine utilisation : un projet d’article de doudou choisi avec une révision et un périmètre de diffusion explicites. Le runner hébergé refuse le contenu non autorisé ; une perspective ou un backend non disponible reste déclaré indisponible. La qualité scientifique et l’amélioration du manuscrit ne sont pas établies par cet essai opérationnel.

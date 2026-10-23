@@ -2,6 +2,7 @@
 Title: Nouveau moteur de revue avec recherche et vérification intégrées
 Created: 2026-10-23
 Author: Codex MOE
+Closed: Tool-backed reader, bounded source verification and immutable recovery implemented, reviewed and exercised on real public PDFs.
 
 --- log ---
 2026-10-23T09:11Z Codex MOE created
@@ -10,19 +11,21 @@ Author: Codex MOE
 2026-10-23T09:54Z Codex note Corrections après validation Astra/Fable : couverture inverse des identifiants Markdown/registre et énumération des critiques majeures ; URLs décisives déclarées par constat, récupération réelle et sources correspondantes exigées, échec de récupération conservé avec justification, support inconnu et constat invérifiable. Le vérificateur récupère les sources décisives sans recherche gratuite ; la recherche reste obligatoire pour le lecteur. Limite explicite : les passages correspondent au texte retourné par l’outil, éventuellement traité, non aux octets de la source ; demande de citations verbatim et localisées. Régressions reproduites (6 puis2 échecs),20 tests ciblés verts, make check-fast :1256 réussis ; make check :2139 réussis,4 ignorés. Aucun dossier d’essai du superviseur modifié ; nouvel essai requis avec le contrat enrichi.
 2026-10-23T10:15Z Codex note Reprise bornée après échec de vérification : --resume-review réutilise le lecteur validé dans une nouvelle tentative, après contrôle des empreintes et du périmètre exact, nouvelle validation du flux natif aux chemins d’origine et comparaison avec JSON/Markdown/trace conservés. Ensemble du lecteur copié sans réécriture des événements, provenance et identité conservées ; seul le vérificateur est relancé. Reprise refusée si registre existant ou --previous-run simultané. Citations demandées contiguës sans ellipses ajoutées ; redirection seule déclarée indisponible. Régressions rouges puis vertes,35 cas comportementaux inclus dans le contrôle complet (dont cycle exécutable de reprise avec conservation octet pour octet), make check-fast :1271 réussis ; make check :2154 réussis,4 ignorés. Dossiers d’essai du superviseur inchangés.
 2026-10-23T10:28Z Codex note Correction proportionnée d’un faux négatif de récupération : la preuve d’un passage peut suivre au plus huit redirections natives observées, chaque URL cible devant avoir son propre appel/résultat effectif ; seule la réponse terminale fournit le passage exact. Aucun alias libre, aucune modification des paramètres d’URL ni substitution d’une récupération sans lien. Cycles, cibles ambiguës et étapes absentes refusés ; localisations des événements originales conservées. Deux cas positifs reproduits rouges puis verts ;45 cas ciblés réussis, make check-fast :1281 réussis, make check :2164 réussis,4 ignorés. Aucun dossier d’essai modifié, aucune tentative antérieure déclarée rétroactivement complète.
+2026-10-23T10:46Z Codex-MOE note Final execution accepted: trial4 completed on public main+annex38pages, reader2 reused with verified provenance, five major findings checked, eleven pending author decisions exported. Astra/Fable final skill contracts validated at b9c27de5; source fidelity addendum clean. Named reviews and archive receipts recorded; no scientific truth or improvement claim.
+2026-10-23T10:46Z reviewer closed — Tool-backed reader, bounded source verification and immutable recovery implemented, reviewed and exercised on real public PDFs.
 
 --- body ---
 ## Context
 F1 : le helper actuel accepte des sorties vides/tronquées, écrase les revues et ne fournit pas les recherches exigées. Créer un nouvel outil à nom descriptif, séparé de peer_review.py ; draconique était un adjectif, pas un nom.
 
 ## Exit criteria
-- [ ] Entrées épinglées : manuscrit et annexes, empreintes, texte paginé et accès effectif aux pages/figures ; pertes et annexes absentes explicites.
-- [ ] Prompt de King–Worthington sourcé et adaptations identifiées ; outils de recherche réellement utilisés ; sources et passages des références décisives vérifiés.
-- [ ] Revue brute préservée dans un dossier propre à l’exécution ; erreurs et troncatures détectées, identités et modes d’entrée consignés ; reprise sans écrasement.
-- [ ] Passe normale de vérification des critiques majeures avant restitution : constat factuel, gravité, incertitude et preuve localisée distincts ; désaccord scientifique conservé.
-- [ ] Parcours borné avec décisions de l’auteur et lien aux révisions ; réutiliser le registre R&R et Zotero, sans deuxième système documentaire. Une revue complète avant multiplication des lecteurs.
-- [ ] Ancien helper intact pendant la coexistence ; un utilisateur peut exécuter le nouveau parcours avec une commande documentée, pas seulement un paquet de prompts.
-- [ ] Tests comportementaux sur échec, troncature, reprise, couverture et preuve ; pas de framework générique, de backend imposé ni de benchmark comparatif par défaut.
+- [x] Entrées épinglées : manuscrit et annexes, empreintes, texte paginé et accès effectif aux pages/figures ; pertes et annexes absentes explicites.
+- [x] Prompt de King–Worthington sourcé et adaptations identifiées ; outils de recherche réellement utilisés ; sources et passages des références décisives vérifiés.
+- [x] Revue brute préservée dans un dossier propre à l’exécution ; erreurs et troncatures détectées, identités et modes d’entrée consignés ; reprise sans écrasement.
+- [x] Passe normale de vérification des critiques majeures avant restitution : constat factuel, gravité, incertitude et preuve localisée distincts ; désaccord scientifique conservé.
+- [x] Parcours borné avec décisions de l’auteur et lien aux révisions ; réutiliser le registre R&R et Zotero, sans deuxième système documentaire. Une revue complète avant multiplication des lecteurs.
+- [x] Ancien helper intact pendant la coexistence ; un utilisateur peut exécuter le nouveau parcours avec une commande documentée, pas seulement un paquet de prompts.
+- [x] Tests comportementaux sur échec, troncature, reprise, couverture et preuve ; pas de framework générique, de backend imposé ni de benchmark comparatif par défaut.
 
 ## Plan / first check
 Relevant files: skills/external-peer-review/{SKILL.md,peer_review.py,references/openrouter.md}, skills/reviewers/, skills/route/, dossier d’audit. Test initial : une sortie vide/tronquée ne produit jamais une revue réputée complète ; la reprise préserve le premier résultat. Design KISS validé avant implémentation.
