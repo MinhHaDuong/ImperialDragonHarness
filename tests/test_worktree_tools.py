@@ -1013,6 +1013,7 @@ def test_gc_reclaims_idle_ownerless_harness_lock(origin, reason):
     "manual hold (pid 01)",
     "manual hold (pid 1)",
     "note: hunt t1 (owner pid not visible)",
+    "hunt t1 note quoting (pid 1)",
 ])
 def test_gc_keeps_idle_lock_that_is_not_a_harness_ownerless_shape(origin, reason):
     """Only the harness shapes are reclaimed by age: `(hunt|claude) … (pid 1`
@@ -1053,6 +1054,56 @@ def test_gc_keeps_lock_of_idle_ownerless_tree_with_uncommitted_files(origin, scr
     assert target.exists()
     porcelain = git(primary, "worktree", "list", "--porcelain").stdout
     assert "locked hunt t7 (owner pid not visible)" in porcelain
+
+
+def _ignore_everything(primary):
+    """Mimic a repo whose .gitignore is `*`: every untracked file is ignored."""
+    exclude = Path(git(primary, "rev-parse", "--git-common-dir").stdout.strip())
+    if not exclude.is_absolute():
+        exclude = primary / exclude
+    exclude = exclude / "info" / "exclude"
+    exclude.parent.mkdir(parents=True, exist_ok=True)
+    with exclude.open("a") as stream:
+        stream.write("\n*\n")
+
+
+@pytest.mark.parametrize("scratch", ["draft.md", ".panel/1/review.md"])
+def test_gc_keeps_idle_ownerless_tree_holding_ignored_files(origin, scratch):
+    """`git worktree remove` deletes ignored files, and a repo may ignore `*`:
+    an ignored draft or review scratch keeps an owner-less tree and its lock."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-ign", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t9 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-ign")
+    _ignore_everything(primary)
+    target = wt / scratch
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("in progress\n")
+    _age_worktree_metadata(wt, 100)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-ownerless-ign (locked, no visible owner, idle 100h, tree not clean" in res.stdout
+    assert target.exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_reclaims_idle_ownerless_tree_holding_only_caches(origin):
+    """Regenerable caches are not work: an owner-less tree holding only an
+    ignored __pycache__ is still reclaimed once idle."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-cache", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t10 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-cache")
+    _ignore_everything(primary)
+    (wt / "__pycache__").mkdir()
+    (wt / "__pycache__" / "m.cpython-311.pyc").write_bytes(b"\0")
+    _age_worktree_metadata(wt, 100)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "removed agent-ownerless-cache" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
 
 
 def test_gc_oversized_idle_threshold_falls_back_to_default(origin):

@@ -89,7 +89,7 @@ Run full repo housekeeping and act on every finding.
    it skips any worktree that is a live process's cwd, any locked worktree
    (lock = in use, mirroring step 0; only a harness lock whose pid > 1 is
    dead is unlocked, and a harness owner-less lock on a clean tree idle 72 h
-   is lifted at removal, so
+   is lifted at removal (hunt step 3), so
    the rails decide), any
    tree with uncommitted changes other than `.panel/` and `build/panel-head/`
    review scratch, and the one it runs from. Before clearing review scratch,
