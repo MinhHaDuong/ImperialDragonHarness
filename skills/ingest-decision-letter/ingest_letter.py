@@ -20,13 +20,13 @@ Ledger record (JSONL, one object per line):
     category  free text; empty until the model fills it
     text      verbatim remark text
     source    ``<file>:<line>`` where the remark starts
-    tickets   list of ticket ids that address this remark ([] = uncovered)
+    tickets   list of ticket ids addressing work (may be empty with a disposition)
     atomic_of parent remark id when this record folds into another (null = distinct)
 
 Example:
     ingest_letter.py segment reviewer1.txt --reviewer R1 > ledger.jsonl
     ingest_letter.py dedupe ledger.jsonl > ledger.dedup.jsonl
-    ingest_letter.py coverage ledger.dedup.jsonl --tickets-dir tickets/
+    ingest_letter.py coverage ledger.dedup.jsonl --tickets 0301 --tickets-dir tickets/
 """
 
 import argparse
@@ -65,6 +65,11 @@ def _normalize_record(rec: dict) -> dict:
         "source": rec.get("source") or "",
         "tickets": rec.get("tickets") or [],
         "atomic_of": rec.get("atomic_of"),
+        "round": rec.get("round") or "",
+        "disposition": rec.get("disposition"),
+        "reason": rec.get("reason") or "",
+        "resolution": rec.get("resolution") or "open",
+        "evidence": rec.get("evidence") or [],
     }
 
 
@@ -157,8 +162,11 @@ def archive(sources: list[Path], into: Path) -> dict:
     manifest describing what was written.
     """
     into.mkdir(parents=True, exist_ok=True)
+    manifest_path = into / "manifest.json"
     entries = []
-    used: set[str] = set()
+    if manifest_path.exists():
+        entries = json.loads(manifest_path.read_text(encoding="utf-8"))["entries"]
+    used: set[str] = {"manifest.json"}
     for src in sources:
         if not src.exists():
             raise SystemExit(f"source not found: {src}")
@@ -173,7 +181,7 @@ def archive(sources: list[Path], into: Path) -> dict:
         log.info("archived %s -> %s", src, dest)
     manifest = {"into": str(into), "entries": entries}
     (into / "manifest.json").write_text(
-        json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     return manifest
 
@@ -181,7 +189,7 @@ def archive(sources: list[Path], into: Path) -> dict:
 # --------------------------------------------------------------------------- #
 # segment
 # --------------------------------------------------------------------------- #
-def segment(text: str, reviewer: str, source_name: str) -> list[dict]:
+def segment(text: str, reviewer: str, source_name: str, round_id: str = "") -> list[dict]:
     """Split a reviewer's comment text into candidate remarks.
 
     Deterministic first pass: an enumeration marker (``1.``, ``Comment 2:``,
@@ -224,7 +232,8 @@ def segment(text: str, reviewer: str, source_name: str) -> list[dict]:
         records.append(
             _normalize_record(
                 {
-                    "id": f"{reviewer}-{n:02d}",
+                    "id": f"{round_id}:" + f"{reviewer}-{n:02d}" if round_id else f"{reviewer}-{n:02d}",
+                    "round": round_id,
                     "reviewer": reviewer,
                     "text": remark_text,
                     "source": f"{source_name}:{start + 1}",
@@ -260,7 +269,7 @@ def dedupe(records: list[dict]) -> tuple[list[dict], dict]:
     the records whose ``atomic_of`` is null.
     """
     known_ids = {r["id"] for r in records if r["id"]}
-    canonical_by_text: dict[str, str] = {}
+    canonical_by_text: dict[tuple[str, str], str] = {}
     unknown_refs: list[str] = []
     out = []
     for rec in records:
@@ -277,7 +286,7 @@ def dedupe(records: list[dict]) -> tuple[list[dict], dict]:
             unknown_refs.append(rec["id"])
             out.append(rec)
             continue
-        key = _norm_text(rec["text"])
+        key = (rec.get("round", ""), _norm_text(rec["text"]))
         if key in canonical_by_text:
             rec["atomic_of"] = canonical_by_text[key]
         else:
@@ -309,52 +318,68 @@ def _ticket_ids_from_dir(tickets_dir: Path) -> set[str]:
     return ids
 
 
-def coverage(records: list[dict], universe: set[str]) -> dict:
-    """Cross-check remark-to-ticket mapping against a ticket universe.
+def coverage(records: list[dict], universe: set[str],
+             existing_tickets: set[str] | None = None, round_id: str | None = None) -> dict:
+    """Check decision coverage; report resolution separately.
 
-    A remark is a record whose ``atomic_of`` is null. Atomic sub-comments are
-    folded into their parent and excluded from the count entirely.
-
-    Flags:
-      uncovered_remarks    remarks addressed by no ticket.
-      orphan_tickets       tickets in the universe that address no remark.
-      unknown_ticket_refs  ticket ids a remark references but not in the universe.
-      duplicate_ids        remark ids that occur more than once (a re-run/concat
-                           collision that would otherwise silently drop a mapping).
+    ``universe`` is the explicit round ticket set; ``existing_tickets`` is the
+    project-wide existence index. Omitting it preserves the legacy API.
+    Legacy records are covered by a ticket mapping; explicit author dispositions
+    cover decisions without requiring artificial tickets. Evidence references are
+    recorded, not automatically verified for scientific sufficiency.
     """
-    remarks = [r for r in records if r["atomic_of"] is None]
+    selected = [r for r in records if round_id is None or r.get("round", "") == round_id]
+    remarks = [r for r in selected if r["atomic_of"] is None]
     mapping: dict[str, list[str]] = {}
     duplicate: set[str] = set()
+    invalid: set[str] = set()
+    uncovered: set[str] = set()
+    unresolved: set[str] = set()
     for r in remarks:
         rid = r["id"]
         if rid in mapping:
             duplicate.add(rid)
         mapping[rid] = list(r.get("tickets") or [])
+        disposition = r.get("disposition")
+        resolution = r.get("resolution", "open")
+        evidence = r.get("evidence", [])
+        has_evidence = (isinstance(evidence, list) and bool(evidence)
+                        and all(isinstance(e, str) and e.strip() for e in evidence))
+        if (disposition not in (None, "accepted", "rejected", "deferred", "already_addressed")
+                or resolution not in ("open", "resolved")
+                or (disposition in ("rejected", "deferred")
+                    and (not isinstance(r.get("reason"), str) or not r["reason"].strip()))
+                or (resolution == "resolved" and not has_evidence)
+                or (disposition == "already_addressed"
+                    and (resolution != "resolved" or not has_evidence))):
+            invalid.add(rid)
+        if not disposition and not mapping[rid]:
+            uncovered.add(rid)
+        if resolution != "resolved":
+            unresolved.add(rid)
 
-    uncovered = sorted(rid for rid, tks in mapping.items() if not tks)
     referenced = {t for tks in mapping.values() for t in tks}
-    orphan = sorted(universe - referenced)
-    unknown = sorted(referenced - universe)
-
+    existing = universe if existing_tickets is None else existing_tickets
     return {
         "remark_count": len(remarks),
-        "covered": len(remarks) - len(uncovered),
-        "uncovered_remarks": uncovered,
-        "orphan_tickets": orphan,
-        "unknown_ticket_refs": unknown,
+        "covered": len(remarks) - len(uncovered | invalid),
+        "uncovered_remarks": sorted(uncovered),
+        "unresolved_remarks": sorted(unresolved),
+        "invalid_records": sorted(invalid),
+        "orphan_tickets": sorted(universe - referenced),
+        "unknown_ticket_refs": sorted((referenced | universe) - existing),
+        "out_of_round_ticket_refs": sorted(referenced - universe),
         "duplicate_ids": sorted(duplicate),
         "map": mapping,
     }
 
 
 def coverage_ok(report: dict) -> bool:
-    """A clean coverage report has no uncovered, orphan, unknown, or duplicate items."""
-    return not (
-        report["uncovered_remarks"]
-        or report["orphan_tickets"]
-        or report["unknown_ticket_refs"]
-        or report["duplicate_ids"]
-    )
+    """Clean decision coverage does not imply that remarks have been resolved."""
+    return not any(report.get(key) for key in (
+        "uncovered_remarks", "orphan_tickets", "unknown_ticket_refs",
+        "out_of_round_ticket_refs", "duplicate_ids", "invalid_records",
+    ))
 
 
 # --------------------------------------------------------------------------- #
@@ -373,8 +398,8 @@ def _cmd_archive(args) -> int:
 
 def _cmd_segment(args) -> int:
     text = extract_text(args.path)
-    source_name = args.source_name or args.path.name
-    records = segment(text, args.reviewer, source_name)
+    source_name = args.source_name or str(args.path)
+    records = segment(text, args.reviewer, source_name, args.round)
     write_ledger(records, sys.stdout)
     log.info("segmented %d candidate remark(s) for %s", len(records), args.reviewer)
     return 0
@@ -398,9 +423,8 @@ def _cmd_coverage(args) -> int:
     universe: set[str] = set()
     if args.tickets:
         universe |= {t.strip() for t in args.tickets.split(",") if t.strip()}
-    if args.tickets_dir:
-        universe |= _ticket_ids_from_dir(args.tickets_dir)
-    report = coverage(records, universe)
+    existing = _ticket_ids_from_dir(args.tickets_dir) if args.tickets_dir else None
+    report = coverage(records, universe, existing_tickets=existing, round_id=args.round)
     _print_json(report)
     return 0 if coverage_ok(report) else 1
 
@@ -423,8 +447,9 @@ def build_parser() -> argparse.ArgumentParser:
     ps.add_argument("path", type=Path)
     ps.add_argument("--reviewer", required=True,
                     help="reviewer label used in the id prefix, e.g. R1")
+    ps.add_argument("--round", default="", help="round label; prefixes new remark ids")
     ps.add_argument("--source-name", default=None,
-                    help="name used in the source field (default: file name)")
+                    help="name used in the source field (default: input path)")
     ps.set_defaults(func=_cmd_segment)
 
     pd = sub.add_parser("dedupe", help="fold atomic/duplicate comments into remarks")
@@ -433,10 +458,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     pc = sub.add_parser("coverage", help="cross-check remark-to-ticket coverage")
     pc.add_argument("ledger", type=Path)
-    pc.add_argument("--tickets", default=None,
+    pc.add_argument("--tickets", required=True,
                     help="comma-separated ticket ids in the universe")
     pc.add_argument("--tickets-dir", type=Path, default=None,
-                    help="dir of NNNN-*.erg tickets to build the universe from")
+                    help="project ticket existence index; does not enlarge round universe")
+    pc.add_argument("--round", default=None, help="check only records with this round label")
     pc.set_defaults(func=_cmd_coverage)
 
     return p
