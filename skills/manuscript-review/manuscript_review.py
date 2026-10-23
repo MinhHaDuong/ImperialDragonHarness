@@ -154,7 +154,7 @@ def fetched_texts(url, tools):
         for tool in matching:
             text = tool_text(tool["content"]).strip()
             if text.startswith("REDIRECT DETECTED:"):
-                reported = re.findall(r"^Redirect URL \(from[^\n]*\):[ \t]*(https?://\S+)[ \t]*$", text, re.M)
+                reported = re.findall(r"^[ \t]*Redirect URL \(from[^\n]*\):[ \t]*(https?://\S+)[ \t]*$", text, re.M)
                 if len(reported) != 1:
                     return []
                 targets.extend(reported)
@@ -303,7 +303,7 @@ def durable_trace(trace):
 
 def ledger_records(review, verified, round_id, source):
     checks = {check["finding_id"]: check for check in verified["verification"]}
-    return [{"id": f"{round_id}-{finding['id']}", "reviewer": "R1", "category": finding["severity"],
+    return [{"id": f"{round_id}-{finding['id']}", "reviewer": "R1", "category": "",
              "text": finding["text"], "source": f"{source}#{finding['id']}", "tickets": [],
              "atomic_of": None, "round": round_id, "disposition": None, "reason": "",
              "resolution": "open", "evidence": [

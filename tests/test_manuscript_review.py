@@ -173,8 +173,10 @@ def source_check(url="https://example.org/paper"):
 
 
 def redirect_notice(target):
-    return ("REDIRECT DETECTED:\nOriginal URL: https://example.org/paper\n"
-            f"Redirect URL (from the server's Location header): {target}\nStatus: 302\n")
+    return ("REDIRECT DETECTED: The URL redirects to a location that was not fetched automatically.\n\n"
+            "    Original URL: https://example.org/paper\n"
+            f"    Redirect URL (from the server's Location header — server-supplied, not verified): {target}\n"
+            "    Status: 302 Found\n")
 
 
 def redirected_verification(initial, extra_fetches):
