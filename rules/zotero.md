@@ -10,8 +10,7 @@ last-reviewed: 2026-10-16
 Loaded when you touch a bibliography or a staging directory. The other half of
 its trigger is a task, which no glob reaches: `/zotero` names this file, and a
 session doing Zotero management by hand
-should read it. (Formerly titled "Electronic document management (EDM)" — the
-acronym is retired; the discipline is Zotero-specific.)
+should read it.
 
 Discipline for source documents and bibliography across writing and research
 projects. Zotero is the system of record; git holds neither the sources nor the
@@ -61,7 +60,8 @@ projects. Zotero is the system of record; git holds neither the sources nor the
   (`pdftoppm -png -scale-to 1500`) and read it. A grep cannot find a formula
   that was never extracted, so a nil result is not a negative finding.
 - **Project `.bib` files are also staging**, git-ignored, synced to Zotero. The
-  `.bib` is provenance scaffolding, not the source of truth.
+  `.bib` is provenance scaffolding, not the source of truth. A
+  cited-works-availability test guards it (`prose-adherence-tests.md`).
 - **Periodic sync + purge.** Reconcile staging to Zotero (correct item type,
   scraped metadata, file attachment) and **purge staging on archival after
   publication** — Zotero retains everything. The reconcile is run by the author

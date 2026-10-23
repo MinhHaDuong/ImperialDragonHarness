@@ -7,7 +7,6 @@ last-reviewed: 2026-09-24
 # Harness rules — how they load
 
 `~/.claude/rules/**.md` is loaded by the runtime itself, not by a hook. The
-mechanism was isolated on 2026-09-09 in the Claude Code bundle (2.1.266): the
 rules directory is walked at session start and each `.md` is sorted on one
 question — does its frontmatter declare `paths:`?
 
@@ -19,8 +18,7 @@ question — does its frontmatter declare `paths:`?
   matching file. These are the rules an agent does *not* have by default, so
   they are the ones this index names.
 
-That is the whole index. It is short because the runtime already did the work;
-it was 942 words while shipping full copies of what it summarised.
+That is the whole index. It is short because the runtime already did the work.
 
 ## Conditional rules — absent until a matching file is touched
 
@@ -39,7 +37,7 @@ it was 942 words while shipping full copies of what it summarised.
 | [lang/en.md](./lang/en.md) | prose files | English norms: one spelling variety, serial comma, sentence-case headings. |
 | [authoring-skills.md](./authoring-skills.md) | `**/SKILL.md`, `**/skills/**/*.md` | Writing a skill: name capabilities not tools, discoverability-first `description:`, quoted frontmatter, declared concurrency, skill-not-command, test one before blasting, naming. |
 | [zotero.md](./zotero.md) | `**/*.bib`, `**/*.ris`, `**/docs/**` | Zotero management — Zotero is the system of record; `docs/` and `.bib` are git-ignored staging. Also named by `/zotero`. |
-| [make.md](./make.md) | `**/Makefile`, `**/*.mk` | One output per rule, target is the exact path written, sentinel stamps, `.PHONY` for aliases only, no hand-curated data, analysis and writing builds split. |
+| [make.md](./make.md) | `**/Makefile`, `**/*.mk` | One output per rule, target is the exact path written, `.DELETE_ON_ERROR`, the `RUN` prefix for Python recipes, no hand-curated data, analysis and writing builds split. |
 | [manuscript-build.md](./manuscript-build.md) | `**/Makefile`, `**/_quarto.y(a)ml`, `**/*.latexmkrc` | An unresolved `\cite`/`\ref` is a link error, not a warning: gate the build on the log, vendor the check, `.DELETE_ON_ERROR`; figures are script-built, never drawn inline. |
 | [state.md](./state.md) | `STATE.md` | STATE.md format spec — sections, length cap, pruning rules. |
 
@@ -75,11 +73,10 @@ single source for prose/code review routing.
 Bodies in
 context already, listed here only so an adapter knows what to ship, and
 `claude-code.md` is the one an adapter on another runtime skips. This index is
-itself conditional (`paths:` on the rules tree): it was 20% of the resident set
-while arguing that describing a resident body again is paying for it twice.
+itself conditional (`paths:` on the rules tree), since describing a resident body
+again is paying for it twice.
 
-Three former rule bodies left in 2026-09-09 because their trigger is a *task*,
-which no `paths:` glob reaches: they are the skills `/pdf-finish`,
+A rule whose trigger is a *task*, which no `paths:` glob reaches, is a skill: `/pdf-finish`,
 `/cut-prose` and `/submission-event`. A skill's description stays resident in
 the catalog and its body loads on invocation — the same pointer-and-payload
 split as `paths:`, for triggers a filename cannot express.
@@ -97,14 +94,11 @@ Compliance is verified ex post by the `verify-adherence` skill.
 
 Each rule body carries a `last-reviewed: YYYY-MM-DD` marker, in the frontmatter
 where the file has one, else as an HTML comment on the first line; a new rule
-body gets its marker at creation. Nothing warns on an old one any more: the
-session-start warning was dropped by ticket 0976 after 343 sessions in which
-it never led to a review.
+body gets its marker at creation. Nothing warns on an old one.
 
 Read the marker for what it records: deliberate review passes, not edits.
 Nothing bumps it when a rule is amended in place, so an old stamp is weak
-evidence of rot — on 2026-08-14 the two loudest warnings named the two files
-with the most commits since their stamps — and a recent one is worth exactly as
+evidence of rot, and a recent one is worth exactly as
 much as the pass that set it. Stamping a file you have not read makes the
 marker lie, and nothing downstream can catch that.
 

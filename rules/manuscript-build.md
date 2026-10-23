@@ -9,7 +9,7 @@ last-reviewed: 2026-10-09
 # Manuscript builds — assert the product, not the exit code
 
 Loaded when a manuscript build (LaTeX/tectonic, Quarto/pandoc) is set up or
-changed — the `paths:` globs are coarse on `Makefile`, which any project may have, so read past this line only if the build in front of you produces a document. The Make rule in `make.md` says that `make` checks the
+changed — the `paths:` globs are coarse on `Makefile`, which any project may have, so read past this line only if the build in front of you produces a document. The Make rule in [make.md](./make.md) says that `make` checks the
 recipe's exit code, not what the recipe produced. Here that takes a sharper
 form: the recipe succeeds **and the product is wrong**.
 
@@ -56,10 +56,9 @@ warning, never on the rendered text.
   runs before the target and has nothing to read yet. The recipe is stronger
   anyway: `make` never splits one, so neither `-j` nor a build launched from
   the subdirectory can route around it.
-- **`.DELETE_ON_ERROR:` is load-bearing.** `make` leaves a target whose recipe
-  failed. Without it the rejected PDF stays on disk *newer* than its sources,
-  the next `make` reports "up to date", and the guard never runs again — the
-  failure silences its own alarm.
+- **`.DELETE_ON_ERROR:` is load-bearing** ([make.md](./make.md)): without it
+  the rejected PDF stays newer than its sources, `make` reports "up to date",
+  and the guard never runs again — the failure silences its own alarm.
 - **A permanent red fixture**, run on every build rather than once by hand: a
   guard whose "all clear" is indistinguishable from "I could not look" is not
   a guard.
