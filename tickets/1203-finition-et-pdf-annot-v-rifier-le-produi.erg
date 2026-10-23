@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Finition et PDF annoté : vérifier le produit rendu
+Created: 2026-10-23
+Author: Codex MOE
+
+--- log ---
+2026-10-23T09:11Z Codex MOE created
+
+--- body ---
+## Context
+F5 : contrôles de mise en page promis sans outil ; compilation accepte citations indéfinies ; bib ignorée absente de git archive ; variantes par mutation/restauration.
+
+## Exit criteria
+- [ ] Finition distingue contrôles mécaniques réellement exécutés et inspection visuelle des pages, avec limites consignées ; ne pas construire un analyseur général de mise en page.
+- [ ] PDF annoté compilé sur les entrées complètes et épinglées, bibliographie comprise ; une citation non résolue interdit une livraison réussie.
+- [ ] Fallback bibliographique correct ou refus explicite quand l’outil requis manque ; pas de PDF présent confondu avec PDF valide.
+- [ ] Variantes rendues dans une copie isolée ; anonymisation cible les identifiants de l’auteur/version sans supprimer les DOI ordinaires de bibliographie.
+- [ ] Tests comportementaux sur journal citations indéfinies, dépendance bibliographique non suivie et absence de mutation de la source.
+
+## Plan / first check
+Relevant files: skills/pdf-finish/, skills/track-changes-pdf/, tests/test_track_changes_pdf.py. Règle existante rules/manuscript-build.md à suivre sans la modifier. Test initial : faux compilateur écrit PDF + log citations indéfinies, le helper refuse.
+
+## Review
+KISS obligatoire. Astra et Fable valident les skills finaux ; le MOE conserve identités effectives, révisions et décisions. Aucun exécutant ne fusionne ni ne supprime l’ancien outil de sa propre initiative.

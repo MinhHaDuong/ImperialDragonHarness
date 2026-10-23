@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Zotero et notes : unifier rattachement et reçus d’archivage
+Created: 2026-10-23
+Author: Codex MOE
+
+--- log ---
+2026-10-23T09:11Z Codex MOE created
+
+--- body ---
+## Context
+F3 : import recommande parfois de recréer la notice sans fichier ; backfill prescrit attachement. Notes Markdown requises mais exclues de check-staging ; chemin d’intake et moment d’import incohérents.
+
+## Exit criteria
+- [ ] Notice existante sans fichier : attachement à cette notice, sans doublon forcé ; consignes d’import/backfill cohérentes.
+- [ ] Chemin concret pour archiver une note Markdown comme Document avec pièce jointe et lien à l’œuvre ; reçu de stockage vérifiable.
+- [ ] La réconciliation des documents ne peut être présentée comme archivage complet des notes sans les avoir vérifiées ; une méthode explicite couvre les notes produites.
+- [ ] Related-work-note et lecture utilisent le même moment d’archivage que le contrat Zotero ; pas de second catalogue bibliographique.
+- [ ] Conserver les garanties existantes du backend, ne pas inventer de schéma de synchronisation ; tests uniquement si le comportement du helper change.
+
+## Plan / first check
+Relevant files: skills/zotero/, skills/reading-note/, skills/related-work-note/SKILL.md, scripts/zotero.py si nécessaire, tests Zotero. Le lot bibliographie possède les runbooks validate/bib-merge ; coordonner plutôt que les éditer.
+
+## Review
+KISS obligatoire. Astra et Fable valident les skills finaux ; le MOE conserve identités effectives, révisions et décisions. Aucun exécutant ne fusionne ni ne supprime l’ancien outil de sa propre initiative.

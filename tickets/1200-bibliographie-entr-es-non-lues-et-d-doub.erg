@@ -1,0 +1,24 @@
+%erg 0.1
+Title: Bibliographie : entrées non lues et dédoublonnage des DOI
+Created: 2026-10-23
+Author: Codex MOE
+
+--- log ---
+2026-10-23T09:11Z Codex MOE created
+
+--- body ---
+## Context
+F2 : validate-refs ignore des entrées BibTeX valides ; bib-merge compare les DOI seulement à auteur/année égal et ne lit pas date.
+
+## Exit criteria
+- [ ] Toute entrée plausible est analysée ou signalée explicitement non lue ; une entrée valide inline ou mixte ne disparaît pas du compte.
+- [ ] Un DOI identique est dédoublonné indépendamment de l’auteur/année ; date BibLaTeX et year sont compris ; les œuvres distinctes restent distinctes.
+- [ ] Le contrôle HTTP est décrit comme accessibilité et ne certifie pas identité ou soutien de l’affirmation ; la chaîne documente ces vérifications de fond séparément.
+- [ ] Préserver append-only et dry-run ; réutiliser un parseur/primitives existants ou une dépendance justifiée, sans nouvel empilement de regex.
+- [ ] Tests des cas reproduits F2, bibliographie mixte, date/year et sauvegarde des clés existantes.
+
+## Plan / first check
+Relevant files: scripts/{validate-refs.py,bib-merge.py}, tests/test_{validate_refs,bib_merge}.py, skills/related-work-note/runbooks/validate.md, skills/conference-submission-prep/runbooks/bib-merge.md. Ne pas modifier les cartes SKILL.md des autres lots. Test initial : une entrée inline valide doit être comptée.
+
+## Review
+KISS obligatoire. Astra et Fable valident les skills finaux ; le MOE conserve identités effectives, révisions et décisions. Aucun exécutant ne fusionne ni ne supprime l’ancien outil de sa propre initiative.
