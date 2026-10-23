@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Align askMinh with the uv environment practice
+Created: 2026-10-23
+Author: Minh Ha-Duong
+Closed: moved to askMinh tickets/0001 (git-erg installed there)
+
+--- log ---
+2026-10-23T14:07Z Minh Ha-Duong created
+2026-10-23T14:11Z Minh Ha-Duong closed — moved to askMinh tickets/0001 (git-erg installed there)
+
+--- body ---
+## Context
+~/CNRS/code/askMinh is a git repo on branch master with no remote. It has requirements.txt, a Makefile with `PYTHON = venv/bin/python3` (a hand-made venv), no pyproject.toml and no uv.lock. Observed 2026-10-23: 4 uncommitted files in the working tree.
+
+Practice to reach: `rules/coding-python.md` (its "Environment principles" and "Environment rules" paragraphs), tracked by 1206.
+
+## Constraints
+Do the work in a git worktree: the 4 uncommitted files are the author's and must stay untouched. No remote exists, so the change lands by a local branch merged by the author.
+
+## Exit criteria
+- [ ] pyproject.toml and a committed uv.lock describe the dependencies; no hand-kept requirements.txt
+- [ ] the Makefile has no PYTHON variable; recipes that run Python tools go through the `RUN` prefix
+- [ ] no `pip install` in the Makefile, README or docs/
+- [ ] the repo's own tests or smoke command pass from a bare shell, output quoted in the PR or log
+- [ ] the alignment check of 1206 prints `ok` in ~/CNRS/code/askMinh
