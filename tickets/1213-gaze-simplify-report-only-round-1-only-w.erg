@@ -1,0 +1,33 @@
+%erg 0.1
+Title: gaze simplify: report-only, round 1 only, with a proportion question
+Created: 2026-10-23
+Author: claude
+
+--- log ---
+2026-10-23T21:02Z claude created
+
+--- body ---
+## Context
+Gaze phase 5 (simplify, `skills/gaze/references/battery.md` §5) ran ten times
+on PRs #1638 and #1640 (2026-10-23): ~70-110 s and one seat per round, CLEAN
+or nits every time, nothing applied. It never flagged the ~55 lines of
+lock-claim machinery added to #1640 against theoretical races; the author did,
+and they were deleted (97b4508d). Simplify judges hunks (duplication, helpers)
+and never asks whether a defence is worth its cost against the threat.
+
+Author decision (2026-10-23): options A + B.
+
+A. Report-only, round 1 only. Gaze makes no commits: simplify findings are
+   reported like panel findings and the coder acts on them. Re-run on a later
+   round only when the diff grew materially since the last simplify pass.
+B. Proportion question. The reviewer also names lines that defend against a
+   scenario no real actor produces, and what they cost (lines, branches,
+   tests), proposing deletion.
+
+## Exit criteria
+- [ ] battery.md §5 states report-only and the round-1 / material-growth trigger; the apply-and-re-anchor procedure is gone
+- [ ] battery.md §5 reviewer brief carries the proportion question (B)
+- [ ] gaze SKILL.md no longer says gaze commits simplify fixes (lines on "only commits", the /simplify exception, Fixing)
+- [ ] verify-gate rule 4 still holds simplify must-fix findings load-bearing, satisfied by a coder fix or a justified disposition
+- [ ] Doc-propagation: no remaining reference to gaze committing on the PR branch (`rg -n "simplify" skills/`)
+- [ ] `make check-fast` and `make lint` pass
