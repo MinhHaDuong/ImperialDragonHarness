@@ -294,8 +294,11 @@ def brief(manifest, run, stage, question, review=None):
         "Do not use offset/limit to skip material. "
         + ("Then actually use WebSearch and WebFetch. " if stage == "review" else
            "Retrieve each finding's decisive sources with WebFetch; search only when needed to locate evidence. ") +
-        "In every WebFetch prompt request verbatim relevant quotations with source locators, "
+        "In every WebFetch prompt request one short CONTIGUOUS verbatim quotation with a source locator, "
         "rather than a paraphrase. Fetch output may be model-processed; do not claim raw source bytes. "
+        "Copy that exact contiguous passage into sources.passage: never join quotes, insert ellipses, "
+        "or alter punctuation. A redirect/URL-only response is not scientific content: follow it to "
+        "retrieve substantive text or mark the declared source unavailable with unknown support. "
         "Verify decisive sources from fetched passages. Never cite from memory. "
         "Do not claim complete coverage if a page is illegible; disclose losses. "
         "Return a single JSON object, no surrounding prose. Author question: " + question + "\n"
@@ -374,13 +377,61 @@ def execute_stage(run, stage, prompt, args):
     return (run / "private" / f"{stage}.stream.jsonl").read_text(encoding="utf-8"), code
 
 
+def reuse_reader(source, run, manifest):
+    """Revalidate and copy a reader bundle unchanged; execute no new reader."""
+    source = source.resolve()
+    saved = json.loads((source / "status.json").read_text(encoding="utf-8"))
+    old = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
+    if saved.get("status") != "incomplete" or saved.get("stage") != "verify":
+        raise ValueError("resume requires a failed verification after a successful reader")
+    if (source / "ledger.jsonl").exists():
+        raise ValueError("resume refuses a source with an existing author ledger")
+    scope = ("clearance", "revision", "question", "annex_inventory", "missing_annexes")
+    if old["documents"] != manifest["documents"] or any(old.get(k) != manifest.get(k) for k in scope):
+        raise ValueError("resumed reader inputs or scope changed; run a new reader")
+    bundle = ["review.json", "review.md", "review.trace.json", "review.launch.json",
+              "review.termination.json", "reader-prompt.md", "private/review.stream.jsonl",
+              "private/review.prompt.txt", "private/review.stderr.txt"]
+    pinned = {f"private/{d['id']}/input.pdf": d["sha256"] for d in old["documents"]}
+    pinned.update({p[k]: p[k + "_sha256"] for d in old["documents"] for p in d["pages"]
+                   for k in ("text", "image")})
+    required = ["manifest.json", *bundle, *pinned]
+    receipt = source / "review.reuse.json"
+    if receipt.exists():
+        required.append("review.reuse.json")
+    for name in required:
+        path = source / name
+        if not path.is_file() or saved.get("artifacts", {}).get(name) != digest(path):
+            raise ValueError(f"reader artifact hash mismatch: {name}")
+        if name in pinned and pinned[name] != digest(path):
+            raise ValueError(f"reader manifest hash mismatch: {name}")
+    reader_run = Path(json.loads(receipt.read_text())["reader_run"]) if receipt.exists() else source
+    code = json.loads((source / "review.termination.json").read_text())["exit_code"]
+    review, trace = validate_stage((source / "private/review.stream.jsonl").read_text(encoding="utf-8"),
+                                   code, old, reader_run, "review")
+    if (review != json.loads((source / "review.json").read_text(encoding="utf-8"))
+            or review["review"] + "\n" != (source / "review.md").read_text(encoding="utf-8")
+            or durable_trace(trace) != json.loads((source / "review.trace.json").read_text(encoding="utf-8"))):
+        raise ValueError("saved reader payload/Markdown/trace differs from original stream")
+    for name in bundle:
+        shutil.copyfile(source / name, run / name)
+    manifest["prompt_source_sha256"] = old["prompt_source_sha256"]
+    manifest["reader_origin"] = str(reader_run)
+    write_json(run / "review.reuse.json", {"source_run": str(source), "reader_run": str(reader_run),
+        "source_manifest_sha256": digest(source / "manifest.json"),
+        "source_status_sha256": digest(source / "status.json"),
+        "reader_stream_sha256": digest(source / "private/review.stream.jsonl"),
+        "observed_models": trace["observed_models"]})
+    return review
+
+
 def run_review(args):
     if args.clearance not in ("public", "cleared"):
         raise ValueError("uncleared fulltext requires the local/private route; hosted runner refused")
     run = args.run.resolve()
     if "release" not in run.parts or "review" not in run.parts:
         raise ValueError("run must be under the project's release/<date>/review/<run-id>/")
-    create_run(run, args.previous_run)
+    create_run(run, args.resume_review or args.previous_run)
     status = {"status": "incomplete", "stage": "prepare"}
     write_json(run / "status.json", status)
     try:
@@ -393,8 +444,11 @@ def run_review(args):
                     "prompt_source_sha256": digest(PROMPT)}
         write_json(run / "manifest.json", manifest)
         shutil.copyfile(PROMPT, run / "reader-prompt.md")
-        review = None
-        for stage in ("review", "verify"):
+        review = reuse_reader(args.resume_review, run, manifest) if args.resume_review else None
+        write_json(run / "manifest.json", manifest)
+        if args.resume_review:
+            status["reader_reused_from"] = str(args.resume_review.resolve())
+        for stage in (("verify",) if args.resume_review else ("review", "verify")):
             status["stage"] = stage
             write_json(run / "status.json", status)
             raw, code = execute_stage(run, stage, brief(manifest, run, stage, args.question, review), args)
@@ -432,7 +486,9 @@ def main():
     parser.add_argument("--annex-inventory", required=True, help="State supplied/expected annexes, or none expected")
     parser.add_argument("--missing-annex", action="append", default=[])
     parser.add_argument("--run", type=Path, required=True)
-    parser.add_argument("--previous-run", type=Path)
+    history = parser.add_mutually_exclusive_group()
+    history.add_argument("--previous-run", type=Path)
+    history.add_argument("--resume-review", type=Path, help="Reuse a validated reader after failed verification")
     parser.add_argument("--revision", required=True, help="Manuscript commit or immutable revision identifier")
     parser.add_argument("--round", required=True)
     parser.add_argument("--question", required=True)
