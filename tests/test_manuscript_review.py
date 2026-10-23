@@ -172,6 +172,67 @@ def source_check(url="https://example.org/paper"):
                          "supports_claim": "yes", "passage": "Source passage", "locator": "p. 4"}]}
 
 
+def redirect_notice(target):
+    return ("REDIRECT DETECTED:\nOriginal URL: https://example.org/paper\n"
+            f"Redirect URL (from the server's Location header): {target}\nStatus: 302\n")
+
+
+def redirected_verification(initial, extra_fetches):
+    events = [json.loads(line) for line in stream({"verification": [source_check()]}).splitlines()]
+    for event in events:
+        for block in event.get("message", {}).get("content", []):
+            if block.get("tool_use_id") == "3":
+                block["content"] = initial
+    for index, (url, content) in enumerate(extra_fetches):
+        call_id = f"redirect-{index}"
+        events[-1:-1] = [
+            {"type": "assistant", "message": {"content": [{"type": "tool_use", "id": call_id,
+                "name": "WebFetch", "input": {"url": url}}]}},
+            {"type": "user", "message": {"content": [{"type": "tool_result", "tool_use_id": call_id,
+                "content": content, "is_error": False}]}}]
+    return "\n".join(json.dumps(event) for event in events)
+
+
+@pytest.mark.parametrize("hops", [1, 2])
+def test_verifier_accepts_exact_passage_after_observed_native_redirect_chain(hops):
+    targets = [f"https://example.org/hop-{i}?error=cookies_not_supported&code=exact-nonce" for i in range(hops)]
+    fetches = [(url, redirect_notice(targets[i + 1]) if i + 1 < hops else "Source passage")
+               for i, url in enumerate(targets)]
+    raw = redirected_verification(redirect_notice(targets[0]), fetches)
+    _, trace = mr.validate_stage(raw, 0, manifest(), Path("/run"), "verify", source_review())
+    assert trace["successful_tools"][-1]["input"]["url"] == targets[-1]
+    assert trace["successful_tools"][-1]["result_line"] > trace["successful_tools"][-1]["call_line"]
+
+
+@pytest.mark.parametrize("case", ["missing", "missing-intermediate", "unrelated", "cycle", "ordinary-body",
+                                      "ambiguous", "query-mismatch", "hop-limit"])
+def test_redirect_retrieval_never_borrows_unobserved_or_unrelated_content(case):
+    target, last = "https://example.org/idp?nonce=exact", "https://example.org/final?nonce=exact"
+    initial, fetches = redirect_notice(target), []
+    if case == "missing-intermediate":
+        fetches = [(last, "Source passage")]
+    elif case == "unrelated":
+        fetches = [(target, "Unrelated substantive passage"), (last, "Source passage")]
+    elif case == "cycle":
+        fetches = [(target, redirect_notice("https://example.org/paper")), (last, "Source passage")]
+    elif case == "ordinary-body":
+        initial = "The paper discusses this quoted example:\n" + initial
+        fetches = [(target, "Source passage")]
+    elif case == "ambiguous":
+        initial += f"Redirect URL (from another header): {last}\n"
+        fetches = [(target, "Source passage"), (last, "Source passage")]
+    elif case == "query-mismatch":
+        fetches = [(target.replace("nonce=exact", "nonce=different"), "Source passage")]
+    elif case == "hop-limit":
+        targets = [f"https://example.org/hop-{i}" for i in range(10)]
+        initial = redirect_notice(targets[0])
+        fetches = [(url, redirect_notice(targets[i + 1]) if i < 9 else "Source passage")
+                   for i, url in enumerate(targets)]
+    raw = redirected_verification(initial, fetches)
+    with pytest.raises(ValueError, match="fetch"):
+        mr.validate_stage(raw, 0, manifest(), Path("/run"), "verify", source_review())
+
+
 def test_decisive_urls_require_declaration_and_actual_reader_retrieval():
     data = source_review()
     mr.validate_stage(stream(data), 0, manifest(), Path("/run"), "review")

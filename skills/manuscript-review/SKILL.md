@@ -113,3 +113,7 @@ only the verifier runs again. The new cycle explicitly combines the old reader's
 identity and evidence with a fresh verifier, preserving every earlier attempt.
 Fetch prompts demand one contiguous verbatim excerpt, without joined quotations
 or added ellipses; redirects without substantive content remain unavailable.
+Passage checking follows only explicit native redirect receipts through URLs
+actually fetched in that run, retaining their tool line locators. It rejects
+cycles, ambiguous targets and chains longer than eight redirects, and never
+substitutes an unrelated fetch or changes URL query parameters.

@@ -140,6 +140,34 @@ def tool_text(content):
     return ""
 
 
+def fetched_texts(url, tools):
+    """Follow at most eight native, actually fetched redirect edges verbatim."""
+    visited = set()
+    for _ in range(9):
+        if url in visited:
+            return []
+        visited.add(url)
+        matching = [t for t in tools if t["name"] == "WebFetch" and t["input"].get("url") == url]
+        if not matching:
+            return []
+        texts, targets = [], []
+        for tool in matching:
+            text = tool_text(tool["content"]).strip()
+            if text.startswith("REDIRECT DETECTED:"):
+                reported = re.findall(r"^Redirect URL \(from[^\n]*\):[ \t]*(https?://\S+)[ \t]*$", text, re.M)
+                if len(reported) != 1:
+                    return []
+                targets.extend(reported)
+            else:
+                texts.append(text)
+        if not targets:
+            return texts
+        if len(set(targets)) != 1:
+            return []
+        url = targets[0]
+    return []
+
+
 def cited_urls(text):
     return {url.rstrip(".,;:)") for url in re.findall(r"https?://[^\s<>\[\]\"']+", text)}
 
@@ -239,13 +267,11 @@ def validate_stage(raw, returncode, manifest, run, stage, review=None):
                 for name in SOURCE_CHECKS:
                     if source.get(name) not in ("yes", "no", "unknown"):
                         raise ValueError(f"source missing {name} check")
-                matching = [t for t in tools if t["name"] == "WebFetch"
-                            and t["input"].get("url") == source.get("url")]
                 if source["accessible"] == "yes":
-                    if not matching or not source.get("passage") or not source.get("locator"):
+                    fetched = fetched_texts(source.get("url"), tools)
+                    if not fetched or not source.get("passage") or not source.get("locator"):
                         raise ValueError("accessible source needs observed fetch, passage and locator")
-                    fetched = "\n".join(tool_text(t["content"]) for t in matching)
-                    if " ".join(source["passage"].split()) not in " ".join(fetched.split()):
+                    if not any(" ".join(source["passage"].split()) in " ".join(text.split()) for text in fetched):
                         raise ValueError("source passage absent from fetched tool result")
                 else:
                     attempted = any(t["name"] == "WebFetch" and t["input"].get("url") == source.get("url")
