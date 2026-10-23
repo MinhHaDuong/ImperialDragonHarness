@@ -1,0 +1,30 @@
+%erg 0.1
+Title: worktree-exit-preflight: count ignored files before roar removes a worktree
+Created: 2026-10-23
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-23T18:41Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+`scripts/worktree-exit-preflight.sh:76` gates `/roar`'s worktree removal
+(`skills/roar/close-and-clean.sh:411`) on `git status --porcelain
+--untracked-files=all`, which does not list ignored files. In a repo whose
+`.gitignore` is `*` (this harness), any file outside the allow-list (a
+draft, notes, a generated report) reads as clean and `git worktree remove`
+deletes it with the tree. PR 1640 met the same blind spot in
+`worktree-gc.sh` and fixed it there with `ownerless_tree_clean`
+(`--ignored=matching`, caches and `.tmp/` tolerated). Found by the roar
+sweep after PRs 1638/1640 (journal 2026-10-23-worktree-gc-ownerless-locks-1638-1640).
+
+## Exit criteria
+
+- [ ] The exit preflight blocks removal on an ignored file other than
+      regenerable caches, the root `.venv/` and `.tmp/` (its own gate).
+- [ ] One shared helper serves `worktree-gc.sh` and the preflight, or the
+      two lists are pinned equal by a test.
+- [ ] A test under a `*` ignore rule: an ignored draft blocks removal; a
+      tree holding only caches passes.
+- [ ] `make check` passes.
