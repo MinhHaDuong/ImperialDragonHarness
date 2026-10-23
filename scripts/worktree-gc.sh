@@ -8,10 +8,11 @@ set -euo pipefail
 # with a live pid or no checkable pid — none, pid 1, several, or past
 # pid_max — stays untouched, with two exceptions: a lock whose single pid
 # > 1 is dead is unlocked so the rails can proceed, and a harness lock
-# naming no owner on a tree with no work in it, ignored files included,
-# whose git metadata has sat idle for $WORKTREE_GC_OWNERLESS_IDLE_HOURS
-# (default 72) is unlocked only at the moment of removal, once every other
-# rail has passed), and no live
+# naming no owner on a tree with no work in it (ignored files included;
+# regenerable caches and the root .venv/ are disposable) whose git metadata
+# has sat idle for $WORKTREE_GC_OWNERLESS_IDLE_HOURS (default 72) is claimed
+# by an atomic rename, checked unchanged, and lifted only if the tree is
+# removed; any keep restores it), and no live
 # process has its cwd inside it. If the live-cwd scan reads nothing at all
 # (no python3, no /proc), nothing is removed. The last two rails
 # exist because "branch merged + tree clean" is the NORMAL state of a live
@@ -83,20 +84,6 @@ ownerless_tree_clean() {
     return 0
 }
 
-# The lock line `git worktree list` prints for one worktree now ("locked",
-# "locked <reason>", or nothing), read again just before an unlock.
-current_lock_line() {
-    local line in_tree=0
-    while IFS= read -r line; do
-        case "$line" in
-            "worktree $1") in_tree=1 ;;
-            "worktree "*) in_tree=0 ;;
-            locked|"locked "*) [ "$in_tree" -eq 1 ] && { printf '%s\n' "$line"; return 0; } ;;
-        esac
-    done < <(git -C "$repo" worktree list --porcelain 2>/dev/null)
-    return 0
-}
-
 # Liveness rail: snapshot every live process's cwd once (Linux /proc), on the
 # first removal candidate — a quiet repo never pays for it. One python3 call
 # for all entries, not one fork per process: a host with ~10k processes spent
@@ -127,11 +114,23 @@ branch=""
 locked_flag=0
 lock_reason=""
 
-reset() { path=""; branch=""; locked_flag=0; lock_reason=""; }
+# An owner-less lock claimed for removal sits at $claim (its `locked` file
+# renamed aside). Every exit that keeps the tree puts it back, unless a new
+# lock was written meanwhile; a removed tree takes the claim with it.
+claim=""
+restore_claim() {
+    if [ -n "$claim" ] && [ -e "$claim" ]; then
+        [ -e "${claim%.gc-claim}" ] || mv -- "$claim" "${claim%.gc-claim}" 2>/dev/null || true
+        rm -f -- "$claim"
+    fi
+    claim=""
+}
+trap restore_claim EXIT
+reset() { restore_claim; path=""; branch=""; locked_flag=0; lock_reason=""; }
 
 report_wip() {
     local tree="$1" base="$2" status
-    if ! status=$(git -C "$tree" status --porcelain --untracked-files=all 2>/dev/null); then
+    if ! status=$(git -C "$tree" --no-optional-locks status --porcelain --untracked-files=all 2>/dev/null); then
         echo "worktree-gc: skip $base (could not inspect worktree status)" >&2
         skipped_wip=$((skipped_wip + 1))
         return 0
@@ -234,6 +233,23 @@ flush() {
                     skipped_locked=$((skipped_locked + 1))
                     reset; return
                 fi
+                # Claim the lock in one atomic rename before any scratch is
+                # purged, and check it is still the one read: a lock renewed
+                # or replaced meanwhile is kept, and one written after the
+                # claim makes `worktree remove` refuse the tree.
+                local gitdir
+                if ! gitdir=$(git -C "$path" rev-parse --absolute-git-dir 2>/dev/null) ||
+                   ! mv -- "$gitdir/locked" "$gitdir/locked.gc-claim" 2>/dev/null; then
+                    echo "worktree-gc: skip $base (lock changed since it was read — treated as in use)"
+                    skipped_locked=$((skipped_locked + 1))
+                    reset; return
+                fi
+                claim="$gitdir/locked.gc-claim"
+                if [ "$(cat -- "$claim" 2>/dev/null)" != "$lock_reason" ]; then
+                    echo "worktree-gc: skip $base (lock changed since it was read — treated as in use)"
+                    skipped_locked=$((skipped_locked + 1))
+                    reset; return
+                fi
                 stale_why="no visible owner, idle ${idle}h"
                 unlock_at_removal=1
             else
@@ -273,7 +289,8 @@ flush() {
             reset; return
         fi
     fi
-    # Only a gone, inactive, unlocked tree reaches this point. The review
+    # Only a gone, inactive tree reaches this point, unlocked or with its
+    # owner-less lock claimed (restored by reset on any keep). The review
     # commands own these two scratch paths; clear them before the WIP check,
     # while retaining every other uncommitted file as a removal blocker.
     # A tracked file under either path may contain real edits; never erase it.
@@ -294,20 +311,9 @@ flush() {
     if report_wip "$path" "$base"; then
         reset; return
     fi
-    # An owner-less lock is lifted only here, after every rail passed: a tree
-    # a later rail keeps also keeps its lock, and the idle check runs again
-    # on the next pass.
+    # The claimed owner-less lock is reported lifted only now, after every
+    # rail passed; if the removal below fails, reset puts it back.
     if [ "$unlock_at_removal" -eq 1 ]; then
-        if [ "$(current_lock_line "$path")" != "locked${lock_reason:+ $lock_reason}" ]; then
-            echo "worktree-gc: skip $base (lock changed since it was read — treated as in use)"
-            skipped_locked=$((skipped_locked + 1))
-            reset; return
-        fi
-        if ! git -C "$repo" worktree unlock "$path" 2>/dev/null; then
-            echo "worktree-gc: skip $base (lock $stale_why, unlock failed)" >&2
-            skipped_locked=$((skipped_locked + 1))
-            reset; return
-        fi
         echo "worktree-gc: unlocked $base (lock $stale_why — stale marker)"
     fi
     if git -C "$repo" worktree remove "$path" 2>/dev/null; then

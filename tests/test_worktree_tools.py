@@ -1109,6 +1109,51 @@ def test_gc_reclaims_idle_ownerless_tree_holding_only_caches(origin):
     assert str(wt) not in _worktree_paths(primary)
 
 
+def test_gc_status_read_does_not_restart_idle_clock(origin):
+    """The GC's own status read of a live-branch tree must not rewrite its
+    index: that would reset the idle clock of an owner-less tree each pass."""
+    _remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-clock", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t11 (owner pid not visible)")
+    _age_worktree_metadata(wt, 100)
+    index = Path(git(wt, "rev-parse", "--absolute-git-dir").stdout.strip()) / "index"
+    before = index.stat().st_mtime
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert index.stat().st_mtime == before
+
+
+def test_gc_restores_claimed_lock_when_removal_fails(origin):
+    """A claimed owner-less lock is lifted only with the tree: if `worktree
+    remove` fails, the lock is back and the next pass decides again."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-stuck", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t12 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-stuck")
+    _age_worktree_metadata(wt, 100)
+    # A git that refuses `worktree remove` up front, as it does for a tree
+    # holding an initialised submodule, and runs everything else.
+    real_git = shutil.which("git")
+    wrap = primary.parent / "refusing-git"
+    wrap.mkdir()
+    (wrap / "git").write_text(
+        "#!/usr/bin/env bash\n"
+        'for a in "$@"; do [ "$a" = remove ] && { echo refused >&2; exit 128; }; done\n'
+        f'exec {real_git} "$@"\n'
+    )
+    (wrap / "git").chmod(0o755)
+    fake_bin = primary.parent / "fake-bin"  # _gc's fake gh stays first after the wrapper
+    res = _gc(primary, extra_env={"PATH": f"{wrap}:{fake_bin}:{os.environ.get('PATH', '')}"})
+    assert res.returncode == 0
+    assert "could not remove agent-ownerless-stuck" in res.stderr
+    assert str(wt) in _worktree_paths(primary)
+    porcelain = git(primary, "worktree", "list", "--porcelain").stdout
+    assert "locked hunt t12 (owner pid not visible)" in porcelain
+    gitdir = Path(git(wt, "rev-parse", "--absolute-git-dir").stdout.strip())
+    assert not (gitdir / "locked.gc-claim").exists()
+
+
 def test_gc_oversized_idle_threshold_falls_back_to_default(origin):
     """A threshold too long to compare must not switch the idle check off:
     it falls back to 72 h, so a tree idle 10 h keeps its owner-less lock."""
