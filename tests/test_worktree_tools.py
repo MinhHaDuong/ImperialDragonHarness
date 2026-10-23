@@ -14,9 +14,11 @@ Exercises:
                                           draft (ticket 0174).
 """
 
+import os
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -104,7 +106,7 @@ def _ignore_worktree_tmp(primary):
         stream.write("\n/.tmp/\n")
 
 
-def _gc(primary, *, gh_response="[]", gh_exit=0):
+def _gc(primary, *, gh_response="[]", gh_exit=0, extra_env=None):
     fake_bin = primary.parent / "fake-bin"
     fake_bin.mkdir(exist_ok=True)
     gh = fake_bin / "gh"
@@ -119,6 +121,8 @@ def _gc(primary, *, gh_response="[]", gh_exit=0):
     env["PATH"] = f"{fake_bin}:{env.get('PATH', '')}"
     env["TEST_GH_RESPONSE"] = gh_response
     env["TEST_GH_EXIT"] = str(gh_exit)
+    env.pop("WORKTREE_GC_OWNERLESS_IDLE_HOURS", None)
+    env.update(extra_env or {})
     return run([str(SCRIPTS / "worktree-gc.sh"), str(primary)], env=env)
 
 
@@ -902,8 +906,9 @@ def test_gc_unlocks_and_removes_dead_pid_locked_worktree(origin):
 def test_gc_keeps_pid_1_locked_worktree(origin):
     """A lock recording pid 1 names no owner: inside a pid namespace (a
     sandboxed runtime) `$PPID` reads 1, and that session may still be live
-    while the live-cwd rail cannot see it. The GC skips it like a pid-less
-    lock, even with the branch gone and the tree clean."""
+    while the live-cwd rail cannot see it. While its tree was active within
+    the idle threshold, the GC keeps it, even with the branch gone and the
+    tree clean."""
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-pid1-lock", dirty=False)
     git(primary, "worktree", "lock", str(wt), "--reason",
@@ -912,7 +917,7 @@ def test_gc_keeps_pid_1_locked_worktree(origin):
 
     res = _gc(primary)
     assert res.returncode == 0
-    assert "skip agent-pid1-lock (locked, pid 1 names no owner" in res.stdout
+    assert "skip agent-pid1-lock (locked, no visible owner, idle 0h < 72h" in res.stdout
     assert "removed agent-pid1-lock" not in res.stdout
     assert str(wt) in _worktree_paths(primary)
     porcelain = git(primary, "worktree", "list", "--porcelain").stdout
@@ -965,6 +970,201 @@ def test_gc_skips_removal_when_live_cwd_scan_reads_nothing(origin):
     res = _gc(primary)
     assert res.returncode == 0
     assert "skip agent-blind (live-cwd scan read nothing" in res.stderr
+    assert str(wt) in _worktree_paths(primary)
+
+
+def _age_worktree_metadata(wt, hours):
+    """Backdate the git metadata `worktree-gc` reads for idleness."""
+    gitdir = Path(git(wt, "rev-parse", "--absolute-git-dir").stdout.strip())
+    then = time.time() - hours * 3600
+    for name in ("HEAD", "index", "logs/HEAD", "locked"):
+        f = gitdir / name
+        if f.exists():
+            os.utime(f, (then, then))
+
+
+@pytest.mark.parametrize("reason", [
+    "hunt t2204 (pid 1; observed tool-parent runtime)",
+    "hunt t2204 (owner pid not visible)",
+])
+def test_gc_reclaims_idle_ownerless_harness_lock(origin, reason):
+    """A harness lock naming no owner is reclaimed once its tree has sat idle
+    past the threshold (72 h by default): the remaining rails decide, so a
+    sandboxed session that died without /roar leaves nothing to clean by hand."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-idle", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", reason)
+    make_branch_gone(remote, primary, "agent-ownerless-idle")
+    _age_worktree_metadata(wt, 100)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "unlocked agent-ownerless-idle (lock no visible owner, idle 100h" in res.stdout
+    assert "removed agent-ownerless-idle" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
+
+
+@pytest.mark.parametrize("reason", [
+    "keep: author review",
+    "hunt t1 (pid 1) and (pid 1)",
+    "hunt t1 (owner pid not visible) (pid)",
+    "claude agent (pid 0)",
+    "claude agent (pid 4194305)",
+    "manual hold (pid 01)",
+    "manual hold (pid 1)",
+    "note: hunt t1 (owner pid not visible)",
+    "hunt t1 note quoting (pid 1)",
+])
+def test_gc_keeps_idle_lock_that_is_not_a_harness_ownerless_shape(origin, reason):
+    """Only the harness shapes are reclaimed by age: `(hunt|claude) … (pid 1`
+    digit-exact, or the whole reason `hunt t<id> (owner pid not visible)`. A
+    hand-made lookalike, an ambiguous, out-of-range or pid-0 lock stays an
+    opaque in-use marker, however long the tree has been idle."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-opaque-lock", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", reason)
+    make_branch_gone(remote, primary, "agent-opaque-lock")
+    _age_worktree_metadata(wt, 1000)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-opaque-lock (locked" in res.stdout
+    assert "removed agent-opaque-lock" not in res.stdout
+    assert str(wt) in _worktree_paths(primary)
+
+
+@pytest.mark.parametrize("scratch", ["work.txt", ".panel/1/review.md"])
+def test_gc_keeps_lock_of_idle_ownerless_tree_with_uncommitted_files(origin, scratch):
+    """Quiet git metadata is not proof a sandboxed session ended: one editing
+    files without git looks idle. A tree holding any uncommitted file, review
+    scratch included, keeps both its files and its lock, so the idle check
+    runs again on the next pass."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-wip", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t7 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-wip")
+    target = wt / scratch
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("in progress\n")
+    _age_worktree_metadata(wt, 100)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-ownerless-wip (locked, no visible owner, idle 100h, tree not clean" in res.stdout
+    assert target.exists()
+    porcelain = git(primary, "worktree", "list", "--porcelain").stdout
+    assert "locked hunt t7 (owner pid not visible)" in porcelain
+
+
+def _ignore_everything(primary):
+    """Mimic a repo whose .gitignore is `*`: every untracked file is ignored."""
+    exclude = Path(git(primary, "rev-parse", "--git-common-dir").stdout.strip())
+    if not exclude.is_absolute():
+        exclude = primary / exclude
+    exclude = exclude / "info" / "exclude"
+    exclude.parent.mkdir(parents=True, exist_ok=True)
+    with exclude.open("a") as stream:
+        stream.write("\n*\n")
+
+
+@pytest.mark.parametrize("scratch", ["draft.md", ".panel/1/review.md"])
+def test_gc_keeps_idle_ownerless_tree_holding_ignored_files(origin, scratch):
+    """`git worktree remove` deletes ignored files, and a repo may ignore `*`:
+    an ignored draft or review scratch keeps an owner-less tree and its lock."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-ign", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t9 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-ign")
+    _ignore_everything(primary)
+    target = wt / scratch
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("in progress\n")
+    _age_worktree_metadata(wt, 100)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "skip agent-ownerless-ign (locked, no visible owner, idle 100h, tree not clean" in res.stdout
+    assert target.exists()
+    assert str(wt) in _worktree_paths(primary)
+
+
+def test_gc_reclaims_idle_ownerless_tree_holding_only_caches(origin):
+    """Regenerable caches are not work: an owner-less tree holding only an
+    ignored __pycache__ and a root .venv (rebuilt from the lock) is still
+    reclaimed once idle."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-cache", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t10 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-cache")
+    _ignore_everything(primary)
+    (wt / "__pycache__").mkdir()
+    (wt / "__pycache__" / "m.cpython-311.pyc").write_bytes(b"\0")
+    (wt / ".venv" / "bin").mkdir(parents=True)
+    (wt / ".venv" / "bin" / "python").write_text("")
+    _age_worktree_metadata(wt, 100)
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert "removed agent-ownerless-cache" in res.stdout
+    assert str(wt) not in _worktree_paths(primary)
+
+
+def test_gc_status_read_does_not_restart_idle_clock(origin):
+    """The GC's own status read of a live-branch tree must not rewrite its
+    index: that would reset the idle clock of an owner-less tree each pass."""
+    _remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-clock", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t11 (owner pid not visible)")
+    _age_worktree_metadata(wt, 100)
+    index = Path(git(wt, "rev-parse", "--absolute-git-dir").stdout.strip()) / "index"
+    before = index.stat().st_mtime
+
+    res = _gc(primary)
+    assert res.returncode == 0
+    assert index.stat().st_mtime == before
+
+
+def test_gc_restores_ownerless_lock_when_removal_fails(origin):
+    """An owner-less lock is lifted only with the tree: if `worktree remove`
+    fails, the lock is back and the next pass decides again."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-stuck", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t12 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-stuck")
+    _age_worktree_metadata(wt, 100)
+    # A git that refuses `worktree remove` up front, as it does for a tree
+    # holding an initialised submodule, and runs everything else.
+    real_git = shutil.which("git")
+    wrap = primary.parent / "refusing-git"
+    wrap.mkdir()
+    (wrap / "git").write_text(
+        "#!/usr/bin/env bash\n"
+        'for a in "$@"; do [ "$a" = remove ] && { echo refused >&2; exit 128; }; done\n'
+        f'exec {real_git} "$@"\n'
+    )
+    (wrap / "git").chmod(0o755)
+    fake_bin = primary.parent / "fake-bin"  # _gc's fake gh stays first after the wrapper
+    res = _gc(primary, extra_env={"PATH": f"{wrap}:{fake_bin}:{os.environ.get('PATH', '')}"})
+    assert res.returncode == 0
+    assert "could not remove agent-ownerless-stuck" in res.stderr
+    assert str(wt) in _worktree_paths(primary)
+    porcelain = git(primary, "worktree", "list", "--porcelain").stdout
+    assert "locked hunt t12 (owner pid not visible)" in porcelain
+
+
+def test_gc_oversized_idle_threshold_falls_back_to_default(origin):
+    """A threshold too long to compare must not switch the idle check off:
+    it falls back to 72 h, so a tree idle 10 h keeps its owner-less lock."""
+    remote, primary = origin
+    wt = make_agent_worktree(primary, "agent-ownerless-env", dirty=False)
+    git(primary, "worktree", "lock", str(wt), "--reason", "hunt t8 (owner pid not visible)")
+    make_branch_gone(remote, primary, "agent-ownerless-env")
+    _age_worktree_metadata(wt, 10)
+
+    res = _gc(primary, extra_env={"WORKTREE_GC_OWNERLESS_IDLE_HOURS": "99999999999999999999"})
+    assert res.returncode == 0
+    assert "idle 10h < 72h" in res.stdout
+    assert "integer expression expected" not in res.stderr
     assert str(wt) in _worktree_paths(primary)
 
 

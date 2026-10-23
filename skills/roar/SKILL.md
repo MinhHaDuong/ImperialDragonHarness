@@ -194,7 +194,9 @@ base, once a passing gate record covers the bundle's candidate.
     Skip this step if not in a worktree. A worktree a subagent created and
     locked with its live pid is left to `worktree-gc` once its branch is
     merged and that pid has exited; a lock with no checkable pid (none,
-    pid 1, several, or past pid_max) is removed here or by hand.
+    pid 1, several, or past pid_max) is removed here. If its session dies
+    first, `worktree-gc` reclaims the harness shapes on a clean tree idle 72 h (hunt step 3), the
+    rest only by hand.
 10. **Clean only the completed task** — roar cleans only the completed task's
     explicitly identified closed-ticket/merged-PR branches and owned worktrees.
     Other branches and worktrees remain, even when merged. Repository-wide

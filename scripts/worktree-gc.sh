@@ -6,8 +6,12 @@ set -euo pipefail
 # changes), its branch is upstream-gone (merged + remote-deleted), it is
 # not the worktree this script is invoked from, it is not locked (a lock
 # with a live pid or no checkable pid — none, pid 1, several, or past
-# pid_max — stays untouched; only a lock whose single pid > 1 is dead is
-# unlocked so the rails can proceed), and no live
+# pid_max — stays untouched, with two exceptions: a lock whose single pid
+# > 1 is dead is unlocked so the rails can proceed, and a harness lock
+# naming no owner on a tree with no work in it (ignored files included;
+# regenerable caches and the root .venv/ are disposable) whose git metadata
+# has sat idle for $WORKTREE_GC_OWNERLESS_IDLE_HOURS (default 72) is
+# lifted just before removal and put back if the removal fails), and no live
 # process has its cwd inside it. If the live-cwd scan reads nothing at all
 # (no python3, no /proc), nothing is removed. The last two rails
 # exist because "branch merged + tree clean" is the NORMAL state of a live
@@ -37,6 +41,47 @@ skipped_locked=0
 skipped_live=0
 husks=0
 declare -a registered_paths=()
+ownerless_idle_hours="${WORKTREE_GC_OWNERLESS_IDLE_HOURS:-72}"
+[[ "$ownerless_idle_hours" =~ ^[0-9]{1,6}$ ]] || ownerless_idle_hours=72
+# The two owner-less lock reasons the harness writes (see the lock rail).
+legacy_pid1_re='^(hunt t[^[:space:]]+|claude [^[:space:](]+( [^[:space:](]+)?) [(]pid 1([^0-9]|$)'
+not_visible_re='^hunt t[^[:space:]]+ [(]owner pid not visible[)]$'
+
+# Hours since a worktree's git metadata last moved: HEAD, index and reflog
+# change with every checkout, commit and status refresh; the lock file dates
+# the lock. Prints nothing when no file can be read (the caller keeps it).
+idle_hours() {
+    local gitdir f m newest=0
+    gitdir=$(git -C "$1" rev-parse --absolute-git-dir 2>/dev/null) || return 0
+    for f in HEAD index logs/HEAD locked; do
+        m=$(stat -c %Y -- "$gitdir/$f" 2>/dev/null) || continue
+        [ "$m" -gt "$newest" ] && newest=$m
+    done
+    [ "$newest" -gt 0 ] && echo $(( ($(date +%s) - newest) / 3600 ))
+    return 0
+}
+
+# An owner-less tree counts as clean only if nothing is modified, untracked
+# or ignored, except regenerable caches (the root .venv/, rebuilt from the
+# lock, and tool caches anywhere) and .tmp/ (its own guard decides).
+# Ignored files count: a repo may ignore `*`, and `worktree remove` deletes
+# them. --no-optional-locks keeps this status from rewriting the index,
+# which would restart the tree's idle clock.
+ownerless_tree_clean() {
+    local out line p
+    out=$(git -C "$1" --no-optional-locks status --porcelain=v1 \
+        --untracked-files=all --ignored=matching 2>/dev/null) || return 1
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        case "$line" in "!! "*) ;; *) return 1 ;; esac
+        p="${line:3}"
+        case "/$p" in
+            /.tmp/*|/.venv/*|*/__pycache__/*|*/.pytest_cache/*|*/.ruff_cache/*|*/.mypy_cache/*) ;;
+            *) return 1 ;;
+        esac
+    done <<<"$out"
+    return 0
+}
 
 # Liveness rail: snapshot every live process's cwd once (Linux /proc), on the
 # first removal candidate — a quiet repo never pays for it. One python3 call
@@ -72,7 +117,7 @@ reset() { path=""; branch=""; locked_flag=0; lock_reason=""; }
 
 report_wip() {
     local tree="$1" base="$2" status
-    if ! status=$(git -C "$tree" status --porcelain --untracked-files=all 2>/dev/null); then
+    if ! status=$(git -C "$tree" --no-optional-locks status --porcelain --untracked-files=all 2>/dev/null); then
         echo "worktree-gc: skip $base (could not inspect worktree status)" >&2
         skipped_wip=$((skipped_wip + 1))
         return 0
@@ -135,7 +180,9 @@ flush() {
     # stale marker, not an active session: unlock it so the remaining rails
     # decide (2026-09-28: a locked tree under a pid dead for days held the
     # last on-disk copy of purged T2 memory; the lock blocked every GC
-    # pass). A lock with no recorded pid is an opaque in-use marker: skip.
+    # pass). A lock with no checkable pid is an opaque in-use marker, except
+    # the two harness owner-less shapes below.
+    local unlock_at_removal=0 stale_why=""
     if [ "$locked_flag" -eq 1 ]; then
         # Exactly one `(pid N` with N at most 4194304 (the Linux pid_max
         # ceiling); a second group or an out-of-range number reads as no
@@ -148,24 +195,51 @@ flush() {
         fi
         # Pid 1 names no owner either: `$PPID` reads 1 inside a pid
         # namespace (a sandboxed runtime), whose session may still be live
-        # and invisible to the live-cwd rail. Skip it like a pid-less lock;
-        # such a tree is removed by hand once its session ends.
+        # and invisible to the live-cwd rail. The harness writes two such
+        # shapes, `hunt t<id> (pid 1` or `claude <name> [<name>] (pid 1`
+        # (legacy, digit-exact) and hunt's whole reason `hunt t<id> (owner
+        # pid not visible)`; those are reclaimed once the tree's git metadata
+        # has sat idle past the threshold, the tree is clean by
+        # ownerless_tree_clean (so a quiet session editing without git keeps
+        # it) and every later rail passes. Any other lock without a checkable
+        # pid (several groups, past pid_max, pid 0, `(pid 01)`, hand-made)
+        # stays opaque.
+        stale_why="pid $lock_pid dead"
         if [ -z "$lock_pid" ] || [ "$lock_pid" -le 1 ]; then
-            echo "worktree-gc: skip $base (locked${lock_pid:+, pid $lock_pid names no owner} — treated as in use)"
-            skipped_locked=$((skipped_locked + 1))
-            reset; return
-        fi
-        if ps -p "$lock_pid" -o pid= >/dev/null 2>&1; then
+            local idle=""
+            if [[ "$lock_pid" = 1 && "$lock_reason" =~ $legacy_pid1_re ]] ||
+               [[ -z "$lock_pid" && "$lock_reason" =~ $not_visible_re ]]; then
+                idle=$(idle_hours "$path")
+                if [ -z "$idle" ] || ! [ "$idle" -ge "$ownerless_idle_hours" ]; then
+                    echo "worktree-gc: skip $base (locked, no visible owner${idle:+, idle ${idle}h < ${ownerless_idle_hours}h} — treated as in use)"
+                    skipped_locked=$((skipped_locked + 1))
+                    reset; return
+                fi
+                if ! ownerless_tree_clean "$path"; then
+                    echo "worktree-gc: skip $base (locked, no visible owner, idle ${idle}h, tree not clean — treated as in use)"
+                    skipped_locked=$((skipped_locked + 1))
+                    reset; return
+                fi
+                stale_why="no visible owner, idle ${idle}h"
+                unlock_at_removal=1
+            else
+                echo "worktree-gc: skip $base (locked${lock_pid:+, pid $lock_pid names no owner} — treated as in use)"
+                skipped_locked=$((skipped_locked + 1))
+                reset; return
+            fi
+        elif ps -p "$lock_pid" -o pid= >/dev/null 2>&1; then
             echo "worktree-gc: skip $base (locked, pid $lock_pid live — active session)"
             skipped_locked=$((skipped_locked + 1))
             reset; return
         fi
+    fi
+    if [ "$locked_flag" -eq 1 ] && [ "$unlock_at_removal" -eq 0 ]; then
         if ! git -C "$repo" worktree unlock "$path" 2>/dev/null; then
-            echo "worktree-gc: skip $base (lock pid $lock_pid dead, unlock failed)" >&2
+            echo "worktree-gc: skip $base (lock $stale_why, unlock failed)" >&2
             skipped_locked=$((skipped_locked + 1))
             reset; return
         fi
-        echo "worktree-gc: unlocked $base (lock pid $lock_pid dead — stale marker)"
+        echo "worktree-gc: unlocked $base (lock $stale_why — stale marker)"
     fi
     # The worktree owns its ignored .tmp/ tree. Never purge it independently:
     # inspect common exclusion, tracked content, integration ancestry, citation
@@ -185,7 +259,8 @@ flush() {
             reset; return
         fi
     fi
-    # Only a gone, inactive, unlocked tree reaches this point. The review
+    # Only a gone, inactive tree reaches this point, unlocked or holding an
+    # owner-less lock that passed its idle and clean checks. The review
     # commands own these two scratch paths; clear them before the WIP check,
     # while retaining every other uncommitted file as a removal blocker.
     # A tracked file under either path may contain real edits; never erase it.
@@ -206,11 +281,25 @@ flush() {
     if report_wip "$path" "$base"; then
         reset; return
     fi
+    # An owner-less lock is lifted only now, after every rail passed, and put
+    # back if the removal fails. Concurrent re-locking within this window is
+    # not guarded: no harness flow re-locks an idle, branch-gone tree.
+    if [ "$unlock_at_removal" -eq 1 ]; then
+        if ! git -C "$repo" worktree unlock "$path" 2>/dev/null; then
+            echo "worktree-gc: skip $base (lock $stale_why, unlock failed)" >&2
+            skipped_locked=$((skipped_locked + 1))
+            reset; return
+        fi
+        echo "worktree-gc: unlocked $base (lock $stale_why — stale marker)"
+    fi
     if git -C "$repo" worktree remove "$path" 2>/dev/null; then
         echo "worktree-gc: removed $base (branch '$branch' gone)"
         removed=$((removed + 1))
     else
         echo "worktree-gc: could not remove $base — left in place" >&2
+        if [ "$unlock_at_removal" -eq 1 ]; then
+            git -C "$repo" worktree lock --reason "$lock_reason" "$path" 2>/dev/null || true
+        fi
     fi
     reset
 }
