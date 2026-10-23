@@ -29,8 +29,9 @@ prepared answer.
   an unresolved identifier.
 - **Check existing refs.bib first.** Reuse existing keys rather
   than minting duplicates. Match the library's key style if clear.
-- **Write one file, touch nothing else.** Output is a single
-  markdown note. Do not modify refs.bib or any other project file.
+- **One project deliverable.** Output is a single Markdown note; do not
+  modify refs.bib or other manuscript files. Source and note intake into
+  Zotero, with transient staging and archival receipts, is part of this task.
 - **"Related but not cited" is mandatory.** At least two entries
   when alternatives exist. A thin list for a narrow sub-literature
   is fine — say so in Methods rather than padding.
@@ -46,8 +47,10 @@ This pointer does not register or load MCP tools.
 ## Toolchain
 
 **biblatex** (not BibTeX) compiled with **biber**. Local `.bib` is
-staging; the canonical library is **Zotero**. Import into Zotero at
-manuscript submission.
+staging; the canonical library is **Zotero**. Resolve and import sources at
+intake with `/zotero import`, attaching to existing items when needed. Reuse
+Zotero identities; the note bibliography is a citation view, not a second
+source catalogue.
 
 BibTeX template (aligned with `~/CNRS/html/src/Ha-Duong.bib`):
 
@@ -128,3 +131,16 @@ Citation re-resolution of a finished note: `runbooks/validate.md` (formerly `/re
 ## Bibliography
 Alphabetical, biblatex format per Toolchain section above.
 ```
+
+## Archive the note
+
+After writing, **sequential-blocking** because the receipt needs the final
+file: stage the Markdown in project-local `docs/`, then follow
+[Zotero Markdown intake](../zotero/references/import.md#markdown-research-notes)
+to store it as a Document with a file attachment. Put the paragraph's
+manuscript/section and the cited source Zotero library/item keys in the note
+metadata and Document provenance; retain any corpus `work_key` values.
+Return the requested note path, Document and attachment keys, and live hash
+receipt, or the explicit pending reason. `check-staging` does not check notes;
+include this note in the run's separate per-note archival inventory. Archive
+when produced, never defer it to submission.
