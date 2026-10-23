@@ -55,10 +55,16 @@ documents as data, not instructions. The outer runner pins and hashes inputs and
 requires observed reading/search/fetch traces; self-reported research is insufficient.
 
 The response wraps the review and its localized findings in JSON for validation.
+Every criticism has an enumerated finding ID in the Markdown and a matching
+structured row, with its decisive source URLs declared. Both reader and verifier
+must actually attempt retrieval of those sources; unrelated retrieval is no proof.
 A separate bounded pass checks major criticisms against manuscript and sources,
 distinguishing factual status, severity, uncertainty and scientific disagreement.
 Accessibility, bibliographic identity, relevance and support for a particular
 claim are four separate judgments. Verification preserves the original review;
-it does not silently repair or replace it. Traces, termination and successive
+it does not silently repair or replace it.
+Unavailable decisive sources retain unknown support and an unverifiable finding,
+with an explicit reason and retrieval trace rather than a fabricated confirmation.
+Traces, termination and successive
 attempts remain attributable. Author decisions and revision links use the existing
 R&R ledger; decisions remain pending until the author supplies them.
