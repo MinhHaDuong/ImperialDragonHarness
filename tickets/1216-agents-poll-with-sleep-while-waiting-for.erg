@@ -19,7 +19,7 @@ leg wall-clock. These are polling loops on background test runs, not the model's
 
 - Ticket 0889 (2026-09-10) added a PreToolUse guard against shell loops that poll `pgrep` for a process: 105 such waiters over
   551 transcripts, two stranded processes. The guard `scripts/guard-pgrep-waiter.sh` no longer exists: commit 90a62683
-  (ticket 0976) deleted eight PreToolUse guards "that never earned their place". It covered `pgrep` loops, not `sleep` polling on a log.
+  (ticket 0976) deleted guards, its title reading "the eight PreToolUse guards that never earned their place". It covered `pgrep` loops, not `sleep` polling on a log.
 - The portable-wait design of 2026-10-21 (journal `2026-10-21-await-external-probes.md`; PRs #1542, #1552; ticket 1163; the
   stopguard design, ticket 1164, deferred) chose the instruction route first: each runtime's own background facility with a deadline.
 - The snapshot pinned for the arena night (`night-pins/2026-10-24-c4-r1/payload`, the Pi agent directory) contains no wait or
@@ -60,12 +60,17 @@ Axes to discuss, for each candidate:
   no evidence they earned their place; this one was among them with 0 firings, never wired live).
 - **Fairness in the arena**: any barrier changes what a leg measures. It enters the harness pin, applies to every arm, and is
   introduced between two series, not inside one.
+- **Where the rails live for the arena**: a rail inside one harness protects only the arms that run that harness, so the
+  arena keeps its own in the meta-harness (the runner and the leg environment), identical for every arm including the bare
+  ones, with every firing logged and audited, and a run of the empty harness to read which rails fire even there (arena
+  ticket 1114). A rail that fires on the empty harness is about the agent or the model; one that fires only inside IDH is about
+  an IDH instruction, and that is where the harness-side barrier belongs.
 
 Generalisation: ticket 1217 (trace-doctor prescribes barriers for the follies it finds). This ticket is its pilot case.
 
 ## Exit criteria
 
 - [ ] The finding above, confirmed or corrected, with the commands used
-- [ ] A decision: close as already addressed (with the evidence), or the smallest hard barrier that reaches the Pi legs, chosen among A to D with the three axes filled in from a replay
+- [ ] A decision: close as already addressed (with the evidence), or the smallest hard barrier that reaches the Pi legs, chosen among A to C (D stays as the line that teaches A) with the three axes filled in from a replay
 - [ ] Cite the bounded background waits already merged (`ce2965be`, `70b39b0a`, `6b39fd9c`) and say what they leave uncovered
 - [ ] If a change is made, a re-measure of `sleep` share on a few legs after the change
