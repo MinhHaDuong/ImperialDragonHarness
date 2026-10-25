@@ -1,0 +1,36 @@
+%erg 0.1
+Title: Wake the orchestrator when a delegated agent session makes no progress
+Created: 2026-10-25
+Author: claude
+
+--- log ---
+2026-10-25T06:26Z claude created
+
+--- body ---
+## Context
+
+A delegated agent session can stall without crashing: a hung command, a dead server, an agent looping on a poll. Nothing
+in the harness wakes the orchestrator; the stall is found at a deadline, with the wall-clock lost. Observed on the arena's
+first cycle-4 night (2026-10-24, arena repo, ticket 1094): the only watchdog (`scripts/arena-watchdog.py`, arena repo) alerts
+and does not act, and it globbed one series name, so it reported "462 minutes without progress" on a leg that was writing
+sessions with the GPU at 99%. A watchdog that false-alarms gets ignored and then hides the real stall.
+
+Searched `~/.agents` for watchdog, stall, no progress, idle timeout: no mechanism that wakes an orchestrator on missing
+progress was found by those words. The only duration guards read were `timeout 1800` around the local CI run
+(`scripts/local-ci.sh`) and 5 to 60 s timeouts on git or system calls. The arena runner has one cap per leg
+(`TIME_CAP_S = 7200`), checked only at the end, and none on a single command.
+
+## Design questions
+
+- Progress means a new session line, a new run record or the server answering, not "the process is alive".
+- The wake-up should be bounded: a threshold set from the longest legitimate silence (a test batch or an agent turn), a
+  capped number of actions, and an entry in a file the orchestrator reads.
+- The glob must follow the files the driver writes, not a hand-kept list of series names.
+- Which runtimes: Claude Code, Codex, Pi (see the portable-wait design of 2026-10-21 and tickets 1163, 1164).
+- Out of scope, decide separately: a per-command test timeout (`pytest-timeout`).
+
+## Exit criteria
+
+- [ ] A decision record: what counts as progress for a delegated session and who is woken
+- [ ] A watchdog that acts once and is capped, tested with a staged stall and with a long legitimate silence (no false positive)
+- [ ] Documented for team-lead delegations, /raid and /hunt
