@@ -1,0 +1,59 @@
+%erg 0.1
+Title: trace-doctor audits traces for agent follies and prescribes a barrier for each
+Created: 2026-10-25
+Author: claude
+
+--- log ---
+2026-10-25T06:36Z claude created
+
+--- body ---
+
+## Context
+
+Agents repeat the same mistakes, and a repeated mistake is a defect of the harness, not of one session. The pilot case is ticket
+1216: self-matching `pgrep` waiters (105 written over 551 transcripts, 2026-06-01 to 2026-09-10, ticket 0889) that are still
+costing hours on the arena's Pi legs (902 s of one leg, 2026-10-24).
+
+The pieces exist. `trace-doctor` surveys the traces and ranks levers in shadow dollars, with a velocity section ranked in
+hours (ticket 1169, `scripts/trace-friction.py`: tool-error rate by cause, the over-30 s tail by tool, wait-command counts,
+turns per merged PR). It reports and files tickets and never applies anything. What is missing is the step from "this costs
+hours" to "this wall stops it", and a check that the wall earns its place.
+
+## Proposal
+
+1. **A catalogue of follies**, each with a detector that runs on the trace corpus and a cost in hours: a wait that runs to its
+   iteration cap, a sleep longer than the job it waits for, an identical failing command repeated, and any class the friction scan
+   already counts. A detector needs a positive control on a fixture transcript, as `trace-friction.py` does.
+2. **A prescription per folly**, taken from a ladder, cheapest hard barrier first: fix the primitive, a per-command cap in the
+   tool layer, a PreToolUse hook, an instruction last (ticket 1216 lays out the four and the three axes: portability,
+   efficiency, specificity).
+3. **No barrier without replay evidence.** The prescription carries the would-fire count over the corpus, a sample of false
+   positives and the hours given back. Ticket 0976 deleted guards that had none of this.
+4. **A review of the barriers in place, and where a folly comes from.** The same survey counts firings per barrier and proposes deleting one with no firing, or
+   with only false alarms, so a wall that does not earn its place does not stay.
+5. **Both corpora.** Claude Code sessions, and the Pi sessions of the arena legs (`runs-*/*/attempts/*/sessions/*.jsonl`
+   in the arena repo), which carry the cost of a folly in wall-clock hours.
+
+6. **The arena's meta-harness keeps its own rails.** Barriers prescribed here protect only the arms that run the harness; the
+   arena (ticket 1114 in the arena repo) keeps rails in its runner, the same for every arm, logs every firing, and runs the
+   empty harness (bare runtimes, arena ticket 1106) to audit which rails fire even there. The doctor reads those firings to tell
+   a folly of the agent or model (fires on the empty harness) from one caused by a harness instruction (fires only inside it), and
+   prescribes the barrier accordingly.
+
+Boundary, unchanged: the survey reports and files tickets; applying a barrier is a separate, reviewed change.
+
+## Open questions
+
+- Where the detectors live: extend `trace-friction.py` or a new script; the existing one's wait-command regex over-counts and is
+  to be tightened first (the script header says it still over-counts quoted or heredoc keywords).
+- How a detector tells a legitimate long silence from a folly (a test batch runs several minutes in the arena legs; the longest single gap
+  was not measured).
+- Whether the prescription step is judgment (a skill run) or a deterministic table from folly class to barrier.
+
+## Exit criteria
+
+- [ ] Catalogue with at least the waiting follies of 1216, each detector tested with a positive control
+- [ ] A report section: folly, hours, frequency, runtimes, prescribed barrier, replay evidence
+- [ ] A review pass over the existing PreToolUse barriers: firings counted, deletions proposed
+- [ ] Run once on the arena's cycle-4 Pi traces as the cross-corpus check
+- [ ] Out of scope: auto-applying a barrier
