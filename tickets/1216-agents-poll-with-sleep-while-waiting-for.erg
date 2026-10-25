@@ -32,8 +32,40 @@ do the long legs actually run (`sleep N` in a loop, on a log or on a process); w
 (a blocking run with a timeout, a notification when the job ends); and was the instruction route implemented for Pi or only
 for Claude Code. Record the answer in the ticket log.
 
+## Barriers to compare (a hard barrier, not a sign)
+
+The sign has been tried: a memory note with the right recipe existed from 2026-09-09 and reached none of the 105 waiters (ticket
+0889). The candidates below are walls. Each is to be discussed on three axes, and none is chosen here.
+
+- **A. Fix the primitive.** Make the self-match impossible: a `pgrep`/`pkill` shim that excludes the caller's own process tree, or
+  a `waitfor <pid|pattern|log-line> --timeout N` command that blocks until the job ends. Removes the cause for every caller.
+  Open: a shim on PATH is bypassed by `/usr/bin/pgrep` or by `ps | grep`; a `waitfor` has to be known to the agent, so it still
+  needs one line of instruction.
+- **B. A hard cap per command in the tool layer.** The Bash call is killed after N seconds. Needs no cooperation from the agent.
+  Open: it pushes legitimate long runs into the background, which is where the polling starts, so a cap without a blocking wait
+  primitive may increase the polling. Which runtimes expose such a cap (a setting in Claude Code and Codex, an extension
+  in Pi) is to be verified, not assumed.
+- **C. A PreToolUse hook** that matches the shape of the command and denies it with a message that names the remedy (the 0889
+  design). Open: command strings are a brittle surface (0889 needed three review rounds for `for` loops and heredocs); a hook
+  costs one process per call; whether Pi can run one is to be verified from the 2026-10-21 probes.
+- **D. An instruction.** The baseline that did not reach the 105; kept only as the line that teaches the primitive of A.
+
+Axes to discuss, for each candidate:
+
+- **Portability**: Claude Code, Codex and Pi, and the arena's pinned snapshot. A barrier that exists in one runtime and not in
+  the one running the tournament's legs protects nothing there.
+- **Efficiency**: tokens and latency per call, resident-prompt budget, and the hours it gives back (measured as in ticket 1169).
+- **Specificity**: what it blocks that was legitimate. Each candidate ships with a replay over the trace corpus: would-fire
+  count, a sample of the false positives, and a positive control (the lesson of 0976, which deleted eight guards for having
+  no evidence they earned their place; this one was among them with 0 firings, never wired live).
+- **Fairness in the arena**: any barrier changes what a leg measures. It enters the harness pin, applies to every arm, and is
+  introduced between two series, not inside one.
+
+Generalisation: ticket 1217 (trace-doctor prescribes barriers for the follies it finds). This ticket is its pilot case.
+
 ## Exit criteria
 
 - [ ] The finding above, confirmed or corrected, with the commands used
-- [ ] A decision: close as already addressed (with the evidence), or the smallest change that reaches the Pi legs
+- [ ] A decision: close as already addressed (with the evidence), or the smallest hard barrier that reaches the Pi legs, chosen among A to D with the three axes filled in from a replay
+- [ ] Cite the bounded background waits already merged (`ce2965be`, `70b39b0a`, `6b39fd9c`) and say what they leave uncovered
 - [ ] If a change is made, a re-measure of `sleep` share on a few legs after the change
