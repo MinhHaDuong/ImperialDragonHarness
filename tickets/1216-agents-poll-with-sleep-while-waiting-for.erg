@@ -1,0 +1,38 @@
+%erg 0.1
+Title: Agents poll with sleep while waiting for background jobs: verify what is in place, then close the gap
+Created: 2026-10-25
+Author: claude
+
+--- log ---
+2026-10-25T06:26Z claude created
+
+--- body ---
+## Context
+
+Agents wait for background jobs by looping on `sleep`, and the time is large. Measured on the arena (ticket 1094,
+cycle 4, 2026-10-24, derived from Pi session timestamps by `scripts/leg-timing.py`): leg `1372-f1m` took 3 787 s of which
+2 668 s were `sleep` (70 %); `1372-f1x` took 1 833 s with 1 126 s of `sleep`. The earlier handoff recorded `sleep` as 7.8 % of local
+leg wall-clock. These are polling loops on background test runs, not the model's speed.
+
+## What was found before writing this (to be confirmed in the first step)
+
+- Ticket 0889 (2026-09-10) added a PreToolUse guard against shell loops that poll `pgrep` for a process: 105 such waiters over
+  551 transcripts, two stranded processes. The guard `scripts/guard-pgrep-waiter.sh` no longer exists: commit 90a62683
+  (ticket 0976) deleted eight PreToolUse guards "that never earned their place". It covered `pgrep` loops, not `sleep` polling on a log.
+- The portable-wait design of 2026-10-21 (journal `2026-10-21-await-external-probes.md`; PRs #1542, #1552; ticket 1163; the
+  stopguard design, ticket 1164, deferred) chose the instruction route first: each runtime's own background facility with a deadline.
+- The snapshot pinned for the arena night (`night-pins/2026-10-24-c4-r1/payload`, the Pi agent directory) contains no wait or
+  sleep rule that I could find by grepping `pgrep`, `sleep` and `background job`.
+
+## First step
+
+Verify, before deciding anything: does any rule or skill that reaches Pi tell the agent how to wait for a background job; what
+do the long legs actually run (`sleep N` in a loop, on a log or on a process); which runtime facility could replace it
+(a blocking run with a timeout, a notification when the job ends); and was the instruction route implemented for Pi or only
+for Claude Code. Record the answer in the ticket log.
+
+## Exit criteria
+
+- [ ] The finding above, confirmed or corrected, with the commands used
+- [ ] A decision: close as already addressed (with the evidence), or the smallest change that reaches the Pi legs
+- [ ] If a change is made, a re-measure of `sleep` share on a few legs after the change
