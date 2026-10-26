@@ -27,7 +27,7 @@ a forked-skill boundary); it inspects the salvaged WIP via
 Salvage is the FIRST step of any restart, not an afterthought.
 (memory: feedback_agent_stall_watchdog_recovery)
 
-**Agent timeout**: Record the time of each push and each observed change in
+**Agent timeout** (to be woken once instead of polling, run `raid-breaker.py --wait --deadline <s>` as a background command; it exits 1 on STALL or GATE_TIMEOUT and never kills; Claude Code only, decision in ticket 1214): Record the time of each push and each observed change in
 the executor's worktree (compare status snapshots; an already-dirty tree does
 not prove recent progress). The ordinary stall window is 10 minutes since
 the latest of these. During a declared project gate, check the executor's
