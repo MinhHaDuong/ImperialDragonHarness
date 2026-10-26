@@ -100,7 +100,10 @@ def _run_hook(project: Path) -> str:
     return subprocess.run(
         ["bash", str(HOOK), str(project)],
         capture_output=True, text=True, timeout=30, check=True,
-        env=child_env(),
+        # The fixture is not a git repository: stop git from walking up into the
+        # repository that holds the temp folder (hunt sets TMPDIR inside a worktree),
+        # which the hook would rightly read as the harness and stay silent.
+        env={**child_env(), "GIT_CEILING_DIRECTORIES": str(project.parent)},
     ).stdout
 
 
