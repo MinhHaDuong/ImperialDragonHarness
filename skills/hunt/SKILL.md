@@ -97,8 +97,9 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    created and handed-over worktrees.
 6. Read the files listed in **Relevant files**.
 7. Write the first test from the **Test** section of the ticket.
-8. Run the test to confirm it fails.
-9. Announce `[Plan → Execute]`, then implement until the affected test passes.
+8. Run `make check-fast` — confirm the test fails.
+9. Announce `[Plan → Execute]`, then implement until the affected test passes — `make check-fast` (or the affected test file alone) is the loop gate. The project's pre-PR gate runs once immediately before step 11 opens the merge request — not per edit.
+   Do not swap a cached or selected result for step 8's failing-test confirmation or for the project's declared gates.
 10. Pre-PR self-gate: run `/verify-adherence <branch>` (the branch created in step 5).
     - Clean → proceed to step 11. Note adherence passed in the merge-request description so `/gaze` can skip the mechanical phase on its next pass (gaze reviews; `/verify-gate` gates).
     - Blockers → decide per blocker:
@@ -121,5 +122,5 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
     (`skills/gaze/SKILL.md` § 2–5). What each gaze result leads to (fix and
     review again, close and gate, or stop at the author) is the caller's
     policy in `skills/merge/SKILL.md` § Before merging.
-13. Fix all comments regardless of severity. Per fix cycle, run `make check-fast` plus the tests implicated by the comments — not the full suite.
+13. Fix all comments regardless of severity. Per fix cycle, run `make check-fast` plus the tests implicated by the comments — not the full suite. If any cycle's fix touches code outside the fast tier, run the full `make check` once, in addition — not on every cycle.
 14. Repeat 12–13 up to 3 times, i.e. up to round 3. If still not clean, escalate (see workflow rules).
