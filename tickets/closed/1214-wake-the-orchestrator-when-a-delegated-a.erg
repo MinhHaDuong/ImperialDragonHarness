@@ -12,6 +12,7 @@ Closed: autoclosed — PR #1680
 2026-10-26T22:47Z reviewer decision record: progress = a push, a change of the worktree snapshot (status, HEAD, pushed ref) or an observed gate exit; the woken party is the launcher of the background raid-breaker.py --wait command, once, by its exit 1 (STALL or GATE_TIMEOUT); the watchdog never kills; deadline exits 0 silently. Codex and Pi have no background-exit wake: per-step pull only (gap). Caveats: writes outside the worktree are unseen; an agent looping on edits looks active.
 2026-10-26T22:56Z reviewer decision record amendment: the snapshot is git status, HEAD, pushed ref, a hash of git diff HEAD and size+mtime of untracked files; a git failure reuses the last snapshot; unexpected errors exit 2 (1 is the wake).
 2026-10-26T23:09Z reviewer closed — autoclosed — PR #1680
+2026-10-26T23:28Z reviewer correction to the 22:56 amendment: in the merged code (bf170fd4) a failed or timed-out git poll is no observation, and the poll is skipped; it does not reuse the last snapshot. skills/raid/references/circuit-breakers.md describes the merged behaviour.
 
 --- body ---
 ## Context
