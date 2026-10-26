@@ -19,9 +19,9 @@ missing), `cost~=` (best-effort USD, `na` if incomplete).
 
 First action of phase 1: `python3 "$IDH_ROOT/scripts/step_clock.py" start`; keep the printed
 token literally (shell variables do not persist between Bash calls).
-Last action before posting: `python3 "$IDH_ROOT/scripts/step_clock.py" end <token>`,
-whose single line (`duration: 4m12s`, or `duration: not measured` when no clock
-could be read) goes into the result block as printed. Never type a duration
+Last action before posting: `python3 "$IDH_ROOT/scripts/step_clock.py" end <token>` (add `--seconds` in a
+second call for `wall=`). Its single line (`duration: 4m12s`, or `duration: not measured`
+when no clock could be read) goes into the result block as printed. Never type a duration
 from memory or estimate: the line comes from the script or says `not measured`.
 This is the one statement of the rule; /verify-gate, /merge and /raid point here.
 The seats' own wall times are the `seat times:` line (`seat_clock.py roster`).

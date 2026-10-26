@@ -18,7 +18,7 @@ def run(*args, stdin=''):
     return subprocess.run([sys.executable, str(SCRIPT), *args], input=stdin, capture_output=True, text=True, timeout=30)
 
 
-def test_stubbed_step_duration_is_well_formed_and_at_least_the_sleep():
+def test_measured_step_duration_is_well_formed_and_at_least_the_sleep():
     t0 = run('start').stdout.strip()
     time.sleep(2)
     line = run('end', t0).stdout.strip()

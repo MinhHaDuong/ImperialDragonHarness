@@ -58,7 +58,7 @@ def table(lines: list[str]) -> str:
         if not parts:
             continue
         if len(parts) < 4:
-            bad.setdefault(parts[0] if parts else '?', []).append(' '.join(parts[1:]) or '?')
+            bad.setdefault(parts[0], []).append(' '.join(parts[1:]) or '?')
             continue
         try:
             a, b = float(parts[-2]), float(parts[-1])

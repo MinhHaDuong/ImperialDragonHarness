@@ -232,7 +232,7 @@ changes keep the guard.
 ```yaml
 verdict: APPROVED | REROLL | ESCALATE | NEEDS-AUTHOR
 round: 1 | 2
-duration: <step_clock.py end line, e.g. duration: 4m12s>
+duration: <text after "duration: " in the step_clock.py end line, e.g. 4m12s>
 gate_session_id: <uuid>
 review_worktree_path: <absolute path of the gate's own worktree>
 ruled_tip_sha: <full commit SHA ruled>
