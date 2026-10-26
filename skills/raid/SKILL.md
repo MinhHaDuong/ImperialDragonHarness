@@ -264,7 +264,11 @@ Phase 7 on its mechanical checks. Everything below is the full tier.
 fixed its findings, so the raid reads that record first and re-runs `/gaze`
 only when it is missing, ESCALATE, or stale against the tip
 (`skills/merge/SKILL.md` § Gating tiers); a second review of a head gaze
-already reviewed buys nothing and costs a full gaze run. Gaze reviews and
+already reviewed buys nothing and costs a full gaze run. The raid decides
+each gaze brief, how many perspectives over which scope, and passes it to
+hunt in the launch prompt or to `/gaze --brief` directly; gaze runs it as
+given. How to size it: `skills/route/references/decorrelation.md` § Sizing a
+gaze brief, the one home. Gaze reviews and
 never returns APPROVED; the gate rules APPROVED / REROLL / ESCALATE /
 NEEDS-AUTHOR. The orchestrator itself
 runs them inline, one per PR (an inline run is serial; only the detached shape

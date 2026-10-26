@@ -86,7 +86,10 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 11. **Review.** Skip when
     `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base origin/main --head HEAD`
     exits 0 (bookkeeping). Otherwise run up to 3 rounds: load the gaze skill with the
-    merge-request number; on findings, fix every comment whatever its severity, rerun
+    merge-request number and a `--brief`. The orchestrator decides the brief: the
+    raid's, when it passed one in the launch prompt, else yours, sized by
+    `skills/route/references/decorrelation.md` § Sizing a gaze brief (a later
+    round is usually its fix case). On findings, fix every comment whatever its severity, rerun
     the tests the fixes affect by name, then the fast test tier, push, and review again.
     Escalate when gaze does, or when round 3 still has findings. What each gaze
     result leads to, a missing or stale `reviewed_head_sha` included, is the

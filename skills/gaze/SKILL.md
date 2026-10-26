@@ -117,7 +117,7 @@ the code perspectives (`correctness`, `consistency`, `scope`, `red-team`,
 external panel); `seats=none` runs mechanical adherence only. Adherence
 (Agent A) runs on every brief. How to size a brief is the orchestrator's
 judgement, guided in one place: `skills/route/references/decorrelation.md`
-§ Scale the review to the risk.
+§ Sizing a gaze brief.
 
 Resolve it in the review worktree before launching anything:
 

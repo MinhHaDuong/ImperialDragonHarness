@@ -63,6 +63,10 @@ re-gate.
   sync, never merge) and, full tier, `merge-gate.py tier --since
   <ruled_tip_sha>` answers 0 (otherwise re-gate). The record on a gated base
   belongs to that same head.
+- **The orchestrator decides the gaze brief.** Whoever runs this recipe
+  (the raid, the hunt, the author) passes `/gaze <pr> --brief '<...>'`,
+  sized by `skills/route/references/decorrelation.md` § Sizing a gaze brief,
+  the one home; gaze runs it and does not resize it.
 - **Full tier: only a head `/gaze` reviewed goes to the gate.** REVIEWED:
   close the ticket, then run the round-1 gate on the current head; a fix the
   round-1 gate asks for is re-gated once in the same session, with no new
