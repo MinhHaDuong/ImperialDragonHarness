@@ -49,7 +49,7 @@ by `/proc/<pid>/cwd` and killing the descendant tree of a PID the agent started.
 | Memory note `feedback_pgrep_waiter_matches_itself` | Exists, but in the harness project's memory (`-home-haduong--claude`), not the arena project's index the session loaded. This is the failure the note itself describes: recalled by relevance, it reached none of the 105 waiters. |
 | Guard `scripts/guard-pgrep-waiter.sh` (ticket 0889) | Deleted by commit 90a62683 (ticket 0976, 2026-09-24): "never wired live, 0 firings". |
 | Resident rule | None for waiting or killing by pattern. Not in the arena night's pinned Pi snapshot either (ticket 1216 says it grepped). |
-| Hooks configured | `~/.claude/settings.json` and `settings.shared.json` have no `hooks`; the wired ones come from the adapter plugin. |
+| Hooks configured | `~/.claude/settings.json` has no `hooks`; `settings.shared.json` wires `guard-destructive-bash.sh` and `rtk hook claude`, and the adapter plugin wires the rest. |
 | Runtime backstop | A Bash call that exceeds its timeout is moved to the background (here the 300 s the agent had set; the default is shorter). It limits the waste, it does not prevent or explain the bug. |
 
 ## 4. Do we already pay for hooks? Yes, in all three runtimes
@@ -57,10 +57,10 @@ by `/proc/<pid>/cwd` and killing the descendant tree of a PID the agent started.
 - Claude Code: `adapters/claude-code/hooks/hooks.json` wires `PreToolUse(Bash)` to `guard-destructive-bash.sh`
   (plus SessionStart and SessionEnd hooks).
 - Codex: `adapters/codex/hooks.json` wires the same script; Codex skips non-managed hooks until their hash is
-  trusted (README, section on trust).
+  trusted (`docs/adapter-operations.md`, "Guard smoke and trust").
 - Pi: `adapters/pi/extensions/idh-guard.ts` registers a `tool_call` handler for bash and feeds the same payload to
   the same script.
-- Measured on this machine: `idh-hook guard-destructive-bash.sh` costs about 33 ms per call (5 calls, 163 ms wall).
+- Measured on this machine: `idh-hook guard-destructive-bash.sh` costs about 33 ms per call (derived: 163 ms wall over only 5 calls).
 
 So a new rule folded into the guard that already runs adds no process and no wiring; a separate new hook would add
 one process per Bash call in each runtime. Not verified: the Codex trust step for a changed hook definition, and
