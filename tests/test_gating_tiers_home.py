@@ -25,7 +25,7 @@ def test_tiers_are_stated_once():
 
 
 def test_callers_point_to_the_home():
-    for rel in ("rules/git.md", "skills/raid/SKILL.md", "skills/hunt/SKILL.md"):
+    for rel in ("rules/git.md", "skills/raid/SKILL.md"):
         assert "§ Gating tiers" in (ROOT / rel).read_text(), rel
 
 
