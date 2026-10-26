@@ -47,8 +47,9 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
      (or switch to the existing branch). A shared or `explore-*` worktree may host a live session: never
      rebase, branch, or leave files in it.
    - **Otherwise create one** under the primary checkout. `P=$PPID`, the
-     long-lived runtime process, names the path and owns the lock (pid 1 or
-     other edge cases: `references/worktree-lifecycle.md`):
+     long-lived runtime process, names the path and owns the lock. If `$PPID`
+     prints 1 (a sandboxed runtime), use `P=$RANDOM` and the lock reason
+     `hunt t$ID (owner pid not visible)` (details: `references/worktree-lifecycle.md`):
      ```bash
      R=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
      W=$R/.claude/worktrees/t$ID-$P
