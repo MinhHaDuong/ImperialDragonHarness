@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-10-26T21:57Z Minh Ha-Duong created
+2026-10-26T22:19Z reviewer note author: criterion added, bookkeeping 'no review' becomes a default the orchestrator may override; 1223 kept as the mechanical floor
 
 --- body ---
 ## Context
@@ -35,6 +36,7 @@ Related: [[1100]], [[1219]] (gaze prescribes no caller behaviour), [[1221]]
 - [ ] `/gaze` accepts a caller brief next to the PR number: which perspectives to run (including none beyond mechanical adherence) and the scope to review (the whole diff, or a commit range or path list); it runs exactly that, with no seat added and no seat dropped on its own.
 - [ ] The result comment states the brief it received and what ran against it, so the caller sees one line to compare; a brief gaze cannot honour (unknown seat, scope outside the diff) is refused with a reason, never silently widened.
 - [ ] Gaze keeps a default brief only for a caller that sends none (an interactive author running `/gaze <pr>`); `/raid`, `/hunt` and `/merge` each say where the brief is decided (the orchestrator) and point to one place that tells how to size it.
+- [ ] "No review" for bookkeeping paths (`skills/merge/SKILL.md` § Gating tiers) becomes a default the orchestrator may override in the brief: the tier decides only which checks the mechanical record runs, and an orchestrator that knows a bookkeeping path steers later sessions (for example `memory/MEMORY.md`) may ask for a review of it. Ticket [[1223]] stays as the mechanical floor for those files.
 - [ ] The sizing guidance lives in one home, as judgement for the orchestrator and not a mechanical floor or category (attempts 1 and 2 are not repeated), with at least the worked cases: one-paragraph prose deletion, rebase or merge of main only, fix of listed findings, large multi-file change.
 - [ ] A regression test shows gaze run with a one-seat brief launches one seat, and with a scope brief reviews only that range.
 - [ ] The harness gate (`.merge-gate.json` checks) passes.
