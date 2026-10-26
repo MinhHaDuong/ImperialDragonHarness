@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-25T06:26Z claude created
+2026-10-26T22:42Z reviewer raid 1214-1218 Imagine (opus seat; drift guard PASS): premise partly met by scripts/raid-breaker.py + raid_gate_state.py (35842ae9: progress = push or worktree change, 600 s window, gate heartbeat for long legitimate silence); the gap is the wake. Path: --wait --deadline mode on raid-breaker.py that exits once on STALL/GATE_TIMEOUT and never kills; tests for a staged stall and a long silence with fresh heartbeat; decision note; pointer lines in circuit-breakers.md, hunt Detach, team-lead.md. Native wake on Claude Code only (background command exit); Codex/Pi get a per-step pull, stated as a gap. EC2 narrowed: acts once = wakes once, no kill. Ticket 1165 keeps the Waiting paragraph; add pointers only.
 
 --- body ---
 ## Context
