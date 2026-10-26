@@ -152,6 +152,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
     steps (mirrors raid Phase 5's mechanical `Skill(hunt)` invocation).
     Each pass through the 11–12 loop is one **review round**; which
     perspectives run, and how deep, is the reviewer's call
-    (`skills/gaze/SKILL.md` § 2–5).
+    (`skills/gaze/SKILL.md` § 2–5). What each gaze result leads to (fix and
+    review again, close and gate, or stop at the author) is the caller's
+    policy in `skills/merge/SKILL.md` § Before merging.
 12. Fix all comments regardless of severity. Per fix cycle, run `make check-fast` plus the tests implicated by the comments — not the full suite. If any cycle's fix touches code outside the fast tier, run the full `make check` once, in addition — not on every cycle.
 13. Repeat 11–12 up to 3 times, i.e. up to round 3. If still not clean, escalate (see workflow rules).

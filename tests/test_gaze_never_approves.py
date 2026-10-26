@@ -58,17 +58,14 @@ ALLOWED_LINES = (
     (
         'description: "Review one merge request: adherence check, code or prose '
         'review panel, simplify. Returns REVIEWED / FINDINGS / ESCALATE and never'
-        ' APPROVED; the merge gate is /verify-gate, run by the caller. Does not '
-        'merge."'
+        ' APPROVED; the merge gate is /verify-gate. Does not merge."'
     ),
     (
         'One skill, one PR, one review result: REVIEWED / FINDINGS / ESCALATE. '
         '**Gaze reviews; `/verify-gate` gates.** Gaze never returns APPROVED, '
-        "REROLL or NEEDS-AUTHOR: those are gate verdicts, ruled by the caller's "
-        '`/verify-gate` run on the reviewed head. **Does not merge** — the merge '
-        'decision belongs to the caller (the human or the raid). Only one live '
-        '`/gaze` may run on a PR at a time; the caller keeps to that '
-        '(`rules/workflow.md` § Delegation). A past verdict is evidence, not '
+        'REROLL or NEEDS-AUTHOR: those are gate verdicts, ruled by `/verify-gate`.'
+        ' **Does not merge.** Input precondition: no other live `/gaze` on the '
+        'PR (`rules/workflow.md` § Delegation). A past verdict is evidence, not '
         'authority to overwrite or call it fabricated: inspect its gate identity '
         'and ruled tip.'
     ),
@@ -334,7 +331,6 @@ def test_moved_sections_are_present():
         "## /gaze result",
         "## Output shape",
         "## Fork execution contract",
-        "**Caller-side recovery.**",
         "## Review scratch cleanup",
         "## Containment postcondition",
         "## External reviewer panel",
@@ -418,48 +414,50 @@ def test_review_panel_has_no_unlisted_skip_path():
     assert "skip" not in agent_c.lower()
 
 
-def _next_lines() -> list[str]:
-    core = _section("### 6. Return the review result")
+CALLER_STEPS = (
+    "the caller closes",
+    "the caller runs",
+    "the caller fixes",
+    "re-runs gaze",
+    "re-runs /gaze",
+    "the merge decision belongs to the caller",
+    "That is the caller's job",
+    "the caller must see this report before any merge step",
+    "**Caller-side recovery.**",
+    "**Fork liveness.**",
+)
+
+
+def test_gaze_prescribes_no_caller_step():
+    """Ticket 1219: gaze states what it reviews, how, and what it returns; what
+    the caller does next (re-run, close the ticket, gate, merge) is the
+    caller's own policy, in /merge, /raid or /hunt. No `next:` line in either
+    result template, and none of the old caller prescriptions anywhere in the
+    expanded contract."""
     template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
-    return [
-        next(ln for ln in text.splitlines() if ln.startswith(key))
-        for text in (core, template)
-        for key in ("next:", "battery:")
-    ]
+    for text in (_section("### 6. Return the review result"), template):
+        assert not re.search(r"^next:", text, re.MULTILINE)
+        assert re.search(r"^battery:", text, re.MULTILINE), "positive control"
+    for step in CALLER_STEPS:
+        assert step not in GAZE, step
+    # Negative control: a planted prescription is caught.
+    assert any(s in GAZE + "\nFINDINGS: the caller fixes them." for s in CALLER_STEPS)
 
 
-def test_next_depends_on_the_result_and_templates_agree():
-    """/gaze 1538 round 2: `next:` said "run /verify-gate" even after an
-    ESCALATE with the battery skipped or not run, routing an unreviewed head to
-    a gate that can approve it. Both result templates now say the same thing,
-    and ESCALATE never leads to the gate."""
-    core_next, core_battery, tmpl_next, tmpl_battery = _next_lines()
-    assert core_next == tmpl_next and core_battery == tmpl_battery
-    escalate = core_next.split("ESCALATE", 1)[1]
-    assert "no gate" in escalate and "/verify-gate" not in escalate
-    assert "NOT-RUN" in escalate and "skipped (--force-approve)" in escalate
-    assert "/verify-gate" in core_next.split("ESCALATE", 1)[0]
-
-
-def test_next_gates_the_current_head_once_and_escalate_goes_to_the_author():
-    """PR 1539 review, then the post-merge follow-up: only REVIEWED goes to the
-    gate, on the current head (reviewed_head_sha plus at most the ticket-close
-    commit); FINDINGS are fixed and re-reviewed by /gaze on the new head, never
-    gated unreviewed; the one re-gate is /verify-gate § Gate sessions; ESCALATE
-    goes to the author with no unbounded /gaze re-run (same wording as raid)."""
-    core_next = _next_lines()[0]
-    gate_part, escalate = core_next.split("ESCALATE", 1)
-    assert "on reviewed_head_sha" not in core_next
-    reviewed, findings = gate_part.split("FINDINGS", 1)
-    assert "/verify-gate" in reviewed
-    assert "reviewed_head_sha plus at most that ticket-close commit" in reviewed
-    assert "/verify-gate" not in findings and "re-runs /gaze on the new head" in findings
-    assert "§ Gate sessions" in gate_part
-    assert "re-runs /gaze" not in escalate
-    assert "the review never completed, and the PR goes to the author" in escalate
-    invariants = _section("## Invariants")
-    assert "again after any fix" not in invariants
-    assert "the single re-gate (`/verify-gate` § Gate sessions)" in " ".join(invariants.split())
+def test_caller_policy_lives_in_merge():
+    """The rules gaze's `next:` line carried moved to the caller (ticket 1219):
+    /merge § Before merging owns them, pointing to § Gating tiers."""
+    merge = (ROOT / "skills" / "merge" / "SKILL.md").read_text(encoding="utf-8")
+    before = " ".join(merge.split("## Before merging", 1)[1].split("\n## ", 1)[0].split())
+    for rule in (
+        "FINDINGS: fix the listed items on the merge request's branch and run `/gaze` again on the new head; a head gaze did not review is never gated.",
+        "means no gate and no merge: the review never completed, and the PR goes to the author, who decides.",
+        "battery `NOT-RUN`, `--force-approve` and a DEGRADED panel included",
+        "(`/verify-gate` § Gate sessions)",
+    ):
+        assert rule in before, rule
+    hunt = " ".join((ROOT / "skills" / "hunt" / "SKILL.md").read_text(encoding="utf-8").split())
+    assert "`skills/merge/SKILL.md` § Before merging" in hunt
 
 
 def test_degraded_panel_maps_to_escalate():

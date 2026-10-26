@@ -2,7 +2,7 @@
 metadata:
   category: build
 name: gaze
-description: "Review one merge request: adherence check, code or prose review panel, simplify. Returns REVIEWED / FINDINGS / ESCALATE and never APPROVED; the merge gate is /verify-gate, run by the caller. Does not merge."
+description: "Review one merge request: adherence check, code or prose review panel, simplify. Returns REVIEWED / FINDINGS / ESCALATE and never APPROVED; the merge gate is /verify-gate. Does not merge."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pr-number> [--force-approve <reason>]"
@@ -42,10 +42,8 @@ the current branch's PR number. -->
 
 One skill, one PR, one review result: REVIEWED / FINDINGS / ESCALATE. **Gaze
 reviews; `/verify-gate` gates.** Gaze never returns APPROVED, REROLL or
-NEEDS-AUTHOR: those are gate verdicts, ruled by the caller's `/verify-gate`
-run on the reviewed head. **Does not merge** — the merge decision belongs to
-the caller (the human or the raid).
-Only one live `/gaze` may run on a PR at a time; the caller keeps to that
+NEEDS-AUTHOR: those are gate verdicts, ruled by `/verify-gate`. **Does not
+merge.** Input precondition: no other live `/gaze` on the PR
 (`rules/workflow.md` § Delegation). A past verdict is evidence, not authority
 to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 
@@ -60,10 +58,9 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 - Runs on exactly one PR.
 - Never returns APPROVED: a test pins it (`tests/test_gaze_never_approves.py`).
   `REVIEWED` means no blocking finding on the reviewed head, nothing more.
-- Does not run `/verify-gate`. The caller runs it after gaze on the current branch head,
-  and at most once more after a fix: the single re-gate (`/verify-gate` § Gate sessions).
+- Does not run `/verify-gate`.
   The review worktree is removed before gaze returns; the gate creates its own.
-- Does not merge. The result is structured output; the merge decision belongs to the caller.
+- Does not merge. The result is structured output.
 - The only commits gaze makes on the PR branch are the bounded phase 5 simplify fixes; no changes to other branches.
 - `--force-approve` is supported for explicit human override; it skips the review and
   is logged loudly in the PR comments and the skill transcript. It is an override
@@ -83,7 +80,7 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 
 ## Fork execution contract
 
-A fork ends its turn when it stops calling tools, and delegated agents run in the background. Launch every agent in the background and wait by polling a written artifact, in one bounded loop; record what did not arrive. Full contract, liveness window and caller-side recovery: `references/fork-contract.md`.
+A fork ends its turn when it stops calling tools, and delegated agents run in the background. Launch every agent in the background and wait by polling a written artifact, in one bounded loop; record what did not arrive. Full contract: `references/fork-contract.md`.
 
 <!-- inline: references/fork-contract.md -->
 
@@ -158,21 +155,16 @@ panel_integrity: COMPLETE | DEGRADED — <PANEL-INTEGRITY: line>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (--force-approve)
 review_groups: <group> ← <seats>, ... | one (whole diff)
 multi_ticket: <distinct close-claim IDs> | none
-next: REVIEWED → the caller closes the ticket on the branch, then runs /verify-gate <pr-number> repo=<caller's checkout> session=<uuid> on the current branch head, which is reviewed_head_sha plus at most that ticket-close commit (one re-gate at most, /verify-gate § Gate sessions: a fix asked by the round-1 gate is re-gated once on the new head with the same session=, without a new gaze run); FINDINGS → the caller fixes them and re-runs /gaze on the new head: a head gaze did not review is never gated; ESCALATE (including battery: NOT-RUN or skipped (--force-approve), or a DEGRADED panel) → no gate and no merge: the review never completed, and the PR goes to the author, who decides
 ```
 
 - `ESCALATE`: a circuit breaker fired, the battery could not run (`battery: NOT-RUN`),
   any phase 2–5 errored or timed out, or the workspace could not be restored.
   `--force-approve` is ESCALATE too, with `battery: skipped (--force-approve)`:
   nothing was reviewed (§ `--force-approve`). So is a DEGRADED panel (below).
-  The review did not complete: the caller runs no gate and the PR goes to the
-  author.
+  The review did not complete.
 - `FINDINGS`: any blocking adherence violation, any `blocking` seat
   verdict, any unresolved `verifiable:` minor, any simplify
-  must-fix not applied, an unread review group (§ 2–5). List them; the
-  caller fixes (a coder on the PR branch, scoped to the list) and re-runs gaze
-  on the new head. FINDINGS never
-  go straight to the gate: the fixed head is one gaze did not review.
+  must-fix not applied, an unread review group (§ 2–5). List them.
 - `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still
   checks every exit criterion and review comment against the diff.
 - `panel_integrity: DEGRADED` (the review panel did not launch, or a selected
@@ -206,7 +198,7 @@ On every exit path run `references/cleanup.md`: remove this run's review scratch
 ## Circuit breakers
 
 - Close claim names a ticket file that does not exist (neither `tickets/<id>-*.erg`
-  nor `tickets/closed/<id>-*.erg`; a caller may close before gating) → ESCALATE. A PR with
+  nor `tickets/closed/<id>-*.erg`; the ticket may already be closed on the branch) → ESCALATE. A PR with
   no ticket at all is not a breaker.
 - Any of phases 2–5 errors or times out → ESCALATE (do not silently skip).
   Exception: simplify intentionally skipped when adherence is blocking.
@@ -224,6 +216,6 @@ See `references/output.md`: per-phase timing, the thresholds in `skills/gaze/tel
 ## Not in scope
 
 - **Gating.** `/verify-gate` rules APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR.
-- **Fixing.** A coder on the PR branch acts on `FINDINGS`; gaze only commits phase 5 simplify fixes.
+- **Fixing.** Gaze commits only phase 5 simplify fixes; it fixes no finding.
 - **Wave-level integration review.** Post-merge integration review of a batch is `/roar` step 8.
-- **Merging.** Ever. That is the caller's job.
+- **Merging.** Ever.

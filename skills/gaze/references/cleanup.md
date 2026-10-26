@@ -12,8 +12,7 @@ Do not gitignore `.panel/` in adopter repos: an ignore rule hides a missed
 cleanup from the worktree gates.
 If the review worktree was never created, there is nothing to clean up. The
 exit preflight must pass after scratch removal: if it reports other WIP, leave
-the review worktree registered and surface those file names as ESCALATE to the
-caller. Never force-remove a tree with real uncommitted files. A failed
+the review worktree registered and return ESCALATE naming those files. Never force-remove a tree with real uncommitted files. A failed
 preflight or normal worktree removal is a cleanup failure, not a successful
 terminal result.
 
@@ -45,8 +44,8 @@ fi
 
 ## Containment postcondition
 
-On **every** exit path (REVIEWED, FINDINGS, ESCALATE, circuit-breaker abort), after removing the review worktree and before returning control to
-the caller — the caller must see this report before any merge step:
+On **every** exit path (REVIEWED, FINDINGS, ESCALATE, circuit-breaker abort), after removing the review worktree and before returning; the report goes
+in the result:
 
 ```bash
 git rev-parse --show-toplevel               # FIRST: confirm cwd is the session
@@ -72,4 +71,4 @@ git -C <primary-repo-root> status --porcelain
   not a bare `git switch` against an assumed cwd (rules/git.md § anchor across
   a forked-skill boundary).
 - Anything that cannot be restored cleanly → downgrade the result to
-  ESCALATE; a contaminated workspace must not feed a merge.
+  ESCALATE.

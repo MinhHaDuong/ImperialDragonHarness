@@ -88,11 +88,33 @@ sessions), which owns how much of the prior verdict a re-gate reuses.
   sync, never merge) and, full tier, `merge-gate.py tier --since
   <ruled_tip_sha>` answers 0 (otherwise re-gate). The record on a gated base
   always belongs to that same head.
-- **Full tier: a gaze result of ESCALATE (or none accepted) means no gate and no merge:**
-  the review never completed, and the PR goes to the author. "Accepted" means a
+- **Full tier: only a head `/gaze` reviewed goes to the gate.** REVIEWED:
+  close the ticket (above), then run the round-1 gate on the current head
+  (`/verify-gate` § Gate sessions); a fix the round-1 gate asks for is
+  re-gated once in the same session, with no new gaze run. FINDINGS: fix the
+  listed items on the merge request's branch and run `/gaze` again on the new
+  head; a head gaze did not review is never gated. A gaze result of ESCALATE
+  (battery `NOT-RUN`, `--force-approve` and a DEGRADED panel included), or
+  none accepted, means no gate and no merge: the review never completed, and
+  the PR goes to the author, who decides. "Accepted" means a
   result is present and its `reviewed_head_sha` is not stale against the branch
   tip (as in `/raid` Phase 6), judged before the caller adds its own fix and
   ticket-close commits; a bookkeeping delta never voids it (§ Gating tiers).
+- **A gaze run that returns no result.** A bare fan-out narration with no
+  `result:` block is no result: do not relaunch a reviewer battery. Wait for
+  the background reviewer notifications and read the review comment they
+  posted on the merge request; that comment is evidence, not a gaze result,
+  so it opens no gate. Run `/gaze <pr>` once more if the liveness window
+  allows it; otherwise park the PR and escalate to the author.
+  **Fork liveness:** once the review comment has posted, the gaze result
+  (returned, or posted as a PR comment) is due within `fork_liveness_seconds`
+  (`skills/gaze/telemetry.yml`, env override `GAZE_LIVENESS_WINDOW_S`;
+  default 1200 s); two silent stalls landed in that window (2026-07-11 and
+  2026-07-13, PR #551). On expiry, do not re-run phases 2–5 of `/gaze`: check
+  three completion markers, a posted gaze result comment, branch-tip motion on
+  the PR branch and the review worktree's file mtime. All stale or absent: no
+  accepted gaze result, so no gate; park the PR and escalate to the author.
+  Never substitute a direct `/verify-gate` for the missing result.
 - **Run the gate record on padme when it is reachable**, over ssh from another
   host; when padme is unreachable run it where you are: the record names the
   host. `"$IDH_ROOT/scripts/local-ci.sh"` still reproduces every forge job in

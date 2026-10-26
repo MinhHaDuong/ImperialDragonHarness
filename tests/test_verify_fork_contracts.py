@@ -273,49 +273,32 @@ def test_gaze_close_claim_count_ignores_refs_none_and_duplicate_ids():
     assert result.stdout.splitlines() == ["0901", "0902"]
 
 
-def test_gaze_documents_fork_liveness_window():
-    """A silent fork stalls between the review comment and the verdict (twice
-    seen: 2026-07-11, 2026-07-13). The caller-monitored liveness window must be
-    documented in SKILL.md and carried as a knob in telemetry.yml — prose and
-    knob must not drift apart (ticket 0321)."""
-    assert "Fork liveness" in VERIFY, (
-        "gaze/SKILL.md: missing the 'Fork liveness' clause"
-    )
-    assert "fork_liveness_seconds" in VERIFY, (
-        "gaze/SKILL.md: does not name the fork_liveness_seconds knob"
-    )
-    assert "fork_liveness_seconds" in TELEMETRY, (
-        "telemetry.yml: missing the fork_liveness_seconds knob"
-    )
-    assert "GAZE_LIVENESS_WINDOW_S" in VERIFY, (
-        "gaze/SKILL.md: does not name the GAZE_LIVENESS_WINDOW_S env override"
-    )
-    assert "GAZE_LIVENESS_WINDOW_S" in TELEMETRY, (
-        "telemetry.yml: missing the GAZE_LIVENESS_WINDOW_S env override"
-    )
+MERGE = (SKILLS / "merge" / "SKILL.md").read_text()
 
 
-def test_gaze_liveness_fallback_names_verify_gate_not_a_rerun():
-    """On window expiry the fallback must skip re-running phases 2–5, drive
-    /verify-gate directly, and key off the three completion markers (verdict
-    comment, branch-tip motion, review-worktree mtime) — never relax the gate
-    (ticket 0321)."""
-    norm = _normalize(VERIFY)
-    assert "do not re-run phases 2–5" in norm.lower(), (
-        "gaze/SKILL.md: liveness fallback does not forbid re-running phases 2–5"
-    )
-    assert "/verify-gate" in norm, (
-        "gaze/SKILL.md: liveness fallback does not name the direct /verify-gate call"
-    )
-    assert "posted gaze result comment" in norm, (
-        "gaze/SKILL.md: liveness fallback omits the result-comment marker"
-    )
-    assert "branch-tip" in norm, (
-        "gaze/SKILL.md: liveness fallback omits the branch-tip-motion marker"
-    )
-    assert "mtime" in norm, (
-        "gaze/SKILL.md: liveness fallback omits the review-worktree mtime marker"
-    )
+def test_caller_documents_gaze_fork_liveness_window():
+    """A silent fork stalls between the review comment and the result (twice
+    seen: 2026-07-11, 2026-07-13). The liveness window is the caller's watch,
+    so /merge documents it (ticket 1219; formerly gaze's, ticket 0321) and
+    telemetry.yml carries the knob: prose and knob must not drift apart."""
+    for text, where in ((MERGE, "merge/SKILL.md"), (TELEMETRY, "telemetry.yml")):
+        assert "fork_liveness_seconds" in text, f"{where}: no fork_liveness_seconds knob"
+        assert "GAZE_LIVENESS_WINDOW_S" in text, f"{where}: no GAZE_LIVENESS_WINDOW_S override"
+    assert "Fork liveness" in MERGE, "merge/SKILL.md: missing the 'Fork liveness' clause"
+    assert "Fork liveness" not in VERIFY, "gaze prescribes no caller watch (ticket 1219)"
+
+
+def test_liveness_fallback_names_verify_gate_not_a_rerun():
+    """On window expiry the caller skips re-running phases 2–5, never
+    substitutes a direct /verify-gate, and keys off the three completion
+    markers (result comment, branch-tip motion, review-worktree mtime)
+    (ticket 0321, moved to /merge by ticket 1219)."""
+    norm = _normalize(MERGE)
+    assert "do not re-run phases 2–5" in norm.lower()
+    assert "never substitute a direct `/verify-gate`" in norm.lower()
+    assert "posted gaze result comment" in norm
+    assert "branch-tip" in norm
+    assert "mtime" in norm
 
 
 def test_no_bare_stash_in_skills_and_scripts():
