@@ -7,6 +7,7 @@ background command), exits 0 silently at --deadline. It never kills anything.
 """
 
 import argparse
+import hashlib
 import subprocess
 import time
 from pathlib import Path
@@ -16,26 +17,37 @@ from raid_gate_state import classify, evaluate, marker_path, read_marker
 WAKE = {"STALL", "GATE_TIMEOUT"}
 
 
-def snapshot(worktree: Path) -> tuple[str, str, str]:
-    """Worktree status, HEAD and pushed ref; a git failure reads as empty."""
-    def git(*cmd: str) -> str:
+def snapshot(worktree: Path) -> tuple[str, str, str, str] | None:
+    """Status, HEAD, pushed ref and content hash of the uncommitted diff.
+
+    The diff hash sees a second edit of an already-modified file. A git
+    failure returns None (no change); a missing upstream reads as empty.
+    """
+    def git(*cmd: str, optional: bool = False) -> str | None:
         try:
             done = subprocess.run(["git", "-C", str(worktree), *cmd], text=True,
-                                  capture_output=True, timeout=30)
+                                  capture_output=True, timeout=5)
         except (OSError, subprocess.SubprocessError):
-            return ""
-        return done.stdout if done.returncode == 0 else ""
-    return (git("status", "--porcelain"), git("rev-parse", "HEAD"),
-            git("rev-parse", "@{upstream}"))
+            return None
+        if done.returncode != 0:
+            return "" if optional else None
+        return done.stdout
+    parts = (git("status", "--porcelain"), git("rev-parse", "HEAD"),
+             git("rev-parse", "@{upstream}", optional=True), git("diff", "HEAD"))
+    if any(part is None for part in parts):
+        return None
+    return (parts[0], parts[1], parts[2], hashlib.sha256(parts[3].encode()).hexdigest())
 
 
 def run(args: argparse.Namespace, clock=time.time, sleep=time.sleep,
         take=snapshot) -> int:
     start = clock()
     state = None
+    seen = None
     while True:
         now = clock()
-        status, state = evaluate(now, state, take(args.worktree),
+        seen = take(args.worktree) or seen
+        status, state = evaluate(now, state, seen,
                                  read_marker(marker_path(args.worktree)),
                                  args.stall_seconds, args.gate_max_seconds)
         if status in WAKE:
@@ -65,6 +77,8 @@ def main() -> int:
     if not args.worktree.is_dir():
         parser.error("worktree does not exist")
     if args.wait:
+        if args.last_progress_epoch is not None:
+            parser.error("--last-progress-epoch applies without --wait")
         if args.deadline is None or args.deadline <= 0:
             parser.error("--wait requires --deadline > 0")
         if not 0 < args.poll_seconds <= 30:

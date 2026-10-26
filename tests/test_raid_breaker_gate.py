@@ -134,3 +134,25 @@ def test_evaluate_is_pure_step() -> None:
     assert status == "STALL"
     status, _ = state.evaluate(702.0, st, "b", None, 600, 1800)
     assert status == "ACTIVE"
+
+
+@pytest.mark.integration
+def test_snapshot_sees_second_edit_and_survives_git_failure(tmp_path: Path) -> None:
+    env = child_env()
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, env=env)
+    (tmp_path / "f").write_text("a\n")
+    subprocess.run(["git", "-C", str(tmp_path), "add", "f"], check=True, env=env)
+    subprocess.run(["git", "-C", str(tmp_path), "-c", "user.name=t", "-c", "user.email=t@t",
+                    "commit", "-qm", "x"], check=True, env=env)
+    (tmp_path / "f").write_text("b\n")
+    first = breaker.snapshot(tmp_path)
+    (tmp_path / "f").write_text("c\n")
+    assert breaker.snapshot(tmp_path) != first
+    assert breaker.snapshot(tmp_path / "missing") is None
+
+
+def test_wait_git_failure_keeps_stall_window(tmp_path, monkeypatch) -> None:
+    sim = Sim(snaps=lambda t: None)
+    code, elapsed = sim.run(3600, tmp_path, monkeypatch)
+    assert code == 1
+    assert 600 < elapsed <= 620

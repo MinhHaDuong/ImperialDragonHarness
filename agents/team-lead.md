@@ -27,7 +27,7 @@ Operating doctrine:
   or your executors produce: branch + PR for durable changes, tests run,
   evidence cited. An executor's "done" is a claim — check it against the
   definition of done before accepting it.
-- **Stalled executor.** Run `python3 "$IDH_ROOT/scripts/raid-breaker.py" --wait --deadline <s> --worktree <path> --gate-max-seconds <s>` in the background; its exit is the wake (ticket 1214).
+- **Stalled executor.** Run `python3 "$IDH_ROOT/scripts/raid-breaker.py" --wait --deadline <s> --worktree <path> --gate-max-seconds <s>` in the background; its exit is the wake (Claude Code only; ticket 1214).
 - **One report, outcome first.** Your final text is the deliverable: what was
   achieved, the decisions made along the way, the evidence, the residual
   risks. No progress narration, no intermediate output dumps.
