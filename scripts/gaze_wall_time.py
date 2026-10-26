@@ -77,7 +77,7 @@ def seat_kind(desc):
     return "other"
 
 
-def analyse(jsonl, meta_dir):
+def analyse(jsonl):
     recs = load(jsonl)
     if len(recs) < 3:
         return None
@@ -111,10 +111,6 @@ def analyse(jsonl, meta_dir):
                 if name == "Bash" and POLL.search(arg):
                     poll_s += d
                     polls.append((u0, ts(r)))
-    # assistant turns and tool seconds before the first launch (setup) and after the last record of any child (closing)
-    gaps = sorted(
-        ((ts(b) - ts(a)), ts(a)) for a, b in zip(recs, recs[1:]) if ts(b) - ts(a) > 120
-    )
     text = " ".join(
         b.get("text", "") + json.dumps(b.get("input", {}))
         for r in recs
@@ -141,7 +137,6 @@ def analyse(jsonl, meta_dir):
         launches=launches,
         calls=calls,
         result=found[-1] if found else None,
-        idle_gaps=[g for g, _ in gaps],
         turns=sum(r["type"] == "assistant" for r in recs),
     )
 
@@ -212,7 +207,7 @@ def runs(root):
         jl = marker.with_name(f"agent-{aid}.jsonl")
         if not jl.exists():
             continue
-        a = analyse(jl, marker.parent)
+        a = analyse(jl)
         if a:
             a["seats"] = seats_of(aid, marker.parent)
             a["id"] = aid

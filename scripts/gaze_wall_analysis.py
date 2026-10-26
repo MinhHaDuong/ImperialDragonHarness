@@ -31,6 +31,9 @@ rs = sorted(
 # 2026-10-21 22:01 CEST, the commits that removed gaze's gate and fix phases
 cut = datetime.datetime(2026, 10, 21, 20, 1, tzinfo=datetime.timezone.utc).timestamp()
 
+if not any(r["start"] >= cut for r in rs) or not any(r["start"] < cut for r in rs):
+    sys.exit("UNTIL leaves the before or the after bucket empty; give a later time")
+
 
 def P(x, p):
     x = sorted(x)
@@ -380,24 +383,24 @@ for name, rr in (
         f"{name}: wall {w / 60:.0f} min; poll {poll / 60:.0f} ({100 * poll / w:.0f}%); foreground-agent wait {ag / 60:.0f} ({100 * ag / w:.0f}%); other tools {(tool - poll - ag) / 60:.0f} ({100 * (tool - poll - ag) / w:.0f}%); remainder (model turns, harness, notification waits; derived) {(w - tool) / 60:.0f} ({100 * (w - tool) / w:.0f}%)"
     )
 print("\n#### old gate+fix phases inside gaze")
-g = f = 0
+gate_s = fix_s = 0
 nr = 0
 for r in old:
     gs = [s for s in r["seats"] if "gate" in s["desc"].lower()]
     fs = [s for s in r["seats"] if s["kind"] == "fix"]
     if gs or fs:
         nr += 1
-    g += sum(s["end"] - s["start"] for s in gs)
-    f += sum(s["end"] - s["start"] for s in fs)
+    gate_s += sum(s["end"] - s["start"] for s in gs)
+    fix_s += sum(s["end"] - s["start"] for s in fs)
 print(
     "BEFORE runs with gate/fix phase",
     nr,
     "of",
     len(old),
     "gate seat min",
-    g / 60,
+    gate_s / 60,
     "fix min",
-    f / 60,
+    fix_s / 60,
     "of wall",
     sum(r["wall"] for r in old) / 60,
 )

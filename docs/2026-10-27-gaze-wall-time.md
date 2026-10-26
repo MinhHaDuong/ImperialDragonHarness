@@ -134,10 +134,10 @@ column says what moves, not how much. Probabilities are my estimates; none has b
 
 | Option | Saves per run | Author-hours | USD | Odds it holds | Note |
 |---|---|---|---|---|---|
-| Faster orchestrator model | about 0 on Sonnet runs; 5 of 28 current runs used Opus or Fable | 1 (a route-grid entry) | cheaper per turn | 40% | Model time per turn is 3.0 s on Sonnet, 3.4 s Opus, 4.8 s Fable. The saving is on the turns of the 5 non-Sonnet runs (52 to 61 turns against 27). A Haiku orchestrator is unmeasured and the choice belongs to `route`, not gaze. |
+| Faster orchestrator model | about 0 on Sonnet runs; 5 of 28 current runs used Opus or Fable | 1 (a route-grid entry) | cheaper per turn | 40% | Model time per turn is 3.0 s on Sonnet, 3.4 s Opus, 4.8 s Fable. The saving is on the turns of the 5 non-Sonnet runs among the 28 (medians over all 140 runs: 52 to 61 turns against 27 on Sonnet). A Haiku orchestrator is unmeasured and the choice belongs to `route`, not gaze. |
 | One-call setup and closing script | about 60 s (derived: 43 s of setup model time x 7/9 turns = 33, plus 43 s of closing x 3/4 = 32, rounded down for overlap) | 3 to 4 | not measured; fewer orchestrator turns | 65% | Setup is 8 tool calls and closing 4, each a model turn. Biggest measured lever. |
 | Drop the orchestrator pre-review | under 5 s | 0.5 | negligible | 90% it saves, 10% worth the loss | Pre-launch tools total 6 s; the one duplicate, pytest, ran 14 times in 25 runs for 39 s of tool time and overlaps the seats. In round 4 it ran after the launch. |
-| Launch the semantic worker with the panel instead of after adherence | up to 12 s average, 50 s in the 8 runs it ends last | 2 | 0 | 50% | The worker reads the adherence seat's verdict; the dependency may be real. Needs a read of `battery.md` phase 3. |
+| Launch the semantic worker with the panel instead of after adherence | up to 12 s average, 39 s over the 8 runs where it ends last (derived: 5.2 min / 8) | 2 | 0 | 50% | The worker reads the adherence seat's verdict; the dependency may be real. Needs a read of `battery.md` phase 3. |
 | Narrow panel (ticket 1225) | at most 32 s | covered by 1225 | tokens, not time | n/a | Judged on quality there, not on time. |
 
 **Recommendation:** the one-call setup and closing script. It attacks the largest measured bucket
@@ -145,7 +145,7 @@ that has no quality cost. Order of effect: setup and closing are 42 percent of w
 removes about 60 of the 98 s. The pre-review drop is not worth a ticket: it is already inside
 setup. Do not act on a wait primitive for gaze on this evidence; 1216 stands on its other
 evidence (arena legs), not on gaze. Pin the gaze orchestrator to Sonnet in `route` if the grid
-allows: Opus and Fable orchestrators took 52 to 61 turns against 27 (READ), a confound with PR
+allows: Opus and Fable orchestrators took 52 to 61 turns against 27 (READ, median over all 140 runs), a confound with PR
 difficulty not removed.
 
 Not measured, and the cheapest next measurement: Haiku turn latency for the gaze orchestrator, and
