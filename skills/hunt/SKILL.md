@@ -17,9 +17,12 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 1. **Detach.** <!-- Fresh subagent to conserve the live session context. -->
    Arguments are `<ticket-id> [inline]`; `$ID` is the ticket id.
     - Without `inline`, hand the ticket to one background agent with the coder profile
-   (`agents/coder.md`, model per the `route` skill) whose first action is
+   (`agents/coder.md`) whose first action is
    loading the hunt skill with `$ID inline` as its argument; the prompt holds that and
    nothing more, since the agent loads the steps itself. Report the handoff and end the turn.
+   Choose the model of each launched worker per launch, from the `route` skill grid
+   (`skills/route/SKILL.md`); seats that must be independent follow
+   `skills/route/references/decorrelation.md` ("The launch line").
     - With `inline` (the detached agent, a raid, a headless run, or the author co-working),
    go on in the current context.
 2. **Read.** Read ticket `$ID` (from git-erg `tickets/` directory or forge).
