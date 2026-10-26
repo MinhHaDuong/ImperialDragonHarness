@@ -2,6 +2,7 @@
 Title: Wake the orchestrator when a delegated agent session makes no progress
 Created: 2026-10-25
 Author: claude
+Closed: autoclosed — PR #1680
 
 --- log ---
 2026-10-25T06:26Z claude created
@@ -10,6 +11,7 @@ Author: claude
 2026-10-26T22:45Z reviewer raid Feasibility: PASS on paths, functions and flags (classify, read_marker, marker_path, hunt Detach, team-lead Verify before reporting, importlib loading in the test). WARN: open PR 1676 (ticket 1226) edits skills/hunt/SKILL.md; keep the hunt change to one pointer line. No other open PR touches the breaker, circuit-breakers.md or team-lead.md.
 2026-10-26T22:47Z reviewer decision record: progress = a push, a change of the worktree snapshot (status, HEAD, pushed ref) or an observed gate exit; the woken party is the launcher of the background raid-breaker.py --wait command, once, by its exit 1 (STALL or GATE_TIMEOUT); the watchdog never kills; deadline exits 0 silently. Codex and Pi have no background-exit wake: per-step pull only (gap). Caveats: writes outside the worktree are unseen; an agent looping on edits looks active.
 2026-10-26T22:56Z reviewer decision record amendment: the snapshot is git status, HEAD, pushed ref, a hash of git diff HEAD and size+mtime of untracked files; a git failure reuses the last snapshot; unexpected errors exit 2 (1 is the wake).
+2026-10-26T23:09Z reviewer closed — autoclosed — PR #1680
 
 --- body ---
 ## Context
