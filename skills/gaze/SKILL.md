@@ -200,7 +200,8 @@ On every exit path run `references/cleanup.md`: remove this run's review scratch
   nor `tickets/closed/<id>-*.erg`; the ticket may already be closed on the branch) → ESCALATE. A PR with
   no ticket at all is not a breaker.
 - Any of phases 2–5 errors or times out → ESCALATE (do not silently skip).
-  Exception: simplify intentionally skipped when adherence is blocking.
+  Exception: simplify intentionally skipped (adherence blocking, prose
+  workpackage, no material growth).
 - Telemetry thresholds (`## Telemetry`).
 
 On **every** exit (not only ESCALATE) run `references/cleanup.md` before

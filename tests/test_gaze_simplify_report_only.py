@@ -21,7 +21,7 @@ def _norm(text: str) -> str:
 def test_phase5_is_report_only_round_one():
     norm = _norm(PHASE5)
     assert "report-only" in norm
-    assert "round 1" in norm and "grew materially" in norm
+    assert "round 1" in norm.lower() and "grew materially" in norm
     for gone in ("commit and push fixes", "applies bounded fixes", "confirm the dispositions"):
         assert gone not in norm, gone
 

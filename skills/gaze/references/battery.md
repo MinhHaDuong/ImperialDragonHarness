@@ -180,12 +180,13 @@ Wait for all spawned agents to complete. Collect their structured outputs.
 panel findings, and the coder acts on them (`skills/merge/SKILL.md`
 § Before merging).
 
-**When it runs.** Round 1: the PR carries no earlier `/gaze` result comment
-whose `simplify:` line reports a pass. On a later round, run it only when the
-diff grew materially since the head that pass names (new files or new
-mechanisms, not the fixes to earlier findings); otherwise log
-`simplify: skipped (no material growth)`. Ten passes on two PRs (ticket 1213)
-applied nothing after round 1.
+**When it runs.** A pass is a `simplify:` result line that names a reviewed
+SHA. Round 1: no earlier `/gaze` result comment on the PR carries a pass. On a
+later round, run it only when the diff grew materially since the head the last
+pass names (new files or new mechanisms, not the fixes to earlier findings);
+otherwise log `simplify: skipped (no material growth)` and carry that pass's
+`Unresolved simplify:` list forward unchanged, each entry marked
+`(from <sha>)`, so the gate still sees the round-1 must-fixes.
 
 **Prose-skip:** when the diff routed prose (the same
 `"$IDH_ROOT/scripts/prose_predicate.py"` verdict the phase 2–4 panel choice used), skip
@@ -207,9 +208,7 @@ surrounding code or instructions, and it edits nothing. It looks for:
 - **proportion:** lines that defend against a scenario no real actor
   produces — a theoretical race, an input no caller sends, a guard on a
   guard. For each, name the scenario, who would produce it, and what the
-  defence costs (lines, branches, tests), and propose deleting it. Simplify
-  that judges only hunks missed ~55 lines of lock-claim machinery the author
-  deleted (ticket 1213).
+  defence costs (lines, branches, tests), and propose deleting it.
 
 This is a distinct simplification pass, not a rerun of a general
 review. It returns the reviewed SHA, paths examined, and actionable

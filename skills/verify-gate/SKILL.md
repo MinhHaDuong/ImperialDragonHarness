@@ -53,7 +53,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    UNRESOLVED. No "I'll get to it later."
 4. **Simplify findings are load-bearing.** Every must-fix from Gaze’s report-only simplify
    phase is either fixed by the coder (diff shows the change) or explicitly justified in a
-   PR comment that the gate agent validates.
+   PR comment that the gate agent validates. A later round that skipped simplify carries
+   the earlier pass's list forward (`/gaze` battery § 5); read it there.
 5. **Adherence violations are blocking.** Any `blocking` entry from `/verify-adherence`
    is a REROLL trigger.
 6. **Two rounds max.** Round 1 is initial gate. Round 2 is post-fix re-gate. Round 3 is
@@ -248,7 +249,7 @@ malformed_minors:
     excerpt: "<hedged phrasing>"
 unresolved_simplify_findings:
   - finding: "<verbatim>"
-    severity: must-fix | nice-to-have
+    severity: must-fix | consider
     status: NOT_APPLIED | WAIVED_WITHOUT_RATIONALE
 unresolved_adherence_violations:
   - rule_ref: "<.claude/rules/foo.md#bar>"
