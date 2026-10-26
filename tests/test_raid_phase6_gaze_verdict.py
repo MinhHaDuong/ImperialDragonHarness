@@ -175,7 +175,7 @@ def test_merge_orders_sync_before_close_and_gates_only_approved():
     sync = merge.index("git fetch origin && git merge --ff-only origin/<branch>")
     close = merge.index("**Close the ticket on the branch before gating.**")
     assert sync < close
-    assert "Only APPROVED on that tip merges." in merge
+    assert "**Merge prerequisite, full tier: the gate's verdict is APPROVED" in merge
     assert "read after `git fetch origin`" in merge
     assert "judged before the caller adds its own fix and ticket-close commits" in merge
 
@@ -222,13 +222,14 @@ def test_phase6_cites_an_existing_output_shape():
 
 
 def test_phase7_checks_local_remote_and_ruled_tip_before_the_helper():
-    """PR 1539 review: the close step pushes HEAD, so 'pushes no close commit'
-    holds only when local HEAD, origin/<branch> and ruled_tip_sha agree,
-    checked after a fetch."""
+    """PR 1539 review: the close step pushes HEAD, so local HEAD must equal
+    origin/<branch> after a fetch; ticket 1221: the head may add at most a
+    bookkeeping delta to ruled_tip_sha."""
     phase7 = " ".join(_slice("## Phase 7: Merge", "### Merge-permission denial").split())
     assert (
         "`git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>` "
-        "== the gate's `ruled_tip_sha`" in phase7
+        "(HEAD read with `-C <worktree-path>`) and, full tier, a head that adds at most "
+        "a bookkeeping delta to the gate's `ruled_tip_sha`" in phase7
     )
     assert "pushes no close commit, and merges" not in phase7
 

@@ -71,9 +71,9 @@ Each duty the retired merge helper carried, and where it lives in the recipe.
 | Never arm auto-merge on a gated base; disarm a stray one | step 5 |
 | Mark a draft ready | step 2 |
 | No `--delete-branch` | step 6 |
-| Merge requests open at the cutover | they follow the recipe as they stand: step 1 closes a ticket the branch has not closed yet, and that new head needs a re-gate (an APPROVED verdict on the old head no longer covers it) |
+| Merge requests open at the cutover | they follow the recipe as they stand: step 1 closes a ticket the branch has not closed yet; that close is a bookkeeping delta, so an APPROVED verdict on the old head still covers it (§ Gating tiers) |
 | Re-recording after the base moves | step 4: mechanical, spends no review round |
-| Review approval and gate record on the same head | § Before merging, three-way equality; step 6 pins it |
+| Review approval covers the head (bookkeeping delta at most); gate record on the same head | § Gating tiers, § Before merging; step 6 pins it |
 | Body edited after approval | step 3: re-read and compare the claims with the ruled set |
 | Attribution-block warning | § Attribution block warning |
 | A merge without a record | nothing refuses on the merge path: the guard hook (enforce mode) and `main_sweep.py` (`/lair` step 15) report it afterwards |

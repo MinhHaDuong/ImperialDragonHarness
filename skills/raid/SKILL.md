@@ -260,6 +260,10 @@ retries once; a non-zero exit is a visible capture failure, not a silent skip.
 
 Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence and integrity.
 
+**Tier first** (`skills/merge/SKILL.md` § Gating tiers, the one home): a
+bookkeeping-tier merge request skips `/gaze` and `/verify-gate` and goes to
+Phase 7 on its mechanical checks. Everything below is the full tier.
+
 **Per-ticket:** run `/gaze` on every merge request, then `/verify-gate` on the
 head it reviewed. Gaze reviews and never returns APPROVED; the gate rules
 APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR. The orchestrator itself
@@ -287,7 +291,8 @@ Only on a gaze result of REVIEWED run
 `/verify-gate <pr-number> repo=<PR's worktree> session=<uuid>` the same way (gaze has removed
 its review tree by then; the gate checks out the PR head in a worktree of its
 own and removes it, while the raid keeps the PR's worktree until gating ends);
-its verdict is accepted only when its `ruled_tip_sha` matches the branch tip. On `FINDINGS` or
+its verdict is accepted only when the branch tip adds at most a bookkeeping
+delta to its `ruled_tip_sha` (§ Gating tiers). On `FINDINGS` or
 a REROLL, a coder fixes the listed items in the PR's worktree so its commits
 land on the PR branch, never on main mid-wave, and the REROLL bump is posed per
 `skills/verify-gate/SKILL.md`; the gate allows two rounds, a third escalates.
@@ -333,7 +338,8 @@ review surfaced: `references/follow-up-tickets.md`.
 <!-- inline: references/follow-up-tickets.md -->
 
 For each wave, merge APPROVED PRs one at a time. A PR is merge-eligible if:
-- `/verify-gate` verdict is APPROVED (one REROLL allowed — Phase 6 handles this), AND
+- the merge request is bookkeeping tier (`skills/merge/SKILL.md` § Gating tiers), or its
+  `/verify-gate` verdict is APPROVED (one REROLL allowed — Phase 6 handles this), AND
 - `scope_overflow` in the verdict is empty or all entries have suggested disposition
   TICKETED (caller creates tickets via `tickets/erg new` and adds `Scope overflow:
   tickets/NNNN` to the PR body before merging).
@@ -360,8 +366,9 @@ For each eligible PR, sequentially within the wave:
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
 4. Merge by the recipe, `skills/merge/SKILL.md` § The recipe,
    only after `git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>`
-   == the gate's `ruled_tip_sha` (HEAD read with `-C <worktree-path>`); any
-   mismatch means no merge. Close before gating: Phase 6 closed the ticket on
+   (HEAD read with `-C <worktree-path>`) and, full tier, a head that adds at
+   most a bookkeeping delta to the gate's `ruled_tip_sha` (`skills/merge/SKILL.md`
+   § Gating tiers); otherwise no merge. Close before gating: Phase 6 closed the ticket on
    the branch before the round-1 gate, so the recipe's close step finds it in
    `tickets/closed/` and adds no close commit.
    **Gated base** (`.merge-gate.json` on the base, `skills/merge/SKILL.md`
