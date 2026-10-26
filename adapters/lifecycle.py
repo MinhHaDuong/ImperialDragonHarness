@@ -248,10 +248,15 @@ def probe_wrappers(runtime=None) -> list:
     return problems
 
 
+# SHADOWED depends on the caller's PATH, not on the install: reported, never failed.
+ADVISORY = ("SHADOWED",)
+
+
 def check(runtime=None) -> int:
     failures = [p for e in entries(runtime) if (p := V.check_entry(e, root()))]
-    failures += probe_wrappers(runtime)
-    for problem in failures:
+    probed = probe_wrappers(runtime)
+    failures += [p for p in probed if p[0] not in ADVISORY]
+    for problem in failures + [p for p in probed if p[0] in ADVISORY]:
         report(*problem)
     print(f"idh check: {len(failures)} broken" if failures else "idh check: ok")
     return 1 if failures else 0
@@ -383,7 +388,8 @@ def install() -> int:
     rc = install_links() | install_loader()
     for problem in probe_wrappers():
         report(*problem)
-        rc = 1
+        if problem[0] not in ADVISORY:
+            rc = 1
     return rc
 
 

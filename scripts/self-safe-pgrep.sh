@@ -1,4 +1,6 @@
 #!/bin/sh
+# no set -euo pipefail: POSIX sh exec wrapper; pipefail is not portable to dash
+# and each step is checked by hand (exempt in scripts/check-pipefail.sh).
 # pgrep/pkill wrapper (ticket 1216). Projected as ~/.local/bin/pgrep and
 # ~/.local/bin/pkill; the tool run is the basename of the name it was called by.
 # A `pgrep -f PATTERN` inside a shell whose own command line holds PATTERN

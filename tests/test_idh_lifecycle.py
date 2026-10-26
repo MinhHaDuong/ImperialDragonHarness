@@ -652,7 +652,8 @@ def test_pgrep_wrapper_is_probed_on_install_and_check(machine):
     (shadow / "pgrep").symlink_to("/usr/bin/pgrep")
     env = dict(machine["env"], PATH=f"{shadow}:{machine['env']['PATH']}")
     r = subprocess.run([sys.executable, str(IDH), "check"], env=env, capture_output=True, text=True, timeout=60)
-    assert r.returncode == 1 and "SHADOWED" in r.stderr, r.stdout + r.stderr
+    # SHADOWED is advisory: reported with a PATH repair hint, exit 0.
+    assert r.returncode == 0 and "SHADOWED" in r.stderr and "before /usr/bin" in r.stderr, r.stdout + r.stderr
 
 
 @pytest.mark.skipif(_procps_major() < 4, reason="-A needs procps-ng >= 4.0")

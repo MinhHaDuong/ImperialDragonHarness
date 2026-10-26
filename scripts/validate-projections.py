@@ -308,7 +308,8 @@ def probe_wrapper(entry: dict, root: Path):
         return None, ""  # check_entry already names the missing target
     if not cands or resolved(cands[0]) != target:
         first = cands[0] if cands else "nothing"
-        return ("SHADOWED", f"{name} resolves first on PATH to {first}, not the wrapper {target}", repair), ""
+        hint = f"put {Path(entry['path']).parent} before /usr/bin on PATH in the shell profile (advisory: not a failure)"
+        return ("SHADOWED", f"{name} resolves first on PATH to {first}, not the wrapper {target}", hint), ""
     real = next((c for c in cands if resolved(c) != target), None)
     if real is None:
         return ("NOREAL", f"no real {name} behind the wrapper on PATH", repair), ""
