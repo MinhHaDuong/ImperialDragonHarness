@@ -227,9 +227,16 @@ changes keep the guard.
 
 ## Verdict shape
 
+Read the clock first thing (`T0=$(python3 "$IDH_ROOT/scripts/step_clock.py" start)`)
+and, after the last check, take `python3 "$IDH_ROOT/scripts/step_clock.py" end "$T0"`;
+its line goes into the verdict and the verdict comment as printed, and reads
+`duration: not measured` where no clock could be read, never an estimate. A gate
+seat, if the gate launches any, reports its own line the same way.
+
 ```yaml
 verdict: APPROVED | REROLL | ESCALATE | NEEDS-AUTHOR
 round: 1 | 2
+duration: <step_clock.py end line, e.g. duration: 4m12s>
 gate_session_id: <uuid>
 review_worktree_path: <absolute path of the gate's own worktree>
 ruled_tip_sha: <full commit SHA ruled>

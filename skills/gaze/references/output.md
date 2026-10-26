@@ -12,8 +12,17 @@ Each phase emits start/end lines: `[verify] phase=<name> start=<ISO> / end=<ISO>
 
 Appended to the result comment: `telemetry: wall=<s>s agents=<n> tokens=<in+out> cost~=$<usd>`
 
-Fields: `wall` (phase 1 to result), `agents` (sub-agent count), `tokens` (sum, use `na` for
+Fields: `wall` (phase 1 to result, in seconds, from the duration clock below, `na` only when it printed `not measured`), `agents` (sub-agent count), `tokens` (sum, use `na` for
 missing), `cost~=` (best-effort USD, `na` if incomplete).
+
+### Duration clock
+
+First action of phase 1: `T0=$(python3 "$IDH_ROOT/scripts/step_clock.py" start)`.
+Last action before posting: `python3 "$IDH_ROOT/scripts/step_clock.py" end "$T0"`,
+whose single line (`duration: 4m12s`, or `duration: not measured` when no clock
+could be read) goes into the result block as printed. Never type a duration
+from memory or estimate: the line comes from the script or says `not measured`.
+The seats' own wall times are the `seat times:` line (`seat_clock.py roster`).
 
 ### Thresholds
 
@@ -62,6 +71,7 @@ Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]
 Adherence: PASS | FAIL (<count>)
 
+duration: <`step_clock.py end` line, e.g. 4m12s>
 telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 seat: <role> · runtime=<id> · family=<family> · route=<token> · model=<id as the launch reported it | not observed> · status: ran|failed|skipped
 ```

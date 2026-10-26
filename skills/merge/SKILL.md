@@ -92,6 +92,11 @@ re-gate.
 
 `N` is the merge request, `<branch>` its head branch, `<base>` its base.
 
+Start the duration clock before step 0 (`T0=$(python3 "$IDH_ROOT/scripts/step_clock.py" start)`).
+After step 8, take `python3 "$IDH_ROOT/scripts/step_clock.py" end "$T0"` and put its
+line (`duration: 4m12s`, or `duration: not measured`) in the report; where the
+merge posts a comment on the request, in that comment too. Never an estimate.
+
 <!-- harness-extension-point -->
 Forge commands below use the current forge CLI; another forge needs the same
 reads and writes in its own spelling.
