@@ -11,6 +11,8 @@ Closed: autoclosed — PR #1685
 
 2026-10-27T00:40Z reviewer note measured: report docs/2026-10-27-gaze-wall-time.md (host padme, 140 runs). Neither the idle-poll nor the wide-panel diagnosis dominates; setup plus closing orchestrator turns (42%) and the slowest seat (40%) do. Child 1227 filed: one-call setup and closing scripts. Report is the /pulse visit brief (author away); USD is not priced (traces hold no cost field).
 2026-10-26T23:21Z reviewer closed — autoclosed — PR #1685
+2026-10-26T23:24Z reviewer reviewer note verify-reroll — round 1: criterion 3 — options carry no USD price although the traces hold the token usage it derives from
+2026-10-26T23:24Z reviewer reviewer note criterion 4 (round-1 fix): the /pulse visit agenda (author auto-memory, project_pulse_gaze_visit_agenda.md) now opens with this report as the visit's brief and marks the 2026-10-21 poll-gap diagnosis as superseded; the visit itself is the author's, and the fix is filed as child 1227. Criterion 3: derived USD per run added to every option from the route grid's cost per model-minute
 
 --- body ---
 ## Context

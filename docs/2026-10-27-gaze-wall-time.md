@@ -129,18 +129,23 @@ build problem, the second a seat-content problem (correctness and doc-propagatio
 ## Criterion 3: priced options
 
 Prices: author-hours (agent implementation plus review), USD (recurring), minutes saved per run
-(derived from the medians above, n=25). USD is not priced: the traces hold no cost field, so that
-column says what moves, not how much. Probabilities are my estimates; none has been run.
+(derived from the medians above, n=25). Probabilities are my estimates; none has been run.
+
+USD is derived, not read: the traces hold token counts but no cost field. The rate is the route
+grid's own measured cost per minute of model time at @medium (`skills/route/grid.json`, arena
+workload): Sonnet 5.5 0.1544 USD / 1.13 min = 0.137 USD/min; Opus 5.5 0.8003 / 5.99 = 0.134
+USD/min. Fable is not in the grid and is not priced. Gaze orchestrator turns have a different
+token mix from arena tasks, so read each figure as an order of magnitude, per gaze run.
 
 | Option | Saves per run | Author-hours | USD | Odds it holds | Note |
 |---|---|---|---|---|---|
-| Faster orchestrator model | about 0 on Sonnet runs; 5 of 28 current runs used Opus or Fable | 1 (a route-grid entry) | cheaper per turn | 40% | Model time per turn is 3.0 s on Sonnet, 3.4 s Opus, 4.8 s Fable. The saving is on the turns of the 5 non-Sonnet runs among the 28 (medians over all 140 runs: 52 to 61 turns against 27 on Sonnet). A Haiku orchestrator is unmeasured and the choice belongs to `route`, not gaze. |
-| One-call setup and closing script | about 60 s (derived: 43 s of setup model time x 7/9 turns = 33, plus 43 s of closing x 3/4 = 32, rounded down for overlap) | 3 to 4 | not measured; fewer orchestrator turns | 65% | Setup is 8 tool calls and closing 4, each a model turn. Biggest measured lever. |
-| Drop the orchestrator pre-review | under 5 s | 0.5 | negligible | 90% it saves, 10% worth the loss | Pre-launch tools total 6 s; the one duplicate, pytest, ran 14 times in 25 runs for 39 s of tool time and overlaps the seats. In round 4 it ran after the launch. |
-| Launch the semantic worker with the panel instead of after adherence | up to 12 s average, 39 s over the 8 runs where it ends last (derived: 5.2 min / 8) | 2 | 0 | 50% | The worker reads the adherence seat's verdict; the dependency may be real. Needs a read of `battery.md` phase 3. |
-| Narrow panel (ticket 1225) | at most 32 s | covered by 1225 | tokens, not time | n/a | Judged on quality there, not on time. |
+| Faster orchestrator model | about 0 on Sonnet runs; 5 of 28 current runs used Opus or Fable | 1 (a route-grid entry) | about 0.25 per non-Sonnet run (derived: Opus 57 turns x 3.4 s = 3.2 min x 0.134 = 0.43; Sonnet 27 x 3.0 s = 1.35 min x 0.137 = 0.18) | 40% | Model time per turn is 3.0 s on Sonnet, 3.4 s Opus, 4.8 s Fable. The saving is on the turns of the 5 non-Sonnet runs among the 28 (medians over all 140 runs: 52 to 61 turns against 27 on Sonnet). A Haiku orchestrator is unmeasured and the choice belongs to `route`, not gaze. |
+| One-call setup and closing script | about 60 s (derived: 43 s of setup model time x 7/9 turns = 33, plus 43 s of closing x 3/4 = 32, rounded down for overlap) | 3 to 4 | about 0.14 per run (derived: 60 s of Sonnet orchestrator time x 0.137 USD/min) | 65% | Setup is 8 tool calls and closing 4, each a model turn. Biggest measured lever. |
+| Drop the orchestrator pre-review | under 5 s | 0.5 | under 0.01 per run (derived: 5 s x 0.137 USD/min) | 90% it saves, 10% worth the loss | Pre-launch tools total 6 s; the one duplicate, pytest, ran 14 times in 25 runs for 39 s of tool time and overlaps the seats. In round 4 it ran after the launch. |
+| Launch the semantic worker with the panel instead of after adherence | up to 12 s average, 39 s over the 8 runs where it ends last (derived: 5.2 min / 8) | 2 | 0 (wall time only; the same seat tokens are spent) | 50% | The worker reads the adherence seat's verdict; the dependency may be real. Needs a read of `battery.md` phase 3. |
+| Narrow panel (ticket 1225) | at most 32 s | covered by 1225 | not priced here: seat tokens dropped depend on the brief | n/a | Judged on quality there, not on time. |
 
-**Recommendation:** the one-call setup and closing script. It attacks the largest measured bucket
+**Recommendation:** the one-call setup and closing script, priced at 3 to 4 author-hours for about 60 s and 0.14 USD saved per gaze run (derived). It attacks the largest measured bucket
 that has no quality cost. Order of effect: setup and closing are 42 percent of wall, the script
 removes about 60 of the 98 s. The pre-review drop is not worth a ticket: it is already inside
 setup. Do not act on a wait primitive for gaze on this evidence; 1216 stands on its other
