@@ -25,8 +25,8 @@ inherit it: review seats cannot reach their review tree.
 | Active feature branch + open MR | `t{N}-{pid}` | `[→ Execute]` |
 | MR review | `review-{N}` | `[→ Verify]` |
 
-`{pid}` is a short session discriminator so two sessions on one ticket land in
-distinct paths: `bash -c 'echo $$'`. Legacy bare `t{N}` names remain valid.
+`{pid}` is `$PPID`, as in hunt's Worktree step, so two sessions on one ticket
+land in distinct paths. Legacy bare `t{N}` names remain valid.
 
 **`/hunt N`: do not create a worktree before the skill runs** — a pre-emptive
 `t{N}-*` worktree makes its ownership check skip the triage.
