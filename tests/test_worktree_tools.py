@@ -698,6 +698,37 @@ def test_preflight_passes_on_clean_worktree(origin):
     assert res.stderr == ""
 
 
+@pytest.mark.parametrize("scratch", ["draft.md", "notes/plan.md"])
+def test_preflight_blocks_on_ignored_draft_under_star_ignore(origin, scratch):
+    """Ticket 1212: under a `*` ignore rule plain status reads clean, yet
+    `git worktree remove` deletes the ignored draft. The preflight refuses."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-ign-draft", dirty=False)
+    _ignore_everything(primary)
+    target = wt / scratch
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("in progress\n")
+
+    res = _preflight(wt)
+    assert res.returncode == 1
+    assert scratch.split("/")[0] in res.stderr
+    assert target.exists()
+
+
+def test_preflight_passes_on_ignored_caches_only(origin):
+    """Regenerable caches and the root .venv are not work: same list as gc."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-ign-cache", dirty=False)
+    _ignore_everything(primary)
+    (wt / "__pycache__").mkdir()
+    (wt / "__pycache__" / "m.pyc").write_bytes(b"\0")
+    (wt / ".venv" / "bin").mkdir(parents=True)
+    (wt / ".venv" / "bin" / "python").write_text("")
+
+    res = _preflight(wt)
+    assert res.returncode == 0, res.stderr
+
+
 def test_preflight_reports_ignored_tmp_without_purging_it(origin):
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-preflight-tmp", dirty=False)
