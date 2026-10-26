@@ -154,6 +154,7 @@ def test_manifest_entries_are_well_formed():
             "installer",
             "children",
             "registration",
+            "probe",
         }, e
         for spec in (e["path"], e["target"]):
             assert spec.startswith(("~/", "$IDH_ROOT")), spec

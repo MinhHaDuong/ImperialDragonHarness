@@ -115,8 +115,9 @@ Cost does not rank turns and wall-clock, so report velocity separately, from
    permission waits and background commands: label each figure "upper bound".
    `AskUserQuestion` hours are the author's own latency, not tool friction;
    list them apart.
-2. **Wait commands** (`wait_commands`, `wait_hours_upper_bound`). The regex is
-   tightened but still counts keywords quoted in heredocs: say "upper bound".
+2. **Wait commands** (`wait_commands`, `wait_hours_upper_bound`). The regex runs
+   on the command minus quoted strings and heredoc bodies; durations are
+   still an upper bound: say so.
 3. **Tool errors by cause** (`errors_by_cause`: worktree guard, no such tool,
    write outside worktree, other) with `error_hours_upper_bound`.
 
@@ -127,6 +128,26 @@ lever; a class that is rising is the finding. Price only what the series
 shows still happening. "Other" errors are a residual: do not name a cause for
 it without reading samples. Findings enter step 3 like any lever; this
 section never applies a fix.
+
+### Follies section
+
+From the same `friction.json`, report the `follies` block: a repeated mistake
+is a defect of the harness, not of one session. One row per folly
+(`pgrep_self_match`, `sleep_poll_to_cap`, `repeat_failing`): count, sessions,
+`seconds_upper_bound` and `seconds_lower_bound`, runtime split, and the `rung`
+of the barrier ladder it maps to (table `folly_barrier`: fix the primitive, a
+per-command cap, a PreToolUse hook, an instruction last). `--folly-min-seconds N`
+counts only calls of at least N seconds, for every folly. Every figure is a
+bound: traces record no job end, so never write "hours given back" and never
+turn the bounds into a point estimate. The rung is a table, not a verdict; no
+prescription is applied here.
+
+Report `barrier_denials` as data: how often each worktree guard refused a call
+(`unattributed` = blocked, guard not identified). Do not propose keeping or
+deleting a barrier: that verdict belongs to /pulse (`rules/workflow.md`, "No
+guards on guards"). For the arena's Pi sessions, run
+`python3 "$HARNESS_DIR/scripts/trace-friction.py" --pi-runs <runs dir> --json`;
+it never prints a command text.
 
 ### Treatment follow-up section
 
