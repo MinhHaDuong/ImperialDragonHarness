@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
 # Sourced by worktree-gc.sh and worktree-exit-preflight.sh: one definition of
 # what a worktree may hold and still be removed without losing work.
 #
