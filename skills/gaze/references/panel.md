@@ -63,8 +63,8 @@ detached, headless, non-interactive CLI process per seat, launched from the
 orchestrating session: a `claude -p "<prompt>"`
 style invocation qualifies (measured working); a headless `vibe -p` session
 cannot serve, its permission policy denies it file tools. Embed the whole seat
-contract in the prompt: perspective, exit criteria, anchor HEAD, changed-file
-roster, the `<panel>/<perspective>.md` path, and the read-only rails (writes
+contract in the prompt: perspective, exit criteria, anchor HEAD, the brief's
+scope (as in step 2 above), the `<panel>/<perspective>.md` path, and the read-only rails (writes
 nothing outside its artifact, posts nothing, holds no credentials). Pin the cwd
 to the review worktree, pass deny-rules as one quoted string, and request the
 model pin; a CLI that cannot enforce it records that limitation in the report.

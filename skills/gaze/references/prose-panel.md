@@ -7,8 +7,8 @@ Loaded from `skills/gaze/SKILL.md` § 2–5 when the diff routes `prose`. It fol
 Prose seats read the **full text**, not only the diff. Every seat is the
 prose-reviewer profile (`agents/prose-reviewer.md`, contract
 `profiles/prose-reviewer/PROFILE.md`); the seat's role, the rulebook or axes it
-holds (`prose_predicate.py --axes`, § 2–4), the anchor HEAD, the changed-file
-roster and its `<panel>/<reviewer>.md` path ride in the launch prompt. First
+holds (`prose_predicate.py --axes`, § 2–4), the anchor HEAD, the brief's
+scope (`references/panel.md` step 2) and its `<panel>/<reviewer>.md` path ride in the launch prompt. First
 name the manuscript files (the predicate's `prose` verdict) and the target
 venue. A caller brief names the prose seats and gaze recruits exactly those;
 under the default brief, recruit for that venue and the scope of the change:

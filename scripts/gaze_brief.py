@@ -15,6 +15,7 @@ An empty brief is the default brief, `seats=auto`, for a caller that sends none.
 """
 
 import argparse
+import re
 import subprocess
 import sys
 
@@ -25,6 +26,13 @@ PANELS = {
 KEYS = ("seats", "scope", "why")
 DEFAULT = "seats=auto; scope=all"
 EDITORIAL_BRIEF = "docs/editorial-brief.md"
+LATER_KEY = re.compile(r";\s*(?:" + "|".join(KEYS) + r")\s*=")
+LINE_BREAKERS = "\x85\u2028\u2029"
+
+
+def unsafe(text: str) -> bool:
+    """True when the text holds a character that would start a new output line."""
+    return any(ord(ch) < 32 or ch in LINE_BREAKERS for ch in text)
 
 
 class Refused(Exception):
@@ -32,7 +40,7 @@ class Refused(Exception):
 
 
 def parse(brief: str) -> dict[str, str]:
-    if any(ord(ch) < 32 for ch in brief):
+    if unsafe(brief):
         raise Refused("control character in the brief")
     out: dict[str, str] = {}
     rest = brief
@@ -42,6 +50,8 @@ def parse(brief: str) -> dict[str, str]:
         key = key.strip()
         if key == "why" and sep:
             value, rest = value + (";" + rest if rest else ""), ""
+            if LATER_KEY.search(value):
+                raise Refused("why= must come last (a key after it would be swallowed)")
         if not sep or key not in KEYS:
             raise Refused(f"unknown key {key!r} (known: {', '.join(KEYS)})")
         if key in out:
@@ -97,10 +107,12 @@ def scope_files(repo: str, scope: str, base: str, head: str) -> list[str]:
     if scope == "all":
         return changed
     if scope.startswith("paths:"):
-        paths = [p.strip() for p in scope[len("paths:"):].split(",") if p.strip()]
+        paths = scope[len("paths:"):].split(",")
         outside = [p for p in paths if p not in changed]
-        if not paths or outside:
-            raise Refused(f"path {', '.join(outside) or '(none)'} outside the diff")
+        if not scope[len("paths:"):] or outside:
+            raise Refused(f"path {', '.join(repr(p) for p in outside) or '(none)'} outside the diff")
+        if len(set(paths)) != len(paths):
+            raise Refused("duplicate path in scope")
         return paths
     start, sep, end = scope.partition("..")
     if not sep or not start or not end or end.startswith("."):
@@ -128,6 +140,8 @@ def resolve(brief: str, panel: str, base: str, head: str, repo: str) -> list[str
         shown = f"default ({DEFAULT}; no caller brief)"
     seats = seats_of(fields["seats"], panel, repo, head)
     files = scope_files(repo, fields["scope"], base, head)
+    if any(unsafe(name) for name in files):
+        raise Refused("a file name in scope holds a control character; name the scope by paths without it")
     return [f"brief: {shown}", *(f"{key}: {value}" for key, value in seats.items()), f"scope: {fields['scope']}"] + [
         f"scope_file: {name}" for name in files
     ]

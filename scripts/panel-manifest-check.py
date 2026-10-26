@@ -46,6 +46,8 @@ def check(text: str) -> list[str]:
 def against_brief(text: str, seats: str) -> list[str]:
     listed = [line.split("\t")[0] for line in text.splitlines() if line.strip() and not line.startswith("#")]
     wanted = [seat for seat in seats.split(",") if seat]
+    if len(set(wanted)) != len(wanted):
+        return [f"duplicate seat in --seats {seats!r}"]
     return [f"perspective {name!r} is not in the brief" for name in listed if name not in wanted] + [
         f"brief seat {name!r} is missing from the manifest" for name in wanted if name not in listed
     ]

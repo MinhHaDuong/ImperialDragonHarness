@@ -141,7 +141,7 @@ rulebook to hold it to.
 **Agent C — PR review** (the panel, `references/panel.md`; on a prose diff
 also `references/prose-panel.md`). This is the one launch mode: gaze launches
 the seats itself, as the code-reviewer or prose-reviewer profile, with the
-perspectives it chose (§ 2–5); there is no separate review skill and no
+perspectives the brief names (§ The brief); there is no separate review skill and no
 gaze-specific reviewer agent.
 
 **Route first.** Choose the panel by the shared prose predicate, anchored in the
@@ -169,7 +169,7 @@ there. Never write `dissent: none` for this path.
 
 Wait for all spawned agents to complete. Collect their structured outputs.
 
-**Early-exit check**: if the adherence agent returned any `blocking` violations, skip phase 5 (simplify). Blocking adherence guarantees FINDINGS; simplify tokens would be wasted. Log `simplify: skipped (adherence blocking)` in the telemetry phase line.
+**Early-exit check** (when `simplify:` is `auto`; a brief's `yes` runs it regardless): if the adherence agent returned any `blocking` violations, skip phase 5 (simplify). Blocking adherence guarantees FINDINGS; simplify tokens would be wasted. Log `simplify: skipped (adherence blocking)` in the telemetry phase line.
 
 ### 5. Simplify (sequential, report-only)
 
