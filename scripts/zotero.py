@@ -1670,7 +1670,7 @@ HDL_ANY_RE = re.compile(r"hdl\.handle\.net/([^\s)\]]+)", re.IGNORECASE)
 
 
 def normal_doi(raw: str | None) -> str:
-    return re.sub(r"^(?:https?://(?:dx\.)?doi\.org/|doi:\s*)", "",
+    return re.sub(r"^(?:(?:https?://)?(?:www\.|dx\.)?doi\.org/|doi:\s*)", "",
                   (raw or "").strip(), flags=re.IGNORECASE).strip().lower()
 
 

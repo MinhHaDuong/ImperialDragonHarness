@@ -167,6 +167,8 @@ Depuis la racine du checkout, avec les dépendances de développement installée
 python docs/audits/2026-10-23-skills-metier/probes.py
 ```
 
+Rejeu lié au point de contrôle : la sonde charge `peer_review.py`, retiré par la PR 1633 ; elle s'exécute depuis la révision auditée (`b4b863c6`), pas depuis `HEAD`.
+
 Les sorties attendues décrivent les défauts de la révision auditée. Il ne faut pas en faire des tests de régression qui exigeraient de conserver ces défauts. Les futures corrections doivent convertir les cas utiles en tests d'acceptation de la bonne conduite.
 
 Tests existants exécutés : `test_external_peer_review_skill`, `test_validate_refs`, `test_bib_merge`, `test_ingest_decision_letter`, `test_track_changes_pdf`, `test_zotero_import`, `test_zotero_find_work`, `test_zotero_check_staging_bib`, `test_zotero_report_duplicates`, `test_zotero_rule`, `test_zotero_backend_name`.

@@ -5,7 +5,7 @@ name: ingest-decision-letter
 description: "Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check mapping every remark to a ticket: one deterministic Revise-and-Resubmit intake pass."
 user-invocable: true
 disable-model-invocation: false
-argument-hint: "<decision-letter> <reviewer-comments>... [--release-dir <paper-repo>/release/<date>]"
+argument-hint: "<decision-letter> <reviewer-comments>... [archive --into <paper-repo>/release/<date>/]"
 ---
 
 # Ingest decision letter $ARGUMENTS
