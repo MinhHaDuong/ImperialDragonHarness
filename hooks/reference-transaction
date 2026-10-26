@@ -25,7 +25,9 @@
 #                current main, whose tree is that of the candidate rebuilt
 #                from its parents by scripts/merge-gate.py, and whose
 #                candidate carries a passing gate record (refs/notes/gate,
-#                written by ticket 1156's merge gate).
+#                written by ticket 1156's merge gate): the full check set, or
+#                for a bookkeeping-only merge its tier's checks (ticket 1221;
+#                merge-gate.py `check` decides which records it accepts).
 # Everything else (a local commit on main, a reset, branch -f, a deletion) is
 # not gated. One deletion cannot be refused: `delete main <old>` through
 # `update-ref --stdin` reaches the hook exactly as a `verify` does; it is

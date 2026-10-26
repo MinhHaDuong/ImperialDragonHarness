@@ -24,6 +24,35 @@ Close claims, short ids, fences, the attribution warning and the edge-case
 checklist live in `references/claims.md`; read it when the body carries a
 `Ticket` line you are unsure of, or a case below sends you there.
 
+## Gating tiers
+
+The one home of how much gating a merge needs; `rules/git.md`, `/raid`,
+`/hunt` and every `/gaze` caller point here. The tier follows what the diff
+touches and is read mechanically, never judged:
+`python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base origin/<base> --head HEAD`
+prints it and answers 0 bookkeeping (with `--since`, also `unchanged`), 1
+full (an empty diff included), 3 could not read (treat as full). The path list is `BOOKKEEPING` in that script: ticket files
+(`tickets/*.erg`, `tickets/closed/*.erg`), `STATE.md` and `memory/`; the
+ticket tool `tickets/erg` and the ticket docs are not bookkeeping. Only
+regular files (or deletions) count: a symlink or gitlink on those paths reads
+full.
+
+| Tier | The diff touches | Gating |
+|------|------------------|--------|
+| bookkeeping | bookkeeping paths only | Mechanical checks only. On a gated base the record runs the checks `.merge-gate.json` declares under `"tiers"`; this harness declares `validate-tickets` (the ticket check), `agnostic-guard` (lint) and `pytest-guard` (the full test suite, since tests read the live tickets, memory and `STATE.md`). On an ungated base, the repo's CI. No `/gaze`, no `/verify-gate`, no review seat. |
+| full | anything else: code, rules, skills, config | `/gaze`, then `/verify-gate` APPROVED, seats scaled to the risk (`skills/route/references/decorrelation.md`); on a gated base, the full record. |
+
+**A commit added after approval is gated by the tier of its own diff**, not
+by the whole PR's gate again:
+`merge-gate.py tier --base origin/<base> --head HEAD --since <ruled_tip_sha>`
+diffs the candidate the approval saw against the candidate of the current
+head, so it measures only what the head adds. Bookkeeping (a ticket close, a
+log line, `STATE.md`, memory) or unchanged (a rebase that leaves the branch's
+own change intact): the APPROVED verdict stands, no review round and no gate round are
+spent; on a gated base the mechanical record is simply re-run on the new
+head. Full: re-gate within the gate session's budget (`/verify-gate` § Gate
+sessions), which owns how much of the prior verdict a re-gate reuses.
+
 ## Before merging
 
 - **Merge method drifts per repo.** This harness repo disables squash, so the
@@ -42,24 +71,28 @@ checklist live in `references/claims.md`; read it when the body carries a
 - **Close the ticket on the branch before gating.** Before the round-1
   `/verify-gate`, close each claimed ticket on the branch (step 1 below), so
   the gate rules a head that already contains the close and step 1 at merge
-  time finds nothing to do. A close commit pushed after the gate changes the
-  head: re-gate. A push pushes nothing only when that three-way equality holds
-  (next item); an unpushed local commit would ride along.
-- **Merge prerequisite: the gate's verdict is APPROVED and
-  the gate's `ruled_tip_sha` equals `git rev-parse origin/<branch>` at merge
-  time, read after `git fetch origin`; otherwise re-gate, do not merge.** Only APPROVED on that tip merges. Run the
+  time finds nothing to do. A close commit pushed after the gate is a
+  bookkeeping delta (§ Gating tiers): the approval stands. An unpushed local
+  commit would ride along, so push first and compare `HEAD` with
+  `origin/<branch>` (next item).
+- **Merge prerequisite, full tier: the gate's verdict is APPROVED and
+  what `origin/<branch>` adds to the gate's `ruled_tip_sha` (read after
+  `git fetch origin`) is bookkeeping, an empty delta included (§ Gating
+  tiers); otherwise re-gate, do not merge.** A bookkeeping-tier request needs
+  no verdict: its mechanical checks are the gate. Run the
   gate as `/verify-gate <pr> repo=<this worktree> session=<uuid>` (one session
   per PR, two rounds at most: `/verify-gate` § Gate sessions); a re-gate past
   that budget is ESCALATE to the author, never a third run.
   Immediately before the merge, run `git fetch origin`, then
-  `git rev-parse HEAD` == `git rev-parse origin/<branch>` == the gate's
-  `ruled_tip_sha`; any mismatch means sync or re-gate, never merge. The review
-  approval and the gate record belong to that same head.
-- **A gaze result of ESCALATE (or none accepted) means no gate and no merge:**
+  `git rev-parse HEAD` == `git rev-parse origin/<branch>` (a mismatch means
+  sync, never merge) and, full tier, `merge-gate.py tier --since
+  <ruled_tip_sha>` answers 0 (otherwise re-gate). The record on a gated base
+  always belongs to that same head.
+- **Full tier: a gaze result of ESCALATE (or none accepted) means no gate and no merge:**
   the review never completed, and the PR goes to the author. "Accepted" means a
   result is present and its `reviewed_head_sha` is not stale against the branch
   tip (as in `/raid` Phase 6), judged before the caller adds its own fix and
-  ticket-close commits; those commits do not void it.
+  ticket-close commits; a bookkeeping delta never voids it (§ Gating tiers).
 - **Run the gate record on padme when it is reachable**, over ssh from another
   host; when padme is unreachable run it where you are: the record names the
   host. `"$IDH_ROOT/scripts/local-ci.sh"` still reproduces every forge job in
@@ -94,8 +127,8 @@ reads and writes in its own spelling.
    stray untracked file.
 2. **Ready.** A draft request is marked ready: `gh pr ready N` <!-- harness-extension-point -->
    Asking for the merge is the intent to merge.
-3. **Same head.** `git fetch origin`, then the three-way equality of § Before
-   merging. Re-read the body and compare its close claims with the set the
+3. **Same head.** `git fetch origin`, then the head checks of § Before
+   merging (tier delta since the ruled tip, full tier only). Re-read the body and compare its close claims with the set the
    gate ruled on: a body edited after approval is a stop and a re-gate.
 4. **Gate (b).** `python3 "$IDH_ROOT/scripts/merge-gate.py" enabled --base origin/<base>`
    answers 0 gated, 1 ungated, 3 could not read (stop; never remove the file

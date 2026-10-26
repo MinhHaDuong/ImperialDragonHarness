@@ -102,17 +102,18 @@ def test_verify_gate_owns_its_worktree():
 
 
 def test_merge_gates_the_head_that_merges():
-    """The caller closes the ticket on the branch before gating, so /merge's
-    prerequisite is one equality: ruled tip == origin/<branch> at merge time.
-    The recipe's close step then finds the ticket already closed and archived
-    and adds no commit; the gate reads exit criteria from tickets/closed/ (ticket
-    1153, third union review)."""
+    """The caller closes the ticket on the branch before gating; /merge's
+    prerequisite is APPROVED plus at most a bookkeeping delta from the ruled
+    tip to origin/<branch> at merge time (ticket 1221). The recipe's close
+    step then finds the ticket already closed and archived and adds no commit;
+    the gate reads exit criteria from tickets/closed/ (ticket 1153, third union
+    review)."""
     merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
     assert "Close the ticket on the branch before gating." in merge
     assert (
-        "the gate's verdict is APPROVED and the gate's `ruled_tip_sha` equals `git rev-parse "
-        "origin/<branch>` at merge time, read after `git fetch origin`; otherwise "
-        "re-gate, do not merge." in merge
+        "the gate's verdict is APPROVED and what `origin/<branch>` adds to the gate's "
+        "`ruled_tip_sha` (read after `git fetch origin`) is bookkeeping, an empty delta "
+        "included (§ Gating tiers); otherwise re-gate, do not merge." in merge
     )
     assert "#1522" not in merge and "Documented exception" not in merge
     assert "rev-list --count <ruled>" not in merge
@@ -534,21 +535,22 @@ def test_ruled_tip_field_has_one_name_across_gate_and_callers():
         text = (SKILLS / name / "SKILL.md").read_text()
         found = set(spelling.findall(text))
         assert found == {field}, (name, found)
-    assert f"the gate's `{field}` equals `git rev-parse" in (SKILLS / "merge" / "SKILL.md").read_text()
+    assert f"--since <{field}>" in (SKILLS / "merge" / "SKILL.md").read_text()
 
 
-def test_merge_checks_three_way_tip_equality_and_conditional_push():
-    """PR 1539 review: the close step runs `git push origin HEAD`, so
-    'pushes nothing' holds only when HEAD == origin/<branch> == ruled tip,
-    read after a fetch."""
+def test_merge_checks_head_equality_and_tier_delta():
+    """PR 1539 review: the close step runs `git push origin HEAD`, so HEAD must
+    equal origin/<branch> after a fetch; ticket 1221: the full tier then reads
+    the delta since the ruled tip mechanically."""
     merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
     assert (
         "`git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>` "
-        "== the gate's `ruled_tip_sha`" in merge
+        "(a mismatch means sync, never merge) and, full tier, `merge-gate.py tier --since "
+        "<ruled_tip_sha>` answers 0 (otherwise re-gate)" in merge
     )
     assert "so it pushes no commit of its own" not in merge
     assert "so the retry pushes nothing" not in merge
-    assert "pushes nothing only when that three-way equality holds" in merge
+    assert "An unpushed local commit would ride along, so push first" in merge
 
 
 def test_merge_accepted_gaze_result_is_not_tautological():
@@ -559,20 +561,21 @@ def test_merge_accepted_gaze_result_is_not_tautological():
     assert "its `reviewed_head_sha` is not stale against the branch tip" in merge
 
 
-def test_dashboard_requires_ruled_tip_equal_to_the_head():
-    """The 1153 stack merged with delta 0, so the dashboard names no
-    historical exception: ruled_tip_sha must equal the branch head."""
+def test_dashboard_allows_at_most_a_bookkeeping_delta_past_the_ruled_tip():
+    """The dashboard names no historical exception; since ticket 1221 the head
+    may add at most a bookkeeping delta to ruled_tip_sha."""
     dash = " ".join((SKILLS / "dashboard" / "SKILL.md").read_text().split())
     assert "a later ticket-close commit from the merge helper is normal" not in dash
     assert "#1522" not in dash and "exception" not in dash
-    assert "`ruled_tip_sha` equal to the branch head (a mismatch is a finding)" in dash
+    assert "a branch head that adds at most a bookkeeping delta to the `ruled_tip_sha`" in dash
 
 
 def test_git_rule_rebases_before_round_one_gate_and_syncs_after_gaze():
     rule = " ".join((REPO / "rules" / "git.md").read_text().split())
     assert "syncs after `/gaze`" in rule
     assert "before the round-1 `/verify-gate`" in rule
-    assert "a later rebase changes the ruled tip and spends the PR's single re-gate" in rule
+    assert "a later rebase is gated by the tier of what it changes" in rule
+    assert "`/merge` § Gating tiers" in rule
 
 
 def test_gate_tree_is_per_session_and_round_and_repo_is_required():

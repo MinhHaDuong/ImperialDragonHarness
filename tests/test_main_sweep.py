@@ -255,3 +255,20 @@ def test_a_repository_without_a_gate_prints_nothing(tmp_path):
     for args in ([], ["--summary"], ["--fetch"]):
         proc = audit(r, *args)
         assert (proc.returncode, proc.stdout) == (0, ""), proc.stderr
+
+
+def test_a_bookkeeping_merge_with_its_tier_receipt_reads_as_ok(repo):
+    """Ticket 1221: a tickets/STATE/memory-only merge carries a tier receipt."""
+    (repo / ".merge-gate.json").write_text(
+        '{"gate": "on", "scope": "s", "checks": [{"name": "t", "argv": ["true"]},'
+        ' {"name": "full", "argv": ["false"]}], "tiers": {"bookkeeping": ["t"]}}\n')
+    git(repo, "add", "-A")
+    git(repo, "commit", "-q", "-m", "tiers")
+    git(repo, "push", "-q", "origin", "main")
+    git(repo, "switch", "-q", "-c", "books", "main")
+    commit(repo, "STATE.md")
+    git(repo, "switch", "-q", "main")
+    receipt(repo, "books")
+    merge = forge_merge(repo, "books")
+    proc = audit(repo)
+    assert line_of(proc, merge).startswith("ok"), proc.stdout + proc.stderr
