@@ -446,7 +446,7 @@ Autonomous mode: ralph loop to next wave.
    timing table: for each merge request, note `<pr> <step> <start> <end>` rows
    (epoch seconds from `step_clock.py start`: gaze, each gate round, merge) as
    the steps run, and print `python3 "$IDH_ROOT/scripts/step_clock.py" table`
-   over them: per-step durations, the total from first gaze to MERGED, and the
+   with the rows on stdin: per-step durations, the total from first gaze to MERGED, and the
    slowest step. A step with no clock reading is listed as `not measured`.
 4. Do NOT run `/lair`.
 

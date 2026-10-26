@@ -60,3 +60,9 @@ def test_seconds_mode():
     assert run('end', '--seconds', '-5').stdout.strip() == 'na'
     t0 = run('start').stdout.strip()
     assert run('end', '--seconds', t0).stdout.strip().isdigit()
+
+
+@pytest.mark.parametrize('row', ['7 gaze nan nan', '7 x inf inf', '7 y 1 inf'])
+def test_table_survives_non_finite_rows(row):
+    out = run('table', stdin=f'{row}\n\n7 ok 1 3\n')
+    assert out.returncode == 0 and 'not measured' in out.stdout and 'PR ?' not in out.stdout

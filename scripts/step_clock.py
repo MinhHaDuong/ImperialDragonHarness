@@ -18,6 +18,7 @@ on stdin and prints one table per merge request: each step's duration, the total
 from the PR's first start to its last end, and the slowest step.
 """
 
+import math
 import sys
 import time
 
@@ -54,12 +55,14 @@ def table(lines: list[str]) -> str:
     bad: dict[str, list[str]] = {}  # unreadable rows are listed, never dropped
     for line in lines:
         parts = line.split()
+        if not parts:
+            continue
         if len(parts) < 4:
             bad.setdefault(parts[0] if parts else '?', []).append(' '.join(parts[1:]) or '?')
             continue
         try:
             a, b = float(parts[-2]), float(parts[-1])
-            if a <= 0 or b < a:
+            if not (math.isfinite(a) and math.isfinite(b)) or a <= 0 or b < a:
                 raise ValueError
             rows.setdefault(parts[0], []).append((' '.join(parts[1:-2]), a, b))
         except ValueError:

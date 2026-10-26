@@ -94,7 +94,7 @@ re-gate.
 
 Start the step clock before step 0 and end it after step 8 (`skills/gaze/references/output.md`
 § Duration clock). The `duration:` line goes in the report and, always, in a comment
-on the request (`gh pr comment N --body "merge <head>: duration: …"`).
+on the request (`gh pr comment N --body "merge <head>: duration: …"`). <!-- harness-extension-point -->
 
 <!-- harness-extension-point -->
 Forge commands below use the current forge CLI; another forge needs the same
