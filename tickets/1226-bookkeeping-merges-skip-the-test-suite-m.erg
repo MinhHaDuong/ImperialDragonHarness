@@ -1,0 +1,49 @@
+%erg 0.1
+Title: Bookkeeping merges skip the test suite; main is verified right after, with a bounded lag
+Created: 2026-10-26
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-26T22:11Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Author directive, 2026-10-26: reduce a merge from 39 s to a few seconds (option A
+of the discussion that evening). Measured that evening: the gate record takes
+33 to 35 s, of which `pytest-guard` is 38.3 s in three records and the other four
+checks about 0.4 s; the merge call and read-back take about 4 s. A bookkeeping
+merge (tickets, STATE.md, memory) pays the suite because the tests read the live
+tickets, memory and STATE.md (ticket 1221, round 1: a 41-line STATE.md fails
+`test_state_within_cap`).
+
+Design (option A): the bookkeeping tier's record runs only the ticket check and the
+agnostic guard (about 0.3 s). The full suite then runs on the new main tip as a
+monitor. Merging faster than the monitor runs is handled by bounding the lag:
+
+- one verification run in flight and one pending, latest tip wins, so work is capped
+  at two runs and each run covers every merge since the last verified-green tip;
+- the fast path is off when main is more than K merges past its last verified-green
+  tip (K = 5 by default) or the last verdict is older than a bound, and off after a
+  red verdict until a green one; while it is off a bookkeeping merge pays the full
+  record, which is today's behaviour;
+- a red verdict names the likely culprit by re-running only the failing tests on the
+  merges since the last green tip;
+- a full-tier record still runs the whole suite on the candidate, so a code merge
+  cannot bury a bad bookkeeping merge;
+- no verdict counts as unverified: if the monitor's host dies the counter trips and
+  the fast path closes (fail closed).
+
+Related: [[1221]] (gating tiers), [[1220]] (check reuse), [[1224]] (durations),
+[[0988]] (merge-gate record).
+
+## Exit criteria
+
+- [ ] A bookkeeping-tier merge on a gated base completes in 6 s or less end to end when the fast path is open (measured and printed per ticket 1224's duration line), the record running only the checks `.merge-gate.json` declares for the tier without `pytest-guard`.
+- [ ] After a fast-path merge the full suite runs on the new main tip in the background, writes a verdict keyed by that tip (a note beside the gate records), and runs at most one at a time with one pending (coalescing), never one per merge.
+- [ ] The fast path closes when main is more than K merges past its last verified-green tip, when the last verdict is older than the bound, or when the last verdict is red, and reopens on a green verdict; K and the bound are declared in `.merge-gate.json`, and a missing verdict counts as unverified.
+- [ ] A red verdict reports the likely culprit merge by re-running only the failing tests on the merges since the last green tip.
+- [ ] Regression tests: (a) a ticket-only merge on an open fast path runs no suite in its record; (b) a STATE.md over its cap merged on the fast path is caught by the monitor and closes the fast path; (c) six merges in a row with a slow monitor close the fast path at the sixth (K = 5); (d) a code merge after a bad bookkeeping merge fails its own record; (e) a dead monitor (no verdict) closes the fast path.
+- [ ] `skills/merge/SKILL.md` § Gating tiers states the fast path, its closing conditions and the monitor in one place, and `/raid`, `/hunt` and `/roar` point to it; the guard hook and the audit of main (`main_sweep.py`) accept a fast-path record.
+- [ ] The harness gate (`.merge-gate.json` checks) passes.
+
