@@ -13,6 +13,7 @@ import json
 import os
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
 import pytest
@@ -272,6 +273,41 @@ def test_enforce_accepts_a_merge_only_with_a_passing_receipt_on_its_candidate(re
     assert (proc.returncode == 0) is (case == "passing"), proc.stderr
     rec = [r for r in journal(wt2) if r["phase"] == "prepared"][-1]
     assert rec["decision"] == ("gate-record" if case == "passing" else "not-gated")
+
+
+def test_enforce_accepts_a_merge_whose_record_took_the_fast_path(repos):
+    """Ticket 1226: a bookkeeping merge whose record ran only the fast-path checks."""
+    work, wt2 = repos["work"], repos["wt2"]
+    gate = {
+        "gate": "on", "scope": "s",
+        "checks": [{"name": "t", "argv": ["true"]}, {"name": "suite", "argv": ["false"]}],
+        "tiers": {"bookkeeping": ["t", "suite"]},
+        "fastpath": {"checks": ["t"], "max_lag": 5, "max_age_minutes": 60},
+    }
+    (work / ".merge-gate.json").write_text(json.dumps(gate))
+    git(work, "add", "-A")
+    git(work, "commit", "-q", "-m", "gate on")
+    main = rev(work, "main")
+    stamp = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    verdict = f"merge-gate-verdict: v1\nresult: pass\ntime: {stamp}\nhost: fixture\nrevision: tip={main}\nscope: s: t suite\n"
+    git(work, "notes", "--ref=refs/notes/gate-verdict", "add", "-m", verdict, main)
+    git(work, "push", "-q", "origin", "refs/notes/gate-verdict")
+    git(work, "config", "idh.mainGuard", "enforce")
+    git(work, "switch", "-q", "--detach")
+    (wt2 / "tickets").mkdir()
+    (wt2 / "tickets" / "0001-a.erg").write_text("a\n")
+    git(wt2, "add", "-A")
+    git(wt2, "commit", "-q", "-m", "ticket")
+    run = subprocess.run(
+        ["python3", str(GATE), "run", "--base", "main", "--head", "side"],
+        capture_output=True, text=True, env=_env(), cwd=wt2,
+    )
+    assert run.returncode == 0 and "scope: s/fastpath: t\n" in run.stdout, run.stdout + run.stderr
+    merge = _candidate(wt2)
+    proc = git(wt2, "update-ref", "refs/heads/main", merge, main, check=False)
+    assert proc.returncode == 0, proc.stderr
+    rec = [r for r in journal(wt2) if r["phase"] == "prepared"][-1]
+    assert rec["decision"] == "gate-record"
 
 
 def test_a_record_on_a_stale_candidate_does_not_pass(repos):

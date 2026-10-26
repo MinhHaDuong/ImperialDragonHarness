@@ -42,10 +42,25 @@ declared under `"rerun": {"bookkeeping": [...]}` (undeclared: every check
 re-runs). A check declared `"integration": true` is skipped unless the diff
 touches a path its `"covers"` patterns match, or `--integration` is passed.
 
+Fast path (ticket 1226; the policy is skills/merge/SKILL.md § Gating tiers):
+when the base declares `"fastpath": {"checks": [names], "max_lag": K,
+"max_age_minutes": M}`, a bookkeeping candidate's record runs only those
+checks, under the scope `<scope>/fastpath`, while the fast path is open: the
+nearest verdict on main's first-parent line below the base is green, at most
+K-1 merges below it (the candidate makes the K-th), and younger than M
+minutes. A verdict is a note in refs/notes/gate-verdict on a main tip, written
+by scripts/merge_monitor.py after the full check set ran there; a record of
+another scope on the merge's own candidate is a verdict too (it ran the
+checks the tier demands). A red verdict, none within reach, or an old one
+closes the path; the record then runs the tier set, as before. Openness is
+judged when the record is written and stated in it; `check` accepts a
+fast-path record of a bookkeeping candidate. `fastpath` prints the state.
+
 Exit codes of `check`: 0 pass, 1 fail or stale scope, 2 no record, 3 error.
 `enabled`: 0 on, 1 off, 3 error. `tier`: 0 bookkeeping (or, with --since,
 unchanged), 1 full (an empty diff included), 3 error. `plan`: 0 printed, 1
-gate off (no declared checks), 3 error.
+gate off (no declared checks), 3 error. `fastpath`: 0 open, 1 closed (or
+not declared), 3 error.
 Any unexpected exception exits 3.
 """
 
@@ -67,12 +82,17 @@ from pathlib import Path
 
 LOG = logging.getLogger("merge-gate")
 NOTES_REF = "refs/notes/gate"
+VERDICT_REF = "refs/notes/gate-verdict"  # monitor verdicts on main tips (ticket 1226)
 LOCAL_REF = "refs/notes/gate-local"  # --no-push records: never pushed, read by `check --local` only
 # Characters that end a line for some reader: every C0 control, DEL, NEL, LS, PS.
 LINE_BREAKERS = frozenset(chr(c) for c in range(32)) | {"\x7f", "\x85", "\u2028", "\u2029"}
 CONFIG_PATH = ".merge-gate.json"
 HEADER = "merge-gate-record: v1"
 FIELDS = ("result", "time", "actor", "host", "revision", "command", "scope", "versions")
+VERDICT_HEADER = "merge-gate-verdict: v1"
+VERDICT_FIELDS = ("result", "time", "host", "revision", "scope")
+VERDICT_EXTRAS = ("failed-first-run", "flaky", "culprit")
+TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 NOT_STATED = "not-stated"
 PASS, FAIL, MISSING, ERROR = 0, 1, 2, 3
 # Bookkeeping paths, the one home of the list (ticket 1221). A pattern ending
@@ -80,6 +100,7 @@ PASS, FAIL, MISSING, ERROR = 0, 1, 2, 3
 # "tickets/*.erg" does not reach tickets/erg (code) or tickets/closed/.
 BOOKKEEPING = ("tickets/*.erg", "tickets/closed/*.erg", "STATE.md", "memory/")
 BOOKKEEPING_TIER = "bookkeeping"
+FASTPATH = "fastpath"
 
 
 class GateError(RuntimeError):
@@ -115,18 +136,24 @@ def rev(ref):
 # ── record format ──────────────────────────────────────────────────────────────
 
 
-def format_entry(fields):
-    """One record entry: the header line, then every field in FIELDS order."""
-    missing = [f for f in FIELDS if not fields.get(f)]
+def format_entry(fields, header=HEADER, keys=FIELDS, extras=("fastpath",)):
+    """One entry: the header line, every field in `keys` order, the optional `extras` present, the checks."""
+    missing = [f for f in keys if not fields.get(f)]
     if missing:
         raise ValueError("record entry lacks " + ", ".join(missing))
-    values = [fields[key] for key in FIELDS] + list(fields.get("checks", []))
+    present = [key for key in extras if fields.get(key)]
+    values = [fields[key] for key in (*keys, *present)] + list(fields.get("checks", []))
     if not all(single_line(v) for v in values):
         # A line break in a free-text value (actor, command) would start a forged entry.
         raise ValueError("record values may not contain a line break or control character")
-    lines = [HEADER] + [f"{key}: {fields[key]}" for key in FIELDS]
+    lines = [header] + [f"{key}: {fields[key]}" for key in (*keys, *present)]
     lines += [f"check: {line}" for line in fields.get("checks", [])]
     return "\n".join(lines) + "\n"
+
+
+def format_verdict(fields):
+    """One monitor verdict entry (refs/notes/gate-verdict), in the record's line format."""
+    return format_entry(fields, VERDICT_HEADER, VERDICT_FIELDS, VERDICT_EXTRAS)
 
 
 def single_line(value):
@@ -139,7 +166,7 @@ def sanitize(text):
     return "".join(" " if c in LINE_BREAKERS else c for c in text).strip()
 
 
-def parse_note(text):
+def parse_note(text, header=HEADER, keys=FIELDS):
     """Entries in note order; lines outside an entry, or unknown keys, are ignored.
 
     Lines end at \n only: the writer refuses every other line boundary, and a
@@ -148,7 +175,7 @@ def parse_note(text):
     """
     entries, current = [], None
     for line in text.split("\n"):
-        if line == HEADER:
+        if line == header:
             current = {"checks": []}
             entries.append(current)
             continue
@@ -157,7 +184,7 @@ def parse_note(text):
             continue
         if key == "check":
             current["checks"].append(value)
-        elif key in FIELDS and key not in current:
+        elif key in keys and key not in current:
             current[key] = value
     return entries
 
@@ -250,8 +277,86 @@ def effective(config, base, oid):
 
 
 def accepted_scopes(config, base, oid):
-    """A tier record, or the full set, which covers every tier."""
-    return tuple(dict.fromkeys((scope_line(effective(config, base, oid)), scope_line(config))))
+    """A tier record, or the full set, which covers every tier; a fast-path record for a bookkeeping candidate."""
+    tiered = effective(config, base, oid)
+    fast = (scope_line(fast_config(config)),) if FASTPATH in config and tiered is not config else ()
+    return tuple(dict.fromkeys((scope_line(tiered), scope_line(config), *fast)))
+
+
+def fast_config(config):
+    """The check set of a fast-path record."""
+    names = config[FASTPATH]["checks"]
+    checks = [c for c in config["checks"] if c["name"] in names]
+    return {**config, "scope": f"{config['scope']}/{FASTPATH}", "checks": checks}
+
+
+# ── fast path: is main verified close enough below this base? (ticket 1226) ──
+
+
+def now():
+    """Seconds since the epoch; MERGE_GATE_NOW overrides it (tests of the age bound)."""
+    return float(os.environ.get("MERGE_GATE_NOW") or time.time())
+
+
+def stamp_age(stamp):
+    """Seconds since a record or verdict time stamp; None when it does not parse."""
+    try:
+        then = datetime.datetime.strptime(stamp, TIME_FORMAT).replace(tzinfo=datetime.timezone.utc)
+    except (TypeError, ValueError):
+        return None
+    return now() - then.timestamp()
+
+
+def verdict_on(tip):
+    """(result, time, source) of what verified main tip `tip`, or None: the monitor's verdict, else the merge's record.
+
+    The latest verdict entry naming the tip decides. Without one, a merge
+    whose candidate (rebuilt from its two parents) has its tree and carries a
+    passing record of a scope other than the fast path counts as green: that
+    record ran the checks the tier demands on this very tree.
+    """
+    entries = [e for e in parse_note(read_note(tip, VERDICT_REF), VERDICT_HEADER, VERDICT_FIELDS)
+               if e.get("revision") == f"tip={tip}" and all(f in e for f in VERDICT_FIELDS)]
+    if entries:
+        latest = entries[-1]
+        return latest["result"], latest["time"], f"verdict on {tip[:12]}"
+    parents = git("rev-list", "--parents", "-n", "1", tip).stdout.split()[1:]
+    if len(parents) != 2:
+        return None
+    config = load_config(parents[0])
+    try:
+        oid = candidate(*parents)
+    except GateError:
+        return None
+    if config is None or git("rev-parse", f"{oid}^{{tree}}").stdout != git("rev-parse", f"{tip}^{{tree}}").stdout:
+        return None
+    fast = scope_line(fast_config(config)) if FASTPATH in config else None
+    scopes = tuple(s for s in accepted_scopes(config, parents[0], oid) if s != fast)
+    mine = [e for e in parse_note(read_note(oid)) if f"candidate={oid} " in e.get("revision", "") + " "]
+    if mine and decide(mine, oid, scopes)[0] == PASS:
+        return "pass", mine[-1]["time"], f"record on the candidate of {tip[:12]}"
+    return None
+
+
+def fastpath_state(config, base):
+    """(open, reason) for a bookkeeping record on `base`. Closed when not declared."""
+    declared = config.get(FASTPATH)
+    if not declared:
+        return False, "closed: no fast path declared"
+    limit, bound = declared["max_lag"], declared["max_age_minutes"] * 60
+    walked = git("rev-list", "--first-parent", f"--max-count={limit}", base).stdout.split()
+    for lag, tip in enumerate(walked):
+        found = verdict_on(tip)
+        if found is None:
+            continue
+        result, stamp, source = found
+        if result != "pass":
+            return False, f"closed: red {source} ({stamp})"
+        age = stamp_age(stamp)
+        if age is None or age > bound:
+            return False, f"closed: last green {source} is older than {declared['max_age_minutes']:g} min ({stamp})"
+        return True, f"open: {lag + 1} of {limit} merges past green ({source}, {age / 60:.0f} min old)"
+    return False, f"closed: no verdict on the last {len(walked)} commits of main (limit {limit}); unverified"
 
 
 # ── actor (vocabulary of scripts/attribution_record.py) ───────────────────────
@@ -372,6 +477,26 @@ def load_config(base):
         raise GateError(
             f'invalid {CONFIG_PATH} at base: "rerun" may only map "{BOOKKEEPING_TIER}" to declared check names'
         )
+    fast = config.get(FASTPATH)
+    if fast is not None and not (
+        isinstance(fast, dict)
+        and isinstance(fast.get("checks"), list)
+        and all(n in names for n in fast["checks"])
+        and isinstance(fast.get("max_lag"), int)
+        and fast["max_lag"] >= 1
+        and isinstance(fast.get("max_age_minutes"), (int, float))
+        and fast["max_age_minutes"] > 0
+        and isinstance(fast.get("monitor_timeout_minutes", 30), (int, float))
+        and isinstance(fast.get("rerun", {}), dict)
+        and all(
+            n in names and isinstance(a, list) and a and all(isinstance(x, str) for x in a)
+            for n, a in fast.get("rerun", {}).items()
+        )
+    ):
+        raise GateError(
+            f'invalid {CONFIG_PATH} at base: "{FASTPATH}" needs declared "checks", '
+            '"max_lag" >= 1, "max_age_minutes" > 0 and "rerun" argv by check name'
+        )
     for item in checks:
         covers = item.get("covers", [])
         if not isinstance(item.get("integration", False), bool) or not (
@@ -393,20 +518,26 @@ def resolve(args):
 # ── notes transport ───────────────────────────────────────────────────────────
 
 
-def fetch_notes(remote):
-    """Make the local notes ref the remote's: the remote is the record of authority.
+def fetch_notes(remote, *refs):
+    """Make the local notes refs the remote's: the remote is the record of authority.
 
-    When the remote has none, the local ref is dropped too, so a later push
-    publishes only its own entry, never a stale or hand-made local note.
+    When the remote lacks one, the local ref is dropped too, so a later push
+    publishes only its own entry, never a stale or hand-made local note. One
+    listing and one fetch serve every ref. Returns whether the remote has the
+    first ref (refs/notes/gate by default).
     """
-    probe = git("ls-remote", "--exit-code", remote, NOTES_REF, check=False)
-    if probe.returncode == 2:
-        git("update-ref", "-d", NOTES_REF, check=False)
-        return False
+    refs = refs or (NOTES_REF,)
+    probe = git("ls-remote", remote, *refs, check=False)
     if probe.returncode:
-        raise GateError(f"cannot read {NOTES_REF} on {remote}: {probe.stderr.strip()}")
-    git("fetch", "-q", remote, f"+{NOTES_REF}:{NOTES_REF}")
-    return True
+        raise GateError(f"cannot read {' '.join(refs)} on {remote}: {probe.stderr.strip()}")
+    listed = {line.split("\t", 1)[1] for line in probe.stdout.splitlines() if "\t" in line}
+    for ref in refs:
+        if ref not in listed:
+            git("update-ref", "-d", ref, check=False)
+    present = [ref for ref in refs if ref in listed]
+    if present:
+        git("fetch", "-q", remote, *(f"+{ref}:{ref}" for ref in present))
+    return refs[0] in listed
 
 
 def read_note(oid, ref=NOTES_REF):
@@ -414,24 +545,26 @@ def read_note(oid, ref=NOTES_REF):
     return shown.stdout if shown.returncode == 0 else ""
 
 
-def append_and_push(oid, text, remote):
+def append_and_push(oid, text, remote, ref=NOTES_REF, fetched=False):
     """Append one entry and push; on a lost race, refetch and append once more.
 
     Without a remote (--no-push) the entry goes to LOCAL_REF, which is never
     pushed: a trial record cannot ride along with a later published one.
+    `fetched` says the caller has just fetched `ref`: the first attempt skips
+    that fetch; a lost race refetches as usual.
     """
     if not remote:
         git("notes", f"--ref={LOCAL_REF}", "append", "-m", text, oid)
         return
     for attempt in (1, 2):
-        if remote:
-            fetch_notes(remote)
-        git("notes", f"--ref={NOTES_REF}", "append", "-m", text, oid)
-        push = git("push", "-q", remote, f"{NOTES_REF}:{NOTES_REF}", check=False)
+        if attempt > 1 or not fetched:
+            fetch_notes(remote, ref)
+        git("notes", f"--ref={ref}", "append", "-m", text, oid)
+        push = git("push", "-q", remote, f"{ref}:{ref}", check=False)
         if push.returncode == 0:
             return
         LOG.warning("notes push rejected (attempt %d): %s", attempt, push.stderr.strip())
-    raise GateError(f"could not push {NOTES_REF} to {remote}; the record exists only locally")
+    raise GateError(f"could not push {ref} to {remote}; the entry exists only locally")
 
 
 # ── commands ──────────────────────────────────────────────────────────────────
@@ -462,17 +595,27 @@ def run_checks(config, cwd):
 
 
 def cmd_run(args):
+    clock = time.monotonic()
     base, head = resolve(args)
     config = load_config(base)
     if config is None:
         raise GateError(f"gate is off at base {args.base}: no {CONFIG_PATH} with gate=on")
     oid = candidate(base, head)
-    config = effective(config, base, oid)
+    tiered = effective(config, base, oid)
+    fastpath, fetched = "", False
+    if FASTPATH in config and tiered is not config:
+        if not args.no_push:
+            fetch_notes(args.remote, NOTES_REF, VERDICT_REF)
+            fetched = True
+        is_open, fastpath = fastpath_state(config, base)
+        if is_open:
+            tiered = fast_config(config)
+    config = tiered
     actor = actor_line(args.runtime, args.model, args.effort)
     command = f"merge-gate run --base {args.base} --head {args.head}"
     if not single_line(actor) or not single_line(command):
         raise ValueError("actor or command holds a line break or control character")  # before any check runs
-    started = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    started = datetime.datetime.now(datetime.timezone.utc).strftime(TIME_FORMAT)
     with tempfile.TemporaryDirectory(prefix="merge-gate-") as tmp:
         tree = Path(tmp) / "candidate"
         git("worktree", "add", "-q", "--detach", str(tree), oid)
@@ -491,12 +634,14 @@ def cmd_run(args):
             "command": command,
             "scope": scope_line(config),
             "versions": versions or NOT_STATED,
+            "fastpath": fastpath,
             "checks": results,
         }
     )
-    append_and_push(oid, entry, None if args.no_push else args.remote)
+    append_and_push(oid, entry, None if args.no_push else args.remote, fetched=fetched)
     sys.stdout.write(entry)
     sys.stdout.write(f"{'pass' if ok else 'fail'}: recorded on candidate {oid}\n")
+    sys.stdout.write(f"duration: {time.monotonic() - clock:.1f}s\n")
     return PASS if ok else FAIL
 
 
@@ -663,6 +808,22 @@ def cmd_plan(args):
     return PASS
 
 
+def cmd_fastpath(args):
+    """Whether a bookkeeping record on this base would take the fast path, and why."""
+    base = rev(args.base)
+    if not base:
+        raise GateError(f"cannot resolve base '{args.base}'")
+    config = load_config(base)
+    if config is None:
+        sys.stdout.write(f"closed: gate is off at base {args.base}\n")
+        return FAIL
+    if not args.no_fetch:
+        fetch_notes(args.remote, NOTES_REF, VERDICT_REF)
+    is_open, reason = fastpath_state(config, base)
+    sys.stdout.write(reason + "\n")
+    return PASS if is_open else FAIL
+
+
 def cmd_candidate(args):
     sys.stdout.write(candidate(*resolve(args)) + "\n")
     return PASS
@@ -685,11 +846,15 @@ def parser():
         ("enabled", cmd_enabled),
         ("tier", cmd_tier),
         ("plan", cmd_plan),
+        ("fastpath", cmd_fastpath),
     ):
         s = sub.add_parser(name)
         s.set_defaults(func=func)
         s.add_argument("--base", required=True, help="base ref, e.g. origin/main")
-        if name == "enabled":
+        if name == "fastpath":
+            s.add_argument("--remote", default="origin", help="where the notes refs live")
+            s.add_argument("--no-fetch", action="store_true", help="read the local notes refs only")
+        if name in ("enabled", "fastpath"):
             continue
         s.add_argument("--head", required=True, help="branch head ref")
         if name in ("run", "check", "plan"):
