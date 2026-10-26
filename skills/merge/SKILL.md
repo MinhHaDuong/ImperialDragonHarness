@@ -30,14 +30,14 @@ The one home of how much gating a merge needs; `rules/git.md`, `/raid`,
 `/hunt` and every `/gaze` caller point here. The tier follows what the diff
 touches and is read mechanically, never judged:
 `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base origin/<base> --head HEAD`
-prints it and answers 0 bookkeeping, 1 full, 3 could not read (treat as
-full). The path list is `BOOKKEEPING` in that script: ticket files
+prints it and answers 0 bookkeeping (with `--since`, also `unchanged`), 1
+full (an empty diff included), 3 could not read (treat as full). The path list is `BOOKKEEPING` in that script: ticket files
 (`tickets/*.erg`, `tickets/closed/*.erg`), `STATE.md` and `memory/`; the
 ticket tool `tickets/erg` and the ticket docs are not bookkeeping.
 
 | Tier | The diff touches | Gating |
 |------|------------------|--------|
-| bookkeeping | bookkeeping paths only | Mechanical checks only: the ticket check and lint (CI on an ungated base; on a gated base, the record runs the tier's checks, `"tiers"` in `.merge-gate.json`). No `/gaze`, no `/verify-gate`, no review seat. |
+| bookkeeping | bookkeeping paths only | Mechanical checks only. On a gated base the record runs the checks `.merge-gate.json` declares under `"tiers"`; this harness declares `validate-tickets` (the ticket check), `agnostic-guard` (lint) and `bookkeeping-tests` (every test that reads tickets, memory or `STATE.md`). On an ungated base, the repo's CI. No `/gaze`, no `/verify-gate`, no review seat. |
 | full | anything else: code, rules, skills, config | `/gaze`, then `/verify-gate` APPROVED, seats scaled to the risk (`skills/route/references/decorrelation.md`); on a gated base, the full record. |
 
 **A commit added after approval is gated by the tier of its own diff**, not
@@ -45,8 +45,8 @@ by the whole PR's gate again:
 `merge-gate.py tier --base origin/<base> --head HEAD --since <ruled_tip_sha>`
 diffs the candidate the approval saw against the candidate of the current
 head, so it measures only what the head adds. Bookkeeping (a ticket close, a
-log line, `STATE.md`, memory, or a rebase that leaves the branch's own change
-intact): the APPROVED verdict stands, no review round and no gate round are
+log line, `STATE.md`, memory) or unchanged (a rebase that leaves the branch's
+own change intact): the APPROVED verdict stands, no review round and no gate round are
 spent; on a gated base the mechanical record is simply re-run on the new
 head. Full: re-gate within the gate session's budget (`/verify-gate` § Gate
 sessions), which owns how much of the prior verdict a re-gate reuses.
