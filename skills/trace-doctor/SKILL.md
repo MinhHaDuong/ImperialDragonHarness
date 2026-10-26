@@ -134,9 +134,10 @@ section never applies a fix.
 From the same `friction.json`, report the `follies` block: a repeated mistake
 is a defect of the harness, not of one session. One row per folly
 (`pgrep_self_match`, `sleep_poll_to_cap`, `repeat_failing`): count, sessions,
-`seconds_upper_bound` and `seconds_lower_bound`, runtime split, and the rung of
-the barrier ladder it maps to (`folly_barrier`: fix the primitive, a
-per-command cap, a PreToolUse hook, an instruction last). Every figure is a
+`seconds_upper_bound` and `seconds_lower_bound`, runtime split, and the `rung`
+of the barrier ladder it maps to (table `folly_barrier`: fix the primitive, a
+per-command cap, a PreToolUse hook, an instruction last). `--folly-min-seconds N`
+counts only calls of at least N seconds, for every folly. Every figure is a
 bound: traces record no job end, so never write "hours given back" and never
 turn the bounds into a point estimate. The rung is a table, not a verdict; no
 prescription is applied here.

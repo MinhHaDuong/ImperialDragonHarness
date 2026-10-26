@@ -198,7 +198,8 @@ PGREP_RE = re.compile(
 )
 PGREP_ARG_OPTS = set("uUgGPstnO")  # short options that take an argument
 LOOP_RE = re.compile(r"\b(?:for|while|until)\b")
-SLEEP_RE = re.compile(r"\bsleep\s+(\d+(?:\.\d+)?)([smhd]?)")
+SLEEP_RE = re.compile(r"\bsleep\s+((?:\d+(?:\.\d+)?[smhd]?)+)")
+SLEEP_PART_RE = re.compile(r"(\d+(?:\.\d+)?)([smhd]?)")
 SLEEP_UNIT = {"": 1, "s": 1, "m": 60, "h": 3600, "d": 86400}
 SEQ_RE = re.compile(r"\bseq\s+(?:(\d+)\s+)?(\d+)|\{(\d+)\.\.(\d+)\}")
 UNBOUNDED_RE = re.compile(r"\b(?:while\s+(?:true|:)|until\s+false)\b|\buntil\s+!?\s*\S")
@@ -263,7 +264,7 @@ def folly_sleep_to_cap(cmd: str, duration_s: float, timeout_s: float | None = No
     sleeps = SLEEP_RE.findall(text)
     if not sleeps or not LOOP_RE.search(text):
         return False
-    step = float(sleeps[0][0]) * SLEEP_UNIT[sleeps[0][1]]
+    step = sum(float(n) * SLEEP_UNIT[u] for n, u in SLEEP_PART_RE.findall(sleeps[0]))
     seq = SEQ_RE.search(text)
     if seq:
         lo, hi = (seq.group(1), seq.group(2)) if seq.group(2) else (seq.group(3), seq.group(4))

@@ -203,6 +203,7 @@ def test_sleep_to_cap_full_cap_versus_early_exit():
     assert not tf.folly_sleep_to_cap("sleep 10", 10.0)  # no loop, no cap
     assert tf.folly_sleep_to_cap("while true; do sleep 5; done", 300.0, timeout_s=300)
     assert tf.folly_sleep_to_cap("for i in $(seq 1 3); do sleep 1m; done", 180.0)  # units
+    assert tf.folly_sleep_to_cap("for i in $(seq 1 2); do sleep 1m30s; done", 180.0)
 
 
 def _call(tid, ts, cmd, err=False, secs=1):
