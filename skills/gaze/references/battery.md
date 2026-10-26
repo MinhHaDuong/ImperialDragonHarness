@@ -47,7 +47,7 @@ Every reviewer agent's prompt:
   its HEAD differs from the anchor HEAD carried in the prompt — it never
   falls back to the session cwd;
 - carries its procedure: Agent A invokes the live adherence contract as
-  specified below; the portable simplify reviewer gets the phase 5 steps;
+  specified below; the simplify reviewer gets the phase 5 steps;
 - ends by **returning a single structured block as its final message**, which
   the orchestrator parses to branch.
 
@@ -123,10 +123,9 @@ Exit 2 (unreadable seat or worker artifact, or an omitted or empty
 `adherence-infrastructure` (ESCALATE), never a PASS or an ordinary FAIL. The
 script reads the last yaml fence of each artifact. The early-exit reads the merged `adherence` and its count of `blocking` findings.
 
-**Native `/review` and `/simplify`** are optional adapter seats, never the
-basis of the review. Phase 5 uses native `/simplify` when available and the
-portable procedure below otherwise, both directly invoked (ticket 0349) and both
-targeting the explicit review worktree and PR branch.
+**Native `/review` and `/simplify`**: native `/review` is an optional adapter
+seat, never the basis of the review. Native `/simplify` is not used: it applies
+fixes, and phase 5 is report-only (below).
 
 **Hand native `/review` the resolved axes; it guesses without them.**
 `/review` checks prose against a house rulebook and, told nothing, picks one by
@@ -172,45 +171,53 @@ Wait for all spawned agents to complete. Collect their structured outputs.
 
 **Early-exit check**: if the adherence agent returned any `blocking` violations, skip phase 5 (simplify). Blocking adherence guarantees FINDINGS; simplify tokens would be wasted. Log `simplify: skipped (adherence blocking)` in the telemetry phase line.
 
-### 5. Simplify (sequential)
+### 5. Simplify (sequential, report-only)
+
+**Report-only.** Gaze makes no commits: simplify findings are reported like
+panel findings, and the coder acts on them (`skills/merge/SKILL.md`
+§ Before merging).
+
+**When it runs.** A pass is a `simplify: <n> on <sha>` result line. Round 1:
+no earlier `/gaze` result comment on the PR carries a pass. On a later round,
+run it only when the diff grew materially since the head the last pass names
+(new files or mechanisms), or when that head is no longer an ancestor (a
+rebase); otherwise log `simplify: skipped (no material growth)`.
 
 **Prose-skip:** when the diff routed prose (the same
 `"$IDH_ROOT/scripts/prose_predicate.py"` verdict the phase 2–4 panel choice used), skip
 this phase and log `simplify: skipped (prose workpackage)` in the telemetry
-phase line. Motive: this phase may commit to the PR branch, and `rules/prose/workpackages.md`
-sends an autonomous manuscript change through its own PR, never concurrently
-with interactive editing of that file (ticket 0550: two runs on the
-same file decided this in opposite directions the same day; the rule now
-exists). Otherwise, after 2–4 land their comments (and the early-exit check passes),
-perform one of these routes. Record `simplify route: native|portable`.
+phase line: the prose panel already judges cuts, and a manuscript change
+proposed here would still have to travel through `rules/prose/workpackages.md`
+(ticket 0550). Otherwise, after 2–4 land their comments (and the early-exit
+check passes), launch the reviewer.
 
-- **Native command available:** run `/simplify <pr-number> worktree=$primary_root/.claude/worktrees/review-<pr-number>`.
-- **Native command absent:** launch a separate reviewer through the active
-  runtime (model chosen per launch from the `route` skill), using the phase artifact
-  and bounded-wait contract above. Give it the explicit PR number, review tree,
-  base ref, anchor HEAD and changed-file roster. It runs the review-anchor check
-  before and after examining `git -C <review-tree> diff origin/<base>...HEAD`
-  and the relevant surrounding code or instructions. It must look for
-  unnecessary complexity, duplication, opportunities to reuse existing
-  mechanisms, and safe simplifications that preserve behavior and ticket
-  intent. This is a distinct simplification pass, not reuse of a general
-  review's approval. It returns the reviewed SHA, paths examined, and actionable
-  findings with severity, location, proposed change and rationale; or a CLEAN
-  verdict explaining the concrete candidates considered and why they need no
-  change. An absent reviewer, timeout, anchor mismatch, wrong diff or missing
-  evidence means this phase is unresolved and triggers the existing breaker;
-  absence of the slash command alone does not.
+Launch a separate reviewer through the active runtime (model chosen per launch
+from the `route` skill), using the phase artifact and bounded-wait contract
+above. Give it the explicit PR number, review tree, base ref, anchor HEAD and
+changed-file roster. It runs the review-anchor check before and after
+examining `git -C <review-tree> diff origin/<base>...HEAD` and the relevant
+surrounding code or instructions, and it edits nothing. It looks for:
 
-For either route, the orchestrator applies bounded fixes only to the PR branch
-in the explicit review tree, or records an evidence-backed disposition for each
-finding. Run affected checks for changes, commit and push fixes, and wait for
-completion before the result is read. After any fixes, anchor the final HEAD
-again and have the simplification reviewer confirm the dispositions against
-that head; update the artifact with the final reviewed SHA. A moved head without
-this confirmation leaves the pass unresolved. Feed all findings and dispositions
-(or the evidenced CLEAN result), route, and reviewed SHA in the result. The
-same must-fix rules apply to both routes; no portable route silently skips or
-weakens the phase. The prose and adherence skips above remain unchanged.
+- unnecessary complexity, duplication, existing mechanisms to reuse, and safe
+  simplifications that preserve behavior and ticket intent;
+- **proportion:** lines that defend against a scenario no real actor
+  produces — a theoretical race, an input no caller sends, a guard on a
+  guard. For each, name the scenario, who would produce it, and what the
+  defence costs (lines, branches, tests), and propose deleting it.
+
+This is a distinct simplification pass, not a rerun of a general
+review. It returns the reviewed SHA, paths examined, and actionable
+findings with severity (`must-fix` or `consider`), location, proposed change
+and rationale; or a CLEAN verdict explaining the concrete candidates
+considered and why they need no change. An absent reviewer, timeout, anchor
+mismatch, wrong diff or missing evidence means this phase is unresolved and
+triggers the existing breaker.
+
+Feed all findings (or the evidenced CLEAN result) and the reviewed SHA into
+the result as `unresolved_simplify_findings`. A must-fix is resolved by a
+coder fix on a later head or a justified disposition in a PR comment, which
+`/verify-gate` rule 4 checks across every `/gaze` result comment, so gaze
+neither judges that resolution nor carries earlier findings forward.
 
 ### External reviewer panel (optional, beside phases 2–4)
 

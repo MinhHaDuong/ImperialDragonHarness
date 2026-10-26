@@ -57,7 +57,7 @@ def test_verify_threads_worktree_path_to_subskills():
     branch the raid had left it) instead of /tmp/review-<pr>. The path must
     travel as an explicit argument.
     """
-    for name in ("/verify-adherence", "/simplify"):
+    for name in ("/verify-adherence",):
         invocation_lines = [
             line for line in VERIFY.splitlines() if name in line and "worktree=" in line
         ]
