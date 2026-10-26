@@ -29,6 +29,8 @@ def load(name, relative):
 
 
 def main():
+    # Checkpoint-bound: the audited helper was retired by PR 1633; replay from
+    # the audited revision (b4b863c6), not from HEAD, as the README states.
     review = load("audit_review", "skills/external-peer-review/peer_review.py")
     validate = load("audit_validate", "scripts/validate-refs.py")
     bib = load("audit_bib", "scripts/bib-merge.py")

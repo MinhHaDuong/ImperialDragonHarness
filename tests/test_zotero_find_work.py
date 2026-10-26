@@ -57,6 +57,8 @@ def test_isbn_forms_cover_ten_and_thirteen_digits_bare_and_hyphenated():
 def test_doi_forms_drop_the_resolver_prefix_and_case():
     assert zi.normal_doi("https://doi.org/10.1111/ABC") == "10.1111/abc"
     assert zi.normal_doi("doi: 10.1111/abc") == "10.1111/abc"
+    assert zi.normal_doi("https://www.doi.org/10.1111/ABC") == "10.1111/abc"
+    assert zi.normal_doi("doi.org/10.1111/abc") == "10.1111/abc"
 
 
 def test_zotero_10_is_the_floor():
