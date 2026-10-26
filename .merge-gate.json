@@ -7,10 +7,9 @@
     {"name": "agnostic-guard", "argv": ["bash", "scripts/check-agnostic.sh"]},
     {"name": "pipefail-guard", "argv": ["bash", "scripts/check-pipefail.sh"]},
     {"name": "pytest-guard", "argv": ["make", "check-tests"]},
-    {"name": "skills-drift", "argv": ["make", "check-skills-drift"]},
-    {"name": "bookkeeping-tests", "argv": ["bash", "scripts/bookkeeping-tests.sh"]}
+    {"name": "skills-drift", "argv": ["make", "check-skills-drift"]}
   ],
-  "tiers": {"bookkeeping": ["validate-tickets", "agnostic-guard", "bookkeeping-tests"]},
+  "tiers": {"bookkeeping": ["validate-tickets", "agnostic-guard", "pytest-guard"]},
   "versions": [
     {"name": "git", "argv": ["git", "--version"]},
     {"name": "python", "argv": ["uv", "run", "--frozen", "python3", "--version"]},
