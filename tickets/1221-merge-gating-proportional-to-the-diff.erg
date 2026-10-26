@@ -1,0 +1,28 @@
+%erg 0.1
+Title: Merge gating proportional to the diff
+Created: 2026-10-26
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-26T16:30Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Author directive, 2026-10-26: merge gating MUST be proportional to the diff.
+
+Today `skills/merge/SKILL.md:46-56` requires an APPROVED /verify-gate whose
+`ruled_tip_sha` equals the merge head, so any new commit (even a one-line
+ticket-log correction) costs a fresh gate, and `rules/git.md:24` counts a
+rebase against the PR's single re-gate. Incident: JETP-observer PR #240,
+~22 minutes and three gaze rounds for tickets/ and STATE.md edits.
+
+Related: [[1219]], [[1220]], [[1100]].
+
+## Exit criteria
+
+- [ ] /merge (and `rules/git.md` § Merging) define gating tiers by what the diff touches, at least: bookkeeping only (tickets/, STATE.md, memory) → mechanical checks only (ticket check, lint), no review or LLM gate; code or rules → review and gate scaled to risk per `skills/route/references/decorrelation.md`.
+- [ ] A commit added after approval is gated by the tier of its own diff, not by re-running the whole PR's gate; a bookkeeping-only follow-up does not void the approval of the rest.
+- [ ] `scripts/merge-gate.py` and the guard hook accept a bookkeeping-tier merge with its mechanical record.
+- [ ] The tiers are stated once (one home), and /raid, /hunt and /gaze-callers point to it.
+- [ ] The harness gate (`.merge-gate.json` checks) passes.
