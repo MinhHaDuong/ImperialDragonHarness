@@ -104,8 +104,8 @@ def test_verify_gate_owns_its_worktree():
 def test_merge_gates_the_head_that_merges():
     """The caller closes the ticket on the branch before gating; /merge's
     prerequisite is APPROVED plus at most a bookkeeping delta from the ruled
-    tip to origin/<branch> at merge time (ticket 1221). The recipe's close step then finds the ticket already closed and archived
-    and adds no commit; the gate reads exit criteria from tickets/closed/ (ticket
+    tip to origin/<branch> at merge time (ticket 1221). The recipe's close
+    step then finds the ticket already closed and archived and adds no commit; the gate reads exit criteria from tickets/closed/ (ticket
     1153, third union review)."""
     merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
     assert "Close the ticket on the branch before gating." in merge
