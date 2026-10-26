@@ -36,6 +36,22 @@ Bookkeeping or unchanged: the APPROVED verdict stands, no review or gate
 round is spent; on a gated base the record is re-run on the new head. Full:
 re-gate.
 
+**Fast path, bookkeeping tier on a gated base.** When the base declares
+`"fastpath"` in `.merge-gate.json`, the record of a bookkeeping merge runs only
+the checks listed there, without the test suite, while the path is open;
+`merge-gate.py fastpath --base origin/<base>` prints the state and why. Open:
+the nearest verdict on main below the base is green, fewer than `max_lag`
+merges below it, and younger than `max_age_minutes`. A red verdict, none
+within reach or an old one closes it; the record then runs the tier's set, as
+before. Verdicts come from the monitor the recipe's last step starts: it runs
+every declared check on the new main tip, one run at a time with one tip
+pending (latest wins), re-runs once only the tests that failed (passing there
+records them as flaky, never red), and on a red verdict names the likely
+culprit merge. A tier or full record counts as its own merge's verdict; no
+verdict counts as unverified. A full-tier record always runs the whole set on
+its candidate, so a code merge cannot bury a bad bookkeeping one. Report a red
+verdict to the author; its fix lands by a merge request paying the full record.
+
 ## Before merging
 
 - **Merge method drifts per repo.** This harness disables squash, so the
@@ -148,6 +164,10 @@ reads and writes in its own spelling.
 8. **Sync.** `"$IDH_ROOT/scripts/sync-local-main.sh" . <base>`. A "left
    untouched" line goes in the report, never forced; never a hand-rolled
    `merge --ff-only` on the primary checkout.
+   On a gated base, then start the monitor and return without waiting:
+   `python3 "$IDH_ROOT/scripts/merge_monitor.py" spawn --ref origin/<base>`
+   (detached and bounded; its verdict reopens or closes the fast path,
+   § Gating tiers).
 
 ## Gated base
 
