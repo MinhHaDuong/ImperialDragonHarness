@@ -250,7 +250,7 @@ malformed_minors:
 unresolved_simplify_findings:
   - finding: "<verbatim>"
     severity: must-fix | consider
-    status: NOT_APPLIED | WAIVED_WITHOUT_RATIONALE
+    status: UNADDRESSED | WAIVED_WITHOUT_RATIONALE
 unresolved_adherence_violations:
   - rule_ref: "<.claude/rules/foo.md#bar>"
     file: <path>
@@ -288,7 +288,7 @@ second_round_needed:   # only if REROLL
   bounce the PR. Author is free to ignore.
 - `nofollow:` minors are muted. The gate records them for the audit trail and does
   nothing else.
-- Any `NOT_APPLIED` must-fix simplify finding without rationale → REROLL (round 1) /
+- Any `UNADDRESSED` must-fix simplify finding without rationale → REROLL (round 1) /
   ESCALATE (round 2).
 - Any `blocking` adherence violation → REROLL (round 1) / ESCALATE (round 2).
 - Any `run` check that fails → REROLL (round 1) / ESCALATE (round 2). A check
