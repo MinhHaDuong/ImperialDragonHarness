@@ -18,8 +18,9 @@ and the forge, which hold for any agent and for a human.
 
 ## The flow
 
-The expensive check runs once, last, on the merge candidate. Earlier stages run
-only what they need.
+The expensive check runs once, last, on the merge candidate, or, for a
+bookkeeping merge on an open fast path, on the new main tip right after the
+merge. Earlier stages run only what they need.
 
 | Stage | Where | What runs |
 |---|---|---|
@@ -33,8 +34,9 @@ only what they need.
 A failed candidate sends the pull request back to stage 1; it then passes through
 stages 2, 3 and 5 again. That is the only case where the full set runs twice
 on one change.
-A pure documentation, ticket or memory diff gets a light record (the ticket
-validator only), so the trace stays uniform and the cost stays small. A
+A bookkeeping diff (tickets, STATE.md, memory) gets a lighter record, the
+checks `.merge-gate.json` lists for its tier, so the trace stays uniform and
+the cost stays small. A
 bookkeeping diff on an open fast path (ticket 1226) runs only the fast-path
 checks; the full set then runs on the new main tip, after the merge, through
 `scripts/merge_monitor.py`. The policy is `skills/merge/SKILL.md` § Gating tiers. **Pending**
@@ -110,7 +112,8 @@ The stance behind the gate, written for projects that adopt it.
   the skills.
 - **Verify, always.** A reviewer never approves: only the gate rules. A review result applies
   to one head. The full integration check runs once, on the merge candidate, and writes the
-  gate record.
+  gate record; a bookkeeping merge on an open fast path runs it on the new main tip
+  after the merge instead.
 - **Monitor.** The guard journal, the daily audit of commits that entered the base branch, the
   review result comment (what ran, by which family, why) and the count of review runs per
   pull request show afterwards whether the trust was well placed.

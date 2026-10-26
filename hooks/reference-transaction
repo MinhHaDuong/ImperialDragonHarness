@@ -26,7 +26,8 @@
 #                from its parents by scripts/merge-gate.py, and whose
 #                candidate carries a passing gate record (refs/notes/gate,
 #                written by ticket 1156's merge gate): the full check set, or
-#                for a bookkeeping-only merge its tier's checks (ticket 1221;
+#                for a bookkeeping-only merge its tier's checks (ticket 1221)
+#                or, on an open fast path, the fast-path checks (ticket 1226;
 #                merge-gate.py `check` decides which records it accepts).
 # Everything else (a local commit on main, a reset, branch -f, a deletion) is
 # not gated. One deletion cannot be refused: `delete main <old>` through

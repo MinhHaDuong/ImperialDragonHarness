@@ -445,6 +445,6 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
 ## Not in scope
 
 - **Merging.** The gate does not merge; that decision belongs to the caller.
-- **Re-running what still holds.** The gate runs only its plan's `run` lines (§ Check plan). Review runs targeted tests only; the full declared set, integration checks included, runs on the merge candidate (`skills/gaze/references/panel.md`, Synthesis step 4).
+- **Re-running what still holds.** The gate runs only its plan's `run` lines (§ Check plan). Review runs targeted tests only; the full declared set, integration checks included, runs on the merge candidate, or after a fast-path merge on the new main tip (`skills/gaze/references/panel.md`, Synthesis step 4).
 - **Integration testing**, unless the diff touches what it covers or the caller or project asks (§ Check plan).
 - **Acting on scope overflow.** The gate detects and reports; the caller tickets and annotates.
