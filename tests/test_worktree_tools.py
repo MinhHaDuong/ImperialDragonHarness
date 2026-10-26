@@ -742,6 +742,25 @@ def test_preflight_reports_ignored_tmp_without_purging_it(origin):
     assert (wt / ".tmp" / "cache.bin").exists()
 
 
+def test_preflight_tolerates_ignored_panel_beside_tmp_before_removal(origin):
+    """With a .tmp/ present the non-removal run keeps .panel/ (cited review
+    scratch, removed only at the removal gate). Ignored, it must not block."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-panel-tmp", dirty=False)
+    _ignore_worktree_tmp(primary)
+    exclude = Path(git(primary, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()) / "info" / "exclude"
+    with exclude.open("a") as stream:
+        stream.write("\n/.panel/\n")
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+    (wt / ".panel" / "1").mkdir(parents=True)
+    (wt / ".panel" / "1" / "review.md").write_text("report\n")
+
+    res = _preflight(wt)
+    assert res.returncode == 0, res.stderr
+    assert (wt / ".panel" / "1" / "review.md").exists()
+
+
 def test_preflight_preserves_cited_panel_until_removal_gate(origin):
     remote, primary = origin
     wt = make_agent_worktree(primary, "agent-preflight-cited-panel")

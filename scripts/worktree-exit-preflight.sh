@@ -82,6 +82,11 @@ status=$(worktree_residue "$path") || {
     echo "worktree-exit-preflight: cannot inspect worktree status: $path" >&2
     exit 2
 }
+# Without --removal a present .tmp/ keeps .panel/ (cited review scratch, only
+# the removal gate deletes it); ignored, it is preserved, not uncommitted work.
+if [ "$preserve_panel" -eq 1 ] && [ -n "$status" ]; then
+    status=$(printf '%s\n' "$status" | grep -v '^!! \.panel/' || true)
+fi
 [ -z "$status" ] && exit 0
 
 cat >&2 <<EOF
