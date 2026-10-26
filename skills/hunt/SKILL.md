@@ -43,8 +43,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 4. **Worktree.** Work in the ticket's **own** worktree, on its own branch.
    - **Owned already?** Yes if you created it for this ticket, or the spawner
      handed it to you by path with `git status --porcelain` printing nothing:
-     there, `git switch -c t$ID-short-description` (or switch to the existing
-     branch). A shared or `explore-*` worktree may host a live session: never
+     there, `W=$(git rev-parse --show-toplevel)` and `git switch -c t$ID-short-description`
+     (or switch to the existing branch). A shared or `explore-*` worktree may host a live session: never
      rebase, branch, or leave files in it.
    - **Otherwise create one** under the primary checkout. `P=$PPID`, the
      long-lived runtime process, names the path and owns the lock (pid 1 or
