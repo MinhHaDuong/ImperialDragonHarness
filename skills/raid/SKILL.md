@@ -445,7 +445,12 @@ Autonomous mode: ralph loop to next wave.
    Any ticket Phase 1 excluded as skip-labelled is listed here too, with the
    decisions it is waiting on. When the queue held nothing else, that list is
    the run's deliverable, not evidence of an idle run.
-3. Write briefing (session log + merge request list + test delta).
+3. Write briefing (session log + merge request list + test delta). Add the
+   timing table: for each merge request, note `<pr> <step> <start> <end>` rows
+   (epoch seconds from `step_clock.py start`, read by the raid itself before and after each call, since gate and merge print only durations: gaze, each gate round, merge) as
+   the steps run, and print `python3 "$IDH_ROOT/scripts/step_clock.py" table`
+   with the rows on stdin: per-step durations, the total from first gaze to MERGED, and the
+   slowest step. A step with no clock reading is listed as `not measured`.
 4. Do NOT run `/lair`.
 
 ## Circuit breakers

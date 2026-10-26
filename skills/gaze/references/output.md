@@ -12,8 +12,19 @@ Each phase emits start/end lines: `[verify] phase=<name> start=<ISO> / end=<ISO>
 
 Appended to the result comment: `telemetry: wall=<s>s agents=<n> tokens=<in+out> cost~=$<usd>`
 
-Fields: `wall` (phase 1 to result), `agents` (sub-agent count), `tokens` (sum, use `na` for
+Fields: `wall` (phase 1 to result, from `step_clock.py end --seconds <token>`, `na` when not measured), `agents` (sub-agent count), `tokens` (sum, use `na` for
 missing), `cost~=` (best-effort USD, `na` if incomplete).
+
+### Duration clock
+
+First action of phase 1: `python3 "$IDH_ROOT/scripts/step_clock.py" start`; keep the printed
+token literally (shell variables do not persist between Bash calls).
+Last action before posting: `python3 "$IDH_ROOT/scripts/step_clock.py" end <token>` (add `--seconds` in a
+second call for `wall=`). Its single line (`duration: 4m12s`, or `duration: not measured`
+when no clock could be read) goes into the result block as printed. Never type a duration
+from memory or estimate: the line comes from the script or says `not measured`.
+This is the one statement of the rule; /verify-gate, /merge and /raid point here.
+The seats' own wall times are the `seat times:` line (`seat_clock.py roster`).
 
 ### Thresholds
 
@@ -62,6 +73,7 @@ Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]
 Adherence: PASS | FAIL (<count>)
 
+duration: <the `step_clock.py end` line as printed, e.g. duration: 4m12s>
 telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 seat: <role> · runtime=<id> · family=<family> · route=<token> · model=<id as the launch reported it | not observed> · status: ran|failed|skipped
 ```

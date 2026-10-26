@@ -108,6 +108,10 @@ verdict to the author; its fix lands by a merge request paying the full record.
 
 `N` is the merge request, `<branch>` its head branch, `<base>` its base.
 
+Start the step clock before step 0 and end it after step 8 (`skills/gaze/references/output.md`
+§ Duration clock). The `duration:` line goes in the report and, always, in a comment
+on the request (`gh pr comment N --body "merge <head>: duration: …"`). <!-- harness-extension-point -->
+
 <!-- harness-extension-point -->
 Forge commands below use the current forge CLI; another forge needs the same
 reads and writes in its own spelling.

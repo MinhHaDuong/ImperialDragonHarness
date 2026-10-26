@@ -2,7 +2,7 @@
 metadata:
   category: writing
 name: external-peer-review
-description: "Obtain independent external frontier-class peer reviews of a manuscript PDF; synthesize convergent findings into one verdict."
+description: "Obtain independent external peer reviews of a manuscript PDF; preserve dissent and synthesize verified findings."
 user-invocable: true
 disable-model-invocation: false
 argument-hint: "<pdf-path> [reviewer needs or personas]"
@@ -10,33 +10,52 @@ argument-hint: "<pdf-path> [reviewer needs or personas]"
 
 # External peer review
 
-Obtain actual independent reviews and present a cross-reviewer synthesis.
-This complements the simulated prose panel of `/gaze`.
+Use this skill when the author explicitly requests independent external
+readers. Ordinary manuscript reviews use `manuscript-review` directly. This
+skill adds reviewer discovery and synthesis to that review protocol; it has
+no separate review executor or credential transport.
 
-1. **Locate the manuscript.** Resolve the PDF path and any requested review
-   questions. If needed, use the project's build procedure to obtain the PDF.
-2. **Describe the reviewers needed.** Request independent advisors with the
-   relevant expertise (deep judgment; pick per the `route` skill).
-   Prefer reviewers decorrelated from the producer and from one another.
-   Personas such as a skeptical expert and an attentive student can diversify
-   questions; they do not establish model independence by themselves.
-3. **Let the runtime discover and route.** The runtime determines available
-   reviewers and the route: llama.cpp on Padmé, OpenRouter, local agents, or
-   agents on another host. No gateway, fixed roster, model ID, or transport is
-   required. Honor any user constraints on where the manuscript may be sent.
-   If no suitable reviewer is available, report that limitation without
-   presenting a simulated review as an external one.
-4. **Smoke-test one review, sequential-blocking.** Confirm that the selected
-   reviewer receives the complete manuscript and returns a non-empty review.
-   Use the runtime's available mechanism. The bundled OpenRouter helper is
-   optional; read `references/openrouter.md` only when that route is selected.
-5. **Collect the remaining reviews, parallel-background when supported.**
-   Independent reviewers can work concurrently. Record completed and missing
-   reviews, reviewer identities, route, persona, and input coverage in durable
-   artifacts. Failed requests remain missing rather than implicit approval.
-6. **Synthesize every completed review.** Present consensus verdict, convergent
-   concerns weighted by independent support, and sharp individual catches.
-   Preserve dissent and attribute findings to the reviewers that supplied them.
+For an optional additional critique of architecture, argument or consistency,
+consider recommending [Coarse](../../docs/research-workflow.md#optional-second-look-with-coarse)
+with a manuscript-specific reason and usage instructions, including installation
+if missing. Its output is advisory; it does not by itself satisfy the independent
+reviewer or verification contract below. Do not launch it automatically.
 
-Reviews are advisory input for the author. This skill produces review artifacts
-and does not publish or merge anything.
+1. **Fix the inputs, sequential-blocking.** Resolve the manuscript PDF,
+   annexes, revision, author's current decisions and review question. Honor
+   the author's clearance and destination constraints. Never infer clearance
+   merely because an external review was requested.
+2. **Discover and route reviewers, sequential-blocking.** Describe the expertise
+   and independent perspectives needed, then use `route` and its decorrelation
+   contract to select available readers. Record actual model identity, effort,
+   route, evidence and missing perspectives. A persona or a separate session
+   does not establish independence; neither does the verification pass within
+   one review. If suitable independent readers are unavailable, state the
+   limitation instead of relabelling a same-family or simulated panel.
+3. **Run one complete review, sequential-blocking.** Follow the live
+   `skills/manuscript-review/SKILL.md` contract for the selected reader, with
+   explicit model, effort, route reason, clearance and input revision. Use a
+   fresh run directory per reader; retain preparation, raw review, tool-use
+   evidence, verification and report. Confirm the run is complete before
+   starting the remaining independent readers; a non-empty response alone is
+   insufficient. The current manuscript-review runner supports only the
+   Claude CLI route; a model flag does not add another provider. For a required
+   independent perspective beyond that route, the runtime may use another
+   available mechanism that fulfills the same input, tool-use, verification
+   and identity evidence contract. Otherwise report that perspective unavailable.
+4. **Collect remaining reviews, parallel-background when capacity allows.**
+   Each follows the same manuscript-review contract in its own run directory.
+   With one slot, run them sequentially. Do not expose one reader's findings
+   to another before its independent review is complete. Report failed or
+   incomplete runs and uncovered manuscript parts explicitly.
+5. **Synthesize, sequential-blocking after collection.** Read every completed
+   review and its verification results. Attribute conclusions and evidence to
+   their reader/run. Preserve dissent, unresolved criticisms and incisive
+   individual findings. Weight a finding by its verified evidence and relevant
+   expertise; repetition across personas is not independent corroboration and
+   majority agreement cannot erase a demonstrated error. Keep coverage,
+   scientific judgment and the author's disposition separate.
+
+Return the per-reader artifacts, identity/independence evidence and limits,
+verified concerns, disagreements and author decisions still needed. Reviews
+are advisory; this skill neither publishes nor merges anything.

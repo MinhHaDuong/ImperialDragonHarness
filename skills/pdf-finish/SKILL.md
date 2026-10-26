@@ -35,31 +35,48 @@ For a Quarto/LaTeX build, the standard knobs:
 - **Bibliography density**:
   `\AtBeginEnvironment{CSLReferences}{\small\setlength{\parskip}{0.3em}}`.
 
-## 2. The checklist — verified by script, not by eyeballing
+## 2. Mechanical checks and visual inspection
 
-Sweep the rendered PDF with a text extractor and check mechanically:
+Record each command actually run, its result, and anything unavailable. Use
+`pdftotext` to extract text, `pdfinfo` for page size/count and metadata, and
+`pdffonts` for embedded fonts when those tools are available. Check:
 
-1. No table or figure split across pages; caption on the same page as its float.
-2. No heading as the last line of a page; no one- or two-line widow above a
-   heading at a page top.
-3. No missing glyphs (grep the extraction for `�` replacement characters,
-   check the embedded font list) — math-mode symbols, not text-mode Unicode,
-   for ≈/≤/… in Latin Modern.
-4. Page size intentional (A4 unless the venue says otherwise); page count and
-   metadata (title, author) match the variant.
-5. Identity matches the variant: an anonymous build carries zero
-   de-anonymizing strings (grep the author name, repo URLs, DOIs); a named
-   build carries the restored links.
-6. Links resolve: spot-check DOIs and URLs added at finishing time.
+- Build logs for unresolved citations/references, following
+  `rules/manuscript-build.md`. A compiler exit code and an existing PDF do not
+  establish a valid product. A missing log leaves the check unverified.
+- Extracted text for replacement characters (`�`) and expected identifiers.
+  Font listings and clean extraction are useful signals; they cannot prove
+  every glyph rendered correctly.
+- Page size (A4 unless the venue specifies otherwise), page count, title and
+  author metadata against the intended variant.
+- Anonymous variants against a specific list of author names, affiliations,
+  acknowledgments, identifying repository URLs and this manuscript's version
+  identifiers. Check visible text, metadata and link targets where inspectable.
+  Preserve ordinary bibliography DOI/URL references; remove or mask only those
+  that identify the author or this manuscript's deposited version.
+- DOIs and URLs introduced during finishing: spot-check their destinations and
+  record any that could not be checked.
 
-Eyeballing stays mandatory for what a script cannot see (memory
-`feedback_visual_verify_citations`) — but the pagination sweep is script work,
-and a pass that only looks is not this pass.
+Inspect rendered pages visually for split tables/figures, detached captions,
+headings stranded at page bottoms, widows/orphans, clipping and missing glyphs.
+Text extraction alone does not establish these layout properties. Inspect all
+pages when feasible; otherwise state exactly which pages were inspected and
+which remain unverified. Do not claim a complete layout pass from a sample.
+No general layout analyzer is required.
 
-## 3. Variants are transform layers
+The handoff records mechanical results, pages visually inspected, findings and
+remaining limits separately. An unavailable tool or uninspected page is a
+reported limit, never a passed check.
 
-A named or deposit variant (HAL, page perso) is a script that applies string
-transforms to the shared source, renders, and reverts — apply, render, restore.
-Archive the script beside the release artifacts so the variant is reproducible.
-Reference implementation: `releases/hal_variant.py` in the Œconomia climate
-finance paper.
+## 3. Variants in isolated copies
+
+Pin the source revision, then create a fresh worktree or isolated source copy
+for each named, anonymous or deposit variant. Include the complete pinned
+build inputs, including any ignored bibliography or generated figures. Apply
+variant transforms and render only in that copy; leave the author's active
+source untouched even if rendering fails. Never use apply/render/restore on
+the working source.
+
+Archive the transform script, source revision and supplementary input hashes
+beside the release artifacts so the variant can be reproduced. Check the
+rendered variant's text, metadata and identifying links before delivery.

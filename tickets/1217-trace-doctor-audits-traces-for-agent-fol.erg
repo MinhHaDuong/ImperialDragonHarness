@@ -5,6 +5,8 @@ Author: claude
 
 --- log ---
 2026-10-25T06:36Z claude created
+2026-10-26T22:42Z reviewer raid 1214-1218 Imagine + blind spot: returned to author. EC3 (barrier review, deletions proposed) conflicts with rules/workflow.md 'No guards on guards: /pulse owns them' and skills/pulse/references/toolkit.md:57; proposed narrowing: report per-barrier denial counts as data, verdicts to /pulse. EC4 largely done by arena ticket 1114 stall census (586 stalls, all cycles incl. c4); proposed narrowing: run detectors on c4 Pi sessions and compare with the census. Pilot folly by cost is sleep-poll (21 %), not pgrep self-match (3 %). Traces do not record job end, so 'hours given back' is a bound. Path if resumed: extend scripts/trace-friction.py (tighten WAIT_RE, 3 detectors, --pi-runs reader, dict folly->rung), fixtures from real specimens.
+2026-10-26T22:55Z reviewer raid advisor (fable) and orchestrator decision: narrowed. EC3 becomes per-barrier denial counts reported as data, verdicts to /pulse. EC4 becomes the folly detectors run on the c4 Pi sessions and compared with the arena census (docs/2026-10-26-rail-stall-census.md, arena repo). Bounds accepted instead of hours. Scope: extend scripts/trace-friction.py plus a Follies section in trace-doctor, a dict folly->rung, no prescription engine; fixtures from real specimens. Also carries 1216's after-change re-measure on harness sessions. Runs after 1216 lands.
 
 --- body ---
 

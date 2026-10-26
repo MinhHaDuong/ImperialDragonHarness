@@ -1,0 +1,48 @@
+{
+  "remark_count": 11,
+  "covered": 0,
+  "uncovered_remarks": [
+    "trial-round-1-R1-01",
+    "trial-round-1-R1-02",
+    "trial-round-1-R1-03",
+    "trial-round-1-R1-04",
+    "trial-round-1-R1-05",
+    "trial-round-1-R1-06",
+    "trial-round-1-R1-07",
+    "trial-round-1-R1-08",
+    "trial-round-1-R1-09",
+    "trial-round-1-R1-10",
+    "trial-round-1-R1-11"
+  ],
+  "unresolved_remarks": [
+    "trial-round-1-R1-01",
+    "trial-round-1-R1-02",
+    "trial-round-1-R1-03",
+    "trial-round-1-R1-04",
+    "trial-round-1-R1-05",
+    "trial-round-1-R1-06",
+    "trial-round-1-R1-07",
+    "trial-round-1-R1-08",
+    "trial-round-1-R1-09",
+    "trial-round-1-R1-10",
+    "trial-round-1-R1-11"
+  ],
+  "invalid_records": [],
+  "orphan_tickets": [],
+  "unknown_ticket_refs": [],
+  "out_of_round_ticket_refs": [],
+  "duplicate_ids": [],
+  "map": {
+    "trial-round-1-R1-01": [],
+    "trial-round-1-R1-02": [],
+    "trial-round-1-R1-03": [],
+    "trial-round-1-R1-04": [],
+    "trial-round-1-R1-05": [],
+    "trial-round-1-R1-06": [],
+    "trial-round-1-R1-07": [],
+    "trial-round-1-R1-08": [],
+    "trial-round-1-R1-09": [],
+    "trial-round-1-R1-10": [],
+    "trial-round-1-R1-11": []
+  }
+}
