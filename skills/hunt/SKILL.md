@@ -18,7 +18,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    Arguments are `<ticket-id> [inline]`; `$ID` is the ticket id.
     - Without `inline`, hand the ticket to one background agent with the coder profile
    (`agents/coder.md`, model per the `route` skill) whose first action is
-   `Skill(skill: "hunt", args: "$ID inline")`; the prompt holds that call and
+   loading the hunt skill with `$ID inline` as its argument; the prompt holds that and
    nothing more, since the agent loads the steps itself. Report the handoff and end the turn.
     - With `inline` (the detached agent, a raid, a headless run, or the author co-working),
    go on in the current context.
@@ -64,23 +64,16 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    § Testing) and, in a modular project, its module.
 7. **Fail first.** Run the new tests by name (e.g. `pytest <file>::<test>`); confirm each one runs and fails for the expected reason.
 8. **Implement.** Implement until those tests pass, rerunning them by name as the loop gate.
-9. **Self-gate.** Pre-PR self-gate: run `/verify-adherence <branch>` (the branch created in the Worktree step).
-    - Clean → proceed to Merge request. Note adherence passed in the merge-request description so `/gaze` can skip the mechanical phase on its next pass (gaze reviews; `/verify-gate` gates).
-    - Blockers → decide per blocker:
-      - Cheap and mechanical (obvious fix, no design judgement) → fix in place, rerun the affected tests by name and `/verify-adherence`, then proceed only once clean. Up to 3 fix-and-recheck cycles; if still not clean after 3 rounds, escalate.
-      - A gate slow enough to hurt is a symptom to name in the handoff; the author decides whether to call `/pulse`.
-      - Otherwise → STOP. Do not open the PR. Escalate with the adherence report and the blocker list.
-    - Circuit breaker: if `/verify-adherence` itself errors, times out, or returns an unparseable result → ESCALATE. Do not open the PR and do not silently skip the gate.
+9. **Self-gate.** Run the verify-adherence skill on the branch. Fix each mechanical
+   blocker in place and run it again, up to 3 times. Escalate instead of opening the
+   merge request when a blocker needs design judgment, the third run still fails, or
+   the skill errors or returns nothing usable.
 10. **Merge request.** Rebase onto `origin/main` (`rules/git.md` § Merging), run the project's declared pre-PR gate once, then push the branch with lease, wait for CI and open a merge request. Run it through `python3 "$IDH_ROOT/scripts/raid-gate.py" -- <gate command>` so a raid can observe a live long-running gate. If the project has `.idh-checks.json`, its gate command is the project's scoped entry point (or `python3 "$IDH_ROOT/scripts/scoped-check.py"` from its root); quote `selected:` and `skipped:` in the PR description. A mapped doc-only diff may run fewer targets; Python code, unmapped paths, or a project without a map run the full `make check`.
 11. **Review.** Review the merge request, unless its tier is bookkeeping
     (`skills/merge/SKILL.md` § Gating tiers): a bookkeeping-only request is
     gated by its mechanical checks alone, so skip Review, Fix and Repeat. Otherwise this action
-    is mechanical — invoke the gaze skill with the PR number:
-    ```
-    Skill(skill: "gaze", args: <pr-number>)
-    ```
-    Follow the contract the skill loader returns; do not paraphrase or inline its
-    steps (mirrors raid Phase 5's mechanical `Skill(hunt)` invocation).
+    is mechanical — load the gaze skill with the merge-request number and follow
+    the contract it returns; do not paraphrase or inline its steps.
     Each pass through the Review–Fix loop is one **review round**; which
     perspectives run, and how deep, is the reviewer's call
     (`skills/gaze/SKILL.md` § 2–5). What each gaze result leads to (fix and

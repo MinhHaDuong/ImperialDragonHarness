@@ -231,14 +231,8 @@ For each wave, launch agents — each creates and locks its own worktree (`skill
 profile** (`agents/coder.md`, whose contract is `profiles/coder/PROFILE.md`;
 the model is chosen per launch from the `route` skill, no frontmatter pin).
 
-The execute-agent contract's FIRST action is mechanical. The agent invokes the
-hunt skill with the ticket ID:
-
-```
-Skill(skill: "hunt", args: "<id> inline")
-```
-
-It then follows the contract the skill loader returns. The agent prompt must NOT
+The execute-agent contract's FIRST action is mechanical: the agent loads the
+hunt skill with `<id> inline` as its argument. It then follows the contract the skill loader returns. The agent prompt must NOT
 paraphrase, summarize, or inline hunt's steps; the versioned `skills/hunt/SKILL.md`
 is the single live execution contract, and the loader supplies it fresh on every
 run. (A prose paraphrase drifts: the contract then lives in prompt-writing memory

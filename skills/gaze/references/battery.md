@@ -73,10 +73,7 @@ Seat defaults are guidance, not pins; raise a seat when the change warrants it:
 
 
 **Agent A — adherence** (`/verify-adherence <branch> worktree=<absolute-review-worktree>`).
-**Label-skip:** if the PR carries the
-`verify:adherence-passed` label (set by `/hunt`'s pre-PR gate, see PR #40),
-do **not** spawn this agent — the adherence check already ran clean before the
-PR was opened. Otherwise the launch is **the adherence-seat profile**
+The launch is **the adherence-seat profile**
 (`agents/adherence-seat.md`), whose contract is
 `profiles/adherence-seat/PROFILE.md`: spawn it on the review worktree
 `$primary_root/.claude/worktrees/review-<pr-number>`, the branch and the
