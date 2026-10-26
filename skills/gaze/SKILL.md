@@ -28,18 +28,6 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 > environment (worktree name, git status snapshot, ticket files, or the shared
 > task list).
 
-**Caller responsibility (before this fork is ever spawned).** The rule above
-binds the fork, which starts with no cwd and no conversation (a bare fork once
-guessed its target from ambient state and pushed a rogue PR). It does not mean the user must supply a bare number by hand every time.
-The invoking session has a cwd and a conversation — when the user types
-`/gaze` with no argument, resolve the PR number *before* invoking this skill:
-query the forge for the PR associated with the current branch, or reuse a PR
-number already established earlier in the conversation. Invoke with that
-number filled in. Only ask the user for it when no such source exists or two
-candidates conflict.
-<!-- harness-extension-point: on GitHub, `gh pr view --json number` resolves
-the current branch's PR number. -->
-
 One skill, one PR, one review result: REVIEWED / FINDINGS / ESCALATE. **Gaze
 reviews; `/verify-gate` gates.** Gaze never returns APPROVED, REROLL or
 NEEDS-AUTHOR: those are gate verdicts, ruled by `/verify-gate`. **Does not
@@ -65,9 +53,9 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 - `--force-approve` is supported for explicit human override; it skips the review and
   is logged loudly in the PR comments and the skill transcript. It is an override
   record, not a verdict.
-- **Cross-repo prerequisite**: the caller must ensure cwd is the target project before
-  invoking `/gaze`. The skill and its sub-skills (`/verify-adherence`, `/simplify`, etc.)
-  use `gh` and `git` commands that resolve against cwd.
+- **Cross-repo prerequisite**: the caller starts `/gaze` inside the target project.
+  The cwd names the repository and nothing else: branch, head and files come
+  from the PR number, reviewed in gaze's own `review-<pr>` worktree.
 - **Branch-currency prerequisite**: the caller rebases the PR branch onto current
   `origin/main` and force-pushes with lease before invoking (`rules/git.md`
   § Merging) — a gate validates the *combination* branch ⊕ base, so a verdict
