@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-21T17:56Z reviewer created
+2026-10-26T22:59Z reviewer reviewer note closing condition (ticket 1224, PR #1677): 1224 subsumes this measurement; close this ticket once one real raid has printed its wrap-up timing table (scripts/step_clock.py table: gaze, each gate round, merge, total and slowest step per merge request) against the 20-minute review budget
 
 --- body ---
 ## Context

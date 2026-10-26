@@ -77,6 +77,8 @@ itself. Optionally:
 - `integration`: run the declared integration checks whatever the diff
   touches (§ Check plan). A project asks for the same through its declaration.
 
+Start the step clock before anything else (`skills/gaze/references/output.md` § Duration clock); its `end` line fills the verdict's `duration:`.
+
 Every invocation produces the same verdict shape. Round is always derived from PR comment
 history (see § Gate sessions), never passed by the caller.
 
@@ -230,6 +232,7 @@ changes keep the guard.
 ```yaml
 verdict: APPROVED | REROLL | ESCALATE | NEEDS-AUTHOR
 round: 1 | 2
+duration: <text after "duration: " in the step_clock.py end line, e.g. 4m12s>
 gate_session_id: <uuid>
 review_worktree_path: <absolute path of the gate's own worktree>
 ruled_tip_sha: <full commit SHA ruled>
@@ -419,6 +422,7 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
    Checks: run:<n> reuse:<n> skip:<n> failed:<n>
    Minors: verifiable:<n> consider:<n> nofollow:<n> malformed:<n>
    Evidence: <legacy | ran:<n> reused:<n> stale:<n> no-report:<n>>
+   duration: <the verdict's duration: value, e.g. 4m12s, or not measured>
    Top reasons (if not APPROVED): <ranked list>
    Rationale: <paragraph>
    ```

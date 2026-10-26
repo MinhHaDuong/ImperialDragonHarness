@@ -2,10 +2,13 @@
 Title: Print the duration of every verify-gate, gaze, review and merge
 Created: 2026-10-26
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1677
 
 --- log ---
 2026-10-26T21:48Z Minh Ha-Duong created
 2026-10-26T22:24Z reviewer reviewer note alignment 2026-10-26: first of the wave; 1226 and 1197 block on it; criterion added: subsumes 1184's raid measurement
+2026-10-26T22:56Z reviewer closed — autoclosed — PR #1677
+2026-10-26T22:59Z reviewer reviewer note verify-reroll — round 1: criterion 1, the /verify-gate PR comment template carries no duration line
 
 --- body ---
 ## Context

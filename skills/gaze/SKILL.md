@@ -76,6 +76,8 @@ A fork ends its turn when it stops calling tools, and delegated agents run in th
 
 ### 1. Setup
 
+First, start the duration clock (`references/output.md` § Duration clock).
+
 Always invoke `/gaze` from within a conversation worktree, never from the main repo
 root. The worktree is the isolation boundary; no main-repo checkout is ever needed.
 
