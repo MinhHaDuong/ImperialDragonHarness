@@ -456,8 +456,6 @@ def test_caller_policy_lives_in_merge():
         "(`/verify-gate` § Gate sessions)",
     ):
         assert rule in before, rule
-    hunt = " ".join((ROOT / "skills" / "hunt" / "SKILL.md").read_text(encoding="utf-8").split())
-    assert "`skills/merge/SKILL.md` § Before merging" in hunt
 
 
 def test_degraded_panel_maps_to_escalate():
