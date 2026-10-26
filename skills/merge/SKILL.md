@@ -148,7 +148,9 @@ reads and writes in its own spelling.
    0 pass: go on. 2 no record for this candidate (none yet, or the base
    moved): write it with `merge-gate.py run --base origin/<base> --head HEAD`
    from this checkout, then `check` again; re-recording spends no review
-   round. 1 fail or stale scope, 3 unreadable: do not merge.
+   round. 1 fail or stale scope, 3 unreadable: do not merge, except a
+   fast-path record whose path has closed since (`check` says so), which is
+   recorded again the same way.
 5. **Disarm (gated base only).** Never arm auto-merge: an armed request
    could land a later head than the record covers. Read
    `gh pr view N --json autoMergeRequest -q '.autoMergeRequest != null'`; <!-- harness-extension-point -->

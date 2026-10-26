@@ -115,6 +115,7 @@ The stance behind the gate, written for projects that adopt it.
   gate record; a bookkeeping merge on an open fast path runs it on the new main tip
   after the merge instead.
 - **Monitor.** The guard journal, the daily audit of commits that entered the base branch, the
+  monitor's verdicts on main tips (`refs/notes/gate-verdict`), the
   review result comment (what ran, by which family, why) and the count of review runs per
   pull request show afterwards whether the trust was well placed.
 

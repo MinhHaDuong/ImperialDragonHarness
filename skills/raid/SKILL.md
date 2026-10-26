@@ -381,9 +381,8 @@ For each eligible PR, sequentially within the wave:
    A missing record after an earlier merge in the wave moved the base means
    record again on the same head: mechanical, it spends no gate round. A
    second miss goes in the briefing.
-   A wave of bookkeeping merges rides the fast path until it closes, and the
-   briefing reports the monitor's last verdict (`skills/merge/SKILL.md`
-   § Gating tiers).
+   The briefing reports the monitor's last verdict and the fast-path state
+   (`skills/merge/SKILL.md` § Gating tiers).
    **Ungated base:** the merge may be queued, not landed: pending checks are normal.
    Pending is not a
    failure: wait as `skills/merge/SKILL.md` § Waiting for a queued merge

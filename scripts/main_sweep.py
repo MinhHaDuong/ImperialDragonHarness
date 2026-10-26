@@ -13,7 +13,8 @@ author, date, message), so for a merge with exactly two parents (P1, P2) the
 audit rebuilds the candidate from (P1, P2) with merge-gate.py's own function,
 requires M's tree to be the candidate's, and reads the note there; the latest
 entry for that candidate decides, under the scope that P1 declares (or its
-bookkeeping tier, for a merge that touches only bookkeeping paths). A receipt
+bookkeeping tier or its fast-path record stating the path open, for a merge
+that touches only bookkeeping paths). A receipt
 made on another base tip names another candidate, so a merge whose first
 parent moved after the gate ran reads as a finding. A single-parent commit is
 read as before: the note on the commit itself. A parentless commit is a

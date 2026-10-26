@@ -185,7 +185,7 @@ def verify_tip(tip, remote, directory):
             LOG.error("%s: %s; no verdict (unverified)", tip[:12], exc)
             return NONE
         finally:
-            mg.git("worktree", "remove", "--force", str(tree), check=False)
+            mg.git("worktree", "remove", "--force", str(tree), check=False)  # never raises: a timeout answers 124
     fields = {
         "result": "fail" if hard else "pass",
         "time": started,
@@ -200,7 +200,7 @@ def verify_tip(tip, remote, directory):
         fields["culprit"] = "unknown (the search passed the deadline)"
     elif blamed:
         commit, bounded = blamed
-        subject = mg.sanitize(mg.git("log", "-1", "--format=%s", commit).stdout)
+        subject = mg.sanitize(mg.git("log", "-1", "--format=%s", commit, check=False).stdout)
         where = "since the last green tip" if bounded else f"no green tip in the last {MAX_CULPRIT} merges"
         fields["culprit"] = f"{commit} {subject} ({where})"
     mg.append_and_push(tip, mg.format_verdict(fields), remote, mg.VERDICT_REF)
@@ -227,13 +227,19 @@ def cmd_spawn(args):
         raise mg.GateError(f"cannot resolve '{args.ref}'")
     directory = state_dir(args.state_dir)
     directory.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile("w", dir=directory, prefix="pending.", delete=False) as staged:
-        staged.write(tip + "\n")  # a staging file of its own: concurrent spawns never share one
-    try:
-        os.replace(staged.name, directory / "pending")  # one slot: the latest tip wins
-    except OSError:
-        Path(staged.name).unlink(missing_ok=True)
-        raise
+    with open(directory / "pending.lock", "w") as guard:
+        fcntl.flock(guard, fcntl.LOCK_EX)  # read, compare and replace as one step against other spawns
+        slot = directory / "pending"
+        current = slot.read_text().strip() if slot.exists() else ""
+        older = current and current != tip and mg.git("merge-base", "--is-ancestor", tip, current, check=False).returncode == 0
+        if not older:  # one slot: the latest tip wins, never an ancestor of the pending one
+            with tempfile.NamedTemporaryFile("w", dir=directory, prefix="pending.", delete=False) as staged:
+                staged.write(tip + "\n")
+            try:
+                os.replace(staged.name, slot)
+            except OSError:
+                Path(staged.name).unlink(missing_ok=True)
+                raise
     with open(directory / "monitor.log", "a") as log:
         subprocess.Popen(
             [sys.executable, str(Path(__file__).resolve()), "work", "--remote", args.remote,

@@ -303,7 +303,7 @@ def load_monitor():
     return monitor
 
 
-@pytest.mark.parametrize("error", ["Timeout", "GateError"])
+@pytest.mark.parametrize("error", ["Timeout", "GateError", "OSError"])
 def test_a_culprit_search_that_fails_keeps_the_red_verdict(repo, monkeypatch, tmp_path, error):
     merge(repo, "STATE.md", "1\n2\n3\n4\n5\n", expect=1)  # the full record is red; land it anyway
     head = git(repo, "rev-parse", "HEAD")
@@ -315,7 +315,7 @@ def test_a_culprit_search_that_fails_keeps_the_red_verdict(repo, monkeypatch, tm
     monitor = load_monitor()
 
     def late(*_args):
-        raise (monitor.Timeout if error == "Timeout" else monitor.mg.GateError)("culprit search failed")
+        raise {"Timeout": monitor.Timeout, "GateError": monitor.mg.GateError, "OSError": OSError}[error]("culprit failed")
 
     monkeypatch.setattr(monitor, "culprit", late)
     assert monitor.verify_tip(head, "origin", tmp_path) == monitor.RED
@@ -340,3 +340,46 @@ def test_a_worker_drains_every_pending_tip_however_many_merges_arrive(tmp_path, 
     assert monitor.cmd_work(args) == 0
     assert seen == [f"tip{n}" for n in range(15)]
     assert not (tmp_path / "pending").exists()
+
+
+def test_a_fast_path_record_is_refused_at_merge_once_the_path_has_closed(repo):
+    verify(repo)
+    git(repo, "switch", "-q", "--detach", "origin/main")
+    (repo / "tickets" / "0002-b.erg").write_text("two\n", encoding="utf-8")
+    git(repo, "add", ".")
+    git(repo, "commit", "-q", "-m", "ticket")
+    head = git(repo, "rev-parse", "HEAD")
+    record = tool(GATE, repo, "run", "--base", "origin/main", "--head", head).stdout
+    assert scope_of(record) == "scope: fx/fastpath: tickets"
+    later = {**child_env(), "MERGE_GATE_NOW": str(int(time.time()) + 3 * 3600)}
+    at_merge = tool(GATE, repo, "check", "--base", "origin/main", "--head", head, env=later)
+    assert at_merge.returncode == 1 and "closed since the record" in at_merge.stdout, at_merge.stdout
+    hook = tool(GATE, repo, "check", "--no-fetch", "--base", "origin/main", "--head", head, env=later)
+    assert hook.returncode == 0, hook.stdout  # after the fact, the record stated the path open
+
+
+def test_a_spawn_never_replaces_the_pending_tip_with_an_older_one(repo):
+    older = git(repo, "rev-parse", "origin/main")
+    merge(repo, "code.txt", "newer\n")
+    newer = git(repo, "rev-parse", "origin/main")
+    state = repo / ".git" / "merge-gate-monitor"
+    state.mkdir(exist_ok=True)
+    with open(state / "lock", "w") as held:
+        fcntl.flock(held, fcntl.LOCK_EX)  # no worker takes the slot meanwhile
+        assert tool(MONITOR, repo, "spawn", "--ref", newer).returncode == 0
+        assert tool(MONITOR, repo, "spawn", "--ref", older).returncode == 0
+        assert (state / "pending").read_text().strip() == newer
+    assert not list(state.glob("pending.tmp*")) and not [f for f in state.glob("pending.*") if f.name != "pending.lock"]
+
+
+def test_a_git_call_past_its_timeout_raises_when_checked_and_answers_124_otherwise(monkeypatch):
+    mg = load_monitor().mg
+
+    def hung(*_args, **kwargs):
+        raise subprocess.TimeoutExpired("git", kwargs.get("timeout"))
+
+    monkeypatch.setattr(mg.subprocess, "run", hung)
+    monkeypatch.setattr(mg, "toplevel", lambda _cwd: str(ROOT))
+    with pytest.raises(mg.GateError, match="no answer"):
+        mg.git("fetch", "origin")
+    assert mg.git("worktree", "prune", check=False).returncode == 124

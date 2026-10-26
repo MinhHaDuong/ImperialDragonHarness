@@ -27,8 +27,8 @@ Gating tiers (ticket 1221; the policy is skills/merge/SKILL.md § Gating
 tiers): a candidate whose changes against the base all match BOOKKEEPING is
 bookkeeping-tier. When the base declares `"tiers": {"bookkeeping": [names]}`,
 such a candidate's record runs only those named checks, under the scope
-`<scope>/bookkeeping`; `check` accepts that scope or the full one for a
-bookkeeping candidate, and only the full one otherwise. `tier` reports the tier
+`<scope>/bookkeeping`; `check` accepts that scope, the fast-path one (below)
+or the full one for a bookkeeping candidate, and only the full one otherwise. `tier` reports the tier
 of a candidate, or with `--since <approved tip>` the tier of what the head adds
 to the candidate the approval saw: the one mechanical reading of the tiers.
 
@@ -54,7 +54,9 @@ another scope on the merge's own candidate is a verdict too (it ran the
 checks the tier demands). A red verdict, none within reach, or an old one
 closes the path; the record then runs the tier set, as before. Openness is
 judged when the record is written and stated in it; `check` accepts a
-fast-path record of a bookkeeping candidate that states the path open. `fastpath` prints the state.
+fast-path record of a bookkeeping candidate that states the path open, and,
+when it fetches (the merge-time check, not the hook's `--no-fetch` one),
+only while the path is still open on the base. `fastpath` prints the state.
 
 Exit codes of `check`: 0 pass, 1 fail or stale scope, 2 no record, 3 error.
 `enabled`: 0 on, 1 off, 3 error. `tier`: 0 bookkeeping (or, with --since,
@@ -128,7 +130,9 @@ def git(*args, check=True, env=None):
     try:
         proc = subprocess.run(["git", *args], capture_output=True, text=True, env=env, cwd=root, timeout=GIT_TIMEOUT)
     except subprocess.TimeoutExpired:
-        raise GateError(f"git {' '.join(args)}: no answer within {GIT_TIMEOUT}s") from None
+        if check:
+            raise GateError(f"git {' '.join(args)}: no answer within {GIT_TIMEOUT}s") from None
+        return subprocess.CompletedProcess(["git", *args], 124, "", f"no answer within {GIT_TIMEOUT}s")
     if check and proc.returncode:
         raise GateError(f"git {' '.join(args)}: {proc.stderr.strip()}")
     return proc
@@ -542,7 +546,7 @@ def fetch_notes(remote, *refs):
     listed = {line.split("\t", 1)[1] for line in probe.stdout.splitlines() if "\t" in line}
     for ref in refs:
         if ref not in listed:
-            git("update-ref", "-d", ref, check=False)
+            git("update-ref", "-d", ref)  # a stale local verdict must not survive
     present = [ref for ref in refs if ref in listed]
     if present:
         git("fetch", "-q", remote, *(f"+{ref}:{ref}" for ref in present))
@@ -660,11 +664,17 @@ def cmd_check(args):
     if config is None:
         raise GateError(f"gate is off at base {args.base}")
     oid = candidate(base, head)
-    if not args.no_fetch and not fetch_notes(args.remote):
+    if not args.no_fetch and not fetch_notes(args.remote, NOTES_REF, VERDICT_REF):
         sys.stdout.write(f"missing: {args.remote} has no {NOTES_REF}; no record on candidate {oid}\n")
         return MISSING
     text = read_note(oid) + ("\n" + read_note(oid, LOCAL_REF) if args.local else "")
-    code, reason = decide(parse_note(text), oid, accepted_scopes(config, base, oid))
+    entries = parse_note(text)
+    code, reason = decide(entries, oid, accepted_scopes(config, base, oid))
+    mine = [e for e in entries if f"candidate={oid} " in e.get("revision", "") + " "]
+    if code == PASS and not args.no_fetch and FASTPATH in config and mine[-1]["scope"] == scope_line(fast_config(config)):
+        still_open, why = fastpath_state(config, base)  # at merge time, not only when recorded
+        if not still_open:
+            code, reason = FAIL, f"fail: the fast path has closed since the record ({why}); record again"
     sys.stdout.write(reason + "\n")
     return code
 
