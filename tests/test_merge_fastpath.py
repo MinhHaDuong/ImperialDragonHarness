@@ -1,0 +1,259 @@
+"""Fast path for bookkeeping merges, verified after the fact by a monitor (ticket 1226).
+
+A bookkeeping-tier record on an open fast path runs only the checks the base
+declares under "fastpath"; the full check set then runs on the new main tip
+(scripts/merge_monitor.py) and writes a verdict note keyed by that tip. The
+fast path closes when main is K merges past its last verified-green tip, when
+that verdict is older than the bound, or when the last verdict is red; no
+verdict is unverified. Every fixture is a local repository with a bare origin.
+The forge's merge is played by pushing the deterministic candidate to main:
+same parents, same tree.
+"""
+
+import fcntl
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import pytest
+
+from child_env import child_env
+
+pytestmark = pytest.mark.integration
+
+ROOT = Path(__file__).resolve().parents[1]
+GATE = ROOT / "scripts" / "merge-gate.py"
+MONITOR = ROOT / "scripts" / "merge_monitor.py"
+SWEEP = ROOT / "scripts" / "main_sweep.py"
+
+# The "suite" stands for pytest-guard: it reads the live STATE.md, as the
+# harness suite does (test_state_within_cap), so a bookkeeping change can break it.
+SUITE = ["sh", "-c", "test $(wc -l < STATE.md) -le 3"]
+
+
+def config(**fastpath):
+    return {
+        "gate": "on",
+        "scope": "fx",
+        "checks": [
+            {"name": "tickets", "argv": ["true"]},
+            {"name": "suite", "argv": SUITE},
+        ],
+        "tiers": {"bookkeeping": ["tickets", "suite"]},
+        "fastpath": {"checks": ["tickets"], "max_lag": 5, "max_age_minutes": 120, **fastpath},
+    }
+
+
+def git(cwd, *args, env=None):
+    return subprocess.run(
+        ["git", "-C", str(cwd), *args], check=True, capture_output=True, text=True, env=env or child_env()
+    ).stdout.strip()
+
+
+def tool(script, cwd, *args, env=None):
+    return subprocess.run(
+        [sys.executable, str(script), *args], cwd=cwd, capture_output=True, text=True, env=env or child_env()
+    )
+
+
+@pytest.fixture
+def repo(tmp_path):
+    return make_repo(tmp_path, config())
+
+
+def make_repo(tmp_path, conf):
+    origin, work = tmp_path / "origin.git", tmp_path / "work"
+    subprocess.run(["git", "init", "-q", "--bare", str(origin)], check=True, env=child_env())
+    subprocess.run(["git", "init", "-q", "-b", "main", str(work)], check=True, env=child_env())
+    for key, value in (("user.email", "t@example.com"), ("user.name", "Fixture"), ("commit.gpgsign", "false")):
+        git(work, "config", key, value)
+    (work / ".merge-gate.json").write_text(json.dumps(conf), encoding="utf-8")
+    (work / "STATE.md").write_text("state\n", encoding="utf-8")
+    (work / "tickets").mkdir()
+    (work / "tickets" / "0001-a.erg").write_text("one\n", encoding="utf-8")
+    (work / "code.txt").write_text("code\n", encoding="utf-8")
+    git(work, "add", ".")
+    git(work, "commit", "-q", "-m", "base")
+    git(work, "remote", "add", "origin", str(origin))
+    git(work, "push", "-q", "origin", "main")
+    return work
+
+
+def merge(work, path, text, *, env=None, expect=0):
+    """Branch from origin/main, change one file, record, and land the candidate as main.
+
+    Returns the record's stdout; the landed tip is origin/main afterwards.
+    """
+    git(work, "fetch", "-q", "origin")
+    git(work, "switch", "-q", "--detach", "origin/main")
+    target = work / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text, encoding="utf-8")
+    git(work, "add", ".")
+    git(work, "commit", "-q", "-m", f"change {path}")
+    head = git(work, "rev-parse", "HEAD")
+    run = tool(GATE, work, "run", "--base", "origin/main", "--head", head, env=env)
+    assert run.returncode == expect, run.stdout + run.stderr
+    if expect == 0:
+        check = tool(GATE, work, "check", "--base", "origin/main", "--head", head)
+        assert check.returncode == 0, check.stdout + check.stderr
+        cand = tool(GATE, work, "candidate", "--base", "origin/main", "--head", head).stdout.strip()
+        git(work, "push", "-q", "origin", f"{cand}:refs/heads/main")
+        git(work, "fetch", "-q", "origin")
+    return run.stdout
+
+
+def verify(work, *extra, env=None):
+    git(work, "fetch", "-q", "origin")
+    return tool(MONITOR, work, "verify", "--tip", "origin/main", *extra, env=env)
+
+
+def fastpath(work, env=None):
+    git(work, "fetch", "-q", "origin")
+    return tool(GATE, work, "fastpath", "--base", "origin/main", env=env)
+
+
+def scope_of(record):
+    return next(line for line in record.splitlines() if line.startswith("scope: "))
+
+
+def verdict_note(work):
+    git(work, "fetch", "-q", "origin", "+refs/notes/gate-verdict:refs/notes/gate-verdict")
+    return git(work, "notes", "--ref=refs/notes/gate-verdict", "show", "origin/main")
+
+
+def test_no_verdict_anywhere_keeps_the_fast_path_closed(repo):
+    probe = fastpath(repo)
+    assert probe.returncode == 1, probe.stdout + probe.stderr
+    record = merge(repo, "tickets/0002-b.erg", "two\n")
+    assert scope_of(record) == "scope: fx/bookkeeping: tickets suite"
+
+
+def test_ticket_only_merge_on_an_open_fast_path_runs_no_suite(repo):
+    assert verify(repo).returncode == 0
+    assert fastpath(repo).returncode == 0
+    start = time.monotonic()
+    record = merge(repo, "tickets/0002-b.erg", "two\n")
+    elapsed = time.monotonic() - start
+    print(f"fast-path record + check + landing, local fixture: {elapsed:.2f}s")
+    assert scope_of(record) == "scope: fx/fastpath: tickets"
+    assert not any(line.startswith("check: suite ") for line in record.splitlines())
+    assert any(line.startswith("duration: ") for line in record.splitlines())
+
+
+def test_fast_path_record_is_accepted_by_the_hook_check_and_the_audit_of_main(repo):
+    verify(repo)
+    merge(repo, "tickets/0002-b.erg", "two\n")
+    hook_check = tool(GATE, repo, "check", "--no-fetch", "--base", "origin/main^1", "--head", "origin/main^2")
+    assert hook_check.returncode == 0, hook_check.stdout + hook_check.stderr
+    audit = tool(SWEEP, repo, "--ref", "origin/main")
+    tip = git(repo, "rev-parse", "origin/main")[:12]
+    line = next(x for x in audit.stdout.splitlines() if tip in x)
+    assert line.startswith("ok"), audit.stdout
+
+
+def test_state_over_cap_on_the_fast_path_is_caught_by_the_monitor_and_closes_it(repo):
+    verify(repo)
+    merge(repo, "tickets/0002-b.erg", "two\n")
+    merge(repo, "STATE.md", "1\n2\n3\n4\n5\n")
+    bad = git(repo, "rev-parse", "origin/main")
+    record = merge(repo, "tickets/0003-c.erg", "three\n")
+    assert scope_of(record) == "scope: fx/fastpath: tickets"  # nothing has run the suite yet
+    result = verify(repo)
+    assert result.returncode == 1, result.stdout + result.stderr
+    note = verdict_note(repo)
+    assert "result: fail" in note
+    assert f"culprit: {bad}" in note  # re-run on the merges since green names the STATE.md merge
+    assert fastpath(repo).returncode == 1
+    record = merge(repo, "tickets/0004-d.erg", "four\n", expect=1)
+    assert scope_of(record) == "scope: fx/bookkeeping: tickets suite"
+
+
+def test_a_green_verdict_reopens_the_fast_path_after_a_red_one(repo):
+    verify(repo)
+    merge(repo, "STATE.md", "1\n2\n3\n4\n5\n")
+    verify(repo)
+    assert fastpath(repo).returncode == 1
+    merge(repo, "STATE.md", "fixed\n")  # pays the full record, which verifies its own tip
+    probe = fastpath(repo)
+    assert probe.returncode == 0, probe.stdout
+
+
+def test_six_merges_with_a_slow_monitor_close_the_fast_path_at_the_sixth(repo):
+    verify(repo)
+    for n in range(1, 6):
+        record = merge(repo, f"tickets/{n:04d}-x.erg", f"{n}\n")
+        assert scope_of(record) == "scope: fx/fastpath: tickets", n
+    record = merge(repo, "tickets/0006-x.erg", "6\n")
+    assert scope_of(record) == "scope: fx/bookkeeping: tickets suite"
+
+
+def test_a_code_merge_after_a_bad_bookkeeping_merge_fails_its_own_record(repo):
+    verify(repo)
+    merge(repo, "STATE.md", "1\n2\n3\n4\n5\n")
+    record = merge(repo, "code.txt", "new code\n", expect=1)
+    assert scope_of(record) == "scope: fx: tickets suite"
+    assert "check: suite fail" in record
+
+
+def test_a_dead_monitor_closes_the_fast_path_once_the_last_verdict_is_too_old(repo):
+    verify(repo)
+    merge(repo, "tickets/0002-b.erg", "two\n")  # no monitor runs after it
+    assert fastpath(repo).returncode == 0
+    later = {**child_env(), "MERGE_GATE_NOW": str(int(time.time()) + 3 * 3600)}
+    probe = fastpath(repo, env=later)
+    assert probe.returncode == 1 and "older than" in probe.stdout, probe.stdout
+    record = merge(repo, "tickets/0003-c.erg", "three\n", env=later)
+    assert scope_of(record) == "scope: fx/bookkeeping: tickets suite"
+
+
+def test_monitor_coalesces_one_run_in_flight_and_one_pending_latest_wins(repo):
+    verify(repo)  # green base: the merges below take the fast path and leave their tips unverified
+    base = git(repo, "rev-parse", "origin/main")
+    state = repo / ".git" / "merge-gate-monitor"
+    state.mkdir(exist_ok=True)
+    tips = []
+    with open(state / "lock", "w") as held:
+        fcntl.flock(held, fcntl.LOCK_EX)  # a run is in flight
+        for n in range(3):
+            merge(repo, "tickets/0002-b.erg", f"{n}\n")
+            tips.append(git(repo, "rev-parse", "origin/main"))
+            spawned = tool(MONITOR, repo, "spawn", "--ref", "origin/main")
+            assert spawned.returncode == 0, spawned.stderr
+        time.sleep(1)  # any worker spawned meanwhile meets the lock and leaves
+        assert (state / "pending").read_text().strip() == tips[-1]
+    worked = tool(MONITOR, repo, "work")
+    assert worked.returncode == 0, worked.stdout + worked.stderr
+    git(repo, "fetch", "-q", "origin", "+refs/notes/gate-verdict:refs/notes/gate-verdict")
+    noted = git(repo, "notes", "--ref=refs/notes/gate-verdict", "list").split()
+    assert sorted(noted[1::2]) == sorted([base, tips[-1]])  # one run for three merges
+    assert not (state / "pending").exists()
+
+
+FLAKY_SUITE = (
+    'if [ -e "$0.ran" ]; then exit 0; fi; touch "$0.ran"; '
+    'echo "FAILED tests/test_x.py::test_flake - boom"; exit 1'
+)
+
+
+@pytest.mark.parametrize("reproduces", [False, True])
+def test_a_red_suite_reruns_only_its_failing_tests_once(tmp_path, reproduces):
+    marker = tmp_path / "suite"
+    rerun_body = "exit 1" if reproduces else 'echo "$@" > "$0.rerun"; exit 0'
+    conf = config(rerun={"suite": ["sh", "-c", rerun_body, str(marker)]})
+    conf["checks"][1]["argv"] = ["sh", "-c", FLAKY_SUITE, str(marker)]
+    work = make_repo(tmp_path, conf)
+    result = verify(work)
+    note = verdict_note(work)
+    assert "failed-first-run: tests/test_x.py::test_flake" in note
+    if reproduces:
+        assert result.returncode == 1 and "result: fail" in note
+        assert fastpath(work).returncode == 1
+    else:
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "result: pass" in note
+        assert "flaky: 1 tests/test_x.py::test_flake" in note
+        assert Path(f"{marker}.rerun").read_text().split() == ["tests/test_x.py::test_flake"]
+        assert fastpath(work).returncode == 0
