@@ -39,29 +39,3 @@ behalf, such as the review panel's perspective agents, inherits this same rule:
 the inner launch must be waited for by polling an artifact too, or the orphan
 failure simply moves one layer down. A launch site is bound by the fork contract
 whether it is this skill's own or a sub-agent's.
-
-**Caller-side recovery.** If `/gaze <pr>` ever returns a bare fan-out
-narration with no `result:` block (REVIEWED/FINDINGS/ESCALATE), treat it as a
-non-result: do **not** relaunch the reviewer battery. Wait for the background
-reviewer notifications and read the review comment they posted on the merge
-request. That comment is evidence, not a gaze result: without an accepted gaze
-result there is no gate. Re-run `/gaze <pr>` once if the liveness window below
-allows it; otherwise park the PR and ESCALATE to the author, as `raid` and
-`merge` do for a missing result.
-
-**Fork liveness.** Once the review comment has posted on the PR, the caller must
-see the gaze result (returned or posted as a PR comment) within
-`fork_liveness_seconds` (`skills/gaze/telemetry.yml`, env override
-`GAZE_LIVENESS_WINDOW_S`; default 1200s / ~20 min), same knob pattern as the
-wall/token thresholds in § Telemetry. Two independent stalls landed
-in exactly this window, both silent: 2026-07-11 (memory
-`feedback_agent_stall_watchdog_recovery`) and 2026-07-13 (raid 291-245, PR #551:
-the review comment posted, then ~30 min of quiet, no simplify commit, no
-result, review worktree mtime frozen).
-
-**On window expiry, do not re-run phases 2–5.** Check three completion markers:
-(1) a posted gaze result comment, (2) branch-tip motion on the PR branch, (3) the
-review worktree's file mtime. All stale/absent → no accepted gaze result, so no gate: park the PR and
-ESCALATE to the author (the window is spent, so no re-run). The check skips only
-the redundant phase 2–5 re-execution; it never substitutes a direct
-`/verify-gate` for the missing result.

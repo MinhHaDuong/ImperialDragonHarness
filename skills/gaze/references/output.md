@@ -18,14 +18,12 @@ missing), `cost~=` (best-effort USD, `na` if incomplete).
 ### Thresholds
 
 Read from `skills/gaze/telemetry.yml`; env vars override. Defaults:
-wall warn=15min escalate=30min; tokens warn=500k escalate=1M; fork liveness
-window=20min (monitored by the caller, not checked at internal phase
-boundaries).
+wall warn=15min escalate=30min; tokens warn=500k escalate=1M. The file's
+`fork_liveness_seconds` is not a gaze threshold: gaze never reads it.
 
 On warn: post `/gaze: slow run` comment, continue. On escalate: stop, post
 `/gaze stopped:` with measured value. Escalate > warn. Check at phase boundaries
-only — except fork liveness, which a silent fork cannot self-check, so the
-caller monitors it (§ Fork execution contract).
+only.
 
 ## `--force-approve`
 
@@ -63,8 +61,6 @@ simplify: <n_fixes_applied> | skipped (adherence blocking) | skipped (prose work
 Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]
 Adherence: PASS | FAIL (<count>)
-
-next: REVIEWED → the caller closes the ticket on the branch, then runs /verify-gate <pr-number> repo=<caller's checkout> session=<uuid> on the current branch head, which is reviewed_head_sha plus at most that ticket-close commit (one re-gate at most, /verify-gate § Gate sessions: a fix asked by the round-1 gate is re-gated once on the new head with the same session=, without a new gaze run); FINDINGS → the caller fixes them and re-runs /gaze on the new head: a head gaze did not review is never gated; ESCALATE (including battery: NOT-RUN or skipped (--force-approve), or a DEGRADED panel) → no gate and no merge: the review never completed, and the PR goes to the author, who decides
 
 telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 seat: <role> · runtime=<id> · family=<family> · route=<token> · model=<id as the launch reported it | not observed> · status: ran|failed|skipped
