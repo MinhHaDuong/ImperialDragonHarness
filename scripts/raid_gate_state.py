@@ -34,3 +34,21 @@ def classify(now: float, last_progress: float, gate: tuple[float, float] | None,
         if 0 <= now - heartbeat <= 30 and started <= heartbeat:
             return "GATE_TIMEOUT" if now - started > gate_max_seconds else "GATE_RUNNING"
     return "STALL" if now - last_progress > stall_seconds else "ACTIVE"
+
+
+def evaluate(now: float, state: tuple | None, snapshot: object,
+             gate: tuple[float, float] | None, stall_seconds: int,
+             gate_max_seconds: int) -> tuple[str, tuple]:
+    """One poll of wait mode: fold a worktree snapshot into the progress clock.
+
+    `state` is None on the first poll (the snapshot is the baseline) or the
+    tuple returned by the previous call. A changed snapshot, or a gate marker
+    that disappeared since the last poll, restarts the stall window.
+    """
+    previous, was_gating, last_progress = state or (snapshot, False, now)
+    gating = classify(now, last_progress, gate, stall_seconds,
+                      gate_max_seconds).startswith("GATE")
+    if snapshot != previous or (was_gating and not gating):
+        last_progress = now
+    status = classify(now, last_progress, gate, stall_seconds, gate_max_seconds)
+    return status, (snapshot, gating, last_progress)
