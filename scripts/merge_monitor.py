@@ -92,6 +92,11 @@ def execute(argv, cwd, deadline):
     return proc.returncode, out, time.monotonic() - start
 
 
+def failed_ids(out):
+    """Failing test ids named in pytest's summary, in order, once each; an id with a control character is dropped."""
+    return [i for i in dict.fromkeys(FAILED.findall(out)) if mg.single_line(i)]
+
+
 def ids_line(ids):
     shown = " ".join(ids[:MAX_IDS])
     return shown + (f" (+{len(ids) - MAX_IDS} more)" if len(ids) > MAX_IDS else "")
@@ -153,7 +158,7 @@ def verify_tip(tip, remote, directory):
                 verdict = "pass" if code == 0 else f"fail(exit {code})"
                 results.append(f"{item['name']} {verdict} {secs:.1f}s :: {' '.join(item['argv'])}")
                 if code:
-                    failed.append((item, list(dict.fromkeys(FAILED.findall(out)))))
+                    failed.append((item, failed_ids(out)))
             first_ids = [i for _item, ids in failed for i in ids]
             if first_ids:
                 with open(directory / "failed-ids.log", "a") as log:
@@ -164,13 +169,19 @@ def verify_tip(tip, remote, directory):
                 rerun = fast.get("rerun", {}).get(item["name"])
                 if ids and rerun:
                     code, out, _secs = execute([*rerun, *ids], tree, deadline)
-                    still = [] if code == 0 else [i for i in ids if i in set(FAILED.findall(out))] or ids
+                    still = [] if code == 0 else [i for i in ids if i in set(failed_ids(out))] or ids
                     flaky += [i for i in ids if i not in still]
                     if still:
                         hard.append((item["name"], still))
                 else:
                     hard.append((item["name"], ids))
-            blamed = culprit(tip, hard, config, tree, deadline) if hard else None
+            blamed = None
+            if hard:
+                try:
+                    blamed = culprit(tip, hard, config, tree, deadline)
+                except Timeout as exc:  # the red result stands; only the blame is unknown
+                    LOG.error("%s: %s; red verdict without a culprit", tip[:12], exc)
+                    blamed = (None, False)
         except Timeout as exc:
             LOG.error("%s: %s; no verdict (unverified)", tip[:12], exc)
             return NONE
@@ -186,14 +197,16 @@ def verify_tip(tip, remote, directory):
         "flaky": f"{len(flaky)} {ids_line(flaky)}" if flaky else "",
         "checks": results,
     }
-    if blamed:
+    if blamed and blamed[0] is None:
+        fields["culprit"] = "unknown (the search passed the deadline)"
+    elif blamed:
         commit, bounded = blamed
         subject = mg.sanitize(mg.git("log", "-1", "--format=%s", commit).stdout)
         where = "since the last green tip" if bounded else f"no green tip in the last {MAX_CULPRIT} merges"
         fields["culprit"] = f"{commit} {subject} ({where})"
     mg.append_and_push(tip, mg.format_verdict(fields), remote, mg.VERDICT_REF)
     LOG.info("verdict %s on %s in %.1fs%s", fields["result"], tip[:12], time.monotonic() - clock,
-             f"; culprit {fields['culprit']}" if blamed else "")
+             f"; culprit {fields['culprit']}" if "culprit" in fields else "")
     if flaky:
         LOG.info("flaky: %s", fields["flaky"])
     return RED if hard else GREEN
@@ -215,9 +228,9 @@ def cmd_spawn(args):
         raise mg.GateError(f"cannot resolve '{args.ref}'")
     directory = state_dir(args.state_dir)
     directory.mkdir(parents=True, exist_ok=True)
-    staged = directory / "pending.new"
-    staged.write_text(tip + "\n")
-    os.replace(staged, directory / "pending")  # one slot: the latest tip wins
+    with tempfile.NamedTemporaryFile("w", dir=directory, prefix="pending.", delete=False) as staged:
+        staged.write(tip + "\n")  # a staging file of its own: concurrent spawns never share one
+    os.replace(staged.name, directory / "pending")  # one slot: the latest tip wins
     with open(directory / "monitor.log", "a") as log:
         subprocess.Popen(
             [sys.executable, str(Path(__file__).resolve()), "work", "--remote", args.remote,

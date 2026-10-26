@@ -11,7 +11,9 @@ same parents, same tree.
 """
 
 import fcntl
+import importlib.util
 import json
+import os
 import subprocess
 import sys
 import time
@@ -134,10 +136,7 @@ def test_no_verdict_anywhere_keeps_the_fast_path_closed(repo):
 def test_ticket_only_merge_on_an_open_fast_path_runs_no_suite(repo):
     assert verify(repo).returncode == 0
     assert fastpath(repo).returncode == 0
-    start = time.monotonic()
     record = merge(repo, "tickets/0002-b.erg", "two\n")
-    elapsed = time.monotonic() - start
-    print(f"fast-path record + check + landing, local fixture: {elapsed:.2f}s")
     assert scope_of(record) == "scope: fx/fastpath: tickets"
     assert not any(line.startswith("check: suite ") for line in record.splitlines())
     assert any(line.startswith("duration: ") for line in record.splitlines())
@@ -257,3 +256,62 @@ def test_a_red_suite_reruns_only_its_failing_tests_once(tmp_path, reproduces):
         assert "flaky: 1 tests/test_x.py::test_flake" in note
         assert Path(f"{marker}.rerun").read_text().split() == ["tests/test_x.py::test_flake"]
         assert fastpath(work).returncode == 0
+
+
+def test_a_verdict_stamped_in_the_future_keeps_the_fast_path_closed(repo):
+    verify(repo)
+    earlier = {**child_env(), "MERGE_GATE_NOW": str(int(time.time()) - 3600)}
+    probe = fastpath(repo, env=earlier)
+    assert probe.returncode == 1 and "future" in probe.stdout, probe.stdout
+
+
+def test_a_fast_path_record_not_written_on_an_open_path_is_refused(repo):
+    verify(repo)
+    git(repo, "fetch", "-q", "origin")
+    git(repo, "switch", "-q", "--detach", "origin/main")
+    (repo / "tickets" / "0002-b.erg").write_text("two\n", encoding="utf-8")
+    git(repo, "add", ".")
+    git(repo, "commit", "-q", "-m", "ticket")
+    head = git(repo, "rev-parse", "HEAD")
+    record = tool(GATE, repo, "run", "--base", "origin/main", "--head", head).stdout
+    assert scope_of(record) == "scope: fx/fastpath: tickets"
+    cand = tool(GATE, repo, "candidate", "--base", "origin/main", "--head", head).stdout.strip()
+    forged = "\n".join(
+        "fastpath: closed: red verdict" if line.startswith("fastpath: ") else line
+        for line in record.splitlines()
+        if not line.startswith(("pass:", "duration:"))
+    )
+    git(repo, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
+    git(repo, "notes", "--ref=refs/notes/gate", "append", "-m", forged, cand)
+    check = tool(GATE, repo, "check", "--no-fetch", "--base", "origin/main", "--head", head)
+    assert check.returncode == 1 and "fast path" in check.stdout, check.stdout + check.stderr
+
+
+def test_a_failing_id_with_a_control_character_still_writes_a_red_verdict(tmp_path):
+    conf = config()
+    conf["checks"][1]["argv"] = ["sh", "-c", "printf 'FAILED tests/a\\001b - boom\\n'; exit 1"]
+    work = make_repo(tmp_path, conf)
+    result = verify(work)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "result: fail" in verdict_note(work)
+
+
+def test_a_culprit_search_that_times_out_keeps_the_red_verdict(repo, monkeypatch, tmp_path):
+    merge(repo, "STATE.md", "1\n2\n3\n4\n5\n", expect=1)  # the full record is red; land it anyway
+    head = git(repo, "rev-parse", "HEAD")
+    git(repo, "push", "-q", "origin", f"{head}:refs/heads/main")
+    git(repo, "fetch", "-q", "origin")
+    for key in [k for k in os.environ if k.startswith("GIT_")]:
+        monkeypatch.delenv(key)
+    monkeypatch.chdir(repo)
+    spec = importlib.util.spec_from_file_location("merge_monitor_under_test", MONITOR)
+    monitor = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(monitor)
+
+    def late(*_args):
+        raise monitor.Timeout("culprit search passed the deadline")
+
+    monkeypatch.setattr(monitor, "culprit", late)
+    assert monitor.verify_tip(head, "origin", tmp_path) == monitor.RED
+    note = verdict_note(repo)
+    assert "result: fail" in note and "culprit: unknown" in note

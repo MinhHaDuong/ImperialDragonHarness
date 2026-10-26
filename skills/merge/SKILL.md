@@ -40,10 +40,11 @@ re-gate.
 `"fastpath"` in `.merge-gate.json`, the record of a bookkeeping merge runs only
 the checks listed there, without the test suite, while the path is open;
 `merge-gate.py fastpath --base origin/<base>` prints the state and why. Open:
-the nearest verdict on main below the base is green, fewer than `max_lag`
-merges below it, and younger than `max_age_minutes`. A red verdict, none
-within reach or an old one closes it; the record then runs the tier's set, as
-before. Verdicts come from the monitor the recipe's last step starts: it runs
+the latest verdict on main at or behind the base is green, the base is fewer
+than `max_lag` merges past it (so main never runs more than `max_lag` merges
+past green), and the verdict is younger than `max_age_minutes`. A red verdict,
+none within reach, an old one or one stamped in the future closes it; the
+record then runs the tier's set, as before. Verdicts come from the monitor the recipe's last step starts: it runs
 every declared check on the new main tip, one run at a time with one tip
 pending (latest wins), re-runs once only the tests that failed (passing there
 records them as flaky, never red), and on a red verdict names the likely

@@ -46,15 +46,15 @@ Fast path (ticket 1226; the policy is skills/merge/SKILL.md § Gating tiers):
 when the base declares `"fastpath": {"checks": [names], "max_lag": K,
 "max_age_minutes": M}`, a bookkeeping candidate's record runs only those
 checks, under the scope `<scope>/fastpath`, while the fast path is open: the
-nearest verdict on main's first-parent line below the base is green, at most
-K-1 merges below it (the candidate makes the K-th), and younger than M
-minutes. A verdict is a note in refs/notes/gate-verdict on a main tip, written
+latest verdict on main's first-parent line at or behind the base is green,
+the base at most K-1 merges past it (the candidate makes the K-th), and the
+verdict younger than M minutes and not stamped in the future. A verdict is a note in refs/notes/gate-verdict on a main tip, written
 by scripts/merge_monitor.py after the full check set ran there; a record of
 another scope on the merge's own candidate is a verdict too (it ran the
 checks the tier demands). A red verdict, none within reach, or an old one
 closes the path; the record then runs the tier set, as before. Openness is
 judged when the record is written and stated in it; `check` accepts a
-fast-path record of a bookkeeping candidate. `fastpath` prints the state.
+fast-path record of a bookkeeping candidate that states the path open. `fastpath` prints the state.
 
 Exit codes of `check`: 0 pass, 1 fail or stale scope, 2 no record, 3 error.
 `enabled`: 0 on, 1 off, 3 error. `tier`: 0 bookkeeping (or, with --since,
@@ -94,6 +94,7 @@ VERDICT_FIELDS = ("result", "time", "host", "revision", "scope")
 VERDICT_EXTRAS = ("failed-first-run", "flaky", "culprit")
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 NOT_STATED = "not-stated"
+CLOCK_SKEW = 300  # seconds a verdict may sit ahead of this host's clock
 PASS, FAIL, MISSING, ERROR = 0, 1, 2, 3
 # Bookkeeping paths, the one home of the list (ticket 1221). A pattern ending
 # in "/" covers its whole subtree; any other matches segment by segment, so
@@ -166,7 +167,7 @@ def sanitize(text):
     return "".join(" " if c in LINE_BREAKERS else c for c in text).strip()
 
 
-def parse_note(text, header=HEADER, keys=FIELDS):
+def parse_note(text, header=HEADER, keys=(*FIELDS, FASTPATH)):
     """Entries in note order; lines outside an entry, or unknown keys, are ignored.
 
     Lines end at \n only: the writer refuses every other line boundary, and a
@@ -213,6 +214,8 @@ def decide(entries, candidate, scopes):
         return FAIL, f"fail: latest record scope '{latest['scope']}' is not the declared scope '{declared}'"
     if latest["result"] != "pass":
         return FAIL, f"fail: latest record says {latest['result']} ({latest['time']}, {latest['host']})"
+    if latest["scope"].partition(": ")[0].endswith(f"/{FASTPATH}") and not latest.get(FASTPATH, "").startswith("open"):
+        return FAIL, "fail: latest record ran the fast-path checks but does not state the fast path open"
     return PASS, f"pass: {latest['time']} on {latest['host']} by {latest['actor']}"
 
 
@@ -353,9 +356,11 @@ def fastpath_state(config, base):
         if result != "pass":
             return False, f"closed: red {source} ({stamp})"
         age = stamp_age(stamp)
+        if age is not None and age < -CLOCK_SKEW:
+            return False, f"closed: last green {source} is stamped in the future ({stamp})"
         if age is None or age > bound:
             return False, f"closed: last green {source} is older than {declared['max_age_minutes']:g} min ({stamp})"
-        return True, f"open: {lag + 1} of {limit} merges past green ({source}, {age / 60:.0f} min old)"
+        return True, f"open: {lag + 1} of {limit} merges past green ({source}, {max(age, 0) / 60:.0f} min old)"
     return False, f"closed: no verdict on the last {len(walked)} commits of main (limit {limit}); unverified"
 
 
