@@ -350,7 +350,7 @@ def test_coder_profile_conversions():
 
 
 def test_hunt_detach_profile_carries_skill_and_agent_tools():
-    """The executor hunt's Route step detaches must be able to run the hunt flow.
+    """The executor hunt's Detach step launches must be able to run the hunt flow.
 
     Its first action is ``Skill(skill: "hunt", ...)`` and the flow launches
     reviewers and panel seats; a profile without Skill and Agent stops at

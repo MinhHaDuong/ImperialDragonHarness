@@ -75,7 +75,7 @@ inherits that asymmetry screens nothing while looking correct.
 
 Such a ticket is not lost. Name it in the wrap-up briefing with the decisions
 it is waiting on, and count that as a success outcome — the same standing hunt's
-Route step gives a returned batched decision list.
+Triage step gives a decision escalated to the author.
 
 **Carve-out: an explicit `/raid <id>` runs.** The exclusion governs target
 *discovery* (the "all open" path), never a ticket named by ID. A named ticket
@@ -235,7 +235,7 @@ The execute-agent contract's FIRST action is mechanical. The agent invokes the
 hunt skill with the ticket ID:
 
 ```
-Skill(skill: "hunt", args: "<id>")
+Skill(skill: "hunt", args: "<id> inline")
 ```
 
 It then follows the contract the skill loader returns. The agent prompt must NOT
