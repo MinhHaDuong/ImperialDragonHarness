@@ -185,7 +185,8 @@ run it only when the diff grew materially since the head the last pass names
 (new files or mechanisms), or when that head is no longer an ancestor (a
 rebase); otherwise log `simplify: skipped (no material growth)`.
 
-**Prose-skip:** when the diff routed prose (the same
+**Prose-skip** (the default brief; a caller brief cannot name `simplify` on
+prose, `gaze_brief.py` refuses it): when the diff routed prose (the same
 `"$IDH_ROOT/scripts/prose_predicate.py"` verdict the phase 2–4 panel choice used), skip
 this phase and log `simplify: skipped (prose workpackage)` in the telemetry
 phase line: the prose panel already judges cuts, and a manuscript change
@@ -196,9 +197,10 @@ check passes), launch the reviewer.
 Launch a separate reviewer through the active runtime (model chosen per launch
 from the `route` skill), using the phase artifact and bounded-wait contract
 above. Give it the explicit PR number, review tree, base ref, anchor HEAD and
-changed-file roster. It runs the review-anchor check before and after
-examining `git -C <review-tree> diff origin/<base>...HEAD` and the relevant
-surrounding code or instructions, and it edits nothing. It looks for:
+the brief's scope. It runs the review-anchor check before and after
+examining the scope's diff (`git -C <review-tree> diff origin/<base>...HEAD
+-- <scope files>`, or `git -C <review-tree> diff A B` on a range scope) and
+the relevant surrounding code or instructions, and it edits nothing. It looks for:
 
 - unnecessary complexity, duplication, existing mechanisms to reuse, and safe
   simplifications that preserve behavior and ticket intent;
@@ -224,7 +226,8 @@ neither judges that resolution nor carries earlier findings forward.
 ### External reviewer panel (optional, beside phases 2–4)
 
 External, decorrelated review is optional evidence routed by the active
-runtime. When useful or requested, describe the expertise, capability and
+runtime. A caller brief decides it (`external: yes|no`); under the default
+brief it runs when useful. When it runs, describe the expertise, capability and
 independence needs through `skills/reviewers/SKILL.md` and read its live-route
 reference. The runtime discovers available reviewers and chooses an appropriate
 route; no fixed roster, provider or gateway is required. The internal battery
@@ -251,7 +254,9 @@ returned finding.
 
 **Panel integrity.** No suitable reviewer, a timeout or a failed route is a
 visible limitation. WARN and continue the required internal battery;
-optional external review is fail-open. Preserve `SEAT-FAILED:` /
+optional external review is fail-open. A brief that named `external` made it
+required: no report is then a missing perspective (`PANEL-INTEGRITY:
+DEGRADED`), never a WARN. Preserve `SEAT-FAILED:` /
 `SEAT-MISSING:` records and the `PANEL-INTEGRITY:` headline verbatim in the
 `/gaze` comment's panel section. These are coverage records, not findings to
 disposition. Distinguish a completed clean review from absent evidence; an

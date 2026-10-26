@@ -14,16 +14,18 @@ directory: collection assumes launcher and seats share a filesystem.
 1. **Manifest first.** Before launching, write `<panel>/manifest.txt`, one seat
    per line as `perspective<TAB>model<TAB>family<TAB>reason`, and run
    `python3 "$IDH_ROOT/scripts/panel-manifest-check.py" <panel>/manifest.txt --seats <panel_seats>`
-   (drop `--seats` only under the default brief, `panel_seats: auto`);
+   (drop `--seats` only under the default brief, `panel_seats: auto`; under
+   `panel_seats: none` write no manifest and launch no panel);
    a line with an empty model, family or reason fails it, and so does a
    perspective the brief did not ask for or a brief seat the manifest lacks. Collection checks
    against this roster: without it, "no more reports are arriving" cannot be
    told from "none were ever launched".
 2. **Launch.** Every code seat is the code-reviewer profile
    (`agents/code-reviewer.md`, contract `profiles/code-reviewer/PROFILE.md`).
-   The perspective, the anchor HEAD, the changed-file roster, the ticket's exit
-   criteria and the exact `<panel>/<perspective>.md` path ride in the launch
-   prompt; the seat's rails (read-only, `git -C`, artifact protocol, report
+   The perspective, the anchor HEAD, the brief's scope (its `scope_file:`
+   lines, and on a range scope the `git diff A B` to read instead of the
+   whole PR's), the ticket's exit criteria and the exact
+   `<panel>/<perspective>.md` path ride in the launch prompt; the seat's rails (read-only, `git -C`, artifact protocol, report
    format) are the contract's and are not restated here.
 3. **Artifacts.** Each seat writes `<panel>/<perspective>.md.part`, then renames
    it to `<panel>/<perspective>.md`. The rename is the completion signal.

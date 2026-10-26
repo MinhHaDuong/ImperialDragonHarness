@@ -27,7 +27,7 @@ diff included), 3 could not read (treat as full).
 
 | Tier | Gating |
 |------|--------|
-| bookkeeping | Mechanical checks: on a gated base, the record; on an ungated base, the repo's CI. No `/verify-gate`. No `/gaze` by default; the orchestrator may override that in a brief when a bookkeeping path steers later sessions, `memory/MEMORY.md` for one (`skills/route/references/decorrelation.md` § Sizing a gaze brief), and fixes its findings before merging. The tier decides which checks the record runs, never whether review is forced. |
+| bookkeeping | Mechanical checks: on a gated base, the record; on an ungated base, the repo's CI. No `/verify-gate`. No `/gaze` by default; the orchestrator may override that in a brief when a bookkeeping path steers later sessions, `memory/MEMORY.md` for one (`skills/route/references/decorrelation.md` § Sizing a gaze brief), and fixes its findings before merging; the same holds for a bookkeeping commit added after approval. The tier decides which checks the record runs, never whether review is forced. |
 | full | `/gaze`, then `/verify-gate` APPROVED; on a gated base, the full record. |
 
 **A commit added after approval is gated by the tier of its own diff:**

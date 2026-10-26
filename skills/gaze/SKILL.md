@@ -106,45 +106,58 @@ fi
 
 Then follow `references/setup-and-breaker.md`: collection, the anchor check and the close-claim preflight.
 
+<!-- inline: references/setup-and-breaker.md -->
+
 ### The brief
 
 The caller decides how much review the change gets; gaze runs that decision.
 The brief names the perspectives (seats) and the scope:
-`seats=<a,b|none>; scope=<all|A..B|paths:p,q>; why=<text>`. Seat names are
-the code perspectives (`correctness`, `consistency`, `scope`, `red-team`,
-`doc-propagation`), the prose seats (`referee`, `venue-expert`, `ai-tells`,
-`editorial-brief`), `simplify` (phase 5) and `external` (the optional
-external panel); `seats=none` runs mechanical adherence only. Adherence
-(Agent A) runs on every brief. How to size a brief is the orchestrator's
-judgement, guided in one place: `skills/route/references/decorrelation.md`
-§ Sizing a gaze brief.
+`seats=<a,b|none>; scope=<all|A..B|paths:p,q>; why=<text>`, `why` last (it
+may hold `;`). Seat names are the code perspectives (`correctness`,
+`consistency`, `scope`, `red-team`, `doc-propagation`) with `simplify`
+(phase 5) and `external` (the optional external panel), or the prose seats
+(`referee`, `venue-expert`, `ai-tells`, `editorial-brief`); `seats=none`
+runs mechanical adherence only. Adherence (Agent A) runs on every brief. How
+to size a brief is the orchestrator's judgement, guided in one place:
+`skills/route/references/decorrelation.md` § Sizing a gaze brief.
 
-Resolve it in the review worktree before launching anything:
+Route the panel first (`prose_predicate.py`, § 2–5 Route first), then
+resolve the brief in the review worktree before launching anything, the
+brief passed through a quoted heredoc so a quote inside it cannot break the
+command:
 
 ```bash
-cd "$review_tree" && python3 "$IDH_ROOT/scripts/gaze_brief.py" resolve --brief '<brief, empty when none>' --base origin/<base> --head HEAD
+BRIEF=$(cat <<'BRIEF_END'
+<brief, empty when none>
+BRIEF_END
+)
+cd "$review_tree" && python3 "$IDH_ROOT/scripts/gaze_brief.py" resolve --brief "$BRIEF" --panel <code|prose> --base origin/<base> --head HEAD
 ```
 
-- **Exit 2: refused.** An unknown seat, a key gaze does not know, a range or
+- **Exit 2: refused.** An unknown key, a duplicate key or seat, a seat the
+  routed panel does not have (`simplify` and `external` on prose included),
+  `editorial-brief` without its file, `seats=auto` from a caller, a range or
   path outside the diff: gaze launches nothing, cleans up and returns
   ESCALATE with the printed `brief: refused — <reason>` line in the result
   comment. It never widens or narrows a brief to make it fit.
 - **Exit 0: run exactly that.** `panel_seats:` is the panel roster: the
   manifest lists those perspectives and no other, checked by
   `panel-manifest-check.py <manifest> --seats <panel_seats>` (§ 2–5);
-  `none` launches no panel. `simplify: yes|no` decides phase 5. Every panel
-  seat and simplify reviews only `scope_files:`, and on a range scope only
-  the diff of that range; Agent A, being mechanical, checks the whole branch.
+  `none` launches no panel and writes no manifest. `simplify: yes|no`
+  decides phase 5 and `external: yes|no` the external panel, which a brief
+  that names it makes required: no report is a missing perspective, not a
+  fail-open WARN. Every panel seat, simplify and an external reviewer read
+  only the `scope_file:` lines, and on a range scope only `git diff A B`;
+  Agent A, being mechanical, checks the whole branch.
 - **No brief: the default brief** (`seats=auto; scope=all`). It exists for a
   caller that sends none, an author running `/gaze <pr>` by hand; gaze then
-  sizes the panel itself by the same guidance (`panel_seats: auto`,
-  `simplify: auto` runs § 5's own rule). An orchestrator (`/raid`, `/hunt`,
-  `/merge`) sends a brief.
+  sizes the panel itself by the same guidance and keeps the standing rules
+  (`auto` everywhere: § 5's own simplify rule, the external panel when
+  useful, the prose panel's referee and AI-tells auditor). An orchestrator
+  (`/raid`, `/hunt`, `/merge`) sends a brief.
 
 The result comment echoes the brief and what ran against it in one line
 (`references/output.md` § Output shape), so the caller compares the two.
-
-<!-- inline: references/setup-and-breaker.md -->
 
 ### 2–5. Review and simplify
 
@@ -157,11 +170,13 @@ model family, and why (§ Output shape); independence is defined in
 `skills/route/references/decorrelation.md`.
 
 **Review groups.** No file count stops a review. When the diff is large, the
-orchestrator partitions it into review groups, by directory or concern, of
-about 400 changed lines or fewer each, and assigns seats per group; a small
-diff is one group. The result lists the groups and which seat read which
-(`review_groups:`). A group no seat read makes the result FINDINGS, never
-REVIEWED, and the result names the unread group.
+orchestrator partitions the brief's scope (its `scope_file:` lines) into
+review groups, by directory or concern, of about 400 changed lines or fewer
+each, and assigns seats per group; a small scope is one group, and
+`seats=none` has none. Files outside the scope form no group. The result
+lists the groups and which seat read which (`review_groups:`). A group no
+seat read makes the result FINDINGS, never REVIEWED, and the result names the
+unread group.
 
 <!-- inline: references/battery.md -->
 
@@ -203,7 +218,7 @@ multi_ticket: <distinct close-claim IDs> | none
   optional external reviewer is fail-open (§ External reviewer panel) and does
   not count. The `PANEL-INTEGRITY:` line is carried verbatim in the result comment.
 - **One retry.** A perspective with no report at the bounded deadline is re-run
-  once, alone, over the whole PR, through the panel's ordinary launch
+  once, alone, over the brief's scope, through the panel's ordinary launch
   (`references/panel.md`), before synthesis and posting, so the round does not
   advance. The panel is DEGRADED, hence ESCALATE, only if that retry also has
   no report.

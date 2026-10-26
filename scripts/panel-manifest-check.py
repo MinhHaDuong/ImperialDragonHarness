@@ -7,7 +7,8 @@ choice was not made, which is the failure the manifest exists to expose.
 
 With `--seats a,b` (the `panel_seats:` line of `gaze_brief.py resolve`), the
 manifest must list exactly those perspectives: gaze adds no seat to the
-caller's brief and drops none (ticket 1225).
+caller's brief and drops none (ticket 1225). `--seats none` passes only an
+empty manifest: the brief asked for no panel.
 """
 
 import re
@@ -63,9 +64,12 @@ def main(argv: list[str]) -> int:
     except (OSError, UnicodeDecodeError) as error:
         print(f"PANEL-MANIFEST: cannot read {argv[1]}: {error}", file=sys.stderr)
         return 1
-    problems = check(text)
-    if seats is not None:
-        problems += against_brief(text, seats)
+    if seats == "none":
+        problems = against_brief(text, "")
+    else:
+        problems = check(text)
+        if seats is not None:
+            problems += against_brief(text, seats)
     for problem in problems:
         print(f"PANEL-MANIFEST: {problem}", file=sys.stderr)
     return 1 if problems else 0

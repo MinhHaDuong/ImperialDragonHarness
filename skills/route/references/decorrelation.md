@@ -28,11 +28,8 @@ The orchestrator picks the row. When unsure, take the lighter one.
 This section is the one home for how much review a merge request gets. The
 orchestrator (`/raid`, `/hunt`, `/merge`, or the author) writes the `/gaze`
 brief (`skills/gaze/SKILL.md` § The brief); gaze runs it and does not resize
-it. It is judgement, not a floor or a category: the orchestrator knows the
-diff, the risk, what was already reviewed and what changed since, and the
-brief is where it says so. Two earlier attempts failed in opposite ways, a
-hunt-owned plan with a risk floor (tracker 1100) and a "no floor" rule that
-left the choice inside gaze (ticket 1176).
+it, except under the default brief it keeps for a caller that sends none. It
+is judgement, not a floor or a category (ticket 1225 records why).
 
 Size from four facts: what the diff touches, how hard a wrong approve is to
 detect or undo (the table above), what an earlier round already read, and
@@ -43,7 +40,7 @@ Worked cases:
 |---|---|---|
 | One-paragraph prose deletion the author already agreed to | `seats=consistency; scope=all` | One seat checks that nothing points at the cut text; a five-seat panel (PR 1667) spent ten minutes on agreed text. |
 | Rebase or merge of main only, nothing of the branch's own changed | No new gaze: the earlier result stands when the tip adds only a bookkeeping delta (`skills/merge/SKILL.md` § Gating tiers); if the merge resolved a conflict, `seats=correctness; scope=paths:<conflicted files>` | The branch's diff was read; only the resolution is new. |
-| Fix of listed findings | `seats=<the seats that raised them>; scope=<previous reviewed head>..HEAD` | The seats that found the defects check the fix, on the fix only; a fresh full panel re-reads what passed. |
+| Fix of listed findings | `seats=<the seats that raised them>; scope=paths:<files the fix touched>`; `scope=<previous reviewed head>..HEAD` only when no rebase or merge of main came between (gaze refuses a range below the merge-base) | The seats that found the defects check the fix, on the fix only; a fresh full panel re-reads what passed. |
 | Large multi-file change (PR 1677: 7 files, about 200 lines, took four full panels) | Round 1: `seats=correctness,consistency,scope,simplify; scope=all`, plus `red-team` from another family on the high-risk row; later rounds: the fix case | Width once, then narrow: each later round reads only what moved. |
 | Edit of `memory/MEMORY.md` or `memory/topics/` | Run gaze, although the tier is bookkeeping, with `seats=none` (one adherence seat) by default; widen to `consistency` when the entry changes guidance sessions act on | Every session reads these files as guidance (ticket 1223); the tier keeps them bookkeeping for the record's checks, and the brief, not the tier, buys review when needed. |
 

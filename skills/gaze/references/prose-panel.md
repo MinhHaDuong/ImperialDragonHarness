@@ -10,8 +10,10 @@ prose-reviewer profile (`agents/prose-reviewer.md`, contract
 holds (`prose_predicate.py --axes`, § 2–4), the anchor HEAD, the changed-file
 roster and its `<panel>/<reviewer>.md` path ride in the launch prompt. First
 name the manuscript files (the predicate's `prose` verdict) and the target
-venue, then recruit for that venue and the scope of the change: always an
-adversarial referee, a venue expert when the project has venue rules. The
+venue. A caller brief names the prose seats and gaze recruits exactly those;
+under the default brief, recruit for that venue and the scope of the change:
+always an adversarial referee, a venue expert when the project has venue
+rules. The
 manifest lists one line per reviewer, its role in the perspective field.
 Seats with relevant expertise use the tools available to them (literature search, installed linters).
 
@@ -21,8 +23,9 @@ Seats with relevant expertise use the tools available to them (literature search
   text and reports every hit with line, context and severity; it has no other
   role, it is a lint pass. Revised passages are new surface for it, so a
   repeat run includes it too.
-- **Editorial-brief auditor, when `docs/editorial-brief.md` exists.** Skip it
-  silently otherwise. The skill owns the schema, projects own the content: one
+- **Editorial-brief auditor, when `docs/editorial-brief.md` exists.** Under
+  the default brief, skip it silently otherwise; a caller brief naming it
+  without the file is refused. The skill owns the schema, projects own the content: one
   standing decision per entry, with a title, **Decision:** (one sentence),
   **Rationale:** (one or two) and **Ticket:**. The seat reads the brief and the
   manuscript diff and returns a table, carried verbatim into the synthesis;
