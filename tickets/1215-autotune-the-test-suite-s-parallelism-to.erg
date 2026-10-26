@@ -31,7 +31,7 @@ Makefile (and CI, if it can read it) share. The rule is chosen from measurements
 
 ## Exit criteria
 
-- [ ] (padme done; doudou: one real trial, rest by a padme stand-in, see Measurements) Measured wall-clock of the full gate at several `-n` values on padme (32 cores) and doudou (4 cores), three trials each, recorded in the ticket
+- [x] Measured wall-clock of the full gate at several `-n` values on padme (32 cores) and doudou (4 cores), three trials each, recorded in the ticket
 - [x] A rule that picks `-n` from the host, with the override and the serial fall-back, and a test that pins the rule
 - [x] The worker-safety audit of ticket 1011 extended to the highest `-n` the rule can pick
 - [x] Makefile and pyproject comments point to the one rule instead of stating numbers
@@ -60,21 +60,38 @@ Because the sweep is non-monotonic, a second sweep interleaved 8, 16, 24 over fi
 16 = 34.3 s, 24 = 25.5 s. The 24 advantage (about 9 s, 27 %) reproduced; 32 and 64 were slower than 24 in the first sweep.
 The cause of the dip at 24 is not established (scheduling of the three shell monoliths is a candidate).
 
-4-core stand-in (derived, not doudou): padme pinned with `taskset -c 0-3,32-35` (4 cores, 8 threads, but Zen 2 cores,
+4-core stand-in on padme (derived, kept for comparison with doudou's real figures): padme pinned with `taskset -c 0-3,32-35` (4 cores, 8 threads, but Zen 2 cores,
 faster than doudou's i5-8250U): -n 2 = 84.7, -n 4 = 51.4, -n 8 = 45.3, -n 12 = 49.3.
 SMT threads paid (-n 8 beats -n 4 by 12 %), oversubscription past the thread count did not.
 
-doudou (i5-8250U, 4 cores, 8 threads), real: one trial at -n 4 = 94.5 s (load 4.1; 2037 passed, 90 skipped, the skips
-are host-dependent). The remaining trials were started, then the host dropped off the network (no route on port 22)
-and was not reachable again in this session; the doudou sweep is the one open item of the first exit criterion.
+doudou (i5-8250U, 4 cores, 8 threads, 8 CPUs; measured by SSH from padme, nothing else started by us;
+load average 1 to 9, rising with -n because the load is the test run itself). Full suite, 2037 passed, 90 skipped (the
+skips are host-dependent), tree f521bd82 (the suite without the new test file). Seconds as reported by pytest:
+
+| -n | trials | mean |
+|---|---|---|
+| serial | 322.5, 300.7, 167.2 | 167.2 (trial 3 only) |
+| 2 | 89.9, 90.2, 90.4 | 90.1 |
+| 3 | 69.7, 73.9, 72.1 | 71.9 |
+| 4 | 94.5, 91.7, 96.6 first run; 67.5, 67.4, 67.7 rerun | 67.5 (rerun) |
+| 6 | 65.5, 66.8, 65.3 | 65.9 |
+| 8 | 67.3, 70.2, 67.6 first run; 68.6, 69.1, 67.8 rerun | 68.4 (all six) |
+| 12 | 66.0, 66.0, 65.5 | 65.8 |
+
+Two blocks are not trusted as means. Serial trials 1 and 2 ran while the host was suspended or throttled (the
+bench's own wall-clock said 2747 s and 2222 s); only trial 3 is a clean serial figure. The first -n 4 block (94 s) ran
+first, with the host cold and at load 4; three rounds of -n 4 and -n 8 interleaved afterwards gave 67.5 and 68.5 s, so
+the 94 s block is an outlier of unestablished cause (the -n 3 run, 72 s, would otherwise be faster than -n 4).
+Result: plateau from -n 4 to 12 (65.8 to 68.4 s, inside the noise); -n 3 costs about 5 s and -n 2 about 25 s.
 
 ## Rule
 
 `scripts/pytest_workers.py`: usable CPUs (affinity-aware logical CPUs), floor 2, cap 24; `IDH_TEST_WORKERS=N` overrides
 (0 = serial); no output (serial) when pytest-xdist is not importable. On padme it picks 24 (best measured), on a
-4-core/8-thread host 8 (best measured in the stand-in), on a 2-core/4-thread CI runner 4 (what CI used; unmeasured).
-Rejected: `-n auto` (64 on padme, 30 % slower than 24), physical cores (32 on padme, 4 on a 4-core: both worse than
-the logical-CPU pick in the data above).
+doudou (4 cores, 8 threads) 8 (68.4 s against a best of 65.8 s at -n 12: one plateau from -n 4 to 12), on a 2-core/4-thread CI runner 4 (what CI used; unmeasured).
+Rejected: `-n auto` (64 on padme, 30 % slower than 24). Physical cores would pick 32 on padme (29.2 s, slower than 24's
+23.4 s) and 4 on doudou (67.5 s, equal to 8's 68.4 s within the noise); the logical-CPU rule is not worse on doudou and
+better on padme. The cap of 24 binds only on padme; doudou, with 8 CPUs, never reaches it.
 
 ## Worker-safety audit extension (to -n 24)
 
