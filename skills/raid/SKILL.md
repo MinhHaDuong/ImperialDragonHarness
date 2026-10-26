@@ -74,8 +74,8 @@ no readable `[labels]` section, fall back to the documented defaults
 inherits that asymmetry screens nothing while looking correct.
 
 Such a ticket is not lost. Name it in the wrap-up briefing with the decisions
-it is waiting on, and count that as a success outcome — the same standing hunt
-step 2b gives a returned batched decision list.
+it is waiting on, and count that as a success outcome — the same standing hunt's
+Triage step gives a decision escalated to the author.
 
 **Carve-out: an explicit `/raid <id>` runs.** The exclusion governs target
 *discovery* (the "all open" path), never a ticket named by ID. A named ticket
@@ -90,9 +90,10 @@ candidates came from `erg ready`, which already applies the skip filter. That
 caller no longer exists, so there is none today — and any future one that synthesizes IDs some other way needs its own
 screen before it reaches this carve-out.
 
-If EVERY discovered ticket is skip-labelled, the run returns those batched
-decision lists rather than an empty-run report. One question round the author
-can answer in a single pass is the deliverable.
+If EVERY discovered ticket is skip-labelled, the run ends with that wrap-up
+briefing (each ticket and the decisions it waits on) rather than an
+empty-run report. One question round the author can answer in a single pass
+is the deliverable.
 
 Apply the monster-ticket checklist (`rules/workflow.md` § Autonomous action) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
 
@@ -227,18 +228,12 @@ rebase WAVE_BASE once and move every wave branch onto it, per
 coordination PR lands, or Wave N merges, re-record WAVE_BASE from the merged
 main tip before the next wave's branches fork.
 
-For each wave, launch agents — each creates and locks its own worktree (hunt step 3) — the **coder
+For each wave, launch agents — each creates and locks its own worktree (`skills/hunt/SKILL.md` § Worktree) — the **coder
 profile** (`agents/coder.md`, whose contract is `profiles/coder/PROFILE.md`;
 the model is chosen per launch from the `route` skill, no frontmatter pin).
 
-The execute-agent contract's FIRST action is mechanical. The agent invokes the
-hunt skill with the ticket ID:
-
-```
-Skill(skill: "hunt", args: "<id>")
-```
-
-It then follows the contract the skill loader returns. The agent prompt must NOT
+The execute-agent contract's FIRST action is mechanical: the agent loads the
+hunt skill with `<id> inline` as its argument. It then follows the contract the skill loader returns. The agent prompt must NOT
 paraphrase, summarize, or inline hunt's steps; the versioned `skills/hunt/SKILL.md`
 is the single live execution contract, and the loader supplies it fresh on every
 run. (A prose paraphrase drifts: the contract then lives in prompt-writing memory

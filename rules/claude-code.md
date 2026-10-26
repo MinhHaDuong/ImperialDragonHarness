@@ -8,7 +8,7 @@ loads the rest of `rules/` and skips this file.
 
 Except for `/hunt N` (below) and manuscript prose
 ([prose/workpackages.md](./prose/workpackages.md)), create the conversation's
-worktree before answering with the plain-git recipe of `/hunt` step 3
+worktree before answering with the plain-git recipe of `skills/hunt/SKILL.md` § Worktree
 (`git worktree add`, `git worktree lock`, `cd`), named from the table below.
 The Bash tool keeps its cwd, so the `cd` moves the session; a restart resets
 it, so paths stay absolute.
@@ -25,11 +25,11 @@ inherit it: review seats cannot reach their review tree.
 | Active feature branch + open MR | `t{N}-{pid}` | `[→ Execute]` |
 | MR review | `review-{N}` | `[→ Verify]` |
 
-`{pid}` is a short session discriminator so two sessions on one ticket land in
-distinct paths: `bash -c 'echo $$'`. Legacy bare `t{N}` names remain valid.
+`{pid}` is `$PPID`, as in hunt's Worktree step, so two sessions on one ticket
+land in distinct paths. Legacy bare `t{N}` names remain valid.
 
-**`/hunt N`: do not create a worktree before the skill runs** — a pre-emptive
-`t{N}-*` worktree makes its ownership check skip the triage.
+**`/hunt N`: do not create a worktree before the skill runs** — its detached
+agent creates its own, orphaning yours.
 
 Open with the phase label heading one self-presentation line, in the
 conversation's language, then answer:

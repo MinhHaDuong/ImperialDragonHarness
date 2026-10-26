@@ -33,7 +33,7 @@ not prove recent progress). The ordinary stall window is 10 minutes since
 the latest of these. During a declared project gate, check the executor's
 worktree with `python3 "$IDH_ROOT/scripts/raid-breaker.py" --worktree <path>
 --last-progress-epoch <epoch> --gate-max-seconds <seconds>` before killing it.
-`/hunt` runs the gate through `raid-gate.py`, whose short-lived heartbeat is
+A gate run through `raid-gate.py` has a short-lived heartbeat
 keyed to this worktree. Another session's gate cannot excuse this executor,
 and a gate in another process namespace is still visible. A heartbeat older
 than 30 seconds is stale, not proof of a live gate. `GATE_RUNNING` suspends the ordinary window;

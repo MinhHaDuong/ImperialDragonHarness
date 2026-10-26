@@ -1,0 +1,43 @@
+%erg 0.1
+Title: Skill references runtime-neutral: plain names instead of /name and Skill(...) across skills and rules
+Created: 2026-10-26
+Author: reviewer
+
+--- log ---
+2026-10-26T20:30Z reviewer created
+
+--- body ---
+## Context
+
+Skills name other skills in Claude Code syntax: `` `/name` `` (145 sites in
+`skills/*/SKILL.md` on 2026-10-26, against 21 "the X skill") and the tool call
+`Skill(skill: "x", args: …)` (one file left, `skills/gaze/references/battery.md`,
+after hunt and raid were rewritten on branch edit-skills-1979616). Codex and Pi
+load the same skill bodies but do not slash-invoke them; `rules/authoring-skills.md`
+asks to name capabilities, not the tool. A Codex model most likely reads
+`/verify-adherence` as a name, so the cost today is ambiguity, not breakage.
+
+## What to do
+
+Rewrite skill references in `skills/` and `rules/` as plain names ("run the
+verify-adherence skill", "load the hunt skill with `<id> inline`"). Keep `/name`
+where the text addresses the author typing a command. Then add a
+`check-agnostic.sh` skill pattern for `Skill(skill` so the tool syntax does not
+come back.
+
+## Relevant files
+
+- `skills/*/SKILL.md`, `skills/*/references/*.md`, `rules/*.md`
+- `scripts/check-agnostic.sh`
+- `rules/authoring-skills.md` (state the convention in one line)
+
+## Test
+
+`check-agnostic.sh` fails on a fixture skill containing `Skill(skill:` and passes
+on the rewritten tree.
+
+## Exit criteria
+
+- No `Skill(skill` in `skills/` or `rules/`; `check-agnostic.sh` flags it.
+- Model-facing skill references use plain names; any `/name` left addresses the author.
+- `rules/authoring-skills.md` states the convention.

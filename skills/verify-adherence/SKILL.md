@@ -69,11 +69,6 @@ earlier blocking failure must stop later review work.
 
 ## Phases
 
-**Label skip.** When called from `/gaze`, if the PR carries the
-`verify:adherence-passed` label (set by `/hunt`'s pre-PR
-gate), the caller skips this entire skill — the adherence check
-already ran clean before the PR was opened.
-
 ### 1.0 Cheap static checks (always first, budget <10 s)
 
 Runs before the project command. Reference resolution is **blocking**;

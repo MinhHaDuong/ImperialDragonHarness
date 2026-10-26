@@ -2,8 +2,8 @@
 
 Child of tracker 0266 (pillage manifest, technique 1). The path-access scan
 (scripts/trace-path-scan.py) is a mechanical verify-adherence phase; its
-SKILL.md wiring must not drift into a paraphrase the way raid Phase 5 and hunt
-step 11 once did. Text-grep only → fast tier, no marker.
+SKILL.md wiring must not drift into a paraphrase the way raid Phase 5 and hunt's
+Review step once did. Text-grep only → fast tier, no marker.
 """
 
 from pathlib import Path

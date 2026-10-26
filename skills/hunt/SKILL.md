@@ -2,7 +2,7 @@
 metadata:
   category: build
 name: hunt
-description: "Begin work on a ticket — creates a worktree and writes the first test."
+description: "Work a ticket — creates a worktree, TDD code, open merge request, review and fix."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<ticket-id> [inline]"
@@ -12,148 +12,81 @@ argument-hint: "<ticket-id> [inline]"
 
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
-`[Plan → Execute]`
-
 ## Steps
 
-1. Read the ticket (from git-erg `tickets/` directory or forge).
-2. Check the **Exit criteria** section. If unclear, ask the author before writing code.
-   - If all exit criteria are **already met** (verify by inspection/grep before writing any code),
-     close the ticket through the **normal branch + PR flow** — never commit the close on `main`.
-     Enter the worktree (step 3) and create the branch (step 4) first, then on that branch run
-     `${ERG:-tickets/erg} close $ARGUMENTS already-done`, commit the ticket file
-     (`git add -u tickets/ && git commit -m "ticket($ARGUMENTS): close — already-done"`
-     — `-u` stages the close edit and any dependent Blocked-by removals, never a
-     stray file in the shared `tickets/`), and open the
-     merge request (step 10). Skip the test/implement steps (5–9); the merge request lands the close
-     via review like any other change. Do not stop with an uncommitted-to-`main` or unpushed close.
-2b. **Route before you execute.** This triage runs once, at hunt entry, before any
-   code is written. Step 2's already-met fast path never reaches it, and needs no
-   triage: it executes nothing, it only lands a close through the normal PR flow.
-   Of the hunts that do arrive here, three skip it entirely and proceed straight to step 3:
-   an executor already running detached, identified by step 3's worktree ownership
-   check (that check is the sole discriminator — do not restate its conditions
-   here); a hunt the author invoked with an explicit `inline` argument, which
-   keeps the co-working behaviour in the author's own session — arguments are
-   `<ticket-id>` optionally followed by `inline`, so the ticket id is the
-   leading token of `$ARGUMENTS` and is what every `t$ARGUMENTS` worktree name
-   and `${ERG:-tickets/erg} close $ARGUMENTS` substitution in this file refers
-   to; and a headless run
-   (`claude -p "/hunt <id>"`), which is already the detached case an orchestrator
-   asked for. Only a hunt in the author's live interactive session reaches the
-   fork below.
-   Each skip is total, the needs-human branch included: an executor spawned by an
-   interactive hunt was triaged by that hunt before it was spawned, so re-reading
-   the tells buys nothing. A raid, though, picks its own targets and no
-   interactive hunt precedes them. `erg ready` already skip-lists the label
-   (`tickets/.ergrc`), and raid Phase 1 screens its own targets;
-   neither is a second triage here.
-   - **Needs-human triage.** Read the ticket for these tells, mostly mechanical: a
-     `Label: needs-human` header; exit criteria carrying decision verbs (decide,
-     arbitrate, sign-off, choose among); manuscript prose as the deliverable, where
-     rules/prose/workpackages.md routes an autonomous change through a PR; a
-     premise resting on conflicting sources. On a hit, do not execute and write no
-     code. Return ONE batched decision list to the author, each item with a
-     recommended default, and end the turn. That return is a success outcome of the
-     hunt, not a failure, exactly as the raid drift guard treats a premise objection.
-   - **Detach by default.** No tell hit, and the hunt is running in the author's
-     interactive session: hand the ticket to ONE background agent, which creates
-     its own worktree in step 3. Not a raid — for a single ticket its orchestrator and review panels
-     cost more than the ticket returns. Launch it with the coder profile (`agents/coder.md`; choose the model per launch from the
-     `route` skill, there is no frontmatter pin). The agent's FIRST action is mechanical:
-     ```
-     Skill(skill: "hunt", args: "$ARGUMENTS")
-     ```
-     The launch prompt must NOT paraphrase, summarize, or inline hunt's steps;
-     `skills/hunt/SKILL.md` is the single live execution contract and the loader
-     supplies it fresh on every run (mirrors raid Phase 5). Instruct the agent to
-     push its branch and open a merge request as hunt's flow dictates. Then report
-     the handoff. Block on the runner with bounded `agent.wait` slices when the
-     author is hands-off or the runtime's notifications cannot wake the parent
-     turn; a client interrupt cancels the watch, not the runner — re-attach and
-     wait again. Otherwise end the turn and say a prompt retrieves the result:
-     the interactive session stays at decision altitude instead of accumulating
-     the executor's test dumps, diffs, and review rounds, which measured 5.4x the
-     cost of the same contract run detached.
-3. Work in the ticket's **own** worktree. A worktree is **owned** when you created
-   it for this ticket, or the spawner handed it to you by path with
-   `git status --porcelain` printing nothing. A shared or `explore-*` worktree that
-   may host a live session is **not owned**: a hunt must never rebase, branch, or
-   leave uncommitted files in it (a hunt that inherited an orchestration
-   session's worktree once rebased its branch and stranded in-progress test edits). Otherwise create one with plain git under the primary checkout,
-   `<pid>` from `bash -c 'echo $$'` so parallel sessions get distinct paths:
-   ```bash
-   R=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
-   W=$R/.claude/worktrees/t$ARGUMENTS-<pid>
-   git worktree add "$W" -b t$ARGUMENTS-short-description origin/main
-   python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" register "$W"
-   git worktree lock --reason "hunt t$ARGUMENTS (pid <owner-pid>)" "$W"
-   cd "$W"
-   ```
-   Plain `git` works from any checkout of the repo: every worktree shares one
-   git store. The `cd` keeps a bare command off the primary checkout.
-   If the branch already exists (re-hunt, second session), drop `-b` and name
-   it: `git worktree add "$W" <branch>`. Without `origin/main`, use `main`.
-   `<owner-pid>` is the long-lived runtime process: `echo $PPID` in the Bash tool,
-   whose shell is the runtime's child. Not the `bash -c 'echo $$'` child, which
-   dies at once and would let `worktree-gc` unlock a live tree. If `$PPID`
-   prints 1, the shell runs in a pid namespace (a sandboxed runtime) and the
-   owner is not visible: write the reason without a pid,
-   `hunt t$ARGUMENTS (owner pid not visible)`, never `(pid 1)`, which on the
-   host names init. `/roar` removes the tree when its integration is ready;
-   if the session dies first, `worktree-gc` reclaims either shape once its
-   branch is gone upstream (merged and pruned) and two more things hold.
-   First, the tree holds no work: no modified, untracked or
-   ignored file (review scratch counts), except regenerable caches, the root
-   `.venv/` and `.tmp/`, which has its own guard. Second, its git metadata
-   (HEAD, index, reflog, lock) has not moved for 72 h; three days outlast a
-   weekend pause, and `WORKTREE_GC_OWNERLESS_IDLE_HOURS` overrides the
-   default. The lock is lifted only if the tree is removed.
-   Any other lock without a checkable pid (several `(pid`, past 4194304, a
-   hand-made lock) is never reclaimed. A lock with a real pid marks the tree in use for
-   `worktree-gc` and molt while that pid lives; `worktree-gc` reclaims it once
-   the pid is dead (it parses `(pid N` from the reason). Work only there: absolute
-   paths under it, `git -C <worktree>` for git. Ad hoc orchestrators should not
-   hand-type this contract: spawn the hunt headlessly with `claude -p "/hunt <id>" --model <token>`.
+1. **Detach.** <!-- Fresh subagent to conserve the live session context. -->
+   Arguments are `<ticket-id> [inline]`; `$ID` is the ticket id.
+    - Without `inline`, hand the ticket to one background agent with the coder profile
+   (`agents/coder.md`) whose first action is
+   loading the hunt skill with `$ID inline` as its argument; the prompt holds that and
+   nothing more, since the agent loads the steps itself. Report the handoff and end the turn.
    Choose the model of each launched worker per launch, from the `route` skill grid
    (`skills/route/SKILL.md`); seats that must be independent follow
    `skills/route/references/decorrelation.md` ("The launch line").
-   Use per-command `TMPDIR` settings such as `TMPDIR="$W/.tmp" <command>`;
-   do not export TMPDIR for the session; never session-wide export it. `.tmp/` is ignored through common Git
-   `info/exclude`, remains owned by the worktree, and is never purged separately.
-   Evidence stays outside `.tmp/`; deliverables stay outside `.tmp/` too.
-4. In a handed-over worktree, create or checkout the ticket branch (step 3 already made it otherwise):
-   ```bash
-   git switch -c t$ARGUMENTS-short-description
-   python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" register "$(git rev-parse --show-toplevel)"
-   ```
-   Registration is idempotent; run it after branch setup for both newly
-   created and handed-over worktrees.
-5. Read the files listed in **Relevant files**.
-6. Write the first test from the **Test** section of the ticket.
-7. Run `make check-fast` — confirm the test fails.
-8. Announce `[Plan → Execute]`, then implement until `make check-fast` (or the affected test file alone) passes — that is the loop gate. The project's pre-PR gate runs once immediately before step 10 opens the PR — not per edit.
-   Do not swap a cached or selected result for step 7's failing-test confirmation or for the project's declared gates. A loop gate slow enough to hurt is a symptom to name in the handoff; the author decides whether to call `/pulse`.
-9. Pre-PR self-gate: run `/verify-adherence <branch>` (the branch created in step 4).
-   - Clean → proceed to step 10. Note adherence passed in the merge-request description so `/gaze` can skip the mechanical phase on its next pass (gaze reviews; `/verify-gate` gates).
-   - Blockers → decide per blocker:
-     - Cheap and mechanical (obvious fix, no design judgement) → fix in place, re-run `make check-fast` and `/verify-adherence`, then proceed only once clean. Up to 3 fix-and-recheck cycles; if still not clean after 3 rounds, escalate.
-     - Otherwise → STOP. Do not open the PR. Escalate with the adherence report and the blocker list.
-   - Circuit breaker: if `/verify-adherence` itself errors, times out, or returns an unparseable result → ESCALATE. Do not open the PR and do not silently skip the gate.
-10. Rebase onto `origin/main` (`rules/git.md` § Merging), run the project's declared pre-PR gate once, then push the branch with lease, wait for CI and open a merge request. Run it through `python3 "$IDH_ROOT/scripts/raid-gate.py" -- <gate command>` so a raid can observe a live long-running gate. If the project has `.idh-checks.json`, its gate command is the project's scoped entry point (or `python3 "$IDH_ROOT/scripts/scoped-check.py"` from its root); quote `selected:` and `skipped:` in the PR description. A mapped doc-only diff may run fewer targets; Python code, unmapped paths, or a project without a map run the full `make check`.
-11. Review the merge request, unless its tier is bookkeeping
-    (`skills/merge/SKILL.md` § Gating tiers): a bookkeeping-only request is
-    gated by its mechanical checks alone, so skip 11–13. Otherwise this action
-    is mechanical — invoke the gaze skill with the PR number:
-    ```
-    Skill(skill: "gaze", args: <pr-number>)
-    ```
-    Follow the contract the skill loader returns; do not paraphrase or inline its
-    steps (mirrors raid Phase 5's mechanical `Skill(hunt)` invocation).
-    Each pass through the 11–12 loop is one **review round**; which
-    perspectives run, and how deep, is the reviewer's call
-    (`skills/gaze/SKILL.md` § 2–5). What each gaze result leads to (fix and
-    review again, close and gate, or stop at the author) is the caller's
-    policy in `skills/merge/SKILL.md` § Before merging.
-12. Fix all comments regardless of severity. Per fix cycle, run `make check-fast` plus the tests implicated by the comments — not the full suite. If any cycle's fix touches code outside the fast tier, run the full `make check` once, in addition — not on every cycle.
-13. Repeat 11–12 up to 3 times, i.e. up to round 3. If still not clean, escalate (see workflow rules).
+    - With `inline` (the detached agent, a raid, a headless run, or the author co-working),
+   go on in the current context.
+2. **Read.** Read ticket `$ID` (from git-erg `tickets/` directory or forge).
+3. **Triage.** Check the ticket's **Exit criteria** section.
+   - Judgment needed — criteria unclear, a `Label: needs-human` header, criteria
+     that decide, arbitrate, sign off or choose, manuscript prose as the
+     deliverable, a premise resting on conflicting sources: settle each by
+     `rules/workflow.md` § Escalation protocol (advisor model first) before coding.
+   - Already met: write no code. After Worktree, record the evidence with
+     `${ERG:-tickets/erg} log $ID "already met: <evidence>"`, commit it,
+     and go straight to Merge request; its ticket claim closes the ticket at merge.
+   - Premise expired: check what changed on the ticket's **Relevant files** since its
+     `Created` date (`git log --since=<Created> -- <files>`). If a change voids the
+     premise, write no code and settle it by the same escalation protocol. Confirmed
+     obsolete: log `"obsolete: <commit or change>"` and go to Merge request as for
+     already met. Still valid but worded for an old tree: update the ticket on the
+     branch and continue.
+4. **Worktree.** Work in the ticket's **own** worktree, on its own branch.
+   - **Owned already?** Yes if you created it for this ticket, or the spawner
+     handed it to you by path with `git status --porcelain` printing nothing:
+     there, `W=$(git rev-parse --show-toplevel)` and `git switch -c t$ID-short-description`
+     (or switch to the existing branch). A shared or `explore-*` worktree may host a live session: never
+     rebase, branch, or leave files in it.
+   - **Otherwise create one** under the primary checkout. `P=$PPID`, the
+     long-lived runtime process, names the path and owns the lock. If `$PPID`
+     prints 1 (a sandboxed runtime), use `P=$RANDOM` and the lock reason
+     `hunt t$ID (owner pid not visible)` (details: `references/worktree-lifecycle.md`):
+     ```bash
+     P=$PPID; REASON="hunt t$ID (pid $P)"
+     if [ "$P" = 1 ]; then P=$RANDOM; REASON="hunt t$ID (owner pid not visible)"; fi
+     R=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
+     W=$R/.claude/worktrees/t$ID-$P
+     git worktree add "$W" -b t$ID-short-description origin/main
+     git worktree lock --reason "$REASON" "$W"
+     ```
+     If the branch already exists (re-hunt, second session), drop `-b`:
+     `git worktree add "$W" <branch>`. Without `origin/main`, use `main`.
+   - **Register and enter.** `python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" register "$W"`,
+     then `cd "$W"`. Work only there: absolute paths under it, `git -C "$W"` for git.
+     Scratch files go in `$W/.tmp/`: set `TMPDIR="$W/.tmp"` per command, never for
+     the whole session. Evidence and deliverables stay outside `.tmp/`.
+5. **Relevant files.** Announce `[Plan → Execute]`, then read the files listed in **Relevant files**.
+6. **Test.** Write the tests the ticket's **Test** section asks for. Tag each one
+   like the project's existing tests: its speed tier (Python: `rules/coding-python.md`
+   § Testing) and, in a modular project, its module.
+7. **Fail first.** Run the new tests by name (e.g. `pytest <file>::<test>`); confirm each one runs and fails for the expected reason.
+8. **Implement.** Implement until those tests pass, rerunning them by name as the loop gate.
+9. **Self-gate.** Announce `[Execute → Verify]`, then run the verify-adherence skill on the branch. Fix each mechanical
+   blocker in place and run it again, up to 3 times. Escalate instead of opening the
+   merge request when a blocker needs design judgment, the third run still fails, or
+   the skill errors or returns nothing usable.
+10. **Merge request.**
+    - Rebase onto `origin/main` (`rules/git.md` § Merging).
+    - Run the project's fast test tier once (Python: `make check-fast`,
+      `rules/coding-python.md` § Testing). The scoped gate
+      (`rules/workflow.md` § Check scope) or the full one runs at merge, on
+      the merge candidate.
+    - Push with lease and open the merge request. Its description carries the
+      close claim `**Ticket:** tickets/<ticket file>`. Wait for CI where it runs on the branch.
+11. **Review.** Skip when
+    `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base origin/main --head HEAD`
+    exits 0 (bookkeeping). Otherwise run up to 3 rounds: load the gaze skill with the
+    merge-request number; on findings, fix every comment whatever its severity, rerun
+    the tests the fixes affect by name, then the fast test tier, push, and review again.
+    Escalate when gaze does, or when round 3 still has findings. What each gaze
+    result leads to, a missing or stale `reviewed_head_sha` included, is the
+    caller's policy in `skills/merge/SKILL.md` § Before merging.
