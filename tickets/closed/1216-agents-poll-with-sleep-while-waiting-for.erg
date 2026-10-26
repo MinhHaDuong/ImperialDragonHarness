@@ -2,6 +2,7 @@
 Title: Agents poll with sleep while waiting for background jobs: verify what is in place, then close the gap
 Created: 2026-10-25
 Author: claude
+Closed: autoclosed — PR #1682
 
 --- log ---
 2026-10-25T06:26Z claude created
@@ -11,6 +12,7 @@ Author: claude
 2026-10-26T22:55Z reviewer raid advisor (fable, one-shot, asked by the author) and orchestrator decision: rescoped to non-arena sessions; arena legs are covered by arena rail 390ee03. Barrier A proper: a POSIX sh wrapper for pgrep/pkill in scripts/, projected to ~/.local/bin for claude, codex and pi (one entry in adapters/projections.json), that execs the real tool (never itself) with -A when it reports procps-ng >= 4.0 and passes through unchanged otherwise; no logging, no waitfor binary. Plus a two-line rule in rules/coding-bash.md (Claude Code only; Codex/Pi gap noted here): wait on a job with foreground 'timeout N cmd' or 'timeout N tail --pid=PID -f /dev/null'; portable fallback the bracket idiom pgrep -f '[p]attern'. No guard clause in guard-destructive-bash.sh (guard growth, moot once the primitive is fixed). No false-positive replay needed: no caller wants its own ancestors. Residual limits: /usr/bin/pgrep and ps|grep bypass the wrapper; procps < 4.0 passes through. Headline cost is sleep-polling (arena census 21 % vs 3 % self-match); a bound is accepted instead of hours saved. EC4 (re-measure sleep share) moves to 1217's detectors on harness sessions; arena-leg re-measure is arena work. The wrapper shadows pgrep on the author's interactive PATH: flagged to the author.
 2026-10-26T22:57Z reviewer author exit criterion (2026-10-26, said to the orchestrator): the pgrep/pkill wrapper must be checked on idh install and idh check: projected pgrep/pkill resolve first on PATH to the wrapper, the wrapper reaches the real binary without recursion, and on procps-ng >= 4.0 a positive control shows -A excludes the caller; older procps reports pass-through, not failure.
 2026-10-26T23:00Z reviewer reviewer coder wrapper scripts/self-safe-pgrep.sh projected as ~/.local/bin/{pgrep,pkill} for claude, codex, pi; idh install and idh check probe it (PATH order, no recursion via --version, -A positive control on procps-ng >= 4.0, pass-through note below). Probe lives in validate-projections.py probe_wrapper, called from lifecycle only (not check_entry), so a runtime launch spawns nothing. Rule lines added in rules/coding-bash.md. Codex/Pi get the wrapper but not the rule line.
+2026-10-26T23:14Z reviewer closed — autoclosed — PR #1682
 
 --- body ---
 ## Context
