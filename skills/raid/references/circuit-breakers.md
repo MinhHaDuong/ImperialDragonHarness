@@ -50,7 +50,7 @@ gate from this check. Bump reason: `agent timeout` or `gate timeout`.
 
 To be woken instead of polling, run `python3 "$IDH_ROOT/scripts/raid-breaker.py" --wait --deadline <s>
 --worktree <path> --gate-max-seconds <s>` as a background command: it exits 1 once on `STALL` or `GATE_TIMEOUT`, never kills
-(Claude Code only; decision record in ticket 1214).
+(Claude Code only; decision record in ticket 1214). The window starts at launch.
 
 **Ping-pong detector**: If two agents edit the same file on the
 same branch, STOP. Reset to last known-good commit, relaunch ONE agent.

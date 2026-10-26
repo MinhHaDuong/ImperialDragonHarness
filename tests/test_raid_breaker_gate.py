@@ -152,7 +152,7 @@ def test_snapshot_sees_second_edit_and_survives_git_failure(tmp_path: Path) -> N
 
 
 def test_wait_git_failure_keeps_stall_window(tmp_path, monkeypatch) -> None:
-    sim = Sim(snaps=lambda t: None)
+    sim = Sim(snaps=lambda t: "same" if (t // 10) % 2 else None)
     code, elapsed = sim.run(3600, tmp_path, monkeypatch)
     assert code == 1
     assert 600 < elapsed <= 620
