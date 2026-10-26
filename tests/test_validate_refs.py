@@ -7,6 +7,8 @@ network — and drive the fetch outcomes by monkeypatching `_fetch`.
 """
 
 import importlib.util
+
+import pytest
 import sys
 import types
 from pathlib import Path
@@ -65,41 +67,44 @@ def test_split_entries():
     assert [k for k, _ in entries] == ["key1", "key2"]
 
 
-def test_field_extraction_variants():
-    body = '  doi = {10.1/x},\n  title = "Quoted",\n  year = 2020,\n'
-    assert vr._field(body, "doi") == "10.1/x"
-    assert vr._field(body, "title") == "Quoted"
-    assert vr._field(body, "year") == "2020"
-    assert vr._field(body, "missing") is None
-
-
 def test_build_url_doi_priority():
-    body = "doi = {https://doi.org/10.5/AB},\nurl = {http://example.com},\n"
+    body = {"doi": "https://doi.org/10.5/AB", "url": "http://example.com"}
     url, kind = vr._build_url("k", body)
     assert kind == "doi"
     assert url == "https://doi.org/10.5/AB"
 
 
+@pytest.mark.parametrize("doi", ["https://www.doi.org/10.1/x", "doi.org/10.1/x",
+                                 "DOI:10.1/x", "http://dx.doi.org/10.1/x"])
+def test_build_url_strips_every_doi_prefix(doi):
+    assert vr._build_url("k", {"doi": doi}) == (vr.DOI_BASE + "10.1/x", "doi")
+
+
+def test_split_entries_rejects_bare_type_opening():
+    with pytest.raises(ValueError, match="declared BibTeX entries"):
+        vr._split_entries("@{k, title={T}}")
+
+
 def test_build_url_arxiv_eprint():
-    body = "eprint = {2401.01234},\neprinttype = {arxiv},\n"
+    body = {"eprint": "2401.01234", "eprinttype": "arxiv"}
     url, kind = vr._build_url("k", body)
     assert kind == "arxiv"
     assert url.endswith("2401.01234")
 
 
 def test_build_url_hal_eprint():
-    body = "eprint = {hal-12345},\neprinttype = {hal},\n"
+    body = {"eprint": "hal-12345", "eprinttype": "hal"}
     url, kind = vr._build_url("k", body)
     assert kind == "hal"
 
 
 def test_build_url_url_fallback():
-    body = "url = {https://example.org/p},\n"
+    body = {"url": "https://example.org/p"}
     assert vr._build_url("k", body) == ("https://example.org/p", "url")
 
 
 def test_build_url_none_when_no_identifier():
-    assert vr._build_url("k", "title = {No ids here},\n") == (None, "none")
+    assert vr._build_url("k", {"title": "No ids here"}) == (None, "none")
 
 
 # ── exit-code contract ───────────────────────────────────────────────────────
@@ -160,3 +165,48 @@ def test_error_on_consecutive_connection_failures(tmp_path, monkeypatch):
     monkeypatch.setattr(vr, "_fetch", lambda url: (None, url, True))
     # 3 consecutive connection errors trips the ERROR escalation
     assert vr.main(["validate-refs.py", str(note)]) == 2
+
+
+def test_inline_and_multiline_entries_are_all_checked(tmp_path, monkeypatch, capsys):
+    note = _note(tmp_path, "@article{inline, doi={10.1/x}}\n"
+                 "@book{multi,\n url={https://example.org/y},\n}\n")
+    fetched = []
+    def fetch(url):
+        fetched.append(url)
+        return 200, url, False
+    monkeypatch.setattr(vr, "_fetch", fetch)
+    assert vr.main(["validate-refs.py", str(note)]) == 0
+    assert fetched == ["https://doi.org/10.1/x", "https://example.org/y"]
+    assert "2 entries" in capsys.readouterr().out
+
+
+def test_unread_entry_is_parse_error_before_any_fetch(tmp_path, monkeypatch, capsys):
+    note = _note(tmp_path, "@book{ok, doi={10.1/x}}\n@article{broken, title={unclosed}")
+    monkeypatch.setattr(vr, "_fetch", lambda url: (_ for _ in ()).throw(AssertionError(url)))
+    assert vr.main(["validate-refs.py", str(note)]) == 3
+    assert "could not be parsed" in capsys.readouterr().err
+
+
+def test_biblatex_parentheses_macros_and_nested_fields(tmp_path, monkeypatch):
+    note = _note(tmp_path, '@string{host = "https://example.org/"}\n'
+                 '@online(key, title={A {Nested} Work}, url=host # "paper")')
+    fetched = []
+    monkeypatch.setattr(vr, "_fetch", lambda url: (fetched.append(url) or 200, url, False))
+    assert vr.main(["validate-refs.py", str(note)]) == 0
+    assert fetched == ["https://example.org/paper"]
+
+
+def test_parsed_field_variants():
+    _, fields = vr._split_entries('@book{k, doi={10.1/x}, title="Quoted", year=2020}')[0]
+    assert fields["doi"] == "10.1/x"
+    assert fields["title"] == "Quoted"
+    assert fields["year"] == "2020"
+
+
+def test_http_pass_is_accessibility_only(tmp_path, monkeypatch, capsys):
+    note = _note(tmp_path, "@book{k, url={https://example.org/expected}}")
+    monkeypatch.setattr(vr, "_fetch", lambda url: (200, "https://example.org/other-work", False))
+    assert vr.main(["validate-refs.py", str(note)]) == 0
+    out = capsys.readouterr()
+    assert out.out == "PASS — 1 entries accessible via HTTP\n"
+    assert "other-work" in out.err

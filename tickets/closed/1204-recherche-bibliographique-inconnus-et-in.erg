@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Recherche bibliographique : inconnus et interfaces explicites
+Created: 2026-10-23
+Author: Codex MOE
+Closed: Search uncertainty, capability limits and claim-specific saturation interfaces validated.
+
+--- log ---
+2026-10-23T09:11Z Codex MOE created
+
+2026-10-23T09:26Z Codex note Clarified explicit register/claim scope, targeted discovery versus claim saturation, unresolved candidates versus evidence-backed nonpreemption, blocked-angle coverage and bounded stop outcomes. Corpus search logs -> consultation.csv access/item statuses -> archived reading notes -> precise lacuna claim/report interface; runtime capability discovery and one-slot fallback preserve diverse separate searches and adversarial verification without quotas. Manual cases: inaccessible decisive text stays unresolved; unavailable engine needs justified fallback or angle_blocked; no novelty claim means no saturation verdict; one slot reports missing reviewer independence. 35 existing skill checks and venv catalog drift passed; six touched document link targets checked. Parent owns full gate and Astra/Fable final review.
+2026-10-23T10:00Z Codex MOE note Criteria verified: Search unknown/blocked outcomes and corpus-to-claim handoff validated by Astra/Fable; runtime one-slot limits explicit. Complete union make check2156passed4skipped. Whole-train integration remains1198/1205.
+2026-10-23T10:00Z reviewer closed — Search uncertainty, capability limits and claim-specific saturation interfaces validated.
+
+--- body ---
+## Context
+F6 : risque de confondre source inaccessible et absence d’antériorité ; contrat de saturation pour registre/novelty appelé pour corpus entier ; outils/runtime présumés.
+
+## Exit criteria
+- [x] Inconnu/inaccessible/angle empêché distincts de non-préemption ; aucun verdict de saturation complet sur couverture empêchée.
+- [x] Passage explicite entre cadrage du corpus, consultation.csv, notes de lecture et saturation d’une revendication de lacune.
+- [x] Capacités et parallélisme négociés selon runtime, sans exiger Workflow/ToolSearch ou huit places disponibles.
+- [x] Recherche ciblée de références proches séparée d’une saturation complète ; supprimer les quotas décoratifs sans réduire les exigences de preuves.
+- [x] Conserver diversité linguistique et disciplinaire, critique contradictoire et provenance ; validation des textes par Astra/Fable avec KISS.
+
+## Plan / first check
+Relevant files: skills/biblio-saturation/SKILL.md, skills/critical-lit-review/SKILL.md. Examen de cas : source majeure inaccessible, moteur indisponible, corpus sans nouveauté formulée, exécution à une seule place. Pas de script neuf si une clarification de contrat suffit.
+
+## Review
+KISS obligatoire. Astra et Fable valident les skills finaux ; le MOE conserve identités effectives, révisions et décisions. Aucun exécutant ne fusionne ni ne supprime l’ancien outil de sa propre initiative.

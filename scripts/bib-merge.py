@@ -1,10 +1,16 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "bibtexparser>=1.4,<2",
+# ]
+# ///
 """bib-merge.py — merge BibTeX entries into refs.bib with deduplication.
 
 Usage:
-    python3 bib-merge.py <new-entries-file> <refs.bib>
-    python3 bib-merge.py - <refs.bib>        # read new entries from stdin
-    python3 bib-merge.py <note-file> <refs.bib>  # extracts ```bibtex fence
+    uv run --script bib-merge.py <new-entries-file> <refs.bib>
+    uv run --script bib-merge.py - <refs.bib>        # read new entries from stdin
+    uv run --script bib-merge.py <note-file> <refs.bib>  # extracts ```bibtex fence
 
 The script reads BibTeX entries from <new-entries-file> (or stdin if '-'),
 deduplicates them against <refs.bib>, and appends non-duplicate entries to
@@ -16,7 +22,8 @@ Input auto-detection:
     the whole input is treated as BibTeX.
 
 Deduplication strategy:
-    Primary key:  normalized(first-author-last-name) + year  e.g. "smith2020"
+    First check: normalized DOI across all entries, regardless of author/year.
+    Fallback group: normalized(first-author-last-name) + year (or date year).
     Confirmation:
       - If both entries have DOI → DOI equality (normalized) decides.
         Matching DOI → SKIPPED (duplicate). Differing DOI → different works,
@@ -41,153 +48,52 @@ Exit codes:
     0 — success (even if all entries skipped)
     1 — usage error or refs.bib missing
     2 — input file missing
+    3 — unread or malformed BibTeX (nothing appended)
 """
-
-from __future__ import annotations
 
 import re
 import sys
 import unicodedata
 from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# BibTeX parser (hand-rolled, no external deps)
-# ---------------------------------------------------------------------------
-
-_ENTRY_START = re.compile(r"@(\w+)\s*\{", re.IGNORECASE)
+# Parse with the existing bibtexparser dependency; serialize only new entries.
+import bibtexparser
+from bibtexparser.bibdatabase import BibDatabase, UndefinedString
+from bibtexparser.bparser import BibTexParser
 
 
 def _extract_bibtex_fence(text: str) -> str:
-    """Extract content from ```bibtex fence if present; else return text as-is."""
-    m = re.search(r"```bibtex\s*\n(.*?)```", text, re.DOTALL | re.IGNORECASE)
-    if m:
-        return m.group(1)
-    return text
-
-
-def _balance_scan(text: str, start: int) -> int:
-    """Return index of the closing } that balances the { at text[start].
-
-    start must point at the opening '{'.
-    """
-    depth = 0
-    i = start
-    in_string = False  # inside "..." outer delimiter
-    while i < len(text):
-        ch = text[i]
-        if ch == "{" and not in_string:
-            depth += 1
-        elif ch == "}" and not in_string:
-            depth -= 1
-            if depth == 0:
-                return i
-        elif ch == '"' and depth == 0:
-            # top-level quote toggle (rare but valid)
-            in_string = not in_string
-        i += 1
-    return -1  # unclosed
-
-
-def _parse_field_value(raw: str) -> str:
-    """Strip outer { } or " " delimiters from a field value."""
-    s = raw.strip()
-    if s.startswith("{") and s.endswith("}"):
-        return s[1:-1].strip()
-    if s.startswith('"') and s.endswith('"'):
-        return s[1:-1].strip()
-    return s
-
-
-def _split_top_level_commas(s: str) -> list[str]:
-    """Split s on commas that are not inside braces or quotes."""
-    parts: list[str] = []
-    depth = 0
-    in_quote = False
-    current: list[str] = []
-    i = 0
-    while i < len(s):
-        ch = s[i]
-        if ch == "{" and not in_quote:
-            depth += 1
-            current.append(ch)
-        elif ch == "}" and not in_quote:
-            depth -= 1
-            current.append(ch)
-        elif ch == '"' and depth == 0:
-            in_quote = not in_quote
-            current.append(ch)
-        elif ch == "," and depth == 0 and not in_quote:
-            parts.append("".join(current))
-            current = []
-        else:
-            current.append(ch)
-        i += 1
-    if current:
-        parts.append("".join(current))
-    return parts
-
-
-def _parse_fields(body: str) -> dict[str, str]:
-    """Parse the comma-separated field=value body of a BibTeX entry."""
-    fields: dict[str, str] = {}
-    parts = _split_top_level_commas(body)
-    for part in parts:
-        part = part.strip()
-        if not part:
-            continue
-        eq = part.find("=")
-        if eq == -1:
-            continue
-        name = part[:eq].strip().lower()
-        raw_value = part[eq + 1 :].strip()
-        if not name:
-            continue
-        fields[name] = _parse_field_value(raw_value)
-    return fields
+    """Extract all BibTeX fences if present; otherwise use the entire input."""
+    fences = re.findall(r"```bibtex\s*\n(.*?)```", text, re.DOTALL | re.IGNORECASE)
+    return "\n".join(fences) if fences else text
 
 
 def parse_bibtex(text: str) -> list[dict]:
-    """Parse BibTeX text into a list of entry dicts.
+    """Parse entries or explicitly reject unread input before any append.
 
-    Each dict has: _type, _key, and one key per field.
-    Entries of type @string and @preamble are skipped.
+    The conservative opening-count guard follows zotero._bib_entries: the
+    library otherwise treats malformed entries as comments and drops them.
     """
-    entries: list[dict] = []
-    pos = 0
-    while pos < len(text):
-        m = _ENTRY_START.search(text, pos)
-        if not m:
-            break
-        entry_type = m.group(1).lower()
-        brace_start = m.end() - 1  # points at '{'
-        close = _balance_scan(text, brace_start)
-        if close == -1:
-            # Unclosed entry — skip rest of file
-            break
-        body = text[brace_start + 1 : close]
-        pos = close + 1
-
-        if entry_type in ("string", "preamble", "comment"):
-            continue
-
-        # First token before the first comma is the cite key
-        comma = body.find(",")
-        if comma == -1:
-            # No fields — treat as malformed but record key
-            key = body.strip()
-            entries.append(
-                {"_type": entry_type, "_key": key, "_raw": text[m.start() : close + 1]}
-            )
-            continue
-
-        key = body[:comma].strip()
-        fields_text = body[comma + 1 :]
-        fields = _parse_fields(fields_text)
-        entry = {"_type": entry_type, "_key": key, "_raw": text[m.start() : close + 1]}
-        entry.update(fields)
-        entries.append(entry)
-
-    return entries
+    parser = BibTexParser(common_strings=True, ignore_nonstandard_types=False)
+    try:
+        entries = bibtexparser.loads(text, parser).entries
+    except UndefinedString as exc:
+        raise ValueError(f"undefined @string macro {exc}") from exc
+    # A bare "@{" opening (no type) declares an entry the parser drops silently.
+    declared = sum(1 for m in re.finditer(r"@\s*(\w*)\s*[{(]", text)
+                   if m.group(1).lower() not in {"string", "preamble", "comment"})
+    if declared != len(entries):
+        raise ValueError(f"{declared} declared BibTeX entries; {len(entries)} read — "
+                         "some entries could not be parsed (or ambiguous @type opening)")
+    result = []
+    for entry in entries:
+        database = BibDatabase()
+        database.entries = [entry]
+        result.append({**{k.lower(): v for k, v in entry.items()
+                          if k not in {"ID", "ENTRYTYPE"}},
+                       "_key": entry["ID"], "_type": entry["ENTRYTYPE"],
+                       "_raw": bibtexparser.dumps(database)})
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -195,19 +101,19 @@ def parse_bibtex(text: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
+# Any scheme, optional www./dx. host, or a bare "doi:" label; one pass suffices.
+DOI_PREFIX = re.compile(r"^(?:(?:https?://)?(?:www\.|dx\.)?doi\.org/|doi:\s*)")
+
+
 def _normalize_doi(doi: str) -> str:
     """Lowercase and strip common DOI URL prefixes."""
-    doi = doi.strip().lower()
-    for prefix in ("https://doi.org/", "http://doi.org/", "http://dx.doi.org/", "doi:"):
-        if doi.startswith(prefix):
-            doi = doi[len(prefix) :]
-    return doi
+    return DOI_PREFIX.sub("", doi.strip().lower())
 
 
 def _normalize_name(name: str) -> str:
     """Extract lowercase ASCII first-author last name."""
     # Strip braces and LaTeX accents
-    name = re.sub(r"\{[^}]*\}", "", name)
+    name = re.sub(r"[{}]", "", name)
     name = re.sub(r"\\[a-zA-Z]+\s*", "", name)
     # Take first author (split on ' and ')
     authors = re.split(r"\s+and\s+", name, flags=re.IGNORECASE)
@@ -226,9 +132,9 @@ def _normalize_name(name: str) -> str:
 
 
 def _base_key(entry: dict) -> str:
-    """Compute base dedup key: normalized_author_last + year."""
+    """Compute fallback dedup group using year or the year in a BibLaTeX date."""
     author = entry.get("author", entry.get("editor", ""))
-    year = entry.get("year", "")
+    year = entry.get("year") or entry.get("date", "")
     year = re.sub(r"[^0-9]", "", year)[:4]
     return _normalize_name(author) + year
 
@@ -306,9 +212,13 @@ def merge(
     existing_keys: set[str] = {e["_key"] for e in refs_entries}
     # base_key -> list of existing entries with that base key
     existing_by_base: dict[str, list[dict]] = {}
+    existing_by_doi: dict[str, dict] = {}
     for e in refs_entries:
         bk = _base_key(e)
         existing_by_base.setdefault(bk, []).append(e)
+        doi = _normalize_doi(e.get("doi", ""))
+        if doi:
+            existing_by_doi.setdefault(doi, e)
 
     report: list[str] = []
     to_append: list[str] = []
@@ -327,8 +237,9 @@ def merge(
         candidates = existing_by_base.get(bk, [])
 
         # Check for duplicate among base-key candidates
-        dup_match = None
-        for cand in candidates:
+        doi = _normalize_doi(entry.get("doi", ""))
+        dup_match = existing_by_doi.get(doi) if doi else None
+        for cand in candidates if dup_match is None else []:
             if _is_duplicate(entry, cand):
                 dup_match = cand
                 break
@@ -357,7 +268,10 @@ def merge(
             renamed = final_key != key
 
         existing_keys.add(final_key)
-        existing_by_base.setdefault(bk, []).append(entry)
+        indexed_entry = {**entry, "_key": final_key}
+        existing_by_base.setdefault(bk, []).append(indexed_entry)
+        if doi:
+            existing_by_doi.setdefault(doi, indexed_entry)
 
         # Rewrite key in raw text if renamed
         raw = entry["_raw"]
@@ -428,8 +342,12 @@ def main(argv: list[str]) -> int:
     # Auto-detect and extract ```bibtex fence if present
     bibtex_new = _extract_bibtex_fence(raw_new)
 
-    new_entries = parse_bibtex(bibtex_new)
-    refs_entries = parse_bibtex(refs_path.read_text())
+    try:
+        new_entries = parse_bibtex(bibtex_new)
+        refs_entries = parse_bibtex(refs_path.read_text())
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 3
 
     report = merge(new_entries, refs_entries, refs_path, dry_run=dry_run)
     # Update source label in first report line

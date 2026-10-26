@@ -10,124 +10,144 @@ argument-hint: 'register file path + novelty claim location, e.g. "conception/re
 
 # Bibliographic saturation pass
 
-Replace a human librarian pass with a multi-agent sweep that is *auditable*:
-every verdict cites a source that an agent actually resolved online, every
-candidate preemption survives an adversarial judge, and the sweep only stops
-when new angles stop producing new candidates.
+An auditable search of an explicit factual register or novelty claim.
+Every conclusion rests on consulted evidence; every serious prior-art candidate
+faces adversarial judgment. Saturation is bounded by the claim, search scope
+and cutoff, never proof that no prior work exists anywhere.
 
-Two workloads, run in one Workflow invocation:
+## Inputs and scope
 
-1. **Factual register lines** — attributions, exact statements, publication
-   venues. Cheap to verify, expensive to get wrong in print.
-2. **A novelty claim** — usually negative ("no prior work states X"), the kind
-   of claim that carries a paper and that search bias systematically
-   under-tests. This is the part that needs saturation, not spot checks.
+Accept either or both, and run only the supplied workload:
 
-## Inputs
+- **Factual register**: numbered claims, criticality, and existing statuses
+  `à contrôler` / `confirmé` / `nuancé` / `réfuté`. This calls for source
+  verification, not a full novelty sweep for each citation.
+- **Novelty claim**: exact statement and location, what would refute it
+  (equivalent propositions in other vocabularies included), fields, languages,
+  period, document types, cutoff, and the available search effort / stop bound.
+- Context paths readers may consult, existing candidate/consultation table,
+  reading notes and search history when present. Searchers never edit these.
 
-- A verification register: numbered lines, each a claim with a criticality
-  level, statuses `à contrôler` / `confirmé` / `nuancé` / `réfuté`.
-- The novelty claim, stated precisely enough to refute: the mathematical
-  setting, the exact proposition, and what would count as prior art
-  (equivalent statements in other vocabularies included).
-- Paths to context files (draft, notes) agents may read. Agents never write.
+Without a refutable novelty claim, return corpus leads or factual checks with
+that limited scope; do not invent a claim or declare a whole corpus saturated.
+For a few nearby references, use a targeted search and
+[related-work-note](../related-work-note/SKILL.md). A full claim sweep requires
+its own scope. Corpus discovery belongs to
+[critical-lit-review](../critical-lit-review/SKILL.md); a later lacuna claim
+can reuse its search history and notes as inputs here.
 
-## Protocol
+## Runtime and concurrency
 
-Orchestrate with the Workflow tool (this is an explicit multi-agent skill;
-invoking it is the opt-in). All fan-outs run **parallel-background in batches
-of at most 8** — the authorized concurrency ceiling; batching trades a little
-wall-clock for bounded coordination overhead. Rounds are
-**sequential-blocking**: the dryness test needs the full round's yield.
+Discover available search, full-text retrieval and delegation capabilities
+before launching. Use the `route` skill for worker choice and reviewer
+independence (`skills/route/references/decorrelation.md`). This skill explicitly
+authorizes delegation when available. Independent searches run
+**parallel-background**, within the runtime's available capacity, with separate
+briefs blind to the other searchers' yields. Rounds and search → cross-check →
+judgment → completeness assessment are **sequential-blocking**, since each
+consumes the preceding evidence.
 
-Choose the worker per launch with the `route` skill (frontmatter does not
-propagate): finders are bulk lookup work for a cheap worker; judges and critic
-need deep judgment. Choose the verifier from another model family
-(`skills/route/references/decorrelation.md`) and say why.
+With one slot, run angle briefs sequentially, preserving separate query logs
+before pooling their results. Keep the adversarial verification pass distinct
+and reconsult sources; report that a same-worker pass lacks an independent
+reviewer. If a required capability is missing, use accessible scholarly search
+interfaces or APIs (e.g. OpenAlex, Crossref, arXiv, disciplinary repositories)
+and record the fallback's actual coverage. If none can search an angle, mark
+`angle_blocked`; a failed tool call is not an executed search.
 
-### Phase 1 — register lines (parallel pipeline, one chain per line)
+### Phase 1 — factual register
 
-For each open line: one web searcher resolves the claim against primary
-sources (DOI, arXiv, publisher, DBLP); then an independent cross-checker
-**re-fetches the sources itself**, corrects venues, years, pages, theorem
-numbers and attribution order, and emits the final verdict. Verdict grid:
-`confirmé` (exact as stated), `nuancé` (right but needs stated corrections),
-`réfuté`. Every verdict includes a *safe wording* — the English sentence the
-manuscript may actually use.
+For each open line, resolve the attribution against primary sources. A
+cross-checker reconsults sources itself and checks venues, years, pages,
+theorem numbers and attribution order. Verdicts: `confirmé` (as stated),
+`nuancé` (with corrections), `réfuté`, or `unresolved` (insufficient evidence,
+including inaccessible text). Include page/section evidence and safe wording;
+for an unresolved claim, wording must retain the uncertainty or omit it.
 
-### Phase 2 — novelty-claim sweep (rounds, loop until dry)
+### Phase 2 — novelty search
 
-Rounds of up to 8 finders, each assigned one angle, blind to the others.
-Draw angles from this taxonomy and adapt to the claim:
+Assign distinct angles adapted to the claim; record why each relevant family
+is searched or excluded. Preserve diversity across:
 
-- **Disciplinary fields**: each field that could have found the result under
-  its own name (for pricing claims: mathematical finance, market
-  microstructure, DeFi/MEV, constraint satisfaction, OR flows, spatial
-  economics, econophysics).
-- **Structured queries**: the intersection queries a librarian would run
-  (term × term across Scopus-like engines).
-- **Languages**: French, Russian, Chinese, Japanese, German — via zbMATH,
-  Math-Net.ru, theses.fr, HAL, national repositories.
-- **Optional HAL transport**: [HAL Discovery MCP](../../docs/hal-discovery-mcp.md),
-  activated only for this task; direct HAL API remains a fallback. This
-  pointer does not register or load MCP tools.
-- **Gray literature**: PhD theses, SSRN and central-bank working papers,
-  institutional repositories.
-- **Citation graph**: forward/backward citations of the pivot papers
-  (Semantic Scholar / OpenAlex APIs), filtered by the claim's vocabulary.
-- **Recency**: last-24-months arXiv categories, not yet indexed elsewhere.
-- **Textbooks and surveys**: where a folklore version of the claim would be
-  recorded as a remark.
-- **Lateral vocabularies**: the same mathematical object under other names
-  in other fields; classics and pre-war literature (archive.org).
+- **Fields and lateral vocabularies**: equivalent objects and propositions in
+  adjacent disciplines, including older terminology and pre-war literature.
+- **Structured queries**: intersect terms and synonyms in disciplinary and
+  general scholarly indexes.
+- **Languages**: relevant non-English traditions and national repositories
+  (e.g. French, Russian, Chinese, Japanese, German); justify the selection.
+- **Gray literature**: theses, working papers, institutional repositories.
+- **Citation graph**: backward/forward trails from pivot works.
+- **Recency**: recent preprints and material not yet indexed elsewhere.
+- **Textbooks and surveys**: possible folklore statements and older sources.
 
-Finder contract: at least 6–10 distinct queries per angle, follow citation
-trails, report only candidates actually located (abstract or full text
-fetched), classified `preempts` / `adjacent` / `background`. An empty
-candidate list is a good answer — no padding with background papers.
+Optional HAL access: [HAL discovery](../../docs/hal-discovery-mcp.md) when
+available; direct HAL API remains a fallback. The pointer loads no tools.
 
-**Dryness criterion**: stop after a round that adds zero fresh
-`preempts`/`adjacent` candidates (dedup by normalized title+year), minimum
-two rounds. Simple round counts miss the tail; dryness is the point.
+For each angle retain queries, interface/date, returned leads, sources actually
+fetched, abstracts versus full texts read, and exclusions. Follow promising
+citation trails and revise queries when terminology changes. Query counts are
+not coverage evidence. Report located candidates as potential `preempts`,
+`adjacent`, or `background`, with provenance; empty results need no padding.
 
-### Phase 3 — adversarial judging (parallel batches of 8)
+After pooling and deduplication by identifiers and normalized title/year,
+launch fresh or revised angles against the uncovered scope. A dry round adds
+no new serious preemption/adjacency candidates **after its planned searches
+actually ran**. A failed, skipped or blocked angle cannot count as dry.
+Stop at a dry round only after the relevant angle families and citation leads
+have been examined and the completeness assessment below agrees. At the
+agreed effort/stop bound, return partial results and remaining work instead
+of forcing a saturation verdict.
 
-Every fresh serious candidate goes to a judge that **fetches the source
-itself** and rules: `preempts` (genuinely states/proves/implies the claim),
-or `must_cite` (nearby; cite and distinguish), with confidence. Default to
-*not preempting* when evidence is thin or the source cannot be verified —
-the finder's description is a lead, not a fact.
+### Phase 3 — adversarial judgment
 
-### Phase 4 — completeness critic, then one final round
+For each serious candidate, a judge reconsults the primary text and records
+one of:
 
-One critic reviews the angles run and the yield, probes a few searches
-itself, and either declares saturation or returns up to 8 missing angles.
-Missing angles trigger exactly one more find+judge round. Never declare
-saturation silently: the critic's assessment is part of the report.
+- `preempts`: passage states, proves or implies the scoped claim.
+- `must_cite`: nearby work that must be cited and distinguished.
+- `does_not_preempt`: positive textual evidence shows the relevant difference;
+  state that difference and its locator, not just low confidence.
+- `unresolved`: identity, interpretation or access remains uncertain. Name
+  the missing evidence and the retrieval attempts; inaccessible text is never
+  evidence of non-preemption. A finder description or abstract alone cannot
+  settle a claim requiring the proof or full argument.
 
-## Web tooling resilience
+Use the `rules/zotero.md` access chain for missing full text and verify folios
+on the page. Record what was actually read. Confidence never substitutes for
+a passage supporting a verdict.
 
-Agents load `WebSearch`/`WebFetch` via ToolSearch. If WebSearch is
-unavailable, fall back to WebFetch on: Semantic Scholar
-(`api.semanticscholar.org`), OpenAlex (`api.openalex.org`), Crossref
-(`api.crossref.org`), arXiv export API, DBLP, `doi.org`. State the fallback
-used in the report.
+### Phase 4 — completeness assessment
+
+A critic checks the logs, exclusions, unresolved candidates and angle coverage,
+and probes searches itself. Record its independence or lack thereof. Missing
+angles lead to another bounded search/judgment round when capacity remains;
+otherwise return them as pending. An unavailable engine may be covered by an
+adequate fallback, but that equivalence needs a stated reason.
+
+Declare `saturated_within_scope` only for the explicitly examined scope when
+no material angle remains blocked, no potentially decisive candidate remains
+unresolved, and the dry-round and critic requirements hold. Otherwise declare
+`partial` with `angle_blocked` and `unresolved` entries. Any narrowing of scope
+must be explicit in both the report and the novelty wording; the original
+broader claim remains unverified. Even a saturated search may establish
+preemption: coverage and the scientific verdict are separate.
 
 ## Outputs
 
-- Register file updated: each adjudicated line gets verdict, findings with
-  page/section pointers, verified sources, safe wording.
-- Novelty-claim report: rounds run and yield per round, judged candidates
-  with verdicts, the must-cite list (feeds the related-work section — see
-  [related-work-note](../related-work-note/SKILL.md)), the critic's
-  saturation assessment.
-- Ticket log entry recording protocol, rounds, and verdict; commits on a
-  branch per git discipline.
+- Register updates with verdicts, safe wording, primary-source locators and
+  remaining unknowns. The coordinator alone edits the register.
+- Claim report: exact claim/scope/cutoff, executed search logs and round yields,
+  deduplicated candidates and judgments with passages, texts actually read,
+  `must_cite` list, `unresolved` candidates, `angle_blocked` entries and reasons,
+  critic's assessment and coverage status. Feed the citation distinctions to
+  `related-work-note`; feed evidence-supported gap wording back to the review.
+- A ticket log when working on a ticket; commit authorized project changes on
+  a branch. Do not create a new bibliography or corpus catalog here.
 
 ## Failure modes this protocol exists to catch
 
 - **Plausible-but-wrong finder claims** — hence judges that re-fetch, and
-  the thin-evidence-means-no default.
+  an explicit unresolved outcome for thin evidence.
 - **Search-angle monoculture** — five prior AI passes each missed a family;
   variety across fields, languages and eras is the countermeasure.
 - **Premature stop** — hence dryness looping plus an explicit critic, not a

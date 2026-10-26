@@ -1,0 +1,24 @@
+{
+  "reviewed_head": "ef82a98deb3d2e51b8d94839eeca649a5cc40edb",
+  "route": "claude -p --model fable --effort high --tools empty --strict-mcp-config --no-session-persistence",
+  "modelUsage": {
+    "claude-fable-5-1": {
+      "inputTokens": 2,
+      "outputTokens": 4646,
+      "cacheReadInputTokens": 649,
+      "cacheCreationInputTokens": 20001,
+      "webSearchRequests": 0,
+      "costUSD": 0.63250225,
+      "contextWindow": 1000000,
+      "maxOutputTokens": 64000,
+      "thinkingTokens": 3940,
+      "canonicalModel": "claude-fable-5-1",
+      "provider": "firstParty",
+      "costBasis": "list"
+    }
+  },
+  "effort": "high requested; not independently observed",
+  "raw_result_sha256": "e6077d5276e0d12b01766c810014dce08bc2c878a2ab6bb6ee27c5b071a58700",
+  "prompt_sha256": "1020fe09d9e47438e0b727352be2ac6de6b9f73af62b324841f29c32c94425fb",
+  "is_merge_approval": false
+}

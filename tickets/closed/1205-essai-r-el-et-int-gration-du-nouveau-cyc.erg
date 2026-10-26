@@ -1,0 +1,34 @@
+%erg 0.1
+Title: Essai réel et intégration du nouveau cycle métier
+Created: 2026-10-23
+Author: Codex MOE
+Closed: Real cycle, named validations, archive receipts, caller migration and composition verified; post-merge integration tracked by1198.
+
+--- log ---
+2026-10-23T09:11Z Codex MOE created
+2026-10-23T09:50Z reviewer note blocker 1200 closed — Blocked-by removed.
+2026-10-23T10:00Z reviewer note blocker 1201 closed — Blocked-by removed.
+2026-10-23T10:00Z reviewer note blocker 1202 closed — Blocked-by removed.
+2026-10-23T10:00Z reviewer note blocker 1203 closed — Blocked-by removed.
+2026-10-23T10:00Z reviewer note blocker 1204 closed — Blocked-by removed.
+2026-10-23T10:23Z Codex-MOE note circuit-breaker — Trial2 rejected joined source quotations; trial3 used contiguous quotations but rejected the Nature source despite an observed redirect chain and exact passage at its final URL. Paused retries, isolated canonical/effective URL matching, requested Astra judgment and a bounded correction; no old attempt or strict passage check rewritten.
+2026-10-23T10:46Z reviewer note blocker 1199 closed — Blocked-by removed.
+2026-10-23T10:46Z Codex-MOE note Complete public cycle trial4 accepted; previous failures preserved. Final skill contracts validated by actual Astra/high and Fable5.1; complete candidate gate2179passed4skipped. Legacy executor retired only after success; active callers migrated. NoteQVBRSPVZ and full evidence archiveCZVL4QLQ live storageHash verified; all author decisions remain pending. Integration tracker1198 stays open until post-merge union review.
+2026-10-23T10:46Z reviewer closed — Real cycle, named validations, archive receipts, caller migration and composition verified; post-merge integration tracked by1198.
+
+--- body ---
+## Context
+Intégration de tous les lots après validation Astra/Fable. Les projets de doudou fourniront les cas métier ; commencer par une entrée publique disponible pour l’essai technique, puis un manuscrit adapté dont la diffusion est autorisée.
+
+## Exit criteria
+- [x] Essai bout en bout du nouveau moteur sur un manuscrit réel avec recherches exécutées, critique vérifiée et artefacts archivés ; pas seulement fixture ou sortie simulée.
+- [x] Validation Astra et Fable sur la version finale des skills modifiés, consigne KISS, avec preuves d’identité et constats résolus ; ne pas appeler leur auto-déclaration une preuve de modèle.
+- [x] Contrôle de composition des lots : interfaces, formats et preuves cohérents ; make check et contrôles ciblés requis passent.
+- [x] Retirement de l’ancien helper seulement après essai satisfaisant et inventaire des appelants ; si encore nécessaire, documenter son motif de maintien et le travail restant sans fermer le tracker.
+- [x] Bilan de ce qui a changé dans les skills conservés, limites réelles et prochaine utilisation sur les projets d’articles ; aucun déploiement ni dépôt public de manuscrit privé.
+
+## Plan / first check
+Depends on all functional children. Ne pas transformer cet essai en étude comparative ou en Replication Day. Les éventuels défauts scientifiques du manuscrit sont advisory et ne déclenchent aucune réécriture autonome du texte.
+
+## Review
+KISS obligatoire. Astra et Fable valident les skills finaux ; le MOE conserve identités effectives, révisions et décisions. Aucun exécutant ne fusionne ni ne supprime l’ancien outil de sa propre initiative.

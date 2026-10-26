@@ -1,0 +1,10 @@
+{
+  "checked_implementation": "3286c079ab18b126db3a80527d6e9bb955cba646",
+  "result": "pass",
+  "verification_count": 5,
+  "original_status": "incomplete",
+  "original_status_sha256": "4dbc13331c4147233a042f208ee0b589ecb723bb508251cd74c52d204d3afa75",
+  "original_stream_sha256": "5078b133cdb048ac6550b43844ed62c8c8963ad06c8e2c6b450d3ca2f3d77a6c",
+  "meaning": "Read-only correction check of observed redirect provenance; no retrospective rewrite of original failed attempt.",
+  "checked_script_sha256": "0b7d64dabd91d879d41429246d4e31dc53f2e0537a68d3778e020a897b66f232"
+}

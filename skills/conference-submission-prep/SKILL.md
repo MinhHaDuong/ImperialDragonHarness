@@ -52,9 +52,11 @@ argument, in the venue's style; a new reference goes through
 ## 3. Review before sending
 
 Run `/gaze` (prose panel) on the submission's merge request, or
-`/external-peer-review` on its PDF, and give the reviewers the call's
-criteria from step 1. Resolve convergent findings; report the rest to the
-author with a recommendation.
+`/manuscript-review` on its PDF, giving the reader the call's criteria from
+step 1. When the author explicitly requests independent external readers,
+use `/external-peer-review`, which runs the same protocol per routed reader
+and preserves dissent. Resolve verified findings; report unresolved concerns
+and the remaining author decisions with a recommendation.
 
 ## 4. Finish and record
 

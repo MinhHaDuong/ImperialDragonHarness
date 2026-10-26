@@ -1,0 +1,58 @@
+[
+  {
+    "probe": "review_empty_truncated_response",
+    "returns_normally": true,
+    "artifact_contains_only_header": true
+  },
+  {
+    "probe": "review_second_run",
+    "previous_review_preserved": false
+  },
+  {
+    "probe": "validator_valid_inline_entry",
+    "positive_control_parsed_by_bib_merge": 1,
+    "validator_entries": 0,
+    "exit": 0,
+    "verdict": "WARN: 0 of 0 entries have no DOI/URL"
+  },
+  {
+    "probe": "validator_wrong_document_http200",
+    "exit": 0,
+    "verdict": "PASS — 1 entries resolved",
+    "interpretation": "HTTP reachability only, no work-identity check"
+  },
+  {
+    "probe": "revision_round_with_unrelated_ticket",
+    "report": {
+      "remark_count": 1,
+      "covered": 1,
+      "uncovered_remarks": [],
+      "orphan_tickets": [
+        "0002"
+      ],
+      "unknown_ticket_refs": [],
+      "duplicate_ids": [],
+      "map": {
+        "R1-01": [
+          "0001"
+        ]
+      }
+    }
+  },
+  {
+    "probe": "archive_two_intakes",
+    "both_files_preserved": true,
+    "manifest_entries": 1
+  },
+  {
+    "probe": "marked_pdf_with_undefined_citations",
+    "accepted": true,
+    "fixture": "fake compiler exits zero and writes PDF plus undefined-citation log"
+  },
+  {
+    "probe": "bib_same_doi_different_year",
+    "actions": [
+      "[ADDED] @smith2021"
+    ]
+  }
+]
