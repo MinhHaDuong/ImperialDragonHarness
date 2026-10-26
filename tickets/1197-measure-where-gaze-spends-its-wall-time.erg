@@ -8,6 +8,8 @@ Author: reviewer
 2026-10-26T22:24Z reviewer reviewer note alignment 2026-10-26: blocked by 1224, which builds the per-seat clock criterion 1 needs; runs in parallel with 1226. Note the 1225 diagnosis (five-seat panel) differs from this ticket's (idle poll gaps, ticket 1216); 1224 settles which dominates
 2026-10-26T22:56Z reviewer note blocker 1224 closed — Blocked-by removed.
 
+2026-10-27T00:40Z reviewer note measured: report docs/2026-10-27-gaze-wall-time.md (host padme, 140 runs). Neither the idle-poll nor the wide-panel diagnosis dominates; setup plus closing orchestrator turns (42%) and the slowest seat (40%) do. Child 1227 filed: one-call setup and closing scripts. Report is the /pulse visit brief (author away).
+
 --- body ---
 ## Context
 /gaze is slow, and the author wants it discussed at the next /pulse visit.
@@ -30,7 +32,9 @@ whether simplify and fix run only on findings; host contention in long runs.
 Cause is open; do not act on a fix before these are measured.
 
 ## Exit criteria
-- [ ] Per-seat and per-phase durations for the slowest recent gaze runs, labelled READ or derived, with the host named
-- [ ] Verdict on the three unknowns above, each backed by a direct measurement
-- [ ] Priced options (author-hours, USD, minutes saved) for: faster orchestrator model, one-call setup script, dropping the orchestrator pre-review; one recommended
-- [ ] Findings brought to the /pulse visit; any fix filed as its own child ticket
+- [x] Per-seat and per-phase durations for the slowest recent gaze runs, labelled READ or derived, with the host named
+- [x] Verdict on the three unknowns above, each backed by a direct measurement
+- [x] Priced options (author-hours, USD, minutes saved) for: faster orchestrator model, one-call setup script, dropping the orchestrator pre-review; one recommended
+- [x] Findings brought to the /pulse visit; any fix filed as its own child ticket
+
+Report: docs/2026-10-27-gaze-wall-time.md. Child: [[1227]].

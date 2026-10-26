@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Gaze setup and closing in one script call each
+Created: 2026-10-26
+Author: reviewer
+
+--- log ---
+2026-10-26T23:03Z reviewer created
+
+--- body ---
+## Context
+Ticket 1197's measurement (docs/2026-10-27-gaze-wall-time.md, host padme, READ from traces of 25
+current-structure gaze runs): setup before the first seat launches is 47 s median, 6 s of it
+tools; closing after the last seat ends is 49 s, 6 s of it tools. About 85 percent of both is
+orchestrator model turns, one per Bash call (8 setup calls, 4 closing calls). Together they are
+42 percent of gaze wall time, the largest bucket with no quality cost.
+
+## Exit criteria
+- [ ] One script prints the setup facts gaze needs (worktree, anchor, PR state, comments, ticket, panel directory) in one call; gaze's first phase makes that call instead of the separate reads
+- [ ] One script runs the closing steps (attribution record, containment, worktree removal, duration line, result comment) in one call
+- [ ] Rerun `scripts/gaze_wall_analysis.py` after 20 runs: setup and closing medians reported against 47 s and 49 s
+- [ ] The harness gate passes
+
+## Relevant files
+skills/gaze/SKILL.md, skills/gaze/references/setup-and-breaker.md, skills/gaze/references/cleanup.md, scripts/gaze_wall_time.py
+
+Priced in the report: about 60 s per run saved (derived), 3 to 4 author-hours, 65 percent odds.
+Related: [[1197]], [[1224]].
