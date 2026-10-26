@@ -14,7 +14,8 @@ dies at once and would let `worktree-gc` unlock a live tree.
 If `$PPID` prints 1, the shell runs in a pid namespace (a sandboxed runtime)
 and the owner is not visible: write the reason without a pid —
 `hunt t<id> (owner pid not visible)`, never `(pid 1)`, which on the host names
-init.
+init. Name the path with another discriminator (`$RANDOM`), or two sandboxed
+hunts on one ticket share `t<id>-1`.
 
 ## When worktree-gc reclaims an ownerless tree
 
