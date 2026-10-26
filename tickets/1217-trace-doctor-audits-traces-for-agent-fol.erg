@@ -57,7 +57,7 @@ Boundary, unchanged: the survey reports and files tickets; applying a barrier is
 ## Exit criteria
 
 - [x] Catalogue with at least the waiting follies of 1216, each detector tested with a positive control
-- [x] A report section: folly, hours, frequency, runtimes, prescribed barrier, replay evidence
+- [x] A report section: folly, bounds (not hours), frequency, runtimes, prescribed rung (narrowed: no replay evidence, no prescription engine)
 - [x] A review pass over the existing PreToolUse barriers: firings counted (narrowed: denial counts as data, verdicts to /pulse)
 - [x] Run once on the arena's cycle-4 Pi traces as the cross-corpus check
 - [ ] Out of scope: auto-applying a barrier

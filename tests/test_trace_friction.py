@@ -191,6 +191,9 @@ def test_pgrep_self_match_specimens():
     assert not tf.folly_pgrep_self(SPEC_C)  # wide, but does not match itself
     assert not tf.folly_pgrep_self(SPEC_BRACKET)
     assert not tf.folly_pgrep_self(SPEC_ECHO)
+    # a quoted pattern holding shell operators is still read whole
+    assert tf.folly_pgrep_self("until ! pgrep -f 'a|b' ; do sleep 5; done  # a|b")
+    assert not tf.folly_pgrep_self("pgrep -f '[a]x|[b]y' >/dev/null")
 
 
 def test_sleep_to_cap_full_cap_versus_early_exit():
@@ -199,6 +202,7 @@ def test_sleep_to_cap_full_cap_versus_early_exit():
     assert not tf.folly_sleep_to_cap(full, 40.0)  # condition met early
     assert not tf.folly_sleep_to_cap("sleep 10", 10.0)  # no loop, no cap
     assert tf.folly_sleep_to_cap("while true; do sleep 5; done", 300.0, timeout_s=300)
+    assert tf.folly_sleep_to_cap("for i in $(seq 1 3); do sleep 1m; done", 180.0)  # units
 
 
 def _call(tid, ts, cmd, err=False, secs=1):
@@ -208,15 +212,19 @@ def _call(tid, ts, cmd, err=False, secs=1):
     }  # fmt: skip
 
 
+def _nrep(calls):
+    return len(tf.repeat_failing_calls(calls))
+
+
 def test_repeat_failing_only_in_a_row_without_edit_between():
     t0 = tf.datetime(2026, 10, 14, 10, tzinfo=tf.timezone.utc)
     mk = lambda i, c, e=True, tool="Bash": {**_call(f"c{i}", t0 + tf.timedelta(minutes=i), c, e), "tool": tool}  # noqa: E731
     same = [mk(0, "make test"), mk(1, "make test")]
-    assert tf.detect_repeat_failing(same) == 1
-    assert tf.detect_repeat_failing([mk(0, "make test"), mk(1, "ls", False), mk(2, "make test")]) == 0
+    assert _nrep(same) == 1
+    assert _nrep([mk(0, "make test"), mk(1, "ls", False), mk(2, "make test")]) == 0
     edited = [mk(0, "make test"), mk(1, "x", False, "Edit"), mk(2, "make test")]
-    assert tf.detect_repeat_failing(edited) == 0
-    assert tf.detect_repeat_failing([mk(0, "make test", False), mk(1, "make test", False)]) == 0
+    assert _nrep(edited) == 0
+    assert _nrep([mk(0, "make test", False), mk(1, "make test", False)]) == 0
 
 
 def _cc_rows():
@@ -281,3 +289,20 @@ def test_barrier_denials_counted_without_verdict(tmp_path):
     assert "unattributed" in d
     blob = json.dumps(d).lower()
     assert "delete" not in blob and "verdict" not in blob and "keep" not in blob
+
+
+def test_sleep_and_repeat_follies_reach_the_summary_end_to_end(tmp_path):
+    t = f"{DAY1}T11:"
+    rows = [
+        # a condition loop, no explicit timeout: Claude Code's default cap applies
+        _use("p1", "Bash", t + "00:00Z", command="until test -f /x/done; do sleep 5; done"),
+        _res("p1", t + "02:00Z", "ok", error=False),
+        _use("r1", "Bash", t + "05:00Z", command="make test"),
+        _res("r1", t + "05:10Z", "Exit code 2"),
+        _use("r2", "Bash", t + "06:00Z", command="make  test"),
+        _res("r2", t + "06:10Z", "Exit code 2"),
+    ]
+    s = _scan(tmp_path, rows)
+    assert s["follies"]["sleep_poll_to_cap"]["count"] == 1
+    assert s["follies"]["repeat_failing"]["count"] == 1
+    assert s["follies"]["repeat_failing"]["rung"] == "hook"

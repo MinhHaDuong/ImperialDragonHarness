@@ -194,13 +194,29 @@ FOLLY_RUNG = {
 }
 DEFAULT_TIMEOUT_S = 120.0  # Claude Code Bash default; lower bound only
 PGREP_RE = re.compile(
-    r"(?:^|[;&|(!\n]|\b(?:do|then|else|until|while|if)\b|\$\()\s*(pgrep)\b([^;&|)\n]*)"
+    r"(?:^|[;&|(!\n]|\b(?:do|then|else|until|while|if)\b|\$\()\s*(pgrep)\b(.*)"
 )
 PGREP_ARG_OPTS = set("uUgGPstnO")  # short options that take an argument
 LOOP_RE = re.compile(r"\b(?:for|while|until)\b")
-SLEEP_RE = re.compile(r"\bsleep\s+(\d+(?:\.\d+)?)")
+SLEEP_RE = re.compile(r"\bsleep\s+(\d+(?:\.\d+)?)([smhd]?)")
+SLEEP_UNIT = {"": 1, "s": 1, "m": 60, "h": 3600, "d": 86400}
 SEQ_RE = re.compile(r"\bseq\s+(?:(\d+)\s+)?(\d+)|\{(\d+)\.\.(\d+)\}")
 UNBOUNDED_RE = re.compile(r"\b(?:while\s+(?:true|:)|until\s+false)\b|\buntil\s+!?\s*\S")
+
+
+def _argv(rest: str) -> list[str]:
+    """Tokens of the pgrep arguments, up to the first shell operator."""
+    lex = shlex.shlex(rest, posix=True, punctuation_chars=True)
+    lex.whitespace_split = True
+    out: list[str] = []
+    try:
+        for tok in lex:
+            if re.fullmatch(r"[();<>|&]+", tok):
+                break
+            out.append(tok)
+    except ValueError:  # unbalanced quote
+        pass
+    return out
 
 
 def folly_pgrep_self(cmd: str) -> bool:
@@ -215,10 +231,7 @@ def folly_pgrep_self(cmd: str) -> bool:
     for m in PGREP_RE.finditer(cmd):
         if any(a <= m.start(1) < b for a, b in spans):
             continue  # the word sits inside quoted text: not a call
-        try:
-            argv = shlex.split(m.group(2))
-        except ValueError:
-            continue
+        argv = _argv(m.group(2))
         pattern, full, skip = None, False, False
         for tok in argv:
             if skip:
@@ -250,7 +263,7 @@ def folly_sleep_to_cap(cmd: str, duration_s: float, timeout_s: float | None = No
     sleeps = SLEEP_RE.findall(text)
     if not sleeps or not LOOP_RE.search(text):
         return False
-    step = float(sleeps[0])
+    step = float(sleeps[0][0]) * SLEEP_UNIT[sleeps[0][1]]
     seq = SEQ_RE.search(text)
     if seq:
         lo, hi = (seq.group(1), seq.group(2)) if seq.group(2) else (seq.group(3), seq.group(4))
@@ -281,18 +294,17 @@ def repeat_failing_calls(calls: list[dict]) -> list[dict]:
     return hits
 
 
-def detect_repeat_failing(calls: list[dict]) -> int:
-    return len(repeat_failing_calls(calls))
-
-
 class Follies:
     """Accumulator: per folly count, sessions, duration bounds, runtime split."""
 
-    def __init__(self) -> None:
+    def __init__(self, min_seconds: float = 0.0) -> None:
         self.rows: dict[str, dict] = {}
+        self.min_seconds = min_seconds  # count only calls at least this long
 
     def add(self, folly: str, session: str, call: dict, runtime: str) -> None:
         secs = max((call["end"] - call["start"]).total_seconds(), 0.0)
+        if secs < self.min_seconds:
+            return
         if call.get("measured"):
             low = secs
         else:
@@ -313,7 +325,10 @@ class Follies:
             secs = max((c["end"] - c["start"]).total_seconds(), 0.0)
             if folly_pgrep_self(c["cmd"]):
                 self.add("pgrep_self_match", session, c, runtime)
-            if folly_sleep_to_cap(c["cmd"], secs, c.get("timeout_s")):
+            # Claude Code backgrounds a call at its timeout (default 120 s);
+            # Pi sessions record none, so a condition loop has no known cap there.
+            cap = c.get("timeout_s") or (DEFAULT_TIMEOUT_S if runtime == "claude-code" else None)
+            if folly_sleep_to_cap(c["cmd"], secs, cap):
                 self.add("sleep_poll_to_cap", session, c, runtime)
         for c in repeat_failing_calls(calls):
             self.add("repeat_failing", session, c, runtime)
@@ -339,7 +354,7 @@ FOLLIES_NOTE = (
     "records the duration (Pi). Traces do not record when a job ended, so no "
     "hours are given back; sessions count distinct transcripts"
 )
-BLOCKED_RE = re.compile(r"\bBLOCKED\b|PreToolUse:[\w|]* ?hook error")
+BLOCKED_RE = re.compile(r"\bBLOCKED:|PreToolUse:[\w|]* ?hook error")
 
 
 # --- readers: Claude Code and Pi shapes -> one call record -------------------
@@ -461,12 +476,13 @@ def _record(days: dict, call: dict) -> None:
         entry["seconds"] += secs
 
 
-def run_scan(projects_dir: Path, days: int, now: datetime | None = None) -> dict:
+def run_scan(projects_dir: Path, days: int, now: datetime | None = None,
+             min_seconds: float = 0.0) -> dict:  # fmt: skip
     now = now or datetime.now(timezone.utc)
     cutoff = now - timedelta(days=days)
     table: dict[str, dict] = defaultdict(new_day)
     seen: set = set()
-    follies = Follies()
+    follies = Follies(min_seconds)
     files = skipped = 0
     for path in iter_trace_files(projects_dir, cutoff.timestamp()):
         try:
@@ -481,20 +497,17 @@ def run_scan(projects_dir: Path, days: int, now: datetime | None = None) -> dict
 
 def iter_pi_files(runs_dir: Path):
     """Yield Pi session files under an arena run directory (or its parent)."""
-    seen = set()
     for pattern in ("*/attempts/*/sessions/*.jsonl", "runs-*/*/attempts/*/sessions/*.jsonl"):
-        for path in sorted(runs_dir.glob(pattern)):
-            if path not in seen:
-                seen.add(path)
-                yield path
+        yield from sorted(runs_dir.glob(pattern))
 
 
-def run_pi_scan(runs_dir: Path, now: datetime | None = None) -> dict:
+def run_pi_scan(runs_dir: Path, now: datetime | None = None,
+                min_seconds: float = 0.0) -> dict:  # fmt: skip
     """Same summary over Pi sessions. Every session counts (no window); no
     command text is carried into the result."""
     table: dict[str, dict] = defaultdict(new_day)
     seen: set = set()
-    follies = Follies()
+    follies = Follies(min_seconds)
     files = skipped = 0
     floor = datetime.min.replace(tzinfo=timezone.utc)
     for path in iter_pi_files(runs_dir):
@@ -596,7 +609,7 @@ def write_csv(path: Path, summary: dict) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Daily friction series from Claude Code traces."
+        description="Daily friction series and follies from Claude Code traces, or Pi sessions with --pi-runs."
     )
     parser.add_argument(
         "--projects-dir",
@@ -616,14 +629,18 @@ def main() -> None:
         help="Arena run directory (or its parent) holding Pi sessions "
         "(*/attempts/*/sessions/*.jsonl); replaces the Claude Code scan",
     )
+    parser.add_argument(
+        "--folly-min-seconds", type=float, default=0.0,
+        help="Count follies only for calls at least this long (the census uses 45)",
+    )  # fmt: skip
     parser.add_argument("--json", action="store_true", help="Print the summary as JSON")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
     if args.pi_runs:
-        summary = run_pi_scan(args.pi_runs)
+        summary = run_pi_scan(args.pi_runs, min_seconds=args.folly_min_seconds)
     else:
-        summary = run_scan(args.projects_dir, args.days)
+        summary = run_scan(args.projects_dir, args.days, min_seconds=args.folly_min_seconds)
     if args.output:
         write_csv(args.output, summary)
         log.info("wrote %d days to %s", len(summary["daily"]), args.output)

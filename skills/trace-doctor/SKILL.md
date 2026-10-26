@@ -115,8 +115,9 @@ Cost does not rank turns and wall-clock, so report velocity separately, from
    permission waits and background commands: label each figure "upper bound".
    `AskUserQuestion` hours are the author's own latency, not tool friction;
    list them apart.
-2. **Wait commands** (`wait_commands`, `wait_hours_upper_bound`). The regex is
-   tightened but still counts keywords quoted in heredocs: say "upper bound".
+2. **Wait commands** (`wait_commands`, `wait_hours_upper_bound`). The regex runs
+   on the command minus quoted strings and heredoc bodies; durations are
+   still an upper bound: say so.
 3. **Tool errors by cause** (`errors_by_cause`: worktree guard, no such tool,
    write outside worktree, other) with `error_hours_upper_bound`.
 
