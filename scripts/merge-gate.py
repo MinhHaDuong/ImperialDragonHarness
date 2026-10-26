@@ -193,25 +193,41 @@ def is_bookkeeping(path):
     return False
 
 
-def changed_paths(old, new):
-    """Paths whose content differs between two commits; renames count at both ends.
+REGULAR_MODES = frozenset({"100644", "100755"})
 
-    Plumbing (diff-tree), so no diff.relative, diff.ignoreSubmodules or other
-    porcelain setting can hide a path.
+
+def changed_entries(old, new):
+    """(path, new mode, status) of every entry that differs; renames count at both ends.
+
+    Plumbing (diff-tree --raw), so no diff.relative, diff.ignoreSubmodules or
+    other porcelain setting can hide an entry, and the mode is read with it.
     """
-    out = git("diff-tree", "-r", "--name-only", "-z", "--no-renames", old, new).stdout
-    return [p for p in out.split("\0") if p]
+    out = git("diff-tree", "-r", "--raw", "-z", "--no-renames", old, new).stdout
+    fields = out.split("\0")
+    entries = []
+    for meta, path in zip(fields[0::2], fields[1::2]):
+        if not meta:
+            break
+        _old_mode, new_mode, _old_oid, _new_oid, status = meta.lstrip(":").split(" ")
+        entries.append((path, new_mode, status[:1]))
+    return entries
 
 
-def tier_of(paths):
-    """An empty list is never bookkeeping: nothing read is not a reading of nothing."""
-    return BOOKKEEPING_TIER if paths and all(is_bookkeeping(p) for p in paths) else "full"
+def tier_of(entries):
+    """Bookkeeping when every entry is a regular file (or a deletion) on a bookkeeping path.
+
+    A symlink or gitlink at a bookkeeping path is not bookkeeping: what it
+    points at is not what the path list vouches for. An empty list is never
+    bookkeeping: nothing read is not a reading of nothing.
+    """
+    ok = all(is_bookkeeping(p) and (status == "D" or mode in REGULAR_MODES) for p, mode, status in entries)
+    return BOOKKEEPING_TIER if entries and ok else "full"
 
 
 def effective(config, base, oid):
     """The check set the record of candidate `oid` runs: a tier's subset, or all."""
     names = config.get("tiers", {}).get(BOOKKEEPING_TIER)
-    if not names or tier_of(changed_paths(base, oid)) != BOOKKEEPING_TIER:
+    if not names or tier_of(changed_entries(base, oid)) != BOOKKEEPING_TIER:
         return config
     checks = [c for c in config["checks"] if c["name"] in names]
     return {**config, "scope": f"{config['scope']}/{BOOKKEEPING_TIER}", "checks": checks}
@@ -484,11 +500,11 @@ def cmd_tier(args):
         if git("rev-parse", f"{old}^{{tree}}").stdout == git("rev-parse", f"{new}^{{tree}}").stdout:
             sys.stdout.write(f"unchanged: the head adds nothing to the candidate of {since[:12]}\n")
             return PASS
-    paths = changed_paths(old, new)
-    tier = tier_of(paths)
-    sys.stdout.write(f"{tier}: {len(paths)} path(s) changed\n")
-    for path in paths:
-        sys.stdout.write(f"  {path}\n")
+    entries = changed_entries(old, new)
+    tier = tier_of(entries)
+    sys.stdout.write(f"{tier}: {len(entries)} path(s) changed\n")
+    for path, mode, status in entries:
+        sys.stdout.write(f"  {status} {mode} {path}\n")
     return PASS if tier == BOOKKEEPING_TIER else FAIL
 
 

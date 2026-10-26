@@ -506,3 +506,43 @@ def test_enabled_and_config_do_not_depend_on_cwd(repo):
     (repo / "memory").mkdir()
     assert gate(repo / "memory", "enabled", "--base", "main").returncode == 0
     assert gate(repo, "enabled", "--base", "main").returncode == 0
+
+
+# ── modes, not only paths (ticket 1221, gaze round 2) ─────────────────────────
+
+
+def _branch_with_entry(repo, name, mode, path, oid=None):
+    git(repo, "switch", "-q", "-c", name, "main")
+    if oid is None:
+        oid = subprocess.run(
+            ["git", "-C", str(repo), "hash-object", "-w", "--stdin"],
+            input="target\n", capture_output=True, text=True, check=True, env=child_env(),
+        ).stdout.strip()
+    git(repo, "update-index", "--add", "--cacheinfo", f"{mode},{oid},{path}")
+    git(repo, "commit", "-q", "-m", name)
+    git(repo, "reset", "-q", "--hard")
+    return name
+
+
+@pytest.mark.parametrize("path", ["STATE.md", "memory/tool.py"])
+def test_a_symlink_on_a_bookkeeping_path_is_full(repo, path):
+    branch = _branch_with_entry(repo, "link", "120000", path)
+    result = gate(repo, "tier", "--base", "main", "--head", branch)
+    assert result.returncode == 1, result.stdout
+
+
+def test_a_gitlink_under_memory_is_full(repo):
+    oid = git(repo, "rev-parse", "main")
+    branch = _branch_with_entry(repo, "sub", "160000", "memory/sub", oid=oid)
+    result = gate(repo, "tier", "--base", "main", "--head", branch)
+    assert result.returncode == 1, result.stdout
+
+
+def test_an_executable_file_and_a_deletion_stay_bookkeeping(repo):
+    branch = _branch_with_entry(repo, "exe", "100755", "memory/run.md")
+    assert gate(repo, "tier", "--base", "main", "--head", branch).returncode == 0
+    git(repo, "rm", "-q", "memory/run.md")
+    git(repo, "commit", "-q", "-m", "drop")
+    approved = git(repo, "rev-parse", "HEAD~1")
+    since = gate(repo, "tier", "--base", "main", "--head", branch, "--since", approved)
+    assert since.returncode == 0 and since.stdout.startswith("bookkeeping"), since.stdout
