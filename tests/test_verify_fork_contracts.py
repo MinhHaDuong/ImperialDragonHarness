@@ -105,8 +105,9 @@ def test_merge_gates_the_head_that_merges():
     """The caller closes the ticket on the branch before gating; /merge's
     prerequisite is APPROVED plus at most a bookkeeping delta from the ruled
     tip to origin/<branch> at merge time (ticket 1221). The recipe's close
-    step then finds the ticket already closed and archived and adds no commit; the gate reads exit criteria from tickets/closed/ (ticket
-    1153, third union review)."""
+    step then finds the ticket already closed and archived and adds no commit;
+    the gate reads exit criteria from tickets/closed/ (ticket 1153, third union
+    review)."""
     merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
     assert "Close the ticket on the branch before gating." in merge
     assert (
@@ -560,7 +561,7 @@ def test_merge_accepted_gaze_result_is_not_tautological():
     assert "its `reviewed_head_sha` is not stale against the branch tip" in merge
 
 
-def test_dashboard_requires_ruled_tip_equal_to_the_head():
+def test_dashboard_allows_at_most_a_bookkeeping_delta_past_the_ruled_tip():
     """The dashboard names no historical exception; since ticket 1221 the head
     may add at most a bookkeeping delta to ruled_tip_sha."""
     dash = " ".join((SKILLS / "dashboard" / "SKILL.md").read_text().split())
