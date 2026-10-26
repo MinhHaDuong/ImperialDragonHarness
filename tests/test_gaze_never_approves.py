@@ -365,13 +365,15 @@ def test_reviewed_head_sha_is_read_after_phase_5():
 
 
 def test_review_panel_has_no_unlisted_skip_path():
-    """Every PR gets the review panel; the only ways it does not run are the
-    enumerated result values. A new skip path must change this test."""
+    """Every PR gets the review panel its brief asks for; the only ways it does
+    not run are the enumerated result values, a brief of `seats=none` among
+    them (ticket 1225). A new skip path must change this test."""
     template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
     line = next(ln for ln in template.splitlines() if ln.startswith("panel:"))
     values = {v.strip() for v in line.split(":", 1)[1].split("|")}
     assert values == {
         "<n_comments_posted>",
+        "skipped (not in brief)",
         "skipped (adherence blocking)",
         "skipped (--force-approve)",
         "skipped (battery NOT-RUN)",

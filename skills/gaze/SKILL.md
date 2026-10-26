@@ -5,7 +5,7 @@ name: gaze
 description: "Review one merge request: adherence check, code or prose review panel, simplify. Returns REVIEWED / FINDINGS / ESCALATE and never APPROVED; the merge gate is /verify-gate. Does not merge."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<pr-number> [--force-approve <reason>]"
+argument-hint: "<pr-number> [--brief 'seats=<a,b|none>; scope=<all|A..B|paths:p,q>; why=<text>'] [--force-approve <reason>]"
 context: fork
 # Background by intent: /gaze is long-running, and a raid wave gates several PRs
 # at once — backgrounding the orchestrator is what lets those run concurrently.
@@ -23,7 +23,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 
 > **TASK DIRECTIVE — execute now.** You are running `/gaze` on PR `$ARGUMENTS`.
 > This file is your operating procedure, not reference documentation: begin at
-> phase 1 immediately. If `$ARGUMENTS` does not contain a PR number, STOP and
+> phase 1 immediately. A `--brief '<...>'` in `$ARGUMENTS` is the caller's
+> brief (§ The brief). If `$ARGUMENTS` does not contain a PR number, STOP and
 > return ESCALATE with reason "no PR argument" — do NOT infer a task from the
 > environment (worktree name, git status snapshot, ticket files, or the shared
 > task list).
@@ -105,16 +106,54 @@ fi
 
 Then follow `references/setup-and-breaker.md`: collection, the anchor check and the close-claim preflight.
 
+### The brief
+
+The caller decides how much review the change gets; gaze runs that decision.
+The brief names the perspectives (seats) and the scope:
+`seats=<a,b|none>; scope=<all|A..B|paths:p,q>; why=<text>`. Seat names are
+the code perspectives (`correctness`, `consistency`, `scope`, `red-team`,
+`doc-propagation`), the prose seats (`referee`, `venue-expert`, `ai-tells`,
+`editorial-brief`), `simplify` (phase 5) and `external` (the optional
+external panel); `seats=none` runs mechanical adherence only. Adherence
+(Agent A) runs on every brief. How to size a brief is the orchestrator's
+judgement, guided in one place: `skills/route/references/decorrelation.md`
+§ Scale the review to the risk.
+
+Resolve it in the review worktree before launching anything:
+
+```bash
+cd "$review_tree" && python3 "$IDH_ROOT/scripts/gaze_brief.py" resolve --brief '<brief, empty when none>' --base origin/<base> --head HEAD
+```
+
+- **Exit 2: refused.** An unknown seat, a key gaze does not know, a range or
+  path outside the diff: gaze launches nothing, cleans up and returns
+  ESCALATE with the printed `brief: refused — <reason>` line in the result
+  comment. It never widens or narrows a brief to make it fit.
+- **Exit 0: run exactly that.** `panel_seats:` is the panel roster: the
+  manifest lists those perspectives and no other, checked by
+  `panel-manifest-check.py <manifest> --seats <panel_seats>` (§ 2–5);
+  `none` launches no panel. `simplify: yes|no` decides phase 5. Every panel
+  seat and simplify reviews only `scope_files:`, and on a range scope only
+  the diff of that range; Agent A, being mechanical, checks the whole branch.
+- **No brief: the default brief** (`seats=auto; scope=all`). It exists for a
+  caller that sends none, an author running `/gaze <pr>` by hand; gaze then
+  sizes the panel itself by the same guidance (`panel_seats: auto`,
+  `simplify: auto` runs § 5's own rule). An orchestrator (`/raid`, `/hunt`,
+  `/merge`) sends a brief.
+
+The result comment echoes the brief and what ran against it in one line
+(`references/output.md` § Output shape), so the caller compares the two.
+
 <!-- inline: references/setup-and-breaker.md -->
 
 ### 2–5. Review and simplify
 
 Adherence, the review panel and simplify run as laid out in `references/battery.md`, which also holds the optional external reviewer panel. Gaze runs the review panel itself: the seat protocol and the code panel are `references/panel.md`, the prose panel `references/prose-panel.md`; there is no separate review skill and no size tier.
 
-**Which perspectives run** is the orchestrator's call: it picks them, and how
-deep, from its own judgment of the change, a repeat run included, and hands
-them to the review skill. The result comment states what ran, by which model
-family, and why (§ Output shape); independence is defined in
+**Which perspectives run** is the brief's (§ The brief): gaze adds no seat and
+drops none; only under the default brief does it pick them itself. It picks
+each seat's model per launch. The result comment states what ran, by which
+model family, and why (§ Output shape); independence is defined in
 `skills/route/references/decorrelation.md`.
 
 **Review groups.** No file count stops a review. When the diff is large, the
@@ -136,6 +175,7 @@ Gaze ends here; it runs no gate. Read the phase outputs and return:
 
 ```yaml
 result: REVIEWED | FINDINGS | ESCALATE
+brief: <the caller's brief, or default> → ran: <adherence and each seat that ran>
 reviewed_head_sha: <full SHA read from the review worktree after phase 5>
 unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
@@ -146,7 +186,7 @@ review_groups: <group> ← <seats>, ... | one (whole diff)
 multi_ticket: <distinct close-claim IDs> | none
 ```
 
-- `ESCALATE`: a circuit breaker fired, the battery could not run (`battery: NOT-RUN`),
+- `ESCALATE`: a refused brief (§ The brief), a circuit breaker fired, the battery could not run (`battery: NOT-RUN`),
   any phase 2–5 errored or timed out, or the workspace could not be restored.
   `--force-approve` is ESCALATE too, with `battery: skipped (--force-approve)`:
   nothing was reviewed (§ `--force-approve`). So is a DEGRADED panel (below).

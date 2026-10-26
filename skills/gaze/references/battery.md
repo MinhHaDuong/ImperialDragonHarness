@@ -177,7 +177,9 @@ Wait for all spawned agents to complete. Collect their structured outputs.
 panel findings, and the coder acts on them (`skills/merge/SKILL.md`
 § Before merging).
 
-**When it runs.** A pass is a `simplify: <n> on <sha>` result line. Round 1:
+**When it runs.** The brief decides: `simplify: no` logs `simplify: skipped
+(not in brief)`, `yes` runs it; under the default brief (`auto`), the rule
+below decides. A pass is a `simplify: <n> on <sha>` result line. Round 1:
 no earlier `/gaze` result comment on the PR carries a pass. On a later round,
 run it only when the diff grew materially since the head the last pass names
 (new files or mechanisms), or when that head is no longer an ancestor (a

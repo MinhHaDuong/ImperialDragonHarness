@@ -13,8 +13,10 @@ directory: collection assumes launcher and seats share a filesystem.
 
 1. **Manifest first.** Before launching, write `<panel>/manifest.txt`, one seat
    per line as `perspective<TAB>model<TAB>family<TAB>reason`, and run
-   `python3 "$IDH_ROOT/scripts/panel-manifest-check.py" <panel>/manifest.txt`;
-   a line with an empty model, family or reason fails it. Collection checks
+   `python3 "$IDH_ROOT/scripts/panel-manifest-check.py" <panel>/manifest.txt --seats <panel_seats>`
+   (drop `--seats` only under the default brief, `panel_seats: auto`);
+   a line with an empty model, family or reason fails it, and so does a
+   perspective the brief did not ask for or a brief seat the manifest lacks. Collection checks
    against this roster: without it, "no more reports are arriving" cannot be
    told from "none were ever launched".
 2. **Launch.** Every code seat is the code-reviewer profile
@@ -32,7 +34,8 @@ directory: collection assumes launcher and seats share a filesystem.
    extend the deadline to hide a gap. A seat still missing after it is
    **missing, not clear**, recorded as § 2–4 Panel integrity says.
 
-The code perspectives, from which the orchestrator picks:
+The code perspectives, from which the brief picks (brief names in
+lower case, `red-team` and `doc-propagation` hyphenated):
 
 | Perspective | Focus | Key question |
 |---|---|---|

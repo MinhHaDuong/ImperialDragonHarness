@@ -58,16 +58,17 @@ Post a single top-level PR comment at end of skill. No interim
 ## /gaze result
 
 result: REVIEWED|FINDINGS|ESCALATE
+brief: <the brief as received, `default (...)`, or `refused — <reason>`> → ran: <adherence, then each seat that ran, `, `-joined>
 reviewed_head_sha: <full SHA read from the review tree after phase 5>
 multi_ticket: <distinct close-claim IDs> | none (non-blocking)
 adherence: PASS|FAIL — <n_blocking> blocking | skipped (--force-approve) | skipped (battery NOT-RUN)
-panel: <n_comments_posted> | skipped (adherence blocking) | skipped (--force-approve) | skipped (battery NOT-RUN)
+panel: <n_comments_posted> | skipped (not in brief) | skipped (adherence blocking) | skipped (--force-approve) | skipped (battery NOT-RUN)
 panel seats: <perspective> (<family>): clear|concerns|blocking|no report, ... — <why these> (omit if the panel did not run)
 seat times: <`seat_clock.py roster` lines, `; `-joined: each seat's wall time, `no report (timed out after <s>s)`, `no report (failed to start)` or `no report`> (omit if no seat launched)
 panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (--force-approve)
 review_groups: <group> ← <seats>, ... | one (whole diff)
-simplify: <n_findings> on <reviewed SHA> | skipped (no material growth) | skipped (adherence blocking) | skipped (prose workpackage) | skipped (--force-approve)
+simplify: <n_findings> on <reviewed SHA> | skipped (not in brief) | skipped (no material growth) | skipped (adherence blocking) | skipped (prose workpackage) | skipped (--force-approve)
 
 Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]
@@ -77,6 +78,10 @@ duration: <the `step_clock.py end` line as printed, e.g. duration: 4m12s>
 telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
 seat: <role> · runtime=<id> · family=<family> · route=<token> · model=<id as the launch reported it | not observed> · status: ran|failed|skipped
 ```
+
+The `brief:` line is the caller's check: the left side is what it asked for
+(the `brief:` line `gaze_brief.py resolve` printed), the right side what ran;
+a seat on one side and not the other is a gaze defect, not a judgement call.
 
 One `seat:` line per review seat launched or planned, retries included, at
 column 0 in exactly this shape (a role may hold spaces, never `·`, `=` or `:`): `/roar` writes the PR body's `reviewer:` lines

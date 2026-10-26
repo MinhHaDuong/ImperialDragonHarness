@@ -15,7 +15,8 @@ adversarial referee, a venue expert when the project has venue rules. The
 manifest lists one line per reviewer, its role in the perspective field.
 Seats with relevant expertise use the tools available to them (literature search, installed linters).
 
-- **AI-tells auditor, every run.** One seat holds `config/ai-tells.yml`
+- **AI-tells auditor, every default-brief run** (a caller brief runs it when
+  it names `ai-tells`). One seat holds `config/ai-tells.yml`
   (blacklisted words and phrases, density limits, patterns), scans the full
   text and reports every hit with line, context and severity; it has no other
   role, it is a lint pass. Revised passages are new surface for it, so a
