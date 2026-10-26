@@ -156,9 +156,10 @@ base's `.merge-gate.json`, and one for adherence:
   tickets-only delta run those, never the test suite.
 - `run <check>`: no reusable result, with the reason (no record, failed
   there, a non-bookkeeping path touched, declared to re-run). Run its command
-  in the gate worktree. When every declared check is `run`, write the
-  record instead (`merge-gate.py run --base origin/<base-branch> --head HEAD`)
-  so a later round, or `/merge`, finds it.
+  in the gate worktree. When every declared check is `run` (none reused,
+  none skipped), write the record instead
+  (`merge-gate.py run --base origin/<base-branch> --head HEAD`), which runs
+  the same set, so a later round or `/merge` finds it.
 - `skip <check>`: outside the tier's declared checks, or an integration
   check (declared `"integration": true`) whose `"covers"` paths the diff does
   not touch. Integration tests are out of scope by default: they run when the
