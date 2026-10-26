@@ -5,7 +5,7 @@ name: verify-gate
 description: "Anti-rubber-stamp merge gate: checks every ticket exit criterion and review comment against the diff. Emits APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR with evidence. Does not merge."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<pr-number> repo=<path> [session=<uuid>]"
+argument-hint: "<pr-number> repo=<path> [session=<uuid>] [integration]"
 context: fork
 # Foreground: its caller (raid phase 6, or the author before /merge) invokes this
 # and must parse its verdict block before
@@ -73,6 +73,8 @@ itself. Optionally:
 - The caller's bundle (preferred): `/gaze`'s returned result block
   (`reviewed_head_sha`, unresolved lists, adherence, panel integrity), with
   `{pr, ticket}`.
+- `integration`: run the declared integration checks whatever the diff
+  touches (§ Check plan). A project asks for the same through its declaration.
 
 Every invocation produces the same verdict shape. Round is always derived from PR comment
 history (see § Gate sessions), never passed by the caller.
@@ -129,6 +131,49 @@ For each review comment, the gate searches:
 
 A comment is UNRESOLVED if none of the above applies.
 
+## Check plan
+
+Before running anything, the gate prints its plan: each check it will run,
+reuse or skip, and why. The plan follows the paths the diff touches, as
+classified once in `skills/merge/SKILL.md` § Gating tiers; the gate keeps no
+path list of its own. On a gated base, from the gate worktree:
+
+```bash
+python3 "$IDH_ROOT/scripts/merge-gate.py" plan --base origin/<base-branch> --head HEAD \
+    --since <prior head> --adherence-from <reviewed_head_sha> [--integration]
+```
+
+`<prior head>` is the round-1 `ruled_tip_sha` on round 2, else
+`reviewed_head_sha`. The plan prints one line per check declared in the
+base's `.merge-gate.json`, and one for adherence:
+
+- `reuse <check>`: the check passed in the latest published gate record for
+  `<prior head>`, and the change from that record's candidate to the current
+  one, head and base alike, is empty or touches bookkeeping paths only, and
+  the declaration does not list the check under `"rerun"`. The line names the
+  source record, its head and candidate; copy it into the verdict verbatim.
+  A declaration whose `"rerun"` names only its ticket checks makes a
+  tickets-only delta run those, never the test suite.
+- `run <check>`: no reusable result, with the reason (no record, failed
+  there, a non-bookkeeping path touched, declared to re-run). Run its command
+  in the gate worktree. When every declared check is `run` (none reused,
+  none skipped), write the record instead
+  (`merge-gate.py run --base origin/<base-branch> --head HEAD`), which runs
+  the same set, so a later round or `/merge` finds it.
+- `skip <check>`: outside the tier's declared checks, or an integration
+  check (declared `"integration": true`) whose `"covers"` paths the diff does
+  not touch. Integration tests are out of scope by default: they run when the
+  diff touches what they cover, or when the caller passes `integration`.
+- `reuse adherence`: what the head adds since `reviewed_head_sha` is empty
+  or bookkeeping; the gaze adherence result stands and the verdict cites its
+  head. `run adherence`: only an adherence result on the ruled tip counts.
+
+A gate on an ungated base (the plan answers `off:`) applies the same rule by
+hand: `merge-gate.py tier --since <prior head>` answering 0 reuses the check
+results the prior verdict cites, re-running only the project's ticket check;
+otherwise the project's declared gate runs (non-negotiable 2), integration
+tests excluded unless covered or asked for.
+
 ## Review evidence
 
 Seat reports are repository files under `tickets/reviews/<base>..<head>/`, one
@@ -144,8 +189,8 @@ apply, and step 2 needs its seats.
    `python3 "$IDH_ROOT/scripts/review_evidence.py" gate --repo "$gate_tree" --base origin/<base-branch> --ticket <ticket-file> --seat <seat>` (one `--seat` per reported seat).
    Copy its `seat` lines into the verdict. A seat is `ran` (report on this head), `reused` (same patch-id,
    criteria hash and policy version, from an earlier head, which it names),
-   `stale` or `no-report`. Check, gate and adherence results are never reused:
-   they always re-run on the delivered head.
+   `stale` or `no-report`. Check, gate and adherence results are reused or
+   re-run as § Check plan says, never otherwise.
 3. **Forge reviews.** Run
    `python3 "$IDH_ROOT/scripts/review_evidence.py" forge <owner/name> <merge-request>`.
    It reads reviews, conversation comments and inline review-thread comments
@@ -213,6 +258,11 @@ scope_overflow:
   - file: <path>
     reason: "<not traceable to exit criterion>"
     suggested_disposition: TICKETED | ESCALATE
+checks:   # the § Check plan lines, each with its outcome
+  - "run <check>: pass | fail(<exit>) - <reason>"
+  - "reuse <check>: passed on record on <head> (candidate <oid>, <time>, <host>); <why>"
+  - "skip <check>: <reason>"
+  - "reuse adherence: result on <head>; <why>" | "run adherence: <reason>"
 review_evidence: legacy | {seats, forge}
   # seats: "seat <name>: ran|reused|stale|no-report (<verdict>) - <reason> <report>"
   # forge: "human: ran <login> ..." | "copilot: ran <login> ..." | "rejected <login> ... (<reason>)"
@@ -240,6 +290,8 @@ second_round_needed:   # only if REROLL
 - Any `NOT_APPLIED` must-fix simplify finding without rationale → REROLL (round 1) /
   ESCALATE (round 2).
 - Any `blocking` adherence violation → REROLL (round 1) / ESCALATE (round 2).
+- Any `run` check that fails → REROLL (round 1) / ESCALATE (round 2). A check
+  neither run nor reused nor skipped by the plan → ESCALATE.
 - Any `stale` seat → REROLL (round 1) / ESCALATE (round 2).
 - Any seat with `no-report` → ESCALATE. There is no merge with a recorded gap.
 - A seat that ran or was reused with verdict `changes` keeps its findings
@@ -315,17 +367,23 @@ The caller owns the gate session; gaze has no part in it.
   and whether or not a session id was passed. A fresh session id does not reset
   the count. Past an ESCALATE the merge decision is the author's, not another
   gate run's.
+- **What a re-gate reuses.** Round 2 plans with `--since` the round-1
+  `ruled_tip_sha`: checks and adherence are reused or re-run as § Check plan
+  says, seats as § Review evidence says. Exit criteria and review comments
+  are always ruled afresh.
 - **Caller enforcement.** The caller invokes the gate at most twice per
   session: round 1, then one re-gate after the fix. Raid never launches a
   third run and never opens a new session to escape the cap.
 - **No gate without a completed review.** Standalone or from a caller, the gate
   is not run when the PR's latest posted `## /gaze result` is ESCALATE, or when no
   gaze result was accepted for the current head (its `reviewed_head_sha` is
-  stale). The only documented caller paths past a moved head are the caller's
-  ticket-close commit on top of `reviewed_head_sha` and the round-2 re-gate of
-  the fix for a round-1 REROLL (`skills/raid/SKILL.md` § Phase 6,
-  `skills/merge/SKILL.md`). Otherwise the gate answers ESCALATE without ruling
-  the criteria, and the author decides.
+  stale). A moved head is not stale when what it adds since
+  `reviewed_head_sha` is bookkeeping or nothing:
+  `merge-gate.py tier --base origin/<base-branch> --head HEAD --since <reviewed_head_sha>`
+  answers 0 (`skills/merge/SKILL.md` § Gating tiers). The only other
+  documented caller path past a moved head is the round-2 re-gate of the fix
+  for a round-1 REROLL (`skills/raid/SKILL.md` § Phase 6). Otherwise the gate
+  answers ESCALATE without ruling the criteria, and the author decides.
   When the caller passes no gaze result, the gate reads the latest
   `## /gaze result` comment posted on the PR (the artifact raid polls) and
   applies this check to it. A refusal spends no gate round: the gate returns
@@ -357,6 +415,7 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
    reroll_bump: <exact returned note verify-reroll line; include on REROLL, omit otherwise>
    Exit criteria: <addressed>/<total>  Review: <unresolved>  Simplify: <unresolved>
    Adherence: <blocking>  Scope overflow: <files> (<ticketed>/<escalate>)
+   Checks: run:<n> reuse:<n> skip:<n> failed:<n>
    Minors: verifiable:<n> consider:<n> nofollow:<n> malformed:<n>
    Evidence: <legacy | ran:<n> reused:<n> stale:<n> no-report:<n>>
    Top reasons (if not APPROVED): <ranked list>
@@ -381,5 +440,6 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
 ## Not in scope
 
 - **Merging.** The gate does not merge; that decision belongs to the caller.
-- **Re-running tests.** The gate reads results; phase 1 of `/verify-adherence` runs them. Review runs targeted tests only; the full suite runs once, on the merge candidate (`skills/gaze/references/panel.md`, Synthesis step 4).
+- **Re-running what still holds.** The gate runs only its plan's `run` lines (§ Check plan). Review runs targeted tests only; the full declared set, integration checks included, runs on the merge candidate (`skills/gaze/references/panel.md`, Synthesis step 4).
+- **Integration testing**, unless the diff touches what it covers or the caller or project asks (§ Check plan).
 - **Acting on scope overflow.** The gate detects and reports; the caller tickets and annotates.

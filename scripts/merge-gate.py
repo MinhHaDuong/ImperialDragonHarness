@@ -32,9 +32,20 @@ bookkeeping candidate, and only the full one otherwise. `tier` reports the tier
 of a candidate, or with `--since <approved tip>` the tier of what the head adds
 to the candidate the approval saw: the one mechanical reading of the tiers.
 
+Plan (ticket 1220; the policy is skills/verify-gate/SKILL.md § Check plan):
+`plan` prints, before anything runs, one line per declared check, `run`,
+`reuse` or `skip` with its reason, and one for the adherence result. A check
+is reused from the latest published record entry for the `--since` head when
+it passed there and the change from that record's candidate to the current
+one (head and base alike) is empty, or bookkeeping and the check is not
+declared under `"rerun": {"bookkeeping": [...]}` (undeclared: every check
+re-runs). A check declared `"integration": true` is skipped unless the diff
+touches a path its `"covers"` patterns match, or `--integration` is passed.
+
 Exit codes of `check`: 0 pass, 1 fail or stale scope, 2 no record, 3 error.
 `enabled`: 0 on, 1 off, 3 error. `tier`: 0 bookkeeping (or, with --since,
-unchanged), 1 full (an empty diff included), 3 error.
+unchanged), 1 full (an empty diff included), 3 error. `plan`: 0 printed, 1
+gate off (no declared checks), 3 error.
 Any unexpected exception exits 3.
 """
 
@@ -182,7 +193,12 @@ def decide(entries, candidate, scopes):
 
 
 def is_bookkeeping(path):
-    for pattern in BOOKKEEPING:
+    return matches(path, BOOKKEEPING)
+
+
+def matches(path, patterns):
+    """`path` matches a pattern: "x/" covers the subtree, any other matches segment by segment."""
+    for pattern in patterns:
         if pattern.endswith("/"):
             if path.startswith(pattern):
                 return True
@@ -348,6 +364,22 @@ def load_config(base):
         raise GateError(
             f'invalid {CONFIG_PATH} at base: "tiers" may only map "{BOOKKEEPING_TIER}" to declared check names'
         )
+    rerun = config.get("rerun", {})
+    if not isinstance(rerun, dict) or not all(
+        key == BOOKKEEPING_TIER and isinstance(value, list) and all(n in names for n in value)
+        for key, value in rerun.items()
+    ):
+        raise GateError(
+            f'invalid {CONFIG_PATH} at base: "rerun" may only map "{BOOKKEEPING_TIER}" to declared check names'
+        )
+    for item in checks:
+        covers = item.get("covers", [])
+        if not isinstance(item.get("integration", False), bool) or not (
+            isinstance(covers, list) and all(isinstance(c, str) and c for c in covers)
+        ):
+            raise GateError(
+                f'invalid {CONFIG_PATH} at base: {item["name"]!r} needs a boolean "integration" and a list "covers"'
+            )
     return config
 
 
@@ -508,6 +540,129 @@ def cmd_tier(args):
     return PASS if tier == BOOKKEEPING_TIER else FAIL
 
 
+# ── plan: what a gate runs, reuses or skips (ticket 1220) ─────────────────────
+
+
+def prior_entry(head):
+    """Latest complete record entry, on any candidate, whose head is `head`; None without one."""
+    listing = git("notes", f"--ref={NOTES_REF}", "list", check=False).stdout.split()
+    best = None
+    for annotated in listing[1::2]:
+        for entry in parse_note(read_note(annotated)):
+            fields = dict(kv.partition("=")[::2] for kv in entry.get("revision", "").split())
+            if fields.get("head") == head and all(f in entry for f in FIELDS):
+                if best is None or entry["time"] >= best[0]["time"]:
+                    best = (entry, fields)
+    return best
+
+
+def passed(entry, name):
+    """Whether the record entry states check `name` passed."""
+    return any(line.startswith(name + " pass ") for line in entry["checks"])
+
+
+def delta_since(new, since):
+    """(tier, entries, source, entry) of what changed from the record of `since` to candidate `new`.
+
+    The record's own candidate is rebuilt from its base and head: a candidate
+    that does not rebuild to the recorded id, or a record that is absent, is
+    no source (entry None). The delta covers both a moved head and a moved base.
+    """
+    found = prior_entry(since)
+    if found is None:
+        return None, [], f"no record for {since[:12]}", None
+    entry, fields = found
+    old = fields.get("candidate", "")
+    try:
+        rebuilt = candidate(fields.get("base", ""), since)
+    except GateError:
+        rebuilt = ""
+    if not old or rebuilt != old:
+        return None, [], f"the record for {since[:12]} names a candidate that does not rebuild here", None
+    source = f"record on {since} (candidate {old}, {entry['time']}, {entry['host']})"
+    if git("rev-parse", f"{old}^{{tree}}").stdout == git("rev-parse", f"{new}^{{tree}}").stdout:
+        return "unchanged", [], source, entry
+    entries = changed_entries(old, new)
+    return tier_of(entries), entries, source, entry
+
+
+def first_paths(entries, limit=3):
+    paths = [p for p, _mode, _status in entries if not is_bookkeeping(p)] or [p for p, _m, _s in entries]
+    return ", ".join(paths[:limit]) + (" ..." if len(paths) > limit else "")
+
+
+def cmd_plan(args):
+    """Print, before anything runs, what the gate runs, reuses or skips, and why."""
+    base, head = resolve(args)
+    new = candidate(base, head)
+    diff = changed_entries(base, new)
+    tier = tier_of(diff)
+    since = rev(args.since) if args.since else ""
+    if args.since and not since:
+        raise GateError(f"cannot resolve --since '{args.since}'")
+    config = load_config(base)
+    sys.stdout.write(f"plan: tier={tier} base={base} head={head} since={since or 'none'}\n")
+    if config is None:
+        sys.stdout.write(f"off: no {CONFIG_PATH} with gate=on at base; no declared checks to plan\n")
+        return FAIL
+    if since and not args.no_fetch:
+        fetch_notes(args.remote)
+    delta_tier, delta, source, entry = (None, [], "no --since head named", None)
+    if since:
+        delta_tier, delta, source, entry = delta_since(new, since)
+    # Undeclared: a bookkeeping delta re-runs every check, as before ticket 1220.
+    rerun = set(config.get("rerun", {}).get(BOOKKEEPING_TIER, [c["name"] for c in config["checks"]]))
+    required = {c["name"] for c in effective(config, base, new)["checks"]}
+    for item in config["checks"]:
+        name = item["name"]
+        if name not in required:
+            sys.stdout.write(f"skip {name}: not in the {tier} tier's declared checks\n")
+            continue
+        if entry is not None and delta_tier in ("unchanged", BOOKKEEPING_TIER) and passed(entry, name):
+            if delta_tier == "unchanged":
+                sys.stdout.write(f"reuse {name}: passed on {source}; the candidate is unchanged since\n")
+                continue
+            if name not in rerun:
+                sys.stdout.write(f"reuse {name}: passed on {source}; the delta since touches bookkeeping only\n")
+                continue
+            reason = f"declared to re-run over a bookkeeping delta (since {source})"
+        elif entry is not None and delta_tier in ("unchanged", BOOKKEEPING_TIER):
+            reason = f"did not pass on {source}"
+        elif entry is not None:
+            reason = f"the delta since {source} touches {first_paths(delta)}"
+        else:
+            reason = source
+        if item.get("integration"):
+            touched = [p for p, _m, _s in diff if matches(p, item.get("covers", []))]
+            if args.integration:
+                reason = f"integration check, asked for with --integration; {reason}"
+            elif touched:
+                reason = f"integration check, the diff touches {', '.join(touched[:3])}; {reason}"
+            else:
+                sys.stdout.write(f"skip {name}: integration check, the diff touches nothing it covers\n")
+                continue
+        sys.stdout.write(f"run {name}: {reason} :: {' '.join(item['argv'])}\n")
+    if args.adherence_from:
+        reviewed = rev(args.adherence_from)
+        if not reviewed:
+            raise GateError(f"cannot resolve --adherence-from '{args.adherence_from}'")
+        try:
+            old = candidate(base, reviewed)
+        except GateError:
+            old = ""
+        entries = changed_entries(old, new) if old else []
+        if old and not entries:
+            sys.stdout.write(f"reuse adherence: result on {reviewed}; the candidate is unchanged since\n")
+        elif old and tier_of(entries) == BOOKKEEPING_TIER:
+            sys.stdout.write(f"reuse adherence: result on {reviewed}; the delta since is bookkeeping\n")
+        else:
+            why = f"touches {first_paths(entries)}" if old else "no longer merges cleanly into the base"
+            sys.stdout.write(f"run adherence: the delta since {reviewed[:12]} {why}\n")
+    else:
+        sys.stdout.write("run adherence: no prior adherence result named (--adherence-from)\n")
+    return PASS
+
+
 def cmd_candidate(args):
     sys.stdout.write(candidate(*resolve(args)) + "\n")
     return PASS
@@ -529,6 +684,7 @@ def parser():
         ("candidate", cmd_candidate),
         ("enabled", cmd_enabled),
         ("tier", cmd_tier),
+        ("plan", cmd_plan),
     ):
         s = sub.add_parser(name)
         s.set_defaults(func=func)
@@ -536,10 +692,15 @@ def parser():
         if name == "enabled":
             continue
         s.add_argument("--head", required=True, help="branch head ref")
-        if name in ("run", "check"):
+        if name in ("run", "check", "plan"):
             s.add_argument("--remote", default="origin", help="where refs/notes/gate lives")
         if name == "tier":
             s.add_argument("--since", help="approved tip: judge only what the head adds to it")
+        if name == "plan":
+            s.add_argument("--since", help="head whose gate record may be reused")
+            s.add_argument("--adherence-from", help="head the prior adherence result was given on")
+            s.add_argument("--integration", action="store_true", help="run integration checks whatever the diff")
+            s.add_argument("--no-fetch", action="store_true", help="read the local notes ref only")
         if name == "check":
             s.add_argument("--no-fetch", action="store_true", help="read the local notes ref only")
             s.add_argument("--local", action="store_true", help="also read --no-push records (never for a merge)")
