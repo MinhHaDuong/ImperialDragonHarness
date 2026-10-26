@@ -1,0 +1,12 @@
+merge-gate-record: v1
+result: pass
+time: 2026-10-26T21:57:29Z
+actor: runtime=not-stated · model=not-stated · effort=not-stated · user=haduong · git-name=reviewer
+host: padme
+revision: candidate=6a3152ca92904d03dc603ca7cdb8e65f6d9185df base=0b797a389e7b68032ee4d5d2176603fa4339eb12 head=96fce531439684eb52e5218a19f346ef1520ea9c
+command: merge-gate run --base origin/main --head HEAD
+scope: 1045-decision-3/bookkeeping: validate-tickets agnostic-guard pytest-guard
+versions: git git version 2.43.0 · python Python 3.11.15 · bash GNU bash, version 5.2.21(1)-release (x86_64-pc-linux-gnu) · grep grep (GNU grep) 3.11 · awk mawk 1.3.4 20240123 · make GNU Make 4.3 · uv uv 0.12.7 (x86_64-unknown-linux-gnu) · age v1.3.2 · erg-blob 7e2b4ce6a04713ffc0294a6040c414fbdbac9f09
+check: validate-tickets pass 0.1s :: tickets/erg check tickets/
+check: agnostic-guard pass 0.1s :: bash scripts/check-agnostic.sh
+check: pytest-guard pass 26.9s :: make check-tests
