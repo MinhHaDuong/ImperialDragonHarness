@@ -128,6 +128,25 @@ shows still happening. "Other" errors are a residual: do not name a cause for
 it without reading samples. Findings enter step 3 like any lever; this
 section never applies a fix.
 
+### Follies section
+
+From the same `friction.json`, report the `follies` block: a repeated mistake
+is a defect of the harness, not of one session. One row per folly
+(`pgrep_self_match`, `sleep_poll_to_cap`, `repeat_failing`): count, sessions,
+`seconds_upper_bound` and `seconds_lower_bound`, runtime split, and the rung of
+the barrier ladder it maps to (`folly_barrier`: fix the primitive, a
+per-command cap, a PreToolUse hook, an instruction last). Every figure is a
+bound: traces record no job end, so never write "hours given back" and never
+turn the bounds into a point estimate. The rung is a table, not a verdict; no
+prescription is applied here.
+
+Report `barrier_denials` as data: how often each worktree guard refused a call
+(`unattributed` = blocked, guard not identified). Do not propose keeping or
+deleting a barrier: that verdict belongs to /pulse (`rules/workflow.md`, "No
+guards on guards"). For the arena's Pi sessions, run
+`python3 "$HARNESS_DIR/scripts/trace-friction.py" --pi-runs <runs dir> --json`;
+it never prints a command text.
+
 ### Treatment follow-up section
 
 After the velocity section, report whether each past fix moved its error
