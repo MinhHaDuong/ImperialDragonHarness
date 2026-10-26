@@ -2,10 +2,13 @@
 Title: merge-gate bookkeeping tier: exclude memory files sessions read as guidance
 Created: 2026-10-26
 Author: reviewer
+Closed: folded into 1225 (author, 2026-10-26): the tier stays mechanical; memory files that steer sessions get a default review brief, not a full-tier floor
 
 --- log ---
 2026-10-26T20:51Z reviewer created
 2026-10-26T22:19Z reviewer note author: kept (2026-10-26); 1225 makes 'no review' for bookkeeping paths an overridable default, 1223 stays as the floor for the memory files that steer sessions; sequence after 1226 (same section)
+2026-10-26T22:24Z reviewer reviewer note alignment 2026-10-26 (author: yes, align): reverses the 22:19 note. A full-tier floor by path is attempt 1 again (1176: no floor, no category) and after 1226 would cost every memory-note merge the ten-minute path. Folded into 1225 as a default brief for memory/MEMORY.md and memory/topics/
+2026-10-26T22:24Z reviewer closed — folded into 1225 (author, 2026-10-26): the tier stays mechanical; memory files that steer sessions get a default review brief, not a full-tier floor
 
 --- body ---
 ## Context
