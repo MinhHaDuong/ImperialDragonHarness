@@ -45,7 +45,6 @@ from pathlib import Path
 
 LOG = logging.getLogger("merge-monitor")
 FAILED = re.compile(r"^(?:FAILED|ERROR) (\S+)", re.M)
-MAX_RUNS = 10  # tips one worker verifies before it leaves; pending ones wait for the next spawn
 MAX_CULPRIT = 20  # merges searched below the tip for the last green one
 MAX_IDS = 50
 TESTS_FAILED = 1  # pytest's exit code for failing tests; 4 and 5 mean the ids do not exist there
@@ -179,7 +178,7 @@ def verify_tip(tip, remote, directory):
             if hard:
                 try:
                     blamed = culprit(tip, hard, config, tree, deadline)
-                except Timeout as exc:  # the red result stands; only the blame is unknown
+                except (Timeout, mg.GateError, OSError) as exc:  # the red result stands; only the blame is unknown
                     LOG.error("%s: %s; red verdict without a culprit", tip[:12], exc)
                     blamed = (None, False)
         except Timeout as exc:
@@ -230,7 +229,11 @@ def cmd_spawn(args):
     directory.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile("w", dir=directory, prefix="pending.", delete=False) as staged:
         staged.write(tip + "\n")  # a staging file of its own: concurrent spawns never share one
-    os.replace(staged.name, directory / "pending")  # one slot: the latest tip wins
+    try:
+        os.replace(staged.name, directory / "pending")  # one slot: the latest tip wins
+    except OSError:
+        Path(staged.name).unlink(missing_ok=True)
+        raise
     with open(directory / "monitor.log", "a") as log:
         subprocess.Popen(
             [sys.executable, str(Path(__file__).resolve()), "work", "--remote", args.remote,
@@ -247,22 +250,19 @@ def cmd_work(args):
     directory = state_dir(args.state_dir)
     directory.mkdir(parents=True, exist_ok=True)
     os.nice(10)  # the author's host stays responsive
-    runs = 0
-    while runs < MAX_RUNS:
+    while True:  # each tip is verified once, so the loop ends when merges stop
         with open(directory / "lock", "w") as lock:
             try:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
                 return 0  # a run is in flight; it will take the pending tip
-            while runs < MAX_RUNS and (tip := take_pending(directory)):
-                runs += 1
+            while tip := take_pending(directory):
                 try:
                     verify_tip(tip, args.remote, directory)
                 except Exception as exc:  # no verdict is unverified: log, then take the next tip
                     LOG.error("%s: %s: %s; no verdict", tip[:12], type(exc).__name__, exc)
         if not (directory / "pending").exists():  # a spawn between the last take and the unlock
             return 0
-    return 0
 
 
 def cmd_verify(args):

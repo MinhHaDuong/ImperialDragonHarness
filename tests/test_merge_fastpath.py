@@ -296,7 +296,15 @@ def test_a_failing_id_with_a_control_character_still_writes_a_red_verdict(tmp_pa
     assert "result: fail" in verdict_note(work)
 
 
-def test_a_culprit_search_that_times_out_keeps_the_red_verdict(repo, monkeypatch, tmp_path):
+def load_monitor():
+    spec = importlib.util.spec_from_file_location("merge_monitor_under_test", MONITOR)
+    monitor = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(monitor)
+    return monitor
+
+
+@pytest.mark.parametrize("error", ["Timeout", "GateError"])
+def test_a_culprit_search_that_fails_keeps_the_red_verdict(repo, monkeypatch, tmp_path, error):
     merge(repo, "STATE.md", "1\n2\n3\n4\n5\n", expect=1)  # the full record is red; land it anyway
     head = git(repo, "rev-parse", "HEAD")
     git(repo, "push", "-q", "origin", f"{head}:refs/heads/main")
@@ -304,14 +312,31 @@ def test_a_culprit_search_that_times_out_keeps_the_red_verdict(repo, monkeypatch
     for key in [k for k in os.environ if k.startswith("GIT_")]:
         monkeypatch.delenv(key)
     monkeypatch.chdir(repo)
-    spec = importlib.util.spec_from_file_location("merge_monitor_under_test", MONITOR)
-    monitor = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(monitor)
+    monitor = load_monitor()
 
     def late(*_args):
-        raise monitor.Timeout("culprit search passed the deadline")
+        raise (monitor.Timeout if error == "Timeout" else monitor.mg.GateError)("culprit search failed")
 
     monkeypatch.setattr(monitor, "culprit", late)
     assert monitor.verify_tip(head, "origin", tmp_path) == monitor.RED
     note = verdict_note(repo)
     assert "result: fail" in note and "culprit: unknown" in note
+
+
+def test_a_worker_drains_every_pending_tip_however_many_merges_arrive(tmp_path, monkeypatch):
+    monitor = load_monitor()
+    seen = []
+
+    def fake_verify(tip, _remote, directory):
+        seen.append(tip)
+        if len(seen) < 15:  # a spawn lands during every run
+            (directory / "pending").write_text(f"tip{len(seen)}\n")
+        return monitor.GREEN
+
+    monkeypatch.setattr(monitor, "verify_tip", fake_verify)
+    monkeypatch.setattr(monitor.os, "nice", lambda _n: 0)
+    (tmp_path / "pending").write_text("tip0\n")
+    args = monitor.parser().parse_args(["work", "--state-dir", str(tmp_path)])
+    assert monitor.cmd_work(args) == 0
+    assert seen == [f"tip{n}" for n in range(15)]
+    assert not (tmp_path / "pending").exists()

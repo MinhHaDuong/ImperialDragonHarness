@@ -94,6 +94,7 @@ VERDICT_FIELDS = ("result", "time", "host", "revision", "scope")
 VERDICT_EXTRAS = ("failed-first-run", "flaky", "culprit")
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 NOT_STATED = "not-stated"
+GIT_TIMEOUT = 300  # seconds; a hung fetch or push must not hold the monitor's lock for ever
 CLOCK_SKEW = 300  # seconds a verdict may sit ahead of this host's clock
 PASS, FAIL, MISSING, ERROR = 0, 1, 2, 3
 # Bookkeeping paths, the one home of the list (ticket 1221). A pattern ending
@@ -124,7 +125,10 @@ def toplevel(cwd):
 
 def git(*args, check=True, env=None):
     root = toplevel(os.getcwd())
-    proc = subprocess.run(["git", *args], capture_output=True, text=True, env=env, cwd=root)
+    try:
+        proc = subprocess.run(["git", *args], capture_output=True, text=True, env=env, cwd=root, timeout=GIT_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        raise GateError(f"git {' '.join(args)}: no answer within {GIT_TIMEOUT}s") from None
     if check and proc.returncode:
         raise GateError(f"git {' '.join(args)}: {proc.stderr.strip()}")
     return proc
