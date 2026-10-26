@@ -90,9 +90,10 @@ candidates came from `erg ready`, which already applies the skip filter. That
 caller no longer exists, so there is none today — and any future one that synthesizes IDs some other way needs its own
 screen before it reaches this carve-out.
 
-If EVERY discovered ticket is skip-labelled, the run returns those batched
-decision lists rather than an empty-run report. One question round the author
-can answer in a single pass is the deliverable.
+If EVERY discovered ticket is skip-labelled, the run ends with that wrap-up
+briefing (each ticket and the decisions it waits on) rather than an
+empty-run report. One question round the author can answer in a single pass
+is the deliverable.
 
 Apply the monster-ticket checklist (`rules/workflow.md` § Autonomous action) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
 
