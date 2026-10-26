@@ -2,10 +2,13 @@
 Title: Reconsider ticket 0976: guards deleted for zero firings that were never wired live or never tested against their overlap
 Created: 2026-10-26
 Author: claude
+Closed: routed: pgrep to 1216, guard judgments and deletion rule to /pulse (advisor verdict, night mode)
 
 --- log ---
 2026-10-26T09:35Z claude created
 2026-10-26T22:42Z reviewer raid 1214-1218 Imagine: returned to author. Premise partly expired: since 0887 (2026-10-05) plugin hooks.json is the only hook source, so committed = live for Claude Code; one PreToolUse guard ships (guard-destructive-bash.sh), wired in CC/Codex/Pi with tests/test_guard_adapter_wiring.py and live smoke in adapters/pilot-support.json. EC2 (restore/keep/replace) and EC5 (live test per guard per runtime) are guard management, /pulse only. Survives: read-only evidence note splitting the 6,206 September refusals by EnterWorktree vs plain git worktree add; pgrep row moves to 1216; deletion rule as one line in skills/pulse/references with author sign-off.
+2026-10-26T22:56Z reviewer closed on the advisor's verdict (fable, night mode, author directive 2026-10-26: escalations go to Fable to finish). Routing: pgrep row to 1216 (projected wrapper); guard classification, live-wiring tests and the deletion rule ('never wired is a repair, not a deletion') to the next /pulse visit, with author sign-off; the worktree-refusal split is not spent unprompted (only useful if someone proposes restoring worktree guards).
+2026-10-26T22:56Z reviewer closed — routed: pgrep to 1216, guard judgments and deletion rule to /pulse (advisor verdict, night mode)
 
 --- body ---
 ## Context
