@@ -122,10 +122,11 @@ ESCALATE_STOP = (
     "the gate is not run: the review never completed, and the PR goes to the author."
 )
 SCOPE = (
-    "The comparison is made on the reviewed head, before the raid adds its "
-    "ticket-close commit or the fix for a gate's round-1 REROLL; those two do not "
-    "void the result (the round-2 re-gate rules the fix). A FINDINGS fix does: it "
-    "moves the head past what gaze reviewed, so gaze runs again on the new head."
+    "Stale means the tip adds more than a bookkeeping delta to `reviewed_head_sha` "
+    "(`skills/merge/SKILL.md` § Gating tiers), judged before the raid adds the fix "
+    "for a gate's round-1 REROLL, which does not void the result (the round-2 "
+    "re-gate rules the fix). A FINDINGS fix does: it moves the head past what gaze "
+    "reviewed, so gaze runs again on the new head."
 )
 GATE_RUN = "Only on a gaze result of REVIEWED run `/verify-gate <pr-number>"
 
