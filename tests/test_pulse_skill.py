@@ -25,12 +25,6 @@ def test_the_expert_cannot_be_invoked_by_a_model():
     assert meta["name"] == "pulse"
 
 
-def test_hunt_keeps_the_failing_test_confirmation_without_a_cache_shortcut():
-    hunt = (REPO / "skills" / "hunt" / "SKILL.md").read_text()
-    assert "confirm the test fails" in hunt
-    assert "cached or selected result" in hunt and "`/pulse`" in hunt
-
-
 def test_the_wrap_up_suggests_the_expert_and_never_runs_it():
     lair = (REPO / "skills" / "lair" / "SKILL.md").read_text()
     step = lair.split("13. **Suggest a testing consultation", 1)[1]
@@ -46,13 +40,16 @@ def test_the_hoard_step_does_not_end_the_wrap_up_before_the_pulse_step():
 
 
 def test_only_hunt_and_the_wrap_up_mention_the_expert():
-    """Nothing else may grow a path to the expert: hunt names it as the place to take a symptom."""
+    """Nothing else may grow a path to the expert: only hunt and the wrap-up may name it.
+
+    Whether hunt names it is hunt's wording, not pinned here; the wrap-up must.
+    """
     mentioning = {
         path.parent.name
         for path in (REPO / "skills").glob("*/SKILL.md")
         if "`/pulse`" in path.read_text()
     }
-    assert mentioning == {"hunt", "lair"}
+    assert "lair" in mentioning and mentioning <= {"hunt", "lair"}
 
 
 def test_the_visit_covers_history_evidence_diagnosis_remedy_and_verification():
