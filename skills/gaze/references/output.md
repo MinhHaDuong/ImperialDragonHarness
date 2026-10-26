@@ -56,7 +56,7 @@ seat times: <`seat_clock.py roster` lines, `; `-joined: each seat's wall time, `
 panel integrity: COMPLETE|DEGRADED — <PANEL-INTEGRITY: line if degraded>
 battery: ran | NOT-RUN — cause: <guard|no-agent-tool|depth> | skipped (--force-approve)
 review_groups: <group> ← <seats>, ... | one (whole diff)
-simplify: <n_findings> on <reviewed SHA> | skipped (no material growth) | skipped (adherence blocking) | skipped (prose workpackage) | skipped (--force-approve)
+simplify: <n_findings> on <reviewed SHA> | skipped (no material growth since <sha>) | skipped (adherence blocking) | skipped (prose workpackage) | skipped (--force-approve)
 
 Unresolved review comments: [list or "none"]
 Unresolved simplify: [list or "none"]

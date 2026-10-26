@@ -184,9 +184,11 @@ panel findings, and the coder acts on them (`skills/merge/SKILL.md`
 SHA. Round 1: no earlier `/gaze` result comment on the PR carries a pass. On a
 later round, run it only when the diff grew materially since the head the last
 pass names (new files or new mechanisms, not the fixes to earlier findings);
-otherwise log `simplify: skipped (no material growth)` and carry that pass's
-`Unresolved simplify:` list forward unchanged, each entry marked
-`(from <sha>)`, so the gate still sees the round-1 must-fixes.
+otherwise log `simplify: skipped (no material growth since <sha>)` and carry
+that pass's `Unresolved simplify:` list forward unchanged, each entry marked
+`(from <sha>)`, so the gate still sees the round-1 must-fixes. A fresh later
+pass gets that list too and re-reports only the entries the head has not fixed
+and no disposition comment answers.
 
 **Prose-skip:** when the diff routed prose (the same
 `"$IDH_ROOT/scripts/prose_predicate.py"` verdict the phase 2–4 panel choice used), skip
@@ -221,7 +223,9 @@ triggers the existing breaker.
 Feed all findings (or the evidenced CLEAN result) and the reviewed SHA into
 the result as `unresolved_simplify_findings`. A must-fix is resolved by a
 coder fix on a later head or a justified disposition in a PR comment, which
-`/verify-gate` rule 4 checks.
+`/verify-gate` rule 4 checks. Gaze does not judge that resolution: an entry
+carried forward `(from <sha>)` is passed to the gate and does not by itself
+make the result FINDINGS.
 
 ### External reviewer panel (optional, beside phases 2–4)
 

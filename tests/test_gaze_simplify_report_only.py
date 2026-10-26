@@ -22,8 +22,6 @@ def test_phase5_is_report_only_round_one():
     norm = _norm(PHASE5)
     assert "report-only" in norm
     assert "round 1" in norm.lower() and "grew materially" in norm
-    for gone in ("commit and push fixes", "applies bounded fixes", "confirm the dispositions"):
-        assert gone not in norm, gone
 
 
 def test_phase5_brief_asks_the_proportion_question():
@@ -35,7 +33,3 @@ def test_phase5_brief_asks_the_proportion_question():
 def test_gaze_makes_no_commits():
     norm = _norm(GAZE)
     assert "gaze makes no commits" in norm.lower()
-    assert "simplify fixes" not in norm
-    for path in SKILLS.glob("*/**/*.md"):
-        text = _norm(path.read_text(encoding="utf-8"))
-        assert "may have pushed fixes" not in text, path

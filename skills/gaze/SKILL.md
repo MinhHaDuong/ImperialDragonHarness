@@ -162,8 +162,9 @@ multi_ticket: <distinct close-claim IDs> | none
   nothing was reviewed (§ `--force-approve`). So is a DEGRADED panel (below).
   The review did not complete.
 - `FINDINGS`: any blocking adherence violation, any `blocking` seat
-  verdict, any unresolved `verifiable:` minor, any unresolved simplify
-  must-fix, an unread review group (§ 2–5). List them.
+  verdict, any unresolved `verifiable:` minor, any simplify must-fix
+  from this run's pass (a carried-forward entry goes to the gate, battery § 5),
+  an unread review group (§ 2–5). List them.
 - `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still
   checks every exit criterion and review comment against the diff.
 - `panel_integrity: DEGRADED` (the review panel did not launch, or a selected
