@@ -1,0 +1,41 @@
+%erg 0.1
+Title: Gaze executes the caller's review brief; the orchestrator decides how much review
+Created: 2026-10-26
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-26T21:57Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Author directive, 2026-10-26: the orchestrator decides how much review a change
+needs; gaze executes that decision. This is the third attempt, and the ticket
+records why the second did not take.
+
+Attempt 1 (tracker [[1100]], children 1142, 1154): hunt owns a proportionate
+review plan with a risk floor; gaze executes it. Attempt 2 (note of 2026-10-21,
+ticket 1176): "trust the orchestrator, no floor, no category" deleted the floor
+and superseded the child that had gaze execute a plan, leaving "the gaze
+controller chooses seats and depth". That moved the decision inside gaze. The
+caller, which knows the diff size, the risk, what was already reviewed and what
+changed since, has no way to say anything: gaze's input is
+`<pr-number> [--force-approve <reason>]` and nothing else, so it defaults to
+its full panel.
+
+Incident (2026-10-26): PR 1667, a three-line addition and fifteen-line deletion
+of one paragraph of `skills/gaze/SKILL.md` the author had already agreed to, got
+a five-seat panel, then a gate, and took about ten minutes to land.
+
+Related: [[1100]], [[1219]] (gaze prescribes no caller behaviour), [[1221]]
+(proportional merge gating), [[1224]] (print durations).
+
+## Exit criteria
+
+- [ ] `/gaze` accepts a caller brief next to the PR number: which perspectives to run (including none beyond mechanical adherence) and the scope to review (the whole diff, or a commit range or path list); it runs exactly that, with no seat added and no seat dropped on its own.
+- [ ] The result comment states the brief it received and what ran against it, so the caller sees one line to compare; a brief gaze cannot honour (unknown seat, scope outside the diff) is refused with a reason, never silently widened.
+- [ ] Gaze keeps a default brief only for a caller that sends none (an interactive author running `/gaze <pr>`); `/raid`, `/hunt` and `/merge` each say where the brief is decided (the orchestrator) and point to one place that tells how to size it.
+- [ ] The sizing guidance lives in one home, as judgement for the orchestrator and not a mechanical floor or category (attempts 1 and 2 are not repeated), with at least the worked cases: one-paragraph prose deletion, rebase or merge of main only, fix of listed findings, large multi-file change.
+- [ ] A regression test shows gaze run with a one-seat brief launches one seat, and with a scope brief reviews only that range.
+- [ ] The harness gate (`.merge-gate.json` checks) passes.
+
