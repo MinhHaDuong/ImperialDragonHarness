@@ -13,6 +13,7 @@ Closed: autoclosed — PR #1682
 2026-10-26T22:57Z reviewer author exit criterion (2026-10-26, said to the orchestrator): the pgrep/pkill wrapper must be checked on idh install and idh check: projected pgrep/pkill resolve first on PATH to the wrapper, the wrapper reaches the real binary without recursion, and on procps-ng >= 4.0 a positive control shows -A excludes the caller; older procps reports pass-through, not failure.
 2026-10-26T23:00Z reviewer reviewer coder wrapper scripts/self-safe-pgrep.sh projected as ~/.local/bin/{pgrep,pkill} for claude, codex, pi; idh install and idh check probe it (PATH order, no recursion via --version, -A positive control on procps-ng >= 4.0, pass-through note below). Probe lives in validate-projections.py probe_wrapper, called from lifecycle only (not check_entry), so a runtime launch spawns nothing. Rule lines added in rules/coding-bash.md. Codex/Pi get the wrapper but not the rule line.
 2026-10-26T23:14Z reviewer closed — autoclosed — PR #1682
+2026-10-26T23:19Z reviewer verify-reroll — round 1: merge-gate checks fail on the candidate (pipefail-guard on scripts/self-safe-pgrep.sh; pytest test_mammoth_audit: idh install exits 1 with SHADOWED); fixed: wrapper exempted with reason, SHADOWED made advisory
 
 --- body ---
 ## Context
