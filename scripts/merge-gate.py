@@ -159,12 +159,11 @@ def scope_line(config):
     return f"{config['scope']}: " + " ".join(c["name"] for c in config["checks"])
 
 
-def decide(entries, candidate, scope):
+def decide(entries, candidate, scopes):
     """Latest entry naming this candidate decides. Returns (code, reason).
 
-    `scope` is one accepted scope line or a tuple of them.
+    `scopes` is the tuple of accepted scope lines (accepted_scopes).
     """
-    scopes = (scope,) if isinstance(scope, str) else tuple(scope)
     mine = [e for e in entries if f"candidate={candidate} " in e.get("revision", "") + " "]
     if not mine:
         return MISSING, "missing: no record on candidate " + candidate
