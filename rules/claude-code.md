@@ -28,8 +28,8 @@ inherit it: review seats cannot reach their review tree.
 `{pid}` is `$PPID`, as in hunt's Worktree step, so two sessions on one ticket
 land in distinct paths. Legacy bare `t{N}` names remain valid.
 
-**`/hunt N`: do not create a worktree before the skill runs** — a pre-emptive
-`t{N}-*` worktree makes its ownership check skip the triage.
+**`/hunt N`: do not create a worktree before the skill runs** — its detached
+agent creates its own, orphaning yours.
 
 Open with the phase label heading one self-presentation line, in the
 conversation's language, then answer:
