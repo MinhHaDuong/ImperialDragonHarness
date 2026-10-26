@@ -2,9 +2,11 @@
 Title: worktree-exit-preflight: count ignored files before roar removes a worktree
 Created: 2026-10-23
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1656
 
 --- log ---
 2026-10-23T18:41Z Minh Ha-Duong created
+2026-10-26T16:44Z reviewer closed — autoclosed — PR #1656
 
 --- body ---
 ## Context
