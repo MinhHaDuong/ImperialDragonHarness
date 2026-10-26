@@ -8,6 +8,7 @@ Author: Minh Ha-Duong
 2026-10-26T22:24Z reviewer reviewer note alignment 2026-10-26: blocked by 1224 (criterion 1 prints its duration line); lands before 1225, which edits the same § Gating tiers
 2026-10-26T22:56Z reviewer note blocker 1224 closed — Blocked-by removed.
 2026-10-26T23:06Z reviewer criterion 1 measured 2026-10-27 on padme, scratch clone with a real monitor green verdict on b43ac98a: fast-path record (validate-tickets + agnostic-guard) 1.0 s vs 33-35 s full tier; check 0.08 s; fastpath state 0.08 s; each forge read 0.42-0.51 s; fetch 0.42 s; monitor spawn 0.06 s. Merge call not measurable before landing (fast path closed on real main until the monitor writes a verdict). Derived end-to-end with record pre-written and ticket already closed: about 2.6 s local+reads plus the merge call; 6 s holds only if the merge call stays under about 3.4 s (ticket context: merge call + read-back about 4 s). Decision (night mode): criterion kept as written, to be confirmed by the first real fast-path merge's duration line; alternative considered: fold steps 0/3/5 forge reads into one, deferred as a recipe change outside this ticket.
+2026-10-26T23:06Z reviewer correction to the previous entry's arithmetic: pr view 0.45 + fetch 0.42 + re-read 0.45 + head checks 0.05 + enabled 0.05 + check 0.08 + auto-merge read 0.45 + read-back 0.45 + sync with fetch about 0.45 + spawn 0.06 = 2.9 s (derived), so the merge call must stay under about 3.1 s for 6 s end to end
 
 --- body ---
 ## Context
