@@ -1,0 +1,51 @@
+%erg 0.1
+Title: merge-gate bookkeeping tier: exclude memory files sessions read as guidance
+Created: 2026-10-26
+Author: reviewer
+
+--- log ---
+2026-10-26T20:51Z reviewer created
+
+--- body ---
+## Context
+
+`scripts/merge-gate.py:81` classes a merge request as bookkeeping when it only
+touches `tickets/*.erg`, `tickets/closed/*.erg`, `STATE.md` or `memory/`. A
+bookkeeping request gets mechanical checks only: no gaze, no verify-gate, no
+review seat (`skills/merge/SKILL.md` § Gating tiers). The tiering is a path
+match, which is the safe part: no model judges it.
+
+The hole is what the list holds. `AGENTS.md:21` has every session read
+`memory/MEMORY.md` at task start, and `memory/topics/` carries the notes it
+points to. An agent that rewrites one changes later sessions' behaviour, and
+the change merges unreviewed. The threat is agent error in a single-author
+repo, not an outside attacker.
+
+Ticket bodies have the same shape (a rewritten exit criterion merges
+unreviewed, then a hunt executes it), but no path can separate a body edit
+from a log line; that needs a content-aware tier and is left out unless it is
+observed (Option C in the hunt-simplification session, 2026-10-26).
+
+## What to do
+
+Remove `memory/MEMORY.md` and `memory/topics/` from bookkeeping; keep
+`memory/journal/`, `memory/evidence/` and the rest of `memory/` as records.
+Update the path list in `skills/merge/SKILL.md` § Gating tiers to match.
+
+## Relevant files
+
+- `scripts/merge-gate.py` (`BOOKKEEPING`)
+- `skills/merge/SKILL.md` § Gating tiers
+- the merge-gate tier tests under `tests/`
+
+## Test
+
+`merge-gate.py tier` answers 1 (full) for a diff touching only
+`memory/MEMORY.md`, 1 for one under `memory/topics/`, and still 0 for one under
+`memory/journal/`.
+
+## Exit criteria
+
+- A diff touching `memory/MEMORY.md` or `memory/topics/` reads full tier.
+- Journal and evidence edits still read bookkeeping.
+- `skills/merge/SKILL.md` § Gating tiers lists the same paths as the script.
