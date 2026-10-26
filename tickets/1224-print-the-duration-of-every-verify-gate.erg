@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-10-26T21:48Z Minh Ha-Duong created
+2026-10-26T22:24Z reviewer reviewer note alignment 2026-10-26: first of the wave; 1226 and 1197 block on it; criterion added: subsumes 1184's raid measurement
 
 --- body ---
 ## Context
@@ -31,5 +32,6 @@ proportional to the diff).
 - [ ] Each review seat inside `/gaze` (and each seat of `/verify-gate`, if any) prints its own duration, so the slowest seat is visible without reading transcripts.
 - [ ] `/raid`'s wrap-up briefing prints one table per merge request: gaze, each gate round, merge, and the total from first gaze to MERGED, and names the slowest step.
 - [ ] A regression test runs a stubbed step and asserts the duration line is present, well formed and measured (a stub that sleeps a known interval reads back at least that interval).
+- [ ] Ticket 1184 (measure one raid by phase) is closed when the raid table above has been printed for one real raid; this ticket subsumes its measurement.
 - [ ] The harness gate (`.merge-gate.json` checks) passes.
 

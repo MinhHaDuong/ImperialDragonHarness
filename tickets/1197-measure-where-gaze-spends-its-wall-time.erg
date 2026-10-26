@@ -1,10 +1,12 @@
 %erg 0.1
 Title: Measure where gaze spends its wall time
 Created: 2026-10-21
+Blocked-by: 1224
 Author: reviewer
 
 --- log ---
 2026-10-21T20:20Z reviewer created
+2026-10-26T22:24Z reviewer reviewer note alignment 2026-10-26: blocked by 1224, which builds the per-seat clock criterion 1 needs; runs in parallel with 1226. Note the 1225 diagnosis (five-seat panel) differs from this ticket's (idle poll gaps, ticket 1216); 1224 settles which dominates
 
 --- body ---
 ## Context
