@@ -48,6 +48,12 @@ salvage the worktree (above), then kill, split or relaunch with narrower scope.
 A WIP push after the red test improves salvage but does not exempt the later
 gate from this check. Bump reason: `agent timeout` or `gate timeout`.
 
+To be woken instead of polling, run `python3 "$IDH_ROOT/scripts/raid-breaker.py" --wait --deadline <s>
+--worktree <path> --gate-max-seconds <s>` as a background command: it exits 1 once on `STALL` or `GATE_TIMEOUT`, never kills
+(Claude Code only; decision record in ticket 1214). <!-- harness-extension-point -->
+The window starts at launch. A poll whose git fails or exceeds 5 s is skipped, not counted as
+silence; a worktree whose git never answers is never woken on, only the deadline ends the wait.
+
 **Ping-pong detector**: If two agents edit the same file on the
 same branch, STOP. Reset to last known-good commit, relaunch ONE agent.
 Bump reason: `ping-pong on {file}`.

@@ -25,6 +25,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    `skills/route/references/decorrelation.md` ("The launch line").
     - With `inline` (the detached agent, a raid, a headless run, or the author co-working),
    go on in the current context.
+   A launcher that wants a wake on silence runs `python3 "$IDH_ROOT/scripts/raid-breaker.py" --wait` in the background (Claude Code only; flags in `skills/raid/references/circuit-breakers.md`, ticket 1214). <!-- harness-extension-point -->
 2. **Read.** Read ticket `$ID` (from git-erg `tickets/` directory or forge).
 3. **Triage.** Check the ticket's **Exit criteria** section.
    - Judgment needed — criteria unclear, a `Label: needs-human` header, criteria
