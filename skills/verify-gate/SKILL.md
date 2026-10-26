@@ -53,8 +53,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    UNRESOLVED. No "I'll get to it later."
 4. **Simplify findings are load-bearing.** Every must-fix from Gaze’s report-only simplify
    phase is either fixed by the coder (diff shows the change) or explicitly justified in a
-   PR comment that the gate agent validates. Read the `Unresolved simplify:` line of the latest
-   `## /gaze result` comment; a round that skipped simplify carries the earlier list forward.
+   PR comment that the gate agent validates. Read the `Unresolved simplify:` line of every
+   `## /gaze result` comment on the PR: a later round may have skipped simplify.
 5. **Adherence violations are blocking.** Any `blocking` entry from `/verify-adherence`
    is a REROLL trigger.
 6. **Two rounds max.** Round 1 is initial gate. Round 2 is post-fix re-gate. Round 3 is
