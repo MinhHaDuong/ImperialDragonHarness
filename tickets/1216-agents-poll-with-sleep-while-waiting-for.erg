@@ -6,6 +6,7 @@ Author: claude
 --- log ---
 2026-10-25T06:26Z claude created
 2026-10-25T06:28Z reviewer claude note Evidence from arena leg 1372-f1m (cycle 4, 2026-10-24), Pi session read call by call: 2 668 s of sleep in 11 waits. Two were pgrep waiters of the 0889 shape and ran to their iteration cap: 'for i in 1..20; pgrep -f "dvc pull"; sleep 15' lasted 301 s although dvc pull had finished within 30 s, and 'for i in 1..30; pgrep -f check1372.sh; sleep 20' lasted 601 s although the third gate run (wall 272 s) was long done: the waiting shell matches its own command line, so the loop never sees the job end. That is 902 s, 34% of the sleep. The other nine waits were fixed sleeps (5 to 420 s) set without knowing the job length; e.g. sleep 420 on a 276 s gate run. Nothing ended the long waits except the loop cap or the timer.
+2026-10-26T09:36Z reviewer claude note Fresh evidence after the 0889 guard was deleted: a self-wait and a self-kill in one arena session on 2026-10-26, plus a near miss on a wide pkill pattern. Note with the root cause, the hook-cost facts for all three runtimes (a PreToolUse(Bash) hook is already paid for in Claude Code, Codex and Pi, about 33 ms per call, derived from 5 calls) and a three-layer defense in depth (instruction, semantic guard in the existing bash guard, watchdog): docs/2026-10-26-self-matching-process-patterns-evidence.md. Related: ticket 1218 reconsiders the 0976 deletions.
 
 --- body ---
 ## Context
