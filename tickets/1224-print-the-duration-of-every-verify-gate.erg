@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Print the duration of every verify-gate, gaze, review and merge
+Created: 2026-10-26
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-26T21:48Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Author directive, 2026-10-26: print the duration of every verify-gate, gaze,
+review and merge.
+
+Incident (this session, 2026-10-26): landing PR 1667, a three-line addition and
+fifteen-line deletion of one paragraph of `skills/gaze/SKILL.md` that the
+author had already agreed to, took about ten minutes. Nobody can say where the
+time went: gaze writes `wall=na tokens=na` into its telemetry line, the gate
+prints no duration, and a merge prints none either. Only the harness's own task
+notifications carry a figure (the 1667 gaze fork: 153 s), and only after the
+fact. The cost of the review path is therefore argued, not measured.
+
+Related: [[1197]] (measure where gaze spends its wall time), [[1184]] (measure
+one raid by phase against the 20-minute review budget), [[1221]] (merge gating
+proportional to the diff).
+
+## Exit criteria
+
+- [ ] `/gaze`, `/verify-gate` and `/merge` each end by printing their own wall-clock duration on one stable line (for example `duration: 4m12s`), in the returned result and in the comment they post on the merge request; `wall=na` is replaced by the measured value.
+- [ ] A duration comes from a clock read at the start and at the end of the step, never from the model's estimate; a step that cannot read a clock prints `duration: not measured`, not a guess.
+- [ ] Each review seat inside `/gaze` (and each seat of `/verify-gate`, if any) prints its own duration, so the slowest seat is visible without reading transcripts.
+- [ ] `/raid`'s wrap-up briefing prints one table per merge request: gaze, each gate round, merge, and the total from first gaze to MERGED, and names the slowest step.
+- [ ] A regression test runs a stubbed step and asserts the duration line is present, well formed and measured (a stub that sleeps a known interval reads back at least that interval).
+- [ ] The harness gate (`.merge-gate.json` checks) passes.
+
