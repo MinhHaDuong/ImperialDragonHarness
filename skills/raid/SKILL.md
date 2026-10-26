@@ -259,9 +259,14 @@ Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence 
 bookkeeping-tier merge request skips `/gaze` and `/verify-gate` and goes to
 Phase 7 on its mechanical checks. Everything below is the full tier.
 
-**Per-ticket:** run `/gaze` on every merge request, then `/verify-gate` on the
-head it reviewed. Gaze reviews and never returns APPROVED; the gate rules
-APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR. The orchestrator itself
+**Per-ticket:** ensure a REVIEWED `/gaze` record on the branch tip, then run
+`/verify-gate` on the head it reviewed. Hunt's Review step already ran gaze and
+fixed its findings, so the raid reads that record first and re-runs `/gaze`
+only when it is missing, ESCALATE, or stale against the tip
+(`skills/merge/SKILL.md` § Gating tiers); a second review of a head gaze
+already reviewed buys nothing and costs a full gaze run. Gaze reviews and
+never returns APPROVED; the gate rules APPROVED / REROLL / ESCALATE /
+NEEDS-AUTHOR. The orchestrator itself
 runs them inline, one per PR (an inline run is serial; only the detached shape
 below adds concurrency, and disjoint-file PRs may run concurrently through
 it). Verify file-sharing PRs sequentially to avoid concurrent-fix collisions.
