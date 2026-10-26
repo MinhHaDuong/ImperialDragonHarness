@@ -1,0 +1,31 @@
+%erg 0.1
+Title: verify-gate reuses prior results and scopes checks to the diff
+Created: 2026-10-26
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-26T16:30Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Author directive, 2026-10-26:
+- verify-gate MUST reuse previous check, gate and adherence results;
+- the checks it runs reflect what the diff touches, and it states what it tests and why before running them;
+- integration testing is out of scope by default.
+
+Today `skills/verify-gate/SKILL.md:147` says "Check, gate and adherence
+results are never reused", so every round re-runs everything whatever the diff
+touched. Incident: JETP-observer PR #240 (tickets/ and STATE.md only) re-ran
+the full fast suite on every pushed head for a one-line ticket-log fix.
+
+Related: [[1100]] (reuse/invalidation tied to revisions and affected scope),
+[[1219]], [[1221]].
+
+## Exit criteria
+
+- [ ] verify-gate reuses a prior check, gate or adherence result when its recorded head or base is unaffected by the diff since then, and records each reuse with the result's source and head; the "never reused" rule is gone.
+- [ ] Before running anything, the gate prints a plan: each check it will run or reuse, and why, derived from the paths the diff touches (for example: tickets/ only → `erg check`, no test suite).
+- [ ] Integration tests are out of scope by default; a gate runs them only when the diff touches what they cover, or when the caller or project explicitly asks for them, and says which.
+- [ ] A regression covers (a) a ticket-only diff that reuses a prior green result and runs only the ticket check, and (b) a code diff that invalidates the reuse.
+- [ ] The harness gate (`.merge-gate.json` checks) passes.

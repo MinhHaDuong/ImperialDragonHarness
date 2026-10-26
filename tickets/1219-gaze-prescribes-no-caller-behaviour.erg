@@ -1,0 +1,31 @@
+%erg 0.1
+Title: gaze prescribes no caller behaviour
+Created: 2026-10-26
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-26T16:30Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Author directive, 2026-10-26: gaze must not prescribe any caller behaviour;
+it does the review it is asked for, period.
+
+Incident (JETP-observer PR #240, 2026-10-26): a tickets-and-STATE-only PR took
+three full gaze rounds and ~22 minutes to land a one-line ticket-log
+correction, because `skills/gaze/SKILL.md:161` tells the caller "FINDINGS →
+the caller fixes them and re-runs /gaze on the new head: a head gaze did not
+review is never gated", and prescribes ticket closing and the /verify-gate
+call. Caller policy lives in the callers (/merge, /raid, /hunt), not in the
+reviewer.
+
+Related: [[1100]] (review orchestration, reuse/invalidation decisions),
+[[1213]] (simplify report-only), [[1220]], [[1221]].
+
+## Exit criteria
+
+- [ ] `skills/gaze/SKILL.md` and its references state only what gaze reviews, how, and what it returns (verdict, findings, reviewed head); no `next:` line or sentence tells the caller what to do afterwards (re-run, close tickets, gate, merge).
+- [ ] Each rule removed from gaze that callers still need is kept, worded as the caller's own policy, in the caller that applies it (/merge, /raid or /hunt) — or dropped with the author's agreement; the PR lists each removed sentence and its destination.
+- [ ] `rg -n "the caller" skills/gaze/` returns no prescription (descriptions of the input contract remain allowed).
+- [ ] The harness gate (`.merge-gate.json` checks) passes.
