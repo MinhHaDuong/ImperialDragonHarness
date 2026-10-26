@@ -1,0 +1,105 @@
+%erg 0.1
+Title: Autotune the test suite's parallelism to the host's cores
+Created: 2026-10-25
+Author: claude
+Closed: autoclosed — PR #1659
+
+--- log ---
+2026-10-25T06:26Z claude created
+2026-10-26T17:32Z reviewer coder: measurements, rule and audit extension recorded; doudou sweep incomplete (host unreachable)
+2026-10-26T18:36Z reviewer note verify-reroll — round 1: exit criterion 1 (doudou 4-core sweep, three trials) MISSING
+2026-10-26T18:36Z reviewer closed — autoclosed — PR #1659
+
+--- body ---
+## Context
+
+The full test gate hard-codes its parallelism, and the hosts differ: doudou has 4 cores, padme has 32.
+
+Read in the repo: `pyproject.toml` pins `pytest-xdist` with a comment that `-n 4` measured 81 s to 38.6 s (ticket 1011);
+the `Makefile` target `check-tests` uses `-n 8` (46.9 s at `-n 4` to 33.8 s at `-n 8`, three trials, load 7 to 9 on padme);
+CI keeps its own `-n 4` and says the forge runner's cores were not measured; `check-fast` and `lint` stay serial. The fall-back
+to serial when xdist is missing is already in the Makefile.
+
+`-n 8` on a 4-core host oversubscribes; `-n 8` on a 32-core host leaves most cores idle (derived from the figures above, not
+measured at other values). `-n auto` counts logical CPUs (64 on padme), which is also unmeasured here.
+
+Related, from the arena (ticket 1094): on padme, test time was 30 to 66 % of an agent leg's wall-clock, and the 3975WX
+(32 cores) is not faster than the 3945WX it replaced on a single core, so test time is where parallelism matters most.
+The agent legs run in other repositories, so this ticket concerns the IDH suite and the pattern, not the arena's targets.
+
+## Design
+
+Compute `-n` from the number of physical cores with a floor and a cap and an environment override, in one place that the
+Makefile (and CI, if it can read it) share. The rule is chosen from measurements on both hosts, not from this text.
+
+## Exit criteria
+
+- [x] Measured wall-clock of the full gate at several `-n` values on padme (32 cores) and doudou (4 cores), three trials each, recorded in the ticket
+- [x] A rule that picks `-n` from the host, with the override and the serial fall-back, and a test that pins the rule
+- [x] The worker-safety audit of ticket 1011 extended to the highest `-n` the rule can pick
+- [x] Makefile and pyproject comments point to the one rule instead of stating numbers
+
+## Measurements (2026-10-26, ticket 1215 coder)
+
+Full suite (`pytest tests/ -n N`, 2123 to 2130 tests, 4 skipped on padme), tree at f521bd82 plus the new test file.
+Wall-clock in seconds, mean of three trials unless noted. Load average was 4 to 48 throughout: padme was shared with
+other sessions, so differences under about 5 s are inside the noise.
+
+padme (Threadripper PRO 3975WX, 32 cores, 64 threads):
+
+| -n | mean (min-max) |
+|---|---|
+| serial | 156.3 (150.0-164.4) |
+| 2 | 84.6 (83.5-86.5) |
+| 4 | 48.1 (46.7-50.1) |
+| 8 | 30.9 (30.7-31.1) |
+| 12 | 27.1 (24.2-30.1) |
+| 16 | 32.7 (31.4-34.8) |
+| 24 | 23.4 (23.2-23.5) |
+| 32 | 29.2 (27.3-32.2) |
+| 64 | 33.1 (30.3-35.1) |
+
+Because the sweep is non-monotonic, a second sweep interleaved 8, 16, 24 over five rounds (mean of five): 8 = 34.9 s,
+16 = 34.3 s, 24 = 25.5 s. The 24 advantage (about 9 s, 27 %) reproduced; 32 and 64 were slower than 24 in the first sweep.
+The cause of the dip at 24 is not established (scheduling of the three shell monoliths is a candidate).
+
+4-core stand-in on padme (derived, kept for comparison with doudou's real figures): padme pinned with `taskset -c 0-3,32-35` (4 cores, 8 threads, but Zen 2 cores,
+faster than doudou's i5-8250U): -n 2 = 84.7, -n 4 = 51.4, -n 8 = 45.3, -n 12 = 49.3.
+SMT threads paid (-n 8 beats -n 4 by 12 %), oversubscription past the thread count did not.
+
+doudou (i5-8250U, 4 cores, 8 threads, 8 CPUs; measured by SSH from padme, nothing else started by us;
+load average 1 to 9, rising with -n because the load is the test run itself). Full suite, 2037 passed, 90 skipped (the
+skips are host-dependent), tree f521bd82 (the suite without the new test file). Seconds as reported by pytest:
+
+| -n | trials | mean |
+|---|---|---|
+| serial | 322.5, 300.7, 167.2 | 167.2 (trial 3 only) |
+| 2 | 89.9, 90.2, 90.4 | 90.1 |
+| 3 | 69.7, 73.9, 72.1 | 71.9 |
+| 4 | 94.5, 91.7, 96.6 first run; 67.5, 67.4, 67.7 rerun | 67.5 (rerun) |
+| 6 | 65.5, 66.8, 65.3 | 65.9 |
+| 8 | 67.3, 70.2, 67.6 first run; 68.6, 69.1, 67.8 rerun | 68.4 (all six) |
+| 12 | 66.0, 66.0, 65.5 | 65.8 |
+
+Two blocks are not trusted as means. Serial trials 1 and 2 ran while the host was suspended or throttled (the
+bench's own wall-clock said 2747 s and 2222 s); only trial 3 is a clean serial figure. The first -n 4 block (94 s) ran
+first, with the host cold and at load 4; three rounds of -n 4 and -n 8 interleaved afterwards gave 67.5 and 68.5 s, so
+the 94 s block is an outlier of unestablished cause (the -n 3 run, 72 s, would otherwise be faster than -n 4).
+Result: plateau from -n 4 to 12 (65.8 to 68.4 s, inside the noise); -n 3 costs about 5 s and -n 2 about 25 s.
+
+## Rule
+
+`scripts/pytest_workers.py`: usable CPUs (affinity-aware logical CPUs), floor 2, cap 24; `IDH_TEST_WORKERS=N` overrides
+(0 = serial); no output (serial) when pytest-xdist is not importable. On padme it picks 24 (best measured), on a
+doudou (4 cores, 8 threads) 8 (68.4 s against a best of 65.8 s at -n 12: one plateau from -n 4 to 12), on a 2-core/4-thread CI runner 4 (what CI used; unmeasured).
+Rejected: `-n auto` (64 on padme, 30 % slower than 24). Physical cores would pick 32 on padme (29.2 s, slower than 24's
+23.4 s) and 4 on doudou (67.5 s, equal to 8's 68.4 s within the noise); the logical-CPU rule is not worse on doudou and
+better on padme. The cap of 24 binds only on padme; doudou, with 8 CPUs, never reaches it.
+
+## Worker-safety audit extension (to -n 24)
+
+Static census re-run over tests/ at f521bd82 for the three 1011 axes: sockets bind port 0 (tests/test_net_relay.py,
+tests/zotero_live.py), fixed `/tmp` paths are read-only or inert strings (test_on_end_hook.py, test_hook_launchers.py),
+no `git config --global`, no ambient `os.environ` writes outside monkeypatch. Live: 33 unpinned runs at -n 8 to 64 on padme (8 at -n 24, 6 at
+-n 32 or 64) returned the same pass/skip counts (2130 passed, 4 skipped); every run from -n 12 up passed. The red runs (serial 2 and 3, -n 2 and 4, one -n 8: nine runs) all ran while this change's own files were mid-edit: a marker violation
+in the new test and a Makefile-shape test not yet updated; both are the same two assertions, fixed before the gate.

@@ -286,5 +286,5 @@ jobs:
           bash --version | head -1
       - name: Run test suite
         # Coverage was reported here but never gated, at a cost on every PR;
-        # run it locally when wanted: pytest tests/ -n 4 --cov=scripts
-        run: python3 -m pytest tests/ -v -n 4
+        # run it locally when wanted: pytest tests/ --cov=scripts
+        run: python3 -m pytest tests/ -v $(python3 scripts/pytest_workers.py)
