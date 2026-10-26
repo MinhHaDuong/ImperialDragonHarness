@@ -79,7 +79,9 @@ budget or past the deadline is `no report`, never simulated.
    into another's keeps its own verdict.
 4. **Targeted tests only.** Gaze's seats, the adherence seat and `/verify-gate`
    run only the tests of the files the diff touches; none runs the full suite,
-   which runs once, on the merge candidate, as the project's declared gate.
+   which runs once as the project's declared gate: on the merge candidate, or,
+   for a bookkeeping merge on an open fast path, on the new main tip after the
+   merge (`skills/merge/SKILL.md` § Gating tiers).
    Where the project declares `.idh-checks.json`, the targeted run is its scoped
    gate (`$IDH_ROOT/scripts/scoped-check.py`) and the review quotes its
    `selected:` and `skipped:` lines, never calling a scoped pass full.

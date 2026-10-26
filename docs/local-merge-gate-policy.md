@@ -27,13 +27,17 @@ only what they need.
 | 2. Rebase onto the base branch, resolve conflicts | local git | nothing |
 | 3. Review (code review and the merge-gate review) | local seats | read the diff; targeted tests of the touched files only |
 | 4. Changes needed? | | back to stage 1; no full run yet |
-| 5. Candidate | the harness | merge the pull request into the base locally, run the full check set once on that commit, write the gate record |
+| 5. Candidate | the harness | merge the pull request into the base locally, run the full check set once on that commit (the fast-path checks only, for a bookkeeping diff on an open fast path), write the gate record |
 | 6. Merge | the merge helper | refuses without a passing record on that candidate |
 
 A failed candidate sends the pull request back to stage 1; it then passes through
-stages 2, 3 and 5 again. That is the only case where the full set runs twice.
+stages 2, 3 and 5 again. That is the only case where the full set runs twice
+on one change.
 A pure documentation, ticket or memory diff gets a light record (the ticket
-validator only), so the trace stays uniform and the cost stays small. **Pending**
+validator only), so the trace stays uniform and the cost stays small. A
+bookkeeping diff on an open fast path (ticket 1226) runs only the fast-path
+checks; the full set then runs on the new main tip, after the merge, through
+`scripts/merge_monitor.py`. The policy is `skills/merge/SKILL.md` § Gating tiers. **Pending**
 (ticket 1171 and the activation pull request of ticket 1156). Ticket 1172, reading the forge's result for a head, was closed as superseded by this flow.
 
 ## Forge settings
@@ -63,7 +67,10 @@ validator only), so the trace stays uniform and the cost stays small. **Pending*
 - A git note on the candidate merge commit, in the notes ref `refs/notes/gate`.
   The latest entry for a commit decides.
 - Fields: result, time, actor (runtime, model and effort where known, never
-  required), host, revision, command and scope, tool versions, one line per check.
+  required), host, revision, command and scope, tool versions, the fast-path
+  state when the base declares one (`fastpath:`), one line per check.
+- Monitor verdicts on main tips live beside the records, in the notes ref
+  `refs/notes/gate-verdict` (ticket 1226); they open and close the fast path.
 - The check set is declared in a file on the base branch (`.merge-gate.json`),
   read from the base, so a branch cannot choose its own checks. The checks run
   code from the branch; the file fixes which checks and which commands.
