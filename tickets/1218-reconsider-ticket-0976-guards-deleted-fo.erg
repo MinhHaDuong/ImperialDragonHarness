@@ -1,0 +1,72 @@
+%erg 0.1
+Title: Reconsider ticket 0976: guards deleted for zero firings that were never wired live or never tested against their overlap
+Created: 2026-10-26
+Author: claude
+
+--- log ---
+2026-10-26T09:35Z claude created
+
+--- body ---
+## Context
+
+Commit 90a62683 (ticket 0976, 2026-09-24) deleted eight `PreToolUse` guards after a transcript audit (6,417 transcripts)
+that kept a guard only "with a quoted firing that prevented real damage". The author chose "the strict cut". The commit
+message gives the numbers; they fall into three different situations that one standard treated alike.
+
+| Guard | Audit figure (from the commit message) | Situation |
+|---|---|---|
+| guard-gh-pr-merge | 176 firings, 0 true positives, never matched any of 893 real `gh pr merge` | measured useless |
+| guard-enterworktree-parked-cwd | 32 firings, 0 TP | measured useless |
+| guard-worktree-remove-wip | 17 firings, 0 TP | measured useless |
+| guard-commit-on-main | 23 firings, 0 verified TP, >= 6 FP; reads the session cwd, not the `cd` target | measured poor; the git pre-commit hook covers it |
+| **guard-pgrep-waiter** | **"never wired live, 0 firings"** | **never measured: zero firings was the wiring, not the guard** |
+| guard-cd-primary-repo | 1 recoverable TP, about 20 FP | measured poor |
+| guard-worktree-identity | 4 recoverable TPs, one episode | thin sample |
+| pretooluse-worktree-path-guard | 23 recoverable TPs, 38 FP | poor, but the hazard class is real |
+
+For the last three, the commit says every true positive was recoverable and each was bypassed at once with `git -C`,
+and that "the runtime's own worktree isolation now refuses that class (6,206 refusals in September transcripts). The
+overlap is inferred, not tested".
+
+## Why reconsider
+
+1. **A guard that was never wired cannot have firings.** Reading that as "no value" deleted guard-pgrep-waiter, which
+   addressed a bug with 105 specimens in 551 transcripts (ticket 0889). The bug is back: two specimens in one session on
+   2026-10-26, a self-wait and a self-kill (evidence note `docs/2026-10-26-self-matching-process-patterns-evidence.md`,
+   ticket 1216). That is fresh evidence the deletion was premature, not proof the old guard was right.
+2. **The overlap with the runtime may not hold for the sessions the rules prescribe.** `rules/claude-code.md` forbids
+   `EnterWorktree` and prescribes plain `git worktree add`, because `EnterWorktree` switches on a runtime guard that
+   refuses git aimed at another worktree. If the 6,206 refusals came from `EnterWorktree` sessions and the harness's own
+   sessions use plain git, the runtime isolation may not cover them. Unverified: it needs the refusals split by how the
+   worktree was entered.
+3. **"Recoverable" is a cost, not a zero.** A recoverable true positive still cost a recovery. The audit counted
+   recoveries as non-events; the price of each was not measured.
+4. **The deletion removed the wiring tests with the guards.** Nothing now checks that a guard in the harness is live in
+   each of the three runtimes, which is the property whose absence made case 5 invisible.
+
+## What to do
+
+- Re-audit the eight, case by case, using the three situations above, not one standard. Report for each: wired live in
+  which runtimes (a known-bad command fired and denied), true and false positives with the price of a recovery, and
+  the hazard's frequency times cost.
+- Restore those whose hazard is real and whose deletion rested on zero firings from an unwired guard (first:
+  guard-pgrep-waiter, which ticket 1216 folds into a design with a semantic self-match test instead of shape matching).
+- Test the inferred overlap for the three worktree guards against plain-git sessions.
+- Write the deletion rule the audit lacked: a guard is deleted for measured harm or measured uselessness while wired
+  live; "never wired" is a repair, not a deletion.
+- Add a ratchet: every guard declared in the adapters has a test that fires a known-bad command through the real
+  wiring in each runtime that claims support.
+
+## Exit criteria
+
+- [ ] A table of the eight guards with wired-live evidence per runtime and measured TP/FP/recovery price.
+- [ ] Each guard classed restore, keep deleted, or replace, with the reason in one line.
+- [ ] The overlap claim for the worktree guards tested against sessions that use plain `git worktree add`.
+- [ ] The deletion rule written where the next audit will read it.
+- [ ] A test that proves each shipped guard is live in each runtime that claims it.
+- [ ] Any restored guard ships with a positive control and a replay over the trace corpus.
+
+## Related
+
+0889 (the pgrep waiter guard), 0976 (the deletion), 1216 (sleep and pgrep polling; the design that would replace the
+deleted guard), 1214 (stall watchdog; a candidate home for the watchdog layer).
