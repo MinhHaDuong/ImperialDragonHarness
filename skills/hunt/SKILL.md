@@ -64,20 +64,19 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    § Testing) and, in a modular project, its module.
 7. **Fail first.** Run the new tests by name (e.g. `pytest <file>::<test>`); confirm each one runs and fails for the expected reason.
 8. **Implement.** Implement until those tests pass, rerunning them by name as the loop gate.
-9. **Self-gate.** Run the verify-adherence skill on the branch. Fix each mechanical
+9. **Self-gate.** Announce `[Execute → Verify]`, then run the verify-adherence skill on the branch. Fix each mechanical
    blocker in place and run it again, up to 3 times. Escalate instead of opening the
    merge request when a blocker needs design judgment, the third run still fails, or
    the skill errors or returns nothing usable.
-10. **Merge request.** Rebase onto `origin/main` (`rules/git.md` § Merging), run the project's declared pre-PR gate once, then push the branch with lease, wait for CI and open a merge request. Run it through `python3 "$IDH_ROOT/scripts/raid-gate.py" -- <gate command>` so a raid can observe a live long-running gate. If the project has `.idh-checks.json`, its gate command is the project's scoped entry point (or `python3 "$IDH_ROOT/scripts/scoped-check.py"` from its root); quote `selected:` and `skipped:` in the PR description. A mapped doc-only diff may run fewer targets; Python code, unmapped paths, or a project without a map run the full `make check`.
-11. **Review.** Review the merge request, unless its tier is bookkeeping
-    (`skills/merge/SKILL.md` § Gating tiers): a bookkeeping-only request is
-    gated by its mechanical checks alone, so skip Review, Fix and Repeat. Otherwise this action
-    is mechanical — load the gaze skill with the merge-request number and follow
-    the contract it returns; do not paraphrase or inline its steps.
-    Each pass through the Review–Fix loop is one **review round**; which
-    perspectives run, and how deep, is the reviewer's call
-    (`skills/gaze/SKILL.md` § 2–5). What each gaze result leads to (fix and
-    review again, close and gate, or stop at the author) is the caller's
-    policy in `skills/merge/SKILL.md` § Before merging.
-12. **Fix.** Fix all comments regardless of severity. Per fix cycle, run the tests the fix affects, by name — not the full suite. If a fix reaches beyond those tests, run the project's pre-PR gate once before the next review round.
-13. **Repeat.** Repeat Review and Fix up to 3 times, i.e. up to round 3. If still not clean, escalate.
+10. **Merge request.**
+    - Rebase onto `origin/main` (`rules/git.md` § Merging).
+    - Run the project's fast test tier once (Python: `make check-fast`,
+      `rules/coding-python.md` § Testing).
+    - Push with lease and open the merge request. Its description carries the
+      close claim `**Ticket:** tickets/<ticket file>`. Wait for CI where it runs on the branch.
+11. **Review.** Skip when
+    `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base origin/main --head HEAD`
+    exits 0 (bookkeeping). Otherwise run up to 3 rounds: load the gaze skill with the
+    merge-request number; on findings, fix every comment whatever its severity, rerun
+    the tests the fixes affect by name, then the fast test tier, push, and review again.
+    Escalate when gaze does, or when round 3 still has findings.
