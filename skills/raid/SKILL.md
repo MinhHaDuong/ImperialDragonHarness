@@ -74,8 +74,8 @@ no readable `[labels]` section, fall back to the documented defaults
 inherits that asymmetry screens nothing while looking correct.
 
 Such a ticket is not lost. Name it in the wrap-up briefing with the decisions
-it is waiting on, and count that as a success outcome — the same standing hunt
-step 2b gives a returned batched decision list.
+it is waiting on, and count that as a success outcome — the same standing hunt's
+Route step gives a returned batched decision list.
 
 **Carve-out: an explicit `/raid <id>` runs.** The exclusion governs target
 *discovery* (the "all open" path), never a ticket named by ID. A named ticket
@@ -227,7 +227,7 @@ rebase WAVE_BASE once and move every wave branch onto it, per
 coordination PR lands, or Wave N merges, re-record WAVE_BASE from the merged
 main tip before the next wave's branches fork.
 
-For each wave, launch agents — each creates and locks its own worktree (hunt step 3) — the **coder
+For each wave, launch agents — each creates and locks its own worktree (`skills/hunt/SKILL.md` § Worktree) — the **coder
 profile** (`agents/coder.md`, whose contract is `profiles/coder/PROFILE.md`;
 the model is chosen per launch from the `route` skill, no frontmatter pin).
 

@@ -206,7 +206,7 @@ base, once a passing gate record covers the bundle's candidate.
     locked with its live pid is left to `worktree-gc` once its branch is
     merged and that pid has exited; a lock with no checkable pid (none,
     pid 1, several, or past pid_max) is removed here. If its session dies
-    first, `worktree-gc` reclaims the harness shapes on a clean tree idle 72 h (hunt step 3), the
+    first, `worktree-gc` reclaims the harness shapes on a clean tree idle 72 h (`skills/hunt/references/worktree-lifecycle.md`), the
     rest only by hand.
 10. **Clean only the completed task** — roar cleans only the completed task's
     explicitly identified closed-ticket/merged-PR branches and owned worktrees.

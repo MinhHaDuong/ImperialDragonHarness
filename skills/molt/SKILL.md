@@ -35,7 +35,7 @@ Run full repo housekeeping and act on every finding.
    names no owner: inside a pid namespace `$PPID` reads 1, and on the host
    pid 1 is init, always alive. Do not abort
    on it here; step 1.5's `worktree-gc.sh` reclaims the harness shapes
-   (`(pid 1`, `(owner pid not visible)`) once the tree is clean and idle 72 h (hunt step 3),
+   (`(pid 1`, `(owner pid not visible)`) once the tree is clean and idle 72 h (`skills/hunt/references/worktree-lifecycle.md`),
    and `/yawn` lists the rest for removal by hand.
 
    If **any** other locked worktree has a live PID, **stop immediately** — print:
@@ -89,7 +89,7 @@ Run full repo housekeeping and act on every finding.
    it skips any worktree that is a live process's cwd, any locked worktree
    (lock = in use, mirroring step 0; only a harness lock whose pid > 1 is
    dead is unlocked, and a harness owner-less lock on a clean tree idle 72 h
-   is lifted at removal (hunt step 3), so
+   is lifted at removal (`skills/hunt/references/worktree-lifecycle.md`), so
    the rails decide), any
    tree with uncommitted changes other than `.panel/` and `build/panel-head/`
    review scratch, and the one it runs from. Before clearing review scratch,

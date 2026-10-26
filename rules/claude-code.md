@@ -8,7 +8,7 @@ loads the rest of `rules/` and skips this file.
 
 Except for `/hunt N` (below) and manuscript prose
 ([prose/workpackages.md](./prose/workpackages.md)), create the conversation's
-worktree before answering with the plain-git recipe of `/hunt` step 3
+worktree before answering with the plain-git recipe of `skills/hunt/SKILL.md` § Worktree
 (`git worktree add`, `git worktree lock`, `cd`), named from the table below.
 The Bash tool keeps its cwd, so the `cd` moves the session; a restart resets
 it, so paths stay absolute.
