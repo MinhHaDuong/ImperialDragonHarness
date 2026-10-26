@@ -456,3 +456,53 @@ def test_a_clean_rebase_after_approval_is_bookkeeping(repo):
     assert git(repo, "rev-parse", "feature") != approved
     result = gate(repo, "tier", "--base", "main", "--head", "feature", "--since", approved)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+# ── cwd and config independence (ticket 1221, gaze round 1) ───────────────────
+
+
+def test_tier_ignores_cwd_and_diff_relative(repo):
+    """A code-only head read from a subdirectory with diff.relative=true once
+    reported "bookkeeping: 0 path(s) changed"; the read is from the toplevel."""
+    (repo / "memory").mkdir()
+    (repo / "memory" / "keep.md").write_text("k\n", encoding="utf-8")
+    git(repo, "add", ".")
+    git(repo, "commit", "-q", "-m", "memory dir on feature")
+    git(repo, "config", "diff.relative", "true")
+    result = gate(repo / "memory", "tier", "--base", "main", "--head", "feature")
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "b.txt" in result.stdout
+
+
+def test_tier_sees_submodule_changes_despite_ignore_config(repo, tmp_path):
+    sub = tmp_path / "sub"
+    subprocess.run(["git", "init", "-q", "-b", "main", str(sub)], check=True, env=child_env())
+    for key, value in (("user.email", "t@example.com"), ("user.name", "Fixture"), ("commit.gpgsign", "false")):
+        git(sub, "config", key, value)
+    git(sub, "commit", "-q", "--allow-empty", "-m", "s")
+    git(repo, "switch", "-q", "-c", "withsub", "main")
+    oid = git(sub, "rev-parse", "HEAD")
+    git(repo, "update-index", "--add", "--cacheinfo", f"160000,{oid},vendor")
+    git(repo, "commit", "-q", "-m", "submodule")
+    git(repo, "config", "diff.ignoreSubmodules", "all")
+    result = gate(repo, "tier", "--base", "main", "--head", "withsub")
+    assert result.returncode == 1 and "vendor" in result.stdout, result.stdout
+
+
+def test_an_empty_diff_is_never_bookkeeping(repo):
+    result = gate(repo, "tier", "--base", "main", "--head", "main")
+    assert result.returncode == 1, result.stdout
+    assert result.stdout.startswith("full")
+
+
+def test_since_the_same_tip_reads_unchanged(repo):
+    tip = git(repo, "rev-parse", "feature")
+    result = gate(repo, "tier", "--base", "main", "--head", "feature", "--since", tip)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.startswith("unchanged")
+
+
+def test_enabled_and_config_do_not_depend_on_cwd(repo):
+    (repo / "memory").mkdir()
+    assert gate(repo / "memory", "enabled", "--base", "main").returncode == 0
+    assert gate(repo, "enabled", "--base", "main").returncode == 0

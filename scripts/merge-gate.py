@@ -33,13 +33,15 @@ of a candidate, or with `--since <approved tip>` the tier of what the head adds
 to the candidate the approval saw: the one mechanical reading of the tiers.
 
 Exit codes of `check`: 0 pass, 1 fail or stale scope, 2 no record, 3 error.
-`enabled`: 0 on, 1 off, 3 error. `tier`: 0 bookkeeping, 1 full, 3 error.
+`enabled`: 0 on, 1 off, 3 error. `tier`: 0 bookkeeping (or, with --since,
+unchanged), 1 full (an empty diff included), 3 error.
 Any unexpected exception exits 3.
 """
 
 import argparse
 import datetime
 import fnmatch
+import functools
 import getpass
 import importlib.util
 import json
@@ -73,8 +75,23 @@ class GateError(RuntimeError):
     """The gate could not establish its subject or read its record."""
 
 
+@functools.cache
+def toplevel(cwd):
+    """The work tree root of `cwd`, or None (a bare repository): every git call runs there.
+
+    A pathspec (ls-tree -- .merge-gate.json) and porcelain diff settings
+    (diff.relative) read differently from a subdirectory; from the root they
+    cannot.
+    """
+    proc = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, cwd=cwd)
+    if proc.returncode:
+        return None
+    return proc.stdout.strip() or None
+
+
 def git(*args, check=True, env=None):
-    proc = subprocess.run(["git", *args], capture_output=True, text=True, env=env)
+    root = toplevel(os.getcwd())
+    proc = subprocess.run(["git", *args], capture_output=True, text=True, env=env, cwd=root)
     if check and proc.returncode:
         raise GateError(f"git {' '.join(args)}: {proc.stderr.strip()}")
     return proc
@@ -178,13 +195,18 @@ def is_bookkeeping(path):
 
 
 def changed_paths(old, new):
-    """Paths whose content differs between two commits; renames count at both ends."""
-    out = git("diff", "--name-only", "--no-renames", "-z", old, new).stdout
+    """Paths whose content differs between two commits; renames count at both ends.
+
+    Plumbing (diff-tree), so no diff.relative, diff.ignoreSubmodules or other
+    porcelain setting can hide a path.
+    """
+    out = git("diff-tree", "-r", "--name-only", "-z", "--no-renames", old, new).stdout
     return [p for p in out.split("\0") if p]
 
 
 def tier_of(paths):
-    return BOOKKEEPING_TIER if all(is_bookkeeping(p) for p in paths) else "full"
+    """An empty list is never bookkeeping: nothing read is not a reading of nothing."""
+    return BOOKKEEPING_TIER if paths and all(is_bookkeeping(p) for p in paths) else "full"
 
 
 def effective(config, base, oid):
@@ -460,6 +482,9 @@ def cmd_tier(args):
         except GateError:
             sys.stdout.write(f"full: the approved tip {since[:12]} no longer merges cleanly into the base\n")
             return FAIL
+        if git("rev-parse", f"{old}^{{tree}}").stdout == git("rev-parse", f"{new}^{{tree}}").stdout:
+            sys.stdout.write(f"unchanged: the head adds nothing to the candidate of {since[:12]}\n")
+            return PASS
     paths = changed_paths(old, new)
     tier = tier_of(paths)
     sys.stdout.write(f"{tier}: {len(paths)} path(s) changed\n")
