@@ -312,7 +312,7 @@ GAZE = REPO / "skills" / "gaze" / "SKILL.md"
 
 
 def test_gaze_agent_a_launch_names_the_adherence_seat_profile():
-    """The phase 2-4 adherence launch (label-skip aside) names the
+    """The phase 2-4 adherence launch names the
     adherence-seat profile and its contract; the live Skill(verify-adherence)
     invocation stays in the block — the sub-skill contract is not a role
     rail and is not delegated."""
@@ -352,7 +352,7 @@ def test_coder_profile_conversions():
 def test_hunt_detach_profile_carries_skill_and_agent_tools():
     """The executor hunt's Detach step launches must be able to run the hunt flow.
 
-    Its first action is ``Skill(skill: "hunt", ...)`` and the flow launches
+    Its first action is loading the hunt skill with ``<id> inline`` and the flow launches
     reviewers and panel seats; a profile without Skill and Agent stops at
     once (ticket 1075, observed on ticket 1046).
     """
