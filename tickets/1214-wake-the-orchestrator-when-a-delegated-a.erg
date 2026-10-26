@@ -36,6 +36,6 @@ progress was found by those words. The only duration guards read were `timeout 1
 
 ## Exit criteria
 
-- [ ] A decision record: what counts as progress for a delegated session and who is woken
-- [ ] A watchdog that acts once and is capped, tested with a staged stall and with a long legitimate silence (no false positive)
-- [ ] Documented for team-lead delegations, /raid and /hunt
+- [x] A decision record: what counts as progress for a delegated session and who is woken
+- [x] A watchdog that acts once and is capped, tested with a staged stall and with a long legitimate silence (no false positive)
+- [x] Documented for team-lead delegations, /raid and /hunt

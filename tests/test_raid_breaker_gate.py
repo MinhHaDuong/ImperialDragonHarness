@@ -155,7 +155,19 @@ def test_wait_git_failure_keeps_stall_window(tmp_path, monkeypatch) -> None:
     sim = Sim(snaps=lambda t: "same" if (t // 10) % 2 else None)
     code, elapsed = sim.run(3600, tmp_path, monkeypatch)
     assert code == 1
-    assert 600 < elapsed <= 620
+    assert 600 < elapsed <= 630  # baseline is the first observed poll, at 10 s
+
+
+def test_wait_persistent_git_failure_is_no_observation(tmp_path, monkeypatch) -> None:
+    code, elapsed = Sim(snaps=lambda t: None).run(3600, tmp_path, monkeypatch)
+    assert code == 0
+    assert elapsed == 3600
+
+
+def test_wait_sleep_is_clamped_to_deadline(tmp_path, monkeypatch) -> None:
+    code, elapsed = Sim(gates=lambda t: (1_000_000.0, t - 1)).run(25, tmp_path, monkeypatch)
+    assert code == 0
+    assert elapsed == 25
 
 
 @pytest.mark.integration

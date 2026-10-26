@@ -22,7 +22,8 @@ def snapshot(worktree: Path) -> tuple[str, str, str, str] | None:
     """Status, HEAD, pushed ref and content hash of the uncommitted diff.
 
     The diff hash sees a second edit of an already-modified file. A git
-    failure returns None (no change); a missing upstream reads as empty.
+    failure or a call past 5 s returns None (no observation: the poll is
+    skipped, so slow git cannot fake a stall); a missing upstream reads as empty.
     """
     def git(*cmd: str, optional: bool = False) -> str | None:
         try:
@@ -53,19 +54,19 @@ def run(args: argparse.Namespace, clock=time.time, sleep=time.sleep,
         take=snapshot) -> int:
     start = clock()
     state = None
-    seen = None
     while True:
-        seen = take(args.worktree) or seen
+        seen = take(args.worktree)
         now = clock()
-        status, state = evaluate(now, state, seen,
-                                 read_marker(marker_path(args.worktree)),
-                                 args.stall_seconds, args.gate_max_seconds)
-        if status in WAKE:
-            print(f"{status} {args.worktree}")
-            return 1
+        if seen is not None:  # a failed or slow git is no observation, not "no change"
+            status, state = evaluate(now, state, seen,
+                                     read_marker(marker_path(args.worktree)),
+                                     args.stall_seconds, args.gate_max_seconds)
+            if status in WAKE:
+                print(f"{status} {args.worktree}")
+                return 1
         if now - start >= args.deadline:
             return 0
-        sleep(args.poll_seconds)
+        sleep(min(args.poll_seconds, args.deadline - (now - start)))
 
 
 def main() -> int:
