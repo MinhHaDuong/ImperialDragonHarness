@@ -328,6 +328,19 @@ def test_missing_bibliography_refused_before_compilation(tmp_path, monkeypatch):
         mod.compile_pdf(["latexmk"], tmp_path, tex)
 
 
+def test_deleted_bibliography_declaration_is_not_checked(tmp_path, monkeypatch):
+    mod = load_helper()
+    (tmp_path / "library.bib").write_text("")
+    tex = tmp_path / "diff.tex"
+    tex.write_text(r"\DIFdel{\bibliography{refs}}\DIFadd{\bibliography{library}}")
+    seen = []
+    monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: seen.append(a) or pytest.skip("compiler reached"))
+    with pytest.raises((SystemExit, pytest.skip.Exception)) as exc:
+        mod.compile_pdf(["latexmk"], tmp_path, tex)
+    assert "bibliography input" not in str(exc.value)
+    assert mod._strip_difdel(r"a\DIFdel{x{y}z}b") == "ab"
+
+
 @pytest.mark.parametrize("pin", ["../escape.bib", "/escape.bib"])
 def test_supplement_rejects_escaping_destination(tmp_path, pin):
     import hashlib

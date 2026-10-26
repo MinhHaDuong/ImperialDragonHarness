@@ -38,6 +38,27 @@ class ToolchainError(SystemExit):
     """Raised (as SystemExit) when a required external tool is missing."""
 
 
+def _strip_difdel(source: str) -> str:
+    """Drop the brace-balanced bodies of ``\\DIFdel{...}`` from latexdiff output."""
+    out, i = [], 0
+    while True:
+        start = source.find("\\DIFdel{", i)
+        if start < 0:
+            out.append(source[i:])
+            return "".join(out)
+        out.append(source[i:start])
+        depth, j = 0, start + len("\\DIFdel")
+        while j < len(source):
+            if source[j] == "{" and source[j - 1] != "\\":
+                depth += 1
+            elif source[j] == "}" and source[j - 1] != "\\":
+                depth -= 1
+                if depth == 0:
+                    break
+            j += 1
+        i = j + 1
+
+
 def require_git() -> str:
     """Return the git executable path, or exit with an actionable message."""
     git = shutil.which("git")
@@ -215,10 +236,11 @@ def compile_pdf(compiler: list[str], workdir: Path, diff_tex: Path,
     pdflatex fallback is limited to documents without a bibliography processor.
     A fresh final log must confirm that citations and references resolved.
     """
-    # Check literal bibliography declarations in latexdiff's flattened source.
+    # Check literal bibliography declarations in latexdiff's flattened source,
+    # skipping deleted text: a \bibliography{} inside \DIFdel{} is not compiled.
     # Missing files must not resolve accidentally from a host BIBINPUTS path.
     input_root = (input_root or workdir).resolve()
-    source = re.sub(r"(?<!\\)%[^\n]*", "", diff_tex.read_text())
+    source = _strip_difdel(re.sub(r"(?<!\\)%[^\n]*", "", diff_tex.read_text()))
     declarations = re.findall(
         r"\\(?:bibliography|addbibresource)(?:\[[^\]]*\])?\s*\{([^}]+)\}", source
     )

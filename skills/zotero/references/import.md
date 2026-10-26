@@ -133,7 +133,7 @@ not inherit the source work's DOI as its own identifier.
 
 3. Resolve `IDH_ROOT` as above, then look up the **note title and file**, not
    the source DOI. Judge title candidates as in Duplicate handling. An existing
-   note Document with no file gets `suggest-attachments --edit`; a different
+   note Document with no file gets `suggest-attachments --parent <itemKey> <file> --edit`; a different
    saved version requires an explicit version decision, not a blind rerun.
 
    ```bash
@@ -160,4 +160,4 @@ run's note paths (and staged `*.md` research notes in scope), repeat step 4 for
 receipt or reason. Distinguish this note inventory from the document sweep;
 a clean PDF report cannot certify that the notes are archived. A changed note
 needs a fresh receipt for its current bytes. Keep this as archival evidence,
-not a second bibliographic catalogue.
+not a second bibliographic catalog.

@@ -7,6 +7,8 @@ network — and drive the fetch outcomes by monkeypatching `_fetch`.
 """
 
 import importlib.util
+
+import pytest
 import sys
 import types
 from pathlib import Path
@@ -70,6 +72,17 @@ def test_build_url_doi_priority():
     url, kind = vr._build_url("k", body)
     assert kind == "doi"
     assert url == "https://doi.org/10.5/AB"
+
+
+@pytest.mark.parametrize("doi", ["https://www.doi.org/10.1/x", "doi.org/10.1/x",
+                                 "DOI:10.1/x", "http://dx.doi.org/10.1/x"])
+def test_build_url_strips_every_doi_prefix(doi):
+    assert vr._build_url("k", {"doi": doi}) == (vr.DOI_BASE + "10.1/x", "doi")
+
+
+def test_split_entries_rejects_bare_type_opening():
+    with pytest.raises(ValueError, match="declared BibTeX entries"):
+        vr._split_entries("@{k, title={T}}")
 
 
 def test_build_url_arxiv_eprint():

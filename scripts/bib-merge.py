@@ -79,7 +79,8 @@ def parse_bibtex(text: str) -> list[dict]:
         entries = bibtexparser.loads(text, parser).entries
     except UndefinedString as exc:
         raise ValueError(f"undefined @string macro {exc}") from exc
-    declared = sum(1 for m in re.finditer(r"@\s*(\w+)\s*[{(]", text)
+    # A bare "@{" opening (no type) declares an entry the parser drops silently.
+    declared = sum(1 for m in re.finditer(r"@\s*(\w*)\s*[{(]", text)
                    if m.group(1).lower() not in {"string", "preamble", "comment"})
     if declared != len(entries):
         raise ValueError(f"{declared} declared BibTeX entries; {len(entries)} read — "
@@ -100,13 +101,13 @@ def parse_bibtex(text: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
+# Any scheme, optional www./dx. host, or a bare "doi:" label; one pass suffices.
+DOI_PREFIX = re.compile(r"^(?:(?:https?://)?(?:www\.|dx\.)?doi\.org/|doi:\s*)")
+
+
 def _normalize_doi(doi: str) -> str:
     """Lowercase and strip common DOI URL prefixes."""
-    doi = doi.strip().lower()
-    for prefix in ("https://doi.org/", "http://doi.org/", "http://dx.doi.org/", "https://dx.doi.org/", "doi:"):
-        if doi.startswith(prefix):
-            doi = doi[len(prefix) :]
-    return doi
+    return DOI_PREFIX.sub("", doi.strip().lower())
 
 
 def _normalize_name(name: str) -> str:

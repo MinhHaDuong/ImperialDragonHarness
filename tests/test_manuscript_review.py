@@ -605,3 +605,14 @@ def test_existing_literal_legacy_reader_stays_replayable():
         "### R1-01\nThe central claim outruns the evidence.\n### R1-01\nAnother legacy mention.")
     payload, _ = mr.validate_stage(stream(data), 0, manifest(), Path("/run"), "review")
     assert payload == data
+
+
+def test_legacy_finding_text_must_be_the_whole_heading_block():
+    """A legacy payload's own text passing on a substring would export a
+    shortened text to the ledger."""
+    data = review()
+    data["review"] = data["review"].replace("R1-01 The central claim outruns the evidence.",
+        "### R1-01\nThe central claim outruns the evidence.")
+    data["findings"][0]["text"] = "The central claim"
+    with pytest.raises(ValueError, match="absent from original"):
+        mr.validate_stage(stream(data), 0, manifest(), Path("/run"), "review")

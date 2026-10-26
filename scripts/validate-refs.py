@@ -78,12 +78,17 @@ def _split_entries(bib_block: str) -> list[tuple[str, dict]]:
         entries = bibtexparser.loads(bib_block, parser).entries
     except UndefinedString as exc:
         raise ValueError(f"undefined @string macro {exc}") from exc
-    declared = sum(1 for m in re.finditer(r"@\s*(\w+)\s*[{(]", bib_block)
+    # A bare "@{" opening (no type) declares an entry the parser drops silently.
+    declared = sum(1 for m in re.finditer(r"@\s*(\w*)\s*[{(]", bib_block)
                    if m.group(1).lower() not in {"string", "preamble", "comment"})
     if declared != len(entries):
         raise ValueError(f"{declared} declared BibTeX entries; {len(entries)} read — "
                          "some entries could not be parsed (or ambiguous @type opening)")
     return [(entry["ID"], entry) for entry in entries]
+
+
+# Any scheme, optional www./dx. host, or a bare "doi:" label.
+DOI_PREFIX = re.compile(r"^(?:(?:https?://)?(?:www\.|dx\.)?doi\.org/|doi:\s*)", re.I)
 
 
 def _build_url(key: str, body: dict) -> tuple[str | None, str]:
@@ -94,17 +99,7 @@ def _build_url(key: str, body: dict) -> tuple[str | None, str]:
     """
     doi = body.get("doi")
     if doi:
-        doi = doi.strip()
-        for prefix in (
-            "https://doi.org/",
-            "http://doi.org/",
-            "http://dx.doi.org/",
-            "https://dx.doi.org/",
-            "doi:",
-        ):
-            if doi.lower().startswith(prefix):
-                doi = doi[len(prefix) :]
-                break
+        doi = DOI_PREFIX.sub("", doi.strip())
         return DOI_BASE + doi, "doi"
 
     eprint = body.get("eprint")

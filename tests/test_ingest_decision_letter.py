@@ -410,3 +410,30 @@ def test_coverage_rejects_dangling_or_self_atomic_without_dedupe(parent_ref):
     assert report["remark_count"] == 1
     assert report["invalid_records"] == ["child"]
     assert not il.coverage_ok(report)
+
+
+def test_dedupe_keeps_duplicate_that_carries_its_own_decision():
+    """A duplicate with tickets or a disposition is not folded: folding would
+    orphan its tickets and hide its own rejection from coverage."""
+    recs = [
+        il._normalize_record({"id": "R1-01", "text": "Same text.", "tickets": ["0301"]}),
+        il._normalize_record({"id": "R2-01", "text": "Same text.", "tickets": ["0302"]}),
+        il._normalize_record({"id": "R2-02", "text": "Same text."}),
+    ]
+    out, summary = il.dedupe(recs)
+    assert summary["remarks"] == 2 and summary["atomics"] == 1
+    assert [r for r in out if r["id"] == "R2-02"][0]["atomic_of"] == "R1-01"
+    report = il.coverage(out, {"0301", "0302"})
+    assert report["orphan_tickets"] == [] and il.coverage_ok(report)
+
+
+def test_dedupe_keeps_duplicate_with_own_rejection():
+    recs = [
+        il._normalize_record({"id": "R1-01", "text": "Same text.", "tickets": ["0301"]}),
+        il._normalize_record({"id": "R2-01", "text": "Same text.",
+                              "disposition": "rejected"}),  # no reason: invalid
+    ]
+    out, _ = il.dedupe(recs)
+    report = il.coverage(out, {"0301"})
+    assert report["remark_count"] == 2
+    assert report["invalid_records"] == ["R2-01"] and not il.coverage_ok(report)

@@ -6,6 +6,8 @@ duplicate. Key collisions on a non-duplicate get a bumped suffix.
 """
 
 import importlib.util
+
+import pytest
 import sys
 from pathlib import Path
 
@@ -64,6 +66,15 @@ def test_normalize_doi_strips_prefixes():
     assert bm._normalize_doi("https://doi.org/10.1/AB") == "10.1/ab"
     assert bm._normalize_doi("doi:10.1/Z") == "10.1/z"
     assert bm._normalize_doi("10.1/Q") == "10.1/q"
+    # www. and bare-host forms must fold onto the same key, not append a duplicate
+    assert bm._normalize_doi("https://www.doi.org/10.1/AB") == "10.1/ab"
+    assert bm._normalize_doi("doi.org/10.1/AB") == "10.1/ab"
+    assert bm._normalize_doi("dx.doi.org/10.1/AB") == "10.1/ab"
+
+
+def test_parse_bibtex_rejects_bare_type_opening():
+    with pytest.raises(ValueError, match="declared BibTeX entries"):
+        bm.parse_bibtex("@{k, title={T}, year={2020}}")
 
 
 def test_normalize_name_variants():

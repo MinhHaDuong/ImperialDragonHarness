@@ -281,6 +281,9 @@ def validate_stage(raw, returncode, manifest, run, stage, review=None):
             raise ValueError("missing findings array")
         blocks = list(re.finditer(r"^### (R1-\d{2,})[ \t]*\n(.*?)(?=^### |^## |\Z)", text, re.M | re.S))
         canonical = {block[1]: block[2].strip() for block in blocks}
+        block_texts: dict[str, set[str]] = {}
+        for block in blocks:
+            block_texts.setdefault(block[1], set()).add(block[2].strip())
         if any("text" not in finding for finding in findings) and len(canonical) != len(blocks):
             raise ValueError("duplicate finding heading")
         ids = set()
@@ -295,7 +298,10 @@ def validate_stage(raw, returncode, manifest, run, stage, review=None):
                 finding["text"] = canonical.get(finding["id"], "")
             if not finding.get("text") or finding.get("severity") not in ("major", "minor"):
                 raise ValueError("missing finding text/severity")
-            if finding["id"] not in text or finding["text"] not in text:
+            # A legacy payload's own text must be the whole heading block, not a
+            # substring of it; otherwise the ledger would export a shortened text.
+            if finding["id"] not in text or finding["text"] not in text \
+                    or finding["text"] not in block_texts.get(finding["id"], {finding["text"]}):
                 raise ValueError("finding absent from original Markdown review")
             if not finding.get("uncertainty"):
                 raise ValueError("missing uncertainty")

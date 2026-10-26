@@ -142,7 +142,7 @@ preemption: coverage and the scientific verdict are separate.
   critic's assessment and coverage status. Feed the citation distinctions to
   `related-work-note`; feed evidence-supported gap wording back to the review.
 - A ticket log when working on a ticket; commit authorized project changes on
-  a branch. Do not create a new bibliography or corpus catalogue here.
+  a branch. Do not create a new bibliography or corpus catalog here.
 
 ## Failure modes this protocol exists to catch
 

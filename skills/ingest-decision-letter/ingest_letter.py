@@ -263,6 +263,12 @@ def _invalid_atomics(records: list[dict]) -> list[dict]:
             and (r.get("round", ""), r["atomic_of"]) not in parents]
 
 
+def _has_decision(rec: dict) -> bool:
+    """True when the record carries tickets or an author decision of its own."""
+    return bool(rec.get("tickets") or rec.get("disposition") or rec.get("evidence")
+                or rec.get("resolution", "open") != "open")
+
+
 def dedupe(records: list[dict]) -> tuple[list[dict], dict]:
     """Collapse atomic sub-comments and duplicates into distinct remarks.
 
@@ -270,7 +276,8 @@ def dedupe(records: list[dict]) -> tuple[list[dict], dict]:
       - explicit: a record whose ``atomic_of`` names another record's id is
         folded into that parent.
       - implicit: records with identical normalized text collapse; the first
-        in document order is canonical, the rest fold into it.
+        in document order is canonical, the rest fold into it unless they
+        carry tickets or a decision of their own (then they stay distinct).
     Returns (ledger, summary). The ledger keeps every input record, with folded
     ones carrying ``atomic_of`` set to their canonical id. Distinct remarks are
     the records whose ``atomic_of`` is null.
@@ -286,10 +293,12 @@ def dedupe(records: list[dict]) -> tuple[list[dict], dict]:
             out.append(rec)
             continue
         key = (rec.get("round", ""), _norm_text(rec["text"]))
-        if key in canonical_by_text:
+        # A duplicate carrying its own tickets or decision stays a distinct
+        # remark: folding it would orphan its tickets and hide its disposition.
+        if key in canonical_by_text and not _has_decision(rec):
             rec["atomic_of"] = canonical_by_text[key]
         else:
-            canonical_by_text[key] = rec["id"]
+            canonical_by_text.setdefault(key, rec["id"])
             rec["atomic_of"] = None
         out.append(rec)
 

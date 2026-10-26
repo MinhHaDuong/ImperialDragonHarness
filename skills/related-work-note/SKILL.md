@@ -50,7 +50,7 @@ This pointer does not register or load MCP tools.
 staging; the canonical library is **Zotero**. Resolve and import sources at
 intake with `/zotero import`, attaching to existing items when needed. Reuse
 Zotero identities; the note bibliography is a citation view, not a second
-source catalogue.
+source catalog.
 
 BibTeX template (aligned with `~/CNRS/html/src/Ha-Duong.bib`):
 

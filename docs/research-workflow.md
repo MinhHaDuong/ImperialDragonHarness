@@ -77,7 +77,7 @@ code or runtime dependency.
 
 Explain how to use it from the manuscript project. Check availability with
 `command -v coarse-review`. If unavailable, give the isolated installation
-command for the tested version (Python 3.12+, with
+command for the pinned version (Python 3.12+, with
 [uv](https://docs.astral.sh/uv/getting-started/installation/) installed):
 
 ```bash
