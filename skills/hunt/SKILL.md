@@ -51,10 +51,12 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
      prints 1 (a sandboxed runtime), use `P=$RANDOM` and the lock reason
      `hunt t$ID (owner pid not visible)` (details: `references/worktree-lifecycle.md`):
      ```bash
+     P=$PPID; REASON="hunt t$ID (pid $P)"
+     if [ "$P" = 1 ]; then P=$RANDOM; REASON="hunt t$ID (owner pid not visible)"; fi
      R=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
      W=$R/.claude/worktrees/t$ID-$P
      git worktree add "$W" -b t$ID-short-description origin/main
-     git worktree lock --reason "hunt t$ID (pid $P)" "$W"
+     git worktree lock --reason "$REASON" "$W"
      ```
      If the branch already exists (re-hunt, second session), drop `-b`:
      `git worktree add "$W" <branch>`. Without `origin/main`, use `main`.
