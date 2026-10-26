@@ -33,11 +33,13 @@ touches and is read mechanically, never judged:
 prints it and answers 0 bookkeeping (with `--since`, also `unchanged`), 1
 full (an empty diff included), 3 could not read (treat as full). The path list is `BOOKKEEPING` in that script: ticket files
 (`tickets/*.erg`, `tickets/closed/*.erg`), `STATE.md` and `memory/`; the
-ticket tool `tickets/erg` and the ticket docs are not bookkeeping.
+ticket tool `tickets/erg` and the ticket docs are not bookkeeping. Only
+regular files (or deletions) count: a symlink or gitlink on those paths reads
+full.
 
 | Tier | The diff touches | Gating |
 |------|------------------|--------|
-| bookkeeping | bookkeeping paths only | Mechanical checks only. On a gated base the record runs the checks `.merge-gate.json` declares under `"tiers"`; this harness declares `validate-tickets` (the ticket check), `agnostic-guard` (lint) and `bookkeeping-tests` (every test that reads tickets, memory or `STATE.md`). On an ungated base, the repo's CI. No `/gaze`, no `/verify-gate`, no review seat. |
+| bookkeeping | bookkeeping paths only | Mechanical checks only. On a gated base the record runs the checks `.merge-gate.json` declares under `"tiers"`; this harness declares `validate-tickets` (the ticket check), `agnostic-guard` (lint) and `pytest-guard` (the full test suite, since tests read the live tickets, memory and `STATE.md`). On an ungated base, the repo's CI. No `/gaze`, no `/verify-gate`, no review seat. |
 | full | anything else: code, rules, skills, config | `/gaze`, then `/verify-gate` APPROVED, seats scaled to the risk (`skills/route/references/decorrelation.md`); on a gated base, the full record. |
 
 **A commit added after approval is gated by the tier of its own diff**, not
