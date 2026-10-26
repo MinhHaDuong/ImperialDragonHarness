@@ -422,6 +422,7 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
    Checks: run:<n> reuse:<n> skip:<n> failed:<n>
    Minors: verifiable:<n> consider:<n> nofollow:<n> malformed:<n>
    Evidence: <legacy | ran:<n> reused:<n> stale:<n> no-report:<n>>
+   duration: <the verdict's duration: value, e.g. 4m12s, or not measured>
    Top reasons (if not APPROVED): <ranked list>
    Rationale: <paragraph>
    ```
