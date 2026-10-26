@@ -2,7 +2,7 @@
 metadata:
   category: build
 name: merge
-description: "Merge a pull request with plain commands: close the claimed ticket on its branch, check the gate record on a gated base, merge pinned to that head, read it back, sync local main. A recipe any runtime follows."
+description: "Land a merge request with plain commands: close its claimed ticket, check the gate record on a gated base, merge pinned to the reviewed head, read it back, sync local main. A recipe any runtime follows."
 user-invocable: true
 argument-hint: "[pr-number]"
 ---
@@ -146,12 +146,18 @@ reads and writes in its own spelling.
    reads to attribute the merge: do not reword it. A claimed ticket absent
    from both directories: stop, the branch or the claim is wrong.
    `-u` stages the dependents whose `Blocked-by` the close removed, never a
-   stray untracked file.
+   stray untracked file. The `add -u` here follows the move because the
+   explicit `git add tickets/closed/<id>-*.erg` stages the archived file's
+   edited blob; the before-the-move ordering `references/claims.md` § Repair
+   insists on is for the repair path, which does not add the `closed/` path
+   itself.
 2. **Ready.** A draft request is marked ready: `gh pr ready N` <!-- harness-extension-point -->
    Asking for the merge is the intent to merge.
 3. **Same head.** `git fetch origin`, then the head checks of § Before
-   merging (tier delta since the ruled tip, full tier only). Re-read the body and compare its close claims with the set the
-   gate ruled on: a body edited after approval is a stop and a re-gate.
+   merging (the "Immediately before the merge" sentence is the full
+   procedure; the tier delta since the ruled tip is full tier only). Re-read
+   the body and compare its close claims with the set the gate ruled on: a
+   body edited after approval is a stop and a re-gate.
 4. **Gate (b).** `python3 "$IDH_ROOT/scripts/merge-gate.py" enabled --base origin/<base>`
    answers 0 gated, 1 ungated, 3 could not read (stop; never remove the file
    to get through). On a gated base:
