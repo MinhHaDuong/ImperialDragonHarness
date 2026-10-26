@@ -16,46 +16,46 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 
 1. Read the ticket (from git-erg `tickets/` directory or forge).
 2. Check the **Exit criteria** section. If unclear, ask the author before writing code.
-   - If all exit criteria are **already met** (verify by inspection/grep before writing any code), close the ticket through the **normal branch + PR flow**: steps 3
-   Enter the worktree (step 3) and create the branch (step 4) first, then on that branch run
-   `${ERG:-tickets/erg} close $ARGUMENTS already-done`, commit the ticket file
-   (`git add -u tickets/ && git commit -m "ticket($ARGUMENTS): close — already-done"`
-   — `-u` stages the close edit and any dependent Blocked-by removals, never a
-   stray file in the shared `tickets/`), and open the
-   merge request (step 10). Skip the test/implement steps (5–9); the merge request lands the close
-   via review like any other change. Do not stop with an uncommitted-to-`main` or unpushed close.
+   - If all exit criteria are **already met** (verify by inspection/grep before writing any code), close the ticket through the **normal branch + PR flow**: steps 4, 5 and 11 — never commit the close on `main`.
+     Enter the worktree (step 4) and create the branch (step 5) first, then on that branch run
+     `${ERG:-tickets/erg} close $ARGUMENTS already-done`, commit the ticket file
+     (`git add -u tickets/ && git commit -m "ticket($ARGUMENTS): close — already-done"`
+     — `-u` stages the close edit and any dependent Blocked-by removals, never a
+     stray file in the shared `tickets/`), and open the
+     merge request (step 11). Skip the test/implement steps (6–10); the merge request lands the close
+     via review like any other change. Do not stop with an uncommitted-to-`main` or unpushed close.
 3. **Route before you execute.** Only a hunt in the author's live interactive
    session reaches this fork. An already-detached executor, an `inline`
-   invocation, and a headless run each skip straight to step 3; raid is not a
+   invocation, and a headless run each skip straight to step 4; raid is not a
    second triage. For why each caller skips, and the `$ARGUMENTS` shape, see
    `references/triage.md`.
    - **Needs-human triage.** Read the ticket for these tells, mostly mechanical: a
-   `Label: needs-human` header; exit criteria carrying decision verbs (decide,
-   arbitrate, sign-off, choose among); manuscript prose as the deliverable, where
-   rules/prose/workpackages.md routes an autonomous change through a PR; a
-   premise resting on conflicting sources. On a hit, do not execute and write no
-   code. Return ONE batched decision list to the author, each item with a
-   recommended default, and end the turn. That return is a success outcome of the
-   hunt, not a failure, exactly as the raid drift guard treats a premise objection.
+     `Label: needs-human` header; exit criteria carrying decision verbs (decide,
+     arbitrate, sign-off, choose among); manuscript prose as the deliverable, where
+     rules/prose/workpackages.md routes an autonomous change through a PR; a
+     premise resting on conflicting sources. On a hit, do not execute and write no
+     code. Return ONE batched decision list to the author, each item with a
+     recommended default, and end the turn. That return is a success outcome of the
+     hunt, not a failure, exactly as the raid drift guard treats a premise objection.
    - **Detach by default.** No tell hit, and the hunt is running in the author's
-   interactive session: hand the ticket to ONE background agent, which creates
-   its own worktree in step 3. Not a raid — for a single ticket its orchestrator and review panels
-   cost more than the ticket returns. Launch it with the coder profile (`agents/coder.md`; choose the model per launch from the
-   `route` skill, there is no frontmatter pin). The agent's FIRST action is mechanical:
-   ```
-   Skill(skill: "hunt", args: "$ARGUMENTS")
-   ```
-   The launch prompt must NOT paraphrase, summarize, or inline hunt's steps;
-   `skills/hunt/SKILL.md` is the single live execution contract and the loader
-   supplies it fresh on every run (mirrors raid Phase 5). Instruct the agent to
-   push its branch and open a merge request as hunt's flow dictates. Then report
-   the handoff. Block on the runner with bounded `agent.wait` slices when the
-   author is hands-off or the runtime's notifications cannot wake the parent
-   turn; a client interrupt cancels the watch, not the runner — re-attach and
-   wait again. Otherwise end the turn and say a prompt retrieves the result:
-   the interactive session stays at decision altitude instead of accumulating
-   the executor's test dumps, diffs, and review rounds, which measured 5.4x the
-   cost of the same contract run detached.
+     interactive session: hand the ticket to ONE background agent, which creates
+     its own worktree in step 4. Not a raid — for a single ticket its orchestrator and review panels
+     cost more than the ticket returns. Launch it with the coder profile (`agents/coder.md`; choose the model per launch from the
+     `route` skill, there is no frontmatter pin). The agent's FIRST action is mechanical:
+     ```
+     Skill(skill: "hunt", args: "$ARGUMENTS")
+     ```
+     The launch prompt must NOT paraphrase, summarize, or inline hunt's steps;
+     `skills/hunt/SKILL.md` is the single live execution contract and the loader
+     supplies it fresh on every run (mirrors raid Phase 5). Instruct the agent to
+     push its branch and open a merge request as hunt's flow dictates. Then report
+     the handoff. Block on the runner with bounded `agent.wait` slices when the
+     author is hands-off or the runtime's notifications cannot wake the parent
+     turn; a client interrupt cancels the watch, not the runner — re-attach and
+     wait again. Otherwise end the turn and say a prompt retrieves the result:
+     the interactive session stays at decision altitude instead of accumulating
+     the executor's test dumps, diffs, and review rounds, which measured 5.4x the
+     cost of the same contract run detached.
 4. Work in the ticket's **own** worktree. A worktree is **owned** when you created
    it for this ticket, or the spawner handed it to you by path with
    `git status --porcelain` printing nothing. A shared or `explore-*` worktree that
@@ -100,26 +100,26 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 8. Run the test to confirm it fails.
 9. Announce `[Plan → Execute]`, then implement until the affected test passes.
 10. Pre-PR self-gate: run `/verify-adherence <branch>` (the branch created in step 5).
-   - Clean → proceed to step 11. Note adherence passed in the merge-request description so `/gaze` can skip the mechanical phase on its next pass (gaze reviews; `/verify-gate` gates).
-   - Blockers → decide per blocker:
-   - Cheap and mechanical (obvious fix, no design judgement) → fix in place, re-run `make check-fast` and `/verify-adherence`, then proceed only once clean. Up to 3 fix-and-recheck cycles; if still not clean after 3 rounds, escalate.
-   - A gate slow enough to hurt is a symptom to name in the handoff; the author decides whether to call `/pulse`.
-   - Otherwise → STOP. Do not open the PR. Escalate with the adherence report and the blocker list.
-   - Circuit breaker: if `/verify-adherence` itself errors, times out, or returns an unparseable result → ESCALATE. Do not open the PR and do not silently skip the gate.
+    - Clean → proceed to step 11. Note adherence passed in the merge-request description so `/gaze` can skip the mechanical phase on its next pass (gaze reviews; `/verify-gate` gates).
+    - Blockers → decide per blocker:
+      - Cheap and mechanical (obvious fix, no design judgement) → fix in place, re-run `make check-fast` and `/verify-adherence`, then proceed only once clean. Up to 3 fix-and-recheck cycles; if still not clean after 3 rounds, escalate.
+      - A gate slow enough to hurt is a symptom to name in the handoff; the author decides whether to call `/pulse`.
+      - Otherwise → STOP. Do not open the PR. Escalate with the adherence report and the blocker list.
+    - Circuit breaker: if `/verify-adherence` itself errors, times out, or returns an unparseable result → ESCALATE. Do not open the PR and do not silently skip the gate.
 11. Rebase onto `origin/main` (`rules/git.md` § Merging), run the project's declared pre-PR gate once, then push the branch with lease, wait for CI and open a merge request. Run it through `python3 "$IDH_ROOT/scripts/raid-gate.py" -- <gate command>` so a raid can observe a live long-running gate. If the project has `.idh-checks.json`, its gate command is the project's scoped entry point (or `python3 "$IDH_ROOT/scripts/scoped-check.py"` from its root); quote `selected:` and `skipped:` in the PR description. A mapped doc-only diff may run fewer targets; Python code, unmapped paths, or a project without a map run the full `make check`.
 12. Review the merge request, unless its tier is bookkeeping
-   (`skills/merge/SKILL.md` § Gating tiers): a bookkeeping-only request is
-   gated by its mechanical checks alone, so skip 12–14. Otherwise this action
-   is mechanical — invoke the gaze skill with the PR number:
-   ```
-   Skill(skill: "gaze", args: <pr-number>)
-   ```
-   Follow the contract the skill loader returns; do not paraphrase or inline its
-   steps (mirrors raid Phase 5's mechanical `Skill(hunt)` invocation).
-   Each pass through the 12–13 loop is one **review round**; which
-   perspectives run, and how deep, is the reviewer's call
-   (`skills/gaze/SKILL.md` § 2–5). What each gaze result leads to (fix and
-   review again, close and gate, or stop at the author) is the caller's
-   policy in `skills/merge/SKILL.md` § Before merging.
+    (`skills/merge/SKILL.md` § Gating tiers): a bookkeeping-only request is
+    gated by its mechanical checks alone, so skip 12–14. Otherwise this action
+    is mechanical — invoke the gaze skill with the PR number:
+    ```
+    Skill(skill: "gaze", args: <pr-number>)
+    ```
+    Follow the contract the skill loader returns; do not paraphrase or inline its
+    steps (mirrors raid Phase 5's mechanical `Skill(hunt)` invocation).
+    Each pass through the 12–13 loop is one **review round**; which
+    perspectives run, and how deep, is the reviewer's call
+    (`skills/gaze/SKILL.md` § 2–5). What each gaze result leads to (fix and
+    review again, close and gate, or stop at the author) is the caller's
+    policy in `skills/merge/SKILL.md` § Before merging.
 13. Fix all comments regardless of severity. Per fix cycle, run `make check-fast` plus the tests implicated by the comments — not the full suite.
 14. Repeat 12–13 up to 3 times, i.e. up to round 3. If still not clean, escalate (see workflow rules).
