@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-26T20:51Z reviewer created
+2026-10-26T22:19Z reviewer note author: kept (2026-10-26); 1225 makes 'no review' for bookkeeping paths an overridable default, 1223 stays as the floor for the memory files that steer sessions; sequence after 1226 (same section)
 
 --- body ---
 ## Context
