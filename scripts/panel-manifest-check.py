@@ -4,6 +4,10 @@
 A manifest line is `perspective<TAB>model<TAB>family<TAB>reason`, written by the
 orchestrator before launching. An empty model, family or reason means the launch
 choice was not made, which is the failure the manifest exists to expose.
+
+With `--seats a,b` (the `panel_seats:` line of `gaze_brief.py resolve`), the
+manifest must list exactly those perspectives: gaze adds no seat to the
+caller's brief and drops none (ticket 1225).
 """
 
 import re
@@ -38,9 +42,21 @@ def check(text: str) -> list[str]:
     return problems
 
 
+def against_brief(text: str, seats: str) -> list[str]:
+    listed = [line.split("\t")[0] for line in text.splitlines() if line.strip() and not line.startswith("#")]
+    wanted = [seat for seat in seats.split(",") if seat]
+    return [f"perspective {name!r} is not in the brief" for name in listed if name not in wanted] + [
+        f"brief seat {name!r} is missing from the manifest" for name in wanted if name not in listed
+    ]
+
+
 def main(argv: list[str]) -> int:
+    seats = None
+    if len(argv) == 4 and argv[2] == "--seats":
+        seats = argv[3]
+        argv = argv[:2]
     if len(argv) != 2:
-        print("usage: panel-manifest-check.py <manifest.txt>", file=sys.stderr)
+        print("usage: panel-manifest-check.py <manifest.txt> [--seats a,b]", file=sys.stderr)
         return 2
     try:
         text = Path(argv[1]).read_text(encoding="utf-8-sig")
@@ -48,6 +64,8 @@ def main(argv: list[str]) -> int:
         print(f"PANEL-MANIFEST: cannot read {argv[1]}: {error}", file=sys.stderr)
         return 1
     problems = check(text)
+    if seats is not None:
+        problems += against_brief(text, seats)
     for problem in problems:
         print(f"PANEL-MANIFEST: {problem}", file=sys.stderr)
     return 1 if problems else 0
