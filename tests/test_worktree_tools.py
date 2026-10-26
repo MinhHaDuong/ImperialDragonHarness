@@ -698,6 +698,37 @@ def test_preflight_passes_on_clean_worktree(origin):
     assert res.stderr == ""
 
 
+@pytest.mark.parametrize("scratch", ["draft.md", "notes/plan.md"])
+def test_preflight_blocks_on_ignored_draft_under_star_ignore(origin, scratch):
+    """Ticket 1212: under a `*` ignore rule plain status reads clean, yet
+    `git worktree remove` deletes the ignored draft. The preflight refuses."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-ign-draft", dirty=False)
+    _ignore_everything(primary)
+    target = wt / scratch
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("in progress\n")
+
+    res = _preflight(wt)
+    assert res.returncode == 1
+    assert scratch.split("/")[0] in res.stderr
+    assert target.exists()
+
+
+def test_preflight_passes_on_ignored_caches_only(origin):
+    """Regenerable caches and the root .venv are not work: same list as gc."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-ign-cache", dirty=False)
+    _ignore_everything(primary)
+    (wt / "__pycache__").mkdir()
+    (wt / "__pycache__" / "m.pyc").write_bytes(b"\0")
+    (wt / ".venv" / "bin").mkdir(parents=True)
+    (wt / ".venv" / "bin" / "python").write_text("")
+
+    res = _preflight(wt)
+    assert res.returncode == 0, res.stderr
+
+
 def test_preflight_reports_ignored_tmp_without_purging_it(origin):
     _, primary = origin
     wt = make_agent_worktree(primary, "agent-preflight-tmp", dirty=False)
@@ -709,6 +740,25 @@ def test_preflight_reports_ignored_tmp_without_purging_it(origin):
     assert res.returncode == 0
     assert ".tmp/" in res.stdout and "1 files" in res.stdout and "bytes" in res.stdout
     assert (wt / ".tmp" / "cache.bin").exists()
+
+
+def test_preflight_tolerates_ignored_panel_beside_tmp_before_removal(origin):
+    """With a .tmp/ present the non-removal run keeps .panel/ (cited review
+    scratch, removed only at the removal gate). Ignored, it must not block."""
+    _, primary = origin
+    wt = make_agent_worktree(primary, "agent-panel-tmp", dirty=False)
+    _ignore_worktree_tmp(primary)
+    exclude = Path(git(primary, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()) / "info" / "exclude"
+    with exclude.open("a") as stream:
+        stream.write("\n/.panel/\n")
+    (wt / ".tmp").mkdir()
+    (wt / ".tmp" / "cache.bin").write_bytes(b"scratch")
+    (wt / ".panel" / "1").mkdir(parents=True)
+    (wt / ".panel" / "1" / "review.md").write_text("report\n")
+
+    res = _preflight(wt)
+    assert res.returncode == 0, res.stderr
+    assert (wt / ".panel" / "1" / "review.md").exists()
 
 
 def test_preflight_preserves_cited_panel_until_removal_gate(origin):

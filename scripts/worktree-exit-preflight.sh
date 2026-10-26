@@ -8,8 +8,8 @@ set -euo pipefail
 # `git worktree remove` refuses too, but without the salvage route below.
 #
 # This is a skill-level gate, called from /roar step 9 (through
-# skills/roar/close-and-clean.sh) and /lair step 7 before leaving the worktree. Checks tracked-modified, staged, AND
-# untracked entries — `git status --porcelain` covers all three by default.
+# skills/roar/close-and-clean.sh) and /lair step 7 before leaving the worktree. Checks tracked-modified, staged, untracked AND
+# ignored entries (minus regenerable caches), via scripts/worktree-clean-lib.sh.
 #
 # Arg: worktree path (default: current directory).
 # Exit 0 silently when clean. Exit 1 with a listing on stderr when dirty.
@@ -71,16 +71,26 @@ if [ ! -L "$path/build" ] && [ -z "$tracked_base" ]; then
     rm -rf -- "$path/build/panel-head"
 fi
 
-# -uall expands untracked directories so each lost file is named in the message
-# (the failure mode was a single .erg file inside an otherwise-untracked dir).
-status=$(git -C "$path" status --porcelain --untracked-files=all 2>/dev/null) || {
+# Same residue definition as worktree-gc.sh (shared lib): uncommitted entries
+# plus ignored files, which `git worktree remove` deletes too (a repo whose
+# .gitignore is `*` hides drafts from plain status; ticket 1212). Regenerable
+# caches, the root .venv/ and .tmp/ (checked above) are tolerated. Untracked
+# directories are expanded so each lost file is named in the message (the
+# 0174 failure was one .erg file inside an otherwise-untracked dir).
+. "$(dirname "${BASH_SOURCE[0]}")/worktree-clean-lib.sh"
+status=$(worktree_residue "$path") || {
     echo "worktree-exit-preflight: cannot inspect worktree status: $path" >&2
     exit 2
 }
+# Without --removal a present .tmp/ keeps .panel/ (cited review scratch, only
+# the removal gate deletes it); ignored, it is preserved, not uncommitted work.
+if [ "$preserve_panel" -eq 1 ] && [ -n "$status" ]; then
+    status=$(printf '%s\n' "$status" | grep -v '^!! \.panel/' || true)
+fi
 [ -z "$status" ] && exit 0
 
 cat >&2 <<EOF
-Blocked: worktree '$path' has uncommitted state — removing the worktree would destroy it.
+Blocked: worktree '$path' has uncommitted or ignored state — removing the worktree would destroy it.
 
 $status
 
