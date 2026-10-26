@@ -8,6 +8,7 @@ Author: Minh Ha-Duong
 2026-10-26T21:57Z Minh Ha-Duong created
 2026-10-26T22:19Z reviewer note author: criterion added, bookkeeping 'no review' becomes a default the orchestrator may override; 1223 kept as the mechanical floor
 2026-10-26T22:24Z reviewer reviewer note alignment 2026-10-26 (author: yes, align): blocked by 1226 (same § Gating tiers); 1223 folded in as a worked case and a default brief, the tier stays mechanical; the brief is the inline form of the 1154 request/response files
+2026-10-26T23:09Z reviewer night-mode decisions (executor): (1) brief syntax is one ';'-separated string seats=..; scope=all|A..B|paths:..; why=.. resolved by scripts/gaze_brief.py, rather than separate --seats/--scope flags, so it maps 1:1 onto the deferred 1154 request file; (2) sizing guidance lives in skills/route/references/decorrelation.md § Sizing a gaze brief, under the existing risk table, rather than a new gaze reference (alternative: skills/gaze/references/brief.md; rejected as a second home); (3) § Gating tiers criterion written before PR 1676 merged, as a one-row edit of the bookkeeping row to keep the rebase conflict-free; (4) adherence stays whole-branch under a scope brief, since it is mechanical and adherence_verdict.py needs the full changed list
 
 --- body ---
 ## Context
