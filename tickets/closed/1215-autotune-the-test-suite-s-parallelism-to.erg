@@ -2,10 +2,13 @@
 Title: Autotune the test suite's parallelism to the host's cores
 Created: 2026-10-25
 Author: claude
+Closed: autoclosed — PR #1659
 
 --- log ---
 2026-10-25T06:26Z claude created
 2026-10-26T17:32Z reviewer coder: measurements, rule and audit extension recorded; doudou sweep incomplete (host unreachable)
+2026-10-26T18:36Z reviewer note verify-reroll — round 1: exit criterion 1 (doudou 4-core sweep, three trials) MISSING
+2026-10-26T18:36Z reviewer closed — autoclosed — PR #1659
 
 --- body ---
 ## Context
