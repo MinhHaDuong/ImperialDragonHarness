@@ -23,7 +23,9 @@ import json
 import os
 import re
 import shlex
+import subprocess
 import sys
+import uuid
 from pathlib import Path
 
 DEFAULT_ROOT = Path(__file__).resolve().parent.parent
@@ -278,6 +280,57 @@ def check_entry(entry: dict, root: Path):
         f"{path} is a real {'directory' if path.is_dir() else 'file'}, not {target}",
         prefix + inspect,
     )
+
+
+def _run(argv, timeout=10):
+    try:
+        r = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return None, f"{type(exc).__name__}: {exc}"
+    return r, (r.stdout + r.stderr).strip()
+
+
+def probe_wrapper(entry: dict, root: Path):
+    """Behavioural check of the pgrep/pkill wrapper (ticket 1216).
+
+    Run by `idh install` and `idh check`, not at runtime launch: it spawns
+    processes, and a launch must stay cheap. Returns (problem, note): problem
+    is None or (kind, detail, repair) like check_entry; note says which mode
+    the wrapper is in. Tests the wrapper's behaviour, not its source.
+    """
+    name = Path(entry["path"]).name
+    target = resolved(expand(entry["target"], root))
+    repair = f"{shlex.quote(str(root / 'bin/idh'))} install, with {Path(entry['path']).parent} first on PATH"
+    dirs = [d or "." for d in os.environ.get("PATH", "").split(":")]
+    cands = [Path(d) / name for d in dirs]
+    cands = [c for c in cands if c.is_file() and os.access(c, os.X_OK)]
+    if target is None:
+        return None, ""  # check_entry already names the missing target
+    if not cands or resolved(cands[0]) != target:
+        first = cands[0] if cands else "nothing"
+        return ("SHADOWED", f"{name} resolves first on PATH to {first}, not the wrapper {target}", repair), ""
+    real = next((c for c in cands if resolved(c) != target), None)
+    if real is None:
+        return ("NOREAL", f"no real {name} behind the wrapper on PATH", repair), ""
+    wrapper = str(cands[0])
+    r_real, out_real = _run([str(real), "--version"])
+    r_wrap, out_wrap = _run([wrapper, "--version"])
+    if r_wrap is None or r_wrap.returncode != 0 or out_wrap != out_real:
+        return ("RECURSION", f"{wrapper} --version did not reach {real} cleanly: {out_wrap[:120]!r}", repair), ""
+    m = re.search(r"procps-ng\s+(\d+)", out_real)
+    if not m or int(m.group(1)) < 4:
+        return None, f"{name}: pass-through ({out_real.splitlines()[0] if out_real else 'unknown version'}; no -A)"
+    mark = "idhprobe" + uuid.uuid4().hex
+    flags = "-0 -f" if name == "pkill" else "-f"
+    script = f'"$1" {flags} "$3" >/dev/null; a=$?; "$2" {flags} "$3" >/dev/null; b=$?; echo "$a $b"'
+    r, out = _run(["sh", "-c", script, "idh-probe", str(real), wrapper, mark])
+    if r is None or out.split() != ["0", "1"]:
+        return (
+            "LEAKY",
+            f"{name} -A positive control failed (plain, wrapped exit codes: {out!r}; wanted '0 1')",
+            repair,
+        ), ""
+    return None, f"{name}: -A active ({out_real.splitlines()[0]}), caller excluded"
 
 
 FIELDS = ("path", "target", "runtimes", "required", "why")

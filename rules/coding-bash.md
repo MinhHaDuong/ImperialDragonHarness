@@ -1,7 +1,7 @@
 ---
 paths:
   - "**/*.sh"
-last-reviewed: 2026-08-14
+last-reviewed: 2026-10-27
 ---
 # Coding Rules — Bash
 
@@ -164,3 +164,7 @@ Two consequences, and the second is the one that bites quietly:
 Verify with a **fake sentinel** loader, never the real key: point `BASH_ENV` at
 a script exporting a recognisable dummy, run the suite, and grep the output for
 the dummy. Verifying with the real key is how you leak it a second time.
+
+## Waiting for a background job
+
+Wait in the foreground with a bound: `timeout N cmd`, or `timeout N tail --pid=PID -f /dev/null`. Never `sleep` in a loop, and never `pgrep -f PATTERN` from a shell whose own command line holds PATTERN: it matches itself (the `pgrep`/`pkill` on PATH are wrappers adding `-A`; on a bare `/usr/bin/pgrep` write `pgrep -f '[p]attern'`).

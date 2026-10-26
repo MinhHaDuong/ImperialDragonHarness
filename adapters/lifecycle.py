@@ -234,8 +234,23 @@ def register_settings(entry, path, target) -> int:
         return 1
 
 
+def probe_wrappers(runtime=None) -> list:
+    """Behavioural probe of each wrapper entry (1216); prints its mode note."""
+    problems = []
+    for e in entries(runtime):
+        if e.get("probe") != "self-safe-pgrep" or V.check_entry(e, root()):
+            continue  # a broken link is already reported by check_entry
+        problem, note = V.probe_wrapper(e, root())
+        if note:
+            print(f"  ok: {note}")
+        if problem:
+            problems.append(problem)
+    return problems
+
+
 def check(runtime=None) -> int:
     failures = [p for e in entries(runtime) if (p := V.check_entry(e, root()))]
+    failures += probe_wrappers(runtime)
     for problem in failures:
         report(*problem)
     print(f"idh check: {len(failures)} broken" if failures else "idh check: ok")
@@ -365,7 +380,11 @@ def _splice(dest: Path) -> int:
 
 def install() -> int:
     # Both steps run; the exit code is non-zero when either refuses.
-    return install_links() | install_loader()
+    rc = install_links() | install_loader()
+    for problem in probe_wrappers():
+        report(*problem)
+        rc = 1
+    return rc
 
 
 def _git(*args):

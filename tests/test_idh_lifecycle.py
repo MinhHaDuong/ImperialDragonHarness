@@ -45,7 +45,8 @@ def machine(tmp_path):
     stub = bin_dir / "systemctl"
     stub.write_text(f'#!/bin/sh\necho "$*" >> "{log}"\nexit 1\n')
     stub.chmod(0o755)
-    env = {"HOME": str(home), "PATH": f"{bin_dir}:/usr/bin:/bin"}
+    # ~/.local/bin first, as a configured machine has it (1216 probes the order).
+    env = {"HOME": str(home), "PATH": f"{home}/.local/bin:{bin_dir}:/usr/bin:/bin"}
 
     def idh(*args):
         return subprocess.run(
@@ -621,3 +622,42 @@ def test_install_refuses_removal_when_the_plugin_payload_is_broken(machine):
         assert "hooks" in after, "the stale hooks must keep firing, not be removed"
     finally:
         payload.write_bytes(backup)
+
+
+def _procps_major():
+    out = subprocess.run(["/usr/bin/pgrep", "--version"], capture_output=True, text=True).stdout
+    import re
+    m = re.search(r"procps-ng\s+(\d+)", out)
+    return int(m.group(1)) if m else 0
+
+
+def test_pgrep_wrapper_is_probed_on_install_and_check(machine):
+    """1216: wrapper behaviour, not its source, is what install and check verify."""
+    home, idh = machine["home"], machine["idh"]
+    r = idh("install")
+    assert r.returncode == 0, r.stdout + r.stderr
+    for name in ("pgrep", "pkill"):
+        assert (home / ".local/bin" / name).resolve() == (REPO / "scripts/self-safe-pgrep.sh").resolve()
+    r = idh("check")
+    assert r.returncode == 0, r.stdout + r.stderr
+    expect = "-A active" if _procps_major() >= 4 else "pass-through"
+    assert expect in r.stdout, r.stdout
+
+    # Negative control: a real pgrep ahead of the wrapper shadows it.
+    shadow = home / "shadow"
+    shadow.mkdir()
+    (shadow / "pgrep").symlink_to("/usr/bin/pgrep")
+    env = dict(machine["env"], PATH=f"{shadow}:{machine['env']['PATH']}")
+    r = subprocess.run([sys.executable, str(IDH), "check"], env=env, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 1 and "SHADOWED" in r.stderr, r.stdout + r.stderr
+
+
+@pytest.mark.skipif(_procps_major() < 4, reason="-A needs procps-ng >= 4.0")
+def test_wrapper_excludes_its_calling_shell(machine):
+    """Positive control: plain pgrep matches the caller, the wrapper does not."""
+    machine["idh"]("install")
+    w = machine["home"] / ".local/bin/pgrep"
+    mark = "idhmarker1216x"
+    script = f'/usr/bin/pgrep -f {mark} >/dev/null; a=$?; "$1" -f {mark} >/dev/null; echo $a $?'
+    r = subprocess.run(["sh", "-c", script, "t", str(w)], capture_output=True, text=True, env=machine["env"])
+    assert r.stdout.split() == ["0", "1"], r
