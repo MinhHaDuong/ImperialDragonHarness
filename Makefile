@@ -50,16 +50,13 @@ check-agnostic-rules:
 	./scripts/check-agnostic.sh rules
 
 # Full gate (coding-python.md): the whole suite, integration + slow included.
-# -n 8: the 1011 worker-safety audit covered -n 4 (81s -> 38.6s); a pulse visit
-# re-measured at load 7-9 with the smart-testing helper retired, three trials
-# each, identical 2094 passed / 4 skipped, 46.9s mean at -n 4 -> 33.8s at -n 8.
-# CI keeps its own -n 4 (.github/workflows/CI.yml): the forge runner's cores
-# were not measured. check-fast and lint are deliberately serial (both sit at the pytest
-# boot+collection floor).
-# Falls back to serial when pytest-xdist is not installed (probe: import xdist).
-HAVE_XDIST := $(shell $(RUN) python3 -c 'import xdist' 2>/dev/null && echo yes)
+# Parallelism comes from one rule, scripts/pytest_workers.py (ticket 1215): it
+# prints `-n N` for this host, or nothing for serial (pytest-xdist missing, or
+# IDH_TEST_WORKERS=0). Measurements and the reasoning live in that ticket and
+# the script's docstring, not here. check-fast and lint are deliberately serial
+# (both sit at the pytest boot+collection floor).
 check-tests:
-	$(RUN) python3 -m pytest tests/ $(if $(HAVE_XDIST),-n 8)
+	$(RUN) python3 -m pytest tests/ $(shell $(RUN) python3 scripts/pytest_workers.py)
 
 check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agnostic-scripts check-agnostic-rules check-personal-data check-tests
 

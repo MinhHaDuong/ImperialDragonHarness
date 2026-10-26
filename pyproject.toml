@@ -28,9 +28,9 @@ dev = [
     # Range-pinned; tests/test_ruff.py asserts the running series matches, so an
     # ambient ruff outside 0.15.x fails loud instead of changing rules (ticket 0470).
     "ruff>=0.15,<0.16",
-    # Parallel test execution for the full suite (ticket 1011): -n 4 measured
-    # 81s -> 38.6s with zero collisions across three trials; check-fast and lint
-    # stay serial — both sit at the pytest boot+collection floor.
+    # Parallel test execution for the full suite (tickets 1011, 1215); the
+    # worker count comes from scripts/pytest_workers.py. check-fast and lint
+    # stay serial.
     "pytest-xdist>=3.8,<4",
     # Attribution query: official inverse-beta primitive for fixed Jeffreys intervals.
     "scipy>=1.10,<2",
