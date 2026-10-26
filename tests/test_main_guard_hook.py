@@ -399,3 +399,25 @@ def test_a_record_on_a_single_parent_commit_does_not_pass(repos):
     git(wt2, "notes", f"--ref={GATE_NOTES_REF}", "add", "-m", "fixture", single)
     proc = git(wt2, "update-ref", "refs/heads/main", single, main, check=False)
     assert proc.returncode != 0
+
+
+@pytest.mark.parametrize("touched,accepted", [("STATE.md", True), ("code.py", False)])
+def test_enforce_accepts_a_bookkeeping_merge_with_its_tier_record(repos, touched, accepted):
+    """Ticket 1221: the tier record (mechanical checks only) admits a bookkeeping merge, nothing else."""
+    work, wt2 = repos["work"], repos["wt2"]
+    (work / ".merge-gate.json").write_text(
+        '{"gate": "on", "scope": "s", "checks": [{"name": "t", "argv": ["true"]},'
+        ' {"name": "full", "argv": ["false"]}], "tiers": {"bookkeeping": ["t"]}}\n')
+    git(work, "add", "-A")
+    git(work, "commit", "-q", "-m", "gate on, with tiers")
+    git(work, "config", "idh.mainGuard", "enforce")
+    git(work, "switch", "-q", "--detach")
+    (wt2 / touched).write_text("edit\n")
+    git(wt2, "add", "-A")
+    git(wt2, "commit", "-q", "-m", touched)
+    assert _receipt(wt2) == (0 if accepted else 1)
+    merge = _candidate(wt2)
+    proc = git(wt2, "update-ref", "refs/heads/main", merge, rev(wt2, "main"), check=False)
+    assert (proc.returncode == 0) is accepted, proc.stderr
+    rec = [r for r in journal(wt2) if r["phase"] == "prepared"][-1]
+    assert rec["decision"] == ("gate-record" if accepted else "not-gated")

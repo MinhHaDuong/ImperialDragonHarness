@@ -23,12 +23,23 @@ refs/notes/gate with it first (and drop it when the remote has none). A
 `--no-push` record goes to refs/notes/gate-local, which is never pushed and is
 read only by `check --local`: a merge rests on a published record.
 
+Gating tiers (ticket 1221; the policy is skills/merge/SKILL.md § Gating
+tiers): a candidate whose changes against the base all match BOOKKEEPING is
+bookkeeping-tier. When the base declares `"tiers": {"bookkeeping": [names]}`,
+such a candidate's record runs only those named checks, under the scope
+`<scope>/bookkeeping`; `check` accepts that scope or the full one for a
+bookkeeping candidate, and only the full one otherwise. `tier` reports the tier
+of a candidate, or with `--since <approved tip>` the tier of what the head adds
+to the candidate the approval saw: the one mechanical reading of the tiers.
+
 Exit codes of `check`: 0 pass, 1 fail or stale scope, 2 no record, 3 error.
-`enabled`: 0 on, 1 off, 3 error. Any unexpected exception exits 3.
+`enabled`: 0 on, 1 off, 3 error. `tier`: 0 bookkeeping, 1 full, 3 error.
+Any unexpected exception exits 3.
 """
 
 import argparse
 import datetime
+import fnmatch
 import getpass
 import importlib.util
 import json
@@ -51,6 +62,11 @@ HEADER = "merge-gate-record: v1"
 FIELDS = ("result", "time", "actor", "host", "revision", "command", "scope", "versions")
 NOT_STATED = "not-stated"
 PASS, FAIL, MISSING, ERROR = 0, 1, 2, 3
+# Bookkeeping paths, the one home of the list (ticket 1221). A pattern ending
+# in "/" covers its whole subtree; any other matches segment by segment, so
+# "tickets/*.erg" does not reach tickets/erg (code) or tickets/closed/.
+BOOKKEEPING = ("tickets/*.erg", "tickets/closed/*.erg", "STATE.md", "memory/")
+BOOKKEEPING_TIER = "bookkeeping"
 
 
 class GateError(RuntimeError):
@@ -127,18 +143,62 @@ def scope_line(config):
 
 
 def decide(entries, candidate, scope):
-    """Latest entry naming this candidate decides. Returns (code, reason)."""
+    """Latest entry naming this candidate decides. Returns (code, reason).
+
+    `scope` is one accepted scope line or a tuple of them.
+    """
+    scopes = (scope,) if isinstance(scope, str) else tuple(scope)
     mine = [e for e in entries if f"candidate={candidate} " in e.get("revision", "") + " "]
     if not mine:
         return MISSING, "missing: no record on candidate " + candidate
     latest = mine[-1]
     if any(f not in latest for f in FIELDS):
         return FAIL, "fail: latest record is incomplete"
-    if latest["scope"] != scope:
-        return FAIL, f"fail: latest record scope '{latest['scope']}' is not the declared scope '{scope}'"
+    if latest["scope"] not in scopes:
+        declared = "' or '".join(scopes)
+        return FAIL, f"fail: latest record scope '{latest['scope']}' is not the declared scope '{declared}'"
     if latest["result"] != "pass":
         return FAIL, f"fail: latest record says {latest['result']} ({latest['time']}, {latest['host']})"
     return PASS, f"pass: {latest['time']} on {latest['host']} by {latest['actor']}"
+
+
+# ── gating tiers ──────────────────────────────────────────────────────────────
+
+
+def is_bookkeeping(path):
+    for pattern in BOOKKEEPING:
+        if pattern.endswith("/"):
+            if path.startswith(pattern):
+                return True
+            continue
+        parts, want = path.split("/"), pattern.split("/")
+        if len(parts) == len(want) and all(fnmatch.fnmatchcase(a, b) for a, b in zip(parts, want)):
+            return True
+    return False
+
+
+def changed_paths(old, new):
+    """Paths whose content differs between two commits; renames count at both ends."""
+    out = git("diff", "--name-only", "--no-renames", "-z", old, new).stdout
+    return [p for p in out.split("\0") if p]
+
+
+def tier_of(paths):
+    return BOOKKEEPING_TIER if all(is_bookkeeping(p) for p in paths) else "full"
+
+
+def effective(config, base, oid):
+    """The check set the record of candidate `oid` runs: a tier's subset, or all."""
+    names = config.get("tiers", {}).get(BOOKKEEPING_TIER)
+    if not names or tier_of(changed_paths(base, oid)) != BOOKKEEPING_TIER:
+        return config
+    checks = [c for c in config["checks"] if c["name"] in names]
+    return {**config, "scope": f"{config['scope']}/{BOOKKEEPING_TIER}", "checks": checks}
+
+
+def accepted_scopes(config, base, oid):
+    """A tier record, or the full set, which covers every tier."""
+    return tuple(dict.fromkeys((scope_line(effective(config, base, oid)), scope_line(config))))
 
 
 # ── actor (vocabulary of scripts/attribution_record.py) ───────────────────────
@@ -242,6 +302,15 @@ def load_config(base):
         raise GateError(f'invalid {CONFIG_PATH} at base: "versions" must be a list of {{name, argv}}')
     if not single_line(config["scope"]) or not all(single_line(v["name"]) for v in versions):
         raise GateError(f"invalid {CONFIG_PATH} at base: scope or version names hold a control character")
+    tiers = config.get("tiers", {})
+    names = {c["name"] for c in checks}
+    if not isinstance(tiers, dict) or not all(
+        key == BOOKKEEPING_TIER and isinstance(value, list) and all(n in names for n in value)
+        for key, value in tiers.items()
+    ):
+        raise GateError(
+            f'invalid {CONFIG_PATH} at base: "tiers" may only map "{BOOKKEEPING_TIER}" to declared check names'
+        )
     return config
 
 
@@ -329,6 +398,7 @@ def cmd_run(args):
     if config is None:
         raise GateError(f"gate is off at base {args.base}: no {CONFIG_PATH} with gate=on")
     oid = candidate(base, head)
+    config = effective(config, base, oid)
     actor = actor_line(args.runtime, args.model, args.effort)
     command = f"merge-gate run --base {args.base} --head {args.head}"
     if not single_line(actor) or not single_line(command):
@@ -371,9 +441,31 @@ def cmd_check(args):
         sys.stdout.write(f"missing: {args.remote} has no {NOTES_REF}; no record on candidate {oid}\n")
         return MISSING
     text = read_note(oid) + ("\n" + read_note(oid, LOCAL_REF) if args.local else "")
-    code, reason = decide(parse_note(text), oid, scope_line(config))
+    code, reason = decide(parse_note(text), oid, accepted_scopes(config, base, oid))
     sys.stdout.write(reason + "\n")
     return code
+
+
+def cmd_tier(args):
+    """Tier of the candidate's changes, or of what head adds to the approved candidate."""
+    base, head = resolve(args)
+    new = candidate(base, head)
+    old = base
+    if args.since:
+        since = rev(args.since)
+        if not since:
+            raise GateError(f"cannot resolve --since '{args.since}'")
+        try:
+            old = candidate(base, since)
+        except GateError:
+            sys.stdout.write(f"full: the approved tip {since[:12]} no longer merges cleanly into the base\n")
+            return FAIL
+    paths = changed_paths(old, new)
+    tier = tier_of(paths)
+    sys.stdout.write(f"{tier}: {len(paths)} path(s) changed\n")
+    for path in paths:
+        sys.stdout.write(f"  {path}\n")
+    return PASS if tier == BOOKKEEPING_TIER else FAIL
 
 
 def cmd_candidate(args):
@@ -391,7 +483,13 @@ def cmd_enabled(args):
 def parser():
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = p.add_subparsers(dest="command", required=True)
-    for name, func in (("run", cmd_run), ("check", cmd_check), ("candidate", cmd_candidate), ("enabled", cmd_enabled)):
+    for name, func in (
+        ("run", cmd_run),
+        ("check", cmd_check),
+        ("candidate", cmd_candidate),
+        ("enabled", cmd_enabled),
+        ("tier", cmd_tier),
+    ):
         s = sub.add_parser(name)
         s.set_defaults(func=func)
         s.add_argument("--base", required=True, help="base ref, e.g. origin/main")
@@ -400,6 +498,8 @@ def parser():
         s.add_argument("--head", required=True, help="branch head ref")
         if name in ("run", "check"):
             s.add_argument("--remote", default="origin", help="where refs/notes/gate lives")
+        if name == "tier":
+            s.add_argument("--since", help="approved tip: judge only what the head adds to it")
         if name == "check":
             s.add_argument("--no-fetch", action="store_true", help="read the local notes ref only")
             s.add_argument("--local", action="store_true", help="also read --no-push records (never for a merge)")

@@ -318,3 +318,141 @@ def test_tool_version_output_is_sanitized(repo):
     assert result.returncode == 0, result.stderr
     line = next(ln for ln in result.stdout.splitlines() if ln.startswith("versions: "))
     assert "\x1b" not in line and "v1 2" in line
+
+
+# ── gating tiers (ticket 1221) ────────────────────────────────────────────────
+
+TIERED = {
+    **CONFIG,
+    "checks": [*CONFIG["checks"], {"name": "full-only", "argv": ["false"]}],
+    "tiers": {"bookkeeping": ["always-pass"]},
+}
+
+
+def branch_touching(repo, *paths, name="books"):
+    """A branch off main changing only `paths`."""
+    git(repo, "switch", "-q", "-c", name, "main")
+    for path in paths:
+        (repo / path).parent.mkdir(parents=True, exist_ok=True)
+        (repo / path).write_text(f"{path}\n", encoding="utf-8")
+    git(repo, "add", ".")
+    git(repo, "commit", "-q", "-m", name)
+    return name
+
+
+@pytest.mark.parametrize(
+    "path,expected",
+    [
+        ("tickets/1221-x.erg", True),
+        ("tickets/closed/1221-x.erg", True),
+        ("STATE.md", True),
+        ("memory/journal/2026-10-26.md", True),
+        ("tickets/erg", False),
+        ("tickets/AGENTS.md", False),
+        ("tickets/closed/sub/1-x.erg", False),
+        ("docs/STATE.md", False),
+        ("scripts/merge-gate.py", False),
+    ],
+)
+def test_bookkeeping_paths(module, path, expected):
+    assert module.is_bookkeeping(path) is expected
+
+
+def test_bookkeeping_diff_records_its_tier_checks_only(repo):
+    set_base_config(repo, json.dumps(TIERED))
+    branch = branch_touching(repo, "tickets/0001-x.erg", "STATE.md", "memory/note.md")
+    result = gate(repo, "run", "--no-push", "--base", "main", "--head", branch)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "scope: fixture-set/bookkeeping: always-pass" in result.stdout
+    assert "full-only" not in result.stdout
+    check = gate(repo, "check", "--no-fetch", "--local", "--base", "main", "--head", branch)
+    assert check.returncode == 0, check.stdout
+
+
+def test_code_diff_runs_the_full_set(repo):
+    set_base_config(repo, json.dumps(TIERED))
+    branch = branch_touching(repo, "tickets/0001-x.erg", "scripts/x.py")
+    result = gate(repo, "run", "--no-push", "--base", "main", "--head", branch)
+    assert result.returncode == 1
+    assert "full-only fail" in result.stdout
+
+
+def test_without_declared_tier_checks_a_bookkeeping_diff_runs_the_full_set(repo):
+    set_base_config(repo, json.dumps({**TIERED, "tiers": {}}))
+    branch = branch_touching(repo, "STATE.md")
+    result = gate(repo, "run", "--no-push", "--base", "main", "--head", branch)
+    assert result.returncode == 1
+    assert "full-only fail" in result.stdout
+
+
+def _forge(repo, module, branch, scope):
+    candidate = gate(repo, "candidate", "--base", "main", "--head", branch).stdout.strip()
+    base, head = git(repo, "rev-parse", "main"), git(repo, "rev-parse", branch)
+    text = module.format_entry(
+        {
+            "result": "pass",
+            "time": "2026-10-26T00:00:00Z",
+            "actor": "runtime=not-stated",
+            "host": "fixture",
+            "revision": f"candidate={candidate} base={base} head={head}",
+            "command": "fixture",
+            "scope": scope,
+            "versions": "git fixture",
+        }
+    )
+    git(repo, "notes", "--ref=gate", "add", "-f", "-m", text, candidate)
+
+
+def test_a_bookkeeping_record_does_not_pass_a_code_diff(repo, module):
+    set_base_config(repo, json.dumps(TIERED))
+    branch = branch_touching(repo, "scripts/x.py")
+    _forge(repo, module, branch, "fixture-set/bookkeeping: always-pass")
+    assert gate(repo, "check", "--no-fetch", "--base", "main", "--head", branch).returncode == 1
+
+
+def test_a_full_record_passes_a_bookkeeping_diff(repo, module):
+    set_base_config(repo, json.dumps(TIERED))
+    branch = branch_touching(repo, "STATE.md")
+    _forge(repo, module, branch, module.scope_line(TIERED))
+    assert gate(repo, "check", "--no-fetch", "--base", "main", "--head", branch).returncode == 0
+
+
+@pytest.mark.parametrize("tiers", [{"bookkeeping": ["no-such-check"]}, {"bookkeeping": "always-pass"},
+                                   {"other": ["always-pass"]}, []])
+def test_bad_tier_declaration_fails_closed(repo, tiers):
+    set_base_config(repo, json.dumps({**TIERED, "tiers": tiers}))
+    assert gate(repo, "enabled", "--base", "main").returncode == 3
+
+
+def test_tier_of_the_whole_diff(repo):
+    books = branch_touching(repo, "tickets/0001-x.erg")
+    assert gate(repo, "tier", "--base", "main", "--head", books).stdout.startswith("bookkeeping")
+    assert gate(repo, "tier", "--base", "main", "--head", books).returncode == 0
+    code = gate(repo, "tier", "--base", "main", "--head", "feature")
+    assert code.returncode == 1 and code.stdout.startswith("full")
+
+
+def test_tier_since_an_approved_tip_judges_only_the_follow_up(repo):
+    approved = git(repo, "rev-parse", "feature")
+    (repo / "STATE.md").write_text("follow-up\n", encoding="utf-8")
+    git(repo, "add", ".")
+    git(repo, "commit", "-q", "-m", "state follow-up")
+    since = gate(repo, "tier", "--base", "main", "--head", "feature", "--since", approved)
+    assert since.returncode == 0, since.stdout + since.stderr
+    (repo / "c.txt").write_text("code\n", encoding="utf-8")
+    git(repo, "add", ".")
+    git(repo, "commit", "-q", "-m", "code follow-up")
+    assert gate(repo, "tier", "--base", "main", "--head", "feature", "--since", approved).returncode == 1
+
+
+def test_a_clean_rebase_after_approval_is_bookkeeping(repo):
+    approved = git(repo, "rev-parse", "feature")
+    git(repo, "switch", "-q", "main")
+    (repo / "z.txt").write_text("main moved\n", encoding="utf-8")
+    git(repo, "add", ".")
+    git(repo, "commit", "-q", "-m", "main moves")
+    git(repo, "switch", "-q", "feature")
+    git(repo, "rebase", "-q", "main")
+    assert git(repo, "rev-parse", "feature") != approved
+    result = gate(repo, "tier", "--base", "main", "--head", "feature", "--since", approved)
+    assert result.returncode == 0, result.stdout + result.stderr
