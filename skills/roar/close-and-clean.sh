@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Roar steps 7-10 in a few commands (tickets 1084, 1098): ticket close,
-# close-claim check, tracker-sibling detection, worktree-exit preflight, the
+# close-claim check, tracker-sibling and citing-tracker detection, worktree-exit preflight, the
 # step-9 exit check, owned worktree removal, scoped branch cleanup.
 #
 # The model used to retype these as bash blocks, one turn each, every turn
@@ -141,6 +141,50 @@ detect_tracker() {
     else
         note "TRACKER: parent $parent has $open open sibling(s); tracker stays open"
     fi
+}
+
+# ── Step 8: open harness trackers whose Children section cites the ticket ─────
+# (ticket 1211). A tracker may list a child living in another repository as
+# free text, which no Parent: header reaches. The match needs the repo's name
+# (main checkout or origin) and the id as words on one line of `## Children`;
+# in the harness's own store the bare id suffices. Wording stays the model's.
+real_dir() { cd -P "$1" 2>/dev/null && pwd -P; }
+cited_children() { # <tracker file>: its Children section
+    awk '/^## /{inside = ($0 ~ /^## Children[[:space:]]*$/); next} inside' "$1"
+}
+detect_citing_trackers() {
+    [ -n "$TICKET" ] || return 0
+    local store="${CLOSE_AND_CLEAN_TRACKER_DIR:-$IDH_ROOT/tickets}"
+    local here_git store_git same=0 names=() n primary url t tid lines hit
+    if [ ! -d "$store" ]; then
+        note "TRACKER: COULD-NOT-LOOK no harness ticket store at $store — not an all-clear"
+        bump 2; return 0
+    fi
+    here_git=$(real_dir "$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)") || here_git=""
+    store_git=$(real_dir "$(git -C "$store" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)") || store_git=""
+    [ -n "$here_git" ] && [ "$here_git" = "$store_git" ] && same=1
+    primary=$(git worktree list --porcelain 2>/dev/null | sed -n '1s/^worktree //p') || primary=""
+    [ -z "$primary" ] || names+=("$(basename "$primary")")
+    url=$(git remote get-url origin 2>/dev/null) || url=""
+    if [ -n "$url" ]; then n=$(basename "${url%/}"); names+=("${n%.git}"); fi
+    for t in "$store"/*.erg; do
+        [ -f "$t" ] || continue
+        is_closed "$t" && continue
+        tid=$(basename "$t"); tid="${tid%%-*}"
+        [ "$tid" = "$TICKET" ] && [ "$same" -eq 1 ] && continue
+        lines=$(cited_children "$t" | grep -wF -- "$TICKET") || continue
+        hit=0
+        if [ "$same" -eq 1 ]; then
+            hit=1
+        else
+            for n in "${names[@]}"; do
+                [ -n "$n" ] && printf '%s\n' "$lines" | grep -qwF -- "$n" && { hit=1; break; }
+            done
+        fi
+        [ "$hit" -eq 1 ] || continue
+        note "TRACKER: CITED-BY $tid ($t) — update its child line and exit criteria (step 8)"
+        bump 1
+    done
 }
 
 # ── Steps 7 and 9: worktree-exit preflight ──────────────────────────────────────────
@@ -520,7 +564,8 @@ cleanup_side() { # <local|remote> <explicit targets...>
 case "$PHASE" in before-exit|all)
     close_ticket
     check_claims
-    detect_tracker ;;
+    detect_tracker
+    detect_citing_trackers ;;
 esac
 case "$PHASE" in before-exit|preflight|all)
     preflight ;;

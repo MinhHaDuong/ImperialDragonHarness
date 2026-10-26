@@ -38,21 +38,23 @@ for t in bash git jq python3 date awk grep sed sort cat mkdir rm mv ls head tail
     p=$(command -v "$t" 2>/dev/null || true); [ -n "$p" ] && ln -sf "$p" "$TOOLS/$t"
 done
 STUBS="$T/stubs"; mkdir -p "$STUBS"
+# Harness tracker store (ticket 1211): empty by default, never the real one.
+mkdir -p "$T/trackers"
 printf '#!/usr/bin/env bash\necho "[]"\n' > "$STUBS/gh"; chmod +x "$STUBS/gh"
 
 run() { # <script> <args...>: hermetic run in the current directory; sets out, rc
     local s="$1"; shift
-    out=$(env -i PATH="$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$s" "$@" 2>&1) && rc=0 || rc=$?
+    out=$(env -i PATH="$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" CLOSE_AND_CLEAN_TRACKER_DIR="${TRACKERS:-$T/trackers}" GIT_CONFIG_GLOBAL=/dev/null bash "$s" "$@" 2>&1) && rc=0 || rc=$?
 }
 run_nogh() {
     local s="$1"; shift
-    out=$(env -i PATH="$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$s" "$@" 2>&1) && rc=0 || rc=$?
+    out=$(env -i PATH="$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" CLOSE_AND_CLEAN_TRACKER_DIR="${TRACKERS:-$T/trackers}" GIT_CONFIG_GLOBAL=/dev/null bash "$s" "$@" 2>&1) && rc=0 || rc=$?
 }
 
 G() { git -C "$W" "$@"; }
 make_world() { # <dir>: bare origin + clone; sets W. Branches given as args are merged into main and pushed.
     local d="$1"; shift
-    mkdir -p "$d"; W="$d/w"
+    mkdir -p "$d"; W="$d/${WNAME:-w}"
     git init -q --bare -b main "$d/o.git"
     git clone -q "$d/o.git" "$W" 2>/dev/null
     G config user.email t@t; G config user.name t
@@ -68,7 +70,7 @@ has_remote() { [ -n "$(git -C "$W" ls-remote --heads origin "$1")" ]; }
 
 wrapped() {
     local wd="$1"; shift
-    out=$(env -i PATH="$wd:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" GIT_CONFIG_GLOBAL=/dev/null bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?
+    out=$(env -i PATH="$wd:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" CLOSE_AND_CLEAN_TRACKER_DIR="${TRACKERS:-$T/trackers}" GIT_CONFIG_GLOBAL=/dev/null bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?
 }
 
 # Independently selectable sections (run in parallel by test_bash_suites.py):
@@ -416,6 +418,49 @@ G add -A; G commit -q -m c3
 run "$SCRIPT" --phase before-exit --ticket 0101
 _check_lacks "open sibling: no integration review" "$out" "INTEGRATION-REVIEW-DUE"
 _check_true "tracker detection never exits 2" test "$rc" != 2
+_check_lacks "no tracker cites the ticket: no CITED-BY" "$out" "CITED-BY"
+
+# --- 10b. trackers in the harness store that cite the closed ticket (1211) ----
+tracker() { # <dir> <id> <children line> [Closed]
+    { printf '%%erg 0.1\nTitle: tracker %s\nCreated: 2026-10-01\nAuthor: t\n' "$2"
+      [ -z "${4:-}" ] || printf 'Closed: 2026-10-02 done\n'
+      printf '\n--- log ---\n\n--- body ---\n## Context\nmentions sen-causal-reading 0101 outside the children\n\n'
+      printf '## Children\n%s\n\n## Exit criteria\n- [ ] children closed\n' "$3"; } > "$1/$2-tracker.erg"
+}
+TRACKERS="$T/h12/tickets"; mkdir -p "$TRACKERS"
+tracker "$TRACKERS" 0900 "- sen-causal-reading: ticket 0101 in that repo, open"
+tracker "$TRACKERS" 0901 "- 0101 askMinh (another repo)"
+tracker "$TRACKERS" 0902 "- sen-causal-reading: ticket 0101" Closed
+tracker "$TRACKERS" 0903 "- sen-causal-reading: ticket 01012"
+WNAME=sen-causal-reading ticket_world "$T/c12"
+run "$SCRIPT" --phase before-exit --ticket 0101
+_check_rc "external tracker cites the closed ticket: finding, rc 1" 1 "$rc"
+_check_says "…names the tracker" "$out" "TRACKER: CITED-BY 0900"
+_check_lacks "…not a tracker citing another repo's 0101" "$out" "CITED-BY 0901"
+_check_lacks "…not a closed tracker" "$out" "CITED-BY 0902"
+_check_lacks "…not a longer id" "$out" "CITED-BY 0903"
+_check_says "single-repo parent check unchanged" "$out" "INTEGRATION-REVIEW-DUE 0100"
+run "$SCRIPT" --phase before-exit --ticket 0102
+_check_lacks "an uncited ticket: no CITED-BY" "$out" "CITED-BY"
+# the repo is also matched by its origin's name
+cd "$T/c12/sen-causal-reading"
+mv "$T/c12/o.git" "$T/c12/causal.git"; G remote set-url origin "$T/c12/causal.git"
+tracker "$TRACKERS" 0904 "- causal 0101 (named by its remote)"
+run "$SCRIPT" --phase before-exit --ticket 0101
+_check_says "…matched by the origin's name" "$out" "CITED-BY 0904"
+# an unreadable tracker store is no all-clear
+TRACKERS="$T/h12/missing"
+run "$SCRIPT" --phase before-exit --ticket 0101
+_check_rc "missing tracker store: rc 2" 2 "$rc"
+_check_says "…says it could not look" "$out" "TRACKER: COULD-NOT-LOOK"
+# same store (the harness itself): a bare id on a child line suffices
+ticket_world "$T/c13"
+TRACKERS="$W/tickets"
+tracker "$TRACKERS" 0910 "- 0101 child one"
+run "$SCRIPT" --phase before-exit --ticket 0101
+_check_says "same-store tracker: bare id on a child line" "$out" "CITED-BY 0910"
+_check_says "…beside the parent check" "$out" "INTEGRATION-REVIEW-DUE 0100"
+unset TRACKERS
 
 # --- 15. the worktree-exit preflight runs on its own, fresh ---------------------
 make_world "$T/c19"; cd "$W"
@@ -543,7 +588,7 @@ gate_stub() { # <file> <enabled rc> <check rc>
 }
 wrapped_gated() { # <gh dir> <gate stub> <args...>
     local wd="$1" gs="$2"; shift 2
-    out=$(env -i PATH="$wd:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" CLOSE_AND_CLEAN_MERGE_GATE="$gs" GIT_CONFIG_GLOBAL=/dev/null bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?
+    out=$(env -i PATH="$wd:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" CLOSE_AND_CLEAN_TRACKER_DIR="${TRACKERS:-$T/trackers}" CLOSE_AND_CLEAN_MERGE_GATE="$gs" GIT_CONFIG_GLOBAL=/dev/null bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?
 }
 OPENPR="$T/openpr";   forge_stub "$OPENPR"   '{"state":"OPEN","autoMergeRequest":null}'
 MERGEDPR="$T/merged"; forge_stub "$MERGEDPR" '{"state":"MERGED","autoMergeRequest":null}'

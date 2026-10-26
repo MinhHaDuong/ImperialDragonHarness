@@ -151,6 +151,17 @@ base, once a passing gate record covers the bundle's candidate.
     The script's `TRACKER: INTEGRATION-REVIEW-DUE <parent>` line is this
     check; on that hit, perform the integration review above — the script
     detects, it does not review.
+
+    A tracker can also cite the ticket without a `Parent:` header: an open
+    harness tracker whose `## Children` section names this repository and
+    the ticket id, often a child in another repository. Each one prints
+    `TRACKER: CITED-BY <id> (<path>)`. Update that tracker's child line
+    (state, PR, date) and tick the exit criteria the close settles; the
+    wording is yours. A tracker in this repository's own store goes in the
+    wrap-up bundle; a harness tracker cited from another repository lands
+    through a harness branch and merge request, never on the harness's main checkout.
+    The line repeats on a re-run while the tracker stays open: check the
+    child line before editing again.
 9. **Exit worktree** (if in one):
     Remove only a worktree owned by this session for the completed ticket/PR,
     or explicitly handed over for that task with proven ownership. Ancestry,
