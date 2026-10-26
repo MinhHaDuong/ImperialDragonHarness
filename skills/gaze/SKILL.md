@@ -61,12 +61,12 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
 - Does not run `/verify-gate`.
   The review worktree is removed before gaze returns; the gate creates its own.
 - Does not merge. The result is structured output.
-- The only commits gaze makes on the PR branch are the bounded phase 5 simplify fixes; no changes to other branches.
+- Gaze makes no commits, on the PR branch or any other: simplify findings are reported like panel findings and the coder acts on them.
 - `--force-approve` is supported for explicit human override; it skips the review and
   is logged loudly in the PR comments and the skill transcript. It is an override
   record, not a verdict.
 - **Cross-repo prerequisite**: the caller must ensure cwd is the target project before
-  invoking `/gaze`. The skill and its sub-skills (`/verify-adherence`, `/simplify`, etc.)
+  invoking `/gaze`. The skill and its sub-skills (`/verify-adherence` and the seats)
   use `gh` and `git` commands that resolve against cwd.
 - **Branch-currency prerequisite**: the caller rebases the PR branch onto current
   `origin/main` and force-pushes with lease before invoking (`rules/git.md`
@@ -75,7 +75,7 @@ to overwrite or call it fabricated: inspect its gate identity and ruled tip.
   branch itself; that is a caller-side step, not a phase here.
 - **Quiet-branch prerequisite**: never start `/gaze` while that branch's coding
   lead is still live. Gaze reviews a head the lead may move under it, and
-  its phase 5 simplify fixes would then commit on top of work in flight.
+  its findings would then describe a head that is already gone.
 
 
 ## Fork execution contract
@@ -110,8 +110,7 @@ if ! git worktree add "$review_tree" origin/"$PR_BRANCH" || ! test -d "$review_t
 fi
 # The reviewer agents (review worktree via git -C) run inside
 # $primary_root/.claude/worktrees/review-<pr-number>; the main repo is never
-# switched, never dirtied. (Exception: phase 5 /simplify is still a direct
-# invocation and runs from the fork's own cwd, not review-<pr> — see its note.)
+# switched, never dirtied.
 ```
 
 Then follow `references/setup-and-breaker.md`: collection, the anchor check and the close-claim preflight.
@@ -163,8 +162,8 @@ multi_ticket: <distinct close-claim IDs> | none
   nothing was reviewed (§ `--force-approve`). So is a DEGRADED panel (below).
   The review did not complete.
 - `FINDINGS`: any blocking adherence violation, any `blocking` seat
-  verdict, any unresolved `verifiable:` minor, any simplify
-  must-fix not applied, an unread review group (§ 2–5). List them.
+  verdict, any unresolved `verifiable:` minor, any unresolved simplify
+  must-fix, an unread review group (§ 2–5). List them.
 - `REVIEWED`: none of the above. It is not an approval: `/verify-gate` still
   checks every exit criterion and review comment against the diff.
 - `panel_integrity: DEGRADED` (the review panel did not launch, or a selected
@@ -216,6 +215,6 @@ See `references/output.md`: per-phase timing, the thresholds in `skills/gaze/tel
 ## Not in scope
 
 - **Gating.** `/verify-gate` rules APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR.
-- **Fixing.** Gaze commits only phase 5 simplify fixes; it fixes no finding.
+- **Fixing.** Gaze makes no commits; it fixes no finding, simplify's included.
 - **Wave-level integration review.** Post-merge integration review of a batch is `/roar` step 8.
 - **Merging.** Ever.

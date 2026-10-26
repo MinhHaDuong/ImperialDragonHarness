@@ -64,8 +64,8 @@ sessions), which owns how much of the prior verdict a re-gate reuses.
   every commit but `is-ancestor` is false — that ancestry check is `/roar`'s
   pre-check, and it is what confirms a squash-merge through the forge before
   a branch gets deleted.
-- **After `/gaze`, sync before closing the ticket.** `/gaze` (its simplify
-  phase) may have pushed fixes from its own review worktree since the caller last
+- **After `/gaze`, sync before closing the ticket.** `/gaze` makes no commits,
+  but a fix cycle or another session may have pushed since the caller last
   fetched: `git fetch origin && git merge --ff-only origin/<branch>` first, or a
   stale rebase silently drops them and the close commit lands on the wrong base.
 - **Close the ticket on the branch before gating.** Before the round-1

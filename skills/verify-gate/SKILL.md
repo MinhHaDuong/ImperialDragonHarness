@@ -51,9 +51,9 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    the `/gaze` panel, human authors, Copilot) is either ADDRESSED (commit changed the cited file, OR
    the comment was marked resolved, OR a ticket was opened with the rationale) or
    UNRESOLVED. No "I'll get to it later."
-4. **Simplify findings are load-bearing.** Every must-fix from `/simplify` or Gaze’s portable equivalent is either
-   applied (diff shows the change) or explicitly justified in a PR comment that the gate
-   agent validates.
+4. **Simplify findings are load-bearing.** Every must-fix from Gaze’s report-only simplify
+   phase is either fixed by the coder (diff shows the change) or explicitly justified in a
+   PR comment that the gate agent validates.
 5. **Adherence violations are blocking.** Any `blocking` entry from `/verify-adherence`
    is a REROLL trigger.
 6. **Two rounds max.** Round 1 is initial gate. Round 2 is post-fix re-gate. Round 3 is
