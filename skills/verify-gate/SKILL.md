@@ -51,9 +51,10 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    the `/gaze` panel, human authors, Copilot) is either ADDRESSED (commit changed the cited file, OR
    the comment was marked resolved, OR a ticket was opened with the rationale) or
    UNRESOLVED. No "I'll get to it later."
-4. **Simplify findings are load-bearing.** Every must-fix from `/simplify` or Gaze’s portable equivalent is either
-   applied (diff shows the change) or explicitly justified in a PR comment that the gate
-   agent validates.
+4. **Simplify findings are load-bearing.** Every must-fix from Gaze’s report-only simplify
+   phase is either fixed by the coder (diff shows the change) or explicitly justified in a
+   PR comment that the gate agent validates. Read the `Unresolved simplify:` line of every
+   `## /gaze result` comment on the PR: a later round may have skipped simplify.
 5. **Adherence violations are blocking.** Any `blocking` entry from `/verify-adherence`
    is a REROLL trigger.
 6. **Two rounds max.** Round 1 is initial gate. Round 2 is post-fix re-gate. Round 3 is
@@ -248,8 +249,8 @@ malformed_minors:
     excerpt: "<hedged phrasing>"
 unresolved_simplify_findings:
   - finding: "<verbatim>"
-    severity: must-fix | nice-to-have
-    status: NOT_APPLIED | WAIVED_WITHOUT_RATIONALE
+    severity: must-fix | consider
+    status: UNADDRESSED | WAIVED_WITHOUT_RATIONALE
 unresolved_adherence_violations:
   - rule_ref: "<.claude/rules/foo.md#bar>"
     file: <path>
@@ -287,7 +288,7 @@ second_round_needed:   # only if REROLL
   bounce the PR. Author is free to ignore.
 - `nofollow:` minors are muted. The gate records them for the audit trail and does
   nothing else.
-- Any `NOT_APPLIED` must-fix simplify finding without rationale → REROLL (round 1) /
+- Any `UNADDRESSED` must-fix simplify finding without rationale → REROLL (round 1) /
   ESCALATE (round 2).
 - Any `blocking` adherence violation → REROLL (round 1) / ESCALATE (round 2).
 - Any `run` check that fails → REROLL (round 1) / ESCALATE (round 2). A check

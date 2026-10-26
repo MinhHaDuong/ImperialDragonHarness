@@ -88,24 +88,6 @@ ALLOWED_LINES = (
         ' no approval at all).'
     ),
     (
-        '- **Native command absent:** launch a separate reviewer through the '
-        'active runtime (model chosen per launch from the `route` skill), using '
-        'the phase artifact and bounded-wait contract above. Give it the explicit'
-        ' PR number, review tree, base ref, anchor HEAD and changed-file roster. '
-        'It runs the review-anchor check before and after examining `git -C '
-        '<review-tree> diff origin/<base>...HEAD` and the relevant surrounding '
-        'code or instructions. It must look for unnecessary complexity, '
-        'duplication, opportunities to reuse existing mechanisms, and safe '
-        'simplifications that preserve behavior and ticket intent. This is a '
-        "distinct simplification pass, not reuse of a general review's approval. "
-        'It returns the reviewed SHA, paths examined, and actionable findings '
-        'with severity, location, proposed change and rationale; or a CLEAN '
-        'verdict explaining the concrete candidates considered and why they need '
-        'no change. An absent reviewer, timeout, anchor mismatch, wrong diff or '
-        'missing evidence means this phase is unresolved and triggers the '
-        'existing breaker; absence of the slash command alone does not.'
-    ),
-    (
         '- `REVIEWED`: none of the above. It is not an approval: `/verify-gate` '
         'still checks every exit criterion and review comment against the diff.'
     ),
@@ -380,8 +362,8 @@ def test_phase_6_is_not_nested_under_a_reference_section():
 
 
 def test_reviewed_head_sha_is_read_after_phase_5():
-    """The result names the head the battery reviewed, read after simplify may
-    have pushed, not the head gaze started on."""
+    """The result names the head the battery reviewed, read after phase 5,
+    not a head recorded before the battery ran."""
     assert GAZE.index("### 5. Simplify") < GAZE.index("### 6. Return the review result")
     template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
     for text in (_section("### 6. Return the review result"), template):
