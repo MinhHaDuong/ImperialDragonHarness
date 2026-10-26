@@ -156,3 +156,19 @@ def test_wait_git_failure_keeps_stall_window(tmp_path, monkeypatch) -> None:
     code, elapsed = sim.run(3600, tmp_path, monkeypatch)
     assert code == 1
     assert 600 < elapsed <= 620
+
+
+@pytest.mark.integration
+def test_snapshot_survives_non_utf8_and_sees_untracked_rewrite(tmp_path: Path) -> None:
+    env = child_env()
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, env=env)
+    (tmp_path / "f").write_text("a\n")
+    git = ["git", "-C", str(tmp_path), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run([*git, "add", "f"], check=True, env=env)
+    subprocess.run([*git, "commit", "-qm", "x"], check=True, env=env)
+    (tmp_path / "f").write_bytes(b"caf\xe9\n")
+    assert breaker.snapshot(tmp_path) is not None
+    (tmp_path / "new").write_text("1\n")
+    first = breaker.snapshot(tmp_path)
+    (tmp_path / "new").write_text("22\n")
+    assert breaker.snapshot(tmp_path) != first

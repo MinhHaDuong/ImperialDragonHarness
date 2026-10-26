@@ -9,6 +9,7 @@ background command), exits 0 silently at --deadline. It never kills anything.
 import argparse
 import hashlib
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -25,18 +26,27 @@ def snapshot(worktree: Path) -> tuple[str, str, str, str] | None:
     """
     def git(*cmd: str, optional: bool = False) -> str | None:
         try:
-            done = subprocess.run(["git", "-C", str(worktree), *cmd], text=True,
+            done = subprocess.run(["git", "-C", str(worktree), *cmd],
                                   capture_output=True, timeout=5)
         except (OSError, subprocess.SubprocessError):
             return None
         if done.returncode != 0:
             return "" if optional else None
-        return done.stdout
+        return done.stdout.decode("utf-8", "replace")
     parts = (git("status", "--porcelain"), git("rev-parse", "HEAD"),
-             git("rev-parse", "@{upstream}", optional=True), git("diff", "HEAD"))
+             git("rev-parse", "@{upstream}", optional=True), git("diff", "HEAD"),
+             git("ls-files", "-o", "--exclude-standard", "-z"))
     if any(part is None for part in parts):
         return None
-    return (parts[0], parts[1], parts[2], hashlib.sha256(parts[3].encode()).hexdigest())
+    untracked = []
+    for name in filter(None, parts[4].split("\0")):
+        try:
+            info = (worktree / name).stat()
+            untracked.append(f"{name}:{info.st_mtime_ns}:{info.st_size}")
+        except OSError:
+            untracked.append(name)
+    digest = hashlib.sha256((parts[3] + "\0".join(untracked)).encode()).hexdigest()
+    return (parts[0], parts[1], parts[2], digest)
 
 
 def run(args: argparse.Namespace, clock=time.time, sleep=time.sleep,
@@ -45,8 +55,8 @@ def run(args: argparse.Namespace, clock=time.time, sleep=time.sleep,
     state = None
     seen = None
     while True:
-        now = clock()
         seen = take(args.worktree) or seen
+        now = clock()
         status, state = evaluate(now, state, seen,
                                  read_marker(marker_path(args.worktree)),
                                  args.stall_seconds, args.gate_max_seconds)
@@ -83,7 +93,11 @@ def main() -> int:
             parser.error("--wait requires --deadline > 0")
         if not 0 < args.poll_seconds <= 30:
             parser.error("--poll-seconds must be in (0, 30]")
-        return run(args)
+        try:
+            return run(args)
+        except Exception as error:  # exit 1 is reserved for the wake
+            print(f"raid-breaker error: {error}", file=sys.stderr)
+            return 2
     if args.last_progress_epoch is None:
         parser.error("--last-progress-epoch is required without --wait")
     status = classify(time.time(), args.last_progress_epoch,
