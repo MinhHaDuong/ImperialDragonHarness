@@ -14,7 +14,8 @@ venue. A caller brief names the prose seats and gaze recruits exactly those;
 under the default brief, recruit for that venue and the scope of the change:
 always an adversarial referee, a venue expert when the project has venue
 rules. The
-manifest lists one line per reviewer, its role in the perspective field.
+manifest lists one line per reviewer, its role in the perspective field; under
+a caller brief the roles are the brief's prose seat names, checked by `--seats`.
 Seats with relevant expertise use the tools available to them (literature search, installed linters).
 
 - **AI-tells auditor, every default-brief run** (a caller brief runs it when

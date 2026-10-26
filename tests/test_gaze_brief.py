@@ -200,11 +200,15 @@ def test_no_brief_is_the_default_brief(repo):
 def test_scope_reaches_every_launch():
     """The resolved scope rides into each launch: panel seats, simplify, the one retry."""
     gaze = ROOT / 'skills' / 'gaze'
-    launch = (gaze / 'references' / 'panel.md').read_text().split('2. **Launch.**', 1)[1].split('3. **Artifacts.**', 1)[0]
+
+    def flat(path):
+        return ' '.join(path.read_text().split())
+
+    launch = flat(gaze / 'references' / 'panel.md').split('2. **Launch.**', 1)[1].split('3. **Artifacts.**', 1)[0]
     assert '`scope_file:`' in launch
-    simplify = (gaze / 'references' / 'battery.md').read_text().split('### 5. Simplify', 1)[1]
+    simplify = flat(gaze / 'references' / 'battery.md').split('### 5. Simplify', 1)[1]
     assert "the brief's scope" in simplify and 'diff A B' in simplify
-    assert "re-run\n  once, alone, over the brief's scope" in (gaze / 'SKILL.md').read_text()
+    assert "re-run once, alone, over the brief's scope" in flat(gaze / 'SKILL.md')
 
 
 @pytest.mark.parametrize('brief, reason', [

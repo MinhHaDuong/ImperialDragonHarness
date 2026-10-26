@@ -123,7 +123,7 @@ def scope_files(repo: str, scope: str, base: str, head: str) -> list[str]:
             raise Refused(f"commit {ref!r} does not resolve")
     if not (fork and ancestor(repo, fork, start) and ancestor(repo, start, end) and ancestor(repo, end, head)):
         raise Refused(f"range {scope} outside the diff {base}...{head} (after a rebase, use paths:)")
-    files = names(repo, start, end)
+    files = [name for name in names(repo, start, end) if name in changed]
     if not files:
         raise Refused(f"range {scope} is an empty range")
     return files

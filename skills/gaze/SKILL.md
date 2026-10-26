@@ -134,7 +134,8 @@ BRIEF_END
 cd "$review_tree" && python3 "$IDH_ROOT/scripts/gaze_brief.py" resolve --brief "$BRIEF" --panel <code|prose> --base origin/<base> --head HEAD
 ```
 
-- **Exit 2: refused.** An unknown key, a duplicate key or seat, a seat the
+- **Exit 2: refused.** An unknown key, a duplicate key, seat or path, an
+  empty seat name, a control character, `why=` not last, a seat the
   routed panel does not have (`simplify` and `external` on prose included),
   `editorial-brief` without its file, `seats=auto` from a caller, a range or
   path outside the diff: gaze launches nothing, cleans up and returns
