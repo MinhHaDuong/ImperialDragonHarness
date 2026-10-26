@@ -16,7 +16,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def start(project: Path, home: Path) -> str:
     env = os.environ.copy()
-    env.update(CLAUDE_PROJECT_DIR=str(project), HOME=str(home), BASH_ENV="")
+    # GIT_CEILING_DIRECTORIES: the fixture is not a git repository; without a ceiling
+    # git walks up into whatever repository holds the temp folder (hunt sets TMPDIR
+    # inside a worktree) and the hook reads the fixture as the harness.
+    env.update(CLAUDE_PROJECT_DIR=str(project), HOME=str(home), BASH_ENV="",
+               GIT_CEILING_DIRECTORIES=str(project.parent))
     return subprocess.check_output(
         ["bash", str(ROOT / "scripts/on-start-context.sh")],
         env=env,
