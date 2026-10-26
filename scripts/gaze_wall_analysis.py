@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 """Derived tables for the gaze wall-time report (ticket 1197): structure, stragglers, counterfactual seat drops, load join.
 
-    python3 scripts/gaze_wall_analysis.py
+    python3 scripts/gaze_wall_analysis.py [UNTIL]   # UNTIL: ISO time, runs starting later are dropped
 
 Needs the session traces and, for the load join, sysstat files in /var/log/sysstat
-(host padme: 10-minute `sar -q` samples, 2026-10-18 on). Every figure is READ
+(host padme: 10-minute `sar -q` samples, 2026-10-19 on). Every figure is READ
 from a timestamp or derived from timestamps; see docs/2026-10-27-gaze-wall-time.md.
 """
 
-import json
 import subprocess
 import re
 import bisect
-import glob
 import os
 import statistics as st
 import collections
@@ -22,8 +20,16 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 import gaze_wall_time as g
 
-rs = sorted(g.runs(g.DEFAULT), key=lambda r: r["start"])
-cut = datetime.datetime(2026, 10, 21, 22, 1).timestamp()
+until = (
+    datetime.datetime.fromisoformat(sys.argv[1].replace("Z", "+00:00")).timestamp()
+    if len(sys.argv) > 1
+    else float("inf")
+)
+rs = sorted(
+    (r for r in g.runs(g.DEFAULT) if r["start"] < until), key=lambda r: r["start"]
+)
+# 2026-10-21 22:01 CEST, the commits that removed gaze's gate and fix phases
+cut = datetime.datetime(2026, 10, 21, 20, 1, tzinfo=datetime.timezone.utc).timestamp()
 
 
 def P(x, p):
@@ -55,7 +61,7 @@ def summ(name, rs):
 old = [r for r in rs if r["start"] < cut]
 new = [r for r in rs if r["start"] >= cut]
 summ("all", rs)
-summ("before 10-21 22:01", old)
+summ("before 10-21 20:01Z", old)
 summ("after", new)
 print("\n#### poll overshoot")
 lag = []
@@ -79,44 +85,6 @@ for lab, sel in (("after", True), ("before", False)):
         "sum min %.1f" % (sum(x) / 60),
         "poll total min %.1f" % (sum(d for ld, d, n in lag if n == sel) / 60),
     )
-print("\n#### slow runs timeline")
-
-
-def tl(r):
-    t0 = r["start"]
-    ev = []
-    for t, d in r["launches"]:
-        ev.append((t - t0, "launch " + d[:28]))
-    for s in r["seats"]:
-        ev.append(
-            (s["end"] - t0, "END " + s["kind"] + " (%ds)" % (s["end"] - s["start"]))
-        )
-    for a, b in r["polls"]:
-        ev.append((a - t0, "poll>"))
-        ev.append((b - t0, "<poll %ds" % (b - a)))
-    return sorted(ev)
-
-
-slow = sorted(rs, key=lambda r: -r["wall"])[:12]
-print(
-    "top12 wall total min",
-    sum(r["wall"] for r in slow) / 60,
-    "idle gaps>120s total min",
-    sum(sum(r["idle_gaps"]) for r in slow) / 60,
-    "poll min",
-    sum(r["poll"] for r in slow) / 60,
-)
-for r in slow[:4]:
-    print(
-        r["id"],
-        datetime.datetime.fromtimestamp(r["start"]),
-        "wall",
-        round(r["wall"]),
-        "model",
-        r["orch_model"],
-    )
-    for t, e in tl(r):
-        print("  %5d %s" % (t, e))
 print("\n#### straggler / structure")
 
 
@@ -313,7 +281,7 @@ print("after epoch models", collections.Counter(r["orch_model"] for r in new))
 print("\n#### contention")
 
 load = []  # (epoch, ldavg1, runq)
-for day in range(18, 27):
+for day in range(19, 27):
     out = subprocess.run(
         ["sar", "-q", "-f", f"/var/log/sysstat/sa{day}"],
         capture_output=True,
@@ -345,50 +313,12 @@ def L(t):
     return load[i][1] if abs(ts_[i] - t) < 900 else None
 
 
-# global agent concurrency
-
-root = os.path.expanduser("~/.claude/projects/-home-haduong--agents/")
-iv = []
-for f in glob.glob(root + "*/subagents/agent-*.jsonl") + glob.glob(root + "*.jsonl"):
-    try:
-        with open(f, "rb") as fh:
-            first = fh.readline()
-            fh.seek(0, 2)
-            size = fh.tell()
-            fh.seek(max(0, size - 20000))
-            last = fh.read().splitlines()[-1]
-        a = json.loads(first)["timestamp"] if "timestamp" in json.loads(first) else None
-        b = json.loads(last).get("timestamp")
-        if a and b:
-            iv.append(
-                (
-                    datetime.datetime.fromisoformat(
-                        a.replace("Z", "+00:00")
-                    ).timestamp(),
-                    datetime.datetime.fromisoformat(
-                        b.replace("Z", "+00:00")
-                    ).timestamp(),
-                )
-            )
-    except Exception:
-        pass
-iv.sort()
-starts = [x[0] for x in iv]
-
-
-def conc(t):
-    return sum(1 for a, b in iv if a <= t <= b)
-
-
-print("agent intervals", len(iv))
 rows = []
 for r in rs:
     for s in r["seats"]:
         if s["kind"] in ("adherence",) and s["end"] - s["start"] < 900:
             mid = (s["start"] + s["end"]) / 2
-            rows.append(
-                (s["end"] - s["start"], L(mid), conc(mid), s["tokens"], s["model"])
-            )
+            rows.append((s["end"] - s["start"], L(mid), s["tokens"]))
 rows = [x for x in rows if x[1] is not None]
 print("adherence seats with load known", len(rows))
 
@@ -411,24 +341,14 @@ def spear(a, b):
 
 d = [x[0] for x in rows]
 print(
-    "spearman(duration, ldavg1) = %.2f ; (duration, concurrent agents) = %.2f ; (duration, out tokens) = %.2f"
-    % (
-        spear(d, [x[1] for x in rows]),
-        spear(d, [x[2] for x in rows]),
-        spear(d, [x[3] for x in rows]),
-    )
+    "spearman(duration, ldavg1) = %.2f ; (duration, out tokens) = %.2f"
+    % (spear(d, [x[1] for x in rows]), spear(d, [x[2] for x in rows]))
 )
 lo = [x[0] for x in rows if x[1] < 20]
 hi = [x[0] for x in rows if x[1] >= 20]
 print(
     "adherence duration: load<20 n=%d median %.0f ; load>=20 n=%d median %.0f"
     % (len(lo), st.median(lo), len(hi), st.median(hi) if hi else float("nan"))
-)
-c = [x[0] for x in rows if x[2] <= 6]
-c2 = [x[0] for x in rows if x[2] > 6]
-print(
-    "adherence duration: conc<=6 n=%d median %.0f ; conc>6 n=%d median %.0f"
-    % (len(c), st.median(c), len(c2), st.median(c2) if c2 else float("nan"))
 )
 # slow runs' load
 for r in sorted(rs, key=lambda r: -r["wall"])[:12]:
@@ -440,8 +360,6 @@ for r in sorted(rs, key=lambda r: -r["wall"])[:12]:
         round(r["wall"]),
         "load1",
         L(mid),
-        "concurrent agents",
-        conc(mid),
     )
 allL = [ld for t, ld, _ in load]
 print(

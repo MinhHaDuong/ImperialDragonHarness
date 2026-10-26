@@ -60,6 +60,11 @@ def seat_kind(desc):
     for key in (
         "simplify",
         "semantic",
+        "doc propagation",
+        "red-team",
+        "red team",
+        "scope seat",
+        "scope review",
         "adherence",
         "correctness",
         "doc-prop",
@@ -68,7 +73,7 @@ def seat_kind(desc):
         "reviewer",
     ):
         if key in d:
-            return key
+            return {"doc propagation": "doc-prop", "red team": "red-team"}.get(key, key)
     return "other"
 
 
@@ -228,6 +233,9 @@ def main(argv=None):
     rs = sorted(runs(args.projects), key=lambda r: r["start"])
     if args.json:
         json.dump(rs, sys.stdout)
+        return 0
+    if not rs:
+        print("runs 0")
         return 0
     walls = [r["wall"] for r in rs]
     print(
