@@ -2,11 +2,15 @@
 Title: trace-doctor audits traces for agent follies and prescribes a barrier for each
 Created: 2026-10-25
 Author: claude
+Closed: autoclosed — PR #1683
 
 --- log ---
 2026-10-25T06:36Z claude created
 2026-10-26T22:42Z reviewer raid 1214-1218 Imagine + blind spot: returned to author. EC3 (barrier review, deletions proposed) conflicts with rules/workflow.md 'No guards on guards: /pulse owns them' and skills/pulse/references/toolkit.md:57; proposed narrowing: report per-barrier denial counts as data, verdicts to /pulse. EC4 largely done by arena ticket 1114 stall census (586 stalls, all cycles incl. c4); proposed narrowing: run detectors on c4 Pi sessions and compare with the census. Pilot folly by cost is sleep-poll (21 %), not pgrep self-match (3 %). Traces do not record job end, so 'hours given back' is a bound. Path if resumed: extend scripts/trace-friction.py (tighten WAIT_RE, 3 detectors, --pi-runs reader, dict folly->rung), fixtures from real specimens.
 2026-10-26T22:55Z reviewer raid advisor (fable) and orchestrator decision: narrowed. EC3 becomes per-barrier denial counts reported as data, verdicts to /pulse. EC4 becomes the folly detectors run on the c4 Pi sessions and compared with the arena census (docs/2026-10-26-rail-stall-census.md, arena repo). Bounds accepted instead of hours. Scope: extend scripts/trace-friction.py plus a Follies section in trace-doctor, a dict folly->rung, no prescription engine; fixtures from real specimens. Also carries 1216's after-change re-measure on harness sessions. Runs after 1216 lands.
+2026-10-26T22:59Z reviewer plan (raid executor): extend scripts/trace-friction.py. a strip_quoted drops heredoc bodies and quoted strings before the wait regex; b _calls reader generator, CC and Pi shapes, unknown lines skipped and counted; c detectors pgrep_self (pattern compiled and tested against the stripped command itself, bracket idiom silent), sleep_to_cap (sleep in a loop, seconds >= 0.9 x cap), repeat_failing (identical failing command twice in a row, no edit between); d FOLLY_RUNG dict folly->rung, data only; e follies in summary as bounds, not hours; f barrier_denials counts per guard wording, unattributed bucket, no verdicts; g --pi-runs DIR reader, no command text emitted for Pi legs; h Follies subsection in trace-doctor SKILL; i docs comparison of the c4 Pi sessions with the arena stall census, numbers only, detectors not tuned to the census; j 1216 re-measure waits 7 days after 1216 merges: baseline series and dated follow-up here. Two commits: CC detectors+rungs+denials+SKILL, then Pi reader+comparison.
+2026-10-26T23:04Z reviewer executed: detectors pgrep_self_match, sleep_poll_to_cap, repeat_failing in trace-friction.py, rung table, barrier_denials (counts, no verdict), --pi-runs, Follies section in trace-doctor. c4 (30 Pi sessions): 2 self-matching pgrep calls of 45 s or more, 902 s; all cycles (472 sessions): 589 stalls vs census 586, pgrep 11 / 4242 s vs census 10-11 / 4147-4267 s (docs/2026-10-27-follies-c4-census-comparison.md). Deviation: pkill left out of the pgrep detector (specimen C is a wide pattern, not a stall); long_call rung dropped (no detector). 1216 baseline (Claude Code, self-matching pgrep by day, hits/Bash calls, 2026-09-30..10-26): 09-30 31/6474, 10-01 28/5664, 10-06 43/3289, 10-07 23/4121, 10-09 5/4008, 10-10 6/2788, 10-13 49/6594, 10-14 23/5542, 10-15 37/2972, 10-16 37/2400, 10-18 19/416, 10-20 23/3815, 10-21 26/7903, 10-22 4/90, 10-24 21/303, 10-25 19/568, 10-26 12/3628 (days with zero or no traces omitted; total 411/66624). Hits count pgrep -f patterns that occur in the command's own text, loop or not. Follow-up 2026-11-03 or later, at least 7 days after 1216 merges: rerun the same series and compare via trace-treatments.py; verdict too_few_days until then. Does not block closing.
+2026-10-26T23:18Z reviewer closed — autoclosed — PR #1683
 
 --- body ---
 
@@ -54,8 +58,8 @@ Boundary, unchanged: the survey reports and files tickets; applying a barrier is
 
 ## Exit criteria
 
-- [ ] Catalogue with at least the waiting follies of 1216, each detector tested with a positive control
-- [ ] A report section: folly, hours, frequency, runtimes, prescribed barrier, replay evidence
-- [ ] A review pass over the existing PreToolUse barriers: firings counted, deletions proposed
-- [ ] Run once on the arena's cycle-4 Pi traces as the cross-corpus check
+- [x] Catalogue with at least the waiting follies of 1216, each detector tested with a positive control
+- [x] A report section: folly, bounds (not hours), frequency, runtimes, prescribed rung (narrowed: no replay evidence, no prescription engine)
+- [x] A review pass over the existing PreToolUse barriers: firings counted (narrowed: denial counts as data, verdicts to /pulse)
+- [x] Run once on the arena's cycle-4 Pi traces as the cross-corpus check
 - [ ] Out of scope: auto-applying a barrier

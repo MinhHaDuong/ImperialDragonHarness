@@ -166,3 +166,144 @@ def test_naive_timestamp_counted_as_utc(tmp_path):
     ]
     s = _scan(tmp_path, rows)
     assert s["totals"]["errors"] == 1
+
+
+# --- ticket 1217: follies, rung table, barrier denials, Pi reader -----------
+# Specimens: docs/2026-10-26-self-matching-process-patterns-evidence.md.
+
+SPEC_A = "until ! pgrep -u $USER -f 'padme-llm.py manifest' >/dev/null; do sleep 5; done; python3 x.py"
+SPEC_B = "for p in $(pgrep -u $USER -f 'until ! pgrep -u'); do kill $p; done"
+SPEC_C = "pkill -f 'bin/make|gmake|cicc|nvcc'"
+SPEC_BRACKET = "until ! pgrep -f '[p]adme-llm.py manifest' >/dev/null; do sleep 5; done"
+SPEC_ECHO = "echo 'pgrep -f x'"
+
+
+def test_wait_regex_ignores_quoted_and_heredoc():
+    assert not tf.is_wait_command("echo 'sleep 5 and until x'")
+    assert not tf.is_wait_command("cat <<EOF\nsleep 5\nuntil true\nEOF")
+    assert tf.is_wait_command("x=$(sleep 5; echo hi)")  # command substitution stays
+    assert tf.is_wait_command("echo 'a'; sleep 5")
+
+
+def test_pgrep_self_match_specimens():
+    assert tf.folly_pgrep_self(SPEC_A)
+    assert tf.folly_pgrep_self(SPEC_B)
+    assert not tf.folly_pgrep_self(SPEC_C)  # wide, but does not match itself
+    assert not tf.folly_pgrep_self(SPEC_BRACKET)
+    assert not tf.folly_pgrep_self(SPEC_ECHO)
+    # a quoted pattern holding shell operators is still read whole
+    assert tf.folly_pgrep_self("until ! pgrep -f 'a|b' ; do sleep 5; done  # a|b")
+    assert not tf.folly_pgrep_self("pgrep -f '[a]x|[b]y' >/dev/null")
+
+
+def test_sleep_to_cap_full_cap_versus_early_exit():
+    full = "for i in $(seq 1 30); do sleep 10; done"
+    assert tf.folly_sleep_to_cap(full, 300.0)  # waited the whole cap, 300 s
+    assert not tf.folly_sleep_to_cap(full, 40.0)  # condition met early
+    assert not tf.folly_sleep_to_cap("sleep 10", 10.0)  # no loop, no cap
+    assert tf.folly_sleep_to_cap("while true; do sleep 5; done", 300.0, timeout_s=300)
+    assert tf.folly_sleep_to_cap("for i in $(seq 1 3); do sleep 1m; done", 180.0)  # units
+    assert tf.folly_sleep_to_cap("for i in $(seq 1 2); do sleep 1m30s; done", 180.0)
+
+
+def _call(tid, ts, cmd, err=False, secs=1):
+    return {
+        "id": tid, "start": ts, "end": ts + tf.timedelta(seconds=secs),
+        "tool": "Bash", "cmd": cmd, "is_error": err, "text": "Exit code 1" if err else "",
+    }  # fmt: skip
+
+
+def _nrep(calls):
+    return len(tf.repeat_failing_calls(calls))
+
+
+def test_repeat_failing_only_in_a_row_without_edit_between():
+    t0 = tf.datetime(2026, 10, 14, 10, tzinfo=tf.timezone.utc)
+    mk = lambda i, c, e=True, tool="Bash": {**_call(f"c{i}", t0 + tf.timedelta(minutes=i), c, e), "tool": tool}  # noqa: E731
+    same = [mk(0, "make test"), mk(1, "make test")]
+    assert _nrep(same) == 1
+    assert _nrep([mk(0, "make test"), mk(1, "ls", False), mk(2, "make test")]) == 0
+    edited = [mk(0, "make test"), mk(1, "x", False, "Edit"), mk(2, "make test")]
+    assert _nrep(edited) == 0
+    assert _nrep([mk(0, "make test", False), mk(1, "make test", False)]) == 0
+
+
+def _cc_rows():
+    t = f"{DAY1}T10:00:"
+    return [
+        _use("a1", "Bash", t + "00Z", command=SPEC_A),
+        _res("a1", f"{DAY1}T10:05:00Z", "ok", error=False),
+        _use("b1", "Bash", t + "10Z", command=SPEC_BRACKET),
+        _res("b1", t + "20Z", "ok", error=False),
+    ]
+
+
+def _pi_rows():
+    """The same two calls in Pi's session shape, plus unknown line types."""
+    def call(tid, ts, cmd):
+        blk = {"type": "toolCall", "id": tid, "name": "bash", "arguments": {"command": cmd}}
+        return {"type": "message", "timestamp": ts, "message": {"role": "assistant", "content": [blk]}}
+
+    def result(tid, ts, ms):
+        return {"type": "message", "timestamp": ts, "message": {
+            "role": "toolResult", "toolCallId": tid, "isError": False, "durationMs": ms,
+            "content": [{"type": "text", "text": "ok"}]}}
+
+    return [
+        {"type": "custom_message", "timestamp": f"{DAY1}T09:59:00Z"},
+        {"type": "mystery"},
+        call("a1", f"{DAY1}T10:00:00Z", SPEC_A),
+        result("a1", f"{DAY1}T10:05:00Z", 300000),
+        call("b1", f"{DAY1}T10:00:10Z", SPEC_BRACKET),
+        result("b1", f"{DAY1}T10:00:20Z", 10000),
+    ]
+
+
+def test_pi_reader_matches_cc_counts_and_survives_unknown_lines(tmp_path):
+    cc = _scan(tmp_path / "cc", _cc_rows())
+    runs = tmp_path / "runs-x" / "leg" / "attempts" / "1" / "sessions"
+    _write(runs / "s.jsonl", _pi_rows())
+    pi = tf.run_pi_scan(tmp_path / "runs-x", now=tf.datetime(2026, 10, 21, tzinfo=tf.timezone.utc))
+    assert pi["follies"]["pgrep_self_match"]["count"] == cc["follies"]["pgrep_self_match"]["count"] == 1
+    assert pi["totals"]["calls"] == cc["totals"]["calls"] == 2
+    assert pi["totals"]["wait_commands"] == cc["totals"]["wait_commands"]
+    assert pi["skipped_lines"] >= 3  # two unknown types and the trailing junk line
+    assert "SPEC" not in json.dumps(pi) and "padme" not in json.dumps(pi)  # no command text
+
+
+def test_follies_in_summary_are_bounds_with_rung(tmp_path):
+    s = _scan(tmp_path, _cc_rows())
+    f = s["follies"]["pgrep_self_match"]
+    assert f["count"] == 1 and f["sessions"] == 1
+    assert f["seconds_upper_bound"] >= f["seconds_lower_bound"] > 0
+    assert f["rung"] == "fix_primitive" and f["runtime"] == {"claude-code": 1}
+    assert "hours" not in s["follies_note"].split("not")[0]
+    assert set(s["follies"]) <= set(s["folly_barrier"])
+    assert s["totals"]["calls"] == 2 and "daily" in s  # existing keys unchanged
+
+
+def test_barrier_denials_counted_without_verdict(tmp_path):
+    rows = _fixture_rows()
+    s = _scan(tmp_path, rows)
+    d = s["barrier_denials"]
+    assert d["worktree_guard"] == 1 and d["write_outside_worktree"] == 1
+    assert "unattributed" in d
+    blob = json.dumps(d).lower()
+    assert "delete" not in blob and "verdict" not in blob and "keep" not in blob
+
+
+def test_sleep_and_repeat_follies_reach_the_summary_end_to_end(tmp_path):
+    t = f"{DAY1}T11:"
+    rows = [
+        # a condition loop, no explicit timeout: Claude Code's default cap applies
+        _use("p1", "Bash", t + "00:00Z", command="until test -f /x/done; do sleep 5; done"),
+        _res("p1", t + "02:00Z", "ok", error=False),
+        _use("r1", "Bash", t + "05:00Z", command="make test"),
+        _res("r1", t + "05:10Z", "Exit code 2"),
+        _use("r2", "Bash", t + "06:00Z", command="make  test"),
+        _res("r2", t + "06:10Z", "Exit code 2"),
+    ]
+    s = _scan(tmp_path, rows)
+    assert s["follies"]["sleep_poll_to_cap"]["count"] == 1
+    assert s["follies"]["repeat_failing"]["count"] == 1
+    assert s["follies"]["repeat_failing"]["rung"] == "hook"
