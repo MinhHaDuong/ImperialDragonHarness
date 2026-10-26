@@ -61,27 +61,7 @@ idle_hours() {
     return 0
 }
 
-# An owner-less tree counts as clean only if nothing is modified, untracked
-# or ignored, except regenerable caches (the root .venv/, rebuilt from the
-# lock, and tool caches anywhere) and .tmp/ (its own guard decides).
-# Ignored files count: a repo may ignore `*`, and `worktree remove` deletes
-# them. --no-optional-locks keeps this status from rewriting the index,
-# which would restart the tree's idle clock.
-ownerless_tree_clean() {
-    local out line p
-    out=$(git -C "$1" --no-optional-locks status --porcelain=v1 \
-        --untracked-files=all --ignored=matching 2>/dev/null) || return 1
-    while IFS= read -r line; do
-        [ -z "$line" ] && continue
-        case "$line" in "!! "*) ;; *) return 1 ;; esac
-        p="${line:3}"
-        case "/$p" in
-            /.tmp/*|/.venv/*|*/__pycache__/*|*/.pytest_cache/*|*/.ruff_cache/*|*/.mypy_cache/*) ;;
-            *) return 1 ;;
-        esac
-    done <<<"$out"
-    return 0
-}
+. "$(dirname "${BASH_SOURCE[0]}")/worktree-clean-lib.sh"
 
 # Liveness rail: snapshot every live process's cwd once (Linux /proc), on the
 # first removal candidate — a quiet repo never pays for it. One python3 call
