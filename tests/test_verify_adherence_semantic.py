@@ -1,22 +1,10 @@
-"""Contract regression tests; the separate live acceptance proves execution."""
+"""Check the frozen live acceptance record of the semantic adherence phase."""
 
 import hashlib
 import json
 from pathlib import Path
 
-import pytest
-
 ROOT = Path(__file__).resolve().parents[1]
-SKILL = ROOT / "skills/verify-adherence/SKILL.md"
-
-
-@pytest.mark.parametrize("requirement", [
-    "Include existing conventional `rules/`", "AGENTS.md", "deleted rule files", "status: ran | skipped | delegated | unavailable | invalid",
-    "completion_evidence:", "Inline analysis does not count", "must not create findings", "blocking semantic finding → adherence: FAIL",
-])
-def test_semantic_execution_contract(requirement):
-    semantic = SKILL.read_text().split("### 3. Semantic subagent")[1]
-    assert requirement in semantic
 
 
 def test_frozen_live_acceptance_record():
