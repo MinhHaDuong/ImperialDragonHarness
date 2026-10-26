@@ -256,8 +256,8 @@ retries once; a non-zero exit is a visible capture failure, not a silent skip.
 Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence and integrity.
 
 **Tier first** (`skills/merge/SKILL.md` § Gating tiers, the one home): a
-bookkeeping-tier merge request skips `/gaze` and `/verify-gate` and goes to
-Phase 7 on its mechanical checks. Everything below is the full tier.
+bookkeeping-tier merge request skips `/verify-gate`, and `/gaze` unless the
+raid's brief asks for it, and goes to Phase 7 on its mechanical checks. Everything below is the full tier.
 
 **Per-ticket:** ensure a REVIEWED `/gaze` record on the branch tip, then run
 `/verify-gate` on the head it reviewed. Hunt's Review step already ran gaze and

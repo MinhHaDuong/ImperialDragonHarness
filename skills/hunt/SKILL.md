@@ -85,7 +85,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
       close claim `**Ticket:** tickets/<ticket file>`. Wait for CI where it runs on the branch.
 11. **Review.** Skip when
     `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base origin/main --head HEAD`
-    exits 0 (bookkeeping). Otherwise run up to 3 rounds: load the gaze skill with the
+    exits 0 (bookkeeping) and the orchestrator's brief asks no review. Otherwise run up to 3 rounds: load the gaze skill with the
     merge-request number and a `--brief`. The orchestrator decides the brief: the
     raid's, when it passed one in the launch prompt, else yours, sized by
     `skills/route/references/decorrelation.md` § Sizing a gaze brief (a later
