@@ -34,7 +34,9 @@ the latest of these. During a declared project gate, check the executor's
 worktree with `python3 "$IDH_ROOT/scripts/raid-breaker.py" --worktree <path>
 --last-progress-epoch <epoch> --gate-max-seconds <seconds>` before killing it.
 A gate run through `raid-gate.py` has a short-lived heartbeat
-keyed to this worktree. Another session's gate cannot excuse this executor,
+keyed to this worktree. Hunt's own pre-merge-request run is only the fast
+tier, which stays well inside the ordinary window and carries no heartbeat;
+a project that declares a longer gate runs it through `raid-gate.py`. Another session's gate cannot excuse this executor,
 and a gate in another process namespace is still visible. A heartbeat older
 than 30 seconds is stale, not proof of a live gate. `GATE_RUNNING` suspends the ordinary window;
 it does not prove a pass. Set the project's maximum above a measured cold gate
