@@ -79,7 +79,8 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
     - Run the project's fast test tier once (Python: `make check-fast`,
       `rules/coding-python.md` § Testing). The scoped gate
       (`rules/workflow.md` § Check scope) or the full one runs at merge, on
-      the merge candidate.
+      the merge candidate; a bookkeeping merge may take the fast path
+      (`skills/merge/SKILL.md` § Gating tiers).
     - Push with lease and open the merge request. Its description carries the
       close claim `**Ticket:** tickets/<ticket file>`. Wait for CI where it runs on the branch.
 11. **Review.** Skip when

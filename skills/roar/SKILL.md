@@ -44,7 +44,9 @@ minutes, polling that read inside it), then continue this pre-check and the
 cleanup yourself when it wakes you; never ask the author to wait or to re-run
 `/roar`. Only a runtime that cannot wake the session when a background command
 exits stops and reports the merge as pending. CLOSED, `OPEN … -` (nothing
-queued) or an unreadable read: report it, never re-run the merge. Then verify the branch has been merged before proceeding:
+queued) or an unreadable read: report it, never re-run the merge. On a gated
+base, report the monitor's verdict on the new main tip when it has landed, and
+a closed fast path with its reason (`skills/merge/SKILL.md` § Gating tiers). Then verify the branch has been merged before proceeding:
 ```bash
 ROAR_BASE_RC=0
 git symbolic-ref -q refs/remotes/origin/main >/dev/null 2>&1 || ROAR_BASE_RC=$?
