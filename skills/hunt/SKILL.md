@@ -82,4 +82,6 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
     exits 0 (bookkeeping). Otherwise run up to 3 rounds: load the gaze skill with the
     merge-request number; on findings, fix every comment whatever its severity, rerun
     the tests the fixes affect by name, then the fast test tier, push, and review again.
-    Escalate when gaze does, or when round 3 still has findings.
+    Escalate when gaze does, or when round 3 still has findings. What each gaze
+    result leads to, a missing or stale `reviewed_head_sha` included, is the
+    caller's policy in `skills/merge/SKILL.md` § Before merging.
