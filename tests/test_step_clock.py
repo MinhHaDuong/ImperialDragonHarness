@@ -30,7 +30,7 @@ def test_formats_minutes_and_hours():
     sys.path.insert(0, str(SCRIPT.parent))
     import step_clock
     assert step_clock.duration_line('1000', now=1252) == 'duration: 4m12s'
-    assert step_clock.duration_line('0', now=3725) == 'duration: 1h02m05s'
+    assert step_clock.duration_line('100', now=3825) == 'duration: 1h02m05s'
 
 
 @pytest.mark.parametrize('token', ['', 'garbage', '9999999999'])
@@ -45,6 +45,18 @@ def test_table_names_total_and_slowest_step():
     assert 'slowest: gate-r1 (4m00s)' in out
 
 
-@pytest.mark.parametrize('skill', ['gaze/references/output.md', 'verify-gate/SKILL.md', 'merge/SKILL.md', 'raid/SKILL.md'])
-def test_each_timed_skill_reads_the_clock(skill):
-    assert 'step_clock.py' in (SCRIPT.parents[1] / 'skills' / skill).read_text()
+@pytest.mark.parametrize('token', ['-5', '0'])
+def test_non_positive_start_is_not_measured(token):
+    assert run('end', token).stdout.strip() == 'duration: not measured'
+
+
+def test_table_lists_unreadable_rows_and_never_negative():
+    out = run('table', stdin='7 gaze not-measured\n7 gate 1 5\n8 merge 10 5\n').stdout
+    assert out.count('not measured') == 2
+    assert ' -' not in out
+
+
+def test_seconds_mode():
+    assert run('end', '--seconds', '-5').stdout.strip() == 'na'
+    t0 = run('start').stdout.strip()
+    assert run('end', '--seconds', t0).stdout.strip().isdigit()

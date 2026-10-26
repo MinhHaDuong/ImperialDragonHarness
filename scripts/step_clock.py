@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """Measure a step's wall clock and print it on one stable line (ticket 1224).
 
-    T0=$(python3 step_clock.py start)         # first thing the step does
-    python3 step_clock.py end "$T0"           # last thing: prints `duration: 4m12s`
+    python3 step_clock.py start               # first thing the step does: prints a token
+    python3 step_clock.py end <token>         # last thing: prints `duration: 4m12s`
+
+Shell variables do not persist between a runtime's Bash calls: carry the printed
+token literally into the later call. `end --seconds <token>` prints whole seconds
+(`na` when not measured) for a numeric field.
 
 `start` prints the current epoch seconds (also `now`). `end` prints
 `duration: <h>h<mm>m<ss>s | <m>m<ss>s | <s>s` from a clock read now less the
@@ -31,29 +35,43 @@ def fmt(seconds: float) -> str:
     return f'{s}s'
 
 
-def duration_line(token: str | None, now: float | None = None) -> str:
+def elapsed_since(token: str | None, now: float | None = None) -> float | None:
     try:
-        elapsed = (time.time() if now is None else now) - float(token)
+        start = float(token)
+        elapsed = (time.time() if now is None else now) - start
     except (TypeError, ValueError):
-        return NOT_MEASURED
-    if elapsed < 0 or elapsed != elapsed:
-        return NOT_MEASURED
-    return f'duration: {fmt(elapsed)}'
+        return None
+    return elapsed if start > 0 and elapsed >= 0 else None  # also rejects NaN
+
+
+def duration_line(token: str | None, now: float | None = None) -> str:
+    elapsed = elapsed_since(token, now)
+    return NOT_MEASURED if elapsed is None else f'duration: {fmt(elapsed)}'
 
 
 def table(lines: list[str]) -> str:
     rows: dict[str, list[tuple[str, float, float]]] = {}
+    bad: dict[str, list[str]] = {}  # unreadable rows are listed, never dropped
     for line in lines:
         parts = line.split()
         if len(parts) < 4:
+            bad.setdefault(parts[0] if parts else '?', []).append(' '.join(parts[1:]) or '?')
             continue
         try:
-            rows.setdefault(parts[0], []).append((' '.join(parts[1:-2]), float(parts[-2]), float(parts[-1])))
+            a, b = float(parts[-2]), float(parts[-1])
+            if a <= 0 or b < a:
+                raise ValueError
+            rows.setdefault(parts[0], []).append((' '.join(parts[1:-2]), a, b))
         except ValueError:
-            continue
+            bad.setdefault(parts[0], []).append(' '.join(parts[1:-2]))
     out = []
-    for pr, steps in rows.items():
+    for pr in dict.fromkeys([*rows, *bad]):
+        steps = rows.get(pr, [])
         out.append(f'PR {pr}')
+        for name in bad.get(pr, []):
+            out.append(f'  {name:<16} not measured')
+        if not steps:
+            continue
         for name, a, b in steps:
             out.append(f'  {name:<16} {fmt(b - a)}')
         slowest = max(steps, key=lambda st: st[2] - st[1])
@@ -67,7 +85,12 @@ def main(argv: list[str]) -> int:
     if mode in ('start', 'now'):
         print(f'{time.time():.3f}')
     elif mode == 'end':
-        print(duration_line(argv[1] if len(argv) > 1 else None))
+        token = argv[-1] if len(argv) > 1 else None
+        if '--seconds' in argv:  # whole seconds for a numeric field; `na` when not measured
+            elapsed = elapsed_since(token)
+            print('na' if elapsed is None else round(elapsed))
+        else:
+            print(duration_line(token))
     elif mode == 'table':
         print(table(sys.stdin.read().splitlines()))
     else:

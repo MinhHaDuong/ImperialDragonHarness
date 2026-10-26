@@ -77,6 +77,8 @@ itself. Optionally:
 - `integration`: run the declared integration checks whatever the diff
   touches (§ Check plan). A project asks for the same through its declaration.
 
+Start the step clock before anything else (`skills/gaze/references/output.md` § Duration clock); its `end` line fills the verdict's `duration:`.
+
 Every invocation produces the same verdict shape. Round is always derived from PR comment
 history (see § Gate sessions), never passed by the caller.
 
@@ -226,12 +228,6 @@ as a `nofollow:` minor, no `scope_overflow` entry. Typeset text and argument
 changes keep the guard.
 
 ## Verdict shape
-
-Read the clock first thing (`T0=$(python3 "$IDH_ROOT/scripts/step_clock.py" start)`)
-and, after the last check, take `python3 "$IDH_ROOT/scripts/step_clock.py" end "$T0"`;
-its line goes into the verdict and the verdict comment as printed, and reads
-`duration: not measured` where no clock could be read, never an estimate. A gate
-seat, if the gate launches any, reports its own line the same way.
 
 ```yaml
 verdict: APPROVED | REROLL | ESCALATE | NEEDS-AUTHOR
