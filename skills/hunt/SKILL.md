@@ -14,19 +14,19 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
 
 ## Steps
 
-1. Read the ticket (from git-erg `tickets/` directory or forge).
-2. Check the **Exit criteria** section. If unclear, ask the author before writing code.
-   - If all exit criteria are **already met** (verify by inspection/grep before writing any code), close the ticket through the **normal branch + PR flow**: steps 4, 5 and 11 — never commit the close on `main`.
-     Enter the worktree (step 4) and create the branch (step 5) first, then on that branch run
+1. **Read.** Read the ticket (from git-erg `tickets/` directory or forge).
+2. **Exit criteria.** Check the ticket's **Exit criteria** section. If unclear, ask the author before writing code.
+   - If all exit criteria are **already met** (verify by inspection/grep before writing any code), close the ticket through the **normal branch + PR flow**: the Worktree, Branch and Merge request steps — never commit the close on `main`.
+     Enter the worktree (Worktree) and create the branch (Branch) first, then on that branch run
      `${ERG:-tickets/erg} close $ARGUMENTS already-done`, commit the ticket file
      (`git add -u tickets/ && git commit -m "ticket($ARGUMENTS): close — already-done"`
      — `-u` stages the close edit and any dependent Blocked-by removals, never a
      stray file in the shared `tickets/`), and open the
-     merge request (step 11). Skip the test/implement steps (6–10); the merge request lands the close
+     merge request (Merge request). Skip the steps from Relevant files through Self-gate; the merge request lands the close
      via review like any other change. Do not stop with an uncommitted-to-`main` or unpushed close.
 3. **Route before you execute.** Only a hunt in the author's live interactive
    session reaches this fork. An already-detached executor, an `inline`
-   invocation, and a headless run each skip straight to step 4; raid is not a
+   invocation, and a headless run each skip straight to the Worktree step; raid is not a
    second triage. For why each caller skips, and the `$ARGUMENTS` shape, see
    `references/triage.md`.
    - **Needs-human triage.** Read the ticket for these tells, mostly mechanical: a
@@ -39,7 +39,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
      hunt, not a failure, exactly as the raid drift guard treats a premise objection.
    - **Detach by default.** No tell hit, and the hunt is running in the author's
      interactive session: hand the ticket to ONE background agent, which creates
-     its own worktree in step 4. Not a raid — for a single ticket its orchestrator and review panels
+     its own worktree in the Worktree step. Not a raid — for a single ticket its orchestrator and review panels
      cost more than the ticket returns. Launch it with the coder profile (`agents/coder.md`; choose the model per launch from the
      `route` skill, there is no frontmatter pin). The agent's FIRST action is mechanical:
      ```
@@ -56,7 +56,7 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
      the interactive session stays at decision altitude instead of accumulating
      the executor's test dumps, diffs, and review rounds, which measured 5.4x the
      cost of the same contract run detached.
-4. Work in the ticket's **own** worktree. A worktree is **owned** when you created
+4. **Worktree.** Work in the ticket's **own** worktree. A worktree is **owned** when you created
    it for this ticket, or the spawner handed it to you by path with
    `git status --porcelain` printing nothing. A shared or `explore-*` worktree that
    may host a live session is **not owned**: a hunt must never rebase, branch, or
@@ -88,39 +88,39 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    do not export TMPDIR for the session; never session-wide export it. `.tmp/` is ignored through common Git
    `info/exclude`, remains owned by the worktree, and is never purged separately.
    Evidence stays outside `.tmp/`; deliverables stay outside `.tmp/` too.
-5. In a handed-over worktree, create or checkout the ticket branch (step 4 already made it otherwise):
+5. **Branch.** In a handed-over worktree, create or checkout the ticket branch (the Worktree step already made it otherwise):
    ```bash
    git switch -c t$ARGUMENTS-short-description
    python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" register "$(git rev-parse --show-toplevel)"
    ```
    Registration is idempotent; run it after branch setup for both newly
    created and handed-over worktrees.
-6. Read the files listed in **Relevant files**.
-7. Write the first test from the **Test** section of the ticket.
-8. Run `make check-fast` — confirm the test fails.
-9. Announce `[Plan → Execute]`, then implement until the affected test passes — `make check-fast` (or the affected test file alone) is the loop gate. The project's pre-PR gate runs once immediately before step 11 opens the merge request — not per edit.
-   Do not swap a cached or selected result for step 8's failing-test confirmation or for the project's declared gates.
-10. Pre-PR self-gate: run `/verify-adherence <branch>` (the branch created in step 5).
-    - Clean → proceed to step 11. Note adherence passed in the merge-request description so `/gaze` can skip the mechanical phase on its next pass (gaze reviews; `/verify-gate` gates).
+6. **Relevant files.** Read the files listed in **Relevant files**.
+7. **Test.** Write the first test from the **Test** section of the ticket.
+8. **Fail first.** Run `make check-fast` — confirm the test fails.
+9. **Implement.** Announce `[Plan → Execute]`, then implement until the affected test passes — `make check-fast` (or the affected test file alone) is the loop gate. The project's pre-PR gate runs once immediately before the Merge request step opens it — not per edit.
+   Do not swap a cached or selected result for the Fail-first confirmation or for the project's declared gates.
+10. **Self-gate.** Pre-PR self-gate: run `/verify-adherence <branch>` (the branch created in the Branch step).
+    - Clean → proceed to Merge request. Note adherence passed in the merge-request description so `/gaze` can skip the mechanical phase on its next pass (gaze reviews; `/verify-gate` gates).
     - Blockers → decide per blocker:
       - Cheap and mechanical (obvious fix, no design judgement) → fix in place, re-run `make check-fast` and `/verify-adherence`, then proceed only once clean. Up to 3 fix-and-recheck cycles; if still not clean after 3 rounds, escalate.
       - A gate slow enough to hurt is a symptom to name in the handoff; the author decides whether to call `/pulse`.
       - Otherwise → STOP. Do not open the PR. Escalate with the adherence report and the blocker list.
     - Circuit breaker: if `/verify-adherence` itself errors, times out, or returns an unparseable result → ESCALATE. Do not open the PR and do not silently skip the gate.
-11. Rebase onto `origin/main` (`rules/git.md` § Merging), run the project's declared pre-PR gate once, then push the branch with lease, wait for CI and open a merge request. Run it through `python3 "$IDH_ROOT/scripts/raid-gate.py" -- <gate command>` so a raid can observe a live long-running gate. If the project has `.idh-checks.json`, its gate command is the project's scoped entry point (or `python3 "$IDH_ROOT/scripts/scoped-check.py"` from its root); quote `selected:` and `skipped:` in the PR description. A mapped doc-only diff may run fewer targets; Python code, unmapped paths, or a project without a map run the full `make check`.
-12. Review the merge request, unless its tier is bookkeeping
+11. **Merge request.** Rebase onto `origin/main` (`rules/git.md` § Merging), run the project's declared pre-PR gate once, then push the branch with lease, wait for CI and open a merge request. Run it through `python3 "$IDH_ROOT/scripts/raid-gate.py" -- <gate command>` so a raid can observe a live long-running gate. If the project has `.idh-checks.json`, its gate command is the project's scoped entry point (or `python3 "$IDH_ROOT/scripts/scoped-check.py"` from its root); quote `selected:` and `skipped:` in the PR description. A mapped doc-only diff may run fewer targets; Python code, unmapped paths, or a project without a map run the full `make check`.
+12. **Review.** Review the merge request, unless its tier is bookkeeping
     (`skills/merge/SKILL.md` § Gating tiers): a bookkeeping-only request is
-    gated by its mechanical checks alone, so skip 12–14. Otherwise this action
+    gated by its mechanical checks alone, so skip Review, Fix and Repeat. Otherwise this action
     is mechanical — invoke the gaze skill with the PR number:
     ```
     Skill(skill: "gaze", args: <pr-number>)
     ```
     Follow the contract the skill loader returns; do not paraphrase or inline its
     steps (mirrors raid Phase 5's mechanical `Skill(hunt)` invocation).
-    Each pass through the 12–13 loop is one **review round**; which
+    Each pass through the Review–Fix loop is one **review round**; which
     perspectives run, and how deep, is the reviewer's call
     (`skills/gaze/SKILL.md` § 2–5). What each gaze result leads to (fix and
     review again, close and gate, or stop at the author) is the caller's
     policy in `skills/merge/SKILL.md` § Before merging.
-13. Fix all comments regardless of severity. Per fix cycle, run `make check-fast` plus the tests implicated by the comments — not the full suite. If any cycle's fix touches code outside the fast tier, run the full `make check` once, in addition — not on every cycle.
-14. Repeat 12–13 up to 3 times, i.e. up to round 3. If still not clean, escalate (see workflow rules).
+13. **Fix.** Fix all comments regardless of severity. Per fix cycle, run `make check-fast` plus the tests implicated by the comments — not the full suite. If any cycle's fix touches code outside the fast tier, run the full `make check` once, in addition — not on every cycle.
+14. **Repeat.** Repeat Review and Fix up to 3 times, i.e. up to round 3. If still not clean, escalate (see workflow rules).
