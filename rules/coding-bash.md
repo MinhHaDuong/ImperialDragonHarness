@@ -167,4 +167,4 @@ the dummy. Verifying with the real key is how you leak it a second time.
 
 ## Waiting for a background job
 
-Wait in the foreground with a bound: `timeout N cmd`, or `timeout N tail --pid=PID -f /dev/null`. Never `sleep` in a loop, and never `pgrep -f PATTERN` from a shell whose own command line holds PATTERN: it matches itself (the `pgrep`/`pkill` on PATH are wrappers adding `-A`; on a bare `/usr/bin/pgrep` write `pgrep -f '[p]attern'`).
+Wait in the foreground with a bound: `timeout N cmd`, or `timeout N tail --pid=PID -f /dev/null`. Never `sleep` in a loop, and never `pgrep -f PATTERN` from a shell whose own command line holds PATTERN: it matches itself (the `pgrep`/`pkill` on PATH are wrappers adding `-A`, which also spares the caller's ancestors; on a bare `/usr/bin/pgrep` write `pgrep -f '[p]attern'`).

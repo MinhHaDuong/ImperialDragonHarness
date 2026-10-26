@@ -8,6 +8,7 @@ installation and status leave host scheduling alone.
 
 import importlib.util
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -625,8 +626,10 @@ def test_install_refuses_removal_when_the_plugin_payload_is_broken(machine):
 
 
 def _procps_major():
-    out = subprocess.run(["/usr/bin/pgrep", "--version"], capture_output=True, text=True).stdout
-    import re
+    try:
+        out = subprocess.run(["/usr/bin/pgrep", "--version"], capture_output=True, text=True).stdout
+    except OSError:
+        return 0
     m = re.search(r"procps-ng\s+(\d+)", out)
     return int(m.group(1)) if m else 0
 

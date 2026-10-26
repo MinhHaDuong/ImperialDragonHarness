@@ -315,7 +315,7 @@ def probe_wrapper(entry: dict, root: Path):
     wrapper = str(cands[0])
     r_real, out_real = _run([str(real), "--version"])
     r_wrap, out_wrap = _run([wrapper, "--version"])
-    if r_wrap is None or r_wrap.returncode != 0 or out_wrap != out_real:
+    if r_wrap is None or r_real is None or r_wrap.returncode != r_real.returncode or out_wrap != out_real:
         return ("RECURSION", f"{wrapper} --version did not reach {real} cleanly: {out_wrap[:120]!r}", repair), ""
     m = re.search(r"procps-ng\s+(\d+)", out_real)
     if not m or int(m.group(1)) < 4:

@@ -6,7 +6,8 @@
 # kill its caller. procps-ng >= 4.0 has -A (--ignore-ancestors), which fixes
 # both; older procps lacks it, so the wrapper passes through unchanged there.
 # It never execs itself: the real tool is the first PATH entry that is not
-# this file (compared by inode, symlinks followed).
+# this file (compared by inode, symlinks followed). No `set -e`: exit codes
+# are the real tool's, passed through by exec.
 name=${0##*/}
 case $name in pgrep | pkill) ;; *) name=pgrep ;; esac
 real=
