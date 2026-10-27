@@ -58,6 +58,36 @@ validator only), so the trace stays uniform and the cost stays small. **Pending*
   pull request, not a ticket. The author later disabled GitHub Actions altogether, so
   no forge CI runs; GitHub is a sync host.
 
+## Session credential
+
+One place states which credential agent sessions use (ticket 1196).
+
+- **Sessions run as a narrow identity.** `scripts/bash-env.sh` exports
+  `GH_CONFIG_DIR=$HOME/.config/gh-agent` into agent shells when
+  `$HOME/.config/gh-agent/hosts.yml` exists. That gh config dir is logged in with a
+  fine-grained personal access token: contents and pull requests read/write; issues,
+  metadata and commit statuses read; no administration, workflows or Actions. The
+  variable is a path, not a secret; the token lives only in that config and in
+  `~/.config/keys/github.env`.
+- **The owner login is the author's.** The default gh login (the repository owner) stays
+  for the author's admin acts: rulesets, settings, Actions. The author's interactive shell
+  does not load `bash-env.sh`, so it keeps that login.
+- **Measured.** With the agent credential a ruleset POST and a repository settings PATCH
+  answer 403. Pull requests 1792, 1793, 1794, 1796 and 1797 merged end to end with
+  `raid_land.py` on it. The repository has no CI, so check-run reads are untested.
+- **Git pushes over ssh use the author's key.** They are not gh calls: they can push
+  branches and `refs/notes/*`, and cannot reach any admin API.
+- **Loader coverage.** `BASH_ENV` is wired into Claude Code settings only
+  (`adapters/lifecycle.py`; the projection of `bash-env.sh` lists the claude runtime).
+  Codex and Pi shells do not load it, so there the agent credential is not selected
+  automatically: the gap stays open until those adapters wire an equivalent.
+- **Limitation, measured.** The `main-traceability` ruleset covers only `main`.
+  `refs/notes/*`, including `refs/notes/gate` (the gate record), stay writable and
+  deletable by the session credential
+  (`conception/2026-10-27-notes-transport-trial.md`).
+- `scripts/census/permissions.py` audits permission allow rules, not credentials, and
+  does not state this.
+
 ## The gate record
 
 - A git note on the candidate merge commit, in the notes ref `refs/notes/gate`.

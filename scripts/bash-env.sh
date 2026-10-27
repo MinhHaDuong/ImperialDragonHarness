@@ -107,6 +107,15 @@ fi
 
 unset -f _be_is_protected_name 2>/dev/null || true
 
+# Agent shells use the narrow forge credential (ticket 1196): a separate gh
+# config dir logged in with a fine-grained token. GH_CONFIG_DIR is a path, not a
+# secret; this loader still reads no key file. Set only when the agent config
+# exists and the caller has not chosen one. The author's interactive shell does
+# not load this file (BASH_ENV is wired into agent runtime settings only).
+if [ -z "${GH_CONFIG_DIR:-}" ] && [ -n "${HOME:-}" ] && [ -f "$HOME/.config/gh-agent/hosts.yml" ]; then
+    export GH_CONFIG_DIR="$HOME/.config/gh-agent"
+fi
+
 # Must stay last: restore the caller's xtrace setting without returning a
 # failing status when xtrace was initially off.
 [ "${_be_had_xtrace:-0}" = 1 ] && set -x
