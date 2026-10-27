@@ -11,7 +11,7 @@ findings, failing gate checks, per-exit-criterion gaps) as input, and waits for 
 writes on completion. Fix agent gets ≤10 min. The agent works under:
 
 - Strict rule: **only** the listed items. No scope creep. No "while I'm here" edits.
-- TDD discipline still applies: add a failing test for any behavioural fix before coding.
+- TDD discipline still applies: add a failing test for any behavioural fix before coding, and show it failing for the targeted reason (an AssertionError on the behaviour, not an import, argument or fixture error) before the fix.
 - Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix. A mapped doc-only fix uses `python3 "$IDH_ROOT/scripts/scoped-check.py"` and quotes selected and skipped targets; Python code and unmapped changes use the full `make check`.
 - Push commits to the PR branch; do not open new PRs.
 
@@ -22,4 +22,12 @@ re-gate once with the same `session=`. Breakers on this loop:
 - Fix agent timeout (10 min) → ESCALATE.
 - Gate disagrees with a gaze result on a must-fix finding → ESCALATE (no silent resolution).
 - Two REROLL rounds reached → ESCALATE.
-- FINDINGS again on the fixes after the narrower gaze → ESCALATE (one fix round per review).
+- FINDINGS again on the fixes after the narrower gaze → ESCALATE, except the
+  second-round rule below.
+
+**Second fix round (author ruling, 2026-10-27).** One further round runs without
+the author when every finding of the narrower gaze (a) concerns the previous
+fixes, with no new scope, (b) is tagged `verifiable:` with its reproduction,
+and (c) is fixed red-test-first, the red run shown failing for the targeted
+reason. A third round, or any judgment finding, escalates.
+
