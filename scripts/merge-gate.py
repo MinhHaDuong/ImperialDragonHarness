@@ -218,9 +218,9 @@ def decide(entries, candidate, scopes):
 
 def before_set(config):
     """The check set a before-merge record runs: the declared "before" subset, or all."""
-    names = config.get("before")
-    if names is None:
+    if "before" not in config:
         return config
+    names = config["before"]
     checks = [c for c in config["checks"] if c["name"] in names]
     return {**config, "scope": f"{config['scope']}/{BEFORE_SCOPE}", "checks": checks}
 
@@ -383,7 +383,7 @@ def load_config(base):
         raise GateError(f"invalid {CONFIG_PATH} at base: scope or version names hold a control character")
     before = config.get("before")
     names = {c["name"] for c in checks}
-    if before is not None and not (
+    if "before" in config and not (
         isinstance(before, list) and before and all(isinstance(n, str) and n in names for n in before)
     ):
         raise GateError(f'invalid {CONFIG_PATH} at base: "before" must be a non-empty list of declared check names')

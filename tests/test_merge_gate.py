@@ -407,7 +407,7 @@ def test_a_record_of_another_scope_does_not_pass(repo, module):
     assert gate(repo, "check", "--no-fetch", "--base", "main", "--head", branch).returncode == 0
 
 
-@pytest.mark.parametrize("before", [["no-such-check"], [], "always-pass", [1]])
+@pytest.mark.parametrize("before", [["no-such-check"], [], "always-pass", [1], None])
 def test_bad_before_declaration_fails_closed(repo, before):
     set_base_config(repo, json.dumps({**BEFORE, "before": before}))
     assert gate(repo, "enabled", "--base", "main").returncode == 3
