@@ -11,7 +11,7 @@ findings, failing gate checks, per-exit-criterion gaps) as input, and waits for 
 writes on completion. Fix agent gets ≤10 min. The agent works under:
 
 - Strict rule: **only** the listed items. No scope creep. No "while I'm here" edits.
-- TDD discipline still applies: add a failing test for any behavioural fix before coding, and show it failing for the targeted reason (an AssertionError on the behaviour, not an import, argument or fixture error) before the fix.
+- TDD discipline still applies: add a failing test for any behavioural fix before coding. Show it failing for the targeted reason (an AssertionError on the behaviour, not an import, argument or fixture error) before the fix.
 - Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix. A mapped doc-only fix uses `python3 "$IDH_ROOT/scripts/scoped-check.py"` and quotes selected and skipped targets; Python code and unmapped changes use the full `make check`.
 - Push commits to the PR branch; do not open new PRs.
 
