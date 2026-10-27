@@ -82,6 +82,8 @@ def close_with(tmp_path, primary, env, f, intent_line):
     ("intent: default\n", "full", "equal"),
     ("intent: verify the fixes because they were the findings\n", "delta", "delta"),
     ("", "delta", "delta"),  # no intent line: never widened to full
+    ("intent: default branch protections only\n", "delta", "delta"),  # a narrow intent starting "default"
+    ("intent: default: the whole merge request\n", "full", "equal"),
 ])
 def test_answer_scope_follows_the_intent(tmp_path, intent_line, scope, match):
     primary, env = branch_repo(tmp_path)

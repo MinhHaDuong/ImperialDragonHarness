@@ -167,7 +167,8 @@ def answer_scope(text):
     scope = _field(text, "scope")
     if scope in ("full", "delta"):
         return scope
-    return "full" if (_field(text, "intent") or "").rstrip(":") == "default" else "delta"
+    default = re.search(r"^intent:[ \t]*default(?::|[ \t]*$)", text, re.MULTILINE)
+    return "full" if default else "delta"
 
 
 def record_answer(primary, pr, text, attribution):
