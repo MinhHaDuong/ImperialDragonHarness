@@ -10,6 +10,7 @@ Author: reviewer
 2026-10-27T15:45Z reviewer note tracker: children 1271-1276 filed by raid after advisor ruling
 2026-10-27T16:07Z reviewer note author ruling 2026-10-27: notes design matures before C3 — design ticket 1277 (transport trial + spec), 1273 blocked on it; C2 1272 proceeds
 2026-10-27T18:22Z reviewer note raid 2026-10-27: all code children merged (1271 #1794, 1272 #1799, 1273 #1808, 1274 #1813, 1275 #1806, 1276 #1816, 1280 #1814, 1281 #1817); full make check on main f6063162: 2702 passed, 1 xfailed (1282). Tracker stays open for 1277 (author's web legs) and 1282, then its integration review.
+2026-10-27T22:05Z reviewer integration review 2026-10-27 (raid, opus, read-only) on main 3ab15d85: INTEGRATION PASS. Exit criteria 1-5 met; chain test tests/test_raid_noforge_f2.py::test_gaze_gate_merge_chain_without_a_forge (gh absent); make check 2792 passed, 4 skipped. Minors, below the ticket floor: merge/gaze argument-hints omit branch:; chain test stubs gaze/gate by direct review_notes calls; 'no remote forge' narrowed by 1280 to 'no origin remote' (origin without gh refuses, by ruling). Tracker stays open for 1277 (web legs: author's call, Fable HOLD-FOR-AUTHOR).
 
 --- body ---
 ## Context
@@ -141,9 +142,9 @@ gate passes; the adapter's tests run with `gh` absent from PATH and with a stub 
 
 ## Children (filed by raid 2026-10-27)
 - [x] 1271 C1 forge.py adapter (PR #1794)
-- [ ] 1272 C2 callers onto the adapter (Blocked-by 1271)
+- [x] 1272 C2 callers onto the adapter (Blocked-by 1271)
 - [ ] 1277 design spec + transport trial (Blocked-by none)
-- [ ] 1273 C3 gaze no-forge + review_notes.py (Blocked-by 1272, 1277)
-- [ ] 1274 C4 verify-gate on notes (Blocked-by 1273)
-- [ ] 1275 C5 no-forge merge in raid_land (Blocked-by 1271)
-- [ ] 1276 C6 raid 6-7 end to end (Blocked-by 1274, 1275)
+- [x] 1273 C3 gaze no-forge + review_notes.py (Blocked-by 1272, 1277)
+- [x] 1274 C4 verify-gate on notes (Blocked-by 1273)
+- [x] 1275 C5 no-forge merge in raid_land (Blocked-by 1271)
+- [x] 1276 C6 raid 6-7 end to end (Blocked-by 1274, 1275)
