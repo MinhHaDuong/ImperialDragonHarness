@@ -1,0 +1,20 @@
+%erg 0.1
+Title: Seat evidence recorded after gaze voids the review it records
+Created: 2026-10-27
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-27T08:23Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Since PR #1698 (ticket 1225), verify-gate requires per-seat review reports under `tickets/reviews/<base..head>/`, and a `no-report` placeholder does not count. Two failures follow, both hit by raid 1229:
+- `/gaze` posts its result comment but writes no seat reports, so a gate on a REVIEWED head refuses for missing evidence (PR #1702 round 1 REROLL, PR #1699).
+- Recording the reports afterwards adds commits under `tickets/reviews/`, which `BOOKKEEPING` in `scripts/merge-gate.py:81` does not list. `tier --since <reviewed head>` then answers `full`, so the act of recording evidence voids the review it records (PR #1702 round 2 ESCALATE; PR #1699 gate refusal). Both PRs landed only on the author's ruling.
+A third, smaller trap: seat reports can carry absolute worktree paths, which `check-agnostic.sh` rejects in the merge-gate record (PR #1699, fixed by hand in 50f9301e).
+
+## Exit criteria
+- [ ] One ordering holds and is tested: either gaze records its own seat reports for the range it reviewed, before the gate, or the gate treats `tickets/reviews/` additions as bookkeeping for tier purposes (state which, and why the other was rejected: bookkeeping evidence must not skip the review it attests)
+- [ ] A PR whose only post-review commits are its ticket close and its seat reports reaches verify-gate APPROVED with no author override (regression test on a fixture range)
+- [ ] Seat reports never contain an absolute path: the recorder writes paths relative to the worktree, with a test
+- [ ] `review_evidence.py record` does not block on stdin when run in the background

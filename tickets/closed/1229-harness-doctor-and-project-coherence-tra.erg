@@ -2,9 +2,11 @@
 Title: Harness doctor and project coherence: tracker
 Created: 2026-10-27
 Author: Minh Ha-Duong
+Closed: integration review done, raid 2026-10-27
 
 --- log ---
 2026-10-27T05:45Z Minh Ha-Duong created
+2026-10-27T08:24Z Minh Ha-Duong closed — integration review done, raid 2026-10-27
 
 --- body ---
 ## Context
@@ -37,11 +39,18 @@ Author's checklist for skill text, carried by 1233 and 1234:
 - 1233 harness-doctor skill, harness-only (blocked by 1234)
 
 ## Exit criteria
-- [ ] Children closed or consciously dropped
-- [ ] Integration review: a `yawn` in one project with local rules (arena)
+- [x] Children closed or consciously dropped (1230 #1696, 1231 #1697, 1232 #1702, 1233 #1699, 1234 #1695)
+- [x] Integration review: a `yawn` in one project with local rules (arena)
       reports its reasoned override of the merge-by-PR rule as reasoned, not
       as a conflict; `/harness-doctor` in the harness flags
       `skills/trace-doctor/SKILL.md` (known positive)
-- [ ] No window without a coherence check: 1232 lands last
-- [ ] Relation to tracker 1127 (skills audit) recorded: 1234's line-count
+- [x] No window without a coherence check: 1232 landed after 1230 and 1231
+- [x] Relation to tracker 1127 (skills audit) recorded: 1234's line-count
       warnings are the worklist for further splits after 1131 (closed)
+
+## Integration review (raid 2026-10-27)
+- arena, yawn check 14: 0 name collisions; the merge-by-PR override in arena CLAUDE.md judged `ok (reasoned)`, kept out of the Action plan.
+- harness, `scripts/skill_text_lint.py` on `skills/trace-doctor/SKILL.md`: date 7, body_lines 1, history_phase 1, long_fence 1 (known positive fires); on `skills/harness-doctor/` (SKILL.md + 4 references): 0 findings.
+- `scripts/project_shadow.py` on the harness itself: skip with reason. Session start emits no coherence prompt; `scripts/prompt-project-coherence.sh` is gone.
+- 1127: the 1234 script's `body_lines` findings are the worklist for further splits after 1131.
+- Follow-ups filed: 1236 (seat evidence voids the review it records), 1237 (adherence artifacts fail to parse). #1702 and #1699 merged on the author's ruling because of 1236.

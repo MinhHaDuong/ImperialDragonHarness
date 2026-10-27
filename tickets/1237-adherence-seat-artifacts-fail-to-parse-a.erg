@@ -1,0 +1,20 @@
+%erg 0.1
+Title: Adherence seat artifacts fail to parse and escalate gaze
+Created: 2026-10-27
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-27T08:23Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Twice in raid 1229 the verify-adherence seat produced an artifact that `adherence_verdict.py` could not read, and gaze escalated or needed a hand repair although the seat itself said PASS:
+- PR #1696 (ticket 1230), first gaze: the artifact carried a prose `semantic_review`; adherence exited 2, simplify never ran, gaze ESCALATE.
+- PR #1702 (ticket 1232), gaze round 2: invalid YAML from an unquoted colon; gaze re-quoted one line by hand to get PASS.
+- PR #1699 (ticket 1233): the semantic phase returned before finishing and was re-run by hand.
+Each cost a review round or a manual step, and a run that cannot tell "the seat failed" from "the parser failed" reports a tooling fault as a review verdict.
+
+## Exit criteria
+- [ ] The seat writes its artifact in a form the parser accepts by construction (structured emit, or schema-validated with a retry), not free YAML
+- [ ] A parse failure is reported as a tooling fault distinct from a verdict, and never escalates a PR whose seat returned PASS without saying so
+- [ ] Fixtures for the three observed shapes (prose semantic_review, unquoted colon, truncated semantic phase) are handled by test
