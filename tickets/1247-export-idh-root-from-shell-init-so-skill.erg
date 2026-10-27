@@ -16,7 +16,7 @@ claude, codex and pi launchers, but does not export it. Two observed faults foll
 - `rules/workflow.md` runs `python3 "$IDH_ROOT/scripts/tmp_report.py"` at session start; in a
   session on 2026-10-27 `$IDH_ROOT` was empty and the call failed (`/scripts/tmp_report.py`).
 - Claude Code 2.1.311 supplies the skill's base directory, not its SKILL.md path, so the paragraph
-  read literally resolves one level too high (`/home/haduong`); reproduced in the 1240 visit.
+  read literally resolves one level too high (the user's home directory); reproduced in the 1240 visit.
 Putting `scripts/` on PATH was considered and set aside for now: 86 call sites in 35 files to rewrite,
 38 scripts to make executable, 87 internal helpers exposed as commands in every shell.
 
