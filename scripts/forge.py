@@ -5,7 +5,8 @@
 
 A review unit is (branch, base ref, head OID). `resolve` takes a request number
 (gh backend) or `branch:<name> [base=<ref>]` (none backend) and returns one record:
-id, branch, base, head, state, mergeable, draft, body, claims. Backend choice:
+id, branch, base, head, state, mergeable, draft, body, claims; the none backend adds
+review_id, the latest review naming the branch in refs/notes/review (ticket 1273), or None. Backend choice:
 `--forge` or `IDH_FORGE`; `auto` is gh when `gh` is on PATH and the ref is a bare number.
 
 Operations: resolve, comments, checks, comment, append_body_line, create, ready,
@@ -228,7 +229,19 @@ class NoneForge:
         return {"id": f"branch:{branch}", "branch": branch, "base": base, "head": head,
                 "state": "MERGED" if merged else "OPEN",
                 "mergeable": "MERGEABLE" if tree.returncode == 0 else "CONFLICTING",
-                "draft": False, "body": "", **_claims(trailers)}
+                "draft": False, "body": "", **_claims(trailers), "review_id": self._review_id(branch)}
+
+    def _review_id(self, branch: str) -> str | None:
+        """The review of the latest request naming `branch` in refs/notes/review (ticket 1273)."""
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "review_notes", os.path.join(os.path.dirname(os.path.abspath(__file__)), "review_notes.py"))
+        rn = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(rn)
+        try:
+            return rn.find(self.cwd or ".", branch)
+        except rn.Refusal:
+            return None
 
     def comments(self, ref: str, reviews: bool = True) -> list[dict]:
         return []

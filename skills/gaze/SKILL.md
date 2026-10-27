@@ -18,10 +18,11 @@ For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$
 
 **Input.** A PR number, then optional free text saying what to verify and
 why (`verify <what> because <why>`), read leniently. With none, the what is the
-whole merge request against its ticket's exit criteria. Without a PR number,
-return ESCALATE with reason "no PR argument". Gaze resolves the forge from its
-cwd, so launch it from the PR's repository; a forge-less project has no PR
-number and reviews by hunt's reviewer seats on the branch diff (ticket 1252).
+whole merge request against its ticket's exit criteria. A forge-less project
+names the unit `branch:<name> [base=<ref>]` in place of the number; every
+phase runs the same, and the result goes to `refs/notes/review` instead of a
+PR comment (§ 5). With neither, return ESCALATE with reason "no PR argument".
+Gaze resolves the forge from its cwd, so launch it from the PR's repository.
 
 ## Invariants
 
@@ -154,6 +155,12 @@ typed `plan check:` line or no placeholder is refused. `gaze_close.py` is the
 only closing path; it prints the line (`plan check: ...`) on stdout, before
 cleanup. The text you return to your caller, and the ESCALATE comment you post
 on a blocked cleanup, carry that printed line, copied as printed.
+
+**No forge.** On `branch:<name>`, `gaze_close.py` records the same text, with
+the attribution lines, as one `answer` entry of the review in
+`refs/notes/review` through the `review_notes.py` helper, the store verify-gate
+reads, and publishes it with read-back when there is a remote. Never write
+those notes by hand.
 
 **Attribution.** As each seat returns, collect its `reviewer: step=review`
 line, with its `finding:` lines, in a file; `gaze_close.py --attribution-file`

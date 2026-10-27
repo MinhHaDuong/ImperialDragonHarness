@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_gaze_close_script_keeps_the_cleanup_order():
     src = (ROOT / "scripts/gaze_close.py").read_text()
-    assert src.index('"worktree-tmp-guard.py"') < src.index('tree / ".panel" / str(pr)')
+    assert src.index('"worktree-tmp-guard.py"') < src.index('tree / ".panel" / key')
     assert '"build" / "panel-head"' in src
     assert '"worktree-exit-preflight.sh"' in src and '"--removal"' in src
     assert src.index("worktree-exit-preflight.sh") < src.index('"worktree", "remove"')
