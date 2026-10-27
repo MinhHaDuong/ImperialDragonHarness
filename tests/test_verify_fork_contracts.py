@@ -462,3 +462,13 @@ def test_queued_merge_wait_is_one_bounded_background_command():
                       "Do not loop on the status command", "The caller asks again at its next step"):
             assert stale not in text, (name, stale)
     assert "§ Waiting for a queued merge" in raid
+
+
+def test_adherence_wait_is_bounded():
+    """Ticket 1289: the semantic-worker wait is a bounded poll; a missing verdict is reported."""
+    text = " ".join((SKILLS / "verify-adherence" / "SKILL.md").read_text().split())
+    assert "Wait for completion and validate" not in text, "unbounded wait is back"
+    assert "10 minutes" in text and "timed out" in text
+    assert "written artifact" in text
+    hunt = " ".join((SKILLS / "hunt" / "SKILL.md").read_text().split())
+    assert "adherence: not obtained" in hunt

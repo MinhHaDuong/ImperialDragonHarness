@@ -28,3 +28,5 @@ by `rules/workflow.md` § Escalation protocol. You never review your own work as
 reviewer; an independent review needs another model family, and the risk decides whether
 one is required (`skills/route/references/decorrelation.md`); a same-family reviewer adds
 angle or replication and is never called independent.
+Your final report states the adherence verdict, or `adherence: not obtained (<reason>)`
+when verify-adherence returned none; a missing verdict is never left out.
