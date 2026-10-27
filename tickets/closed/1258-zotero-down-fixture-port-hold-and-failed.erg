@@ -1,0 +1,23 @@
+%erg 0.1
+Title: Zotero down-fixture port hold and failed-test names in the gate (1254 child)
+Created: 2026-10-27
+Author: reviewer
+Closed: autoclosed — PR #1758
+
+--- log ---
+2026-10-27T12:52Z reviewer created
+2026-10-27T12:52Z reviewer closed — autoclosed — PR #1758
+
+--- body ---
+## Context
+Child of 1254 (tracker). Lands in PR #1758: the zotero "down" fixtures hold their port (`closed_port`), and
+`merge-gate.py run` keeps the failed test names of a failed check.
+
+## Exit criteria
+- [x] The zotero "down" fixtures cannot be reached by another concurrent run: the port is held, not released
+      (`tests/zotero_live.py::closed_port`, three autouse `zotero_down` fixtures).
+- [x] `merge-gate.py run` keeps the failing test names of a failed check (one line each); `red_report` matches by name.
+- [x] The harness gate passes.
+
+## Relevant files
+tests/zotero_live.py, tests/test_zotero_import.py, scripts/merge-gate.py

@@ -38,6 +38,7 @@ pid and execs the real binary.
 """
 
 import atexit
+import contextlib
 import importlib.util
 import json
 import os
@@ -122,6 +123,17 @@ def free_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         return sock.getsockname()[1]
+
+
+@contextlib.contextmanager
+def closed_port():
+    """A loopback port that refuses connections, held for the block: the
+    socket stays bound and never listens, so no concurrent run (another
+    xdist worker, another worktree's gate) can bind it, e.g. for a live
+    Zotero, before the test connects. `free_port` releases its port at once."""
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        yield sock.getsockname()[1]
 
 
 def why_not_here() -> str | None:

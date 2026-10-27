@@ -42,7 +42,7 @@ from pyzotero import errors as ze
 
 import zotero_live
 from child_env import child_env
-from zotero_live import free_port, unique_title
+from zotero_live import closed_port, free_port, unique_title
 
 # The real-Zotero fixtures (tests/zotero_live.py), bound here so pytest
 # finds them by name.
@@ -63,10 +63,25 @@ def zotero_down(monkeypatch, tmp_path_factory):
     loopback port, ZOTERO_NO_LAUNCH is set, and the key file is a path of
     the test's own that holds nothing (never ~/.config/keys). `use_live`
     points the URL and the key file at the throwaway client instead."""
-    monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{free_port()}")
-    monkeypatch.setenv("ZOTERO_NO_LAUNCH", "1")
-    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE",
-                       str(tmp_path_factory.mktemp("keys") / "zotero-local.env"))
+    with closed_port() as port:
+        monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{port}")
+        monkeypatch.setenv("ZOTERO_NO_LAUNCH", "1")
+        monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE",
+                           str(tmp_path_factory.mktemp("keys") / "zotero-local.env"))
+        yield
+
+
+def test_the_closed_port_stays_taken_and_refuses_connections():
+    """The "down" port is held, not just remembered: nothing else can bind
+    it while the test runs (ticket 1254), and a connect is refused."""
+    import socket
+    with closed_port() as port:
+        with socket.socket() as other, pytest.raises(OSError):
+            other.bind(("127.0.0.1", port))
+        with socket.socket() as client, pytest.raises(ConnectionRefusedError):
+            client.connect(("127.0.0.1", port))
+    with socket.socket() as after:  # released at block exit
+        after.bind(("127.0.0.1", port))
 
 
 def make_pdf(path: Path, lines: list[str], info: dict[str, str] | None = None
