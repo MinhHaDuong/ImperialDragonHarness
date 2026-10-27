@@ -507,3 +507,168 @@ def test_record_refuses_an_unknown_family(repo, policy):
         input="body\n", capture_output=True, text=True, env=child_env())
     assert out.returncode != 0
     assert not (repo / "tickets" / "reviews").exists()
+
+
+@pytest.mark.integration
+def test_record_writes_no_absolute_worktree_path_and_reads_body_file(repo, policy, tmp_path):
+    body = tmp_path / "body.md"
+    body.write_text(f"see {repo}/scripts/x.py and {repo}\n", encoding="utf-8")
+    out = subprocess.run(
+        [sys.executable, str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+         "--policy-root", str(policy), "--ticket", str(repo / "tickets/0001-x.erg"),
+         "--seat", "correctness", "--verdict", "approve", "--family", "Anthropic",
+         "--worker", "test", "--body-file", str(body)],
+        stdin=subprocess.DEVNULL, capture_output=True, text=True, env=child_env(), check=True)
+    text = Path(out.stdout.strip()).read_text(encoding="utf-8")
+    assert str(repo) not in text and "see scripts/x.py and ." in text
+
+
+@pytest.mark.integration
+def test_gate_survives_a_ticket_close_after_the_reports(repo, policy):
+    """Ticket 1236 gaze finding: gaze, then close on the branch, then gate."""
+    record_seat(repo, policy, "correctness")
+    record_seat(repo, policy, "red-team")
+    commit_reports(repo)
+    git(repo, "mv", "tickets/0001-x.erg", "tickets/closed/0001-x.erg") if (repo / "tickets/closed").mkdir(exist_ok=True) is None else None
+    closed = repo / "tickets/closed/0001-x.erg"
+    closed.write_text(closed.read_text().replace("[ ]", "[x]") + "\n2026-10-27 closed\n")
+    git(repo, "add", "-A", "tickets")
+    git(repo, "commit", "-q", "-m", "ticket(1): close and archive")
+    out = subprocess.run(
+        [sys.executable, str(SCRIPT), "gate", "--repo", str(repo), "--base", "main",
+         "--policy-root", str(policy), "--ticket", str(closed),
+         "--seat", "correctness", "--seat", "red-team"],
+        capture_output=True, text=True, env=child_env())
+    assert out.returncode == 0, out.stdout + out.stderr
+    assert "stale" not in out.stdout
+
+
+@pytest.mark.integration
+def test_ticket_edit_with_changed_criteria_is_still_caught(repo, policy):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    (repo / "tickets/0001-x.erg").write_text(REPO_TICKET.replace("## Exit criteria\n", "## Exit criteria\n- [ ] new demand\n"))
+    git(repo, "commit", "-qam", "criteria change")
+    out = subprocess.run(
+        [sys.executable, str(SCRIPT), "gate", "--repo", str(repo), "--base", "main",
+         "--policy-root", str(policy), "--ticket", str(repo / "tickets/0001-x.erg"),
+         "--seat", "correctness"], capture_output=True, text=True, env=child_env())
+    assert out.returncode != 0 and "stale" in out.stdout
+
+
+@pytest.mark.integration
+def test_relativize_respects_path_boundaries_and_other_worktrees(repo, tmp_path):
+    sibling = tmp_path / "repo-extra"
+    other = tmp_path / "review-9"
+    git(repo, "worktree", "add", "-q", "-b", "rv", str(other))
+    text = f"a {repo}/x.py b {repo}-extra/y.py c {other}/z.py d {repo}."
+    got = re_mod.relativize(text, repo)
+    assert "a x.py" in got and f"{repo}-extra/y.py" in got and "c z.py" in got
+    assert str(repo) + "/" not in got.replace(f"{repo}-extra/y.py", "")
+    assert str(sibling) in got
+    assert got.endswith("d ..")  # root becomes ".", the sentence period stays
+
+
+def gate_with(repo, policy, ticket, *seats):
+    args = [sys.executable, str(SCRIPT), "gate", "--repo", str(repo), "--base", "main",
+            "--policy-root", str(policy), *sum((["--seat", x] for x in seats), [])]
+    if ticket is not None:
+        args += ["--ticket", str(ticket)]
+    return subprocess.run(args, capture_output=True, text=True, env=child_env())
+
+
+@pytest.mark.integration
+def test_rewritten_criterion_is_stale_even_with_a_stale_ticket_copy(repo, policy, tmp_path):
+    old_copy = tmp_path / "0001-x.erg"
+    old_copy.write_text((repo / "tickets/0001-x.erg").read_text())
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    (repo / "tickets/0001-x.erg").write_text(REPO_TICKET.replace("## Exit criteria\n", "## Exit criteria\n- [ ] rewritten\n"))
+    git(repo, "commit", "-qam", "rewrite criterion")
+    for ticket in (repo / "tickets/0001-x.erg", old_copy):
+        out = gate_with(repo, policy, ticket)
+        assert out.returncode != 0, out.stdout
+    out = gate_with(repo, policy, repo / "tickets/0001-x.erg", "correctness")
+    assert out.returncode != 0 and "stale" in out.stdout
+    # a stale copy passed by path is only a name: the committed text decides
+    shadow = repo / "tickets/0001-x.erg"
+    shadow.write_text(old_copy.read_text())
+    out = gate_with(repo, policy, shadow, "correctness")
+    assert out.returncode != 0 and "stale" in out.stdout
+
+
+@pytest.mark.integration
+def test_untracked_ticket_and_omitted_ticket_on_a_touched_range_are_refused(repo, policy, tmp_path):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    stray = repo / "tickets/9999-nope.erg"
+    stray.write_text(REPO_TICKET)
+    out = gate_with(repo, policy, stray, "correctness")
+    assert out.returncode != 0 and "not tracked" in out.stderr
+    stray.unlink()
+    (repo / "tickets/0001-x.erg").write_text(REPO_TICKET + "\nnote\n")
+    git(repo, "commit", "-qam", "touch ticket")
+    out = gate_with(repo, policy, None, "correctness")
+    assert out.returncode != 0 and "pass --ticket" in out.stderr
+
+
+@pytest.mark.integration
+def test_executable_ticket_edit_is_not_exempt(repo, policy):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    p = repo / "tickets/0001-x.erg"
+    p.chmod(0o755)
+    git(repo, "commit", "-qam", "chmod ticket")
+    out = gate_with(repo, policy, p, "correctness")
+    assert out.returncode != 0 and "stale" in out.stdout
+
+
+@pytest.mark.integration
+def test_probe_a_shadow_ticket_committed_after_review_is_not_the_reviewed_ticket(repo, policy):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    commit(repo, "tickets/9999-shadow.erg", REPO_TICKET, "shadow")
+    shadow = repo / "tickets/9999-shadow.erg"
+    out = gate_with(repo, policy, shadow, "correctness")
+    assert out.returncode != 0 and ("stale" in out.stdout or "ticket" in out.stderr)
+
+
+@pytest.mark.integration
+def test_probe_c_open_and_closed_copies_together_are_refused(repo, policy):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    commit(repo, "tickets/closed/0001-x.erg",
+           REPO_TICKET.replace("## Exit criteria\n", "## Exit criteria\n- [ ] rewritten\n"), "closed copy")
+    out = gate_with(repo, policy, repo / "tickets/0001-x.erg", "correctness")
+    assert out.returncode != 0 and "both open and closed" in out.stderr
+
+
+@pytest.mark.integration
+def test_probe_g_a_non_ticket_path_is_refused(repo, policy):
+    subprocess.run([sys.executable, str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+                    "--policy-root", str(policy), "--no-ticket", "--seat", "correctness",
+                    "--verdict", "approve", "--family", "Anthropic", "--worker", "t"],
+                   input="b\n", check=True, capture_output=True, text=True, env=child_env())
+    commit_reports(repo)
+    out = gate_with(repo, policy, repo / "README.md", "correctness")
+    assert out.returncode != 0 and "not a ticket file" in out.stderr
+
+
+@pytest.mark.integration
+def test_a_second_exit_criteria_section_makes_the_review_stale(repo, policy):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    p = repo / "tickets/0001-x.erg"
+    p.write_text(p.read_text() + "\n## Exit criteria\n- [ ] sneaked in\n")
+    git(repo, "commit", "-qam", "second section")
+    out = gate_with(repo, policy, p, "correctness")
+    assert out.returncode != 0 and "stale" in out.stdout
+
+
+@pytest.mark.integration
+def test_record_without_a_ticket_choice_is_refused(repo, policy):
+    out = subprocess.run([sys.executable, str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+                          "--policy-root", str(policy), "--seat", "correctness", "--verdict", "approve",
+                          "--family", "Anthropic", "--worker", "t"],
+                         input="b\n", capture_output=True, text=True, env=child_env())
+    assert out.returncode != 0 and "--ticket" in out.stderr

@@ -78,6 +78,7 @@ class Inputs:
     patch_id: str
     criteria_hash: str
     policy_version: str
+    ticket: str = "none"  # basename of the ticket the criteria hash was read from
 
 
 # --- pure core -------------------------------------------------------------
@@ -93,8 +94,8 @@ def decide(record: dict | None, current: Inputs) -> tuple[str, str]:
         return RERUN, "no report"
     if record.get("kind") in NEVER_REUSED_KINDS:
         return RERUN, f"{record['kind']} results are never reused"
-    changed = [key for key in ("patch-id", "criteria-hash", "policy-version")
-               if record.get(key) != getattr(current, key.replace("-", "_"))]
+    changed = [key for key in ("patch-id", "criteria-hash", "policy-version", "ticket")
+               if record.get(key, "none") != getattr(current, key.replace("-", "_"))]
     if changed:
         return STALE, f"{', '.join(changed)} changed"
     if record.get("verdict") not in ("approve", "changes"):
@@ -167,11 +168,11 @@ def criteria_hash(ticket_text: str | None) -> str:
     """Hash the Exit criteria section, ignoring checkbox state and other sections."""
     if ticket_text is None:
         return "none"
-    match = re.search(r"^## Exit criteria\s*$(.*?)(?=^## |\Z)", ticket_text, re.M | re.S)
-    if not match:
+    sections = re.findall(r"^## Exit criteria\s*$(.*?)(?=^## |\Z)", ticket_text, re.M | re.S)
+    if not sections:
         return "none"
     lines = []
-    for line in match.group(1).splitlines():
+    for line in "\n".join(sections).splitlines():
         line = re.sub(r"^-\s*\[[ xX]\]\s*", "- ", line.strip())
         if line:
             lines.append(line)
@@ -199,6 +200,13 @@ def git(repo: Path, *args: str, stdin: str | None = None) -> str:
                           text=True, input=stdin, timeout=60).stdout.strip()
 
 
+def is_ticket_file(path: str) -> bool:
+    """`tickets/*.erg` or `tickets/closed/*.erg`, the ticket paths merge-gate calls bookkeeping."""
+    parts = path.split("/")
+    return (path.endswith(".erg") and parts[0] == "tickets"
+            and (len(parts) == 2 or (len(parts) == 3 and parts[1] == "closed")))
+
+
 def exempt_paths(repo: Path, base: str, head: str) -> list[str]:
     """Plain report files added under REVIEWS_DIR: outside the reviewed identity."""
     raw = subprocess.run(["git", "-C", str(repo), "diff", "--raw", "-z", "--no-renames",
@@ -207,8 +215,14 @@ def exempt_paths(repo: Path, base: str, head: str) -> list[str]:
     exempt = []
     for meta, path in zip(fields[0::2], fields[1::2]):
         parts = meta.split()
-        if (len(parts) == 5 and parts[4] == "A" and parts[1] == "100644"
+        if len(parts) != 5:
+            continue
+        if (parts[4] == "A" and parts[1] == "100644"
                 and path.startswith(f"{REVIEWS_DIR}/") and path.endswith(REPORT_SUFFIXES)):
+            exempt.append(path)
+        elif is_ticket_file(path) and (parts[4] == "D" or parts[1] == "100644"):
+            # The ticket close (move to closed/, checkboxes, log) is bookkeeping, as in
+            # merge-gate; its exit criteria are covered by criteria_hash, not the patch.
             exempt.append(path)
     return exempt
 
@@ -238,12 +252,52 @@ def policy_version(root: Path) -> str:
     return digest.hexdigest()[:16]
 
 
+class TicketRefused(SystemExit):
+    pass
+
+
+def ticket_at_head(args: argparse.Namespace, base: str, head: str) -> tuple[str | None, str]:
+    """The ticket text as committed at `head`, never the caller's working copy.
+
+    The path names the ticket; a move to tickets/closed/ is followed. A path
+    not tracked at head is refused, and so is no path when the range touches
+    a ticket: the criteria hash is the only guard once ticket edits leave the patch.
+    """
+    if args.ticket is None:
+        touched = [e for e in git(args.repo, "diff", "--name-only", "--no-renames", base, head).splitlines()
+                   if is_ticket_file(e)]
+        if touched:
+            raise TicketRefused(f"review-evidence: the range touches {touched[0]}; pass --ticket")
+        return None, "none"
+    top = Path(git(args.repo, "rev-parse", "--show-toplevel")).resolve()
+    path = Path(args.ticket)
+    path = path if path.is_absolute() else Path(args.repo) / path
+    try:
+        rel = path.resolve().relative_to(top).as_posix()
+    except ValueError:
+        raise TicketRefused(f"review-evidence: --ticket {args.ticket} is outside the repository")
+    name = Path(rel).name
+    if not is_ticket_file(rel):
+        raise TicketRefused(f"review-evidence: --ticket {args.ticket} is not a ticket file")
+    found = {}
+    for candidate in (f"tickets/{name}", f"tickets/closed/{name}"):
+        shown = subprocess.run(["git", "-C", str(args.repo), "show", f"{head}:{candidate}"],
+                               capture_output=True, timeout=60)
+        if shown.returncode == 0:
+            found[candidate] = shown.stdout.decode()
+    if len(found) > 1:
+        raise TicketRefused(f"review-evidence: {name} exists both open and closed at {head[:12]}")
+    if not found:
+        raise TicketRefused(f"review-evidence: --ticket {args.ticket} is not tracked at {head[:12]}")
+    return next(iter(found.values())), name
+
+
 def current_inputs(args: argparse.Namespace) -> Inputs:
     head = git(args.repo, "rev-parse", args.head)
     base = git(args.repo, "merge-base", args.base, head)
-    ticket = args.ticket.read_text() if args.ticket else None
-    return Inputs(base, head, patch_id(args.repo, base, head), criteria_hash(ticket),
-                  policy_version(args.policy_root))
+    text, name = ticket_at_head(args, base, head)
+    return Inputs(base, head, patch_id(args.repo, base, head), criteria_hash(text),
+                  policy_version(args.policy_root), name)
 
 
 def load_reports(repo: Path, head: str) -> list[tuple[Path, dict]]:
@@ -318,7 +372,26 @@ def cmd_identity(args: argparse.Namespace) -> int:
     return 0
 
 
+def relativize(body: str, repo: Path) -> str:
+    """Rewrite absolute paths into any worktree of this repo as relative ones.
+
+    Replacement happens only at a path boundary, so `/w/t1-12` never eats the
+    front of `/w/t1-123/x`. A path into another worktree keeps its tail
+    relative to that tree's root.
+    """
+    roots = {str(Path(repo).resolve()), str(Path(git(repo, "rev-parse", "--show-toplevel")).resolve())}
+    for line in git(repo, "worktree", "list", "--porcelain").splitlines():
+        if line.startswith("worktree "):
+            roots.add(line[len("worktree "):])
+    for root in sorted((r.rstrip("/") for r in roots if r.strip("/")), key=len, reverse=True):
+        body = re.sub(re.escape(root) + r"(?:/([^\s`'\")\]>,;:]*))?(?![\w-])(?!\.[\w-])",
+                      lambda m: m.group(1) or ".", body)
+    return body
+
+
 def cmd_record(args: argparse.Namespace) -> int:
+    if args.ticket is None and not args.no_ticket:
+        raise TicketRefused("review-evidence: record needs --ticket (or --no-ticket for a ticketless range)")
     current = current_inputs(args)
     folder = range_dir(args.repo, current)
     folder.mkdir(parents=True, exist_ok=True)
@@ -330,9 +403,14 @@ def cmd_record(args: argparse.Namespace) -> int:
         "verdict": args.verdict, "family": args.family, "worker": args.worker,
         "base": current.base, "head": current.head, "patch-id": current.patch_id,
         "criteria-hash": current.criteria_hash, "policy-version": current.policy_version,
+        "ticket": current.ticket,
         "recorded": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
-    body = sys.stdin.read()
+    if args.body_file:
+        body = args.body_file.read_text(encoding="utf-8")
+    else:
+        body = "" if sys.stdin.isatty() else sys.stdin.read()
+    body = relativize(body, args.repo)
     path = folder / f"{args.seat}-{n}.md"
     path.write_text("---\n" + "".join(f"{k}: {v}\n" for k, v in header.items())
                     + "---\n\n" + body)
@@ -435,6 +513,8 @@ def main() -> int:
     rec.add_argument("--kind", choices=KINDS, default="review")
     rec.add_argument("--verdict", choices=VERDICTS, required=True)
     rec.add_argument("--family", default="unknown", type=family_name)
+    rec.add_argument("--no-ticket", action="store_true", help="the reviewed range claims no ticket")
+    rec.add_argument("--body-file", type=Path, help="read the report body here; stdin is read only when it is not a terminal")
     rec.add_argument("--worker", default="unknown", type=header_value)
     rec.set_defaults(fn=cmd_record)
     gate = sub.add_parser("gate", parents=[common])
