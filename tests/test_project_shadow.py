@@ -4,7 +4,6 @@ harness checkout; the positive control is a local skill named like a harness
 skill, the negative twin a skill that is not."""
 
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path

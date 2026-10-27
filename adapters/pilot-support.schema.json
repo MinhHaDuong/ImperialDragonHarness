@@ -93,6 +93,11 @@
      "minLength": 1,
      "description": "The user-level directory this harness scans for skills."
     },
+    "project_skill_roots": {
+     "type": "array",
+     "items": {"type": "string", "minLength": 1},
+     "description": "Project-relative directories this harness scans for skills; read by yawn check 14."
+    },
     "documentation_url": {
      "type": "string",
      "format": "uri"
