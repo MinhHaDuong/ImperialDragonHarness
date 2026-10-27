@@ -1,0 +1,33 @@
+%erg 0.1
+Title: Skill-text lint script for harness-doctor
+Created: 2026-10-27
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-27T05:45Z Minh Ha-Duong created
+2026-10-27T06:05Z Minh Ha-Duong note Rescoped from a gate test to a tool harness-doctor runs on demand
+
+--- body ---
+## Context
+Parent: 1229. The mechanical half of the author's checklist, as a zero-LLM
+script that `/harness-doctor` (1233) runs on demand. It is a doctor's
+instrument, not a guard: it never runs in the adherence command, the merge
+gate or at session start, and its output is evidence for the doctor's
+report, not a pass or fail.
+
+Checks over `skills/*/SKILL.md` and `skills/*/references/*.md`:
+- body line count over 150;
+- fenced code blocks or heredocs over a small line threshold (the script
+  belongs in `scripts/`);
+- ticket numbers, merge-request numbers, dated filenames, project names;
+- history phrasing (`phase N`, `since we`, `used to`, incident dates).
+
+## Exit criteria
+- [ ] One script under `scripts/`, emitting findings per file and line in a
+      form the doctor reads (JSON plus a short human summary)
+- [ ] `skills/trace-doctor/SKILL.md` is the positive control: flagged on line
+      count, code-block length and history phrasing
+- [ ] Project-name list is data, not hardcoded in the script
+- [ ] A unit test covers the script's detectors on fixtures; no test runs the
+      script over the live skills, and nothing wires it into the gate
+- [ ] No model call

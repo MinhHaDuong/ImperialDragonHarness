@@ -33,7 +33,7 @@ Author's checklist for skill text, carried by 1233 and 1234:
 - 1230 yawn reports project-versus-harness contradiction, shadowing, repeats
 - 1231 molt resolves those findings (blocked by 1230)
 - 1232 session start drops the model coherence prompt (blocked by 1230, 1231)
-- 1234 skill-text lint test in the harness gate
+- 1234 skill-text lint script, a tool the doctor runs, not a gate
 - 1233 harness-doctor skill, harness-only (blocked by 1234)
 
 ## Exit criteria

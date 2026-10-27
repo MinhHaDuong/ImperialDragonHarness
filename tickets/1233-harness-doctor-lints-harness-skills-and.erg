@@ -11,7 +11,8 @@ Blocked-by: 1234
 ## Context
 Parent: 1229. An author-called skill that runs only in the harness repo
 (outside it, it refuses with one line) and is never scheduled or triggered at
-session start. It covers what 1234 cannot check mechanically:
+session start. It runs the 1234 lint script for the mechanical checks and itself covers
+what that script cannot:
 contradiction within or between skills and rules, and a skill presuming or
 paraphrasing another skill's responsibility.
 
@@ -33,7 +34,7 @@ inventory what they ship (`docs/2026-09-16-runtime-capability-survey.md` is
 the starting point) and record the absence where there is none.
 
 ## Exit criteria
-- [ ] Skill passes 1234 itself: under 150 lines, scripts in `scripts/`
+- [ ] Skill passes the 1234 script itself: under 150 lines, scripts in `scripts/`
 - [ ] Description pass first; full bodies read only for overlapping pairs
 - [ ] Each finding names both files and the conflicting lines; findings above
       the severity floor become tickets, the rest are reported
