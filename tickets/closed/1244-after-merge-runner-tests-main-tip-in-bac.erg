@@ -2,10 +2,12 @@
 Title: After-merge runner: full suite on the newest main tip, red opens a ticket, audit covers gaps
 Created: 2026-10-27
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1745
 
 --- log ---
 2026-10-27T09:32Z reviewer created child 1 of tracker 1226 (author, 2026-10-27)
 2026-10-27T11:14Z reviewer note criterion 3 moved to child 1251 (author ruling 2026-10-27: bookkeeping tier runs pytest-guard, so a red-main ticket PR cannot land)
+2026-10-27T11:20Z reviewer closed — autoclosed — PR #1745
 
 --- body ---
 ## Context
