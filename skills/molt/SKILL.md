@@ -132,7 +132,20 @@ Run full repo housekeeping and act on every finding.
    relocated here: that is an operator decision (check 12 of the yawn
    names the knob).
 
-2. **Yawn.** Invoke /yawn. The probe (`project-state.py`)
+2. **Yawn.** If /yawn already reported on this repository earlier in this
+   conversation, check whether that report still holds before running it again:
+
+   ```bash
+   python3 "$IDH_ROOT/scripts/project-state.py" "$(git rev-parse --show-toplevel)" --fingerprint
+   ```
+
+   Equal to the report's `Probe fingerprint:` line → reuse its Action plan and
+   skip the rerun; say so in the step 7 report. Different, `unavailable`, or no
+   such line → the state has moved since: invoke /yawn. The fingerprint covers
+   HEAD, the working tree, refs and worktrees, so a step 1 fetch that moved a
+   ref or a step 1.5 removal forces the rerun; molt's own branch cut does not.
+
+   With no earlier report, invoke /yawn. The probe (`project-state.py`)
    runs once inside yawn and covers all checks — do not re-run git
    commands already collected there. Parse the **Action plan** section from
    the output: the bold headings `**fix-now**`, `**open-ticket**`, `**skip**`

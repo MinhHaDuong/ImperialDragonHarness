@@ -10,6 +10,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))  # project-state imports git_utils
@@ -304,3 +306,33 @@ def test_disk_space_state_warns_without_blocking(monkeypatch):
     out = ps.disk_space_state(Path("/proj"))
     assert out["status"] == "warn"
     assert out["warnings"] == ["/tmp has 5% free"]
+
+
+def _git(repo, *args):
+    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
+
+
+@pytest.mark.integration
+def test_state_fingerprint_ignores_branch_cut_and_tracks_state(tmp_path):
+    """molt reuses a yawn report on an equal fingerprint: its own housekeeping
+    branch cut must not move it; a commit or an edit must."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q", "-b", "main")
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.invalid")
+    (repo / "f").write_text("1\n")
+    _git(repo, "add", "f")
+    _git(repo, "commit", "-qm", "one")
+    before = ps.state_fingerprint(repo)
+    assert before
+
+    _git(repo, "switch", "-qc", "housekeeping-20261027")
+    assert ps.state_fingerprint(repo) == before
+
+    (repo / "f").write_text("2\n")
+    edited = ps.state_fingerprint(repo)
+    assert edited != before
+
+    _git(repo, "commit", "-qam", "two")
+    assert ps.state_fingerprint(repo) not in (before, edited)

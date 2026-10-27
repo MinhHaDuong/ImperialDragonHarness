@@ -108,6 +108,8 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
 ```
 ## Yawn — {date}
 
+Probe fingerprint: {fingerprint}
+
 | Check            | Status | Detail                       |
 |------------------|--------|------------------------------|
 | Recent activity  | ...    | N commits (last 12h)         |
@@ -124,6 +126,8 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
 | Session scratch  | ...    | N orphan dirs, X of cap      |
 | Local directives | ...    | N shadow / N reasoned / skip |
 ```
+
+`{fingerprint}` is the probe's `fingerprint` field, verbatim (`unavailable` when null): /molt compares it to decide whether this report still holds.
 
 Use `ok` for normal status, `warn` for attention-needed, `fail` for problems, `skip` for gracefully-degraded checks (detail column explains why).
 
