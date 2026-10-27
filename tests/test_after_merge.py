@@ -675,3 +675,22 @@ def test_broken_forge_still_records_the_tip(tmp_path, monkeypatch, module):
     assert "red ticket: not opened (AttributeError" in proc.stdout
     git(work, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
     assert [e["result"] for e in module.parse_note(note(work, red))] == ["fail"]
+
+
+def test_an_ungated_tip_is_not_an_attempt(tmp_path):
+    """A tip that declares no gate is not noted as attempted, so the audit
+    never lists it as a crash once a newer gated tip has a record."""
+    work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    (work / ".merge-gate.json").write_text(json.dumps({"gate": "off"}), encoding="utf-8")
+    git(work, "commit", "-qam", "gate off")
+    git(work, "push", "-q", "origin", "main")
+    ungated = merge_branch(work, "ungated")
+    assert "declares no gate" in finish(run_after(work))[1]
+    gated_cfg = {"gate": "on", "scope": "fixture-set", "checks": [{"name": "ok", "argv": ["true"]}]}
+    (work / ".merge-gate.json").write_text(json.dumps(gated_cfg), encoding="utf-8")
+    git(work, "commit", "-qam", "gate on")
+    git(work, "push", "-q", "origin", "main")
+    merge_branch(work, "gated")
+    assert finish(run_after(work))[0] == 0
+    gaps = [ln.split()[1] for ln in audit(work, "--after").stdout.splitlines() if ln.startswith("after-gap")]
+    assert ungated[:12] not in gaps
