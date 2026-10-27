@@ -54,8 +54,8 @@ restate the fields. Facts come in order: `kind`, `pr`, writers, then reviewers.
 `reviewer:` line, so writers may be appended at any time.
 
 ```text
-writer: step=execute · runtime=claude · model=anthropic/claude-sonnet-5-5 · effort=not-stated · route=sonnet · independence=not-stated
-reviewer: step=review · seat=correctness · runtime=codex · model=openai/gpt-x · effort=not-stated · route=r · independence=cross-family · status: ran
+writer: step=execute · runtime=claude · model=<provider>/<model-id> · effort=not-stated · route=<route> · independence=not-stated
+reviewer: step=review · seat=correctness · runtime=codex · model=<provider>/<model-id> · effort=not-stated · route=<route> · independence=cross-family · status: ran
 ```
 
 - Writer: `runtime`, `effort`, `model` (verbatim provider-qualified id), plus `step`
