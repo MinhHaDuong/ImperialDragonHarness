@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Stopguard measure: detect ask-without-ask-up and wait-without-wake stops in session traces, reported by trace-doctor
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T19:32Z reviewer created
+
+--- body ---
+## Context
+Child of 1164 (Stopguard, deferred), author's decision 2026-10-27: instead of Stopguard's phase 1 (a dry-run
+end-of-turn hook, 3.5 agent-h + 0.3 author-h), measure the two bad stops after the fact from session traces and let
+the trace-doctor's monthly survey report them. This yields 1164's gate G1 (>= 5 bad stops per week on Claude Code)
+with no hook in the turn path (Monitor, not guard).
+
+Bad stops (conception/2026-10-21-stopguard-design.md):
+1. ask without ask-up: a turn that ends on a question to the author with no advisor call earlier in that turn,
+   excluding decisions that are the author's by right where they can be recognised;
+2. wait without wake: a turn that ends saying it waits while no background task, timer or watcher is pending.
+
+## Exit criteria
+- [ ] A script reads the session traces the trace-doctor already reads and counts each bad stop per week, per runtime
+      where the traces allow, listing the offending turns.
+- [ ] Precision checked against a hand-labelled sample (at least 30 turns, including positive controls from the
+      2026-10-27 raid session); precision and recall stated; heuristic limits documented.
+- [ ] The trace-doctor survey reports the weekly counts and names 1164's G1 threshold.
+- [ ] The harness gate passes.
+
+Related: [[1164]].
