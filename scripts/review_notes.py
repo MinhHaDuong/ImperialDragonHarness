@@ -26,6 +26,12 @@ fetch, check and integrate, no push; `resolve` (CLI `find`) refreshes before
 looking a branch up, so a fresh clone after setup + `git fetch` finds the
 published review, and an unreachable remote is a refusal, never "no review".
 
+Locking (ticket 1282). Every local write to refs/notes/review (`notes append`, `notes merge`)
+is a read-modify-write, so writers hold an exclusive flock on
+<git-common-dir>/idh-review-notes.lock, polled up to IDH_NOTES_LOCK_WAIT seconds (default 30);
+a writer that cannot get it raises Refusal (non-zero exit). Reentrant within a process. Host-local:
+clones on other hosts meet through `sync`, which is already compare-and-swap.
+
 Identity (ticket 1281). `add --request <request_id>` binds an entry to the
 request its run was launched on, else to the latest request; an entry whose
 `--head` is not that request's head is refused, never bound to another round.
@@ -57,6 +63,8 @@ Exit: 0 ok, 1 refused or below retrievable, 2 usage or tamper.
 """
 
 import argparse
+import contextlib
+import fcntl
 import hashlib
 import json
 import os
@@ -90,6 +98,41 @@ class Refusal(Exception):
 
 class Tamper(Refusal):
     """The store contradicts what this clone saw before."""
+
+
+_LOCK_DEPTH = 0
+
+
+@contextlib.contextmanager
+def _locked(cwd):
+    """Exclusive host-local lock on the review store; reentrant so refresh can nest."""
+    global _LOCK_DEPTH
+    if _LOCK_DEPTH:
+        _LOCK_DEPTH += 1
+        try:
+            yield
+        finally:
+            _LOCK_DEPTH -= 1
+        return
+    common = Path(_out(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir"))
+    path = common / "idh-review-notes.lock"
+    wait = float(os.environ.get("IDH_NOTES_LOCK_WAIT", "30"))
+    with open(path, "a") as fh:
+        deadline = time.monotonic() + wait
+        while True:
+            try:
+                fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except OSError:
+                if time.monotonic() >= deadline:
+                    raise Refusal(f"review notes lock {path} still held after {wait:g}s; entry not written") from None
+                time.sleep(0.05)
+        _LOCK_DEPTH = 1
+        try:
+            yield
+        finally:
+            _LOCK_DEPTH = 0
+            fcntl.flock(fh, fcntl.LOCK_UN)
 
 
 def _git(cwd, *args, check=True, stdin=None):
@@ -279,7 +322,13 @@ def _check_remote(cwd, remote, tip, warnings):
 
 
 def _integrate(cwd):
-    """Bring the tracking ref into the local ref: fast-forward or cat_sort_uniq merge."""
+    """Bring the tracking ref into the local ref: fast-forward or cat_sort_uniq merge.
+    The whole decision runs under the lock, so a ref created meanwhile is never overwritten."""
+    with _locked(cwd):
+        _integrate_locked(cwd)
+
+
+def _integrate_locked(cwd):
     if not _has_ref(cwd, TRACK):
         return
     track = _rev(cwd, TRACK)
@@ -433,7 +482,8 @@ def _write(cwd, entry):
     line = _line(entry)
     if any(c in line for c in "\n\r"):
         raise Refusal("an entry must be one line")
-    _git(cwd, "notes", f"--ref={REF}", "append", "-m", line, anchor(cwd, entry["review_id"]))
+    with _locked(cwd):
+        _git(cwd, "notes", f"--ref={REF}", "append", "-m", line, anchor(cwd, entry["review_id"]))
     return entry
 
 

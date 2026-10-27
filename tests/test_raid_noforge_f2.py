@@ -96,9 +96,6 @@ def test_origin_without_gh_refuses_and_main_stays(tmp_path, monkeypatch, capsys)
     assert git(work, "rev-parse", "--verify", "-q", "refs/notes/gate", check=False) == ""
 
 
-@pytest.mark.xfail(strict=False, reason="lost update (a race, so it can pass): `git notes append` is a read-modify-write on "
-                   "refs/notes/review and both writers exit 0; review_notes.py:376, not among the three "
-                   "defects of ticket 1281, no ticket yet (reported on 1276)")
 def test_two_concurrent_appends_to_one_review_both_survive(tmp_path, monkeypatch):
     work, wt, _ = make_repo(tmp_path, monkeypatch, remote=False)
     no_gh(tmp_path, monkeypatch)
@@ -106,8 +103,8 @@ def test_two_concurrent_appends_to_one_review_both_survive(tmp_path, monkeypatch
     # spec §8: both entries must survive
     procs = [subprocess.Popen([sys.executable, str(NOTES), "-C", str(wt), "add", "plan", "--review", rid,
                                "--json", json.dumps({"text": f"seat {i}"})], env=os.environ,
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE) for i in range(2)]
-    assert [p.wait() for p in procs] == [0, 0]
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE) for i in range(8)]
+    assert [p.wait() for p in procs] == [0] * 8
     shown = notes(wt, "show", rid).stdout
-    assert "seat 0" in shown and "seat 1" in shown
+    assert all(f"seat {i}" in shown for i in range(8))
 
