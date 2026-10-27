@@ -331,3 +331,31 @@ def test_synced_runtime_skills_are_not_checked(tmp_path):
     )
     result = _run(skills)
     assert result.returncode != 0
+
+
+# --- Skill-tool call syntax in doctrine prose (ticket 1222) -------------------
+# Skills and rules name another skill by its plain name ("load the gaze skill
+# with ..."); the Claude Code tool-call form does not read as an instruction on
+# Codex or Pi (skills/harness-doctor/references/authoring-skills.md).
+
+SKILL_CALL_LINE = 'Then call `Skill(skill: "gaze", args: "1700")` on the result.\n'
+
+
+@pytest.mark.parametrize("dirname", ["skills", "rules"])
+def test_fails_on_skill_tool_call_syntax(tmp_path, dirname):
+    d = tmp_path / dirname
+    d.mkdir()
+    (d / "SKILL.md").write_text(f"# Example\n\n{SKILL_CALL_LINE}")
+    result = _run(d)
+    assert result.returncode == 1, result.stdout
+    assert "Skill(skill" in result.stdout
+
+
+def test_skill_tool_call_escape_hatch(tmp_path):
+    d = tmp_path / "skills"
+    d.mkdir()
+    (d / "SKILL.md").write_text(
+        f"# Example\n\n<!-- harness-extension-point -->\n{SKILL_CALL_LINE}"
+    )
+    result = _run(d)
+    assert result.returncode == 0, result.stdout

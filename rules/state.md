@@ -11,22 +11,22 @@ Single orientation file, loaded at session start via hook. Hard cap: **40 lines 
 ## Structure
 
 `## North star` is the author's and rarely changes. The other `##` sections are
-maintained by the agent, at wrap-up through `/lair` step 10, and the author may edit
+maintained by the agent, at wrap-up through lair step 10, and the author may edit
 them too. The line cap controls their growth. "Hand sections" below means these
 narrative sections: neither derived numbers nor the North star.
 
 | Section | Content | Who edits |
 |---------|---------|-----------|
 | `## North star` | One paragraph — the core argument, rarely changes | Author |
-| Any additional `##` sections | Milestones, blockers, incidents, decisions, next actions in prose | `/lair` (agent); the author may edit |
+| Any additional `##` sections | Milestones, blockers, incidents, decisions, next actions in prose | lair (agent); the author may edit |
 
 **No derived numbers (ticket 1121).** STATE.md stores no ticket counts, next
 picks, open merge requests, CI verdicts or recent commits: every merge made
 them stale and every parallel PR collided on them. One pointer line replaces
 them — live numbers are read when needed from `erg ready tickets/`,
-`erg list` and `/dashboard`. Nothing regenerates STATE.md; `/lair` step 10
+`erg list` and the dashboard skill. Nothing regenerates STATE.md; lair step 10
 edits and prunes the hand sections only when one changes, and bumps
-`Last updated:` in that same change (a quiet day opens no STATE PR; `/molt`
+`Last updated:` in that same change (a quiet day opens no STATE PR; molt
 writes no stamp). A ticket-closing PR needs
 no STATE.md edit.
 

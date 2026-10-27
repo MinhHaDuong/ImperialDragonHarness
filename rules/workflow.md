@@ -119,7 +119,7 @@ A clean-room render is usually seconds — run it yourself.
   needs a seat from another model family. A same-family review is never called
   independent; report any required perspective that was unreachable.
 - **Watch contention, not headcount.** Three or more agents on one file or
-  registry → open a coordination change first. One `/gaze` per PR at a time.
+  registry → open a coordination change first. One gaze per PR at a time.
 - **Say what a delegate in a shared worktree must not do.** A read-only brief
   does not imply "don't touch git": forbid `add`/`commit`/`push` explicitly.
 - **Before building a multi-cycle orchestration**, inventory the existing
@@ -128,9 +128,9 @@ A clean-room render is usually seconds — run it yourself.
 # Ticket discipline for multi-PR work
 
 Sub-tasks landing in separate PRs → child tickets *before* work starts, each
-PR closing its own child (close-claim syntax: `/merge`). The parent becomes a
+PR closing its own child (close-claim syntax: the merge skill). The parent becomes a
 tracker listing every child, closed only after the integration review
-(`/roar` step 8), never on the bare event of the last child merging.
+(roar step 8), never on the bare event of the last child merging.
 
 **Monster ticket → propose a decomposition.** A large blast radius (15+ files,
 or a symbol other tickets depend on), a build-gated exit, bundled sign-off
@@ -169,7 +169,7 @@ no-op on an empty sweep.
 merge, corrupts state, or bites the science. Below that: fix it inline, record
 it in memory, or drop it; sweeps report such findings, they do not mint
 tickets. In a tooling repo, when a guard misfires, prefer deleting the guard and
-its tests over growing them. No guards on guards: /test-doctor owns them.
+its tests over growing them. No guards on guards: test-doctor owns them.
 
 **Loophole found → offer the fix**, in the form the floor dictates: a ticket
 above it, an inline fix or a memory below.

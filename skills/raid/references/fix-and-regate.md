@@ -15,11 +15,11 @@ writes on completion. Fix agent gets ≤10 min. The agent works under:
 - Test-run budget: `make check-fast` plus the tests implicated by the unresolved-items list during the fix; one declared project gate before the final push — not per fix. A mapped doc-only fix uses `python3 "$IDH_ROOT/scripts/scoped-check.py"` and quotes selected and skipped targets; Python code and unmapped changes use the full `make check`.
 - Push commits to the PR branch; do not open new PRs.
 
-After a FINDINGS fix, run `/gaze` on the new head with a narrower intent: verify
+After a FINDINGS fix, run gaze on the new head with a narrower intent: verify
 those fixes, because they were the findings; after a round-1 REROLL fix,
 re-gate once with the same `session=`. Breakers on this loop:
 
 - Fix agent timeout (10 min) → ESCALATE.
 - Gate disagrees with a gaze result on a must-fix finding → ESCALATE (no silent resolution).
 - Two REROLL rounds reached → ESCALATE.
-- FINDINGS again on the fixes after the narrower `/gaze` → ESCALATE (one fix round per review).
+- FINDINGS again on the fixes after the narrower gaze → ESCALATE (one fix round per review).

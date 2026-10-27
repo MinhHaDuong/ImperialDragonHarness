@@ -15,7 +15,7 @@ or hand-merge around the guard.
    objection. Let the runtime discover and route a suitable reviewer; record
    the actual identity, route, independence basis, reviewed base/head and
    completed report. While the PR's gate budget has a round left (fewer than
-   two `/verify-gate` rounds posted, § Phase 6), disposition every returned
+   two verify-gate rounds posted, § Phase 6), disposition every returned
    finding through verify-gate; a blocking finding sends the PR back through
    Phase 6. When the gate budget is exhausted, run no further gate or fix: park
    the PR and escalate to the author with the findings (step 4). If fixes change the

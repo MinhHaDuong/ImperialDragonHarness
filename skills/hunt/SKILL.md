@@ -137,10 +137,10 @@ When the work shows the plan was wrong, replan and announce why.
 - **Land by the project's route**, read from its `AGENTS.md` or `CLAUDE.md`,
   never assumed. With a forge: push with lease and open a merge request whose
   description carries the close claim `**Ticket:** tickets/<ticket file>`, then
-  wait for CI where it runs on the branch; `/merge` closes the claimed ticket.
+  wait for CI where it runs on the branch; the merge skill closes the claimed ticket.
   Without one there is no claim to execute; close it on the branch yourself:
   `${ERG:-tickets/erg} close $ID "<reason>"`, then `${ERG:-tickets/erg} archive $ID || true`,
-  stage narrowly as `/merge` step Close does
+  stage narrowly as merge's step Close does
   (`git add -u tickets/ && git add tickets/closed/<id>-*.erg`), and commit
   `ticket($ID): close and archive`. Nothing is pushed.
   Either way the merge itself is the caller's, by the project's recipe.

@@ -69,7 +69,7 @@ carry the intent, the method and the budget in minutes, which fits the
 
 ##### Small intent: verify one fix
 
-`/gaze 1700 verify the fix for finding 2 because it was blocking` on a
+Arguments `1700 verify the fix for finding 2 because it was blocking` on a
 twelve-line change to one script. One seat reads the fix and its test.
 
 ```text
@@ -81,7 +81,7 @@ correctness	small-model	anthropic	a few lines of logic; the test is the evidence
 
 ##### Behaviour claim: a check, no seat
 
-`/gaze 1701 verify the parser now rejects an empty key because the ticket's
+Arguments `1701 verify the parser now rejects an empty key because the ticket's
 exit criterion says so`. Running the new test against the old code settles it.
 
 ```text
@@ -93,7 +93,7 @@ regression	script	none	fails on the base, passes on the head
 
 ##### No intent, high risk: the whole merge request
 
-`/gaze 1702` on a 300-line change to a merge gate script. The default what
+Arguments `1702` on a 300-line change to a merge gate script. The default what
 is the whole merge request against its ticket's exit criteria; a gate is a
 high-risk row, so one seat comes from another family.
 

@@ -14,8 +14,8 @@ Orchestration with ordinary judgment; choose workers per the `route` skill (`ski
 
 For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill, its SKILL.md or its directory; a pre-set `IDH_ROOT` wins. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
-A raid does not redefine skills. It calls `/hunt`,
-`/gaze`, `/roar`, etc. Its job is sequencing, wave management,
+A raid does not redefine skills. It loads the hunt,
+gaze and roar skills, among others. Its job is sequencing, wave management,
 and enforcing invariants.
 
 ## Model policy
@@ -32,7 +32,7 @@ does not configure spawned children.
   neither done nor split, a review of a scientific argument, a design review of
   a critical feature. Never a standing setting of the orchestrator or a
   fan-out member.
-- **Per-ticket `/gaze` and `/verify-gate`:** follow their own launch choices.
+- **Per-ticket gaze and verify-gate:** follow their own launch choices.
 
 ## Balance rule
 
@@ -259,17 +259,17 @@ launch) with
 It creates the closed block if absent, re-fetches the body, reads it back and
 retries once; a non-zero exit is a visible capture failure, not a silent skip.
 
-## Phase 6: Verify (per-ticket `/gaze`, then `/verify-gate`)
+## Phase 6: Verify (per-ticket gaze, then verify-gate)
 
 Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence and integrity.
 
 **Tier first** (`skills/merge/SKILL.md` § Gating tiers, the one home): a
-bookkeeping-tier merge request skips `/gaze` and `/verify-gate` and goes to
+bookkeeping-tier merge request skips gaze and verify-gate and goes to
 Phase 7 on its mechanical checks. Everything below is the full tier.
 
-**Per-ticket:** ensure a REVIEWED `/gaze` record on the branch tip, then run
-`/verify-gate` on the head it reviewed. Hunt's Verify phase already ran gaze and
-fixed its findings, so the raid reads that record first and re-runs `/gaze`
+**Per-ticket:** ensure a REVIEWED gaze record on the branch tip, then run
+the verify-gate skill on the head it reviewed. Hunt's Verify phase already ran gaze and
+fixed its findings, so the raid reads that record first and re-runs gaze
 only when it is missing, ESCALATE, or stale against the tip
 (`skills/merge/SKILL.md` § Gating tiers, which also counts a `seats:
 self-only` record as missing); a second review of a head gaze
@@ -296,12 +296,12 @@ Stale means the tip adds more than a bookkeeping delta to `reviewed_head_sha`
 for a gate's round-1 REROLL, which does not void the result (the round-2
 re-gate rules the fix). A FINDINGS fix does: it moves the head past what gaze
 reviewed. On FINDINGS the fix agent fixes the listed items and the raid runs
-`/gaze` on the new head with a new, narrower intent naming those fixes, before
+gaze on the new head with a new, narrower intent naming those fixes, before
 any gate: a head gaze did not review is never gated. The raid states each
-intent it passes (`/gaze <pr> verify <what> because <why>`); with none, gaze
+intent it passes (gaze with `<pr> verify <what> because <why>`); with none, gaze
 reviews the whole merge request against its ticket's exit criteria.
 Only on a gaze result of REVIEWED run
-`/verify-gate <pr-number> repo=<PR's worktree> session=<uuid>` the same way (gaze has removed
+verify-gate with `<pr-number> repo=<PR's worktree> session=<uuid>` the same way (gaze has removed
 its review tree by then; the gate checks out the PR head in a worktree of its
 own and removes it, while the raid keeps the PR's worktree until gating ends);
 its verdict is accepted only when the branch tip adds at most a bookkeeping
@@ -329,7 +329,7 @@ re-gate, and the loop's breakers.
 
 Phase 7 merges stay strictly sequential.
 
-**Per-wave:** after all per-ticket `/gaze` runs complete, launch one integration-review
+**Per-wave:** after all per-ticket gaze runs complete, launch one integration-review
 subagent (read-only; worker chosen per § Model policy) to check:
 - Do the merged/merge-pending PRs compose without contradiction?
 - Does `make check` still pass if we imagine them all merged?
@@ -341,7 +341,7 @@ subagent (read-only; worker chosen per § Model policy) to check:
   conflicting lines carry identical prose; conflicts elsewhere are ordinary.
 
 Wave-level findings go to the human as a wave-summary comment; they do not block
-individual `/gaze` results and `/verify-gate` verdicts.
+individual gaze results and verify-gate verdicts.
 
 ## Phase 7: Merge (sequential per-wave)
 
@@ -352,7 +352,7 @@ review surfaced: `references/follow-up-tickets.md`.
 
 For each wave, merge APPROVED PRs one at a time. A PR is merge-eligible if:
 - the merge request is bookkeeping tier (`skills/merge/SKILL.md` § Gating tiers), or its
-  `/verify-gate` verdict is APPROVED (one REROLL allowed — Phase 6 handles this), AND
+  verify-gate verdict is APPROVED (one REROLL allowed — Phase 6 handles this), AND
 - `scope_overflow` in the verdict is empty or all entries have suggested disposition
   TICKETED (caller creates tickets via `tickets/erg new` and adds `Scope overflow:
   tickets/NNNN` to the PR body before merging).
@@ -417,9 +417,9 @@ and leaves a diverged main untouched: read its output, and stop if a line says
 
 ## Phase 8: Celebrate (per-merged-PR)
 
-After all merges, from the updated main branch, run `/roar` for each
+After all merges, from the updated main branch, load the roar skill for each
 PR whose read-back answered MERGED; a pending PR gets its
-`/roar` when its bounded wait (`skills/merge/SKILL.md` § Waiting for a queued
+roar when its bounded wait (`skills/merge/SKILL.md` § Waiting for a queued
 merge) reports it merged. The roar pre-check (`git merge-base --is-ancestor
 HEAD origin/main`) passes because HEAD is main after the pull.
 
@@ -475,7 +475,7 @@ or the failing read first.
    with the rows on stdin: per-step durations, the total from first gaze to MERGED, and the
    slowest step. A step with no clock reading is listed as `not measured`.
 4. Disarm the sitrep cadence (kill the pending background `sleep 900` command) after the last sitrep.
-5. Do NOT run `/lair`.
+5. Do NOT run the lair skill.
 
 ## Circuit breakers
 

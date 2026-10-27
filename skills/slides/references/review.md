@@ -17,7 +17,7 @@ talk. Read-only: change the deck only when asked.
    - *fidelity*: every number on a slide matches the paper or pipeline
      output it claims; a mismatch is critical.
    No message recoverable from the titles → stop the diagnosis there and
-   send the author to `/message-framing`; visual notes on a deck about to
+   send the author to the message-framing skill; visual notes on a deck about to
    be restructured are wasted.
 3. **Rank.** *Critical* — blocks understanding: no message, illegible text,
    a wrong number. *Important* — the audience will notice: layout drift,

@@ -27,8 +27,8 @@ diff included), 3 could not read (treat as full).
 
 | Tier | Gating |
 |------|--------|
-| bookkeeping | Mechanical checks only: on a gated base, the record; on an ungated base, the repo's CI. No `/gaze`, no `/verify-gate`, no review seat. |
-| full | `/gaze`, then `/verify-gate` APPROVED; on a gated base, the record. |
+| bookkeeping | Mechanical checks only: on a gated base, the record; on an ungated base, the repo's CI. No gaze, no verify-gate, no review seat. |
+| full | gaze, then verify-gate APPROVED; on a gated base, the record. |
 
 **Two moments, whatever the tier** (ticket 1245, tracker 1226). On a gated
 base, `.merge-gate.json` declares the full check set (`"checks"`) and its
@@ -40,7 +40,7 @@ new tip of main; a red there is reported, never reverted (Trust, Verify,
 Monitor). A change to the gate itself is therefore fully tested only once
 it is on main.
 
-**A `/gaze` record with `seats: self-only`, or with no `seats:` line, counts
+**A gaze record with `seats: self-only`, or with no `seats:` line, counts
 as no record** (definition: `skills/gaze/SKILL.md` § 4): gaze runs again, from
 a session that can launch seats. A second self-only record on the same head
 goes to the author.
@@ -57,12 +57,12 @@ re-gate.
   recipe passes `--merge`; a squash-only repo rejects that flag. Read the
   repo's merge settings at merge time, and trust the merge attempt over the
   flag.
-- **After `/gaze`, sync before closing the ticket.** `/gaze` makes no commits,
+- **After gaze, sync before closing the ticket.** Gaze makes no commits,
   but a fix cycle or another session may have pushed:
   `git fetch origin && git merge --ff-only origin/<branch>` first, or a stale
   rebase drops those commits and the close commit lands on the wrong base.
 - **Close the ticket on the branch before gating.** Close each claimed
-  ticket (step 1) before the round-1 `/verify-gate`; step 1 at merge time
+  ticket (step 1) before the round-1 verify-gate; step 1 at merge time
   then finds nothing to do. A close commit pushed after the gate is a
   bookkeeping delta: the approval stands. An unpushed local commit would
   ride along, so push first.

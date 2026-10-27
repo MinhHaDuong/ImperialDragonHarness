@@ -24,7 +24,7 @@ Discipline: `rules/zotero.md`. Zotero is the system of record; `docs/` is stagin
   open web → author. A paywall is not inaccessibility until ISTEX has answered;
   a scan without a text layer goes through `ocrmypdf`. Never write a note from
   an abstract and say so if the full text could not be had.
-- **Intake.** If the work is not in Zotero yet, file it first with `/zotero`
+- **Intake.** If the work is not in Zotero yet, file it first with the zotero skill
   import — PDF or URL. It resolves the identifier, dedupes and
   attaches the file; do not duplicate its lookups here.
 - **Metadata from the first page**, not from PDF metadata fields:

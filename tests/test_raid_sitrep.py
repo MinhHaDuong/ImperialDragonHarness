@@ -197,4 +197,4 @@ def test_raid_skill_arms_cadence_before_phase_2_and_disarms_before_lair():
     arm = text.index("write `RAID_START` and arm the sitrep cadence")
     assert text.index("## Phase 1: Select") < arm < text.index("## Phase 2: Imagine")
     disarm = text.index("Disarm the sitrep cadence")
-    assert disarm < text.index("Do NOT run `/lair`")
+    assert disarm < text.index("Do NOT run the lair skill")

@@ -63,7 +63,7 @@ def _gate_calls_with_worktree(text: str) -> list[str]:
     """Gate invocations passing worktree=, over whitespace-normalized text so a
     wrapped call is seen. A call runs to the closing backtick or sentence end."""
     norm = " ".join(text.split())
-    return [m.group(0) for m in re.finditer(r"/verify-gate <pr[^`]*", norm) if "worktree=" in m.group(0)]
+    return [m.group(0) for m in re.finditer(r"(?:/verify-gate|verify-gate with) `?<pr[^`]*", norm) if "worktree=" in m.group(0)]
 
 
 def test_verify_gate_owns_its_worktree():
@@ -82,6 +82,7 @@ def test_verify_gate_owns_its_worktree():
     # Negative controls: a wrapped invocation must be caught too.
     assert _gate_calls_with_worktree("run `/verify-gate <pr>\n  repo=x worktree=y`")
     assert _gate_calls_with_worktree("run /verify-gate <pr> repo=x worktree=y")
+    assert _gate_calls_with_worktree("run verify-gate with `<pr> repo=x worktree=y`")
     assert "worktree remove" in VERIFY, "gaze still removes its review tree"
 
 
@@ -161,7 +162,7 @@ def test_liveness_fallback_names_verify_gate_not_a_rerun():
     (ticket 0321, moved to /merge by ticket 1219)."""
     norm = _normalize(DETACHED)
     assert "do not re-run gaze's pass" in norm.lower()
-    assert "never substitute a direct `/verify-gate`" in norm.lower()
+    assert "never substitute a direct verify-gate run" in norm.lower()
     assert "posted gaze result comment" in norm
     assert "branch-tip" in norm
     assert "mtime" in norm
@@ -385,10 +386,10 @@ def test_dashboard_allows_at_most_a_bookkeeping_delta_past_the_ruled_tip():
 
 def test_git_rule_rebases_before_round_one_gate_and_syncs_after_gaze():
     rule = " ".join((REPO / "rules" / "git.md").read_text().split())
-    assert "syncs after `/gaze`" in rule
-    assert "before the round-1 `/verify-gate`" in rule
+    assert "syncs after gaze" in rule
+    assert "before the round-1 verify-gate" in rule
     assert "a later rebase is gated by the tier of what it changes" in rule
-    assert "`/merge` § Gating tiers" in rule
+    assert "(merge § Gating tiers)" in rule
 
 
 def test_gate_tree_is_per_session_and_round_and_repo_is_required():

@@ -20,7 +20,7 @@ skill **never signs** a tag — that is the human's sole responsibility.
 - Invoke from the **target repo's working directory**, on its **main
   branch**, with **all feature work already merged**.
 - **Cross-repo prerequisite**: the caller must ensure cwd is the target
-  project before invoking `/release`. The skill is cwd-based — it never
+  project before loading the release skill. The skill is cwd-based — it never
   takes a repo or path argument. For cross-repo flows, change into the
   target project directory and fetch from the forge before the call.
 
@@ -106,7 +106,7 @@ explicit human go-ahead.
   diagnostic) if **no** such URL is found, so a missing URL surfaces
   immediately. An already-current URL is a normal match: the helper prints its
   count and exits 0 (idempotent no-op).
-- Commit the change on a release branch, never on main: `release(<tag>): update download URL to <tag>`. Land it with `/merge`, sync local main and sign from that main, so the `HEAD` in step 5 is the merged commit.
+- Commit the change on a release branch, never on main: `release(<tag>): update download URL to <tag>`. Land it with the merge skill, sync local main and sign from that main, so the `HEAD` in step 5 is the merged commit.
 
 ## 5. GPG signing pause (human-only)
 

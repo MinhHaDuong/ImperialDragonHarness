@@ -17,7 +17,7 @@ background: false
 
 # Verify gate — PR $ARGUMENTS
 
-> **TASK DIRECTIVE — execute now.** You are running `/verify-gate` on PR
+> **TASK DIRECTIVE — execute now.** You are running the verify-gate skill on PR
 > `$ARGUMENTS` (a PR number followed by `repo=<path>`, any checkout of the
 > target project). This file is your operating procedure, not reference
 > documentation: resolve the PR and gate it immediately. Create your own gate
@@ -29,7 +29,7 @@ background: false
 > name, git status snapshot, ticket files, or the shared task list).
 
 The last line of defence before merge. A gate with teeth: **cannot approve without
-concrete per-criterion evidence**. Called by the PR's caller after `/gaze`
+concrete per-criterion evidence**. Called by the PR's caller after gaze
 returns: raid phase 6, or the author before `/merge`. Gaze never calls it. The
 caller owns the gate session (§ Gate sessions).
 
@@ -60,7 +60,7 @@ For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$
    plan), never from a gaze result: a failing check is a REROLL trigger.
 6. **Two rounds max.** Round 1 is initial gate. Round 2 is post-fix re-gate. Round 3 is
    forbidden — escalate.
-7. **Tagged minors are mandatory.** Review comments from the `/gaze` code and
+7. **Tagged minors are mandatory.** Review comments from the gaze code and
    prose panels at the minor/suggestion tier must carry one of `verifiable:`,
    `consider:`, or `nofollow:`. Untagged minors and ambiguous "X might break" /
    "this could cause Y" phrasings are refused — the gate does not triage hedges. See
@@ -72,7 +72,7 @@ Always `<pr-number> repo=<path>`. Without `repo=`, STOP and emit
 `verdict: ESCALATE` with rationale "no repo argument": a fork has no cwd to
 fall back on. With that minimum the gate resolves ticket, diff and comments
 itself. Optionally:
-- The caller's bundle (preferred): `/gaze`'s returned result block
+- The caller's bundle (preferred): gaze's returned result block
   (`reviewed_head_sha`, intent, `plan check:`, unresolved lists), with
   `{pr, ticket}`.
 - `integration`: run the declared integration checks whatever the diff
@@ -93,7 +93,7 @@ state: whatever branch is checked out there is irrelevant.
 **Isolation — the gate owns its checkout.** Every invocation, whoever the
 caller, creates a fresh detached worktree on the PR head, rules from it and
 removes it on exit. No caller hands the gate a tree, and the gate never reads
-a tree another skill created: `/gaze` removes its review worktree before it
+a tree another skill created: gaze removes its review worktree before it
 returns, so a later gate run cannot rely on it.
 
 ```bash
@@ -164,7 +164,7 @@ before the merge, the full set runs on main after it
   in the gate worktree. When every before-set check is `run` (none reused),
   write the record instead
   (`merge-gate.py run --base origin/<base-branch> --head HEAD`), which runs
-  the same set, so a later round or `/merge` finds it.
+  the same set, so a later round or the merge skill finds it.
 - `skip <check>`: after-merge only (outside the declared before set), or an
   integration check (declared `"integration": true`) whose `"covers"` paths the diff does
   not touch. Integration tests are out of scope by default: they run when the
@@ -279,7 +279,7 @@ second_round_needed:   # only if REROLL
 
 - Any `MISSING` in `per_exit_criterion` → REROLL (round 1) / ESCALATE (round 2).
 - Any `UNRESOLVED` review comment from a human author → REROLL (round 1) / ESCALATE (round 2).
-- Any `UNRESOLVED` `/gaze` finding labelled severity ≥ medium →
+- Any `UNRESOLVED` gaze finding labelled severity ≥ medium →
   REROLL (round 1) / ESCALATE (round 2).
   Severity triggers apply to `blocking` findings. Tagged minors are triaged by tag, not severity.
 - Any unresolved `verifiable:` minor (failing assertion still reproduces) → treated as
@@ -311,7 +311,7 @@ The gate runs in an isolated checkout over a shared `main`; a mid-wave `erg log`
 on the ticket collides at the insertion point with the branch's own ticket
 commits. The orchestrator poses the line: committed onto the PR branch with the
 REROLL fix, or deferred to merge time.
-For a `/verify-gate` invocation outside raid, its caller owns posing
+For a verify-gate invocation outside raid, its caller owns posing
 the returned `reroll_bump` by the same rule: on the PR branch with the fix, or
 at merge time. The caller never runs `erg log` against main mid-wave; the gate
 still writes no ticket file.
@@ -405,7 +405,7 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
    own `$gate_tree`. Immediately before ruling, read the full tip SHA with
    `git -C "$gate_tree" rev-parse HEAD`; stop with ESCALATE if this fails.
    These are audit fields, posted under the same snake_case keys as the
-   structured verdict: callers (raid, `/merge`, dashboard) read `ruled_tip_sha`.
+   structured verdict: callers (raid, merge, dashboard) read `ruled_tip_sha`.
 
    ```
    /verify-gate round=<n> verdict=<V>
@@ -429,7 +429,7 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
   PR body's stated intent and test plan stand in for exit criteria; record a
   `no_ticket` nit.
 - A close claim naming a ticket file that does not exist → ESCALATE (dangling
-  claim; `/merge` would fail on it). Resolve the claim in the gate worktree as
+  claim; the merge skill would fail on it). Resolve the claim in the gate worktree as
   `tickets/<id>-*.erg` **or** `tickets/closed/<id>-*.erg`, as the merge
   recipe does: callers close the ticket on the branch before gating, so a closed,
   archived ticket is the normal case and its exit criteria are read from

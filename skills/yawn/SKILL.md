@@ -96,7 +96,7 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
     - **Orphans** — `orphan_count` / `orphan_bytes`, session directories no live
       process owns (no open descriptor inside them, no process cwd'd there, and
       the id named by nothing running). Classify as **fix-now**: `Sweep N orphan
-      session scratch directories (X reclaimable)`. /molt applies it.
+      session scratch directories (X reclaimable)`. Molt applies it.
     - In the warning, name the relocation knob but do not set it: moving the
       temp root is an operator decision, since the root must also stay short —
       sandbox socket paths are built under it. The runtime knob is
@@ -127,7 +127,7 @@ Probe fingerprint: {fingerprint}
 | Local directives | ...    | N shadow / N reasoned / skip |
 ```
 
-`{fingerprint}` is the probe's `fingerprint` field, verbatim (`unavailable` when null): /molt compares it to decide whether this report still holds.
+`{fingerprint}` is the probe's `fingerprint` field, verbatim (`unavailable` when null): molt compares it to decide whether this report still holds.
 
 Use `ok` for normal status, `warn` for attention-needed, `fail` for problems, `skip` for gracefully-degraded checks (detail column explains why).
 
@@ -163,7 +163,7 @@ Format:
 
 Omit a heading if it has no entries. If all checks are `ok`, omit the Action plan entirely.
 
-> **Contract** — `/molt` parses this section programmatically. The bold headings `**fix-now**`, `**open-ticket**`, `**skip**` are a stable interface; do not rename or reformat them.
+> **Contract** — Molt parses this section programmatically. The bold headings `**fix-now**`, `**open-ticket**`, `**skip**` are a stable interface; do not rename or reformat them.
 
 Last line of the report, only when the Action plan holds at least one `fix-now`
 or `open-ticket` entry (a `skip`-only plan gets none), outside the headings above:

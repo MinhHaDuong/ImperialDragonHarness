@@ -16,7 +16,7 @@ Take a journal's **Revise-and-Resubmit** decision letter plus each reviewer's
 comments, archive them where they will not be lost, parse them into a structured
 **remark ledger**, and produce a **coverage check** that records each author decision, any
 ticket(s) addressing it, and evidence of resolution. This is
-the *inverse* of `external-peer-review` / the `/gaze` prose panel: those review **our**
+the *inverse* of `external-peer-review` / the gaze prose panel: those review **our**
 manuscript; this ingests **the journal's** review of it.
 
 The bundled helper is `"$IDH_ROOT/skills/ingest-decision-letter/ingest_letter.py"`.

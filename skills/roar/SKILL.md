@@ -168,7 +168,7 @@ base, once a passing gate record covers the bundle's candidate.
     or explicitly handed over for that task with proven ownership. Ancestry,
     branch-name similarity and a merged PR alone do not establish ownership.
     If ownership is uncertain, keep it and name it in step 11. A tree another
-    session or agent holds stays; it is left to `/molt` or `worktree-gc`.
+    session or agent holds stays; it is left to molt or `worktree-gc`.
 
     a. From inside the worktree, after the last wrap-up commit, run the exit
        check. Pass `--bundle-branch` only for the `roar-*`
@@ -250,8 +250,8 @@ base, once a passing gate record covers the bundle's candidate.
     only then has roar written everything durable. Advise `/clear`, never
     `/compact`.
 
-Note: STATE.md is updated on main during `/lair`, not here. Worktree GC
-belongs to housekeeping (`/molt`), not here: roar exits and disposes of its
+Note: STATE.md is updated on main during lair, not here. Worktree GC
+belongs to housekeeping (molt), not here: roar exits and disposes of its
 OWN merged worktree (step 9) and touches nothing outside it. A repo-wide GC
 from roar would remove worktrees that are live session base cwds (a
 merged-and-pruned branch reads `[gone]` even while sessions still sit in the

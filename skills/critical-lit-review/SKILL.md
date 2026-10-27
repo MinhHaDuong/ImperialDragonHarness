@@ -69,7 +69,7 @@ agreement on it before searching. It states:
 - **Full text** for kept sources follows the `rules/zotero.md` chain (`docs/` →
   Zotero → ISTEX → open web → author). A source is not inaccessible until that
   chain has run; record which step failed in `justification`.
-- **Intake** of kept sources into Zotero goes through `/zotero import` (PDF or
+- **Intake** of kept sources into Zotero goes through the zotero skill's `import` (PDF or
   URL alike). Zotero, not the run directory, holds them.
 
 Assess corpus coverage against the agreed period, traditions, institutional

@@ -24,7 +24,7 @@ not on a PDF review: read it explicitly in both modes. Its bullets are the
 make-mode spec and the review-mode checklist; neither reference restates them.
 
 **Upstream.** A deck has one central message. If the author cannot state it
-in a sentence, run `/message-framing` first; neither mode invents it.
+in a sentence, run the message-framing skill first; neither mode invents it.
 
 ## Render and look
 

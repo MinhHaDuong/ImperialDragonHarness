@@ -88,7 +88,7 @@ unavailable route is never reported as a clean review.
 #### Finding tags
 
 Every non-blocking finding carries exactly one prefix; `blocking` findings are
-not tagged. `/verify-gate` reads the same set.
+not tagged. Verify-gate reads the same set.
 
 | Prefix | Meaning |
 |---|---|

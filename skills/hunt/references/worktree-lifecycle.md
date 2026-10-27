@@ -19,7 +19,7 @@ hunts on one ticket share `t<id>-1`.
 
 ## When worktree-gc reclaims an ownerless tree
 
-`/roar` removes the tree when its integration is ready. If the session dies
+Roar removes the tree when its integration is ready. If the session dies
 first, `worktree-gc` reclaims the tree once its branch is gone upstream (merged
 and pruned) and two more things hold:
 

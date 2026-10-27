@@ -30,7 +30,7 @@ Choose the model of each launched worker per launch, from the `route` skill grid
 1. Resolve the manuscript's project and permission to process its contents. Read
    project instructions, locate its R&R ledger and the exact manuscript revision.
    Inventory supplied and expected annexes, noting missing ones explicitly. Select
-   the worker and effort through `/route` and record the routing reason.
+   the worker and effort through the route skill and record the routing reason.
    Uncleared content forces the local/private lane. This first runner supports
    only a hosted route and refuses uncleared fulltext before preparation. For
    that case use the local route from the session, and restrict any separate

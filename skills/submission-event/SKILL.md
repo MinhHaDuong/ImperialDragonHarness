@@ -40,7 +40,7 @@ scratch at the next event, and the two readings do not converge.
 ## 1. Homepage publications list
 
 `~/CNRS/html/src/Ha-Duong.bib`: when this event belongs in the publications
-list, the explicit-only `/update-publist` skill owns the entry-type mapping,
+list, the explicit-only update-publist skill owns the entry-type mapping,
 build, verification and deploy procedure. If the author has not already
 authorized this publication-list update, ask them to invoke `/update-publist`
 (usually with `--page-only` when no deposit is due). If the current session

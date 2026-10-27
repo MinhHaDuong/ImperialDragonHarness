@@ -5,7 +5,7 @@ sequentially: each consumes the previous one's decision.
 
 1. **Message and slot.** State the central message in one sentence and the
    slot length; the slide budget follows from the doctrine's pace bullet. No
-   message yet → `/message-framing`, then come back.
+   message yet → the message-framing skill, then come back.
 2. **Title plan, nothing else.** Write the slide titles as a numbered list.
    Apply the titles-alone test; cut every title that does not serve the
    message. In an interactive session this list is the one checkpoint the

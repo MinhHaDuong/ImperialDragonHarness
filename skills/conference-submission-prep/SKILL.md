@@ -11,8 +11,8 @@ Editorial sparring, not content generation: the author owns the
 contribution; this pass makes it fit what the call asks for and how it will
 be read. It does not judge scientific merit.
 
-**Upstream.** Venue chosen with `/choose-venue`; central message framed with
-`/message-framing`. If either is missing, do it first: a call cannot be
+**Upstream.** Venue chosen with the choose-venue skill; central message framed with
+the message-framing skill. If either is missing, do it first: a call cannot be
 answered by a submission that does not yet know its one claim.
 
 The steps run sequentially: each consumes the previous one's output.
@@ -45,16 +45,16 @@ same holds for most conference abstracts. It covers, explicitly:
 Self-contained, no tables or figures unless the call invites them, claims no
 larger than the evidence, the contribution type named.
 
-Length over budget: `/cut-prose`. Citations: only those that carry the
+Length over budget: the cut-prose skill. Citations: only those that carry the
 argument, in the venue's style; a new reference goes through
-`/related-work-note`, then `runbooks/bib-merge.md`.
+the related-work-note skill, then `runbooks/bib-merge.md`.
 
 ## 3. Review before sending
 
-Run `/gaze` (prose panel) on the submission's merge request, or
-`/manuscript-review` on its PDF, giving the reader the call's criteria from
+Run the gaze skill (prose panel) on the submission's merge request, or
+the manuscript-review skill on its PDF, giving the reader the call's criteria from
 step 1. When the author explicitly requests independent external readers,
-use `/external-peer-review`, which runs the same protocol per routed reader
+use the external-peer-review skill, which runs the same protocol per routed reader
 and preserves dissent. Resolve verified findings; report unresolved concerns
 and the remaining author decisions with a recommendation.
 
@@ -62,6 +62,6 @@ and the remaining author decisions with a recommendation.
 
 - Blind review: in the source, self-citations in the third person,
   acknowledgments, identifying project names and identifying figure content
-  (logos, maps, screenshots) removed; then `/pdf-finish`
+  (logos, maps, screenshots) removed; then the pdf-finish skill
   builds the anonymous variant and sweeps it, metadata included.
-- Once sent: `/submission-event submitted`.
+- Once sent: the submission-event skill with `submitted`.

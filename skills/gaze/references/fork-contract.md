@@ -4,7 +4,7 @@ Loaded from `skills/gaze/SKILL.md`; applies to every phase that spawns an agent.
 
 ## Fork execution contract
 
-`/gaze` runs as a `context: fork` (see frontmatter). A fork's turn ends the
+Gaze runs as a `context: fork` (see frontmatter). A fork's turn ends the
 instant it stops calling tools, and **delegated subagents always run in the
 background and notify the session, not this fork.** There is no foreground
 launch parameter to pass; earlier revisions of this contract named one, and a

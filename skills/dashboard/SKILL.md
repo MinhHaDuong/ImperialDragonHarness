@@ -48,7 +48,7 @@ say so in one line, then print the full state anyway.
 ## 3. Inspect
 
 For each merge request new or changed since the last call, read its diff,
-checks and `/verify-gate` verdicts, sequentially, and report findings against
+checks and verify-gate verdicts, sequentially, and report findings against
 its stated claims: ticket line in path form, a branch head that adds at most
 a bookkeeping delta to the `ruled_tip_sha` (`skills/merge/SKILL.md` § Gating
 tiers; more is a finding), test gaps, rules relaxed. Report only; fixes belong to the session doing the work or to
