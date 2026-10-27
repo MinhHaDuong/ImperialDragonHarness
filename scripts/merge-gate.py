@@ -542,13 +542,23 @@ def fetch_notes(remote, *refs):
     first ref (refs/notes/gate by default).
     """
     refs = refs or (NOTES_REF,)
+    # Read each local ref before asking the remote: the listing can go stale before
+    # the drop, and a concurrent fetch may by then have brought a newer entry (the
+    # first red verdict, say). Only the value seen before the listing is dropped
+    # (gaze round 9); a ref that moved since is that fetch's, and stays.
+    before = {ref: git("rev-parse", "--verify", "--quiet", ref, check=False).stdout.strip() for ref in refs}
     probe = git("ls-remote", remote, *refs, check=False)
     if probe.returncode:
         raise GateError(f"cannot read {' '.join(refs)} on {remote}: {probe.stderr.strip()}")
     listed = {line.split("\t", 1)[1] for line in probe.stdout.splitlines() if "\t" in line}
     for ref in refs:
-        if ref not in listed:
-            git("update-ref", "-d", ref)  # a stale local verdict must not survive
+        if ref in listed or not before[ref]:
+            continue
+        dropped = git("update-ref", "-d", ref, before[ref], check=False)
+        now = git("rev-parse", "--verify", "--quiet", ref, check=False).stdout.strip()
+        if dropped.returncode and now == before[ref]:
+            # a stale local verdict must not survive: a failed drop fails closed
+            raise GateError(f"git update-ref -d {ref}: {dropped.stderr.strip()}")
     present = [ref for ref in refs if ref in listed]
     if present:
         git("fetch", "-q", remote, *(f"+{ref}:{ref}" for ref in present))
@@ -601,7 +611,7 @@ def append_and_push(oid, text, remote, ref=NOTES_REF, fetched=False):
         if push.returncode == 0:
             return
         LOG.warning("notes push rejected (attempt %d): %s", attempt, push.stderr.strip())
-    raise GateError(f"could not push {ref} to {remote}; the entry exists only locally")
+    raise GateError(f"could not publish the entry to {ref} on {remote} after two attempts")
 
 
 # ── commands ──────────────────────────────────────────────────────────────────

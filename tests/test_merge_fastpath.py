@@ -455,3 +455,26 @@ def test_a_verdict_survives_a_concurrent_notes_fetch_between_append_and_push(rep
     shown = subprocess.run(["git", "-C", str(origin), "notes", f"--ref={ref}", "show", base],
                            capture_output=True, text=True, check=True, env=child_env())
     assert "red" in shown.stdout
+
+
+def test_a_verdict_fetched_after_the_listing_is_not_dropped(repo, monkeypatch):
+    """Gaze round 9: the remote listing says no verdict ref yet; before the stale-ref
+    drop, another session fetches the first (red) verdict into the local ref. Dropping
+    it would leave no verdict, and the fast path would rest on an older green record."""
+    monkeypatch.chdir(repo)
+    mg = load_monitor().mg
+    ref = mg.VERDICT_REF
+    base = git(repo, "rev-parse", "HEAD")
+    real_git, arrived = mg.git, []
+
+    def interleaved(*args, **kwargs):
+        result = real_git(*args, **kwargs)
+        if args[:1] == ("ls-remote",) and not arrived:
+            arrived.append(True)
+            real_git("notes", f"--ref={ref}", "append", "-m", "red", base)  # the other session's fetch
+        return result
+
+    monkeypatch.setattr(mg, "git", interleaved)
+    assert mg.fetch_notes("origin", ref) is False
+    assert arrived
+    assert "red" in mg.read_note(base, ref)
