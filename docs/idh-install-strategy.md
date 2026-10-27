@@ -57,8 +57,9 @@ At `~/.agents`, canonical skills are recognized in place, not self-linked.
 Run `./bin/idh install` only after reviewing these host-wide actions.
 Rerunning it refreshes unchanged receipt-owned links, refuses foreign
 replacements, and retires receipt-owned links into this checkout that the
-manifest no longer declares, if unchanged. A dangling skill link into this
-checkout's `skills/` that no receipt holds is pruned; other unrecorded links
+manifest no longer declares, if unchanged. A dangling skill link to
+`skills/<same name>` of this checkout, whose skill is gone and which no
+receipt ever held, is pruned; other unrecorded links
 are left alone. After moving a checkout, rerun install from its new place.
 `./bin/idh check` and `./bin/idh status` are read-only diagnostics.
 

@@ -3,7 +3,8 @@
 The operator's command, not the runtimes': hooks and skills keep calling
 scripts by path. adapters/projections.json is the one list of links, so
 install creates exactly what check verifies (and retires the links it
-once created that the manifest no longer declares), and the launch validator
+once created that the manifest no longer declares, and prunes unrecorded
+dangling links to skills that left the checkout), and the launch validator
 (scripts/validate-projections.py) supplies the per-entry verdict. Links are
 built from the structured `path`/`target` fields only; the free-form
 `installer` text is display, never executed. Stdlib only, Python 3.12.
@@ -94,8 +95,9 @@ def install_links() -> int:
         if problem:
             report(*problem)
             rc = 1
+    recorded = set(owned)  # before retire_stale drops edited links from it
     rc |= retire_stale(owned, declared)
-    rc |= prune_unrecorded(declared)
+    rc |= prune_unrecorded(declared, recorded)
     try:
         receipt.parent.mkdir(parents=True, exist_ok=True)
         _replace(receipt, (json.dumps(owned, indent=2) + "\n").encode(), 0o600)
@@ -112,8 +114,10 @@ def retire_stale(owned: dict, declared: set[Path]) -> int:
     projection out of the manifest; either way the receipt still holds the
     link, so it would otherwise dangle or shadow for good. Only a link whose
     text is unchanged since install wrote it, and which points into this
-    checkout, is removed. A link edited or replaced since then is no longer
-    ours: it leaves the receipt and stays put. Another checkout's link, and
+    checkout, is removed. A link edited or replaced since then stays put and
+    keeps its record, so prune_unrecorded leaves it alone on every later run;
+    only the record of a path that no longer exists is dropped. Another
+    checkout's link, and
     a receipt path that is the same file as a declared one (HOME spelled
     another way), keep both the link and the record.
     """
@@ -146,19 +150,21 @@ def retire_stale(owned: dict, declared: set[Path]) -> int:
                 rc = 1
                 continue
             print(f"retired: {path} (no longer declared)")
-        del owned[key]
+        if not os.path.lexists(path):
+            del owned[key]
     return rc
 
 
-def prune_unrecorded(declared: set[Path]) -> int:
+def prune_unrecorded(declared: set[Path], recorded: set[str]) -> int:
     """Remove dangling links to this checkout's skills that no receipt holds.
 
     retire_stale only knows links install recorded; a skill link made by
     `idh install skill`, by hand, or before the receipt existed outlives its
     skill otherwise, and `idh uninstall skill` cannot name a skill that left
     the repo. Only the skills roots, only dangling links, and only those whose
-    text resolves to <this checkout>/skills/<name>: unlinking a dangling link
-    destroys nothing.
+    text resolves to <this checkout>/skills/<same name>, whose skill entry is
+    gone (an unmounted overlay keeps its entry), and no receipt ever held:
+    a receipt link edited by hand is retire_stale's to keep.
     """
     rc = 0
     skills = root() / "skills"
@@ -172,8 +178,10 @@ def prune_unrecorded(declared: set[Path]) -> int:
             continue  # absent, or the checkout itself (no links of ours there)
         for link in sorted(skills_root.iterdir()):
             try:
-                if link in declared or not link.is_symlink() or link.exists():
+                if link in declared or str(link) in recorded or not link.is_symlink() or link.exists():
                     continue
+                if os.path.lexists(skills / link.name):
+                    continue  # the skill entry is still there (e.g. an unmounted overlay)
                 text = os.readlink(link)
                 points_to = Path(os.path.normpath(Path(os.path.realpath(link.parent)) / text))
                 if points_to.parent != skills or points_to.name != link.name:
