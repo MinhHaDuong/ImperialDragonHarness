@@ -999,6 +999,7 @@ def run_after_once(tip, remote, actor, command):
     if config is None:
         return None
     config = after_config(config)
+    note_attempt(tip)  # a tip with no gate is not an attempt: it never gets a record
     started = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     with tempfile.TemporaryDirectory(prefix="merge-gate-after-") as tmp:
         tree = Path(tmp) / "tip"
@@ -1053,7 +1054,6 @@ def run_after(remote, branch, actor, command, forge=None):
                     code = PASS if prior[-1].get("result") == "pass" else FAIL
                     done = tip
                     continue
-            note_attempt(tip)
             outcome = run_after_once(tip, remote, actor, command)
             if outcome is None:
                 sys.stdout.write(f"off: {tip[:12]} declares no gate; nothing to run\n")
