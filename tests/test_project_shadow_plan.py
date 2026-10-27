@@ -71,11 +71,24 @@ def test_display_string_ok_reasoned_is_also_left_alone():
     assert plan([rec("a", "ok (reasoned)", "delete-local")]).stdout == ""
 
 
-def test_bad_shapes_fail_and_destination_harness_wins():
+def test_only_warn_acts_and_bad_shapes_fail_closed():
     assert plan([], raw="[1]\n").returncode == 1
-    assert plan([], raw='{"verdict": "warn", "disposition": "annotate"}\n'
-                ).returncode == 1
-    out = plan([rec("a", "warn", "delete-local", "harness")]).stdout
-    assert out.startswith("open-ticket")
-    assert plan([rec("a", "warn", "x", "project")]).stdout.startswith("skip")
-    assert plan([rec("a", "okay", "delete-local")]).stdout.startswith("fix-now")
+    for v in ("Ok", "okay", None, "fail"):
+        out = plan([rec("a", v, "delete-local")]).stdout
+        assert out.startswith("skip") and "fix-now" not in out
+    out = plan([], raw='{"verdict": "warn", "disposition": "annotate"}\n')
+    assert out.returncode == 0 and out.stdout.startswith("skip")
+    assert "None" not in out.stdout and "lacks" in out.stdout
+    assert plan([rec("a", "warn", "harness-ticket", "harness")]
+                ).stdout.startswith("open-ticket")
+
+
+def test_contradicting_destination_is_skipped():
+    for disp, dest in (("delete-local", "harness"), ("annotate", "harness"),
+                       ("harness-ticket", "project")):
+        assert plan([rec("a", "warn", disp, dest)]).stdout.startswith("skip")
+
+
+def test_unknown_flag_exits_nonzero():
+    out = plan([rec("a", "warn", "harness-ticket", "harness")], "--atuo")
+    assert out.returncode != 0 and out.stdout == ""

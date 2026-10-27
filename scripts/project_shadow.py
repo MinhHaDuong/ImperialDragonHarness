@@ -138,32 +138,45 @@ def route(rec: dict, auto: bool) -> str | None:
         return f"skip: {rec.get('reason', '')}"
     if rec.get("verdict") in ("ok", "ok (reasoned)"):
         return None
+    if rec.get("verdict") != "warn":
+        return (f"skip: verdict {rec.get('verdict')!r} for "
+                f"{rec.get('local_file') or '?'} is not 'warn'; no action")
     local, kind = rec.get("local_file"), rec.get("kind")
-    if not local:
-        raise ValueError("record without local_file")
-    disp = rec.get("disposition")
-    if rec.get("destination") == "harness":
-        disp = "harness-ticket"  # the fix belongs to the harness, not the project
-    if disp == "delete-local":
-        return f"fix-now: delete redundant local copy {local} ({kind})"
-    if disp == "annotate":
-        return f"fix-now: write the reason beside {local} ({kind})"
+    disp, dest = rec.get("disposition"), rec.get("destination")
+    where = f"{local or '?'} ({kind or '?'})"
+    need = ["local_file", "kind", "disposition", "destination"]
     if disp == "harness-ticket":
-        what = f"general fix for {local} vs {rec.get('harness_file')} ({kind})"
+        need.append("harness_file")
+    missing = [k for k in need if not rec.get(k)]
+    if missing:
+        return f"skip: record for {where} lacks {', '.join(missing)}; judge by hand"
+    if (disp == "harness-ticket") != (dest == "harness"):
+        return (f"skip: destination {dest} contradicts disposition {disp} "
+                f"for {where}; judge by hand")
+    if disp == "delete-local":
+        return f"fix-now: delete redundant local copy {where}"
+    if disp == "annotate":
+        return f"fix-now: write the reason beside {where}"
+    if disp == "harness-ticket":
+        what = f"general fix for {local} vs {rec['harness_file']} ({kind})"
         if auto:
             return f"report: harness-bound, not filed unattended: {what}"
         return (f"open-ticket: in the harness repo ($IDH_ROOT), on a harness "
                 f"branch, never its main checkout: {what}")
-    return f"skip: no disposition for {local} ({kind}); judge by hand"
+    return f"skip: unknown disposition {disp} for {where}; judge by hand"
 
 
 def plan(argv: list[str]) -> int:
+    import argparse
+    ap = argparse.ArgumentParser(prog="project_shadow.py --plan")
+    ap.add_argument("--auto", action="store_true")
+    auto = ap.parse_args(argv).auto  # an unknown flag exits 2
     lines = []
     for raw in sys.stdin:
         if not raw.strip():
             continue
         try:
-            line = route(json.loads(raw), "--auto" in argv)
+            line = route(json.loads(raw), auto)
         except ValueError as exc:
             print(f"project_shadow --plan: bad record: {exc}", file=sys.stderr)
             return 1

@@ -150,7 +150,9 @@ Run full repo housekeeping and act on every finding.
    findings) prints one plan line each; `fix-now:`, `open-ticket:` and
    `skip:` lines join the plan headings of the same name, and `report:` goes
    to the run summary only. Add `--auto` when `CLAUDE_NIGHT_SWEEP` is set.
-   An `ok (reasoned)` finding yields no line: leave it alone.
+   Dispositions come from yawn's judged pass; the script's mechanical records
+   carry none, so they route to `skip:` for hand judgment. An `ok (reasoned)`
+   finding yields no line: leave it alone.
 
 2.5. **Audit open-ticket exit criteria.** For each open ticket, apply
    lightweight grep-able checks. Only check exit criteria that reduce to one of
