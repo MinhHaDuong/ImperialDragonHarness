@@ -1,0 +1,46 @@
+%erg 0.1
+Title: Forge-less raid, gaze and merge: review, gate and land a branch with no forge
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T11:00Z reviewer created
+
+--- body ---
+## Context
+Author ruling, 2026-10-27: raid, hunt, gaze and merge must need no forge. Split from ticket 1241
+item 7 ("raid Phases 6-7 give a forge-less ready-to-merge branch a path through gating and merge,
+or say raid needs a forge"): the second branch of that item is now excluded.
+
+State on origin/main f52b159e: hunt already has a no-forge route (closes the ticket on the branch,
+reviewer seats on `git diff <base>...HEAD`). gaze takes a PR number, and its setup and closing
+scripts (`scripts/gaze_setup.py`, `scripts/gaze_close.py`, ticket 1227) read and write the PR
+through `gh`. merge's recipe is `gh` throughout (each call behind `<!-- harness-extension-point -->`).
+raid Phases 6-7 assume merge requests. Twelve helpers call `gh`, among them
+`attribution_record.py`, `review_evidence.py`, `review-anchor.py`; `raid-sitrep.py` already has
+`--no-forge`. The gate record itself (`merge-gate.py`, git notes) is already forge-free.
+
+## Design questions (settle in Plan, advisor first, author if still open)
+- What stands for the merge request: a branch plus a base ref, with the review result, attribution
+  and gate verdict recorded in git (notes on the reviewed head, or `tickets/reviews/`)?
+- What "merge" means with no forge: a local `git merge --no-ff` onto main guarded by the gate record,
+  then a push if a remote exists; the main-update guard hook already accepts gated moves.
+- Where each forge read/write gets its no-forge spelling: one adapter in the scripts, not a branch in
+  every skill paragraph.
+
+## Exit criteria
+- [ ] gaze reviews a branch range with no forge and records its result where the gate reads it.
+- [ ] verify-gate rules on that record with no forge.
+- [ ] merge lands a gated branch onto main with no forge, with the same pinned-head and read-back
+      guarantees as the forge recipe.
+- [ ] raid Phases 6-7 run end to end on a repository with no remote forge; a test runs the
+      gaze-gate-merge chain on a temp repo with `gh` absent from PATH.
+- [ ] The forge path is unchanged (its tests pass); the harness gate passes.
+
+## Relevant files
+skills/gaze/, skills/merge/, skills/verify-gate/, skills/raid/SKILL.md, scripts/gaze_setup.py,
+scripts/gaze_close.py, scripts/attribution_record.py, scripts/review_evidence.py,
+scripts/review-anchor.py, scripts/merge-gate.py
+
+Monster check before Execute: likely a tracker with children (gaze, gate, merge, raid), each one
+sign-off unit. Related: [[1241]], [[1227]], [[1248]].

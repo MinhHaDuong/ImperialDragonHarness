@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-27T09:10Z claude created
+2026-10-27T11:00Z reviewer note item 7 moved to 1252 per author ruling: forge-less operation required
 
 --- body ---
 ## Context
@@ -19,7 +20,7 @@ in session; items 3-10 are review findings the author deferred here.
 - [ ] 4. `rules/workflow.md` monster line gives a lone autonomous session (neither orchestrator nor hunt) an action; stay inside the resident budget.
 - [ ] 5. Simplify hunt: drop the third restatement of the monster return in Execute, drop the Detach final-report clause if redundant, shorten "Too big or multipart" to a pointer to `rules/workflow.md`.
 - [ ] 6. Hunt's no-forge close stages narrowly, as `/merge` step Close does (`git add -u tickets/ && git add tickets/closed/<id>-*.erg`), not `tickets/` wholesale.
-- [ ] 7. Raid Phases 6-7 give a forge-less ready-to-merge branch a path through gating and merge, or say raid needs a forge.
+- [x] 7. Moved to ticket 1252 (author 2026-10-27: raid, hunt, gaze and merge must need no forge; the "or say raid needs a forge" branch is excluded).
 - [ ] 8. Hunt's `TMPDIR="$W/.tmp"` advice makes `tests/test_harness_doctor_skill.py::test_refusal_ignores_an_exported_work_tree` and `::test_refusal_outside_harness[no-repo]` fail (reproduced 2026-10-27: fail with TMPDIR in the worktree, pass with the default); fix the tests or the advice.
 - [ ] 9. Gaze takes only a PR number: no route for forge-less projects, and launched from a session whose cwd is another repo it resolves the wrong forge. Give it a branch/repo argument or document the limit.
 - [ ] 10. (low) The self-gate runs before the rebase, as before 1235; decide whether to swap.
