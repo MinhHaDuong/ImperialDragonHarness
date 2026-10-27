@@ -26,7 +26,7 @@ No `result:` block is no result. Wait for the background reviewer
 notifications and read the review comment they posted on the merge request;
 that comment is evidence, not a gaze result, and opens no gate. Run
 gaze on `<pr>` once more if the liveness window allows; otherwise park the
-merge request and escalate to the author.
+merge request and escalate (`rules/workflow.md` § Escalation protocol).
 
 **Fork liveness:** once the review comment has posted, the gaze result
 (returned, or posted as a PR comment) is due within `fork_liveness_seconds`
@@ -34,5 +34,6 @@ merge request and escalate to the author.
 expiry, do not re-run gaze's pass: check the three completion
 markers, a posted gaze result comment, branch-tip motion on the PR branch
 and the review worktree's file mtime. All stale or absent: no accepted gaze
-result, so no gate; park the merge request and escalate to the author. Never
+result, so no gate; park the merge request and escalate (`rules/workflow.md`
+§ Escalation protocol). Never
 substitute a direct verify-gate run for the missing result.

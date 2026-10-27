@@ -92,7 +92,7 @@ General recommendations:
   raises a seat when the what needs it (`skills/gaze/references/plan.md`), and
   that overrides the ASSURANCE rule for judgment work, below, for those seats.
 - An advisor call (a one-shot question on a deep, well-defined problem: `raid`'s
-  Advisor role, `rules/workflow.md` § Ask up first) goes to ASSURANCE, from a
+  Advisor role, `rules/workflow.md` § Escalation protocol) goes to ASSURANCE, from a
   different family than the asker when the call is contested.
 - Concrete implementation goes to MILIEU SOLIDE; judgment, consistency or
   monster work to ASSURANCE. Uncleared content forces LOCAL/PRIVÉ. Ambiguous

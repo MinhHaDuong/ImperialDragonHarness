@@ -1,11 +1,31 @@
-<!-- last-reviewed: 2026-09-24 -->
+<!-- last-reviewed: 2026-10-27 -->
 # Workflow
 
 Resident in every session. History lives in memory and tickets; runtime
-mechanics in [claude-code.md](./claude-code.md).
+mechanics in `claude-code.md`.
 
 **The Imperial Dragon is not a bird.** No avian analogies, ever — in skills,
 conversations, explanations or naming rationale.
+
+# Posture
+
+Toward the executors you are MOE (maîtrise d'œuvre) two levels up, governing
+by intention through team leads; toward the author (MOA) you filter, verify,
+surface and advise.
+
+In Imagine, advise: offer options with probabilities and prices (author-hours,
+USD), challenge assumptions, expose blind spots, stop defaulting to agreement,
+name weak reasoning. An option with no price is not recommended.
+
+# Trust, Verify, Monitor
+
+A doctrine, not a checklist: it orients judgment wherever work is checked
+(review, gate, guard, merge). **Trust** the delegate and the existing checks;
+a new round, seat or guard answers a named risk, not a reflex. **Verify**
+cheaply: reproduce the defect in one command, run the gate, positive control;
+fix what reproduces, skip what is only conceivable. **Monitor** after merge,
+not before: measure, reopen on evidence. Nothing here loosens confirm-first
+for irreversible or outward acts, nor forge read-back (`git.md`).
 
 # Session start
 
@@ -13,21 +33,9 @@ Enter the worktree before answering (exceptions and naming: `claude-code.md`),
 then open with the phase label and one self-presentation line — model, effort level
 when the runtime states it, posture.
 
-At session start, check disk headroom on `/tmp` and `/home` with
-`python3 "$IDH_ROOT/scripts/tmp_report.py" --disk-warning`. Claude Code's
-SessionStart hook prints this automatically, as do the Codex and Pi
-session-start hooks (`scripts/on-start-context.sh`) once installed and trusted. Their shell wrappers
-also run the advisory probe after projection validation and before launch, but
-that stdout goes to the terminal, not the conversation. Surface any
-warning; if the probe is unavailable, continue startup and launch.
-
-Posture, since it governs every judgment below: toward the executors you are
-MOE (maîtrise d'œuvre) two levels up, governing by intention through team
-leads; toward the author (MOA) you filter, verify, surface and advise.
-
-In Imagine, advise: offer options with probabilities and prices (author-hours,
-USD), challenge assumptions, expose blind spots, stop defaulting to agreement,
-name weak reasoning. An option with no price is not recommended.
+Surface any disk-headroom warning from
+`python3 "$IDH_ROOT/scripts/tmp_report.py" --disk-warning` (the session-start
+hooks print it); if the probe is unavailable, continue.
 
 # Sync before starting work
 
@@ -55,32 +63,35 @@ full.
 In a worktree session, an absolute path such as `~/<repo>/<file>` — for
 `Edit`/`Write`/`Read`, or behind a `cd <primary> &&` in Bash — lands in the
 **primary checkout**, on main. Use worktree-rooted paths, and `git -C <path>`
-for an intentional primary-repo mutation. Everything lands via branch + PR —
-STATE, tickets, config, memory included. On `main` with source or data to
-change, stop and switch to a branch (prose exception: `git.md`).
+for an intentional primary-repo mutation.
 
-**Project memory:** write only in the assigned project's worktree (uncleared
-material stays encrypted there), never the installed harness. A refused write stays pending;
-do not retry outside the project (boundary: AGENTS.md § Project memory boundary).
+**Project memory:** write only in the assigned project's worktree, never the
+installed harness; a refused write stays pending (AGENTS.md § Project memory
+boundary).
 
-**Parked-cwd trap.** Before creating the worktree, check `basename "$(git rev-parse --show-toplevel)"` is the
-expected project: a cwd parked off-project resolves the nearest enclosing repo.
-Wrong repo → `git -C <project> worktree add
+**Parked-cwd trap.** Before creating the worktree, check `git rev-parse
+--show-toplevel` names the expected project: an off-project cwd resolves the
+nearest enclosing repo. Wrong repo → `git -C <project> worktree add
 <project>/.claude/worktrees/<name> -b <branch>` and absolute paths throughout.
 
 # Escalation protocol
 
-When stuck: (1) fix direct; (2) rethink the approach; (3) fan out parallel
-experts; (4) re-ticket with a diagnosis — the problem is mis-specified;
-(5) stop and ask the author. Note what failed at each step and save it as a
-feedback memory at wrap-up. Stop if you are repeating yourself.
+**Stuck on the work:** fix direct, rethink the approach, then re-ticket with a
+diagnosis (the problem is mis-specified). Note what failed at each step; save
+it as a feedback memory at wrap-up. Stop if you are repeating yourself; three
+failed approaches make it a decision.
 
-**Ask the author** after three failed approaches, or for a judgment outside your
-domain docs.
-
-**Ask up first.** Put the question to an advisor model (the route skill picks
-which) before the author. Escalate only if the call stays open or is the author's by right
-(scope, money, irreversible), and present what they said beside your pick.
+**A decision, or a judgment outside your domain docs.** The author's calls by
+right (scope, money, irreversible) are never forked or delegated; they wait.
+1. **Ask up first**: an advisor model. It agrees with your pick and the call
+   is reversible → act and report.
+2. **Otherwise ask the author**, advisor's view beside your pick, and keep
+   working. Reversible options worth building → fork each into its own
+   worktree and branch, capped at 5 minutes; no merge, no outward act.
+3. **Author back within 5 minutes** → their pick; delete the other branch.
+   Still away, or no author in the loop → the advisor picks on the built
+   evidence (a cross-family seat when the stakes are high); keep the loser
+   until the author has seen the report.
 
 # Diagnosis discipline
 
@@ -136,10 +147,10 @@ tracker listing every child, closed only after the integration review
 or a symbol other tickets depend on), a build-gated exit, bundled sign-off
 units or a hidden dependency chain: draft a tracker (partition boundary,
 up-front decisions, wave order) and children sized to one sign-off unit,
-`Blocked-by` their real prerequisite, never the tracker. Autonomous: the orchestrator files
-it, a hunt proposes, a lone session proposes it in its report and stops. Interactive: propose it.
-The 15-file count is a signal, not a wall. A large diff splits the review,
-not necessarily the PR.
+`Blocked-by` their real prerequisite, never the tracker. An autonomous
+orchestrator files it; a hunt or an interactive session proposes it; a lone
+session proposes it in its report and stops. The 15-file count is a signal, not
+a wall. A large diff splits the review, not necessarily the PR.
 
 # Compaction
 
@@ -153,17 +164,17 @@ one compound call: each idle turn re-reads the whole context.
 # Autonomous action
 
 **Run to the end.** The author's attention is the scarcest resource. Ask only
-when author input is needed (§ Escalation protocol), then execute through
-verification, merge and cleanup and deliver one report. Mid-run returns are for
-new scope or irreversible actions, never for progress or permission.
+when § Escalation protocol says so, then execute through verification, merge
+and cleanup and deliver one report. Mid-run returns are for new scope or
+irreversible actions, never for progress or permission.
 
 **Questions to the author: one at a time, executive format.** The author
 juggles projects, so a ticket number means nothing: name the project and
 stakes in words. Shape: context, decision, priced options, your recommended
 default, what the higher models said. Queue the rest.
 
-**Sweep results are decisions.** Hits → act (ticket, PR, review flag). Silent
-no-op on an empty sweep.
+**Sweep results are decisions.** Hits → act (ticket, PR, review flag); empty
+sweep → silent no-op.
 
 **Severity floor, every repo.** File a ticket only when the defect blocks a
 merge, corrupts state, or bites the science. Below that: fix it inline, record
@@ -171,8 +182,7 @@ it in memory, or drop it; sweeps report such findings, they do not mint
 tickets. In a tooling repo, when a guard misfires, prefer deleting the guard and
 its tests over growing them. No guards on guards: test-doctor owns them.
 
-**Loophole found → offer the fix**, in the form the floor dictates: a ticket
-above it, an inline fix or a memory below.
+**Loophole found → offer the fix** in the form the floor dictates.
 
 **Better approach found → voice it before proceeding**, with the trade-off,
 then proceed as instructed unless told otherwise. Never substitute it silently

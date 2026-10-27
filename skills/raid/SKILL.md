@@ -289,7 +289,8 @@ launch shape and result acceptance.
 
 A gaze result of ESCALATE, or no accepted result (missing at the end of the
 bounded wait, or its `reviewed_head_sha` stale against the branch tip), means
-the gate is not run: the review never completed, and the PR goes to the author.
+the gate is not run: the review never completed, and the PR follows
+`rules/workflow.md` § Escalation protocol.
 A run that returns no result is handled as `references/detached-gaze.md` § No result says.
 Stale means the tip adds more than a bookkeeping delta to `reviewed_head_sha`
 (`skills/merge/SKILL.md` § Gating tiers), judged before the raid adds the fix
@@ -316,7 +317,9 @@ The raid owns each PR's gate session (`skills/verify-gate/SKILL.md` § Gate
 sessions): it generates one UUID per PR before round 1, passes the same
 `session=` to round 1 and to the single re-gate after the fix, and never runs
 the gate a third time or opens a second session for the PR. A round-2 REROLL
-is ESCALATE; ESCALATE and NEEDS-AUTHOR go to the author. The same two-round
+is ESCALATE; ESCALATE follows `rules/workflow.md` § Escalation protocol, which may fix,
+re-ticket or park the PR but never merges past the gate (that call is the
+author's, `skills/verify-gate/SKILL.md`); NEEDS-AUTHOR waits for the author. The same two-round
 budget binds the merge-permission-denial recovery (§ Merge-permission denial):
 once two gate rounds are posted on the PR, that recovery parks the PR and
 escalates to the author instead of sending it back through Phase 6.
@@ -358,7 +361,7 @@ For each wave, merge APPROVED PRs one at a time. A PR is merge-eligible if:
   tickets/NNNN` to the PR body before merging).
 
 Any ESCALATE verdict (from exit criteria, review comments, or scope overflow) stops
-the PR — it stays open for human review.
+the PR: it stays open and follows `rules/workflow.md` § Escalation protocol.
 
 A `NEEDS-AUTHOR` verdict is
 not merge-eligible without the author: surface it to the author and leave the PR open.
