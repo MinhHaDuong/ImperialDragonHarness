@@ -106,17 +106,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     `test-doctor: checked` when it could not tell: pass that line on, since silence
     would otherwise read as an all-clear. Proposed, never run automatically:
     do not launch the test-doctor skill, ask a question or open a ticket for it.
-14. **Report the main-update guard while ticket 1180 is open.** From the
-    primary checkout, run `python3 "$IDH_ROOT/scripts/main_guard_memo.py" --repo .`
-    and carry its line into the final summary unchanged. It prints the updates
-    of `main` in the last 24 h, the `warned` count and `idh.mainGuard`; nothing
-    once the mode is `enforce` and nothing was refused; a `main-guard: not
-    checked` line when the journal is missing or unreadable, which must be
-    passed on; if the command itself fails, report `main-guard: not checked
-    (command failed)`. Switching to enforce is the author's act: never run `git config
-    idh.mainGuard`, ask a question, open a ticket or wait. Remove this step
-    when ticket 1180 closes.
-15. **Report merges without a gate receipt.** From the primary checkout, run
+14. **Report merges without a gate receipt.** From the primary checkout, run
     `python3 "$IDH_ROOT/scripts/main_sweep.py" --fetch --after --summary` and carry its
     one line into the final summary unchanged: `main audit: N commits in the
     last 24 h, M without a gate receipt: <first sha>`, then the after-merge
@@ -128,7 +118,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     all-clear; if the command itself fails, report `main audit: not checked
     (command failed)`. Never ask a question, open a ticket or wait on a finding:
     the author reads the line.
-16. **Point out slow tickets.** From the primary checkout, run
+15. **Point out slow tickets.** From the primary checkout, run
     `python3 "$IDH_ROOT/scripts/slow_tickets.py"` and carry its lines into the
     final summary unchanged. It lists tickets closed in the last 24 h (no marker
     of the previous lair exists, so say that window) whose solve time passed the
