@@ -2,6 +2,7 @@
 Title: 1252 child C3: gaze reviews branch:<name> with no forge, results in refs/notes/review via one helper
 Created: 2026-10-27
 Author: reviewer
+Closed: closed by raid — PR #1808
 
 --- log ---
 2026-10-27T15:45Z reviewer created
@@ -9,6 +10,8 @@ Author: reviewer
 2026-10-27T16:24Z reviewer note blocker 1272 closed — Blocked-by removed.
 2026-10-27T16:31Z reviewer note design: conception/2026-10-27-notes-review-spec.md, accepted by the author 2026-10-27 (ticket 1277 log); build to it
 2026-10-27T16:33Z reviewer note from the 1798 re-review (consider, OpenAI seat): the 6a tamper check (ancestry + growing entry-id set) passes a descendant notes commit that changes an entry under an unchanged id; keep a digest per entry id and reject a conflict
+2026-10-27T16:46Z reviewer built: scripts/review_notes.py (spec §7), gaze branch:<name> records an answer entry in refs/notes/review; forge path tests green
+2026-10-27T17:06Z reviewer closed — closed by raid — PR #1808
 
 --- body ---
 ## Context

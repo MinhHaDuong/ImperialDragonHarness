@@ -152,9 +152,11 @@ When the work shows the plan was wrong, replan and announce why.
   ticket's exit criteria by default; what each gaze result leads to, a missing
   or stale `reviewed_head_sha` included, is the caller's policy
   (`skills/raid/SKILL.md` § Phase 6; no result:
-  `skills/raid/references/detached-gaze.md` § No result). Without one, reviewer seats on
-  `git diff <base>...HEAD`, chosen and scaled by risk
-  (`skills/route/references/decorrelation.md`). On findings, fix every one
+  `skills/raid/references/detached-gaze.md` § No result). Without one, write
+  the request first, `python3 "$IDH_ROOT/scripts/review_notes.py" open --branch <branch>
+  --base-ref <base> --why <why> --intent <what>` (`request --review <id>` on later rounds),
+  then load gaze with `branch:<branch>` and the same intent; its result is the
+  `answer` entry that `review_notes.py coverage <id> HEAD` reads. On findings, fix every one
   whatever its severity, rerun what the fixes affect, then the fast tier, push
   where there is a forge, and review again with a new, narrower intent: verify
   those fixes, because they were the findings. Escalate when the review does,

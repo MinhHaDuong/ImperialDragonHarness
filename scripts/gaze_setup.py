@@ -6,6 +6,9 @@ PR state, ticket files, panel directory, printed as one key=value block.
 
 Exit: 0 ready, 1 blocked (conflicts, missing ticket file, worktree not created),
 2 read failure (forge or anchor), 3 another gaze is live on this PR.
+With no forge the unit is `branch:<name> [base=<ref>]` (ticket 1273): the review tree is
+`review-<unit_key>` at the branch head, and the review in refs/notes/review is found, or
+opened when no request names the branch; `review_id=` is printed.
 Leftover review worktree of a dead run is cleaned (gaze_close.cleanup) first.
 """
 import argparse
@@ -18,6 +21,7 @@ import time
 from pathlib import Path
 
 import forge
+import review_notes
 import gaze_close  # same directory: the script dir is on sys.path
 
 HERE = Path(__file__).resolve().parent
@@ -101,7 +105,7 @@ def fail(code, msg):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("pr", help="PR number")
+    ap.add_argument("pr", help="PR number, or branch:<name> [base=<ref>] with no forge")
     pr = ap.parse_args().pr
     clock = str(int(time.time()))
     primary = gaze_close.primary_root()
@@ -111,6 +115,8 @@ def main():
     except forge.ForgeRefusal as exc:
         return fail(2, re.sub(r"^cannot read request", "cannot read PR", str(exc)))
     branch = meta["branch"]
+    key = gaze_close.unit_key(pr)
+    local = isinstance(fg, forge.NoneForge)
     if meta.get("mergeable") == "CONFLICTING":
         return fail(1, f"PR {pr} has merge conflicts")
     try:
@@ -118,16 +124,22 @@ def main():
         ci = fg.checks(pr)
     except forge.ForgeRefusal as exc:
         return fail(2, re.sub(r"^cannot read request", "cannot read PR", str(exc)))
-    tree = primary / ".claude" / "worktrees" / f"review-{pr}"
+    tree = primary / ".claude" / "worktrees" / f"review-{key}"
     if tree.exists():
         if time.time() - newest_mtime(tree) < liveness_window():
             return fail(3, "another gaze is live on this PR")
         ok, msg = gaze_close.cleanup(primary, pr, branch)
         if not ok:
             return fail(1, f"leftover review worktree not removable: {msg}")
-    if subprocess.run(["git", "fetch", "origin", branch], capture_output=True).returncode:
+    if local:
+        if meta.get("claims_error"):  # the forge path stops on a malformed claim too
+            return fail(1, f"malformed close claim in a Ticket: trailer: {meta['claims_error']}")
+        start = meta["head"]
+    elif subprocess.run(["git", "fetch", "origin", branch], capture_output=True).returncode:
         return fail(2, f"git fetch origin {branch} failed")
-    r = subprocess.run(["git", "worktree", "add", str(tree), f"origin/{branch}"],
+    else:
+        start = f"origin/{branch}"
+    r = subprocess.run(["git", "worktree", "add", *(["--detach"] if local else []), str(tree), start],
                        capture_output=True, text=True)
     if r.returncode or not tree.is_dir():
         return fail(1, f"cannot create isolated review worktree for PR {pr}; refusing to fall back "
@@ -136,11 +148,20 @@ def main():
                        capture_output=True, text=True)
     if a.returncode:
         return fail(2, a.stderr.strip() or "REVIEW-ANCHOR: failed")
+    review_id = meta.get("review_id")
+    if local and not review_id:  # gaze without a hunt request: open the review so the answer has a home
+        try:
+            review_id = review_notes.open_review(str(primary), branch, meta["base"], skill="gaze",
+                                                 why="gaze invoked on a branch with no request")
+        except review_notes.Refusal as exc:
+            return fail(2, f"cannot open a review for {branch}: {exc}")
     body = meta.get("body") or ""
     tickets, malformed = close_claims(body, tree)
+    if local:  # no body: the claims are the branch's `Ticket:` trailers, read by forge.resolve
+        tickets, malformed = close_claims("\n".join(f"Ticket: {i}" for i in meta.get("claims", [])), tree)
     missing = [t for t in tickets if not (tree / t).exists()
                and not (tree / "tickets" / "closed" / Path(t).name).exists()]
-    panel = tree / ".panel" / pr
+    panel = tree / ".panel" / key
     panel.mkdir(parents=True)
     (panel / "pr-body.md").write_text(body)
     _, entry_branch = gaze_close.git("branch", "--show-current")
@@ -159,6 +180,8 @@ def main():
     print(f"review_tree={tree}\npanel={panel}")
     print(f"pr_body={panel / 'pr-body.md'}\ncomments={panel / 'comments.md'}")
     print(f"ticket={' '.join(tickets) if tickets else 'none'}")
+    if local:
+        print(f"review_id={review_id}")
     print(f"anchor={changed[0]}\nchanged_files={len(changed) - 1}")
     print("\n".join(changed[1:]))
     if malformed:

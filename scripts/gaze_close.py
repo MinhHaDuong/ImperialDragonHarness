@@ -28,6 +28,11 @@ cleanup, for the caller's return text and a blocked-cleanup ESCALATE. The line i
 still gives the calling gaze the line to paste. It may also hold `{{duration}}` and
 `{{containment}}`; both are replaced by the script's own readings. Exit: 0 clean, 1 cleanup blocked
 (attribution appended, no comment posted; 2 when the append also failed), 2 also when cwd is inside the review worktree (refused, nothing removed), 2 read failure, 4 containment flagged (comment still posted).
+
+No forge (`branch:<name>`, ticket 1273): the review unit's paths use `unit_key`; the
+attribution lines and the result text go into one `answer` entry of refs/notes/review
+through review_notes.py, published with read-back when there is a remote (exit 2 when
+it is not retrievable); a blocked cleanup records an ESCALATE answer.
 """
 import argparse
 import json
@@ -38,10 +43,19 @@ import sys
 from pathlib import Path
 
 import forge  # same directory: the script dir is on sys.path
+import review_notes as rn
 
 HERE = Path(__file__).resolve().parent
 # A typed verdict line in any dress: indented, quoted, emphasised, any case.
 TYPED_PLAN_CHECK = re.compile(r"^[\s>*_`#-]*plan check\s*[:*_]", re.MULTILINE | re.IGNORECASE)
+
+
+def unit_key(pr):
+    """Path segment for a review unit: a request number as is; `branch:<name>` (no forge,
+    ticket 1273) as `branch-<slug>`, safe in a worktree and panel path."""
+    pr = str(pr).strip()
+    m = re.fullmatch(r"branch:(\S+?)(?:\s+base=\S+)?", pr)
+    return "branch-" + re.sub(r"[^A-Za-z0-9._-]+", "-", m.group(1)) if m else pr
 
 
 def git(*args, cwd=None):
@@ -68,7 +82,8 @@ def primary_root(cwd=None):
 
 def cleanup(primary, pr, branch):
     """Remove scratch and the review worktree; return (ok, message)."""
-    tree = primary / ".claude" / "worktrees" / f"review-{pr}"
+    key = unit_key(pr)
+    tree = primary / ".claude" / "worktrees" / f"review-{key}"
     if not tree.is_dir():
         return True, "no review worktree"
     tmp = tree / ".tmp"
@@ -78,12 +93,12 @@ def cleanup(primary, pr, branch):
                            capture_output=True, text=True)
         if r.returncode:
             return False, (r.stderr or r.stdout).strip() or "tmp guard blocked"
-    rc1, tracked_panel = git("ls-files", "--", f".panel/{pr}", cwd=tree)
+    rc1, tracked_panel = git("ls-files", "--", f".panel/{key}", cwd=tree)
     rc2, tracked_base = git("ls-files", "--", "build/panel-head", cwd=tree)
     if rc1 or rc2:
         return False, "cannot read tracked files in the review worktree"
     if not tracked_panel:
-        shutil.rmtree(tree / ".panel" / str(pr), ignore_errors=True)
+        shutil.rmtree(tree / ".panel" / key, ignore_errors=True)
     if not (tree / "build").is_symlink() and not tracked_base:
         shutil.rmtree(tree / "build" / "panel-head", ignore_errors=True)
     try:
@@ -103,7 +118,8 @@ def cleanup(primary, pr, branch):
 
 def plan_check_line(primary, pr):
     """The checker's verdict line for the review panel, verbatim."""
-    panel = primary / ".claude" / "worktrees" / f"review-{pr}" / ".panel" / str(pr)
+    key = unit_key(pr)
+    panel = primary / ".claude" / "worktrees" / f"review-{key}" / ".panel" / key
     r = subprocess.run([sys.executable, str(HERE / "seat_clock.py"), "plan-check", str(panel)],
                        capture_output=True, text=True)
     first = r.stdout.splitlines()[0] if r.stdout.strip() else ""
@@ -112,7 +128,8 @@ def plan_check_line(primary, pr):
 
 def read_entry(primary, pr):
     """State recorded by gaze_setup.py at entry (branch, porcelain lines), if any."""
-    f = primary / ".claude" / "worktrees" / f"review-{pr}" / ".panel" / str(pr) / "entry-state.json"
+    key = unit_key(pr)
+    f = primary / ".claude" / "worktrees" / f"review-{key}" / ".panel" / key / "entry-state.json"
     try:
         return json.loads(f.read_text())
     except (OSError, ValueError):
@@ -139,6 +156,49 @@ def containment(primary, entry_branch, entry_status=(), entry_primary=()):
     return flags, report
 
 
+def _field(text, name):
+    m = re.search(rf"^{name}:\s*(\S+)", text, re.MULTILINE)
+    return m.group(1) if m else None
+
+
+def answer_scope(text):
+    """Spec §4: a narrow intent is never widened. `scope:` when given, else full only for the
+    default intent (`intent: default`); any other intent, or none, records delta."""
+    scope = _field(text, "scope")
+    if scope in ("full", "delta"):
+        return scope
+    first = re.search(r"^intent:[ \t]*(.*?)[ \t]*$", text, re.MULTILINE)  # the field, not a quote below
+    value = first.group(1) if first else ""
+    return "full" if value == "default" or value.startswith("default:") else "delta"
+
+
+def record_answer(primary, pr, text, attribution):
+    """No forge (ticket 1273): the result becomes an `answer` entry in refs/notes/review, the
+    store verify-gate reads, then is published with read-back when there is a remote.
+    Returns 0, or 2 when the entry could not be written or its publication not verified."""
+    cwd = str(primary)
+    try:
+        rid = forge.get_forge("none", pr, cwd).resolve(pr).get("review_id")
+        if not rid:
+            print("answer: FAILED no review request for this branch (gaze_setup opens one)")
+            return 2
+        result = _field(text, "result")
+        entry = rn.add(cwd, "answer", rid, {
+            "run_id": f"gz-{rn._compact(rn._now())}-{rn._hex(4)}",
+            "result": result if result in ("REVIEWED", "FINDINGS", "ESCALATE") else "ESCALATE",
+            "seats": _field(text, "seats") or "self-only",
+            "coverage": {"scope": answer_scope(text)},
+            "attribution": attribution.splitlines() if attribution else [],
+            "text": text}, head=_field(text, "reviewed_head_sha"), skill="gaze")
+        level = rn.publish(cwd, [entry["id"]])
+    except (rn.Refusal, forge.ForgeRefusal) as exc:
+        print(f"answer: FAILED {exc}")
+        return 2
+    print(f"answer: recorded {entry['id']} in review {rid} ({level})")
+    remote = rn.setup(cwd) is not None
+    return 2 if remote and level != "retrievable" else 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("pr")
@@ -149,7 +209,7 @@ def main():
     ap.add_argument("--comment-file", type=Path)
     a = ap.parse_args()
     primary = primary_root()
-    tree = (primary / ".claude" / "worktrees" / f"review-{a.pr}").resolve()
+    tree = (primary / ".claude" / "worktrees" / f"review-{unit_key(a.pr)}").resolve()
     here = Path.cwd().resolve()
     if here == tree or tree in here.parents:
         print(f"gaze_close: cwd is inside the review worktree {tree}, which this call removes; "
@@ -167,7 +227,10 @@ def main():
     entry_branch = a.entry_branch or entry["branch"]
     status = 0
     lines = a.attribution_file.read_text().strip()
-    if lines:
+    local = unit_key(a.pr) != str(a.pr).strip()  # branch:<name>: the none backend, whatever IDH_FORGE says
+    if local and lines:
+        print("attribution: carried in the answer entry (no forge)")
+    elif lines:
         r = subprocess.run([sys.executable, str(HERE / "attribution_record.py"),
                             "--append-pr", a.pr, "--append", lines,
                              "--project", primary.name],
@@ -177,6 +240,9 @@ def main():
             status = 2
     ok, msg = cleanup(primary, a.pr, a.branch)
     print(f"cleanup: {msg}")
+    if not ok and local:
+        status = record_answer(primary, a.pr, f"result: ESCALATE\nreason: cleanup blocked: {msg}\n{plan_line}",
+                               lines) or status
     if not ok:
         print(f"/gaze cleanup blocked: {msg}; nothing posted: the calling gaze posts the "
               "ESCALATE comment (gh pr comment) naming these files", file=sys.stderr)
@@ -190,6 +256,9 @@ def main():
     if a.comment_file:
         text = (comment_text.replace("{{plan_check}}", plan_line)
                 .replace("{{duration}}", duration).replace("{{containment}}", report))
+        if local:
+            status = record_answer(primary, a.pr, text, lines) or status
+            return 4 if flags and status == 0 else status
         try:
             forge.get_forge(None, a.pr).comment(a.pr, text, strict=True)
             print("comment: posted")

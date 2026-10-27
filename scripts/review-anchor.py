@@ -39,7 +39,8 @@ def anchor(pr: str, worktree: Path) -> None:
     head = run("git", "-C", str(worktree), "rev-parse", "HEAD")
     if head != expected:
         raise ValueError(f"wrong HEAD for PR #{pr}: worktree={head} PR={expected}")
-    base_ref = f"refs/remotes/origin/{base}"
+    # no forge (`branch:<name>`): the base is already a ref such as origin/main or main
+    base_ref = base if record["id"].startswith("branch:") else f"refs/remotes/origin/{base}"
     run("git", "-C", str(worktree), "rev-parse", "--verify", base_ref)
     changed = run("git", "-C", str(worktree), "diff", "--name-only", "--no-renames",
                   f"{base_ref}...HEAD")
