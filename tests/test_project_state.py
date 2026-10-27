@@ -154,6 +154,26 @@ def test_ticket_state_erg_missing_falls_back_to_file_count(tmp_path, monkeypatch
     assert out["closed_unarchived"] == ["0002"]
 
 
+def test_ticket_state_prefers_vendored_erg_over_path(tmp_path, monkeypatch):
+    """The project's tickets/erg reads its tickets' format; an older erg on
+    PATH would report false violations, so the vendored binary wins."""
+    tickets = tmp_path / "tickets"
+    tickets.mkdir()
+    vendored = tickets / "erg"
+    vendored.write_text("#!/bin/sh\n")
+    vendored.chmod(0o755)
+    monkeypatch.setattr(ps.shutil, "which", lambda _x: "/usr/local/bin/erg")
+    seen = []
+
+    def responder(args):
+        seen.append(args[0])
+        return _cp(returncode=1)
+
+    monkeypatch.setattr(ps, "run", lambda args, cwd: responder(args))
+    ps.ticket_state(tmp_path)
+    assert seen[0] == str(vendored)
+
+
 def test_ticket_state_flags_closed_but_unarchived(tmp_path, monkeypatch):
     """A top-level tickets/*.erg carrying a Closed: header is the
     close-without-archive escape — flag its id, exclude it from `open`."""

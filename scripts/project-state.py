@@ -2,6 +2,7 @@
 """Per-project state probe. JSON on stdout, exit 0 always."""
 
 import json
+import os
 import shutil
 import subprocess
 import time
@@ -154,7 +155,13 @@ def ticket_state(project):
             "error": "no tickets/ directory",
         }
 
-    erg_bin = shutil.which("erg") or str(project / "tickets/erg")
+    # The project's vendored binary first: it reads the format the project's
+    # tickets use, where an older erg on PATH reports false violations.
+    vendored = project / "tickets/erg"
+    if vendored.is_file() and os.access(vendored, os.X_OK):
+        erg_bin = str(vendored)
+    else:
+        erg_bin = shutil.which("erg") or str(vendored)
 
     try:
         r = run([erg_bin, "ready", "--json", str(tickets_dir)], project)
