@@ -41,11 +41,23 @@ _be_is_protected_name() {
         LD_PRELOAD|LD_LIBRARY_PATH|LD_AUDIT|LD_DEBUG|LD_PROFILE|\
         GCONV_PATH|PYTHONPATH|NODE_OPTIONS|NODE_PATH|PERL5LIB|RUBYOPT|\
         GIT_SSH_COMMAND|GIT_SSH|GIT_ASKPASS|GIT_EXTERNAL_DIFF|LESSOPEN|LESSCLOSE|\
+        GH_CONFIG_DIR|GH_TOKEN|GITHUB_TOKEN|\
         TZ|TZDIR|LOCALDOMAIN|TERMINFO|BASH_XTRACEFD|HISTFILE|KEYS|\
         BASH_FUNC_*|DYLD_*) return 0 ;;
     esac
     return 1
 }
+
+# Agent shells use the narrow forge credential (ticket 1196): a separate gh
+# config dir logged in with a fine-grained token. GH_CONFIG_DIR is a path, not a
+# secret; this loader still reads no key file. Set only when the agent config
+# exists and the caller has not chosen one. The author's interactive shell does
+# not load this file (BASH_ENV is wired into agent runtime settings only).
+# Runs before the project .env parse, which can export HOME; GH_CONFIG_DIR is
+# a protected name there.
+if [ -z "${GH_CONFIG_DIR:-}" ] && [ -n "${HOME:-}" ] && [ -f "$HOME/.config/gh-agent/hosts.yml" ]; then
+    export GH_CONFIG_DIR="$HOME/.config/gh-agent"
+fi
 
 # BASH_ENV is sourced before Bash necessarily initializes PWD, so fall back to
 # the process cwd rather than silently skipping project configuration.
