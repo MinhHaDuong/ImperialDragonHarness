@@ -56,7 +56,10 @@ that already carries an after-merge record is reported `covered` and not run
 again: hooks/reference-transaction starts the runner on every move of main,
 ticket 1265), appends
 the record as a note on that tip, refetches, and loops while the tip moves; a
-result covers its tip and every tip it passed over. The record's scope is
+result covers its tip and every tip it passed over, but a tip the runner
+started on (its oid is appended to `.git/idh/after-attempts` before the checks
+run, ticket 1293) and that carries no record was not passed over: it crashed,
+and main_sweep --after lists it. The record's scope is
 `<scope>/after-merge` and its revision `tip=<oid>`, never `candidate=`, so
 neither `check` nor the main-update hook can take it for a before-merge record.
 On red it prints the ticket text (tip, failing checks, first-parent merges
@@ -772,6 +775,22 @@ def lock_file():
     return path
 
 
+def attempts_file():
+    """Host-local list of the tips a runner started on, beside the lock (ticket 1293)."""
+    return lock_file().with_name("after-attempts")
+
+
+def note_attempt(tip):
+    """Append `tip` before its checks run: a runner that dies leaves this and no record."""
+    with open(attempts_file(), "a", encoding="utf-8") as handle:
+        handle.write(tip + "\n")
+
+
+def attempted_tips():
+    path = attempts_file()
+    return set(path.read_text(encoding="utf-8").split()) if path.exists() else set()
+
+
 def fetch_tip(remote, branch):
     git("fetch", "-q", remote, f"+refs/heads/{branch}:refs/remotes/{remote}/{branch}")
     tip = rev(f"refs/remotes/{remote}/{branch}")
@@ -980,6 +999,7 @@ def run_after_once(tip, remote, actor, command):
     if config is None:
         return None
     config = after_config(config)
+    note_attempt(tip)  # a tip with no gate is not an attempt: it never gets a record
     started = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     with tempfile.TemporaryDirectory(prefix="merge-gate-after-") as tmp:
         tree = Path(tmp) / "tip"

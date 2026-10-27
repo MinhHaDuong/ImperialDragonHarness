@@ -228,6 +228,31 @@ def test_the_audit_lists_tips_without_an_after_record_and_runs_the_latest(tmp_pa
     assert not [line for line in again.stdout.splitlines() if line.startswith("after-gap")], again.stdout
 
 
+def test_the_audit_lists_a_tip_the_runner_crashed_on_but_not_one_it_passed_over(tmp_path):
+    """Ticket 1293: a newer record covers a tip passed over, not a tip a runner started on and left bare."""
+    work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    crashed = merge_branch(work, "crashed")
+    passed_over = merge_branch(work, "passed-over")
+    attempts = Path(git(work, "rev-parse", "--path-format=absolute", "--git-common-dir")) / "idh" / "after-attempts"
+    attempts.parent.mkdir(parents=True, exist_ok=True)
+    attempts.write_text(crashed + "\n", encoding="utf-8")  # what run_after leaves when it dies mid-run
+    merge_branch(work, "latest")
+    assert finish(run_after(work))[0] == 0  # green record on the newest tip
+    proc = audit(work, "--after")
+    gaps = [line.split()[1] for line in proc.stdout.splitlines() if line.startswith("after-gap")]
+    assert gaps == [crashed[:12]], proc.stdout + proc.stderr
+    assert passed_over[:12] not in gaps
+    assert proc.returncode == 1, proc.stdout  # the plain-audit findings also exit 1; the gap line is the point
+
+
+def test_the_runner_notes_each_tip_it_starts_on(tmp_path, module):
+    work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    tip = git(work, "rev-parse", "main")
+    assert finish(run_after(work))[0] == 0
+    common = Path(git(work, "rev-parse", "--path-format=absolute", "--git-common-dir"))
+    assert (common / "idh" / "after-attempts").read_text().split() == [tip]
+
+
 def test_an_after_record_alone_does_not_vouch_for_a_direct_commit(tmp_path):
     work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
     (work / "direct.txt").write_text("d\n", encoding="utf-8")
@@ -650,3 +675,22 @@ def test_broken_forge_still_records_the_tip(tmp_path, monkeypatch, module):
     assert "red ticket: not opened (AttributeError" in proc.stdout
     git(work, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
     assert [e["result"] for e in module.parse_note(note(work, red))] == ["fail"]
+
+
+def test_an_ungated_tip_is_not_an_attempt(tmp_path):
+    """A tip that declares no gate is not noted as attempted, so the audit
+    never lists it as a crash once a newer gated tip has a record."""
+    work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    (work / ".merge-gate.json").write_text(json.dumps({"gate": "off"}), encoding="utf-8")
+    git(work, "commit", "-qam", "gate off")
+    git(work, "push", "-q", "origin", "main")
+    ungated = merge_branch(work, "ungated")
+    assert "declares no gate" in finish(run_after(work))[1]
+    gated_cfg = {"gate": "on", "scope": "fixture-set", "checks": [{"name": "ok", "argv": ["true"]}]}
+    (work / ".merge-gate.json").write_text(json.dumps(gated_cfg), encoding="utf-8")
+    git(work, "commit", "-qam", "gate on")
+    git(work, "push", "-q", "origin", "main")
+    merge_branch(work, "gated")
+    assert finish(run_after(work))[0] == 0
+    gaps = [ln.split()[1] for ln in audit(work, "--after").stdout.splitlines() if ln.startswith("after-gap")]
+    assert ungated[:12] not in gaps
