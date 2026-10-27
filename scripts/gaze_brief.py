@@ -26,7 +26,7 @@ PANELS = {
 KEYS = ("seats", "scope", "why")
 DEFAULT = "seats=auto; scope=all"
 EDITORIAL_BRIEF = "docs/editorial-brief.md"
-LATER_KEY = re.compile(r";\s*(?:" + "|".join(KEYS) + r")\s*=")
+LATER_KEY = re.compile(r";\s*(?:" + "|".join(KEYS) + r")\s*=", re.IGNORECASE)  # `;SCOPE=` inside why= must not slip past
 LINE_BREAKERS = "\x85\u2028\u2029"
 
 
