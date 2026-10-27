@@ -1,0 +1,45 @@
+%erg 0.1
+Title: harness-doctor lints harness skills and rules from within the harness
+Created: 2026-10-27
+Author: Minh Ha-Duong
+Blocked-by: 1234
+
+--- log ---
+2026-10-27T05:45Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Parent: 1229. An author-called skill that runs only in the harness repo
+(outside it, it refuses with one line) and is never scheduled or triggered at
+session start. It covers what 1234 cannot check mechanically:
+contradiction within or between skills and rules, and a skill presuming or
+paraphrasing another skill's responsibility.
+
+Reference material moves under `skills/harness-doctor/references/`:
+- the skill-writing guide, now `rules/authoring-skills.md`;
+- the author's checklist (see 1229);
+- the evidence base in `docs/2026-04-03-harness-best-practices-research.md`
+  and `docs/Forsythe-2026-10principles.md`, as pointers.
+
+Trade-off to settle in the PR: `rules/authoring-skills.md` loads on every
+skill edit through its `paths:` frontmatter, and two tests cite it. Moving
+it wholesale removes that edit-time prompt. Default: leave a path-scoped stub
+of a few lines naming the enforced bullets and pointing to the reference.
+
+Runtime diagnostics: the doctor knows and runs the diagnostics each runtime
+ships, and reads their output as evidence beside its own pass. Claude Code:
+`/skill-doctor` report, `claude plugin eval`, `/doctor`. Codex and Pi:
+inventory what they ship (`docs/2026-09-16-runtime-capability-survey.md` is
+the starting point) and record the absence where there is none.
+
+## Exit criteria
+- [ ] Skill passes 1234 itself: under 150 lines, scripts in `scripts/`
+- [ ] Description pass first; full bodies read only for overlapping pairs
+- [ ] Each finding names both files and the conflicting lines; findings above
+      the severity floor become tickets, the rest are reported
+- [ ] Runtime diagnostics inventoried per runtime and invoked where present;
+      an unavailable diagnostic is reported as unavailable, not as clean
+- [ ] Reference material moved; `authoring-skills.md` stub or move decided
+      and the tests that cite it updated
+- [ ] Retirement clause in the skill: three consecutive runs with no finding
+      above the floor and the author is asked whether to delete it

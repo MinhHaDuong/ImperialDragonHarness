@@ -1,0 +1,22 @@
+%erg 0.1
+Title: molt resolves project-versus-harness coherence findings
+Created: 2026-10-27
+Author: Minh Ha-Duong
+Blocked-by: 1230
+
+--- log ---
+2026-10-27T05:45Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Parent: 1229. `molt` acts on what `yawn` reports (1230). Decision per finding:
+- general fix: open a ticket in the harness repo, not the project;
+- redundant local copy: delete it from the project;
+- deliberate local difference: keep it and write its reason next to it.
+
+## Exit criteria
+- [ ] molt consumes the 1230 findings; it does not re-derive them
+- [ ] Harness-bound findings become harness tickets above the severity floor
+      (`rules/workflow.md`), otherwise recorded below it
+- [ ] Project edits go through a project branch, never the harness checkout
+- [ ] A finding already marked `ok (reasoned)` is left alone
