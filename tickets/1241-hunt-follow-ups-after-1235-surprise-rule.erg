@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Hunt follow-ups after 1235: surprise rule, overlap check, monster and forge-less loose ends
+Created: 2026-10-27
+Author: claude
+
+--- log ---
+2026-10-27T09:10Z claude created
+
+--- body ---
+## Context
+Follow-ups from ticket 1235 (PR #1704, merged 2026-10-27 on author override
+after five gaze rounds). Items 1-2 are the author's design questions, answered
+in session; items 3-10 are review findings the author deferred here.
+
+## Exit criteria
+- [ ] 1. Plan has a surprise rule: ask before executing (escalation protocol, advisor first) when the route departs from what the ticket's author would expect: another deliverable kind, work beyond **Relevant files**, a dropped or reinterpreted exit criterion, anything irreversible or outward-facing. Otherwise announce and proceed.
+- [ ] 2. Plan checks for in-flight overlap: open merge requests and locked worktrees touching **Relevant files**; on overlap, name it in the plan and coordinate (PR comment, or a session message where the runtime allows); three or more on one file: a coordination change first (`rules/workflow.md`). Decide whether a helper script earns its place.
+- [ ] 3. A ticket returned as a monster mid-Execute: say what becomes of its locked worktree and partial branch, and what raid does when no later wave is left.
+- [ ] 4. `rules/workflow.md` monster line gives a lone autonomous session (neither orchestrator nor hunt) an action; stay inside the resident budget.
+- [ ] 5. Simplify hunt: drop the third restatement of the monster return in Execute, drop the Detach final-report clause if redundant, shorten "Too big or multipart" to a pointer to `rules/workflow.md`.
+- [ ] 6. Hunt's no-forge close stages narrowly, as `/merge` step Close does (`git add -u tickets/ && git add tickets/closed/<id>-*.erg`), not `tickets/` wholesale.
+- [ ] 7. Raid Phases 6-7 give a forge-less ready-to-merge branch a path through gating and merge, or say raid needs a forge.
+- [ ] 8. Hunt's `TMPDIR="$W/.tmp"` advice makes `tests/test_harness_doctor_skill.py::test_refusal_ignores_an_exported_work_tree` and `::test_refusal_outside_harness[no-repo]` fail (reproduced 2026-10-27: fail with TMPDIR in the worktree, pass with the default); fix the tests or the advice.
+- [ ] 9. Gaze takes only a PR number: no route for forge-less projects, and launched from a session whose cwd is another repo it resolves the wrong forge. Give it a branch/repo argument or document the limit.
+- [ ] 10. (low) The self-gate runs before the rebase, as before 1235; decide whether to swap.
+
+## Relevant files
+- `skills/hunt/SKILL.md`
+- `skills/raid/SKILL.md`
+- `skills/gaze/SKILL.md`
+- `rules/workflow.md`
+- `tests/test_harness_doctor_skill.py`
+
+## Test
+Wording items take no tests. Item 8 is a test fix; item 2's helper, if built, gets tests.
