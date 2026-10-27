@@ -13,6 +13,7 @@ Closed: Closed by the author 2026-10-27: 1286 fixed seat attribution and append 
 2026-10-27T19:35Z reviewer unlabel needs-human
 2026-10-27T19:35Z reviewer label deferred
 2026-10-27T21:26Z reviewer closed — Closed by the author 2026-10-27: 1286 fixed seat attribution and append order; journal path kept. trace-doctor's Watchlist row tracks attribution_query.py coverage (baseline 74/757 available over 28 days to 2026-10-27) and proposes reopening if the share has not risen two weeks after 1286. Author decisions recorded in the log bind any reopen.
+2026-10-27T21:55Z reviewer author confirmed the close in session 2026-10-27 (reply 'Confirmed' to verify-gate round-1 NEEDS-AUTHOR on PR #1841)
 
 --- body ---
 ## Context
