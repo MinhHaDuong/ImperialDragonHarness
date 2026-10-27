@@ -86,28 +86,35 @@ if [ -r "/proc/$PPID/cmdline" ]; then
 else
     git_argv=" $(ps -o args= -p "$PPID" 2>/dev/null) "
 fi
-# The subcommand of that command: `git [-c X] [-C X] [--opt] <sub> ...`, argv0
+# The subcommand of that command: `git [global options] <sub> ...`, argv0
 # skipped (under `gc` the parent is the child `git pack-refs`, argv0 its
-# libexec path). Empty when it cannot be read.
-if [ -r "/proc/$PPID/cmdline" ]; then
-    git_words=$(tr '\000' '\n' < "/proc/$PPID/cmdline" 2>/dev/null)
-else
-    git_words=$(ps -o args= -p "$PPID" 2>/dev/null | tr ' ' '\n')
-fi
+# libexec path). Words are the NUL-separated argv entries, never re-split: a
+# newline inside a word is masked (\001) before NUL becomes the separator, so
+# `-c $'a=b\npack-refs'` stays one word. Only git's own global options are
+# stepped over, each with its exact arity (git 2.43); an unknown option, or a
+# parent that is not readable from /proc (the `ps` fallback cannot tell words
+# apart), leaves git_sub empty: not pack-refs.
 git_sub=""
-skip=0
-first=1
-while IFS= read -r word; do
-    if [ "$first" = 1 ]; then first=0; continue; fi
-    if [ "$skip" = 1 ]; then skip=0; continue; fi
-    case "$word" in
-        -c|-C|--git-dir|--work-tree|--namespace|--super-prefix|--config-env) skip=1 ;;
-        -*) ;;
-        *) git_sub=$word; break ;;
-    esac
-done <<EOF_WORDS
+if [ -r "/proc/$PPID/cmdline" ]; then
+    git_words=$(tr '\n' '\001' < "/proc/$PPID/cmdline" 2>/dev/null | tr '\000' '\n')
+    skip=0
+    first=1
+    while IFS= read -r word; do
+        if [ "$first" = 1 ]; then first=0; continue; fi
+        if [ "$skip" = 1 ]; then skip=0; continue; fi
+        case "$word" in
+            -c|-C|--git-dir|--work-tree|--namespace|--super-prefix|--config-env|--attr-source) skip=1 ;;
+            --git-dir=*|--work-tree=*|--namespace=*|--super-prefix=*|--config-env=*|--attr-source=*|--exec-path=*) ;;
+            -p|--paginate|-P|--no-pager|--no-replace-objects|--no-lazy-fetch|--no-optional-locks|--no-advice) ;;
+            --bare|--exec-path|--html-path|--man-path|--info-path) ;;
+            --literal-pathspecs|--glob-pathspecs|--noglob-pathspecs|--icase-pathspecs) ;;
+            ""|-*) break ;;
+            *) git_sub=$word; break ;;
+        esac
+    done <<EOF_WORDS
 $git_words
 EOF_WORDS
+fi
 case "$git_argv" in *" fetch "*) ;; *) origin_new="" ;; esac
 case "$git_argv" in *" --stdin "*) stdin_tx=1 ;; *) stdin_tx=0 ;; esac
 

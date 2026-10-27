@@ -507,3 +507,59 @@ def test_enforce_still_refuses_creating_main_at_another_commit(repos):
     proc = git(wt2, "update-ref", "refs/heads/main", other, check=False)
     assert proc.returncode != 0
     assert git(wt2, "rev-parse", "-q", "--verify", "refs/heads/main", check=False).returncode != 0
+
+
+# --- the prune discriminator reads the parent's argv (ticket 1268, gaze finding) ---
+# The hook reads /proc/$PPID/cmdline. To drive it with an argv of our choosing
+# the parent is a `bash -c SCRIPT ...` whose cmdline is `bash -c SCRIPT <words>`:
+# argv0 is skipped, `-c` takes SCRIPT as its value (as `git -c X` would), and the
+# words after it stand in for what follows. SCRIPT feeds the hook a prune of a
+# packed main (`V -> 0`) and exits; its own text may carry a "\npack-refs" line.
+
+
+def _prune_through(repo, *words, script=None):
+    """Exit status of the hook's prepared phase for a prune, under a parent `bash -c SCRIPT *words`."""
+    value = rev(repo, "main")
+    script = script or 'printf "%s\\n" "$LINE" | sh hooks/reference-transaction prepared; exit $?'
+    env = _env()
+    env["LINE"] = f"{value} {'0' * 40} refs/heads/main"
+    return subprocess.run(
+        ["bash", "-c", script, *words], cwd=repo, env=env, capture_output=True, text=True
+    )
+
+
+def test_prune_discriminator_accepts_pack_refs_after_known_options(repos):
+    work = repos["work"]
+    _packed_main(work)
+    git(work, "config", "idh.mainGuard", "enforce")
+    assert _prune_through(work, "pack-refs").returncode == 0  # control: `git -c X pack-refs`
+    assert _prune_through(work, "-C", "x", "--attr-source=HEAD", "pack-refs").returncode == 0
+
+
+@pytest.mark.parametrize(
+    "words",
+    [
+        ("--attr-source", "pack-refs", "update-ref"),  # pack-refs is the option's value
+        ("--bogus-option", "pack-refs"),  # unknown option before the subcommand: fail closed
+        ("-C", "x", "--attr-source", "pack-refs"),
+    ],
+    ids=["attr-source-value", "unknown-option", "attr-source-after-C"],
+)
+def test_prune_discriminator_fails_closed_on_spoofed_argv(repos, words):
+    work = repos["work"]
+    _packed_main(work)
+    git(work, "config", "idh.mainGuard", "enforce")
+    proc = _prune_through(work, *words)
+    assert proc.returncode != 0, proc.stderr
+    assert "refused" in proc.stderr
+
+
+def test_prune_discriminator_does_not_split_a_word_on_newline(repos):
+    # `git -c $'a=b\npack-refs' update-ref -d ...`: one word, not two.
+    work = repos["work"]
+    _packed_main(work)
+    git(work, "config", "idh.mainGuard", "enforce")
+    script = 'printf "%s\\n" "$LINE" | sh hooks/reference-transaction prepared; exit $?\npack-refs'
+    proc = _prune_through(work, script=script)
+    assert proc.returncode != 0, proc.stderr
+    assert "refused" in proc.stderr
