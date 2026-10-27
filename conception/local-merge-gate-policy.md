@@ -77,10 +77,16 @@ One place states which credential agent sessions use (ticket 1196).
   `raid_land.py` on it. The repository has no CI, so check-run reads are untested.
 - **Git pushes over ssh use the author's key.** They are not gh calls: they can push
   branches and `refs/notes/*`, and cannot reach any admin API.
-- **Loader coverage.** `BASH_ENV` is wired into Claude Code settings only
-  (`adapters/lifecycle.py`; the projection of `bash-env.sh` lists the claude runtime).
-  Codex and Pi shells do not load it, so there the agent credential is not selected
-  automatically: the gap stays open until those adapters wire an equivalent.
+- **Loader coverage.** Claude Code selects the credential through `BASH_ENV`
+  (`adapters/lifecycle.py`). Codex and Pi have no shell-env hook, so their wrappers in
+  `scripts/shell-init.sh` launch the runtime with `GH_CONFIG_DIR` set for the child only
+  (an env prefix, never exported), when the agent config exists and the caller has not set
+  the variable (ticket 1284). The author's interactive shell stays on the owner login.
+  Measured 2026-10-27 on padme, through the wrappers, with an empty-body ruleset POST
+  (invalid by design: the owner login answers 422, verified as control): `codex exec` and
+  `pi --print` each ran `gh api -X POST .../rulesets` and got 403 "Resource not accessible
+  by personal access token". Residual gap: a Codex or Pi launched outside the wrappers
+  (IDE extension, desktop app, cron) stays on the owner login.
 - **Limitation, measured.** The `main-traceability` ruleset covers only `main`.
   `refs/notes/*`, including `refs/notes/gate` (the gate record), stay writable and
   deletable by the session credential
