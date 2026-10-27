@@ -1,0 +1,28 @@
+%erg 0.1
+Title: zotero check-staging retries with the filename title when the embedded PDF title matches nothing
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T13:53Z reviewer created
+
+--- body ---
+## Context
+Imported from GitHub issue MinhHaDuong/ImperialDragonHarness#1654 (cross-repo; sen-causal-reading
+ticket 0081 exit criterion 2 waits on it). `scripts/zotero.py check-staging` classifies as `absent`
+PDFs that Zotero stores identically (same storageHash): `audit_one` (~l. 2249) searches by the PDF's
+embedded `/Title` whenever it has >= TITLE_MIN_WORDS words and falls back to `_filename_title(path)`
+only when it is shorter; a junk or garbled embedded title (`PII 0304-4076(90)…`, `Microsoft Word - …`,
+`ajae_5132.tex`, SIAM headers, `NEO-KEYNBSIAN`) matches no item, no hash is compared, verdict `absent`.
+Evidence (issue): `find-work --title "<filename title>" --pdf <file>` → match while check-staging says
+absent; with `_pdf_info` neutralised, 12 of 25 such files become `identical`.
+
+## Exit criteria
+- [ ] When the embedded-title search yields no candidate, audit_one retries with the filename-derived
+      title, then compares the hash.
+- [ ] Regression test: a PDF whose /Title is junk and whose filename title matches a stored item reads
+      `identical`; it fails on today's code.
+- [ ] Issue #1654 is closed with a link to the merge; the harness gate passes.
+
+## Relevant files
+scripts/zotero.py, tests/test_zotero_import.py (or the check-staging test file)
