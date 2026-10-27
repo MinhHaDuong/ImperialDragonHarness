@@ -10,6 +10,7 @@ Author: Minh Ha-Duong
 2026-10-27T06:52Z reviewer reviewer note rewritten (author, 2026-10-27: management by intention, KISS, Trust Verify Monitor): intent in, gaze plans, executes, verifies plan against done, records. PR 1686 (brief grammar) closed unmerged as too much ceremony; Blocked-by 1226 dropped, the design no longer edits § Gating tiers.
 2026-10-27T06:54Z reviewer reviewer note author 2026-10-27: gaze is one pass, read-only on the code, delivers its report in one defined place (the result comment), may run checks but leaves scratch clean; added to Design and exit criteria
 2026-10-27T07:11Z reviewer reviewer note Fable review of PR 1698 applied with the author's rulings (2026-10-27): interface kept (gate fields, attribution block); family checked from the launch line and the worker's own first line; other-family for high risk is judgement, not a rule; no retry, a timeout is a deviation; existing cleanup step is the scratch check; force-approve, retry and the battery/review_groups/multi_ticket lines deleted; lints are checks not seats; Codex/Pi pass the intent verbatim; skill shrink measured.
+2026-10-27T07:15Z reviewer reviewer note author 2026-10-27: gaze stops mechanical adherence; the merge gate record (pytest-guard) and hunt's self-gate run it; rule-judgement stays a plannable perspective; the adherence: result field goes and verify-gate reads adherence from the gate record
 
 --- body ---
 ## Context
@@ -49,8 +50,12 @@ rounds, not a faster round.
    or stronger model, chosen through the route skill. For a high-risk what
    (the decorrelation.md rows: rules, gates, credentials, deletion), a look
    from another model family is worth its cost; gaze weighs that by judgement.
-   Mechanical lints (adherence tests, AI-tells for prose) are checks the plan
-   runs as scripts, never review seats.
+   Mechanical adherence (the `-m adherence` tests, verify-adherence's
+   mechanical tier) is not gaze's: the merge gate's record runs it on every
+   merge (`pytest-guard`), and hunt's self-gate before the merge request.
+   Gaze does not run it. Judging the change against the written rules is
+   review, and stays a perspective the plan may choose. Other lints, such as
+   AI-tells for prose, are checks the plan runs as scripts, never seats.
 3. **Execute.** Exactly the plan, nothing added.
 4. **Verify.** Plan against what was done: each planned item ran and
    reported; each worker is the family planned (its launch line, and the
@@ -64,8 +69,11 @@ rounds, not a faster round.
    model when known, time), plan check, findings, verdict (REVIEWED, FINDINGS
    or ESCALATE; gaze never approves), duration. The interface stays: the
    fields `/verify-gate`, `/merge` and `/raid` read today (`reviewed_head_sha`,
-   `adherence`, the result line) keep their names; `plan check:` replaces
+   the result line) keep their names; `plan check:` replaces
    `panel_integrity:`, and its readers are repointed in the same change. The
+   `adherence:` field goes: `/verify-gate` takes adherence from the gate
+   record's checks instead of from gaze (`--adherence-from`), in the same
+   change. The
    reviewer `attribution` block in the merge request body stays, as the
    register of who reviewed (read by `/merge` and the journal); the result
    comment is the register of what was found.
@@ -110,7 +118,8 @@ that wants them reviewed says so in the intent.
 - [ ] `/gaze` takes optional free text after the merge request number as its intent (what, why); with none, the default intent is the whole merge request against its ticket's exit criteria.
 - [ ] Gaze writes its plan (method, workers, budget) before launching anything, from nature, size, location and history; the guidance for it lives in one place and states the "cheapest method that settles the what" rule with a few worked cases.
 - [ ] After executing, gaze compares plan with what was done and records the outcome as a `plan check:` line; a planned perspective missing without a valid substitute blocks a REVIEWED verdict.
-- [ ] The result comment carries intent, plan, run, plan check, findings, verdict and duration; `reviewed_head_sha`, `adherence` and the result line keep their names; `plan check:` replaces `panel_integrity:` with every reader (verify-gate, merge, raid, tests) repointed; the body's attribution block is still written.
+- [ ] The result comment carries intent, plan, run, plan check, findings, verdict and duration; `reviewed_head_sha` and the result line keep their names; `plan check:` replaces `panel_integrity:` with every reader (verify-gate, merge, raid, tests) repointed; the body's attribution block is still written.
+- [ ] Gaze runs no mechanical adherence: no adherence seat by default and no `adherence:` result field; `/verify-gate` reads adherence from the merge gate record's checks (`--adherence-from` retired), and a test shows a gaze run launches no verify-adherence.
 - [ ] One pass, no recursion: the plan may run several workers in parallel, but no worker launches a further review and gaze has no internal round or fix loop; it returns after the single pass.
 - [ ] Read-only: a test shows a gaze run leaves the merge request's branch tip and the caller's worktree unchanged.
 - [ ] Scratch clean: checks run in gaze's own throwaway worktree; the existing cleanup step and exit preflight stay and are the check.
