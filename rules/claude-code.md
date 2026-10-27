@@ -21,7 +21,7 @@ inherit it: review seats cannot reach their review tree.
 |---------|---------------|-------|
 | Fresh conversation, no ticket | `explore-{topic}` | `[→ Imagine]` |
 | Ticket reference but no branch | `t{N}-{pid}` | `[→ Plan]` |
-| `/hunt N` | *decided inside hunt* | `[→ Execute]` |
+| `/hunt N` | *decided inside hunt* | `[→ Plan]` |
 | Active feature branch + open MR | `t{N}-{pid}` | `[→ Execute]` |
 | MR review | `review-{N}` | `[→ Verify]` |
 
