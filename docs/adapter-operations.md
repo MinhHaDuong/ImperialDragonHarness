@@ -86,7 +86,9 @@ From the permanent new checkout:
 
 Explicit reinstallation atomically refreshes links whose text still matches
 the installer receipt at
-`${XDG_STATE_HOME:-$HOME/.local/state}/idh/links.json`.
+`${XDG_STATE_HOME:-$HOME/.local/state}/idh/links.json`,
+and retires receipt-owned links into this checkout that the manifest no
+longer declares (a deleted skill, a dropped projection).
 Modified or foreign links are refused. If a refused link needs repair,
 inspect its ownership and resolve that single conflict explicitly.
 Do not remove a runtime configuration file to repair registration:
@@ -130,7 +132,7 @@ Other host integration is removed explicitly:
 The harness installs no scheduler; arrange recurring runs externally.
 An interrupted install can leave partial registration; rerun install and
 check from the current checkout. Only unchanged receipt-owned links are
-refreshed, and runtime configuration changes are backed up.
+refreshed or retired, and runtime configuration changes are backed up.
 
 ## Limits
 
