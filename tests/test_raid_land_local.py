@@ -203,3 +203,11 @@ def test_failed_push_after_the_move_is_exit_6_not_a_remerge(tmp_path, monkeypatc
     assert code == rl.UNKNOWN
     assert any("push failed" in line for line in out)
     assert git(work, "rev-parse", "main^2") == tip  # moved locally, reported, never re-merged
+
+
+def test_unreadable_origin_base_refuses(tmp_path, monkeypatch):
+    work, wt, origin = make_repo(tmp_path, monkeypatch, remote=True)
+    git(work, "config", "remote.origin.fetch", "+refs/heads/other:refs/remotes/origin/other")
+    git(work, "update-ref", "-d", "refs/remotes/origin/main")
+    with pytest.raises(rl.Refusal, match="cannot read origin/main"):
+        land(wt)

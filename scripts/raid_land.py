@@ -218,10 +218,11 @@ def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
         base = fg.base_branch(info)
         base_ref = base
         if remote:
-            git(cwd, "fetch", "-q", "origin")
+            if git(cwd, "fetch", "-q", "origin").returncode != 0 or git(
+                    cwd, "rev-parse", "--verify", "-q", f"origin/{base}").returncode != 0:
+                raise Refusal(f"cannot read origin/{base} (fetch failed or the remote has no {base})")
             # The push publishes every commit under the merge, so the local base must be origin's exactly.
-            if git(cwd, "rev-parse", "--verify", "-q", f"origin/{base}").returncode == 0 and rev(
-                    cwd, base) != rev(cwd, f"origin/{base}"):
+            if rev(cwd, base) != rev(cwd, f"origin/{base}"):
                 raise Refusal(f"local {base} differs from origin/{base} (behind, ahead or diverged: sync it first)")
     else:
         base = info.get("base") or base
