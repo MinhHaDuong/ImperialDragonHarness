@@ -364,3 +364,24 @@ def test_one_normaliser_reads_the_seats_claim(line, value):
     sys.path.insert(0, str(Path(CLOSE).parent))
     import gaze_close
     assert gaze_close.seats_claim(f"result: REVIEWED\n{line}\n") == value
+
+
+def test_record_answer_reads_the_claim_through_the_one_normaliser(monkeypatch):
+    """Ticket 1287: the notes record reads `seats:` through seats_claim, as main() does. The old
+    `_field` reader saw nothing in marked-up `**seats:** panel` and recorded `self-only`."""
+    import sys
+    sys.path.insert(0, str(Path(CLOSE).parent))
+    import gaze_close
+    seen = {}
+
+    def add(cwd, kind, rid, body, **kw):
+        seen.update(body)
+        return {"id": "e1"}
+
+    monkeypatch.setattr(gaze_close.rn, "add", add)
+    monkeypatch.setattr(gaze_close.rn, "publish", lambda cwd, ids: "retrievable")
+    monkeypatch.setattr(gaze_close.rn, "setup", lambda cwd: None)
+    text = "result: REVIEWED\nscope: full\n**seats:** panel\n"
+    code = gaze_close.record_answer("/nowhere", "7", text, "", identity={"review_id": "r1"})
+    assert code == 0
+    assert seen["seats"] == "panel"
