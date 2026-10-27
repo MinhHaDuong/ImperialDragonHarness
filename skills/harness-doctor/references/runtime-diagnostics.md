@@ -16,7 +16,8 @@ that prints one; a check that refreshes one needs the author.
 Reporting rule: a diagnostic that is absent, refuses, times out or was not
 run is reported as *unavailable* with the reason, never as clean. "Ships
 nothing" is recorded only against a control: the runtime's own command list,
-seen to answer.
+seen to answer. The report's "control fired" line covers each diagnostic
+used, against the control its runtime section names.
 
 An "Observed" note records a probe against the version named in its
 section heading. On a newer version, probe again before relying on it.
@@ -38,6 +39,9 @@ section heading. On a newer version, probe again before relying on it.
 - `claude plugin eval` (spends): behaviour evals against `evals/` cases, with
   `--json <file> --no-publish --max-cost-usd N`. The harness ships no eval
   cases; report it unavailable until it does.
+- Control: `claude plugin validate` on a scratch copy of one skill with its
+  `description:` line removed must flag it; `claude doctor` and the author
+  forms count as answering when they print their report.
 
 ## Codex (observed at 0.164.0)
 
@@ -51,6 +55,8 @@ section heading. On a newer version, probe again before relying on it.
   config, sandbox, state and install; its help calls the JSON report
   redacted. Install health, not skill text.
 - `codex review` (spends): a reviewer from another family, not a diagnostic.
+- Control: `codex debug prompt-input` must list a known harness skill (for
+  example `hunt`); `codex doctor --json` must return an `overallStatus`.
 
 ## Pi (observed at 1.4.0)
 
