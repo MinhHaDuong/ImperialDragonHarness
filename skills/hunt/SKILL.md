@@ -131,6 +131,9 @@ When the work shows the plan was wrong, replan and announce why.
   blocker in place and run it again, up to 3 times. Escalate instead of landing
   when a blocker needs design judgment, the third run still fails, or the skill
   errors or returns nothing usable.
+  A verdict never obtained (timeout, spawn refused, no return) is never dropped
+  silently: the final report carries `adherence: not obtained (<reason>)`, and
+  proceeding on `make lint` alone is allowed only with that line.
 - **Prepare to land.** Run the project's lint and fast test tier once (Python:
   `make lint` then `make check-fast`, `rules/coding-python.md` § Testing). The
   scoped gate (`rules/workflow.md` § Check scope) or the full one runs at

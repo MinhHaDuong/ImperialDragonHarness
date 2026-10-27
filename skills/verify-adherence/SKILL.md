@@ -224,8 +224,17 @@ independent follow `skills/route/references/decorrelation.md`. Give it:
   and line as separate keys, severity `blocking` or `nit`).
   Review only: do not edit, add, commit, push, or mutate project/forge state."
 
-Wait for completion and validate the worker's returned report before emitting
-PASS. Record observed runtime identity (worker/session id, model/family/effort
+Launch the worker in the background and tell it to write its report to a named
+path (`<worktree>/.panel/adherence-semantic.md`, written as `.md.part` then
+renamed). This skill is a fork: its turn ends the moment it stops calling tools,
+so a launch followed by narration ("waiting for the semantic worker") returns no
+verdict to the caller. Wait by polling that written artifact in one bounded loop
+of 10 minutes (`sleep` inside the tool call), then validate the worker's report
+before emitting PASS. At the deadline, or when the spawn is refused (the
+runtime's subagent spawn-depth cap can refuse a worker under
+raid -> coder -> fork), the worker timed out: record `status: unavailable`,
+reason "worker timed out" or "worker spawn refused". Never end the turn without
+the verdict block of phase 4. Full pattern: `skills/gaze/references/fork-contract.md`. Record observed runtime identity (worker/session id, model/family/effort
 where exposed), route/transport, launch evidence and completion evidence.
 Requested model names and a model's self-report are not observed identity;
 record masked identity fields as unavailable rather than inventing them.
@@ -311,6 +320,8 @@ This ratchet is the whole point. Do not accept `semantic_findings` as a steady s
 - No `trace=<path>` argument supplied → skip phase 1.2 silently (the trace is an
   optional input, like `worktree=`; a standalone author pre-check has none).
 - Phase 1 fails to run (env broken) → ESCALATE; don't fall through.
+- Semantic worker not back in 10 minutes, or spawn refused → `status: unavailable`,
+  emit the verdict (phase 3); a fork never ends its turn on "waiting".
 - Semantic subagent output lacks `file`, `line` or `suggested_test` → reject the output and
   flag as adherence-infrastructure bug. Don't silently accept.
 

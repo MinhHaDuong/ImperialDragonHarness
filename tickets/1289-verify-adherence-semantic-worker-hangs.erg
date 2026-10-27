@@ -42,3 +42,6 @@ worker"; the coders proceeded on make lint alone.
 
 ## Feasibility (raid 2026-10-27b)
 PASS. Wave 2 (hunt/SKILL.md shared with 1286).
+
+## Outcome (coder)
+Explained, not reproduced. Mechanism evidenced by gaze's fork contract (skills/gaze/references/fork-contract.md): a fork ends its turn when it stops calling tools, and background workers notify the main session, so a fork that launched the worker and narrated "waiting" returns no verdict at any depth. Spawn-depth cap (raid -> coder -> fork -> worker = 3) is a second, unproven hypothesis. The 1273/1281 coder transcripts were not found locally. Fix: bounded 10-minute poll of a written artifact, timeout -> status unavailable; hunt reports "adherence: not obtained (reason)".
