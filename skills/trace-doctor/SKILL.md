@@ -114,7 +114,11 @@ Cost does not rank turns and wall-clock, so report velocity separately, from
    largest first. Every duration is tool_use to tool_result, so it includes
    permission waits and background commands: label each figure "upper bound".
    `AskUserQuestion` hours are the author's own latency, not tool friction;
-   list them apart.
+   list them apart. When the Bash tail is mostly test or gate commands, the
+   remedy is a consultation, not a ticket: run
+   `python3 "$HARNESS_DIR/scripts/gate_traces.py" survey --project <path>` for
+   the projects concerned and offer `/test-doctor` with what it prints. Only
+   the author starts the consultation.
 2. **Wait commands** (`wait_commands`, `wait_hours_upper_bound`). The regex runs
    on the command minus quoted strings and heredoc bodies; durations are
    still an upper bound: say so.

@@ -20,7 +20,7 @@ Memory neighbours, none of them lifecycle skills proper:
 
 A consultation, not a lifecycle step: `/test-doctor` (testing expert) is started by the
 author only. `/lair` step 13 reports the speed bumps the traces show and
-suggests it; nothing else calls it.
+suggests it, as `/trace-doctor` does for a slow gate; nothing calls it.
 
 ## Choosing between neighbours
 
