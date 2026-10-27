@@ -336,3 +336,18 @@ def test_state_fingerprint_ignores_branch_cut_and_tracks_state(tmp_path):
 
     _git(repo, "commit", "-qam", "two")
     assert ps.state_fingerprint(repo) not in (before, edited)
+
+
+@pytest.mark.integration
+def test_state_fingerprint_sees_claude_housekeeping_branches(tmp_path):
+    """Yawn check 8 reports claude/housekeeping-* branches as "tidying"; a
+    reused report must not hide one created since."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q", "-b", "main")
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.invalid")
+    _git(repo, "commit", "-qm", "one", "--allow-empty")
+    before = ps.state_fingerprint(repo)
+    _git(repo, "branch", "claude/housekeeping-foo")
+    assert ps.state_fingerprint(repo) != before

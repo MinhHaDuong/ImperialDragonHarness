@@ -143,7 +143,9 @@ Run full repo housekeeping and act on every finding.
    skip the rerun; say so in the step 7 report. Different, `unavailable`, or no
    such line → the state has moved since: invoke /yawn. The fingerprint covers
    HEAD, the working tree, refs and worktrees, so a step 1 fetch that moved a
-   ref or a step 1.5 removal forces the rerun; molt's own branch cut does not.
+   ref or a step 1.5 removal forces the rerun. Molt's own branch cut does not,
+   provided yawn ran on a checkout already at `origin/main`; from a lagging
+   main or a feature branch the HEAD differs, and yawn runs again.
 
    With no earlier report, invoke /yawn. The probe (`project-state.py`)
    runs once inside yawn and covers all checks — do not re-run git

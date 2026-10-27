@@ -416,8 +416,8 @@ def pr_state(project):
 
 def state_fingerprint(project):
     """Hash of the repository state a yawn report describes: HEAD, working
-    tree, refs and worktrees. Branch names and molt's own housekeeping branch
-    are left out, so molt's step-1 branch cut alone does not change it; a
+    tree, refs and worktrees. Branch names and molt's own housekeeping-<date>
+    branch are left out (claude/housekeeping-* stays: yawn check 8 reads it), so molt's step-1 branch cut alone does not change it; a
     fetch that moved a ref, a commit, an edit or a removed worktree does."""
     parts = []
     for args in (
@@ -433,7 +433,7 @@ def state_fingerprint(project):
     parts[2] = "".join(
         line + "\n"
         for line in parts[2].splitlines()
-        if "/housekeeping-" not in line.split(" ", 1)[-1]
+        if not line.split(" ", 1)[-1].startswith("refs/heads/housekeeping-")
     )
     parts[3] = "".join(
         line + "\n"
