@@ -144,7 +144,7 @@ prescription is applied here.
 
 Report `barrier_denials` as data: how often each worktree guard refused a call
 (`unattributed` = blocked, guard not identified). Do not propose keeping or
-deleting a barrier: that verdict belongs to /pulse (`rules/workflow.md`, "No
+deleting a barrier: that verdict belongs to /test-doctor (`rules/workflow.md`, "No
 guards on guards"). For the arena's Pi sessions, run
 `python3 "$HARNESS_DIR/scripts/trace-friction.py" --pi-runs <runs dir> --json`;
 it never prints a command text.

@@ -1,4 +1,4 @@
-"""pulse_traces reads how long agents wait on test and gate commands.
+"""gate_traces reads how long agents wait on test and gate commands.
 
 The survey feeds a suggestion at lair, so its two failure modes both matter: a
 silent miss hides a real speed bump, and a false alarm teaches the author to
@@ -18,10 +18,10 @@ import pytest
 from child_env import child_env
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPT = REPO / "scripts" / "pulse_traces.py"
+SCRIPT = REPO / "scripts" / "gate_traces.py"
 sys.path.insert(0, str(REPO / "scripts"))
 
-import pulse_traces as pt  # noqa: E402
+import gate_traces as pt  # noqa: E402
 
 NOW = datetime(2026, 10, 21, 12, 0, tzinfo=timezone.utc)
 
@@ -192,7 +192,7 @@ def test_positive_control_a_slow_repeated_gate_fires(tmp_path, project):
     _slow_repeated(root, project)
     lines = pt.survey(root, project, days=7, now=NOW)
     assert len(lines) == 1
-    assert "make check-fast" in lines[0] and "ran 4x" in lines[0] and "/pulse" in lines[0]
+    assert "make check-fast" in lines[0] and "ran 4x" in lines[0] and "/test-doctor" in lines[0]
 
 
 def test_a_clean_trace_is_silent(tmp_path, project):
@@ -217,11 +217,11 @@ def test_few_runs_do_not_fire_however_slow(tmp_path, project):
 
 def test_not_being_able_to_look_is_said_not_silent(tmp_path, project):
     (line,) = pt.survey(tmp_path / "no-such-root", project, days=7, now=NOW)
-    assert line.startswith("pulse: not checked")
+    assert line.startswith("test-doctor: not checked")
     root = tmp_path / "traces"
     root.mkdir()
     (line,) = pt.survey(root, project, days=7, now=NOW)
-    assert line.startswith("pulse: not checked")
+    assert line.startswith("test-doctor: not checked")
 
 
 def test_activity_without_a_recognised_gate_says_so_instead_of_staying_silent(tmp_path, project):
@@ -254,7 +254,7 @@ def test_partial_blindness_is_said_not_silent(tmp_path, project):
     _trace(directory / "s1.jsonl", [_call("make check-fast", 8)])
     (directory / "gone.jsonl").symlink_to(directory / "does-not-exist.jsonl")
     (line,) = pt.survey(root, project, days=7, now=NOW)
-    assert line.startswith("pulse: checked 1 sessions") and "1 unreadable" in line
+    assert line.startswith("test-doctor: checked 1 sessions") and "1 unreadable" in line
 
 
 @pytest.mark.parametrize("bad", [
@@ -324,4 +324,4 @@ def test_cli_survey_and_collect_json(tmp_path, project):
     data = json.loads(collect.stdout)
     assert data["gates"]["make check-fast"]["runs"] == 4
     missing = _run("survey", "--project", str(project), "--traces", str(tmp_path / "none"))
-    assert missing.returncode == 0 and missing.stdout.startswith("pulse: not checked")
+    assert missing.returncode == 0 and missing.stdout.startswith("test-doctor: not checked")

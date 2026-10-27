@@ -6,7 +6,7 @@ For each: when it fits, its prerequisite, what to check first, how to verify, ho
 
 - **Fits.** A serial runner on a multi-core host, with independent tests.
 - **Prerequisite.** No shared mutable state, fixed ports or shared temporary paths. The worker plugin is installed or declared.
-- **Check first.** `pulse_profile.py profile <record> --workers N` for the lower bound: the longest test sets a floor, so one dominant test caps the gain.
+- **Check first.** `gate_profile.py profile <record> --workers N` for the lower bound: the longest test sets a floor, so one dominant test caps the gain.
 - **Verify.** Run twice with workers; compare the pass set with the serial run. Time it in the environment agents use.
 - **Undo.** Drop the flag. Price: about 0.5 author-hours.
 

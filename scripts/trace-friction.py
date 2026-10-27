@@ -15,7 +15,7 @@ with its tool_result, and reports per day:
   that ran to their cap, and an identical failing command repeated, each with a
   duration bound and the rung of the barrier ladder it maps to (data only);
 * barrier denials: how often each worktree guard refused a call (counts only;
-  a verdict on a barrier belongs to /pulse).
+  a verdict on a barrier belongs to /test-doctor).
 
 `--pi-runs DIR` reads the arena's Pi sessions instead and never emits a
 command text.
