@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Doctor visit: the IDH_ROOT helper paragraph repeated across skills
+Created: 2026-10-27
+Author: Minh Ha-Duong
+Blocked-by: 1238
+
+--- log ---
+2026-10-27T09:00Z Minh Ha-Duong created
+
+--- body ---
+## Complaint
+Author, 2026-10-27: skills start with the same paragraph, "For helper commands, set `IDH_ROOT=…`". The checklist flags a skill restating what another owns; here 16 of 38 `skills/*/SKILL.md` carry the paragraph, 14 of them verbatim, about 326 bytes each (about 5 KB in all, loaded with each skill, not resident). Measured on origin/main 1b427518.
+
+## What is already known (for the chart, not a diagnosis)
+- The repetition is deliberate and enforced: the loaded-skill path seam (ticket 0803; `tests/test_skill_seam.py`, including `test_the_canonical_one_line_spelling_dominates`). Each runtime supplies only the loaded skill's own path, so each skill derives the helper root itself.
+- yawn is the cross-runtime proof slice for the seam (`adapters/README.md`, `adapters/pilot-support.json`): any remedy is checked on Claude Code, Codex and Pi alike.
+
+## The visit
+Run `/harness-doctor` (the visit form from 1238) with this complaint. The doctor examines, gives a differential (e.g. necessary per-skill cost; a resident rule could carry it; a shorter canonical line; the runtime could supply the root; only skills that run helpers need it, and some carry it without using it), confirms with the cheapest observation, and offers priced options with odds, one recommended. The author decides; nothing changes before that.
+
+## Exit criteria
+- [ ] One visit run, journal entry written in the harness's repository memory
+- [ ] Diagnosis with confidence, and what stays unexplained
+- [ ] Options priced (author-hours, agent cost) with odds and undo, one recommended, each checked against the seam tests and the three-runtime proof slice
+- [ ] The author's choice recorded here; a chosen remedy filed as its own ticket, or the duplication accepted with its reason in `skills/harness-doctor/references/checklist.md`
