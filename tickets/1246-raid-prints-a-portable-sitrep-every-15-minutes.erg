@@ -1,0 +1,68 @@
+%erg 0.1
+Title: Raid prints a portable sitrep every 15 minutes
+Created: 2026-10-27
+Author: MinhHaDuong
+
+--- log ---
+2026-10-27T09:55Z MinhHaDuong created
+
+--- body ---
+## Context
+
+The raid has an executor-side watchdog (`raid-breaker.py`: 10-minute
+stall window, gate heartbeat, `--wait` that wakes the coordinator on
+`STALL`/`GATE_TIMEOUT`), but nothing on the coordinator side. An author
+who steps away during a raid has no progress trail until the wrap-up
+briefing, and a coordinator that went quiet is only noticed by looking.
+
+The author asked for a sitrep every 15 minutes that works on every runtime
+the harness supports (Claude Code, Codex, Pi), not just a Claude Code
+session cron. A 1-minute idle nudge was considered and set aside: each
+wake re-reads the coordinator's whole context (~9M cached tokens/hour at
+150K context), and a coordinator with pending background work is already
+woken by its notifications and by `raid-breaker.py --wait`.
+
+## Design direction
+
+Split what must be portable from what cannot be:
+
+1. **Sitrep producer, runtime-agnostic.** A script (e.g.
+   `scripts/raid-sitrep.py`) that renders the sitrep from durable state
+   only: the raid log, git (branches, worktrees, `WAVE_BASE`), the forge's
+   open PRs behind `# harness-extension-point`, and `raid-breaker.py`
+   readings. Because it reads disk and forge state and no conversation, any
+   runtime, the author's own shell (`watch -n 900 ...`) or a system timer can run it.
+   Today the raid log has no fixed path (`skills/raid/SKILL.md` mentions it
+   at the `WAVE_BASE` step), so this ticket fixes one.
+2. **Wake source, per runtime, behind an extension point.** In Claude Code,
+   a background command that exits on a 15-minute deadline wakes the
+   coordinator, like `raid-breaker.py --wait`. Codex and Pi: find each
+   runtime's equivalent; where none exists, the raid prints the sitrep at
+   each wave boundary and each circuit-breaker event, and says that the
+   timed cadence is unavailable on that runtime.
+3. **Fold the nudge into the sitrep.** When the sitrep shows nothing in
+   flight and a non-empty queue, the coordinator resumes the next wave
+   rather than ending its turn.
+
+Sitrep content (one screen): elapsed time vs. deadline/budget, current
+wave and its tickets, each PR's step (executing / gaze / gate round N /
+merged / escalated), breakers fired since the last sitrep, the next action.
+
+## Exit criteria
+
+- [ ] The raid log has a fixed, documented path, and the raid writes the
+      state the sitrep needs into it.
+- [ ] `scripts/raid-sitrep.py` renders the sitrep from durable state alone
+      and exits non-zero when it could not read part of its state. It
+      never prints an all-clear it cannot distinguish from "could not look".
+- [ ] `skills/raid/SKILL.md` arms the 15-minute cadence at raid start and
+      disarms it at wrap-up; runtime-specific lines sit behind
+      `<!-- harness-extension-point -->` (`scripts/check-agnostic.sh` passes).
+- [ ] The per-runtime wake source is documented for Claude Code, Codex and
+      Pi. A runtime without one degrades to wave-boundary sitreps, says
+      so, and does not fail silently.
+- [ ] An idle coordinator with a non-empty queue resumes on the sitrep
+      wake (folded nudge); one with an empty queue proceeds to wrap-up.
+- [ ] Tests cover rendering from a fixture raid log, the unreadable-state
+      exit, and the empty-queue vs. non-empty-queue branch.
+- [ ] `make check` passes.
