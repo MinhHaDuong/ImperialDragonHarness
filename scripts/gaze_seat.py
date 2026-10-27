@@ -224,7 +224,8 @@ def answer_of(door: dict, text: str) -> str:
     """
     marker = door.get('answer_marker')
     thinking = door.get('thinking_marker')
-    if marker and thinking and thinking in text and marker not in text:
+    marked = {line.strip() for line in text.splitlines()}
+    if marker and thinking and thinking in marked and marker not in text:
         return ''
     lines = text.split(marker, 1)[1].splitlines() if marker and marker in text else text.splitlines()
     if not (marker and marker in text):

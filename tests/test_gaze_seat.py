@@ -41,6 +41,8 @@ case "$STUB_MODE" in
     printf 'Aider v0.86.2\n--------------\n> **THINKING**\nverdict: clear\n------------\n> **ANSWER**\nNOT-RUN: tree unreachable\nTokens: 1\n' | sed 's/^> /\xe2\x96\xba /' ;;
   aider-truncated)
     printf 'Aider v0.86.2\n--------------\n> **THINKING**\nfinding: none\nverdict: clear\n' | sed 's/^> /\xe2\x96\xba /' ;;
+  aider-plain-quote)
+    printf 'Aider v0.86.2\nRepo-map: disabled\n\nfinding: none; the seat drops lines after @ **THINKING** markers\nverdict: clear\nTokens: 1\n' | sed 's/@/\xe2\x96\xba/' ;;
   aider-plain)
     printf 'Aider v0.86.2\nModel: openai/x with ask edit format\nGit repo: none\nRepo-map: disabled\nAdded d.diff to the chat (read-only).\n\nfinding: none\nverdict: clear\n\nTokens: 1 sent, 2 received.\n' ;;
   aider-plain-notrun)
@@ -469,6 +471,13 @@ def test_thinking_without_an_answer_is_no_report(rig, padme):
     result = aider_seat(rig, mode='aider-truncated')  # truncated: a verdict inside thinking only
     assert result.returncode == 1 and 'no report (empty output)' in result.stdout
     assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_plain_answer_quoting_the_thinking_marker_is_reported(rig, padme):
+    result = aider_seat(rig, mode='aider-plain-quote')  # the marker counts only as a line of its own
+    assert result.returncode == 0, result.stdout
+    assert 'verdict: clear' in (rig['panel'] / 'correctness.md').read_text()
 
 
 @pytest.mark.integration
