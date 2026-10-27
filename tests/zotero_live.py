@@ -60,6 +60,7 @@ import pytest
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 START_WAIT = 60.0
 DEFAULT_PORT = 23119
+PORT_ATTEMPTS = 4  # ports drawn before a foreign listener fails the start
 # The only variable taken from the caller. The author's display, Wayland
 # socket, X authority and session bus never reach a throwaway client: it
 # draws on a private Xvfb (author's order, 2026-10-16: no Zotero windows or
@@ -320,6 +321,19 @@ class LiveZotero:
         self.binary = zi.find_zotero_launcher()[0]
         self.version = zotero_version(self.binary)
         self.root = root
+        for attempt in range(PORT_ATTEMPTS):
+            if attempt:  # a fresh layout for the new port
+                shutil.rmtree(root, ignore_errors=True)
+            if self._start(local_api, one_time_key):
+                return
+        pytest.skip(f"the throwaway Zotero {self.version} found a foreign "
+                    f"listener on each of {PORT_ATTEMPTS} ports")
+
+    def _start(self, local_api: bool, one_time_key: bool) -> bool:
+        """Start the client on a newly drawn port; False when another
+        server holds that port (the caller retries), skip when the client
+        cannot run."""
+        root = self.root
         self.port = free_port()
         assert self.port != DEFAULT_PORT
         self.url = f"http://127.0.0.1:{self.port}"
@@ -341,6 +355,16 @@ class LiveZotero:
                 pytest.skip(f"the throwaway Zotero {self.version} did not answer "
                             f"on {self.url} within {START_WAIT:.0f} s")
             time.sleep(0.2)
+        # The client creates its database in the data directory it was given
+        # (not a default location); until it exists, an answer on the port
+        # may come from another server.
+        while not (self.data / "zotero.sqlite").exists():
+            if self.process.poll() is not None or (
+                    time.monotonic() - started > START_WAIT):
+                self.stop()
+                pytest.skip("the throwaway Zotero ignored -datadir; isolation "
+                            "not guaranteed")
+            time.sleep(0.2)
         if local_api:
             # The local API answers reads only once the client's initial item
             # load is done; no test writes before that.
@@ -350,13 +374,27 @@ class LiveZotero:
                 self.stop()
                 pytest.skip(f"the throwaway Zotero {self.version} did not load "
                             f"its items: {exc}")
+            if self._foreign_listener():
+                self.stop()
+                return False
         self.startup = time.monotonic() - started
-        # The data directory is the one given: the client did not fall back
-        # to a default location.
-        if not (self.data / "zotero.sqlite").exists():
-            self.stop()
-            pytest.skip("the throwaway Zotero ignored -datadir; isolation "
-                        "not guaranteed")
+        return True
+
+    def _foreign_listener(self) -> bool:
+        """One keyed write on the profile's own key: another server on this
+        port (two clients drawn the same port) answers every readiness read
+        but rejects the key with 401. The probe collection is removed."""
+        z = self.client()
+        try:
+            created = z.create_collections([{"name": "port-probe",
+                                             "parentCollection": False}])
+        except Exception as exc:  # pyzotero maps the status to its own errors
+            if "401" in str(exc) or "NotAuthorised" in type(exc).__name__:
+                return True
+            raise
+        key = created["successful"]["0"]["key"]
+        z.delete_collection(z.collection(key))
+        return False
 
     def stop(self) -> None:
         stop_client(self.process)
