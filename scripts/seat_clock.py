@@ -129,7 +129,7 @@ def plan_check(panel: Path) -> tuple[bool, list[str]]:
         if budget is not None and int(timed.group(1)) > budget:
             deviations.append(f'{name}: {timed.group(1)}s, over the {budget // 60}m budget')
         text = (panel / f'{name}.md').read_text(encoding='utf-8-sig', errors='replace')
-        lines_ = [ln.strip().strip('*').strip() for ln in text.splitlines() if ln.strip()]
+        lines_ = [ln.strip().strip('*').strip() for ln in text.splitlines() if re.search(r'\w', ln)]
         first = lines_[0] if lines_ else ''
         signed = first.lower().startswith('worker:')
         if not lines_ or (planned != 'none' and (not signed or len(lines_) < 2)):
@@ -137,7 +137,7 @@ def plan_check(panel: Path) -> tuple[bool, list[str]]:
             continue
         if planned == 'none':
             continue
-        named = re.search(r'family=([\w.-]+)', first)
+        named = re.search(r'family=([\w.-]+)', first, re.IGNORECASE)
         if not named:
             deviations.append(f'{name}: names no family, planned {planned}')
         elif named.group(1).lower() != planned.lower():
