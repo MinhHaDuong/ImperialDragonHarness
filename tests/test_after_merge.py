@@ -264,6 +264,28 @@ def test_the_runner_skips_a_tip_that_already_carries_an_after_record(tmp_path, m
     assert len([e for e in module.parse_note(note(work, tip)) if module.is_after_entry(e)]) == 1
 
 
+def test_the_audit_flags_a_tip_left_without_an_after_record_past_the_limit(tmp_path):
+    """Ticket 1265: a gap older than --stale-minutes is a finding even when the audit's own run is green."""
+    work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    assert finish(run_after(work))[0] == 0
+    git(work, "switch", "-q", "-c", "old", "main")
+    (work / "old.txt").write_text("old\n", encoding="utf-8")
+    git(work, "add", "-A")
+    git(work, "commit", "-q", "-m", "old")
+    git(work, "switch", "-q", "main")
+    two_hours_ago = f"{int(time.time()) - 7200} +0000"
+    subprocess.run(["git", "-C", str(work), "merge", "-q", "--no-ff", "old", "-m", "old merge"], check=True,
+                   capture_output=True, env={**child_env(), "GIT_COMMITTER_DATE": two_hours_ago})
+    git(work, "push", "-q", "origin", "main")
+    old = git(work, "rev-parse", "main")
+    proc = audit(work, "--after", "--summary")
+    assert f"1 older than 60 min: {old[:12]}" in proc.stdout, proc.stdout
+    fresh = merge_branch(work, "fresh")
+    proc = audit(work, "--after", "--stale-minutes", "180")
+    assert "older than" not in proc.stdout, proc.stdout
+    assert fresh[:12] in proc.stdout
+
+
 def test_landing_through_raid_land_starts_the_runner_through_the_hook(tmp_path, monkeypatch, module):
     """Ticket 1265: no caller starts the runner; the main-update hook does, on the sync's move of main."""
     monkeypatch.setenv("HOME", str(tmp_path / "home"))

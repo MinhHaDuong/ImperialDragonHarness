@@ -33,7 +33,10 @@ all-clear.
 With --after (ticket 1244), it also lists the first-parent tips newer than
 the newest one carrying an after-merge record (a record covers the tips its
 runner passed over) and runs `merge-gate.py run-after` on the latest; a red
-run is a finding.
+run is a finding. So is a gap tip committed more than --stale-minutes ago
+(ticket 1265): hooks/reference-transaction starts the runner on every move of
+main, so a tip that old without a record means the runner never started or
+died.
 
 Never run in the merge path: run by hand, or from the end-of-day wrap-up with
 --summary (one line).
@@ -137,22 +140,22 @@ def after_gaps(tip: str, max_count: int) -> tuple[list[tuple[str, str]], str]:
 
     A record covers its tip and every tip below it that it passed over, so
     the gaps are the tips newer than the newest recorded one, newest first.
-    Returns (gaps as (sha, subject), what bounds them).
+    Returns (gaps as (sha, committer time, subject), what bounds them).
     """
-    walked = mg.git("log", "--first-parent", f"--max-count={max_count}", "--format=%H %s", tip).stdout.splitlines()
+    walked = mg.git("log", "--first-parent", f"--max-count={max_count}", "--format=%H %ct %s", tip).stdout.splitlines()
     gaps = []
     for line in walked:
-        sha, _, subject = line.partition(" ")
+        sha, stamp, subject = (line.split(" ", 2) + [""])[:3]
         if mg.after_entries(sha):
             return gaps, f"since the after-merge record on {sha[:12]}"
-        gaps.append((sha, subject))
+        gaps.append((sha, int(stamp), subject))
     return gaps, f"none in the newest {max_count} first-parent commits"
 
 
-def after_audit(tip: str, ref: str, max_count: int, summary: bool) -> tuple[list[str], int]:
-    """Report the gaps and run the full set on the latest tip when there is one."""
+def after_audit(tip: str, ref: str, max_count: int, summary: bool, stale_minutes: float = 60) -> tuple[list[str], int]:
+    """Report the gaps, flag the stale ones, and run the full set on the latest tip when there is one."""
     gaps, bound = after_gaps(tip, max_count)
-    lines = [] if summary else [f"after-gap {sha[:12]}  {subject[:60]}" for sha, subject in gaps]
+    lines = [] if summary else [f"after-gap {sha[:12]}  {subject[:60]}" for sha, _, subject in gaps]
     if not gaps:
         return lines + [f"after: every tip carries an after-merge record ({bound})"], 0
     remote, _, branch = ref.partition("/") if ref.startswith("origin/") else ("origin", "", ref)
@@ -160,10 +163,14 @@ def after_audit(tip: str, ref: str, max_count: int, summary: bool) -> tuple[list
     command = f"main_sweep --after: merge-gate run-after --remote {remote} --ref {branch}"
     code = mg.run_after(remote, branch, actor, command) if not summary else _quiet_run(remote, branch, actor, command)
     head = f"after: {len(gaps)} tip(s) without an after-merge record ({bound})"
+    cutoff = time.time() - stale_minutes * 60
+    stale = [sha for sha, stamp, _ in gaps if stamp < cutoff]
+    if stale:  # the hook should have started a runner on each of them long ago
+        head += f", {len(stale)} older than {stale_minutes:g} min: {stale[0][:12]}"
     if code == mg.BUSY:
-        return lines + [f"{head}; not run: another runner holds the lock and will cover the newest tip"], 0
+        return lines + [f"{head}; not run: another runner holds the lock and will cover the newest tip"], int(bool(stale))
     lines.append(f"{head}; ran on {gaps[0][0][:12]}: {'red' if code else 'green'}")
-    return lines, code
+    return lines, code or int(bool(stale))
 
 
 def _quiet_run(remote: str, branch: str, actor: str, command: str) -> int:
@@ -220,6 +227,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--summary", action="store_true", help="one line, for the end-of-day wrap-up")
     p.add_argument("--after", action="store_true",
                    help="also report tips with no after-merge record and run the full set on the latest one")
+    p.add_argument("--stale-minutes", type=_positive(float), default=60,
+                   help="with --after, a tip without a record committed longer ago is a finding (default 60)")
     return p.parse_args(argv)
 
 
@@ -243,7 +252,7 @@ def run(args: argparse.Namespace) -> int:
     text = render(results, cut, args.summary)
     after_code = 0
     if args.after:
-        lines, after_code = after_audit(tip, args.ref, args.max_count, args.summary)
+        lines, after_code = after_audit(tip, args.ref, args.max_count, args.summary, args.stale_minutes)
         text += "; " + lines[-1] if args.summary else "\n" + "\n".join(lines)
     sys.stdout.write(text + "\n")
     if cut:

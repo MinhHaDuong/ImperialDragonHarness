@@ -120,8 +120,9 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     `python3 "$IDH_ROOT/scripts/main_sweep.py" --fetch --after --summary` and carry its
     one line into the final summary unchanged: `main audit: N commits in the
     last 24 h, M without a gate receipt: <first sha>`, then the after-merge
-    part (`--after`: tips with no after-merge record, and the full set run on
-    the latest of them). It prints nothing when
+    part (`--after`: tips with no after-merge record, any older than an hour
+    flagged since the main-update hook should have started their runner, and
+    the full set run on the latest of them). It prints nothing when
     the base declares no gate; a line ending `range cut …` or a `main audit:
     not checked (…)` line must be passed on, since silence would read as an
     all-clear; if the command itself fails, report `main audit: not checked
