@@ -61,8 +61,10 @@ def _fixture(root):
         _say(20, "Role: coder"),
         _use("h", "Skill", 21, skill="hunt"),
         _res("h", 22),
-        _use("t1", "Bash", 23, command=f"cd {WT} && uv run pytest tests/ -q"),
+        _use("t1", "Bash", 23, command=f"cd {WT} && uv run pytest tests/ -q > /tmp/x.log"),
         _res("t1", 53),                                                # test/gate 30
+        _use("mb", "Bash", 53, command="git merge-base --is-ancestor main HEAD"),
+        _res("mb", 54),                                                # read-only git
         _use("t2", "Bash", 54, command="uv run pytest tests/ -q"),
         _res("t2", 84),                                                # rerun, no change
         _use("e", "Edit", 85, file_path=f"{WT}/x.py"),
@@ -78,7 +80,7 @@ def _fixture(root):
 def _report(tmp_path):
     _fixture(tmp_path)
     since = datetime.now(timezone.utc) - timedelta(days=1)
-    return tw.survey(tw.load_traces(tmp_path, since))
+    return tw.survey(tw.load_traces(tmp_path, since), since - timedelta(days=30))
 
 
 def test_orchestrator_gaps_go_to_the_record_that_ends_them(tmp_path):
@@ -109,3 +111,15 @@ def test_command_dir_follows_cd_and_dash_c():
     assert tw.command_dir(f"cd {WT}/sub && make check", "/elsewhere") == WT
     assert tw.command_dir(f"git -C {WT} status", "/elsewhere") == WT
     assert tw.command_dir("make check", f"{WT}/a") == WT
+
+
+def test_command_key_never_prints_arguments():
+    assert tw.command_key("TOKEN=s3cret curl -H 'auth: x' https://h") == "curl"
+    assert tw.command_key("timeout 590 bash -c 'until grep -q X f; do sleep 5; done'") == "timeout"
+    assert tw.command_key("/x/scratchpad/idle.sh 9") == "idle.sh"
+
+
+def test_p90_is_nearest_rank_and_out_of_window_runs_drop(tmp_path):
+    _fixture(tmp_path)
+    traces = tw.load_traces(tmp_path, datetime.now(timezone.utc) - timedelta(days=1))
+    assert tw.survey(traces, T0 + timedelta(seconds=1))["raid"]["runs"] == 0

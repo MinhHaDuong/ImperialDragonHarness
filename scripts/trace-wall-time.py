@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Where raid, hunt and gaze runs spend their wall time, from Claude Code traces.
 
-    python3 scripts/trace-wall-time.py [--days N] [--projects DIR] [--json]
+    python3 scripts/trace-wall-time.py [--days N] [--projects-dir DIR] [--json]
 
 Zero-LLM, standard-library-only companion to trace-friction.py (which bounds
 slow tools) and gaze_wall_time.py (which splits gaze into seats). This one
@@ -11,7 +11,7 @@ decomposes every run of the three ticket-working skills:
   from that call to the trace's end; a hunt run likewise for hunt; a gaze run
   is a `forked-skill` agent named gaze. A hunt inside a raid tree is counted
   in both views (`nested_in_raid` says how many).
-* its tree is the run plus every agent it spawned, linked through each
+* its tree is the run plus every agent it spawned after its start, linked through each
   agent's `.meta.json` (`toolUseId`, or `parentAgentId` for forked skills).
 
 Every gap between two consecutive records of one trace is attributed to the
@@ -36,6 +36,8 @@ else the record's cwd: a heuristic, so a rerun is an estimate, not a proof.
 import argparse
 import importlib.util
 import json
+import math
+import os
 import re
 import statistics
 import sys
@@ -54,12 +56,14 @@ SKILLS = ("raid", "hunt", "gaze")
 POLL = re.compile(r"\bsleep\b|\bidle(\.sh)?\b|\buntil\b|\bwhile\b|\bwait\b|for \w+ in .*(seq|\{1\.\.)")
 GIT = re.compile(r"^\s*(git|gh|glab|erg-pr\S*|tickets/erg)\b|raid-merge|sync-local-main")
 MUT_GIT = re.compile(
-    r"\bgit\b[^|;&]*\b(commit|rebase|merge|pull|reset|checkout|switch|cherry-pick|am|restore|apply)\b"
+    r"\bgit\b[^|;&]*\b(commit|rebase|merge|pull|reset|checkout|switch|cherry-pick|am|restore|apply)\b(?!-)"
 )
 MUT_SH = re.compile(r"\bsed -i|\bperl -pi|\bmv |\bcp |\brm |>\s*[\w./~-]+\.\w+\b")
 CD = re.compile(r"^\s*cd\s+(\"[^\"]+\"|'[^']+'|\S+)")
 DASH_C = re.compile(r"\s-C\s+(\"[^\"]+\"|'[^']+'|\S+)")
 BLOCKER_MIN_S = 60
+ENV_ASSIGN = re.compile(r"[A-Za-z_]\w*=")
+NOT_BLOCKERS = {"generation", "human", "human-away", "idle-tail"}  # reported in the split, not here
 AWAY_S = 1800  # a human gap longer than this is the author away, not a reply
 
 
@@ -127,10 +131,22 @@ def tool_category(name, inp):
 
 
 def command_key(cmd):
-    c = gt._strip_heredocs(cmd)
-    c = re.sub(r"^\s*cd\s+\S+\s*&&\s*", "", c)
-    c = re.sub(r"/home/[^/\s]+/\S*?/", "", c)
-    return c.strip().split("\n")[0][:70]
+    """The command's leading program words, never its arguments or values.
+
+    A trace can hold a credential typed into a command; the report names
+    only what ran (`timeout bash`, `until`, `uv run`), as trace-friction's
+    Pi mode never prints a command text.
+    """
+    c = re.sub(r"^\s*cd\s+\S+\s*&&\s*", "", gt._strip_heredocs(cmd)).strip()
+    words = []
+    for w in re.split(r"[\s;&|]+", c.split("\n")[0]):
+        if not w or ENV_ASSIGN.match(w):
+            continue
+        w = os.path.basename(w)
+        if not re.fullmatch(r"[A-Za-z][\w.-]*", w) or len(words) == 2:
+            break
+        words.append(w)
+    return " ".join(words) or "(unnamed)"
 
 
 class Trace:
@@ -296,8 +312,8 @@ def test_events(trees, start):
                 if classes and not inp.get("run_in_background"):
                     end, failed = outcome.get(uid, (t, False))
                     ev.append(("test", t, d, ",".join(sorted(classes)), failed, (end - t).total_seconds()))
-                if MUT_GIT.search(cmd) or MUT_SH.search(gt._strip_heredocs(cmd)):
-                    ev.append(("mut", t, d))
+                elif MUT_GIT.search(cmd) or MUT_SH.search(gt._strip_heredocs(cmd)):
+                    ev.append(("mut", t, d))  # a test's own `> x.log` is not a change
     ev.sort(key=lambda e: e[1])
     return ev
 
@@ -332,13 +348,13 @@ def blocker_label(tr, cat, rec):
     return f"{cat} :: {use[0]}"
 
 
-def survey(traces, top=20):
+def survey(traces, since, top=20):
     raid_members = set()
     runs = {s: [] for s in SKILLS}
     for tr in traces:
         for skill in SKILLS:
             start = tr.start_of(skill)
-            if start is not None:
+            if start is not None and start >= since:
                 runs[skill].append((tr, start))
                 if skill == "raid":
                     raid_members.update(id(d) for d in descendants(tr))
@@ -349,7 +365,7 @@ def survey(traces, top=20):
         walls, agents, nested = [], 0, 0
         for tr, start in lst:
             nested += skill == "hunt" and id(tr) in raid_members
-            kids = descendants(tr)
+            kids = [k for k in descendants(tr) if k.recs and _ts(k.recs[0]["timestamp"]) >= start]
             agents += len(kids)
             walls.append(tr.wall(start))
             for member, member_start in [(tr, start)] + [(k, None) for k in kids]:
@@ -357,7 +373,7 @@ def survey(traces, top=20):
                     tree[cat] += gap
                     if member is tr:
                         orch[cat] += gap
-                    if cat != "generation" and gap >= BLOCKER_MIN_S:
+                    if cat not in NOT_BLOCKERS and gap >= BLOCKER_MIN_S:
                         blockers[blocker_label(member, cat, rec)] += gap
             n, s = redundancy(test_events([tr] + kids, start))
             red_n.update(n)
@@ -368,7 +384,7 @@ def survey(traces, top=20):
             "nested_in_raid": nested,
             "agents": agents,
             "wall_median_s": statistics.median(walls) if walls else 0,
-            "wall_p90_s": walls[max(0, int(0.9 * len(walls)) - 1)] if walls else 0,
+            "wall_p90_s": walls[math.ceil(0.9 * len(walls)) - 1] if walls else 0,  # nearest rank
             "wall_total_s": sum(walls),
             "orchestrator_s": dict(orch.most_common()),
             "tree_s": dict(tree.most_common()),
@@ -408,12 +424,12 @@ def print_report(report, days):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--days", type=float, default=28)
-    ap.add_argument("--projects", type=Path, default=DEFAULT_ROOT)
+    ap.add_argument("--projects-dir", type=Path, default=DEFAULT_ROOT)
     ap.add_argument("--top", type=int, default=20)
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     since = datetime.now(timezone.utc) - timedelta(days=a.days)
-    report = survey(load_traces(a.projects, since), a.top)
+    report = survey(load_traces(a.projects_dir, since), since, a.top)
     if a.json:
         json.dump(report, sys.stdout, indent=1)
         print()
