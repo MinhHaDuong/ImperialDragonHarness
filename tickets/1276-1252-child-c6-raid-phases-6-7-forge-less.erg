@@ -9,6 +9,7 @@ Author: reviewer
 2026-10-27T16:31Z reviewer note design: conception/2026-10-27-notes-review-spec.md, accepted by the author 2026-10-27 (ticket 1277 log); build to it
 2026-10-27T16:52Z reviewer note from PR 1806 (C5) reviews, for the end-to-end run: two concurrent-writer races in the local merge were tagged consider: and not reproduced; and after a failed push of main (exit 6) local main stays ahead — the rule for who reconciles and how (retry the push, never reset main) is unwritten and the author's call
 2026-10-27T16:52Z reviewer note blocker 1275 closed — Blocked-by removed.
+2026-10-27T16:56Z reviewer note held 2026-10-27 by the author: a design note on review/merge/propagation flows comes first; this end-to-end ticket waits for it to say which flows to exercise
 
 --- body ---
 ## Context

@@ -8,6 +8,7 @@ Author: reviewer
 2026-10-27T16:13Z reviewer note doudou<->padme trial run (conception/2026-10-27-notes-transport-trial.md): cases 1,2,3,5 PASS; rebase survival only with notes.rewriteRef per clone and leaves orphans; no GitHub refusal of notes refs. Web-leg script conception/2026-10-27-notes-web-leg.sh, positive control PASS on padme; ChatGPT Work and Claude Code Web legs pending (author).
 2026-10-27T16:31Z reviewer note author accepted the spec 2026-10-27 with Fable's advice on the five decisions: (1) anchor on a fixed note per review_id — check once on doudou git 2.53 and GitHub that a note on an absent object works; (2) keep refs/review-heads by default, prune only on explicit housekeeping and only heads already in main; (3) web legs run by the author with the fixed script, A-D rule stands, C3 does not wait; (4) tamper detection in the helper now, no signing (refs/notes/gate is unsigned anyway); (5) rules/git.md clause written at C5's merge, no-forge landing only with IDH_FORGE=none set deliberately. Carry-over by git patch-id --verbatim (measured). 1273 unblocked; this ticket stays open for the web legs.
 2026-10-27T16:35Z reviewer note verify-reroll — round 1: rebase onto origin/main (tickets/closed/1196 conflicts); web legs of 1277 recorded as pending
+2026-10-27T16:56Z reviewer note author 2026-10-27: recalibrate the flows (review locally + forge merge; local merge + push upstream; local merge to a /srv hub on padme; peer to peer). Design note first, reviewed for practices and values; more choice is not always better.
 
 --- body ---
 ## Context
