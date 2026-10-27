@@ -39,8 +39,8 @@ checks `.merge-gate.json` lists for its tier, so the trace stays uniform and
 the cost stays small. A
 bookkeeping diff on an open fast path (ticket 1226) runs only the fast-path
 checks; the full set then runs on the new main tip, after the merge, through
-`scripts/merge_monitor.py`. The policy is `skills/merge/SKILL.md` § Gating tiers. **Pending**
-(ticket 1171 and the activation pull request of ticket 1156). Ticket 1172, reading the forge's result for a head, was closed as superseded by this flow.
+`scripts/merge_monitor.py`. The policy is `skills/merge/SKILL.md` § Gating tiers. In place
+(tickets 1171 and 1156 closed; the fast path, ticket 1226). Ticket 1172, reading the forge's result for a head, was closed as superseded by this flow.
 
 ## Forge settings
 
@@ -79,8 +79,8 @@ checks; the full set then runs on the new main tip, after the merge, through
 - Fail closed: an unreadable declaration, a malformed file, an empty forge check
   list or a failed inspection refuses the merge; only an explicit `"gate": "off"`
   turns the gate off.
-- **Pending** (ticket 1156): the record and the refusal in the merge helper,
-  then the activation pull request that turns the gate on.
+- In place (ticket 1156, closed): the record and the refusal in the merge helper,
+  and the activation that turned the gate on.
 
 ## The guard on the base branch
 

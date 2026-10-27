@@ -428,3 +428,30 @@ def test_only_exit_1_reads_as_a_missing_note(monkeypatch, code, raises):
             mg.read_note("0" * 40)
     else:
         assert mg.read_note("0" * 40) == ""
+
+
+def test_a_verdict_survives_a_concurrent_notes_fetch_between_append_and_push(repo, monkeypatch):
+    """Gaze round 8: another session's fetch (+ref:ref) resets the local verdict ref
+    after the append. Pushing the ref by name then reports "up to date" and the red
+    verdict is lost, leaving the fast path open on the older green one."""
+    monkeypatch.chdir(repo)
+    mg = load_monitor().mg
+    ref = mg.VERDICT_REF
+    base = git(repo, "rev-parse", "HEAD")
+    mg.append_and_push(base, "green", "origin", ref=ref)
+    real_git, clobbered = mg.git, []
+
+    def interleaved(*args, **kwargs):
+        result = real_git(*args, **kwargs)
+        if args[:1] == ("notes",) and "append" in args and not clobbered:
+            clobbered.append(True)
+            real_git("fetch", "-q", "origin", f"+{ref}:{ref}")  # the concurrent session
+        return result
+
+    monkeypatch.setattr(mg, "git", interleaved)
+    mg.append_and_push(base, "red", "origin", ref=ref)
+    assert clobbered
+    origin = repo.parent / "origin.git"
+    shown = subprocess.run(["git", "-C", str(origin), "notes", f"--ref={ref}", "show", base],
+                           capture_output=True, text=True, check=True, env=child_env())
+    assert "red" in shown.stdout

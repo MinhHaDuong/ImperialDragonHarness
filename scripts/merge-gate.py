@@ -565,6 +565,15 @@ def read_note(oid, ref=NOTES_REF):
     return shown.stdout if shown.returncode == 0 else ""
 
 
+def note_at(commit, oid):
+    """The note on `oid` as stored in notes commit `commit` (not the moving ref), or ""."""
+    for line in git("ls-tree", "-r", commit).stdout.splitlines():
+        meta, _, path = line.partition("\t")
+        if path.replace("/", "") == oid:
+            return git("cat-file", "-p", meta.split()[2]).stdout
+    return ""
+
+
 def append_and_push(oid, text, remote, ref=NOTES_REF, fetched=False):
     """Append one entry and push; on a lost race, refetch and append once more.
 
@@ -580,7 +589,15 @@ def append_and_push(oid, text, remote, ref=NOTES_REF, fetched=False):
         if attempt > 1 or not fetched:
             fetch_notes(remote, ref)
         git("notes", f"--ref={ref}", "append", "-m", text, oid)
-        push = git("push", "-q", remote, f"{ref}:{ref}", check=False)
+        # Push the commit that holds this entry, by SHA, and only once the entry is
+        # seen in it: a concurrent fetch (+ref:ref) can reset the local ref between
+        # the append and the push, and pushing the ref by name would then report
+        # "up to date" while the entry is lost (gaze round 8). A lost entry is a lost race.
+        tip = git("rev-parse", "--verify", "--quiet", ref, check=False).stdout.strip()
+        if not tip or text not in note_at(tip, oid):
+            LOG.warning("notes entry lost to a concurrent fetch (attempt %d)", attempt)
+            continue
+        push = git("push", "-q", remote, f"{tip}:{ref}", check=False)
         if push.returncode == 0:
             return
         LOG.warning("notes push rejected (attempt %d): %s", attempt, push.stderr.strip())
