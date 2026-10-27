@@ -302,8 +302,8 @@ REACH = re.compile(r'reach:\s*read=(yes|no)\s+shell=(yes|no)\s+tests=(ran|not-ru
 def reach_refusal(report: str) -> str | None:
     """Why the seat's declared reach rules out a report: no `reach:` line, or `read=no`."""
     lines = [line.strip().strip('*`').strip() for line in report.splitlines() if line.strip()]
-    line = next((x for x in lines if x.lower().startswith('reach:')), None)
-    if line is None or not (m := REACH.fullmatch(line)):
+    line = lines[1] if len(lines) > 1 else ''  # the launcher's worker line is first
+    if not (m := REACH.fullmatch(line)):
         return 'no valid reach line'
     return 'read=no' if m.group(1).lower() == 'no' else None
 

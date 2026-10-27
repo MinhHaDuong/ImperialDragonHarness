@@ -49,6 +49,7 @@ case "$STUB_MODE" in
   notrun-tick) printf 'Reading the tree first.\n`NOT-RUN: HEAD moved`\n' ;;
   mentions) printf 'reach: read=yes shell=no tests=not-run\nfinding: the seat prints NOT-RUN: on refusal, as specified\nverdict: clear\n' ;;
   noread) printf 'reach: read=no shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
+  lateread) printf 'Looking.\\nreach: read=yes shell=no tests=not-run\\nverdict: clear\\n' ;;
   noreach) printf 'finding: none\nverdict: clear\n' ;;
   empty) : ;;
   aiderish)
@@ -173,6 +174,12 @@ def test_report_without_reach_line_is_no_report(rig):
     assert result.returncode == 1
     assert 'seat reach: no valid reach line' in result.stdout
     assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_reach_line_must_be_the_second_line(rig):
+    result = launch(rig, mode='lateread')
+    assert result.returncode == 1 and 'seat reach: no valid reach line' in result.stdout
 
 
 @pytest.mark.integration
