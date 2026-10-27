@@ -1,0 +1,48 @@
+%erg 0.1
+Title: After-merge runner: full suite on the newest main tip, red opens a ticket, audit covers gaps
+Created: 2026-10-27
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-27T09:32Z reviewer created child 1 of tracker 1226 (author, 2026-10-27)
+
+--- body ---
+## Context
+
+Child 1 of tracker 1226 (optimistic merge, option C). Purely additive: today's
+full gate record keeps running before the merge until child 1245 lands, so
+main is never untested in between. Design in 1226 § Design; this ticket
+carries its after-merge half.
+
+## Design
+
+- **Runner** (new script, launched in the background by the merging session
+  after the read-back): takes a host-local `flock` (the kernel frees it when
+  the holder dies; no pid file). Lock busy: exit at once, the holder will see
+  the new tip. Holding it: run the after set on the current `origin/main`
+  tip, write the record as a note on that tip, fetch; if main moved, loop on
+  the newest tip until quiet. A result covers its tip and every tip it passed
+  over.
+- **Scope line** of an after-merge record differs from a before-merge one, so
+  neither `check` nor the guard hook can take one for the other.
+- **Red:** open a ticket naming the tip, the failing checks and the
+  first-parent merges since the last green after-record. Main is read-only,
+  so the ticket lands through a ticket-only PR merged on the bookkeeping
+  path. That merge starts a runner on a tip still red: **dedupe** — no new
+  ticket while an open one already names the same failing checks. Nothing
+  reverts automatically; no flaky re-run (a red check is red).
+- **Audit:** `scripts/main_sweep.py` reports main tips with no
+  after-merge record and runs the after set on the latest one.
+- Other hosts: a merge from another machine starts its own runner; tolerated
+  (one wasted run, never a wrong record).
+
+Out: everything 1226 § Design lists as out; changing what runs before the
+merge (child 1245).
+
+## Exit criteria
+
+- [ ] After a merge, the runner runs the full set on the main tip in the background and writes its record as a note on that tip, under an after-merge scope line.
+- [ ] One runner at a time via `flock`: a test with three quick merges shows at most two runs, the last on the newest tip; a killed runner leaves no lock behind.
+- [ ] A red after-merge record opens a ticket naming the tip, the failing checks and the merges since the last green tip; a test shows it on a planted failure, and a second red run on the same failure opens no second ticket.
+- [ ] The daily audit reports main tips with no after-merge record and runs the set on the latest one; a test shows it.
+- [ ] `skills/merge/SKILL.md` step 8 (or after) starts the runner; the harness gate passes.
