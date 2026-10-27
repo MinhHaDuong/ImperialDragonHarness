@@ -2,9 +2,11 @@
 Title: 1252 child: landing route read off the repository — local merge only with no origin remote, else refuse without gh
 Created: 2026-10-27
 Author: reviewer
+Closed: closed by raid — PR #1814
 
 --- log ---
 2026-10-27T17:13Z reviewer created
+2026-10-27T17:31Z reviewer closed — closed by raid — PR #1814
 
 --- body ---
 ## Context

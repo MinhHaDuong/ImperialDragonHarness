@@ -7,7 +7,8 @@ A review unit is (branch, base ref, head OID). `resolve` takes a request number
 (gh backend) or `branch:<name> [base=<ref>]` (none backend) and returns one record:
 id, branch, base, head, state, mergeable, draft, body, claims; the none backend adds
 review_id, the latest review naming the branch in refs/notes/review (ticket 1273), or None. Backend choice:
-`--forge` or `IDH_FORGE`; `auto` is gh when `gh` is on PATH and the ref is a bare number.
+`--forge`; `auto` is gh when `gh` is on PATH and the ref is a bare number. There is no environment
+switch: the landing route is read off the repository (ticket 1280, conception/2026-10-27-review-merge-flows.md).
 
 Operations: resolve, comments, checks, comment, append_body_line, create, ready,
 auto_merge_armed, disarm, merge, read_back. On the `none` backend comment,
@@ -368,16 +369,37 @@ class NoneForge:
         return "MERGED - -" if info["state"] == "MERGED" else f"OPEN {info['head']} -"
 
 
-def get_forge(choice: str | None = None, ref: str = "", cwd: str | None = None):
-    """Pick a backend: `choice` or IDH_FORGE (auto|gh|none); auto = gh when on PATH and ref is a number."""
-    choice = choice or os.environ.get("IDH_FORGE") or "auto"
+def _has_origin(cwd: str | None) -> bool:
+    return subprocess.run(["git", "-C", cwd or ".", "remote", "get-url", "origin"],
+                          capture_output=True, text=True).returncode == 0
+
+
+def get_forge(choice: str | None = None, ref: str = "", cwd: str | None = None, landing: bool = False):
+    """Pick a backend: `choice` (auto|gh|none; default auto). No environment switch (ticket 1280).
+
+    auto reads the route off the repository. Reviewing: gh when it is on PATH and the ref is a bare
+    number, else none (review on notes). Landing (`landing=True`): with a remote named origin the
+    forge is the only route, so gh or a refusal naming the cause, never the local merge; with no origin
+    remote the local gated merge (none). An explicit `gh` or `none` is for tests and the --forge flag."""
+    choice = choice or "auto"
     if choice == "gh":
         return GhForge(cwd)
     if choice == "none":
         return NoneForge(cwd)
     if choice != "auto":
         raise ForgeRefusal(f"unknown forge {choice!r} (auto|gh|none)")
-    return GhForge(cwd) if shutil.which("gh") and re.fullmatch(r"#?\d+", ref.strip()) else NoneForge(cwd)
+    numeric = bool(re.fullmatch(r"#?\d+", ref.strip()))
+    if landing and _has_origin(cwd):
+        if not shutil.which("gh"):
+            raise ForgeRefusal("this repository has an origin remote and gh is not available; "
+                               "landing waits for the forge")
+        if not numeric:
+            raise ForgeRefusal(f"this repository has an origin remote; landing {ref!r} needs a forge "
+                               "request number, never the local merge")
+        return GhForge(cwd)
+    if landing:
+        return NoneForge(cwd)  # no origin remote: the local gated merge, whatever the ref
+    return GhForge(cwd) if shutil.which("gh") and numeric else NoneForge(cwd)
 
 
 def main(argv=None) -> int:

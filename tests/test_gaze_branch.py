@@ -109,11 +109,10 @@ def test_malformed_trailer_claim_blocks_and_opens_nothing(tmp_path):
     assert rn.find(primary, "feature") is None
 
 
-def test_unknown_forge_env_still_cleans_up(tmp_path):
+def test_close_still_cleans_up(tmp_path):
     primary, env = branch_repo(tmp_path)
     r = run(SETUP, ["branch:feature"], primary, env)
     f = fields(r.stdout)
-    env["IDH_FORGE"] = "bogus"
     attr = tmp_path / "attr.txt"
     attr.write_text("")
     r = run(CLOSE, ["branch:feature", "--branch", "feature", "--attribution-file", str(attr)], primary, env)

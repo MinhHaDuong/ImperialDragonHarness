@@ -227,7 +227,7 @@ def main():
     entry_branch = a.entry_branch or entry["branch"]
     status = 0
     lines = a.attribution_file.read_text().strip()
-    local = unit_key(a.pr) != str(a.pr).strip()  # branch:<name>: the none backend, whatever IDH_FORGE says
+    local = unit_key(a.pr) != str(a.pr).strip()  # branch:<name>: the none backend
     if local and lines:
         print("attribution: carried in the answer entry (no forge)")
     elif lines:

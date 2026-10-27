@@ -64,7 +64,6 @@ def stub(tmp_path, monkeypatch):
     monkeypatch.setenv("STUB_LOG", str(tmp_path / "log"))
     monkeypatch.setenv("STUB_STATE", str(state))
     monkeypatch.setenv("PATH", f"{bindir}{os.pathsep}{os.environ['PATH']}")
-    monkeypatch.delenv("IDH_FORGE", raising=False)
     return state
 
 
@@ -75,7 +74,6 @@ def nogh(tmp_path, monkeypatch):
     bindir.mkdir()
     (bindir / "git").symlink_to(shutil.which("git"))
     monkeypatch.setenv("PATH", str(bindir))
-    monkeypatch.delenv("IDH_FORGE", raising=False)
     assert shutil.which("gh") is None
 
 
@@ -146,19 +144,44 @@ def test_gh_absent_is_a_typed_refusal(nogh):
         forge.GhForge().resolve("7")
 
 
-def test_auto_picks_by_path_and_ref(stub, nogh, monkeypatch):
+def test_auto_reviewing_picks_by_ref(stub, nogh):
     assert isinstance(forge.get_forge("auto", "branch:t1-x"), forge.NoneForge)
     assert isinstance(forge.get_forge("auto", "7"), forge.NoneForge)  # gh absent
-    monkeypatch.setenv("IDH_FORGE", "gh")
-    assert isinstance(forge.get_forge(None, "7"), forge.GhForge)
-    monkeypatch.setenv("IDH_FORGE", "bogus")
     with pytest.raises(forge.ForgeRefusal):
-        forge.get_forge(None, "7")
+        forge.get_forge("bogus", "7")
+
+
+def test_idh_forge_env_is_ignored(stub, monkeypatch):
+    monkeypatch.setenv("IDH_FORGE", "none")
+    assert isinstance(forge.get_forge(None, "7"), forge.GhForge)
 
 
 def test_auto_takes_gh_for_a_number_when_present(stub):
     assert isinstance(forge.get_forge("auto", "7"), forge.GhForge)
     assert isinstance(forge.get_forge("auto", "branch:t1-x"), forge.NoneForge)
+
+
+def test_landing_with_origin_never_local(repo, stub):
+    sh(repo, "remote", "add", "origin", str(repo))
+    assert isinstance(forge.get_forge(None, "7", cwd=str(repo), landing=True), forge.GhForge)
+    with pytest.raises(forge.ForgeRefusal, match="origin"):
+        forge.get_forge(None, "branch:t1-x", cwd=str(repo), landing=True)
+
+
+def test_landing_with_origin_without_gh_refuses_naming_cause(repo, nogh):
+    sh(repo, "remote", "add", "origin", str(repo))
+    for ref in ("7", "branch:t1-x"):
+        with pytest.raises(forge.ForgeRefusal, match="origin remote and gh is not available"):
+            forge.get_forge(None, ref, cwd=str(repo), landing=True)
+
+
+def test_landing_without_origin_is_the_local_merge(repo, nogh, stub):
+    assert isinstance(forge.get_forge(None, "branch:t1-x", cwd=str(repo), landing=True), forge.NoneForge)
+
+
+def test_reviewing_with_origin_is_unchanged(repo, nogh):
+    sh(repo, "remote", "add", "origin", str(repo))
+    assert isinstance(forge.get_forge(None, "branch:t1-x", cwd=str(repo)), forge.NoneForge)
 
 
 def test_none_resolve_from_git_only(repo, nogh):
@@ -277,3 +300,7 @@ def test_append_body_line_refuses_when_the_patch_fails(monkeypatch):
 
 def test_comments_can_leave_reviews_out(stub):
     assert [c["body"] for c in forge.get_forge("gh").comments("7", reviews=False)] == []
+
+
+def test_landing_without_origin_numeric_ref_is_local_even_with_gh(repo, stub):
+    assert isinstance(forge.get_forge(None, "7", cwd=str(repo), landing=True), forge.NoneForge)
