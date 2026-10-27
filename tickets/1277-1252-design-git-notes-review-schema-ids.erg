@@ -1,0 +1,33 @@
+%erg 0.1
+Title: 1252 design: git-notes review schema — ids, entry format, rebase survival, transport, request-pull, incremental review
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T16:07Z reviewer created
+
+--- body ---
+## Context
+Tracker 1252 (forge-less raid, gaze and merge). Design note conception/2026-10-27-git-notes-review-design.md
+(author, drafted with ChatGPT) and the advisor ruling in 1252 (one refs/notes/review with a kind: field) left
+five questions open that C3 (1273) and C4 (1274) depend on. The note orders a transport trial before migration;
+the ruling waived it for 1252. Author ruling 2026-10-27: settle the design first, with transport trials.
+
+## Questions to settle
+1. Rebase survival: notes key on commit SHAs and raid rebases before every gate; notes.rewriteRef covers only
+   local rebase/amend and must be configured in every environment. Carry, copy (git notes copy), or re-key?
+2. Transport: notes refs are not fetched by default; concurrent appends from several hosts race on one ref;
+   can each environment (doudou, padme, ChatGPT Work, Claude Code Web) fetch and push notes with its usual access?
+   If not, the fallback (relay, dedicated branch) is chosen here.
+3. The request's What as `git request-pull` output (note §2.1): kept, and where it lives.
+4. Incremental review (note §4): links between rounds, delta vs full scope, findings that persist.
+5. Identifiers (review_id, request_id, run_id, seat_id, gate_session_id) and the entry format; one ref vs four
+   (the ruling's choice stands unless the trial or (1) overturns it).
+
+## Exit criteria
+- [ ] Transport trial doudou <-> padme run and reported (publish, fetch, append, rebase, cleanup, recover; concurrent append).
+- [ ] Web legs (ChatGPT Work, Claude Code Web) run by the author or recorded as not run.
+- [ ] A design spec in conception/ answers questions 1-5, cites the trial, and is reviewed by a cross-family seat.
+- [ ] The author accepts the spec; 1273, 1274 and 1276 are updated to it.
+
+Related: [[1252]], [[1273]].
