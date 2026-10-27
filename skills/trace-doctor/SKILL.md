@@ -114,7 +114,11 @@ Cost does not rank turns and wall-clock, so report velocity separately, from
    largest first. Every duration is tool_use to tool_result, so it includes
    permission waits and background commands: label each figure "upper bound".
    `AskUserQuestion` hours are the author's own latency, not tool friction;
-   list them apart.
+   list them apart. When the Bash tail is mostly test or gate commands, the
+   remedy is a consultation, not a ticket: run `/lair` step 13's gate survey
+   for each project concerned and offer `/test-doctor` with what it prints,
+   passing an inconclusive line on as lair does. Only the author starts the
+   consultation.
 2. **Wait commands** (`wait_commands`, `wait_hours_upper_bound`). The regex runs
    on the command minus quoted strings and heredoc bodies; durations are
    still an upper bound: say so.
@@ -144,7 +148,7 @@ prescription is applied here.
 
 Report `barrier_denials` as data: how often each worktree guard refused a call
 (`unattributed` = blocked, guard not identified). Do not propose keeping or
-deleting a barrier: that verdict belongs to /pulse (`rules/workflow.md`, "No
+deleting a barrier: that verdict belongs to /test-doctor (`rules/workflow.md`, "No
 guards on guards"). For the arena's Pi sessions, run
 `python3 "$HARNESS_DIR/scripts/trace-friction.py" --pi-runs <runs dir> --json`;
 it never prints a command text.

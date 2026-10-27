@@ -9,7 +9,7 @@ trigger; if another row fits better, switch.
 | `/yawn` | "is the repo healthy?" | one repo, current state | nothing (fixes on request) | `project-state.py` probe | `/molt` step 2, user |
 | `/molt` | housekeeping due, or after a sweep wants action | one repo | housekeeping branch, fix-now repairs, worktree GC, tickets | `/yawn`, `housekeeping-git.sh` | `/lair` step 1, automated sweeps, user |
 | `/roar` | one PR just merged | the completed task only | memory facts, ticket close, that task's branch and worktree | none | user |
-| `/lair` | the day is ending | every branch, the whole session | pushes, WIP commits, handoff comments, STATE refresh, metrics | `/molt`; proposes `/hoard` and `/pulse` | user |
+| `/lair` | the day is ending | every branch, the whole session | pushes, WIP commits, handoff comments, STATE refresh, metrics | `/molt`; proposes `/hoard` and `/test-doctor` | user |
 
 Memory neighbours, none of them lifecycle skills proper:
 
@@ -18,9 +18,9 @@ Memory neighbours, none of them lifecycle skills proper:
 | `/roar` capture (steps 2-3, `runbooks/capture.md`) | what significant fact did this task produce? | append to the journal |
 | `/hoard` | how do I tidy accumulated memory, stale claims included? | pruned and merged topics, index |
 
-A consultation, not a lifecycle step: `/pulse` (testing expert) is started by the
+A consultation, not a lifecycle step: `/test-doctor` (testing expert) is started by the
 author only. `/lair` step 13 reports the speed bumps the traces show and
-suggests it; nothing else calls it.
+suggests it, as `/trace-doctor` does for a slow gate; nothing calls it.
 
 ## Choosing between neighbours
 

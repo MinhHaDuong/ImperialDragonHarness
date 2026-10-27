@@ -37,7 +37,7 @@ Rules:
 ## Testing
 
 - Tests live in `tests/test_<module>.py`. A new script or changed behavior starts with a test.
-- When tests get too slow, suggest the `/pulse` skill.
+- When tests get too slow, suggest the `/test-doctor` skill.
 - `make check-fast`: fast tier only (`-m "not slow and not integration and not adherence"`), under 10 s, the development loop.
 - `make lint`: adherence tier only (`-m adherence`) — ruff / mypy / hygiene / contracts.
 - `make check`: everything. This is the default merge gate for code changes, run on the merge candidate (`/verify-gate`), unless the project declared a lighter one (e.g. `check-fast` + `lint`); before the merge request, hunt runs only `make check-fast`.
