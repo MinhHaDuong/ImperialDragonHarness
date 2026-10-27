@@ -395,3 +395,15 @@ def test_a_fast_path_declaring_no_checks_is_an_invalid_gate(tmp_path):
     git(repo, "commit", "-q", "-m", "ticket")
     run = tool(GATE, repo, "run", "--base", "origin/main", "--head", git(repo, "rev-parse", "HEAD"))
     assert run.returncode == 3 and "at least one" in run.stderr, run.stdout + run.stderr
+
+
+def test_a_hung_notes_read_is_an_error_not_a_missing_note(monkeypatch):
+    mg = load_monitor().mg
+    monkeypatch.setattr(mg, "toplevel", lambda _cwd: str(ROOT))
+
+    def hung(*_args, **kwargs):
+        raise subprocess.TimeoutExpired("git", kwargs.get("timeout"))
+
+    monkeypatch.setattr(mg.subprocess, "run", hung)
+    with pytest.raises(mg.GateError, match="no answer"):
+        mg.read_note("0" * 40)

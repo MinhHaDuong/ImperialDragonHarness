@@ -44,7 +44,7 @@ the latest verdict on main at or behind the base is green, the base is fewer
 than `max_lag` merges past it (so main never runs more than `max_lag` merges
 past green), and the verdict is younger than `max_age_minutes`. A red verdict,
 none within reach, an old one or one stamped in the future closes it; the
-record then runs the tier's set, as before. The merge-time `check` (step 5,
+record then runs the tier's set, as before. The merge-time `check` (step 4,
 fetching) judges the path again on the base: a fast-path record written while
 it was open fails once it has closed, and the recipe records again. Verdicts come from the monitor the recipe's last step starts: it runs
 every declared check on the new main tip, one run at a time with one tip
