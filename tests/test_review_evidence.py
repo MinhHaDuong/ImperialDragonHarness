@@ -621,3 +621,54 @@ def test_executable_ticket_edit_is_not_exempt(repo, policy):
     git(repo, "commit", "-qam", "chmod ticket")
     out = gate_with(repo, policy, p, "correctness")
     assert out.returncode != 0 and "stale" in out.stdout
+
+
+@pytest.mark.integration
+def test_probe_a_shadow_ticket_committed_after_review_is_not_the_reviewed_ticket(repo, policy):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    commit(repo, "tickets/9999-shadow.erg", REPO_TICKET, "shadow")
+    shadow = repo / "tickets/9999-shadow.erg"
+    out = gate_with(repo, policy, shadow, "correctness")
+    assert out.returncode != 0 and ("stale" in out.stdout or "ticket" in out.stderr)
+
+
+@pytest.mark.integration
+def test_probe_c_open_and_closed_copies_together_are_refused(repo, policy):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    commit(repo, "tickets/closed/0001-x.erg",
+           REPO_TICKET.replace("## Exit criteria\n", "## Exit criteria\n- [ ] rewritten\n"), "closed copy")
+    out = gate_with(repo, policy, repo / "tickets/0001-x.erg", "correctness")
+    assert out.returncode != 0 and "both open and closed" in out.stderr
+
+
+@pytest.mark.integration
+def test_probe_g_a_non_ticket_path_is_refused(repo, policy):
+    subprocess.run([sys.executable, str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+                    "--policy-root", str(policy), "--no-ticket", "--seat", "correctness",
+                    "--verdict", "approve", "--family", "Anthropic", "--worker", "t"],
+                   input="b\n", check=True, capture_output=True, text=True, env=child_env())
+    commit_reports(repo)
+    out = gate_with(repo, policy, repo / "README.md", "correctness")
+    assert out.returncode != 0 and "not a ticket file" in out.stderr
+
+
+@pytest.mark.integration
+def test_a_second_exit_criteria_section_makes_the_review_stale(repo, policy):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    p = repo / "tickets/0001-x.erg"
+    p.write_text(p.read_text() + "\n## Exit criteria\n- [ ] sneaked in\n")
+    git(repo, "commit", "-qam", "second section")
+    out = gate_with(repo, policy, p, "correctness")
+    assert out.returncode != 0 and "stale" in out.stdout
+
+
+@pytest.mark.integration
+def test_record_without_a_ticket_choice_is_refused(repo, policy):
+    out = subprocess.run([sys.executable, str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+                          "--policy-root", str(policy), "--seat", "correctness", "--verdict", "approve",
+                          "--family", "Anthropic", "--worker", "t"],
+                         input="b\n", capture_output=True, text=True, env=child_env())
+    assert out.returncode != 0 and "--ticket" in out.stderr
