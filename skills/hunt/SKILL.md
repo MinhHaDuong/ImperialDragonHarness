@@ -43,14 +43,15 @@ its **Relevant files**, then decide what the ticket is and what it takes:
   criteria that decide, arbitrate, sign off or choose, manuscript prose as the
   deliverable, a premise resting on conflicting sources. Settle each by
   `rules/workflow.md` § Escalation protocol (advisor model first) before executing.
-- **Already met**: the plan is to record evidence, not to build. After entering
-  the worktree, `${ERG:-tickets/erg} log $ID "already met: <evidence>"`, commit,
-  and go to Verify's landing; the ticket claim closes it at merge.
+- **Already met**: the plan is to record evidence, not to build. Enter the
+  worktree (Execute § Worktree), `${ERG:-tickets/erg} log $ID "already met: <evidence>"`,
+  commit, skip the rest of Execute, and go to Verify's landing.
 - **Premise expired**: check what changed on **Relevant files** since the
   ticket's `Created` date (`git log --since=<Created> -- <files>`). A change that
   voids the premise is settled by the same escalation protocol; confirmed
   obsolete, log `"obsolete: <commit or change>"` and land as for already met.
-  Still valid but worded for an old tree: update the ticket on the branch.
+  Still valid but worded for an old tree: update the ticket in the worktree,
+  on the branch, and continue.
 - **Too big or multipart**: the monster-ticket signals of `rules/workflow.md`
   § Ticket discipline for multi-PR work, or parts that would land in separate
   merges. Split it: file child tickets, turn `$ID` into a tracker listing them,
@@ -67,6 +68,8 @@ announcement informs; proceed without waiting unless a judgment above is
 still open.
 
 ## Execute
+
+Every route, building or not, starts in the worktree.
 
 ### Worktree
 
@@ -114,24 +117,29 @@ or split as in Plan if the ticket turns out to be several.
   blocker in place and run it again, up to 3 times. Escalate instead of landing
   when a blocker needs design judgment, the third run still fails, or the skill
   errors or returns nothing usable.
-- **Prepare to land.** Rebase onto the base branch (`rules/git.md` § Merging),
+- **Prepare to land.** Rebase onto the base branch (`<base>`: `origin/main`,
+  else `main`; `rules/git.md` § Merging),
   then run the project's fast test tier once (Python: `make check-fast`,
   `rules/coding-python.md` § Testing). The scoped gate (`rules/workflow.md`
   § Check scope) or the full one runs at merge, on the merge candidate.
 - **Land by the project's route**, read from its `AGENTS.md` or `CLAUDE.md`,
   never assumed. With a forge: push with lease and open a merge request whose
   description carries the close claim `**Ticket:** tickets/<ticket file>`, then
-  wait for CI where it runs on the branch. Without one: close the ticket on the
-  branch and hand it to the project's local merge recipe.
+  wait for CI where it runs on the branch; `/merge` closes the claimed ticket.
+  Without one there is no claim to execute: close it on the branch yourself
+  (`${ERG:-tickets/erg} close $ID "<reason>"`, then `archive $ID`, as
+  `skills/merge/SKILL.md` step Close does), commit, and stop at ready to merge.
+  Either way the merge itself is the caller's, by the project's recipe.
 - **Review.** Skip when
   `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base <base> --head HEAD`
-  exits 0 (bookkeeping). Otherwise run up to 3 rounds: the gaze skill on the
-  merge request, or, without a forge, a review of the branch diff scaled to its
-  risk (`skills/route/references/decorrelation.md`). Fix every finding whatever
-  its severity, rerun what the fixes affect, then the fast tier, and review again.
-  Escalate when the review does, or when round 3 still has findings. What each
-  gaze result leads to, a missing or stale `reviewed_head_sha` included, is the
-  caller's policy in `skills/merge/SKILL.md` § Before merging.
+  exits 0 (bookkeeping). Otherwise run up to 3 rounds. With a forge, the gaze
+  skill on the merge request; what each gaze result leads to, a missing or
+  stale `reviewed_head_sha` included, is the caller's policy in
+  `skills/merge/SKILL.md` § Before merging. Without one, reviewer seats on
+  `git diff <base>...HEAD`, chosen and scaled by risk
+  (`skills/route/references/decorrelation.md`). Fix every finding whatever its
+  severity, rerun what the fixes affect, then the fast tier, and review again.
+  Escalate when the review does, or when round 3 still has findings.
 
 ## Celebrate
 

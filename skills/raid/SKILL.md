@@ -75,7 +75,7 @@ inherits that asymmetry screens nothing while looking correct.
 
 Such a ticket is not lost. Name it in the wrap-up briefing with the decisions
 it is waiting on, and count that as a success outcome — the same standing hunt's
-Triage step gives a decision escalated to the author.
+Plan phase gives a decision escalated to the author.
 
 **Carve-out: an explicit `/raid <id>` runs.** The exclusion governs target
 *discovery* (the "all open" path), never a ticket named by ID. A named ticket
@@ -234,7 +234,7 @@ the model is chosen per launch from the `route` skill, no frontmatter pin).
 
 The execute-agent contract's FIRST action is mechanical: the agent loads the
 hunt skill with `<id> inline` as its argument. It then follows the contract the skill loader returns. The agent prompt must NOT
-paraphrase, summarize, or inline hunt's steps; the versioned `skills/hunt/SKILL.md`
+paraphrase, summarize, or inline hunt's phases; the versioned `skills/hunt/SKILL.md`
 is the single live execution contract, and the loader supplies it fresh on every
 run. (A prose paraphrase drifts: the contract then lives in prompt-writing memory
 instead of the skill.) The agent pushes its branch and opens a merge request as
