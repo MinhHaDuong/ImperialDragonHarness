@@ -228,3 +228,23 @@ def test_callers_send_a_narrower_intent_not_a_fixed_round_loop(skill):
 def test_detached_gaze_passes_the_intent_verbatim():
     text = norm((ROOT / "skills" / "raid" / "references" / "detached-gaze.md").read_text(encoding="utf-8"))
     assert "intent" in text and "verbatim" in text
+
+
+def test_a_plan_without_a_budget_is_a_deviation(tmp_path):
+    panel = tmp_path / "p"
+    write_plan(panel, "# intent: verify x because y\nregression\tscript\tnone\told and new code\n")
+    report(panel, "regression", "ok")
+    ok, lines = seat_clock.plan_check(panel)
+    assert ok and "no budget declared" in lines[0], lines
+
+
+def test_items_are_matched_by_name_not_position(tmp_path):
+    panel = tmp_path / "p"
+    write_plan(panel, MANIFEST)
+    report(panel, "redteam", "worker: model=m3 · family=anthropic")
+    report(panel, "correctness", "worker: model=m1 · family=anthropic")
+    (panel / "external.md.status").write_text("external: reported in 3s\n")
+    ok, lines = seat_clock.plan_check(panel)
+    assert ok
+    assert "redteam: family anthropic, planned openai" in lines[0]
+    assert "correctness:" not in lines[0]

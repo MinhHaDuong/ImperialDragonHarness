@@ -115,10 +115,11 @@ def plan_check(panel: Path) -> tuple[bool, list[str]]:
     manifest = (panel / 'manifest.txt').read_text(encoding='utf-8-sig').splitlines()
     budget = next((int(m.group(1)) * 60 for line in manifest
                    if (m := re.fullmatch(r'# budget: (\d+)m', line.strip()))), None)
-    missing, deviations = [], []
-    items = [line.split('\t') for line in manifest if line.strip() and not line.startswith('#')]
-    for cells, line in zip(items, lines):
+    missing, deviations = [], [] if budget is not None else ['no budget declared']
+    by_name = {line.split(': ', 1)[0]: line for line in lines}
+    for cells in (line.split('\t') for line in manifest if line.strip() and not line.startswith('#')):
         name, planned = cells[0], cells[2].strip() if len(cells) > 2 else ''
+        line = by_name.get(name, f'{name}: no report')
         timed = re.search(r': reported in (\d+)s', line)
         if not timed:
             missing.append(line)
