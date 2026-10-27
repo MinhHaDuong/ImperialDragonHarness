@@ -389,7 +389,7 @@ if [[ "$*" == *PATCH* ]]; then
   echo patch >> {tmp_path}/patches
   if (( $(wc -l < {tmp_path}/patches) <= {drop} )); then cat >/dev/null; echo '{{}}'; exit 0; fi
   jq -r .body > {store}; echo '{{}}'
-else cat {store}; fi
+else jq -Rs '{{body: .}}' {store}; fi
 """)
     stub.chmod(0o755)
     return store, stub.parent

@@ -17,6 +17,7 @@ import sys
 import time
 from pathlib import Path
 
+import forge
 import gaze_close  # same directory: the script dir is on sys.path
 
 HERE = Path(__file__).resolve().parent
@@ -104,13 +105,14 @@ def main():
     pr = ap.parse_args().pr
     clock = str(int(time.time()))
     primary = gaze_close.primary_root()
-    r = subprocess.run(["gh", "pr", "view", pr, "--json",
-                        "headRefName,headRefOid,baseRefName,state,mergeable,body,comments,reviews,statusCheckRollup"],
-                       capture_output=True, text=True)
-    if r.returncode:
-        return fail(2, f"cannot read PR {pr}: {r.stderr.strip()}")
-    meta = json.loads(r.stdout)
-    branch = meta["headRefName"]
+    fg = forge.get_forge(None, pr)
+    try:
+        meta = fg.resolve(pr)
+        discussion = fg.comments(pr)
+        ci = fg.checks(pr)
+    except forge.ForgeRefusal as exc:
+        return fail(2, re.sub(r"^cannot read request", "cannot read PR", str(exc)))
+    branch = meta["branch"]
     if meta.get("mergeable") == "CONFLICTING":
         return fail(1, f"PR {pr} has merge conflicts")
     tree = primary / ".claude" / "worktrees" / f"review-{pr}"
@@ -143,16 +145,12 @@ def main():
     _, entry_primary = gaze_close.git("-C", str(primary), "status", "--porcelain")
     (panel / "entry-state.json").write_text(json.dumps(
         {"branch": entry_branch, "status": entry_status.splitlines(), "primary": entry_primary.splitlines()}))
-    comments = [f"## {c.get('author', {}).get('login', '?')}\n{c.get('body', '')}"
-                for c in meta.get("comments", []) + meta.get("reviews", [])]
+    comments = [f"## {c.get('author', {}).get('login', '?')}\n{c.get('body', '')}" for c in discussion]
     (panel / "comments.md").write_text("\n\n".join(comments))
-    checks = meta.get("statusCheckRollup") or []
-    bad = [c for c in checks if (c.get("conclusion") or c.get("state") or "").upper() in
-           ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED")]
+    ci = "passing" if ci == "pending" else ci  # the report has only none|passing|failing: pending reads as passing, as before the move
     changed = a.stdout.strip().splitlines()
-    ci = "none" if not checks else ("failing: " + ",".join(c.get("name", "?") for c in bad) if bad else "passing")
     print(f"clock={clock}")
-    print(f"pr={pr}\nbranch={branch}\nhead={meta['headRefOid']}\nbase={meta['baseRefName']}")
+    print(f"pr={pr}\nbranch={branch}\nhead={meta['head']}\nbase={meta['base']}")
     print(f"state={meta['state']}\nmergeable={meta.get('mergeable')}")
     print(f"ci={ci}")
     print(f"review_tree={tree}\npanel={panel}")

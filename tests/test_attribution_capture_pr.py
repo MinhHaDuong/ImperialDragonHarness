@@ -2,7 +2,6 @@
 
 import argparse
 import importlib.util
-import json
 import subprocess
 import sys
 from pathlib import Path
@@ -13,6 +12,7 @@ from child_env import child_env
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "attribution_record.py"
+sys.path.insert(0, str(SCRIPT.parent))  # the script imports forge from its own directory
 BODY = """Summary.
 
 ```attribution
@@ -34,13 +34,17 @@ def forge(monkeypatch):
           "comments": "## /gaze result\n\nresult: REVIEWED\n" + SEAT.format(model="anthropic/example-opus") + "\n",
           "captured": []}
 
-    def gh(*args, stdin=None):
-        fields = args[args.index("--json") + 1]
-        if fields == "comments":
-            return pr["comments"]
-        if fields == "body":
-            return pr["body"]
-        return json.dumps({key: pr[key] for key in fields.split(",")})
+    class Forge:
+        """The adapter's operations over the in-memory PR."""
+
+        def comments(self, ref):
+            return [{"body": c} for c in pr["comments"].split("\n\n\n")] if pr["comments"] else []
+
+        def resolve(self, ref):
+            return {"state": pr["state"], "body": pr["body"]}
+
+        def merged_at(self, ref):
+            return pr["mergedAt"]
 
     def append_to_pr(number, line, project):
         pr["body"] = module.append_line(pr["body"], line, number, project)
@@ -49,7 +53,7 @@ def forge(monkeypatch):
         pr["captured"].append((text, audience))
         return "captured"
 
-    monkeypatch.setattr(module, "gh", gh)
+    monkeypatch.setattr(module, "forge_for", lambda number: Forge())
     monkeypatch.setattr(module, "append_to_pr", append_to_pr)
     monkeypatch.setattr(module, "capture_record", capture_record)
     return module, pr
