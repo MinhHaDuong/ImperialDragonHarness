@@ -527,3 +527,74 @@ def test_open_ticket_flag_hands_the_real_forge_adapter_to_the_runner(module, mon
     module.main(["run-after", "--open-ticket"])
     module.main(["run-after"])
     assert type(seen[0]).__name__ == "GhForge" and seen[1] is None
+
+
+# ── environment records (ticket 1288) ────────────────────────────────────────
+
+LOCKED_MODULE = "locked_dist_xyz"  # a distribution uv.lock names, absent from the interpreter running the check
+
+
+def env_repo(tmp_path, monkeypatch, check_argv):
+    """A gated temp main whose one check is `check_argv` and whose uv.lock pins LOCKED_MODULE."""
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    (tmp_path / "home").mkdir()
+    work = make_repo(tmp_path, [{"name": "the-check", "argv": check_argv}])
+    (work / "uv.lock").write_text(f'version = 1\n\n[[package]]\nname = "{LOCKED_MODULE}"\nversion = "1"\n')
+    git(work, "add", "uv.lock")
+    git(work, "commit", "-q", "-m", "lock")
+    git(work, "push", "-q", "origin", "main")
+    monkeypatch.chdir(work)
+    return work
+
+
+def test_a_missing_locked_dependency_is_an_environment_record_not_a_red_ticket(tmp_path, monkeypatch, module):
+    work = env_repo(tmp_path, monkeypatch, ["python3", "-c", f"import {LOCKED_MODULE}"])
+    tip = merge_branch(work, "later")
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch")
+    assert run_after_in_process(module, forge) == module.ENV != module.FAIL
+    assert [c for c in forge.calls if c[0] == "create"] == []
+    assert remote_red_branches(work) == []
+    git(work, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
+    [entry] = module.parse_note(note(work, tip))
+    assert entry["result"] == "environment"
+    assert f"env-problem the-check {LOCKED_MODULE}" in entry["checks"]
+    # the next start judges the tip again rather than calling it covered
+    assert run_after_in_process(module, forge) == module.ENV
+    assert len(module.parse_note(note(work, tip))) == 2
+
+
+def test_a_module_the_lock_does_not_name_stays_red(tmp_path, monkeypatch, module):
+    work = env_repo(tmp_path, monkeypatch, ["python3", "-c", "import not_in_the_lock_xyz"])
+    tip = merge_branch(work, "later")
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch")
+    assert run_after_in_process(module, forge) == module.FAIL
+    assert len([c for c in forge.calls if c[0] == "create"]) == 1
+    assert [e["result"] for e in module.parse_note(note(work, tip))] == ["fail"]
+
+
+def test_a_plain_failure_stays_red(tmp_path, monkeypatch, module):
+    work = env_repo(tmp_path, monkeypatch, ["sh", "-c", "exit 1"])
+    merge_branch(work, "later")
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch")
+    assert run_after_in_process(module, forge) == module.FAIL
+    assert len([c for c in forge.calls if c[0] == "create"]) == 1
+
+
+def test_an_environment_failure_beside_a_real_failure_stays_red(tmp_path, monkeypatch, module):
+    work = env_repo(tmp_path, monkeypatch, ["python3", "-c", f"import {LOCKED_MODULE}"])
+    config = json.loads((work / ".merge-gate.json").read_text())
+    config["checks"].append({"name": "real", "argv": ["sh", "-c", "exit 1"]})
+    (work / ".merge-gate.json").write_text(json.dumps(config), encoding="utf-8")
+    git(work, "commit", "-q", "-am", "second check")
+    git(work, "push", "-q", "origin", "main")
+    tip = merge_branch(work, "later")
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch")
+    assert run_after_in_process(module, forge) == module.FAIL
+    assert [e["result"] for e in module.parse_note(note(work, tip))] == ["fail"]
+
+
+def test_the_runner_clears_an_inherited_virtual_env(tmp_path, monkeypatch, module):
+    work = env_repo(tmp_path, monkeypatch, ["sh", "-c", 'test -z "$VIRTUAL_ENV"'])
+    monkeypatch.setenv("VIRTUAL_ENV", "/nonexistent/stale-venv")
+    merge_branch(work, "later")
+    assert run_after_in_process(module, None) == module.PASS
