@@ -2,9 +2,11 @@
 Title: gaze_seat: refuse a Pi model id the provider does not list; name the cause of a failed seat
 Created: 2026-10-27
 Author: reviewer
+Closed: closed by raid — PR #1792
 
 --- log ---
 2026-10-27T13:05Z reviewer created
+2026-10-27T16:00Z reviewer closed — closed by raid — PR #1792
 
 --- body ---
 ## Context
