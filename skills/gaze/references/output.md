@@ -48,6 +48,7 @@ caller: the one delivery place. No interim "started"/"finished" chatter.
 ## /gaze result
 
 result: REVIEWED|FINDINGS|ESCALATE
+seats: panel|self-only
 reviewed_head_sha: <full SHA read from the review tree after the pass>
 intent: <the caller's text verbatim | default: the whole merge request against its ticket's exit criteria>
 review plan: <method; items as name (model, family); budget> — <why this plan settles the what>
@@ -67,6 +68,9 @@ shape (a role may hold spaces, never `·`, `=` or `:`): `/roar` writes the PR
 body's `reviewer:` lines from them (`attribution_record.py --seats-pr`, ticket
 1155). A result with no `seat:` line, or a body `reviewer:` seat absent from
 it, is a capture failure. A requested model name is not an observed id.
+
+`seats: self-only` when no plan item but `self` has a report (SKILL.md § 4);
+callers count such a record as missing.
 
 `plan check: FAIL` never goes with REVIEWED: a planned item without a report
 is an unresolved pass (SKILL.md § 4).
