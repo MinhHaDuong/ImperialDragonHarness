@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Derived tables for the gaze wall-time report (ticket 1197): structure, stragglers, counterfactual seat drops, load join.
 
-    python3 scripts/gaze_wall_analysis.py [UNTIL]   # UNTIL: ISO time, runs starting later are dropped
+    python3 scripts/gaze_wall_analysis.py [CUT]   # CUT: ISO time; AFTER = runs starting at or after it
+
+CUT defaults to 2026-10-21T20:01Z (the commits that removed gaze's gate and fix
+phases); give the merge time of a later change (ticket 1227: 2026-10-27T10:45Z)
+to compare the runs since it with the runs before it. The last section reads
+setup and closing from tool calls, so it covers headless seats too.
 
 Needs the session traces and, for the load join, sysstat files in /var/log/sysstat
 (host padme: 10-minute `sar -q` samples, 2026-10-19 on). Every figure is READ
@@ -20,19 +25,21 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 import gaze_wall_time as g
 
-until = (
+# default: 2026-10-21 22:01 CEST, the commits that removed gaze's gate and fix phases
+cut = (
     datetime.datetime.fromisoformat(sys.argv[1].replace("Z", "+00:00")).timestamp()
     if len(sys.argv) > 1
-    else float("inf")
+    else datetime.datetime(
+        2026, 10, 21, 20, 1, tzinfo=datetime.timezone.utc
+    ).timestamp()
 )
-rs = sorted(
-    (r for r in g.runs(g.DEFAULT) if r["start"] < until), key=lambda r: r["start"]
+CUTLAB = datetime.datetime.fromtimestamp(cut, datetime.timezone.utc).strftime(
+    "%m-%d %H:%MZ"
 )
-# 2026-10-21 22:01 CEST, the commits that removed gaze's gate and fix phases
-cut = datetime.datetime(2026, 10, 21, 20, 1, tzinfo=datetime.timezone.utc).timestamp()
+rs = sorted(g.runs(g.DEFAULT), key=lambda r: r["start"])
 
 if not any(r["start"] >= cut for r in rs) or not any(r["start"] < cut for r in rs):
-    sys.exit("UNTIL leaves the before or the after bucket empty; give a later time")
+    sys.exit("CUT leaves the before or the after bucket empty; give another time")
 
 
 def P(x, p):
@@ -64,7 +71,7 @@ def summ(name, rs):
 old = [r for r in rs if r["start"] < cut]
 new = [r for r in rs if r["start"] >= cut]
 summ("all", rs)
-summ("before 10-21 20:01Z", old)
+summ(f"before {CUTLAB}", old)
 summ("after", new)
 print("\n#### poll overshoot")
 lag = []
@@ -507,3 +514,39 @@ print(
     "s/token median: load<20 n=%d %.3f ; load>=20 n=%d %.3f"
     % (len(lo), st.median(lo), len(hi), st.median(hi) if hi else 0)
 )
+
+print(f"\n#### setup and closing from tool calls (headless-safe), cut {CUTLAB}")
+print(
+    "setup = run start to first gaze_seat.py launch or Agent call; closing = last plan-check "
+    "end (or traced seat end) to run end; the cut compares structures, not like for like"
+)
+
+
+def med(xs):
+    return f"{st.median(xs):5.0f}s" if xs else "  n/a"
+
+
+for name, rr in (("AFTER", new), ("BEFORE", old)):
+    e = [(r, g.endpoints(r)) for r in rr]
+    su = [x["setup"] for _, x in e if x["setup"] is not None]
+    cl = [x["closing"] for _, x in e if x["closing"] is not None]
+    print(f"{name}: runs {len(rr)}  wall median {med([r['wall'] for r in rr])}")
+    print(
+        f"  setup   n={len(su):3d} median {med(su)}  tool calls median "
+        f"{st.median(x['setup_calls'] for _, x in e if x['setup'] is not None) if su else 'n/a'}"
+    )
+    print(
+        f"  closing n={len(cl):3d} median {med(cl)}  tool calls median "
+        f"{st.median(x['closing_calls'] for _, x in e if x['closing'] is not None) if cl else 'n/a'}"
+    )
+    ss = [x["setup_script"] for _, x in e if x["setup_script"] is not None]
+    cs = [x["close_script"] for _, x in e if x["close_script"] is not None]
+    print(f"  gaze_setup.py: {len(ss)} of {len(rr)} runs; start to its call {med(ss)}")
+    print(f"  gaze_close.py: {len(cs)} of {len(rr)} runs; its call to run end {med(cs)}")
+    print(
+        "  runs without a launch/closing evidence:",
+        sum(1 for _, x in e if x["setup"] is None),
+        "/",
+        sum(1 for _, x in e if x["closing"] is None),
+    )
+    print("  orchestrator models", dict(collections.Counter(r["orch_model"] for r in rr)))
