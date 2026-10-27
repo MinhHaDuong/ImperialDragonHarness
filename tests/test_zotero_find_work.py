@@ -501,6 +501,21 @@ def test_check_staging_retries_with_the_filename_when_the_embedded_title_is_junk
 
 
 @pytest.mark.integration
+def test_the_filename_retry_leaves_bib_titled_and_unmatched_rows_alone(
+        lib, tmp_path):
+    """Negative controls for #1654: a .bib title is never overridden by the
+    filename, and a retry that finds nothing keeps the first answer."""
+    keys, files = lib
+    probe = tmp_path / "Valiant1979-QuasarGimbalLemma.pdf"
+    shutil.copyfile(files["junk"], probe)
+    biblio = row(probe, bib_entry={"title": "Wholly Absent Treatise on Turbines"})
+    assert biblio["verdict"] == "absent"
+    nothing = tmp_path / "Nobody1999-UnrelatedTurbineDocument.pdf"
+    shutil.copyfile(files["shared"], nothing)
+    assert row(nothing)["verdict"] == "absent"
+
+
+@pytest.mark.integration
 def test_check_staging_names_every_tied_parent(lib, tmp_path):
     keys, files = lib
     probe = tmp_path / "Tiebreak2020-shared.pdf"
