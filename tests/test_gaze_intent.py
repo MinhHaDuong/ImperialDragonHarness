@@ -154,14 +154,35 @@ def test_a_worker_of_another_family_is_a_named_deviation(tmp_path):
     assert "redteam: family anthropic, planned openai" in lines[0]
 
 
-def test_a_worker_that_does_not_name_its_family_is_a_deviation(tmp_path):
+def test_a_worker_line_without_a_family_is_a_deviation(tmp_path):
     panel = tmp_path / "p"
     write_plan(panel, MANIFEST)
-    report(panel, "correctness", "verdict: clear")
+    report(panel, "correctness", "worker: model=m1")
     report(panel, "redteam", "worker: model=m2 · family=openai")
     ok, lines = seat_clock.plan_check(panel)
     assert ok
     assert "correctness: names no family" in lines[0]
+
+
+@pytest.mark.parametrize("content", ["", "garbage\n", "verdict: clear\n"])
+def test_an_empty_or_unsigned_report_fails_the_plan_check(tmp_path, content):
+    """Red-team finding on PR 1703: a report with nothing in it, or none of the
+    worker's own first line, is no report, not a deviation."""
+    panel = tmp_path / "p"
+    write_plan(panel, MANIFEST)
+    (panel / "correctness.md").write_text(content, encoding="utf-8")
+    report(panel, "redteam", "worker: model=m2 · family=openai")
+    ok, lines = seat_clock.plan_check(panel)
+    assert not ok
+    assert lines[0].startswith("plan check: FAIL") and "correctness: no report" in lines[0], lines
+
+
+def test_an_empty_script_report_fails_the_plan_check(tmp_path):
+    panel = tmp_path / "p"
+    write_plan(panel, "# intent: verify x because y\n# budget: 5m\nregression\tscript\tnone\told and new code\n")
+    (panel / "regression.md").write_text("\n", encoding="utf-8")
+    ok, lines = seat_clock.plan_check(panel)
+    assert not ok, lines
 
 
 def test_a_script_item_needs_no_family(tmp_path):
@@ -228,14 +249,6 @@ def test_callers_send_a_narrower_intent_not_a_fixed_round_loop(skill):
 def test_detached_gaze_passes_the_intent_verbatim():
     text = norm((ROOT / "skills" / "raid" / "references" / "detached-gaze.md").read_text(encoding="utf-8"))
     assert "intent" in text and "verbatim" in text
-
-
-def test_a_plan_without_a_budget_is_a_deviation(tmp_path):
-    panel = tmp_path / "p"
-    write_plan(panel, "# intent: verify x because y\nregression\tscript\tnone\told and new code\n")
-    report(panel, "regression", "ok")
-    ok, lines = seat_clock.plan_check(panel)
-    assert ok and "no budget declared" in lines[0], lines
 
 
 def test_items_are_matched_by_name_not_position(tmp_path):

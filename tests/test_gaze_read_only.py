@@ -51,6 +51,35 @@ def repos(tmp_path):
     return origin, primary, caller
 
 
+def run_gaze(caller: Path, primary: Path, seat: str) -> subprocess.CompletedProcess:
+    """Gaze's setup block, a simulated seat, then gaze's cleanup block."""
+    setup = bash_block(GAZE / "SKILL.md", "**Isolation setup:**").replace(
+        "PR_BRANCH=<resolved-branch-name>", "PR_BRANCH=feat")
+    cleanup = bash_block(GAZE / "references" / "cleanup.md", "## Review scratch cleanup")
+    script = ("set -u\n" + setup + seat + cleanup).replace("<pr-number>", "7")
+    return subprocess.run(["bash", "-c", script], cwd=caller, capture_output=True, text=True,
+                          env={"PATH": "/usr/bin:/bin", "HOME": str(primary.parent), "IDH_ROOT": str(ROOT),
+                               "GIT_CONFIG_NOSYSTEM": "1", "GIT_AUTHOR_NAME": "s", "GIT_AUTHOR_EMAIL": "s@x",
+                               "GIT_COMMITTER_NAME": "s", "GIT_COMMITTER_EMAIL": "s@x"})
+
+
+@pytest.mark.parametrize("seat, removed", [
+    ('git -C "$review_tree" commit -q --allow-empty -m "a seat that commits"\n', True),
+    ('echo stray >> "$review_tree/a.txt"\n', False),
+])
+def test_a_seat_that_writes_cannot_move_the_branch_or_the_callers_tree(repos, seat, removed):
+    """A seat that breaks its read-only rail still cannot reach the branch: the
+    review tree is detached and gaze never pushes. Uncommitted writes make the
+    cleanup refuse to remove the tree, so they are reported, never lost."""
+    origin, primary, caller = repos
+    tip, caller_status = git(origin, "rev-parse", "refs/heads/feat"), git(caller, "status", "--porcelain")
+    run = run_gaze(caller, primary, seat)
+    assert (run.returncode == 0) is removed, run.stdout + run.stderr
+    assert git(origin, "rev-parse", "refs/heads/feat") == tip
+    assert git(caller, "status", "--porcelain") == caller_status
+    assert (primary / ".claude" / "worktrees" / "review-7").exists() is not removed
+
+
 def test_a_gaze_run_leaves_the_branch_tip_and_the_callers_worktree_unchanged(repos):
     origin, primary, caller = repos
     tip = git(origin, "rev-parse", "refs/heads/feat")

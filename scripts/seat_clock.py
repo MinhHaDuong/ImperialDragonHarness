@@ -21,10 +21,11 @@ manifest seat has no report or the manifest lists no seat.
 `# budget: <n>m` in its header) with what ran (ticket 1225). Its first line is
 `plan check: PASS`, `plan check: PASS with deviations — ...` or `plan check:
 FAIL — ...`; the roster lines follow. An item with no report fails it. A worker
-whose report's first line (`worker: model=<id> · family=<family>`) names no
+whose report is empty or does not open with `worker: model=<id> ·
+family=<family>` did not report either, which fails it too; one that names no
 family or another family than planned, or an item over the budget, is a
-deviation; an item planned with family `none` (a script) names none. Exit 1 on
-FAIL only.
+deviation. An item planned with family `none` (a script) needs only a
+non-empty report. Exit 1 on FAIL only.
 """
 
 import argparse
@@ -115,7 +116,7 @@ def plan_check(panel: Path) -> tuple[bool, list[str]]:
     manifest = (panel / 'manifest.txt').read_text(encoding='utf-8-sig').splitlines()
     budget = next((int(m.group(1)) * 60 for line in manifest
                    if (m := re.fullmatch(r'# budget: (\d+)m', line.strip()))), None)
-    missing, deviations = [], [] if budget is not None else ['no budget declared']
+    missing, deviations = [], []
     by_name = {line.split(': ', 1)[0]: line for line in lines}
     for cells in (line.split('\t') for line in manifest if line.strip() and not line.startswith('#')):
         name, planned = cells[0], cells[2].strip() if len(cells) > 2 else ''
@@ -126,9 +127,13 @@ def plan_check(panel: Path) -> tuple[bool, list[str]]:
             continue
         if budget is not None and int(timed.group(1)) > budget:
             deviations.append(f'{name}: {timed.group(1)}s, over the {budget // 60}m budget')
+        text = (panel / f'{name}.md').read_text(encoding='utf-8', errors='replace')
+        first = text.split('\n', 1)[0]
+        if not text.strip() or (planned != 'none' and not first.startswith('worker:')):
+            missing.append(f'{name}: no report (empty, or no worker line)')
+            continue
         if planned == 'none':
             continue
-        first = (panel / f'{name}.md').read_text(encoding='utf-8', errors='replace').split('\n', 1)[0]
         named = re.search(r'family=([\w.-]+)', first)
         if not named:
             deviations.append(f'{name}: names no family, planned {planned}')

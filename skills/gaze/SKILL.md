@@ -155,7 +155,8 @@ Choose the model of each launched worker per launch, from the `route` skill grid
 
 Compare the plan with what was done:
 `python3 "$IDH_ROOT/scripts/seat_clock.py" plan-check <panel>`. It fails when a
-planned item has no report, and names as deviations a worker of another
+planned item has no report (an empty one, or a worker's without its `worker:`
+first line, counts as none), and names as deviations a worker of another
 family than planned (from the worker's own first line) and an item over the
 budget. Gaze adds what the script cannot see: whether the run covered the
 stated what, and the reason for each deviation. There is no retry: a worker
@@ -203,8 +204,7 @@ On every exit path run `references/cleanup.md`: remove this run's review scratch
 - Close claim names a ticket file that does not exist (neither `tickets/<id>-*.erg`
   nor `tickets/closed/<id>-*.erg`; the ticket may already be closed on the branch) → ESCALATE. A PR with
   no ticket at all is not a breaker.
-- `plan check: FAIL` without a substitute that settles the what → ESCALATE
-  (phase 4).
+- The phase 4 ESCALATE conditions.
 - Telemetry thresholds (`## Telemetry`).
 
 On **every** exit (not only ESCALATE) run `references/cleanup.md` before

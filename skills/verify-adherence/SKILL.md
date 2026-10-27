@@ -7,9 +7,9 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "<branch> [worktree=<path>] [trace=<path>] [semantic=caller]"
 context: fork
-# Foreground: /gaze runs this as phase 2 (Agent A) and blocks on its structured
-# output. `context: fork` skills may default to background; a fork cannot wait
-# on a background completion, so the default would orphan this phase.
+# Foreground: its caller (hunt's self-gate) blocks on its structured output.
+# `context: fork` skills may default to background; a fork cannot wait on a
+# background completion, so the default would orphan the verdict.
 background: false
 ---
 
