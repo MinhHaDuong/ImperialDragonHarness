@@ -74,9 +74,9 @@ Next: <downstream step>
 
 ## Downstream
 
-- Talk → `/slides` (slide titles build toward the message; doctrine in
+- Talk → the slides skill (slide titles build toward the message; doctrine in
   `rules/doctype/slides.md`).
-- Conference abstract → `/conference-submission-prep`; a slot-limited abstract
-  over budget → `/cut-prose`.
+- Conference abstract → the conference-submission-prep skill; a slot-limited abstract
+  over budget → the cut-prose skill.
 - Article → `rules/doctype/article.md` (the introduction states the message as
   the contribution).

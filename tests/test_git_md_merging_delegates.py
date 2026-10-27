@@ -26,7 +26,7 @@ GAZE_SKILL = _normalize((REPO / "skills" / "gaze" / "SKILL.md").read_text())
 
 
 def test_git_md_points_at_merge_for_conflict_recovery():
-    assert "/merge` § Merge conflict recovery" in GIT_RULES, (
+    assert "(merge § Merge conflict recovery)" in GIT_RULES, (
         "rules/git.md § Merging must point at /merge for the multi-PR-wave "
         "and generated-file conflict recipes"
     )

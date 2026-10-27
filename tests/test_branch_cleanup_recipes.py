@@ -37,7 +37,7 @@ def test_git_md_delegates_the_sweep_and_inlines_no_loop():
         "rules/git.md must not inline shell recipes — the branch sweep is "
         "/roar step 10"
     )
-    assert "/roar` step 10" in GIT_RULES, (
+    assert "Roar's step 10" in GIT_RULES, (
         "rules/git.md must point at the skill that owns the sweep"
     )
 

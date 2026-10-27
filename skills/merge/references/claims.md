@@ -1,6 +1,6 @@
 # Close claims and edge cases
 
-When `/merge` reads this: step 0 (parsing the body), step 1 (closing), a
+When merge reads this: step 0 (parsing the body), step 1 (closing), a
 merge that skipped step 1, and the index of where each edge case lives.
 
 ## Ticket lines in the body
@@ -66,6 +66,6 @@ and silently drops the `Closed:` header.
 | Mark a draft ready | step 2 |
 | No `--delete-branch` | step 6 |
 | Re-recording after the base moves | step 4: spends no review round |
-| Approval covers the head (bookkeeping delta at most); gate record on the same head | `/merge` § Gating tiers and § Before merging; step 6 pins it |
+| Approval covers the head (bookkeeping delta at most); gate record on the same head | merge § Gating tiers and § Before merging; step 6 pins it |
 | Body edited after approval | step 3: re-read and compare the claims with the ruled set |
 | Attribution-block warning | § Attribution block warning |

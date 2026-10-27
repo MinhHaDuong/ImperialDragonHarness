@@ -36,7 +36,7 @@ Run full repo housekeeping and act on every finding.
    pid 1 is init, always alive. Do not abort
    on it here; step 1.5's `worktree-gc.sh` reclaims the harness shapes
    (`(pid 1`, `(owner pid not visible)`) once the tree is clean and idle 72 h (`skills/hunt/references/worktree-lifecycle.md`),
-   and `/yawn` lists the rest for removal by hand.
+   and yawn lists the rest for removal by hand.
 
    If **any** other locked worktree has a live PID, **stop immediately** — print:
 
@@ -132,7 +132,7 @@ Run full repo housekeeping and act on every finding.
    relocated here: that is an operator decision (check 12 of the yawn
    names the knob).
 
-2. **Yawn.** If /yawn already reported on this repository earlier in this
+2. **Yawn.** If yawn already reported on this repository earlier in this
    conversation, check whether that report still holds before running it again:
 
    ```bash
@@ -141,13 +141,13 @@ Run full repo housekeeping and act on every finding.
 
    Equal to the report's `Probe fingerprint:` line → reuse its Action plan and
    skip the rerun; say so in the step 7 report. Different, `unavailable`, or no
-   such line → the state has moved since: invoke /yawn. The fingerprint covers
+   such line → the state has moved since: load the yawn skill. The fingerprint covers
    HEAD, the working tree, refs and worktrees, so a step 1 fetch that moved a
    ref or a step 1.5 removal forces the rerun. Molt's own branch cut does not,
    provided yawn ran on a checkout already at `origin/main`; from a lagging
    main or a feature branch the HEAD differs, and yawn runs again.
 
-   With no earlier report, invoke /yawn. The probe (`project-state.py`)
+   With no earlier report, load the yawn skill. The probe (`project-state.py`)
    runs once inside yawn and covers all checks — do not re-run git
    commands already collected there. Parse the **Action plan** section from
    the output: the bold headings `**fix-now**`, `**open-ticket**`, `**skip**`

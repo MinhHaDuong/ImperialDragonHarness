@@ -28,6 +28,7 @@ GLOBAL_PATTERNS=(
 # names, so the first violation of this rule reached a merge gate unflagged.
 PROSE_PATTERNS=(
     'CLAUDE_CODE_[A-Z_]'   # vendor-namespaced runtime knob; name the capability instead
+    'Skill(skill'          # Claude Code tool-call syntax; name the skill in plain words (ticket 1222)
 )
 
 # Patterns checked only in skills/ (ticket bodies may legitimately name consumer projects

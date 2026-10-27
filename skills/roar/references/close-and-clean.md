@@ -11,7 +11,7 @@ all give 2; a repo with no `tickets/` directory at all gets an explicit
 `--ticket` when there is none. Not in a worktree: use `--phase all` with step 10's explicit
 cleanup targets and skip step 9. With no targets, cleanup deletes no branches. Its report lines:
 
-- `CLOSE: ALREADY-CLOSED` is the usual case after `/merge`;
+- `CLOSE: ALREADY-CLOSED` is the usual case after merge;
   `CLOSED-UNCOMMITTED` means it closed and archived the ticket and you must
   commit that in the wrap-up bundle.
 - `CLAIMS`: a PR body's `**Ticket:**` line is executed by the merge recipe's
@@ -22,7 +22,7 @@ cleanup targets and skip step 9. With no targets, cleanup deletes no branches. I
   `UNRESOLVED` (no such ticket here — renumbered, or this checkout is
   behind). The script never repairs a `DROPPED`: do it with
   `tickets/erg close <id>` plus `tickets/erg archive`, committed like any
-  other change. `/yawn` step 9 does not cover this: it indexes on
+  other change. Yawn step 9 does not cover this: it indexes on
   the `Closed:` header being *present*, so it is blind to a ticket that was
   never closed at all.
 

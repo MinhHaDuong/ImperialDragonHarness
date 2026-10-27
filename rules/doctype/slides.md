@@ -7,7 +7,7 @@ last-reviewed: 2026-10-01
 
 Document-type conventions for any talk deck; beamer is the default source,
 ODP or PPTX a LibreOffice conversion of its PDF. Language norms live in
-`lang/`, universal prose in `prose/_all.md`; procedure in the `/slides` skill.
+`lang/`, universal prose in `prose/_all.md`; procedure in the slides skill.
 
 - **One talk, one message.** Every slide serves it; a slide that serves another message goes, however good.
 - **One idea per slide.** A slide that turns is two slides.

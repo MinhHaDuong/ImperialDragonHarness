@@ -11,7 +11,7 @@ does the mechanical part in one call, in this order:
 - Lists the ticket file(s) named by PR-body close claims (`tickets/*.erg`). A
   claim naming a file that exists neither under `tickets/` nor `tickets/closed/`
   is a breaker (exit 1, ESCALATE). No claim → `ticket=none`: proceed, the gate
-  reviews against the PR body (`/verify-gate` § Circuit breakers).
+  reviews against the PR body (verify-gate § Circuit breakers).
 - Writes the PR body and all PR and review comments to files in the panel
   directory, reports CI as `none`, `passing` or `failing: <names>`
   (informational: note failures in the setup summary, do not block; the reviewer

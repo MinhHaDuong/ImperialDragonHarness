@@ -2,10 +2,12 @@
 Title: Skill references runtime-neutral: plain names instead of /name and Skill(...) across skills and rules
 Created: 2026-10-26
 Author: reviewer
+Closed: autoclosed — PR #1754
 
 --- log ---
 2026-10-26T20:30Z reviewer created
 2026-10-27T07:14Z reviewer retargeted: the skill-writing guide moved to skills/harness-doctor/references/authoring-skills.md (ticket 1233); rules/authoring-skills.md is its stub
+2026-10-27T12:08Z reviewer closed — autoclosed — PR #1754
 
 --- body ---
 ## Context

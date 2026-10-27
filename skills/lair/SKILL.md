@@ -19,7 +19,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
 
 0. **Review session scope**: use today's commits and the current ticket state to identify work for steps 1–2. Always perform steps 11 and 12: the reconcile proposal and pending experiences are independent of new commits.
 
-1. **Housekeeping** — run `/molt` (git sync, yawn, eager fix-now repairs, ticket creation).
+1. **Housekeeping** — load the molt skill (git sync, yawn, eager fix-now repairs, ticket creation).
 2. **Reflect on the session** — summarize work done. `git log --since="6am" --oneline` as starting point.
    Then run the report-only temporary-candidate scan for the host, using the
    exact current runtime name and session id from its live metadata:
@@ -51,7 +51,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     a. Preflight from inside the worktree: `"$IDH_ROOT/scripts/worktree-exit-preflight.sh"` (purges `.panel/` and `build/panel-head/` review scratch, then refuses on any other uncommitted/untracked state). If it blocks, finish step 5/6 (commit WIP, handoff notes) and re-run.
     b. `cd` to the primary checkout (`dirname "$(git rev-parse --path-format=absolute --git-common-dir)"`). All remaining steps run on main.
 8. **Hygiene sweep**:
-   - Stale worktrees were GC'd by `/molt` at step 1 (housekeeping owns worktree GC; the script's rails protect active sessions). Here, just `git worktree prune` for leftover admin entries of already-deleted dirs.
+   - Stale worktrees were GC'd by molt at step 1 (housekeeping owns worktree GC; the script's rails protect active sessions). Here, just `git worktree prune` for leftover admin entries of already-deleted dirs.
    - **A worktree the GC skipped for uncommitted changes is a signal, not just an obstacle**: diff it and ask "is this a closed ticket's dropped deliverable?" — a `**Ticket:**` claim closes its ticket at merge whatever landed (the merge recipe's close step), so a PR can close a ticket having landed only part of the work, leaving the rest as orphaned WIP. Preserve it (`wip(NNNN):` commit + push), then re-ticket and execute; never silently discard. Verify any recovered test actually runs — uncommitted WIP may never have been linted/executed.
    - `git branch -a` → delete stale remote branches
    - Check for orphan tickets and stale merge requests
@@ -75,7 +75,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     `docs/` modified since the start of the current day (`docs/` is git-ignored,
     so git cannot see it). If it prints a line, include it in the final summary
     as an offer of `/zotero check-staging`; the author accepts or not. No output, no
-    mention. Proposed, never run automatically; it does not belong in `/molt`.
+    mention. Proposed, never run automatically; it does not belong in molt.
 12. **Suggest a hoard in the conclusion when relevant.** After completing
     all lair work, count journal experiences not yet covered by an accepted
     report in `memory/hoards/`. An unmerged report does not mark experiences
@@ -105,7 +105,7 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     no gate that waited long, and a line starting `test-doctor: not checked` or
     `test-doctor: checked` when it could not tell: pass that line on, since silence
     would otherwise read as an all-clear. Proposed, never run automatically:
-    do not launch `/test-doctor`, ask a question or open a ticket for it.
+    do not launch the test-doctor skill, ask a question or open a ticket for it.
 14. **Report the main-update guard while ticket 1180 is open.** From the
     primary checkout, run `python3 "$IDH_ROOT/scripts/main_guard_memo.py" --repo .`
     and carry its line into the final summary unchanged. It prints the updates

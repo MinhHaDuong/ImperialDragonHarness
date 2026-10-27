@@ -34,7 +34,7 @@ def test_the_rule_body_did_not_come_back():
 def test_prose_all_points_to_the_skill():
     assert SKILL.exists(), "the /cut-prose pointer must resolve to skills/cut-prose/SKILL.md"
     body = PROSE_ALL.read_text(encoding="utf-8")
-    assert "/cut-prose" in body, (
+    assert "cut-prose skill" in body, (
         "rules/prose/_all.md must carry a one-line pointer to /cut-prose so the "
         "technique reaches any agent editing prose mid-cut"
     )

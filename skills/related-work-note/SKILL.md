@@ -48,7 +48,7 @@ This pointer does not register or load MCP tools.
 
 **biblatex** (not BibTeX) compiled with **biber**. Local `.bib` is
 staging; the canonical library is **Zotero**. Resolve and import sources at
-intake with `/zotero import`, attaching to existing items when needed. Reuse
+intake with the zotero skill's `import`, attaching to existing items when needed. Reuse
 Zotero identities; the note bibliography is a citation view, not a second
 source catalog.
 

@@ -112,7 +112,7 @@ SCOPE = (
     "re-gate rules the fix). A FINDINGS fix does: it moves the head past what gaze "
     "reviewed."
 )
-GATE_RUN = "Only on a gaze result of REVIEWED run `/verify-gate <pr-number>"
+GATE_RUN = "Only on a gaze result of REVIEWED run verify-gate with `<pr-number>"
 
 
 def _gaze_then_gate_violations(per_ticket: str) -> list[str]:
@@ -223,6 +223,6 @@ def test_phase6_findings_are_re_reviewed_before_any_gate():
     on the new head with a narrower intent before any gate, and FINDINGS on
     the fixes escalates (ticket 1225)."""
     norm = " ".join(_per_ticket().split())
-    assert "runs `/gaze` on the new head with a new, narrower intent naming those fixes, before any gate" in norm
-    assert "After a FINDINGS fix, run `/gaze` on the new head with a narrower intent" in norm
-    assert "FINDINGS again on the fixes after the narrower `/gaze` → ESCALATE" in norm
+    assert "runs gaze on the new head with a new, narrower intent naming those fixes, before any gate" in norm
+    assert "After a FINDINGS fix, run gaze on the new head with a narrower intent" in norm
+    assert "FINDINGS again on the fixes after the narrower gaze → ESCALATE" in norm

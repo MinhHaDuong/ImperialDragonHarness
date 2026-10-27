@@ -24,7 +24,7 @@ in the comment file (by hand: `python3 "$IDH_ROOT/scripts/step_clock.py" end <to
 add `--seconds` in a second call for `wall=`). Its single line (`duration: 4m12s`, or `duration: not measured`
 when no clock could be read) goes into the result block as printed. Never type a duration
 from memory or estimate: the line comes from the script or says `not measured`.
-This is the one statement of the rule; /verify-gate, /merge and /raid point here.
+This is the one statement of the rule; verify-gate, merge and raid point here.
 The plan items' own wall times are the `ran:` line (`seat_clock.py roster`).
 
 ### Thresholds
@@ -64,7 +64,7 @@ seat: <role> · runtime=<id> · family=<family> · route=<token> · model=<id as
 ```
 
 One `seat:` line per plan item that is a worker, at column 0 in exactly this
-shape (a role may hold spaces, never `·`, `=` or `:`): `/roar` writes the PR
+shape (a role may hold spaces, never `·`, `=` or `:`): roar writes the PR
 body's `reviewer:` lines from them (`attribution_record.py --seats-pr`, ticket
 1155). A result with no `seat:` line, or a body `reviewer:` seat absent from
 it, is a capture failure. A requested model name is not an observed id.

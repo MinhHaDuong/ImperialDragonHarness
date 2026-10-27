@@ -17,7 +17,7 @@ background: false
 
 For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill, its SKILL.md or its directory; a pre-set `IDH_ROOT` wins. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
-> **TASK DIRECTIVE — execute now.** You are running `/verify-adherence` on
+> **TASK DIRECTIVE — execute now.** You are running the verify-adherence skill on
 > `$ARGUMENTS` (a branch name, optionally followed by `worktree=<path>`).
 > This file is your operating procedure, not reference documentation: begin
 > at phase 1.0 immediately. If `worktree=<path>` is present, `cd` into that
@@ -39,14 +39,14 @@ rule is permanently enforced → never needs LLM again.
 
 ## When to use
 
-- Called by `/gaze` as part of phase 2.
+- Called by gaze as part of phase 2.
 - Called standalone by an author who wants to pre-check their own branch before opening a PR.
 - Called by the raid in an Imagine phase to audit a prototype.
 
 ## Input
 
 A branch name, optionally followed by `worktree=<path>` — the isolated
-review worktree prepared by the caller (`/gaze` phase 1). When present,
+review worktree prepared by the caller (gaze phase 1). When present,
 all phases run from that path.
 
 ## Protocol
@@ -185,7 +185,7 @@ assertion message, and evolve without changing a harness interface. A
 central YAML/grep bank would force a framework for one beneficiary until
 a second project arrives wanting the same mechanism.
 
-When `/gaze` or a review surfaces a rule worth mechanizing, write a
+When gaze or a review surfaces a rule worth mechanizing, write a
 test covered by the declared adherence command in the target repo. That is the ratchet
 in practice.
 
@@ -293,11 +293,11 @@ or an explicitly justified inapplicable `skipped` status. Always emit
 
 After each run, if `semantic_findings` is non-empty:
 
-1. The caller (`/gaze` or author) opens a small follow-up ticket in the target repo when the finding meets the severity floor of `rules/workflow.md`; below it, the caller adds the test inline or drops the finding:
+1. The caller (gaze or author) opens a small follow-up ticket in the target repo when the finding meets the severity floor of `rules/workflow.md`; below it, the caller adds the test inline or drops the finding:
    "Mechanize adherence rule X per suggested_test."
 2. That ticket adds a test run by the declared adherence command (in an existing test file, or a
    new one) that asserts the rule mechanically.
-3. Next invocation of `/verify-adherence`, the rule is caught by phase 1 instead of
+3. Next invocation of verify-adherence, the rule is caught by phase 1 instead of
    phase 3. LLM surface shrinks permanently.
 
 This ratchet is the whole point. Do not accept `semantic_findings` as a steady state.
@@ -316,7 +316,7 @@ This ratchet is the whole point. Do not accept `semantic_findings` as a steady s
 
 ## Not in scope
 
-- Writing style / AI-tells (a check `/gaze`'s plan may run over `config/ai-tells.yml`).
+- Writing style / AI-tells (a check gaze's plan may run over `config/ai-tells.yml`).
 - Ticket format (enforced by pre-commit hook).
 - Git branch naming (enforced by pre-commit hook).
 - Merging decisions. This skill never affects merge state.

@@ -87,7 +87,7 @@ General recommendations:
   cheap-to-verify work goes to the ÉCONOMIQUES cluster; Luna is the default
   absent a reason, and Haiku 5.5 is its peer inside Claude Code. Keep a
   Haiku worker under 100K prompt tokens (price x5 above).
-- Review seats of `/gaze` (correctness and red team included) start in the
+- Review seats of gaze (correctness and red team included) start in the
   ÉCONOMIQUES cluster; gaze's plan
   raises a seat when the what needs it (`skills/gaze/references/plan.md`), and
   that overrides the ASSURANCE rule for judgment work, below, for those seats.

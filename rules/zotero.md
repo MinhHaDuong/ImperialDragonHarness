@@ -8,7 +8,7 @@ last-reviewed: 2026-10-16
 # Zotero management
 
 Loaded when you touch a bibliography or a staging directory. The other half of
-its trigger is a task, which no glob reaches: `/zotero` names this file, and a
+its trigger is a task, which no glob reaches: the zotero skill names this file, and a
 session doing Zotero management by hand
 should read it.
 
@@ -65,11 +65,11 @@ projects. Zotero is the system of record; git holds neither the sources nor the
 - **Periodic sync + purge.** Reconcile staging to Zotero (correct item type,
   scraped metadata, file attachment) and **purge staging on archival after
   publication** — Zotero retains everything. The reconcile is run by the author
-  on demand (`/zotero check-staging`) and is *proposed* by `/lair`, never run
+  on demand (`/zotero check-staging`) and is *proposed* by lair, never run
   automatically: when the project has a `docs/` directory and a file under it
   has an mtime since the start of the current day, lair's final summary offers
   it (`skills/lair/zotero-reconcile-trigger`, a cheap mtime scan with no Zotero
-  access and no network); otherwise lair is silent. `/molt` does not run it.
+  access and no network); otherwise lair is silent. Molt does not run it.
 - **Reports carry a page count** — pass `numPages` on the entry. The Zotero
   `report` type has no `numPages` field, so the `zotero` skill's import flow files it in Extra
   as the CSL variable `number-of-pages`; that is the correct home, not a

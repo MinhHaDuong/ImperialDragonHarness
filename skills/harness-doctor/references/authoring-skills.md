@@ -22,6 +22,11 @@ tests are the gate, this is why.
   don't. Enforced by `$IDH_ROOT/scripts/check-agnostic.sh` (`$IDH_ROOT`: the
   harness checkout); a genuinely runtime-specific
   line goes behind `<!-- harness-extension-point -->`.
+- **Name another skill by its plain name** ("load the gaze skill with
+  `<pr> <intent>`", "run verify-gate"); keep `/name` only where the author
+  types it (usage lines, suggestions in a report, frontmatter descriptions)
+  or in a literal output string such as `## /gaze result`. Never the
+  Skill-tool call form: `check-agnostic.sh` flags it.
 - **Never take a name the runtime already binds.** A skill named after a
   built-in command silently shadows it and hides its own staleness. Check the
   runtime's command list when you name one; renaming away needs no stub.
