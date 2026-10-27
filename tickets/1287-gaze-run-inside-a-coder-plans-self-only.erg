@@ -17,3 +17,54 @@ for the merge, so each PR paid a second gaze.
 - [ ] Find why gaze under hunt plans self-only (brief, intent, nesting, consent) and fix the cause.
 - [ ] A hunt run's gaze plans a panel with a cross-family seat when consent exists, without the caller saying so.
 - [ ] The harness gate passes.
+
+## Imagine (raid 2026-10-27b)
+- Premise check: holds for self-only; partly void for the other two symptoms. Transcripts of the wave-1 gaze forks
+  (session e75a58ed, subagents a4798611 for PR 1796, a7416073 for PR 1795) show: the Skill tool did fork, the fork
+  ran on the coder's model (claude-sonnet-5-5), read only SKILL.md (never references/plan.md or panel.md), did the
+  whole review itself and typed the manifest by hand. Cause established: the "plan at least one item that is not
+  self" rule (references/plan.md:36-41, present since 8c4e9a0e, before wave 1) and the cross-family default
+  (plan.md method table, high-risk rows only) live in a reference a fork does not load: `<!-- inline: -->` markers
+  are expanded only by tests/conftest.py:16-33, never at runtime. Not the cause: nesting (headless door needs none).
+  Contributing: consent was unset during wave 1 (second-round runs on 1793/1794/1796 report `cross_family_spend
+  unset`); now set (OpenAI, Mistral). Void: "PASS with deviations beside a failed check" and the hand-repaired
+  manifest are fixed by 1267 (PR #1793: plan-write, script-written plan-check line).
+- Simplest path: make plan-write, which 1267 already made the only way to write a plan, refuse the two bad plans,
+  so prose guidance a fork skips no longer matters. (a) every item `self` -> refused unless `--no-door "<doors
+  tried>"`, recorded as a `# no-door:` header; (b) the host consents to a family (`gaze_seat.consented(config_path())`,
+  read by the script, not from `--spend`, which the fork may omit) and no item has a consented family
+  (case-insensitive) -> refused unless `--no-cross-family "<reason>"`, recorded as a header. The refusal message
+  names the fix (e.g. "plan a headless seat of OpenAI via gaze_seat.py"). Docs: plan.md row "Other family" becomes
+  the consent default; SKILL.md § 2 says plan.md is read before planning and plan-write refuses these plans.
+  YAGNI: reuse gaze_seat.consented/config_path (import as seat_clock already imports panel-manifest-check); no hunt
+  change (the fix lives in gaze, so no caller must say it); no model pin on the skill (AGENTS.md: skills name no model).
+- Risk class: judgment (widens the cross-family default from high-risk rows to every consented plan; a gate-adjacent
+  script). Suggested coder: opus.
+
+## Plan
+- Actions:
+  1. scripts/seat_clock.py `plan_write` + argparse: `--no-door`, `--no-cross-family`; the two refusals above; self =
+     item name `self` or model `self` (define once in plan.md's file-format paragraph).
+  2. skills/gaze/references/plan.md: Methods table "Other family" row = default whenever `# spend:` consents;
+     non-self paragraph cites the plan-write refusal and the two flags; worked cases unchanged except the spend line.
+  3. skills/gaze/SKILL.md § 2: one sentence: read references/plan.md before planning; plan-write refuses an all-self
+     plan and, under consent, a plan with no consented-family seat. No restatement of the rules (plan.md stays home).
+- First test (tests/test_seat_clock.py, temp XDG_CONFIG_HOME):
+  `test_plan_write_refuses_all_self_plan` (exit 2, no manifest.txt, stderr names `--no-door`);
+  `test_plan_write_under_consent_requires_consented_family`: consent ["OpenAI"], no `--spend`, items self +
+  anthropic seat -> exit 2; add item family `openai` -> written; no consent file -> anthropic-only written.
+  Catches wrong impls: one reading `--spend` passes the no-spend case; exact-case match rejects `openai`; one that
+  ignores consent absence refuses the last case. Plus `--no-cross-family "trivial"` -> written with its header.
+- Files touched: scripts/seat_clock.py, tests/test_seat_clock.py, skills/gaze/references/plan.md,
+  skills/gaze/SKILL.md (§ 2 only). Possibly tests pinning plan.md wording (grep plan.md in tests/). No registry.
+- Dependencies: 1286 edits skills/gaze/SKILL.md (attribution, § 5) and the raid ordered 1287 after it; 1290 edits
+  SKILL.md and panel.md (different sections) and gaze_seat.py (imported here, not edited): same wave as neither, or
+  rebase. 1292 touches tests/test_gaze_seat.py only. No dependency on 1252/1277/1282.
+- Exit-criterion mapping: (1) cause -> Imagine above (transcript evidence), fix -> actions 1-3; (2) action 1 + tests,
+  and live proof: the coder's own hunt Review step is a hunt run's gaze from inside a coder; its PR record must show
+  `seats: panel` with an OpenAI or Mistral item, quoted in the PR body; (3) `make check` (or scoped gate, quote
+  selected/skipped).
+
+## Orchestrator decisions (raid 2026-10-27b)
+- Cross-family default applies whenever consent exists (gaze runs only on full-tier changes, so this is the full-tier rule); a plan without one needs a recorded --no-cross-family reason. Matches the author's standing rule of 2026-10-27.
+- Runs after 1286 (skills/gaze/SKILL.md).

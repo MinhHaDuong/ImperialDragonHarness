@@ -17,3 +17,17 @@ left gate_state on the full sync. A gate host that may only read cannot rule.
 - [ ] The harness gate passes.
 
 Related: [[1274]], [[1281]].
+
+## Imagine (raid 2026-10-27b)
+- Premise check: holds. Nothing touched scripts/review_notes.py since 1281 (b7a21ec7, 2026-10-27). scripts/review_notes.py:645-646 still calls `sync(cwd, remote)` in `gate_state`; `refresh` (line 320) already exists and is the reader half (fetch, check, integrate, no push). `record_verdict` (line 702) calls `gate_state` and then `publish` (which calls `sync`), so the verdict write is already the only intended push.
+- Simplest path: one-line change, `sync(cwd, remote)` -> `refresh(cwd, remote)` in `gate_state`, plus the docstring ("Syncs first" -> "Refreshes first, never pushes"). Existing helper reused; no new abstraction. YAGNI hit to avoid: no read-only flag on `sync`.
+- Side effect to note: `sync` ends with `_save_state` (tamper baseline); `refresh` does not. `_check_remote` still runs inside `refresh`, so tamper detection on gate reads is kept; the baseline is saved only when the verdict is published. Acceptable, say so in the commit message.
+- Risk class: concrete fix. Coder: sonnet.
+
+## Plan
+1. scripts/review_notes.py `gate_state`: `sync` -> `refresh`; fix docstring (and the comment at record_verdict line 702: "syncs first" -> "refreshes first").
+2. First test, in tests/test_review_notes_gate.py (uses the existing `two_clones` fixture): `test_gate_state_never_pushes_to_a_read_only_remote`. A publishes a review with an answer; B opens a local-only second review (an unpublished local entry, so the old `sync` WOULD try to push `refs/notes/review`). Then install an update hook on origin logging every pushed ref to a file and rejecting `refs/*` (copy the `hook` helper pattern from tests/test_review_notes.py:346; define a local variant that also logs). Assert `gate_state(b, rid, head)` returns ready=True, the hook log is empty, and origin's `refs/notes/review` tip is unchanged. Also assert the CLI `gate` exits 0 on that remote. Catches a wrong implementation: old code pushes B's unpublished entry, is rejected 5 times and raises Refusal (and logs attempts). A fresh B with nothing local would NOT discriminate (sync pushes nothing then), hence the unpublished local entry. Positive control: run once without the hook and see the log mechanism fire on a `record_verdict`.
+3. Same file: a second assertion that `record_verdict` on the refusing remote still writes the entry locally and does not claim retrievable (publish raises Refusal or returns a non-retrievable level; the coder checks which and pins it), so "the verdict write is the only push" is shown by the log containing only the verdict attempt.
+- Files touched: scripts/review_notes.py; tests/test_review_notes_gate.py. No shared registry (no allowlist, routes.json or conftest list) edited.
+- Dependencies: none open. File overlap: 1282 (concurrent adds lose an entry) also edits review_notes.py (sync/_integrate area); different functions, sequence it after or accept a trivial rebase. 1277, 1252 independent.
+- Exit-criterion mapping: (1) gate_state reads through refresh -> action 1 + test in 2 (hook log empty); verdict only push -> test in 3. (2) rules on a remote that refuses pushes -> tests 2/3. (3) harness gate -> `make check` scoped via `.idh-checks.json`; quote selected/skipped lines; integration tier (this test module is marked integration) must be run explicitly, per 1283.

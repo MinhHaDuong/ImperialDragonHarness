@@ -19,3 +19,51 @@ shells load (BASH_ENV in Claude settings). Codex and Pi shells still run gh as t
 - [ ] conception/local-merge-gate-policy.md's Session credential section drops the gap; the harness gate passes.
 
 Related: [[1196]].
+
+## Imagine (raid 2026-10-27b)
+- Premise check: holds. scripts/bash-env.sh:60-ish exports GH_CONFIG_DIR; BASH_ENV is wired only in the claude
+  branch of adapters/lifecycle.py (~l.385-390) and projections.json lists bash-env.sh for runtime "claude" only.
+  Codex and Pi have no shell-env hook (hooks.json = SessionStart + PreToolUse guard; idh-guard.ts = guard only).
+  Nothing merged on these surfaces since 2026-10-27 creation (git log clean on shell-init.sh, lifecycle.py, adapters).
+- Simplest path: scripts/shell-init.sh already wraps `codex` and `pi` (same file the author's bashrc sources, but the
+  wrappers only affect the launched child). Add one helper `_idh_agent_gh` that, when GH_CONFIG_DIR is unset and
+  $HOME/.config/gh-agent/hosts.yml exists, makes the launch run as `GH_CONFIG_DIR=... command codex "$@"`
+  (env-prefix on the command, no export, so the author's interactive shell never gets it). Child shells inherit it
+  (Codex shell_environment_policy default inherits all; GH_CONFIG_DIR is not KEY/SECRET/TOKEN-named; to be measured).
+  YAGNI: no new Pi extension env injection, no projection entry, no new loader. Alternatives rejected: extending
+  BASH_ENV to codex/pi (not honoured by their shell spawn, unproven; also loads .env parse into those runtimes);
+  Codex config.toml set (per-user file outside the harness, drift).
+  Known gap, state it in the policy: launches outside the wrappers (IDE extension, desktop app, cron) stay on the owner login.
+- Risk class: concrete fix with one measurement-dependent point (does the env reach each runtime's tool shell).
+  Coder: sonnet.
+
+## Plan
+1. scripts/shell-init.sh: add `_idh_agent_gh_env` (prints nothing; returns 0 when hosts.yml exists and
+   GH_CONFIG_DIR unset). In `codex` and `pi` use `env GH_CONFIG_DIR="$HOME/.config/gh-agent" command codex "$@"`
+   in that case, else plain `command`. Leave `claude` alone (BASH_ENV handles it).
+2. tests/test_shell_init_gh_agent.sh (model on tests/test_bash_env_gh_agent_config.sh): hermetic HOME, stub `codex`/`pi`
+   on PATH that print $GH_CONFIG_DIR, source shell-init with IDH_SKIP_VALIDATE=1; cases: config present -> path;
+   hosts.yml missing -> unset; caller-set GH_CONFIG_DIR wins; parent shell afterwards still has GH_CONFIG_DIR unset
+   (author's shell unaffected); `claude` wrapper untouched.
+3. conception/local-merge-gate-policy.md Session credential: replace the "Loader coverage" bullet with the
+   wrapper mechanism, the measured 403 per runtime, and the residual non-wrapper-launch gap. Update STATE.md
+   Handoff line "Codex and Pi shells do not load it yet" only if the coder's PR lands (orchestrator may do it at wrap-up).
+4. Measurement (exit 2): run `codex exec` and `pi --print` under the wrappers, each asking its bash tool to run
+   `gh api -X POST repos/<owner>/<repo>/rulesets` with an invalid-empty body (expect 403 before validation);
+   also `gh api user --jq .login` to show the identity. Log both outputs in the PR body / policy doc. Needs live
+   model calls and the padme token: a sonnet coder on padme can do it; if a runtime is unreachable, the coder
+   reports "unmeasured: <reason>", leaves the box unchecked, and no null is claimed.
+- First test: step 2 case "config present" asserts the stub child sees the exact gh-agent path AND the parent does not.
+  A wrong implementation that `export`s in the wrapper passes the first half but fails the parent-clean assertion;
+  one that skips the hosts.yml check fails the missing-config case. Stubs prove env passing, not that the real
+  runtimes forward it: that is step 4.
+- Files touched: scripts/shell-init.sh, tests/test_shell_init_gh_agent.sh (new), conception/local-merge-gate-policy.md,
+  maybe STATE.md. Registries: none (tests glob-discovered? coder confirms the .sh runner picks it up; no
+  allowlist expected). Check tests/test_skill_seam.py and tests/test_projection_validator.py still pass (they source shell-init).
+- Dependencies: none open; 1196 merged. File overlap: 1285 (notes refs protection) edits the same policy doc,
+  different bullet ("Limitation"); keep in separate waves or accept a trivial rebase.
+- Exit mapping: EC1 -> steps 1-2 (+ step 4 shows real runtimes). EC2 -> step 4 (live; coder reports, cannot be a unit test).
+  EC3 -> step 3, then `make` gate / doc check named in the repo gate.
+
+## Orchestrator decisions (raid 2026-10-27b)
+- The live 403 probe must use a deliberately invalid ruleset body (e.g. an empty JSON object), so a shell that wrongly carries owner rights gets 422 and nothing is created. Never send a valid ruleset. A runtime that cannot be driven headless on padme is reported 'unmeasured', not a pass.

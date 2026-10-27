@@ -17,3 +17,53 @@ ticket PR (#1801, closed by hand after `uv sync --frozen` made both green). The 
       tip red, and reports an environment problem as such, not as a red tip.
 - [ ] A test with a missing dependency yields no red ticket.
 - [ ] The harness gate passes.
+
+## Imagine (raid 2026-10-27b)
+- Premise holds on the current tree. scripts/merge-gate.py `run_after_once` -> `run_checks` -> `run_one` keeps only
+  pytest `FAILED` ids; any non-zero exit is "fail", and `run_after` then calls `red_report` + `open_red_ticket`
+  (lines ~933-1004). Nothing separates an import-time failure from a red tip. No commit since 2026-10-27 touched it
+  (last: 05983eb1, forge adapter). Not established: why doudou's venv was stale (the checks run `make` in a fresh tip
+  worktree; Makefile `RUN` is empty when `VIRTUAL_ENV` is inherited from the shell that triggered the hook). Do not
+  fix that cause blind; detection is cause-independent.
+- Simplest path: detect, do not sync. A sync mutates the host venv (or needs network) and cannot be tested offline.
+  In `run_one`, also match `ModuleNotFoundError: No module named` / `ImportError: cannot import name` in the streamed
+  lines; `run_checks` appends a `env-problem <check> <message>` record line for a failed check that shows one.
+  `run_after_once` writes `result: environment` (not `fail`; `decide()` still treats it as not-pass) when every failed
+  check carries such a line; any other failure stays `fail`. `run_after` prints `environment: ...`, opens NO ticket,
+  returns a new code ENV (nonzero, distinct from FAIL). A mixed run (one env, one real failure) stays red.
+- Antipatterns: YAGNI hit, `uv sync --frozen` preflight: dropped (see above; add only if detection proves
+  insufficient). Guard-on-guard risk: none, one regex and one result value. Masking risk: an undeclared real
+  dependency also reads "environment" on every host; the record and log still show it, and the next tip reruns.
+- Risk class: concrete fix with one small judgment (exit code / record value). Coder: sonnet.
+
+## Plan
+1. scripts/merge-gate.py: `run_one` flags import-time lines; `run_checks` emits `env-problem` lines (keep the
+   `(ok, results)` signature: cmd_run shares it, the marker rides in `results`).
+2. `run_after_once`: result `environment` when all failed checks have env-problem lines. Add `ENV` constant.
+3. `run_after`: the `covered:` branch must not treat a prior `environment` record as covering (the host may be fixed
+   by the next hook start); on env outcome print the status, skip `red_report`/`open_red_ticket`, `code = ENV`.
+   `cmd_run_after` returns ENV as is. `last_green` already requires `result == pass`.
+4. scripts/main_sweep.py `after_audit`: print `environment` instead of `red` when code is ENV (still a finding).
+5. hooks/reference-transaction needs no change (log only). Docs: one line in skills/merge/SKILL.md step 9 (or its
+   after-merge paragraph) saying an environment record opens no ticket.
+- First test (tests/test_after_merge.py, after `test_a_red_run_prints_the_ticket_text_and_exits_non_zero`):
+  `test_an_import_failure_in_a_check_is_an_environment_record_not_a_red_ticket`. make_repo with a check
+  `python3 -c "import no_such_module_xyz"`; run with `--open-ticket` and the stub forge as the red tests do
+  (`red_repo` fixture); assert exit == ENV, note result == "environment", no `red-*` branch on origin, stub forge got
+  no `create`. Catches a wrong implementation: a twin test with check `sh -c 'exit 1'` must still exit 1, record
+  `fail`, and open its ticket (kills "everything is environment"); a third with one env check plus one real failure
+  stays red; a fourth: tip rerun after an `environment` record runs again (not `covered`).
+- Files touched: scripts/merge-gate.py, scripts/main_sweep.py, tests/test_after_merge.py, skills/merge/SKILL.md.
+  Shared registries: none (no allowlist, routes.json or conftest list). Possible: a pytest-adherence census if
+  SKILL.md size is ratcheted (run `make lint`).
+- Dependencies: none open. File overlap with 1283 (integration tier in gates) if it edits merge-gate.py `run_checks`;
+  serialize if both are in one wave.
+- Exit criteria: (1) detect-and-report -> actions 1-4, first test; (2) missing dependency, no red ticket -> first
+  test's no-branch/no-create assertions; (3) harness gate -> `make check-tests` plus `make lint` by the coder.
+  The doudou reproduction needs that host; the coder reports instead the offline simulation (import of a missing
+  module), and the author may confirm on doudou by deleting a dependency from a scratch venv.
+
+## Orchestrator decisions (raid 2026-10-27b)
+- An 'environment' verdict requires evidence that the venv is out of step with the lock (e.g. uv sync --frozen --dry-run reports pending changes, or the missing module is a locked third-party distribution not installed). A missing name from the repo's own modules (the #1799 shape: cannot import name X from a scripts/ module) stays RED. Otherwise RED.
+- ENV exit code: nonzero, distinct from FAIL; main_sweep counts it as a finding (shows 'environment').
+- Doudou reproduction is the author's; the coder reports the offline missing-dependency simulation.

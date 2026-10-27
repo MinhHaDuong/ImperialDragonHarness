@@ -20,3 +20,33 @@ silently — the review record is corrupted. Not in 1281's list.
 - [ ] The harness gate passes (full make check).
 
 Related: [[1252]], [[1276]], [[1281]].
+
+## Imagine (raid 2026-10-27b)
+- Premise holds. scripts/review_notes.py:436 `_write` runs `git notes --ref=refs/notes/review append` (a read-modify-write of the notes
+  commit, no lock); xfail still at tests/test_raid_noforge_f2.py:99. No commit touched review_notes.py after 1281 (b7a21ec7); main 17cfb767.
+- Simplest path: a host-local `fcntl.flock` (LOCK_EX, bounded wait) on `<git-common-dir>/idh-review-notes.lock`, taken in `_write` and
+  around the `notes merge` of `_integrate` (line ~295, same read-modify-write on REF); timeout -> `Refusal` (non-zero exit). Precedent:
+  scripts/merge-gate.py:973 and scripts/worktree-tmp-guard.py:52 already use fcntl.flock, so no new library. A CAS retry loop is the
+  alternative but `git notes append` has no CAS flag, so it would mean rebuilding notes by hand: premature, rejected.
+- Antipattern scan: YAGNI on a shared helper (two call sites only, inline a small contextmanager `_locked(cwd)`); do not lock reads; do not
+  touch refs/notes/gate (review_notes_gate.py, separate store, not in the ticket). Lock dir is the common git dir so linked worktrees share it.
+  Caveat to state in the docstring: flock is per host (NFS/other-host clones not covered; those go through sync, which is already CAS).
+- Risk class: concrete fix. Coder: sonnet.
+
+## Plan
+1. scripts/review_notes.py: add `_locked(cwd, wait=...)` (flock on `rev-parse --git-common-dir`/idh-review-notes.lock; wait from env
+   IDH_NOTES_LOCK_WAIT, default ~30s, poll LOCK_NB; on timeout raise Refusal). Wrap the append in `_write` and the `notes merge` in
+   `_integrate`. Confirm the CLI main maps Refusal to non-zero. Update module docstring (one line on locking).
+2. tests/test_raid_noforge_f2.py: drop the xfail on test_two_concurrent_appends_to_one_review_both_survive; raise writers 2 -> 8 so the
+   race is near-certain on old code.
+3. tests/test_review_notes.py: add deterministic lock tests (no timing luck).
+- First test: (a) the un-xfailed 8-writer test; (b) `test_add_refuses_when_lock_held`: the test process flocks the lock file, sets
+  IDH_NOTES_LOCK_WAIT=0.3, runs `add`: asserts non-zero exit, stderr names the lock, and the note is unchanged. Old code would exit 0 and
+  write, so it fails; a lock that is ignored cannot pass. (c) `test_add_waits_then_writes`: hold lock 0.5s in a thread, add succeeds after.
+- Positive control (exit criterion 2): run the 8-writer scenario against old code via `git show 17cfb767:scripts/review_notes.py` in a temp
+  dir, loop until an entry is lost (record the count in the PR); then show 0 losses over 50 loops on the new code. Report numbers.
+- Files touched: scripts/review_notes.py, tests/test_raid_noforge_f2.py, tests/test_review_notes.py. No registry/allowlist/routes.json.
+- Dependencies: none blocking. File overlap: 1291 (gate-state pushes on read, review_notes_gate.py) and 1292 nits may touch
+  review_notes*.py; 1252 tracker only needs its note updated; 1276 is merged. 1277 unrelated. STATE.md line on 1282 to drop at close.
+- Exit mapping: EC1 -> action 1 + tests (a)(b)(c); EC2 -> action 2 + positive control above (agent-doable, no credential); EC3 -> full
+  `make check` by the coder, quote selected:/skipped: if scoped.

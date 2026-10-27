@@ -25,3 +25,30 @@ Below the severity floor, bundled at the author's request; fix opportunistically
 
 ## Exit criteria
 - [ ] Each item fixed, dropped with a reason, or moved to its own ticket if it turns out to bite.
+
+## Imagine (raid 2026-10-27b)
+- Premise: holds. No commit since 2026-10-27 touched the listed surfaces beyond 1280/1281 (already merged, already described). Bundle is below the floor; "drop" is a legitimate outcome per item.
+- Simplest path: fix only the 4 items that are a few lines with an existing test seat; drop the rest with a reason in the log. YAGNI hit: do not build a stdin-spy guard; the fix for item 1 is to make the stub measure stdin type, not content.
+- Risk class: concrete fix (small, independent). Coder: sonnet.
+
+## Plan
+Item by item:
+1. vibe stdin test (tests/test_gaze_seat.py:545-552): FIX. In the stub (line 27 area) record `readlink /proc/self/fd/0` (or `[ -t 0 ]` plus `stat -L -c %t:%T /dev/stdin`) to `$STUB_LOG/<name>.stdin_dev`; assert it is `/dev/null` for vibe. Catches a mutation that inherits stdin because pytest's fd 0 is also /dev/null only if the test replaces fd 0 with a pipe first (open a pipe, `stdin=PIPE` in the launch subprocess) so inheritance is distinguishable. Needs the `launch()` helper to accept stdin; verify the mutation (drop `stdin=DEVNULL` in scripts/gaze_seat.py/seat_clock) fails the test.
+2. gaze_wall_time endpoints() (scripts/gaze_wall_time.py:235): FIX, 1 line: keep only plan-check ends with start >= `first` (no seat -> no closing). Test in the existing gaze_wall_time test file: a run with a plan-check and no seat gives closing None.
+3. forge._has_origin (scripts/forge.py:375): DROP-or-FIX. Fix = treat returncode 2 (no such remote) as False, any other nonzero (e.g. 128, not a repo) as ForgeRefusal; ~4 lines + a test with a non-repo cwd. Do it only if cheap; it fails safe today (landing no-origin on a broken repo goes local, which then fails on git anyway): lean DROP.
+4. 1275 concurrent-writer races: DROP (not reproduced; 1282 already tracks the real concurrent defect).
+5. 1274 stale refusal not naming cause: DROP (fails safe; message-only).
+6. 1281 answer inherits request head: DROP (contract allows it; documented).
+7. test_after_merge copies no review_notes.py (tests/test_after_merge.py:302): DROP unless the test hits forge.py:242 lazy load; test passes today, so the path is unused there.
+8. stray gate note from wrong-worktree verify-gate: DROP (one-off, operator error; refs/notes/gate unprotected is 1285).
+9. verify-gate prose / stale NEEDS-AUTHOR: DROP as nit; if it recurs, own ticket against skills/verify-gate. No reproducer.
+10. https push failure: DROP (cause not established, one-off, retry works).
+11. stderr prints in library code (review_notes.py: 410,804,823,854; gaze_close.py): DROP (CLI scripts; no consumer harmed). Private helpers (rn._compact/_hex/_now used at gaze_close.py:197, gaze_setup.py:178, tests): FIX only as a rename to public `compact/hex_id/now` across 3 call sites if wanted; lean DROP.
+- Files touched: tests/test_gaze_seat.py, scripts/gaze_wall_time.py, its test file (find via grep gaze_wall_time tests/), optionally scripts/forge.py + tests/test_forge*.py. No shared registry edited.
+- Dependencies: none open (1282 overlaps only on review_notes.py, untouched in the lean plan). No file overlap with 1283-1291 expected; gaze_seat.py only if item 1 needs a helper change.
+- First test: item 1's strengthened vibe test, written first and shown red against a mutant that inherits stdin (a pipe fed non-empty data must not reach the stub); a content-only assert would stay green, which is the tautology being fixed.
+- Exit mapping: single criterion discharged by the per-item dispositions above (items 1, 2 fixed; 3, 11 optional; others dropped with the stated reason recorded in the PR body and ticket log).
+
+## Orchestrator decisions (raid 2026-10-27b)
+- Lean plan accepted: fix the vibe stdin test and gaze_wall_time endpoints(); drop _has_origin and the private-helper rename (fail safe / cosmetic), and the other items with the reasons above, recorded in the PR body and an erg log note.
+- Added nit (orchestrator, observed 2026-10-27): scripts/raid_log.py 'path' requires a second argument (len(argv) >= 2) and prints the usage instead of the path; fix to accept 'path' alone, with a test.

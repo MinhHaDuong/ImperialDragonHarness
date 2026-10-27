@@ -15,3 +15,24 @@ worker"; the coders proceeded on make lint alone.
 - [ ] Reproduce or explain the hang; the semantic worker returns or times out with a stated result.
 - [ ] A hunt never proceeds on a missing adherence verdict without saying so in its report.
 - [ ] The harness gate passes.
+
+## Imagine (raid 2026-10-27b)
+- Premise: holds. skills/verify-adherence/SKILL.md phase 3 says "Wait for completion" with no bound, and the skill is `context: fork` (line ~10), so a verdict that never arrives blocks its caller forever. Hunt's Self-gate (skills/hunt/SKILL.md:130) already says "escalate when the skill errors or returns nothing usable", yet two coders proceeded on `make lint`: the rule is there, nothing forces a report line. Nothing merged on these files since 2026-10-27 touches it (last: 88b57d80, plain names).
+- Cause (hypothesis, not isolated): spawn depth. Raid orchestrator -> coder -> forked skill -> semantic worker is depth 3, the cap in settings.shared.json:9; a worker spawn at the cap may be refused or silently degrade (rules/claude-code.md). A live repro needs a raid-depth session; an agent can only simulate it.
+- Simplest path: (a) bound the wait in phase 3 (state a timeout, e.g. 10 min; on expiry `status: unavailable`, `adherence: FAIL`, `escalation: adherence-infrastructure`, reason "worker timed out"), and say a worker spawn refused at depth is the same status; (b) hunt Self-gate and Report: a missing/unavailable verdict is stated in the report as "adherence: not obtained (reason)", never silently dropped. No new helper, no new test about tests (YAGNI). Antipattern: do not add a watchdog script.
+- Risk class: consistency (two prose contracts + one text test). Coder: sonnet.
+
+## Plan
+1. skills/verify-adherence/SKILL.md phase 3: replace "Wait for completion" with a bounded wait (named timeout) and add timeout/spawn-refused to the `unavailable` list; add one line in Circuit breakers.
+2. skills/hunt/SKILL.md Verify/Self-gate (and the report step): if the verdict is unavailable/timed out/FAIL-infrastructure, the final report carries an `adherence:` line saying so with the reason; proceeding on make lint alone is allowed only with that line.
+3. profiles/coder/PROFILE.md: one sentence echoing the report line (check the profile's existing Report section first).
+4. Run `make skills-catalog` only if a description changes (not expected).
+5. Explanation of the hang: record the depth hypothesis in the ticket log/conception note as "explained, not reproduced"; the coder reports what it could and could not reproduce.
+- First test: tests/test_verify_fork_contracts.py::test_adherence_wait_is_bounded: phase 3 text contains a timeout figure and the words "timed out" mapped to `status: unavailable`; hunt SKILL.md Self-gate contains the "adherence:" report-line rule. Fails on the current tree (neither exists). Weakness: text-presence only; it catches a missing bound but not a wrong one, acceptable for a prose contract.
+- Files touched: skills/verify-adherence/SKILL.md, skills/hunt/SKILL.md, profiles/coder/PROFILE.md (maybe), tests/test_verify_fork_contracts.py. No shared registry edited. Overlap risk: any other ticket editing hunt SKILL.md Verify (check 1282-1292 before launch).
+- Dependencies: none blocking; 1252 tracker context only; file overlap with other hunt-skill tickets.
+- Exit mapping: 1 (reproduce or explain) -> action 5 plus bounded wait (action 1); live repro cannot be done by an agent, coder reports depth hypothesis as unproven. 2 -> action 2/3 and the test. 3 -> make lint and make check-fast.
+
+## Orchestrator decisions (raid 2026-10-27b)
+- Accept 'explained, not reproduced' for criterion 1 if a live depth reproduction is out of reach; the explanation must name the evidence (depth cap, transcript) and be labelled a hypothesis if not isolated.
+- 10-minute bound on the semantic worker wait accepted.
