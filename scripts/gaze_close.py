@@ -38,9 +38,19 @@ def git(*args, cwd=None):
 
 
 def primary_root(cwd=None):
+    """The primary checkout: parent of the shared `.git`, read from git.
+
+    Not by cutting the toplevel at `/.claude/worktrees/`: a repository whose
+    own path holds that segment (a test fixture under a worktree's TMPDIR)
+    would resolve to the outer checkout. A bare-hub layout, whose common dir
+    is not a `.git`, keeps the path cut.
+    """
     rc, top = git("rev-parse", "--show-toplevel", cwd=cwd)
     if rc:
         raise SystemExit("gaze_close: not inside a git repository")
+    rc, common = git("rev-parse", "--path-format=absolute", "--git-common-dir", cwd=cwd)
+    if not rc and Path(common).name == ".git":
+        return Path(common).parent
     return Path(top.split("/.claude/worktrees/")[0])
 
 
