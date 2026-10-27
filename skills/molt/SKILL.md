@@ -141,7 +141,9 @@ Run full repo housekeeping and act on every finding.
    runs once inside yawn and covers all checks — do not re-run git
    commands already collected there. Parse the **Action plan** section from
    the output: the bold headings `**fix-now**`, `**open-ticket**`, `**skip**`
-   are the contract interface consumed by steps 3–5 below.
+   are the contract interface consumed by steps 3–5 below. Yawn's closing
+   `Next move:` line is addressed to a user who ran yawn alone; inside molt,
+   ignore it: you are already in the move it suggests.
 
    Yawn check 14 findings (project directives shadowing the harness's) arrive
    as its JSON records; molt routes them and does not re-read local rules:
