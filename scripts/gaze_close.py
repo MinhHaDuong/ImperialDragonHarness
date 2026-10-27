@@ -38,6 +38,8 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+# A typed verdict line in any dress: indented, quoted, emphasised, any case.
+TYPED_PLAN_CHECK = re.compile(r"^[\s>*_`#-]*plan check\s*[:*_]", re.MULTILINE | re.IGNORECASE)
 
 
 def git(*args, cwd=None):
@@ -153,7 +155,7 @@ def main():
         return 2
     comment_text = a.comment_file.read_text() if a.comment_file else None
     if comment_text is not None and ("{{plan_check}}" not in comment_text
-                                     or re.search(r"^plan check:", comment_text, re.MULTILINE)):
+                                     or TYPED_PLAN_CHECK.search(comment_text)):
         print("gaze_close: the comment file needs the {{plan_check}} placeholder and no typed "
               "'plan check:' line; the script writes that line", file=sys.stderr)
         return 2

@@ -262,3 +262,14 @@ def test_blocked_cleanup_still_prints_the_plan_check(tmp_path):
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], primary, env)
     assert r.returncode == 1
     assert any(ln.startswith("plan check: FAIL") for ln in r.stdout.splitlines())
+
+
+@pytest.mark.parametrize("typed", ["  plan check: PASS", "> plan check: PASS", "**plan check:** PASS", "Plan check: PASS"])
+def test_typed_plan_check_in_any_markup_is_refused(tmp_path, typed):
+    primary, env, f = opened(tmp_path)
+    comment = tmp_path / "c.md"
+    comment.write_text(f"{{{{plan_check}}}}\n{typed}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 2 and "plan_check" in r.stderr
+    assert (primary / ".claude" / "worktrees" / "review-7").exists()
+    assert not (tmp_path / "gh.log").exists()
