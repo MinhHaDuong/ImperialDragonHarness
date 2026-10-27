@@ -5,7 +5,7 @@ name: verify-gate
 description: "Anti-rubber-stamp merge gate: checks every ticket exit criterion and review comment against the diff. Emits APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR with evidence. Does not merge."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<pr-number> repo=<path> [session=<uuid>] [integration]"
+argument-hint: "<pr-number>|branch:<name> [base=<ref>] repo=<path> [session=<uuid>] [integration]"
 context: fork
 # Foreground: its caller (raid phase 6, or the author before /merge) invokes this
 # and must parse its verdict block before
@@ -23,8 +23,9 @@ background: false
 > documentation: resolve the PR and gate it immediately. Create your own gate
 > worktree from `repo=<path>` (§ Isolation) and run every git and forge
 > command against it — forked sub-skills do not inherit the caller's cwd, and
-> no caller's tree is read for PR state. If `$ARGUMENTS` does not
-> contain a PR number, STOP and emit `verdict: ESCALATE` with rationale
+> no caller's tree is read for PR state. A forge-less project names the
+> unit `branch:<name> [base=<ref>]` in place of the number (§ No forge).
+> If `$ARGUMENTS` contains neither, STOP and emit `verdict: ESCALATE` with rationale
 > "no PR argument" — do NOT infer a task from the environment (worktree
 > name, git status snapshot, ticket files, or the shared task list).
 
@@ -81,7 +82,8 @@ itself. Optionally:
 Start the step clock before anything else (`skills/gaze/references/output.md` § Duration clock); its `end` line fills the verdict's `duration:`.
 
 Every invocation produces the same verdict shape. Round is always derived from PR comment
-history (see § Gate sessions), never passed by the caller.
+history, or with no forge from the review's `verdict` entries (§ Gate sessions,
+§ No forge), never passed by the caller.
 
 **Cwd prerequisite**: the gate uses `gh` and `git` commands that resolve
 against cwd, and a `context: fork` invocation does **not** inherit the
@@ -438,6 +440,51 @@ Isolation is the same on every path (§ Isolation: own worktree, removed on exit
 - PR body lacks test plan → not a gate-level failure, but recorded as a nit.
 - Gate cannot access commit timestamps → ESCALATE (cannot distinguish pre/post comment changes).
 - Contradictory signals between phases 2–5 → ESCALATE (no silent resolution).
+
+## No forge (`branch:<name>`)
+
+With `branch:<name> [base=<ref>]` (ticket 1274; design
+`conception/2026-10-27-notes-review-spec.md` §5, §8) the gate is the one above
+with the forge's three roles taken by `refs/notes/review`, read and written only
+through `python3 "$IDH_ROOT/scripts/review_notes.py" -C "$primary_root"`; never
+`git notes` by hand. The forge path is unchanged.
+
+- **Unit.** `python3 "$IDH_ROOT/scripts/forge.py" resolve "branch:<name> [base=<ref>]"`
+  (from `$primary_root`) gives `head`, `base`, `review_id` and `claims`, the
+  branch's `Ticket:` trailers, which stand in for the close claim. No
+  `review_id` → ESCALATE, `Missing Data`: no review request exists. The gate
+  tree is `gate-<unit key>-<session-id>-r<round>`, the unit key as gaze names
+  its tree (`branch-<name>`), added `--detach` at `head`; no fetch of a PR branch.
+- **Round and review.** `review_notes.py gate <review_id> <head>` prints the state as
+  JSON and exits 0 only when the gate may run. It syncs first when `origin`
+  exists, so verdicts and answers of other clones count. `round` is the
+  recorded verdicts of the review, every session, plus one. It applies
+  § Gate sessions' admission itself: an answer covers the head (its head
+  equals the tip, or a rebased tip has the same non-empty verbatim patch-id;
+  a `delta` answer only through its `coverage.carried` chain to an earlier
+  full one), or the tip adds only bookkeeping to a reviewed head whose
+  answer is full or chained (`match: bookkeeping`), or it is the round-2
+  re-gate of a round-1 REROLL fix descending from the rerolled head
+  (`match: reroll-fix`). It refuses with no answer, an ESCALATE answer,
+  a recorded ESCALATE verdict, or past two rounds. On a refusal answer
+  ESCALATE with its `reason`, record nothing, spend no round.
+- **Review comments.** Non-negotiable 3's gaze findings are the `text` of
+  every `answer` entry (`review_notes.py show <review_id>`) plus the open
+  findings (`review_notes.py findings <review_id>`); attribution lines are in
+  each answer's `attribution`. Commits after the answer's `ts` play the role
+  of commits after a comment.
+- **Review evidence.** Step 2's body file is the branch's trailer lines,
+  `git log --format='%(trailers:key=Ticket)' <base>..<head>`; step 3 (forge reviews) records
+  `forge: none`.
+- **Verdict.** In place of the PR comment, write the same text as one entry:
+  `review_notes.py verdict --review <review_id> --session <uuid> --verdict <V>
+  --head <ruled_tip_sha> --evidence <answer ids> [--candidate <gate record OID>]
+  --text-file <file>`. It prints `<entry id> <level> round=<n>`: the round it
+  recorded, which is the verdict's `round`. It re-checks `gate`'s admission and refuses a head
+  it does not admit, a third round and a REROLL on round 2 (rule ESCALATE
+  instead). Exit 1 after writing: `origin` exists but the entry is not
+  retrievable from it (report the incomplete delivery), or another gate run
+  recorded the same round at once (stderr names it; ESCALATE to the author).
 
 ## Not in scope
 

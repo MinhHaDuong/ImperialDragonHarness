@@ -1,6 +1,5 @@
 %erg 0.1
 Title: 1252 child C6: raid Phases 6-7 forge-less, end-to-end test with gh absent
-Blocked-by: 1274
 Created: 2026-10-27
 Author: reviewer
 
@@ -12,6 +11,7 @@ Author: reviewer
 2026-10-27T16:56Z reviewer note held 2026-10-27 by the author: a design note on review/merge/propagation flows comes first; this end-to-end ticket waits for it to say which flows to exercise
 2026-10-27T17:12Z reviewer note unheld by the author's flows ruling 2026-10-27: exercise F2 only on a repository with no origin remote (gh absent), plus the refusal when origin exists and gh is absent; F2-with-origin is not a flow
 2026-10-27T17:31Z reviewer note blocker 1280 closed — Blocked-by removed.
+2026-10-27T17:42Z reviewer note blocker 1274 closed — Blocked-by removed.
 
 --- body ---
 ## Context

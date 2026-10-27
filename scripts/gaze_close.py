@@ -183,11 +183,15 @@ def record_answer(primary, pr, text, attribution):
             print("answer: FAILED no review request for this branch (gaze_setup opens one)")
             return 2
         result = _field(text, "result")
+        scope = answer_scope(text)
+        cov = {"scope": scope}
+        if scope == "delta":  # spec §4: a delta counts only through the answer it carries (ticket 1274)
+            cov["carried"] = rn.carry_target(cwd, rid)
         entry = rn.add(cwd, "answer", rid, {
             "run_id": f"gz-{rn._compact(rn._now())}-{rn._hex(4)}",
             "result": result if result in ("REVIEWED", "FINDINGS", "ESCALATE") else "ESCALATE",
             "seats": _field(text, "seats") or "self-only",
-            "coverage": {"scope": answer_scope(text)},
+            "coverage": cov,
             "attribution": attribution.splitlines() if attribution else [],
             "text": text}, head=_field(text, "reviewed_head_sha"), skill="gaze")
         level = rn.publish(cwd, [entry["id"]])
