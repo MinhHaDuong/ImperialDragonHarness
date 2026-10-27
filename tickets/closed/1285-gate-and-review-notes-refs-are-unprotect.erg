@@ -2,11 +2,14 @@
 Title: Gate and review notes refs are unprotected on the forge
 Created: 2026-10-27
 Author: reviewer
-Label: needs-human
+Closed: closed by the author's choice (option 1, accept; exposure stated in conception/local-merge-gate-policy.md)
 
 --- log ---
 2026-10-27T18:32Z reviewer created
 2026-10-27T18:32Z reviewer label needs-human
+2026-10-27T19:32Z reviewer note author's choice 2026-10-27: option 1, accept. Detection after the fact suffices: main_sweep.py audits every main commit against its gate record daily, and review_notes.py refuses an entry changed under an unchanged id; a forge ruleset most likely cannot target refs/notes/*, and the owner login and ssh key bypass rulesets anyway. Reopen if GitHub supports rulesets on notes refs, or if the audit finds a gate note changed after its merge (advisor: Fable).
+2026-10-27T19:32Z reviewer unlabel needs-human
+2026-10-27T19:32Z reviewer closed — closed by the author's choice (option 1, accept; exposure stated in conception/local-merge-gate-policy.md)
 
 --- body ---
 ## Context
