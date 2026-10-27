@@ -683,8 +683,9 @@ def _bookkeeping_since(cwd, base_ref, head, since):
 
 def gate_state(cwd, review_id, head, remote="origin"):
     """What verify-gate needs before ruling `head` (spec §5, §8): the round it would rule,
-    whether a completed review admits it, and why not. Syncs first when there is a remote,
-    so verdicts and answers written by other clones count.
+    whether a completed review admits it, and why not. Refreshes first when there is a remote
+    (fetch and merge, never a push), so verdicts and answers written by other clones count
+    and a read-only gate host can rule.
 
     Admitted: an answer covers the head (equal head, or equal non-empty verbatim patch-id;
     a delta only through its `carried` chain to an earlier full answer); or the head adds
@@ -692,8 +693,7 @@ def gate_state(cwd, review_id, head, remote="origin"):
     the round-2 re-gate of the fix for a round-1 REROLL, descending from the rerolled head.
     Refused: no answer, an ESCALATE answer (the latest, or the one
     covering the head), a recorded ESCALATE verdict, more than two rounds."""
-    if setup(cwd, remote):
-        sync(cwd, remote)
+    refresh(cwd, remote)
     head = _rev(cwd, head)
     verdicts = _verdicts(cwd, review_id)
     answers = [e for e in entries(cwd, review_id) if e["kind"] == "answer"]
@@ -749,7 +749,7 @@ def record_verdict(cwd, review_id, session, verdict, head, evidence=(), gate_can
         session = str(uuid.UUID(session))
     except (TypeError, ValueError):
         raise Refusal(f"gate session id must be a UUID, got {session!r}") from None
-    state = gate_state(cwd, review_id, head, remote)  # syncs first when there is a remote
+    state = gate_state(cwd, review_id, head, remote)  # refreshes first, never pushes
     if not state["ready"]:
         raise Refusal(f"the gate may not rule {state['head'][:12]}: {state['reason']}")
     rnd = state["round"]

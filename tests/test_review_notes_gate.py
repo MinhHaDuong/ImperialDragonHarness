@@ -366,3 +366,38 @@ def test_reroll_fix_must_descend_from_the_rerolled_head(repo):
     fix(repo, 16)
     state = rn.gate_state(repo, rid, "feature")
     assert not state["ready"] and state["match"] == "none"
+
+
+# --- ticket 1291: the gate reads through refresh; the verdict write is the only push ---------
+
+def logging_hook(origin, log):
+    """An update hook on the bare origin that logs every pushed ref and rejects them all."""
+    h = origin / "hooks" / "update"
+    h.write_text(f'#!/bin/sh\necho "$1" >> {log}\necho "refused $1" >&2\nexit 1\n')
+    h.chmod(0o755)
+
+
+def test_gate_state_never_pushes_to_a_read_only_remote(two_clones, tmp_path):
+    origin, a, b = two_clones
+    rid = rn.open_review(a, "feature", "origin/main")
+    answer(a, rid)
+    assert rn.publish(a, [e["id"] for e in rn.entries(a, rid)]) == "retrievable"
+    rn.open_review(b, "feature", "origin/main")  # unpublished local entry: the old sync would push it
+    tip = sh(origin, "rev-parse", "refs/notes/review")
+    log = tmp_path / "pushed.log"
+    logging_hook(origin, log)
+    state = rn.gate_state(b, rid, "feature")
+    assert state["ready"], state
+    assert not log.exists()  # nothing was even attempted
+    assert sh(origin, "rev-parse", "refs/notes/review") == tip
+    r = cli(b, "gate", rid, "feature")
+    assert r.returncode == 0, r.stderr
+    assert not log.exists()
+    # the verdict write is the only push: it reaches the hook, is refused, and is not retrievable
+    try:
+        done = rn.record_verdict(b, rid, session(), "APPROVED", "feature")
+        assert done["level"] != "retrievable"
+    except rn.Refusal:
+        pass
+    assert log.exists() and log.read_text().strip()  # positive control: the hook log fires
+    assert sh(origin, "rev-parse", "refs/notes/review") == tip
