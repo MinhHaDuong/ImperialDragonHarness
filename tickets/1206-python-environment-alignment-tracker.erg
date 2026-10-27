@@ -6,6 +6,7 @@ Author: Minh Ha-Duong
 --- log ---
 2026-10-23T14:07Z Minh Ha-Duong created
 2026-10-27T09:46Z reviewer 2026-10-27: integration check not runnable from padme: askMinh and fs-housekeeper are absent from ~/CNRS/code and from the forge; run the alignment check on the machine that holds them, then close
+2026-10-27T09:56Z reviewer 2026-10-27 check run on doudou (repos live there, not padme): askMinh master 2288bb8 NOT ok (no pyproject.toml/uv.lock, requirements.txt pinned by hand, Makefile:7 PYTHON = venv/bin/python3); fs-housekeeper main 62434c9 NOT ok (Makefile:8 PYTHON :=, Makefile:53,72 and docs/CONTRIBUTING.md:36 uv pip install). Both tickets/0001 open, untouched since 2026-10-23; supersedes the previous note
 
 --- body ---
 ## Context
