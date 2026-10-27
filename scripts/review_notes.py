@@ -530,11 +530,13 @@ def _append(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", 
         req = named[0]
     # One read of the requests, one check: a verdict rules the review's latest submission on the
     # gate's head (rebased or bookkeeping), every other entry binds to the request it examined.
-    if kind != "verdict" and head is not None and _rev(cwd, head) != req["head"]:
-        raise Refusal(f"head {_rev(cwd, head)[:12]} is not the head of request {req['request_id']} "
+    # A ref is resolved once: the commit checked is the commit bound.
+    oid = _rev(cwd, head) if head is not None else req["head"]
+    if kind != "verdict" and oid != req["head"]:
+        raise Refusal(f"head {oid[:12]} is not the head of request {req['request_id']} "
                       f"({req['head'][:12]}): an entry binds only to the request it reviewed; "
                       "name that request (--request), or request the head first")
-    binding = _binding(cwd, head or req["head"], req["base_ref"])
+    binding = _binding(cwd, oid, req["base_ref"])
     return _write(cwd, _entry(cwd, kind, review_id, req["request_id"], binding, author, skill,
                               links, dict(fields)))
 
@@ -707,7 +709,7 @@ def record_verdict(cwd, review_id, session, verdict, head, evidence=(), gate_can
     entry = _append(cwd, "verdict", review_id,
                     {"gate_session_id": session, "round": rnd, "verdict": verdict,
                      "evidence": list(evidence), "gate_candidate": gate_candidate, "text": text},
-                    head=head, author=author or {"role": "verify-gate"}, skill="verify-gate")
+                    head=state["head"], author=author or {"role": "verify-gate"}, skill="verify-gate")
     level = publish(cwd, [entry["id"]], remote) if has_remote else "done-unpublished"
     conflict = [v["id"] for v in _verdicts(cwd, review_id)
                 if v.get("round") == rnd and v["id"] != entry["id"]]

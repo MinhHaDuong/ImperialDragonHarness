@@ -451,3 +451,23 @@ def test_an_entry_on_another_head_is_refused_even_with_one_request(world):
     rid = rn.open_review(a, "feature", "origin/main")  # its only request is on the later head
     with pytest.raises(rn.Refusal, match="head"):
         rn.add(a, "answer", rid, {"run_id": "gz-x"}, head=old)
+
+
+def test_a_symbolic_head_is_resolved_once(world, monkeypatch):
+    """gaze 1817 round 3: the ref checked against the request is the commit bound, even if the
+    branch moves between the check and the write."""
+    _, a, _, _ = world
+    rid = rn.open_review(a, "feature", "origin/main")
+    req = rn.entries(a, rid)[0]
+    sh(a, "switch", "-q", "feature")
+    sh(a, "commit", "-q", "--allow-empty", "-m", "moved")
+    moved = sh(a, "rev-parse", "HEAD")
+    sh(a, "reset", "-q", "--hard", req["head"])
+    real, calls = rn._rev, []
+
+    def racing(cwd, ref):  # the branch moves right after its first resolution
+        calls.append(ref)
+        return moved if ref == "feature" and calls.count("feature") > 1 else real(cwd, ref)
+    monkeypatch.setattr(rn, "_rev", racing)
+    e = rn.add(a, "answer", rid, {"run_id": "gz-x"}, head="feature", request_id=req["request_id"])
+    assert e["head"] == req["head"]
