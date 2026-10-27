@@ -56,9 +56,11 @@ rounds, not a faster round.
 
 Properties of every run:
 
-- **One pass.** Gaze reviews once and returns. No internal round, no fix
-  loop: findings go back to the caller, who fixes and, if it wants, sends a
-  new narrower intent.
+- **One pass, no recursion.** The pass may be multi-headed: several workers
+  in parallel, as the plan says. It does not recurse: no worker launches
+  another review, gaze does not review its own findings again, and there is
+  no internal round or fix loop. Findings go back to the caller, who fixes
+  and, if it wants, sends a new narrower intent.
 - **Read-only on the code.** Gaze never edits, commits or pushes on the
   merge request's branch, nor writes in the caller's worktree.
 - **Checks allowed, scratch clean.** Gaze may run tests or scripts to settle
@@ -83,7 +85,7 @@ that wants them reviewed says so in the intent.
 - [ ] Gaze writes its plan (method, workers, budget) before launching anything, from nature, size, location and history; the guidance for it lives in one place and states the "cheapest method that settles the what" rule with a few worked cases.
 - [ ] After executing, gaze compares plan with what was done and records the outcome as a `plan check:` line; a planned perspective missing without a valid substitute blocks a REVIEWED verdict.
 - [ ] The result comment carries intent, plan, run, plan check, findings, verdict and duration, and is the only register (no per-seat attribution writes into the merge request body).
-- [ ] One pass: gaze has no internal round or fix loop; it returns after its single review.
+- [ ] One pass, no recursion: the plan may run several workers in parallel, but no worker launches a further review and gaze has no internal round or fix loop; it returns after the single pass.
 - [ ] Read-only: a test shows a gaze run leaves the merge request's branch tip and the caller's worktree unchanged.
 - [ ] Scratch clean: checks run in gaze's own throwaway worktree, removed with every scratch file before it returns; a test shows nothing of the run remains on disk.
 - [ ] `/hunt`, `/raid` and `/merge` pass an intent and drop their fixed round loops: a later round is a new, narrower intent.
