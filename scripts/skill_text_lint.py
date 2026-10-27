@@ -41,6 +41,11 @@ PATTERNS = [
     ("ticket_word", r"\b(ticket|MR|PR) \d+"),
 ]
 
+# A harness script named in skill text: `$IDH_ROOT/scripts/x` or a bare
+# `scripts/x`, not a skill-local `skills/a/scripts/x`.
+SCRIPT_REF = re.compile(
+    r"(?:\$\{?IDH_ROOT\}?/|(?<![\w./-]))scripts/([\w-][\w./-]*)")
+
 
 def project_names(projects_file: Path) -> list[str]:
     entries = json.loads(Path(projects_file).read_text(encoding="utf-8"))
@@ -55,7 +60,7 @@ def compile_patterns(names: list[str]) -> list[tuple[str, re.Pattern]]:
     return [(n, re.compile(p, re.IGNORECASE)) for n, p in pats]
 
 
-def lint_file(path: Path, rel: str, pats) -> list[dict]:
+def lint_file(path: Path, rel: str, pats, root: Path) -> list[dict]:
     text = path.read_text(encoding="utf-8")
     m = FRONTMATTER.match(text)
     offset = text[:m.end()].count("\n") if m else 0
@@ -88,6 +93,9 @@ def lint_file(path: Path, rel: str, pats) -> list[dict]:
         for name, pat in pats:
             if pat.search(line):
                 out.append(finding(i, name, line))
+        for ref in SCRIPT_REF.findall(line):
+            if not (Path(root) / "scripts" / ref.rstrip("./")).exists():
+                out.append(finding(i, "missing_script", line))
     return out
 
 
@@ -107,7 +115,7 @@ def lint(root: Path, projects_file: Path, paths: list[Path] | None = None):
             rel = str(f.relative_to(root))
         except ValueError:
             rel = str(f)
-        findings += lint_file(f, rel, pats)
+        findings += lint_file(f, rel, pats, root)
     summary: dict[str, int] = {}
     for f in findings:
         summary[f["check"]] = summary.get(f["check"], 0) + 1
