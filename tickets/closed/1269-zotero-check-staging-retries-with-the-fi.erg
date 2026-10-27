@@ -2,9 +2,11 @@
 Title: zotero check-staging retries with the filename title when the embedded PDF title matches nothing
 Created: 2026-10-27
 Author: reviewer
+Closed: autoclosed — PR #1775
 
 --- log ---
 2026-10-27T13:53Z reviewer created
+2026-10-27T14:12Z reviewer closed — autoclosed — PR #1775
 
 --- body ---
 ## Context
