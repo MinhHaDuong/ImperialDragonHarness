@@ -27,9 +27,8 @@ looking a branch up, so a fresh clone after setup + `git fetch` finds the
 published review, and an unreachable remote is a refusal, never "no review".
 
 Identity (ticket 1281). `add --request <request_id>` binds an entry to the
-request its run was launched on; without it, an entry on a head other than the
-latest request's is refused once the review has several requests, never bound
-to a later round.
+request its run was launched on, else to the latest request; an entry whose
+`--head` is not that request's head is refused, never bound to another round.
 
 Integrity (spec §6a, 1273 log). Each sync compares the remote with what this
 clone last saw (<git-common-dir>/idh-review-seen.json): a remote tip that does
@@ -507,19 +506,13 @@ def open_review(cwd, branch, base_ref="origin/main", **kw):
 def add(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", links=(),
         request_id=None):
     """Append a plan, report, answer or link to the request `request_id`, the one the run was
-    launched on (frozen at gaze setup, ticket 1281), whose head must be `head` when given.
-    Without it, the latest request; once the
-    review has several requests, only when `head` is the latest request's head (or not given):
-    a result on another head is then refused rather than bound to a round it did not review."""
+    launched on (frozen at gaze setup, ticket 1281), else to the latest request. Either way the
+    request's head must be `head` when given: a result on another head is refused rather than
+    bound to a request it did not review (and whose retained head is not the one examined)."""
     if kind == "request":
         raise Refusal("a request is written by `request`, which keeps its head")
     if kind == "verdict":
         raise Refusal("a verdict is written by `verdict`, which derives its round")
-    if request_id is None and head is not None:
-        reqs = [e for e in entries(cwd, review_id) if e["kind"] == "request"]
-        if len(reqs) > 1 and _rev(cwd, head) != reqs[-1]["head"]:
-            raise Refusal(f"head {_rev(cwd, head)[:12]} is not the head of the latest request "
-                          f"{reqs[-1]['request_id']}: name the request the run reviewed (--request)")
     return _append(cwd, kind, review_id, fields, head, author, skill, links, request_id)
 
 
@@ -535,9 +528,12 @@ def _append(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", 
         if not named:
             raise Refusal(f"review {review_id} has no request {request_id}")
         req = named[0]
-        if kind != "verdict" and head is not None and _rev(cwd, head) != req["head"]:
-            raise Refusal(f"head {_rev(cwd, head)[:12]} is not the head of request {request_id} "
-                          f"({req['head'][:12]}): an entry binds only to the request it reviewed")
+    # One read of the requests, one check: a verdict rules the review's latest submission on the
+    # gate's head (rebased or bookkeeping), every other entry binds to the request it examined.
+    if kind != "verdict" and head is not None and _rev(cwd, head) != req["head"]:
+        raise Refusal(f"head {_rev(cwd, head)[:12]} is not the head of request {req['request_id']} "
+                      f"({req['head'][:12]}): an entry binds only to the request it reviewed; "
+                      "name that request (--request), or request the head first")
     binding = _binding(cwd, head or req["head"], req["base_ref"])
     return _write(cwd, _entry(cwd, kind, review_id, req["request_id"], binding, author, skill,
                               links, dict(fields)))

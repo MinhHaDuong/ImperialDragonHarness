@@ -440,3 +440,14 @@ def test_a_named_request_on_another_head_is_refused(world):
     rid, r1, r2 = two_rounds(a)
     with pytest.raises(rn.Refusal, match="head"):
         rn.add(a, "answer", rid, {"run_id": "gz-x"}, head=r1["head"], request_id=r2["request_id"])
+
+
+def test_an_entry_on_another_head_is_refused_even_with_one_request(world):
+    """gaze 1817 round 2: the implicit path binds the latest request only on its own head."""
+    _, a, _, _ = world
+    sh(a, "switch", "-q", "feature")
+    old = sh(a, "rev-parse", "HEAD")
+    sh(a, "commit", "-q", "--allow-empty", "-m", "later")
+    rid = rn.open_review(a, "feature", "origin/main")  # its only request is on the later head
+    with pytest.raises(rn.Refusal, match="head"):
+        rn.add(a, "answer", rid, {"run_id": "gz-x"}, head=old)

@@ -178,8 +178,8 @@ def record_answer(primary, pr, text, attribution, identity=None):
     store verify-gate reads, then is published with read-back when there is a remote.
     `identity` is what gaze_setup froze (review_id, request_id, run_id): the answer binds to
     that request, never to one written while the run went on (ticket 1281). Without it (no
-    entry state) the review is resolved and the answer takes the latest request only if it
-    is on the reviewed head; review_notes refuses otherwise.
+    entry state) the review is resolved and the answer takes the latest request, only if
+    that request is on the reviewed head: review_notes refuses otherwise.
     Returns 0, or 2 when the entry could not be written or its publication not verified."""
     cwd = str(primary)
     identity = identity or {}
