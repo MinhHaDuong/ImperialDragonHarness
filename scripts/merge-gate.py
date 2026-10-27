@@ -115,6 +115,8 @@ BOOKKEEPING_TIER = "bookkeeping"
 BEFORE_SCOPE = "before-merge"  # scope suffix of a `run` record when "before" is declared (ticket 1245)
 AFTER_SCOPE = "after-merge"  # scope suffix of a run-after record (ticket 1244)
 BUSY = 4  # run_after only, never an exit code: another runner holds the lock
+ENV = 5  # run_after: the host's Python environment lacks a locked dependency; not a red tip (ticket 1288)
+ENV_MARK = "env-problem "  # record line of a failed check whose only cause is a locked, uninstalled module
 AFTER_WALK = 200  # first-parent commits searched for the last green after-record
 RED_RETRIES = 2  # landing attempts of one red-ticket request (ticket 1251)
 RED_KEY = "Failing checks: "  # the line of a red ticket that carries its dedupe key
@@ -489,33 +491,58 @@ def first_line(argv, cwd):
 FAILED_TEST = re.compile(r"^(?:FAILED|ERROR) (\S+?::[^\[\s]*(?:\[.*?\](?= - |$))?)(?: - .*)?$")
 
 
-def run_one(argv, cwd):
-    """Run `argv`, echoing its output to stderr as it comes; (exit code, failed test ids).
+MISSING_MODULE = re.compile(r"ModuleNotFoundError: No module named '([\w.]+)'")
+
+
+def _dist_key(name):
+    return name.lower().replace("-", "_").replace(".", "_")
+
+
+def locked_dists(cwd):
+    """Normalized names of the distributions the tree's uv.lock pins; empty without one."""
+    try:
+        text = (Path(cwd) / "uv.lock").read_text(encoding="utf-8")
+    except OSError:
+        return set()
+    return {_dist_key(m) for m in re.findall(r'^name = "([^"]+)"', text, re.M)}
+
+
+def run_one(argv, cwd, env=None):
+    """Run `argv`, echoing its output to stderr as it comes; (exit code, failed test ids, missing modules).
 
     The ids are pytest's `FAILED <nodeid>` / `ERROR <nodeid>` summary lines, in
-    order, once each. The gate keeps no other part of the output.
+    order, once each. The missing modules are the names of
+    `ModuleNotFoundError` lines, once each. The gate keeps no other part of the output.
     """
-    failed = []
+    failed, missing = [], []
     with subprocess.Popen(
-        argv, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace"
+        argv, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace", env=env
     ) as proc:
         for line in proc.stdout:
             sys.stderr.write(line)
+            for name in MISSING_MODULE.findall(line):
+                if name not in missing:
+                    missing.append(name)  # a dotted name (a submodule of an installed package) never matches the lock
             found = FAILED_TEST.match(line.rstrip("\n"))
             if found and found.group(1) not in failed:
                 failed.append(found.group(1))
-    return proc.returncode, failed
+    return proc.returncode, failed, missing
 
 
-def run_checks(config, cwd):
-    """(ok, record lines): one line per check, then `failed-test <check> <id>` per failed test of a failed check."""
+def run_checks(config, cwd, env=None):
+    """(ok, record lines): one line per check, then `failed-test <check> <id>` per failed test of a failed check.
+
+    A failed check with no failed test ids whose output shows missing modules, all of them distributions
+    the tree's uv.lock pins, also gets `env-problem <check> <modules>`: the host's
+    environment is out of step with the lock. A module the lock does not name stays red.
+    """
     results, ok = [], True
     for item in config["checks"]:
         start = time.monotonic()
         LOG.info("check %s: %s", item["name"], " ".join(item["argv"]))
-        failed = []
+        failed, missing = [], []
         try:
-            code, failed = run_one(item["argv"], cwd)
+            code, failed, missing = run_one(item["argv"], cwd, env)
             verdict = "pass" if code == 0 else f"fail(exit {code})"
         except OSError as exc:
             code, verdict = 127, f"fail(cannot run: {exc.strerror or exc})"
@@ -523,7 +550,24 @@ def run_checks(config, cwd):
         results.append(f"{item['name']} {verdict} {time.monotonic() - start:.1f}s :: {' '.join(item['argv'])}")
         if code != 0:
             results += [sanitize(f"failed-test {item['name']} {test}") for test in failed]
+            if missing and not failed and all("." not in m and _dist_key(m) in locked_dists(cwd) for m in missing):
+                results.append(sanitize(f"{ENV_MARK}{item['name']} {' '.join(missing)}"))
     return ok, results
+
+
+def environment_only(config, results):
+    """True when every failed check of `results` carries an `env-problem` line."""
+    failing = failing_checks(config, results)
+    return bool(failing) and all(any(r.startswith(f"{ENV_MARK}{n} ") for r in results) for n in failing)
+
+
+def runner_env():
+    """The runner's environment without the triggering shell's VIRTUAL_ENV.
+
+    An inherited VIRTUAL_ENV empties the Makefile's RUN, so the checks would run
+    in that shell's venv instead of the locked environment of the tip (ticket 1288).
+    """
+    return {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
 
 
 def cmd_run(args):
@@ -941,13 +985,14 @@ def run_after_once(tip, remote, actor, command):
         tree = Path(tmp) / "tip"
         git("worktree", "add", "-q", "--detach", str(tree), tip)
         try:
-            ok, results = run_checks(config, tree)
+            ok, results = run_checks(config, tree, runner_env())
             versions = " · ".join(f"{v['name']} {first_line(v['argv'], tree)}" for v in config.get("versions", []))
         finally:
             git("worktree", "remove", "--force", str(tree), check=False)
+    env_only = not ok and environment_only(config, results)
     entry = format_entry(
         {
-            "result": "pass" if ok else "fail",
+            "result": "pass" if ok else "environment" if env_only else "fail",
             "time": started,
             "actor": actor,
             "host": socket.gethostname(),
@@ -960,7 +1005,7 @@ def run_after_once(tip, remote, actor, command):
     )
     append_and_push(tip, entry, remote)
     sys.stdout.write(entry)
-    return ok, results, config
+    return ok, results, config, env_only
 
 
 def run_after(remote, branch, actor, command, forge=None):
@@ -979,10 +1024,13 @@ def run_after(remote, branch, actor, command, forge=None):
             fetch_notes(remote)
             prior = after_entries(tip)
             if prior:  # the hook starts a runner on every move of main, a sync to a covered tip included
-                sys.stdout.write(f"covered: {tip} already carries an after-merge record; not run again\n")
-                code = PASS if prior[-1].get("result") == "pass" else FAIL
-                done = tip
-                continue
+                if prior[-1].get("result") == "environment":  # the host may be fixed by now: judge again
+                    sys.stdout.write(f"covered: {tip} carries only an environment record; running again\n")
+                else:
+                    sys.stdout.write(f"covered: {tip} already carries an after-merge record; not run again\n")
+                    code = PASS if prior[-1].get("result") == "pass" else FAIL
+                    done = tip
+                    continue
             outcome = run_after_once(tip, remote, actor, command)
             if outcome is None:
                 sys.stdout.write(f"off: {tip[:12]} declares no gate; nothing to run\n")
@@ -990,6 +1038,13 @@ def run_after(remote, branch, actor, command, forge=None):
             elif outcome[0]:
                 sys.stdout.write(f"pass: after-merge record on {tip}\n")
                 code = PASS
+            elif outcome[3]:
+                sys.stdout.write(
+                    f"environment: {tip[:12]} failed on modules the lock names but this host lacks "
+                    f"({'; '.join(r for r in outcome[1] if r.startswith(ENV_MARK))}); "
+                    "no ticket opened, run `uv sync --frozen` here\n"
+                )
+                code = ENV
             else:
                 report = red_report(tip, outcome[2], outcome[1])
                 sys.stdout.write(f"red: after-merge record on {tip}; its ticket:\n{report}")

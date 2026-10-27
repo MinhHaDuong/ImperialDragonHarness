@@ -155,7 +155,8 @@ reads and writes in its own spelling.
    `$(git rev-parse --git-common-dir)/idh/after-merge.log`, never wait on it.
    The runner runs the full set on the newest `<base>` tip and notes the record there
    (a busy lock means a runner already covers this tip; `covered` means the
-   tip already carries a record). A sync that left main untouched starts
+   tip already carries a record; an `environment` record, a failure on locked
+   modules this host lacks, opens no ticket and is judged again at the next start). A sync that left main untouched starts
    nothing; the next move of main does, and `main_sweep.py --after` flags a
    tip left an hour without a record. A red never blocks
    this merge: the log and the note carry it, and `main_sweep.py --after`

@@ -169,7 +169,7 @@ def after_audit(tip: str, ref: str, max_count: int, summary: bool, stale_minutes
         head += f", {len(stale)} older than {stale_minutes:g} min: {stale[0][:12]}"
     if code == mg.BUSY:
         return lines + [f"{head}; not run: another runner holds the lock and will cover the newest tip"], int(bool(stale))
-    lines.append(f"{head}; ran on {gaps[0][0][:12]}: {'red' if code else 'green'}")
+    lines.append(f"{head}; ran on {gaps[0][0][:12]}: {'environment' if code == mg.ENV else 'red' if code else 'green'}")
     return lines, code or int(bool(stale))
 
 
