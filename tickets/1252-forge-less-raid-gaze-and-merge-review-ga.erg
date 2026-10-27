@@ -8,6 +8,7 @@ Author: reviewer
 2026-10-27T11:19Z reviewer note author ruling 2026-10-27: forge-independent, not forge-free — the forge stays the default route for now; the no-forge path is added beside it
 2026-10-27T14:43Z reviewer note design note conception/2026-10-27-git-notes-review-design.md received (PR #1781, merged 19db6f32); linked in body, two divergences from D2/wave order flagged for Plan
 2026-10-27T15:45Z reviewer note tracker: children 1271-1276 filed by raid after advisor ruling
+2026-10-27T16:07Z reviewer note author ruling 2026-10-27: notes design matures before C3 — design ticket 1277 (transport trial + spec), 1273 blocked on it; C2 1272 proceeds
 
 --- body ---
 ## Context
@@ -138,9 +139,10 @@ gate passes; the adapter's tests run with `gh` absent from PATH and with a stub 
 **C1 can start now.**
 
 ## Children (filed by raid 2026-10-27)
-- [ ] 1271 C1 forge.py adapter
+- [x] 1271 C1 forge.py adapter (PR #1794)
 - [ ] 1272 C2 callers onto the adapter (Blocked-by 1271)
-- [ ] 1273 C3 gaze no-forge + review_notes.py (Blocked-by 1272)
+- [ ] 1277 design spec + transport trial (Blocked-by none)
+- [ ] 1273 C3 gaze no-forge + review_notes.py (Blocked-by 1272, 1277)
 - [ ] 1274 C4 verify-gate on notes (Blocked-by 1273)
 - [ ] 1275 C5 no-forge merge in raid_land (Blocked-by 1271)
 - [ ] 1276 C6 raid 6-7 end to end (Blocked-by 1274, 1275)
