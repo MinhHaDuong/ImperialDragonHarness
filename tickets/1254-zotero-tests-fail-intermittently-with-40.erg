@@ -7,6 +7,8 @@ Author: reviewer
 2026-10-27T11:19Z reviewer created
 2026-10-27T12:22Z reviewer reproduction: free_port window real (4 procs x 2000 binds: 1444 shared-port pairs); 401 NOT reproduced in 60 file runs (3 parallel x -n16) + 12 full-suite runs (4 parallel); other flakes seen under load: live-Zotero 400s, test_idh_lifecycle wrapper. Fix: hold the down port; gate keeps failed-test lines
 2026-10-27T12:49Z reviewer note PR #1758 lands the preventive fix (closed_port for the zotero_down fixtures) and failed-test names in merge-gate run, as Refs: — criterion 1 open (401 never reproduced in 72 parallel runs; gaze positive control shows the released-port mechanism is sufficient), criterion 2 partly met (live fixture tests/zotero_live.py:323 still uses free_port, Zotero itself must bind it). Since 1245 the before-merge gate runs no pytest, so this flake can no longer block a merge.
+2026-10-27T12:52Z reviewer note split: criterion 3, 4 and the down-fixture part of 2 moved to child 1258 (PR #1758); 1254 stays the tracker with criterion 1 and the LiveZotero port open
+2026-10-27T12:52Z reviewer note verify-reroll — round 1: verifiable minors unresolved (red_report test passes on base; FAILED_TEST truncates node ids containing " - ")
 
 --- body ---
 ## Context
@@ -22,10 +24,13 @@ re-record (about 75-90 s) and can block a merge.
 - [ ] Reproduce: the failing test identified, with the condition that triggers the 401 (or the
       hypothesis refuted with the run that refutes it).
 - [ ] The zotero tests cannot fail from another concurrent run: isolated credentials/server or a
-      stub, or moved to a tier the gate does not run, with the reason stated.
-- [ ] `merge-gate.py run` keeps the failing test names of a failed check (one line each) so the next
-      flake is named, not guessed.
-- [ ] The harness gate passes.
+      stub, or moved to a tier the gate does not run, with the reason stated. The "down" fixtures are
+      done (child 1258); open: the LiveZotero port (`tests/zotero_live.py`, `free_port`, Zotero itself binds it).
+- [x] `merge-gate.py run` keeps the failing test names of a failed check: child 1258.
+- [x] The harness gate passes: child 1258.
+
+## Children
+- 1258 Zotero down-fixture port hold and failed-test names in the gate (PR #1758, closed)
 
 ## Relevant files
 tests/test_zotero_import.py, scripts/merge-gate.py, pytest.ini
