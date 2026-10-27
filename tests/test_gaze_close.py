@@ -19,7 +19,7 @@ def forge_shim(tmp_path, env):
     shim = tmp_path / "bin" / "gh"
     shim.write_text(
         "#!/bin/sh\n"
-        'if [ "$1" = pr ] && [ "$2" = view ]; then cat "$MOCK_BODY"; exit 0; fi\n'
+        'if [ "$1" = pr ] && [ "$2" = view ]; then jq -Rs \'{body: .}\' "$MOCK_BODY"; exit 0; fi\n'
         'if [ "$1" = api ]; then\n'
         '  case "$*" in *PATCH*) python3 -c "import json,sys;open(sys.argv[1],\'w\').write(json.load(sys.stdin)[\'body\'])" "$MOCK_BODY" ;;\n'
         '  *) cat "$MOCK_BODY" ;; esac; exit 0; fi\n'

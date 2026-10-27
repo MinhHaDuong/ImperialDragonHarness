@@ -226,3 +226,56 @@ def test_parse_claims_malformed_is_a_stop(body):
 
 def test_parse_claims_none_is_not_malformed():
     assert forge.parse_claims("Ticket: none\nTicket: tickets/1271-x") == ["1271"]
+
+
+def test_resolve_reports_a_malformed_claim_without_raising(stub):
+    """Ticket 1272: each caller keeps its own order of refusals; parse_claims stays the one parser."""
+    stub.write_text(json.dumps({"head": HEAD, "body": "Ticket: tickets/oops\n", "rollup": []}))
+    rec = forge.get_forge("gh").resolve("7")
+    assert rec["claims"] == [] and "canonical" in rec["claims_error"]
+
+
+def test_append_body_line_edit_runs_every_attempt(stub):
+    f = forge.get_forge("gh")
+    f.append_body_line("7", "L1", edit=lambda body: body + "L1\n")
+    f.append_body_line("7", "L1", edit=lambda body: body + "L1\n")  # the caller's edit decides: no skip
+    assert json.loads(stub.read_text())["body"].count("L1") == 2
+
+
+def test_comment_is_lenient_unless_strict(monkeypatch):
+    f = forge.GhForge()
+    monkeypatch.setattr(f, "_gh", lambda *a, **k: subprocess.CompletedProcess(a, 1, "", "502"))
+    f.comment("7", "x")
+    with pytest.raises(forge.ForgeRefusal, match="502"):
+        f.comment("7", "x", strict=True)
+
+
+def test_merged_at_and_cwd(tmp_path, monkeypatch):
+    seen = {}
+
+    def run(cmd, **kw):
+        seen.update(kw)
+        return subprocess.CompletedProcess(cmd, 0, json.dumps({"mergedAt": "2026-10-27T21:04:00Z"}), "")
+
+    monkeypatch.setattr(forge.subprocess, "run", run)
+    f = forge.get_forge("gh", cwd=str(tmp_path))
+    assert f.merged_at("7") == "2026-10-27T21:04:00Z" and seen["cwd"] == str(tmp_path)
+    with pytest.raises(forge.NoForgeMerge):
+        forge.NoneForge().merged_at("branch:x")
+
+
+def test_append_body_line_refuses_when_the_patch_fails(monkeypatch):
+    f = forge.GhForge()
+
+    def gh(*args, stdin=None):
+        if args[0] == "api":
+            return subprocess.CompletedProcess(args, 1, "", "HTTP 403")
+        return subprocess.CompletedProcess(args, 0, json.dumps({"body": ""}), "")
+
+    monkeypatch.setattr(f, "_gh", gh)
+    with pytest.raises(forge.ForgeRefusal, match="403"):
+        f.append_body_line("7", "L")
+
+
+def test_comments_can_leave_reviews_out(stub):
+    assert [c["body"] for c in forge.get_forge("gh").comments("7", reviews=False)] == []

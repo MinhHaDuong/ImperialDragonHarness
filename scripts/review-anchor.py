@@ -11,6 +11,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+import forge  # same directory: the script dir is on sys.path
+
 
 def run(*argv: str, cwd: Path | None = None) -> str:
     try:
@@ -23,10 +25,12 @@ def run(*argv: str, cwd: Path | None = None) -> str:
 def anchor(pr: str, worktree: Path) -> None:
     if not worktree.is_absolute() or not worktree.is_dir():
         raise ValueError("worktree must be an existing absolute directory")
-    metadata = json.loads(run("gh", "pr", "view", pr, "--json", "headRefOid,baseRefName",
-                              cwd=worktree))
-    expected = metadata["headRefOid"]
-    base = metadata["baseRefName"]
+    try:
+        record = forge.get_forge(None, pr, str(worktree)).resolve(pr)
+    except forge.ForgeRefusal as exc:
+        raise ValueError(f"command failed: gh pr view {pr}: {exc}") from exc
+    expected = record["head"]
+    base = record["base"]
     if not expected or not base:
         raise ValueError("PR head or base is unavailable")
     root = run("git", "-C", str(worktree), "rev-parse", "--show-toplevel")

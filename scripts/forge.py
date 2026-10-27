@@ -13,8 +13,12 @@ auto_merge_armed, disarm, merge, read_back. On the `none` backend comment,
 append_body_line, ready and disarm return NOOP (falsy, typed, never raising);
 comments is empty, checks is "none", auto_merge_armed is False; merge and
 read_back raise NoForgeMerge until ticket 1275 (a silent no-op merge would read
-back "merged" on nothing). No caller uses this module yet (ticket 1272 moves them);
-the gh backend is lifted from raid_land.GhForge.
+back "merged" on nothing). merged_at is the merge timestamp of a merged request.
+The callers (ticket 1272): gaze_setup, gaze_close, attribution_record, review-anchor, raid_land.
+`resolve` never raises on a malformed close claim: it returns `claims: []` and `claims_error`,
+so each caller keeps its own order of refusals; parse_claims is the one parser.
+ForgeRefusal and MergeRefused here are not raid_land's Refusal: a caller maps them, never
+catches one for the other.
 """
 
 import argparse
@@ -54,7 +58,7 @@ NOOP = _NoOp()
 def parse_claims(body: str) -> list[str]:
     """Ticket ids claimed in a body by `Ticket: tickets/<id>-...` lines, code fences ignored.
     A malformed claim or an unclosed fence is a stop (skills/merge/references/claims.md):
-    raises ForgeRefusal, mirroring raid_land.close_claims (not imported: raid_land will import this module)."""
+    raises ForgeRefusal; raid_land.close_claims wraps this into its Refusal."""
     ids: list[str] = []
     fence = None
     for line in body.splitlines():
@@ -82,12 +86,24 @@ def parse_claims(body: str) -> list[str]:
     return list(dict.fromkeys(ids))
 
 
+def _claims(body: str) -> dict:
+    """The claims fields of a resolve record; a malformed claim is reported, not raised."""
+    try:
+        return {"claims": parse_claims(body)}
+    except ForgeRefusal as exc:
+        return {"claims": [], "claims_error": str(exc)}
+
+
 class GhForge:
-    """Backend over the `gh` CLI, resolved from PATH at each call."""
+    """Backend over the `gh` CLI, resolved from PATH at each call; `cwd` is where gh runs."""
+
+    def __init__(self, cwd: str | None = None):
+        self.cwd = cwd
 
     def _gh(self, *args: str, stdin: str | None = None) -> subprocess.CompletedProcess:
         try:
-            return subprocess.run(["gh", *args], input=stdin, capture_output=True, text=True, timeout=120)
+            return subprocess.run(["gh", *args], input=stdin, capture_output=True, text=True, timeout=120,
+                                  cwd=self.cwd)
         except OSError as exc:
             raise ForgeRefusal(f"gh unavailable: {exc}") from exc
 
@@ -100,13 +116,14 @@ class GhForge:
     def resolve(self, ref: str) -> dict:
         d = self._view(ref, "number,state,isDraft,mergeable,headRefName,baseRefName,headRefOid,body")
         body = d.get("body") or ""
-        return {"id": str(d["number"]), "branch": d["headRefName"], "base": d["baseRefName"],
+        return {"id": str(d.get("number", ref)), "branch": d["headRefName"], "base": d["baseRefName"],
                 "head": d["headRefOid"], "state": d["state"], "mergeable": d.get("mergeable"),
-                "draft": bool(d.get("isDraft")), "body": body, "claims": parse_claims(body)}
+                "draft": bool(d.get("isDraft")), "body": body, **_claims(body)}
 
-    def comments(self, ref: str) -> list[dict]:
-        d = self._view(ref, "comments,reviews")
-        return d.get("comments", []) + d.get("reviews", [])
+    def comments(self, ref: str, reviews: bool = True) -> list[dict]:
+        """Comments, then formal reviews unless `reviews` is False."""
+        d = self._view(ref, "comments,reviews" if reviews else "comments")
+        return d.get("comments", []) + (d.get("reviews", []) if reviews else [])
 
     def checks(self, ref: str) -> str:
         """`none`, `passing`, `pending`, or `failing: <names>`. `pending` means a check has not
@@ -121,23 +138,34 @@ class GhForge:
         done = [(c.get("conclusion") or c.get("state") or "").upper() for c in rollup]
         return "pending" if any(d in ("", "PENDING", "EXPECTED") for d in done) else "passing"
 
-    def comment(self, ref: str, body: str) -> None:
-        self._gh("pr", "comment", str(ref), "--body", body)
+    def comment(self, ref: str, body: str, strict: bool = False) -> None:
+        """Post a comment. Lenient by default (a failure is not reported); `strict` raises
+        ForgeRefusal with gh's stderr."""
+        done = self._gh("pr", "comment", str(ref), "--body", body)
+        if strict and done.returncode != 0:
+            raise ForgeRefusal(done.stderr.strip())
 
-    def append_body_line(self, ref: str, line: str) -> None:
+    def merged_at(self, ref: str) -> str | None:
+        """The merge timestamp (ISO 8601) of a merged request, else None."""
+        return self._view(ref, "mergedAt").get("mergedAt") or None
+
+    def append_body_line(self, ref: str, line: str, edit=None) -> None:
         """Append lines to the body; the read-back is the evidence. The forge has no
-        compare-and-swap, so one retry re-fetches the body before giving up."""
+        compare-and-swap, so one retry re-fetches the body before giving up. `edit(body)`
+        returns the new body in place of the plain append and is applied on every attempt."""
         wanted = line.strip("\n").splitlines()
         for _ in range(2):
             body = self._view(ref, "body").get("body") or ""
-            if not all(item in body.splitlines() for item in wanted):
-                body = body.rstrip("\n") + "\n" + line.strip("\n") + "\n"
-                self._gh("api", f"repos/{{owner}}/{{repo}}/pulls/{ref}", "-X", "PATCH", "--input", "-",
-                         stdin=json.dumps({"body": body}))
+            if edit is not None or not all(item in body.splitlines() for item in wanted):
+                body = edit(body) if edit else body.rstrip("\n") + "\n" + line.strip("\n") + "\n"
+                done = self._gh("api", f"repos/{{owner}}/{{repo}}/pulls/{ref}", "-X", "PATCH", "--input", "-",
+                                stdin=json.dumps({"body": body}))
+                if done.returncode != 0:
+                    raise ForgeRefusal(f"gh api failed: {done.stderr.strip()}")
             seen = (self._view(ref, "body").get("body") or "").splitlines()
             if all(item in seen for item in wanted):
                 return
-        raise ForgeRefusal(f"request {ref} body lost the appended line twice; append it by hand")
+        raise ForgeRefusal(f"PR #{ref} body lost the appended line twice; append it by hand")
 
     def create(self, branch: str, base: str, title: str, body: str) -> str:
         """Open a request from a pushed branch; its number."""
@@ -203,18 +231,21 @@ class NoneForge:
         return {"id": f"branch:{branch}", "branch": branch, "base": base, "head": head,
                 "state": "MERGED" if merged else "OPEN",
                 "mergeable": "MERGEABLE" if tree.returncode == 0 else "CONFLICTING",
-                "draft": False, "body": "", "claims": parse_claims(trailers)}
+                "draft": False, "body": "", **_claims(trailers)}
 
-    def comments(self, ref: str) -> list[dict]:
+    def comments(self, ref: str, reviews: bool = True) -> list[dict]:
         return []
 
     def checks(self, ref: str) -> str:
         return "none"
 
-    def comment(self, ref: str, body: str):
+    def comment(self, ref: str, body: str, strict: bool = False):
         return NOOP
 
-    def append_body_line(self, ref: str, line: str):
+    def merged_at(self, ref: str):
+        raise NoForgeMerge("no forge: the merge date arrives with ticket 1275")
+
+    def append_body_line(self, ref: str, line: str, edit=None):
         return NOOP
 
     def create(self, branch: str, base: str, title: str, body: str) -> str:
@@ -240,12 +271,12 @@ def get_forge(choice: str | None = None, ref: str = "", cwd: str | None = None):
     """Pick a backend: `choice` or IDH_FORGE (auto|gh|none); auto = gh when on PATH and ref is a number."""
     choice = choice or os.environ.get("IDH_FORGE") or "auto"
     if choice == "gh":
-        return GhForge()
+        return GhForge(cwd)
     if choice == "none":
         return NoneForge(cwd)
     if choice != "auto":
         raise ForgeRefusal(f"unknown forge {choice!r} (auto|gh|none)")
-    return GhForge() if shutil.which("gh") and re.fullmatch(r"#?\d+", ref.strip()) else NoneForge(cwd)
+    return GhForge(cwd) if shutil.which("gh") and re.fullmatch(r"#?\d+", ref.strip()) else NoneForge(cwd)
 
 
 def main(argv=None) -> int:

@@ -40,7 +40,7 @@ def make_repo(tmp_path, body="Closes nothing"):
     git(seed, "push", "origin", "feature")
     run_checked(["git", "clone", str(origin), str(primary)])
     head = git(seed, "rev-parse", "HEAD")
-    meta = {"headRefName": "feature", "headRefOid": head, "baseRefName": "main",
+    meta = {"number": 7, "headRefName": "feature", "headRefOid": head, "baseRefName": "main",
             "state": "OPEN", "mergeable": "MERGEABLE", "body": body,
             "comments": [{"author": {"login": "bob"}, "body": "looks odd"}],
             "reviews": [], "statusCheckRollup": [{"name": "ci", "conclusion": "SUCCESS"}]}

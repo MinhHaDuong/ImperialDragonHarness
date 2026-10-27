@@ -10,6 +10,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import forge  # same directory: the script dir is on sys.path
+
 LOG = logging.getLogger(__name__)
 FACT = re.compile(r"^\s*(kind|pr|writer|reviewer|finding|defect-confirmed)\s*:")
 # Per-PR block fields (ticket 1149). "not-stated" is the one spelling of an unstated effort
@@ -223,29 +225,29 @@ def extract_record(body, merged):
     return text
 
 
-def gh(*args, stdin=None):
-    result = subprocess.run(["gh", *args], input=stdin, text=True, capture_output=True)
-    if result.returncode:
-        raise ValueError(f"gh {args[0]} failed: {result.stderr.strip()}")
-    return result.stdout
+def forge_for(pr):
+    """The forge adapter for request `pr` (scripts/forge.py, the one door to the forge)."""
+    return forge.get_forge(None, str(pr))
+
+
+def forge_call(call, *args, **kwargs):
+    """Run an adapter operation; the adapter's refusal is this module's ValueError."""
+    try:
+        return call(*args, **kwargs)
+    except forge.ForgeRefusal as exc:
+        raise ValueError(str(exc)) from exc
 
 
 def append_to_pr(pr, line, project):
     """Append to the live PR body, read back, and retry once if the line is missing.
 
     The forge has no compare-and-swap: a concurrent whole-body PATCH can drop the line,
-    so every attempt re-fetches the body and the read-back is the only evidence.
+    so every attempt re-fetches the body and the read-back is the only evidence
+    (the adapter's append_body_line; `edit` writes into the attribution block). The extra "\n"
+    keeps the body bytes the gh `--jq` read produced before the move (ticket 1272, a pure move).
     """
-    wanted = line.strip("\n").splitlines()
-    for _ in range(2):
-        body = gh("pr", "view", str(pr), "--json", "body", "--jq", ".body // \"\"")
-        new = append_line(body, line, pr=pr, project=project)
-        gh("api", f"repos/{{owner}}/{{repo}}/pulls/{pr}", "-X", "PATCH", "--input", "-",
-           stdin=json.dumps({"body": new}))
-        seen = gh("api", f"repos/{{owner}}/{{repo}}/pulls/{pr}", "--jq", ".body // \"\"").splitlines()
-        if all(item in seen for item in wanted):
-            return
-    raise ValueError(f"PR #{pr} body lost the appended line twice; append it by hand")
+    forge_call(forge_for(pr).append_body_line, str(pr), line,
+               edit=lambda body: append_line(body + "\n", line, pr=pr, project=project))
 
 
 SEAT = re.compile(r"seat: ([^·=:]*[^\s·=:]) · runtime=(\S+) · family=(\S+) · route=(\S+) · model=([^·]+?) · status: (ran|failed|skipped)")
@@ -301,9 +303,10 @@ def seat_lines(results, body, masked_evidence=None):
 def append_seats(args):
     """--seats FILE prints the stdin body with the lines; --seats-pr PR edits the live body."""
     if args.seats_pr:
-        results = gh("pr", "view", str(args.seats_pr), "--json", "comments", "--jq",
-                     '[.comments[].body | select(startswith("## /gaze result"))] | join("\\n")')
-        body = gh("pr", "view", str(args.seats_pr), "--json", "body", "--jq", ".body // \"\"")
+        fg = forge_for(args.seats_pr)
+        results = "\n".join(c.get("body", "") for c in forge_call(fg.comments, str(args.seats_pr), reviews=False)
+                            if c.get("body", "").startswith("## /gaze result"))
+        body = forge_call(fg.resolve, str(args.seats_pr))["body"]
     else:
         results, body = args.seats.read_text(), sys.stdin.read()
     lines, failures = seat_lines(results, body, args.masked_evidence)
@@ -325,15 +328,17 @@ def capture_pr(args):
     resumes where it stopped.
     """
     pr = args.capture_pr
-    view = json.loads(gh("pr", "view", str(pr), "--json", "state,mergedAt"))
-    if view.get("state") != "MERGED" or not view.get("mergedAt"):
-        raise ValueError(f"PR #{pr} is {view.get('state')}, not merged")
+    fg = forge_for(pr)
+    state = forge_call(fg.resolve, str(pr)).get("state")
+    merged_at = forge_call(fg.merged_at, str(pr)) if state == "MERGED" else None
+    if state != "MERGED" or not merged_at:
+        raise ValueError(f"PR #{pr} is {state}, not merged")
     args.seats, args.seats_pr = None, pr
     if append_seats(args):
         LOG.error("attribution-record: PR #%s not captured; fix the failures above and rerun", pr)
         return 1
-    body = gh("pr", "view", str(pr), "--json", "body", "--jq", ".body // \"\"")
-    text = extract_record(body, view["mergedAt"][:10])
+    body = forge_call(fg.resolve, str(pr))["body"]
+    text = extract_record(body, merged_at[:10])
     LOG.info("%s", capture_record(text, parse_record(text), args.capture, args.audience))
     return 0
 

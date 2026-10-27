@@ -37,6 +37,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import forge  # same directory: the script dir is on sys.path
+
 HERE = Path(__file__).resolve().parent
 # A typed verdict line in any dress: indented, quoted, emphasised, any case.
 TYPED_PLAN_CHECK = re.compile(r"^[\s>*_`#-]*plan check\s*[:*_]", re.MULTILINE | re.IGNORECASE)
@@ -188,9 +190,11 @@ def main():
     if a.comment_file:
         text = (comment_text.replace("{{plan_check}}", plan_line)
                 .replace("{{duration}}", duration).replace("{{containment}}", report))
-        r = subprocess.run(["gh", "pr", "comment", a.pr, "--body", text], capture_output=True, text=True)
-        print("comment: " + ("posted" if r.returncode == 0 else "FAILED " + r.stderr.strip()))
-        if r.returncode:
+        try:
+            forge.get_forge(None, a.pr).comment(a.pr, text, strict=True)
+            print("comment: posted")
+        except forge.ForgeRefusal as exc:
+            print("comment: FAILED " + str(exc))
             status = 2
     return 4 if flags and status == 0 else status
 

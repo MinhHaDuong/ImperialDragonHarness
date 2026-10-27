@@ -52,6 +52,7 @@ def invoke(tmp_path, checkout, tree):
     shim.chmod(0o755)
     env = dict(child_env(), PATH=f"{tmp_path}:{os.environ['PATH']}",
                MOCK_GH_CWD=str(tree), MOCK_PR_JSON=json.dumps({
+        "number": 42, "state": "OPEN", "headRefName": "feature",
         "headRefOid": git(right, "rev-parse", "HEAD"), "baseRefName": "main",
     }))
     return subprocess.run([sys.executable, str(SCRIPT), "42", "--worktree", str(tree)],

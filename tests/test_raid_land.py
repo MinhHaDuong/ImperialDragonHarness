@@ -30,8 +30,8 @@ class StubForge:
         self.calls = []
 
     def resolve(self, pr):
-        return {"state": self.state, "isDraft": False, "headRefName": "feat", "baseRefName": "main",
-                "headRefOid": self.head, "body": self.body}
+        return {"id": pr, "state": self.state, "draft": False, "branch": "feat", "base": "main",
+                "head": self.head, "body": self.body}
 
     def ready(self, pr): self.calls.append("ready")
 
@@ -245,7 +245,7 @@ def test_sync_result_needs_known_success_line(tmp_path, monkeypatch, stdout, rc,
 def refused_merge(forge):
     def merge(pr, h, auto):
         forge.calls.append(("merge", h, auto))
-        raise rl.MergeRefused("head moved")
+        raise rl.forge.MergeRefused("head moved")
     forge.merge = merge
 
 
@@ -269,10 +269,10 @@ def test_usage_line_names_ruled_claims():
 
 def test_create_returns_the_request_number_and_refuses_without_one(monkeypatch):
     """Ticket 1251: GhForge.create, the red ticket's request, parsed from gh's URL; gh itself is stubbed."""
-    forge = rl.GhForge()
+    forge = rl.forge.GhForge()
     seen = []
 
-    def fake(*args, out="https://github.com/o/r/pull/42\n", code=0):
+    def fake(*args, stdin=None, out="https://github.com/o/r/pull/42\n", code=0):
         seen.append(args)
         return subprocess.CompletedProcess(args, code, out, "")
 
@@ -280,5 +280,18 @@ def test_create_returns_the_request_number_and_refuses_without_one(monkeypatch):
     assert forge.create("red-abc", "main", "t", "b") == "42"
     assert seen[0][:6] == ("pr", "create", "--head", "red-abc", "--base", "main")
     monkeypatch.setattr(forge, "_gh", lambda *a: subprocess.CompletedProcess(a, 1, "", "denied"))
-    with pytest.raises(rl.Refusal):
+    with pytest.raises(rl.forge.ForgeRefusal):
         forge.create("red-abc", "main", "t", "b")
+
+
+def test_adapter_refusal_before_the_merge_call_is_exit_1(repo):
+    """The adapter's ForgeRefusal is not raid_land's Refusal: main_land maps both to REFUSED."""
+    forge = StubForge(head(repo))
+
+    def unreadable(pr):
+        raise rl.forge.ForgeRefusal("cannot read request 7: gone")
+
+    forge.resolve = unreadable
+    assert rl.main_land(forge, "7", head(repo), [], "main", repo, [].append) == rl.REFUSED
+    assert not issubclass(rl.forge.ForgeRefusal, rl.Refusal)
+    assert not issubclass(rl.forge.MergeRefused, rl.Refusal)

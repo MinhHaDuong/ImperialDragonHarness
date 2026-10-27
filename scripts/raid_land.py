@@ -16,12 +16,11 @@ exactly that set. Prints one `<pr> merge <start> <end>` row for
 Exit: 0 merged and synced; 1 refused before any merge (reason on stderr);
 4 merged but local main not synced (sync script missing, failing or unknown
 output); 5 queued on an ungated base; 6 merge outcome unknown (an error after
-the merge call: read the request by hand, never re-run). Forge calls live in `GhForge`; git, merge-gate.py, erg and
+the merge call: read the request by hand, never re-run). Forge calls live in scripts/forge.py; git, merge-gate.py, erg and
 sync-local-main.sh are called directly.
 """
 
 import argparse
-import json
 import os
 import re
 import subprocess
@@ -29,6 +28,7 @@ import sys
 import time
 from pathlib import Path
 
+import forge
 from step_clock import fmt
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,59 +43,6 @@ class Refusal(Exception):
 
 class PostMerge(Refusal):
     """A failure after the merge call: the outcome is unknown, never re-merge."""
-
-
-class MergeRefused(Exception):
-    """The forge reported that it refused the merge call (nonzero exit)."""
-
-
-class GhForge:
-    """The forge adapter: the only place that spells `gh`."""
-
-    def _gh(self, *args: str) -> subprocess.CompletedProcess:
-        return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=120)
-
-    def resolve(self, pr: str) -> dict:
-        done = self._gh("pr", "view", pr, "--json", "state,isDraft,headRefName,baseRefName,headRefOid,body")
-        if done.returncode != 0:
-            raise Refusal(f"cannot read request {pr}: {done.stderr.strip()}")
-        return json.loads(done.stdout)
-
-    def create(self, branch: str, base: str, title: str, body: str) -> str:
-        """Open a request from a pushed branch; its number (ticket 1251, the red ticket)."""
-        done = self._gh("pr", "create", "--head", branch, "--base", base, "--title", title, "--body", body)
-        number = re.search(r"/pull/(\d+)\s*$", done.stdout.strip())
-        if done.returncode != 0 or not number:
-            raise Refusal(f"cannot open a request from {branch}: {done.stderr.strip() or done.stdout.strip()}")
-        return number.group(1)
-
-    def ready(self, pr: str) -> None:
-        self._gh("pr", "ready", pr)
-
-    def auto_merge_armed(self, pr: str) -> bool:
-        done = self._gh("pr", "view", pr, "--json", "autoMergeRequest", "-q", ".autoMergeRequest != null")
-        if done.returncode != 0 or done.stdout.strip() not in ("true", "false"):
-            raise Refusal("auto-merge state unreadable")
-        return done.stdout.strip() == "true"
-
-    def disarm(self, pr: str) -> None:
-        self._gh("pr", "merge", pr, "--disable-auto")
-
-    def merge(self, pr: str, head: str, auto: bool) -> None:
-        done = self._gh("pr", "merge", pr, "--merge", *(["--auto"] if auto else ["--match-head-commit", head]))
-        if done.returncode != 0:
-            raise MergeRefused(done.stderr.strip() or f"gh exit {done.returncode}")
-
-    def read_back(self, pr: str) -> str | None:
-        """`<STATE> <head> <queued|->`, or None when unreadable."""
-        done = self._gh(
-            "pr", "view", pr, "--json", "state,headRefOid,autoMergeRequest", "-q",
-            '"\\(.state) \\(.headRefOid) \\(if .autoMergeRequest then "queued" else "-" end)"')
-        out = done.stdout.strip()
-        return out if done.returncode == 0 and len(out.split()) == 3 else None
-
-    def comment(self, pr: str, body: str) -> None:
-        self._gh("pr", "comment", pr, "--body", body)
 
 
 def git(cwd, *args: str) -> subprocess.CompletedProcess:
@@ -115,32 +62,11 @@ def gate(cwd, *args: str) -> int:
 
 
 def close_claims(body: str) -> list[str]:
-    """Ticket ids claimed in the body, fences ignored (skills/merge/references/claims.md)."""
-    ids: list[str] = []
-    fence = None
-    for line in body.splitlines():
-        m = re.match(r"\s*(`{3,}|~{3,})", line)
-        if m:
-            mark = m.group(1)
-            if fence is None:
-                fence = mark
-            elif mark[0] == fence[0] and len(mark) >= len(fence):
-                fence = None
-            continue
-        if fence:
-            continue
-        m = re.match(r"\s*(?:\*\*)?Ticket:(?:\*\*)?\s*(\S.*)$", line)
-        if not m:
-            continue
-        value = m.group(1).strip()
-        p = re.match(r"tickets/(?:closed/)?(\d{4,})-", value)
-        if p:
-            ids.append(p.group(1))
-        elif value.lower() != "none":
-            raise Refusal(f"close claim not in canonical form: {line.strip()!r}")
-    if fence:
-        raise Refusal("unclosed code fence in the request body")
-    return list(dict.fromkeys(ids))
+    """Ticket ids claimed in the body (forge.parse_claims, the one parser), a stop as a Refusal."""
+    try:
+        return forge.parse_claims(body)
+    except forge.ForgeRefusal as exc:
+        raise Refusal(str(exc)) from exc
 
 
 def close_tickets(cwd: Path, pr: str, ids: list[str]) -> bool:
@@ -245,27 +171,27 @@ def same_claims(body: str, ruled: list[str]) -> None:
         raise Refusal(f"close claims in the body {close_claims(body)} differ from the ruled set {sorted(ruled)}")
 
 
-def land(forge, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
+def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
          do_cleanup: bool = False, out=print, ruled_claims: list[str] | None = None) -> int:
     cwd = Path(cwd or os.getcwd()).resolve()
     ruled_claims = ruled_claims or []
     start = int(time.time())
-    info = forge.resolve(pr)
-    branch = info["headRefName"]
+    info = fg.resolve(pr)
+    branch = info["branch"]
     if info["state"] != "OPEN":
         raise Refusal(f"request is {info['state']}, not OPEN")
     if git(cwd, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip() != branch:
         raise Refusal(f"cwd is not on branch {branch}")
-    base = info.get("baseRefName") or base
+    base = info.get("base") or base
     body = info.get("body") or ""
     out(f"attribution: {attribution(body)}")
     same_claims(body, ruled_claims)
     head = check_head(cwd, branch, base, ruled)
     if close_tickets(cwd, pr, close_claims(body)):
         head = check_head(cwd, branch, base, ruled)
-    if info.get("isDraft"):
-        forge.ready(pr)
-    again = forge.resolve(pr)  # step 3: a body edited after approval is a stop
+    if info.get("draft"):
+        fg.ready(pr)
+    again = fg.resolve(pr)  # step 3: a body edited after approval is a stop
     same_claims(again.get("body") or "", ruled_claims)
     enabled = gate(cwd, "enabled", "--base", f"origin/{base}")
     if enabled not in (0, 1):
@@ -273,28 +199,28 @@ def land(forge, pr: str, ruled: str, base: str = "main", cwd: Path | None = None
     gated = enabled == 0
     if gated:
         record(cwd, base)
-        if forge.auto_merge_armed(pr):
-            forge.disarm(pr)
-            if forge.auto_merge_armed(pr):
+        if fg.auto_merge_armed(pr):
+            fg.disarm(pr)
+            if fg.auto_merge_armed(pr):
                 raise Refusal("auto-merge still armed")
     try:
         try:
-            forge.merge(pr, head, auto=not gated)
-        except MergeRefused as exc:
+            fg.merge(pr, head, auto=not gated)
+        except forge.MergeRefused as exc:  # the adapter's class, not a Refusal
             # Definite "not merged" only when the forge refused AND the request is still OPEN at this head.
-            back = forge.read_back(pr)
+            back = fg.read_back(pr)
             if back is not None and back.split()[:2] == ["OPEN", head] and "queued" not in back:
                 raise Refusal(f"forge refused the merge, request still open at {head[:12]}: {exc}") from exc
             raise PostMerge(f"forge reported a refusal ({exc}) but the read-back is {back!r}") from exc
-        return after_merge(forge, pr, cwd, branch, base, head, gated, start, do_cleanup, out)
+        return after_merge(fg, pr, cwd, branch, base, head, gated, start, do_cleanup, out)
     except Refusal:
         raise
     except Exception as exc:
         raise PostMerge(f"{type(exc).__name__}: {exc}") from exc
 
 
-def after_merge(forge, pr, cwd, branch, base, head, gated, start, do_cleanup, out) -> int:
-    back = forge.read_back(pr)
+def after_merge(fg, pr, cwd, branch, base, head, gated, start, do_cleanup, out) -> int:
+    back = fg.read_back(pr)
     if back is None:
         raise PostMerge("read-back unreadable")
     state, oid, queued = back.split()
@@ -306,7 +232,7 @@ def after_merge(forge, pr, cwd, branch, base, head, gated, start, do_cleanup, ou
     end = int(time.time())
     out(f"{pr} merge {start} {end}")
     try:
-        forge.comment(pr, f"merge {head}: duration: {fmt(end - start)}")
+        fg.comment(pr, f"merge {head}: duration: {fmt(end - start)}")
     except Exception as exc:  # the merge landed; a lost comment is reported
         out(f"duration comment failed: {exc}")
     common = git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()
@@ -320,18 +246,18 @@ def after_merge(forge, pr, cwd, branch, base, head, gated, start, do_cleanup, ou
     return OK
 
 
-def main_land(forge, pr, ruled, ruled_claims, base, cwd, out=print, do_cleanup=False) -> int:
+def main_land(fg, pr, ruled, ruled_claims, base, cwd, out=print, do_cleanup=False) -> int:
     """land() with refusals mapped to exit codes; usable by tests with a stub forge."""
     try:
-        return land(forge, pr, ruled, base, cwd, do_cleanup, out, ruled_claims)
+        return land(fg, pr, ruled, base, cwd, do_cleanup, out, ruled_claims)
     except PostMerge as exc:
         out(f"raid_land: {pr} merge outcome unknown: {exc}; the merge was called, read the request by hand, never re-run")
         try:
-            out(f"read-back now: {forge.read_back(pr)}")
+            out(f"read-back now: {fg.read_back(pr)}")
         except Exception as exc2:
             out(f"read-back now: unreadable ({exc2})")
         return UNKNOWN
-    except Refusal as exc:
+    except (Refusal, forge.ForgeRefusal) as exc:  # the adapter's refusals before the merge call
         print(f"raid_land: {pr} refused: {exc}", file=sys.stderr)
         return REFUSED
 
@@ -346,7 +272,7 @@ def main(argv=None) -> int:
     p.add_argument("--cleanup", action="store_true", help="remove the merged worktree and branch")
     a = p.parse_args(argv)
     claims = [] if a.ruled_claims == "-" else [c for c in a.ruled_claims.split(",") if c]
-    return main_land(GhForge(), a.pr, a.ruled_head, claims, a.base, None, print, a.cleanup)
+    return main_land(forge.get_forge(None, a.pr), a.pr, a.ruled_head, claims, a.base, None, print, a.cleanup)
 
 
 if __name__ == "__main__":
