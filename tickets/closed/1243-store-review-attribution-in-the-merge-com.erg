@@ -3,6 +3,7 @@ Title: Store review attribution in the merge commit, not a journal file
 Created: 2026-10-27
 Author: reviewer
 Label: deferred
+Closed: Closed by the author 2026-10-27: 1286 fixed seat attribution and append order; journal path kept. trace-doctor's Watchlist row tracks attribution_query.py coverage (baseline 74/757 available over 28 days to 2026-10-27) and proposes reopening if the share has not risen two weeks after 1286. Author decisions recorded in the log bind any reopen.
 
 --- log ---
 2026-10-27T09:45Z reviewer created
@@ -11,6 +12,8 @@ Label: deferred
 2026-10-27T19:35Z reviewer note author's decision 2026-10-27 (Q1 a): fix the seats' attribution lines and the append order first (ticket 1286, in the running raid) and keep the journal path; this ticket is held. The author's answers to its open decisions, binding if it reopens: no encryption (no private-audience path); no retrospective migration of past PRs; no blocking (an incomplete block never stops /merge). Measuring capture refusals after 1286 is a nice-to-have, not a commitment (advisor: Fable).
 2026-10-27T19:35Z reviewer unlabel needs-human
 2026-10-27T19:35Z reviewer label deferred
+2026-10-27T21:26Z reviewer closed — Closed by the author 2026-10-27: 1286 fixed seat attribution and append order; journal path kept. trace-doctor's Watchlist row tracks attribution_query.py coverage (baseline 74/757 available over 28 days to 2026-10-27) and proposes reopening if the share has not risen two weeks after 1286. Author decisions recorded in the log bind any reopen.
+2026-10-27T21:55Z reviewer author confirmed the close in session 2026-10-27 (reply 'Confirmed' to verify-gate round-1 NEEDS-AUTHOR on PR #1841)
 
 --- body ---
 ## Context

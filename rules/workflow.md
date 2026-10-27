@@ -163,10 +163,10 @@ one compound call: each idle turn re-reads the whole context.
 
 # Autonomous action
 
-**Run to the end.** The author's attention is the scarcest resource. Ask only
-when § Escalation protocol says so, then execute through verification, merge
-and cleanup and deliver one report. Mid-run returns are for new scope or
-irreversible actions, never for progress or permission.
+**Run to the end.** The author's attention is the scarcest resource: ask only
+when § Escalation protocol says so, run through verification, merge,
+cleanup, deliver one report. Return mid-run only for new scope or an
+irreversible act; skill-prescribed steps (roar, gaze) run unasked.
 
 **Questions to the author: one at a time, executive format.** The author
 juggles projects, so a ticket number means nothing: name the project and
