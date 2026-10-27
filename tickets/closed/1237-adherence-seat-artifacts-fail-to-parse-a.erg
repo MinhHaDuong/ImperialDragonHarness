@@ -2,9 +2,12 @@
 Title: Adherence seat artifacts fail to parse and escalate gaze
 Created: 2026-10-27
 Author: Minh Ha-Duong
+Closed: overtaken by 1225; dead-path removal filed as follow-up
 
 --- log ---
 2026-10-27T08:23Z Minh Ha-Duong created
+2026-10-27T10:53Z reviewer note overtaken by 1225 (5cb969f5): gaze no longer launches the adherence seat; nothing calls adherence_verdict.py; author ruled close and file the removal (2026-10-27)
+2026-10-27T10:53Z reviewer closed — overtaken by 1225; dead-path removal filed as follow-up
 
 --- body ---
 ## Context
