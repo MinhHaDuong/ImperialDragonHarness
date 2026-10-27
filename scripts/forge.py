@@ -240,6 +240,8 @@ class NoneForge:
         spec.loader.exec_module(rn)
         try:
             return rn.find(self.cwd or ".", branch)
+        except rn.Tamper as exc:  # surfaced, never read as "no review"
+            raise ForgeRefusal(f"refs/notes/review: TAMPER: {exc}") from exc
         except rn.Refusal:
             return None
 

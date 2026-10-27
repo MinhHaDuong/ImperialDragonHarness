@@ -159,8 +159,9 @@ on a blocked cleanup, carry that printed line, copied as printed.
 **No forge.** On `branch:<name>`, `gaze_close.py` records the same text, with
 the attribution lines, as one `answer` entry of the review in
 `refs/notes/review` through the `review_notes.py` helper, the store verify-gate
-reads, and publishes it with read-back when there is a remote. Never write
-those notes by hand.
+reads, and publishes it with read-back when there is a remote; a narrow
+intent records `scope: delta`, only the default intent a full review. Never
+write those notes by hand.
 
 **Attribution.** As each seat returns, collect its `reviewer: step=review`
 line, with its `finding:` lines, in a file; `gaze_close.py --attribution-file`

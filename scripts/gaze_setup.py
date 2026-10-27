@@ -132,13 +132,8 @@ def main():
         if not ok:
             return fail(1, f"leftover review worktree not removable: {msg}")
     if local:
-        review_id = meta.get("review_id")
-        if not review_id:  # gaze without a hunt request: open the review so the answer has a home
-            try:
-                review_id = review_notes.open_review(str(primary), branch, meta["base"], skill="gaze",
-                                                     why="gaze invoked on a branch with no request")
-            except review_notes.Refusal as exc:
-                return fail(2, f"cannot open a review for {branch}: {exc}")
+        if meta.get("claims_error"):  # the forge path stops on a malformed claim too
+            return fail(1, f"malformed close claim in a Ticket: trailer: {meta['claims_error']}")
         start = meta["head"]
     elif subprocess.run(["git", "fetch", "origin", branch], capture_output=True).returncode:
         return fail(2, f"git fetch origin {branch} failed")
@@ -153,6 +148,13 @@ def main():
                        capture_output=True, text=True)
     if a.returncode:
         return fail(2, a.stderr.strip() or "REVIEW-ANCHOR: failed")
+    review_id = meta.get("review_id")
+    if local and not review_id:  # gaze without a hunt request: open the review so the answer has a home
+        try:
+            review_id = review_notes.open_review(str(primary), branch, meta["base"], skill="gaze",
+                                                 why="gaze invoked on a branch with no request")
+        except review_notes.Refusal as exc:
+            return fail(2, f"cannot open a review for {branch}: {exc}")
     body = meta.get("body") or ""
     tickets, malformed = close_claims(body, tree)
     if local:  # no body: the claims are the branch's `Ticket:` trailers, read by forge.resolve

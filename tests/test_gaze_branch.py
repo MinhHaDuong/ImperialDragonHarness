@@ -41,7 +41,7 @@ def test_branch_review_records_an_answer_in_the_notes(tmp_path):
     attr.write_text(SEAT + "\n")
     comment = tmp_path / "c.md"
     comment.write_text(f"result: REVIEWED\nseats: panel\nreviewed_head_sha: {f['head']}\n"
-                       "{{plan_check}}\n{{duration}}\n")
+                       "intent: default: the whole merge request\n{{plan_check}}\n{{duration}}\n")
     r = run(CLOSE, ["branch:feature", "--branch", "feature", "--token", f["clock"],
                     "--attribution-file", str(attr), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
@@ -66,3 +66,53 @@ def test_branch_review_reuses_the_hunt_request(tmp_path):
     assert r.returncode == 0, r.stderr
     assert fields(r.stdout)["review_id"] == rid
     assert len([e for e in rn.entries(primary, rid) if e["kind"] == "request"]) == 1
+
+
+def close_with(tmp_path, primary, env, f, intent_line):
+    attr = tmp_path / "attr.txt"
+    attr.write_text("")
+    comment = tmp_path / "c.md"
+    comment.write_text(f"result: REVIEWED\nseats: panel\nreviewed_head_sha: {f['head']}\n{intent_line}"
+                       "{{plan_check}}\n")
+    return run(CLOSE, ["branch:feature", "--branch", "feature", "--token", f["clock"],
+                       "--attribution-file", str(attr), "--comment-file", str(comment)], primary, env)
+
+
+@pytest.mark.parametrize("intent_line,scope,match", [
+    ("intent: default\n", "full", "equal"),
+    ("intent: verify the fixes because they were the findings\n", "delta", "delta"),
+    ("", "delta", "delta"),  # no intent line: never widened to full
+])
+def test_answer_scope_follows_the_intent(tmp_path, intent_line, scope, match):
+    primary, env = branch_repo(tmp_path)
+    r = run(SETUP, ["branch:feature"], primary, env)
+    assert r.returncode == 0, r.stderr
+    f = fields(r.stdout)
+    r = close_with(tmp_path, primary, env, f, intent_line)
+    assert r.returncode == 0, r.stdout + r.stderr
+    answer = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]
+    assert answer["coverage"]["scope"] == scope
+    assert rn.coverage(primary, f["review_id"], f["head"])["match"] == match
+
+
+def test_malformed_trailer_claim_blocks_and_opens_nothing(tmp_path):
+    primary, env = branch_repo(tmp_path)
+    git(primary, "switch", "-q", "feature")
+    git(primary, "commit", "-q", "--allow-empty", "-m", "x\n\nTicket: see-0042")
+    git(primary, "switch", "-q", "main")
+    r = run(SETUP, ["branch:feature"], primary, env)
+    assert r.returncode == 1 and "claim" in r.stderr
+    assert rn.find(primary, "feature") is None
+
+
+def test_unknown_forge_env_still_cleans_up(tmp_path):
+    primary, env = branch_repo(tmp_path)
+    r = run(SETUP, ["branch:feature"], primary, env)
+    f = fields(r.stdout)
+    env["IDH_FORGE"] = "bogus"
+    attr = tmp_path / "attr.txt"
+    attr.write_text("")
+    r = run(CLOSE, ["branch:feature", "--branch", "feature", "--attribution-file", str(attr)], primary, env)
+    assert "Traceback" not in r.stderr, r.stderr
+    assert not (primary / ".claude" / "worktrees" / "review-branch-feature").exists()
+    assert f["review_id"]

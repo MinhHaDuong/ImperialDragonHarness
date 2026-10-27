@@ -319,6 +319,7 @@ def sync(cwd, remote="origin"):
     _check_heads(cwd, remote, warnings)
     _git(cwd, "push", "-q", remote, f"{HEADS}/*:{HEADS}/*", check=False)
     tip = _fetch(cwd, remote)
+    _check_remote(cwd, remote, tip, warnings)  # a replacement in the push-to-fetch window
     _save_state(cwd, remote, tip, _all_lines(cwd, TRACK)[0] if tip else {})
     return {"status": "synced", "warnings": list(dict.fromkeys(warnings))}
 

@@ -320,3 +320,15 @@ def test_none_forge_resolve_carries_the_review_id(world):
     assert f.resolve("branch:feature")["review_id"] is None
     rid = rn.open_review(a, "feature", "origin/main")
     assert f.resolve("branch:feature")["review_id"] == rid
+
+
+def test_none_forge_resolve_surfaces_a_tampered_store(world):
+    _, a, _, _ = world
+    rid = rn.open_review(a, "feature", "origin/main")
+    line = raw_note(a, rid).strip()
+    sh(a, "notes", "--ref=review", "append", "-m", line.replace('"hunt"', '"forged"'), rn.anchor(a, rid))
+    fspec = importlib.util.spec_from_file_location("forge", SCRIPTS / "forge.py")
+    forge = importlib.util.module_from_spec(fspec)
+    fspec.loader.exec_module(forge)
+    with pytest.raises(forge.ForgeRefusal, match="(?i)tamper"):
+        forge.get_forge("none", cwd=str(a)).resolve("branch:feature")
