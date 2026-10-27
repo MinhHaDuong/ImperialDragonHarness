@@ -705,9 +705,9 @@ def last_green(tip, limit=AFTER_WALK):
     return None
 
 
-def red_report(tip, results):
+def red_report(tip, config, results):
     """The would-be ticket text of a red after-merge record (opening it is ticket 1251)."""
-    failing = [line.split(" ", 1)[0] for line in results if line.split(" ")[1].startswith("fail")]
+    failing = [c["name"] for c, line in zip(config["checks"], results) if not line.startswith(c["name"] + " pass ")]
     green = last_green(tip)
     span = f"{green}..{tip}" if green else tip
     merges = git(
@@ -728,7 +728,7 @@ def red_report(tip, results):
 
 
 def run_after_once(tip, remote, actor, command):
-    """Run the full set on `tip`, note it there; (ok, results), or None when the tip declares no gate."""
+    """Run the full set on `tip`, note it there; (ok, results, config), or None when the tip declares no gate."""
     config = load_config(tip)
     if config is None:
         return None
@@ -757,7 +757,7 @@ def run_after_once(tip, remote, actor, command):
     )
     append_and_push(tip, entry, remote)
     sys.stdout.write(entry)
-    return ok, results
+    return ok, results, config
 
 
 def run_after(remote, branch, actor, command):
@@ -779,7 +779,7 @@ def run_after(remote, branch, actor, command):
                 code = PASS
             else:
                 sys.stdout.write(f"red: after-merge record on {tip}; the ticket it would open (no forge write):\n")
-                sys.stdout.write(red_report(tip, outcome[1]))
+                sys.stdout.write(red_report(tip, outcome[2], outcome[1]))
                 code = FAIL
             done = tip
         return code
