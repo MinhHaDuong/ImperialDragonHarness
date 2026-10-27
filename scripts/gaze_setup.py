@@ -108,13 +108,16 @@ def main():
     fg = forge.get_forge(None, pr)
     try:
         meta = fg.resolve(pr)
-        discussion = fg.comments(pr)
-        ci = fg.checks(pr)
     except forge.ForgeRefusal as exc:
         return fail(2, re.sub(r"^cannot read request", "cannot read PR", str(exc)))
     branch = meta["branch"]
     if meta.get("mergeable") == "CONFLICTING":
         return fail(1, f"PR {pr} has merge conflicts")
+    try:
+        discussion = fg.comments(pr)
+        ci = fg.checks(pr)
+    except forge.ForgeRefusal as exc:
+        return fail(2, re.sub(r"^cannot read request", "cannot read PR", str(exc)))
     tree = primary / ".claude" / "worktrees" / f"review-{pr}"
     if tree.exists():
         if time.time() - newest_mtime(tree) < liveness_window():

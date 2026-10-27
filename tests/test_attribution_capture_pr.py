@@ -37,7 +37,7 @@ def forge(monkeypatch):
     class Forge:
         """The adapter's operations over the in-memory PR."""
 
-        def comments(self, ref):
+        def comments(self, ref, reviews=True):
             return [{"body": c} for c in pr["comments"].split("\n\n\n")] if pr["comments"] else []
 
         def resolve(self, ref):

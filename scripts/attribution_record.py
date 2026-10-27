@@ -304,7 +304,7 @@ def append_seats(args):
     """--seats FILE prints the stdin body with the lines; --seats-pr PR edits the live body."""
     if args.seats_pr:
         fg = forge_for(args.seats_pr)
-        results = "\n".join(c.get("body", "") for c in forge_call(fg.comments, str(args.seats_pr))
+        results = "\n".join(c.get("body", "") for c in forge_call(fg.comments, str(args.seats_pr), reviews=False)
                             if c.get("body", "").startswith("## /gaze result"))
         body = forge_call(fg.resolve, str(args.seats_pr))["body"]
     else:

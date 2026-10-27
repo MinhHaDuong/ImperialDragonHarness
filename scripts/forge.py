@@ -120,9 +120,10 @@ class GhForge:
                 "head": d["headRefOid"], "state": d["state"], "mergeable": d.get("mergeable"),
                 "draft": bool(d.get("isDraft")), "body": body, **_claims(body)}
 
-    def comments(self, ref: str) -> list[dict]:
-        d = self._view(ref, "comments,reviews")
-        return d.get("comments", []) + d.get("reviews", [])
+    def comments(self, ref: str, reviews: bool = True) -> list[dict]:
+        """Comments, then formal reviews unless `reviews` is False."""
+        d = self._view(ref, "comments,reviews" if reviews else "comments")
+        return d.get("comments", []) + (d.get("reviews", []) if reviews else [])
 
     def checks(self, ref: str) -> str:
         """`none`, `passing`, `pending`, or `failing: <names>`. `pending` means a check has not
@@ -157,8 +158,10 @@ class GhForge:
             body = self._view(ref, "body").get("body") or ""
             if edit is not None or not all(item in body.splitlines() for item in wanted):
                 body = edit(body) if edit else body.rstrip("\n") + "\n" + line.strip("\n") + "\n"
-                self._gh("api", f"repos/{{owner}}/{{repo}}/pulls/{ref}", "-X", "PATCH", "--input", "-",
-                         stdin=json.dumps({"body": body}))
+                done = self._gh("api", f"repos/{{owner}}/{{repo}}/pulls/{ref}", "-X", "PATCH", "--input", "-",
+                                stdin=json.dumps({"body": body}))
+                if done.returncode != 0:
+                    raise ForgeRefusal(f"gh api failed: {done.stderr.strip()}")
             seen = (self._view(ref, "body").get("body") or "").splitlines()
             if all(item in seen for item in wanted):
                 return
@@ -230,7 +233,7 @@ class NoneForge:
                 "mergeable": "MERGEABLE" if tree.returncode == 0 else "CONFLICTING",
                 "draft": False, "body": "", **_claims(trailers)}
 
-    def comments(self, ref: str) -> list[dict]:
+    def comments(self, ref: str, reviews: bool = True) -> list[dict]:
         return []
 
     def checks(self, ref: str) -> str:

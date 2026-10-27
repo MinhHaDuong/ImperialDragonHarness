@@ -262,3 +262,20 @@ def test_merged_at_and_cwd(tmp_path, monkeypatch):
     assert f.merged_at("7") == "2026-10-27T21:04:00Z" and seen["cwd"] == str(tmp_path)
     with pytest.raises(forge.NoForgeMerge):
         forge.NoneForge().merged_at("branch:x")
+
+
+def test_append_body_line_refuses_when_the_patch_fails(monkeypatch):
+    f = forge.GhForge()
+
+    def gh(*args, stdin=None):
+        if args[0] == "api":
+            return subprocess.CompletedProcess(args, 1, "", "HTTP 403")
+        return subprocess.CompletedProcess(args, 0, json.dumps({"body": ""}), "")
+
+    monkeypatch.setattr(f, "_gh", gh)
+    with pytest.raises(forge.ForgeRefusal, match="403"):
+        f.append_body_line("7", "L")
+
+
+def test_comments_can_leave_reviews_out(stub):
+    assert [c["body"] for c in forge.get_forge("gh").comments("7", reviews=False)] == []
