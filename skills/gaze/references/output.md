@@ -47,7 +47,7 @@ caller: the one delivery place. No interim "started"/"finished" chatter.
 result: REVIEWED|FINDINGS|ESCALATE
 reviewed_head_sha: <full SHA read from the review tree after the pass>
 intent: <the caller's text verbatim | default: the whole merge request against its ticket's exit criteria>
-plan: <method; items as name (model, family); budget> — <why this plan settles the what>
+review plan: <method; items as name (model, family); budget> — <why this plan settles the what>
 ran: <`seat_clock.py roster` lines, `; `-joined: each item's wall time or `no report (...)`>
 plan check: <the first line of `seat_clock.py plan-check`> — <each deviation's reason, and whether the what is still settled>
 

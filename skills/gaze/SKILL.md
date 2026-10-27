@@ -24,18 +24,19 @@ return ESCALATE with reason "no PR argument".
 ## Invariants
 
 - **One pass, no recursion.** One PR. The pass may run several workers in
-  parallel; no worker launches a further review, gaze does not review its own
-  findings again, and there is no internal round or fix loop.
-- **Read-only on the code.** Gaze makes no commits, no pushes, and writes nothing in the
-  caller's worktree. Checks run in gaze's own `review-<pr>` worktree, removed
-  with its scratch before returning (§ Cleanup and containment).
-- No mechanical adherence: the `-m adherence` tests are not gaze's to run.
-  Judging the change against the written rules is review, and the plan may
-  choose it.
+  parallel; no worker launches a further review, and there is no second pass
+  or fix loop. Within the pass, gaze checks each finding before reporting it
+  (reproduces it or reads the code it cites) and drops what does not hold.
+- **Read-only on the code.** Gaze makes no commits and no pushes, and writes
+  nothing in the caller's worktree. It writes only its report: the result
+  comment and its attribution lines on the PR, and the same text returned to
+  the caller. Checks run in gaze's own review worktree, removed with its
+  scratch before returning (§ Cleanup and containment).
 - Never returns APPROVED (pinned by `tests/test_gaze_never_approves.py`).
   REVIEWED means no blocking finding on the reviewed head, nothing more.
 - Does not merge.
-- No other live `/gaze` on the same PR.
+- **One live gaze per PR.** The review worktree `review-<pr-number>` is the
+  lock (§ 1. Setup).
 - Started inside the target project; branch, head and files come from the PR
   number.
 
@@ -50,7 +51,12 @@ A fork ends its turn when it stops calling tools, and delegated agents run in th
 ### 1. Setup
 
 Start the duration clock (`references/output.md` § Duration clock), then
-create the review worktree.
+create the review worktree. If `review-<pr-number>` already exists, another
+gaze holds the PR: when anything in it changed within the liveness window
+(`fork_liveness_seconds`, `skills/gaze/telemetry.yml`), that run is live, so
+return ESCALATE "another gaze is live on this PR"; otherwise it is a dead
+run's leftover, so run the cleanup (`references/cleanup.md`) on it, then
+create the tree.
 
 **Isolation setup:**
 
@@ -73,9 +79,12 @@ close-claim check.
 
 ### 2. Plan
 
-Before launching anything, write the plan to `<panel>/manifest.txt`: method,
-items (each worker or check, with its model and family), budget. Guidance and
-worked cases: `references/plan.md`.
+Before launching anything, write the review plan to `<panel>/manifest.txt`,
+where `<panel>` is `$review_tree/.panel/<pr-number>/`: method, items (each
+worker or check, with its model and family), budget. Work gaze does itself is
+an item like any other, worker `self`, and writes its own report to
+`<panel>/<item>.md`, opening with the same `worker:` line every report
+carries. Guidance and worked cases: `references/plan.md`.
 
 <!-- inline: references/plan.md -->
 
@@ -117,6 +126,7 @@ full template is `references/output.md`:
 result: REVIEWED | FINDINGS | ESCALATE
 reviewed_head_sha: <full SHA read from the review worktree after the pass>
 intent: <verbatim | default>
+review plan: <method; items as name (model, family); budget>
 plan check: PASS | PASS with deviations — <...> | FAIL — <...>
 unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
