@@ -15,7 +15,7 @@ recorded: 2026-10-27T07:50:36Z
 
 Doc-propagation seat on PR #1699, range 40c2d9bdbbb3e58e1038eb5bf4bb310f0a25baae...HEAD, tickets/reviews excluded. Launched by the coder, read-only; worker self-reported as claude-haiku-5-5. Report verbatim:
 
-Model: Claude Haiku 5.5 (claude-haiku-5-5), DOC-PROPAGATION seat, read-only. Worktree: /home/haduong/.agents/.claude/worktrees/t1233-3125650. Diff base 40c2d9bd...HEAD, tickets/reviews excluded. Nothing written, no git write commands run.
+Model: Claude Haiku 5.5 (claude-haiku-5-5), DOC-PROPAGATION seat, read-only. Worktree: the PR worktree. Diff base 40c2d9bd...HEAD, tickets/reviews excluded. Nothing written, no git write commands run.
 
 Findings:
 - nit: skills/harness-doctor/references/authoring-skills.md:6-8 says the rules are "enforced by tests/test_skill_descriptions.py and tests/test_skill_frontmatter.py", but the capability bullet is enforced by scripts/check-agnostic.sh (carried over from the original wording; the move did not change it).
