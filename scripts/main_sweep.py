@@ -2,7 +2,8 @@
 """Audit the last 24 hours of main: does each commit that entered it carry a gate receipt?
 
 Ticket 1179 (after 1157, tracker 1045). Stateless and git-only: no forge, no
-watermark, no stored state. It reads the repository it runs in and prints
+watermark, no stored state, except that --after runs the gate's check set and
+pushes its record as a note to refs/notes/gate. It reads the repository it runs in and prints
 nothing when the base declares no gate (no `.merge-gate.json` at the tip, or
 `"gate": "off"`).
 
@@ -29,13 +30,20 @@ no finding. 1: a finding. 2: could not look in full; a range cut by a cap says
 so on stdout and exits 2 whatever it found, so a cut never reads as an
 all-clear.
 
+With --after (ticket 1244), it also lists the first-parent tips newer than
+the newest one carrying an after-merge record (a record covers the tips its
+runner passed over) and runs `merge-gate.py run-after` on the latest; a red
+run is a finding.
+
 Never run in the merge path: run by hand, or from the end-of-day wrap-up with
 --summary (one line).
 """
 
 import argparse
 import importlib.util
+import io
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -61,7 +69,11 @@ def _tree(oid: str) -> str:
 
 def _verdict(sha: str, parents: list[str], config: dict) -> tuple[str, str]:
     if len(parents) == 1:
-        if mg.read_note(sha).strip():
+        text = mg.read_note(sha)
+        entries = mg.parse_note(text)
+        if entries and all(mg.is_after_entry(e) for e in entries):  # ticket 1244: never admits a commit
+            return "finding", "single-parent commit with an after-merge record only"
+        if text.strip():
             return "ok", "note on the commit itself"
         return "finding", "single-parent commit without a note"
     if len(parents) != 2:
@@ -121,6 +133,62 @@ def audit(ref: str, max_count: int, time_limit: float) -> tuple[list[dict], list
     return results, cut
 
 
+def after_gaps(tip: str, max_count: int) -> tuple[list[tuple[str, str]], str]:
+    """First-parent tips above the newest one with an after-merge record (ticket 1244).
+
+    A record covers its tip and every tip below it that it passed over, so
+    the gaps are the tips newer than the newest recorded one, newest first.
+    Returns (gaps as (sha, subject), what bounds them).
+    """
+    walked = mg.git("log", "--first-parent", f"--max-count={max_count}", "--format=%H %s", tip).stdout.splitlines()
+    gaps = []
+    for line in walked:
+        sha, _, subject = line.partition(" ")
+        if mg.after_entries(sha):
+            return gaps, f"since the after-merge record on {sha[:12]}"
+        gaps.append((sha, subject))
+    return gaps, f"none in the newest {max_count} first-parent commits"
+
+
+def after_audit(tip: str, ref: str, max_count: int, summary: bool) -> tuple[list[str], int]:
+    """Report the gaps and run the full set on the latest tip when there is one."""
+    gaps, bound = after_gaps(tip, max_count)
+    lines = [] if summary else [f"after-gap {sha[:12]}  {subject[:60]}" for sha, subject in gaps]
+    if not gaps:
+        return lines + [f"after: every tip carries an after-merge record ({bound})"], 0
+    remote, _, branch = ref.partition("/") if ref.startswith("origin/") else ("origin", "", ref)
+    actor = mg.actor_line("", "", "")
+    command = f"main_sweep --after: merge-gate run-after --remote {remote} --ref {branch}"
+    code = mg.run_after(remote, branch, actor, command) if not summary else _quiet_run(remote, branch, actor, command)
+    head = f"after: {len(gaps)} tip(s) without an after-merge record ({bound})"
+    if code == mg.BUSY:
+        return lines + [f"{head}; not run: another runner holds the lock and will cover the newest tip"], 0
+    lines.append(f"{head}; ran on {gaps[0][0][:12]}: {'red' if code else 'green'}")
+    return lines, code
+
+
+def _quiet_run(remote: str, branch: str, actor: str, command: str) -> int:
+    """run_after with its own text and its checks' output kept off fds 1 and 2 (the summary is one line).
+
+    The checks are subprocesses inheriting the file descriptors, so swapping
+    sys.stdout alone would not hold them; the record on the tip keeps the detail.
+    """
+    sys.stdout.flush()
+    sys.stderr.flush()
+    saved = [os.dup(fd) for fd in (1, 2)]
+    real, sys.stdout = sys.stdout, io.StringIO()
+    try:
+        with open(os.devnull, "w") as sink:
+            for fd in (1, 2):
+                os.dup2(sink.fileno(), fd)
+            return mg.run_after(remote, branch, actor, command)
+    finally:
+        for fd, copy in zip((1, 2), saved):
+            os.dup2(copy, fd)
+            os.close(copy)
+        sys.stdout = real
+
+
 def render(results: list[dict], cut: list[str], summary: bool) -> str:
     findings = [r for r in results if r["status"] == "finding"]
     if summary:
@@ -151,6 +219,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="seconds of work before the range is cut (default 60)")
     p.add_argument("--fetch", action="store_true", help="fetch origin main and refs/notes/gate first")
     p.add_argument("--summary", action="store_true", help="one line, for the end-of-day wrap-up")
+    p.add_argument("--after", action="store_true",
+                   help="also report tips with no after-merge record and run the full set on the latest one")
     return p.parse_args(argv)
 
 
@@ -171,10 +241,15 @@ def run(args: argparse.Namespace) -> int:
     if args.fetch:
         mg.fetch_notes("origin")
     results, cut = audit(tip, args.max_count, args.time_limit)
-    sys.stdout.write(render(results, cut, args.summary) + "\n")
+    text = render(results, cut, args.summary)
+    after_code = 0
+    if args.after:
+        lines, after_code = after_audit(tip, args.ref, args.max_count, args.summary)
+        text += "; " + lines[-1] if args.summary else "\n" + "\n".join(lines)
+    sys.stdout.write(text + "\n")
     if cut:
         return 2
-    return 1 if any(r["status"] == "finding" for r in results) else 0
+    return 1 if after_code or any(r["status"] == "finding" for r in results) else 0
 
 
 def main(argv: list[str] | None = None) -> int:

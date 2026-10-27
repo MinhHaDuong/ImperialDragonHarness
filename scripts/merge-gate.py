@@ -43,15 +43,29 @@ declared under `"rerun": {"bookkeeping": [...]}` (undeclared: every check
 re-runs). A check declared `"integration": true` is skipped unless the diff
 touches a path its `"covers"` patterns match, or `--integration` is passed.
 
+After-merge runner (ticket 1244, tracker 1226): `run-after`, started in the
+background once a merge has landed, takes a host-local flock (the kernel frees
+it when the holder dies; busy: exit 0 at once, the holder will see the new
+tip), runs the full declared set on the current `<remote>/<ref>` tip, appends
+the record as a note on that tip, refetches, and loops while the tip moves; a
+result covers its tip and every tip it passed over. The record's scope is
+`<scope>/after-merge` and its revision `tip=<oid>`, never `candidate=`, so
+neither `check` nor the main-update hook can take it for a before-merge record.
+On red it prints the would-be ticket text (tip, failing checks, first-parent
+merges since the last green after-record) and exits 1; opening that ticket is
+ticket 1251. Nothing reverts, nothing re-runs.
+
 Exit codes of `check`: 0 pass, 1 fail or stale scope, 2 no record, 3 error.
 `enabled`: 0 on, 1 off, 3 error. `tier`: 0 bookkeeping (or, with --since,
 unchanged), 1 full (an empty diff included), 3 error. `plan`: 0 printed, 1
-gate off (no declared checks), 3 error.
+gate off (no declared checks), 3 error. `run-after`: 0 green, off or busy,
+1 red, 3 error.
 Any unexpected exception exits 3.
 """
 
 import argparse
 import datetime
+import fcntl
 import fnmatch
 import functools
 import getpass
@@ -81,6 +95,9 @@ PASS, FAIL, MISSING, ERROR = 0, 1, 2, 3
 # "tickets/*.erg" does not reach tickets/erg (code) or tickets/closed/.
 BOOKKEEPING = ("tickets/*.erg", "tickets/closed/*.erg", "STATE.md", "memory/")
 BOOKKEEPING_TIER = "bookkeeping"
+AFTER_SCOPE = "after-merge"  # scope suffix of a run-after record (ticket 1244)
+BUSY = 4  # run_after only, never an exit code: another runner holds the lock
+AFTER_WALK = 200  # first-parent commits searched for the last green after-record
 
 
 class GateError(RuntimeError):
@@ -646,6 +663,137 @@ def cmd_plan(args):
     return PASS
 
 
+# ── after-merge runner (ticket 1244, tracker 1226) ────────────────────────────
+
+
+def after_config(config):
+    """The full declared set (no tier, no integration skip) under the after-merge scope."""
+    return {**config, "scope": f"{config['scope']}/{AFTER_SCOPE}"}
+
+
+def is_after_entry(entry):
+    """An entry written by `run-after`: its scope name ends in /after-merge."""
+    return entry.get("scope", "").partition(": ")[0].endswith("/" + AFTER_SCOPE)
+
+
+def after_entries(oid):
+    return [e for e in parse_note(read_note(oid)) if is_after_entry(e)]
+
+
+def lock_file():
+    """One host-local lock per repository, beside the main-guard journal."""
+    common = git("rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()
+    path = Path(common) / "idh" / "after-merge.lock"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def fetch_tip(remote, branch):
+    git("fetch", "-q", remote, f"+refs/heads/{branch}:refs/remotes/{remote}/{branch}")
+    tip = rev(f"refs/remotes/{remote}/{branch}")
+    if not tip:
+        raise GateError(f"cannot resolve {remote}/{branch} after fetch")
+    return tip
+
+
+def last_green(tip, limit=AFTER_WALK):
+    """Newest first-parent ancestor of `tip` (itself excluded) with a passing after-record."""
+    walked = git("rev-list", "--first-parent", f"--max-count={limit}", f"{tip}^", check=False).stdout.split()
+    for oid in walked:
+        if any(e.get("result") == "pass" for e in after_entries(oid)):
+            return oid
+    return None
+
+
+def red_report(tip, config, results):
+    """The would-be ticket text of a red after-merge record (opening it is ticket 1251)."""
+    failing = [c["name"] for c, line in zip(config["checks"], results) if not line.startswith(c["name"] + " pass ")]
+    green = last_green(tip)
+    span = f"{green}..{tip}" if green else tip
+    merges = git(
+        "log", "--first-parent", f"--max-count={AFTER_WALK}", "--abbrev=12", "--format=- %h %s", span
+    ).stdout.strip()
+    return "\n".join(
+        [
+            f"Title: After-merge red on main {tip[:12]}: {', '.join(failing)}",
+            "",
+            f"Tip: {tip}",
+            f"Failing checks: {', '.join(failing)}",
+            f"Last green after-merge tip: {green or f'none in the last {AFTER_WALK} first-parent commits'}",
+            "Merges since (first parent, newest first):",
+            merges,
+            "",
+        ]
+    )
+
+
+def run_after_once(tip, remote, actor, command):
+    """Run the full set on `tip`, note it there; (ok, results, config), or None when the tip declares no gate."""
+    config = load_config(tip)
+    if config is None:
+        return None
+    config = after_config(config)
+    started = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    with tempfile.TemporaryDirectory(prefix="merge-gate-after-") as tmp:
+        tree = Path(tmp) / "tip"
+        git("worktree", "add", "-q", "--detach", str(tree), tip)
+        try:
+            ok, results = run_checks(config, tree)
+            versions = " · ".join(f"{v['name']} {first_line(v['argv'], tree)}" for v in config.get("versions", []))
+        finally:
+            git("worktree", "remove", "--force", str(tree), check=False)
+    entry = format_entry(
+        {
+            "result": "pass" if ok else "fail",
+            "time": started,
+            "actor": actor,
+            "host": socket.gethostname(),
+            "revision": f"tip={tip}",  # never `candidate=`: decide() cannot match it
+            "command": command,
+            "scope": scope_line(config),
+            "versions": versions or NOT_STATED,
+            "checks": results,
+        }
+    )
+    append_and_push(tip, entry, remote)
+    sys.stdout.write(entry)
+    return ok, results, config
+
+
+def run_after(remote, branch, actor, command):
+    """Hold the lock, run on the newest tip until it stops moving: the last run's code, or BUSY."""
+    with open(lock_file(), "a") as handle:
+        try:
+            fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            sys.stdout.write(f"busy: another runner holds {handle.name}; it will see the new tip\n")
+            return BUSY
+        code, done = PASS, None
+        while (tip := fetch_tip(remote, branch)) != done:
+            outcome = run_after_once(tip, remote, actor, command)
+            if outcome is None:
+                sys.stdout.write(f"off: {tip[:12]} declares no gate; nothing to run\n")
+                code = PASS
+            elif outcome[0]:
+                sys.stdout.write(f"pass: after-merge record on {tip}\n")
+                code = PASS
+            else:
+                sys.stdout.write(f"red: after-merge record on {tip}; the ticket it would open (no forge write):\n")
+                sys.stdout.write(red_report(tip, outcome[2], outcome[1]))
+                code = FAIL
+            done = tip
+        return code
+
+
+def cmd_run_after(args):
+    actor = actor_line(args.runtime, args.model, args.effort)
+    command = f"merge-gate run-after --remote {args.remote} --ref {args.ref}"
+    if not single_line(actor) or not single_line(command):
+        raise ValueError("actor or command holds a line break or control character")
+    code = run_after(args.remote, args.ref, actor, command)
+    return PASS if code == BUSY else code
+
+
 def cmd_candidate(args):
     sys.stdout.write(candidate(*resolve(args)) + "\n")
     return PASS
@@ -661,6 +809,12 @@ def cmd_enabled(args):
 def parser():
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = p.add_subparsers(dest="command", required=True)
+    after = sub.add_parser("run-after", help="full set on the newest tip of --ref, after a merge")
+    after.set_defaults(func=cmd_run_after)
+    after.add_argument("--remote", default="origin", help="where the branch and refs/notes/gate live")
+    after.add_argument("--ref", default="main", help="branch name on --remote (default main)")
+    for name in ("runtime", "model", "effort"):
+        after.add_argument(f"--{name}", default=os.environ.get(f"MERGE_GATE_{name.upper()}", ""))
     for name, func in (
         ("run", cmd_run),
         ("check", cmd_check),

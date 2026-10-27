@@ -4,7 +4,8 @@ Ticket 1157, child B of tracker 1045. Two parts. The first is a git hook that
 journals every update of `refs/heads/main` and can refuse one. The second is a
 daily audit that reports any commit that reached `main` in the last 24 hours
 without a gate receipt. Both use only git, so they work the same under any
-agent runtime and for a human.
+agent runtime and for a human. The audit's `--after` (ticket 1244) is the one
+part that writes: it runs the gate's check set and pushes a note.
 
 ## The hook: `hooks/reference-transaction`
 
@@ -136,7 +137,9 @@ then has no note, and the merge is a finding.
 
 ## The audit: `scripts/main_sweep.py`
 
-Stateless and git-only: no forge read, no watermark, no stored state. It
+Stateless and git-only: no forge read, no watermark, no stored state.
+Without `--after` it only reads; with `--after` it runs the gate's check set
+on the latest uncovered tip and pushes a note to `refs/notes/gate`. It
 reads the repository it runs in, so any project that adopts the gate can run
 it, and prints nothing when the tip of `--ref` (default `origin/main`)
 declares no gate (`.merge-gate.json` absent or `"gate": "off"`). With
@@ -171,6 +174,14 @@ declaration or an unknown `--ref` also exits 2.
 make main-sweep                          # fetches main and the receipts, then audits
 python3 scripts/main_sweep.py --summary  # one line, as the end-of-day wrap-up carries it
 ```
+
+**After-merge records** (ticket 1244): `merge-gate.py run-after` notes its
+record on a main tip under the scope `<scope>/after-merge` and the revision
+`tip=<oid>`. Such a record never admits a main update: the hook and `check`
+read only `candidate=` entries under a before-merge scope, and the audit
+reads a single-parent commit whose note holds after-merge entries only as a
+finding. With `--after`, the audit also lists the tips above the newest
+after-merge record and runs the full set on the latest.
 
 It never runs in the merge path: not among the gate's checks, not in the
 merge helper. The end-of-day wrap-up (`/lair`) runs it with `--summary` and

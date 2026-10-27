@@ -2,7 +2,6 @@
 Title: Optimistic merge: fast checks before the merge, the full suite on main right after
 Created: 2026-10-26
 Author: Minh Ha-Duong
-Blocked-by: 1244
 Blocked-by: 1245
 
 --- log ---
@@ -12,6 +11,7 @@ Blocked-by: 1245
 2026-10-27T09:11Z reviewer reviewer note rewritten to option C (author, 2026-10-27; no GitHub): cheap checks before the merge, the full suite on main right after, red opens a ticket, the daily audit covers a missing run. Replaces the bookkeeping fast path of PR 1676 (parked).
 2026-10-27T09:12Z reviewer reviewer note author 2026-10-27: single runner on the newest tip (lock, loop while main moves), not one full run per merge
 2026-10-27T09:32Z reviewer reviewer note split into children 1244 (runner, additive, first) and 1245 (cheap before set; blocked by 1244); verify-gate runs no full suite before the merge (author); the 'lands before 1225' note is moot, 1225 landed first
+2026-10-27T11:20Z reviewer note blocker 1244 closed — Blocked-by removed.
 
 --- body ---
 ## Context
@@ -61,6 +61,7 @@ Tracker since 2026-10-27; closed after the integration review, not on the last c
 
 - [ ] 1244 after-merge runner, red ticket, audit coverage (criteria 3 to 6 below); additive, lands first
 - [ ] 1245 cheap before set, `tiers` dropped, `/verify-gate` runs no full suite (criteria 1, 2, 7); blocked by 1244
+- [ ] 1251 red after-merge record opens a ticket (criterion 5 below), split from 1244 (author, 2026-10-27); blocked by 1245
 
 Author ruling, 2026-10-27: `/verify-gate` does not run the full suite before the merge.
 

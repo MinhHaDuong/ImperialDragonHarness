@@ -2,9 +2,12 @@
 Title: After-merge runner: full suite on the newest main tip, red opens a ticket, audit covers gaps
 Created: 2026-10-27
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1745
 
 --- log ---
 2026-10-27T09:32Z reviewer created child 1 of tracker 1226 (author, 2026-10-27)
+2026-10-27T11:14Z reviewer note criterion 3 moved to child 1251 (author ruling 2026-10-27: bookkeeping tier runs pytest-guard, so a red-main ticket PR cannot land)
+2026-10-27T11:20Z reviewer closed — autoclosed — PR #1745
 
 --- body ---
 ## Context
@@ -43,7 +46,7 @@ merge (child 1245).
 
 - [ ] After a merge, the runner runs the full set on the main tip in the background and writes its record as a note on that tip, under an after-merge scope line.
 - [ ] One runner at a time via `flock`: a test with three quick merges shows at most two runs, the last on the newest tip; a killed runner leaves no lock behind.
-- [ ] A red after-merge record opens a ticket naming the tip, the failing checks and the merges since the last green tip; a test shows it on a planted failure, and a second red run on the same failure opens no second ticket.
+- [ ] A red after-merge record opens a ticket: moved to child 1251 (author's ruling, 2026-10-27; the bookkeeping tier runs pytest-guard, so the ticket PR would fail its own gate on a red main). Here the runner, on red, prints the would-be ticket text and exits non-zero, with no forge write.
 - [ ] The daily audit reports main tips with no after-merge record and runs the set on the latest one; a test shows it.
 - [ ] `skills/merge/SKILL.md` step 8 (or after) starts the runner; the harness gate passes.
 

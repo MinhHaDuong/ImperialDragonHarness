@@ -2,10 +2,10 @@
 Title: Before the merge only cheap checks: split .merge-gate.json, drop tiers, verify-gate leaves the suite to main
 Created: 2026-10-27
 Author: Minh Ha-Duong
-Blocked-by: 1244
 
 --- log ---
 2026-10-27T09:32Z reviewer created child 2 of tracker 1226 (author, 2026-10-27)
+2026-10-27T11:20Z reviewer note blocker 1244 closed — Blocked-by removed.
 
 --- body ---
 ## Context
