@@ -12,8 +12,10 @@ on the doctor's own skill and its control, never as a gate over live skills.
 import hashlib
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import pytest
@@ -65,36 +67,62 @@ def _here(cwd, env=None):
                           capture_output=True, text=True)
 
 
+def _primary_root():
+    common = subprocess.run(
+        ["git", "-C", str(REPO), "rev-parse", "--path-format=absolute",
+         "--git-common-dir"], capture_output=True, text=True, check=True).stdout.strip()
+    return Path(common).resolve().parent
+
+
+@pytest.fixture
+def foreign(tmp_path):
+    """A directory outside every harness checkout, worktrees included.
+
+    pytest's tmp_path follows TMPDIR, and hunt puts TMPDIR inside the
+    worktree, so tmp_path can sit in the harness: the refusal would then be
+    asked about a harness cwd and rightly admit it.
+    """
+    roots = (REPO.resolve(), _primary_root())
+    for base in (tmp_path, Path(tempfile.gettempdir()), Path("/tmp")):
+        base = base.resolve()
+        if base.is_dir() and not any(base.is_relative_to(r) for r in roots):
+            d = Path(tempfile.mkdtemp(prefix="foreign-", dir=base))
+            yield d
+            shutil.rmtree(d, ignore_errors=True)
+            return
+    pytest.skip("no temporary directory outside the harness checkout")
+
+
 @pytest.mark.integration
 @pytest.mark.parametrize("repo", [True, False], ids=["foreign-repo", "no-repo"])
-def test_refusal_outside_harness(tmp_path, repo):
+def test_refusal_outside_harness(foreign, repo):
     if repo:
-        subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
-    out = _here(tmp_path)
+        subprocess.run(["git", "init", "-q", str(foreign)], check=True)
+    out = _here(foreign)
     assert out.returncode == 1
     assert len(out.stderr.strip().splitlines()) == 1
 
 
 @pytest.mark.integration
 @pytest.mark.parametrize("var", ["GIT_DIR", "GIT_COMMON_DIR"])
-def test_refusal_ignores_an_exported_git_dir(tmp_path, var):
+def test_refusal_ignores_an_exported_git_dir(foreign, var):
     """An exported repository override pointing at the harness must not admit a foreign cwd."""
-    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    subprocess.run(["git", "init", "-q", str(foreign)], check=True)
     git_dir = subprocess.run(
         ["git", "-C", str(REPO), "rev-parse", "--path-format=absolute",
          "--git-common-dir"], capture_output=True, text=True, check=True).stdout.strip()
-    out = _here(tmp_path, env={**os.environ, var: git_dir})
+    out = _here(foreign, env={**os.environ, var: git_dir})
     assert out.returncode == 1
 
 
 @pytest.mark.integration
-def test_refusal_ignores_an_exported_work_tree(tmp_path):
+def test_refusal_ignores_an_exported_work_tree(foreign):
     """GIT_WORK_TREE plus GIT_DIR at the harness must not admit a foreign cwd either."""
     git_dir = subprocess.run(
         ["git", "-C", str(REPO), "rev-parse", "--path-format=absolute", "--git-dir"],
         capture_output=True, text=True, check=True).stdout.strip()
     env = {**os.environ, "GIT_DIR": git_dir, "GIT_WORK_TREE": str(REPO)}
-    assert _here(tmp_path, env=env).returncode == 1
+    assert _here(foreign, env=env).returncode == 1
 
 
 @pytest.mark.integration
