@@ -1,8 +1,7 @@
 # Close claims and edge cases
 
 When `/merge` reads this: step 0 (parsing the body), step 1 (closing), a
-merge that skipped step 1, and the checklist of cases the retired merge
-helper handled (ticket 1178).
+merge that skipped step 1, and the index of where each edge case lives.
 
 ## Ticket lines in the body
 
@@ -24,9 +23,9 @@ Close intent is read from the merge request **body** only — never the title:
   A malformed `Ticket: tickets/...` path is a stop, not a silent skip.
 - Ticket lines inside Markdown code fences are examples and are ignored.
   The fence rules are the CommonMark subset implemented by `fence_map` in
-  `$IDH_ROOT/skills/roar/check-close-claims.sh`, the one retained reader:
-  a fence closes only on a run of the opener's character at least as long as
-  the opener, so a `~~~` line inside a backtick fence stays fenced.
+  `$IDH_ROOT/skills/roar/check-close-claims.sh`: a fence closes only on a
+  run of the opener's character at least as long as the opener, so a `~~~`
+  line inside a backtick fence stays fenced.
 - An **unclosed** fence whose remaining text holds a `Ticket:` or
   `Ticket-ref:` line with a `tickets/` path or a short ID: stop and close the
   fence first; the claim would otherwise be dropped or read from fenced text.
@@ -55,25 +54,18 @@ the merge request; if one did, there is nothing to do. Otherwise, on a new
 branch: `erg close <ID> <reason>` edits the ticket file but does **not**
 stage its own edit, so `git add -u tickets/` BEFORE the move to `closed/` and
 the commit — otherwise the commit carries the rename with the pre-edit blob
-and silently drops the `Closed:` header (aedist PR #1008; a 100%-rename,
-0-insertion commit is the tell). The sweep `check-close-claims.sh` reports
-`DROPPED` and `UNRESOLVED` claims over a window; it does not audit short-ID
-claims, which is why step 0 normalizes them.
+and silently drops the `Closed:` header.
 
-## Edge-case checklist
-
-Each duty the retired merge helper carried, and where it lives in the recipe.
+## Where each case lives
 
 | Case | Where |
 |---|---|
-| Body-claim grammar: fences, short ids, `Ticket-ref` is not a claim | above; `check-close-claims.sh` keeps the fence reader |
-| Close-commit text `ticket(<ids>): close and archive — PR #N` | step 1; read by `$IDH_ROOT/scripts/enumerate-merges.py` |
+| Body-claim grammar: fences, short ids, `Ticket-ref` is not a claim | above |
+| Close-commit text `ticket(<ids>): close and archive — PR #N` | step 1 |
 | Never arm auto-merge on a gated base; disarm a stray one | step 5 |
 | Mark a draft ready | step 2 |
 | No `--delete-branch` | step 6 |
-| Merge requests open at the cutover | they follow the recipe as they stand: step 1 closes a ticket the branch has not closed yet; that close is a bookkeeping delta, so an APPROVED verdict on the old head still covers it (§ Gating tiers) |
-| Re-recording after the base moves | step 4: mechanical, spends no review round |
-| Review approval covers the head (bookkeeping delta at most); gate record on the same head | § Gating tiers, § Before merging; step 6 pins it |
+| Re-recording after the base moves | step 4: spends no review round |
+| Approval covers the head (bookkeeping delta at most); gate record on the same head | `/merge` § Gating tiers and § Before merging; step 6 pins it |
 | Body edited after approval | step 3: re-read and compare the claims with the ruled set |
 | Attribution-block warning | § Attribution block warning |
-| A merge without a record | nothing refuses on the merge path: the guard hook (enforce mode) and `main_sweep.py` (`/lair` step 15) report it afterwards |

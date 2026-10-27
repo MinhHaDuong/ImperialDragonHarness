@@ -139,7 +139,7 @@ def _normalize(text: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
-MERGE = (SKILLS / "merge" / "SKILL.md").read_text()
+DETACHED = (SKILLS / "raid" / "references" / "detached-gaze.md").read_text()
 
 
 def test_caller_documents_gaze_fork_liveness_window():
@@ -147,10 +147,10 @@ def test_caller_documents_gaze_fork_liveness_window():
     seen: 2026-07-11, 2026-07-13). The liveness window is the caller's watch,
     so /merge documents it (ticket 1219; formerly gaze's, ticket 0321) and
     telemetry.yml carries the knob: prose and knob must not drift apart."""
-    for text, where in ((MERGE, "merge/SKILL.md"), (TELEMETRY, "telemetry.yml")):
+    for text, where in ((DETACHED, "raid/references/detached-gaze.md"), (TELEMETRY, "telemetry.yml")):
         assert "fork_liveness_seconds" in text, f"{where}: no fork_liveness_seconds knob"
         assert "GAZE_LIVENESS_WINDOW_S" in text, f"{where}: no GAZE_LIVENESS_WINDOW_S override"
-    assert "Fork liveness" in MERGE, "merge/SKILL.md: missing the 'Fork liveness' clause"
+    assert "Fork liveness" in DETACHED, "raid/references/detached-gaze.md: missing the 'Fork liveness' clause"
     assert "Fork liveness" not in VERIFY, "gaze prescribes no caller watch (ticket 1219)"
 
 
@@ -159,7 +159,7 @@ def test_liveness_fallback_names_verify_gate_not_a_rerun():
     substitutes a direct /verify-gate, and keys off the three completion
     markers (result comment, branch-tip motion, review-worktree mtime)
     (ticket 0321, moved to /merge by ticket 1219)."""
-    norm = _normalize(MERGE)
+    norm = _normalize(DETACHED)
     assert "do not re-run gaze's pass" in norm.lower()
     assert "never substitute a direct `/verify-gate`" in norm.lower()
     assert "posted gaze result comment" in norm
@@ -369,9 +369,9 @@ def test_merge_checks_head_equality_and_tier_delta():
 def test_merge_accepted_gaze_result_is_not_tautological():
     """PR 1539 review: 'Accepted' mirrors raid — present and not stale
     against the branch tip."""
-    merge = " ".join((SKILLS / "merge" / "SKILL.md").read_text().split())
-    assert "its `reviewed_head_sha` is the reviewed head" not in merge
-    assert "its `reviewed_head_sha` is not stale against the branch tip" in merge
+    out = " ".join(DETACHED.split())
+    assert "its `reviewed_head_sha` is the reviewed head" not in out
+    assert "its `reviewed_head_sha` is not stale against the branch tip" in out
 
 
 def test_dashboard_allows_at_most_a_bookkeeping_delta_past_the_ruled_tip():

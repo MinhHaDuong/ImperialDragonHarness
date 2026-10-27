@@ -162,7 +162,6 @@ def test_merge_orders_sync_before_close_and_gates_only_approved():
     assert sync < close
     assert "**Merge prerequisite, full tier: the gate's verdict is APPROVED" in merge
     assert "read after `git fetch origin`" in merge
-    assert "judged before the caller adds its own fix and ticket-close commits" in merge
 
 
 def test_phase6_fix_loop_keeps_the_old_gaze_guards():

@@ -241,7 +241,7 @@ def test_gaze_is_one_pass():
 # Callers pass an intent and keep no fixed gaze round loop
 
 
-@pytest.mark.parametrize("skill", ["hunt", "raid", "merge"])
+@pytest.mark.parametrize("skill", ["hunt", "raid"])
 def test_callers_send_a_narrower_intent_not_a_fixed_round_loop(skill):
     text = norm((ROOT / "skills" / skill / "SKILL.md").read_text(encoding="utf-8"))
     assert "narrower intent" in text, skill

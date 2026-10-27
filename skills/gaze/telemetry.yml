@@ -11,9 +11,9 @@ tokens:
   warn: 500000    # 500k in+out → post "verify: token-heavy run" comment, continue
   escalate: 1000000  # 1M → ESCALATE
 
-# Fork liveness window (ticket 0321): past it, a review worktree is a dead
-# run's leftover (gaze's lock, SKILL.md § 1. Setup); a caller waiting on a gaze
-# result reads it too (skills/merge/SKILL.md § Before merging).
+# Fork liveness window: past it, a review worktree is a dead run's leftover
+# (gaze's lock, SKILL.md § 1. Setup); a caller waiting on a gaze result
+# reads it too (skills/raid/references/detached-gaze.md § No result).
 fork_liveness_seconds: 1200  # ~20 min
 
 env:

@@ -286,8 +286,7 @@ launch shape and result acceptance.
 A gaze result of ESCALATE, or no accepted result (missing at the end of the
 bounded wait, or its `reviewed_head_sha` stale against the branch tip), means
 the gate is not run: the review never completed, and the PR goes to the author.
-A run that returns no result is handled as `skills/merge/SKILL.md` § Before
-merging says (no relaunch of the pass, the liveness window, park and escalate).
+A run that returns no result is handled as `references/detached-gaze.md` § No result says.
 Stale means the tip adds more than a bookkeeping delta to `reviewed_head_sha`
 (`skills/merge/SKILL.md` § Gating tiers), judged before the raid adds the fix
 for a gate's round-1 REROLL, which does not void the result (the round-2
