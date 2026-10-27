@@ -377,7 +377,14 @@ For each eligible PR, sequentially within the wave:
    directly: take its path from the agent's completion notification. Never check the
    branch out anywhere else, and do not delete and re-checkout the branch.
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
-4. Merge by the recipe, `skills/merge/SKILL.md` § The recipe,
+4. Merge by the recipe, `skills/merge/SKILL.md` § The recipe, in one call from the PR's
+   worktree: `python3 "$IDH_ROOT/scripts/raid_land.py" <pr> --ruled-head <ruled_tip_sha|-> --ruled-claims <ids,|-> --cleanup`
+   (`--ruled-claims` is the ruled verdict's `ticket:` field, never a fresh read of the body)
+   (close, head pin, record with one re-record, disarm, pinned merge, read-back, sync, a
+   `<pr> merge <start> <end>` row for `step_clock.py`). Exit 1 refused, 4 merged but main
+   unsynced (report, never re-merge), 5 queued, 6 merge outcome unknown (read the request, never
+   re-merge). Start the after-merge runner (recipe step 9) yourself. The checks below are what it enforces,
+   by the recipe,
    only after `git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>`
    (HEAD read with `-C <worktree-path>`) and, full tier, a head that adds at
    most a bookkeeping delta to the gate's `ruled_tip_sha` (`skills/merge/SKILL.md`

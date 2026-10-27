@@ -2,10 +2,12 @@
 Title: raid_land.py: close, gate record, pinned merge and read-back in one call per PR
 Created: 2026-10-27
 Author: reviewer
+Closed: autoclosed — PR #1756
 
 --- log ---
 2026-10-27T11:19Z reviewer created
 2026-10-27T11:25Z reviewer note add to scope: run /merge step 8 (sync-local-main.sh) after each read-back — the 2026-10-27 raid skipped it for 13 merges and the primary checkout ran stale helpers
+2026-10-27T12:54Z reviewer closed — autoclosed — PR #1756
 
 --- body ---
 ## Context
