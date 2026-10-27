@@ -213,17 +213,21 @@ def is_local(door: dict, provider: str, base_url: str) -> bool:
     return address.is_loopback or address.is_private or address in ipaddress.ip_network('100.64.0.0/10')
 
 
-def answer_of(door: dict, text: str) -> str | None:
-    """The part of a door's output after its answer marker (aider prints banner and thinking first)."""
+BANNER = re.compile(r'(Aider v|Main model:|Model:|Git repo:|Repo-map:|Added |Warning|You can skip|Open documentation|https?://|\s*$)')
+
+
+def answer_of(door: dict, text: str) -> str:
+    """A door's answer: after its marker when it prints one, else the output after the leading banner.
+
+    aider prints the answer marker only around reasoning content, so a plain answer has none.
+    """
     marker = door.get('answer_marker')
-    if not marker:
-        return text
-    if marker not in text:
-        return None
-    answer = text.split(marker, 1)[1]
-    lines = answer.splitlines()
-    cut = next((i for i, line in enumerate(lines) if re.match(r'Tokens: ', line)), len(lines))
-    return '\n'.join(lines[:cut])
+    lines = text.split(marker, 1)[1].splitlines() if marker and marker in text else text.splitlines()
+    if not (marker and marker in text):
+        start = next((i for i, line in enumerate(lines) if not BANNER.match(line)), len(lines))
+        lines = lines[start:]
+    cut = next((i for i, line in enumerate(lines) if line.startswith('Tokens: ')), len(lines))
+    return '\n'.join(lines[:cut]) if marker else text
 
 
 def git(tree: Path, *args: str) -> str | None:
@@ -355,10 +359,6 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
     text = last if wrote_last else staging
     worker = f'worker: model={args.model} · family={args.family} · runtime={args.runtime} · door=headless'
     answer = answer_of(door, text.read_text(encoding='utf-8', errors='replace'))
-    if answer is None:
-        for leftover in (staging, last):
-            leftover.unlink(missing_ok=True)
-        return False, f'no report (no answer marker {door["answer_marker"]!r} in the output)'
     report = stamp(answer, worker)
     for leftover in (staging, last):
         leftover.unlink(missing_ok=True)
