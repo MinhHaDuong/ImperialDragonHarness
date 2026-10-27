@@ -1,0 +1,29 @@
+%erg 0.1
+Title: mammoth-audit moves into the harness-doctor toolkit; no public command
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T13:15Z reviewer created
+
+--- body ---
+## Context
+Author ruling, 2026-10-27 raid: mammoth-audit is a heavy measurement that belongs to the
+harness-doctor's toolkit, not a public command. Today it ships as `bin/mammoth-audit` (a wrapper over
+`scripts/mammoth-audit.py`, ticket 0876) and is projected to `~/.local/bin/idh-mammoth-audit` by
+`adapters/projections.json`; `tests/test_mammoth_audit.py` runs it through that installed launcher.
+Ticket 1249/1257 just defined `bin/` as curated public commands, which this does not fit.
+
+## Exit criteria
+- [ ] `bin/mammoth-audit` and its `idh-mammoth-audit` projection are gone; `idh install` retires an
+      existing `~/.local/bin/idh-mammoth-audit` link (test on a temporary HOME).
+- [ ] Any scheduler or cron entry that runs it is removed or repointed, stated in the PR.
+- [ ] `skills/harness-doctor/SKILL.md` (or its references) names the audit as a doctor's measurement,
+      called as `"$IDH_ROOT/scripts/mammoth-audit.py"`, with when to use it and its cost.
+- [ ] `tests/test_mammoth_audit.py` exercises the script directly; the harness gate passes.
+
+## Relevant files
+bin/mammoth-audit, adapters/projections.json, scripts/mammoth-audit.py, tests/test_mammoth_audit.py,
+skills/harness-doctor/SKILL.md, bin/install-cron
+
+Related: [[1257]], [[1249]].
