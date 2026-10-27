@@ -2,9 +2,12 @@
 Title: After-merge red on main aae48de3e01c: pytest-guard
 Created: 2026-10-27
 Author: merge-gate
+Closed: exit criterion met: after-merge record on 65dfa8ab passes
 
 --- log ---
 2026-10-27T14:46Z merge-gate created
+2026-10-27T14:57Z reviewer after-merge record on 65dfa8ab passes pytest-guard; tests/test_local_ci_parallel.py 10/10 three runs in a row. The three failures reproduced once on a clean aae48de3 checkout at 14:5xZ while other sessions ran test suites; not reproduced since. Load-sensitive timing suspected, cause not established.
+2026-10-27T14:57Z reviewer closed — exit criterion met: after-merge record on 65dfa8ab passes
 
 --- body ---
 ## Context
