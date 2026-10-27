@@ -17,7 +17,8 @@ Facts every flow inherits:
 - Guard in `enforce` on padme [M, `git config idh.mainGuard` this session] and doudou [caller's statement].
   Main moves only (i) to `origin/main` or by fast-forward along it, (ii) to the tip just fetched from the remote
   named `origin`, or (iii) onto one two-parent merge whose first parent is the current main and whose candidate
-  carries a passing note in `refs/notes/gate` (guard "Gated update"; `classify()` in the hook).
+  carries a passing note in `refs/notes/gate` (guard "Gated update"; `classify()` in the hook). Path (i) also
+  admits a *stale* `origin/main`: reset to it is accepted without a fetch [M, gaze on PR 1809, scratch repo].
 - Path (i)/(ii) needs no gate note at all; path (iii) needs the note *before* main moves, and admits **one merge
   hop**: catching up two merges from anything but `origin` is refused [I, code read of `classify()`, not run].
 - Neither clone nor fetch brings notes [M, trial case 1]. Ruleset `main-traceability` covers `main` only;
@@ -39,13 +40,18 @@ landing path; evidence in comments is forge-bound (the reason for 1252). Failure
 landing (not work); comment evidence lost with the forge. Needs from 1273-1276: nothing (it is the forge path
 they must leave unchanged); notes as its evidence store would need extra work outside 1252.
 
-**F2.** Buys: landing without the GitHub API (git over ssh only), the same gate record, pinned head and
-read-back; on a repo with no remote, the full chain runs locally (1252's exit criteria). Costs: two landing
-paths into one main. Failure modes: (a) a concurrent forge merge or second local landing makes the push
-non-fast-forward: local main ahead of `origin/main`, the open item in 1276's log ("exit 6 … who reconciles is
-unwritten"); (b) offline: the push fails the same way; (c) notes ordering is benign: the gate note is pushed
-when recorded, and other clones follow main by path (i), which needs no note [I]; (d) ruleset holds (the push is
-a fast-forward); there is no forge CI to bypass. Needs: 1273, 1274 (evidence), 1275 (done), 1276.
+**F2.** Buys: landing without the GitHub API (git over ssh only), the same gate record and pinned head; on a
+repo with no remote, the full chain runs locally (1252's exit criteria). The read-back is weaker than F1's:
+`NoneForge.read_back` reads the *local* base; `origin` is checked only by the later fetch in `sync_local` [I,
+code read of `scripts/forge.py`, `scripts/raid_land.py`]. Costs: two landing paths into one main. **F2 is not
+deliberate-only today**: `get_forge` in auto mode returns `NoneForge` whenever `gh` is not on PATH or the ref is
+not a number (`scripts/forge.py:365`) [I, code read here and by the gaze; not run], so `raid_land.py
+branch:<name>` lands locally with `idh.mergeRoute` unset. Failure modes: (a) a concurrent forge merge or second local
+landing makes the push non-fast-forward: local main ahead of `origin/main`, the open item in 1276's log ("exit 6
+… who reconciles is unwritten"); (b) offline: the push fails the same way; (c) notes ordering is benign: the
+gate note is pushed when recorded, and other clones follow main by path (i), which needs no note [I]; (d)
+ruleset holds (the push is a fast-forward); there is no forge CI to bypass. Needs: 1273, 1274 (evidence), 1275
+(done), 1276.
 
 **F3.** Buys: a hub the author owns, independent of GitHub. Costs: padme is not always reachable, so the hub is
 offline exactly when a laptop is; web sessions are excluded; the guard trusts only the remote named `origin`, so
@@ -71,10 +77,8 @@ state, reconciled by merge commits that carry no gate record. Needs: all of F3 a
 - "**The forge stays the central origin: one place to pull from**" (policy, Direction) and "forge-independent,
   not forge-free — the forge stays the default route" (1252 ruling). F1 default and F2 fallback both keep one
   place to pull from. F3 and F4 remove it.
-- "**Local main syncs by ref, never by assumption**" and "**Never read a SHA … from output a proxy may
-  rewrite**" (git.md). F2's CAS + read-back meets both; F4 has no ref to sync to.
-- "**Run to the end** … mid-run returns are for new scope or irreversible actions" (workflow.md, Autonomous
-  action). A per-incident "which main is right?" (F3, F4) is exactly such a return, recurring.
+- "**Local main syncs by ref, never by assumption**" (git.md): F2's CAS and `sync_local` fetch meet it; F4 cannot.
+- "**Run to the end**" (workflow.md): a per-incident "which main is right?" (F3, F4) is a recurring mid-run return.
 - "**More choice is not always better**" (author). Each kept flow is a path the skills must describe, the
   guard must admit and 1276 must exercise; each costs reading time in every session forever.
 
@@ -83,51 +87,75 @@ state, reconciled by merge commits that carry no gate record. Needs: all of F3 a
 **One default, one fallback, one hub.**
 - **Default: F1.** Review locally (seats run where the work is), land by forge PR merge, GitHub is the hub.
   Evidence stays in forge comments on this route for now (spec §5: "the forge route is unchanged in 1252").
-- **Fallback: F2, pushing to `origin` = GitHub.** Trigger, deliberate and only this: `IDH_FORGE=none` set by
+- **Fallback: F2, pushing to `origin` = GitHub.** Trigger, deliberate and only this: `git config idh.mergeRoute local` set by
   the author or by a session the author told to (already ruled, 1277 log point 5), used when the GitHub API is
-  unavailable or for a repository that has no forge. Never chosen automatically, never because `gh` is absent.
+  unavailable or for a repository that has no forge. This is **not true of the code today** (§1, F2): the
+  principle requires that auto never selects the local merge. Fix: `get_forge` auto returns `GhForge` when `gh`
+  is present and the ref is numeric, and otherwise refuses with "set `git config idh.mergeRoute local` to land without a forge".
+  Review on notes may stay automatic; only landing needs the deliberate switch.
 - **Offline is not a landing flow.** Work, review and gate locally; the branch waits. Landing needs `origin`
   reachable. This is the single choice that keeps F3/F4 unnecessary.
-- **Rejected: F3** (second hub, unreachable for web sessions and often for laptops, guard growth, two mains).
-  **Rejected: F4** (no canonical main, contradicts "one place to pull from"). If the worry behind F3 is losing
-  GitHub, a **push mirror** to `padme:/srv` (`git push --mirror` from `/lair`, never landed on, never pulled from
-  by sessions) gives a backup with no canonical claim; optional, outside 1252.
-- **Canonical main**: F1 and F2: `origin/main` on GitHub. F2 with no remote: that repository's own `main`.
+- **Boundary: offline vs no remote.** A repository *has a remote* when `git remote get-url origin` succeeds;
+  reachability does not enter. `origin` configured: `origin/main` is canonical; unreachable means the branch
+  waits, even for days. No `origin`: the repository's own `main` is canonical and F2 lands locally (still under
+  `idh.mergeRoute=local`). Adding `origin` later moves canonicity to it; the first push fast-forwards or is refused.
+- **Rejected: F3**, firmly on the rulings "the forge stays the central origin" (policy) and "the forge stays
+  the default route" (1252) [M, quoted]. The other reasons are inferred: web sessions and laptops cannot reach
+  `/srv` [I]; guard growth [I], which vanishes if `/srv` becomes `origin`. Reopen F3 on evidence: GitHub
+  unreachable from both hosts for over a day while work had to land, or a forge policy change blocking landing.
+- **Rejected: F4** (no canonical main, contradicts "one place to pull from").
+- **No `/srv` mirror in this flow.** A mirror is an extra option to describe and own. If GitHub loss is a real
+  worry, it belongs to the host's backup of the working clones, not to the review flow.
 - **Reconciliation rule for F2's push failure** (the 1276 open item): `origin/main` is canonical, local main is a
-  cache. If the remote tip is unchanged since the landing read it, retry the push (transient error). If
-  `origin/main` moved, return local main to `origin/main` (the guard admits it: path (i) [I, code read]), keep
-  the branch, rebase, re-gate, re-land. "Never reset main" then means never off `origin/main`, not never to it.
+  cache. **Fetch first**, then compare. If the fetched tip equals the base the landing read, retry the push
+  (transient error). If it moved, reset local main to the fetched `origin/main` (guard path (i) [M, gaze
+  reproduced `reset --hard`, `branch -f`]), keep the branch, rebase, re-gate, re-land. Fetch first because the
+  guard accepts a stale `origin/main` too [M]: resetting to it drops the local merge without learning whether
+  the remote moved. "Never reset main" then means never off a freshly fetched `origin/main`.
 
 ## 4. What changes in the tickets and the rule
 
 - **1273 (C3)**: no change in substance. Simplification: `review_notes.py setup/sync/publish` talk to `origin`
   only; no hub selection, no per-remote refspecs.
 - **1274 (C4)**: no change.
+- **New small change, before 1276** (recommended over folding it into 1276): `get_forge` auto never returns
+  `NoneForge`; landing without a forge requires `idh.mergeRoute=local`; callers and tests that relied on auto adjust.
+  ~0.5-1 agent-hour (~$6-15) + 2 author-minutes [I]. Separate because it changes today's behaviour on every
+  repo, needs its own review, and 1276 should exercise the corrected switch rather than build it.
 - **1275 (merged)**: no code change now; its exit-6 state gets the reconciliation rule above, implemented with
-  1276 (raid_land: on push failure, compare `origin/main` with the read base tip and report which branch of the
-  rule applies; ~1 agent-hour).
-- **1276 (C6)**: unhold. Exercise F2 only, in two shapes: no remote (temp repo, `gh` absent, existing criterion)
-  and a local bare repo standing in as `origin` (push, a concurrent second landing, reconciliation per §3), plus
-  the spec §8 rebase and concurrent-append cases. Do not exercise F3 or F4. F1 is covered by "forge path unchanged".
+  1276 (raid_land: on push failure, fetch, compare `origin/main` with the read base tip and report which branch
+  of the rule applies; ~1 agent-hour, ~$12-15).
+- **1276 (C6)**: unhold. Exercise F2 only, always under `idh.mergeRoute=local`, in two shapes: no remote (temp repo,
+  existing criterion) and a local bare repo standing in as `origin` (push, a concurrent second landing,
+  reconciliation per §3); plus auto with `gh` absent refuses, and the spec §8 rebase and concurrent-append
+  cases. Do not exercise F3 or F4. F1 is covered by "forge path unchanged".
 - **rules/git.md, line 9** (written at C5's merge per 1277 point 5; text proposed, the author's call):
-  "Everything … lands via branch + PR on the forge. With `IDH_FORGE=none` set deliberately, it lands via branch +
-  local gated merge (merge skill) pushed to `origin`, which stays the one canonical main; offline, the branch waits."
+  "Everything … lands via branch + PR on the forge. With `idh.mergeRoute` set to `local` deliberately, it lands via branch +
+  local gated merge (merge skill) pushed to `origin`, which stays the one canonical main; offline, the branch
+  waits; with no `origin` configured, the repository's own main is canonical."
 
 ## 5. The author's decisions, priced
 
 | # | Decision | Recommended | Author | Agent |
 |---|---|---|---|---|
-| 1 | Two flows only (F1 default, F2 fallback by `IDH_FORGE=none`); F3, F4 rejected | yes | 5 min | 0 |
-| 2 | Offline never lands (vs land locally, push later) | yes | 2 min | 0; the alternative is F2 failure (b) made normal |
-| 3 | F2 push-failure rule: retry if unchanged, else back to `origin/main` and re-land | yes | 3 min | ~1 h in 1276 |
-| 4 | rules/git.md line 9 text above | yes | 3 min | 0.25 h |
-| 5 | Optional push mirror to `padme:/srv` for backup | only if GitHub loss worries you | 10 min (`/srv` setup) | ~0.5 h |
-| 6 | Later: notes as evidence store on the forge route too (one store for A) | wait for web legs | 15 min, after 1276 | ~4-6 h [I] |
+| 1 | Two flows only (F1 default, F2 fallback by `idh.mergeRoute=local`); F3, F4 rejected | yes | 5 min | 0 |
+| 2 | Offline never lands; no-remote boundary = `origin` configured or not | yes | 2 min | 0; the alternative is F2 failure (b) made normal |
+| 3 | Auto never selects the local merge (small change before 1276) | yes | 2 min | 0.5-1 h, ~$6-15 |
+| 4 | F2 push-failure rule: fetch, retry if unchanged, else reset to fetched `origin/main` and re-land | yes | 3 min | ~1 h in 1276, ~$12-15 |
+| 5 | rules/git.md line 9 text above | yes | 3 min | 0.25 h, ~$3-4 |
+| 6 | Later: notes as evidence store on the forge route too (one store for A) | wait for web legs | 15 min, after 1276 | ~4-6 h, ~$50-90 |
 
-1276 as rescoped: ~3-4 agent-hours [I]. Rejected cost avoided: F3 ~8-12 agent-hours + 30 author-minutes, F4
-~15+ agent-hours, both open-ended in maintenance [I, rough].
+Basis, all [I]: agent-hours by analogy with 1275 (PR #1806: four implementation commits 17:33-17:48 [M,
+`git log`]; earlier work untimed); USD at ~$12-15 per agent-hour, derived in
+`conception/discussions/2026-10-14-1095-seats/r2-architect.md`, not measured here. 1276 as rescoped: ~3-4
+agent-hours, ~$36-60. F3 and F4 stay unpriced: no design to size, and their cost is open-ended ownership.
 
-**Probability the recommendation holds for six months: ~0.75** [I]. It breaks if (a) the author needs to land
-for days with GitHub unreachable from both hosts (then F3, with `/srv` renamed `origin`, is the next step, not
-F4), or (b) the web legs show a web session cannot push to GitHub at all, which weakens the F1/F2 hub argument
-less than it seems: such a session could not reach `/srv` either.
+**No probability is given**: there is no base rate to set one on. What would overturn the recommendation: (a)
+the author needs to land for days with GitHub unreachable from both hosts (then F3, with `/srv` renamed
+`origin`, is the next step, not F4); (b) the web legs show a web session cannot push to GitHub at all, which
+weakens the hub argument less than it seems: such a session could not reach `/srv` either.
+## Naming (author, 2026-10-27)
+`IDH_FORGE=auto|gh|none` named a mechanism, not the decision. The one switch is the per-repository git config
+`idh.mergeRoute = forge | local` (default `forge`), visible in `git config` like `idh.mainGuard`; an environment
+variable could be inherited silently by a subshell or CI job, the wrong property for a deliberate choice. Review on
+notes needs no setting. The fix in §3 renames the reader in scripts/forge.py and drops `IDH_FORGE`.
