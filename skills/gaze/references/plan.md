@@ -33,6 +33,10 @@ answers that question and nothing wider.
 | Panel | several seats in parallel, one perspective each | a what spanning concerns, or a large diff split by directory |
 | Other family | a seat from another model family (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | a high-risk what: worth its cost, by judgement |
 
+Plan at least one item that is not `self`: a run where only `self` reports
+is `seats: self-only` (SKILL.md § 4), which callers discard. Plan `self`
+alone only when nothing else can launch.
+
 Choose each seat's model through the `route` skill (`skills/route/SKILL.md`),
 weaker or stronger as the what needs.
 

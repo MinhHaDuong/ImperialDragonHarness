@@ -59,7 +59,7 @@ its **Relevant files**, then decide what the ticket is and what it takes:
 - **Too big or multipart** (`rules/workflow.md` § Ticket discipline for
   multi-PR work): return it, unsplit, to whoever launched the hunt with a
   proposed decomposition; execute only on "go as one". Found mid-Execute:
-  commit and push the partial branch, name it in the proposal, unlock the
+  commit the partial branch (push it where there is a forge), name it in the proposal, unlock the
   worktree and leave it for the caller.
 - **Otherwise**: choose the route. Name the deliverable's kind (code, prose,
   data, configuration, documentation), the work it takes, and the evidence that

@@ -118,10 +118,11 @@ No retry: a worker that timed out or could not be reached is a deviation.
 - `REVIEWED`: none of the above, and the what covered.
 
 Whatever the result, say who reviewed: `seats: self-only` when no item but
-`self` has a report (no other seat could launch, under a nesting limit or
-without the agent connector), else `seats: panel`. A self-only result is the
-caller reviewing its own work; the reuse rule (`skills/merge/SKILL.md`
-§ Gating tiers) counts it as no record. Claude Code's nesting cap is pinned
+`self` has a report, else `seats: panel` (a script check counts: its evidence
+is not gaze's judgment). This is the one definition. A self-only result
+is the caller reviewing its own work, so the reuse rule
+(`skills/merge/SKILL.md` § Gating tiers) counts it, and a record with no
+`seats:` line, as no record. Claude Code's nesting cap is pinned
 for gaze's seats in `settings.shared.json`; Codex and Pi (`allowed_subagents`)
 need their own equivalent, or fall back to `seats: self-only`.
 

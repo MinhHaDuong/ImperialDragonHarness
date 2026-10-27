@@ -69,8 +69,7 @@ body's `reviewer:` lines from them (`attribution_record.py --seats-pr`, ticket
 1155). A result with no `seat:` line, or a body `reviewer:` seat absent from
 it, is a capture failure. A requested model name is not an observed id.
 
-`seats: self-only` when no plan item but `self` has a report (SKILL.md § 4);
-callers count such a record as missing.
+`seats:` is defined once, in SKILL.md § 4.
 
 `plan check: FAIL` never goes with REVIEWED: a planned item without a report
 is an unresolved pass (SKILL.md § 4).

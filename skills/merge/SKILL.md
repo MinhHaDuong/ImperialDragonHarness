@@ -40,9 +40,10 @@ new tip of main; a red there is reported, never reverted (Trust, Verify,
 Monitor). A change to the gate itself is therefore fully tested only once
 it is on main.
 
-**A `/gaze` record counts only if a seat other than gaze itself ran:** one
-with `seats: self-only` (`skills/gaze/references/output.md`) counts as no
-record, and gaze runs again, from a session that can launch seats.
+**A `/gaze` record with `seats: self-only`, or with no `seats:` line, counts
+as no record** (definition: `skills/gaze/SKILL.md` § 4): gaze runs again, from
+a session that can launch seats. A second self-only record on the same head
+goes to the author.
 
 **A commit added after approval is gated by the tier of its own diff:**
 `merge-gate.py tier --base origin/<base> --head HEAD --since <ruled_tip_sha>`.

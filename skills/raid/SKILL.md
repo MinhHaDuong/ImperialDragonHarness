@@ -271,8 +271,8 @@ Phase 7 on its mechanical checks. Everything below is the full tier.
 `/verify-gate` on the head it reviewed. Hunt's Verify phase already ran gaze and
 fixed its findings, so the raid reads that record first and re-runs `/gaze`
 only when it is missing, ESCALATE, or stale against the tip
-(`skills/merge/SKILL.md` § Gating tiers); a record with `seats: self-only`
-counts as missing; a second review of a head gaze
+(`skills/merge/SKILL.md` § Gating tiers, which also counts a `seats:
+self-only` record as missing); a second review of a head gaze
 already reviewed buys nothing and costs a full gaze run. Gaze reviews and
 never returns APPROVED; the gate rules APPROVED / REROLL / ESCALATE /
 NEEDS-AUTHOR. The orchestrator itself
