@@ -65,3 +65,18 @@ def test_setup_prose_mention_alone_is_no_claim(tmp_path):
     r = run(SETUP, ["7"], primary, env)
     assert r.returncode == 0, r.stderr
     assert fields(r.stdout)["ticket"] == "none"
+
+
+def test_setup_slug_form_is_no_claim_like_merge(tmp_path):
+    """/merge: only a 4-digit ID alone qualifies; `NNNN-slug` closes nothing."""
+    primary, env = make_repo(tmp_path, body="x\nTicket: 0042-some-slug\n")
+    r = run(SETUP, ["7"], primary, env)
+    assert r.returncode == 0, r.stderr
+    assert fields(r.stdout)["ticket"] == "none"
+
+
+def test_setup_malformed_ticket_path_stops_like_merge(tmp_path):
+    """/merge: a malformed `Ticket: tickets/...` path is a stop, not a silent skip."""
+    primary, env = make_repo(tmp_path, body="x\n**Ticket:** tickets/0042-a.md\n")
+    r = run(SETUP, ["7"], primary, env)
+    assert r.returncode == 1 and "malformed" in r.stderr

@@ -20,7 +20,7 @@ without it fails at argument parsing rather than skipping attribution.
 
 The comment file may hold `{{duration}}` and `{{containment}}`; both are
 replaced by the script's own readings. Exit: 0 clean, 1 cleanup blocked
-(attribution appended, no comment posted), 2 read failure, 4 containment flagged (comment still posted).
+(attribution appended, no comment posted; 2 when the append also failed), 2 also when cwd is inside the review worktree (refused, nothing removed), 2 read failure, 4 containment flagged (comment still posted).
 """
 import argparse
 import json
@@ -118,13 +118,20 @@ def main():
     ap.add_argument("--comment-file", type=Path)
     a = ap.parse_args()
     primary = primary_root()
+    tree = (primary / ".claude" / "worktrees" / f"review-{a.pr}").resolve()
+    here = Path.cwd().resolve()
+    if here == tree or tree in here.parents:
+        print(f"gaze_close: cwd is inside the review worktree {tree}, which this call removes; "
+              "run it from the invoking session worktree", file=sys.stderr)
+        return 2
     entry = read_entry(primary, a.pr)
     entry_branch = a.entry_branch or entry["branch"]
     status = 0
     lines = a.attribution_file.read_text().strip()
     if lines:
         r = subprocess.run([sys.executable, str(HERE / "attribution_record.py"),
-                            "--append-pr", a.pr, "--append", lines],
+                            "--append-pr", a.pr, "--append", lines,
+                             "--project", primary.name],
                            capture_output=True, text=True)
         print("attribution: " + ("appended" if r.returncode == 0 else "FAILED " + r.stderr.strip()))
         if r.returncode:
@@ -134,7 +141,7 @@ def main():
     if not ok:
         print(f"/gaze cleanup blocked: {msg}; nothing posted: the calling gaze posts the "
               "ESCALATE comment (gh pr comment) naming these files", file=sys.stderr)
-        return 1
+        return 2 if status else 1
     flags, report = containment(primary, entry_branch, entry["status"], entry["primary"])
     print(report)
     r = subprocess.run([sys.executable, str(HERE / "step_clock.py"), "end", a.token or ""],

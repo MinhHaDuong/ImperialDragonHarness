@@ -1,7 +1,7 @@
 """Ticket 1227: one call cleans, reports containment and posts the comment."""
 
 import pytest
-from gaze_fixture import CLOSE, SETUP, fields, make_repo, run
+from gaze_fixture import CLOSE, SETUP, fields, git, make_repo, run
 
 pytestmark = pytest.mark.integration
 
@@ -100,3 +100,43 @@ def test_call_without_attribution_file_fails_loudly(tmp_path):
     r = run(CLOSE, ["7", "--branch", "feature"], primary, env)
     assert r.returncode == 2 and "--attribution-file" in r.stderr
     assert (primary / ".claude" / "worktrees" / "review-7").exists()
+
+
+def test_attribution_creates_the_block_when_the_body_has_none(tmp_path):
+    primary, env, f = opened(tmp_path)
+    body = forge_shim(tmp_path, env)
+    body.write_text("Body without a block\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, SEAT + "\n")], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    text = body.read_text()
+    assert "```attribution" in text and "seat: a" in text and f"project: {primary.name}" in text
+
+
+def test_blocked_cleanup_with_failed_append_exits_2(tmp_path):
+    primary, env, f = opened(tmp_path)
+    (primary / ".claude" / "worktrees" / "review-7" / "f.txt").write_text("real wip\n")
+    # the default shim answers `pr view` with PR json, not a body: the append fails
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, SEAT + "\n")], primary, env)
+    assert "attribution: FAILED" in r.stdout and "blocked" in r.stderr
+    assert r.returncode == 2
+
+
+def test_close_from_inside_the_review_worktree_is_refused(tmp_path):
+    primary, env, f = opened(tmp_path)
+    tree = primary / ".claude" / "worktrees" / "review-7"
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], tree, env)
+    assert r.returncode == 2 and "inside the review worktree" in r.stderr
+    assert tree.exists()
+
+
+def test_preexisting_untracked_primary_file_is_not_contamination(tmp_path):
+    primary, env = make_repo(tmp_path)
+    (primary / "docs").mkdir()
+    (primary / "docs" / "draft.md").write_text("author work\n")
+    caller = tmp_path / "caller"
+    git(primary, "worktree", "add", "-b", "callerbr", str(caller))
+    r = run(SETUP, ["7"], caller, env)
+    assert r.returncode == 0, r.stderr
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], caller, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "clean" in r.stdout
