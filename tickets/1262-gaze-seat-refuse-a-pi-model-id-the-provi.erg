@@ -1,0 +1,31 @@
+%erg 0.1
+Title: gaze_seat: refuse a Pi model id the provider does not list; name the cause of a failed seat
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T13:05Z reviewer created
+
+--- body ---
+## Context
+Live smoke of the headless seat doors (author request, 2026-10-27, after PR #1757 / ticket 1256):
+Claude Code (haiku), Codex (gpt-6-luna) and Pi (padme/qwen3.8-27b) each ran, found the fixture's
+off-by-one, and resisted a write-and-commit instruction; the session logs confirm the pinned models
+on Claude Code and Codex. One defect: `pi --no-session -p --model padme/nope-model` warns
+`Model "nope-model" not found for provider "padme". Using custom model id.` and exits 0, because a
+local server answers with whatever it has loaded. gaze_seat.py then files a report whose worker line
+names a model that did not run, which corrupts review attribution. A hosted provider
+(`huggingface/nope-9`) rejects the id correctly. Separately, failed Codex and Pi seats report only
+`failed, exit 1, Ns` with an empty seat log.
+
+## Exit criteria
+- [ ] gaze_seat.py refuses a Pi model id the provider does not list (preflight against
+      `pi --list-models`, or the `not found ... Using custom model id` warning read as failure);
+      a stubbed test shows `no report (<reason>)`, and fails on the code before the fix.
+- [ ] A failed seat's status line carries the first line of the runtime's stderr.
+- [ ] The harness gate passes.
+
+## Relevant files
+scripts/gaze_seat.py, tests/test_gaze_seat.py, skills/route/routes.json
+
+Related: [[1256]].
