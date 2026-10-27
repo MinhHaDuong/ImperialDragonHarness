@@ -18,4 +18,4 @@ The doctors stay author-called: lair suggests, never starts, a visit (as `skills
 - [ ] "Solve time" is defined once, from data the harness already records (for example the merge request's opening to its MERGED read-back, or the hunt step clock), and the definition names its source; a ticket whose duration cannot be read is listed as unknown, never as fast
 - [ ] For each listed ticket, lair suggests a visit with the complaint pre-filled: `/harness-doctor` when the time sat in review, gate or tooling; `/test-doctor` when it sat in test gates
 - [ ] lair never starts a visit itself; the 30-minute threshold lives in one place
-- [ ] A test covers the threshold (a 29-minute and a 31-minute fixture) and the unknown-duration case
+- [ ] A fast unit test covers the threshold with synthetic records whose timestamps are 29 and 31 minutes apart (no real waiting), and the unknown-duration case
