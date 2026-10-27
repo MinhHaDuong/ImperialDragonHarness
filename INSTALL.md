@@ -16,8 +16,9 @@ explicit root argument.
 
 Follow the [installation guide](conception/idh-install-strategy.md) to register
 resources with each runtime. `./bin/idh install` creates manifest links and
-edits the shell loader, preserving unrelated profile content and refusing
-same-name conflicts. Claude hooks come from the adapter plugin; Codex hooks
+links every `bin/*` command into `~/.local/bin` (a name already taken is
+refused and named; see `bin/README`), edits the shell loader, preserving
+unrelated profile content and refusing same-name conflicts. Claude hooks come from the adapter plugin; Codex hooks
 merge into its settings. Review these host-wide actions before running it:
 there is no dry run or runtime selector, and shell integration is not opt-in.
 Scheduling is left to the host.

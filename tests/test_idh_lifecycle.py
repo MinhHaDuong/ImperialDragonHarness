@@ -118,6 +118,26 @@ def test_install_is_idempotent_and_refuses_foreign_files(machine):
     assert "installed:" not in r.stdout
 
 
+def test_bin_commands_are_linked_and_collisions_refused(machine):
+    home, idh, env = machine["home"], machine["idh"], machine["env"]
+    clash = Path(env["PATH"].split(":")[1]) / "snapshot"  # another command on PATH
+    clash.write_text("#!/bin/sh\n")
+    clash.chmod(0o755)
+    r = idh("install")
+    out = r.stdout + r.stderr
+    assert r.returncode == 1, out
+    assert "snapshot" in out and "collides" in out and str(clash) in out
+    local = home / ".local" / "bin"
+    assert not (local / "snapshot").exists()
+    for name in ("usage-report", "install-cron"):
+        assert (local / name).resolve() == (REPO / "bin" / name).resolve(), name
+    clash.unlink()
+    assert idh("install").returncode == 0
+    assert (local / "snapshot").resolve() == (REPO / "bin" / "snapshot").resolve()
+    r = idh("install")  # idempotent
+    assert r.returncode == 0 and "installed:" not in r.stdout
+
+
 def test_skill_subcommands_still_reach_perch(machine):
     r = machine["idh"]("check", "harness", "pi", "--version", "0.99.0")
     assert "pi:" in r.stdout + r.stderr
@@ -706,3 +726,32 @@ def test_install_retires_links_the_manifest_no_longer_declares(machine):
     assert str(elsewhere) in after and str(alias / ".local/bin/pgrep") in after
     assert idh("check").returncode == 0
     assert "retired:" not in idh("install").stdout
+
+
+def _fresh_lifecycle():
+    spec = importlib.util.spec_from_file_location("lifecycle_bin", REPO / "adapters" / "lifecycle.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_bin_refresh_survives_a_leftover_tmp_link(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+    lc = _fresh_lifecycle()
+    dest = tmp_path / ".local" / "bin"
+    dest.mkdir(parents=True)
+    (dest / "snapshot").symlink_to("../stale/snapshot")  # our link, relocated harness
+    (dest / "snapshot.idh-link-tmp").symlink_to("junk")  # crash leftover
+    owned = {str(dest / "snapshot"): "../stale/snapshot"}
+    assert lc.install_bin(owned, set(), []) == 0
+    assert (dest / "snapshot").resolve() == (REPO / "bin" / "snapshot").resolve()
+    assert not os.path.lexists(dest / "snapshot.idh-link-tmp")
+
+
+def test_bin_on_path_is_not_a_collision(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("PATH", f"{REPO / 'bin'}:/usr/bin:/bin")
+    lc = _fresh_lifecycle()
+    assert lc.install_bin({}, set(), []) == 0
+    assert (tmp_path / ".local/bin/snapshot").is_symlink()

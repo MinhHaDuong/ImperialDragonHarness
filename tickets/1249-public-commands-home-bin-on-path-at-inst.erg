@@ -5,6 +5,8 @@ Author: reviewer
 
 --- log ---
 2026-10-27T10:48Z reviewer created
+2026-10-27T11:47Z reviewer note split into tracker + child 1257 (installer, PR #1751) after the #1751 gate's round-1 REROLL; doifetch stays here until it can be filed from doudou
+2026-10-27T11:47Z reviewer note verify-reroll — round 1: doifetch criterion MISSING; split ticket 1249 so this PR closes its own installer child
 
 --- body ---
 ## Context
@@ -15,6 +17,10 @@ harness (e.g. `doifetch`, on host doudou under `CNRS/code/`) would get a home. S
 projects); `scripts/` stays internal, reached through `$IDH_ROOT/scripts/`. `bin/` exists already
 (`idh`, `mammoth-audit`, `snapshot`, `usage-report`, `install-cron`) and the installer already links
 `idh` into the user's local bin directory.
+
+## Children
+- [ ] 1257 installer links curated bin/ commands onto PATH (PR #1751)
+- [ ] doifetch adoption from doudou (not yet filed; needs that host)
 
 ## Exit criteria
 - [ ] `bin/idh install` links every `bin/*` command onto PATH (or puts `bin/` on PATH), refusing a name

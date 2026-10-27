@@ -1,0 +1,2 @@
+bin/ holds curated public commands: stable names, `--help`, meant for the operator's shell or other projects; `idh install` links each onto PATH (~/.local/bin), refusing a name already taken.
+scripts/ is internal: hooks, gates and helpers, reached by path through $IDH_ROOT/scripts/ and never put on PATH.
