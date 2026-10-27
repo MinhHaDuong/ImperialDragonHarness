@@ -121,6 +121,7 @@ def test_housekeeping_edit_does_not_count_as_usage(tmp_path):
     assert dead["disposition"] == "candidate-remove"
 
 
+@pytest.mark.integration
 def test_audit_script_runs_directly_without_scheduler(tmp_path):
     fake_home = tmp_path / "home"
     env = {
