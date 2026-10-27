@@ -16,7 +16,8 @@ that prints one; a check that refreshes one needs the author.
 Reporting rule: a diagnostic that is absent, refuses, times out or was not
 run is reported as *unavailable* with the reason, never as clean. "Ships
 nothing" is recorded only against a control: the runtime's own command list,
-seen to answer.
+seen to answer. The report's "control fired" line covers each diagnostic
+used, against the control its runtime section names.
 
 An "Observed" note records a probe against the version named in its
 section heading. On a newer version, probe again before relying on it.

@@ -3,8 +3,10 @@
 Pinned here: a model cannot start it, it refuses outside the harness, it points
 at its references and the lint script rather than restating them, and the
 skill-writing guide moved under it while a path-scoped stub keeps the
-edit-time prompt. The lint itself is never run over live skills here: the
-script is an instrument, not a gate.
+edit-time prompt. The doctor runs as a visit: the refusal precedes the probe
+menu, the menu is a table, the frozen control fixture keeps firing, the empty
+revisit is stated and no retirement clause survives. The lint runs here only
+on the doctor's own skill and its control, never as a gate over live skills.
 """
 
 import os
@@ -19,12 +21,32 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
 
 import skill_frontmatter as sf  # noqa: E402
+import skill_text_lint as stl  # noqa: E402
 
 DOCTOR = REPO / "skills" / "harness-doctor"
 SKILL = DOCTOR / "SKILL.md"
 HERE = REPO / "scripts" / "harness_here.sh"
 STUB = REPO / "rules" / "authoring-skills.md"
 POINTER = re.compile(r"`references/([\w.-]+\.md)`")
+CONTROL = REPO / "tests" / "fixtures" / "harness-doctor" / "trace-doctor-SKILL.md"
+CONTROL_CHECKS = {"body_lines", "date", "history_phase", "long_fence"}
+
+
+def _sections(text):
+    """Map each `## ` heading to (start offset, body up to the next heading)."""
+    heads = [(m.start(), m.group(1).strip())
+             for m in re.finditer(r"^## (.+)$", text, re.MULTILINE)]
+    out = {}
+    for i, (start, title) in enumerate(heads):
+        end = heads[i + 1][0] if i + 1 < len(heads) else len(text)
+        out[title] = (start, text[start:end])
+    return out
+
+
+def _section(text, prefix):
+    hits = [v for k, v in _sections(text).items() if k.startswith(prefix)]
+    assert len(hits) == 1, f"expected one section starting {prefix!r}"
+    return hits[0]
 
 
 def test_the_doctor_cannot_be_invoked_by_a_model():
@@ -84,6 +106,8 @@ def test_skill_names_its_references_and_script():
         "runtime-diagnostics.md"}
     assert '"$IDH_ROOT/scripts/skill_text_lint.py"' in body
     assert '"$IDH_ROOT/scripts/harness_here.sh"' in body
+    assert "skills/test-doctor/SKILL.md" in body
+    assert (REPO / "skills" / "test-doctor" / "SKILL.md").is_file()
 
 
 def test_stub_keeps_paths_and_points_to_reference():
@@ -92,3 +116,57 @@ def test_stub_keeps_paths_and_points_to_reference():
     assert set(meta["paths"]) == {"**/SKILL.md", "**/skills/**/*.md"}
     assert "skills/harness-doctor/references/authoring-skills.md" in text
     assert (DOCTOR / "references" / "authoring-skills.md").is_file()
+
+
+def test_control_fixture_fires_every_listed_check():
+    """The frozen control must keep firing: a silent control means a blind probe."""
+    result = stl.lint(REPO, stl.DEFAULT_PROJECTS, [CONTROL])
+    assert set(result["summary"]) >= CONTROL_CHECKS
+
+
+def test_skill_names_the_control_fixture():
+    body = SKILL.read_text(encoding="utf-8")
+    cited = re.findall(r"`(tests/fixtures/harness-doctor/[\w.-]+)`", body)
+    assert cited, "SKILL.md must cite the control fixture"
+    assert all((REPO / c).is_file() for c in cited)
+    control_section = _section(body, "Positive control")[1]
+    assert all(c in control_section for c in CONTROL_CHECKS)
+
+
+def test_refusal_precedes_the_menu():
+    body = SKILL.read_text(encoding="utf-8")
+    probes_start, probes = _section(body, "Probes")
+    assert body.index("harness_here.sh") < probes_start
+    assert "harness_here" not in probes
+
+
+def test_menu_is_a_table_not_a_sequence():
+    _, probes = _section(SKILL.read_text(encoding="utf-8"), "Probes")
+    rows = [ln for ln in probes.splitlines() if ln.startswith("|")]
+    assert len(rows) >= 2 + 5, "header, rule, five probes"
+    assert all(r.count("|") == 4 for r in rows), "probe | answers | cost"
+    assert not re.search(r"^\s*\d+\.", probes, re.MULTILINE)
+
+
+def test_no_retirement_text():
+    files = [SKILL, *sorted((DOCTOR / "references").glob("*.md"))]
+    for f in files:
+        text = f.read_text(encoding="utf-8").lower()
+        assert "retire" not in text, f
+        assert "three consecutive" not in text, f
+
+
+def test_revisit_empty_case_is_stated():
+    _, journal = _section(SKILL.read_text(encoding="utf-8"), "Journal")
+    assert "no prior visit" in journal
+    assert "revisit condition" in journal
+    assert "-harness-doctor-" in journal
+
+
+def test_skill_under_150_lines():
+    assert len(SKILL.read_text(encoding="utf-8").splitlines()) < 150
+
+
+def test_lint_reports_nothing_on_skill():
+    result = stl.lint(REPO, stl.DEFAULT_PROJECTS, [SKILL])
+    assert result["findings"] == [], result["findings"]
