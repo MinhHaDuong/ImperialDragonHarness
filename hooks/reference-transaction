@@ -36,7 +36,17 @@
 #                before-merge set (ticket 1245; merge-gate.py `check` decides
 #                which records it accepts).
 # Everything else (a local commit on main, a reset, branch -f, a deletion) is
-# not gated. One deletion cannot be refused: `delete main <old>` through
+# not gated, with one exception: git's own `pack-refs` (what `git gc` runs;
+# ticket 1268). It writes main into packed-refs (a transaction `0 -> value`,
+# a no-op create when value is the current main) and then prunes the loose
+# ref (`value -> 0`, which reads as a deletion). Both are journaled as
+# `pack-refs`, action `allowed`, in every mode, and start no after-merge run.
+# The prune is recognised on state and argv together: old == current == the
+# refs/heads/main line of packed-refs, and the parent command is `git
+# [options] pack-refs`. State alone is not enough (`branch -D main` on a
+# packed main looks the same); argv alone is not either (`-m pack-refs`
+# spoofs a word match), hence the anchoring on the subcommand position.
+# One deletion cannot be refused: `delete main <old>` through
 # `update-ref --stdin` reaches the hook exactly as a `verify` does; it is
 # journaled and warned about once committed.
 #
@@ -75,6 +85,41 @@ if [ -r "/proc/$PPID/cmdline" ]; then
     git_argv=" $(tr '\000' ' ' < "/proc/$PPID/cmdline" 2>/dev/null) "
 else
     git_argv=" $(ps -o args= -p "$PPID" 2>/dev/null) "
+fi
+# The subcommand of that command: `git [global options] <sub> ...`, argv0
+# required to be `git` (under `gc` the parent is the child `git pack-refs`, argv0 its
+# libexec path). Words are the NUL-separated argv entries, never re-split: a
+# newline inside a word is masked (\001) before NUL becomes the separator, so
+# `-c $'a=b\npack-refs'` stays one word. Only git's own global options are
+# stepped over, each with its exact arity (git 2.43); an unknown option, or a
+# parent that is not readable from /proc (the `ps` fallback cannot tell words
+# apart), leaves git_sub empty: not pack-refs.
+git_sub=""
+if [ -r "/proc/$PPID/cmdline" ]; then
+    git_words=$(tr '\n' '\001' < "/proc/$PPID/cmdline" 2>/dev/null | tr '\000' '\n')
+    skip=0
+    first=1
+    while IFS= read -r word; do
+        if [ "$first" = 1 ]; then
+            # Only a process that presents itself as `git` (basename of argv0,
+            # `git-pack-refs`-style names and `exec -a` aliases excluded).
+            [ "${word##*/}" = git ] || break
+            first=0
+            continue
+        fi
+        if [ "$skip" = 1 ]; then skip=0; continue; fi
+        case "$word" in
+            -c|-C|--git-dir|--work-tree|--namespace|--super-prefix|--config-env|--attr-source|--shallow-file) skip=1 ;;
+            --git-dir=*|--work-tree=*|--namespace=*|--super-prefix=*|--config-env=*|--attr-source=*|--exec-path=*) ;;
+            -p|--paginate|-P|--no-pager|--no-replace-objects|--no-lazy-fetch|--no-optional-locks|--no-advice) ;;
+            --bare|--exec-path|--html-path|--man-path|--info-path) ;;
+            --literal-pathspecs|--no-literal-pathspecs|--glob-pathspecs|--noglob-pathspecs|--icase-pathspecs) ;;
+            ""|-*) break ;;
+            *) git_sub=$word; break ;;
+        esac
+    done <<EOF_WORDS
+$git_words
+EOF_WORDS
 fi
 case "$git_argv" in *" fetch "*) ;; *) origin_new="" ;; esac
 case "$git_argv" in *" --stdin "*) stdin_tx=1 ;; *) stdin_tx=0 ;; esac
@@ -160,6 +205,27 @@ journal() {
     printf '%s\n' "$line" >> "$common/idh/main-journal.jsonl"
 }
 
+# The refs/heads/main value in packed-refs; empty when the file is absent or
+# has no such line (a reftable repository: nothing matches, so nothing passes).
+packed_main() {
+    pc=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return 0
+    [ -r "$pc/packed-refs" ] || return 0
+    while read -r psha pref; do
+        if [ "$pref" = "$MAIN_REF" ]; then printf '%s' "$psha"; return 0; fi
+    done < "$pc/packed-refs"
+    return 0
+}
+
+# Git's own pack-refs (ticket 1268): $1 declared old, $2 actual current, $3 new.
+# Succeeds for the pack write (a no-op create of the current value, from any
+# caller) and for the prune (old == current == packed, under `git pack-refs`).
+is_pack_refs() {
+    if is_zero "$1" && ! is_zero "$2" && [ "$3" = "$2" ]; then return 0; fi
+    if [ "$git_sub" = pack-refs ] && is_zero "$3" && ! is_zero "$1" &&
+       [ "$1" = "$2" ] && [ "$(packed_main)" = "$1" ]; then return 0; fi
+    return 1
+}
+
 classify() {
     # $1 actual current, $2 new; prints on-origin | gate-record | not-gated
     if is_zero "$2"; then echo not-gated; return; fi
@@ -223,7 +289,10 @@ start_after_merge() {
 if [ "$phase" = committed ]; then
     moved=0
     while read -r old new; do
-        [ -n "$new" ] && [ "$old" != "$new" ] && ! is_zero "$new" && moved=1
+        [ -n "$new" ] && [ "$old" != "$new" ] && ! is_zero "$new" || continue
+        # pack-refs' pack write (`0 -> value`) restates main, it does not move it
+        [ "$git_sub" = pack-refs ] && is_zero "$old" && continue
+        moved=1
     done <<EOF
 $main_updates
 EOF
@@ -242,6 +311,10 @@ printf '%s' "$main_updates" | {
         [ "$old" = "$new" ] && ! is_zero "$new" && continue
         decision=""
         action=""
+        if is_pack_refs "$old" "$current" "$new"; then
+            ( journal "$old" "$current" "$new" pack-refs allowed ) >/dev/null 2>&1
+            continue
+        fi
         if [ "$stdin_tx" = 1 ] && is_zero "$new" && ! is_zero "$old"; then
             # `update-ref --stdin`: `verify main <old>` and `delete main <old>`
             # both arrive as "<old> <zero>". A verify changes nothing, so

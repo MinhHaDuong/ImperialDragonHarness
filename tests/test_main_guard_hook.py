@@ -423,3 +423,187 @@ def test_enforce_accepts_a_merge_with_its_before_merge_record(repos, before, acc
     assert (proc.returncode == 0) is accepted, proc.stderr
     rec = [r for r in journal(wt2) if r["phase"] == "prepared"][-1]
     assert rec["decision"] == ("gate-record" if accepted else "not-gated")
+
+
+# --- git's own pack-refs (ticket 1268) ---
+# `git pack-refs --all --prune`, which `git gc` runs, writes main into
+# packed-refs (a transaction `0 -> value`) and then removes the loose ref (a
+# transaction `value -> 0`). The second looks exactly like a deletion.
+
+
+def _packed_main(repo):
+    """Main sits in packed-refs and as a loose ref (what a clone plus `pack-refs --all` leaves)."""
+    git(repo, "pack-refs", "--all")
+    common = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
+    assert "refs/heads/main" in (common / "packed-refs").read_text()
+
+
+def _bad_rows(repo):
+    return [r for r in journal(repo) if r["action"] in ("warned", "refused")]
+
+
+@pytest.mark.parametrize("runner", ["work", "wt2"])
+def test_enforce_lets_pack_refs_prune_main_without_losing_it(repos, runner):
+    work = repos[runner]
+    git(repos["work"], "config", "idh.mainGuard", "enforce")
+    before = rev(work, "main")
+    proc = git(work, "pack-refs", "--all", "--prune", check=False)
+    assert proc.returncode == 0, proc.stderr
+    assert rev(work, "main") == before
+    assert _bad_rows(work) == []
+    assert any(r["decision"] == "pack-refs" for r in journal(work))
+
+
+def test_warn_mode_pack_refs_leaves_no_warning_row(repos):
+    work = repos["work"]
+    proc = git(work, "pack-refs", "--all", "--prune", check=False)
+    assert proc.returncode == 0 and "main-guard" not in proc.stderr
+    assert _bad_rows(work) == []
+
+
+def test_enforce_lets_pack_refs_write_a_main_not_yet_on_origin(repos):
+    work = repos["work"]
+    git(work, "config", "idh.mainGuard", "warn")
+    assert local_commit(work).returncode == 0  # main ahead of origin, ungated
+    git(work, "config", "idh.mainGuard", "enforce")
+    tip = rev(work, "main")
+    proc = git(work, "pack-refs", "--all", "--prune", check=False)
+    assert proc.returncode == 0, proc.stderr
+    assert rev(work, "main") == tip
+    common = Path(git(work, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
+    assert f"{tip} refs/heads/main" in (common / "packed-refs").read_text()
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["update-ref", "-d", "refs/heads/main", "OLD"],
+        ["update-ref", "-m", "pack-refs", "-d", "refs/heads/main", "OLD"],
+        ["-c", "core.x=pack-refs", "update-ref", "-d", "refs/heads/main", "OLD"],
+        ["update-ref", "-d", "refs/heads/main"],
+        ["branch", "-D", "main"],
+    ],
+    ids=["delete-with-old", "spoof-message", "spoof-config", "delete", "branch-D"],
+)
+def test_enforce_still_refuses_deleting_a_packed_main(repos, argv):
+    work, wt2 = repos["work"], repos["wt2"]
+    _packed_main(work)
+    git(work, "config", "idh.mainGuard", "enforce")
+    git(work, "switch", "-q", "--detach")
+    old = rev(wt2, "main")
+    proc = git(wt2, *[old if a == "OLD" else a for a in argv], check=False)
+    assert proc.returncode != 0
+    assert rev(wt2, "main") == old
+
+
+def test_enforce_still_refuses_creating_main_at_another_commit(repos):
+    work, wt2 = repos["work"], repos["wt2"]
+    git(work, "config", "idh.mainGuard", "warn")
+    git(work, "switch", "-q", "--detach")
+    git(wt2, "update-ref", "-d", "refs/heads/main")  # warn mode: goes through
+    git(work, "config", "idh.mainGuard", "enforce")
+    assert local_commit(wt2, "elsewhere").returncode == 0  # side, not main
+    other = rev(wt2, "side")
+    proc = git(wt2, "update-ref", "refs/heads/main", other, check=False)
+    assert proc.returncode != 0
+    assert git(wt2, "rev-parse", "-q", "--verify", "refs/heads/main", check=False).returncode != 0
+
+
+# --- the prune discriminator reads the parent's argv (ticket 1268, gaze finding) ---
+# The hook reads /proc/$PPID/cmdline. To drive it with an argv of our choosing
+# the parent is a bash run as `git -c SCRIPT <words>` (argv0 `git`):
+# argv0 is checked, `-c` takes SCRIPT as its value (as `git -c X` would), and the
+# words after it stand in for what follows. SCRIPT feeds the hook a prune of a
+# packed main (`V -> 0`) and exits; its own text may carry a "\npack-refs" line.
+
+
+def _prune_through(repo, *words, script=None):
+    """Exit status of the hook's prepared phase for a prune, under a parent `bash -c SCRIPT *words`."""
+    value = rev(repo, "main")
+    script = script or 'printf "%s\\n" "$LINE" | sh hooks/reference-transaction prepared; exit $?'
+    env = _env()
+    env["LINE"] = f"{value} {'0' * 40} refs/heads/main"
+    return subprocess.run(
+        ["git", "-c", script, *words],  # bash presenting itself as argv0 `git`
+        executable="/bin/bash",
+        cwd=repo,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_prune_discriminator_accepts_pack_refs_after_known_options(repos):
+    work = repos["work"]
+    _packed_main(work)
+    git(work, "config", "idh.mainGuard", "enforce")
+    assert _prune_through(work, "pack-refs").returncode == 0  # control: `git -c X pack-refs`
+    assert _prune_through(work, "-C", "x", "--attr-source=HEAD", "pack-refs").returncode == 0
+
+
+@pytest.mark.parametrize(
+    "words",
+    [
+        ("--attr-source", "pack-refs", "update-ref"),  # pack-refs is the option's value
+        ("--bogus-option", "pack-refs"),  # unknown option before the subcommand: fail closed
+        ("-C", "x", "--attr-source", "pack-refs"),
+    ],
+    ids=["attr-source-value", "unknown-option", "attr-source-after-C"],
+)
+def test_prune_discriminator_fails_closed_on_spoofed_argv(repos, words):
+    work = repos["work"]
+    _packed_main(work)
+    git(work, "config", "idh.mainGuard", "enforce")
+    proc = _prune_through(work, *words)
+    assert proc.returncode != 0, proc.stderr
+    assert "refused" in proc.stderr
+
+
+def test_prune_discriminator_does_not_split_a_word_on_newline(repos):
+    # `git -c $'a=b\npack-refs' update-ref -d ...`: one word, not two.
+    work = repos["work"]
+    _packed_main(work)
+    git(work, "config", "idh.mainGuard", "enforce")
+    script = 'printf "%s\\n" "$LINE" | sh hooks/reference-transaction prepared; exit $?\npack-refs'
+    proc = _prune_through(work, script=script)
+    assert proc.returncode != 0, proc.stderr
+    assert "refused" in proc.stderr
+
+
+def _prune_as_argv0(repo, argv0):
+    """Prune under a parent whose cmdline is `ARGV0 -c SCRIPT pack-refs` (exec -a)."""
+    inner = 'printf "%s\\n" "$LINE" | sh hooks/reference-transaction prepared; exit $?'
+    outer = 'exec -a "$ARGV0" bash -c "$INNER" pack-refs'
+    value = rev(repo, "main")
+    env = _env()
+    env.update(LINE=f"{value} {'0' * 40} refs/heads/main", INNER=inner, ARGV0=argv0)
+    return subprocess.run(["bash", "-c", outer], cwd=repo, env=env, capture_output=True, text=True)
+
+
+def test_prune_discriminator_requires_argv0_basename_git(repos):
+    work = repos["work"]
+    _packed_main(work)
+    git(work, "config", "idh.mainGuard", "enforce")
+    assert _prune_as_argv0(work, "git").returncode == 0  # control
+    assert _prune_as_argv0(work, "/usr/lib/git-core/git").returncode == 0  # gc's child
+    proc = _prune_as_argv0(work, "git-branch")  # exec -a git-branch git pack-refs -D main
+    assert proc.returncode != 0, proc.stderr
+    assert "refused" in proc.stderr
+
+
+@pytest.mark.parametrize(
+    "words",
+    [("--no-literal-pathspecs", "pack-refs"), ("--shallow-file", "x", "pack-refs")],
+    ids=["no-literal-pathspecs", "shallow-file"],
+)
+def test_prune_discriminator_knows_more_global_options(repos, words):
+    work = repos["work"]
+    _packed_main(work)
+    git(work, "config", "idh.mainGuard", "enforce")
+    assert _prune_through(work, *words).returncode == 0
+
+
+def test_the_global_option_arities_match_git(repos):
+    work = repos["work"]
+    assert git(work, "--no-literal-pathspecs", "rev-parse", "HEAD").returncode == 0
+    assert git(work, "--shallow-file", "x", "rev-parse", "HEAD").returncode == 0

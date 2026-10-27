@@ -1,6 +1,5 @@
 %erg 0.1
 Title: 1045 child: observe the main-update guard, then turn enforce on
-Blocked-by: 1268
 Created: 2026-10-21
 Author: reviewer
 
@@ -10,6 +9,7 @@ Author: reviewer
 2026-10-21T17:02Z reviewer note blocker 1179 closed — Blocked-by removed.
 2026-10-27T13:45Z reviewer note observation 2026-10-27 on padme: 146 journal rows today (71 allowed, 73 unlabelled); all 3 warned lines ever are git gc --auto running pack-refs --all --prune, which deletes the loose refs/heads/main while packing it (new=000, phase prepared). Harmless in warn; enforce would refuse git's own maintenance. Enforce waits for the hook fix filed as the next ticket. Session types seen today: raid; roar/lair/molt not yet; doudou not checked.
 2026-10-27T13:50Z reviewer note doudou checked 2026-10-27: 42 journal rows, 0 warned, 0 refused, mainGuard unset, hook installed; Fable advises enforce is safe to turn on now (failure mode on gc is noise, not a lost ref), design recorded in 1268
+2026-10-27T16:16Z reviewer note blocker 1268 closed — Blocked-by removed.
 
 --- body ---
 ## Context
