@@ -1,0 +1,23 @@
+%erg 0.1
+Title: After-merge red on main 5ce1f602d91d: pytest-guard, lint
+Created: 2026-10-27
+Author: merge-gate
+
+--- log ---
+2026-10-27T16:19Z merge-gate created
+
+--- body ---
+## Context
+
+Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full
+declared set failed on main after a merge.
+
+Tip: 5ce1f602d91d2c1bf4082384154b9ecabe1ea04a
+Failing checks: pytest-guard, lint
+Last green after-merge tip: ed79bdbd338a6c6732d1c754afe40b5fda6ddf43
+Merges since (first parent, newest first):
+- 5ce1f602d91d Merge pull request #1795 from MinhHaDuong/t1268-pack-refs-guard
+
+## Exit criteria
+
+- [ ] An after-merge record on main passes the checks named above.
