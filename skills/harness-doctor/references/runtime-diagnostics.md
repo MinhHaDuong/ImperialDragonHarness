@@ -10,6 +10,9 @@ Each line is labelled: **no user** (runs headless), **author** (interactive,
 the author runs it and pastes the output), **spends** (model usage, opt-in
 with a cost cap). Never run a **spends** line without the author's agreement.
 
+Credentials: the doctor never displays a credential and never runs a form
+that prints one; a check that refreshes one needs the author.
+
 Reporting rule: a diagnostic that is absent, refuses, times out or was not
 run is reported as *unavailable* with the reason, never as clean. "Ships
 nothing" is recorded only against a control: the runtime's own command list,
@@ -45,7 +48,8 @@ section heading. On a newer version, probe again before relying on it.
   model-invocable still appears in it; read that as an observation to check
   against Codex's documentation, cause not established.
 - `codex doctor --json` (no user): `overallStatus` and per-check results for
-  config, sandbox, state and install. Install health, not skill text.
+  config, sandbox, state and install; its help calls the JSON report
+  redacted. Install health, not skill text.
 - `codex review` (spends): a reviewer from another family, not a diagnostic.
 
 ## Pi (observed at 1.4.0)
@@ -57,8 +61,15 @@ other; their precedence rules still differ.
 - No doctor or validate command. Control: `pi --help` lists every command
   (install, remove, update, list, config, auth, mcp) and none checks skills.
   Report "no skill diagnostic shipped".
-- `pi list` (no user): installed extensions; `pi auth` and `pi mcp`: provider
-  and server readiness. Context only.
+- `pi list` (no user): installed extensions. Context only.
+- `pi auth check --provider <p> --no-refresh` (no user): provider readiness
+  without touching stored credentials. A check that refreshes credentials
+  (the default without `--no-refresh`) needs the author. Never run
+  `--credentials`, `print-api-key`, `print-bearer-token` or any form that
+  prints a credential: credentials are never displayed.
+- `pi mcp list` (no user): configured servers and their status; report names
+  and status only, never a header or environment value. `login`, `logout`,
+  `add` and `remove` change state and are the author's.
 - `pi --skill <path> -p --mode json` (spends): loads one skill headless; the
   only way to see Pi read a given skill body.
 - `pi config` (author): the interactive view of enabled package resources.
