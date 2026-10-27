@@ -2,9 +2,11 @@
 Title: Review notes: two concurrent adds on one clone lose an entry and both exit 0
 Created: 2026-10-27
 Author: reviewer
+Closed: merged via PR #1827 (raid 2026-10-27b)
 
 --- log ---
 2026-10-27T17:55Z reviewer created
+2026-10-27T19:50Z reviewer closed — merged via PR #1827 (raid 2026-10-27b)
 
 --- body ---
 ## Context
