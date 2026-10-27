@@ -325,19 +325,19 @@ def test_two_gate_runs_ruling_at_once_report_the_conflict(two_clones, monkeypatc
     rid = rn.open_review(a, "feature", "origin/main")
     answer(a, rid)
     rn.record_verdict(a, rid, session(), "REROLL", "feature")
-    real = rn.sync
+    real = rn.refresh
     calls = []
 
-    def stale_once(cwd, remote="origin"):  # B's first sync misses A's verdict, as in a race
+    def stale_once(cwd, remote="origin"):  # B's first refresh misses A's verdict, as in a race
         calls.append(cwd)
         if len(calls) == 1:
             sh(cwd, "fetch", "-q", "origin", rn.FETCH_NOTES)
             rn._integrate(cwd)
             sh(cwd, "update-ref", "refs/notes/review", "refs/notes/review~1")
-            return {"status": "synced", "warnings": []}
+            return {"status": "fetched", "warnings": []}
         return real(cwd, remote)
 
-    monkeypatch.setattr(rn, "sync", stale_once)
+    monkeypatch.setattr(rn, "refresh", stale_once)
     done = rn.record_verdict(b, rid, session(), "REROLL", "feature")
     assert done["entry"]["round"] == 1 and done["conflict"]
     state = rn.gate_state(b, rid, "feature")
