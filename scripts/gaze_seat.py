@@ -259,7 +259,9 @@ def refusal(report: str) -> str | None:
     return next((line for line in lines if line.upper().startswith('NOT-RUN')), None)
 
 
-UNLISTED_MODEL = 'not found for provider'  # Pi's warning when it runs an id the provider does not list
+# Pi's warning line when it runs an id the provider does not list. Anchored at line start and
+# read for Pi only: codex echoes tool output (files, diffs) to stderr, phrase included.
+UNLISTED_MODEL = re.compile(r'Warning: Model ".*" not found for provider ')
 
 
 def launch(args: argparse.Namespace) -> tuple[bool, str]:
@@ -362,7 +364,7 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
     log = staging.with_name(staging.name + '.log')
     stderr_lines = [line.strip() for line in log.read_text(encoding='utf-8', errors='replace').splitlines()
                     if line.strip()] if log.exists() else []
-    if ok and any(UNLISTED_MODEL in line for line in stderr_lines):
+    if ok and args.runtime == 'pi' and any(UNLISTED_MODEL.match(line) for line in stderr_lines):
         # A local provider answers to any id and the CLI exits 0: the run is not the pinned model's.
         for leftover in (staging, last):
             leftover.unlink(missing_ok=True)
