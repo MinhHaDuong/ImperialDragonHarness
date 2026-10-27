@@ -203,18 +203,34 @@ def test_a_module_in_a_comma_import_list_is_named(tmp_path):
     assert "tests/test_comma.py" in line(out, "selected")
 
 
-def test_an_integration_fallback_that_collects_nothing_says_so(tmp_path):
-    """gaze finding (correctness seat): the result named the integration tier when it ran no test of its own."""
-    root = project(tmp_path, {
-        "pytest.ini": PYTEST_INI,
-        "scripts/alpha.py": "class Thing:\n    ok = True\n",
-        "tests/test_uses_alpha.py": USES_ALPHA.format(module="alpha"),
-    })
-    write(root, {"scripts/alpha.py": "class Thing:\n    ok = 1\n", "scripts/gamma.py": "X = 1\n"})
-    commit(root, "a named and an unnamed file; the only integration test is selected")
+UNIT_ALPHA = (
+    "import sys\nfrom pathlib import Path\n\n"
+    "sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))\n"
+    "import alpha\n\n\ndef test_ok():\n    assert alpha.OK\n"
+)
+
+
+def test_an_empty_integration_tier_is_not_a_pass(tmp_path):
+    """gaze findings: an empty fallback read 'integration tier' (round 1), then 'no test outside the selection' (round 2)."""
+    root = project(tmp_path, {"pytest.ini": PYTEST_INI, "scripts/alpha.py": "OK = True\n", "tests/test_alpha_unit.py": UNIT_ALPHA})
+    write(root, {"scripts/alpha.py": "OK = 1\n", "scripts/gamma.py": "X = 1\n"})
+    commit(root, "a named and an unnamed file; the integration tier is empty")
     code, out, err = touched(root)
-    assert code == 0, out + err
-    assert line(out, "result") == "result: pass (1 selected file(s), integration tier: no test outside the selection)"
+    assert code == 4, out + err
+    assert line(out, "result") == "result: incomplete (1 selected file(s) passed; integration tier collected no test)"
+
+
+def test_a_selection_that_collects_nothing_does_not_hide_behind_the_tier(tmp_path):
+    """gaze round 2 (OpenAI seat): selected exit 5 with a passing tier read as a pass."""
+    root = alpha_project(tmp_path)
+    write(root, {"tests/test_empty.py": "# will name scripts/gamma.py; defines no test\n"})
+    commit(root, "an empty test file")
+    write(root, {"scripts/gamma.py": "X = 1\n", "scripts/delta.py": "Y = 1\n"})
+    commit(root, "gamma named only by the empty file, delta by nothing")
+    code, out, err = touched(root)
+    assert code == 4, out + err
+    assert line(out, "selected") == "selected: tests/test_empty.py"
+    assert line(out, "result") == "result: incomplete (integration tier passed; 1 selected file(s) collected no test)"
 
 
 def test_selected_tests_run_whatever_marker_filter_the_project_sets(tmp_path):
@@ -226,3 +242,22 @@ def test_selected_tests_run_whatever_marker_filter_the_project_sets(tmp_path):
     code, out, err = touched(root)
     assert code == 1, out + err
     assert line(out, "selected") == "selected: tests/test_uses_alpha.py"
+
+
+@pytest.mark.parametrize("text, names", [
+    ("import alpha\n", True),
+    ("import os, alpha\n", True),
+    ("import os as o, pkg.alpha as a\n", True),
+    ("import os, \\\n    alpha\n", True),
+    ("from pkg.alpha import Thing\n", True),
+    ('load("alpha", path)\n', True),
+    ("import alpha_x\n", False),
+    ("the alpha release\n", False),
+])
+def test_a_python_module_is_named_by_its_import_forms(text, names):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("touched_tests", SCRIPT)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert any(r.search(text) for r in mod.patterns("scripts/alpha.py")) is names

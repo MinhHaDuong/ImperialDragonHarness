@@ -11,8 +11,7 @@ multi-commit branch is covered whole. Selection is a text search of tests/:
   its repo path, its file name, or for a Python module `import <stem>`,
   `from <stem>` and the quoted `"<stem>"` of an importlib load;
 - a changed source file no test names makes the whole integration tier run
-  (`-m integration`, the selected files excepted), when the project declares
-  that marker.
+  (`-m integration`), when the project declares that marker.
 
 Selected files run with no marker filter (`-m ""` overrides one in the
 project's addopts), through the project's runner:
@@ -25,8 +24,9 @@ while an integration test still imports it from the old one.
 Printed lines a review quotes: `selected:`, `fallback:`, `result:`.
 Exit: 0 the tests ran and passed, 1 a test failed, 2 usage or git error,
 4 not a pass: nothing ran (no test layout, no source or test file changed,
-no test collected) or a changed source file stayed uncovered (no test names
-it and the project declares no integration marker).
+no test collected), or `incomplete`: a planned run collected no test (the
+selection, or an empty integration tier) or a changed source file no test
+names met no declared integration marker.
 """
 
 import argparse
@@ -84,8 +84,8 @@ def patterns(path):
     if p.suffix == ".py" and IDENTIFIER.fullmatch(p.stem):
         stem = re.escape(p.stem)
         found.append(re.compile(r"\bfrom\s+(?:[\w.]+\.)?" + stem + r"\b"))
-        # `import x`, `import os, x`, `import pkg.x as y`: any name of the import list
-        found.append(re.compile(r"\bimport\s+(?:[\w.]+(?:\s+as\s+\w+)?\s*,\s*)*(?:[\w.]+\.)?" + stem + r"\b"))
+        # `import x`, `import os, x`, `import pkg.x as y`, a backslash-continued list: any name of it
+        found.append(re.compile(r"\bimport\s+(?:[\w.]+(?:\s+as\s+\w+)?[\s\\]*,[\s\\]*)*(?:[\w.]+\.)?" + stem + r"\b"))
         found.append(re.compile(r"[\"']" + stem + r"[\"']"))
     return found
 
@@ -165,7 +165,7 @@ def main(argv=None):
     if selected:
         runs.append(("selected", ["-m", "", *selected]))
     if unnamed and marker:
-        runs.append(("integration", ["-m", "integration", "tests/", *(f"--ignore={t}" for t in selected)]))
+        runs.append(("integration", ["-m", "integration", "tests/"]))  # selection included: empty means empty
     if not runs:
         out("result: skipped (no source or test file changed)")
         return SKIPPED
@@ -184,17 +184,17 @@ def main(argv=None):
     if failed:
         out(f"result: fail ({'; '.join(failed)})")
         return FAIL
-    ran = [f"{len(selected)} selected file(s)"] if codes.get("selected") == 0 else []  # 5: collected nothing
-    if codes.get("integration") == 0:
-        ran.append("integration tier")
-    elif "integration" in codes and ran:  # the whole tier sat inside the selection, which ran
-        ran.append("integration tier: no test outside the selection")
+    names = {"selected": f"{len(selected)} selected file(s)", "integration": "integration tier"}
+    ran = [names[label] for label, code in codes.items() if code == 0]
+    empty = [names[label] for label, code in codes.items() if code == 5]  # pytest collected nothing
     if not ran:
         out("result: skipped (no test collected)")
         return SKIPPED
+    gaps = [f"{e} collected no test" for e in empty]
     if unnamed and not marker:
-        out(f"result: incomplete ({', '.join(ran)} passed; {len(unnamed)} source file(s) not covered: "
-            "no integration marker declared)")
+        gaps.append(f"{len(unnamed)} source file(s) not covered: no integration marker declared")
+    if gaps:
+        out(f"result: incomplete ({', '.join(ran)} passed; {'; '.join(gaps)})")
         return SKIPPED
     out(f"result: pass ({', '.join(ran)})")
     return PASS
