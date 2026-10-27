@@ -103,6 +103,19 @@ def fail(code, msg):
     return code
 
 
+def reviewed_request(primary, review_id, branch, meta):
+    """The request this run reviews: the latest one on the head the review tree holds, chosen
+    by head, not by recency, so a request written meanwhile on another head never captures it
+    (ticket 1281). None on that head (the branch moved past the hunt request): gaze requests
+    it, which also keeps the reviewed commit under refs/review-heads/."""
+    on_head = [e for e in review_notes.entries(str(primary), review_id)
+               if e["kind"] == "request" and e["head"] == meta["head"]]
+    if on_head:
+        return on_head[-1]["request_id"]
+    return review_notes.request(str(primary), review_id, branch, meta["base"], skill="gaze",
+                                why="gaze on a head no request names", head=meta["head"])["request_id"]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("pr", help="PR number, or branch:<name> [base=<ref>] with no forge")
@@ -155,6 +168,14 @@ def main():
                                                  why="gaze invoked on a branch with no request")
         except review_notes.Refusal as exc:
             return fail(2, f"cannot open a review for {branch}: {exc}")
+    identity = {}
+    if local:  # frozen now, carried to gaze_close: a later request never captures this run (1281)
+        try:
+            request_id = reviewed_request(primary, review_id, branch, meta)
+        except review_notes.Refusal as exc:
+            return fail(2, f"cannot bind a request for {branch}: {exc}")
+        identity = {"review_id": review_id, "request_id": request_id,
+                    "run_id": f"gz-{review_notes._compact(review_notes._now())}-{review_notes._hex(4)}"}
     body = meta.get("body") or ""
     tickets, malformed = close_claims(body, tree)
     if local:  # no body: the claims are the branch's `Ticket:` trailers, read by forge.resolve
@@ -168,7 +189,8 @@ def main():
     _, entry_status = gaze_close.git("status", "--porcelain")
     _, entry_primary = gaze_close.git("-C", str(primary), "status", "--porcelain")
     (panel / "entry-state.json").write_text(json.dumps(
-        {"branch": entry_branch, "status": entry_status.splitlines(), "primary": entry_primary.splitlines()}))
+        {"branch": entry_branch, "status": entry_status.splitlines(), "primary": entry_primary.splitlines(),
+         **identity}))
     comments = [f"## {c.get('author', {}).get('login', '?')}\n{c.get('body', '')}" for c in discussion]
     (panel / "comments.md").write_text("\n\n".join(comments))
     ci = "passing" if ci == "pending" else ci  # the report has only none|passing|failing: pending reads as passing, as before the move
@@ -180,8 +202,8 @@ def main():
     print(f"review_tree={tree}\npanel={panel}")
     print(f"pr_body={panel / 'pr-body.md'}\ncomments={panel / 'comments.md'}")
     print(f"ticket={' '.join(tickets) if tickets else 'none'}")
-    if local:
-        print(f"review_id={review_id}")
+    for key, value in identity.items():
+        print(f"{key}={value}")
     print(f"anchor={changed[0]}\nchanged_files={len(changed) - 1}")
     print("\n".join(changed[1:]))
     if malformed:

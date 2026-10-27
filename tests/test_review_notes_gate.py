@@ -61,9 +61,12 @@ def repo(tmp_path):
 
 def answer(repo, rid, result="REVIEWED", scope="full", head="feature", carried=None):
     cov = {"scope": scope, **({"carried": carried} if carried else {})}
+    oid = sh(repo, "rev-parse", head)
+    on_head = [e for e in rn.entries(repo, rid) if e["kind"] == "request" and e["head"] == oid]
+    rq = on_head[-1] if on_head else rn.request(repo, rid, "feature", "main", head=oid)  # as gaze_setup does (1281)
     return rn.add(repo, "answer", rid, {"run_id": f"gz-{rn._hex(4)}", "result": result, "seats": "panel",
                                         "coverage": cov, "text": f"result: {result}"},
-                  head=sh(repo, "rev-parse", head))
+                  head=oid, request_id=rq["request_id"])
 
 
 def session():

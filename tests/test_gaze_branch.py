@@ -133,3 +133,71 @@ def test_a_delta_answer_carries_the_earlier_full_one(tmp_path):
     delta = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]
     assert delta["coverage"] == {"scope": "delta", "carried": full["id"]}
     assert rn.gate_state(primary, f["review_id"], f["head"])["ready"]
+
+
+def test_a_late_gaze_answer_stays_bound_to_the_request_it_reviewed(tmp_path):
+    """Ticket 1281: gaze_setup freezes the request and run identity; a hunt request written while
+    the gaze ran (round 2) does not capture the round-1 answer."""
+    primary, env = branch_repo(tmp_path)
+    f = fields(run(SETUP, ["branch:feature"], primary, env).stdout)
+    r1 = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "request"][-1]
+    assert f["request_id"] == r1["request_id"] and f["run_id"].startswith("gz-")
+    git(primary, "switch", "-q", "feature")
+    git(primary, "commit", "-q", "--allow-empty", "-m", "round 2")
+    git(primary, "switch", "-q", "main")
+    r2 = rn.request(primary, f["review_id"], "feature", "origin/main")
+    r = close_with(tmp_path, primary, env, f, "intent: default\n")
+    assert r.returncode == 0, r.stdout + r.stderr
+    answer = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]
+    assert answer["request_id"] == r1["request_id"] != r2["request_id"]
+    assert answer["run_id"] == f["run_id"] and answer["head"] == r1["head"]
+
+
+def test_a_second_clone_resumes_the_published_review(tmp_path):
+    """Ticket 1281: a fresh clone after the documented bootstrap (setup, git fetch) resumes the
+    review instead of opening a duplicate."""
+    primary, env = branch_repo(tmp_path)
+    rid = rn.open_review(primary, "feature", "origin/main", why="hunt asked")
+    assert rn.publish(primary, [rn.entries(primary, rid)[0]["id"]]) == "retrievable"
+    second = tmp_path / "second"
+    git(tmp_path, "clone", "-q", str(tmp_path / "origin.git"), str(second))
+    git(second, "config", "user.email", "t@example.com")
+    git(second, "config", "user.name", "T")
+    git(second, "branch", "feature", "origin/feature")
+    rn.setup(second)
+    git(second, "fetch", "-q", "origin")
+    r = run(SETUP, ["branch:feature"], second, env)
+    assert r.returncode == 0, r.stderr
+    assert fields(r.stdout)["review_id"] == rid
+    assert len([e for e in rn.entries(second, rid) if e["kind"] == "request"]) == 1
+
+
+def test_setup_binds_the_request_on_the_reviewed_head_not_the_latest(tmp_path):
+    """gaze 1817 finding 1: the request is chosen by the head gaze reviews; a later request on
+    another head (written in the setup window, or before a rollback) never captures the run."""
+    primary, env = branch_repo(tmp_path)
+    rid = rn.open_review(primary, "feature", "origin/main", why="round 1")
+    r1 = rn.entries(primary, rid)[0]
+    git(primary, "switch", "-q", "feature")
+    git(primary, "commit", "-q", "--allow-empty", "-m", "round 2")
+    rn.request(primary, rid, "feature", "origin/main")
+    git(primary, "reset", "-q", "--hard", r1["head"])  # the branch is back on round 1's head
+    git(primary, "switch", "-q", "main")
+    f = fields(run(SETUP, ["branch:feature"], primary, env).stdout)
+    assert f["review_id"] == rid and f["request_id"] == r1["request_id"]
+
+
+def test_setup_writes_a_request_when_none_names_the_reviewed_head(tmp_path):
+    """The branch moved past the hunt request with no new one: gaze requests the head it reviews,
+    so the answer binds to it and its review-head is retained."""
+    primary, env = branch_repo(tmp_path)
+    rid = rn.open_review(primary, "feature", "origin/main", why="round 1")
+    git(primary, "switch", "-q", "feature")
+    git(primary, "commit", "-q", "--allow-empty", "-m", "unrequested")
+    head = git(primary, "rev-parse", "HEAD")
+    git(primary, "switch", "-q", "main")
+    f = fields(run(SETUP, ["branch:feature"], primary, env).stdout)
+    reqs = [e for e in rn.entries(primary, rid) if e["kind"] == "request"]
+    assert f["review_id"] == rid and len(reqs) == 2
+    assert f["request_id"] == reqs[-1]["request_id"] and reqs[-1]["head"] == head
+    assert git(primary, "rev-parse", f"refs/review-heads/{rid}/{f['request_id']}") == head

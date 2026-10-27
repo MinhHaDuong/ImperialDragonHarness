@@ -2,9 +2,12 @@
 Title: Review notes: verify retained heads, bootstrap readers and pin request identity
 Created: 2026-10-27
 Author: ChatGPT
+Closed: closed by raid — PR #1817
 
 --- log ---
 2026-10-27T17:33Z ChatGPT created
+2026-10-27T17:51Z reviewer fixed on t1281-review-notes-hardening: publish verifies request review-heads on the remote; refresh/resolve reader bootstrap (no push, fetch failure refuses); add --request and gaze setup-to-close request/run identity
+2026-10-27T18:17Z reviewer closed — closed by raid — PR #1817
 
 --- body ---
 ## Context

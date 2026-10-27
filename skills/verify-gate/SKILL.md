@@ -452,7 +452,9 @@ through `python3 "$IDH_ROOT/scripts/review_notes.py" -C "$primary_root"`; never
 - **Unit.** `python3 "$IDH_ROOT/scripts/forge.py" resolve "branch:<name> [base=<ref>]"`
   (from `$primary_root`) gives `head`, `base`, `review_id` and `claims`, the
   branch's `Ticket:` trailers, which stand in for the close claim. No
-  `review_id` → ESCALATE, `Missing Data`: no review request exists. The gate
+  `review_id` → ESCALATE, `Missing Data`: no review request exists (resolve
+  fetches the remote's reviews first; an unreadable remote fails the resolve,
+  never reads as no review: ESCALATE naming it). The gate
   tree is `gate-<unit key>-<session-id>-r<round>`, the unit key as gaze names
   its tree (`branch-<name>`), added `--detach` at `head`; no fetch of a PR branch.
 - **Round and review.** `review_notes.py gate <review_id> <head>` prints the state as
