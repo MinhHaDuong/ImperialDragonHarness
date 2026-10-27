@@ -522,3 +522,15 @@ def test_add_waits_then_writes(world):
     fh.close()
     assert done.returncode == 0, done.stderr
     assert raw_note(a, rid).count('"kind": "plan"') + raw_note(a, rid).count('"kind":"plan"') == 1
+
+
+def test_integrate_creating_the_ref_takes_the_lock(world, monkeypatch):
+    import fcntl
+    _, a, _, _ = world
+    sh(a, "update-ref", rn.TRACK, sh(a, "rev-parse", "HEAD"))
+    monkeypatch.setenv("IDH_NOTES_LOCK_WAIT", "0.2")
+    with open(_lock_path(a), "a") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)
+        with pytest.raises(rn.Refusal, match="idh-review-notes.lock"):
+            rn._integrate(a)
+    assert sh(a, "rev-parse", "--verify", "-q", rn.REF, check=False) == ""

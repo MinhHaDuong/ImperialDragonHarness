@@ -322,7 +322,13 @@ def _check_remote(cwd, remote, tip, warnings):
 
 
 def _integrate(cwd):
-    """Bring the tracking ref into the local ref: fast-forward or cat_sort_uniq merge."""
+    """Bring the tracking ref into the local ref: fast-forward or cat_sort_uniq merge.
+    The whole decision runs under the lock, so a ref created meanwhile is never overwritten."""
+    with _locked(cwd):
+        _integrate_locked(cwd)
+
+
+def _integrate_locked(cwd):
     if not _has_ref(cwd, TRACK):
         return
     track = _rev(cwd, TRACK)
@@ -335,8 +341,7 @@ def _integrate(cwd):
     if _git(cwd, "merge-base", "--is-ancestor", local, track, check=False).returncode == 0:
         _git(cwd, "update-ref", REF, track, local)
         return
-    with _locked(cwd):
-        _git(cwd, "notes", f"--ref={REF}", "merge", "-q", "-s", "cat_sort_uniq", TRACK)
+    _git(cwd, "notes", f"--ref={REF}", "merge", "-q", "-s", "cat_sort_uniq", TRACK)
 
 
 def _check_heads(cwd, remote, warnings):
