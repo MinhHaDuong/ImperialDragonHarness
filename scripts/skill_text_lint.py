@@ -41,10 +41,12 @@ PATTERNS = [
     ("ticket_word", r"\b(ticket|MR|PR) \d+"),
 ]
 
-# A harness script named in skill text: `$IDH_ROOT/scripts/x` or a bare
-# `scripts/x`, not a skill-local `skills/a/scripts/x`.
+# A harness script named in skill text: under a harness-root variable
+# (`$IDH_ROOT`, `$HARNESS_DIR`) or a bare `scripts/x`; not a skill-local
+# `skills/a/scripts/x` nor another repo's `$REPO/scripts/x`.
 SCRIPT_REF = re.compile(
-    r"(?:\$\{?IDH_ROOT\}?/|(?<![\w./-]))scripts/([\w-][\w./-]*)")
+    r"(?:\$\{?(?:IDH_ROOT|HARNESS_DIR)\}?/|(?<![\w./-]))"
+    r"scripts/([\w-][\w./-]*)")
 
 
 def project_names(projects_file: Path) -> list[str]:

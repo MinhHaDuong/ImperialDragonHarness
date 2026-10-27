@@ -116,6 +116,9 @@ def test_missing_script_flags_absent_harness_script_only(tmp_path):
     make(tmp_path, "run `python3 \"$IDH_ROOT/scripts/here.py\"`.\n"
                    "run scripts/gone.py\n"
                    "run ${IDH_ROOT}/scripts/gone.sh\n"
-                   "run skills/a/scripts/local.sh\n")
+                   "run skills/a/scripts/local.sh\n"
+                   "run $HARNESS_DIR/scripts/gone.py\n"
+                   "run $REPO/scripts/other.py\n")
     got = checks(run(tmp_path), "missing_script")
-    assert [f["line"] for f in got] == [FM_LINES + 2, FM_LINES + 3]
+    assert [f["line"] for f in got] == [FM_LINES + 2, FM_LINES + 3,
+                                        FM_LINES + 5]
