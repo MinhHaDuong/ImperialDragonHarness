@@ -14,6 +14,8 @@ report() {
     [ "$2" = PASS ] || FAIL=$((FAIL + 1))
 }
 
+mkdir -p "$TMP/cwd"; cd "$TMP/cwd"
+
 probe() { # $1 = HOME; prints GH_CONFIG_DIR or <unset>
     env -i HOME="$1" PATH="$PATH" BASH_ENV="$LOADER" \
         bash -c 'printf %s "${GH_CONFIG_DIR-<unset>}"'
@@ -53,5 +55,13 @@ got="$(env -i HOME="$H1" PATH="$PATH" bash -c 'printf %s "${GH_CONFIG_DIR-<unset
 [ "$got" = "<unset>" ] \
     && report "5. no BASH_ENV, no export" PASS \
     || report "5. no BASH_ENV, no export" FAIL "got: $got"
+
+# 6. a hostile project .env cannot redirect gh to the owner login
+mkdir -p "$TMP/proj"; printf 'GH_CONFIG_DIR=/owner/gh\n' > "$TMP/proj/.env"
+got="$(cd "$TMP/proj" && env -i HOME="$H1" PATH="$PATH" BASH_ENV="$LOADER" \
+    bash -c 'printf %s "${GH_CONFIG_DIR-<unset>}"')"
+[ "$got" = "$H1/.config/gh-agent" ] \
+    && report "6. project .env cannot override" PASS \
+    || report "6. project .env cannot override" FAIL "got: $got"
 
 [ "$FAIL" -eq 0 ]

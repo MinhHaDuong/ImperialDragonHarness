@@ -84,7 +84,8 @@ One place states which credential agent sessions use (ticket 1196).
 - **Limitation, measured.** The `main-traceability` ruleset covers only `main`.
   `refs/notes/*`, including `refs/notes/gate` (the gate record), stay writable and
   deletable by the session credential
-  (`conception/2026-10-27-notes-transport-trial.md`).
+  (ticket 1277's notes-transport trial, measured on a throwaway notes ref; its report is
+  `conception/2026-10-27-notes-transport-trial.md` once that branch lands).
 - `scripts/census/permissions.py` audits permission allow rules, not credentials, and
   does not state this.
 
