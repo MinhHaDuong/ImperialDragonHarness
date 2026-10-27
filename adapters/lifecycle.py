@@ -2,7 +2,8 @@
 
 The operator's command, not the runtimes': hooks and skills keep calling
 scripts by path. adapters/projections.json is the one list of links, so
-install creates exactly what check verifies, and the launch validator
+install creates exactly what check verifies (and retires the links it
+once created that the manifest no longer declares), and the launch validator
 (scripts/validate-projections.py) supplies the per-entry verdict. Links are
 built from the structured `path`/`target` fields only; the free-form
 `installer` text is display, never executed. Stdlib only, Python 3.12.
@@ -56,9 +57,11 @@ def install_links() -> int:
     except (OSError, ValueError) as exc:
         report("REFUSED", f"{receipt}: {exc}", "inspect the link receipt")
         return 1
+    declared = set()
     for entry in entries():
         base = root()
         path, target = V.expand(entry["path"], base), V.expand(entry["target"], base)
+        declared.add(path)
         try:
             # Only an unchanged link created by a previous install can be
             # refreshed after relocation. Foreign links remain untouched.
@@ -91,12 +94,58 @@ def install_links() -> int:
         if problem:
             report(*problem)
             rc = 1
+    rc |= retire_stale(owned, declared)
     try:
         receipt.parent.mkdir(parents=True, exist_ok=True)
         _replace(receipt, (json.dumps(owned, indent=2) + "\n").encode(), 0o600)
     except OSError as exc:
         report("REFUSED", f"{receipt}: {exc}", "make the state directory writable and rerun install")
         rc = 1
+    return rc
+
+
+def retire_stale(owned: dict, declared: set[Path]) -> int:
+    """Remove links install created that the manifest no longer declares.
+
+    A deleted skill drops out of the `children` expansion and a retired
+    projection out of the manifest; either way the receipt still holds the
+    link, so it would otherwise dangle or shadow for good. Only a link whose
+    text is unchanged since install wrote it, and which points into this
+    checkout, is removed. A link edited or replaced since then is no longer
+    ours: it leaves the receipt and stays put. Another checkout's link, and
+    a receipt path that is the same file as a declared one (HOME spelled
+    another way), keep both the link and the record.
+    """
+    rc = 0
+    here = root()
+    ids = set()
+    for path in declared:
+        try:
+            st = path.lstat()
+        except OSError:
+            continue
+        ids.add((st.st_dev, st.st_ino))
+    for key in sorted(set(owned) - {str(p) for p in declared}):
+        path = Path(key)
+        try:
+            st = path.lstat()
+            if (st.st_dev, st.st_ino) in ids:
+                continue  # declared under another spelling: keep its record
+            text = os.readlink(path) if path.is_symlink() else None
+        except OSError:
+            text = None  # gone: nothing left to remove
+        if text is not None and text == owned[key]:
+            points_to = Path(os.path.normpath(Path(os.path.realpath(path.parent)) / text))
+            if not points_to.is_relative_to(here):
+                continue  # another checkout's link: its own install decides
+            try:
+                path.unlink()
+            except OSError as exc:
+                report("REFUSED", f"{path}: {exc}", "remove the retired link by hand")
+                rc = 1
+                continue
+            print(f"retired: {path} (no longer declared)")
+        del owned[key]
     return rc
 
 

@@ -8,6 +8,7 @@ installation and status leave host scheduling alone.
 
 import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
@@ -665,3 +666,43 @@ def test_wrapper_excludes_its_calling_shell(machine):
     script = f'/usr/bin/pgrep -f {mark} >/dev/null; a=$?; "$1" -f {mark} >/dev/null; echo $a $?'
     r = subprocess.run(["sh", "-c", script, "t", str(w)], capture_output=True, text=True, env=machine["env"])
     assert r.stdout.split() == ["0", "1"], r
+
+
+def test_install_retires_links_the_manifest_no_longer_declares(machine):
+    """A retired projection or deleted skill leaves the receipt and the disk."""
+    home, idh = machine["home"], machine["idh"]
+    assert idh("install").returncode == 0
+    receipt = home / ".local/state/idh/links.json"
+    owned = json.loads(receipt.read_text())
+    root = home / ".pi/agent/skills"
+    root.mkdir(parents=True)
+    ours = os.path.relpath(REPO / "skills/perch", root)
+    retired, edited = root / "perch", root / "edited"
+    foreign, elsewhere = root / "arena", root / "other-checkout"
+    retired.symlink_to(ours)
+    edited.symlink_to(ours)
+    foreign.symlink_to("/elsewhere/skills/arena")
+    elsewhere.symlink_to("/another/checkout/skills/perch")
+    owned[str(retired)] = ours
+    owned[str(edited)] = "../was/something/else"
+    owned[str(elsewhere)] = "/another/checkout/skills/perch"
+    owned[str(home / ".claude/skills/gone")] = "../../.agents/skills/gone"  # already absent
+    # HOME through an alias: the same declared link under another spelling.
+    alias = home.parent / "home-alias"
+    alias.symlink_to(home)
+    kept = home / ".local/bin/pgrep"
+    owned[str(alias / ".local/bin/pgrep")] = os.readlink(kept)
+    receipt.write_text(json.dumps(owned))
+
+    r = idh("install")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert f"retired: {retired}" in r.stdout
+    assert not os.path.lexists(retired)
+    assert edited.is_symlink() and foreign.is_symlink()  # not ours as they stand
+    assert elsewhere.is_symlink()  # another checkout's install decides
+    assert kept.is_symlink()  # declared, whatever the receipt spelled
+    after = json.loads(receipt.read_text())
+    assert not {str(retired), str(edited), str(home / ".claude/skills/gone")} & set(after)
+    assert str(elsewhere) in after and str(alias / ".local/bin/pgrep") in after
+    assert idh("check").returncode == 0
+    assert "retired:" not in idh("install").stdout
