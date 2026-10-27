@@ -275,7 +275,7 @@ def test_hoard_installs_across_runtimes_without_legacy_skill(tmp_path, monkeypat
     for runtime, relative in (
         ("claude", ".claude/skills/hoard"),
         ("codex", ".agents/skills/hoard"),
-        ("pi", ".pi/agent/skills/hoard"),
+        ("pi", ".agents/skills/hoard"),
     ):
         perch.install(runtime, "hoard")
         projected = home / relative

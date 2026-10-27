@@ -8,6 +8,7 @@ installation and status leave host scheduling alone.
 
 import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
@@ -665,3 +666,32 @@ def test_wrapper_excludes_its_calling_shell(machine):
     script = f'/usr/bin/pgrep -f {mark} >/dev/null; a=$?; "$1" -f {mark} >/dev/null; echo $a $?'
     r = subprocess.run(["sh", "-c", script, "t", str(w)], capture_output=True, text=True, env=machine["env"])
     assert r.stdout.split() == ["0", "1"], r
+
+
+def test_install_retires_links_the_manifest_no_longer_declares(machine):
+    """A retired projection or deleted skill leaves the receipt and the disk."""
+    home, idh = machine["home"], machine["idh"]
+    assert idh("install").returncode == 0
+    receipt = home / ".local/state/idh/links.json"
+    owned = json.loads(receipt.read_text())
+    root = home / ".pi/agent/skills"
+    root.mkdir(parents=True)
+    retired, edited, foreign = root / "perch", root / "edited", root / "arena"
+    retired.symlink_to("../../../.agents/skills/perch")
+    edited.symlink_to("../../../.agents/skills/edited")
+    foreign.symlink_to("/elsewhere/skills/arena")
+    owned[str(retired)] = os.readlink(retired)
+    owned[str(edited)] = "../../../.agents/skills/was-something-else"
+    owned[str(home / ".claude/skills/gone")] = "../../.agents/skills/gone"  # already absent
+    receipt.write_text(json.dumps(owned))
+
+    r = idh("install")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert f"retired: {retired}" in r.stdout
+    assert not os.path.lexists(retired)
+    assert edited.is_symlink() and foreign.is_symlink()  # not ours as they stand
+    after = json.loads(receipt.read_text())
+    assert not {str(retired), str(edited), str(home / ".claude/skills/gone")} & set(after)
+    # Every declared link install made is still on record and on disk.
+    assert idh("check").returncode == 0
+    assert "retired:" not in idh("install").stdout

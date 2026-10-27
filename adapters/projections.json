@@ -189,16 +189,7 @@
       "path": "~/.agents/skills",
       "target": "$IDH_ROOT/skills",
       "runtimes": [
-        "codex"
-      ],
-      "required": true,
-      "children": true,
-      "why": "Additive harness registration; unrelated children remain owned by the runtime"
-    },
-    {
-      "path": "~/.pi/agent/skills",
-      "target": "$IDH_ROOT/skills",
-      "runtimes": [
+        "codex",
         "pi"
       ],
       "required": true,

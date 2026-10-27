@@ -91,12 +91,38 @@ def install_links() -> int:
         if problem:
             report(*problem)
             rc = 1
+    rc |= retire_stale(owned)
     try:
         receipt.parent.mkdir(parents=True, exist_ok=True)
         _replace(receipt, (json.dumps(owned, indent=2) + "\n").encode(), 0o600)
     except OSError as exc:
         report("REFUSED", f"{receipt}: {exc}", "make the state directory writable and rerun install")
         rc = 1
+    return rc
+
+
+def retire_stale(owned: dict) -> int:
+    """Remove links install created that the manifest no longer declares.
+
+    A deleted skill drops out of the `children` expansion and a retired
+    projection out of the manifest; either way the receipt still holds the
+    link, so it would otherwise dangle or shadow for good. Only a link whose
+    text is unchanged since install wrote it is removed; anything else at
+    that path is no longer ours, so it leaves the receipt and stays put.
+    """
+    rc = 0
+    declared = {str(V.expand(e["path"], root())) for e in entries()}
+    for key in sorted(set(owned) - declared):
+        path = Path(key)
+        if path.is_symlink() and os.readlink(path) == owned[key]:
+            try:
+                path.unlink()
+            except OSError as exc:
+                report("REFUSED", f"{path}: {exc}", "remove the retired link by hand")
+                rc = 1
+                continue
+            print(f"retired: {path} (no longer declared)")
+        del owned[key]
     return rc
 
 
