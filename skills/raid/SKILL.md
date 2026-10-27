@@ -258,6 +258,8 @@ launch) with
 `python3 "$IDH_ROOT/scripts/attribution_record.py" --append-pr <pr> --append '<line>' --project <name>`.
 It creates the closed block if absent, re-fetches the body, reads it back and
 retries once; a non-zero exit is a visible capture failure, not a silent skip.
+Line fields and order: `skills/merge/references/claims.md` § Line formats; a
+`writer:` line may be appended after reviewer lines.
 
 ## Phase 6: Verify (per-ticket gaze, then verify-gate)
 

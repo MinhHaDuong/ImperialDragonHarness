@@ -343,6 +343,19 @@ def test_append_into_existing_block_keeps_one_block_and_order(reader):
     assert run_pr_body(body).stdout == "ok\n"
 
 
+def test_append_writer_after_reviewers_lands_before_them(reader):
+    body = run_append("", PLAN, "--pr", "9", "--project", "p").stdout
+    for line in (REVIEW, GATE):
+        body = run_append(body, line).stdout
+    after = run_append(body, EXECUTE)
+    assert after.returncode == 0, after.stderr
+    lines = after.stdout.splitlines()
+    assert lines.index(PLAN) < lines.index(EXECUTE) < lines.index(REVIEW) < lines.index(GATE)
+    record = reader.parse_pr_body(after.stdout)
+    assert [w["step"] for w in record["steps"]] == ["plan", "execute"]
+    assert [r["step"] for r in record["reviewers"]] == ["review", "gate"]
+
+
 def test_append_multiline_reviewer_with_finding(reader):
     body = run_append("", PLAN, "--pr", "9", "--project", "p").stdout
     body = run_append(body, EXECUTE).stdout
