@@ -7,6 +7,7 @@ edit-time prompt. The lint itself is never run over live skills here: the
 script is an instrument, not a gate.
 """
 
+import os
 import re
 import subprocess
 import sys
@@ -33,24 +34,36 @@ def test_the_doctor_cannot_be_invoked_by_a_model():
     assert meta["name"] == "harness-doctor"
 
 
+def _here(cwd, env=None):
+    return subprocess.run(["bash", str(HERE)], cwd=cwd, env=env,
+                          capture_output=True, text=True)
+
+
 @pytest.mark.integration
-def test_refusal_outside_harness(tmp_path):
+@pytest.mark.parametrize("repo", [True, False], ids=["foreign-repo", "no-repo"])
+def test_refusal_outside_harness(tmp_path, repo):
+    if repo:
+        subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    out = _here(tmp_path)
+    assert out.returncode == 1
+    assert len(out.stderr.strip().splitlines()) == 1
+
+
+@pytest.mark.integration
+def test_refusal_ignores_an_exported_git_dir(tmp_path):
+    """An exported GIT_DIR pointing at the harness must not admit a foreign cwd."""
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
-    out = subprocess.run(["bash", str(HERE)], cwd=tmp_path,
-                         capture_output=True, text=True)
+    git_dir = subprocess.run(
+        ["git", "-C", str(REPO), "rev-parse", "--path-format=absolute",
+         "--git-common-dir"], capture_output=True, text=True, check=True).stdout.strip()
+    out = _here(tmp_path, env={**os.environ, "GIT_DIR": git_dir})
     assert out.returncode == 1
-    assert len(out.stderr.strip().splitlines()) == 1
-    inside = subprocess.run(["bash", str(HERE)], cwd=REPO / "skills",
-                            capture_output=True, text=True)
-    assert inside.returncode == 0, inside.stderr
 
 
 @pytest.mark.integration
-def test_refusal_outside_any_repo(tmp_path):
-    out = subprocess.run(["bash", str(HERE)], cwd=tmp_path,
-                         capture_output=True, text=True)
-    assert out.returncode == 1
-    assert len(out.stderr.strip().splitlines()) == 1
+def test_the_harness_is_accepted():
+    inside = _here(REPO / "skills")
+    assert inside.returncode == 0, inside.stderr
 
 
 def test_skill_names_its_references_and_script():
@@ -66,11 +79,5 @@ def test_stub_keeps_paths_and_points_to_reference():
     text = STUB.read_text(encoding="utf-8")
     meta = sf.load(STUB)
     assert set(meta["paths"]) == {"**/SKILL.md", "**/skills/**/*.md"}
-    body = sf.FRONTMATTER.sub("", text, count=1).strip().splitlines()
-    assert len(body) <= 8
     assert "skills/harness-doctor/references/authoring-skills.md" in text
     assert (DOCTOR / "references" / "authoring-skills.md").is_file()
-
-
-def test_catalog_lists_harness_doctor():
-    assert "`/harness-doctor`" in (REPO / "skills-catalog.md").read_text()

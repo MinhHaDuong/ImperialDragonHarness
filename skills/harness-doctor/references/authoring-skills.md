@@ -1,5 +1,5 @@
 ---
-last-reviewed: 2026-09-09
+last-reviewed: 2026-10-27
 ---
 # Writing skills
 

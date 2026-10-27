@@ -29,7 +29,8 @@ runtime's own diagnostics as evidence, and reports.
   `references/authoring-skills.md`; what the doctor looks for lives in
   `references/checklist.md`; the research behind both in `references/evidence.md`.
   Cite them in findings instead of paraphrasing.
-- **The author decides.** Report and propose; change nothing unasked.
+- **The author decides.** Report and propose. The run writes only its journal
+  entry and the tickets the floor calls for; any other change waits for the author.
 
 ## Procedure
 
@@ -52,7 +53,8 @@ Sequential-blocking: each step selects what the next one reads.
    against `references/checklist.md`: keep it, or dismiss it with a word of
    reason (a date in a command example, a template).
 4. **Runtime evidence.** Run the diagnostics in `references/runtime-diagnostics.md`
-   for every runtime, in its order, one at a time. Lines marked as spending
+   for every runtime, in its order, one at a time, each under a time limit
+   (a timeout is recorded as unavailable). Lines marked as spending
    model usage need the author's agreement and a cost cap. For each runtime,
    record ran (with what it said that bears on skills), or unavailable (with
    why). A runtime that ships nothing is recorded as such against the
