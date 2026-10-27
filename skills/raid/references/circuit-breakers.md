@@ -65,4 +65,5 @@ agent. Kill and relaunch with corrected instructions.
 Bump reason: `redirect ban triggered`.
 
 **Escalation**: If the same fix fails twice, stop and leave a
-ticket comment with the two failed approaches.
+ticket comment with the two failed approaches, then follow `rules/workflow.md`
+§ Escalation protocol.

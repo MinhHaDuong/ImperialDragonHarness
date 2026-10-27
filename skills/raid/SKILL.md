@@ -316,7 +316,8 @@ The raid owns each PR's gate session (`skills/verify-gate/SKILL.md` § Gate
 sessions): it generates one UUID per PR before round 1, passes the same
 `session=` to round 1 and to the single re-gate after the fix, and never runs
 the gate a third time or opens a second session for the PR. A round-2 REROLL
-is ESCALATE; ESCALATE and NEEDS-AUTHOR go to the author. The same two-round
+is ESCALATE; ESCALATE follows `rules/workflow.md` § Escalation protocol, NEEDS-AUTHOR
+waits for the author. The same two-round
 budget binds the merge-permission-denial recovery (§ Merge-permission denial):
 once two gate rounds are posted on the PR, that recovery parks the PR and
 escalates to the author instead of sending it back through Phase 6.
@@ -358,7 +359,7 @@ For each wave, merge APPROVED PRs one at a time. A PR is merge-eligible if:
   tickets/NNNN` to the PR body before merging).
 
 Any ESCALATE verdict (from exit criteria, review comments, or scope overflow) stops
-the PR — it stays open for human review.
+the PR: it stays open and follows `rules/workflow.md` § Escalation protocol.
 
 A `NEEDS-AUTHOR` verdict is
 not merge-eligible without the author: surface it to the author and leave the PR open.
