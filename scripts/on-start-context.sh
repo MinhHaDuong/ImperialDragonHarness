@@ -37,11 +37,11 @@ _script_dir="$(cd "$(dirname "$0")" && pwd)"
 # the census only when the harness git-common-dir is readable and differs from
 # the project's, so an error never reads as "not the harness".
 if [ -n "$_proj" ] && [ -d "$_proj" ]; then
-    _harness=$(cd "$_script_dir/.." && pwd -P)
-    _pdir=$(cd "$_proj" && pwd -P)
+    _harness=$(cd "$_script_dir/.." && pwd -P) || _harness=""
+    _pdir=$(cd "$_proj" && pwd -P 2>/dev/null) || _pdir=""
     _hgit=$(git -C "$_harness" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
     _pgit=$(git -C "$_pdir" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
-    if [ "$_pdir" != "$_harness" ] && [ -n "$_hgit" ] && [ "$_pgit" != "$_hgit" ]; then
+    if [ -n "$_pdir" ] && [ -n "$_harness" ] && [ "$_pdir" != "$_harness" ] && [ -n "$_hgit" ] && [ "$_pgit" != "$_hgit" ]; then
         python3 "$_script_dir/resident_census.py" --project "$_pdir" --warn 2>/dev/null || true
     fi
 fi

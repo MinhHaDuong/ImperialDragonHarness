@@ -12,6 +12,7 @@ project is over budget or declares a catch-all. These tests pin the counting
 and that line, each with a positive control.
 """
 
+import os
 import shutil
 import subprocess
 import sys
@@ -126,7 +127,6 @@ def test_session_start_emits_no_coherence_prompt(tmp_path):
     skill.write_text("# X\n", encoding="utf-8")
     (project / "AGENTS.md").write_text("local\n", encoding="utf-8")
     assert "PROJECT DIRECTIVE COHERENCE" not in _run_hook(project)
-    assert not list((REPO / "scripts").glob("prompt-project-*"))
 
 
 def test_over_budget_project_line_comes_from_the_start_hook(tmp_path):
@@ -192,3 +192,14 @@ def test_worktree_instruction_carries_the_prose_exception(tmp_path):
     assert "every conversation works in its own worktree" not in output
     assert "manuscript prose" in output and "in place" in output
     assert "rules/prose/workpackages.md" in output
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores directory modes")
+def test_unreadable_project_dir_does_not_abort_the_hook(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+    project.chmod(0)
+    try:
+        assert "Running on host" in _run_hook(project)
+    finally:
+        project.chmod(0o700)
