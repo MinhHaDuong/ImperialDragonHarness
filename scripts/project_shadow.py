@@ -134,7 +134,7 @@ def route(rec: dict, auto: bool) -> str | None:
     alone. `auto` (unattended sweep) never files into the harness checkout."""
     if rec.get("status") == "skip":
         return f"skip: {rec.get('reason', '')}"
-    if rec.get("verdict") == "ok":
+    if str(rec.get("verdict", "")).startswith("ok"):  # also "ok (reasoned)"
         return None
     local, kind = rec.get("local_file"), rec.get("kind")
     disp = rec.get("disposition")
@@ -158,7 +158,7 @@ def plan(argv: list[str]) -> int:
             continue
         try:
             line = route(json.loads(raw), "--auto" in argv)
-        except (ValueError, AttributeError) as exc:
+        except ValueError as exc:
             print(f"project_shadow --plan: bad record: {exc}", file=sys.stderr)
             return 1
         if line:

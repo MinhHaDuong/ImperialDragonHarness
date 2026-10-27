@@ -4,7 +4,7 @@ by its **fix-now**, **open-ticket** and **skip** headings."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-YAWN = Path(__file__).resolve().parent.parent / "skills/yawn/SKILL.md"
+YAWN = ROOT / "skills/yawn/SKILL.md"
 
 
 def test_contract_headings_untouched():

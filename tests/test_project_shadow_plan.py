@@ -65,3 +65,7 @@ def test_malformed_line_fails_and_empty_is_empty():
     assert plan([], raw="not json\n").returncode != 0
     out = plan([], raw="")
     assert out.returncode == 0 and out.stdout == ""
+
+
+def test_display_string_ok_reasoned_is_also_left_alone():
+    assert plan([rec("a", "ok (reasoned)", "delete-local")]).stdout == ""
