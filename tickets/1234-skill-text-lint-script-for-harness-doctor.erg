@@ -68,3 +68,9 @@ Further tests, each a positive and a negative near-miss (fixtures in tmp_path, `
 - references glob: a hit under `references/x.md` is found; a file under `notes/` is not.
 
 Files touched: scripts/skill_text_lint.py (new), tests/test_skill_text_lint.py (new), tickets/1234-*.erg (this plan). Not touched: the adherence command, any hook, CI, other tests.
+
+## Feasibility (raid 2026-10-27): PASS
+- Import `skill_frontmatter.FRONTMATTER`; never compile a `\A---` regex. `test_frontmatter_regex_has_single_definition` fails on a second definition anywhere in the source tree.
+- Positive control verified: trace-doctor is 235 lines, with a fence at 37-65 (27 content lines). It has only one history-phrase line, so date hits carry most of that check: expect `history_*` count >= 1, not many.
+- `scripts/projects.json` is a list of `{name,path}` (8 entries, `harness` first), as the plan assumes. A list file is the only data source; no keys or network.
+- The output wrapper `{files,findings,summary}` is the 1233 contract (1233 reads `.findings[]`). scripts/ sits outside SKILL_PATTERNS, so docstring script paths are safe.

@@ -54,3 +54,8 @@ Antipattern scan: `test_startup_prompt_carries_the_warning` (catch-all fixture, 
 
 Dependencies: 1230 (guard in `project_shadow.py`), 1231. Merge precondition only, not a deliverable.
 Files touched: scripts/on-start-context.sh, scripts/prompt-project-coherence.sh (deleted), scripts/resident_census.py (comment), tests/test_project_census.py, tests/test_project_coherence_prompt.py (deleted).
+
+## Feasibility (raid 2026-10-27): WARN
+- Interface gap: `project_shadow.py --is-harness` is not in 1230's plan. Worse, `! python3 … --is-harness` fails open: an argparse error (exit 2) or a missing yaml inverts to "not harness" and the census warns on the harness's own rules. Fix: inline the existing 6-line git-common-dir guard (`prompt-project-coherence.sh:8-14`) in `on-start-context.sh` before the census call. That removes the cross-ticket dependency, and the linked-worktree fixture no longer needs to copy `project_shadow.py`, `skill_frontmatter.py` and yaml.
+- Citations verified: on-start-context.sh:33-38, census at :35-36, prompt at :40, guard :9-14, `tests/test_project_census.py` HOOK :30 / `_run_hook` :99-107, `resident_census.py:28`, test names in test_project_coherence_prompt.py, codex hooks.json:10, and pi idh-guard.ts:40. Repo-wide, only on-start-context.sh and the two tests name the script, outside docs/ and tickets/.
+- The hook copy in the worktree fixture also runs `tmp_report.py` and the `$HOME/.bashrc` grep. Both are tolerated (`||`), but assert only on the absence of the census line, never on empty stdout.

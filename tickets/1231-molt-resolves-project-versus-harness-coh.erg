@@ -51,3 +51,10 @@ Antipattern scan: each test asserts on exact routed output for a fixture whose n
 
 Dependencies: Blocked-by 1230 (record field names; adjust the fixture keys if 1230 renames them, build against the shared record, not yawn prose). Not 1232.
 Files touched: skills/molt/coherence-route.py (new), skills/molt/SKILL.md, tests/test_molt_coherence_route.py (new), tests/test_yawn_molt_suggestion.py.
+
+## Feasibility (raid 2026-10-27): WARN
+- Canonical record, matching 1230, in JSON lines: `kind` (shadowing|contradiction|repeat), `local_file`, `harness_file`, `instruction`, `verdict` (`ok`|`warn`, never the string "ok (reasoned)"), `reason` (str|null), `disposition` (delete-local|annotate|harness-ticket|null), `destination` (project|harness). Skip lines `{"status":"skip","reason":...}` must be passed through as skip, not treated as malformed. Null disposition means skip with a reason.
+- Simplicity verdict: the separate router is not justified. Dispositions are assigned by yawn's judged pass, so a router tests a 4-row mapping, not the criterion. yawn's Action plan already classifies into fix-now/open-ticket/skip, and molt steps 3-5 already act on it. Keep the Imagine path (prose in molt step 4). If a behavioral test is required, add `--plan` to 1230's `scripts/project_shadow.py` (one file, one test file, ok-vs-warn twin) rather than a new `skills/molt/coherence-route.py`.
+- `--auto` has no source: molt has no sweep flag. If kept, step 2 must say that molt passes it when `CLAUDE_NIGHT_SWEEP` is set (the existing sweep marker, on-start-context.sh:14).
+- The planned "yawn headings appear once" assertion duplicates `test_contract_headings_untouched`, so drop it and add only the molt wiring line. 1230 leaves this test file untouched.
+- A harness ticket filed interactively still goes on a harness branch/worktree (rules/git.md), never `tickets/erg new` in the harness main checkout. Say so in step 4. No keys or network needed.

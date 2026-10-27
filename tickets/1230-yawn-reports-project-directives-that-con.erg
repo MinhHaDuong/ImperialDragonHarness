@@ -90,3 +90,13 @@ text; only skill-text assertions are testable.
 Files: scripts/project_shadow.py, tests/test_project_shadow.py, skills/yawn/SKILL.md,
 tests/test_yawn_molt_suggestion.py, adapters/pilot-support.json, adapters/README.md
 (check no schema test rejects the new field).
+
+## Feasibility (raid 2026-10-27): WARN
+- Canonical finding record (shared with 1231), JSON lines, one object per line: `kind` (shadowing|contradiction|repeat), `local_file`, `harness_file`, `instruction`, `verdict` (`ok`|`warn`; "ok (reasoned)" is yawn display text only), `reason` (str|null), `disposition` (delete-local|annotate|harness-ticket|null), `destination` (project|harness). Skip is one line `{"status":"skip","reason":...}`. The script leaves `disposition` null on warn (redundant vs deliberate is not mechanical); yawn's judged pass fills it.
+- Plan step 4 says reason detection is for name collisions only, but the listed test "reasoned vs unreasoned CLAUDE.md" is a contradiction (judged) case. Fix: scan for the reason marker in the colliding local SKILL.md/rule file; drop the CLAUDE.md pair from the script tests (arena's merge override is judged-path evidence, checked at the 1229 integration review).
+- Pi's project root is `.pi/skills/` as well as `.agents/skills/` (shipped `docs/skills.md:35,61`); add it to pi's `project_skill_roots`. `adapters/perch.py` and the tests that read pilot-support.json do no key whitelist, so the new field is safe.
+- 1232 calls `project_shadow.py --is-harness PROJECT`, which this plan does not define. Either add it (exit 0 harness or linked worktree, 1 otherwise, stdlib only, decided before importing yaml), or let 1232 inline the shell guard (recommended there).
+- `skill_frontmatter.load` is at line 35, not 44. It raises `FrontmatterError`: catch that for the malformed-SKILL.md record.
+- yawn check 13 sits after `## Action plan` (SKILL.md:174), not inside 1-12. Put check 14 after 13, and add table rows to Output format. Keep `**skip**` from appearing on a line of its own in the new text, or `test_contract_headings_untouched` breaks.
+- Do not edit `tests/test_yawn_molt_suggestion.py`: its one test already pins the headings. 1231 owns the single molt-wiring assertion there, which avoids a W1/W2 edit on the same lines.
+- The check-14 command must read `python3 "$IDH_ROOT/scripts/project_shadow.py"`. A bare `scripts/x.py` in skills/ trips `make check-agnostic-skills`. No keys or network needed.
