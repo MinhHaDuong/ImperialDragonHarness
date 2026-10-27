@@ -1,0 +1,33 @@
+%erg 0.1
+Title: Remove the dead adherence-seat path: adherence_verdict.py, seat agent and profile, verify-adherence semantic=caller
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T10:53Z reviewer created
+
+--- body ---
+## Context
+Successor of ticket 1237 (closed 2026-10-27 as overtaken, author's ruling). The gaze rewrite of
+ticket 1225 (5cb969f5) took the adherence seat out of gaze; `tests/test_gaze_intent.py` now asserts
+gaze names neither `adherence-seat` nor `adherence_verdict`. On origin/main e61b03dd nothing calls the
+seat path: what remains is the machinery and the tests that pin it, plus one stale sentence
+(`skills/verify-adherence/SKILL.md:52`, "`/gaze` passes it"). Hunt's self-gate runs verify-adherence
+in its ordinary mode and never reaches `adherence_verdict.py`.
+
+## Exit criteria
+- [ ] `scripts/adherence_verdict.py` and its tests are gone.
+- [ ] `agents/adherence-seat.md` and `profiles/adherence-seat/` are gone, with their entries in
+      `tests/test_agent_profiles.py` and `tests/test_profile_tool_grants.py`.
+- [ ] verify-adherence drops the `semantic=caller` mode (argument hint, line 52 paragraph, § 3 caller
+      section, the provisional-verdict line); the ordinary mode's text is unchanged.
+- [ ] `git grep -n "semantic=caller\|adherence_verdict\|adherence-seat"` finds nothing outside
+      `tickets/`, docs/discussions and memory; the gaze-intent negative assertion stays.
+- [ ] Generated files regenerated (skills catalog, agent projections); the harness gate passes.
+
+## Relevant files
+scripts/adherence_verdict.py, tests/test_adherence_verdict.py, agents/adherence-seat.md,
+profiles/adherence-seat/PROFILE.md, skills/verify-adherence/SKILL.md, tests/test_agent_profiles.py,
+tests/test_profile_tool_grants.py
+
+Related: [[1237]], [[1225]].
