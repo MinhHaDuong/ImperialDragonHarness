@@ -22,3 +22,40 @@ cost with no owner decision behind each run.
 - [ ] Its tests are deleted with it, not tuned; Codex and Pi start hooks that
       share `on-start-context.sh` are checked for the same removal
 - [ ] Lands after 1230 and 1231 are merged
+
+## Imagine (raid 2026-10-27)
+
+**Premise holds.** `scripts/on-start-context.sh:33-38` still calls `prompt-project-coherence.sh` (prompt at `:40`); yawn and molt do not check coherence yet; ordering stands, 1232 last.
+
+**Premise gap: the census call lives inside the file to delete.** `resident_census.py --project --warn` is at `prompt-project-coherence.sh:35-36`, after the harness and worktree early exits (`:8-14`). Deleting the script silently drops the budget line.
+
+**Simplest path.** Delete `scripts/prompt-project-coherence.sh` and `tests/test_project_coherence_prompt.py`. In `on-start-context.sh:33-38`, call `python3 "$_script_dir/resident_census.py" --project "$_proj" --warn 2>/dev/null || true` directly, keeping the not-the-harness guard (or the census's own handling). `tests/test_project_census.py`: keep the function tests; repoint `_run_hook`/`HOOK` (`:30`, `:99-107`) at `on-start-context.sh` with `CLAUDE_PROJECT_DIR`, so the delivery-channel positive control survives. Repoint, don't tune.
+
+**Dangling references.** `scripts/resident_census.py:28` "SessionStart coherence prompt" → "SessionStart hook". Dated docs and closed tickets stay. None in `rules/`, `adapters/`, `skills/`.
+
+**Codex and Pi.** Both call `on-start-context.sh` (`adapters/codex/hooks.json`, `adapters/pi/extensions/idh-guard.ts`): one edit covers them. Also check `tests/test_session_start_wiring.py` and other on-start tests.
+
+**Criterion proposals.** (a) The census line still fires from `on-start-context.sh` for an over-budget project, silent otherwise. (b) `grep -r prompt-project-coherence scripts tests adapters` is empty. (c) "Lands after 1230 and 1231" is a merge precondition, not a deliverable.
+
+## Plan (raid 2026-10-27)
+
+Actions (after 1230 and 1231 merge; rebase first, since 1230 adds the guard to `scripts/project_shadow.py`):
+1. `tests/test_project_census.py`: repoint `HOOK` (`:30`) to `scripts/on-start-context.sh`; `_run_hook(project)` runs it with `CLAUDE_PROJECT_DIR=project`, `HOME=tmp`, `BASH_ENV=""`, `GIT_CEILING_DIRECTORIES` kept (copy `start()` from the prompt test). Update the module docstring ("SessionStart hook prints one line").
+2. `scripts/on-start-context.sh:33-38`: replace the block with
+   `if [ -n "$_proj" ] && [ -d "$_proj" ] && ! python3 "$_script_dir/project_shadow.py" --is-harness "$_proj" 2>/dev/null; then python3 "$_script_dir/resident_census.py" --project "$_proj" --warn 2>/dev/null || true; fi`
+   Guard survival: 1230 owns the harness-self plus linked-worktree test (same git-common-dir compare as old `prompt-project-coherence.sh:9-14`). If 1230 exposes it only as a skip verdict, import its function from a one-line `python3 -c` or inline the git-common-dir compare in the shell; do not drop it, since the census would otherwise warn on the harness's own resident text.
+3. Delete `scripts/prompt-project-coherence.sh` and `tests/test_project_coherence_prompt.py`. Move its two survivors into `tests/test_project_census.py`: `test_worktree_instruction_carries_the_prose_exception` (0968, unrelated to coherence), and a harness-linked-worktree test (fixture: git-init a copy of `scripts/` dir pieces `on-start-context.sh`, `resident_census.py`, `project_shadow.py`, a catch-all rule, `git worktree add`, run the hook from the copy with `CLAUDE_PROJECT_DIR=linked`; assert no census line).
+4. `scripts/resident_census.py:28`: "SessionStart coherence prompt" becomes "SessionStart hook". Comment at `on-start-context.sh:30-32` rewritten (no model call mention).
+5. Codex/Pi: no edit (both only exec `on-start-context.sh`, checked in `adapters/codex/hooks.json`, `adapters/pi/extensions/idh-guard.ts`); `grep -r prompt-project-coherence scripts tests adapters` must be empty (only `tests/test_project_census.py` strings gone with step 1). `tests/test_session_start_wiring.py` and the other on-start tests do not name the script: run them unchanged.
+
+FIRST failing test: `test_session_start_emits_no_coherence_prompt` in `tests/test_project_census.py`. Fixture: tmp project with `AGENTS.md` plus `.claude/skills/x/SKILL.md` (the old trigger). Assertion: `"PROJECT DIRECTIVE COHERENCE" not in _run_hook(project)` and `not (SCRIPTS/"prompt-project-coherence.sh").exists()`. Fails today (prompt emitted, file present).
+
+Antipattern scan: `test_startup_prompt_carries_the_warning` (catch-all fixture, asserts `"catchall.md"` in on-start-context output) fails if step 2 drops the census line, so the delivery channel is a real positive control; the small-project test is its negative. The harness-worktree test fails if the guard is lost (the copied harness has a catch-all rule, so a missing guard prints a line); a guard-only-silence test would pass vacuously, hence the catch-all. The no-prompt test would pass on an empty script, but the census test covers that.
+
+Dependencies: 1230 (guard in `project_shadow.py`), 1231. Merge precondition only, not a deliverable.
+Files touched: scripts/on-start-context.sh, scripts/prompt-project-coherence.sh (deleted), scripts/resident_census.py (comment), tests/test_project_census.py, tests/test_project_coherence_prompt.py (deleted).
+
+## Feasibility (raid 2026-10-27): WARN
+- Interface gap: `project_shadow.py --is-harness` is not in 1230's plan. Worse, `! python3 … --is-harness` fails open: an argparse error (exit 2) or a missing yaml inverts to "not harness" and the census warns on the harness's own rules. Fix: inline the existing 6-line git-common-dir guard (`prompt-project-coherence.sh:8-14`) in `on-start-context.sh` before the census call. That removes the cross-ticket dependency, and the linked-worktree fixture no longer needs to copy `project_shadow.py`, `skill_frontmatter.py` and yaml.
+- Citations verified: on-start-context.sh:33-38, census at :35-36, prompt at :40, guard :9-14, `tests/test_project_census.py` HOOK :30 / `_run_hook` :99-107, `resident_census.py:28`, test names in test_project_coherence_prompt.py, codex hooks.json:10, and pi idh-guard.ts:40. Repo-wide, only on-start-context.sh and the two tests name the script, outside docs/ and tickets/.
+- The hook copy in the worktree fixture also runs `tmp_report.py` and the `$HOME/.bashrc` grep. Both are tolerated (`||`), but assert only on the absence of the census line, never on empty stdout.

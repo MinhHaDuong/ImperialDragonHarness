@@ -44,3 +44,65 @@ the starting point) and record the absence where there is none.
       and the tests that cite it updated
 - [ ] Retirement clause in the skill: three consecutive runs with no finding
       above the floor and the author is asked whether to delete it
+
+## Imagine (raid 2026-10-27)
+
+**Premise holds.** Coherence is only the per-session prompt; no skill-text lint exists; `skills/trace-doctor/SKILL.md` is 235 lines. `rules/authoring-skills.md` is 54 lines, `paths:` at lines 2-5.
+
+**Simplest path.** Shape after `skills/test-doctor/SKILL.md` (`disable-model-invocation: true`, `user-invocable: true`, `IDH_ROOT` from the loaded path), category `session`; regenerate `skills-catalog.md` (`scripts/gen_skills_catalog.py`). Body ~60 lines of procedure (descriptions first, overlapping pairs next, 1234 script, runtime evidence, report), pointing at `references/` rather than restating the checklist. Refusal: git toplevel of the cwd equals `IDH_ROOT`, else one line and stop.
+
+**Stub or move: MOVE plus a stub ≤8 lines** keeping `paths:` and the enforced bullets, pointing at `skills/harness-doctor/references/authoring-skills.md`. Update citers: `tests/test_skill_descriptions.py:3,63`, `tests/test_skill_frontmatter.py:160`, `tests/test_check_agnostic.py:272`, `scripts/check-agnostic.sh:25`, `rules/README.md:38`.
+
+**Runtime diagnostics.** The survey (`docs/2026-09-16-runtime-capability-survey.md`) has no diagnostics inventory. Claude Code `/doctor` and `/skill-doctor` are interactive: the author runs them and pastes output. `claude plugin eval` is a CLI and may run headless (unverified). Codex and Pi: unknown; "none found" only after a positive control.
+
+**Antipatterns.** Inventory duplicating the survey → add a diagnostics section to the survey, skill points there. Restated checklist → pointer. Runtime-command table in the skill → one reference file.
+
+**Criterion proposals.** (a) "Passes the 1234 script" → "no finding above the floor from the 1234 script". (b) Registered in the catalog. (c) Refusal tested outside `IDH_ROOT`. (d) The three-run retirement count recorded in a journal entry, as test-doctor does.
+
+## Plan (raid 2026-10-27)
+
+Actions:
+1. `skills/harness-doctor/SKILL.md` (<=150 lines, no fence >12 lines, no ticket/date/project names): frontmatter after test-doctor: `metadata.category: session`, `name`, quoted `description` (plain function first: "Lint the harness's own skills and rules for contradiction and overlap; author-called, harness repo only."), `disable-model-invocation: true`, `user-invocable: true`, quoted `argument-hint`. Body: IDH_ROOT line (as test-doctor); Stance (called never self-started, never scheduled or run at session start, author decides); Refusal; Procedure: 1 descriptions pass (`gen_skills_catalog.py` output, pick overlapping pairs), 2 read full bodies of those pairs only, 3 run `python3 "$IDH_ROOT/scripts/skill_text_lint.py"` and judge hits (false positives are the doctor's call), 4 runtime evidence (`references/runtime-diagnostics.md`), 5 report; Findings (both files and conflicting lines each; above the severity floor a ticket, rest reported); Retirement clause; delegation line "choose the worker per the `route` skill" (no model names; concurrency of multi-item steps declared sequential-blocking).
+2. Refusal: new `scripts/harness_here.sh` (git toplevel of cwd == IDH_ROOT, else one line on stderr, exit 1); SKILL.md step 0 runs it and stops on non-zero.
+3. `skills/harness-doctor/references/` (each named in SKILL.md as `` `references/x.md` ``, so test_skill_reference_pointers passes):
+   - `authoring-skills.md`: `git mv` of `rules/authoring-skills.md` content (keep `last-reviewed`, drop the `paths:` block there so the reference is not double-loaded).
+   - `checklist.md`: the author's checklist from tracker 1229 (six bullets, as rules not history), plus a "doctor judges, script finds" split.
+   - `evidence.md`: pointers only to `docs/2026-04-03-harness-best-practices-research.md` and `docs/Forsythe-2026-10principles.md`, one line each on what to take from them.
+   - `runtime-diagnostics.md`: Claude Code: `/doctor` and `/skill-doctor` are interactive, run by the author who pastes the output; `claude plugin eval` CLI, may run headless (UNVERIFIED: check `claude plugin eval --help` before first use, record outcome). Codex and Pi: inventory what each ships starting from `docs/2026-09-16-runtime-capability-survey.md`; "none found" only after a positive control (a known-present command seen to answer); otherwise "not inventoried". Output is evidence beside the doctor's pass; unavailable is reported as unavailable, never clean. Home of the inventory: this file only; survey stays untouched (no duplication). Runtime-specific command names sit behind `<!-- harness-extension-point -->` in this file; SKILL.md names capabilities ("the runtime's skill diagnostic").
+4. Move plus stub: `rules/authoring-skills.md` becomes <=8 lines: keep `paths:` (both globs) and `last-reviewed`, one-line enforced bullets (route decides worker; capabilities not tools, `scripts/check-agnostic.sh`; quote frontmatter), pointer to `skills/harness-doctor/references/authoring-skills.md`.
+5. Citer updates: `tests/test_skill_descriptions.py:3,63`, `tests/test_skill_frontmatter.py:160`, `tests/test_check_agnostic.py:272`, `scripts/check-agnostic.sh:25` point at the reference path; `rules/README.md:38` row keeps the stub (paths unchanged) and its summary; rg `authoring-skills` afterwards for strays.
+6. Catalog: run `scripts/gen_skills_catalog.py` into `skills-catalog.md` (new `/harness-doctor` row under Session and maintenance).
+7. Retirement journal: SKILL.md clause: after each run write `memory/journal/YYYY/YYYY-MM-DD-harness-doctor-<slug>.md` (`Date:`, `Project:` headers; findings above floor count; run number); search `-harness-doctor-` entries; three consecutive with zero above-floor findings -> ask the author whether to delete the skill.
+8. `tests/test_harness_doctor_skill.py` (after test_test_doctor_skill.py).
+
+FIRST failing test: `test_the_doctor_cannot_be_invoked_by_a_model` in `tests/test_harness_doctor_skill.py`: `sf.load(skills/harness-doctor/SKILL.md)` has `disable-model-invocation is True`, `user-invocable is True`, `name == "harness-doctor"`. Fails now on the missing file. Next in order: `test_refusal_outside_harness` (runs `scripts/harness_here.sh` with cwd=tmp_path git repo: exit 1, one stderr line; from REPO: exit 0); `test_skill_names_both_references_and_script` (pointer regex finds the four references, and `skill_text_lint.py`); `test_body_within_150_lines`; `test_retirement_clause_names_three_runs`; `test_stub_keeps_paths_and_points_to_reference` (stub <=8 body lines, `paths:` has both globs, referenced file exists); `test_catalog_lists_harness_doctor` (regenerated catalog contains the row; reuse existing catalog freshness test if one exists).
+
+Dependencies: Blocked-by 1234. Plan against its interface only (`scripts/skill_text_lint.py`, exit 0, JSON `{file,line,check,text}`); until it lands, tests that need the script are limited to the SKILL.md mention, and the criterion "no finding above the floor from the 1234 script" is checked by hand at merge, not by test (1234 forbids a test over live skills). Positive control (hand): doctor flags `skills/trace-doctor/SKILL.md`.
+
+Files touched: skills/harness-doctor/SKILL.md; skills/harness-doctor/references/{authoring-skills,checklist,evidence,runtime-diagnostics}.md; scripts/harness_here.sh; rules/authoring-skills.md; rules/README.md; scripts/check-agnostic.sh (comment only); tests/test_skill_descriptions.py; tests/test_skill_frontmatter.py; tests/test_check_agnostic.py; tests/test_harness_doctor_skill.py; skills-catalog.md.
+
+Antipattern scan on the tests: no test runs the lint over live skills (the stub test reads one file and the references, which is structure, not lint); no grep-the-prose tests beyond a fixed set of named clauses (retirement, refusal) - drop the retirement-wording test if it only mirrors the text; refusal test uses a real temp repo, not a mock; no guard on the guard (no test that the script's detectors exist, that is 1234's fixtures); `test_body_within_150_lines` duplicates what 1234 reports, keep only if the lint stays out of the gate (it does), else delete.
+
+PLAN WARN: criterion "Skill passes the 1234 script itself" cannot be a test (1234 exit criterion); verified by hand run at merge. Criterion "Each finding names both files and conflicting lines" and "description pass first" are procedure text, checked by review, not test. `claude plugin eval` headless behaviour is unverified.
+
+## Feasibility (raid 2026-10-27): WARN
+- Moving `rules/authoring-skills.md` under `skills/harness-doctor/references/` breaks `make check-agnostic-skills`. Its line 24 has the bare `` `scripts/check-agnostic.sh` ``, which matches SKILL_PATTERNS (positive control run: VIOLATION, exit 1). Fix: write `$IDH_ROOT/scripts/check-agnostic.sh` in the moved text, and the same for every script path in SKILL.md and references (`gen_skills_catalog.py`, `skill_text_lint.py`, `harness_here.sh`).
+- Open ticket 1222 (outside this raid) also edits `rules/authoring-skills.md` (one-line convention). Record in the PR that 1222 retargets to the reference file after this move.
+- 1234 emits `{"files","findings":[{file,line,check,text}],"summary"}`. Read `.findings[]`, not a top-level list.
+- `skills-catalog.md` is gated by `make check-skills-drift`. Regenerate it in the same commit as the new SKILL.md. Category `session` is valid (`gen_skills_catalog.py:21`). This is the only PR in the raid that touches the catalog.
+- Other citers verified: test_skill_descriptions.py:3,63; test_skill_frontmatter.py:160; test_check_agnostic.py:272; check-agnostic.sh:25 (comment); rules/README.md:38.
+- `claude plugin eval` headless behaviour is unverified. Keep the hand check, and record "unavailable", never "clean". No keys or network otherwise.
+
+**Runtime diagnostics, Claude Code (verified in docs 2026-10-27, raid).** Sources: code.claude.com/docs/en/troubleshooting.md, cli-reference.md, skills.md, plugin-evals.md.
+- `claude doctor` (shell): runs without a user, read-only; install health, unparseable settings, unused skills and their context cost, CLAUDE.md duplication, slow hooks. Text output; JSON unverified. Scope is the user's own setup, not an arbitrary directory.
+- `/doctor` (in-session): interactive, proposes fixes; the author runs it.
+- `/skill-doctor`: per-skill context cost, 7-day usage, never-invoked skills. Not a linter; usage evidence for the doctor. Bash invocation unconfirmed; the author runs it and pastes.
+- `claude plugin validate <path>`: structural schema check, no model spend. First choice.
+- `claude plugin eval . --json <file> --no-publish --max-cost-usd N`: runs without a user, `schemaVersion: 1` JSON, exits 0/1/2; spends model usage; needs a plugin manifest or skills-dir plugin (loose SKILL.md folders are not auto-detected). Behaviour evals only, opt-in with an explicit cost cap.
+Codex and Pi: still to inventory, with a positive control before recording "none".
+
+**Runtime diagnostics, Codex and Pi (probed locally 2026-10-27, codex-cli 0.164.0, pi 1.4.0).** The doctor treats every runtime alike: run what each ships, cheapest first, and report an unavailable tool as unavailable.
+- Codex `codex doctor --json`: runs without a user, `schemaVersion` JSON, `overallStatus` plus 21 checks (config.load, mcp.config, sandbox.*, state.*, installation, …). Health of the install, not of skill text.
+- Codex `codex debug prompt-input`: runs without a user, no model spend; JSON of the model-visible input, `AGENTS.md` and skills included. The direct evidence of what Codex actually loads, hence of shadowing and precedence: the doctor's best cross-runtime probe, and a candidate input for 1230.
+- Codex `codex review`: non-interactive reviewer, model spend; a decorrelated seat, not a diagnostic.
+- Pi: no doctor or validate command (the help lists all commands: install, remove, update, list, config, auth, mcp). Available: `pi list` (installed extensions), `pi auth` (provider readiness), `pi mcp` (servers); `pi --skill <path> -p --mode json` loads one skill headless at model cost. Record "no diagnostic" for skill text in Pi, against this command list as the control; web docs not yet checked.

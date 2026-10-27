@@ -20,3 +20,41 @@ Parent: 1229. `molt` acts on what `yawn` reports (1230). Decision per finding:
       (`rules/workflow.md`), otherwise recorded below it
 - [ ] Project edits go through a project branch, never the harness checkout
 - [ ] A finding already marked `ok (reasoned)` is left alone
+
+## Imagine (raid 2026-10-27)
+
+**Why now / premise.** Holds: `skills/yawn/SKILL.md` has no coherence check; the only check is the session-start prompt (`scripts/prompt-project-coherence.sh:40`) that 1232 removes, so molt's acting half must exist first. Sequenced behind 1230.
+
+**Simplest path.** Reuse the existing seam: yawn's `## Action plan` with `**fix-now**` / `**open-ticket**` / `**skip**` (`skills/yawn/SKILL.md:133-161`), which molt parses at step 2 and acts on in steps 3-5. No new script, no new interface; edit molt only. Step 4 gains one clause for coherence findings: redundant local copy → fix-now on the housekeeping branch from step 1; general fix → open-ticket in the harness repo, severity floor applied as step 4 already does; deliberate difference → write its reason beside it as a fix-now edit. 1230 emits `ok (reasoned)` as `ok`/`skip`, never into the plan, so "leave it alone" is free.
+
+**Antipatterns.** YAGNI: no per-finding decision engine, no `coherence` subcommand in `ticket-sweep.sh`; three sentences in step 4. Re-deriving: molt must not re-read local rules; 1230 tags each finding with kind and decision, molt routes. Ticket target: `tickets/erg new` in the project cwd files into the project; name the harness destination through `$IDH_ROOT` on each finding.
+
+**Criterion proposals.** (a) A deliberate-difference write-back is a fix-now committed on the housekeeping branch. (b) A test (step-text or fixture plan) showing a reasoned finding produces zero edits and zero tickets. (c) An automated sweep never writes into the harness checkout: it files through the harness's branch rule, or reports only.
+
+**Blind-spot pass (raid 2026-10-27).** Routes the finding record defined in 1230 (kind, files, instruction, verdict, disposition, destination); does not re-derive. `tests/test_yawn_molt_suggestion.py` pins the shared text with 1230.
+
+## Plan (raid 2026-10-27)
+
+Finding record (from 1230, assumed fields): `{kind, local_file, harness_file, instruction, verdict: ok|warn, disposition: delete-local|harness-ticket|annotate, destination: project|harness}`, JSON lines.
+
+PLAN WARN (deviates from Imagine "edit molt only"): molt is pure prose, so "an ok (reasoned) finding yields zero edits/tickets" cannot be tested without executable code; a grep on SKILL.md is tautological. Plan adds one ~40-line pure router, `skills/molt/coherence-route.py`, that molt calls; the model still performs the edits, the router only decides. Exit criteria unchanged.
+
+Actions
+1. Write the failing tests first (below), then `skills/molt/coherence-route.py`: stdin findings -> stdout plan in yawn's `**fix-now**` / `**open-ticket**` / `**skip**` shape. Rules: verdict ok -> nothing emitted (not even skip); warn+delete-local -> fix-now (project branch); warn+annotate -> fix-now "write reason beside <local_file>"; warn+harness-ticket -> open-ticket naming `$IDH_ROOT` destination; `--auto` (sweep) with destination harness -> report-only line, never a harness write. Unknown disposition -> skip with reason (never guess).
+2. `skills/molt/SKILL.md` step 2: add "coherence findings arrive as the 1230 records; pipe them through `python3 "$IDH_ROOT/skills/molt/coherence-route.py"`; do not re-read local rules". Step 4: one clause: harness-bound findings pass the severity floor (else summary only), are filed in the harness repo through its branch rule; project edits go on the step-1 `housekeeping-<date>` branch, never the harness checkout.
+3. `tests/test_molt_coherence_route.py` (behavioral, below). Extend `tests/test_yawn_molt_suggestion.py` with one assertion that molt SKILL.md names `coherence-route.py` and that yawn's three headings still appear once (shared contract with 1230).
+4. Run the adherence command; `tests/test_skill_seam.py` must pass (script reached via `$IDH_ROOT`).
+
+FIRST failing test: `test_ok_reasoned_finding_yields_empty_plan`. Fixture: stdin of two JSON lines, one `verdict: ok` with disposition `delete-local` (the strongest bait: if the router ignored verdict it would emit fix-now), one `warn`/`annotate`. Assertions: exit 0; output contains exactly one entry, for the warn finding; the ok finding's `local_file` appears nowhere in stdout. A wrong implementation that acts on ok fails; a stdin of only the ok line must print empty output.
+Further tests: warn+delete-local -> fix-now; warn+harness-ticket -> open-ticket with harness destination; `--auto` + harness -> no open-ticket heading, a report line; malformed JSON line -> nonzero exit (never silently dropped); empty stdin -> empty output.
+Antipattern scan: each test asserts on exact routed output for a fixture whose neighbour record would flip it (ok vs warn on the same disposition), so a router ignoring verdict, ignoring `--auto`, or collapsing dispositions fails. The step-text assertion in action 3 only guards wiring, not behavior, and is paired with the behavioral tests, not relied on.
+
+Dependencies: Blocked-by 1230 (record field names; adjust the fixture keys if 1230 renames them, build against the shared record, not yawn prose). Not 1232.
+Files touched: skills/molt/coherence-route.py (new), skills/molt/SKILL.md, tests/test_molt_coherence_route.py (new), tests/test_yawn_molt_suggestion.py.
+
+## Feasibility (raid 2026-10-27): WARN
+- Canonical record, matching 1230, in JSON lines: `kind` (shadowing|contradiction|repeat), `local_file`, `harness_file`, `instruction`, `verdict` (`ok`|`warn`, never the string "ok (reasoned)"), `reason` (str|null), `disposition` (delete-local|annotate|harness-ticket|null), `destination` (project|harness). Skip lines `{"status":"skip","reason":...}` must be passed through as skip, not treated as malformed. Null disposition means skip with a reason.
+- Simplicity verdict: the separate router is not justified. Dispositions are assigned by yawn's judged pass, so a router tests a 4-row mapping, not the criterion. yawn's Action plan already classifies into fix-now/open-ticket/skip, and molt steps 3-5 already act on it. Keep the Imagine path (prose in molt step 4). If a behavioral test is required, add `--plan` to 1230's `scripts/project_shadow.py` (one file, one test file, ok-vs-warn twin) rather than a new `skills/molt/coherence-route.py`.
+- `--auto` has no source: molt has no sweep flag. If kept, step 2 must say that molt passes it when `CLAUDE_NIGHT_SWEEP` is set (the existing sweep marker, on-start-context.sh:14).
+- The planned "yawn headings appear once" assertion duplicates `test_contract_headings_untouched`, so drop it and add only the molt wiring line. 1230 leaves this test file untouched.
+- A harness ticket filed interactively still goes on a harness branch/worktree (rules/git.md), never `tickets/erg new` in the harness main checkout. Say so in step 4. No keys or network needed.
