@@ -25,8 +25,7 @@ Arguments are `<ticket-id> [inline]`; `$ID` is the ticket id.
 - Without `inline`, hand the ticket to one background agent with the coder profile
   (`agents/coder.md`) whose first action is
   loading the hunt skill with `$ID inline` as its argument; the prompt holds that and
-  nothing more, since the agent loads the phases itself. Report the handoff and end the turn;
-  the agent's final report carries any proposal back to the author, a returned monster included.
+  nothing more, since the agent loads the phases itself. Report the handoff and end the turn.
   Choose the model of each launched worker per launch, from the `route` skill grid
   (`skills/route/SKILL.md`); seats that must be independent follow
   `skills/route/references/decorrelation.md` ("The launch line").
@@ -46,25 +45,34 @@ its **Relevant files**, then decide what the ticket is and what it takes:
   `rules/workflow.md` § Escalation protocol (advisor model first) before executing.
 - **Already met**: the plan is to record evidence, not to build. Announce
   `[Plan → Execute]`, enter the worktree (§ Worktree), `${ERG:-tickets/erg} log $ID "already met: <evidence>"`,
-  commit, skip the rest of Execute, and go to Verify's Prepare to land.
+  commit, skip the rest of Execute, and go to Verify's Rebase, then Prepare to land.
 - **Premise expired**: check what changed on **Relevant files** since the
   ticket's `Created` date (`git log --since=<Created> -- <files>`). A change that
   voids the premise is settled by the same escalation protocol; confirmed
   obsolete, log `"obsolete: <commit or change>"` and land as for already met.
   Still valid but worded for an old tree: note it in the plan; the ticket is
   updated on the branch once Execute has entered the worktree.
-- **Too big or multipart**: the monster-ticket signals of `rules/workflow.md`
-  § Ticket discipline for multi-PR work, or parts that would land in separate
-  merges. Do not split it yourself: return it to whoever launched the hunt,
-  flagged as a likely monster, with a proposed decomposition (tracker,
-  children sized to one sign-off unit, wave order). The caller
-  decides: the author approves, reshapes, or says go as one; a raid splits it
-  by its own monster checklist and runs the children. Execute only on "go as one".
+- **Surprise**: a route its author would not expect (another deliverable
+  kind, work beyond **Relevant files**, a dropped or reinterpreted exit
+  criterion, anything irreversible or outward-facing) is asked before
+  executing, by the same escalation protocol.
+- **Too big or multipart** (`rules/workflow.md` § Ticket discipline for
+  multi-PR work): return it, unsplit, to whoever launched the hunt with a
+  proposed decomposition; execute only on "go as one". Found mid-Execute:
+  commit the partial branch (push it where there is a forge), name it in the proposal, unlock the
+  worktree and leave it for the caller.
 - **Otherwise**: choose the route. Name the deliverable's kind (code, prose,
   data, configuration, documentation), the work it takes, and the evidence that
   will show each exit criterion met. Code earns tests; prose, data and
   configuration earn the check that fits them (a render, a run, a read of the
   diff), never tests pinning their wording.
+
+Check for work in flight on **Relevant files**: open merge requests touching
+them (the forge's list with files; none without a forge) and locked worktrees
+(`git worktree list`). Name any overlap in the plan and coordinate (a merge
+request comment, or a session message where the runtime allows); three or
+more on one file take a coordination change first (`rules/workflow.md`
+§ Delegation).
 
 Close the phase by announcing the plan in a few lines: the route, why it beats
 the obvious alternative, and the evidence Verify will look for. The
@@ -112,27 +120,29 @@ name and see each fail for the expected reason; implement until they pass,
 rerunning them by name as the loop gate. For any other deliverable, do the work
 and produce the evidence the plan named.
 
-When the work shows the plan was wrong, replan and announce why; a ticket that
-proves to be several goes back up as in Plan.
+When the work shows the plan was wrong, replan and announce why.
 
 ## Verify
 
+- **Rebase** onto the base branch (`<base>`: `origin/main`, else `main`;
+  `rules/git.md` § Merging) before any gate.
 - **Self-gate.** Run the verify-adherence skill on the branch. Fix each mechanical
   blocker in place and run it again, up to 3 times. Escalate instead of landing
   when a blocker needs design judgment, the third run still fails, or the skill
   errors or returns nothing usable.
-- **Prepare to land.** Rebase onto the base branch (`<base>`: `origin/main`,
-  else `main`; `rules/git.md` § Merging),
-  then run the project's fast test tier once (Python: `make check-fast`,
-  `rules/coding-python.md` § Testing). The scoped gate (`rules/workflow.md`
-  § Check scope) or the full one runs at merge, on the merge candidate.
+- **Prepare to land.** Run the project's lint and fast test tier once (Python:
+  `make lint` then `make check-fast`, `rules/coding-python.md` § Testing). The
+  scoped gate (`rules/workflow.md` § Check scope) or the full one runs at
+  merge, on the merge candidate.
 - **Land by the project's route**, read from its `AGENTS.md` or `CLAUDE.md`,
   never assumed. With a forge: push with lease and open a merge request whose
   description carries the close claim `**Ticket:** tickets/<ticket file>`, then
   wait for CI where it runs on the branch; `/merge` closes the claimed ticket.
   Without one there is no claim to execute; close it on the branch yourself:
   `${ERG:-tickets/erg} close $ID "<reason>"`, then `${ERG:-tickets/erg} archive $ID || true`,
-  stage `tickets/` and commit `ticket($ID): close and archive`. Nothing is pushed.
+  stage narrowly as `/merge` step Close does
+  (`git add -u tickets/ && git add tickets/closed/<id>-*.erg`), and commit
+  `ticket($ID): close and archive`. Nothing is pushed.
   Either way the merge itself is the caller's, by the project's recipe.
 - **Review.** Skip when
   `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base <base> --head HEAD`

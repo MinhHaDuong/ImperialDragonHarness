@@ -5,7 +5,8 @@
     "command": "\"$HOME/.local/bin/idh-hook\" statusline.sh"
   },
   "env": {
-    "BASH_ENV": "$HOME/.local/lib/idh/bash-env.sh"
+    "BASH_ENV": "$HOME/.local/lib/idh/bash-env.sh",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "3"
   },
   "permissions": {
     "allow": [

@@ -243,7 +243,10 @@ run. (A prose paraphrase drifts: the contract then lives in prompt-writing memor
 instead of the skill.) The agent lands its branch as hunt's Verify phase
 dictates: a merge request on a forge, a ready-to-merge branch without one. An agent that returns its ticket as a likely monster
 brings a proposed decomposition instead: apply the monster checklist to it,
-file the split, and schedule the children in a later wave.
+file the split, and schedule the children in a later wave. A partial branch it
+pushed is named in the split for the child that inherits it; its unlocked
+worktree is removed with the wave's. No later wave left: report the split to
+the author instead.
 
 Wait for wave to complete.
 
@@ -268,7 +271,8 @@ Phase 7 on its mechanical checks. Everything below is the full tier.
 `/verify-gate` on the head it reviewed. Hunt's Verify phase already ran gaze and
 fixed its findings, so the raid reads that record first and re-runs `/gaze`
 only when it is missing, ESCALATE, or stale against the tip
-(`skills/merge/SKILL.md` § Gating tiers); a second review of a head gaze
+(`skills/merge/SKILL.md` § Gating tiers, which also counts a `seats:
+self-only` record as missing); a second review of a head gaze
 already reviewed buys nothing and costs a full gaze run. Gaze reviews and
 never returns APPROVED; the gate rules APPROVED / REROLL / ESCALATE /
 NEEDS-AUTHOR. The orchestrator itself

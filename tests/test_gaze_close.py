@@ -140,3 +140,24 @@ def test_preexisting_untracked_primary_file_is_not_contamination(tmp_path):
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], caller, env)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "clean" in r.stdout
+
+
+def test_primary_root_of_a_repo_nested_under_a_worktree_path(tmp_path):
+    """A repo whose own path holds `/.claude/worktrees/` is its own primary.
+
+    Hunt puts TMPDIR in `<primary>/.claude/worktrees/<name>/.tmp`; cutting the
+    toplevel at the first such segment resolved a fixture repo there to the
+    outer checkout, and gaze_setup made `review-<pr>` in the real repository.
+    """
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(CLOSE).parent))
+    import gaze_close
+
+    nested = tmp_path / ".claude" / "worktrees" / "t1-1" / ".tmp" / "fixture"
+    nested.mkdir(parents=True)
+    git(nested, "init", "-q")
+    assert gaze_close.primary_root(cwd=nested) == nested.resolve()
+    git(nested, "commit", "-q", "--allow-empty", "-m", "base")
+    git(nested, "worktree", "add", "-q", str(nested / ".claude" / "worktrees" / "x"))
+    assert gaze_close.primary_root(cwd=nested / ".claude" / "worktrees" / "x") == nested.resolve()

@@ -19,7 +19,9 @@ For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$
 **Input.** A PR number, then optional free text saying what to verify and
 why (`verify <what> because <why>`), read leniently. With none, the what is the
 whole merge request against its ticket's exit criteria. Without a PR number,
-return ESCALATE with reason "no PR argument".
+return ESCALATE with reason "no PR argument". Gaze resolves the forge from its
+cwd, so launch it from the PR's repository; a forge-less project has no PR
+number and reviews by hunt's reviewer seats on the branch diff (ticket 1252).
 
 ## Invariants
 
@@ -115,6 +117,15 @@ No retry: a worker that timed out or could not be reached is a deviation.
   any simplify must-fix.
 - `REVIEWED`: none of the above, and the what covered.
 
+Whatever the result, say who reviewed: `seats: self-only` when no item but
+`self` has a report, else `seats: panel` (a script check counts: its evidence
+is not gaze's judgment). This is the one definition. A self-only result
+is the caller reviewing its own work, so the reuse rule
+(`skills/merge/SKILL.md` § Gating tiers) counts it, and a record with no
+`seats:` line, as no record. Claude Code's nesting cap is pinned
+for gaze's seats in `settings.shared.json`; Codex and Pi (`allowed_subagents`)
+need their own equivalent, or fall back to `seats: self-only`.
+
 ### 5. Output
 
 Run the cleanup (`references/cleanup.md`) first, since it can downgrade the
@@ -123,6 +134,7 @@ full template is `references/output.md`:
 
 ```yaml
 result: REVIEWED | FINDINGS | ESCALATE
+seats: panel | self-only
 reviewed_head_sha: <full SHA read from the review worktree after the pass>
 intent: <verbatim | default>
 review plan: <method; items as name (model, family); budget>
