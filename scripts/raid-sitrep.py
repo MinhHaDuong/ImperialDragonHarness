@@ -111,7 +111,7 @@ def main(argv: list[str]) -> int:
         for tree in worktrees():
             gate = read_marker(marker_path(tree))
             if gate is not None:
-                status = classify(time.time(), time.time(), gate, 600, int(gate_max))
+                status = classify(now, now, gate, 600, int(gate_max))
                 if status.startswith("GATE"):
                     out.append(f"gate heartbeat: {status} in {tree.name}")
     except (OSError, RuntimeError, subprocess.SubprocessError) as error:

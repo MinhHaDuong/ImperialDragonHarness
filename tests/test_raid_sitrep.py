@@ -173,3 +173,28 @@ def test_skill_arms_and_disarms_cadence():
     assert "harness-extension-point" in text[section:wrap]
     assert "disarm" in text[wrap:].lower()
     assert 'scripts/raid-sitrep.py' not in text.replace('$IDH_ROOT/scripts/raid-sitrep.py', '')
+
+
+def gate_run(repo, tmp_path, monkeypatch, capsys, heartbeat):
+    log_with(tmp_path, monkeypatch, done_log(2).replace("step=merged", "step=gate_round_1"))
+    monkeypatch.setattr(sitrep, "worktrees", lambda: [repo])
+    monkeypatch.setattr(sitrep, "read_marker", lambda _path: (float(NOW) - 100, heartbeat))
+    return run(capsys, "--no-forge")[1]
+
+
+def test_gate_heartbeat_fresh_uses_now_value(repo, tmp_path, monkeypatch, capsys):
+    out = gate_run(repo, tmp_path, monkeypatch, capsys, float(NOW) - 5)
+    assert "gate heartbeat: GATE_RUNNING" in out
+
+
+def test_gate_heartbeat_stale_is_not_reported(repo, tmp_path, monkeypatch, capsys):
+    out = gate_run(repo, tmp_path, monkeypatch, capsys, float(NOW) - 100)
+    assert "gate heartbeat" not in out
+
+
+def test_raid_skill_arms_cadence_before_phase_2_and_disarms_before_lair():
+    text = (SCRIPTS.parent / "skills" / "raid" / "SKILL.md").read_text()
+    arm = text.index("write `RAID_START` and arm the sitrep cadence")
+    assert text.index("## Phase 1: Select") < arm < text.index("## Phase 2: Imagine")
+    disarm = text.index("Disarm the sitrep cadence")
+    assert disarm < text.index("Do NOT run `/lair`")

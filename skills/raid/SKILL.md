@@ -50,6 +50,9 @@ completed last. The checkpoint is the repo, not session state.
 
 ## Phase 1: Select
 
+At raid start, before selecting, write `RAID_START` and arm the sitrep cadence
+as `## Sitrep cadence` below describes.
+
 If $ARGUMENTS is "all open": read open tickets from git-erg `tickets/` or forge.
 Otherwise: parse comma-separated ticket IDs.
 
@@ -193,7 +196,7 @@ below):
 Annotate tickets with PASS/WARN/BLOCK. Commit annotations.
 
 After committing the final annotation, run `git pull --rebase origin main`, then
-record `WAVE_BASE="$(git rev-parse HEAD)"` in the raid log. Per-phase annotation
+record `WAVE_BASE="$(git rev-parse HEAD)"` in the raid log (fixed path and format: `## Sitrep cadence`). Per-phase annotation
 commits stay as they are — WAVE_BASE is simply their last commit — so every wave
 ticket annotation is an ancestor of it and all wave branches fork from one
 shared, mergeable base. Patch-equivalent commits are not merge-equivalent: a
@@ -468,9 +471,8 @@ or the failing read first.
    the steps run, and print `python3 "$IDH_ROOT/scripts/step_clock.py" table`
    with the rows on stdin: per-step durations, the total from first gaze to MERGED, and the
    slowest step. A step with no clock reading is listed as `not measured`.
-4. Do NOT run `/lair`.
-5. Disarm the sitrep cadence (kill the pending background `sleep 900` command) after the last sitrep.
-
+4. Disarm the sitrep cadence (kill the pending background `sleep 900` command) after the last sitrep.
+5. Do NOT run `/lair`.
 
 ## Circuit breakers
 
