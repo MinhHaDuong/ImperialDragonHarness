@@ -1,0 +1,47 @@
+%erg 0.1
+Title: Harness doctor and project coherence: tracker
+Created: 2026-10-27
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-27T05:45Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Two scopes were conflated. Project coherence (do a project's local rules and
+skills contradict or shadow the harness, and why) belongs to the project-level
+skills `yawn` (report) and `molt` (act). Whole-harness linting belongs to a
+doctor that runs only inside the harness repo, author-called. Running a
+harness-wide model pass at every session start in every project is drift.
+
+Today neither `yawn` nor `molt` checks coherence; the only check is the model
+prompt that `scripts/on-start-context.sh` emits through
+`scripts/prompt-project-coherence.sh` on every session start. No mechanical
+lint covers skill text beyond frontmatter and descriptions; the former
+`skill-doctor` (removed, ticket 0885) mined git history, not skill text.
+
+Author's checklist for skill text, carried by 1233 and 1234:
+- contradiction within or between skills;
+- a skill presuming or paraphrasing what another skill does or owns;
+- historical justifications;
+- ticket numbers or project names;
+- SKILL.md over 150 lines (warning, not a hard fail, until the author decides
+  otherwise: `rules/authoring-skills.md` splits by exclusivity, not length);
+- long Bash or Python heredocs in skill text (scripts belong in `scripts/`).
+
+## Children
+- 1230 yawn reports project-versus-harness contradiction, shadowing, repeats
+- 1231 molt resolves those findings (blocked by 1230)
+- 1232 session start drops the model coherence prompt (blocked by 1230, 1231)
+- 1234 skill-text lint test in the harness gate
+- 1233 harness-doctor skill, harness-only (blocked by 1234)
+
+## Exit criteria
+- [ ] Children closed or consciously dropped
+- [ ] Integration review: a `yawn` in one project with local rules (arena)
+      reports its reasoned override of the merge-by-PR rule as reasoned, not
+      as a conflict; `/harness-doctor` in the harness flags
+      `skills/trace-doctor/SKILL.md` (known positive)
+- [ ] No window without a coherence check: 1232 lands last
+- [ ] Relation to tracker 1127 (skills audit) recorded: 1234's line-count
+      warnings are the worklist for further splits after 1131 (closed)
