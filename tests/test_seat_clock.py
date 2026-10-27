@@ -1,12 +1,11 @@
 """A review seat ends within its cap, and every manifest seat reports a wall time or a failure (ticket 1099)."""
 
+import json
 import os
 import subprocess
 import sys
 import time
 from pathlib import Path
-
-import json
 
 import pytest
 
