@@ -39,8 +39,9 @@ lines are built here and checked by `panel-manifest-check.py` before anything
 is written, so a manifest the plan check cannot parse is never produced. It
 also refuses (ticket 1287) a plan whose every item is self, unless `--no-door`
 names the doors tried, and, when the host's consent file (`gaze_seat.py`)
-names a family other than `--home-family`, a plan with no item of such a
-family (case-insensitive), unless `--no-cross-family` gives the reason; either
+names a provider other than `--home-family`, a plan with no item of another
+family billed by such a provider (its family, or the `<provider>/` prefix of
+its model, case-insensitive), unless `--no-cross-family` gives the reason; either
 flag becomes a header line. Exit 2 and no file on a refused plan.
 """
 
@@ -212,11 +213,20 @@ def cross_family_problems(items: list[list[str]], home_family: str, no_door: str
     gaze_seat = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(gaze_seat)
     path = gaze_seat.config_path()
-    other = [f for f in gaze_seat.consented(path) if f.lower() != home_family.strip().lower()]
-    planned = {item[2].strip().lower() for item in items if len(item) > 2 and not is_self(item)}
-    if other and not planned & {f.lower() for f in other} and not (no_cross_family or '').strip():
+    home = home_family.strip().lower()
+    other = [f for f in gaze_seat.consented(path) if f.lower() != home]
+    allowed = {f.lower() for f in other}
+
+    def cross(item: list[str]) -> bool:
+        # Decorrelation by the family label; consent by the family or the `<provider>/` that bills it.
+        family, model = item[2].strip().lower(), item[1].strip()
+        provider = model.split('/', 1)[0].lower() if '/' in model else ''
+        return family != home and (family in allowed or provider in allowed)
+
+    if other and not any(cross(item) for item in items if not is_self(item)) \
+            and not (no_cross_family or '').strip():
         problems.append(f'this host consents to cross-family spend on {", ".join(other)} ({path}) and no '
-                        f'item is of that family; plan a headless seat of {other[0]} via gaze_seat.py, '
+                        f'seat of another family is billed by it; plan a headless seat of {other[0]} via gaze_seat.py, '
                         'or pass --no-cross-family "<reason>"')
     return problems
 

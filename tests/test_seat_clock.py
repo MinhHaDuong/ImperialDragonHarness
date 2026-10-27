@@ -261,3 +261,16 @@ def test_seats_derives_panel_only_from_a_non_self_report(tmp_path):
     assert run('seats', str(manifest.parent)).stdout.strip() == 'seats: self-only'
     (manifest.parent / 'redteam.md').write_text('worker: model=o · family=openai\nverdict: clear\n')
     assert run('seats', str(manifest.parent)).stdout.strip() == 'seats: panel'
+
+
+def test_consent_follows_the_billing_provider_not_the_family_label(tmp_path):
+    """GLM served through a consented Mistral provider is a cross-family seat (adherence finding)."""
+    glm = ('xfam', 'mistral/glm-5', 'GLM', 'headless pi')
+    result, _ = plan(tmp_path, SELF, glm, providers=['Mistral'])
+    assert result.returncode == 0, result.stderr
+    unbilled = ('xfam', 'glm-5', 'GLM', 'headless pi')  # no consented provider bills it
+    result, manifest = plan(tmp_path, SELF, unbilled, providers=['Mistral'])
+    assert result.returncode == 2 and not manifest.exists()
+    home = ('xfam', 'anthropic/claude-x', 'anthropic', 'headless pi')  # consented, but the home family
+    result, manifest = plan(tmp_path, SELF, home, providers=['Mistral', 'anthropic'])
+    assert result.returncode == 2 and not manifest.exists()

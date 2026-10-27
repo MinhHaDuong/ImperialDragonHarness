@@ -42,8 +42,8 @@ for "no door launched", that is, every door tried and none started.
 
 `plan-write` enforces both rules. It refuses a plan whose every item is self
 unless `--no-door "<doors tried>"` names them, and, when the host consents to
-a family other than `--home-family`, a plan with no item of a consented family
-unless `--no-cross-family "<reason>"` gives one. It reads consent from the
+a provider other than `--home-family`, a plan with no seat of another family
+billed by such a provider (its family, or its model's `<provider>/` prefix) unless `--no-cross-family "<reason>"` gives one. It reads consent from the
 host's file, not from `--spend`. Either flag becomes a header line that the
 plan check reports as a deviation. A cross-family seat that then files no
 report (timed out, refused, `NOT-RUN:`) fails the plan check like any missing
