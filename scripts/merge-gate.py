@@ -1008,7 +1008,7 @@ def cmd_run_after(args):
     command = f"merge-gate run-after --remote {args.remote} --ref {args.ref}"
     if not single_line(actor) or not single_line(command):
         raise ValueError("actor or command holds a line break or control character")
-    forge = raid_land().GhForge() if args.open_ticket else None
+    forge = raid_land().forge.GhForge() if args.open_ticket else None
     code = run_after(args.remote, args.ref, actor, command, forge)
     return PASS if code == BUSY else code
 

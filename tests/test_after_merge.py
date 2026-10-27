@@ -299,7 +299,7 @@ def test_landing_through_raid_land_starts_the_runner_through_the_hook(tmp_path, 
     (work / "hooks" / "reference-transaction").write_bytes((ROOT / "hooks" / "reference-transaction").read_bytes())
     (work / "hooks" / "reference-transaction").chmod(0o755)
     (work / "scripts").mkdir()
-    for name in ("merge-gate.py", "raid_land.py", "step_clock.py"):
+    for name in ("merge-gate.py", "raid_land.py", "forge.py", "step_clock.py"):
         (work / "scripts" / name).write_bytes((ROOT / "scripts" / name).read_bytes())
     git(work, "add", "-A")
     git(work, "commit", "-q", "-m", "gated tree with the hook")
@@ -365,9 +365,10 @@ class MergingForge:
 
     def resolve(self, pr):
         info = self.prs[pr]
-        return {"state": "MERGED" if pr in self.merged else "OPEN", "isDraft": False,
-                "headRefName": info["branch"], "baseRefName": info["base"],
-                "headRefOid": self._head(pr), "body": info["body"]}
+        # The record forge.GhForge.resolve returns (ticket 1272), not gh's raw JSON field names.
+        return {"id": pr, "state": "MERGED" if pr in self.merged else "OPEN", "draft": False,
+                "branch": info["branch"], "base": info["base"], "head": self._head(pr),
+                "mergeable": "MERGEABLE", "body": info["body"], "claims": []}
 
     def ready(self, pr):
         pass
@@ -461,7 +462,7 @@ def test_an_unlanded_red_branch_dedupes_and_landing_is_bounded(red_repo, module,
     work = red_repo
     merge_branch(work, "breaker", {"BROKEN": "planted failure"})
     lander = module.raid_land()
-    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch", refuse=lander.MergeRefused)
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch", refuse=lander.forge.MergeRefused)
     assert run_after_in_process(module, forge) == module.FAIL
     merges = [c for c in forge.calls if c[0] == "merge"]
     assert 1 <= len(merges) <= module.RED_RETRIES, forge.calls
