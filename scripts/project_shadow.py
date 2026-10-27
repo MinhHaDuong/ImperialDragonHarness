@@ -140,7 +140,14 @@ def main(argv: list[str]) -> int:
                     "reason": "project is the harness (or a worktree of it); "
                               "the harness is not compared with itself"}]
     else:
-        records = scan(project)
+        try:
+            import skill_frontmatter  # noqa: F401  (needs PyYAML)
+        except ImportError as exc:
+            records = [{"status": "skip",
+                        "reason": f"PyYAML unavailable ({exc}); install it "
+                                  "to compare skill names"}]
+        else:
+            records = scan(project)
     for rec in records:
         print(json.dumps(rec))
     return 0

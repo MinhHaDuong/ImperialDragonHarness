@@ -143,3 +143,16 @@ def test_symlinked_roots_yield_one_record(tmp_path):
     (tmp_path / ".pi").mkdir()
     (tmp_path / ".pi/skills").symlink_to(tmp_path / ".agents/skills")
     assert len(run(tmp_path, tmp_path)) == 1
+
+
+def test_missing_pyyaml_is_a_skip_not_a_traceback(tmp_path):
+    skill(tmp_path, ".claude/skills", "yawn")
+    code = ("import sys, runpy; sys.modules['yaml'] = None; "
+            f"sys.argv = [{str(SCRIPT)!r}, {str(tmp_path)!r}]; "
+            f"runpy.run_path({str(SCRIPT)!r}, run_name='__main__')")
+    env = child_env()
+    env["GIT_CEILING_DIRECTORIES"] = str(tmp_path.parent)
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True,
+                         text=True, env=env)
+    (rec,) = [json.loads(line) for line in out.stdout.splitlines() if line]
+    assert rec["status"] == "skip" and "PyYAML" in rec["reason"]
