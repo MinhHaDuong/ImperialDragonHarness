@@ -1,0 +1,22 @@
+%erg 0.1
+Title: Installer links curated bin/ commands onto PATH (1249 child)
+Created: 2026-10-27
+Author: reviewer
+Closed: autoclosed — PR #1751
+
+--- log ---
+2026-10-27T11:47Z reviewer created
+2026-10-27T11:47Z reviewer closed — autoclosed — PR #1751
+
+--- body ---
+## Context
+Child of tracker 1249, split on 2026-10-27 by the verify-gate of PR #1751 (round 1 REROLL: 1249
+bundled two sign-off units, the installer and doifetch's adoption, which needs host doudou).
+
+## Exit criteria
+- [x] `bin/idh install` links every executable `bin/*` command onto PATH, refusing a name that
+      collides with an existing command and naming it; a test shows both (tests/test_idh_lifecycle.py).
+- [x] `bin/README` states the bin/scripts split in two lines.
+- [x] The harness gate passes.
+
+Related: [[1249]].
