@@ -324,6 +324,15 @@ budget binds the merge-permission-denial recovery (§ Merge-permission denial):
 once two gate rounds are posted on the PR, that recovery parks the PR and
 escalates to the author instead of sending it back through Phase 6.
 
+**No forge.** A repository with no `origin` remote runs Phases 6-7 on notes
+and the local gated merge (flow F2, `conception/2026-10-27-review-merge-flows.md`),
+the same steps through the helpers, never raw git: the request is
+`review_notes.py open --branch <branch> --base-ref <base>`; gaze takes
+`branch:<branch>` and its `answer` entry is what `review_notes.py coverage|gate <id> HEAD`
+reads; verify-gate rules through `gate` and appends its ruling with `verdict`
+(`skills/verify-gate/SKILL.md`). With `origin` and no `gh`, nothing lands: the PR
+waits (`raid_land.py` refuses, exit 1), the local merge is never the fallback.
+
 **Fix-and-regate.** On `FINDINGS` or a round-1 REROLL, follow
 `references/fix-and-regate.md`: the fix agent's rules, the re-review or
 re-gate, and the loop's breakers.
@@ -407,6 +416,12 @@ For each eligible PR, sequentially within the wave:
    prescribes (one bounded background command) and move on to the next PR
    meanwhile; a PR still pending when that wait ends is listed as queued in the
    briefing, not as merged.
+   **No forge:** the call is the same with `<pr>` = `branch:<branch> [base=<ref>]`. It is a
+   `--no-ff` merge pinned by head OID, the base moved under the main-update guard, the gate record
+   in this repository's `refs/notes/gate`; nothing is pushed (no `origin`), and the repository's own
+   main is canonical. Step 1 and the `origin/<branch>` head equality below do not apply (there is no
+   `origin`); `raid_land.py` checks the head against the ruled tip locally. Claimed tickets must be closed on the branch beforehand; the read-back is the
+   `MERGED <oid> -` that `raid_land.py` reads back.
 5. If merge fails (conflict, CI regression), or the read-back is CLOSED, or OPEN on a gated base, or unreadable, ESCALATE (an OPEN queued merge on an ungated base is pending, step 4) — leave a PR comment and move to the next PR.
    A *permission denial* on the merge call is not a merge failure — handle it
    per § Merge-permission denial below, not by ESCALATE.
