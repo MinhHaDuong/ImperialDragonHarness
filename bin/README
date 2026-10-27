@@ -1,2 +1,3 @@
 bin/ holds curated public commands: stable names, `--help`, meant for the operator's shell or other projects; `idh install` links each onto PATH (~/.local/bin), refusing a name already taken.
-scripts/ is internal: hooks, gates and helpers, reached by path through $IDH_ROOT/scripts/ and never put on PATH.
+Every command here carries the `idh-` prefix (`idh` itself is the exception) so none collides with a user's own command; a bare name is not accepted. `idh install` retires the unprefixed links it once made and never touches a command of the user's own.
+scripts/ is internal: hooks, gates and helpers, reached by path through $IDH_ROOT/scripts/ and never put on PATH. Heavy measurements for the harness-doctor, such as `scripts/mammoth-audit.py`, live there.

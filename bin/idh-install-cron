@@ -3,7 +3,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-SNAPSHOT_CMD="$SCRIPT_DIR/snapshot"
+SNAPSHOT_CMD="$SCRIPT_DIR/idh-snapshot"
+OLD_CMD="$SCRIPT_DIR/snapshot"  # the pre-prefix name (1264): repoint, never duplicate
 CRON_ENTRY="55 23 * * * $SNAPSHOT_CMD"
 
 # Check if already installed
@@ -13,6 +14,6 @@ if crontab -l 2>/dev/null | grep -qF "$SNAPSHOT_CMD"; then
     exit 0
 fi
 
-# Append to existing crontab
-(crontab -l 2>/dev/null; echo "$CRON_ENTRY") | crontab -
+# Append to existing crontab, dropping an entry that still names the old command
+(crontab -l 2>/dev/null | grep -vF "$OLD_CMD" || true; echo "$CRON_ENTRY") | crontab -
 echo "Installed: $CRON_ENTRY"

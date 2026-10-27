@@ -17,7 +17,7 @@ REPO = Path(__file__).resolve().parents[1]
 
 # Where harness code lives. adapters/ joined the list when it gained its
 # first python (ticket 0802); until then the guard's silence about it could
-# not be told from a pass. hooks/ and bin/ host python too (bin/usage-report
+# not be told from a pass. hooks/ and bin/ host python too (bin/idh-usage-report
 # is an extensionless python-shebang program), so a scan limited to scripts/
 # and tests/ would miss real consumers. skills/ bundles executable Python too
 # (ticket 0950). projects/ stays out intentionally: its Python files are
