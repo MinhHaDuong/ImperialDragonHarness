@@ -161,3 +161,11 @@ weakens the hub argument less than it seems: such a session could not reach `/sr
 `idh.mergeRoute = forge | local` (default `forge`), visible in `git config` like `idh.mainGuard`; an environment
 variable could be inherited silently by a subshell or CI job, the wrong property for a deliberate choice. Review on
 notes needs no setting. The fix in §3 renames the reader in scripts/forge.py and drops `IDH_FORGE`.
+
+## Author's ruling (2026-10-27)
+Accepted: **F1 is the default; F2 is for repositories without an upstream.** The route is read off the repository,
+not set: with a remote named `origin`, landing is F1 only (forge PR; if `gh` or the forge is unavailable, the landing
+refuses and waits, never lands locally); with no `origin` remote, landing is F2 (local gated merge; the repository's
+own main is canonical). This supersedes the `idh.mergeRoute` switch proposed above: there is no setting. The §3 fix
+becomes: auto selects the local merge only when the repository has no `origin` remote, and otherwise refuses without
+`gh`. F3 and F4 stay rejected.
