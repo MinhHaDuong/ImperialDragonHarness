@@ -6,7 +6,8 @@
 A review unit is (branch, base ref, head OID). `resolve` takes a request number
 (gh backend) or `branch:<name> [base=<ref>]` (none backend) and returns one record:
 id, branch, base, head, state, mergeable, draft, body, claims; the none backend adds
-review_id, the latest review naming the branch in refs/notes/review (ticket 1273), or None. Backend choice:
+review_id, the latest review naming the branch in refs/notes/review (ticket 1273), or None,
+read after a fetch from the remote; an unreadable remote raises (ticket 1281). Backend choice:
 `--forge`; `auto` is gh when `gh` is on PATH and the ref is a bare number. There is no environment
 switch: the landing route is read off the repository (ticket 1280, conception/2026-10-27-review-merge-flows.md).
 
@@ -233,18 +234,20 @@ class NoneForge:
                 "draft": False, "body": "", **_claims(trailers), "review_id": self._review_id(branch)}
 
     def _review_id(self, branch: str) -> str | None:
-        """The review of the latest request naming `branch` in refs/notes/review (ticket 1273)."""
+        """The review of the latest request naming `branch` in refs/notes/review (ticket 1273),
+        after a read-only refresh from the remote (ticket 1281: a fresh clone finds the
+        published review; an unreadable remote is a refusal, never "no review")."""
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "review_notes", os.path.join(os.path.dirname(os.path.abspath(__file__)), "review_notes.py"))
         rn = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(rn)
         try:
-            return rn.find(self.cwd or ".", branch)
+            return rn.resolve(self.cwd or ".", branch)
         except rn.Tamper as exc:  # surfaced, never read as "no review"
             raise ForgeRefusal(f"refs/notes/review: TAMPER: {exc}") from exc
-        except rn.Refusal:
-            return None
+        except rn.Refusal as exc:  # an unreadable store is not an empty one (ticket 1281)
+            raise ForgeRefusal(f"refs/notes/review unreadable: {exc}") from exc
 
     def comments(self, ref: str, reviews: bool = True) -> list[dict]:
         return []

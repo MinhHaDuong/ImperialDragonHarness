@@ -17,9 +17,19 @@ Transport (spec §2). `setup` writes the two fetch refspecs and the cat_sort_uni
 merge strategy (no push refspec, no rewriteRef); with no remote it is a no-op and
 everything stays local. `sync` = fetch into refs/notes/origin/review, fast-forward
 or `notes merge -s cat_sort_uniq`, push, at most 5 attempts; never forced.
-`publish` = sync, refetch, then the remote tip must equal the local one and every
-named entry must be readable from it: prints done-unpublished | published |
-retrievable and exits non-zero below retrievable.
+`publish` = sync, refetch, then the remote tip must equal the local one, every
+named entry must be readable from it, and the review-head of each named entry's
+request must exist on the remote naming that request's head (never forced; a
+missing or moved one is reported on stderr): prints done-unpublished | published |
+retrievable and exits non-zero below retrievable. `refresh` = the reader half:
+fetch, check and integrate, no push; `resolve` (CLI `find`) refreshes before
+looking a branch up, so a fresh clone after setup + `git fetch` finds the
+published review, and an unreachable remote is a refusal, never "no review".
+
+Identity (ticket 1281). `add --request <request_id>` binds an entry to the
+request its run was launched on; without it, an entry on a head other than the
+latest request's is refused once the review has several requests, never bound
+to a later round.
 
 Integrity (spec §6a, 1273 log). Each sync compares the remote with what this
 clone last saw (<git-common-dir>/idh-review-seen.json): a remote tip that does
@@ -42,7 +52,7 @@ never past a recorded ESCALATE verdict. `verdict` appends the gate's ruling
 with the round it derives itself, only on an admitted head: never a third
 round, never a REROLL on round 2; `add` refuses `verdict`.
 
-Commands: setup, open, request, add, sync, publish, show, history, find,
+Commands: setup, open, request, add, sync, refresh, publish, show, history, find,
 findings, coverage, gate, verdict, keep-head, export, import, prune (refused).
 Exit: 0 ok, 1 refused or below retrievable, 2 usage or tamper.
 """
@@ -308,6 +318,26 @@ def _check_heads(cwd, remote, warnings):
             warnings.append(f"review-head {ref} moved locally: request says {head[:12]}")
 
 
+def refresh(cwd, remote="origin"):
+    """Reader bootstrap (ticket 1281): fetch the remote notes and review-heads, check them,
+    and bring them into the local ref; never pushes, so a read-only remote suffices. Local
+    unpublished entries survive (merge, never a forced fetch into the live ref). A failed
+    fetch raises Refusal: an unreachable store is not an empty one. No remote: nothing to do."""
+    if not setup(cwd, remote):
+        return {"status": "local", "warnings": []}
+    warnings = []
+    tip = _fetch(cwd, remote)
+    _check_remote(cwd, remote, tip, warnings)
+    before = {e["id"]: e for e in all_entries(cwd)}
+    _integrate(cwd)
+    after = _all_lines(cwd, REF)[0]
+    for eid, entry in before.items():
+        if eid not in after:
+            _write(cwd, entry)
+    _check_heads(cwd, remote, warnings)
+    return {"status": "fetched", "warnings": list(dict.fromkeys(warnings))}
+
+
 def sync(cwd, remote="origin"):
     """Fetch, check, merge, push; never forced. Returns {status, warnings}."""
     if not setup(cwd, remote):
@@ -339,8 +369,34 @@ def sync(cwd, remote="origin"):
     return {"status": "synced", "warnings": list(dict.fromkeys(warnings))}
 
 
+def _retention_problems(cwd, remote, ids):
+    """The review-heads the named entries need (their requests' heads), checked on the remote:
+    each must exist there and name its request's head (ticket 1281). Never repaired by force."""
+    every = all_entries(cwd)
+    named = [e for e in every if e["id"] in set(ids)]
+    heads = {(e["review_id"], e["request_id"]): e["head"] for e in every if e.get("kind") == "request"}
+    remote_heads = dict(reversed(line.split()) for line in
+                        _out(cwd, "ls-remote", remote, f"{HEADS}/*").splitlines())
+    problems = []
+    for key in dict.fromkeys((e["review_id"], e["request_id"]) for e in named):
+        ref = f"{HEADS}/{key[0]}/{key[1]}"
+        want = heads.get(key)
+        if want is None:
+            problems.append(f"{ref}: no request entry {key[1]} in review {key[0]}")
+        elif ref not in remote_heads:
+            problems.append(f"{ref}: missing on {remote} (push rejected or not made); kept locally, "
+                            "publish again to retry")
+        elif remote_heads[ref] != want:
+            problems.append(f"{ref}: moved on {remote} to {remote_heads[ref][:12]}, request says "
+                            f"{want[:12]}; not overwritten")
+    return problems
+
+
 def publish(cwd, ids, remote="origin"):
-    """Sync, then verify against the remote: done-unpublished | published | retrievable."""
+    """Sync, then verify against the remote: done-unpublished | published | retrievable.
+    Retrievable also needs the review-heads of the named entries' requests on the remote, each
+    naming its request's head; a missing or moved one is reported on stderr and caps the level
+    at published (ticket 1281). Nothing local is dropped, so a later publish retries."""
     if sync(cwd, remote)["status"] == "local":
         return "done-unpublished"
     tip = _fetch(cwd, remote)
@@ -348,7 +404,12 @@ def publish(cwd, ids, remote="origin"):
     if not tip or remote_tip != _rev(cwd, REF):
         return "done-unpublished"
     readable = _all_lines(cwd, TRACK)[0]
-    return "retrievable" if all(i in readable for i in ids) else "published"
+    if not all(i in readable for i in ids):
+        return "published"
+    problems = _retention_problems(cwd, remote, ids)
+    for problem in problems:
+        print(f"review_notes: review-head not retrievable: {problem}", file=sys.stderr)
+    return "published" if problems else "retrievable"
 
 
 # --- writing ---------------------------------------------------------------------
@@ -442,31 +503,54 @@ def open_review(cwd, branch, base_ref="origin/main", **kw):
     return rid
 
 
-def add(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", links=()):
-    """Append a plan, report, answer or link to the review's latest request."""
+def add(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", links=(),
+        request_id=None):
+    """Append a plan, report, answer or link to the request `request_id`, the one the run was
+    launched on (frozen at gaze setup, ticket 1281). Without it, the latest request; once the
+    review has several requests, only when `head` is the latest request's head (or not given):
+    a result on another head is then refused rather than bound to a round it did not review."""
     if kind == "request":
         raise Refusal("a request is written by `request`, which keeps its head")
     if kind == "verdict":
         raise Refusal("a verdict is written by `verdict`, which derives its round")
-    return _append(cwd, kind, review_id, fields, head, author, skill, links)
+    if request_id is None and head is not None:
+        reqs = [e for e in entries(cwd, review_id) if e["kind"] == "request"]
+        if len(reqs) > 1 and _rev(cwd, head) != reqs[-1]["head"]:
+            raise Refusal(f"head {_rev(cwd, head)[:12]} is not the head of the latest request "
+                          f"{reqs[-1]['request_id']}: name the request the run reviewed (--request)")
+    return _append(cwd, kind, review_id, fields, head, author, skill, links, request_id)
 
 
-def _append(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", links=()):
+def _append(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", links=(),
+            request_id=None):
     reqs = [e for e in entries(cwd, review_id) if e["kind"] == "request"]
     if not reqs:
         raise Refusal(f"review {review_id} has no request")
-    last = reqs[-1]
-    binding = _binding(cwd, head or last["head"], last["base_ref"])
-    return _write(cwd, _entry(cwd, kind, review_id, last["request_id"], binding, author, skill,
+    if request_id is None:
+        req = reqs[-1]
+    else:
+        named = [e for e in reqs if e["request_id"] == request_id]
+        if not named:
+            raise Refusal(f"review {review_id} has no request {request_id}")
+        req = named[0]
+    binding = _binding(cwd, head or req["head"], req["base_ref"])
+    return _write(cwd, _entry(cwd, kind, review_id, req["request_id"], binding, author, skill,
                               links, dict(fields)))
 
 
 # --- reading ---------------------------------------------------------------------
 
 def find(cwd, branch):
-    """The review id of the latest request naming `branch`, else None."""
+    """The review id of the latest request naming `branch` in the local ref, else None."""
     hits = [e for e in all_entries(cwd) if e.get("kind") == "request" and e.get("branch") == branch]
     return hits[-1]["review_id"] if hits else None
+
+
+def resolve(cwd, branch, remote="origin"):
+    """`find` after `refresh`: the resolver every reader uses, so a fresh clone sees the reviews
+    already published (ticket 1281). Raises Refusal when the remote cannot be read."""
+    refresh(cwd, remote)
+    return find(cwd, branch)
 
 
 def open_findings(cwd, review_id):
@@ -680,7 +764,9 @@ def main(argv=None):
     s.add_argument("--author", help="JSON object: role, runtime, observed model/family")
     s.add_argument("--links", nargs="*", default=[])
     s.add_argument("--skill", default="gaze")
+    s.add_argument("--request", help="the request id the run was launched on (gaze setup's request_id)")
     sub.add_parser("sync")
+    sub.add_parser("refresh")
     sub.add_parser("publish").add_argument("ids", nargs="*")
     sub.add_parser("show").add_argument("review")
     sub.add_parser("history").add_argument("review", nargs="?")
@@ -726,9 +812,9 @@ def main(argv=None):
         elif a.cmd == "add":
             print(add(cwd, a.kind, a.review, json.loads(a.json), head=a.head,
                       author=json.loads(a.author) if a.author else None, skill=a.skill,
-                      links=a.links)["id"])
-        elif a.cmd == "sync":
-            report = sync(cwd, remote)
+                      links=a.links, request_id=a.request)["id"])
+        elif a.cmd in ("sync", "refresh"):
+            report = (sync if a.cmd == "sync" else refresh)(cwd, remote)
             print(report["status"])
             for w in report["warnings"]:
                 print(f"warning: {w}", file=sys.stderr)
@@ -742,7 +828,7 @@ def main(argv=None):
             for e in entries(cwd, a.review) if a.review else all_entries(cwd):
                 print(e["ts"], e["review_id"], e["kind"], e["id"], e.get("result") or e.get("verdict") or "")
         elif a.cmd == "find":
-            rid = find(cwd, a.branch)
+            rid = resolve(cwd, a.branch, remote)
             if not rid:
                 return 1
             print(rid)

@@ -332,3 +332,103 @@ def test_none_forge_resolve_surfaces_a_tampered_store(world):
     fspec.loader.exec_module(forge)
     with pytest.raises(forge.ForgeRefusal, match="(?i)tamper"):
         forge.get_forge("none", cwd=str(a)).resolve("branch:feature")
+
+
+# --- ticket 1281: retained heads verified, reader bootstrap, request identity frozen ---------
+
+def forge_module():
+    fspec = importlib.util.spec_from_file_location("forge", SCRIPTS / "forge.py")
+    forge = importlib.util.module_from_spec(fspec)
+    fspec.loader.exec_module(forge)
+    return forge
+
+
+def hook(origin, refuse):
+    """An update hook on the bare origin that rejects every ref matching the shell glob `refuse`."""
+    h = origin / "hooks" / "update"
+    h.write_text(f'#!/bin/sh\ncase "$1" in {refuse}) echo "refused $1" >&2; exit 1;; esac\nexit 0\n')
+    h.chmod(0o755)
+
+
+def test_publish_is_not_retrievable_when_the_review_heads_are_rejected(world, capsys):
+    origin, a, _, _ = world
+    hook(origin, "refs/review-heads/*")
+    rid = rn.open_review(a, "feature", "origin/main")
+    req = rn.entries(a, rid)[0]
+    ref = f"refs/review-heads/{rid}/{req['request_id']}"
+    level = rn.publish(a, [req["id"]])
+    assert level != "retrievable"
+    assert sh(a, "ls-remote", "origin", "refs/review-heads/*") == ""  # the reject stood
+    assert sh(a, "ls-remote", "origin", "refs/notes/review")  # the notes went through
+    assert ref in capsys.readouterr().err  # the failure is visible, naming the ref
+    # all local evidence stays for a retry: the entry and the kept head
+    assert [e["id"] for e in rn.entries(a, rid)] == [req["id"]]
+    assert sh(a, "rev-parse", ref) == req["head"]
+    (origin / "hooks" / "update").unlink()
+    assert rn.publish(a, [req["id"]]) == "retrievable"
+
+
+def test_publish_reports_a_moved_remote_review_head_and_never_forces_it(world, capsys):
+    origin, a, b, _ = world
+    rid = rn.open_review(a, "feature", "origin/main")
+    req = rn.entries(a, rid)[0]
+    ref = f"refs/review-heads/{rid}/{req['request_id']}"
+    sh(b, "commit", "-q", "--allow-empty", "-m", "unrelated")  # not a descendant of the head
+    squatter = sh(b, "rev-parse", "HEAD")
+    sh(b, "push", "-q", "origin", f"HEAD:{ref}")
+    assert rn.publish(a, [req["id"]]) != "retrievable"
+    assert sh(a, "ls-remote", "origin", ref).split()[0] == squatter  # not overwritten
+    assert "moved" in capsys.readouterr().err
+    assert sh(a, "rev-parse", ref) == req["head"]
+
+
+def test_a_fresh_clone_bootstrap_finds_the_published_review(world):
+    origin, a, b, _ = world
+    rid = rn.open_review(a, "feature", "origin/main")
+    assert rn.publish(a, [rn.entries(a, rid)[0]["id"]]) == "retrievable"
+    # B has an unpublished entry of its own, then follows the documented bootstrap
+    sh(b, "switch", "-qc", "side", "origin/main")
+    sh(b, "commit", "-q", "--allow-empty", "-m", "side")
+    mine = rn.open_review(b, "side", "origin/main")
+    rn.setup(b)
+    sh(b, "fetch", "-q", "origin")
+    hook(origin, "refs/*")  # a reader: no push needed, and none happens
+    tip = sh(origin, "rev-parse", "refs/notes/review")
+    assert rn.resolve(b, "feature") == rid
+    assert forge_module().get_forge("none", cwd=str(b)).resolve("branch:feature")["review_id"] == rid
+    assert rn.find(b, "side") == mine and rn.entries(b, mine)  # local unpublished entry kept
+    assert sh(origin, "rev-parse", "refs/notes/review") == tip
+
+
+def test_a_fetch_failure_is_not_read_as_no_review(world, tmp_path):
+    _, _, b, _ = world
+    sh(b, "remote", "set-url", "origin", str(tmp_path / "gone.git"))
+    with pytest.raises(rn.Refusal):
+        rn.resolve(b, "feature")
+    forge = forge_module()
+    with pytest.raises(forge.ForgeRefusal):
+        forge.get_forge("none", cwd=str(b)).resolve("branch:feature")
+
+
+def two_rounds(a):
+    rid = rn.open_review(a, "feature", "origin/main")
+    r1 = rn.entries(a, rid)[0]
+    sh(a, "switch", "-q", "feature")
+    sh(a, "commit", "-q", "--allow-empty", "-m", "round 2")
+    r2 = rn.request(a, rid, "feature", "origin/main")
+    assert r2["head"] != r1["head"]
+    return rid, r1, r2
+
+
+def test_a_late_answer_from_round_one_is_not_bound_to_round_two(world):
+    _, a, _, _ = world
+    rid, r1, r2 = two_rounds(a)
+    fields = {"run_id": "gz-r1", "result": "REVIEWED", "seats": "panel", "coverage": {"scope": "full"}}
+    with pytest.raises(rn.Refusal, match="request"):
+        rn.add(a, "answer", rid, fields, head=r1["head"])  # no request named: never inferred as latest
+    late = rn.add(a, "answer", rid, fields, head=r1["head"], request_id=r1["request_id"])
+    assert late["request_id"] == r1["request_id"] and late["head"] == r1["head"]
+    with pytest.raises(rn.Refusal, match="no request"):
+        rn.add(a, "report", rid, {"run_id": "gz-r1"}, request_id="rq-nope")
+    plan = rn.add(a, "plan", rid, {"run_id": "gz-r2"}, request_id=r2["request_id"])
+    assert plan["request_id"] == r2["request_id"] and plan["head"] == r2["head"]

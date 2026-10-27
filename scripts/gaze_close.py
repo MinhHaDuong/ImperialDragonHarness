@@ -31,7 +31,8 @@ still gives the calling gaze the line to paste. It may also hold `{{duration}}` 
 
 No forge (`branch:<name>`, ticket 1273): the review unit's paths use `unit_key`; the
 attribution lines and the result text go into one `answer` entry of refs/notes/review
-through review_notes.py, published with read-back when there is a remote (exit 2 when
+through review_notes.py, bound to the request and run id gaze_setup froze in the entry
+state (ticket 1281), published with read-back when there is a remote (exit 2 when
 it is not retrievable); a blocked cleanup records an ESCALATE answer.
 """
 import argparse
@@ -172,13 +173,18 @@ def answer_scope(text):
     return "full" if value == "default" or value.startswith("default:") else "delta"
 
 
-def record_answer(primary, pr, text, attribution):
+def record_answer(primary, pr, text, attribution, identity=None):
     """No forge (ticket 1273): the result becomes an `answer` entry in refs/notes/review, the
     store verify-gate reads, then is published with read-back when there is a remote.
+    `identity` is what gaze_setup froze (review_id, request_id, run_id): the answer binds to
+    that request, never to one written while the run went on (ticket 1281). Without it (no
+    entry state) the review is resolved and the answer takes the latest request only if it
+    is on the reviewed head; review_notes refuses otherwise.
     Returns 0, or 2 when the entry could not be written or its publication not verified."""
     cwd = str(primary)
+    identity = identity or {}
     try:
-        rid = forge.get_forge("none", pr, cwd).resolve(pr).get("review_id")
+        rid = identity.get("review_id") or forge.get_forge("none", pr, cwd).resolve(pr).get("review_id")
         if not rid:
             print("answer: FAILED no review request for this branch (gaze_setup opens one)")
             return 2
@@ -188,12 +194,13 @@ def record_answer(primary, pr, text, attribution):
         if scope == "delta":  # spec §4: a delta counts only through the answer it carries (ticket 1274)
             cov["carried"] = rn.carry_target(cwd, rid)
         entry = rn.add(cwd, "answer", rid, {
-            "run_id": f"gz-{rn._compact(rn._now())}-{rn._hex(4)}",
+            "run_id": identity.get("run_id") or f"gz-{rn._compact(rn._now())}-{rn._hex(4)}",
             "result": result if result in ("REVIEWED", "FINDINGS", "ESCALATE") else "ESCALATE",
             "seats": _field(text, "seats") or "self-only",
             "coverage": cov,
             "attribution": attribution.splitlines() if attribution else [],
-            "text": text}, head=_field(text, "reviewed_head_sha"), skill="gaze")
+            "text": text}, head=_field(text, "reviewed_head_sha"), skill="gaze",
+            request_id=identity.get("request_id"))
         level = rn.publish(cwd, [entry["id"]])
     except (rn.Refusal, forge.ForgeRefusal) as exc:
         print(f"answer: FAILED {exc}")
@@ -246,7 +253,7 @@ def main():
     print(f"cleanup: {msg}")
     if not ok and local:
         status = record_answer(primary, a.pr, f"result: ESCALATE\nreason: cleanup blocked: {msg}\n{plan_line}",
-                               lines) or status
+                               lines, entry) or status
     if not ok:
         print(f"/gaze cleanup blocked: {msg}; nothing posted: the calling gaze posts the "
               "ESCALATE comment (gh pr comment) naming these files", file=sys.stderr)
@@ -261,7 +268,7 @@ def main():
         text = (comment_text.replace("{{plan_check}}", plan_line)
                 .replace("{{duration}}", duration).replace("{{containment}}", report))
         if local:
-            status = record_answer(primary, a.pr, text, lines) or status
+            status = record_answer(primary, a.pr, text, lines, entry) or status
             return 4 if flags and status == 0 else status
         try:
             forge.get_forge(None, a.pr).comment(a.pr, text, strict=True)
