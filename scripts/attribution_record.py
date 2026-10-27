@@ -317,6 +317,27 @@ def append_seats(args):
     return 1 if failures else 0
 
 
+def capture_pr(args):
+    """--capture-pr PR: seats, extract and capture of one merged PR in a single call.
+
+    Nothing is captured while a seat fails: the body keeps what was appended, and a
+    rerun skips those seats, so fixing the cause (often --masked-evidence) and rerunning
+    resumes where it stopped.
+    """
+    pr = args.capture_pr
+    view = json.loads(gh("pr", "view", str(pr), "--json", "state,mergedAt"))
+    if view.get("state") != "MERGED" or not view.get("mergedAt"):
+        raise ValueError(f"PR #{pr} is {view.get('state')}, not merged")
+    args.seats, args.seats_pr = None, pr
+    if append_seats(args):
+        LOG.error("attribution-record: PR #%s not captured; fix the failures above and rerun", pr)
+        return 1
+    body = gh("pr", "view", str(pr), "--json", "body", "--jq", ".body // \"\"")
+    text = extract_record(body, view["mergedAt"][:10])
+    LOG.info("%s", capture_record(text, parse_record(text), args.capture, args.audience))
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("record", nargs="?", type=Path, help="record file; default stdin")
@@ -337,7 +358,19 @@ def main():
                         help="as --seats, reading the PR's gaze result comments and editing its live body")
     parser.add_argument("--masked-evidence", metavar="PATH:LINE",
                         help="with --seats: evidence anchor for seats whose model was not observed")
+    parser.add_argument("--capture-pr", type=int, metavar="PR",
+                        help="one call for a merged PR: --seats-pr, then --extract with its merge date, then --capture"
+                             " (needs --capture PROJECT and --audience)")
     args = parser.parse_args()
+    if args.capture_pr:
+        if not args.capture or not args.audience or args.record or args.seats or args.seats_pr \
+                or args.pr_body or args.append is not None or args.extract or args.merged:
+            parser.error("--capture-pr needs --capture PROJECT and --audience, and takes no other mode")
+        try:
+            return capture_pr(args)
+        except ValueError as error:
+            LOG.error("attribution-record: %s", error)
+            return 1
     if args.seats or args.seats_pr:
         if args.record or args.capture or args.pr_body or args.append is not None or args.extract:
             parser.error("--seats takes no other mode")
