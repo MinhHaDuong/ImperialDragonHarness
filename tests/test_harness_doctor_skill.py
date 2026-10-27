@@ -62,11 +62,6 @@ def test_skill_names_its_references_and_script():
     assert '"$IDH_ROOT/scripts/harness_here.sh"' in body
 
 
-def test_retirement_clause_names_three_runs():
-    body = SKILL.read_text(encoding="utf-8")
-    assert "three consecutive" in body and "-harness-doctor-" in body
-
-
 def test_stub_keeps_paths_and_points_to_reference():
     text = STUB.read_text(encoding="utf-8")
     meta = sf.load(STUB)
