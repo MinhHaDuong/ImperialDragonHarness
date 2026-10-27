@@ -45,6 +45,7 @@ import sys
 import time
 from pathlib import Path
 
+MAX_BUDGET_M = 13  # 15-minute deadline less the closing (skills/gaze/references/plan.md)
 DEFAULT_CAP_S = 600  # the panel's ten-minute collection deadline
 
 
@@ -170,6 +171,16 @@ def plan_write(panel: Path, intent: str, method: str, budget: str, spend: str | 
     checker = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(checker)
     flat = [cell for item in items for cell in item] + [intent, method, budget, spend or '']
+    early = []
+    if any(re.search('[\udc80-\udcff]', cell) for cell in flat + [str(panel)]):
+        return ['an argument is not valid UTF-8']
+    if not intent.strip():
+        early.append('empty --intent')
+    if not (m := re.fullmatch(r'(\d+)m', budget)) or not 1 <= int(m.group(1)) <= MAX_BUDGET_M:
+        early.append(f'--budget must be <n>m with n from 1 to {MAX_BUDGET_M}')
+    early += [f'family {item[2]!r} holds whitespace' for item in items if re.search(r'\s', item[2])]
+    if early:
+        return early
     if any(c in cell for cell in flat for c in '\t\n\r'):
         return ['a tab or newline inside a field']
     header = [f'# intent: {intent}', f'# method: {method}', f'# budget: {budget}']

@@ -143,3 +143,18 @@ def test_plan_write_refuses_what_the_checker_cannot_parse(tmp_path, args):
     result = run('plan-write', str(panel), '--intent', 'i', '--method', 'm', '--budget', '10m', *args)
     assert result.returncode == 2
     assert not (panel / 'manifest.txt').exists()
+
+
+@pytest.mark.parametrize('args', [
+    ['--intent', 'i', '--method', 'm', '--budget', '99m', '--item', 'a', 'm', 'f', 'r'],   # over the 13m ceiling
+    ['--intent', '', '--method', 'm', '--budget', '10m', '--item', 'a', 'm', 'f', 'r'],    # empty intent
+    ['--intent', 'i', '--method', 'm', '--budget', '10m', '--item', 'a', 'm', 'two words', 'r'],  # space in family
+    [b'--intent', b'bad\xff', b'--method', b'm', b'--budget', b'10m', b'--item', b'a', b'm', b'f', b'r'],  # non-UTF-8
+])
+def test_plan_write_refuses_out_of_contract_values(tmp_path, args):
+    panel = tmp_path / 'panel'
+    cmd = [sys.executable, str(SCRIPT), 'plan-write', str(panel), *[os.fsencode(a) for a in args]]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    assert result.returncode == 2, result.stderr
+    assert 'Traceback' not in result.stderr
+    assert not (panel / 'manifest.txt').exists()
