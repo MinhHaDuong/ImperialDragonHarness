@@ -1,0 +1,82 @@
+%erg 0.1
+Title: harness-doctor runs as a visit: triage, probes on demand, no end of life
+Created: 2026-10-27
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-27T08:35Z Minh Ha-Duong created
+
+--- body ---
+## Context
+`skills/harness-doctor/SKILL.md` (merged in #1699, ticket 1233) runs as a fixed sweep: descriptions, overlapping bodies, lint, every runtime's diagnostics, report. Compared with `skills/test-doctor/SKILL.md`, the author ruled on 2026-10-27:
+- **No end of life.** The doctor position is needed for good; drop the retirement clause (three empty runs, then ask to delete).
+- **A visit, not a form.** Adopt test-doctor's stance: start from a complaint or a question (or, with none, a short triage of where the harness hurts), form hypotheses, and launch only the probes that separate them, cheapest first. Do not walk through steps the case does not need; go back when new evidence contradicts an earlier step.
+- **Triage.** Order the work by what costs most to be wrong about, before any probe runs.
+- **Positive control.** Before trusting a probe's silence, fire it on a known case: the lint script on `skills/trace-doctor/SKILL.md` (it flags body length, a long code block, history phrasing and dates). A probe that finds nothing says nothing until it has fired.
+- **Prices on proposals.** Each proposed fix carries a price (author-hours, agent cost) and odds; recommend one.
+- **Revisit.** A run reads the journal's earlier `-harness-doctor-` entries, checks whether their tickets fixed what they targeted, and sets the next revisit condition.
+
+The probes stay as they are, now launched on demand: the description and overlap reading, `scripts/skill_text_lint.py`, the runtime diagnostics in `references/runtime-diagnostics.md`, and `scripts/project_shadow.py` where a question is about shadowing.
+
+## Exit criteria
+- [ ] Retirement clause removed from `skills/harness-doctor/SKILL.md`; no test or reference still mentions it
+- [ ] The body frames a visit: complaint or triage first, hypotheses, probes chosen to separate them; no fixed all-steps procedure
+- [ ] The probe list is a menu with what each probe answers and what it costs (time, model usage, credentials), not a sequence
+- [ ] The lint probe's positive control (trace-doctor) runs before its findings are read, and the report says it fired
+- [ ] Every proposal in the report carries a price and odds, with one recommended
+- [ ] Revisit: the run checks the previous entry's tickets and writes a revisit condition in its journal entry
+- [ ] Shared stance with test-doctor is pointed at, not restated, or the checklist records why the duplication is accepted
+- [ ] Skill stays under 150 lines; `scripts/skill_text_lint.py` reports no finding above the floor on it; `tests/test_harness_doctor_skill.py` updated
+
+## Imagine (raid 2026-10-27)
+**Why now, premise holds.** The sweep is fixed: SKILL.md:35-62 "Sequential-blocking" steps 0-5, the retirement clause at :79-89, and no stance beyond :21-33. test-doctor already carries the target stance (SKILL.md:17, :39). The lint takes `paths` (skill_text_lint.py:119), so the control `skill_text_lint.py skills/trace-doctor/SKILL.md` runs alone; it fires body_lines, history_phase:15, long_fence:37 and dates.
+
+**Simplest path.** Rewrite in place, about 95 lines: visit sentence (as test-doctor:17); Stance (keep four bullets, add listen-first, consent for spends); Triage (rank by cost of being wrong: contradiction misleading a model, then ownership, then lint, then runtime drift); Menu table: probe | answers | cost. Rows: catalog and description reading (cheap, tokens); body pair reading (tokens); lint (seconds, free); runtime diagnostics (a minute each, some spend and credentials); project_shadow. Then positive control, priced proposals with odds and one recommended, Revisit and journal (previous entries' tickets checked, revisit condition written). Delete :79-89; "retirement" appears in no test. Add tests for the clause's absence, the control and the revisit.
+
+**Shared stance.** Accept the duplication, record it in the checklist. Two skills do not justify a reference; the stance differs (harness text versus project suites), and a shared file adds a pointer hop and a drift owner. Point to test-doctor's SKILL.md in one line; extract a reference only if a third doctor appears.
+
+**Antipatterns.** A shared reference now (premature abstraction). A numbered menu (sequence in disguise); order cheapest-first only as advice. Re-explaining the checklist.
+
+**Implied, missing criterion proposal.** The control must also fire for runtime diagnostics, not only lint (runtime-diagnostics.md already names controls); the report's "fired" line should cover each probe used. No premise objection.
+
+## Blind-spot (raid 2026-10-27)
+1. **The control is a live patient.** Open 1130 strips trace-doctor's history lines; 1127's `body_lines` worklist splits it. Once fixed, the control goes silent, which reads as a broken probe or invites a quiet swap → the visit can no longer tell "clean" from "blind". Check: name the property the control must show, plus a frozen fixture (or a rule for choosing a replacement), and test that it fires. AUTHOR (the ruling names the file).
+2. **No complaint, no bound.** No skill suggests a visit (test-doctor names `/lair`, `/trace-doctor`), so a visit usually starts without a complaint, and "triage of where it hurts" turns back into reading the whole catalog → the sweep comes back. Check: default triage input = skills and rules changed since the last `-harness-doctor-` entry (`git log` since its date); whether `/lair` or `/roar` suggest a visit is AUTHOR.
+3. **The refusal is a gate, not a probe.** Step 0 (`harness_here.sh`) must not end up in the menu; the test pins only the string. Check: keep it as a precondition and assert that it comes before the menu.
+4. **History is empty.** The journal has no `-harness-doctor-` entry yet; the first revisit must report "no prior visit", not "fixed". Check: the test covers the empty case.
+
+## Orchestrator decisions (raid 2026-10-27)
+- Positive control: a frozen fixture copied from today's skills/trace-doctor/SKILL.md under tests/fixtures/ (or the repo's fixture convention), tested to fire on body length, long fence, history phrasing and dates; the doctor fires the lint on it before reading real findings. Rationale: ticket 1130 will clean the live file.
+- No-complaint default triage: the skills and rules changed since the last `-harness-doctor-` journal entry (or, with none, the whole catalog by descriptions only).
+- Who suggests a visit (/lair, /roar): out of scope; the doctor stays author-called.
+- The harness-only refusal stays a precondition before any probe, never a menu item; first revisit with no prior entry reports "no prior visit".
+
+## Plan (raid 2026-10-27)
+Facts: SKILL.md is 89 lines; lint on trace-doctor today yields body_lines 1, date 7, history_phase 1, long_fence 1. The lint takes explicit paths, so the control runs alone. Fixture convention: tests/fixtures/<topic>/ (erg/, decision-letter/).
+1. FIRST failing test, tests/test_harness_doctor_skill.py::test_control_fixture_fires_every_listed_check: run skill_text_lint.lint(REPO, projects, [fixture]) on tests/fixtures/harness-doctor/trace-doctor-SKILL.md; assert the summary keys are a superset of {body_lines, date, history_phase, long_fence}. Fails now: the fixture does not exist.
+2. Create tests/fixtures/harness-doctor/trace-doctor-SKILL.md: byte copy of skills/trace-doctor/SKILL.md as of today (cp, never edited; a header-free copy so findings stay identical). Not under skills/, so skill_files never sweeps it.
+3. Rewrite skills/harness-doctor/SKILL.md in place, target about 100 lines, hard cap 150:
+   - Frontmatter unchanged; IDH_ROOT paragraph kept (~8 lines).
+   - Opening "visit, not a form" paragraph with a one-line pointer to skills/test-doctor/SKILL.md for the shared stance (~6).
+   - ## Precondition (~4): harness_here.sh, non-zero relays one line and stops; stated before and outside the menu.
+   - ## Stance (~14): called never self-started; listen first (one question; with an argument start there); examine with consent for spends; harness only; every runtime alike; the author decides; pointers to references/.
+   - ## The visit (~14): complaint or default triage, chart (earlier entries), hypotheses with a prior, probes that separate them cheapest first, go back on contradiction. Triage orders by cost of being wrong (contradiction misleading a model, ownership, lint, runtime drift). No-complaint default: skills and rules changed since the last -harness-doctor- entry (git log since its date), or with no entry the whole catalog by descriptions only.
+   - ## Probes, a table, not numbered (~12): probe | answers | cost (time, model usage, credentials). Rows: catalog and descriptions; overlapping bodies; skill_text_lint.py; runtime diagnostics; project_shadow.py (shadowing questions only).
+   - ## Positive control (~9): before reading findings, fire each probe used on a known case; lint on tests/fixtures/harness-doctor/trace-doctor-SKILL.md and expect body_lines, date, history_phase, long_fence; runtime probes against the control runtime-diagnostics.md names; the report says "fired" per probe; a silent control means the probe is blind, not the harness clean.
+   - ## Findings and report (~16): keep both-files path:line rule and the severity floor; every proposal carries price (author-hours, agent cost) and odds, one recommended.
+   - ## Journal and revisit (~12): entry format kept; read earlier -harness-doctor- entries, check whether their tickets fixed their targets; none found means report "no prior visit", never "fixed"; write a revisit condition. Delete "The record and retirement" and the three-runs clause.
+4. references/runtime-diagnostics.md: add one line that the report's fired line covers each runtime diagnostic, against its named control. No other reference change; grep shows no retirement mention there.
+5. references/checklist.md: add a note "Shared stance with test-doctor": duplication accepted, pointer to test-doctor/SKILL.md; stance differs (harness text versus project suites), a shared reference adds a hop and a drift owner; extract only if a third doctor appears. Satisfies the exit criterion without a new file.
+6. Test changes in tests/test_harness_doctor_skill.py (structural, not sentence greps):
+   - test_refusal_precedes_the_menu: index of the harness_here.sh mention < index of the Probes heading; and harness_here.sh is absent from the Probes table rows.
+   - test_menu_is_a_table_not_a_sequence: Probes section has table rows with three cells and contains no line starting with a digit-dot.
+   - test_no_retirement_text: no "retire" and no "three consecutive" in SKILL.md or any file under references/.
+   - test_control_fixture_fires_every_listed_check (item 1), plus test_skill_names_the_control_fixture: the path cited in SKILL.md exists and is a file.
+   - test_revisit_empty_case_is_stated: the Journal section contains "no prior visit"; weak alone, so it is paired with a check that the section also mentions a revisit condition.
+   - test_skill_under_150_lines and test_lint_reports_nothing_above_floor_on_skill: lint the new SKILL.md, assert zero findings (floor is the lint's own set).
+   - Update test_skill_names_its_references_and_script: keep the pointers; add the test-doctor pointer.
+Antipattern scan: bare sentence greps are used only as a pair with a structural anchor (section order, table shape, file existence, lint output); the fixture test runs the real lint, not a string match.
+Files touched: tickets/1238-*.erg (now), then at execution skills/harness-doctor/SKILL.md, skills/harness-doctor/references/{checklist,runtime-diagnostics}.md, tests/test_harness_doctor_skill.py, tests/fixtures/harness-doctor/trace-doctor-SKILL.md.
+
+## Feasibility (raid 2026-10-27): PASS
+Every path the plan cites exists except the new fixture `tests/fixtures/harness-doctor/trace-doctor-SKILL.md`, which the plan creates. The copy passes check-agnostic as its source does, and sits outside `skills/`, so a live lint scan does not pick it up. No keys, no network, no cross-ticket registry.

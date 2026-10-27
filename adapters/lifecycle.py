@@ -3,7 +3,8 @@
 The operator's command, not the runtimes': hooks and skills keep calling
 scripts by path. adapters/projections.json is the one list of links, so
 install creates exactly what check verifies (and retires the links it
-once created that the manifest no longer declares), and the launch validator
+once created that the manifest no longer declares, and prunes dangling
+links to harness skills that are gone), and the launch validator
 (scripts/validate-projections.py) supplies the per-entry verdict. Links are
 built from the structured `path`/`target` fields only; the free-form
 `installer` text is display, never executed. Stdlib only, Python 3.12.
@@ -95,6 +96,7 @@ def install_links() -> int:
             report(*problem)
             rc = 1
     rc |= retire_stale(owned, declared)
+    rc |= prune_dangling(skill_roots())
     try:
         receipt.parent.mkdir(parents=True, exist_ok=True)
         _replace(receipt, (json.dumps(owned, indent=2) + "\n").encode(), 0o600)
@@ -146,6 +148,55 @@ def retire_stale(owned: dict, declared: set[Path]) -> int:
                 continue
             print(f"retired: {path} (no longer declared)")
         del owned[key]
+    return rc
+
+
+def skill_roots() -> list[Path]:
+    """The skills roots the manifest fills with one link per harness skill."""
+    return sorted({
+        V.expand(e["path"], root())
+        for e in json.loads((REPO / "adapters" / "projections.json").read_text())["entries"]
+        if e.get("children") is True and e["target"] == "$IDH_ROOT/skills"
+    })
+
+
+def _points_into_harness_skills(link: Path) -> bool:
+    """Does this link's text end in ``.agents/skills/<link name>``?
+
+    A foreign checkout (``~/code/arena/skills/arena``) shares the bare
+    ``skills/<name>`` tail, so the harness's own ``.agents/skills/<name>`` is
+    required, wherever that checkout was. Matching the tail rather than any
+    substring keeps ``.agents/skills/x/sub`` or a link whose name differs from
+    its target out of the sweep.
+    """
+    parts = Path(os.path.normpath(os.readlink(link))).parts
+    return parts[-3:] == (".agents", "skills", link.name)
+
+
+def prune_dangling(roots: list[Path]) -> int:
+    """Remove links in the skills roots whose harness skill no longer exists.
+
+    Moved from perch (ticket 1128) so the plain install runs it: retire_stale
+    only knows links the receipt recorded, and `idh uninstall skill` cannot
+    name a skill that left the repo. Shape-based, never the receipt: only a
+    dangling link into ``.agents/skills/<same name>``, whose unlinking destroys
+    nothing. Foreign dangling links and live links stay. A link that cannot be
+    removed does not stop the sweep; each one is reported.
+    """
+    rc = 0
+    for skills_root in roots:
+        if not skills_root.is_dir():
+            continue
+        for entry in sorted(skills_root.iterdir()):
+            if entry.is_symlink() and not entry.exists() and _points_into_harness_skills(entry):
+                was = os.readlink(entry)
+                try:
+                    entry.unlink(missing_ok=True)  # gone meanwhile (a concurrent install): done
+                except OSError as exc:
+                    report("REFUSED", f"could not prune dangling link {entry}: {exc}", "remove it by hand")
+                    rc = 1
+                    continue
+                print(f"pruned dangling link {entry} -> {was}")
     return rc
 
 

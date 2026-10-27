@@ -19,6 +19,7 @@
 | Command | Description |
 |---------|-------------|
 | `/dashboard` | Ticket dashboard: open tickets, branches and merge requests; full state plus a delta led by the ticket count. |
+| `/harness-doctor` | Lint harness skills and rules for contradiction and overlap; author-called, harness only. |
 | `/lair` | End-of-day wrap-up: housekeeping, push branches, run tests, refresh STATE, offer an autonomous session. Not for one merged task (/roar) or a mid-session check (/perch). |
 | `/molt` | Repo housekeeping that acts: git sync, yawn, fix-now repairs, tickets for findings. Safe interactively or in automated sweeps. Not for a plain check (/yawn). |
 | `/perch` | Mid-session orientation: summarize what's done, surface unresolved points, assess clear-readiness. Not for end-of-day (/lair) or post-merge (/roar) wrap-up. |

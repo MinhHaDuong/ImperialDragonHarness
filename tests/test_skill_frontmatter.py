@@ -157,7 +157,7 @@ def test_free_text_fields_are_quoted():
                 offenders.append(f"{md.parent.name}: {field}: {raw[:60]}")
     assert not offenders, (
         "free-text frontmatter values are always quoted "
-        "(rules/authoring-skills.md) — wrap the value in \" \", or ' ' when it "
+        "(skills/harness-doctor/references/authoring-skills.md) — wrap the value in \" \", or ' ' when it "
         "already contains a double quote:\n  " + "\n  ".join(offenders)
     )
 
