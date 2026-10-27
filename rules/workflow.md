@@ -137,7 +137,7 @@ or a symbol other tickets depend on), a build-gated exit, bundled sign-off
 units or a hidden dependency chain: draft a tracker (partition boundary,
 up-front decisions, wave order) and children sized to one sign-off unit,
 `Blocked-by` their real prerequisite, never the tracker. Autonomous: the orchestrator files
-it, a hunt proposes. Interactive: propose it.
+it, a hunt proposes, a lone session proposes it in its report and stops. Interactive: propose it.
 The 15-file count is a signal, not a wall. A large diff splits the review,
 not necessarily the PR.
 
