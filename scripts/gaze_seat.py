@@ -31,7 +31,10 @@ declares it in the plan before anything launches. Consent is checked against
 the provider that bills the seat, never the caller's family label: the door's
 one family (Anthropic on claude-code, OpenAI on codex), or the `<provider>/`
 prefix of a pi model. The provider of the session running gaze
-(`--home-family`) needs no consent.
+(`--home-family`) needs no consent. A provider that is itself a model family
+(any family a door names) fixes the seat's family, so `--family` cannot claim
+another one; a host provider serving other makers' models leaves the label to
+the plan.
 """
 
 import argparse
@@ -54,6 +57,7 @@ ROUTES = HERE.parent / 'skills' / 'route' / 'routes.json'
 CONSENT_KEY = 'cross_family_spend'
 MODEL_FLAGS = ('--model', '-m')
 PLACEHOLDER = re.compile(r'<[^<>]+>.*')
+ANCHOR = re.compile(r'[0-9a-f]{7,40}')
 
 CONTRACT = """\
 You are one read-only code-review seat of a gaze panel, launched headless.
@@ -185,9 +189,11 @@ def stamp(text: str, worker: str) -> str:
 
 
 def refusal(report: str) -> str | None:
-    """The seat's `NOT-RUN:` line, when its report opens with one after the worker line."""
-    lines = [line.strip().strip('*').strip() for line in report.splitlines() if line.strip()]
-    return lines[1] if len(lines) > 1 and lines[1].upper().startswith('NOT-RUN') else None
+    """The seat's `NOT-RUN:` line, in a report that reaches no verdict."""
+    lines = [line.strip().strip('*`').strip() for line in report.splitlines() if line.strip()]
+    if any(line.lower().startswith('verdict:') for line in lines):
+        return None
+    return next((line for line in lines if line.upper().startswith('NOT-RUN')), None)
 
 
 def launch(args: argparse.Namespace) -> tuple[bool, str]:
@@ -202,6 +208,12 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
     provider = billed_provider(door, args.model)
     if provider is None:
         return False, f'no report (cannot tell which provider bills {args.model}; name it as <provider>/<id>)'
+    known = {f.lower() for d in doors.values() for f in d.get('families', [])
+             if not f.lower().startswith('any provider')}
+    if provider.lower() in known and provider.lower() != args.family.lower():
+        # A provider that is itself a model family serves only that family:
+        # the stamped family must not claim another one.
+        return False, f'no report (model {args.model} is family {provider}, not {args.family})'
     if provider.lower() != args.home_family.lower() and \
             provider.lower() not in (f.lower() for f in consented(config_path())):
         return False, (f'no report (no consent for cross-family spend on {provider}; '
@@ -209,7 +221,7 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
     anchor = (git(args.review_tree, 'rev-parse', 'HEAD') or '').strip()
     if not anchor:
         return False, f'no report (review tree unreadable: {args.review_tree})'
-    if not args.anchor or not anchor.startswith(args.anchor):
+    if not ANCHOR.fullmatch(args.anchor) or not anchor.startswith(args.anchor):
         return False, f'no report (review tree HEAD {anchor[:12]} is not the anchor {args.anchor[:12]})'
     diff = git(args.review_tree, 'diff', f'{args.base}...HEAD')
     if diff is None:
@@ -234,6 +246,8 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
                           'cwd': str(args.review_tree)}))
         return True, 'dry run, nothing launched'
     try:
+        for leftover in (staging, last):  # a past run's output never stands in for this one
+            leftover.unlink(missing_ok=True)
         diff_file.write_text(diff, encoding='utf-8')
         if command.stdin:
             promptfile.write_text(prompt, encoding='utf-8')

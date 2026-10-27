@@ -27,6 +27,9 @@ case "$STUB_MODE" in
   fail) echo "partial"; exit 1 ;;
   liar) printf 'worker: model=gpt-6.1-sol · family=OpenAI\nfinding: none\nverdict: clear\n' ;;
   notrun) printf 'NOT-RUN: review tree unreachable\n' ;;
+  notrun-tick) printf 'Reading the tree first.\n`NOT-RUN: HEAD moved`\n' ;;
+  mentions) printf 'finding: the seat prints NOT-RUN: on refusal, as specified\nverdict: clear\n' ;;
+  empty) : ;;
   outfile|outfile-fail)
     # codex writes its last message to the -o file
     prev=""; for a in "$@"; do [ "$prev" = "-o" ] && printf 'verdict: clear\n' > "$a"; prev="$a"; done
@@ -123,6 +126,37 @@ def test_seat_refusal_is_no_report(rig):
 
 
 @pytest.mark.integration
+def test_marked_up_refusal_after_a_preface_is_no_report(rig):
+    result = launch(rig, mode='notrun-tick')
+    assert result.stdout.strip() == 'correctness: no report (seat refused: NOT-RUN: HEAD moved)'
+    mentions = launch(rig, mode='mentions', name='scope')
+    assert mentions.returncode == 0, mentions.stdout  # a report with a verdict is not a refusal
+
+
+@pytest.mark.integration
+def test_past_door_output_never_stands_in_for_this_run(rig):
+    (rig['panel'] / 'correctness.seat.last').write_text('verdict: clear (a past run)\n')
+    result = launch(rig, mode='empty')
+    assert result.returncode == 1
+    assert result.stdout.startswith('correctness: no report (empty output')
+    assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_short_anchor_prefix_is_refused(rig):
+    result = launch(rig, anchor=rig['head'][:1])
+    assert result.returncode == 1 and 'is not the anchor' in result.stdout
+
+
+@pytest.mark.integration
+def test_family_label_cannot_contradict_the_model_provider(rig):
+    result = launch(rig, runtime='pi', model='anthropic/claude-haiku-5-5', family='OpenAI', name='scope')
+    assert result.returncode == 1
+    assert 'is family anthropic, not OpenAI' in result.stdout
+    assert not (rig['log'] / 'pi.argv').exists()
+
+
+@pytest.mark.integration
 def test_moved_review_tree_is_no_report(rig):
     result = launch(rig, anchor=rig['base'])
     assert result.returncode == 1
@@ -142,9 +176,10 @@ def test_door_output_file_does_not_rescue_a_failed_exit(rig):
 
 @pytest.mark.integration
 def test_consent_follows_the_billing_provider_not_the_label(rig):
-    result = launch(rig, runtime='pi', model='openai/gpt-x', family='Anthropic', name='scope')
+    # A host provider serving another maker's model bills; the label names the maker.
+    result = launch(rig, runtime='pi', model='huggingface/qwen3', family='Anthropic', name='scope')
     assert result.returncode == 1
-    assert 'no consent for cross-family spend on openai' in result.stdout
+    assert 'no consent for cross-family spend on huggingface' in result.stdout
     assert not (rig['log'] / 'pi.argv').exists()
 
 

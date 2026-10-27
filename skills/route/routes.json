@@ -80,7 +80,7 @@
       },
       "headless": {
         "template": "claude -p --model <haiku|sonnet|opus|fable> \"<prompt>\"",
-        "seat_rails": ["--restricted", "--strict-mcp-config", "--tools", "Read,Grep,Glob"],
+        "seat_rails": ["--restricted", "--safe-mode", "--strict-mcp-config", "--tools", "Read,Grep,Glob"],
         "seat_rails_status": "flags read from --help 2026-10-27 (ticket 1256): read tools only, no shell, no write tool; codex holds the seat by its read-only sandbox instead. gaze_seat.py inserts them after the program and subcommand",
         "families": ["Anthropic"],
         "status": "verified 2026-10-08 (--model haiku answered claude-haiku-5-5)"
@@ -93,7 +93,7 @@
       },
       "headless": {
         "template": "pi --no-session -p --model <provider>/<id>[:<thinking>] \"<prompt>\"",
-        "seat_rails": ["--no-extensions", "--no-mcp", "--tools", "read,grep,find,ls"],
+        "seat_rails": ["--no-extensions", "--no-context-files", "--no-mcp", "--tools", "read,grep,find,ls"],
         "seat_rails_status": "flags read from --help 2026-10-27 (ticket 1256): read tools only, no shell, no write tool; codex holds the seat by its read-only sandbox instead. gaze_seat.py inserts them after the program and subcommand",
         "families": ["any provider configured in the host's Pi"],
         "note": "Author 2026-10-08: Anthropic API credits for Max-plan owners are coming, so Pi can call Anthropic once the Claude weekly limit is exhausted. Wrapper scripts/pi-haiku (copy it to ~/.local/bin/pi-haiku on a host; the installed copy is host-local) runs Pi on anthropic/claude-haiku-5-5 only and refuses --model/--provider/--models/--api-key overrides, so no costlier model is reachable through it; the key is read from ~/.config/keys/anthropic.env into that process only. Verified 2026-10-08 after the Max-plan credits arrived: overrides refused; a call succeeded and the JSON events name claude-haiku-5-5. Live door for Haiku only; Pi still has no other Anthropic model through this wrapper. Configured providers differ per host. On padme (2026-10-08) pi --list-models shows only huggingface (76 models) and the local padme seats; anthropic, openai and openrouter report not_ready. Run 'pi --list-models' before routing to Pi.",
@@ -108,6 +108,7 @@
       "headless": {
         "template": "codex exec -s read-only -m <openai-model-id> -o <outfile> - < <promptfile>",
         "seat_rails": [],
+        "seat_rails_limit": "codex exec offers no flag to skip the project's AGENTS.md, so a reviewed tree can still address its codex seat; the read-only sandbox caps what that can do",
         "seat_rails_status": "flags read from --help 2026-10-27 (ticket 1256): read tools only, no shell, no write tool; codex holds the seat by its read-only sandbox instead. gaze_seat.py inserts them after the program and subcommand",
         "families": ["OpenAI"],
         "note": "Under a ChatGPT-account login every non-OpenAI model is rejected (HTTP 400). Read the 'model:' line of the session header; the model's own self-report is wrong (it said gpt-6.1-sol while running gpt-6-luna).",
