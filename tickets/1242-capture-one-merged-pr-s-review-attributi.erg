@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Capture one merged PR's review attribution in one call
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T09:27Z reviewer created
+
+--- body ---
+## Context
+Roar's capture runbook (`skills/roar/runbooks/capture.md`) chains three
+`scripts/attribution_record.py` modes by hand for every reviewed merged PR:
+`--seats-pr`, then `--extract --merged <date>`, then `--capture`. The merge
+date has to be looked up, and a seat failure part-way leaves the operator to
+work out what to redo. The author called the post-merge extraction and
+capture burdensome (2026-10-27 discussion); 43 commits in the two weeks
+before mention attribution.
+
+## Scope
+Add `--capture-pr N` running the three in order, with the merge date read
+from the forge. Storage location unchanged; moving the record out of
+journal files is ticket 1243.
+
+## Exit criteria
+- [ ] `--capture-pr N --capture PROJECT --audience A` captures a merged PR's block with its forge merge date
+- [ ] An unmerged PR is refused before any body edit
+- [ ] A seat failure captures nothing; a rerun after the fix captures once, without duplicating seats
+- [ ] The capture runbook names the one call as the common path
+- [ ] `make check` passes
