@@ -327,6 +327,8 @@ SIGNED = "worker: model=m · family={}\nverdict: clear\n"
 
 @pytest.mark.parametrize("claim,reports,code", [
     ("panel", {"self": SIGNED.format("anthropic")}, 2),            # PR 1827: panel typed, only self filed
+    ("Panel", {"self": SIGNED.format("anthropic")}, 2),            # gaze finding: any case
+    ("**panel**", {"self": SIGNED.format("anthropic")}, 2),        # gaze finding: any markup
     ("panel", {"self": SIGNED.format("anthropic"), "redteam": SIGNED.format("openai")}, 0),
     ("self-only", {"self": SIGNED.format("anthropic")}, 0),
 ])

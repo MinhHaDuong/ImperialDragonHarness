@@ -221,7 +221,7 @@ def cross_family_problems(items: list[list[str]], home_family: str, no_door: str
         # Decorrelation by the family label; consent by the family or the `<provider>/` that bills it.
         family, model = item[2].strip().lower(), item[1].strip()
         provider = model.split('/', 1)[0].lower() if '/' in model else ''
-        return family != home and (family in allowed or provider in allowed)
+        return family not in (home, 'none') and (family in allowed or provider in allowed)  # a script never counts
 
     if other and not any(cross(item) for item in items if not is_self(item)) \
             and not (no_cross_family or '').strip():

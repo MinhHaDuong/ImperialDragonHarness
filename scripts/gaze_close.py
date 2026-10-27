@@ -241,7 +241,8 @@ def main():
         print("gaze_close: the comment file needs the {{plan_check}} placeholder and no typed "
               "'plan check:' line; the script writes that line", file=sys.stderr)
         return 2
-    if comment_text is not None and _field(comment_text, "seats") == "panel":
+    claimed = re.sub(r"[*_`]", "", _field(comment_text, "seats") or "").lower() if comment_text else ""
+    if claimed == "panel":
         derived = panel_reading(primary, a.pr, "seats") or "seats: self-only (panel unreadable)"
         if derived != "seats: panel":  # ticket 1287: a typed panel claim no non-self report backs
             print(f"gaze_close: the comment says seats: panel, the panel reads {derived}: no item "

@@ -214,6 +214,9 @@ def test_plan_write_under_consent_requires_consented_family(tmp_path):
     assert 'OpenAI' in result.stderr and '--no-cross-family' in result.stderr
     result, manifest = plan(tmp_path, SELF, CHECK, providers=['OpenAI'])  # PR 1827: a check is not another family
     assert result.returncode == 2 and not manifest.exists()
+    prefixed = ('control', 'openai/script', 'none', 'fails on base')  # gaze finding: a check never counts
+    result, manifest = plan(tmp_path, SELF, prefixed, providers=['OpenAI'])
+    assert result.returncode == 2 and not manifest.exists()
     result, manifest = plan(tmp_path, SELF, SAME, OPENAI, providers=['OpenAI'])  # case-insensitive
     assert result.returncode == 0, result.stderr
     result, manifest = plan(tmp_path, SELF, SAME, providers=None)  # no consent file: same family is fine
