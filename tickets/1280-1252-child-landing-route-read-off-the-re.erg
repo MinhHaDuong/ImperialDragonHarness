@@ -1,0 +1,22 @@
+%erg 0.1
+Title: 1252 child: landing route read off the repository — local merge only with no origin remote, else refuse without gh
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T17:13Z reviewer created
+
+--- body ---
+## Context
+Author's ruling 2026-10-27 on the flows note (conception/2026-10-27-review-merge-flows.md, PR #1809): F1 is the
+default (review on notes, merge by forge PR); F2, the local gated merge, is only for repositories without an
+upstream. No setting. Today scripts/forge.py get_forge in auto mode selects the local merge whenever gh is absent
+or the ref is not numeric, so a repository with an origin lands locally when gh is missing.
+
+## Exit criteria
+- [ ] With a remote named origin, landing never selects the local merge: without gh it refuses, naming the cause.
+- [ ] With no origin remote, landing selects the local gated merge; review on notes is unchanged in both cases.
+- [ ] The IDH_FORGE environment switch is removed or reduced to test-only use, stated in the code; tests cover both cases.
+- [ ] The harness gate passes (full make check, including the integration tier).
+
+Related: [[1252]], [[1275]], [[1276]].
