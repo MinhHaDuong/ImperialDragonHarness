@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Public commands home: bin/ on PATH at install, adopt doifetch from doudou
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T10:48Z reviewer created
+
+--- body ---
+## Context
+Author, 2026-10-27, while ruling ticket 1247 (export IDH_ROOT instead of putting `scripts/` on PATH):
+making helpers public is attractive as a side effect, because personal utilities that live outside the
+harness (e.g. `doifetch`, on host doudou under `CNRS/code/`) would get a home. Split by audience:
+`bin/` holds curated public commands (stable names, `--help`, used from the author's shell or other
+projects); `scripts/` stays internal, reached through `$IDH_ROOT/scripts/`. `bin/` exists already
+(`idh`, `mammoth-audit`, `snapshot`, `usage-report`, `install-cron`) and the installer already links
+`idh` into the user's local bin directory.
+
+## Exit criteria
+- [ ] `bin/idh install` links every `bin/*` command onto PATH (or puts `bin/` on PATH), refusing a name
+      that collides with an existing command and naming it; a test shows both.
+- [ ] `doifetch` is brought from doudou into `bin/` with `--help` and a smoke test (no network in
+      the test); its doudou copy is replaced by the installed one.
+- [ ] `bin/README` (or the install doc) states the bin/scripts split in two lines: what earns a
+      place in `bin/`.
+- [ ] The harness gate passes.
+
+## Relevant files
+bin/idh, bin/, scripts/shell-init.sh, INSTALL.md
+
+Related: [[1247]], [[1240]].
