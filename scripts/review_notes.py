@@ -30,8 +30,16 @@ changed under an unchanged id (sha256 of its line) is a Tamper: the sync stops
 before merging anything. `prune` is forbidden: anchors are not objects, so
 `git notes prune` would delete every review.
 
+Gate (ticket 1274, spec §5, §8). verify-gate reads a review through `gate`: the
+round is the count of `verdict` entries of the review, every session and clone
+alike (synced first), plus one; the gate runs only when the latest `answer` is
+not ESCALATE and an answer covers the head (`coverage`: equal, or an equal
+non-empty verbatim patch-id after a rebase; a delta answer only after a full
+one). `verdict` appends the gate's ruling with the round it derives itself:
+never a third round, never a REROLL on round 2; `add` refuses `verdict`.
+
 Commands: setup, open, request, add, sync, publish, show, history, find,
-findings, coverage, keep-head, export, import, prune (refused).
+findings, coverage, gate, verdict, keep-head, export, import, prune (refused).
 Exit: 0 ok, 1 refused or below retrievable, 2 usage or tamper.
 """
 
@@ -45,6 +53,7 @@ import socket
 import subprocess
 import sys
 import time
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -58,6 +67,8 @@ REQUIRED = ("ts", "id", "v", "kind", "review_id", "request_id", "author", "publi
             "head", "base", "base_ref", "merge_base", "range_patch_id", "links")
 CLOSED = ("fixed", "rejected", "wontfix", "withdrawn", "resolved", "invalid")
 ATTEMPTS = 5
+VERDICTS = ("APPROVED", "REROLL", "ESCALATE", "NEEDS-AUTHOR")
+MAX_ROUNDS = 2
 
 
 class Refusal(Exception):
@@ -428,9 +439,15 @@ def open_review(cwd, branch, base_ref="origin/main", **kw):
 
 
 def add(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", links=()):
-    """Append a plan, report, answer, verdict or link to the review's latest request."""
+    """Append a plan, report, answer or link to the review's latest request."""
     if kind == "request":
         raise Refusal("a request is written by `request`, which keeps its head")
+    if kind == "verdict":
+        raise Refusal("a verdict is written by `verdict`, which derives its round")
+    return _append(cwd, kind, review_id, fields, head, author, skill, links)
+
+
+def _append(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", links=()):
     reqs = [e for e in entries(cwd, review_id) if e["kind"] == "request"]
     if not reqs:
         raise Refusal(f"review {review_id} has no request")
@@ -481,6 +498,73 @@ def coverage(cwd, review_id, head):
     return best or {"match": "none", "head": head}
 
 
+def _verdicts(cwd, review_id):
+    return [e for e in entries(cwd, review_id) if e["kind"] == "verdict"]
+
+
+def gate_state(cwd, review_id, head, remote="origin"):
+    """What verify-gate needs before ruling `head` (spec §5, §8): the round it would rule,
+    whether a completed review admits it, and why not. Syncs first when there is a remote,
+    so verdicts and answers written by other clones count."""
+    if setup(cwd, remote):
+        sync(cwd, remote)
+    head = _rev(cwd, head)
+    verdicts = _verdicts(cwd, review_id)
+    answers = [e for e in entries(cwd, review_id) if e["kind"] == "answer"]
+    state = {"review_id": review_id, "head": head, "round": len(verdicts) + 1, "ready": False,
+             "reason": "", "match": "none", "answer": None, "result": None,
+             "reviewed_head": answers[-1]["head"] if answers else None,
+             "verdicts": [{"round": v.get("round"), "verdict": v.get("verdict"),
+                           "session": v.get("gate_session_id"), "head": v["head"], "id": v["id"]}
+                          for v in verdicts]}
+    cov = coverage(cwd, review_id, head) if answers else {"match": "none"}
+    state.update({k: cov[k] for k in ("match", "answer", "result") if k in cov})
+    full = [e for e in answers if (e.get("coverage") or {}).get("scope", "full") == "full"
+            and e.get("result") != "ESCALATE"]
+    if state["round"] > MAX_ROUNDS:
+        state["reason"] = f"{len(verdicts)} verdicts recorded: two rounds max, ESCALATE to the author"
+    elif not answers:
+        state["reason"] = "no completed review: no gaze answer in the review"
+    elif answers[-1].get("result") == "ESCALATE":
+        state["reason"] = f"no completed review: the latest gaze answer {answers[-1]['id']} is ESCALATE"
+    elif cov["match"] == "none":
+        state["reason"] = (f"stale: no gaze answer covers {head[:12]}; the latest reviewed "
+                           f"{state['reviewed_head'][:12]}")
+    elif cov["match"] == "delta" and not full:
+        state["reason"] = "no full review: only delta answers, and a delta never counts as full"
+    else:
+        state["ready"] = True
+    return state
+
+
+def record_verdict(cwd, review_id, session, verdict, head, evidence=(), gate_candidate="", text="",
+                   author=None, remote="origin"):
+    """Append the gate's `verdict` entry; the round is derived here from the review's recorded
+    verdicts (all sessions), never passed. Publishes with read-back when there is a remote.
+    Returns {entry, level}."""
+    if verdict not in VERDICTS:
+        raise Refusal(f"verdict must be one of {'|'.join(VERDICTS)}, got {verdict!r}")
+    try:
+        session = str(uuid.UUID(session))
+    except (TypeError, ValueError):
+        raise Refusal(f"gate session id must be a UUID, got {session!r}") from None
+    has_remote = setup(cwd, remote) is not None
+    if has_remote:
+        sync(cwd, remote)
+    rnd = len(_verdicts(cwd, review_id)) + 1
+    if rnd > MAX_ROUNDS:
+        raise Refusal(f"review {review_id} already has two rounds of verdicts; two rounds max, "
+                      "the merge decision is the author's")
+    if rnd == MAX_ROUNDS and verdict == "REROLL":
+        raise Refusal("round 2 cannot REROLL (never a third round): rule ESCALATE")
+    entry = _append(cwd, "verdict", review_id,
+                    {"gate_session_id": session, "round": rnd, "verdict": verdict,
+                     "evidence": list(evidence), "gate_candidate": gate_candidate, "text": text},
+                    head=head, author=author or {"role": "verify-gate"}, skill="verify-gate")
+    level = publish(cwd, [entry["id"]], remote) if has_remote else "done-unpublished"
+    return {"entry": entry, "level": level, "remote": has_remote}
+
+
 def export(cwd, review_id):
     return "".join(_line(e) + "\n" for e in entries(cwd, review_id))
 
@@ -525,7 +609,7 @@ def main(argv=None):
         s.add_argument("--responses", default="[]", help="JSON list of {finding_id, disposition}")
         s.add_argument("--skill", default="hunt")
     s = sub.add_parser("add")
-    s.add_argument("kind", choices=[k for k in KINDS if k != "request"])
+    s.add_argument("kind", choices=[k for k in KINDS if k not in ("request", "verdict")])
     s.add_argument("--review", required=True)
     s.add_argument("--json", required=True, help="kind-specific fields, a JSON object")
     s.add_argument("--head")
@@ -541,6 +625,17 @@ def main(argv=None):
     s = sub.add_parser("coverage")
     s.add_argument("review")
     s.add_argument("head")
+    s = sub.add_parser("gate")
+    s.add_argument("review")
+    s.add_argument("head")
+    s = sub.add_parser("verdict")
+    s.add_argument("--review", required=True)
+    s.add_argument("--session", required=True, help="the gate session UUID (session=)")
+    s.add_argument("--verdict", required=True, choices=VERDICTS)
+    s.add_argument("--head", required=True, help="the ruled tip")
+    s.add_argument("--evidence", nargs="*", default=[], help="entry ids the ruling rests on")
+    s.add_argument("--candidate", default="", help="the gate record's candidate OID")
+    s.add_argument("--text-file", type=Path, help="the human-readable verdict summary")
     s = sub.add_parser("keep-head")
     s.add_argument("review")
     s.add_argument("request")
@@ -592,6 +687,15 @@ def main(argv=None):
                 print(json.dumps(f))
         elif a.cmd == "coverage":
             print(json.dumps(coverage(cwd, a.review, a.head)))
+        elif a.cmd == "gate":
+            state = gate_state(cwd, a.review, a.head, remote)
+            print(json.dumps(state))
+            return 0 if state["ready"] else 1
+        elif a.cmd == "verdict":
+            done = record_verdict(cwd, a.review, a.session, a.verdict, a.head, a.evidence, a.candidate,
+                                  a.text_file.read_text() if a.text_file else "", remote=remote)
+            print(done["entry"]["id"], done["level"], f"round={done['entry']['round']}")
+            return 1 if done["remote"] and done["level"] != "retrievable" else 0
         elif a.cmd == "keep-head":
             print(keep_head(cwd, a.review, a.request, _rev(cwd, a.head)))
         elif a.cmd == "export":
