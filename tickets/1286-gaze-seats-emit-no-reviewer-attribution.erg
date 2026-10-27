@@ -20,3 +20,23 @@ trial and error (provider-qualified model, route, independence).
 - [ ] The harness gate passes.
 
 Related: [[1243]].
+
+## Imagine (raid 2026-10-27b)
+- Premise holds. `identity()` (attribution_record.py:~45) and `parse_record` (:93) are unchanged since the raid; `append_line` (:185) appends blindly before the closing fence, so a writer line after reviewers lands out of order and only the strict parse (`--pr-body`, `extract_record`) rejects it. gaze_close.py (:243) appends only what the attribution file holds; a `--seats-pr` path (roar 1155) already derives reviewer lines from the `seat:` lines of the posted result, but nothing in gaze runs it, and the raid's coder-run gazes left the file empty. No commit since Created touches these surfaces.
+- Simplest path: (a) `append_line` inserts a `writer:` line before the first `reviewer:` line of the block (after the last existing `writer:` line if any); (b) gaze_close, after posting its comment, runs the existing `attribution_record.py --seats-pr <pr>` when the attribution file was empty or lacks a seat named in the comment; (c) one doc section. No new module, no new format.
+- Antipattern scan: YAGNI hit if a new "attribution builder" is proposed: `--seats-pr` already skips seats present in the body, reuse it. Do not re-sort the whole block (premature); only the writer insertion point. Doc: add `## Line formats` to skills/merge/references/claims.md (it already owns "Attribution block warning"); raid and hunt cite it, no copy of the field list.
+- Risk class: concrete fix, 3 sites + doc. Coder: sonnet.
+
+## Plan
+1. scripts/attribution_record.py `append_line`: when LINE starts with `writer:` and the block holds a `reviewer:` line, insert before the first one (keep multi-line LINE intact); otherwise current behaviour.
+2. scripts/gaze_close.py (main, after the attribution append / comment post): non-local path, call `attribution_record.py --seats-pr <pr> --project <name>`, report `attribution: seats appended|FAILED ...` like the existing line; no forge path stays "carried in the answer entry" (answer already carries seat lines; confirm in record_answer, else add the `seat:` text there).
+3. skills/merge/references/claims.md: `## Line formats`: writer fields (step, runtime, model=provider/id, effort, route, independence), reviewer fields (step, seat, ..., status), `not-stated`, masked variant, one worked line each; point to `--pr-body` as the check.
+4. skills/raid/SKILL.md (Attribution lines, :250-259) and skills/hunt/SKILL.md (where writer lines are named; grep `writer:`): replace restated formats with the cite; note writer lines may be appended at any time.
+5. skills/gaze/SKILL.md (:170-175): say gaze_close derives missing reviewer lines from the result's `seat:` lines.
+- First test (tests/test_attribution_record.py, `test_append_writer_after_reviewers_lands_before_them`): build body with PLAN, REVIEW, GATE, then `run_append(body, EXECUTE)`; assert `parse_pr_body` succeeds, `[w.step] == [plan, execute]` and the writer line index < first reviewer index. A wrong impl that appends at the end fails parse_record on order; one that sorts everything would also pass, so add an assert the reviewer lines keep their relative order. Second: tests/test_gaze_close.py, `test_empty_attribution_file_runs_seats_pr` with a stub that records the argv; asserts `--seats-pr <pr>` is invoked only when the file is empty/missing a seat (and not on the local path).
+- Files touched: scripts/attribution_record.py, scripts/gaze_close.py, skills/merge/references/claims.md, skills/raid/SKILL.md, skills/hunt/SKILL.md, skills/gaze/SKILL.md, tests/test_attribution_record.py, tests/test_gaze_close.py. Registries: none (skills catalog unchanged unless a description changes; if so `make skills-catalog`).
+- Dependencies: none blocking. Overlap with 1285/1287+ only if they edit gaze_close.py or raid SKILL.md Phase 5 (check the wave). Related 1243 closed context only.
+- Exit mapping: 1 -> step 2 + gaze_close test; 2 -> step 1 + test 1; 3 -> steps 3-4 (grep that raid/hunt no longer list the fields); 4 -> `make` gate by the coder, quoting selected:/skipped:. Nothing needs a live credential; the gaze_close forge call is stubbed as in existing tests.
+
+## Feasibility (raid 2026-10-27b)
+WARN: skills/hunt holds no attribution text: step 4 there adds a citation. hunt/SKILL.md is shared with 1289 (wave 2). Wave 1.

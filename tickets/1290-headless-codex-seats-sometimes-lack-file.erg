@@ -16,3 +16,25 @@ review records still counted them as seats.
 - [ ] The codex door's seat rails give read access to the review tree consistently; a seat that cannot read reports NOT-RUN, never a clear.
 - [ ] A seat's status line says whether it ran tests or read code only.
 - [ ] The harness gate passes.
+
+## Imagine (raid 2026-10-27b)
+- Premise check: holds. Headless door (`skills/route/routes.json` launch_doors.codex.headless) is `codex exec -s read-only`, `seat_rails: []`; the sandbox, not a flag, holds the seat. `scripts/gaze_seat.py` `refusal()` (l.287) only catches a `NOT-RUN` line in a report with no `verdict:`; a seat that could not read yet wrote a clear passes, and no line says tests ran vs code read. Nothing on gaze_seat/routes/code-reviewer profile merged for this since creation (same day). Cause of the missing read/temp dir is not established (door vs sandbox vs the seats having been subagent-door); we do not need it: we make the seat declare reach and the launcher enforce it.
+- Simplest path: one declared line, one launcher check. The Charter (profiles/code-reviewer/PROFILE.md, and prose-reviewer if it shares the format) requires a second line `reach: read=<yes|no> shell=<yes|no> tests=<ran|not-run>`; `gaze_seat.launch` refuses (`no report (seat reach: ...)`) when the line is absent or `read=no`; the line passes through into the report so the verdict reader sees it. YAGNI: no codex-side probing/flag hunting, no new helper; extend `refusal()`. No premature abstraction: regex in place.
+- Risk: concrete fix, small. Coder: sonnet.
+
+## Plan
+- Actions: (1) profiles/code-reviewer/PROFILE.md Charter: add the `reach:` line to the report format (and the same wording to profiles/prose-reviewer/PROFILE.md if it has its own report format; check). (2) scripts/gaze_seat.py: add `REACH` regex and `reach_refusal(report)`; call it after `refusal()` in `launch`; absent line or `read=no` -> `(False, 'no report (seat reach: ...)')`. Add one line to LAUNCH rails telling the seat to open its report with the reach line after `worker:`. (3) skills/gaze/references/panel.md: one sentence under the headless-door text: reach line required, read=no or missing is NOT-RUN, `tests=not-run` means read-only clear. (4) gaze skill/record side: where the panel record names each seat's status (skills/gaze/SKILL.md or references), carry the reach value; grep for where `worker:` is summarised and add it there only if a rendering site exists.
+- First test (tests/test_gaze_seat.py): `test_seat_that_cannot_read_is_no_report`: fake codex writes a clear verdict with `reach: read=no shell=no tests=not-run`; assert returncode 1, no `<name>.md`, `.status` contains `seat reach`. Companion `test_report_without_reach_line_is_no_report` and `test_reach_line_survives_into_the_report` (read=yes shell=no tests=not-run -> filed, line present). Catches a wrong implementation: one that only checks for NOT-RUN fails the first; one that drops absent-line fails the second; the third proves the status reaches the reader. Existing rig fakes (l.41-80) and success tests must add the reach line to their canned reports, else they go red: that is expected, not a tautology.
+- Files touched: profiles/code-reviewer/PROFILE.md, (maybe) profiles/prose-reviewer/PROFILE.md, scripts/gaze_seat.py, skills/gaze/references/panel.md, tests/test_gaze_seat.py (+ possibly tests/test_seat_runner.sh canned reports). Registry: none (no routes.json edit, no allowlist). Charter text is also read by the subagent door seats: they must emit the line too; check tests that pin Charter wording.
+- Dependencies: no blocker. File overlap with 1286 (seat attribution, gaze_seat.py/stamp), 1287 (gaze panel), 1292 nits if it touches gaze_seat.py: serialize in one wave or give 1290 a different wave from 1286.
+- Exit criteria map: (1) reads consistent / NOT-RUN not clear -> actions 1-2 + first test (consistency is declared and enforced, not made true by flags; we cannot make codex's sandbox read, only refuse a seat that says it cannot). (2) status line ran-tests-or-read-only -> `reach:` `tests=` field, test 3. (3) harness gate -> coder runs it. Agent-impossible: a real codex run showing the reach line; coder reports the dry-run argv and fake-CLI evidence, and says live behaviour is unmeasured; orchestrator may run one live seat if wanted.
+
+## Orchestrator decisions (raid 2026-10-27b)
+- Criterion 1 is met by refusing (no report) a seat that declares read=no or omits the reach line; the codex sandbox itself is not changed.
+- The coder makes one live headless codex seat run on padme (cross-family consent covers OpenAI) and quotes its reach line.
+
+## Blind-spot pass (raid 2026-10-27b)
+- Runs after 1287 (interaction: a refused cross-family seat must fail the plan check, not degrade silently).
+
+## Feasibility (raid 2026-10-27b)
+PASS: both profiles (code-reviewer, prose-reviewer) carry their own report format; edit both. Wave 3, after 1287; tests/test_gaze_seat.py shared with 1292 (wave 1).

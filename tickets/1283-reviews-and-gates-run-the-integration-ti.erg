@@ -19,3 +19,65 @@ broken meanwhile. The after-merge runner on padme did not flag it either (its re
 - [ ] A test shows the #1799 shape is caught before merge: a moved symbol still referenced by an integration test fails the gate.
 - [ ] Explain why padme's after-merge record on the #1799 tip passed while make check failed, and fix it if it is a defect.
 - [ ] The harness gate passes.
+
+## Imagine (raid 2026-10-27b)
+- Premise holds for criteria 1-2: `.merge-gate.json` "before" set has no test run (validate-tickets, guards,
+  skills-drift, lint); verify-gate plans only that set (skills/verify-gate/SKILL.md § Check plan); gaze's
+  "targeted tests only" (skills/gaze/references/panel.md:104) names no mechanism, so seats fell back to check-fast.
+  The `"integration": true` + `"covers"` hook in merge-gate.py `plan` (~l.693) exists but no check uses it.
+- Criterion 3, premise partly wrong: padme had NO after-merge record on 01e2d72f (#1799) nor on the 9 tips after
+  it. The record that passed was the before-merge record on candidate a7f254ce (no test suite, by design, 1245).
+  `.git/idh/after-merge.log` after the f83eff45 record shows 10x `merge-gate: unexpected AttributeError: module
+  'raid_land' has no attribute 'GhForge'`: `cmd_run_after` built `raid_land().GhForge()` (now `.forge.GhForge()`,
+  scripts/merge-gate.py:1011) BEFORE running any check, `main` caught it (l.1081), exit 3 into a nohup log: no
+  record, no red ticket. Defect: forge construction precedes the run. Second, masking: main_sweep `--after` lists
+  only tips newer than the newest record, so dc0fc78e's green record hid the 10 dead tips (scripts/main_sweep.py:141).
+- Simplest path: (a) one stdlib script picks the tests whose text names a changed file's stem (import, `scripts/x.py`,
+  `x.py`) and runs them with no marker filter; a changed source file no test names -> `-m integration` full tier;
+  prints `selected:`/`fallback:` lines. Declared as a before-set check in `.merge-gate.json`, so gate record,
+  verify-gate plan and gaze all run the same thing. (b) build the forge lazily, only on red, after the note is written.
+- YAGNI scan: pytest-testmon (coverage-based) misses subprocess spawns and adds a dep: no. scripts/scoped-check.py
+  needs a hand-kept `.idh-checks.json` path map: no, a grep of tests/ is the map. No new config keys.
+- Risk class: judgment (adds a test run to the "cheap" before set ruled in 1245) + concrete fix (b). Coder: opus.
+
+## Plan
+1. scripts/touched-tests.py (new): `--base REV` (default `HEAD^1`, the candidate's base parent); diff names; for each
+   changed .py/.sh under scripts/, hooks/, tickets/erg, select tests/test_*.py mentioning its stem; unmatched source
+   file -> full integration tier; run `python3 -m pytest <selected>` (all markers); print selected/fallback/skipped.
+2. .merge-gate.json: add check `touched-tests` (argv above) to "checks" and "before"; update its "about".
+3. scripts/merge-gate.py `cmd_run_after`/`run_after`: pass a forge factory; call it only in the red branch, inside
+   the existing try at ~l.999 so the red stands in the note whatever the forge does.
+4. skills/gaze/references/panel.md item 4 and skills/verify-gate/SKILL.md § Check plan: cite the check; review quotes
+   its selected/fallback lines. skills/merge/SKILL.md § Gating tiers: before set = cheap set + touched tests.
+- First test: tests/test_touched_tests.py `test_moved_symbol_fails_the_touched_check` (integration): tmp git repo,
+  scripts/a.py defines `Thing`, tests/test_uses_a.py (marked integration) imports `a.Thing`, plus an unrelated failing
+  tests/test_other.py; branch moves Thing to scripts/b.py. Assert exit != 0, `selected:` names test_uses_a.py and NOT
+  test_other.py; positive control: after fixing the import, exit 0. Catches a wrong impl: "run everything" fails
+  on test_other; "fast tier only" never runs the integration test; "changed tests only" misses test_uses_a.py.
+  Plus test_after_merge.py `test_broken_forge_still_records_the_tip`: scratch scripts with a raid_land.py lacking
+  `forge`, `run-after --open-ticket` on a green tip -> note with `result: pass` exists on the tip.
+- Files touched: scripts/touched-tests.py (new), .merge-gate.json (shared registry: before set), scripts/merge-gate.py,
+  skills/gaze/references/panel.md, skills/verify-gate/SKILL.md, skills/merge/SKILL.md, tests/test_touched_tests.py
+  (new), tests/test_after_merge.py; tests/test_merge_gate*.py only if they pin the before-set names.
+- Dependencies: 1288 edits the same `run_after`/`run_after_once` and test_after_merge.py: serialize (1283 after).
+  1288's planned `ImportError: cannot import name` -> "environment" classification would relabel the #1799 shape
+  (`from raid_land import GhForge`) as an environment problem, not red: 1288 must not match `cannot import name`
+  for repo-local modules. 1292 touches test_after_merge.py (nit): file overlap. 1290 touches panel.md. 1282 touches
+  merge-gate.py (review notes, other region). No blocker on 1252/1277.
+- Exit mapping: c1 -> actions 1, 2, 4 (record/plan/review quote selected lines). c2 -> first test. c3 -> diagnosis
+  above (write it in the PR body) + action 3 and its test; masking (main_sweep) left as a reported residual unless the
+  orchestrator wants it here. c4 -> `make check` + `merge-gate.py run` in the PR.
+
+## Orchestrator decisions (raid 2026-10-27b)
+- Touched-tests run lives in gaze and verify-gate (each says which tests ran), NOT in the .merge-gate.json before-set: that would reverse the author's 1245/1226 cheap-set ruling. Rejected alternative: before-set entry.
+- Criterion 3: fix the forge-built-before-checks crash in cmd_run_after (build the forge only on red, after the record). The main_sweep blind spot (a later green record hides unchecked tips) is its own follow-up ticket, not this PR.
+- Runs after 1288 (same run_after code, tests/test_after_merge.py).
+
+## Blind-spot pass (raid 2026-10-27b)
+- The touched-tests step must degrade in projects without the harness layout (no tests/, no integration marker): say 'no test layout: skipped' and never error or claim a pass. gaze and verify-gate are projected into other repos.
+- Base: merge-base with the base branch (origin/main), not HEAD^1, so a multi-commit PR is covered.
+- Measure once: wall time of 'pytest -m integration' on padme and the selection replayed on the #1799 diff; put both in the PR. If the fallback blows gaze's budget, run the step in verify-gate only and say so.
+- Interpreter: run through the project's declared runner (Makefile RUN / uv run --frozen), not an inherited VIRTUAL_ENV.
+
+## Feasibility (raid 2026-10-27b)
+WARN: follow the orchestrator decision, not the plan's .merge-gate.json/before-set items; criterion 2 rests on touched-tests.py's exit status as run by gaze and verify-gate. Wave 2, after 1288.
