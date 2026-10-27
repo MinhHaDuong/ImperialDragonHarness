@@ -204,6 +204,8 @@ def library(zotero_factory, tmp_path_factory):
     stored = make_pdf(files / "original-publisher-name.pdf",
                       ["Totally Different Recorded Title", "by Renamer"])
     shared = make_pdf(files / "shared.pdf", ["Working paper", "by Tiebreak"])
+    junk = make_pdf(files / "publisher-scan.pdf", ["Quasar Gimbal Lemma"],
+                    {"Title": "Microsoft Word - qg1979 final draft v2"})
     shared_copy = files / "shared-copy.pdf"
     shared_copy.write_bytes(shared.read_bytes())
     keys = {
@@ -239,6 +241,8 @@ def library(zotero_factory, tmp_path_factory):
                               url="https://hdl.handle.net/10419/12345"),
         "hash": zotero.save("Totally Different Recorded Title",
                             creators=("Renamer",), date="2024", pdf=stored),
+        "junk": zotero.save("Quasar Gimbal Lemma", creators=("Valiant",),
+                            date="1979", pdf=junk),
         "tie_wp": zotero.save("Working Paper Version", creators=("Tiebreak",),
                               DOI="10.5555/tie", pdf=shared),
         "tie_journal": zotero.save("Journal Version", creators=("Tiebreak",),
@@ -263,7 +267,7 @@ def library(zotero_factory, tmp_path_factory):
         "contentType": "text/html", "parentItem": keys["kurz"],
         "tags": [], "relations": {}}])
     assert linked["successful"], linked
-    return zotero, keys, {"stored": stored, "shared": shared}
+    return zotero, keys, {"stored": stored, "shared": shared, "junk": junk}
 
 
 @pytest.fixture
@@ -479,6 +483,21 @@ def test_check_staging_verdicts_cover_every_answer(lib, tmp_path):
     unknown = row(thin)
     assert unknown["verdict"] == "unidentified", "could not look is not absent"
     assert unknown["consulted"] == []
+
+
+@pytest.mark.integration
+def test_check_staging_retries_with_the_filename_when_the_embedded_title_is_junk(
+        lib, tmp_path):
+    """Issue #1654: a publisher-tool /Title long enough to be searched
+    matches no item; the filename title must still be tried, and the hash
+    then reads identical, not absent."""
+    keys, files = lib
+    probe = tmp_path / "Valiant1979-QuasarGimbalLemma.pdf"
+    shutil.copyfile(files["junk"], probe)
+    assert zi._pdf_info(probe)["Title"].startswith("Microsoft Word")
+    judged = row(probe)
+    assert judged["verdict"] == "identical"
+    assert judged["zotero_key"] == keys["junk"]
 
 
 @pytest.mark.integration

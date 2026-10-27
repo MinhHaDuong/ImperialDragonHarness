@@ -2254,15 +2254,31 @@ def audit_one(path: Path, libs: list[tuple[str, zotero.Zotero]],
         title = _filename_title(path)
     bib_type = str(bib_entry.get("_type", "")).lower()
     item_type = BIB_TO_ZOTERO_TYPE.get(bib_type)
-    res = find_work(libs, title=title,
-                    doi=bib_entry.get("doi"), isbn=bib_entry.get("isbn"),
-                    arxiv=bib_entry.get("arxiv"),
-                    handle=bib_entry.get("handle"),
-                    item_type=item_type, pdf_path=path,
-                    # Fail closed: an unplaced type may be a part whose ISBN
-                    # is its volume's.
-                    isbn_unusable=None if item_type else
-                    f"unmapped .bib type @{bib_type}: part or volume unknown")
+
+    def look(searched: str) -> dict[str, Any]:
+        return find_work(libs, title=searched,
+                         doi=bib_entry.get("doi"), isbn=bib_entry.get("isbn"),
+                         arxiv=bib_entry.get("arxiv"),
+                         handle=bib_entry.get("handle"),
+                         item_type=item_type, pdf_path=path,
+                         # Fail closed: an unplaced type may be a part whose
+                         # ISBN is its volume's.
+                         isbn_unusable=None if item_type else
+                         f"unmapped .bib type @{bib_type}: part or volume "
+                         "unknown")
+
+    res = look(title)
+    if not (res["matches"] or res["candidates"]):
+        # A junk or garbled embedded /Title (publisher tool strings) matches
+        # no item and so never reaches the hash comparison; the filename
+        # carries the author's own naming intent (issue #1654).
+        fallback = _filename_title(path)
+        if (fallback != title and not bib_entry.get("title")
+                and len(re.findall(r"[^\W_]{3,}", fallback))
+                >= TITLE_MIN_WORDS):
+            retry = look(fallback)
+            if retry["matches"] or retry["candidates"]:
+                res = retry
     top = res["matches"][0] if res["matches"] else None
     # Six answers, not four. Collapsing title candidates into "absent" is
     # the expensive mistake in both directions: called present, a document
