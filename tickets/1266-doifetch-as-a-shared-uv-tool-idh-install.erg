@@ -1,0 +1,30 @@
+%erg 0.1
+Title: DOIfetch as a shared uv tool: idh install pins it; the zotero skill fetches missing fulltexts from open sources
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T13:38Z reviewer created
+
+--- body ---
+## Context
+Author ruling, 2026-10-27 raid (1249's doifetch half, options B then C). DOIfetch is a separate project
+(`MinhHaDuong/DOIfetch` on GitHub, a fork of `hanhan6688/DoiHarvest`), not a script to vendor. Colleagues
+asked for it, so it must install in one command. Step B lands in the DOIfetch repo: a console entry point
+`doifetch`, open and institutional sources (Crossref, Unpaywall, HAL, ISTEX, EZproxy) as the default
+source list, and a README install line (`uv tool install git+https://github.com/MinhHaDuong/DOIfetch`).
+The harness neither adds nor enables shadow-library sources; enabling any source outside the default
+list stays a manual, per-user choice.
+
+## Exit criteria
+- [ ] `idh install` installs DOIfetch as a uv tool pinned to a recorded ref (or reports clearly that uv or
+      the network is unavailable), idempotently; a test on a temporary HOME with a stubbed `uv`.
+- [ ] The zotero skill gains a "fetch missing fulltexts" step that calls `doifetch` with the default
+      (open and institutional) source list only, for the works the cited-works check reports missing, and
+      says what to do when `doifetch` is absent.
+- [ ] Tracker 1249's doifetch child line points here; the harness gate passes.
+
+## Relevant files
+adapters/lifecycle.py, bin/idh, skills/zotero/SKILL.md, skills/zotero/references/*, tests/test_idh_lifecycle.py
+
+Related: [[1249]], [[1257]].

@@ -7,6 +7,7 @@ Author: reviewer
 2026-10-27T10:48Z reviewer created
 2026-10-27T11:47Z reviewer note split into tracker + child 1257 (installer, PR #1751) after the #1751 gate's round-1 REROLL; doifetch stays here until it can be filed from doudou
 2026-10-27T11:47Z reviewer note verify-reroll — round 1: doifetch criterion MISSING; split ticket 1249 so this PR closes its own installer child
+2026-10-27T13:38Z reviewer note doifetch child filed as 1266 (author: package DOIfetch for sharing, B then C)
 
 --- body ---
 ## Context
@@ -20,7 +21,7 @@ projects); `scripts/` stays internal, reached through `$IDH_ROOT/scripts/`. `bin
 
 ## Children
 - [ ] 1257 installer links curated bin/ commands onto PATH (PR #1751)
-- [ ] doifetch adoption from doudou (not yet filed; needs that host)
+- [ ] 1266 DOIfetch as a shared uv tool, zotero skill step (author ruling 2026-10-27: B then C)
 
 ## Exit criteria
 - [ ] `bin/idh install` links every `bin/*` command onto PATH (or puts `bin/` on PATH), refusing a name

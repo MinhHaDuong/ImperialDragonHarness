@@ -1,0 +1,39 @@
+%erg 0.1
+Title: A git hook starts the after-merge runner on every move of main
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T13:17Z reviewer created
+
+--- body ---
+## Context
+Raid 2026-10-27: after ticket 1245 made the before-merge set cheap (no pytest), 15 PRs merged through
+the raid's landing path (a hand-rolled land.sh, then scripts/raid_land.py) and NO after-merge run
+started: no record on any main tip, no runner log, no lock. raid_land.py's docstring says step 9 is
+the caller's; raid Phase 7 calls raid_land.py and does not start it either. Main went about 1h20
+without a full-suite pass, which voids the "trust, verify, monitor" bargain of tracker 1226.
+
+## Design (author, 2026-10-27)
+A git hook owns step 9: the existing `hooks/reference-transaction` (main-update guard, ticket 1045)
+already sees every committed move of `refs/heads/main`; on such a move it starts
+`merge-gate.py run-after --ref main` detached (nohup, from the shared git dir), never blocking or
+failing the ref update. The runner's flock dedupes concurrent triggers. Every landing path (raid_land,
+the merge recipe by hand, sync-local-main.sh after a web-UI merge) is then covered without a caller
+remembering it; skills cite the hook instead of carrying the snippet.
+
+## Exit criteria
+- [ ] On a committed update of refs/heads/main, the reference-transaction hook starts the after-merge
+      runner detached; the ref update's latency and exit status are unaffected (test: the hook returns
+      at once and the update succeeds even when the runner fails to start).
+- [ ] A test lands a request on a temp gated repo through raid_land.py and finds an after-merge record
+      (or a busy-lock note) on the new tip without any caller starting the runner; it fails on today's code.
+- [ ] Merge step 9, raid Phase 7 and raid_land.py's docstring cite the hook; no snippet restatement remains.
+- [ ] `main_sweep.py --after` (lair's audit) flags main tips older than N minutes with no after-merge
+      record, so a silent gap is caught within a day.
+- [ ] The harness gate passes.
+
+## Relevant files
+hooks/reference-transaction, scripts/raid_land.py, skills/raid/SKILL.md, skills/merge/SKILL.md, scripts/main_sweep.py, skills/lair/SKILL.md
+
+Related: [[1226]], [[1244]], [[1255]].
