@@ -2,9 +2,12 @@
 Title: Vibe as read-only gaze seat; correct stale Vibe route docs
 Created: 2026-10-27
 Author: claude
+Closed: closed by raid — PR #1805
 
 --- log ---
 2026-10-27T16:23Z claude created
+2026-10-27T16:32Z reviewer live control 2026-10-27, Vibe 2.26.0, via scripts/gaze_seat.py launch --runtime vibe --model mistral-large-latest (14-18s): seat report 'nonce: NONCE-ZQ7-4471-planted' (planted in secret.txt, sha256 7c84a5f0 unchanged), 'write: blocked by runtime policy'; git status of the review tree showed only .panel/, no WRITTEN.txt; disposable home removed. Earlier raw probe: bogus model id gets HTTP 400 Invalid model.
+2026-10-27T16:37Z reviewer closed — closed by raid — PR #1805
 
 --- body ---
 ## Context

@@ -25,6 +25,10 @@ log="$STUB_LOG/$(basename "$0").argv"
 printf '%s\n' "$@" > "$log"
 pwd > "$STUB_LOG/$(basename "$0").cwd"
 cat > "$STUB_LOG/$(basename "$0").stdin"
+if [ -n "$VIBE_HOME" ]; then
+  printf '%s\n' "$VIBE_HOME" > "$STUB_LOG/vibe.home"
+  cat "$VIBE_HOME/agents/seat.toml" > "$STUB_LOG/vibe.agent"
+fi
 [ "$(basename "$0")" = aider ] && [ -z "$STUB_MODE" ] && STUB_MODE=aider-clear
 case "$STUB_MODE" in
   aider-clear)
@@ -78,7 +82,7 @@ def rig(tmp_path):
     bin_dir, log = tmp_path / 'bin', tmp_path / 'log'
     bin_dir.mkdir()
     log.mkdir()
-    for name in ('claude', 'codex', 'pi', 'aider'):
+    for name in ('claude', 'codex', 'pi', 'aider', 'vibe'):
         stub = bin_dir / name
         stub.write_text(STUB)
         stub.chmod(0o755)
@@ -535,3 +539,30 @@ def test_non_reasoning_answer_without_a_marker_is_reported(rig, padme):
     report = (rig['panel'] / 'correctness.md').read_text()
     assert 'verdict: clear' in report and 'Aider v' not in report and 'Repo-map' not in report
     assert 'Tokens:' not in report and report.splitlines()[0].startswith('worker: model=padme/served-model')
+
+
+@pytest.mark.integration
+def test_vibe_seat_is_read_only_pinned_by_a_disposable_home_and_stdin_closed(rig):
+    (rig['tmp'] / 'gaze-seats.json').write_text('{"cross_family_spend": ["Mistral"]}')
+    result = launch(rig, runtime='vibe', model='mistral-large-latest', family='Mistral')
+    assert result.returncode == 0, result.stdout
+    argv = (rig['log'] / 'vibe.argv').read_text().splitlines()
+    assert argv[:2] == ['--enabled-tools', 'read_file'] and argv[2] == '-p'
+    assert argv[argv.index('--agent') + 1] == 'seat' and '--trust' not in argv
+    assert (rig['log'] / 'vibe.stdin').read_text() == ''  # /dev/null, never the caller's stdin
+    assert (rig['log'] / 'vibe.cwd').read_text().strip() == str(rig['tree'].resolve())
+    agent = (rig['log'] / 'vibe.agent').read_text()
+    assert 'name = "mistral-large-latest"' in agent and 'alias = "seat-model"' in agent
+    assert not Path((rig['log'] / 'vibe.home').read_text().strip()).exists()  # home removed after the run
+    report = (rig['panel'] / 'correctness.md').read_text()
+    assert report.splitlines()[0].startswith('worker: model=mistral-large-latest · family=Mistral · runtime=vibe')
+
+
+@pytest.mark.integration
+def test_vibe_seat_needs_mistral_consent_and_a_plain_model_name(rig):
+    refused = launch(rig, runtime='vibe', model='mistral-large-latest', family='Mistral')
+    assert refused.returncode == 1 and 'no consent for cross-family spend on Mistral' in refused.stdout
+    (rig['tmp'] / 'gaze-seats.json').write_text('{"cross_family_spend": ["Mistral"]}')
+    odd = launch(rig, runtime='vibe', model='x"\n[[models]]', family='Mistral')
+    assert odd.returncode == 1 and 'not a plain model name' in odd.stdout
+    assert not (rig['log'] / 'vibe.argv').exists()

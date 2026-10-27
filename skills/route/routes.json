@@ -20,7 +20,7 @@
       "endpoint": "api.mistral.ai (pi built-in)",
       "key_env": "MISTRAL_API_KEY",
       "status": "live",
-      "note": "zai-glm-5-3 direct (the Vibe route). NEW 2026-10-06: mistral-large-4 public preview (~1T MoE, 49B active, vision) at 0.68/2.09 per M (-50% preview, expiry unannounced; 0.07 cached input); context 1M claimed vs ~524K evaluator-side (262K max output); weights due Oct 27 (open-weight, red-team pending); pi's generic custom provider sends the OpenAI 'store' param (422) — use the NATIVE mistral provider, which accepts unknown model ids; pi resolves catalog-unknown mistral models at thinking OFF.",
+      "note": "Vibe (2.26.0) reaches Mistral through the Le Chat plan login in the OS keyring, default model mistral-vibe-cli-latest (mistral-medium-3.5 alias); the earlier note naming zai-glm-5-3 here was stale (ticket 1279). NEW 2026-10-06: mistral-large-4 public preview (~1T MoE, 49B active, vision) at 0.68/2.09 per M (-50% preview, expiry unannounced; 0.07 cached input); context 1M claimed vs ~524K evaluator-side (262K max output); weights due Oct 27 (open-weight, red-team pending); pi's generic custom provider sends the OpenAI 'store' param (422) — use the NATIVE mistral provider, which accepts unknown model ids; pi resolves catalog-unknown mistral models at thinking OFF.",
       "last_verified": "2026-10-06"
     },
     "deepseek": {
@@ -141,10 +141,13 @@
         "status": "unverified"
       },
       "headless": {
-        "template": "vibe -p \"<prompt>\" --max-turns <n> [--agent <name>]",
+        "template": "vibe -p \"<prompt>\" --agent seat --max-turns 40",
+        "seat_rails": ["--enabled-tools", "read_file"],
+        "seat_rails_status": "verified 2026-10-27 on Vibe 2.26.0 (ticket 1279): in -p, --enabled-tools disables every other tool; with only read_file a seat told to write tried write_file, bash and others and no file landed. grep is not offered: in the Unified Harness it runs through bash and is denied, the seat falls back to read_file. Stdin must be closed (gaze_seat.py gives /dev/null): an inherited stdin makes vibe -p block and print nothing.",
+        "seat_agent": {"name": "seat", "provider": "mistral", "home_env": "VIBE_HOME"},
         "families": ["Mistral"],
-        "note": "No model flag: the model comes from the agent or the config. Run from a trusted folder (--trust) or project config is ignored. Cannot be a detached review seat: file tools are denied to headless sessions (ticket 1017); record 'no report', never simulate.",
-        "status": "partly verified 2026-10-08: the command runs, but the probe printed no model id from an untrusted folder"
+        "note": "No model flag: gaze_seat.py writes agents/seat.toml (active_model plus one [[models]]) into a disposable VIBE_HOME and removes it after the run; the pin reaches the API (a bogus id gets HTTP 400 Invalid model). Attribute the seat by the pin: the model misreports itself (said Claude 3.5 Sonnet). Auth is the Le Chat plan login in the OS keyring, no MISTRAL_API_KEY; whether pinned non-default models bill the plan or separately is unchecked (Mistral console). Vibe's default model is mistral-vibe-cli-latest (alias mistral-medium-3.5). The cwd is the review tree and stays untrusted (no --trust), so project config and AGENTS.md are not loaded. Supersedes the 2.25.8 finding (tickets 1017, 1279) that headless sessions deny file tools: that symptom was the stdin hang.",
+        "status": "verified 2026-10-27 on Vibe 2.26.0 (ticket 1279): planted nonce returned through gaze_seat.py, write attempt left the tree unchanged"
       }
     }
   }
