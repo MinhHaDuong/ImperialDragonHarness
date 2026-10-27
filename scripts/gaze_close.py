@@ -18,6 +18,10 @@ files is never force-removed.
 `--attribution-file` is required (an empty file records nothing); a call
 without it fails at argument parsing rather than skipping attribution.
 
+A comment whose `seats:` field says `panel` is refused (exit 2, nothing removed or
+posted) unless `seat_clock.py seats` reads `seats: panel` on the review panel: an item
+other than self filed a report the plan check accepts (ticket 1287).
+
 The comment file must hold `{{plan_check}}` (ticket 1267) and no typed
 `plan check:` line; otherwise the call exits 2 before anything is removed or
 posted. The script replaces it with the first line of `seat_clock.py
@@ -117,13 +121,18 @@ def cleanup(primary, pr, branch):
     return True, "review worktree removed"
 
 
-def plan_check_line(primary, pr):
-    """The checker's verdict line for the review panel, verbatim."""
+def panel_reading(primary, pr, mode):
+    """First stdout line of `seat_clock.py <mode>` on the review panel."""
     key = unit_key(pr)
     panel = primary / ".claude" / "worktrees" / f"review-{key}" / ".panel" / key
-    r = subprocess.run([sys.executable, str(HERE / "seat_clock.py"), "plan-check", str(panel)],
+    r = subprocess.run([sys.executable, str(HERE / "seat_clock.py"), mode, str(panel)],
                        capture_output=True, text=True)
-    first = r.stdout.splitlines()[0] if r.stdout.strip() else ""
+    return r.stdout.splitlines()[0] if r.stdout.strip() else ""
+
+
+def plan_check_line(primary, pr):
+    """The checker's verdict line for the review panel, verbatim."""
+    first = panel_reading(primary, pr, "plan-check")
     return first if first.startswith("plan check:") else "plan check: FAIL — manifest unreadable"
 
 
@@ -232,6 +241,12 @@ def main():
         print("gaze_close: the comment file needs the {{plan_check}} placeholder and no typed "
               "'plan check:' line; the script writes that line", file=sys.stderr)
         return 2
+    if comment_text is not None and _field(comment_text, "seats") == "panel":
+        derived = panel_reading(primary, a.pr, "seats") or "seats: self-only (panel unreadable)"
+        if derived != "seats: panel":  # ticket 1287: a typed panel claim no non-self report backs
+            print(f"gaze_close: the comment says seats: panel, the panel reads {derived}: no item "
+                  "but self filed a report; post seats: self-only", file=sys.stderr)
+            return 2
     plan_line = plan_check_line(primary, a.pr)
     print(plan_line)  # the callers copy this line (comment, blocked-cleanup ESCALATE); never typed
     entry = read_entry(primary, a.pr)

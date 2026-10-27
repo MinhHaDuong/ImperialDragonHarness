@@ -320,3 +320,25 @@ def test_partial_attribution_file_gets_the_missing_seat(tmp_path):
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, have + "\n"), "--comment-file", str(comment)], primary, env)
     assert "attribution: seats appended" in r.stdout, r.stdout
     assert "seat=b" in body.read_text() and body.read_text().count("seat=a") == 1
+
+
+SIGNED = "worker: model=m · family={}\nverdict: clear\n"
+
+
+@pytest.mark.parametrize("claim,reports,code", [
+    ("panel", {"self": SIGNED.format("anthropic")}, 2),            # PR 1827: panel typed, only self filed
+    ("panel", {"self": SIGNED.format("anthropic"), "redteam": SIGNED.format("openai")}, 0),
+    ("self-only", {"self": SIGNED.format("anthropic")}, 0),
+])
+def test_seats_panel_needs_a_filed_non_self_report(tmp_path, claim, reports, code):
+    """Ticket 1287: the `seats:` header is checked against the panel, like the plan-check line."""
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\nself\tself\tanthropic\tgaze\nredteam\to\topenai\theadless codex\n", reports)
+    comment = tmp_path / "c.md"
+    comment.write_text(f"result: REVIEWED\nseats: {claim}\n{{{{plan_check}}}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == code, r.stdout + r.stderr
+    if code:
+        assert "seats: self-only" in r.stderr
+        assert (primary / ".claude" / "worktrees" / "review-7").exists()
+        assert not (tmp_path / "gh.log").exists()

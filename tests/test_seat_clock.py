@@ -6,6 +6,8 @@ import sys
 import time
 from pathlib import Path
 
+import json
+
 import pytest
 
 pytestmark = pytest.mark.integration
@@ -13,8 +15,18 @@ pytestmark = pytest.mark.integration
 SCRIPT = Path(__file__).resolve().parents[1] / 'scripts' / 'seat_clock.py'
 
 
-def run(*args, timeout=30):
-    return subprocess.run([sys.executable, str(SCRIPT), *args], capture_output=True, text=True, timeout=timeout)
+def run(*args, timeout=30, env=None):
+    return subprocess.run([sys.executable, str(SCRIPT), *args], capture_output=True, text=True, timeout=timeout,
+                          env={**os.environ, **env} if env else None)
+
+
+def consent(tmp_path, providers):
+    """A consent file for plan-write to read; never the host's (padme has one)."""
+    path = tmp_path / 'gaze-seats.json'
+    path.unlink(missing_ok=True)
+    if providers is not None:
+        path.write_text(json.dumps({'cross_family_spend': providers}))
+    return {'IDH_GAZE_SEATS_CONFIG': str(path)}
 
 
 def test_timed_out_reader_is_killed_and_the_caller_continues(tmp_path):
@@ -124,8 +136,8 @@ def test_plan_write_builds_a_manifest_the_plan_check_accepts(tmp_path):
     """Ticket 1267: the manifest comes from a helper, so it parses."""
     panel = tmp_path / 'panel'
     result = run('plan-write', str(panel), '--intent', 'verify X', '--method', 'one seat',
-                 '--budget', '10m', '--spend', 'none',
-                 '--item', 'regression', 'script', 'none', 'fails on base')
+                 '--budget', '10m', '--spend', 'none', '--home-family', 'anthropic',
+                 '--item', 'regression', 'script', 'none', 'fails on base', env=consent(tmp_path, None))
     assert result.returncode == 0, result.stderr
     (panel / 'regression.md').write_text('ran: ok\n')
     checked = run('plan-check', str(panel))
@@ -140,8 +152,10 @@ def test_plan_write_builds_a_manifest_the_plan_check_accepts(tmp_path):
 ])
 def test_plan_write_refuses_what_the_checker_cannot_parse(tmp_path, args):
     panel = tmp_path / 'panel'
-    result = run('plan-write', str(panel), '--intent', 'i', '--method', 'm', '--budget', '10m', *args)
+    result = run('plan-write', str(panel), '--intent', 'i', '--method', 'm', '--budget', '10m',
+                 '--home-family', 'anthropic', *args, env=consent(tmp_path, None))
     assert result.returncode == 2
+    assert 'plan refused' in result.stderr
     assert not (panel / 'manifest.txt').exists()
 
 
@@ -153,8 +167,97 @@ def test_plan_write_refuses_what_the_checker_cannot_parse(tmp_path, args):
 ])
 def test_plan_write_refuses_out_of_contract_values(tmp_path, args):
     panel = tmp_path / 'panel'
-    cmd = [sys.executable, str(SCRIPT), 'plan-write', str(panel), *[os.fsencode(a) for a in args]]
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+    cmd = [sys.executable, str(SCRIPT), 'plan-write', str(panel), '--home-family', 'anthropic',
+           *[os.fsencode(a) for a in args]]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=30,
+                            env={**os.environ, **consent(tmp_path, None)})
     assert result.returncode == 2, result.stderr
     assert 'Traceback' not in result.stderr
     assert not (panel / 'manifest.txt').exists()
+
+
+# Ticket 1287: plan-write refuses the plans a fork that skipped references/plan.md writes.
+def plan(tmp_path, *items, home='anthropic', providers=None, extra=()):
+    panel = tmp_path / f'panel{len(list(tmp_path.glob("panel*")))}'  # a fresh panel per call
+    flat = [cell for item in items for cell in ('--item', *item)]
+    result = run('plan-write', str(panel), '--intent', 'i', '--method', 'm', '--budget', '10m',
+                 '--home-family', home, *extra, *flat, env=consent(tmp_path, providers))
+    return result, panel / 'manifest.txt'
+
+
+SELF = ('self', 'self', 'anthropic', 'gaze reads the diff')
+SAME = ('correctness', 'mid-model', 'anthropic', 'headless claude-code')
+OPENAI = ('redteam', 'other-model', 'openai', 'headless codex')
+CHECK = ('control', 'script', 'none', 'fails on base')
+
+
+def test_plan_write_refuses_all_self_plan(tmp_path):
+    result, manifest = plan(tmp_path, SELF)
+    assert result.returncode == 2
+    assert not manifest.exists()
+    assert '--no-door' in result.stderr
+    model_self = ('mine', 'self', 'anthropic', 'gaze itself')  # self by model, not by name
+    result, manifest = plan(tmp_path, SELF, model_self)
+    assert result.returncode == 2 and not manifest.exists()
+
+
+def test_plan_write_records_no_door(tmp_path):
+    result, manifest = plan(tmp_path, SELF, extra=('--no-door', 'headless claude-code failed to start'))
+    assert result.returncode == 0, result.stderr
+    assert '# no-door: headless claude-code failed to start' in manifest.read_text().splitlines()
+
+
+def test_plan_write_under_consent_requires_consented_family(tmp_path):
+    # No --spend: consent is read from the host config, never from the plan's own line.
+    result, manifest = plan(tmp_path, SELF, SAME, providers=['OpenAI'])
+    assert result.returncode == 2
+    assert not manifest.exists()
+    assert 'OpenAI' in result.stderr and '--no-cross-family' in result.stderr
+    result, manifest = plan(tmp_path, SELF, CHECK, providers=['OpenAI'])  # PR 1827: a check is not another family
+    assert result.returncode == 2 and not manifest.exists()
+    result, manifest = plan(tmp_path, SELF, SAME, OPENAI, providers=['OpenAI'])  # case-insensitive
+    assert result.returncode == 0, result.stderr
+    result, manifest = plan(tmp_path, SELF, SAME, providers=None)  # no consent file: same family is fine
+    assert result.returncode == 0, result.stderr
+
+
+def test_plan_write_cross_family_is_relative_to_the_home_family(tmp_path):
+    # On a Codex session an OpenAI seat is same-family.
+    result, _ = plan(tmp_path, SELF, OPENAI, home='OpenAI', providers=['OpenAI'])
+    assert result.returncode == 0, result.stderr  # nothing cross-family is consented
+    result, manifest = plan(tmp_path, SELF, OPENAI, home='openai', providers=['OpenAI', 'Anthropic'])
+    assert result.returncode == 2 and not manifest.exists()
+    assert 'Anthropic' in result.stderr
+    result, _ = plan(tmp_path, SELF, OPENAI, SAME, home='openai', providers=['OpenAI', 'Anthropic'])
+    assert result.returncode == 0, result.stderr
+
+
+def test_plan_write_no_cross_family_is_recorded_and_shown_by_the_plan_check(tmp_path):
+    result, manifest = plan(tmp_path, SELF, SAME, providers=['OpenAI'], extra=('--no-cross-family', 'trivial'))
+    assert result.returncode == 0, result.stderr
+    assert '# no-cross-family: trivial' in manifest.read_text().splitlines()
+    for name in ('self', 'correctness'):
+        (manifest.parent / f'{name}.md').write_text('worker: model=m · family=anthropic\nverdict: clear\n')
+    checked = run('plan-check', str(manifest.parent))
+    assert checked.returncode == 0
+    assert checked.stdout.splitlines()[0] == 'plan check: PASS with deviations — no cross-family seat: trivial'
+
+
+def test_cross_family_seat_without_a_report_fails_the_plan_check(tmp_path):
+    """No silent fallback: the only cross-family seat yielding nothing fails the check."""
+    result, manifest = plan(tmp_path, SELF, OPENAI, providers=['OpenAI'])
+    assert result.returncode == 0, result.stderr
+    (manifest.parent / 'self.md').write_text('worker: model=m · family=anthropic\nverdict: clear\n')
+    (manifest.parent / 'redteam.md.status').write_text('redteam: no report (refused: read=no)\n')
+    checked = run('plan-check', str(manifest.parent))
+    assert checked.returncode == 1
+    assert checked.stdout.startswith('plan check: FAIL — redteam: no report')
+
+
+def test_seats_derives_panel_only_from_a_non_self_report(tmp_path):
+    result, manifest = plan(tmp_path, SELF, OPENAI, providers=['OpenAI'])
+    assert result.returncode == 0, result.stderr
+    (manifest.parent / 'self.md').write_text('worker: model=m · family=anthropic\nverdict: clear\n')
+    assert run('seats', str(manifest.parent)).stdout.strip() == 'seats: self-only'
+    (manifest.parent / 'redteam.md').write_text('worker: model=o · family=openai\nverdict: clear\n')
+    assert run('seats', str(manifest.parent)).stdout.strip() == 'seats: panel'
