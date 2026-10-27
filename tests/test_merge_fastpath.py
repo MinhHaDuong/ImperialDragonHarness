@@ -272,6 +272,36 @@ def test_a_suite_that_stopped_early_is_red_even_if_its_listed_failures_pass_alon
     assert fastpath(work).returncode == 1
 
 
+MAKE_SUITE = (
+    'echo "FAILED tests/test_x.py::test_flake - boom"; {extra}'
+    'echo "======== 1 failed, 3 passed in 1.00s ========"; exit 1'
+)
+
+
+@pytest.mark.parametrize("extra, recovers", [
+    ("", True),  # an ordinary failure behind make (exit 2): the flaky re-run still works
+    ('echo "!!!!!!!! Interrupted: 1 error during collection !!!!!!!!"; ', False),
+    ('echo "INTERNALERROR> boom"; ', False),
+])
+def test_the_flaky_rerun_reads_pytest_behind_make(tmp_path, extra, recovers):
+    """Gaze round 12: pytest-guard is `make check-tests`, and make exits 2 for any failing
+    recipe, so the exit code alone cannot tell an ordinary failure from a stopped run."""
+    marker = tmp_path / "suite"
+    makefile = tmp_path / "Makefile"
+    makefile.write_text("check:\n\t@sh -c '" + MAKE_SUITE.format(extra=extra).replace("'", "'\\''") + "'\n")
+    conf = config(rerun={"suite": ["sh", "-c", 'echo "$@" > "$0.rerun"; exit 0', str(marker)]})
+    conf["checks"][1]["argv"] = ["make", "-s", "-f", str(makefile), "check"]
+    work = make_repo(tmp_path, conf)
+    result = verify(work)
+    note = verdict_note(work)
+    if recovers:
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "result: pass" in note and "flaky: 1 tests/test_x.py::test_flake" in note
+    else:
+        assert result.returncode == 1 and "result: fail" in note
+        assert not Path(f"{marker}.rerun").exists()
+
+
 def test_a_verdict_stamped_in_the_future_keeps_the_fast_path_closed(repo):
     verify(repo)
     earlier = {**child_env(), "MERGE_GATE_NOW": str(int(time.time()) - 3600)}

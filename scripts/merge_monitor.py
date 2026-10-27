@@ -91,6 +91,27 @@ def execute(argv, cwd, deadline):
     return proc.returncode, out, time.monotonic() - start
 
 
+MAKE_RECIPE_FAILED = 2  # make's exit when a recipe fails, whatever the recipe's own code
+SUMMARY = re.compile(r"^=+ (.+?) in [\d.]+s(?: \(.*\))? =+$", re.MULTILINE)
+
+
+def ordinary_failures(code, out):
+    """The first run completed and only tests failed, so its failing ids may be re-run.
+
+    pytest says so with exit 1. Behind make (pytest-guard is `make check-tests`) every
+    failing recipe is exit 2, so there the run's own summary decides: failures only, no
+    error, no interruption, no internal error. A run that stopped early never ran the
+    rest of the suite, and its listed ids passing alone prove nothing (gaze rounds 11-12).
+    """
+    if code == TESTS_FAILED:
+        return True
+    if code != MAKE_RECIPE_FAILED or "INTERNALERROR" in out or re.search(r"^!+ .*Interrupted", out, re.MULTILINE):
+        return False
+    found = SUMMARY.findall(out)
+    kinds = {part.split()[-1] for part in found[-1].split(",") if part.split()} if found else set()
+    return "failed" in kinds and not kinds & {"error", "errors"}
+
+
 def failed_ids(out):
     """Failing test ids named in pytest's summary, in order, once each; an id with a control character is dropped."""
     return [i for i in dict.fromkeys(FAILED.findall(out)) if mg.single_line(i)]
@@ -157,19 +178,16 @@ def verify_tip(tip, remote, directory):
                 verdict = "pass" if code == 0 else f"fail(exit {code})"
                 results.append(f"{item['name']} {verdict} {secs:.1f}s :: {' '.join(item['argv'])}")
                 if code:
-                    failed.append((item, code, failed_ids(out)))
-            first_ids = [i for _item, _code, ids in failed for i in ids]
+                    failed.append((item, ordinary_failures(code, out), failed_ids(out)))
+            first_ids = [i for _item, _ordinary, ids in failed for i in ids]
             if first_ids:
                 with open(directory / "failed-ids.log", "a") as log:
                     log.write(f"{started} {tip} {' '.join(first_ids)}\n")
                 LOG.info("first run failing ids: %s", " ".join(first_ids))
             flaky, hard = [], []
-            for item, code, ids in failed:
+            for item, ordinary, ids in failed:
                 rerun = fast.get("rerun", {}).get(item["name"])
-                # Only ordinary test failures (exit 1) earn a re-run of the listed ids: a run
-                # that stopped early (2 interrupted, 3 internal error, ...) never ran the rest,
-                # so its failing ids passing alone proves nothing (as in recheck).
-                if ids and rerun and code == TESTS_FAILED:
+                if ids and rerun and ordinary:  # a run that stopped early is a hard failure
                     code, out, _secs = execute([*rerun, *ids], tree, deadline)
                     still = [] if code == 0 else [i for i in ids if i in set(failed_ids(out))] or ids
                     flaky += [i for i in ids if i not in still]
