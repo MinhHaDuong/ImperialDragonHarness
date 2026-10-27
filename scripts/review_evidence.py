@@ -4,7 +4,7 @@
 Reports are repository files under `tickets/reviews/<base>..<head>/`, one per
 seat execution, written by the controller. A report is reused only while the
 five identity inputs hold: the merge base and head it names may move, but the
-patch-id of the diff, the ticket's exit-criteria hash and the review policy
+patch-id of the diff, the ticket body hash and the review policy
 version must not change. Check, gate and adherence results are never reused.
 
 Forge-read reviews (human, Copilot) are admitted only from three pinned actor
@@ -164,19 +164,26 @@ def classify_forge(payload: dict, host: str) -> list[dict]:
     return rows
 
 
+BODY_MARK = re.compile(r"^--- body ---[ \t]*\r?$", re.M)
+TICKED = re.compile(r"^([ \t]*(?:[-*+]|\d+[.)])[ \t]+)\[[xX]\]", re.M)
+
+
 def criteria_hash(ticket_text: str | None) -> str:
-    """Hash the Exit criteria section, ignoring checkbox state and other sections."""
+    """Hash the ticket's whole body, raw, with checkbox state normalised.
+
+    The body is the text from the first `--- body ---` line to the end of the
+    file; erg reads later marker lines as body text, so they are hashed too.
+    Nothing is parsed: any other edit after a review reads stale, so notes
+    belong in the log. The header, the log and the file's location are outside.
+    """
     if ticket_text is None:
         return "none"
-    sections = re.findall(r"^## Exit criteria\s*$(.*?)(?=^## |\Z)", ticket_text, re.M | re.S)
-    if not sections:
+    start = BODY_MARK.search(ticket_text)
+    if not start:
         return "none"
-    lines = []
-    for line in "\n".join(sections).splitlines():
-        line = re.sub(r"^-\s*\[[ xX]\]\s*", "- ", line.strip())
-        if line:
-            lines.append(line)
-    return hashlib.sha256("\n".join(lines).encode()).hexdigest()[:16]
+    body = ticket_text[start.end():]
+    body = TICKED.sub(r"\1[ ]", body)
+    return hashlib.sha256(body.encode()).hexdigest()[:16]
 
 
 def parse_report(text: str) -> dict:
@@ -289,7 +296,10 @@ def ticket_at_head(args: argparse.Namespace, base: str, head: str) -> tuple[str 
         raise TicketRefused(f"review-evidence: {name} exists both open and closed at {head[:12]}")
     if not found:
         raise TicketRefused(f"review-evidence: --ticket {args.ticket} is not tracked at {head[:12]}")
-    return next(iter(found.values())), name
+    text = next(iter(found.values()))
+    if not BODY_MARK.search(text):
+        raise TicketRefused(f"review-evidence: {name} has no `--- body ---` line at {head[:12]}")
+    return text, name
 
 
 def current_inputs(args: argparse.Namespace) -> Inputs:
@@ -418,8 +428,44 @@ def cmd_record(args: argparse.Namespace) -> int:
     return 0
 
 
+def claim_mismatch(args: argparse.Namespace, current: Inputs) -> str | None:
+    """Why the PR body's close claim does not name the gated ticket, or None.
+
+    The claim grammar is the merge recipe's (gaze_setup.close_claims, after
+    skills/merge/references/claims.md); the body is the only source.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from gaze_setup import close_claims
+    claims, malformed = close_claims(args.pr_body_file.read_text(encoding="utf-8"),
+                                     Path(git(args.repo, "rev-parse", "--show-toplevel")))
+    if malformed:
+        return f"malformed close claim {malformed[0]}"
+    claimed = {Path(c).name for c in claims}
+    # The merge path reads claims with raid_land's grammar; the two must agree.
+    from raid_land import Refusal, close_claims as merge_claims
+    try:
+        merged = sorted(merge_claims(args.pr_body_file.read_text(encoding="utf-8")))
+    except Refusal as exc:
+        return f"merge grammar refuses the body: {exc}"
+    if merged != sorted(n.split("-", 1)[0] for n in claimed):
+        return f"the gate and the merge recipe read different claims ({sorted(claimed)} vs {merged})"
+    if len(claimed) > 1:
+        return f"the PR claims several tickets {sorted(claimed)}; gate one range per ticket"
+    if current.ticket == "none":
+        return f"gated range names no ticket but the PR claims {sorted(claimed)}" if claimed else None
+    if current.ticket not in claimed:
+        return (f"gated ticket {current.ticket} is not the ticket the PR claims "
+                f"({', '.join(sorted(claimed)) or 'none'})")
+    return None
+
+
 def cmd_gate(args: argparse.Namespace) -> int:
     current = current_inputs(args)
+    if args.pr_body_file is not None:
+        why = claim_mismatch(args, current)
+        if why:
+            print(f"claim: refused, {why}")
+            return 1
     rows = seat_rows(args.repo, current, list(dict.fromkeys(args.seat)))
     ok = True
     print(f"REVIEW-EVIDENCE: base {current.base} head {current.head} "
@@ -519,6 +565,8 @@ def main() -> int:
     rec.set_defaults(fn=cmd_record)
     gate = sub.add_parser("gate", parents=[common])
     gate.add_argument("--seat", action="append", default=[], required=True)
+    gate.add_argument("--pr-body-file", type=Path,
+                      help="the PR body; the gated ticket must be the one it claims to close")
     gate.set_defaults(fn=cmd_gate)
     fg = sub.add_parser("forge", help="admit forge-read reviews by pinned actor")
     fg.add_argument("forge_repo", help="owner/name")

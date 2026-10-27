@@ -202,9 +202,10 @@ irrelevant
 """
 
 
-def test_criteria_hash_ignores_checkbox_state_and_other_sections():
-    ticked = TICKET.replace("- [ ] First", "- [x] First").replace("irrelevant", "changed")
+def test_criteria_hash_ignores_checkbox_state_only():
+    ticked = TICKET.replace("- [ ] First", "- [x] First")
     assert re_mod.criteria_hash(TICKET) == re_mod.criteria_hash(ticked)
+    assert re_mod.criteria_hash(TICKET) != re_mod.criteria_hash(TICKET.replace("irrelevant", "changed"))
     reworded = TICKET.replace("Second criterion", "Second criterion, stricter")
     assert re_mod.criteria_hash(TICKET) != re_mod.criteria_hash(reworded)
     assert re_mod.criteria_hash(None) == "none"
@@ -531,7 +532,8 @@ def test_gate_survives_a_ticket_close_after_the_reports(repo, policy):
     commit_reports(repo)
     git(repo, "mv", "tickets/0001-x.erg", "tickets/closed/0001-x.erg") if (repo / "tickets/closed").mkdir(exist_ok=True) is None else None
     closed = repo / "tickets/closed/0001-x.erg"
-    closed.write_text(closed.read_text().replace("[ ]", "[x]") + "\n2026-10-27 closed\n")
+    closed.write_text(closed.read_text().replace("[ ]", "[x]").replace(
+        "--- body ---", "2026-10-27 closed\n\n--- body ---", 1))
     git(repo, "add", "-A", "tickets")
     git(repo, "commit", "-q", "-m", "ticket(1): close and archive")
     out = subprocess.run(
@@ -672,3 +674,153 @@ def test_record_without_a_ticket_choice_is_refused(repo, policy):
                           "--family", "Anthropic", "--worker", "t"],
                          input="b\n", capture_output=True, text=True, env=child_env())
     assert out.returncode != 0 and "--ticket" in out.stderr
+
+
+# --- ticket 1261: heading variants and the PR's claim ------------------------
+
+def _edit_after_review(repo, policy, edit):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    p = repo / "tickets/0001-x.erg"
+    p.write_text(edit(p.read_text()))
+    git(repo, "commit", "-qam", "edit ticket")
+    return gate_with(repo, policy, p, "correctness")
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("heading", ["## Exit Criteria", "### Exit criteria",
+                                     "## Exit criteria (added)"])
+def test_variant_criteria_heading_added_after_review_is_stale(repo, policy, heading):
+    out = _edit_after_review(repo, policy, lambda t: t + f"\n{heading}\n- [ ] sneaked in\n")
+    assert out.returncode != 0 and "stale" in out.stdout, out.stdout
+
+
+@pytest.mark.integration
+def test_rename_weaken_and_append_an_unchanged_copy_is_stale(repo, policy):
+    def edit(text):
+        old = text.split("## Exit criteria\n", 1)[1].split("\n## ", 1)[0]
+        renamed = text.replace("## Exit criteria\n", "## Acceptance\n- [ ] weak\n# ", 1)
+        return renamed.replace("# \n", "\n", 1) + "\n## Exit criteria\n" + old
+    out = _edit_after_review(repo, policy, edit)
+    assert out.returncode != 0 and "stale" in out.stdout, out.stdout
+
+
+def _two_tickets(repo):
+    commit(repo, "tickets/0002-y.erg", REPO_TICKET.replace("Title: x", "Title: y"), "other ticket")
+
+
+def _gate_claiming(repo, policy, tmp_path, body, ticket):
+    body_file = tmp_path / "body.md"
+    body_file.write_text(body)
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), "gate", "--repo", str(repo), "--base", "main",
+         "--policy-root", str(policy), "--ticket", str(repo / ticket),
+         "--pr-body-file", str(body_file), "--seat", "correctness"],
+        capture_output=True, text=True, env=child_env())
+
+
+@pytest.mark.integration
+def test_gate_refuses_a_recorded_ticket_the_pr_does_not_claim(repo, policy, tmp_path):
+    _two_tickets(repo)
+    subprocess.run(
+        [sys.executable, str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+         "--policy-root", str(policy), "--ticket", str(repo / "tickets/0002-y.erg"),
+         "--seat", "correctness", "--verdict", "approve", "--family", "Anthropic",
+         "--worker", "t"], input="b\n", capture_output=True, text=True,
+        env=child_env(), check=True)
+    commit_reports(repo)
+    # the probe: without the claim, the unrelated ticket's report reads reused
+    probe = gate_with(repo, policy, repo / "tickets/0002-y.erg", "correctness")
+    assert probe.returncode == 0 and "stale" not in probe.stdout
+    wrong = _gate_claiming(repo, policy, tmp_path, "**Ticket:** tickets/0001-x.erg\n",
+                           "tickets/0002-y.erg")
+    assert wrong.returncode != 0 and "claim" in (wrong.stdout + wrong.stderr), wrong.stdout
+    right = _gate_claiming(repo, policy, tmp_path, "**Ticket:** tickets/0002-y.erg\n",
+                           "tickets/0002-y.erg")
+    assert right.returncode == 0, right.stdout + right.stderr
+    none = _gate_claiming(repo, policy, tmp_path, "Ticket: none\n", "tickets/0002-y.erg")
+    assert none.returncode != 0
+    fenced = _gate_claiming(repo, policy, tmp_path,
+                            "```\n**Ticket:** tickets/0002-y.erg\n```\n", "tickets/0002-y.erg")
+    assert fenced.returncode != 0
+
+
+# --- ticket 1261, author ruling 2026-10-27: hash the raw body, no Markdown parsing ---
+
+def _body_ticket(criteria="- [ ] a\n- [ ] b\n", extra=""):
+    return ("%erg 0.1\nTitle: x\n\n--- log ---\n2026-10-27 created\n\n--- body ---\n"
+            f"## Context\nc\n\n## Exit criteria\n{criteria}\n{extra}## Notes\nn\n")
+
+
+BASE_TICKET = _body_ticket()
+SPAN = "- [ ] `x <!--\n- [ ] b\n- [ ] c -->`\n"
+# (reviewed text, edited text): every edit must read stale
+BYPASS_PROBES = {
+    "variant heading": (BASE_TICKET, _body_ticket(extra="## Exit Criteria\n- [ ] sneaked\n")),
+    "suffix heading": (BASE_TICKET, BASE_TICKET.replace("## Exit criteria", "## Exit criteria (advisory)")),
+    "rename-weaken-append": (BASE_TICKET, _body_ticket("- [ ] weak\n").replace(
+        "## Exit criteria", "## Acceptance") + "\n## Exit criteria\n- [ ] a\n- [ ] b\n"),
+    "html comment wrap": (BASE_TICKET, BASE_TICKET.replace(
+        "## Exit criteria", "<!--\n## Exit criteria").replace("\n## Notes", "\n# -->\n## Notes")),
+    "comment text edited": (_body_ticket(extra="<!-- why a -->\n"), _body_ticket(extra="<!-- why b -->\n")),
+    "inline-code markers": (_body_ticket("- [ ] `<!--` opens\n- [ ] a\n- [ ] `-->` closes\n"),
+                            _body_ticket("- [ ] `<!--` opens\n- [ ] hidden\n- [ ] `-->` closes\n")),
+    "empty comment": (_body_ticket("- [ ] a <!--> x\n- [ ] b\n- [ ] c <!-- e -->\n"),
+                      _body_ticket("- [ ] a <!--> x\n- [ ] b changed\n- [ ] c <!-- e -->\n")),
+    "multi-line code span": (_body_ticket(SPAN), _body_ticket(SPAN.replace("] b", "] b changed"))),
+    "indented code block": (_body_ticket(extra="    code a\n\n"), _body_ticket(extra="    code b\n\n")),
+    "setext heading": (_body_ticket(extra="Exit criteria (revised)\n-----\nsneaked\n\n"),
+                       _body_ticket(extra="Exit criteria (revised)\n-----\nsneaked, loosened\n\n")),
+    "later marker line": (BASE_TICKET, BASE_TICKET + "--- amendment ---\nCriterion B is waived\n"),
+    "body note": (BASE_TICKET, _body_ticket(extra="Note: criteria are advisory.\n\n")),
+    "context edit": (BASE_TICKET, BASE_TICKET.replace("## Context\nc", "## Context\nc, narrowed")),
+}
+
+
+@pytest.mark.parametrize("name", sorted(BYPASS_PROBES))
+def test_every_body_edit_after_review_reads_stale(name):
+    reviewed, edited = BYPASS_PROBES[name]
+    assert re_mod.criteria_hash(edited) != re_mod.criteria_hash(reviewed)
+
+
+def test_a_pure_close_reads_reused():
+    closed = (BASE_TICKET.replace("- [ ]", "- [x]", 1).replace("- [ ] b", "- [X] b")
+              .replace("--- body ---", "2026-10-28 closed\n\n--- body ---")
+              .replace("%erg 0.1", "%erg 0.1\nClosed: 2026-10-28"))
+    assert re_mod.criteria_hash(closed) == re_mod.criteria_hash(BASE_TICKET)
+    assert re_mod.criteria_hash(None) == "none"
+
+
+def test_other_list_markers_normalise_their_tick_and_keep_their_marker():
+    star = BASE_TICKET.replace("- [ ] a", "* [ ] a")
+    assert re_mod.criteria_hash(star.replace("* [ ] a", "* [x] a")) == re_mod.criteria_hash(star)
+    assert re_mod.criteria_hash(star) != re_mod.criteria_hash(BASE_TICKET)
+
+
+@pytest.mark.integration
+def test_gate_refuses_several_claims_and_disagreeing_grammars(repo, policy, tmp_path):
+    _two_tickets(repo)
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    several = _gate_claiming(repo, policy, tmp_path,
+                             "**Ticket:** tickets/0001-x.erg\n**Ticket:** tickets/0002-y.erg\n",
+                             "tickets/0001-x.erg")
+    assert several.returncode != 0 and "claim" in several.stdout
+    split = _gate_claiming(repo, policy, tmp_path,
+                           "Ticket: tickets/0001-x.erg (main)\nticket tickets/0002-y.erg\n",
+                           "tickets/0002-y.erg")
+    assert split.returncode != 0 and "claim" in split.stdout
+
+
+def test_crlf_marker_line_is_accepted():
+    crlf = BASE_TICKET.replace("--- body ---\n", "--- body ---\r\n")
+    assert re_mod.criteria_hash(crlf) != "none"
+
+
+@pytest.mark.integration
+def test_ticket_without_a_body_marker_is_refused(repo, policy):
+    p = repo / "tickets/0001-x.erg"
+    p.write_text(REPO_TICKET.replace("--- body ---", "--- text ---"))
+    git(repo, "commit", "-qam", "no body marker")
+    out = gate_with(repo, policy, p, "correctness")
+    assert out.returncode != 0 and "body" in out.stdout + out.stderr

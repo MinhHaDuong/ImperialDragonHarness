@@ -2,9 +2,12 @@
 Title: review_evidence: normalise the exit-criteria heading and bind the recorded ticket to the PR's claim
 Created: 2026-10-27
 Author: reviewer
+Closed: autoclosed — PR #1763
 
 --- log ---
 2026-10-27T13:01Z reviewer created
+2026-10-27T13:43Z reviewer note author ruling 2026-10-27: hash the raw body with checkbox state normalized; no Markdown parsing
+2026-10-27T13:44Z reviewer closed — autoclosed — PR #1763
 
 --- body ---
 ## Context
@@ -18,9 +21,9 @@ The last review found two narrower edges that only a dishonest or careless edito
    and the gate reads `reused`.
 
 ## Exit criteria
-- [ ] The criteria section match is case-insensitive at any heading level (`^#{2,}\s*exit criteria\b`),
-      or a ticket whose criteria heading is not exact is refused; tests for the three variants and the
-      rename-and-append case read stale or refused, and fail on the code before the fix.
+- [ ] The criteria hash covers the whole ticket body from the first `--- body ---` line, raw, with only checkbox
+      state normalized (author ruling 2026-10-27, no Markdown parsing): heading variants, rename-and-append,
+      comment wraps and any other body edit after recording read stale; a close reads reused.
 - [ ] The gate compares the recorded ticket with the ticket the PR claims to close and refuses a mismatch.
 - [ ] The harness gate passes.
 
