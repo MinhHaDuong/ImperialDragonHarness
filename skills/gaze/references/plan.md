@@ -63,8 +63,9 @@ through `python3 "$IDH_ROOT/scripts/panel-manifest-check.py"`. Header lines
 carry the intent, the method, the budget in minutes, which fits the
 15-minute deadline less the closing (at most 13), and the spend: the line
 `python3 "$IDH_ROOT/scripts/gaze_seat.py" consent` prints, which names the
-families the author consented to spend on (one host-local key, set once; none
-by default). Each plan item is `name<TAB>model<TAB>family<TAB>reason`, the
+providers the author consented to spend on (one host-local key, set once; none
+by default). Consent follows the provider that bills the seat, not the family
+the plan writes. Each plan item is `name<TAB>model<TAB>family<TAB>reason`, the
 reason naming the seat's door (`headless <runtime>`, or `subagent`). Every
 item, a check included, writes `<panel>/<name>.md`.
 

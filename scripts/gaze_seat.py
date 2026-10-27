@@ -3,28 +3,35 @@
 
 `launch` builds the seat's command from the runtime's headless door in
 `skills/route/routes.json` (`launch_doors.<runtime>.headless`: its `template`,
-with the model pinned, and its `seat_rails` flags that keep the reader
-read-only), embeds the seat contract in the prompt, pins the cwd to the review
-tree and runs it under `seat_clock.run_seat` with a hard cap. A headless
-process does not nest inside the caller's agent tree, so the same door works
-from a subagent on every runtime.
+with the model pinned, and its `seat_rails` flags: read tools only, no shell
+and no write tool, where the CLI offers an allowlist; codex holds the seat by
+its read-only sandbox instead). It writes the diff `<base>...HEAD` beside the
+report, since a seat without a shell cannot run git, embeds the seat contract
+in the prompt, pins the cwd to the review tree and runs it under
+`seat_clock.run_seat` with a hard cap. A headless process does not nest inside
+the caller's agent tree, so the same door works from a subagent on every
+runtime.
 
 The report lands as `<panel>/<name>.md`, written `.part` then renamed, its
 first line `worker: model=<pin> · family=<family> · runtime=<rt> ·
 door=headless` set by the launcher: the pin is what ran, and a CLI's own
 self-report of its model is not trusted. Whatever stops a seat (no door, a
 family the door cannot serve, no consent, an unreadable or moved review tree,
-a start failure, a nonzero exit, empty output, the cap) prints and saves
+a start failure, a nonzero exit, empty output, a `NOT-RUN:` refusal, the
+cap) prints and saves
 `<name>: no report (<reason>)` to `<panel>/<name>.md.status` and writes no
 report, so `seat_clock.py plan-check` counts it missing. Nothing here reads
 the code in the caller's place.
 
 Consent to spend on another provider is one host-local key,
-`cross_family_spend` (a list of families), in `$IDH_GAZE_SEATS_CONFIG`, else
+`cross_family_spend` (a list of providers), in `$IDH_GAZE_SEATS_CONFIG`, else
 `${XDG_CONFIG_HOME:-~/.config}/harness/gaze-seats.json`. Absent, no
 cross-family seat launches. `consent` prints the manifest header line that
-declares it in the plan before anything launches. The family of the session
-running gaze (`--home-family`) needs no consent.
+declares it in the plan before anything launches. Consent is checked against
+the provider that bills the seat, never the caller's family label: the door's
+one family (Anthropic on claude-code, OpenAI on codex), or the `<provider>/`
+prefix of a pi model. The provider of the session running gaze
+(`--home-family`) needs no consent.
 """
 
 import argparse
@@ -54,8 +61,12 @@ You are one read-only code-review seat of a gaze panel, launched headless.
 Perspective: {perspective}. Judge against this one perspective only.
 Review tree: {tree}, anchored at HEAD {anchor}.
 
+The change under review is the diff in {diff}; read it first, then the
+files it touches under the review tree.
+
 Reach rails:
-- Read the tree only as `git -C "{tree}" ...` or by reading files under it.
+- Read the tree only with your read tools, or, where you have a shell, as
+  `git -C "{tree}" ...`.
 - Never overwrite the working tree: no `git checkout <ref> -- <path>`, no
   `git restore .`, no `git reset --hard`. Read another version with
   `git show <ref>:<path>`.
@@ -149,10 +160,17 @@ def door_serves(door: dict, family: str) -> bool:
     return any(f.startswith('any provider') for f in served) or family.lower() in served
 
 
-def anchor_of(tree: Path) -> str | None:
-    result = subprocess.run(['git', '-C', str(tree), 'rev-parse', 'HEAD'],
-                            capture_output=True, text=True)
-    return result.stdout.strip() if result.returncode == 0 else None
+def billed_provider(door: dict, model: str) -> str | None:
+    """The provider that bills a seat: the door's one family, else the model's prefix."""
+    families = door.get('families', [])
+    if len(families) == 1 and not families[0].lower().startswith('any provider'):
+        return families[0]
+    return model.split('/', 1)[0] if '/' in model else None
+
+
+def git(tree: Path, *args: str) -> str | None:
+    result = subprocess.run(['git', '-C', str(tree), *args], capture_output=True, text=True)
+    return result.stdout if result.returncode == 0 else None
 
 
 def stamp(text: str, worker: str) -> str:
@@ -166,6 +184,12 @@ def stamp(text: str, worker: str) -> str:
     return f'{worker}\n{rest}\n' if rest.strip() else ''
 
 
+def refusal(report: str) -> str | None:
+    """The seat's `NOT-RUN:` line, when its report opens with one after the worker line."""
+    lines = [line.strip().strip('*').strip() for line in report.splitlines() if line.strip()]
+    return lines[1] if len(lines) > 1 and lines[1].upper().startswith('NOT-RUN') else None
+
+
 def launch(args: argparse.Namespace) -> tuple[bool, str]:
     # The seat runs with its cwd in the review tree: every path it is handed is absolute.
     args.panel, args.review_tree = args.panel.resolve(), args.review_tree.resolve()
@@ -175,25 +199,33 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         return False, f'no report (no headless door for runtime {args.runtime})'
     if not door_serves(door, args.family):
         return False, f'no report (the {args.runtime} door cannot serve family {args.family})'
-    if args.family.lower() != args.home_family.lower() and \
-            args.family.lower() not in (f.lower() for f in consented(config_path())):
-        return False, (f'no report (no consent for cross-family spend on {args.family}; '
+    provider = billed_provider(door, args.model)
+    if provider is None:
+        return False, f'no report (cannot tell which provider bills {args.model}; name it as <provider>/<id>)'
+    if provider.lower() != args.home_family.lower() and \
+            provider.lower() not in (f.lower() for f in consented(config_path())):
+        return False, (f'no report (no consent for cross-family spend on {provider}; '
                        f'{CONSENT_KEY} in {config_path()})')
-    anchor = anchor_of(args.review_tree)
-    if anchor is None:
+    anchor = (git(args.review_tree, 'rev-parse', 'HEAD') or '').strip()
+    if not anchor:
         return False, f'no report (review tree unreadable: {args.review_tree})'
-    if args.anchor and not anchor.startswith(args.anchor):
+    if not args.anchor or not anchor.startswith(args.anchor):
         return False, f'no report (review tree HEAD {anchor[:12]} is not the anchor {args.anchor[:12]})'
+    diff = git(args.review_tree, 'diff', f'{args.base}...HEAD')
+    if diff is None:
+        return False, f'no report (cannot diff the review tree against {args.base})'
     try:
         brief = args.brief.read_text(encoding='utf-8')
     except OSError as error:
         return False, f'no report (cannot read the brief: {error.strerror})'
+    diff_file = args.panel / f'{args.name}.diff'
     prompt = CONTRACT.format(perspective=args.perspective, tree=args.review_tree, anchor=anchor,
-                             brief=brief)
+                             diff=diff_file, brief=brief)
     staging = args.panel / f'{args.name}.seat'
+    last = args.panel / f'{args.name}.seat.last'  # a door's own output file, apart from the clock's
     promptfile = args.panel / f'{args.name}.prompt'
     try:
-        command = build_command(door, args.model, prompt, staging, promptfile)
+        command = build_command(door, args.model, prompt, last, promptfile)
     except ValueError as error:
         return False, f'no report ({error})'
     if args.dry_run:
@@ -202,19 +234,27 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
                           'cwd': str(args.review_tree)}))
         return True, 'dry run, nothing launched'
     try:
+        diff_file.write_text(diff, encoding='utf-8')
         if command.stdin:
             promptfile.write_text(prompt, encoding='utf-8')
     except OSError as error:
         return False, f'no report (cannot write beside the panel: {error.strerror})'
     ok, outcome = seat_clock.run_seat(args.cap, staging, command.argv, cwd=args.review_tree,
                                       stdin=command.stdin)
+    wrote_last = last.exists() and last.read_text(encoding='utf-8', errors='replace').strip()
+    if not ok and not (wrote_last and outcome.startswith('no report (empty output')):
+        return False, outcome  # a nonzero exit stays a failure even when the door wrote its file
     if not ok:
-        return False, outcome
+        outcome = 'reported in ' + outcome.rsplit(', ', 1)[-1].rstrip(')')
+    text = last if wrote_last else staging
     worker = f'worker: model={args.model} · family={args.family} · runtime={args.runtime} · door=headless'
-    report = stamp(staging.read_text(encoding='utf-8', errors='replace'), worker)
-    staging.unlink()
+    report = stamp(text.read_text(encoding='utf-8', errors='replace'), worker)
+    for leftover in (staging, last):
+        leftover.unlink(missing_ok=True)
     if not report:
         return False, 'no report (empty output)'
+    if refused := refusal(report):
+        return False, f'no report (seat refused: {refused})'
     out = args.panel / f'{args.name}.md'
     part = out.with_name(out.name + '.part')
     part.write_text(report, encoding='utf-8')
@@ -236,7 +276,8 @@ def main(argv: list[str]) -> int:
     run.add_argument('--name', required=True, help='plan item name; report is <panel>/<name>.md')
     run.add_argument('--review-tree', type=Path, required=True)
     run.add_argument('--brief', type=Path, required=True, help='intent, exit criteria, file roster')
-    run.add_argument('--anchor', default='', help='expected HEAD of the review tree')
+    run.add_argument('--anchor', required=True, help='expected HEAD of the review tree')
+    run.add_argument('--base', required=True, help='base ref; the seat reads the diff <base>...HEAD')
     run.add_argument('--cap', type=int, default=seat_clock.DEFAULT_CAP_S, help='wall-clock cap, seconds')
     run.add_argument('--routes', type=Path, default=ROUTES)
     run.add_argument('--dry-run', action='store_true', help='print the command, launch nothing')

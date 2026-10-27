@@ -26,9 +26,11 @@ cat > "$STUB_LOG/$(basename "$0").stdin"
 case "$STUB_MODE" in
   fail) echo "partial"; exit 1 ;;
   liar) printf 'worker: model=gpt-6.1-sol · family=OpenAI\nfinding: none\nverdict: clear\n' ;;
-  outfile)
+  notrun) printf 'NOT-RUN: review tree unreachable\n' ;;
+  outfile|outfile-fail)
     # codex writes its last message to the -o file
-    prev=""; for a in "$@"; do [ "$prev" = "-o" ] && printf 'verdict: clear\n' > "$a"; prev="$a"; done ;;
+    prev=""; for a in "$@"; do [ "$prev" = "-o" ] && printf 'verdict: clear\n' > "$a"; prev="$a"; done
+    if [ "$STUB_MODE" = outfile-fail ]; then exit 2; fi ;;
   *) printf 'finding: none\nverdict: clear\n' ;;
 esac
 '''
@@ -55,6 +57,11 @@ def rig(tmp_path):
     git = ['git', '-C', str(tree), '-c', 'user.name=t', '-c', 'user.email=t@t']
     subprocess.run([*git, 'init', '-q'], check=True)
     subprocess.run([*git, 'commit', '-q', '--allow-empty', '-m', 'base'], check=True)
+    base = subprocess.run([*git, 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
+    (tree / 'parser.py').write_text('def parse(key):\n    return key\n')
+    subprocess.run([*git, 'add', 'parser.py'], check=True)
+    subprocess.run([*git, 'commit', '-q', '-m', 'change'], check=True)
+    head = subprocess.run([*git, 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
     panel = tree / '.panel' / '1'
     panel.mkdir(parents=True)
     brief = tmp_path / 'brief.md'
@@ -65,17 +72,19 @@ def rig(tmp_path):
         'STUB_LOG': str(log),
         'IDH_GAZE_SEATS_CONFIG': str(tmp_path / 'gaze-seats.json'),
     }
-    return {'tmp': tmp_path, 'log': log, 'tree': tree, 'panel': panel, 'brief': brief, 'env': env}
+    return {'tmp': tmp_path, 'log': log, 'tree': tree, 'panel': panel, 'brief': brief, 'env': env,
+            'base': base, 'head': head}
 
 
 def launch(rig, *extra, runtime='claude-code', model='haiku', family='Anthropic', name='correctness',
-           mode='', home='Anthropic'):
+           mode='', home='Anthropic', anchor=None):
     env = dict(rig['env'], STUB_MODE=mode)
     return subprocess.run(
         [sys.executable, str(SCRIPT), 'launch', '--runtime', runtime, '--model', model,
          '--family', family, '--home-family', home, '--perspective', 'correctness',
          '--panel', str(rig['panel']), '--name', name, '--review-tree', str(rig['tree']),
-         '--brief', str(rig['brief']), '--cap', '20', *extra],
+         '--brief', str(rig['brief']), '--cap', '20', '--base', rig['base'],
+         '--anchor', anchor or rig['head'], *extra],
         capture_output=True, text=True, timeout=60, env=env)
 
 
@@ -94,12 +103,49 @@ def test_headless_seat_reports_with_the_pinned_worker_line(rig):
     assert (rig['panel'] / 'correctness.md.status').read_text().startswith('correctness: reported in ')
     argv = (rig['log'] / 'claude.argv').read_text().splitlines()
     assert argv[argv.index('--model') + 1] == 'haiku'
-    assert '-p' in argv and '--disallowedTools' in argv
+    assert '-p' in argv and '--restricted' in argv
+    assert argv[argv.index('--tools') + 1] == 'Read,Grep,Glob'  # no shell, no write tool
     prompt = (rig['log'] / 'claude.argv').read_text()  # the prompt is the last argument, multi-line
     assert prompt.rstrip().endswith('exit criterion 2')  # the brief closes the last argument
     assert 'verify the parser' in prompt and 'correctness' in prompt
     assert str(rig['tree']) in prompt  # the reach rail names the review tree
     assert Path((rig['log'] / 'claude.cwd').read_text().strip()) == rig['tree']
+    diff = rig['panel'] / 'correctness.diff'
+    assert str(diff) in prompt and 'def parse(key)' in diff.read_text()  # the diff, without a shell
+
+
+@pytest.mark.integration
+def test_seat_refusal_is_no_report(rig):
+    result = launch(rig, mode='notrun')
+    assert result.returncode == 1
+    assert result.stdout.strip() == 'correctness: no report (seat refused: NOT-RUN: review tree unreachable)'
+    assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_moved_review_tree_is_no_report(rig):
+    result = launch(rig, anchor=rig['base'])
+    assert result.returncode == 1
+    assert 'is not the anchor' in result.stdout
+    assert not (rig['log'] / 'claude.argv').exists()
+
+
+@pytest.mark.integration
+def test_door_output_file_does_not_rescue_a_failed_exit(rig):
+    (rig['tmp'] / 'gaze-seats.json').write_text(json.dumps({'cross_family_spend': ['OpenAI']}))
+    result = launch(rig, runtime='codex', model='gpt-6-luna', family='OpenAI', name='redteam',
+                    mode='outfile-fail')
+    assert result.returncode == 1
+    assert result.stdout.startswith('redteam: no report (failed, exit 2, ')
+    assert not (rig['panel'] / 'redteam.md').exists()
+
+
+@pytest.mark.integration
+def test_consent_follows_the_billing_provider_not_the_label(rig):
+    result = launch(rig, runtime='pi', model='openai/gpt-x', family='Anthropic', name='scope')
+    assert result.returncode == 1
+    assert 'no consent for cross-family spend on openai' in result.stdout
+    assert not (rig['log'] / 'pi.argv').exists()
 
 
 @pytest.mark.integration
@@ -191,6 +237,6 @@ def test_every_runtime_door_builds_a_pinned_read_only_command():
     pi = gaze_seat.build_command(doors['pi'], 'anthropic/claude-haiku-5-5', 'PROMPT', Path('/p/x.seat'),
                                  Path('/p/x.prompt'))
     assert pi.argv[pi.argv.index('--model') + 1] == 'anthropic/claude-haiku-5-5'
-    assert '--exclude-tools' in pi.argv and pi.argv[-1] == 'PROMPT'
+    assert pi.argv[pi.argv.index('--tools') + 1] == 'read,grep,find,ls' and pi.argv[-1] == 'PROMPT'
     with pytest.raises(ValueError):  # the claude door offers named aliases only
         gaze_seat.build_command(doors['claude-code'], 'gpt-6-luna', 'P', Path('/o'), Path('/f'))

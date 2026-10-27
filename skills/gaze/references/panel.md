@@ -22,18 +22,25 @@ launcher and seats share a filesystem. The plan file `<panel>/manifest.txt`
    python3 "$IDH_ROOT/scripts/gaze_seat.py" launch --runtime <door> \
      --model <pin> --family <family> --home-family <gaze's own family> \
      --perspective <perspective> --panel <panel> --name <item> \
-     --review-tree "$review_tree" --anchor <head> --brief <panel>/brief.md
+     --review-tree "$review_tree" --anchor <head> --base <base-ref> \
+     --brief <panel>/brief.md
    ```
 
    The door, model and family come from the plan item; the runtime's door
    (`launch_doors.<door>.headless` in `skills/route/routes.json`) supplies the
-   command template and its read-only `seat_rails`. The script embeds the
-   seat contract (perspective, anchor, reach rails below, report format), pins
-   the cwd to the review tree, runs the seat under `seat_clock.py`'s cap
+   command template and its `seat_rails`: read tools only, with no shell and
+   no write tool, where the CLI takes an allowlist; a sandboxed door holds the
+   seat read-only by its sandbox. A seat without a shell runs no tests and no
+   git: a behaviour claim is a check item, and the script writes the diff
+   `<base>...HEAD` to `<panel>/<name>.diff` for the seat to read. The script
+   embeds the seat contract (perspective, anchor, diff path, reach rails
+   below, report format), pins the cwd to the review tree, runs the seat
+   under `seat_clock.py`'s cap
    (600 s by default; set `--cap` within the plan's budget) and files
    `<panel>/<name>.md` with its first line `worker: model=<pin> ·
    family=<family>` set from the pin, never from the CLI's self-report.
-   Anything that stops a seat is `<name>: no report (<reason>)` in
+   Anything that stops a seat, its own `NOT-RUN:` refusal included, is
+   `<name>: no report (<reason>)` in
    `<panel>/<name>.md.status` and no report at all: the plan check counts the
    seat missing, and gaze never replaces it with its own read.
    `--dry-run` prints the command and launches nothing.
