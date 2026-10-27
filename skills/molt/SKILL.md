@@ -170,7 +170,7 @@ Run full repo housekeeping and act on every finding.
    survive separate Bash tool calls.
 
    ```bash
-   bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" close <id>
+   bash "$IDH_ROOT/scripts/ticket-sweep.sh" close <id>
    ```
 
    The script closes, then stages the closed file in one process. If it fails,
@@ -189,7 +189,7 @@ Run full repo housekeeping and act on every finding.
 2.6. **Archive closed tickets.** Skip if `tickets/` is absent.
 
    ```bash
-   bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" archive
+   bash "$IDH_ROOT/scripts/ticket-sweep.sh" archive
    ```
 
    The script moves any remaining ticket with a non-empty `Closed:` header from
@@ -216,7 +216,7 @@ Run full repo housekeeping and act on every finding.
      cannot be mapped to a landed merge request: skip deletion and log it; never
      read 2 as merged or as not merged.
      ```bash
-     bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" merged-probe <branch>
+     bash "$IDH_ROOT/scripts/ticket-sweep.sh" merged-probe <branch>
      ```
    - **Worktree guard**: if the branch is prefixed with `+` in `git branch` output, a
      worktree is checked out on it. Skip if the worktree is dirty (uncommitted changes).

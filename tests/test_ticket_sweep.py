@@ -1,4 +1,4 @@
-"""Exercise skills/molt/ticket-sweep.sh: close, archive, prune, merged-probe."""
+"""Exercise scripts/ticket-sweep.sh: close, archive, prune, merged-probe."""
 
 import subprocess
 from pathlib import Path
@@ -9,7 +9,7 @@ from child_env import child_env
 
 
 ROOT = Path(__file__).resolve().parent.parent
-SWEEP = ROOT / "skills/molt/ticket-sweep.sh"
+SWEEP = ROOT / "scripts/ticket-sweep.sh"
 MOLT = ROOT / "skills/molt/SKILL.md"
 YAWN = ROOT / "skills/yawn/SKILL.md"
 OLD_ERG_REV = "51ee49c"
