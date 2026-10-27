@@ -55,9 +55,8 @@ RESULT_VALUES = {"REVIEWED", "FINDINGS", "ESCALATE"}
 ALLOWED_LINES = (
     (
         'description: "Review one merge request: plan the checks that settle '
-        'what the caller asks, run them once, compare the plan with what ran, '
-        'post one result. Returns REVIEWED / FINDINGS / ESCALATE, never '
-        'APPROVED. Does not merge."'
+        'what the caller asks, run them once, check the plan against what ran, '
+        'post one result: REVIEWED / FINDINGS / ESCALATE, never APPROVED."'
     ),
     (
         '- Never returns APPROVED (pinned by '
