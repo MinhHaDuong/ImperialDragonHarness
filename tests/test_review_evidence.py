@@ -778,3 +778,8 @@ def test_gate_refuses_several_claims_and_disagreeing_grammars(repo, policy, tmp_
                            "Ticket: tickets/0001-x.erg (main)\nticket tickets/0002-y.erg\n",
                            "tickets/0002-y.erg")
     assert split.returncode != 0 and "claim" in split.stdout
+
+
+def test_suffix_on_the_criteria_heading_changes_the_hash():
+    soft = TICKET.replace("## Exit criteria", "## Exit criteria (advisory, none required)")
+    assert re_mod.criteria_hash(soft) != re_mod.criteria_hash(TICKET)

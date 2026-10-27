@@ -201,6 +201,7 @@ def criteria_hash(ticket_text: str | None) -> str:
         other = None if fence or fenced else HEADING.match(raw)
         if crit:
             level, found = len(crit.group(1)), True
+            inside.append(re.sub(r"\s+", " ", raw.strip().lower()))  # a suffix is a ruling
             continue
         if other and level and len(other.group(1)) <= level:
             level = 0
