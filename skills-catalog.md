@@ -9,7 +9,7 @@
 | Command | Description |
 |---------|-------------|
 | `/gaze` | Review one merge request: plan the checks that settle what the caller asks, run them once, check the plan against what ran, post one result: REVIEWED / FINDINGS / ESCALATE, never APPROVED. |
-| `/hunt` | Work a ticket — creates a worktree, TDD code, open merge request, review and fix. |
+| `/hunt` | Work a ticket: plan, execute in its own worktree, verify and land, wrap up. |
 | `/merge` | Land a merge request: close its claimed ticket, check the gate record on a gated base, merge pinned to the reviewed head, read the result back, sync local main. |
 | `/raid` | Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears. |
 | `/verify-gate` | Anti-rubber-stamp merge gate: checks every ticket exit criterion and review comment against the diff. Emits APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR with evidence. Does not merge. |

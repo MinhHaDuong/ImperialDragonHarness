@@ -21,11 +21,11 @@ inherit it: review seats cannot reach their review tree.
 |---------|---------------|-------|
 | Fresh conversation, no ticket | `explore-{topic}` | `[→ Imagine]` |
 | Ticket reference but no branch | `t{N}-{pid}` | `[→ Plan]` |
-| `/hunt N` | *decided inside hunt* | `[→ Execute]` |
+| `/hunt N` | *decided inside hunt* | `[→ Plan]` |
 | Active feature branch + open MR | `t{N}-{pid}` | `[→ Execute]` |
 | MR review | `review-{N}` | `[→ Verify]` |
 
-`{pid}` is `$PPID`, as in hunt's Worktree step, so two sessions on one ticket
+`{pid}` is `$PPID`, as in hunt's § Worktree, so two sessions on one ticket
 land in distinct paths. Legacy bare `t{N}` names remain valid.
 
 **`/hunt N`: do not create a worktree before the skill runs** — its detached

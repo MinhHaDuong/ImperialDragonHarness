@@ -75,7 +75,7 @@ inherits that asymmetry screens nothing while looking correct.
 
 Such a ticket is not lost. Name it in the wrap-up briefing with the decisions
 it is waiting on, and count that as a success outcome — the same standing hunt's
-Triage step gives a decision escalated to the author.
+Plan phase gives a decision escalated to the author.
 
 **Carve-out: an explicit `/raid <id>` runs.** The exclusion governs target
 *discovery* (the "all open" path), never a ticket named by ID. A named ticket
@@ -95,7 +95,7 @@ briefing (each ticket and the decisions it waits on) rather than an
 empty-run report. One question round the author can answer in a single pass
 is the deliverable.
 
-Apply the monster-ticket checklist (`rules/workflow.md` § Autonomous action) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
+Apply the monster-ticket checklist (`rules/workflow.md` § Ticket discipline for multi-PR work) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
 
 ## Phase 2: Imagine (parallel)
 
@@ -234,11 +234,13 @@ the model is chosen per launch from the `route` skill, no frontmatter pin).
 
 The execute-agent contract's FIRST action is mechanical: the agent loads the
 hunt skill with `<id> inline` as its argument. It then follows the contract the skill loader returns. The agent prompt must NOT
-paraphrase, summarize, or inline hunt's steps; the versioned `skills/hunt/SKILL.md`
+paraphrase, summarize, or inline hunt's phases; the versioned `skills/hunt/SKILL.md`
 is the single live execution contract, and the loader supplies it fresh on every
 run. (A prose paraphrase drifts: the contract then lives in prompt-writing memory
-instead of the skill.) The agent pushes its branch and opens a merge request as
-hunt's flow dictates.
+instead of the skill.) The agent lands its branch as hunt's Verify phase
+dictates: a merge request on a forge, a ready-to-merge branch without one. An agent that returns its ticket as a likely monster
+brings a proposed decomposition instead: apply the monster checklist to it,
+file the split, and schedule the children in a later wave.
 
 Wait for wave to complete.
 
@@ -260,7 +262,7 @@ bookkeeping-tier merge request skips `/gaze` and `/verify-gate` and goes to
 Phase 7 on its mechanical checks. Everything below is the full tier.
 
 **Per-ticket:** ensure a REVIEWED `/gaze` record on the branch tip, then run
-`/verify-gate` on the head it reviewed. Hunt's Review step already ran gaze and
+`/verify-gate` on the head it reviewed. Hunt's Verify phase already ran gaze and
 fixed its findings, so the raid reads that record first and re-runs `/gaze`
 only when it is missing, ESCALATE, or stale against the tip
 (`skills/merge/SKILL.md` § Gating tiers); a second review of a head gaze
