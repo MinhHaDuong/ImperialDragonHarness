@@ -28,7 +28,17 @@ diff included), 3 could not read (treat as full).
 | Tier | Gating |
 |------|--------|
 | bookkeeping | Mechanical checks only: on a gated base, the record; on an ungated base, the repo's CI. No `/gaze`, no `/verify-gate`, no review seat. |
-| full | `/gaze`, then `/verify-gate` APPROVED; on a gated base, the full record. |
+| full | `/gaze`, then `/verify-gate` APPROVED; on a gated base, the record. |
+
+**Two moments, whatever the tier** (ticket 1245, tracker 1226). On a gated
+base, `.merge-gate.json` declares the full check set (`"checks"`) and its
+cheap subset (`"before"`): ticket validator, guards, catalog drift and
+`make lint`, no test suite. *Before the merge*, the record (steps 4 to 6)
+runs the before set on the candidate and is what the merge rests on.
+*After the merge*, step 9 runs the full set, test suite included, on the
+new tip of main; a red there is reported, never reverted (Trust, Verify,
+Monitor). A change to the gate itself is therefore fully tested only once
+it is on main.
 
 **A commit added after approval is gated by the tier of its own diff:**
 `merge-gate.py tier --base origin/<base> --head HEAD --since <ruled_tip_sha>`.

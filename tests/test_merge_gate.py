@@ -320,12 +320,12 @@ def test_tool_version_output_is_sanitized(repo):
     assert "\x1b" not in line and "v1 2" in line
 
 
-# ── gating tiers (ticket 1221) ────────────────────────────────────────────────
+# ── before set (ticket 1245) and tier (ticket 1221) ─────────────────────────────
 
-TIERED = {
+BEFORE = {
     **CONFIG,
     "checks": [*CONFIG["checks"], {"name": "full-only", "argv": ["false"]}],
-    "tiers": {"bookkeeping": ["always-pass"]},
+    "before": ["always-pass"],
 }
 
 
@@ -358,30 +358,25 @@ def test_bookkeeping_paths(module, path, expected):
     assert module.is_bookkeeping(path) is expected
 
 
-def test_bookkeeping_diff_records_its_tier_checks_only(repo):
-    set_base_config(repo, json.dumps(TIERED))
-    branch = branch_touching(repo, "tickets/0001-x.erg", "STATE.md", "memory/note.md")
+def test_run_records_only_the_before_set(repo):
+    """Ticket 1245: the record before the merge runs the declared before set, whatever the diff."""
+    set_base_config(repo, json.dumps(BEFORE))
+    branch = branch_touching(repo, "scripts/x.py")
     result = gate(repo, "run", "--no-push", "--base", "main", "--head", branch)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "scope: fixture-set/bookkeeping: always-pass" in result.stdout
+    assert "scope: fixture-set/before-merge: always-pass" in result.stdout
     assert "full-only" not in result.stdout
     check = gate(repo, "check", "--no-fetch", "--local", "--base", "main", "--head", branch)
     assert check.returncode == 0, check.stdout
 
 
-def test_code_diff_runs_the_full_set(repo):
-    set_base_config(repo, json.dumps(TIERED))
-    branch = branch_touching(repo, "tickets/0001-x.erg", "scripts/x.py")
-    result = gate(repo, "run", "--no-push", "--base", "main", "--head", branch)
-    assert result.returncode == 1
-    assert "full-only fail" in result.stdout
-
-
-def test_without_declared_tier_checks_a_bookkeeping_diff_runs_the_full_set(repo):
-    set_base_config(repo, json.dumps({**TIERED, "tiers": {}}))
+def test_without_a_before_set_run_records_the_full_set(repo):
+    config = {k: v for k, v in BEFORE.items() if k != "before"}
+    set_base_config(repo, json.dumps(config))
     branch = branch_touching(repo, "STATE.md")
     result = gate(repo, "run", "--no-push", "--base", "main", "--head", branch)
     assert result.returncode == 1
+    assert "scope: fixture-set: always-pass marker-absent full-only" in result.stdout
     assert "full-only fail" in result.stdout
 
 
@@ -403,25 +398,39 @@ def _forge(repo, module, branch, scope):
     git(repo, "notes", "--ref=gate", "add", "-f", "-m", text, candidate)
 
 
-def test_a_bookkeeping_record_does_not_pass_a_code_diff(repo, module):
-    set_base_config(repo, json.dumps(TIERED))
+def test_a_record_of_another_scope_does_not_pass(repo, module):
+    set_base_config(repo, json.dumps(BEFORE))
     branch = branch_touching(repo, "scripts/x.py")
     _forge(repo, module, branch, "fixture-set/bookkeeping: always-pass")
     assert gate(repo, "check", "--no-fetch", "--base", "main", "--head", branch).returncode == 1
-
-
-def test_a_full_record_passes_a_bookkeeping_diff(repo, module):
-    set_base_config(repo, json.dumps(TIERED))
-    branch = branch_touching(repo, "STATE.md")
-    _forge(repo, module, branch, module.scope_line(TIERED))
+    _forge(repo, module, branch, "fixture-set/before-merge: always-pass")
     assert gate(repo, "check", "--no-fetch", "--base", "main", "--head", branch).returncode == 0
 
 
-@pytest.mark.parametrize("tiers", [{"bookkeeping": ["no-such-check"]}, {"bookkeeping": "always-pass"},
-                                   {"other": ["always-pass"]}, []])
-def test_bad_tier_declaration_fails_closed(repo, tiers):
-    set_base_config(repo, json.dumps({**TIERED, "tiers": tiers}))
+@pytest.mark.parametrize("before", [["no-such-check"], [], "always-pass", [1]])
+def test_bad_before_declaration_fails_closed(repo, before):
+    set_base_config(repo, json.dumps({**BEFORE, "before": before}))
     assert gate(repo, "enabled", "--base", "main").returncode == 3
+
+
+def test_a_legacy_tiers_key_has_no_effect(repo):
+    """Bases older than ticket 1245 carry "tiers": read without error, never applied."""
+    set_base_config(repo, json.dumps({**BEFORE, "tiers": {"bookkeeping": ["full-only"]}}))
+    branch = branch_touching(repo, "STATE.md")
+    result = gate(repo, "run", "--no-push", "--base", "main", "--head", branch)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "scope: fixture-set/before-merge: always-pass" in result.stdout
+
+
+def test_the_harness_declares_a_cheap_before_set():
+    """Ticket 1245: lint before the merge, the test suite only after it."""
+    config = json.loads((ROOT / ".merge-gate.json").read_text(encoding="utf-8"))
+    checks = {c["name"]: c["argv"] for c in config["checks"]}
+    assert checks.get("lint") == ["make", "lint"]
+    assert "lint" in config["before"] and "pytest-guard" not in config["before"]
+    assert "pytest-guard" in checks
+    assert set(config["before"]) <= set(checks)
+    assert "tiers" not in config and "rerun" not in config
 
 
 def test_tier_of_the_whole_diff(repo):

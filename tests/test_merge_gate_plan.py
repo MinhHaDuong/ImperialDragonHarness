@@ -1,10 +1,10 @@
 """verify-gate's check plan: reuse prior results, scope checks to the diff (ticket 1220).
 
 `merge-gate.py plan` prints, before anything runs, one line per declared check
-(`run`, `reuse` or `skip`, with the reason) and one for the adherence result.
-A prior result is a gate record entry for the `--since` head; it is reused
-only when what changed between its candidate and the current one is
-bookkeeping (skills/merge/SKILL.md § Gating tiers). Every fixture is a local
+(`run`, `reuse` or `skip`, with the reason). Only the declared before set runs
+before the merge (ticket 1245); the rest is skipped as after-merge only. A
+prior result is a gate record entry for the `--since` head; it is reused only
+when the candidate is unchanged since that record's. Every fixture is a local
 repository with a bare origin: no forge, no network.
 """
 
@@ -28,9 +28,9 @@ CONFIG = {
         {"name": "ticket-check", "argv": ["true"]},
         {"name": "suite", "argv": ["sh", "-c", "! test -e FAIL_MARKER"]},
         {"name": "integ", "argv": ["true"], "integration": True, "covers": ["it/"]},
+        {"name": "full-suite", "argv": ["false"]},
     ],
-    "tiers": {"bookkeeping": ["ticket-check", "suite"]},
-    "rerun": {"bookkeeping": ["ticket-check"]},
+    "before": ["ticket-check", "suite", "integ"],
 }
 
 
@@ -116,17 +116,19 @@ def names(actions, kind):
     }
 
 
-def test_ticket_only_delta_reuses_the_prior_green_result_and_runs_only_the_ticket_check(
-    repo,
-):
+def test_a_ticket_only_delta_reruns_the_before_set(repo):
+    """Ticket 1245: the before set costs seconds, so any delta re-runs it."""
     prior = record(repo)
     commit(repo, "tickets/0001-x.erg", message="ticket log")
     actions, out = plan(repo, "--since", prior)
-    assert names(actions, "run") == {"ticket-check"}, out
-    assert names(actions, "reuse") == {"suite", "integ"}, out
-    for name in ("suite", "integ"):
-        assert prior in actions[name][1], out  # the reuse names its source head
-    assert "bookkeeping" in actions["suite"][1], out
+    assert names(actions, "run") == {"ticket-check", "suite"}, out
+    assert names(actions, "reuse") == set(), out
+
+
+def test_a_check_outside_the_before_set_is_skipped_as_after_merge_only(repo):
+    actions, out = plan(repo)
+    assert actions["full-suite"][0] == "skip", out
+    assert "after-merge only" in actions["full-suite"][1], out
 
 
 def test_code_delta_invalidates_the_reuse(repo):
@@ -135,7 +137,7 @@ def test_code_delta_invalidates_the_reuse(repo):
     actions, out = plan(repo, "--since", prior)
     assert names(actions, "reuse") == set(), out
     assert names(actions, "run") == {"ticket-check", "suite"}, out
-    assert names(actions, "skip") == {"integ"}, out
+    assert names(actions, "skip") == {"integ", "full-suite"}, out
     assert "src/more.py" in actions["suite"][1], out
 
 
@@ -144,34 +146,24 @@ def test_unchanged_head_reuses_every_passed_check(repo):
     actions, out = plan(repo, "--since", prior)
     assert names(actions, "reuse") == {"ticket-check", "suite", "integ"}, out
     assert names(actions, "run") == set(), out
+    assert prior in actions["suite"][1], out  # the reuse names its source head
 
 
 def test_a_failed_prior_check_is_never_reused(repo):
     commit(repo, "FAIL_MARKER", message="break")
     prior = record(repo)
-    commit(repo, "tickets/0001-x.erg", message="ticket log")
     actions, out = plan(repo, "--since", prior)
     assert actions["suite"][0] == "run", out
-    assert actions["integ"][0] == "reuse", out
+    assert actions["ticket-check"][0] == "reuse", out
 
 
-def test_a_code_change_on_the_base_invalidates_the_reuse(repo):
+def test_a_change_on_the_base_invalidates_the_reuse(repo):
     prior = record(repo)
     git(repo, "switch", "-q", "main")
-    commit(repo, "src/base.py", message="base moved")
+    commit(repo, "STATE.md", message="base moved")
     git(repo, "switch", "-q", "feature")
     actions, out = plan(repo, "--since", prior)
     assert names(actions, "reuse") == set(), out
-
-
-def test_a_bookkeeping_change_on_the_base_keeps_the_reuse(repo):
-    prior = record(repo)
-    git(repo, "switch", "-q", "main")
-    commit(repo, "STATE.md", message="state")
-    git(repo, "switch", "-q", "feature")
-    actions, out = plan(repo, "--since", prior)
-    assert names(actions, "run") == {"ticket-check"}, out
-    assert names(actions, "reuse") == {"suite", "integ"}, out
 
 
 def test_without_a_prior_record_every_check_runs(repo):
@@ -211,9 +203,9 @@ def test_the_plan_is_printed_before_any_check_runs(repo):
 @pytest.mark.parametrize(
     "patch",
     [
-        {"rerun": {"bookkeeping": ["no-such-check"]}},
-        {"rerun": {"full": ["suite"]}},
-        {"rerun": ["ticket-check"]},
+        {"before": ["no-such-check"]},
+        {"before": []},
+        {"before": "suite"},
         {"checks": [{"name": "x", "argv": ["true"], "integration": "yes"}]},
         {"checks": [{"name": "x", "argv": ["true"], "covers": "it/"}]},
     ],
@@ -221,10 +213,23 @@ def test_the_plan_is_printed_before_any_check_runs(repo):
 def test_bad_plan_declarations_fail_closed(repo, patch):
     config = {**CONFIG, **patch}
     if "checks" in patch:
-        config.pop("tiers")
-        config.pop("rerun")
+        config.pop("before")
     git(repo, "switch", "-q", "main")
     (repo / ".merge-gate.json").write_text(json.dumps(config), encoding="utf-8")
     git(repo, "commit", "-q", "-am", "config")
     git(repo, "switch", "-q", "feature")
     assert gate(repo, "plan", "--base", "main", "--head", "feature").returncode == 3
+
+
+def test_legacy_tier_keys_are_ignored(repo):
+    """Bases older than ticket 1245 carry "tiers" and "rerun": read, never applied."""
+    config = {**CONFIG, "tiers": {"bookkeeping": ["ticket-check"]}, "rerun": {"bookkeeping": []}}
+    git(repo, "switch", "-q", "main")
+    (repo / ".merge-gate.json").write_text(json.dumps(config), encoding="utf-8")
+    git(repo, "commit", "-q", "-am", "legacy config")
+    git(repo, "switch", "-q", "feature")
+    git(repo, "switch", "-q", "-c", "books", "main")
+    commit(repo, "STATE.md", message="state")
+    result = gate(repo, "plan", "--base", "main", "--head", "books")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "run suite:" in result.stdout, result.stdout

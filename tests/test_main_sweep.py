@@ -257,16 +257,16 @@ def test_a_repository_without_a_gate_prints_nothing(tmp_path):
         assert (proc.returncode, proc.stdout) == (0, ""), proc.stderr
 
 
-def test_a_bookkeeping_merge_with_its_tier_receipt_reads_as_ok(repo):
-    """Ticket 1221: a tickets/STATE/memory-only merge carries a tier receipt."""
+def test_a_merge_with_its_before_merge_receipt_reads_as_ok(repo):
+    """Ticket 1245: a code merge carries the before-set receipt; the full set runs after."""
     (repo / ".merge-gate.json").write_text(
         '{"gate": "on", "scope": "s", "checks": [{"name": "t", "argv": ["true"]},'
-        ' {"name": "full", "argv": ["false"]}], "tiers": {"bookkeeping": ["t"]}}\n')
+        ' {"name": "full", "argv": ["false"]}], "before": ["t"]}\n')
     git(repo, "add", "-A")
-    git(repo, "commit", "-q", "-m", "tiers")
+    git(repo, "commit", "-q", "-m", "before set")
     git(repo, "push", "-q", "origin", "main")
     git(repo, "switch", "-q", "-c", "books", "main")
-    commit(repo, "STATE.md")
+    commit(repo, "code.py")
     git(repo, "switch", "-q", "main")
     receipt(repo, "books")
     merge = forge_merge(repo, "books")

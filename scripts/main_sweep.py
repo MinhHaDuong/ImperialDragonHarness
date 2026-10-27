@@ -13,8 +13,8 @@ head into the base tip. The forge's merge commit M is another object (other
 author, date, message), so for a merge with exactly two parents (P1, P2) the
 audit rebuilds the candidate from (P1, P2) with merge-gate.py's own function,
 requires M's tree to be the candidate's, and reads the note there; the latest
-entry for that candidate decides, under the scope that P1 declares (or its
-bookkeeping tier, for a merge that touches only bookkeeping paths). A receipt
+entry for that candidate decides, under the before-merge scope that P1
+declares (ticket 1245: its "before" set, or the full set without one). A receipt
 made on another base tip names another candidate, so a merge whose first
 parent moved after the gate ran reads as a finding. A single-parent commit is
 read as before: the note on the commit itself. A parentless commit is a
@@ -84,8 +84,7 @@ def _verdict(sha: str, parents: list[str], config: dict) -> tuple[str, str]:
         return "finding", f"candidate cannot be rebuilt: {exc}"
     if _tree(target) != _tree(sha):
         return "finding", f"tree differs from candidate {target[:12]}"
-    scopes = mg.accepted_scopes(config, parents[0], target)  # a bookkeeping merge may carry its tier record
-    code, reason = mg.decide(mg.parse_note(mg.read_note(target)), target, scopes)
+    code, reason = mg.decide(mg.parse_note(mg.read_note(target)), target, mg.accepted_scopes(config))
     if code == mg.PASS:
         return "ok", reason
     if code == mg.MISSING:

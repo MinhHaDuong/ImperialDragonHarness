@@ -148,7 +148,8 @@ def test_an_after_record_is_never_taken_for_a_before_merge_one(tmp_path, module)
     cwd = os.getcwd()
     os.chdir(work)
     try:
-        scopes = module.accepted_scopes(config, tip, module.candidate(tip, git(work, "rev-parse", "feature")))
+        module.candidate(tip, git(work, "rev-parse", "feature"))
+        scopes = module.accepted_scopes(config)
     finally:
         os.chdir(cwd)
     assert module.decide(entries, tip, scopes)[0] == module.MISSING
