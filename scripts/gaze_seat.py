@@ -65,6 +65,16 @@ MODEL_FLAGS = ('--model', '-m')
 PLACEHOLDER = re.compile(r'<[^<>]+>.*')
 ANCHOR = re.compile(r'[0-9a-f]{7,40}')
 
+SEAT_MODEL = re.compile(r'[A-Za-z0-9][A-Za-z0-9._-]*')
+SEAT_AGENT_TOML = '''\
+active_model = "seat-model"
+
+[[models]]
+name = "{model}"
+provider = "{provider}"
+alias = "seat-model"
+'''
+
 ROLES = ('code-reviewer', 'prose-reviewer')
 PROFILES = HERE.parent / 'profiles'
 
@@ -105,6 +115,7 @@ def persona(role: str) -> str:
 class Command:
     argv: list[str]
     stdin: Path | None
+    env: dict[str, str] | None = None
 
 
 def load_doors(routes: Path) -> dict:
@@ -149,6 +160,28 @@ def build_command(door: dict, model: str, prompt: str, outfile: Path, promptfile
             argv.append(token)
     lead = next(i for i, token in enumerate(argv) if token.startswith('-'))
     return Command(argv[:lead] + list(door['seat_rails']) + argv[lead:], stdin)
+
+
+def seat_home(door: dict, model: str) -> Path:
+    """A disposable VIBE_HOME holding the seat agent that pins `model` (ticket 1279).
+
+    Vibe has no model flag; the agent file is the pin. The home is empty otherwise, so the
+    user's config and trusted folders never shape the seat. Auth is the OS keyring, not the home.
+    """
+    spec = door['seat_agent']
+    home = Path(tempfile.mkdtemp(prefix='gaze-vibe-', dir='/tmp'))
+    (home / 'agents').mkdir()
+    (home / 'agents' / f'{spec["name"]}.toml').write_text(
+        SEAT_AGENT_TOML.format(model=model, provider=spec['provider']), encoding='utf-8')
+    return home
+
+
+def remove_home(home: Path) -> None:
+    """Remove the disposable home; Vibe leaves read-only plugin files in read-only directories."""
+    def unlock(function, path, _error):
+        os.chmod(os.path.dirname(path), 0o700)
+        function(path)
+    shutil.rmtree(home, onerror=unlock)
 
 
 def config_path() -> Path:
@@ -335,9 +368,14 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         command = build_command(door, run_model, prompt, last, promptfile, values)
     except ValueError as error:
         return False, f'no report ({error})'
+    if 'seat_agent' in door:
+        if not SEAT_MODEL.fullmatch(run_model):
+            return False, f'no report (model id {run_model!r} is not a plain model name)'
+        command.env = {door['seat_agent']['home_env']: '<disposable>'}
     if args.dry_run:
         print(json.dumps({'argv': [a if a != prompt else '<prompt>' for a in command.argv],
                           'stdin': str(command.stdin) if command.stdin else None,
+                          'env': command.env,
                           'cwd': 'scratch' if door.get('scratch_cwd') else str(args.review_tree)}))
         return True, 'dry run, nothing launched'
     try:
@@ -356,9 +394,21 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
             shutil.rmtree(scratch, ignore_errors=True)
             return False, 'no report (scratch directory is inside a git repository)'
         cwd = scratch
+    home = None
     try:
-        ok, outcome = seat_clock.run_seat(args.cap, staging, command.argv, cwd=cwd, stdin=command.stdin)
+        if 'seat_agent' in door:
+            home = seat_home(door, run_model)
+            command.env = {door['seat_agent']['home_env']: str(home)}
+        ok, outcome = seat_clock.run_seat(args.cap, staging, command.argv, cwd=cwd, stdin=command.stdin,
+                                          env=command.env)
+    except OSError as error:
+        return False, f'no report (cannot prepare the seat: {error.strerror})'
     finally:
+        if home:
+            try:
+                remove_home(home)
+            except OSError:
+                pass  # a leftover under /tmp is tolerable; the seat's outcome stands
         if scratch:
             shutil.rmtree(scratch, ignore_errors=True)
     log = staging.with_name(staging.name + '.log')

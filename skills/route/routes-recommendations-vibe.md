@@ -7,9 +7,12 @@ Launch forms are in `routes.json` under `launch_doors.vibe`.
 
 - Vibe is Mistral-served (the `mistral` route). It has no model flag on the
   command line: the model comes from the agent (`--agent <name>`) or the
-  configuration.
-- Headless `vibe -p` denies file tools, so it cannot serve as a
-  detached review seat. Record such a seat as `no report`; never simulate it.
+  configuration; default `mistral-vibe-cli-latest`.
+- Headless `vibe -p` reads files and can serve as a detached review seat
+  through `gaze_seat.py` (Vibe 2.26.0, ticket 1279): `--enabled-tools
+  read_file` only, stdin closed (an inherited stdin hangs it silently), model
+  pinned by a seat agent in a disposable `VIBE_HOME`. Its auth is the Le Chat
+  plan login in the keyring. A seat that fails is `no report`; never simulate it.
 - Run from a trusted folder (`--trust`), or project configuration such as
   `AGENTS.md` is ignored.
 - Subagent model selection is unverified.

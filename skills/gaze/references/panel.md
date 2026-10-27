@@ -85,8 +85,9 @@ stagger launches.
 #### Doors that cannot serve
 
 A door whose CLI cannot hold a seat read-only has no `seat_rails` in
-`routes.json`, and `gaze_seat.py` refuses it: a headless `vibe -p` session
-cannot serve, its permission policy denies it file tools. A rail or a model
+`routes.json`, and `gaze_seat.py` refuses it. Headless Vibe (2.26.0) serves
+with `--enabled-tools read_file`, stdin from `/dev/null` and a seat agent in a
+disposable `VIBE_HOME` that pins the model (ticket 1279). A rail or a model
 pin a CLI cannot enforce is recorded in the report as that limitation.
 `$IDH_ROOT/scripts/coaching/seat-runner.sh` is an optional heavier transport.
 An external reviewer routed by `skills/reviewers/SKILL.md` is a plan item
