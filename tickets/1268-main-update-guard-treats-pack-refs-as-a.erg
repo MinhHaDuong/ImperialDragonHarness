@@ -26,3 +26,17 @@ mode (1180's goal) the hook would refuse git's own maintenance. Blocks 1180's en
 hooks/reference-transaction, tests/test_main_guard_hook.py, conception/2026-10-21-main-update-guard.md
 
 Related: [[1180]], [[1045]].
+
+## Design (Fable advice, 2026-10-27; reproduced in a scratch repo, git 2.43, enforce on)
+Today under enforce, `git pack-refs --all --prune` prints `fatal: ref updates aborted by hook` (exit 128)
+but packed-refs is already written and main still resolves: noise plus a `refused` row per gc, not a lost
+ref. "packed value equals old" alone is UNSAFE: `git branch -D main` on a packed main has the same shape
+while packed-refs still holds the value. Whitelist two pack-refs shapes, matched on ref state:
+1. Prune: `new` zero, `old` == current == the refs/heads/main line of `$common/packed-refs`, AND the parent
+   git argv's subcommand is `pack-refs` (anchored: `git [opts] pack-refs`, so `-m pack-refs` cannot spoof).
+2. Pack write: `old` zero and `new` == current (a no-op create): allow unconditionally. Without it, after a
+   locally gated merge not yet pushed, pack-refs aborts BEFORE writing packed-refs.
+Tests: prune on a packed main vs `branch -D` on a packed main (must differ); main ahead of origin then
+pack-refs; `update-ref -d`; gc during a merge (main.lock serialises; REF_HAVE_OLD makes git skip the
+prune); reftable (no packed-refs; parse fails closed, never crashes); linked worktree running gc. No more
+robust discriminator than argv exists in git 2.43 (REF_IS_PRUNING never reaches the hook).
