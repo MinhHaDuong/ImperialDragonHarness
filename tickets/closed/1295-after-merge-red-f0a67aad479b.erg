@@ -2,9 +2,11 @@
 Title: After-merge red on main f0a67aad479b: pytest-guard
 Created: 2026-10-27
 Author: merge-gate
+Closed: met: after-merge record on d5d381d3 passes pytest-guard (68.1s); tests/test_probe_memory_symlink.py::test_sigterm_kills_the_child_group_before_exit passes 5/5 on padme 2026-10-27 (first run 7.3s, then 0.1s); failure on f0a67aad unrelated to #1833 (review_notes.py); cause not established, plausibly host load from parallel raid gates
 
 --- log ---
 2026-10-27T20:06Z merge-gate created
+2026-10-27T20:43Z reviewer closed — met: after-merge record on d5d381d3 passes pytest-guard (68.1s); tests/test_probe_memory_symlink.py::test_sigterm_kills_the_child_group_before_exit passes 5/5 on padme 2026-10-27 (first run 7.3s, then 0.1s); failure on f0a67aad unrelated to #1833 (review_notes.py); cause not established, plausibly host load from parallel raid gates
 
 --- body ---
 ## Context
