@@ -150,6 +150,9 @@ root), and a ratchet holds every seam-bearing body to the same
 runtime-supplied-path derivation — one line for most skills, two for
 `roar`, which needs its own skill directory first.
 
+Yawn's check 14 (`scripts/project_shadow.py`) takes each runtime's project
+skill folders from `project_skill_roots` in `adapters/pilot-support.json`.
+
 Adversarial-root findings worth knowing before you "simplify" the line:
 the idiom's nested quoting survives a double quote in the installation
 root (observed, pinned), and a dangling projection fails visibly at the
