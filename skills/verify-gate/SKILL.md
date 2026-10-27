@@ -458,14 +458,15 @@ through `python3 "$IDH_ROOT/scripts/review_notes.py" -C "$primary_root"`; never
 - **Round and review.** `review_notes.py gate <review_id> <head>` prints the state as
   JSON and exits 0 only when the gate may run. It syncs first when `origin`
   exists, so verdicts and answers of other clones count. `round` is the
-  recorded verdicts of the review, every session, plus one; round > 2 is
-  refused. A refusal is § Gate sessions' "no completed review" answer: the
-  latest gaze `answer` is ESCALATE, there is none, or none covers the head.
-  When the reason is `stale`, apply the bookkeeping exception with
-  `--since <reviewed_head>` from the JSON; otherwise ESCALATE, record
-  nothing, spend no round. Coverage is the helper's: the answer's head equals
-  the tip, or a rebased tip has the same non-empty verbatim patch-id; a
-  `delta` answer (narrow intent) counts only after a full one.
+  recorded verdicts of the review, every session, plus one. It applies
+  § Gate sessions' admission itself: an answer covers the head (its head
+  equals the tip, or a rebased tip has the same non-empty verbatim patch-id;
+  a `delta` answer only through its `coverage.carried` chain to an earlier
+  full one), or the tip adds only bookkeeping to the reviewed head
+  (`match: bookkeeping`), or it is the round-2 re-gate of a round-1 REROLL
+  fix (`match: reroll-fix`). It refuses with no answer, an ESCALATE answer,
+  a recorded ESCALATE verdict, or past two rounds. On a refusal answer
+  ESCALATE with its `reason`, record nothing, spend no round.
 - **Review comments.** Non-negotiable 3's gaze findings are the `text` of
   every `answer` entry (`review_notes.py show <review_id>`) plus the open
   findings (`review_notes.py findings <review_id>`); attribution lines are in
@@ -478,9 +479,11 @@ through `python3 "$IDH_ROOT/scripts/review_notes.py" -C "$primary_root"`; never
   `review_notes.py verdict --review <review_id> --session <uuid> --verdict <V>
   --head <ruled_tip_sha> --evidence <answer ids> [--candidate <gate record OID>]
   --text-file <file>`. It prints `<entry id> <level> round=<n>`: the round it
-  recorded, which is the verdict's `round`. It refuses a third round and a
-  REROLL on round 2 (rule ESCALATE instead), and exits 1 when `origin` exists
-  but the entry is not retrievable from it: report the incomplete delivery.
+  recorded, which is the verdict's `round`. It re-checks `gate`'s admission and refuses a head
+  it does not admit, a third round and a REROLL on round 2 (rule ESCALATE
+  instead). Exit 1 after writing: `origin` exists but the entry is not
+  retrievable from it (report the incomplete delivery), or another gate run
+  recorded the same round at once (stderr names it; ESCALATE to the author).
 
 ## Not in scope
 

@@ -119,3 +119,17 @@ def test_close_still_cleans_up(tmp_path):
     assert "Traceback" not in r.stderr, r.stderr
     assert not (primary / ".claude" / "worktrees" / "review-branch-feature").exists()
     assert f["review_id"]
+
+
+def test_a_delta_answer_carries_the_earlier_full_one(tmp_path):
+    """Ticket 1274: verify-gate admits a delta answer only through `coverage.carried`."""
+    primary, env = branch_repo(tmp_path)
+    f = fields(run(SETUP, ["branch:feature"], primary, env).stdout)
+    assert close_with(tmp_path, primary, env, f, "intent: default\n").returncode == 0
+    full = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]
+    f = fields(run(SETUP, ["branch:feature"], primary, env).stdout)
+    r = close_with(tmp_path, primary, env, f, "intent: verify the fixes because they were the findings\n")
+    assert r.returncode == 0, r.stdout + r.stderr
+    delta = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"][-1]
+    assert delta["coverage"] == {"scope": "delta", "carried": full["id"]}
+    assert rn.gate_state(primary, f["review_id"], f["head"])["ready"]
