@@ -12,19 +12,6 @@ evidence, and any unavailable perspective.
 
 Guards every agent: rules/guards.md.
 
-### Authorized model services
-
-The user authorizes transmissions necessary to perform requested work to
-Claude (Anthropic), Codex (OpenAI), and OpenRouter through their authenticated
-CLI or API routes. Do not request renewed confirmation solely because a
-task requires sending relevant project documents to one of these services.
-An explicit local-only restriction or third-party confidentiality obligation
-still applies. Material restricted to encrypted or local storage requires
-separate clearance before transmission; credentials must not enter prompts. This authorization does
-not authorize unrelated publication, messages to people, or additional spend
-beyond an agreed task budget. Runtime-managed approval controls remain in
-force; report any refusal rather than bypassing it.
-
 Current status, blockers, next actions: `STATE.md`.
 
 Tickets: `tickets/*.erg`. GitHub Issues are for cross-repo coordination only.

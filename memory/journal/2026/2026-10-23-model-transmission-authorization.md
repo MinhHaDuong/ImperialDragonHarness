@@ -5,7 +5,8 @@ submission review pilots, the user explicitly authorized the transmissions
 necessary for the tests and requested that blocking of sends to Claude,
 Codex and OpenRouter be disabled, remembered and committed.
 
-The harness AGENTS.md now records standing
+The harness guards (`rules/guards.md`, and for Codex and Pi the
+session-start context) now record standing
 authorization for task-necessary model-service transmissions to those three
 destinations, preserving explicit local-only restrictions, confidentiality
 obligations, credential protections and agreed task budgets.
@@ -33,3 +34,6 @@ an inference from the original test request.
 Cross-family review via Claude CLI requested Opus/medium. The encrypted/local
 material exception was made explicit after review. Official documentation
 URL was fetched and its redirect observed. CLI modelUsage: claude-opus-5-5; effort requested, not independently attested.
+
+Placement revised on 2026-10-27 at the author's choice: first drafted in the
+harness AGENTS.md, which no other repository loads.

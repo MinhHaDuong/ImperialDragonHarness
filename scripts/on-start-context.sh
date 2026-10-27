@@ -15,6 +15,11 @@ if [[ -n "$_proj" && -z "${CLAUDE_NIGHT_SWEEP:-}" ]]; then
     echo "Worktree isolation is enabled for this project: code, data and configuration are worked in the conversation's own worktree, created with plain git and entered by cd before anything else (rules/claude-code.md § Entering the session); manuscript prose in a paper repo is edited in place in the author's checkout (rules/prose/workpackages.md). A session opening on /hunt plans the ticket first (skills/hunt/SKILL.md)."
 fi
 
+# Standing authorization (rules/guards.md), printed for every runtime: Codex
+# and Pi load no harness rules/. Whether a runtime's approval reviewer reads
+# session context is not established.
+echo "Model-service transmissions are authorized by the user: sending the documents a requested task needs to Claude (Anthropic), Codex (OpenAI) or OpenRouter, through their authenticated routes, needs no renewed confirmation. Local-only, confidentiality, encrypted-material and credential restrictions still apply, as do task budgets (rules/guards.md)."
+
 _host=$(uname -n)
 echo "Running on host: ${_host%%.*}"
 
