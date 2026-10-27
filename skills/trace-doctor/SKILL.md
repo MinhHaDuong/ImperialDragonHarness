@@ -192,12 +192,39 @@ From `stopguard.json` (rules and limits: the docstring of
 runtime: stops, ask without ask-up, wait without wake, bad. Codex and Pi are
 reported unmeasured, never as zero.
 
-Name the gate: **ticket 1164, gate G1: 5 or more bad stops per week on Claude
-Code reopens Stopguard; below that, close it.** Report `g1.bad_per_week` (a
-derived rate: window total over window weeks) beside the verdict, and scale it
-by the labelled precision before calling it a count of true bad stops. The
-verdict informs the author; this section never reopens or closes 1164. The
-offending turns (`--list`) are for local reading only; never commit them.
+Name the gate: **ticket 1164 (closed), gate G1: 5 or more bad stops per week
+on Claude Code is the reopen condition for Stopguard.** Report
+`g1.bad_per_week` (a derived rate: window total over window weeks) beside the
+verdict, and scale it by the labelled precision before calling it a count of
+true bad stops. The verdict feeds the watchlist below; the offending turns
+(`--list`) are for local reading only; never commit them.
+
+### Watchlist
+
+Closed tickets whose reopen condition each run re-measures. Report one row per
+entry: the current figure, its baseline, the trend since the last run. When the
+trigger holds, propose the reopen to the author with the numbers; this section
+never reopens a ticket.
+
+| Ticket | Diagnostic | Baseline | Trigger to propose reopening |
+|--------|-----------|----------|------------------------------|
+| 1164 Stopguard hook | `stopguard.json` above | 2026-10-27: ~169 flags/week, precision 0.56 [0.33, 0.77] | precision-scaled bad stops stay at or above 5/week two weeks after the routine-step wording fix (ticket 1296) landed in `rules/workflow.md` |
+| 1243 attribution in merge commit | `attribution_query.py --since` coverage, below | 2026-10-27: 3 of 157 merges `available`; 15 of 302 since 2026-10-20 | the `available` share has not risen two weeks after ticket 1286 (seat attribution lines) merged |
+
+For 1243, count coverage over the survey window. The denominator holds
+unreviewed merges (ticket-only, roar, housekeeping), so read the share as a
+trend, not a capture rate; sample `missing` rows before calling a refusal.
+
+```bash
+SINCE=$(git rev-list -n1 --before="28 days ago" origin/main)   # match --days
+python3 "$HARNESS_DIR/scripts/attribution_query.py" . --since "$SINCE" --json \
+  2>/dev/null > "$SCRATCH/attribution.json"
+python3 -c 'import json,sys,collections; print(collections.Counter(r["attribution"] for r in json.load(open(sys.argv[1]))["coverage"]))' \
+  "$SCRATCH/attribution.json"
+```
+
+Retire a row when its ticket's decision is settled (reopened, or the trigger
+stayed clear for three runs), and say so in the report.
 
 ### Treatment follow-up section
 
