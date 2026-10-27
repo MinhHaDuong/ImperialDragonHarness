@@ -54,6 +54,8 @@ To be woken instead of polling, run `python3 "$IDH_ROOT/scripts/raid-breaker.py"
 The window starts at launch. A poll whose git fails or exceeds 5 s is skipped, not counted as
 silence; a worktree whose git never answers is never woken on, only the deadline ends the wait.
 
+Log each fired breaker as a `BREAKER` line (`references/sitrep.md`).
+
 **Ping-pong detector**: If two agents edit the same file on the
 same branch, STOP. Reset to last known-good commit, relaunch ONE agent.
 Bump reason: `ping-pong on {file}`.
