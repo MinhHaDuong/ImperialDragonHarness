@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Sessions stop to ask leave for routine steps: workflow wording fix, then re-measure
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T21:19Z reviewer created
+
+--- body ---
+## Context
+The trace measure of Stopguard's bad stops (ticket 1294, PR #1832; conception/2026-10-27-stopguard-measure-labels.md)
+counted about 169 flagged stops a week at agent-labelled precision 0.56. Its true positives are mostly sessions that
+end a turn asking the author's leave for a routine step (running roar, a gaze, a one-shot check); its false
+positives are mostly stops where an advisor had already answered, or decisions that are the author's by right
+(money, scope). Author's decision 2026-10-27 (advisor Fable): Stopguard (1164) stays deferred; fix the wording that
+lets sessions read routine steps as needing leave, then re-measure.
+
+## Exit criteria
+- [ ] rules/workflow.md (Autonomous action and Escalation protocol) says plainly that routine steps the session's
+      own skills prescribe (roar after a merge, gaze before a gate, a bounded check) are run, not asked; asking is
+      for decisions that are the author's by right; the change fits the resident-rule budget.
+- [ ] The next trace-doctor run reports the weekly bad-stop count against the 2026-10-27 baseline (about 169/week).
+- [ ] The harness gate passes.
+
+Related: [[1164]], [[1294]].
