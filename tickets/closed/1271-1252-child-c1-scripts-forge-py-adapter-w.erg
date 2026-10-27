@@ -2,9 +2,11 @@
 Title: 1252 child C1: scripts/forge.py adapter with gh and none backends, no caller moved
 Created: 2026-10-27
 Author: reviewer
+Closed: closed by raid — PR #1794
 
 --- log ---
 2026-10-27T15:45Z reviewer created
+2026-10-27T15:58Z reviewer closed — closed by raid — PR #1794
 
 --- body ---
 ## Context
