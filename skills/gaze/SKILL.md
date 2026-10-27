@@ -145,7 +145,7 @@ it appends attribution first, then removes this run's review scratch and the rev
 containment postcondition (cwd, branch, foreign files)
 and posts the comment. On a blocked cleanup (exit 1) attribution is already
 appended, the script posts nothing, and the calling gaze posts the ESCALATE
-comment itself with `gh pr comment`.
+comment itself.
 
 <!-- inline: references/cleanup.md -->
 
