@@ -2,9 +2,11 @@
 Title: Stopguard measure: detect ask-without-ask-up and wait-without-wake stops in session traces, reported by trace-doctor
 Created: 2026-10-27
 Author: reviewer
+Closed: merged via PR #1832 (raid 2026-10-27b)
 
 --- log ---
 2026-10-27T19:32Z reviewer created
+2026-10-27T20:04Z reviewer closed — merged via PR #1832 (raid 2026-10-27b)
 
 --- body ---
 ## Context

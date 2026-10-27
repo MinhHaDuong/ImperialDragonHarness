@@ -10,6 +10,7 @@ Label: deferred
 2026-10-21T08:26Z reviewer Design reviewed (Fable, Astra, KISS); deferred by the author, no work before the deferral is lifted
 2026-10-21T10:06Z reviewer reviewer note Velocity scan 2026-10-21 (conception/2026-10-21-velocity-friction-scan.md) found 2,038 wait-regex matches (upper bound) and about 43 hook-blocked sleeps in 14 days. The wait-replacement idea is already in hand: bounded background waits landed in ce2965be, 70b39b0a, 6b39fd9c, and the waiter design in conception/discussions/2026-10-21-await-external-design.md owns the registry. No new ticket; re-measure the wait count after the waiter lands.
 2026-10-27T19:32Z reviewer note author 2026-10-27: stays deferred; its G1 number comes from ticket 1294 (trace-based measure reported by trace-doctor) instead of phase 1's hook. Reopen at >= 5 bad stops/week, close below.
+2026-10-27T21:19Z reviewer note 2026-10-27: G1 crossed per the trace measure (ticket 1294, PR #1832): ~169 flags/week at agent-labelled precision 0.56 [0.33, 0.77], >= ~56 true/week at the lower bound vs the threshold of 5. Author's decision (advisor Fable): Stopguard stays deferred — a 0.56-precision hook would refuse about half of good stops; the true positives are mostly sessions asking leave for routine steps (roar, gaze, a one-shot check), so the next step is a rules/workflow.md wording fix and a re-measure at the next trace-doctor run, not the hook.
 
 --- body ---
 ## Context
