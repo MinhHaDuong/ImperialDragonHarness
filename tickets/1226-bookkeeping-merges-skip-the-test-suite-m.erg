@@ -8,6 +8,7 @@ Author: Minh Ha-Duong
 2026-10-26T22:24Z reviewer reviewer note alignment 2026-10-26: blocked by 1224 (criterion 1 prints its duration line); lands before 1225, which edits the same § Gating tiers
 2026-10-26T22:56Z reviewer note blocker 1224 closed — Blocked-by removed.
 2026-10-27T09:11Z reviewer reviewer note rewritten to option C (author, 2026-10-27; no GitHub): cheap checks before the merge, the full suite on main right after, red opens a ticket, the daily audit covers a missing run. Replaces the bookkeeping fast path of PR 1676 (parked).
+2026-10-27T09:12Z reviewer reviewer note author 2026-10-27: single runner on the newest tip (lock, loop while main moves), not one full run per merge
 
 --- body ---
 ## Context
@@ -30,9 +31,14 @@ record. `make lint` runs in 6 to 15 s (READ).
   that moment (ticket validator, agnostic and pipefail guards, catalog drift,
   `make lint`), recorded on the merge candidate as today. Seconds, not
   minutes, so the candidate rarely moves under it.
-- **After the merge:** the merging session starts the full declared set
-  (the test suite included) on the new main tip, in the background, and
-  records the result as a note on that tip, in the record format of today.
+- **After the merge: one runner, always on the newest tip.** The merging
+  session starts the runner in the background unless one is already running
+  (a lock file decides). The runner runs the full declared set (the test
+  suite included) on the current main tip and records the result as a note
+  on that tip, in the record format of today. When it ends, if main has
+  moved, it runs once more on the newest tip, until main is quiet. A burst
+  of N merges costs two runs, not N; a result stays valid for the tip it
+  ran on, so a tip passed over is covered by the next green one.
 - **Red after the merge:** a ticket is opened naming the tip, the failing
   checks, and the merges since the last green tip. Nothing reverts
   automatically.
@@ -50,7 +56,8 @@ forge feature (merge queue, required checks) is used.
 
 - [ ] `.merge-gate.json` declares the before-merge and after-merge check sets; the before set holds no test-suite run.
 - [ ] A merge records the before set on its candidate and lands; measured end to end with the 1224 duration line, against today's record (88 to 95 s).
-- [ ] After a merge, the full set runs on the new main tip in the background and writes its record as a note on that tip.
+- [ ] After a merge, the runner runs the full set on the main tip in the background and writes its record as a note on that tip.
+- [ ] One runner at a time: a merge during a run starts no second runner; the running one tests the newest tip when it ends. A test with three quick merges shows at most two runs, the last on the newest tip.
 - [ ] A red after-merge record opens a ticket naming the tip, the failing checks and the merges since the last green tip; a test shows it on a planted failure.
 - [ ] The daily audit reports main tips with no after-merge record and runs the set on the latest one; a test shows it.
 - [ ] The guard hook and the audit accept a main whose merges carry a before-merge record; `skills/merge/SKILL.md` states the two moments in one place.
