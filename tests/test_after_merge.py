@@ -237,3 +237,12 @@ def test_an_after_record_alone_does_not_vouch_for_a_direct_commit(tmp_path):
     proc = audit(work)
     [line] = [x for x in proc.stdout.splitlines() if direct[:12] in x]
     assert line.startswith("finding"), proc.stdout
+
+
+def test_the_audit_summary_with_after_stays_one_line_over_noisy_checks(tmp_path):
+    work = make_repo(tmp_path, [{"name": "noisy", "argv": ["sh", "-c", "echo NOISY-OUT; echo NOISY-ERR >&2"]}])
+    merge_branch(work, "gap")
+    proc = audit(work, "--after", "--summary")
+    assert "NOISY" not in proc.stdout + proc.stderr
+    assert len(proc.stdout.splitlines()) == 1, proc.stdout
+    assert "ran on" in proc.stdout

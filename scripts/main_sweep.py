@@ -42,6 +42,7 @@ import argparse
 import importlib.util
 import io
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -166,11 +167,24 @@ def after_audit(tip: str, ref: str, max_count: int, summary: bool) -> tuple[list
 
 
 def _quiet_run(remote: str, branch: str, actor: str, command: str) -> int:
-    """run_after with its record text kept off stdout (the summary is one line)."""
+    """run_after with its own text and its checks' output kept off fds 1 and 2 (the summary is one line).
+
+    The checks are subprocesses inheriting the file descriptors, so swapping
+    sys.stdout alone would not hold them; the record on the tip keeps the detail.
+    """
+    sys.stdout.flush()
+    sys.stderr.flush()
+    saved = [os.dup(fd) for fd in (1, 2)]
     real, sys.stdout = sys.stdout, io.StringIO()
     try:
-        return mg.run_after(remote, branch, actor, command)
+        with open(os.devnull, "w") as sink:
+            for fd in (1, 2):
+                os.dup2(sink.fileno(), fd)
+            return mg.run_after(remote, branch, actor, command)
     finally:
+        for fd, copy in zip((1, 2), saved):
+            os.dup2(copy, fd)
+            os.close(copy)
         sys.stdout = real
 
 
