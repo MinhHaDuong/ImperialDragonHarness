@@ -331,6 +331,10 @@ SIGNED = "worker: model=m · family={}\nverdict: clear\n"
     ("**panel**", {"self": SIGNED.format("anthropic")}, 2),        # gaze finding: any markup
     ("<key>Seats: panel", {"self": SIGNED.format("anthropic")}, 2),   # gaze round 2: the key too
     ("<key>**seats:** panel", {"self": SIGNED.format("anthropic")}, 2),
+    ("<key>- seats: panel", {"self": SIGNED.format("anthropic")}, 2),   # raid fix: list, quote, heading, spaced colon
+    ("<key>> seats: panel", {"self": SIGNED.format("anthropic")}, 2),
+    ("<key>### seats: panel", {"self": SIGNED.format("anthropic")}, 2),
+    ("<key>seats : panel", {"self": SIGNED.format("anthropic")}, 2),
     ("panel", {"self": SIGNED.format("anthropic"), "redteam": SIGNED.format("openai")}, 0),
     ("self-only", {"self": SIGNED.format("anthropic")}, 0),
 ])
@@ -347,3 +351,16 @@ def test_seats_panel_needs_a_filed_non_self_report(tmp_path, claim, reports, cod
         assert "seats: self-only" in r.stderr
         assert (primary / ".claude" / "worktrees" / "review-7").exists()
         assert not (tmp_path / "gh.log").exists()
+
+
+@pytest.mark.parametrize("line,value", [
+    ("seats: panel", "panel"), ("Seats: panel", "panel"), ("- seats: panel", "panel"),
+    ("> seats: panel", "panel"), ("### seats: panel", "panel"), ("seats : panel", "panel"),
+    ("**seats:** panel", "panel"), ("seats: self-only", "self-only"), ("scope: full", None),
+])
+def test_one_normaliser_reads_the_seats_claim(line, value):
+    """Raid fix, ticket 1287: the claim check and the notes record read `seats:` alike."""
+    import sys
+    sys.path.insert(0, str(Path(CLOSE).parent))
+    import gaze_close
+    assert gaze_close.seats_claim(f"result: REVIEWED\n{line}\n") == value

@@ -171,6 +171,20 @@ def _field(text, name):
     return m.group(1) if m else None
 
 
+def seats_claims(text):
+    """Every `seats:` value in a comment, lowercased: one reader for the claim check and the
+    notes record (ticket 1287). A leading list, quote or heading mark, markup around the key,
+    and spaces before the colon do not hide the claim."""
+    plain = re.sub(r"[*_`]", "", text or "")
+    return [v.lower() for v in re.findall(r"^[\s>#-]*seats\s*:\s*([A-Za-z][\w-]*)", plain, re.M | re.I)]
+
+
+def seats_claim(text):
+    """The value the comment claims: `panel` when any line says it, else the first, else None."""
+    claims = seats_claims(text)
+    return "panel" if "panel" in claims else (claims[0] if claims else None)
+
+
 def answer_scope(text):
     """Spec §4: a narrow intent is never widened. `scope:` when given, else full only for the
     default intent (`intent: default`); any other intent, or none, records delta."""
@@ -205,7 +219,7 @@ def record_answer(primary, pr, text, attribution, identity=None):
         entry = rn.add(cwd, "answer", rid, {
             "run_id": identity.get("run_id") or f"gz-{rn._compact(rn._now())}-{rn._hex(4)}",
             "result": result if result in ("REVIEWED", "FINDINGS", "ESCALATE") else "ESCALATE",
-            "seats": _field(text, "seats") or "self-only",
+            "seats": seats_claim(text) or "self-only",
             "coverage": cov,
             "attribution": attribution.splitlines() if attribution else [],
             "text": text}, head=_field(text, "reviewed_head_sha"), skill="gaze",
@@ -241,8 +255,7 @@ def main():
         print("gaze_close: the comment file needs the {{plan_check}} placeholder and no typed "
               "'plan check:' line; the script writes that line", file=sys.stderr)
         return 2
-    claims = re.findall(r"^\s*seats:\s*(\S+)", re.sub(r"[*_`]", "", comment_text or ""), re.M | re.I)
-    if any(c.lower() == "panel" for c in claims):  # in any case or markup, key and value
+    if seats_claim(comment_text) == "panel":  # in any case or markup, key and value
         derived = panel_reading(primary, a.pr, "seats") or "seats: self-only (panel unreadable)"
         if derived != "seats: panel":  # ticket 1287: a typed panel claim no non-self report backs
             print(f"gaze_close: the comment says seats: panel, the panel reads {derived}: no item "
