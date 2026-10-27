@@ -20,3 +20,6 @@ crash leaves no red ticket and no sweep finding: red tips can go unseen.
 - [ ] The harness gate passes.
 
 Related: [[1283]], [[1265]].
+
+## Feasibility (raid 2026-10-27b)
+WARN: no plan yet; files scripts/main_sweep.py (after_gaps, ~:138) and tests/test_after_merge.py. The documented rule that a result covers every tip it passed over (merge-gate.py:59) must be reconciled: the coder first states how a crashed-on tip is told apart from a passed-over one (e.g. the runner logs or marks a start for each tip it attempts), then implements. Wave 3, after 1283.

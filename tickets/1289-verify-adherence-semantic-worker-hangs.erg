@@ -36,3 +36,9 @@ worker"; the coders proceeded on make lint alone.
 ## Orchestrator decisions (raid 2026-10-27b)
 - Accept 'explained, not reproduced' for criterion 1 if a live depth reproduction is out of reach; the explanation must name the evidence (depth cap, transcript) and be labelled a hypothesis if not isolated.
 - 10-minute bound on the semantic worker wait accepted.
+
+## Blind-spot pass (raid 2026-10-27b)
+- The depth hypothesis may be wrong: verify-adherence is context: fork and launches its worker as a background subagent; a fork that stops calling tools ends its turn and returns 'waiting for the semantic worker' at any depth. Check the 1273/1281 coder transcripts first (fork's last message right after the launch, no wait loop?). If so, the fix reuses gaze's fork contract (skills/gaze/SKILL.md ~52, references/fork-contract.md: poll a written artifact in one bounded loop), not a prose timeout. State which cause the evidence supports.
+
+## Feasibility (raid 2026-10-27b)
+PASS. Wave 2 (hunt/SKILL.md shared with 1286).

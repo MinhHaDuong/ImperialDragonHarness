@@ -68,3 +68,10 @@ for the merge, so each PR paid a second gaze.
 ## Orchestrator decisions (raid 2026-10-27b)
 - Cross-family default applies whenever consent exists (gaze runs only on full-tier changes, so this is the full-tier rule); a plan without one needs a recorded --no-cross-family reason. Matches the author's standing rule of 2026-10-27.
 - Runs after 1286 (skills/gaze/SKILL.md).
+
+## Blind-spot pass (raid 2026-10-27b)
+- 'Cross-family' means a family different from the session's home family (gaze_seat.py already takes --home-family), drawn from consented families; on a Codex session an OpenAI seat is same-family. Test with home family OpenAI and Anthropic.
+- Define and test the outcome when the only cross-family seat yields no report (e.g. 1290's read=no refusal): the plan check fails and gaze returns no accepted review; never a silent fallback to --no-cross-family. Say it in plan.md.
+
+## Feasibility (raid 2026-10-27b)
+WARN: tests/test_seat_clock.py run() inherits the host env, and padme has a consent config: set IDH_GAZE_SEATS_CONFIG in the existing plan-write test. Wave 2, after 1286.

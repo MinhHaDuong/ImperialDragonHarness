@@ -50,3 +50,6 @@ Related: [[1252]], [[1276]], [[1281]].
   review_notes*.py; 1252 tracker only needs its note updated; 1276 is merged. 1277 unrelated. STATE.md line on 1282 to drop at close.
 - Exit mapping: EC1 -> action 1 + tests (a)(b)(c); EC2 -> action 2 + positive control above (agent-doable, no credential); EC3 -> full
   `make check` by the coder, quote selected:/skipped: if scoped.
+
+## Feasibility (raid 2026-10-27b)
+WARN: flock conflicts with itself across two opens in one process; refresh() calls _integrate then _write, so the two lock sites must not nest (take the lock once at the outer entry, or make it reentrant). Wave 1.

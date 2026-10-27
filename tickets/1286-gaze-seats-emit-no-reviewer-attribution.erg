@@ -37,3 +37,6 @@ Related: [[1243]].
 - Files touched: scripts/attribution_record.py, scripts/gaze_close.py, skills/merge/references/claims.md, skills/raid/SKILL.md, skills/hunt/SKILL.md, skills/gaze/SKILL.md, tests/test_attribution_record.py, tests/test_gaze_close.py. Registries: none (skills catalog unchanged unless a description changes; if so `make skills-catalog`).
 - Dependencies: none blocking. Overlap with 1285/1287+ only if they edit gaze_close.py or raid SKILL.md Phase 5 (check the wave). Related 1243 closed context only.
 - Exit mapping: 1 -> step 2 + gaze_close test; 2 -> step 1 + test 1; 3 -> steps 3-4 (grep that raid/hunt no longer list the fields); 4 -> `make` gate by the coder, quoting selected:/skipped:. Nothing needs a live credential; the gaze_close forge call is stubbed as in existing tests.
+
+## Feasibility (raid 2026-10-27b)
+WARN: skills/hunt holds no attribution text: step 4 there adds a citation. hunt/SKILL.md is shared with 1289 (wave 2). Wave 1.

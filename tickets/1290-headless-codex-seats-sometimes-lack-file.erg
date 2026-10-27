@@ -32,3 +32,9 @@ review records still counted them as seats.
 ## Orchestrator decisions (raid 2026-10-27b)
 - Criterion 1 is met by refusing (no report) a seat that declares read=no or omits the reach line; the codex sandbox itself is not changed.
 - The coder makes one live headless codex seat run on padme (cross-family consent covers OpenAI) and quotes its reach line.
+
+## Blind-spot pass (raid 2026-10-27b)
+- Runs after 1287 (interaction: a refused cross-family seat must fail the plan check, not degrade silently).
+
+## Feasibility (raid 2026-10-27b)
+PASS: both profiles (code-reviewer, prose-reviewer) carry their own report format; edit both. Wave 3, after 1287; tests/test_gaze_seat.py shared with 1292 (wave 1).

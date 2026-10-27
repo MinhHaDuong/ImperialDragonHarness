@@ -67,3 +67,9 @@ ticket PR (#1801, closed by hand after `uv sync --frozen` made both green). The 
 - An 'environment' verdict requires evidence that the venv is out of step with the lock (e.g. uv sync --frozen --dry-run reports pending changes, or the missing module is a locked third-party distribution not installed). A missing name from the repo's own modules (the #1799 shape: cannot import name X from a scripts/ module) stays RED. Otherwise RED.
 - ENV exit code: nonzero, distinct from FAIL; main_sweep counts it as a finding (shows 'environment').
 - Doudou reproduction is the author's; the coder reports the offline missing-dependency simulation.
+
+## Blind-spot pass (raid 2026-10-27b)
+- Check whether an inherited VIRTUAL_ENV makes the Makefile RUN empty in the detached hook (stale-venv root cause); if so, the runner clears VIRTUAL_ENV before running checks, in addition to the environment classification. Report the measurement.
+
+## Feasibility (raid 2026-10-27b)
+WARN: the plan's first test (import no_such_module_xyz) contradicts the orchestrator decision (an unlocked module stays RED): the environment test needs a module the lock names but the venv lacks (scratch uv.lock or stubbed uv); keep the unlocked-module case as the RED companion. Wave 1.

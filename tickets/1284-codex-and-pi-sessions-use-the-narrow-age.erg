@@ -67,3 +67,6 @@ Related: [[1196]].
 
 ## Orchestrator decisions (raid 2026-10-27b)
 - The live 403 probe must use a deliberately invalid ruleset body (e.g. an empty JSON object), so a shell that wrongly carries owner rights gets 422 and nothing is created. Never send a valid ruleset. A runtime that cannot be driven headless on padme is reported 'unmeasured', not a pass.
+
+## Feasibility (raid 2026-10-27b)
+PASS: wrappers at scripts/shell-init.sh:89/95; tests/test_bash_suites.py globs test_*.sh. codex/pi must be logged in for the live probe, else 'unmeasured'. STATE.md left to the orchestrator. Wave 1.

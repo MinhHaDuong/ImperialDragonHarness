@@ -72,3 +72,12 @@ broken meanwhile. The after-merge runner on padme did not flag it either (its re
 - Touched-tests run lives in gaze and verify-gate (each says which tests ran), NOT in the .merge-gate.json before-set: that would reverse the author's 1245/1226 cheap-set ruling. Rejected alternative: before-set entry.
 - Criterion 3: fix the forge-built-before-checks crash in cmd_run_after (build the forge only on red, after the record). The main_sweep blind spot (a later green record hides unchecked tips) is its own follow-up ticket, not this PR.
 - Runs after 1288 (same run_after code, tests/test_after_merge.py).
+
+## Blind-spot pass (raid 2026-10-27b)
+- The touched-tests step must degrade in projects without the harness layout (no tests/, no integration marker): say 'no test layout: skipped' and never error or claim a pass. gaze and verify-gate are projected into other repos.
+- Base: merge-base with the base branch (origin/main), not HEAD^1, so a multi-commit PR is covered.
+- Measure once: wall time of 'pytest -m integration' on padme and the selection replayed on the #1799 diff; put both in the PR. If the fallback blows gaze's budget, run the step in verify-gate only and say so.
+- Interpreter: run through the project's declared runner (Makefile RUN / uv run --frozen), not an inherited VIRTUAL_ENV.
+
+## Feasibility (raid 2026-10-27b)
+WARN: follow the orchestrator decision, not the plan's .merge-gate.json/before-set items; criterion 2 rests on touched-tests.py's exit status as run by gaze and verify-gate. Wave 2, after 1288.
