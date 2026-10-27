@@ -192,7 +192,7 @@ classify() {
 # it. Only for a tip whose tree carries .merge-gate.json, and not when
 # `git config idh.afterMerge` is `off`. The runner is the primary checkout's
 # scripts/merge-gate.py (it outlives a linked worktree that a landing removes
-# right after), else the one beside this hook. It starts in its own session,
+# right after), else $IDH_ROOT's, else the one beside this hook. It starts in its own session,
 # from the shared git directory, with no inherited git repository variables
 # and none of git's descriptors: the update never waits on it, and a runner
 # that cannot start costs the update nothing. Its flock dedupes concurrent
