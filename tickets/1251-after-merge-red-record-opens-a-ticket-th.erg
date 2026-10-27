@@ -2,6 +2,7 @@
 Title: After-merge red record opens a ticket through a ticket-only PR
 Created: 2026-10-27
 Author: Minh Ha-Duong
+Blocked-by: 1245
 
 --- log ---
 2026-10-27T10:57Z Minh Ha-Duong created

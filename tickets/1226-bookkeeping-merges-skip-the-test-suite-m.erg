@@ -61,6 +61,7 @@ Tracker since 2026-10-27; closed after the integration review, not on the last c
 
 - [ ] 1244 after-merge runner, red ticket, audit coverage (criteria 3 to 6 below); additive, lands first
 - [ ] 1245 cheap before set, `tiers` dropped, `/verify-gate` runs no full suite (criteria 1, 2, 7); blocked by 1244
+- [ ] 1251 red after-merge record opens a ticket (criterion 5 below), split from 1244 (author, 2026-10-27); blocked by 1245
 
 Author ruling, 2026-10-27: `/verify-gate` does not run the full suite before the merge.
 

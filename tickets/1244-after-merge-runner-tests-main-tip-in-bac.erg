@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-10-27T09:32Z reviewer created child 1 of tracker 1226 (author, 2026-10-27)
+2026-10-27T11:14Z reviewer note criterion 3 moved to child 1251 (author ruling 2026-10-27: bookkeeping tier runs pytest-guard, so a red-main ticket PR cannot land)
 
 --- body ---
 ## Context
