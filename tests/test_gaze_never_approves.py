@@ -54,34 +54,15 @@ RESULT_VALUES = {"REVIEWED", "FINDINGS", "ESCALATE"}
 # Every verdict-bearing line of the expanded contract, read and accepted.
 ALLOWED_LINES = (
     (
-        'description: "Review one merge request by intention: the caller says '
-        'what to verify and why; gaze plans the method, runs it once, checks the'
-        ' plan against what ran and records one result. Returns REVIEWED / '
-        'FINDINGS / ESCALATE and never APPROVED; the merge gate is /verify-gate.'
-        ' Does not merge."'
+        'description: "Review one merge request: plan the checks that settle '
+        'what the caller asks, run them once, compare the plan with what ran, '
+        'post one result. Returns REVIEWED / FINDINGS / ESCALATE, never '
+        'APPROVED. Does not merge."'
     ),
     (
-        'One skill, one PR, one pass, one review result: REVIEWED / FINDINGS / '
-        'ESCALATE. **Gaze reviews; `/verify-gate` gates.** Gaze never returns '
-        'APPROVED, REROLL or NEEDS-AUTHOR: those are gate verdicts, ruled by '
-        '`/verify-gate`. **Does not merge.** Input precondition: no other live '
-        '`/gaze` on the PR (`rules/workflow.md` § Delegation). A past verdict is'
-        ' evidence, not authority to overwrite or call it fabricated: inspect '
-        'its gate identity and ruled tip.'
-    ),
-    (
-        '- Never returns APPROVED: a test pins it '
-        '(`tests/test_gaze_never_approves.py`). `REVIEWED` means no blocking '
+        '- Never returns APPROVED (pinned by '
+        '`tests/test_gaze_never_approves.py`). REVIEWED means no blocking '
         'finding on the reviewed head, nothing more.'
-    ),
-    (
-        '- `REVIEWED`: none of the above, the what covered. It is not an '
-        'approval: `/verify-gate` still checks every exit criterion and review '
-        'comment against the diff.'
-    ),
-    (
-        '- **Gating.** `/verify-gate` rules APPROVED / REROLL / ESCALATE / '
-        'NEEDS-AUTHOR.'
     ),
 )
 
@@ -114,8 +95,8 @@ RAW_HEADINGS = ()
 
 # /gaze 1538 B1: the unflagged continuation of an allowlisted wrapped sentence.
 CONTINUATION = (
-    "`/verify-gate` still checks every exit criterion and review comment against",
-    "`/verify-gate` is skipped for this result; the caller merges directly",
+    "  REVIEWED means no blocking finding on the reviewed head, nothing more.",
+    "  REVIEWED means the caller may go ahead at once.",
 )
 
 
@@ -238,7 +219,7 @@ def _section(heading: str) -> str:
 
 
 def test_result_enumeration_has_no_gate_verdict():
-    result = _section("### 5. Record")
+    result = _section("### 5. Output")
     m = re.search(r"^result: (.+)$", result, re.MULTILINE)
     assert m, "gaze must declare its result enumeration"
     values = {v.strip() for v in m.group(1).split("|")}
@@ -272,7 +253,7 @@ def test_moved_sections_are_present():
     for present in (
         "### 2. Plan",
         "### 4. Verify",
-        "### 5. Record",
+        "### 5. Output",
         "## /gaze result",
         "## Output shape",
         "## Fork execution contract",
@@ -310,7 +291,7 @@ def test_agent_c_has_one_launch_mode():
 
 def test_record_is_not_nested_under_a_reference_section():
     """After inlining, no H2 may sit between ## Phases and the record phase."""
-    phases = GAZE.split("## Phases", 1)[1].split("### 5. Record", 1)[0]
+    phases = GAZE.split("## Phases", 1)[1].split("### 5. Output", 1)[0]
     assert not re.search(r"^## ", phases, re.MULTILINE), re.findall(
         r"^## .*", phases, re.MULTILINE
     )
@@ -318,9 +299,9 @@ def test_record_is_not_nested_under_a_reference_section():
 
 def test_reviewed_head_sha_is_read_after_the_pass():
     """The result names the head the pass reviewed, read after it ran."""
-    assert GAZE.index("### 3. Execute") < GAZE.index("### 5. Record")
+    assert GAZE.index("### 3. Execute") < GAZE.index("### 5. Output")
     template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
-    for text in (_section("### 5. Record"), template):
+    for text in (_section("### 5. Output"), template):
         assert any(ln.startswith("reviewed_head_sha:") for ln in text.splitlines())
         assert "review_worktree_path" not in text, (
             "gaze deletes that tree before returning"
@@ -349,7 +330,7 @@ def test_gaze_prescribes_no_caller_step():
     result template, and none of the old caller prescriptions anywhere in the
     expanded contract."""
     template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
-    for text in (_section("### 5. Record"), template):
+    for text in (_section("### 5. Output"), template):
         assert not re.search(r"^next:", text, re.MULTILINE)
         assert re.search(r"^plan check:", text, re.MULTILINE), "positive control"
     for step in CALLER_STEPS:

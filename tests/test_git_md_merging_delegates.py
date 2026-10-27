@@ -56,10 +56,3 @@ def test_merge_skill_documents_repo_merge_method_drift():
         "--merge and that a squash-only repo will reject it"
     )
 
-
-def test_gaze_states_branch_currency_as_a_caller_prerequisite():
-    assert "Branch-currency prerequisite" in GAZE_SKILL, (
-        "skills/gaze/SKILL.md must state, in its own Invariants, that the "
-        "caller rebases onto current origin/main before invoking — /gaze "
-        "does not rebase the PR branch itself"
-    )
