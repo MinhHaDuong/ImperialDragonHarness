@@ -426,6 +426,22 @@ HEAD origin/main`) passes because HEAD is main after the pull.
 
 Autonomous mode: ralph loop to next wave.
 
+## Sitrep cadence
+
+The raid log has a fixed path and format (`references/sitrep.md`); append
+`RAID_START`, `WAVE_BASE`, `WAVE`, `PR` (each step change), `BREAKER` and `QUEUE` lines with
+`python3 "$IDH_ROOT/scripts/raid_log.py" append EVENT key=value ...`. At raid
+start, after `RAID_START`, run `python3 "$IDH_ROOT/scripts/raid-sitrep.py"`
+once and arm the cadence: a background command
+`sleep 900; python3 "$IDH_ROOT/scripts/raid-sitrep.py"` whose exit wakes you.
+<!-- harness-extension-point --> (Claude Code; Codex and Pi have no timed wake: run the sitrep at each wave boundary and breaker event, and say so)
+On each wake, read the sitrep, re-arm, and act on its last line: `NEXT resume
+wave` means launch the next wave now rather than ending the turn; `NEXT
+wrap-up` means proceed to Wrap up; `UNREADABLE` (exit 2) means repair the log
+or the failing read first.
+
+<!-- inline: references/sitrep.md -->
+
 ## Wrap up
 
 1. `make check` on main — compare against baseline. New failures → ticket.
@@ -453,6 +469,8 @@ Autonomous mode: ralph loop to next wave.
    with the rows on stdin: per-step durations, the total from first gaze to MERGED, and the
    slowest step. A step with no clock reading is listed as `not measured`.
 4. Do NOT run `/lair`.
+5. Disarm the sitrep cadence (kill the pending background `sleep 900` command) after the last sitrep.
+
 
 ## Circuit breakers
 
