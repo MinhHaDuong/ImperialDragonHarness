@@ -3,9 +3,11 @@ Title: Align the harness instructions on bounded background waits
 Created: 2026-10-21
 Label: deferred
 Author: reviewer
+Closed: closed by the author 2026-10-27 (Q4): the bounded-wait rule already exists in rules/coding-bash.md § Waiting for a background job and skills/merge/SKILL.md § Waiting for a queued merge, hooks block foreground sleeps, and the audit this ticket rests on is ~800 commits stale. Reopen if a Codex or Pi session is observed stuck on a wait. The rules/git.md 'wait for CI' wording (no CI in this repo) is fixed inline when next touched (advisor: Fable).
 
 --- log ---
 2026-10-21T09:44Z reviewer created
+2026-10-27T19:31Z reviewer closed — closed by the author 2026-10-27 (Q4): the bounded-wait rule already exists in rules/coding-bash.md § Waiting for a background job and skills/merge/SKILL.md § Waiting for a queued merge, hooks block foreground sleeps, and the audit this ticket rests on is ~800 commits stale. Reopen if a Codex or Pi session is observed stuck on a wait. The rules/git.md 'wait for CI' wording (no CI in this repo) is fixed inline when next touched (advisor: Fable).
 
 --- body ---
 
