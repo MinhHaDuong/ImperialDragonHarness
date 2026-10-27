@@ -9,6 +9,7 @@ Author: reviewer
 2026-10-27T14:43Z reviewer note design note conception/2026-10-27-git-notes-review-design.md received (PR #1781, merged 19db6f32); linked in body, two divergences from D2/wave order flagged for Plan
 2026-10-27T15:45Z reviewer note tracker: children 1271-1276 filed by raid after advisor ruling
 2026-10-27T16:07Z reviewer note author ruling 2026-10-27: notes design matures before C3 — design ticket 1277 (transport trial + spec), 1273 blocked on it; C2 1272 proceeds
+2026-10-27T18:22Z reviewer note raid 2026-10-27: all code children merged (1271 #1794, 1272 #1799, 1273 #1808, 1274 #1813, 1275 #1806, 1276 #1816, 1280 #1814, 1281 #1817); full make check on main f6063162: 2702 passed, 1 xfailed (1282). Tracker stays open for 1277 (author's web legs) and 1282, then its integration review.
 
 --- body ---
 ## Context
