@@ -25,7 +25,7 @@ A consumer project's own resident text — ``AGENTS.md``/``CLAUDE.md`` with
 their ``@`` imports, and every unscoped or catch-all ``.claude/rules`` body —
 is paid on top, per project. ``--project DIR`` measures it (0971); it is not a
 harness channel, because the harness cannot gate a project, so the budget is
-surfaced by the SessionStart coherence prompt rather than tested here.
+surfaced by the SessionStart hook rather than tested here.
 
 Local skill cards absent from the Git index are supplemental ``skills-local``
 cost, included in every session total. The tracked ``skills`` budget stays a
