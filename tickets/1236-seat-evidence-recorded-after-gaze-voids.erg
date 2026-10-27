@@ -5,6 +5,7 @@ Author: Minh Ha-Duong
 
 --- log ---
 2026-10-27T08:23Z Minh Ha-Duong created
+2026-10-27T09:21Z Minh-Ha-Duong note PR #1710 (ticket 1238): no seat reports in the range, verify-gate used review_evidence legacy and approved in round 1; the trap fires on partial evidence (some seats recorded, others no-report or stale), not on none
 
 --- body ---
 ## Context
