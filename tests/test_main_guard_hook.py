@@ -423,3 +423,87 @@ def test_enforce_accepts_a_merge_with_its_before_merge_record(repos, before, acc
     assert (proc.returncode == 0) is accepted, proc.stderr
     rec = [r for r in journal(wt2) if r["phase"] == "prepared"][-1]
     assert rec["decision"] == ("gate-record" if accepted else "not-gated")
+
+
+# --- git's own pack-refs (ticket 1268) ---
+# `git pack-refs --all --prune`, which `git gc` runs, writes main into
+# packed-refs (a transaction `0 -> value`) and then removes the loose ref (a
+# transaction `value -> 0`). The second looks exactly like a deletion.
+
+
+def _packed_main(repo):
+    """Main sits in packed-refs and as a loose ref (what a clone plus `pack-refs --all` leaves)."""
+    git(repo, "pack-refs", "--all")
+    common = Path(git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
+    assert "refs/heads/main" in (common / "packed-refs").read_text()
+
+
+def _bad_rows(repo):
+    return [r for r in journal(repo) if r["action"] in ("warned", "refused")]
+
+
+@pytest.mark.parametrize("runner", ["work", "wt2"])
+def test_enforce_lets_pack_refs_prune_main_without_losing_it(repos, runner):
+    work = repos[runner]
+    git(repos["work"], "config", "idh.mainGuard", "enforce")
+    before = rev(work, "main")
+    proc = git(work, "pack-refs", "--all", "--prune", check=False)
+    assert proc.returncode == 0, proc.stderr
+    assert rev(work, "main") == before
+    assert _bad_rows(work) == []
+    assert any(r["decision"] == "pack-refs" for r in journal(work))
+
+
+def test_warn_mode_pack_refs_leaves_no_warning_row(repos):
+    work = repos["work"]
+    proc = git(work, "pack-refs", "--all", "--prune", check=False)
+    assert proc.returncode == 0 and "main-guard" not in proc.stderr
+    assert _bad_rows(work) == []
+
+
+def test_enforce_lets_pack_refs_write_a_main_not_yet_on_origin(repos):
+    work = repos["work"]
+    git(work, "config", "idh.mainGuard", "warn")
+    assert local_commit(work).returncode == 0  # main ahead of origin, ungated
+    git(work, "config", "idh.mainGuard", "enforce")
+    tip = rev(work, "main")
+    proc = git(work, "pack-refs", "--all", "--prune", check=False)
+    assert proc.returncode == 0, proc.stderr
+    assert rev(work, "main") == tip
+    common = Path(git(work, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip())
+    assert f"{tip} refs/heads/main" in (common / "packed-refs").read_text()
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["update-ref", "-d", "refs/heads/main", "OLD"],
+        ["update-ref", "-m", "pack-refs", "-d", "refs/heads/main", "OLD"],
+        ["-c", "core.x=pack-refs", "update-ref", "-d", "refs/heads/main", "OLD"],
+        ["update-ref", "-d", "refs/heads/main"],
+        ["branch", "-D", "main"],
+    ],
+    ids=["delete-with-old", "spoof-message", "spoof-config", "delete", "branch-D"],
+)
+def test_enforce_still_refuses_deleting_a_packed_main(repos, argv):
+    work, wt2 = repos["work"], repos["wt2"]
+    _packed_main(work)
+    git(work, "config", "idh.mainGuard", "enforce")
+    git(work, "switch", "-q", "--detach")
+    old = rev(wt2, "main")
+    proc = git(wt2, *[old if a == "OLD" else a for a in argv], check=False)
+    assert proc.returncode != 0
+    assert rev(wt2, "main") == old
+
+
+def test_enforce_still_refuses_creating_main_at_another_commit(repos):
+    work, wt2 = repos["work"], repos["wt2"]
+    git(work, "config", "idh.mainGuard", "warn")
+    git(work, "switch", "-q", "--detach")
+    git(wt2, "update-ref", "-d", "refs/heads/main")  # warn mode: goes through
+    git(work, "config", "idh.mainGuard", "enforce")
+    assert local_commit(wt2, "elsewhere").returncode == 0  # side, not main
+    other = rev(wt2, "side")
+    proc = git(wt2, "update-ref", "refs/heads/main", other, check=False)
+    assert proc.returncode != 0
+    assert git(wt2, "rev-parse", "-q", "--verify", "refs/heads/main", check=False).returncode != 0

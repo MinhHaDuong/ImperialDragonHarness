@@ -43,6 +43,19 @@ an update and is ignored. A `delete` of main with an expected old value inside
 cannot be refused; once committed it is journaled (`deleted-unrefusable`) and
 warned about.
 
+Git's own `pack-refs` (run by `git gc`, ticket 1268) is the one deletion-shaped
+update that passes. It writes main into `packed-refs` (`0 -> value`, a no-op
+create when `value` is the current main) and then prunes the loose ref
+(`value -> 0`). The hook journals both as `pack-refs`, `allowed`, in every mode,
+and starts no after-merge run for the pack write. The prune is recognised on
+state and argv together: `old` equals the current main and the
+`refs/heads/main` line of `packed-refs`, and the parent command is
+`git [options] pack-refs`, the subcommand found past `-c X` and `-C X`
+(`-m pack-refs` or `-c core.x=pack-refs` does not spoof it). State alone would
+also pass `git branch -D main` on a packed main; argv alone would pass a
+spoof. Git 2.43 gives the hook no flag that marks a prune. No `packed-refs`
+file (reftable) means nothing matches: the check fails closed.
+
 ### How this differs from the merge-gate spec
 
 The spec ([`conception/2026-10-05-merge-gate-spec.md`](2026-10-05-merge-gate-spec.md),

@@ -180,3 +180,11 @@ def test_the_update_succeeds_when_the_runner_fails_to_start(repo, failure):
     assert took < STUB_SLEEP / 2
     assert repo["git"](repo["work"], "rev-parse", "main").stdout.strip() == repo["side"]
     assert "Traceback" not in proc.stderr
+
+
+def test_git_pack_refs_starts_no_runner(repo):
+    # pack-refs writes main into packed-refs as a transaction `0 -> value`: a
+    # no-op create, not a move (ticket 1268).
+    proc, _ = timed(repo, "pack-refs", "--all", "--prune")
+    assert proc.returncode == 0, proc.stderr
+    assert starts(repo) == []
