@@ -53,7 +53,7 @@ reviewed_head_sha: <full SHA read from the review tree after the pass>
 intent: <the caller's text verbatim | default: the whole merge request against its ticket's exit criteria>
 review plan: <method; items as name (model, family); budget> — <why this plan settles the what>
 ran: <`seat_clock.py roster` lines, `; `-joined: each item's wall time or `no report (...)`>
-plan check: <the first line of `seat_clock.py plan-check`> — <each deviation's reason, and whether the what is still settled>
+{{plan_check}} — <each deviation's reason, and whether the what is still settled>
 
 Findings: [each with its item, severity or tag, location and evidence; or "none"]
 Unresolved simplify: [must-fix and consider findings of a simplify item; or "none" | "not planned"]
@@ -70,6 +70,10 @@ body's `reviewer:` lines from them (`attribution_record.py --seats-pr`, ticket
 it, is a capture failure. A requested model name is not an observed id.
 
 `seats:` is defined once, in SKILL.md § 4.
+
+`{{plan_check}}` is replaced by `gaze_close.py` with the first line of
+`seat_clock.py plan-check`, verbatim; the model writes only the reason after
+it (SKILL.md § 5).
 
 `plan check: FAIL` never goes with REVIEWED: a planned item without a report
 is an unresolved pass (SKILL.md § 4).

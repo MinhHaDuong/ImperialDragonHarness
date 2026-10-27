@@ -331,7 +331,7 @@ def test_gaze_prescribes_no_caller_step():
     template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
     for text in (_section("### 5. Output"), template):
         assert not re.search(r"^next:", text, re.MULTILINE)
-        assert re.search(r"^plan check:", text, re.MULTILINE), "positive control"
+        assert re.search(r"^\{\{plan_check\}\}", text, re.MULTILINE), "positive control"
     for step in CALLER_STEPS:
         assert step not in GAZE, step
     # Negative control: a planted prescription is caught.

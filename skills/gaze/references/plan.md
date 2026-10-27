@@ -61,8 +61,12 @@ seats.
 
 #### The plan file
 
-Write it as `<panel>/manifest.txt` before launching anything, and pass it
-through `python3 "$IDH_ROOT/scripts/panel-manifest-check.py"`. Header lines
+Write it with `python3 "$IDH_ROOT/scripts/seat_clock.py" plan-write <panel>
+--intent T --method T --budget <n>m --spend T --item NAME MODEL FAMILY REASON`
+(`--item` repeats, once per plan item) before launching anything. The helper
+builds `<panel>/manifest.txt` and runs `panel-manifest-check.py` on it; a plan
+the checker cannot parse exits 2 and writes nothing. Never write the file by
+hand: free text there makes every sentence a seat with no report. Header lines
 carry the intent, the method, the budget in minutes, which fits the
 15-minute deadline less the closing (at most 13), and the spend: the line
 `python3 "$IDH_ROOT/scripts/gaze_seat.py" consent` prints, which names the

@@ -27,9 +27,16 @@ that line alone did not report either, which fails it too; one that names no
 family or another family than planned, or an item over the budget, is a
 deviation. An item planned with family `none` (a script) needs only a
 non-empty report. Exit 1 on FAIL only.
+
+`plan-write <panel> --intent T --method T --budget <n>m [--spend T] --item NAME
+MODEL FAMILY REASON ...` writes `<panel>/manifest.txt` (ticket 1267): the header
+and TAB lines are built here and checked by `panel-manifest-check.py` before
+anything is written, so a manifest the plan check cannot parse is never
+produced. Exit 2 and no file on a refused plan.
 """
 
 import argparse
+import importlib.util
 import os
 import re
 import signal
@@ -38,6 +45,7 @@ import sys
 import time
 from pathlib import Path
 
+MAX_BUDGET_M = 13  # 15-minute deadline less the closing (skills/gaze/references/plan.md)
 DEFAULT_CAP_S = 600  # the panel's ten-minute collection deadline
 
 
@@ -155,6 +163,37 @@ def plan_check(panel: Path) -> tuple[bool, list[str]]:
     return not missing and complete, [head, *lines]
 
 
+def plan_write(panel: Path, intent: str, method: str, budget: str, spend: str | None,
+               items: list[list[str]]) -> list[str]:
+    """Write the manifest; return the problems (nothing is written when any)."""
+    spec = importlib.util.spec_from_file_location(
+        'panel_manifest_check', Path(__file__).with_name('panel-manifest-check.py'))
+    checker = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(checker)
+    flat = [cell for item in items for cell in item] + [intent, method, budget, spend or '']
+    early = []
+    if any(re.search('[\udc80-\udcff]', cell) for cell in flat + [str(panel)]):
+        return ['an argument is not valid UTF-8']
+    if not intent.strip():
+        early.append('empty --intent')
+    if not (m := re.fullmatch(r'(\d+)m', budget)) or not 1 <= int(m.group(1)) <= MAX_BUDGET_M:
+        early.append(f'--budget must be <n>m with n from 1 to {MAX_BUDGET_M}')
+    early += [f'family {item[2]!r} holds whitespace' for item in items if re.search(r'\s', item[2])]
+    if early:
+        return early
+    if any(c in cell for cell in flat for c in '\t\n\r'):
+        return ['a tab or newline inside a field']
+    header = [f'# intent: {intent}', f'# method: {method}', f'# budget: {budget}']
+    if spend:
+        header.append(f'# spend: {spend}')
+    text = '\n'.join(header + ['\t'.join(item) for item in items]) + '\n'
+    problems = checker.check(text)
+    if not problems:
+        panel.mkdir(parents=True, exist_ok=True)
+        (panel / 'manifest.txt').write_text(text, encoding='utf-8')
+    return problems
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest='mode', required=True)
@@ -166,7 +205,22 @@ def main(argv: list[str]) -> int:
     roster_p.add_argument('panel', type=Path)
     plan_p = sub.add_parser('plan-check', help='the plan against what ran')
     plan_p.add_argument('panel', type=Path)
+    write_p = sub.add_parser('plan-write', help='write a validated manifest')
+    write_p.add_argument('panel', type=Path)
+    write_p.add_argument('--intent', required=True)
+    write_p.add_argument('--method', required=True)
+    write_p.add_argument('--budget', required=True, help='<n>m')
+    write_p.add_argument('--spend')
+    write_p.add_argument('--item', nargs=4, action='append', default=[],
+                         metavar=('NAME', 'MODEL', 'FAMILY', 'REASON'))
     args = parser.parse_args(argv)
+    if args.mode == 'plan-write':
+        problems = plan_write(args.panel, args.intent, args.method, args.budget, args.spend, args.item)
+        for problem in problems:
+            print(f'seat_clock: plan refused: {problem}', file=sys.stderr)
+        if not problems:
+            print(f'plan written: {args.panel}/manifest.txt')
+        return 2 if problems else 0
     if args.mode == 'run':
         ok, outcome = run_seat(args.cap, args.out, args.command)
         line = f'{seat_name(args.out)}: {outcome}'
