@@ -81,7 +81,7 @@ re-gate.
 
 ## The recipe
 
-`"$IDH_ROOT/scripts/raid_land.py"` executes steps 0 to 8 for one request in one call (the raid's Phase 7); this recipe stays the contract it follows.
+`"$IDH_ROOT/scripts/raid_land.py"` executes steps 0 to 8 for one request in one call (the raid's Phase 7), step 8 included, and posts the duration comment; it does not start step 9, the after-merge runner, which the caller still starts. This recipe stays the contract it follows.
 
 `N` is the merge request, `<branch>` its head branch, `<base>` its base.
 

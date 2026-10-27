@@ -4,14 +4,18 @@
     raid_land.py <pr> --ruled-head <sha|-> [--base main] [--cleanup]
 
 Run it from the request's own worktree on its head branch. It executes
-`skills/merge/SKILL.md` § The recipe (steps 0-8); that file stays the contract.
+`skills/merge/SKILL.md` § The recipe, steps 0 to 8; step 9 (the after-merge
+runner) is NOT run here, the caller starts it. That file stays the contract.
 `--ruled-head` is the tip the review gate ruled on (`-` for a bookkeeping tier
-request, which has no verdict). Prints one `<pr> merge <start> <end>` row for
-`step_clock.py table`.
+request, which then must read as bookkeeping). `--ruled-claims` is the comma
+list of ticket ids the gate ruled on (`-` for none); the body must still claim
+exactly that set. Prints one `<pr> merge <start> <end>` row for
+`step_clock.py table` and posts the duration comment.
 
-Exit: 0 merged and synced; 1 refused (reason on stderr), nothing merged or a
-merge never re-run; 4 merged but local main not synced; 5 queued on an ungated
-base. Forge calls live in `GhForge`; git, merge-gate.py, erg and
+Exit: 0 merged and synced; 1 refused before any merge (reason on stderr);
+4 merged but local main not synced (sync script missing, failing or unknown
+output); 5 queued on an ungated base; 6 merge outcome unknown (an error after
+the merge call: read the request by hand, never re-run). Forge calls live in `GhForge`; git, merge-gate.py, erg and
 sync-local-main.sh are called directly.
 """
 
@@ -24,14 +28,20 @@ import sys
 import time
 from pathlib import Path
 
+from step_clock import fmt
+
 ROOT = Path(__file__).resolve().parents[1]
 GATE = ROOT / "scripts" / "merge-gate.py"
 SYNC = ROOT / "scripts" / "sync-local-main.sh"
-OK, REFUSED, UNSYNCED, QUEUED = 0, 1, 4, 5
+OK, REFUSED, UNSYNCED, QUEUED, UNKNOWN = 0, 1, 4, 5, 6
 
 
 class Refusal(Exception):
     """A reason to stop; the message goes to stderr."""
+
+
+class PostMerge(Refusal):
+    """A failure after the merge call: the outcome is unknown, never re-merge."""
 
 
 class GhForge:
@@ -147,7 +157,10 @@ def check_head(cwd: Path, branch: str, base: str, ruled: str) -> str:
     head = rev(cwd, "HEAD")
     if head != rev(cwd, f"origin/{branch}"):
         raise Refusal("local head differs from origin/" + branch + " (sync, never merge)")
-    if ruled != "-" and head != ruled and gate(
+    if ruled == "-":
+        if gate(cwd, "tier", "--base", f"origin/{base}", "--head", "HEAD") != 0:
+            raise Refusal("no ruled head given and the request is not bookkeeping tier")
+    elif head != ruled and gate(
             cwd, "tier", "--base", f"origin/{base}", "--head", "HEAD", "--since", ruled) != 0:
         raise Refusal(f"head {head[:12]} adds more than bookkeeping to the ruled tip {ruled[:12]}")
     return head
@@ -169,10 +182,31 @@ def record(cwd: Path, base: str) -> None:
         raise Refusal(f"gate check answered {rc}")
 
 
-def sync(primary: Path, base: str) -> list[str]:
-    done = subprocess.run([str(SYNC), str(primary), base], capture_output=True, text=True)
+SYNCED = re.compile(r"fast-forwarded at|updated by ref")
+
+
+def sync(primary: Path, base: str) -> tuple[bool, list[str]]:
+    """Step 8. (synced, lines): synced only on exit 0 and a known success line."""
+    try:
+        done = subprocess.run([str(SYNC), str(primary), base], capture_output=True, text=True, timeout=300)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return False, [f"sync-local-main: could not run ({exc})"]
     lines = (done.stdout + done.stderr).strip().splitlines()
-    return lines
+    ok = done.returncode == 0 and any(SYNCED.search(line) for line in lines)
+    if not ok and not lines:
+        lines = [f"sync-local-main: no output (exit {done.returncode}), not confirmed synced"]
+    return ok, lines
+
+
+def attribution(body: str) -> str:
+    """Step 0 warning text: `ok`, `missing`, `invalid: ...` or `unchecked`; never a refusal."""
+    try:
+        done = subprocess.run([sys.executable, str(ROOT / "scripts" / "attribution_record.py"), "--pr-body"],
+                              input=body, capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        return "unchecked"
+    out = done.stdout.strip()
+    return out if done.returncode == 0 and out else (out or "unchecked")
 
 
 def cleanup(cwd: Path, branch: str, head: str, base: str) -> str:
@@ -191,9 +225,15 @@ def cleanup(cwd: Path, branch: str, head: str, base: str) -> str:
     return f"cleaned {cwd} ({branch})"
 
 
+def same_claims(body: str, ruled: list[str]) -> None:
+    if sorted(close_claims(body)) != sorted(ruled):
+        raise Refusal(f"close claims in the body {close_claims(body)} differ from the ruled set {sorted(ruled)}")
+
+
 def land(forge, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
-         do_cleanup: bool = False, out=print) -> int:
+         do_cleanup: bool = False, out=print, ruled_claims: list[str] | None = None) -> int:
     cwd = Path(cwd or os.getcwd()).resolve()
+    ruled_claims = ruled_claims or []
     start = int(time.time())
     info = forge.resolve(pr)
     branch = info["headRefName"]
@@ -202,11 +242,16 @@ def land(forge, pr: str, ruled: str, base: str = "main", cwd: Path | None = None
     if git(cwd, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip() != branch:
         raise Refusal(f"cwd is not on branch {branch}")
     base = info.get("baseRefName") or base
+    body = info.get("body") or ""
+    out(f"attribution: {attribution(body)}")
+    same_claims(body, ruled_claims)
     head = check_head(cwd, branch, base, ruled)
-    if close_tickets(cwd, pr, close_claims(info.get("body") or "")):
+    if close_tickets(cwd, pr, close_claims(body)):
         head = check_head(cwd, branch, base, ruled)
     if info.get("isDraft"):
         forge.ready(pr)
+    again = forge.resolve(pr)  # step 3: a body edited after approval is a stop
+    same_claims(again.get("body") or "", ruled_claims)
     enabled = gate(cwd, "enabled", "--base", f"origin/{base}")
     if enabled not in (0, 1):
         raise Refusal("gate configuration unreadable (never remove the file to get through)")
@@ -217,41 +262,69 @@ def land(forge, pr: str, ruled: str, base: str = "main", cwd: Path | None = None
             forge.disarm(pr)
             if forge.auto_merge_armed(pr):
                 raise Refusal("auto-merge still armed")
-    forge.merge(pr, head, auto=not gated)
+    try:
+        forge.merge(pr, head, auto=not gated)
+        return after_merge(forge, pr, cwd, branch, base, head, gated, start, do_cleanup, out)
+    except PostMerge:
+        raise
+    except Exception as exc:
+        raise PostMerge(f"{type(exc).__name__}: {exc}") from exc
+
+
+def after_merge(forge, pr, cwd, branch, base, head, gated, start, do_cleanup, out) -> int:
     back = forge.read_back(pr)
     if back is None:
-        raise Refusal("read-back unreadable; merge not re-run, read the request by hand")
+        raise PostMerge("read-back unreadable")
     state, oid, queued = back.split()
-    if state == "MERGED" and oid == head:
-        pass
-    elif state == "OPEN" and queued == "queued" and not gated:
+    if state == "OPEN" and queued == "queued" and not gated:
         out(f"{pr} queued (pending checks)")
         return QUEUED
-    else:
-        raise Refusal(f"read-back {back!r}, expected MERGED {head}")
-    out(f"{pr} merge {start} {int(time.time())}")
+    if not (state == "MERGED" and oid == head):
+        raise PostMerge(f"read-back {back!r}, expected MERGED {head}")
+    end = int(time.time())
+    out(f"{pr} merge {start} {end}")
+    try:
+        forge.comment(pr, f"merge {head}: duration: {fmt(end - start)}")
+    except Exception as exc:  # the merge landed; a lost comment is reported
+        out(f"duration comment failed: {exc}")
     common = git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()
-    lines = sync(Path(common).parent, base)
+    synced, lines = sync(Path(common).parent, base)
     for line in lines:
         out(line)
-    code = UNSYNCED if re.search(r"left untouched|diverged|skipped", "\n".join(lines)) else OK
-    if do_cleanup and code == OK:
+    if not synced:
+        return UNSYNCED
+    if do_cleanup:
         out(cleanup(cwd, branch, head, base))
-    return code
+    return OK
+
+
+def main_land(forge, pr, ruled, ruled_claims, base, cwd, out=print, do_cleanup=False) -> int:
+    """land() with refusals mapped to exit codes; usable by tests with a stub forge."""
+    try:
+        return land(forge, pr, ruled, base, cwd, do_cleanup, out, ruled_claims)
+    except PostMerge as exc:
+        out(f"raid_land: {pr} merge outcome unknown: {exc}; the merge was called, read the request by hand, never re-run")
+        try:
+            out(f"read-back now: {forge.read_back(pr)}")
+        except Exception as exc2:
+            out(f"read-back now: unreadable ({exc2})")
+        return UNKNOWN
+    except Refusal as exc:
+        print(f"raid_land: {pr} refused: {exc}", file=sys.stderr)
+        return REFUSED
 
 
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("pr")
     p.add_argument("--ruled-head", required=True, help="tip the gate ruled on, or - (bookkeeping)")
+    p.add_argument("--ruled-claims", required=True,
+                   help="comma list of ticket ids the gate ruled on, or - for none")
     p.add_argument("--base", default="main")
     p.add_argument("--cleanup", action="store_true", help="remove the merged worktree and branch")
     a = p.parse_args(argv)
-    try:
-        return land(GhForge(), a.pr, a.ruled_head, a.base, do_cleanup=a.cleanup)
-    except Refusal as exc:
-        print(f"raid_land: {a.pr} refused: {exc}", file=sys.stderr)
-        return REFUSED
+    claims = [] if a.ruled_claims == "-" else [c for c in a.ruled_claims.split(",") if c]
+    return main_land(GhForge(), a.pr, a.ruled_head, claims, a.base, None, print, a.cleanup)
 
 
 if __name__ == "__main__":

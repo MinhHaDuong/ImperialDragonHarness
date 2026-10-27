@@ -15,6 +15,7 @@ spec = importlib.util.spec_from_file_location("raid_land", SCRIPTS / "raid_land.
 assert spec and spec.loader
 rl = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(rl)
+REAL_SYNC = rl.sync
 
 
 def sh(cwd, *args):
@@ -61,7 +62,7 @@ def repo(tmp_path, monkeypatch):
     sh(work, "add", "b.txt")
     sh(work, "commit", "-qm", "feat")
     sh(work, "push", "-q", "origin", "feat")
-    monkeypatch.setattr(rl, "sync", lambda primary, base: ["sync-local-main: main fast-forwarded"])
+    monkeypatch.setattr(rl, "sync", lambda primary, base: (True, ["sync-local-main: main fast-forwarded"]))
     return work
 
 
@@ -71,6 +72,7 @@ def head(repo):
 
 def land(repo, forge, ruled, **kw):
     out = []
+    kw.setdefault("ruled_claims", [])
     code = rl.land(forge, "7", ruled, "main", repo, out=out.append, **kw)
     return code, out
 
@@ -123,7 +125,7 @@ def test_bad_read_back_refuses_and_merges_once(repo, back):
     if back is None:
         forge.readback = None
     with pytest.raises(rl.Refusal):
-        land(repo, forge, "-")
+        land(repo, forge, head(repo))
     assert len(merged_calls(forge)) == 1
 
 
@@ -138,9 +140,9 @@ def test_happy_path_prints_one_row_and_syncs(repo):
 
 
 def test_unsynced_main_exits_4_without_remerge(repo, monkeypatch):
-    monkeypatch.setattr(rl, "sync", lambda p, b: ["sync-local-main: local main diverged — left untouched"])
+    monkeypatch.setattr(rl, "sync", lambda p, b: (False, ["sync-local-main: local main diverged — left untouched"]))
     forge = StubForge(head(repo))
-    code, out = land(repo, forge, "-")
+    code, out = land(repo, forge, head(repo))
     assert code == rl.UNSYNCED and len(merged_calls(forge)) == 1
 
 
@@ -149,3 +151,88 @@ def test_close_claims_ignore_fences_and_refs():
     assert rl.close_claims(body) == ["0123"]
     with pytest.raises(rl.Refusal):
         rl.close_claims("Ticket: 0123\n")
+
+
+def test_body_claims_differing_from_ruled_set_refuse(repo):
+    forge = StubForge(head(repo), body="**Ticket:** tickets/0123-x.erg\n")
+    with pytest.raises(rl.Refusal, match="close claims"):
+        land(repo, forge, head(repo), ruled_claims=["0999"])
+    assert merged_calls(forge) == []
+
+
+def test_body_edited_between_reads_refuses(repo):
+    forge = StubForge(head(repo))
+    reads = [""]
+    orig = forge.resolve
+
+    def resolve(pr):
+        info = orig(pr)
+        info["body"] = "".join(reads)
+        reads[:] = ["**Ticket:** tickets/0123-x.erg\n"]
+        return info
+
+    forge.resolve = resolve
+    with pytest.raises(rl.Refusal, match="close claims"):
+        land(repo, forge, head(repo))
+    assert merged_calls(forge) == []
+
+
+def test_dash_ruled_head_still_requires_bookkeeping_tier(repo, monkeypatch):
+    forge = StubForge(head(repo))
+    monkeypatch.setattr(rl, "gate", lambda cwd, *a: 1 if a[0] == "tier" else 0)
+    with pytest.raises(rl.Refusal, match="not bookkeeping"):
+        land(repo, forge, "-")
+    assert merged_calls(forge) == []
+
+
+def test_attribution_warning_surfaced_never_refuses(repo, monkeypatch):
+    monkeypatch.setattr(rl, "attribution", lambda body: "missing")
+    forge = StubForge(head(repo))
+    code, out = land(repo, forge, head(repo))
+    assert code == 0 and any("attribution: missing" in line for line in out)
+
+
+def test_duration_comment_posted_after_merge(repo):
+    forge = StubForge(head(repo))
+    forge.comment = lambda pr, body: forge.calls.append(("comment", body))
+    land(repo, forge, head(repo))
+    comments = [c for c in forge.calls if c[0] == "comment"]
+    assert len(comments) == 1 and f"merge {head(repo)}: duration: " in comments[0][1]
+
+
+def test_exception_after_merge_is_outcome_unknown_code_6(repo):
+    forge = StubForge(head(repo))
+    forge.read_back = lambda pr: (_ for _ in ()).throw(OSError("boom"))
+    out = []
+    code = rl.main_land(forge, "7", head(repo), [], "main", repo, out.append)
+    assert code == rl.UNKNOWN and len(merged_calls(forge)) == 1
+    assert any("outcome unknown" in line for line in out)
+
+
+def test_bad_read_back_is_code_6_not_1(repo):
+    forge = StubForge(head(repo), readback="CLOSED x -")
+    out = []
+    assert rl.main_land(forge, "7", head(repo), [], "main", repo, out.append) == rl.UNKNOWN
+
+
+def test_missing_sync_script_after_merge_is_code_4(repo, monkeypatch):
+    monkeypatch.setattr(rl, "sync", REAL_SYNC)
+    monkeypatch.setattr(rl, "SYNC", Path("/nonexistent/sync.sh"))
+    forge = StubForge(head(repo))
+    code, out = land(repo, forge, head(repo))
+    assert code == rl.UNSYNCED
+
+
+@pytest.mark.parametrize("stdout,rc,want", [
+    ("sync-local-main: main fast-forwarded at /x (a -> b)\n", 0, True),
+    ("sync-local-main: main updated by ref a -> b\n", 0, True),
+    ("", 0, False),
+    ("something odd\n", 0, False),
+    ("sync-local-main: main fast-forwarded at /x (a -> b)\n", 2, False),
+])
+def test_sync_result_needs_known_success_line(tmp_path, monkeypatch, stdout, rc, want):
+    script = tmp_path / "s.sh"
+    script.write_text(f"#!/bin/sh\nprintf '%s' '{stdout}'\nexit {rc}\n".replace("\\n", "\n"))
+    script.chmod(0o755)
+    monkeypatch.setattr(rl, "SYNC", script)
+    assert REAL_SYNC(tmp_path, "main")[0] is want
