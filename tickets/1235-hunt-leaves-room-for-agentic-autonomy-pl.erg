@@ -1,0 +1,36 @@
+%erg 0.1
+Title: Hunt leaves room for agentic autonomy: plan chooses, no forge or code assumed
+Created: 2026-10-27
+Author: claude
+
+--- log ---
+2026-10-27T07:40Z claude created
+
+--- body ---
+## Context
+The author asked (2026-10-27) to reword `skills/hunt/SKILL.md`. Its eleven
+numbered steps read as a fixed procedure, while the plan should choose what
+runs: steps 6-8 assume the ticket is code (TDD), steps 10-11 assume a forge
+(push, merge request, CI, `/gaze <pr>`), and Triage sits as a step instead of
+being the planning phase. Local-only projects (e.g. arena: no remote, lands by
+`git merge --no-ff`) and prose tickets fall outside the script.
+
+## Exit criteria
+- [ ] Hunt is phrased as phases `[Plan]` `[Execute]` `[Verify]` `[Celebrate]`, not an eleven-step script
+- [ ] Triage is promoted into Plan; the plan is announced with a brief justification before Execute
+- [ ] Execute follows the plan; TDD applies to code only; prose takes no TDD and no word-pin tests
+- [ ] Verify lands by the project's route: forge (push, merge request, CI, gaze) or local (the project's merge recipe), never assumed
+- [ ] Plan names the split route: a complex or multipart ticket becomes a tracker with child tickets, executed by launching a raid
+- [ ] `§ Worktree` anchors cited by `rules/claude-code.md` and `skills/raid/SKILL.md` still resolve
+- [ ] Coder profile charter and the claude-code.md `/hunt N` phase label agree with the new wording
+- [ ] `make check-fast` passes
+
+## Relevant files
+- `skills/hunt/SKILL.md`
+- `profiles/coder/PROFILE.md`
+- `rules/claude-code.md`
+
+## Test
+Wording change: no new tests (no word-pin tests). Existing guards that read
+hunt (`tests/test_launch_model_choice.py`, `tests/test_agent_profiles.py`,
+`tests/test_raid_invokes_hunt.py`) must stay green.
