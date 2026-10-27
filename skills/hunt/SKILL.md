@@ -116,8 +116,9 @@ Work in the ticket's **own** worktree, on its own branch.
 For code, test first: write the tests the ticket's **Test** section asks for,
 tagged like the project's existing tests (speed tier, Python:
 `rules/coding-python.md` § Testing; module, in a modular project); run them by
-name and see each fail for the expected reason; implement until they pass,
-rerunning them by name as the loop gate. For any other deliverable, do the work
+name and see each fail for the targeted reason (an AssertionError on the
+behaviour, not an import, argument or fixture error), shown in the run output;
+implement until they pass, rerunning them by name as the loop gate. For any other deliverable, do the work
 and produce the evidence the plan named.
 
 When the work shows the plan was wrong, replan and announce why.
@@ -157,7 +158,9 @@ When the work shows the plan was wrong, replan and announce why.
   whatever its severity, rerun what the fixes affect, then the fast tier, push
   where there is a forge, and review again with a new, narrower intent: verify
   those fixes, because they were the findings. Escalate when the review does,
-  or when a pass over the fixes still finds blocking items on them. A clean
+  or when a pass over the fixes still finds blocking items on them, except
+  the one further round `skills/raid/references/fix-and-regate.md` allows for
+  findings that carry a reproduction. A clean
   review leaves the branch ready to merge.
 
 ## Celebrate

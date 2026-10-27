@@ -2,9 +2,11 @@
 Title: Fix rounds: a second automatic round for verifiable fix-on-fix findings; red test shown failing for the targeted reason
 Created: 2026-10-27
 Author: reviewer
+Closed: second fix round rule + red-for-targeted-reason; PR
 
 --- log ---
 2026-10-27T12:58Z reviewer created
+2026-10-27T13:04Z reviewer closed — second fix round rule + red-for-targeted-reason; PR
 
 --- body ---
 ## Context
