@@ -231,75 +231,19 @@ def test_monitor_coalesces_one_run_in_flight_and_one_pending_latest_wins(repo):
     assert not (state / "pending").exists()
 
 
-FLAKY_SUITE = (
-    'if [ -e "$0.ran" ]; then exit 0; fi; touch "$0.ran"; '
-    'echo "FAILED tests/test_x.py::test_flake - boom"; exit 1'
-)
-
-
-@pytest.mark.parametrize("reproduces", [False, True])
-def test_a_red_suite_reruns_only_its_failing_tests_once(tmp_path, reproduces):
+@pytest.mark.parametrize("exit_code", [1, 2])  # pytest's own failure, and the same behind make
+def test_a_red_suite_stays_red_even_when_its_failing_test_passes_alone(tmp_path, exit_code):
+    """No re-run turns a red check green: a flaky test closes the fast path until fixed."""
     marker = tmp_path / "suite"
-    rerun_body = "exit 1" if reproduces else 'echo "$@" > "$0.rerun"; exit 0'
-    conf = config(rerun={"suite": ["sh", "-c", rerun_body, str(marker)]})
-    conf["checks"][1]["argv"] = ["sh", "-c", FLAKY_SUITE, str(marker)]
+    conf = config(rerun={"suite": ["sh", "-c", 'echo "$@" >> "$0.rerun"; exit 0', str(marker)]})
+    conf["checks"][1]["argv"] = ["sh", "-c", f'echo "FAILED tests/test_x.py::test_flake - boom"; exit {exit_code}']
     work = make_repo(tmp_path, conf)
     result = verify(work)
     note = verdict_note(work)
-    assert "failed-first-run: tests/test_x.py::test_flake" in note
-    if reproduces:
-        assert result.returncode == 1 and "result: fail" in note
-        assert fastpath(work).returncode == 1
-    else:
-        assert result.returncode == 0, result.stdout + result.stderr
-        assert "result: pass" in note
-        assert "flaky: 1 tests/test_x.py::test_flake" in note
-        assert Path(f"{marker}.rerun").read_text().split() == ["tests/test_x.py::test_flake"]
-        assert fastpath(work).returncode == 0
-
-
-def test_a_suite_that_stopped_early_is_red_even_if_its_listed_failures_pass_alone(tmp_path):
-    """Gaze round 11: pytest exits 2 (interrupted) or 3 (internal error) after listing a
-    failure; the tests after the stop never ran, so re-running the listed id proves nothing."""
-    marker = tmp_path / "suite"
-    conf = config(rerun={"suite": ["sh", "-c", 'echo "$@" > "$0.rerun"; exit 0', str(marker)]})
-    conf["checks"][1]["argv"] = ["sh", "-c", 'echo "FAILED tests/test_x.py::test_a - boom"; exit 2']
-    work = make_repo(tmp_path, conf)
-    result = verify(work)
     assert result.returncode == 1, result.stdout + result.stderr
-    assert "result: fail" in verdict_note(work)
-    assert not Path(f"{marker}.rerun").exists()
+    assert "result: fail" in note and "failed-tests: tests/test_x.py::test_flake" in note
+    assert "flaky" not in note
     assert fastpath(work).returncode == 1
-
-
-MAKE_SUITE = (
-    'echo "FAILED tests/test_x.py::test_flake - boom"; {extra}'
-    'echo "======== 1 failed, 3 passed in 1.00s ========"; exit 1'
-)
-
-
-@pytest.mark.parametrize("extra, recovers", [
-    ("", True),  # an ordinary failure behind make (exit 2): the flaky re-run still works
-    ('echo "!!!!!!!! Interrupted: 1 error during collection !!!!!!!!"; ', False),
-    ('echo "INTERNALERROR> boom"; ', False),
-])
-def test_the_flaky_rerun_reads_pytest_behind_make(tmp_path, extra, recovers):
-    """Gaze round 12: pytest-guard is `make check-tests`, and make exits 2 for any failing
-    recipe, so the exit code alone cannot tell an ordinary failure from a stopped run."""
-    marker = tmp_path / "suite"
-    makefile = tmp_path / "Makefile"
-    makefile.write_text("check:\n\t@sh -c '" + MAKE_SUITE.format(extra=extra).replace("'", "'\\''") + "'\n")
-    conf = config(rerun={"suite": ["sh", "-c", 'echo "$@" > "$0.rerun"; exit 0', str(marker)]})
-    conf["checks"][1]["argv"] = ["make", "-s", "-f", str(makefile), "check"]
-    work = make_repo(tmp_path, conf)
-    result = verify(work)
-    note = verdict_note(work)
-    if recovers:
-        assert result.returncode == 0, result.stdout + result.stderr
-        assert "result: pass" in note and "flaky: 1 tests/test_x.py::test_flake" in note
-    else:
-        assert result.returncode == 1 and "result: fail" in note
-        assert not Path(f"{marker}.rerun").exists()
 
 
 def test_a_verdict_stamped_in_the_future_keeps_the_fast_path_closed(repo):

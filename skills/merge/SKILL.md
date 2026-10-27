@@ -48,9 +48,8 @@ record then runs the tier's set, as before. The merge-time `check` (step 4,
 fetching) judges the path again on the base: a fast-path record written while
 it was open fails once it has closed, and the recipe records again. Verdicts come from the monitor the recipe's last step starts: it runs
 every declared check on the new main tip, one run at a time with one tip
-pending (latest wins), re-runs once only the tests that failed (passing there
-records them as flaky, never red), and on a red verdict names the likely
-culprit merge. A tier or full record counts as its own merge's verdict; no
+pending (latest wins), never re-runs a red check to turn it green, and on a
+red verdict names the likely culprit merge. A tier or full record counts as its own merge's verdict; no
 verdict counts as unverified. A full-tier record always runs the whole set on
 its candidate, so a code merge cannot bury a bad bookkeeping one. Report a red
 verdict to the author; its fix lands by a merge request paying the full record.

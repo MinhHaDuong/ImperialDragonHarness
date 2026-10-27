@@ -14,14 +14,13 @@ so one run is in flight and one tip pending, never one run per merge. Each run
 covers every merge since the last verified tip. `verify --tip <ref>` runs one
 tip in the foreground.
 
-A red check whose output names failing tests (pytest's `FAILED <id>` and
-`ERROR <id>` summary lines) re-runs only those tests once with the check's
-declared `"rerun"` argv; the ones that pass are recorded as `flaky:` and do
-not make the verdict red. A failure that reproduces, or one that names no
-test, is red, and the monitor then re-runs only the failing tests (or the
-failing check) on each merge since the last green tip to name the likely
-culprit. The failing ids of the first run are kept in the verdict
-(`failed-first-run:`) and appended to `failed-ids.log` in the state directory.
+A red check is red: nothing re-runs it to turn it green, so a flaky test
+closes the fast path until it is fixed. On a red verdict the monitor re-runs
+only the failing tests (pytest's `FAILED <id>` and `ERROR <id>` summary
+lines, with the check's declared `"rerun"` argv), or the failing check, on
+each merge since the last green tip, to name the likely culprit. The failing
+ids are kept in the verdict (`failed-tests:`) and appended to
+`failed-ids.log` in the state directory.
 
 Fail closed: a run that times out, crashes or cannot push writes no verdict,
 and no verdict is unverified (merge-gate.py closes the fast path after K merges
@@ -91,27 +90,6 @@ def execute(argv, cwd, deadline):
     return proc.returncode, out, time.monotonic() - start
 
 
-MAKE_RECIPE_FAILED = 2  # make's exit when a recipe fails, whatever the recipe's own code
-SUMMARY = re.compile(r"^=+ (.+?) in [\d.]+s(?: \(.*\))? =+$", re.MULTILINE)
-
-
-def ordinary_failures(code, out):
-    """The first run completed and only tests failed, so its failing ids may be re-run.
-
-    pytest says so with exit 1. Behind make (pytest-guard is `make check-tests`) every
-    failing recipe is exit 2, so there the run's own summary decides: failures only, no
-    error, no interruption, no internal error. A run that stopped early never ran the
-    rest of the suite, and its listed ids passing alone prove nothing (gaze rounds 11-12).
-    """
-    if code == TESTS_FAILED:
-        return True
-    if code != MAKE_RECIPE_FAILED or "INTERNALERROR" in out or re.search(r"^!+ .*Interrupted", out, re.MULTILINE):
-        return False
-    found = SUMMARY.findall(out)
-    kinds = {part.split()[-1] for part in found[-1].split(",") if part.split()} if found else set()
-    return "failed" in kinds and not kinds & {"error", "errors"}
-
-
 def failed_ids(out):
     """Failing test ids named in pytest's summary, in order, once each; an id with a control character is dropped."""
     return [i for i in dict.fromkeys(FAILED.findall(out)) if mg.single_line(i)]
@@ -178,23 +156,13 @@ def verify_tip(tip, remote, directory):
                 verdict = "pass" if code == 0 else f"fail(exit {code})"
                 results.append(f"{item['name']} {verdict} {secs:.1f}s :: {' '.join(item['argv'])}")
                 if code:
-                    failed.append((item, ordinary_failures(code, out), failed_ids(out)))
-            first_ids = [i for _item, _ordinary, ids in failed for i in ids]
-            if first_ids:
+                    failed.append((item, failed_ids(out)))
+            failed_tests = [i for _item, ids in failed for i in ids]
+            if failed_tests:
                 with open(directory / "failed-ids.log", "a") as log:
-                    log.write(f"{started} {tip} {' '.join(first_ids)}\n")
-                LOG.info("first run failing ids: %s", " ".join(first_ids))
-            flaky, hard = [], []
-            for item, ordinary, ids in failed:
-                rerun = fast.get("rerun", {}).get(item["name"])
-                if ids and rerun and ordinary:  # a run that stopped early is a hard failure
-                    code, out, _secs = execute([*rerun, *ids], tree, deadline)
-                    still = [] if code == 0 else [i for i in ids if i in set(failed_ids(out))] or ids
-                    flaky += [i for i in ids if i not in still]
-                    if still:
-                        hard.append((item["name"], still))
-                else:
-                    hard.append((item["name"], ids))
+                    log.write(f"{started} {tip} {' '.join(failed_tests)}\n")
+                LOG.info("failing ids: %s", " ".join(failed_tests))
+            hard = [(item["name"], ids) for item, ids in failed]
             blamed = None
             if hard:
                 try:
@@ -213,8 +181,7 @@ def verify_tip(tip, remote, directory):
         "host": socket.gethostname(),
         "revision": f"tip={tip}",
         "scope": mg.scope_line(config),
-        "failed-first-run": ids_line(first_ids) if first_ids else "",
-        "flaky": f"{len(flaky)} {ids_line(flaky)}" if flaky else "",
+        "failed-tests": ids_line(failed_tests) if failed_tests else "",
         "checks": results,
     }
     if blamed and blamed[0] is None:
@@ -227,8 +194,6 @@ def verify_tip(tip, remote, directory):
     mg.append_and_push(tip, mg.format_verdict(fields), remote, mg.VERDICT_REF)
     LOG.info("verdict %s on %s in %.1fs%s", fields["result"], tip[:12], time.monotonic() - clock,
              f"; culprit {fields['culprit']}" if "culprit" in fields else "")
-    if flaky:
-        LOG.info("flaky: %s", fields["flaky"])
     return RED if hard else GREEN
 
 
