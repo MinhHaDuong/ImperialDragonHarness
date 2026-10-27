@@ -34,10 +34,13 @@ def _measured(comments):
     return total if found else None
 
 
+def _parse(t):
+    return datetime.fromisoformat(t.replace('Z', '+00:00'))
+
+
 def _span(created, merged):
     try:
-        f = lambda t: datetime.fromisoformat(t.replace('Z', '+00:00'))
-        return (f(merged) - f(created)).total_seconds()
+        return (_parse(merged) - _parse(created)).total_seconds()
     except (AttributeError, TypeError, ValueError):
         return None
 

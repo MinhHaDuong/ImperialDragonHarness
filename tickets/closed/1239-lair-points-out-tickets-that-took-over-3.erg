@@ -8,6 +8,7 @@ Closed: autoclosed — PR #1733
 2026-10-27T08:58Z Minh Ha-Duong created
 2026-10-27T09:13Z reviewer note blocker 1238 closed — Blocked-by removed.
 2026-10-27T10:34Z reviewer closed — autoclosed — PR #1733
+2026-10-27T10:38Z reviewer note verify-reroll — round 1: pytest-guard fails on tests/test_ruff.py::test_ruff (E731 lambda at scripts/slow_tickets.py:39)
 
 --- body ---
 ## Context
