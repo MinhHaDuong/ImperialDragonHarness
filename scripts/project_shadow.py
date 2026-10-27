@@ -132,12 +132,18 @@ def scan(project: Path) -> list[dict]:
 def route(rec: dict, auto: bool) -> str | None:
     """One plan line for a record, or None: a reasoned (ok) finding is left
     alone. `auto` (unattended sweep) never files into the harness checkout."""
+    if not isinstance(rec, dict):
+        raise ValueError("record is not a JSON object")
     if rec.get("status") == "skip":
         return f"skip: {rec.get('reason', '')}"
-    if str(rec.get("verdict", "")).startswith("ok"):  # also "ok (reasoned)"
+    if rec.get("verdict") in ("ok", "ok (reasoned)"):
         return None
     local, kind = rec.get("local_file"), rec.get("kind")
+    if not local:
+        raise ValueError("record without local_file")
     disp = rec.get("disposition")
+    if rec.get("destination") == "harness":
+        disp = "harness-ticket"  # the fix belongs to the harness, not the project
     if disp == "delete-local":
         return f"fix-now: delete redundant local copy {local} ({kind})"
     if disp == "annotate":
@@ -146,8 +152,8 @@ def route(rec: dict, auto: bool) -> str | None:
         what = f"general fix for {local} vs {rec.get('harness_file')} ({kind})"
         if auto:
             return f"report: harness-bound, not filed unattended: {what}"
-        return (f"open-ticket: in the harness repo, on a harness branch, "
-                f"never its main checkout: {what}")
+        return (f"open-ticket: in the harness repo ($IDH_ROOT), on a harness "
+                f"branch, never its main checkout: {what}")
     return f"skip: no disposition for {local} ({kind}); judge by hand"
 
 

@@ -69,3 +69,13 @@ def test_malformed_line_fails_and_empty_is_empty():
 
 def test_display_string_ok_reasoned_is_also_left_alone():
     assert plan([rec("a", "ok (reasoned)", "delete-local")]).stdout == ""
+
+
+def test_bad_shapes_fail_and_destination_harness_wins():
+    assert plan([], raw="[1]\n").returncode == 1
+    assert plan([], raw='{"verdict": "warn", "disposition": "annotate"}\n'
+                ).returncode == 1
+    out = plan([rec("a", "warn", "delete-local", "harness")]).stdout
+    assert out.startswith("open-ticket")
+    assert plan([rec("a", "warn", "x", "project")]).stdout.startswith("skip")
+    assert plan([rec("a", "okay", "delete-local")]).stdout.startswith("fix-now")

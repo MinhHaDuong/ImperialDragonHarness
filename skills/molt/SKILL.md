@@ -146,7 +146,10 @@ Run full repo housekeeping and act on every finding.
    Yawn check 14 findings (project directives shadowing the harness's) arrive
    as its JSON records; molt routes them and does not re-read local rules:
    `python3 "$IDH_ROOT/scripts/project_shadow.py" --plan < findings.jsonl`
-   prints one plan line each, adding `--auto` when `CLAUDE_NIGHT_SWEEP` is set.
+   (`findings.jsonl` is the check 14 JSON lines, script output plus the judged
+   findings) prints one plan line each; `fix-now:`, `open-ticket:` and
+   `skip:` lines join the plan headings of the same name, and `report:` goes
+   to the run summary only. Add `--auto` when `CLAUDE_NIGHT_SWEEP` is set.
    An `ok (reasoned)` finding yields no line: leave it alone.
 
 2.5. **Audit open-ticket exit criteria.** For each open ticket, apply
