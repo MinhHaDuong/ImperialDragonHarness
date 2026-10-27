@@ -249,6 +249,9 @@ def matches(path, patterns):
 
 
 REGULAR_MODES = frozenset({"100644", "100755"})
+# Seat reports recorded after a review attest it; they cannot void it. File
+# shape only (never a verdict): a pure addition of a non-executable .md.
+SEAT_REPORT = ("tickets/reviews/*/*.md",)
 
 
 def changed_entries(old, new):
@@ -268,6 +271,11 @@ def changed_entries(old, new):
     return entries
 
 
+def is_seat_report(path, mode, status):
+    """A seat report added as a plain file; a modified, deleted or executable one is not."""
+    return status == "A" and mode == "100644" and matches(path, SEAT_REPORT)
+
+
 def tier_of(entries):
     """Bookkeeping when every entry is a regular file (or a deletion) on a bookkeeping path.
 
@@ -275,7 +283,8 @@ def tier_of(entries):
     points at is not what the path list vouches for. An empty list is never
     bookkeeping: nothing read is not a reading of nothing.
     """
-    ok = all(is_bookkeeping(p) and (status == "D" or mode in REGULAR_MODES) for p, mode, status in entries)
+    ok = all(is_bookkeeping(p) and (status == "D" or mode in REGULAR_MODES) or is_seat_report(p, mode, status)
+             for p, mode, status in entries)
     return BOOKKEEPING_TIER if entries and ok else "full"
 
 

@@ -332,7 +332,12 @@ def cmd_record(args: argparse.Namespace) -> int:
         "criteria-hash": current.criteria_hash, "policy-version": current.policy_version,
         "recorded": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
-    body = sys.stdin.read()
+    if args.body_file:
+        body = args.body_file.read_text(encoding="utf-8")
+    else:
+        body = "" if sys.stdin.isatty() else sys.stdin.read()
+    root = str(Path(git(args.repo, "rev-parse", "--show-toplevel")).resolve())
+    body = body.replace(root + "/", "").replace(root, ".")
     path = folder / f"{args.seat}-{n}.md"
     path.write_text("---\n" + "".join(f"{k}: {v}\n" for k, v in header.items())
                     + "---\n\n" + body)
@@ -435,6 +440,7 @@ def main() -> int:
     rec.add_argument("--kind", choices=KINDS, default="review")
     rec.add_argument("--verdict", choices=VERDICTS, required=True)
     rec.add_argument("--family", default="unknown", type=family_name)
+    rec.add_argument("--body-file", type=Path, help="read the report body here; stdin is read only when it is not a terminal")
     rec.add_argument("--worker", default="unknown", type=header_value)
     rec.set_defaults(fn=cmd_record)
     gate = sub.add_parser("gate", parents=[common])

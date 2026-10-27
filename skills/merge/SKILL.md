@@ -23,7 +23,9 @@ you are unsure of, or a case below sends you there.
 The tier is read from the diff, never judged:
 `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base origin/<base> --head HEAD`
 answers 0 bookkeeping (with `--since`, also `unchanged`), 1 full (an empty
-diff included), 3 could not read (treat as full).
+diff included), 3 could not read (treat as full). A seat report added as a
+plain `.md` under `tickets/reviews/` is bookkeeping; an edited, deleted or
+executable one is full.
 
 | Tier | Gating |
 |------|--------|

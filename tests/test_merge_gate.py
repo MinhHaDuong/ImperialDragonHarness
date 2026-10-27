@@ -555,3 +555,33 @@ def test_an_executable_file_and_a_deletion_stay_bookkeeping(repo):
     approved = git(repo, "rev-parse", "HEAD~1")
     since = gate(repo, "tier", "--base", "main", "--head", branch, "--since", approved)
     assert since.returncode == 0 and since.stdout.startswith("bookkeeping"), since.stdout
+
+
+def test_tier_since_ignores_added_seat_reports_and_ticket_close(repo):
+    """Ticket 1236: recording seat reports after a review must not void it."""
+    approved = git(repo, "rev-parse", "feature")
+    (repo / "tickets/reviews/main..abc").mkdir(parents=True)
+    (repo / "tickets/reviews/main..abc/correctness-1.md").write_text("report\n", encoding="utf-8")
+    (repo / "tickets").mkdir(exist_ok=True)
+    (repo / "tickets/0001-x.erg").write_text("closed\n", encoding="utf-8")
+    git(repo, "add", ".")
+    git(repo, "commit", "-q", "-m", "reviews: record")
+    assert gate(repo, "tier", "--base", "main", "--head", "feature", "--since", approved).returncode == 0
+
+
+def test_tier_since_rejects_edited_or_executable_seat_reports(repo):
+    d = repo / "tickets/reviews/main..abc"
+    d.mkdir(parents=True)
+    (d / "correctness-1.md").write_text("report\n", encoding="utf-8")
+    git(repo, "add", ".")
+    git(repo, "commit", "-q", "-m", "reviews: record")
+    recorded = git(repo, "rev-parse", "feature")
+    (d / "correctness-1.md").write_text("edited\n", encoding="utf-8")
+    git(repo, "commit", "-qam", "edit report")
+    assert gate(repo, "tier", "--base", "main", "--head", "feature", "--since", recorded).returncode == 1
+    after_edit = git(repo, "rev-parse", "feature")
+    (d / "hook-1.md").write_text("#!/bin/sh\n", encoding="utf-8")
+    (d / "hook-1.md").chmod(0o755)
+    git(repo, "add", ".")
+    git(repo, "commit", "-q", "-m", "executable report")
+    assert gate(repo, "tier", "--base", "main", "--head", "feature", "--since", after_edit).returncode == 1

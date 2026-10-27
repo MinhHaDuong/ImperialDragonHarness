@@ -507,3 +507,17 @@ def test_record_refuses_an_unknown_family(repo, policy):
         input="body\n", capture_output=True, text=True, env=child_env())
     assert out.returncode != 0
     assert not (repo / "tickets" / "reviews").exists()
+
+
+@pytest.mark.integration
+def test_record_writes_no_absolute_worktree_path_and_reads_body_file(repo, policy, tmp_path):
+    body = tmp_path / "body.md"
+    body.write_text(f"see {repo}/scripts/x.py and {repo}\n", encoding="utf-8")
+    out = subprocess.run(
+        [sys.executable, str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+         "--policy-root", str(policy), "--ticket", str(repo / "tickets/0001-x.erg"),
+         "--seat", "correctness", "--verdict", "approve", "--family", "Anthropic",
+         "--worker", "test", "--body-file", str(body)],
+        stdin=subprocess.DEVNULL, capture_output=True, text=True, env=child_env(), check=True)
+    text = Path(out.stdout.strip()).read_text(encoding="utf-8")
+    assert str(repo) not in text and "see scripts/x.py and ." in text
