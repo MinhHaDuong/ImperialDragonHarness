@@ -1,52 +1,75 @@
 %erg 0.1
-Title: Gaze executes the caller's review brief; the orchestrator decides how much review
+Title: Gaze by intention: the caller says what to verify and why; gaze plans, executes, verifies, records
 Created: 2026-10-26
-Blocked-by: 1226
 Author: Minh Ha-Duong
 
 --- log ---
 2026-10-26T21:57Z Minh Ha-Duong created
 2026-10-26T22:19Z reviewer note author: criterion added, bookkeeping 'no review' becomes a default the orchestrator may override; 1223 kept as the mechanical floor
 2026-10-26T22:24Z reviewer reviewer note alignment 2026-10-26 (author: yes, align): blocked by 1226 (same § Gating tiers); 1223 folded in as a worked case and a default brief, the tier stays mechanical; the brief is the inline form of the 1154 request/response files
+2026-10-27T06:52Z reviewer reviewer note rewritten (author, 2026-10-27: management by intention, KISS, Trust Verify Monitor): intent in, gaze plans, executes, verifies plan against done, records. PR 1686 (brief grammar) closed unmerged as too much ceremony; Blocked-by 1226 dropped, the design no longer edits § Gating tiers.
 
 --- body ---
 ## Context
 
-Author directive, 2026-10-26: the orchestrator decides how much review a change
-needs; gaze executes that decision. This is the third attempt, and the ticket
-records why the second did not take.
+Author directive, 2026-10-27: management by intention, under KISS, less is
+more, and Trust, Verify, Monitor. The orchestrator says what to verify and
+why; gaze owns the how. This replaces the brief grammar of the 2026-10-26
+version of this ticket (PR 1686, closed unmerged: too much ceremony, a
+170-line resolver and a seat-manifest check policing the caller's wording).
 
-Attempt 1 (tracker [[1100]], children 1142, 1154): hunt owns a proportionate
-review plan with a risk floor; gaze executes it. Attempt 2 (note of 2026-10-21,
-ticket 1176): "trust the orchestrator, no floor, no category" deleted the floor
-and superseded the child that had gaze execute a plan, leaving "the gaze
-controller chooses seats and depth". That moved the decision inside gaze. The
-caller, which knows the diff size, the risk, what was already reviewed and what
-changed since, has no way to say anything: gaze's input is
-`<pr-number> [--force-approve <reason>]` and nothing else, so it defaults to
-its full panel.
+Why the earlier attempts did not take. Attempt 1 (tracker [[1100]]): the
+caller wrote the review plan, under a risk floor. Attempt 2 (ticket 1176):
+gaze chose with no input and defaulted to its full panel. Attempt 3 (PR
+1686): the caller wrote seats and scope in a grammar. Here the caller writes
+only intent; the what bounds the scope, the why sets the risk, gaze plans.
 
-Incident (2026-10-26): PR 1667, a three-line addition and fifteen-line deletion
-of one paragraph of `skills/gaze/SKILL.md` the author had already agreed to, got
-a five-seat panel, then a gate, and took about ten minutes to land.
+Evidence (2026-10-26 night): PR 1677, about 200 lines, took four full panels;
+PR 1676 took thirteen gaze rounds, most re-reading 1,200 lines to check a fix
+of a few lines. Ticket 1197's measurement (docs/2026-10-27-gaze-wall-time.md):
+setup and closing turns are 42 percent of gaze wall time; a narrower panel
+saves at most 32 s per run, so the gain sought here is fewer and smaller
+rounds, not a faster round.
 
-Alignment (2026-10-26, author: "yes, align"): the brief is the inline form of
-the request and response files deferred by ticket 1154 (tracker [[1100]], dyne
-format, git-erg 0271 to 0275): the brief is the frozen request, the result
-comment that echoes it is the response. Ticket [[1223]] is folded in here: the
-tier stays purely mechanical, and memory files that steer sessions get a
-default brief instead of a full-tier floor.
+## Design
 
-Related: [[1100]], [[1219]] (gaze prescribes no caller behaviour), [[1221]]
-(proportional merge gating), [[1224]] (print durations).
+1. **Intent in.** `/gaze <pr> verify <what> because <why>`, plain words. No
+   intent: the what is the whole merge request, the why its ticket's exit
+   criteria. Nothing is refused for its wording.
+2. **Plan.** Gaze writes a short plan before launching anything: method,
+   workers, budget. It derives them from the change's nature (prose or code),
+   size, location (the risk rows of skills/route/references/decorrelation.md)
+   and history (what earlier results on this merge request covered). The
+   cheapest method that settles the what wins: running a test against old and
+   new code, one seat, a panel, an external or other-family model, a weaker
+   or stronger model, chosen through the route skill.
+3. **Execute.** Exactly the plan, nothing added.
+4. **Verify.** Plan against what was done: each planned item ran and
+   reported; each worker is the model or family planned; the run covered the
+   stated what; the budget held. A deviation is named with its reason. A
+   planned perspective missing without a substitute that still settles the
+   what means the verdict cannot be REVIEWED.
+5. **Record.** One result comment: intent, plan, what ran (worker, model,
+   time), plan check, findings, verdict (REVIEWED, FINDINGS or ESCALATE;
+   gaze never approves), duration. That comment is the whole register.
+
+Trust: the orchestrator trusts gaze's plan; gaze trusts the coder's tests and
+the gate's checks. Verify: step 4, and the comment shows intent beside plan.
+Monitor: trace-doctor and the 1197 telemetry judge plan sizing across runs;
+guidance changes on that evidence, never through a per-run floor.
+
+A later round is a new, narrower intent ("verify the fixes for findings X
+and Y"), not a re-run of the whole review. Memory files every session reads
+(ticket 1223, folded in earlier) are covered the same way: an orchestrator
+that wants them reviewed says so in the intent.
 
 ## Exit criteria
 
-- [ ] `/gaze` accepts a caller brief next to the PR number: which perspectives to run (including none beyond mechanical adherence) and the scope to review (the whole diff, or a commit range or path list); it runs exactly that, with no seat added and no seat dropped on its own.
-- [ ] The result comment states the brief it received and what ran against it, so the caller sees one line to compare; a brief gaze cannot honour (unknown seat, scope outside the diff) is refused with a reason, never silently widened.
-- [ ] Gaze keeps a default brief only for a caller that sends none (an interactive author running `/gaze <pr>`); `/raid`, `/hunt` and `/merge` each say where the brief is decided (the orchestrator) and point to one place that tells how to size it.
-- [ ] "No review" for bookkeeping paths (`skills/merge/SKILL.md` § Gating tiers) becomes a default the orchestrator may override in the brief: the tier decides only which checks the mechanical record runs, and an orchestrator that knows a bookkeeping path steers later sessions (for example `memory/MEMORY.md`) may ask for a review of it. The tier is not used to force review: `memory/MEMORY.md` and `memory/topics/` stay bookkeeping for the record's checks (ticket [[1223]] folded in).
-- [ ] The sizing guidance lives in one home, as judgement for the orchestrator and not a mechanical floor or category (attempts 1 and 2 are not repeated), with at least the worked cases: one-paragraph prose deletion, rebase or merge of main only, fix of listed findings, large multi-file change, and an edit of `memory/MEMORY.md` or `memory/topics/` (files every session reads as guidance: one adherence seat by default, the orchestrator may widen; from ticket 1223).
-- [ ] A regression test shows gaze run with a one-seat brief launches one seat, and with a scope brief reviews only that range.
+- [ ] `/gaze` takes an optional plain-text intent (what, why) after the merge request number; with none, the default intent is the whole merge request against its ticket's exit criteria.
+- [ ] Gaze writes its plan (method, workers, budget) before launching anything, from nature, size, location and history; the guidance for it lives in one place and states the "cheapest method that settles the what" rule with a few worked cases.
+- [ ] After executing, gaze compares plan with what was done and records the outcome as a `plan check:` line; a planned perspective missing without a valid substitute blocks a REVIEWED verdict.
+- [ ] The result comment carries intent, plan, run, plan check, findings, verdict and duration, and is the only register (no per-seat attribution writes into the merge request body).
+- [ ] `/hunt`, `/raid` and `/merge` pass an intent and drop their fixed round loops: a later round is a new, narrower intent.
+- [ ] The fixed battery as a default, the brief grammar idea, and per-phase integrity rules the plan check replaces are deleted; the skill text is shorter than before.
+- [ ] Regression tests: a small intent yields a one-worker plan; a plan item that did not run makes the plan check fail and blocks REVIEWED.
 - [ ] The harness gate (`.merge-gate.json` checks) passes.
-
