@@ -474,9 +474,10 @@ def _request_what(cwd, base, branch, remote):
 
 
 def request(cwd, review_id, branch, base_ref="origin/main", why="", intent="", tickets=(),
-            responses=(), author=None, skill="hunt", remote="origin"):
-    """A new request (round) on the branch's current head; keeps the head."""
-    binding = _binding(cwd, branch, base_ref)
+            responses=(), author=None, skill="hunt", remote="origin", head=None):
+    """A new request (round) on the branch's current head, or on `head` when the caller already
+    pinned the commit under review (gaze setup, ticket 1281); keeps the head."""
+    binding = _binding(cwd, head or branch, base_ref)
     prior = [e for e in entries(cwd, review_id) if e["kind"] == "request"]
     extra = {"branch": branch, "what": _request_what(cwd, binding["base"], branch, remote),
              "why": why, "intent": intent, "tickets": list(tickets), "responses": list(responses)}
@@ -506,7 +507,8 @@ def open_review(cwd, branch, base_ref="origin/main", **kw):
 def add(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", links=(),
         request_id=None):
     """Append a plan, report, answer or link to the request `request_id`, the one the run was
-    launched on (frozen at gaze setup, ticket 1281). Without it, the latest request; once the
+    launched on (frozen at gaze setup, ticket 1281), whose head must be `head` when given.
+    Without it, the latest request; once the
     review has several requests, only when `head` is the latest request's head (or not given):
     a result on another head is then refused rather than bound to a round it did not review."""
     if kind == "request":
@@ -533,6 +535,9 @@ def _append(cwd, kind, review_id, fields, head=None, author=None, skill="gaze", 
         if not named:
             raise Refusal(f"review {review_id} has no request {request_id}")
         req = named[0]
+        if kind != "verdict" and head is not None and _rev(cwd, head) != req["head"]:
+            raise Refusal(f"head {_rev(cwd, head)[:12]} is not the head of request {request_id} "
+                          f"({req['head'][:12]}): an entry binds only to the request it reviewed")
     binding = _binding(cwd, head or req["head"], req["base_ref"])
     return _write(cwd, _entry(cwd, kind, review_id, req["request_id"], binding, author, skill,
                               links, dict(fields)))

@@ -162,8 +162,10 @@ the attribution lines, as one `answer` entry of the review in
 reads, and publishes it with read-back when there is a remote; a narrow
 intent records `scope: delta`, carrying the review's latest non-ESCALATE
 answer, only the default intent a full review. The answer binds to the request
-and run id `gaze_setup.py` printed (`request_id=`, `run_id=`), never to a
-request written while the review ran. Never
+and run id `gaze_setup.py` printed (`request_id=`, `run_id=`): the request on
+the reviewed head (setup writes one when none names it), never one written
+while the review ran. Setup fetches the review store first; a configured but
+unreachable remote stops it (exit 2) rather than opening a duplicate review. Never
 write those notes by hand.
 
 **Attribution.** As each seat returns, collect its `reviewer: step=review`

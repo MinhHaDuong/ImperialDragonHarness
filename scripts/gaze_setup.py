@@ -103,6 +103,19 @@ def fail(code, msg):
     return code
 
 
+def reviewed_request(primary, review_id, branch, meta):
+    """The request this run reviews: the latest one on the head the review tree holds, chosen
+    by head, not by recency, so a request written meanwhile on another head never captures it
+    (ticket 1281). None on that head (the branch moved past the hunt request): gaze requests
+    it, which also keeps the reviewed commit under refs/review-heads/."""
+    on_head = [e for e in review_notes.entries(str(primary), review_id)
+               if e["kind"] == "request" and e["head"] == meta["head"]]
+    if on_head:
+        return on_head[-1]["request_id"]
+    return review_notes.request(str(primary), review_id, branch, meta["base"], skill="gaze",
+                                why="gaze on a head no request names", head=meta["head"])["request_id"]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("pr", help="PR number, or branch:<name> [base=<ref>] with no forge")
@@ -157,10 +170,11 @@ def main():
             return fail(2, f"cannot open a review for {branch}: {exc}")
     identity = {}
     if local:  # frozen now, carried to gaze_close: a later request never captures this run (1281)
-        requests = [e for e in review_notes.entries(str(primary), review_id) if e["kind"] == "request"]
-        if not requests:
-            return fail(2, f"review {review_id} has no request")
-        identity = {"review_id": review_id, "request_id": requests[-1]["request_id"],
+        try:
+            request_id = reviewed_request(primary, review_id, branch, meta)
+        except review_notes.Refusal as exc:
+            return fail(2, f"cannot bind a request for {branch}: {exc}")
+        identity = {"review_id": review_id, "request_id": request_id,
                     "run_id": f"gz-{review_notes._compact(review_notes._now())}-{review_notes._hex(4)}"}
     body = meta.get("body") or ""
     tickets, malformed = close_claims(body, tree)

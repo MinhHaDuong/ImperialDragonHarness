@@ -432,3 +432,11 @@ def test_a_late_answer_from_round_one_is_not_bound_to_round_two(world):
         rn.add(a, "report", rid, {"run_id": "gz-r1"}, request_id="rq-nope")
     plan = rn.add(a, "plan", rid, {"run_id": "gz-r2"}, request_id=r2["request_id"])
     assert plan["request_id"] == r2["request_id"] and plan["head"] == r2["head"]
+
+
+def test_a_named_request_on_another_head_is_refused(world):
+    """gaze 1817 finding 1: an explicit request id never binds an entry on another head."""
+    _, a, _, _ = world
+    rid, r1, r2 = two_rounds(a)
+    with pytest.raises(rn.Refusal, match="head"):
+        rn.add(a, "answer", rid, {"run_id": "gz-x"}, head=r1["head"], request_id=r2["request_id"])
