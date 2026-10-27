@@ -281,3 +281,153 @@ def test_step9_starts_the_runner_from_a_linked_worktree(tmp_path, module, layout
     tip = git(primary, "rev-parse", "main")
     git(seed, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
     assert [e["result"] for e in module.parse_note(note(seed, tip))] == ["pass"]
+
+
+# ── ticket 1251: a red after-merge record opens a ticket through a ticket-only PR ──
+
+ERG = ROOT / "tickets" / "erg"
+RED_CHECKS = [
+    {"name": "always-pass", "argv": ["true"]},
+    {"name": "marker-absent", "argv": ["sh", "-c", "! test -e BROKEN"]},
+    {"name": "second-marker-absent", "argv": ["sh", "-c", "! test -e BROKEN2"]},
+]
+
+
+class MergingForge:
+    """Stub forge: `create` opens a request on a pushed branch; `merge` merges it into the bare origin."""
+
+    def __init__(self, origin, scratch, refuse=None):
+        self.origin, self.scratch, self.refuse = origin, scratch, refuse
+        self.prs, self.merged, self.calls = {}, set(), []
+
+    def create(self, branch, base, title, body):
+        number = str(len(self.prs) + 1)
+        self.prs[number] = {"branch": branch, "base": base, "title": title, "body": body}
+        self.calls.append(("create", branch))
+        return number
+
+    def _head(self, pr):
+        refs = git(self.origin, "for-each-ref", "--format=%(objectname)", f"refs/heads/{self.prs[pr]['branch']}")
+        return refs.strip()
+
+    def resolve(self, pr):
+        info = self.prs[pr]
+        return {"state": "MERGED" if pr in self.merged else "OPEN", "isDraft": False,
+                "headRefName": info["branch"], "baseRefName": info["base"],
+                "headRefOid": self._head(pr), "body": info["body"]}
+
+    def ready(self, pr):
+        pass
+
+    def auto_merge_armed(self, pr):
+        return False
+
+    def disarm(self, pr):
+        pass
+
+    def merge(self, pr, head, auto):
+        self.calls.append(("merge", pr))
+        if self.refuse:
+            raise self.refuse("stub: merge refused")
+        if not self.scratch.exists():
+            subprocess.run(["git", "clone", "-q", str(self.origin), str(self.scratch)], check=True, env=child_env())
+            for key, value in (("user.email", "f@example.com"), ("user.name", "Forge")):
+                git(self.scratch, "config", key, value)
+        git(self.scratch, "fetch", "-q", "origin")
+        git(self.scratch, "checkout", "-q", "-B", "main", "origin/main")
+        git(self.scratch, "merge", "-q", "--no-ff", head, "-m", f"Merge pull request #{pr}")
+        git(self.scratch, "push", "-q", "origin", "main")
+        self.merged.add(pr)
+
+    def read_back(self, pr):
+        state = "MERGED" if pr in self.merged else "OPEN"
+        return f"{state} {self._head(pr)} -"
+
+    def comment(self, pr, body):
+        pass
+
+
+@pytest.fixture
+def red_repo(tmp_path, monkeypatch, module):
+    """A gated temp main whose before set is cheap (ticket 1245); HOME is a temp dir."""
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    (tmp_path / "home").mkdir()
+    work = make_repo(tmp_path, RED_CHECKS)
+    config = json.loads((work / ".merge-gate.json").read_text())
+    config["before"] = ["always-pass"]
+    (work / ".merge-gate.json").write_text(json.dumps(config), encoding="utf-8")
+    git(work, "commit", "-q", "-am", "before set")
+    git(work, "push", "-q", "origin", "main")
+    monkeypatch.chdir(work)
+    return work
+
+
+def run_after_in_process(module, forge):
+    return module.run_after("origin", "main", "runtime=fixture", "merge-gate run-after", forge=forge)
+
+
+def red_tickets(work, ref="origin/main"):
+    git(work, "fetch", "-q", "origin")
+    names = git(work, "ls-tree", "--name-only", f"{ref}:tickets").splitlines() if ref else []
+    return [n for n in names if "-after-merge-red-" in n]
+
+
+def remote_red_branches(work):
+    return [line.split()[1] for line in git(work, "ls-remote", "origin", "refs/heads/red-*").splitlines()]
+
+
+def test_a_red_record_opens_one_ticket_and_a_second_red_run_opens_none(red_repo, module, tmp_path):
+    work = red_repo
+    green = git(work, "rev-parse", "main")
+    assert run_after_in_process(module, None) == module.PASS
+    first = merge_branch(work, "harmless")
+    tip = merge_branch(work, "breaker", {"BROKEN": "planted failure"})
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch")
+    assert run_after_in_process(module, forge) == module.FAIL
+    [name] = red_tickets(work)
+    assert name.endswith(f"-after-merge-red-{tip[:12]}.erg"), name
+    text = git(work, "show", f"origin/main:tickets/{name}")
+    assert tip in text and "Failing checks: marker-absent\n" in text
+    assert f"Last green after-merge tip: {green}" in text
+    for merge in (first, tip):
+        assert merge[:12] in text
+    tree = tmp_path / "check-tree"
+    git(work, "worktree", "add", "-q", "--detach", str(tree), "origin/main")
+    proc = subprocess.run([str(ERG), "check", str(tree / "tickets")], capture_output=True, text=True,
+                          env=child_env())
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert remote_red_branches(work) == []  # landed: the branch is gone, the open ticket carries the set
+    # Second red run on the same failure: main moved (a harmless merge), the failing set did not.
+    merge_branch(work, "unrelated")
+    assert run_after_in_process(module, forge) == module.FAIL
+    assert len(red_tickets(work)) == 1
+    assert [c for c in forge.calls if c[0] == "create"] == [("create", f"red-{tip[:12]}")]
+
+
+def test_an_unlanded_red_branch_dedupes_and_landing_is_bounded(red_repo, module, tmp_path):
+    work = red_repo
+    merge_branch(work, "breaker", {"BROKEN": "planted failure"})
+    lander = module.raid_land()
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch", refuse=lander.MergeRefused)
+    assert run_after_in_process(module, forge) == module.FAIL
+    merges = [c for c in forge.calls if c[0] == "merge"]
+    assert 1 <= len(merges) <= module.RED_RETRIES, forge.calls
+    assert len(remote_red_branches(work)) == 1  # left open for a human, carrying the set
+    merge_branch(work, "unrelated")
+    assert run_after_in_process(module, forge) == module.FAIL
+    assert len([c for c in forge.calls if c[0] == "create"]) == 1, forge.calls
+
+
+def test_a_different_failing_set_opens_its_own_ticket(red_repo, module, tmp_path):
+    work = red_repo
+    merge_branch(work, "breaker", {"BROKEN": "planted failure"})
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch")
+    assert run_after_in_process(module, forge) == module.FAIL
+    assert len(red_tickets(work)) == 1
+    git(work, "pull", "-q", "--ff-only", "origin", "main")
+    merge_branch(work, "breaker2", {"BROKEN2": "second planted failure"})
+    assert run_after_in_process(module, forge) == module.FAIL
+    tickets = red_tickets(work)
+    assert len(tickets) == 2, tickets
+    texts = [git(work, "show", f"origin/main:tickets/{n}") for n in tickets]
+    assert any("Failing checks: marker-absent, second-marker-absent\n" in t for t in texts)
