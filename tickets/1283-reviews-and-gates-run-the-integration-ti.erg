@@ -1,0 +1,21 @@
+%erg 0.1
+Title: Reviews and gates run the integration tier for the files a change touches
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T18:32Z reviewer created
+
+--- body ---
+## Context
+Raid 2026-10-27: PR #1799 (1272) moved raid_land's GhForge/MergeRefused into scripts/forge.py; merge-gate.py and the
+fakes in tests/test_after_merge.py still used the old names. Every gaze and verify-gate that day ran make check-fast
+and make lint only, never the integration tier, so main went red until PR #1811; the after-merge red-ticket path was
+broken meanwhile. The after-merge runner on padme did not flag it either (its record on the tip passed).
+
+## Exit criteria
+- [ ] A gaze or gate on a change runs the integration-tier tests that import or spawn the changed files (or the full
+      tier when the mapping is unknown), and says which ran.
+- [ ] A test shows the #1799 shape is caught before merge: a moved symbol still referenced by an integration test fails the gate.
+- [ ] Explain why padme's after-merge record on the #1799 tip passed while make check failed, and fix it if it is a defect.
+- [ ] The harness gate passes.

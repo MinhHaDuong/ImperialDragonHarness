@@ -1,0 +1,18 @@
+%erg 0.1
+Title: Headless codex seats sometimes lack file reads or a writable temp dir
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T18:32Z reviewer created
+
+--- body ---
+## Context
+Raid 2026-10-27: on PR 1798 the codex seat refused NOT-RUN (no read tool, git forbidden) and was re-run with the files
+inlined; on PRs 1806 and 1795 codex seats had no shell or temp dir, so their clears were code reads, not runs. The
+review records still counted them as seats.
+
+## Exit criteria
+- [ ] The codex door's seat rails give read access to the review tree consistently; a seat that cannot read reports NOT-RUN, never a clear.
+- [ ] A seat's status line says whether it ran tests or read code only.
+- [ ] The harness gate passes.

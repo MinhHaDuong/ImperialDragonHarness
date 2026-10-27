@@ -1,0 +1,25 @@
+%erg 0.1
+Title: Gate and review notes refs are unprotected on the forge
+Created: 2026-10-27
+Author: reviewer
+Label: needs-human
+
+--- log ---
+2026-10-27T18:32Z reviewer created
+2026-10-27T18:32Z reviewer label needs-human
+
+--- body ---
+## Context
+Measured 2026-10-27 (conception/2026-10-27-notes-transport-trial.md, case 6): the main-traceability ruleset covers only
+main; the narrow agent token can force-update and delete refs/notes/*, including refs/notes/gate, the record the main
+guard and merge trust, and refs/notes/review. A session can rewrite or erase gate evidence after the fact.
+
+## Decision for the author
+Options to price: (1) accept and rely on the review-notes tamper detection plus local journals; (2) a forge-side
+protection if the forge can target these refs (unverified — rulesets are believed to target branches and tags only);
+(3) mirror the notes refs to a second store and compare in the daily audit.
+
+## Exit criteria
+- [ ] The author's choice is recorded here.
+- [ ] If (2) or (3): implemented and a deletion or force-update of refs/notes/gate by the agent token is refused or detected (measured).
+- [ ] The policy doc states which it is.
