@@ -4,6 +4,8 @@
     project_shadow.py PROJECT              JSON lines: findings or one skip
     project_shadow.py --is-harness PROJECT exit 0 if PROJECT is the harness or
                                            a linked worktree of it, else 1
+    project_shadow.py --plan [--auto]      finding records on stdin -> one
+                                           plan line each (ticket 1231, molt)
 
 Mechanical half only: a local skill or rule named like a harness skill or
 rule. Contradictions and repeated procedures are model judgment (yawn). One
@@ -127,8 +129,49 @@ def scan(project: Path) -> list[dict]:
     return records
 
 
+def route(rec: dict, auto: bool) -> str | None:
+    """One plan line for a record, or None: a reasoned (ok) finding is left
+    alone. `auto` (unattended sweep) never files into the harness checkout."""
+    if rec.get("status") == "skip":
+        return f"skip: {rec.get('reason', '')}"
+    if rec.get("verdict") == "ok":
+        return None
+    local, kind = rec.get("local_file"), rec.get("kind")
+    disp = rec.get("disposition")
+    if disp == "delete-local":
+        return f"fix-now: delete redundant local copy {local} ({kind})"
+    if disp == "annotate":
+        return f"fix-now: write the reason beside {local} ({kind})"
+    if disp == "harness-ticket":
+        what = f"general fix for {local} vs {rec.get('harness_file')} ({kind})"
+        if auto:
+            return f"report: harness-bound, not filed unattended: {what}"
+        return (f"open-ticket: in the harness repo, on a harness branch, "
+                f"never its main checkout: {what}")
+    return f"skip: no disposition for {local} ({kind}); judge by hand"
+
+
+def plan(argv: list[str]) -> int:
+    lines = []
+    for raw in sys.stdin:
+        if not raw.strip():
+            continue
+        try:
+            line = route(json.loads(raw), "--auto" in argv)
+        except (ValueError, AttributeError) as exc:
+            print(f"project_shadow --plan: bad record: {exc}", file=sys.stderr)
+            return 1
+        if line:
+            lines.append(line)
+    for line in lines:
+        print(line)
+    return 0
+
+
 def main(argv: list[str]) -> int:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
+    if len(argv) >= 2 and argv[1] == "--plan":
+        return plan(argv[2:])
     if len(argv) == 3 and argv[1] == "--is-harness":
         return 0 if is_harness(Path(argv[2])) else 1
     if len(argv) != 2 or not Path(argv[1]).is_dir():

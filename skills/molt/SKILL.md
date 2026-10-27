@@ -143,6 +143,12 @@ Run full repo housekeeping and act on every finding.
    the output: the bold headings `**fix-now**`, `**open-ticket**`, `**skip**`
    are the contract interface consumed by steps 3–5 below.
 
+   Yawn check 14 findings (project directives shadowing the harness's) arrive
+   as its JSON records; molt routes them and does not re-read local rules:
+   `python3 "$IDH_ROOT/scripts/project_shadow.py" --plan < findings.jsonl`
+   prints one plan line each, adding `--auto` when `CLAUDE_NIGHT_SWEEP` is set.
+   An `ok (reasoned)` finding yields no line: leave it alone.
+
 2.5. **Audit open-ticket exit criteria.** For each open ticket, apply
    lightweight grep-able checks. Only check exit criteria that reduce to one of
    three crisp shapes:
@@ -217,6 +223,11 @@ Run full repo housekeeping and act on every finding.
      using a specific title. For test failures, the slug must contain `fix-tests`
      (e.g. `0042-fix-tests-module-not-found`).
    - If a ticket already exists, skip.
+   - A harness-bound finding is filed in the harness repo on a harness branch
+     or worktree, never with `tickets/erg new` in the harness main checkout;
+     an unattended sweep (`--auto`) only reports it. Project edits
+     (`delete-local`, `annotate`) are `fix-now` commits on the step 1
+     `housekeeping-<date>` branch.
    - Apply the severity floor (rules/workflow.md § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
 
 5. **Log `skip` items.** One line each, no action.
