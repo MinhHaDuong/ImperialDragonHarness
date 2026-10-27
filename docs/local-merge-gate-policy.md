@@ -1,10 +1,10 @@
 # Local merge gate: policy and adoption guide
 
-Status as of 2026-10-21. Written at the author's request so the policy can be
-adopted in other projects. Decided in tracker 1045. Today only the forge
-settings are in place (the light ruleset, no required checks, GitHub Actions
-disabled), together with the gate-record machinery, the guard hook and the daily audit.
-The gate itself is on: `.merge-gate.json` declares `"gate": "on"` (ticket 1156).
+Status as of 2026-10-27. Written at the author's request so the policy can be
+adopted in other projects. Decided in tracker 1045. In place: the forge settings
+(the light ruleset, no required checks, GitHub Actions disabled), the
+gate-record machinery, the guard hook, the daily audit, and the gate itself,
+which `.merge-gate.json` turns on with `"gate": "on"` (ticket 1156).
 Each part still open is marked **pending** with its ticket.
 
 ## Principle
