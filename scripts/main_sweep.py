@@ -135,7 +135,7 @@ def audit(ref: str, max_count: int, time_limit: float) -> tuple[list[dict], list
     return results, cut
 
 
-def after_gaps(tip: str, max_count: int) -> tuple[list[tuple[str, str]], str]:
+def after_gaps(tip: str, max_count: int) -> tuple[list[tuple[str, int, str]], str]:
     """First-parent tips above the newest one with an after-merge record (ticket 1244).
 
     A record covers its tip and every tip below it that it passed over, so
