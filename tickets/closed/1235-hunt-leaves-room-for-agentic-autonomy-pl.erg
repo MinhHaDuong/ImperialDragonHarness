@@ -2,10 +2,13 @@
 Title: Hunt leaves room for agentic autonomy: plan chooses, no forge or code assumed
 Created: 2026-10-27
 Author: claude
+Closed: autoclosed — PR #1704
 
 --- log ---
 2026-10-27T07:40Z claude created
 2026-10-27T08:31Z reviewer author steer 2026-10-27: hunt returns a monster to its caller with a proposed decomposition instead of splitting; exit criterion reworded (gaze round 2 F1)
+2026-10-27T09:03Z reviewer author override 2026-10-27: merge without a clean gaze round (rounds 1-4 FINDINGS fixed; round 5 stopped, its correctness seat clear); deferred items go to ticket 1236
+2026-10-27T09:03Z reviewer closed — autoclosed — PR #1704
 
 --- body ---
 ## Context
