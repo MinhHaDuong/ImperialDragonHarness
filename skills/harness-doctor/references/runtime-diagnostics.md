@@ -61,15 +61,18 @@ other; their precedence rules still differ.
 - No doctor or validate command. Control: `pi --help` lists every command
   (install, remove, update, list, config, auth, mcp) and none checks skills.
   Report "no skill diagnostic shipped".
-- `pi list` (no user): installed extensions. Context only.
+- `pi list --no-approve` (no user): installed extensions, project-local files
+  not trusted. Context only.
 - `pi auth check --provider <p> --no-refresh` (no user): provider readiness
   without touching stored credentials. A check that refreshes credentials
   (the default without `--no-refresh`) needs the author. Never run
   `--credentials`, `print-api-key`, `print-bearer-token` or any form that
   prints a credential: credentials are never displayed.
-- `pi mcp list` (no user): configured servers and their status; report names
-  and status only, never a header or environment value. `login`, `logout`,
-  `add` and `remove` change state and are the author's.
+- `pi mcp list` (author), plain form: it starts every enabled server's
+  configured command and may refresh OAuth tokens near expiry, so by the rule
+  above it needs the author. Report names and status only, never a header or
+  environment value. `login`, `logout`, `add` and `remove` change state and
+  are the author's.
 - `pi --skill <path> -p --mode json` (spends): loads one skill headless; the
   only way to see Pi read a given skill body.
 - `pi config` (author): the interactive view of enabled package resources.
