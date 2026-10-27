@@ -2,9 +2,11 @@
 Title: Remove the dead adherence-seat path: adherence_verdict.py, seat agent and profile, verify-adherence semantic=caller
 Created: 2026-10-27
 Author: reviewer
+Closed: autoclosed — PR #1741
 
 --- log ---
 2026-10-27T10:53Z reviewer created
+2026-10-27T11:02Z reviewer closed — autoclosed — PR #1741
 
 --- body ---
 ## Context

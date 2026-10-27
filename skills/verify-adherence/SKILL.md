@@ -5,7 +5,7 @@ name: verify-adherence
 description: "Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM."
 disable-model-invocation: false
 user-invocable: true
-argument-hint: "<branch> [worktree=<path>] [trace=<path>] [semantic=caller]"
+argument-hint: "<branch> [worktree=<path>] [trace=<path>]"
 context: fork
 # Foreground: its caller (hunt's self-gate) blocks on its structured output.
 # `context: fork` skills may default to background; a fork cannot wait on a
@@ -48,10 +48,6 @@ rule is permanently enforced → never needs LLM again.
 A branch name, optionally followed by `worktree=<path>` — the isolated
 review worktree prepared by the caller (`/gaze` phase 1). When present,
 all phases run from that path.
-
-`semantic=caller` hands the phase-3 worker launch to the caller. `/gaze`
-passes it because its adherence seat is read-only and holds no launch tool.
-See § 3 for what the skill still owes in that mode.
 
 ## Protocol
 
@@ -237,21 +233,8 @@ Inline analysis does not count as a launch or a completed worker. A promised
 launch, a tool call rejected before execution, and a started worker without a
 completed valid report cannot satisfy phase 3.
 
-**`semantic=caller`.** Do everything above except the launch: decide
-applicability, discover the rules, and record `semantic_review.status:
-delegated` with `applicable`, `reason` and `rule_sources`. Leave the identity
-fields null and emit `adherence: PASS` or `FAIL` over phases 1.0 to 2 alone,
-never `PARTIAL` or a placeholder: the caller's fold reads any value but `PASS`
-as a failure. A delegated status is a handoff, not a review. The caller
-launches the worker with the inputs and prompt above, has it return the one
-YAML fence that prompt asks for, then folds both returns with
-`"$IDH_ROOT/scripts/adherence_verdict.py"`. That script fails the verdict
-whenever an instruction file is in the diff and no completed, valid worker
-report is present. Without this argument the skill launches the worker itself,
-as above.
-
 Output findings: the `semantic_findings` entries the prompt above specifies,
-file and line as separate keys (the fold rejects a finding with no `line` key).
+file and line as separate keys.
 Each finding must have a concrete source anchor, severity `blocking` or `nit`,
 and a nonempty `suggested_test`. A clean report must still provide evidence
 for the reviewed rules; an empty/malformed response cannot stand for review.
@@ -271,7 +254,7 @@ adherence: PASS | FAIL
 escalation: null | adherence-infrastructure
 semantic_review:
   applicable: true | false
-  status: ran | skipped | delegated | unavailable | invalid
+  status: ran | skipped | unavailable | invalid
   reason: <trigger, skip reason, or infrastructure failure>
   rule_sources: [<project rule paths>]
   worker_id: <observed runtime worker/session id, or null>
@@ -300,9 +283,7 @@ untested_rules:
 
 Verdict mapping is mandatory: any mechanical failure or blocking semantic finding → adherence: FAIL.
 A required semantic review with status other than `ran` also fails with the
-infrastructure escalation above. The one exception is `delegated` under
-`semantic=caller`: that verdict is provisional and stands only after the caller's
-merge (§ 3), which applies the same rule. PASS requires successful mechanical checks,
+infrastructure escalation above. PASS requires successful mechanical checks,
 no blocking semantic findings, and either a valid completed semantic worker
 or an explicitly justified inapplicable `skipped` status. Always emit
 `semantic_review`, even when an earlier phase stops execution; record it as
