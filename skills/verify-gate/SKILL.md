@@ -179,7 +179,7 @@ record (the before set stays cheap); they catch before the merge what only the
 integration tier sees, such as a moved symbol an integration test still
 imports (ticket 1283). The verdict quotes the `selected:`, `fallback:` and
 `result:` lines. Exit 1 fails the criterion the change carries (REROLL);
-exit 4 is quoted as skipped, never as a pass.
+exit 4 (`skipped`, `incomplete`) is quoted as such, never as a pass.
 
 A gate on an ungated base (the plan answers `off:`) applies the same rule by
 hand: `merge-gate.py tier --since <prior head>` answering 0 reuses the check

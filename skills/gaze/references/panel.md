@@ -109,8 +109,8 @@ unavailable route is never reported as a clean review.
    file, integration tier included, or the whole integration tier for a changed
    source file no test names (ticket 1283; a fast-tier run alone missed a
    moved symbol). The review quotes its `selected:`, `fallback:` and `result:`
-   lines; exit 1 is a blocking finding, and exit 4 (`skipped`) is reported as
-   skipped, never as a pass. Where the project declares `.idh-checks.json`,
+   lines; exit 1 is a blocking finding; exit 4 (`skipped`, `incomplete`) is
+   reported as such, never as a pass. Where the project declares `.idh-checks.json`,
    its scoped gate (`$IDH_ROOT/scripts/scoped-check.py`) runs too and the
    review quotes its `selected:` and `skipped:` lines, never calling a scoped
    pass full.

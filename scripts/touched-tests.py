@@ -23,8 +23,9 @@ while an integration test still imports it from the old one.
 
 Printed lines a review quotes: `selected:`, `fallback:`, `result:`.
 Exit: 0 the tests ran and passed, 1 a test failed, 2 usage or git error,
-4 skipped: nothing ran (no test layout, or no source or test file changed);
-a skip is never a pass.
+4 not a pass: nothing ran (no test layout, no source or test file changed,
+no test collected) or a changed source file stayed uncovered (no test names
+it and the project declares no integration marker).
 """
 
 import argparse
@@ -55,11 +56,12 @@ def git(root, *args):
 def changed_files(root, base):
     merge_base = git(root, "merge-base", "HEAD", base).strip()
     names = git(root, "diff", "--name-only", "--no-renames", f"{merge_base}..HEAD").splitlines()
-    modes = {}
-    for rev in (merge_base, "HEAD"):
-        for entry in git(root, "ls-tree", "-r", rev, "--", *names).splitlines() if names else []:
+    wanted, modes = set(names), {}
+    for rev in (merge_base, "HEAD"):  # whole trees, filtered here: no pathspec list to overrun ARG_MAX
+        for entry in git(root, "ls-tree", "-r", rev).splitlines() if names else []:
             meta, path = entry.split("\t", 1)
-            modes.setdefault(path, meta.split()[0])
+            if path in wanted:
+                modes.setdefault(path, meta.split()[0])
     return merge_base, [(name, modes.get(name, "")) for name in names]
 
 
@@ -169,19 +171,25 @@ def main(argv=None):
         return SKIPPED
     python, env = runner(root)
     extra = workers(root, python, env)
-    failed = []
+    failed, ran = [], False
     for targets in runs:
         cmd = [*python, "-m", "pytest", "-q", *extra, *targets]
         out(f"run: {' '.join(cmd)}")
         sys.stdout.flush()
         code = subprocess.run(cmd, cwd=root, env=env).returncode
+        ran = ran or code == 0
         if code not in (0, 5):  # 5: nothing collected, e.g. a tier with no test outside the selection
             failed.append(f"pytest exit {code}")
     if failed:
         out(f"result: fail ({'; '.join(failed)})")
         return FAIL
-    covered = "" if marker or not unnamed else f"; {len(unnamed)} source file(s) not covered"
-    out(f"result: pass ({len(selected)} selected file(s){', integration tier' if unnamed and marker else ''}{covered})")
+    if not ran:
+        out("result: skipped (no test collected)")
+        return SKIPPED
+    if unnamed and not marker:
+        out(f"result: incomplete ({len(selected)} selected file(s) passed; {len(unnamed)} source file(s) not covered)")
+        return SKIPPED
+    out(f"result: pass ({len(selected)} selected file(s){', integration tier' if unnamed else ''})")
     return PASS
 
 

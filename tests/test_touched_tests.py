@@ -159,3 +159,26 @@ def test_a_project_without_a_test_layout_is_skipped_not_passed(tmp_path):
     assert code == 4, out + err
     assert "result: skipped (no test layout)" in out
     assert "pass" not in line(out, "result")
+
+
+def test_an_uncovered_source_file_without_an_integration_marker_is_not_a_pass(tmp_path):
+    root = project(tmp_path, {
+        "scripts/alpha.py": "class Thing:\n    ok = True\n",
+        "tests/test_uses_alpha.py": USES_ALPHA.format(module="alpha").replace("pytestmark = pytest.mark.integration\n", ""),
+    })
+    write(root, {"scripts/alpha.py": "class Thing:\n    ok = 1\n", "scripts/gamma.py": "X = 1\n"})
+    commit(root, "touch a named and an unnamed file")
+    code, out, err = touched(root)
+    assert code == 4, out + err
+    assert "scripts/gamma.py" in line(out, "fallback")
+    assert line(out, "result").startswith("result: incomplete")
+
+
+def test_a_selection_that_collects_no_test_is_not_a_pass(tmp_path):
+    root = alpha_project(tmp_path)
+    write(root, {"tests/test_empty.py": "# no test here yet\n"})
+    commit(root, "an empty test file")
+    code, out, err = touched(root)
+    assert code == 4, out + err
+    assert line(out, "selected") == "selected: tests/test_empty.py"
+    assert line(out, "result") == "result: skipped (no test collected)"
