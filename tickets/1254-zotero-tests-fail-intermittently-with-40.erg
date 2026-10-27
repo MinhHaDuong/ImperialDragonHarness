@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Zotero tests fail intermittently with 401 under parallel gate runs
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T11:19Z reviewer created
+
+--- body ---
+## Context
+Raid 2026-10-27, author ruling (ticket, from the raid's time-saving review). Observed twice on padme:
+the #1736 gate's first `pytest-guard` run failed two tests in `tests/test_zotero_import.py` with HTTP 401
+from the local Zotero API (each passed 3 of 3 alone), and the #1746 ticket-only gate failed
+`pytest-guard` once while an isolated `make check-tests` on the same tree passed (2430 passed). The
+gate keeps no per-test log, so the second failing test is not identified. Cause not established;
+parallel runs sharing the local API key or server is one hypothesis. Each occurrence costs a full
+re-record (about 75-90 s) and can block a merge.
+
+## Exit criteria
+- [ ] Reproduce: the failing test identified, with the condition that triggers the 401 (or the
+      hypothesis refuted with the run that refutes it).
+- [ ] The zotero tests cannot fail from another concurrent run: isolated credentials/server or a
+      stub, or moved to a tier the gate does not run, with the reason stated.
+- [ ] `merge-gate.py run` keeps the failing test names of a failed check (one line each) so the next
+      flake is named, not guessed.
+- [ ] The harness gate passes.
+
+## Relevant files
+tests/test_zotero_import.py, scripts/merge-gate.py, pytest.ini

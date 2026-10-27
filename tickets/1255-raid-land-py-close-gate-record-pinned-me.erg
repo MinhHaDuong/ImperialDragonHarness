@@ -1,0 +1,31 @@
+%erg 0.1
+Title: raid_land.py: close, gate record, pinned merge and read-back in one call per PR
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T11:19Z reviewer created
+
+--- body ---
+## Context
+Raid 2026-10-27, author ruling. The raid hand-rolled the same landing command for each of 12 merges:
+pin the ruled head, `merge-gate.py check`, `run` and `check` again when main moved (twice today a
+peer merge staled the record mid-run), disarm auto-merge, `gh pr merge --match-head-commit`, read
+back, log a timing row. Each hand-roll is an orchestrator turn and a chance to slip (a session-id
+placeholder went out unfilled once today). The merge recipe stays the single contract; this script
+executes it.
+
+## Exit criteria
+- [ ] One call per PR: verifies the head equals the gate's ruled tip, runs `/merge`'s steps 1 and 3-8
+      (close when claimed, check/record with one retry on a moved base, disarm, pinned merge,
+      read-back), and prints one `<pr> merge <start> <end>` row for `step_clock.py`.
+- [ ] Refuses (non-zero, reason printed) on head drift, a failing record, a second stale record or
+      an unreadable read-back; never re-runs a merge.
+- [ ] Forge calls sit behind one adapter, so ticket 1252's no-forge path can plug in.
+- [ ] raid Phase 7 calls it; `skills/merge/SKILL.md` stays the contract it cites.
+- [ ] Tests on a temp repo with a stubbed forge; the harness gate passes.
+
+## Relevant files
+skills/merge/SKILL.md, skills/raid/SKILL.md, scripts/merge-gate.py, new scripts/raid_land.py
+
+Related: [[1252]], [[1245]].
