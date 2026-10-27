@@ -37,7 +37,6 @@ ROSTER = {
     "code-reviewer": "Code-review seat; perspective arrives in the prompt.",
     "prose-reviewer": "Prose-panel seat; role and rulebook arrive in the prompt.",
     "gate-seat": "Read-only verify-gate seat; verdict only.",
-    "adherence-seat": "Read-only verify-adherence seat; verdict artifact only.",
 }
 
 AGENTS_CHANNEL_BUDGET = 800  # tests/test_resident_census.py owns the budget
@@ -115,7 +114,6 @@ def test_seat_contracts_pin_reviewer_discipline():
         "code-reviewer": ("rules/workflow.md", "rules/git.md"),
         "prose-reviewer": ("rules/workflow.md", "rules/git.md"),
         "gate-seat": ("rules/workflow.md", "rules/git.md"),
-        "adherence-seat": ("rules/workflow.md", "rules/git.md"),
     }
     for name, rules in seats.items():
         text = " ".join(
@@ -139,7 +137,6 @@ def test_contract_skills_sections_name_the_invokable_contracts():
         "code-reviewer": "skills/gaze/references/panel.md",
         "prose-reviewer": "skills/gaze/references/prose-panel.md",
         "gate-seat": "skills/verify-gate/SKILL.md",
-        "adherence-seat": "skills/verify-adherence/SKILL.md",
     }
     for name, skill_path in skills_of.items():
         text = " ".join(

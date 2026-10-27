@@ -29,11 +29,6 @@ def granted(agent: str) -> set[str]:
     return {t.strip() for t in m.group(1).split(",")}
 
 
-def test_adherence_seat_grants_skill():
-    """Its profile makes invoking verify-adherence the first action."""
-    assert "Skill" in granted("adherence-seat")
-
-
 @pytest.mark.parametrize("seat", READ_ONLY_SEATS)
 def test_seat_without_skill_says_so(seat):
     """The profile's substitute sentence and the grant must agree."""
@@ -98,9 +93,6 @@ def test_control_ungranted_declaration_fails():
 
 
 def test_control_tool_removed_from_shell_fails():
-    text = profile_text("adherence-seat")
-    shell = granted("adherence-seat") - {"Skill"}
-    assert check_pair(text, shell, "adherence-seat")
     shell = granted("coder") - {"Edit"}
     assert check_pair(profile_text("coder"), shell, "coder")
 
