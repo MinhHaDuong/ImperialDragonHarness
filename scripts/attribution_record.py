@@ -203,7 +203,11 @@ def append_line(body, line, pr=None, project=None):
         raise ValueError(f"{len(opens)} attribution blocks; exactly one is allowed")
     for i in range(opens[0] + 1, len(lines)):
         if CLOSE.fullmatch(lines[i]):
-            return "\n".join([*lines[:i], line, *lines[i:]]) + "\n"
+            at = i
+            if line.startswith("writer: "):  # facts order: kind, pr, writers, then reviewers (ticket 1286)
+                first = next((j for j in range(opens[0] + 1, i) if lines[j].startswith("reviewer: ")), None)
+                at = i if first is None else first
+            return "\n".join([*lines[:at], line, *lines[at:]]) + "\n"
     raise ValueError(f"attribution block opened at line {opens[0] + 1} is never closed")
 
 

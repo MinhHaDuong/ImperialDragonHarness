@@ -1,5 +1,7 @@
 """Ticket 1227: one call cleans, reports containment and posts the comment."""
 
+from pathlib import Path
+
 import pytest
 from gaze_fixture import CLOSE, SETUP, fields, git, make_repo, run
 
@@ -273,3 +275,48 @@ def test_typed_plan_check_in_any_markup_is_refused(tmp_path, typed):
     assert r.returncode == 2 and "plan_check" in r.stderr
     assert (primary / ".claude" / "worktrees" / "review-7").exists()
     assert not (tmp_path / "gh.log").exists()
+
+
+def seats_shim(tmp_path, env):
+    """gh shim whose `pr view` answers body and a posted gaze result carrying a seat: line."""
+    body = tmp_path / "body.txt"
+    body.write_text("Body\n```attribution\nkind: review-attribution\npr: 7 · merged pending · project: .agents\n"
+                    "writer: step=execute · runtime=fixture · model=e/w · effort=not-stated · route=sonnet"
+                    " · independence=not-stated\n```\n")
+    result = tmp_path / "result.txt"
+    result.write_text("## /gaze result\nseat: a · runtime=claude · family=anthropic · route=r · model=anthropic/claude-x · status: ran\n")
+    shim = tmp_path / "bin" / "gh"
+    shim.write_text(
+        "#!/bin/sh\n"
+        'if [ "$1" = pr ] && [ "$2" = view ]; then python3 -c "import json,sys;print(json.dumps(dict(json.loads(sys.argv[3]),body=open(sys.argv[1]).read(),'
+        'comments=[{\'body\':open(sys.argv[2]).read()}])))" "$MOCK_BODY" "$MOCK_RESULT" "$MOCK_PR_JSON"; exit 0; fi\n'
+        'if [ "$1" = api ]; then\n'
+        '  case "$*" in *PATCH*) python3 -c "import json,sys;open(sys.argv[1],\'w\').write(json.load(sys.stdin)[\'body\'])" "$MOCK_BODY" ;;\n'
+        '  *) cat "$MOCK_BODY" ;; esac; exit 0; fi\n')
+    env["MOCK_BODY"], env["MOCK_RESULT"] = str(body), str(result)
+    return body
+
+
+def test_empty_attribution_file_runs_seats_pr(tmp_path):
+    primary, env, f = opened(tmp_path)
+    body = seats_shim(tmp_path, env)
+    comment = tmp_path / "c.md"
+    comment.write_text(Path(env["MOCK_RESULT"]).read_text() + "result: REVIEWED\n{{plan_check}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "attribution: seats appended" in r.stdout
+    assert "reviewer: " in body.read_text() and "seat=a" in body.read_text()
+
+
+def test_partial_attribution_file_gets_the_missing_seat(tmp_path):
+    primary, env, f = opened(tmp_path)
+    body = seats_shim(tmp_path, env)
+    result = Path(env["MOCK_RESULT"])
+    result.write_text(result.read_text() + result.read_text().split("\n")[1].replace("seat: a", "seat: b") + "\n")
+    have = ("reviewer: step=review · seat=a · runtime=claude · model=anthropic/claude-x · effort=not-stated"
+            " · route=r · independence=not-stated · status: ran")
+    comment = tmp_path / "c.md"
+    comment.write_text(result.read_text() + "result: REVIEWED\n{{plan_check}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, have + "\n"), "--comment-file", str(comment)], primary, env)
+    assert "attribution: seats appended" in r.stdout, r.stdout
+    assert "seat=b" in body.read_text() and body.read_text().count("seat=a") == 1

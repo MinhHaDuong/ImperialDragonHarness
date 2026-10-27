@@ -273,6 +273,13 @@ def main():
         try:
             forge.get_forge(None, a.pr).comment(a.pr, text, strict=True)
             print("comment: posted")
+            if re.search(r"^seat: ", text, re.M):  # derive the reviewer lines the file lacks from the posted result (ticket 1286)
+                r = subprocess.run([sys.executable, str(HERE / "attribution_record.py"),
+                                    "--seats-pr", a.pr, "--project", primary.name],
+                                   capture_output=True, text=True)
+                print("attribution: " + ("seats appended" if r.returncode == 0 else "seats FAILED " + r.stderr.strip()))
+                if r.returncode:
+                    status = 2
         except forge.ForgeRefusal as exc:
             print("comment: FAILED " + str(exc))
             status = 2

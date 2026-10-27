@@ -171,7 +171,10 @@ write those notes by hand.
 **Attribution.** As each seat returns, collect its `reviewer: step=review`
 line, with its `finding:` lines, in a file; `gaze_close.py --attribution-file`
 appends them to the PR body through `attribution_record.py --append-pr`.
-Seats never edit the body; a failed append is reported, not skipped.
+Seats never edit the body; a failed append is reported, not skipped. For each seat
+in the posted result's `seat:` lines that the file lacks, `gaze_close.py`
+derives the reviewer line. Line fields:
+`skills/merge/references/claims.md` § Line formats.
 
 ## Cleanup and containment
 

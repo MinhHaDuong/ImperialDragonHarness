@@ -167,6 +167,7 @@ When the work shows the plan was wrong, replan and announce why.
   the one further round `skills/raid/references/fix-and-regate.md` allows for
   findings that carry a reproduction. A clean
   review leaves the branch ready to merge.
+  PR-body attribution lines (writer, reviewer) follow `skills/merge/references/claims.md` § Line formats.
 
 ## Celebrate
 

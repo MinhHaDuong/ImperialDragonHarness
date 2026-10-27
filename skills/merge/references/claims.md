@@ -46,6 +46,28 @@ output or exit is `unchecked`, which is not an all-clear. **Never refuse** on
 it: a missing block costs the record, not the merge. Surface the warning in
 your report and let the author decide whether to complete the block first.
 
+## Line formats
+
+The one home of the block's line shapes; raid, hunt and gaze cite it and do not
+restate the fields. Facts come in order: `kind`, `pr`, writers, then reviewers.
+`attribution_record.py --append` puts a late `writer:` line before the first
+`reviewer:` line, so writers may be appended at any time.
+
+```text
+writer: step=execute · runtime=claude · model=<provider>/<model-id> · effort=not-stated · route=<route> · independence=not-stated
+reviewer: step=review · seat=correctness · runtime=codex · model=<provider>/<model-id> · effort=not-stated · route=<route> · independence=cross-family · status: ran
+```
+
+- Writer: `runtime`, `effort`, `model` (verbatim provider-qualified id), plus `step`
+  (`plan`, `execute`; distinct per line), `route`, `independence`. `effort`, `route`
+  and `independence` take `not-stated` when unknown.
+- Reviewer: `seat`, `runtime`, `model`, `status: ran|failed|skipped`, plus `step`,
+  `effort`, `route`, `independence`; `finding:` lines follow a `ran` reviewer.
+- A masked identity replaces `model=` with `model-state=` and `model-evidence=`.
+- Gaze derives reviewer lines from the `seat:` lines of its posted result when the
+  seat wrote none (`gaze_close.py`, via `--seats-pr`).
+- Check with `--pr-body` (strict): `ok`, `missing` or `invalid: <reason>`.
+
 ## Repair
 
 A merge that skipped step 1 lands the code and drops the claim with no
