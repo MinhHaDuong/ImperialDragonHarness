@@ -92,19 +92,25 @@ flags, 77 wait flags, 675 bad stops (a stop can carry both).
 | Precision, ask rule, both | 8/15 = 0.53 | 0.30–0.75 |
 | Precision, wait rule | 2/6 = 0.33 | 0.10–0.70 |
 | Precision, all flags | 10/21 = 0.48 | 0.28–0.68 |
+| Precision, random flags only (ask and wait) | 9/16 = 0.56 | 0.33–0.77 |
 | Bad among unflagged | 1/14 = 0.07 | 0.01–0.31 |
-| Recall (derived) | 0.51 | 0.19–0.85 |
+| Recall (derived) | 0.57 | 0.23–0.88 |
 
-Recall is derived, not measured: flagged bad ≈ 675 × 0.51 (precision weighted
-by rule volume, (600 × 8/15 + 77 × 2/6) / 677) ≈ 345; unflagged bad ≈ 4,614 ×
-1/14 ≈ 330; recall ≈ 345 / (345 + 330). The interval carries only the
+The raid rows are positive controls, oversampled from one session; they test
+the rule on its target case but do not represent the population, so the
+derived figures below use the random strata only.
+
+Recall is derived, not measured: precision weighted by rule volume, (600 ×
+7/10 + 77 × 2/6) / 677 ≈ 0.66; flagged bad ≈ 675 × 0.66 ≈ 444; unflagged bad ≈
+4,614 × 1/14 ≈ 330; recall ≈ 444 / (444 + 330). The interval carries only the
 unflagged-rate interval; one false negative in 14 makes it wide.
 
 **Against 1164's gate G1** (at least 5 bad stops per week on Claude Code):
 the script counts about 169 flags a week (675 over four weeks); at the
-precision lower bound of 0.28 that is still about 47 true bad stops a week
-(derived). The verdict "reopen" holds under any label correction short of
-reversing most TP rows.
+random-flag precision lower bound of 0.33 that is still about 56 true bad
+stops a week (derived). Even the raid stratum's 0.20 leaves about 34. The
+verdict "reopen" holds under any label correction short of reversing most TP
+rows.
 
 ## Heuristic limits
 

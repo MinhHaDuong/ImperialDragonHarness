@@ -172,3 +172,12 @@ def test_replayed_stop_in_a_forked_session_counts_once(tmp_path):
     since = datetime.now(timezone.utc) - timedelta(days=1)
     rep = sg.report(sg.load_traces(tmp_path, since), T0 - timedelta(days=1))
     assert rep["runtimes"]["claude-code"]["weeks"]["2026-W43"]["stops"] == 1
+
+
+def test_g1_verdict_at_or_above_threshold():
+    rows = []
+    for i in range(6):
+        rows += [_human(10 * i, "go " * 50), _end(10 * i + 1, "Which one?"), _stop(10 * i + 2)]
+    tr = sg.Trace(Path("s.jsonl"), rows)
+    rep = sg.report([tr], T0 - timedelta(days=1), now=T0 + timedelta(days=6))
+    assert rep["g1"]["bad_per_week"] == 6.0 and rep["g1"]["verdict"] == "at_or_above"
