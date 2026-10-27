@@ -1,0 +1,39 @@
+%erg 0.1
+Title: yawn reports project directives that contradict or shadow the harness
+Created: 2026-10-27
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-27T05:45Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Parent: 1229. `yawn` is project-oriented and currently has no check comparing
+a project's own directives against the harness.
+
+Scope: project `CLAUDE.md`, `AGENTS.md`, `.claude/CLAUDE.md`, `.claude/rules/`,
+`.claude/skills/`, `.agents/skills/` against the loaded harness rules and
+skills. Never the harness against itself (that is 1233). In the harness repo
+itself the check is a `skip`.
+
+Findings, three kinds, each with a *why*:
+- contradiction: a local instruction that inverts a harness instruction;
+- shadowing: a local skill or rule with a harness name (mechanical), or one
+  taking a harness skill's responsibility (judged);
+- repeated procedure: a local copy of a harness procedure.
+
+A local override that states its reason in place is `ok (reasoned)`; a
+silent override or a copy is `warn`. Example of reasoned: arena's
+`CLAUDE.md` replaces merge-by-PR with `git merge --no-ff` because the repo
+has no forge.
+
+## Exit criteria
+- [ ] Name-collision shadowing is a script under `scripts/`, called from the
+      yawn body, with a test that fires on a fixture project shadowing a
+      harness skill name (positive control) and stays quiet on one that does not
+- [ ] Judged findings read skill descriptions first and full bodies only where
+      descriptions overlap
+- [ ] Each finding names the local file, the harness file, and the
+      governing instruction; output fits the existing yawn report format
+- [ ] Degrades to `skip` with a reason when the project has no local directives
+- [ ] `yawn` stays a reporter: no fixes, no tickets

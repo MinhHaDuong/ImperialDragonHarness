@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Skill-text lint test in the harness gate
+Created: 2026-10-27
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-27T05:45Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Parent: 1229. The mechanical half of the author's checklist, as a test in the
+harness adherence gate, ratcheted against a baseline so existing debt warns
+and new debt fails.
+
+Checks over `skills/*/SKILL.md` and `skills/*/references/*.md`:
+- body line count over 150: warning list (worklist for further splits), not a failure;
+- fenced code blocks or heredocs over a small line threshold: the script
+  belongs in `scripts/`;
+- ticket numbers, merge-request numbers, dated filenames, project names;
+- history phrasing (`phase N`, `since we`, `used to`, incident dates).
+
+## Exit criteria
+- [ ] One test module; `skills/trace-doctor/SKILL.md` is the positive
+      control and is flagged on line count, code-block length and history
+- [ ] Baseline file records current debt; a new violation fails
+- [ ] Project-name list is data, not hardcoded in the test
+- [ ] Runs in the adherence command; no model call
