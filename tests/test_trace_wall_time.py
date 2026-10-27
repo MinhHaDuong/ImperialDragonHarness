@@ -142,8 +142,11 @@ def test_mutating_git_chained_before_a_test_resets_the_ledger():
 def test_agent_spawned_before_the_run_is_not_the_runs(tmp_path):
     _fixture(tmp_path)
     sub = tmp_path / "proj" / "s1" / "subagents"
-    _write(sub / "agent-early.jsonl", [_say(-50, "early"), _say(-40, "x", role="assistant")])
+    _write(sub / "agent-early.jsonl", [
+        _say(-50, "early"), _use("eh", "Skill", -45, skill="hunt"), _res("eh", -44),
+    ])
     (sub / "agent-early.meta.json").write_text(json.dumps({"toolUseId": "spawn"}))
     since = datetime.now(timezone.utc) - timedelta(days=1)
     r = tw.survey(tw.load_traces(tmp_path, since), since - timedelta(days=30))
     assert r["raid"]["agents"] == 1
+    assert r["hunt"]["runs"] == 2 and r["hunt"]["nested_in_raid"] == 1  # the early hunt is not nested
