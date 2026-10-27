@@ -1,6 +1,6 @@
 # Worktree ownership, lock reason, and gc reclaim
 
-The contract behind hunt's Worktree step: how to write the lock reason so the
+The contract behind hunt's § Worktree: how to write the lock reason so the
 owner is checkable, and the conditions under which `worktree-gc` later reclaims
 the tree. No normal hunt run traverses this; it is here for anyone debugging a
 stranded worktree or a lock that will not clear.

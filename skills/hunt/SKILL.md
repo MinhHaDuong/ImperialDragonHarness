@@ -25,7 +25,7 @@ Arguments are `<ticket-id> [inline]`; `$ID` is the ticket id.
 - Without `inline`, hand the ticket to one background agent with the coder profile
   (`agents/coder.md`) whose first action is
   loading the hunt skill with `$ID inline` as its argument; the prompt holds that and
-  nothing more, since the agent loads the steps itself. Report the handoff and end the turn.
+  nothing more, since the agent loads the phases itself. Report the handoff and end the turn.
   Choose the model of each launched worker per launch, from the `route` skill grid
   (`skills/route/SKILL.md`); seats that must be independent follow
   `skills/route/references/decorrelation.md` ("The launch line").
@@ -54,8 +54,11 @@ its **Relevant files**, then decide what the ticket is and what it takes:
   on the branch, and continue.
 - **Too big or multipart**: the monster-ticket signals of `rules/workflow.md`
   § Ticket discipline for multi-PR work, or parts that would land in separate
-  merges. Split it: file child tickets, turn `$ID` into a tracker listing them,
-  and run the raid skill on the children instead of executing here.
+  merges. Do not split it yourself: return it to whoever launched the hunt,
+  flagged as a likely monster, with a proposed decomposition (tracker,
+  children sized to one sign-off unit, wave order). The caller
+  decides: the author approves, reshapes, or says go as one; a raid splits it
+  by its own monster checklist and runs the children. Execute only on "go as one".
 - **Otherwise**: choose the route. Name the deliverable's kind (code, prose,
   data, configuration, documentation), the work it takes, and the evidence that
   will show each exit criterion met. Code earns tests; prose, data and
@@ -109,7 +112,7 @@ rerunning them by name as the loop gate. For any other deliverable, do the work
 and produce the evidence the plan named.
 
 When the work shows the plan was wrong, replan: announce the new route and why,
-or split as in Plan if the ticket turns out to be several.
+or send it up as in Plan if the ticket turns out to be several.
 
 ## Verify
 
@@ -128,7 +131,7 @@ or split as in Plan if the ticket turns out to be several.
   wait for CI where it runs on the branch; `/merge` closes the claimed ticket.
   Without one there is no claim to execute: close it on the branch yourself
   (`${ERG:-tickets/erg} close $ID "<reason>"`, then `archive $ID`, as
-  `skills/merge/SKILL.md` step Close does), commit, and stop at ready to merge.
+  `skills/merge/SKILL.md` step Close does) and commit.
   Either way the merge itself is the caller's, by the project's recipe.
 - **Review.** Skip when
   `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base <base> --head HEAD`
@@ -138,8 +141,9 @@ or split as in Plan if the ticket turns out to be several.
   `skills/merge/SKILL.md` § Before merging. Without one, reviewer seats on
   `git diff <base>...HEAD`, chosen and scaled by risk
   (`skills/route/references/decorrelation.md`). Fix every finding whatever its
-  severity, rerun what the fixes affect, then the fast tier, and review again.
-  Escalate when the review does, or when round 3 still has findings.
+  severity, rerun what the fixes affect, then the fast tier, push where there
+  is a forge, and review again. Escalate when the review does, or when round 3
+  still has findings. A clean review leaves the branch ready to merge.
 
 ## Celebrate
 
