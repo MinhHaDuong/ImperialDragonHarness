@@ -805,7 +805,6 @@ def test_comments_elsewhere_do_not_move_the_hash():
     assert re_mod.criteria_hash(noted) == re_mod.criteria_hash(TICKET)
     real = (REPO_ROOT / "tickets/closed/0016-harness-project-leak-guard.erg").read_text()
     assert "<!--" in real
-    assert re_mod.criteria_hash(real) == re_mod.criteria_hash(re.sub(r"<!--.*?-->", "", real, flags=re.S))
     assert re_mod.criteria_hash(real) == re_mod.criteria_hash(real + "\n<!-- extra\n- [ ] x\n-->\n")
 
 
@@ -817,3 +816,64 @@ def test_indented_fence_is_not_a_fence_and_closer_takes_no_info_string():
     ends = TICKET.replace("irrelevant", "```python\n## Exit criteria\nghost\n``` js\n## Exit criteria\nghost2\n```")
     # ``` js does not close: everything up to the bare closer is fenced text
     assert re_mod.criteria_hash(ends) == re_mod.criteria_hash(TICKET)
+
+
+# --- ticket 1261, second fix round: spans, fences and headings before comments ---
+
+def _with_criteria(*items, tail=""):
+    body = "\n".join(f"- [ ] {i}" for i in items)
+    return f"%erg 0.1\nTitle: x\n\n--- body ---\n## Context\nc\n\n## Exit criteria\n{body}\n{tail}\n## Notes\nn\n"
+
+
+def test_inline_code_comment_markers_do_not_hide_criteria_between_them():
+    mid = "`<!--` opens a comment"
+    end = "`-->` closes it"
+    one = _with_criteria(mid, "hidden demand", end)
+    two = _with_criteria(mid, "hidden demand, loosened", end)
+    assert re_mod.criteria_hash(one) != re_mod.criteria_hash(two)
+
+
+def test_empty_comment_forms_are_complete_comments():
+    for empty in ("<!-->", "<!--->"):
+        one = _with_criteria("a", f"x {empty} y", "b", "later <!-- end --> z")
+        two = _with_criteria("a", f"x {empty} y", "b changed", "later <!-- end --> z")
+        assert re_mod.criteria_hash(one) != re_mod.criteria_hash(two)
+
+
+# hashes of the pre-comment-strip code (613d45ad) on tickets whose inline code names a marker
+PRE_STRIP_HASHES = {
+    "0016-harness-project-leak-guard": "1a7a7bfdd1385859",
+    "0124-fix-leak-guard-violation-raid-skill": "354b4d5746cd03d5",
+    "0304-enrich-generated-state-status-block": "facb6547fd5982cc",
+    "1233-harness-doctor-lints-harness-skills-and": "a2a0fff81954611c",
+    "1246-raid-prints-a-portable-sitrep-every-15-minutes": "5312193c51eff06c",
+}
+
+
+@pytest.mark.parametrize("stem", sorted(PRE_STRIP_HASHES))
+def test_inline_code_markers_in_real_closed_tickets_keep_their_hash(stem):
+    text = (REPO_ROOT / f"tickets/closed/{stem}.erg").read_text()
+    assert re_mod.criteria_hash(text) == PRE_STRIP_HASHES[stem]
+
+
+@pytest.mark.parametrize("heading_block", [
+    "  ## Exit criteria (added)\nsneaked demand",
+    "Exit criteria (revised)\n-----------------------\nsneaked demand",
+    "Exit criteria (revised)\n=======================\nsneaked demand",
+])
+def test_indented_and_setext_headings_are_criteria_sections(heading_block):
+    lead = _with_criteria("a") + "\n## Notes\n"  # closed section; prose counts only under a criteria heading
+    assert re_mod.criteria_hash(lead + "\n" + heading_block + "\n") != re_mod.criteria_hash(lead)
+
+
+def test_backtick_info_string_with_a_backtick_is_no_fence():
+    lead = _with_criteria("a") + "\n```x`y\n"
+    sneaked = lead + "\n## Exit criteria (added)\nsneaked demand\n"
+    assert re_mod.criteria_hash(sneaked) != re_mod.criteria_hash(lead)
+
+
+def test_lone_code_span_or_fenced_open_comment_is_not_refused():
+    re_mod.criteria_hash(_with_criteria("a `<!--` b"))
+    re_mod.criteria_hash(_with_criteria("a", tail="```html\n<!-- never closed\n```\n"))
+    with pytest.raises(ValueError):
+        re_mod.criteria_hash(_with_criteria("a", tail="<!-- never closed\n"))
