@@ -73,7 +73,9 @@ state, reconciled by merge commits that carry no gate record. Needs: all of F3 a
   reflex" (workflow.md, Trust, Verify, Monitor). F1 and F2 reuse the guard, the gate record and the ruleset
   as they are. F3 and F4 need new guard paths and hub checks for risks nobody has observed.
 - "**No guards on guards**" and "when a guard misfires, prefer deleting the guard … over growing it" (workflow.md,
-  Severity floor). F3/F4 grow the guard (remote-generalised on-origin path, pre-receive on `/srv`): rejected.
+  Severity floor). F3 as an extra hub beside GitHub, and F4, grow the guard (remote-generalised on-origin path,
+  pre-receive on `/srv`). F3 with `/srv` renamed `origin` would not (§3); its rejection then rests on the
+  central-origin ruling below, not on guard growth.
 - "**The forge stays the central origin: one place to pull from**" (policy, Direction) and "forge-independent,
   not forge-free — the forge stays the default route" (1252 ruling). F1 default and F2 fallback both keep one
   place to pull from. F3 and F4 remove it.
