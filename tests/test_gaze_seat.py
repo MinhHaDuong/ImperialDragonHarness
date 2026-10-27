@@ -9,6 +9,8 @@ import importlib.util
 import json
 import subprocess
 import sys
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import pytest
@@ -51,7 +53,7 @@ def rig(tmp_path):
     bin_dir, log = tmp_path / 'bin', tmp_path / 'log'
     bin_dir.mkdir()
     log.mkdir()
-    for name in ('claude', 'codex', 'pi'):
+    for name in ('claude', 'codex', 'pi', 'aider'):
         stub = bin_dir / name
         stub.write_text(STUB)
         stub.chmod(0o755)
@@ -275,3 +277,122 @@ def test_every_runtime_door_builds_a_pinned_read_only_command():
     assert pi.argv[pi.argv.index('--tools') + 1] == 'read,grep,find,ls' and pi.argv[-1] == 'PROMPT'
     with pytest.raises(ValueError):  # the claude door offers named aliases only
         gaze_seat.build_command(doors['claude-code'], 'gpt-6-luna', 'P', Path('/o'), Path('/f'))
+
+
+class _Models(BaseHTTPRequestHandler):
+    def do_GET(self):
+        body = json.dumps({'object': 'list', 'data': [{'id': i} for i in self.server.served]}).encode()
+        self.send_response(200 if self.path == '/v1/models' else 404)
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+@pytest.fixture
+def padme(rig):
+    """A stub OpenAI-compatible server and a Pi models.json declaring it as provider `padme`."""
+    server = HTTPServer(('127.0.0.1', 0), _Models)
+    server.served = ['served-model']
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    url = f'http://127.0.0.1:{server.server_port}/v1'
+    models = rig['tmp'] / 'models.json'
+    models.write_text(json.dumps({'providers': {'padme': {'baseUrl': url, 'api': 'openai-completions'}}}))
+    rig['env']['IDH_PI_MODELS'] = str(models)
+    yield url
+    server.shutdown()
+
+
+def aider_seat(rig, model='padme/served-model', **kw):
+    return launch(rig, runtime='aider', model=model, family='Alibaba', home='Anthropic', **kw)
+
+
+@pytest.mark.integration
+def test_aider_seat_runs_read_only_against_the_declared_local_server(rig, padme):
+    result = aider_seat(rig)  # no consent file: a local provider spends nothing
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = rig['panel'] / 'correctness.md'
+    assert first_line(report) == 'worker: model=padme/served-model · family=Alibaba · runtime=aider · door=headless'
+    argv = (rig['log'] / 'aider.argv').read_text().splitlines()
+    assert argv[argv.index('--model') + 1] == 'openai/served-model'
+    assert argv[argv.index('--openai-api-base') + 1] == padme  # from Pi's declaration, not a copy
+    assert argv[argv.index('--chat-mode') + 1] == 'ask'
+    for rail in ('--dry-run', '--no-git', '--no-auto-commits', '--no-suggest-shell-commands'):
+        assert rail in argv
+    diff = rig['panel'] / 'correctness.diff'
+    assert argv[argv.index('--read') + 1] == str(diff) and 'def parse(key)' in diff.read_text()
+    assert (rig['panel'] / 'correctness.prompt').read_text().startswith('You are one code-review seat')
+    assert argv[argv.index('--message-file') + 1] == str(rig['panel'] / 'correctness.prompt')
+
+
+@pytest.mark.integration
+def test_aider_seat_refuses_a_model_id_the_server_does_not_serve(rig, padme):
+    result = aider_seat(rig, model='padme/nope-model')
+    assert result.returncode == 1
+    assert result.stdout.startswith('correctness: no report (') and 'nope-model' in result.stdout
+    assert 'served-model' in result.stdout  # names what the server does serve
+    assert not (rig['log'] / 'aider.argv').exists() and not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_aider_seat_without_a_listing_or_declaration_is_no_report(rig, padme):
+    (rig['tmp'] / 'models.json').write_text(json.dumps({'providers': {'padme': {'baseUrl': 'http://127.0.0.1:9/v1'}}}))
+    unreachable = aider_seat(rig)
+    assert unreachable.returncode == 1 and 'no report (cannot list models' in unreachable.stdout
+    undeclared = aider_seat(rig, model='ghost/served-model')
+    assert undeclared.returncode == 1 and 'no report' in undeclared.stdout
+    assert not (rig['log'] / 'aider.argv').exists()
+
+
+@pytest.mark.integration
+def test_aider_seat_failure_is_no_report(rig, padme):
+    result = aider_seat(rig, mode='fail')
+    assert result.returncode == 1 and 'no report' in result.stdout
+    assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_aider_door_does_not_exempt_a_hosted_provider_from_consent(rig, padme):
+    (rig['tmp'] / 'models.json').write_text(json.dumps({'providers': {'hosted': {'baseUrl': padme}}}))
+    result = aider_seat(rig, model='hosted/served-model')
+    assert result.returncode == 1 and 'no consent for cross-family spend on hosted' in result.stdout
+
+
+def test_aider_door_declares_rails_and_no_hand_copied_address():
+    gaze_seat = load_module()
+    door = gaze_seat.load_doors(ROOT / 'skills' / 'route' / 'routes.json')['aider']
+    assert {'--chat-mode', 'ask', '--dry-run', '--no-git', '--no-auto-commits'} <= set(door['seat_rails'])
+    assert '127.0.0.1' not in json.dumps(door) and '100.' not in door['template']
+
+
+def charter(role):
+    text = (ROOT / 'profiles' / role / 'PROFILE.md').read_text()
+    return text.split('\nCharter:\n', 1)[1].strip()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('role', ['code-reviewer', 'prose-reviewer'])
+def test_seat_prompt_carries_the_role_profile_charter(rig, role):
+    extra = [] if role == 'code-reviewer' else ['--role', role]
+    result = launch(rig, *extra)
+    assert result.returncode == 0, result.stdout + result.stderr
+    prompt = (rig['log'] / 'claude.argv').read_text()
+    assert charter(role) in prompt  # one source per role: the profile file, not an embedded copy
+    assert str(rig['tree']) in prompt and 'correctness.diff' in prompt and rig['head'] in prompt  # launch parts
+    assert 'verify the parser' in prompt  # the brief still closes the prompt
+
+
+@pytest.mark.integration
+def test_unknown_role_is_no_report(rig):
+    result = launch(rig, '--role', 'no-such-role')
+    assert result.returncode != 0 and not (rig['panel'] / 'correctness.md').exists()
+
+
+def test_plan_guidance_requires_an_external_seat_before_self_only():
+    plan = (ROOT / 'skills' / 'gaze' / 'references' / 'plan.md').read_text()
+    flat = ' '.join(plan.split())
+    assert 'When the subagent door cannot launch' in flat
+    assert 'same-family seat on the headless door' in flat
+    assert 'before it may fall back to `seats: self-only`' in flat
+    assert 'self-only stays only for "no door launched"' in flat

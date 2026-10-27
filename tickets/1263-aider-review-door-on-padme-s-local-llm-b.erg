@@ -5,6 +5,8 @@ Author: reviewer
 
 --- log ---
 2026-10-27T13:07Z reviewer created
+2026-10-27T13:11Z reviewer note criterion added by author ruling 2026-10-27: headless seats load the role profile
+2026-10-27T13:21Z reviewer note criterion added by author ruling 2026-10-27: gaze plans an external seat via the headless door before falling back to self-only
 
 --- body ---
 ## Context
@@ -26,6 +28,17 @@ models through OpenAI-compatible providers declared in `~/.pi/agent/models.json`
       Pi defect of ticket 1262 must not recur here); stubbed tests, red first.
 - [ ] One live smoke on padme's local backend: a seat reviews a fixture diff and a write/commit
       instruction leaves the tree unchanged; recorded in the PR body.
+- [ ] Headless seats wear the same role persona as subagent seats: scripts/gaze_seat.py builds the seat prompt
+      from the role's profile file (profiles/code-reviewer/PROFILE.md, or profiles/prose-reviewer/PROFILE.md
+      for a prose seat, chosen by a `--role` argument defaulting to code-reviewer) plus the launch-specific
+      parts (perspective, tree, anchor, rails, diff path), instead of its own embedded CONTRACT string. One
+      source per role; a test asserts the seat prompt contains the profile's Charter section and fails on the
+      current code. The persona is per role, never per model. (author ruling 2026-10-27)
+- [ ] Gaze always plans at least one seat other than itself: when the subagent door cannot launch (nesting
+      limit, missing delegation tool), the plan uses the headless door (scripts/gaze_seat.py) for a
+      same-family seat before it may fall back to `seats: self-only`; self-only stays only for "no door
+      launched". Stated once in skills/gaze/references/plan.md; a test pins the rule's presence
+      (author ruling 2026-10-27).
 - [ ] The harness gate passes.
 
 ## Relevant files

@@ -115,6 +115,22 @@
         "status": "verified 2026-10-08 (-m gpt-6-luna accepted; -m claude-haiku-5-5 rejected)"
       }
     },
+    "aider": {
+      "subagent": {
+        "form": "none: aider is a terminal pair-programming CLI with no subagent tool",
+        "status": "n/a"
+      },
+      "headless": {
+        "template": "aider --model <openai-model> --openai-api-base <baseUrl> --openai-api-key local --message-file <promptfile> --read <diff>",
+        "seat_rails": ["--chat-mode", "ask", "--dry-run", "--no-git", "--no-auto-commits", "--no-suggest-shell-commands", "--no-detect-urls", "--no-analytics", "--no-check-update", "--no-show-release-notes", "--no-notifications", "--no-show-model-warnings", "--no-pretty", "--no-stream", "--no-fancy-input", "--no-restore-chat-history", "--map-tokens", "0", "--env-file", "/dev/null", "--input-history-file", "/dev/null", "--chat-history-file", "/dev/null", "--llm-history-file", "/dev/null"],
+        "seat_rails_status": "flags read from aider 0.86.2 --help 2026-10-27 (ticket 1263): ask mode proposes no edit, --dry-run and --no-git forbid file writes and commits, history files go to /dev/null so the review tree gains no .aider* file. aider cannot read the tree itself without git: the seat reads the diff given with --read",
+        "families": ["any provider declared in the host's Pi models.json (local ones only, see local_providers)"],
+        "local_providers": ["padme*"],
+        "base_url_source": "providers.<provider>.baseUrl in $IDH_PI_MODELS, else ~/.pi/agent/models.json (Pi's declaration, never a second copy). The model is pinned as <provider>/<id>; aider is run as openai/<id>. gaze_seat.py lists <baseUrl>/models first and refuses an id the server does not serve: a local server answers with whatever it has loaded, which is how Pi mislabelled a seat (ticket 1262).",
+        "note": "Local providers (fnmatch patterns in local_providers) spend nothing, so they need no cross-family consent; any other provider declared in Pi's file still needs it. The api key is the literal 'local': padme's server ignores it.",
+        "status": "verified 2026-10-27 with padme (ticket 1263 live smoke, recorded in the PR)"
+      }
+    },
     "vibe": {
       "subagent": {
         "form": "unknown",

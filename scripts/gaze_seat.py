@@ -6,8 +6,8 @@
 with the model pinned, and its `seat_rails` flags: read tools only, no shell
 and no write tool, where the CLI offers an allowlist; codex holds the seat by
 its read-only sandbox instead). It writes the diff `<base>...HEAD` beside the
-report, since a seat without a shell cannot run git, embeds the seat contract
-in the prompt, pins the cwd to the review tree and runs it under
+report, since a seat without a shell cannot run git, builds the prompt from the role's profile
+Charter (`--role`, `profiles/<role>/PROFILE.md`) plus the launch rails, pins the cwd to the review tree and runs it under
 `seat_clock.run_seat` with a hard cap. A headless process does not nest inside
 the caller's agent tree, so the same door works from a subagent on every
 runtime.
@@ -39,12 +39,14 @@ the plan.
 
 import argparse
 import importlib.util
+import fnmatch
 import json
 import os
 import re
 import shlex
 import subprocess
 import sys
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -59,8 +61,11 @@ MODEL_FLAGS = ('--model', '-m')
 PLACEHOLDER = re.compile(r'<[^<>]+>.*')
 ANCHOR = re.compile(r'[0-9a-f]{7,40}')
 
-CONTRACT = """\
-You are one read-only code-review seat of a gaze panel, launched headless.
+ROLES = ('code-reviewer', 'prose-reviewer')
+PROFILES = HERE.parent / 'profiles'
+
+LAUNCH = """\
+You are launched headless as one seat of a gaze panel.
 
 Perspective: {perspective}. Judge against this one perspective only.
 Review tree: {tree}, anchored at HEAD {anchor}.
@@ -68,7 +73,7 @@ Review tree: {tree}, anchored at HEAD {anchor}.
 The change under review is the diff in {diff}; read it first, then the
 files it touches under the review tree.
 
-Reach rails:
+Launch rails (they override the profile where it names a file to write):
 - Read the tree only with your read tools, or, where you have a shell, as
   `git -C "{tree}" ...`.
 - Never overwrite the working tree: no `git checkout <ref> -- <path>`, no
@@ -77,20 +82,19 @@ Reach rails:
 - If the tree is unreachable or its HEAD is not {anchor}, reply with one line
   `NOT-RUN: <reason>` and stop; never fall back to another directory.
 - Write no file, post nothing, commit and push nothing, read no credentials.
-
-Report: your final message is your report; the launcher files it. Open it
-with `worker: model=<id> · family=<family>`. Give each finding its evidence
-from the diff and a confidence (high / medium / low). Tag every non-blocking
-finding with exactly one of `verifiable:` (evidence attached now: a failing
-test id, command output or SHA:file:line), `consider:` (a hypothesis) or
-`nofollow:` (recorded, not pursued); blocking findings carry no tag. End with
-one line `verdict: clear`, `verdict: concerns` or `verdict: blocking`. An
-empty changed-file list never yields `clear`.
+- Your final message is your report; the launcher files it, so write no
+  report file yourself. An empty changed-file list never yields `clear`.
 
 The brief from gaze (intent, exit criteria, changed-file roster) follows.
 
 {brief}
 """
+
+
+def persona(role: str) -> str:
+    """The role's Charter, read from its profile file: one source per role, never per model."""
+    text = (PROFILES / role / 'PROFILE.md').read_text(encoding='utf-8')
+    return text.split('\nCharter:\n', 1)[1].strip()
 
 
 @dataclass
@@ -105,11 +109,13 @@ def load_doors(routes: Path) -> dict:
             if isinstance(door, dict) and 'headless' in door}
 
 
-def build_command(door: dict, model: str, prompt: str, outfile: Path, promptfile: Path) -> Command:
+def build_command(door: dict, model: str, prompt: str, outfile: Path, promptfile: Path,
+                  values: dict[str, str] | None = None) -> Command:
     """Fill the door's template; raise ValueError when it cannot carry this seat."""
     if 'seat_rails' not in door:
         raise ValueError('door declares no seat_rails, so it cannot hold a seat read-only')
     tokens = shlex.split(door['template'])
+    values = values or {}
     argv: list[str] = []
     stdin = None
     skip = False
@@ -124,6 +130,10 @@ def build_command(door: dict, model: str, prompt: str, outfile: Path, promptfile
             argv.append(prompt)
         elif token == '<outfile>':
             argv.append(str(outfile))
+        elif token == '<promptfile>':
+            argv.append(str(promptfile))
+        elif token.strip('<>') in values and token.startswith('<'):
+            argv.append(values[token.strip('<>')])
         elif previous in MODEL_FLAGS and PLACEHOLDER.fullmatch(token):
             offered = token.strip('<>').split('|')
             if len(offered) > 1 and model not in offered:
@@ -172,6 +182,23 @@ def billed_provider(door: dict, model: str) -> str | None:
     return model.split('/', 1)[0] if '/' in model else None
 
 
+def pi_models_path() -> Path:
+    return Path(os.environ.get('IDH_PI_MODELS') or Path.home() / '.pi' / 'agent' / 'models.json')
+
+
+def served_models(base_url: str) -> list[str] | None:
+    """Ids an OpenAI-compatible server lists at <baseUrl>/models; None when it cannot be read."""
+    try:
+        with urllib.request.urlopen(base_url.rstrip('/') + '/models', timeout=15) as response:
+            return [str(item['id']) for item in json.load(response)['data']]
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
+def is_local(door: dict, provider: str) -> bool:
+    return any(fnmatch.fnmatchcase(provider, pattern) for pattern in door.get('local_providers', []))
+
+
 def git(tree: Path, *args: str) -> str | None:
     result = subprocess.run(['git', '-C', str(tree), *args], capture_output=True, text=True)
     return result.stdout if result.returncode == 0 else None
@@ -214,7 +241,7 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         # A provider that is itself a model family serves only that family:
         # the stamped family must not claim another one.
         return False, f'no report (model {args.model} is family {provider}, not {args.family})'
-    if provider.lower() != args.home_family.lower() and \
+    if provider.lower() != args.home_family.lower() and not is_local(door, provider) and \
             provider.lower() not in (f.lower() for f in consented(config_path())):
         return False, (f'no report (no consent for cross-family spend on {provider}; '
                        f'{CONSENT_KEY} in {config_path()})')
@@ -230,14 +257,37 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         brief = args.brief.read_text(encoding='utf-8')
     except OSError as error:
         return False, f'no report (cannot read the brief: {error.strerror})'
+    values: dict[str, str] = {}
+    run_model = args.model
+    if 'baseUrl' in door['template']:
+        # An OpenAI-compatible door: the server is the provider's declaration in Pi's models.json,
+        # and the pinned id must be one it lists, since a local server answers to any id.
+        provider_id, _, model_id = args.model.partition('/')
+        try:
+            declared = json.loads(pi_models_path().read_text(encoding='utf-8'))['providers'][provider_id]
+            base_url = str(declared['baseUrl'])
+        except (OSError, ValueError, KeyError, TypeError):
+            return False, f'no report (provider {provider_id} has no baseUrl in {pi_models_path()})'
+        served = served_models(base_url)
+        if served is None:
+            return False, f'no report (cannot list models at {base_url}/models)'
+        if model_id not in served:
+            return False, f'no report (model {model_id} is not served at {base_url}; it serves {", ".join(served)})'
+        values['baseUrl'] = base_url
+        run_model = f'openai/{model_id}'
     diff_file = args.panel / f'{args.name}.diff'
-    prompt = CONTRACT.format(perspective=args.perspective, tree=args.review_tree, anchor=anchor,
-                             diff=diff_file, brief=brief)
+    values['diff'] = str(diff_file)
+    try:
+        charter = persona(args.role)
+    except (OSError, IndexError):
+        return False, f'no report (no Charter in profiles/{args.role}/PROFILE.md)'
+    prompt = charter + '\n\n' + LAUNCH.format(perspective=args.perspective, tree=args.review_tree,
+                                              anchor=anchor, diff=diff_file, brief=brief)
     staging = args.panel / f'{args.name}.seat'
     last = args.panel / f'{args.name}.seat.last'  # a door's own output file, apart from the clock's
     promptfile = args.panel / f'{args.name}.prompt'
     try:
-        command = build_command(door, args.model, prompt, last, promptfile)
+        command = build_command(door, run_model, prompt, last, promptfile, values)
     except ValueError as error:
         return False, f'no report ({error})'
     if args.dry_run:
@@ -249,7 +299,7 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         for leftover in (staging, last):  # a past run's output never stands in for this one
             leftover.unlink(missing_ok=True)
         diff_file.write_text(diff, encoding='utf-8')
-        if command.stdin:
+        if command.stdin or '<promptfile>' in door['template']:
             promptfile.write_text(prompt, encoding='utf-8')
     except OSError as error:
         return False, f'no report (cannot write beside the panel: {error.strerror})'
@@ -285,6 +335,8 @@ def main(argv: list[str]) -> int:
     run.add_argument('--model', required=True, help='model pinned on the door, from the route skill')
     run.add_argument('--family', required=True, help='model family the plan names for this seat')
     run.add_argument('--home-family', required=True, help='family of the session running gaze')
+    run.add_argument('--role', choices=ROLES, default='code-reviewer',
+                     help='profile whose Charter is the seat persona (profiles/<role>/PROFILE.md)')
     run.add_argument('--perspective', required=True)
     run.add_argument('--panel', type=Path, required=True, help='<review_tree>/.panel/<pr>/')
     run.add_argument('--name', required=True, help='plan item name; report is <panel>/<name>.md')
