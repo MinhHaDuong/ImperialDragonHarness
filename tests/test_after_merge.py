@@ -526,7 +526,8 @@ def test_open_ticket_flag_hands_the_real_forge_adapter_to_the_runner(module, mon
     monkeypatch.setattr(module, "run_after", lambda *a, **k: seen.append(a[-1]) or module.PASS)
     module.main(["run-after", "--open-ticket"])
     module.main(["run-after"])
-    assert type(seen[0]).__name__ == "GhForge" and seen[1] is None
+    assert callable(seen[0]) and seen[1] is None  # a factory: built only on red (ticket 1283)
+    assert type(seen[0]()).__name__ == "GhForge"
 
 
 # ── environment records (ticket 1288) ────────────────────────────────────────
@@ -613,3 +614,39 @@ def test_a_missing_submodule_of_a_locked_package_stays_red(tmp_path, monkeypatch
     merge_branch(work, "later")
     forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch")
     assert run_after_in_process(module, forge) == module.FAIL
+
+
+def test_broken_forge_still_records_the_tip(tmp_path, monkeypatch, module):
+    """Ticket 1283: on 01e2d72f (#1799) `--open-ticket` built the forge before any check ran.
+
+    raid_land had lost `GhForge`, the build raised, main() exited 3 into a nohup
+    log: no record, no red ticket, on that tip and the nine after it. The forge
+    is built only on red now, inside the guard that keeps the red in the note.
+    """
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    (tmp_path / "home").mkdir()
+    work = make_repo(tmp_path, [{"name": "marker-absent", "argv": ["sh", "-c", "! test -e BROKEN"]}])
+    (work / "scripts").mkdir()
+    (work / "scripts" / "merge-gate.py").write_bytes(GATE.read_bytes())
+    (work / "scripts" / "raid_land.py").write_text("REFUSED = 1  # no `forge`: the #1799 shape\n", encoding="utf-8")
+    git(work, "add", "-A")
+    git(work, "commit", "-q", "-m", "gate script beside a raid_land without forge")
+    git(work, "push", "-q", "origin", "main")
+
+    def run():
+        return subprocess.run(
+            [sys.executable, str(work / "scripts" / "merge-gate.py"), "run-after", "--ref", "main", "--open-ticket"],
+            cwd=work, capture_output=True, text=True, env=child_env(), timeout=120,
+        )
+
+    green = git(work, "rev-parse", "main")
+    proc = run()
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert [e["result"] for e in module.parse_note(note(work, green))] == ["pass"]
+
+    red = merge_branch(work, "breaker", {"BROKEN": "planted failure"})
+    proc = run()
+    assert proc.returncode == 1, proc.stdout + proc.stderr
+    assert "red ticket: not opened (AttributeError" in proc.stdout
+    git(work, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
+    assert [e["result"] for e in module.parse_note(note(work, red))] == ["fail"]
