@@ -31,7 +31,7 @@ answers that question and nothing wider.
 | Check | a script run in the review worktree, against old and new code (`git show <ref>:<path>`); model `script`, family `none` | the what is a behaviour a test or a script can show |
 | One seat | one code-reviewer or prose-reviewer, one perspective | a narrow what, one concern |
 | Panel | several seats in parallel, one perspective each | a what spanning concerns, or a large diff split by directory |
-| Other family | a seat from another model family (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | a high-risk what: worth its cost, by judgement |
+| Other family | a seat from another model family on its headless door (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | a high-risk what: the default for the perspective the risk row names, when the `# spend:` line consents to that family; without consent the plan names that perspective unavailable and a same-family seat takes it, never called independent |
 
 Plan at least one item that is not `self`: a run where only `self` reports
 is `seats: self-only` (SKILL.md § 4), which callers discard. Plan `self`
@@ -60,10 +60,14 @@ seats.
 
 Write it as `<panel>/manifest.txt` before launching anything, and pass it
 through `python3 "$IDH_ROOT/scripts/panel-manifest-check.py"`. Header lines
-carry the intent, the method and the budget in minutes, which fits the
-15-minute deadline less the closing (at most 13); each plan item is
-`name<TAB>model<TAB>family<TAB>reason`. Every item, a check included, writes
-`<panel>/<name>.md`.
+carry the intent, the method, the budget in minutes, which fits the
+15-minute deadline less the closing (at most 13), and the spend: the line
+`python3 "$IDH_ROOT/scripts/gaze_seat.py" consent` prints, which names the
+providers the author consented to spend on (one host-local key, set once; none
+by default). Consent follows the provider that bills the seat, not the family
+the plan writes. Each plan item is `name<TAB>model<TAB>family<TAB>reason`, the
+reason naming the seat's door (`headless <runtime>`, or `subagent`). Every
+item, a check included, writes `<panel>/<name>.md`.
 
 #### Worked cases
 
@@ -100,8 +104,9 @@ high-risk row, so one seat comes from another family.
 ```text
 # intent: the whole merge request against its ticket's exit criteria
 # method: panel; red team from another family because a gate is high risk
-# budget: 20m
-correctness	mid-model	anthropic	logic of the gate against the exit criteria
-scope	small-model	anthropic	only what the ticket asks
-redteam	other-model	openai	gate bypass; another family for a high-risk row
+# budget: 13m
+# spend: cross-family consented for OpenAI (<config path>)
+correctness	mid-model	anthropic	headless; logic of the gate against the exit criteria
+scope	small-model	anthropic	headless; only what the ticket asks
+redteam	other-model	openai	headless codex; gate bypass, another family for a high-risk row
 ```

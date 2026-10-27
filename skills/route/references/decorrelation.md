@@ -29,7 +29,7 @@ A failed `plan check:` is for a seat that was required and could not run, not fo
 - Replication substitutes for lineage only when no other-family seat is reachable; the report then says "same family, not independent".
 - When a required other-family seat is unreachable, say so. Never simulate one.
 
-To get a cross-family seat from Claude Code, whose `Agent` children are all Anthropic, start a headless CLI from bash: the `headless` entry in `routes.json` `launch_doors` whose `families` excludes the producer's, through the cheapest live door, with the full seat contract in the prompt (`skills/gaze/references/panel.md`, detached-seat substitution). If it cannot run, record `no report`; the plan check names the missing perspective. Cross-family seats cost real money (key caps, credit walls in `routes.json`); state the spend in the report.
+A runtime's own subagents stay in its family, so a cross-family seat starts as a headless CLI from bash: the `headless` entry in `routes.json` `launch_doors` whose `families` excludes the producer's, through the cheapest live door, launched by `$IDH_ROOT/scripts/gaze_seat.py` with the full seat contract in the prompt (`skills/gaze/references/panel.md` § Launch and collection). If it cannot run, record `no report`; the plan check names the missing perspective. Cross-family seats cost real money (key caps, credit walls in `routes.json`): they launch only on the providers the author consented to once, in the host's `cross_family_spend` key (`gaze_seat.py consent`), and the plan states the spend before launch.
 
 ## The launch line
 

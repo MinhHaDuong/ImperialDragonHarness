@@ -6,8 +6,8 @@ When the runtime's nesting blocks the inline run — a raid is itself
 an agent orchestration, and child sessions do not inherit the agent connector;
 detect it by the inline run's `plan check: FAIL` naming seats that could not
 launch, or by a known absent agent connector — substitute one detached, headless, non-interactive
-CLI session per PR per the detached-seat contract
-(`skills/gaze/references/panel.md` § Detached-seat substitution): cwd
+CLI session per PR, launched like a headless seat
+(`skills/gaze/references/panel.md` § Launch and collection): cwd
 pinned to the PR's worktree, prompt asking it to load the gaze skill with `<pr-number> <intent>`, the
 intent passed verbatim on every runtime (Claude Code, Codex, Pi), plus the
 caller prerequisites and the containment rails (no merges, no writes outside
@@ -16,7 +16,9 @@ the PR branch); the result is observed by polling the written artifact — the
 `skills/gaze/SKILL.md` § Output shape, accepted only when its `reviewed_head_sha`
 is not stale against the branch tip and its `seats:` is `panel`
 (`skills/raid/SKILL.md` § Phase 6) — under that contract's bounded wait, never a spawn exit status,
-and the structured result must return to the orchestrator.
+and the structured result must return to the orchestrator. Inside it, gaze
+launches its own seats through the same headless door, so neither level
+needs the runtime to nest agents.
 
 ## No result
 
