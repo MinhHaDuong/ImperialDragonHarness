@@ -191,7 +191,7 @@ def prune_dangling(roots: list[Path]) -> int:
             if entry.is_symlink() and not entry.exists() and _points_into_harness_skills(entry):
                 was = os.readlink(entry)
                 try:
-                    entry.unlink()
+                    entry.unlink(missing_ok=True)  # gone meanwhile (a concurrent install): done
                 except OSError as exc:
                     report("REFUSED", f"could not prune dangling link {entry}: {exc}", "remove it by hand")
                     rc = 1

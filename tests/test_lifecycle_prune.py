@@ -85,3 +85,18 @@ def test_plain_install_runs_the_prune(monkeypatch, tmp_path):
     monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
     lifecycle.install_links()
     assert swept, "plain idh install must run the dangling-link sweep"
+
+
+def test_prune_dangling_link_gone_meanwhile_is_not_a_refusal(tmp_path, monkeypatch, capsys):
+    root = tmp_path / ".claude" / "skills"
+    root.mkdir(parents=True)
+    os.symlink(tmp_path / ".agents" / "skills" / "gone", root / "gone")
+    real = Path.unlink
+
+    def vanish_first(self, *args, **kwargs):
+        real(self, missing_ok=True)  # a concurrent install got there first
+        real(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "unlink", vanish_first)
+    assert lifecycle.prune_dangling([root]) == 0
+    assert "REFUSED" not in capsys.readouterr().err
