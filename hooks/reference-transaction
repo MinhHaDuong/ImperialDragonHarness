@@ -45,7 +45,8 @@
 # refs/heads/main line of packed-refs, and the parent command is `git
 # [options] pack-refs`. State alone is not enough (`branch -D main` on a
 # packed main looks the same); argv alone is not either (`-m pack-refs`
-# spoofs a word match), hence the anchoring on the subcommand position. One deletion cannot be refused: `delete main <old>` through
+# spoofs a word match), hence the anchoring on the subcommand position.
+# One deletion cannot be refused: `delete main <old>` through
 # `update-ref --stdin` reaches the hook exactly as a `verify` does; it is
 # journaled and warned about once committed.
 #
