@@ -31,7 +31,7 @@ answers that question and nothing wider.
 | Check | a script run in the review worktree, against old and new code (`git show <ref>:<path>`); model `script`, family `none` | the what is a behaviour a test or a script can show |
 | One seat | one code-reviewer or prose-reviewer, one perspective | a narrow what, one concern |
 | Panel | several seats in parallel, one perspective each | a what spanning concerns, or a large diff split by directory |
-| Other family | a seat from another model family on its headless door (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | a high-risk what: the default for the perspective the risk row names, when the `# spend:` line consents to that family; without consent the plan names that perspective unavailable and a same-family seat takes it, never called independent |
+| Other family | a seat from another model family on its headless door (`decorrelation.md`, "The launch line"), or an external reviewer routed by `skills/reviewers/SKILL.md` | the default whenever the host consents to spend on a family other than gaze's own (the `# spend:` line): at least one seat of a consented family, on the perspective the risk row names, else the widest one; without consent the plan names that perspective unavailable and a same-family seat takes it, never called independent |
 
 Plan at least one item that is not `self`: a run where only `self` reports
 is `seats: self-only` (SKILL.md § 4), which callers discard. When the
@@ -39,6 +39,18 @@ subagent door cannot launch (nesting limit, no delegation tool), plan a
 same-family seat on the headless door (`"$IDH_ROOT/scripts/gaze_seat.py"`, which needs no
 nesting) before it may fall back to `seats: self-only`; self-only stays only
 for "no door launched", that is, every door tried and none started.
+
+`plan-write` enforces both rules. It refuses a plan whose every item is self
+unless `--no-door "<doors tried>"` names them, and, when the host consents to
+a provider other than `--home-family`, a plan with no seat of another family
+billed by such a provider (its family, or its model's `<provider>/` prefix) unless `--no-cross-family "<reason>"` gives one. It reads consent from the
+host's file, not from `--spend`. Either flag becomes a header line that the
+plan check reports as a deviation. A cross-family seat that then files no
+report (timed out, refused, `NOT-RUN:`) fails the plan check like any missing
+item: the review is not accepted, and the run never falls back to
+`--no-cross-family` after the fact. `gaze_close.py` refuses a `seats: panel`
+result that no non-self report backs. The first two worked cases below hold
+on a host with no consent; with consent each adds a consented-family seat.
 
 Choose each seat's model through the `route` skill (`skills/route/SKILL.md`),
 weaker or stronger as the what needs.
@@ -62,8 +74,10 @@ seats.
 #### The plan file
 
 Write it with `python3 "$IDH_ROOT/scripts/seat_clock.py" plan-write <panel>
---intent T --method T --budget <n>m --spend T --item NAME MODEL FAMILY REASON`
-(`--item` repeats, once per plan item) before launching anything. The helper
+--intent T --method T --budget <n>m --spend T --home-family F --item NAME MODEL
+FAMILY REASON` (`--item` repeats, once per plan item; `--home-family` is the
+family of the session running gaze, as for `gaze_seat.py launch`) before
+launching anything. The helper
 builds `<panel>/manifest.txt` and runs `panel-manifest-check.py` on it; a plan
 the checker cannot parse exits 2 and writes nothing. Never write the file by
 hand: free text there makes every sentence a seat with no report. Header lines
@@ -73,7 +87,8 @@ carry the intent, the method, the budget in minutes, which fits the
 providers the author consented to spend on (one host-local key, set once; none
 by default). Consent follows the provider that bills the seat, not the family
 the plan writes. Each plan item is `name<TAB>model<TAB>family<TAB>reason`, the
-reason naming the seat's door (`headless <runtime>`, or `subagent`). Every
+reason naming the seat's door (`headless <runtime>`, or `subagent`). An item
+is self when its name or its model is `self`: gaze's own read. Every
 item, a check included, writes `<panel>/<name>.md`.
 
 #### Worked cases
@@ -87,6 +102,7 @@ twelve-line change to one script. One seat reads the fix and its test.
 # intent: verify the fix for finding 2 because it was blocking
 # method: one seat on the twelve changed lines and their test
 # budget: 10m
+# spend: cross-family none consented (cross_family_spend unset in <config path>)
 correctness	small-model	anthropic	a few lines of logic; the test is the evidence
 ```
 
@@ -99,6 +115,7 @@ exit criterion says so`. Running the new test against the old code settles it.
 # intent: verify the parser rejects an empty key because of exit criterion 2
 # method: run the new test on the base and on the head
 # budget: 5m
+# spend: cross-family none consented (cross_family_spend unset in <config path>)
 regression	script	none	fails on the base, passes on the head
 ```
 

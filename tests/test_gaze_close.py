@@ -320,3 +320,68 @@ def test_partial_attribution_file_gets_the_missing_seat(tmp_path):
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, have + "\n"), "--comment-file", str(comment)], primary, env)
     assert "attribution: seats appended" in r.stdout, r.stdout
     assert "seat=b" in body.read_text() and body.read_text().count("seat=a") == 1
+
+
+SIGNED = "worker: model=m · family={}\nverdict: clear\n"
+
+
+@pytest.mark.parametrize("claim,reports,code", [
+    ("panel", {"self": SIGNED.format("anthropic")}, 2),            # PR 1827: panel typed, only self filed
+    ("Panel", {"self": SIGNED.format("anthropic")}, 2),            # gaze finding: any case
+    ("**panel**", {"self": SIGNED.format("anthropic")}, 2),        # gaze finding: any markup
+    ("<key>Seats: panel", {"self": SIGNED.format("anthropic")}, 2),   # gaze round 2: the key too
+    ("<key>**seats:** panel", {"self": SIGNED.format("anthropic")}, 2),
+    ("<key>- seats: panel", {"self": SIGNED.format("anthropic")}, 2),   # raid fix: list, quote, heading, spaced colon
+    ("<key>> seats: panel", {"self": SIGNED.format("anthropic")}, 2),
+    ("<key>### seats: panel", {"self": SIGNED.format("anthropic")}, 2),
+    ("<key>seats : panel", {"self": SIGNED.format("anthropic")}, 2),
+    ("panel", {"self": SIGNED.format("anthropic"), "redteam": SIGNED.format("openai")}, 0),
+    ("self-only", {"self": SIGNED.format("anthropic")}, 0),
+])
+def test_seats_panel_needs_a_filed_non_self_report(tmp_path, claim, reports, code):
+    """Ticket 1287: the `seats:` header is checked against the panel, like the plan-check line."""
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\nself\tself\tanthropic\tgaze\nredteam\to\topenai\theadless codex\n", reports)
+    comment = tmp_path / "c.md"
+    line = claim[len("<key>"):] if claim.startswith("<key>") else f"seats: {claim}"
+    comment.write_text(f"result: REVIEWED\n{line}\n{{{{plan_check}}}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == code, r.stdout + r.stderr
+    if code:
+        assert "seats: self-only" in r.stderr
+        assert (primary / ".claude" / "worktrees" / "review-7").exists()
+        assert not (tmp_path / "gh.log").exists()
+
+
+@pytest.mark.parametrize("line,value", [
+    ("seats: panel", "panel"), ("Seats: panel", "panel"), ("- seats: panel", "panel"),
+    ("> seats: panel", "panel"), ("### seats: panel", "panel"), ("seats : panel", "panel"),
+    ("**seats:** panel", "panel"), ("seats: self-only", "self-only"), ("scope: full", None),
+])
+def test_one_normaliser_reads_the_seats_claim(line, value):
+    """Raid fix, ticket 1287: the claim check and the notes record read `seats:` alike."""
+    import sys
+    sys.path.insert(0, str(Path(CLOSE).parent))
+    import gaze_close
+    assert gaze_close.seats_claim(f"result: REVIEWED\n{line}\n") == value
+
+
+def test_record_answer_reads_the_claim_through_the_one_normaliser(monkeypatch):
+    """Ticket 1287: the notes record reads `seats:` through seats_claim, as main() does. The old
+    `_field` reader saw nothing in marked-up `**seats:** panel` and recorded `self-only`."""
+    import sys
+    sys.path.insert(0, str(Path(CLOSE).parent))
+    import gaze_close
+    seen = {}
+
+    def add(cwd, kind, rid, body, **kw):
+        seen.update(body)
+        return {"id": "e1"}
+
+    monkeypatch.setattr(gaze_close.rn, "add", add)
+    monkeypatch.setattr(gaze_close.rn, "publish", lambda cwd, ids: "retrievable")
+    monkeypatch.setattr(gaze_close.rn, "setup", lambda cwd: None)
+    text = "result: REVIEWED\nscope: full\n**seats:** panel\n"
+    code = gaze_close.record_answer("/nowhere", "7", text, "", identity={"review_id": "r1"})
+    assert code == 0
+    assert seen["seats"] == "panel"

@@ -18,6 +18,10 @@ files is never force-removed.
 `--attribution-file` is required (an empty file records nothing); a call
 without it fails at argument parsing rather than skipping attribution.
 
+A comment whose `seats:` field says `panel` is refused (exit 2, nothing removed or
+posted) unless `seat_clock.py seats` reads `seats: panel` on the review panel: an item
+other than self filed a report the plan check accepts (ticket 1287).
+
 The comment file must hold `{{plan_check}}` (ticket 1267) and no typed
 `plan check:` line; otherwise the call exits 2 before anything is removed or
 posted. The script replaces it with the first line of `seat_clock.py
@@ -117,13 +121,18 @@ def cleanup(primary, pr, branch):
     return True, "review worktree removed"
 
 
-def plan_check_line(primary, pr):
-    """The checker's verdict line for the review panel, verbatim."""
+def panel_reading(primary, pr, mode):
+    """First stdout line of `seat_clock.py <mode>` on the review panel."""
     key = unit_key(pr)
     panel = primary / ".claude" / "worktrees" / f"review-{key}" / ".panel" / key
-    r = subprocess.run([sys.executable, str(HERE / "seat_clock.py"), "plan-check", str(panel)],
+    r = subprocess.run([sys.executable, str(HERE / "seat_clock.py"), mode, str(panel)],
                        capture_output=True, text=True)
-    first = r.stdout.splitlines()[0] if r.stdout.strip() else ""
+    return r.stdout.splitlines()[0] if r.stdout.strip() else ""
+
+
+def plan_check_line(primary, pr):
+    """The checker's verdict line for the review panel, verbatim."""
+    first = panel_reading(primary, pr, "plan-check")
     return first if first.startswith("plan check:") else "plan check: FAIL — manifest unreadable"
 
 
@@ -162,6 +171,20 @@ def _field(text, name):
     return m.group(1) if m else None
 
 
+def seats_claims(text):
+    """Every `seats:` value in a comment, lowercased: one reader for the claim check and the
+    notes record (ticket 1287). A leading list, quote or heading mark, markup around the key,
+    and spaces before the colon do not hide the claim."""
+    plain = re.sub(r"[*_`]", "", text or "")
+    return [v.lower() for v in re.findall(r"^[\s>#-]*seats\s*:\s*([A-Za-z][\w-]*)", plain, re.M | re.I)]
+
+
+def seats_claim(text):
+    """The value the comment claims: `panel` when any line says it, else the first, else None."""
+    claims = seats_claims(text)
+    return "panel" if "panel" in claims else (claims[0] if claims else None)
+
+
 def answer_scope(text):
     """Spec §4: a narrow intent is never widened. `scope:` when given, else full only for the
     default intent (`intent: default`); any other intent, or none, records delta."""
@@ -196,7 +219,7 @@ def record_answer(primary, pr, text, attribution, identity=None):
         entry = rn.add(cwd, "answer", rid, {
             "run_id": identity.get("run_id") or f"gz-{rn._compact(rn._now())}-{rn._hex(4)}",
             "result": result if result in ("REVIEWED", "FINDINGS", "ESCALATE") else "ESCALATE",
-            "seats": _field(text, "seats") or "self-only",
+            "seats": seats_claim(text) or "self-only",
             "coverage": cov,
             "attribution": attribution.splitlines() if attribution else [],
             "text": text}, head=_field(text, "reviewed_head_sha"), skill="gaze",
@@ -232,6 +255,12 @@ def main():
         print("gaze_close: the comment file needs the {{plan_check}} placeholder and no typed "
               "'plan check:' line; the script writes that line", file=sys.stderr)
         return 2
+    if seats_claim(comment_text) == "panel":  # in any case or markup, key and value
+        derived = panel_reading(primary, a.pr, "seats") or "seats: self-only (panel unreadable)"
+        if derived != "seats: panel":  # ticket 1287: a typed panel claim no non-self report backs
+            print(f"gaze_close: the comment says seats: panel, the panel reads {derived}: no item "
+                  "but self filed a report; post seats: self-only", file=sys.stderr)
+            return 2
     plan_line = plan_check_line(primary, a.pr)
     print(plan_line)  # the callers copy this line (comment, blocked-cleanup ESCALATE); never typed
     entry = read_entry(primary, a.pr)

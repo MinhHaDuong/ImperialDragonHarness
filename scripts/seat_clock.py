@@ -26,13 +26,23 @@ family=<family>` (leading blank lines and Markdown bold tolerated), or holds
 that line alone did not report either, which fails it too; one that names no
 family or another family than planned, or an item over the budget, is a
 deviation. An item planned with family `none` (a script) needs only a
-non-empty report. Exit 1 on FAIL only.
+non-empty report. A `# no-cross-family:` or `# no-door:` header is a deviation
+too, so the posted line shows it. Exit 1 on FAIL only.
 
-`plan-write <panel> --intent T --method T --budget <n>m [--spend T] --item NAME
-MODEL FAMILY REASON ...` writes `<panel>/manifest.txt` (ticket 1267): the header
-and TAB lines are built here and checked by `panel-manifest-check.py` before
-anything is written, so a manifest the plan check cannot parse is never
-produced. Exit 2 and no file on a refused plan.
+`seats <panel>` prints `seats: panel` when an item other than self (name or
+model `self`) filed a report the plan check accepts, else `seats: self-only`.
+
+`plan-write <panel> --intent T --method T --budget <n>m [--spend T]
+--home-family F [--no-door T] [--no-cross-family T] --item NAME MODEL FAMILY
+REASON ...` writes `<panel>/manifest.txt` (ticket 1267): the header and TAB
+lines are built here and checked by `panel-manifest-check.py` before anything
+is written, so a manifest the plan check cannot parse is never produced. It
+also refuses (ticket 1287) a plan whose every item is self, unless `--no-door`
+names the doors tried, and, when the host's consent file (`gaze_seat.py`)
+names a provider other than `--home-family`, a plan with no item of another
+family billed by such a provider (its family, or the `<provider>/` prefix of
+its model, case-insensitive), unless `--no-cross-family` gives the reason; either
+flag becomes a header line. Exit 2 and no file on a refused plan.
 """
 
 import argparse
@@ -126,12 +136,33 @@ def roster(panel: Path) -> tuple[bool, list[str]]:
     return complete, lines
 
 
+def is_self(item: list[str]) -> bool:
+    """Gaze's own read: item name `self`, or model `self` (references/plan.md, the plan file)."""
+    return item[0] == 'self' or (len(item) > 1 and item[1].strip() == 'self')
+
+
 def plan_check(panel: Path) -> tuple[bool, list[str]]:
+    ok, lines, _ = assess(panel)
+    return ok, lines
+
+
+def seats(panel: Path) -> str:
+    """`seats: panel` when an item other than self filed a report the plan check accepts."""
+    _, _, reported = assess(panel)
+    return 'seats: panel' if reported else 'seats: self-only'
+
+
+def assess(panel: Path) -> tuple[bool, list[str], list[str]]:
+    """The plan check, plus the non-self items whose report it accepted."""
     complete, lines = roster(panel)
     manifest = (panel / 'manifest.txt').read_text(encoding='utf-8-sig').splitlines()
     budget = next((int(m.group(1)) * 60 for line in manifest
                    if (m := re.fullmatch(r'# budget: (\d+)m', line.strip()))), None)
-    missing, deviations = [], []
+    missing, deviations, reported = [], [], []
+    deviations += [f'no cross-family seat: {line.split(":", 1)[1].strip()}' for line in manifest
+                   if line.startswith('# no-cross-family:')]
+    deviations += [f'no door launched: {line.split(":", 1)[1].strip()}' for line in manifest
+                   if line.startswith('# no-door:')]
     by_name = {line.split(': ', 1)[0]: line for line in lines}
     for cells in (line.split('\t') for line in manifest if line.strip() and not line.startswith('#')):
         name, planned = cells[0], cells[2].strip() if len(cells) > 2 else ''
@@ -149,6 +180,8 @@ def plan_check(panel: Path) -> tuple[bool, list[str]]:
         if not lines_ or (planned != 'none' and (not signed or len(lines_) < 2)):
             missing.append(f'{name}: no report (empty, unsigned, or the worker line alone)')
             continue
+        if not is_self(cells):
+            reported.append(name)
         if planned == 'none':
             continue
         named = re.search(r'family=([\w.-]+)', first, re.IGNORECASE)
@@ -162,17 +195,52 @@ def plan_check(panel: Path) -> tuple[bool, list[str]]:
         head = 'plan check: PASS with deviations — ' + '; '.join(deviations)
     else:
         head = 'plan check: PASS'
-    return not missing and complete, [head, *lines]
+    return not missing and complete, [head, *lines], reported
+
+
+def cross_family_problems(items: list[list[str]], home_family: str, no_door: str | None,
+                          no_cross_family: str | None) -> list[str]:
+    """Ticket 1287: refuse the plans a run that skipped references/plan.md writes.
+
+    Every item self, unless `--no-door` names the doors tried. Under host consent
+    (read here from the consent file, never from `--spend`), no item of a consented
+    family other than the home family, unless `--no-cross-family` gives the reason."""
+    problems = []
+    if items and all(is_self(item) for item in items) and not (no_door or '').strip():
+        problems.append('every item is self, so the run would be seats: self-only; plan a seat on the '
+                        'headless door (gaze_seat.py launch), or pass --no-door "<doors tried>"')
+    spec = importlib.util.spec_from_file_location('gaze_seat', Path(__file__).with_name('gaze_seat.py'))
+    gaze_seat = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(gaze_seat)
+    path = gaze_seat.config_path()
+    home = home_family.strip().lower()
+    other = [f for f in gaze_seat.consented(path) if f.lower() != home]
+    allowed = {f.lower() for f in other}
+
+    def cross(item: list[str]) -> bool:
+        # Decorrelation by the family label; consent by the family or the `<provider>/` that bills it.
+        family, model = item[2].strip().lower(), item[1].strip()
+        provider = model.split('/', 1)[0].lower() if '/' in model else ''
+        return family not in (home, 'none') and (family in allowed or provider in allowed)  # a script never counts
+
+    if other and not any(cross(item) for item in items if not is_self(item)) \
+            and not (no_cross_family or '').strip():
+        problems.append(f'this host consents to cross-family spend on {", ".join(other)} ({path}) and no '
+                        f'seat of another family is billed by it; plan a headless seat of {other[0]} via gaze_seat.py, '
+                        'or pass --no-cross-family "<reason>"')
+    return problems
 
 
 def plan_write(panel: Path, intent: str, method: str, budget: str, spend: str | None,
-               items: list[list[str]]) -> list[str]:
+               items: list[list[str]], home_family: str = '', no_door: str | None = None,
+               no_cross_family: str | None = None) -> list[str]:
     """Write the manifest; return the problems (nothing is written when any)."""
     spec = importlib.util.spec_from_file_location(
         'panel_manifest_check', Path(__file__).with_name('panel-manifest-check.py'))
     checker = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(checker)
-    flat = [cell for item in items for cell in item] + [intent, method, budget, spend or '']
+    flat = [cell for item in items for cell in item] + [intent, method, budget, spend or '', home_family,
+                                                        no_door or '', no_cross_family or '']
     early = []
     if any(re.search('[\udc80-\udcff]', cell) for cell in flat + [str(panel)]):
         return ['an argument is not valid UTF-8']
@@ -185,9 +253,16 @@ def plan_write(panel: Path, intent: str, method: str, budget: str, spend: str | 
         return early
     if any(c in cell for cell in flat for c in '\t\n\r'):
         return ['a tab or newline inside a field']
+    refused = cross_family_problems(items, home_family, no_door, no_cross_family)
+    if refused:
+        return refused
     header = [f'# intent: {intent}', f'# method: {method}', f'# budget: {budget}']
     if spend:
         header.append(f'# spend: {spend}')
+    if no_door:
+        header.append(f'# no-door: {no_door}')
+    if no_cross_family:
+        header.append(f'# no-cross-family: {no_cross_family}')
     text = '\n'.join(header + ['\t'.join(item) for item in items]) + '\n'
     problems = checker.check(text)
     if not problems:
@@ -207,17 +282,23 @@ def main(argv: list[str]) -> int:
     roster_p.add_argument('panel', type=Path)
     plan_p = sub.add_parser('plan-check', help='the plan against what ran')
     plan_p.add_argument('panel', type=Path)
+    seats_p = sub.add_parser('seats', help='panel or self-only, from the reports')
+    seats_p.add_argument('panel', type=Path)
     write_p = sub.add_parser('plan-write', help='write a validated manifest')
     write_p.add_argument('panel', type=Path)
     write_p.add_argument('--intent', required=True)
     write_p.add_argument('--method', required=True)
     write_p.add_argument('--budget', required=True, help='<n>m')
     write_p.add_argument('--spend')
+    write_p.add_argument('--home-family', required=True, help='family of the session running gaze')
+    write_p.add_argument('--no-door', help='doors tried, when every item is self')
+    write_p.add_argument('--no-cross-family', help='why no consented cross-family seat is planned')
     write_p.add_argument('--item', nargs=4, action='append', default=[],
                          metavar=('NAME', 'MODEL', 'FAMILY', 'REASON'))
     args = parser.parse_args(argv)
     if args.mode == 'plan-write':
-        problems = plan_write(args.panel, args.intent, args.method, args.budget, args.spend, args.item)
+        problems = plan_write(args.panel, args.intent, args.method, args.budget, args.spend, args.item,
+                              args.home_family, args.no_door, args.no_cross_family)
         for problem in problems:
             print(f'seat_clock: plan refused: {problem}', file=sys.stderr)
         if not problems:
@@ -232,6 +313,13 @@ def main(argv: list[str]) -> int:
             pass  # the printed line still names the seat
         print(line)
         return 0 if ok else 1
+    if args.mode == 'seats':
+        try:
+            print(seats(args.panel))
+        except OSError as error:
+            print(f'seat_clock: cannot read {args.panel}/manifest.txt: {error}', file=sys.stderr)
+            return 2
+        return 0
     try:
         complete, lines = (plan_check if args.mode == 'plan-check' else roster)(args.panel)
     except OSError as error:

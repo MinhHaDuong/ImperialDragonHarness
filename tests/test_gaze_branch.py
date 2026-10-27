@@ -18,6 +18,14 @@ SEAT = ("reviewer: step=review · seat: a · runtime=codex · family=openai · r
         "model=m · status: ran")
 
 
+def seat_panel(f):
+    """A panel where one non-self seat reported: gaze_close accepts `seats: panel` (ticket 1287)."""
+    panel = Path(f["panel"])
+    panel.mkdir(parents=True, exist_ok=True)
+    (panel / "manifest.txt").write_text("# budget: 10m\na\tm\topenai\theadless codex\n")
+    (panel / "a.md").write_text("worker: model=m · family=openai\nverdict: clear\n")
+
+
 def branch_repo(tmp_path):
     primary, env = make_repo(tmp_path)
     git(primary, "config", "user.email", "t@example.com")
@@ -39,6 +47,7 @@ def test_branch_review_records_an_answer_in_the_notes(tmp_path):
     assert rid.startswith("rv-") and "f.txt" in r.stdout
     attr = tmp_path / "attr.txt"
     attr.write_text(SEAT + "\n")
+    seat_panel(f)
     comment = tmp_path / "c.md"
     comment.write_text(f"result: REVIEWED\nseats: panel\nreviewed_head_sha: {f['head']}\n"
                        "intent: default: the whole merge request\n{{plan_check}}\n{{duration}}\n")
@@ -71,6 +80,7 @@ def test_branch_review_reuses_the_hunt_request(tmp_path):
 def close_with(tmp_path, primary, env, f, intent_line):
     attr = tmp_path / "attr.txt"
     attr.write_text("")
+    seat_panel(f)
     comment = tmp_path / "c.md"
     comment.write_text(f"result: REVIEWED\nseats: panel\nreviewed_head_sha: {f['head']}\n{intent_line}"
                        "{{plan_check}}\n")

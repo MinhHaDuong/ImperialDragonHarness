@@ -86,7 +86,10 @@ where `<panel>` is `$review_tree/.panel/<pr-number>/`: method, items (each
 worker or check, with its model and family), budget. Work gaze does itself is
 an item like any other, worker `self`, and writes its own report to
 `<panel>/<item>.md`, opening with the same `worker:` line every report
-carries. Guidance and worked cases: `references/plan.md`.
+carries. Read `references/plan.md` before planning: it holds the guidance and
+worked cases. `plan-write` takes `--home-family` (gaze's own family) and
+refuses a plan whose every item is self, and, when the host consents to
+another family, a plan with no seat of that family.
 
 <!-- inline: references/plan.md -->
 
@@ -122,7 +125,8 @@ No retry: a worker that timed out or could not be reached is a deviation.
 
 Whatever the result, say who reviewed: `seats: self-only` when no item but
 `self` has a report, else `seats: panel` (a script check counts: its evidence
-is not gaze's judgment). This is the one definition. A self-only result
+is not gaze's judgment). This is the one definition; `gaze_close.py` refuses
+`seats: panel` when no non-self item filed a report. A self-only result
 is the caller reviewing its own work, so the reuse rule
 (`skills/merge/SKILL.md` § Gating tiers) counts it, and a record with no
 `seats:` line, as no record. Seats launch on the headless door
