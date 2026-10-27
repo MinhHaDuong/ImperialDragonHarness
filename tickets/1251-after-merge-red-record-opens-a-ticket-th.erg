@@ -2,10 +2,10 @@
 Title: After-merge red record opens a ticket through a ticket-only PR
 Created: 2026-10-27
 Author: Minh Ha-Duong
-Blocked-by: 1245
 
 --- log ---
 2026-10-27T10:57Z Minh Ha-Duong created
+2026-10-27T11:39Z reviewer note blocker 1245 closed — Blocked-by removed.
 
 --- body ---
 ## Context
