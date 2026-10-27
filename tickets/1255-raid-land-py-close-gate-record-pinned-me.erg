@@ -30,3 +30,19 @@ executes it.
 skills/merge/SKILL.md, skills/raid/SKILL.md, scripts/merge-gate.py, new scripts/raid_land.py
 
 Related: [[1252]], [[1245]].
+
+## Raid annotation (design, 2026-10-27)
+Order: after 1252's C1 (scripts/forge.py, gh backend suffices), before 1252's C5, which adds the
+none-backend merge into the adapter and so reaches raid_land.py with no change to its body.
+Files: new scripts/raid_land.py, new tests/test_raid_land.py, skills/raid/SKILL.md Phase 7 step 4
+(one call replaces the hand-rolled chain), skills/merge/SKILL.md one sentence naming the script as
+the recipe's executor (the recipe stays the contract).
+Adapter boundary: forge.resolve/ready/auto_merge_armed/disarm/merge/read_back/comment only; git,
+merge-gate.py tier/enabled/check/run, erg close and sync-local-main.sh are called directly
+(forge-free already). Never imports gh.
+First test (red): stubbed forge whose head != the gate's ruled tip -> exit non-zero, reason printed,
+the stub's merge never called. Then: second stale record refuses; unreadable read-back refuses and
+never re-merges; happy path prints exactly one `<pr> merge <start> <end>` row.
+Sync step: after a MERGED read-back at the pinned head, run `sync-local-main.sh <primary> <base>`
+(step 8); a `left untouched`/`diverged`/`skipped` line is printed in the report and sets a distinct
+non-zero exit (say 4, merged-but-unsynced), never a re-merge.

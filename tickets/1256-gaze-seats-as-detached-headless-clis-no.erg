@@ -31,3 +31,20 @@ skills/gaze/references/panel.md, skills/gaze/SKILL.md, skills/raid/references/de
 skills/route/routes.json (launch_doors), scripts/gaze_setup.py, scripts/gaze_close.py
 
 Related: [[1241]], [[1252]].
+
+
+## Raid annotation (design, 2026-10-27)
+Plan: one launcher, new scripts/gaze_seat.py `launch --runtime --model --perspective --panel --name`,
+that builds the command from routes.json launch_doors headless templates (claude -p --model, codex
+exec -s read-only -m -o, pi --no-session -p --model), embeds panel.md's seat contract, pins cwd to
+the review tree, and runs under `seat_clock.py run --cap 600`. gaze references/plan.md: the headless
+door is the default seat door; the cross-family pick per decorrelation.md; the `seat:` line already
+carries family= and model= (attribution_record SEAT regex), so no format change. Consent: one config
+key (cross-family spend allowed, providers listed) read at plan time and named in the manifest.
+A launch failure writes `no report (<reason>)`: plan-check already treats it as missing.
+First test: launcher with a stub CLI on PATH writes the report path and a correct `worker:` line;
+a stub that exits 1 yields `no report`, never a self-read.
+Wait for 1241? No: 1241's body carries no `self-only` item (grep finds none in tickets/skills/
+scripts), so there is nothing to wait for; 1256's "missing, never a self-read" criterion covers it.
+Wait for 1252's adapter? No: seats are runtime launches, not forge calls; keep gaze_setup.py and
+gaze_close.py out of the diff to stay disjoint from 1252 C2. Run it in wave 1 beside C1.
