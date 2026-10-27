@@ -19,13 +19,13 @@ name weak reasoning. An option with no price is not recommended.
 
 # Trust, Verify, Monitor
 
-For every check on work: review, gate, guard, merge. **Trust** the delegate
-and the existing checks; add a round, seat or guard for a named risk, never
-by reflex. **Verify** cheaply: reproduce the defect in one command, run the
-gate, positive control; fix what reproduces, skip what is only conceivable.
-**Monitor** after merge, not before: measure, reopen on evidence. Nothing here
-loosens confirm-first for irreversible or outward acts, nor forge read-back
-(`git.md`).
+A doctrine, not a checklist: it orients judgment wherever work is checked
+(review, gate, guard, merge). **Trust** the delegate and the existing checks;
+a new round, seat or guard answers a named risk, not a reflex. **Verify**
+cheaply: reproduce the defect in one command, run the gate, positive control;
+fix what reproduces, skip what is only conceivable. **Monitor** after merge,
+not before: measure, reopen on evidence. Nothing here loosens confirm-first
+for irreversible or outward acts, nor forge read-back (`git.md`).
 
 # Session start
 
