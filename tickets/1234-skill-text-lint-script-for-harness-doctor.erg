@@ -43,3 +43,28 @@ Checks over `skills/*/SKILL.md` and `skills/*/references/*.md`:
 **Antipatterns.** No per-check plugin classes: a flat list of `(name, regex)`. No severity scale. No `--fail` flag; always exit 0.
 
 **Criterion proposals.** (a) A project-name fixture built from a temp list file. (b) The trace-doctor positive control is a hand check by the doctor, since no test runs over live skills. (c) Fenced lines are scanned for dates too.
+
+## Plan (raid 2026-10-27)
+PLAN WARN: criterion 2 (trace-doctor flagged) cannot be a test, since no test may run over live skills. It is a hand check at verify time: run the script once on that file, expect findings for `body_lines` (235 > 150), `long_fence` (lines 37-65) and `history`; paste the output in the PR.
+
+Actions
+1. `scripts/skill_text_lint.py`: argparse CLI `skill_text_lint.py [paths...] [--root DIR] [--projects FILE]`. No paths: glob `skills/*/SKILL.md` and `skills/*/references/*.md` under `--root` (default: repo root). `--projects` defaults to `scripts/projects.json`; names come from its `name` field, `harness` skipped. Exit 0 always, no `--fail`, no model call, logging for the human summary (stderr).
+2. Frontmatter stripped with `skill_frontmatter.FRONTMATTER`; line numbers stay file-absolute. Body line count = lines after the frontmatter.
+3. Flat list `PATTERNS = [(name, regex)]`, case-insensitive, per line (fenced lines included):
+   history_phase `\bphase \d`; history_since `\bsince we\b`; history_used_to `\bused to\b`; history_formerly `\bformerly\b`; date `20\d\d-\d\d(-\d\d)?`; ticket_ref `#\d{3,}`; ticket_word `\b(ticket|MR|PR) \d+`. Project names: one extra pattern `\b(?:n1|n2|...)\b` (re.escape) built from the list file.
+4. Two structural checks, same finding shape: `body_lines` when body > 150 (one finding, line 1); `long_fence` for a fenced block (info string empty/bash/sh/python) with more than 12 content lines (finding at the opening fence line); `heredoc` for `<<` inside any fence.
+5. Output on stdout: JSON `{"files": N, "findings": [{"file","line","check","text"}], "summary": {check: count}}`; one human line per check on stderr.
+6. Docstring states: doctor's instrument, never a gate, false positives ("used to compute", dates in command examples) are the doctor's to judge.
+
+FIRST failing test: `tests/test_skill_text_lint.py::test_long_fence_flags_13_lines_not_12`. Fixture (tmp_path `skills/a/SKILL.md`): frontmatter, then a bash fence of 12 `echo x` lines, then a second bash fence of 13. Assertion: findings with check `long_fence` are exactly one, at the second fence's opening line. Fails first with ModuleNotFoundError.
+
+Further tests, each a positive and a negative near-miss (fixtures in tmp_path, `lint(root, projects_file)` called as a function, plus one CLI `subprocess` run on the fixture tree asserting exit 0 and parseable JSON):
+- body_lines: 150 body lines (frontmatter extra) not flagged; 151 flagged.
+- heredoc: `cat <<'EOF'` in a fence flagged; `a << b` in prose outside a fence not flagged.
+- history: `phase 2` flagged, `phased rollout` not; `since we` flagged, `since weeks` not; `used to` flagged, and a documented false positive `used to compute` is also flagged (test pins it, comment says doctor judges); `formerly` flagged, `form` not.
+- date: `2026-10-27` and `2026-10` flagged, `2026-1` not; one inside a fence flagged (criterion c).
+- ticket_ref: `#1234` flagged, `#12` not; `ticket 1234` and `MR 7` flagged, `ticket list` not.
+- projects: temp list file `[{"name":"zeta","path":"x"},{"name":"harness","path":"y"}]`: `zeta` flagged, `harness` not, `zetas` not; a second list file changes the result (criterion: names are data).
+- references glob: a hit under `references/x.md` is found; a file under `notes/` is not.
+
+Files touched: scripts/skill_text_lint.py (new), tests/test_skill_text_lint.py (new), tickets/1234-*.erg (this plan). Not touched: the adherence command, any hook, CI, other tests.

@@ -49,3 +49,44 @@ has no forge.
 **Criterion proposals.** (a) The script emits the `skip` reason; test the harness-self and the no-directives skips. (b) `ok (reasoned)` made operational: the reason sits in the same file within a few lines of the override; arena `CLAUDE.md` "no remote" is the live fixture. (c) Output is stable for 1231, which routes it.
 
 **Blind-spot pass (raid 2026-10-27), folded in.** (1) Scope includes the project's own top-level `skills/*` when they are projected into the user skill namespace (arena's `skills/arena`, linked from `~/.claude/skills/arena`), not only `.claude/skills/` and `.agents/skills/`. (2) Project skill roots are per runtime (Vibe `.vibe/skills`, `adapters/pilot-support.json:55`; Pi, Codex): take the folder list from the adapter declarations, not a hardcoded list, and judge shadowing against each runtime's precedence. (3) yawn is the cross-runtime proof slice (`adapters/README.md:142-152`): the check calls its script through the runtime-supplied `IDH_ROOT` seam and `tests/test_skill_seam.py` passes. (4) The finding record is the 1231 contract: kind, local file, harness file, governing instruction, verdict (`ok (reasoned)` / `warn`), proposed disposition and destination (project or harness); `tests/test_yawn_molt_suggestion.py` pins the shared yawn/molt text. Raid assumption, author may overrule: the judged half also runs when molt calls yawn from lair, since it is scoped to one project with local directives.
+
+## Plan (raid 2026-10-27)
+Actions:
+1. `scripts/project_shadow.py <project>`: JSON on stdout. Skip record
+   `{"status":"skip","reason":...}` for the harness or a linked worktree of it
+   (port the git-common-dir test of `prompt-project-coherence.sh:9-14`) and for no
+   local directive source.
+2. Collisions: harness names = `skills/*/SKILL.md` (via `skill_frontmatter.load`) and
+   `rules/*.md` stems; local = dirs with a SKILL.md under each project skill root,
+   `.claude/rules/*.md`, and top-level `skills/*` (arena). One record per collision
+   with the 1231 fields: kind, local_file, harness_file, instruction (harness
+   description), verdict, disposition, destination. Malformed local SKILL.md gives a
+   record with a reason, never a crash.
+3. Skill roots are data: add `project_skill_roots` per harness in
+   `adapters/pilot-support.json` (claude `.claude/skills`; codex/pi `.agents/skills`;
+   vibe `.vibe/skills` + `.agents/skills`); the script reads it.
+4. `ok (reasoned)`: reason marker (`because`, `since`, `has no`) within 5 lines of the
+   override in the same file; else `warn`. Name collisions only; contradiction and
+   repeats stay judged.
+5. `skills/yawn/SKILL.md`: check 14 (script through the existing `$IDH_ROOT` seam,
+   then judged pass: descriptions first, bodies only on overlap), one table row, bullets
+   with local file, harness file, instruction. Reporter only; `ok (reasoned)` never
+   enters the Action plan; contract headings untouched.
+6. One sentence in `adapters/README.md` yawn paragraph.
+First failing test, `tests/test_project_shadow.py::test_name_collision_is_found`:
+tmp non-git project (GIT_CEILING_DIRECTORIES) with `.claude/skills/yawn/SKILL.md` and
+`.claude/skills/mine/SKILL.md`, run against the real harness. Assert exactly one
+record: kind shadowing, local_file ends `.claude/skills/yawn/SKILL.md`, harness_file
+ends `skills/yawn/SKILL.md`, verdict warn, no `mine`. Negative twin: only `mine`, zero
+records.
+Others: harness/worktree skip; no-directives skip; `.vibe/skills/yawn` and top-level
+`skills/yawn` found; reasoned vs unreasoned CLAUDE.md gives `ok (reasoned)` vs `warn`;
+extend `test_yawn_molt_suggestion`. Antipatterns: the `mine` and exact-one asserts defeat a
+"flag everything" version; the reasoned pair differs only by reason text; the vibe root is
+absent from code defaults, so not tautological. Dependencies: none upstream; feeds 1231 (record contract) and 1232 (guard moved here
+before the prompt script is deleted).
+PLAN WARN: criterion 2 and the contradiction/repeat kinds are model judgment in skill
+text; only skill-text assertions are testable.
+Files: scripts/project_shadow.py, tests/test_project_shadow.py, skills/yawn/SKILL.md,
+tests/test_yawn_molt_suggestion.py, adapters/pilot-support.json, adapters/README.md
+(check no schema test rejects the new field).
