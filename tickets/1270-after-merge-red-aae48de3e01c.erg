@@ -1,0 +1,28 @@
+%erg 0.1
+Title: After-merge red on main aae48de3e01c: pytest-guard
+Created: 2026-10-27
+Author: merge-gate
+
+--- log ---
+2026-10-27T14:46Z merge-gate created
+
+--- body ---
+## Context
+
+Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full
+declared set failed on main after a merge.
+
+Tip: aae48de3e01c3eedc320383bcdb6fb55df8992d8
+Failing checks: pytest-guard
+Last green after-merge tip: c9d50e43c9805fc83e63a5a52436681d69cc324f
+Merges since (first parent, newest first):
+- aae48de3e01c Merge pull request #1785 from MinhHaDuong/t1252-3527094
+
+Failed tests (check, test id):
+- pytest-guard tests/test_local_ci_parallel.py::test_pool_runs_every_item_and_counts_failures
+- pytest-guard tests/test_local_ci_parallel.py::test_pool_failure_count_is_exact_over_many_short_items
+- pytest-guard tests/test_local_ci_parallel.py::test_pool_counts_a_job_killed_before_it_wrote_its_status
+
+## Exit criteria
+
+- [ ] An after-merge record on main passes the checks named above.
