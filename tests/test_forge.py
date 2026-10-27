@@ -207,3 +207,13 @@ def test_cli_resolve_none(repo, nogh):
     bad = subprocess.run([sys.executable, str(SCRIPTS / "forge.py"), "--forge", "none", "resolve", "7"],
                          cwd=repo, capture_output=True, text=True, env={"PATH": os.environ["PATH"]})
     assert bad.returncode == 1 and "forge:" in bad.stderr
+
+
+def test_gh_checks_pending_is_not_passing(stub):
+    f = forge.get_forge("gh")
+    for status in ("IN_PROGRESS", "QUEUED", "PENDING"):
+        stub.write_text(json.dumps({"head": HEAD, "body": "", "rollup": [
+            {"name": "a", "status": "COMPLETED", "conclusion": "SUCCESS"},
+            {"name": "b", "status": status, "conclusion": ""}]}))
+        assert f.checks("7") == "pending"
+

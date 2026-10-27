@@ -100,13 +100,17 @@ class GhForge:
         return d.get("comments", []) + d.get("reviews", [])
 
     def checks(self, ref: str) -> str:
-        """`none`, `passing`, or `failing: <names>`."""
+        """`none`, `passing`, `pending`, or `failing: <names>`. `pending` means a check has not
+        finished (no conclusion yet); callers gate on `passing` only. Failing wins over pending."""
         rollup = self._view(ref, "statusCheckRollup").get("statusCheckRollup") or []
         bad = [c for c in rollup if (c.get("conclusion") or c.get("state") or "").upper()
                in ("FAILURE", "ERROR", "TIMED_OUT", "CANCELLED")]
         if not rollup:
             return "none"
-        return "failing: " + ",".join(c.get("name", "?") for c in bad) if bad else "passing"
+        if bad:
+            return "failing: " + ",".join(c.get("name", "?") for c in bad)
+        done = [(c.get("conclusion") or c.get("state") or "").upper() for c in rollup]
+        return "pending" if any(d in ("", "PENDING", "EXPECTED") for d in done) else "passing"
 
     def comment(self, ref: str, body: str) -> None:
         self._gh("pr", "comment", str(ref), "--body", body)
