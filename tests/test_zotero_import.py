@@ -2648,3 +2648,31 @@ def test_an_unanswered_key_dialog_is_not_reported_as_zotero_stopping(
         zi.authorize(zi.local_library())
     assert "stopped answering" not in str(exc.value)
     assert "unanswered" in str(exc.value)
+
+
+@pytest.mark.integration
+def test_a_second_client_on_a_taken_port_retries_and_both_write(
+        zotero_binary, tmp_path, monkeypatch):
+    """Two clients forced onto one port (what two xdist workers drawing the
+    same free_port() do): the second one's readiness checks pass against the
+    first's server and its keyed writes would 401. The fixture detects the
+    foreign listener, stops its client, draws another port and retries."""
+    monkeypatch.delenv("ZOTERO_NO_LAUNCH", raising=False)
+    first = zotero_live.LiveZotero(tmp_path / "a")
+    try:
+        draws = iter([first.port])
+        real = zotero_live.free_port
+        monkeypatch.setattr(zotero_live, "free_port",
+                            lambda: next(draws, None) or real())
+        try:
+            second = zotero_live.LiveZotero(tmp_path / "b")
+        except pytest.skip.Exception as skipped:  # base code skips on a shared port
+            pytest.fail(f"the second client could not start: {skipped}")
+        try:
+            assert first.save(unique_title())
+            assert second.save(unique_title())  # 401 on a shared port
+            assert second.port != first.port
+        finally:
+            second.stop()
+    finally:
+        first.stop()
