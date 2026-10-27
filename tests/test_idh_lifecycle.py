@@ -787,3 +787,32 @@ def test_bin_on_path_is_not_a_collision(tmp_path, monkeypatch):
     lc = _fresh_lifecycle()
     assert lc.install_bin({}, set(), []) == 0
     assert (tmp_path / ".local/bin/idh-snapshot").is_symlink()
+
+
+DOIFETCH_REF = "3e074798b0c0bf0b010c444ea701ab8768213294"  # ticket 1266 log: PR 11 merge
+
+
+def test_install_puts_doifetch_on_a_pinned_ref_once(machine, tmp_path):
+    """1266: idh install installs DOIfetch as a uv tool, idempotently."""
+    uvlog, state = tmp_path / "uv.log", tmp_path / "uv.state"
+    stub = Path(machine["env"]["PATH"].split(":")[1]) / "uv"
+    stub.write_text(
+        f'#!/bin/sh\necho "$*" >> "{uvlog}"\n'
+        f'case "$1 $2" in\n'
+        f'  "tool dir") echo "{state}"; exit 0;;\n'
+        f'  "tool install") mkdir -p "{state}/doifetch"; echo "$*" > "{state}/doifetch/uv-receipt.toml"; exit 0;;\n'
+        f'esac\nexit 0\n'
+    )
+    stub.chmod(0o755)
+    for _ in range(2):
+        r = machine["idh"]("install")
+        assert r.returncode == 0, r.stderr
+        installs = [ln for ln in uvlog.read_text().splitlines() if ln.startswith("tool install")]
+        assert len(installs) == 1, installs
+    assert f"DOIfetch@{DOIFETCH_REF}" in installs[0]
+
+
+def test_install_without_uv_reports_and_still_succeeds(machine):
+    r = machine["idh"]("install")
+    assert r.returncode == 0, r.stderr
+    assert "uv" in r.stderr and "doifetch" in r.stderr.lower()

@@ -48,6 +48,31 @@ def report(kind, detail, repair) -> None:
     print(f"  {kind}: {detail}\n    repair: {repair}", file=sys.stderr)
 
 
+DOIFETCH_URL = "git+https://github.com/MinhHaDuong/DOIfetch"
+DOIFETCH_REF = "3e074798b0c0bf0b010c444ea701ab8768213294"  # PR 11: uv tool, open sources by default
+
+
+def install_doifetch() -> int:
+    """Install DOIfetch as a uv tool at the pinned ref (1266). Optional: never fails the install."""
+    uv = shutil.which("uv")
+    if not uv:
+        report("SKIPPED", "doifetch not installed: uv not found", "install uv, then rerun idh install")
+        return 0
+    spec = f"{DOIFETCH_URL}@{DOIFETCH_REF}"
+    try:
+        tools = subprocess.run([uv, "tool", "dir"], capture_output=True, text=True, timeout=60).stdout.strip()
+        receipt = Path(tools) / "doifetch" / "uv-receipt.toml"  # uv records the git rev; `tool list` does not
+        if tools and receipt.is_file() and DOIFETCH_REF in receipt.read_text():
+            return 0
+        done = subprocess.run([uv, "tool", "install", "--force", spec], capture_output=True, text=True, timeout=300)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        report("SKIPPED", f"doifetch not installed: {exc}", "check uv and the network, then rerun idh install")
+        return 0
+    if done.returncode:
+        report("SKIPPED", f"doifetch not installed: uv exited {done.returncode}", "check the network, then rerun idh install")
+    return 0
+
+
 def install_links() -> int:
     """Create each absent entry; leave correct ones; refuse anything else."""
     rc = 0
@@ -97,6 +122,7 @@ def install_links() -> int:
             report(*problem)
             rc = 1
     rc |= install_bin(owned, declared, entries())
+    install_doifetch()
     rc |= retire_stale(owned, declared)
     rc |= prune_dangling(skill_roots())
     try:
