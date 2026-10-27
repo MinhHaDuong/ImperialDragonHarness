@@ -273,7 +273,7 @@ def main():
         try:
             forge.get_forge(None, a.pr).comment(a.pr, text, strict=True)
             print("comment: posted")
-            if not lines and re.search(r"^seat: ", text, re.M):  # the seat wrote no attribution: derive reviewer lines from the posted result (ticket 1286)
+            if re.search(r"^seat: ", text, re.M):  # derive the reviewer lines the file lacks from the posted result (ticket 1286)
                 r = subprocess.run([sys.executable, str(HERE / "attribution_record.py"),
                                     "--seats-pr", a.pr, "--project", primary.name],
                                    capture_output=True, text=True)

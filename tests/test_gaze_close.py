@@ -308,10 +308,15 @@ def test_empty_attribution_file_runs_seats_pr(tmp_path):
     assert "reviewer: " in body.read_text() and "seat=a" in body.read_text()
 
 
-def test_nonempty_attribution_file_skips_seats_pr(tmp_path):
+def test_partial_attribution_file_gets_the_missing_seat(tmp_path):
     primary, env, f = opened(tmp_path)
-    seats_shim(tmp_path, env)
+    body = seats_shim(tmp_path, env)
+    result = Path(env["MOCK_RESULT"])
+    result.write_text(result.read_text() + result.read_text().split("\n")[1].replace("seat: a", "seat: b") + "\n")
+    have = ("reviewer: step=review · seat=a · runtime=claude · model=anthropic/claude-x · effort=not-stated"
+            " · route=r · independence=not-stated · status: ran")
     comment = tmp_path / "c.md"
-    comment.write_text("result: REVIEWED\n{{plan_check}}\n")
-    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, SEAT + "\n"), "--comment-file", str(comment)], primary, env)
-    assert "seats" not in r.stdout
+    comment.write_text(result.read_text() + "result: REVIEWED\n{{plan_check}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, have + "\n"), "--comment-file", str(comment)], primary, env)
+    assert "attribution: seats appended" in r.stdout, r.stdout
+    assert "seat=b" in body.read_text()
