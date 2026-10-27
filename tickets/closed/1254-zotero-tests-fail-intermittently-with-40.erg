@@ -2,6 +2,7 @@
 Title: Zotero tests fail intermittently with 401 under parallel gate runs
 Created: 2026-10-27
 Author: reviewer
+Closed: children 1258 and 1259 landed; cause isolated
 
 --- log ---
 2026-10-27T11:19Z reviewer created
@@ -10,6 +11,8 @@ Author: reviewer
 2026-10-27T12:52Z reviewer note split: criterion 3, 4 and the down-fixture part of 2 moved to child 1258 (PR #1758); 1254 stays the tracker with criterion 1 and the LiveZotero port open
 2026-10-27T12:52Z reviewer note verify-reroll — round 1: verifiable minors unresolved (red_report test passes on base; FAILED_TEST truncates node ids containing " - ")
 2026-10-27T12:58Z reviewer note cause isolated 2026-10-27 (investigator, positive control fired): live-vs-live port collision — two xdist workers drawn the same port by free_port(); the second Zotero starts without a bind error, its readiness checks pass against the other worker's server (reads need no key), and keyed writes fail 401 because the key belongs to the other server. Explains gate-only appearance (load widens the >=1.4 s bind window) and clean isolated reruns. Excluded: candidate-tree files, the HOME leak (#1759), env. #1758/1258 fixed the down-port half only.
+2026-10-27T13:45Z reviewer note criteria met: cause isolated (live-vs-live port collision, positive control, log 2026-10-27); concurrency handled by 1258 (down port held) and 1259 (foreign listener rejected, PR #1762)
+2026-10-27T13:45Z reviewer closed — children 1258 and 1259 landed; cause isolated
 
 --- body ---
 ## Context
@@ -22,9 +25,9 @@ parallel runs sharing the local API key or server is one hypothesis. Each occurr
 re-record (about 75-90 s) and can block a merge.
 
 ## Exit criteria
-- [ ] Reproduce: the failing test identified, with the condition that triggers the 401 (or the
+- [x] Reproduce: the failing test identified, with the condition that triggers the 401 (or the
       hypothesis refuted with the run that refutes it).
-- [ ] The zotero tests cannot fail from another concurrent run: isolated credentials/server or a
+- [x] The zotero tests cannot fail from another concurrent run: isolated credentials/server or a
       stub, or moved to a tier the gate does not run, with the reason stated. The "down" fixtures are
       done (child 1258); open: the LiveZotero port (`tests/zotero_live.py`, `free_port`, Zotero itself binds it).
 - [x] `merge-gate.py run` keeps the failing test names of a failed check: child 1258.
@@ -32,6 +35,7 @@ re-record (about 75-90 s) and can block a merge.
 
 ## Children
 - 1258 Zotero down-fixture port hold and failed-test names in the gate (PR #1758, closed)
+- 1259 Zotero live fixture rejects a foreign listener on its port (PR #1762, closed)
 
 ## Relevant files
 tests/test_zotero_import.py, scripts/merge-gate.py, pytest.ini
