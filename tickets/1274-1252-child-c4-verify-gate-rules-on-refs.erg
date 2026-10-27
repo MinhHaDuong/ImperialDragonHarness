@@ -1,0 +1,19 @@
+%erg 0.1
+Title: 1252 child C4: verify-gate rules on refs/notes/review with no forge
+Blocked-by: 1273
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T15:45Z reviewer created
+
+--- body ---
+## Context
+Child of tracker 1252 (forge-less raid, gaze and merge); design in 1252's `## Raid annotation (design, 2026-10-27)` and `## Advisor ruling (2026-10-27)`.
+verify-gate reads the gaze entries of refs/notes/review and appends `kind: verdict` entries with session= and round=, deriving the round from them.
+
+## Exit criteria
+- [ ] verify-gate rules on that record with no forge.
+- [ ] The forge path is unchanged (its tests pass); the harness gate passes.
+
+Related: [[1252]].
