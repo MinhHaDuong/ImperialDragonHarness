@@ -527,6 +527,8 @@ def gate_state(cwd, review_id, head, remote="origin"):
         state["reason"] = "no completed review: no gaze answer in the review"
     elif answers[-1].get("result") == "ESCALATE":
         state["reason"] = f"no completed review: the latest gaze answer {answers[-1]['id']} is ESCALATE"
+    elif state["result"] == "ESCALATE":
+        state["reason"] = f"no completed review: the answer {state['answer']} covering the head is ESCALATE"
     elif cov["match"] == "none":
         state["reason"] = (f"stale: no gaze answer covers {head[:12]}; the latest reviewed "
                            f"{state['reviewed_head'][:12]}")

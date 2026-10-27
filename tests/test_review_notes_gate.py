@@ -223,3 +223,15 @@ def test_cli_gate_and_verdict(repo):
     assert v["text"].startswith("/verify-gate round=1 verdict=APPROVED") and v["round"] == 1
     r = cli(repo, "add", "verdict", "--review", rid, "--json", "{}")
     assert r.returncode != 0
+
+
+def test_an_escalate_answer_covering_the_head_refuses_even_if_not_latest(repo):
+    rid = rn.open_review(repo, "feature", "main")
+    answer(repo, rid, result="ESCALATE")  # on the current head
+    sh(repo, "branch", "-q", "old", "feature~0")
+    sh(repo, "switch", "-q", "feature")
+    commit(repo, "f.py", "def f():\n    return 13\n\n\n\n\n\ndef g():\n    return 2\n", "later")
+    answer(repo, rid, result="REVIEWED")  # latest, but on another head
+    sh(repo, "reset", "-q", "--hard", "old")
+    state = rn.gate_state(repo, rid, "feature")
+    assert not state["ready"] and "ESCALATE" in state["reason"]
