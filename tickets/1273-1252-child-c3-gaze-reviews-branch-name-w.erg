@@ -1,6 +1,5 @@
 %erg 0.1
 Title: 1252 child C3: gaze reviews branch:<name> with no forge, results in refs/notes/review via one helper
-Blocked-by: 1277
 Created: 2026-10-27
 Author: reviewer
 
@@ -8,6 +7,7 @@ Author: reviewer
 2026-10-27T15:45Z reviewer created
 2026-10-27T16:07Z reviewer note re-blocked on 1277 (design spec + transport trial) by author ruling 2026-10-27
 2026-10-27T16:24Z reviewer note blocker 1272 closed — Blocked-by removed.
+2026-10-27T16:31Z reviewer note design: conception/2026-10-27-notes-review-spec.md, accepted by the author 2026-10-27 (ticket 1277 log); build to it
 
 --- body ---
 ## Context
