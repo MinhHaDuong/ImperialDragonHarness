@@ -1,0 +1,30 @@
+%erg 0.1
+Title: Landing starts the after-merge runner: raid_land.py or raid Phase 7 owns /merge step 9
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T13:17Z reviewer created
+
+--- body ---
+## Context
+Raid 2026-10-27: after ticket 1245 made the before-merge set cheap (no pytest), 15 PRs merged through
+the raid's landing path (a hand-rolled land.sh, then scripts/raid_land.py) and NO after-merge run
+started: no record on any main tip, no runner log, no lock. raid_land.py's docstring says step 9 is
+the caller's; raid Phase 7 calls raid_land.py and does not start it either. Main went about 1h20
+without a full-suite pass, which voids the "trust, verify, monitor" bargain of tracker 1226.
+
+## Exit criteria
+- [ ] Exactly one owner starts /merge step 9 after every MERGED read-back on a gated base: either
+      raid_land.py (detached, never blocking, its exit code unaffected) or raid Phase 7 and hunt's
+      landing text — stated once, cited elsewhere.
+- [ ] A test lands a request on a temp gated repo through the raid path and finds an after-merge record
+      (or a busy-lock note) on the new tip; it fails on today's code.
+- [ ] `lair`'s audit (`main_sweep.py --after`) flags main tips older than N minutes without an
+      after-merge record, so a silent gap like today's is caught within a day.
+- [ ] The harness gate passes.
+
+## Relevant files
+scripts/raid_land.py, skills/raid/SKILL.md, skills/merge/SKILL.md, scripts/main_sweep.py, skills/lair/SKILL.md
+
+Related: [[1226]], [[1244]], [[1255]].
