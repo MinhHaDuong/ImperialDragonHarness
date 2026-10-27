@@ -85,9 +85,12 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
       close claim `**Ticket:** tickets/<ticket file>`. Wait for CI where it runs on the branch.
 11. **Review.** Skip when
     `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base origin/main --head HEAD`
-    exits 0 (bookkeeping). Otherwise run up to 3 rounds: load the gaze skill with the
-    merge-request number; on findings, fix every comment whatever its severity, rerun
-    the tests the fixes affect by name, then the fast test tier, push, and review again.
-    Escalate when gaze does, or when round 3 still has findings. What each gaze
+    exits 0 (bookkeeping). Otherwise load the gaze skill with the merge-request
+    number and an intent: `verify <what> because <why>`, the ticket's exit criteria
+    by default. On findings, fix every one whatever its severity, rerun the tests
+    the fixes affect by name, then the fast test tier, push, and run gaze again
+    with a new, narrower intent: verify those fixes, because they were the
+    findings. Escalate when gaze does, or when a pass over the fixes still finds
+    blocking items on them. What each gaze
     result leads to, a missing or stale `reviewed_head_sha` included, is the
     caller's policy in `skills/merge/SKILL.md` § Before merging.

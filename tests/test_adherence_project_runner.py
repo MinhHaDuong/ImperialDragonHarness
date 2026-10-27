@@ -23,16 +23,6 @@ def test_adherence_discovers_a_declared_runner_and_fails_closed():
     assert not re.search(r"uv run|pytest|pyproject|ruff", text)
 
 
-def test_gaze_loads_live_adherence_contract():
-    text = (REPO / "skills/gaze/SKILL.md").read_text()
-    agent_a = text.split("**Agent A — adherence**", 1)[1].split("**Agent B", 1)[0]
-    assert 'Skill(skill: "verify-adherence"' in agent_a
-    assert "harness-extension-point: runtime skill-loader invocation" in agent_a
-    assert "worktree=" in agent_a
-    assert "structured" in agent_a
-    assert not re.search(r"uv run|pytest|pyproject|ruff", agent_a)
-
-
 def test_trace_doctor_uses_harness_stdlib_interpreter():
     text = (REPO / "skills/trace-doctor/SKILL.md").read_text()
     assert "uv run" not in text

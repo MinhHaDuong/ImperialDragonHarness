@@ -88,9 +88,9 @@ General recommendations:
   absent a reason, and Haiku 5.5 is its peer inside Claude Code. Keep a
   Haiku worker under 100K prompt tokens (price x5 above).
 - Review seats of `/gaze` (correctness and red team included) start in the
-  ÉCONOMIQUES cluster, by the author's ruling of 2026-10-21; the battery's
-  "when to raise" column is the escalation, and it overrides the ASSURANCE rule
-  for judgment work, below, for those seats.
+  ÉCONOMIQUES cluster, by the author's ruling of 2026-10-21; gaze's plan
+  raises a seat when the what needs it (`skills/gaze/references/plan.md`), and
+  that overrides the ASSURANCE rule for judgment work, below, for those seats.
 - An advisor call (a one-shot question on a deep, well-defined problem: `raid`'s
   Advisor role, `rules/workflow.md` § Ask up first) goes to ASSURANCE, from a
   different family than the asker when the call is contested.

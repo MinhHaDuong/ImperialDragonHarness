@@ -48,15 +48,16 @@ For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.
    those targets match the actual changed paths. Python code, unmapped paths, or a
    project without a map require the full gate; never label a scoped pass full.
 3. **Review comments are load-bearing.** Every review comment (from `/review`,
-   the `/gaze` panel, human authors, Copilot) is either ADDRESSED (commit changed the cited file, OR
+   the findings of every `## /gaze result` comment, human authors, Copilot) is either ADDRESSED (commit changed the cited file, OR
    the comment was marked resolved, OR a ticket was opened with the rationale) or
    UNRESOLVED. No "I'll get to it later."
 4. **Simplify findings are load-bearing.** Every must-fix from Gaze’s report-only simplify
    phase is either fixed by the coder (diff shows the change) or explicitly justified in a
    PR comment that the gate agent validates. Read the `Unresolved simplify:` line of every
    `## /gaze result` comment on the PR: a later round may have skipped simplify.
-5. **Adherence violations are blocking.** Any `blocking` entry from `/verify-adherence`
-   is a REROLL trigger.
+5. **Adherence violations are blocking.** Adherence is read from the merge
+   gate record's checks (`pytest-guard` runs the `-m adherence` tests; § Check
+   plan), never from a gaze result: a failing check is a REROLL trigger.
 6. **Two rounds max.** Round 1 is initial gate. Round 2 is post-fix re-gate. Round 3 is
    forbidden — escalate.
 7. **Tagged minors are mandatory.** Review comments from the `/gaze` code and
@@ -72,7 +73,7 @@ Always `<pr-number> repo=<path>`. Without `repo=`, STOP and emit
 fall back on. With that minimum the gate resolves ticket, diff and comments
 itself. Optionally:
 - The caller's bundle (preferred): `/gaze`'s returned result block
-  (`reviewed_head_sha`, unresolved lists, adherence, panel integrity), with
+  (`reviewed_head_sha`, intent, `plan check:`, unresolved lists), with
   `{pr, ticket}`.
 - `integration`: run the declared integration checks whatever the diff
   touches (§ Check plan). A project asks for the same through its declaration.
@@ -143,12 +144,13 @@ path list of its own. On a gated base, from the gate worktree:
 
 ```bash
 python3 "$IDH_ROOT/scripts/merge-gate.py" plan --base origin/<base-branch> --head HEAD \
-    --since <prior head> --adherence-from <reviewed_head_sha> [--integration]
+    --since <prior head> [--integration]
 ```
 
 `<prior head>` is the round-1 `ruled_tip_sha` on round 2, else
 `reviewed_head_sha`. The plan prints one line per check declared in the
-base's `.merge-gate.json`, and one for adherence:
+base's `.merge-gate.json`; adherence is one of them, the gate record's
+`pytest-guard`:
 
 - `reuse <check>`: the check passed in the latest published gate record for
   `<prior head>`, and the change from that record's candidate to the current
@@ -167,9 +169,6 @@ base's `.merge-gate.json`, and one for adherence:
   check (declared `"integration": true`) whose `"covers"` paths the diff does
   not touch. Integration tests are out of scope by default: they run when the
   diff touches what they cover, or when the caller passes `integration`.
-- `reuse adherence`: what the head adds since `reviewed_head_sha` is empty
-  or bookkeeping; the gaze adherence result stands and the verdict cites its
-  head. `run adherence`: only an adherence result on the ruled tip counts.
 
 A gate on an ungated base (the plan answers `off:`) applies the same rule by
 hand: `merge-gate.py tier --since <prior head>` answering 0 reuses the check
@@ -192,7 +191,7 @@ apply, and step 2 needs its seats.
    `python3 "$IDH_ROOT/scripts/review_evidence.py" gate --repo "$gate_tree" --base origin/<base-branch> --ticket <ticket-file> --seat <seat>` (one `--seat` per reported seat).
    Copy its `seat` lines into the verdict. A seat is `ran` (report on this head), `reused` (same patch-id,
    criteria hash and policy version, from an earlier head, which it names),
-   `stale` or `no-report`. Check, gate and adherence results are reused or
+   `stale` or `no-report`. Check and gate results are reused or
    re-run as § Check plan says, never otherwise.
 3. **Forge reviews.** Run
    `python3 "$IDH_ROOT/scripts/review_evidence.py" forge <owner/name> <merge-request>`.
@@ -254,10 +253,9 @@ unresolved_simplify_findings:
   - finding: "<verbatim>"
     severity: must-fix | consider
     status: UNADDRESSED | WAIVED_WITHOUT_RATIONALE
-unresolved_adherence_violations:
-  - rule_ref: "<.claude/rules/foo.md#bar>"
-    file: <path>
-    severity: blocking | nit
+unresolved_adherence_violations:   # failing adherence tests of the gate record's checks
+  - test_id: <tests/test_x.py::test_y>
+    check: <check name>
 scope_overflow:
   - file: <path>
     reason: "<not traceable to exit criterion>"
@@ -266,7 +264,6 @@ checks:   # the § Check plan lines, each with its outcome
   - "run <check>: pass | fail(<exit>) - <reason>"
   - "reuse <check>: passed on record on <head> (candidate <oid>, <time>, <host>); <why>"
   - "skip <check>: <reason>"
-  - "reuse adherence: result on <head>; <why>" | "run adherence: <reason>"
 review_evidence: legacy | {seats, forge}
   # seats: "seat <name>: ran|reused|stale|no-report (<verdict>) - <reason> <report>"
   # forge: "human: ran <login> ..." | "copilot: ran <login> ..." | "rejected <login> ... (<reason>)"
@@ -282,7 +279,7 @@ second_round_needed:   # only if REROLL
 
 - Any `MISSING` in `per_exit_criterion` → REROLL (round 1) / ESCALATE (round 2).
 - Any `UNRESOLVED` review comment from a human author → REROLL (round 1) / ESCALATE (round 2).
-- Any `UNRESOLVED` review comment from the `/gaze` panel labelled severity ≥ medium →
+- Any `UNRESOLVED` `/gaze` finding labelled severity ≥ medium →
   REROLL (round 1) / ESCALATE (round 2).
   Severity triggers apply to `blocking` findings. Tagged minors are triaged by tag, not severity.
 - Any unresolved `verifiable:` minor (failing assertion still reproduces) → treated as
@@ -293,7 +290,7 @@ second_round_needed:   # only if REROLL
   nothing else.
 - Any `UNADDRESSED` must-fix simplify finding without rationale → REROLL (round 1) /
   ESCALATE (round 2).
-- Any `blocking` adherence violation → REROLL (round 1) / ESCALATE (round 2).
+- Any failing adherence check of the gate record → REROLL (round 1) / ESCALATE (round 2).
 - Any `run` check that fails → REROLL (round 1) / ESCALATE (round 2). A check
   neither run nor reused nor skipped by the plan → ESCALATE.
 - Any `stale` seat → REROLL (round 1) / ESCALATE (round 2).
@@ -372,7 +369,7 @@ The caller owns the gate session; gaze has no part in it.
   the count. Past an ESCALATE the merge decision is the author's, not another
   gate run's.
 - **What a re-gate reuses.** Round 2 plans with `--since` the round-1
-  `ruled_tip_sha`: checks and adherence are reused or re-run as § Check plan
+  `ruled_tip_sha`: checks are reused or re-run as § Check plan
   says, seats as § Review evidence says. Exit criteria and review comments
   are always ruled afresh.
 - **Caller enforcement.** The caller invokes the gate at most twice per
@@ -395,8 +392,7 @@ The caller owns the gate session; gaze has no part in it.
   `/verify-gate refused: no completed review`, never the
   `/verify-gate round=<n> verdict=<V>` header that round derivation counts.
 
-Uses existing PR state for the criteria once that check passes (no phase 2-5
-outputs are passed).
+Uses existing PR state for the criteria once that check passes.
 Isolation is the same on every path (§ Isolation: own worktree, removed on exit).
 
 ## Output destinations

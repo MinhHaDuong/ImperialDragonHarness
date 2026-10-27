@@ -47,27 +47,27 @@ GATE_TOKEN = re.compile(
     r"|\bverdict\s*:|\b(?:result|status)\s*[:=]\s*(?:ok|okay|pass(?:ed)?|green|clean|lgtm)\b",
     re.I,
 )
-# Only the exact flag `--force-approve` and this test's filename are exempt;
-# the posted override markers (`/gaze: force-approved`, `FORCE-APPROVED by`)
-# are verdict-bearing units and must be allowlisted like any other.
-OVERRIDE_NAME = re.compile(r"--force-approve\b(?!d)|test_gaze_never_approves")
+# Only this test's filename is exempt.
+OVERRIDE_NAME = re.compile(r"test_gaze_never_approves")
 RESULT_VALUES = {"REVIEWED", "FINDINGS", "ESCALATE"}
 
 # Every verdict-bearing line of the expanded contract, read and accepted.
 ALLOWED_LINES = (
     (
-        'description: "Review one merge request: adherence check, code or prose '
-        'review panel, simplify. Returns REVIEWED / FINDINGS / ESCALATE and never'
-        ' APPROVED; the merge gate is /verify-gate. Does not merge."'
+        'description: "Review one merge request by intention: the caller says '
+        'what to verify and why; gaze plans the method, runs it once, checks the'
+        ' plan against what ran and records one result. Returns REVIEWED / '
+        'FINDINGS / ESCALATE and never APPROVED; the merge gate is /verify-gate.'
+        ' Does not merge."'
     ),
     (
-        'One skill, one PR, one review result: REVIEWED / FINDINGS / ESCALATE. '
-        '**Gaze reviews; `/verify-gate` gates.** Gaze never returns APPROVED, '
-        'REROLL or NEEDS-AUTHOR: those are gate verdicts, ruled by `/verify-gate`.'
-        ' **Does not merge.** Input precondition: no other live `/gaze` on the '
-        'PR (`rules/workflow.md` § Delegation). A past verdict is evidence, not '
-        'authority to overwrite or call it fabricated: inspect its gate identity '
-        'and ruled tip.'
+        'One skill, one PR, one pass, one review result: REVIEWED / FINDINGS / '
+        'ESCALATE. **Gaze reviews; `/verify-gate` gates.** Gaze never returns '
+        'APPROVED, REROLL or NEEDS-AUTHOR: those are gate verdicts, ruled by '
+        '`/verify-gate`. **Does not merge.** Input precondition: no other live '
+        '`/gaze` on the PR (`rules/workflow.md` § Delegation). A past verdict is'
+        ' evidence, not authority to overwrite or call it fabricated: inspect '
+        'its gate identity and ruled tip.'
     ),
     (
         '- Never returns APPROVED: a test pins it '
@@ -75,40 +75,9 @@ ALLOWED_LINES = (
         'finding on the reviewed head, nothing more.'
     ),
     (
-        'If the battery cannot be launched at all — the runtime refuses the '
-        'spawn, the agent connector is absent, or the spawn-depth limit is hit — '
-        'first attempt the detached-seat substitution documented in '
-        '`references/panel.md`; if that also cannot run, emit a one-line '
-        '`battery: NOT-RUN — cause: <guard|no-agent-tool|depth>` in the result '
-        'comment. The boundary with the seat-level signal: no seat launched at '
-        'all is a battery NOT-RUN; seats launched but reports missing stays '
-        'seat-level `PANEL-INTEGRITY:` (whose name is unchanged). The NOT-RUN '
-        'line names a launch failure, not a review finding: never fabricate '
-        'findings. The result is capped at ESCALATE, never APPROVED (gaze returns'
-        ' no approval at all).'
-    ),
-    (
-        '- `REVIEWED`: none of the above. It is not an approval: `/verify-gate` '
-        'still checks every exit criterion and review comment against the diff.'
-    ),
-    (
-        '- `--force-approve` returns `result: ESCALATE` with `battery: skipped '
-        '(--force-approve)`; nothing is reviewed, so REVIEWED is unavailable. The'
-        ' PR comment carries `/gaze: force-approved — reason: <reason>` and '
-        '`FORCE-APPROVED by <reason>`.'
-    ),
-    (
-        '- Posts a loud PR comment: `/gaze: force-approved — reason: <reason>`. '
-        'It lists the outputs of phases 2–5 that exist, so reviewers see what was'
-        ' waived.'
-    ),
-    (
-        '- Is an override record, not a verdict and not a gate pass: '
-        '`/verify-gate` still rules, and still does not merge.'
-    ),
-    (
-        'On `--force-approve`, the comment is annotated `FORCE-APPROVED by '
-        '<reason>`.'
+        '- `REVIEWED`: none of the above, the what covered. It is not an '
+        'approval: `/verify-gate` still checks every exit criterion and review '
+        'comment against the diff.'
     ),
     (
         '- **Gating.** `/verify-gate` rules APPROVED / REROLL / ESCALATE / '
@@ -134,8 +103,6 @@ NEGATIVE_CONTROLS = (
     "Post the result as good to merge.",
     "status: green",
     "Give the PR a green light.",
-    # the posted override marker is not an exemption (/gaze 1538 B2)
-    "Return FORCE-APPROVED to the caller.",
     # every inflection of approve (/gaze 1538 round 2)
     "Mark the PR as approving.",
     "Record two approvals for the caller.",
@@ -143,12 +110,12 @@ NEGATIVE_CONTROLS = (
 )
 
 # Reference titles, dropped by the inliner, seen only by the raw scan.
-RAW_HEADINGS = ("# Gaze — telemetry, force-approve and output shape",)
+RAW_HEADINGS = ()
 
 # /gaze 1538 B1: the unflagged continuation of an allowlisted wrapped sentence.
 CONTINUATION = (
-    "checks every exit criterion and review comment against the diff.",
-    "is skipped for this result; the caller merges directly.",
+    "`/verify-gate` still checks every exit criterion and review comment against",
+    "`/verify-gate` is skipped for this result; the caller merges directly",
 )
 
 
@@ -271,7 +238,7 @@ def _section(heading: str) -> str:
 
 
 def test_result_enumeration_has_no_gate_verdict():
-    result = _section("### 6. Return the review result")
+    result = _section("### 5. Record")
     m = re.search(r"^result: (.+)$", result, re.MULTILINE)
     assert m, "gaze must declare its result enumeration"
     values = {v.strip() for v in m.group(1).split("|")}
@@ -303,15 +270,15 @@ def test_every_reference_is_inlined_into_the_contract():
 def test_moved_sections_are_present():
     """Each section an absence test or a split relies on is found where it moved."""
     for present in (
-        "### 6. Return the review result",
+        "### 2. Plan",
+        "### 4. Verify",
+        "### 5. Record",
         "## /gaze result",
         "## Output shape",
         "## Fork execution contract",
         "## Review scratch cleanup",
         "## Containment postcondition",
-        "## External reviewer panel",
         "## Telemetry",
-        "## `--force-approve`",
         "## Circuit breakers",
     ):
         assert present in GAZE, present
@@ -341,45 +308,24 @@ def test_agent_c_has_one_launch_mode():
         assert gone not in GAZE, gone
 
 
-def test_phase_6_is_not_nested_under_a_reference_section():
-    """After inlining, no H2 may sit between ## Phases and phase 6."""
-    phases = GAZE.split("## Phases", 1)[1].split("### 6. Return the review result", 1)[
-        0
-    ]
+def test_record_is_not_nested_under_a_reference_section():
+    """After inlining, no H2 may sit between ## Phases and the record phase."""
+    phases = GAZE.split("## Phases", 1)[1].split("### 5. Record", 1)[0]
     assert not re.search(r"^## ", phases, re.MULTILINE), re.findall(
         r"^## .*", phases, re.MULTILINE
     )
 
 
-def test_reviewed_head_sha_is_read_after_phase_5():
-    """The result names the head the battery reviewed, read after phase 5,
-    not a head recorded before the battery ran."""
-    assert GAZE.index("### 5. Simplify") < GAZE.index("### 6. Return the review result")
+def test_reviewed_head_sha_is_read_after_the_pass():
+    """The result names the head the pass reviewed, read after it ran."""
+    assert GAZE.index("### 3. Execute") < GAZE.index("### 5. Record")
     template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
-    for text in (_section("### 6. Return the review result"), template):
+    for text in (_section("### 5. Record"), template):
         assert any(ln.startswith("reviewed_head_sha:") for ln in text.splitlines())
         assert "review_worktree_path" not in text, (
             "gaze deletes that tree before returning"
         )
         assert not re.search(r"^round:", text, re.MULTILINE), "gaze computes no round"
-
-
-def test_review_panel_has_no_unlisted_skip_path():
-    """Every PR gets the review panel; the only ways it does not run are the
-    enumerated result values. A new skip path must change this test."""
-    template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
-    line = next(ln for ln in template.splitlines() if ln.startswith("panel:"))
-    values = {v.strip() for v in line.split(":", 1)[1].split("|")}
-    assert values == {
-        "<n_comments_posted>",
-        "skipped (adherence blocking)",
-        "skipped (--force-approve)",
-        "skipped (battery NOT-RUN)",
-    }, values
-    agent_c = GAZE.split("**Agent C — PR review**", 1)[1].split(
-        "Wait for all spawned agents", 1
-    )[0]
-    assert "skip" not in agent_c.lower()
 
 
 CALLER_STEPS = (
@@ -403,9 +349,9 @@ def test_gaze_prescribes_no_caller_step():
     result template, and none of the old caller prescriptions anywhere in the
     expanded contract."""
     template = GAZE.split("## /gaze result", 1)[1].split("```", 1)[0]
-    for text in (_section("### 6. Return the review result"), template):
+    for text in (_section("### 5. Record"), template):
         assert not re.search(r"^next:", text, re.MULTILINE)
-        assert re.search(r"^battery:", text, re.MULTILINE), "positive control"
+        assert re.search(r"^plan check:", text, re.MULTILINE), "positive control"
     for step in CALLER_STEPS:
         assert step not in GAZE, step
     # Negative control: a planted prescription is caught.

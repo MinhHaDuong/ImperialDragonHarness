@@ -8,7 +8,7 @@
 
 | Command | Description |
 |---------|-------------|
-| `/gaze` | Review one merge request: adherence check, code or prose review panel, simplify. Returns REVIEWED / FINDINGS / ESCALATE and never APPROVED; the merge gate is /verify-gate. Does not merge. |
+| `/gaze` | Review one merge request by intention: the caller says what to verify and why; gaze plans the method, runs it once, checks the plan against what ran and records one result. Returns REVIEWED / FINDINGS / ESCALATE and never APPROVED; the merge gate is /verify-gate. Does not merge. |
 | `/hunt` | Work a ticket — creates a worktree, TDD code, open merge request, review and fix. |
 | `/merge` | Land a merge request: close its claimed ticket, check the gate record on a gated base, merge pinned to the reviewed head, read the result back, sync local main. |
 | `/raid` | Work through multiple tickets autonomously: pick targets, implement each in isolated worktree waves, verify, and merge APPROVED PRs after verify-gate clears. |

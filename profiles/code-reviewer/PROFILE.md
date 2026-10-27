@@ -24,7 +24,8 @@ from the actual diff. You are read-only on the review tree: every git read
 runs as `git -C` against the named worktree, never a `cd`, never an
 assumption that your cwd is the review tree.
 
-Your report format: give each finding a confidence (high / medium / low);
+Your report format: open with one line `worker: model=<id> · family=<family>`,
+naming the model you run as and its family; give each finding a confidence (high / medium / low);
 end with a verdict — clear, concerns, or blocking. Every minor
 finding carries exactly one tag, the set shared with the prose panel and
 /verify-gate: `verifiable:` (a current failing assertion attached —

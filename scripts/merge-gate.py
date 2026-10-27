@@ -34,7 +34,8 @@ to the candidate the approval saw: the one mechanical reading of the tiers.
 
 Plan (ticket 1220; the policy is skills/verify-gate/SKILL.md § Check plan):
 `plan` prints, before anything runs, one line per declared check, `run`,
-`reuse` or `skip` with its reason, and one for the adherence result. A check
+`reuse` or `skip` with its reason; adherence is one of those checks (ticket
+1225: `pytest-guard` runs the `-m adherence` tests). A check
 is reused from the latest published record entry for the `--since` head when
 it passed there and the change from that record's candidate to the current
 one (head and base alike) is empty, or bookkeeping and the check is not
@@ -642,24 +643,6 @@ def cmd_plan(args):
                 sys.stdout.write(f"skip {name}: integration check, the diff touches nothing it covers\n")
                 continue
         sys.stdout.write(f"run {name}: {reason} :: {' '.join(item['argv'])}\n")
-    if args.adherence_from:
-        reviewed = rev(args.adherence_from)
-        if not reviewed:
-            raise GateError(f"cannot resolve --adherence-from '{args.adherence_from}'")
-        try:
-            old = candidate(base, reviewed)
-        except GateError:
-            old = ""
-        entries = changed_entries(old, new) if old else []
-        if old and not entries:
-            sys.stdout.write(f"reuse adherence: result on {reviewed}; the candidate is unchanged since\n")
-        elif old and tier_of(entries) == BOOKKEEPING_TIER:
-            sys.stdout.write(f"reuse adherence: result on {reviewed}; the delta since is bookkeeping\n")
-        else:
-            why = f"touches {first_paths(entries)}" if old else "no longer merges cleanly into the base"
-            sys.stdout.write(f"run adherence: the delta since {reviewed[:12]} {why}\n")
-    else:
-        sys.stdout.write("run adherence: no prior adherence result named (--adherence-from)\n")
     return PASS
 
 
@@ -698,7 +681,6 @@ def parser():
             s.add_argument("--since", help="approved tip: judge only what the head adds to it")
         if name == "plan":
             s.add_argument("--since", help="head whose gate record may be reused")
-            s.add_argument("--adherence-from", help="head the prior adherence result was given on")
             s.add_argument("--integration", action="store_true", help="run integration checks whatever the diff")
             s.add_argument("--no-fetch", action="store_true", help="read the local notes ref only")
         if name == "check":

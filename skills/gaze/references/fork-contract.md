@@ -11,8 +11,7 @@ launch parameter to pass; earlier revisions of this contract named one, and a
 lever that does not exist cannot be the thing holding a phase together.
 
 What is true is the first sentence: the fork survives only while it keeps
-calling tools. So every agent this skill spawns (the phase 2–5 reviewers and
-the review panel's perspective agents) is launched in the background and then
+calling tools. So every agent this skill spawns (the seats of its plan) is launched in the background and then
 **waited for by polling an artifact it writes**, in one bounded loop. The wait
 itself is the tool call that keeps the fork alive.
 
@@ -27,15 +26,12 @@ written in advance can.
 Without this, the failure is silent and total: the fork ends its turn at the
 launch, the completions re-invoke the **MAIN loop**, and the fork's last message
 is a fan-out narration ("reviewers are running in parallel…") instead of a
-result, with phase 5 never running. This orphaned real runs, each forcing the
-caller to relaunch a duplicate reviewer battery.
+result, with the plan check and the record never running. This orphaned real runs, each forcing the
+caller to relaunch a duplicate review.
 
 **Bound every wait, and record what did not arrive.** An agent missing at the
-deadline is missing, not clear: name it in the result and treat its phase as
+deadline is missing, not clear: name it in the plan check and treat the pass as
 unresolved. Never extend a deadline to avoid recording a gap.
 
-**The contract applies recursively.** Any nested fan-out performed on `/gaze`'s
-behalf, such as the review panel's perspective agents, inherits this same rule:
-the inner launch must be waited for by polling an artifact too, or the orphan
-failure simply moves one layer down. A launch site is bound by the fork contract
-whether it is this skill's own or a sub-agent's.
+**No nested fan-out.** A seat launches no further agent or review: the pass
+is one level deep, so no inner launch can be orphaned.
