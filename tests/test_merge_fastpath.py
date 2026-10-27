@@ -258,6 +258,20 @@ def test_a_red_suite_reruns_only_its_failing_tests_once(tmp_path, reproduces):
         assert fastpath(work).returncode == 0
 
 
+def test_a_suite_that_stopped_early_is_red_even_if_its_listed_failures_pass_alone(tmp_path):
+    """Gaze round 11: pytest exits 2 (interrupted) or 3 (internal error) after listing a
+    failure; the tests after the stop never ran, so re-running the listed id proves nothing."""
+    marker = tmp_path / "suite"
+    conf = config(rerun={"suite": ["sh", "-c", 'echo "$@" > "$0.rerun"; exit 0', str(marker)]})
+    conf["checks"][1]["argv"] = ["sh", "-c", 'echo "FAILED tests/test_x.py::test_a - boom"; exit 2']
+    work = make_repo(tmp_path, conf)
+    result = verify(work)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "result: fail" in verdict_note(work)
+    assert not Path(f"{marker}.rerun").exists()
+    assert fastpath(work).returncode == 1
+
+
 def test_a_verdict_stamped_in_the_future_keeps_the_fast_path_closed(repo):
     verify(repo)
     earlier = {**child_env(), "MERGE_GATE_NOW": str(int(time.time()) - 3600)}

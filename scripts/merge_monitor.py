@@ -157,16 +157,19 @@ def verify_tip(tip, remote, directory):
                 verdict = "pass" if code == 0 else f"fail(exit {code})"
                 results.append(f"{item['name']} {verdict} {secs:.1f}s :: {' '.join(item['argv'])}")
                 if code:
-                    failed.append((item, failed_ids(out)))
-            first_ids = [i for _item, ids in failed for i in ids]
+                    failed.append((item, code, failed_ids(out)))
+            first_ids = [i for _item, _code, ids in failed for i in ids]
             if first_ids:
                 with open(directory / "failed-ids.log", "a") as log:
                     log.write(f"{started} {tip} {' '.join(first_ids)}\n")
                 LOG.info("first run failing ids: %s", " ".join(first_ids))
             flaky, hard = [], []
-            for item, ids in failed:
+            for item, code, ids in failed:
                 rerun = fast.get("rerun", {}).get(item["name"])
-                if ids and rerun:
+                # Only ordinary test failures (exit 1) earn a re-run of the listed ids: a run
+                # that stopped early (2 interrupted, 3 internal error, ...) never ran the rest,
+                # so its failing ids passing alone proves nothing (as in recheck).
+                if ids and rerun and code == TESTS_FAILED:
                     code, out, _secs = execute([*rerun, *ids], tree, deadline)
                     still = [] if code == 0 else [i for i in ids if i in set(failed_ids(out))] or ids
                     flaky += [i for i in ids if i not in still]
