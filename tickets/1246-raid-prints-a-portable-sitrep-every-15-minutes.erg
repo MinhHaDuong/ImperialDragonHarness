@@ -134,3 +134,9 @@ edits to appended lines and new headings, not the line-15 paragraph.
 written by coordinator prose, so a coordinator that forgets a line yields a
 sitrep that says "no PR data" (must be UNREADABLE-exit 2, not blank); `gh` rate
 or auth failure must also exit 2.
+
+## Raid feasibility (2026-10-27)
+WARN (minor path errors; shared file). `skills/raid/SKILL.md:196` and `circuit-breakers.md:44/53` match. `test_raid_wave_base.py` and `skills/dashboard/dashboard.sh` exist.
+- Path fix: `classify` lives in `scripts/raid_gate_state.py`, not `raid-breaker.py`, which defines only `snapshot`, `run` and `main`, and is hyphenated, so it cannot be imported plainly. The sitrep should read the existing gate heartbeat markers (`raid_gate_state.marker_path`, under TMPDIR `idh-raid-gates/`) as durable breaker state, rather than adding BREAKER lines to the log alone.
+- Shared file: the unlanded author trim in the locked worktree `explore-merge-skill` rewrites 5 hunks of `skills/raid/SKILL.md` (Phases 6-7, Gating-tiers pointers moved to `rules/git.md`). Raid SKILL edits should land after that worktree is landed or dropped (author's call), or expect a rebase conflict.
+- Doc lines must use `"$IDH_ROOT/scripts/raid-sitrep.py"`, never `scripts/...` (check-agnostic SKILL_PATTERNS).

@@ -69,3 +69,8 @@ Run `/harness-doctor` (the visit form from 1238) with this complaint. The doctor
   uncommitted modification to ticket 1237 in the prep worktree is unrelated.
 - Verdict: GO. Priced: executor about 1 agent-hour (read-only, one journal
   file), author about 0.25 h to rule.
+
+## Raid feasibility (2026-10-27)
+PASS. Recount holds (16 of 38 SKILL.md carry the paragraph). `harness_here.sh`, the lint fixture, both seam test names and the `memory/journal/2026/` doctor entries exist. The diff (journal entry plus ticket only) is bookkeeping tier (`memory/`, `tickets/*.erg`), so it needs no gaze and no full gate.
+- Note: harness-doctor's stance says "Only the author starts a visit" and "Listen first". The raid launch is valid only because the ticket body is the author's complaint, so the entry should say so. The visit must not stop to ask the author anything: none of its probes spends model usage.
+- No conflict with the other five tickets: 1237 (if retargeted to removal) deletes no seam-bearing skill.

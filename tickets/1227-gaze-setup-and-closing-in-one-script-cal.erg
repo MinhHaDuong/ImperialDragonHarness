@@ -37,3 +37,9 @@ Related: [[1197]], [[1224]].
 - **Dependencies.** None blocking. Uses review-anchor.py, step_clock.py, worktree-tmp-guard.py, worktree-exit-preflight.sh, attribution_record.py as they stand.
 - **Shared-file note.** skills/gaze/SKILL.md and references/ also likely touched by 1237 (adherence verdict parsing, panel.md/plan-check area, low overlap with phase 1/5), 1239/1246 (lair/raid; no overlap expected), 1244 (merge skill; none), 1240 (the IDH_ROOT paragraph at the top of SKILL.md, repeated in 78 skill files: conflict risk on lines 15-17 only; edit below it, rebase after 1240). Land 1227 after 1237 if both edit SKILL.md § 3-5.
 - Verdict: GO. Risk: baseline confound and the pinned contract tests; 65 percent odds stand.
+
+## Raid feasibility (2026-10-27)
+PASS with one WARN. Paths exist: setup-and-breaker.md, cleanup.md, `review-anchor.py`, `step_clock.py`, `worktree-tmp-guard.py`, `worktree-exit-preflight.sh`, `attribution_record.py`, `gaze_wall_analysis.py`, both pinned contract tests. No `.idh-checks.json` in this repo, so the gate is the full `make check` (no scoped gate).
+- WARN, path: `review-anchor.py` is hyphenated, so it can only be loaded with importlib or a subprocess call. Pick one before writing the test. Any new SKILL/reference line naming the scripts must spell them `"$IDH_ROOT/scripts/..."`, because a repo-relative `scripts/x.py` fails `check-agnostic.sh` SKILL_PATTERNS.
+- Shared file: the unlanded author trim in the locked worktree `explore-merge-skill` edits `skills/gaze/telemetry.yml` and `skills/raid/references/detached-gaze.md` (gaze-adjacent). No direct overlap with SKILL.md § 1/§ 5, but rebase on whatever lands from it.
+- 1237 will not edit gaze (see 1237 feasibility), so the planned ordering "land after 1237" can be dropped.
