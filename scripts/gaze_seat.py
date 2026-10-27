@@ -259,6 +259,9 @@ def refusal(report: str) -> str | None:
     return next((line for line in lines if line.upper().startswith('NOT-RUN')), None)
 
 
+UNLISTED_MODEL = 'not found for provider'  # Pi's warning when it runs an id the provider does not list
+
+
 def launch(args: argparse.Namespace) -> tuple[bool, str]:
     # The seat runs with its cwd in the review tree: every path it is handed is absolute.
     args.panel, args.review_tree = args.panel.resolve(), args.review_tree.resolve()
@@ -356,7 +359,17 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
     finally:
         if scratch:
             shutil.rmtree(scratch, ignore_errors=True)
+    log = staging.with_name(staging.name + '.log')
+    stderr_lines = [line.strip() for line in log.read_text(encoding='utf-8', errors='replace').splitlines()
+                    if line.strip()] if log.exists() else []
+    if ok and any(UNLISTED_MODEL in line for line in stderr_lines):
+        # A local provider answers to any id and the CLI exits 0: the run is not the pinned model's.
+        for leftover in (staging, last):
+            leftover.unlink(missing_ok=True)
+        return False, f'no report (the provider does not list {args.model}; the CLI fell back to a custom id)'
     wrote_last = last.exists() and last.read_text(encoding='utf-8', errors='replace').strip()
+    if not ok and stderr_lines and outcome.startswith('no report (failed, exit '):
+        return False, f'{outcome[:-1]}: {stderr_lines[0][:200]})'  # name the cause the runtime gave
     if not ok and not (wrote_last and outcome.startswith('no report (empty output')):
         return False, outcome  # a nonzero exit stays a failure even when the door wrote its file
     if not ok:
