@@ -87,7 +87,7 @@ else
     git_argv=" $(ps -o args= -p "$PPID" 2>/dev/null) "
 fi
 # The subcommand of that command: `git [global options] <sub> ...`, argv0
-# skipped (under `gc` the parent is the child `git pack-refs`, argv0 its
+# required to be `git` (under `gc` the parent is the child `git pack-refs`, argv0 its
 # libexec path). Words are the NUL-separated argv entries, never re-split: a
 # newline inside a word is masked (\001) before NUL becomes the separator, so
 # `-c $'a=b\npack-refs'` stays one word. Only git's own global options are
@@ -100,7 +100,13 @@ if [ -r "/proc/$PPID/cmdline" ]; then
     skip=0
     first=1
     while IFS= read -r word; do
-        if [ "$first" = 1 ]; then first=0; continue; fi
+        if [ "$first" = 1 ]; then
+            # Only a process that presents itself as `git` (basename of argv0,
+            # `git-pack-refs`-style names and `exec -a` aliases excluded).
+            [ "${word##*/}" = git ] || break
+            first=0
+            continue
+        fi
         if [ "$skip" = 1 ]; then skip=0; continue; fi
         case "$word" in
             -c|-C|--git-dir|--work-tree|--namespace|--super-prefix|--config-env|--attr-source) skip=1 ;;

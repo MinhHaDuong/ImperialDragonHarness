@@ -511,8 +511,8 @@ def test_enforce_still_refuses_creating_main_at_another_commit(repos):
 
 # --- the prune discriminator reads the parent's argv (ticket 1268, gaze finding) ---
 # The hook reads /proc/$PPID/cmdline. To drive it with an argv of our choosing
-# the parent is a `bash -c SCRIPT ...` whose cmdline is `bash -c SCRIPT <words>`:
-# argv0 is skipped, `-c` takes SCRIPT as its value (as `git -c X` would), and the
+# the parent is a bash run as `git -c SCRIPT <words>` (argv0 `git`):
+# argv0 is checked, `-c` takes SCRIPT as its value (as `git -c X` would), and the
 # words after it stand in for what follows. SCRIPT feeds the hook a prune of a
 # packed main (`V -> 0`) and exits; its own text may carry a "\npack-refs" line.
 
@@ -524,7 +524,12 @@ def _prune_through(repo, *words, script=None):
     env = _env()
     env["LINE"] = f"{value} {'0' * 40} refs/heads/main"
     return subprocess.run(
-        ["bash", "-c", script, *words], cwd=repo, env=env, capture_output=True, text=True
+        ["git", "-c", script, *words],  # bash presenting itself as argv0 `git`
+        executable="/bin/bash",
+        cwd=repo,
+        env=env,
+        capture_output=True,
+        text=True,
     )
 
 
@@ -561,5 +566,26 @@ def test_prune_discriminator_does_not_split_a_word_on_newline(repos):
     git(work, "config", "idh.mainGuard", "enforce")
     script = 'printf "%s\\n" "$LINE" | sh hooks/reference-transaction prepared; exit $?\npack-refs'
     proc = _prune_through(work, script=script)
+    assert proc.returncode != 0, proc.stderr
+    assert "refused" in proc.stderr
+
+
+def _prune_as_argv0(repo, argv0):
+    """Prune under a parent whose cmdline is `ARGV0 -c SCRIPT pack-refs` (exec -a)."""
+    inner = 'printf "%s\\n" "$LINE" | sh hooks/reference-transaction prepared; exit $?'
+    outer = 'exec -a "$ARGV0" bash -c "$INNER" pack-refs'
+    value = rev(repo, "main")
+    env = _env()
+    env.update(LINE=f"{value} {'0' * 40} refs/heads/main", INNER=inner, ARGV0=argv0)
+    return subprocess.run(["bash", "-c", outer], cwd=repo, env=env, capture_output=True, text=True)
+
+
+def test_prune_discriminator_requires_argv0_basename_git(repos):
+    work = repos["work"]
+    _packed_main(work)
+    git(work, "config", "idh.mainGuard", "enforce")
+    assert _prune_as_argv0(work, "git").returncode == 0  # control
+    assert _prune_as_argv0(work, "/usr/lib/git-core/git").returncode == 0  # gc's child
+    proc = _prune_as_argv0(work, "git-branch")  # exec -a git-branch git pack-refs -D main
     assert proc.returncode != 0, proc.stderr
     assert "refused" in proc.stderr
