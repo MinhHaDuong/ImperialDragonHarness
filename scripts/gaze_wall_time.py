@@ -107,7 +107,7 @@ def analyse(jsonl):
                 if name == "Agent":
                     agent_s += d  # a foreground child the run blocked on
                 tool_s += d
-                calls.append((u0, d, name, arg[:300]))
+                calls.append((u0, d, name, arg[:2000]))
                 if name == "Bash" and POLL.search(arg):
                     poll_s += d
                     polls.append((u0, ts(r)))
@@ -213,6 +213,39 @@ def runs(root):
             a["id"] = aid
             a["session"] = marker.parent.parent.name
             yield a
+
+
+def endpoints(r):
+    """Setup and closing segments that need no subagent trace (ticket 1227).
+
+    Setup is run start to the first seat launch: a `gaze_seat.py launch` Bash
+    call (headless seat) or an Agent call. Closing is the last seat evidence
+    to run end: the end of the last `plan-check` call, or the last traced
+    seat's end, whichever is later. Either is None when the run has no such
+    evidence. Calls are (start, duration, tool, argument) as `analyse` records
+    them; the dry-run launches are not seats.
+    """
+    firsts = [
+        c[0]
+        for c in r["calls"]
+        if (c[2] == "Bash" and "gaze_seat.py" in c[3] and " launch" in c[3] and "--dry-run" not in c[3])
+        or c[2] == "Agent"
+    ]
+    firsts += [t for t, _ in r["launches"]]
+    ends = [c[0] + c[1] for c in r["calls"] if c[2] == "Bash" and "plan-check" in c[3]]
+    ends += [s["end"] for s in r["seats"]]
+    first = min(firsts) if firsts else None
+    last = max(ends) if ends else None
+    closes = [c[0] for c in r["calls"] if c[2] == "Bash" and "gaze_close.py" in c[3]]
+    setups = [c[0] + c[1] for c in r["calls"] if c[2] == "Bash" and "gaze_setup.py" in c[3]]
+    return dict(
+        setup=(first - r["start"]) if first is not None else None,
+        setup_calls=sum(1 for c in r["calls"] if first is not None and c[0] < first),
+        closing=(r["end"] - last) if last is not None and last <= r["end"] else None,
+        closing_calls=sum(1 for c in r["calls"] if last is not None and c[0] > last),
+        setup_script=(min(setups) - r["start"]) if setups else None,
+        close_script=(r["end"] - min(closes)) if closes else None,
+    )
 
 
 def pct(xs, p):

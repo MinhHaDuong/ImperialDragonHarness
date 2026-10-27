@@ -2,10 +2,12 @@
 Title: Gaze setup and closing in one script call each
 Created: 2026-10-26
 Author: reviewer
+Closed: closed by raid — PR #1812 (criteria 1, 2, 4 in #1736; criterion 3 reported in #1812)
 
 --- log ---
 2026-10-26T23:03Z reviewer created
 2026-10-27T10:33Z reviewer criteria 1, 2, 4 done in PR (scripts/gaze_setup.py, gaze_close.py). Criterion 3 pending: after 20 gaze runs on the new structure run 'python3 scripts/gaze_wall_analysis.py <merge-time ISO>' and report setup/closing medians against 49 s / 49 s (baseline is the pre-2026-10-27 structure; say so)
+2026-10-27T17:19Z reviewer closed — closed by raid — PR #1812 (criteria 1, 2, 4 in #1736; criterion 3 reported in #1812)
 
 --- body ---
 ## Context
@@ -18,7 +20,7 @@ orchestrator model turns, one per Bash call (8 setup calls, 4 closing calls). To
 ## Exit criteria
 - [ ] One script prints the setup facts gaze needs (worktree, anchor, PR state, comments, ticket, panel directory) in one call; gaze's first phase makes that call instead of the separate reads
 - [ ] One script runs the closing steps (attribution record, containment, worktree removal, duration line, result comment) in one call
-- [ ] Rerun `scripts/gaze_wall_analysis.py` after 20 runs: setup and closing medians reported against 49 s and 49 s
+- [x] Rerun `scripts/gaze_wall_analysis.py` after 20 runs: setup and closing medians reported against 49 s and 49 s
 - [ ] The harness gate passes
 
 ## Relevant files
@@ -53,3 +55,11 @@ PASS with one WARN. Paths exist: setup-and-breaker.md, cleanup.md, `review-ancho
 - **The script's own analysis cannot be applied:** most post-merge seats are headless (ticket 1256, 13:18 CET) and leave no subagent trace, so `r["seats"]` is empty in 39 of 45 runs and the setup/closing segments (defined by seat times) are undefined for them. Only 6 runs have seats (setup 49 s, closing 53 s, 5 and 6 calls, but n = 6 and those mix pre-script behaviour).
 - **Confounds.** New Plan phase and plan-check (08:51 CET rewrite); scripts patched at 12:05 and the seats definition at 12:55; seat door changed at 13:18; orchestrator model shifted to Opus; PR difficulty uncontrolled; 45 runs but n = 20 comparable ones is unmet for the seat-based definition.
 - **Verdict: not established as the criterion defines it.** Direction is strong: setup returns in about 5 s and reaches the first seat in about 20 s against 49 s, closing is 17 s where the script ran, and run wall fell from 249 s to 153 s. But the segments are not measured on the same endpoints, closing adoption is 14 of 45, and confounds are uncontrolled. To settle it: extend `gaze_wall_analysis.py` with a post-merge bucket and headless-seat endpoints, rerun after closing adoption is fixed. Box left unticked; ticket stays open.
+
+## Criterion 3 rerun (2026-10-27 17:16Z)
+`python3 scripts/gaze_wall_analysis.py 2026-10-27T10:45:00Z` now takes the post-merge cut from argv (AFTER = runs starting at or after it; the argv no longer acts as an upper bound), and its last section reads setup and closing from tool calls, so headless seats count (`gaze_wall_time.endpoints`). Traces of host padme, READ from timestamps; medians are derived from them. 64 gaze runs started from 10:45:34Z to 17:13Z; run wall median 143 s (baseline run wall 249 s; the script's own BEFORE bucket, 179 runs since the 10-21 cut, reads 292 s).
+- **Setup.** Start to the first `gaze_seat.py launch` or Agent call: median 34 s, n = 34, 5 tool calls before it (baseline 49 s, 8 calls, same endpoint). Only 34 of 64 runs launched any seat; the other 30 reviewed by themselves, so no launch exists to measure. Start to the `gaze_setup.py` call: median 5 s, n = 62 of 64 (adoption 97 percent).
+- **Closing.** End of the last `plan-check` call, or last traced seat end, to run end: median 30 s, n = 60, 2 tool calls (baseline 49 s, 4 calls, endpoint last seat end). The endpoints differ, so this is not like for like. `gaze_close.py` ran in 35 of 64 runs (55 percent; the earlier report counted 14 of 45); its call to run end: median 21 s (n = 35). Closing by the first endpoint, with the script 27 s (n = 32), without it 36 s (n = 28).
+- **Same-script comparison.** The pre-cut bucket measured with these endpoints gives setup 45 s (n = 141) and closing 33 s (n = 150): that bucket mixes structures since 10-21, and its closing is also shorter than the 49 s baseline under the new endpoint, so most of the closing difference is the endpoint.
+- **Confounds.** The baseline is a different structure (before the Plan phase and plan-check, 25 runs cut at 2026-10-26T23:00Z). Orchestrator model: Opus 41 runs, Sonnet 23 (setup 28 s vs 36 s, closing 36 s vs 23 s); PR difficulty uncontrolled; seat door changed during the window (ticket 1256); `gaze_close.py` adoption is partial; the 30 self-review runs have no setup endpoint and are shorter by construction.
+- **Verdict.** Setup to first seat is down 15 s (49 to 34 s, derived) on the same endpoint and the script call itself returns in 5 s. Closing cannot be compared to 49 s on a common endpoint; the script's own span is 21 s. n exceeds 20 on every figure. Box ticked: the criterion asks for a report against 49 s / 49 s, and it states where that comparison holds.
