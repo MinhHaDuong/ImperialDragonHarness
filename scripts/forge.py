@@ -334,6 +334,8 @@ class NoneForge:
             moved = self._git("update-ref", bref, new, old)
         if moved.returncode != 0:
             raise MergeRefused(f"{bname} not moved: {(moved.stderr or moved.stdout).strip()}")
+        if self._git("rev-parse", bref).stdout.strip() != new:  # a checkout switched under us: publish nothing
+            raise MergeRefused(f"{bname} is not at the new merge {new[:12]} after the move; nothing pushed")
         if self.has_remote():
             pushed = self._git("push", "-q", "origin", f"{new}:{bref}")
             if pushed.returncode != 0:

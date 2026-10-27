@@ -175,5 +175,31 @@ def test_local_base_behind_origin_refuses(tmp_path, monkeypatch):
     git(other, "add", "z")
     git(other, "commit", "-qm", "elsewhere")
     git(other, "push", "-q", "origin", "main")
-    with pytest.raises(rl.Refusal, match="behind or diverged"):
+    with pytest.raises(rl.Refusal, match="differs from origin"):
         land(wt)
+
+
+def test_local_base_ahead_of_origin_refuses(tmp_path, monkeypatch):
+    work, wt, origin = make_repo(tmp_path, monkeypatch, remote=True)
+    git(work, "config", "idh.mainGuard", "off")
+    (work / "unreviewed").write_text("u\n")
+    git(work, "add", "unreviewed")
+    git(work, "commit", "-qm", "unpushed local main")
+    git(work, "config", "idh.mainGuard", "enforce")
+    before = git(origin, "rev-parse", "main")
+    with pytest.raises(rl.Refusal, match="differs from origin"):
+        land(wt)
+    assert git(origin, "rev-parse", "main") == before
+
+
+def test_failed_push_after_the_move_is_exit_6_not_a_remerge(tmp_path, monkeypatch):
+    work, wt, origin = make_repo(tmp_path, monkeypatch, remote=True)
+    hook = origin / "hooks" / "pre-receive"
+    hook.write_text("#!/bin/sh\nwhile read o n r; do [ \"$r\" = refs/heads/main ] && exit 1; done\nexit 0\n")
+    hook.chmod(0o755)
+    tip = git(wt, "rev-parse", "HEAD")
+    out = []
+    code = rl.main_land(forge.NoneForge(str(wt)), "branch:feat base=main", tip, [], "main", wt, out.append)
+    assert code == rl.UNKNOWN
+    assert any("push failed" in line for line in out)
+    assert git(work, "rev-parse", "main^2") == tip  # moved locally, reported, never re-merged
