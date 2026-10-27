@@ -27,7 +27,7 @@ counterfactuals note does.
 
 ## 1. Survey
 
-Run the five committed, standard-library-only scripts with the harness's
+Run the six committed, standard-library-only scripts with the harness's
 `python3` interpreter. They do not require a package-manager environment.
 All intermediate outputs go to a scratch
 directory; nothing here is tracked. `$ARGUMENTS` (e.g. `--days 14`) passes
@@ -47,6 +47,8 @@ python3 "$HARNESS_DIR/scripts/trace-compact-audit.py" $ARGUMENTS \
   --output "$SCRATCH/compact-audit-rows.csv" --json > "$SCRATCH/compact-audit.json" &
 python3 "$HARNESS_DIR/scripts/trace-friction.py" $ARGUMENTS \
   --output "$SCRATCH/friction-daily.csv" --json > "$SCRATCH/friction.json" &
+python3 "$HARNESS_DIR/scripts/trace-wall-time.py" $ARGUMENTS \
+  --json > "$SCRATCH/wall-time.json" &
 wait
 
 # Forge join: reads AND writes the accumulating committed cache (do not create a
@@ -152,6 +154,33 @@ deleting a barrier: that verdict belongs to /test-doctor (`rules/workflow.md`, "
 guards on guards"). For the arena's Pi sessions, run
 `python3 "$HARNESS_DIR/scripts/trace-friction.py" --pi-runs <runs dir> --json`;
 it never prints a command text.
+
+### Where time goes: raid, hunt, gaze
+
+From `wall-time.json` (method and limits: the docstring of
+`$HARNESS_DIR/scripts/trace-wall-time.py`), one block per skill, in hours:
+
+1. **Runs and wall**: run count, `nested_in_raid` for hunt, median and p90
+   wall. A hunt inside a raid appears in both views; never add them.
+2. **Orchestrator split** (the run's own trace, its critical path):
+   generation, test/gate, poll/wait, background-wait (blocked on spawned
+   agents or background commands), forked-skill (waiting on a forked skill
+   such as gaze or verify-adherence), human and human-away (gaps over 30 min:
+   the author absent, not a reply), idle-tail. Report human-away apart: it
+   is the author's latency, not harness time.
+3. **Tree split** (agent-seconds summed over the run and its descendants):
+   where parallel work goes. Generation is model latency, a route lever;
+   poll/wait and background-wait are wait-primitive levers; test/gate is a
+   gate-survey lever (offer `/test-doctor` as in the velocity section).
+4. **Redundant testing**: test runs, and reruns of the same gate class in the
+   same worktree with no mutation in between, after a pass and after a
+   failure, with their minutes. A heuristic estimate; a test of the same
+   commit in another worktree (a review seat) is not counted.
+5. **Blockers**: the longest summed waits by command or tool. A hand-rolled
+   idle or poll loop near the top is a follies candidate.
+
+Every gap is READ; every category is a heuristic. A finding enters step 3 like
+any lever; this section never applies a fix.
 
 ### Treatment follow-up section
 
