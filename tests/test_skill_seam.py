@@ -40,7 +40,7 @@ from pathlib import Path
 
 import pytest
 
-from child_env import child_env
+from child_env import child_env, isolated_path
 from tracked_tree import tracked_checkout
 
 REPO = Path(__file__).resolve().parent.parent
@@ -296,6 +296,7 @@ def test_hoard_installs_across_runtimes_without_legacy_skill(tmp_path, monkeypat
     home.mkdir()
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.delenv("USERPROFILE", raising=False)
+    monkeypatch.setenv("PATH", isolated_path())  # not the developer's ~/.local/bin
     monkeypatch.delenv("XDG_STATE_HOME", raising=False)
 
     def load(name):

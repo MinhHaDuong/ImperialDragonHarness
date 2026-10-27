@@ -23,3 +23,16 @@ CLEARED_KEYS = ("BASH_ENV",)
 def child_env() -> dict[str, str]:
     """`os.environ` at call time, minus the bash loader variables."""
     return {k: v for k, v in os.environ.items() if k not in CLEARED_KEYS}
+
+
+SYSTEM_PATH = "/usr/local/bin:/usr/bin:/bin"
+
+
+def isolated_path() -> str:
+    """PATH for an install test: system directories only.
+
+    `idh install` refuses a command name that `shutil.which` already finds on
+    PATH (ticket 1257). A test that isolates HOME but inherits PATH sees the
+    developer's real `~/.local/bin` links and refuses on that machine only.
+    """
+    return SYSTEM_PATH
