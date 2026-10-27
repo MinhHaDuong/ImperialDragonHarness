@@ -7,16 +7,17 @@ Author: Minh Ha-Duong
 2026-10-23T14:07Z Minh Ha-Duong created
 2026-10-27T09:46Z reviewer 2026-10-27: integration check not runnable from padme: askMinh and fs-housekeeper are absent from ~/CNRS/code and from the forge; run the alignment check on the machine that holds them, then close
 2026-10-27T09:56Z reviewer 2026-10-27 check run on doudou (repos live there, not padme): askMinh master 2288bb8 NOT ok (no pyproject.toml/uv.lock, requirements.txt pinned by hand, Makefile:7 PYTHON = venv/bin/python3); fs-housekeeper main 62434c9 NOT ok (Makefile:8 PYTHON :=, Makefile:53,72 and docs/CONTRIBUTING.md:36 uv pip install). Both tickets/0001 open, untouched since 2026-10-23; supersedes the previous note
+2026-10-27T10:08Z reviewer 2026-10-27 doudou: fs-housekeeper tickets/0001 closed, branch merged locally at 0f7f11c, alignment check ok on main (24 passed 1 skipped; 20 mypy errors pre-existing on 62434c9). askMinh tickets/0001: branch t0001-uv-env tip 986c809 ready for the author's merge (ticket constraint), check ok in its worktree, 4 tests need OPENAI_API_KEY; author decisions: Python 3.12 pin and langchain 0.2 era, skip marker for key-dependent tests, keep .python-version. Close this tracker once askMinh master prints ok
 
 --- body ---
 ## Context
 Rule `rules/coding-python.md` (Environment principles and rules, added by PR 1634, which merges before this tracker) states one uv-based environment practice: dependencies in pyproject.toml with a committed uv.lock, no pip, one `RUN` prefix in the Makefile and no PYTHON variable. On 2026-10-23 the alignment check below ran on ten Python repos (in ~/CNRS/code: askMinh, carto chercheurs département SSM IP, DOIfetch, fs-housekeeper, llm_benchmarks, maiba, Music Library Clinic, ThinkTanksSurveyor, VN-Power-Scenario; plus sen-causal-reading; selected as the directories with a top-level pyproject.toml or requirements.txt; not counted: natu, a 2020 setup.py library, and directories with Python but neither file, such as search-works-for-zotero, Costs-and-Benefits-Cofiring-VN and Household electricity, which a later sweep may add): five print ok, five do not: sen-causal-reading (its own ticket 0083 and PR, on its branch t0083-uv-env in ~/CNRS/papiers/actif/sen-causal-reading) and the four children below. Impact is real only for sen-causal-reading, where `project-state.py --tests` reported a false failure (author's observation, 2026-10-23; not reproduced in review); the four children are deviations, not breakages, ticketed at the author's request (2026-10-23) although they sit under the severity floor.
 
 ## Children
-- 1207 askMinh (moved: askMinh tickets/0001, open there; closed here only as moved)
+- 1207 askMinh (moved: askMinh tickets/0001, open there; branch t0001-uv-env ready for the author's merge, 2026-10-27)
 - 1208 VN-Power-Scenario (closed, dropped by the author 2026-10-23: left alone; draft PR 27 on its origin stays open, the check prints NOT ok on master and the 11 regression tests await the author's decision; nothing was pushed to the collaborator's fork)
 - 1209 ThinkTanksSurveyor (closed, done 2026-10-23: now a git repository with no remote, uv-aligned and merged locally on main; the check prints `ok`)
-- 1210 fs-housekeeper (moved: fs-housekeeper tickets/0001, open there; closed here only as moved)
+- 1210 fs-housekeeper (moved: fs-housekeeper tickets/0001, closed there 2026-10-27, merged 0f7f11c, check ok)
 - sen-causal-reading: ticket 0083 in that repo, closed there; PR 87 merged 2026-10-23 (requirements.txt removed, ruff kept at 0.15 by the author); the alignment check prints `ok` there
 
 ## Alignment check
