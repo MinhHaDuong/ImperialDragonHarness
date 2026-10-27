@@ -43,7 +43,10 @@ launcher and seats share a filesystem. The plan file `<panel>/manifest.txt`
    Anything that stops a seat, its own `NOT-RUN:` refusal included, is
    `<name>: no report (<reason>)` in
    `<panel>/<name>.md.status` and no report at all: the plan check counts the
-   seat missing, and gaze never replaces it with its own read.
+   seat missing, and gaze never replaces it with its own read. A headless seat
+   declares `reach: read=<yes|no> shell=<yes|no> tests=<ran|not-run>` on its
+   second line; a missing line or `read=no` is that same missing seat, and
+   `tests=not-run` marks a clear that read code only, never ran it.
    `--dry-run` prints the command and launches nothing.
 
    **Subagent door.** Where the runtime's delegation tool is present, a seat
