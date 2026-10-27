@@ -4,7 +4,7 @@
 Reports are repository files under `tickets/reviews/<base>..<head>/`, one per
 seat execution, written by the controller. A report is reused only while the
 five identity inputs hold: the merge base and head it names may move, but the
-patch-id of the diff, the ticket's exit-criteria hash and the review policy
+patch-id of the diff, the ticket body hash and the review policy
 version must not change. Check, gate and adherence results are never reused.
 
 Forge-read reviews (human, Copilot) are admitted only from three pinned actor
@@ -164,143 +164,27 @@ def classify_forge(payload: dict, host: str) -> list[dict]:
     return rows
 
 
-CRITERIA_HEADING = re.compile(r"^ {0,3}(#{2,})\s*exit\s+criteria\b", re.I)
-SETEXT_TEXT = re.compile(r"^ {0,3}exit\s+criteria\b", re.I)
-SETEXT_RULE = re.compile(r"^ {0,3}(=+|-+)\s*$")
-HEADING = re.compile(r"^ {0,3}(#{1,6})(?:\s|$)")
-CHECKBOX = re.compile(r"^-\s*\[[ xX]\]\s*")
-LIST_ITEM = re.compile(r"^(?:[-*+]|\d+[.)])\s+")
-FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")  # 4+ spaces of indent is text
-CODE_RUN = re.compile(r"`+")
-
-
-def _visible_lines(text: str) -> list[tuple[str, bool]]:
-    """(line, fenced) pairs with HTML comments removed.
-
-    Fences are recognised first and code spans next, so a comment marker inside
-    either is text; `<!-->` and `<!--->` are complete comments. A comment that
-    never closes raises ValueError.
-    """
-    out: list[tuple[str, bool]] = []
-    fence = None
-    in_comment = False
-    for raw in text.splitlines():
-        if in_comment:
-            end = raw.find("-->")
-            if end < 0:
-                out.append(("", False))
-                continue
-            in_comment, raw = False, raw[end + 3:]
-        else:
-            m = FENCE.match(raw)
-            if fence is not None:
-                if (m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence)
-                        and not m.group(2).strip()):
-                    fence = None
-                out.append((raw, True))
-                continue
-            if m and not (m.group(1)[0] == "`" and "`" in m.group(2)):
-                fence = m.group(1)
-                out.append((raw, True))
-                continue
-        kept, i = [], 0
-        while i < len(raw):
-            run = CODE_RUN.match(raw, i)
-            if run:
-                close = next((c for c in CODE_RUN.finditer(raw, run.end())
-                              if len(c.group()) == len(run.group())), None)
-                stop = close.end() if close else run.end()
-                kept.append(raw[i:stop])
-                i = stop
-            elif raw.startswith("<!--", i):
-                tail = raw[i + 4:]
-                if tail.startswith(">"):
-                    i += 5
-                elif tail.startswith("->"):
-                    i += 6
-                else:
-                    end = raw.find("-->", i + 4)
-                    if end < 0:
-                        in_comment = True
-                        break
-                    i = end + 3
-            else:
-                kept.append(raw[i])
-                i += 1
-        out.append(("".join(kept), False))
-    if in_comment:
-        raise ValueError("unterminated HTML comment in the ticket")
-    return out
-
-
-def _setext_headings(lines: list[tuple[str, bool]]) -> tuple[dict[int, int], set[int]]:
-    """Setext headings as {first line index: level} and their underline indexes."""
-    heads: dict[int, int] = {}
-    rules: set[int] = set()
-    para = None  # first line of the open plain-text paragraph
-    for i, (line, fenced) in enumerate(lines):
-        rule = None if fenced else SETEXT_RULE.match(line)
-        plain = (not fenced and line.strip() and not HEADING.match(line)
-                 and not LIST_ITEM.match(line.strip()) and not rule)
-        if rule and para is not None:
-            heads[para] = 1 if rule.group(1)[0] == "=" else 2
-            rules.add(i)
-            para = None
-        elif plain:
-            para = i if para is None else para
-        else:
-            para = None
-    return heads, rules
+BODY_MARK = re.compile(r"^--- body ---[ \t]*$", re.M)
+SECTION_MARK = re.compile(r"^--- \w+ ---[ \t]*$", re.M)
+TICKED = re.compile(r"^([ \t]*(?:[-*+]|\d+[.)])[ \t]+)\[[xX]\]", re.M)
 
 
 def criteria_hash(ticket_text: str | None) -> str:
-    """Hash every exit-criteria section and every other list item.
+    """Hash the ticket's whole body, raw, with checkbox state normalised.
 
-    A criteria heading is `exit criteria` at any level, any case, with any
-    suffix, ATX (indented up to three spaces) or setext; its section ends at
-    the next heading of the same or a higher level. List items (any bullet or
-    number, checkbox state dropped) outside such sections are hashed too, so
-    renaming the real heading and appending a copy of the old text cannot hide
-    a weakened list. Checkbox state and other prose are ignored.
+    The body is the text under `--- body ---` up to the next section marker.
+    Nothing is parsed: any other edit after a review reads stale, so notes
+    belong in the log. The header, the log and the file's location are outside.
     """
     if ticket_text is None:
         return "none"
-    lines = _visible_lines(ticket_text)
-    setext, rules = _setext_headings(lines)
-    inside: list[str] = []
-    outside: list[str] = []
-    level = 0  # heading level of the open criteria section; 0 when outside
-    found = False
-    for i, (raw, fenced) in enumerate(lines):
-        line = raw.strip()
-        if i in rules:
-            continue
-        crit = None if fenced else CRITERIA_HEADING.match(raw)
-        head = None if fenced else HEADING.match(raw)
-        # (heading level, is it a criteria heading) for ATX and setext alike
-        if i in setext:
-            level_here, is_crit = setext[i], bool(SETEXT_TEXT.match(raw))
-        elif head:
-            level_here, is_crit = len(head.group(1)), bool(crit)
-        else:
-            level_here, is_crit = 0, False
-        if is_crit:
-            level, found = level_here, True
-            inside.append(re.sub(r"\s+", " ", line.lower()))  # a suffix is a ruling
-            continue
-        if level_here and level and level_here <= level:
-            level = 0
-        if not line:
-            continue
-        norm = CHECKBOX.sub("- ", line)
-        if level:
-            inside.append(norm)
-        elif LIST_ITEM.match(line):
-            outside.append(re.sub(r"^(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s*)?", "- ", line))
-    if not found:
+    start = BODY_MARK.search(ticket_text)
+    if not start:
         return "none"
-    lines_out = inside + (["--outside--", *outside] if outside else [])
-    return hashlib.sha256("\n".join(lines_out).encode()).hexdigest()[:16]
+    body = ticket_text[start.end():]
+    end = SECTION_MARK.search(body)
+    body = TICKED.sub(r"\1[ ]", body[:end.start()] if end else body)
+    return hashlib.sha256(body.encode()).hexdigest()[:16]
 
 
 def parse_report(text: str) -> dict:

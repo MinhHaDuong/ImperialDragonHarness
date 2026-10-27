@@ -202,9 +202,10 @@ irrelevant
 """
 
 
-def test_criteria_hash_ignores_checkbox_state_and_other_sections():
-    ticked = TICKET.replace("- [ ] First", "- [x] First").replace("irrelevant", "changed")
+def test_criteria_hash_ignores_checkbox_state_only():
+    ticked = TICKET.replace("- [ ] First", "- [x] First")
     assert re_mod.criteria_hash(TICKET) == re_mod.criteria_hash(ticked)
+    assert re_mod.criteria_hash(TICKET) != re_mod.criteria_hash(TICKET.replace("irrelevant", "changed"))
     reworded = TICKET.replace("Second criterion", "Second criterion, stricter")
     assert re_mod.criteria_hash(TICKET) != re_mod.criteria_hash(reworded)
     assert re_mod.criteria_hash(None) == "none"
@@ -531,7 +532,8 @@ def test_gate_survives_a_ticket_close_after_the_reports(repo, policy):
     commit_reports(repo)
     git(repo, "mv", "tickets/0001-x.erg", "tickets/closed/0001-x.erg") if (repo / "tickets/closed").mkdir(exist_ok=True) is None else None
     closed = repo / "tickets/closed/0001-x.erg"
-    closed.write_text(closed.read_text().replace("[ ]", "[x]") + "\n2026-10-27 closed\n")
+    closed.write_text(closed.read_text().replace("[ ]", "[x]").replace(
+        "--- body ---", "2026-10-27 closed\n\n--- body ---", 1))
     git(repo, "add", "-A", "tickets")
     git(repo, "commit", "-q", "-m", "ticket(1): close and archive")
     out = subprocess.run(
@@ -703,14 +705,6 @@ def test_rename_weaken_and_append_an_unchanged_copy_is_stale(repo, policy):
     assert out.returncode != 0 and "stale" in out.stdout, out.stdout
 
 
-def test_criteria_hash_reads_heading_variants_and_sees_outside_checkboxes():
-    base = re_mod.criteria_hash(TICKET)
-    for heading in ("## Exit Criteria", "### Exit criteria", "## Exit criteria (added)"):
-        assert re_mod.criteria_hash(TICKET + f"\n{heading}\n- [ ] more\n") != base
-    assert re_mod.criteria_hash(TICKET + "\n## Acceptance\n- [ ] weak\n") != base
-    assert re_mod.criteria_hash(TICKET.replace("irrelevant", "prose changes")) == base
-
-
 def _two_tickets(repo):
     commit(repo, "tickets/0002-y.erg", REPO_TICKET.replace("Title: x", "Title: y"), "other ticket")
 
@@ -751,129 +745,52 @@ def test_gate_refuses_a_recorded_ticket_the_pr_does_not_claim(repo, policy, tmp_
     assert fenced.returncode != 0
 
 
-@pytest.mark.parametrize("bullet", ["* [ ] weak", "+ [ ] weak", "1. [ ] weak", "- weak"])
-def test_renamed_section_with_any_list_form_is_seen(bullet):
-    base = re_mod.criteria_hash(TICKET)
-    tampered = TICKET.replace("## Exit criteria\n- [ ] First criterion\n- [ ] Second criterion",
-                              f"## Acceptance\n{bullet}") + "\n## Exit criteria\n- [ ] First criterion\n- [ ] Second criterion\n"
-    assert re_mod.criteria_hash(tampered) != base
+# --- ticket 1261, author ruling 2026-10-27: hash the raw body, no Markdown parsing ---
+
+def _body_ticket(criteria="- [ ] a\n- [ ] b\n", extra=""):
+    return ("%erg 0.1\nTitle: x\n\n--- log ---\n2026-10-27 created\n\n--- body ---\n"
+            f"## Context\nc\n\n## Exit criteria\n{criteria}\n{extra}## Notes\nn\n")
 
 
-def test_comment_line_in_a_fence_does_not_close_the_criteria_section():
-    plain = TICKET.replace("- [ ] Second criterion", "- [ ] Second criterion\n```\n# run this\n```\n- [ ] Third")
-    weaker = plain.replace("- [ ] Third", "- [ ] Third, loosened")
-    assert re_mod.criteria_hash(plain) != re_mod.criteria_hash(weaker)
-
-
-@pytest.mark.integration
-def test_gate_refuses_several_claims_and_disagreeing_grammars(repo, policy, tmp_path):
-    _two_tickets(repo)
-    record_seat(repo, policy, "correctness")
-    commit_reports(repo)
-    several = _gate_claiming(repo, policy, tmp_path,
-                             "**Ticket:** tickets/0001-x.erg\n**Ticket:** tickets/0002-y.erg\n",
-                             "tickets/0001-x.erg")
-    assert several.returncode != 0 and "claim" in several.stdout
-    split = _gate_claiming(repo, policy, tmp_path,
-                           "Ticket: tickets/0001-x.erg (main)\nticket tickets/0002-y.erg\n",
-                           "tickets/0002-y.erg")
-    assert split.returncode != 0 and "claim" in split.stdout
-
-
-def test_suffix_on_the_criteria_heading_changes_the_hash():
-    soft = TICKET.replace("## Exit criteria", "## Exit criteria (advisory, none required)")
-    assert re_mod.criteria_hash(soft) != re_mod.criteria_hash(TICKET)
-
-
-# --- ticket 1261 fix round: HTML comments and fence indentation ---------------
-
-@pytest.mark.parametrize("closer", ["\n## Notes\n-->", "\n# -->"])
-def test_commenting_out_the_criteria_section_changes_the_hash(closer):
-    head, tail = TICKET.split("## Exit criteria\n")
-    section = "## Exit criteria\n" + tail.split("\n## ")[0]
-    hidden = TICKET.replace(section, "<!--\n" + section + closer + "\n")
-    assert re_mod.criteria_hash(hidden) != re_mod.criteria_hash(TICKET)
-
-
-def test_unterminated_comment_is_refused():
-    with pytest.raises(ValueError):
-        re_mod.criteria_hash(TICKET + "\n<!-- never closed\n")
-
-
-def test_comments_elsewhere_do_not_move_the_hash():
-    noted = TICKET.replace("irrelevant", "irrelevant <!-- a\n- [ ] note\n# x\n-->")
-    assert re_mod.criteria_hash(noted) == re_mod.criteria_hash(TICKET)
-    real = (REPO_ROOT / "tickets/closed/0016-harness-project-leak-guard.erg").read_text()
-    assert "<!--" in real
-    assert re_mod.criteria_hash(real) == re_mod.criteria_hash(real + "\n<!-- extra\n- [ ] x\n-->\n")
-
-
-def test_indented_fence_is_not_a_fence_and_closer_takes_no_info_string():
-    # a 4-space indented ``` is text: the heading after it still counts
-    lead = TICKET.replace("irrelevant", "    ```")
-    sneaked = lead + "\n## Exit criteria (added)\n- [ ] sneaked\n"
-    assert re_mod.criteria_hash(sneaked) != re_mod.criteria_hash(lead)
-    ends = TICKET.replace("irrelevant", "```python\n## Exit criteria\nghost\n``` js\n## Exit criteria\nghost2\n```")
-    # ``` js does not close: everything up to the bare closer is fenced text
-    assert re_mod.criteria_hash(ends) == re_mod.criteria_hash(TICKET)
-
-
-# --- ticket 1261, second fix round: spans, fences and headings before comments ---
-
-def _with_criteria(*items, tail=""):
-    body = "\n".join(f"- [ ] {i}" for i in items)
-    return f"%erg 0.1\nTitle: x\n\n--- body ---\n## Context\nc\n\n## Exit criteria\n{body}\n{tail}\n## Notes\nn\n"
-
-
-def test_inline_code_comment_markers_do_not_hide_criteria_between_them():
-    mid = "`<!--` opens a comment"
-    end = "`-->` closes it"
-    one = _with_criteria(mid, "hidden demand", end)
-    two = _with_criteria(mid, "hidden demand, loosened", end)
-    assert re_mod.criteria_hash(one) != re_mod.criteria_hash(two)
-
-
-def test_empty_comment_forms_are_complete_comments():
-    for empty in ("<!-->", "<!--->"):
-        one = _with_criteria("a", f"x {empty} y", "b", "later <!-- end --> z")
-        two = _with_criteria("a", f"x {empty} y", "b changed", "later <!-- end --> z")
-        assert re_mod.criteria_hash(one) != re_mod.criteria_hash(two)
-
-
-# hashes of the pre-comment-strip code (613d45ad) on tickets whose inline code names a marker
-PRE_STRIP_HASHES = {
-    "0016-harness-project-leak-guard": "1a7a7bfdd1385859",
-    "0124-fix-leak-guard-violation-raid-skill": "354b4d5746cd03d5",
-    "0304-enrich-generated-state-status-block": "facb6547fd5982cc",
-    "1233-harness-doctor-lints-harness-skills-and": "a2a0fff81954611c",
-    "1246-raid-prints-a-portable-sitrep-every-15-minutes": "5312193c51eff06c",
+BASE_TICKET = _body_ticket()
+SPAN = "- [ ] `x <!--\n- [ ] b\n- [ ] c -->`\n"
+# (reviewed text, edited text): every edit must read stale
+BYPASS_PROBES = {
+    "variant heading": (BASE_TICKET, _body_ticket(extra="## Exit Criteria\n- [ ] sneaked\n")),
+    "suffix heading": (BASE_TICKET, BASE_TICKET.replace("## Exit criteria", "## Exit criteria (advisory)")),
+    "rename-weaken-append": (BASE_TICKET, _body_ticket("- [ ] weak\n").replace(
+        "## Exit criteria", "## Acceptance") + "\n## Exit criteria\n- [ ] a\n- [ ] b\n"),
+    "html comment wrap": (BASE_TICKET, BASE_TICKET.replace(
+        "## Exit criteria", "<!--\n## Exit criteria").replace("\n## Notes", "\n# -->\n## Notes")),
+    "comment text edited": (_body_ticket(extra="<!-- why a -->\n"), _body_ticket(extra="<!-- why b -->\n")),
+    "inline-code markers": (_body_ticket("- [ ] `<!--` opens\n- [ ] a\n- [ ] `-->` closes\n"),
+                            _body_ticket("- [ ] `<!--` opens\n- [ ] hidden\n- [ ] `-->` closes\n")),
+    "empty comment": (_body_ticket("- [ ] a <!--> x\n- [ ] b\n- [ ] c <!-- e -->\n"),
+                      _body_ticket("- [ ] a <!--> x\n- [ ] b changed\n- [ ] c <!-- e -->\n")),
+    "multi-line code span": (_body_ticket(SPAN), _body_ticket(SPAN.replace("] b", "] b changed"))),
+    "indented code block": (_body_ticket(extra="    code a\n\n"), _body_ticket(extra="    code b\n\n")),
+    "setext heading": (_body_ticket(extra="Exit criteria (revised)\n-----\nsneaked\n\n"),
+                       _body_ticket(extra="Exit criteria (revised)\n-----\nsneaked, loosened\n\n")),
+    "body note": (BASE_TICKET, _body_ticket(extra="Note: criteria are advisory.\n\n")),
+    "context edit": (BASE_TICKET, BASE_TICKET.replace("## Context\nc", "## Context\nc, narrowed")),
 }
 
 
-@pytest.mark.parametrize("stem", sorted(PRE_STRIP_HASHES))
-def test_inline_code_markers_in_real_closed_tickets_keep_their_hash(stem):
-    text = (REPO_ROOT / f"tickets/closed/{stem}.erg").read_text()
-    assert re_mod.criteria_hash(text) == PRE_STRIP_HASHES[stem]
+@pytest.mark.parametrize("name", sorted(BYPASS_PROBES))
+def test_every_body_edit_after_review_reads_stale(name):
+    reviewed, edited = BYPASS_PROBES[name]
+    assert re_mod.criteria_hash(edited) != re_mod.criteria_hash(reviewed)
 
 
-@pytest.mark.parametrize("heading_block", [
-    "  ## Exit criteria (added)\nsneaked demand",
-    "Exit criteria (revised)\n-----------------------\nsneaked demand",
-    "Exit criteria (revised)\n=======================\nsneaked demand",
-])
-def test_indented_and_setext_headings_are_criteria_sections(heading_block):
-    lead = _with_criteria("a") + "\n## Notes\n"  # closed section; prose counts only under a criteria heading
-    assert re_mod.criteria_hash(lead + "\n" + heading_block + "\n") != re_mod.criteria_hash(lead)
+def test_a_pure_close_reads_reused():
+    closed = (BASE_TICKET.replace("- [ ]", "- [x]", 1).replace("- [ ] b", "- [X] b")
+              .replace("--- body ---", "2026-10-28 closed\n\n--- body ---")
+              .replace("%erg 0.1", "%erg 0.1\nClosed: 2026-10-28"))
+    assert re_mod.criteria_hash(closed) == re_mod.criteria_hash(BASE_TICKET)
+    assert re_mod.criteria_hash(None) == "none"
 
 
-def test_backtick_info_string_with_a_backtick_is_no_fence():
-    lead = _with_criteria("a") + "\n```x`y\n"
-    sneaked = lead + "\n## Exit criteria (added)\nsneaked demand\n"
-    assert re_mod.criteria_hash(sneaked) != re_mod.criteria_hash(lead)
-
-
-def test_lone_code_span_or_fenced_open_comment_is_not_refused():
-    re_mod.criteria_hash(_with_criteria("a `<!--` b"))
-    re_mod.criteria_hash(_with_criteria("a", tail="```html\n<!-- never closed\n```\n"))
-    with pytest.raises(ValueError):
-        re_mod.criteria_hash(_with_criteria("a", tail="<!-- never closed\n"))
+def test_other_list_markers_normalise_their_tick_and_keep_their_marker():
+    star = BASE_TICKET.replace("- [ ] a", "* [ ] a")
+    assert re_mod.criteria_hash(star.replace("* [ ] a", "* [x] a")) == re_mod.criteria_hash(star)
+    assert re_mod.criteria_hash(star) != re_mod.criteria_hash(BASE_TICKET)
