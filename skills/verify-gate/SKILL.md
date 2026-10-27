@@ -462,9 +462,10 @@ through `python3 "$IDH_ROOT/scripts/review_notes.py" -C "$primary_root"`; never
   § Gate sessions' admission itself: an answer covers the head (its head
   equals the tip, or a rebased tip has the same non-empty verbatim patch-id;
   a `delta` answer only through its `coverage.carried` chain to an earlier
-  full one), or the tip adds only bookkeeping to the reviewed head
-  (`match: bookkeeping`), or it is the round-2 re-gate of a round-1 REROLL
-  fix (`match: reroll-fix`). It refuses with no answer, an ESCALATE answer,
+  full one), or the tip adds only bookkeeping to a reviewed head whose
+  answer is full or chained (`match: bookkeeping`), or it is the round-2
+  re-gate of a round-1 REROLL fix descending from the rerolled head
+  (`match: reroll-fix`). It refuses with no answer, an ESCALATE answer,
   a recorded ESCALATE verdict, or past two rounds. On a refusal answer
   ESCALATE with its `reason`, record nothing, spend no round.
 - **Review comments.** Non-negotiable 3's gaze findings are the `text` of

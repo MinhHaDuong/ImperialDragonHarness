@@ -36,7 +36,8 @@ alike (synced first), plus one; the gate runs only when the latest `answer` is
 not ESCALATE and an answer covers the head (`coverage`: equal, or an equal
 non-empty verbatim patch-id after a rebase; a delta answer only through its
 `coverage.carried` chain to an earlier full one), or the head adds only
-bookkeeping to the reviewed one, or it is the round-2 re-gate of a REROLL fix;
+bookkeeping to a full or chained reviewed one, or it is the round-2 re-gate
+of a REROLL fix descending from the rerolled head;
 never past a recorded ESCALATE verdict. `verdict` appends the gate's ruling
 with the round it derives itself, only on an admitted head: never a third
 round, never a REROLL on round 2; `add` refuses `verdict`.
@@ -531,6 +532,10 @@ def _chained(answers, delta):
         cur = target
 
 
+def _full_or_chained(answers, e):
+    return (e.get("coverage") or {}).get("scope", "full") == "full" or _chained(answers, e)
+
+
 def _bookkeeping_since(cwd, base_ref, head, since):
     """merge-gate.py tier --since: 0 when what `head` adds to `since` is bookkeeping or nothing."""
     gate = Path(__file__).resolve().with_name("merge-gate.py")
@@ -546,8 +551,9 @@ def gate_state(cwd, review_id, head, remote="origin"):
 
     Admitted: an answer covers the head (equal head, or equal non-empty verbatim patch-id;
     a delta only through its `carried` chain to an earlier full answer); or the head adds
-    only bookkeeping to the latest reviewed head; or it is the round-2 re-gate of the fix
-    for a round-1 REROLL. Refused: no answer, an ESCALATE answer (the latest, or the one
+    only bookkeeping to the latest reviewed head, whose answer is full or chained; or it is
+    the round-2 re-gate of the fix for a round-1 REROLL, descending from the rerolled head.
+    Refused: no answer, an ESCALATE answer (the latest, or the one
     covering the head), a recorded ESCALATE verdict, more than two rounds."""
     if setup(cwd, remote):
         sync(cwd, remote)
@@ -573,13 +579,17 @@ def gate_state(cwd, review_id, head, remote="origin"):
         state["reason"] = f"no completed review: the latest gaze answer {answers[-1]['id']} is ESCALATE"
     elif state["result"] == "ESCALATE":
         state["reason"] = f"no completed review: the answer {state['answer']} covering the head is ESCALATE"
-    elif cov["match"] == "delta" and not _chained(answers, next(e for e in answers if e["id"] == cov["answer"])):
+    elif cov["match"] == "delta" and not _full_or_chained(answers, next(e for e in answers if e["id"] == cov["answer"])):
         state["reason"] = ("no full review: the delta answer covering the head does not carry an "
                            "earlier full answer (coverage.carried)")
     elif cov["match"] != "none":
         state["ready"] = True
-    elif verdicts and verdicts[-1].get("verdict") == "REROLL" and state["round"] == MAX_ROUNDS:
+    elif (verdicts and verdicts[-1].get("verdict") == "REROLL" and state["round"] == MAX_ROUNDS
+          and _git(cwd, "merge-base", "--is-ancestor", verdicts[-1]["head"], head, check=False).returncode == 0):
         state.update(ready=True, match="reroll-fix", answer=None, result=None)
+    elif not _full_or_chained(answers, answers[-1]):
+        state["reason"] = (f"no full review: the latest answer {answers[-1]['id']} is a delta that does "
+                           "not carry an earlier full answer (coverage.carried)")
     elif _bookkeeping_since(cwd, answers[-1]["base_ref"], head, state["reviewed_head"]):
         state.update(ready=True, match="bookkeeping", answer=answers[-1]["id"],
                      result=answers[-1].get("result"))

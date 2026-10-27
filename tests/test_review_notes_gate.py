@@ -339,3 +339,27 @@ def test_two_gate_runs_ruling_at_once_report_the_conflict(two_clones, monkeypatc
     assert done["entry"]["round"] == 1 and done["conflict"]
     state = rn.gate_state(b, rid, "feature")
     assert state["round"] == 3 and not state["ready"]  # fails closed: past the cap
+
+
+def test_bookkeeping_after_an_unchained_delta_is_refused(repo):
+    """gaze 1813 round 2: the bookkeeping path rests on a full or chained answer only."""
+    rid = rn.open_review(repo, "feature", "main")
+    answer(repo, rid, scope="delta")  # a narrow first review: carried is None
+    assert not rn.gate_state(repo, rid, "feature")["ready"]
+    sh(repo, "switch", "-q", "feature")
+    (Path(repo) / "tickets").mkdir()
+    commit(repo, "tickets/0001-x.erg", "%erg 0.1\n", "ticket(1): close")
+    state = rn.gate_state(repo, rid, "feature")
+    assert not state["ready"] and "full" in state["reason"]
+    with pytest.raises(rn.Refusal):
+        rn.record_verdict(repo, rid, session(), "APPROVED", "feature")
+
+
+def test_reroll_fix_must_descend_from_the_rerolled_head(repo):
+    rid = rn.open_review(repo, "feature", "main")
+    answer(repo, rid)
+    rn.record_verdict(repo, rid, session(), "REROLL", "feature")
+    sh(repo, "branch", "-q", "-f", "feature", "main")  # a head unrelated to the ruled one
+    fix(repo, 16)
+    state = rn.gate_state(repo, rid, "feature")
+    assert not state["ready"] and state["match"] == "none"
