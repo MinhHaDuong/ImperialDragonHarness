@@ -64,7 +64,7 @@ def run_gaze(caller: Path, primary: Path, seat: str) -> subprocess.CompletedProc
 
 
 @pytest.mark.parametrize("seat, removed", [
-    ('git -C "$review_tree" commit -q --allow-empty -m "a seat that commits"\n', True),
+    ('git -C "$review_tree" commit -q --allow-empty -m "a seat that commits" && echo SEAT-COMMITTED\n', True),
     ('echo stray >> "$review_tree/a.txt"\n', False),
 ])
 def test_a_seat_that_writes_cannot_move_the_branch_or_the_callers_tree(repos, seat, removed):
@@ -75,6 +75,7 @@ def test_a_seat_that_writes_cannot_move_the_branch_or_the_callers_tree(repos, se
     tip, caller_status = git(origin, "rev-parse", "refs/heads/feat"), git(caller, "status", "--porcelain")
     run = run_gaze(caller, primary, seat)
     assert (run.returncode == 0) is removed, run.stdout + run.stderr
+    assert removed is ("SEAT-COMMITTED" in run.stdout), "the seat's write must have happened"
     assert git(origin, "rev-parse", "refs/heads/feat") == tip
     assert git(caller, "status", "--porcelain") == caller_status
     assert (primary / ".claude" / "worktrees" / "review-7").exists() is not removed

@@ -21,8 +21,9 @@ manifest seat has no report or the manifest lists no seat.
 `# budget: <n>m` in its header) with what ran (ticket 1225). Its first line is
 `plan check: PASS`, `plan check: PASS with deviations — ...` or `plan check:
 FAIL — ...`; the roster lines follow. An item with no report fails it. A worker
-whose report is empty or does not open with `worker: model=<id> ·
-family=<family>` did not report either, which fails it too; one that names no
+whose report is empty, does not open with `worker: model=<id> ·
+family=<family>` (leading blank lines and Markdown bold tolerated), or holds
+that line alone did not report either, which fails it too; one that names no
 family or another family than planned, or an item over the budget, is a
 deviation. An item planned with family `none` (a script) needs only a
 non-empty report. Exit 1 on FAIL only.
@@ -127,10 +128,12 @@ def plan_check(panel: Path) -> tuple[bool, list[str]]:
             continue
         if budget is not None and int(timed.group(1)) > budget:
             deviations.append(f'{name}: {timed.group(1)}s, over the {budget // 60}m budget')
-        text = (panel / f'{name}.md').read_text(encoding='utf-8', errors='replace')
-        first = text.split('\n', 1)[0]
-        if not text.strip() or (planned != 'none' and not first.startswith('worker:')):
-            missing.append(f'{name}: no report (empty, or no worker line)')
+        text = (panel / f'{name}.md').read_text(encoding='utf-8-sig', errors='replace')
+        lines_ = [ln.strip().strip('*').strip() for ln in text.splitlines() if ln.strip()]
+        first = lines_[0] if lines_ else ''
+        signed = first.lower().startswith('worker:')
+        if not lines_ or (planned != 'none' and (not signed or len(lines_) < 2)):
+            missing.append(f'{name}: no report (empty, unsigned, or the worker line alone)')
             continue
         if planned == 'none':
             continue

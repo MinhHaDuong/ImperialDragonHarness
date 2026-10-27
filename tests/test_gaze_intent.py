@@ -164,7 +164,7 @@ def test_a_worker_line_without_a_family_is_a_deviation(tmp_path):
     assert "correctness: names no family" in lines[0]
 
 
-@pytest.mark.parametrize("content", ["", "garbage\n", "verdict: clear\n"])
+@pytest.mark.parametrize("content", ["", "garbage\n", "verdict: clear\n", "worker: model=m1 · family=anthropic\n"])
 def test_an_empty_or_unsigned_report_fails_the_plan_check(tmp_path, content):
     """Red-team finding on PR 1703: a report with nothing in it, or none of the
     worker's own first line, is no report, not a deviation."""
@@ -261,3 +261,12 @@ def test_items_are_matched_by_name_not_position(tmp_path):
     assert ok
     assert "redteam: family anthropic, planned openai" in lines[0]
     assert "correctness:" not in lines[0]
+
+
+def test_a_worker_line_after_a_blank_line_or_in_bold_still_signs(tmp_path):
+    panel = tmp_path / "p"
+    write_plan(panel, MANIFEST)
+    (panel / "correctness.md").write_text("\ufeff\n**worker: model=m1 · family=anthropic**\nverdict: clear\n", encoding="utf-8")
+    report(panel, "redteam", "worker: model=m2 · family=openai")
+    ok, lines = seat_clock.plan_check(panel)
+    assert ok and lines[0] == "plan check: PASS", lines
