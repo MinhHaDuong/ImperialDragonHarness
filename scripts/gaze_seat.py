@@ -220,8 +220,12 @@ def answer_of(door: dict, text: str) -> str:
     """A door's answer: after its marker when it prints one, else the output after the leading banner.
 
     aider prints the answer marker only around reasoning content, so a plain answer has none.
+    Thinking without its answer marker is a truncated run: no answer, so no report.
     """
     marker = door.get('answer_marker')
+    thinking = door.get('thinking_marker')
+    if marker and thinking and thinking in text and marker not in text:
+        return ''
     lines = text.split(marker, 1)[1].splitlines() if marker and marker in text else text.splitlines()
     if not (marker and marker in text):
         start = next((i for i, line in enumerate(lines) if not BANNER.match(line)), len(lines))
