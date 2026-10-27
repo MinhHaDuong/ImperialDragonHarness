@@ -1,0 +1,46 @@
+%erg 0.1
+Title: Before the merge only cheap checks: split .merge-gate.json, drop tiers, verify-gate leaves the suite to main
+Created: 2026-10-27
+Author: Minh Ha-Duong
+Blocked-by: 1244
+
+--- log ---
+2026-10-27T09:32Z reviewer created child 2 of tracker 1226 (author, 2026-10-27)
+
+--- body ---
+## Context
+
+Child 2 of tracker 1226. Switches the pre-merge gate to the cheap set once
+child 1244's runner tests main after every merge. This is the latency win:
+a gate record runs 88 to 95 s today, `make lint` 6 to 15 s (padme, READ).
+
+Author ruling, 2026-10-27: **`/verify-gate` does not run the full suite
+before the merge** — "it is the whole point". Adherence stays before the merge
+through `make lint` (`pytest -m adherence`).
+
+## Design
+
+- `.merge-gate.json` declares a before set (ticket validator, agnostic and
+  pipefail guards, catalog drift, `make lint`) and an after set (the full
+  declared set, test suite included). Read from main, as today.
+- The `tiers` key goes: every merge runs the cheap set, so the bookkeeping
+  subset adds nothing. Delete `effective()` / `accepted_scopes()`
+  tier handling in `scripts/merge-gate.py`; keep the `tier`
+  subcommand, which still decides whether a PR needs `/gaze`.
+- `/verify-gate` check plan (`skills/verify-gate/SKILL.md` § Check
+  plan, `merge-gate.py plan`) covers only the before set; its
+  `unresolved_adherence_violations` reads the `make lint` check, not
+  `pytest-guard`. The `rerun` key follows: keep it only if it still
+  selects within the before set.
+- Guard hook (`hooks/reference-transaction`) and `scripts/main_sweep.py`
+  accept a merge carrying a passing before-merge record.
+- `skills/merge/SKILL.md` states the two moments in one place (§ Gating
+  tiers as it stands after 1225).
+
+## Exit criteria
+
+- [ ] `.merge-gate.json` declares the before-merge and after-merge check sets; the before set holds no test-suite run; the `tiers` key and its code path are gone.
+- [ ] A merge records the before set on its candidate and lands; measured end to end with the `step_clock.py` duration line, against today's record (88 to 95 s).
+- [ ] `/verify-gate` runs no full suite before the merge; its adherence finding reads the `make lint` check.
+- [ ] The guard hook and the audit accept a main whose merges carry a before-merge record; `skills/merge/SKILL.md` states the two moments in one place.
+- [ ] The harness gate passes.
