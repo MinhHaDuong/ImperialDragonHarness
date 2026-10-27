@@ -168,7 +168,7 @@ CRITERIA_HEADING = re.compile(r"^(#{2,})\s*exit\s+criteria\b", re.I)
 HEADING = re.compile(r"^(#{1,6})\s")
 CHECKBOX = re.compile(r"^-\s*\[[ xX]\]\s*")
 LIST_ITEM = re.compile(r"^(?:[-*+]|\d+[.)])\s+")
-FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
+FENCE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")  # 4+ spaces of indent is text
 
 
 def criteria_hash(ticket_text: str | None) -> str:
@@ -183,6 +183,9 @@ def criteria_hash(ticket_text: str | None) -> str:
     """
     if ticket_text is None:
         return "none"
+    if "<!--" in re.sub(r"<!--.*?-->", "", ticket_text, flags=re.S):
+        raise ValueError("unterminated HTML comment in the ticket")
+    ticket_text = re.sub(r"<!--.*?-->", "", ticket_text, flags=re.S)
     inside: list[str] = []
     outside: list[str] = []
     level = 0  # heading level of the open criteria section; 0 when outside
@@ -195,7 +198,7 @@ def criteria_hash(ticket_text: str | None) -> str:
             mark = fenced.group(1)
             if fence is None:
                 fence = mark
-            elif mark[0] == fence[0] and len(mark) >= len(fence):
+            elif mark[0] == fence[0] and len(mark) >= len(fence) and not fenced.group(2).strip():
                 fence = None
         crit = None if fence or fenced else CRITERIA_HEADING.match(raw)
         other = None if fence or fenced else HEADING.match(raw)

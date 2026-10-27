@@ -783,3 +783,37 @@ def test_gate_refuses_several_claims_and_disagreeing_grammars(repo, policy, tmp_
 def test_suffix_on_the_criteria_heading_changes_the_hash():
     soft = TICKET.replace("## Exit criteria", "## Exit criteria (advisory, none required)")
     assert re_mod.criteria_hash(soft) != re_mod.criteria_hash(TICKET)
+
+
+# --- ticket 1261 fix round: HTML comments and fence indentation ---------------
+
+@pytest.mark.parametrize("closer", ["\n## Notes\n-->", "\n# -->"])
+def test_commenting_out_the_criteria_section_changes_the_hash(closer):
+    head, tail = TICKET.split("## Exit criteria\n")
+    section = "## Exit criteria\n" + tail.split("\n## ")[0]
+    hidden = TICKET.replace(section, "<!--\n" + section + closer + "\n")
+    assert re_mod.criteria_hash(hidden) != re_mod.criteria_hash(TICKET)
+
+
+def test_unterminated_comment_is_refused():
+    with pytest.raises(ValueError):
+        re_mod.criteria_hash(TICKET + "\n<!-- never closed\n")
+
+
+def test_comments_elsewhere_do_not_move_the_hash():
+    noted = TICKET.replace("irrelevant", "irrelevant <!-- a\n- [ ] note\n# x\n-->")
+    assert re_mod.criteria_hash(noted) == re_mod.criteria_hash(TICKET)
+    real = (REPO_ROOT / "tickets/closed/0016-harness-project-leak-guard.erg").read_text()
+    assert "<!--" in real
+    assert re_mod.criteria_hash(real) == re_mod.criteria_hash(re.sub(r"<!--.*?-->", "", real, flags=re.S))
+    assert re_mod.criteria_hash(real) == re_mod.criteria_hash(real + "\n<!-- extra\n- [ ] x\n-->\n")
+
+
+def test_indented_fence_is_not_a_fence_and_closer_takes_no_info_string():
+    # a 4-space indented ``` is text: the heading after it still counts
+    lead = TICKET.replace("irrelevant", "    ```")
+    sneaked = lead + "\n## Exit criteria (added)\n- [ ] sneaked\n"
+    assert re_mod.criteria_hash(sneaked) != re_mod.criteria_hash(lead)
+    ends = TICKET.replace("irrelevant", "```python\n## Exit criteria\nghost\n``` js\n## Exit criteria\nghost2\n```")
+    # ``` js does not close: everything up to the bare closer is fenced text
+    assert re_mod.criteria_hash(ends) == re_mod.criteria_hash(TICKET)
