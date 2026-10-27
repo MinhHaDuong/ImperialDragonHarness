@@ -21,8 +21,9 @@ import sys
 from pathlib import Path
 
 HARNESS = Path(__file__).resolve().parent.parent
+FRONTMATTER = re.compile(r"\A---\n.*?\n---\n", re.DOTALL)
 REASON = re.compile(r"\b(because|since|has no)\b", re.IGNORECASE)
-REASON_LINES = 15  # a reason must sit in the file's opening lines
+REASON_LINES = 5  # a reason must sit within 5 lines of the opening, past the frontmatter
 DIRECTIVE_FILES = ("CLAUDE.md", "AGENTS.md", ".claude/CLAUDE.md")
 
 
@@ -65,14 +66,18 @@ def harness_skills() -> dict[str, tuple[Path, str]]:
         path = sub / "SKILL.md"
         try:
             desc = str(load(path).get("description", ""))
-        except FrontmatterError:
+        except (FrontmatterError, OSError, UnicodeDecodeError):
             desc = ""
         found[sub.name] = (path, desc)
     return found
 
 
 def reason_in(path: Path) -> str | None:
-    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None  # unreadable (broken link, permissions): silent, hence warn
+    lines = FRONTMATTER.sub("", text, count=1).splitlines()
     for line in lines[:REASON_LINES]:
         if REASON.search(line):
             return line.strip()
@@ -107,11 +112,12 @@ def scan(project: Path) -> list[dict]:
         names = {sub.name}
         try:
             names.add(str(load(path).get("name", sub.name)))
-        except FrontmatterError:
+        except (FrontmatterError, OSError, UnicodeDecodeError):
             pass  # still judged by directory name
         hit = next((n for n in sorted(names) if n in skills), None)
-        if hit and path not in seen:
-            seen.add(path)
+        real = path.resolve()
+        if hit and real not in seen:
+            seen.add(real)
             records.append(finding(path, *skills[hit]))
     for path in local_rules:
         target = HARNESS / "rules" / path.name

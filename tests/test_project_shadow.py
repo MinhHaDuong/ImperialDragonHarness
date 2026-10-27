@@ -116,3 +116,30 @@ def test_every_runtime_declares_project_skill_roots():
     roots = {v["harness"]: v["project_skill_roots"] for v in data["versions"]}
     assert ".vibe/skills" in roots["vibe"] and ".pi/skills" in roots["pi"]
     assert ".claude/skills" in roots["claude"]
+
+
+def test_undecodable_skill_and_broken_rule_link_are_records(tmp_path):
+    bad = tmp_path / ".claude/skills/yawn/SKILL.md"
+    bad.parent.mkdir(parents=True)
+    bad.write_bytes(b"\xff\xfe\x00bad")
+    rules = tmp_path / ".claude/rules"
+    rules.mkdir(parents=True)
+    (rules / "git.md").symlink_to("/nonexistent")
+    recs = run(tmp_path, tmp_path)
+    assert len(recs) == 1 or len(recs) == 2
+    assert {r["verdict"] for r in recs} == {"warn"}
+
+
+def test_frontmatter_words_are_not_a_reason(tmp_path):
+    path = tmp_path / ".claude/skills/yawn/SKILL.md"
+    path.parent.mkdir(parents=True)
+    path.write_text("---\nname: yawn\ndescription: Runs since midnight\n---\nbody\n")
+    (rec,) = run(tmp_path, tmp_path)
+    assert rec["verdict"] == "warn"
+
+
+def test_symlinked_roots_yield_one_record(tmp_path):
+    skill(tmp_path, ".agents/skills", "yawn")
+    (tmp_path / ".pi").mkdir()
+    (tmp_path / ".pi/skills").symlink_to(tmp_path / ".agents/skills")
+    assert len(run(tmp_path, tmp_path)) == 1
