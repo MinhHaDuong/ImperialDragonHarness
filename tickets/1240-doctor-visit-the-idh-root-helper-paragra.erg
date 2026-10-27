@@ -23,3 +23,49 @@ Run `/harness-doctor` (the visit form from 1238) with this complaint. The doctor
 - [ ] Diagnosis with confidence, and what stays unexplained
 - [ ] Options priced (author-hours, agent cost) with odds and undo, one recommended, each checked against the seam tests and the three-runtime proof slice
 - [ ] The author's choice recorded here; a chosen remedy filed as its own ticket, or the duplication accepted with its reason in `skills/harness-doctor/references/checklist.md`
+
+## Raid annotation (Imagine+Plan, 2026-10-27)
+- Premise check (recounted on this tree): the paragraph is not expired. 16 of 38
+  skills open with "For helper commands, set `IDH_ROOT=...`": 14 verbatim (325
+  bytes of text, 326 with newline), plus two shortened (hoard, 95 bytes;
+  verify-gate, 207 bytes) = about 5 KB. Roar is a 17th spelling of the seam,
+  two-step, not the paragraph. All 16 actually run a helper (`$IDH_ROOT` is used
+  1 to 8 times in each; release, once), so "carries it without using it" is not
+  borne out here; a hand-pruning option would target release/hoard-class single
+  users at best. Seam tests: `test_every_seam_body_derives...` (floor 10) and
+  `test_the_canonical_one_line_spelling_dominates` (floor 14, met exactly by the
+  14 verbatim: any shortening or removal of one verbatim copy fails it).
+- Running the visit in a hunt: executor loads `skills/harness-doctor/SKILL.md`
+  and its references, runs the `harness_here.sh` gate, then a complaint-started
+  visit (the ticket is the author's complaint; a hunt launched on it counts as
+  called). Cheapest probes: recount (done above), lint with its positive control
+  (`tests/fixtures/harness-doctor/trace-doctor-SKILL.md`), read
+  `tests/test_skill_seam.py` and `adapters/README.md`; no model-spending probe, so
+  no consent step. Runtime question per exit criterion: for each option, state
+  what Claude Code, Codex and Pi would have to supply; where a runtime cannot be
+  run, report "unavailable", not clean. It writes one journal entry,
+  `memory/journal/2026/2026-10-27-harness-doctor-idh-root-paragraph-1240.md`
+  (the existing doctor entries sit in `memory/journal/2026/`), with: diagnosis
+  and confidence, what stays unexplained, hypotheses with odds, priced options
+  (author-hours, agent cost, odds, undo, seam-test and three-runtime check), one
+  recommendation. Done = the entry exists plus the first three exit criteria
+  ticked; the fourth (author's choice) is not the executor's: leave it open and
+  say so; the ticket then stays open (no close claim) until the author rules.
+  The MR contains the journal entry and the ticket's ticked boxes/log only.
+  Do not close the ticket in the MR.
+- Antipattern scan: the risk is a doctor "fixing" the duplication on the spot
+  (shortening the line, editing tests, adding a rule). Forbidden by the ticket
+  ("nothing changes before the author decides"): the diff must touch no
+  `skills/`, `rules/`, `tests/`, `scripts/`; the verifier checks by path. Also
+  avoid a null-as-finding trap: "no better remedy" needs a positive control, and
+  "nothing worth doing" is a legitimate priced option. Pre-weighed hint, not a
+  decision: the seam tests encode the duplication as a safeguard, so accept-with-
+  reason in `checklist.md` is likely cheap, but that edit also waits for the author.
+- Shared-file note: 1237 and 1227/gaze (gaze, verify-adherence), 1239
+  (test-doctor), 1246 (raid), 1244 (merge) edit skills that carry the paragraph.
+  No conflict: this visit edits none of them. Risk is only the recount going
+  stale if one of them touches the paragraph; the entry should quote the commit
+  it measured. Run after those merge or accept a small recount drift. The
+  uncommitted modification to ticket 1237 in the prep worktree is unrelated.
+- Verdict: GO. Priced: executor about 1 agent-hour (read-only, one journal
+  file), author about 0.25 h to rule.
