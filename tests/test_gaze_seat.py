@@ -9,6 +9,8 @@ import importlib.util
 import json
 import subprocess
 import sys
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import pytest
@@ -23,13 +25,26 @@ log="$STUB_LOG/$(basename "$0").argv"
 printf '%s\n' "$@" > "$log"
 pwd > "$STUB_LOG/$(basename "$0").cwd"
 cat > "$STUB_LOG/$(basename "$0").stdin"
+[ "$(basename "$0")" = aider ] && [ -z "$STUB_MODE" ] && STUB_MODE=aider-clear
 case "$STUB_MODE" in
+  aider-clear)
+    printf 'Aider v0.86.2\n--------------\n► **THINKING**\nhmm\n------------\n► **ANSWER**\nfinding: none\nverdict: clear\nTokens: 1\n' ;;
   fail) echo "partial"; exit 1 ;;
   liar) printf 'worker: model=gpt-6.1-sol · family=OpenAI\nfinding: none\nverdict: clear\n' ;;
   notrun) printf 'NOT-RUN: review tree unreachable\n' ;;
   notrun-tick) printf 'Reading the tree first.\n`NOT-RUN: HEAD moved`\n' ;;
   mentions) printf 'finding: the seat prints NOT-RUN: on refusal, as specified\nverdict: clear\n' ;;
   empty) : ;;
+  aiderish)
+    printf 'Aider v0.86.2\nModel: openai/x with ask edit format\n\n--------------\n> **THINKING**\n\nmaybe verdict: clear\n\n------------\n> **ANSWER**\n\nfinding: none\nverdict: concerns\n\nTokens: 1 sent, 2 received.\n' | sed 's/^> /\xe2\x96\xba /' ;;
+  aider-notrun)
+    printf 'Aider v0.86.2\n--------------\n> **THINKING**\nverdict: clear\n------------\n> **ANSWER**\nNOT-RUN: tree unreachable\nTokens: 1\n' | sed 's/^> /\xe2\x96\xba /' ;;
+  aider-truncated)
+    printf 'Aider v0.86.2\n--------------\n> **THINKING**\nfinding: none\nverdict: clear\n' | sed 's/^> /\xe2\x96\xba /' ;;
+  aider-plain)
+    printf 'Aider v0.86.2\nModel: openai/x with ask edit format\nGit repo: none\nRepo-map: disabled\nAdded d.diff to the chat (read-only).\n\nfinding: none\nverdict: clear\n\nTokens: 1 sent, 2 received.\n' ;;
+  aider-plain-notrun)
+    printf 'Aider v0.86.2\nRepo-map: disabled\n\nNOT-RUN: tree unreachable\nTokens: 1\n' ;;
   outfile|outfile-fail)
     # codex writes its last message to the -o file
     prev=""; for a in "$@"; do [ "$prev" = "-o" ] && printf 'verdict: clear\n' > "$a"; prev="$a"; done
@@ -51,7 +66,7 @@ def rig(tmp_path):
     bin_dir, log = tmp_path / 'bin', tmp_path / 'log'
     bin_dir.mkdir()
     log.mkdir()
-    for name in ('claude', 'codex', 'pi'):
+    for name in ('claude', 'codex', 'pi', 'aider'):
         stub = bin_dir / name
         stub.write_text(STUB)
         stub.chmod(0o755)
@@ -275,3 +290,191 @@ def test_every_runtime_door_builds_a_pinned_read_only_command():
     assert pi.argv[pi.argv.index('--tools') + 1] == 'read,grep,find,ls' and pi.argv[-1] == 'PROMPT'
     with pytest.raises(ValueError):  # the claude door offers named aliases only
         gaze_seat.build_command(doors['claude-code'], 'gpt-6-luna', 'P', Path('/o'), Path('/f'))
+
+
+class _Models(BaseHTTPRequestHandler):
+    def do_GET(self):
+        body = json.dumps({'object': 'list', 'data': [{'id': i} for i in self.server.served]}).encode()
+        self.send_response(200 if self.path == '/v1/models' else 404)
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *args):
+        pass
+
+
+@pytest.fixture
+def padme(rig):
+    """A stub OpenAI-compatible server and a Pi models.json declaring it as provider `padme`."""
+    server = HTTPServer(('127.0.0.1', 0), _Models)
+    server.served = ['served-model']
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    url = f'http://127.0.0.1:{server.server_port}/v1'
+    models = rig['tmp'] / 'models.json'
+    models.write_text(json.dumps({'providers': {'padme': {'baseUrl': url, 'api': 'openai-completions'}}}))
+    rig['env']['IDH_PI_MODELS'] = str(models)
+    yield url
+    server.shutdown()
+
+
+def aider_seat(rig, model='padme/served-model', family='Local', **kw):
+    return launch(rig, runtime='aider', model=model, family=family, home='Anthropic', **kw)
+
+
+@pytest.mark.integration
+def test_aider_seat_runs_read_only_against_the_declared_local_server(rig, padme):
+    result = aider_seat(rig)  # no consent file: a local provider spends nothing
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = rig['panel'] / 'correctness.md'
+    assert first_line(report) == 'worker: model=padme/served-model · family=Local · runtime=aider · door=headless'
+    argv = (rig['log'] / 'aider.argv').read_text().splitlines()
+    assert argv[argv.index('--model') + 1] == 'openai/served-model'
+    assert argv[argv.index('--openai-api-base') + 1] == padme  # from Pi's declaration, not a copy
+    assert argv[argv.index('--chat-mode') + 1] == 'ask'
+    for rail in ('--dry-run', '--no-git', '--no-auto-commits', '--no-suggest-shell-commands'):
+        assert rail in argv
+    diff = rig['panel'] / 'correctness.diff'
+    assert argv[argv.index('--read') + 1] == str(diff) and 'def parse(key)' in diff.read_text()
+    assert (rig['panel'] / 'correctness.prompt').read_text().startswith('You are one code-review seat')
+    assert argv[argv.index('--message-file') + 1] == str(rig['panel'] / 'correctness.prompt')
+
+
+@pytest.mark.integration
+def test_aider_seat_refuses_a_model_id_the_server_does_not_serve(rig, padme):
+    result = aider_seat(rig, model='padme/nope-model')
+    assert result.returncode == 1
+    assert result.stdout.startswith('correctness: no report (') and 'nope-model' in result.stdout
+    assert 'served-model' in result.stdout  # names what the server does serve
+    assert not (rig['log'] / 'aider.argv').exists() and not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_aider_seat_without_a_listing_or_declaration_is_no_report(rig, padme):
+    (rig['tmp'] / 'models.json').write_text(json.dumps({'providers': {'padme': {'baseUrl': 'http://127.0.0.1:9/v1'}}}))
+    unreachable = aider_seat(rig)
+    assert unreachable.returncode == 1 and 'no report (cannot list models' in unreachable.stdout
+    undeclared = aider_seat(rig, model='ghost/served-model')
+    assert undeclared.returncode == 1 and 'no report' in undeclared.stdout
+    assert not (rig['log'] / 'aider.argv').exists()
+
+
+@pytest.mark.integration
+def test_aider_seat_failure_is_no_report(rig, padme):
+    result = aider_seat(rig, mode='fail')
+    assert result.returncode == 1 and 'no report' in result.stdout
+    assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_aider_door_does_not_exempt_a_hosted_provider_from_consent(rig, padme):
+    (rig['tmp'] / 'models.json').write_text(json.dumps({'providers': {'hosted': {'baseUrl': padme}}}))
+    result = aider_seat(rig, model='hosted/served-model')
+    assert result.returncode == 1 and 'no consent for cross-family spend on hosted' in result.stdout
+
+
+def test_aider_door_declares_rails_and_no_hand_copied_address():
+    gaze_seat = load_module()
+    door = gaze_seat.load_doors(ROOT / 'skills' / 'route' / 'routes.json')['aider']
+    assert {'--chat-mode', 'ask', '--dry-run', '--no-git', '--no-auto-commits'} <= set(door['seat_rails'])
+    assert '127.0.0.1' not in json.dumps(door) and '100.' not in door['template']
+
+
+def charter(role):
+    text = (ROOT / 'profiles' / role / 'PROFILE.md').read_text()
+    return text.split('\nCharter:\n', 1)[1].strip()
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('role', ['code-reviewer', 'prose-reviewer'])
+def test_seat_prompt_carries_the_role_profile_charter(rig, role):
+    extra = [] if role == 'code-reviewer' else ['--role', role]
+    result = launch(rig, *extra)
+    assert result.returncode == 0, result.stdout + result.stderr
+    prompt = (rig['log'] / 'claude.argv').read_text()
+    assert charter(role) in prompt  # one source per role: the profile file, not an embedded copy
+    assert str(rig['tree']) in prompt and 'correctness.diff' in prompt and rig['head'] in prompt  # launch parts
+    assert 'verify the parser' in prompt  # the brief still closes the prompt
+
+
+@pytest.mark.integration
+def test_unknown_role_is_no_report(rig):
+    result = launch(rig, '--role', 'no-such-role')
+    assert result.returncode != 0 and not (rig['panel'] / 'correctness.md').exists()
+
+
+def test_plan_guidance_requires_an_external_seat_before_self_only():
+    plan = (ROOT / 'skills' / 'gaze' / 'references' / 'plan.md').read_text()
+    flat = ' '.join(plan.split())
+    assert 'When the subagent door cannot launch' in flat
+    assert 'same-family seat on the headless door' in flat
+    assert 'before it may fall back to `seats: self-only`' in flat
+    assert 'self-only stays only for "no door launched"' in flat
+
+
+@pytest.mark.integration
+def test_aider_runs_in_a_scratch_directory_outside_the_review_tree_and_any_repo(rig, padme):
+    result = aider_seat(rig)  # aider loads .aider.conf.yml from its cwd and git root: neither may be reviewed code
+    assert result.returncode == 0, result.stdout
+    cwd = Path((rig['log'] / 'aider.cwd').read_text().strip()).resolve()
+    tree = rig['tree'].resolve()
+    assert cwd != tree and tree not in cwd.parents and cwd not in tree.parents
+    assert subprocess.run(['git', '-C', str(cwd.parent), 'rev-parse'], capture_output=True).returncode != 0
+    assert not cwd.exists()  # removed after the seat
+
+
+@pytest.mark.integration
+def test_local_exemption_follows_the_declared_host_not_the_provider_name(rig, padme):
+    (rig['tmp'] / 'models.json').write_text(json.dumps({'providers': {
+        'padme-cloud': {'baseUrl': 'http://93.184.216.34:8080/v1'}}}))
+    remote = aider_seat(rig, model='padme-cloud/served-model')
+    assert remote.returncode == 1 and 'no consent for cross-family spend on padme-cloud' in remote.stdout
+    (rig['tmp'] / 'models.json').write_text(json.dumps({'providers': {
+        'padme': {'baseUrl': 'http://100.93.160.120:8080/v1'}}}))  # CGNAT (tailnet) address is local
+    gaze_seat = load_module()
+    door = gaze_seat.load_doors(ROOT / 'skills' / 'route' / 'routes.json')['aider']
+    for url, local in (('http://127.0.0.1:1/v1', True), ('http://100.93.160.120/v1', True),
+                       ('http://192.168.1.4/v1', True), ('http://localhost/v1', True),
+                       ('http://93.184.216.34/v1', False), ('http://example.com/v1', False)):
+        assert gaze_seat.is_local(door, 'padme', url) is local, url
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('label', ['Anthropic', 'OpenAI', 'Alibaba'])
+def test_local_model_cannot_be_stamped_as_another_family(rig, padme, label):
+    result = aider_seat(rig, family=label)
+    assert result.returncode == 1 and 'family Local' in result.stdout
+    assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_aider_report_is_the_answer_only(rig, padme):
+    result = aider_seat(rig, mode='aiderish')
+    assert result.returncode == 0, result.stdout
+    report = (rig['panel'] / 'correctness.md').read_text()
+    assert report.splitlines()[0].startswith('worker: model=padme/served-model')
+    assert 'Aider v' not in report and 'THINKING' not in report and 'Tokens:' not in report
+    assert 'verdict: concerns' in report and 'maybe verdict: clear' not in report
+
+
+@pytest.mark.integration
+def test_verdict_in_aider_thinking_does_not_hide_a_refusal(rig, padme):
+    refused = aider_seat(rig, mode='aider-notrun')
+    assert refused.returncode == 1 and 'seat refused' in refused.stdout
+    bare = aider_seat(rig, mode='aider-plain-notrun')  # no marker: the whole answer is scanned
+    assert bare.returncode == 1 and 'seat refused' in bare.stdout
+
+
+@pytest.mark.integration
+def test_thinking_without_an_answer_is_no_report(rig, padme):
+    result = aider_seat(rig, mode='aider-truncated')  # truncated: a verdict inside thinking only
+    assert result.returncode == 1 and 'no report (empty output)' in result.stdout
+    assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_non_reasoning_answer_without_a_marker_is_reported(rig, padme):
+    result = aider_seat(rig, mode='aider-plain')
+    assert result.returncode == 0, result.stdout
+    report = (rig['panel'] / 'correctness.md').read_text()
+    assert 'verdict: clear' in report and 'Aider v' not in report and 'Repo-map' not in report
+    assert 'Tokens:' not in report and report.splitlines()[0].startswith('worker: model=padme/served-model')
