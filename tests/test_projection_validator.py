@@ -295,6 +295,17 @@ def test_negative_control_healthy_home_launches_unchanged(world, runtime):
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize("runtime", RUNTIMES)
+def test_wrappers_export_idh_root_to_the_launched_runtime(world, runtime):
+    """Ticket 1247: claude, codex and pi inherit IDH_ROOT, the checkout."""
+    exe = world["fakebin"] / runtime
+    exe.write_text('#!/bin/sh\necho "IDH_ROOT=$IDH_ROOT"\n')
+    r = launch(world, runtime)
+    assert r.returncode == 0, r.stderr
+    assert f"IDH_ROOT={world['root'].resolve()}\n" in r.stdout
+
+
+@pytest.mark.integration
 def test_claude_session_start_prints_low_disk_warning(tmp_path):
     fakebin = tmp_path / "bin"
     fakebin.mkdir()

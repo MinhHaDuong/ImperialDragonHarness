@@ -14,9 +14,9 @@ destination. Read its AGENTS.md and inspect its memory convention. Missing
 paths or permissions are visible failures; do not create a replacement store
 in the harness or use retired shared/native-store helpers.
 
-For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"`
-in the same shell call. Substitute the absolute SKILL.md path supplied by the
-runtime; this physically resolves the installed projection to its canonical
+For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"`
+in the same shell call. Substitute the absolute SKILL.md path or skill directory supplied by the
+runtime (a pre-set `IDH_ROOT` wins); this physically resolves the installed projection to its canonical
 checkout. Never derive the helper root from the selected project's cwd.
 
 ## Migration preflight

@@ -14,6 +14,9 @@
 
 # Resolve the checkout from this sourced file instead of a fixed home path.
 _IDH_ROOT="$(cd -P -- "$(dirname -- "$(readlink -f -- "${BASH_SOURCE[0]}")")/.." && pwd -P)"
+# Exported for every runtime the wrappers launch (claude, codex, pi) and for
+# the skills' helper commands and rules/workflow.md's session-start probe.
+export IDH_ROOT="$_IDH_ROOT"
 
 # _idh_bypass_log RUNTIME [NOTE] — record an explicit bypass, and say so.
 # $PWD is printf %q escaped (every control character, not only newlines), so
