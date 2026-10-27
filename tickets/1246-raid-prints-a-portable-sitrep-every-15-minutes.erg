@@ -66,3 +66,77 @@ merged / escalated), breakers fired since the last sitrep, the next action.
 - [ ] Tests cover rendering from a fixture raid log, the unreadable-state
       exit, and the empty-queue vs. non-empty-queue branch.
 - [ ] `make check` passes.
+
+## Raid annotation (Imagine+Plan, 2026-10-27)
+
+**Premise: holds (GO).** On this tree `scripts/raid-sitrep.py` does not exist;
+`skills/raid/SKILL.md:196` and `references/circuit-breakers.md:44` say "the raid
+log" with no path and no writer; the only wake is `raid-breaker.py --wait`
+("Claude Code only", the marker is at circuit-breakers.md:53). No sibling
+solved it (main log scanned, no sitrep commit).
+
+**Simplest path.** One stdlib script plus a log convention; no scheduler, no
+daemon, no config. Cadence is the runtime's job: Claude Code arms one background
+`sleep 900 && raid-sitrep.py` (exits, wakes the coordinator, re-armed each time);
+the author's shell uses `watch -n 900`. Antipatterns to refuse: a timer/cron
+manager in the harness (YAGNI), a generic "wake source" abstraction with a
+plugin API (premature; one marked paragraph per runtime suffices), reusing
+`raid-breaker.py` internals beyond a one-shot call (import `classify`, do not fork it).
+Codex/Pi wake sources are unverified: the implementer must check once and write
+"none found, wave-boundary sitreps" if so (criterion 4 allows it); do not invent one.
+
+**Fixed raid-log path (proposal).** `$(git rev-parse --git-common-dir)/idh-raid/raid.log`:
+append-only text, one line `<epoch> <EVENT> key=value ...` (RAID_START deadline=,
+WAVE_BASE sha=, WAVE n tickets=, PR n step=, BREAKER kind=, QUEUE n=). Shared by all
+worktrees, untracked (no gitignore edit, no branch-and-PR noise), survives
+worktree removal. Env override `IDH_RAID_LOG` for tests.
+
+**Actions (ordered).**
+1. Test, then `scripts/raid_log.py` (append/parse helpers, ~40 lines) and the
+   documented path; SKILL.md writes RAID_START, WAVE_BASE, wave, PR-step and
+   BREAKER lines at the points that already exist (Phase 4 line 196, Phase 5, Phase 6).
+2. `scripts/raid-sitrep.py`: render elapsed/budget, wave, PR steps, breakers since
+   previous sitrep (last SITREP line), next action; read `gh pr list` (behind the
+   extension point, as dashboard.sh does); exit 2 on any unreadable part (log
+   missing/garbled, git or forge failure), printing `UNREADABLE <part>` in place of data.
+3. Next-action rule in the script: nothing in flight and QUEUE n>0 prints
+   `NEXT resume wave`, QUEUE 0 prints `NEXT wrap-up`; SKILL.md says act on it.
+4. SKILL.md: arm at raid start, disarm at wrap-up (kill the background sleep);
+   per-runtime paragraph(s) behind `<!-- harness-extension-point -->`;
+   `scripts/check-agnostic.sh` must pass. Possibly a `references/sitrep.md`.
+5. `make check`.
+
+**Files.** New: `scripts/raid-sitrep.py`, `scripts/raid_log.py`, `tests/test_raid_sitrep.py`,
+fixture log. Edit: `skills/raid/SKILL.md`, `references/circuit-breakers.md` (path),
+generated skills catalog only if frontmatter changes (it should not).
+
+**First failing test.** `tests/test_raid_sitrep.py::test_unreadable_state_exits_nonzero`:
+point `IDH_RAID_LOG` at a nonexistent file, expect exit 2 and `UNREADABLE` on output
+(no "all clear" string). Then fixture-render, then queue 0 vs n>0 NEXT line.
+
+**Tautological-test check.** Rendering tests must assert on values taken from a
+hand-written fixture log (elapsed 25m, PR 12 at gate round 2), not on strings the
+script's own formatter produced; the exit test needs a positive control (same
+fixture readable, exit 0). The "arms at start / disarms at wrap-up" criterion is
+text in SKILL.md: assert the command line and its position under the right
+headings (like `test_raid_wave_base.py`), and accept it proves wording only; the
+folded nudge is verified through the script's NEXT line, not the prose.
+Forge reads must be stubbed with a failing `gh` and a canned `gh` for both branches.
+
+**Shared-file note.** `skills/raid/SKILL.md` collides with 1240 (IDH_ROOT paragraph
+at line 15, repeated across skills), possibly 1244 (after-merge runner touches the
+Phase 6/merge step) and 1239 (lair, adjacent only via step_clock timings; no
+overlap expected). 1237 and 1227 touch gaze/adherence scripts, not raid files:
+low risk. Rebase on origin/main immediately before editing SKILL.md; keep the
+edits to appended lines and new headings, not the line-15 paragraph.
+
+**Risks.** Codex/Pi wake sources may not exist (degrade, documented); the log is
+written by coordinator prose, so a coordinator that forgets a line yields a
+sitrep that says "no PR data" (must be UNREADABLE-exit 2, not blank); `gh` rate
+or auth failure must also exit 2.
+
+## Raid feasibility (2026-10-27)
+WARN (minor path errors; shared file). `skills/raid/SKILL.md:196` and `circuit-breakers.md:44/53` match. `test_raid_wave_base.py` and `skills/dashboard/dashboard.sh` exist.
+- Path fix: `classify` lives in `scripts/raid_gate_state.py`, not `raid-breaker.py`, which defines only `snapshot`, `run` and `main`, and is hyphenated, so it cannot be imported plainly. The sitrep should read the existing gate heartbeat markers (`raid_gate_state.marker_path`, under TMPDIR `idh-raid-gates/`) as durable breaker state, rather than adding BREAKER lines to the log alone.
+- Shared file: the unlanded author trim in the locked worktree `explore-merge-skill` rewrites 5 hunks of `skills/raid/SKILL.md` (Phases 6-7, Gating-tiers pointers moved to `rules/git.md`). Raid SKILL edits should land after that worktree is landed or dropped (author's call), or expect a rebase conflict.
+- Doc lines must use `"$IDH_ROOT/scripts/raid-sitrep.py"`, never `scripts/...` (check-agnostic SKILL_PATTERNS).
