@@ -1,0 +1,46 @@
+%erg 0.1
+Title: Store review attribution in the merge commit, not a journal file
+Created: 2026-10-27
+Author: reviewer
+Label: needs-human
+
+--- log ---
+2026-10-27T09:45Z reviewer created
+
+--- body ---
+## Context
+Every reviewed merged PR leaves a post-merge annex: a ~30-line
+`memory/journal/YYYY/*-review-attribution-prNNNN.md` (130 so far), a
+`memory/evidence/` file, and a roar capture commit. The record is already
+complete in the PR body's `attribution` block when `/merge` runs (ticket 1151),
+so roar copies forge text into a file after the fact. The author called the
+merge-time extraction and capture burdensome (2026-10-27 discussion).
+
+Alternative rejected: `erg log` lines on the closed ticket. That needs a
+strict one-ticket-per-PR rule. The log grammar is single-line, so the
+30-line record either becomes 30 entries per ticket or a lossy summary that
+breaks the shared-catch anchors `scripts/attribution_query.py` scores on.
+`.erg` files are also plaintext, with no equivalent of the `.age` audience.
+
+## Proposal
+`/merge` passes the PR body's attribution block as the merge commit body
+(`gh pr merge --body`; harness extension point for other forges). The commit
+date replaces the `pending` swap. `attribution_query.py` reads
+`git log --merges` blocks plus the existing journal files (no migration).
+Roar's attribution capture (one call since ticket 1242) goes away; the seats join moves before merge (into
+the `/gaze` closing or `/merge` step 0).
+
+## Author decisions (needs-human)
+1. **Private audience.** A merge commit is plaintext. Do private projects keep
+   the encrypted journal path, or does forge-level privacy suffice? It
+   suffices unless the repo may be published later.
+2. **Late appends.** Body edits after merge no longer reach the record, so the
+   block must be complete at merge. Should `/merge` refuse when it is not,
+   instead of today's warning?
+
+## Exit criteria
+- [ ] A merged PR's attribution block is the merge commit body, read back after merge
+- [ ] `attribution_query.py` reports identical scores on the 130 journal records before and after, and counts merge-commit records once
+- [ ] Roar's capture runbook no longer writes review-attribution journal files for public projects
+- [ ] The private-audience path follows the author's decision
+- [ ] `make check` passes
