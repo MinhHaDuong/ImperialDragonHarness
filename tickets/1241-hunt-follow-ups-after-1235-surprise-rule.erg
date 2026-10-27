@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-27T09:10Z claude created
+2026-10-27T11:00Z reviewer note item 7 moved to 1252 per author ruling: forge-less operation required
 
 --- body ---
 ## Context
@@ -19,7 +20,7 @@ in session; items 3-10 are review findings the author deferred here.
 - [ ] 4. `rules/workflow.md` monster line gives a lone autonomous session (neither orchestrator nor hunt) an action; stay inside the resident budget.
 - [ ] 5. Simplify hunt: drop the third restatement of the monster return in Execute, drop the Detach final-report clause if redundant, shorten "Too big or multipart" to a pointer to `rules/workflow.md`.
 - [ ] 6. Hunt's no-forge close stages narrowly, as `/merge` step Close does (`git add -u tickets/ && git add tickets/closed/<id>-*.erg`), not `tickets/` wholesale.
-- [ ] 7. Raid Phases 6-7 give a forge-less ready-to-merge branch a path through gating and merge, or say raid needs a forge.
+- [x] 7. Moved to ticket 1252 (author 2026-10-27: raid, hunt, gaze and merge must need no forge; the "or say raid needs a forge" branch is excluded).
 - [ ] 8. Hunt's `TMPDIR="$W/.tmp"` advice makes `tests/test_harness_doctor_skill.py::test_refusal_ignores_an_exported_work_tree` and `::test_refusal_outside_harness[no-repo]` fail (reproduced 2026-10-27: fail with TMPDIR in the worktree, pass with the default); fix the tests or the advice.
 - [ ] 9. Gaze takes only a PR number: no route for forge-less projects, and launched from a session whose cwd is another repo it resolves the wrong forge. Give it a branch/repo argument or document the limit.
 - [ ] 10. (low) The self-gate runs before the rebase, as before 1235; decide whether to swap.
@@ -33,3 +34,21 @@ in session; items 3-10 are review findings the author deferred here.
 
 ## Test
 Wording items take no tests. Item 8 is a test fix; item 2's helper, if built, gets tests.
+
+## Raid annotation (Imagine+Plan, 2026-10-27)
+Checked against main f52b159e (post #1733/#1735/#1736/#1738).
+- 1 valid: hunt Plan has no surprise rule (only "Judgment needed" bullets). Add one bullet to Plan, pointing at workflow.md § Escalation protocol. skills/hunt.
+- 2 valid: nothing in Plan reads open MRs or locked worktrees. Simplest: one Plan sentence naming the two reads (`git worktree list` for locked trees, forge MR list with files, or none without a forge), then name/coordinate/escalate at 3+. No helper script (answer to "decide": no; two commands, no logic). skills/hunt.
+- 3 valid: hunt Execute says only "goes back up as in Plan"; raid Phase 5 says "schedule the children in a later wave", silent on the locked worktree, partial branch, and no later wave. Add one sentence each: unlock+keep branch pushed/noted in the split, and "no later wave left: report the split to the author". skills/hunt, skills/raid.
+- 4 valid: workflow.md:135-140 gives orchestrator/hunt/interactive, no lone autonomous session. Add ~60 chars: "A lone autonomous session proposes it in its report and stops." workflow.md.
+- 5 valid: Detach "a returned monster included", Plan "Too big or multipart" (long), Execute "goes back up" and raid 244-246 all restate it. Cut Execute clause and shorten Plan bullet to a pointer. Net shrink. skills/hunt.
+- 6 valid: hunt Verify "stage `tickets/`" still wholesale; merge/SKILL.md:89 has the narrow form. Copy it. skills/hunt.
+- 7 valid: raid Phase 6 (`gaze <pr>`, forge wording) and Phase 7 assume a PR. Simplest honest action: one line "raid needs a forge; a forge-less ready branch goes to the author with the hunt report". Cheaper than a new path. skills/raid.
+- 8 valid, reproduced: with TMPDIR inside the worktree, `test_refusal_outside_harness[no-repo]` fails (rc 0). Cause (isolated): pytest tmp_path then sits inside the harness checkout, so the "no repo" cwd resolves to the harness; harness_here.sh is correct. Fix the tests: build the foreign cwd outside REPO (mkdtemp under /tmp, or skip when tmp_path is under REPO). Keep hunt's advice. tests/test_harness_doctor_skill.py. The ticket's second name (exported_work_tree) passed in my run with TMPDIR set; only no-repo failed, so re-measure before editing.
+- 9 valid: gaze Input is PR-number only; "no PR argument" -> ESCALATE. Simplest: document the limit (forge-less projects use hunt's reviewer seats; run from the PR's repo cwd). Adding a repo argument is a feature. skills/gaze.
+- 10 valid, low: hunt Verify runs self-gate then rebase. Swap = rebase first (rules/git.md "Rebase before every gate"). One-line reorder; do it.
+
+Monster check: one sign-off unit (wording of 5 files, one test fix, ~5 files, no dependents, no build gate). Items 1-2 are decided in session. Verdict GO as one PR; no split.
+Resident budget: rules/*.md resident total 17517 chars vs RESIDENT_BUDGET 17800 (tests/test_rules_resident_budget.py:56): 283 headroom. Item 4's ~60 chars fits; do not raise the budget.
+Tests: first failing = tests/test_harness_doctor_skill.py::test_refusal_outside_harness[no-repo] under TMPDIR=<worktree>/.tmp (red before, green after; run both with and without TMPDIR). Wording items take no tests; resist pinning hunt text. Tautology check: a test that only passes because tmp_path is outside the repo proves nothing, so the fixed test must assert rc 1 from a cwd verified to be outside REPO.
+Conflicts: 1247 touches only the top IDH_ROOT paragraph of every skill (disjoint hunks). 1248 touches gaze_close/gaze_setup plus one raid marker line (item 9 edits gaze Input prose, item 7 raid Phase 6-7; rebase, no overlap expected). 1244 touches merge skill and tickets only. Rebase after those land.

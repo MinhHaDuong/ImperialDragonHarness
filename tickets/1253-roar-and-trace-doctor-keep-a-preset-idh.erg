@@ -1,0 +1,31 @@
+%erg 0.1
+Title: Roar and trace-doctor keep a preset IDH_ROOT and accept a skill directory
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T11:05Z reviewer created
+
+--- body ---
+## Context
+Found by the verify-gate of PR #1743 (ticket 1247, 2026-10-27). 1247 replaced the helper paragraph
+with a one-line fallback (preset `IDH_ROOT` wins; a skill directory or a SKILL.md path resolve the
+same root). Four sites outside that paragraph still derive the root unconditionally from
+`dirname(<loaded-SKILL.md>)/../..`: `skills/roar/SKILL.md:27`, `skills/roar/runbooks/sweep.md:23`,
+`skills/roar/runbooks/capture.md:92`, `skills/trace-doctor/SKILL.md:38` (`HARNESS_DIR`). Under Claude
+Code, which supplies the skill directory, each resolves one level too high, and the roar lines
+overwrite the `IDH_ROOT` that `shell-init.sh` now exports, so roar's attribution helpers can run
+from the wrong place. `skills/roar/close-and-clean.sh:60` already keeps a preset value.
+
+## Exit criteria
+- [ ] The four sites use 1247's canonical fallback line (or read the preset `IDH_ROOT`), so a preset
+      wins and a directory or a SKILL.md path resolve the same root.
+- [ ] `tests/test_skill_seam.py` (or a sibling) fails on an unconditional `dirname(<loaded-SKILL.md>)`
+      derivation anywhere under `skills/`.
+- [ ] The harness gate passes.
+
+## Relevant files
+skills/roar/SKILL.md, skills/roar/runbooks/sweep.md, skills/roar/runbooks/capture.md,
+skills/trace-doctor/SKILL.md, tests/test_skill_seam.py
+
+Related: [[1247]], [[1240]].
