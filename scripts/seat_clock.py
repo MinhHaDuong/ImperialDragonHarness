@@ -16,10 +16,22 @@ else `reported in <s>s` from the report's mtime less the manifest's (the
 manifest is written just before launch), else `no report`. Fresh status lines of
 seats outside the manifest (optional external readers) follow. Exit 1 when a
 manifest seat has no report or the manifest lists no seat.
+
+`plan-check <panel>` compares gaze's plan (the manifest: one item per line,
+`# budget: <n>m` in its header) with what ran (ticket 1225). Its first line is
+`plan check: PASS`, `plan check: PASS with deviations — ...` or `plan check:
+FAIL — ...`; the roster lines follow. An item with no report fails it. A worker
+whose report is empty, does not open with `worker: model=<id> ·
+family=<family>` (leading blank lines and Markdown bold tolerated), or holds
+that line alone did not report either, which fails it too; one that names no
+family or another family than planned, or an item over the budget, is a
+deviation. An item planned with family `none` (a script) needs only a
+non-empty report. Exit 1 on FAIL only.
 """
 
 import argparse
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -100,6 +112,45 @@ def roster(panel: Path) -> tuple[bool, list[str]]:
     return complete, lines
 
 
+def plan_check(panel: Path) -> tuple[bool, list[str]]:
+    complete, lines = roster(panel)
+    manifest = (panel / 'manifest.txt').read_text(encoding='utf-8-sig').splitlines()
+    budget = next((int(m.group(1)) * 60 for line in manifest
+                   if (m := re.fullmatch(r'# budget: (\d+)m', line.strip()))), None)
+    missing, deviations = [], []
+    by_name = {line.split(': ', 1)[0]: line for line in lines}
+    for cells in (line.split('\t') for line in manifest if line.strip() and not line.startswith('#')):
+        name, planned = cells[0], cells[2].strip() if len(cells) > 2 else ''
+        line = by_name.get(name, f'{name}: no report')
+        timed = re.search(r': reported in (\d+)s', line)
+        if not timed:
+            missing.append(line)
+            continue
+        if budget is not None and int(timed.group(1)) > budget:
+            deviations.append(f'{name}: {timed.group(1)}s, over the {budget // 60}m budget')
+        text = (panel / f'{name}.md').read_text(encoding='utf-8-sig', errors='replace')
+        lines_ = [ln.strip().strip('*').strip() for ln in text.splitlines() if re.search(r'\w', ln)]
+        first = lines_[0] if lines_ else ''
+        signed = first.lower().startswith('worker:')
+        if not lines_ or (planned != 'none' and (not signed or len(lines_) < 2)):
+            missing.append(f'{name}: no report (empty, unsigned, or the worker line alone)')
+            continue
+        if planned == 'none':
+            continue
+        named = re.search(r'family=([\w.-]+)', first, re.IGNORECASE)
+        if not named:
+            deviations.append(f'{name}: names no family, planned {planned}')
+        elif named.group(1).lower() != planned.lower():
+            deviations.append(f'{name}: family {named.group(1)}, planned {planned}')
+    if missing or not complete:
+        head = 'plan check: FAIL — ' + '; '.join(missing + deviations)
+    elif deviations:
+        head = 'plan check: PASS with deviations — ' + '; '.join(deviations)
+    else:
+        head = 'plan check: PASS'
+    return not missing and complete, [head, *lines]
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = parser.add_subparsers(dest='mode', required=True)
@@ -109,6 +160,8 @@ def main(argv: list[str]) -> int:
     run_p.add_argument('command', nargs='+', help='reader command, after --')
     roster_p = sub.add_parser('roster', help='one line per manifest seat')
     roster_p.add_argument('panel', type=Path)
+    plan_p = sub.add_parser('plan-check', help='the plan against what ran')
+    plan_p.add_argument('panel', type=Path)
     args = parser.parse_args(argv)
     if args.mode == 'run':
         ok, outcome = run_seat(args.cap, args.out, args.command)
@@ -120,7 +173,7 @@ def main(argv: list[str]) -> int:
         print(line)
         return 0 if ok else 1
     try:
-        complete, lines = roster(args.panel)
+        complete, lines = (plan_check if args.mode == 'plan-check' else roster)(args.panel)
     except OSError as error:
         print(f'seat_clock: cannot read {args.panel}/manifest.txt: {error}', file=sys.stderr)
         return 2

@@ -90,29 +90,13 @@ def test_phase6_gaze_launch_returns_a_verdict():
     )
 
 
-def test_phase6_substitution_trigger_names_detection_causes():
-    """The detached fallback must trigger on every battery NOT-RUN cause.
-
-    The gaze battery NOT-RUN enum carries three causes — guard, no-agent-tool,
-    depth — but the Phase 6 substitution trigger named only two (plus the
-    known-absent-connector heuristic): an inline run reporting
-    `NOT-RUN — cause: guard` would not trigger the detached fallback and the
-    PR would end the wave with no verdict at all (round-1 gate V1/V3). The
-    trigger clause must name each cause beside the NOT-RUN signal it detects.
-    """
+def test_phase6_substitution_trigger_names_its_signals():
+    """The detached fallback triggers on the inline run's failed plan check
+    naming seats that could not launch, or on a known absent connector
+    (ticket 0990; ticket 1225 retired the battery NOT-RUN line)."""
     norm = re.sub(r"\s+", " ", _per_ticket())
-    m = re.search(r"battery: NOT-RUN — cause:", norm)
-    assert m, (
-        "Phase 6 must trigger the detached fallback on the gaze battery "
-        "NOT-RUN signal, not on connector heuristics alone"
-    )
-    window = norm[m.start():m.start() + 250]
-    for cause in ("no-agent-tool", "depth", "guard"):
-        assert cause in window, (
-            f"Phase 6's substitution trigger must name the detection cause "
-            f"{cause!r} beside the battery NOT-RUN signal — a NOT-RUN run "
-            "with an unnamed cause would not trigger the detached fallback"
-        )
+    assert "`plan check: FAIL` naming seats that could not launch" in norm
+    assert "known absent agent connector" in norm
 
 
 GAZE_RESULT = "the `## /gaze result` PR comment"
@@ -126,7 +110,7 @@ SCOPE = (
     "(`skills/merge/SKILL.md` § Gating tiers), judged before the raid adds the fix "
     "for a gate's round-1 REROLL, which does not void the result (the round-2 "
     "re-gate rules the fix). A FINDINGS fix does: it moves the head past what gaze "
-    "reviewed, so gaze runs again on the new head."
+    "reviewed."
 )
 GATE_RUN = "Only on a gaze result of REVIEWED run `/verify-gate <pr-number>"
 
@@ -210,7 +194,7 @@ def test_denial_recovery_respects_the_gate_budget():
         "parks the PR and escalates to the author instead of sending it back through Phase 6"
         in " ".join(_per_ticket().split())
     )
-    assert "gaze phase outputs 2–5" in " ".join(_per_ticket().split())
+    assert "Gate disagrees with a gaze result on a must-fix finding" in " ".join(_per_ticket().split())
 
 
 def test_phase6_cites_an_existing_output_shape():
@@ -236,9 +220,10 @@ def test_phase7_checks_local_remote_and_ruled_tip_before_the_helper():
 
 
 def test_phase6_findings_are_re_reviewed_before_any_gate():
-    """A FINDINGS fix moves the head past what gaze reviewed: raid re-runs
-    /gaze on the new head before any gate, and a second FINDINGS escalates."""
+    """A FINDINGS fix moves the head past what gaze reviewed: raid runs /gaze
+    on the new head with a narrower intent before any gate, and FINDINGS on
+    the fixes escalates (ticket 1225)."""
     norm = " ".join(_per_ticket().split())
-    assert "the raid re-runs `/gaze` on the new head before any gate" in norm
-    assert "After a FINDINGS fix, re-run `/gaze` on the new head" in norm
-    assert "FINDINGS again after the re-run `/gaze` → ESCALATE" in norm
+    assert "runs `/gaze` on the new head with a new, narrower intent naming those fixes, before any gate" in norm
+    assert "After a FINDINGS fix, run `/gaze` on the new head with a narrower intent" in norm
+    assert "FINDINGS again on the fixes after the narrower `/gaze` → ESCALATE" in norm

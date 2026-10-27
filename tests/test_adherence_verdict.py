@@ -21,7 +21,6 @@ from child_env import child_env
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPT = REPO / "scripts" / "adherence_verdict.py"
-BATTERY = REPO / "skills" / "gaze" / "references" / "battery.md"
 ADHERENCE = REPO / "skills" / "verify-adherence" / "SKILL.md"
 
 _spec = importlib.util.spec_from_file_location("adherence_verdict", SCRIPT)
@@ -246,21 +245,6 @@ def test_cli_exit_codes(tmp_path):
     )
     assert ok.returncode == 0, ok.stderr
     assert yaml.safe_load(ok.stdout)["semantic_review"]["status"] == "ran"
-
-
-def test_gaze_launches_the_seat_with_semantic_caller():
-    """The Agent A invocation hands phase 3 to gaze, and gaze folds the
-    returns through the merge script."""
-    battery = BATTERY.read_text(encoding="utf-8")
-    block = battery.split("**Agent A — adherence**", 1)[1].split(
-        "**Native `/review` and `/simplify`**", 1
-    )[0]
-    assert (
-        'Skill(skill: "verify-adherence", args: "<branch> '
-        "worktree=$primary_root/.claude/worktrees/review-<pr-number> "
-        'semantic=caller")'
-    ) in block
-    assert "$IDH_ROOT/scripts/adherence_verdict.py" in block
 
 
 def test_verify_adherence_declares_semantic_caller():

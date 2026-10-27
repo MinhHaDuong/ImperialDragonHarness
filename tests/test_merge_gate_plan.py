@@ -195,16 +195,10 @@ def test_integration_check_runs_when_the_caller_asks(repo):
     assert "--integration" in actions["integ"][1], out
 
 
-def test_adherence_reused_over_a_bookkeeping_delta_and_rerun_over_code(repo):
-    reviewed = git(repo, "rev-parse", "feature")
-    commit(repo, "tickets/0001-x.erg", message="close")
-    actions, out = plan(repo, "--adherence-from", reviewed)
-    assert actions["adherence"][0] == "reuse" and reviewed in actions["adherence"][1], (
-        out
-    )
-    commit(repo, "src/fix.py", message="fix")
-    actions, out = plan(repo, "--adherence-from", reviewed)
-    assert actions["adherence"][0] == "run", out
+def test_the_plan_names_no_separate_adherence_result(repo):
+    """Ticket 1225: adherence is a check of the gate record, not a gaze result to reuse."""
+    actions, out = plan(repo)
+    assert "adherence" not in actions, out
 
 
 def test_the_plan_is_printed_before_any_check_runs(repo):

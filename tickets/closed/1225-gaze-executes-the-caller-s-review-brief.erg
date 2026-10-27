@@ -2,6 +2,7 @@
 Title: Gaze by intention: the caller says what to verify and why; gaze plans, executes, verifies, records
 Created: 2026-10-26
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1703
 
 --- log ---
 2026-10-26T21:57Z Minh Ha-Duong created
@@ -11,6 +12,7 @@ Author: Minh Ha-Duong
 2026-10-27T06:54Z reviewer reviewer note author 2026-10-27: gaze is one pass, read-only on the code, delivers its report in one defined place (the result comment), may run checks but leaves scratch clean; added to Design and exit criteria
 2026-10-27T07:11Z reviewer reviewer note Fable review of PR 1698 applied with the author's rulings (2026-10-27): interface kept (gate fields, attribution block); family checked from the launch line and the worker's own first line; other-family for high risk is judgement, not a rule; no retry, a timeout is a deviation; existing cleanup step is the scratch check; force-approve, retry and the battery/review_groups/multi_ticket lines deleted; lints are checks not seats; Codex/Pi pass the intent verbatim; skill shrink measured.
 2026-10-27T07:15Z reviewer reviewer note author 2026-10-27: gaze stops mechanical adherence; the merge gate record (pytest-guard) and hunt's self-gate run it; rule-judgement stays a plannable perspective; the adherence: result field goes and verify-gate reads adherence from the gate record
+2026-10-27T08:59Z reviewer closed — autoclosed — PR #1703
 
 --- body ---
 ## Context

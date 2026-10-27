@@ -8,7 +8,8 @@ spec = importlib.util.spec_from_file_location('panel_manifest_check', SCRIPT)
 check_mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(check_mod)
 
-GOOD = 'correctness\tmid-model\tfamily-a\tlogic needs reasoning\nscope\tsmall-model\tfamily-b\tmechanical diff check\n'
+B = '# budget: 10m\n'
+GOOD = B + 'correctness\tmid-model\tfamily-a\tlogic needs reasoning\nscope\tsmall-model\tfamily-b\tmechanical diff check\n'
 
 
 def test_complete_manifest_passes():
@@ -33,14 +34,14 @@ def test_empty_manifest_rejected():
 
 def test_duplicate_perspective_rejected():
     assert check_mod.check('a\tm\tf\tr\na\tm\tf\tr\n')
-    assert check_mod.check('a\tm\tf\tr\nb\tm\tf\tr\n') == []
+    assert check_mod.check(B + 'a\tm\tf\tr\nb\tm\tf\tr\n') == []
 
 
 def test_perspective_name_charset():
     for bad in ('../x', 'a/b', 'a b', '﻿a'):
         assert check_mod.check(f'{bad}\tm\tf\tr\n'), bad
     for good in ('red-team', 'doc-propagation', 'ai_tells2'):
-        assert check_mod.check(f'{good}\tm\tf\tr\n') == [], good
+        assert check_mod.check(B + f'{good}\tm\tf\tr\n') == [], good
 
 
 def test_bom_is_stripped_by_main(tmp_path):
@@ -64,3 +65,9 @@ def test_main_exit_codes(tmp_path, capsys):
     assert check_mod.main(['x', str(good)]) == 0
     assert check_mod.main(['x', str(bad)]) == 1
     assert 'PANEL-MANIFEST:' in capsys.readouterr().err
+
+
+def test_manifest_without_a_budget_rejected():
+    """Ticket 1225: the manifest is gaze's plan; a plan declares its budget."""
+    problems = check_mod.check('scope\tm\tf\tr\n')
+    assert any('budget' in p for p in problems), problems

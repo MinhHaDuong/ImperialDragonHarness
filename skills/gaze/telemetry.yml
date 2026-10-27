@@ -5,20 +5,19 @@
 # in the "env" key (takes precedence over the values below).
 
 wall_seconds:
-  warn: 900      # 15 min → post "verify: slow run" comment, continue
-  escalate: 1800 # 30 min → ESCALATE (likely runaway)
+  deadline: 900  # 15 min hard limit: at the deadline gaze stops waiting and delivers what it has
 
 tokens:
   warn: 500000    # 500k in+out → post "verify: token-heavy run" comment, continue
   escalate: 1000000  # 1M → ESCALATE
 
-# Fork liveness window (ticket 0321). Gaze never reads it: a caller waiting
-# on a gaze result does — see skills/merge/SKILL.md § Before merging.
+# Fork liveness window (ticket 0321): past it, a review worktree is a dead
+# run's leftover (gaze's lock, SKILL.md § 1. Setup); a caller waiting on a gaze
+# result reads it too (skills/merge/SKILL.md § Before merging).
 fork_liveness_seconds: 1200  # ~20 min
 
 env:
-  wall_seconds_warn:      VERIFY_WALL_WARN_S
-  wall_seconds_escalate:  VERIFY_WALL_ESCALATE_S
+  wall_seconds_deadline:  GAZE_DEADLINE_S
   tokens_warn:            VERIFY_TOKENS_WARN
   tokens_escalate:        VERIFY_TOKENS_ESCALATE
   fork_liveness_seconds:  GAZE_LIVENESS_WINDOW_S

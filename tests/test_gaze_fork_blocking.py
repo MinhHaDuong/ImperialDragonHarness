@@ -246,7 +246,6 @@ def test_real_gaze_primary_launch_paragraph_in_scope():
         "site, so the locality ratchet never inspects it — stripping its local "
         "wait contract would go unnoticed (ticket 0263 B1)."
     )
-    assert len(launch) >= 2
 
 
 # --- B2: wait evidence must survive negation, a dead lever must not slip in ---
