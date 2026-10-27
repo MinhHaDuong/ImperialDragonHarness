@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-27T11:19Z reviewer created
 2026-10-27T12:22Z reviewer reproduction: free_port window real (4 procs x 2000 binds: 1444 shared-port pairs); 401 NOT reproduced in 60 file runs (3 parallel x -n16) + 12 full-suite runs (4 parallel); other flakes seen under load: live-Zotero 400s, test_idh_lifecycle wrapper. Fix: hold the down port; gate keeps failed-test lines
+2026-10-27T12:49Z reviewer note PR #1758 lands the preventive fix (closed_port for the zotero_down fixtures) and failed-test names in merge-gate run, as Refs: — criterion 1 open (401 never reproduced in 72 parallel runs; gaze positive control shows the released-port mechanism is sufficient), criterion 2 partly met (live fixture tests/zotero_live.py:323 still uses free_port, Zotero itself must bind it). Since 1245 the before-merge gate runs no pytest, so this flake can no longer block a merge.
 
 --- body ---
 ## Context
