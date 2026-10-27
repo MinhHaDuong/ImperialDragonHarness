@@ -329,6 +329,8 @@ SIGNED = "worker: model=m · family={}\nverdict: clear\n"
     ("panel", {"self": SIGNED.format("anthropic")}, 2),            # PR 1827: panel typed, only self filed
     ("Panel", {"self": SIGNED.format("anthropic")}, 2),            # gaze finding: any case
     ("**panel**", {"self": SIGNED.format("anthropic")}, 2),        # gaze finding: any markup
+    ("<key>Seats: panel", {"self": SIGNED.format("anthropic")}, 2),   # gaze round 2: the key too
+    ("<key>**seats:** panel", {"self": SIGNED.format("anthropic")}, 2),
     ("panel", {"self": SIGNED.format("anthropic"), "redteam": SIGNED.format("openai")}, 0),
     ("self-only", {"self": SIGNED.format("anthropic")}, 0),
 ])
@@ -337,7 +339,8 @@ def test_seats_panel_needs_a_filed_non_self_report(tmp_path, claim, reports, cod
     primary, env, f = opened(tmp_path)
     panel(primary, "# budget: 10m\nself\tself\tanthropic\tgaze\nredteam\to\topenai\theadless codex\n", reports)
     comment = tmp_path / "c.md"
-    comment.write_text(f"result: REVIEWED\nseats: {claim}\n{{{{plan_check}}}}\n")
+    line = claim[len("<key>"):] if claim.startswith("<key>") else f"seats: {claim}"
+    comment.write_text(f"result: REVIEWED\n{line}\n{{{{plan_check}}}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == code, r.stdout + r.stderr
     if code:
