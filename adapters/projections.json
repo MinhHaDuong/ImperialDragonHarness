@@ -92,13 +92,6 @@
       "why": "the operator's command on PATH (ticket 0987)"
     },
     {
-      "path": "~/.local/bin/idh-mammoth-audit",
-      "target": "$IDH_ROOT/bin/mammoth-audit",
-      "runtimes": [],
-      "required": true,
-      "why": "manual audit launcher available on PATH"
-    },
-    {
       "path": "$IDH_ROOT/skills/email",
       "target": "~/.config/harness/private/skills/email",
       "runtimes": [

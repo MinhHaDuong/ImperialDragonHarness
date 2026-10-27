@@ -76,6 +76,7 @@ A menu, not a sequence: launch a probe only when it separates live hypotheses.
 | Overlapping bodies: both texts of a listed pair, plus any rule body they cite | Contradiction, or a skill presuming or paraphrasing another's responsibility | Minutes; reading tokens per pair; no credentials |
 | Lint: `python3 "$IDH_ROOT/scripts/skill_text_lint.py" --root "$IDH_ROOT" [paths]` | Mechanical hits: history phrasing, dates, ticket forms, project names, body length, long blocks | Seconds; no model usage; no credentials |
 | Runtime diagnostics, per `references/runtime-diagnostics.md` | What each runtime loads and flags: shadowing, precedence, install health | About a minute each; spends lines need agreement and a cost cap; credential rules there |
+| Stale skills: `"$IDH_ROOT/scripts/mammoth-audit.py"` | Which skills no session trace has invoked in 180 days, as removal candidates; aggregate counts only, nothing removed | About 45 s on 7,500 trace files (4.7 GB); no model usage; no credentials; reads `~/.claude/projects`, writes one JSON report under `~/.local/state` |
 | Shadowing: `python3 "$IDH_ROOT/scripts/project_shadow.py" <project>` | Whether a project's skill or rule, named like the harness's, shadows it | Seconds; no model usage; only for a shadowing question |
 
 The lint prints JSON on stdout: read `.findings[]`, each

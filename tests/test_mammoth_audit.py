@@ -121,23 +121,15 @@ def test_housekeeping_edit_does_not_count_as_usage(tmp_path):
     assert dead["disposition"] == "candidate-remove"
 
 
-@pytest.mark.integration
-def test_installed_audit_launcher_runs_without_scheduler(tmp_path):
+def test_audit_script_runs_directly_without_scheduler(tmp_path):
     fake_home = tmp_path / "home"
     env = {
         **child_env(),
         "HOME": str(fake_home),
         "XDG_CONFIG_HOME": str(fake_home / "config"),
-        "XDG_BIN_HOME": str(fake_home / "custom bin"),
     }
-    # Run the installed audit command directly, without a scheduler.
-    # Run from the tracked tree: untracked overlay links in this checkout would
-    # make the install refuse on one machine only (ticket 0989).
-    subprocess.run(
-        [sys.executable, str(tracked_checkout() / "bin" / "idh"), "install"],
-        check=True, env=env,
-    )
-    argv = [str(fake_home / ".local/bin/idh-mammoth-audit")]
+    # The doctor's measurement: called by path, never installed on PATH (1264).
+    argv = [sys.executable, str(SCRIPTS / "mammoth-audit.py"), "--repo", str(tracked_checkout())]
     output = tmp_path / "report.json"
     result = subprocess.run(
         [

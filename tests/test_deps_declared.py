@@ -10,7 +10,7 @@ The guard derives imports from the *source* (``ast``), never from the
 declaration file it checks — a test that reads the same list it verifies
 passes forever (the hollow-guard trap). Membership is decided by what a file
 *is*, not its suffix: ``.py`` files, extensionless python-shebang programs
-(``bin/usage-report``), and the quoted python heredocs embedded in shell
+(``bin/idh-usage-report``), and the quoted python heredocs embedded in shell
 scripts (the last production one, in gen-skills-catalog.sh, became
 scripts/gen_skills_catalog.py under ticket 0531 — the path stays scanned,
 its extractor pinned by a direct unit test, so the next one cannot hide).

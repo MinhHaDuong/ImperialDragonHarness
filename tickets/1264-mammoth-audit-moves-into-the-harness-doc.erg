@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-27T13:15Z reviewer created
+2026-10-27T13:16Z reviewer note criterion added by author ruling 2026-10-27: public harness commands carry the idh- prefix
 
 --- body ---
 ## Context
@@ -21,6 +22,10 @@ Ticket 1249/1257 just defined `bin/` as curated public commands, which this does
 - [ ] `skills/harness-doctor/SKILL.md` (or its references) names the audit as a doctor's measurement,
       called as `"$IDH_ROOT/scripts/mammoth-audit.py"`, with when to use it and its cost.
 - [ ] `tests/test_mammoth_audit.py` exercises the script directly; the harness gate passes.
+- [ ] Every public command in bin/ carries the `idh-` prefix (install-cron → idh-install-cron, snapshot → idh-snapshot,
+      usage-report → idh-usage-report; `idh` itself stays); every caller, doc, test, projection and timer is updated
+      (grep the whole repo); `idh install` retires the old unprefixed links it owns and never touches a user's own
+      command of that name (test on a temporary HOME); bin/README states the prefix rule.
 
 ## Relevant files
 bin/mammoth-audit, adapters/projections.json, scripts/mammoth-audit.py, tests/test_mammoth_audit.py,

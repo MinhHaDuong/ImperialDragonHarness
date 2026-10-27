@@ -120,20 +120,20 @@ def test_install_is_idempotent_and_refuses_foreign_files(machine):
 
 def test_bin_commands_are_linked_and_collisions_refused(machine):
     home, idh, env = machine["home"], machine["idh"], machine["env"]
-    clash = Path(env["PATH"].split(":")[1]) / "snapshot"  # another command on PATH
+    clash = Path(env["PATH"].split(":")[1]) / "idh-snapshot"  # another command on PATH
     clash.write_text("#!/bin/sh\n")
     clash.chmod(0o755)
     r = idh("install")
     out = r.stdout + r.stderr
     assert r.returncode == 1, out
-    assert "snapshot" in out and "collides" in out and str(clash) in out
+    assert "idh-snapshot" in out and "collides" in out and str(clash) in out
     local = home / ".local" / "bin"
-    assert not (local / "snapshot").exists()
-    for name in ("usage-report", "install-cron"):
+    assert not (local / "idh-snapshot").exists()
+    for name in ("idh-usage-report", "idh-install-cron"):
         assert (local / name).resolve() == (REPO / "bin" / name).resolve(), name
     clash.unlink()
     assert idh("install").returncode == 0
-    assert (local / "snapshot").resolve() == (REPO / "bin" / "snapshot").resolve()
+    assert (local / "idh-snapshot").resolve() == (REPO / "bin" / "idh-snapshot").resolve()
     r = idh("install")  # idempotent
     assert r.returncode == 0 and "installed:" not in r.stdout
 
@@ -728,6 +728,38 @@ def test_install_retires_links_the_manifest_no_longer_declares(machine):
     assert "retired:" not in idh("install").stdout
 
 
+def test_every_public_command_carries_the_idh_prefix():
+    names = [p.name for p in (REPO / "bin").iterdir() if p.is_file() and os.access(p, os.X_OK)]
+    assert names and all(n.startswith("idh") for n in names), names
+    assert "mammoth-audit" not in " ".join(names)  # the doctor's measurement, not a command
+
+
+def test_install_retires_unprefixed_bin_links_and_spares_the_users_own(machine):
+    """The pre-prefix names (1249) leave when owned; a user's own command stays."""
+    home, idh = machine["home"], machine["idh"]
+    local = home / ".local" / "bin"
+    local.mkdir(parents=True)
+    owned = {}
+    for old in ("install-cron", "idh-mammoth-audit"):  # our links, in the receipt
+        text = os.path.relpath(REPO / "bin" / old.removeprefix("idh-"), local)
+        (local / old).symlink_to(text)
+        owned[str(local / old)] = text
+    (local / "usage-report").symlink_to("/elsewhere/usage-report")  # the user's link
+    owned[str(local / "usage-report")] = "../was/ours/once"  # receipt text no longer matches
+    (local / "snapshot").write_text("#!/bin/sh\n# the user's own\n")  # not in the receipt
+    receipt = home / ".local/state/idh/links.json"
+    receipt.parent.mkdir(parents=True)
+    receipt.write_text(json.dumps(owned))
+    r = idh("install")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert not os.path.lexists(local / "install-cron")
+    assert not os.path.lexists(local / "idh-mammoth-audit")
+    assert os.readlink(local / "usage-report") == "/elsewhere/usage-report"
+    assert "user's own" in (local / "snapshot").read_text()
+    assert (local / "idh-install-cron").is_symlink()
+    assert idh("install").returncode == 0
+
+
 def _fresh_lifecycle():
     spec = importlib.util.spec_from_file_location("lifecycle_bin", REPO / "adapters" / "lifecycle.py")
     module = importlib.util.module_from_spec(spec)
@@ -741,12 +773,12 @@ def test_bin_refresh_survives_a_leftover_tmp_link(tmp_path, monkeypatch):
     lc = _fresh_lifecycle()
     dest = tmp_path / ".local" / "bin"
     dest.mkdir(parents=True)
-    (dest / "snapshot").symlink_to("../stale/snapshot")  # our link, relocated harness
-    (dest / "snapshot.idh-link-tmp").symlink_to("junk")  # crash leftover
-    owned = {str(dest / "snapshot"): "../stale/snapshot"}
+    (dest / "idh-snapshot").symlink_to("../stale/idh-snapshot")  # our link, relocated harness
+    (dest / "idh-snapshot.idh-link-tmp").symlink_to("junk")  # crash leftover
+    owned = {str(dest / "idh-snapshot"): "../stale/idh-snapshot"}
     assert lc.install_bin(owned, set(), []) == 0
-    assert (dest / "snapshot").resolve() == (REPO / "bin" / "snapshot").resolve()
-    assert not os.path.lexists(dest / "snapshot.idh-link-tmp")
+    assert (dest / "idh-snapshot").resolve() == (REPO / "bin" / "idh-snapshot").resolve()
+    assert not os.path.lexists(dest / "idh-snapshot.idh-link-tmp")
 
 
 def test_bin_on_path_is_not_a_collision(tmp_path, monkeypatch):
@@ -754,4 +786,4 @@ def test_bin_on_path_is_not_a_collision(tmp_path, monkeypatch):
     monkeypatch.setenv("PATH", f"{REPO / 'bin'}:/usr/bin:/bin")
     lc = _fresh_lifecycle()
     assert lc.install_bin({}, set(), []) == 0
-    assert (tmp_path / ".local/bin/snapshot").is_symlink()
+    assert (tmp_path / ".local/bin/idh-snapshot").is_symlink()

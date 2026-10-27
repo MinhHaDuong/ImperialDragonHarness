@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Take a snapshot of ~/.claude/stats-cache.json
-# Usage: snapshot [YYYY-MM-DD]
+# Usage: idh-snapshot [YYYY-MM-DD]
 set -euo pipefail
 
 SNAPSHOTS_DIR="${CLAUDE_TELEMETRY_DIR:-$HOME/.claude/telemetry/snapshots}"

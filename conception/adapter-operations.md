@@ -129,7 +129,8 @@ Other host integration is removed explicitly:
 
 ## Audit and recovery
 
-`./bin/mammoth-audit` reports candidates without removing skills.
+`scripts/mammoth-audit.py` (a harness-doctor measurement, not a command on PATH) reports
+candidates without removing skills.
 The harness installs no scheduler; arrange recurring runs externally.
 An interrupted install can leave partial registration; rerun install and
 check from the current checkout. Only unchanged receipt-owned links are
