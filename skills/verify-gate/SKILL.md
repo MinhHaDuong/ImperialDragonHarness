@@ -139,7 +139,7 @@ A comment is UNRESOLVED if none of the above applies.
 
 Before running anything, the gate prints its plan: each check it will run,
 reuse or skip, and why. The plan follows the paths the diff touches, as
-classified once in `skills/merge/SKILL.md` § Gating tiers; the gate keeps no
+classified once in `rules/git.md` § Gating tiers; the gate keeps no
 path list of its own. On a gated base, from the gate worktree:
 
 ```bash
@@ -381,7 +381,7 @@ The caller owns the gate session; gaze has no part in it.
   stale). A moved head is not stale when what it adds since
   `reviewed_head_sha` is bookkeeping or nothing:
   `merge-gate.py tier --base origin/<base-branch> --head HEAD --since <reviewed_head_sha>`
-  answers 0 (`skills/merge/SKILL.md` § Gating tiers). The only other
+  answers 0 (`rules/git.md` § Gating tiers). The only other
   documented caller path past a moved head is the round-2 re-gate of the fix
   for a round-1 REROLL (`skills/raid/SKILL.md` § Phase 6). Otherwise the gate
   answers ESCALATE without ruling the criteria, and the author decides.

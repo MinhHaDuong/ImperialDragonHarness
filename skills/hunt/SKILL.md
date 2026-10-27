@@ -139,8 +139,9 @@ proves to be several goes back up as in Plan.
   exits 0 (bookkeeping). Otherwise, with a forge, load the gaze skill with the
   merge-request number and an intent: `verify <what> because <why>`, the
   ticket's exit criteria by default; what each gaze result leads to, a missing
-  or stale `reviewed_head_sha` included, is the caller's policy in
-  `skills/merge/SKILL.md` § Before merging. Without one, reviewer seats on
+  or stale `reviewed_head_sha` included, is the caller's policy
+  (`skills/raid/SKILL.md` § Phase 6; no result:
+  `skills/raid/references/detached-gaze.md` § No result). Without one, reviewer seats on
   `git diff <base>...HEAD`, chosen and scaled by risk
   (`skills/route/references/decorrelation.md`). On findings, fix every one
   whatever its severity, rerun what the fixes affect, then the fast tier, push

@@ -107,7 +107,7 @@ ESCALATE_STOP = (
 )
 SCOPE = (
     "Stale means the tip adds more than a bookkeeping delta to `reviewed_head_sha` "
-    "(`skills/merge/SKILL.md` § Gating tiers), judged before the raid adds the fix "
+    "(`rules/git.md` § Gating tiers), judged before the raid adds the fix "
     "for a gate's round-1 REROLL, which does not void the result (the round-2 "
     "re-gate rules the fix). A FINDINGS fix does: it moves the head past what gaze "
     "reviewed."
@@ -162,7 +162,6 @@ def test_merge_orders_sync_before_close_and_gates_only_approved():
     assert sync < close
     assert "**Merge prerequisite, full tier: the gate's verdict is APPROVED" in merge
     assert "read after `git fetch origin`" in merge
-    assert "judged before the caller adds its own fix and ticket-close commits" in merge
 
 
 def test_phase6_fix_loop_keeps_the_old_gaze_guards():

@@ -15,26 +15,8 @@ branch, and read each exit code on its own line, never the tail of a pipe.
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
 Close claims, short ids, fences, the attribution warning and the edge-case
-checklist: `references/claims.md`. Read it when the body carries a `Ticket`
-line you are unsure of, or a case below sends you there.
-
-## Gating tiers
-
-The tier is read from the diff, never judged:
-`python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base origin/<base> --head HEAD`
-answers 0 bookkeeping (with `--since`, also `unchanged`), 1 full (an empty
-diff included), 3 could not read (treat as full).
-
-| Tier | Gating |
-|------|--------|
-| bookkeeping | Mechanical checks only: on a gated base, the record; on an ungated base, the repo's CI. No `/gaze`, no `/verify-gate`, no review seat. |
-| full | `/gaze`, then `/verify-gate` APPROVED; on a gated base, the full record. |
-
-**A commit added after approval is gated by the tier of its own diff:**
-`merge-gate.py tier --base origin/<base> --head HEAD --since <ruled_tip_sha>`.
-Bookkeeping or unchanged: the APPROVED verdict stands, no review or gate
-round is spent; on a gated base the record is re-run on the new head. Full:
-re-gate.
+index: `references/claims.md`. Read it when the body carries a `Ticket` line
+you are unsure of, or a case below sends you there.
 
 ## Before merging
 
@@ -53,41 +35,14 @@ re-gate.
   ride along, so push first.
 - **Merge prerequisite, full tier: the gate's verdict is APPROVED and
   what `origin/<branch>` adds to the gate's `ruled_tip_sha` (read after
-  `git fetch origin`) is bookkeeping, an empty delta included (§ Gating
-  tiers); otherwise re-gate, do not merge.** A bookkeeping-tier request needs
-  no verdict. Run the gate as
-  `/verify-gate <pr> repo=<this worktree> session=<uuid>`, one session per
-  PR; a re-gate the gate refuses is ESCALATE to the author.
+  `git fetch origin`) is bookkeeping, an empty delta included (`rules/git.md`
+  § Gating tiers); otherwise re-gate, do not merge.** A bookkeeping-tier
+  request needs no verdict.
   **Head checks, immediately before the merge:** `git fetch origin`, then
   `git rev-parse HEAD` == `git rev-parse origin/<branch>` (a mismatch means
-  sync, never merge) and, full tier, `merge-gate.py tier --since
-  <ruled_tip_sha>` answers 0 (otherwise re-gate). The record on a gated base
+  sync, never merge) and, full tier, `merge-gate.py tier --since <ruled_tip_sha>`
+  answers 0 (otherwise re-gate). The record on a gated base
   belongs to that same head.
-- **Full tier: only a head `/gaze` reviewed goes to the gate.** REVIEWED:
-  close the ticket, then run the round-1 gate on the current head; a fix the
-  round-1 gate asks for is re-gated once in the same session, with no new
-  gaze run. FINDINGS: fix on the merge request's branch and run `/gaze` on the
-  new head with a new, narrower intent (`/gaze <pr> verify the fixes for
-  <findings> because <why they blocked>`), never a re-run of the whole review;
-  a head gaze did not review is never gated. Escalate to the author when a
-  pass over the fixes still finds blocking items on them. ESCALATE, or
-  no accepted result: no gate, no merge; the PR goes to the author.
-  "Accepted" means a result is present and its `reviewed_head_sha` is not
-  stale against the branch tip, judged before the caller adds its own fix
-  and ticket-close commits; a bookkeeping delta never voids it.
-- **A gaze run that returns no result.** No `result:` block is no result.
-  Wait for the background reviewer notifications and read the review comment
-  they posted on the merge request; that comment is evidence, not a gaze
-  result, and opens no gate. Run `/gaze <pr>` once more if the liveness
-  window allows; otherwise park the PR and escalate to the author.
-  **Fork liveness:** once the review comment has posted, the gaze result
-  (returned, or posted as a PR comment) is due within `fork_liveness_seconds`
-  (`skills/gaze/telemetry.yml`, env override `GAZE_LIVENESS_WINDOW_S`). On
-  expiry, do not re-run gaze's pass: check the three completion
-  markers, a posted gaze result comment, branch-tip motion on the PR branch
-  and the review worktree's file mtime. All stale or absent: no accepted
-  gaze result, so no gate; park the PR and escalate to the author. Never
-  substitute a direct `/verify-gate` for the missing result.
 - **Run the gate record on padme when reachable**, over ssh from another
   host; otherwise where you are.
 

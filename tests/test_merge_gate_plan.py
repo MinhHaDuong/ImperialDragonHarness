@@ -4,7 +4,7 @@
 (`run`, `reuse` or `skip`, with the reason) and one for the adherence result.
 A prior result is a gate record entry for the `--since` head; it is reused
 only when what changed between its candidate and the current one is
-bookkeeping (skills/merge/SKILL.md § Gating tiers). Every fixture is a local
+bookkeeping (rules/git.md § Gating tiers). Every fixture is a local
 repository with a bare origin: no forge, no network.
 """
 
