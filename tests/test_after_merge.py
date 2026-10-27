@@ -3,10 +3,11 @@
 `merge-gate.py run-after` takes a host-local flock, runs the declared checks
 on the current origin tip, writes the record as a note on that tip under an
 after-merge scope line, refetches and loops while main moves. On red it
-prints the would-be ticket text and exits 1 (opening the ticket is ticket
-1251). `main_sweep.py --after` reports tips with no after-merge record and
-runs the set on the latest one. Real git, real processes, a bare origin; no
-forge, and the lock is never mocked.
+prints the ticket text and exits 1; given a forge (`--open-ticket`, ticket
+1251) it also opens and lands that ticket, deduped on the failing-check set.
+`main_sweep.py --after` reports tips with no after-merge record and runs the
+set on the latest one. Real git, real processes, a bare origin; the forge is
+a stub that merges into that origin, and the lock is never mocked.
 """
 
 import importlib.util

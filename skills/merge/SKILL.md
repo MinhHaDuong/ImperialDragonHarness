@@ -152,12 +152,14 @@ reads and writes in its own spelling.
    do not wait on it:
    ```bash
    C=$(git rev-parse --path-format=absolute --git-common-dir); mkdir -p "$C/idh"
-   (cd "$C" && nohup python3 "$IDH_ROOT/scripts/merge-gate.py" run-after --ref <base> >>"$C/idh/after-merge.log" 2>&1 &)
+   (cd "$C" && nohup python3 "$IDH_ROOT/scripts/merge-gate.py" run-after --open-ticket --ref <base> >>"$C/idh/after-merge.log" 2>&1 &)
    ```
    It runs the full set on the newest `<base>` tip and notes the record there
    (a busy lock means a runner already covers this tip). Its red never blocks
    this merge: the log and the note carry it, and `main_sweep.py --after`
-   reports it.
+   reports it. On red, `--open-ticket` opens the ticket itself: a ticket-only
+   request from branch `red-<tip12>`, landed by `raid_land.py`, none when an
+   open ticket or a `red-*` branch already carries the same failing checks.
 
 ## Gated base
 

@@ -60,6 +60,14 @@ class GhForge:
             raise Refusal(f"cannot read request {pr}: {done.stderr.strip()}")
         return json.loads(done.stdout)
 
+    def create(self, branch: str, base: str, title: str, body: str) -> str:
+        """Open a request from a pushed branch; its number (ticket 1251, the red ticket)."""
+        done = self._gh("pr", "create", "--head", branch, "--base", base, "--title", title, "--body", body)
+        number = re.search(r"/pull/(\d+)\s*$", done.stdout.strip())
+        if done.returncode != 0 or not number:
+            raise Refusal(f"cannot open a request from {branch}: {done.stderr.strip() or done.stdout.strip()}")
+        return number.group(1)
+
     def ready(self, pr: str) -> None:
         self._gh("pr", "ready", pr)
 
