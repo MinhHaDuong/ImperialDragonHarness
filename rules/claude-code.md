@@ -50,8 +50,7 @@ conversation's language, then answer:
 - **`team-lead` delegation needs a nesting depth of at least 2**, or it
   silently degrades into a flat agent; check it before debugging the prompt.
 <!-- harness-extension-point -->
-  Knobs: `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (pinned to 3 in `settings.shared.json`:
-  raid, coder, gaze, seats), `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`.
+  Knobs: `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` (3 in `settings.shared.json`: raid, coder, gaze, seats), `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS`.
 
 ## Hook output
 

@@ -13,6 +13,7 @@ Closed: autoclosed — PR #1750
 2026-10-27T11:27Z reviewer measured: Claude Code 2.1.311 default spawn cap is 3 (remote flag may override; env wins); a launch from depth d is refused when d >= cap; nested probe from a raid coder: depth-2 child launched, depth-3 child had no Agent tool. Pinned 3: raid, coder, gaze fork, seats; 2 would lower the default and strand gaze's seats
 2026-10-27T11:44Z reviewer item 8 widened by coordinator evidence: under hunt's TMPDIR the full suite had 21 gaze failures and a stray review-7 in the real repo; cause gaze_close.primary_root cut the path at /.claude/worktrees/; fixed to read the git common dir; advice kept; full suite green with and without TMPDIR
 2026-10-27T11:52Z reviewer closed — autoclosed — PR #1750
+2026-10-27T11:55Z reviewer note verify-reroll — round 1: agnostic-guard fails on rules/claude-code.md:54 (CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS wrapped off the harness-extension-point line)
 
 --- body ---
 ## Context
