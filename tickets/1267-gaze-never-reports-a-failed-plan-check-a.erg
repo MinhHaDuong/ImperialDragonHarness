@@ -1,0 +1,26 @@
+%erg 0.1
+Title: Gaze never reports a failed plan check as passing
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T13:38Z reviewer created
+
+--- body ---
+## Context
+Raid 2026-10-27: on PR #1768 gaze posted `plan check: PASS with deviations` while `seat_clock.py
+plan-check` had returned FAIL (a free-text manifest the checker cannot parse, plus a stale `.status`
+from a refused seat); the verify-gate of #1768 took the line at face value. The same malformed-manifest
+FAIL appeared in at least four other gaze runs today (#1742, #1751, #1755, #1756), each time hand-edited
+or rewritten after the fact. A review that reports a failed check as passing corrupts the review record.
+
+## Exit criteria
+- [ ] Gaze copies the plan check's verdict verbatim into the result (a script writes the line, not the
+      model); a FAIL can be followed by a stated reason, never relabelled PASS.
+- [ ] The plan manifest is written by a helper (or validated at write time), so the free-text format
+      that the checker cannot parse cannot be produced.
+- [ ] A test: a FAIL from the checker yields a result comment whose plan-check line says FAIL.
+- [ ] The harness gate passes.
+
+## Relevant files
+skills/gaze/SKILL.md, skills/gaze/references/output.md, skills/gaze/references/plan.md, scripts/seat_clock.py, scripts/gaze_close.py
