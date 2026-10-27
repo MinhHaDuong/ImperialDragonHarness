@@ -16,47 +16,25 @@ the review worktree registered and return ESCALATE naming those files. Never for
 preflight or normal worktree removal is a cleanup failure, not a successful
 terminal result.
 
-```bash
-review_tree="$primary_root/.claude/worktrees/review-<pr-number>"
-if [ -d "$review_tree" ]; then
-    # Read verdicts before deleting panel files. Citation or ancestry uncertainty
-    # keeps both the candidate .tmp and its review evidence in place.
-    if [ -e "$review_tree/.tmp" ] || [ -L "$review_tree/.tmp" ]; then
-        python3 "$IDH_ROOT/scripts/worktree-tmp-guard.py" removal \
-            "$primary_root" "$review_tree" --branch "$PR_BRANCH" || exit 1
-    fi
-    tracked_panel=$(git -C "$review_tree" ls-files -- ".panel/<pr-number>") || exit 2
-    tracked_base=$(git -C "$review_tree" ls-files -- build/panel-head) || exit 2
-    [ -n "$tracked_panel" ] || rm -rf -- "$review_tree/.panel/<pr-number>"
-    if [ ! -L "$review_tree/build" ] && [ -z "$tracked_base" ]; then
-        rm -rf -- "$review_tree/build/panel-head"
-    fi
-    rmdir -- "$review_tree/.panel" 2>/dev/null || true
-    # Detached review trees without provable branch ancestry retain .tmp.
-    if ! "$IDH_ROOT/scripts/worktree-exit-preflight.sh" --removal --branch "$PR_BRANCH" "$review_tree"; then
-        echo "/gaze cleanup blocked: real WIP remains in $review_tree" >&2
-        exit 1
-    fi
-    git -C "$primary_root" worktree remove "$review_tree" || exit 1
-fi
-```
-
+`"$IDH_ROOT/scripts/gaze_close.py"` runs these steps in order (its source is the
+contract that `tests/test_review_panel_cleanup_contract.py` pins): the
+`.tmp` guard (`worktree-tmp-guard.py removal`) before any deletion; removal of
+`.panel/<pr-number>` and `build/panel-head` when untracked;
+`worktree-exit-preflight.sh --removal --branch <branch>`; plain
+`git worktree remove`, never `--force`. A blocked step exits 1, posts nothing
+and leaves the review worktree registered: return ESCALATE naming the files.
 
 ## Containment postcondition
 
 On **every** exit path (REVIEWED, FINDINGS, ESCALATE, circuit-breaker abort), after removing the review worktree and before returning; the report goes
 in the result:
 
-```bash
-git rev-parse --show-toplevel               # FIRST: confirm cwd is the session
-                                            # worktree — the forks just returned,
-                                            # so a drifted cwd would make the two
-                                            # reads below report a foreign tree's
-                                            # state (rules/git.md § anchor)
-git status --porcelain                      # invoking session worktree
-git branch --show-current                   # must equal the branch on entry
-git -C <primary-repo-root> status --porcelain
-```
+The script reads, and prints as `containment: ...`: the toplevel of cwd (the
+forks just returned, so a drifted cwd would make the other reads report a
+foreign tree's state, `rules/git.md` § anchor), `git status --porcelain` of the
+invoking session worktree, its branch (compared to `--entry-branch`), and the
+primary checkout's status; lines already present at entry (recorded by `gaze_setup.py`) are the caller's own work, not findings. Any finding exits 4 (the comment is still posted
+with the report); the repairs below stay with gaze.
 
 - **Foreign files** (anything this run did not deliberately create —
   especially stray `tickets/*.erg`) → remove or restore them, and flag the
