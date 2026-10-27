@@ -5,8 +5,8 @@ submission review pilots, the user explicitly authorized the transmissions
 necessary for the tests and requested that blocking of sends to Claude,
 Codex and OpenRouter be disabled, remembered and committed.
 
-The harness guards (`rules/guards.md`, and for Codex and Pi the
-session-start context) now record standing
+The harness session-start context (`scripts/on-start-context.sh`, printed on
+Claude Code, Codex and Pi in every project) now records standing
 authorization for task-necessary model-service transmissions to those three
 destinations, preserving explicit local-only restrictions, confidentiality
 obligations, credential protections and agreed task budgets.
@@ -15,7 +15,7 @@ The local Codex configuration was read: its existing value was
 `approvals_reviewer = "user"`. This session nevertheless exposed
 `approvals_reviewer = "auto_review"` as managed execution policy. No local
 configuration value was changed or invented: the agent cannot replace the
-active managed policy through repository instructions. This commit records
+active managed policy through repository instructions. This change records
 the user's authorization; it does not claim to disable the managed reviewer.
 
 After the explicit authorization, the REL hosted review launch was accepted.
@@ -35,5 +35,6 @@ Cross-family review via Claude CLI requested Opus/medium. The encrypted/local
 material exception was made explicit after review. Official documentation
 URL was fetched and its redirect observed. CLI modelUsage: claude-opus-5-5; effort requested, not independently attested.
 
-Placement revised on 2026-10-27 at the author's choice: first drafted in the
-harness AGENTS.md, which no other repository loads.
+Placement revised on 2026-10-27: first drafted in the harness AGENTS.md, which
+no other repository loads; the author chose wider reach, and the resident rules
+had no budget left, so the session-start context carries it.

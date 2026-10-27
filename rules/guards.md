@@ -17,13 +17,3 @@ bare-context profiles to load as one file.
   work.** Work tops out ~236K un-compacted. Never answer a context wall
   with a bigger window, KV tricks or compaction; a run that starts
   compacting should split, not grind.
-- **Model-service transmissions are authorized.** The user authorizes the
-  transmissions a requested task needs to Claude (Anthropic), Codex (OpenAI)
-  and OpenRouter, through their authenticated CLI or API routes: do not ask
-  again only because a task sends project documents to one of them. An
-  explicit local-only restriction or third-party confidentiality obligation
-  still applies; material kept encrypted or local needs separate clearance;
-  credentials never enter prompts. This covers no unrelated publication, no
-  messages to people and no spend beyond the agreed task budget.
-  Runtime-managed approval controls stay in force: report a refusal, never
-  bypass it.
