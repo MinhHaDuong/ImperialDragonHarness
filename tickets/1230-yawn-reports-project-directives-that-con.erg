@@ -37,3 +37,15 @@ has no forge.
       governing instruction; output fits the existing yawn report format
 - [ ] Degrades to `skip` with a reason when the project has no local directives
 - [ ] `yawn` stays a reporter: no fixes, no tickets
+
+## Imagine (raid 2026-10-27)
+
+**Premise holds.** `skills/yawn/SKILL.md:33-104` (checks 1-13) has no local-versus-harness comparison; the only pass is the prompt at `scripts/prompt-project-coherence.sh:40`, called from `scripts/on-start-context.sh:36-38`, whose lines 17-31 enumerate exactly this ticket's local sources.
+
+**Simplest path.** (1) `scripts/project_shadow.py <project>`: local skill and rule names against harness `skills/*` and `rules/*`, reusing `skill_frontmatter.load` (`scripts/skill_frontmatter.py:44`); JSON, one line per collision (local file, harness file, governing instruction). (2) Move the harness-self and linked-worktree guard (`prompt-project-coherence.sh:9-14`) into the script so the harness yields `skip`; 1232 deletes the prompt script and would otherwise lose it. (3) Yawn check 14: run the script, then the judged pass (descriptions first, bodies only on overlap); one table row plus bullets, placed before Output format. (4) `tests/test_project_shadow.py` with tmp fixture projects (positive: shadows a harness skill name; negative: does not).
+
+**Antipatterns.** YAGNI: no Python prose parsing for contradictions; the judged part stays with the model. Duplication: share the source enumeration or note two small lists.
+
+**Criterion proposals.** (a) The script emits the `skip` reason; test the harness-self and the no-directives skips. (b) `ok (reasoned)` made operational: the reason sits in the same file within a few lines of the override; arena `CLAUDE.md` "no remote" is the live fixture. (c) Output is stable for 1231, which routes it.
+
+**Blind-spot pass (raid 2026-10-27), folded in.** (1) Scope includes the project's own top-level `skills/*` when they are projected into the user skill namespace (arena's `skills/arena`, linked from `~/.claude/skills/arena`), not only `.claude/skills/` and `.agents/skills/`. (2) Project skill roots are per runtime (Vibe `.vibe/skills`, `adapters/pilot-support.json:55`; Pi, Codex): take the folder list from the adapter declarations, not a hardcoded list, and judge shadowing against each runtime's precedence. (3) yawn is the cross-runtime proof slice (`adapters/README.md:142-152`): the check calls its script through the runtime-supplied `IDH_ROOT` seam and `tests/test_skill_seam.py` passes. (4) The finding record is the 1231 contract: kind, local file, harness file, governing instruction, verdict (`ok (reasoned)` / `warn`), proposed disposition and destination (project or harness); `tests/test_yawn_molt_suggestion.py` pins the shared yawn/molt text. Raid assumption, author may overrule: the judged half also runs when molt calls yawn from lair, since it is scoped to one project with local directives.

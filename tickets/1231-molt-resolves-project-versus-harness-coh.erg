@@ -20,3 +20,15 @@ Parent: 1229. `molt` acts on what `yawn` reports (1230). Decision per finding:
       (`rules/workflow.md`), otherwise recorded below it
 - [ ] Project edits go through a project branch, never the harness checkout
 - [ ] A finding already marked `ok (reasoned)` is left alone
+
+## Imagine (raid 2026-10-27)
+
+**Why now / premise.** Holds: `skills/yawn/SKILL.md` has no coherence check; the only check is the session-start prompt (`scripts/prompt-project-coherence.sh:40`) that 1232 removes, so molt's acting half must exist first. Sequenced behind 1230.
+
+**Simplest path.** Reuse the existing seam: yawn's `## Action plan` with `**fix-now**` / `**open-ticket**` / `**skip**` (`skills/yawn/SKILL.md:133-161`), which molt parses at step 2 and acts on in steps 3-5. No new script, no new interface; edit molt only. Step 4 gains one clause for coherence findings: redundant local copy → fix-now on the housekeeping branch from step 1; general fix → open-ticket in the harness repo, severity floor applied as step 4 already does; deliberate difference → write its reason beside it as a fix-now edit. 1230 emits `ok (reasoned)` as `ok`/`skip`, never into the plan, so "leave it alone" is free.
+
+**Antipatterns.** YAGNI: no per-finding decision engine, no `coherence` subcommand in `ticket-sweep.sh`; three sentences in step 4. Re-deriving: molt must not re-read local rules; 1230 tags each finding with kind and decision, molt routes. Ticket target: `tickets/erg new` in the project cwd files into the project; name the harness destination through `$IDH_ROOT` on each finding.
+
+**Criterion proposals.** (a) A deliberate-difference write-back is a fix-now committed on the housekeeping branch. (b) A test (step-text or fixture plan) showing a reasoned finding produces zero edits and zero tickets. (c) An automated sweep never writes into the harness checkout: it files through the harness's branch rule, or reports only.
+
+**Blind-spot pass (raid 2026-10-27).** Routes the finding record defined in 1230 (kind, files, instruction, verdict, disposition, destination); does not re-derive. `tests/test_yawn_molt_suggestion.py` pins the shared text with 1230.

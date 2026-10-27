@@ -44,3 +44,17 @@ the starting point) and record the absence where there is none.
       and the tests that cite it updated
 - [ ] Retirement clause in the skill: three consecutive runs with no finding
       above the floor and the author is asked whether to delete it
+
+## Imagine (raid 2026-10-27)
+
+**Premise holds.** Coherence is only the per-session prompt; no skill-text lint exists; `skills/trace-doctor/SKILL.md` is 235 lines. `rules/authoring-skills.md` is 54 lines, `paths:` at lines 2-5.
+
+**Simplest path.** Shape after `skills/test-doctor/SKILL.md` (`disable-model-invocation: true`, `user-invocable: true`, `IDH_ROOT` from the loaded path), category `session`; regenerate `skills-catalog.md` (`scripts/gen_skills_catalog.py`). Body ~60 lines of procedure (descriptions first, overlapping pairs next, 1234 script, runtime evidence, report), pointing at `references/` rather than restating the checklist. Refusal: git toplevel of the cwd equals `IDH_ROOT`, else one line and stop.
+
+**Stub or move: MOVE plus a stub ≤8 lines** keeping `paths:` and the enforced bullets, pointing at `skills/harness-doctor/references/authoring-skills.md`. Update citers: `tests/test_skill_descriptions.py:3,63`, `tests/test_skill_frontmatter.py:160`, `tests/test_check_agnostic.py:272`, `scripts/check-agnostic.sh:25`, `rules/README.md:38`.
+
+**Runtime diagnostics.** The survey (`docs/2026-09-16-runtime-capability-survey.md`) has no diagnostics inventory. Claude Code `/doctor` and `/skill-doctor` are interactive: the author runs them and pastes output. `claude plugin eval` is a CLI and may run headless (unverified). Codex and Pi: unknown; "none found" only after a positive control.
+
+**Antipatterns.** Inventory duplicating the survey → add a diagnostics section to the survey, skill points there. Restated checklist → pointer. Runtime-command table in the skill → one reference file.
+
+**Criterion proposals.** (a) "Passes the 1234 script" → "no finding above the floor from the 1234 script". (b) Registered in the catalog. (c) Refusal tested outside `IDH_ROOT`. (d) The three-run retirement count recorded in a journal entry, as test-doctor does.

@@ -31,3 +31,15 @@ Checks over `skills/*/SKILL.md` and `skills/*/references/*.md`:
 - [ ] A unit test covers the script's detectors on fixtures; no test runs the
       script over the live skills, and nothing wires it into the gate
 - [ ] No model call
+
+## Imagine (raid 2026-10-27)
+
+**Premise holds.** `skills/trace-doctor/SKILL.md`: 235 lines; first fence lines 37-65 (27-line script); history phrasing and dated filenames at 15, 56, 63, 71, 76, 85, 88, 111. `scripts/check-agnostic.sh` states project names "cannot be caught by static grep" and greps only paths, `gh`, `github.com`: no duplication.
+
+**Simplest path.** One `scripts/skill_text_lint.py`, globbing the files, reusing `skill_frontmatter.FRONTMATTER` to strip frontmatter and count body lines; JSON findings `{file, line, check, text}` plus a one-line summary per check; `--projects FILE` defaulting to the existing `scripts/projects.json` (8 names, no new list); argparse and logging per `rules/coding-python.md`.
+
+**Thresholds.** Body > 150 lines. Fenced `bash`/`sh`/`python`/untagged block > 12 lines (examples run 2-6). Any `<<` heredoc inside a fence. History, case-insensitive: `\bphase \d`, `\bsince we\b`, `\bused to\b`, `\bformerly\b`, dates `20\d\d-\d\d(-\d\d)?`. Ticket/MR: `#\d{3,}`, `\b(ticket|MR|PR) \d+`. Project names word-bounded, skipping `harness` (in `projects.json`, hits constantly). False positives ("used to compute", dates in command examples, templates) are the doctor's to judge.
+
+**Antipatterns.** No per-check plugin classes: a flat list of `(name, regex)`. No severity scale. No `--fail` flag; always exit 0.
+
+**Criterion proposals.** (a) A project-name fixture built from a temp list file. (b) The trace-doctor positive control is a hand check by the doctor, since no test runs over live skills. (c) Fenced lines are scanned for dates too.

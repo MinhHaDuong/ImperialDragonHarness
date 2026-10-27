@@ -22,3 +22,17 @@ cost with no owner decision behind each run.
 - [ ] Its tests are deleted with it, not tuned; Codex and Pi start hooks that
       share `on-start-context.sh` are checked for the same removal
 - [ ] Lands after 1230 and 1231 are merged
+
+## Imagine (raid 2026-10-27)
+
+**Premise holds.** `scripts/on-start-context.sh:33-38` still calls `prompt-project-coherence.sh` (prompt at `:40`); yawn and molt do not check coherence yet; ordering stands, 1232 last.
+
+**Premise gap: the census call lives inside the file to delete.** `resident_census.py --project --warn` is at `prompt-project-coherence.sh:35-36`, after the harness and worktree early exits (`:8-14`). Deleting the script silently drops the budget line.
+
+**Simplest path.** Delete `scripts/prompt-project-coherence.sh` and `tests/test_project_coherence_prompt.py`. In `on-start-context.sh:33-38`, call `python3 "$_script_dir/resident_census.py" --project "$_proj" --warn 2>/dev/null || true` directly, keeping the not-the-harness guard (or the census's own handling). `tests/test_project_census.py`: keep the function tests; repoint `_run_hook`/`HOOK` (`:30`, `:99-107`) at `on-start-context.sh` with `CLAUDE_PROJECT_DIR`, so the delivery-channel positive control survives. Repoint, don't tune.
+
+**Dangling references.** `scripts/resident_census.py:28` "SessionStart coherence prompt" → "SessionStart hook". Dated docs and closed tickets stay. None in `rules/`, `adapters/`, `skills/`.
+
+**Codex and Pi.** Both call `on-start-context.sh` (`adapters/codex/hooks.json`, `adapters/pi/extensions/idh-guard.ts`): one edit covers them. Also check `tests/test_session_start_wiring.py` and other on-start tests.
+
+**Criterion proposals.** (a) The census line still fires from `on-start-context.sh` for an over-budget project, silent otherwise. (b) `grep -r prompt-project-coherence scripts tests adapters` is empty. (c) "Lands after 1230 and 1231" is a merge precondition, not a deliverable.
