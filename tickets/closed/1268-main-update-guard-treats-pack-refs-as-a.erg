@@ -2,9 +2,11 @@
 Title: Main-update guard treats pack-refs as a no-op, not an ungated deletion of main
 Created: 2026-10-27
 Author: reviewer
+Closed: closed by raid — PR #1795
 
 --- log ---
 2026-10-27T13:45Z reviewer created
+2026-10-27T16:16Z reviewer closed — closed by raid — PR #1795
 
 --- body ---
 ## Context
