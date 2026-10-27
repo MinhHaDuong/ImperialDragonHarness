@@ -379,6 +379,7 @@ For each eligible PR, sequentially within the wave:
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
 4. Merge by the recipe, `skills/merge/SKILL.md` § The recipe, in one call from the PR's
    worktree: `python3 "$IDH_ROOT/scripts/raid_land.py" <pr> --ruled-head <ruled_tip_sha|-> --ruled-claims <ids,|-> --cleanup`
+   (`--ruled-claims` is the ruled verdict's `ticket:` field, never a fresh read of the body)
    (close, head pin, record with one re-record, disarm, pinned merge, read-back, sync, a
    `<pr> merge <start> <end>` row for `step_clock.py`). Exit 1 refused, 4 merged but main
    unsynced (report, never re-merge), 5 queued, 6 merge outcome unknown (read the request, never

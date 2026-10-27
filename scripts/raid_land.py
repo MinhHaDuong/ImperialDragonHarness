@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Land one merge request by /merge's recipe, in one call (ticket 1255).
 
-    raid_land.py <pr> --ruled-head <sha|-> [--base main] [--cleanup]
+    raid_land.py <pr> --ruled-head <sha|-> --ruled-claims <ids|-> [--base main] [--cleanup]
 
 Run it from the request's own worktree on its head branch. It executes
 `skills/merge/SKILL.md` § The recipe, steps 0 to 8; step 9 (the after-merge
@@ -44,6 +44,10 @@ class PostMerge(Refusal):
     """A failure after the merge call: the outcome is unknown, never re-merge."""
 
 
+class MergeRefused(Exception):
+    """The forge reported that it refused the merge call (nonzero exit)."""
+
+
 class GhForge:
     """The forge adapter: the only place that spells `gh`."""
 
@@ -69,7 +73,9 @@ class GhForge:
         self._gh("pr", "merge", pr, "--disable-auto")
 
     def merge(self, pr: str, head: str, auto: bool) -> None:
-        self._gh("pr", "merge", pr, "--merge", *(["--auto"] if auto else ["--match-head-commit", head]))
+        done = self._gh("pr", "merge", pr, "--merge", *(["--auto"] if auto else ["--match-head-commit", head]))
+        if done.returncode != 0:
+            raise MergeRefused(done.stderr.strip() or f"gh exit {done.returncode}")
 
     def read_back(self, pr: str) -> str | None:
         """`<STATE> <head> <queued|->`, or None when unreadable."""
@@ -263,9 +269,16 @@ def land(forge, pr: str, ruled: str, base: str = "main", cwd: Path | None = None
             if forge.auto_merge_armed(pr):
                 raise Refusal("auto-merge still armed")
     try:
-        forge.merge(pr, head, auto=not gated)
+        try:
+            forge.merge(pr, head, auto=not gated)
+        except MergeRefused as exc:
+            # Definite "not merged" only when the forge refused AND the request is still OPEN at this head.
+            back = forge.read_back(pr)
+            if back is not None and back.split()[:2] == ["OPEN", head] and "queued" not in back:
+                raise Refusal(f"forge refused the merge, request still open at {head[:12]}: {exc}") from exc
+            raise PostMerge(f"forge reported a refusal ({exc}) but the read-back is {back!r}") from exc
         return after_merge(forge, pr, cwd, branch, base, head, gated, start, do_cleanup, out)
-    except PostMerge:
+    except Refusal:
         raise
     except Exception as exc:
         raise PostMerge(f"{type(exc).__name__}: {exc}") from exc

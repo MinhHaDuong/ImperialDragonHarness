@@ -41,7 +41,9 @@ class StubForge:
 
     def merge(self, pr, head, auto): self.calls.append(("merge", head, auto))
 
-    def read_back(self, pr): return self.readback
+    def read_back(self, pr):
+        self.reads = getattr(self, "reads", 0) + 1
+        return self.readback
 
     def comment(self, pr, body): self.calls.append("comment")
 
@@ -207,12 +209,14 @@ def test_exception_after_merge_is_outcome_unknown_code_6(repo):
     code = rl.main_land(forge, "7", head(repo), [], "main", repo, out.append)
     assert code == rl.UNKNOWN and len(merged_calls(forge)) == 1
     assert any("outcome unknown" in line for line in out)
+    assert any(line.startswith("read-back now: unreadable") for line in out)
 
 
 def test_bad_read_back_is_code_6_not_1(repo):
     forge = StubForge(head(repo), readback="CLOSED x -")
     out = []
     assert rl.main_land(forge, "7", head(repo), [], "main", repo, out.append) == rl.UNKNOWN
+    assert forge.reads == 2 and "read-back now: CLOSED x -" in out
 
 
 def test_missing_sync_script_after_merge_is_code_4(repo, monkeypatch):
@@ -236,3 +240,28 @@ def test_sync_result_needs_known_success_line(tmp_path, monkeypatch, stdout, rc,
     script.chmod(0o755)
     monkeypatch.setattr(rl, "SYNC", script)
     assert REAL_SYNC(tmp_path, "main")[0] is want
+
+
+def refused_merge(forge):
+    def merge(pr, h, auto):
+        forge.calls.append(("merge", h, auto))
+        raise rl.MergeRefused("head moved")
+    forge.merge = merge
+
+
+def test_forge_refused_merge_with_open_read_back_at_same_head_is_definite_refusal(repo):
+    forge = StubForge(head(repo), readback=f"OPEN {head(repo)} -")
+    refused_merge(forge)
+    out = []
+    assert rl.main_land(forge, "7", head(repo), [], "main", repo, out.append) == rl.REFUSED
+    assert not any("outcome unknown" in line for line in out)
+
+
+def test_forge_refused_merge_with_other_read_back_stays_unknown(repo):
+    forge = StubForge(head(repo), readback="MERGED " + "f" * 40 + " -")
+    refused_merge(forge)
+    assert rl.main_land(forge, "7", head(repo), [], "main", repo, [].append) == rl.UNKNOWN
+
+
+def test_usage_line_names_ruled_claims():
+    assert "--ruled-claims" in rl.__doc__.splitlines()[2]
