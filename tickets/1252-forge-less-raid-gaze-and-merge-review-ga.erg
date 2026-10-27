@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-27T11:00Z reviewer created
 2026-10-27T11:19Z reviewer note author ruling 2026-10-27: forge-independent, not forge-free — the forge stays the default route for now; the no-forge path is added beside it
+2026-10-27T14:43Z reviewer note design note conception/2026-10-27-git-notes-review-design.md received (PR #1781, merged 19db6f32); linked in body, two divergences from D2/wave order flagged for Plan
 
 --- body ---
 ## Context
@@ -42,6 +43,12 @@ raid Phases 6-7 assume merge requests. Twelve helpers call `gh`, among them
 skills/gaze/, skills/merge/, skills/verify-gate/, skills/raid/SKILL.md, scripts/gaze_setup.py,
 scripts/gaze_close.py, scripts/attribution_record.py, scripts/review_evidence.py,
 scripts/review-anchor.py, scripts/merge-gate.py
+
+Design note: conception/2026-10-27-git-notes-review-design.md (PR #1781, French). Read before
+settling D1-D3. Two divergences to settle there: it splits review notes into four refs
+(review-request, review-plan, review-report/, review-answer) where D2 has one refs/notes/review,
+and it puts a four-environment transport trial (doudou, padme, ChatGPT Work, Claude Code Web)
+before any harness migration, where wave 1 here starts with C1.
 
 Monster check before Execute: likely a tracker with children (gaze, gate, merge, raid), each one
 sign-off unit. Related: [[1241]], [[1227]], [[1248]].
