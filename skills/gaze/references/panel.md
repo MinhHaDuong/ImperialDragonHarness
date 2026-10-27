@@ -11,24 +11,53 @@ inside the worktree and never a temporary directory: collection assumes
 launcher and seats share a filesystem. The plan file `<panel>/manifest.txt`
 (`references/plan.md`) is written before anything launches.
 
-1. **Launch.** Every code seat is the code-reviewer profile
-   (`agents/code-reviewer.md`, contract `profiles/code-reviewer/PROFILE.md`).
-   The intent, the perspective, the anchor HEAD, the changed-file roster
-   inside the what, the ticket's exit criteria and the exact
-   `<panel>/<name>.md` path ride in the launch prompt; the seat's rails
-   (read-only, `git -C`, artifact protocol, report format, its first line
-   naming its model and family) are the contract's and are not restated here.
-   Every seat prompt also carries the reach rails: the tree is read only as
+1. **Launch.** The default door is a detached headless CLI, one per seat,
+   which does not nest inside gaze's own agent tree and so launches at any
+   depth on Claude Code, Codex and Pi alike. Write the brief once to
+   `<panel>/brief.md` (the intent, the ticket's exit criteria, the
+   changed-file roster inside the what), then launch each seat as a
+   background shell command:
+
+   ```bash
+   python3 "$IDH_ROOT/scripts/gaze_seat.py" launch --runtime <door> \
+     --model <pin> --family <family> --home-family <gaze's own family> \
+     --perspective <perspective> --panel <panel> --name <item> \
+     --review-tree "$review_tree" --anchor <head> --brief <panel>/brief.md
+   ```
+
+   The door, model and family come from the plan item; the runtime's door
+   (`launch_doors.<door>.headless` in `skills/route/routes.json`) supplies the
+   command template and its read-only `seat_rails`. The script embeds the
+   seat contract (perspective, anchor, reach rails below, report format), pins
+   the cwd to the review tree, runs the seat under `seat_clock.py`'s cap
+   (600 s by default; set `--cap` within the plan's budget) and files
+   `<panel>/<name>.md` with its first line `worker: model=<pin> ·
+   family=<family>` set from the pin, never from the CLI's self-report.
+   Anything that stops a seat is `<name>: no report (<reason>)` in
+   `<panel>/<name>.md.status` and no report at all: the plan check counts the
+   seat missing, and gaze never replaces it with its own read.
+   `--dry-run` prints the command and launches nothing.
+
+   **Subagent door.** Where the runtime's delegation tool is present, a seat
+   of gaze's own family may instead be the code-reviewer profile
+   (`agents/code-reviewer.md`, contract `profiles/code-reviewer/PROFILE.md`),
+   launched as a background agent with the intent, the perspective, the
+   anchor HEAD, the roster, the exit criteria and the exact
+   `<panel>/<name>.md` path in its prompt; the seat's own rails are the
+   contract's. Launch every such seat in one message, as parallel background
+   agents, and wait by polling for their artifacts (step 3).
+
+   Either door, the seat carries the reach rails: the tree is read only as
    `git -C "$primary_root/.claude/worktrees/review-<pr-number>" ...`; no
    working-tree overwrite (`git checkout <ref> -- `, `git restore .`,
    `git reset --hard`), another version is read with `git show <ref>:<path>`;
    an unreachable tree, or a HEAD other than the anchor, is a NOT-RUN refusal,
    and the seat never falls back to the session cwd.
-   Launch every seat of the plan in one message, as parallel background agents.
    A check item runs as a script through
    `python3 "$IDH_ROOT/scripts/seat_clock.py" run --cap <s> --out <panel>/<name>.md -- <command>`.
-2. **Artifacts.** Each seat writes `<panel>/<name>.md.part`, then renames it to
-   `<panel>/<name>.md`. The rename is the completion signal.
+2. **Artifacts.** Each report lands as `<panel>/<name>.md.part`, then is
+   renamed to `<panel>/<name>.md` (by `gaze_seat.py` on the headless door, by
+   the seat on the subagent door). The rename is the completion signal.
 3. **Collection.** One bounded polling loop, within the plan's budget and
    never past gaze's 15-minute deadline, until every plan item has its report
    or the deadline passes. At the deadline, stop the seats the runtime can
@@ -37,32 +66,20 @@ launcher and seats share a filesystem. The plan file `<panel>/manifest.txt`
    no report at the deadline is missing, not clear, and the plan check names
    it. Never extend the deadline to hide a gap.
 
-**Fan-out preflight.** Check that the delegation tool is available before
-launching. Spawn success is not a guarantee the agent exists: under a silent
-child cap a spawn returned success for seats that never listed (merge request
-#1143). The manifest and the landed artifacts are the source of truth for
-what ran. When the tool is absent because this fork is itself a child, use the
-detached-seat substitution below; a seat nothing could launch has no report.
+**Fan-out preflight.** On the subagent door, spawn success is not a guarantee
+the agent exists: under a silent child cap a spawn returned success for seats
+that never listed (merge request #1143). On either door the manifest and the
+landed artifacts are the source of truth for what ran, and completion is
+observed by polling, never by a spawn's or a process's start. Cap concurrent
+headless seats to what the host and the providers' rate limits bear, and
+stagger launches.
 
-#### Detached-seat substitution
+#### Doors that cannot serve
 
-A child session does not inherit the runtime's agent connector. Substitute one
-detached, headless, non-interactive CLI process per seat, launched from the
-orchestrating session: a `claude -p "<prompt>"`
-style invocation qualifies (measured working); a headless `vibe -p` session
-cannot serve, its permission policy denies it file tools. Embed the whole seat
-contract in the prompt: intent, perspective, exit criteria, anchor HEAD,
-changed-file roster, the `<panel>/<name>.md` path, the first-line rule, and the
-read-only rails (writes nothing outside its artifact, posts nothing, holds no
-credentials). Pin the cwd to the review worktree, pass deny-rules as one
-quoted string, and request the model pin; a CLI that cannot enforce it records
-that limitation in the report. Launch each one through
-`python3 "$IDH_ROOT/scripts/seat_clock.py" run --cap 600 --out <panel>/<name>.md -- <cli...>`,
-which kills it at the cap and records `no report (timed out after 600s)`.
-Completion is observed by the polling above, never by the spawn's success. Cap
-concurrent seats to the runtime's child cap and stagger launches; a seat beyond
-budget or past the deadline is `no report`, never simulated. The same door
-serves an other-family seat (`skills/route/references/decorrelation.md`).
+A door whose CLI cannot hold a seat read-only has no `seat_rails` in
+`routes.json`, and `gaze_seat.py` refuses it: a headless `vibe -p` session
+cannot serve, its permission policy denies it file tools. A rail or a model
+pin a CLI cannot enforce is recorded in the report as that limitation.
 `$IDH_ROOT/scripts/coaching/seat-runner.sh` is an optional heavier transport.
 An external reviewer routed by `skills/reviewers/SKILL.md` is a plan item
 like any other; its route's `SEAT-FAILED:`, `SEAT-MISSING:` and

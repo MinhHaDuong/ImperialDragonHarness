@@ -122,9 +122,9 @@ Whatever the result, say who reviewed: `seats: self-only` when no item but
 is not gaze's judgment). This is the one definition. A self-only result
 is the caller reviewing its own work, so the reuse rule
 (`skills/merge/SKILL.md` § Gating tiers) counts it, and a record with no
-`seats:` line, as no record. Claude Code's nesting cap is pinned
-for gaze's seats in `settings.shared.json`; Codex and Pi (`allowed_subagents`)
-need their own equivalent, or fall back to `seats: self-only`.
+`seats:` line, as no record. Seats launch on the headless door
+(`references/panel.md`), which needs no agent nesting on any runtime; a seat
+that cannot launch is `no report`, never replaced by gaze's own read.
 
 ### 5. Output
 
