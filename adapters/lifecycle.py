@@ -130,12 +130,22 @@ def install_bin(owned: dict, declared: set[Path], manifest: list) -> int:
             continue
         if path.is_symlink() and owned.get(str(path)) == os.readlink(path):
             tmp = path.with_name(path.name + ".idh-link-tmp")  # relocated: refresh our own link
-            tmp.symlink_to(rel)
-            os.replace(tmp, path)
+            try:
+                tmp.unlink(missing_ok=True)  # a crash leftover must not block the refresh
+                tmp.symlink_to(rel)
+                os.replace(tmp, path)
+            except OSError as exc:
+                report("REFUSED", f"{path}: {exc}", "inspect the path, then rerun idh install")
+                rc = 1
+                continue
+            finally:
+                tmp.unlink(missing_ok=True)
             owned[str(path)] = rel
             print(f"installed: {path} -> {src}")
             continue
         other = path if (path.is_symlink() or path.exists()) else shutil.which(src.name)
+        if other and not path.is_symlink() and Path(other).resolve() == src.resolve():
+            other = None  # bin/ itself is on PATH: the hit is our own source
         if other:
             report("REFUSED", f"{path}: name collides with existing command {other}",
                    f"rename bin/{src.name} or remove the existing command, then rerun idh install")
