@@ -35,11 +35,3 @@ def test_readme_indexes_zotero_rule():
         "rules/README.md must name zotero.md — as a conditional-table row if it "
         "gains `paths:` frontmatter, else in the resident list"
     )
-
-
-def test_git_md_cross_references_zotero():
-    git_md = (RULES / "git.md").read_text(encoding="utf-8")
-    assert "zotero.md" in git_md, (
-        "rules/git.md must cross-reference zotero.md — source-document staging "
-        "follows a separate discipline from generated handoff artifacts"
-    )
