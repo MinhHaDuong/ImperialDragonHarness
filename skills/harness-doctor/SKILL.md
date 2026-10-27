@@ -53,8 +53,8 @@ Sequential-blocking: each step selects what the next one reads.
    against `references/checklist.md`: keep it, or dismiss it with a word of
    reason (a date in a command example, a template).
 4. **Runtime evidence.** Run the diagnostics in `references/runtime-diagnostics.md`
-   for every runtime, in its order, one at a time, each under a time limit
-   (a timeout is recorded as unavailable). Lines marked as spending
+   for every runtime, in its order, one at a time, each under a time limit of about
+   a minute (a timeout is recorded as unavailable). Lines marked as spending
    model usage need the author's agreement and a cost cap. For each runtime,
    record ran (with what it said that bears on skills), or unavailable (with
    why). A runtime that ships nothing is recorded as such against the

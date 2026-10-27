@@ -50,14 +50,25 @@ def test_refusal_outside_harness(tmp_path, repo):
 
 
 @pytest.mark.integration
-def test_refusal_ignores_an_exported_git_dir(tmp_path):
-    """An exported GIT_DIR pointing at the harness must not admit a foreign cwd."""
+@pytest.mark.parametrize("var", ["GIT_DIR", "GIT_COMMON_DIR"])
+def test_refusal_ignores_an_exported_git_dir(tmp_path, var):
+    """An exported repository override pointing at the harness must not admit a foreign cwd."""
     subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
     git_dir = subprocess.run(
         ["git", "-C", str(REPO), "rev-parse", "--path-format=absolute",
          "--git-common-dir"], capture_output=True, text=True, check=True).stdout.strip()
-    out = _here(tmp_path, env={**os.environ, "GIT_DIR": git_dir})
+    out = _here(tmp_path, env={**os.environ, var: git_dir})
     assert out.returncode == 1
+
+
+@pytest.mark.integration
+def test_refusal_ignores_an_exported_work_tree(tmp_path):
+    """GIT_WORK_TREE plus GIT_DIR at the harness must not admit a foreign cwd either."""
+    git_dir = subprocess.run(
+        ["git", "-C", str(REPO), "rev-parse", "--path-format=absolute", "--git-dir"],
+        capture_output=True, text=True, check=True).stdout.strip()
+    env = {**os.environ, "GIT_DIR": git_dir, "GIT_WORK_TREE": str(REPO)}
+    assert _here(tmp_path, env=env).returncode == 1
 
 
 @pytest.mark.integration

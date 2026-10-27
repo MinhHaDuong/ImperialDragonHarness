@@ -19,7 +19,8 @@ tests are the gate, this is why.
   not a timer-tool name; "delegate to a subagent", not an agent-tool name;
   "merge request" not "PR", "ticket" not "issue", "forge" not "GitHub"; never
   hardcode `gh`. The harness outlives tool generations — names rot, capabilities
-  don't. Enforced by `$IDH_ROOT/scripts/check-agnostic.sh`; a genuinely runtime-specific
+  don't. Enforced by `$IDH_ROOT/scripts/check-agnostic.sh` (`$IDH_ROOT`: the
+  harness checkout); a genuinely runtime-specific
   line goes behind `<!-- harness-extension-point -->`.
 - **Never take a name the runtime already binds.** A skill named after a
   built-in command silently shadows it and hides its own staleness. Check the

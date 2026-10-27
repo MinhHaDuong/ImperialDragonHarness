@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-26T20:30Z reviewer created
+2026-10-27T07:14Z reviewer retargeted: the skill-writing guide moved to skills/harness-doctor/references/authoring-skills.md (ticket 1233); rules/authoring-skills.md is its stub
 
 --- body ---
 ## Context
@@ -29,7 +30,7 @@ come back.
 
 - `skills/*/SKILL.md`, `skills/*/references/*.md`, `rules/*.md`
 - `scripts/check-agnostic.sh`
-- `rules/authoring-skills.md` (state the convention in one line)
+- `skills/harness-doctor/references/authoring-skills.md` (state the convention in one line; `rules/authoring-skills.md` is now its edit-time stub)
 
 ## Test
 
@@ -40,4 +41,4 @@ on the rewritten tree.
 
 - No `Skill(skill` in `skills/` or `rules/`; `check-agnostic.sh` flags it.
 - Model-facing skill references use plain names; any `/name` left addresses the author.
-- `rules/authoring-skills.md` states the convention.
+- `skills/harness-doctor/references/authoring-skills.md` states the convention.

@@ -15,7 +15,10 @@ run is reported as *unavailable* with the reason, never as clean. "Ships
 nothing" is recorded only against a control: the runtime's own command list,
 seen to answer.
 
-## Claude Code
+An "Observed" note records a probe against the version named in its
+section heading. On a newer version, probe again before relying on it.
+
+## Claude Code (observed at 2.1.311)
 
 <!-- harness-extension-point -->
 - `claude plugin validate "$IDH_ROOT"` (no user, no spend): validates the
@@ -33,7 +36,7 @@ seen to answer.
   `--json <file> --no-publish --max-cost-usd N`. The harness ships no eval
   cases; report it unavailable until it does.
 
-## Codex
+## Codex (observed at 0.164.0)
 
 <!-- harness-extension-point -->
 - `codex debug prompt-input` (no user, no spend): JSON of the model-visible
@@ -45,7 +48,7 @@ seen to answer.
   config, sandbox, state and install. Install health, not skill text.
 - `codex review` (spends): a reviewer from another family, not a diagnostic.
 
-## Pi
+## Pi (observed at 1.4.0)
 
 <!-- harness-extension-point -->
 Pi discovers skills from the shared Agent Skills root (`~/.agents/skills`),
