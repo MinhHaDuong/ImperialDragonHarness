@@ -212,3 +212,14 @@ def test_remote_base_deleted_refuses_and_is_not_recreated(tmp_path, monkeypatch)
     with pytest.raises(rl.Refusal, match="cannot read origin/main"):
         land(wt)
     assert git(origin, "rev-parse", "--verify", "-q", "refs/heads/main", check=False) == ""
+
+
+def test_cli_with_origin_and_no_gh_refuses_cleanly(tmp_path, monkeypatch, capsys):
+    work, wt, origin = make_repo(tmp_path, monkeypatch, remote=True)
+    bindir = tmp_path / "nogh"
+    bindir.mkdir()
+    (bindir / "git").symlink_to(shutil.which("git"))
+    monkeypatch.setenv("PATH", str(bindir))
+    monkeypatch.chdir(work)
+    assert rl.main(["7", "--ruled-head", "-", "--ruled-claims", "-"]) == rl.REFUSED
+    assert "origin remote and gh is not available" in capsys.readouterr().err

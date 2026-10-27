@@ -397,6 +397,8 @@ def get_forge(choice: str | None = None, ref: str = "", cwd: str | None = None, 
             raise ForgeRefusal(f"this repository has an origin remote; landing {ref!r} needs a forge "
                                "request number, never the local merge")
         return GhForge(cwd)
+    if landing:
+        return NoneForge(cwd)  # no origin remote: the local gated merge, whatever the ref
     return GhForge(cwd) if shutil.which("gh") and numeric else NoneForge(cwd)
 
 

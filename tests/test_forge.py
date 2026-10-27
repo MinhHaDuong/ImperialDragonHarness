@@ -300,3 +300,7 @@ def test_append_body_line_refuses_when_the_patch_fails(monkeypatch):
 
 def test_comments_can_leave_reviews_out(stub):
     assert [c["body"] for c in forge.get_forge("gh").comments("7", reviews=False)] == []
+
+
+def test_landing_without_origin_numeric_ref_is_local_even_with_gh(repo, stub):
+    assert isinstance(forge.get_forge(None, "7", cwd=str(repo), landing=True), forge.NoneForge)
