@@ -56,7 +56,7 @@ For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$
    PR comment that the gate agent validates. Read the `Unresolved simplify:` line of every
    `## /gaze result` comment on the PR: a later round may have skipped simplify.
 5. **Adherence violations are blocking.** Adherence is read from the merge
-   gate record's checks (`pytest-guard` runs the `-m adherence` tests; § Check
+   gate record's checks (`lint` runs the `-m adherence` tests; § Check
    plan), never from a gaze result: a failing check is a REROLL trigger.
 6. **Two rounds max.** Round 1 is initial gate. Round 2 is post-fix re-gate. Round 3 is
    forbidden — escalate.
@@ -150,23 +150,23 @@ python3 "$IDH_ROOT/scripts/merge-gate.py" plan --base origin/<base-branch> --hea
 `<prior head>` is the round-1 `ruled_tip_sha` on round 2, else
 `reviewed_head_sha`. The plan prints one line per check declared in the
 base's `.merge-gate.json`; adherence is one of them, the gate record's
-`pytest-guard`:
+`lint`. The gate runs no full test suite: only the declared before set runs
+before the merge, the full set runs on main after it
+(`skills/merge/SKILL.md` § Gating tiers).
 
 - `reuse <check>`: the check passed in the latest published gate record for
-  `<prior head>`, and the change from that record's candidate to the current
-  one, head and base alike, is empty or touches bookkeeping paths only, and
-  the declaration does not list the check under `"rerun"`. The line names the
-  source record, its head and candidate; copy it into the verdict verbatim.
-  A declaration whose `"rerun"` names only its ticket checks makes a
-  tickets-only delta run those, never the test suite.
+  `<prior head>`, and the candidate is unchanged since that record's, head
+  and base alike. The line names the source record, its head and candidate;
+  copy it into the verdict verbatim. Any change re-runs the before set,
+  which costs seconds.
 - `run <check>`: no reusable result, with the reason (no record, failed
-  there, a non-bookkeeping path touched, declared to re-run). Run its command
-  in the gate worktree. When every declared check is `run` (none reused,
-  none skipped), write the record instead
+  there, the paths the delta touches). Run its command
+  in the gate worktree. When every before-set check is `run` (none reused),
+  write the record instead
   (`merge-gate.py run --base origin/<base-branch> --head HEAD`), which runs
   the same set, so a later round or `/merge` finds it.
-- `skip <check>`: outside the tier's declared checks, or an integration
-  check (declared `"integration": true`) whose `"covers"` paths the diff does
+- `skip <check>`: after-merge only (outside the declared before set), or an
+  integration check (declared `"integration": true`) whose `"covers"` paths the diff does
   not touch. Integration tests are out of scope by default: they run when the
   diff touches what they cover, or when the caller passes `integration`.
 

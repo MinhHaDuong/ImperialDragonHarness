@@ -1,16 +1,16 @@
 {
   "gate": "on",
   "scope": "1045-decision-3",
-  "about": "Ticket 1045 decision 3 (2026-10-20): the seven formerly forge-required checks minus skill-lint, grep-e-guard and status-verb-guard, plus the skills-catalog drift check. Run by scripts/merge-gate.py on the candidate merge commit; read from the base revision. Ticket 1221: a bookkeeping-only candidate runs only the tier's checks; policy in skills/merge/SKILL.md § Gating tiers. Ticket 1220: over a bookkeeping delta since a passing record, /verify-gate re-runs only the \"rerun\" checks and reuses the rest (skills/verify-gate/SKILL.md § Check plan); the merge record itself is unaffected.",
+  "about": "Ticket 1045 decision 3 (2026-10-20): the seven formerly forge-required checks minus skill-lint, grep-e-guard and status-verb-guard, plus the skills-catalog drift check; ticket 1245 adds lint. Run by scripts/merge-gate.py; read from the base revision. Ticket 1245 (tracker 1226): \"checks\" is the full set, run on main after every merge by merge-gate.py run-after; \"before\" is the cheap subset recorded on the candidate before the merge (no test suite). Policy in skills/merge/SKILL.md § Gating tiers.",
   "checks": [
     {"name": "validate-tickets", "argv": ["tickets/erg", "check", "tickets/"]},
     {"name": "agnostic-guard", "argv": ["bash", "scripts/check-agnostic.sh"]},
     {"name": "pipefail-guard", "argv": ["bash", "scripts/check-pipefail.sh"]},
     {"name": "pytest-guard", "argv": ["make", "check-tests"]},
-    {"name": "skills-drift", "argv": ["make", "check-skills-drift"]}
+    {"name": "skills-drift", "argv": ["make", "check-skills-drift"]},
+    {"name": "lint", "argv": ["make", "lint"]}
   ],
-  "tiers": {"bookkeeping": ["validate-tickets", "agnostic-guard", "pytest-guard"]},
-  "rerun": {"bookkeeping": ["validate-tickets", "agnostic-guard"]},
+  "before": ["validate-tickets", "agnostic-guard", "pipefail-guard", "skills-drift", "lint"],
   "versions": [
     {"name": "git", "argv": ["git", "--version"]},
     {"name": "python", "argv": ["uv", "run", "--frozen", "python3", "--version"]},

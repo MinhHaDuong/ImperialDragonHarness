@@ -401,20 +401,20 @@ def test_a_record_on_a_single_parent_commit_does_not_pass(repos):
     assert proc.returncode != 0
 
 
-@pytest.mark.parametrize("touched,accepted", [("STATE.md", True), ("code.py", False)])
-def test_enforce_accepts_a_bookkeeping_merge_with_its_tier_record(repos, touched, accepted):
-    """Ticket 1221: the tier record (mechanical checks only) admits a bookkeeping merge, nothing else."""
+@pytest.mark.parametrize("before,accepted", [(["t"], True), (["t", "full"], False)])
+def test_enforce_accepts_a_merge_with_its_before_merge_record(repos, before, accepted):
+    """Ticket 1245: the before-set record admits any merge; the full set is the after-merge runner's."""
     work, wt2 = repos["work"], repos["wt2"]
     (work / ".merge-gate.json").write_text(
         '{"gate": "on", "scope": "s", "checks": [{"name": "t", "argv": ["true"]},'
-        ' {"name": "full", "argv": ["false"]}], "tiers": {"bookkeeping": ["t"]}}\n')
+        ' {"name": "full", "argv": ["false"]}], "before": ' + json.dumps(before) + '}\n')
     git(work, "add", "-A")
-    git(work, "commit", "-q", "-m", "gate on, with tiers")
+    git(work, "commit", "-q", "-m", "gate on, with a before set")
     git(work, "config", "idh.mainGuard", "enforce")
     git(work, "switch", "-q", "--detach")
-    (wt2 / touched).write_text("edit\n")
+    (wt2 / "code.py").write_text("edit\n")
     git(wt2, "add", "-A")
-    git(wt2, "commit", "-q", "-m", touched)
+    git(wt2, "commit", "-q", "-m", "code")
     assert _receipt(wt2) == (0 if accepted else 1)
     merge = _candidate(wt2)
     proc = git(wt2, "update-ref", "refs/heads/main", merge, rev(wt2, "main"), check=False)

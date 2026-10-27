@@ -47,8 +47,8 @@ judge cuts, and a manuscript change travels through
 not the mechanical tier. Prose seats: `references/prose-panel.md`.
 
 Not planned: mechanical adherence (the `-m adherence` tests, verify-adherence's
-mechanical tier). The merge gate's record runs it on every merge
-(`pytest-guard`), and hunt's self-gate before the merge request. Lints, such
+mechanical tier). The merge gate's record runs it before every merge
+(`lint`), and hunt's self-gate before the merge request. Lints, such
 as the AI-tells list of `config/ai-tells.yml` on prose, are checks, never
 seats.
 

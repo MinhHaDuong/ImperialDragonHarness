@@ -23,25 +23,30 @@ refs/notes/gate with it first (and drop it when the remote has none). A
 `--no-push` record goes to refs/notes/gate-local, which is never pushed and is
 read only by `check --local`: a merge rests on a published record.
 
-Gating tiers (ticket 1221; the policy is skills/merge/SKILL.md § Gating
-tiers): a candidate whose changes against the base all match BOOKKEEPING is
-bookkeeping-tier. When the base declares `"tiers": {"bookkeeping": [names]}`,
-such a candidate's record runs only those named checks, under the scope
-`<scope>/bookkeeping`; `check` accepts that scope or the full one for a
-bookkeeping candidate, and only the full one otherwise. `tier` reports the tier
-of a candidate, or with `--since <approved tip>` the tier of what the head adds
-to the candidate the approval saw: the one mechanical reading of the tiers.
+Two moments (ticket 1245, tracker 1226; the policy is skills/merge/SKILL.md
+§ Gating tiers): `"checks"` is the full declared set, run after the merge by
+`run-after`; `"before": [names]` picks the cheap subset that `run` records on
+the candidate before the merge, under the scope `<scope>/before-merge`, and
+the only scope `check` accepts. Without `"before"` the full set runs before
+the merge under the bare scope, as before ticket 1245. A `"tiers"` or
+`"rerun"` key, left on bases older than ticket 1245, is ignored.
+
+Tier (ticket 1221): a candidate whose changes against the base all match
+BOOKKEEPING is bookkeeping-tier. `tier` reports the tier of a candidate, or
+with `--since <approved tip>` the tier of what the head adds to the candidate
+the approval saw: it decides whether a merge request needs a review, never
+which checks run.
 
 Plan (ticket 1220; the policy is skills/verify-gate/SKILL.md § Check plan):
 `plan` prints, before anything runs, one line per declared check, `run`,
-`reuse` or `skip` with its reason; adherence is one of those checks (ticket
-1225: `pytest-guard` runs the `-m adherence` tests). A check
-is reused from the latest published record entry for the `--since` head when
-it passed there and the change from that record's candidate to the current
-one (head and base alike) is empty, or bookkeeping and the check is not
-declared under `"rerun": {"bookkeeping": [...]}` (undeclared: every check
-re-runs). A check declared `"integration": true` is skipped unless the diff
-touches a path its `"covers"` patterns match, or `--integration` is passed.
+`reuse` or `skip` with its reason; adherence is one of those checks (`lint`
+runs the `-m adherence` tests). A check outside the before set is skipped
+(after-merge only). A check is reused from the latest published record entry
+for the `--since` head when it passed there and the candidate is unchanged
+since that record's (head and base alike); any change re-runs the before set,
+which costs seconds. A check declared `"integration": true` is skipped unless
+the diff touches a path its `"covers"` patterns match, or `--integration` is
+passed.
 
 After-merge runner (ticket 1244, tracker 1226): `run-after`, started in the
 background once a merge has landed, takes a host-local flock (the kernel frees
@@ -95,6 +100,7 @@ PASS, FAIL, MISSING, ERROR = 0, 1, 2, 3
 # "tickets/*.erg" does not reach tickets/erg (code) or tickets/closed/.
 BOOKKEEPING = ("tickets/*.erg", "tickets/closed/*.erg", "STATE.md", "memory/")
 BOOKKEEPING_TIER = "bookkeeping"
+BEFORE_SCOPE = "before-merge"  # scope suffix of a `run` record when "before" is declared (ticket 1245)
 AFTER_SCOPE = "after-merge"  # scope suffix of a run-after record (ticket 1244)
 BUSY = 4  # run_after only, never an exit code: another runner holds the lock
 AFTER_WALK = 200  # first-parent commits searched for the last green after-record
@@ -207,7 +213,22 @@ def decide(entries, candidate, scopes):
     return PASS, f"pass: {latest['time']} on {latest['host']} by {latest['actor']}"
 
 
-# ── gating tiers ──────────────────────────────────────────────────────────────
+# ── before set (ticket 1245) and tier (ticket 1221) ───────────────────────────
+
+
+def before_set(config):
+    """The check set a before-merge record runs: the declared "before" subset, or all."""
+    if "before" not in config:
+        return config
+    names = config["before"]
+    checks = [c for c in config["checks"] if c["name"] in names]
+    return {**config, "scope": f"{config['scope']}/{BEFORE_SCOPE}", "checks": checks}
+
+
+def accepted_scopes(config):
+    """The scope lines a before-merge record may carry: one per declaration."""
+    return (scope_line(before_set(config)),)
+
 
 
 def is_bookkeeping(path):
@@ -257,19 +278,6 @@ def tier_of(entries):
     ok = all(is_bookkeeping(p) and (status == "D" or mode in REGULAR_MODES) for p, mode, status in entries)
     return BOOKKEEPING_TIER if entries and ok else "full"
 
-
-def effective(config, base, oid):
-    """The check set the record of candidate `oid` runs: a tier's subset, or all."""
-    names = config.get("tiers", {}).get(BOOKKEEPING_TIER)
-    if not names or tier_of(changed_entries(base, oid)) != BOOKKEEPING_TIER:
-        return config
-    checks = [c for c in config["checks"] if c["name"] in names]
-    return {**config, "scope": f"{config['scope']}/{BOOKKEEPING_TIER}", "checks": checks}
-
-
-def accepted_scopes(config, base, oid):
-    """A tier record, or the full set, which covers every tier."""
-    return tuple(dict.fromkeys((scope_line(effective(config, base, oid)), scope_line(config))))
 
 
 # ── actor (vocabulary of scripts/attribution_record.py) ───────────────────────
@@ -373,23 +381,12 @@ def load_config(base):
         raise GateError(f'invalid {CONFIG_PATH} at base: "versions" must be a list of {{name, argv}}')
     if not single_line(config["scope"]) or not all(single_line(v["name"]) for v in versions):
         raise GateError(f"invalid {CONFIG_PATH} at base: scope or version names hold a control character")
-    tiers = config.get("tiers", {})
+    before = config.get("before")
     names = {c["name"] for c in checks}
-    if not isinstance(tiers, dict) or not all(
-        key == BOOKKEEPING_TIER and isinstance(value, list) and all(n in names for n in value)
-        for key, value in tiers.items()
+    if "before" in config and not (
+        isinstance(before, list) and before and all(isinstance(n, str) and n in names for n in before)
     ):
-        raise GateError(
-            f'invalid {CONFIG_PATH} at base: "tiers" may only map "{BOOKKEEPING_TIER}" to declared check names'
-        )
-    rerun = config.get("rerun", {})
-    if not isinstance(rerun, dict) or not all(
-        key == BOOKKEEPING_TIER and isinstance(value, list) and all(n in names for n in value)
-        for key, value in rerun.items()
-    ):
-        raise GateError(
-            f'invalid {CONFIG_PATH} at base: "rerun" may only map "{BOOKKEEPING_TIER}" to declared check names'
-        )
+        raise GateError(f'invalid {CONFIG_PATH} at base: "before" must be a non-empty list of declared check names')
     for item in checks:
         covers = item.get("covers", [])
         if not isinstance(item.get("integration", False), bool) or not (
@@ -485,7 +482,7 @@ def cmd_run(args):
     if config is None:
         raise GateError(f"gate is off at base {args.base}: no {CONFIG_PATH} with gate=on")
     oid = candidate(base, head)
-    config = effective(config, base, oid)
+    config = before_set(config)
     actor = actor_line(args.runtime, args.model, args.effort)
     command = f"merge-gate run --base {args.base} --head {args.head}"
     if not single_line(actor) or not single_line(command):
@@ -528,7 +525,7 @@ def cmd_check(args):
         sys.stdout.write(f"missing: {args.remote} has no {NOTES_REF}; no record on candidate {oid}\n")
         return MISSING
     text = read_note(oid) + ("\n" + read_note(oid, LOCAL_REF) if args.local else "")
-    code, reason = decide(parse_note(text), oid, accepted_scopes(config, base, oid))
+    code, reason = decide(parse_note(text), oid, accepted_scopes(config))
     sys.stdout.write(reason + "\n")
     return code
 
@@ -628,23 +625,16 @@ def cmd_plan(args):
     delta_tier, delta, source, entry = (None, [], "no --since head named", None)
     if since:
         delta_tier, delta, source, entry = delta_since(new, since)
-    # Undeclared: a bookkeeping delta re-runs every check, as before ticket 1220.
-    rerun = set(config.get("rerun", {}).get(BOOKKEEPING_TIER, [c["name"] for c in config["checks"]]))
-    required = {c["name"] for c in effective(config, base, new)["checks"]}
+    required = {c["name"] for c in before_set(config)["checks"]}
     for item in config["checks"]:
         name = item["name"]
         if name not in required:
-            sys.stdout.write(f"skip {name}: not in the {tier} tier's declared checks\n")
+            sys.stdout.write(f"skip {name}: after-merge only, not in the declared before set\n")
             continue
-        if entry is not None and delta_tier in ("unchanged", BOOKKEEPING_TIER) and passed(entry, name):
-            if delta_tier == "unchanged":
-                sys.stdout.write(f"reuse {name}: passed on {source}; the candidate is unchanged since\n")
-                continue
-            if name not in rerun:
-                sys.stdout.write(f"reuse {name}: passed on {source}; the delta since touches bookkeeping only\n")
-                continue
-            reason = f"declared to re-run over a bookkeeping delta (since {source})"
-        elif entry is not None and delta_tier in ("unchanged", BOOKKEEPING_TIER):
+        if entry is not None and delta_tier == "unchanged" and passed(entry, name):
+            sys.stdout.write(f"reuse {name}: passed on {source}; the candidate is unchanged since\n")
+            continue
+        if entry is not None and delta_tier == "unchanged":
             reason = f"did not pass on {source}"
         elif entry is not None:
             reason = f"the delta since {source} touches {first_paths(delta)}"
