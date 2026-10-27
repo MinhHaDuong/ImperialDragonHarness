@@ -319,4 +319,4 @@ def test_partial_attribution_file_gets_the_missing_seat(tmp_path):
     comment.write_text(result.read_text() + "result: REVIEWED\n{{plan_check}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, have + "\n"), "--comment-file", str(comment)], primary, env)
     assert "attribution: seats appended" in r.stdout, r.stdout
-    assert "seat=b" in body.read_text()
+    assert "seat=b" in body.read_text() and body.read_text().count("seat=a") == 1
