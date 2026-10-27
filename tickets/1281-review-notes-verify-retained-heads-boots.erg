@@ -1,0 +1,81 @@
+%erg 0.1
+Title: Review notes: verify retained heads, bootstrap readers and pin request identity
+Created: 2026-10-27
+Author: ChatGPT
+
+--- log ---
+2026-10-27T17:33Z ChatGPT created
+
+--- body ---
+## Context
+Follow-up to the author's review of the in-progress Git-notes implementation (tracker 1252).
+Three defects were reproduced on main bf0db9ec55b4edc974556b35563cff7730ff3650 in temporary
+repositories with a local bare remote. These concern delivered C3 behaviour, not the still-open
+gate/raid migration or the pending web-environment trials. Do not redesign the accepted store.
+
+Baseline validation: tests/test_review_notes.py, tests/test_gaze_branch.py, tests/test_forge.py,
+tests/test_raid_land_local.py and tests/test_after_merge.py: 79 passed. The scenarios below are
+additional probes, not existing failing tests. The snapshot matters: coordinate with the active
+1274 work (PR #1813) and recheck against current main before implementation.
+
+## Reproductions
+
+### 1. Publication claims retrievability when retention refs were rejected (highest priority)
+Use the two-clone world fixture in tests/test_review_notes.py. Install an executable update hook
+in the bare origin that exits 1 for refs/review-heads/* and 0 for other refs. Open a review on
+feature against origin/main, then publish its request entry id.
+
+Observed: publish returns retrievable and the request exists in refs/notes/review, but
+git ls-remote origin 'refs/review-heads/*' is empty. sync ignores the retention-ref push result
+(scripts/review_notes.py:319-320); publish checks only the notes tip and entry ids (:327-336).
+
+Expected: complete retrievability must not be claimed when the reviewed code's required retention
+refs were not published and verified. Report missing, moved or rejected refs and preserve the
+local entries and heads for retry. Otherwise later branch rewriting/deletion can leave readable
+reports without their examined commits. Do not repair a moved remote ref by force-pushing it.
+
+### 2. A bootstrapped clone fetches the notes but readers do not find the review
+Clone A opens and publishes a review. In clone B, run review_notes.setup(B), then git fetch origin.
+Inspect all_entries(B, TRACK), all_entries(B), and find(B, 'feature').
+
+Observed: one entry in refs/notes/origin/review, zero in refs/notes/review, find returns None.
+An explicit sync(B) repairs discovery, but the normal resolver does not perform it before reading.
+gaze_setup.py:151-155 can therefore open a new review for the same branch instead of resuming it.
+
+Expected: the documented fresh-clone bootstrap/resolution path integrates fetched review data
+before deciding that no request exists, or explicitly refuses with an actionable sync requirement.
+It must preserve local unpushed entries and distinguish missing data from a failed fetch. Ordinary
+read/resolution should not unnecessarily require remote write permission; reader-only web access
+is part of the accepted transport design.
+
+### 3. A late answer is attached to the latest request instead of the request reviewed
+In one clone, open request R1 on head H1. Advance feature and write request R2 on head H2.
+Then call add('answer', review_id, old_run_fields, head=H1) for the execution launched on R1.
+
+Observed: the answer correctly names H1 but receives R2's request_id, because add selects the
+latest request at publication time (scripts/review_notes.py:430-440). This is reproducible without
+actual process concurrency and models a reviewer finishing after a new submission.
+
+Expected: freeze request identity when the execution starts and carry it through publication.
+The answer must reference R1, or fail explicitly on an inconsistent binding; never silently bind
+an old-head result to R2. Apply the same rule to plan/report entries and their links as appropriate.
+
+## Exit criteria
+- [ ] Regression test: a remote accepting notes but rejecting required review-head refs cannot yield
+      retrievable; the failure is visible and all local evidence remains available for retry.
+- [ ] Publication verifies the required remote retention refs against their request heads; missing
+      or moved refs are not silently accepted or force-overwritten.
+- [ ] Regression test: a fresh second clone follows the documented bootstrap and discovers the
+      existing review without creating a duplicate; a fetch failure is not treated as no review.
+- [ ] Reader bootstrap preserves local unpublished entries and works without requiring a push.
+- [ ] Regression test: a result from R1 arriving after R2 remains bound to R1 (or is explicitly
+      refused); request/run identity is carried from setup to publication, not inferred as latest.
+- [ ] Update affected helper/caller contracts and run the focused tests above, then the repository's
+      required gate. Keep the forge path unchanged.
+
+## Relevant files
+scripts/review_notes.py, scripts/gaze_setup.py, scripts/gaze_close.py, scripts/forge.py,
+tests/test_review_notes.py, tests/test_gaze_branch.py,
+conception/2026-10-27-notes-review-spec.md
+
+Related: [[1252]], [[1274]], [[1276]], [[1277]].
