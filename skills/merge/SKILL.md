@@ -85,7 +85,7 @@ re-gate.
 
 ## The recipe
 
-`"$IDH_ROOT/scripts/raid_land.py"` executes steps 0 to 8 for one request in one call (the raid's Phase 7), step 8 included, and posts the duration comment; it does not start step 9, the after-merge runner, which the caller still starts. This recipe stays the contract it follows.
+`"$IDH_ROOT/scripts/raid_land.py"` executes steps 0 to 8 for one request in one call (the raid's Phase 7), step 8 included, and posts the duration comment; step 9 follows from its sync. This recipe stays the contract it follows.
 
 `N` is the merge request, `<branch>` its head branch, `<base>` its base.
 
@@ -149,17 +149,17 @@ reads and writes in its own spelling.
 8. **Sync.** `"$IDH_ROOT/scripts/sync-local-main.sh" . <base>`. A "left
    untouched" line goes in the report, never forced; never a hand-rolled
    `merge --ff-only` on the primary checkout.
-9. **After-merge run (gated base).** Start the runner in the background from
-   the shared git directory, which outlives this worktree (bare or not), and
-   do not wait on it:
-   ```bash
-   C=$(git rev-parse --path-format=absolute --git-common-dir); mkdir -p "$C/idh"
-   (cd "$C" && nohup python3 "$IDH_ROOT/scripts/merge-gate.py" run-after --open-ticket --ref <base> >>"$C/idh/after-merge.log" 2>&1 &)
-   ```
-   It runs the full set on the newest `<base>` tip and notes the record there
-   (a busy lock means a runner already covers this tip). Its red never blocks
+9. **After-merge run (gated base).** Nothing to start: step 8's sync moves
+   local main, and the main-update hook (`hooks/reference-transaction`,
+   § after-merge start) starts the runner detached on that move. Read
+   `$(git rev-parse --git-common-dir)/idh/after-merge.log`, never wait on it.
+   The runner runs the full set on the newest `<base>` tip and notes the record there
+   (a busy lock means a runner already covers this tip; `covered` means the
+   tip already carries a record). A sync that left main untouched starts
+   nothing; the next move of main does, and `main_sweep.py --after` flags a
+   tip left an hour without a record. A red never blocks
    this merge: the log and the note carry it, and `main_sweep.py --after`
-   reports it. On red, `--open-ticket` opens the ticket itself: a ticket-only
+   reports it. On red, the runner (the hook passes `--open-ticket`) opens the ticket itself: a ticket-only
    request from branch `red-<tip12>`, landed by `raid_land.py`, none when an
    open ticket or a `red-*` branch already carries the same failing checks.
 

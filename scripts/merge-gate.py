@@ -51,14 +51,17 @@ passed.
 After-merge runner (ticket 1244, tracker 1226): `run-after`, started in the
 background once a merge has landed, takes a host-local flock (the kernel frees
 it when the holder dies; busy: exit 0 at once, the holder will see the new
-tip), runs the full declared set on the current `<remote>/<ref>` tip, appends
+tip), runs the full declared set on the current `<remote>/<ref>` tip (a tip
+that already carries an after-merge record is reported `covered` and not run
+again: hooks/reference-transaction starts the runner on every move of main,
+ticket 1265), appends
 the record as a note on that tip, refetches, and loops while the tip moves; a
 result covers its tip and every tip it passed over. The record's scope is
 `<scope>/after-merge` and its revision `tip=<oid>`, never `candidate=`, so
 neither `check` nor the main-update hook can take it for a before-merge record.
 On red it prints the ticket text (tip, failing checks, first-parent merges
 since the last green after-record) and exits 1. With `--open-ticket` (ticket
-1251; skills/merge/SKILL.md step 9 passes it) it also opens that ticket, still
+1251; hooks/reference-transaction passes it) it also opens that ticket, still
 under the lock: `tickets/<next>-after-merge-red-<tip12>.erg` written in a
 throwaway worktree on branch `red-<tip12>`, pushed, opened as a request and
 landed by scripts/raid_land.py as a bookkeeping-tier request, at most
@@ -973,6 +976,13 @@ def run_after(remote, branch, actor, command, forge=None):
             return BUSY
         code, done = PASS, None
         while (tip := fetch_tip(remote, branch)) != done:
+            fetch_notes(remote)
+            prior = after_entries(tip)
+            if prior:  # the hook starts a runner on every move of main, a sync to a covered tip included
+                sys.stdout.write(f"covered: {tip} already carries an after-merge record; not run again\n")
+                code = PASS if prior[-1].get("result") == "pass" else FAIL
+                done = tip
+                continue
             outcome = run_after_once(tip, remote, actor, command)
             if outcome is None:
                 sys.stdout.write(f"off: {tip[:12]} declares no gate; nothing to run\n")

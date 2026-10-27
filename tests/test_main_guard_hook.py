@@ -82,6 +82,8 @@ def repos(tmp_path):
     work = tmp_path / "work"
     git(tmp_path, "clone", "-q", str(origin), str(work))
     git(work, "config", "core.hooksPath", "hooks")
+    # The after-merge start (ticket 1265) has its own tests, tests/test_after_merge_hook.py.
+    git(work, "config", "idh.afterMerge", "off")
     wt2 = tmp_path / "wt2"
     git(work, "worktree", "add", "-q", "-b", "side", str(wt2), "main")
     return {"origin": origin, "seed": seed, "work": work, "wt2": wt2, "tmp": tmp_path}
