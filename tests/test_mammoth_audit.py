@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from child_env import child_env
+from child_env import child_env, isolated_path
 from tracked_tree import tracked_checkout
 
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
@@ -127,6 +127,7 @@ def test_installed_audit_launcher_runs_without_scheduler(tmp_path):
     env = {
         **child_env(),
         "HOME": str(fake_home),
+        "PATH": isolated_path(),
         "XDG_CONFIG_HOME": str(fake_home / "config"),
         "XDG_BIN_HOME": str(fake_home / "custom bin"),
     }

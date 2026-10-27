@@ -28,6 +28,7 @@ import json
 from pathlib import Path
 
 import pytest
+from child_env import isolated_path
 from tracked_tree import tracked_checkout
 
 # The tracked tree, not this checkout: untracked links here (the private
@@ -55,6 +56,7 @@ def home(tmp_path, monkeypatch):
     root.mkdir()
     monkeypatch.setenv("HOME", str(root))
     monkeypatch.delenv("USERPROFILE", raising=False)
+    monkeypatch.setenv("PATH", isolated_path())  # not the developer's ~/.local/bin
     # No CLIs in CI: stub the version probe as the perch tests do.
     monkeypatch.setattr(perch, "check_version", lambda *a, **k: "9.9.9")
     return root
