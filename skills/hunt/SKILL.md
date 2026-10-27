@@ -46,7 +46,7 @@ its **Relevant files**, then decide what the ticket is and what it takes:
   `rules/workflow.md` § Escalation protocol (advisor model first) before executing.
 - **Already met**: the plan is to record evidence, not to build. Announce
   `[Plan → Execute]`, enter the worktree (§ Worktree), `${ERG:-tickets/erg} log $ID "already met: <evidence>"`,
-  commit, skip the rest of Execute, and go to Verify's landing.
+  commit, skip the rest of Execute, and go to Verify's Prepare to land.
 - **Premise expired**: check what changed on **Relevant files** since the
   ticket's `Created` date (`git log --since=<Created> -- <files>`). A change that
   voids the premise is settled by the same escalation protocol; confirmed
@@ -130,8 +130,9 @@ proves to be several goes back up as in Plan.
   never assumed. With a forge: push with lease and open a merge request whose
   description carries the close claim `**Ticket:** tickets/<ticket file>`, then
   wait for CI where it runs on the branch; `/merge` closes the claimed ticket.
-  Without one there is no claim to execute: close and archive it on the branch
-  yourself, as `skills/merge/SKILL.md` step Close does, and commit.
+  Without one there is no claim to execute; close it on the branch yourself:
+  `${ERG:-tickets/erg} close $ID "<reason>"`, then `${ERG:-tickets/erg} archive $ID || true`,
+  stage `tickets/` and commit `ticket($ID): close and archive`. Nothing is pushed.
   Either way the merge itself is the caller's, by the project's recipe.
 - **Review.** Skip when
   `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base <base> --head HEAD`

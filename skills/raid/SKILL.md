@@ -237,8 +237,8 @@ hunt skill with `<id> inline` as its argument. It then follows the contract the 
 paraphrase, summarize, or inline hunt's phases; the versioned `skills/hunt/SKILL.md`
 is the single live execution contract, and the loader supplies it fresh on every
 run. (A prose paraphrase drifts: the contract then lives in prompt-writing memory
-instead of the skill.) The agent pushes its branch and opens a merge request as
-hunt's flow dictates. An agent that returns its ticket as a likely monster
+instead of the skill.) The agent lands its branch as hunt's Verify phase
+dictates: a merge request on a forge, a ready-to-merge branch without one. An agent that returns its ticket as a likely monster
 brings a proposed decomposition instead: apply the monster checklist to it,
 file the split, and schedule the children in a later wave.
 
