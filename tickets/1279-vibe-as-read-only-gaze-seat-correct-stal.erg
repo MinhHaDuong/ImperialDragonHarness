@@ -1,0 +1,54 @@
+%erg 0.1
+Title: Vibe as read-only gaze seat; correct stale Vibe route docs
+Created: 2026-10-27
+Author: claude
+
+--- log ---
+2026-10-27T16:23Z claude created
+
+--- body ---
+## Context
+The harness records that headless `vibe -p` "denies file tools" and cannot be
+a review seat (`skills/route/routes-recommendations-vibe.md`, `routes.json`
+`launch_doors.vibe`, `skills/gaze/references/panel.md` § Doors that cannot
+serve; source: 2026-10-02/03 trial on Vibe 2.25.8). A probe on Vibe 2.26.0,
+2026-10-27 (session explore-mistral-vibe), contradicts it:
+
+- `read_file` works headless under the `plan`, `ask` and `auto-approve` agents
+  (planted nonce returned verbatim; file count matched `grep`).
+- Launched without a terminal, `vibe -p` blocks on inherited stdin and prints
+  nothing until killed; `</dev/null` fixes it. Likely the 2.25.8 "blocked" symptom.
+- In `-p`, `--enabled-tools` disables every other tool. With
+  `--enabled-tools read_file --enabled-tools grep`, a seat told to write by any
+  means tried write_file, bash, process.start, run_typescript and subagent.spawn;
+  no file landed on disk.
+- In the Unified Harness "grep" executes through bash, so under that rail it is
+  denied; the seat falls back to `read_file` (directory listing included).
+- A custom agent TOML (`agents/<name>.toml`, `active_model` + `[[models]]`)
+  pins the model: `mistral-large-latest` and `magistral-medium-latest` answer;
+  a bogus name gets HTTP 400 `Invalid model` (pin reaches the API).
+  `VIBE_HOME=<dir>` isolates the agent file from `~/.vibe`.
+- The model misreports itself ("Claude 3.5 Sonnet"): attribute by the pin.
+- Auth is the Le Chat plan login (OS keyring), no `MISTRAL_API_KEY`. Vibe's
+  default model is `mistral-vibe-cli-latest` (alias mistral-medium-3.5); the
+  `routes.json` mistral-route note calling Vibe "zai-glm-5-3" looks stale.
+
+## Exit criteria
+- [ ] `launch_doors.vibe` in `skills/route/routes.json` gains `seat_rails`
+      (read tools only, stdin closed, model pinned via a seat agent TOML in a
+      disposable `VIBE_HOME`), status note dated and versioned.
+- [ ] `scripts/gaze_seat.py` launches a vibe seat with those rails and stdin
+      from `/dev/null`; a test covers the argv it builds.
+- [ ] One live positive control: a vibe seat returns a planted nonce and a
+      write attempt leaves the tree unchanged (record the evidence in the log).
+- [ ] `routes-recommendations-vibe.md`, `panel.md` § Doors that cannot serve
+      and the mistral-route note in `routes.json` corrected; no remaining
+      claim that headless Vibe cannot read files.
+- [ ] Project memory: one journal entry recording the stdin hang and the
+      superseded 2.25.8 finding.
+- [ ] Scoped gate (`.idh-checks.json`) passes.
+
+## Out of scope
+Using the plan's keyring credential from other clients (pi): terms and
+billing unknown. Whether pinned non-default models draw on the plan quota or
+bill separately: check the Mistral console after first runs.
