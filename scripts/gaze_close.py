@@ -23,7 +23,9 @@ The comment file must hold `{{plan_check}}` (ticket 1267) and no typed
 posted. The script replaces it with the first line of `seat_clock.py
 plan-check` on the review panel (read before cleanup removes it), `plan check:
 FAIL — manifest unreadable` when the panel cannot be read, so the verdict is
-never the model's to write. It may also hold `{{duration}}` and
+never the model's to write; the line is also printed on stdout, before
+cleanup, for the caller's return text and a blocked-cleanup ESCALATE. The line is also printed on stdout, before cleanup, so a blocked cleanup
+still gives the calling gaze the line to paste. It may also hold `{{duration}}` and
 `{{containment}}`; both are replaced by the script's own readings. Exit: 0 clean, 1 cleanup blocked
 (attribution appended, no comment posted; 2 when the append also failed), 2 also when cwd is inside the review worktree (refused, nothing removed), 2 read failure, 4 containment flagged (comment still posted).
 """
@@ -156,6 +158,7 @@ def main():
               "'plan check:' line; the script writes that line", file=sys.stderr)
         return 2
     plan_line = plan_check_line(primary, a.pr)
+    print(plan_line)  # the callers copy this line (comment, blocked-cleanup ESCALATE); never typed
     entry = read_entry(primary, a.pr)
     entry_branch = a.entry_branch or entry["branch"]
     status = 0

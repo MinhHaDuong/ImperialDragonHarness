@@ -151,8 +151,9 @@ unresolved_simplify_findings: [...]
 deviations — ...`, or `FAIL — ...`). You append only the reason after it,
 never relabel a FAIL, and never type the line yourself: a comment file with a
 typed `plan check:` line or no placeholder is refused. `gaze_close.py` is the
-only closing path; on a blocked cleanup the ESCALATE comment you post carries
-the line from running `plan-check` yourself, pasted as printed.
+only closing path; it prints the line (`plan check: ...`) on stdout, before
+cleanup. The text you return to your caller, and the ESCALATE comment you post
+on a blocked cleanup, carry that printed line, copied as printed.
 
 **Attribution.** As each seat returns, collect its `reviewer: step=review`
 line, with its `finding:` lines, in a file; `gaze_close.py --attribution-file`

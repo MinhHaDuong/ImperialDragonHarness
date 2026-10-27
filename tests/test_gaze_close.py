@@ -244,3 +244,21 @@ def test_documented_template_filled_as_documented_is_accepted(tmp_path, doc):
     assert r.returncode == 0, r.stdout + r.stderr
     (line,) = plan_line(tmp_path)
     assert line.startswith("plan check: FAIL") and "plan check: plan check" not in line
+
+
+def test_stdout_carries_the_checkers_fail_verbatim(tmp_path):
+    """Ticket 1267: the caller copies the printed line, never types one."""
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\nOne seat reads the diff and the test.\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], primary, env)
+    (line,) = [ln for ln in r.stdout.splitlines() if ln.startswith("plan check:")]
+    assert line.startswith("plan check: FAIL"), line
+
+
+def test_blocked_cleanup_still_prints_the_plan_check(tmp_path):
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\nOne seat reads the diff and the test.\n")
+    (primary / ".claude" / "worktrees" / "review-7" / "f.txt").write_text("real wip\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], primary, env)
+    assert r.returncode == 1
+    assert any(ln.startswith("plan check: FAIL") for ln in r.stdout.splitlines())
