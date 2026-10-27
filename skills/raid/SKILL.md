@@ -284,14 +284,16 @@ A gaze result of ESCALATE, or no accepted result (missing at the end of the
 bounded wait, or its `reviewed_head_sha` stale against the branch tip), means
 the gate is not run: the review never completed, and the PR goes to the author.
 A run that returns no result is handled as `skills/merge/SKILL.md` § Before
-merging says (no battery relaunch, the liveness window, park and escalate).
+merging says (no relaunch of the pass, the liveness window, park and escalate).
 Stale means the tip adds more than a bookkeeping delta to `reviewed_head_sha`
 (`skills/merge/SKILL.md` § Gating tiers), judged before the raid adds the fix
 for a gate's round-1 REROLL, which does not void the result (the round-2
 re-gate rules the fix). A FINDINGS fix does: it moves the head past what gaze
-reviewed, so gaze runs again on the new head.
-On FINDINGS the fix agent fixes the listed items and the raid re-runs `/gaze` on
-the new head before any gate: a head gaze did not review is never gated.
+reviewed. On FINDINGS the fix agent fixes the listed items and the raid runs
+`/gaze` on the new head with a new, narrower intent naming those fixes, before
+any gate: a head gaze did not review is never gated. The raid states each
+intent it passes (`/gaze <pr> verify <what> because <why>`); with none, gaze
+reviews the whole merge request against its ticket's exit criteria.
 Only on a gaze result of REVIEWED run
 `/verify-gate <pr-number> repo=<PR's worktree> session=<uuid>` the same way (gaze has removed
 its review tree by then; the gate checks out the PR head in a worktree of its

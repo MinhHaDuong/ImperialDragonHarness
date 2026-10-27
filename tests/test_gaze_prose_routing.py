@@ -140,31 +140,25 @@ def test_mixed_diff_is_prose_by_any(tmp_path):
     )
 
 
-def test_simplify_prose_guard_documented():
-    """§ 5 Simplify carries the prose guard, its motive, and its log line."""
-    text = GAZE.read_text(encoding="utf-8")
-    assert "### 5. Simplify" in text, "gaze § 5 heading moved — update this test"
-    section = text.split("### 5. Simplify")[1].split("### 6.")[0]
-    assert "simplify: skipped (prose workpackage)" in section, (
-        "the prose skip must log like the tier skips"
-    )
+def test_simplify_is_a_code_perspective():
+    """Simplify is not planned on prose, and the plan guidance says why."""
+    plan = (REPO / "skills" / "gaze" / "references" / "plan.md").read_text(encoding="utf-8")
+    section = " ".join(plan.split("**Simplify**", 1)[1].split("**Rules**", 1)[0].split())
+    assert "code perspective" in section
     assert "rules/prose/workpackages.md" in section, (
         "the guard must cite rules/prose/workpackages.md as its motive"
     )
 
 
-def test_native_review_seat_is_handed_the_resolved_axes():
-    """The native `/review` seat is told the doctype and language, never left to infer them.
+def test_prose_seats_are_handed_the_resolved_axes():
+    """A prose seat is told the doctype and language, never left to infer them.
 
-    Routing settles which *panel* reviews a diff; it does not settle which
-    *rulebook* the reviewer holds it to. Told nothing, `/review` picks one by
+    Routing settles which seats review a diff; it does not settle which
+    rulebook the reviewer holds it to. Told nothing, a reviewer picks one by
     inference: it read `rules/doctype/book.md` on a manuscript whose manifest
-    declares `techreport` (audit of 2026-08-17, MR 136). The guard moved from
-    gaze's body to `references/battery.md` with the body split (ticket 1153).
+    declares `techreport` (audit of 2026-08-17, MR 136). Ticket 1225 moved the
+    clause into the plan guidance.
     """
-    text = (REPO / "skills" / "gaze" / "references" / "battery.md").read_text(encoding="utf-8")
-    marker = "**Hand native `/review` the resolved axes"
-    assert marker in text, "axes clause missing from battery.md"
-    clause = text.split(marker)[1].split("**Agent C")[0]
-    assert '"$IDH_ROOT/scripts/prose_predicate.py" --axes' in clause
-    assert "review-<pr-number>" in clause, "the axes call reads the disk, so it must be cwd-anchored"
+    text = " ".join((REPO / "skills" / "gaze" / "references" / "plan.md").read_text(encoding="utf-8").split())
+    assert '"$IDH_ROOT/scripts/prose_predicate.py" --axes' in text
+    assert 'cd "$review_tree"' in text, "the axes call reads the disk, so it must be cwd-anchored"

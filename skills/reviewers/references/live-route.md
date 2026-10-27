@@ -59,7 +59,7 @@ PANEL-INTEGRITY: <missing or failed perspectives> — review coverage incomplete
 An error, timeout, missing access or absent reviewer is a visible limitation.
 Carry integrity records verbatim into the review report; do not disposition
 them as findings. Optional external evidence is fail-open: WARN and proceed
-with the required internal battery and gate. An empty result without a
+with the required internal review and gate. An empty result without a
 completion record is unavailable evidence, never a clean review.
 
 When a permission denial specifically requires independent evidence, this

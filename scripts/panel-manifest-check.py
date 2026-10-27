@@ -3,7 +3,9 @@
 
 A manifest line is `perspective<TAB>model<TAB>family<TAB>reason`, written by the
 orchestrator before launching. An empty model, family or reason means the launch
-choice was not made, which is the failure the manifest exists to expose.
+choice was not made, which is the failure the manifest exists to expose. The
+manifest is gaze's plan (ticket 1225), so it also declares its budget in one
+`# budget: <n>m` header line.
 """
 
 import re
@@ -11,6 +13,7 @@ import sys
 from pathlib import Path
 
 NAME = re.compile(r"[A-Za-z0-9_-]+")
+BUDGET = re.compile(r"# budget: \d+m")
 FIELDS = ("perspective", "model", "family", "reason")
 
 
@@ -35,6 +38,8 @@ def check(text: str) -> list[str]:
         problems += [f"line {number}: empty {name}" for name, cell in zip(FIELDS, cells) if not cell.strip()]
     if not seen:
         problems.append("manifest lists no perspective")
+    if not any(BUDGET.fullmatch(line.strip()) for line in text.splitlines()):
+        problems.append("manifest declares no `# budget: <n>m` line")
     return problems
 
 

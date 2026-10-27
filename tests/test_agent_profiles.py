@@ -311,32 +311,6 @@ def test_pi_template_body_is_the_shell_pointer_plus_one_provenance_comment():
 GAZE = REPO / "skills" / "gaze" / "SKILL.md"
 
 
-def test_gaze_agent_a_launch_names_the_adherence_seat_profile():
-    """The phase 2-4 adherence launch names the
-    adherence-seat profile and its contract; the live Skill(verify-adherence)
-    invocation stays in the block — the sub-skill contract is not a role
-    rail and is not delegated."""
-    gaze = GAZE.read_text(encoding="utf-8")
-    launch = " ".join(
-        gaze.split("**Agent A — adherence**", 1)[1]
-        .split("**Native `/review` and `/simplify`**", 1)[0]
-        .split()
-    )
-    assert "the adherence-seat profile" in launch, (
-        "the Agent A launch block must name the adherence-seat profile it "
-        "launches (agents/adherence-seat.md)"
-    )
-    assert "agents/adherence-seat.md" in launch
-    assert "profiles/adherence-seat/PROFILE.md" in launch, (
-        "the Agent A launch block must point at the contract that owns the "
-        "seat rails"
-    )
-    assert 'Skill(skill: "verify-adherence"' in launch, (
-        "the live Skill(verify-adherence) invocation contract stays verbatim "
-        "in the Agent A launch block"
-    )
-
-
 def test_coder_profile_conversions():
     """The inventory coder site (raid wave execution) launches the named
     coder profile; task materials ride in the prompt. Gaze no longer fixes:

@@ -66,8 +66,11 @@ re-gate.
 - **Full tier: only a head `/gaze` reviewed goes to the gate.** REVIEWED:
   close the ticket, then run the round-1 gate on the current head; a fix the
   round-1 gate asks for is re-gated once in the same session, with no new
-  gaze run. FINDINGS: fix on the merge request's branch and run `/gaze` again
-  on the new head; a head gaze did not review is never gated. ESCALATE, or
+  gaze run. FINDINGS: fix on the merge request's branch and run `/gaze` on the
+  new head with a new, narrower intent (`/gaze <pr> verify the fixes for
+  <findings> because <why they blocked>`), never a re-run of the whole review;
+  a head gaze did not review is never gated. Escalate to the author when a
+  pass over the fixes still finds blocking items on them. ESCALATE, or
   no accepted result: no gate, no merge; the PR goes to the author.
   "Accepted" means a result is present and its `reviewed_head_sha` is not
   stale against the branch tip, judged before the caller adds its own fix
@@ -80,7 +83,7 @@ re-gate.
   **Fork liveness:** once the review comment has posted, the gaze result
   (returned, or posted as a PR comment) is due within `fork_liveness_seconds`
   (`skills/gaze/telemetry.yml`, env override `GAZE_LIVENESS_WINDOW_S`). On
-  expiry, do not re-run phases 2–5 of `/gaze`: check the three completion
+  expiry, do not re-run gaze's pass: check the three completion
   markers, a posted gaze result comment, branch-tip motion on the PR branch
   and the review worktree's file mtime. All stale or absent: no accepted
   gaze result, so no gate; park the PR and escalate to the author. Never

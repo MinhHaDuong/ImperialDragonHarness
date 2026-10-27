@@ -11,16 +11,5 @@ Loaded from `skills/gaze/SKILL.md` § 1. Setup, after the isolation script has r
   - PR body, full diff, all existing review comments, all inline comments, all commit
     messages on the branch.
 - Check CI status for the merge request if the forge exposes it. If the forge CLI or API is unavailable, skip gracefully — CI status is informational only. If checks are configured and any are failing, note this in the setup summary; do not block on it (reviewer decides).
-- First run `python3 "$IDH_ROOT/scripts/review-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the battery: do not review an empty or wrong-tree diff. Carry its HEAD and changed-file roster into every review prompt.
-- No size stops or tiers the review: every PR gets adherence, the review panel and simplify (simplify on round 1 and on material growth, battery.md § 5); a large diff is read in review groups (§ 2–5).
-
-- **Preflight before spawning phases 2–5.** Count distinct ticket close-claims
-  from the PR **body**, using the merge recipe's line grammar (`skills/merge/references/claims.md`): bold or
-  bare `Ticket: tickets/NNNN...` lines count; the title, `Ticket-ref:` lines,
-  `Ticket: none`, and repeated claims for one ID do not. For example, extract
-  IDs with `grep -oiP '^\*{0,2}ticket:?\*{0,2}:?\s*tickets/\K\d+' | sort -u`.
-  If the count is two or more, record `multi_ticket: <IDs>` as a **non-blocking**
-  finding for `/verify-gate` to disposition, and continue the normal review;
-  genuinely bundled tickets are permitted by `rules/git.md` § Merging.
-
+- First run `python3 "$IDH_ROOT/scripts/review-anchor.py" <pr-number> --worktree "$primary_root/.claude/worktrees/review-<pr-number>"`. A nonzero `REVIEW-ANCHOR:` result stops the run: do not review an empty or wrong-tree diff. Carry its HEAD and changed-file roster into every plan item.
 - ESCALATE with a clear message, and do not proceed, only if a close claim names a nonexistent ticket file or the PR body, diff or comments cannot be located. A missing ticket with no claim and no reference is not an escalation.

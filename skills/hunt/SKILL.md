@@ -136,15 +136,18 @@ proves to be several goes back up as in Plan.
   Either way the merge itself is the caller's, by the project's recipe.
 - **Review.** Skip when
   `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base <base> --head HEAD`
-  exits 0 (bookkeeping). Otherwise run up to 3 rounds. With a forge, the gaze
-  skill on the merge request; what each gaze result leads to, a missing or
-  stale `reviewed_head_sha` included, is the caller's policy in
+  exits 0 (bookkeeping). Otherwise, with a forge, load the gaze skill with the
+  merge-request number and an intent: `verify <what> because <why>`, the
+  ticket's exit criteria by default; what each gaze result leads to, a missing
+  or stale `reviewed_head_sha` included, is the caller's policy in
   `skills/merge/SKILL.md` § Before merging. Without one, reviewer seats on
   `git diff <base>...HEAD`, chosen and scaled by risk
-  (`skills/route/references/decorrelation.md`). Fix every finding whatever its
-  severity, rerun what the fixes affect, then the fast tier, push where there
-  is a forge, and review again. Escalate when the review does, or when round 3
-  still has findings. A clean review leaves the branch ready to merge.
+  (`skills/route/references/decorrelation.md`). On findings, fix every one
+  whatever its severity, rerun what the fixes affect, then the fast tier, push
+  where there is a forge, and review again with a new, narrower intent: verify
+  those fixes, because they were the findings. Escalate when the review does,
+  or when a pass over the fixes still finds blocking items on them. A clean
+  review leaves the branch ready to merge.
 
 ## Celebrate
 

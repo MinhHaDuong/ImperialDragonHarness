@@ -1,4 +1,4 @@
-"""Ticket 0928: an Agent C panel cannot claim independent agreement without fan-out."""
+"""Ticket 0928: a panel cannot claim independent agreement without fan-out; ticket 1225: the plan check names it."""
 
 from pathlib import Path
 import re
@@ -11,23 +11,15 @@ def test_panel_is_launched_without_a_wrapper_agent():
     gaze = (ROOT / "skills/gaze/SKILL.md").read_text()
     assert not (ROOT / "agents/gaze-pr-review.md").exists()
     assert "gaze-pr-review" not in gaze
-    agent_c = gaze.split("**Agent C — PR review**", 1)[1].split(
-        "Wait for all spawned agents", 1
-    )[0]
-    assert "missing at the bounded collection deadline" in agent_c
+    collection = gaze.split("3. **Collection.**", 1)[1].split("**Fan-out preflight.**", 1)[0]
+    assert "missing, not clear" in collection and "plan check names" in " ".join(collection.split())
 
 
-def test_agent_c_missing_fanout_is_visible_in_both_pr_comments():
+def test_a_seat_without_a_report_is_visible_in_the_result_comment():
     gaze = (ROOT / "skills/gaze/SKILL.md").read_text()
-    agent_c = gaze.split("**Agent C — PR review**", 1)[1].split(
-        "Wait for all spawned agents", 1
-    )[0]
-    assert "PANEL-INTEGRITY:" in agent_c
-    assert "dissent: unavailable" in agent_c
-    assert "Agent tool" in agent_c
-    assert "post" in agent_c.lower()
     output = gaze.split("## Output shape", 1)[1]
-    assert "panel integrity:" in output
+    assert "plan check:" in output
+    assert "`plan check: FAIL` never goes with REVIEWED" in " ".join(output.split())
 
 
 def test_live_review_surfaces_do_not_dispatch_retired_governance():

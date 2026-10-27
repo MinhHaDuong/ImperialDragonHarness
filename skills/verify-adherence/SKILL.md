@@ -7,9 +7,9 @@ disable-model-invocation: false
 user-invocable: true
 argument-hint: "<branch> [worktree=<path>] [trace=<path>] [semantic=caller]"
 context: fork
-# Foreground: /gaze runs this as phase 2 (Agent A) and blocks on its structured
-# output. `context: fork` skills may default to background; a fork cannot wait
-# on a background completion, so the default would orphan this phase.
+# Foreground: its caller (hunt's self-gate) blocks on its structured output.
+# `context: fork` skills may default to background; a fork cannot wait on a
+# background completion, so the default would orphan the verdict.
 background: false
 ---
 
@@ -335,7 +335,7 @@ This ratchet is the whole point. Do not accept `semantic_findings` as a steady s
 
 ## Not in scope
 
-- Writing style / AI-tells (handled by the `/gaze` prose panel and `config/ai-tells.yml`).
+- Writing style / AI-tells (a check `/gaze`'s plan may run over `config/ai-tells.yml`).
 - Ticket format (enforced by pre-commit hook).
 - Git branch naming (enforced by pre-commit hook).
 - Merging decisions. This skill never affects merge state.
