@@ -56,7 +56,8 @@ seats.
 
 Write it as `<panel>/manifest.txt` before launching anything, and pass it
 through `python3 "$IDH_ROOT/scripts/panel-manifest-check.py"`. Header lines
-carry the intent, the method and the budget in minutes; each plan item is
+carry the intent, the method and the budget in minutes, which fits the
+15-minute deadline less the closing (at most 13); each plan item is
 `name<TAB>model<TAB>family<TAB>reason`. Every item, a check included, writes
 `<panel>/<name>.md`.
 

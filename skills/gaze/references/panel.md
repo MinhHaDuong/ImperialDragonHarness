@@ -29,8 +29,10 @@ launcher and seats share a filesystem. The plan file `<panel>/manifest.txt`
    `python3 "$IDH_ROOT/scripts/seat_clock.py" run --cap <s> --out <panel>/<name>.md -- <command>`.
 2. **Artifacts.** Each seat writes `<panel>/<name>.md.part`, then renames it to
    `<panel>/<name>.md`. The rename is the completion signal.
-3. **Collection.** One bounded polling loop, within the plan's budget, until
-   every plan item has its report or the deadline passes. A seat that only
+3. **Collection.** One bounded polling loop, within the plan's budget and
+   never past gaze's 15-minute deadline, until every plan item has its report
+   or the deadline passes. At the deadline, stop the seats the runtime can
+   stop; a late report is not read. A seat that only
    *returned* its findings reported to nobody. There is no retry: a seat with
    no report at the deadline is missing, not clear, and the plan check names
    it. Never extend the deadline to hide a gap.

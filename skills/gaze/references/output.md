@@ -28,13 +28,15 @@ The plan items' own wall times are the `ran:` line (`seat_clock.py roster`).
 
 ### Thresholds
 
-Read from `skills/gaze/telemetry.yml`; env vars override. Defaults:
-wall warn=15min escalate=30min; tokens warn=500k escalate=1M. The file's
-`fork_liveness_seconds` is not a gaze threshold: gaze never reads it.
+Read from `skills/gaze/telemetry.yml`; env vars override. Defaults: wall
+deadline 15 min; tokens warn=500k escalate=1M.
 
-On warn: add `slow run` to the telemetry line and continue. On escalate:
-stop and return ESCALATE, the measured value in the result comment. Escalate >
-warn. Check at phase boundaries only.
+**The deadline is hard.** It runs from the duration clock's start. At the
+deadline gaze stops waiting, stops what it can, and goes to verify and output
+with what it has: every item not finished is a `not finished at the deadline`
+deviation. On tokens warn, add `token-heavy run` to the telemetry line and
+continue; on tokens escalate, stop and return ESCALATE with the measured
+value.
 
 ## Output shape
 

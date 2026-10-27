@@ -35,6 +35,10 @@ return ESCALATE with reason "no PR argument".
 - Never returns APPROVED (pinned by `tests/test_gaze_never_approves.py`).
   REVIEWED means no blocking finding on the reviewed head, nothing more.
 - Does not merge.
+- **15 minutes, then deliver.** The pass has a hard 15-minute deadline from
+  its start (`skills/gaze/telemetry.yml`). At the deadline gaze stops waiting
+  and delivers what it has, finished or not. A change that cannot be verified
+  in 15 minutes is itself the signal.
 - **One live gaze per PR.** The review worktree `review-<pr-number>` is the
   lock (§ 1. Setup).
 - Started inside the target project; branch, head and files come from the PR
@@ -111,7 +115,9 @@ whether the run covered the stated what, and the reason for each deviation.
 No retry: a worker that timed out or could not be reached is a deviation.
 
 - `ESCALATE`: `plan check: FAIL` with no substitute that still settles the
-  what, a circuit breaker fired, or the workspace could not be restored.
+  what, a circuit breaker fired, the workspace could not be restored, or the
+  deadline passed with items not finished and no blocking finding in hand
+  (reason: "not verifiable within 15 minutes").
 - `FINDINGS`: any `blocking` seat verdict, any unresolved `verifiable:` minor,
   any simplify must-fix.
 - `REVIEWED`: none of the above, and the what covered.
