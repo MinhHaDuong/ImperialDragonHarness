@@ -209,14 +209,15 @@ never reopens a ticket.
 | Ticket | Diagnostic | Baseline | Trigger to propose reopening |
 |--------|-----------|----------|------------------------------|
 | 1164 Stopguard hook | `stopguard.json` above | 2026-10-27: ~169 flags/week, precision 0.56 [0.33, 0.77] | precision-scaled bad stops stay at or above 5/week two weeks after the routine-step wording fix (ticket 1296) landed in `rules/workflow.md` |
-| 1243 attribution in merge commit | `attribution_query.py --since` coverage, below | 2026-10-27: 3 of 157 merges `available`; 15 of 302 since 2026-10-20 | the `available` share has not risen two weeks after ticket 1286 (seat attribution lines) merged |
+| 1243 attribution in merge commit | `attribution_query.py --since` coverage, below | 2026-10-27, 28-day window: 74 of 757 merges `available` (9.8%) | the `available` share has not risen two weeks after ticket 1286 (seat attribution lines) merged |
 
 For 1243, count coverage over the survey window. The denominator holds
 unreviewed merges (ticket-only, roar, housekeeping), so read the share as a
 trend, not a capture rate; sample `missing` rows before calling a refusal.
 
 ```bash
-SINCE=$(git rev-list -n1 --before="28 days ago" origin/main)   # match --days
+DAYS=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["window_days"])' "$SCRATCH/census-summary.json")
+SINCE=$(git rev-list -n1 --before="$DAYS days ago" origin/main)
 python3 "$HARNESS_DIR/scripts/attribution_query.py" . --since "$SINCE" --json \
   2>/dev/null > "$SCRATCH/attribution.json"
 python3 -c 'import json,sys,collections; print(collections.Counter(r["attribution"] for r in json.load(open(sys.argv[1]))["coverage"]))' \
