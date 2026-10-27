@@ -1,6 +1,6 @@
 # Related-work-note validator (runbook)
 
-For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for the parent skill (this runbook sits under `skills/<parent>/runbooks/`, so anchor on the parent's `SKILL.md`, not on this file). This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for the parent skill, its SKILL.md or its directory; a pre-set `IDH_ROOT` wins (this runbook sits under `skills/<parent>/runbooks/`, so anchor on the parent's `SKILL.md`, not on this file). This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
 Check HTTP accessibility of every identifier in the note's Bibliography. Flag entries
 with no DOI, URL, or eprint as unverifiable. Append a single provenance

@@ -2,10 +2,13 @@
 
 The seam every script-backed skill body carries:
 
-    IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"
+    IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"
 
-The runtime supplies the absolute projected path of the SKILL.md it loaded;
-the body substitutes it for ``<loaded-SKILL.md>``. ``cd -P`` resolves the
+A session launched through scripts/shell-init.sh already exports IDH_ROOT
+(ticket 1247) and the line keeps it. Otherwise the runtime supplies the
+absolute projected path of the SKILL.md it loaded (Claude Code 2.1.x supplies
+the skill directory instead; both resolve the same); the body substitutes it
+for ``<loaded-SKILL.md>``. ``cd -P`` resolves the
 projected symlink to the canonical checkout, so the bundled scripts under
 ``$IDH_ROOT/scripts/`` are found from any installation root, through any
 skills root, with no build step and no configuration field.
@@ -42,27 +45,38 @@ from tracked_tree import tracked_checkout
 
 REPO = Path(__file__).resolve().parent.parent
 
-SEAM_LINE = 'IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"'
+SEAM_LINE = (
+    'IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p");'
+    ' cd -P "$p/../.." && pwd -P)}"'
+)
 SEAM_RE = re.compile(re.escape(SEAM_LINE))
+
+
+def seam_env():
+    """Child env without an inherited IDH_ROOT, which the seam line would keep."""
+    return {k: v for k, v in child_env().items() if k != "IDH_ROOT"}
 
 
 def bodies_with_seam():
     return sorted(p for p in REPO.glob("skills/*/SKILL.md") if "IDH_ROOT" in p.read_text())
 
 
-def run_idiom(projected_skill_path):
+def run_idiom(projected_skill_path, preset=None):
     script = (
         SEAM_LINE.replace("<loaded-SKILL.md>", projected_skill_path)
         + '\necho "$IDH_ROOT"\n'
     )
     # LC_ALL=C: the dangling-projection test matches bash's English
     # "No such file" diagnostic, which a localized shell translates.
+    env = seam_env()
+    if preset is not None:
+        env["IDH_ROOT"] = preset
     return subprocess.run(
         ["bash", "-c", script],
         capture_output=True,
         text=True,
         timeout=10,
-        env={**child_env(), "LC_ALL": "C"},
+        env={**env, "LC_ALL": "C"},
     )
 
 
@@ -115,6 +129,29 @@ def test_resolves_a_space_containing_root(tmp_path):
     r = run_idiom(str(projected / "SKILL.md"))
     assert r.returncode == 0, r.stderr
     assert r.stdout.strip() == str(root)
+
+
+@pytest.mark.integration
+def test_skill_directory_and_skill_file_resolve_the_same_root(tmp_path):
+    # Claude Code 2.1.x supplies the skill's base directory, not its SKILL.md.
+    root = tmp_path / "real-tree"
+    make_tree(root)
+    projected = tmp_path / "agents" / "skills" / "probe"
+    projected.parent.mkdir(parents=True)
+    os.symlink(root / "skills" / "probe", projected)
+    by_file = run_idiom(str(projected / "SKILL.md"))
+    by_dir = run_idiom(str(projected))
+    assert by_file.returncode == 0 and by_dir.returncode == 0, by_dir.stderr
+    assert by_dir.stdout.strip() == by_file.stdout.strip() == str(root)
+
+
+@pytest.mark.integration
+def test_a_preset_idh_root_wins(tmp_path):
+    root = tmp_path / "real-tree"
+    make_tree(root)
+    r = run_idiom(str(root / "skills" / "probe" / "SKILL.md"), preset="/wrapper/exported")
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.strip() == "/wrapper/exported"
 
 
 @pytest.mark.integration
@@ -177,7 +214,7 @@ def test_probe_script_is_reachable_through_the_seam(tmp_path):
     )
     r = subprocess.run(
         ["bash", "-c", script], capture_output=True, text=True, timeout=10,
-        env=child_env(),
+        env=seam_env(),
     )
     assert r.returncode == 0, r.stderr
     assert r.stdout.strip() == "probe-found"
@@ -192,7 +229,7 @@ def test_hoard_real_migration_from_another_project_cwd(tmp_path):
     projected = tmp_path / "installed/skills/hoard"
     projected.parent.mkdir(parents=True)
     projected.symlink_to(REPO / "skills/hoard", target_is_directory=True)
-    env = {**child_env(), "GIT_AUTHOR_NAME": "fixture", "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
+    env = {**seam_env(), "GIT_AUTHOR_NAME": "fixture", "GIT_AUTHOR_EMAIL": "fixture@example.invalid",
            "GIT_COMMITTER_NAME": "fixture", "GIT_COMMITTER_EMAIL": "fixture@example.invalid"}
 
     def git(root, *args):

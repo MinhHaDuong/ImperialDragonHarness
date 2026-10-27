@@ -19,7 +19,7 @@ skill is absorbed here). The probe script
 is the mechanical half; you are the brains: resolve identifiers, classify the
 type, clean the metadata.
 
-For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill, its SKILL.md or its directory; a pre-set `IDH_ROOT` wins. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
 1. **Probe.** `python3 "$IDH_ROOT/skills/zotero/scripts/probe-url.py" <url>...`
    stages each document in `docs/` and prints a JSON record per URL:

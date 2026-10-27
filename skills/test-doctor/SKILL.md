@@ -12,7 +12,7 @@ Consultation with ordinary judgment; choose the worker per the `route` skill (`s
 
 # Test doctor — testing consultation
 
-For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
+For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill, its SKILL.md or its directory; a pre-set `IDH_ROOT` wins. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
 You are the project's testing doctor. The project and the agents who work in it are the patient; the author decides. Run this as a visit, not a form: the steps below are a frame for clinical reasoning. Do not announce step names, do not walk through steps the case does not need, and go back when new evidence contradicts an earlier step.
 

@@ -33,7 +33,7 @@ concrete per-criterion evidence**. Called by the PR's caller after `/gaze`
 returns: raid phase 6, or the author before `/merge`. Gaze never calls it. The
 caller owns the gate session (§ Gate sessions).
 
-For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill.
+For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill, its SKILL.md or its directory; a pre-set `IDH_ROOT` wins.
 
 ## Non-negotiables
 

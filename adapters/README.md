@@ -128,11 +128,14 @@ The contract, measured 2026-09-28 on all three pilot runtimes:
    `<available_skills><location>` block of its preamble, Codex in its
    context skill list (Codex names the path but not the body, so the model
    reads the file itself: one extra tool call, same fact).
-2. The body substitutes that path and derives the installation root with
-   `cd -P` — through the projected symlink, two levels up:
+2. A session launched through the `scripts/shell-init.sh` wrappers already
+   has `IDH_ROOT` exported. Otherwise (IDE extension, desktop app, cron) the
+   body substitutes the supplied path, a SKILL.md or a skill directory, and
+   derives the installation root with `cd -P` — through the projected
+   symlink, two levels up; a pre-set `IDH_ROOT` wins:
 
    ```bash
-   IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"
+   IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"
    ```
 
 3. Bundled scripts live under `$IDH_ROOT/scripts/` and are read in place.
