@@ -17,7 +17,7 @@ first line `worker: model=<pin> · family=<family> · runtime=<rt> ·
 door=headless` set by the launcher: the pin is what ran, and a CLI's own
 self-report of its model is not trusted. Whatever stops a seat (no door, a
 family the door cannot serve, no consent, an unreadable or moved review tree,
-a start failure, a nonzero exit, empty output, a `NOT-RUN:` refusal, the
+a start failure, a nonzero exit, empty output, a `NOT-RUN:` refusal, a missing or `read=no` `reach:` line, the
 cap) prints and saves
 `<name>: no report (<reason>)` to `<panel>/<name>.md.status` and writes no
 report, so `seat_clock.py plan-check` counts it missing. Nothing here reads
@@ -96,6 +96,10 @@ Launch rails (they override the profile where it names a file to write):
 - If the tree is unreachable or its HEAD is not {anchor}, reply with one line
   `NOT-RUN: <reason>` and stop; never fall back to another directory.
 - Write no file, post nothing, commit and push nothing, read no credentials.
+- Open your report with `worker: ...`, then a second line
+  `reach: read=<yes|no> shell=<yes|no> tests=<ran|not-run>`: whether you
+  could read the tree, had a shell, and ran tests or read code only. If you
+  could not read the tree, say `read=no`; never write a clear.
 - Your final message is your report; the launcher files it, so write no
   report file yourself. An empty changed-file list never yields `clear`.
 
@@ -292,6 +296,18 @@ def refusal(report: str) -> str | None:
     return next((line for line in lines if line.upper().startswith('NOT-RUN')), None)
 
 
+REACH = re.compile(r'reach:\s*read=(yes|no)\s+shell=(yes|no)\s+tests=(ran|not-run)\s*$', re.I)
+
+
+def reach_refusal(report: str) -> str | None:
+    """Why the seat's declared reach rules out a report: no `reach:` line, or `read=no`."""
+    lines = [line.strip().strip('*`').strip() for line in report.splitlines() if line.strip()]
+    line = next((x for x in lines if x.lower().startswith('reach:')), None)
+    if line is None or not (m := REACH.fullmatch(line)):
+        return 'no valid reach line'
+    return 'read=no' if m.group(1).lower() == 'no' else None
+
+
 # Pi's warning line when it runs an id the provider does not list. Anchored at line start and
 # read for Pi only: codex echoes tool output (files, diffs) to stderr, phrase included.
 UNLISTED_MODEL = re.compile(r'Warning: Model ".*" not found for provider ')
@@ -436,6 +452,8 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         return False, 'no report (empty output)'
     if refused := refusal(report):
         return False, f'no report (seat refused: {refused})'
+    if bad := reach_refusal(report):
+        return False, f'no report (seat reach: {bad})'
     out = args.panel / f'{args.name}.md'
     part = out.with_name(out.name + '.part')
     part.write_text(report, encoding='utf-8')

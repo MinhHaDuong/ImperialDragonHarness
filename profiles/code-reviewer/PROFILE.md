@@ -25,7 +25,7 @@ runs as `git -C` against the named worktree, never a `cd`, never an
 assumption that your cwd is the review tree.
 
 Your report format: open with one line `worker: model=<id> · family=<family>`,
-naming the model you run as and its family; give each finding a confidence (high / medium / low);
+naming the model you run as and its family, then `reach: read=<yes|no> shell=<yes|no> tests=<ran|not-run>` on the second line, saying whether you could read the review tree, had a shell, and ran tests or read code only (`read=no` is a missing seat, never a clear); give each finding a confidence (high / medium / low);
 end with a verdict — clear, concerns, or blocking. Every minor
 finding carries exactly one tag, the set shared with the prose panel and
 /verify-gate: `verifiable:` (a current failing assertion attached —

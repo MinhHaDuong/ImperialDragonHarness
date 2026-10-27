@@ -32,40 +32,42 @@ fi
 [ "$(basename "$0")" = aider ] && [ -z "$STUB_MODE" ] && STUB_MODE=aider-clear
 case "$STUB_MODE" in
   aider-clear)
-    printf 'Aider v0.86.2\n--------------\n► **THINKING**\nhmm\n------------\n► **ANSWER**\nfinding: none\nverdict: clear\nTokens: 1\n' ;;
+    printf 'Aider v0.86.2\n--------------\n► **THINKING**\nhmm\n------------\n► **ANSWER**\nreach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\nTokens: 1\n' ;;
   fail) echo "partial"; echo "stub: provider rejected the request" >&2; exit 1 ;;
   pi-unknown)
     # Pi on a provider that does not list the id: warns on stderr, answers anyway, exits 0
     echo 'Warning: Model "nope-model" not found for provider "anthropic". Using custom model id.' >&2
-    printf 'finding: none\nverdict: clear\n' ;;
+    printf 'reach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
   codex-echo)
     # codex echoes tool output to stderr: a file that merely contains Pi's warning text
     echo 'exec: sed -n 1,5p gaze_seat.py' >&2
     echo "UNLISTED_MODEL = 'not found for provider'  # Pi's warning" >&2
     echo '+ assert "Model \"x\" not found for provider" in out' >&2
-    printf 'finding: none\nverdict: clear\n' ;;
-  liar) printf 'worker: model=gpt-6.1-sol · family=OpenAI\nfinding: none\nverdict: clear\n' ;;
+    printf 'reach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
+  liar) printf 'worker: model=gpt-6.1-sol · family=OpenAI\nreach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
   notrun) printf 'NOT-RUN: review tree unreachable\n' ;;
   notrun-tick) printf 'Reading the tree first.\n`NOT-RUN: HEAD moved`\n' ;;
-  mentions) printf 'finding: the seat prints NOT-RUN: on refusal, as specified\nverdict: clear\n' ;;
+  mentions) printf 'reach: read=yes shell=no tests=not-run\nfinding: the seat prints NOT-RUN: on refusal, as specified\nverdict: clear\n' ;;
+  noread) printf 'reach: read=no shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
+  noreach) printf 'finding: none\nverdict: clear\n' ;;
   empty) : ;;
   aiderish)
-    printf 'Aider v0.86.2\nModel: openai/x with ask edit format\n\n--------------\n> **THINKING**\n\nmaybe verdict: clear\n\n------------\n> **ANSWER**\n\nfinding: none\nverdict: concerns\n\nTokens: 1 sent, 2 received.\n' | sed 's/^> /\xe2\x96\xba /' ;;
+    printf 'Aider v0.86.2\nModel: openai/x with ask edit format\n\n--------------\n> **THINKING**\n\nmaybe verdict: clear\n\n------------\n> **ANSWER**\n\nreach: read=yes shell=no tests=not-run\nfinding: none\nverdict: concerns\n\nTokens: 1 sent, 2 received.\n' | sed 's/^> /\xe2\x96\xba /' ;;
   aider-notrun)
     printf 'Aider v0.86.2\n--------------\n> **THINKING**\nverdict: clear\n------------\n> **ANSWER**\nNOT-RUN: tree unreachable\nTokens: 1\n' | sed 's/^> /\xe2\x96\xba /' ;;
   aider-truncated)
-    printf 'Aider v0.86.2\n--------------\n> **THINKING**\nfinding: none\nverdict: clear\n' | sed 's/^> /\xe2\x96\xba /' ;;
+    printf 'Aider v0.86.2\n--------------\n> **THINKING**\nreach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\n' | sed 's/^> /\xe2\x96\xba /' ;;
   aider-plain-quote)
-    printf 'Aider v0.86.2\nRepo-map: disabled\n\nfinding: none; the seat drops lines after @ **THINKING** markers\nverdict: clear\nTokens: 1\n' | sed 's/@/\xe2\x96\xba/' ;;
+    printf 'Aider v0.86.2\nRepo-map: disabled\n\nreach: read=yes shell=no tests=not-run\nfinding: none; the seat drops lines after @ **THINKING** markers\nverdict: clear\nTokens: 1\n' | sed 's/@/\xe2\x96\xba/' ;;
   aider-plain)
-    printf 'Aider v0.86.2\nModel: openai/x with ask edit format\nGit repo: none\nRepo-map: disabled\nAdded d.diff to the chat (read-only).\n\nfinding: none\nverdict: clear\n\nTokens: 1 sent, 2 received.\n' ;;
+    printf 'Aider v0.86.2\nModel: openai/x with ask edit format\nGit repo: none\nRepo-map: disabled\nAdded d.diff to the chat (read-only).\n\nreach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\n\nTokens: 1 sent, 2 received.\n' ;;
   aider-plain-notrun)
     printf 'Aider v0.86.2\nRepo-map: disabled\n\nNOT-RUN: tree unreachable\nTokens: 1\n' ;;
   outfile|outfile-fail)
     # codex writes its last message to the -o file
-    prev=""; for a in "$@"; do [ "$prev" = "-o" ] && printf 'verdict: clear\n' > "$a"; prev="$a"; done
+    prev=""; for a in "$@"; do [ "$prev" = "-o" ] && printf 'reach: read=yes shell=no tests=not-run\nverdict: clear\n' > "$a"; prev="$a"; done
     if [ "$STUB_MODE" = outfile-fail ]; then exit 2; fi ;;
-  *) printf 'finding: none\nverdict: clear\n' ;;
+  *) printf 'reach: read=yes shell=no tests=not-run\nfinding: none\nverdict: clear\n' ;;
 esac
 '''
 
@@ -154,6 +156,41 @@ def test_seat_refusal_is_no_report(rig):
     assert result.returncode == 1
     assert result.stdout.strip() == 'correctness: no report (seat refused: NOT-RUN: review tree unreachable)'
     assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_seat_that_cannot_read_is_no_report(rig):
+    result = launch(rig, mode='noread')  # a clear written without reading the tree
+    assert result.returncode == 1
+    assert result.stdout.strip() == 'correctness: no report (seat reach: read=no)'
+    assert (rig['panel'] / 'correctness.md.status').read_text().strip() == result.stdout.strip()
+    assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_report_without_reach_line_is_no_report(rig):
+    result = launch(rig, mode='noreach')
+    assert result.returncode == 1
+    assert 'seat reach: no valid reach line' in result.stdout
+    assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_reach_line_survives_into_the_report(rig):
+    result = launch(rig)
+    assert result.returncode == 0, result.stdout
+    text = (rig['panel'] / 'correctness.md').read_text()
+    assert 'reach: read=yes shell=no tests=not-run' in text.splitlines()
+
+
+@pytest.mark.integration
+def test_refused_reach_fails_the_plan_check(rig):
+    (rig['panel'] / 'manifest.txt').write_text('# budget: 10m\ncorrectness\thaiku\tAnthropic\treach\n')
+    launch(rig, mode='noread')
+    check = subprocess.run([sys.executable, str(SCRIPT.with_name('seat_clock.py')), 'plan-check', str(rig['panel'])],
+                           capture_output=True, text=True)
+    assert check.returncode == 1 and check.stdout.startswith('plan check: FAIL')
+    assert 'correctness: no report' in check.stdout
 
 
 @pytest.mark.integration
