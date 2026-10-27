@@ -15,7 +15,7 @@ real state: the implementation of the main-update guard (ticket 1157, PR 1566) i
 closed; what remains is an observation period and one act of the author. The hook ships in
 warn mode (`git config idh.mainGuard`, unset = warn): it journals every update of `main`
 and refuses nothing. `enforce` makes it refuse a not-gated update. Guide:
-`docs/2026-10-21-main-update-guard.md`.
+`conception/2026-10-21-main-update-guard.md`.
 
 Observed on 2026-10-21, 14:00 to 15:00 UTC on one clone: 13 updates of `main`, all allowed as
 moves to `origin/main`, no `warned` line. Only one kind of flow (the sync after a merge) has run.

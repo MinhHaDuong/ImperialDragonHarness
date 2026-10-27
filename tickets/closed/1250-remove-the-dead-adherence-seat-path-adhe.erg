@@ -24,7 +24,7 @@ in its ordinary mode and never reaches `adherence_verdict.py`.
 - [ ] verify-adherence drops the `semantic=caller` mode (argument hint, line 52 paragraph, § 3 caller
       section, the provisional-verdict line); the ordinary mode's text is unchanged.
 - [ ] `git grep -n "semantic=caller\|adherence_verdict\|adherence-seat"` finds nothing outside
-      `tickets/`, docs/discussions and memory; the gaze-intent negative assertion stays.
+      `tickets/`, conception/discussions and memory; the gaze-intent negative assertion stays.
 - [ ] Generated files regenerated (skills catalog, agent projections); the harness gate passes.
 
 ## Relevant files

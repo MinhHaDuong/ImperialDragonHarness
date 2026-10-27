@@ -53,7 +53,7 @@ agreement on it before searching. It states:
   trails), without asking it to saturate a corpus as if it were a novelty
   claim. Retain queries, interfaces/dates, yields and blocked angles; agree
   a practical stop bound and assess coverage against the scoped object.
-- **Optional HAL transport**: [HAL Discovery MCP](../../docs/hal-discovery-mcp.md),
+- **Optional HAL transport**: [HAL Discovery MCP](../../conception/hal-discovery-mcp.md),
   activated only for this task; direct HAL API remains a fallback. This
   pointer does not register or load MCP tools.
 - **Pool every candidate raw, then screen once with one rule** derived from

@@ -169,7 +169,7 @@ def test_naive_timestamp_counted_as_utc(tmp_path):
 
 
 # --- ticket 1217: follies, rung table, barrier denials, Pi reader -----------
-# Specimens: docs/2026-10-26-self-matching-process-patterns-evidence.md.
+# Specimens: conception/2026-10-26-self-matching-process-patterns-evidence.md.
 
 SPEC_A = "until ! pgrep -u $USER -f 'padme-llm.py manifest' >/dev/null; do sleep 5; done; python3 x.py"
 SPEC_B = "for p in $(pgrep -u $USER -f 'until ! pgrep -u'); do kill $p; done"

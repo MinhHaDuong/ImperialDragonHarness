@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_frozen_live_acceptance_record():
     """Checks this retained run, not execution of any future skill version."""
-    evidence = json.loads((ROOT / "docs/adherence-semantic/evidence.json").read_text())
+    evidence = json.loads((ROOT / "conception/adherence-semantic/evidence.json").read_text())
     accepted = evidence["accepted_run"]
     assert evidence["loaded_skill"]["sha256"] == hashlib.sha256(evidence["loaded_skill"]["source"].encode()).hexdigest()
     assert accepted["adherence"] == "FAIL"
@@ -22,7 +22,7 @@ def test_frozen_live_acceptance_record():
     assert finding["severity"] == "blocking"
     assert (finding["file"], finding["line"]) == ("scripts/check-tree.sh", 3)
     assert finding["suggested_test"]
-    worker = [json.loads(line) for line in (ROOT / "docs/adherence-semantic/worker.jsonl").read_text().splitlines()]
+    worker = [json.loads(line) for line in (ROOT / "conception/adherence-semantic/worker.jsonl").read_text().splitlines()]
     completed = next(record for record in worker if record.get("kind") == "accepted_worker_result")
     assert completed["is_error"] is False
     assert completed["session_id"] == accepted["semantic_review"]["worker_id"]

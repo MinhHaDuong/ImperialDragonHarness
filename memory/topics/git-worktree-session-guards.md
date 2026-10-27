@@ -84,5 +84,5 @@ measurement of the risk.
 - [Closing 1074: guard refusals](../journal/2026/2026-10-09-close-1074-guard-refusals.md)
 - [Raid 1072 guard refusals](../journal/2026/2026-10-09-raid-1072-guard-and-invented-waiver.md)
 - [Tournament publication, refused compound commands](../journal/2026/2026-10-08-tournament-publication-wrapup.md)
-- Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
-  revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).
+- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md);
+  revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).

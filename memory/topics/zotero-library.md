@@ -21,7 +21,7 @@ hard invariants (no sqlite writes, client-side merges, backup then dry-run
 then apply); the rule file became `rules/zotero.md` and the EDM acronym was
 retired (PR #1143). The web survey of that date recorded that Zotero 10 made
 the local HTTP API writable; it is dated, perishable evidence kept in
-`docs/zotero-integration.md` Annex A. Semantic retrieval belongs to the
+`conception/zotero-integration.md` Annex A. Semantic retrieval belongs to the
 author's separate search-works-for-zotero project. The overnight train then
 consolidated one `zotero` skill over a `scripts/zotero.py` backend (tickets
 1018, 1025, 1026). Duplicate merges remain a client-side author action. The
@@ -53,5 +53,5 @@ separate follow-ups. Removing a housekeeping step does not withdraw
 - [Zotero library](../reference_zotero.md) — scoped reference note, interpreted; no episode reconstructed.
 - [Zotero architecture session, PR #1143](../journal/2026/2026-10-02-zotero-interface-architecture-pr1143.md)
 - [Zotero train raid](../journal/2026/2026-10-04-zotero-train-breaker-and-the-review-it-cost.md)
-- Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
-  revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).
+- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md);
+  revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).

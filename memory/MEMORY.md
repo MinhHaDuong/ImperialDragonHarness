@@ -1,6 +1,6 @@
 # Project memory
 
-v8 repository memory. Pilot: [pilot.md](../docs/memory-v8/pilot.md). Provenance: [inventory](../docs/memory-v8/source-inventory.md), [revisions](../docs/memory-v8/source-revisions.tsv).
+v8 repository memory. Pilot: [pilot.md](../conception/memory-v8/pilot.md). Provenance: [inventory](../conception/memory-v8/source-inventory.md), [revisions](../conception/memory-v8/source-revisions.tsv).
 
 ## Topics
 

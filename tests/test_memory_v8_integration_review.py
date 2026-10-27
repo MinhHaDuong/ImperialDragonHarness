@@ -1,6 +1,6 @@
 """Ticket 0909 — the integration review's mechanically pinnable shape.
 
-The integration review (docs/memory-v8/integration-review.md) verifies the
+The integration review (conception/memory-v8/integration-review.md) verifies the
 tracker's five exit criteria against the delivered record. This module pins
 what a machine can pin: the document exists and is dated, every relative
 link resolves, each of the five criteria has its own section stating a
@@ -13,7 +13,7 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-REVIEW = REPO / "docs" / "memory-v8" / "integration-review.md"
+REVIEW = REPO / "conception" / "memory-v8" / "integration-review.md"
 
 LINK = re.compile(r"\]\(([^)#\s]+)(?:#[^)\s]*)?\)")
 CRITERION = re.compile(r"^## Criterion [1-5] — ", re.MULTILINE)

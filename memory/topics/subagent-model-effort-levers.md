@@ -38,5 +38,5 @@ recorded that the source note lacks the `fable` token (accepted, not fixed).
 - [Routing waves A0 to C](../journal/2026/2026-10-08-llm-routing-waves-a0-to-c.md)
 - [Routing review round](../journal/2026/2026-10-09-routing-review-round-and-host-hygiene.md)
 - [Routing review round two](../journal/2026/2026-10-09-routing-review-round-two.md)
-- Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
-  revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).
+- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md);
+  revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).

@@ -11,7 +11,7 @@ Forge-read reviews (human, Copilot) are admitted only from three pinned actor
 IDs and only when the forge reports them unedited; anything else fails closed.
 
 Subcommands: `identity`, `record`, `gate`, `forge`.
-Ticket 1142; design in docs/discussions/2026-10-14-1096-design.md.
+Ticket 1142; design in conception/discussions/2026-10-14-1096-design.md.
 """
 
 import argparse
@@ -38,7 +38,7 @@ log = logging.getLogger("review_evidence")
 
 # Forge actors whose reviews may be read as evidence or binding findings:
 # the three accounts that posted reviews across 22 repositories in the census
-# of 2026-10-14 (docs/discussions/2026-10-14-1096-seats/evidence-review-authors.json).
+# of 2026-10-14 (conception/discussions/2026-10-14-1096-seats/evidence-review-authors.json).
 # Node IDs, not logins: a login can be renamed and re-registered.
 FORGE_ACTORS = {
     ("github.com", "MDQ6VXNlcjE4NDc1MjA4"): "human",    # MinhHaDuong

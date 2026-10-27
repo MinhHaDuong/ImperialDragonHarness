@@ -138,5 +138,5 @@ establish a new model-performance finding here.
 - [Cycle 3 and production switch](../journal/2026/2026-10-12-t1048-cycle3-speed-stage-and-production-switch.md)
 - [Arena 1053 close, provider 404 scored OK](../journal/2026/2026-10-12-t1053-close-shared-arena-checkout.md)
 - [Raid 1084/1085/1086, pi link no-op](../journal/2026/2026-10-12-raid-1084-1086-detached-gaze-occupancy.md)
-- Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
-  revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).
+- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md);
+  revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).

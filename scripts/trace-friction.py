@@ -2,7 +2,7 @@
 """Trace-friction scan (ticket 1169): velocity losses in Claude Code transcripts.
 
 Zero-LLM, standard-library-only companion to trace-stats.py: that measures
-cost, this measures friction. Method: docs/2026-10-21-velocity-friction-scan.md.
+cost, this measures friction. Method: conception/2026-10-21-velocity-friction-scan.md.
 
 Walks ~/.claude/projects (main sessions and subagents), pairs each tool_use
 with its tool_result, and reports per day:

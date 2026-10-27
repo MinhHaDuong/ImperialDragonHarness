@@ -29,7 +29,7 @@ that as "could not look", never as a clear. Its last line is the next action:
   now; do not end the turn.
 - `NEXT wrap-up`: nothing in flight, queue empty. Go to Wrap up.
 
-**Wake sources** (probed 2026-10-21, `docs/discussions/2026-10-21-await-external-design.md`):
+**Wake sources** (probed 2026-10-21, `conception/discussions/2026-10-21-await-external-design.md`):
 
 | Runtime | Timed wake | Cadence |
 |---|---|---|

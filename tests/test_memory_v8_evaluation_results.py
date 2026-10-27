@@ -1,6 +1,6 @@
 """Ticket 0918 STEP B — the acceptance-trial results ledger stays in shape.
 
-The predeclared protocol (docs/memory-v8/evaluation-protocol.md, committed
+The predeclared protocol (conception/memory-v8/evaluation-protocol.md, committed
 to main before the first acceptance trial) fixes the denominators — 31
 cells — and the verdict vocabulary. This module pins the results document's
 shape so the ledger cannot silently lose a cell, gain an invented verdict,
@@ -12,8 +12,8 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-RESULTS = REPO / "docs" / "memory-v8" / "evaluation-results.md"
-PROTOCOL = REPO / "docs" / "memory-v8" / "evaluation-protocol.md"
+RESULTS = REPO / "conception" / "memory-v8" / "evaluation-results.md"
+PROTOCOL = REPO / "conception" / "memory-v8" / "evaluation-protocol.md"
 
 # Denominators as predeclared by the protocol's § Denominators and margins.
 EXPECTED_CELLS = {

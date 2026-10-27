@@ -23,9 +23,9 @@ REPO = Path(__file__).resolve().parents[1]
 # One dated evidence doc per runtime, capability-survey shape, per the raid
 # annotation of 2026-10-02 (imagine pass) recorded in the ticket body.
 RUNTIME_DOCS = {
-    "Claude Code": REPO / "docs" / "2026-10-02-memory-v8-runtime-claude-code.md",
-    "Codex": REPO / "docs" / "2026-10-02-memory-v8-runtime-codex.md",
-    "Pi": REPO / "docs" / "2026-10-02-memory-v8-runtime-pi.md",
+    "Claude Code": REPO / "conception" / "2026-10-02-memory-v8-runtime-claude-code.md",
+    "Codex": REPO / "conception" / "2026-10-02-memory-v8-runtime-codex.md",
+    "Pi": REPO / "conception" / "2026-10-02-memory-v8-runtime-pi.md",
 }
 
 # This hunt's own roar capture (step 3): the factual episode record of the

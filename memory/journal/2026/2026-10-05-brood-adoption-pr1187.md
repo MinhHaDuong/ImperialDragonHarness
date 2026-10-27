@@ -14,7 +14,7 @@ An independent synthetic execution produced local red/green tests, a ticket-only
 nomination, copied-origin discounting, a retained exception after synthetic
 adoption, withheld private evidence and a changed-Dream revision reread. These
 are procedural fixture results; field benefit and real cross-project adoption
-were not claimed. The versioned [evaluation](../../../docs/memory-v8/brood-evaluation.md)
+were not claimed. The versioned [evaluation](../../../conception/memory-v8/brood-evaluation.md)
 records the evidence and limitations.
 
 Native Codex review and independent Correctness/Consistency reviews reported no

@@ -8,15 +8,15 @@ Label: deferred
 2026-10-21T08:26Z reviewer created
 2026-10-21T08:26Z reviewer label deferred
 2026-10-21T08:26Z reviewer Design reviewed (Fable, Astra, KISS); deferred by the author, no work before the deferral is lifted
-2026-10-21T10:06Z reviewer reviewer note Velocity scan 2026-10-21 (docs/2026-10-21-velocity-friction-scan.md) found 2,038 wait-regex matches (upper bound) and about 43 hook-blocked sleeps in 14 days. The wait-replacement idea is already in hand: bounded background waits landed in ce2965be, 70b39b0a, 6b39fd9c, and the waiter design in docs/discussions/2026-10-21-await-external-design.md owns the registry. No new ticket; re-measure the wait count after the waiter lands.
+2026-10-21T10:06Z reviewer reviewer note Velocity scan 2026-10-21 (conception/2026-10-21-velocity-friction-scan.md) found 2,038 wait-regex matches (upper bound) and about 43 hook-blocked sleeps in 14 days. The wait-replacement idea is already in hand: bounded background waits landed in ce2965be, 70b39b0a, 6b39fd9c, and the waiter design in conception/discussions/2026-10-21-await-external-design.md owns the registry. No new ticket; re-measure the wait count after the waiter lands.
 
 --- body ---
 ## Context
-A hook that runs when an agent ends its turn, on Claude Code, Codex and Pi, to observe and later refuse two bad stops: a question to the author with no ask-up, and a wait with nothing tracked to wake the agent. Design, reviews and plan: `docs/2026-10-21-stopguard-design.md` (reviewed by Fable, Astra and a KISS pass). The end-of-turn mechanism was smoke-tested headless on all three harnesses on 2026-10-21.
+A hook that runs when an agent ends its turn, on Claude Code, Codex and Pi, to observe and later refuse two bad stops: a question to the author with no ask-up, and a wait with nothing tracked to wake the agent. Design, reviews and plan: `conception/2026-10-21-stopguard-design.md` (reviewed by Fable, Astra and a KISS pass). The end-of-turn mechanism was smoke-tested headless on all three harnesses on 2026-10-21.
 
 Deferred by the author on 2026-10-21: no implementation, and no phase 1 work, until the deferral is lifted. Children are filed when it is lifted, not before.
 
-Related: the waiter that gives rule 2 a pass condition is designed in another session (`docs/discussions/2026-10-21-await-external-design.md` on branch `explore-await-external-*`, uncommitted). It owns the wait registry; this tracker owns the only Stop-hook implementation.
+Related: the waiter that gives rule 2 a pass condition is designed in another session (`conception/discussions/2026-10-21-await-external-design.md` on branch `explore-await-external-*`, uncommitted). It owns the wait registry; this tracker owns the only Stop-hook implementation.
 
 ## Children (to file at lift time, one sign-off unit each)
 - phase 1: close the design's smoke gaps; runner, two rules, dry only, spool, three adapters (3.5 agent h, 0.3 author h)

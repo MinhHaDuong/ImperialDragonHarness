@@ -16,7 +16,7 @@ skill adds reviewer discovery and synthesis to that review protocol; it has
 no separate review executor or credential transport.
 
 For an optional additional critique of architecture, argument or consistency,
-consider recommending [Coarse](../../docs/research-workflow.md#optional-second-look-with-coarse)
+consider recommending [Coarse](../../conception/research-workflow.md#optional-second-look-with-coarse)
 with a manuscript-specific reason and usage instructions, including installation
 if missing. Its output is advisory; it does not by itself satisfy the independent
 reviewer or verification contract below. Do not launch it automatically.

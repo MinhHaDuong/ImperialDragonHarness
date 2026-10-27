@@ -39,8 +39,8 @@ Examined groups and paths:
 10. External/conference entry points and retired executor: `skills/external-peer-review/SKILL.md`, `skills/conference-submission-prep/SKILL.md`; inspected removed `peer_review.py`, `references/openrouter.md`, and `tests/test_external_peer_review_skill.py` at `origin/main`.
 11. Retired reference/tests, guarded keystore/probe: `scripts/keystore.py`, `scripts/probe-memory-symlink.py`, `tests/test_keystore.py`, `tests/test_probe_memory_symlink.py` and their diffs.
 12. Dependency declaration and lock: `pyproject.toml`, `uv.lock`, `tests/test_deps_declared.py`.
-13. Audit narrative, probes, source reuse, retirement: `docs/audits/2026-10-23-skills-metier/{README.md,probes.py,evidence.json,execution.md,retirement-inventory.md,coarse-ink.md}`.
-14. Named model reports and metadata: all Astra/Fable review and metadata files under `docs/audits/2026-10-23-skills-metier/reviews/` (read report identity/scope and outcome headers).
+13. Audit narrative, probes, source reuse, retirement: `conception/audits/2026-10-23-skills-metier/{README.md,probes.py,evidence.json,execution.md,retirement-inventory.md,coarse-ink.md}`.
+14. Named model reports and metadata: all Astra/Fable review and metadata files under `conception/audits/2026-10-23-skills-metier/reviews/` (read report identity/scope and outcome headers).
 15. Trial/archive/handoff receipts: `train.json`, `trial-attempts.json`, `trial3-revalidation.json`, `trial-ledger-handoff.json`, `archive-receipt.json`.
 16. Tickets and generated catalog: open tracker 1198, closed tickets 1199–1205 and `skills-catalog.md`.
 

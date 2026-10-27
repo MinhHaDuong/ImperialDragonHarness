@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Phase-5 A/B offline harvest — ticket 0326 (child of 0245, trace-doctor phase 5).
 
-Computes the pre-registered metrics (docs/trace-ab-2026-06.md) for one arm from
+Computes the pre-registered metrics (conception/trace-ab-2026-06.md) for one arm from
 cached census + join inputs and routes a baseline/candidate pair through the
 pre-registered decision rule in scripts/trace_ab_decision.py. This is the
 offline tooling the live A/B arms on ticket 0245 will consume once they run;
@@ -16,11 +16,11 @@ Inputs:
   - census CSV  — per-agent rows from `scripts/trace-stats.py --output` (the
     columns read: `project`, `agent_id`, `pr_numbers`, `cost_usd`, `date`,
     `verify_gaze_skills`).
-  - join cache CSV — `docs/trace-pr-join-2026-06.csv`, produced by
+  - join cache CSV — `conception/trace-pr-join-2026-06.csv`, produced by
     `scripts/trace-pr-join.py` (`repo`, `pr`, `merged`, `reroll_mentions`,
     `escalate_mentions`).
 
-Metric definitions (see docs/trace-ab-2026-06.md § Metric definitions):
+Metric definitions (see conception/trace-ab-2026-06.md § Metric definitions):
   - cost_per_merged_pr — total shadow-$ in the arm / merged PR count (primary).
   - cost_per_cycle     — total shadow-$ / gaze/verify cycle count (measure B).
   - reroll_per_pr      — REROLL mentions / PR (guardrail; baseline 33/112).
@@ -220,8 +220,8 @@ def main() -> None:
     parser.add_argument(
         "--join-cache",
         type=Path,
-        default=_HERE.parent / "docs" / "trace-pr-join-2026-06.csv",
-        help="Forge-join cache CSV (default: docs/trace-pr-join-2026-06.csv)",
+        default=_HERE.parent / "conception" / "trace-pr-join-2026-06.csv",
+        help="Forge-join cache CSV (default: conception/trace-pr-join-2026-06.csv)",
     )
     parser.add_argument(
         "--baseline-window",

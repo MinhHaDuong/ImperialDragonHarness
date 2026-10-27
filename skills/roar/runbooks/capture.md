@@ -35,7 +35,7 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
 
    **Capture review attribution for every reviewed merged PR**, even when
    routine completion produces no significant-experience entry. Use the fixed
-   lines in [the attribution contract](../../../docs/2026-10-02-reviewer-attribution-design.md#4-the-attribution-record):
+   lines in [the attribution contract](../../../conception/2026-10-02-reviewer-attribution-design.md#4-the-attribution-record):
    first line `kind: review-attribution`, PR/date/project, writer runtime,
    verbatim provider-qualified full model id and effort, then one named
    `reviewer:` line per review attempt with `status: ran|failed|skipped`.

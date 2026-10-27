@@ -3,7 +3,7 @@
 Runtime registration and delivery adapters for the portable harness checkout.
 The reference clone is `~/.agents`; runtime profiles remain independently owned.
 
-The [installation strategy](../docs/idh-install-strategy.md) makes native,
+The [installation strategy](../conception/idh-install-strategy.md) makes native,
 additive registration the target. The commands below describe the current
 skills-only pilot. Host registration is described in the installation guide.
 

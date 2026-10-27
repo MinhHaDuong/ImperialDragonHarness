@@ -2,7 +2,7 @@
 """Path-access allow/forbid scan over the agent tool trace — ticket 0289.
 
 Child of tracker 0266 (pillage manifest, technique 1;
-docs/pillage-0266-agentic-reproduction-2026-07-12.md). verify-adherence checks
+conception/pillage-0266-agentic-reproduction-2026-07-12.md). verify-adherence checks
 the diff and rule files, but nothing inspects the tool-call trace for
 out-of-scope file access. The paper's guardrail (arXiv:2604.21965 App. B.3)
 catches an agent that READS a forbidden path even when it never writes it — a

@@ -1,6 +1,6 @@
 """Agent profile subsystem pins (ticket 0938, wave 1).
 
-The design (docs/2026-10-03-agent-profile-subsystem-design.md) replaces
+The design (conception/2026-10-03-agent-profile-subsystem-design.md) replaces
 inline fork roles with thin runtime shells whose body is a pointer to a
 harness-side contract at ``profiles/<name>/PROFILE.md``. No machinery
 validates the pointer; these doc-pin tests are the enforcement surface the
@@ -10,7 +10,7 @@ exists and lists its baseline rules. They fail while the roster is absent —
 the wave 1 red step.
 
 The roster and its census arithmetic come from
-docs/2026-10-03-agent-role-inventory.md ("Proposed shell roster"): 323 new
+conception/2026-10-03-agent-role-inventory.md ("Proposed shell roster"): 323 new
 characters, agents channel 438 -> 761 of 800, no budget raise.
 """
 

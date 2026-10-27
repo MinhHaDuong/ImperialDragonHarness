@@ -2,7 +2,7 @@
 
 review-pr and review-pr-prose folded into /gaze with no alias: a live mention
 sends an agent to a skill that no longer exists, which it may then improvise.
-History is exempt (docs/, memory/, tickets/, projects/).
+History is exempt (conception/, memory/, tickets/, projects/).
 """
 
 import subprocess
