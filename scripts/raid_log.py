@@ -57,7 +57,7 @@ def parse(text: str) -> tuple[list[tuple[float, str, dict[str, str]]], list[int]
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) >= 2 and argv[0] == "path":
+    if len(argv) >= 1 and argv[0] == "path":
         print(log_path())
         return 0
     if len(argv) >= 2 and argv[0] == "append":

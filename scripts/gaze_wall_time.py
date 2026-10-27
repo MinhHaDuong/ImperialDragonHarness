@@ -232,9 +232,14 @@ def endpoints(r):
         or c[2] == "Agent"
     ]
     firsts += [t for t, _ in r["launches"]]
-    ends = [c[0] + c[1] for c in r["calls"] if c[2] == "Bash" and "plan-check" in c[3]]
-    ends += [s["end"] for s in r["seats"]]
     first = min(firsts) if firsts else None
+    # A plan-check before any seat launch is not seat evidence: counting it would inflate closing.
+    ends = [
+        c[0] + c[1]
+        for c in r["calls"]
+        if c[2] == "Bash" and "plan-check" in c[3] and first is not None and c[0] >= first
+    ]
+    ends += [s["end"] for s in r["seats"]]
     last = max(ends) if ends else None
     closes = [c[0] for c in r["calls"] if c[2] == "Bash" and "gaze_close.py" in c[3]]
     setups = [c[0] + c[1] for c in r["calls"] if c[2] == "Bash" and "gaze_setup.py" in c[3]]

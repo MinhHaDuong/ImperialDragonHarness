@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-27T18:32Z reviewer created
+2026-10-27T19:35Z reviewer fixed: vibe stdin test (live pipe, mutant fails), gaze_wall_time endpoints, raid_log path. dropped: _has_origin (fails safe), 1275 races (not reproduced, 1282), 1274 message (fails safe), 1281 (contract), test_after_merge copy (path unused), stray gate note (operator error, 1285), verify-gate prose (no reproducer), https push (one-off), stderr/private helpers (cosmetic)
 
 --- body ---
 ## Context
