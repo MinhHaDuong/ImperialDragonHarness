@@ -2,11 +2,13 @@
 Title: Session start drops the model coherence prompt
 Created: 2026-10-27
 Author: Minh Ha-Duong
+Closed: autoclosed — PR #1702
 
 --- log ---
 2026-10-27T05:45Z Minh Ha-Duong created
 2026-10-27T06:32Z reviewer note blocker 1230 closed — Blocked-by removed.
 2026-10-27T07:11Z reviewer note blocker 1231 closed — Blocked-by removed.
+2026-10-27T07:27Z reviewer closed — autoclosed — PR #1702
 
 --- body ---
 ## Context
