@@ -1,0 +1,21 @@
+%erg 0.1
+Title: lair points out tickets that took over 30 minutes and suggests a doctor visit
+Created: 2026-10-27
+Author: Minh Ha-Duong
+Blocked-by: 1238
+
+--- log ---
+2026-10-27T08:58Z Minh Ha-Duong created
+
+--- body ---
+## Context
+Author ruling, 2026-10-27: in `/lair`, any ticket that took more than 30 minutes to solve is pointed out, and a doctor visit is suggested for it. A slow ticket is a symptom of harness friction (review rounds, gate refusals, tooling faults). Raid 1229 had several: 1231 (three gaze rounds), 1232 and 1233 (gate refusals over seat evidence, ticket 1236), 1233 (five gaze rounds).
+
+The doctors stay author-called: lair suggests, never starts, a visit (as `skills/test-doctor/SKILL.md` already allows "`/lair` and `/trace-doctor` may suggest one"). The suggestion hands the doctor its complaint: the ticket, its duration, and where the time went. Blocked by 1238, which makes `/harness-doctor` a complaint-driven visit.
+
+## Exit criteria
+- [ ] lair lists each ticket closed since the last lair whose solve time exceeded 30 minutes, with its duration and the source of that number (labelled measured, read from a record, or derived)
+- [ ] "Solve time" is defined once, from data the harness already records (for example the merge request's opening to its MERGED read-back, or the hunt step clock), and the definition names its source; a ticket whose duration cannot be read is listed as unknown, never as fast
+- [ ] For each listed ticket, lair suggests a visit with the complaint pre-filled: `/harness-doctor` when the time sat in review, gate or tooling; `/test-doctor` when it sat in test gates
+- [ ] lair never starts a visit itself; the 30-minute threshold lives in one place
+- [ ] A test covers the threshold (a 29-minute and a 31-minute fixture) and the unknown-duration case
