@@ -53,7 +53,7 @@ reviewed_head_sha: <full SHA read from the review tree after the pass>
 intent: <the caller's text verbatim | default: the whole merge request against its ticket's exit criteria>
 review plan: <method; items as name (model, family); budget> — <why this plan settles the what>
 ran: <`seat_clock.py roster` lines, `; `-joined: each item's wall time or `no report (...)`>
-plan check: {{plan_check}} — <each deviation's reason, and whether the what is still settled>
+{{plan_check}} — <each deviation's reason, and whether the what is still settled>
 
 Findings: [each with its item, severity or tag, location and evidence; or "none"]
 Unresolved simplify: [must-fix and consider findings of a simplify item; or "none" | "not planned"]

@@ -223,3 +223,24 @@ def test_comment_without_the_placeholder_or_with_a_typed_line_is_refused(tmp_pat
     assert r.returncode == 2 and "plan_check" in r.stderr
     assert (primary / ".claude" / "worktrees" / "review-7").exists()
     assert not (tmp_path / "gh.log").exists()
+
+
+DOCS = [("skills/gaze/SKILL.md"), ("skills/gaze/references/output.md")]
+
+
+@pytest.mark.parametrize("doc", DOCS)
+def test_documented_template_filled_as_documented_is_accepted(tmp_path, doc):
+    """Ticket 1267: the template line the docs show, with only its <reason> filled,
+    is accepted and posts exactly one `plan check:` line."""
+    import re
+    from pathlib import Path
+    src = (Path(__file__).resolve().parents[1] / doc).read_text()
+    hits = [ln for ln in src.splitlines() if "{{plan_check}}" in ln and ln.startswith(("plan check:", "{{plan_check}} —"))]
+    tmpl = hits[0]  # a skill read may inline its references; the first hit is the file's own
+    primary, env, f = opened(tmp_path)
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\n" + re.sub(r"<[^>]*>", "none", tmpl) + "\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    (line,) = plan_line(tmp_path)
+    assert line.startswith("plan check: FAIL") and "plan check: plan check" not in line

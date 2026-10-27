@@ -140,7 +140,7 @@ seats: panel | self-only
 reviewed_head_sha: <full SHA read from the review worktree after the pass>
 intent: <verbatim | default>
 review plan: <method; items as name (model, family); budget>
-plan check: {{plan_check}} — <reason for each deviation>
+{{plan_check}} — <reason for each deviation>
 unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
 ```
