@@ -81,17 +81,17 @@ diagnosis (the problem is mis-specified). Note what failed at each step; save
 it as a feedback memory at wrap-up. Stop if you are repeating yourself; three
 failed approaches make it a decision.
 
-**A decision, or a judgment outside your domain docs:**
-1. **Ask up first**: an advisor model (the route skill picks which). It agrees
-   with your pick and the call is reversible → act and report.
+**A decision, or a judgment outside your domain docs.** The author's calls by
+right (scope, money, irreversible) are never forked or delegated; they wait.
+1. **Ask up first**: an advisor model. It agrees with your pick and the call
+   is reversible → act and report.
 2. **Otherwise ask the author**, advisor's view beside your pick, and keep
    working. Reversible options worth building → fork each into its own
    worktree and branch, capped at 5 minutes; no merge, no outward act.
 3. **Author back within 5 minutes** → their pick; delete the other branch.
-   Still away → the advisor picks on the built evidence (a cross-family seat
-   when the stakes are high); keep the loser until the author has seen the
-   report. The author's calls by right (scope, money, irreversible) are never
-   forked or delegated; they wait.
+   Still away, or no author in the loop → the advisor picks on the built
+   evidence (a cross-family seat when the stakes are high); keep the loser
+   until the author has seen the report.
 
 # Diagnosis discipline
 
@@ -147,11 +147,10 @@ tracker listing every child, closed only after the integration review
 or a symbol other tickets depend on), a build-gated exit, bundled sign-off
 units or a hidden dependency chain: draft a tracker (partition boundary,
 up-front decisions, wave order) and children sized to one sign-off unit,
-`Blocked-by` their real prerequisite, never the tracker. An orchestrator files
-it; a hunt or an interactive session proposes it; a lone session proposes it
-in its report and stops.
-The 15-file count is a signal, not a wall. A large diff splits the review,
-not necessarily the PR.
+`Blocked-by` their real prerequisite, never the tracker. An autonomous
+orchestrator files it; a hunt or an interactive session proposes it; a lone
+session proposes it in its report and stops. The 15-file count is a signal, not
+a wall. A large diff splits the review, not necessarily the PR.
 
 # Compaction
 
