@@ -407,3 +407,24 @@ def test_a_hung_notes_read_is_an_error_not_a_missing_note(monkeypatch):
     monkeypatch.setattr(mg.subprocess, "run", hung)
     with pytest.raises(mg.GateError, match="no answer"):
         mg.read_note("0" * 40)
+
+
+@pytest.mark.parametrize("code, raises", [(1, False), (128, True)])
+def test_only_exit_1_reads_as_a_missing_note(monkeypatch, code, raises):
+    """Gaze round 6: git exits 1 for no note (or no notes ref yet), 128 on a fatal error.
+
+    A fatal read counted as absent would let the fast path skip an unreadable verdict
+    and accept an older green one: fail open.
+    """
+    mg = load_monitor().mg
+    monkeypatch.setattr(mg, "toplevel", lambda _cwd: str(ROOT))
+
+    def answer(args, *_a, **_kw):
+        return subprocess.CompletedProcess(args, code, stdout="", stderr="fatal: bad object")
+
+    monkeypatch.setattr(mg.subprocess, "run", answer)
+    if raises:
+        with pytest.raises(mg.GateError, match="exit 128"):
+            mg.read_note("0" * 40)
+    else:
+        assert mg.read_note("0" * 40) == ""

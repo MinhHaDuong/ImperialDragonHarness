@@ -181,7 +181,7 @@ reads and writes in its own spelling.
 ## Gated base
 
 A base whose tree carries `.merge-gate.json` with `"gate": "on"` is gated;
-steps 4 to 7 apply. A `--no-push` trial record never admits a merge.
+steps 4 to 8 apply. A `--no-push` trial record never admits a merge.
 
 **Background merge.** The wait is the record run, so steps 4 to 8 can run as
 one background command. A `check` that answers 2 again after one re-record

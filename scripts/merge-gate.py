@@ -556,8 +556,11 @@ def fetch_notes(remote, *refs):
 
 def read_note(oid, ref=NOTES_REF):
     shown = git("notes", f"--ref={ref}", "show", oid, check=False)
-    if shown.returncode == 124:  # a hung read is not an absent note: fail closed, never fall through to another source
-        raise GateError(f"git notes --ref={ref} show {oid}: {shown.stderr.strip()}")
+    # Exit 1 is the one absent answer (no note, or no notes ref yet). Anything else
+    # (124 a hung read, 128 a fatal error) is not an absent note: fail closed, never
+    # fall through to another source.
+    if shown.returncode not in (0, 1):
+        raise GateError(f"git notes --ref={ref} show {oid}: exit {shown.returncode}: {shown.stderr.strip()}")
     return shown.stdout if shown.returncode == 0 else ""
 
 
