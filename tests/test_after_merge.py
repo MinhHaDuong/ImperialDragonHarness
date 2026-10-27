@@ -1,0 +1,239 @@
+"""After-merge runner: the full set on the newest main tip, in the background (ticket 1244).
+
+`merge-gate.py run-after` takes a host-local flock, runs the declared checks
+on the current origin tip, writes the record as a note on that tip under an
+after-merge scope line, refetches and loops while main moves. On red it
+prints the would-be ticket text and exits 1 (opening the ticket is ticket
+1251). `main_sweep.py --after` reports tips with no after-merge record and
+runs the set on the latest one. Real git, real processes, a bare origin; no
+forge, and the lock is never mocked.
+"""
+
+import importlib.util
+import json
+import os
+import signal
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import pytest
+
+from child_env import child_env
+
+pytestmark = pytest.mark.integration
+
+ROOT = Path(__file__).resolve().parents[1]
+GATE = ROOT / "scripts" / "merge-gate.py"
+SWEEP = ROOT / "scripts" / "main_sweep.py"
+
+
+def git(cwd, *args):
+    return subprocess.run(
+        ["git", "-C", str(cwd), *args], check=True, capture_output=True, text=True, env=child_env()
+    ).stdout.strip()
+
+
+def run_after(cwd, *args, **kw):
+    return subprocess.Popen(
+        [sys.executable, str(GATE), "run-after", "--ref", "main", *args],
+        cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=child_env(), **kw,
+    )
+
+
+def finish(proc, timeout=60):
+    out, err = proc.communicate(timeout=timeout)
+    return proc.returncode, out, err
+
+
+@pytest.fixture
+def module():
+    spec = importlib.util.spec_from_file_location("merge_gate", GATE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def make_repo(tmp_path, checks):
+    origin, work = tmp_path / "origin.git", tmp_path / "work"
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(origin)], check=True, env=child_env())
+    subprocess.run(["git", "init", "-q", "-b", "main", str(work)], check=True, env=child_env())
+    for key, value in (("user.email", "t@example.com"), ("user.name", "Fixture"), ("commit.gpgsign", "false")):
+        git(work, "config", key, value)
+    config = {"gate": "on", "scope": "fixture-set", "checks": checks}
+    (work / ".merge-gate.json").write_text(json.dumps(config), encoding="utf-8")
+    git(work, "add", ".")
+    git(work, "commit", "-q", "-m", "base")
+    git(work, "remote", "add", "origin", str(origin))
+    git(work, "push", "-q", "origin", "main")
+    return work
+
+
+def merge_branch(work, name, files=None):
+    """A --no-ff merge of a one-commit branch into main, pushed: one 'merge' on main."""
+    git(work, "switch", "-q", "-c", name, "main")
+    for path, text in (files or {name + ".txt": name}).items():
+        (work / path).write_text(text + "\n", encoding="utf-8")
+    git(work, "add", "-A")
+    git(work, "commit", "-q", "-m", name)
+    git(work, "switch", "-q", "main")
+    git(work, "merge", "-q", "--no-ff", name, "-m", f"Merge {name}")
+    git(work, "push", "-q", "origin", "main")
+    return git(work, "rev-parse", "HEAD")
+
+
+def note(work, oid):
+    proc = subprocess.run(
+        ["git", "-C", str(work), "notes", "--ref=refs/notes/gate", "show", oid],
+        capture_output=True, text=True, env=child_env(),
+    )
+    return proc.stdout if proc.returncode == 0 else ""
+
+
+def wait_for_lines(path, n, proc, timeout=30):
+    end = time.monotonic() + timeout
+    while time.monotonic() < end:
+        if path.exists() and len(path.read_text().splitlines()) >= n:
+            return
+        if proc.poll() is not None:
+            raise AssertionError(f"runner exited {proc.returncode} first: {proc.communicate()}")
+        time.sleep(0.05)
+    raise AssertionError(f"{path} never reached {n} line(s)")
+
+
+def logging_checks(log, pause):
+    return [{"name": "log-tip", "argv": ["sh", "-c", f"git rev-parse HEAD >> {log}; sleep {pause}"]}]
+
+
+def test_three_quick_merges_run_at_most_twice(tmp_path, module):
+    log = tmp_path / "runs.log"
+    work = make_repo(tmp_path, logging_checks(log, 3))
+    first = run_after(work)
+    wait_for_lines(log, 1, first)  # run 1 holds the lock, on the first tip
+    merge_branch(work, "two")
+    second = run_after(work)
+    merge_branch(work, "three")
+    third = run_after(work)
+    final = git(work, "rev-parse", "origin/main")
+    for proc in (second, third):
+        code, out, err = finish(proc)
+        assert code == 0, err
+        assert "busy" in out, out + err
+    code, out, err = finish(first)
+    assert code == 0, out + err
+    runs = log.read_text().splitlines()
+    assert len(runs) <= 2, runs
+    assert runs[-1] == final
+    git(work, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
+    entries = module.parse_note(note(work, final))
+    assert [e["result"] for e in entries] == ["pass"]
+    assert entries[0]["scope"] == "fixture-set/after-merge: log-tip"
+    assert f"tip={final}" in entries[0]["revision"]
+
+
+def test_an_after_record_is_never_taken_for_a_before_merge_one(tmp_path, module):
+    work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    git(work, "switch", "-q", "-c", "feature")
+    (work / "f.txt").write_text("f\n", encoding="utf-8")
+    git(work, "add", "-A")
+    git(work, "commit", "-q", "-m", "feature")
+    git(work, "switch", "-q", "main")
+    tip = git(work, "rev-parse", "main")
+    code, out, err = finish(run_after(work))
+    assert code == 0, out + err
+    entries = module.parse_note(note(work, tip))
+    config = json.loads((work / ".merge-gate.json").read_text())
+    # Even keyed on the very object `decide` is asked about, the after-record neither matches nor fits a scope.
+    cwd = os.getcwd()
+    os.chdir(work)
+    try:
+        scopes = module.accepted_scopes(config, tip, module.candidate(tip, git(work, "rev-parse", "feature")))
+    finally:
+        os.chdir(cwd)
+    assert module.decide(entries, tip, scopes)[0] == module.MISSING
+    assert entries[0]["scope"] not in scopes
+
+
+def test_a_killed_runner_leaves_no_lock_behind(tmp_path):
+    log = tmp_path / "runs.log"
+    work = make_repo(tmp_path, logging_checks(log, 60))
+    holder = run_after(work, start_new_session=True)
+    wait_for_lines(log, 1, holder)
+    busy = finish(run_after(work))
+    assert "busy" in busy[1], busy
+    os.killpg(holder.pid, signal.SIGKILL)
+    holder.wait(timeout=10)
+    log.write_text("")
+    (work / ".merge-gate.json").write_text(
+        json.dumps({"gate": "on", "scope": "s", "checks": logging_checks(log, 0)}), encoding="utf-8"
+    )
+    git(work, "commit", "-q", "-am", "quick check")
+    git(work, "push", "-q", "origin", "main")
+    code, out, err = finish(run_after(work))
+    assert code == 0, out + err
+    assert "busy" not in out
+    assert log.read_text().splitlines() == [git(work, "rev-parse", "origin/main")]
+
+
+def test_a_red_run_prints_the_ticket_text_and_exits_non_zero(tmp_path, module):
+    checks = [
+        {"name": "always-pass", "argv": ["true"]},
+        {"name": "marker-absent", "argv": ["sh", "-c", "! test -e BROKEN"]},
+    ]
+    work = make_repo(tmp_path, checks)
+    green = git(work, "rev-parse", "main")
+    assert finish(run_after(work))[0] == 0
+    first = merge_branch(work, "harmless")
+    tip = merge_branch(work, "breaker", {"BROKEN": "planted failure"})
+    code, out, err = finish(run_after(work))
+    assert code == 1, out + err
+    report = out[out.index("Title:"):]
+    assert tip in report
+    assert "Failing checks: marker-absent" in report
+    assert "always-pass" not in report.split("Failing checks:", 1)[1].split("\n", 1)[0]
+    assert f"Last green after-merge tip: {green}" in report
+    for merge in (first, tip):
+        assert merge[:12] in report
+    assert green[:12] not in report.split("Merges since", 1)[1]
+    assert [e["result"] for e in module.parse_note(note(work, tip))] == ["fail"]
+    remote_branches = git(work, "ls-remote", "origin", "refs/heads/*").splitlines()
+    assert len(remote_branches) == 1  # no forge write: only main on origin
+
+
+def audit(work, *args):
+    return subprocess.run(
+        [sys.executable, str(SWEEP), "--ref", "main", *args],
+        cwd=work, capture_output=True, text=True, env=child_env(),
+    )
+
+
+def test_the_audit_lists_tips_without_an_after_record_and_runs_the_latest(tmp_path, module):
+    work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    merge_branch(work, "covered")
+    assert finish(run_after(work))[0] == 0
+    covered = git(work, "rev-parse", "main")
+    gap1 = merge_branch(work, "gap-one")
+    gap2 = merge_branch(work, "gap-two")
+    proc = audit(work, "--after")
+    gaps = [line.split()[1] for line in proc.stdout.splitlines() if line.startswith("after-gap")]
+    assert gaps == [gap2[:12], gap1[:12]], proc.stdout + proc.stderr
+    assert covered[:12] not in gaps
+    assert f"; ran on {gap2[:12]}: green" in proc.stdout
+    git(work, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
+    assert [e["result"] for e in module.parse_note(note(work, gap2))] == ["pass"]
+    again = audit(work, "--after")
+    assert not [line for line in again.stdout.splitlines() if line.startswith("after-gap")], again.stdout
+
+
+def test_an_after_record_alone_does_not_vouch_for_a_direct_commit(tmp_path):
+    work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    (work / "direct.txt").write_text("d\n", encoding="utf-8")
+    git(work, "add", "-A")
+    git(work, "commit", "-q", "-m", "direct")
+    git(work, "push", "-q", "origin", "main")
+    direct = git(work, "rev-parse", "main")
+    assert finish(run_after(work))[0] == 0
+    proc = audit(work)
+    [line] = [x for x in proc.stdout.splitlines() if direct[:12] in x]
+    assert line.startswith("finding"), proc.stdout

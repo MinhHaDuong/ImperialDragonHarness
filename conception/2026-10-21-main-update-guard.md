@@ -172,6 +172,14 @@ make main-sweep                          # fetches main and the receipts, then a
 python3 scripts/main_sweep.py --summary  # one line, as the end-of-day wrap-up carries it
 ```
 
+**After-merge records** (ticket 1244): `merge-gate.py run-after` notes its
+record on a main tip under the scope `<scope>/after-merge` and the revision
+`tip=<oid>`. Such a record never admits a main update: the hook and `check`
+read only `candidate=` entries under a before-merge scope, and the audit
+reads a single-parent commit whose note holds after-merge entries only as a
+finding. With `--after`, the audit also lists the tips above the newest
+after-merge record and runs the full set on the latest.
+
 It never runs in the merge path: not among the gate's checks, not in the
 merge helper. The end-of-day wrap-up (`/lair`) runs it with `--summary` and
 carries its line, `main audit: N commits in the last 24 h, M without a gate

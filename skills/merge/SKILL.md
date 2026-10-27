@@ -128,11 +128,21 @@ reads and writes in its own spelling.
 8. **Sync.** `"$IDH_ROOT/scripts/sync-local-main.sh" . <base>`. A "left
    untouched" line goes in the report, never forced; never a hand-rolled
    `merge --ff-only` on the primary checkout.
+9. **After-merge run (gated base).** Start the runner in the background from
+   the primary checkout, which outlives this worktree, and do not wait on it:
+   ```bash
+   C=$(git rev-parse --path-format=absolute --git-common-dir); mkdir -p "$C/idh"
+   (cd "$C/.." && nohup python3 "$IDH_ROOT/scripts/merge-gate.py" run-after --ref <base> >>"$C/idh/after-merge.log" 2>&1 &)
+   ```
+   It runs the full set on the newest `<base>` tip and notes the record there
+   (a busy lock means a runner already covers this tip). Its red never blocks
+   this merge: the log and the note carry it, and `main_sweep.py --after`
+   reports it.
 
 ## Gated base
 
 A base whose tree carries `.merge-gate.json` with `"gate": "on"` is gated;
-steps 4 to 7 apply. A `--no-push` trial record never admits a merge.
+steps 4 to 7 and 9 apply. A `--no-push` trial record never admits a merge.
 
 **Background merge.** The wait is the record run, so steps 4 to 8 can run as
 one background command. A `check` that answers 2 again after one re-record
