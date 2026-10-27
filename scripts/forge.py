@@ -52,7 +52,9 @@ NOOP = _NoOp()
 
 
 def parse_claims(body: str) -> list[str]:
-    """Ticket ids claimed in a body by `Ticket: tickets/<id>-...` lines, code fences ignored."""
+    """Ticket ids claimed in a body by `Ticket: tickets/<id>-...` lines, code fences ignored.
+    A malformed claim or an unclosed fence is a stop (skills/merge/references/claims.md):
+    raises ForgeRefusal, mirroring raid_land.close_claims (not imported: raid_land will import this module)."""
     ids: list[str] = []
     fence = None
     for line in body.splitlines():
@@ -67,9 +69,16 @@ def parse_claims(body: str) -> list[str]:
         if fence:
             continue
         m = re.match(r"\s*(?:\*\*)?Ticket:(?:\*\*)?\s*(\S.*)$", line)
-        p = m and re.match(r"tickets/(?:closed/)?(\d{4,})-", m.group(1).strip())
+        if not m:
+            continue
+        value = m.group(1).strip()
+        p = re.match(r"tickets/(?:closed/)?(\d{4,})-", value)
         if p:
             ids.append(p.group(1))
+        elif value.lower() != "none":
+            raise ForgeRefusal(f"close claim not in canonical form: {line.strip()!r}")
+    if fence:
+        raise ForgeRefusal("unclosed code fence in the request body")
     return list(dict.fromkeys(ids))
 
 

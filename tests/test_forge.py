@@ -217,3 +217,12 @@ def test_gh_checks_pending_is_not_passing(stub):
             {"name": "b", "status": status, "conclusion": ""}]}))
         assert f.checks("7") == "pending"
 
+
+@pytest.mark.parametrize("body", ["Ticket: tickets/12-x", "Ticket: nonsense", "```\nTicket: tickets/1271-x\n"])
+def test_parse_claims_malformed_is_a_stop(body):
+    with pytest.raises(forge.ForgeRefusal):
+        forge.parse_claims(body)
+
+
+def test_parse_claims_none_is_not_malformed():
+    assert forge.parse_claims("Ticket: none\nTicket: tickets/1271-x") == ["1271"]
