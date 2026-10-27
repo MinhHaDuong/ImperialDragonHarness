@@ -672,3 +672,80 @@ def test_record_without_a_ticket_choice_is_refused(repo, policy):
                           "--family", "Anthropic", "--worker", "t"],
                          input="b\n", capture_output=True, text=True, env=child_env())
     assert out.returncode != 0 and "--ticket" in out.stderr
+
+
+# --- ticket 1261: heading variants and the PR's claim ------------------------
+
+def _edit_after_review(repo, policy, edit):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    p = repo / "tickets/0001-x.erg"
+    p.write_text(edit(p.read_text()))
+    git(repo, "commit", "-qam", "edit ticket")
+    return gate_with(repo, policy, p, "correctness")
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("heading", ["## Exit Criteria", "### Exit criteria",
+                                     "## Exit criteria (added)"])
+def test_variant_criteria_heading_added_after_review_is_stale(repo, policy, heading):
+    out = _edit_after_review(repo, policy, lambda t: t + f"\n{heading}\n- [ ] sneaked in\n")
+    assert out.returncode != 0 and "stale" in out.stdout, out.stdout
+
+
+@pytest.mark.integration
+def test_rename_weaken_and_append_an_unchanged_copy_is_stale(repo, policy):
+    def edit(text):
+        old = text.split("## Exit criteria\n", 1)[1].split("\n## ", 1)[0]
+        renamed = text.replace("## Exit criteria\n", "## Acceptance\n- [ ] weak\n# ", 1)
+        return renamed.replace("# \n", "\n", 1) + "\n## Exit criteria\n" + old
+    out = _edit_after_review(repo, policy, edit)
+    assert out.returncode != 0 and "stale" in out.stdout, out.stdout
+
+
+def test_criteria_hash_reads_heading_variants_and_sees_outside_checkboxes():
+    base = re_mod.criteria_hash(TICKET)
+    for heading in ("## Exit Criteria", "### Exit criteria", "## Exit criteria (added)"):
+        assert re_mod.criteria_hash(TICKET + f"\n{heading}\n- [ ] more\n") != base
+    assert re_mod.criteria_hash(TICKET + "\n## Acceptance\n- [ ] weak\n") != base
+    assert re_mod.criteria_hash(TICKET.replace("irrelevant", "prose changes")) == base
+
+
+def _two_tickets(repo):
+    commit(repo, "tickets/0002-y.erg", REPO_TICKET.replace("Title: x", "Title: y"), "other ticket")
+
+
+def _gate_claiming(repo, policy, tmp_path, body, ticket):
+    body_file = tmp_path / "body.md"
+    body_file.write_text(body)
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), "gate", "--repo", str(repo), "--base", "main",
+         "--policy-root", str(policy), "--ticket", str(repo / ticket),
+         "--pr-body-file", str(body_file), "--seat", "correctness"],
+        capture_output=True, text=True, env=child_env())
+
+
+@pytest.mark.integration
+def test_gate_refuses_a_recorded_ticket_the_pr_does_not_claim(repo, policy, tmp_path):
+    _two_tickets(repo)
+    subprocess.run(
+        [sys.executable, str(SCRIPT), "record", "--repo", str(repo), "--base", "main",
+         "--policy-root", str(policy), "--ticket", str(repo / "tickets/0002-y.erg"),
+         "--seat", "correctness", "--verdict", "approve", "--family", "Anthropic",
+         "--worker", "t"], input="b\n", capture_output=True, text=True,
+        env=child_env(), check=True)
+    commit_reports(repo)
+    # the probe: without the claim, the unrelated ticket's report reads reused
+    probe = gate_with(repo, policy, repo / "tickets/0002-y.erg", "correctness")
+    assert probe.returncode == 0 and "stale" not in probe.stdout
+    wrong = _gate_claiming(repo, policy, tmp_path, "**Ticket:** tickets/0001-x.erg\n",
+                           "tickets/0002-y.erg")
+    assert wrong.returncode != 0 and "claim" in (wrong.stdout + wrong.stderr), wrong.stdout
+    right = _gate_claiming(repo, policy, tmp_path, "**Ticket:** tickets/0002-y.erg\n",
+                           "tickets/0002-y.erg")
+    assert right.returncode == 0, right.stdout + right.stderr
+    none = _gate_claiming(repo, policy, tmp_path, "Ticket: none\n", "tickets/0002-y.erg")
+    assert none.returncode != 0
+    fenced = _gate_claiming(repo, policy, tmp_path,
+                            "```\n**Ticket:** tickets/0002-y.erg\n```\n", "tickets/0002-y.erg")
+    assert fenced.returncode != 0

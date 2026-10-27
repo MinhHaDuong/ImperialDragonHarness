@@ -188,7 +188,8 @@ apply, and step 2 needs its seats.
    under `tickets/reviews/` at the head, `<seat>-<n>.md`. With none, record
    `review_evidence: legacy` and judge the review comments as above; stop here.
 2. **Seat table.** In the gate worktree, run
-   `python3 "$IDH_ROOT/scripts/review_evidence.py" gate --repo "$gate_tree" --base origin/<base-branch> --ticket <ticket-file> --seat <seat>` (one `--seat` per reported seat).
+   `python3 "$IDH_ROOT/scripts/review_evidence.py" gate --repo "$gate_tree" --base origin/<base-branch> --ticket <ticket-file> --pr-body-file <body-file> --seat <seat>` (one `--seat` per reported seat; the body
+   file is the merge request body, and the gate refuses a ticket it does not claim to close).
    Copy its `seat` lines into the verdict. A seat is `ran` (report on this head), `reused` (same patch-id,
    criteria hash and policy version, from an earlier head, which it names),
    `stale` or `no-report`. Check and gate results are reused or

@@ -164,18 +164,45 @@ def classify_forge(payload: dict, host: str) -> list[dict]:
     return rows
 
 
+CRITERIA_HEADING = re.compile(r"^(#{2,})\s*exit\s+criteria\b", re.I)
+HEADING = re.compile(r"^(#{1,6})\s")
+CHECKBOX = re.compile(r"^-\s*\[[ xX]\]\s*")
+
+
 def criteria_hash(ticket_text: str | None) -> str:
-    """Hash the Exit criteria section, ignoring checkbox state and other sections."""
+    """Hash every exit-criteria section and every other checkbox line.
+
+    A criteria heading is `exit criteria` at any level, any case, with any
+    suffix; its section ends at the next heading of the same or a higher level.
+    Checkbox lines outside such sections are hashed too, so renaming the real
+    heading and appending a copy of the old text cannot hide a weakened list.
+    Checkbox state and prose are ignored.
+    """
     if ticket_text is None:
         return "none"
-    sections = re.findall(r"^## Exit criteria\s*$(.*?)(?=^## |\Z)", ticket_text, re.M | re.S)
-    if not sections:
+    inside: list[str] = []
+    outside: list[str] = []
+    level = 0  # heading level of the open criteria section; 0 when outside
+    found = False
+    for raw in ticket_text.splitlines():
+        line = raw.strip()
+        crit = CRITERIA_HEADING.match(raw)
+        other = HEADING.match(raw)
+        if crit:
+            level, found = len(crit.group(1)), True
+            continue
+        if other and level and len(other.group(1)) <= level:
+            level = 0
+        if not line:
+            continue
+        norm = CHECKBOX.sub("- ", line)
+        if level:
+            inside.append(norm)
+        elif CHECKBOX.match(line):
+            outside.append(norm)
+    if not found:
         return "none"
-    lines = []
-    for line in "\n".join(sections).splitlines():
-        line = re.sub(r"^-\s*\[[ xX]\]\s*", "- ", line.strip())
-        if line:
-            lines.append(line)
+    lines = inside + (["--outside--", *outside] if outside else [])
     return hashlib.sha256("\n".join(lines).encode()).hexdigest()[:16]
 
 
@@ -418,8 +445,34 @@ def cmd_record(args: argparse.Namespace) -> int:
     return 0
 
 
+def claim_mismatch(args: argparse.Namespace, current: Inputs) -> str | None:
+    """Why the PR body's close claim does not name the gated ticket, or None.
+
+    The claim grammar is the merge recipe's (gaze_setup.close_claims, after
+    skills/merge/references/claims.md); the body is the only source.
+    """
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from gaze_setup import close_claims
+    claims, malformed = close_claims(args.pr_body_file.read_text(encoding="utf-8"),
+                                     Path(git(args.repo, "rev-parse", "--show-toplevel")))
+    if malformed:
+        return f"malformed close claim {malformed[0]}"
+    claimed = {Path(c).name for c in claims}
+    if current.ticket == "none":
+        return f"gated range names no ticket but the PR claims {sorted(claimed)}" if claimed else None
+    if current.ticket not in claimed:
+        return (f"gated ticket {current.ticket} is not the ticket the PR claims "
+                f"({', '.join(sorted(claimed)) or 'none'})")
+    return None
+
+
 def cmd_gate(args: argparse.Namespace) -> int:
     current = current_inputs(args)
+    if args.pr_body_file is not None:
+        why = claim_mismatch(args, current)
+        if why:
+            print(f"claim: refused, {why}")
+            return 1
     rows = seat_rows(args.repo, current, list(dict.fromkeys(args.seat)))
     ok = True
     print(f"REVIEW-EVIDENCE: base {current.base} head {current.head} "
@@ -519,6 +572,8 @@ def main() -> int:
     rec.set_defaults(fn=cmd_record)
     gate = sub.add_parser("gate", parents=[common])
     gate.add_argument("--seat", action="append", default=[], required=True)
+    gate.add_argument("--pr-body-file", type=Path,
+                      help="the PR body; the gated ticket must be the one it claims to close")
     gate.set_defaults(fn=cmd_gate)
     fg = sub.add_parser("forge", help="admit forge-read reviews by pinned actor")
     fg.add_argument("forge_repo", help="owner/name")
