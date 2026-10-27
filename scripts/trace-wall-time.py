@@ -63,6 +63,8 @@ CD = re.compile(r"^\s*cd\s+(\"[^\"]+\"|'[^']+'|\S+)")
 DASH_C = re.compile(r"\s-C\s+(\"[^\"]+\"|'[^']+'|\S+)")
 BLOCKER_MIN_S = 60
 ENV_ASSIGN = re.compile(r"[A-Za-z_]\w*=")
+WRAPPERS = {"timeout", "uv", "nohup", "nice", "time", "env", "xargs", "rtk", "exec", "command"}
+PROGRAMS = {"bash", "sh", "run", "python", "python3", "pytest", "make", "node", "npm", "git", "gh", "sleep", "grep", "claude"}
 NOT_BLOCKERS = {"generation", "human", "human-away", "idle-tail"}  # reported in the split, not here
 AWAY_S = 1800  # a human gap longer than this is the author away, not a reply
 
@@ -131,21 +133,31 @@ def tool_category(name, inp):
 
 
 def command_key(cmd):
-    """The command's leading program words, never its arguments or values.
+    """The command's program name, never its arguments or values.
 
-    A trace can hold a credential typed into a command; the report names
-    only what ran (`timeout bash`, `until`, `uv run`), as trace-friction's
-    Pi mode never prints a command text.
+    A trace can hold a credential typed into a command (`echo <token>`,
+    `curl <url>`), as trace-friction's Pi mode never prints a command text.
+    The first program word is kept; a second only when the first is a known
+    wrapper and the second a known program (`timeout bash`, `uv run`).
     """
     c = re.sub(r"^\s*cd\s+\S+\s*&&\s*", "", gt._strip_heredocs(cmd)).strip()
     words = []
     for w in re.split(r"[\s;&|]+", c.split("\n")[0]):
-        if not w or ENV_ASSIGN.match(w):
+        if not w or ENV_ASSIGN.match(w) or w == "export":
             continue
         w = os.path.basename(w)
-        if not re.fullmatch(r"[A-Za-z][\w.-]*", w) or len(words) == 2:
+        if not words:
+            if not re.fullmatch(r"[A-Za-z][\w.-]*", w):
+                break
+            words.append(w)
+            if w not in WRAPPERS:
+                break
+        elif w.startswith("-") or w.isdigit():
+            continue  # a wrapper's flag or duration
+        else:
+            if w in PROGRAMS:
+                words.append(w)
             break
-        words.append(w)
     return " ".join(words) or "(unnamed)"
 
 
@@ -309,10 +321,12 @@ def test_events(trees, start):
                 cmd = inp.get("command", "")
                 d = command_dir(cmd, cwd)
                 classes = gt.gate_classes(cmd)
+                if MUT_GIT.search(cmd):
+                    ev.append(("mut", t, d))  # before a test chained after it: `git pull && pytest`
                 if classes and not inp.get("run_in_background"):
                     end, failed = outcome.get(uid, (t, False))
                     ev.append(("test", t, d, ",".join(sorted(classes)), failed, (end - t).total_seconds()))
-                elif MUT_GIT.search(cmd) or MUT_SH.search(gt._strip_heredocs(cmd)):
+                elif MUT_SH.search(gt._strip_heredocs(cmd)):
                     ev.append(("mut", t, d))  # a test's own `> x.log` is not a change
     ev.sort(key=lambda e: e[1])
     return ev
@@ -357,7 +371,9 @@ def survey(traces, since, top=20):
             if start is not None and start >= since:
                 runs[skill].append((tr, start))
                 if skill == "raid":
-                    raid_members.update(id(d) for d in descendants(tr))
+                    raid_members.update(
+                        id(d) for d in descendants(tr) if _ts(d.recs[0]["timestamp"]) >= start
+                    )
     report = {}
     for skill, lst in runs.items():
         orch, tree, blockers = Counter(), Counter(), Counter()

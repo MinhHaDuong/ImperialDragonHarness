@@ -115,7 +115,13 @@ def test_command_dir_follows_cd_and_dash_c():
 
 def test_command_key_never_prints_arguments():
     assert tw.command_key("TOKEN=s3cret curl -H 'auth: x' https://h") == "curl"
-    assert tw.command_key("timeout 590 bash -c 'until grep -q X f; do sleep 5; done'") == "timeout"
+    assert tw.command_key("timeout 590 bash -c 'until grep -q X f; do sleep 5; done'") == "timeout bash"
+    assert tw.command_key("echo ghp_SeCrEt") == "echo"
+    assert tw.command_key("printf sk-ant-SeCrEt") == "printf"
+    assert tw.command_key("curl https://h/SeCrEt") == "curl"
+    assert tw.command_key("ssh myhost") == "ssh"
+    assert tw.command_key("export KEY=v && curl x") == "curl"
+    assert tw.command_key("uv run pytest -q") == "uv run"
     assert tw.command_key("/x/scratchpad/idle.sh 9") == "idle.sh"
 
 
@@ -123,3 +129,21 @@ def test_p90_is_nearest_rank_and_out_of_window_runs_drop(tmp_path):
     _fixture(tmp_path)
     traces = tw.load_traces(tmp_path, datetime.now(timezone.utc) - timedelta(days=1))
     assert tw.survey(traces, T0 + timedelta(seconds=1))["raid"]["runs"] == 0
+
+
+def test_mutating_git_chained_before_a_test_resets_the_ledger():
+    ev = tw.test_events([tw.Trace(Path("x"), [
+        _use("a", "Bash", 0, command="uv run pytest -q"), _res("a", 10),
+        _use("b", "Bash", 11, command="git pull && uv run pytest -q"), _res("b", 20),
+    ])], None)
+    assert tw.redundancy(ev)[0].get("rerun_after_pass", 0) == 0
+
+
+def test_agent_spawned_before_the_run_is_not_the_runs(tmp_path):
+    _fixture(tmp_path)
+    sub = tmp_path / "proj" / "s1" / "subagents"
+    _write(sub / "agent-early.jsonl", [_say(-50, "early"), _say(-40, "x", role="assistant")])
+    (sub / "agent-early.meta.json").write_text(json.dumps({"toolUseId": "spawn"}))
+    since = datetime.now(timezone.utc) - timedelta(days=1)
+    r = tw.survey(tw.load_traces(tmp_path, since), since - timedelta(days=30))
+    assert r["raid"]["agents"] == 1
