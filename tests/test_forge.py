@@ -187,14 +187,14 @@ def test_none_conflict_and_bad_refs(repo, nogh):
         f.resolve("branch:nope base=main")
 
 
-def test_none_noops_are_typed_and_merge_refuses(repo, nogh):
+def test_none_noops_are_typed_and_unresolvable_merge_refuses(repo, nogh):
     f = forge.get_forge("none", cwd=str(repo))
     for result in (f.comment("x", "b"), f.append_body_line("x", "l"), f.ready("x"), f.disarm("x")):
         assert result is forge.NOOP and not result
     assert f.comments("x") == [] and f.checks("x") == "none" and f.auto_merge_armed("x") is False
-    with pytest.raises(forge.NoForgeMerge):
+    with pytest.raises(forge.ForgeRefusal):  # an unresolvable unit refuses, never reads back "merged"
         f.merge("x", HEAD, auto=False)
-    with pytest.raises(forge.NoForgeMerge):
+    with pytest.raises(forge.ForgeRefusal):
         f.read_back("x")
 
 
@@ -260,8 +260,6 @@ def test_merged_at_and_cwd(tmp_path, monkeypatch):
     monkeypatch.setattr(forge.subprocess, "run", run)
     f = forge.get_forge("gh", cwd=str(tmp_path))
     assert f.merged_at("7") == "2026-10-27T21:04:00Z" and seen["cwd"] == str(tmp_path)
-    with pytest.raises(forge.NoForgeMerge):
-        forge.NoneForge().merged_at("branch:x")
 
 
 def test_append_body_line_refuses_when_the_patch_fails(monkeypatch):

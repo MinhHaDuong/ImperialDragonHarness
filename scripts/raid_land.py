@@ -16,7 +16,12 @@ exactly that set. Prints one `<pr> merge <start> <end>` row for
 Exit: 0 merged and synced; 1 refused before any merge (reason on stderr);
 4 merged but local main not synced (sync script missing, failing or unknown
 output); 5 queued on an ungated base; 6 merge outcome unknown (an error after
-the merge call: read the request by hand, never re-run). Forge calls live in scripts/forge.py; git, merge-gate.py, erg and
+the merge call: read the request by hand, never re-run).
+With no forge (`<pr>` = `branch:<name> [base=<ref>]`, forge.NoneForge; ticket 1275) the same
+recipe runs locally: the merge is forge.NoneForge.merge (a `--no-ff` merge pinned by head OID,
+the base moved under the main-update guard, pushed when origin exists), the gate record lives
+in refs/notes/gate of this repository, claimed tickets must already be closed on the branch,
+and step 8 is read from the refs. Forge calls live in scripts/forge.py; git, merge-gate.py, erg and
 sync-local-main.sh are called directly.
 """
 
@@ -93,28 +98,43 @@ def close_tickets(cwd: Path, pr: str, ids: list[str]) -> bool:
     return True
 
 
-def check_head(cwd: Path, branch: str, base: str, ruled: str) -> str:
-    git(cwd, "fetch", "-q", "origin")
+def check_closed(cwd: Path, ids: list[str]) -> None:
+    """No-forge step 1: hunt closes the ticket on the branch, so a claimed ticket must already be
+    closed there; nothing is committed or pushed from here."""
+    for tid in ids:
+        closed = list((cwd / "tickets" / "closed").glob(f"{tid}-*.erg"))
+        if not (closed and "\nClosed:" in closed[0].read_text()):
+            raise Refusal(f"claimed ticket {tid} is not closed on the branch (no forge: close it there)")
+
+
+def check_head(cwd: Path, branch: str, base_ref: str, ruled: str, remote: bool = True) -> str:
+    """`base_ref` is the ref the gate and tier judge against: origin/<base>, or the local branch with no forge."""
     head = rev(cwd, "HEAD")
-    if head != rev(cwd, f"origin/{branch}"):
-        raise Refusal("local head differs from origin/" + branch + " (sync, never merge)")
+    if remote:
+        git(cwd, "fetch", "-q", "origin")
+        if head != rev(cwd, f"origin/{branch}"):
+            raise Refusal("local head differs from origin/" + branch + " (sync, never merge)")
     if ruled == "-":
-        if gate(cwd, "tier", "--base", f"origin/{base}", "--head", "HEAD") != 0:
+        if gate(cwd, "tier", "--base", base_ref, "--head", "HEAD") != 0:
             raise Refusal("no ruled head given and the request is not bookkeeping tier")
     elif head != ruled and gate(
-            cwd, "tier", "--base", f"origin/{base}", "--head", "HEAD", "--since", ruled) != 0:
+            cwd, "tier", "--base", base_ref, "--head", "HEAD", "--since", ruled) != 0:
         raise Refusal(f"head {head[:12]} adds more than bookkeeping to the ruled tip {ruled[:12]}")
     return head
 
 
-def record(cwd: Path, base: str) -> None:
-    """Steps 4: check the gate record, writing it when missing; one re-record on a moved base."""
-    args = ("--base", f"origin/{base}", "--head", "HEAD")
+def record(cwd: Path, base_ref: str, notes_remote: str | None = None) -> None:
+    """Steps 4: check the gate record, writing it when missing; one re-record on a moved base.
+    `notes_remote` is where refs/notes/gate lives when it is not origin: with no remote, this
+    repository's own git directory, so the record lands in refs/notes/gate where the main-update
+    guard reads it (merge-gate.py `--no-push` records are never accepted for a merge)."""
+    args = ("--base", base_ref, "--head", "HEAD")
+    where = ("--remote", notes_remote) if notes_remote else ()
     for _ in range(2):
-        rc = gate(cwd, "check", *args)
+        rc = gate(cwd, "check", *args, *where)
         if rc == 2:
-            gate(cwd, "run", *args)
-            rc = gate(cwd, "check", *args)
+            gate(cwd, "run", *args, *where)
+            rc = gate(cwd, "check", *args, *where)
         if rc != 2:
             break
     if rc == 2:
@@ -150,14 +170,15 @@ def attribution(body: str) -> str:
     return out if done.returncode == 0 and out else (out or "unchecked")
 
 
-def cleanup(cwd: Path, branch: str, head: str, base: str) -> str:
+def cleanup(cwd: Path, branch: str, head: str, base: str, base_ref: str | None = None) -> str:
     """Remove the merged worktree from outside it; retain on any doubt."""
+    base_ref = base_ref or f"origin/{base}"
     common = git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()
     primary = Path(common).parent
     os.chdir(primary)
     git(primary, "fetch", "-q", "--prune", "origin")
-    if git(primary, "merge-base", "--is-ancestor", head, f"origin/{base}").returncode != 0:
-        return f"cleanup skipped: {head[:12]} not in origin/{base}"
+    if git(primary, "merge-base", "--is-ancestor", head, base_ref).returncode != 0:
+        return f"cleanup skipped: {head[:12]} not in {base_ref}"
     git(primary, "worktree", "unlock", str(cwd))
     if git(primary, "worktree", "remove", str(cwd)).returncode != 0:
         return f"cleanup skipped: worktree {cwd} not removed"
@@ -171,55 +192,107 @@ def same_claims(body: str, ruled: list[str]) -> None:
         raise Refusal(f"close claims in the body {close_claims(body)} differ from the ruled set {sorted(ruled)}")
 
 
+def claims_of(info: dict, local: bool) -> list[str]:
+    """The ticket ids a request claims: body lines on a forge, commit trailers (resolve's `claims`) without."""
+    if not local:
+        return close_claims(info.get("body") or "")
+    if info.get("claims_error"):
+        raise Refusal(info["claims_error"])
+    return list(info.get("claims") or [])
+
+
 def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
          do_cleanup: bool = False, out=print, ruled_claims: list[str] | None = None) -> int:
     cwd = Path(cwd or os.getcwd()).resolve()
     ruled_claims = ruled_claims or []
     start = int(time.time())
+    local = bool(getattr(fg, "local", False))  # no forge: the merge is the local one (forge.NoneForge)
     info = fg.resolve(pr)
     branch = info["branch"]
     if info["state"] != "OPEN":
         raise Refusal(f"request is {info['state']}, not OPEN")
     if git(cwd, "rev-parse", "--abbrev-ref", "HEAD").stdout.strip() != branch:
         raise Refusal(f"cwd is not on branch {branch}")
-    base = info.get("base") or base
-    body = info.get("body") or ""
-    out(f"attribution: {attribution(body)}")
-    same_claims(body, ruled_claims)
-    head = check_head(cwd, branch, base, ruled)
-    if close_tickets(cwd, pr, close_claims(body)):
-        head = check_head(cwd, branch, base, ruled)
+    remote = git(cwd, "remote", "get-url", "origin").returncode == 0
+    if local:
+        base = fg.base_branch(info)
+        base_ref = base
+        if remote:
+            # An explicit refspec: a plain fetch does not prune, so a deleted remote base would leave
+            # a stale cached ref that still equals the local one, and the push would recreate it.
+            if git(cwd, "fetch", "-q", "origin",
+                   f"+refs/heads/{base}:refs/remotes/origin/{base}").returncode != 0:
+                raise Refusal(f"cannot read origin/{base} (fetch failed or the remote has no {base})")
+            # The push publishes every commit under the merge, so the local base must be origin's exactly.
+            if rev(cwd, base) != rev(cwd, f"origin/{base}"):
+                raise Refusal(f"local {base} differs from origin/{base} (behind, ahead or diverged: sync it first)")
+    else:
+        base = info.get("base") or base
+        base_ref = f"origin/{base}"
+        out(f"attribution: {attribution(info.get('body') or '')}")
+    claims = claims_of(info, local)
+    if local:
+        if sorted(claims) != sorted(ruled_claims):
+            raise Refusal(f"close claims {claims} differ from the ruled set {sorted(ruled_claims)}")
+    else:
+        same_claims(info.get("body") or "", ruled_claims)
+    head = check_head(cwd, branch, base_ref, ruled, remote=not local)
+    if local:
+        check_closed(cwd, claims)
+    elif close_tickets(cwd, pr, claims):
+        head = check_head(cwd, branch, base_ref, ruled)
     if info.get("draft"):
         fg.ready(pr)
     again = fg.resolve(pr)  # step 3: a body edited after approval is a stop
-    same_claims(again.get("body") or "", ruled_claims)
-    enabled = gate(cwd, "enabled", "--base", f"origin/{base}")
+    if local:
+        if sorted(claims_of(again, local)) != sorted(ruled_claims) or again["head"] != head:
+            raise Refusal("the unit's claims or head changed since the review gate ruled")
+    else:
+        same_claims(again.get("body") or "", ruled_claims)
+    enabled = gate(cwd, "enabled", "--base", base_ref)
     if enabled not in (0, 1):
         raise Refusal("gate configuration unreadable (never remove the file to get through)")
     gated = enabled == 0
     if gated:
-        record(cwd, base)
+        notes = None
+        if local and not remote:
+            notes = git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()
+        record(cwd, base_ref, notes)
         if fg.auto_merge_armed(pr):
             fg.disarm(pr)
             if fg.auto_merge_armed(pr):
                 raise Refusal("auto-merge still armed")
     try:
         try:
-            fg.merge(pr, head, auto=not gated)
+            fg.merge(pr, head, auto=not gated and not local)
         except forge.MergeRefused as exc:  # the adapter's class, not a Refusal
             # Definite "not merged" only when the forge refused AND the request is still OPEN at this head.
             back = fg.read_back(pr)
             if back is not None and back.split()[:2] == ["OPEN", head] and "queued" not in back:
                 raise Refusal(f"forge refused the merge, request still open at {head[:12]}: {exc}") from exc
             raise PostMerge(f"forge reported a refusal ({exc}) but the read-back is {back!r}") from exc
-        return after_merge(fg, pr, cwd, branch, base, head, gated, start, do_cleanup, out)
+        return after_merge(fg, pr, cwd, branch, base, head, gated, start, do_cleanup, out, local)
     except Refusal:
         raise
     except Exception as exc:
         raise PostMerge(f"{type(exc).__name__}: {exc}") from exc
 
 
-def after_merge(fg, pr, cwd, branch, base, head, gated, start, do_cleanup, out) -> int:
+def sync_local(cwd: Path, base: str) -> tuple[bool, list[str]]:
+    """Step 8 with no forge. The merge already moved the local base (and pushed it when origin exists),
+    so sync-local-main.sh has nothing to move and prints nothing: synced is read from the refs."""
+    primary = Path(git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()).parent
+    if git(primary, "remote", "get-url", "origin").returncode != 0:
+        return True, [f"no remote: local {base} at {rev(primary, 'refs/heads/' + base)[:12]}"]
+    ok, lines = sync(primary, base)
+    git(primary, "fetch", "-q", "origin", base)
+    if not ok and git(primary, "rev-parse", f"refs/heads/{base}").stdout == git(
+            primary, "rev-parse", f"refs/remotes/origin/{base}").stdout != "":
+        return True, lines + [f"{base} equals origin/{base}"]
+    return ok, lines
+
+
+def after_merge(fg, pr, cwd, branch, base, head, gated, start, do_cleanup, out, local=False) -> int:
     back = fg.read_back(pr)
     if back is None:
         raise PostMerge("read-back unreadable")
@@ -235,14 +308,17 @@ def after_merge(fg, pr, cwd, branch, base, head, gated, start, do_cleanup, out) 
         fg.comment(pr, f"merge {head}: duration: {fmt(end - start)}")
     except Exception as exc:  # the merge landed; a lost comment is reported
         out(f"duration comment failed: {exc}")
-    common = git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()
-    synced, lines = sync(Path(common).parent, base)
+    if local:
+        synced, lines = sync_local(cwd, base)
+    else:
+        common = git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()
+        synced, lines = sync(Path(common).parent, base)
     for line in lines:
         out(line)
     if not synced:
         return UNSYNCED
     if do_cleanup:
-        out(cleanup(cwd, branch, head, base))
+        out(cleanup(cwd, branch, head, base, base if local else None))
     return OK
 
 

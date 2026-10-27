@@ -11,9 +11,9 @@ id, branch, base, head, state, mergeable, draft, body, claims. Backend choice:
 Operations: resolve, comments, checks, comment, append_body_line, create, ready,
 auto_merge_armed, disarm, merge, read_back. On the `none` backend comment,
 append_body_line, ready and disarm return NOOP (falsy, typed, never raising);
-comments is empty, checks is "none", auto_merge_armed is False; merge and
-read_back raise NoForgeMerge until ticket 1275 (a silent no-op merge would read
-back "merged" on nothing). merged_at is the merge timestamp of a merged request.
+comments is empty, checks is "none", auto_merge_armed is False; merge is the
+local gated merge of ticket 1275 (design D3 of 1252) and read_back reads the merge
+commit back from git, never from the call. merged_at is the merge timestamp of a merged request.
 The callers (ticket 1272): gaze_setup, gaze_close, attribution_record, review-anchor, raid_land.
 `resolve` never raises on a malformed close claim: it returns `claims: []` and `claims_error`,
 so each caller keeps its own order of refusals; parse_claims is the one parser.
@@ -28,14 +28,11 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 
 class ForgeRefusal(Exception):
     """The forge cannot answer or refused; the message says why."""
-
-
-class NoForgeMerge(ForgeRefusal):
-    """merge/read_back on the none backend: not implemented before ticket 1275."""
 
 
 class MergeRefused(ForgeRefusal):
@@ -242,8 +239,30 @@ class NoneForge:
     def comment(self, ref: str, body: str, strict: bool = False):
         return NOOP
 
+    local = True  # raid_land runs its local-landing path for this backend (ticket 1275)
+
+    def base_branch(self, info: dict) -> str:
+        """The local branch a request's base names: `origin/main` and `main` both give `main`."""
+        base = info["base"]
+        return base[len("origin/"):] if base.startswith("origin/") else base
+
+    def has_remote(self) -> bool:
+        return self._git("remote", "get-url", "origin").returncode == 0
+
+    def _landing(self, info: dict) -> str | None:
+        """The merge commit that brought `info.head` into the base branch (first-parent walk), else None."""
+        walk = self._git("log", "--first-parent", "--merges", "--format=%H %P", "-n", "200",
+                         f"refs/heads/{self.base_branch(info)}")
+        for line in walk.stdout.splitlines():
+            parts = line.split()
+            if len(parts) == 3 and parts[2] == info["head"]:
+                return parts[0]
+        return None
+
     def merged_at(self, ref: str):
-        raise NoForgeMerge("no forge: the merge date arrives with ticket 1275")
+        """The committer date (ISO 8601) of the merge commit that landed the unit, else None."""
+        landed = self._landing(self.resolve(ref))
+        return (self._git("show", "-s", "--format=%cI", landed).stdout.strip() or None) if landed else None
 
     def append_body_line(self, ref: str, line: str, edit=None):
         return NOOP
@@ -260,11 +279,78 @@ class NoneForge:
     def disarm(self, ref: str):
         return NOOP
 
+    def _checked_out(self, bname: str) -> str | None:
+        """The worktree that has refs/heads/<bname> checked out, else None."""
+        path = None
+        for line in self._git("worktree", "list", "--porcelain").stdout.splitlines():
+            if line.startswith("worktree "):
+                path = line[len("worktree "):]
+            elif line == f"branch refs/heads/{bname}":
+                return path
+        return None
+
     def merge(self, ref: str, head: str, auto: bool):
-        raise NoForgeMerge("no forge: the local merge arrives with ticket 1275")
+        """D3 of ticket 1252: merge `head` (pinned by OID) into the local base branch, no forge.
+
+        In a throwaway detached worktree at the base tip: `git merge --no-ff <head>`. The new tip
+        then replaces the old one by compare-and-swap (`update-ref ... <old>`), or, when a worktree
+        has the base checked out, by a fast-forward there so its files follow the ref. Either
+        way the main-update guard (hooks/reference-transaction) judges the move; a refusal is a
+        MergeRefused carrying its stderr. With a remote the base is then pushed (fast-forward only);
+        a failed push leaves the local base moved and raises ForgeRefusal saying so.
+        The caller has already checked the gate record (raid_land.record)."""
+        info = self.resolve(ref)
+        if info["state"] != "OPEN":
+            raise MergeRefused(f"unit is {info['state']}, not OPEN")
+        if info["head"] != head:
+            raise MergeRefused(f"{info['branch']} is at {info['head'][:12]}, not the pinned {head[:12]}")
+        if info["mergeable"] != "MERGEABLE":
+            raise MergeRefused(f"{info['branch']} does not merge cleanly into {info['base']}")
+        bname = self.base_branch(info)
+        bref = f"refs/heads/{bname}"
+        old = self._rev(bref)
+        with tempfile.TemporaryDirectory(prefix="forge-merge-") as tmp:
+            tree = os.path.join(tmp, "candidate")
+            added = self._git("worktree", "add", "-q", "--detach", tree, old)
+            if added.returncode != 0:
+                raise MergeRefused(f"cannot create the merge worktree: {added.stderr.strip()}")
+            try:
+                msg = f"Merge branch '{info['branch']}' into {bname}\n\nreviewed-head: {head}\n"
+                done = subprocess.run(["git", "-C", tree, "merge", "--no-ff", "-q", "-m", msg, head],
+                                      capture_output=True, text=True)
+                if done.returncode != 0:
+                    raise MergeRefused(f"git merge failed: {(done.stderr or done.stdout).strip()}")
+                new = subprocess.run(["git", "-C", tree, "rev-parse", "HEAD"], capture_output=True,
+                                     text=True).stdout.strip()
+            finally:
+                self._git("worktree", "remove", "--force", tree)
+        if self._git("rev-parse", f"{new}^2").stdout.strip() != head:
+            raise MergeRefused("the merge commit's second parent is not the pinned head")
+        where = self._checked_out(bname)
+        if where:
+            moved = subprocess.run(["git", "-C", where, "merge", "--ff-only", "-q", new],
+                                   capture_output=True, text=True)
+        else:
+            moved = self._git("update-ref", bref, new, old)
+        if moved.returncode != 0:
+            raise MergeRefused(f"{bname} not moved: {(moved.stderr or moved.stdout).strip()}")
+        if self._git("rev-parse", bref).stdout.strip() != new:  # a checkout switched under us: publish nothing
+            raise MergeRefused(f"{bname} is not at the new merge {new[:12]} after the move; nothing pushed")
+        if self.has_remote():
+            pushed = self._git("push", "-q", "origin", f"{new}:{bref}")
+            if pushed.returncode != 0:
+                raise ForgeRefusal(f"{bname} moved locally to {new[:12]} but the push failed: "
+                                   f"{pushed.stderr.strip()}; push it by hand, never re-merge")
 
     def read_back(self, ref: str):
-        raise NoForgeMerge("no forge: the local read-back arrives with ticket 1275")
+        """`<STATE> <head> -`: MERGED with the second parent of the merge commit that landed the
+        unit (first-parent walk of the base). A head in the base by no such merge commit reads
+        `MERGED - -`, which matches no pinned head; otherwise OPEN with the branch tip."""
+        info = self.resolve(ref)
+        landed = self._landing(info)
+        if landed:
+            return f"MERGED {self._git('rev-parse', landed + '^2').stdout.strip()} -"
+        return "MERGED - -" if info["state"] == "MERGED" else f"OPEN {info['head']} -"
 
 
 def get_forge(choice: str | None = None, ref: str = "", cwd: str | None = None):
