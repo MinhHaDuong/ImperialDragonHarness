@@ -29,7 +29,17 @@ cat > "$STUB_LOG/$(basename "$0").stdin"
 case "$STUB_MODE" in
   aider-clear)
     printf 'Aider v0.86.2\n--------------\n► **THINKING**\nhmm\n------------\n► **ANSWER**\nfinding: none\nverdict: clear\nTokens: 1\n' ;;
-  fail) echo "partial"; exit 1 ;;
+  fail) echo "partial"; echo "stub: provider rejected the request" >&2; exit 1 ;;
+  pi-unknown)
+    # Pi on a provider that does not list the id: warns on stderr, answers anyway, exits 0
+    echo 'Warning: Model "nope-model" not found for provider "anthropic". Using custom model id.' >&2
+    printf 'finding: none\nverdict: clear\n' ;;
+  codex-echo)
+    # codex echoes tool output to stderr: a file that merely contains Pi's warning text
+    echo 'exec: sed -n 1,5p gaze_seat.py' >&2
+    echo "UNLISTED_MODEL = 'not found for provider'  # Pi's warning" >&2
+    echo '+ assert "Model \"x\" not found for provider" in out' >&2
+    printf 'finding: none\nverdict: clear\n' ;;
   liar) printf 'worker: model=gpt-6.1-sol · family=OpenAI\nfinding: none\nverdict: clear\n' ;;
   notrun) printf 'NOT-RUN: review tree unreachable\n' ;;
   notrun-tick) printf 'Reading the tree first.\n`NOT-RUN: HEAD moved`\n' ;;
@@ -206,6 +216,44 @@ def test_failed_seat_is_no_report_never_a_self_read(rig):
     assert result.returncode == 1
     assert result.stdout.startswith('correctness: no report (failed, exit 1, ')
     assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_failed_seat_status_carries_the_first_stderr_line(rig):
+    result = launch(rig, mode='fail')
+    assert result.returncode == 1
+    assert result.stdout.startswith('correctness: no report (failed, exit 1, ')
+    assert 'stub: provider rejected the request' in result.stdout
+
+
+@pytest.mark.integration
+def test_pi_seat_refuses_a_model_id_the_provider_does_not_list(rig):
+    # A local server answers to any id and Pi exits 0 with a stderr warning: the
+    # report would name a model that did not run.
+    result = launch(rig, runtime='pi', model='anthropic/nope-model', family='Anthropic',
+                    mode='pi-unknown')
+    assert result.returncode == 1
+    assert result.stdout.startswith('correctness: no report (')
+    assert 'nope-model' in result.stdout
+    assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_codex_seat_echoing_the_warning_phrase_still_reports(rig):
+    # codex echoes tool output on stderr; reading this PR's own diff must not
+    # read as Pi's unlisted-model warning.
+    (rig['tmp'] / 'gaze-seats.json').write_text(json.dumps({'cross_family_spend': ['OpenAI']}))
+    result = launch(rig, runtime='codex', model='gpt-6-luna', family='OpenAI', mode='codex-echo')
+    assert result.returncode == 0, result.stdout
+    assert (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_pi_seat_with_a_listed_model_still_reports(rig):
+    # Control: the same door and provider without the warning files its report.
+    result = launch(rig, runtime='pi', model='anthropic/listed-model', family='Anthropic')
+    assert result.returncode == 0, result.stdout
+    assert (rig['panel'] / 'correctness.md').exists()
 
 
 @pytest.mark.integration
