@@ -27,7 +27,17 @@ re-gate once with the same `session=`. Breakers on this loop:
 
 **Second fix round (author ruling, 2026-10-27).** One further round runs without
 the author when every finding of the narrower gaze (a) concerns the previous
-fixes, with no new scope, (b) is tagged `verifiable:` with its reproduction,
-and (c) is fixed red-test-first, the red run shown failing for the targeted
-reason. A third round, or any judgment finding, escalates.
+fixes, with no new scope, (b) is a `verifiable:` minor or a blocking finding,
+in both cases carrying a reproduction, and (c) is fixed red-test-first, the
+red run shown failing for the targeted reason. A third round, or any judgment
+finding, escalates.
+
+- **Reproduction** is a failing test id or captured command output; a bare
+  `SHA:file:line` citation is not one.
+- **Judgment finding**: a `consider:` or `nofollow:` item, or any finding
+  without a reproduction. A fix agent that cannot show the red run escalates;
+  so does a prose or doc fix, which has no red test.
+- **Judge of (a)**: the orchestrator (raid or hunt), against the diff of the
+  fix commits.
+- This count is separate from verify-gate's two-round REROLL budget.
 

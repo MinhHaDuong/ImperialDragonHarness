@@ -59,8 +59,8 @@ re-gate.
   recipe passes `--merge`; a squash-only repo rejects that flag. Read the
   repo's merge settings at merge time, and trust the merge attempt over the
   flag.
-- **Fix rounds after gaze:** one round, plus a second for verifiable fix-on-fix
-  findings only, as `skills/raid/references/fix-and-regate.md` states.
+- **Fix rounds after gaze:** one round, plus a second for fix-on-fix findings
+  that carry a reproduction, as `skills/raid/references/fix-and-regate.md` states.
 - **After gaze, sync before closing the ticket.** Gaze makes no commits,
   but a fix cycle or another session may have pushed:
   `git fetch origin && git merge --ff-only origin/<branch>` first, or a stale
