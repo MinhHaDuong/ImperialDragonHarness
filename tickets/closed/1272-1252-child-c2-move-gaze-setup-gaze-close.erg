@@ -2,10 +2,12 @@
 Title: 1252 child C2: move gaze_setup, gaze_close, attribution_record, review-anchor and raid_land onto the forge adapter
 Created: 2026-10-27
 Author: reviewer
+Closed: closed by raid — PR #1799
 
 --- log ---
 2026-10-27T15:45Z reviewer created
 2026-10-27T15:58Z reviewer note blocker 1271 closed — Blocked-by removed.
+2026-10-27T16:24Z reviewer closed — closed by raid — PR #1799
 
 --- body ---
 ## Context
