@@ -163,6 +163,12 @@ def test_raid_log_helper_roundtrip(tmp_path, monkeypatch):
         raid_log.append("bad event", {}, path)
 
 
+def test_raid_log_path_needs_no_second_argument(capsys):
+    import raid_log
+    assert raid_log.main(["path"]) == 0
+    assert capsys.readouterr().out.strip() == str(raid_log.log_path())
+
+
 def test_skill_arms_and_disarms_cadence():
     text = (SCRIPTS.parent / "skills" / "raid" / "SKILL.md").read_text()
     arm = text.find("raid-sitrep.py")

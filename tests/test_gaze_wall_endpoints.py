@@ -42,3 +42,8 @@ def test_agent_seats_use_their_traced_end():
     )
     e = g.endpoints(r)
     assert e["setup"] == 20 and e["closing"] == 80
+
+
+def test_plan_check_before_any_seat_launch_is_not_closing():
+    r = _run([(20, 2, "Bash", "python3 scripts/seat_clock.py plan-check .panel/9")])
+    assert g.endpoints(r)["closing"] is None

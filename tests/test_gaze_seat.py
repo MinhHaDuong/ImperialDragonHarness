@@ -111,7 +111,7 @@ def rig(tmp_path):
 
 
 def launch(rig, *extra, runtime='claude-code', model='haiku', family='Anthropic', name='correctness',
-           mode='', home='Anthropic', anchor=None):
+           mode='', home='Anthropic', anchor=None, caller_stdin=None):
     env = dict(rig['env'], STUB_MODE=mode)
     return subprocess.run(
         [sys.executable, str(SCRIPT), 'launch', '--runtime', runtime, '--model', model,
@@ -119,7 +119,7 @@ def launch(rig, *extra, runtime='claude-code', model='haiku', family='Anthropic'
          '--panel', str(rig['panel']), '--name', name, '--review-tree', str(rig['tree']),
          '--brief', str(rig['brief']), '--cap', '20', '--base', rig['base'],
          '--anchor', anchor or rig['head'], *extra],
-        capture_output=True, text=True, timeout=60, env=env)
+        capture_output=True, text=True, timeout=60, env=env, input=caller_stdin)
 
 
 def first_line(path):
@@ -544,7 +544,8 @@ def test_non_reasoning_answer_without_a_marker_is_reported(rig, padme):
 @pytest.mark.integration
 def test_vibe_seat_is_read_only_pinned_by_a_disposable_home_and_stdin_closed(rig):
     (rig['tmp'] / 'gaze-seats.json').write_text('{"cross_family_spend": ["Mistral"]}')
-    result = launch(rig, runtime='vibe', model='mistral-large-latest', family='Mistral')
+    result = launch(rig, runtime='vibe', model='mistral-large-latest', family='Mistral',
+                    caller_stdin='caller-secret')  # a live pipe: pytest's own fd 0 is /dev/null, which hides a leak
     assert result.returncode == 0, result.stdout
     argv = (rig['log'] / 'vibe.argv').read_text().splitlines()
     assert argv[:2] == ['--enabled-tools', 'read_file'] and argv[2] == '-p'
