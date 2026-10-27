@@ -6,6 +6,7 @@ fields and the no-fallback worktree setup remain."""
 from pathlib import Path
 import os
 import subprocess
+import sys
 
 import pytest
 
@@ -18,13 +19,11 @@ VERIFY = ROOT / "skills/verify-gate/SKILL.md"
 
 
 def test_worktree_creation_failure_stops_gaze():
-    setup = GAZE.read_text().split("**Isolation setup:**", 1)[1].split(
-        "## Review scratch cleanup", 1
-    )[0]
-    assert "git worktree add" in setup
-    assert "if ! git worktree add" in setup
-    assert 'test -d "$review_tree"' in setup
-    assert "gaze: cannot create isolated review worktree" in setup
+    src = (ROOT / "scripts/gaze_setup.py").read_text()
+    assert '"worktree", "add"' in src
+    assert "tree.is_dir()" in src
+    assert "cannot create isolated review worktree" in src
+    assert "isolated review worktree" in GAZE.read_text()
 
 
 def test_verdict_comment_names_gate_identity():
@@ -37,13 +36,7 @@ def test_verdict_comment_names_gate_identity():
 
 @pytest.mark.integration
 def test_denied_worktree_add_stops_without_fallback(tmp_path):
-    """Run the documented setup block against a fake guard denial."""
-    setup = GAZE.read_text().split("**Isolation setup:**", 1)[1].split(
-        "## Review scratch cleanup", 1
-    )[0]
-    shell = setup.split("```bash", 1)[1].split("```", 1)[0]
-    shell = shell.replace("<pr-number>", "85")
-    shell = shell.replace("<resolved-branch-name>", "branch-85")
+    """Run gaze_setup.py against a fake guard denial."""
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
     fake_git = bin_dir / "git"
@@ -54,8 +47,15 @@ def test_denied_worktree_add_stops_without_fallback(tmp_path):
         '*) exit 99;; esac\n'
     )
     fake_git.chmod(0o755)
+    fake_gh = bin_dir / "gh"
+    fake_gh.write_text(
+        "#!/bin/sh\n"
+        'echo \'{"headRefName":"branch-85","headRefOid":"x","baseRefName":"main","state":"OPEN","mergeable":"MERGEABLE"}\'\n'
+    )
+    fake_gh.chmod(0o755)
     env = child_env() | {"PATH": f"{bin_dir}:{os.environ['PATH']}", "IDH_HOME": str(ROOT)}
-    result = subprocess.run(["bash", "-c", shell], env=env, text=True, capture_output=True)
+    result = subprocess.run([sys.executable, str(ROOT / "scripts/gaze_setup.py"), "85"], cwd=tmp_path,
+                            env=env, text=True, capture_output=True)
     assert result.returncode != 0
-    assert "gaze: cannot create isolated review worktree" in result.stderr
+    assert "cannot create isolated review worktree" in result.stderr
     assert not (tmp_path / ".claude/worktrees/review-85").exists()

@@ -54,30 +54,23 @@ A fork ends its turn when it stops calling tools, and delegated agents run in th
 
 ### 1. Setup
 
-Start the duration clock (`references/output.md` § Duration clock), then
-create the review worktree. If `review-<pr-number>` already exists, another
-gaze holds the PR: when anything in it changed within the liveness window
-(`fork_liveness_seconds`, `skills/gaze/telemetry.yml`), that run is live, so
-return ESCALATE "another gaze is live on this PR"; otherwise it is a dead
-run's leftover, so run the cleanup (`references/cleanup.md`) on it, then
-create the tree.
-
-**Isolation setup:**
+One call does the whole phase (clock, isolation worktree, anchor check, PR
+state, ticket files, panel directory):
 
 ```bash
-PR_BRANCH=<resolved-branch-name>   # forge-specific: PR number to branch
-primary_root=$(git rev-parse --show-toplevel)
-primary_root="${primary_root%%/.claude/worktrees/*}"   # strip if run from a session worktree
-review_tree="$primary_root/.claude/worktrees/review-<pr-number>"
-git fetch origin "$PR_BRANCH" || exit 1
-if ! git worktree add "$review_tree" origin/"$PR_BRANCH" || ! test -d "$review_tree"; then
-    echo "gaze: cannot create isolated review worktree for PR <pr-number>; refusing to fall back into the invoking tree" >&2
-    exit 1
-fi
+python3 "$IDH_ROOT/scripts/gaze_setup.py" <pr-number>
 ```
 
-Then `references/setup-and-breaker.md`: collection, the anchor check and the
-close-claim check.
+It prints one `key=value` block (`clock`, `branch`, `head`, `ci`,
+`review_tree`, `panel`, `ticket`, the changed-file roster; PR body and
+comments are written to files in the panel directory). Keep `clock` and
+`branch` literally for § 5. Exit 1 blocks (conflicts, a close claim naming a
+nonexistent ticket file, no isolated worktree: never fall back into the
+invoking tree), 2 is a read or anchor failure, 3 means another gaze is live on
+this PR (`review-<pr-number>` is the lock; liveness window
+`fork_liveness_seconds`, `skills/gaze/telemetry.yml`): return ESCALATE
+"another gaze is live on this PR". A dead run's leftover tree is cleaned by
+the script. Details and what stays judgment: `references/setup-and-breaker.md`.
 
 <!-- inline: references/setup-and-breaker.md -->
 
@@ -138,14 +131,18 @@ unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
 ```
 
-**Attribution.** After each seat returns, append its `reviewer: step=review`
-line, with its `finding:` lines, to the PR body through
-`python3 "$IDH_ROOT/scripts/attribution_record.py" --append-pr <pr> --append '<lines>'`.
+**Attribution.** As each seat returns, collect its `reviewer: step=review`
+line, with its `finding:` lines, in a file; `gaze_close.py --attribution-file`
+appends them to the PR body through `attribution_record.py --append-pr`.
 Seats never edit the body; a failed append is reported, not skipped.
 
 ## Cleanup and containment
 
-On every exit path run `references/cleanup.md`: remove this run's review scratch and the review worktree, then check the containment postcondition (cwd, branch, foreign files) and report it before returning.
+On every exit path run `references/cleanup.md` through the one closing call
+(`python3 "$IDH_ROOT/scripts/gaze_close.py" <pr> --branch <branch> --token <clock> --comment-file <file>`):
+it removes this run's review scratch and the review worktree, checks the
+containment postcondition (cwd, branch, foreign files), records attribution
+and posts the comment.
 
 <!-- inline: references/cleanup.md -->
 
