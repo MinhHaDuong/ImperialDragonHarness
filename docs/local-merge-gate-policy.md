@@ -4,8 +4,8 @@ Status as of 2026-10-21. Written at the author's request so the policy can be
 adopted in other projects. Decided in tracker 1045. Today only the forge
 settings are in place (the light ruleset, no required checks, GitHub Actions
 disabled), together with the gate-record machinery, the guard hook and the daily audit.
-The gate itself switches on when the activation pull request of ticket 1156
-merges. Each part still open is marked **pending** with its ticket.
+The gate itself is on: `.merge-gate.json` declares `"gate": "on"` (ticket 1156).
+Each part still open is marked **pending** with its ticket.
 
 ## Principle
 

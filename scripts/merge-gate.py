@@ -44,7 +44,8 @@ touches a path its `"covers"` patterns match, or `--integration` is passed.
 
 Fast path (ticket 1226; the policy is skills/merge/SKILL.md § Gating tiers):
 when the base declares `"fastpath": {"checks": [names], "max_lag": K,
-"max_age_minutes": M}`, a bookkeeping candidate's record runs only those
+"max_age_minutes": M}` (plus, for scripts/merge_monitor.py,
+`"monitor_timeout_minutes"` and `"rerun": {check: argv}`), a bookkeeping candidate's record runs only those
 checks, under the scope `<scope>/fastpath`, while the fast path is open: the
 latest verdict on main's first-parent line at or behind the base is green,
 the base at most K-1 merges past it (the candidate makes the K-th), and the
