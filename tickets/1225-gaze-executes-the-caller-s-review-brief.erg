@@ -9,6 +9,7 @@ Author: Minh Ha-Duong
 2026-10-26T22:24Z reviewer reviewer note alignment 2026-10-26 (author: yes, align): blocked by 1226 (same § Gating tiers); 1223 folded in as a worked case and a default brief, the tier stays mechanical; the brief is the inline form of the 1154 request/response files
 2026-10-27T06:52Z reviewer reviewer note rewritten (author, 2026-10-27: management by intention, KISS, Trust Verify Monitor): intent in, gaze plans, executes, verifies plan against done, records. PR 1686 (brief grammar) closed unmerged as too much ceremony; Blocked-by 1226 dropped, the design no longer edits § Gating tiers.
 2026-10-27T06:54Z reviewer reviewer note author 2026-10-27: gaze is one pass, read-only on the code, delivers its report in one defined place (the result comment), may run checks but leaves scratch clean; added to Design and exit criteria
+2026-10-27T07:11Z reviewer reviewer note Fable review of PR 1698 applied with the author's rulings (2026-10-27): interface kept (gate fields, attribution block); family checked from the launch line and the worker's own first line; other-family for high risk is judgement, not a rule; no retry, a timeout is a deviation; existing cleanup step is the scratch check; force-approve, retry and the battery/review_groups/multi_ticket lines deleted; lints are checks not seats; Codex/Pi pass the intent verbatim; skill shrink measured.
 
 --- body ---
 ## Context
@@ -21,7 +22,8 @@ version of this ticket (PR 1686, closed unmerged: too much ceremony, a
 
 Why the earlier attempts did not take. Attempt 1 (tracker [[1100]]): the
 caller wrote the review plan, under a risk floor. Attempt 2 (ticket 1176):
-gaze chose with no input and defaulted to its full panel. Attempt 3 (PR
+the orchestrator was to choose the seats, but nothing sized them, so the full
+panel ran by default. Attempt 3 (PR
 1686): the caller wrote seats and scope in a grammar. Here the caller writes
 only intent; the what bounds the scope, the why sets the risk, gaze plans.
 
@@ -34,7 +36,8 @@ rounds, not a faster round.
 
 ## Design
 
-1. **Intent in.** `/gaze <pr> verify <what> because <why>`, plain words. No
+1. **Intent in.** Free text after the merge request number, in the shape
+   `/gaze <pr> verify <what> because <why>`; the parser stays lenient. No
    intent: the what is the whole merge request, the why its ticket's exit
    criteria. Nothing is refused for its wording.
 2. **Plan.** Gaze writes a short plan before launching anything: method,
@@ -43,16 +46,29 @@ rounds, not a faster round.
    and history (what earlier results on this merge request covered). The
    cheapest method that settles the what wins: running a test against old and
    new code, one seat, a panel, an external or other-family model, a weaker
-   or stronger model, chosen through the route skill.
+   or stronger model, chosen through the route skill. For a high-risk what
+   (the decorrelation.md rows: rules, gates, credentials, deletion), a look
+   from another model family is worth its cost; gaze weighs that by judgement.
+   Mechanical lints (adherence tests, AI-tells for prose) are checks the plan
+   runs as scripts, never review seats.
 3. **Execute.** Exactly the plan, nothing added.
 4. **Verify.** Plan against what was done: each planned item ran and
-   reported; each worker is the model or family planned; the run covered the
+   reported; each worker is the family planned (its launch line, and the
+   worker's own first line, where it names its model and family); the run covered the
    stated what; the budget held. A deviation is named with its reason. A
    planned perspective missing without a substitute that still settles the
-   what means the verdict cannot be REVIEWED.
-5. **Record.** One result comment: intent, plan, what ran (worker, model,
-   time), plan check, findings, verdict (REVIEWED, FINDINGS or ESCALATE;
-   gaze never approves), duration. That comment is the whole register.
+   what means the verdict cannot be REVIEWED. There is no retry: a worker
+   that timed out or could not be reached is a deviation, reported so the
+   orchestrator can decide.
+5. **Record.** One result comment: intent, plan, what ran (worker, family,
+   model when known, time), plan check, findings, verdict (REVIEWED, FINDINGS
+   or ESCALATE; gaze never approves), duration. The interface stays: the
+   fields `/verify-gate`, `/merge` and `/raid` read today (`reviewed_head_sha`,
+   `adherence`, the result line) keep their names; `plan check:` replaces
+   `panel_integrity:`, and its readers are repointed in the same change. The
+   reviewer `attribution` block in the merge request body stays, as the
+   register of who reviewed (read by `/merge` and the journal); the result
+   comment is the register of what was found.
 
 Properties of every run:
 
@@ -65,14 +81,24 @@ Properties of every run:
   merge request's branch, nor writes in the caller's worktree.
 - **Checks allowed, scratch clean.** Gaze may run tests or scripts to settle
   the what, in a throwaway worktree of its own; it removes that worktree and
-  every scratch file before returning, and the record says so.
+  every scratch file before returning. The existing cleanup step
+  (`skills/gaze/references/cleanup.md`, with its exit preflight that refuses
+  to remove a tree holding real work) already enforces this; keep it.
 - **One delivery place.** The report is the merge request's gaze result
-  comment, the same text returned to the caller; nothing else is written.
+  comment, the same text returned to the caller, plus the reviewer lines in
+  the body's attribution block.
 
 Trust: the orchestrator trusts gaze's plan; gaze trusts the coder's tests and
 the gate's checks. Verify: step 4, and the comment shows intent beside plan.
 Monitor: trace-doctor and the 1197 telemetry judge plan sizing across runs;
 guidance changes on that evidence, never through a per-run floor.
+
+Deleted as cruft: `--force-approve` (nine uses, each to escape review
+rounds or to say a docs-only change needed little review; one pass and a
+narrow intent say that without a special path); the one-retry rule; the
+`battery:`, `review_groups:` and `multi_ticket:` result lines, which nothing
+outside gaze acts on except tests that pin them (`battery: NOT-RUN` for
+detached substitution becomes a plan-check deviation).
 
 A later round is a new, narrower intent ("verify the fixes for findings X
 and Y"), not a re-run of the whole review. Memory files every session reads
@@ -81,14 +107,15 @@ that wants them reviewed says so in the intent.
 
 ## Exit criteria
 
-- [ ] `/gaze` takes an optional plain-text intent (what, why) after the merge request number; with none, the default intent is the whole merge request against its ticket's exit criteria.
+- [ ] `/gaze` takes optional free text after the merge request number as its intent (what, why); with none, the default intent is the whole merge request against its ticket's exit criteria.
 - [ ] Gaze writes its plan (method, workers, budget) before launching anything, from nature, size, location and history; the guidance for it lives in one place and states the "cheapest method that settles the what" rule with a few worked cases.
 - [ ] After executing, gaze compares plan with what was done and records the outcome as a `plan check:` line; a planned perspective missing without a valid substitute blocks a REVIEWED verdict.
-- [ ] The result comment carries intent, plan, run, plan check, findings, verdict and duration, and is the only register (no per-seat attribution writes into the merge request body).
+- [ ] The result comment carries intent, plan, run, plan check, findings, verdict and duration; `reviewed_head_sha`, `adherence` and the result line keep their names; `plan check:` replaces `panel_integrity:` with every reader (verify-gate, merge, raid, tests) repointed; the body's attribution block is still written.
 - [ ] One pass, no recursion: the plan may run several workers in parallel, but no worker launches a further review and gaze has no internal round or fix loop; it returns after the single pass.
 - [ ] Read-only: a test shows a gaze run leaves the merge request's branch tip and the caller's worktree unchanged.
-- [ ] Scratch clean: checks run in gaze's own throwaway worktree, removed with every scratch file before it returns; a test shows nothing of the run remains on disk.
-- [ ] `/hunt`, `/raid` and `/merge` pass an intent and drop their fixed round loops: a later round is a new, narrower intent.
-- [ ] The fixed battery as a default, the brief grammar idea, and per-phase integrity rules the plan check replaces are deleted; the skill text is shorter than before.
+- [ ] Scratch clean: checks run in gaze's own throwaway worktree; the existing cleanup step and exit preflight stay and are the check.
+- [ ] `/hunt`, `/raid` and `/merge` pass an intent and drop their fixed gaze round loops: a later round is a new, narrower intent. The gate's two-round cap is unchanged.
+- [ ] Codex and Pi: the intent is passed verbatim to the detached gaze session (`skills/raid/references/detached-gaze.md`).
+- [ ] Deleted: the fixed battery as a default (`references/battery.md`), `--force-approve`, the one-retry rule, the `battery:`, `review_groups:` and `multi_ticket:` lines, and the per-phase integrity rules the plan check replaces. `skills/gaze/SKILL.md` plus its references lose lines net, the count stated in the merge request; the plan guidance is one file, and a search finds its "cheapest method" rule nowhere else.
 - [ ] Regression tests: a small intent yields a one-worker plan; a plan item that did not run makes the plan check fail and blocks REVIEWED.
 - [ ] The harness gate (`.merge-gate.json` checks) passes.
