@@ -2,10 +2,12 @@
 Title: DOIfetch as a shared uv tool: idh install pins it; the zotero skill fetches missing fulltexts from open sources
 Created: 2026-10-27
 Author: reviewer
+Closed: closed by raid — PR #1796
 
 --- log ---
 2026-10-27T13:38Z reviewer created
 2026-10-27T14:59Z reviewer Step B landed in DOIfetch: PR 11 (Install as a uv tool; open sources by default; ISTEX login flow) merged 2026-10-27T14:39Z at 3e074798b0c0bf0b010c444ea701ab8768213294 — the candidate pinned ref for idh install. Step C (this ticket) is unblocked.
+2026-10-27T15:56Z reviewer closed — closed by raid — PR #1796
 
 --- body ---
 ## Context

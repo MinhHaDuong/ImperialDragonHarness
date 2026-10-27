@@ -142,3 +142,15 @@ item through the local API:
 Before trusting a check's negatives, run it against a case you know is
 positive — a guard whose "all clear" is indistinguishable from "I could not
 look" is not a guard. `consulted` / `skipped` in every result exist for that.
+
+## Fetching missing fulltexts
+
+For a work a staging or cited-works check reports without a stored file (verdict
+`work_present_no_file`), try `doifetch --doi <doi> --title <title>` with no
+`--source`. The default list is open and institutional only (Crossref, Unpaywall,
+HAL, ISTEX, EZproxy). File each downloaded PDF with
+`suggest-attachments --parent <itemKey> <file>`, and add `--edit` after reading
+the report. Never pass `--source scihub` or `--source libgen`: a source outside the
+default list is the author's own manual, per-user choice, never the harness's.
+When `command -v doifetch` fails, say so and tell the user to run `idh install`
+(needs `uv` and the network); do not fetch another way.
