@@ -702,47 +702,7 @@ def test_install_retires_links_the_manifest_no_longer_declares(machine):
     assert elsewhere.is_symlink()  # another checkout's install decides
     assert kept.is_symlink()  # declared, whatever the receipt spelled
     after = json.loads(receipt.read_text())
-    assert not {str(retired), str(home / ".claude/skills/gone")} & set(after)
-    assert {str(edited), str(elsewhere), str(alias / ".local/bin/pgrep")} <= set(after)
+    assert not {str(retired), str(edited), str(home / ".claude/skills/gone")} & set(after)
+    assert str(elsewhere) in after and str(alias / ".local/bin/pgrep") in after
     assert idh("check").returncode == 0
     assert "retired:" not in idh("install").stdout
-
-
-def test_install_prunes_unrecorded_dangling_links_to_this_checkouts_skills(machine):
-    """A link no receipt holds still goes once its skill left the checkout; nothing else does."""
-    home, idh = machine["home"], machine["idh"]
-    assert idh("install").returncode == 0
-    root = home / ".claude/skills"
-    ghost, foreign, live, renamed = root / "ghost", root / "elsewhere", root / "by-hand", root / "alias"
-    ghost.symlink_to(os.path.relpath(REPO / "skills/ghost", root))
-    foreign.symlink_to("/elsewhere/skills/elsewhere")
-    live.symlink_to(os.path.relpath(REPO / "skills/perch", root))
-    renamed.symlink_to(os.path.relpath(REPO / "skills/not-alias", root))
-    # A receipt-recorded dangling link is retired by the receipt path.
-    receipt = home / ".local/state/idh/links.json"
-    owned = json.loads(receipt.read_text())
-    recorded = root / "recorded-gone"
-    recorded.symlink_to(os.path.relpath(REPO / "skills/recorded-gone", root))
-    owned[str(recorded)] = os.readlink(recorded)
-    # A receipt link edited by hand since install: retire_stale keeps it, so must prune.
-    edited = root / "edited-gone"
-    edited.symlink_to(os.path.relpath(REPO / "skills/edited-gone", root))
-    owned[str(edited)] = "../was/something/else"
-    receipt.write_text(json.dumps(owned))
-    # A skill entry that is a dangling symlink (unmounted overlay) keeps its link.
-    overlay = REPO / "skills/overlay-unmounted"
-    overlay.symlink_to("/nonexistent/private/skills/overlay-unmounted")
-    kept = root / "overlay-unmounted"
-    kept.symlink_to(os.path.relpath(overlay, root))
-
-    try:
-        r = idh("install")
-        again = idh("install").stdout
-    finally:
-        overlay.unlink()
-    assert r.returncode == 0, r.stdout + r.stderr
-    assert f"pruned: {ghost}" in r.stdout and not os.path.lexists(ghost)
-    assert f"retired: {recorded}" in r.stdout and not os.path.lexists(recorded)
-    assert foreign.is_symlink() and live.is_symlink() and renamed.is_symlink()
-    assert edited.is_symlink() and kept.is_symlink()
-    assert "pruned:" not in again and "retired:" not in again

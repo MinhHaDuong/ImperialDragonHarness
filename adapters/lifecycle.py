@@ -3,8 +3,8 @@
 The operator's command, not the runtimes': hooks and skills keep calling
 scripts by path. adapters/projections.json is the one list of links, so
 install creates exactly what check verifies (and retires the links it
-once created that the manifest no longer declares, and prunes unrecorded
-dangling links to skills that left the checkout), and the launch validator
+once created that the manifest no longer declares, and prunes dangling
+links to harness skills that are gone), and the launch validator
 (scripts/validate-projections.py) supplies the per-entry verdict. Links are
 built from the structured `path`/`target` fields only; the free-form
 `installer` text is display, never executed. Stdlib only, Python 3.12.
@@ -95,9 +95,8 @@ def install_links() -> int:
         if problem:
             report(*problem)
             rc = 1
-    recorded = set(owned)  # before retire_stale drops edited links from it
     rc |= retire_stale(owned, declared)
-    rc |= prune_unrecorded(declared, recorded)
+    rc |= prune_dangling(skill_roots())
     try:
         receipt.parent.mkdir(parents=True, exist_ok=True)
         _replace(receipt, (json.dumps(owned, indent=2) + "\n").encode(), 0o600)
@@ -114,10 +113,8 @@ def retire_stale(owned: dict, declared: set[Path]) -> int:
     projection out of the manifest; either way the receipt still holds the
     link, so it would otherwise dangle or shadow for good. Only a link whose
     text is unchanged since install wrote it, and which points into this
-    checkout, is removed. A link edited or replaced since then stays put and
-    keeps its record, so prune_unrecorded leaves it alone on every later run;
-    only the record of a path that no longer exists is dropped. Another
-    checkout's link, and
+    checkout, is removed. A link edited or replaced since then is no longer
+    ours: it leaves the receipt and stays put. Another checkout's link, and
     a receipt path that is the same file as a declared one (HOME spelled
     another way), keep both the link and the record.
     """
@@ -150,48 +147,56 @@ def retire_stale(owned: dict, declared: set[Path]) -> int:
                 rc = 1
                 continue
             print(f"retired: {path} (no longer declared)")
-        if not os.path.lexists(path):
-            del owned[key]
+        del owned[key]
     return rc
 
 
-def prune_unrecorded(declared: set[Path], recorded: set[str]) -> int:
-    """Remove dangling links to this checkout's skills that no receipt holds.
-
-    retire_stale only knows links install recorded; a skill link made by
-    `idh install skill`, by hand, or before the receipt existed outlives its
-    skill otherwise, and `idh uninstall skill` cannot name a skill that left
-    the repo. Only the skills roots, only dangling links, and only those whose
-    text resolves to <this checkout>/skills/<same name>, whose skill entry is
-    gone (an unmounted overlay keeps its entry), and no receipt ever held:
-    a receipt link edited by hand is retire_stale's to keep.
-    """
-    rc = 0
-    skills = root() / "skills"
-    roots = {
+def skill_roots() -> list[Path]:
+    """The skills roots the manifest fills with one link per harness skill."""
+    return sorted({
         V.expand(e["path"], root())
         for e in json.loads((REPO / "adapters" / "projections.json").read_text())["entries"]
         if e.get("children") is True and e["target"] == "$IDH_ROOT/skills"
-    }
-    for skills_root in sorted(roots):
-        if not skills_root.is_dir() or skills_root.resolve() == skills.resolve():
-            continue  # absent, or the checkout itself (no links of ours there)
-        for link in sorted(skills_root.iterdir()):
-            try:
-                if link in declared or str(link) in recorded or not link.is_symlink() or link.exists():
+    })
+
+
+def _points_into_harness_skills(link: Path) -> bool:
+    """Does this link's text end in ``.agents/skills/<link name>``?
+
+    A foreign checkout (``~/code/arena/skills/arena``) shares the bare
+    ``skills/<name>`` tail, so the harness's own ``.agents/skills/<name>`` is
+    required, wherever that checkout was. Matching the tail rather than any
+    substring keeps ``.agents/skills/x/sub`` or a link whose name differs from
+    its target out of the sweep.
+    """
+    parts = Path(os.path.normpath(os.readlink(link))).parts
+    return parts[-3:] == (".agents", "skills", link.name)
+
+
+def prune_dangling(roots: list[Path]) -> int:
+    """Remove links in the skills roots whose harness skill no longer exists.
+
+    Moved from perch (ticket 1128) so the plain install runs it: retire_stale
+    only knows links the receipt recorded, and `idh uninstall skill` cannot
+    name a skill that left the repo. Shape-based, never the receipt: only a
+    dangling link into ``.agents/skills/<same name>``, whose unlinking destroys
+    nothing. Foreign dangling links and live links stay. A link that cannot be
+    removed does not stop the sweep; each one is reported.
+    """
+    rc = 0
+    for skills_root in roots:
+        if not skills_root.is_dir():
+            continue
+        for entry in sorted(skills_root.iterdir()):
+            if entry.is_symlink() and not entry.exists() and _points_into_harness_skills(entry):
+                was = os.readlink(entry)
+                try:
+                    entry.unlink()
+                except OSError as exc:
+                    report("REFUSED", f"could not prune dangling link {entry}: {exc}", "remove it by hand")
+                    rc = 1
                     continue
-                if os.path.lexists(skills / link.name):
-                    continue  # the skill entry is still there (e.g. an unmounted overlay)
-                text = os.readlink(link)
-                points_to = Path(os.path.normpath(Path(os.path.realpath(link.parent)) / text))
-                if points_to.parent != skills or points_to.name != link.name:
-                    continue  # not one of ours
-                link.unlink()
-            except OSError as exc:
-                report("REFUSED", f"{link}: {exc}", "remove the dangling link by hand")
-                rc = 1
-                continue
-            print(f"pruned: {link} -> {text} (skill no longer in this checkout)")
+                print(f"pruned dangling link {entry} -> {was}")
     return rc
 
 
