@@ -205,9 +205,10 @@ def test_failed_push_after_the_move_is_exit_6_not_a_remerge(tmp_path, monkeypatc
     assert git(work, "rev-parse", "main^2") == tip  # moved locally, reported, never re-merged
 
 
-def test_unreadable_origin_base_refuses(tmp_path, monkeypatch):
+def test_remote_base_deleted_refuses_and_is_not_recreated(tmp_path, monkeypatch):
     work, wt, origin = make_repo(tmp_path, monkeypatch, remote=True)
-    git(work, "config", "remote.origin.fetch", "+refs/heads/other:refs/remotes/origin/other")
-    git(work, "update-ref", "-d", "refs/remotes/origin/main")
+    git(work, "push", "-q", "origin", "main:spare")
+    git(origin, "update-ref", "-d", "refs/heads/main")  # a plain fetch does not prune the cached origin/main
     with pytest.raises(rl.Refusal, match="cannot read origin/main"):
         land(wt)
+    assert git(origin, "rev-parse", "--verify", "-q", "refs/heads/main", check=False) == ""

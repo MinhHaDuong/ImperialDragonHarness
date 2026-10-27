@@ -218,8 +218,10 @@ def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
         base = fg.base_branch(info)
         base_ref = base
         if remote:
-            if git(cwd, "fetch", "-q", "origin").returncode != 0 or git(
-                    cwd, "rev-parse", "--verify", "-q", f"origin/{base}").returncode != 0:
+            # An explicit refspec: a plain fetch does not prune, so a deleted remote base would leave
+            # a stale cached ref that still equals the local one, and the push would recreate it.
+            if git(cwd, "fetch", "-q", "origin",
+                   f"+refs/heads/{base}:refs/remotes/origin/{base}").returncode != 0:
                 raise Refusal(f"cannot read origin/{base} (fetch failed or the remote has no {base})")
             # The push publishes every commit under the merge, so the local base must be origin's exactly.
             if rev(cwd, base) != rev(cwd, f"origin/{base}"):
