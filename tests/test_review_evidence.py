@@ -566,3 +566,58 @@ def test_relativize_respects_path_boundaries_and_other_worktrees(repo, tmp_path)
     assert "a x.py" in got and f"{repo}-extra/y.py" in got and "c z.py" in got
     assert str(repo) + "/" not in got.replace(f"{repo}-extra/y.py", "")
     assert str(sibling) in got
+    assert got.endswith("d ..")  # root becomes ".", the sentence period stays
+
+
+def gate_with(repo, policy, ticket, *seats):
+    args = [sys.executable, str(SCRIPT), "gate", "--repo", str(repo), "--base", "main",
+            "--policy-root", str(policy), *sum((["--seat", x] for x in seats), [])]
+    if ticket is not None:
+        args += ["--ticket", str(ticket)]
+    return subprocess.run(args, capture_output=True, text=True, env=child_env())
+
+
+@pytest.mark.integration
+def test_rewritten_criterion_is_stale_even_with_a_stale_ticket_copy(repo, policy, tmp_path):
+    old_copy = tmp_path / "0001-x.erg"
+    old_copy.write_text((repo / "tickets/0001-x.erg").read_text())
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    (repo / "tickets/0001-x.erg").write_text(REPO_TICKET.replace("## Exit criteria\n", "## Exit criteria\n- [ ] rewritten\n"))
+    git(repo, "commit", "-qam", "rewrite criterion")
+    for ticket in (repo / "tickets/0001-x.erg", old_copy):
+        out = gate_with(repo, policy, ticket)
+        assert out.returncode != 0, out.stdout
+    out = gate_with(repo, policy, repo / "tickets/0001-x.erg", "correctness")
+    assert out.returncode != 0 and "stale" in out.stdout
+    # a stale copy passed by path is only a name: the committed text decides
+    shadow = repo / "tickets/0001-x.erg"
+    shadow.write_text(old_copy.read_text())
+    out = gate_with(repo, policy, shadow, "correctness")
+    assert out.returncode != 0 and "stale" in out.stdout
+
+
+@pytest.mark.integration
+def test_untracked_ticket_and_omitted_ticket_on_a_touched_range_are_refused(repo, policy, tmp_path):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    stray = repo / "tickets/9999-nope.erg"
+    stray.write_text(REPO_TICKET)
+    out = gate_with(repo, policy, stray, "correctness")
+    assert out.returncode != 0 and "not tracked" in out.stderr
+    stray.unlink()
+    (repo / "tickets/0001-x.erg").write_text(REPO_TICKET + "\nnote\n")
+    git(repo, "commit", "-qam", "touch ticket")
+    out = gate_with(repo, policy, None, "correctness")
+    assert out.returncode != 0 and "pass --ticket" in out.stderr
+
+
+@pytest.mark.integration
+def test_executable_ticket_edit_is_not_exempt(repo, policy):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    p = repo / "tickets/0001-x.erg"
+    p.chmod(0o755)
+    git(repo, "commit", "-qam", "chmod ticket")
+    out = gate_with(repo, policy, p, "correctness")
+    assert out.returncode != 0 and "stale" in out.stdout

@@ -219,7 +219,7 @@ def exempt_paths(repo: Path, base: str, head: str) -> list[str]:
         if (parts[4] == "A" and parts[1] == "100644"
                 and path.startswith(f"{REVIEWS_DIR}/") and path.endswith(REPORT_SUFFIXES)):
             exempt.append(path)
-        elif is_ticket_file(path) and (parts[4] == "D" or parts[1] in ("100644", "100755")):
+        elif is_ticket_file(path) and (parts[4] == "D" or parts[1] == "100644"):
             # The ticket close (move to closed/, checkboxes, log) is bookkeeping, as in
             # merge-gate; its exit criteria are covered by criteria_hash, not the patch.
             exempt.append(path)
@@ -251,10 +251,43 @@ def policy_version(root: Path) -> str:
     return digest.hexdigest()[:16]
 
 
+class TicketRefused(SystemExit):
+    pass
+
+
+def ticket_at_head(args: argparse.Namespace, base: str, head: str) -> str | None:
+    """The ticket text as committed at `head`, never the caller's working copy.
+
+    The path names the ticket; a move to tickets/closed/ is followed. A path
+    not tracked at head is refused, and so is no path when the range touches
+    a ticket: the criteria hash is the only guard once ticket edits leave the patch.
+    """
+    if args.ticket is None:
+        touched = [e for e in git(args.repo, "diff", "--name-only", "--no-renames", base, head).splitlines()
+                   if is_ticket_file(e)]
+        if touched:
+            raise TicketRefused(f"review-evidence: the range touches {touched[0]}; pass --ticket")
+        return None
+    top = Path(git(args.repo, "rev-parse", "--show-toplevel")).resolve()
+    path = Path(args.ticket)
+    path = path if path.is_absolute() else Path(args.repo) / path
+    try:
+        rel = path.resolve().relative_to(top).as_posix()
+    except ValueError:
+        raise TicketRefused(f"review-evidence: --ticket {args.ticket} is outside the repository")
+    name = Path(rel).name
+    for candidate in dict.fromkeys([rel, f"tickets/closed/{name}", f"tickets/{name}"]):
+        shown = subprocess.run(["git", "-C", str(args.repo), "show", f"{head}:{candidate}"],
+                               capture_output=True, timeout=60)
+        if shown.returncode == 0:
+            return shown.stdout.decode()
+    raise TicketRefused(f"review-evidence: --ticket {args.ticket} is not tracked at {head[:12]}")
+
+
 def current_inputs(args: argparse.Namespace) -> Inputs:
     head = git(args.repo, "rev-parse", args.head)
     base = git(args.repo, "merge-base", args.base, head)
-    ticket = args.ticket.read_text() if args.ticket else None
+    ticket = ticket_at_head(args, base, head)
     return Inputs(base, head, patch_id(args.repo, base, head), criteria_hash(ticket),
                   policy_version(args.policy_root))
 
@@ -343,7 +376,7 @@ def relativize(body: str, repo: Path) -> str:
         if line.startswith("worktree "):
             roots.add(line[len("worktree "):])
     for root in sorted((r.rstrip("/") for r in roots if r.strip("/")), key=len, reverse=True):
-        body = re.sub(re.escape(root) + r"(?:/([^\s`'\")\]>,;:]*))?(?![\w.-])",
+        body = re.sub(re.escape(root) + r"(?:/([^\s`'\")\]>,;:]*))?(?![\w-])(?!\.[\w-])",
                       lambda m: m.group(1) or ".", body)
     return body
 
