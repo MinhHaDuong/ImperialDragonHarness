@@ -1,0 +1,29 @@
+%erg 0.1
+Title: harness-doctor runs as a visit: triage, probes on demand, no end of life
+Created: 2026-10-27
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-27T08:35Z Minh Ha-Duong created
+
+--- body ---
+## Context
+`skills/harness-doctor/SKILL.md` (merged in #1699, ticket 1233) runs as a fixed sweep: descriptions, overlapping bodies, lint, every runtime's diagnostics, report. Compared with `skills/test-doctor/SKILL.md`, the author ruled on 2026-10-27:
+- **No end of life.** The doctor position is needed for good; drop the retirement clause (three empty runs, then ask to delete).
+- **A visit, not a form.** Adopt test-doctor's stance: start from a complaint or a question (or, with none, a short triage of where the harness hurts), form hypotheses, and launch only the probes that separate them, cheapest first. Do not walk through steps the case does not need; go back when new evidence contradicts an earlier step.
+- **Triage.** Order the work by what costs most to be wrong about, before any probe runs.
+- **Positive control.** Before trusting a probe's silence, fire it on a known case: the lint script on `skills/trace-doctor/SKILL.md` (it flags body length, a long code block, history phrasing and dates). A probe that finds nothing says nothing until it has fired.
+- **Prices on proposals.** Each proposed fix carries a price (author-hours, agent cost) and odds; recommend one.
+- **Revisit.** A run reads the journal's earlier `-harness-doctor-` entries, checks whether their tickets fixed what they targeted, and sets the next revisit condition.
+
+The probes stay as they are, now launched on demand: the description and overlap reading, `scripts/skill_text_lint.py`, the runtime diagnostics in `references/runtime-diagnostics.md`, and `scripts/project_shadow.py` where a question is about shadowing.
+
+## Exit criteria
+- [ ] Retirement clause removed from `skills/harness-doctor/SKILL.md`; no test or reference still mentions it
+- [ ] The body frames a visit: complaint or triage first, hypotheses, probes chosen to separate them; no fixed all-steps procedure
+- [ ] The probe list is a menu with what each probe answers and what it costs (time, model usage, credentials), not a sequence
+- [ ] The lint probe's positive control (trace-doctor) runs before its findings are read, and the report says it fired
+- [ ] Every proposal in the report carries a price and odds, with one recommended
+- [ ] Revisit: the run checks the previous entry's tickets and writes a revisit condition in its journal entry
+- [ ] Shared stance with test-doctor is pointed at, not restated, or the checklist records why the duplication is accepted
+- [ ] Skill stays under 150 lines; `scripts/skill_text_lint.py` reports no finding above the floor on it; `tests/test_harness_doctor_skill.py` updated
