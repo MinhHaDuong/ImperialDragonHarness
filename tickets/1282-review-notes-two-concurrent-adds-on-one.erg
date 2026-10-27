@@ -1,0 +1,22 @@
+%erg 0.1
+Title: Review notes: two concurrent adds on one clone lose an entry and both exit 0
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T17:55Z reviewer created
+
+--- body ---
+## Context
+Found by 1276's end-to-end test (PR #1816, xfail, non-strict because the race sometimes passes): two
+`scripts/review_notes.py add` calls running at once on one clone write to refs/notes/review; one entry is lost
+and both exit 0. Parallel gaze and gate runs share a clone during a raid, so a review or verdict entry can vanish
+silently — the review record is corrupted. Not in 1281's list.
+
+## Exit criteria
+- [ ] Concurrent writers on one clone never lose an entry: the local write is serialised (a lock) or retried on a
+      compare-and-swap of refs/notes/review, and a writer that cannot write exits non-zero.
+- [ ] 1276's xfail turns into a passing test (strict), and a positive control shows the old code losing an entry.
+- [ ] The harness gate passes (full make check).
+
+Related: [[1252]], [[1276]], [[1281]].
