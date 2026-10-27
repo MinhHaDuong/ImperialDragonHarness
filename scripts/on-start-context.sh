@@ -30,11 +30,20 @@ fi
 
 _script_dir="$(cd "$(dirname "$0")" && pwd)"
 
-# Ask for a project-level coherence pass only when the project has its own
-# directives. The helper prints a short instruction; it does not try to infer
-# semantic conflicts from matching words or delay startup with a model call.
-if [ -n "$_proj" ]; then
-    "$_script_dir/prompt-project-coherence.sh" "$_proj" || true
+# Resident-text budget for the project's own directives (0971): the zero-LLM
+# census prints one declarative line when the project is over budget or declares
+# a catch-all `paths:`. The harness and its linked worktrees are skipped: their
+# resident text is gated by the harness tests. The guard fails closed: it runs
+# the census only when the harness git-common-dir is readable and differs from
+# the project's, so an error never reads as "not the harness".
+if [ -n "$_proj" ] && [ -d "$_proj" ]; then
+    _harness=$(cd "$_script_dir/.." && pwd -P)
+    _pdir=$(cd "$_proj" && pwd -P)
+    _hgit=$(git -C "$_harness" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
+    _pgit=$(git -C "$_pdir" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
+    if [ "$_pdir" != "$_harness" ] && [ -n "$_hgit" ] && [ "$_pgit" != "$_hgit" ]; then
+        python3 "$_script_dir/resident_census.py" --project "$_pdir" --warn 2>/dev/null || true
+    fi
 fi
 
 # Remind when the harness loader is missing from the shell config. A bare
