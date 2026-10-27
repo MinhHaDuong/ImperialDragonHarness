@@ -478,3 +478,51 @@ def test_a_verdict_fetched_after_the_listing_is_not_dropped(repo, monkeypatch):
     assert mg.fetch_notes("origin", ref) is False
     assert arrived
     assert "red" in mg.read_note(base, ref)
+
+
+def _notes_session(repo, monkeypatch):
+    monkeypatch.chdir(repo)
+    mg = load_monitor().mg
+    return mg, mg.VERDICT_REF, git(repo, "rev-parse", "HEAD")
+
+
+def test_a_stale_local_verdict_the_remote_lacks_is_dropped(repo, monkeypatch):
+    mg, ref, base = _notes_session(repo, monkeypatch)
+    mg.git("notes", f"--ref={ref}", "append", "-m", "green, never published", base)
+    assert mg.fetch_notes("origin", ref) is False
+    assert mg.local_ref(ref) == ""
+
+
+def test_a_local_verdict_that_moved_after_the_listing_is_kept(repo, monkeypatch):
+    mg, ref, base = _notes_session(repo, monkeypatch)
+    mg.git("notes", f"--ref={ref}", "append", "-m", "stale", base)
+    real_git, moved = mg.git, []
+
+    def interleaved(*args, **kwargs):
+        result = real_git(*args, **kwargs)
+        if args[:1] == ("ls-remote",) and not moved:
+            moved.append(True)
+            real_git("notes", f"--ref={ref}", "append", "-m", "red", base)  # a concurrent fetch
+        return result
+
+    monkeypatch.setattr(mg, "git", interleaved)
+    mg.fetch_notes("origin", ref)
+    assert moved and "red" in mg.read_note(base, ref)
+
+
+@pytest.mark.parametrize("failing", ["update-ref", "rev-parse"])
+def test_an_unreadable_or_undroppable_local_ref_fails_closed(repo, monkeypatch, failing):
+    """Gaze round 10: a failed read must not pass for an absent ref, and a failed drop of an
+    unmoved stale ref must not be swallowed; either way the gate cannot know the verdict."""
+    mg, ref, base = _notes_session(repo, monkeypatch)
+    mg.git("notes", f"--ref={ref}", "append", "-m", "green, never published", base)
+    real_git = mg.git
+
+    def broken(*args, **kwargs):
+        if args[:1] == (failing,):
+            return subprocess.CompletedProcess(["git", *args], 124, "", "no answer")
+        return real_git(*args, **kwargs)
+
+    monkeypatch.setattr(mg, "git", broken)
+    with pytest.raises(mg.GateError):
+        mg.fetch_notes("origin", ref)

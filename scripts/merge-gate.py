@@ -533,11 +533,25 @@ def resolve(args):
 # ── notes transport ───────────────────────────────────────────────────────────
 
 
+def local_ref(ref):
+    """The local ref's commit, "" when it does not exist; any other failed read raises.
+
+    `rev-parse --verify --quiet` exits 1 for an absent ref. A timeout (124) or a
+    fatal error is not an absent ref and must not be read as one (gaze round 10).
+    """
+    read = git("rev-parse", "--verify", "--quiet", ref, check=False)
+    if read.returncode not in (0, 1):
+        raise GateError(f"git rev-parse {ref}: exit {read.returncode}: {read.stderr.strip()}")
+    return read.stdout.strip() if read.returncode == 0 else ""
+
+
 def fetch_notes(remote, *refs):
     """Make the local notes refs the remote's: the remote is the record of authority.
 
-    When the remote lacks one, the local ref is dropped too, so a later push
-    publishes only its own entry, never a stale or hand-made local note. One
+    When the remote lacks one, the local ref is dropped too, at the value read
+    before the listing (a ref a concurrent fetch moved meanwhile stays), so a
+    later push publishes only its own entry, never a stale or hand-made local
+    note. A local ref that cannot be read or dropped fails closed. One
     listing and one fetch serve every ref. Returns whether the remote has the
     first ref (refs/notes/gate by default).
     """
@@ -546,7 +560,7 @@ def fetch_notes(remote, *refs):
     # the drop, and a concurrent fetch may by then have brought a newer entry (the
     # first red verdict, say). Only the value seen before the listing is dropped
     # (gaze round 9); a ref that moved since is that fetch's, and stays.
-    before = {ref: git("rev-parse", "--verify", "--quiet", ref, check=False).stdout.strip() for ref in refs}
+    before = {ref: local_ref(ref) for ref in refs}
     probe = git("ls-remote", remote, *refs, check=False)
     if probe.returncode:
         raise GateError(f"cannot read {' '.join(refs)} on {remote}: {probe.stderr.strip()}")
@@ -555,8 +569,7 @@ def fetch_notes(remote, *refs):
         if ref in listed or not before[ref]:
             continue
         dropped = git("update-ref", "-d", ref, before[ref], check=False)
-        now = git("rev-parse", "--verify", "--quiet", ref, check=False).stdout.strip()
-        if dropped.returncode and now == before[ref]:
+        if dropped.returncode and local_ref(ref) == before[ref]:
             # a stale local verdict must not survive: a failed drop fails closed
             raise GateError(f"git update-ref -d {ref}: {dropped.stderr.strip()}")
     present = [ref for ref in refs if ref in listed]
@@ -587,6 +600,10 @@ def note_at(commit, oid):
 def append_and_push(oid, text, remote, ref=NOTES_REF, fetched=False):
     """Append one entry and push; on a lost race, refetch and append once more.
 
+    The push sends the notes commit that holds the entry, by SHA, once the entry
+    is seen in it: a concurrent fetch may reset the local ref in between, and
+    an entry lost that way is a lost race.
+
     Without a remote (--no-push) the entry goes to LOCAL_REF, which is never
     pushed: a trial record cannot ride along with a later published one.
     `fetched` says the caller has just fetched `ref`: the first attempt skips
@@ -603,7 +620,7 @@ def append_and_push(oid, text, remote, ref=NOTES_REF, fetched=False):
         # seen in it: a concurrent fetch (+ref:ref) can reset the local ref between
         # the append and the push, and pushing the ref by name would then report
         # "up to date" while the entry is lost (gaze round 8). A lost entry is a lost race.
-        tip = git("rev-parse", "--verify", "--quiet", ref, check=False).stdout.strip()
+        tip = local_ref(ref)
         if not tip or text not in note_at(tip, oid):
             LOG.warning("notes entry lost to a concurrent fetch (attempt %d)", attempt)
             continue
