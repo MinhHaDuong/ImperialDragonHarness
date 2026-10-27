@@ -1,4 +1,4 @@
-"""Slow-ticket classification for lair step 16 (ticket 1239): synthetic records, no gh, no waiting."""
+"""Slow-ticket classification for lair step 15 (ticket 1239): synthetic records, no gh, no waiting."""
 
 import sys
 from pathlib import Path
