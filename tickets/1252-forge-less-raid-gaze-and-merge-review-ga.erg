@@ -45,3 +45,46 @@ scripts/review-anchor.py, scripts/merge-gate.py
 
 Monster check before Execute: likely a tracker with children (gaze, gate, merge, raid), each one
 sign-off unit. Related: [[1241]], [[1227]], [[1248]].
+
+## Raid annotation (design, 2026-10-27)
+Monster check: yes. Blast radius ~20 files across 4 skills and 6 scripts, a symbol others depend on
+(the adapter: 1255 and C2-C5 build on it), bundled sign-off units (gaze, gate, merge, raid), and a
+hidden chain (gate reads what gaze writes; raid needs all three). Proposal: 1252 becomes the tracker.
+
+Partition boundary: every forge read/write moves behind one module, `scripts/forge.py`; skills cite
+operations, not `gh` spellings. Git-only state (merge-gate notes, worktrees, tier) stays where it is.
+
+Up-front decisions (settle before C1; advisor first):
+- D1 Merge-request stand-in: a review unit = (branch, base ref, head OID). `forge.resolve(ref)` takes a
+  PR number (gh backend) or `branch:<name> [base=<ref>]` (none backend) and returns the same record:
+  id, branch, base, head, state, body, close claims. No-forge close claims: `Ticket: tickets/<file>`
+  commit trailers on base..head (hunt already closes on the branch, so this is mostly a cross-check).
+- D2 Where results live: git notes on the reviewed head, same transport as merge-gate (push the ref when
+  a remote exists, local otherwise): `refs/notes/review` carries the gaze result block and its
+  `reviewer:`/`seat:`/`finding:` lines (attribution); verify-gate verdicts append there with
+  `session=` and `round=`, so the round is derived from notes as it is from comments today. Not
+  `tickets/reviews/`: a commit moves the head the result names. The gate record stays refs/notes/gate.
+- D3 Local merge: in a throwaway detached worktree at the base tip, `git merge --no-ff <head-OID>`
+  (pinned by OID, never by branch name), attribution block from D2 notes into the merge message,
+  `merge-gate.py check` on the candidate, `update-ref refs/heads/<base> <new> <old>` (CAS = the pin),
+  push the base if a remote exists, read back `rev-parse <base>^2 == head`, then sync-local-main.sh.
+- D4 Adapter interface (`scripts/forge.py`, backends `gh` and `none`, chosen by `--forge auto|gh|none`
+  / `IDH_FORGE`; auto = gh when gh is on PATH and the ref is a PR number): resolve, body,
+  append_body_line, comment, results(marker), ready, auto_merge_armed, disarm, merge(unit, head),
+  read_back(unit) -> (state, head, queued). Unsupported ops on `none` return a typed no-op, never raise.
+
+Children (one sign-off unit each; Blocked-by = real prerequisite, never the tracker):
+- C1 forge.py adapter: interface + gh and none backends, tests with gh absent from PATH and a stub gh.
+  No caller moved. Blocked-by: none.
+- C2 Move gaze_setup, gaze_close, attribution_record (append_to_pr), review-anchor onto the adapter;
+  forge path byte-identical (compare outputs on a stub forge). Blocked-by: C1.
+- C3 gaze takes `branch:<name>` with no forge, writes D2 notes; hunt's Review calls gaze on both routes
+  (removes hunt's forge/no-forge divergence; answers 1241 item 9). Blocked-by: C2.
+- C4 verify-gate reads D2 notes and writes its verdict/round there with no forge. Blocked-by: C3.
+- C5 merge recipe no-forge spelling (D3) as the adapter's none merge/read_back, executed by
+  raid_land.py. Blocked-by: C1, 1255.
+- C6 raid Phases 6-7 forge-less + end-to-end test (temp repo, no remote, gh absent): gaze, gate,
+  merge chain. Blocked-by: C4, C5.
+Waves: 1 = C1 (+1256 in parallel, disjoint files); 2 = C2, 1255; 3 = C3, C5; 4 = C4; 5 = C6; then
+the tracker's integration review. review_evidence.py `forge` subcommand stays gh-only (none = no
+forge reviews, an empty admitted set, said so), out of scope.

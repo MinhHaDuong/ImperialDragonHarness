@@ -39,3 +39,15 @@ check set that does not run the suite for a red-ticket candidate.
 - `scripts/merge-gate.py` (`run-after`, `red_report`)
 - `.merge-gate.json` (`tiers`)
 - `skills/merge/SKILL.md` step 9
+
+## Raid annotation (Imagine+Plan, 2026-10-27, wave 4)
+- GO once 1245 lands: a ticket-only PR's before-merge record then runs the cheap set, not pytest-guard.
+- Path: `open_red_ticket(report, tip)` in scripts/merge-gate.py, called from `run_after` on FAIL; writes
+  `tickets/<next>-after-merge-red-<tip12>.erg` from `red_report` in a throwaway worktree on branch
+  `red-<tip12>`, commits, pushes, records the before-merge gate, lands by the /merge flow; serialized
+  under the runner's existing lock, bounded retries.
+- Dedupe key: the sorted failing-check set (not the tip, which moves on every merge of a red main);
+  skip when an open ticket or a remote `red-*` branch carries the same set.
+- First test: temp main with a failing check, `run-after` twice: one ticket after the first run, still
+  one after the second; the file passes `tickets/erg check`.
+- Overlap: 1254 also edits `red_report` (match failing checks by name); land one at a time.

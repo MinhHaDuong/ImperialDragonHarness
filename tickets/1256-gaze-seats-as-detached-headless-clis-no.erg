@@ -1,0 +1,50 @@
+%erg 0.1
+Title: Gaze seats as detached headless CLIs: no nesting limit, cross-family by default
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T11:21Z reviewer created
+
+--- body ---
+## Context
+Author ruling, 2026-10-27 (option C of the raid's gaze discussion; A and B went into ticket 1241).
+In today's raid every hunt-run gaze degraded to a same-identity self-read: the coder runs at subagent
+depth 1 and gaze's seats would need depth 2, which the runtime refused ("seats could not launch
+(nesting limit)", PR #1736). 1241 makes gaze say so (`self-only`) and raises Claude Code's depth.
+That does not reach Codex or Pi, and every seat stays Anthropic-family inside Claude Code.
+`skills/raid/references/detached-gaze.md` and `skills/gaze/references/panel.md` § Detached-seat
+substitution already describe a headless seat (`claude -p`, `codex exec -m`, `pi -p`) with containment rails.
+
+## Exit criteria
+- [ ] Gaze can launch each seat as a detached headless CLI on all three runtimes, with the model
+      pinned per seat from the route skill, the containment rails of panel.md, and a bounded wait.
+- [ ] A seat from another model family is the default for the review perspective that risk calls
+      for (`skills/route/references/decorrelation.md`), and the seat line records family and model.
+- [ ] A seat that cannot launch is reported as missing, never replaced by a self-read.
+- [ ] Spending on another provider's model is declared in the plan before launch (author consent
+      to cross-family spend recorded once, in config, not per run).
+- [ ] The harness gate passes; the subagent path keeps working.
+
+## Relevant files
+skills/gaze/references/panel.md, skills/gaze/SKILL.md, skills/raid/references/detached-gaze.md,
+skills/route/routes.json (launch_doors), scripts/gaze_setup.py, scripts/gaze_close.py
+
+Related: [[1241]], [[1252]].
+
+
+## Raid annotation (design, 2026-10-27)
+Plan: one launcher, new scripts/gaze_seat.py `launch --runtime --model --perspective --panel --name`,
+that builds the command from routes.json launch_doors headless templates (claude -p --model, codex
+exec -s read-only -m -o, pi --no-session -p --model), embeds panel.md's seat contract, pins cwd to
+the review tree, and runs under `seat_clock.py run --cap 600`. gaze references/plan.md: the headless
+door is the default seat door; the cross-family pick per decorrelation.md; the `seat:` line already
+carries family= and model= (attribution_record SEAT regex), so no format change. Consent: one config
+key (cross-family spend allowed, providers listed) read at plan time and named in the manifest.
+A launch failure writes `no report (<reason>)`: plan-check already treats it as missing.
+First test: launcher with a stub CLI on PATH writes the report path and a correct `worker:` line;
+a stub that exits 1 yields `no report`, never a self-read.
+Wait for 1241? No: 1241's body carries no `self-only` item (grep finds none in tickets/skills/
+scripts), so there is nothing to wait for; 1256's "missing, never a self-read" criterion covers it.
+Wait for 1252's adapter? No: seats are runtime launches, not forge calls; keep gaze_setup.py and
+gaze_close.py out of the diff to stay disjoint from 1252 C2. Run it in wave 1 beside C1.
