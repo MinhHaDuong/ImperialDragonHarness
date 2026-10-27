@@ -1,0 +1,14 @@
+# Trust, Verify, Monitor and the escalation protocol land in workflow.md (PR #1778)
+
+Context. An interactive Imagine session on 2026-10-27 began as a sitrep and asked whether the 2026-10-21 Trust, Verify, Monitor doctrine was stated in AGENTS.md or rules/workflow.md. It was in neither: a memory note, a conception memo (conception/local-merge-gate-policy.md) and one clause of skills/merge/SKILL.md.
+
+Events.
+- The author chose a general section, not a Delegation bullet, and asked that Posture and the doctrine precede Session start. The resident rules budget (tests/test_rules_resident_budget.py, 17800 chars) had 196 chars of headroom; room came from condensing the disk-probe paragraph, not from raising the budget.
+- A Fable review of the first wording found it had dropped three parts of the stated doctrine (fix what reproduces / skip the conceivable; monitor instead of before; the boundary's scope). A second Fable pass over the whole file cut restatements of git.md, guards.md and the file itself; one edit was declined because it would have made interactive sessions stop after proposing a decomposition.
+- The author read "For every check on work:" as an absolute that would bind; the section was reworded to open "A doctrine, not a checklist".
+- The author proposed letting a question wait 5 minutes then escalating to a panel, then replaced it with forking: build the reversible options in separate worktrees while the author is away, capped at 5 minutes; author back → their pick, still away → the advisor picks on the built evidence. Calls by right (scope, money, irreversible) are never forked or delegated.
+- Asked whether only one escalation protocol existed: raid routed ESCALATE straight to the author in four places, against Ask up first and the 2026-10-26 night-mode ruling. Raid's routes were pointed at the protocol; NEEDS-AUTHOR and merge-permission denial stay with the author.
+- Gaze round 1 (same-family panel) on a62e1b51: FINDINGS — one missed raid route (skills/raid/SKILL.md:290), a verify-gate disagreement on who merges past an ESCALATE, calls by right stated after step 1. Fixed; round 2 REVIEWED on 43a45370; verify-gate APPROVED round 1. No cross-family seat (spend not consented).
+- A raid wording-pin test (tests/test_raid_phase6_gaze_verdict.py) failed on the rerouted sentence. The author ruled "REMOVE WORDING PINS"; the file was deleted. The harness already held the remedy in skills/test-doctor/references/toolkit.md § Thin the wording pins (keep incident-tied and interface pins, at most 15 files per batch, before/after counts); the deleted file named incident ticket 0990, which that toolkit's keep class would have retained in part. A first thinning batch opened as PR #1782 (9 files deleted, 3 single tests), left for the author.
+
+Outcome. PR #1778 merged at 43a45370, carrying PR #1776's commits rebased; #1776 closed as superseded. Resident rules 17795 of 17800.
