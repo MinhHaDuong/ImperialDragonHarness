@@ -589,3 +589,21 @@ def test_prune_discriminator_requires_argv0_basename_git(repos):
     proc = _prune_as_argv0(work, "git-branch")  # exec -a git-branch git pack-refs -D main
     assert proc.returncode != 0, proc.stderr
     assert "refused" in proc.stderr
+
+
+@pytest.mark.parametrize(
+    "words",
+    [("--no-literal-pathspecs", "pack-refs"), ("--shallow-file", "x", "pack-refs")],
+    ids=["no-literal-pathspecs", "shallow-file"],
+)
+def test_prune_discriminator_knows_more_global_options(repos, words):
+    work = repos["work"]
+    _packed_main(work)
+    git(work, "config", "idh.mainGuard", "enforce")
+    assert _prune_through(work, *words).returncode == 0
+
+
+def test_the_global_option_arities_match_git(repos):
+    work = repos["work"]
+    assert git(work, "--no-literal-pathspecs", "rev-parse", "HEAD").returncode == 0
+    assert git(work, "--shallow-file", "x", "rev-parse", "HEAD").returncode == 0
