@@ -139,10 +139,13 @@ Seats never edit the body; a failed append is reported, not skipped.
 ## Cleanup and containment
 
 On every exit path run `references/cleanup.md` through the one closing call
-(`python3 "$IDH_ROOT/scripts/gaze_close.py" <pr> --branch <branch> --token <clock> --comment-file <file>`):
-it removes this run's review scratch and the review worktree, checks the
-containment postcondition (cwd, branch, foreign files), records attribution
-and posts the comment.
+(`python3 "$IDH_ROOT/scripts/gaze_close.py" <pr> --branch <branch> --token <clock> --attribution-file <file> --comment-file <file>`;
+the attribution file is required, empty when no seat ran):
+it appends attribution first, then removes this run's review scratch and the review worktree, checks the
+containment postcondition (cwd, branch, foreign files)
+and posts the comment. On a blocked cleanup (exit 1) attribution is already
+appended, the script posts nothing, and the calling gaze posts the ESCALATE
+comment itself with `gh pr comment`.
 
 <!-- inline: references/cleanup.md -->
 

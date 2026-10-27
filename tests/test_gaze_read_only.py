@@ -68,7 +68,8 @@ def run_gaze(tmp_path, repos, seat: str) -> subprocess.CompletedProcess:
     env = gh_env(tmp_path, primary, origin)
     script = (f'set -u\nsetup=$({sys.executable} "{ROOT}/scripts/gaze_setup.py" 7) || exit 1\n'
               'review_tree=$(echo "$setup" | sed -n "s/^review_tree=//p")\n' + seat +
-              f'{sys.executable} "{ROOT}/scripts/gaze_close.py" 7 --branch feat\n')
+              f': > "{tmp_path}/attr.txt"\n'
+              f'{sys.executable} "{ROOT}/scripts/gaze_close.py" 7 --branch feat --attribution-file "{tmp_path}/attr.txt"\n')
     return subprocess.run(["bash", "-c", script], cwd=caller, capture_output=True, text=True, env=env)
 
 
