@@ -78,6 +78,7 @@ import importlib.util
 import json
 import logging
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -461,18 +462,43 @@ def first_line(argv, cwd):
     return sanitize(first) or "unknown"
 
 
+FAILED_TEST = re.compile(r"^(?:FAILED|ERROR) (.+?)(?: - .*)?$")
+
+
+def run_one(argv, cwd):
+    """Run `argv`, echoing its output to stderr as it comes; (exit code, failed test ids).
+
+    The ids are pytest's `FAILED <nodeid>` / `ERROR <nodeid>` summary lines, in
+    order, once each. The gate keeps no other part of the output.
+    """
+    failed = []
+    with subprocess.Popen(
+        argv, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace"
+    ) as proc:
+        for line in proc.stdout:
+            sys.stderr.write(line)
+            found = FAILED_TEST.match(line.rstrip("\n"))
+            if found and found.group(1) not in failed:
+                failed.append(found.group(1))
+    return proc.returncode, failed
+
+
 def run_checks(config, cwd):
+    """(ok, record lines): one line per check, then `failed-test <check> <id>` per failed test of a failed check."""
     results, ok = [], True
     for item in config["checks"]:
         start = time.monotonic()
         LOG.info("check %s: %s", item["name"], " ".join(item["argv"]))
+        failed = []
         try:
-            code = subprocess.run(item["argv"], cwd=cwd).returncode
+            code, failed = run_one(item["argv"], cwd)
             verdict = "pass" if code == 0 else f"fail(exit {code})"
         except OSError as exc:
             code, verdict = 127, f"fail(cannot run: {exc.strerror or exc})"
         ok = ok and code == 0
         results.append(f"{item['name']} {verdict} {time.monotonic() - start:.1f}s :: {' '.join(item['argv'])}")
+        if code != 0:
+            results += [sanitize(f"failed-test {item['name']} {test}") for test in failed]
     return ok, results
 
 
@@ -697,7 +723,7 @@ def last_green(tip, limit=AFTER_WALK):
 
 def red_report(tip, config, results):
     """The would-be ticket text of a red after-merge record (opening it is ticket 1251)."""
-    failing = [c["name"] for c, line in zip(config["checks"], results) if not line.startswith(c["name"] + " pass ")]
+    failing = [c["name"] for c in config["checks"] if not any(line.startswith(c["name"] + " pass ") for line in results)]
     green = last_green(tip)
     span = f"{green}..{tip}" if green else tip
     merges = git(
