@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-27T07:40Z claude created
+2026-10-27T08:31Z reviewer author steer 2026-10-27: hunt returns a monster to its caller with a proposed decomposition instead of splitting; exit criterion reworded (gaze round 2 F1)
 
 --- body ---
 ## Context
@@ -20,7 +21,7 @@ being the planning phase. Local-only projects (e.g. arena: no remote, lands by
 - [ ] Triage is promoted into Plan; the plan is announced with a brief justification before Execute
 - [ ] Execute follows the plan; TDD applies to code only; prose takes no TDD and no word-pin tests
 - [ ] Verify lands by the project's route: forge (push, merge request, CI, gaze) or local (the project's merge recipe), never assumed
-- [ ] Plan names the split route: a complex or multipart ticket becomes a tracker with child tickets, executed by launching a raid
+- [ ] Plan names the monster route: a complex or multipart ticket goes back to the hunt's caller with a proposed decomposition (tracker, children, waves); the caller, author or raid, splits it, and raid handles a monster returned mid-wave
 - [ ] `§ Worktree` anchors cited by `rules/claude-code.md` and `skills/raid/SKILL.md` still resolve
 - [ ] Coder profile charter and the claude-code.md `/hunt N` phase label agree with the new wording
 - [ ] `make check-fast` passes

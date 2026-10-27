@@ -136,8 +136,8 @@ tracker listing every child, closed only after the integration review
 or a symbol other tickets depend on), a build-gated exit, bundled sign-off
 units or a hidden dependency chain: draft a tracker (partition boundary,
 up-front decisions, wave order) and children sized to one sign-off unit,
-`Blocked-by` their real prerequisite, never the tracker. Autonomous: file the
-split. Interactive: propose it.
+`Blocked-by` their real prerequisite, never the tracker. Autonomous: the orchestrator files
+it, a hunt proposes. Interactive: propose it.
 The 15-file count is a signal, not a wall. A large diff splits the review,
 not necessarily the PR.
 

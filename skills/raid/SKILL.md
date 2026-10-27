@@ -95,7 +95,7 @@ briefing (each ticket and the decisions it waits on) rather than an
 empty-run report. One question round the author can answer in a single pass
 is the deliverable.
 
-Apply the monster-ticket checklist (`rules/workflow.md` § Autonomous action) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
+Apply the monster-ticket checklist (`rules/workflow.md` § Ticket discipline for multi-PR work) to each candidate before wave grouping; decompose monsters into tracking + child tickets rather than holding them or fanning them into a colliding wave.
 
 ## Phase 2: Imagine (parallel)
 
@@ -238,7 +238,9 @@ paraphrase, summarize, or inline hunt's phases; the versioned `skills/hunt/SKILL
 is the single live execution contract, and the loader supplies it fresh on every
 run. (A prose paraphrase drifts: the contract then lives in prompt-writing memory
 instead of the skill.) The agent pushes its branch and opens a merge request as
-hunt's flow dictates.
+hunt's flow dictates. An agent that returns its ticket as a likely monster
+brings a proposed decomposition instead: apply the monster checklist to it,
+file the split, and schedule the children in a later wave.
 
 Wait for wave to complete.
 

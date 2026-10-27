@@ -25,7 +25,8 @@ Arguments are `<ticket-id> [inline]`; `$ID` is the ticket id.
 - Without `inline`, hand the ticket to one background agent with the coder profile
   (`agents/coder.md`) whose first action is
   loading the hunt skill with `$ID inline` as its argument; the prompt holds that and
-  nothing more, since the agent loads the phases itself. Report the handoff and end the turn.
+  nothing more, since the agent loads the phases itself. Report the handoff and end the turn;
+  the agent's final report carries any proposal back to the author, a returned monster included.
   Choose the model of each launched worker per launch, from the `route` skill grid
   (`skills/route/SKILL.md`); seats that must be independent follow
   `skills/route/references/decorrelation.md` ("The launch line").
@@ -43,8 +44,8 @@ its **Relevant files**, then decide what the ticket is and what it takes:
   criteria that decide, arbitrate, sign off or choose, manuscript prose as the
   deliverable, a premise resting on conflicting sources. Settle each by
   `rules/workflow.md` § Escalation protocol (advisor model first) before executing.
-- **Already met**: the plan is to record evidence, not to build. Enter the
-  worktree (Execute § Worktree), `${ERG:-tickets/erg} log $ID "already met: <evidence>"`,
+- **Already met**: the plan is to record evidence, not to build. Announce
+  `[Plan → Execute]`, enter the worktree (§ Worktree), `${ERG:-tickets/erg} log $ID "already met: <evidence>"`,
   commit, skip the rest of Execute, and go to Verify's landing.
 - **Premise expired**: check what changed on **Relevant files** since the
   ticket's `Created` date (`git log --since=<Created> -- <files>`). A change that
@@ -111,8 +112,8 @@ name and see each fail for the expected reason; implement until they pass,
 rerunning them by name as the loop gate. For any other deliverable, do the work
 and produce the evidence the plan named.
 
-When the work shows the plan was wrong, replan: announce the new route and why,
-or send it up as in Plan if the ticket turns out to be several.
+When the work shows the plan was wrong, replan and announce why; a ticket that
+proves to be several goes back up as in Plan.
 
 ## Verify
 
@@ -129,9 +130,8 @@ or send it up as in Plan if the ticket turns out to be several.
   never assumed. With a forge: push with lease and open a merge request whose
   description carries the close claim `**Ticket:** tickets/<ticket file>`, then
   wait for CI where it runs on the branch; `/merge` closes the claimed ticket.
-  Without one there is no claim to execute: close it on the branch yourself
-  (`${ERG:-tickets/erg} close $ID "<reason>"`, then `archive $ID`, as
-  `skills/merge/SKILL.md` step Close does) and commit.
+  Without one there is no claim to execute: close and archive it on the branch
+  yourself, as `skills/merge/SKILL.md` step Close does, and commit.
   Either way the merge itself is the caller's, by the project's recipe.
 - **Review.** Skip when
   `python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base <base> --head HEAD`
