@@ -126,8 +126,11 @@
         "seat_rails_status": "flags read from aider 0.86.2 --help 2026-10-27 (ticket 1263): ask mode proposes no edit, --dry-run and --no-git forbid file writes and commits, history files go to /dev/null so the review tree gains no .aider* file. aider cannot read the tree itself without git: the seat reads the diff given with --read",
         "families": ["any provider declared in the host's Pi models.json (local ones only, see local_providers)"],
         "local_providers": ["padme*"],
+        "local_family": "Local",
+        "scratch_cwd": true,
+        "answer_marker": "\u25ba **ANSWER**",
         "base_url_source": "providers.<provider>.baseUrl in $IDH_PI_MODELS, else ~/.pi/agent/models.json (Pi's declaration, never a second copy). The model is pinned as <provider>/<id>; aider is run as openai/<id>. gaze_seat.py lists <baseUrl>/models first and refuses an id the server does not serve: a local server answers with whatever it has loaded, which is how Pi mislabelled a seat (ticket 1262).",
-        "note": "Local providers (fnmatch patterns in local_providers) spend nothing, so they need no cross-family consent; any other provider declared in Pi's file still needs it. The api key is the literal 'local': padme's server ignores it.",
+        "note": "A local provider (name matches local_providers AND declared host is loopback, private or CGNAT) spends nothing, so it needs no cross-family consent and is stamped family Local; a label naming another family is refused. Any other provider declared in Pi's file still needs consent. aider runs in an empty scratch directory outside the tree and any repo, because it loads .aider.conf.yml from its cwd and git root (a planted config can run commands); its report is the text after answer_marker, so banner and thinking never reach the verdict scan. The api key is the literal 'local': padme's server ignores it.",
         "status": "verified 2026-10-27 with padme (ticket 1263 live smoke, recorded in the PR)"
       }
     },

@@ -40,15 +40,19 @@ the plan.
 import argparse
 import importlib.util
 import fnmatch
+import ipaddress
 import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
+import tempfile
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
 
 HERE = Path(__file__).resolve().parent
 _spec = importlib.util.spec_from_file_location('seat_clock', HERE / 'seat_clock.py')
@@ -195,8 +199,31 @@ def served_models(base_url: str) -> list[str] | None:
         return None
 
 
-def is_local(door: dict, provider: str) -> bool:
-    return any(fnmatch.fnmatchcase(provider, pattern) for pattern in door.get('local_providers', []))
+def is_local(door: dict, provider: str, base_url: str) -> bool:
+    """A provider is local when its name matches and its declared host is loopback, private or CGNAT."""
+    if not any(fnmatch.fnmatchcase(provider, pattern) for pattern in door.get('local_providers', [])):
+        return False
+    host = urlsplit(base_url).hostname or ''
+    if host == 'localhost':
+        return True
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return address.is_loopback or address.is_private or address in ipaddress.ip_network('100.64.0.0/10')
+
+
+def answer_of(door: dict, text: str) -> str | None:
+    """The part of a door's output after its answer marker (aider prints banner and thinking first)."""
+    marker = door.get('answer_marker')
+    if not marker:
+        return text
+    if marker not in text:
+        return None
+    answer = text.split(marker, 1)[1]
+    lines = answer.splitlines()
+    cut = next((i for i, line in enumerate(lines) if re.match(r'Tokens: ', line)), len(lines))
+    return '\n'.join(lines[:cut])
 
 
 def git(tree: Path, *args: str) -> str | None:
@@ -241,10 +268,32 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         # A provider that is itself a model family serves only that family:
         # the stamped family must not claim another one.
         return False, f'no report (model {args.model} is family {provider}, not {args.family})'
-    if provider.lower() != args.home_family.lower() and not is_local(door, provider) and \
+    values: dict[str, str] = {}
+    run_model, local = args.model, False
+    if 'baseUrl' in door['template']:
+        # An OpenAI-compatible door: the server is the provider's declaration in Pi's models.json.
+        provider_id, _, model_id = args.model.partition('/')
+        try:
+            declared = json.loads(pi_models_path().read_text(encoding='utf-8'))['providers'][provider_id]
+            base_url = str(declared['baseUrl'])
+        except (OSError, ValueError, KeyError, TypeError):
+            return False, f'no report (provider {provider_id} has no baseUrl in {pi_models_path()})'
+        local = is_local(door, provider_id, base_url)
+        if local and args.family.lower() != door['local_family'].lower():
+            return False, (f'no report (model {args.model} is served locally: family {door["local_family"]}, '
+                           f'not {args.family})')
+        values['baseUrl'], run_model = base_url, f'openai/{model_id}'
+    if provider.lower() != args.home_family.lower() and not local and \
             provider.lower() not in (f.lower() for f in consented(config_path())):
         return False, (f'no report (no consent for cross-family spend on {provider}; '
                        f'{CONSENT_KEY} in {config_path()})')
+    if 'baseUrl' in door['template']:
+        served = served_models(values['baseUrl'])  # a local server answers to any id: list, then refuse
+        if served is None:
+            return False, f'no report (cannot list models at {values["baseUrl"]}/models)'
+        if model_id not in served:
+            return False, (f'no report (model {model_id} is not served at {values["baseUrl"]}; '
+                           f'it serves {", ".join(served)})')
     anchor = (git(args.review_tree, 'rev-parse', 'HEAD') or '').strip()
     if not anchor:
         return False, f'no report (review tree unreadable: {args.review_tree})'
@@ -257,24 +306,6 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         brief = args.brief.read_text(encoding='utf-8')
     except OSError as error:
         return False, f'no report (cannot read the brief: {error.strerror})'
-    values: dict[str, str] = {}
-    run_model = args.model
-    if 'baseUrl' in door['template']:
-        # An OpenAI-compatible door: the server is the provider's declaration in Pi's models.json,
-        # and the pinned id must be one it lists, since a local server answers to any id.
-        provider_id, _, model_id = args.model.partition('/')
-        try:
-            declared = json.loads(pi_models_path().read_text(encoding='utf-8'))['providers'][provider_id]
-            base_url = str(declared['baseUrl'])
-        except (OSError, ValueError, KeyError, TypeError):
-            return False, f'no report (provider {provider_id} has no baseUrl in {pi_models_path()})'
-        served = served_models(base_url)
-        if served is None:
-            return False, f'no report (cannot list models at {base_url}/models)'
-        if model_id not in served:
-            return False, f'no report (model {model_id} is not served at {base_url}; it serves {", ".join(served)})'
-        values['baseUrl'] = base_url
-        run_model = f'openai/{model_id}'
     diff_file = args.panel / f'{args.name}.diff'
     values['diff'] = str(diff_file)
     try:
@@ -293,7 +324,7 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
     if args.dry_run:
         print(json.dumps({'argv': [a if a != prompt else '<prompt>' for a in command.argv],
                           'stdin': str(command.stdin) if command.stdin else None,
-                          'cwd': str(args.review_tree)}))
+                          'cwd': 'scratch' if door.get('scratch_cwd') else str(args.review_tree)}))
         return True, 'dry run, nothing launched'
     try:
         for leftover in (staging, last):  # a past run's output never stands in for this one
@@ -303,8 +334,19 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
             promptfile.write_text(prompt, encoding='utf-8')
     except OSError as error:
         return False, f'no report (cannot write beside the panel: {error.strerror})'
-    ok, outcome = seat_clock.run_seat(args.cap, staging, command.argv, cwd=args.review_tree,
-                                      stdin=command.stdin)
+    cwd, scratch = args.review_tree, None
+    if door.get('scratch_cwd'):
+        # The CLI loads config from its cwd and git root: reviewed code must be neither.
+        scratch = Path(tempfile.mkdtemp(prefix='gaze-seat-', dir='/tmp'))
+        if git(scratch, 'rev-parse', '--git-dir') is not None:
+            shutil.rmtree(scratch, ignore_errors=True)
+            return False, 'no report (scratch directory is inside a git repository)'
+        cwd = scratch
+    try:
+        ok, outcome = seat_clock.run_seat(args.cap, staging, command.argv, cwd=cwd, stdin=command.stdin)
+    finally:
+        if scratch:
+            shutil.rmtree(scratch, ignore_errors=True)
     wrote_last = last.exists() and last.read_text(encoding='utf-8', errors='replace').strip()
     if not ok and not (wrote_last and outcome.startswith('no report (empty output')):
         return False, outcome  # a nonzero exit stays a failure even when the door wrote its file
@@ -312,7 +354,12 @@ def launch(args: argparse.Namespace) -> tuple[bool, str]:
         outcome = 'reported in ' + outcome.rsplit(', ', 1)[-1].rstrip(')')
     text = last if wrote_last else staging
     worker = f'worker: model={args.model} · family={args.family} · runtime={args.runtime} · door=headless'
-    report = stamp(text.read_text(encoding='utf-8', errors='replace'), worker)
+    answer = answer_of(door, text.read_text(encoding='utf-8', errors='replace'))
+    if answer is None:
+        for leftover in (staging, last):
+            leftover.unlink(missing_ok=True)
+        return False, f'no report (no answer marker {door["answer_marker"]!r} in the output)'
+    report = stamp(answer, worker)
     for leftover in (staging, last):
         leftover.unlink(missing_ok=True)
     if not report:

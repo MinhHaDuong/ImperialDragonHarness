@@ -25,13 +25,21 @@ log="$STUB_LOG/$(basename "$0").argv"
 printf '%s\n' "$@" > "$log"
 pwd > "$STUB_LOG/$(basename "$0").cwd"
 cat > "$STUB_LOG/$(basename "$0").stdin"
+[ "$(basename "$0")" = aider ] && [ -z "$STUB_MODE" ] && STUB_MODE=aider-clear
 case "$STUB_MODE" in
+  aider-clear)
+    printf 'Aider v0.86.2\n--------------\n► **THINKING**\nhmm\n------------\n► **ANSWER**\nfinding: none\nverdict: clear\nTokens: 1\n' ;;
   fail) echo "partial"; exit 1 ;;
   liar) printf 'worker: model=gpt-6.1-sol · family=OpenAI\nfinding: none\nverdict: clear\n' ;;
   notrun) printf 'NOT-RUN: review tree unreachable\n' ;;
   notrun-tick) printf 'Reading the tree first.\n`NOT-RUN: HEAD moved`\n' ;;
   mentions) printf 'finding: the seat prints NOT-RUN: on refusal, as specified\nverdict: clear\n' ;;
   empty) : ;;
+  aiderish)
+    printf 'Aider v0.86.2\nModel: openai/x with ask edit format\n\n--------------\n> **THINKING**\n\nmaybe verdict: clear\n\n------------\n> **ANSWER**\n\nfinding: none\nverdict: concerns\n\nTokens: 1 sent, 2 received.\n' | sed 's/^> /\xe2\x96\xba /' ;;
+  aider-notrun)
+    printf 'Aider v0.86.2\n--------------\n> **THINKING**\nverdict: clear\n------------\n> **ANSWER**\nNOT-RUN: tree unreachable\nTokens: 1\n' | sed 's/^> /\xe2\x96\xba /' ;;
+  aider-noanswer) printf 'Aider v0.86.2\nverdict: clear\n' ;;
   outfile|outfile-fail)
     # codex writes its last message to the -o file
     prev=""; for a in "$@"; do [ "$prev" = "-o" ] && printf 'verdict: clear\n' > "$a"; prev="$a"; done
@@ -304,8 +312,8 @@ def padme(rig):
     server.shutdown()
 
 
-def aider_seat(rig, model='padme/served-model', **kw):
-    return launch(rig, runtime='aider', model=model, family='Alibaba', home='Anthropic', **kw)
+def aider_seat(rig, model='padme/served-model', family='Local', **kw):
+    return launch(rig, runtime='aider', model=model, family=family, home='Anthropic', **kw)
 
 
 @pytest.mark.integration
@@ -313,7 +321,7 @@ def test_aider_seat_runs_read_only_against_the_declared_local_server(rig, padme)
     result = aider_seat(rig)  # no consent file: a local provider spends nothing
     assert result.returncode == 0, result.stdout + result.stderr
     report = rig['panel'] / 'correctness.md'
-    assert first_line(report) == 'worker: model=padme/served-model · family=Alibaba · runtime=aider · door=headless'
+    assert first_line(report) == 'worker: model=padme/served-model · family=Local · runtime=aider · door=headless'
     argv = (rig['log'] / 'aider.argv').read_text().splitlines()
     assert argv[argv.index('--model') + 1] == 'openai/served-model'
     assert argv[argv.index('--openai-api-base') + 1] == padme  # from Pi's declaration, not a copy
@@ -396,3 +404,56 @@ def test_plan_guidance_requires_an_external_seat_before_self_only():
     assert 'same-family seat on the headless door' in flat
     assert 'before it may fall back to `seats: self-only`' in flat
     assert 'self-only stays only for "no door launched"' in flat
+
+
+@pytest.mark.integration
+def test_aider_runs_in_a_scratch_directory_outside_the_review_tree_and_any_repo(rig, padme):
+    result = aider_seat(rig)  # aider loads .aider.conf.yml from its cwd and git root: neither may be reviewed code
+    assert result.returncode == 0, result.stdout
+    cwd = Path((rig['log'] / 'aider.cwd').read_text().strip()).resolve()
+    tree = rig['tree'].resolve()
+    assert cwd != tree and tree not in cwd.parents and cwd not in tree.parents
+    assert subprocess.run(['git', '-C', str(cwd.parent), 'rev-parse'], capture_output=True).returncode != 0
+    assert not cwd.exists()  # removed after the seat
+
+
+@pytest.mark.integration
+def test_local_exemption_follows_the_declared_host_not_the_provider_name(rig, padme):
+    (rig['tmp'] / 'models.json').write_text(json.dumps({'providers': {
+        'padme-cloud': {'baseUrl': 'http://93.184.216.34:8080/v1'}}}))
+    remote = aider_seat(rig, model='padme-cloud/served-model')
+    assert remote.returncode == 1 and 'no consent for cross-family spend on padme-cloud' in remote.stdout
+    (rig['tmp'] / 'models.json').write_text(json.dumps({'providers': {
+        'padme': {'baseUrl': 'http://100.93.160.120:8080/v1'}}}))  # CGNAT (tailnet) address is local
+    gaze_seat = load_module()
+    door = gaze_seat.load_doors(ROOT / 'skills' / 'route' / 'routes.json')['aider']
+    for url, local in (('http://127.0.0.1:1/v1', True), ('http://100.93.160.120/v1', True),
+                       ('http://192.168.1.4/v1', True), ('http://localhost/v1', True),
+                       ('http://93.184.216.34/v1', False), ('http://example.com/v1', False)):
+        assert gaze_seat.is_local(door, 'padme', url) is local, url
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize('label', ['Anthropic', 'OpenAI', 'Alibaba'])
+def test_local_model_cannot_be_stamped_as_another_family(rig, padme, label):
+    result = aider_seat(rig, family=label)
+    assert result.returncode == 1 and 'family Local' in result.stdout
+    assert not (rig['panel'] / 'correctness.md').exists()
+
+
+@pytest.mark.integration
+def test_aider_report_is_the_answer_only(rig, padme):
+    result = aider_seat(rig, mode='aiderish')
+    assert result.returncode == 0, result.stdout
+    report = (rig['panel'] / 'correctness.md').read_text()
+    assert report.splitlines()[0].startswith('worker: model=padme/served-model')
+    assert 'Aider v' not in report and 'THINKING' not in report and 'Tokens:' not in report
+    assert 'verdict: concerns' in report and 'maybe verdict: clear' not in report
+
+
+@pytest.mark.integration
+def test_verdict_in_aider_thinking_does_not_hide_a_refusal(rig, padme):
+    refused = aider_seat(rig, mode='aider-notrun')
+    assert refused.returncode == 1 and 'seat refused' in refused.stdout
+    missing = aider_seat(rig, mode='aider-noanswer')
+    assert missing.returncode == 1 and 'no answer' in missing.stdout
