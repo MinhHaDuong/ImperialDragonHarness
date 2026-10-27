@@ -9,6 +9,7 @@ revisit is stated and no retirement clause survives. The lint runs here only
 on the doctor's own skill and its control, never as a gate over live skills.
 """
 
+import hashlib
 import os
 import re
 import subprocess
@@ -29,6 +30,9 @@ HERE = REPO / "scripts" / "harness_here.sh"
 STUB = REPO / "rules" / "authoring-skills.md"
 POINTER = re.compile(r"`references/([\w.-]+\.md)`")
 CONTROL = REPO / "tests" / "fixtures" / "harness-doctor" / "trace-doctor-SKILL.md"
+# The control is frozen: a copy edited or swapped for a weaker file could still
+# raise the four checks yet stop being the case the doctor's report names.
+CONTROL_SHA256 = "445e4276f655e2d38fff918d78dcba890d829347651a6efa26baec7318aa6e7a"
 CONTROL_CHECKS = {"body_lines", "date", "history_phase", "long_fence"}
 
 
@@ -120,6 +124,7 @@ def test_stub_keeps_paths_and_points_to_reference():
 
 def test_control_fixture_fires_every_listed_check():
     """The frozen control must keep firing: a silent control means a blind probe."""
+    assert hashlib.sha256(CONTROL.read_bytes()).hexdigest() == CONTROL_SHA256
     result = stl.lint(REPO, stl.DEFAULT_PROJECTS, [CONTROL])
     assert set(result["summary"]) >= CONTROL_CHECKS
 

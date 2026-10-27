@@ -2,7 +2,7 @@
 metadata:
   category: session
 name: harness-doctor
-description: "Lint harness skills and rules for contradiction and overlap; author-called, harness only."
+description: "Diagnose harness skills and rules for contradiction and overlap: triage, then probes on demand; author-called, harness only."
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "[skill or rule to start from]"
