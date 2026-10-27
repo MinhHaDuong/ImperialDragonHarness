@@ -52,14 +52,14 @@ live settings, never added). Codex hooks still merge into its configuration,
 and install links individual rules, skills, instructions, launchers and
 the Pi extension without replacing profile directories or requiring a
 repository pointer. Unrelated content survives; same-name resource conflicts
-are refused and must be resolved explicitly, never deleted blindly. A link
-install created into this checkout that the manifest no longer declares is
-retired, if unchanged.
+are refused and must be resolved explicitly, never deleted blindly.
 At `~/.agents`, canonical skills are recognized in place, not self-linked.
 Run `./bin/idh install` only after reviewing these host-wide actions.
-Rerunning `./bin/idh install` refreshes unchanged receipt-owned links,
-retires those the manifest no longer declares, and refuses foreign
-replacements; after moving a checkout, run the moved one's install.
+Rerunning it refreshes unchanged receipt-owned links, refuses foreign
+replacements, and retires receipt-owned links into this checkout that the
+manifest no longer declares, if unchanged. A dangling skill link into this
+checkout's `skills/` that no receipt holds is pruned; other unrecorded links
+are left alone. After moving a checkout, rerun install from its new place.
 `./bin/idh check` and `./bin/idh status` are read-only diagnostics.
 
 ## Remaining work

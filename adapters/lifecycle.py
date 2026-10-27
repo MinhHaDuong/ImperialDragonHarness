@@ -95,6 +95,7 @@ def install_links() -> int:
             report(*problem)
             rc = 1
     rc |= retire_stale(owned, declared)
+    rc |= prune_unrecorded(declared)
     try:
         receipt.parent.mkdir(parents=True, exist_ok=True)
         _replace(receipt, (json.dumps(owned, indent=2) + "\n").encode(), 0o600)
@@ -146,6 +147,43 @@ def retire_stale(owned: dict, declared: set[Path]) -> int:
                 continue
             print(f"retired: {path} (no longer declared)")
         del owned[key]
+    return rc
+
+
+def prune_unrecorded(declared: set[Path]) -> int:
+    """Remove dangling links to this checkout's skills that no receipt holds.
+
+    retire_stale only knows links install recorded; a skill link made by
+    `idh install skill`, by hand, or before the receipt existed outlives its
+    skill otherwise, and `idh uninstall skill` cannot name a skill that left
+    the repo. Only the skills roots, only dangling links, and only those whose
+    text resolves to <this checkout>/skills/<name>: unlinking a dangling link
+    destroys nothing.
+    """
+    rc = 0
+    skills = root() / "skills"
+    roots = {
+        V.expand(e["path"], root())
+        for e in json.loads((REPO / "adapters" / "projections.json").read_text())["entries"]
+        if e.get("children") is True and e["target"] == "$IDH_ROOT/skills"
+    }
+    for skills_root in sorted(roots):
+        if not skills_root.is_dir() or skills_root.resolve() == skills.resolve():
+            continue  # absent, or the checkout itself (no links of ours there)
+        for link in sorted(skills_root.iterdir()):
+            try:
+                if link in declared or not link.is_symlink() or link.exists():
+                    continue
+                text = os.readlink(link)
+                points_to = Path(os.path.normpath(Path(os.path.realpath(link.parent)) / text))
+                if points_to.parent != skills or points_to.name != link.name:
+                    continue  # not one of ours
+                link.unlink()
+            except OSError as exc:
+                report("REFUSED", f"{link}: {exc}", "remove the dangling link by hand")
+                rc = 1
+                continue
+            print(f"pruned: {link} -> {text} (skill no longer in this checkout)")
     return rc
 
 
