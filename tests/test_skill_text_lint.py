@@ -108,3 +108,17 @@ def test_cli_exits_zero_with_json(tmp_path):
     assert r.returncode == 0
     out = json.loads(r.stdout)
     assert out["files"] == 1 and out["summary"]["ticket_word"] == 1
+
+
+def test_missing_script_flags_absent_harness_script_only(tmp_path):
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts/here.py").write_text("")
+    make(tmp_path, "run `python3 \"$IDH_ROOT/scripts/here.py\"`.\n"
+                   "run scripts/gone.py\n"
+                   "run ${IDH_ROOT}/scripts/gone.sh\n"
+                   "run skills/a/scripts/local.sh\n"
+                   "run $HARNESS_DIR/scripts/gone.py\n"
+                   "run $REPO/scripts/other.py\n")
+    got = checks(run(tmp_path), "missing_script")
+    assert [f["line"] for f in got] == [FM_LINES + 2, FM_LINES + 3,
+                                        FM_LINES + 5]
