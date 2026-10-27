@@ -2,11 +2,13 @@
 Title: 1252 child C4: verify-gate rules on refs/notes/review with no forge
 Created: 2026-10-27
 Author: reviewer
+Closed: closed by raid — PR #1813
 
 --- log ---
 2026-10-27T15:45Z reviewer created
 2026-10-27T16:31Z reviewer note design: conception/2026-10-27-notes-review-spec.md, accepted by the author 2026-10-27 (ticket 1277 log); build to it
 2026-10-27T17:06Z reviewer note blocker 1273 closed — Blocked-by removed.
+2026-10-27T17:42Z reviewer closed — closed by raid — PR #1813
 
 --- body ---
 ## Context
