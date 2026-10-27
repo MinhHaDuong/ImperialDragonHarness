@@ -167,14 +167,17 @@ def classify_forge(payload: dict, host: str) -> list[dict]:
 CRITERIA_HEADING = re.compile(r"^(#{2,})\s*exit\s+criteria\b", re.I)
 HEADING = re.compile(r"^(#{1,6})\s")
 CHECKBOX = re.compile(r"^-\s*\[[ xX]\]\s*")
+LIST_ITEM = re.compile(r"^(?:[-*+]|\d+[.)])\s+")
+FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
 
 
 def criteria_hash(ticket_text: str | None) -> str:
-    """Hash every exit-criteria section and every other checkbox line.
+    """Hash every exit-criteria section and every other list item.
 
     A criteria heading is `exit criteria` at any level, any case, with any
     suffix; its section ends at the next heading of the same or a higher level.
-    Checkbox lines outside such sections are hashed too, so renaming the real
+    List items (any bullet or number, checkbox state dropped) outside such
+    sections are hashed too, so renaming the real
     heading and appending a copy of the old text cannot hide a weakened list.
     Checkbox state and prose are ignored.
     """
@@ -184,10 +187,18 @@ def criteria_hash(ticket_text: str | None) -> str:
     outside: list[str] = []
     level = 0  # heading level of the open criteria section; 0 when outside
     found = False
+    fence = None
     for raw in ticket_text.splitlines():
         line = raw.strip()
-        crit = CRITERIA_HEADING.match(raw)
-        other = HEADING.match(raw)
+        fenced = FENCE.match(raw)
+        if fenced:
+            mark = fenced.group(1)
+            if fence is None:
+                fence = mark
+            elif mark[0] == fence[0] and len(mark) >= len(fence):
+                fence = None
+        crit = None if fence or fenced else CRITERIA_HEADING.match(raw)
+        other = None if fence or fenced else HEADING.match(raw)
         if crit:
             level, found = len(crit.group(1)), True
             continue
@@ -198,8 +209,8 @@ def criteria_hash(ticket_text: str | None) -> str:
         norm = CHECKBOX.sub("- ", line)
         if level:
             inside.append(norm)
-        elif CHECKBOX.match(line):
-            outside.append(norm)
+        elif LIST_ITEM.match(line):
+            outside.append(re.sub(r"^(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s*)?", "- ", line))
     if not found:
         return "none"
     lines = inside + (["--outside--", *outside] if outside else [])
@@ -458,6 +469,16 @@ def claim_mismatch(args: argparse.Namespace, current: Inputs) -> str | None:
     if malformed:
         return f"malformed close claim {malformed[0]}"
     claimed = {Path(c).name for c in claims}
+    # The merge path reads claims with raid_land's grammar; the two must agree.
+    from raid_land import Refusal, close_claims as merge_claims
+    try:
+        merged = sorted(merge_claims(args.pr_body_file.read_text(encoding="utf-8")))
+    except Refusal as exc:
+        return f"merge grammar refuses the body: {exc}"
+    if merged != sorted(n.split("-", 1)[0] for n in claimed):
+        return f"the gate and the merge recipe read different claims ({sorted(claimed)} vs {merged})"
+    if len(claimed) > 1:
+        return f"the PR claims several tickets {sorted(claimed)}; gate one range per ticket"
     if current.ticket == "none":
         return f"gated range names no ticket but the PR claims {sorted(claimed)}" if claimed else None
     if current.ticket not in claimed:

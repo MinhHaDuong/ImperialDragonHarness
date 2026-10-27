@@ -749,3 +749,32 @@ def test_gate_refuses_a_recorded_ticket_the_pr_does_not_claim(repo, policy, tmp_
     fenced = _gate_claiming(repo, policy, tmp_path,
                             "```\n**Ticket:** tickets/0002-y.erg\n```\n", "tickets/0002-y.erg")
     assert fenced.returncode != 0
+
+
+@pytest.mark.parametrize("bullet", ["* [ ] weak", "+ [ ] weak", "1. [ ] weak", "- weak"])
+def test_renamed_section_with_any_list_form_is_seen(bullet):
+    base = re_mod.criteria_hash(TICKET)
+    tampered = TICKET.replace("## Exit criteria\n- [ ] First criterion\n- [ ] Second criterion",
+                              f"## Acceptance\n{bullet}") + "\n## Exit criteria\n- [ ] First criterion\n- [ ] Second criterion\n"
+    assert re_mod.criteria_hash(tampered) != base
+
+
+def test_comment_line_in_a_fence_does_not_close_the_criteria_section():
+    plain = TICKET.replace("- [ ] Second criterion", "- [ ] Second criterion\n```\n# run this\n```\n- [ ] Third")
+    weaker = plain.replace("- [ ] Third", "- [ ] Third, loosened")
+    assert re_mod.criteria_hash(plain) != re_mod.criteria_hash(weaker)
+
+
+@pytest.mark.integration
+def test_gate_refuses_several_claims_and_disagreeing_grammars(repo, policy, tmp_path):
+    _two_tickets(repo)
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    several = _gate_claiming(repo, policy, tmp_path,
+                             "**Ticket:** tickets/0001-x.erg\n**Ticket:** tickets/0002-y.erg\n",
+                             "tickets/0001-x.erg")
+    assert several.returncode != 0 and "claim" in several.stdout
+    split = _gate_claiming(repo, policy, tmp_path,
+                           "Ticket: tickets/0001-x.erg (main)\nticket tickets/0002-y.erg\n",
+                           "tickets/0002-y.erg")
+    assert split.returncode != 0 and "claim" in split.stdout
