@@ -24,7 +24,7 @@ directory unchanged.
 
 ```bash
 ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
-IDH_ROOT="$(cd -P "$(dirname "$ROAR_SKILL_MD")/../.." && pwd -P)"
+IDH_ROOT="${IDH_ROOT:-$(p="$ROAR_SKILL_MD"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"
 ```
 
 ## Non-git projects
@@ -130,7 +130,8 @@ base, once a passing gate record covers the bundle's candidate.
 
    ```bash
    ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
-   ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
+   IDH_ROOT="${IDH_ROOT:-$(p="$ROAR_SKILL_MD"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"
+   ROAR_DIR="$IDH_ROOT/skills/roar"
    "$ROAR_DIR/close-and-clean.sh" --phase before-exit --ticket NNNN --days 7
    ```
 
@@ -176,7 +177,8 @@ base, once a passing gate record covers the bundle's candidate.
 
        ```bash
        ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
-       ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
+       IDH_ROOT="${IDH_ROOT:-$(p="$ROAR_SKILL_MD"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"
+       ROAR_DIR="$IDH_ROOT/skills/roar"
        "$ROAR_DIR/close-and-clean.sh" --phase exit-check [--bundle-branch roar-…]
        ```
 
@@ -222,7 +224,8 @@ base, once a passing gate record covers the bundle's candidate.
 
     ```bash
     ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
-    ROAR_DIR="$(cd -P "$(dirname "$ROAR_SKILL_MD")" && pwd -P)"
+    IDH_ROOT="${IDH_ROOT:-$(p="$ROAR_SKILL_MD"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"
+    ROAR_DIR="$IDH_ROOT/skills/roar"
     "$ROAR_DIR/close-and-clean.sh" --phase after-exit \
       --remove-worktree "$WORKTREE_PATH" \
       --local-branch "$COMPLETED_PR_BRANCH=$COMPLETED_PR_HEAD_OID" \

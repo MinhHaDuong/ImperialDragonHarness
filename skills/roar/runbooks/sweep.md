@@ -17,10 +17,10 @@ When roar runs this: roar steps 4-5, after capture, on the ref and not the worki
    the coordinates of every reviewer attempt in that record; absent or mixed
    revisions are unresolved. Never infer revisions from record context or apply
    a branch-wide SHA across attempts without supporting trail evidence.
-   Resolve the loaded helper root in the same invocation: `<loaded-SKILL.md>` is roar's own SKILL.md, the file that points here (absolute path supplied when loading it); the `dirname/../..` expression resolves from `skills/roar/` to the harness root, so never substitute this runbook's path.
+   Resolve the loaded helper root in the same invocation: `<loaded-SKILL.md>` is roar's own SKILL.md, the file that points here (absolute path supplied when loading it); a preset `IDH_ROOT` wins, otherwise the expression resolves from `skills/roar/` (the file or its directory) to the harness root, so never substitute this runbook's path.
 
    ```bash
-   IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)" && MERGED_THROUGH="$(git -C "$PROJECT_REPO" rev-parse --verify 'refs/remotes/origin/main^{commit}')" && python3 "$IDH_ROOT/scripts/attribution_backfill.py" --project "$PROJECT_REPO" --merged-through "$MERGED_THROUGH" --defect-fix --fix-pr "$FIX_PR" --fix-commit "$FIX_SHA" --reviewed "$PAST_PR=$REVIEWED_SHA"
+   IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}" && MERGED_THROUGH="$(git -C "$PROJECT_REPO" rev-parse --verify 'refs/remotes/origin/main^{commit}')" && python3 "$IDH_ROOT/scripts/attribution_backfill.py" --project "$PROJECT_REPO" --merged-through "$MERGED_THROUGH" --defect-fix --fix-pr "$FIX_PR" --fix-commit "$FIX_SHA" --reviewed "$PAST_PR=$REVIEWED_SHA"
    ```
 
    Repeat `--reviewed PR=SHA` for additional supported records. This joins

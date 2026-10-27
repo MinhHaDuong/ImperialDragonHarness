@@ -16,7 +16,8 @@ feeding the next.
 ## 1. Collect
 
 ```bash
-DASH_DIR="$(cd -P "$(dirname "<loaded-SKILL.md>")" && pwd -P)"
+IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"
+DASH_DIR="$IDH_ROOT/skills/dashboard"
 "$DASH_DIR/dashboard.sh"
 ```
 
