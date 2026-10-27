@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Per-project state probe. JSON on stdout, exit 0 always."""
 
+import hashlib
 import json
+import os
 import shutil
 import subprocess
 import time
@@ -154,7 +156,13 @@ def ticket_state(project):
             "error": "no tickets/ directory",
         }
 
-    erg_bin = shutil.which("erg") or str(project / "tickets/erg")
+    # The project's vendored binary first: it reads the format the project's
+    # tickets use, where an older erg on PATH reports false violations.
+    vendored = project / "tickets/erg"
+    if vendored.is_file() and os.access(vendored, os.X_OK):
+        erg_bin = str(vendored)
+    else:
+        erg_bin = shutil.which("erg") or str(vendored)
 
     try:
         r = run([erg_bin, "ready", "--json", str(tickets_dir)], project)
@@ -406,6 +414,35 @@ def pr_state(project):
     return {"open": len(items), "items": items}
 
 
+def state_fingerprint(project):
+    """Hash of the repository state a yawn report describes: HEAD, working
+    tree, refs and worktrees. Branch names and molt's own housekeeping-<date>
+    branch are left out (claude/housekeeping-* stays: yawn check 8 reads it), so molt's step-1 branch cut alone does not change it; a
+    fetch that moved a ref, a commit, an edit or a removed worktree does."""
+    parts = []
+    for args in (
+        ["git", "rev-parse", "HEAD"],
+        ["git", "status", "--porcelain"],
+        ["git", "for-each-ref", "--format=%(objectname) %(refname)"],
+        ["git", "worktree", "list", "--porcelain"],
+    ):
+        r = run(args, project)
+        if r.returncode != 0:
+            return None
+        parts.append(r.stdout)
+    parts[2] = "".join(
+        line + "\n"
+        for line in parts[2].splitlines()
+        if not line.split(" ", 1)[-1].startswith("refs/heads/housekeeping-")
+    )
+    parts[3] = "".join(
+        line + "\n"
+        for line in parts[3].splitlines()
+        if not line.startswith("branch ")
+    )
+    return hashlib.sha256("\0".join(parts).encode()).hexdigest()[:16]
+
+
 def main():
     import argparse
 
@@ -416,11 +453,20 @@ def main():
     parser.add_argument(
         "--tests", action="store_true", help="Run test suite (may be slow)"
     )
+    parser.add_argument(
+        "--fingerprint",
+        action="store_true",
+        help="Print only the state fingerprint (fast; molt compares it)",
+    )
     args = parser.parse_args()
 
     project = Path(args.path).expanduser().resolve()
 
-    out = {"path": str(project)}
+    if args.fingerprint:
+        print(state_fingerprint(project) or "unavailable")
+        return
+
+    out = {"path": str(project), "fingerprint": state_fingerprint(project)}
 
     collectors: dict = {
         "git": git_state,

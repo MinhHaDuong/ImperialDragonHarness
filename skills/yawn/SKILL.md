@@ -43,7 +43,7 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
    - **Non-ticket branches** with `commits_beyond_default > 0`: flag as cleanup candidate.
    - **Closed-ticket branches** (name matches `t<NNNN>-*` and ticket NNNN has a `Closed:` line) where the merge probe succeeds: classify as **fix-now** — safe to delete. Run this probe per branch:
      ```bash
-     bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" merged-probe <branch>
+     bash "$IDH_ROOT/scripts/ticket-sweep.sh" merged-probe <branch>
      ```
      Exit 0 means the branch landed on main: ancestry (`git merge-base --is-ancestor`) or, as an equal second signal, the merge request number from the ticket's `Closed:` header appearing as `(#N)` in a subject on main. Emit one fix-now bullet per matching branch: `Delete local branch \`<branch>\` (closed ticket <NNNN>, merged into main)`.
      Note: the merge-request-subject signal stays because ancestry misses squash merges in the past, which left no ancestry; the probe tries both.
@@ -56,7 +56,7 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
 6. **Working tree** — from `git.clean` / `git.dirty_files`. List uncommitted files if dirty.
 7. **Tests green** — from `tests.status` / `tests.detail`. Skip if `tests.runner == "none"`.
 8. **Housekeeping** — from `housekeeping.state` / `housekeeping.age_hours` / `housekeeping.branch`. Report `ok` if `state == "clean"` (age ≤ 12 h), `warn` if `state == "needed"` (overdue) or `state == "tidying"` (a `claude/housekeeping-*` branch is in flight). Skip if probe missing.
-9. **Ticket archival** — from `tickets.closed_unarchived` (list of ticket IDs sitting in `tickets/*.erg` with a `Closed:` header, never moved to `tickets/closed/`). `ok` if empty; `warn` listing the IDs otherwise. This is the close-without-archive escape: a merge that skipped the merge recipe's close step skips `erg archive`. Classify the fix as **fix-now** — `bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" archive` (moves all closed tickets to `tickets/closed/` and stages the move; commit it). Skip if `tickets.error` is set or no `tickets/` directory.
+9. **Ticket archival** — from `tickets.closed_unarchived` (list of ticket IDs sitting in `tickets/*.erg` with a `Closed:` header, never moved to `tickets/closed/`). `ok` if empty; `warn` listing the IDs otherwise. This is the close-without-archive escape: a merge that skipped the merge recipe's close step skips `erg archive`. Classify the fix as **fix-now** — `bash "$IDH_ROOT/scripts/ticket-sweep.sh" archive` (moves all closed tickets to `tickets/closed/` and stages the move; commit it). Skip if `tickets.error` is set or no `tickets/` directory.
 10. **Hook freshness** — from `hooks`. Skip (silent) if `hooks.hooks_path` is null or `hooks.in_worktree` is false — no working-tree `core.hooksPath`, so the stale-hook-in-worktree trap does not exist. `skip` with the reason if `hooks.error` is set (no remote, detached HEAD). `warn` if `hooks.stale_files` is non-empty, naming the files: "working-tree hooks differ from origin/<default> — worktrees will run the main checkout's stale hooks until it is updated". `ok` if in-worktree hooks match the default branch. Advisory only, never a hard gate.
 11. **Docs freshness (deep verification)** — cross-check status/directive docs (`STATE.md`, `README.md`, etc.):
    - **Staleness** — flag docs whose content predates recent repo activity
@@ -108,6 +108,8 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
 ```
 ## Yawn — {date}
 
+Probe fingerprint: {fingerprint}
+
 | Check            | Status | Detail                       |
 |------------------|--------|------------------------------|
 | Recent activity  | ...    | N commits (last 12h)         |
@@ -124,6 +126,8 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
 | Session scratch  | ...    | N orphan dirs, X of cap      |
 | Local directives | ...    | N shadow / N reasoned / skip |
 ```
+
+`{fingerprint}` is the probe's `fingerprint` field, verbatim (`unavailable` when null): /molt compares it to decide whether this report still holds.
 
 Use `ok` for normal status, `warn` for attention-needed, `fail` for problems, `skip` for gracefully-degraded checks (detail column explains why).
 

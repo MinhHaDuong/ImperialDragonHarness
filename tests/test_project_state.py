@@ -10,6 +10,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 SCRIPTS = Path(__file__).resolve().parent.parent / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))  # project-state imports git_utils
@@ -154,6 +156,26 @@ def test_ticket_state_erg_missing_falls_back_to_file_count(tmp_path, monkeypatch
     assert out["closed_unarchived"] == ["0002"]
 
 
+def test_ticket_state_prefers_vendored_erg_over_path(tmp_path, monkeypatch):
+    """The project's tickets/erg reads its tickets' format; an older erg on
+    PATH would report false violations, so the vendored binary wins."""
+    tickets = tmp_path / "tickets"
+    tickets.mkdir()
+    vendored = tickets / "erg"
+    vendored.write_text("#!/bin/sh\n")
+    vendored.chmod(0o755)
+    monkeypatch.setattr(ps.shutil, "which", lambda _x: "/usr/local/bin/erg")
+    seen = []
+
+    def responder(args):
+        seen.append(args[0])
+        return _cp(returncode=1)
+
+    monkeypatch.setattr(ps, "run", lambda args, cwd: responder(args))
+    ps.ticket_state(tmp_path)
+    assert seen[0] == str(vendored)
+
+
 def test_ticket_state_flags_closed_but_unarchived(tmp_path, monkeypatch):
     """A top-level tickets/*.erg carrying a Closed: header is the
     close-without-archive escape — flag its id, exclude it from `open`."""
@@ -284,3 +306,48 @@ def test_disk_space_state_warns_without_blocking(monkeypatch):
     out = ps.disk_space_state(Path("/proj"))
     assert out["status"] == "warn"
     assert out["warnings"] == ["/tmp has 5% free"]
+
+
+def _git(repo, *args):
+    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
+
+
+@pytest.mark.integration
+def test_state_fingerprint_ignores_branch_cut_and_tracks_state(tmp_path):
+    """molt reuses a yawn report on an equal fingerprint: its own housekeeping
+    branch cut must not move it; a commit or an edit must."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q", "-b", "main")
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.invalid")
+    (repo / "f").write_text("1\n")
+    _git(repo, "add", "f")
+    _git(repo, "commit", "-qm", "one")
+    before = ps.state_fingerprint(repo)
+    assert before
+
+    _git(repo, "switch", "-qc", "housekeeping-20261027")
+    assert ps.state_fingerprint(repo) == before
+
+    (repo / "f").write_text("2\n")
+    edited = ps.state_fingerprint(repo)
+    assert edited != before
+
+    _git(repo, "commit", "-qam", "two")
+    assert ps.state_fingerprint(repo) not in (before, edited)
+
+
+@pytest.mark.integration
+def test_state_fingerprint_sees_claude_housekeeping_branches(tmp_path):
+    """Yawn check 8 reports claude/housekeeping-* branches as "tidying"; a
+    reused report must not hide one created since."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q", "-b", "main")
+    _git(repo, "config", "user.name", "Test")
+    _git(repo, "config", "user.email", "test@example.invalid")
+    _git(repo, "commit", "-qm", "one", "--allow-empty")
+    before = ps.state_fingerprint(repo)
+    _git(repo, "branch", "claude/housekeeping-foo")
+    assert ps.state_fingerprint(repo) != before

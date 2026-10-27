@@ -48,32 +48,27 @@ Run full repo housekeeping and act on every finding.
 
    Do not proceed past step 0. The fix-now deletions would race with the other session's uncommitted work.
 
-0.7. **Freshen the erg binary (before any erg check).** Refresh the installed
-   `erg` *before* step 1's git phase, because both erg-driven surfaces a sweep
-   acts on run against whatever binary is on `PATH`: the corpus check
-   `erg check tickets/` inside `housekeeping-git.sh`, and `erg ready` inside the
-   step-2 yawn probe (`project-state.py` prefers `which erg`). A stale
-   installed binary produces *false* violations on tickets using format the old
-   binary predates (for example bogus hits on closed tickets carrying the
-   newer `Label:` header), and an autonomous sweep would file
-   tickets on them.
+0.7. **The erg binary: the project's own, no refresh.** Every erg-driven
+   surface a sweep acts on runs the project's vendored `tickets/erg`: the
+   corpus check inside `housekeeping-git.sh`, `ticket-sweep.sh`, and `erg
+   ready` inside the step-2 yawn probe (`project-state.py` prefers
+   `tickets/erg` and falls back to `erg` on `PATH`). A stale binary produces
+   *false* violations on tickets using format it predates (for example bogus
+   hits on closed tickets carrying the newer `Label:` header), and an
+   autonomous sweep would file tickets on them. Step 1 cuts the housekeeping
+   branch from `origin/main`, which puts the project's reviewed binary in
+   place; nothing needs refreshing first.
 
-   ```bash
-   erg update   # refresh the INSTALLED binary. Offline-safe by design: fetch
-                # errors (no remote, no network, not a git repo) exit 0, so the
-                # sweep never fails on an isolated machine.
-   ```
-
-   `erg update` only ever replaces the binary it runs as (the installed
-   `~/.local/bin/erg`), never the committed `tickets/erg`. If a visited repo's
-   committed `tickets/erg` lags its remote, **surface that as an `open-ticket`
-   finding (step 4) — do not run `tickets/erg update` and do not commit a
-   refreshed binary here.** The committed binary is durable state that travels
-   via a merge request, not via a sweep's direct mutation.
-
-   Ordering this before step 1 means every later erg-driven finding runs against
-   the fresh binary: a violation that survives the refresh is real and may be
-   ticketed; one that does not was a stale-binary artifact and is dropped.
+   **Do not run `erg sync` in a sweep** (`erg update` is its old name). It
+   rewrites `tickets/erg` in place from the project's origin, and in a checkout
+   whose local main lags, step 1's `git switch` then refuses the modified file
+   even when it matches the target byte for byte. `erg sync --upstream`
+   imports a binary the project has not reviewed: if a visited repo's
+   committed `tickets/erg` lags git-erg, **surface that as an `open-ticket`
+   finding (step 4) and do not commit a refreshed binary here.** The committed
+   binary is durable state that travels via a merge request, not via a
+   sweep's direct mutation. A stale `erg` on `PATH` is the operator's to
+   reinstall; the sweep does not read it while `tickets/erg` exists.
 
 1. **Git phase.** Run `"$IDH_ROOT/scripts/housekeeping-git.sh"` from the project root. Then cut a dated branch: `git switch -c housekeeping-$(date -u +%Y%m%d) origin/main`. All subsequent commits in this run land on that branch.
 
@@ -137,11 +132,28 @@ Run full repo housekeeping and act on every finding.
    relocated here: that is an operator decision (check 12 of the yawn
    names the knob).
 
-2. **Yawn.** Invoke /yawn. The probe (`project-state.py`)
+2. **Yawn.** If /yawn already reported on this repository earlier in this
+   conversation, check whether that report still holds before running it again:
+
+   ```bash
+   python3 "$IDH_ROOT/scripts/project-state.py" "$(git rev-parse --show-toplevel)" --fingerprint
+   ```
+
+   Equal to the report's `Probe fingerprint:` line → reuse its Action plan and
+   skip the rerun; say so in the step 7 report. Different, `unavailable`, or no
+   such line → the state has moved since: invoke /yawn. The fingerprint covers
+   HEAD, the working tree, refs and worktrees, so a step 1 fetch that moved a
+   ref or a step 1.5 removal forces the rerun. Molt's own branch cut does not,
+   provided yawn ran on a checkout already at `origin/main`; from a lagging
+   main or a feature branch the HEAD differs, and yawn runs again.
+
+   With no earlier report, invoke /yawn. The probe (`project-state.py`)
    runs once inside yawn and covers all checks — do not re-run git
    commands already collected there. Parse the **Action plan** section from
    the output: the bold headings `**fix-now**`, `**open-ticket**`, `**skip**`
-   are the contract interface consumed by steps 3–5 below.
+   are the contract interface consumed by steps 3–5 below. Yawn's closing
+   `Next move:` line is addressed to a user who ran yawn alone; inside molt,
+   ignore it: you are already in the move it suggests.
 
    Yawn check 14 findings (project directives shadowing the harness's) arrive
    as its JSON records; molt routes them and does not re-read local rules:
@@ -168,7 +180,7 @@ Run full repo housekeeping and act on every finding.
    survive separate Bash tool calls.
 
    ```bash
-   bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" close <id>
+   bash "$IDH_ROOT/scripts/ticket-sweep.sh" close <id>
    ```
 
    The script closes, then stages the closed file in one process. If it fails,
@@ -187,7 +199,7 @@ Run full repo housekeeping and act on every finding.
 2.6. **Archive closed tickets.** Skip if `tickets/` is absent.
 
    ```bash
-   bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" archive
+   bash "$IDH_ROOT/scripts/ticket-sweep.sh" archive
    ```
 
    The script moves any remaining ticket with a non-empty `Closed:` header from
@@ -214,7 +226,7 @@ Run full repo housekeeping and act on every finding.
      cannot be mapped to a landed merge request: skip deletion and log it; never
      read 2 as merged or as not merged.
      ```bash
-     bash "$IDH_ROOT/skills/molt/ticket-sweep.sh" merged-probe <branch>
+     bash "$IDH_ROOT/scripts/ticket-sweep.sh" merged-probe <branch>
      ```
    - **Worktree guard**: if the branch is prefixed with `+` in `git branch` output, a
      worktree is checked out on it. Skip if the worktree is dirty (uncommitted changes).
