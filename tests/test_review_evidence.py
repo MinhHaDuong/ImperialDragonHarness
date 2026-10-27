@@ -771,6 +771,7 @@ BYPASS_PROBES = {
     "indented code block": (_body_ticket(extra="    code a\n\n"), _body_ticket(extra="    code b\n\n")),
     "setext heading": (_body_ticket(extra="Exit criteria (revised)\n-----\nsneaked\n\n"),
                        _body_ticket(extra="Exit criteria (revised)\n-----\nsneaked, loosened\n\n")),
+    "later marker line": (BASE_TICKET, BASE_TICKET + "--- amendment ---\nCriterion B is waived\n"),
     "body note": (BASE_TICKET, _body_ticket(extra="Note: criteria are advisory.\n\n")),
     "context edit": (BASE_TICKET, BASE_TICKET.replace("## Context\nc", "## Context\nc, narrowed")),
 }
@@ -794,3 +795,32 @@ def test_other_list_markers_normalise_their_tick_and_keep_their_marker():
     star = BASE_TICKET.replace("- [ ] a", "* [ ] a")
     assert re_mod.criteria_hash(star.replace("* [ ] a", "* [x] a")) == re_mod.criteria_hash(star)
     assert re_mod.criteria_hash(star) != re_mod.criteria_hash(BASE_TICKET)
+
+
+@pytest.mark.integration
+def test_gate_refuses_several_claims_and_disagreeing_grammars(repo, policy, tmp_path):
+    _two_tickets(repo)
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    several = _gate_claiming(repo, policy, tmp_path,
+                             "**Ticket:** tickets/0001-x.erg\n**Ticket:** tickets/0002-y.erg\n",
+                             "tickets/0001-x.erg")
+    assert several.returncode != 0 and "claim" in several.stdout
+    split = _gate_claiming(repo, policy, tmp_path,
+                           "Ticket: tickets/0001-x.erg (main)\nticket tickets/0002-y.erg\n",
+                           "tickets/0002-y.erg")
+    assert split.returncode != 0 and "claim" in split.stdout
+
+
+def test_crlf_marker_line_is_accepted():
+    crlf = BASE_TICKET.replace("--- body ---\n", "--- body ---\r\n")
+    assert re_mod.criteria_hash(crlf) != "none"
+
+
+@pytest.mark.integration
+def test_ticket_without_a_body_marker_is_refused(repo, policy):
+    p = repo / "tickets/0001-x.erg"
+    p.write_text(REPO_TICKET.replace("--- body ---", "--- text ---"))
+    git(repo, "commit", "-qam", "no body marker")
+    out = gate_with(repo, policy, p, "correctness")
+    assert out.returncode != 0 and "body" in out.stdout + out.stderr

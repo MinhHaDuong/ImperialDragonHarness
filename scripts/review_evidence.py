@@ -164,15 +164,15 @@ def classify_forge(payload: dict, host: str) -> list[dict]:
     return rows
 
 
-BODY_MARK = re.compile(r"^--- body ---[ \t]*$", re.M)
-SECTION_MARK = re.compile(r"^--- \w+ ---[ \t]*$", re.M)
+BODY_MARK = re.compile(r"^--- body ---[ \t]*\r?$", re.M)
 TICKED = re.compile(r"^([ \t]*(?:[-*+]|\d+[.)])[ \t]+)\[[xX]\]", re.M)
 
 
 def criteria_hash(ticket_text: str | None) -> str:
     """Hash the ticket's whole body, raw, with checkbox state normalised.
 
-    The body is the text under `--- body ---` up to the next section marker.
+    The body is the text from the first `--- body ---` line to the end of the
+    file; erg reads later marker lines as body text, so they are hashed too.
     Nothing is parsed: any other edit after a review reads stale, so notes
     belong in the log. The header, the log and the file's location are outside.
     """
@@ -182,8 +182,7 @@ def criteria_hash(ticket_text: str | None) -> str:
     if not start:
         return "none"
     body = ticket_text[start.end():]
-    end = SECTION_MARK.search(body)
-    body = TICKED.sub(r"\1[ ]", body[:end.start()] if end else body)
+    body = TICKED.sub(r"\1[ ]", body)
     return hashlib.sha256(body.encode()).hexdigest()[:16]
 
 
@@ -297,7 +296,10 @@ def ticket_at_head(args: argparse.Namespace, base: str, head: str) -> tuple[str 
         raise TicketRefused(f"review-evidence: {name} exists both open and closed at {head[:12]}")
     if not found:
         raise TicketRefused(f"review-evidence: --ticket {args.ticket} is not tracked at {head[:12]}")
-    return next(iter(found.values())), name
+    text = next(iter(found.values()))
+    if not BODY_MARK.search(text):
+        raise TicketRefused(f"review-evidence: {name} has no `--- body ---` line at {head[:12]}")
+    return text, name
 
 
 def current_inputs(args: argparse.Namespace) -> Inputs:
