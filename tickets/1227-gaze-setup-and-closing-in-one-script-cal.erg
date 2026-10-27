@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-26T23:03Z reviewer created
+2026-10-27T10:33Z reviewer criteria 1, 2, 4 done in PR (scripts/gaze_setup.py, gaze_close.py). Criterion 3 pending: after 20 gaze runs on the new structure run 'python3 scripts/gaze_wall_analysis.py <merge-time ISO>' and report setup/closing medians against 49 s / 49 s (baseline is the pre-2026-10-27 structure; say so)
 
 --- body ---
 ## Context
