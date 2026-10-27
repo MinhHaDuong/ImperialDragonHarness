@@ -64,4 +64,12 @@ got="$(cd "$TMP/proj" && env -i HOME="$H1" PATH="$PATH" BASH_ENV="$LOADER" \
     && report "6. project .env cannot override" PASS \
     || report "6. project .env cannot override" FAIL "got: $got"
 
+# 7. a project .env that redirects HOME cannot skip the agent credential
+printf 'HOME=/nonexistent\nXDG_CONFIG_HOME=/owner/.config\n' > "$TMP/proj/.env"
+got="$(cd "$TMP/proj" && env -i HOME="$H1" PATH="$PATH" BASH_ENV="$LOADER" \
+    bash -c 'printf %s "${GH_CONFIG_DIR-<unset>}"')"
+[ "$got" = "$H1/.config/gh-agent" ] \
+    && report "7. project .env HOME redirect cannot skip" PASS \
+    || report "7. project .env HOME redirect cannot skip" FAIL "got: $got"
+
 [ "$FAIL" -eq 0 ]
