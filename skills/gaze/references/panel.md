@@ -103,10 +103,17 @@ unavailable route is never reported as a clean review.
    into another's keeps its own verdict.
 4. **Targeted tests only.** Gaze's checks and seats run only the tests of the
    files the what touches; none runs the full suite, which runs once, as the
-   project's declared gate (here: after the merge, on main). Where the project declares
-   `.idh-checks.json`, the targeted run is its scoped gate
-   (`$IDH_ROOT/scripts/scoped-check.py`) and the review quotes its
-   `selected:` and `skipped:` lines, never calling a scoped pass full.
+   project's declared gate (here: after the merge, on main). The targeted run
+   is `python3 "$IDH_ROOT/scripts/touched-tests.py" --base origin/<base-branch>`
+   from the review worktree, once per review: every test that names a changed
+   file, integration tier included, or the whole integration tier for a changed
+   source file no test names (ticket 1283; a fast-tier run alone missed a
+   moved symbol). The review quotes its `selected:`, `fallback:` and `result:`
+   lines; exit 1 is a blocking finding, and exit 4 (`skipped`) is reported as
+   skipped, never as a pass. Where the project declares `.idh-checks.json`,
+   its scoped gate (`$IDH_ROOT/scripts/scoped-check.py`) runs too and the
+   review quotes its `selected:` and `skipped:` lines, never calling a scoped
+   pass full.
 5. **Write `<panel>/review.md` before posting**, so findings survive a forge
    outage or a failed post.
 6. **Re-run the anchor first**, `python3 "$IDH_ROOT/scripts/review-anchor.py" <pr-number> --worktree "$review_tree"`: a nonzero `REVIEW-ANCHOR:` means the branch moved during review, so do not post.

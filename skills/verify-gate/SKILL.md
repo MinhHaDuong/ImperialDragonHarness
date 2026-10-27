@@ -172,6 +172,15 @@ before the merge, the full set runs on main after it
   not touch. Integration tests are out of scope by default: they run when the
   diff touches what they cover, or when the caller passes `integration`.
 
+Beside the plan, the gate runs the touched tests once, from the gate
+worktree, gated base or not: `python3 "$IDH_ROOT/scripts/touched-tests.py"
+--base origin/<base-branch>`. They are not a before-set check and leave no gate
+record (the before set stays cheap); they catch before the merge what only the
+integration tier sees, such as a moved symbol an integration test still
+imports (ticket 1283). The verdict quotes the `selected:`, `fallback:` and
+`result:` lines. Exit 1 fails the criterion the change carries (REROLL);
+exit 4 is quoted as skipped, never as a pass.
+
 A gate on an ungated base (the plan answers `off:`) applies the same rule by
 hand: `merge-gate.py tier --since <prior head>` answering 0 reuses the check
 results the prior verdict cites, re-running only the project's ticket check;
