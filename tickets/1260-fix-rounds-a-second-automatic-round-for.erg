@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Fix rounds: a second automatic round for verifiable fix-on-fix findings; red test shown failing for the targeted reason
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T12:58Z reviewer created
+
+--- body ---
+## Context
+Author ruling, 2026-10-27 raid. The raid's one-fix-round breaker (`skills/raid/references/fix-and-regate.md`:
+"FINDINGS again on the fixes after the narrower gaze → ESCALATE") fired on PRs #1755 and #1756; both
+second-round findings were real, local fixes to the first round's own fixes, and each cost the author an
+interruption. Upstream cause: producers wrote tests after code or tests that never failed for the
+targeted reason (PR #1756's first round; mutation testing found survivors).
+
+## Exit criteria
+- [ ] A second fix round runs without the author when every finding of the narrower gaze is about the
+      previous fixes (no new scope), is tagged `verifiable` with a reproduction, and the fix is
+      red-test-first; a third round, or any judgment finding, escalates. Stated once (fix-and-regate.md),
+      cited from /merge § Before merging.
+- [ ] Hunt's Execute step requires the red run to be shown failing for the targeted reason (not an
+      import or argument error), and the fix-round contract says the same.
+- [ ] The harness gate passes.
+
+## Relevant files
+skills/raid/references/fix-and-regate.md, skills/merge/SKILL.md, skills/hunt/SKILL.md

@@ -1,0 +1,28 @@
+%erg 0.1
+Title: Zotero live fixture rejects a foreign listener on its port (1254 child)
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T12:58Z reviewer created
+
+--- body ---
+## Context
+Child of tracker 1254. Cause isolated on 2026-10-27 (see 1254's log): two pytest-xdist workers can
+draw the same loopback port from `tests/zotero_live.py::free_port()`; the second Zotero starts
+without a bind error and the fixture's readiness checks pass against the other worker's server,
+so keyed writes fail with HTTP 401. Reproduced deterministically by forcing both `LiveZotero`
+instances onto one port.
+
+## Exit criteria
+- [ ] `LiveZotero` detects a foreign listener on its port at startup (one keyed write, 401 means
+      foreign; or the LISTEN socket's owner is not the fixture's process group), stops its client,
+      draws a new port and retries a bounded number of times.
+- [ ] A test forces two fixtures onto one port and shows the second retries and both write; the
+      same test fails on the code before the fix.
+- [ ] The harness gate passes.
+
+## Relevant files
+tests/zotero_live.py, tests/test_zotero_import.py
+
+Related: [[1254]], [[1258]].

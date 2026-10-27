@@ -1,0 +1,30 @@
+%erg 0.1
+Title: review_evidence: normalise the exit-criteria heading and bind the recorded ticket to the PR's claim
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T13:01Z reviewer created
+
+--- body ---
+## Context
+Follow-up of ticket 1236 (PR #1755, merged on the author's ruling 2026-10-27 after its final gaze).
+The last review found two narrower edges that only a dishonest or careless editor reaches:
+1. `criteria_hash` matches `^## Exit criteria\s*$` exactly; `## Exit Criteria`, `### Exit criteria`
+   or `## Exit criteria (added)` added after recording read `reused`. Worse: renaming the real heading,
+   weakening it, and appending an unchanged copy of the old section also passes. None of 709 closed
+   tickets uses a variant heading.
+2. If `record` and `gate` both name the same unrelated ticket, the PR's real ticket can be rewritten
+   and the gate reads `reused`.
+
+## Exit criteria
+- [ ] The criteria section match is case-insensitive at any heading level (`^#{2,}\s*exit criteria\b`),
+      or a ticket whose criteria heading is not exact is refused; tests for the three variants and the
+      rename-and-append case read stale or refused, and fail on the code before the fix.
+- [ ] The gate compares the recorded ticket with the ticket the PR claims to close and refuses a mismatch.
+- [ ] The harness gate passes.
+
+## Relevant files
+scripts/review_evidence.py, tests/test_review_evidence.py, skills/verify-gate/SKILL.md
+
+Related: [[1236]].
