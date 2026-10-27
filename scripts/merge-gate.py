@@ -1012,6 +1012,9 @@ def run_after(remote, branch, actor, command, forge=None):
     """Hold the lock, run on the newest tip until it stops moving: the last run's code, or BUSY.
 
     With a forge, a red run opens its ticket (open_red_ticket), still under the lock.
+    `forge` is a forge or a zero-argument factory of one, called only on red, after
+    the record is pushed, inside the guard that keeps the red standing whatever the
+    build raises (ticket 1283: a forge built before the checks ran lost every record).
     """
     with open(lock_file(), "a") as handle:
         try:
@@ -1050,7 +1053,8 @@ def run_after(remote, branch, actor, command, forge=None):
                 sys.stdout.write(f"red: after-merge record on {tip}; its ticket:\n{report}")
                 if forge is not None:
                     try:
-                        sys.stdout.write(open_red_ticket(report, outcome[1], tip, forge, remote, branch, outcome[2]) + "\n")
+                        built = forge() if callable(forge) else forge
+                        sys.stdout.write(open_red_ticket(report, outcome[1], tip, built, remote, branch, outcome[2]) + "\n")
                     except Exception as exc:  # the red stands in the note and the log whatever happens here
                         sys.stdout.write(f"red ticket: not opened ({type(exc).__name__}: {exc})\n")
                 code = FAIL
@@ -1063,7 +1067,7 @@ def cmd_run_after(args):
     command = f"merge-gate run-after --remote {args.remote} --ref {args.ref}"
     if not single_line(actor) or not single_line(command):
         raise ValueError("actor or command holds a line break or control character")
-    forge = raid_land().forge.GhForge() if args.open_ticket else None
+    forge = (lambda: raid_land().forge.GhForge()) if args.open_ticket else None  # built only on red
     code = run_after(args.remote, args.ref, actor, command, forge)
     return PASS if code == BUSY else code
 
