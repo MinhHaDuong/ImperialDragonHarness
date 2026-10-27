@@ -5,7 +5,8 @@
 
 Run it from the request's own worktree on its head branch. It executes
 `skills/merge/SKILL.md` § The recipe, steps 0 to 8; step 9 (the after-merge
-runner) is NOT run here, the caller starts it. That file stays the contract.
+runner) needs no call here: hooks/reference-transaction starts it when step 8's
+sync moves main (ticket 1265). That file stays the contract.
 `--ruled-head` is the tip the review gate ruled on (`-` for a bookkeeping tier
 request, which then must read as bookkeeping). `--ruled-claims` is the comma
 list of ticket ids the gate ruled on (`-` for none); the body must still claim

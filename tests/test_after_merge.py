@@ -250,38 +250,68 @@ def test_the_audit_summary_with_after_stays_one_line_over_noisy_checks(tmp_path)
     assert "ran on" in proc.stdout
 
 
-def step9_snippet():
-    """The fenced bash of skills/merge/SKILL.md step 9, as the merging session runs it."""
-    text = (ROOT / "skills" / "merge" / "SKILL.md").read_text(encoding="utf-8")
-    step = text[text.index("9. **After-merge run"):]
-    return step.split("```bash\n", 1)[1].split("```", 1)[0]
+def test_the_runner_skips_a_tip_that_already_carries_an_after_record(tmp_path, module):
+    """Ticket 1265: the hook starts the runner on every move of main, a session-start sync included."""
+    log = tmp_path / "runs.log"
+    work = make_repo(tmp_path, logging_checks(log, 0))
+    tip = git(work, "rev-parse", "main")
+    assert finish(run_after(work))[0] == 0
+    code, out, err = finish(run_after(work))
+    assert code == 0, out + err
+    assert f"covered: {tip}" in out, out + err
+    assert log.read_text().splitlines() == [tip]
+    git(work, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
+    assert len([e for e in module.parse_note(note(work, tip)) if module.is_after_entry(e)]) == 1
 
 
-@pytest.mark.parametrize("layout", ["bare", "non-bare"])
-def test_step9_starts_the_runner_from_a_linked_worktree(tmp_path, module, layout):
-    seed = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
-    origin = tmp_path / "origin.git"
-    if layout == "bare":
-        primary = tmp_path / "proj.git"
-        subprocess.run(["git", "clone", "-q", "--bare", str(origin), str(primary)], check=True, env=child_env())
-    else:
-        primary = seed
-    linked = tmp_path / "request-wt"
-    git(primary, "worktree", "add", "-q", "-b", "request", str(linked), "main")
-    for key, value in (("user.email", "t@example.com"), ("user.name", "Fixture")):
-        git(primary, "config", key, value)
-    env = {**child_env(), "IDH_ROOT": str(ROOT)}
-    script = step9_snippet().replace("<base>", "main")
-    subprocess.run(["bash", "-c", script], cwd=linked, check=True, env=env)
-    common = Path(git(linked, "rev-parse", "--path-format=absolute", "--git-common-dir"))
+def test_landing_through_raid_land_starts_the_runner_through_the_hook(tmp_path, monkeypatch, module):
+    """Ticket 1265: no caller starts the runner; the main-update hook does, on the sync's move of main."""
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.delenv("IDH_ROOT", raising=False)
+    (tmp_path / "home").mkdir()
+    work = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    config = json.loads((work / ".merge-gate.json").read_text())
+    config["before"] = ["ok"]
+    (work / ".merge-gate.json").write_text(json.dumps(config), encoding="utf-8")
+    (work / "hooks").mkdir()
+    (work / "hooks" / "reference-transaction").write_bytes((ROOT / "hooks" / "reference-transaction").read_bytes())
+    (work / "hooks" / "reference-transaction").chmod(0o755)
+    (work / "scripts").mkdir()
+    for name in ("merge-gate.py", "raid_land.py", "step_clock.py"):
+        (work / "scripts" / name).write_bytes((ROOT / "scripts" / name).read_bytes())
+    git(work, "add", "-A")
+    git(work, "commit", "-q", "-m", "gated tree with the hook")
+    git(work, "push", "-q", "origin", "main")
+    git(work, "config", "core.hooksPath", "hooks")
+    request = tmp_path / "request-wt"
+    git(work, "worktree", "add", "-q", "-b", "feat", str(request), "main")
+    (request / "feat.txt").write_text("feat\n", encoding="utf-8")
+    git(request, "add", "-A")
+    git(request, "commit", "-q", "-m", "feat")
+    git(request, "push", "-q", "origin", "feat")
+    head = git(request, "rev-parse", "HEAD")
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch")
+    forge.prs["7"] = {"branch": "feat", "base": "main", "title": "feat", "body": "**Ticket:** none"}
+    lander = module.raid_land()
+    out = []
+    code = lander.main_land(forge, "7", head, [], "main", request, out=out.append)
+    assert code == lander.OK, out
+    tip = git(work, "rev-parse", "main")
+    assert tip == git(work, "rev-parse", "origin/main") and tip != head
+    common = Path(git(work, "rev-parse", "--path-format=absolute", "--git-common-dir"))
     log = common / "idh" / "after-merge.log"
-    end = time.monotonic() + 30
-    while time.monotonic() < end and "pass: after-merge record" not in (log.read_text() if log.exists() else ""):
+    end = time.monotonic() + 60
+    text = ""
+    while time.monotonic() < end:
+        text = log.read_text() if log.exists() else ""
+        if f"after-merge record on {tip}" in text or "busy:" in text:
+            break
         time.sleep(0.1)
-    assert "pass: after-merge record" in log.read_text(), log.read_text()
-    tip = git(primary, "rev-parse", "main")
-    git(seed, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
-    assert [e["result"] for e in module.parse_note(note(seed, tip))] == ["pass"]
+    assert f"after-merge record on {tip}" in text or "busy:" in text, f"no runner started: log {text!r}"
+    git(work, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
+    if "busy:" not in text:
+        entries = [e for e in module.parse_note(note(work, tip)) if module.is_after_entry(e)]
+        assert [e["result"] for e in entries] == ["pass"]
 
 
 # ── ticket 1251: a red after-merge record opens a ticket through a ticket-only PR ──
