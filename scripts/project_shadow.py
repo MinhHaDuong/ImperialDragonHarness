@@ -4,6 +4,8 @@
     project_shadow.py PROJECT              JSON lines: findings or one skip
     project_shadow.py --is-harness PROJECT exit 0 if PROJECT is the harness or
                                            a linked worktree of it, else 1
+    project_shadow.py --plan [--auto]      finding records on stdin -> one
+                                           plan line each (ticket 1231, molt)
 
 Mechanical half only: a local skill or rule named like a harness skill or
 rule. Contradictions and repeated procedures are model judgment (yawn). One
@@ -127,8 +129,68 @@ def scan(project: Path) -> list[dict]:
     return records
 
 
+def route(rec: dict, auto: bool) -> str | None:
+    """One plan line for a record, or None: a reasoned (ok) finding is left
+    alone. `auto` (unattended sweep) never files into the harness checkout."""
+    if not isinstance(rec, dict):
+        raise ValueError("record is not a JSON object")
+    if rec.get("status") == "skip":
+        return f"skip: {rec.get('reason', '')}"
+    if rec.get("verdict") in ("ok", "ok (reasoned)"):
+        return None
+    if rec.get("verdict") != "warn":
+        return (f"skip: verdict {rec.get('verdict')!r} for "
+                f"{rec.get('local_file') or '?'} is not 'warn'; no action")
+    local, kind = rec.get("local_file"), rec.get("kind")
+    disp, dest = rec.get("disposition"), rec.get("destination")
+    where = f"{local or '?'} ({kind or '?'})"
+    need = ["local_file", "kind", "disposition", "destination"]
+    if disp == "harness-ticket":
+        need.append("harness_file")
+    missing = [k for k in need if not rec.get(k)]
+    if missing:
+        return f"skip: record for {where} lacks {', '.join(missing)}; judge by hand"
+    if (disp == "harness-ticket") != (dest == "harness"):
+        return (f"skip: destination {dest} contradicts disposition {disp} "
+                f"for {where}; judge by hand")
+    if disp == "delete-local":
+        return f"fix-now: delete redundant local copy {where}"
+    if disp == "annotate":
+        return f"fix-now: write the reason beside {where}"
+    if disp == "harness-ticket":
+        what = f"general fix for {local} vs {rec['harness_file']} ({kind})"
+        if auto:
+            return f"report: harness-bound, not filed unattended: {what}"
+        return (f"open-ticket: in the harness repo ($IDH_ROOT), on a harness "
+                f"branch, never its main checkout: {what}")
+    return f"skip: unknown disposition {disp} for {where}; judge by hand"
+
+
+def plan(argv: list[str]) -> int:
+    import argparse
+    ap = argparse.ArgumentParser(prog="project_shadow.py --plan")
+    ap.add_argument("--auto", action="store_true")
+    auto = ap.parse_args(argv).auto  # an unknown flag exits 2
+    lines = []
+    for raw in sys.stdin:
+        if not raw.strip():
+            continue
+        try:
+            line = route(json.loads(raw), auto)
+        except ValueError as exc:
+            print(f"project_shadow --plan: bad record: {exc}", file=sys.stderr)
+            return 1
+        if line:
+            lines.append(line)
+    for line in lines:
+        print(line)
+    return 0
+
+
 def main(argv: list[str]) -> int:
     sys.path.insert(0, str(Path(__file__).resolve().parent))
+    if len(argv) >= 2 and argv[1] == "--plan":
+        return plan(argv[2:])
     if len(argv) == 3 and argv[1] == "--is-harness":
         return 0 if is_harness(Path(argv[2])) else 1
     if len(argv) != 2 or not Path(argv[1]).is_dir():
