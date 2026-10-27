@@ -1,0 +1,40 @@
+%erg 0.1
+Title: After-merge red record opens a ticket through a ticket-only PR
+Created: 2026-10-27
+Author: Minh Ha-Duong
+
+--- log ---
+2026-10-27T10:57Z Minh Ha-Duong created
+
+--- body ---
+## Context
+
+Split off from 1244 (child 1 of tracker 1226), criterion 3, by the author's
+ruling of 2026-10-27. 1244's runner, on red, prints the would-be ticket text
+(tip, failing checks, first-parent merges since the last green after-record)
+and exits non-zero; it writes nothing to the forge. This ticket makes that red
+reach a ticket without a human.
+
+## Finding that forced the split
+
+The raid feasibility check of 1244 found that the bookkeeping tier in
+`.merge-gate.json` (`"tiers": {"bookkeeping": [...]}`) still runs
+`pytest-guard` on the candidate (main tip plus the ticket file). When the
+after-merge red is `pytest-guard`, the likely case, a ticket-only PR fails its
+own before-merge record and can never merge on the bookkeeping path: the
+autoland deadlocks exactly when it fires. Check: plant a failing test on a
+temp main and run `merge-gate.py run` on a ticket-only candidate.
+
+Remedies to weigh: file the red outside a merge (a forge issue behind an
+extension point, the ticket then landing with the fix), or a bookkeeping
+check set that does not run the suite for a red-ticket candidate.
+
+## Exit criteria
+
+- [ ] A red after-merge record opens a ticket naming the tip, the failing checks and the merges since the last green tip; a test shows it on a planted failure, and a second red run on the same failure opens no second ticket.
+
+## Relevant files
+
+- `scripts/merge-gate.py` (`run-after`, `red_report`)
+- `.merge-gate.json` (`tiers`)
+- `skills/merge/SKILL.md` step 9
