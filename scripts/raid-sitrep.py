@@ -33,8 +33,8 @@ def minutes(seconds: float) -> str:
 
 
 def worktrees() -> list[Path]:
-    paths = [Path(l[9:]) for l in sh("git", "worktree", "list", "--porcelain").splitlines()
-             if l.startswith("worktree ")]
+    paths = [Path(ln[9:]) for ln in sh("git", "worktree", "list", "--porcelain").splitlines()
+             if ln.startswith("worktree ")]
     return paths
 
 

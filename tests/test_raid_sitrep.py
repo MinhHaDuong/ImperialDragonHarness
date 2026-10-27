@@ -6,7 +6,6 @@ a STALL before the last SITREP, a GATE_TIMEOUT after it).
 """
 
 import importlib.util
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -94,7 +93,7 @@ def test_garbled_line_is_unreadable(repo, tmp_path, monkeypatch, capsys):
 
 
 def test_missing_queue_is_unreadable(repo, tmp_path, monkeypatch, capsys):
-    text = "".join(l for l in FIXTURE.read_text().splitlines(True) if " QUEUE " not in l)
+    text = "".join(ln for ln in FIXTURE.read_text().splitlines(True) if " QUEUE " not in ln)
     log_with(tmp_path, monkeypatch, text)
     code, out = run(capsys, "--no-forge")
     assert code == 2
