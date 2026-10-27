@@ -348,7 +348,7 @@ def main(argv=None) -> int:
     p.add_argument("--cleanup", action="store_true", help="remove the merged worktree and branch")
     a = p.parse_args(argv)
     claims = [] if a.ruled_claims == "-" else [c for c in a.ruled_claims.split(",") if c]
-    return main_land(forge.get_forge(None, a.pr), a.pr, a.ruled_head, claims, a.base, None, print, a.cleanup)
+    return main_land(forge.get_forge(None, a.pr, landing=True), a.pr, a.ruled_head, claims, a.base, None, print, a.cleanup)
 
 
 if __name__ == "__main__":
