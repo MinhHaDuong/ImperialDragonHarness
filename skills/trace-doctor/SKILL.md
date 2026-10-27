@@ -27,7 +27,7 @@ counterfactuals note does.
 
 ## 1. Survey
 
-Run the six committed, standard-library-only scripts with the harness's
+Run the seven committed, standard-library-only scripts with the harness's
 `python3` interpreter. They do not require a package-manager environment.
 All intermediate outputs go to a scratch
 directory; nothing here is tracked. `$ARGUMENTS` (e.g. `--days 14`) passes
@@ -49,6 +49,8 @@ python3 "$HARNESS_DIR/scripts/trace-friction.py" $ARGUMENTS \
   --output "$SCRATCH/friction-daily.csv" --json > "$SCRATCH/friction.json" &
 python3 "$HARNESS_DIR/scripts/trace-wall-time.py" $ARGUMENTS \
   --json > "$SCRATCH/wall-time.json" &
+python3 "$HARNESS_DIR/scripts/trace-stopguard.py" $ARGUMENTS \
+  --json > "$SCRATCH/stopguard.json" &
 wait
 
 # Forge join: reads AND writes the accumulating committed cache (do not create a
@@ -181,6 +183,21 @@ From `wall-time.json` (method and limits: the docstring of
 
 Every gap is READ; every category is a heuristic. A finding enters step 3 like
 any lever; this section never applies a fix.
+
+### Bad stops
+
+From `stopguard.json` (rules and limits: the docstring of
+`$HARNESS_DIR/scripts/trace-stopguard.py`; precision and recall:
+`conception/2026-10-27-stopguard-measure-labels.md`), one row per ISO week and
+runtime: stops, ask without ask-up, wait without wake, bad. Codex and Pi are
+reported unmeasured, never as zero.
+
+Name the gate: **ticket 1164, gate G1: 5 or more bad stops per week on Claude
+Code reopens Stopguard; below that, close it.** Report `g1.bad_per_week` (a
+derived rate: window total over window weeks) beside the verdict, and scale it
+by the labelled precision before calling it a count of true bad stops. The
+verdict informs the author; this section never reopens or closes 1164. The
+offending turns (`--list`) are for local reading only; never commit them.
 
 ### Treatment follow-up section
 
