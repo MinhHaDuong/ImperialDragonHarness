@@ -125,3 +125,15 @@ Run when the user ends a work session ("done for today", "let's stop", "wrap up"
     all-clear; if the command itself fails, report `main audit: not checked
     (command failed)`. Never ask a question, open a ticket or wait on a finding:
     the author reads the line.
+16. **Point out slow tickets.** From the primary checkout, run
+    `python3 "$IDH_ROOT/scripts/slow_tickets.py"` and carry its lines into the
+    final summary unchanged. It lists tickets closed in the last 24 h (no marker
+    of the previous lair exists, so say that window) whose solve time passed the
+    script's threshold, each with its duration and the source of that number:
+    read from the `duration:` comments of its merge request, or derived from the
+    request's opening to its merge, an upper bound that includes time in the queue; a
+    ticket whose time could not be read is listed as unknown. Each line suggests
+    `/harness-doctor` with the complaint pre-filled; when it names `/test-doctor`,
+    attach the complaint to the step 13 offer rather than making a second one.
+    It prints nothing when no ticket was slow. Suggestion only: never start a
+    visit, ask a question, open a ticket or wait.
