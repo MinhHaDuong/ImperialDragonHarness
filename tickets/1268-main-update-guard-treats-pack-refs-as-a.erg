@@ -1,0 +1,28 @@
+%erg 0.1
+Title: Main-update guard treats pack-refs as a no-op, not an ungated deletion of main
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T13:45Z reviewer created
+
+--- body ---
+## Context
+Found while reviewing ticket 1180's observation (2026-10-27): the only `warned` lines in the main-update
+journal (3 ever, padme) come from `git gc --auto` → `git pack-refs --all --prune`, which removes the
+loose `refs/heads/main` while writing the same value into `packed-refs`. The reference-transaction hook
+reads it as an ungated deletion (`new` = 000…, phase `prepared`). In warn mode this is noise; in enforce
+mode (1180's goal) the hook would refuse git's own maintenance. Blocks 1180's enforce step.
+
+## Exit criteria
+- [ ] The hook recognises a pack-refs transaction (the loose ref removed while the packed value equals the
+      old value, or the transaction is pack-refs' own) and journals it as `allowed` (or skips it), never
+      `warned`/refused; a real deletion of main is still refused under enforce.
+- [ ] Tests on a temp repo: `git pack-refs --all --prune` under enforce succeeds and leaves main intact;
+      `git update-ref -d refs/heads/main` under enforce is refused. Both fail on today's hook as stated.
+- [ ] The harness gate passes.
+
+## Relevant files
+hooks/reference-transaction, tests/test_main_guard_hook.py, conception/2026-10-21-main-update-guard.md
+
+Related: [[1180]], [[1045]].
