@@ -2,9 +2,11 @@
 Title: After-merge runner opens a false red on a host with a stale Python environment
 Created: 2026-10-27
 Author: reviewer
+Closed: merged via PR #1829 (raid 2026-10-27b)
 
 --- log ---
 2026-10-27T18:32Z reviewer created
+2026-10-27T19:47Z reviewer closed — merged via PR #1829 (raid 2026-10-27b)
 
 --- body ---
 ## Context
