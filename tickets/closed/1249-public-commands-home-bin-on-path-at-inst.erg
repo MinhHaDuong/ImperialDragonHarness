@@ -2,12 +2,14 @@
 Title: Public commands home: bin/ on PATH at install, adopt doifetch from doudou
 Created: 2026-10-27
 Author: reviewer
+Closed: integration review by raid 2026-10-27: children 1257 (#1751) and 1266 (#1796) merged; bin/README states the bin/scripts split; idh install links bin/* refusing taken names; the doifetch criterion became 1266 (uv tool, not vendored) by the author's ruling
 
 --- log ---
 2026-10-27T10:48Z reviewer created
 2026-10-27T11:47Z reviewer note split into tracker + child 1257 (installer, PR #1751) after the #1751 gate's round-1 REROLL; doifetch stays here until it can be filed from doudou
 2026-10-27T11:47Z reviewer note verify-reroll — round 1: doifetch criterion MISSING; split ticket 1249 so this PR closes its own installer child
 2026-10-27T13:38Z reviewer note doifetch child filed as 1266 (author: package DOIfetch for sharing, B then C)
+2026-10-27T16:40Z reviewer closed — integration review by raid 2026-10-27: children 1257 (#1751) and 1266 (#1796) merged; bin/README states the bin/scripts split; idh install links bin/* refusing taken names; the doifetch criterion became 1266 (uv tool, not vendored) by the author's ruling
 
 --- body ---
 ## Context
