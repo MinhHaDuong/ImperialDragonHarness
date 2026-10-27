@@ -27,3 +27,54 @@ Bad stops (conception/2026-10-21-stopguard-design.md):
 - [ ] The harness gate passes.
 
 Related: [[1164]].
+
+## Imagine (raid 2026-10-27b)
+- Premise check: holds. No stopguard code exists (`scripts/` has no stop_guard); 1164 is still deferred and
+  conception/2026-10-21-stopguard-design.md §6 phase 3 (Claude Code replay, G1) is the sibling this replaces. Since
+  2026-10-21 only review-chain work (1273-1281) touched scripts/; nothing on trace-*.py or skills/trace-doctor.
+- Simplest path: one new standard-library script `scripts/trace-stopguard.py`, a sibling of trace-wall-time.py,
+  reusing its trace walk (importlib-load pattern; `_load_records`, `load_traces`, sub-agents excluded) and the
+  `--days/--projects-dir/--json` flags. A turn = records from a human prompt to the last assistant `end_turn`
+  record. Rule 1: last text block's final non-empty line outside a code fence ends in `?`, and no Agent/SendMessage
+  call (the advisor) earlier in that turn; AskUserQuestion-ended turns count as asks. Rule 2: final text matches a
+  wait vocabulary (design §3 list) while no pending background Bash/Agent/Monitor/ScheduleWakeup (tool_use with no
+  later task-notification or end) exists. Weekly bucket by ISO week of the turn end.
+  YAGNI: no spool, hook, registry or Turn class (design §3-4 is the hook this ticket replaces); no Codex/Pi walker
+  (their traces are another format, ~6 and ~5 weeks; report "claude-code only, others unmeasured", which the
+  criterion allows with "where the traces allow"); no automatic labeller, the sample is hand-labelled.
+  Premature-abstraction risk: do not factor a shared trace-reader module; copy-load as wall-time does.
+- Risk class: judgment (heuristic rules with a precision/recall claim and an author-by-right exclusion list).
+  Suggested coder: opus. The hand-labelling cannot be done by the author in-run; see mapping.
+
+## Plan
+1. `scripts/trace-stopguard.py`: `iter_turns(traces)`, `rule_ask_up(turn)`, `rule_wait(turn)`, `by_week`, argparse `--days`,
+   `--json`, `--list` (offending turns: session id, ts, last 160 chars; no full text, none committed).
+2. `tests/test_trace_stopguard.py`: synthetic-trace fixtures in the `_use/_res/_say` style of test_trace_wall_time.py.
+3. `skills/trace-doctor/SKILL.md`: add the script to § 1 survey block (a seventh script, run beside wall-time, output
+   `$SCRATCH/stopguard.json`) and a short "Bad stops" subsection in § 2 reporting weekly counts per runtime and
+   naming "1164 gate G1: >= 5 bad stops per week on Claude Code: reopen; below: close". Bump "six" to "seven".
+4. `conception/2026-10-27-stopguard-measure-labels.md`: the hand-labelled sample (turn id = session:index, label,
+   one line; no message text) with precision, recall and documented limits. Update conception only; do not edit 1164.
+- First test: `test_ask_up_flags_question_without_advisor`: two turns ending "Which one?"; one has an earlier Agent
+  call to the advisor; assert only the other is flagged. Catches a wrong implementation that flags any "?" or
+  ignores the advisor, and the sibling `test_question_in_code_fence_and_mid_message_not_flagged`; the wait test
+  pairs a pending `run_in_background` with and without a task-notification (a tautological "flags the word
+  waiting" implementation fails the paired case).
+- Files touched: scripts/trace-stopguard.py (new), tests/test_trace_stopguard.py (new), skills/trace-doctor/SKILL.md,
+  conception/2026-10-27-stopguard-measure-labels.md (new). Registries: none edited (trace scripts are not listed in a
+  dispatch table; run `make skills-catalog` only if the description changes, it should not). tests/fixtures/harness-doctor/trace-doctor-SKILL.md
+  is a frozen sha-pinned control: do NOT touch it.
+- Dependencies: none open (1282-1292, 1252, 1277 do not touch trace-* or trace-doctor). Soft: 1164 (read-only).
+  File overlap: only skills/trace-doctor/SKILL.md, shared with no listed ticket.
+- Exit mapping: (1) script + tests, step 1-2; claude-code only, other runtimes stated unmeasured. (2) Precision/recall:
+  agent draws >= 30 turns (>= 10 flagged, >= 10 unflagged, the positives from today's raid session ~/.claude traces, e.g.
+  turns ending in a question to the author) and proposes labels; the AUTHOR must confirm the labels (agent cannot
+  know "would have preferred to continue"). Coder reports precision/recall as "agent-labelled, pending author
+  confirmation" and lists the 30 for a 0.2 author-hour skim; exit stays unticked until confirmed. Recall = flagged
+  among labelled-bad of an unflagged sample, with the small-n interval stated. (3) step 3. (4) `make check` / the
+  scoped gate (.idh-checks.json), quoting selected/skipped.
+- Decide (orchestrator): accept agent-labelled-then-author-skim as discharging criterion 2, or hold the ticket open
+  for the author. Recommended: accept the skim (0.2 author-h) rather than 1.5 author-h of fresh labelling.
+
+## Orchestrator decisions (raid 2026-10-27b)
+- Agent-proposed labels for criterion 2, reported as agent-labelled pending the author skim (~0.2 author-h); criterion 2 stays unticked until the author confirms. Coder: opus. Wave 2 (no file overlap).
