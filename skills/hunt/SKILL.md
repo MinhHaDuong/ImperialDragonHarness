@@ -33,7 +33,7 @@ Arguments are `<ticket-id> [inline]`; `$ID` is the ticket id.
 - With `inline` (the detached agent, a raid, a headless run, or the author co-working),
   go on in the current context.
 
-A launcher that wants a wake on silence runs `python3 "$IDH_ROOT/scripts/raid-breaker.py" --wait` in the background (Claude Code only; flags in `skills/raid/references/circuit-breakers.md`, ticket 1214). <!-- harness-extension-point -->
+A launcher that wants a wake on silence runs `python3 "$IDH_ROOT/scripts/raid-breaker.py" --wait` in the background (Claude Code only; flags in `skills/raid/references/circuit-breakers.md`). <!-- harness-extension-point -->
 
 ## Plan
 
