@@ -40,7 +40,7 @@ Rules:
 - When tests get too slow, suggest the test-doctor skill.
 - `make check-fast`: fast tier only (`-m "not slow and not integration and not adherence"`), under 10 s, the development loop.
 - `make lint`: adherence tier only (`-m adherence`) — ruff / mypy / hygiene / contracts.
-- `make check`: everything. This is the default merge gate for code changes, run on the merge candidate (the verify-gate skill), unless the project declared a lighter one (e.g. `check-fast` + `lint`); before the merge request, hunt runs only `make check-fast`.
+- `make check`: everything; a project's full gate unless it declares a lighter one (e.g. `check-fast` + `lint`).
 - **pytest spawn failure under the rtk hook.** If `pytest` or `python3 -m pytest` dies under the rtk Bash hook with `Failed to spawn process: No such file or directory (os error 2)`, run it as `rtk proxy python3 -m pytest …` to bypass the rewrite. If that fails too, the pytest shim is stale (a pipx venv after a Python upgrade leaves `~/.local/bin/pytest` on a deleted interpreter): `pipx list` confirms it, `pipx reinstall-all` fixes it.
 
 Every Python project has an `adherence` ruff test running the locked ruff, resolved with `shutil.which`, not a nested `uv run ruff`: pytest already runs inside the project venv under `make lint`, and a nested `uv run` re-enters uv from inside uv and breaks under `UV_NO_SYNC` in a clean CI/cloud container. Reference: `tests/test_ruff.py` in the harness.

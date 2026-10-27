@@ -2,10 +2,13 @@
 Title: Measure one raid by phase against the 20-minute review budget
 Created: 2026-10-21
 Author: reviewer
+Closed: measured on raid 2026-10-27: both PRs inside the 20-minute window; gaze dominates when the panel runs, orchestrator queueing otherwise
 
 --- log ---
 2026-10-21T17:56Z reviewer created
 2026-10-26T22:59Z reviewer reviewer note closing condition (ticket 1224, PR #1677): 1224 subsumes this measurement; close this ticket once one real raid has printed its wrap-up timing table (scripts/step_clock.py table: gaze, each gate round, merge, total and slowest step per merge request) against the 20-minute review budget
+2026-10-27T14:13Z reviewer reviewer measured raid 2026-10-27 (step_clock.py table; gaze/gate durations from their result comments, starts derived as post time minus duration): PR 1774 first review to merge 10m26s, gaze 4m46s (panel, 2 agents) dominant, gate-r1 3m21s, merge 24s, orchestrator wait 1m31s; PR 1775 16m11s, orchestrator queue wait 10m25s dominant (a self-only first review counted as none), gaze-panel 1m55s, gate-r1 40s, merge 26s. Both inside the 20-minute window. Gaps named: no seat times: line in either gaze result (telemetry wall=na), so per-seat wall times are not recorded; about 18 s between gate post and merge start unattributed.
+2026-10-27T14:13Z reviewer closed — measured on raid 2026-10-27: both PRs inside the 20-minute window; gaze dominates when the panel runs, orchestrator queueing otherwise
 
 --- body ---
 ## Context

@@ -158,6 +158,6 @@ def test_primary_root_of_a_repo_nested_under_a_worktree_path(tmp_path):
     nested.mkdir(parents=True)
     git(nested, "init", "-q")
     assert gaze_close.primary_root(cwd=nested) == nested.resolve()
-    git(nested, "commit", "-q", "--allow-empty", "-m", "base")
+    git(nested, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "base")
     git(nested, "worktree", "add", "-q", str(nested / ".claude" / "worktrees" / "x"))
     assert gaze_close.primary_root(cwd=nested / ".claude" / "worktrees" / "x") == nested.resolve()
