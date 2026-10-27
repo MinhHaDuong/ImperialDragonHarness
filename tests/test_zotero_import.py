@@ -1409,7 +1409,7 @@ def test_container_detection(monkeypatch, marker, env, cgroup, expected):
 # --------------------------------------------------------------------------
 # Exact-tier ties (ticket 0570): two distinct records legitimately sharing one
 # attachment md5 — 269 such clusters measured in the user library
-# (docs/zotero-integration.md), none visible in Zotero's Duplicates pane.
+# (conception/zotero-integration.md), none visible in Zotero's Duplicates pane.
 # The old classify_matches returned "match" from matches[0] unconditionally at
 # the exact tier, so the second record vanished without a trace.
 # --------------------------------------------------------------------------

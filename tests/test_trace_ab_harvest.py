@@ -28,7 +28,7 @@ spec.loader.exec_module(hv)
 
 # --- fixtures -------------------------------------------------------------
 
-# Phase-4 guardrail baselines, used verbatim (docs/trace-counterfactuals-2026-06.md).
+# Phase-4 guardrail baselines, used verbatim (conception/trace-counterfactuals-2026-06.md).
 BASELINE_PAIRS = 112
 BASELINE_REROLL = 33
 BASELINE_ESCALATE = 18

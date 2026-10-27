@@ -4,7 +4,7 @@
 A skill with zero observed invocations may still be load-bearing because another
 skill calls it. Deleting on the usage count alone would break the caller.
 
-Corpus deliberately includes tests/, .github/, docs/, tickets/ and the settings
+Corpus deliberately includes tests/, .github/, conception/, tickets/ and the settings
 files: a script wired only into CI or only into the night-run settings has no
 reference in skills/ and would read as an orphan otherwise. Python scripts are
 matched on the module stem too, since an import drops the .py.
@@ -25,7 +25,7 @@ def load_corpus(R: Path) -> dict[str, str]:
             for p in (R / "skills" / s).rglob("*")
             if p.is_file() and p.suffix in TEXT_SUFFIX
         )
-    for sub in ("tests", ".github", "docs", "tickets", "commands", "agents"):
+    for sub in ("tests", ".github", "conception", "tickets", "commands", "agents"):
         d = R / sub
         if not d.exists():
             continue

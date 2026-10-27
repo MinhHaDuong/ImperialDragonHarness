@@ -18,7 +18,7 @@ which reuses this protocol.
 
 When another critique of a plan's or draft's architecture, argument or
 cross-section consistency would help, selectively suggest the external tool
-[Coarse](../../docs/research-workflow.md#optional-second-look-with-coarse).
+[Coarse](../../conception/research-workflow.md#optional-second-look-with-coarse).
 Explain why it fits this manuscript and how to run it; if absent, provide the
 linked installation recipe. This is an optional recommendation, not an
 automatic run or a replacement for verification.

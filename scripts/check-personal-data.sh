@@ -2,12 +2,12 @@
 # Guard against tier-2 personal data (access topology) in the public harness.
 # T2 = mail/IMAP/SMTP hosts, login aliases, keyring-extraction procedures,
 # credential-store inventories. T2 lives in ~/.config/harness/private/ (never
-# committed) — see docs/2026-09-28-personal-data-tiers.md.
-# Usage: check-personal-data.sh [file-or-dir ...]   (default: skills/ projects/ docs/)
+# committed) — see conception/2026-09-28-personal-data-tiers.md.
+# Usage: check-personal-data.sh [file-or-dir ...]   (default: skills/ projects/ conception/)
 set -euo pipefail
 
 if [ $# -eq 0 ]; then
-    TARGETS=(skills/ projects/ docs/)
+    TARGETS=(skills/ projects/ conception/)
 else
     TARGETS=("$@")
 fi

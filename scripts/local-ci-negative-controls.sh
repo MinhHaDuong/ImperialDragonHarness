@@ -56,7 +56,7 @@ inject() {
     status-verb-guard)
         echo '2026-05-01T10:00Z claude status closed — done' >> "$skill" ;;
     personal-data-guard)
-        printf 'Login: minh.ha-duong@%s.services\n' ods > docs/zz-probe.md ;;
+        printf 'Login: minh.ha-duong@%s.services\n' ods > conception/zz-probe.md ;;
     pipefail-guard)
         printf '#!/bin/bash\necho hello\n' > scripts/zz-probe.sh ;;
     grep-e-guard)

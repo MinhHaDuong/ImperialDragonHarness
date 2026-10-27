@@ -23,7 +23,7 @@ MEMORY = REPO / "memory"
 INDEX = MEMORY / "MEMORY.md"
 
 # The ten tracked memory/ root sources inventoried by 0917 in
-# docs/memory-v8/source-inventory.md (PR #1102). Old-path correspondence:
+# conception/memory-v8/source-inventory.md (PR #1102). Old-path correspondence:
 # the nine sources stay at their inventory paths, unrewritten; MEMORY.md is
 # the index itself, replaced by design with its legacy text in Git history.
 PILOT_SOURCES = (
@@ -61,9 +61,13 @@ def unresolved_links(root, doc, archival_links=()):
         elif not resolved.is_file():
             source = doc.relative_to(root).as_posix()
             old = resolved.relative_to(root.resolve()).as_posix()
+            # Design history left docs/ for conception/ on 2026-10-27; pinned
+            # records keep their old link text.
+            if old.startswith("docs/") and (root / "conception" / old[5:]).is_file():
+                continue
             current = (source == "memory/MEMORY.md" or source.startswith("memory/topics/")
-                       or source in {"docs/memory-v8/README.md",
-                                     "docs/2026-10-02-memory-v8-runtime-smoke.md"})
+                       or source in {"conception/memory-v8/README.md",
+                                     "conception/2026-10-02-memory-v8-runtime-smoke.md"})
             if current or (source, old) not in archival_links:
                 broken.append(target)
     return broken
@@ -202,7 +206,7 @@ def test_relocated_clone_remains_readable(tmp_path):
 
     Clone the repository, move the clone elsewhere, drop the origin remote —
     then read the memory surface with plain file access only: every relative
-    link in every Markdown file under memory/ and docs/memory-v8/, plus
+    link in every Markdown file under memory/ and conception/memory-v8/, plus
     the live runtime-smoke document, must resolve inside the relocated clone.
     """
     checkout = tmp_path / "checkout"
@@ -222,8 +226,8 @@ def test_relocated_clone_remains_readable(tmp_path):
     archival_links = verified_archival_links(relocated)
     docs = [
         *sorted((relocated / "memory").rglob("*.md")),
-        *sorted((relocated / "docs" / "memory-v8").glob("*.md")),
-        relocated / "docs" / "2026-10-02-memory-v8-runtime-smoke.md",
+        *sorted((relocated / "conception" / "memory-v8").glob("*.md")),
+        relocated / "conception" / "2026-10-02-memory-v8-runtime-smoke.md",
     ]
     assert docs
     encountered = set()

@@ -28,7 +28,7 @@ work.
   `last_verified`), in the same pass as the cycle verdict.
 
 Arena protocol, runner, analysis and reports live in the independent repository.
-See [the integration contract](../../docs/arena-integration.md) for locations,
+See [the integration contract](../../conception/arena-integration.md) for locations,
 transferred tickets and the explicit grid refresh command.
 
 ## Performance grid

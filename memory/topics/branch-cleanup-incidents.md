@@ -74,5 +74,5 @@ records the design, not completed implementation; 1095 remains deferred.
 - [Raid 1084/1085/1086](../journal/2026/2026-10-12-raid-1084-1086-detached-gaze-occupancy.md) — update-ref measurement; outcome later corrected by the next entry.
 - [PR 1374 scope revision and merge](../journal/2026/2026-10-13-pr1374-author-scope-revision-and-merge.md)
 - [PR 1374 review evidence](../journal/2026/2026-10-13-pr1374-review-evidence/gate-and-author-comments.md)
-- Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
-  revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).
+- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md);
+  revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).

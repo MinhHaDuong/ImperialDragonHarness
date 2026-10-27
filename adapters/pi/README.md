@@ -2,7 +2,7 @@
 
 Pi is a coding-agent runtime the harness can drive with
 `pi --print --mode json`. Characterized on 0.87.1 (ticket 0979,
-[docs/2026-10-02-pi-reroute-openrouter-0979.md](../../docs/2026-10-02-pi-reroute-openrouter-0979.md)),
+[conception/2026-10-02-pi-reroute-openrouter-0979.md](../../conception/2026-10-02-pi-reroute-openrouter-0979.md)),
 on padme only, one machine configuration: with an empty or absent `--model`,
 Pi silently discards the explicit `--provider` and serves the request through
 the first provider with a valid key on the machine (huggingface in the

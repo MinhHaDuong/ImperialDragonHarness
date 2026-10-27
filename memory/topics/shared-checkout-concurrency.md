@@ -128,5 +128,5 @@ branch. This was an authorized census, not task-local roar scope expanding.
 - [Raid 1091/1092](../journal/2026/2026-10-13-raid-1091-1092-and-gaze-1374.md)
 - [PR 1374 merge and roar](../journal/2026/2026-10-13-pr1374-author-scope-revision-and-merge.md)
 - [2026-09-29 relocation lessons import](../journal/2026/2026-10-09-import-2026-09-29-relocation-lessons.md)
-- Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
-  revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).
+- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md);
+  revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).

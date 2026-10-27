@@ -21,8 +21,8 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-RERUN = REPO / "docs" / "memory-v8" / "2026-10-02-pi-rerun-local-provider.md"
-RESULTS = REPO / "docs" / "memory-v8" / "evaluation-results.md"
+RERUN = REPO / "conception" / "memory-v8" / "2026-10-02-pi-rerun-local-provider.md"
+RESULTS = REPO / "conception" / "memory-v8" / "evaluation-results.md"
 TICKETS = REPO / "tickets"
 
 CELL_VERDICTS = {"pass", "fail", "near-miss", "no-event", "absent"}

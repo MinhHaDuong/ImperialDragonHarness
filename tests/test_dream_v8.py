@@ -100,7 +100,7 @@ def test_dream_prompt_is_versioned_and_complete():
 
 
 def test_convention_docs_point_at_the_live_prompt():
-    text = (REPO / "docs" / "memory-v8" / "README.md").read_text(
+    text = (REPO / "conception" / "memory-v8" / "README.md").read_text(
         encoding="utf-8"
     )
     assert "memory/HOARD.md" in text, (
@@ -168,6 +168,8 @@ def test_report_journal_ledger_pins_the_untouched_journal():
             f"{rel}: ledger blob does not match the file — journal rewritten?"
         )
     for path in first:
+        # Design history left docs/ for conception/ on 2026-10-27.
+        path = path.replace("docs/", "conception/", 1) if path.startswith("docs/") else path
         assert (REPO / path).is_file(), (
             f"ledger names a missing file: {path}"
         )

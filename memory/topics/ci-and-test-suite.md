@@ -124,5 +124,5 @@ remain historical, with completed results recorded separately.
 - [Local CI wrap-up](../journal/2026/2026-10-12-local-ci-wrap-up-inefficiency.md)
 - [Raid 1084/1085/1086, collision self-report](../journal/2026/2026-10-12-raid-1084-1086-detached-gaze-occupancy.md)
 - [Raid 1091/1092](../journal/2026/2026-10-13-raid-1091-1092-and-gaze-1374.md) and [PR 1374 merge](../journal/2026/2026-10-13-pr1374-author-scope-revision-and-merge.md)
-- Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
-  revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).
+- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md);
+  revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).

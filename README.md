@@ -30,13 +30,14 @@ ImperialDragonHarness/      # reference clone: ~/.agents
 ├── projects/<slug>/memory/ # Legacy project memories; migration tracked per project
 ├── bin/ hooks/             # PATH utilities, git hooks
 ├── settings.shared.json    # Tracked config; the live settings.json is git-ignored
-└── docs/                   # Reference material (not loaded)
+├── conception/             # Design history: memos, audits, reviews (not loaded)
+└── docs/                   # Staging for external documents, git-ignored (Zotero is the record)
 ```
 
 - [ROADMAP.md](ROADMAP.md) : development priorities.
 - [STATE.md](STATE.md) : current resume point.
 - [skills-catalog.md](skills-catalog.md) : for humans browsing, runtimes discover registered skills directly.
-- [Research workflow](docs/research-workflow.md) : choose the skills for literature, manuscript review, author decisions and PDF delivery.
+- [Research workflow](conception/research-workflow.md) : choose the skills for literature, manuscript review, author decisions and PDF delivery.
 - [INSTALL.md](INSTALL.md) : setup, maintenance commands and runtime support.
 - [CONTRIBUTING.md](CONTRIBUTING.md) : development setup, checks and ticket workflow.
 
@@ -63,5 +64,5 @@ The harness uses `/route` to assign each task to a model based on benchmark evid
 ## Benchmarking arena
 
 Benchmarks are produced by **Arena**, an independent repository, owning the protocol, tournament runner, analysis and reports.
-See the [Arena integration contract](docs/arena-integration.md) for the repository location, report paths and evidence-refresh procedure.
+See the [Arena integration contract](conception/arena-integration.md) for the repository location, report paths and evidence-refresh procedure.
 Benchmark coverage and provisional results remain explicit when routing is updated.

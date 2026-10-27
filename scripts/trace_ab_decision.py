@@ -1,6 +1,6 @@
 """Phase-5 A/B decision rule — pure functions (ticket 0315).
 
-Pre-registered in docs/trace-ab-2026-06.md. No argparse, no __main__: the sole
+Pre-registered in conception/trace-ab-2026-06.md. No argparse, no __main__: the sole
 consumers are the unit tests now and the 0245 harvest step later, which imports
 `decide` and `filter_window` directly. Zero LLM calls, no network, no I/O.
 
@@ -10,7 +10,7 @@ Decision rule (pre-registered before any B-arm data):
              baseline * (1 + guardrail_noise_pct).
 A cost win with a breached guardrail is a REJECT — the guardrail is binding.
 
-The metric keys match docs/trace-ab-2026-06.md exactly: the primary cost metric
+The metric keys match conception/trace-ab-2026-06.md exactly: the primary cost metric
 is `cost_per_merged_pr` (measure A / default); measure B compares on
 `cost_per_cycle` by passing `cost_key="cost_per_cycle"`. Keeping the code keys
 identical to the pre-registration doc is the whole point of this ticket — the

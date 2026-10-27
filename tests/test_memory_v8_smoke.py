@@ -15,7 +15,7 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-EVIDENCE = REPO / "docs" / "2026-10-02-memory-v8-runtime-smoke.md"
+EVIDENCE = REPO / "conception" / "2026-10-02-memory-v8-runtime-smoke.md"
 ENTRY = REPO / "memory" / "journal" / "2026" / "2026-10-02-memory-v8-smoke.md"
 
 LINK = re.compile(r"\]\(([^)#\s]+)(?:#[^)\s]*)?\)")

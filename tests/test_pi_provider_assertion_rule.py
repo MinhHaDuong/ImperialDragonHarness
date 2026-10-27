@@ -4,7 +4,7 @@ Pi 0.87.1 reroutes a request to a different provider than the one
 requested when ``--model`` is empty or absent — the explicit ``--provider``
 is discarded silently, with a normal-looking answer on screen (characterized
 on padme; essai 0977's non-empty-id observation under ilaas stays
-unreconciled, docs/2026-09-28-essai-pi-backends-souverains.md).
+unreconciled, conception/2026-09-28-essai-pi-backends-souverains.md).
 The harness mitigation is a documented rule, not code: every Pi run
 targeting a sovereign backend must verify ``"provider"`` in ``--mode json``
 output equals the requested provider before trusting the answer, and model
@@ -43,7 +43,7 @@ def test_pi_adapter_pins_provider_assertion_rule():
 
 
 def test_pi_characterization_doc_records_trigger_and_versions():
-    doc = (REPO / "docs" / "2026-10-02-pi-reroute-openrouter-0979.md").read_text()
+    doc = (REPO / "conception" / "2026-10-02-pi-reroute-openrouter-0979.md").read_text()
     assert "0.87.1" in doc
     assert "openrouter" in doc.lower()
     assert "uncleared" in doc.lower() or "egress" in doc.lower()

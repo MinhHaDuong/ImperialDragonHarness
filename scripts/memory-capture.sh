@@ -33,7 +33,7 @@
 # is not stripped and participates in the project identity. Repository content
 # names this derivation mechanism, never a key file; computing the filename
 # aids no decryption (the ciphertext-at-rest limit is recorded in
-# docs/memory-v8/pilot.md). The key is created with age-keygen on first private
+# conception/memory-v8/pilot.md). The key is created with age-keygen on first private
 # capture, mode 600, never tracked. age-keygen's success banner (the public
 # key) is swallowed; its stderr is surfaced in full when it fails.
 set -euo pipefail

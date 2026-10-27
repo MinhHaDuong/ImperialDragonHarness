@@ -302,5 +302,5 @@ auto-merge, then merged directly; cause remains unestablished.
 - The 36 records of 2026-10-08 to 2026-10-13, `memory/journal/2026/2026-10-{08..13}-review-attribution-pr*.md`, ledgered in the [2026-10-13 dream](../hoards/2026-10-13-third-dream.md).
 - [Reviewer attribution design](../journal/2026/2026-10-02-reviewer-attribution-design.md) — processed by the first dream; linked here as the design behind the records.
 - The 33 records: `memory/journal/2026/2026-10-0[56]-review-attribution-pr*.md`, ledgered in the [2026-10-07 dream](../hoards/2026-10-07-second-dream.md).
-- Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
-  revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).
+- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md);
+  revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).

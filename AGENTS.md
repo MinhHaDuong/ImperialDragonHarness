@@ -16,6 +16,10 @@ Current status, blockers, next actions: `STATE.md`.
 
 Tickets: `tickets/*.erg`. GitHub Issues are for cross-repo coordination only.
 
+Design history (memos, audits, review records): `conception/`, as in the
+research projects. `docs/` is git-ignored staging for external documents
+(rules/zotero.md).
+
 ## Project memory
 
 Read [memory/MEMORY.md](memory/MEMORY.md) at task start when it exists. Open

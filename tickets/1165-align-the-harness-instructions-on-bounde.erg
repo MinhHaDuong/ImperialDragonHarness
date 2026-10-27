@@ -28,7 +28,7 @@ Pi has no background tool. A command bounded by `timeout` is the deadline on
 every runtime.
 
 ## Evidence (redo at Imagine time)
-`docs/discussions/2026-10-21-longrun-language-audit.md` (landed with this
+`conception/discussions/2026-10-21-longrun-language-audit.md` (landed with this
 ticket) lists contradictions C1 to C7, gaps G1 to G12, runtime leaks A1 to A9, 18 proposed
 edits, a proposed hints list and its location. It read a tree 48 commits
 behind main and was only partly re-checked after the rebase; its line numbers
@@ -36,11 +36,11 @@ and the merge-wait findings are stale. Rerun the audit against main when this
 ticket moves to Imagine, before trusting any line in it.
 
 ## Parked alternative (not part of this ticket)
-`docs/discussions/2026-10-21-await-external-design.md` (landed with this
+`conception/discussions/2026-10-21-await-external-design.md` (landed with this
 ticket) describes a homegrown waiter (systemd transient unit, one recorded outcome, delivery by
 live push, resume or pull). Parked, no code. It matters only if the aligned
 instructions leave Codex or Pi unable to resume after a wait; reopen it then.
-The Stopguard design (docs/2026-10-21-stopguard-design.md, tracker 1164) reads
+The Stopguard design (conception/2026-10-21-stopguard-design.md, tracker 1164) reads
 the same wait registry for its rule 2 and will cite the "Waiting" paragraph this
 ticket adds.
 

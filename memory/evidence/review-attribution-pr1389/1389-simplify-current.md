@@ -2,7 +2,7 @@
 
 - HEAD before/after: `9bd20fa3f24f05cf8cc5030d40f44b380fe5b6c3`.
 - Compared against `825b1eda84a5948705ed618101b5a799821618d1`.
-- Only changed path: [docs/2026-10-14-adherence-semantic.md](../../../docs/2026-10-14-adherence-semantic.md).
+- Only changed path: [docs/2026-10-14-adherence-semantic.md](../../../conception/2026-10-14-adherence-semantic.md).
 - Prior CLEAN evidence: `/tmp/idh-final-gazes/1389.log:4318` (original runtime reference; retained initial report: [simplify-initial.md](simplify-initial.md)).
 
 Concrete candidates considered:

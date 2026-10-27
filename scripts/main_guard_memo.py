@@ -11,7 +11,7 @@ A missing or unreadable journal always prints a `not checked` line: silence
 must not stand for "could not look", and a missing journal can mean the hook
 is not running.
 
-Guide: docs/2026-10-21-main-update-guard.md.
+Guide: conception/2026-10-21-main-update-guard.md.
 """
 
 import argparse

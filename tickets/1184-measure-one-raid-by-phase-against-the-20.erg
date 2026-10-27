@@ -13,7 +13,7 @@ Child of ticket 1099 (bound review time), carrying its exit criterion 3, a measu
 be taken after 1099 lands: 1099 adds `scripts/seat_clock.py` (a 600 s cap on headless readers and a
 `roster` of each seat's wall time or failure) and the `seat times:` line of the `/gaze` result comment.
 The author's window is 20 minutes from first review to merge; raids 1080 and 1089 took 79 and 59
-(docs/discussions/2026-10-14-1096-design.md, "What the evidence says about the 20-minute window").
+(conception/discussions/2026-10-14-1096-design.md, "What the evidence says about the 20-minute window").
 Not blocked by 1099 in the DAG: it simply has nothing to measure until 1099 is merged.
 
 ## How to measure

@@ -101,7 +101,7 @@ def test_revision_and_skipped_attempt_survive(reader):
 
 
 def test_canonical_template_parses_verbatim(reader):
-    document = (ROOT / "docs" / "2026-10-02-reviewer-attribution-design.md").read_text()
+    document = (ROOT / "conception" / "2026-10-02-reviewer-attribution-design.md").read_text()
     section = document.split("### Valid capture example (synthetic fixture)")[1]
     template = section.split("```text\n")[1].split("```")[0]
     assert reader.parse_record(template) == reader.parse_record(RECORD)

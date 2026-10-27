@@ -2,7 +2,7 @@
 
 Imports into v8 the facts from nine legacy native notes written or extended
 during the 2026-09-29 relocation session (tracker 0978, PRs #1053 to #1066).
-They were inventoried in [source-revisions.tsv](../../../docs/memory-v8/source-revisions.tsv)
+They were inventoried in [source-revisions.tsv](../../../conception/memory-v8/source-revisions.tsv)
 but no topic or journal entry carried their content. Facts are restated from
 the sources; nothing is promoted to a rule.
 

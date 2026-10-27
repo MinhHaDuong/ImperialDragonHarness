@@ -46,7 +46,7 @@ BUDGETS = {
     # Raised 2026-10-02 (ticket 0920): the v8 pilot merges the 0911 reading
     # section into AGENTS.md, as the adopted convention requires. The section
     # was trimmed against this gate; the abridgement is stated in
-    # docs/memory-v8/pilot.md, with the template as the reference, so the
+    # conception/memory-v8/pilot.md, with the template as the reference, so the
     # budget moves to the measured value plus thin headroom instead.
     "import": 4500,  # canonical harness instructions and supporting references
     # Lowered 2026-09-10 by the title-only index pass: the index line is a

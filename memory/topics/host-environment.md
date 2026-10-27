@@ -64,5 +64,5 @@ subvolume listing confirmed it.
 - [Routing review round and host hygiene](../journal/2026/2026-10-09-routing-review-round-and-host-hygiene.md)
 - [Permissions allow-all](../journal/2026/2026-10-10-permissions-allow-all-and-idh-install-sync.md)
 - [Cycle 3, key displayed](../journal/2026/2026-10-12-t1048-cycle3-speed-stage-and-production-switch.md)
-- Provenance: [source inventory](../../docs/memory-v8/source-inventory.md);
-  revisions in [source-revisions.tsv](../../docs/memory-v8/source-revisions.tsv).
+- Provenance: [source inventory](../../conception/memory-v8/source-inventory.md);
+  revisions in [source-revisions.tsv](../../conception/memory-v8/source-revisions.tsv).

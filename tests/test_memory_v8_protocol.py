@@ -1,6 +1,6 @@
 """Ticket 0918 STEP A — the v8 evaluation protocol is predeclared.
 
-Design v8 §9 (docs/2026-09-10-dragon-memory-design.md) and the Astra
+Design v8 §9 (conception/2026-09-10-dragon-memory-design.md) and the Astra
 clarification require the evaluation protocol to be committed before the
 first acceptance trial, with earlier exploratory smokes excluded by commit
 reference. This module pins the protocol document's shape so the margins
@@ -17,7 +17,7 @@ import pytest
 from child_env import child_env
 
 REPO = Path(__file__).resolve().parents[1]
-PROTOCOL = REPO / "docs" / "memory-v8" / "evaluation-protocol.md"
+PROTOCOL = REPO / "conception" / "memory-v8" / "evaluation-protocol.md"
 
 LINK = re.compile(r"\]\(([^)#\s]+)(?:#[^)\s]*)?\)")
 

@@ -3,7 +3,7 @@
 
 Reads the per-agent census CSV (scripts/trace-stats.py with the 0243
 detector columns) and computes one statistic per hypothesis H1-H13 from
-docs/trace-open-coding-2026-06.md, plus the D1 data-quality flag. Emits a
+conception/trace-open-coding-2026-06.md, plus the D1 data-quality flag. Emits a
 JSON summary and an optional markdown section ready for the report.
 
 Honest-accounting notes:

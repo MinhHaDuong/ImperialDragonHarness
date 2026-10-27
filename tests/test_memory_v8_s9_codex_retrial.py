@@ -17,8 +17,8 @@ import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
-RETRIAL = REPO / "docs" / "memory-v8" / "2026-10-02-s9-codex-retrial-closed-channel.md"
-RESULTS = REPO / "docs" / "memory-v8" / "evaluation-results.md"
+RETRIAL = REPO / "conception" / "memory-v8" / "2026-10-02-s9-codex-retrial-closed-channel.md"
+RESULTS = REPO / "conception" / "memory-v8" / "evaluation-results.md"
 TICKETS = REPO / "tickets"
 
 CELL_VERDICTS = {"pass", "fail", "near-miss", "absent"}
