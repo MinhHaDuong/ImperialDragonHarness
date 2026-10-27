@@ -29,7 +29,7 @@ from pyzotero import _client as pyzotero_client
 
 import zotero_live
 from test_zotero_import import make_pdf
-from zotero_live import free_port
+from zotero_live import closed_port
 
 zotero_factory = zotero_live.zotero_factory
 zi = zotero_live.helper_module()
@@ -39,9 +39,11 @@ HOFFMAN = "Systems of inequalities involving convex functions"
 
 @pytest.fixture(autouse=True)
 def zotero_down(monkeypatch, tmp_path):
-    monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{free_port()}")
-    monkeypatch.setenv("ZOTERO_NO_LAUNCH", "1")
-    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(tmp_path / "no-key.env"))
+    with closed_port() as port:
+        monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{port}")
+        monkeypatch.setenv("ZOTERO_NO_LAUNCH", "1")
+        monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(tmp_path / "no-key.env"))
+        yield
 
 
 # ── pure: identifier forms ───────────────────────────────────────────────────

@@ -5,6 +5,7 @@ Author: reviewer
 
 --- log ---
 2026-10-27T11:19Z reviewer created
+2026-10-27T12:22Z reviewer reproduction: free_port window real (4 procs x 2000 binds: 1444 shared-port pairs); 401 NOT reproduced in 60 file runs (3 parallel x -n16) + 12 full-suite runs (4 parallel); other flakes seen under load: live-Zotero 400s, test_idh_lifecycle wrapper. Fix: hold the down port; gate keeps failed-test lines
 
 --- body ---
 ## Context

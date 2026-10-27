@@ -21,7 +21,7 @@ import pytest
 
 import zotero_live
 from child_env import child_env
-from zotero_live import free_port
+from zotero_live import closed_port
 
 # The real-Zotero fixture (tests/zotero_live.py), bound here so pytest
 # finds it by name.
@@ -38,9 +38,11 @@ LONELY = b"a size nobody else has"
 
 @pytest.fixture(autouse=True)
 def zotero_down(monkeypatch, tmp_path):
-    monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{free_port()}")
-    monkeypatch.setenv("ZOTERO_NO_LAUNCH", "1")
-    monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(tmp_path / "no-key.env"))
+    with closed_port() as port:
+        monkeypatch.setenv("ZOTERO_CONNECTOR_URL", f"http://127.0.0.1:{port}")
+        monkeypatch.setenv("ZOTERO_NO_LAUNCH", "1")
+        monkeypatch.setenv("ZOTERO_LOCAL_KEY_FILE", str(tmp_path / "no-key.env"))
+        yield
 
 
 def write_files(directory: Path) -> dict[str, Path]:
