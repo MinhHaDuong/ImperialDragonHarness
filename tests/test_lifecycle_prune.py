@@ -83,6 +83,7 @@ def test_plain_install_runs_the_prune(monkeypatch, tmp_path):
     monkeypatch.setattr(lifecycle, "prune_dangling", lambda roots: swept.append(roots) or 0)
     monkeypatch.setattr(lifecycle, "entries", lambda runtime=None: [])
     monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    monkeypatch.setenv("HOME", str(tmp_path))  # install_links also links bin/* under $HOME
     lifecycle.install_links()
     assert swept, "plain idh install must run the dangling-link sweep"
 
