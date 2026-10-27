@@ -23,7 +23,8 @@ refs/notes/gate with it first (and drop it when the remote has none). A
 `--no-push` record goes to refs/notes/gate-local, which is never pushed and is
 read only by `check --local`: a merge rests on a published record.
 
-Gating tiers (the policy is rules/git.md § Gating tiers): a candidate whose changes against the base all match BOOKKEEPING is
+Gating tiers (ticket 1221; the policy is skills/merge/SKILL.md § Gating
+tiers): a candidate whose changes against the base all match BOOKKEEPING is
 bookkeeping-tier. When the base declares `"tiers": {"bookkeeping": [names]}`,
 such a candidate's record runs only those named checks, under the scope
 `<scope>/bookkeeping`; `check` accepts that scope or the full one for a

@@ -1,7 +1,7 @@
 {
   "gate": "on",
   "scope": "1045-decision-3",
-  "about": "Ticket 1045 decision 3 (2026-10-20): the seven formerly forge-required checks minus skill-lint, grep-e-guard and status-verb-guard, plus the skills-catalog drift check. Run by scripts/merge-gate.py on the candidate merge commit; read from the base revision. Ticket 1221: a bookkeeping-only candidate runs only the tier's checks; policy in rules/git.md § Gating tiers. Ticket 1220: over a bookkeeping delta since a passing record, /verify-gate re-runs only the \"rerun\" checks and reuses the rest (skills/verify-gate/SKILL.md § Check plan); the merge record itself is unaffected.",
+  "about": "Ticket 1045 decision 3 (2026-10-20): the seven formerly forge-required checks minus skill-lint, grep-e-guard and status-verb-guard, plus the skills-catalog drift check. Run by scripts/merge-gate.py on the candidate merge commit; read from the base revision. Ticket 1221: a bookkeeping-only candidate runs only the tier's checks; policy in skills/merge/SKILL.md § Gating tiers. Ticket 1220: over a bookkeeping delta since a passing record, /verify-gate re-runs only the \"rerun\" checks and reuses the rest (skills/verify-gate/SKILL.md § Check plan); the merge record itself is unaffected.",
   "checks": [
     {"name": "validate-tickets", "argv": ["tickets/erg", "check", "tickets/"]},
     {"name": "agnostic-guard", "argv": ["bash", "scripts/check-agnostic.sh"]},

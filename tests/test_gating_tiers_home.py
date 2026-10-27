@@ -1,7 +1,8 @@
-"""Gating tiers have one home, rules/git.md § Gating tiers.
+"""Gating tiers have one home, /merge § Gating tiers (ticket 1221).
 
-No skill restates the tiers. The bookkeeping path list is the script's
-(`BOOKKEEPING` in scripts/merge-gate.py); the prose does not repeat it.
+No other skill or rule restates the tiers. The bookkeeping path list is the
+script's (`BOOKKEEPING` in scripts/merge-gate.py); the prose does not repeat
+it.
 """
 
 from pathlib import Path
@@ -12,4 +13,4 @@ HOME = "## Gating tiers"
 
 def test_tiers_are_stated_once():
     homes = [p for p in (*ROOT.glob("skills/**/*.md"), *ROOT.glob("rules/**/*.md")) if HOME in p.read_text()]
-    assert homes == [ROOT / "rules" / "git.md"], homes
+    assert homes == [ROOT / "skills" / "merge" / "SKILL.md"], homes

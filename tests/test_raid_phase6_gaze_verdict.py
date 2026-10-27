@@ -107,7 +107,7 @@ ESCALATE_STOP = (
 )
 SCOPE = (
     "Stale means the tip adds more than a bookkeeping delta to `reviewed_head_sha` "
-    "(`rules/git.md` § Gating tiers), judged before the raid adds the fix "
+    "(`skills/merge/SKILL.md` § Gating tiers), judged before the raid adds the fix "
     "for a gate's round-1 REROLL, which does not void the result (the round-2 "
     "re-gate rules the fix). A FINDINGS fix does: it moves the head past what gaze "
     "reviewed."

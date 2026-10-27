@@ -21,27 +21,9 @@ Family rule: **a git command that printed nothing has not necessarily done nothi
 ## Merging
 
 - **Merge by the `/merge` recipe.** It reads merge settings at merge time (they drift), carries the close-claim syntax, syncs after `/gaze`, checks the gate record and holds the recoveries (`/merge` § Merge conflict recovery). One ticket per PR unless they genuinely land together.
-- **Rebase before every gate.** A verdict on a stale base is partly void. Rebase onto `origin/main`, force-push with lease, wait for CI — before the MR, before `/gaze`, before the round-1 `/verify-gate`; a later rebase is gated by the tier of what it changes.
+- **Rebase before every gate.** A verdict on a stale base is partly void. Rebase onto `origin/main`, force-push with lease, wait for CI — before the MR, before `/gaze`, before the round-1 `/verify-gate`; a later rebase is gated by the tier of what it changes (`/merge` § Gating tiers).
 - **Anchor branch-mutating git after a fork returns.** The shell cwd may sit in another worktree: before the first `switch`/`checkout`/`merge`/`rebase`/`commit`/`push`/`reset` of that turn, check `git rev-parse --show-toplevel` or use `git -C <path>`.
 - **Remind the user of a merge left without its `/roar`.** Once, before you hand back.
-
-## Gating tiers
-
-How much gating a merge request needs follows what its diff touches, read
-mechanically:
-`python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base origin/<base> --head HEAD`
-answers 0 bookkeeping (with `--since`, also `unchanged`), 1 full (an empty
-diff included), 3 could not read (treat as full).
-
-| Tier | Gating |
-|------|--------|
-| bookkeeping | Mechanical checks only: on a gated base, the record; on an ungated base, the repo's CI. No `/gaze`, no `/verify-gate`, no review seat. |
-| full | `/gaze`, then `/verify-gate` APPROVED; on a gated base, the full record. |
-
-**A commit added after approval is gated by the tier of its own diff:**
-`merge-gate.py tier --base origin/<base> --head HEAD --since <ruled_tip_sha>`.
-Bookkeeping or unchanged: the verdict stands, no review or gate round is
-spent; on a gated base the record is re-run on the new head. Full: re-gate.
 
 ## Branch cleanup
 

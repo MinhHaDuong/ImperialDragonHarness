@@ -18,6 +18,24 @@ Close claims, short ids, fences, the attribution warning and the edge-case
 index: `references/claims.md`. Read it when the body carries a `Ticket` line
 you are unsure of, or a case below sends you there.
 
+## Gating tiers
+
+The tier is read from the diff, never judged:
+`python3 "$IDH_ROOT/scripts/merge-gate.py" tier --base origin/<base> --head HEAD`
+answers 0 bookkeeping (with `--since`, also `unchanged`), 1 full (an empty
+diff included), 3 could not read (treat as full).
+
+| Tier | Gating |
+|------|--------|
+| bookkeeping | Mechanical checks only: on a gated base, the record; on an ungated base, the repo's CI. No `/gaze`, no `/verify-gate`, no review seat. |
+| full | `/gaze`, then `/verify-gate` APPROVED; on a gated base, the full record. |
+
+**A commit added after approval is gated by the tier of its own diff:**
+`merge-gate.py tier --base origin/<base> --head HEAD --since <ruled_tip_sha>`.
+Bookkeeping or unchanged: the APPROVED verdict stands, no review or gate
+round is spent; on a gated base the record is re-run on the new head. Full:
+re-gate.
+
 ## Before merging
 
 - **Merge method drifts per repo.** This harness disables squash, so the
@@ -35,8 +53,8 @@ you are unsure of, or a case below sends you there.
   ride along, so push first.
 - **Merge prerequisite, full tier: the gate's verdict is APPROVED and
   what `origin/<branch>` adds to the gate's `ruled_tip_sha` (read after
-  `git fetch origin`) is bookkeeping, an empty delta included (`rules/git.md`
-  § Gating tiers); otherwise re-gate, do not merge.** A bookkeeping-tier
+  `git fetch origin`) is bookkeeping, an empty delta included (§ Gating
+  tiers); otherwise re-gate, do not merge.** A bookkeeping-tier
   request needs no verdict.
   **Head checks, immediately before the merge:** `git fetch origin`, then
   `git rev-parse HEAD` == `git rev-parse origin/<branch>` (a mismatch means

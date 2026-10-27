@@ -97,7 +97,7 @@ def test_merge_gates_the_head_that_merges():
     assert (
         "the gate's verdict is APPROVED and what `origin/<branch>` adds to the gate's "
         "`ruled_tip_sha` (read after `git fetch origin`) is bookkeeping, an empty delta "
-        "included (`rules/git.md` § Gating tiers); otherwise re-gate, do not merge." in merge
+        "included (§ Gating tiers); otherwise re-gate, do not merge." in merge
     )
     assert "#1522" not in merge and "Documented exception" not in merge
     assert "rev-list --count <ruled>" not in merge
@@ -388,7 +388,7 @@ def test_git_rule_rebases_before_round_one_gate_and_syncs_after_gaze():
     assert "syncs after `/gaze`" in rule
     assert "before the round-1 `/verify-gate`" in rule
     assert "a later rebase is gated by the tier of what it changes" in rule
-    assert "## Gating tiers" in rule
+    assert "`/merge` § Gating tiers" in rule
 
 
 def test_gate_tree_is_per_session_and_round_and_repo_is_required():

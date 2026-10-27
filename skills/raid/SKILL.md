@@ -257,7 +257,7 @@ retries once; a non-zero exit is a visible capture failure, not a silent skip.
 
 Mood: Be strict, skeptical, nit-picky, detail-oriented. Aim for code excellence and integrity.
 
-**Tier first** (`rules/git.md` § Gating tiers): a
+**Tier first** (`skills/merge/SKILL.md` § Gating tiers, the one home): a
 bookkeeping-tier merge request skips `/gaze` and `/verify-gate` and goes to
 Phase 7 on its mechanical checks. Everything below is the full tier.
 
@@ -265,7 +265,7 @@ Phase 7 on its mechanical checks. Everything below is the full tier.
 `/verify-gate` on the head it reviewed. Hunt's Verify phase already ran gaze and
 fixed its findings, so the raid reads that record first and re-runs `/gaze`
 only when it is missing, ESCALATE, or stale against the tip
-(`rules/git.md` § Gating tiers); a second review of a head gaze
+(`skills/merge/SKILL.md` § Gating tiers); a second review of a head gaze
 already reviewed buys nothing and costs a full gaze run. Gaze reviews and
 never returns APPROVED; the gate rules APPROVED / REROLL / ESCALATE /
 NEEDS-AUTHOR. The orchestrator itself
@@ -285,7 +285,7 @@ bounded wait, or its `reviewed_head_sha` stale against the branch tip), means
 the gate is not run: the review never completed, and the PR goes to the author.
 A run that returns no result is handled as `references/detached-gaze.md` § No result says.
 Stale means the tip adds more than a bookkeeping delta to `reviewed_head_sha`
-(`rules/git.md` § Gating tiers), judged before the raid adds the fix
+(`skills/merge/SKILL.md` § Gating tiers), judged before the raid adds the fix
 for a gate's round-1 REROLL, which does not void the result (the round-2
 re-gate rules the fix). A FINDINGS fix does: it moves the head past what gaze
 reviewed. On FINDINGS the fix agent fixes the listed items and the raid runs
@@ -298,7 +298,7 @@ Only on a gaze result of REVIEWED run
 its review tree by then; the gate checks out the PR head in a worktree of its
 own and removes it, while the raid keeps the PR's worktree until gating ends);
 its verdict is accepted only when the branch tip adds at most a bookkeeping
-delta to its `ruled_tip_sha` (`rules/git.md` § Gating tiers). On `FINDINGS` or
+delta to its `ruled_tip_sha` (§ Gating tiers). On `FINDINGS` or
 a REROLL, a coder fixes the listed items in the PR's worktree so its commits
 land on the PR branch, never on main mid-wave, and the REROLL bump is posed per
 `skills/verify-gate/SKILL.md`; the gate allows two rounds, a third escalates.
@@ -344,7 +344,7 @@ review surfaced: `references/follow-up-tickets.md`.
 <!-- inline: references/follow-up-tickets.md -->
 
 For each wave, merge APPROVED PRs one at a time. A PR is merge-eligible if:
-- the merge request is bookkeeping tier (`rules/git.md` § Gating tiers), or its
+- the merge request is bookkeeping tier (`skills/merge/SKILL.md` § Gating tiers), or its
   `/verify-gate` verdict is APPROVED (one REROLL allowed — Phase 6 handles this), AND
 - `scope_overflow` in the verdict is empty or all entries have suggested disposition
   TICKETED (caller creates tickets via `tickets/erg new` and adds `Scope overflow:
@@ -373,7 +373,8 @@ For each eligible PR, sequentially within the wave:
 4. Merge by the recipe, `skills/merge/SKILL.md` § The recipe,
    only after `git fetch origin`, then `git rev-parse HEAD` == `git rev-parse origin/<branch>`
    (HEAD read with `-C <worktree-path>`) and, full tier, a head that adds at
-   most a bookkeeping delta to the gate's `ruled_tip_sha` (`rules/git.md` § Gating tiers); otherwise no merge. Close before gating: Phase 6 closed the ticket on
+   most a bookkeeping delta to the gate's `ruled_tip_sha` (`skills/merge/SKILL.md`
+   § Gating tiers); otherwise no merge. Close before gating: Phase 6 closed the ticket on
    the branch before the round-1 gate, so the recipe's close step finds it in
    `tickets/closed/` and adds no close commit.
    **Gated base** (`.merge-gate.json` on the base, `skills/merge/SKILL.md`
