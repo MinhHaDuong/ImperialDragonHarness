@@ -471,3 +471,54 @@ def test_a_symbolic_head_is_resolved_once(world, monkeypatch):
     monkeypatch.setattr(rn, "_rev", racing)
     e = rn.add(a, "answer", rid, {"run_id": "gz-x"}, head="feature", request_id=req["request_id"])
     assert e["head"] == req["head"]
+
+
+def _lock_path(repo):
+    return Path(sh(repo, "rev-parse", "--path-format=absolute", "--git-common-dir")) / "idh-review-notes.lock"
+
+
+
+def _add(repo, rid, env):
+    import os
+    return subprocess.run([sys.executable, str(SCRIPTS / "review_notes.py"), "-C", str(repo), "add", "plan",
+                           "--review", rid, "--json", json.dumps({"text": "x"})],
+                          capture_output=True, text=True, env={**os.environ, **env})
+
+
+def _rid(repo):
+    out = subprocess.run([sys.executable, str(SCRIPTS / "review_notes.py"), "-C", str(repo), "open",
+                          "--branch", "feature", "--base-ref", "main"], capture_output=True, text=True, check=True)
+    return out.stdout.split()[0]
+
+
+def test_add_refuses_when_lock_held(world):
+    import fcntl
+    _, a, _, _ = world
+    rid = _rid(a)
+    before = raw_note(a, rid)
+    with open(_lock_path(a), "a") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)
+        done = _add(a, rid, {"IDH_NOTES_LOCK_WAIT": "0.3"})
+    assert done.returncode != 0 and "idh-review-notes.lock" in done.stderr
+    assert raw_note(a, rid) == before
+
+
+def test_add_waits_then_writes(world):
+    import fcntl
+    import threading
+    import time
+    _, a, _, _ = world
+    rid = _rid(a)
+    fh = open(_lock_path(a), "a")
+    fcntl.flock(fh, fcntl.LOCK_EX)
+
+    def release():
+        time.sleep(0.5)
+        fcntl.flock(fh, fcntl.LOCK_UN)
+    t = threading.Thread(target=release)
+    t.start()
+    done = _add(a, rid, {"IDH_NOTES_LOCK_WAIT": "10"})
+    t.join()
+    fh.close()
+    assert done.returncode == 0, done.stderr
+    assert raw_note(a, rid).count('"kind": "plan"') + raw_note(a, rid).count('"kind":"plan"') == 1
