@@ -45,6 +45,16 @@ def test_a_failed_check_records_one_line_per_failed_test(gate, tmp_path, capsys)
     assert "FAILED tests/test_a.py::test_one" in capsys.readouterr().err  # output still echoed
 
 
+def test_a_node_id_holding_a_dash_keeps_its_dash(gate, tmp_path):
+    out = "FAILED tests/a.py::t[a - b] - assert 0\\nERROR tests/c.py::t[x - y]\\n"
+    cfg = {"checks": [check("tests", f"import sys; sys.stdout.write('{out}'); sys.exit(1)")]}
+    _, results = gate.run_checks(cfg, tmp_path)
+    assert results[1:] == [
+        "failed-test tests tests/a.py::t[a - b]",
+        "failed-test tests tests/c.py::t[x - y]",
+    ]
+
+
 def test_a_passing_check_adds_no_lines(gate, tmp_path):
     cfg = {"checks": [check("tests", "print('FAILED x::y in a log line')")]}
     ok, results = gate.run_checks(cfg, tmp_path)
@@ -52,13 +62,19 @@ def test_a_passing_check_adds_no_lines(gate, tmp_path):
 
 
 def test_red_report_names_checks_despite_extra_lines(gate, tmp_path, monkeypatch):
-    cfg = {"checks": [check("lint", "pass"), check("tests", "pass")]}
+    cfg = {"checks": [check("tests", "pass"), check("lint", "pass")]}
     results = [
-        "lint pass 1.0s :: x",
         "tests fail(exit 1) 2.0s :: x",
         "failed-test tests tests/test_a.py::test_one",
+        "lint pass 1.0s :: x",
     ]
     monkeypatch.setattr(gate, "last_green", lambda tip: None)
     monkeypatch.setattr(gate, "git", lambda *a, **k: type("R", (), {"stdout": ""})())
     text = gate.red_report("a" * 40, cfg, results)
     assert "Failing checks: tests\n" in text
+
+
+def test_a_bracketed_id_stops_at_its_own_bracket(gate):
+    line = "FAILED tests/a.py::t[a] - AssertionError: [x] != [y]"
+    assert gate.FAILED_TEST.match(line).group(1) == "tests/a.py::t[a]"
+    assert gate.FAILED_TEST.match("FAILED tests/a.py::t").group(1) == "tests/a.py::t"

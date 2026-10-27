@@ -462,7 +462,9 @@ def first_line(argv, cwd):
     return sanitize(first) or "unknown"
 
 
-FAILED_TEST = re.compile(r"^(?:FAILED|ERROR) (.+?)(?: - .*)?$")
+# pytest appends " - <message>" after the id; a parametrized id may hold " - "
+# itself, so a bracketed part ends at the first "]" that is followed by " - " or the line end.
+FAILED_TEST = re.compile(r"^(?:FAILED|ERROR) (\S+?::[^\[\s]*(?:\[.*?\](?= - |$))?)(?: - .*)?$")
 
 
 def run_one(argv, cwd):
