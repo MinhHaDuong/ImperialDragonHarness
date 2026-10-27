@@ -15,8 +15,8 @@ two bad stops per ISO week:
 * ask without ask-up: the last non-empty line outside a code fence ends in
   `?` (trailing markdown stripped), or the turn called AskUserQuestion, and
   no advisor call came earlier in the turn: an Agent call whose model is
-  fable or whose description, type or prompt head names an advisor; a
-  worker spawn is not an ask-up. A
+  fable or whose description, type or prompt head names an advisor, and
+  whose result is not an error; a worker spawn is not an ask-up. A
   question naming an author's-call act (merge, push, delete, spend, scope...)
   is excluded and counted as `authors_call`.
 * wait without wake: the final text matches a wait vocabulary (waiting for,
@@ -24,8 +24,8 @@ two bad stops per ISO week:
   not addressed to the author ("waiting for your go"), while nothing pending
   will wake the session: no background agent (the runtime's own
   `pendingBackgroundAgentCount` on the turn's `turn_duration` record; when the
-  key or record is missing, Agent launches not yet matched by a
-  task-notification's tool-use id), no background Bash or Workflow without
+  key or record is missing, Agent launches whose result was the async-launch
+  notice and that no task-notification's tool-use id has matched yet), no background Bash or Workflow without
   its task-notification, no Monitor within its timeout, no ScheduleWakeup
   before its delay.
 
@@ -71,6 +71,7 @@ WAIT = re.compile(
     r"will be notified|(I'll|I will) (be notified|check back|report back|come back)|auto-?merge)",
     re.I,
 )
+ASYNC = re.compile(r"async agent launched|running in the background", re.I)
 TOOL_USE_ID = re.compile(r"<tool-use-id>(\S+?)</tool-use-id>")
 
 
@@ -148,9 +149,13 @@ def stops(trace):
             tail.insert(0, wt._text(r))
         text = "\n".join(tail).strip()
         uses = [b for r in asst for b in _uses(r)]
+        failed = {
+            b.get("tool_use_id") for r in seg for b in _blocks(r)
+            if isinstance(b, dict) and b.get("type") == "tool_result" and b.get("is_error")
+        }
         advisor = asked_tool = False
         for b in uses:
-            if is_advisor(b):
+            if is_advisor(b) and b.get("id") not in failed:
                 advisor = True
             elif b.get("name") == "AskUserQuestion" and not advisor:
                 asked_tool = True
@@ -187,6 +192,10 @@ def stops(trace):
         if turn == 0:
             continue
         seg.append(r)
+        for b in _blocks(r):  # a foreground agent returns its report, never a notification
+            if isinstance(b, dict) and b.get("type") == "tool_result" and b.get("tool_use_id") in agents:
+                if b.get("is_error") or not ASYNC.search(json.dumps(b.get("content"))[:300]):
+                    agents.discard(b.get("tool_use_id"))
         if r["type"] == "assistant":
             t = wt._ts(r["timestamp"])
             for b in _uses(r):

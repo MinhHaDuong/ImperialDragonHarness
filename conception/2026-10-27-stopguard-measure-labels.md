@@ -22,7 +22,10 @@ figure here is provisional until the author skims the 38 held-out rows (about
    tracked; French author's-call verbs were missing. Wait detection was also
    narrowed to the last two paragraphs, and a stop ending on a question counts
    as an ask, not a wait.
-2. **Rules frozen** at the commit that adds this note.
+2. **Rules frozen** at the commit that adds this note. Two later fixes from
+   the PR review (a foreground Agent result clears the tracked agent; an
+   advisor call that errored is not an ask-up) change none of the 38 held-out
+   flags and none of the window totals below, rechecked after the fix.
 3. **Held-out draw** (seed 1295, 38 stops), stratified: 5 flagged and 3
    unflagged stops from the 2026-10-27 raid session `e75a58ed` (positive
    controls, excluding the turns seen in tuning), 10 random ask flags, 6

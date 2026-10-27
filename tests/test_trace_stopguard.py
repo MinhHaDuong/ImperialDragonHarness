@@ -24,8 +24,8 @@ def _use(tid, name, sec, **inp):
     return {"type": "assistant", "timestamp": _t(sec), "message": {"content": [block], "stop_reason": "tool_use"}}
 
 
-def _res(tid, sec):
-    block = {"type": "tool_result", "tool_use_id": tid, "content": "ok"}
+def _res(tid, sec, content="Async agent launched successfully.", error=False):
+    block = {"type": "tool_result", "tool_use_id": tid, "content": content, "is_error": error}
     return {"type": "user", "timestamp": _t(sec), "message": {"content": [block]}}
 
 
@@ -181,3 +181,14 @@ def test_g1_verdict_at_or_above_threshold():
     tr = sg.Trace(Path("s.jsonl"), rows)
     rep = sg.report([tr], T0 - timedelta(days=1), now=T0 + timedelta(days=6))
     assert rep["g1"]["bad_per_week"] == 6.0 and rep["g1"]["verdict"] == "at_or_above"
+
+
+def test_foreground_agent_result_clears_it_and_failed_advisor_is_no_ask_up():
+    found = _turns(
+        _human(0), _use("a", "Agent", 1, description="Review PR 9"), _res("a", 2, content="Review: clean."),
+        _end(3, "Review clean. I'll merge once CI passes."), _stop(4),
+        _human(10), _use("f", "Agent", 11, model="fable", prompt="A or B"), _res("f", 12, content="boom", error=True),
+        _end(13, "Which one?"), _stop(14),
+    )
+    assert [f["wait_without_wake"] for f in found] == [True, False]
+    assert [f["ask_without_ask_up"] for f in found] == [False, True]
