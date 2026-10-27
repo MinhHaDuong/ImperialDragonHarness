@@ -35,7 +35,7 @@ That is the whole index. It is short because the runtime already did the work.
 | [doctype/book.md](./doctype/book.md) | `**/*.tex` | Book conventions: book-wide terminology, chapter openings/closings, single-place notation. |
 | [lang/fr.md](./lang/fr.md) | prose files | French language norms: guillemets « », virgule décimale, casse de phrase. |
 | [lang/en.md](./lang/en.md) | prose files | English norms: one spelling variety, serial comma, sentence-case headings. |
-| [authoring-skills.md](./authoring-skills.md) | `**/SKILL.md`, `**/skills/**/*.md` | Writing a skill: name capabilities not tools, discoverability-first `description:`, quoted frontmatter, declared concurrency, skill-not-command, test one before blasting, naming. |
+| [authoring-skills.md](./authoring-skills.md) | `**/SKILL.md`, `**/skills/**/*.md` | Writing a skill, edit-time stub: the route skill decides the worker, capabilities not tools, discoverability-first quoted frontmatter. Full guide: `skills/harness-doctor/references/authoring-skills.md`. |
 | [zotero.md](./zotero.md) | `**/*.bib`, `**/*.ris`, `**/docs/**` | Zotero management — Zotero is the system of record; `docs/` and `.bib` are git-ignored staging. Also named by `/zotero`. |
 | [make.md](./make.md) | `**/Makefile`, `**/*.mk` | One output per rule, target is the exact path written, `.DELETE_ON_ERROR`, the `RUN` prefix for Python recipes, no hand-curated data, analysis and writing builds split. |
 | [manuscript-build.md](./manuscript-build.md) | `**/Makefile`, `**/_quarto.y(a)ml`, `**/*.latexmkrc` | An unresolved `\cite`/`\ref` is a link error, not a warning: gate the build on the log, vendor the check, `.DELETE_ON_ERROR`; figures are script-built, never drawn inline. |
