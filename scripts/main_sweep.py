@@ -2,7 +2,8 @@
 """Audit the last 24 hours of main: does each commit that entered it carry a gate receipt?
 
 Ticket 1179 (after 1157, tracker 1045). Stateless and git-only: no forge, no
-watermark, no stored state. It reads the repository it runs in and prints
+watermark, no stored state, except that --after runs the gate's check set and
+pushes its record as a note to refs/notes/gate. It reads the repository it runs in and prints
 nothing when the base declares no gate (no `.merge-gate.json` at the tip, or
 `"gate": "off"`).
 

@@ -129,10 +129,11 @@ reads and writes in its own spelling.
    untouched" line goes in the report, never forced; never a hand-rolled
    `merge --ff-only` on the primary checkout.
 9. **After-merge run (gated base).** Start the runner in the background from
-   the primary checkout, which outlives this worktree, and do not wait on it:
+   the shared git directory, which outlives this worktree (bare or not), and
+   do not wait on it:
    ```bash
    C=$(git rev-parse --path-format=absolute --git-common-dir); mkdir -p "$C/idh"
-   (cd "$C/.." && nohup python3 "$IDH_ROOT/scripts/merge-gate.py" run-after --ref <base> >>"$C/idh/after-merge.log" 2>&1 &)
+   (cd "$C" && nohup python3 "$IDH_ROOT/scripts/merge-gate.py" run-after --ref <base> >>"$C/idh/after-merge.log" 2>&1 &)
    ```
    It runs the full set on the newest `<base>` tip and notes the record there
    (a busy lock means a runner already covers this tip). Its red never blocks

@@ -63,7 +63,8 @@ check: check-skills-drift check-agnostic-tickets check-agnostic-skills check-agn
 # Daily audit of main (tickets 1157, 1179): does each commit that entered
 # origin/main in the last 24 h carry a gate receipt? Exit 1 on a finding, 2 when
 # it could not look in full. --after (ticket 1244): tips with no after-merge
-# record, and the full set run on the latest. Git-only, never in the merge path
+# record, and the full set run on the latest; that run executes the gate's
+# checks and pushes a note to refs/notes/gate. Git-only otherwise, never in the merge path
 # (conception/2026-10-21-main-update-guard.md).
 .PHONY: main-sweep
 main-sweep:

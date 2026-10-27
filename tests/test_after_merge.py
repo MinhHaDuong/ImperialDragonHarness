@@ -246,3 +246,37 @@ def test_the_audit_summary_with_after_stays_one_line_over_noisy_checks(tmp_path)
     assert "NOISY" not in proc.stdout + proc.stderr
     assert len(proc.stdout.splitlines()) == 1, proc.stdout
     assert "ran on" in proc.stdout
+
+
+def step9_snippet():
+    """The fenced bash of skills/merge/SKILL.md step 9, as the merging session runs it."""
+    text = (ROOT / "skills" / "merge" / "SKILL.md").read_text(encoding="utf-8")
+    step = text[text.index("9. **After-merge run"):]
+    return step.split("```bash\n", 1)[1].split("```", 1)[0]
+
+
+@pytest.mark.parametrize("layout", ["bare", "non-bare"])
+def test_step9_starts_the_runner_from_a_linked_worktree(tmp_path, module, layout):
+    seed = make_repo(tmp_path, [{"name": "ok", "argv": ["true"]}])
+    origin = tmp_path / "origin.git"
+    if layout == "bare":
+        primary = tmp_path / "proj.git"
+        subprocess.run(["git", "clone", "-q", "--bare", str(origin), str(primary)], check=True, env=child_env())
+    else:
+        primary = seed
+    linked = tmp_path / "request-wt"
+    git(primary, "worktree", "add", "-q", "-b", "request", str(linked), "main")
+    for key, value in (("user.email", "t@example.com"), ("user.name", "Fixture")):
+        git(primary, "config", key, value)
+    env = {**child_env(), "IDH_ROOT": str(ROOT)}
+    script = step9_snippet().replace("<base>", "main")
+    subprocess.run(["bash", "-c", script], cwd=linked, check=True, env=env)
+    common = Path(git(linked, "rev-parse", "--path-format=absolute", "--git-common-dir"))
+    log = common / "idh" / "after-merge.log"
+    end = time.monotonic() + 30
+    while time.monotonic() < end and "pass: after-merge record" not in (log.read_text() if log.exists() else ""):
+        time.sleep(0.1)
+    assert "pass: after-merge record" in log.read_text(), log.read_text()
+    tip = git(primary, "rev-parse", "main")
+    git(seed, "fetch", "-q", "origin", "+refs/notes/gate:refs/notes/gate")
+    assert [e["result"] for e in module.parse_note(note(seed, tip))] == ["pass"]

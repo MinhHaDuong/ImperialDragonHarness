@@ -4,7 +4,8 @@ Ticket 1157, child B of tracker 1045. Two parts. The first is a git hook that
 journals every update of `refs/heads/main` and can refuse one. The second is a
 daily audit that reports any commit that reached `main` in the last 24 hours
 without a gate receipt. Both use only git, so they work the same under any
-agent runtime and for a human.
+agent runtime and for a human. The audit's `--after` (ticket 1244) is the one
+part that writes: it runs the gate's check set and pushes a note.
 
 ## The hook: `hooks/reference-transaction`
 
@@ -136,7 +137,9 @@ then has no note, and the merge is a finding.
 
 ## The audit: `scripts/main_sweep.py`
 
-Stateless and git-only: no forge read, no watermark, no stored state. It
+Stateless and git-only: no forge read, no watermark, no stored state.
+Without `--after` it only reads; with `--after` it runs the gate's check set
+on the latest uncovered tip and pushes a note to `refs/notes/gate`. It
 reads the repository it runs in, so any project that adopts the gate can run
 it, and prints nothing when the tip of `--ref` (default `origin/main`)
 declares no gate (`.merge-gate.json` absent or `"gate": "off"`). With
