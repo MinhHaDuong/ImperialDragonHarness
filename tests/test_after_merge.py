@@ -432,3 +432,45 @@ def test_a_different_failing_set_opens_its_own_ticket(red_repo, module, tmp_path
     assert len(tickets) == 2, tickets
     texts = [git(work, "show", f"origin/main:tickets/{n}") for n in tickets]
     assert any("Failing checks: marker-absent, second-marker-absent\n" in t for t in texts)
+
+
+def test_a_merged_red_branch_left_behind_does_not_block_a_recurrence(red_repo, module, tmp_path):
+    """Gaze finding 1: a red-* branch already in main carries no open ticket of its own."""
+    work = red_repo
+    merge_branch(work, "breaker", {"BROKEN": "planted failure"})
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch")
+    assert run_after_in_process(module, forge) == module.FAIL
+    git(work, "fetch", "-q", "origin")
+    git(work, "push", "-q", "origin", "origin/main^2:refs/heads/red-leftover")  # the landed ticket commit
+    git(work, "pull", "-q", "--ff-only", "origin", "main")
+    [name] = red_tickets(work)
+    subprocess.run([str(ERG), "close", name.split("-", 1)[0], "fixed", "tickets"], cwd=work, check=True,
+                   capture_output=True, env=child_env())
+    git(work, "commit", "-q", "-am", "close the red ticket")
+    git(work, "push", "-q", "origin", "main")
+    assert run_after_in_process(module, forge) == module.FAIL
+    assert len([c for c in forge.calls if c[0] == "create"]) == 2, forge.calls
+
+
+def test_a_failing_check_in_the_before_set_is_not_landed_but_left_open(red_repo, module, tmp_path, capsys):
+    """Gaze finding 3: the before-merge record would refuse the request for the very red it reports."""
+    work = red_repo
+    config = json.loads((work / ".merge-gate.json").read_text())
+    config["before"] = ["always-pass", "marker-absent"]
+    (work / ".merge-gate.json").write_text(json.dumps(config), encoding="utf-8")
+    git(work, "commit", "-q", "-am", "marker-absent runs before the merge")
+    git(work, "push", "-q", "origin", "main")
+    merge_branch(work, "breaker", {"BROKEN": "planted failure"})
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch")
+    assert run_after_in_process(module, forge) == module.FAIL
+    assert [c[0] for c in forge.calls] == ["create"]
+    assert "before-merge set" in capsys.readouterr().out
+    assert len(remote_red_branches(work)) == 1
+
+
+def test_open_ticket_flag_hands_the_real_forge_adapter_to_the_runner(module, monkeypatch):
+    seen = []
+    monkeypatch.setattr(module, "run_after", lambda *a, **k: seen.append(a[-1]) or module.PASS)
+    module.main(["run-after", "--open-ticket"])
+    module.main(["run-after"])
+    assert type(seen[0]).__name__ == "GhForge" and seen[1] is None

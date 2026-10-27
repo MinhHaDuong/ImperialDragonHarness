@@ -62,7 +62,8 @@ since the last green after-record) and exits 1. With `--open-ticket` (ticket
 under the lock: `tickets/<next>-after-merge-red-<tip12>.erg` written in a
 throwaway worktree on branch `red-<tip12>`, pushed, opened as a request and
 landed by scripts/raid_land.py as a bookkeeping-tier request, at most
-RED_RETRIES landing attempts. The dedupe key is the sorted failing-check set,
+RED_RETRIES landing attempts; a failing check in the before set leaves the
+request open (its own record would refuse it). The dedupe key is the sorted failing-check set,
 not the tip: no ticket opens when an open after-merge-red ticket on the tip or
 a remote `red-*` branch already carries that set. An unlanded request stays
 open with its branch, for a human. Nothing reverts, nothing re-runs.
@@ -819,6 +820,8 @@ def red_duplicate(key, tip, remote):
     if key in open_red_keys(tip):
         return f"an open after-merge-red ticket on {tip[:12]}"
     for ref in red_branches(remote):
+        if git("merge-base", "--is-ancestor", ref, tip, check=False).returncode == 0:
+            continue  # already in main: a leftover branch carries no ticket of its own
         if key in open_red_keys(ref):
             return f"branch {ref.split('/', 3)[-1]} on {remote}"
     return None
@@ -874,17 +877,25 @@ def run_in(tree, *argv):
     return proc.stdout.strip()
 
 
-def open_red_ticket(report, results, tip, forge, remote, base):
-    """Open (land) the red ticket of `report` unless its failing set is already carried; a status line."""
+def open_red_ticket(report, results, tip, forge, remote, base, config=None):
+    """Open (land) the red ticket of `report` unless its failing set is already carried; a status line.
+
+    The branch starts from the freshly fetched base tip, not the red tip, so
+    the ticket number sees every ticket landed while the checks ran. A request
+    whose failing check is in the before-merge set would be refused by its
+    own record: it is opened and left open, never landed.
+    """
     key = red_key(report)
     duplicate = red_duplicate(key, tip, remote)
     if duplicate:
         return f"red ticket: not opened, {', '.join(key)} already carried by {duplicate}"
     branch = f"red-{tip[:12]}"
+    blocked = sorted(set(key) & {c["name"] for c in before_set(config)["checks"]}) if config else []
     lander = raid_land()
+    start = fetch_tip(remote, base)
     with tempfile.TemporaryDirectory(prefix="merge-gate-red-") as tmp:
         tree = Path(tmp) / "red"
-        git("worktree", "add", "-q", "-B", branch, str(tree), tip)
+        git("worktree", "add", "-q", "-B", branch, str(tree), start)
         try:
             (tree / "tickets").mkdir(exist_ok=True)
             erg = erg_binary(tree)
@@ -895,9 +906,13 @@ def open_red_ticket(report, results, tip, forge, remote, base):
             title = f"ticket({number}): after-merge red on main {tip[:12]}: {', '.join(key)}"
             run_in(tree, "git", "add", str(path.relative_to(tree)))
             run_in(tree, "git", "commit", "-q", "-m", f"{title}\n\nOpened by merge-gate.py run-after (ticket 1251).")
-            run_in(tree, "git", "push", "-q", "--force-with-lease", remote, f"HEAD:refs/heads/{branch}")
+            # A plain push: an existing red-<tip12> (another failing set on this tip) is never overwritten.
+            run_in(tree, "git", "push", "-q", remote, f"HEAD:refs/heads/{branch}")
             body = f"{report.partition(chr(10) + chr(10))[2]}\n**Ticket:** none\n\nOpened by `merge-gate.py run-after` (ticket 1251)."
             pr = forge.create(branch, base, title, body)
+            if blocked:
+                return (f"red ticket: {path.name} in request {pr}, not landed: {', '.join(blocked)} "
+                        "is in the before-merge set, whose record would refuse it; left open")
             code = lander.REFUSED
             for _ in range(RED_RETRIES):
                 code = lander.main_land(forge, pr, "-", [], base, tree, out=lambda m: sys.stdout.write(f"{m}\n"))
@@ -970,7 +985,7 @@ def run_after(remote, branch, actor, command, forge=None):
                 sys.stdout.write(f"red: after-merge record on {tip}; its ticket:\n{report}")
                 if forge is not None:
                     try:
-                        sys.stdout.write(open_red_ticket(report, outcome[1], tip, forge, remote, branch) + "\n")
+                        sys.stdout.write(open_red_ticket(report, outcome[1], tip, forge, remote, branch, outcome[2]) + "\n")
                     except Exception as exc:  # the red stands in the note and the log whatever happens here
                         sys.stdout.write(f"red ticket: not opened ({type(exc).__name__}: {exc})\n")
                 code = FAIL
