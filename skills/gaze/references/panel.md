@@ -101,8 +101,8 @@ unavailable route is never reported as a clean review.
 3. **Deduplicate** findings, never verdicts: a seat whose only finding merged
    into another's keeps its own verdict.
 4. **Targeted tests only.** Gaze's checks and seats run only the tests of the
-   files the what touches; none runs the full suite, which runs once, on the
-   merge candidate, as the project's declared gate. Where the project declares
+   files the what touches; none runs the full suite, which runs once, as the
+   project's declared gate (here: after the merge, on main). Where the project declares
    `.idh-checks.json`, the targeted run is its scoped gate
    (`$IDH_ROOT/scripts/scoped-check.py`) and the review quotes its
    `selected:` and `skipped:` lines, never calling a scoped pass full.
