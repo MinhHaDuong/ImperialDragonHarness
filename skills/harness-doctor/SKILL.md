@@ -2,7 +2,7 @@
 metadata:
   category: session
 name: harness-doctor
-description: "Diagnose harness skills and rules for contradiction and overlap: triage, then probes on demand; author-called, harness only."
+description: "Lint harness skills and rules for contradiction and overlap; author-called, harness only."
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "[skill or rule to start from]"
@@ -33,11 +33,12 @@ not a probe: it is never offered, skipped or priced.
 - **Listen first.** With an argument, start from that skill or rule and its
   neighbours. Without one, ask one question about what hurts; with no
   complaint, triage (below).
-- **Examine with consent.** Reading text needs no permission. Before a probe
-  that spends model usage or touches credentials, say what it runs and what it
-  costs, and wait for the author's agreement.
-- **Harness only.** It examines the harness's own text, never a project's;
-  a shadowing question reads only the names `project_shadow.py` compares.
+- **Examine with consent.** Reading text needs no permission, its tokens
+  included. Before a probe that spends model usage or touches credentials, say
+  what it runs and what it costs, and wait for the author's agreement.
+- **Harness only.** It examines the harness's own text, never a project's.
+  The one exception is a shadowing question: `project_shadow.py` then reads the
+  project's same-named skills and rules to compare them with the harness's.
 - **Every runtime alike.** No runtime is the reference; what could not run is
   reported as unavailable, never clean.
 - **Point, do not restate.** The rules a skill must follow live in
@@ -75,7 +76,7 @@ A menu, not a sequence: launch a probe only when it separates live hypotheses.
 | Overlapping bodies: both texts of a listed pair, plus any rule body they cite | Contradiction, or a skill presuming or paraphrasing another's responsibility | Minutes; reading tokens per pair; no credentials |
 | Lint: `python3 "$IDH_ROOT/scripts/skill_text_lint.py" --root "$IDH_ROOT" [paths]` | Mechanical hits: history phrasing, dates, ticket forms, project names, body length, long blocks | Seconds; no model usage; no credentials |
 | Runtime diagnostics, per `references/runtime-diagnostics.md` | What each runtime loads and flags: shadowing, precedence, install health | About a minute each; spends lines need agreement and a cost cap; credential rules there |
-| Shadowing: `python3 "$IDH_ROOT/scripts/project_shadow.py" <project>` | Whether a project's skill or rule shadows the harness's by name | Seconds; no model usage; only for a shadowing question |
+| Shadowing: `python3 "$IDH_ROOT/scripts/project_shadow.py" <project>` | Whether a project's skill or rule, named like the harness's, shadows it | Seconds; no model usage; only for a shadowing question |
 
 The lint prints JSON on stdout: read `.findings[]`, each
 `{file, line, check, text}`. It always exits 0 and is an instrument, not a
@@ -91,11 +92,13 @@ refreshes a credential needs the author.
 A probe that finds nothing says nothing until it has fired on a known case.
 Before reading a probe's findings, fire it on its control:
 
-- Lint: run it alone on `tests/fixtures/harness-doctor/trace-doctor-SKILL.md`,
+- Lint: run it alone on `"$IDH_ROOT/tests/fixtures/harness-doctor/trace-doctor-SKILL.md"`,
   a frozen copy of a skill that must raise `body_lines`, `date`,
   `history_phase` and `long_fence`. All four must appear.
 - Runtime diagnostics: the control each runtime's section names.
-- Reading probes: one known overlap or contradiction the reader must find.
+- Reading probes: the known overlap of this skill with
+  `skills/test-doctor/SKILL.md` (the shared visit stance the checklist
+  records); a reader that misses it is blind.
 
 A control that stays silent means the probe is blind, not the harness clean:
 report that probe unavailable. The report says, per probe used, that its

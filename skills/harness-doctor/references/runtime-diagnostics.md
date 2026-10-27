@@ -39,6 +39,9 @@ section heading. On a newer version, probe again before relying on it.
 - `claude plugin eval` (spends): behaviour evals against `evals/` cases, with
   `--json <file> --no-publish --max-cost-usd N`. The harness ships no eval
   cases; report it unavailable until it does.
+- Control: `claude plugin validate` on a scratch copy of one skill with its
+  `description:` line removed must flag it; `claude doctor` and the author
+  forms count as answering when they print their report.
 
 ## Codex (observed at 0.164.0)
 
@@ -52,6 +55,8 @@ section heading. On a newer version, probe again before relying on it.
   config, sandbox, state and install; its help calls the JSON report
   redacted. Install health, not skill text.
 - `codex review` (spends): a reviewer from another family, not a diagnostic.
+- Control: `codex debug prompt-input` must list a known harness skill (for
+  example `hunt`); `codex doctor --json` must return an `overallStatus`.
 
 ## Pi (observed at 1.4.0)
 

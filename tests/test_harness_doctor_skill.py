@@ -1,4 +1,4 @@
-"""The harness doctor is an author-called lint of the harness's own skills and rules.
+"""The harness doctor is an author-called visit to the harness's own skills and rules.
 
 Pinned here: a model cannot start it, it refuses outside the harness, it points
 at its references and the lint script rather than restating them, and the
@@ -131,17 +131,21 @@ def test_control_fixture_fires_every_listed_check():
 
 def test_skill_names_the_control_fixture():
     body = SKILL.read_text(encoding="utf-8")
-    cited = re.findall(r"`(tests/fixtures/harness-doctor/[\w.-]+)`", body)
+    cited = re.findall(r'"\$IDH_ROOT/(tests/fixtures/harness-doctor/[\w.-]+)"', body)
     assert cited, "SKILL.md must cite the control fixture"
     assert all((REPO / c).is_file() for c in cited)
     control_section = _section(body, "Positive control")[1]
     assert all(c in control_section for c in CONTROL_CHECKS)
+    assert "control" in control_section and "fired" in control_section
+    assert "skills/test-doctor/SKILL.md" in control_section, "reading-probe control"
 
 
 def test_refusal_precedes_the_menu():
     body = SKILL.read_text(encoding="utf-8")
     probes_start, probes = _section(body, "Probes")
-    assert body.index("harness_here.sh") < probes_start
+    pre_start, pre = _section(body, "Precondition")
+    assert pre_start < probes_start
+    assert "harness_here.sh" in pre and "stop" in pre
     assert "harness_here" not in probes
 
 
@@ -150,6 +154,8 @@ def test_menu_is_a_table_not_a_sequence():
     rows = [ln for ln in probes.splitlines() if ln.startswith("|")]
     assert len(rows) >= 2 + 5, "header, rule, five probes"
     assert all(r.count("|") == 4 for r in rows), "probe | answers | cost"
+    for r in rows[2:]:
+        assert all(c.strip() for c in r.strip().strip("|").split("|")), r
     assert not re.search(r"^\s*\d+\.", probes, re.MULTILINE)
 
 
@@ -159,13 +165,28 @@ def test_no_retirement_text():
         text = f.read_text(encoding="utf-8").lower()
         assert "retire" not in text, f
         assert "three consecutive" not in text, f
+        assert "delete this skill" not in text, f
 
 
 def test_revisit_empty_case_is_stated():
     _, journal = _section(SKILL.read_text(encoding="utf-8"), "Journal")
     assert "no prior visit" in journal
+    assert 'never "fixed"' in journal
     assert "revisit condition" in journal
     assert "-harness-doctor-" in journal
+
+
+def test_proposals_are_priced_with_one_recommended():
+    _, report = _section(SKILL.read_text(encoding="utf-8"), "Findings")
+    for word in ("price", "author-hours", "agent cost", "odds", "recommend"):
+        assert word in report, word
+
+
+def test_visit_forms_hypotheses_before_probes():
+    body = SKILL.read_text(encoding="utf-8")
+    visit_start, visit = _section(body, "The visit")
+    assert visit_start < _section(body, "Probes")[0]
+    assert "Hypotheses" in visit and "prior" in visit
 
 
 def test_skill_under_150_lines():
