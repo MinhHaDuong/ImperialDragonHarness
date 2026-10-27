@@ -8,6 +8,7 @@ Author: Minh Ha-Duong
 2026-10-26T22:19Z reviewer note author: criterion added, bookkeeping 'no review' becomes a default the orchestrator may override; 1223 kept as the mechanical floor
 2026-10-26T22:24Z reviewer reviewer note alignment 2026-10-26 (author: yes, align): blocked by 1226 (same § Gating tiers); 1223 folded in as a worked case and a default brief, the tier stays mechanical; the brief is the inline form of the 1154 request/response files
 2026-10-27T06:52Z reviewer reviewer note rewritten (author, 2026-10-27: management by intention, KISS, Trust Verify Monitor): intent in, gaze plans, executes, verifies plan against done, records. PR 1686 (brief grammar) closed unmerged as too much ceremony; Blocked-by 1226 dropped, the design no longer edits § Gating tiers.
+2026-10-27T06:54Z reviewer reviewer note author 2026-10-27: gaze is one pass, read-only on the code, delivers its report in one defined place (the result comment), may run checks but leaves scratch clean; added to Design and exit criteria
 
 --- body ---
 ## Context
@@ -53,6 +54,19 @@ rounds, not a faster round.
    time), plan check, findings, verdict (REVIEWED, FINDINGS or ESCALATE;
    gaze never approves), duration. That comment is the whole register.
 
+Properties of every run:
+
+- **One pass.** Gaze reviews once and returns. No internal round, no fix
+  loop: findings go back to the caller, who fixes and, if it wants, sends a
+  new narrower intent.
+- **Read-only on the code.** Gaze never edits, commits or pushes on the
+  merge request's branch, nor writes in the caller's worktree.
+- **Checks allowed, scratch clean.** Gaze may run tests or scripts to settle
+  the what, in a throwaway worktree of its own; it removes that worktree and
+  every scratch file before returning, and the record says so.
+- **One delivery place.** The report is the merge request's gaze result
+  comment, the same text returned to the caller; nothing else is written.
+
 Trust: the orchestrator trusts gaze's plan; gaze trusts the coder's tests and
 the gate's checks. Verify: step 4, and the comment shows intent beside plan.
 Monitor: trace-doctor and the 1197 telemetry judge plan sizing across runs;
@@ -69,6 +83,9 @@ that wants them reviewed says so in the intent.
 - [ ] Gaze writes its plan (method, workers, budget) before launching anything, from nature, size, location and history; the guidance for it lives in one place and states the "cheapest method that settles the what" rule with a few worked cases.
 - [ ] After executing, gaze compares plan with what was done and records the outcome as a `plan check:` line; a planned perspective missing without a valid substitute blocks a REVIEWED verdict.
 - [ ] The result comment carries intent, plan, run, plan check, findings, verdict and duration, and is the only register (no per-seat attribution writes into the merge request body).
+- [ ] One pass: gaze has no internal round or fix loop; it returns after its single review.
+- [ ] Read-only: a test shows a gaze run leaves the merge request's branch tip and the caller's worktree unchanged.
+- [ ] Scratch clean: checks run in gaze's own throwaway worktree, removed with every scratch file before it returns; a test shows nothing of the run remains on disk.
 - [ ] `/hunt`, `/raid` and `/merge` pass an intent and drop their fixed round loops: a later round is a new, narrower intent.
 - [ ] The fixed battery as a default, the brief grammar idea, and per-phase integrity rules the plan check replaces are deleted; the skill text is shorter than before.
 - [ ] Regression tests: a small intent yields a one-worker plan; a plan item that did not run makes the plan check fail and blocks REVIEWED.
