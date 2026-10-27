@@ -323,9 +323,10 @@ def test_hoard_installs_across_runtimes_without_legacy_skill(tmp_path, monkeypat
 
 
 def test_no_skill_derives_the_root_unconditionally_from_dirname():
-    """Ticket 1253: `$(dirname "<path>")/../..` ignores a preset IDH_ROOT and
-    resolves one level too high when the runtime supplies the skill directory."""
-    bad = re.compile(r'\$\(dirname "[^"]*"\)/\.\./\.\.')
+    """Ticket 1253: a `$(dirname "<loaded path>")` skill location ignores a
+    preset IDH_ROOT and, given the skill directory, lands one level too high.
+    The fallback's own `p=$(dirname "$p")` does not match."""
+    bad = re.compile(r'\$\(dirname "(?:<loaded|\$\{?[A-Z_]*SKILL_MD)[^"]*"\)')
     hits = [
         f"{p.relative_to(REPO)}:{n}"
         for p in sorted((REPO / "skills").rglob("*"))
