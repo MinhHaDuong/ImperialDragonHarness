@@ -15,6 +15,7 @@
       "unknown_version_behavior": "refuse-install",
       "below_minimum_behavior": "refuse-install",
       "skills_root": "$HOME/.claude/skills",
+      "project_skill_roots": [".claude/skills"],
       "documentation_url": "https://code.claude.com/docs/en/skills",
       "evidence_note": "perch has been live in this harness across the 2.1 series, which is the floor; 2.1.273 is what the probe returned on the pilot machine. Claude Code reads only its own skills root -- it does not scan $HOME/.agents -- so the neutral home creates no duplicate perch for it. A floor rather than an allowlist: PR #780 enumerated supported versions and refused two of the three installed CLIs nine days later."
     },
@@ -27,6 +28,7 @@
       "unknown_version_behavior": "refuse-install",
       "below_minimum_behavior": "refuse-install",
       "skills_root": "$HOME/.agents/skills",
+      "project_skill_roots": [".agents/skills"],
       "documentation_url": "https://learn.chatgpt.com/docs/build-skills",
       "evidence_note": "0.154.0 is the only Codex build this pilot observed, so it is the floor: a version below it was never tested and is refused rather than assumed. Upstream documents $HOME/.agents/skills as the user-level skills root and states that symlinked skill folders are followed."
     },
@@ -39,6 +41,7 @@
       "unknown_version_behavior": "refuse-install",
       "below_minimum_behavior": "refuse-install",
       "skills_root": "$HOME/.agents/skills",
+      "project_skill_roots": [".pi/skills", ".agents/skills"],
       "documentation_url": "https://github.com/earendil-works/pi/blob/main/packages/coding-agent/docs/skills.md",
       "evidence_note": "Installed for this pilot with `npm install -g --ignore-scripts @earendil-works/pi-coding-agent` (0.85.1) and exposed on PATH by a symlink beside the existing node/npm ones. The authoritative product is the pi.dev coding agent, npm @earendil-works/pi-coding-agent, GitHub earendil-works/pi, config home ~/.pi/agent; the similarly named @mariozechner/pi-coding-agent is deprecated upstream in favour of it. Its shipped docs/skills.md lists ~/.agents/skills/ as a global skill location."
     },
@@ -51,6 +54,7 @@
       "unknown_version_behavior": "refuse-install",
       "below_minimum_behavior": "refuse-install",
       "skills_root": "$HOME/.vibe/skills and $HOME/.agents/skills (both user-level)",
+      "project_skill_roots": [".vibe/skills", ".agents/skills"],
       "documentation_url": "https://docs.mistral.ai/vibe/code/overview",
       "evidence_note": "Fourth target per the 2026-09-28 amendment to 0800. Version probe verified on the pilot machine. Skills roots per Vibe's own documented search order (project .vibe/skills, .agents/skills, then user ~/.vibe/skills, ~/.agents/skills); the neutral ~/.agents/skills root is shared with Codex and Pi, so the perch and healthcheck symlinks are already discoverable there. NO porting slice has run on Vibe: this entry claims a version probe and skills-root compatibility only, never behavioral support. The recorded decision (0810) names Vibe as the next manual slice."
     }

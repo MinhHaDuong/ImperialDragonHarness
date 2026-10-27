@@ -122,6 +122,7 @@ Parse the JSON output. Use its fields to populate checks 1–12 below without re
 | Hook freshness   | ...    | in sync / N stale / skip     |
 | Docs freshness   | ...    | N docs scanned, K stale refs |
 | Session scratch  | ...    | N orphan dirs, X of cap      |
+| Local directives | ...    | N shadow / N reasoned / skip |
 ```
 
 Use `ok` for normal status, `warn` for attention-needed, `fail` for problems, `skip` for gracefully-degraded checks (detail column explains why).
@@ -175,3 +176,30 @@ Once the Action plan is fully effected, propose: "Surface remaining nits?"
     `/tmp` or `/home` has less than 10% free, naming the mount and reported
     percentage. A missing/unreadable mount is unknown, not healthy. This is an
     advisory warning; it never blocks startup.
+14. **Local directives versus the harness** — the project's own `CLAUDE.md`,
+    `AGENTS.md`, `.claude/CLAUDE.md`, `.claude/rules/`, runtime skill roots and
+    top-level `skills/` against the loaded harness rules and skills; never the
+    harness against itself. Reporter only: no fixes, no tickets.
+    ```bash
+    python3 "$IDH_ROOT/scripts/project_shadow.py" "$(git rev-parse --show-toplevel)"
+    ```
+    The script prints JSON lines. A line with `status: skip` makes the check
+    `skip` with its reason (the harness itself, or no local directives). Each
+    other line is a name-collision finding (`kind` shadowing) carrying the local
+    file, the harness file and the governing harness `instruction`; its
+    `verdict` is `ok` when the reason is stated in place, shown as
+    `ok (reasoned)`, and `warn` when the override is silent. Then the judged
+    pass, which the script cannot do: read skill and rule *descriptions* first
+    and open a full body only where descriptions overlap, to find
+    - **contradiction** — a local instruction inverting a harness instruction;
+    - **shadowing** by responsibility — a local skill or rule taking over a
+      harness skill's job under another name;
+    - **repeat** — a local copy of a harness procedure.
+
+    Each judged finding uses the same record: kind, local file, harness file,
+    governing instruction, verdict, and a proposed disposition (`delete-local`,
+    `annotate`, `harness-ticket`) with its destination (project or harness).
+    A local override that states its reason in place is `ok (reasoned)` (arena's
+    `CLAUDE.md` replaces merge-by-PR with `git merge --no-ff` because the repo
+    has no forge); a silent override or a copy is `warn`. `ok (reasoned)` never
+    enters the Action plan.
