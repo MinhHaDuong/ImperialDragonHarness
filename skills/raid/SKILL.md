@@ -262,7 +262,7 @@ bookkeeping-tier merge request skips `/gaze` and `/verify-gate` and goes to
 Phase 7 on its mechanical checks. Everything below is the full tier.
 
 **Per-ticket:** ensure a REVIEWED `/gaze` record on the branch tip, then run
-`/verify-gate` on the head it reviewed. Hunt's Review step already ran gaze and
+`/verify-gate` on the head it reviewed. Hunt's Verify phase already ran gaze and
 fixed its findings, so the raid reads that record first and re-runs `/gaze`
 only when it is missing, ESCALATE, or stale against the tip
 (`skills/merge/SKILL.md` § Gating tiers); a second review of a head gaze

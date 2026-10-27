@@ -2,7 +2,7 @@
 metadata:
   category: build
 name: hunt
-description: "Work a ticket: plan the route, execute it in its own worktree, verify and land it, wrap up."
+description: "Work a ticket: plan, execute in its own worktree, verify and land, wrap up."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<ticket-id> [inline]"
@@ -13,9 +13,9 @@ argument-hint: "<ticket-id> [inline]"
 For helper commands, set `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
 A hunt runs four phases: `[Plan]`, `[Execute]`, `[Verify]`, `[Celebrate]`.
-Announce each on entry (`[→ Plan]`, `[Plan → Execute]`, …). The phases are
-fixed; what runs inside Execute is not. The plan chooses it, within the
-ticket's scope and exit criteria.
+Announce each on entry: `[→ Plan]`, `[Plan → Execute]`, `[Execute → Verify]`,
+`[Verify → Celebrate]`. The phases are fixed; what runs inside Execute is
+not. The plan chooses it, within the ticket's scope and exit criteria.
 
 ## Detach
 
@@ -51,8 +51,8 @@ its **Relevant files**, then decide what the ticket is and what it takes:
   ticket's `Created` date (`git log --since=<Created> -- <files>`). A change that
   voids the premise is settled by the same escalation protocol; confirmed
   obsolete, log `"obsolete: <commit or change>"` and land as for already met.
-  Still valid but worded for an old tree: update the ticket in the worktree,
-  on the branch, and continue.
+  Still valid but worded for an old tree: note it in the plan; the ticket is
+  updated on the branch once Execute has entered the worktree.
 - **Too big or multipart**: the monster-ticket signals of `rules/workflow.md`
   § Ticket discipline for multi-PR work, or parts that would land in separate
   merges. Do not split it yourself: return it to whoever launched the hunt,
