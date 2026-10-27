@@ -713,3 +713,19 @@ def test_claude_does_not_require_or_register_global_instructions(world):
     assert validate(world, "claude").returncode == 0
     global_instructions.symlink_to(world["tmp"] / "foreign-instructions")
     assert validate(world, "claude").returncode == 0
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root reads any directory")
+def test_markdown_children_refuse_an_unreadable_directory(tmp_path):
+    """A child rglob would skip silently reads as undeclared, so it raises."""
+    (tmp_path / "a.md").write_text("x")
+    hidden = tmp_path / "sub"
+    hidden.mkdir()
+    (hidden / "b.md").write_text("x")
+    assert sorted(VALIDATOR._markdown_under(tmp_path)) == [tmp_path / "a.md", hidden / "b.md"]
+    hidden.chmod(0)
+    try:
+        with pytest.raises(VALIDATOR.ManifestError, match="cannot list"):
+            VALIDATOR._markdown_under(tmp_path)
+    finally:
+        hidden.chmod(0o755)

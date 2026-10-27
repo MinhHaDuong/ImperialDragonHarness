@@ -88,8 +88,9 @@ Explicit reinstallation atomically refreshes links whose text still matches
 the installer receipt at
 `${XDG_STATE_HOME:-$HOME/.local/state}/idh/links.json`,
 and retires receipt-owned links into this checkout that the manifest no
-longer declares (a deleted skill, a dropped projection).
-Modified or foreign links are refused. If a refused link needs repair,
+longer declares (a deleted skill, a dropped projection); a retired link
+that was modified since install is dropped from the receipt and left in
+place. Modified or foreign links at declared paths are refused. If a refused link needs repair,
 inspect its ownership and resolve that single conflict explicitly.
 Do not remove a runtime configuration file to repair registration:
 hook JSON is normally a regular user-owned file containing merged hooks.

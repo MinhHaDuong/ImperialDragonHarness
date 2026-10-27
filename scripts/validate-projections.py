@@ -341,6 +341,21 @@ class ManifestError(Exception):
     pass
 
 
+def _markdown_under(source: Path) -> list[Path]:
+    """Every *.md below source, like rglob, but an unreadable directory raises.
+
+    rglob skips what it cannot list, and a child missing from the expansion
+    reads as undeclared: install would retire a link that is still wanted.
+    """
+    def fail(exc):
+        raise ManifestError(f"cannot list {exc.filename}: {exc.strerror}")
+
+    found = []
+    for top, dirs, files in os.walk(source, onerror=fail):
+        found += [Path(top) / n for n in dirs + files if n.endswith(".md")]
+    return found
+
+
 def load_entries(manifest: Path, runtime: str, root=None):
     try:
         entries = json.loads(manifest.read_text())["entries"]
@@ -365,7 +380,7 @@ def load_entries(manifest: Path, runtime: str, root=None):
             source = expand(entry["target"], root)
             if not source.is_dir():
                 raise ManifestError(f"registration source {source} is missing")
-            children = source.rglob("*.md") if entry["children"] == "markdown" else source.iterdir()
+            children = _markdown_under(source) if entry["children"] == "markdown" else source.iterdir()
             for child in sorted(children):
                 if child.name.startswith(".") or child.name == "__pycache__":
                     continue

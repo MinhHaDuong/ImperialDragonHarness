@@ -111,10 +111,10 @@ def retire_stale(owned: dict, declared: set[Path]) -> int:
     projection out of the manifest; either way the receipt still holds the
     link, so it would otherwise dangle or shadow for good. Only a link whose
     text is unchanged since install wrote it, and which points into this
-    checkout, is removed: anything else at that path is no longer ours (or
-    belongs to another checkout), so it leaves the receipt and stays put. A
-    receipt path that is the same file as a declared one (HOME spelled
-    another way) is never stale.
+    checkout, is removed. A link edited or replaced since then is no longer
+    ours: it leaves the receipt and stays put. Another checkout's link, and
+    a receipt path that is the same file as a declared one (HOME spelled
+    another way), keep both the link and the record.
     """
     rc = 0
     here = root()
@@ -135,7 +135,7 @@ def retire_stale(owned: dict, declared: set[Path]) -> int:
         except OSError:
             text = None  # gone: nothing left to remove
         if text is not None and text == owned[key]:
-            points_to = Path(os.path.normpath(path.parent / text))
+            points_to = Path(os.path.normpath(Path(os.path.realpath(path.parent)) / text))
             if not points_to.is_relative_to(here):
                 continue  # another checkout's link: its own install decides
             try:
