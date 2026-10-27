@@ -1,0 +1,19 @@
+%erg 0.1
+Title: Gaze run inside a coder plans self-only
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T18:32Z reviewer created
+
+--- body ---
+## Context
+Raid 2026-10-27, wave 1: all five coder-run gazes (hunt inline) planned `seats: self-only`, two printed
+"plan check: PASS with deviations" beside a failed check, and one later run hand-repaired its manifest. Detached gaze
+runs with an explicit "panel with a cross-family seat" brief planned panels every time. Self-only records do not count
+for the merge, so each PR paid a second gaze.
+
+## Exit criteria
+- [ ] Find why gaze under hunt plans self-only (brief, intent, nesting, consent) and fix the cause.
+- [ ] A hunt run's gaze plans a panel with a cross-family seat when consent exists, without the caller saying so.
+- [ ] The harness gate passes.

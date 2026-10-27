@@ -1,0 +1,21 @@
+%erg 0.1
+Title: Codex and Pi sessions use the narrow agent credential
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T18:32Z reviewer created
+
+--- body ---
+## Context
+Ticket 1196 (PR #1800) exports GH_CONFIG_DIR=~/.config/gh-agent through scripts/bash-env.sh, which only Claude Code
+shells load (BASH_ENV in Claude settings). Codex and Pi shells still run gh as the owner login, so the 1196 guarantee
+(no session credential can edit rulesets or settings) holds for one runtime of three.
+
+## Exit criteria
+- [ ] Codex and Pi agent shells resolve gh to the agent config when ~/.config/gh-agent/hosts.yml exists; the
+      author's interactive shell does not.
+- [ ] A ruleset write from each runtime's agent shell returns 403 (measured once per runtime, logged).
+- [ ] conception/local-merge-gate-policy.md's Session credential section drops the gap; the harness gate passes.
+
+Related: [[1196]].

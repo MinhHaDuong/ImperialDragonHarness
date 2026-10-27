@@ -1,0 +1,19 @@
+%erg 0.1
+Title: After-merge runner opens a false red on a host with a stale Python environment
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T18:32Z reviewer created
+
+--- body ---
+## Context
+2026-10-27: fast-forwarding doudou's checkout 47 commits fired its after-merge runner while its venv lacked new
+dependencies (httpx2, bibtexparser, pyzotero); lint and pytest-guard failed at import and the runner opened a red
+ticket PR (#1801, closed by hand after `uv sync --frozen` made both green). The same tip was green on padme.
+
+## Exit criteria
+- [ ] The runner syncs the environment (or detects an import-time failure from missing dependencies) before judging a
+      tip red, and reports an environment problem as such, not as a red tip.
+- [ ] A test with a missing dependency yields no red ticket.
+- [ ] The harness gate passes.

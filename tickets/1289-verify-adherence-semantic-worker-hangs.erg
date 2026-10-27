@@ -1,0 +1,17 @@
+%erg 0.1
+Title: verify-adherence semantic worker hangs
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T18:32Z reviewer created
+
+--- body ---
+## Context
+Raid 2026-10-27: in two hunts (1273, 1281) verify-adherence never returned a verdict, stuck "waiting for the semantic
+worker"; the coders proceeded on make lint alone.
+
+## Exit criteria
+- [ ] Reproduce or explain the hang; the semantic worker returns or times out with a stated result.
+- [ ] A hunt never proceeds on a missing adherence verdict without saying so in its report.
+- [ ] The harness gate passes.

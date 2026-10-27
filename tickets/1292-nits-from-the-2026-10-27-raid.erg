@@ -1,0 +1,27 @@
+%erg 0.1
+Title: Nits from the 2026-10-27 raid
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T18:32Z reviewer created
+
+--- body ---
+## Context
+Below the severity floor, bundled at the author's request; fix opportunistically or drop.
+
+- tests/test_gaze_seat.py vibe test asserts stdin is empty, but pytest already points fd 0 at /dev/null, so a
+  mutation inheriting stdin survives (measured); the behaviour is guaranteed centrally since 1256.
+- scripts/gaze_wall_time.py endpoints(): a plan-check before any seat launch would inflate closing (consider, 1227).
+- scripts/forge.py _has_origin reads any `git remote get-url origin` failure as "no origin" (consider, 1280).
+- Local merge (1275): two concurrent-writer races tagged consider and not reproduced.
+- 1274: a round-2 REROLL fix rebased onto a moved base loses its link and is refused as stale without naming the cause (fails safe).
+- 1281: an answer written without a head inherits its request's head (contract allows it).
+- tests/test_after_merge.py copies forge.py but not review_notes.py into its scratch scripts.
+- A verify-gate run in the wrong worktree wrote a stray pass record for a merge candidate that will never exist (refs/notes/gate).
+- verify-gate sometimes returns prose instead of the verdict block; once it returned NEEDS-AUTHOR on a decision the author had already given.
+- git push over https failed once in two places on padme and succeeded on retry; cause not established.
+- review_notes.py and gaze_close.py: print to stderr in library code; private helpers (rn._compact, rn._hex) used across modules.
+
+## Exit criteria
+- [ ] Each item fixed, dropped with a reason, or moved to its own ticket if it turns out to bite.
