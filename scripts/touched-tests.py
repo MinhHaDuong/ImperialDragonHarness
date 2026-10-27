@@ -14,7 +14,8 @@ multi-commit branch is covered whole. Selection is a text search of tests/:
   (`-m integration`, the selected files excepted), when the project declares
   that marker.
 
-Selected files run with no marker filter, through the project's runner:
+Selected files run with no marker filter (`-m ""` overrides one in the
+project's addopts), through the project's runner:
 `uv run --frozen python3` with an inherited VIRTUAL_ENV dropped when the
 project has uv.lock and uv is on PATH (the Makefile's RUN rule), else
 `python3`. The project's `scripts/pytest_workers.py`, when present, sets the
@@ -82,7 +83,9 @@ def patterns(path):
         found.append(re.compile(r"(?<![\w.-])" + re.escape(p.name) + r"(?![\w-])"))
     if p.suffix == ".py" and IDENTIFIER.fullmatch(p.stem):
         stem = re.escape(p.stem)
-        found.append(re.compile(r"\b(?:import|from)\s+(?:[\w.]+\.)?" + stem + r"\b"))
+        found.append(re.compile(r"\bfrom\s+(?:[\w.]+\.)?" + stem + r"\b"))
+        # `import x`, `import os, x`, `import pkg.x as y`: any name of the import list
+        found.append(re.compile(r"\bimport\s+(?:[\w.]+(?:\s+as\s+\w+)?\s*,\s*)*(?:[\w.]+\.)?" + stem + r"\b"))
         found.append(re.compile(r"[\"']" + stem + r"[\"']"))
     return found
 
@@ -158,11 +161,11 @@ def main(argv=None):
         out(f"fallback: full integration tier (-m integration), no test names: {' '.join(unnamed)}")
     else:
         out(f"fallback: unavailable (no integration marker declared), not covered: {' '.join(unnamed)}")
-    runs = []
+    runs = []  # (label, pytest targets); a later -m overrides a marker filter in the project's addopts
     if selected:
-        runs.append(selected)
+        runs.append(("selected", ["-m", "", *selected]))
     if unnamed and marker:
-        runs.append(["tests/", "-m", "integration", *(f"--ignore={t}" for t in selected)])
+        runs.append(("integration", ["-m", "integration", "tests/", *(f"--ignore={t}" for t in selected)]))
     if not runs:
         out("result: skipped (no source or test file changed)")
         return SKIPPED
@@ -171,25 +174,29 @@ def main(argv=None):
         return SKIPPED
     python, env = runner(root)
     extra = workers(root, python, env)
-    failed, ran = [], False
-    for targets in runs:
+    codes = {}
+    for label, targets in runs:
         cmd = [*python, "-m", "pytest", "-q", *extra, *targets]
-        out(f"run: {' '.join(cmd)}")
+        out(f"run: {' '.join(repr(a) if a == '' else a for a in cmd)}")
         sys.stdout.flush()
-        code = subprocess.run(cmd, cwd=root, env=env).returncode
-        ran = ran or code == 0
-        if code not in (0, 5):  # 5: nothing collected, e.g. a tier with no test outside the selection
-            failed.append(f"pytest exit {code}")
+        codes[label] = subprocess.run(cmd, cwd=root, env=env).returncode
+    failed = [f"{label}: pytest exit {code}" for label, code in codes.items() if code not in (0, 5)]
     if failed:
         out(f"result: fail ({'; '.join(failed)})")
         return FAIL
+    ran = [f"{len(selected)} selected file(s)"] if codes.get("selected") == 0 else []  # 5: collected nothing
+    if codes.get("integration") == 0:
+        ran.append("integration tier")
+    elif "integration" in codes and ran:  # the whole tier sat inside the selection, which ran
+        ran.append("integration tier: no test outside the selection")
     if not ran:
         out("result: skipped (no test collected)")
         return SKIPPED
     if unnamed and not marker:
-        out(f"result: incomplete ({len(selected)} selected file(s) passed; {len(unnamed)} source file(s) not covered)")
+        out(f"result: incomplete ({', '.join(ran)} passed; {len(unnamed)} source file(s) not covered: "
+            "no integration marker declared)")
         return SKIPPED
-    out(f"result: pass ({len(selected)} selected file(s){', integration tier' if unnamed else ''})")
+    out(f"result: pass ({', '.join(ran)})")
     return PASS
 
 

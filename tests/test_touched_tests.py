@@ -182,3 +182,47 @@ def test_a_selection_that_collects_no_test_is_not_a_pass(tmp_path):
     assert code == 4, out + err
     assert line(out, "selected") == "selected: tests/test_empty.py"
     assert line(out, "result") == "result: skipped (no test collected)"
+
+
+def test_a_module_in_a_comma_import_list_is_named(tmp_path):
+    """gaze finding (OpenAI seat): `import os, alpha` was missed, and another test naming alpha hid the fallback."""
+    root = project(tmp_path, {
+        "pytest.ini": PYTEST_INI,
+        "scripts/alpha.py": "OK = True\n",
+        "tests/test_comma.py": (
+            "import sys\nfrom pathlib import Path\n\n"
+            "sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'scripts'))\n"
+            "import os, alpha  # noqa: E401\n\n\ndef test_ok():\n    assert alpha.OK and os.sep\n"
+        ),
+        "tests/test_unit.py": "def test_names_it():\n    assert 'scripts/alpha.py'\n",
+    })
+    write(root, {"scripts/alpha.py": "OK = False\n"})
+    commit(root, "break alpha")
+    code, out, err = touched(root)
+    assert code == 1, out + err
+    assert "tests/test_comma.py" in line(out, "selected")
+
+
+def test_an_integration_fallback_that_collects_nothing_says_so(tmp_path):
+    """gaze finding (correctness seat): the result named the integration tier when it ran no test of its own."""
+    root = project(tmp_path, {
+        "pytest.ini": PYTEST_INI,
+        "scripts/alpha.py": "class Thing:\n    ok = True\n",
+        "tests/test_uses_alpha.py": USES_ALPHA.format(module="alpha"),
+    })
+    write(root, {"scripts/alpha.py": "class Thing:\n    ok = 1\n", "scripts/gamma.py": "X = 1\n"})
+    commit(root, "a named and an unnamed file; the only integration test is selected")
+    code, out, err = touched(root)
+    assert code == 0, out + err
+    assert line(out, "result") == "result: pass (1 selected file(s), integration tier: no test outside the selection)"
+
+
+def test_selected_tests_run_whatever_marker_filter_the_project_sets(tmp_path):
+    root = alpha_project(tmp_path)
+    write(root, {"pytest.ini": PYTEST_INI + 'addopts = -m "not integration"\n'})
+    commit(root, "a project that filters integration by default")
+    (root / "scripts" / "alpha.py").write_text("class Thing:\n    ok = False\n", encoding="utf-8")
+    commit(root, "break Thing")
+    code, out, err = touched(root)
+    assert code == 1, out + err
+    assert line(out, "selected") == "selected: tests/test_uses_alpha.py"
