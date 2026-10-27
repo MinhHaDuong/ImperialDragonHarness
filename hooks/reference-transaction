@@ -12,6 +12,13 @@
 #   enforce journal; a non-gated update is refused at the `prepared` phase
 #   off     journal only
 #
+# After-merge start (ticket 1265): once a move of main is committed, and the
+# new tip carries .merge-gate.json, the hook starts
+# `python3 scripts/merge-gate.py run-after --open-ticket --ref main` detached
+# (log: <git-common-dir>/idh/after-merge.log). Independent of idh.mainGuard,
+# `off` included; `git config idh.afterMerge off` disables it. The runner is
+# the primary checkout's, else $IDH_ROOT's, else the one beside this hook.
+#
 # A gated update of main is one of:
 #   on-origin    the new tip is origin/main (as a `fetch` transaction may set
 #                it: `fetch --atomic origin main:main`; from any other command
@@ -37,7 +44,8 @@
 # only an enforce-mode refusal exits non-zero. Journal file, shared by all
 # worktrees: $(git rev-parse --git-common-dir)/idh/main-journal.jsonl
 #
-# POSIX sh, git and /proc or ps only: no agent runtime is involved.
+# The guard is POSIX sh, git and /proc or ps only: no agent runtime is
+# involved. Only the after-merge start launches Python, detached.
 # No `set -e` on purpose: a failing journal step must not turn into a
 # refused ref update (tests/test_main_guard_hook.py pins this).
 
@@ -195,6 +203,7 @@ start_after_merge() {
     common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || return 0
     runner=""
     case "$common" in */.git) runner="${common%/.git}/scripts/merge-gate.py" ;; esac
+    [ -f "$runner" ] || runner="${IDH_ROOT:-/nonexistent}/scripts/merge-gate.py"
     [ -f "$runner" ] || runner="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd -P)/scripts/merge-gate.py"
     [ -f "$runner" ] || return 0
     mkdir -p "$common/idh" 2>/dev/null || return 0
@@ -203,6 +212,7 @@ start_after_merge() {
     (
         # shellcheck disable=SC2046  # one word per variable name is the intent
         unset $(git rev-parse --local-env-vars 2>/dev/null)
+        GIT_TERMINAL_PROMPT=0; export GIT_TERMINAL_PROMPT
         cd "$common" || exit 0
         $detach nohup python3 "$runner" run-after --open-ticket --ref main \
             </dev/null >>"$common/idh/after-merge.log" 2>&1 &
