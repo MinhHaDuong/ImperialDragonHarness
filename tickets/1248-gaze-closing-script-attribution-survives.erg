@@ -1,0 +1,38 @@
+%erg 0.1
+Title: Gaze closing script: attribution survives a blocked cleanup and the documented call carries it
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T10:45Z reviewer created
+
+--- body ---
+## Context
+Gate review of PR #1736 (ticket 1227, merged 2026-10-27,
+https://github.com/MinhHaDuong/ImperialDragonHarness/pull/1736#issuecomment-6439896367) found two
+regressions against the gaze text `scripts/gaze_close.py` replaced. Both lose review attribution,
+which the merge gate and the attribution audit read:
+1. Attribution is appended only at close, after cleanup; a blocked cleanup exits 1 before the append,
+   so the reviewer lines never reach the PR body (old rule: "a failed append is reported, not skipped").
+2. The closing call documented in `skills/gaze/SKILL.md` carries no `--attribution-file`, so a gaze
+   following it literally skips attribution without error; on a blocked cleanup it posts nothing and
+   no text says who posts the ESCALATE comment.
+Two smaller items from the same reviews: `gaze_setup.py` matches every `tickets/*.erg` path in the PR
+body rather than close claims only (a prose mention can trip the breaker; `Ticket: NNNN` is missed);
+and in `skills/raid/SKILL.md` the `<!-- harness-extension-point -->` marker for the sitrep cadence
+sits after the Claude-Code-specific "arm the cadence" sentence instead of before it (PR #1735 gate).
+
+## Exit criteria
+- [ ] Attribution is appended before cleanup, or a blocked cleanup still appends and reports; a test
+      with a blocked cleanup shows the attribution lines in the PR body (stubbed forge).
+- [ ] The documented closing call carries the attribution file; a call without it fails loudly; the
+      ESCALATE comment's owner on a blocked cleanup is stated.
+- [ ] `gaze_setup.py` reads close claims as `/merge` parses them (`skills/merge/references/claims.md`).
+- [ ] The raid sitrep extension-point marker precedes the runtime-specific line.
+- [ ] The harness gate passes.
+
+## Relevant files
+scripts/gaze_close.py, scripts/gaze_setup.py, skills/gaze/SKILL.md, skills/gaze/references/cleanup.md,
+skills/raid/SKILL.md, tests/test_gaze_close.py, tests/test_gaze_setup.py
+
+Related: [[1227]], [[1246]].

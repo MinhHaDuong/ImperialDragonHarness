@@ -1,0 +1,42 @@
+%erg 0.1
+Title: Export IDH_ROOT from shell-init so skills stop deriving the harness root
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T10:45Z reviewer created
+
+--- body ---
+## Context
+Remedy for the 1240 doctor visit (journal 2026-10-27-harness-doctor-idh-root-paragraph-1240.md),
+ruled by the author on 2026-10-27: "OK to export IDH_ROOT". Locating the harness's helper scripts
+is an installation concern, not something each skill should re-derive. `scripts/shell-init.sh`,
+sourced from `~/.bashrc` by `bin/idh install`, already computes `_IDH_ROOT` (line 16) and wraps the
+claude, codex and pi launchers, but does not export it. Two observed faults follow:
+- `rules/workflow.md` runs `python3 "$IDH_ROOT/scripts/tmp_report.py"` at session start; in a
+  session on 2026-10-27 `$IDH_ROOT` was empty and the call failed (`/scripts/tmp_report.py`).
+- Claude Code 2.1.311 supplies the skill's base directory, not its SKILL.md path, so the paragraph
+  read literally resolves one level too high (`/home/haduong`); reproduced in the 1240 visit.
+Putting `scripts/` on PATH was considered and set aside for now: 86 call sites in 35 files to rewrite,
+38 scripts to make executable, 87 internal helpers exposed as commands in every shell.
+
+## Design
+- `shell-init.sh` exports `IDH_ROOT` (the wrapper's resolved checkout).
+- The 16 skills' helper paragraph shrinks to one fallback line that keeps the loaded-skill seam for
+  sessions not launched through the wrapper (IDE extension, desktop app, cron), and accepts either
+  a SKILL.md path or a skill directory.
+- `tests/test_skill_seam.py` follows the new canonical line.
+
+## Exit criteria
+- [ ] A shell that sourced `shell-init.sh` has `IDH_ROOT` exported to the checkout; a test shows it.
+- [ ] Every skill carrying the paragraph uses the one-line fallback; the seam test pins it; a skill
+      loaded with a directory or a SKILL.md path resolves the same root (test).
+- [ ] `rules/workflow.md`'s session-start probe works in a wrapper-launched session.
+- [ ] Codex and Pi checked once to inherit the variable through the wrapper (or the gap stated).
+- [ ] The harness gate passes.
+
+## Relevant files
+scripts/shell-init.sh, skills/*/SKILL.md (16 carrying the paragraph), tests/test_skill_seam.py,
+adapters/README.md, rules/workflow.md
+
+Related: [[1240]].
