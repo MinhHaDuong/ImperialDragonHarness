@@ -265,3 +265,20 @@ def test_forge_refused_merge_with_other_read_back_stays_unknown(repo):
 
 def test_usage_line_names_ruled_claims():
     assert "--ruled-claims" in rl.__doc__.splitlines()[2]
+
+
+def test_create_returns_the_request_number_and_refuses_without_one(monkeypatch):
+    """Ticket 1251: GhForge.create, the red ticket's request, parsed from gh's URL; gh itself is stubbed."""
+    forge = rl.GhForge()
+    seen = []
+
+    def fake(*args, out="https://github.com/o/r/pull/42\n", code=0):
+        seen.append(args)
+        return subprocess.CompletedProcess(args, code, out, "")
+
+    monkeypatch.setattr(forge, "_gh", fake)
+    assert forge.create("red-abc", "main", "t", "b") == "42"
+    assert seen[0][:6] == ("pr", "create", "--head", "red-abc", "--base", "main")
+    monkeypatch.setattr(forge, "_gh", lambda *a: subprocess.CompletedProcess(a, 1, "", "denied"))
+    with pytest.raises(rl.Refusal):
+        forge.create("red-abc", "main", "t", "b")

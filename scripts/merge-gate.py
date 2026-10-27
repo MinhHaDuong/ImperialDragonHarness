@@ -56,9 +56,17 @@ the record as a note on that tip, refetches, and loops while the tip moves; a
 result covers its tip and every tip it passed over. The record's scope is
 `<scope>/after-merge` and its revision `tip=<oid>`, never `candidate=`, so
 neither `check` nor the main-update hook can take it for a before-merge record.
-On red it prints the would-be ticket text (tip, failing checks, first-parent
-merges since the last green after-record) and exits 1; opening that ticket is
-ticket 1251. Nothing reverts, nothing re-runs.
+On red it prints the ticket text (tip, failing checks, first-parent merges
+since the last green after-record) and exits 1. With `--open-ticket` (ticket
+1251; skills/merge/SKILL.md step 9 passes it) it also opens that ticket, still
+under the lock: `tickets/<next>-after-merge-red-<tip12>.erg` written in a
+throwaway worktree on branch `red-<tip12>`, pushed, opened as a request and
+landed by scripts/raid_land.py as a bookkeeping-tier request, at most
+RED_RETRIES landing attempts; a failing check in the before set leaves the
+request open (its own record would refuse it). The dedupe key is the sorted failing-check set,
+not the tip: no ticket opens when an open after-merge-red ticket on the tip or
+a remote `red-*` branch already carries that set. An unlanded request stays
+open with its branch, for a human. Nothing reverts, nothing re-runs.
 
 Exit codes of `check`: 0 pass, 1 fail or stale scope, 2 no record, 3 error.
 `enabled`: 0 on, 1 off, 3 error. `tier`: 0 bookkeeping (or, with --since,
@@ -105,6 +113,8 @@ BEFORE_SCOPE = "before-merge"  # scope suffix of a `run` record when "before" is
 AFTER_SCOPE = "after-merge"  # scope suffix of a run-after record (ticket 1244)
 BUSY = 4  # run_after only, never an exit code: another runner holds the lock
 AFTER_WALK = 200  # first-parent commits searched for the last green after-record
+RED_RETRIES = 2  # landing attempts of one red-ticket request (ticket 1251)
+RED_KEY = "Failing checks: "  # the line of a red ticket that carries its dedupe key
 
 
 class GateError(RuntimeError):
@@ -732,9 +742,14 @@ def last_green(tip, limit=AFTER_WALK):
     return None
 
 
+def failing_checks(config, results):
+    """Names of the declared checks with no `<name> pass ` record line, in declared order."""
+    return [c["name"] for c in config["checks"] if not any(line.startswith(c["name"] + " pass ") for line in results)]
+
+
 def red_report(tip, config, results):
-    """The would-be ticket text of a red after-merge record (opening it is ticket 1251)."""
-    failing = [c["name"] for c in config["checks"] if not any(line.startswith(c["name"] + " pass ") for line in results)]
+    """The ticket text of a red after-merge record: a Title line, a blank line, the facts."""
+    failing = failing_checks(config, results)
     green = last_green(tip)
     span = f"{green}..{tip}" if green else tip
     merges = git(
@@ -745,13 +760,171 @@ def red_report(tip, config, results):
             f"Title: After-merge red on main {tip[:12]}: {', '.join(failing)}",
             "",
             f"Tip: {tip}",
-            f"Failing checks: {', '.join(failing)}",
+            f"{RED_KEY}{', '.join(failing)}",
             f"Last green after-merge tip: {green or f'none in the last {AFTER_WALK} first-parent commits'}",
             "Merges since (first parent, newest first):",
             merges,
             "",
         ]
     )
+
+
+# ── red ticket (ticket 1251) ──────────────────────────────────────────────────
+
+
+@functools.cache
+def raid_land():
+    """scripts/raid_land.py, the landing executor, loaded beside this file."""
+    here = str(Path(__file__).resolve().parent)
+    if here not in sys.path:
+        sys.path.insert(0, here)  # raid_land imports step_clock from its own directory
+    spec = importlib.util.spec_from_file_location("raid_land", Path(here) / "raid_land.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def red_key(text):
+    """The dedupe key a red ticket carries: its sorted failing-check names, or None."""
+    for line in text.splitlines():
+        if line.startswith(RED_KEY):
+            return tuple(sorted(n.strip() for n in line[len(RED_KEY):].split(",") if n.strip()))
+    return None
+
+
+def open_red_keys(treeish):
+    """Keys of the open after-merge-red tickets directly under tickets/ in `treeish`."""
+    names = git("ls-tree", "--name-only", f"{treeish}:tickets", check=False).stdout.split()
+    keys = set()
+    for name in names:
+        if "-after-merge-red-" not in name or not name.endswith(".erg"):
+            continue
+        text = git("show", f"{treeish}:tickets/{name}", check=False).stdout
+        if re.search(r"^Closed:\s*\S", text.split("\n--- log ---", 1)[0], re.MULTILINE):
+            continue
+        key = red_key(text)
+        if key is not None:
+            keys.add(key)
+    return keys
+
+
+def red_branches(remote):
+    """Remote `red-*` branches, fetched (pruned) into refs/remotes/<remote>/red-*: their tracking refs."""
+    git("fetch", "-q", "--prune", remote, f"+refs/heads/red-*:refs/remotes/{remote}/red-*")
+    out = git("for-each-ref", "--format=%(refname)", f"refs/remotes/{remote}/red-*").stdout
+    return out.split()
+
+
+def red_duplicate(key, tip, remote):
+    """Where `key` is already carried (an open ticket on the tip, a red-* branch), or None."""
+    if key in open_red_keys(tip):
+        return f"an open after-merge-red ticket on {tip[:12]}"
+    for ref in red_branches(remote):
+        if git("merge-base", "--is-ancestor", ref, tip, check=False).returncode == 0:
+            continue  # already in main: a leftover branch carries no ticket of its own
+        if key in open_red_keys(ref):
+            return f"branch {ref.split('/', 3)[-1]} on {remote}"
+    return None
+
+
+def erg_binary(tree):
+    """The ticket tool: $ERG, else the tree's own tickets/erg, else this harness's."""
+    for path in (os.environ.get("ERG"), tree / "tickets" / "erg", Path(__file__).resolve().parents[1] / "tickets" / "erg"):
+        if path and Path(path).is_file():
+            return str(path)
+    raise GateError("no erg binary to number the red ticket")
+
+
+def red_ticket_text(report, results):
+    """The %erg 0.1 file of a red after-merge report; failed test ids (ticket 1254) appended."""
+    head, _, facts = report.partition("\n\n")
+    now = datetime.datetime.now(datetime.timezone.utc)
+    tests = [line.split(" ", 1)[1] for line in results if line.startswith("failed-test ")]
+    body = [
+        "## Context",
+        "",
+        "Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full",
+        "declared set failed on main after a merge.",
+        "",
+        facts.rstrip("\n"),
+        *(["", "Failed tests (check, test id):", *(f"- {t}" for t in tests)] if tests else []),
+        "",
+        "## Exit criteria",
+        "",
+        "- [ ] An after-merge record on main passes the checks named above.",
+        "",
+    ]
+    return "\n".join(
+        [
+            "%erg 0.1",
+            head,
+            f"Created: {now:%Y-%m-%d}",
+            "Author: merge-gate",
+            "",
+            "--- log ---",
+            f"{now:%Y-%m-%dT%H:%MZ} merge-gate created",
+            "",
+            "--- body ---",
+            *body,
+        ]
+    )
+
+
+def run_in(tree, *argv):
+    proc = subprocess.run(list(argv), cwd=tree, capture_output=True, text=True)
+    if proc.returncode:
+        raise GateError(f"{' '.join(argv[:3])}: {(proc.stderr or proc.stdout).strip()}")
+    return proc.stdout.strip()
+
+
+def open_red_ticket(report, results, tip, forge, remote, base, config=None):
+    """Open (land) the red ticket of `report` unless its failing set is already carried; a status line.
+
+    The branch starts from the freshly fetched base tip, not the red tip, so
+    the ticket number sees every ticket landed while the checks ran. A request
+    whose failing check is in the before-merge set would be refused by its
+    own record: it is opened and left open, never landed.
+    """
+    key = red_key(report)
+    duplicate = red_duplicate(key, tip, remote)
+    if duplicate:
+        return f"red ticket: not opened, {', '.join(key)} already carried by {duplicate}"
+    branch = f"red-{tip[:12]}"
+    blocked = sorted(set(key) & {c["name"] for c in before_set(config)["checks"]}) if config else []
+    lander = raid_land()
+    start = fetch_tip(remote, base)
+    with tempfile.TemporaryDirectory(prefix="merge-gate-red-") as tmp:
+        tree = Path(tmp) / "red"
+        git("worktree", "add", "-q", "-B", branch, str(tree), start)
+        try:
+            (tree / "tickets").mkdir(exist_ok=True)
+            erg = erg_binary(tree)
+            number = run_in(tree, erg, "next-id", "tickets")
+            path = tree / "tickets" / f"{number}-after-merge-red-{tip[:12]}.erg"
+            path.write_text(red_ticket_text(report, results), encoding="utf-8")
+            run_in(tree, erg, "validate", str(path))
+            title = f"ticket({number}): after-merge red on main {tip[:12]}: {', '.join(key)}"
+            run_in(tree, "git", "add", str(path.relative_to(tree)))
+            run_in(tree, "git", "commit", "-q", "-m", f"{title}\n\nOpened by merge-gate.py run-after (ticket 1251).")
+            # A plain push: an existing red-<tip12> (another failing set on this tip) is never overwritten.
+            run_in(tree, "git", "push", "-q", remote, f"HEAD:refs/heads/{branch}")
+            body = f"{report.partition(chr(10) + chr(10))[2]}\n**Ticket:** none\n\nOpened by `merge-gate.py run-after` (ticket 1251)."
+            pr = forge.create(branch, base, title, body)
+            if blocked:
+                return (f"red ticket: {path.name} in request {pr}, not landed: {', '.join(blocked)} "
+                        "is in the before-merge set, whose record would refuse it; left open")
+            code = lander.REFUSED
+            for _ in range(RED_RETRIES):
+                code = lander.main_land(forge, pr, "-", [], base, tree, out=lambda m: sys.stdout.write(f"{m}\n"))
+                if code != lander.REFUSED:
+                    break
+            if code in (lander.OK, lander.UNSYNCED):
+                git("push", "-q", remote, "--delete", branch, check=False)
+                return f"red ticket: {path.name} landed by request {pr} (raid_land exit {code})"
+            return f"red ticket: {path.name} in request {pr}, not landed (raid_land exit {code}); left open"
+        finally:
+            git("worktree", "remove", "--force", str(tree), check=False)
+            git("branch", "-D", branch, check=False)
 
 
 def run_after_once(tip, remote, actor, command):
@@ -787,8 +960,11 @@ def run_after_once(tip, remote, actor, command):
     return ok, results, config
 
 
-def run_after(remote, branch, actor, command):
-    """Hold the lock, run on the newest tip until it stops moving: the last run's code, or BUSY."""
+def run_after(remote, branch, actor, command, forge=None):
+    """Hold the lock, run on the newest tip until it stops moving: the last run's code, or BUSY.
+
+    With a forge, a red run opens its ticket (open_red_ticket), still under the lock.
+    """
     with open(lock_file(), "a") as handle:
         try:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -805,8 +981,13 @@ def run_after(remote, branch, actor, command):
                 sys.stdout.write(f"pass: after-merge record on {tip}\n")
                 code = PASS
             else:
-                sys.stdout.write(f"red: after-merge record on {tip}; the ticket it would open (no forge write):\n")
-                sys.stdout.write(red_report(tip, outcome[2], outcome[1]))
+                report = red_report(tip, outcome[2], outcome[1])
+                sys.stdout.write(f"red: after-merge record on {tip}; its ticket:\n{report}")
+                if forge is not None:
+                    try:
+                        sys.stdout.write(open_red_ticket(report, outcome[1], tip, forge, remote, branch, outcome[2]) + "\n")
+                    except Exception as exc:  # the red stands in the note and the log whatever happens here
+                        sys.stdout.write(f"red ticket: not opened ({type(exc).__name__}: {exc})\n")
                 code = FAIL
             done = tip
         return code
@@ -817,7 +998,8 @@ def cmd_run_after(args):
     command = f"merge-gate run-after --remote {args.remote} --ref {args.ref}"
     if not single_line(actor) or not single_line(command):
         raise ValueError("actor or command holds a line break or control character")
-    code = run_after(args.remote, args.ref, actor, command)
+    forge = raid_land().GhForge() if args.open_ticket else None
+    code = run_after(args.remote, args.ref, actor, command, forge)
     return PASS if code == BUSY else code
 
 
@@ -840,6 +1022,7 @@ def parser():
     after.set_defaults(func=cmd_run_after)
     after.add_argument("--remote", default="origin", help="where the branch and refs/notes/gate live")
     after.add_argument("--ref", default="main", help="branch name on --remote (default main)")
+    after.add_argument("--open-ticket", action="store_true", help="on red, open and land its ticket (ticket 1251)")
     for name in ("runtime", "model", "effort"):
         after.add_argument(f"--{name}", default=os.environ.get(f"MERGE_GATE_{name.upper()}", ""))
     for name, func in (
