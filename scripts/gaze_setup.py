@@ -46,6 +46,53 @@ def newest_mtime(tree):
     return newest
 
 
+FENCE = re.compile(r"[ \t]{0,3}(`{3,}|~{3,})(.*)$")
+
+
+def live_lines(body):
+    """Body lines outside closed code fences (the `/merge` grammar,
+    skills/merge/references/claims.md; lines of an unclosed fence stay in,
+    as check-close-claims.sh keeps them, so a hidden claim is still seen)."""
+    live, held, opener = [], [], None
+    for line in body.splitlines():
+        m = FENCE.fullmatch(line.rstrip("\r"))
+        if opener is None:
+            if m and not (m.group(1)[0] == "`" and "`" in m.group(2)):
+                opener, held = m.group(1), [line]
+            else:
+                live.append(line)
+        else:
+            held.append(line)
+            if m and m.group(1)[0] == opener[0] and len(m.group(1)) >= len(opener) \
+                    and not m.group(2).strip():
+                opener = None
+    if opener is not None:
+        live.extend(held)
+    return live
+
+
+def close_claims(body, tree):
+    """Ticket files named by close claims: `Ticket: tickets/...` paths and the
+    short `Ticket: NNNN` form (resolved against the review tree). `Ticket-ref:`
+    and prose mentions are not claims; `Ticket: NNNN-slug` qualifies as nothing
+    (closes nothing, as in `/merge`). A malformed `Ticket: tickets/...` path is a
+    stop there, so it is returned apart. Returns (claims, malformed)."""
+    found, malformed = [], []
+    for line in live_lines(body):
+        m = re.fullmatch(r"\*{0,2}ticket:?\*{0,2}:?\s*(\S+)\s*", line.strip(), re.I)
+        if not m:
+            continue
+        ref = m.group(1)
+        if re.fullmatch(r"\d{4}", ref):
+            hits = sorted(tree.glob(f"tickets/{ref}-*.erg")) + sorted(tree.glob(f"tickets/closed/{ref}-*.erg"))
+            found.append(str(hits[0].relative_to(tree)) if len(hits) == 1 else f"tickets/{ref}-*.erg")
+        elif re.fullmatch(r"tickets/(?:closed/)?[\w.-]+\.erg", ref):
+            found.append(ref)
+        elif ref.lower().startswith("tickets/"):
+            malformed.append(ref)
+    return sorted(set(found)), sorted(set(malformed))
+
+
 def fail(code, msg):
     print(f"gaze_setup: {msg}", file=sys.stderr)
     return code
@@ -85,7 +132,7 @@ def main():
     if a.returncode:
         return fail(2, a.stderr.strip() or "REVIEW-ANCHOR: failed")
     body = meta.get("body") or ""
-    tickets = sorted(set(re.findall(r"tickets/(?:closed/)?[\w.-]+\.erg", body)))
+    tickets, malformed = close_claims(body, tree)
     missing = [t for t in tickets if not (tree / t).exists()
                and not (tree / "tickets" / "closed" / Path(t).name).exists()]
     panel = tree / ".panel" / pr
@@ -113,6 +160,8 @@ def main():
     print(f"ticket={' '.join(tickets) if tickets else 'none'}")
     print(f"anchor={changed[0]}\nchanged_files={len(changed) - 1}")
     print("\n".join(changed[1:]))
+    if malformed:
+        return fail(1, f"malformed close claim path(s), fix the Ticket line: {' '.join(malformed)}")
     if missing:
         return fail(1, f"close claim names nonexistent ticket file(s): {' '.join(missing)}")
     return 0

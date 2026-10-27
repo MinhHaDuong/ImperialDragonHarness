@@ -22,7 +22,9 @@ contract that `tests/test_review_panel_cleanup_contract.py` pins): the
 `.panel/<pr-number>` and `build/panel-head` when untracked;
 `worktree-exit-preflight.sh --removal --branch <branch>`; plain
 `git worktree remove`, never `--force`. A blocked step exits 1, posts nothing
-and leaves the review worktree registered: return ESCALATE naming the files.
+and leaves the review worktree registered: return ESCALATE naming the files and
+post that comment yourself; attribution was appended before
+cleanup, so the review is recorded either way.
 
 ## Containment postcondition
 

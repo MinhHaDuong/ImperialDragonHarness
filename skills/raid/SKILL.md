@@ -434,9 +434,9 @@ The raid log has a fixed path and format (`references/sitrep.md`); append
 `RAID_START`, `WAVE_BASE`, `WAVE`, `PR` (each step change), `BREAKER` and `QUEUE` lines with
 `python3 "$IDH_ROOT/scripts/raid_log.py" append EVENT key=value ...`. At raid
 start, after `RAID_START`, run `python3 "$IDH_ROOT/scripts/raid-sitrep.py"`
-once and arm the cadence: a background command
-`sleep 900; python3 "$IDH_ROOT/scripts/raid-sitrep.py"` whose exit wakes you.
-<!-- harness-extension-point --> (Claude Code; Codex and Pi have no timed wake: run the sitrep at each wave boundary and breaker event, and say so)
+once and arm the cadence: <!-- harness-extension-point --> a background command
+`sleep 900; python3 "$IDH_ROOT/scripts/raid-sitrep.py"` whose exit wakes you
+(Claude Code; Codex and Pi have no timed wake: run the sitrep at each wave boundary and breaker event, and say so)
 On each wake, read the sitrep, re-arm, and act on its last line: `NEXT resume
 wave` means launch the next wave now rather than ending the turn; `NEXT
 wrap-up` means proceed to Wrap up; `UNREADABLE` (exit 2) means repair the log

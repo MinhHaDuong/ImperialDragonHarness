@@ -41,3 +41,42 @@ def test_setup_conflicting_pr_blocks_before_worktree(tmp_path):
     r = run(SETUP, ["7"], primary, env)
     assert r.returncode == 1
     assert not (primary / ".claude" / "worktrees" / "review-7").exists()
+
+
+def test_setup_reads_close_claims_not_prose_mentions(tmp_path):
+    body = ("See tickets/0009-prose.erg for background.\nTicket-ref: tickets/0008-ref.erg\n"
+            "```\n**Ticket:** tickets/0007-fenced.erg\n```\n**Ticket:** tickets/closed/0001-a.erg\n")
+    primary, env = make_repo(tmp_path, body=body)
+    r = run(SETUP, ["7"], primary, env)
+    # only the live claim is read: it is the one reported missing
+    assert r.returncode == 1 and "0001-a.erg" in r.stderr
+    for other in ("0009", "0008", "0007"):
+        assert other not in r.stderr
+
+
+def test_setup_reads_short_form_claim(tmp_path):
+    primary, env = make_repo(tmp_path, body="x\nTicket: 0042\n")
+    r = run(SETUP, ["7"], primary, env)
+    assert r.returncode == 1 and "0042" in r.stderr
+
+
+def test_setup_prose_mention_alone_is_no_claim(tmp_path):
+    primary, env = make_repo(tmp_path, body="Mentions tickets/0009-prose.erg in passing.\n")
+    r = run(SETUP, ["7"], primary, env)
+    assert r.returncode == 0, r.stderr
+    assert fields(r.stdout)["ticket"] == "none"
+
+
+def test_setup_slug_form_is_no_claim_like_merge(tmp_path):
+    """/merge: only a 4-digit ID alone qualifies; `NNNN-slug` closes nothing."""
+    primary, env = make_repo(tmp_path, body="x\nTicket: 0042-some-slug\n")
+    r = run(SETUP, ["7"], primary, env)
+    assert r.returncode == 0, r.stderr
+    assert fields(r.stdout)["ticket"] == "none"
+
+
+def test_setup_malformed_ticket_path_stops_like_merge(tmp_path):
+    """/merge: a malformed `Ticket: tickets/...` path is a stop, not a silent skip."""
+    primary, env = make_repo(tmp_path, body="x\n**Ticket:** tickets/0042-a.md\n")
+    r = run(SETUP, ["7"], primary, env)
+    assert r.returncode == 1 and "malformed" in r.stderr
