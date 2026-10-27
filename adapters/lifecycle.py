@@ -13,6 +13,7 @@ built from the structured `path`/`target` fields only; the free-form
 import importlib.util
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -95,6 +96,7 @@ def install_links() -> int:
         if problem:
             report(*problem)
             rc = 1
+    rc |= install_bin(owned, declared, entries())
     rc |= retire_stale(owned, declared)
     rc |= prune_dangling(skill_roots())
     try:
@@ -103,6 +105,51 @@ def install_links() -> int:
     except OSError as exc:
         report("REFUSED", f"{receipt}: {exc}", "make the state directory writable and rerun install")
         rc = 1
+    return rc
+
+
+def install_bin(owned: dict, declared: set[Path], manifest: list) -> int:
+    """Link each curated bin/ command into ~/.local/bin under its own name (1249).
+
+    A command the manifest already links (under any name) is skipped. A name
+    that is taken, by anything but our own link, or that resolves on PATH to
+    another command, is refused and named; the rest still install.
+    """
+    rc = 0
+    base = root()
+    dest = Path(os.environ["HOME"]) / ".local/bin"
+    taken = {V.expand(e["target"], base) for e in manifest}
+    for src in sorted((base / "bin").iterdir()):
+        if not src.is_file() or not os.access(src, os.X_OK) or src in taken:
+            continue
+        path = dest / src.name
+        declared.add(path)
+        rel = os.path.relpath(src, dest)
+        if path.is_symlink() and os.readlink(path) == rel:
+            owned[str(path)] = rel
+            continue
+        if path.is_symlink() and owned.get(str(path)) == os.readlink(path):
+            tmp = path.with_name(path.name + ".idh-link-tmp")  # relocated: refresh our own link
+            tmp.symlink_to(rel)
+            os.replace(tmp, path)
+            owned[str(path)] = rel
+            print(f"installed: {path} -> {src}")
+            continue
+        other = path if (path.is_symlink() or path.exists()) else shutil.which(src.name)
+        if other:
+            report("REFUSED", f"{path}: name collides with existing command {other}",
+                   f"rename bin/{src.name} or remove the existing command, then rerun idh install")
+            rc = 1
+            continue
+        try:
+            dest.mkdir(parents=True, exist_ok=True)
+            path.symlink_to(rel)
+        except OSError as exc:
+            report("REFUSED", f"{path}: {exc}", "inspect the path, then rerun idh install")
+            rc = 1
+            continue
+        owned[str(path)] = rel
+        print(f"installed: {path} -> {src}")
     return rc
 
 

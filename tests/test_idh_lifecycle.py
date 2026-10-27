@@ -118,6 +118,26 @@ def test_install_is_idempotent_and_refuses_foreign_files(machine):
     assert "installed:" not in r.stdout
 
 
+def test_bin_commands_are_linked_and_collisions_refused(machine):
+    home, idh, env = machine["home"], machine["idh"], machine["env"]
+    clash = Path(env["PATH"].split(":")[1]) / "snapshot"  # another command on PATH
+    clash.write_text("#!/bin/sh\n")
+    clash.chmod(0o755)
+    r = idh("install")
+    out = r.stdout + r.stderr
+    assert r.returncode == 1, out
+    assert "snapshot" in out and "collides" in out and str(clash) in out
+    local = home / ".local" / "bin"
+    assert not (local / "snapshot").exists()
+    for name in ("usage-report", "install-cron"):
+        assert (local / name).resolve() == (REPO / "bin" / name).resolve(), name
+    clash.unlink()
+    assert idh("install").returncode == 0
+    assert (local / "snapshot").resolve() == (REPO / "bin" / "snapshot").resolve()
+    r = idh("install")  # idempotent
+    assert r.returncode == 0 and "installed:" not in r.stdout
+
+
 def test_skill_subcommands_still_reach_perch(machine):
     r = machine["idh"]("check", "harness", "pi", "--version", "0.99.0")
     assert "pi:" in r.stdout + r.stderr
