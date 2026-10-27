@@ -1,0 +1,47 @@
+%erg 0.1
+Title: Rename /pulse to /test-doctor; trace-doctor suggests it for slow gates
+Created: 2026-10-27
+Author: reviewer
+Closed: autoclosed — PR #1689
+
+--- log ---
+2026-10-27T05:08Z reviewer created
+2026-10-27T05:27Z reviewer closed — autoclosed — PR #1689
+
+--- body ---
+## Context
+
+`/pulse` names a general health check; the skill is a testing doctor for slow,
+flaky or stale gates (and the guards those tests embody). The author finds the
+name broader than the task and chose `/test-doctor`, pairing it with
+`/trace-doctor` as the two meta doctors (2026-10-27). A themed name is waived:
+the skill is meta.
+
+Separately, trace-doctor's velocity section ranks the slow Bash tail, which is
+mostly test gates, but its only output is a ticket: it has no route to the
+testing consultation whose method fits that case.
+
+Barrier denials were checked first (trace-friction, 28 d, padme, 2026-10-27):
+3,391 worktree-guard refusals, none in the last 3 days, last heavy day 10-14,
+matching edd139bd (plain-git worktrees). Guard ownership stays as written:
+ticket 1218 routed the live PreToolUse guard to this skill.
+
+## Actions
+
+- Rename `skills/pulse/` to `skills/test-doctor/`, `scripts/pulse_traces.py` to
+  `scripts/gate_traces.py`, `scripts/pulse_profile.py` to `scripts/gate_profile.py`,
+  their tests, the survey's `pulse:` line prefix, and every live reference.
+  Closed tickets and journal entries keep their wording (history).
+- Chart entries become `-test-doctor-<slug>.md`; the history search reads both
+  `-test-doctor-` and the older `-pulse-` entries.
+- trace-doctor's velocity section offers `/test-doctor` for a gate-dominated
+  slow tail instead of ticketing it; the mention test admits trace-doctor as a
+  suggester (suggest, never invoke).
+
+## Exit criteria
+
+- [ ] No live file (outside `tickets/closed/`, `memory/journal/`) names `/pulse` or `pulse_*.py`
+- [ ] Chart history search covers both slugs
+- [ ] trace-doctor suggests `/test-doctor` for gate-dominated slow tails; the mention test allows exactly hunt, lair, trace-doctor
+- [ ] Catalog regenerated, drift clean; `make check` passes
+- [ ] Runtime skill links (Claude Code, Pi) point at `test-doctor` after merge

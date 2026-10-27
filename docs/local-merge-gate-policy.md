@@ -129,7 +129,7 @@ The stance behind the gate, written for projects that adopt it.
 - Before delegating a change to a rule that skills state in several places, grep
   every statement of it and hand the delegate the list.
 - Thin the test suite on a schedule: tests that only pin wording are the first to
-  cut. The testing doctor skill (`/pulse`) holds the remedy. **Pending.**
+  cut. The testing doctor skill (`/test-doctor`) holds the remedy. **Pending.**
 
 ## Direction
 

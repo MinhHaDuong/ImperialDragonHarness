@@ -169,7 +169,7 @@ no-op on an empty sweep.
 merge, corrupts state, or bites the science. Below that: fix it inline, record
 it in memory, or drop it; sweeps report such findings, they do not mint
 tickets. In a tooling repo, when a guard misfires, prefer deleting the guard and
-its tests over growing them. No guards on guards: /pulse owns them.
+its tests over growing them. No guards on guards: /test-doctor owns them.
 
 **Loophole found → offer the fix**, in the form the floor dictates: a ticket
 above it, an inline fix or a memory below.

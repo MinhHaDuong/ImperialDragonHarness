@@ -1,4 +1,4 @@
-"""pulse_profile turns a per-test duration record into the numbers a diagnosis needs.
+"""gate_profile turns a per-test duration record into the numbers a diagnosis needs.
 
 The fixtures are built so every number can be checked by hand: ten tests of 1 s
 and one of 90 s, a known tail concentration, and a worker lower bound that the
@@ -15,10 +15,10 @@ import pytest
 from child_env import child_env
 
 REPO = Path(__file__).resolve().parents[1]
-SCRIPT = REPO / "scripts" / "pulse_profile.py"
+SCRIPT = REPO / "scripts" / "gate_profile.py"
 sys.path.insert(0, str(REPO / "scripts"))
 
-import pulse_profile as pp  # noqa: E402
+import gate_profile as pp  # noqa: E402
 
 
 def _junit(path: Path, cases: list[tuple[str, str, float]], skipped: tuple[str, ...] = ()) -> Path:

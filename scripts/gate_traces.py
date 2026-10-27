@@ -326,14 +326,14 @@ def survey(root: Path, project: Path, days: float, now: datetime | None = None,
            p90_seconds: float = P90_SECONDS, waited_minutes: float = WAITED_MINUTES) -> list[str]:
     collected = collect(root, project, days, now, extra)
     if not collected.sessions:
-        return [f"pulse: not checked (no session traces with shell activity for "
+        return [f"test-doctor: not checked (no session traces with shell activity for "
                 f"{project.name} under {root} in the last {days:g}d)"]
     if not collected.foreground and not collected.background and collected.unpaired:
-        return [f"pulse: checked {collected.sessions} sessions in {project.name} but could not tell: "
+        return [f"test-doctor: checked {collected.sessions} sessions in {project.name} but could not tell: "
                 f"every gate call lacked a result (unpaired {collected.unpaired}, "
                 f"{collected.unreadable} unreadable)"]
     if not collected.foreground and not collected.background:
-        return [f"pulse: checked {collected.sessions} sessions in {project.name} and recognised no test "
+        return [f"test-doctor: checked {collected.sessions} sessions in {project.name} and recognised no test "
                 f"or gate command; a project-specific gate name needs --pattern"]
     flagged = []
     for gate, stats in summarise(collected.foreground).items():
@@ -341,14 +341,14 @@ def survey(root: Path, project: Path, days: float, now: datetime | None = None,
                 stats["p90_s"] >= p90_seconds
                 or (stats["total_min"] >= waited_minutes and stats["median_s"] >= TYPICAL_SECONDS)):
             flagged.append(
-                f'pulse: "{gate}" ran {stats["runs"]}x in {days:g}d in {project.name}: '
+                f'test-doctor: "{gate}" ran {stats["runs"]}x in {days:g}d in {project.name}: '
                 f'median {stats["median_s"]}s, p90 {stats["p90_s"]}s, '
-                f'{stats["total_min"]} min waited. A consultation may help: /pulse')
+                f'{stats["total_min"]} min waited. A consultation may help: /test-doctor')
     if len(flagged) > LINES_SHOWN:
         extra_count = len(flagged) - LINES_SHOWN
-        flagged = flagged[:LINES_SHOWN] + [f"pulse: {extra_count} more gate(s) over the same thresholds"]
+        flagged = flagged[:LINES_SHOWN] + [f"test-doctor: {extra_count} more gate(s) over the same thresholds"]
     if not flagged and (collected.unreadable or collected.unpaired or collected.dropped):
-        flagged = [f"pulse: checked {collected.sessions} sessions in {project.name}, "
+        flagged = [f"test-doctor: checked {collected.sessions} sessions in {project.name}, "
                    f"{collected.unreadable} unreadable, {collected.unpaired} unpaired, "
                    f"{collected.dropped} dropped; the check was partial"]
     return flagged
