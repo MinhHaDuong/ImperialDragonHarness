@@ -199,6 +199,13 @@ def git(repo: Path, *args: str, stdin: str | None = None) -> str:
                           text=True, input=stdin, timeout=60).stdout.strip()
 
 
+def is_ticket_file(path: str) -> bool:
+    """`tickets/*.erg` or `tickets/closed/*.erg`, the ticket paths merge-gate calls bookkeeping."""
+    parts = path.split("/")
+    return (path.endswith(".erg") and parts[0] == "tickets"
+            and (len(parts) == 2 or (len(parts) == 3 and parts[1] == "closed")))
+
+
 def exempt_paths(repo: Path, base: str, head: str) -> list[str]:
     """Plain report files added under REVIEWS_DIR: outside the reviewed identity."""
     raw = subprocess.run(["git", "-C", str(repo), "diff", "--raw", "-z", "--no-renames",
@@ -207,8 +214,14 @@ def exempt_paths(repo: Path, base: str, head: str) -> list[str]:
     exempt = []
     for meta, path in zip(fields[0::2], fields[1::2]):
         parts = meta.split()
-        if (len(parts) == 5 and parts[4] == "A" and parts[1] == "100644"
+        if len(parts) != 5:
+            continue
+        if (parts[4] == "A" and parts[1] == "100644"
                 and path.startswith(f"{REVIEWS_DIR}/") and path.endswith(REPORT_SUFFIXES)):
+            exempt.append(path)
+        elif is_ticket_file(path) and (parts[4] == "D" or parts[1] in ("100644", "100755")):
+            # The ticket close (move to closed/, checkboxes, log) is bookkeeping, as in
+            # merge-gate; its exit criteria are covered by criteria_hash, not the patch.
             exempt.append(path)
     return exempt
 
@@ -318,6 +331,23 @@ def cmd_identity(args: argparse.Namespace) -> int:
     return 0
 
 
+def relativize(body: str, repo: Path) -> str:
+    """Rewrite absolute paths into any worktree of this repo as relative ones.
+
+    Replacement happens only at a path boundary, so `/w/t1-12` never eats the
+    front of `/w/t1-123/x`. A path into another worktree keeps its tail
+    relative to that tree's root.
+    """
+    roots = {str(Path(repo).resolve()), str(Path(git(repo, "rev-parse", "--show-toplevel")).resolve())}
+    for line in git(repo, "worktree", "list", "--porcelain").splitlines():
+        if line.startswith("worktree "):
+            roots.add(line[len("worktree "):])
+    for root in sorted((r.rstrip("/") for r in roots if r.strip("/")), key=len, reverse=True):
+        body = re.sub(re.escape(root) + r"(?:/([^\s`'\")\]>,;:]*))?(?![\w.-])",
+                      lambda m: m.group(1) or ".", body)
+    return body
+
+
 def cmd_record(args: argparse.Namespace) -> int:
     current = current_inputs(args)
     folder = range_dir(args.repo, current)
@@ -336,8 +366,7 @@ def cmd_record(args: argparse.Namespace) -> int:
         body = args.body_file.read_text(encoding="utf-8")
     else:
         body = "" if sys.stdin.isatty() else sys.stdin.read()
-    root = str(Path(git(args.repo, "rev-parse", "--show-toplevel")).resolve())
-    body = body.replace(root + "/", "").replace(root, ".")
+    body = relativize(body, args.repo)
     path = folder / f"{args.seat}-{n}.md"
     path.write_text("---\n" + "".join(f"{k}: {v}\n" for k, v in header.items())
                     + "---\n\n" + body)

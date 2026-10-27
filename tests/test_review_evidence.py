@@ -521,3 +521,48 @@ def test_record_writes_no_absolute_worktree_path_and_reads_body_file(repo, polic
         stdin=subprocess.DEVNULL, capture_output=True, text=True, env=child_env(), check=True)
     text = Path(out.stdout.strip()).read_text(encoding="utf-8")
     assert str(repo) not in text and "see scripts/x.py and ." in text
+
+
+@pytest.mark.integration
+def test_gate_survives_a_ticket_close_after_the_reports(repo, policy):
+    """Ticket 1236 gaze finding: gaze, then close on the branch, then gate."""
+    record_seat(repo, policy, "correctness")
+    record_seat(repo, policy, "red-team")
+    commit_reports(repo)
+    git(repo, "mv", "tickets/0001-x.erg", "tickets/closed/0001-x.erg") if (repo / "tickets/closed").mkdir(exist_ok=True) is None else None
+    closed = repo / "tickets/closed/0001-x.erg"
+    closed.write_text(closed.read_text().replace("[ ]", "[x]") + "\n2026-10-27 closed\n")
+    git(repo, "add", "-A", "tickets")
+    git(repo, "commit", "-q", "-m", "ticket(1): close and archive")
+    out = subprocess.run(
+        [sys.executable, str(SCRIPT), "gate", "--repo", str(repo), "--base", "main",
+         "--policy-root", str(policy), "--ticket", str(closed),
+         "--seat", "correctness", "--seat", "red-team"],
+        capture_output=True, text=True, env=child_env())
+    assert out.returncode == 0, out.stdout + out.stderr
+    assert "stale" not in out.stdout
+
+
+@pytest.mark.integration
+def test_ticket_edit_with_changed_criteria_is_still_caught(repo, policy):
+    record_seat(repo, policy, "correctness")
+    commit_reports(repo)
+    (repo / "tickets/0001-x.erg").write_text(REPO_TICKET.replace("## Exit criteria\n", "## Exit criteria\n- [ ] new demand\n"))
+    git(repo, "commit", "-qam", "criteria change")
+    out = subprocess.run(
+        [sys.executable, str(SCRIPT), "gate", "--repo", str(repo), "--base", "main",
+         "--policy-root", str(policy), "--ticket", str(repo / "tickets/0001-x.erg"),
+         "--seat", "correctness"], capture_output=True, text=True, env=child_env())
+    assert out.returncode != 0 and "stale" in out.stdout
+
+
+@pytest.mark.integration
+def test_relativize_respects_path_boundaries_and_other_worktrees(repo, tmp_path):
+    sibling = tmp_path / "repo-extra"
+    other = tmp_path / "review-9"
+    git(repo, "worktree", "add", "-q", "-b", "rv", str(other))
+    text = f"a {repo}/x.py b {repo}-extra/y.py c {other}/z.py d {repo}."
+    got = re_mod.relativize(text, repo)
+    assert "a x.py" in got and f"{repo}-extra/y.py" in got and "c z.py" in got
+    assert str(repo) + "/" not in got.replace(f"{repo}-extra/y.py", "")
+    assert str(sibling) in got
