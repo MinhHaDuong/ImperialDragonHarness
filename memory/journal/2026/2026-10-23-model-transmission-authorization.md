@@ -33,7 +33,8 @@ an inference from the original test request.
 
 Cross-family review via Claude CLI requested Opus/medium. The encrypted/local
 material exception was made explicit after review. Official documentation
-URL was fetched and its redirect observed. CLI modelUsage: claude-opus-5-5; effort requested, not independently attested.
+URL was fetched and its redirect observed. CLI modelUsage: claude-opus-5-5;
+effort requested, not independently attested.
 
 Placement revised on 2026-10-27: first drafted in the harness AGENTS.md, which
 no other repository loads; the author chose wider reach, and the resident rules
