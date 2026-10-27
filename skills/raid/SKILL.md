@@ -419,7 +419,8 @@ For each eligible PR, sequentially within the wave:
    **No forge:** the call is the same with `<pr>` = `branch:<branch> [base=<ref>]`. It is a
    `--no-ff` merge pinned by head OID, the base moved under the main-update guard, the gate record
    in this repository's `refs/notes/gate`; nothing is pushed (no `origin`), and the repository's own
-   main is canonical. Claimed tickets must be closed on the branch beforehand; the read-back is the
+   main is canonical. Step 1 and the `origin/<branch>` head equality below do not apply (there is no
+   `origin`); `raid_land.py` checks the head against the ruled tip locally. Claimed tickets must be closed on the branch beforehand; the read-back is the
    `MERGED <oid> -` that `raid_land.py` reads back.
 5. If merge fails (conflict, CI regression), or the read-back is CLOSED, or OPEN on a gated base, or unreadable, ESCALATE (an OPEN queued merge on an ungated base is pending, step 4) — leave a PR comment and move to the next PR.
    A *permission denial* on the merge call is not a merge failure — handle it
