@@ -71,6 +71,20 @@ _idh_disk_warning() {
   [ -z "$output" ] || printf '%s\n' "$output"
 }
 
+# _idh_agent_gh RUNTIME ARGS... — launch RUNTIME on the narrow agent gh
+# credential (ticket 1284, after 1196). The variable is set for the child only
+# (env prefix, never exported), so the author's interactive shell keeps the
+# owner login. Applies when the agent config exists and the caller has not set
+# GH_CONFIG_DIR. Launches outside these wrappers (IDE, desktop app, cron) are
+# not covered.
+_idh_agent_gh() {
+  if [ -z "${GH_CONFIG_DIR:-}" ] && [ -n "${HOME:-}" ] && [ -f "$HOME/.config/gh-agent/hosts.yml" ]; then
+    GH_CONFIG_DIR="$HOME/.config/gh-agent" command "$@"
+  else
+    command "$@"
+  fi
+}
+
 # `function NAME {`, never `NAME() {`: an alias of the same name (e.g.
 # alias codex='codex --approve-for-me') is expanded inside `NAME()` and makes
 # this file a syntax error. The alias still applies at the prompt, then calls
@@ -86,13 +100,13 @@ function claude {
 function codex {
   _idh_preflight codex || return
   _idh_disk_warning
-  command codex "$@"
+  _idh_agent_gh codex "$@"
 }
 
 function pi {
   _idh_preflight pi || return
   _idh_disk_warning
-  command pi "$@"
+  _idh_agent_gh pi "$@"
 }
 
 # Last line on purpose: the ~/.bashrc loader keeps its refusing stubs unless
