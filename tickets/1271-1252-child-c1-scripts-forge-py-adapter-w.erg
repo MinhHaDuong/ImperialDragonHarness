@@ -1,0 +1,24 @@
+%erg 0.1
+Title: 1252 child C1: scripts/forge.py adapter with gh and none backends, no caller moved
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T15:45Z reviewer created
+
+--- body ---
+## Context
+Child of tracker 1252 (forge-less raid, gaze and merge); design in 1252's `## Raid annotation (design, 2026-10-27)` and `## Advisor ruling (2026-10-27)`.
+Interface per the advisor ruling point 3: resolve(ref) -> id, branch, base, head, state, mergeable, body,
+close claims; comments; checks; comment; append_body_line with read-back; create, ready, auto_merge_armed,
+disarm, merge, read_back (gh backend lifted from raid_land.GhForge). Backend chosen by `--forge auto|gh|none`
+/ `IDH_FORGE`. On `none`: resolve from `branch:<name> [base=<ref>]` by git only; comments and checks empty;
+comment, append_body_line, ready, disarm a typed no-op; auto_merge_armed False; merge and read_back raise a
+typed refusal until C5 (a silent no-op merge would read back "merged" on nothing).
+
+## Exit criteria
+- [ ] scripts/forge.py exposes those operations with gh and none backends; no caller is moved.
+- [ ] The adapter's tests run with `gh` absent from PATH and with a stub `gh`.
+- [ ] The forge path is unchanged (its tests pass); the harness gate passes.
+
+Related: [[1252]].

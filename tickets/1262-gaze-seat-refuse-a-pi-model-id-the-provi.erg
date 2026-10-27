@@ -29,3 +29,20 @@ names a model that did not run, which corrupts review attribution. A hosted prov
 scripts/gaze_seat.py, tests/test_gaze_seat.py, skills/route/routes.json
 
 Related: [[1256]].
+
+## Raid annotation (Imagine+Plan, 2026-10-27)
+- Premise check: both defects still exist on this tree. launch() (scripts/gaze_seat.py:262-358) checks the served-model list only for the baseUrl (aider) door, at :296-303 via served_models(); the Pi door has no such check and trusts exit 0. run_seat (scripts/seat_clock.py:~85-87) returns `no report (failed, exit N, Ns)` with no stderr; stderr lands in `<panel>/<name>.seat.log` and is never read. No test mentions `list-models` or `not found`.
+- Simplest path: after run_seat, read `<staging>.log` (already written, no new process, no network). (a) If the runtime is Pi and the log holds `Model "<id>" not found for provider`, return `no report (pi does not list <model>; it fell back to a custom id)` and unlink nothing it must keep. (b) On any failed outcome, append the first non-blank stderr line: `no report (failed, exit 1, 2s: <line>)`. Prefer the warning over a `pi --list-models` preflight: it is the exact signal the ticket observed, needs no output-format parse, and a local server may not list its models anyway. The cost (the seat runs once before refusal) is local and cheap.
+- Antipattern scan: YAGNI, no new flag, no per-provider branch, no second preflight; match the warning on any door's log (one regex), not a Pi-only conditional, unless a test shows false hits. Do not hand-roll a `--list-models` parser. Keep the edit in gaze_seat.py; seat_clock.py stays untouched (its status format feeds roster/plan-check).
+- Actions, in order: (1) add stub modes to STUB in tests/test_gaze_seat.py: `pi-unknown` (stderr `Model "nope-model" not found for provider "padme". Using custom model id.`, stdout `finding: none` / `verdict: clear`, exit 0) and make `fail` also write one stderr line. (2) First failing test: launch(rig, runtime='pi', model='padme/nope-model', family=..., mode='pi-unknown') must exit 1 with stdout starting `correctness: no report (` naming the model, and no `correctness.md` filed; it fails today because a report is filed. (3) Second test: mode='fail' stdout contains the stub's stderr line. (4) Implement both in launch() after run_seat. (5) Run tests/test_gaze_seat.py, then the harness gate (make / the scoped gate; quote selected: and skipped:).
+- Files: scripts/gaze_seat.py, tests/test_gaze_seat.py. skills/route/routes.json needs no change unless the Pi door note should mention the warning check (optional, one line).
+- Tautological-test check: the unknown-model test uses a clear verdict on stdout, so only the new refusal can turn it into no report; a stub that warns on a model the stub did name correctly would be wrong, so add a control: mode default with a listed model still reports. The stderr test asserts the exact stub line, which cannot appear unless stderr is read. Check the test by running it against the unfixed code first (must fail).
+- Feasibility: all names exist (launch, run_seat, staging, `.seat.log`, rig/launch helpers, the `pi` stub on a PATH of stubs only). The Pi door needs the models.json check? No: only the aider door has baseUrl; the Pi template (routes.json:95) has no baseUrl, so no urlopen. No network, no API key: tests stub `pi`. Live confirmation of the real warning text is already in the ticket; keep the regex loose (`not found for provider`).
+- Risk: warning wording may change across Pi versions (then the check silently stops, a null the test cannot see; the exit-0 smoke in the ticket is the manual control). Low. GO.
+
+## Raid blind-spot (2026-10-27)
+- The ticket saw an EMPTY seat log on failed Codex/Pi seats. run_seat sends stderr to `<staging>.log`, stdout to
+  `.stdout`. Before writing the regex and the stub, run one live `pi --no-session -p --model padme/nope-model`
+  (and one failing codex seat if cheap) with stdout and stderr split, and make the stub write to the stream the
+  real runtime uses. The refusal must happen before `part.rename(out)` (gaze_seat.py ~376), or seat_clock
+  plan-check counts the fake-model report as reported.

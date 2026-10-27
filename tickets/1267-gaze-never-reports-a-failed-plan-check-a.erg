@@ -24,3 +24,48 @@ or rewritten after the fact. A review that reports a failed check as passing cor
 
 ## Relevant files
 skills/gaze/SKILL.md, skills/gaze/references/output.md, skills/gaze/references/plan.md, scripts/seat_clock.py, scripts/gaze_close.py
+
+## Raid annotation (Imagine+Plan, 2026-10-27)
+**Premise check: holds.** The model writes both lines by hand. Manifest: instruction at
+skills/gaze/SKILL.md:81 and references/plan.md:64-72 (tab format described in prose only; the
+validator `scripts/panel-manifest-check.py` is named but nothing forces the model to run it, and
+SKILL.md § 2 does not mention it). Plan-check line: skills/gaze/references/output.md:56 template
+("<the first line of plan-check>"), filled by the model from SKILL.md:105 § 4. Unparseable cause:
+`seat_clock.roster` (seat_clock.py:~100) takes every non-`#` line as a seat, name = text before the
+first TAB; `plan_check` needs `cells[2]` = family and `# budget: <n>m` exactly. A free-text manifest
+makes each sentence a "seat" with no report, so the checker returns FAIL, which the model then
+relabelled. The stale `.status` is a separate mode (fresh() only compares mtime to the manifest).
+**Simplest path (two small pieces, no new framework).**
+1. `seat_clock.py plan-write <panel> --intent T --method T --budget Nm --spend T --item NAME MODEL FAMILY REASON` (repeatable):
+   builds the header and TAB lines, runs `panel-manifest-check.check` on the text, refuses (exit 2,
+   writes nothing) on a problem. Free text can then not reach manifest.txt. SKILL.md § 2 and plan.md
+   say "write it with plan-write".
+2. `gaze_close.py` fills a `{{plan_check}}` placeholder (next to `{{duration}}`/`{{containment}}`)
+   by running `seat_clock.py plan-check <review_tree>/.panel/<pr>` BEFORE cleanup removes the panel,
+   taking line 1 verbatim; unreadable panel gives `plan check: FAIL — manifest unreadable`. output.md:56
+   becomes `plan check: {{plan_check}}`-style line; the model appends only ` — <reason>` after it.
+   Edit to gaze_close.py: ~8 lines in main() plus one replace; local, no forge calls touched,
+   so C2 (1252) rebases trivially.
+Antipattern scan: no second validator (reuse panel-manifest-check.check); no guard-on-guard test; no
+model-in-the-loop for a value a script computes. Rejected: a lint of posted comments (after the fact).
+**Actions in order.** (a) test_gaze_close.py: panel with an unparseable manifest, comment file with
+`{{plan_check}}`, mock gh: posted body line starts `plan check: FAIL` (red first: placeholder not
+replaced today). Positive control: same with a valid manifest and reports gives `PASS`. (b) implement
+the replace. (c) test_seat_clock.py: plan-write on valid args yields a manifest plan_check accepts;
+free-text/empty-family args exit 2 and write nothing. (d) implement plan-write. (e) edit SKILL.md § 2,
+references/plan.md, references/output.md; `make skills-catalog` only if frontmatter changes (it will not).
+Files: scripts/gaze_close.py, scripts/seat_clock.py, the three gaze docs, tests/test_gaze_close.py,
+tests/test_seat_clock.py. Pinned tests that may break: test_gaze_intent.py:198-200 (the "never goes
+with REVIEWED" sentence must stay verbatim), test_gaze_never_approves.py:334 (needs a `^plan check:`
+line in the text), test_review_panel_cleanup_contract.py (scratch removal order: run plan-check
+before cleanup, do not reorder), tests of the docstring of seat_clock/gaze_close if any pin it.
+**Tautology check.** Test (a) must feed the real `seat_clock.py` (not a mocked verdict) and assert on
+the body captured by the mock gh, with the PASS control; a test that only checks the template contains
+the placeholder would be tautological and is not enough. **Feasibility.** ~1.5 h of coding, one PR,
+low risk; the only judgment left to the model is the deviation reason after the verbatim verdict.
+
+## Raid blind-spot (2026-10-27)
+- Only 14 of 45 post-merge gaze runs called gaze_close.py (1227's criterion 3 report); the rest closed by hand,
+  where nothing fills `{{plan_check}}`. Criterion 1 ("a script writes the line, not the model") therefore needs the
+  closing call to be the only closing path in skills/gaze/SKILL.md, and a result carrying a literal or missing
+  plan-check line must be rejected (the output check or verify-gate reads it as no result). Same exit criteria.

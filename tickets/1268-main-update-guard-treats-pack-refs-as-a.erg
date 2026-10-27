@@ -40,3 +40,52 @@ Tests: prune on a packed main vs `branch -D` on a packed main (must differ); mai
 pack-refs; `update-ref -d`; gc during a merge (main.lock serialises; REF_HAVE_OLD makes git skip the
 prune); reftable (no packed-refs; parse fails closed, never crashes); linked worktree running gc. No more
 robust discriminator than argv exists in git 2.43 (REF_IS_PRUNING never reaches the hook).
+
+## Raid annotation (Plan, 2026-10-27)
+Plan for the design above; no new design, exit criteria untouched. Host git 2.43.0.
+**Premise check.** Confirmed. Deletion is judged at hooks/reference-transaction:165 (`classify`: zero `new`
+=> `not-gated`), reached from the `prepared` branch at :259-260 and turned into `refused` under enforce.
+Line 242 skips only `old == new` non-zero. Shape 2 (pack write, `0 -> value`) also reaches classify and is
+refused when main is not yet on origin. `git_argv` (:73-80) is the whole cmdline, matched by words only.
+**Reading the parent argv (traced in a scratch repo, trace hook printing /proc/$PPID/cmdline).**
+- `git pack-refs --all --prune`: hook's parent is that very `git pack-refs` process; argv `git|pack-refs|--all|--prune`.
+- `git gc` and `git gc --auto` (forced with 3000 loose objects, autoDetach=false): parent is the child
+  `pack-refs`, argv0 is `/usr/lib/git-core/git`, argv1 `pack-refs`. The gc process is NOT the parent, so
+  argv0 must be matched by basename or skipped, never by `git`. Linked-worktree run: same argv.
+- Order per run: tx1 `0 -> v` (pack write, main and others), then tx2 `v -> 0` (prune), one ref each.
+- `git branch -D main` on packed main: argv `git|branch|-D|main`, stdin `0 -> 0`; `update-ref -d refs/heads/main`: same,
+  `0 -> 0`. NEW FACT: without an expected old value `old` is zero, so "old == current == packed" already
+  separates them; with `update-ref -d refs/heads/main <old>` or `--stdin delete`, `old` is the value and
+  only argv separates. Keep the argv check, and test that form.
+- Not exercised: detached gc (`--auto` with autoDetach) behaves as above in process terms but was not traced; reftable not
+  available in 2.43 default builds, covered by test of "no packed-refs file" (fail closed).
+**Actions, in order.**
+1. Failing tests first in tests/test_main_guard_hook.py (enforce, temp repo from `repos`): see pairs below.
+2. hooks/reference-transaction: add `git_sub` = first non-option word of argv after argv0, skipping `-c X`, `-C X`,
+   `--git-dir X|=`, `--work-tree`, `--namespace`, `--exec-path`; NUL turned to newlines, read line by line (POSIX sh,
+   `ps` fallback). Add `packed_main` = the refs/heads/main line of `$common/packed-refs` (absent or unparsable => empty).
+3. In the main loop before classify (`prepared` and `committed`): allow when
+   (a) `git_sub = pack-refs`, `new` zero, `old` == `current` == `packed_main`; or
+   (b) `old` zero and `new` == `current` (no-op create; any caller, per design).
+   Journal `decision=pack-refs`, `action=allowed` (or skip); never `warned`/`refused`, in every mode.
+4. Update the header comment (:1-44) and conception/2026-10-21-main-update-guard.md (one paragraph).
+5. Run the harness gate (scoped per .idh-checks.json; quote `selected:`/`skipped:`).
+**Tests, allow paired with deny (differ in one discriminator).**
+- allow `git pack-refs --all --prune` (packed main) | deny `git update-ref -d refs/heads/main <old>` (packed main, same stdin
+  `v -> 0`; discriminator: argv). Also deny `git branch -D main` (packed).
+- deny `git -c core.x=pack-refs update-ref -d refs/heads/main <old>` and an alias/`-m pack-refs` spoof (anchoring).
+- allow prune with packed value == old | deny the same argv with loose main differing from packed (`current` != packed).
+- allow `0 -> current` on main ahead of origin (pack-refs) | deny `0 -> other-sha` create (discriminator: new == current).
+- allow gc from a linked worktree; gc during a gated merge (main.lock); no packed-refs file => refused-or-allowed per
+  rule, never a crash (ticket: parse fails closed).
+Verify each new test fails on the current hook before step 2 (the ticket requires it).
+**Risk.** Low-medium: argv spoof by a caller who names itself pack-refs (e.g. an alias) is closed by anchoring but
+a hand-run `git pack-refs` prune cannot lose main, since it prunes only what packed-refs holds (same value).
+Rule (b) is argv-free and accepted by the design. gc detached not traced.
+
+## Raid blind-spot (2026-10-27)
+- The committed-phase block (hooks/reference-transaction ~223-231) counts any `old != new`, `new` non-zero
+  update of main as a move and starts `merge-gate.py run-after`. pack-refs' pack write (`0 -> current`) matches,
+  so every gc starts the after-merge runner (deduped per tip by its after-merge record: at most one spurious run
+  per unrecorded tip). Apply the same "pack write is a no-op create" discriminator there, with a test that
+  `git pack-refs --all` starts no runner. Same exit criteria; this is the plan's second whitelist shape reused.

@@ -7,6 +7,7 @@ Author: reviewer
 2026-10-27T11:00Z reviewer created
 2026-10-27T11:19Z reviewer note author ruling 2026-10-27: forge-independent, not forge-free — the forge stays the default route for now; the no-forge path is added beside it
 2026-10-27T14:43Z reviewer note design note conception/2026-10-27-git-notes-review-design.md received (PR #1781, merged 19db6f32); linked in body, two divergences from D2/wave order flagged for Plan
+2026-10-27T15:45Z reviewer note tracker: children 1271-1276 filed by raid after advisor ruling
 
 --- body ---
 ## Context
@@ -95,3 +96,51 @@ Children (one sign-off unit each; Blocked-by = real prerequisite, never the trac
 Waves: 1 = C1 (+1256 in parallel, disjoint files); 2 = C2, 1255; 3 = C3, C5; 4 = C4; 5 = C6; then
 the tracker's integration review. review_evidence.py `forge` subcommand stays gh-only (none = no
 forge reviews, an empty admitted set, said so), out of scope.
+
+## Advisor ruling (2026-10-27)
+Advisor: Claude Fable 5.1 (one shot, no execution). Inputs: this body, the design note, merge-gate.py,
+raid_land.py, gaze_setup.py, gaze_close.py, attribution_record.py, review-anchor.py, grep of `gh` in scripts/.
+1. **One ref, `refs/notes/review` (D2 stands).** merge-gate.py already answers the note's §3.1 worry
+   (several runs on one commit must not overwrite) with one ref + append-only entries chosen by latest
+   (`append_and_push`, `parse_note`, `decide`); the same pattern carries a `kind:` field
+   (request | plan | report | answer | verdict) plus `run=`/`seat=`/`session=`/`round=`. One ref = one
+   refspec to fetch and push, which is the transport risk the note itself names; four refs (one per
+   reviewer under review-report/) quadruple it and add a race per ref. refs/notes/gate stays apart
+   (mechanical evidence, not reports). C3 writes request/plan/report/answer entries to that one ref
+   through one helper (`review_notes.py` read/write, reusing merge-gate's fetch/append/push), never
+   raw `git notes` in a skill; C4 appends `kind: verdict` entries there and derives the round from them.
+2. **The transport trial gates nothing in 1252.** C1 and C2 touch no notes. C3/C4 write through the one
+   helper, so a storage switch (branch-backed store, relay) if a web environment cannot push notes is a
+   one-module change, not a rewrite. 1252's exit criteria name one repo with `gh` absent and no second
+   environment: cross-environment review (note §6, objective 2) is a later ticket, and the trial gates
+   that ticket. The doudou<->padme leg can run as a session-side probe beside C3; the ChatGPT Work and
+   Claude Code Web legs need the author's accounts (point 4).
+3. **C1 trimmed to the operations real call sites use** (D4 amended): `resolve(ref)` -> id, branch,
+   base, head, state, mergeable, body, close claims (body is a field, not an op); `comments(ref)`
+   (gaze_setup dumps comments+reviews; the marker filter is the caller's, so no `results(marker)`);
+   `checks(ref)` (statusCheckRollup -> none|passing|failing); `comment`; `append_body_line` with
+   read-back (attribution_record); `create`, `ready`, `auto_merge_armed`, `disarm`, `merge`,
+   `read_back` (raid_land.GhForge, lifted as the gh backend). `none` backend in C1: resolve from
+   `branch:<name> [base=<ref>]` by git only; comments/checks empty; comment/append_body_line/ready/
+   disarm typed no-op; auto_merge_armed False; **merge and read_back raise a typed refusal until C5**:
+   a silent no-op merge would let a caller read back "merged" on nothing. raid_land.py joins C2's list.
+4. **Author's by right:** the web legs of the trial (their accounts and hours; not a 1252 blocker) and
+   the rules/git.md wording once C5 lets a gated branch land with no forge (a rule edit, note §7); the
+   ruling "forge stays the default route" bounds it. One-ref vs four is reversible: not the author's.
+Children (1255, 1256 are closed; wave 1 is C1 alone): C1 forge.py, Blocked-by none. C2 gaze_setup,
+gaze_close, attribution_record, review-anchor, raid_land onto the adapter, byte-identical forge path,
+Blocked-by C1. C3 gaze on `branch:<name>` + review_notes.py helper + hunt on both routes, Blocked-by C2.
+C4 verify-gate reads/writes verdict entries, Blocked-by C3. C5 none merge/read_back (D3) in raid_land,
+Blocked-by C1. C6 raid 6-7 end to end, temp repo, gh absent, Blocked-by C4, C5. Cross-environment
+review: separate ticket after the trial, not a child.
+C1 exit criteria (from this ticket's own): the forge path is unchanged (its tests pass) and the harness
+gate passes; the adapter's tests run with `gh` absent from PATH and with a stub `gh`; no caller moved.
+**C1 can start now.**
+
+## Children (filed by raid 2026-10-27)
+- [ ] 1271 C1 forge.py adapter
+- [ ] 1272 C2 callers onto the adapter (Blocked-by 1271)
+- [ ] 1273 C3 gaze no-forge + review_notes.py (Blocked-by 1272)
+- [ ] 1274 C4 verify-gate on notes (Blocked-by 1273)
+- [ ] 1275 C5 no-forge merge in raid_land (Blocked-by 1271)
+- [ ] 1276 C6 raid 6-7 end to end (Blocked-by 1274, 1275)

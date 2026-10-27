@@ -1,0 +1,20 @@
+%erg 0.1
+Title: 1252 child C6: raid Phases 6-7 forge-less, end-to-end test with gh absent
+Blocked-by: 1275
+Blocked-by: 1274
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T15:45Z reviewer created
+
+--- body ---
+## Context
+Child of tracker 1252 (forge-less raid, gaze and merge); design in 1252's `## Raid annotation (design, 2026-10-27)` and `## Advisor ruling (2026-10-27)`.
+Raid Phases 6-7 on the no-forge route.
+
+## Exit criteria
+- [ ] raid Phases 6-7 run end to end on a repository with no remote forge; a test runs the gaze-gate-merge chain on a temp repo with `gh` absent from PATH.
+- [ ] The forge path is unchanged (its tests pass); the harness gate passes.
+
+Related: [[1252]].

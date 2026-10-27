@@ -1,0 +1,20 @@
+%erg 0.1
+Title: 1252 child C2: move gaze_setup, gaze_close, attribution_record, review-anchor and raid_land onto the forge adapter
+Blocked-by: 1271
+Created: 2026-10-27
+Author: reviewer
+
+--- log ---
+2026-10-27T15:45Z reviewer created
+
+--- body ---
+## Context
+Child of tracker 1252 (forge-less raid, gaze and merge); design in 1252's `## Raid annotation (design, 2026-10-27)` and `## Advisor ruling (2026-10-27)`.
+Move gaze_setup.py, gaze_close.py, attribution_record.py, review-anchor.py and raid_land.py onto the adapter.
+
+## Exit criteria
+- [ ] The five callers reach the forge only through scripts/forge.py.
+- [ ] Their outputs on a stub forge are byte-identical before and after the move.
+- [ ] The forge path is unchanged (its tests pass); the harness gate passes.
+
+Related: [[1252]].
