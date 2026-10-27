@@ -35,7 +35,7 @@ straight through to each script's own `--days` argparse flag (default 28) —
 there is no shell-side day parsing to keep in sync.
 
 ```bash
-HARNESS_DIR="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)"
+HARNESS_DIR="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"
 cd "$HARNESS_DIR"                                         # cache paths below are repo-relative
 SCRATCH=$(mktemp -d)
 

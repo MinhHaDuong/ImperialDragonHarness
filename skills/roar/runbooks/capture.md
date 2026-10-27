@@ -89,7 +89,7 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
    required facts is a **capture failure**: report the PR and missing facts in
    step 11's summary; preserve the pending capture, never silently omit it.
    Validate the complete record before writing: stream its text on stdin to
-   `IDH_ROOT="$(cd -P "$(dirname "<loaded-SKILL.md>")/../.." && pwd -P)" && python3 "$IDH_ROOT/scripts/attribution_record.py" --capture "$PROJECT_REPO" --audience public`
+   `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}" && python3 "$IDH_ROOT/scripts/attribution_record.py" --capture "$PROJECT_REPO" --audience public`
    Replace `<loaded-SKILL.md>` with the absolute path supplied when loading
    this Roar skill; resolve the helper root in the same shell invocation.
    (use `private` for uncleared material). `PROJECT_REPO` is the resolved

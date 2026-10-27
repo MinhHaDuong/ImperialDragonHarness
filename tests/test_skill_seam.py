@@ -320,3 +320,17 @@ def test_hoard_installs_across_runtimes_without_legacy_skill(tmp_path, monkeypat
         assert "already discoverable" in perch.install(runtime, "hoard")
         assert not (projected.parent / "dream").exists()
         assert not (projected.parent / "dream").is_symlink()
+
+
+def test_no_skill_derives_the_root_unconditionally_from_dirname():
+    """Ticket 1253: `$(dirname "<path>")/../..` ignores a preset IDH_ROOT and
+    resolves one level too high when the runtime supplies the skill directory."""
+    bad = re.compile(r'\$\(dirname "[^"]*"\)/\.\./\.\.')
+    hits = [
+        f"{p.relative_to(REPO)}:{n}"
+        for p in sorted((REPO / "skills").rglob("*"))
+        if p.is_file() and p.suffix in {".md", ".sh"}
+        for n, line in enumerate(p.read_text().splitlines(), 1)
+        if bad.search(line)
+    ]
+    assert not hits, f"unconditional dirname root derivation: {hits}"

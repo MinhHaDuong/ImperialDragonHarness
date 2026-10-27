@@ -24,7 +24,7 @@ directory unchanged.
 
 ```bash
 ROAR_SKILL_MD="<loaded-roar-SKILL.md>"
-IDH_ROOT="$(cd -P "$(dirname "$ROAR_SKILL_MD")/../.." && pwd -P)"
+IDH_ROOT="${IDH_ROOT:-$(p="$ROAR_SKILL_MD"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"
 ```
 
 ## Non-git projects
