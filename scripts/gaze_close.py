@@ -18,12 +18,18 @@ files is never force-removed.
 `--attribution-file` is required (an empty file records nothing); a call
 without it fails at argument parsing rather than skipping attribution.
 
-The comment file may hold `{{duration}}` and `{{containment}}`; both are
-replaced by the script's own readings. Exit: 0 clean, 1 cleanup blocked
+The comment file must hold `{{plan_check}}` (ticket 1267) and no typed
+`plan check:` line; otherwise the call exits 2 before anything is removed or
+posted. The script replaces it with the first line of `seat_clock.py
+plan-check` on the review panel (read before cleanup removes it), `plan check:
+FAIL — manifest unreadable` when the panel cannot be read, so the verdict is
+never the model's to write. It may also hold `{{duration}}` and
+`{{containment}}`; both are replaced by the script's own readings. Exit: 0 clean, 1 cleanup blocked
 (attribution appended, no comment posted; 2 when the append also failed), 2 also when cwd is inside the review worktree (refused, nothing removed), 2 read failure, 4 containment flagged (comment still posted).
 """
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -89,6 +95,15 @@ def cleanup(primary, pr, branch):
     return True, "review worktree removed"
 
 
+def plan_check_line(primary, pr):
+    """The checker's verdict line for the review panel, verbatim."""
+    panel = primary / ".claude" / "worktrees" / f"review-{pr}" / ".panel" / str(pr)
+    r = subprocess.run([sys.executable, str(HERE / "seat_clock.py"), "plan-check", str(panel)],
+                       capture_output=True, text=True)
+    first = r.stdout.splitlines()[0] if r.stdout.strip() else ""
+    return first if first.startswith("plan check:") else "plan check: FAIL — manifest unreadable"
+
+
 def read_entry(primary, pr):
     """State recorded by gaze_setup.py at entry (branch, porcelain lines), if any."""
     f = primary / ".claude" / "worktrees" / f"review-{pr}" / ".panel" / str(pr) / "entry-state.json"
@@ -134,6 +149,13 @@ def main():
         print(f"gaze_close: cwd is inside the review worktree {tree}, which this call removes; "
               "run it from the invoking session worktree", file=sys.stderr)
         return 2
+    comment_text = a.comment_file.read_text() if a.comment_file else None
+    if comment_text is not None and ("{{plan_check}}" not in comment_text
+                                     or re.search(r"^plan check:", comment_text, re.MULTILINE)):
+        print("gaze_close: the comment file needs the {{plan_check}} placeholder and no typed "
+              "'plan check:' line; the script writes that line", file=sys.stderr)
+        return 2
+    plan_line = plan_check_line(primary, a.pr)
     entry = read_entry(primary, a.pr)
     entry_branch = a.entry_branch or entry["branch"]
     status = 0
@@ -159,7 +181,8 @@ def main():
     duration = r.stdout.strip() or "duration: not measured"
     print(duration)
     if a.comment_file:
-        text = a.comment_file.read_text().replace("{{duration}}", duration).replace("{{containment}}", report)
+        text = (comment_text.replace("{{plan_check}}", plan_line)
+                .replace("{{duration}}", duration).replace("{{containment}}", report))
         r = subprocess.run(["gh", "pr", "comment", a.pr, "--body", text], capture_output=True, text=True)
         print("comment: " + ("posted" if r.returncode == 0 else "FAILED " + r.stderr.strip()))
         if r.returncode:

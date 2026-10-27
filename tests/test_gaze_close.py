@@ -42,7 +42,7 @@ def opened(tmp_path):
 def test_clean_tree_is_removed_and_comment_posted(tmp_path):
     primary, env, f = opened(tmp_path)
     comment = tmp_path / "c.md"
-    comment.write_text("result: REVIEWED\n{{duration}}\n{{containment}}\n")
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{duration}}\n{{containment}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", "--token", f["clock"], *ATTR(tmp_path), "--comment-file", str(comment)],
             primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
@@ -57,7 +57,7 @@ def test_dirty_tracked_file_preserves_tree_and_blocks(tmp_path):
     tree = primary / ".claude" / "worktrees" / "review-7"
     (tree / "f.txt").write_text("real wip\n")
     comment = tmp_path / "c.md"
-    comment.write_text("x\n")
+    comment.write_text("x {{plan_check}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 1 and "blocked" in r.stderr
     assert (tree / "f.txt").read_text() == "real wip\n"
@@ -88,7 +88,7 @@ def test_clean_close_appends_attribution_before_the_comment(tmp_path):
     primary, env, f = opened(tmp_path)
     body = forge_shim(tmp_path, env)
     comment = tmp_path / "c.md"
-    comment.write_text("result: REVIEWED\n")
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, SEAT + "\n"), "--comment-file", str(comment)],
             primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
@@ -161,3 +161,65 @@ def test_primary_root_of_a_repo_nested_under_a_worktree_path(tmp_path):
     git(nested, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "--allow-empty", "-m", "base")
     git(nested, "worktree", "add", "-q", str(nested / ".claude" / "worktrees" / "x"))
     assert gaze_close.primary_root(cwd=nested / ".claude" / "worktrees" / "x") == nested.resolve()
+
+
+def panel(primary, manifest, reports=None):
+    """Write a plan and its reports into the review tree's panel, as a gaze run leaves them."""
+    d = primary / ".claude" / "worktrees" / "review-7" / ".panel" / "7"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "manifest.txt").write_text(manifest)
+    for name, text in (reports or {}).items():
+        (d / f"{name}.md").write_text(text)
+
+
+def plan_line(tmp_path):
+    return [ln for ln in (tmp_path / "gh.log").read_text().splitlines() if ln.startswith("plan check:")]
+
+
+def test_failed_plan_check_reaches_the_comment_as_fail(tmp_path):
+    """Ticket 1267: the verdict is the checker's, copied by the script. A free-text
+    manifest (the format that produced a model-relabelled PASS) is a FAIL."""
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\nOne seat reads the diff and the test.\n")
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\n{{plan_check}} — the model's reason\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    (line,) = plan_line(tmp_path)
+    assert line.startswith("plan check: FAIL") and line.endswith("— the model's reason"), line
+    assert "{{" not in (tmp_path / "gh.log").read_text()
+
+
+def test_missing_panel_is_a_failed_plan_check(tmp_path):
+    primary, env, f = opened(tmp_path)
+    comment = tmp_path / "c.md"
+    comment.write_text("{{plan_check}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert plan_line(tmp_path) == ["plan check: FAIL — manifest unreadable"]
+
+
+def test_valid_plan_check_reaches_the_comment_as_pass(tmp_path):
+    """Positive control for the FAIL test: same path, a parseable manifest and a report."""
+    primary, env, f = opened(tmp_path)
+    panel(primary, "# budget: 10m\nregression\tscript\tnone\tfails on base\n")
+    d = primary / ".claude" / "worktrees" / "review-7" / ".panel" / "7"
+    (d / "regression.md").write_text("ran: ok\n")
+    comment = tmp_path / "c.md"
+    comment.write_text("{{plan_check}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert plan_line(tmp_path) == ["plan check: PASS"]
+
+
+@pytest.mark.parametrize("text", ["result: REVIEWED\n", "{{plan_check}}\nplan check: PASS\n"])
+def test_comment_without_the_placeholder_or_with_a_typed_line_is_refused(tmp_path, text):
+    """The closing call is the only path: a hand-typed or missing plan-check line
+    posts nothing and removes nothing."""
+    primary, env, f = opened(tmp_path)
+    comment = tmp_path / "c.md"
+    comment.write_text(text)
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 2 and "plan_check" in r.stderr
+    assert (primary / ".claude" / "worktrees" / "review-7").exists()
+    assert not (tmp_path / "gh.log").exists()

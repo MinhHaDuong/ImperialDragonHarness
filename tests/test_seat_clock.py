@@ -118,3 +118,28 @@ def test_roster_names_every_manifest_seat(tmp_path):
         'red-team: no report (timed out after 600s)',
         'xfam: reported in 300s',
     ]
+
+
+def test_plan_write_builds_a_manifest_the_plan_check_accepts(tmp_path):
+    """Ticket 1267: the manifest comes from a helper, so it parses."""
+    panel = tmp_path / 'panel'
+    result = run('plan-write', str(panel), '--intent', 'verify X', '--method', 'one seat',
+                 '--budget', '10m', '--spend', 'none',
+                 '--item', 'regression', 'script', 'none', 'fails on base')
+    assert result.returncode == 0, result.stderr
+    (panel / 'regression.md').write_text('ran: ok\n')
+    checked = run('plan-check', str(panel))
+    assert checked.returncode == 0 and checked.stdout.splitlines()[0] == 'plan check: PASS'
+
+
+@pytest.mark.parametrize('args', [
+    ['--item', 'a', 'm', '', 'reason'],            # empty family
+    ['--item', 'bad name', 'm', 'f', 'reason'],    # name outside [A-Za-z0-9_-]
+    [],                                            # no item
+    ['--item', 'a\tb', 'm', 'f', 'reason'],        # a tab inside a cell
+])
+def test_plan_write_refuses_what_the_checker_cannot_parse(tmp_path, args):
+    panel = tmp_path / 'panel'
+    result = run('plan-write', str(panel), '--intent', 'i', '--method', 'm', '--budget', '10m', *args)
+    assert result.returncode == 2
+    assert not (panel / 'manifest.txt').exists()

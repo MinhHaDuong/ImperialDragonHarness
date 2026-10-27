@@ -78,7 +78,9 @@ the script. Details and what stays judgment: `references/setup-and-breaker.md`.
 
 ### 2. Plan
 
-Before launching anything, write the review plan to `<panel>/manifest.txt`,
+Before launching anything, write the review plan to `<panel>/manifest.txt`
+with `seat_clock.py plan-write` (`references/plan.md`; it refuses a manifest
+the plan check cannot parse, so never type the file),
 where `<panel>` is `$review_tree/.panel/<pr-number>/`: method, items (each
 worker or check, with its model and family), budget. Work gaze does itself is
 an item like any other, worker `self`, and writes its own report to
@@ -138,10 +140,19 @@ seats: panel | self-only
 reviewed_head_sha: <full SHA read from the review worktree after the pass>
 intent: <verbatim | default>
 review plan: <method; items as name (model, family); budget>
-plan check: PASS | PASS with deviations — <...> | FAIL — <...>
+plan check: {{plan_check}} — <reason for each deviation>
 unresolved_review_comments: [...]
 unresolved_simplify_findings: [...]
 ```
+
+**The plan-check line is the script's.** The comment file holds the literal
+`{{plan_check}}`; `gaze_close.py` replaces it with the first line of
+`seat_clock.py plan-check`, verbatim (`plan check: PASS`, `PASS with
+deviations — ...`, or `FAIL — ...`). You append only the reason after it,
+never relabel a FAIL, and never type the line yourself: a comment file with a
+typed `plan check:` line or no placeholder is refused. `gaze_close.py` is the
+only closing path; on a blocked cleanup the ESCALATE comment you post carries
+the line from running `plan-check` yourself, pasted as printed.
 
 **Attribution.** As each seat returns, collect its `reviewer: step=review`
 line, with its `finding:` lines, in a file; `gaze_close.py --attribution-file`
