@@ -383,3 +383,15 @@ def test_a_git_call_past_its_timeout_raises_when_checked_and_answers_124_otherwi
     with pytest.raises(mg.GateError, match="no answer"):
         mg.git("fetch", "origin")
     assert mg.git("worktree", "prune", check=False).returncode == 124
+
+
+def test_a_fast_path_declaring_no_checks_is_an_invalid_gate(tmp_path):
+    conf = config()
+    conf["fastpath"]["checks"] = []
+    repo = make_repo(tmp_path, conf)
+    git(repo, "switch", "-q", "--detach", "origin/main")
+    (repo / "tickets" / "0002-b.erg").write_text("two\n", encoding="utf-8")
+    git(repo, "add", ".")
+    git(repo, "commit", "-q", "-m", "ticket")
+    run = tool(GATE, repo, "run", "--base", "origin/main", "--head", git(repo, "rev-parse", "HEAD"))
+    assert run.returncode == 3 and "at least one" in run.stderr, run.stdout + run.stderr

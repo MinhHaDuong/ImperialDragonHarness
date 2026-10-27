@@ -494,6 +494,7 @@ def load_config(base):
     if fast is not None and not (
         isinstance(fast, dict)
         and isinstance(fast.get("checks"), list)
+        and fast["checks"]  # an empty set would record a pass that ran nothing
         and all(n in names for n in fast["checks"])
         and isinstance(fast.get("max_lag"), int)
         and fast["max_lag"] >= 1
@@ -508,7 +509,7 @@ def load_config(base):
     ):
         raise GateError(
             f'invalid {CONFIG_PATH} at base: "{FASTPATH}" needs declared "checks", '
-            '"max_lag" >= 1, "max_age_minutes" > 0 and "rerun" argv by check name'
+            '(at least one), "max_lag" >= 1, "max_age_minutes" > 0 and "rerun" argv by check name'
         )
     for item in checks:
         covers = item.get("covers", [])
