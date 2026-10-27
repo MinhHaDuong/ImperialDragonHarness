@@ -76,16 +76,22 @@ nearest enclosing repo. Wrong repo → `git -C <project> worktree add
 
 # Escalation protocol
 
-When stuck: (1) fix direct; (2) rethink the approach; (3) fan out parallel
-experts; (4) re-ticket with a diagnosis — the problem is mis-specified;
-(5) stop and ask the author. Note what failed at each step; save it as a
-feedback memory at wrap-up. Stop if you are repeating yourself.
+**Stuck on the work:** fix direct, rethink the approach, then re-ticket with a
+diagnosis (the problem is mis-specified). Note what failed at each step; save
+it as a feedback memory at wrap-up. Stop if you are repeating yourself; three
+failed approaches make it a decision.
 
-**Ask the author** after three failed approaches, or for a judgment outside
-your domain docs. **Ask up first**: put the question to an advisor model (the
-route skill picks which); escalate only if the call stays open or is the
-author's by right (scope, money, irreversible), and present what they said
-beside your pick.
+**A decision, or a judgment outside your domain docs:**
+1. **Ask up first**: an advisor model (the route skill picks which). It agrees
+   with your pick and the call is reversible → act and report.
+2. **Otherwise ask the author**, advisor's view beside your pick, and keep
+   working. Reversible options worth building → fork each into its own
+   worktree and branch, capped at 5 minutes; no merge, no outward act.
+3. **Author back within 5 minutes** → their pick; delete the other branch.
+   Still away → the advisor picks on the built evidence (a cross-family seat
+   when the stakes are high); keep the loser until the author has seen the
+   report. The author's calls by right (scope, money, irreversible) are never
+   forked or delegated; they wait.
 
 # Diagnosis discipline
 
