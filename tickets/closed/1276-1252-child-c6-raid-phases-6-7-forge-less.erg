@@ -2,6 +2,7 @@
 Title: 1252 child C6: raid Phases 6-7 forge-less, end-to-end test with gh absent
 Created: 2026-10-27
 Author: reviewer
+Closed: raid Phases 6-7 e2e on the no-forge route tested
 
 --- log ---
 2026-10-27T15:45Z reviewer created
@@ -12,6 +13,8 @@ Author: reviewer
 2026-10-27T17:12Z reviewer note unheld by the author's flows ruling 2026-10-27: exercise F2 only on a repository with no origin remote (gh absent), plus the refusal when origin exists and gh is absent; F2-with-origin is not a flow
 2026-10-27T17:31Z reviewer note blocker 1280 closed — Blocked-by removed.
 2026-10-27T17:42Z reviewer note blocker 1274 closed — Blocked-by removed.
+2026-10-27T17:47Z reviewer e2e: tests/test_raid_noforge_f2.py (F2 chain on notes, rebase between gaze and gate, origin+no gh refusal); raid SKILL no-forge path. Finding: two concurrent review_notes add calls on one clone lose an entry (git notes append read-modify-write, both exit 0), xfail non-strict, not in 1281 list. Known limits from C5 reviews: two concurrent-writer races in the local merge (consider:), failed-push-of-main question moot with no origin
+2026-10-27T17:47Z reviewer closed — raid Phases 6-7 e2e on the no-forge route tested
 
 --- body ---
 ## Context
