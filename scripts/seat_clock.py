@@ -52,16 +52,20 @@ def kill_group(pid: int) -> None:
         pass
 
 
-def run_seat(cap: int, out: Path, command: list[str]) -> tuple[bool, str]:
+def run_seat(cap: int, out: Path, command: list[str], cwd: Path | None = None,
+             stdin: Path | None = None) -> tuple[bool, str]:
     # The reader's stdout goes beside the report, never onto it: a seat that
     # writes <out>.part and renames it to <out> itself keeps its report.
+    # `cwd` pins the reader to the review tree; `stdin` feeds it a prompt file
+    # (gaze_seat.py, ticket 1256), else it reads nothing.
     captured = out.with_name(out.name + '.stdout')
     started, launched = time.monotonic(), time.time() - 1  # 1 s for filesystem stamp granularity
     try:
         with captured.open('wb') as stdout, out.with_name(out.name + '.log').open('wb') as stderr:
             try:
-                child = subprocess.Popen(command, stdout=stdout, stderr=stderr,
-                                         stdin=subprocess.DEVNULL, start_new_session=True)
+                with (stdin.open('rb') if stdin else open(os.devnull, 'rb')) as feed:
+                    child = subprocess.Popen(command, stdout=stdout, stderr=stderr, stdin=feed,
+                                             cwd=cwd, start_new_session=True)
             except OSError:
                 return False, 'no report (failed to start)'
     except OSError as error:
