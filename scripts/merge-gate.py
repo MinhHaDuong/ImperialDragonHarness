@@ -511,7 +511,7 @@ def run_one(argv, cwd, env=None):
     """Run `argv`, echoing its output to stderr as it comes; (exit code, failed test ids, missing modules).
 
     The ids are pytest's `FAILED <nodeid>` / `ERROR <nodeid>` summary lines, in
-    order, once each. The missing modules are the top-level names of
+    order, once each. The missing modules are the names of
     `ModuleNotFoundError` lines, once each. The gate keeps no other part of the output.
     """
     failed, missing = [], []
@@ -521,8 +521,8 @@ def run_one(argv, cwd, env=None):
         for line in proc.stdout:
             sys.stderr.write(line)
             for name in MISSING_MODULE.findall(line):
-                if name.split(".")[0] not in missing:
-                    missing.append(name.split(".")[0])
+                if name not in missing:
+                    missing.append(name)  # a dotted name (a submodule of an installed package) never matches the lock
             found = FAILED_TEST.match(line.rstrip("\n"))
             if found and found.group(1) not in failed:
                 failed.append(found.group(1))
@@ -532,7 +532,7 @@ def run_one(argv, cwd, env=None):
 def run_checks(config, cwd, env=None):
     """(ok, record lines): one line per check, then `failed-test <check> <id>` per failed test of a failed check.
 
-    A failed check whose output shows missing modules, all of them distributions
+    A failed check with no failed test ids whose output shows missing modules, all of them distributions
     the tree's uv.lock pins, also gets `env-problem <check> <modules>`: the host's
     environment is out of step with the lock. A module the lock does not name stays red.
     """
@@ -550,7 +550,7 @@ def run_checks(config, cwd, env=None):
         results.append(f"{item['name']} {verdict} {time.monotonic() - start:.1f}s :: {' '.join(item['argv'])}")
         if code != 0:
             results += [sanitize(f"failed-test {item['name']} {test}") for test in failed]
-            if missing and all(_dist_key(m) in locked_dists(cwd) for m in missing):
+            if missing and not failed and all("." not in m and _dist_key(m) in locked_dists(cwd) for m in missing):
                 results.append(sanitize(f"{ENV_MARK}{item['name']} {' '.join(missing)}"))
     return ok, results
 

@@ -598,3 +598,18 @@ def test_the_runner_clears_an_inherited_virtual_env(tmp_path, monkeypatch, modul
     monkeypatch.setenv("VIRTUAL_ENV", "/nonexistent/stale-venv")
     merge_branch(work, "later")
     assert run_after_in_process(module, None) == module.PASS
+
+
+def test_a_real_test_failure_in_the_same_check_stays_red(tmp_path, monkeypatch, module):
+    script = f"echo 'FAILED tests/t.py::test_real - assert 0'; python3 -c 'import {LOCKED_MODULE}'"
+    work = env_repo(tmp_path, monkeypatch, ["sh", "-c", script])
+    merge_branch(work, "later")
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch")
+    assert run_after_in_process(module, forge) == module.FAIL
+
+
+def test_a_missing_submodule_of_a_locked_package_stays_red(tmp_path, monkeypatch, module):
+    work = env_repo(tmp_path, monkeypatch, ["sh", "-c", f"echo \"ModuleNotFoundError: No module named '{LOCKED_MODULE}.sub'\"; exit 1"])
+    merge_branch(work, "later")
+    forge = MergingForge(tmp_path / "origin.git", tmp_path / "forge-scratch")
+    assert run_after_in_process(module, forge) == module.FAIL
