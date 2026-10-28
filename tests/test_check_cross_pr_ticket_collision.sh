@@ -377,6 +377,15 @@ if [[ "$rc" == 0 ]] && ! grep -q '#99' <<< "$out"; then
     echo "PASS: fork checkout excludes its own cross-repository PR"
 else echo "FAIL: fork checkout took its own PR for a rival (rc=$rc)"; echo "$out"; fail=1; fi
 
+# GitHub owner/name are case-insensitive: an origin cloned in another case is still self.
+git -C "$REPO" remote set-url origin "https://github.com/Me/Repo.git"
+rc=0
+out=$(STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"me/repo"}}]' \
+      STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
+if [[ "$rc" == 0 ]] && ! grep -q '#99' <<< "$out"; then
+    echo "PASS: origin URL in another case still names self"
+else echo "FAIL: origin case mismatch took own PR for a rival (rc=$rc)"; echo "$out"; fail=1; fi
+
 # The local origin's identity unreadable: self cannot be established, fail closed.
 git -C "$REPO" remote set-url origin "nonsense"
 rc=0

@@ -129,11 +129,12 @@ if [[ -z "$SELF_PR" ]]; then
     # Self is the head repository AND branch of this checkout's origin, never the
     # branch name alone (a fork may reuse it) nor cross_repository, which compares
     # head with base and so marks a fork checkout's own PR as foreign (ticket 1325).
+    # Compared case-insensitively: GitHub owner/name are, and a clone may differ in case.
     if ! SOURCE_REPO=$(python3 "$FORGE_PY" origin 2>/dev/null) || [[ -z "$SOURCE_REPO" ]]; then
         echo "cross-pr-collision: cannot establish self repository; set SELF_PR_NUMBER (no renumber recommendation)." >&2
         exit 2
     fi
-    SELF_MATCHES=$(jq -r --arg branch "$CURRENT_BRANCH" --arg repo "$SOURCE_REPO" '.[] | select(.branch == $branch and .head_repository == $repo) | .number' <<< "$SIBLINGS_JSON")
+    SELF_MATCHES=$(jq -r --arg branch "$CURRENT_BRANCH" --arg repo "$SOURCE_REPO" '.[] | select(.branch == $branch and ((.head_repository // "") | ascii_downcase) == ($repo | ascii_downcase)) | .number' <<< "$SIBLINGS_JSON")
     if [[ $(grep -c . <<< "$SELF_MATCHES" || true) -gt 1 ]]; then
         echo "cross-pr-collision: ambiguous self PR for current repository/branch; set SELF_PR_NUMBER (no renumber recommendation)." >&2
         exit 2
