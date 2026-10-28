@@ -52,10 +52,6 @@ elif args[0] == "api" and args[1].endswith("/files"):
 elif args[:2] == ["api", "repos/{owner}/{repo}/pulls/7"]:
     state["body"] = json.loads(sys.stdin.read())["body"]
     json.dump(state, open(os.environ["STUB_STATE"], "w"))
-elif args[:2] == ["repo", "view"]:
-    if state.get("origin_fail"):
-        sys.exit(1)
-    print(state.get("origin", "o/r"))
 elif args[:2] == ["pr", "merge"] and state.get("refuse"):
     print("not mergeable", file=sys.stderr)
     sys.exit(1)
@@ -411,16 +407,18 @@ def test_cli_read_back_three_rows(stub, tmp_path, repo):
     assert gone.returncode == 2 and gone.stdout == ""
 
 
-def test_cli_origin_names_the_local_origin_repository(stub, tmp_path, repo):
-    """Ticket 1325: self detection compares a row's head repository with the local origin's."""
+def test_cli_origin_names_the_local_origin_repository(stub, tmp_path):
+    """Ticket 1325: self detection compares a row's head repository with the local origin's,
+    read off the URL so an ssh host alias still answers."""
     cwd = tmp_path / "cwd"
     assert cli(cwd, "origin").returncode == 3  # no origin: no forge
     sh(cwd, "remote", "add", "origin", "https://example.invalid/me/fork.git")
-    stub.write_text(json.dumps({"head": HEAD, "body": "", "origin": "me/fork"}))
-    done = cli(cwd, "origin")
-    assert done.returncode == 0 and done.stdout.strip() == "me/fork"
-    call = [json.loads(line) for line in (tmp_path / "log").read_text().splitlines()][-1]
-    assert call[:3] == ["repo", "view", "https://example.invalid/me/fork.git"]
-    stub.write_text(json.dumps({"head": HEAD, "body": "", "origin_fail": True}))
+    for url, want in [("https://example.invalid/me/fork.git", "me/fork"),
+                      ("git@github-work:me/fork.git", "me/fork"),
+                      ("ssh://git@github.com/me/fork", "me/fork")]:
+        sh(cwd, "remote", "set-url", "origin", url)
+        done = cli(cwd, "origin")
+        assert done.returncode == 0 and done.stdout.strip() == want, (url, done)
+    sh(cwd, "remote", "set-url", "origin", "nonsense")
     failed = cli(cwd, "origin")
     assert failed.returncode == 2 and failed.stdout == ""
