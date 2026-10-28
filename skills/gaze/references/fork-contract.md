@@ -12,8 +12,15 @@ lever that does not exist cannot be the thing holding a phase together.
 
 What is true is the first sentence: the fork survives only while it keeps
 calling tools. So every agent this skill spawns (the seats of its plan) is launched in the background and then
-**waited for by polling an artifact it writes**, in one bounded loop. The wait
-itself is the tool call that keeps the fork alive.
+**waited for by polling an artifact it writes**, through the shared helper
+`python3 "$IDH_ROOT/scripts/wait-roster.py" <panel> --roster <panel>/manifest.txt --until <epoch>`
+(exit 0 all reported, 1 not all: the missing names, or `status: <name>` for a
+seat that ended without a report, 3 slice ended under the tool cap: re-issue
+the same command). When the roster has the run's own (self) item, write that
+report before calling it, or the wait is on itself. Fix `<epoch>` once, before launching, and
+reuse that literal on every call, so the deadline holds across re-issues. The
+wait itself is the tool call that keeps the fork alive; no session writes its
+own loop.
 
 Each spawned agent is therefore told, in its prompt, to write its result to a
 named path under `<worktree>/.panel/<pr-number>/`, writing to `<name>.md.part`

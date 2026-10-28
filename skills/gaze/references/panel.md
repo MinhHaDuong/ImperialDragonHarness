@@ -69,9 +69,18 @@ launcher and seats share a filesystem. The plan file `<panel>/manifest.txt`
 2. **Artifacts.** Each report lands as `<panel>/<name>.md.part`, then is
    renamed to `<panel>/<name>.md` (by `gaze_seat.py` on the headless door, by
    the seat on the subagent door). The rename is the completion signal.
-3. **Collection.** One bounded polling loop, within the plan's budget and
-   never past gaze's 15-minute deadline, until every plan item has its report
-   or the deadline passes. At the deadline, stop the seats the runtime can
+3. **Collection.** Wait with `python3 "$IDH_ROOT/scripts/wait-roster.py" <panel>
+   --roster <panel>/manifest.txt --until <epoch>`, never a hand-written loop.
+   Fix `<epoch>` once, at launch (`date +%s` plus the plan's budget, never
+   past gaze's 15-minute deadline), and pass the same literal on every call:
+   the helper answers 0 all reported, 1 not all reported (missing names listed;
+   `status: <name>` for a seat whose fresh `.md.status` says it ended without
+   a report, which returns at once rather than at the deadline), 3 its 540 s
+   slice ended under the tool cap, so re-issue the same command. It ignores
+   `.part` files, reports older than the manifest and reports written after
+   the deadline. Write the run's own (self) report before calling it, or the
+   wait is on itself. Collection ends
+   when every plan item has its report or the deadline passes. At the deadline, stop the seats the runtime can
    stop; a late report is not read. A seat that only
    *returned* its findings reported to nobody. There is no retry: a seat with
    no report at the deadline is missing, not clear, and the plan check names
