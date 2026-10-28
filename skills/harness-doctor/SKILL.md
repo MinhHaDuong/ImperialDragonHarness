@@ -78,6 +78,7 @@ A menu, not a sequence: launch a probe only when it separates live hypotheses.
 | Lint: `python3 "$IDH_ROOT/scripts/skill_text_lint.py" --root "$IDH_ROOT" [paths]` | Mechanical hits: history phrasing, dates, ticket forms, project names, body length, long blocks | Seconds; no model usage; no credentials |
 | Runtime diagnostics, per `references/runtime-diagnostics.md` | What each runtime loads and flags: shadowing, precedence, install health | About a minute each; spends lines need agreement and a cost cap; credential rules there |
 | Stale skills: `"$IDH_ROOT/scripts/mammoth-audit.py"` | Which skills no session trace has invoked in 180 days, as removal candidates; aggregate counts only, nothing removed | About 45 s on 7,500 trace files (4.7 GB); no model usage; no credentials; reads `~/.claude/projects`, writes one JSON report under `~/.local/state` |
+| Merge path: `python3 "$IDH_ROOT/scripts/trace_merge_path.py" --since <YYYY-MM-DD>` | Whether sessions run the reviews and gates a skill requires before they merge: each merging session classed gated, bookkeeping or no gate seen, plus verify-gate loads without `repo=`; read the unexplained ones by hand | Under a minute on a week of traces; no model usage; no credentials; reads `~/.claude/projects`, prints session ids and skill names only |
 | Shadowing: `python3 "$IDH_ROOT/scripts/project_shadow.py" <project>` | Whether a project's skill or rule, named like the harness's, shadows it | Seconds; no model usage; only for a shadowing question |
 
 The lint prints JSON on stdout: read `.findings[]`, each
@@ -97,6 +98,9 @@ Before reading a probe's findings, fire it on its control:
 - Lint: run it alone on `"$IDH_ROOT/tests/fixtures/harness-doctor/trace-doctor-SKILL.md"`,
   a frozen copy of a skill that must raise `body_lines`, `date`,
   `history_phase` and `long_fence`. All four must appear.
+- Merge path: `tests/test_trace_merge_path.py`, whose fixture traces hold one
+  session of each class, a gate run inside a subagent and a grep that only
+  names the merge command.
 - Runtime diagnostics: the control each runtime's section names.
 - Reading probes: the known overlap of this skill with
   `skills/test-doctor/SKILL.md` (the shared visit stance the checklist
