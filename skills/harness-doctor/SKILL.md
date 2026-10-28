@@ -1,8 +1,9 @@
 ---
 metadata:
-  category: session
+  category: maintenance
+  order: 3
 name: harness-doctor
-description: "Lint harness skills and rules for contradiction and overlap; author-called, harness only."
+description: "A harnessing expert. Can lint skills and rules for contradiction and overlap, and much more. Author-called, harness only."
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "[skill or rule to start from]"

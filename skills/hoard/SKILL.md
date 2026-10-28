@@ -1,6 +1,7 @@
 ---
 metadata:
   category: memory
+  order: 1
 name: hoard
 description: "Consolidate one project's repository memory, pruning stale or contradicted claims, without proposing rules. Use to tidy accumulated memory; not for new facts (/roar)."
 user-invocable: true

@@ -8,7 +8,7 @@
 
 | Command | Description |
 |---------|-------------|
-| `/hunt` | Work a ticket: plan, execute in its own worktree, verify adherence, ask \gaze to review, fix and opens a merge request. Does not merge. |
+| `/hunt` | Work a ticket: plan, execute in its own worktree, verify adherence, ask /gaze to review, fix and open a merge request. Does not merge. |
 | `/verify-adherence` | Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. |
 | `/gaze` | Review one merge request: plan the checks that settle what the caller asks, run them once, check the plan against what ran, post one result: REVIEWED / FINDINGS / ESCALATE. Does not modify code. |
 | `/verify-gate` | Anti-rubber-stamp merge gate: checks every ticket exit criterion and review comment against the diff. Emits APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR with evidence. Does not merge. |
@@ -24,7 +24,7 @@
 | `/molt` | Repo housekeeping: git sync, yawn, fix-now repairs, tickets for findings. Safe interactively or in automated sweeps. Everything /roar missed. |
 | `/dashboard` | Ticket dashboard: open tickets, branches and merge requests; full state plus a delta led by the ticket count. Read-only. |
 | `/perch` | Mid-session orientation: summarize what's done, surface unresolved points, assess clear-readiness. Read-only. |
-| `/lair` | End-of-day wrap-up: housekeeping, push branches, run tests, refresh STATE. Requires no concurrent session. |
+| `/lair` | End-of-day wrap-up: housekeeping, push branches, run tests, refresh STATE. Run it last: parallel sessions are only partly protected. |
 
 ### Project maintenance
 
@@ -32,13 +32,13 @@
 |---------|-------------|
 | `/test-doctor` | An expert for slow, flaky or stale test gates in your project. Author-called only. |
 | `/trace-doctor` | Survey of Claude Code session-trace economics: cost census, hypothesis statistics, ranked cost-saving report cross-referenced to tickets. Never auto-applies; files tickets for findings. |
-| `/harness-doctor` | An harnessing expert. Can lint skills and rules for contradiction and overlap, and much more. Author-called, harness only. |
+| `/harness-doctor` | A harnessing expert. Can lint skills and rules for contradiction and overlap, and much more. Author-called, harness only. |
 
 ### Memory and learning
 
 | Command | Description |
 |---------|-------------|
-| `/hoard` | Consolidate one project's repository memory, pruning stale or contradicted claims, without proposing rules. Use to tidy accumulated memory; not for new facts (/roar). |
+| `/hoard` | Consolidate one project's repository memory, pruning stale or contradicted claims, without proposing rules. |
 | `/brood` | Turn accepted Hoard findings into project improvements and scoped harness nominations, on explicit request. |
 
 ### Runtime and review support
@@ -56,7 +56,6 @@
 |---------|-------------|
 | `/biblio-saturation` | Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness. |
 | `/critical-lit-review` | Critical literature review (état de l'art) in history of economics and STS: object, actors, controversies. |
-| `/manuscript-review` | Review a manuscript with real literature retrieval, page evidence and a bounded check of major criticisms; preserve the original review and pending author decisions. |
 | `/reading-note` | Critical reading note (note de lecture) on one article or book, filed in Zotero. |
 | `/related-work-note` | Due-diligence note for one cited paragraph of a manuscript: relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL. |
 | `/zotero` | Import PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, or report duplicate files: extract metadata, resolve identifiers, create items with PDFs through the running Zotero's local API. |
@@ -65,18 +64,18 @@
 
 | Command | Description |
 |---------|-------------|
-| `/external-peer-review` | Simulate independent external peer reviews of a manuscript PDF; preserve dissent and synthesize verified findings. |
+| `/external-peer-review` | Obtain independent AI peer reviews of a manuscript PDF; preserve dissent and synthesize verified findings. |
 | `/manuscript-review` | Review a manuscript with real literature retrieval, page evidence and a bounded check of major criticisms; preserve the original review and pending author decisions. |
 | `/ingest-decision-letter` | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check mapping every remark to a ticket. Helps streamline Revise-and-Resubmit. |
 
-### Copyediting
+### Writing and delivery
 
 | Command | Description |
 |---------|-------------|
-| `/message-framing` | Frame the central message of a talk, abstract or article before drafting it. Not for cutting a text (/cut-prose) or building a deck (/slides). |
+| `/message-framing` | Frame the central message of a talk, abstract or article before drafting it. |
 | `/cut-prose` | Cut a document to a word or page budget by removing whole passages before condensing anything. Fights LLM hair shaving tendencies. |
 | `/pdf-finish` | Finishing pass on a PDF deliverable — journal submission, preprint deposit, personal page, report handoff. |
-| `/slides` | Make or review a talk's slide deck: build a beamer deck from a written text, or critique an existing deck with prioritized fixes. Keywords: diaporama, présentation. |
+| `/slides` | Make or review a talk's slide deck: build a beamer deck from a written text, or critique an existing deck with prioritized fixes. |
 | `/track-changes-pdf` | Render a revision-marked PDF of a LaTeX manuscript between two git refs, marking insertions and deletions via latexdiff. |
 
 ### Submission and publication

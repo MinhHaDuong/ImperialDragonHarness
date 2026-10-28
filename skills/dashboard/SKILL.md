@@ -1,8 +1,9 @@
 ---
 metadata:
   category: session
+  order: 3
 name: dashboard
-description: "Ticket dashboard: open tickets, branches and merge requests; full state plus a delta led by the ticket count."
+description: "Ticket dashboard: open tickets, branches and merge requests; full state plus a delta led by the ticket count. Read-only."
 user-invocable: true
 argument-hint:
 ---

@@ -1,8 +1,9 @@
 ---
 metadata:
-  category: publication
+  category: reviewing
+  order: 3
 name: ingest-decision-letter
-description: "Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check mapping every remark to a ticket: one deterministic Revise-and-Resubmit intake pass."
+description: "Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check mapping every remark to a ticket. Helps streamline Revise-and-Resubmit."
 user-invocable: true
 disable-model-invocation: false
 argument-hint: "<decision-letter> <reviewer-comments>... [archive --into <paper-repo>/release/<date>/]"

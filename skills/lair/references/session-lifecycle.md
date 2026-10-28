@@ -6,7 +6,7 @@ trigger; if another row fits better, switch.
 | Skill | Trigger | Scope | Writes | Calls | Called by |
 |-------|---------|-------|--------|-------|-----------|
 | `perch` | "where are we?" mid-session | this conversation | nothing (report only) | none | user |
-| `yawn` | "is the repo healthy?" | one repo, current state | nothing (fixes on request) | `project-state.py` probe | `molt` step 2, user |
+| `yawn` | "is the repo healthy?" | one repo, current state | nothing (report and action plan; `molt` applies it) | `project-state.py` probe | `molt` step 2, user |
 | `molt` | housekeeping due, or after a sweep wants action | one repo | housekeeping branch, fix-now repairs, worktree GC, tickets | `yawn`, `housekeeping-git.sh` | `lair` step 1, automated sweeps, user |
 | `roar` | one PR just merged | the completed task only | memory facts, ticket close, that task's branch and worktree | none | user |
 | `lair` | the day is ending | every branch, the whole session | pushes, WIP commits, handoff comments, STATE refresh, metrics | `molt`; proposes `hoard` and `test-doctor` | user |

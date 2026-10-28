@@ -12,6 +12,7 @@ so its "all clear" is indistinguishable from "I could not look" — that is
 how four unparseable SKILL.md files went unnoticed (ticket 0515).
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -19,14 +20,28 @@ import skill_frontmatter
 
 
 CATEGORIES = {
-    "build": "Build and ship",
-    "session": "Session and maintenance",
+    "build": "The build loop",
+    "session": "The session loop",
+    "maintenance": "Project maintenance",
     "memory": "Memory and learning",
     "runtime-review": "Runtime and review support",
     "research": "Research and bibliography",
-    "writing": "Writing and presentation",
+    "reviewing": "Reviewing",
+    "writing": "Writing and delivery",
     "publication": "Submission and publication",
 }
+GENERALIST = {"build", "session", "maintenance", "memory", "runtime-review"}
+
+# Description sentences that only steer the model's skill choice: routing
+# hints and search keywords (often French). The runtime reads them; the
+# catalog, written for people, leaves them out.
+ROUTING_HINT = re.compile(r"^(Not for|Use for|Use to|Keywords?:) ")
+
+
+def catalog_description(description: str) -> str:
+    """One table row: line breaks collapsed, routing hints dropped."""
+    sentences = re.split(r"(?<=\.) ", " ".join(description.split()))
+    return " ".join(s for s in sentences if not ROUTING_HINT.match(s))
 
 
 def catalog_lines(root: str = ".") -> list[str]:
@@ -50,23 +65,27 @@ def catalog_lines(root: str = ".") -> list[str]:
         name, description = meta.get("name"), meta.get("description")
         if not isinstance(name, str) or not isinstance(description, str):
             continue
-        # Collapse the line breaks of a folded/multi-line description into
-        # one table row.
         metadata = meta.get("metadata")
         category = metadata.get("category") if isinstance(metadata, dict) else None
         if category not in CATEGORIES:
             raise ValueError(f"{skill_file}: missing or unknown category {category!r}")
-        catalog.append((category, name, " ".join(description.split())))
+        # An optional metadata.order puts a section in workflow order; skills
+        # without one follow, by name.
+        order = metadata.get("order", float("inf"))
+        if isinstance(order, bool) or not isinstance(order, (int, float)):
+            raise ValueError(f"{skill_file}: metadata.order must be a number, not {order!r}")
+        catalog.append((category, order, name, catalog_description(description)))
 
     lines = []
     current_family = None
     for category, title in CATEGORIES.items():
-        entries = sorted((name, desc) for cat, name, desc in catalog if cat == category)
+        entries = [(name, desc) for cat, _, name, desc in
+                   sorted(e for e in catalog if e[0] == category)]
         if not entries:
             continue
         if lines:
             lines.append("")
-        family = "Generalist" if category in {"build", "session", "memory", "runtime-review"} else "Research"
+        family = "Generalist" if category in GENERALIST else "Research"
         if family != current_family:
             lines.extend([f"## {family}", ""])
             current_family = family

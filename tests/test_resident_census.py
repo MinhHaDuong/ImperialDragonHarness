@@ -62,7 +62,7 @@ BUDGETS = {
     # step-only skills (typography-finish, bib-merge, related-work-note-validate)
     # became runbooks; with the lifecycle trim of 1132, 6993 -> 6120 chars
     # measured. The budget is that plus thin headroom.
-    "skills": 6200,  # tracked cards; local cards are supplemental (1091)
+    "skills": 6300,  # tracked cards; local cards are supplemental (1091); +100 for routing hints kept out of the catalog (2026-10-28)
     "agents": 800,  # name + description of every agents/*.md
 }
 

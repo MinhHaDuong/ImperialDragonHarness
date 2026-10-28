@@ -31,9 +31,13 @@ Missing memory does not block work; report a known incomplete installation.
 
 The skills catalog in `skills-catalog.md` is auto-generated from `skills/*/SKILL.md` frontmatter.
 
+A `description:` sentence starting with `Not for`, `Use for`, `Use to` or
+`Keyword(s):` is a routing hint for the model; the catalog omits it.
+
 Set each skill’s `metadata.category` frontmatter to a key in
-`scripts/gen_skills_catalog.py`. After changing a skill’s name, description
-or category, or adding or removing a skill, run `make skills-catalog`.
+`scripts/gen_skills_catalog.py`; an optional numeric `metadata.order` sets
+its row within the section. After changing a skill’s name, description,
+category or order, or adding or removing a skill, run `make skills-catalog`.
 Check generated catalog drift with `make check-skills-drift`.
 
 ## Agent profiles

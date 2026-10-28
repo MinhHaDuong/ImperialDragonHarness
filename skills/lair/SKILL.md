@@ -1,8 +1,9 @@
 ---
 metadata:
   category: session
+  order: 5
 name: lair
-description: "End-of-day wrap-up: housekeeping, push branches, run tests, refresh STATE, offer an autonomous session. Not for one merged task (/roar) or a mid-session check (/perch)."
+description: "End-of-day wrap-up: housekeeping, push branches, run tests, refresh STATE. Run it last: parallel sessions are only partly protected. Not for one merged task (/roar) or a mid-session check (/perch)."
 disable-model-invocation: false
 user-invocable: true
 ---

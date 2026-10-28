@@ -1,6 +1,7 @@
 ---
 metadata:
   category: build
+  order: 4
 name: verify-gate
 description: "Anti-rubber-stamp merge gate: checks every ticket exit criterion and review comment against the diff. Emits APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR with evidence. Does not merge."
 disable-model-invocation: false

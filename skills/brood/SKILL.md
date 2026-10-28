@@ -1,6 +1,7 @@
 ---
 metadata:
   category: memory
+  order: 2
 name: brood
 description: "Turn accepted Hoard findings into project improvements and scoped harness nominations, on explicit request."
 disable-model-invocation: true

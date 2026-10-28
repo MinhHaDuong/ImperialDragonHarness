@@ -1,8 +1,9 @@
 ---
 metadata:
   category: build
+  order: 1
 name: hunt
-description: "Work a ticket: plan, execute in its own worktree, verify and land, wrap up."
+description: "Work a ticket: plan, execute in its own worktree, verify adherence, ask /gaze to review, fix and open a merge request. Does not merge."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<ticket-id> [inline]"

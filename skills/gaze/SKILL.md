@@ -1,8 +1,9 @@
 ---
 metadata:
   category: build
+  order: 3
 name: gaze
-description: "Review one merge request: plan the checks that settle what the caller asks, run them once, check the plan against what ran, post one result: REVIEWED / FINDINGS / ESCALATE, never APPROVED."
+description: "Review one merge request: plan the checks that settle what the caller asks, run them once, check the plan against what ran, post one result: REVIEWED / FINDINGS / ESCALATE. Does not modify code."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pr-number> [verify <what> because <why>]"

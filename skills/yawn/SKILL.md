@@ -1,8 +1,9 @@
 ---
 metadata:
   category: session
+  order: 1
 name: yawn
-description: "Repo healthcheck, reports first, fixes on request: git hygiene, test status, doc freshness; degrades without project conventions. Not for unprompted fixes (/molt)."
+description: "Repo morning health check, read-only: git hygiene, test status, doc freshness; degrades without project conventions. Usually suggests /molt to fix findings."
 disable-model-invocation: false
 user-invocable: true
 argument-hint:
@@ -16,7 +17,7 @@ Neighbouring skills and when to prefer each: [session-lifecycle](../lair/referen
 
 For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p"); cd -P "$p/../.." && pwd -P)}"` in the same shell call. Replace `<loaded-SKILL.md>` with the absolute path the runtime supplied for this skill, its SKILL.md or its directory; a pre-set `IDH_ROOT` wins. This follows a projected skill symlink to the canonical checkout; do not derive the helper root from the project cwd.
 
-Run a healthcheck on the current repository. Report results concisely — one line per check, flag anything abnormal.
+Run a healthcheck on the current repository. Report results concisely — one line per check, flag anything abnormal. Read-only: yawn reports and plans; molt applies the plan.
 
 This skill is user-level and must **gracefully degrade**: each check runs only if its prerequisites are present. Missing prerequisites yield a `skip` status with a one-line reason, never a fail.
 
@@ -140,10 +141,10 @@ After the table (and any stale-findings list), add a one-line summary verdict.
 After the verdict, if any findings are warn or fail, emit an **Action plan** section.
 Classify every finding into exactly one of three categories:
 
-- `fix-now` — trivial, no ticket needed, reversible, no design decision: do it in the
-  current session, on a branch, immediately after the user says "do it"
+- `fix-now` — trivial, no ticket needed, reversible, no design decision: molt
+  applies it on its housekeeping branch
 - `open-ticket` — multi-file, requires a design decision, or worth
-  tracking across sessions: create a ticket. Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
+  tracking across sessions: molt files a ticket. Apply the severity floor (`rules/workflow.md` § Autonomous action), in every repo — findings that don't block a merge, corrupt state, or bite the science are reported in the run summary, not ticketed.
 - `skip` — cosmetic, already tracked elsewhere, or not worth acting on now: note why
 
 Format:
@@ -173,8 +174,6 @@ Next move: `/molt` effects the fix-now entries and files tickets for the open-ti
 ```
 
 An all-ok run emits no Action plan and no suggestion.
-
-Once the Action plan is fully effected, propose: "Surface remaining nits?"
 
 13. **Disk headroom at session start** — from `disk_space`. Warn if either
     `/tmp` or `/home` has less than 10% free, naming the mount and reported
