@@ -35,7 +35,7 @@ when the runtime states it, posture.
 
 Surface any disk-headroom warning from
 `python3 "$IDH_ROOT/scripts/tmp_report.py" --disk-warning` (the session-start
-hooks print it); if the probe is unavailable, continue.
+hooks print it); if unavailable, continue.
 
 # Sync before starting work
 
@@ -78,7 +78,7 @@ nearest enclosing repo. Wrong repo → `git -C <project> worktree add
 
 **Stuck on the work:** fix direct, rethink the approach, then re-ticket with a
 diagnosis (the problem is mis-specified). Note what failed at each step; save
-it as a feedback memory at wrap-up. Stop if you are repeating yourself; three
+it as a feedback memory at wrap-up. Stop when you repeat yourself; three
 failed approaches make it a decision.
 
 **A decision, or a judgment outside your domain docs.** The author's calls by
@@ -95,7 +95,7 @@ right (scope, money, irreversible) are never forked or delegated; they wait.
 
 # Diagnosis discipline
 
-**Report the observation; hold the cause until you have isolated it.** Loaded
+**Report the observation; hold the cause until isolated.** Loaded
 labels — *corrupt*, *broken*, *tampered*, *hacked* — misdirect the fix. Check
 the cheap discriminators first (tool intact? deterministic? reproduced by an
 independent path? documented upstream?); any yes points toward intended
@@ -121,11 +121,10 @@ A clean-room render is usually seconds — run it yourself.
 
 - **Don't delegate simple work.** Delegate when the work is substantial, needs
   decorrelation, or must run unattended — not to avoid doing it.
-- **One well-prompted agent first.** Add agents only when one clearly cannot
-  cover the task.
-- **Delegate intent, not procedure.** Goal, constraints, definition of done;
-  the delegate chooses the method. A brief names the relevant memory topics
-  (`memory/topics/`) by path when any apply; the worker reads the index itself.
+- **One well-prompted agent first.** Add agents only when one cannot cover
+  the task.
+- **Delegate intent, not procedure.** Goal, constraints, definition of done,
+  relevant memory topics by path; the delegate chooses the method.
 - **Reviewers scale to the risk** (`skills/route/references/decorrelation.md`):
   a trivial change takes one cheaper same-family reviewer; a high-risk change
   needs a seat from another model family. A same-family review is never called
