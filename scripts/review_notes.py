@@ -115,8 +115,8 @@ HEADS = "refs/review-heads"
 FETCH_NOTES = f"+{REF}:{TRACK}"  # explicit fetches only, after ls-remote saw the ref
 FETCH_NOTES_GLOB = f"+{REF}*:{TRACK}*"  # the persistent spec: a glob tolerates a notes-less remote
 FETCH_HEADS = f"{HEADS}/*:{HEADS}/*"
-SEAT_LINE = re.compile(r"^seat: (?P<name>[^·\n]+?) · [^\n]*?\bfamily=(?P<family>[^\s·]*)[^\n]*"
-                       r"· status: (?P<status>\w+)[ \t]*$", re.M)
+SEAT_LINE = re.compile(r"^seat: (?P<name>[^·\n]+?) · [^\n]*?\bfamily=(?P<family>[^\s·]*)"
+                       r"[^\n]*?\broute=(?P<route>[^\s·]*)[^\n]*· status: (?P<status>\w+)[ \t]*$", re.M)
 FAMILY_ALIASES = {"claude": "anthropic"}
 KINDS = ("request", "plan", "report", "answer", "verdict", "link", "writer")  # writer: ticket 1307
 REQUIRED = ("ts", "id", "v", "kind", "review_id", "request_id", "author", "publisher",
@@ -849,12 +849,15 @@ def cross_family_seats(text, producer_family):
 
     Read from the generated `seat:` lines (seat_clock.py identities, ticket 1303), keyed on
     `family=`, never on the runtime: a Claude model behind the codex door is still Anthropic,
-    GLM through Pi is GLM. `none`, `unknown` and an empty family never count."""
+    GLM through Pi is GLM. `none`, `unknown` and an empty family never count, nor a `self` or
+    `subagent` seat: only a headless seat's family is launcher-set (seat_clock.identities), so a
+    plan's family column cannot relabel gaze's own read or a same-runtime subagent."""
     home = _family(producer_family)
     out = []
     for m in SEAT_LINE.finditer(text or ""):
         fam = _family(m.group("family"))
-        if m.group("status") == "ran" and fam not in ("", "none", "unknown", home):
+        if (m.group("status") == "ran" and m.group("route") not in ("self", "subagent")
+                and fam not in ("", "none", "unknown", home)):
             out.append(m.group("name").strip())
     return out
 
@@ -876,7 +879,7 @@ def gate_state(cwd, review_id, head, remote="origin", producer_family=None):
     `producer_family`, when given, says a cross-family seat was required (the decorrelation
     high-risk row, judged by the gate's caller): an admission resting on an answer that ran no
     seat of another family is refused, naming it (ticket 1326). `cross_family` lists the seats
-    that count; the round-2 re-gate of a REROLL fix rests on round 1's admission."""
+    that count; the round-2 re-gate of a REROLL fix re-checks the latest answer."""
     report = refresh(cwd, remote)
     head = _rev(cwd, head)
     verdicts = _verdicts(cwd, review_id)
@@ -912,13 +915,15 @@ def gate_state(cwd, review_id, head, remote="origin", producer_family=None):
     else:
         state["reason"] = (f"stale: no gaze answer covers {head[:12]}, and it adds more than "
                            f"bookkeeping to the latest reviewed {state['reviewed_head'][:12]}")
-    if producer_family and state["ready"] and state["answer"]:
-        text = next((e.get("text", "") for e in answers if e["id"] == state["answer"]), "")
+    # A REROLL-fix re-gate has no covering answer: re-check the latest one, which round 1 ruled on.
+    checked = state["answer"] or (answers[-1]["id"] if state["match"] == "reroll-fix" else None)
+    if producer_family and state["ready"] and checked:
+        text = next((e.get("text", "") for e in answers if e["id"] == checked), "")
         state["cross_family"] = cross_family_seats(text, producer_family)
         if not state["cross_family"]:
             opted = re.search(r"no cross-family seat: ([^;—\n]*)", text)
             state.update(ready=False, reason=(
-                f"no cross-family seat: answer {state['answer']} ran no seat outside family "
+                f"no cross-family seat: answer {checked} ran no seat outside family "
                 f"{_family(producer_family)}, and the change needs one (decorrelation.md, high-risk "
                 f"row){f'; the plan opted out: {opted.group(1).strip()}' if opted else ''}; "
                 "park it for a seat launched by the interface session"))

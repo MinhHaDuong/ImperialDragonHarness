@@ -272,6 +272,7 @@ def identities(panel: Path, session_runtime: str = '', session_model: str = '') 
         elif (door and header.get('door') == 'headless' and header.get('runtime')
               and header['runtime'] == door.group(1).strip('.,;)(')):
             runtime, model, route = header['runtime'], header.get('model') or pin, _token(pin)
+            family = header.get('family') or family  # launcher-set: the plan cannot relabel it (1326)
         elif door:
             runtime, model, route = door.group(1).strip('.,;)('), pin, _token(pin)
         else:
