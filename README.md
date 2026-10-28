@@ -11,7 +11,7 @@ They `/yawn` at dawn, `/hunt` one ticket or `/raid` many in autonomous waves,
 
 ## Design case
 
-- **Research.** The harness is specialized for academic research: literature
+- **Research.** The harness is specialized for academic research: Zotero library management, literature
   reviews, manuscripts, reviewer responses, slides and bibliographies, next to
   the code that supports them. Its author, [Minh Ha-Duong](https://minh.haduong.com),
   is a CNRS senior researcher in environment and development at
@@ -46,17 +46,18 @@ Every task passes through five phases:
 Each skill's `SKILL.md` is its procedure; `conception/` keeps the design
 history behind it.
 
-- **Day cycle**: `/yawn` (healthcheck) → work → `/perch` (orient) → `/lair`
+- **Day cycle**: `/yawn` (healthcheck) → `/molt` (housekeeping) → work → `/perch` (orient) → work → `/lair`
   (wrap-up: housekeeping, tests, STATE, suggestions).
 - **Ticket loop**: `/hunt N` → `/merge` → `/roar`. Hunt works one ticket in
   its own worktree and branch, reviewed by `/gaze` and `/verify-gate`; merge
   lands it behind the merge gate. With an `origin` remote the forge merges
-  the PR; without one the merge is local and gated
+  the PR; without one the merge is local
   ([flows ruling](conception/2026-10-27-review-merge-flows.md)).
 - **Autonomous work**: `/raid` picks several tickets and runs them in waves,
-  each through the same loop, merging what the gate approves.
-- **Research**: literature, manuscript review, author decisions and PDF
-  delivery ([research workflow](conception/research-workflow.md)).
+  merging as the gate approves, unattended for hours, asking an advisor model
+  for decisions.
+- **Research**: Skills and scripts to assist the complete ([research workflow](conception/research-workflow.md)),
+  according to procedures described my book ([Research Excellence à la française](http://minh.haduong.com/realf.html)).
 
 ## Components
 
