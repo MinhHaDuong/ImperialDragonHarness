@@ -1,0 +1,38 @@
+%erg 0.1
+Title: F1 review evidence on local notes: route PR reviews to refs/notes/review, push at merge
+Created: 2026-10-28
+Author: reviewer
+
+--- log ---
+2026-10-28T08:36Z reviewer created
+2026-10-28T08:40Z reviewer note author 2026-10-28: "independence is of the essence"; notes need no push when processed locally; a push can run in the background; no read-back, everything syncs at PR merge.
+
+--- body ---
+## Context
+Author ruling 2026-10-27 (ticket 1277 log, PR #1809): F1 = notes review + forge PR merge. Built so far
+(1273-1281): notes review only for `branch:<name>` units; `scripts/forge.py` `get_forge` sends any numeric
+review ref to GhForge, so F1 evidence is still PR comments. Author 2026-10-28: independence from the forge
+comes first; review notes stay local, any push runs in the background, one sync at PR merge.
+
+Measured on padme 2026-10-28: one notes round-trip to origin ~0.45 s, one `gh` API read ~0.5 s, a local
+note read ~0 s. Today's notes path with a remote publishes synchronously with re-fetch read-back after each
+gaze answer and verdict (`gaze_close.py`, `review_notes.py publish`), and `review_notes.py gate` syncs first.
+
+## Design (default; the implementer may refine)
+- Review of a PR number in a repository with `origin`: gaze and verify-gate write to `refs/notes/review`,
+  keyed by the PR's head branch; no review evidence on the PR.
+- Every review write is local. A push, if any, is best-effort in the background; never blocks, never
+  read back. Readers (`gate`, `resolve`) try a fetch, and a failed fetch is reported, never read as "no review".
+- At landing (`raid_land.py` / merge recipe), before `gh pr merge`: push `refs/notes/review` (and the
+  review-heads) synchronously, never forced; a non-zero exit refuses the merge. Exit code suffices: a git push
+  is atomic, unlike a forge API mutation, so no separate re-fetch read-back.
+- Best-effort one-line PR comment pointing at the review (`review on notes: <id>, verdict <V>`) so the PR
+  page is not blank; its failure is ignored (no forge dependency). Author may drop it.
+- Web sessions stay outcome B (1277): readers and seats, entries leave by export/import.
+
+## Exit criteria
+- [ ] gaze on a PR number in a repo with `origin` writes its answer to `refs/notes/review`, not a PR comment, with no network call on the write path.
+- [ ] verify-gate on a PR number reads gaze findings from notes and records its verdict in notes.
+- [ ] Landing pushes `refs/notes/review` before the merge and refuses on a failed push; test covers the refusal.
+- [ ] A failed background push or reader fetch never blocks a review and never reads as "no review"; tests cover both.
+- [ ] Skill texts (gaze, verify-gate, merge, raid) and STATE describe one F1 evidence path; `make check` passes.
