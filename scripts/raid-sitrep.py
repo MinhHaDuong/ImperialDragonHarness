@@ -4,6 +4,8 @@
 Reads no conversation, so any runtime, a shell (`watch -n 900`) or a timer can
 run it. Exit 0: every part was read. Exit 2: some part could not be read; the
 sitrep says `UNREADABLE <part>` in its place and prints no all-clear.
+`--raid <id>` is required: the log is shared by every raid of the repository and
+only that raid's lines are read (lines without a raid id are ignored).
 A clean run appends a SITREP line to the log (the next sitrep reports breakers
 after it); `--no-mark` skips that.
 """
@@ -46,6 +48,7 @@ def open_prs() -> list[dict]:
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--raid", default=None, help="raid id printed by the RAID_START line")
     parser.add_argument("--now", type=float, default=None, help="epoch seconds (tests)")
     parser.add_argument("--no-forge", action="store_true", help="skip the forge read, say so")
     parser.add_argument("--no-mark", action="store_true", help="do not append a SITREP line")
@@ -67,6 +70,12 @@ def main(argv: list[str]) -> int:
     except (OSError, RuntimeError, subprocess.SubprocessError) as error:
         fail("log", str(error))
 
+    if args.raid is None:
+        fail("raid", "--raid <id> is required (the id the RAID_START line printed)")
+        events = []
+    else:
+        events = [e for e in events if e[2].get("raid") == args.raid]
+
     starts = [e for e in events if e[1] == "RAID_START"]
     queue = [e for e in events if e[1] == "QUEUE"]
     gate_max = 1800.0
@@ -79,7 +88,7 @@ def main(argv: list[str]) -> int:
                        f"budget, {minutes(max(deadline - now, 0))} left")
         except (KeyError, ValueError):
             fail("deadline", "RAID_START lacks a numeric deadline=")
-    elif events or path is not None and path.exists():
+    elif args.raid is not None and path is not None and path.exists():
         fail("RAID_START", "no RAID_START line in the log")
 
     waves = [e for e in events if e[1] == "WAVE"]
@@ -145,7 +154,7 @@ def main(argv: list[str]) -> int:
     if unreadable:
         return 2
     if not args.no_mark and path is not None:
-        append("SITREP", {}, path, now=now)
+        append("SITREP", {"raid": args.raid}, path, now=now)
     return 0
 
 
