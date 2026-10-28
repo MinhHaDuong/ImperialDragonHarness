@@ -2,10 +2,12 @@
 Title: Forge leaks: route every raw gh call through scripts/forge.py, so no-forge and other forges work wherever the harness touches review or merge state
 Created: 2026-10-28
 Author: claude
+Closed: integration review done (raid f7fa41): children 1318-1321 merged; residue listed in body
 
 --- log ---
 2026-10-28T17:40Z claude created
 2026-10-28T17:50Z claude note children 1318-1321 filed (raid f7fa41); the filing sweep added project-state.py, tmp_report.py, worktree-tmp-guard.py (to 1319) and review_evidence.py (to 1321)
+2026-10-28T18:46Z reviewer closed — integration review done (raid f7fa41): children 1318-1321 merged; residue listed in body
 
 --- body ---
 ## Context
@@ -48,9 +50,27 @@ Original list:
 - trace analytics and local-ci: decide keep-with-reason or port
 
 ## Exit criteria
-- [ ] Every site above is routed through `forge.py` or listed as residue with its reason
-- [ ] Each ported site has a `none`-backend test (no `gh` on PATH) that shows the
+- [x] Every site above is routed through `forge.py` or listed as residue with its reason
+- [x] Each ported site has a `none`-backend test (no `gh` on PATH) that shows the
       step still works or answers a typed NOOP, never an empty all-clear
-- [ ] `scripts/check-agnostic.sh` (or a forge equivalent, only if a leak recurs after
+- [x] `scripts/check-agnostic.sh` (or a forge equivalent, only if a leak recurs after
       the sweep) keeps the count from growing
-- [ ] `make check` passes
+- [x] `make check` passes
+
+## Integration review (raid f7fa41, 2026-10-28, main 21e9bb9a)
+Children: 1318 PR #1912, 1319 PR #1916, 1320 PR #1915, 1321 PR #1911, all merged at their
+ruled heads. forge.py CLI: `list`, `files`, `read-back`; exit 0 rows, 2 could not look (origin,
+no gh or gh failed), 3 no forge (no origin remote); `resolve` refuses with 1.
+Residue, each with its reason at the call site or in the child's log:
+- 1321 keep: trace-pr-join.py, trace_merge_path.py (regex, not a call), review_evidence.py
+  (host-pinned GraphQL, fails closed), local-ci.sh (act is a GitHub Actions runner).
+- 1319 keep: slow_tickets.py (needs createdAt, comments, checks; no verb; degrades to unknown).
+- 1320 markers: merge/SKILL.md comment, ready, disarm, merge; claims.md body edit;
+  lair/SKILL.md auto-merge setting. forge.py has these writes in Python (raid_land.py uses
+  them) but no CLI; the prose keeps the gh spelling behind extension-point markers.
+- Not calls: census/exec-vs-mention.py, trace-wall-time.py (pattern lists); rules/git.md example.
+Union sweep (`git grep` for raw gh calls in scripts/ and skills/): only the residue above.
+`env -u TMPDIR make check` on 21e9bb9a: 3009 passed, 4 skipped; check-agnostic passes;
+`forge.py list` with no gh on PATH in this origin repo exits 2, dashboard says NOT inspected.
+Criterion 3: check-agnostic's SKILL_PATTERNS already gate `gh ` in skills/ outside markers; no
+new script-side guard, since the criterion asks for one only if a leak recurs.
