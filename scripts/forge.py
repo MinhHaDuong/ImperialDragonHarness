@@ -7,7 +7,9 @@ A review unit is (branch, base ref, head OID). `resolve` takes a request number
 (gh backend) or `branch:<name> [base=<ref>]` (none backend) and returns one record:
 id, branch, base, head, state, mergeable, draft, body, claims; the none backend adds
 review_id, the latest review naming the branch in refs/notes/review (ticket 1273), or None,
-read after a fetch from the remote; an unreadable remote raises (ticket 1281). Backend choice:
+read after a fetch from the remote; an unreadable remote with no local review raises, with one
+it answers from the local entries and warns (tickets 1281, 1300). A PR number's notes review
+is keyed `pr:<n>` and found by review_notes.find_unit, never through this backend. Backend choice:
 `--forge`; `auto` is gh when `gh` is on PATH and the ref is a bare number. There is no environment
 switch: the landing route is read off the repository (ticket 1280, conception/2026-10-27-review-merge-flows.md).
 
