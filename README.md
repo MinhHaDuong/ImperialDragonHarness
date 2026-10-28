@@ -20,11 +20,11 @@ They `/yawn` at dawn, `/hunt` one ticket or `/raid` many in autonomous waves,
   `flock`, XDG paths), and much of it depends on `make` and Python. Some code
   paths will not work on macOS, Windows or WSL2, and we accept that. The committed assumptions are listed in
   [INSTALL.md § Platform contract](INSTALL.md#platform-contract).
-- **Forge optional.** Everything works in a local repository with no remote.
-  Issues live in `tickets/` ([git-erg](https://github.com/MinhHaDuong/git-erg));
-  review comments and verdicts live in git notes (`refs/notes/review`), and
-  merge-gate records in `refs/notes/gate`.
-- **Forge independent.** A forge, when present, is a transport and a merge
+- **Forge optional, forge independent.** Everything works in a local
+  repository with no remote. Issues live in `tickets/`
+  ([git-erg](https://github.com/MinhHaDuong/git-erg)); review comments and
+  verdicts live in git notes (`refs/notes/review`), and merge-gate records in
+  `refs/notes/gate`. A forge, when present, is a transport and a merge
   button, not a store of record. A hardcoded dependency on GitHub is a bug:
   forge calls go through one adapter (`scripts/forge.py`).
 - **Runtime and model independence.** This sentence was added using the
