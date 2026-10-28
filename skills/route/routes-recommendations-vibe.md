@@ -21,4 +21,5 @@ Launch forms are in `routes.json` under `launch_doors.vibe`.
 
 Use the models of the configured agent. For anything the grid ranks above
 that, or for a cross-family review, launch another runtime's headless CLI
-from bash (`claude -p`, `codex exec`, `pi -p`) as listed in `routes.json`.
+from bash (`claude -p`, `codex exec`, or `pi -p` for the providers the host's Pi
+declares) as listed in `routes.json`.

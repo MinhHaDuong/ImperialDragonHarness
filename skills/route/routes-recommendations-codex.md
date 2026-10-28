@@ -10,7 +10,8 @@ Launch forms are in `routes.json` under `launch_doors.codex`.
   Anthropic door. A custom provider with an Anthropic key was not tested.
 - Therefore this runtime has no cross-family door of its own. A review seat
   from another family is a headless CLI that is not Codex (`claude -p`,
-  `pi -p`), when one is reachable from bash. Otherwise record `no report`.
+  `vibe`, or `pi -p` for the providers the host's Pi declares), when one is
+  reachable from bash. Otherwise record `no report`.
 - Subagent model selection: `spawn_agent` honours `model` and
   `reasoning_effort` when `fork_turns` is not `all` (verified 2026-10-09,
   `routes.json`); under `all` it is unmeasured. For a headless seat, name the

@@ -18,9 +18,9 @@ oversize context, uncleared content, or a cross-family need).
 | Ordinary review | `sonnet` | Anthropic | same family: replication, not independence |
 | Hard implementation, cross-cutting judgment | `opus` | Anthropic | |
 | One-shot deep problem, adversarial judgment | `fable` | Anthropic | never orchestration or bulk |
-| Independent review of a risky change | `pi -p` / `codex exec -m` | other | headless seat from bash |
+| Independent review of a risky change | `codex exec -m` (OpenAI), `vibe` (Mistral) | other | headless seat from bash; on padme `pi -p` serves only the local seats and huggingface |
 | Cheap work, different family wanted | `codex exec -m gpt-6-luna` | OpenAI | headless seat |
-| Uncleared content | local model via `pi -p` | local | never a hosted door |
+| Uncleared content | local model via `pi -p`, or Albert via `pi-albert` | local; Albert: Qwen (`openweight-code`), OpenAI lineage (`openweight-large`), DINUM-hosted | Albert is PRIVÉ by author ruling 2026-10-28, not yet in the grid: smoke and spot check (arena) before routing work to it; never another hosted door |
 | Context over 256K | none | n/a | split the work |
 
 ## Launching
@@ -30,8 +30,9 @@ oversize context, uncleared content, or a cross-family need).
   `Agent` child inherits the session model; harness agent definitions carry no
   `model:` line.
 - Every `Agent` child is Anthropic. A cross-family worker is a headless CLI
-  started from bash: `pi -p` with a provider-qualified model, or
-  `codex exec -m` for OpenAI.
+  started from bash: `codex exec -m` for OpenAI, `vibe` for Mistral; `pi -p`
+  reaches only the providers the host's Pi declares (on padme, its local
+  seats and huggingface).
 
 ## Which model for which work
 
