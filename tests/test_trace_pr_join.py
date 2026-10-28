@@ -135,3 +135,19 @@ def test_cache_union_preserves_rows_absent_from_current_census(tmp_path):
     final = tpj2.load_cache(cache_path)
     assert ("ImperialDragonHarness", 10) in final, "pair A must be retained"
     assert ("ImperialDragonHarness", 99) in final, "pair B must be retained (was not in census)"
+
+
+def test_counts_pointer_verdicts_and_legacy_headers():
+    """Ticket 1301: the PR comment is a pointer (`verdict <V>` / `verdict=<V>`); legacy gaze
+    results (`result: ESCALATE`) and gate headers still count; prose mentions do not."""
+    bodies = [
+        "/gaze review on notes: rv-1, verdict ESCALATE",
+        "/verify-gate round=1 verdict=REROLL · review on notes: rv-1",
+        "/verify-gate round=2 verdict=ESCALATE",  # legacy gate header
+        "## /gaze result\n\nresult: ESCALATE\nreviewed_head_sha: abc",  # legacy gaze result
+        "/gaze review on notes: rv-2, verdict FINDINGS",
+        "I think a REROLL or an ESCALATE would be overkill here.",  # prose: not a verdict
+    ]
+    assert tpj.count_verdicts("\n".join(bodies)) == (1, 3)
+    import json  # what `gh api` returns: line breaks escaped inside JSON strings
+    assert tpj.count_verdicts(json.dumps([{"body": b} for b in bodies])) == (1, 3)

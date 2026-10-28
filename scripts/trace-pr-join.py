@@ -3,8 +3,13 @@
 
 Reads the census CSV's `pr_numbers` column (main agents only), maps each
 project to its GitHub repo, and fetches per-PR diff size and review
-outcome (merged flag, REROLL/ESCALATE mentions in comments) via the gh
-CLI. Results are cached to a committed CSV so the analysis re-runs
+outcome (merged flag, REROLL/ESCALATE verdicts in comments) via the gh
+CLI. A verdict is a `verdict <V>`/`verdict=<V>` field (the gaze and verify-gate
+pointer comments since ticket 1301, the legacy `/verify-gate` header) or a legacy
+gaze result's `result: ESCALATE` line; prose mentions do not count. The review
+evidence itself lives in refs/notes/review, which a foreign repo's PR does not
+share, so the forge comments stay the source here: a pointer that failed to post
+undercounts. Results are cached to a committed CSV so the analysis re-runs
 offline (`--no-network` uses cache only; missing PRs stay blank rather
 than failing the run).
 
@@ -58,6 +63,16 @@ def collect_pairs(rows: list[dict]) -> list[tuple[str, int]]:
     return pairs
 
 
+# `gh api` returns JSON, where a body's line breaks are the two characters `\n`.
+VERDICT = re.compile(r"\bverdict[ =](REROLL|ESCALATE)\b|(?:^|\\n)result:[ \t]*(ESCALATE)\b", re.MULTILINE)
+
+
+def count_verdicts(comments: str) -> tuple[int, int]:
+    """(REROLL, ESCALATE) verdict counts in the PR's comment text."""
+    found = [a or b for a, b in VERDICT.findall(comments)]
+    return found.count("REROLL"), found.count("ESCALATE")
+
+
 def gh_fetch_pr(owner: str, repo: str, n: int) -> dict:
     """Fetch one PR's stats via gh REST (GraphQL avoided: intermittently 401s)."""
     pr = json.loads(
@@ -74,14 +89,15 @@ def gh_fetch_pr(owner: str, repo: str, n: int) -> dict:
         text=True,
         check=True,
     ).stdout
+    rerolls, escalates = count_verdicts(comments)
     return {
         "repo": repo,
         "pr": n,
         "additions": pr.get("additions", 0),
         "deletions": pr.get("deletions", 0),
         "merged": bool(pr.get("merged")),
-        "reroll_mentions": comments.count("REROLL"),
-        "escalate_mentions": comments.count("ESCALATE"),
+        "reroll_mentions": rerolls,
+        "escalate_mentions": escalates,
     }
 
 
