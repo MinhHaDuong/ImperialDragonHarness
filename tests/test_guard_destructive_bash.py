@@ -10,9 +10,13 @@ real hook invocation (a subprocess fed a PreToolUse payload on stdin):
 - clean target tree -> allowed, even when the session cwd is dirty;
 - every former pattern (recursive rm, force push, clean, sudo rm, DROP) -> allowed;
 - "reset --hard" as text (quoted, commit message, heredoc body) -> allowed.
+
+Ticket 1324 adds one clause: a `pgrep -f`/`pkill -f` search lacking `-A` or a
+bracketed pattern matches its own calling shell, so it is refused.
 """
 
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -153,3 +157,58 @@ def test_non_repo_target_allows(tmp_path):
     # itself sits inside one (e.g. under ~/.claude/jobs/...).
     ceiling = {"GIT_CEILING_DIRECTORIES": str(tmp_path.parent)}
     assert _run("git reset --hard", tmp_path, ceiling).returncode == 0
+
+
+@pytest.mark.parametrize("command", [
+    "pgrep -f foo",
+    "pgrep -af foo",
+    "pgrep --full foo",
+    "pgrep -u root -f foo",
+    "pkill -9 -f foo",
+    "pkill -ALRM -f foo",  # a signal name holding an A is not -A
+    "/usr/bin/pgrep -f foo",
+    "rtk pgrep -lf foo",
+    "timeout 5 pkill -f foo",
+    "while pgrep -f job >/dev/null; do :; done",
+    "cd /tmp && pgrep -f foo",
+])
+def test_self_matching_pgrep_is_blocked(tmp_path, command):
+    res = _run(command, tmp_path)
+    assert res.returncode == 2, (command, res.stderr)
+    assert "-A" in res.stderr and "[p]attern" in res.stderr and "tail --pid" in res.stderr
+
+
+@pytest.mark.parametrize("command", [
+    "pgrep -fA foo",
+    "pgrep -A -f foo",
+    "pgrep --full --ignore-ancestors foo",
+    "pgrep -f '[f]oo'",
+    "pgrep foo",
+    "pgrep -P 12 sh",
+    "pgrep -uf foo",  # -u takes the value f: no -f flag
+    "pkill -x sleep",
+    'echo "pgrep -f foo"',
+    "cat <<'EOF'\npgrep -f foo\nEOF",
+])
+def test_safe_pgrep_is_allowed(tmp_path, command):
+    res = _run(command, tmp_path)
+    assert res.returncode == 0, (command, res.stderr)
+
+
+def _procps_major():
+    out = subprocess.run(["pgrep", "--version"], capture_output=True, text=True).stdout
+    m = re.search(r"procps-ng\s+(\d+)", out)
+    return int(m.group(1)) if m else 0
+
+
+@pytest.mark.skipif(_procps_major() < 4, reason="-A needs procps-ng >= 4.0")
+def test_refused_form_really_matches_its_shell():
+    """Positive control: the refused form self-matches, the allowed ones do not."""
+    mark = "idhmarker1324x"
+    script = f"pgrep -f {mark} >/dev/null; a=$?; pgrep -A -f {mark} >/dev/null; echo $a $?"
+    r = subprocess.run(["sh", "-c", script], capture_output=True, text=True, env=child_env())
+    assert r.stdout.split() == ["0", "1"], r
+    # The bracket holds only while the plain word is absent from the caller's line.
+    r = subprocess.run(["sh", "-c", "pgrep -f '[i]dhmarker1324x' >/dev/null; echo $?"],
+                       capture_output=True, text=True, env=child_env())
+    assert r.stdout.split() == ["1"], r

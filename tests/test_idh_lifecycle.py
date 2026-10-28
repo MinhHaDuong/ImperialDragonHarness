@@ -9,7 +9,6 @@ installation and status leave host scheduling alone.
 import importlib.util
 import json
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -47,7 +46,7 @@ def machine(tmp_path):
     stub = bin_dir / "systemctl"
     stub.write_text(f'#!/bin/sh\necho "$*" >> "{log}"\nexit 1\n')
     stub.chmod(0o755)
-    # ~/.local/bin first, as a configured machine has it (1216 probes the order).
+    # ~/.local/bin first, as a configured machine has it.
     env = {"HOME": str(home), "PATH": f"{home}/.local/bin:{bin_dir}:/usr/bin:/bin"}
 
     def idh(*args):
@@ -646,48 +645,6 @@ def test_install_refuses_removal_when_the_plugin_payload_is_broken(machine):
         payload.write_bytes(backup)
 
 
-def _procps_major():
-    try:
-        out = subprocess.run(["/usr/bin/pgrep", "--version"], capture_output=True, text=True).stdout
-    except OSError:
-        return 0
-    m = re.search(r"procps-ng\s+(\d+)", out)
-    return int(m.group(1)) if m else 0
-
-
-def test_pgrep_wrapper_is_probed_on_install_and_check(machine):
-    """1216: wrapper behaviour, not its source, is what install and check verify."""
-    home, idh = machine["home"], machine["idh"]
-    r = idh("install")
-    assert r.returncode == 0, r.stdout + r.stderr
-    for name in ("pgrep", "pkill"):
-        assert (home / ".local/bin" / name).resolve() == (REPO / "scripts/self-safe-pgrep.sh").resolve()
-    r = idh("check")
-    assert r.returncode == 0, r.stdout + r.stderr
-    expect = "-A active" if _procps_major() >= 4 else "pass-through"
-    assert expect in r.stdout, r.stdout
-
-    # Negative control: a real pgrep ahead of the wrapper shadows it.
-    shadow = home / "shadow"
-    shadow.mkdir()
-    (shadow / "pgrep").symlink_to("/usr/bin/pgrep")
-    env = dict(machine["env"], PATH=f"{shadow}:{machine['env']['PATH']}")
-    r = subprocess.run([sys.executable, str(IDH), "check"], env=env, capture_output=True, text=True, timeout=60)
-    # SHADOWED is advisory: reported with a PATH repair hint, exit 0.
-    assert r.returncode == 0 and "SHADOWED" in r.stderr and "before /usr/bin" in r.stderr, r.stdout + r.stderr
-
-
-@pytest.mark.skipif(_procps_major() < 4, reason="-A needs procps-ng >= 4.0")
-def test_wrapper_excludes_its_calling_shell(machine):
-    """Positive control: plain pgrep matches the caller, the wrapper does not."""
-    machine["idh"]("install")
-    w = machine["home"] / ".local/bin/pgrep"
-    mark = "idhmarker1216x"
-    script = f'/usr/bin/pgrep -f {mark} >/dev/null; a=$?; "$1" -f {mark} >/dev/null; echo $a $?'
-    r = subprocess.run(["sh", "-c", script, "t", str(w)], capture_output=True, text=True, env=machine["env"])
-    assert r.stdout.split() == ["0", "1"], r
-
-
 def test_install_retires_links_the_manifest_no_longer_declares(machine):
     """A retired projection or deleted skill leaves the receipt and the disk."""
     home, idh = machine["home"], machine["idh"]
@@ -710,8 +667,8 @@ def test_install_retires_links_the_manifest_no_longer_declares(machine):
     # HOME through an alias: the same declared link under another spelling.
     alias = home.parent / "home-alias"
     alias.symlink_to(home)
-    kept = home / ".local/bin/pgrep"
-    owned[str(alias / ".local/bin/pgrep")] = os.readlink(kept)
+    kept = home / ".local/bin/idh"
+    owned[str(alias / ".local/bin/idh")] = os.readlink(kept)
     receipt.write_text(json.dumps(owned))
 
     r = idh("install")
@@ -723,7 +680,7 @@ def test_install_retires_links_the_manifest_no_longer_declares(machine):
     assert kept.is_symlink()  # declared, whatever the receipt spelled
     after = json.loads(receipt.read_text())
     assert not {str(retired), str(edited), str(home / ".claude/skills/gone")} & set(after)
-    assert str(elsewhere) in after and str(alias / ".local/bin/pgrep") in after
+    assert str(elsewhere) in after and str(alias / ".local/bin/idh") in after
     assert idh("check").returncode == 0
     assert "retired:" not in idh("install").stdout
 
