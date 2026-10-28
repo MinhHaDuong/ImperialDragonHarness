@@ -441,8 +441,8 @@ After all waves, in one compound so the `cd` persists across the sync:
 `cd <session-worktree> && "$IDH_ROOT/scripts/sync-local-main.sh" . main`. The
 sync script always exits 0 and leaves a diverged main untouched: read its
 output, and stop if a line says `left untouched`, `diverged` or `skipped`.
-A red on main is reported and ticketed, never reverted (`skills/merge/SKILL.md`
-step 9). Gated base: the after-merge runner the sync started covers the tip
+A red on main is reported and ticketed, never reverted (`rules/workflow.md`
+§ Trust, Verify, Monitor; on a gated base, `skills/merge/SKILL.md` step 9). Gated base: the after-merge runner the sync started covers the tip
 and opens the ticket; read its log, never wait on it. Ungated base: `make check`
 in a checkout of the synced main (the primary checkout, or a throwaway
 `git worktree add --detach <dir> main`); new failures → ticket.
@@ -482,7 +482,8 @@ or the failing read first.
 
 ## Wrap up
 
-1. `make check` on main — compare against baseline. New failures → ticket.
+1. Main against baseline: on a gated base, the after-merge log of the newest
+   tip (§ Phase 7); on an ungated base, `make check` on main. New failures → ticket.
 1b. Scan ticket log sections for current bump notes and legacy bump entries;
     print counts by ticket and category (author names may contain spaces):
     ```bash
