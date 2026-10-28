@@ -534,10 +534,30 @@ def publish(cwd, ids, remote="origin"):
     return "published" if problems else "retrievable"
 
 
+def _refuse_split_rounds(cwd, review_id):
+    """Verdict writes are local (ticket 1300), so two clones can each rule one round; the
+    landing door, after merging the remote's notes, is where they meet. Two verdicts of one
+    round, or verdicts past the two-round budget, refuse the landing (gaze on PR #1855)."""
+    rounds = {}
+    for v in _verdicts(cwd, review_id):
+        rounds.setdefault(v.get("round"), []).append(v)
+    for rnd, vs in sorted(rounds.items(), key=lambda kv: str(kv[0])):
+        if len(vs) > 1:
+            raise Refusal(f"review {review_id}: round {rnd} has {len(vs)} verdicts "
+                          f"({', '.join(v.get('verdict', '?') for v in vs)}); two gate runs ruled "
+                          "one round, refusing to land: ESCALATE")
+    over = sum(len(vs) for vs in rounds.values())
+    if over > MAX_ROUNDS:
+        raise Refusal(f"review {review_id}: {over} verdicts recorded, past the two-round budget; "
+                      "refusing to land: ESCALATE")
+
+
 def push_for_landing(cwd, branch, remote="origin"):
     """Landing door (ticket 1299): push REF and the review-heads of the requests naming `branch`,
-    synchronously and never forced, before the merge. A failed push is a Refusal. No remote, or
-    no request for the branch: nothing pushed, []. Returns the refs pushed."""
+    synchronously and never forced, before the merge. A failed push is a Refusal; so is a landing
+    review whose verdicts split a round or exceed two rounds (checked after the refresh, before
+    any push). No remote, or no request for the branch: nothing pushed, []. Returns the refs
+    pushed."""
     def requests():
         return [e for e in all_entries(cwd) if e.get("kind") == "request" and e.get("branch") == branch]
     # Notes are merge evidence (ticket 1300): the landing review's retained heads must exist.
@@ -550,6 +570,7 @@ def push_for_landing(cwd, branch, remote="origin"):
     if not reqs:
         return []
     landing = reqs[-1]["review_id"]
+    _refuse_split_rounds(cwd, landing)
     _push_notes(cwd, remote, [])
     pushed = [REF]
     for key in dict.fromkeys((e["review_id"], e["request_id"]) for e in reqs):

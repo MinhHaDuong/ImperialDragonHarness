@@ -440,3 +440,27 @@ def test_failed_background_push_does_not_block_the_verdict(two_clones):
     assert elapsed < 5, elapsed
     assert r.stdout.split()[1] == "local"
     assert [e for e in rn.entries(a, rid) if e["kind"] == "verdict"]
+
+
+# --- gaze 1855: two clones ruling one round are caught at the landing door -----------------
+
+def test_push_for_landing_refuses_two_verdicts_for_one_round(two_clones):
+    origin, a, b = two_clones
+    rid = rn.open_review(a, "feature", "origin/main")
+    answer(a, rid)
+    rn.sync(a)
+    rn.refresh(b)
+    assert rn.record_verdict(a, rid, session(), "APPROVED", "feature")["entry"]["round"] == 1
+    assert rn.record_verdict(b, rid, session(), "REROLL", "feature")["entry"]["round"] == 1
+    rn.sync(b)  # B's round-1 verdict reaches origin; A's is still local
+    with pytest.raises(rn.Refusal, match="round 1"):
+        rn.push_for_landing(a, "feature")
+
+
+def test_push_for_landing_passes_a_single_verdict_per_round(two_clones):
+    origin, a, b = two_clones
+    rid = rn.open_review(a, "feature", "origin/main")
+    answer(a, rid)
+    rn.record_verdict(a, rid, session(), "APPROVED", "feature")
+    assert "refs/notes/review" in rn.push_for_landing(a, "feature")
+    assert sh(origin, "rev-parse", "refs/notes/review") == sh(a, "rev-parse", "refs/notes/review")
