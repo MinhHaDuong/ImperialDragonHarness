@@ -27,9 +27,9 @@ They `/yawn` at dawn, `/hunt` one ticket or `/raid` many in autonomous waves,
 - **Forge independent.** A forge, when present, is a transport and a merge
   button, not a store of record. A hardcoded dependency on GitHub is a bug:
   forge calls go through one adapter (`scripts/forge.py`).
-- **Runtime and model independence.** This sentence was added IDH on Pi by
-  Qwen 3.8 flash next, everything running locally on the author's
-  workstation.
+- **Runtime and model independence.** This sentence was added using the
+  Imperial Dragon Harness on Pi by Qwen 3.8 flash next, everything running
+  locally on the author's workstation.
 
 ## The Five Claws
 
