@@ -1,0 +1,27 @@
+%erg 0.1
+Title: F1 landing: push refs/notes/review before the PR merge, refuse on failed push
+Created: 2026-10-28
+Author: reviewer
+
+--- log ---
+2026-10-28T08:43Z reviewer created
+
+--- body ---
+## Context
+Child of tracker 1298 (F1: review evidence on local notes, push at merge). First in order: harmless alone,
+and it guarantees notes reach origin before any merge once 1300 makes notes the evidence.
+
+## Design (default; the implementer may refine)
+- `review_notes.py`: a `push_for_landing` helper — push `refs/notes/review` and the review-heads of the
+  review(s) being landed only (not every `refs/review-heads/*`), synchronously, never forced; raise
+  `Refusal` on a non-zero exit. A git push is atomic: exit code suffices, no re-fetch read-back.
+- `raid_land.py` `land()`: call it before `fg.merge` on the forge route; `Refusal` → exit 1. No-op when the
+  repository holds no review notes for the unit (today's PR units), so landing behaviour is unchanged until 1300.
+- Check `hooks/reference-transaction` (main-update guard, enforce mode) accepts these pushes on a gated
+  base; `refs/review-heads/*` is outside `refs/notes/*`.
+- Merge recipe text (`skills/merge/SKILL.md` § The recipe) gains the push step.
+
+## Exit criteria
+- [ ] Landing pushes `refs/notes/review` (and the landed review's head ref) before the merge and refuses on a failed push; test covers the refusal (tracker criterion 3).
+- [ ] The main-update guard does not refuse the push; evidence named in the PR.
+- [ ] `make check` passes.

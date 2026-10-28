@@ -6,8 +6,19 @@ Author: reviewer
 --- log ---
 2026-10-28T08:36Z reviewer created
 2026-10-28T08:40Z reviewer note author 2026-10-28: "independence is of the essence"; notes need no push when processed locally; a push can run in the background; no read-back, everything syncs at PR merge.
+2026-10-28T08:50Z reviewer note tracker: raid 2026-10-28 split it (monster: ~20 files, shared comment contract); children 1299, 1300, 1301
 
 --- body ---
+## Tracker (raid 2026-10-28)
+Imagine estimated ~20 files and a shared contract (the `## /gaze result` PR comment, read by attribution,
+trace-pr-join, roar capture, detached-gaze polling). Blind-Spot showed a naive split leaves gaze writing notes
+while verify-gate reads comments, so the order keeps a dual-write:
+- 1299 landing push (criterion 3). Blocked-by: none.
+- 1300 notes evidence for PR units, comment dual-written, review keyed by PR not bare branch name (criteria 2, 4; 1 notes half). Blocked-by: 1299.
+- 1301 cut-over: comment becomes a pointer, readers move to notes, texts and STATE (criteria 1, 5). Blocked-by: 1300.
+Open for the author, not blocking: review-heads retention (unbounded ref growth, flows memo §10).
+Close after the integration review, not on the last child's merge.
+
 ## Context
 Author ruling 2026-10-27 (ticket 1277 log, PR #1809): F1 = notes review + forge PR merge. Built so far
 (1273-1281): notes review only for `branch:<name>` units; `scripts/forge.py` `get_forge` sends any numeric
