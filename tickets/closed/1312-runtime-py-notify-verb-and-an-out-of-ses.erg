@@ -2,12 +2,14 @@
 Title: runtime.py notify verb and an out-of-session raid supervisor (arena watchdog pattern)
 Created: 2026-10-28
 Author: claude
+Closed: autoclosed — PR #1899
 
 --- log ---
 2026-10-28T14:17Z claude created
 2026-10-28T16:14Z reviewer note blocker 1311 closed — Blocked-by removed.
 2026-10-28T17:21Z reviewer supervisor decision: defer, not built. Raid log (as of 2026-10-28): 11 RAID_START, 41 SITREP, 4 BREAKER lines, no dead coordinator. Survivorship caveat: a dead coordinator writes nothing, so the log cannot show one. Check that would settle it: count raids whose last line is not QUEUE n=0 or a final SITREP, cross-checked with their sessions' end. Until it runs the supervisor stays a candidate, not a rejection. No systemd unit, no bin/idh install change. notify shipped as the fallback when can wake answers no (sitrep.md).
 2026-10-28T17:21Z reviewer raid-log counts re-read at execution: 12 RAID_START, 44 SITREP, 4 BREAKER (the annotation's 11/41/4 predates this raid)
+2026-10-28T17:35Z reviewer closed — autoclosed — PR #1899
 
 --- body ---
 ## Context
