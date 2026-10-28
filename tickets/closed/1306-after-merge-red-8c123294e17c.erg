@@ -2,10 +2,12 @@
 Title: After-merge red on main 8c123294e17c: pytest-guard
 Created: 2026-10-28
 Author: merge-gate
+Closed: autoclosed — PR #1873
 
 --- log ---
 2026-10-28T11:20Z merge-gate created
 2026-10-28T11:47Z reviewer note raid imagine/plan (orchestrator inline): after-merge records on main tips 37453623, 71c99888 and 117beabd pass; 8c123294 and 8fa57bf4 failed test_seats_appended_to_body_without_comment, 617dc40e failed test_pi_any_provider_seat_keeps_its_exact_qualifier, both in tests/test_gaze_close.py, both pass alone: an intermittent failure under xdist, cause not yet established. Actions: reproduce (repeat tests/test_gaze_close.py under the project's worker count), isolate the shared state, fix red-test-first; if not reproducible in a bounded attempt, close on the passing after-merge record with the evidence. Feasibility PASS.
+2026-10-28T12:00Z reviewer closed — autoclosed — PR #1873
 
 --- body ---
 ## Context

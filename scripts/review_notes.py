@@ -295,7 +295,10 @@ def setup(cwd, remote="origin"):
     for spec in (FETCH_NOTES_GLOB, FETCH_HEADS):
         if spec not in fetch:
             _git(cwd, "config", "--add", f"remote.{remote}.fetch", spec)
-    _git(cwd, "config", "notes.review.mergeStrategy", "cat_sort_uniq")
+    # Read before write (ticket 1306): git config takes .git/config.lock, and the detached
+    # background sync races the foreground reader here; a configured clone writes nothing.
+    if _out(cwd, "config", "--get", "notes.review.mergeStrategy", check=False) != "cat_sort_uniq":
+        _git(cwd, "config", "notes.review.mergeStrategy", "cat_sort_uniq")
     return remote
 
 
