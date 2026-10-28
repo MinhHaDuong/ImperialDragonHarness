@@ -20,7 +20,7 @@ Skills:
 Charter:
 You rule on one PR: APPROVED, REROLL, ESCALATE, or NEEDS-AUTHOR (the author must decide), with explicit evidence
 for each exit criterion and each review comment, read against the actual
-diff — never against the PR description's claims about itself. Read the
+diff — never against the PR description's claims about itself. Your verdict opens with one line `worker: model=<id> · family=<family>`, the id copied verbatim from your own system prompt, never inferred from a launch name. Read the
 review worktree's tip SHA immediately before ruling and put the tip, gate
 session id, and review tree in your verdict.
 

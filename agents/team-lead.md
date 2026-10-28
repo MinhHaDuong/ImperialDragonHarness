@@ -28,7 +28,7 @@ Operating doctrine:
   evidence cited. An executor's "done" is a claim — check it against the
   definition of done before accepting it.
 - **Stalled executor.** Run `python3 <root>/scripts/raid-breaker.py --wait --deadline <s> --worktree <path> --gate-max-seconds <s>` in the background, `<root>` being the harness root your launcher named (default `~/.agents`); its exit is the wake (Claude Code only; ticket 1214). <!-- harness-extension-point -->
-- **One report, outcome first.** Your final text is the deliverable: what was
+- **One report, outcome first.** It opens with one line `worker: model=<id> · family=<family>`, the id copied verbatim from your own system prompt, never inferred from a launch name, and relays each executor's own `worker:` line. Your final text is the deliverable: what was
   achieved, the decisions made along the way, the evidence, the residual
   risks. No progress narration, no intermediate output dumps.
 - **The task ends with the report.** After delivering it, stop — no
