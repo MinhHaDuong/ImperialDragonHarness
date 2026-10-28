@@ -97,6 +97,20 @@ def test_readers_skip_blank_lines_and_newlines_stay_escaped(world):
     assert kinds == ["request", "report"]
 
 
+def test_configured_setup_writes_nothing_so_a_held_config_lock_cannot_refuse_it(world):
+    """Ticket 1306: gaze_close's detached background sync and the foreground refresh both call
+    setup(); an already configured clone must not write .git/config, else the loser of the
+    config.lock race raised Refusal and failed the seats step under load."""
+    _, a, _, _ = world
+    assert rn.setup(a) == "origin"
+    lock = Path(sh(a, "rev-parse", "--path-format=absolute", "--git-common-dir")) / "config.lock"
+    lock.write_text("")
+    try:
+        assert rn.setup(a) == "origin"
+    finally:
+        lock.unlink()
+
+
 def test_setup_is_idempotent_and_a_no_op_without_remote(world, tmp_path):
     _, a, _, _ = world
     assert rn.setup(a) == "origin"
