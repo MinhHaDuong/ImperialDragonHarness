@@ -5,13 +5,17 @@
     forge.py [--forge auto|gh|none] list --state open|merged|all [--head <branch>] [--limit N]
     forge.py [--forge auto|gh|none] files <ref>
     forge.py [--forge auto|gh|none] read-back <ref>
+    forge.py [--forge auto|gh|none] origin
 
 The ref-less and shell-facing verbs (ticket 1318; tickets 1319 and 1320 consume them, never extend them):
-`list` prints a JSON array of rows {number, branch, title, body, auto, mergedAt, cross_repository}
-(auto: auto-merge armed; mergedAt: ISO time or null; cross_repository: the head lives in a fork);
+`list` prints a JSON array of rows {number, branch, title, body, auto, mergedAt, cross_repository,
+head_repository} (auto: auto-merge armed; mergedAt: ISO time or null; cross_repository: the head lives
+in a repository other than the base's; head_repository: that head repository's owner/name, or null);
+`origin` prints the local origin remote's owner/name, what a row's head_repository is compared with to
+tell this checkout's own request from a sibling, a fork checkout included (ticket 1325);
 `files` prints a JSON array of {path, status} (status as the forge names it: added, modified, ...);
 `read-back` prints `STATE head queued|-` (the read_back verb, a landing read: no offline mark, no cache).
-All three share one exit contract, read off the repository like `get_forge(landing=True)`:
+All four share one exit contract, read off the repository like `get_forge(landing=True)`:
   0  the answer is on stdout
   2  could not look: an origin remote exists but gh is missing, unauthed or unreachable (stdout empty)
   3  no forge: no origin remote, or `--forge none` (typed NOOP "no forge" on stderr, stdout empty, never `[]`)
@@ -406,9 +410,9 @@ reviewThreads(first:100){pageInfo{hasNextPage}
             raise MergeRefused(done.stderr.strip() or f"gh exit {done.returncode}")
 
     def list_requests(self, state: str = "open", head: str | None = None, limit: int = 100) -> list[dict]:
-        """Rows {number, branch, title, body, auto, mergedAt, cross_repository} of the repository's requests."""
+        """Rows {number, branch, title, body, auto, mergedAt, cross_repository, head_repository}."""
         args = ["pr", "list", "--state", state, "--limit", str(limit), "--json",
-                "number,headRefName,title,body,autoMergeRequest,mergedAt,isCrossRepository"]
+                "number,headRefName,title,body,autoMergeRequest,mergedAt,isCrossRepository,headRepository"]
         if head:
             args += ["--head", head]
         done = self._gh(*args)
@@ -420,8 +424,19 @@ reviewThreads(first:100){pageInfo{hasNextPage}
             raise ForgeRefusal(f"cannot list requests: unreadable gh output ({exc})") from exc
         return [{"number": r["number"], "branch": r.get("headRefName"), "title": r.get("title") or "",
                  "body": r.get("body") or "", "auto": r.get("autoMergeRequest") is not None,
-                 "mergedAt": r.get("mergedAt") or None, "cross_repository": bool(r.get("isCrossRepository"))}
+                 "mergedAt": r.get("mergedAt") or None, "cross_repository": bool(r.get("isCrossRepository")),
+                 "head_repository": (r.get("headRepository") or {}).get("nameWithOwner") or None}
                 for r in raw]
+
+    def origin(self) -> str:
+        """The local origin remote's owner/name, as the forge names it (redirects resolved)."""
+        url = subprocess.run(["git", "-C", self.cwd or ".", "remote", "get-url", "origin"],
+                             capture_output=True, text=True).stdout.strip()
+        done = self._gh("repo", "view", url, "--json", "nameWithOwner", "--jq", ".nameWithOwner")
+        name = done.stdout.strip()
+        if done.returncode != 0 or not name:
+            raise ForgeRefusal(f"cannot name the origin repository: {done.stderr.strip() or f'gh exit {done.returncode}'}")
+        return name
 
     def files(self, ref: str) -> list[dict]:
         """Rows {path, status} of the files a request changes."""
@@ -611,6 +626,9 @@ class NoneForge:
     def files(self, ref: str):
         return NOOP
 
+    def origin(self):
+        return NOOP
+
     def read_back(self, ref: str):
         """`<STATE> <head> -`: MERGED with the second parent of the merge commit that landed the
         unit (first-parent walk of the base). A head in the base by no such merge commit reads
@@ -687,6 +705,7 @@ def main(argv=None) -> int:
     q.add_argument("--limit", type=int, default=100)
     sub.add_parser("files").add_argument("ref")
     sub.add_parser("read-back").add_argument("ref")
+    sub.add_parser("origin")
     a = p.parse_args(argv)
     try:
         if a.cmd == "resolve":
@@ -697,6 +716,8 @@ def main(argv=None) -> int:
             out = backend.list_requests(a.state, a.head, a.limit)
         elif a.cmd == "files":
             out = backend.files(a.ref)
+        elif a.cmd == "origin":
+            out = backend.origin()
         else:
             out = NOOP if isinstance(backend, NoneForge) else backend.read_back(a.ref)
     except ForgeRefusal as exc:
