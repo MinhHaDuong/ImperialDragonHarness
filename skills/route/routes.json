@@ -34,7 +34,7 @@
       "endpoint": "https://albert.api.etalab.gouv.fr/v1 (pi custom provider `albert`, DINUM)",
       "key_env": "ALBERT_API_KEY",
       "status": "live on padme through scripts/pi-albert, which loads the key into the Pi process only (verified 2026-10-28: both seats answered)",
-      "note": "Seats by alias, which follow Albert's upgrades: albert/openweight-code (Qwen3-Coder-30B-A3B-Instruct, 262K, soon DeepSeek 4) and albert/openweight-large (gpt-oss-120b, 131K). Albert also serves deepseek-v4-flash-0731, mistral-small-3.2-24b, ministral-3-8b and gemma-4-31b. Author ruling 2026-10-28: Albert counts as cleared (LOCAL/PRIVÉ) for uncleared content. Plain `pi` has no Albert access; gaze seats launch plain `pi`, so a seat on Albert needs the launcher to use pi-albert.",
+      "note": "Seats by alias, which follow Albert's upgrades: albert/openweight-code (Qwen3-Coder-30B-A3B-Instruct, 262K, soon DeepSeek 4) and albert/openweight-large (gpt-oss-120b, 131K). Albert also serves deepseek-v4-flash-0731, mistral-small-3.2-24b, ministral-3-8b and gemma-4-31b. Author ruling 2026-10-28: Albert counts as cleared (LOCAL/PRIVÉ) for uncleared content; its seats are not yet in the grid (smoke and spot check first). pi-albert pins --provider albert and a non-empty --model (openweight-code by default; openweight-code, openweight-large or deepseek-v4-flash), refusing any other, per adapters/pi/README.md § Rule; callers still assert the served provider. Plain `pi` has no Albert access; gaze seats launch plain `pi`, so a seat on Albert needs the launcher to use pi-albert.",
       "last_verified": "2026-10-28"
     },
     "openrouter": {

@@ -1,11 +1,32 @@
 #!/usr/bin/env bash
-# Pi with the Albert API (DINUM, albert.api.etalab.gouv.fr) reachable. The key is
-# read from ~/.config/keys/albert.env into this process only, never exported to
-# the login environment, so plain `pi` keeps no Albert access. Seats:
-# albert/openweight-code and albert/openweight-large (aliases that follow
-# Albert's upgrades). Author ruling 2026-10-28: Albert counts as cleared for
-# uncleared content.
+# Pi on the Albert API (DINUM, albert.api.etalab.gouv.fr). The key is read from
+# ~/.config/keys/albert.env into this process only, never exported to the login
+# environment, so plain `pi` keeps no Albert access. Author ruling 2026-10-28:
+# Albert counts as cleared (PRIVÉ) for uncleared content.
+# The provider is pinned and the model is never empty: an empty --model is the
+# reroute trigger (adapters/pi/README.md § Rule), which would send the prompt to
+# a hosted fallback. Other --provider/--model values are refused. Callers still
+# assert the served provider (`--mode json`, turn_end.message.provider).
 set -euo pipefail
+
+MODEL="openweight-code"
+ALLOWED="openweight-code openweight-large deepseek-v4-flash"
+args=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --provider|--provider=*|--models|--models=*|--api-key|--api-key=*)
+      echo "pi-albert: $1 refused; this wrapper only runs the albert provider" >&2
+      exit 2 ;;
+    --model) MODEL="${2:-}"; shift 2; continue ;;
+    --model=*) MODEL="${1#--model=}"; shift; continue ;;
+  esac
+  args+=("$1"); shift
+done
+MODEL="${MODEL#albert/}"
+case " $ALLOWED " in
+  *" $MODEL "*) ;;
+  *) echo "pi-albert: model '$MODEL' refused; one of: $ALLOWED" >&2; exit 2 ;;
+esac
 
 keyfile="$HOME/.config/keys/albert.env"
 [ -r "$keyfile" ] || { echo "pi-albert: $keyfile not readable" >&2; exit 1; }
@@ -15,4 +36,4 @@ set -a
 set +a
 [ -n "${ALBERT_API_KEY:-}" ] || { echo "pi-albert: ALBERT_API_KEY missing in $keyfile" >&2; exit 1; }
 
-exec pi "$@"
+exec pi --provider albert --model "$MODEL" "${args[@]}"

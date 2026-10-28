@@ -95,7 +95,7 @@ General recommendations:
   Advisor role, `rules/workflow.md` § Escalation protocol) goes to ASSURANCE, from a
   different family than the asker when the call is contested.
 - Concrete implementation goes to MILIEU SOLIDE; judgment, consistency or
-  monster work to ASSURANCE. Uncleared content forces LOCAL/PRIVÉ. Ambiguous
+  monster work to ASSURANCE. Uncleared content forces LOCAL/PRIVÉ (Albert counts as PRIVÉ by author ruling 2026-10-28). Ambiguous
   tasks wait for a human before any spend; when `rules/workflow.md` batches
   decisions, the batched list wins: collect, ask once, with a recommended default. The 256K guard outranks all of
   it: oversize context is a split-the-work ticket.
