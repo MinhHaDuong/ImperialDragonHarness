@@ -227,7 +227,7 @@ independent follow `skills/route/references/decorrelation.md`. Give it:
 
 Launch the worker in the background and tell it to write its report to a named
 path (`<worktree>/.panel/adherence-semantic.md`, written as `.md.part` then
-renamed). Delete that path and its `.part` before every launch: hunt reruns
+renamed). Delete that path, its `.part` and its `.status` before every launch: hunt reruns
 this skill in the same worktree, and a report left by an earlier run must not
 answer the poll. This skill is a fork: its turn ends the moment it stops calling tools,
 so a launch followed by narration ("waiting for the semantic worker") returns no

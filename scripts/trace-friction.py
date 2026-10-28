@@ -71,6 +71,14 @@ WAIT_RE = re.compile(
     r"(?:sleep\s+\d|until\s)"
     r"|--watch\b|\bgh\s+(?:run|pr\s+checks)\s+watch\b"
 )
+# A wait-roster.py call (ticket 1327) is the same wait moved into a helper:
+# counted, or the series would drop as the recipes adopt it with no less
+# waiting. The recipes quote its path, so this one matches the raw command, at
+# command position only (optionally behind python3 or timeout N).
+WAIT_HELPER_RE = re.compile(
+    r"(?:^|[;&|(]\s*|\n\s*|\b(?:do|then|else)\s+|\btimeout\s+\d+\w*\s+)"
+    r"(?:python3?\s+)?[\"']?[^\s\"';&|]*wait-roster\.py\b"
+)
 
 
 def classify_error(tool: str, text: str) -> str:
@@ -128,7 +136,7 @@ def strip_quoted(cmd: str) -> str:
 
 
 def is_wait_command(command: str) -> bool:
-    return bool(WAIT_RE.search(strip_quoted(command)))
+    return bool(WAIT_RE.search(strip_quoted(command)) or WAIT_HELPER_RE.search(command))
 
 
 def _parse_ts(s) -> datetime | None:
