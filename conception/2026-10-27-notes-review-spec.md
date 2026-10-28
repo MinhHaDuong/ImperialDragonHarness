@@ -121,7 +121,7 @@ Claude Code Web may restrict pushes to its session branch [I, unverified]; that 
   (ruling point 1; trial "Does anything argue against one ref?": nothing refuses it [M]).
 - Per-kind refs (note §3.1, appraise) were chosen there against overwriting several runs on one commit; append +
   `run_id` satisfies that requirement (note §3.1 last line, §8.3 first case). The four families become
-  `kind ∈ {request, plan, report, answer, verdict, link}`.
+  `kind ∈ {request, plan, report, answer, verdict, link, writer}` (`writer`: ticket 1307).
 - One commit or ref per entry (git-bug, git-dit; prior art §4) removes races outright but is a bespoke layout with
   enumeration cost and many refs. Kept as the **fallback store**: branch `idh-review-store`, one file
   `<review_id>/<ts>-<id>.json` per entry, conflict-free rebase on retry [I, not run]. Chosen only on outcome D.
@@ -140,7 +140,8 @@ Kind-specific: `request`: `what`, `why`, `intent`, `tickets`, `delta` (n>1), `re
 REVIEWED|FINDINGS|ESCALATE`, `seats panel|self-only`, `coverage` {scope full|delta, verified, carried, out},
 `report_ids` (pins report versions), `unresolved`, `attribution` (lines), telemetry. `verdict`: `gate_session_id`,
 `round`, `verdict APPROVED|REROLL|ESCALATE|NEEDS-AUTHOR`, `evidence` (entry ids), `gate_candidate` (OID).
-`link`: forge PR number or other external id. An entry is never edited; a correction is a new entry linking it.
+`link`: forge PR number or other external id. `writer` (ticket 1307): `line`, one `writer:` attribution line,
+recorded locally by raid or hunt. An entry is never edited; a correction is a new entry linking it.
 "Latest summary" is a derived view (note §3.2).
 
 ## 4. The request's What; incremental review

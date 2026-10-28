@@ -144,7 +144,11 @@ reads and writes in its own spelling.
 5a. **Push the review evidence.** `python3 "$IDH_ROOT/scripts/review_notes.py" push-landing <branch>`
    pushes `refs/notes/review` and the review-heads of the requests naming `<branch>`, never
    forced. It prints the refs pushed and does nothing when the branch has no review notes
-   or the repository has no remote; a non-zero exit stops the merge.
+   or the repository has no remote; a non-zero exit stops the merge. On a forge, then render
+   the attribution block of notes into the body, right before the merge:
+   `python3 "$IDH_ROOT/scripts/attribution_record.py" --render-pr N` (`references/claims.md`
+   § Attribution block warning); its exit 1 (`missing`, `invalid: …`, a lost edit) is a
+   warning, never a stop.
 6. **Merge.** Gated base:
    `gh pr merge N --merge --match-head-commit "$(git rev-parse HEAD)"`. <!-- harness-extension-point -->
    Never `--auto`; never `--delete-branch`. Ungated base:

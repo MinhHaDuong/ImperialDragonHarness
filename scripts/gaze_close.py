@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Gaze closing in one call (ticket 1227): scratch cleanup, review-worktree
-removal, containment report, duration line, attribution append, result on notes and,
+removal, containment report, duration line, result and attribution on notes and,
 for a PR, a one-line pointer comment.
 
     gaze_close.py <pr> --branch <pr-branch> [--token T] [--entry-branch B]
@@ -11,9 +11,9 @@ every exit path runs this after the panel has consumed its artifacts; the
 scratch `.panel/<pr>` and `build/panel-head` are removed only when untracked,
 after `worktree-tmp-guard.py removal`; `worktree-exit-preflight.sh --removal
 --branch` must pass, else the review worktree stays registered (cleanup blocked,
-exit 1) and the result is ESCALATE naming the files; attribution is appended
+exit 1) and the result is ESCALATE naming the files; the attribution lines are built
 before cleanup so a blocked cleanup still records the review, as an ESCALATE answer
-on notes with its pointer on the PR. A tree with real uncommitted files is never force-removed.
+on notes carrying them, with its pointer on the PR. A tree with real uncommitted files is never force-removed.
 
 `--attribution-file` is required (an empty file records nothing); a call
 without it fails at argument parsing rather than skipping attribution.
@@ -25,7 +25,7 @@ A comment whose `seats:` field says `panel` is refused (exit 2, nothing removed 
 posted) unless `seat_clock.py seats` reads `seats: panel` on the review panel: an item
 other than self filed a report the plan check accepts (ticket 1287).
 
-The `seat:` lines of the result and the `reviewer:` lines of the attribution append are never typed
+The `seat:` lines of the result and the `reviewer:` lines of the attribution are never typed
 (ticket 1303). The comment file holds `{{seats}}`, which the script replaces with the lines
 `seat_clock.py identities` builds from the plan (one name per seat: the plan item's) and the
 launcher-set `worker:` headers, read before cleanup removes the panel and carried into a
@@ -35,7 +35,7 @@ before anything is removed or posted. `--session-runtime` and `--session-model` 
 only `finding: <seat> · verifiable|consider · <path:line> · adopted: yes|no` lines; the script
 writes each seat's `reviewer:` line (through `attribution_record.seat_lines`) and puts the seat's
 findings beneath it. A finding naming a seat absent from the plan, or a seat that did not run, or any other
-typed line, exits 2 before anything is removed, appended or posted.
+typed line, exits 2 before anything is removed, recorded or posted.
 
 The comment file must hold `{{plan_check}}` (ticket 1267) and no typed
 `plan check:` line; otherwise the call exits 2 before anything is removed or
@@ -46,7 +46,7 @@ never the model's to write; the line is also printed on stdout, before
 cleanup, for the caller's return text and a blocked-cleanup ESCALATE. The line is also printed on stdout, before cleanup, so a blocked cleanup
 still gives the calling gaze the line to paste. It may also hold `{{duration}}` and
 `{{containment}}`; both are replaced by the script's own readings. Exit: 0 clean, 1 cleanup blocked
-(attribution appended, ESCALATE answer recorded; 2 when the append or the answer also failed), 2 also when cwd is inside the review worktree (refused, nothing removed), 2 read failure, 4 containment flagged (result still recorded).
+(ESCALATE answer recorded with its attribution; 2 when the answer also failed or a seat line failed), 2 also when cwd is inside the review worktree (refused, nothing removed), 2 read failure, 4 containment flagged (result still recorded).
 
 Every unit records its result in refs/notes/review (ticket 1273 for `branch:<name>`,
 ticket 1300 for a PR number): the attribution lines and the result text go into one
@@ -56,10 +56,9 @@ a detached background sync whose result is ignored (exit 2 only when the entry c
 written); a blocked cleanup records an ESCALATE answer. The answer is the evidence for a PR
 unit (`pr:<n>`) too (ticket 1301): the PR comment is one line, `/gaze review on notes: <review_id>,
 verdict <V>`, posted best-effort after the answer (a failure is printed, never an exit code),
-and none when the answer failed. A PR unit's attribution goes to the PR body through
-`--append-pr`, and the `seat:` lines of the answer through `attribution_record.py --seats-pr`,
-which reads the notes answers; a failed append exits 2. The `branch:` unit's paths use
-`unit_key`, and its attribution lives only in the answer.
+and none when the answer failed. Attribution lives only in the answer, every unit (ticket 1307):
+this script makes no PR-body edit; landing renders the notes block into a PR body just before
+the merge (`raid_land.py`, merge step 5a). The `branch:` unit's paths use `unit_key`.
 """
 import argparse
 import json
@@ -181,7 +180,7 @@ def seat_block(primary, pr, runtime, model):
 
 
 def attribution_lines(file_text, seats):
-    """(lines, failures): the PR-body lines from the generated seats and the finding lines of the
+    """(lines, failures): the answer's attribution lines from the generated seats and the finding lines of the
     attribution file. Each seat's `reviewer:` line is derived (attribution_record.seat_lines);
     its findings follow it. A file the contract refuses raises ValueError, before anything is
     removed or posted; failures are the capture failures of a derived line (an unobserved model)."""
@@ -377,16 +376,8 @@ def main():
         print(f"attribution: seat line FAILED {failure}")
     lines = "\n".join(lines)
     local = unit_key(a.pr) != str(a.pr).strip()  # branch:<name>: the none backend
-    if local and lines:
-        print("attribution: carried in the answer entry (no forge)")
-    elif lines:
-        r = subprocess.run([sys.executable, str(HERE / "attribution_record.py"),
-                            "--append-pr", a.pr, "--append", lines,
-                             "--project", primary.name],
-                           capture_output=True, text=True)
-        print("attribution: " + ("appended" if r.returncode == 0 else "FAILED " + r.stderr.strip()))
-        if r.returncode:
-            status = 2
+    if lines:  # every unit (ticket 1307): landing renders the block, nothing edits a PR body here
+        print("attribution: carried in the answer entry")
     ok, msg = cleanup(primary, a.pr, a.branch)
     print(f"cleanup: {msg}")
     if not ok:
@@ -413,13 +404,6 @@ def main():
             return 4 if flags and status == 0 else status
         result = _field(text, "result")
         pointer(primary, a.pr, result if result in ("REVIEWED", "FINDINGS", "ESCALATE") else "ESCALATE", entry)
-        if re.search(r"^seat: ", text, re.M):  # the reviewer lines the file lacks, from the notes answers (1286, 1301)
-            r = subprocess.run([sys.executable, str(HERE / "attribution_record.py"),
-                                "--seats-pr", a.pr, "--project", primary.name],
-                               capture_output=True, text=True, cwd=str(primary))
-            print("attribution: " + ("seats appended" if r.returncode == 0 else "seats FAILED " + r.stderr.strip()))
-            if r.returncode:
-                status = 2
     return 4 if flags and status == 0 else status
 
 

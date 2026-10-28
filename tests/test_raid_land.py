@@ -188,10 +188,70 @@ def test_dash_ruled_head_still_requires_bookkeeping_tier(repo, monkeypatch):
 
 
 def test_attribution_warning_surfaced_never_refuses(repo, monkeypatch):
-    monkeypatch.setattr(rl, "attribution", lambda body: "missing")
+    monkeypatch.setattr(rl, "attribution", lambda cwd, unit, body: ("missing", None))
     forge = StubForge(head(repo))
     code, out = land(repo, forge, head(repo))
     assert code == 0 and any("attribution: missing" in line for line in out)
+
+
+# --- ticket 1307: the block lives on notes; landing renders it into the body before the merge ---
+
+WRITER = ("writer: step=execute · runtime=claude-code · model=anthropic/claude-opus-5-5 · effort=not-stated"
+          " · route=opus · independence=not-stated")
+REVIEWER = ("reviewer: step=review · seat=a · runtime=codex · model=openai/gpt-6-luna · effort=not-stated"
+            " · route=headless · independence=not-stated · status: ran")
+
+
+def gazed(repo):
+    import review_notes as rn
+    rid = rl.attribution_record.record_writer(str(repo), WRITER, "pr:7", branch="feat")
+    rn.add(str(repo), "answer", rid, {"run_id": "gz-1", "result": "REVIEWED", "seats": "panel",
+                                      "coverage": {"scope": "full"}, "attribution": [REVIEWER], "text": "x"})
+    return rid
+
+
+class RenderForge(StubForge):
+    def __init__(self, head, body, fail=False):
+        super().__init__(head, body=body)
+        self.fail = fail
+
+    def append_body_line(self, pr, line, edit=None):
+        self.calls.append("render")
+        if self.fail:
+            raise rl.forge.ForgeRefusal("PR #7 body lost the appended line twice")
+        self.body = edit(self.body)
+
+
+def test_forge_landing_renders_the_notes_block_right_before_the_merge(repo):
+    gazed(repo)
+    body = "Summary\n\n**Ticket:** none\n"
+    forge = RenderForge(head(repo), body)
+    code, out = land(repo, forge, head(repo))
+    assert code == 0, out
+    assert "attribution: ok" in out
+    names = [c if isinstance(c, str) else c[0] for c in forge.calls]
+    assert names.index("render") == names.index("merge") - 1
+    record = rl.attribution_record.parse_pr_body(forge.body)
+    assert record["pr"] == 7 and record["reviewers"][0]["seat"] == "a"
+    assert forge.body.startswith(body)
+
+
+def test_failed_render_is_a_warning_and_the_merge_goes_on(repo):
+    gazed(repo)
+    forge = RenderForge(head(repo), "Summary\n", fail=True)
+    code, out = land(repo, forge, head(repo))
+    assert code == 0 and merged_calls(forge)
+    assert any(line.startswith("attribution: render failed") for line in out)
+
+
+def test_pre_switch_request_falls_back_to_its_body_and_is_not_rendered(repo):
+    body = ("```attribution\nkind: review-attribution\npr: 7 · merged pending · project: x\n"
+            f"{WRITER}\n{REVIEWER}\n```\n")
+    forge = RenderForge(head(repo), body)
+    code, out = land(repo, forge, head(repo))
+    assert code == 0, out
+    assert any(line.startswith("attribution: ok (PR body") for line in out)
+    assert "render" not in forge.calls and forge.body == body
 
 
 def test_duration_comment_posted_after_merge(repo):
@@ -295,3 +355,23 @@ def test_adapter_refusal_before_the_merge_call_is_exit_1(repo):
     assert rl.main_land(forge, "7", head(repo), [], "main", repo, [].append) == rl.REFUSED
     assert not issubclass(rl.forge.ForgeRefusal, rl.Refusal)
     assert not issubclass(rl.forge.MergeRefused, rl.Refusal)
+
+
+def test_render_reads_the_block_again_after_the_notes_push(repo, monkeypatch):
+    """Gaze finding on PR #1874: step 0 reads local notes; the push integrates the remote's
+    entries first, so the render takes the block read after it, never the step-0 one."""
+    import review_notes as rn
+    rid = rl.attribution_record.record_writer(str(repo), WRITER, "pr:7", branch="feat")
+
+    def push(cwd, branch):  # the remote's answer arrives with the landing refresh
+        rn.add(str(repo), "answer", rid, {"run_id": "gz-9", "result": "REVIEWED", "seats": "panel",
+                                          "coverage": {"scope": "full"}, "attribution": [REVIEWER],
+                                          "text": "x"})
+        return []
+
+    monkeypatch.setattr(rl.review_notes, "push_for_landing", push)
+    forge = RenderForge(head(repo), "Summary\n")
+    code, out = land(repo, forge, head(repo))
+    assert code == 0, out
+    assert any(line.startswith("attribution: invalid") for line in out)  # step 0: no reviewer yet
+    assert "render" in forge.calls and REVIEWER in forge.body

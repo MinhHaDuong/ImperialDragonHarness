@@ -73,6 +73,8 @@ def load_records(project, stats):
             if header:
                 pr = int(header[1])
             record = parse_record(text)
+            if not isinstance(record["pr"], int):  # a no-forge unit (ticket 1307): no PR to backfill
+                raise ValueError("branch-unit record has no PR number")
             if name_pr and record["pr"] != int(name_pr[1]):
                 raise ValueError("record PR disagrees with filename")
             records[record["pr"]].append((path, original, record))

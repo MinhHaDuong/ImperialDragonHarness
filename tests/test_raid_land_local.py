@@ -306,3 +306,27 @@ def test_landing_without_notes_leaves_fetch_config_untouched(tmp_path, monkeypat
     assert git(work, "config", "--get-all", "remote.origin.fetch") == before
     assert subprocess.run(["git", "-C", str(work), "fetch", "origin"], capture_output=True,
                           env=env()).returncode == 0
+
+
+# --- ticket 1307: an F2 landing reads the attribution block from notes -----------------------
+
+def test_f2_landing_reads_a_recorded_review_as_ok(tmp_path, monkeypatch):
+    work, wt, _ = make_repo(tmp_path, monkeypatch, remote=False)
+    writer = ("writer: step=execute · runtime=claude-code · model=anthropic/claude-opus-5-5"
+              " · effort=not-stated · route=opus · independence=not-stated")
+    reviewer = ("reviewer: step=review · seat=a · runtime=codex · model=openai/gpt-6-luna"
+                " · effort=not-stated · route=headless · independence=not-stated · status: ran")
+    rid = rl.attribution_record.record_writer(str(wt), writer, "branch:feat", base_ref="main")
+    review_notes.add(str(wt), "answer", rid, {"run_id": "gz-1", "result": "REVIEWED", "seats": "panel",
+                                              "coverage": {"scope": "full"}, "attribution": [reviewer],
+                                              "text": "x"})
+    code, out = land(wt)
+    assert code == 0, out
+    assert "attribution: ok" in out
+
+
+def test_f2_landing_without_a_review_reads_missing_and_still_lands(tmp_path, monkeypatch):
+    work, wt, _ = make_repo(tmp_path, monkeypatch, remote=False)
+    code, out = land(wt)
+    assert code == 0, out
+    assert "attribution: missing" in out

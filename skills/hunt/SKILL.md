@@ -168,7 +168,10 @@ When the work shows the plan was wrong, replan and announce why.
   the one further round `skills/raid/references/fix-and-regate.md` allows for
   findings that carry a reproduction. A clean
   review leaves the branch ready to merge.
-  PR-body attribution lines (writer, reviewer) follow `skills/merge/references/claims.md` § Line formats.
+  Attribution lives on notes (`skills/merge/references/claims.md` § Line formats): gaze
+  records the reviewer lines; when no orchestrator records the writer lines (a raid does),
+  record your own once the review exists, locally:
+  `python3 "$IDH_ROOT/scripts/attribution_record.py" --record-writer '<line>' --unit pr:<n>|branch:<branch>`.
 
 ## Celebrate
 

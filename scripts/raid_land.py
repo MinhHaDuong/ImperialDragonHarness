@@ -5,7 +5,8 @@
 
 Run it from the request's own worktree on its head branch. It executes
 `skills/merge/SKILL.md` § The recipe, steps 0 to 8 (5a, the push of the review notes and heads of the unit, runs
-just before the merge: ticket 1299); step 9 (the after-merge
+just before the merge: ticket 1299; on a forge it then renders the attribution block of notes into the
+request body, a warning when it fails: ticket 1307); step 9 (the after-merge
 runner) needs no call here: hooks/reference-transaction starts it when step 8's
 sync moves main (ticket 1265). That file stays the contract.
 `--ruled-head` is the tip the review gate ruled on (`-` for a bookkeeping tier
@@ -34,6 +35,7 @@ import sys
 import time
 from pathlib import Path
 
+import attribution_record
 import forge
 import review_notes
 from step_clock import fmt
@@ -161,8 +163,36 @@ def sync(primary: Path, base: str) -> tuple[bool, list[str]]:
     return ok, lines
 
 
-def attribution(body: str) -> str:
-    """Step 0 warning text: `ok`, `missing`, `invalid: ...` or `unchecked`; never a refusal."""
+def attribution(cwd: Path, unit: str, body: str | None) -> tuple[str, str | None]:
+    """Step 0 (ticket 1307): (warning text, notes block). The block is read from notes, both
+    modes, locally; `ok` carries it for the render. A forge request whose notes hold no valid
+    block falls back to its body (a request opened before the switch). Never a refusal."""
+    project = Path(git(cwd, "rev-parse", "--path-format=absolute", "--git-common-dir").stdout.strip()).parent.name
+    try:
+        text, status = attribution_record.notes_block(str(cwd), unit, project)
+    except Exception as exc:  # a warning, never a refusal
+        text, status = None, f"unchecked ({exc})"
+    if text or body is None:
+        return status, text
+    from_body = attribution_body(body)
+    return (f"{from_body} (PR body; notes: {status})" if from_body == "ok" else f"{status} (PR body: {from_body})"), None
+
+
+def render(fg, pr: str, text: str | None, out) -> None:
+    """Step 5a, after the notes push and right before the merge (ticket 1307): the notes block
+    becomes the PR body's block, in one edit read back by the adapter. A failure is a warning:
+    the block stays on notes, the merge goes on."""
+    if not text:
+        return
+    try:
+        attribution_record.render_to_pr(pr, text, fg)
+        out("attribution: rendered into the PR body from notes")
+    except Exception as exc:  # never a refusal: a missing block costs the record, not the merge
+        out(f"attribution: render failed ({exc}); the block stays on notes")
+
+
+def attribution_body(body: str) -> str:
+    """The PR body's own block: `ok`, `missing`, `invalid: ...` or `unchecked`; never a refusal."""
     try:
         done = subprocess.run([sys.executable, str(ROOT / "scripts" / "attribution_record.py"), "--pr-body"],
                               input=body, capture_output=True, text=True, timeout=60)
@@ -231,7 +261,9 @@ def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
     else:
         base = info.get("base") or base
         base_ref = f"origin/{base}"
-        out(f"attribution: {attribution(info.get('body') or '')}")
+    unit = (info.get("review_id") or pr) if local else f"pr:{pr}"
+    status, _ = attribution(cwd, unit, None if local else info.get("body") or "")
+    out(f"attribution: {status}")
     claims = claims_of(info, local)
     if local:
         if sorted(claims) != sorted(ruled_claims):
@@ -271,6 +303,8 @@ def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
             raise Refusal(f"review notes not pushed: {exc}") from exc
         if pushed:
             out(f"review notes pushed: {', '.join(pushed)}")
+    if not local:  # read again after the notes push integrated the remote's entries
+        render(fg, pr, attribution(cwd, unit, again.get("body") or "")[1], out)
     try:
         try:
             fg.merge(pr, head, auto=not gated and not local)
