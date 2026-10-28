@@ -14,8 +14,15 @@ dies at once and would let `worktree-gc` unlock a live tree.
 If `$PPID` prints 1, the shell runs in a pid namespace (a sandboxed runtime)
 and the owner is not visible: write the reason without a pid —
 `hunt t<id> (owner pid not visible)`, never `(pid 1)`, which on the host names
-init. Name the path with another discriminator (`$RANDOM`), or two sandboxed
-hunts on one ticket share `t<id>-1`.
+init.
+
+## The path: pid plus `$RANDOM`
+
+The path is `t<id>-<pid>-<random>`, redrawn while it exists. The pid alone is
+not a discriminator: a spawner and its subagents share one runtime process, so
+`t<id>-$PPID` once resolved a subagent's hunt to its orchestrator's session
+tree (ticket 1328). The lock reason keeps the bare pid, which `worktree-gc`
+parses; the path is never recomputed from it.
 
 ## When worktree-gc reclaims an ownerless tree
 

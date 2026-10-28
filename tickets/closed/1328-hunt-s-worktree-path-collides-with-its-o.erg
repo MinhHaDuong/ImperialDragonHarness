@@ -2,9 +2,11 @@
 Title: Hunt's worktree path collides with its orchestrator's session worktree when both share $PPID
 Created: 2026-10-28
 Author: reviewer
+Closed: fixed by PR #1934: hunt path t$ID-$PPID-$RANDOM redrawn while it exists; inherited cwd no longer counts as handed
 
 --- log ---
 2026-10-28T21:13Z reviewer created
+2026-10-28T22:14Z reviewer closed — fixed by PR #1934: hunt path t$ID-$PPID-$RANDOM redrawn while it exists; inherited cwd no longer counts as handed
 
 --- body ---
 ## Context

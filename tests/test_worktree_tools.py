@@ -1259,3 +1259,58 @@ def test_gc_skips_live_process_cwd_worktree(origin):
     finally:
         proc.kill()
         proc.wait()
+
+
+# --- hunt § Worktree recipe: no shared-$PPID collision (ticket 1328) --------
+
+HUNT_SKILL = REPO_ROOT / "skills" / "hunt" / "SKILL.md"
+
+
+def _hunt_worktree_recipe():
+    """The bash block under hunt § Worktree's "Otherwise create one", verbatim."""
+    text = HUNT_SKILL.read_text()
+    tail = text.split("**Otherwise create one**", 1)[1]
+    return tail.split("```bash\n", 1)[1].split("```", 1)[0]
+
+
+def _run_hunt_recipe(primary, ticket, branch, prelude=""):
+    script = _hunt_worktree_recipe().replace(
+        "t$ID-short-description", branch)
+    # Each call is its own bash child of this pytest process: the two share
+    # one $PPID, as a spawner and its subagent share the runtime process.
+    out = run(["bash", "-c", f"ID={ticket}\n{prelude}{script}"], cwd=primary,
+              check=False)
+    assert out.returncode == 0, f"recipe failed for {branch}: {out.stderr}"
+    return Path(out.stdout.strip().splitlines()[-1])
+
+
+def test_hunt_recipe_two_callers_sharing_ppid_get_distinct_paths(origin):
+    _, primary = origin
+    git(primary, "fetch", "origin")
+    ppid = os.getpid()
+    # The spawner's session tree, named the old way from the shared $PPID.
+    spawner = primary / ".claude" / "worktrees" / f"t7-{ppid}"
+    git(primary, "worktree", "add", str(spawner), "-b", "spawner", "main")
+
+    first = _run_hunt_recipe(primary, 7, "t7-first")
+    second = _run_hunt_recipe(primary, 7, "t7-second")
+
+    assert len({spawner, first, second}) == 3
+    porcelain = git(primary, "worktree", "list", "--porcelain").stdout
+    for wt in (first, second):
+        assert wt.is_dir()
+        assert f"worktree {wt}\n" in porcelain
+    # The lock keeps the bare pid that worktree-gc parses.
+    assert porcelain.count(f"locked hunt t7 (pid {ppid})\n") == 2
+
+
+def test_hunt_recipe_redraws_when_path_exists(origin):
+    _, primary = origin
+    git(primary, "fetch", "origin")
+    seed = "RANDOM=1328\n"
+    taken = _run_hunt_recipe(primary, 8, "t8-first", prelude=seed)
+    # Same seed, same first draw: the recipe must not land on the held tree.
+    again = _run_hunt_recipe(primary, 8, "t8-second", prelude=seed)
+    assert again != taken
+    assert git(again, "branch", "--show-current").stdout.strip() == "t8-second"
+    assert git(taken, "branch", "--show-current").stdout.strip() == "t8-first"

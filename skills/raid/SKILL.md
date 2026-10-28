@@ -391,7 +391,8 @@ For each eligible PR, sequentially within the wave:
 2. Run the recipe's commands inside the PR's own worktree, as one command
    (`(cd <worktree-path> && ...)`, a subshell); `git -C <worktree-path>` is
    for single reads. An Execute agent's own worktree qualifies
-   directly: take its path from the agent's completion notification. Never check the
+   directly: take its path from the agent's completion notification; a path equal to the
+   session worktree is refused, never merged or cleaned up from. Never check the
    branch out anywhere else, and do not delete and re-checkout the branch.
 3. Check PR is still mergeable (no conflicts from earlier merges in this wave).
 4. Merge by the recipe, `skills/merge/SKILL.md` § The recipe, in one call from the PR's
