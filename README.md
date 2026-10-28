@@ -27,6 +27,12 @@ They `/yawn` at dawn, `/hunt` one ticket or `/raid` many in autonomous waves,
 - **Forge independent.** A forge, when present, is a transport and a merge
   button, not a store of record. A hardcoded dependency on GitHub is a bug:
   forge calls go through one adapter (`scripts/forge.py`).
+- **Runtime and model independence.** Rules and skills are portable Markdown,
+  run under Claude Code, Codex and Pi; runtime specifics stay in `adapters/`
+  and `rules/claude-code.md`. No skill names a model: `/route` assigns each
+  task one from benchmark evidence, and reviews that must be independent take
+  a seat from another model family
+  ([decorrelation](skills/route/references/decorrelation.md)).
 
 ## The Five Claws
 
