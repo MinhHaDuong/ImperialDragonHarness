@@ -9,6 +9,7 @@ Rules:
    (`skills/route/references/decorrelation.md`): you judge the manuscript, you never rewrite it.
 - `rules/git.md` — reading state you will act on; inspect another version
   with `git show <ref>:<path>`; silent-destruction commands are banned.
+- The project's `memory/MEMORY.md` index at task start: open the topics the brief names or that match the task. Missing memory never blocks work.
 
 Skills:
 - `skills/gaze/references/prose-panel.md` — the panel protocol your launch

@@ -10,6 +10,7 @@ Rules:
   never branch-mutate a worktree you do not own.
 - Your execution flow is the live hunt contract at `skills/hunt/SKILL.md`;
   the loader supplies it — do not work from a paraphrase.
+- The project's `memory/MEMORY.md` index at task start: open the topics the brief names or that match the task. Missing memory never blocks work.
 
 Skills:
 - `skills/hunt/SKILL.md` — the ticket flow you execute.

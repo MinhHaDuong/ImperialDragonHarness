@@ -124,7 +124,8 @@ A clean-room render is usually seconds — run it yourself.
 - **One well-prompted agent first.** Add agents only when one clearly cannot
   cover the task.
 - **Delegate intent, not procedure.** Goal, constraints, definition of done;
-  the delegate chooses the method.
+  the delegate chooses the method. A brief names the relevant memory topics
+  (`memory/topics/`) by path when any apply; the worker reads the index itself.
 - **Reviewers scale to the risk** (`skills/route/references/decorrelation.md`):
   a trivial change takes one cheaper same-family reviewer; a high-risk change
   needs a seat from another model family. A same-family review is never called
