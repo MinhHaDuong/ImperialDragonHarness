@@ -77,7 +77,10 @@ re-gate.
   what `origin/<branch>` adds to the gate's `ruled_tip_sha` (read after
   `git fetch origin`) is bookkeeping, an empty delta included (§ Gating
   tiers); otherwise re-gate, do not merge.** A bookkeeping-tier
-  request needs no verdict.
+  request needs no verdict. With none yet, gate as
+  `verify-gate <pr> repo=<PR's worktree> session=<uuid>`, one UUID for round
+  1 and the one re-gate (`skills/verify-gate/SKILL.md` § Gate sessions). A
+  raid's Phase 6 verdict is that verdict: never gate it again here.
   **Head checks, immediately before the merge:** `git fetch origin`, then
   `git rev-parse HEAD` == `git rev-parse origin/<branch>` (a mismatch means
   sync, never merge) and, full tier, `merge-gate.py tier --since <ruled_tip_sha>`
