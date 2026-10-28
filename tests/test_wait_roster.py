@@ -87,3 +87,33 @@ def test_usage_errors_exit_two(tmp_path):
     assert wait(str(tmp_path), '--until', until(1)).returncode == 2
     assert wait(str(tmp_path), 'a').returncode == 2
     assert wait(str(tmp_path / 'nope'), 'a', '--until', until(1)).returncode == 2
+
+
+def test_report_written_after_the_deadline_is_late_not_present(tmp_path):
+    report = tmp_path / 'a.md'
+    report.write_text('x')
+    done = wait(str(tmp_path), 'a', '--until', until(-5))  # the file's mtime is now, after --until
+    assert (done.returncode, done.stdout.split()) == (1, ['a'])
+
+
+def test_failed_seat_status_is_final_and_returns_at_once(tmp_path):
+    (tmp_path / 'a.md').write_text('x')
+    (tmp_path / 'b.md.status').write_text('b: no report (failed, exit 1, 3s)\n')
+    started = time.monotonic()
+    done = wait(str(tmp_path), 'a', 'b', '--until', until(60))
+    assert time.monotonic() - started < 10
+    assert (done.returncode, done.stdout.splitlines()) == (1, ['status: b'])
+
+
+def test_reported_status_without_a_report_keeps_waiting(tmp_path):
+    (tmp_path / 'a.md.status').write_text('a: reported in 3s\n')
+    assert wait(str(tmp_path), 'a', '--until', until(60), '--slice', '1').returncode == 3
+
+
+def test_status_older_than_the_manifest_is_a_past_rounds(tmp_path):
+    status = tmp_path / 'a.md.status'
+    status.write_text('a: no report (timed out after 5s)\n')
+    os.utime(status, (time.time() - 100, time.time() - 100))
+    (tmp_path / 'manifest.txt').write_text('a\tmodel\tfam\treason\n')
+    done = wait(str(tmp_path), '--roster', str(tmp_path / 'manifest.txt'), '--until', until(60), '--slice', '1')
+    assert done.returncode == 3

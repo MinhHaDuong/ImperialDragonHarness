@@ -11,13 +11,18 @@ The roster is NAMEs, or `--roster FILE`: a gaze `manifest.txt` (parsed by
 `seat_clock.manifest_items`) or any other file with one name per line. A
 manifest roster also takes the manifest as `--newer-than`, as `seat_clock.py
 roster` does; a report older than `--newer-than` is a past round's and does
-not count. `--until` is an absolute epoch second (`date +%s`, plus the
+not count; nor does a report written after `--until`. A fresh
+`<name>.md.status` that does not say `reported in` (a failed headless seat
+writes only that, `seat_clock.py run`) is final for the name: the wait does
+not run on to the deadline for a dead seat. `--until` is an absolute epoch second (`date +%s`, plus the
 deadline): the same value on every re-issue keeps the deadline across calls.
 
 One call stays under the runtime's per-call cap (Claude Code Bash: 600 s):
 `--slice` (default 540 s) bounds it. Exit codes:
-  0  every roster name is present
-  1  the deadline passed; the missing names are listed, one per line
+  0  every roster name has its report
+  1  not every name has a report: the deadline passed (missing names listed,
+     one per line), or every name is final but a seat ended without a report
+     (its line reads `status: <name>`); the call returns at once in that case
   2  usage error
   3  the slice ended before the deadline; re-issue the same command
 """
@@ -39,11 +44,22 @@ def manifest_names(panel: Path) -> list[str]:
     return [cells[0] for cells in module.manifest_items(panel)]
 
 
-def missing(panel: Path, names: list[str], floor: float | None) -> list[str]:
-    def present(name: str) -> bool:
+def classify(panel: Path, names: list[str], floor: float | None, until: float) -> tuple[list[str], list[str]]:
+    """The names still pending, and those final with a status line but no report."""
+    def fresh(path: Path) -> bool:
+        return path.is_file() and (floor is None or path.stat().st_mtime >= floor)
+
+    pending, dead = [], []
+    for name in names:
         report = panel / f'{name}.md'
-        return report.is_file() and (floor is None or report.stat().st_mtime >= floor)
-    return [name for name in names if not present(name)]
+        if fresh(report) and report.stat().st_mtime <= until:  # a report after the deadline is late
+            continue
+        status = panel / f'{name}.md.status'
+        if fresh(status) and ': reported in ' not in status.read_text(errors='replace'):
+            dead.append(name)
+        else:
+            pending.append(name)
+    return pending, dead
 
 
 def main(argv: list[str]) -> int:
@@ -80,13 +96,17 @@ def main(argv: list[str]) -> int:
         return 2
     slice_end = time.time() + args.slice_s
     while True:
-        gone = missing(panel, names, floor)
-        if not gone:
-            return 0
+        gone, dead = classify(panel, names, floor, args.until)
         now = time.time()
-        if now >= args.until:
-            print('\n'.join(gone))
-            print(f'wait-roster: deadline passed, {len(gone)} of {len(names)} missing', file=sys.stderr)
+        lines = gone + [f'status: {name}' for name in dead]
+        if not gone:
+            if dead:
+                print('\n'.join(lines))
+            return 1 if dead else 0
+        if now > args.until:
+            print('\n'.join(lines))
+            print(f'wait-roster: deadline passed, {len(gone) + len(dead)} of {len(names)} without a report',
+                  file=sys.stderr)
             return 1
         if now >= slice_end:
             print(f'wait-roster: slice of {args.slice_s:g}s ended, {len(gone)} of {len(names)} missing, '

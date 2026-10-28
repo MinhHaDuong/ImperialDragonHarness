@@ -73,9 +73,13 @@ launcher and seats share a filesystem. The plan file `<panel>/manifest.txt`
    --roster <panel>/manifest.txt --until <epoch>`, never a hand-written loop.
    Fix `<epoch>` once, at launch (`date +%s` plus the plan's budget, never
    past gaze's 15-minute deadline), and pass the same literal on every call:
-   the helper answers 0 all present, 1 deadline (missing names listed), 3 its
-   540 s slice ended under the tool cap, so re-issue the same command. It
-   ignores `.part` files and reports older than the manifest. Collection ends
+   the helper answers 0 all reported, 1 not all reported (missing names listed;
+   `status: <name>` for a seat whose fresh `.md.status` says it ended without
+   a report, which returns at once rather than at the deadline), 3 its 540 s
+   slice ended under the tool cap, so re-issue the same command. It ignores
+   `.part` files, reports older than the manifest and reports written after
+   the deadline. Write the run's own (self) report before calling it, or the
+   wait is on itself. Collection ends
    when every plan item has its report or the deadline passes. At the deadline, stop the seats the runtime can
    stop; a late report is not read. A seat that only
    *returned* its findings reported to nobody. There is no retry: a seat with
