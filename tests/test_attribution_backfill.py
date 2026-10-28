@@ -12,6 +12,7 @@ from run_checked import run_checked
 
 CLI = Path(__file__).resolve().parents[1] / "scripts" / "attribution_backfill.py"
 pytestmark = pytest.mark.integration
+sys.path.insert(0, str(CLI.parent))  # attribution_record imports forge from its own directory
 SPEC = importlib.util.spec_from_file_location("attribution_record", CLI.with_name("attribution_record.py"))
 READER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(READER)

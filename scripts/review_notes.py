@@ -79,8 +79,14 @@ never past a recorded ESCALATE verdict. `verdict` appends the gate's ruling
 with the round it derives itself, only on an admitted head: never a third
 round, never a REROLL on round 2; `add` refuses `verdict`.
 
+Readers (ticket 1301). The answers are the review evidence of a PR unit too; its PR comment is
+a one-line pointer. `answers --unit pr:<n>` prints every answer's text (attribution's seat
+source); `--latest [--json] [--head <sha>]` the newest answer's result, seats and reviewed head
+(`current` when --head names that commit), what raid polls. No review exits 1; a stale read
+with nothing local refuses, as `find`.
+
 Commands: setup, open, request, add, sync, refresh, publish, push-landing, show, history, find,
-findings, coverage, gate, verdict, keep-head, export, import, prune (refused).
+answers, findings, coverage, gate, verdict, keep-head, export, import, prune (refused).
 Exit: 0 ok, 1 refused or below retrievable, 2 usage or tamper.
 """
 
@@ -763,6 +769,23 @@ def resolve_unit(cwd, unit, remote="origin"):
     return _resolved(cwd, remote, find_unit, unit)
 
 
+def answer_texts(cwd, review_id):
+    """The text of every `answer` entry of the review, oldest first (ticket 1301): the gaze
+    results that attribution's `--seats-pr` reads its `seat:` lines from, instead of PR comments."""
+    return [e.get("text") or "" for e in entries(cwd, review_id) if e["kind"] == "answer"]
+
+
+def latest_answer(cwd, review_id):
+    """The newest `answer` of the review as a poller reads it (ticket 1301): result, seats, the
+    head it reviewed and its entry id; None when the review has no answer yet."""
+    answers = [e for e in entries(cwd, review_id) if e["kind"] == "answer"]
+    if not answers:
+        return None
+    e = answers[-1]
+    return {"review_id": review_id, "answer": e["id"], "result": e.get("result"),
+            "seats": e.get("seats"), "reviewed_head_sha": e["head"], "ts": e.get("ts")}
+
+
 def open_findings(cwd, review_id):
     """Findings whose latest disposition (by (ts, id)) is not a closing one."""
     found, state = {}, {}
@@ -991,6 +1014,11 @@ def main(argv=None):
     s.add_argument("branch", nargs="?")
     s.add_argument("--unit", help="pr:<n>: a forge merge request's review, never matched by branch")
     sub.add_parser("findings").add_argument("review")
+    s = sub.add_parser("answers", help="a PR review's gaze answers (resolved after refresh)")
+    s.add_argument("--unit", required=True, help="pr:<n>")
+    s.add_argument("--latest", action="store_true", help="only the newest answer's result, seats and head")
+    s.add_argument("--json", action="store_true", help="with --latest: one JSON object")
+    s.add_argument("--head", help="with --latest: report whether the answer reviewed this commit (current)")
     s = sub.add_parser("coverage")
     s.add_argument("review")
     s.add_argument("head")
@@ -1057,6 +1085,24 @@ def main(argv=None):
             if not rid:
                 return 1
             print(rid)
+        elif a.cmd == "answers":
+            rid = resolve_unit(cwd, a.unit, remote)
+            if not rid:
+                print(f"review_notes: no review for {a.unit}", file=sys.stderr)
+                return 1
+            if not a.latest:
+                for text in answer_texts(cwd, rid):
+                    print(text.rstrip("\n"))
+                    print()
+                return 0
+            latest = latest_answer(cwd, rid)
+            if not latest:
+                print(f"review_notes: no answer yet in review {rid} ({a.unit})", file=sys.stderr)
+                return 1
+            if a.head:
+                latest["current"] = latest["reviewed_head_sha"] == _rev(cwd, a.head)
+            print(json.dumps(latest) if a.json else
+                  " ".join(f"{k}={v}" for k, v in latest.items()))
         elif a.cmd == "findings":
             for f in open_findings(cwd, a.review):
                 print(json.dumps(f))

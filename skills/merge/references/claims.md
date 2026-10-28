@@ -64,8 +64,9 @@ reviewer: step=review · seat=correctness · runtime=codex · model=<provider>/<
 - Reviewer: `seat`, `runtime`, `model`, `status: ran|failed|skipped`, plus `step`,
   `effort`, `route`, `independence`; `finding:` lines follow a `ran` reviewer.
 - A masked identity replaces `model=` with `model-state=` and `model-evidence=`.
-- Gaze derives reviewer lines from the `seat:` lines of its posted result when the
-  seat wrote none (`gaze_close.py`, via `--seats-pr`).
+- Gaze derives reviewer lines from the `seat:` lines of its result when the seat
+  wrote none (`gaze_close.py`, via `--seats-pr`, which reads the review's notes
+  answers; a bare model id takes the seat's `family` as provider prefix).
 - Check with `--pr-body` (strict): `ok`, `missing` or `invalid: <reason>`.
 
 ## Repair

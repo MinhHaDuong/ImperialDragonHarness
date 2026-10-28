@@ -49,13 +49,13 @@ For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$
    those targets match the actual changed paths. Python code, unmapped paths, or a
    project without a map require the full gate; never label a scoped pass full.
 3. **Review comments are load-bearing.** Every review comment (from `/review`,
-   the findings of every `## /gaze result` comment, human authors, Copilot) is either ADDRESSED (commit changed the cited file, OR
+   the findings of every gaze answer on notes (§ Notes review), human authors, Copilot) is either ADDRESSED (commit changed the cited file, OR
    the comment was marked resolved, OR a ticket was opened with the rationale) or
    UNRESOLVED. No "I'll get to it later."
 4. **Simplify findings are load-bearing.** Every must-fix from Gaze’s report-only simplify
    phase is either fixed by the coder (diff shows the change) or explicitly justified in a
    PR comment that the gate agent validates. Read the `Unresolved simplify:` line of every
-   `## /gaze result` comment on the PR: a later round may have skipped simplify.
+   gaze answer of the review (`review_notes.py show`): a later round may have skipped simplify.
 5. **Adherence violations are blocking.** Adherence is read from the merge
    gate record's checks (`lint` runs the `-m adherence` tests; § Check
    plan), never from a gaze result: a failing check is a REROLL trigger.
@@ -82,8 +82,8 @@ itself. Optionally:
 Start the step clock before anything else (`skills/gaze/references/output.md` § Duration clock); its `end` line fills the verdict's `duration:`.
 
 Every invocation produces the same verdict shape. Round is always derived from the
-review's `verdict` entries in `refs/notes/review` when the unit has a notes review, else
-from PR comment history (§ Gate sessions, § Notes review), never passed by the caller.
+review's `verdict` entries in `refs/notes/review` (§ Gate sessions, § Notes review),
+never from PR comments and never passed by the caller.
 
 **Cwd prerequisite**: the gate uses `gh` and `git` commands that resolve
 against cwd, and a `context: fork` invocation does **not** inherit the
@@ -101,7 +101,7 @@ returns, so a later gate run cannot rely on it.
 ```bash
 PR_BRANCH=<head branch resolved from the forge for <pr-number>>
 # <session-id>: the caller's session=, else the standalone UUID generated now;
-# <round>: derived from PR comments (§ Gate sessions) before the tree exists.
+# <round>: derived by `review_notes.py gate` (§ Notes review) before the tree exists.
 primary_root=$(git -C "<repo-path>" rev-parse --show-toplevel) || exit 1
 primary_root="${primary_root%%/.claude/worktrees/*}"
 gate_tree="$primary_root/.claude/worktrees/gate-<pr-number>-<session-id>-r<round>"
@@ -112,7 +112,7 @@ if ! git -C "$primary_root" worktree add --detach "$gate_tree" origin/"$PR_BRANC
 fi
 ```
 
-On every exit path, after the verdict comment posts: `git -C "$primary_root"
+On every exit path, after the verdict is recorded: `git -C "$primary_root"
 worktree remove "$gate_tree"`. The session and round suffix keeps a
 round-1 tree left behind by a refused removal from blocking round 2. The gate writes nothing in it, so a plain
 remove suffices; a refusal is reported in the verdict, never forced.
@@ -376,10 +376,9 @@ The caller owns the gate session; gaze has no part in it.
 - **Standalone** means only that no `session=` was passed (an author's ad hoc
   or debugging run): the gate generates a fresh UUID and records it. It changes
   no rule below; there is no standalone override.
-- **Round derivation:** on a unit with a notes review, `review_notes.py gate`
-  derives it (§ Notes review). Otherwise count PR comments matching
-  `/verify-gate round=N verdict=V`, across every session and caller; current
-  round = count + 1. The caller never passes the round.
+- **Round derivation:** `review_notes.py gate` derives it (§ Notes review):
+  the review's recorded verdicts, across every session and caller, plus one.
+  PR comments are never counted. The caller never passes the round.
 - **Two-round cap, every path.** Round > 2 → immediate ESCALATE, whoever calls
   and whether or not a session id was passed. A fresh session id does not reset
   the count. Past an ESCALATE the merge decision is the author's, not another
@@ -392,7 +391,7 @@ The caller owns the gate session; gaze has no part in it.
   session: round 1, then one re-gate after the fix. Raid never launches a
   third run and never opens a new session to escape the cap.
 - **No gate without a completed review.** Standalone or from a caller, the gate
-  is not run when the PR's latest posted `## /gaze result` is ESCALATE, or when no
+  is not run when the review's latest gaze answer on notes is ESCALATE, or when no
   gaze result was accepted for the current head (its `reviewed_head_sha` is
   stale). A moved head is not stale when what it adds since
   `reviewed_head_sha` is bookkeeping or nothing:
@@ -401,30 +400,31 @@ The caller owns the gate session; gaze has no part in it.
   documented caller path past a moved head is the round-2 re-gate of the fix
   for a round-1 REROLL (`skills/raid/SKILL.md` § Phase 6). Otherwise the gate
   answers ESCALATE without ruling the criteria, and the author decides.
-  When the caller passes no gaze result, the gate reads the latest
-  `## /gaze result` comment posted on the PR (the artifact raid polls) and
-  applies this check to it. A refusal spends no gate round: the gate returns
-  ESCALATE to its caller and posts, if anything, a comment headed
-  `/verify-gate refused: no completed review`, never the
-  `/verify-gate round=<n> verdict=<V>` header that round derivation counts.
+  The gate reads the review's gaze answers on notes, the artifact raid polls,
+  never a PR comment: a PR with no notes review (gazed before notes evidence)
+  has no completed review, so gaze runs on it again. A refusal spends no gate
+  round: the gate returns ESCALATE to its caller and posts, if anything, a
+  comment headed `/verify-gate refused: no completed review`, never the
+  `/verify-gate round=<n> verdict=<V>` pointer.
 
-On a unit with a notes review, this admission is `review_notes.py gate`'s
-(§ Notes review), read from the gaze `answer` entries rather than the comment.
+This admission is `review_notes.py gate`'s (§ Notes review), read from the
+gaze `answer` entries.
 Uses existing PR state for the criteria once that check passes.
 Isolation is the same on every path (§ Isolation: own worktree, removed on exit).
 
 ## Output destinations
 
-1. Structured verdict returned to the caller (raid, or the author). On a unit
-   with a notes review, also its `verdict` entry (§ Notes review), written
-   before any comment.
-2. PR comment posted with human-readable summary (on a PR only):
+1. Structured verdict returned to the caller (raid, or the author), and its
+   `verdict` entry on notes (§ Notes review), written before any comment.
+2. The human-readable summary below is that entry's text (`--text-file`), the
+   evidence. On a PR, then post one pointer line, best-effort:
+   `/verify-gate round=<n> verdict=<V> ruled_tip_sha=<sha> · review on notes: <review_id>`.
 
    Take the `gate_session_id` from the caller's `session=` argument; with
    none (standalone), generate a fresh UUID. The review worktree path is the gate's
    own `$gate_tree`. Immediately before ruling, read the full tip SHA with
    `git -C "$gate_tree" rev-parse HEAD`; stop with ESCALATE if this fails.
-   These are audit fields, posted under the same snake_case keys as the
+   These are audit fields, written under the same snake_case keys as the
    structured verdict: callers (raid, merge, dashboard) read `ruled_tip_sha`.
 
    ```
@@ -476,8 +476,8 @@ never `git notes` by hand.
 - **Unit, PR.** Branch, head, body and close claim come from the forge as
   above; the review is `review_notes.py find --unit pr:<n>`, keyed by the PR
   number, never by its branch name, which merge may reuse. Exit 1 with nothing
-  on stderr: the PR has no notes review (gazed before notes evidence), so
-  the comment path above applies unchanged.
+  on stderr: the PR has no notes review (gazed before notes evidence): no
+  completed review, ESCALATE without ruling, spend no round; gaze runs again.
 - **Unreadable remote.** Every lookup fetches the remote's reviews first. A
   failed fetch is a stale read, never "no review": with no local review the
   lookup refuses (`remote unreadable, no local review`, on stderr): ESCALATE
@@ -515,9 +515,8 @@ never `git notes` by hand.
   `gate`'s admission and refuses a head it does not admit, a third round and a
   REROLL on round 2 (rule ESCALATE instead). Exit 1 after writing: another gate
   run recorded the same round at once (stderr names it; ESCALATE to the
-  author). On a PR, then post the `/verify-gate round=<n> verdict=<V>` comment
-  (§ Output destinations) with that same round: the comment stays, dual-written,
-  until its readers move to notes. On `branch:` nothing is posted.
+  author). On a PR, then post the one-line pointer (§ Output destinations) with
+  that same round; a failed post changes nothing. On `branch:` nothing is posted.
 
 ## Not in scope
 

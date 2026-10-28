@@ -11,6 +11,7 @@ import sys
 from pathlib import Path
 
 import forge  # same directory: the script dir is on sys.path
+import review_notes
 
 LOG = logging.getLogger(__name__)
 FACT = re.compile(r"^\s*(kind|pr|writer|reviewer|finding|defect-confirmed)\s*:")
@@ -259,7 +260,7 @@ NOT_OBSERVED = "not observed"
 
 
 def seat_lines(results, body, masked_evidence=None):
-    """Return (reviewer lines to append, capture failures) from gaze result comments (ticket 1155).
+    """Return (reviewer lines to append, capture failures) from gaze results (ticket 1155).
 
     Every `seat:` line of the results is one review attempt. A seat the body's block already
     carries (gaze appends live, ticket 1151) is not repeated; a body seat the list misses, a
@@ -278,15 +279,21 @@ def seat_lines(results, body, masked_evidence=None):
     present = {}
     for line in body.splitlines():
         if line.startswith("reviewer: step=review · "):
-            name = identity(line[10:]).get("seat")
+            try:
+                name = identity(line[10:]).get("seat")
+            except ValueError as error:  # a hand-typed line (PR #1855): reported, never fatal
+                failures.append(f"malformed reviewer line in the PR body ({error}): {line}")
+                continue
             present[name] = present.get(name, 0) + 1
     lines = []
-    for seat, runtime, _family, route, model, status in seats:
+    for seat, runtime, family, route, model, status in seats:
         if present.get(seat):
             present[seat] -= 1
             continue
         if model != NOT_OBSERVED:
-            model_field = f"model={model}"
+            # gaze writes the id as the worker reported it, often bare beside its family
+            # (PRs #1852, #1855): the family is the provider prefix the record requires.
+            model_field = f"model={model if '/' in model else family.lower() + '/' + model}"
         elif masked_evidence:
             model_field = f"model-state=runtime-masked · model-evidence={masked_evidence}"
         else:
@@ -304,12 +311,30 @@ def seat_lines(results, body, masked_evidence=None):
     return lines, failures
 
 
+def review_results(pr, fg, cwd="."):
+    """The gaze results of PR `pr`: its review's notes answers (ticket 1301), resolved after a
+    refresh. No review on notes: a merged PR predates the switch, so its `## /gaze result`
+    comments are read as history; an open one is refused (re-gaze it), never read from comments.
+    A stale read with nothing local is a refusal too."""
+    try:
+        rid = review_notes.resolve_unit(cwd, f"pr:{int(pr)}")
+    except review_notes.Refusal as exc:
+        raise ValueError(f"PR #{pr}: {exc}") from exc
+    if rid:
+        return "\n".join(review_notes.answer_texts(cwd, rid))
+    state = forge_call(fg.resolve, str(pr)).get("state")
+    if state != "MERGED":
+        raise ValueError(f"PR #{pr} has no review on notes (state {state}): re-gaze it; "
+                         "PR comments are read only for merged pre-switch PRs")
+    return "\n".join(c.get("body", "") for c in forge_call(fg.comments, str(pr), reviews=False)
+                     if c.get("body", "").startswith("## /gaze result"))
+
+
 def append_seats(args):
     """--seats FILE prints the stdin body with the lines; --seats-pr PR edits the live body."""
     if args.seats_pr:
         fg = forge_for(args.seats_pr)
-        results = "\n".join(c.get("body", "") for c in forge_call(fg.comments, str(args.seats_pr), reviews=False)
-                            if c.get("body", "").startswith("## /gaze result"))
+        results = review_results(args.seats_pr, fg)
         body = forge_call(fg.resolve, str(args.seats_pr))["body"]
     else:
         results, body = args.seats.read_text(), sys.stdin.read()
@@ -364,7 +389,8 @@ def main():
     parser.add_argument("--seats", type=Path, metavar="RESULT",
                         help="gaze result comment(s) file; print the stdin PR body with the seats' reviewer lines added")
     parser.add_argument("--seats-pr", type=int, metavar="PR",
-                        help="as --seats, reading the PR's gaze result comments and editing its live body")
+                        help="as --seats, reading the PR review's notes answers (merged pre-switch PRs: "
+                             "the gaze result comments) and editing its live body")
     parser.add_argument("--masked-evidence", metavar="PATH:LINE",
                         help="with --seats: evidence anchor for seats whose model was not observed")
     parser.add_argument("--capture-pr", type=int, metavar="PR",

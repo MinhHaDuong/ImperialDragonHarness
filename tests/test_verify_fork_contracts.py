@@ -158,12 +158,12 @@ def test_caller_documents_gaze_fork_liveness_window():
 def test_liveness_fallback_names_verify_gate_not_a_rerun():
     """On window expiry the caller does not re-run gaze's pass, never
     substitutes a direct /verify-gate, and keys off the three completion
-    markers (result comment, branch-tip motion, review-worktree mtime)
+    markers (answer on notes, branch-tip motion, review-worktree mtime)
     (ticket 0321, moved to /merge by ticket 1219)."""
     norm = _normalize(DETACHED)
     assert "do not re-run gaze's pass" in norm.lower()
     assert "never substitute a direct verify-gate run" in norm.lower()
-    assert "posted gaze result comment" in norm
+    assert "gaze answer entry on notes" in norm
     assert "branch-tip" in norm
     assert "mtime" in norm
 
@@ -339,7 +339,7 @@ def test_ruled_tip_field_has_one_name_across_gate_and_callers():
     """/gaze 1523: posted verdicts carry `ruled_tip_sha:` while merge and raid
     read `Ruled tip SHA`. The name the gate posts is the name callers read."""
     gate = (SKILLS / "verify-gate" / "SKILL.md").read_text()
-    posted = gate.split("2. PR comment posted", 1)[1].split("```", 2)[1]
+    posted = gate.split("2. The human-readable summary below", 1)[1].split("```", 2)[1]
     names = re.findall(r"^\s*([\w ]+): <full commit SHA", posted, re.MULTILINE)
     assert len(names) == 1, names
     field = names[0].strip()
@@ -410,7 +410,7 @@ def _no_review_no_gate(gate: str) -> bool:
     para = norm.split(NO_REVIEW_NO_GATE, 1)[1].split(" - **", 1)[0]
     return all(s in para for s in (
         "Standalone or from a caller",
-        "latest posted `## /gaze result` is ESCALATE",
+        "latest gaze answer on notes is ESCALATE",
         "no gaze result was accepted for the current head",
         "the gate answers ESCALATE without ruling the criteria",
     ))
@@ -472,3 +472,21 @@ def test_adherence_wait_is_bounded():
     assert "written artifact" in text
     hunt = " ".join((SKILLS / "hunt" / "SKILL.md").read_text().split())
     assert "adherence: not obtained" in hunt
+
+
+def test_no_skill_text_names_full_result_comment_as_evidence():
+    """Ticket 1301 (F1 cut-over): the gaze and gate evidence is on notes; the PR comment is a
+    one-line pointer. A skill text may name a gaze result comment only as the history of a PR
+    gazed before notes evidence; dual-write wording is gone."""
+    evidence = re.compile(r"gaze result`? comment|dual-writ", re.IGNORECASE)
+    hits = []
+    for name in ("gaze", "verify-gate", "merge", "raid", "roar"):
+        for path in sorted((SKILLS / name).rglob("*.md")):
+            lines = path.read_text().splitlines()
+            for i, line in enumerate(lines):
+                context = " ".join(lines[max(0, i - 1):i + 2])
+                if evidence.search(line) and "before notes evidence" not in context:
+                    hits.append(f"{path.relative_to(SKILLS)}:{i + 1}: {line.strip()}")
+    assert hits == [], hits
+    # Negative control: the wording the cut-over removed is caught.
+    assert evidence.search("the latest `## /gaze result` comment posted on the PR")

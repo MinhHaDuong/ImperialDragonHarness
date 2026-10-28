@@ -21,10 +21,10 @@ contract that `tests/test_review_panel_cleanup_contract.py` pins): the
 `.tmp` guard (`worktree-tmp-guard.py removal`) before any deletion; removal of
 `.panel/<pr-number>` and `build/panel-head` when untracked;
 `worktree-exit-preflight.sh --removal --branch <branch>`; plain
-`git worktree remove`, never `--force`. A blocked step exits 1, posts nothing
-and leaves the review worktree registered: return ESCALATE naming the files and
-post that comment yourself; attribution was appended before
-cleanup, so the review is recorded either way.
+`git worktree remove`, never `--force`. A blocked step exits 1 and leaves the
+review worktree registered; the script records an ESCALATE answer on notes and
+posts its pointer: return ESCALATE naming the files. Attribution was appended
+before cleanup, so the review is recorded either way.
 
 ## Containment postcondition
 
@@ -35,12 +35,12 @@ The script reads, and prints as `containment: ...`: the toplevel of cwd (the
 forks just returned, so a drifted cwd would make the other reads report a
 foreign tree's state, `rules/git.md` § anchor), `git status --porcelain` of the
 invoking session worktree, its branch (compared to `--entry-branch`), and the
-primary checkout's status; lines already present at entry (recorded by `gaze_setup.py`) are the caller's own work, not findings. Any finding exits 4 (the comment is still posted
+primary checkout's status; lines already present at entry (recorded by `gaze_setup.py`) are the caller's own work, not findings. Any finding exits 4 (the result is still recorded
 with the report); the repairs below stay with gaze.
 
 - **Foreign files** (anything this run did not deliberately create —
   especially stray `tickets/*.erg`) → remove or restore them, and flag the
-  contamination in the result comment. Do not leave them for a later
+  contamination in the result. Do not leave them for a later
   `git add` to sweep.
 - **Unexpected branch** → switch back to the entry branch and flag it. Never
   end the skill with the session worktree on a different branch than it was

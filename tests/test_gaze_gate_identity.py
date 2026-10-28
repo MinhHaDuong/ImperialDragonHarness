@@ -26,8 +26,8 @@ def test_worktree_creation_failure_stops_gaze():
     assert "isolated review worktree" in GAZE.read_text()
 
 
-def test_verdict_comment_names_gate_identity():
-    template = VERIFY.read_text().split("2. PR comment posted", 1)[1].split(
+def test_verdict_text_names_gate_identity():
+    template = VERIFY.read_text().split("2. The human-readable summary below", 1)[1].split(
         "## Circuit breakers", 1
     )[0]
     for field in ("gate_session_id:", "review_worktree_path:", "ruled_tip_sha:"):

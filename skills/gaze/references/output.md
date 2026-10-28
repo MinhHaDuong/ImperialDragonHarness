@@ -1,4 +1,4 @@
-# Gaze — telemetry and the result comment
+# Gaze — telemetry and the result
 
 Loaded from `skills/gaze/SKILL.md`.
 
@@ -8,9 +8,9 @@ Loaded from `skills/gaze/SKILL.md`.
 
 Each phase emits start/end lines: `[verify] phase=<name> start=<ISO> / end=<ISO> elapsed=<s>s`
 
-### Verdict footer (PR comment)
+### Verdict footer
 
-Appended to the result comment: `telemetry: wall=<s>s agents=<n> tokens=<in+out> cost~=$<usd>`
+Appended to the result: `telemetry: wall=<s>s agents=<n> tokens=<in+out> cost~=$<usd>`
 
 Fields: `wall` (phase 1 to result, from `step_clock.py end --seconds <token>`, `na` when not measured), `agents` (sub-agent count), `tokens` (sum, use `na` for
 missing), `cost~=` (best-effort USD, `na` if incomplete).
@@ -20,7 +20,7 @@ missing), `cost~=` (best-effort USD, `na` if incomplete).
 `gaze_setup.py` starts the clock and prints it as `clock=`; keep the token literally
 (shell variables do not persist between Bash calls).
 `gaze_close.py --token <clock>` ends it and substitutes the line for `{{duration}}`
-in the comment file (by hand: `python3 "$IDH_ROOT/scripts/step_clock.py" end <token>`;
+in the result file (by hand: `python3 "$IDH_ROOT/scripts/step_clock.py" end <token>`;
 add `--seconds` in a second call for `wall=`). Its single line (`duration: 4m12s`, or `duration: not measured`
 when no clock could be read) goes into the result block as printed. Never type a duration
 from memory or estimate: the line comes from the script or says `not measured`.
@@ -41,8 +41,11 @@ value.
 
 ## Output shape
 
-One top-level PR comment at the end of the run, the same text returned to the
-caller: the one delivery place. No interim "started"/"finished" chatter.
+One result at the end of the run: `gaze_close.py --comment-file` records it as
+the review's `answer` entry on notes, the one evidence place (ticket 1301), and
+the same text is returned to the caller. On a PR the script posts only a
+one-line pointer comment, `/gaze review on notes: <review_id>, verdict <V>`;
+a failed post changes nothing. No interim "started"/"finished" chatter.
 
 ```
 ## /gaze result
@@ -64,10 +67,12 @@ seat: <role> · runtime=<id> · family=<family> · route=<token> · model=<id as
 ```
 
 One `seat:` line per plan item that is a worker, at column 0 in exactly this
-shape (a role may hold spaces, never `·`, `=` or `:`): roar writes the PR
-body's `reviewer:` lines from them (`attribution_record.py --seats-pr`, ticket
-1155). A result with no `seat:` line, or a body `reviewer:` seat absent from
-it, is a capture failure. A requested model name is not an observed id.
+shape (a role may hold spaces, never `·`, `=` or `:`): `attribution_record.py
+--seats-pr` writes the PR body's `reviewer:` lines from them, read from the
+review's notes answers (tickets 1155, 1301). A model id without a provider
+prefix takes `family` as that prefix. A result with no `seat:` line, or a body
+`reviewer:` seat absent from it, is a capture failure. A requested model name
+is not an observed id.
 
 `seats:` is defined once, in SKILL.md § 4.
 
