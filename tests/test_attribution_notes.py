@@ -188,3 +188,24 @@ def test_capture_unit_refuses_an_unmerged_unit(repo, monkeypatch):
     args = argparse.Namespace(capture_unit="pr:7", capture=repo, audience="public", project="work")
     with pytest.raises(ValueError, match="not merged"):
         ar.capture_unit(args)
+
+
+def test_capture_unit_for_a_branch_deleted_by_cleanup(repo, monkeypatch):
+    """Gaze finding on PR #1874: raid_land --cleanup deletes the merged branch; the merge date
+    comes from the review's retained head and the landing merge, not from the branch."""
+    gazed(repo, "branch:feat")
+    git(repo, "switch", "-q", "main")
+    git(repo, "-c", "core.hooksPath=/dev/null", "merge", "-q", "--no-ff", "-m", "land feat", "feat")
+    git(repo, "branch", "-d", "feat")
+    landed = git(repo, "show", "-s", "--format=%cs", "HEAD")
+    captured = {}
+    monkeypatch.setattr(ar, "capture_record",
+                        lambda text, record, repository, audience: captured.update(text=text) or "captured")
+    args = argparse.Namespace(capture_unit="branch:feat", capture=repo, audience="public", project="work")
+    assert ar.capture_unit(args) == 0
+    assert f"pr: branch:feat · merged {landed} · project: work" in captured["text"]
+
+
+def test_branch_unit_not_landed_has_no_merge_date(repo):
+    gazed(repo, "branch:feat")
+    assert ar.merged_date(str(repo), "branch:feat") is None

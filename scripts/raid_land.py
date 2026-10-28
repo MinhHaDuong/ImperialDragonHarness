@@ -185,7 +185,7 @@ def render(fg, pr: str, text: str | None, out) -> None:
     if not text:
         return
     try:
-        fg.append_body_line(pr, text.rstrip("\n"), edit=lambda body: attribution_record.put_block(body, text))
+        attribution_record.render_to_pr(pr, text, fg)
         out("attribution: rendered into the PR body from notes")
     except Exception as exc:  # never a refusal: a missing block costs the record, not the merge
         out(f"attribution: render failed ({exc}); the block stays on notes")
@@ -262,7 +262,7 @@ def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
         base = info.get("base") or base
         base_ref = f"origin/{base}"
     unit = (info.get("review_id") or pr) if local else f"pr:{pr}"
-    status, block = attribution(cwd, unit, None if local else info.get("body") or "")
+    status, _ = attribution(cwd, unit, None if local else info.get("body") or "")
     out(f"attribution: {status}")
     claims = claims_of(info, local)
     if local:
@@ -303,8 +303,8 @@ def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
             raise Refusal(f"review notes not pushed: {exc}") from exc
         if pushed:
             out(f"review notes pushed: {', '.join(pushed)}")
-    if not local:
-        render(fg, pr, block, out)
+    if not local:  # read again after the notes push integrated the remote's entries
+        render(fg, pr, attribution(cwd, unit, again.get("body") or "")[1], out)
     try:
         try:
             fg.merge(pr, head, auto=not gated and not local)

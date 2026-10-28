@@ -463,21 +463,41 @@ def put_block(body, text):
     return "\n".join(out) + "\n"
 
 
-def render_to_pr(pr, text):
+def render_to_pr(pr, text, fg=None):
     """Landing (raid_land, merge step 5a): write the notes block into the PR body in one edit,
-    read back by the adapter (append_body_line with a whole-block `edit`)."""
-    forge_call(forge_for(pr).append_body_line, str(pr), text.rstrip("\n"),
+    read back by the adapter (append_body_line with a whole-block `edit`). The one render path:
+    raid_land passes its own adapter as `fg`."""
+    forge_call((fg or forge_for(pr)).append_body_line, str(pr), text.rstrip("\n"),
                edit=lambda body: put_block(body, text))
 
 
+def landing_date(cwd, review_id, base=None):
+    """The committer date of the merge that landed a no-forge unit, read from evidence that
+    survives `raid_land --cleanup` deleting the branch: the review's latest retained request
+    head and the oldest merge on the base's first-parent chain that descends from it. None
+    when no such merge exists."""
+    requests = [e for e in review_notes.entries(cwd, review_id) if e["kind"] == "request"]
+    if not requests:
+        return None
+    head, base_ref = requests[-1]["head"], base or requests[-1].get("base_ref") or "main"
+    for ref in dict.fromkeys([base_ref, base_ref.removeprefix("origin/")]):
+        dates = _git_out(cwd, "log", "--ancestry-path", "--first-parent", "--merges",
+                         "--format=%cs", f"{head}..{ref}").splitlines()
+        if dates:
+            return dates[-1]
+    return None
+
+
 def merged_date(cwd, unit):
-    """The merge date (YYYY-MM-DD) of a landed unit, from the forge or, with none, from git."""
+    """The merge date (YYYY-MM-DD) of a landed unit: the forge's for a PR; with no forge, the
+    landing merge commit's, found from the review's retained head (the branch may be gone)."""
     kind, key, base = split_unit(unit)
     if kind == "review":
         raise ValueError("capture takes a pr:<n> or branch:<name> unit, not a review id")
-    fg = forge_for(key) if kind == "pr" else forge.get_forge("none", str(unit), cwd)
-    ref = key if kind == "pr" else str(unit)
-    at = forge_call(fg.merged_at, ref)
+    if kind == "branch":
+        rid = review_for(cwd, unit)
+        return landing_date(cwd, rid, base) if rid else None
+    at = forge_call(forge_for(key).merged_at, key)
     return at[:10] if at else None
 
 

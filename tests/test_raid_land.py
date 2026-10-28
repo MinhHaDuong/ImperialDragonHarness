@@ -355,3 +355,23 @@ def test_adapter_refusal_before_the_merge_call_is_exit_1(repo):
     assert rl.main_land(forge, "7", head(repo), [], "main", repo, [].append) == rl.REFUSED
     assert not issubclass(rl.forge.ForgeRefusal, rl.Refusal)
     assert not issubclass(rl.forge.MergeRefused, rl.Refusal)
+
+
+def test_render_reads_the_block_again_after_the_notes_push(repo, monkeypatch):
+    """Gaze finding on PR #1874: step 0 reads local notes; the push integrates the remote's
+    entries first, so the render takes the block read after it, never the step-0 one."""
+    import review_notes as rn
+    rid = rl.attribution_record.record_writer(str(repo), WRITER, "pr:7", branch="feat")
+
+    def push(cwd, branch):  # the remote's answer arrives with the landing refresh
+        rn.add(str(repo), "answer", rid, {"run_id": "gz-9", "result": "REVIEWED", "seats": "panel",
+                                          "coverage": {"scope": "full"}, "attribution": [REVIEWER],
+                                          "text": "x"})
+        return []
+
+    monkeypatch.setattr(rl.review_notes, "push_for_landing", push)
+    forge = RenderForge(head(repo), "Summary\n")
+    code, out = land(repo, forge, head(repo))
+    assert code == 0, out
+    assert any(line.startswith("attribution: invalid") for line in out)  # step 0: no reviewer yet
+    assert "render" in forge.calls and REVIEWER in forge.body
