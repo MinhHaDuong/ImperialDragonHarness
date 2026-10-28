@@ -1,0 +1,23 @@
+%erg 0.1
+Title: After-merge red on main 6183f766fa3a: skills-drift
+Created: 2026-10-28
+Author: merge-gate
+
+--- log ---
+2026-10-28T10:46Z merge-gate created
+
+--- body ---
+## Context
+
+Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full
+declared set failed on main after a merge.
+
+Tip: 6183f766fa3aee4f08998d17aac6fd91e7d20919
+Failing checks: skills-drift
+Last green after-merge tip: 6d749bcb1e3c200c7771599d1f32652798550822
+Merges since (first parent, newest first):
+- 6183f766fa3a Update skills-catalog.md
+
+## Exit criteria
+
+- [ ] An after-merge record on main passes the checks named above.
