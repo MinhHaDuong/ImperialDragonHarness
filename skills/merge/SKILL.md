@@ -203,7 +203,7 @@ caller arms exactly one wake,
 polls this single-read status command at an interval inside the command
 and exits as soon as the status is no longer pending; the runtime wakes the
 caller on exit, and the caller continues from the status it reads (the
-answers of `wake arm` are read as in the raid skill's `references/sitrep.md`
+answers of `wake arm` are read as in `$IDH_ROOT/skills/raid/references/sitrep.md`
 § Wake sources). Never ask the author to wait or to re-run later; never a
 fixed-delay timer (it waits past the event); never an unbounded or
 foreground loop. A runtime where `wake arm` answers NOOP asks once at its
