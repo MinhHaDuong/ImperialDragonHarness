@@ -30,6 +30,8 @@ def repo(tmp_path, monkeypatch):
     root = tmp_path / "repo"
     root.mkdir()
     subprocess.run(["git", "init", "-q", str(root)], check=True, env=child_env())
+    subprocess.run(["git", "-C", str(root), "remote", "add", "origin", "https://example.invalid/r.git"],
+                   check=True, env=child_env())  # a forge exists: the listing goes through forge.py (ticket 1319)
     monkeypatch.chdir(root)
     return root
 

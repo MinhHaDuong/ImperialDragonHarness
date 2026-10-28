@@ -3,7 +3,6 @@
 
 import argparse
 import fcntl
-import json
 import os
 from pathlib import Path
 import re
@@ -201,21 +200,14 @@ def citation_sources(repo: Path, worktree: Path, branch: str) -> list[tuple[str,
     commit_log = run_git(repo, "log", "--format=%B", f"{anchor}..{branch_ref}")
     sources: list[tuple[str, str]] = [(f"branch commits {anchor}..{branch_ref}", commit_log.stdout)]
 
+    import forge  # ticket 1319: the forge adapter; an unreadable forge stays fail-closed
     try:
-        prs = subprocess.run(
-            ["gh", "pr", "list", "--state", "all", "--head", branch,
-             "--limit", "1000", "--json", "number,title,body"],
-            cwd=repo, capture_output=True, text=True, encoding="utf-8", errors="replace",
-        )
-    except OSError as exc:
-        raise Blocked(f"could not inspect citation sources (gh unavailable): {exc}") from exc
-    if prs.returncode:
-        raise Blocked(f"could not inspect citation sources (gh exit {prs.returncode})")
-    try:
-        documents = json.loads(prs.stdout)
-    except ValueError as exc:
-        raise Blocked("could not inspect citation sources (invalid PR listing)") from exc
-    if not isinstance(documents, list) or len(documents) >= 1000:
+        documents = forge.get_forge_listing(cwd=str(repo)).list_requests("all", branch, 1000)
+    except forge.ForgeRefusal as exc:
+        raise Blocked(f"could not inspect citation sources ({exc})") from exc
+    if documents is forge.NOOP:  # no forge: no request body can cite a path; commits and verdict files still gate
+        documents = []
+    if len(documents) >= 1000:
         raise Blocked("could not inspect citation sources (PR listing incomplete)")
     numbers: list[str] = []
     for pr in documents:

@@ -103,26 +103,38 @@ def test_worktree_state_returns_empty_on_error(monkeypatch):
 # ── pr_state ─────────────────────────────────────────────────────────────────
 
 
-def test_pr_state_parses_gh_json(monkeypatch):
-    payload = '[{"number": 7, "title": "Fix", "headRefName": "claude/fix"}]'
-    _patch_run(monkeypatch, lambda args: _cp(payload))
+def _forge_listing(monkeypatch, rows=None, refusal=None):
+    import forge
+
+    class Backend:
+        def list_requests(self, *args, **kwargs):
+            if refusal:
+                raise forge.ForgeRefusal(refusal)
+            return forge.NOOP if rows is None else rows
+
+    monkeypatch.setattr(forge, "get_forge_listing", lambda choice=None, cwd=None: Backend())
+
+
+def test_pr_state_reads_the_forge_listing(monkeypatch):
+    _forge_listing(monkeypatch, [{"number": 7, "title": "Fix", "branch": "claude/fix"}])
     out = ps.pr_state(Path("/proj"))
     assert out["open"] == 1
     assert out["items"][0] == {"number": 7, "title": "Fix", "branch": "claude/fix"}
 
 
-def test_pr_state_handles_gh_unavailable(monkeypatch):
-    _patch_run(monkeypatch, lambda args: _cp("", 1, "gh: not logged in"))
+def test_pr_state_handles_forge_unavailable(monkeypatch):
+    _forge_listing(monkeypatch, refusal="gh: not logged in")
     out = ps.pr_state(Path("/proj"))
     assert out["open"] is None
-    assert "gh unavailable" in out["error"]
+    assert "forge unavailable" in out["error"]
 
 
-def test_pr_state_handles_bad_json(monkeypatch):
-    _patch_run(monkeypatch, lambda args: _cp("not json"))
+def test_pr_state_no_forge_is_not_inspected_never_zero(monkeypatch):
+    _forge_listing(monkeypatch, rows=None)
     out = ps.pr_state(Path("/proj"))
     assert out["open"] is None
-    assert "parse error" in out["error"]
+    assert "no forge" in out["error"]
+
 
 
 # ── ticket_state ─────────────────────────────────────────────────────────────

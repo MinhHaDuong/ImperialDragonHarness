@@ -7,6 +7,7 @@ Author: claude
 2026-10-28T17:48Z claude created
 2026-10-28T17:52Z claude note planned (raid f7fa41): Imagine, Blind-Spot (4 material findings folded into 1318), feasibility PASS
 2026-10-28T18:07Z reviewer note blocker 1318 closed — Blocked-by removed.
+2026-10-28T18:22Z reviewer residue: scripts/slow_tickets.py (PR view createdAt, comments, checks) stays on raw gh: no forge.py verb serves it and forge.py is out of scope; it already degrades to unknown duration. Other five sites ported; tests/test_forge_status_scripts.py covers the none backend.
 
 --- body ---
 ## Context

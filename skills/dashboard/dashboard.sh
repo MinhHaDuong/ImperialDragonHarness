@@ -20,13 +20,27 @@ done
 echo "== remote branches"
 git branch -r --format='%(refname:short)' | grep -v -e HEAD -e '^origin$' -e '^origin/main$' || true
 
-if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then  # harness-extension-point
+# ticket 1319: merge requests come from the forge adapter. Exit 3 = no forge, 2 = could not look.
+forge_py="$(dirname "$0")/../../scripts/forge.py"
+set +e
+open=$(python3 "$forge_py" list --state open 2>/dev/null); rc=$?
+if [ "$rc" = 0 ]; then
+    merged=$(python3 "$forge_py" list --state merged --limit 8 2>/dev/null); rc=$?
+fi
+set -e
+if [ "$rc" = 0 ]; then
     echo "== open merge requests"
-    gh pr list --state open --json number,headRefName,title,autoMergeRequest \
-        --jq '.[]|"\(.number) \(.headRefName) auto=\(.autoMergeRequest!=null) \(.title)"'  # harness-extension-point
+    printf '%s' "$open" | python3 -c '
+import json, sys
+for r in json.load(sys.stdin):
+    print(r["number"], r["branch"], "auto=" + str(bool(r["auto"])).lower(), r["title"])'
     echo "== recently merged"
-    gh pr list --state merged --limit 8 --json number,mergedAt,title \
-        --jq '.[]|"\(.number) \(.mergedAt) \(.title)"'  # harness-extension-point
+    printf '%s' "$merged" | python3 -c '
+import json, sys
+for r in json.load(sys.stdin):
+    print(r["number"], r["mergedAt"], r["title"])'
+elif [ "$rc" = 3 ]; then
+    echo "== merge requests: no forge (no origin remote), NOT inspected"
 else
     echo "== merge requests: forge CLI unavailable or signed out, NOT inspected"
 fi
