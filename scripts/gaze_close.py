@@ -33,11 +33,15 @@ still gives the calling gaze the line to paste. It may also hold `{{duration}}` 
 `{{containment}}`; both are replaced by the script's own readings. Exit: 0 clean, 1 cleanup blocked
 (attribution appended, no comment posted; 2 when the append also failed), 2 also when cwd is inside the review worktree (refused, nothing removed), 2 read failure, 4 containment flagged (comment still posted).
 
-No forge (`branch:<name>`, ticket 1273): the review unit's paths use `unit_key`; the
-attribution lines and the result text go into one `answer` entry of refs/notes/review
-through review_notes.py, bound to the request and run id gaze_setup froze in the entry
-state (ticket 1281), published with read-back when there is a remote (exit 2 when
-it is not retrievable); a blocked cleanup records an ESCALATE answer.
+Every unit records its result in refs/notes/review (ticket 1273 for `branch:<name>`,
+ticket 1300 for a PR number): the attribution lines and the result text go into one
+`answer` entry through review_notes.py, bound to the request and run id gaze_setup froze in
+the entry state (ticket 1281). The write is local and makes no network call: a remote gets
+a detached background sync whose result is ignored (exit 2 only when the entry could not be
+written); a blocked cleanup records an ESCALATE answer. A PR unit (`pr:<n>`) also keeps
+today's PR comment and `--append-pr`/`--seats-pr` attribution (dual-write until ticket
+1301), the answer first, then the comment; a failed comment still exits 2. The `branch:`
+unit's paths use `unit_key`, and its attribution lives only in the answer.
 """
 import argparse
 import json
@@ -61,6 +65,13 @@ def unit_key(pr):
     pr = str(pr).strip()
     m = re.fullmatch(r"branch:(\S+?)(?:\s+base=\S+)?", pr)
     return "branch-" + re.sub(r"[^A-Za-z0-9._-]+", "-", m.group(1)) if m else pr
+
+
+def review_unit(pr):
+    """The notes unit of a PR number, `pr:<n>` (ticket 1300); None for `branch:<name>`, whose
+    reviews are found by branch. Fork PRs are out of scope: the harness takes none."""
+    pr = str(pr).strip()
+    return None if pr.startswith("branch:") else f"pr:{pr.lstrip('#')}"
 
 
 def git(*args, cwd=None):
@@ -197,17 +208,20 @@ def answer_scope(text):
 
 
 def record_answer(primary, pr, text, attribution, identity=None):
-    """No forge (ticket 1273): the result becomes an `answer` entry in refs/notes/review, the
-    store verify-gate reads, then is published with read-back when there is a remote.
-    `identity` is what gaze_setup froze (review_id, request_id, run_id): the answer binds to
-    that request, never to one written while the run went on (ticket 1281). Without it (no
-    entry state) the review is resolved and the answer takes the latest request, only if
-    that request is on the reviewed head: review_notes refuses otherwise.
-    Returns 0, or 2 when the entry could not be written or its publication not verified."""
+    """The result becomes an `answer` entry in refs/notes/review, the store verify-gate reads
+    (ticket 1273; every unit since ticket 1300). `identity` is what gaze_setup froze
+    (review_id, request_id, run_id): the answer binds to that request, never to one written
+    while the run went on (ticket 1281). Without it (no entry state) a PR unit's review is
+    found locally by its unit, a branch unit's is resolved, and the answer takes the latest
+    request, only if that request is on the reviewed head: review_notes refuses otherwise.
+    The write path is local (ticket 1300): no fetch, no push, no forge call; a remote gets a
+    detached background sync, never waited. Returns 0, or 2 when the entry could not be written."""
     cwd = str(primary)
     identity = identity or {}
+    unit = review_unit(pr)
     try:
-        rid = identity.get("review_id") or forge.get_forge("none", pr, cwd).resolve(pr).get("review_id")
+        rid = identity.get("review_id") or (
+            rn.find_unit(cwd, unit) if unit else forge.get_forge("none", pr, cwd).resolve(pr).get("review_id"))
         if not rid:
             print("answer: FAILED no review request for this branch (gaze_setup opens one)")
             return 2
@@ -224,13 +238,13 @@ def record_answer(primary, pr, text, attribution, identity=None):
             "attribution": attribution.splitlines() if attribution else [],
             "text": text}, head=_field(text, "reviewed_head_sha"), skill="gaze",
             request_id=identity.get("request_id"))
-        level = rn.publish(cwd, [entry["id"]])
     except (rn.Refusal, forge.ForgeRefusal) as exc:
         print(f"answer: FAILED {exc}")
         return 2
-    print(f"answer: recorded {entry['id']} in review {rid} ({level})")
-    remote = rn.setup(cwd) is not None
-    return 2 if remote and level != "retrievable" else 0
+    started = rn.sync_background(cwd)
+    print(f"answer: recorded {entry['id']} in review {rid} (local"
+          f"{'; background sync started' if started else ''})")
+    return 0
 
 
 def main():
@@ -280,7 +294,7 @@ def main():
             status = 2
     ok, msg = cleanup(primary, a.pr, a.branch)
     print(f"cleanup: {msg}")
-    if not ok and local:
+    if not ok:
         status = record_answer(primary, a.pr, f"result: ESCALATE\nreason: cleanup blocked: {msg}\n{plan_line}",
                                lines, entry) or status
     if not ok:
@@ -296,10 +310,10 @@ def main():
     if a.comment_file:
         text = (comment_text.replace("{{plan_check}}", plan_line)
                 .replace("{{duration}}", duration).replace("{{containment}}", report))
+        status = record_answer(primary, a.pr, text, lines, entry) or status  # notes first, every unit
         if local:
-            status = record_answer(primary, a.pr, text, lines, entry) or status
             return 4 if flags and status == 0 else status
-        try:
+        try:  # dual-write (ticket 1300): the PR comment stays until its readers move (ticket 1301)
             forge.get_forge(None, a.pr).comment(a.pr, text, strict=True)
             print("comment: posted")
             if re.search(r"^seat: ", text, re.M):  # derive the reviewer lines the file lacks from the posted result (ticket 1286)

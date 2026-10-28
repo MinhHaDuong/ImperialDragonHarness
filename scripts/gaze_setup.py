@@ -8,7 +8,11 @@ Exit: 0 ready, 1 blocked (conflicts, missing ticket file, worktree not created),
 2 read failure (forge or anchor), 3 another gaze is live on this PR.
 With no forge the unit is `branch:<name> [base=<ref>]` (ticket 1273): the review tree is
 `review-<unit_key>` at the branch head, and the review in refs/notes/review is found, or
-opened when no request names the branch; `review_id=` is printed.
+opened when no request names the branch. A PR number has a notes review too (ticket 1300),
+keyed `pr:<n>`, never by branch name (merge never deletes branches, so a reused name would
+inherit old rounds): found after a refresh, or opened on the PR head against origin/<base>.
+The forge and remote reads happen here, so gaze_close writes with no network call. Every
+unit prints and freezes `review_id=`, `request_id=` and `run_id=` in entry-state.json.
 Leftover review worktree of a dead run is cleaned (gaze_close.cleanup) first.
 """
 import argparse
@@ -103,7 +107,7 @@ def fail(code, msg):
     return code
 
 
-def reviewed_request(primary, review_id, branch, meta):
+def reviewed_request(primary, review_id, branch, meta, base_ref=None):
     """The request this run reviews: the latest one on the head the review tree holds, chosen
     by head, not by recency, so a request written meanwhile on another head never captures it
     (ticket 1281). None on that head (the branch moved past the hunt request): gaze requests
@@ -112,7 +116,7 @@ def reviewed_request(primary, review_id, branch, meta):
                if e["kind"] == "request" and e["head"] == meta["head"]]
     if on_head:
         return on_head[-1]["request_id"]
-    return review_notes.request(str(primary), review_id, branch, meta["base"], skill="gaze",
+    return review_notes.request(str(primary), review_id, branch, base_ref or meta["base"], skill="gaze",
                                 why="gaze on a head no request names", head=meta["head"])["request_id"]
 
 
@@ -162,20 +166,29 @@ def main():
     if a.returncode:
         return fail(2, a.stderr.strip() or "REVIEW-ANCHOR: failed")
     review_id = meta.get("review_id")
+    unit = None if local else gaze_close.review_unit(pr)
+    base_ref = meta["base"] if local else f"origin/{meta['base']}"
+    if unit:  # ticket 1300: the PR's notes review, looked up now so the close writes offline
+        subprocess.run(["git", "fetch", "origin", meta["base"]], capture_output=True)  # a stale base only moves the binding
+        try:
+            review_id = review_notes.resolve_unit(str(primary), unit) or review_notes.open_review(
+                str(primary), branch, base_ref, unit=unit, skill="gaze", head=meta["head"],
+                why="gaze on a merge request with no notes review")
+        except review_notes.Refusal as exc:
+            return fail(2, f"cannot find or open the notes review of {unit}: {exc}")
     if local and not review_id:  # gaze without a hunt request: open the review so the answer has a home
         try:
             review_id = review_notes.open_review(str(primary), branch, meta["base"], skill="gaze",
                                                  why="gaze invoked on a branch with no request")
         except review_notes.Refusal as exc:
             return fail(2, f"cannot open a review for {branch}: {exc}")
-    identity = {}
-    if local:  # frozen now, carried to gaze_close: a later request never captures this run (1281)
-        try:
-            request_id = reviewed_request(primary, review_id, branch, meta)
-        except review_notes.Refusal as exc:
-            return fail(2, f"cannot bind a request for {branch}: {exc}")
-        identity = {"review_id": review_id, "request_id": request_id,
-                    "run_id": f"gz-{review_notes._compact(review_notes._now())}-{review_notes._hex(4)}"}
+    # frozen now, carried to gaze_close: a later request never captures this run (1281)
+    try:
+        request_id = reviewed_request(primary, review_id, branch, meta, base_ref)
+    except review_notes.Refusal as exc:
+        return fail(2, f"cannot bind a request for {branch}: {exc}")
+    identity = {"review_id": review_id, "request_id": request_id,
+                "run_id": f"gz-{review_notes._compact(review_notes._now())}-{review_notes._hex(4)}"}
     body = meta.get("body") or ""
     tickets, malformed = close_claims(body, tree)
     if local:  # no body: the claims are the branch's `Ticket:` trailers, read by forge.resolve

@@ -1,7 +1,16 @@
 """Ticket 1227: one call prints the facts gaze needs and creates the review tree."""
 
+import importlib.util
+import json
+from pathlib import Path
+
 import pytest
 from gaze_fixture import SETUP, fields, git, make_repo, run
+
+SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
+_spec = importlib.util.spec_from_file_location("review_notes", SCRIPTS / "review_notes.py")
+rn = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(rn)
 
 pytestmark = pytest.mark.integration
 
@@ -80,3 +89,30 @@ def test_setup_malformed_ticket_path_stops_like_merge(tmp_path):
     primary, env = make_repo(tmp_path, body="x\n**Ticket:** tickets/0042-a.md\n")
     r = run(SETUP, ["7"], primary, env)
     assert r.returncode == 1 and "malformed" in r.stderr
+
+
+# --- ticket 1300: a PR unit's review lives in refs/notes/review, keyed by the PR number ----------
+
+def test_pr_setup_freezes_notes_identity(tmp_path):
+    primary, env = make_repo(tmp_path)
+    r = run(SETUP, ["7"], primary, env)
+    assert r.returncode == 0, r.stderr
+    f = fields(r.stdout)
+    assert f["review_id"] and f["request_id"] and f["run_id"].startswith("gz-")
+    assert rn.find_unit(primary, "pr:7") == f["review_id"]
+    req = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "request"][-1]
+    assert req["unit"] == "pr:7" and req["head"] == f["head"] and req["request_id"] == f["request_id"]
+    state = json.loads((primary / ".claude" / "worktrees" / "review-7" / ".panel" / "7" / "entry-state.json").read_text())
+    assert {k: state[k] for k in ("review_id", "request_id", "run_id")} == \
+        {k: f[k] for k in ("review_id", "request_id", "run_id")}
+
+
+def test_pr_setup_on_reused_branch_opens_new_review(tmp_path):
+    primary, env = make_repo(tmp_path)
+    old_pr = rn.open_review(str(primary), "feature", "origin/main", unit="pr:6", head="origin/feature")
+    plain = rn.open_review(str(primary), "feature", "origin/main", head="origin/feature")
+    r = run(SETUP, ["7"], primary, env)
+    assert r.returncode == 0, r.stderr
+    rid = fields(r.stdout)["review_id"]
+    assert rid not in (old_pr, plain)
+    assert len([e for e in rn.entries(primary, old_pr) if e["kind"] == "request"]) == 1

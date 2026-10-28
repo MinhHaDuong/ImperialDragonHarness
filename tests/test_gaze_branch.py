@@ -2,6 +2,7 @@
 `answer` entry in refs/notes/review, published to a local bare remote."""
 
 import importlib.util
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -55,7 +56,7 @@ def test_branch_review_records_an_answer_in_the_notes(tmp_path):
                     "--attribution-file", str(attr), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     assert not tree.exists()
-    assert "(retrievable)" in r.stdout
+    assert "(local; background sync started)" in r.stdout  # ticket 1300: written locally, synced detached
     assert not (tmp_path / "gh.log").exists()  # nothing went to a forge
     answer = [e for e in rn.entries(primary, rid) if e["kind"] == "answer"][-1]
     assert answer["result"] == "REVIEWED" and answer["seats"] == "panel"
@@ -65,6 +66,12 @@ def test_branch_review_records_an_answer_in_the_notes(tmp_path):
     cov = rn.coverage(primary, rid, f["head"])
     assert cov["match"] == "equal" and cov["result"] == "REVIEWED"
     origin = tmp_path / "origin.git"
+    import time
+    deadline = time.monotonic() + 20  # the detached sync delivers; nobody waits on it but this test
+    while time.monotonic() < deadline and subprocess.run(
+            ["git", "-C", str(origin), "rev-parse", "-q", "--verify", "refs/notes/review"],
+            capture_output=True, text=True).stdout.strip() != git(primary, "rev-parse", "refs/notes/review"):
+        time.sleep(0.2)
     assert git(origin, "rev-parse", "refs/notes/review") == git(primary, "rev-parse", "refs/notes/review")
 
 
