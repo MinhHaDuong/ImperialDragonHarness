@@ -1,0 +1,32 @@
+%erg 0.1
+Title: F1 cut-over: PR comment becomes a pointer, comment readers move to notes, texts and STATE
+Created: 2026-10-28
+Author: reviewer
+Blocked-by: 1300
+
+--- log ---
+2026-10-28T08:43Z reviewer created
+
+--- body ---
+## Context
+Child of tracker 1298. After 1300 (notes are the evidence, comment still dual-written). Cuts the PR comment to a
+best-effort pointer and moves every reader of the full comment to notes, then aligns the texts.
+
+Known readers (Blind-Spot grep, raid 2026-10-28): `scripts/attribution_record.py --seats-pr`,
+`scripts/trace-pr-join.py` (REROLL/ESCALATE counts), `skills/roar/runbooks/capture.md`,
+`skills/merge/references/claims.md`, `skills/raid/references/detached-gaze.md` (result polling), open ticket
+1297 (trace-doctor design); tests test_attribution_seats, test_attribution_capture_pr, test_gaze_close,
+test_gaze_never_approves, test_merge_gate_plan, test_verify_fork_contracts. Re-grep before starting.
+
+## Design (default; the implementer may refine)
+- gaze and verify-gate post at most a one-line pointer (`review on notes: <id>, verdict <V>`), failure ignored.
+- Attribution seat lines come from the notes answers (`--seats-notes` or equivalent), copied into the PR body
+  before merge; `raid_land` step 0 keeps checking the body.
+- Pre-switch PRs (evidence only in comments): readers fall back to comments, or document re-gaze; pick one.
+- Skill texts (gaze, verify-gate, merge, raid, roar) and STATE describe one F1 evidence path; web sessions stay
+  outcome B (readers and seats, entries leave by export/import).
+
+## Exit criteria
+- [ ] gaze on a PR number writes no full answer as a PR comment (tracker criterion 1, comment half).
+- [ ] Every reader listed above reads notes; tests updated.
+- [ ] Skill texts (gaze, verify-gate, merge, raid) and STATE describe one F1 evidence path; `make check` passes (tracker criterion 5).

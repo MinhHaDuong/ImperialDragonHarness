@@ -6,6 +6,7 @@ Label: deferred
 
 --- log ---
 2026-10-28T08:28Z claude created
+2026-10-28T08:44Z reviewer note raid 2026-10-28: 1301 moves gaze/verify-gate evidence from PR comments to refs/notes/review; read notes, not comments, when this is designed
 
 --- body ---
 ## Context
