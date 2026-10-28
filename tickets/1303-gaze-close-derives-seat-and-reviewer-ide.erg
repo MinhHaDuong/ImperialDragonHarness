@@ -6,6 +6,7 @@ Author: reviewer
 --- log ---
 2026-10-28T09:55Z reviewer created
 2026-10-28T09:55Z reviewer note author 2026-10-28 picked option C of three (A pin the seat vocabulary + pre-post consistency check; B provider-qualify the worker pin; C derive identity lines mechanically).
+2026-10-28T10:30Z reviewer note raid Imagine+Blind-Spot: after 1301 (PR #1858) defect 2 (bare pin) is fixed by seat_lines' family prefix; 1303 now rests on 1301 and is ordered after it. Path narrowed: derive seat: lines only, --seats-pr derives reviewer: lines, attribution file keeps finding: lines. Blind-Spot: 5 design constraints added below.
 
 --- body ---
 ## Context
@@ -35,8 +36,32 @@ Two defects:
   `gaze_close.py` refuses to post when a finding names a seat absent from the plan.
 - Template text in `output.md` and gaze `SKILL.md` § Attribution changes to say the lines are generated.
 
+## Imagine annotation (raid 2026-10-28)
+Ordered after 1301 (PR #1858), which rewrites gaze_close.py, attribution_record.py, output.md, gaze SKILL.md,
+test_gaze_close.py and test_attribution_seats.py, and already fixes defect 2 (seat_lines prefixes a bare model with
+the seat family). Simplest path within option C:
+- one `identities(panel)` in `scripts/seat_clock.py` (beside `roster`, sharing `assess`'s parse of
+  `<panel>/manifest.txt`, `<panel>/<name>.md` headers and `.md.status`), used by plan-check and gaze_close;
+- gaze_close fills a `{{seats}}` placeholder (like `{{plan_check}}`) with the generated `seat:` lines;
+- `--seats-pr` (post-1301) derives the body `reviewer:` lines from them; the attribution file carries only
+  `finding:` lines; gaze_close refuses (non-zero, nothing posted) on a finding naming a seat absent from the manifest.
+
+## Blind-Spot constraints (raid 2026-10-28)
+1. Subagent-door seats type their own `worker:` header (profiles/code-reviewer/PROFILE.md:28,
+   prose-reviewer:23; panel.md subagent door). Take model from the manifest pin and runtime from the session,
+   or label the line self-reported; never present a seat-typed header as launcher-derived. Fixture required.
+2. A failed or no-report seat has no header; a derived `model=not observed` is a capture failure in
+   seat_lines unless masked evidence is given. Choose the rule against the attribution contract
+   (conception/2026-10-02-reviewer-attribution-design.md) so a failed seat never blocks capture; fixture required.
+3. The panel lives in the review worktree, removed by cleanup(): compute identities before cleanup, next to
+   plan_check_line (pr/1858 gaze_close.py:299 vs :316), and carry them into the blocked-cleanup ESCALATE answer.
+4. Seat names join past records (attribution_query.py:21 keys on seat; roar capture.md asks stable names):
+   plan item names carry no round suffix; check existing journal seat names before fixing the rule.
+5. Provider qualification reuses `billed_provider()` (scripts/gaze_seat.py:219), not a family-string rule;
+   fixture for a Pi any-provider seat.
+
 ## Exit criteria
-- [ ] A test replays the #1853 shape (plan item `consistency`, `--role code-reviewer`, bare pin `gpt-6-luna`): gaze_close emits one name and a provider-qualified model, and `attribution_record.py --seats-pr` then captures with no failure.
+- [ ] A test replays the #1853 shape (plan item `consistency`, `--role code-reviewer`, bare pin `gpt-6-luna`): gaze_close emits one name and a provider-qualified model (qualification already provided by 1301; kept as a regression assertion), and `attribution_record.py --seats-pr` then captures with no failure.
 - [ ] Neither `output.md` nor gaze `SKILL.md` asks the model to type `seat:` or `reviewer:` identity lines.
 - [ ] `gaze_close.py` refuses (non-zero, nothing posted) when a `finding:` names a seat not in the plan; test covers it.
 - [ ] Self seats (no worker header) still produce a valid line from the session's own identity, as today.
