@@ -1,0 +1,10 @@
+# 2026-10-28 — Gate scope label deleted; two probes in harness-doctor's kit
+
+Session: Claude Code, claude-opus-5-5, host padme, background job e7e3e853.
+
+- Writer identities not observed: the coder for ticket 1305 (PR #1871) was launched with model alias `opus` and the coder for ticket 1297 (PR #1878) with alias `sonnet`; neither final report stated its model id, so their writer lines are recorded runtime-masked. Profiles coder, gate-seat and team-lead now open their report with `worker: model=<id> · family=<family>` (this bundle).
+- An earlier writer line for #1871 was typed with an unobserved id (`claude-opus-4-8`) through `attribution_record.py --append-pr`, a flag removed by ticket 1307 (#1874) during the session; the call errored with its output silenced, so nothing was recorded.
+- Ticket 1305: 7 of 15 gate runs between 10:24 and 11:35 refused REVIEWED diffs ("no full review ... coverage.carried"); gaze inferred `scope: delta` from any non-default intent while hunt and raid prescribe intents (66 of 71 gaze calls since 2026-10-27 18:00). First fix (scope from the reviewed range) left the label dead; author ruled it a guard on a guard and it was deleted (#1871, merged 531f6750).
+- PRs #1874 and #1876 took 3 and 4 gaze rounds: findings in rounds 1-2, then a rebase onto #1874 that changed `raid_land.py` produced a seam bug found in #1876 round 3. Later rounds were focused re-checks recorded as full.
+- Author asked for diagnostics as ready tools with a memo line rather than deferred tickets: merge-path probe (#1870, `scripts/trace_merge_path.py`) and review-trajectory probe (#1878, `scripts/review_trajectory.py`, ticket 1297) added to harness-doctor's Probes table. First review-trajectory run since 2026-10-28: approach #1876, coder #1870, reviewer-miss none, 23 PRs without local notes.
+- Author accepted trace-doctor as a non-practitioner (surveying) doctor; a shared doctor practice text (ethic for all, consultation for practitioners) was commissioned the same afternoon.
