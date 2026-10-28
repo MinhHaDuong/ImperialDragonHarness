@@ -2,10 +2,12 @@
 Title: runtime.py session verbs: session id, scratch dir and project dir behind one read, replacing CLAUDE_* env reads in hooks and skills
 Created: 2026-10-28
 Author: claude
+Closed: autoclosed — PR #1897
 
 --- log ---
 2026-10-28T14:17Z claude created
 2026-10-28T16:14Z reviewer note blocker 1311 closed — Blocked-by removed.
+2026-10-28T17:42Z reviewer closed — autoclosed — PR #1897
 
 --- body ---
 ## Context
