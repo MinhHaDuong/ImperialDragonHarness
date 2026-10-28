@@ -74,12 +74,13 @@ def catalog_lines(root: str = ".") -> list[str]:
         order = metadata.get("order", float("inf"))
         if isinstance(order, bool) or not isinstance(order, (int, float)):
             raise ValueError(f"{skill_file}: metadata.order must be a number, not {order!r}")
-        catalog.append((category, order, name, catalog_description(description)))
+        catalog.append((category, order, name, skill_file.parent.name,
+                        catalog_description(description)))
 
     lines = []
     current_family = None
     for category, title in CATEGORIES.items():
-        entries = [(name, desc) for cat, _, name, desc in
+        entries = [(name, folder, desc) for cat, _, name, folder, desc in
                    sorted(e for e in catalog if e[0] == category)]
         if not entries:
             continue
@@ -91,8 +92,10 @@ def catalog_lines(root: str = ".") -> list[str]:
             current_family = family
         lines.extend([f"### {title}", "", "| Command | Description |",
                       "|---------|-------------|"])
-        lines.extend("| `/{}` | {} |".format(name, desc.replace("|", "\\|"))
-                     for name, desc in entries)
+        # Each command links to the SKILL.md it was generated from.
+        lines.extend("| [`/{}`](skills/{}/SKILL.md) | {} |".format(
+                         name, folder, desc.replace("|", "\\|"))
+                     for name, folder, desc in entries)
     return lines
 
 
