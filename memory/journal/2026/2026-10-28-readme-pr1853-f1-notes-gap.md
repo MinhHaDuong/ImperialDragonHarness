@@ -1,0 +1,9 @@
+# 2026-10-28 — README restructure (PR #1853) and the F1 review-notes gap
+
+Session: Claude Code, claude-opus-5-5, host padme; the author finished PR #1853 in Pi.
+
+- F1 review evidence. The author's ruling of 2026-10-27 is recorded in the ticket 1277 log as "F1 default (notes review + forge PR merge)"; `conception/2026-10-27-review-merge-flows.md` lists F1 evidence as "comments (notes later)"; `scripts/forge.py` `get_forge` routes a numeric review ref to GhForge (PR comments). The session first answered from the flows note (evidence = PR comments), then found the ruling in the 1277 log. Author 2026-10-28: independence first; notes local, background push, sync at PR merge. Ticket 1298 filed (PR #1850); another session split it into 1299-1301 (PR #1851) and merged 1299 (PR #1852) the same morning.
+- Measured on padme 2026-10-28, three runs each: `gh pr view` ~0.5 s; `git ls-remote`/`git fetch` of refs/notes/gate ~0.4-0.5 s; local `git notes show` ~0.00 s.
+- README PR #1853: drafted by the Claude Code session (design case, eight harness components, four memory layers, skills catalog link, "AI is a dragon" link); the author edited in Pi and merged at 083ae48c (merge a4de4fa1). Gaze panel: Codex gpt-6-luna (cross-family) and a Pi self seat (Qwen); verify-gate round 1 APPROVED. Roar attribution capture refused: the body names the Codex seat `consistency` with `model=openai/gpt-6-luna`, the gaze comment names it `code-reviewer` with `model=gpt-6-luna`.
+- Ticket 1302 filed (PR #1854): task memory for subagents, author's option C (profiles read the memory index; briefs name topics).
+- Worktrees locked with `git worktree lock` and no `--reason` (this session's and explore-tickets-1512901) carry no pid, so `worktree-gc.sh` skips them; explore-tickets-1512901 was removed by hand at molt.
