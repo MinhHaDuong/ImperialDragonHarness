@@ -7,6 +7,7 @@ Author: reviewer
 2026-10-28T09:55Z reviewer created
 2026-10-28T09:55Z reviewer note author 2026-10-28 picked option C of three (A pin the seat vocabulary + pre-post consistency check; B provider-qualify the worker pin; C derive identity lines mechanically).
 2026-10-28T10:30Z reviewer note raid Imagine+Blind-Spot: after 1301 (PR #1858) defect 2 (bare pin) is fixed by seat_lines' family prefix; 1303 now rests on 1301 and is ordered after it. Path narrowed: derive seat: lines only, --seats-pr derives reviewer: lines, attribution file keeps finding: lines. Blind-Spot: 5 design constraints added below.
+2026-10-28T10:33Z reviewer note raid Plan written; feasibility PASS (symbols exist at PR #1858 head 3f56a5ae; seat_clock.py and gaze_seat.py untouched by #1858). Execute waits for #1858 to merge.
 
 --- body ---
 ## Context
@@ -59,6 +60,26 @@ the seat family). Simplest path within option C:
    plan item names carry no round suffix; check existing journal seat names before fixing the rule.
 5. Provider qualification reuses `billed_provider()` (scripts/gaze_seat.py:219), not a family-string rule;
    fixture for a Pi any-provider seat.
+
+## Plan (raid 2026-10-28; built on PR #1858)
+Actions:
+1. `scripts/seat_clock.py`: shared `_items(panel)` parse (manifest + headers + status) used by roster/assess and a
+   new `identities(panel, session_runtime, session_model)`; one `format_seat()`; CLI `identities <panel>`.
+2. `scripts/gaze_close.py`: compute the seat block before `cleanup()` beside `plan_check_line`; require `{{seats}}`,
+   refuse a typed `^seat: ` line (exit 2, nothing removed); carry the block into the blocked-cleanup ESCALATE answer;
+   `finding_seats()` refuses a finding naming a seat absent from the manifest before any append; `--session-runtime`
+   and `--session-model` (env default).
+3. Docs: output.md seat template -> `{{seats}}`; gaze SKILL.md § Attribution (file = finding: lines) and closing call
+   flags; plan.md "item names carry no round or ticket suffix"; cleanup.md ESCALATE carries seats. Profiles unchanged.
+Choices: route= headless pin | `subagent` | `self`; status from `.md.status` (reported -> ran, no report/missing ->
+failed, manifest reason `skipped...` -> skipped); failed seat model = planned pin (contract §4: a failed reviewer is a
+line), `not observed` only with no pin; subagent seat model = manifest pin, runtime = session; provider via
+`billed_provider(load_doors(ROUTES)[runtime], pin)`, else family prefix in seat_lines.
+First test (red): `test_gaze_close_derives_the_1853_seat` in tests/test_gaze_close.py — fixture panel with no typed
+seat: line; asserts one `seat: consistency` line, `model=openai/gpt-6-luna`, no `code-reviewer`, and
+`attribution_record.seat_lines` returns no failure. Then one test per exit criterion and per Blind-Spot constraint
+(subagent pin wins over typed header; failed seat captures; ESCALATE answer keeps seats; typed seat refused; Pi
+any-provider exact qualifier; `identities()` status mapping unit test in tests/test_seat_clock.py).
 
 ## Exit criteria
 - [ ] A test replays the #1853 shape (plan item `consistency`, `--role code-reviewer`, bare pin `gpt-6-luna`): gaze_close emits one name and a provider-qualified model (qualification already provided by 1301; kept as a regression assertion), and `attribution_record.py --seats-pr` then captures with no failure.
