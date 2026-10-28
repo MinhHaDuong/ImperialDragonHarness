@@ -99,7 +99,7 @@ removes it on exit. No caller hands the gate a tree, and the gate never reads
 a tree another skill created: gaze removes its review worktree before it
 returns, so a later gate run cannot rely on it.
 
-Resolve the PR with `python3 "$IDH_ROOT/scripts/forge.py" resolve <pr-number>`
+Resolve the merge request with `python3 "$IDH_ROOT/scripts/forge.py" resolve <pr-number>`
 (from `repo=<path>`). Its reads wait a short bound; an unreachable forge answers
 from the mapping cached at an earlier contact with `"cached": true` and
 `"forge": "unread (offline: ...)"` (ticket 1308): then skip the fetch below

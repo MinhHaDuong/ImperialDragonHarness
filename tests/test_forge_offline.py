@@ -86,28 +86,24 @@ def test_first_review_offline_stops_cannot_map(tmp_path):
     assert not (primary / ".claude" / "worktrees" / "review-7").exists()
 
 
-def test_network_error_is_unreachable_and_marks_offline(tmp_path):
+def test_network_error_is_unreachable_and_marks_offline(tmp_path, monkeypatch):
     forge = _load("forge")
     primary, env = make_repo(tmp_path)
-    os.environ["PATH"], saved = env["PATH"], os.environ["PATH"]
-    os.environ["MOCK_PR_JSON"] = env["MOCK_PR_JSON"]
-    try:
-        fg = forge.GhForge(str(primary))
-        assert fg.resolve("7")["forge"] == "read"
-        (tmp_path / "bin" / "gh").write_text(NETFAIL)
-        rec = fg.resolve("7")
-        assert rec["cached"] and rec["forge"].startswith("unread (offline: network")
-        (tmp_path / "bin" / "gh").write_text("#!/bin/sh\necho called >> " + str(tmp_path / "calls") + "\nexit 1\n")
-        with pytest.raises(forge.ForgeUnreachable):
-            fg.comments("7")  # the offline mark: no network call at all
-        fg.comment("7", "pointer")  # lenient: dropped
-        assert not (tmp_path / "calls").exists()
-        with pytest.raises(forge.ForgeRefusal):  # landing never answers from the cache
-            forge.GhForge(str(primary), landing=True).resolve("7")
-        assert (tmp_path / "calls").exists()
-    finally:
-        os.environ["PATH"] = saved
-        os.environ.pop("MOCK_PR_JSON", None)
+    monkeypatch.setenv("PATH", env["PATH"])
+    monkeypatch.setenv("MOCK_PR_JSON", env["MOCK_PR_JSON"])
+    fg = forge.GhForge(str(primary))
+    assert fg.resolve("7")["forge"] == "read"
+    (tmp_path / "bin" / "gh").write_text(NETFAIL)
+    rec = fg.resolve("7")
+    assert rec["cached"] and rec["forge"].startswith("unread (offline: network")
+    (tmp_path / "bin" / "gh").write_text("#!/bin/sh\necho called >> " + str(tmp_path / "calls") + "\nexit 1\n")
+    with pytest.raises(forge.ForgeUnreachable):
+        fg.comments("7")  # the offline mark: no network call at all
+    fg.comment("7", "pointer")  # lenient: dropped
+    assert not (tmp_path / "calls").exists()
+    with pytest.raises(forge.ForgeRefusal):  # landing never answers from the cache
+        forge.GhForge(str(primary), landing=True).resolve("7")
+    assert (tmp_path / "calls").exists()
 
 
 # --- verify-gate ---------------------------------------------------------------------------
