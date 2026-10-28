@@ -1,0 +1,34 @@
+%erg 0.1
+Title: Forge leaks, skill prose: merge recipe, claims.md, lair and roar capture name forge.py commands, not gh
+Created: 2026-10-28
+Author: claude
+Blocked-by: 1318
+
+--- log ---
+2026-10-28T17:48Z claude created
+
+--- body ---
+## Context
+Child of tracker 1317 (forge leaks). Skill prose that prescribes raw `gh` commands, today
+fenced with `<!-- harness-extension-point -->` markers. The recipe is executed by
+`scripts/raid_land.py` through forge.py; the prose should name the same forge.py commands so
+a reader on a no-forge repository or another forge follows a working path.
+
+Sites on main 2026-10-28:
+- `skills/merge/SKILL.md` (~101-216: comment, view, ready, auto-merge read and disarm, merge,
+  read-back, queued-merge wait)
+- `skills/merge/references/claims.md` (~18: body edit and read-back)
+- `skills/lair/SKILL.md` (~71: auto-merge setting read and arm)
+- `skills/roar/runbooks/capture.md` (~82: PR body read hint)
+
+Needs the forge.py CLI from 1318. `rules/git.md`'s example (`gh pr edit … && gh pr view`)
+documents forge mechanics concretely by design (scripts/check-agnostic.sh note); leave it.
+
+Parent: tracker 1317.
+
+## Exit criteria
+- [ ] The four files above name forge.py commands where a forge.py verb exists, and keep a
+      `gh` spelling only behind an extension-point marker with a reason in this ticket's log
+- [ ] Every forge.py command the prose names exists and is exercised by a test
+- [ ] `scripts/check-agnostic.sh` passes
+- [ ] `make check` passes

@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-28T17:40Z claude created
+2026-10-28T17:50Z claude note children 1318-1321 filed (raid f7fa41); the filing sweep added project-state.py, tmp_report.py, worktree-tmp-guard.py (to 1319) and review_evidence.py (to 1321)
 
 --- body ---
 ## Context
@@ -33,7 +34,13 @@ plus the inventory of tracker 1309):
 - **Probably legitimate:** `scripts/local-ci.sh` passes a forge token to `act`
   (a GitHub Actions runner by design).
 
-## Children (to file when work starts, one sign-off unit each)
+## Children (filed 2026-10-28, raid f7fa41)
+- 1318 landing path scripts (wave 1)
+- 1319 status and hygiene scripts, Blocked-by 1318
+- 1320 skill prose, Blocked-by 1318
+- 1321 measurement and CI sites, keep-or-port (wave 1)
+
+Original list:
 - landing path: close-and-clean, check-close-claims, cross-PR collision, review-anchor
   onto forge.py verbs (add a verb only where a caller needs one)
 - skill prose: merge recipe and claims.md name forge.py commands, not `gh`

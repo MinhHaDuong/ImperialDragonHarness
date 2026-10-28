@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Forge leaks, landing path: close-and-clean, check-close-claims, cross-PR collision and review-anchor through forge.py
+Created: 2026-10-28
+Author: claude
+
+--- log ---
+2026-10-28T17:48Z claude created
+
+--- body ---
+## Context
+Child of tracker 1317 (forge leaks). The landing path is the highest-stakes surface: a raw
+`gh` call here makes a no-forge or other-forge repository fail, or read "nothing found" as a
+clear. Model: `scripts/forge.py` (gh and none backends, typed NOOP and refusal, offline cache),
+`tests/test_forge.py`; the none backend's state is `review_notes.py` (refs/notes/review) and
+`merge-gate.py` (refs/notes/gate).
+
+Sites on main 2026-10-28:
+- `skills/roar/close-and-clean.sh` (~342 `gh pr view --json state`, ~360 auto-merge armed read)
+- `skills/roar/check-close-claims.sh` (~56 `gh pr list --state merged`)
+- `scripts/check-cross-pr-ticket-collision.sh` (~100-133: open PR list, repo view, PR files)
+- `scripts/review-anchor.py` (~31, error text naming `gh pr view`; check whether any raw call remains)
+
+Shell callers need a CLI: today `forge.py` exposes only `resolve`. This child sets the CLI
+shape (subcommands over the existing backend methods) that 1319 and 1320 build on.
+
+Parent: tracker 1317.
+
+## Exit criteria
+- [ ] The four sites above call `forge.py` (Python API or CLI) instead of `gh`, or are listed
+      in this ticket's log as residue with a reason
+- [ ] Each ported site has a `none`-backend test (no `gh` on PATH) showing the step still
+      works or answers a typed NOOP/refusal, never an empty all-clear
+- [ ] A verb or CLI subcommand is added to `scripts/forge.py` only where a caller here needs it,
+      with its gh and none behaviour tested in `tests/test_forge.py`
+- [ ] `make check` passes
