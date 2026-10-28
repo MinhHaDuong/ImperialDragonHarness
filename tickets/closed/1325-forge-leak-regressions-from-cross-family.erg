@@ -2,9 +2,11 @@
 Title: Forge-leak regressions from cross-family review: collision check exits 0 past a known collision without a forge; fork PRs taken as self; merge disarm reads the wrong PR
 Created: 2026-10-28
 Author: claude
+Closed: autoclosed — PR #1923
 
 --- log ---
 2026-10-28T20:19Z claude created
+2026-10-28T20:49Z reviewer closed — autoclosed — PR #1923
 
 --- body ---
 ## Context
