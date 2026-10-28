@@ -48,9 +48,10 @@ salvage the worktree (above), then kill, split or relaunch with narrower scope.
 A WIP push after the red test improves salvage but does not exempt the later
 gate from this check. Bump reason: `agent timeout` or `gate timeout`.
 
-To be woken instead of polling, run `python3 "$IDH_ROOT/scripts/raid-breaker.py" --wait --deadline <s>
---worktree <path> --gate-max-seconds <s>` as a background command: it exits 1 once on `STALL` or `GATE_TIMEOUT`, never kills
-(Claude Code only; decision record in ticket 1214). <!-- harness-extension-point -->
+To be woken instead of polling, arm `python3 "$IDH_ROOT/scripts/raid-breaker.py" --wait --deadline <s>
+--worktree <path> --gate-max-seconds <s>` with `python3 "$IDH_ROOT/scripts/runtime.py" wake arm --after 0 --cmd "<that command>"`
+(answers read as in `references/sitrep.md` § Wake sources): it exits once on `STALL` or `GATE_TIMEOUT` or at the deadline,
+never kills, and its exit delivers the wake (decision record in ticket 1214).
 The window starts at launch. A poll whose git fails or exceeds 5 s is skipped, not counted as
 silence; a worktree whose git never answers is never woken on, only the deadline ends the wait.
 

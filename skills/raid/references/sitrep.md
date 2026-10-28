@@ -12,7 +12,7 @@ repository do not mix. `append RAID_START ...` mints a short random id (or takes
 `raid=<id>` if given) and prints the line; read the id there and pass `raid=<id>`
 on every later append. An append without `raid=` is refused (exit 2). Keep the
 id in the command text, not in an environment variable: shell exports do not
-persist across calls and the background `sleep 900; sitrep` must carry it.
+persist across calls and the armed sitrep `--cmd` must carry it.
 Lines without `raid=` (written before the field existed) belong to no raid and
 are ignored by the sitrep.
 
@@ -40,14 +40,21 @@ that as "could not look", never as a clear. Its last line is the next action:
   now; do not end the turn.
 - `NEXT wrap-up`: nothing in flight, queue empty. Go to Wrap up.
 
-**Wake sources** (probed 2026-10-21, `conception/discussions/2026-10-21-await-external-design.md`):
+**Wake sources.** Every timed wake goes through
+`python3 "$IDH_ROOT/scripts/runtime.py" wake arm --after <s> --cmd "<cmd>"` (ticket 1311): after
+`<s>` seconds it runs `<cmd>` and wakes the session with `<cmd> exited <rc>: <output>`. `<cmd>`
+runs later in a fresh shell, so expand `$IDH_ROOT` when arming (double-quote `--cmd`). Read
+its one-line answer:
 
-| Runtime | Timed wake | Cadence |
+| Answer | Meaning | What the session does |
 |---|---|---|
-| Claude Code | A background `sleep 900; sitrep --raid <id>` command exits and re-invokes the session | every 15 minutes, re-armed after each wake |
-| Codex | Background terminals run but do not wake the model | none found: sitrep at each wave boundary and breaker event |
-| Pi | No native facility (add-on packages unverified) | none found: sitrep at each wave boundary and breaker event |
+| `RUN-IN-BACKGROUND <command>` | Claude Code: only the session's own tool can start the process whose exit wakes it | run `<command>` as a background command |
+| `ARMED codex <unit> ...` | Codex: a `systemd-run --user` timer will `codex queue` the result into the thread (queued, not proven delivered) | nothing; the turn starts when it arrives |
+| `ARMED pi ...` | Pi: the result goes to the wake inbox; delivery needs the reader extension (ticket 1316) | nothing |
+| `NOOP wake arm <runtime>: <reason>` (exit 1) | no timed wake here: headless, no `systemd-run`, extension not loaded | sitrep at each wave boundary and breaker event |
+| exit 3 | the runtime cannot be told (no marker, or two) | rerun with `--runtime <name>` |
 
+`python3 "$IDH_ROOT/scripts/runtime.py" can wake` asks the same question without arming.
 Where no timed wake exists, say so in the first sitrep: "timed sitrep cadence
 unavailable on this runtime; sitreps at wave boundaries only". The author's own
 shell can still run `watch -n 900 python3 "$IDH_ROOT/scripts/raid-sitrep.py" --raid <id>`

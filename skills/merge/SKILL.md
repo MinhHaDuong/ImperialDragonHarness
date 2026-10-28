@@ -196,16 +196,18 @@ one background command. A `check` that answers 2 again after one re-record
 (the base keeps moving) goes in the report, not into a loop.
 
 **Waiting for a queued merge.** The caller waits itself and finishes the
-chain itself. Step 7's read-back is the single-read status command. Where
-the runtime wakes the session when a background command exits, it starts
-exactly one background command with a hard time bound of about 25 minutes,
-which polls this single-read status command at an interval inside the
-command and exits as soon as the status is no longer pending; the runtime
-wakes the caller on exit, and the caller continues from the status it reads.
-Never ask the author to wait or to re-run later; never a fixed-delay timer
-(it waits past the event); never an unbounded or foreground loop. A runtime
-that cannot wake the session on exit asks once at its next step and reports
-the PR as pending.
+chain itself. Step 7's read-back is the single-read status command. The
+caller arms exactly one wake,
+`python3 "$IDH_ROOT/scripts/runtime.py" wake arm --after 0 --cmd "<poll>"`, whose
+`<poll>` (the first line below) has a hard time bound of about 25 minutes,
+polls this single-read status command at an interval inside the command
+and exits as soon as the status is no longer pending; the runtime wakes the
+caller on exit, and the caller continues from the status it reads (the
+answers of `wake arm` are read as in the raid skill's `references/sitrep.md`
+§ Wake sources). Never ask the author to wait or to re-run later; never a
+fixed-delay timer (it waits past the event); never an unbounded or
+foreground loop. A runtime where `wake arm` answers NOOP asks once at its
+next step and reports the PR as pending.
 
 ```bash
 end=$((SECONDS + 1500)); while [ "$SECONDS" -lt "$end" ] && [ "$(gh pr view N --json state,autoMergeRequest -q '.state == "OPEN" and .autoMergeRequest != null')" = true ]; do sleep 60; done  # <!-- harness-extension-point -->

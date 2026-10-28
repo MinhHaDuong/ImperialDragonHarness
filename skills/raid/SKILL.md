@@ -473,9 +473,9 @@ The raid log has a fixed path and format (`references/sitrep.md`); append
 `RAID_START` mints the id and prints it: read it there and put `raid=<id>` on
 every later append and on the sitrep command. At raid
 start, after `RAID_START`, run `python3 "$IDH_ROOT/scripts/raid-sitrep.py" --raid <id>`
-once and arm the cadence: <!-- harness-extension-point --> a background command
-`sleep 900; python3 "$IDH_ROOT/scripts/raid-sitrep.py" --raid <id>` whose exit wakes you
-(Claude Code; Codex and Pi have no timed wake: run the sitrep at each wave boundary and breaker event, and say so)
+once and arm the cadence:
+`python3 "$IDH_ROOT/scripts/runtime.py" wake arm --after 900 --cmd "python3 '$IDH_ROOT/scripts/raid-sitrep.py' --raid <id>"`
+(answers read as in `references/sitrep.md` § Wake sources; on `NOOP`, run the sitrep at each wave boundary and breaker event, and say so).
 On each wake, read the sitrep, re-arm, and act on its last line: `NEXT resume
 wave` means launch the next wave now rather than ending the turn; `NEXT
 wrap-up` means proceed to Wrap up; `UNREADABLE` (exit 2) means repair the log
@@ -511,7 +511,7 @@ or the failing read first.
    the steps run, and print `python3 "$IDH_ROOT/scripts/step_clock.py" table`
    with the rows on stdin: per-step durations, the total from first gaze to MERGED, and the
    slowest step. A step with no clock reading is listed as `not measured`.
-4. Disarm the sitrep cadence (kill the pending background `sleep 900` command) after the last sitrep.
+4. Disarm the sitrep cadence after the last sitrep: `python3 "$IDH_ROOT/scripts/runtime.py" wake disarm`; its `NOOP` names what to stop yourself (on Claude Code, the pending background command).
 5. Do NOT run the lair skill.
 
 ## Circuit breakers

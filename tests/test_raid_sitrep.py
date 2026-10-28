@@ -177,8 +177,8 @@ def test_skill_arms_and_disarms_cadence():
     section = text.find("## Sitrep cadence")
     wrap = text.find("## Wrap up")
     assert 0 < section < wrap
-    assert "harness-extension-point" in text[section:wrap]
-    assert "disarm" in text[wrap:].lower()
+    assert 'runtime.py" wake arm --after 900' in text[section:wrap]
+    assert 'runtime.py" wake disarm' in text[wrap:]
     assert 'scripts/raid-sitrep.py' not in text.replace('$IDH_ROOT/scripts/raid-sitrep.py', '')
 
 
