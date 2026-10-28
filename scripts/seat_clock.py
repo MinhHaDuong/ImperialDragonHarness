@@ -269,7 +269,8 @@ def identities(panel: Path, session_runtime: str = '', session_model: str = '') 
         door = re.search(r'headless[ ]+(\S+)', reason)
         if is_self(cells):
             runtime, model, route = session_runtime, session_model.strip() or 'not observed', 'self'
-        elif header.get('door') == 'headless' and header.get('runtime'):
+        elif (door and header.get('door') == 'headless' and header.get('runtime')
+              and header['runtime'] == door.group(1).strip('.,;)(')):
             runtime, model, route = header['runtime'], header.get('model') or pin, _token(pin)
         elif door:
             runtime, model, route = door.group(1).strip('.,;)('), pin, _token(pin)
