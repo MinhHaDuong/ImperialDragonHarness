@@ -48,3 +48,29 @@ it is not a guard (0976's burden of proof is not engaged).
       across re-issued calls
 - [ ] Tests: all-present, deadline with a missing name, `.part` ignored
 - [ ] `make check` passes
+
+## Imagine (raid 534413)
+Premise holds (2026-10-28): nothing blocks on `.panel/`. `scripts/seat_clock.py`
+`roster`/`plan-check` (l.130, l.162) are non-blocking snapshots; the recipes at
+`skills/gaze/references/panel.md:72-78`, `fork-contract.md:15-34` and
+`skills/verify-adherence/SKILL.md:229-241` still describe a hand-written loop.
+Simplest path: a stdlib `scripts/wait-roster.py <dir> (--roster FILE | NAME...)`
+with an absolute `--until EPOCH` deadline, `.md` only (never `.part`), the
+manifest format parsed through `seat_clock.manifest_items`, not re-parsed.
+How details implied by criteria 1-2 (not new intent): a configurable slice
+under the runtime's per-call cap (Claude Code Bash 600 s) ending with its own
+exit code (3: slice ended, deadline not reached, re-issue); the deadline
+carried across re-issues as the same absolute `--until`; a stale report from an
+earlier round must not count (`--newer-than MANIFEST`, or callers delete it
+first, as verify-adherence does; pick one and test it); a test for `--until`
+already past. Keep it roster-only: no general wait tool, no inotify, no JSON.
+Codex agent waits stay on native `wait_agent`; the helper serves shell waits.
+
+## Blind-spot (raid 534413, gpt-6-luna, OpenAI)
+- Kept, for the author (outside the exit criteria): `scripts/trace-friction.py`
+  counts poll loops by command text, so `wait-roster.py` calls would drop out
+  of the measured series without less waiting. Counting helper calls as wait
+  commands keeps the Monitor step honest; not done in this ticket unless asked.
+- Dismissed: `runtime.py wake arm` instead of a blocking wait. A gaze fork ends
+  when it stops calling tools (`fork-contract.md`), so it cannot idle for a wake.
+- Covered: consumer inventory (Imagine grep; the executor greps once more).
