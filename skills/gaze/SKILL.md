@@ -76,6 +76,14 @@ this PR (`review-<pr-number>` is the lock; liveness window
 "another gaze is live on this PR". A dead run's leftover tree is cleaned by
 the script. Details and what stays judgment: `references/setup-and-breaker.md`.
 
+**Offline forge (ticket 1308).** Forge reads wait a short bound
+(`IDH_FORGE_READ_TIMEOUT`, default 5 s). A PR mapped at an earlier contact
+(branch, base, body: cached on every resolve) reviews offline: no fetch, the
+head from `origin/<branch>`, the local notes review, discussion and CI
+unread. Setup prints `forge=unread (offline: ...)` and `ci=unread`, and
+`gaze_close.py` adds that `forge:` line to the answer: never read it as "no
+comments". A PR never mapped, or with no local notes review, stops (exit 2).
+
 <!-- inline: references/setup-and-breaker.md -->
 
 ### 2. Plan

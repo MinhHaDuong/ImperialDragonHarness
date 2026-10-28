@@ -126,6 +126,13 @@ reads and writes in its own spelling.
 3. **Same head.** `git fetch origin`, then the head checks of § Before
    merging. Re-read the body and compare its close claims with the set the
    gate ruled on: a body edited after approval is a stop and a re-gate.
+   Then recheck the human and Copilot reviews (ticket 1308): the gate may have
+   ruled with the forge unread, and reviews keep arriving. A CHANGES_REQUESTED
+   review (an author's latest deciding one) or an unresolved review thread
+   newer than the verdict's `forge_read` (every one when it reads `unread`) is
+   a stop: resolve it or re-gate. An unreadable recheck is a stop too; landing
+   reads keep their 120 s bound and never use the offline cache.
+   `raid_land.py` runs this right after step 0's claims parse (`recheck_reviews`).
 4. **Gate.** `python3 "$IDH_ROOT/scripts/merge-gate.py" enabled --base origin/<base>`
    answers 0 gated, 1 ungated, 3 could not read (stop; never remove the file
    to get through). On a gated base:

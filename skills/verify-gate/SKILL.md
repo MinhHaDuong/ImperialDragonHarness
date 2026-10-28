@@ -99,6 +99,12 @@ removes it on exit. No caller hands the gate a tree, and the gate never reads
 a tree another skill created: gaze removes its review worktree before it
 returns, so a later gate run cannot rely on it.
 
+Resolve the PR with `python3 "$IDH_ROOT/scripts/forge.py" resolve <pr-number>`
+(from `repo=<path>`). Its reads wait a short bound; an unreachable forge answers
+from the mapping cached at an earlier contact with `"cached": true` and
+`"forge": "unread (offline: ...)"` (ticket 1308): then skip the fetch below
+and add the tree at its `head`. A refusal (never mapped) is ESCALATE, `Missing Data`.
+
 ```bash
 PR_BRANCH=<head branch resolved from the forge for <pr-number>>
 # <session-id>: the caller's session=, else the standalone UUID generated now;
@@ -217,6 +223,11 @@ apply, and step 2 needs its seats.
    counts as proof, and its findings still bind like any other comment.
    Exit 3: the forge read failed or came back truncated (more than one page),
    so the comment set is unknown: `Missing Data`, ESCALATE.
+   Exit 4: the forge did not answer within the short read bound (ticket 1308):
+   record `forge: unread (offline)` in `review_evidence` and the verdict text,
+   never "no reviews", and rule on the rest; landing rechecks every human and
+   Copilot review (`skills/merge/SKILL.md` step 3). A complete read prints
+   `forge-read: <time>` first: pass it as the verdict's `--forge-read`.
 
 ## Scope containment
 
@@ -510,7 +521,8 @@ never `git notes` by hand.
 - **Verdict.** Write the verdict text as one entry:
   `review_notes.py verdict --review <review_id> --session <uuid> --verdict <V>
   --head <ruled_tip_sha> --evidence <answer ids> [--candidate <gate record OID>]
-  --text-file <file>`. It prints `<entry id> local round=<n>`: the round it
+  --text-file <file> [--forge-read <time>]`; `--forge-read` is step 3's
+  `forge-read:` time, omitted (`unread`) when the forge went unread or on `branch:`. It prints `<entry id> local round=<n>`: the round it
   recorded, which is the verdict's `round`. The write is local, with a
   background sync nobody waits for; delivery is the landing push. It re-checks
   `gate`'s admission and refuses a head it does not admit, a third round and a
