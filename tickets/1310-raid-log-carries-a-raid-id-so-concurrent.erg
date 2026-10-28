@@ -1,0 +1,29 @@
+%erg 0.1
+Title: Raid log carries a raid id so concurrent raids do not mix in one sitrep
+Created: 2026-10-28
+Author: claude
+
+--- log ---
+2026-10-28T14:08Z claude created
+
+--- body ---
+## Context
+The raid log has one path per repository
+(`$(git rev-parse --git-common-dir)/idh-raid/raid.log`, ticket 1246), and its
+lines carry no raid id. On 2026-10-28 two raids ran at once: session
+`a369ec1d` (tickets 1299–1301, `RAID_START` 09:55) and session `ebfa5b29`
+(`RAID_START` 11:27, while PR 1858 was still at gate round 1). Each raid's
+`raid-sitrep.py` reads every line since the last `RAID_START`, so it reports
+the other raid's PRs, queue and breakers, and the second `RAID_START` cut off
+the first raid's view. The same pattern shows at 09:39/09:55. Found while
+checking ticket 1246's cadence (cadence itself held: about 15 min, one
+31-minute gap in 30 intervals).
+
+## Exit criteria
+- [ ] Every raid-log line carries a raid id set at `RAID_START` (e.g. the
+      session id, or a short random id the coordinator exports)
+- [ ] `raid-sitrep.py` filters on its raid id; a line without one counts as
+      UNREADABLE for the new format, not as data
+- [ ] Test: two interleaved raids in one fixture log give two separate sitreps
+- [ ] `references/sitrep.md` documents the field
+- [ ] `make check` passes
