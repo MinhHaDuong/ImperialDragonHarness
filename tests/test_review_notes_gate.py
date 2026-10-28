@@ -36,6 +36,9 @@ def ident(repo):
 @pytest.fixture(autouse=True)
 def no_backoff(monkeypatch):
     monkeypatch.setenv("IDH_REVIEW_BACKOFF", "0")
+    # In-process verdicts start no detached sync here (ticket 1300): each test syncs when it
+    # means to; the CLI tests run the real background sync.
+    monkeypatch.setattr(rn, "sync_background", lambda cwd, remote="origin": False)
 
 
 def commit(repo, name, text, msg):
@@ -275,10 +278,12 @@ def test_rounds_count_verdicts_published_by_another_clone(two_clones):
     rid = rn.open_review(a, "feature", "origin/main")
     answer(a, rid)
     done = rn.record_verdict(a, rid, session(), "REROLL", "feature")
-    assert done["level"] == "retrievable"
-    state = rn.gate_state(b, rid, "feature")  # B never saw the review: the gate syncs first
+    assert done["level"] == "local"  # ticket 1300: the write is local, delivery comes later
+    rn.sync(a)  # what the background sync (or the landing push) delivers
+    state = rn.gate_state(b, rid, "feature")  # B never saw the review: the gate refreshes first
     assert state["ready"] and state["round"] == 2
     assert rn.record_verdict(b, rid, session(), "APPROVED", "feature")["entry"]["round"] == 2
+    rn.sync(b)
     assert sh(origin, "rev-parse", "refs/notes/review") == sh(b, "rev-parse", "refs/notes/review")
 
 
@@ -302,7 +307,7 @@ def test_cli_gate_and_verdict(repo):
     assert r.returncode == 0, r.stderr
     eid, level = r.stdout.split()[:2]
     v = [e for e in rn.entries(repo, rid) if e["kind"] == "verdict"][-1]
-    assert v["id"] == eid and level == "done-unpublished" and v["gate_candidate"] == "0" * 40
+    assert v["id"] == eid and level == "local" and v["gate_candidate"] == "0" * 40
     assert v["text"].startswith("/verify-gate round=1 verdict=APPROVED") and v["round"] == 1
     r = cli(repo, "add", "verdict", "--review", rid, "--json", "{}")
     assert r.returncode != 0
@@ -325,6 +330,7 @@ def test_two_gate_runs_ruling_at_once_report_the_conflict(two_clones, monkeypatc
     rid = rn.open_review(a, "feature", "origin/main")
     answer(a, rid)
     rn.record_verdict(a, rid, session(), "REROLL", "feature")
+    rn.sync(a)
     real = rn.refresh
     calls = []
 
@@ -339,7 +345,9 @@ def test_two_gate_runs_ruling_at_once_report_the_conflict(two_clones, monkeypatc
 
     monkeypatch.setattr(rn, "refresh", stale_once)
     done = rn.record_verdict(b, rid, session(), "REROLL", "feature")
-    assert done["entry"]["round"] == 1 and done["conflict"]
+    assert done["entry"]["round"] == 1  # the write is local (ticket 1300): no conflict seen yet
+    rn.sync(b)  # the two round-1 verdicts meet
+    assert len([v for v in rn._verdicts(b, rid) if v["round"] == 1]) == 2
     state = rn.gate_state(b, rid, "feature")
     assert state["round"] == 3 and not state["ready"]  # fails closed: past the cap
 
@@ -393,11 +401,66 @@ def test_gate_state_never_pushes_to_a_read_only_remote(two_clones, tmp_path):
     r = cli(b, "gate", rid, "feature")
     assert r.returncode == 0, r.stderr
     assert not log.exists()
-    # the verdict write is the only push: it reaches the hook, is refused, and is not retrievable
-    try:
-        done = rn.record_verdict(b, rid, session(), "APPROVED", "feature")
-        assert done["level"] != "retrievable"
-    except rn.Refusal:
-        pass
+    # the verdict is written locally (ticket 1300); only its sync pushes: refused by the hook
+    done = rn.record_verdict(b, rid, session(), "APPROVED", "feature")
+    assert done["level"] == "local"
+    assert not log.exists()
+    with pytest.raises(rn.Refusal):
+        rn.sync(b)
     assert log.exists() and log.read_text().strip()  # positive control: the hook log fires
     assert sh(origin, "rev-parse", "refs/notes/review") == tip
+
+
+# --- ticket 1300: stale reads reported, the verdict write is local ----------------------------
+
+def test_gate_state_stale_read_reports_staleness(two_clones, tmp_path):
+    _, a, _ = two_clones
+    rid = rn.open_review(a, "feature", "origin/main")
+    answer(a, rid)
+    assert rn.gate_state(a, rid, "feature")["stale"] == ""
+    sh(a, "remote", "set-url", "origin", str(tmp_path / "gone.git"))
+    state = rn.gate_state(a, rid, "feature")
+    assert state["ready"] and state["stale"]  # rules on local entries, says the round may be undercounted
+    done = rn.record_verdict(a, rid, session(), "APPROVED", "feature")
+    assert done["entry"]["round"] == 1 and done["stale"]
+
+
+def test_failed_background_push_does_not_block_the_verdict(two_clones):
+    import time
+    origin, a, _ = two_clones
+    rid = rn.open_review(a, "feature", "origin/main")
+    answer(a, rid)
+    h = origin / "hooks" / "pre-receive"
+    h.write_text("#!/bin/sh\nsleep 6\nexit 1\n")
+    h.chmod(0o755)
+    t0 = time.monotonic()
+    r = cli(a, "verdict", "--review", rid, "--session", session(), "--verdict", "APPROVED", "--head", "feature")
+    elapsed = time.monotonic() - t0
+    assert r.returncode == 0, r.stderr
+    assert elapsed < 5, elapsed
+    assert r.stdout.split()[1] == "local"
+    assert [e for e in rn.entries(a, rid) if e["kind"] == "verdict"]
+
+
+# --- gaze 1855: two clones ruling one round are caught at the landing door -----------------
+
+def test_push_for_landing_refuses_two_verdicts_for_one_round(two_clones):
+    origin, a, b = two_clones
+    rid = rn.open_review(a, "feature", "origin/main")
+    answer(a, rid)
+    rn.sync(a)
+    rn.refresh(b)
+    assert rn.record_verdict(a, rid, session(), "APPROVED", "feature")["entry"]["round"] == 1
+    assert rn.record_verdict(b, rid, session(), "REROLL", "feature")["entry"]["round"] == 1
+    rn.sync(b)  # B's round-1 verdict reaches origin; A's is still local
+    with pytest.raises(rn.Refusal, match="round 1"):
+        rn.push_for_landing(a, "feature")
+
+
+def test_push_for_landing_passes_a_single_verdict_per_round(two_clones):
+    origin, a, b = two_clones
+    rid = rn.open_review(a, "feature", "origin/main")
+    answer(a, rid)
+    rn.record_verdict(a, rid, session(), "APPROVED", "feature")
+    assert "refs/notes/review" in rn.push_for_landing(a, "feature")
+    assert sh(origin, "rev-parse", "refs/notes/review") == sh(a, "rev-parse", "refs/notes/review")

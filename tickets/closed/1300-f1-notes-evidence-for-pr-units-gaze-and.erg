@@ -1,0 +1,58 @@
+%erg 0.1
+Title: F1 notes evidence for PR units: gaze and verify-gate write local notes, dual-write comment
+Created: 2026-10-28
+Author: reviewer
+Closed: notes are the review evidence for PR units, comment dual-written (PR #1855)
+
+--- log ---
+2026-10-28T08:43Z reviewer created
+2026-10-28T09:08Z reviewer note blocker 1299 closed — Blocked-by removed.
+2026-10-28T09:46Z reviewer note raid 2026-10-28, gaze item 3 on PR #1855: kept fail-closed. A PR gaze reads its head from origin before any notes lookup, so first-time discovery stops (exit 2) and opens no review; opening locally would let a unit hold two reviews whose verdicts split the round count. Advisor (Fable) agreed: criterion 4 governs the write path and readers of an existing local review. Reversible; author may revisit.
+2026-10-28T09:52Z reviewer closed — notes are the review evidence for PR units, comment dual-written (PR #1855)
+
+--- body ---
+## Context
+Child of tracker 1298. After 1299 (landing pushes notes first). Makes notes the review evidence for PR-number
+units while keeping today's full PR comment as a dual-write, so every comment reader (attribution
+`--seats-pr`, `trace-pr-join.py`, roar capture, detached-gaze polling) keeps working until 1301 cuts over.
+
+## Design (default; the implementer may refine)
+- Review id for a PR unit is keyed by PR number (or ticket), not bare head-branch name: merge never deletes
+  branches (`skills/merge/SKILL.md`), so a reused branch name would inherit old rounds. Forks are out of scope
+  (the harness takes no fork PRs); say so in a comment.
+- `gaze_setup.py`: open or bind the notes review for every unit and freeze its identity in `entry-state.json`;
+  the forge lookup happens here (read phase), so the write path needs no network. Separate "notes evidence"
+  (always) from `local` (git-only reads).
+- `gaze_close.py`: the answer always goes to notes locally; `rn.publish`'s synchronous sync + read-back on this
+  path becomes a detached background `review_notes.py sync`, result ignored. PR comment still posted (dual-write).
+- `review_notes.py refresh`: a failed fetch is a warning (stale), not a refusal; `resolve` returning nothing
+  while stale still refuses ("remote unreadable, no local review"), never "no review". `gate_state` on a stale
+  read reports staleness in the verdict (1281's round rule).
+- verify-gate on a PR number reads gaze findings from notes and records its verdict and round in notes (its
+  § No forge path becomes the notes path for PR units too); forge reviews by humans/Copilot stay a read.
+
+## Exit criteria
+- [ ] gaze on a PR number in a repo with `origin` writes its answer to `refs/notes/review` with no network call on the write path (tracker criterion 1, notes half).
+- [ ] verify-gate on a PR number reads gaze findings from notes and records its verdict in notes (tracker criterion 2).
+- [ ] A failed background push or reader fetch never blocks a review and never reads as "no review"; tests cover both (tracker criterion 4).
+- [ ] Existing PR-comment readers still pass their tests (dual-write).
+- [ ] `make check` passes.
+
+## Actions (raid plan phase, 2026-10-28; Opus draft, orchestrator amended item 3)
+1. Review key `pr:<n>`. `scripts/review_notes.py`: `request()`/`open_review()` take `unit=` stored on each request entry; add `find_unit(cwd, unit)` (matches `unit`, never `branch`) and `resolve_unit` (refresh then find_unit); CLI `find --unit`. A PR number is never reused; merge never deletes branches, so branch keying (`find` matches `branch`, review_notes.py:598) would hand a reused name old rounds. Comment: fork PRs out of scope. `branch:` units keep `find`.
+2. Lookup in setup. `scripts/gaze_setup.py`: notes evidence for every unit, `local` (:132) kept for git-only reads; today review opened (:165) and identity frozen (:172) only under `local`. PR unit: `rn.resolve_unit(primary, f"pr:{n}")` else `open_review(..., base_ref=f"origin/{base}", unit=..., head=...)`, then freeze in `entry-state.json`. `scripts/gaze_close.py` `record_answer`: PR unit without identity uses local `find_unit` (no refresh); drop the fetching `forge.get_forge("none").resolve` fallback (:210) for PR units; write path `rn.add` → `rn.sync_background`, return 0 (drops :227 publish and :233 exit 2). `main`: PR unit records the answer first, then posts the comment and attribution `--append-pr`/`--seats-pr` unchanged (dual-write); a failed comment still exits 2.
+3. Background sync. `rn.sync_background(cwd)`: detached `Popen([sys.executable, review_notes.py, "-C", cwd, "sync", "--if-idle"], DEVNULL io, start_new_session=True)`, never waited, result ignored. `sync --if-idle` tries the lock once; busy → `skipped: lock busy`, exit 0. The verdict write (`record_verdict`/`verdict`) uses the same local write + background sync (amended: every review write is local, author 2026-10-28); the PR verdict comment stays as dual-write.
+4. Stale refresh. `refresh` catches a failed ls-remote/fetch `Refusal` → `{"status": "stale", "warnings": [...]}`; `Tamper` still raises. `resolve`/`resolve_unit`: stale and nothing local → `Refusal("remote unreadable, no local review: …")`; found → local id with warning on stderr. `gate_state` gains `stale:`; verify-gate writes `notes: stale (…)` in its verdict (round may be undercounted). `forge.py` docstring (:10); `_review_id` (:249) keeps mapping Refusal.
+5. verify-gate. `skills/verify-gate/SKILL.md` § No forge (:456) → § Notes review for `branch:` and PR units: PR unit from gh, review_id from `find --unit pr:<n>`; round/admission from `gate`; gaze findings from `show`/`findings`; human/Copilot forge reviews stay a read; verdict via `verdict`, also posted as the `/verify-gate round=<n>` comment (same round). PR with no notes review (gazed before) → today's comment path. § Gate sessions (:386), § Output destinations point there. `skills/gaze/SKILL.md` § 5: notes answer for every unit, PRs also get the comment.
+
+## Test
+- test_review_notes.py: test_refresh_unreachable_remote_is_stale_not_refusal; test_resolve_stale_returns_local_review; test_resolve_stale_without_local_refuses_naming_remote (never None = "no review"); test_tamper_still_raises_under_lenient_refresh; test_find_unit_ignores_reused_branch_name; test_sync_if_idle_skips_busy_lock (<2 s, exit 0).
+- test_review_notes_gate.py: test_gate_state_stale_read_reports_staleness.
+- test_gaze_setup.py: test_pr_setup_freezes_notes_identity; test_pr_setup_on_reused_branch_opens_new_review.
+- test_gaze_close.py: test_pr_answer_written_to_notes_and_comment; test_record_answer_makes_no_network_call (forge/refresh/sync/publish/resolve patched to raise, Popen recorded); test_failed_background_push_does_not_block_close (origin hook sleeps then rejects; close exits 0 fast, answer local); same no-block test for the verdict write.
+- Existing --seats-pr and comment tests stay green.
+
+## Feasibility
+WARN: 11 files (review_notes, gaze_setup, gaze_close, forge docstring, verify-gate and gaze SKILL, 4 test files, gaze_fixture). Risks: detached child outliving tmp_path (fails silently, intended); `origin/<base>` must exist locally (make_repo clones); stale read may undercount rounds (reported, not enforced).
+- Carried from gaze on PR #1852 (consider, red-team dissent): `push_for_landing` skips a review's head ref missing locally and the merge proceeds (review_notes.py ~487-489). Once notes are merge evidence (this ticket), make a missing head ref of a landed review refuse, with a test.
+- Carried from the #1852 fix (must-fix here): `review_notes.setup()` adds an exact `refs/notes/review` fetch refspec to `remote.origin.fetch`; once PR units open notes reviews, every plain `git fetch origin` exits 128 while origin has no `refs/notes/review` (reproduced by tests/test_after_merge.py on PR #1852's first head). Make the refspecs tolerate an absent remote ref (e.g. a glob, or no persistent refspec and explicit fetches in refresh), with a test that `git fetch origin` exits 0 after setup against a notes-less origin.

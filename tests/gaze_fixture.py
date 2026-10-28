@@ -39,6 +39,8 @@ def make_repo(tmp_path, body="Closes nothing"):
     git(seed, "commit", "-am", "change")
     git(seed, "push", "origin", "feature")
     run_checked(["git", "clone", str(origin), str(primary)])
+    git(primary, "config", "user.email", "t@example.com")  # notes entries are commits (ticket 1300)
+    git(primary, "config", "user.name", "T")
     head = git(seed, "rev-parse", "HEAD")
     meta = {"number": 7, "headRefName": "feature", "headRefOid": head, "baseRefName": "main",
             "state": "OPEN", "mergeable": "MERGEABLE", "body": body,

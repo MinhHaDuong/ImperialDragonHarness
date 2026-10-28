@@ -20,8 +20,8 @@ For helper commands, set `IDH_ROOT="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$
 why (`verify <what> because <why>`), read leniently. With none, the what is the
 whole merge request against its ticket's exit criteria. A forge-less project
 names the unit `branch:<name> [base=<ref>]` in place of the number; every
-phase runs the same, and the result goes to `refs/notes/review` instead of a
-PR comment (§ 5). With neither, return ESCALATE with reason "no PR argument".
+phase runs the same. Either way the result goes to `refs/notes/review`; a PR
+also gets it as a comment (§ 5). With neither, return ESCALATE with reason "no PR argument".
 Gaze resolves the forge from its cwd, so launch it from the PR's repository.
 
 ## Invariants
@@ -161,10 +161,14 @@ only closing path; it prints the line (`plan check: ...`) on stdout, before
 cleanup. The text you return to your caller, and the ESCALATE comment you post
 on a blocked cleanup, carry that printed line, copied as printed.
 
-**No forge.** On `branch:<name>`, `gaze_close.py` records the same text, with
+**Notes answer, every unit.** `gaze_close.py` records the same text, with
 the attribution lines, as one `answer` entry of the review in
 `refs/notes/review` through the `review_notes.py` helper, the store verify-gate
-reads, and publishes it with read-back when there is a remote; a narrow
+reads. The write is local, with no network call; a remote gets a detached
+background sync whose result nobody waits for (the landing push delivers). A PR's
+review is keyed `pr:<n>`, never by its branch name, which merge may reuse; on a
+PR the comment is still posted after the answer (dual-write while its readers
+move to notes). On `branch:<name>` nothing goes to a forge. A narrow
 intent records `scope: delta`, carrying the review's latest non-ESCALATE
 answer, only the default intent a full review. The answer binds to the request
 and run id `gaze_setup.py` printed (`request_id=`, `run_id=`): the request on

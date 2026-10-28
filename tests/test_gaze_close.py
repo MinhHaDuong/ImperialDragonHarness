@@ -385,3 +385,103 @@ def test_record_answer_reads_the_claim_through_the_one_normaliser(monkeypatch):
     code = gaze_close.record_answer("/nowhere", "7", text, "", identity={"review_id": "r1"})
     assert code == 0
     assert seen["seats"] == "panel"
+
+
+# --- ticket 1300: the answer goes to refs/notes/review for a PR too; the comment is dual-written ---
+
+def _notes():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("review_notes", Path(CLOSE).parent / "review_notes.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_pr_answer_written_to_notes_and_comment(tmp_path):
+    rn = _notes()
+    primary, env, f = opened(tmp_path)
+    comment = tmp_path / "c.md"
+    comment.write_text(f"result: REVIEWED\nreviewed_head_sha: {f['head']}\nintent: default\n{{{{plan_check}}}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert "result: REVIEWED" in (tmp_path / "gh.log").read_text()  # dual-write: the comment still posts
+    answers = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"]
+    assert len(answers) == 1 and answers[0]["result"] == "REVIEWED"
+    assert answers[0]["request_id"] == f["request_id"] and answers[0]["run_id"] == f["run_id"]
+    assert answers[0]["head"] == f["head"]
+
+
+NETWORK_GIT = {("fetch",), ("push",), ("ls-remote",), ("pull",), ("remote", "update"),
+               ("request-pull",)}
+
+
+def _git_subcommand(cmd):
+    """The git subcommand of a spawned argv, as a 1- or 2-tuple (`remote update`), or None.
+    Every child goes through subprocess.Popen, whichever route spawned it (rn._git, a direct
+    subprocess.run in gaze_close, forge), so the test patches Popen once (gaze on PR #1855)."""
+    argv = [str(c) for c in cmd] if isinstance(cmd, (list, tuple)) else str(cmd).split()
+    if not argv or Path(argv[0]).name != "git":
+        return None
+    i = 1
+    while i < len(argv) and argv[i].startswith("-"):
+        i += 2 if argv[i] in ("-C", "-c", "--git-dir", "--work-tree") else 1
+    rest = argv[i:]
+    if not rest:
+        return None
+    if rest[0] == "remote" and len(rest) > 1:
+        return (rest[0], rest[1])
+    return (rest[0],)
+
+
+def test_record_answer_makes_no_network_call(tmp_path, monkeypatch):
+    import sys
+    primary, env, f = opened(tmp_path)
+    sys.path.insert(0, str(Path(CLOSE).parent))
+    import gaze_close
+
+    def boom(*a, **k):
+        raise AssertionError("network on the write path")
+    for name in ("refresh", "sync", "publish", "resolve", "resolve_unit", "_fetch", "_push_notes"):
+        monkeypatch.setattr(gaze_close.rn, name, boom)
+    monkeypatch.setattr(gaze_close.forge, "get_forge", boom)
+    real_git, spawned = gaze_close.rn._git, []
+
+    def local_git(cwd, *args, **kw):
+        if args and args[0] in ("fetch", "ls-remote", "push", "request-pull"):
+            raise AssertionError(f"network git {args[0]} on the write path")
+        return real_git(cwd, *args, **kw)
+    monkeypatch.setattr(gaze_close.rn, "_git", local_git)
+    real_popen = gaze_close.rn.subprocess.Popen
+
+    def popen(cmd, *a, **kw):  # record the detached sync, refuse any git network child, run the rest
+        if "--if-idle" in cmd:
+            spawned.append(cmd)
+            return None
+        sub = _git_subcommand(cmd)
+        if sub in NETWORK_GIT:
+            raise AssertionError(f"network git {' '.join(sub)} spawned on the write path: {cmd}")
+        return real_popen(cmd, *a, **kw)
+    monkeypatch.setattr(gaze_close.rn.subprocess, "Popen", popen)
+    text = f"result: REVIEWED\nreviewed_head_sha: {f['head']}\nintent: default\n"
+    assert gaze_close.record_answer(primary, "7", text, "") == 0  # no identity: local find_unit
+    assert gaze_close.record_answer(primary, "7", text, "", identity={
+        "review_id": f["review_id"], "request_id": f["request_id"], "run_id": f["run_id"]}) == 0
+    assert len(spawned) == 2 and all(c[-2:] == ["sync", "--if-idle"] for c in spawned)
+
+
+def test_failed_background_push_does_not_block_close(tmp_path):
+    import time
+    rn = _notes()
+    primary, env, f = opened(tmp_path)
+    hook = tmp_path / "origin.git" / "hooks" / "pre-receive"
+    hook.write_text("#!/bin/sh\nsleep 8\nexit 1\n")
+    hook.chmod(0o755)
+    comment = tmp_path / "c.md"
+    comment.write_text("result: FINDINGS\nintent: default\n{{plan_check}}\n")
+    t0 = time.monotonic()
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    elapsed = time.monotonic() - t0
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert elapsed < 7, elapsed
+    answers = [e for e in rn.entries(primary, f["review_id"]) if e["kind"] == "answer"]
+    assert answers and answers[-1]["result"] == "FINDINGS"
