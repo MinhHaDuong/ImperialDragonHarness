@@ -2,10 +2,12 @@
 Title: Gaze waits for its seat roster through one shared bounded helper
 Created: 2026-10-28
 Author: claude
+Closed: autoclosed — PR #1927
 
 --- log ---
 2026-10-28T20:26Z claude created
 2026-10-28T20:34Z reviewer claude note body: Pi figures added, Codex wait_agent share corrected (2026-10-28 survey)
+2026-10-28T21:05Z reviewer closed — autoclosed — PR #1927
 
 --- body ---
 
