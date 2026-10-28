@@ -27,7 +27,7 @@ CATEGORIES = {
     "runtime-review": "Runtime and review support",
     "research": "Research and bibliography",
     "reviewing": "Reviewing",
-    "writing": "Copyediting",
+    "writing": "Writing and delivery",
     "publication": "Submission and publication",
 }
 GENERALIST = {"build", "session", "maintenance", "memory", "runtime-review"}

@@ -68,7 +68,7 @@
 | `/manuscript-review` | Review a manuscript with real literature retrieval, page evidence and a bounded check of major criticisms; preserve the original review and pending author decisions. |
 | `/ingest-decision-letter` | Ingest a journal decision letter and reviewer comments into a structured remark ledger, archive the sources, and run a coverage check mapping every remark to a ticket. Helps streamline Revise-and-Resubmit. |
 
-### Copyediting
+### Writing and delivery
 
 | Command | Description |
 |---------|-------------|
