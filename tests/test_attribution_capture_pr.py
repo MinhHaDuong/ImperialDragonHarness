@@ -25,8 +25,11 @@ SEAT = "seat: correctness · runtime=claude-code · family=anthropic · route=op
 
 
 @pytest.fixture
-def forge(monkeypatch):
-    """A PR held in memory: gh reads it, the body append edits it, capture records what it receives."""
+def forge(monkeypatch, tmp_path):
+    """A PR held in memory: gh reads it, the body append edits it, capture records what it receives.
+    The cwd is a remote-less repo whose notes hold no review: the PR predates notes evidence."""
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    monkeypatch.chdir(tmp_path)
     spec = importlib.util.spec_from_file_location("attribution_record", SCRIPT)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -73,6 +76,15 @@ def test_merged_pr_is_captured_with_its_seats_and_merge_date(forge):
     assert "pr: 1155 · merged 2026-10-27 · project: .agents" in text
     assert "seat=correctness · runtime=claude-code · model=anthropic/example-opus" in text
     assert module.parse_record(text)["reviewers"]
+
+
+def test_merged_pre_switch_pr_falls_back_to_comments(forge):
+    """Ticket 1301: no review on notes and the PR merged: its gaze result comments are history."""
+    module, pr = forge
+    assert module.review_results(1155, module.forge_for(1155)) == pr["comments"]
+    pr["state"] = "OPEN"
+    with pytest.raises(ValueError, match="no review on notes"):
+        module.review_results(1155, module.forge_for(1155))
 
 
 def test_unmerged_pr_is_refused_before_any_edit(forge):
