@@ -2,12 +2,14 @@
 Title: Gaze run from a subagent cannot reach a cross-family seat although consent is on file
 Created: 2026-10-28
 Author: claude
+Closed: fixed: PR #1925 — seat reaches at depth 1 and 2; gate refuses required cross-family review with no other-family seat
 
 --- log ---
 2026-10-28T20:19Z claude created
 2026-10-28T20:41Z reviewer repro depth 1 (coder subagent, CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=3, cwd nested worktree .claude/worktrees/t1326-3606107): gaze_seat.py launch --runtime codex --model gpt-6-luna --family openai --home-family anthropic -> 'xfam: reported in 8s', exit 0, report header 'worker: model=gpt-6-luna · family=openai · runtime=codex · door=headless', 'reach: read=yes shell=yes tests=not-run'. No layer refused.
 2026-10-28T20:41Z reviewer repro depth 2 (nested haiku Agent, same command, same cwd): 'xfam: reported in 10s', EXIT=0, same worker header and reach line. No permission prompt, no sandbox or nesting refusal.
 2026-10-28T20:41Z reviewer f7fa41 artefacts (review rv-20261028-pr-1915-f0c6 on notes): five answers, none planned a cross-family seat; each plan check carries a '# no-cross-family:' deviation written by the gaze run itself ('low risk prose change, host not consenting' although the host consents to OpenAI and Mistral; 'medium risk, cost not justified'; 'narrow fix settled by reading the code'; 'small prose diff, low risk'). Cause: the plan-write opt-out, not a refused launch. One answer was REVIEWED with 'plan check: FAIL'.
+2026-10-28T21:05Z reviewer closed — fixed: PR #1925 — seat reaches at depth 1 and 2; gate refuses required cross-family review with no other-family seat
 
 --- body ---
 ## Context
