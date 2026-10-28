@@ -2,12 +2,14 @@
 Title: Forge leaks, skill prose: merge recipe, claims.md, lair and roar capture name forge.py commands, not gh
 Created: 2026-10-28
 Author: claude
+Closed: autoclosed — PR #1915
 
 --- log ---
 2026-10-28T17:48Z claude created
 2026-10-28T17:52Z claude note planned (raid f7fa41): Imagine, Blind-Spot (4 material findings folded into 1318), feasibility PASS
 2026-10-28T18:07Z reviewer note blocker 1318 closed — Blocked-by removed.
 2026-10-28T18:21Z reviewer kept behind markers (no forge.py verb, 1318 added none): merge/SKILL.md duration comment, ready, disarm, merge (steps 2,5,6); claims.md body edit (read-back now forge.py resolve); lair/SKILL.md auto-merge setting read and arm. Reads moved to forge.py: step 0 resolve, step 5 list (auto), step 7 and the queued-merge wait read-back; capture.md body read resolve.
+2026-10-28T18:41Z reviewer closed — autoclosed — PR #1915
 
 --- body ---
 ## Context
