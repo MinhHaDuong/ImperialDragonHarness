@@ -22,12 +22,9 @@ stating opposite rules on the same act; a skill restating a step another
 skill owns, which drifts when the owner changes; a rule body and a skill
 disagreeing on who decides.
 
-## Shared stance with test-doctor
+## Shared practice
 
-The visit stance (complaint, hypotheses, probes that separate them, priced
-proposals, revisit) is shared with `skills/test-doctor/SKILL.md`. The
-harness doctor points at it in one line and restates only what differs: the
-patient is harness text, not a project's suites, so the triage order, probes
-and controls differ. The small duplication is accepted: a shared reference
-for two skills adds a pointer hop and a drift owner. Extract one only when a
-third doctor appears.
+The ethic every doctor follows and the consultation the practitioners run
+live once, in `references/doctor-practice.md`. Each doctor's SKILL.md points to
+it and keeps only its specialty. A doctor's line that restates a duty stated
+there is a duplicate to remove.
