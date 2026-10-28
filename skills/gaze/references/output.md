@@ -63,16 +63,21 @@ Unresolved simplify: [must-fix and consider findings of a simplify item; or "non
 
 duration: <the `step_clock.py end` line as printed, e.g. duration: 4m12s>
 telemetry: wall=<seconds>s agents=<n> tokens=<in+out> cost~=$<usd>
-seat: <role> · runtime=<id> · family=<family> · route=<token> · model=<id as the worker reported it | not observed> · status: ran|failed|skipped
+{{seats}}
 ```
 
-One `seat:` line per plan item that is a worker, at column 0 in exactly this
-shape (a role may hold spaces, never `·`, `=` or `:`): `attribution_record.py
---seats-pr` writes the PR body's `reviewer:` lines from them, read from the
-review's notes answers (tickets 1155, 1301). A model id without a provider
-prefix takes `family` as that prefix. A result with no `seat:` line, or a body
-`reviewer:` seat absent from it, is a capture failure. A requested model name
-is not an observed id.
+`{{seats}}` is replaced by `gaze_close.py` with one `seat:` line per plan item that is
+a worker, built from the plan's item names and the launcher-set `worker:` headers
+(`seat_clock.py identities`, ticket 1303): you type no `seat:` line and no
+`reviewer:` line, and a comment with a typed `seat:` line, or without the
+placeholder, is refused. The name is the plan item's, the one name used in the
+plan, the roster, the `seat:` line and the attribution `seat=` field. The script
+also writes the PR body's `reviewer:` lines from them, and
+`attribution_record.py --seats-pr` reads them from the review's notes answers
+(tickets 1155, 1301). A `self` item takes the identity given by
+`--session-runtime` and `--session-model` of the closing call. A result with no
+`seat:` line, or a body `reviewer:` seat absent from it, is a capture failure.
+A requested model name is not an observed id.
 
 `seats:` is defined once, in SKILL.md § 4.
 

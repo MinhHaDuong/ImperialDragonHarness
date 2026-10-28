@@ -15,10 +15,6 @@ spec = importlib.util.spec_from_file_location("review_notes", SCRIPTS / "review_
 rn = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(rn)
 
-SEAT = ("reviewer: step=review · seat: a · runtime=codex · family=openai · route=r · "
-        "model=m · status: ran")
-
-
 def seat_panel(f):
     """A panel where one non-self seat reported: gaze_close accepts `seats: panel` (ticket 1287)."""
     panel = Path(f["panel"])
@@ -47,11 +43,11 @@ def test_branch_review_records_an_answer_in_the_notes(tmp_path):
     rid = f["review_id"]
     assert rid.startswith("rv-") and "f.txt" in r.stdout
     attr = tmp_path / "attr.txt"
-    attr.write_text(SEAT + "\n")
+    attr.write_text("")
     seat_panel(f)
     comment = tmp_path / "c.md"
     comment.write_text(f"result: REVIEWED\nseats: panel\nreviewed_head_sha: {f['head']}\n"
-                       "intent: default: the whole merge request\n{{plan_check}}\n{{duration}}\n")
+                       "intent: default: the whole merge request\n{{plan_check}}\n{{seats}}\n{{duration}}\n")
     r = run(CLOSE, ["branch:feature", "--branch", "feature", "--token", f["clock"],
                     "--attribution-file", str(attr), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
@@ -60,7 +56,9 @@ def test_branch_review_records_an_answer_in_the_notes(tmp_path):
     assert not (tmp_path / "gh.log").exists()  # nothing went to a forge
     answer = [e for e in rn.entries(primary, rid) if e["kind"] == "answer"][-1]
     assert answer["result"] == "REVIEWED" and answer["seats"] == "panel"
-    assert answer["head"] == f["head"] and answer["attribution"] == [SEAT]
+    assert answer["head"] == f["head"] and len(answer["attribution"]) == 1
+    assert answer["attribution"][0].startswith(
+        "reviewer: step=review · seat=a · runtime=codex · model=openai/m ·")  # ticket 1303: generated
     assert "plan check:" in answer["text"] and "{{" not in answer["text"]
     # where the gate reads it: coverage of the reviewed head, from a fresh clone of the remote
     cov = rn.coverage(primary, rid, f["head"])
@@ -90,7 +88,7 @@ def close_with(tmp_path, primary, env, f, intent_line):
     seat_panel(f)
     comment = tmp_path / "c.md"
     comment.write_text(f"result: REVIEWED\nseats: panel\nreviewed_head_sha: {f['head']}\n{intent_line}"
-                       "{{plan_check}}\n")
+                       "{{plan_check}}\n{{seats}}\n")
     return run(CLOSE, ["branch:feature", "--branch", "feature", "--token", f["clock"],
                        "--attribution-file", str(attr), "--comment-file", str(comment)], primary, env)
 

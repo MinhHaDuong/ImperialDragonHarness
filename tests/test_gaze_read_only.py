@@ -98,7 +98,7 @@ def test_a_gaze_run_leaves_the_branch_tip_and_the_callers_worktree_unchanged(tmp
     caller_branch = git(caller, "branch", "--show-current")
     review = (
         'mkdir -p "$review_tree/.panel/7"\n'
-        'printf "# budget: 5m\\ncorrectness\\tm\\tanthropic\\tr\\n" > "$review_tree/.panel/7/manifest.txt"\n'
+        'printf "# budget: 5m\\ncorrectness\\tscript\\tnone\\tr\\n" > "$review_tree/.panel/7/manifest.txt"\n'
         'printf "worker: model=m · family=anthropic\\nverdict: clear\\n" > "$review_tree/.panel/7/correctness.md"\n'
     )
     run = run_gaze(tmp_path, repos, review)

@@ -32,8 +32,7 @@ def forge_shim(tmp_path, env):
     return body
 
 
-SEAT = ("reviewer: step=review · seat: a · runtime=claude · family=anthropic · route=r · "
-        "model=m · status: ran")
+HEADLESS = "worker: model={pin} · family={family} · runtime={runtime} · door=headless\nverdict: clear\n"
 
 
 POINTER = re.compile(r"^/gaze review on notes: (rv-\S+), verdict (REVIEWED|FINDINGS|ESCALATE)$")
@@ -60,7 +59,7 @@ def opened(tmp_path):
 def test_clean_tree_is_removed_and_comment_posted(tmp_path):
     primary, env, f = opened(tmp_path)
     comment = tmp_path / "c.md"
-    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{duration}}\n{{containment}}\n")
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n{{duration}}\n{{containment}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", "--token", f["clock"], *ATTR(tmp_path), "--comment-file", str(comment)],
             primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
@@ -75,7 +74,7 @@ def test_dirty_tracked_file_preserves_tree_and_blocks(tmp_path):
     tree = primary / ".claude" / "worktrees" / "review-7"
     (tree / "f.txt").write_text("real wip\n")
     comment = tmp_path / "c.md"
-    comment.write_text("x {{plan_check}}\n")
+    comment.write_text("x {{plan_check}}\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 1 and "blocked" in r.stderr
     assert (tree / "f.txt").read_text() == "real wip\n"
@@ -95,24 +94,28 @@ def test_foreign_file_in_session_tree_is_flagged(tmp_path):
 def test_blocked_cleanup_still_appends_attribution(tmp_path):
     primary, env, f = opened(tmp_path)
     body = forge_shim(tmp_path, env)
+    one_seat(primary)
     (primary / ".claude" / "worktrees" / "review-7" / "f.txt").write_text("real wip\n")
-    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, SEAT + "\n")], primary, env)
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], primary, env)
     assert r.returncode == 1 and "blocked" in r.stderr
     assert "ESCALATE" in r.stderr
     assert "attribution: appended" in r.stdout
-    assert "seat: a" in body.read_text()
+    assert "seat=a" in body.read_text()
     assert "seat:" not in posted(tmp_path)
+    # constraint 3: the identities were read before cleanup and ride in the ESCALATE answer
+    assert "seat: a · runtime=claude-code" in answer_text(primary, f)
 
 
 def test_clean_close_appends_attribution_before_the_comment(tmp_path):
     primary, env, f = opened(tmp_path)
-    body = forge_shim(tmp_path, env)
+    body = seats_shim(tmp_path, env)
     comment = tmp_path / "c.md"
-    comment.write_text("result: REVIEWED\n{{plan_check}}\n")
-    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, SEAT + "\n"), "--comment-file", str(comment)],
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
+    one_seat(primary)
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)],
             primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
-    assert "seat: a" in body.read_text()
+    assert "seat=a" in body.read_text()
 
 
 def test_call_without_attribution_file_fails_loudly(tmp_path):
@@ -126,17 +129,19 @@ def test_attribution_creates_the_block_when_the_body_has_none(tmp_path):
     primary, env, f = opened(tmp_path)
     body = forge_shim(tmp_path, env)
     body.write_text("Body without a block\n")
-    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, SEAT + "\n")], primary, env)
+    one_seat(primary)
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     text = body.read_text()
-    assert "```attribution" in text and "seat: a" in text and f"project: {primary.name}" in text
+    assert "```attribution" in text and "seat=a" in text and f"project: {primary.name}" in text
 
 
 def test_blocked_cleanup_with_failed_append_exits_2(tmp_path):
     primary, env, f = opened(tmp_path)
+    one_seat(primary)
     (primary / ".claude" / "worktrees" / "review-7" / "f.txt").write_text("real wip\n")
     # the default shim answers `pr view` with PR json, not a body: the append fails
-    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, SEAT + "\n")], primary, env)
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path)], primary, env)
     assert "attribution: FAILED" in r.stdout and "blocked" in r.stderr
     assert r.returncode == 2
 
@@ -192,6 +197,12 @@ def panel(primary, manifest, reports=None):
         (d / f"{name}.md").write_text(text)
 
 
+def one_seat(primary, name="a", pin="claude-x", family="anthropic", runtime="claude-code", header=True):
+    """A plan with one headless worker item and its launcher-stamped report (ticket 1303)."""
+    panel(primary, f"# budget: 10m\n{name}\t{pin}\t{family}\theadless {runtime}\n",
+          {name: HEADLESS.format(pin=pin, family=family, runtime=runtime)} if header else None)
+
+
 def plan_line(primary, f):
     return [ln for ln in answer_text(primary, f).splitlines() if ln.startswith("plan check:")]
 
@@ -202,7 +213,7 @@ def test_failed_plan_check_reaches_the_comment_as_fail(tmp_path):
     primary, env, f = opened(tmp_path)
     panel(primary, "# budget: 10m\nOne seat reads the diff and the test.\n")
     comment = tmp_path / "c.md"
-    comment.write_text("result: REVIEWED\n{{plan_check}} — the model's reason\n")
+    comment.write_text("result: REVIEWED\n{{plan_check}} — the model's reason\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     (line,) = plan_line(primary, f)
@@ -213,7 +224,7 @@ def test_failed_plan_check_reaches_the_comment_as_fail(tmp_path):
 def test_missing_panel_is_a_failed_plan_check(tmp_path):
     primary, env, f = opened(tmp_path)
     comment = tmp_path / "c.md"
-    comment.write_text("{{plan_check}}\n")
+    comment.write_text("{{plan_check}}\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     assert plan_line(primary, f) == ["plan check: FAIL — manifest unreadable"]
@@ -226,7 +237,7 @@ def test_valid_plan_check_reaches_the_comment_as_pass(tmp_path):
     d = primary / ".claude" / "worktrees" / "review-7" / ".panel" / "7"
     (d / "regression.md").write_text("ran: ok\n")
     comment = tmp_path / "c.md"
-    comment.write_text("{{plan_check}}\n")
+    comment.write_text("{{plan_check}}\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     assert plan_line(primary, f) == ["plan check: PASS"]
@@ -259,7 +270,7 @@ def test_documented_template_filled_as_documented_is_accepted(tmp_path, doc):
     tmpl = hits[0]  # a skill read may inline its references; the first hit is the file's own
     primary, env, f = opened(tmp_path)
     comment = tmp_path / "c.md"
-    comment.write_text("result: REVIEWED\n" + re.sub(r"<[^>]*>", "none", tmpl) + "\n")
+    comment.write_text("result: REVIEWED\n{{seats}}\n" + re.sub(r"<[^>]*>", "none", tmpl) + "\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     (line,) = plan_line(primary, f)
@@ -320,25 +331,153 @@ def test_empty_attribution_file_runs_seats_pr(tmp_path):
     primary, env, f = opened(tmp_path)
     body = seats_shim(tmp_path, env)
     comment = tmp_path / "c.md"
-    comment.write_text(Path(env["MOCK_RESULT"]).read_text() + "result: REVIEWED\n{{plan_check}}\n")
+    one_seat(primary)
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "attribution: seats appended" in r.stdout
     assert "reviewer: " in body.read_text() and "seat=a" in body.read_text()
 
 
-def test_partial_attribution_file_gets_the_missing_seat(tmp_path):
+def test_findings_follow_their_generated_reviewer_line(tmp_path):
+    """The file holds findings only, keyed by seat; the script writes each reviewer line and
+    puts the seat's findings under it, once (the --seats-pr step then finds the seat present)."""
     primary, env, f = opened(tmp_path)
     body = seats_shim(tmp_path, env)
-    result = Path(env["MOCK_RESULT"])
-    result.write_text(result.read_text() + result.read_text().split("\n")[1].replace("seat: a", "seat: b") + "\n")
-    have = ("reviewer: step=review · seat=a · runtime=claude · model=anthropic/claude-x · effort=not-stated"
-            " · route=r · independence=not-stated · status: ran")
+    panel(primary, "# budget: 10m\na\tclaude-x\tanthropic\theadless claude-code\nb\tclaude-y\tanthropic\theadless claude-code\n",
+          {n: HEADLESS.format(pin=p, family="anthropic", runtime="claude-code") for n, p in (("a", "claude-x"), ("b", "claude-y"))})
     comment = tmp_path / "c.md"
-    comment.write_text(result.read_text() + "result: REVIEWED\n{{plan_check}}\n")
-    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, have + "\n"), "--comment-file", str(comment)], primary, env)
-    assert "attribution: seats appended" in r.stdout, r.stdout
-    assert "seat=b" in body.read_text() and body.read_text().count("seat=a") == 1
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
+    finding = "finding: a · verifiable · scripts/x.py:3 · adopted: yes\n"
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, finding), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    lines = [ln for ln in body.read_text().splitlines() if ln.startswith(("reviewer:", "  finding:"))]
+    assert [ln.split(" · ")[1] if ln.startswith("reviewer") else "finding" for ln in lines] == ["seat=a", "finding", "seat=b"]
+    assert body.read_text().count("seat=a") == 1
+
+
+# --- ticket 1303: the identity lines are generated, never typed --------------------------------
+
+def seat_close(tmp_path, primary, env, attr="", extra=()):
+    comment = tmp_path / "c.md"
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
+    return run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path, attr), "--comment-file", str(comment), *extra],
+               primary, env)
+
+
+def seat_lines_of(text):
+    return [ln for ln in text.splitlines() if ln.startswith("seat: ")]
+
+
+def test_gaze_close_derives_the_1853_seat(tmp_path):
+    """Replay of PR #1853: plan item `consistency`, `--role code-reviewer`, bare pin `gpt-6-luna`.
+    One name, a provider-qualified model, and the capture then raises no failure."""
+    primary, env, f = opened(tmp_path)
+    body = seats_shim(tmp_path, env)
+    one_seat(primary, name="consistency", pin="gpt-6-luna", family="openai", runtime="codex")
+    r = seat_close(tmp_path, primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    (line,) = seat_lines_of(answer_text(primary, f))
+    assert line.startswith("seat: consistency · runtime=codex") and "model=openai/gpt-6-luna" in line
+    assert "code-reviewer" not in answer_text(primary, f) and "FAILED" not in r.stdout
+    reviewers = [ln for ln in body.read_text().splitlines() if ln.startswith("reviewer: ")]
+    assert len(reviewers) == 1 and "seat=consistency" in reviewers[0] and "model=openai/gpt-6-luna" in reviewers[0]
+    import sys
+    sys.path.insert(0, str(Path(CLOSE).parent))
+    import attribution_record
+    assert attribution_record.seat_lines(answer_text(primary, f), body.read_text()) == ([], [])
+
+
+@pytest.mark.parametrize("typed", ["seat: a · runtime=x", "  seat: a", "> seat: a", "**seat:** a"])
+def test_typed_seat_line_or_missing_placeholder_is_refused(tmp_path, typed):
+    primary, env, f = opened(tmp_path)
+    one_seat(primary)
+    comment = tmp_path / "c.md"
+    comment.write_text(f"result: REVIEWED\n{{{{plan_check}}}}\n{{{{seats}}}}\n{typed}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 2 and "seats" in r.stderr
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    assert r.returncode == 2 and "{{seats}}" in r.stderr
+    assert (primary / ".claude" / "worktrees" / "review-7").exists() and not (tmp_path / "gh.log").exists()
+
+
+@pytest.mark.parametrize("attr,why", [
+    ("finding: ghost · verifiable · scripts/x.py:3 · adopted: yes\n", "absent from the plan"),
+    ("finding: failing · verifiable · scripts/x.py:3 · adopted: yes\n", "did not run"),
+    ("reviewer: step=review · seat=a · runtime=x · model=m/n · status: ran\n", "holds only"),
+    ("  finding: verifiable · scripts/x.py:3 · adopted: yes\n", "holds only"),
+])
+def test_attribution_file_is_findings_of_seats_in_the_plan(tmp_path, attr, why):
+    """Exit criterion: a finding naming a seat absent from the plan refuses the close (non-zero,
+    nothing removed, appended or posted); so does a typed reviewer line, or a seat that failed."""
+    primary, env, f = opened(tmp_path)
+    body = seats_shim(tmp_path, env)
+    before = body.read_text()
+    panel(primary, "# budget: 10m\na\tclaude-x\tanthropic\theadless claude-code\n"
+                   "failing\tgpt-6-luna\topenai\theadless codex\n",
+          {"a": HEADLESS.format(pin="claude-x", family="anthropic", runtime="claude-code")})
+    r = seat_close(tmp_path, primary, env, attr)
+    assert r.returncode == 2 and why in r.stderr, r.stdout + r.stderr
+    assert (primary / ".claude" / "worktrees" / "review-7").exists()
+    assert body.read_text() == before and not (tmp_path / "gh.log").exists()
+
+
+def test_subagent_seat_takes_the_pin_not_its_typed_header(tmp_path):
+    """Blind-Spot 1: a subagent types its own `worker:` header, so the line takes the manifest pin
+    and the session's runtime and says route=subagent, whatever the header claims."""
+    primary, env, f = opened(tmp_path)
+    seats_shim(tmp_path, env)
+    panel(primary, "# budget: 10m\nscope\tclaude-x\tanthropic\tsubagent\n",
+          {"scope": "worker: model=made-up-model · family=anthropic · runtime=elsewhere\nverdict: clear\n"})
+    r = seat_close(tmp_path, primary, env, extra=["--session-runtime", "claude-code"])
+    assert r.returncode == 0, r.stdout + r.stderr
+    (line,) = seat_lines_of(answer_text(primary, f))
+    assert "runtime=claude-code" in line and "route=subagent" in line and "model=anthropic/claude-x" in line
+    assert "made-up-model" not in line and "elsewhere" not in line
+
+
+def test_failed_seat_still_captures_with_its_planned_pin(tmp_path):
+    """Blind-Spot 2: a seat that filed no report keeps its pin and the runtime its reason names
+    (status failed), so the capture is not blocked by `model=not observed`."""
+    primary, env, f = opened(tmp_path)
+    body = seats_shim(tmp_path, env)
+    one_seat(primary, name="late", pin="gpt-6-luna", family="openai", runtime="codex", header=False)
+    r = seat_close(tmp_path, primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    (line,) = seat_lines_of(answer_text(primary, f))
+    assert "runtime=codex" in line and "model=openai/gpt-6-luna" in line and line.endswith("status: failed")
+    assert "seat=late" in body.read_text() and "status: failed" in body.read_text()
+
+
+def test_pi_any_provider_seat_keeps_its_exact_qualifier(tmp_path):
+    """Blind-Spot 5: pi's door serves any provider, so the qualifier is the pin's own prefix
+    (padme/...), not a family-string rule."""
+    primary, env, f = opened(tmp_path)
+    seats_shim(tmp_path, env)
+    one_seat(primary, name="local", pin="padme/qwen3.8-flash-next-iq3_s", family="qwen", runtime="pi")
+    r = seat_close(tmp_path, primary, env)
+    assert r.returncode == 0, r.stdout + r.stderr
+    (line,) = seat_lines_of(answer_text(primary, f))
+    assert "runtime=pi" in line and "model=padme/qwen3.8-flash-next-iq3_s" in line
+
+
+def test_self_seat_takes_the_session_identity(tmp_path):
+    primary, env, f = opened(tmp_path)
+    seats_shim(tmp_path, env)
+    panel(primary, "# budget: 10m\nself\tself\tanthropic\tgaze\n", {"self": "worker: self · family=anthropic\nok\n"})
+    r = seat_close(tmp_path, primary, env, extra=["--session-runtime", "claude-code", "--session-model", "claude-x"])
+    assert r.returncode == 0, r.stdout + r.stderr
+    (line,) = seat_lines_of(answer_text(primary, f))
+    assert "runtime=claude-code" in line and "route=self" in line and "model=anthropic/claude-x" in line
+
+
+def test_self_seat_without_a_session_model_is_loud_not_invented(tmp_path):
+    primary, env, f = opened(tmp_path)
+    seats_shim(tmp_path, env)
+    panel(primary, "# budget: 10m\nself\tself\tanthropic\tgaze\n", {"self": "worker: self · family=anthropic\nok\n"})
+    r = seat_close(tmp_path, primary, env)
+    assert r.returncode == 2 and "model not observed" in r.stdout
 
 
 SIGNED = "worker: model=m · family={}\nverdict: clear\n"
@@ -360,11 +499,13 @@ SIGNED = "worker: model=m · family={}\nverdict: clear\n"
 def test_seats_panel_needs_a_filed_non_self_report(tmp_path, claim, reports, code):
     """Ticket 1287: the `seats:` header is checked against the panel, like the plan-check line."""
     primary, env, f = opened(tmp_path)
+    seats_shim(tmp_path, env)
     panel(primary, "# budget: 10m\nself\tself\tanthropic\tgaze\nredteam\to\topenai\theadless codex\n", reports)
     comment = tmp_path / "c.md"
     line = claim[len("<key>"):] if claim.startswith("<key>") else f"seats: {claim}"
-    comment.write_text(f"result: REVIEWED\n{line}\n{{{{plan_check}}}}\n")
-    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
+    comment.write_text(f"result: REVIEWED\n{line}\n{{{{plan_check}}}}\n{{{{seats}}}}\n")
+    r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment),
+                    "--session-runtime", "claude-code", "--session-model", "claude-x"], primary, env)
     assert r.returncode == code, r.stdout + r.stderr
     if code:
         assert "seats: self-only" in r.stderr
@@ -420,7 +561,7 @@ def test_pr_answer_written_to_notes_and_pointer(tmp_path):
     rn = _notes()
     primary, env, f = opened(tmp_path)
     comment = tmp_path / "c.md"
-    comment.write_text(f"result: REVIEWED\nreviewed_head_sha: {f['head']}\nintent: default\n{{{{plan_check}}}}\n")
+    comment.write_text(f"result: REVIEWED\nreviewed_head_sha: {f['head']}\nintent: default\n{{{{plan_check}}}}\n{{{{seats}}}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     (line,) = posted(tmp_path).splitlines()  # the comment is the pointer alone (ticket 1301)
@@ -497,7 +638,7 @@ def test_failed_background_push_does_not_block_close(tmp_path):
     hook.write_text("#!/bin/sh\nsleep 8\nexit 1\n")
     hook.chmod(0o755)
     comment = tmp_path / "c.md"
-    comment.write_text("result: FINDINGS\nintent: default\n{{plan_check}}\n")
+    comment.write_text("result: FINDINGS\nintent: default\n{{plan_check}}\n{{seats}}\n")
     t0 = time.monotonic()
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     elapsed = time.monotonic() - t0
@@ -512,8 +653,7 @@ def test_failed_background_push_does_not_block_close(tmp_path):
 def test_pr_close_posts_only_pointer(tmp_path):
     primary, env, f = opened(tmp_path)
     comment = tmp_path / "c.md"
-    comment.write_text("## /gaze result\n\nresult: FINDINGS\n{{plan_check}}\nFindings: one\n"
-                       "seat: a · runtime=claude · family=anthropic · route=r · model=anthropic/x · status: ran\n")
+    comment.write_text("## /gaze result\n\nresult: FINDINGS\n{{plan_check}}\n{{seats}}\nFindings: one\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert "pointer: posted" in r.stdout, r.stdout + r.stderr
     assert posted(tmp_path) == f"/gaze review on notes: {f['review_id']}, verdict FINDINGS\n"
@@ -525,7 +665,7 @@ def test_pointer_failure_ignored_exit_zero(tmp_path):
     shim = tmp_path / "bin" / "gh"
     shim.write_text(shim.read_text().replace('  comment) printf', '  comment) echo refused >&2; exit 1; printf'))
     comment = tmp_path / "c.md"
-    comment.write_text("result: REVIEWED\n{{plan_check}}\n")
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "pointer: not posted" in r.stdout and "result: REVIEWED" in answer_text(primary, f)
@@ -536,10 +676,10 @@ def test_seats_appended_to_body_without_comment(tmp_path):
     gets the reviewer line, and the posted pointer holds no `seat:` line."""
     primary, env, f = opened(tmp_path)
     body = seats_shim(tmp_path, env)
-    seat = Path(env["MOCK_RESULT"]).read_text().splitlines()[1]
+    one_seat(primary)
     Path(env["MOCK_RESULT"]).write_text("an unrelated comment\n")
     comment = tmp_path / "c.md"
-    comment.write_text(f"result: REVIEWED\n{{{{plan_check}}}}\n{seat}\n")
+    comment.write_text("result: REVIEWED\n{{plan_check}}\n{{seats}}\n")
     r = run(CLOSE, ["7", "--branch", "feature", *ATTR(tmp_path), "--comment-file", str(comment)], primary, env)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "attribution: seats appended" in r.stdout
