@@ -411,6 +411,28 @@ def test_pr_answer_written_to_notes_and_comment(tmp_path):
     assert answers[0]["head"] == f["head"]
 
 
+NETWORK_GIT = {("fetch",), ("push",), ("ls-remote",), ("pull",), ("remote", "update"),
+               ("request-pull",)}
+
+
+def _git_subcommand(cmd):
+    """The git subcommand of a spawned argv, as a 1- or 2-tuple (`remote update`), or None.
+    Every child goes through subprocess.Popen, whichever route spawned it (rn._git, a direct
+    subprocess.run in gaze_close, forge), so the test patches Popen once (gaze on PR #1855)."""
+    argv = [str(c) for c in cmd] if isinstance(cmd, (list, tuple)) else str(cmd).split()
+    if not argv or Path(argv[0]).name != "git":
+        return None
+    i = 1
+    while i < len(argv) and argv[i].startswith("-"):
+        i += 2 if argv[i] in ("-C", "-c", "--git-dir", "--work-tree") else 1
+    rest = argv[i:]
+    if not rest:
+        return None
+    if rest[0] == "remote" and len(rest) > 1:
+        return (rest[0], rest[1])
+    return (rest[0],)
+
+
 def test_record_answer_makes_no_network_call(tmp_path, monkeypatch):
     import sys
     primary, env, f = opened(tmp_path)
@@ -431,10 +453,13 @@ def test_record_answer_makes_no_network_call(tmp_path, monkeypatch):
     monkeypatch.setattr(gaze_close.rn, "_git", local_git)
     real_popen = gaze_close.rn.subprocess.Popen
 
-    def popen(cmd, *a, **kw):  # record the detached sync, run every other child (git) as usual
+    def popen(cmd, *a, **kw):  # record the detached sync, refuse any git network child, run the rest
         if "--if-idle" in cmd:
             spawned.append(cmd)
             return None
+        sub = _git_subcommand(cmd)
+        if sub in NETWORK_GIT:
+            raise AssertionError(f"network git {' '.join(sub)} spawned on the write path: {cmd}")
         return real_popen(cmd, *a, **kw)
     monkeypatch.setattr(gaze_close.rn.subprocess, "Popen", popen)
     text = f"result: REVIEWED\nreviewed_head_sha: {f['head']}\nintent: default\n"
