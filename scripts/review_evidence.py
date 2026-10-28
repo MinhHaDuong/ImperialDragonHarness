@@ -497,7 +497,6 @@ reviewThreads(first:100){pageInfo{hasNextPage endCursor}
 
 
 def cmd_forge(args: argparse.Namespace) -> int:
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
     import forge  # same directory: the one read bound and network classifier (ticket 1308)
     owner, name = args.forge_repo.split("/", 1)
     read_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
