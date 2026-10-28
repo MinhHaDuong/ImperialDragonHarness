@@ -79,8 +79,8 @@ When roar runs this: roar steps 2-3, in the wrap-up worktree, before the worktre
    When the merged PR body carries an `attribution` block (ticket 1151), copy
    it instead of rebuilding it: read the merged PR's final body from the forge,
    not the commit message, which predates late appends
-   <!-- harness-extension-point: on GitHub, `gh pr view <N> --json body --jq .body` -->
-   and pipe it through
+   (`python3 "$IDH_ROOT/scripts/forge.py" resolve <N>` prints it as the JSON `body`)
+   and pipe the body through
    `attribution_record.py --extract --merged <merge-date>`, which swaps
    `pending` for the merge date; stream its output to `--capture` below.
    Complete only what the block lacks, from the review trail.

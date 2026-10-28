@@ -15,7 +15,8 @@ Close intent is read from the merge request **body** only — never the title:
 - `Ticket: NNNN` (short form) — a claim, once normalized: when exactly one
   `tickets/NNNN-*.erg` or `tickets/closed/NNNN-*.erg` matches, rewrite the
   body to the canonical path and read it back in the same command
-  (`gh pr edit N --body-file <file> && gh pr view N --json body`), <!-- harness-extension-point -->
+  (`gh pr edit N --body-file <file>` <!-- harness-extension-point --> then
+  `python3 "$IDH_ROOT/scripts/forge.py" resolve N` for the body),
   so the claim audit can see it; zero or several matches: stop and fix the
   line by hand. Only a 4-digit ID alone after `Ticket:` qualifies — never
   `NNNN-slug`, `NNNN, MMMM` or `#NNNN`.

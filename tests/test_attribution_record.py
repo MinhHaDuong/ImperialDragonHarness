@@ -443,7 +443,7 @@ def test_render_pr_fails_loud_when_both_writes_are_lost(tmp_path):
 
 def test_skills_wire_the_helper_modes():
     roar = (ROOT / "skills" / "roar" / "runbooks" / "capture.md").read_text()
-    assert "--extract" in roar and "gh pr view" in roar
+    assert "--extract" in roar and "forge.py\" resolve" in roar
     assert "--capture-unit" in roar
     raid = (ROOT / "skills" / "raid" / "SKILL.md").read_text()
     assert "--record-writer" in raid
