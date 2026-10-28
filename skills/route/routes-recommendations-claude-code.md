@@ -33,6 +33,11 @@ oversize context, uncleared content, or a cross-family need).
   started from bash: `codex exec -m` for OpenAI, `vibe` for Mistral; `pi -p`
   reaches only the providers the host's Pi declares (on padme, its local
   seats and huggingface).
+- Before choosing a door, ask whether it is configured here:
+  `python3 "$IDH_ROOT/scripts/runtime.py" can launch.subagent` or
+  `can launch.headless.<door>` (a `launch_doors` key in `routes.json`). Exit 0
+  means configured (the door is declared and its program is on PATH), not
+  that a launch will succeed; exit 1 prints the NOOP reason (ticket 1313).
 
 ## Which model for which work
 
