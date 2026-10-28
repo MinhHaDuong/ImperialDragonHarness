@@ -49,7 +49,7 @@ import sys
 
 SEPARATORS = {";", "&&", "||", "|", "&", "(", ")", "|&", ";;", "{", "}"}
 PREFIXES = {"rtk", "command", "env", "sudo", "time", "nice", "exec"}
-HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\1")
+HEREDOC = re.compile(r"(?<!<)<<(?!<)-?\s*(['\"]?)([^\s'\"<>;&|()]+)\1")
 
 
 def strip_heredocs(text):
@@ -146,8 +146,9 @@ def self_matching_pgrep(argv):
             break
         if tok.startswith("--"):
             name = tok.split("=", 1)[0]
-            full |= name == "--full"
-            ancestors |= name == "--ignore-ancestors"
+            # getopt_long takes any unambiguous prefix: --ful is --full.
+            full |= len(name) > 3 and "--full".startswith(name)
+            ancestors |= len(name) > 3 and "--ignore-ancestors".startswith(name)
             if name in PGREP_ARG_LONG and "=" not in tok:
                 i += 1
         elif tok == "-A":
@@ -204,7 +205,7 @@ def main():
             print(
                 f"BLOCKED: `{tool} -f PATTERN` matches the calling shell, whose own "
                 f"command line holds PATTERN: a wait never ends, a pkill can kill "
-                f"its caller. Add -A (--ignore-ancestors), or bracket one letter "
+                f"its caller. Add -A (--ignore-ancestors, procps-ng >= 4), or bracket one letter "
                 f"('[p]attern'); to wait for a job, `timeout N tail --pid=PID -f "
                 f"/dev/null`.",
                 file=sys.stderr,

@@ -168,9 +168,11 @@ def test_non_repo_target_allows(tmp_path):
     "pkill -ALRM -f foo",  # a signal name holding an A is not -A
     "/usr/bin/pgrep -f foo",
     "rtk pgrep -lf foo",
+    "grep -q x <<<word\npgrep -f foo\nword",  # a here-string is no heredoc
     "timeout 5 pkill -f foo",
     "while pgrep -f job >/dev/null; do :; done",
     "cd /tmp && pgrep -f foo",
+    "pgrep --ful foo",  # getopt_long prefix of --full
 ])
 def test_self_matching_pgrep_is_blocked(tmp_path, command):
     res = _run(command, tmp_path)
@@ -189,6 +191,8 @@ def test_self_matching_pgrep_is_blocked(tmp_path, command):
     "pkill -x sleep",
     'echo "pgrep -f foo"',
     "cat <<'EOF'\npgrep -f foo\nEOF",
+    "cat <<'END-OF-TEXT'\npgrep -f job\nEND-OF-TEXT",  # gaze rv-20261028-pr-1914-c770
+    "pgrep --full --ignore-anc foo",
 ])
 def test_safe_pgrep_is_allowed(tmp_path, command):
     res = _run(command, tmp_path)
