@@ -137,9 +137,8 @@ downgraded to `consider:`; a `verifiable:` finding without its evidence is held
 until it has some.
 
 **The bar: diminishing returns** (`rules/workflow.md` § Trust, Verify,
-Monitor). A finding reopens work only if it clears this bar. A `blocking` or
-`verifiable:` finding carries two more fields, or it is a `consider:` or
-`nofollow:`:
+Monitor). A `blocking` or `verifiable:` finding reopens work only if it clears
+this bar: it carries two more fields, or it is a `consider:`:
 
 - `scenario:` the concrete input or state, and the wrong outcome a real
   user (caller, reader) meets: not "an adversary could", not "if someone
@@ -152,6 +151,14 @@ The bar is fixed before the findings arrive and is the same in every round:
 a finding is never judged against an earlier, larger one. Hardening a fix
 already made, or a finding on code a previous fix added for a below-bar
 reason, is `nofollow:`.
+
+**Reading the rounds.** The above-bar findings should shrink round by round.
+Shrinking and now below the bar is the normal end: stop, and never lower the
+bar in a later round to find something. Fresh blockers still arriving at
+round 3 mean the approach is wrong, not the fixes: the escalation is a
+redesign, re-ticketed with a diagnosis (`rules/workflow.md` § Escalation
+protocol), never a further fix round. Whether coder or reviewers are at fault
+is read after the fact, across PRs, not mid-review.
 
 | Severity | Seat verdict |
 |---|---|

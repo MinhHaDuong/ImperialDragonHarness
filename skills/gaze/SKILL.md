@@ -119,9 +119,9 @@ No retry: a worker that timed out or could not be reached is a deviation.
   what, a circuit breaker fired, the workspace could not be restored, or the
   deadline passed with items not finished and no blocking finding in hand
   (reason: "not verifiable within 15 minutes").
-- `FINDINGS`: any `blocking` seat verdict, any unresolved `verifiable:` minor,
-  any simplify must-fix; each finding clearing the bar
-  (`references/panel.md` § Finding tags), else it is posted as a `consider:`.
+- `FINDINGS`: any `blocking` seat verdict or unresolved `verifiable:` minor
+  that clears the bar (`references/panel.md` § Finding tags; one that does
+  not is posted as a `consider:`), any simplify must-fix.
 - `REVIEWED`: none of the above, and the what covered.
 
 Whatever the result, say who reviewed: `seats: self-only` when no item but
