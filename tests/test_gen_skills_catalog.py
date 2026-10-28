@@ -36,8 +36,8 @@ def test_catalog_skips_symlinked_private_skills(tmp_path):
 
     lines = gen_skills_catalog.catalog_lines(str(tmp_path))
 
-    rows = [line for line in lines if line.startswith("| `/")]
-    assert rows == ["| `/public-skill` | A public skill description. |"]
+    rows = [line for line in lines if line.startswith("| [`/")]
+    assert rows == ["| [`/public-skill`](skills/public-skill/SKILL.md) | A public skill description. |"]
 
 
 def test_catalog_lists_all_public_skills(tmp_path):
@@ -47,8 +47,8 @@ def test_catalog_lists_all_public_skills(tmp_path):
     lines = gen_skills_catalog.catalog_lines(str(tmp_path))
 
     assert lines[-2:] == [
-        "| `/alpha` | First. |",
-        "| `/beta` | Second. |",
+        "| [`/alpha`](skills/alpha/SKILL.md) | First. |",
+        "| [`/beta`](skills/beta/SKILL.md) | Second. |",
     ]
 
 
@@ -69,7 +69,7 @@ def test_catalog_groups_before_sorting_names(tmp_path):
     path.write_text(path.read_text().replace("category: build", "category: session"))
     lines = gen_skills_catalog.catalog_lines(str(tmp_path))
     assert lines.index("### The build loop") < lines.index("### The session loop")
-    assert lines.index("| `/zebra` | Build. |") < lines.index("| `/alpha` | Session. |")
+    assert lines.index("| [`/zebra`](skills/zebra/SKILL.md) | Build. |") < lines.index("| [`/alpha`](skills/alpha/SKILL.md) | Session. |")
 
 
 def test_catalog_separates_generalist_and_research(tmp_path):
@@ -80,7 +80,7 @@ def test_catalog_separates_generalist_and_research(tmp_path):
     lines = gen_skills_catalog.catalog_lines(str(tmp_path))
     assert lines.index("## Generalist") < lines.index("### The build loop")
     assert lines.index("## Research") < lines.index("### Research and bibliography")
-    assert lines.index("| `/hunt` | Build. |") < lines.index("## Research")
+    assert lines.index("| [`/hunt`](skills/hunt/SKILL.md) | Build. |") < lines.index("## Research")
 
 
 def test_catalog_document_is_reproducible(tmp_path):
@@ -88,7 +88,7 @@ def test_catalog_document_is_reproducible(tmp_path):
     document = gen_skills_catalog.catalog_document(str(tmp_path))
     assert document.startswith("# Skills catalog\n")
     assert "## Generalist" in document
-    assert document.endswith("| `/hunt` | Begin work. |\n")
+    assert document.endswith("| [`/hunt`](skills/hunt/SKILL.md) | Begin work. |\n")
     assert document == gen_skills_catalog.catalog_document(str(tmp_path))
 
 
@@ -110,8 +110,8 @@ def test_catalog_orders_by_metadata_order_then_name(tmp_path):
             path.write_text(path.read_text().replace(
                 "category: build", f"category: build\n  order: {order}"))
     rows = [line for line in gen_skills_catalog.catalog_lines(str(tmp_path))
-            if line.startswith("| `/")]
-    assert rows == ["| `/zebra` | Zebra. |", "| `/mid` | Mid. |", "| `/alpha` | Alpha. |"]
+            if line.startswith("| [`/")]
+    assert rows == ["| [`/zebra`](skills/zebra/SKILL.md) | Zebra. |", "| [`/mid`](skills/mid/SKILL.md) | Mid. |", "| [`/alpha`](skills/alpha/SKILL.md) | Alpha. |"]
 
 
 def test_catalog_hides_routing_hints():
@@ -128,3 +128,11 @@ def test_catalog_rejects_non_numeric_order(tmp_path):
     path.write_text(path.read_text().replace("category: build", 'category: build\n  order: "1"'))
     with pytest.raises(ValueError, match="metadata.order must be a number"):
         gen_skills_catalog.catalog_lines(str(tmp_path))
+
+
+def test_each_row_links_to_its_skill_file(tmp_path):
+    """A row links to the SKILL.md it was generated from, by the skill's directory."""
+    _make_skill(tmp_path, "linked", "Linked.")
+    row = [line for line in gen_skills_catalog.catalog_lines(str(tmp_path)) if "/linked" in line][0]
+    assert row.startswith("| [`/linked`](skills/linked/SKILL.md) |")
+    assert (tmp_path / "skills" / "linked" / "SKILL.md").is_file()
