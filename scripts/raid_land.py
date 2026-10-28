@@ -33,6 +33,7 @@ import re
 import subprocess
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 import attribution_record
@@ -224,6 +225,43 @@ def same_claims(body: str, ruled: list[str]) -> None:
         raise Refusal(f"close claims in the body {close_claims(body)} differ from the ruled set {sorted(ruled)}")
 
 
+def _when(ts: str):
+    """An ISO 8601 UTC time as a datetime, or None when it is not one (`unread`, absent)."""
+    try:
+        when = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return when if when.tzinfo else None  # a time with no zone cannot be ordered against the forge's
+
+
+def gate_read(cwd: Path, pr: str, ruled: str):
+    """When the gate's verdict on the ruled head read the forge reviews, else None (everything
+    unread: an offline verdict, a verdict before ticket 1308, or none found in the local notes)."""
+    try:
+        rid = review_notes.find_unit(str(cwd), f"pr:{pr}")
+        verdicts = [e for e in review_notes.entries(str(cwd), rid) if e["kind"] == "verdict"] if rid else []
+    except review_notes.Refusal:
+        return None
+    ruled_on = [v for v in verdicts if v.get("head") == ruled] or verdicts
+    return _when(ruled_on[-1].get("forge_read")) if ruled_on else None
+
+
+def recheck_reviews(fg, pr: str, cwd: Path, ruled: str) -> None:
+    """Ticket 1308: the gate may have ruled with the forge unread, and reviews keep arriving after
+    it. Refuse a CHANGES_REQUESTED review or an unresolved review thread newer than the gate's
+    forge read (every one when the gate did not read it); an unreadable recheck refuses too."""
+    since = gate_read(cwd, pr, ruled)
+    try:
+        blocking = fg.review_state(pr)
+    except forge.ForgeRefusal as exc:
+        raise Refusal(f"human and Copilot reviews unreadable at landing, never landed unread: {exc}") from exc
+    late = [b for b in blocking if since is None or not _when(b["at"]) or _when(b["at"]) > since]
+    if late:
+        window = f"since the gate's forge read {since:%Y-%m-%dT%H:%M:%SZ}" if since else "and the gate never read the forge"
+        raise Refusal(f"unresolved review {window}: {'; '.join(b['what'] for b in late)} "
+                      "(resolve it, or re-gate)")
+
+
 def claims_of(info: dict, local: bool) -> list[str]:
     """The ticket ids a request claims: body lines on a forge, commit trailers (resolve's `claims`) without."""
     if not local:
@@ -270,6 +308,7 @@ def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
             raise Refusal(f"close claims {claims} differ from the ruled set {sorted(ruled_claims)}")
     else:
         same_claims(info.get("body") or "", ruled_claims)
+        recheck_reviews(fg, pr, cwd, ruled)
     head = check_head(cwd, branch, base_ref, ruled, remote=not local)
     if local:
         check_closed(cwd, claims)
