@@ -10,6 +10,7 @@ Rules:
   (`skills/route/references/decorrelation.md`); it rules, it never repairs.
 - `rules/git.md` — reading state you will act on; inspect another version
   with `git show <ref>:<path>`; working-tree overwrites are banned.
+- The project's `memory/MEMORY.md` index at task start: open the topics the brief names or that match the task. Missing memory never blocks work.
 
 Skills:
 - `skills/verify-gate/SKILL.md` — the gate procedure; validate every
