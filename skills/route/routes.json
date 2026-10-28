@@ -40,7 +40,7 @@
     "openrouter": {
       "endpoint": "openrouter.ai (pi custom provider)",
       "key_env": "OPENROUTER_API_KEY_IDH",
-      "status": "declared on padme (openrouter-minimax, openrouter-minimax1p) but not reachable: no loader puts OPENROUTER_API_KEY_IDH into the Pi process (2026-10-28); a loader like pi-albert waits on the author's choice of paying key",
+      "status": "live on padme through scripts/pi-openrouter, billed to OPENROUTER_API_KEY_PI (author 2026-10-28); providers openrouter-deepseek (deepseek/deepseek-v4.1-flash-1017), openrouter-minimax and openrouter-minimax1p (minimax/minimax-m3.1-flash) answered a smoke prompt served by the requested provider; plain pi has no OpenRouter access; hosted, never for uncleared content",
       "cap_monthly_usd": 60,
       "note": "Monthly key cap 60 USD; author reported 45.18/60 before replay. Seven GLM Flash/Mimo failures were 403 key-limit errors, not model abandonment; targeted replay underway. Candidate and judge calls share this cap.",
       "last_verified": "2026-10-06"

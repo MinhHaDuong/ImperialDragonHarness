@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Pi on OpenRouter, billed to OPENROUTER_API_KEY_PI (author's choice 2026-10-28).
+# Only that key is read from ~/.config/keys/openrouter.env, into this process
+# only, never exported to the login environment, so plain `pi` keeps no
+# OpenRouter access. OpenRouter is a hosted door: never for uncleared content.
+# Usage: pi-openrouter --provider openrouter-<name> --model <declared id> ...
+# Both flags are required and checked against Pi's models.json, because an
+# empty or undeclared model is Pi's reroute trigger (adapters/pi/README.md).
+set -euo pipefail
+
+provider="" model=""
+args=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --provider) provider="${2:-}"; shift 2; continue ;;
+    --provider=*) provider="${1#--provider=}"; shift; continue ;;
+    --model) model="${2:-}"; shift 2; continue ;;
+    --model=*) model="${1#--model=}"; shift; continue ;;
+    --models|--models=*|--api-key|--api-key=*)
+      echo "pi-openrouter: $1 refused" >&2; exit 2 ;;
+  esac
+  args+=("$1"); shift
+done
+model="${model#"$provider"/}"
+
+models_json="${IDH_PI_MODELS:-$HOME/.pi/agent/models.json}"
+python3 - "$models_json" "$provider" "$model" <<'PY' || exit 2
+import json, sys
+path, provider, model = sys.argv[1:]
+providers = json.load(open(path)).get("providers", {})
+ok = provider.startswith("openrouter-") and provider in providers and \
+    model in [m.get("id") for m in providers[provider].get("models", [])]
+if not ok:
+    declared = {p: [m.get("id") for m in v.get("models", [])]
+                for p, v in providers.items() if p.startswith("openrouter-")}
+    sys.exit(f"pi-openrouter: --provider {provider!r} --model {model!r} refused; declared: {declared}")
+PY
+
+keyfile="$HOME/.config/keys/openrouter.env"
+[ -r "$keyfile" ] || { echo "pi-openrouter: $keyfile not readable" >&2; exit 1; }
+line=$(grep -m1 '^OPENROUTER_API_KEY_PI=' "$keyfile" || true)
+[ -n "$line" ] || { echo "pi-openrouter: OPENROUTER_API_KEY_PI missing in $keyfile" >&2; exit 1; }
+OPENROUTER_API_KEY_PI="${line#OPENROUTER_API_KEY_PI=}"
+OPENROUTER_API_KEY_PI="${OPENROUTER_API_KEY_PI%\"}"; OPENROUTER_API_KEY_PI="${OPENROUTER_API_KEY_PI#\"}"
+export OPENROUTER_API_KEY_PI
+
+exec pi --provider "$provider" --model "$model" "${args[@]}"
