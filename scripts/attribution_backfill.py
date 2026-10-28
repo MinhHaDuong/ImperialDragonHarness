@@ -14,6 +14,9 @@ from attribution_record import parse_record
 LOG = logging.getLogger(__name__)
 FULL_SHA = re.compile(r"(?:[0-9a-f]{40}|[0-9a-f]{64})")
 HUNK = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+\d+(?:,\d+)? @@", re.MULTILINE)
+# Merge's close moves and edits the claimed ticket, so a ticket anchor never resolves;
+# a later ticket edit is bookkeeping, not a defect fix.
+TICKET_ANCHOR = re.compile(r"tickets/(?:closed/)?[^/]+\.erg:\d+")
 
 
 def git(project, *args):
@@ -168,7 +171,8 @@ def backfill(project, fix, fix_pr, evidence, merged_through=None):
             if pr == fix_pr:
                 raise ValueError("fix PR is not a past review")
             anchors = sorted({finding["anchor"] for reviewer in record["reviewers"]
-                              for finding in reviewer["findings"]})
+                              for finding in reviewer["findings"]
+                              if not TICKET_ANCHOR.fullmatch(finding["anchor"])})
             matches = [anchor for anchor in anchors
                        if covered_anchor(project, reviewed, base, fix, anchor, renamed)]
             if not matches:
