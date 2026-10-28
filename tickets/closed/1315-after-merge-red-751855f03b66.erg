@@ -2,9 +2,11 @@
 Title: After-merge red on main 751855f03b66: pytest-guard
 Created: 2026-10-28
 Author: merge-gate
+Closed: after-merge record on main c3492b2a passes pytest-guard (record 2026-10-28T17:16:31Z); the test also passes alone on that tip. Only merge in the red window (#1886) changed one ticket line, so the 751855f failure is unexplained, likely flaky timing; reopen if it recurs.
 
 --- log ---
 2026-10-28T14:46Z merge-gate created
+2026-10-28T17:20Z reviewer closed — after-merge record on main c3492b2a passes pytest-guard (record 2026-10-28T17:16:31Z); the test also passes alone on that tip. Only merge in the red window (#1886) changed one ticket line, so the 751855f failure is unexplained, likely flaky timing; reopen if it recurs.
 
 --- body ---
 ## Context
