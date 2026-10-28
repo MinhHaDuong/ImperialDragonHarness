@@ -51,7 +51,9 @@ host's file, not from `--spend`. Either flag becomes a header line that the
 plan check reports as a deviation. A cross-family seat that then files no
 report (timed out, refused, `NOT-RUN:`) fails the plan check like any missing
 item: the review is not accepted, and the run never falls back to
-`--no-cross-family` after the fact. `gaze_close.py` refuses a `seats: panel`
+`--no-cross-family` after the fact. On a high-risk change no opt-out reason
+holds: verify-gate refuses a review with no seat of another family that ran
+(ticket 1326). `gaze_close.py` refuses a `seats: panel`
 result that no non-self report backs. The first two worked cases below hold
 on a host with no consent; with consent each adds a consented-family seat.
 

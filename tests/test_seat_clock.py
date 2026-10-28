@@ -308,6 +308,23 @@ def test_identities_map_status_route_and_provider(tmp_path):
     ]
 
 
+def test_identities_take_a_headless_seat_family_from_the_launcher_header(tmp_path):
+    """Ticket 1326: the plan's family column cannot relabel a headless seat; the launcher's header wins."""
+    header = 'worker: model=sonnet · family=anthropic · runtime=claude-code · door=headless\nverdict: clear\n'
+    panel = _plan(tmp_path, ['correctness\tsonnet\topenai\theadless claude-code'], {'correctness': header})
+    result = run('identities', str(panel), '--session-runtime', 'claude-code')
+    assert result.returncode == 0, result.stderr
+    assert 'family=anthropic' in result.stdout and 'family=openai' not in result.stdout
+
+
+def test_identities_mark_a_headless_seat_without_the_launcher_header_unconfirmed(tmp_path):
+    """Gaze 1925 round 2: a report the launcher did not write keeps no confirmed route."""
+    panel = _plan(tmp_path, ['redteam\tsonnet\topenai\theadless codex'],
+                  {'redteam': 'worker: model=sonnet · family=openai\nverdict: clear\n'})
+    lines = run('identities', str(panel), '--session-runtime', 'claude-code').stdout.splitlines()
+    assert len(lines) == 1 and 'route=unconfirmed' in lines[0] and lines[0].endswith('status: ran')
+
+
 def test_identities_skip_free_text_and_fail_loudly_without_a_manifest(tmp_path):
     panel = _plan(tmp_path, ['One seat reads the diff.'], {})
     assert run('identities', str(panel)).stdout.strip() == ''

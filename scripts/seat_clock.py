@@ -272,8 +272,11 @@ def identities(panel: Path, session_runtime: str = '', session_model: str = '') 
         elif (door and header.get('door') == 'headless' and header.get('runtime')
               and header['runtime'] == door.group(1).strip('.,;)(')):
             runtime, model, route = header['runtime'], header.get('model') or pin, _token(pin)
+            family = header.get('family') or family  # launcher-set: the plan cannot relabel it (1326)
         elif door:
             runtime, model, route = door.group(1).strip('.,;)('), pin, _token(pin)
+            if name in accepted:  # a report the launcher did not stamp: its family is unconfirmed (1326)
+                route = 'unconfirmed'
         else:
             runtime, model, route = session_runtime, pin, 'subagent'
         status = ('skipped' if reason.strip().lower().startswith('skipped')

@@ -423,3 +423,100 @@ def test_push_for_landing_passes_a_single_verdict_per_round(two_clones):
     rn.record_verdict(a, rid, session(), "APPROVED", "feature")
     assert "refs/notes/review" in rn.push_for_landing(a, "feature")
     assert sh(origin, "rev-parse", "refs/notes/review") == sh(a, "rev-parse", "refs/notes/review")
+
+
+# --- ticket 1326: a high-risk change needs a cross-family seat that ran ---------------
+
+SAME_FAMILY_ONLY = (
+    "result: REVIEWED\nseats: panel\n"
+    "plan check: PASS with deviations — no cross-family seat: low risk, cost not justified\n"
+    "seat: self · runtime=claude-code · family=anthropic · route=self · model=anthropic/x · status: ran\n"
+    "seat: correctness · runtime=claude-code · family=claude · route=sonnet · model=anthropic/y · status: ran\n")
+# Runtime codex, but the family is what counts: a Claude model behind any door is not cross-family.
+CODEX_DOOR_SAME_FAMILY = SAME_FAMILY_ONLY.replace("runtime=claude-code · family=claude", "runtime=codex · family=anthropic")
+CROSS_FAILED = SAME_FAMILY_ONLY + (
+    "seat: redteam · runtime=codex · family=openai · route=gpt · model=openai/z · status: failed\n")
+CROSS_RAN = SAME_FAMILY_ONLY + (
+    "seat: redteam · runtime=pi · family=glm · route=glm · model=mistral/glm · status: ran\n")
+
+
+def answer_text(repo, rid, text):
+    oid = sh(repo, "rev-parse", "feature")
+    rq = rn.request(repo, rid, "feature", "main", head=oid)
+    return rn.add(repo, "answer", rid, {"run_id": f"gz-{rn._hex(4)}", "result": "REVIEWED",
+                                        "seats": "panel", "text": text},
+                  head=oid, request_id=rq["request_id"])
+
+
+@pytest.mark.parametrize("text", [SAME_FAMILY_ONLY, CODEX_DOOR_SAME_FAMILY, CROSS_FAILED])
+def test_required_cross_family_refuses_a_review_with_no_other_family_seat_that_ran(repo, text):
+    rid = rn.open_review(repo, "feature", "main")
+    a = answer_text(repo, rid, text)
+    assert rn.gate_state(repo, rid, "feature")["ready"]  # not required: admitted as before
+    state = rn.gate_state(repo, rid, "feature", producer_family="anthropic")
+    assert not state["ready"] and state["cross_family"] == []
+    assert "no cross-family seat" in state["reason"] and a["id"] in state["reason"]
+    with pytest.raises(rn.Refusal):
+        rn.record_verdict(repo, rid, session(), "APPROVED", "feature", producer_family="anthropic")
+
+
+def test_required_cross_family_admits_a_review_whose_other_family_seat_ran(repo):
+    rid = rn.open_review(repo, "feature", "main")
+    answer_text(repo, rid, CROSS_RAN)
+    state = rn.gate_state(repo, rid, "feature", producer_family="Anthropic")
+    assert state["ready"] and state["cross_family"] == ["redteam"]
+    # Relative to an OpenAI producer, the headless Anthropic seat is the other family; self never counts.
+    assert rn.gate_state(repo, rid, "feature", producer_family="openai")["cross_family"] == [
+        "correctness", "redteam"]
+
+
+def test_cli_gate_takes_the_required_producer_family(repo):
+    rid = rn.open_review(repo, "feature", "main")
+    answer_text(repo, rid, SAME_FAMILY_ONLY)
+    r = cli(repo, "gate", rid, "feature", "--require-cross-family", "anthropic")
+    assert r.returncode == 1 and "no cross-family seat" in json.loads(r.stdout)["reason"]
+    assert cli(repo, "gate", rid, "feature", "--require-cross-family", "unknown").returncode == 2
+
+
+def test_seat_line_reads_the_real_formatter():
+    """The gate parses the lines seat_clock.format_seat writes; a format drift fails here."""
+    sc_spec = importlib.util.spec_from_file_location("seat_clock", SCRIPTS / "seat_clock.py")
+    sc = importlib.util.module_from_spec(sc_spec)
+    sc_spec.loader.exec_module(sc)
+    line = sc.format_seat({"seat": "redteam", "runtime": "codex", "family": "openai",
+                           "route": "gpt", "model": "openai/gpt-6-luna", "status": "ran"})
+    assert rn.cross_family_seats(line + "\n", "anthropic") == ["redteam"]
+
+
+def test_self_and_subagent_seats_never_count_as_cross_family():
+    """Gaze 1925 finding 1: only a headless seat's family is launcher-set; a plan labelling self
+    or a subagent with another family cannot satisfy the requirement."""
+    text = ("seat: self · runtime=claude-code · family=openai · route=self · model=anthropic/x · status: ran\n"
+            "seat: c · runtime=claude-code · family=openai · route=subagent · model=anthropic/y · status: ran\n"
+            "seat: r · runtime=codex · family=openai · route=unconfirmed · model=openai/z · status: ran\n")
+    assert rn.cross_family_seats(text, "anthropic") == []
+
+
+def test_reroll_fix_regate_still_needs_the_cross_family_seat(repo):
+    """Gaze 1925 finding 2: the round-2 re-gate of a REROLL fix re-checks the reviewed answer."""
+    rid = rn.open_review(repo, "feature", "main")
+    answer_text(repo, rid, SAME_FAMILY_ONLY)
+    rn.record_verdict(repo, rid, session(), "REROLL", "feature")
+    sh(repo, "switch", "-q", "feature")
+    commit(repo, "f.py", "def f():\n    return 11\n\n\n\n\n\ndef g():\n    return 2\n", "fix")
+    sh(repo, "switch", "-q", "main")
+    assert rn.gate_state(repo, rid, "feature")["match"] == "reroll-fix"
+    state = rn.gate_state(repo, rid, "feature", producer_family="anthropic")
+    assert not state["ready"] and "no cross-family seat" in state["reason"]
+
+
+def test_reroll_fix_regate_checks_the_answer_the_reroll_cited(repo):
+    rid = rn.open_review(repo, "feature", "main")
+    cited = answer_text(repo, rid, SAME_FAMILY_ONLY)
+    answer_text(repo, rid, CROSS_RAN)  # later, not the one round 1 ruled on
+    rn.record_verdict(repo, rid, session(), "REROLL", "feature", evidence=[cited["id"]])
+    sh(repo, "switch", "-q", "feature")
+    commit(repo, "f.py", "def f():\n    return 12\n\n\n\n\n\ndef g():\n    return 2\n", "fix")
+    sh(repo, "switch", "-q", "main")
+    state = rn.gate_state(repo, rid, "feature", producer_family="anthropic")
+    assert not state["ready"] and cited["id"] in state["reason"]

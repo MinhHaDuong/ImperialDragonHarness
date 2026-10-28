@@ -1,0 +1,69 @@
+%erg 0.1
+Title: Gaze run from a subagent cannot reach a cross-family seat although consent is on file
+Created: 2026-10-28
+Author: claude
+Closed: fixed: PR #1925 — seat reaches at depth 1 and 2; gate refuses required cross-family review with no other-family seat
+
+--- log ---
+2026-10-28T20:19Z claude created
+2026-10-28T20:41Z reviewer repro depth 1 (coder subagent, CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=3, cwd nested worktree .claude/worktrees/t1326-3606107): gaze_seat.py launch --runtime codex --model gpt-6-luna --family openai --home-family anthropic -> 'xfam: reported in 8s', exit 0, report header 'worker: model=gpt-6-luna · family=openai · runtime=codex · door=headless', 'reach: read=yes shell=yes tests=not-run'. No layer refused.
+2026-10-28T20:41Z reviewer repro depth 2 (nested haiku Agent, same command, same cwd): 'xfam: reported in 10s', EXIT=0, same worker header and reach line. No permission prompt, no sandbox or nesting refusal.
+2026-10-28T20:41Z reviewer f7fa41 artefacts (review rv-20261028-pr-1915-f0c6 on notes): five answers, none planned a cross-family seat; each plan check carries a '# no-cross-family:' deviation written by the gaze run itself ('low risk prose change, host not consenting' although the host consents to OpenAI and Mistral; 'medium risk, cost not justified'; 'narrow fix settled by reading the code'; 'small prose diff, low risk'). Cause: the plan-write opt-out, not a refused launch. One answer was REVIEWED with 'plan check: FAIL'.
+2026-10-28T21:05Z reviewer closed — fixed: PR #1925 — seat reaches at depth 1 and 2; gate refuses required cross-family review with no other-family seat
+
+--- body ---
+## Context
+In raid f7fa41 (2026-10-28), gaze run by a team-lead subagent recorded `seats:
+self-only` three times on PR #1915 (one cross-family seat refused) and reached
+`panel` only with a same-family seat. The landing-path PRs merged with no
+cross-family review, and a later cross-family pass from the interface session
+found 2 blocking and 1 high regressions (see the fix ticket filed with this one).
+Consent is not the cause: `~/.config/harness/gaze-seats.json` declares
+cross-family spend for OpenAI and Mistral, and the same `gaze_seat.py launch
+--runtime codex` works from the interface session. Cause not established:
+candidates are the subagent permission layer refusing the headless `codex exec`,
+nesting depth (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`), or the seat's sandbox
+from a nested cwd.
+
+## Exit criteria
+- [ ] Reproduce: one gaze from a subagent (depth 1 and 2) that plans a codex seat; record exactly what refuses it
+- [ ] Fix, or a documented route: gaze from a subagent reaches a cross-family seat, or the raid escalates such PRs to a seat launched by the interface session
+- [ ] verify-gate does not admit a landing-path PR whose review has no cross-family seat when one was required (`skills/route/references/decorrelation.md`)
+
+## Raid f642df annotation (Imagine + Blind-Spot + Plan, 2026-10-28)
+Premise holds: nothing merged since creation touches the surfaces.
+`skills/raid/references/detached-gaze.md` substitutes a detached session when
+inline gaze fails but does not route a seat to the interface session.
+Drift guard: PASS (no criterion added or dropped; the notes below are inputs).
+
+Findings to carry:
+- Read raid f7fa41 artefacts first (PR #1915 gaze answers on notes, seat
+  reports, plan header): `--no-cross-family` escape, `NOT-RUN:`/timeout
+  report, or a refusal text. They may settle the cause before any repro.
+- verify-gate has no cross-family check today (`skills/verify-gate/SKILL.md`
+  § Review evidence; `scripts/review_evidence.py` computes families but
+  refuses nothing). Its inputs are missing: the decorrelation risk row is an
+  orchestrator judgement never recorded; producer family is not on notes;
+  `--family` defaults to `unknown`; `--no-cross-family` lives in the plan
+  header. Decide where the "cross-family required" signal is recorded (reuse
+  the plan's consent/deviation line before inventing metadata) and key the
+  check on report family, never on runtime (Claude Code, Codex, Pi alike).
+- The check sits after the `review_evidence: legacy` branch and skips the
+  bookkeeping tier, so in-flight PRs are not retroactively blocked.
+- Bootstrap: this fix PR is itself high-risk; if hunt's gaze from a subagent
+  cannot reach the codex seat, report it and the raid launches that seat from
+  the interface session.
+- YAGNI: no nesting-aware launcher before the cause is named; no new
+  "landing-path" classifier. No overlap with 1327 (avoid editing panel.md).
+
+Actions:
+1. Read f7fa41 artefacts; then repro `gaze_seat.py launch --runtime codex`
+   at depth 1 (executor) and depth 2 (nested Agent), cwd nested worktree vs
+   root; record verbatim refusal + layer in this log.
+2. Fix if cheap and cause-pinned; otherwise document the route
+   (detached-gaze.md / raid Phase 6): consented cross-family seat with no
+   report or `self-only` from a subagent → PR parked for an interface seat.
+3. verify-gate: refuse (ESCALATE, named reason) a review with no ran
+   cross-family seat when the recorded signal requires one; first test fails
+   on current main and would pass a wrong implementation only if it checked
+   families correctly (fixture: same-family-only reports + required signal).
