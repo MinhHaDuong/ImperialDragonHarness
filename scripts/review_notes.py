@@ -778,7 +778,8 @@ def resolve_unit(cwd, unit, remote="origin"):
 
 def answer_texts(cwd, review_id):
     """The text of every `answer` entry of the review, oldest first (ticket 1301): the gaze
-    results that attribution's `--seats-pr` reads its `seat:` lines from, instead of PR comments."""
+    results that attribution's legacy `--seats-pr` (PRs merged before ticket 1307) reads its
+    `seat:` lines from, instead of PR comments."""
     return [e.get("text") or "" for e in entries(cwd, review_id) if e["kind"] == "answer"]
 
 
