@@ -2,9 +2,12 @@
 Title: Raid log carries a raid id so concurrent raids do not mix in one sitrep
 Created: 2026-10-28
 Author: claude
+Closed: autoclosed — PR #1884
 
 --- log ---
 2026-10-28T14:08Z claude created
+2026-10-28T14:36Z reviewer claude note exit criterion 2 is met as the raid annotation reworded it: lines without raid= are ignored, not UNREADABLE (legacy lines must not break a new raid); UNREADABLE is a missing --raid or an id with no RAID_START. Gaze REVIEWED (panel) on 5f70f99 and d8e7cff.
+2026-10-28T14:36Z reviewer closed — autoclosed — PR #1884
 
 --- body ---
 ## Context
