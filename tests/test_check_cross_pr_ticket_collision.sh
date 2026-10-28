@@ -64,10 +64,6 @@ case "$1 $2" in
     # Emulate `gh api ... --jq '...'`: forge.py asks for "filename<TAB>status" lines.
     [[ -n "${STUB_API_FAIL:-}" ]] && exit 1
     for f in ${STUB_SIBLING_FILES:-}; do printf '%s\tadded\n' "$f"; done ;;
-  "repo view")
-    # forge.py origin: the local origin's owner/name (ticket 1325)
-    [[ -n "${STUB_REPO_VIEW_FAIL:-}" ]] && exit 1
-    printf '%s\n' "${STUB_ORIGIN_REPO:-me/repo}" ;;
   *)
     echo "stub gh: unexpected: $*" >&2; exit 1 ;;
 esac
@@ -140,8 +136,6 @@ run_check() {  # env STUB_PR_LIST, STUB_SIBLING_FILES, SELF_PR_NUMBER, STUB_GH_L
       STUB_SIBLING_FILES="${STUB_SIBLING_FILES:-}" \
       STUB_API_FAIL="${STUB_API_FAIL:-}" \
       STUB_PR_LIST_FAIL="${STUB_PR_LIST_FAIL:-}" \
-      STUB_ORIGIN_REPO="${STUB_ORIGIN_REPO:-me/repo}" \
-      STUB_REPO_VIEW_FAIL="${STUB_REPO_VIEW_FAIL:-}" \
       STUB_GH_LOG="${STUB_GH_LOG:-/dev/null}" \
       bash "$SCRIPT" )
 }
@@ -310,8 +304,10 @@ else
     echo "FAIL: gh failure should exit 2 with the clear line (got rc=$rc)"; echo "$out"; fail=1
 fi
 
-# Infer the open PR locally: never fetch its own files.
+# Infer the open PR locally: never fetch its own files. Self is the origin's owner/name,
+# read off its URL (ticket 1325); the seeded objects are already fetched.
 seed_repo inferred 0300
+git -C "$REPO" remote set-url origin "git@github-alias:me/repo.git"
 GHLOG="$WORK/inferred.log"; : > "$GHLOG"
 rc=0
 out=$(STUB_GH_LOG="$GHLOG" \
@@ -373,22 +369,23 @@ else echo "FAIL: same-name source verification incorrect (rc=$rc)"; echo "$out";
 
 # Ticket 1325: from a fork checkout the PR's own head is cross-repository relative to the base,
 # yet its head repository is the local origin: it is self, never a rival claim.
+git -C "$REPO" remote set-url origin "https://github.com/me/fork.git"
 rc=0
-out=$(STUB_ORIGIN_REPO='me/fork' \
-      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred","isCrossRepository":true,"headRepository":{"nameWithOwner":"me/fork"}}]' \
+out=$(STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred","isCrossRepository":true,"headRepository":{"nameWithOwner":"me/fork"}}]' \
       STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
 if [[ "$rc" == 0 ]] && ! grep -q '#99' <<< "$out"; then
     echo "PASS: fork checkout excludes its own cross-repository PR"
 else echo "FAIL: fork checkout took its own PR for a rival (rc=$rc)"; echo "$out"; fail=1; fi
 
 # The local origin's identity unreadable: self cannot be established, fail closed.
+git -C "$REPO" remote set-url origin "nonsense"
 rc=0
-out=$(STUB_REPO_VIEW_FAIL=1 \
-      STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"me/repo"}}]' \
+out=$(STUB_PR_LIST='[{"number":99,"headRefName":"pr-inferred","headRepository":{"nameWithOwner":"me/repo"}}]' \
       STUB_SIBLING_FILES='tickets/0300-own.erg' run_check 2>&1) || rc=$?
 if [[ "$rc" == 2 ]] && ! grep -q 'Renumber your' <<< "$out"; then
     echo "PASS: unreadable origin identity fails closed without renumber advice"
 else echo "FAIL: unreadable origin identity unsafe (rc=$rc)"; echo "$out"; fail=1; fi
+git -C "$REPO" remote set-url origin "git@github-alias:me/repo.git"
 
 # A detached HEAD cannot establish self: fail closed without renumber advice.
 git -C "$REPO" switch -q --detach

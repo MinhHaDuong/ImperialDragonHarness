@@ -11,7 +11,7 @@ The ref-less and shell-facing verbs (ticket 1318; tickets 1319 and 1320 consume 
 `list` prints a JSON array of rows {number, branch, title, body, auto, mergedAt, cross_repository,
 head_repository} (auto: auto-merge armed; mergedAt: ISO time or null; cross_repository: the head lives
 in a repository other than the base's; head_repository: that head repository's owner/name, or null);
-`origin` prints the local origin remote's owner/name, what a row's head_repository is compared with to
+`origin` prints the local origin remote's owner/name, read off its URL, what a row's head_repository is compared with to
 tell this checkout's own request from a sibling, a fork checkout included (ticket 1325);
 `files` prints a JSON array of {path, status} (status as the forge names it: added, modified, ...);
 `read-back` prints `STATE head queued|-` (the read_back verb, a landing read: no offline mark, no cache).
@@ -429,14 +429,15 @@ reviewThreads(first:100){pageInfo{hasNextPage}
                 for r in raw]
 
     def origin(self) -> str:
-        """The local origin remote's owner/name, as the forge names it (redirects resolved)."""
+        """The local origin remote's owner/name, read off its URL. Parsed locally, never asked of gh:
+        `gh repo view <url>` takes an ssh host alias (git@github-work:o/r) for an API host and fails,
+        and `gh repo view` without a URL may name the upstream of a fork checkout (ticket 1325)."""
         url = subprocess.run(["git", "-C", self.cwd or ".", "remote", "get-url", "origin"],
                              capture_output=True, text=True).stdout.strip()
-        done = self._gh("repo", "view", url, "--json", "nameWithOwner", "--jq", ".nameWithOwner")
-        name = done.stdout.strip()
-        if done.returncode != 0 or not name:
-            raise ForgeRefusal(f"cannot name the origin repository: {done.stderr.strip() or f'gh exit {done.returncode}'}")
-        return name
+        m = re.search(r"[:/]([^/:]+)/([^/:]+?)(?:\.git)?/?$", url)
+        if not m:
+            raise ForgeRefusal(f"cannot name the origin repository from its URL {url!r}")
+        return f"{m.group(1)}/{m.group(2)}"
 
     def files(self, ref: str) -> list[dict]:
         """Rows {path, status} of the files a request changes."""
