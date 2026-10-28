@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-28T20:26Z claude created
+2026-10-28T20:34Z reviewer claude note body: Pi figures added, Codex wait_agent share corrected (2026-10-28 survey)
 
 --- body ---
 
@@ -21,10 +22,16 @@ the count). Variants seen: `for i in $(seq 1 55)`, `until [ -f a ] && [ -f b ]`,
 the 600 s tool cap and re-issued (one loop shape repeated 28 times within
 single sessions). Durations are upper bounds (tool_use to tool_result).
 
-Codex, same window (656 sessions): only 14 shell `.panel` waits; it polls
-through its native `sleep` tool instead (2675 calls of 45-60 s, 40 sessions,
-~34.8 h requested), 566 of them followed by `list_agents` although
-`wait_agent` exists. Pi transcripts were not read.
+Codex, same window (656 sessions): only 14 shell `.panel` waits. Agent waits
+mostly go through the native `wait_agent` (36 sessions use only it); 14
+sessions fall back to `sleep` then `list_agents`. Its other native `sleep`
+calls (2675 of 45-60 s, ~34.8 h requested) wait on shell jobs (`tail`, a
+`python3` check), the class this helper serves.
+
+Pi, same window: interactive sessions are 8, with 137 shell calls, none slow
+and no `.panel` wait. Arena runs (647 headless sessions) hold 41 poll loops
+(~2 h) and 151 `sleep N; check` calls (~6.6 h); they are the measured
+benchmark, so this ticket does not touch them.
 
 The helper is a plain script, so it serves Claude Code, Codex and Pi alike;
 it is not a guard (0976's burden of proof is not engaged).
