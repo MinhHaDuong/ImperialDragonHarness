@@ -2,9 +2,11 @@
 Title: gaze records a first review as delta when the caller states an intent, so verify-gate cannot admit it
 Created: 2026-10-28
 Author: MinhHaDuong
+Closed: Scope is a fact of the reviewed range (author's ruling 2026-10-28): gaze_close records full unless scope: delta is stated, and a delta with nothing to carry is recorded full; rule in gaze SKILL.md and spec §4 amendment; #133 replay test admits.
 
 --- log ---
 2026-10-28T11:18Z MinhHaDuong created
+2026-10-28T11:48Z reviewer closed — Scope is a fact of the reviewed range (author's ruling 2026-10-28): gaze_close records full unless scope: delta is stated, and a delta with nothing to carry is recorded full; rule in gaze SKILL.md and spec §4 amendment; #133 replay test admits.
 
 --- body ---
 ## Context
