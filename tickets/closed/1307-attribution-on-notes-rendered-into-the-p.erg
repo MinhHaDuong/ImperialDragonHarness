@@ -2,10 +2,12 @@
 Title: Attribution on notes, rendered into the PR body at landing; F2 writer lines and capture
 Created: 2026-10-28
 Author: reviewer
+Closed: autoclosed — PR #1874
 
 --- log ---
 2026-10-28T11:34Z reviewer created
 2026-10-28T11:52Z reviewer note raid imagine/plan+blind-spot: notes are the one record; new kind writer in review_notes.KINDS (only shared registry); attribution_record.py --record-writer (local: find_unit/find else open_review, NOT resolve_unit, which fetches) and --from-notes (writer entries + each answer's attribution field, latest per seat, strict parse_pr_body); roar --capture-unit, --capture-pr kept as legacy for pre-switch PRs; gaze_close: delete --append-pr and --seats-pr forge branches only (leave record_answer scope/intent code to 1305); raid_land: step-0 attribution reads notes in both modes (F2 prints ok for a recorded review), forge render as one whole-block edit after push_for_landing (5a) and immediately before fg.merge, failure = warning. Feasibility WARN (writer needs a request entry first). Lands before 1308.
+2026-10-28T12:26Z reviewer closed — autoclosed — PR #1874
 
 --- body ---
 ## Context
