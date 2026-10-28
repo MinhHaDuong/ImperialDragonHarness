@@ -433,15 +433,16 @@ def test_queued_merge_wait_is_one_bounded_background_command():
     merge = _normalize((SKILLS / "merge" / "SKILL.md").read_text())
     wait = merge.split("**Waiting for a queued merge.**", 1)[1].split("**", 1)[0]
     for phrase in (
-        "Where the runtime wakes the session when a background command exits",
-        "exactly one background command with a hard time bound of about 25 minutes",
+        "arms exactly one wake",
+        'runtime.py" wake arm --after 0',
+        "has a hard time bound of about 25 minutes",
         "polls this single-read status command at an interval inside the command",
         "exits as soon as the status is no longer pending",
         "the runtime wakes the caller on exit",
         "Never ask the author to wait or to re-run later",
         "never a fixed-delay timer",
         "never an unbounded or foreground loop",
-        "A runtime that cannot wake the session on exit",
+        "A runtime where `wake arm` answers NOOP",
         "asks once at its next step and reports the PR as pending",
     ):
         assert phrase in wait, phrase

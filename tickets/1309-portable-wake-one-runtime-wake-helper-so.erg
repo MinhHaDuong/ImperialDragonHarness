@@ -88,13 +88,15 @@ Contract, the same as forge.py and merge-gate.py:
 - 1312 notify + out-of-session raid supervisor (Blocked-by 1311)
 - 1313 launch (Blocked-by 1311)
 - 1314 session reads (Blocked-by 1311)
+- 1316 Pi wake extension (Blocked-by 1311; split from 1311)
 - 1310 (raid id in the raid log): closed 2026-10-28, PR #1884 (independent of runtime.py).
 
 ## Exit criteria
 - [ ] 1311-1314 closed, or a child consciously dropped with its reason here
-- [ ] Integration review: `git grep harness-extension-point` and
-      "Claude Code only" across skills/ agents/ scripts/ show no wake, launch or
-      session site left outside `runtime.py`; the residue is listed with reasons
+- [ ] Integration review: every wake, launch or session site found by
+      `git grep harness-extension-point` and "Claude Code only" across skills/ agents/
+      scripts/ is either behind `runtime.py` or on the residue list with its reason
+      (reworded 2026-10-28 with the 1313/1314 shrinks, advisor AGREE)
 - [ ] Each verb carries a live positive control per runtime (recorded in the child)
 
 ## Original wake context (moved to 1311)

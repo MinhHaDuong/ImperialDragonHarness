@@ -2,10 +2,10 @@
 Title: runtime.py launch verb: one door for subagent and headless launches, model and effort pinned, from routes.json launch_doors
 Created: 2026-10-28
 Author: claude
-Blocked-by: 1311
 
 --- log ---
 2026-10-28T14:17Z claude created
+2026-10-28T16:14Z reviewer note blocker 1311 closed — Blocked-by removed.
 
 --- body ---
 ## Context
@@ -26,3 +26,20 @@ so routes.json stays the one data home and runtime.py the one code path.
 - [ ] In-session subagent launches (Agent tool) stay prose, but the prose names
       the verb's contract; tests/test_launch_model_choice.py still passes
 - [ ] `make check` passes
+
+## Raid annotation (2026-10-28): shrunk, advisor AGREE
+Premise objection from the opus planner, verified by a Fable advisor:
+`scripts/gaze_seat.py:126` is already the single code path over `launch_doors`;
+`seat_clock.py` launches nothing; `manuscript_review.py:461` needs `--effort` and
+`--output-format stream-json`, which no door carries. Wrapping gaze_seat would be a
+second path over the same data. **Scope now:** `scripts/runtime_launch.py` with
+`can launch.subagent` (Claude 0, Codex 0, Pi 1: Pi core has no subagents) and
+`can launch.headless.<door>`, answering "configured" (from routes.json and
+`shutil.which` of the template's program), never "available".
+`rules/claude-code.md` names the contract.
+**Residue for 1309, with reasons:** gaze_seat.py (already the one door reader);
+manuscript_review.py, which is the one true Claude-only launch and cannot be
+routed for Codex/Pi until door templates grow `effort` and a JSON-stream field.
+Exit criterion 2 is dropped by this shrink; recorded here.
+First failing test: `tests/test_runtime_launch.py::test_pi_cannot_launch_subagent`.
+Also test a door whose program is absent from PATH (exit 1).

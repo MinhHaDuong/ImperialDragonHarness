@@ -1,0 +1,26 @@
+%erg 0.1
+Title: runtime.py wake on Pi: idh-wake extension delivers inbox jobs with sendUserMessage
+Created: 2026-10-28
+Author: claude
+
+--- log ---
+2026-10-28T15:40Z claude created
+2026-10-28T16:14Z reviewer note blocker 1311 closed — Blocked-by removed.
+
+--- body ---
+## Context
+Split from 1311 at raid planning (2026-10-28; monster checklist: a TypeScript
+extension, a projection entry and a live Pi control are their own sign-off
+unit). 1311 ships Pi `wake` as an inbox writer: it writes a job into
+`$IDH_WAKE_INBOX`, or answers NOOP "extension not loaded" when that is absent.
+This child adds the reader.
+
+## Exit criteria
+- [ ] `adapters/pi/extensions/idh-wake.ts`: at `session_start` (not in the factory)
+      it creates the inbox, exports `IDH_WAKE_INBOX`, starts a timer, and delivers
+      due jobs with `pi.sendUserMessage()` when idle
+- [ ] Projection entry in `adapters/projections.json`, covered by `tests/test_adapter_deployment.py`
+- [ ] Live controls on padme's local provider (no paid call): positive (an armed job
+      starts a turn in an idle `pi`) and negative (no extension → exit 1 NOOP)
+- [ ] `can wake.*` for Pi answers from the extension's presence; sitrep.md's Pi row updated
+- [ ] `make check` passes

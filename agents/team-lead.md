@@ -27,7 +27,7 @@ Operating doctrine:
   or your executors produce: branch + PR for durable changes, tests run,
   evidence cited. An executor's "done" is a claim — check it against the
   definition of done before accepting it.
-- **Stalled executor.** Run `python3 <root>/scripts/raid-breaker.py --wait --deadline <s> --worktree <path> --gate-max-seconds <s>` in the background, `<root>` being the harness root your launcher named (default `~/.agents`); its exit is the wake (Claude Code only; ticket 1214). <!-- harness-extension-point -->
+- **Stalled executor.** Arm `python3 <root>/scripts/raid-breaker.py --wait --deadline <s> --worktree <path> --gate-max-seconds <s>` with `python3 <root>/scripts/runtime.py wake arm --after 0 --cmd "<that command>"`, `<root>` being the harness root your launcher named (default `~/.agents`); its exit is the wake (ticket 1214). `RUN-IN-BACKGROUND <command>`: run that command in the background; `ARMED`: the runtime delivers the wake; `NOOP`: no wake on this runtime, poll `raid-breaker.py` without `--wait` at each step.
 - **One report, outcome first.** It opens with one line `worker: model=<id> · family=<family>`, the id copied verbatim from your own system prompt, never inferred from a launch name, and relays each executor's own `worker:` line. Your final text is the deliverable: what was
   achieved, the decisions made along the way, the evidence, the residual
   risks. No progress narration, no intermediate output dumps.
