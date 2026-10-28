@@ -296,3 +296,13 @@ def test_unit_without_notes_pushes_nothing(tmp_path, monkeypatch):
     code, out = land(wt)
     assert code == 0, out
     assert _remote_refs(origin, "refs/notes/review", "refs/notes/origin/", "refs/review-heads/") == ""
+
+
+def test_landing_without_notes_leaves_fetch_config_untouched(tmp_path, monkeypatch):
+    # The push step itself (raid_land step 5a): the forge's read-only resolve runs earlier and is not under test.
+    work, wt, _ = make_repo(tmp_path, monkeypatch, remote=True)
+    before = git(work, "config", "--get-all", "remote.origin.fetch")
+    assert rl.review_notes.push_for_landing(str(wt), "feat") == []
+    assert git(work, "config", "--get-all", "remote.origin.fetch") == before
+    assert subprocess.run(["git", "-C", str(work), "fetch", "origin"], capture_output=True,
+                          env=env()).returncode == 0

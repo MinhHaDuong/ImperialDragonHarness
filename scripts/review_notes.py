@@ -473,10 +473,14 @@ def push_for_landing(cwd, branch, remote="origin"):
     """Landing door (ticket 1299): push REF and the review-heads of the requests naming `branch`,
     synchronously and never forced, before the merge. A failed push is a Refusal. No remote, or
     no request for the branch: nothing pushed, []. Returns the refs pushed."""
-    if not setup(cwd, remote):
-        return []
+    def requests():
+        return [e for e in all_entries(cwd) if e.get("kind") == "request" and e.get("branch") == branch]
+
+    if not _has_remote(cwd, remote) or not requests():
+        return []  # decided from local entries: no config write, no fetch
+    setup(cwd, remote)
     refresh(cwd, remote)
-    reqs = [e for e in all_entries(cwd) if e.get("kind") == "request" and e.get("branch") == branch]
+    reqs = requests()
     if not reqs:
         return []
     _push_notes(cwd, remote, [])
