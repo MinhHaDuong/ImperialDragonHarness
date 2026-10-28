@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Pi with the Albert API (DINUM, albert.api.etalab.gouv.fr) reachable. The key is
+# read from ~/.config/keys/albert.env into this process only, never exported to
+# the login environment, so plain `pi` keeps no Albert access. Seats:
+# albert/openweight-code and albert/openweight-large (aliases that follow
+# Albert's upgrades). Author ruling 2026-10-28: Albert counts as cleared for
+# uncleared content.
+set -euo pipefail
+
+keyfile="$HOME/.config/keys/albert.env"
+[ -r "$keyfile" ] || { echo "pi-albert: $keyfile not readable" >&2; exit 1; }
+set -a
+# shellcheck disable=SC1090
+. "$keyfile"
+set +a
+[ -n "${ALBERT_API_KEY:-}" ] || { echo "pi-albert: ALBERT_API_KEY missing in $keyfile" >&2; exit 1; }
+
+exec pi "$@"

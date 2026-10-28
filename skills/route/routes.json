@@ -26,14 +26,21 @@
     "deepseek": {
       "endpoint": "api.deepseek.com (pi built-in)",
       "key_env": "DEEPSEEK_API_KEY",
-      "status": "live where the host's Pi declares this provider; not on padme, whose Pi serves its local seats and huggingface only (pi --list-models, 2026-10-28): launch this family through its own CLI door",
+      "status": "live where the host's Pi declares this provider; not on padme, whose Pi serves its local seats and huggingface only (pi --list-models, 2026-10-28): on padme DeepSeek runs through Pi's huggingface provider (deepseek-ai/DeepSeek-V4.1-Flash-1017) or Albert (deepseek-v4-flash)",
       "note": "deepseek-flash. pi catalog bills flat PEAK; real time-of-use halves it off-peak (01-04 & 06-10 UTC weekdays). pi catalog default thinking is HIGH, not pi's default medium.",
       "last_verified": "2026-10-06"
+    },
+    "albert": {
+      "endpoint": "https://albert.api.etalab.gouv.fr/v1 (pi custom provider `albert`, DINUM)",
+      "key_env": "ALBERT_API_KEY",
+      "status": "live on padme through scripts/pi-albert, which loads the key into the Pi process only (verified 2026-10-28: both seats answered)",
+      "note": "Seats by alias, which follow Albert's upgrades: albert/openweight-code (Qwen3-Coder-30B-A3B-Instruct, 262K, soon DeepSeek 4) and albert/openweight-large (gpt-oss-120b, 131K). Albert also serves deepseek-v4-flash-0731, mistral-small-3.2-24b, ministral-3-8b and gemma-4-31b. Author ruling 2026-10-28: Albert counts as cleared (LOCAL/PRIVÉ) for uncleared content. Plain `pi` has no Albert access; gaze seats launch plain `pi`, so a seat on Albert needs the launcher to use pi-albert.",
+      "last_verified": "2026-10-28"
     },
     "openrouter": {
       "endpoint": "openrouter.ai (pi custom provider)",
       "key_env": "OPENROUTER_API_KEY_IDH",
-      "status": "live",
+      "status": "declared on padme (openrouter-minimax, openrouter-minimax1p) but not reachable: no loader puts OPENROUTER_API_KEY_IDH into the Pi process (2026-10-28); a loader like pi-albert waits on the author's choice of paying key",
       "cap_monthly_usd": 60,
       "note": "Monthly key cap 60 USD; author reported 45.18/60 before replay. Seven GLM Flash/Mimo failures were 403 key-limit errors, not model abandonment; targeted replay underway. Candidate and judge calls share this cap.",
       "last_verified": "2026-10-06"
