@@ -2,9 +2,12 @@
 Title: After-merge red on main a8f1ba242c4c: pytest-guard
 Created: 2026-10-28
 Author: merge-gate
+Closed: red cleared — after-merge record on 3932d601 passes
 
 --- log ---
 2026-10-28T17:56Z merge-gate created
+2026-10-28T18:06Z reviewer reviewer note red not reproduced: after-merge record on 3932d601 passes all six checks (pytest-guard 79.7s); tests/test_idh_lifecycle.py 39/39 pass in a fresh worktree. No idh/install code changed between a8f1ba24 and 3932d601 (only runtime_launch.py). The red run's pytest-guard took 376.8s vs 79.7s green; both failing tests spawn idh with timeout=60, so a load-induced timeout is the leading hypothesis, cause not established (failure text not kept in the record).
+2026-10-28T18:06Z reviewer closed — red cleared — after-merge record on 3932d601 passes
 
 --- body ---
 ## Context
