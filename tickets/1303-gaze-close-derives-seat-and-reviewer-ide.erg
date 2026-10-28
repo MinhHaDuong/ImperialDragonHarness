@@ -1,0 +1,43 @@
+%erg 0.1
+Title: gaze_close derives seat and reviewer identity lines from the plan and worker headers; the model no longer types them
+Created: 2026-10-28
+Author: reviewer
+
+--- log ---
+2026-10-28T09:55Z reviewer created
+2026-10-28T09:55Z reviewer note author 2026-10-28 picked option C of three (A pin the seat vocabulary + pre-post consistency check; B provider-qualify the worker pin; C derive identity lines mechanically).
+
+--- body ---
+## Context
+Roar's attribution capture for PR #1853 refused (2026-10-28, journal
+`memory/journal/2026/2026-10-28-readme-pr1853-f1-notes-gap.md`). One gaze run (Pi,
+padme/qwen3.8-flash-next-iq3_s) typed one Codex seat twice, under two names:
+- attribution file -> PR body: `seat=consistency` (the plan item), `model=openai/gpt-6-luna`;
+- result comment: `seat: code-reviewer` (the `--role` profile), `model=gpt-6-luna`.
+`attribution_record.py` `seat_lines()` joins the two by exact seat name, so the body seat was unmatched
+and the comment seat was derived anew; the derived line then failed the provider-qualified model check.
+
+Two defects:
+1. Proximate: `skills/gaze/references/output.md` template `seat: <role>` is ambiguous (plan item name or
+   `--role` profile), and the identity is hand-typed in two places with no check until roar.
+2. Latent: the derive path copies the worker header's model, which is the bare route pin
+   (`skills/route/grid.json` stores `gpt-6-luna`; `scripts/gaze_seat.py` writes `worker: model=<pin>`),
+   while `attribution_record.py` requires `provider/model`. Any unmatched seat fails capture.
+
+## Design (option C)
+- `gaze_close.py` builds every `seat:` line of the posted result and every `reviewer: step=review` line of
+  the attribution append from the plan's item names and each report's launcher-set `worker:` header
+  (model, family, runtime, door) plus the seat status files. The model types neither.
+- One name per seat: the plan item name, used in the plan, roster, `seat:` line and `seat=` field.
+- The model id is provider-qualified at that one point (from the header's family/runtime, or the grid
+  row's provider), so derived and appended lines pass `attribution_record.py` strict identity.
+- The model still writes `finding:` lines (path:line, adopted) in the attribution file, keyed by seat name;
+  `gaze_close.py` refuses to post when a finding names a seat absent from the plan.
+- Template text in `output.md` and gaze `SKILL.md` § Attribution changes to say the lines are generated.
+
+## Exit criteria
+- [ ] A test replays the #1853 shape (plan item `consistency`, `--role code-reviewer`, bare pin `gpt-6-luna`): gaze_close emits one name and a provider-qualified model, and `attribution_record.py --seats-pr` then captures with no failure.
+- [ ] Neither `output.md` nor gaze `SKILL.md` asks the model to type `seat:` or `reviewer:` identity lines.
+- [ ] `gaze_close.py` refuses (non-zero, nothing posted) when a `finding:` names a seat not in the plan; test covers it.
+- [ ] Self seats (no worker header) still produce a valid line from the session's own identity, as today.
+- [ ] `make check` passes.
