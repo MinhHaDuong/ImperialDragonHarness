@@ -296,6 +296,9 @@ second_round_needed:   # only if REROLL
   Severity triggers apply to `blocking` findings. Tagged minors are triaged by tag, not severity.
 - Any unresolved `verifiable:` minor (failing assertion still reproduces) → treated as
   blocker-adjacent: REROLL (round 1) / ESCALATE (round 2).
+- A `blocking` finding or `verifiable:` minor without its `scenario:` and
+  `on main:` fields (`skills/gaze/references/panel.md` § Finding tags) is
+  read as a `consider:`.
 - `consider:` minors are informational. They appear in the verdict comment but do not
   bounce the PR. Author is free to ignore.
 - `nofollow:` minors are muted. The gate records them for the audit trail and does
