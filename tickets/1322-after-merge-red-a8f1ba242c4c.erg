@@ -1,0 +1,27 @@
+%erg 0.1
+Title: After-merge red on main a8f1ba242c4c: pytest-guard
+Created: 2026-10-28
+Author: merge-gate
+
+--- log ---
+2026-10-28T17:56Z merge-gate created
+
+--- body ---
+## Context
+
+Opened by `merge-gate.py run-after --open-ticket` (ticket 1251): the full
+declared set failed on main after a merge.
+
+Tip: a8f1ba242c4cb30375ef76259bd9157b9ac2f5b6
+Failing checks: pytest-guard
+Last green after-merge tip: 7099ed9aebdba488e86e73930f4c88eb9d3b6388
+Merges since (first parent, newest first):
+- a8f1ba242c4c Merge pull request #1904 from MinhHaDuong/raid-1317-children
+
+Failed tests (check, test id):
+- pytest-guard tests/test_idh_lifecycle.py::test_symlinked_bashrc_is_rewritten_at_its_target
+- pytest-guard tests/test_idh_lifecycle.py::test_install_is_idempotent_and_refuses_foreign_files
+
+## Exit criteria
+
+- [ ] An after-merge record on main passes the checks named above.
