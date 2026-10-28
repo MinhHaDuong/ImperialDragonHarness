@@ -3,9 +3,10 @@
 Loaded from `skills/gaze/SKILL.md` § 2. The one home of gaze's planning
 guidance; no other file restates it.
 
-**The cheapest method that settles the what wins.** The intent bounds the
-scope (the what) and sets the risk (the why). Gaze plans a method that
-answers that question and nothing wider.
+**The cheapest method that settles the what wins.** The intent sets the
+focus (the what) and the risk (the why). Gaze plans a method that answers
+that question and nothing wider; the `review plan:` line records what it
+covered, and no label claims more.
 
 #### Inputs
 
