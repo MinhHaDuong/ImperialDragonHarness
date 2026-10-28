@@ -14,6 +14,11 @@ inherit old rounds): found after a refresh, or opened on the PR head against ori
 The forge and remote reads happen here, so gaze_close writes with no network call. Every
 unit prints and freezes `review_id=`, `request_id=` and `run_id=` in entry-state.json.
 Leftover review worktree of a dead run is cleaned (gaze_close.cleanup) first.
+Offline (ticket 1308): forge reads wait a short bound (forge.read_timeout). An unreachable
+forge with the PR's mapping cached by an earlier contact proceeds: no fetch, the head from
+refs/remotes/origin/<branch>, the notes review found locally (none is a stop: never a second
+review), discussion and CI unread; it prints `forge=unread (offline: ...)` and freezes `forge`
+in entry-state.json, so gaze_close's answer says so. A PR never mapped stops (exit 2).
 """
 import argparse
 import json
@@ -134,11 +139,16 @@ def main():
     branch = meta["branch"]
     key = gaze_close.unit_key(pr)
     local = isinstance(fg, forge.NoneForge)
+    offline = bool(meta.get("cached"))  # the forge did not answer: the cached mapping (ticket 1308)
+    forge_read = meta.get("forge") or "read"
     if meta.get("mergeable") == "CONFLICTING":
         return fail(1, f"PR {pr} has merge conflicts")
     try:
         discussion = fg.comments(pr)
         ci = fg.checks(pr)
+    except forge.ForgeUnreachable as exc:  # context, not mapping: the review proceeds and says so
+        discussion, ci = [], "unread"
+        forge_read = forge_read if offline else f"unread (offline: {exc})"
     except forge.ForgeRefusal as exc:
         return fail(2, re.sub(r"^cannot read request", "cannot read PR", str(exc)))
     tree = primary / ".claude" / "worktrees" / f"review-{key}"
@@ -151,6 +161,8 @@ def main():
     if local:
         if meta.get("claims_error"):  # the forge path stops on a malformed claim too
             return fail(1, f"malformed close claim in a Ticket: trailer: {meta['claims_error']}")
+        start = meta["head"]
+    elif offline:  # no network: the remote-tracking ref the cached head was read from
         start = meta["head"]
     elif subprocess.run(["git", "fetch", "origin", branch], capture_output=True).returncode:
         return fail(2, f"git fetch origin {branch} failed")
@@ -168,7 +180,12 @@ def main():
     review_id = meta.get("review_id")
     unit = None if local else gaze_close.review_unit(pr)
     base_ref = meta["base"] if local else f"origin/{meta['base']}"
-    if unit:  # ticket 1300: the PR's notes review, looked up now so the close writes offline
+    if unit and offline:  # no fetch and no new review offline: a second review would split the rounds
+        review_id = review_notes.find_unit(str(primary), unit)
+        if not review_id:
+            return fail(2, f"forge unreachable and no local notes review of {unit}: "
+                           "cannot open one offline; retry when the forge answers")
+    elif unit:  # ticket 1300: the PR's notes review, looked up now so the close writes offline
         subprocess.run(["git", "fetch", "origin", meta["base"]], capture_output=True)  # a stale base only moves the binding
         try:
             review_id = review_notes.resolve_unit(str(primary), unit) or review_notes.open_review(
@@ -188,7 +205,8 @@ def main():
     except review_notes.Refusal as exc:
         return fail(2, f"cannot bind a request for {branch}: {exc}")
     identity = {"review_id": review_id, "request_id": request_id,
-                "run_id": f"gz-{review_notes._compact(review_notes._now())}-{review_notes._hex(4)}"}
+                "run_id": f"gz-{review_notes._compact(review_notes._now())}-{review_notes._hex(4)}",
+                "forge": forge_read}
     body = meta.get("body") or ""
     tickets, malformed = close_claims(body, tree)
     if local:  # no body: the claims are the branch's `Ticket:` trailers, read by forge.resolve
@@ -205,6 +223,8 @@ def main():
         {"branch": entry_branch, "status": entry_status.splitlines(), "primary": entry_primary.splitlines(),
          **identity}))
     comments = [f"## {c.get('author', {}).get('login', '?')}\n{c.get('body', '')}" for c in discussion]
+    if forge_read != "read":
+        comments.insert(0, f"forge: {forge_read}: discussion and CI not read; never read this as no comments")
     (panel / "comments.md").write_text("\n\n".join(comments))
     ci = "passing" if ci == "pending" else ci  # the report has only none|passing|failing: pending reads as passing, as before the move
     changed = a.stdout.strip().splitlines()

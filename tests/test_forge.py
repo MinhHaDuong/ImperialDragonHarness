@@ -64,6 +64,10 @@ def stub(tmp_path, monkeypatch):
     monkeypatch.setenv("STUB_LOG", str(tmp_path / "log"))
     monkeypatch.setenv("STUB_STATE", str(state))
     monkeypatch.setenv("PATH", f"{bindir}{os.pathsep}{os.environ['PATH']}")
+    # a repository of its own: the offline cache (ticket 1308) never lands in the enclosing checkout,
+    # even when TMPDIR sits inside one
+    subprocess.run(["git", "init", "-q", str(tmp_path / "cwd")], check=True)
+    monkeypatch.chdir(tmp_path / "cwd")
     return state
 
 
@@ -102,7 +106,8 @@ def repo(tmp_path):
 def test_gh_resolve_record(stub):
     rec = forge.get_forge("gh").resolve("7")
     assert rec == {"id": "7", "branch": "t1-x", "base": "main", "head": HEAD, "state": "OPEN",
-                   "mergeable": "MERGEABLE", "draft": True, "body": rec["body"], "claims": ["1271"]}
+                   "mergeable": "MERGEABLE", "draft": True, "body": rec["body"], "claims": ["1271"],
+                   "forge": "read"}
 
 
 def test_gh_comments_checks_comment_and_ops(stub, tmp_path):
@@ -288,7 +293,7 @@ def test_merged_at_and_cwd(tmp_path, monkeypatch):
 def test_append_body_line_refuses_when_the_patch_fails(monkeypatch):
     f = forge.GhForge()
 
-    def gh(*args, stdin=None):
+    def gh(*args, stdin=None, read=False):
         if args[0] == "api":
             return subprocess.CompletedProcess(args, 1, "", "HTTP 403")
         return subprocess.CompletedProcess(args, 0, json.dumps({"body": ""}), "")

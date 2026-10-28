@@ -13,7 +13,7 @@ is keyed `pr:<n>` and found by review_notes.find_unit, never through this backen
 `--forge`; `auto` is gh when `gh` is on PATH and the ref is a bare number. There is no environment
 switch: the landing route is read off the repository (ticket 1280, conception/2026-10-27-review-merge-flows.md).
 
-Operations: resolve, comments, checks, comment, append_body_line, create, ready,
+Operations: resolve, comments, checks, review_state, comment, append_body_line, create, ready,
 auto_merge_armed, disarm, merge, read_back. On the `none` backend comment,
 append_body_line, ready and disarm return NOOP (falsy, typed, never raising);
 comments is empty, checks is "none", auto_merge_armed is False; merge is the
@@ -24,6 +24,19 @@ The callers (ticket 1272): gaze_setup, gaze_close, attribution_record, review-an
 so each caller keeps its own order of refusals; parse_claims is the one parser.
 ForgeRefusal and MergeRefused here are not raid_land's Refusal: a caller maps them, never
 catches one for the other.
+
+Offline (ticket 1308). Review reads (resolve, comments, checks) wait IDH_FORGE_READ_TIMEOUT
+seconds (default 5); landing reads (`get_forge(landing=True)`: resolve, read_back, merged_at,
+auto_merge_armed, review_state) and every write keep 120 s. A read that times out or
+fails on the network raises ForgeUnreachable and marks the forge offline for OFFLINE_TTL
+seconds in <git-common-dir>/idh-forge-cache.json, so later review calls, in this process or
+another, skip the network at once (a review write raises ForgeUnreachable, a lenient comment
+is dropped); any successful read clears the mark. Every successful resolve caches the PR's
+mapping (branch, base, body, draft, state) there, first contact included; a review resolve
+that finds the forge unreachable answers from that cache with `forge: unread (offline: ...)`,
+`cached: true`, `mergeable: None` and the head read from refs/remotes/origin/<branch>. With no
+cache entry it refuses: the PR cannot be mapped (ticket 1300's fail-closed first discovery).
+Landing never reads the cache. No setting: behaviour follows reachability.
 """
 
 import argparse
@@ -34,10 +47,64 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 
 class ForgeRefusal(Exception):
     """The forge cannot answer or refused; the message says why."""
+
+
+class ForgeUnreachable(ForgeRefusal):
+    """The forge did not answer in time or the network failed: unread, not refused (ticket 1308)."""
+
+
+OFFLINE_TTL = 300  # seconds an offline mark holds before a review read tries the network again
+WRITE_TIMEOUT = 120
+# gh's stderr when the network, not the forge, failed
+NET_ERR = re.compile(r"error connecting|could not resolve|dial tcp|no such host|i/o timeout|"
+                     r"connection (refused|reset|timed out)|network is unreachable|TLS handshake|"
+                     r"timeout awaiting", re.I)
+
+
+def read_timeout() -> float:
+    """Seconds a review read waits for the forge: IDH_FORGE_READ_TIMEOUT, default 5."""
+    try:
+        return max(0.1, float(os.environ.get("IDH_FORGE_READ_TIMEOUT", "5")))
+    except ValueError:
+        return 5.0
+
+
+def _cache_path(cwd: str | None):
+    try:
+        done = subprocess.run(["git", "-C", cwd or ".", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                              capture_output=True, text=True, timeout=20)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return os.path.join(done.stdout.strip(), "idh-forge-cache.json") if done.returncode == 0 else None
+
+
+def _load_cache(cwd: str | None) -> dict:
+    path = _cache_path(cwd)
+    try:
+        with open(path) as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except (OSError, TypeError, ValueError):
+        return {}
+
+
+def _save_cache(cwd: str | None, data: dict) -> None:
+    """Best-effort: a cache that cannot be written only costs the next offline review its mapping."""
+    path = _cache_path(cwd)
+    if not path:
+        return
+    try:
+        fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".idh-forge-cache-")
+        with os.fdopen(fd, "w") as f:
+            json.dump(data, f, sort_keys=True)
+        os.replace(tmp, path)
+    except OSError:
+        pass
 
 
 class MergeRefused(ForgeRefusal):
@@ -97,32 +164,94 @@ def _claims(body: str) -> dict:
 
 
 class GhForge:
-    """Backend over the `gh` CLI, resolved from PATH at each call; `cwd` is where gh runs."""
+    """Backend over the `gh` CLI, resolved from PATH at each call; `cwd` is where gh runs.
+    `landing` keeps the 120 s reads and never answers from the offline cache (ticket 1308)."""
 
-    def __init__(self, cwd: str | None = None):
+    def __init__(self, cwd: str | None = None, landing: bool = False):
         self.cwd = cwd
+        self.landing = landing
 
-    def _gh(self, *args: str, stdin: str | None = None) -> subprocess.CompletedProcess:
+    def _offline(self) -> str | None:
+        """The offline mark's reason while it holds (review calls only), else None."""
+        if self.landing:
+            return None
+        mark = _load_cache(self.cwd).get("offline") or {}
+        if time.time() - float(mark.get("at", 0)) < OFFLINE_TTL:
+            return mark.get("reason") or "forge offline"
+        return None
+
+    def _mark(self, reason: str | None) -> None:
+        """Set (reason) or clear (None) the offline mark; a clear writes only when a mark exists."""
+        if self.landing:
+            return
+        data = _load_cache(self.cwd)
+        if reason is None and "offline" not in data:
+            return
+        if reason is None:
+            data.pop("offline")
+        else:
+            data["offline"] = {"at": time.time(), "reason": reason}
+        _save_cache(self.cwd, data)
+
+    def _gh(self, *args: str, stdin: str | None = None, read: bool = False) -> subprocess.CompletedProcess:
+        offline = self._offline()
+        if offline:
+            raise ForgeUnreachable(offline)
+        timeout = read_timeout() if read and not self.landing else WRITE_TIMEOUT
         try:
-            return subprocess.run(["gh", *args], input=stdin, capture_output=True, text=True, timeout=120,
+            done = subprocess.run(["gh", *args], input=stdin, capture_output=True, text=True, timeout=timeout,
                                   cwd=self.cwd)
         except OSError as exc:
             raise ForgeRefusal(f"gh unavailable: {exc}") from exc
         except subprocess.TimeoutExpired as exc:
-            raise ForgeRefusal(f"gh timed out after {exc.timeout}s") from exc
+            self._mark(f"gh timed out after {exc.timeout}s")
+            raise ForgeUnreachable(f"gh timed out after {exc.timeout}s") from exc
+        if done.returncode != 0 and NET_ERR.search(done.stderr or ""):
+            reason = f"network: {done.stderr.strip().splitlines()[-1]}"
+            self._mark(reason)
+            raise ForgeUnreachable(reason)
+        if read and done.returncode == 0:
+            self._mark(None)
+        return done
 
     def _view(self, ref: str, fields: str) -> dict:
-        done = self._gh("pr", "view", str(ref), "--json", fields)
+        done = self._gh("pr", "view", str(ref), "--json", fields, read=True)
         if done.returncode != 0:
             raise ForgeRefusal(f"cannot read request {ref}: {done.stderr.strip()}")
         return json.loads(done.stdout)
 
     def resolve(self, ref: str) -> dict:
-        d = self._view(ref, "number,state,isDraft,mergeable,headRefName,baseRefName,headRefOid,body")
+        key = str(ref).lstrip("#")
+        try:
+            d = self._view(ref, "number,state,isDraft,mergeable,headRefName,baseRefName,headRefOid,body")
+        except ForgeUnreachable as exc:
+            if self.landing:
+                raise
+            return self._cached(key, exc)
         body = d.get("body") or ""
-        return {"id": str(d.get("number", ref)), "branch": d["headRefName"], "base": d["baseRefName"],
-                "head": d["headRefOid"], "state": d["state"], "mergeable": d.get("mergeable"),
-                "draft": bool(d.get("isDraft")), "body": body, **_claims(body)}
+        record = {"id": str(d.get("number", ref)), "branch": d["headRefName"], "base": d["baseRefName"],
+                  "head": d["headRefOid"], "state": d["state"], "mergeable": d.get("mergeable"),
+                  "draft": bool(d.get("isDraft")), "body": body, **_claims(body), "forge": "read"}
+        data = _load_cache(self.cwd)
+        data.setdefault("prs", {})[record["id"]] = {k: record[k] for k in ("branch", "base", "body", "draft", "state")}
+        _save_cache(self.cwd, data)
+        return record
+
+    def _cached(self, key: str, exc: ForgeUnreachable) -> dict:
+        """The mapping cached at an earlier contact, the head from the remote-tracking ref."""
+        hit = (_load_cache(self.cwd).get("prs") or {}).get(key)
+        if not hit:
+            raise ForgeRefusal(f"forge unreachable ({exc}) and PR {key} was never resolved on this clone: "
+                               "cannot map it to a branch; retry when the forge answers")
+        ref = f"refs/remotes/origin/{hit['branch']}"
+        done = subprocess.run(["git", "-C", self.cwd or ".", "rev-parse", "--verify", "-q", ref],
+                              capture_output=True, text=True)
+        if done.returncode != 0:
+            raise ForgeRefusal(f"forge unreachable ({exc}) and {ref} is missing: cannot read PR {key}'s head")
+        body = hit.get("body") or ""
+        return {"id": key, "branch": hit["branch"], "base": hit["base"], "head": done.stdout.strip(),
+                "state": hit.get("state") or "OPEN", "mergeable": None, "draft": bool(hit.get("draft")),
+                "body": body, **_claims(body), "forge": f"unread (offline: {exc})", "cached": True}
 
     def comments(self, ref: str, reviews: bool = True) -> list[dict]:
         """Comments, then formal reviews unless `reviews` is False."""
@@ -143,15 +272,59 @@ class GhForge:
         return "pending" if any(d in ("", "PENDING", "EXPECTED") for d in done) else "passing"
 
     def comment(self, ref: str, body: str, strict: bool = False) -> None:
-        """Post a comment. Lenient by default (a failure is not reported); `strict` raises
-        ForgeRefusal with gh's stderr."""
-        done = self._gh("pr", "comment", str(ref), "--body", body)
+        """Post a comment. Lenient by default (a failure, offline included, is not reported);
+        `strict` raises ForgeRefusal with gh's stderr."""
+        try:
+            done = self._gh("pr", "comment", str(ref), "--body", body)
+        except ForgeUnreachable:
+            if strict:
+                raise
+            return
         if strict and done.returncode != 0:
             raise ForgeRefusal(done.stderr.strip())
 
     def merged_at(self, ref: str) -> str | None:
         """The merge timestamp (ISO 8601) of a merged request, else None."""
         return self._view(ref, "mergedAt").get("mergedAt") or None
+
+    REVIEW_STATE_QUERY = """query($owner:String!,$name:String!,$pr:Int!){repository(owner:$owner,name:$name){
+pullRequest(number:$pr){
+reviews(last:100){pageInfo{hasPreviousPage} nodes{author{login} state submittedAt}}
+reviewThreads(first:100){pageInfo{hasNextPage}
+ nodes{isResolved path comments(last:100){pageInfo{hasPreviousPage} nodes{author{login} createdAt}}}}}}}"""
+
+    def review_state(self, ref: str) -> list[dict]:
+        """The reviews that block a landing (ticket 1308), each `{what, at}` with `at` ISO 8601:
+        an author whose latest deciding review is CHANGES_REQUESTED (at its submission), and an
+        unresolved review thread (at its latest comment). Pointer and conversation comments are
+        not read. A truncated or unreadable answer raises ForgeRefusal: never "nothing blocks"."""
+        done = self._gh("api", "graphql", "-F", "owner={owner}", "-F", "name={repo}", "-F", f"pr={ref}",
+                        "-f", f"query={self.REVIEW_STATE_QUERY}", read=True)
+        if done.returncode != 0:
+            raise ForgeRefusal(f"cannot read the reviews of request {ref}: {done.stderr.strip()}")
+        try:
+            pr = json.loads(done.stdout)["data"]["repository"]["pullRequest"]
+            reviews, threads = pr["reviews"], pr["reviewThreads"]
+            if reviews["pageInfo"]["hasPreviousPage"] is not False or threads["pageInfo"]["hasNextPage"] is not False:
+                raise ForgeRefusal(f"the reviews of request {ref} span more than one page")
+            latest = {}
+            for r in reviews["nodes"]:
+                if r["state"] in ("APPROVED", "CHANGES_REQUESTED", "DISMISSED"):
+                    latest[(r.get("author") or {}).get("login", "<deleted>")] = r
+            out = [{"what": f"changes requested by {who}", "at": r["submittedAt"]}
+                   for who, r in latest.items() if r["state"] == "CHANGES_REQUESTED"]
+            for t in threads["nodes"]:
+                if t["isResolved"]:
+                    continue
+                if t["comments"]["pageInfo"]["hasPreviousPage"] is not False or not t["comments"]["nodes"]:
+                    raise ForgeRefusal(f"a review thread of request {ref} is truncated or empty")
+                last = max(t["comments"]["nodes"], key=lambda c: c["createdAt"])
+                out.append({"what": f"unresolved thread on {t.get('path') or '?'} "
+                                    f"(last by {(last.get('author') or {}).get('login', '<deleted>')})",
+                            "at": last["createdAt"]})
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ForgeRefusal(f"unexpected review payload for request {ref}: {exc!r}") from exc
+        return out
 
     def append_body_line(self, ref: str, line: str, edit=None) -> None:
         """Append lines to the body; the read-back is the evidence. The forge has no
@@ -258,6 +431,9 @@ class NoneForge:
 
     def checks(self, ref: str) -> str:
         return "none"
+
+    def review_state(self, ref: str) -> list[dict]:
+        return []  # no forge: no human or Copilot review to recheck
 
     def comment(self, ref: str, body: str, strict: bool = False):
         return NOOP
@@ -390,7 +566,7 @@ def get_forge(choice: str | None = None, ref: str = "", cwd: str | None = None, 
     remote the local gated merge (none). An explicit `gh` or `none` is for tests and the --forge flag."""
     choice = choice or "auto"
     if choice == "gh":
-        return GhForge(cwd)
+        return GhForge(cwd, landing)
     if choice == "none":
         return NoneForge(cwd)
     if choice != "auto":
@@ -403,7 +579,7 @@ def get_forge(choice: str | None = None, ref: str = "", cwd: str | None = None, 
         if not numeric:
             raise ForgeRefusal(f"this repository has an origin remote; landing {ref!r} needs a forge "
                                "request number, never the local merge")
-        return GhForge(cwd)
+        return GhForge(cwd, landing=True)
     if landing:
         return NoneForge(cwd)  # no origin remote: the local gated merge, whatever the ref
     return GhForge(cwd) if shutil.which("gh") and numeric else NoneForge(cwd)
