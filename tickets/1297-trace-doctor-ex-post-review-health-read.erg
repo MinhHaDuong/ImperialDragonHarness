@@ -1,0 +1,44 @@
+%erg 0.1
+Title: trace-doctor: ex-post review-health read across merged PRs
+Created: 2026-10-28
+Author: claude
+Label: deferred
+
+--- log ---
+2026-10-28T08:28Z claude created
+
+--- body ---
+## Context
+PR #1847 (2026-10-28) fixed a bar for review findings: a `blocking` or
+`verifiable:` finding carries `scenario:` and `on main:`, else it is a
+`consider:` (`skills/gaze/references/panel.md` § Finding tags). The author's
+reasoning (journal `memory/journal/2026/2026-10-28-diminishing-returns-bar.md`):
+no diminishing returns by round 3 means the approach needs redesign;
+diminishing returns yet serious flaws means the coder or the reviewers are
+bad; below the bar at rounds 2-3 is normal. The coder/reviewer judgment is an
+ex-post read across PRs, not a mid-review duty.
+
+## Proposal
+trace-doctor's monthly survey reads the `## /gaze result` and verify-gate
+comments of the month's merged PRs and classifies each by its round
+trajectory of above-bar findings:
+- not shrinking by round 3: approach wrong; name the ticket or skill;
+- shrinking, but a late blocker on lines present at the round-1 head (from git,
+  so seats record nothing extra): reviewer miss; name the seat/route as arena
+  evidence (`skills/route/SKILL.md` § Update discipline), never a grid edit;
+- many above-bar findings in round 1: coder quality; name the coder route as
+  arena evidence;
+- shrinking and below the bar: normal, counted as the base rate;
+- severity labels of late findings rising month over month: reviewer drift.
+
+Deferred: build once about two months of merged PRs carry the new fields
+(from 2026-12-28); before that there is nothing to classify.
+
+## Exit criteria
+- [ ] trace-doctor's report has a review-trajectory section with the five
+      classes above, each PR cited by number
+- [ ] the late-blocker class is derived from git (line present at the round-1
+      reviewed head), with no new field asked of seats
+- [ ] findings feed arena evidence or tickets per trace-doctor's existing
+      contract; nothing edits the route grid
+- [ ] one run on real PRs, with the report attached by path
