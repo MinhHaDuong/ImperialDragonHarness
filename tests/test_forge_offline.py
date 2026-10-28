@@ -198,7 +198,10 @@ def test_gh_review_state_parses_and_fails_closed(tmp_path, monkeypatch):
                 {"author": {"login": "c"}, "createdAt": "2026-10-28T09:00:00Z"}]}},
             {"isResolved": False, "path": "a.py", "comments": {"pageInfo": {"hasPreviousPage": False}, "nodes": [
                 {"author": {"login": "c"}, "createdAt": "2026-10-28T09:00:00Z"},
-                {"author": {"login": "h"}, "createdAt": "2026-10-28T09:30:00Z"}]}}]}}}}}
+                {"author": {"login": "h"}, "createdAt": "2026-10-28T09:30:00Z"}]}},
+            {"isResolved": False, "path": "b.py", "comments": {"pageInfo": {"hasPreviousPage": False}, "nodes": [
+                {"author": {"login": "c"}, "createdAt": "2026-10-28T08:00:00Z",
+                 "updatedAt": "2026-10-28T14:00:00Z"}]}}]}}}}}
     bindir = tmp_path / "bin"
     bindir.mkdir()
     gh = bindir / "gh"
@@ -207,8 +210,42 @@ def test_gh_review_state_parses_and_fails_closed(tmp_path, monkeypatch):
     monkeypatch.setenv("PATH", f"{bindir}{os.pathsep}{os.environ['PATH']}")
     got = forge.GhForge(str(tmp_path), landing=True).review_state("7")
     assert got == [{"what": "changes requested by k", "at": "2026-10-28T12:00:00Z"},
-                   {"what": "unresolved thread on a.py (last by h)", "at": "2026-10-28T09:30:00Z"}]
+                   {"what": "unresolved thread on a.py (last by h)", "at": "2026-10-28T09:30:00Z"},
+                   {"what": "unresolved thread on b.py (last by c)", "at": "2026-10-28T14:00:00Z"}]  # edited later
     payload["data"]["repository"]["pullRequest"]["reviewThreads"]["pageInfo"]["hasNextPage"] = True
     gh.write_text(f"#!/bin/sh\ncat <<'EOF'\n{json.dumps(payload)}\nEOF\n")
     with pytest.raises(forge.ForgeRefusal, match="more than one page"):
         forge.GhForge(str(tmp_path), landing=True).review_state("7")
+
+
+# --- gaze round 1 findings -----------------------------------------------------------------
+
+def test_missing_request_is_not_an_unreachable_forge():
+    forge = _load("forge")
+    assert not forge.NET_ERR.search("GraphQL: Could not resolve to a PullRequest with the number of 999999.")
+    assert forge.NET_ERR.search("error connecting to api.github.com\ncould not resolve host: api.github.com")
+
+
+def test_fork_pr_never_reviews_offline(tmp_path, monkeypatch):
+    forge = _load("forge")
+    primary, env = make_repo(tmp_path)
+    meta = json.loads(env["MOCK_PR_JSON"])
+    meta["isCrossRepository"] = True
+    monkeypatch.setenv("PATH", env["PATH"])
+    monkeypatch.setenv("MOCK_PR_JSON", json.dumps(meta))
+    fg = forge.GhForge(str(primary))
+    assert fg.resolve("7")["forge"] == "read"
+    (tmp_path / "bin" / "gh").write_text(NETFAIL)
+    with pytest.raises(forge.ForgeRefusal, match="fork"):
+        fg.resolve("7")
+
+
+def test_concurrent_cache_writes_keep_every_entry(tmp_path):
+    forge = _load("forge")
+    git(tmp_path, "init", "-q")
+    code = ("import sys; sys.path.insert(0, sys.argv[1]); import forge\n"
+            "for i in range(20):\n"
+            "    forge._update_cache(sys.argv[2], lambda d, k=f'{sys.argv[3]}-{i}': d.setdefault('prs', {}).__setitem__(k, {}))\n")
+    procs = [subprocess.Popen([sys.executable, "-c", code, str(SCRIPTS), str(tmp_path), str(n)]) for n in range(4)]
+    assert all(p.wait() == 0 for p in procs)
+    assert len(forge._load_cache(str(tmp_path))["prs"]) == 80

@@ -40,6 +40,7 @@ Landing never reads the cache. No setting: behaviour follows reachability.
 """
 
 import argparse
+import fcntl
 import json
 import os
 import re
@@ -60,8 +61,9 @@ class ForgeUnreachable(ForgeRefusal):
 
 OFFLINE_TTL = 300  # seconds an offline mark holds before a review read tries the network again
 WRITE_TIMEOUT = 120
-# gh's stderr when the network, not the forge, failed
-NET_ERR = re.compile(r"error connecting|could not resolve|dial tcp|no such host|i/o timeout|"
+# gh's stderr when the network, not the forge, failed. Never bare "could not resolve": gh's
+# GraphQL "Could not resolve to a PullRequest" is a missing request, not an unreachable forge.
+NET_ERR = re.compile(r"error connecting|could not resolve host|dial tcp|no such host|i/o timeout|"
                      r"connection (refused|reset|timed out)|network is unreachable|TLS handshake|"
                      r"timeout awaiting", re.I)
 
@@ -93,11 +95,25 @@ def _load_cache(cwd: str | None) -> dict:
         return {}
 
 
-def _save_cache(cwd: str | None, data: dict) -> None:
-    """Best-effort: a cache that cannot be written only costs the next offline review its mapping."""
+def _update_cache(cwd: str | None, change) -> None:
+    """Read, `change(data)` in place, write, under an exclusive flock so concurrent reviews never
+    drop each other's entries. Best-effort: a cache that cannot be written only costs the next
+    offline review its mapping."""
     path = _cache_path(cwd)
     if not path:
         return
+    try:
+        with open(path + ".lock", "w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            data = _load_cache(cwd)
+            if change(data) is False:
+                return
+            _save_cache(path, data)
+    except OSError:
+        pass
+
+
+def _save_cache(path: str, data: dict) -> None:
     try:
         fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".idh-forge-cache-")
         with os.fdopen(fd, "w") as f:
@@ -184,14 +200,13 @@ class GhForge:
         """Set (reason) or clear (None) the offline mark; a clear writes only when a mark exists."""
         if self.landing:
             return
-        data = _load_cache(self.cwd)
-        if reason is None and "offline" not in data:
-            return
-        if reason is None:
-            data.pop("offline")
-        else:
+        def change(data):
+            if reason is None:
+                return data.pop("offline", None) is not None  # nothing to clear: no write
             data["offline"] = {"at": time.time(), "reason": reason}
-        _save_cache(self.cwd, data)
+        if reason is None and "offline" not in _load_cache(self.cwd):
+            return  # the common case, no lock taken
+        _update_cache(self.cwd, change)
 
     def _gh(self, *args: str, stdin: str | None = None, read: bool = False) -> subprocess.CompletedProcess:
         offline = self._offline()
@@ -223,7 +238,8 @@ class GhForge:
     def resolve(self, ref: str) -> dict:
         key = str(ref).lstrip("#")
         try:
-            d = self._view(ref, "number,state,isDraft,mergeable,headRefName,baseRefName,headRefOid,body")
+            d = self._view(ref, "number,state,isDraft,mergeable,headRefName,baseRefName,headRefOid,body,"
+                               "isCrossRepository")
         except ForgeUnreachable as exc:
             if self.landing:
                 raise
@@ -232,9 +248,9 @@ class GhForge:
         record = {"id": str(d.get("number", ref)), "branch": d["headRefName"], "base": d["baseRefName"],
                   "head": d["headRefOid"], "state": d["state"], "mergeable": d.get("mergeable"),
                   "draft": bool(d.get("isDraft")), "body": body, **_claims(body), "forge": "read"}
-        data = _load_cache(self.cwd)
-        data.setdefault("prs", {})[record["id"]] = {k: record[k] for k in ("branch", "base", "body", "draft", "state")}
-        _save_cache(self.cwd, data)
+        entry = {k: record[k] for k in ("branch", "base", "body", "draft", "state")}
+        entry["fork"] = bool(d.get("isCrossRepository"))
+        _update_cache(self.cwd, lambda data: data.setdefault("prs", {}).__setitem__(record["id"], entry))
         return record
 
     def _cached(self, key: str, exc: ForgeUnreachable) -> dict:
@@ -243,6 +259,9 @@ class GhForge:
         if not hit:
             raise ForgeRefusal(f"forge unreachable ({exc}) and PR {key} was never resolved on this clone: "
                                "cannot map it to a branch; retry when the forge answers")
+        if hit.get("fork"):  # its head lives in another repository: origin/<branch> is not it
+            raise ForgeRefusal(f"forge unreachable ({exc}) and PR {key} comes from a fork: its head is not "
+                               "on origin; retry when the forge answers")
         ref = f"refs/remotes/origin/{hit['branch']}"
         done = subprocess.run(["git", "-C", self.cwd or ".", "rev-parse", "--verify", "-q", ref],
                               capture_output=True, text=True)
@@ -291,13 +310,14 @@ class GhForge:
 pullRequest(number:$pr){
 reviews(last:100){pageInfo{hasPreviousPage} nodes{author{login} state submittedAt}}
 reviewThreads(first:100){pageInfo{hasNextPage}
- nodes{isResolved path comments(last:100){pageInfo{hasPreviousPage} nodes{author{login} createdAt}}}}}}}"""
+ nodes{isResolved path comments(last:100){pageInfo{hasPreviousPage} nodes{author{login} createdAt updatedAt}}}}}}}"""
 
     def review_state(self, ref: str) -> list[dict]:
         """The reviews that block a landing (ticket 1308), each `{what, at}` with `at` ISO 8601:
         an author whose latest deciding review is CHANGES_REQUESTED (at its submission), and an
-        unresolved review thread (at its latest comment). Pointer and conversation comments are
-        not read. A truncated or unreadable answer raises ForgeRefusal: never "nothing blocks"."""
+        unresolved review thread (at its latest comment written or edited). Pointer and conversation
+        comments are not read. A thread reopened with no new comment carries no time of its own: it
+        dates from its latest comment, so a recheck windowed after that misses it. A truncated or unreadable answer raises ForgeRefusal: never "nothing blocks"."""
         done = self._gh("api", "graphql", "-F", "owner={owner}", "-F", "name={repo}", "-F", f"pr={ref}",
                         "-f", f"query={self.REVIEW_STATE_QUERY}", read=True)
         if done.returncode != 0:
@@ -318,10 +338,12 @@ reviewThreads(first:100){pageInfo{hasNextPage}
                     continue
                 if t["comments"]["pageInfo"]["hasPreviousPage"] is not False or not t["comments"]["nodes"]:
                     raise ForgeRefusal(f"a review thread of request {ref} is truncated or empty")
-                last = max(t["comments"]["nodes"], key=lambda c: c["createdAt"])
+                def touched(c):
+                    return max(c["createdAt"], c.get("updatedAt") or c["createdAt"])
+                last = max(t["comments"]["nodes"], key=touched)
                 out.append({"what": f"unresolved thread on {t.get('path') or '?'} "
                                     f"(last by {(last.get('author') or {}).get('login', '<deleted>')})",
-                            "at": last["createdAt"]})
+                            "at": touched(last)})
         except (KeyError, TypeError, ValueError) as exc:
             raise ForgeRefusal(f"unexpected review payload for request {ref}: {exc!r}") from exc
         return out
