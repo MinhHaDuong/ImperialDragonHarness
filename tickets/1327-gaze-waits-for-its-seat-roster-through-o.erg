@@ -1,0 +1,43 @@
+%erg 0.1
+Title: Gaze waits for its seat roster through one shared bounded helper
+Created: 2026-10-28
+Author: claude
+
+--- log ---
+2026-10-28T20:26Z claude created
+
+--- body ---
+
+## Context
+Every gaze fork hand-writes its own collection loop over `.panel/<pr>/`
+(`skills/gaze/references/fork-contract.md`, `panel.md` step 3): a fork lives
+only while it calls tools, so the wait must be a tool call, and the recipe
+leaves its shape to each session. Measured 2026-10-28 over 14 days of Claude
+Code transcripts (3379 files): sleep-poll loops are the largest slow-call
+class, and `.panel/` waits are most of them (211 of 280 on 2026-10-27, 75 of
+106 on 2026-10-28; 1216's instruction route merged 2026-10-26 did not lower
+the count). Variants seen: `for i in $(seq 1 55)`, `until [ -f a ] && [ -f b ]`,
+`while [ $SECONDS -lt $end ]`, inline Python `time.sleep`, some running into
+the 600 s tool cap and re-issued (one loop shape repeated 28 times within
+single sessions). Durations are upper bounds (tool_use to tool_result).
+
+Codex, same window (656 sessions): only 14 shell `.panel` waits; it polls
+through its native `sleep` tool instead (2675 calls of 45-60 s, 40 sessions,
+~34.8 h requested), 566 of them followed by `list_agents` although
+`wait_agent` exists. Pi transcripts were not read.
+
+The helper is a plain script, so it serves Claude Code, Codex and Pi alike;
+it is not a guard (0976's burden of proof is not engaged).
+
+## Exit criteria
+- [ ] One helper (e.g. `scripts/wait-roster.py <dir> --roster FILE|NAMES
+      --deadline S`) blocks until every roster name exists as `<name>.md`
+      (never `.part`), or the deadline passes; stays under the runtime's
+      per-call cap and says so; exit 0 all present, 1 deadline with the
+      missing names listed, 2 usage
+- [ ] `fork-contract.md` and `panel.md` step 3 (and any other skill that
+      collects seat files, e.g. verify-adherence) call it instead of
+      describing a hand-written loop; the 15-minute gaze deadline is honoured
+      across re-issued calls
+- [ ] Tests: all-present, deadline with a missing name, `.part` ignored
+- [ ] `make check` passes
