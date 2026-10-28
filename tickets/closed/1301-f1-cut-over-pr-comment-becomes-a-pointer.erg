@@ -2,11 +2,13 @@
 Title: F1 cut-over: PR comment becomes a pointer, comment readers move to notes, texts and STATE
 Created: 2026-10-28
 Author: reviewer
+Closed: PR comment is a pointer, readers on notes, texts and STATE aligned (PR #1858)
 
 --- log ---
 2026-10-28T08:43Z reviewer created
 2026-10-28T09:52Z reviewer note blocker 1300 closed — Blocked-by removed.
 2026-10-28T10:12Z reviewer implementation note: the pointer post uses forge.comment(strict=True) inside try/except so the failure is printed ('pointer: not posted (...)'), still never a status; Design's strict=False intent (failure ignored) holds. Unrecognised result: values keep 1300's coercion to ESCALATE in record_answer; the pointer mirrors the answer.
+2026-10-28T10:25Z reviewer closed — PR comment is a pointer, readers on notes, texts and STATE aligned (PR #1858)
 
 --- body ---
 ## Context
