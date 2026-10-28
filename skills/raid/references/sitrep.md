@@ -56,6 +56,10 @@ queued-merge wait does. Read its one-line answer:
 | exit 3 | the runtime cannot be told (no marker, or two) | rerun with `--runtime <name>` |
 
 `python3 "$IDH_ROOT/scripts/runtime.py" can wake` asks the same question without arming.
+When `can wake` answers 1, use `notify` to reach the author:
+`python3 "$IDH_ROOT/scripts/runtime.py" notify --key raid-<id> --title "raid <id>" --body "<what needs you>"`
+(desktop popup where `notify-send` exists, plus an alert file under the git common dir;
+a repeat of the same key within an hour prints `SUPPRESSED`).
 Where no timed wake exists, say so in the first sitrep: "timed sitrep cadence
 unavailable on this runtime; sitreps at wave boundaries only". The author's own
 shell can still run `watch -n 900 python3 "$IDH_ROOT/scripts/raid-sitrep.py" --raid <id>`

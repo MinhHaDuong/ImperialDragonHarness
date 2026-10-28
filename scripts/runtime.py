@@ -31,6 +31,8 @@ import os
 import sys
 
 import runtime_launch
+import runtime_notify
+import runtime_session
 import runtime_wake
 
 DONE, NOOP, FAILED, UNREAD = 0, 1, 2, 3
@@ -41,6 +43,8 @@ RUNTIMES = ("claude", "codex", "pi")
 # above and one line here.
 VERBS = [
     runtime_launch,
+    runtime_notify,
+    runtime_session,
     runtime_wake,
 ]
 
@@ -82,21 +86,13 @@ def resolve(choice: str | None, env=None) -> str:
 
 
 def session_id(rt: str, env=None):
-    """The runtime's own session id, or None when it does not export one."""
-    env = os.environ if env is None else env
-    key = {"claude": "CLAUDE_CODE_SESSION_ID", "codex": "CODEX_THREAD_ID"}.get(rt)
-    return (env.get(key) or None) if key else None
+    """The runtime's own session id, or None (defined in runtime_session)."""
+    return runtime_session.session_id(rt, os.environ if env is None else env)
 
 
 def headless(rt: str, env=None) -> bool:
-    """True when no interactive session is there to wake: `claude -p` (an sdk entrypoint)
-    or a night sweep. Subagents and forks of a live session are not headless."""
-    env = os.environ if env is None else env
-    if env.get("CLAUDE_NIGHT_SWEEP"):
-        return True
-    if rt == "claude":
-        return env.get("CLAUDE_CODE_ENTRYPOINT", "").startswith("sdk")
-    return False
+    """True when no interactive session is there to wake (defined in runtime_session)."""
+    return runtime_session.headless(rt, os.environ if env is None else env)
 
 
 def noop(verb: str, rt: str, reason: str) -> int:
