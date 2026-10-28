@@ -133,9 +133,11 @@ def test_wait_regex_positive_and_negative():
         "if a; then sleep 2; fi",
         "for i in 1 2; do sleep 3; done",
         "timeout 9 sleep 5",
+        'python3 "$IDH_ROOT/scripts/wait-roster.py" .panel/12 --roster .panel/12/manifest.txt --until 99',
     ):
         assert tf.is_wait_command(cmd), cmd
     assert not tf.is_wait_command("echo asleep and untilled")
+    assert not tf.is_wait_command('echo "call wait-roster.py, not a loop"')
 
 
 def test_dangling_symlink_tolerated(tmp_path):
