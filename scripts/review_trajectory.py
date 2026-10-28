@@ -10,7 +10,8 @@ that carries `scenario:` and `on main:`), and class the PR by that sequence:
 - reviewer-miss: a finding above the bar in round 2 or later cites a line that was already
   in the round-1 reviewed head (the cited line's text is looked up with git in the head of
   its own round, then searched in the round-1 head's file), so the first round saw it and
-  said nothing;
+  said nothing; a finding that repeats a round-1 finding (same path, same line text) is
+  skipped, since the reviewer did say it;
 - coder: round 1 alone carries at least `--coder-threshold` above-bar findings (default 3);
 - normal: shrinking and the last round below the bar: the base rate.
 A PR with no notes, one round, or a last round still above the bar is `insufficient`, with
@@ -105,6 +106,8 @@ def was_present(repo: Path, first_head: str, head: str, cite: str) -> bool | Non
     text = line_text(repo, head, path, int(number))
     if not text or len(text) < 4:
         return None
+    if _git(repo, "cat-file", "-e", f"{first_head}^{{commit}}").returncode != 0:
+        return None  # the round-1 head is not in this clone: could not look, not "line is new"
     done = _git(repo, "show", f"{first_head}:{path}")
     return (
         any(row.strip() == text for row in done.stdout.splitlines())
@@ -147,13 +150,26 @@ def merged_prs(repo: Path, since: str) -> list[tuple[int, str]]:
     return sorted(out)
 
 
+def _key(repo: Path, head: str, cite: str):
+    path, number = cite.rsplit(":", 1)
+    text = line_text(repo, head, path, int(number))
+    return (path, text) if text else None
+
+
 def analyse(repo: Path, rounds: list[dict], threshold: int) -> dict:
     parsed = [parse_findings(r["text"]) for r in rounds]
     counts = [sum(f["above"] for f in found) for found in parsed]
     late = []
+    first = {  # what round 1 already said: (path, line text at the round-1 head)
+        _key(repo, rounds[0]["head"], f["cite"])
+        for f in parsed[0]
+        if f["above"] and f["cite"]
+    }
     for number, found in enumerate(parsed[1:], 2):
         for f in found:
             if f["above"] and f["cite"]:
+                if _key(repo, rounds[number - 1]["head"], f["cite"]) in first - {None}:
+                    continue  # repeated: round 1 caught it, the coder left it
                 late.append(
                     {
                         "round": number,
@@ -172,7 +188,7 @@ def analyse(repo: Path, rounds: list[dict], threshold: int) -> dict:
     ]
     if len(rounds) < 2:
         verdict, reason = "insufficient", "one round"
-    elif len(rounds) >= 3 and counts[2] > 0 and counts[2] >= counts[0]:
+    elif any(c > 0 and c >= counts[0] for c in counts[2:]):
         verdict, reason = "approach", ""
     elif any(item["old"] for item in late):
         verdict, reason = "reviewer-miss", ""

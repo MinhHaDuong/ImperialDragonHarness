@@ -269,3 +269,53 @@ def test_parse_findings_gates_on_scenario_and_on_main():
         ("a.py:9", "blocking", True),
         (None, "blocking", False),
     ]
+
+
+def test_a_repeated_finding_is_not_a_reviewer_miss(tmp_path):
+    """Round 1 caught it; the coder left the line; round 2 repeats it. The reviewer saw it."""
+    fx = Fixture(tmp_path / "repo")
+    fx.pr(
+        31,
+        [
+            (BASE, [("blocking", "f31.py:3", True)]),
+            (BASE + "c = 3\n", [("blocking", "f31.py:3", True)]),
+            (BASE + "c = 3\n", []),
+        ],
+    )
+    pr = rt.survey(fx.repo, "2026-10-01", rounds_of=fx.reader)["prs"][0]
+    assert pr["class"] != "reviewer-miss" and pr["late"] == []
+
+
+def test_an_unreadable_round_one_head_is_unverified_not_new(tmp_path):
+    fx = Fixture(tmp_path / "repo")
+    fx.pr(
+        32,
+        [
+            (BASE, [("blocking", "f32.py:1", True)]),
+            (BASE + "c = 3\n", [("blocking", "f32.py:3", True)]),
+            (BASE + "c = 3\n", []),
+        ],
+    )
+    fx.rounds[32][0]["head"] = "deadbeef" * 5
+    report = rt.survey(fx.repo, "2026-10-01", rounds_of=fx.reader)
+    assert report["prs"][0]["late"][0]["old"] is None
+    assert "unverified late findings (head or line unreadable): #32" in rt.render(
+        report
+    )
+
+
+def test_approach_counts_any_round_from_the_third(tmp_path):
+    fx = Fixture(tmp_path / "repo")
+    fx.pr(
+        33,
+        [
+            (BASE, [("blocking", "f33.py:1", True)]),
+            (BASE + "c\n", []),
+            (BASE + "c\n", []),
+            (BASE + "c\nd\n", [("blocking", "f33.py:5", True)]),
+        ],
+    )
+    assert (
+        rt.survey(fx.repo, "2026-10-01", rounds_of=fx.reader)["prs"][0]["class"]
+        == "approach"
+    )
