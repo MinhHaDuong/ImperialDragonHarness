@@ -1,13 +1,104 @@
 %erg 0.1
-Title: Portable wake: one runtime-wake helper so raid sitreps and stall alerts fire on Codex and Pi, not Claude Code only
+Title: Runtime interface: one adapter, scripts/runtime.py, for every runtime-specific action (as forge.py is for the forge)
 Created: 2026-10-28
 Author: claude
 
 --- log ---
 2026-10-28T14:08Z claude created
 2026-10-28T14:14Z reviewer claude note roar sweep 2026-10-28: sites that hard-code the Claude-only wake, all in scope: skills/hunt/SKILL.md:36, agents/team-lead.md:30, skills/raid/references/circuit-breakers.md:53, skills/raid/SKILL.md:476, skills/raid/references/sitrep.md:37-38, plus the 'runtime that cannot wake the session' fallbacks in skills/merge/SKILL.md (Waiting for a queued merge) and skills/roar/SKILL.md (Pre-check).
+2026-10-28T15:40Z claude note author 2026-10-28: rescoped from a wake-only helper to a single runtime interface like the forge adapter ("one helper for the time, one to launch an agent, ..."); author left the name to the session: scripts/runtime.py. Becomes the tracker; children 1311-1314. The original wake context below is kept and now belongs to 1311.
 
 --- body ---
+## Context
+Claude Code-only behaviour is a bug (author, 2026-10-28). Today each skill
+spells its runtime case in prose behind `<!-- harness-extension-point -->`,
+and Codex and Pi get "none found" or a per-step fallback. The forge already
+solved the same problem: `scripts/forge.py` is one CLI (`forge.py [--forge
+auto|gh|none] <verb> ...`, verbs resolve/comments/checks/merge/read_back/...),
+typed refusals and a falsy NOOP for unsupported writes, stub-backed tests
+(`tests/test_forge.py`). This tracker builds its runtime twin:
+
+    python3 scripts/runtime.py [--runtime auto|claude|codex|pi] <verb> <args>
+
+plus `runtime.py can <verb>` so a skill branches on a capability, not on a
+runtime name.
+
+Inventory (session 38c9c55f, 2026-10-28, read-only sweep of skills/ agents/
+scripts/ hooks/ adapters/ rules/ profiles/), about 60 sites:
+- **wake / timer**, ~12 action sites: raid § Sitrep cadence (SKILL.md:474-476),
+  merge § Waiting for a queued merge (195-203), roar Pre-check (43-46), lair
+  (65-70), `raid-breaker.py --wait` in hunt:36, agents/team-lead.md:30,
+  raid circuit-breakers.md:53, sitrep.md:37-38. → 1311
+- **notify**: 0 sites today; the arena watchdog (`notify-send` + alert file,
+  systemd user timer) is the pattern and the fallback for a dead session. → 1312
+- **launch agent**, ~20 sites: rules/claude-code.md:40-52 (model pin, effort,
+  spawn depth), raid launches, routes.json:73-120 `launch_doors` (subagent and
+  headless per runtime), manuscript-review:95-100, gaze_seat.py, seat_clock.py,
+  gaze fork contract. → 1313
+- **session reads**, ~10 sites: on-end.sh:41-82 (`session_id`,
+  `CLAUDE_CODE_CHILD_SESSION`, `CLAUDE_SESSION_SCRATCH_ROOT`,
+  `CLAUDE_CODE_TMPDIR`), on-start-sync.sh:6 and on-start-context.sh:10-15
+  (`CLAUDE_PROJECT_DIR`), yawn:104, molt:165 (`CLAUDE_NIGHT_SWEEP`),
+  lair/log-agent-metrics:6. → 1314
+- **Out of this tracker, decided here:**
+  - The trace analytics (trace-*.py, mammoth-audit, census) parse Claude
+    transcripts. They are measurement, not action; porting them is separate work.
+  - Hook and skill registration is install-time and belongs to `adapters/` and
+    `bin/idh`.
+  - Ask-author has no action site (skills ask in prose).
+  - Stop and message-agent are a tiny surface (SendMessage redirects are
+    banned). They can join 1313 if a caller appears.
+  - Diagnostics already has its per-runtime table
+    (harness-doctor/references/runtime-diagnostics.md); fold it in only when
+    a script needs it.
+- Guard already in place: `scripts/check-agnostic.sh`. Each child removes the
+  extension-point markers its verb replaces.
+
+## CLI (designed from current call sites; children implement it)
+
+    python3 scripts/runtime.py [--runtime auto|claude|codex|pi] <verb> ...
+
+| Verb | Today's caller | Behaviour |
+|---|---|---|
+| `which` | none yet; every skill that guesses | print the detected runtime; exit 3 if it cannot tell |
+| `can <verb>[.<mode>]` | the "Claude Code only" prose | exit 0 yes, 1 no, 3 cannot tell; e.g. `can wake.send`, `can launch.subagent` |
+| `wake arm --every S --cmd CMD [--deadline S]` | raid sitrep cadence | Claude: prints `RUN-IN-BACKGROUND <cmd>` for the session's own background tool (only it can start the process that wakes it); Codex: detached `systemd-run --user --on-active` timer that runs CMD and `codex queue`s its output; Pi: a wake file read by the extension timer |
+| `wake poll --status CMD --while TEXT --every S --deadline S` | merge § Waiting for a queued merge, roar Pre-check, lair, `raid-breaker.py --wait` | bounded poll of a single-read status command; on exit, the wake is delivered as with `arm` |
+| `wake send --session ID --message TEXT` | none yet | Codex `codex queue --thread`; Pi wake file; Claude NOOP until a cross-process path is probed |
+| `wake disarm [--all]` | raid Wrap up step 4 | kill or remove what `arm` created (Claude: prints the task to stop) |
+| `notify --key K --title T --body B [--repeat S]` | none; arena-watchdog pattern | `notify-send` + alert file under the git common dir, at most one per K per S (default 3600) |
+| `launch --door subagent\|headless --role R --model M [--effort E] --prompt-file F [--out F]` | routes.json `launch_doors`, gaze_seat.py, seat_clock.py, manuscript-review | headless: run the door; subagent: Claude prints the Agent-tool parameters (model token pinned), Pi/Codex NOOP or headless fallback as `can` says |
+| `session id\|scratch\|project-dir\|headless\|child` | on-end.sh, on-start-*.sh, yawn, molt, lair metrics | one value on stdout, or NOOP |
+
+Contract, the same as forge.py and merge-gate.py:
+- Exit codes: 0 done, 1 NOOP (unsupported here, with a one-line
+  `NOOP <verb> <runtime>: <reason>`), 2 refused or failed, 3 could not read.
+- One-line results on stdout, diagnostics on stderr. An all-clear is never
+  printed when a backend could not look.
+- Backend selection: the flag only. `auto` reads the runtime's own markers and
+  never falls back to a guess, which is the lesson of forge.py's dropped
+  environment switch.
+- Stdlib only; one module, one class per backend; `tests/test_runtime.py` with
+  stubbed CLIs, like `tests/test_forge.py`.
+- A verb is added when a caller needs it, not before (YAGNI). The table is the
+  ceiling for this tracker, not a floor.
+
+## Children
+- 1311 skeleton + wake (first; the others depend on its selection and `can`)
+- 1312 notify + out-of-session raid supervisor (Blocked-by 1311)
+- 1313 launch (Blocked-by 1311)
+- 1314 session reads (Blocked-by 1311)
+- 1310 (raid id in the raid log) is independent, in flight in a raid.
+
+## Exit criteria
+- [ ] 1311-1314 closed, or a child consciously dropped with its reason here
+- [ ] Integration review: `git grep harness-extension-point` and
+      "Claude Code only" across skills/ agents/ scripts/ show no wake, launch or
+      session site left outside `runtime.py`; the residue is listed with reasons
+- [ ] Each verb carries a live positive control per runtime (recorded in the child)
+
+## Original wake context (moved to 1311)
+
 ## Context
 The raid sitrep (ticket 1246) and the stall wake (`raid-breaker.py --wait`,
 ticket 1214) wake only a Claude Code session: their timer is a background

@@ -1,0 +1,28 @@
+%erg 0.1
+Title: runtime.py launch verb: one door for subagent and headless launches, model and effort pinned, from routes.json launch_doors
+Created: 2026-10-28
+Author: claude
+Blocked-by: 1311
+
+--- log ---
+2026-10-28T14:17Z claude created
+
+--- body ---
+## Context
+Child of tracker 1309. Launching a worker is spelled per runtime in prose:
+rules/claude-code.md:40-52 (model token pin, effort only through Workflow
+`opts.effort`, spawn depth), raid's launches, manuscript-review:95-100
+(`claude -p --model --effort`), and `skills/route/routes.json:73-120`
+`launch_doors`, which already holds the subagent and headless templates per
+runtime (Codex `codex exec -s read-only -m <id> -o <out> -`, Pi `pi --no-session
+-p --model <provider>/<id>[:<thinking>]`). `runtime.py launch --role --model
+--effort --prompt-file [--headless]` renders and runs the door from routes.json,
+so routes.json stays the one data home and runtime.py the one code path.
+
+## Exit criteria
+- [ ] `launch` verb reading `launch_doors`; `can launch --subagent` answers per runtime
+      (Pi core: no subagents)
+- [ ] Headless launches in gaze_seat.py / seat_clock.py / manuscript-review go through it
+- [ ] In-session subagent launches (Agent tool) stay prose, but the prose names
+      the verb's contract; tests/test_launch_model_choice.py still passes
+- [ ] `make check` passes
