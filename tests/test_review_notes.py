@@ -203,13 +203,14 @@ def test_empty_range_never_matches(world):
     assert rn.coverage(a, rid, sh(a, "rev-parse", "HEAD"))["match"] == "none"
 
 
-def test_delta_answer_alone_is_not_full(world):
+def test_an_old_delta_label_is_ignored(world):
+    """Ticket 1305: the scope label is gone; an old entry's coverage field changes nothing."""
     _, a, _, _ = world
     rid = rn.open_review(a, "feature", "origin/main")
     head = sh(a, "rev-parse", "feature")
     rn.add(a, "answer", rid, {"run_id": "gz-1", "result": "REVIEWED", "seats": "panel",
                               "coverage": {"scope": "delta"}})
-    assert rn.coverage(a, rid, head)["match"] == "delta"
+    assert rn.coverage(a, rid, head)["match"] == "equal"
 
 
 def test_review_head_is_kept_published_and_checked(world, tmp_path):

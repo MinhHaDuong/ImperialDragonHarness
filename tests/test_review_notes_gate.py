@@ -62,13 +62,13 @@ def repo(tmp_path):
     return r
 
 
-def answer(repo, rid, result="REVIEWED", scope="full", head="feature", carried=None):
-    cov = {"scope": scope, **({"carried": carried} if carried else {})}
+def answer(repo, rid, result="REVIEWED", head="feature", **legacy):
+    """An answer as gaze_close writes it; `legacy` adds fields of old entries (e.g. coverage)."""
     oid = sh(repo, "rev-parse", head)
     on_head = [e for e in rn.entries(repo, rid) if e["kind"] == "request" and e["head"] == oid]
     rq = on_head[-1] if on_head else rn.request(repo, rid, "feature", "main", head=oid)  # as gaze_setup does (1281)
     return rn.add(repo, "answer", rid, {"run_id": f"gz-{rn._hex(4)}", "result": result, "seats": "panel",
-                                        "coverage": cov, "text": f"result: {result}"},
+                                        "text": f"result: {result}", **legacy},
                   head=oid, request_id=rq["request_id"])
 
 
@@ -113,47 +113,6 @@ def fix(repo, n):
     sh(repo, "switch", "-q", "feature")
     commit(repo, "f.py", f"def f():\n    return {n}\n\n\n\n\n\ndef g():\n    return 2\n", f"fix {n}")
     sh(repo, "switch", "-q", "main")
-
-
-def test_delta_answer_counts_only_through_its_carried_chain(repo):
-    rid = rn.open_review(repo, "feature", "main")
-    full = answer(repo, rid)
-    fix(repo, 12)
-    rn.request(repo, rid, "feature", "main")
-    answer(repo, rid, scope="delta")  # carries nothing
-    state = rn.gate_state(repo, rid, "feature")
-    assert not state["ready"] and state["match"] == "delta" and "carried" in state["reason"]
-    answer(repo, rid, scope="delta", carried=full["id"])
-    state = rn.gate_state(repo, rid, "feature")
-    assert state["ready"] and state["match"] == "delta"
-
-
-def test_delta_chain_must_point_back_to_an_earlier_full_answer(repo):
-    rid = rn.open_review(repo, "feature", "main")
-    first = answer(repo, rid, scope="delta")  # a delta first: nothing earlier to carry
-    answer(repo, rid, scope="full", head="main~1")  # a later full answer, on another head
-    fix(repo, 12)
-    d2 = answer(repo, rid, scope="delta", carried=first["id"])
-    state = rn.gate_state(repo, rid, "feature")
-    assert not state["ready"], state
-    # a later answer named as carried is not a chain either
-    later = answer(repo, rid, scope="full", head="main~1")
-    entry = dict(d2, id=d2["id"] + "x", coverage={"scope": "delta", "carried": later["id"]})
-    assert not rn._chained([first, d2, later, entry], dict(entry, ts=first["ts"]))
-    # a two-link chain ending at a full answer counts
-    full = answer(repo, rid, scope="full")
-    fix(repo, 13)
-    mid = answer(repo, rid, scope="delta", carried=full["id"], head="main~1")
-    answer(repo, rid, scope="delta", carried=mid["id"])
-    assert rn.gate_state(repo, rid, "feature")["ready"]
-
-
-def test_gaze_records_what_a_delta_carries(repo):
-    rid = rn.open_review(repo, "feature", "main")
-    assert rn.carry_target(repo, rid) is None
-    full = answer(repo, rid)
-    answer(repo, rid, result="ESCALATE")
-    assert rn.carry_target(repo, rid) == full["id"]  # never an ESCALATE answer
 
 
 def test_bookkeeping_after_the_reviewed_head_is_admitted(repo):
@@ -352,18 +311,18 @@ def test_two_gate_runs_ruling_at_once_report_the_conflict(two_clones, monkeypatc
     assert state["round"] == 3 and not state["ready"]  # fails closed: past the cap
 
 
-def test_bookkeeping_after_an_unchained_delta_is_refused(repo):
-    """gaze 1813 round 2: the bookkeeping path rests on a full or chained answer only."""
+def test_an_old_scope_label_is_ignored(repo):
+    """Ticket 1305 deleted the scope label and its carried chain; entries written before still
+    carry `coverage`. Readers ignore it: an old uncarried delta on the head admits the gate."""
     rid = rn.open_review(repo, "feature", "main")
-    answer(repo, rid, scope="delta")  # a narrow first review: carried is None
-    assert not rn.gate_state(repo, rid, "feature")["ready"]
+    answer(repo, rid, coverage={"scope": "delta", "carried": None})
+    state = rn.gate_state(repo, rid, "feature")
+    assert state["ready"] and state["match"] == "equal"
     sh(repo, "switch", "-q", "feature")
     (Path(repo) / "tickets").mkdir()
     commit(repo, "tickets/0001-x.erg", "%erg 0.1\n", "ticket(1): close")
     state = rn.gate_state(repo, rid, "feature")
-    assert not state["ready"] and "full" in state["reason"]
-    with pytest.raises(rn.Refusal):
-        rn.record_verdict(repo, rid, session(), "APPROVED", "feature")
+    assert state["ready"] and state["match"] == "bookkeeping"
 
 
 def test_reroll_fix_must_descend_from_the_rerolled_head(repo):
