@@ -1,0 +1,39 @@
+%erg 0.1
+Title: Forge-leak regressions from cross-family review: collision check exits 0 past a known collision without a forge; fork PRs taken as self; merge disarm reads the wrong PR
+Created: 2026-10-28
+Author: claude
+
+--- log ---
+2026-10-28T20:19Z claude created
+
+--- body ---
+## Context
+Post-merge cross-family review (Codex gpt-6.1-sol via `gaze_seat.py`, 2026-10-28)
+of PRs #1912 (ticket 1318) and #1915 (ticket 1320), which merged with same-family
+review only (raid f7fa41). Each finding is a regression: the pre-merge parent
+behaved correctly.
+1. **blocking** `scripts/check-cross-pr-ticket-collision.sh:103-105`: on `forge.py
+   list` exit 3 (no forge) it prints `skipped: no forge` and exits 0, discarding
+   `collision` counted from the base tip just above. Parent 053aec8c returned 2.
+   Confirmed by reading main.
+2. **blocking** same script, ≈119: self detection uses `cross_repository | not`,
+   which describes head-vs-base repository, not head-vs-local-origin. From a fork
+   checkout the PR's own number is not excluded and the script demands a renumber
+   (parent: 0; main: 1, with stubbed forge responses).
+3. **verifiable, high** `skills/merge/SKILL.md:153-156`: the disarm step selects
+   the request by branch and `cross_repository: false` without `number == N`;
+   with two open requests on one head branch, the wrong request's auto-merge
+   state can be read. Parent used `gh pr view N`.
+4. **consider** `skills/merge/SKILL.md:104-106`: exit 3 (no forge) is an
+   unconditional stop; the branch-unit (no-forge) alternative is not described.
+Seat reports: kept in the review session's scratch (paths in the session log);
+findings restated here in full.
+
+## Exit criteria
+- [ ] 1: exit 3 path exits non-zero when `collision > 0`; test with a base-tip collision and no origin
+- [ ] 2: self detection compares the PR head repository and branch with the local origin, as before; test from a fork-shaped stub
+- [ ] 3: the disarm step identifies request N by number; prose names the forge.py call that does
+- [ ] 4: decided (describe the branch-unit route or state why exit 3 stops)
+- [ ] Each fix's test fails on current main first
+- [ ] A cross-family seat reviews the fix PR before merge
+- [ ] `make check` passes
