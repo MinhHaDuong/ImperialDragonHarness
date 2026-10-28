@@ -19,7 +19,8 @@ Per backend:
   `codex queue` only queues: into an exited thread nothing runs, so the result line says
   QUEUED, never DELIVERED. Absolute paths are passed to the unit, and the caller's PATH is
   set for CMD. Without systemd-run (CI, another OS, a logged-out user without lingering)
-  `arm` and `disarm` answer NOOP. `send` calls `codex queue` directly.
+  `arm` and `disarm` answer NOOP. Unit names carry the thread id, and `disarm` stops only
+  that thread's units. `send` calls `codex queue` directly.
 - Pi: the writer side only (the reader extension is ticket 1316). Messages go into the
   `$IDH_WAKE_INBOX` directory as `<stamp>-<rand>.msg` (UTF-8 text, written to a dot-file
   then renamed); `arm` runs a detached `wake fire --inbox` process and records its pid in
@@ -28,6 +29,7 @@ Per backend:
 
 import argparse
 import os
+import re
 import secrets
 import shlex
 import shutil
@@ -53,7 +55,8 @@ def register(sub) -> None:
     arm.add_argument("--after", type=float, required=True, metavar="S")
     arm.add_argument("--cmd", required=True)
     arm.add_argument("--session", help="session to wake (default: this one)")
-    modes.add_parser("disarm", help="cancel what arm started")
+    dis = modes.add_parser("disarm", help="cancel what arm started for this session")
+    dis.add_argument("--session", help="session whose wakes to cancel (default: this one)")
     send = modes.add_parser("send", help="queue a message into a session now")
     send.add_argument("--session", required=True)
     send.add_argument("--message", required=True)
@@ -81,7 +84,7 @@ def can(rt: str, mode: str, env) -> str | None:
             return "codex is not on PATH"
         if mode != "send" and not shutil.which("systemd-run", path=env.get("PATH")):
             return "systemd-run is not available for a detached timer"
-        if mode == "arm" and not env.get("CODEX_THREAD_ID"):
+        if mode != "send" and not env.get("CODEX_THREAD_ID"):
             return "CODEX_THREAD_ID is not set; pass --session"
         return None
     if rt == "pi":
@@ -154,7 +157,7 @@ def arm(a, rt: str, env) -> int:
     if rt == "codex":
         thread = a.session or env["CODEX_THREAD_ID"]
         codex = shutil.which("codex", path=env.get("PATH"))
-        unit = UNIT_PREFIX + secrets.token_hex(4)
+        unit = f"{unit_stem(thread)}{secrets.token_hex(4)}"
         argv = [shutil.which("systemd-run", path=env.get("PATH")), "--user", "--quiet", "--collect",
                 f"--on-active={max(a.after, 1):g}", f"--unit={unit}", f"--working-directory={os.getcwd()}",
                 f"--setenv=PATH={env.get('PATH', '')}",
@@ -176,10 +179,16 @@ def arm(a, rt: str, env) -> int:
     return runtime.DONE
 
 
-def disarm(rt: str, env) -> int:
+def unit_stem(thread: str) -> str:
+    """Unit names carry the thread, so one session's disarm never cancels another's wakes."""
+    return f"{UNIT_PREFIX}{re.sub(r'[^A-Za-z0-9_-]', '_', thread)}-"
+
+
+def disarm(a, rt: str, env) -> int:
     if rt == "codex":
         ctl = shutil.which("systemctl", path=env.get("PATH")) or "systemctl"
-        done = subprocess.run([ctl, "--user", "stop", f"{UNIT_PREFIX}*.timer", f"{UNIT_PREFIX}*.service"],
+        stem = unit_stem(a.session or env["CODEX_THREAD_ID"])
+        done = subprocess.run([ctl, "--user", "stop", f"{stem}*.timer", f"{stem}*.service"],
                               capture_output=True, text=True, stdin=subprocess.DEVNULL)
         if done.returncode != 0:
             print(f"wake: systemctl stop failed: {(done.stderr or done.stdout).strip()}", file=sys.stderr)
@@ -210,12 +219,12 @@ def run(a, rt: str, env=None) -> int:
     env = os.environ if env is None else env
     if a.mode == "fire":
         return fire(a)
-    seen = {**env, "CODEX_THREAD_ID": a.session} if a.mode == "arm" and a.session else env
+    seen = {**env, "CODEX_THREAD_ID": a.session} if a.mode != "send" and a.session else env
     reason = can(rt, a.mode, seen)
     if reason:
         return runtime.noop(f"wake {a.mode}", rt, reason)
     if a.mode == "arm":
         return arm(a, rt, env)
     if a.mode == "disarm":
-        return disarm(rt, env)
+        return disarm(a, rt, env)
     return send(a, rt, env)

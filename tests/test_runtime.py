@@ -207,6 +207,19 @@ def test_codex_send_queues_and_a_failed_queue_exits_2(env, tmp_path, monkeypatch
 
 
 @pytest.mark.integration
+def test_codex_disarm_stops_only_this_threads_units(env, tmp_path, monkeypatch, capsys):
+    """Two Codex sessions on one user bus never cancel each other's wakes."""
+    stub(env, "systemd-run", "systemctl", "codex")
+    monkeypatch.setenv("CODEX_THREAD_ID", "t-a")
+    out = cli(capsys, "wake", "arm", "--after", "5", "--cmd", "true")[1]
+    unit = out.split()[2]
+    assert unit.startswith("idh-wake-t-a-")
+    assert cli(capsys, "wake", "disarm")[:2] == (0, "DISARMED codex")
+    stop = calls(tmp_path)[-1]
+    assert stop == ["systemctl", "--user", "stop", "idh-wake-t-a-*.timer", "idh-wake-t-a-*.service"]
+
+
+@pytest.mark.integration
 def test_codex_failed_systemd_run_exits_2(env, monkeypatch, capsys):
     stub(env, "systemd-run", "codex")
     monkeypatch.setenv("CODEX_THREAD_ID", "t-1")
