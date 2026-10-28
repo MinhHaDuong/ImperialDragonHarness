@@ -1,6 +1,6 @@
 # Imperial Dragon Harness
 
-A personal harness for AI-assisted research across Claude Code, Codex and Pi.
+A personal harness for AI-assisted research integrity, excellence and openness.
 Why a dragon, and why a harness: [AI is a dragon](https://realf.hypotheses.org/2).
 
 Casual people get shit done. Real humans ride the Imperial Dragon Harness.
