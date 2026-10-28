@@ -88,22 +88,28 @@ Every route, building or not, starts in the worktree.
 
 Work in the ticket's **own** worktree, on its own branch.
 
-- **Owned already?** Yes if you created it for this ticket, or the spawner
-  handed it to you by path with `git status --porcelain` printing nothing:
-  there, `W=$(git rev-parse --show-toplevel)` and `git switch -c t$ID-short-description`
-  (or switch to the existing branch). A shared or `explore-*` worktree may host a live session: never
+- **Owned already?** Yes if you created it in this run, or the spawner's brief
+  names its path explicitly and `git status --porcelain` prints nothing:
+  there, `W=<that path>` and `git switch -c t$ID-short-description`
+  (or switch to the existing branch). The directory your shell starts in is
+  not a handed path: a subagent inherits its spawner's cwd. A tree you did not
+  create and no brief named is never adopted, clean or not: stop and report it.
+  A shared or `explore-*` worktree may host a live session: never
   rebase, branch, or leave files in it.
-- **Otherwise create one** under the primary checkout. `P=$PPID`, the
-  long-lived runtime process, names the path and owns the lock. If `$PPID`
-  prints 1 (a sandboxed runtime), use `P=$RANDOM` and the lock reason
-  `hunt t$ID (owner pid not visible)` (details: `references/worktree-lifecycle.md`):
+- **Otherwise create one** under the primary checkout. `$PPID`, the
+  long-lived runtime process, owns the lock; a spawner and its subagents
+  share it, so `$RANDOM` makes the path yours, redrawn while it exists.
+  If `$PPID` prints 1 (a sandboxed runtime), the lock reason is
+  `hunt t$ID (owner pid not visible)` (details: `references/worktree-lifecycle.md`).
+  The path is not recomputable: note the printed `$W` and use it verbatim.
   ```bash
   P=$PPID; REASON="hunt t$ID (pid $P)"
-  if [ "$P" = 1 ]; then P=$RANDOM; REASON="hunt t$ID (owner pid not visible)"; fi
+  if [ "$P" = 1 ]; then REASON="hunt t$ID (owner pid not visible)"; fi
   R=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
-  W=$R/.claude/worktrees/t$ID-$P
-  git worktree add "$W" -b t$ID-short-description origin/main
-  git worktree lock --reason "$REASON" "$W"
+  W=$R/.claude/worktrees/t$ID-$P-$RANDOM
+  while [ -e "$W" ]; do W=$R/.claude/worktrees/t$ID-$P-$RANDOM; done
+  git worktree add "$W" -b t$ID-short-description origin/main &&
+    git worktree lock --reason "$REASON" "$W" && echo "$W"
   ```
   If the branch already exists (re-hunt, second session), drop `-b`:
   `git worktree add "$W" <branch>`. Without `origin/main`, use `main`.

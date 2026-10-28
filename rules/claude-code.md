@@ -25,8 +25,9 @@ inherit it: review seats cannot reach their review tree.
 | Active feature branch + open MR | `t{N}-{pid}` | `[→ Execute]` |
 | MR review | `review-{N}` | `[→ Verify]` |
 
-`{pid}` is `$PPID`, as in hunt's § Worktree, so two sessions on one ticket
-land in distinct paths. Legacy bare `t{N}` names remain valid.
+`{pid}` is `$PPID-$RANDOM`, as in hunt's § Worktree: `$PPID` alone is shared
+by the session and its subagents, so only the random part keeps their paths
+apart. Legacy bare `t{N}` names remain valid.
 
 **`/hunt N`: do not create a worktree before the skill runs** — its detached
 agent creates its own, orphaning yours.
