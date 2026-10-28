@@ -2,6 +2,7 @@
 Title: 1252 design: git-notes review schema — ids, entry format, rebase survival, transport, request-pull, incremental review
 Created: 2026-10-27
 Author: reviewer
+Closed: All four criteria met: doudou<->padme trial reported (PR #1798); web legs run by the author, both outcome B (read, relay publish); spec reviewed by a cross-family seat (PR #1798) and accepted; 1273/1274/1276 built to it.
 
 --- log ---
 2026-10-27T16:07Z reviewer created
@@ -10,6 +11,8 @@ Author: reviewer
 2026-10-27T16:35Z reviewer note verify-reroll — round 1: rebase onto origin/main (tickets/closed/1196 conflicts); web legs of 1277 recorded as pending
 2026-10-27T16:56Z reviewer note author 2026-10-27: recalibrate the flows (review locally + forge merge; local merge + push upstream; local merge to a /srv hub on padme; peer to peer). Design note first, reviewed for practices and values; more choice is not always better.
 2026-10-27T17:12Z reviewer note author ruling 2026-10-27 on the flows note (conception/2026-10-27-review-merge-flows.md, PR #1809): F1 default (notes review + forge PR merge); F2 only for repositories without an upstream (no origin remote: local gated merge). No idh.mergeRoute switch; with origin and no gh, landing refuses. F3 (/srv hub) and F4 (peer to peer) rejected.
+2026-10-28T07:03Z reviewer web legs run by the author 2026-10-27/28 (conception/2026-10-27-notes-web-leg.sh). Claude Code Web (git 2.43.0): fetch-notes PASS; push of refs/notes/* refused HTTP 403 even with push access attached; branch push PASS (claude/idh-trial-1277); ref deletion refused by git and by the API proxy (403) -> outcome B of the spec's A-D rule (reader and seat, entries leave by export, a durable host imports and publishes); the script's cleanup cannot run there. ChatGPT Work (git 2.51.1): fetch-notes PASS; push-notes FAIL, no GitHub HTTPS credential in the environment -> outcome B as configured (A would need a push token there: author's call, not taken). Persistence not tested (fresh clones).
+2026-10-28T07:03Z reviewer closed — All four criteria met: doudou<->padme trial reported (PR #1798); web legs run by the author, both outcome B (read, relay publish); spec reviewed by a cross-family seat (PR #1798) and accepted; 1273/1274/1276 built to it.
 
 --- body ---
 ## Context
