@@ -11,9 +11,10 @@ a practitioner, so it follows the ethic only.
 - **Called, never self-started.** Only the author starts a visit or a survey.
   A skill may suggest one; no skill, hook, schedule or session start invokes it.
 - **Consent and price before a costly probe.** Reading files, traces and
-  records needs no permission. Before a probe that spends model usage, executes
-  a suite, writes to the project, or touches credentials or the network, say
-  what it runs, where, and what it costs, and wait for the author's agreement.
+  records needs no permission. Before a probe that executes a suite, writes to
+  the project or touches the network, say what it runs, where, and what it
+  costs. Before one that spends model usage or touches credentials, also wait
+  for the author's agreement.
 - **Label every number**: *measured* (command, environment, date), *read from
   a record* (and its age) or *derived* (with the arithmetic).
 - **Positive control.** A probe that finds nothing says nothing until it has
@@ -25,13 +26,14 @@ a practitioner, so it follows the ethic only.
   agent cost) and odds, recommend one, and perform only what was agreed.
 - **The kit's memo.** Each doctor keeps one line per tool: what symptoms it
   diagnoses, and what it needs to run (data, window, cost, credentials). It
-  lives in the doctor's SKILL.md probe table (the surveying doctor's: its
-  survey commands); when that grows too long, in a `references/` tool list.
+  lives in the doctor's SKILL.md probe table (the surveying doctor's: the
+  comment on each survey command); when that grows too long, in a
+  `references/` tool list.
 - **History.** A practitioner's visit leaves one journal entry in the project's
   own repository memory (never the harness's, unless the harness is the
   project), `memory/journal/YYYY/YYYY-MM-DD-<doctor>-<slug>.md`, with `Date:`
-  and `Project:` headers. Read the earlier entries first; an earlier remedy
-  that did not hold is the first suspect. Every intervention books a revisit
+  and `Project:` headers. Read the earlier entries first, and which revisits
+  are due; an earlier remedy that did not hold is the first suspect. Every intervention books a revisit
   or watch condition: what to rerun, on what, and when. With no earlier entry,
   say "no prior visit", never "fixed". With no repository memory, give the
   entry to the author and say so. The surveying doctor's history is its
