@@ -42,6 +42,13 @@ if args[:2] == ["pr", "view"]:
         print(json.dumps({"number": 7, "state": "OPEN", "isDraft": True, "mergeable": "MERGEABLE",
                           "headRefName": "t1-x", "baseRefName": "main", "headRefOid": state["head"],
                           "body": state["body"]}))
+elif args[:2] == ["pr", "list"]:
+    if state.get("list_fail"):
+        print("gh: not logged in", file=sys.stderr)
+        sys.exit(4)
+    print(json.dumps(state.get("rows", [])))
+elif args[0] == "api" and args[1].endswith("/files"):
+    print(state.get("files", ""))
 elif args[:2] == ["api", "repos/{owner}/{repo}/pulls/7"]:
     state["body"] = json.loads(sys.stdin.read())["body"]
     json.dump(state, open(os.environ["STUB_STATE"], "w"))
@@ -309,3 +316,89 @@ def test_comments_can_leave_reviews_out(stub):
 
 def test_landing_without_origin_numeric_ref_is_local_even_with_gh(repo, stub):
     assert isinstance(forge.get_forge(None, "7", cwd=str(repo), landing=True), forge.NoneForge)
+
+
+# --- ticket 1318: ref-less CLI verbs (list, files, read-back) and their three-row contract ----
+
+CLI = [sys.executable, str(SCRIPTS / "forge.py")]
+ROW = {"number": 9, "headRefName": "t9-x", "title": "T", "body": "B", "mergedAt": None,
+       "isCrossRepository": False, "autoMergeRequest": {"enabledAt": "x"}}
+
+
+def git_only_env(tmp_path):
+    bindir = tmp_path / "gitonly"
+    bindir.mkdir(exist_ok=True)
+    if not (bindir / "git").exists():
+        (bindir / "git").symlink_to(shutil.which("git"))
+    return {"PATH": str(bindir)}
+
+
+def cli(cwd, *args):
+    return subprocess.run([*CLI, *args], cwd=cwd, capture_output=True, text=True)
+
+
+def test_cli_list_no_origin_no_gh_is_a_typed_noop_never_an_empty_list(repo, nogh):
+    done = subprocess.run([*CLI, "--forge", "none", "list", "--state", "open"], cwd=repo, capture_output=True,
+                          text=True, env={"PATH": os.environ["PATH"]})
+    assert done.returncode == 3 and done.stdout == "" and "no forge" in done.stderr
+    auto = subprocess.run([*CLI, "list", "--state", "open"], cwd=repo, capture_output=True, text=True,
+                          env={"PATH": os.environ["PATH"]})
+    assert auto.returncode == 3 and auto.stdout == "" and "no forge" in auto.stderr
+
+
+def test_cli_list_origin_without_gh_is_could_not_look(repo, nogh):
+    sh(repo, "remote", "add", "origin", "https://example.invalid/o/r.git")
+    done = subprocess.run([*CLI, "list", "--state", "open"], cwd=repo, capture_output=True, text=True,
+                          env={"PATH": os.environ["PATH"]})
+    assert done.returncode == 2 and done.stdout == "" and "forge:" in done.stderr
+    forced = subprocess.run([*CLI, "--forge", "none", "list", "--state", "open"], cwd=repo, capture_output=True,
+                            text=True, env={"PATH": os.environ["PATH"]})
+    assert forced.returncode == 3
+
+
+def test_cli_list_empty_ref_routes_to_gh_with_origin(stub, tmp_path):
+    cwd = tmp_path / "cwd"
+    sh(cwd, "remote", "add", "origin", "https://example.invalid/o/r.git")
+    stub.write_text(json.dumps({"head": HEAD, "body": "", "rows": [ROW]}))
+    done = cli(cwd, "list", "--state", "open", "--head", "t9-x", "--limit", "5")
+    assert done.returncode == 0, done.stderr
+    assert json.loads(done.stdout) == [{"number": 9, "branch": "t9-x", "title": "T", "body": "B", "auto": True,
+                                        "mergedAt": None, "cross_repository": False}]
+    call = [json.loads(line) for line in (tmp_path / "log").read_text().splitlines()][0]
+    assert call[:4] == ["pr", "list", "--state", "open"] and call[call.index("--head") + 1] == "t9-x"
+    assert call[call.index("--limit") + 1] == "5"
+    stub.write_text(json.dumps({"head": HEAD, "body": "", "rows": []}))
+    assert json.loads(cli(cwd, "list", "--state", "merged").stdout) == []
+
+
+def test_cli_list_gh_failure_is_could_not_look(stub, tmp_path):
+    sh(tmp_path / "cwd", "remote", "add", "origin", "https://example.invalid/o/r.git")
+    stub.write_text(json.dumps({"head": HEAD, "body": "", "list_fail": True}))
+    done = cli(tmp_path / "cwd", "list", "--state", "open")
+    assert done.returncode == 2 and done.stdout == "" and "not logged in" in done.stderr
+
+
+def test_cli_files_rows_and_none(stub, tmp_path, repo):
+    sh(tmp_path / "cwd", "remote", "add", "origin", "https://example.invalid/o/r.git")
+    stub.write_text(json.dumps({"head": HEAD, "body": "", "files": "tickets/0300-a.erg\tadded\nf\tmodified"}))
+    done = cli(tmp_path / "cwd", "files", "9")
+    assert done.returncode == 0 and json.loads(done.stdout) == [
+        {"path": "tickets/0300-a.erg", "status": "added"}, {"path": "f", "status": "modified"}]
+    none = subprocess.run([*CLI, "files", "9"], cwd=repo, capture_output=True, text=True,
+                          env=git_only_env(tmp_path))
+    assert none.returncode == 3 and none.stdout == "" and "no forge" in none.stderr
+
+
+def test_cli_read_back_three_rows(stub, tmp_path, repo):
+    cwd = tmp_path / "cwd"
+    assert cli(cwd, "read-back", "7").returncode == 3  # no origin: no forge
+    sh(cwd, "remote", "add", "origin", "https://example.invalid/o/r.git")
+    done = cli(cwd, "read-back", "7")
+    assert done.returncode == 0 and done.stdout.strip() == f"OPEN {HEAD} -"
+    stub.write_text(json.dumps({"head": HEAD, "body": "", "armed": True}))
+    # a landing read leaves no offline mark and no cache behind
+    assert not list((cwd / ".git").glob("idh-forge-cache*"))
+    sh(repo, "remote", "add", "origin", "https://example.invalid/o/r.git")
+    gone = subprocess.run([*CLI, "read-back", "7"], cwd=repo, capture_output=True, text=True,
+                          env=git_only_env(tmp_path))
+    assert gone.returncode == 2 and gone.stdout == ""

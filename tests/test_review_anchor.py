@@ -2,6 +2,7 @@
 
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -78,3 +79,17 @@ def test_empty_pr_diff_fails_loudly(tmp_path, checkout):
     result = invoke(tmp_path, checkout, right)
     assert result.returncode != 0
     assert "REVIEW-ANCHOR: empty diff" in result.stderr
+
+
+@pytest.mark.integration
+def test_no_gh_is_a_typed_refusal_naming_the_forge(tmp_path, checkout):
+    """The none backend (ticket 1318): a PR number with no gh on PATH is a refusal, never an anchor."""
+    wrong, right = checkout
+    bindir = tmp_path / "gitonly"
+    bindir.mkdir()
+    (bindir / "git").symlink_to(shutil.which("git"))
+    result = subprocess.run([sys.executable, str(SCRIPT), "42", "--worktree", str(right)], cwd=wrong,
+                            env=dict(child_env(), PATH=str(bindir)), capture_output=True, text=True)
+    assert result.returncode == 2
+    assert "REVIEW-ANCHOR: cannot read PR 42 from the forge" in result.stderr
+    assert "gh pr view" not in result.stderr

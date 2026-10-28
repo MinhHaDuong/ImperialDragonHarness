@@ -14,17 +14,18 @@
 # is invisible to it — the script therefore compares added IDs against the base
 # tip's tickets/ directly, in plain git. And sibling OPEN PRs, via the forge.
 #
-# Forge coupling is confined to three calls, each marked `# harness-extension-point`
-# (the harness's forge-isolation idiom): resolving the source
-# repository, listing open PRs and fetching a PR's changed files. Everything else is forge-agnostic git + text.
+# Forge coupling is confined to two scripts/forge.py calls (ticket 1318): `list --state open`
+# and `files <pr>`. Everything else is forge-agnostic git + text. The forge adapter owns
+# the route: gh when the repository has an origin remote, none otherwise.
 #
 # Environment (all optional; defaults suit GitHub Actions `pull_request`):
 #   BASE_REF        base ref to diff against          (default: origin/main)
 #   SELF_PR_NUMBER  this PR's number (otherwise inferred from current branch)
 #
 # Exit 0: no collision (or no ticket files added — fast path, no forge calls).
-# Exit 2: the open-PR list could not be fetched (no gh auth/network/GitHub
-#         remote), or self identity cannot be established — fails closed.
+# Exit 0 also: "skipped: no forge" when forge.py answers exit 3 (no origin remote).
+# Exit 2: the open-PR list could not be fetched (origin remote but no gh
+#         auth/network), or self identity cannot be established — fails closed.
 #         Inspection failure takes precedence over any base collision already
 #         reported, and suppresses renumber advice until self identity is known.
 # Exit 1: a ticket ID this PR adds is also added by an open PR. Message names the
@@ -93,11 +94,16 @@ while IFS= read -r own_path; do
     collision=$((collision + 1))
 done <<< "$OWN_PATHS"
 
-# ── enumerate sibling open PRs (forge-specific) ───────────────────────────────
-# harness-extension-point: GitHub CLI — swap this block for another forge's API.
-# Fail closed but legibly: without gh auth, network or a GitHub remote the
-# bare call dies under set -e with an opaque message; say what is missing.
-if ! SIBLINGS_JSON=$(gh pr list --state open --json number,headRefName,headRepository 2>/dev/null); then # harness-extension-point
+# ── enumerate sibling open PRs (through the forge adapter) ────────────────────
+# forge.py list: exit 3 = no forge at all (typed NOOP; nothing to collide with, so
+# skip legibly), exit 2 = a forge exists and could not be read (fail closed).
+FORGE_PY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/forge.py"
+forge_rc=0
+SIBLINGS_JSON=$(python3 "$FORGE_PY" list --state open --limit 100 2>/dev/null) || forge_rc=$?
+if [[ "$forge_rc" -eq 3 ]]; then
+    echo "cross-pr-collision: skipped: no forge (no origin remote), so no sibling PR to compare."
+    exit 0
+elif [[ "$forge_rc" -ne 0 ]]; then
     echo "cross-pr-collision: cannot list open PRs (no gh auth/network/GitHub remote)" >&2
     exit 2
 fi
@@ -105,15 +111,12 @@ fi
 # ── infer self only when the caller supplied no explicit override ────────────
 if [[ -z "$SELF_PR" ]]; then
     CURRENT_BRANCH=$(git symbolic-ref --quiet --short HEAD || true)
-    # Resolve the local source repository, not the forge's default/base repo:
-    # forks may have identically named branches. Never exclude on name alone.
-    SOURCE_URL=$(git remote get-url origin 2>/dev/null || true)
-    # harness-extension-point: GitHub CLI — establish local origin's identity.
-    if [[ -z "$CURRENT_BRANCH" || -z "$SOURCE_URL" ]] || ! SOURCE_REPO=$(gh repo view "$SOURCE_URL" --json nameWithOwner --jq .nameWithOwner 2>/dev/null) || [[ -z "$SOURCE_REPO" ]]; then
-        echo "cross-pr-collision: cannot establish self repository/branch; set SELF_PR_NUMBER (no renumber recommendation)." >&2
+    if [[ -z "$CURRENT_BRANCH" ]]; then
+        echo "cross-pr-collision: cannot establish self branch; set SELF_PR_NUMBER (no renumber recommendation)." >&2
         exit 2
     fi
-    SELF_MATCHES=$(jq -r --arg branch "$CURRENT_BRANCH" --arg repo "$SOURCE_REPO" '.[] | select(.headRefName == $branch and .headRepository.nameWithOwner == $repo) | .number' <<< "$SIBLINGS_JSON")
+    # A same-named head in a fork (cross_repository) is a sibling, never self.
+    SELF_MATCHES=$(jq -r --arg branch "$CURRENT_BRANCH" '.[] | select(.branch == $branch and (.cross_repository | not)) | .number' <<< "$SIBLINGS_JSON")
     if [[ $(grep -c . <<< "$SELF_MATCHES" || true) -gt 1 ]]; then
         echo "cross-pr-collision: ambiguous self PR for current repository/branch; set SELF_PR_NUMBER (no renumber recommendation)." >&2
         exit 2
@@ -126,16 +129,13 @@ while IFS=$'\t' read -r pr_number pr_branch; do
     [[ -z "$pr_number" ]] && continue
     [[ -n "$SELF_PR" && "$pr_number" == "$SELF_PR" ]] && continue
 
-    # harness-extension-point: GitHub CLI — fetch this PR's changed files.
     # Fail-open by design (hygiene gate; renumber-on-merge stays the backstop),
     # but say so — a silent skip would look identical to a clean pass in CI logs.
-    if ! sib_files=$(
-        gh api "repos/{owner}/{repo}/pulls/${pr_number}/files" --paginate \
-            --jq '.[] | select(.status=="added") | .filename' 2>/dev/null
-    ); then
+    if ! sib_rows=$(python3 "$FORGE_PY" files "$pr_number" 2>/dev/null); then
         echo "cross-pr-collision: WARNING — could not fetch PR #${pr_number}'s files; check incomplete for that PR." >&2
         continue
     fi
+    sib_files=$(jq -r '.[] | select(.status == "added") | .path' <<< "$sib_rows")
     sib_ids=$(ticket_ids_from_paths <<< "$sib_files") || true
     [[ -z "$sib_ids" ]] && continue
 

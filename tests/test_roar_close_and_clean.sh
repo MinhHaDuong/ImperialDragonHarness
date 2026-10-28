@@ -514,20 +514,20 @@ merge_elsewhere() { # <branch>: merge it on origin from another clone, so W's ma
     git -C "$c" -c user.email=t@t -c user.name=t merge -q --no-ff -m "merge $1" "origin/$1"
     git -C "$c" push -q origin main
 }
-# Forge stubs answer `gh pr view B --json … --jq F` by running the caller's
-# real jq filter over a fixture, so the filter itself is exercised.
+# Forge stubs answer `gh pr view B --json … -q F` (forge.py read-back, ticket 1318) by running the
+# caller's real jq filter over a fixture, so the filter itself is exercised.
 forge_stub() { # <dir> <pr json>
     mkdir -p "$1"
     cat > "$1/gh" <<STUB
 #!/usr/bin/env bash
-f=""; while [ \$# -gt 0 ]; do [ "\$1" = --jq ] && f="\$2"; shift; done
+f=""; while [ \$# -gt 0 ]; do { [ "\$1" = --jq ] || [ "\$1" = -q ]; } && f="\$2"; shift; done
 printf '%s' '$2' | jq -r "\$f"
 STUB
     chmod +x "$1/gh"
 }
-ARMED="$T/armed";     forge_stub "$ARMED"    '{"state":"OPEN","autoMergeRequest":{"mergeMethod":"MERGE"}}'
-UNARMED="$T/unarmed"; forge_stub "$UNARMED"  '{"state":"OPEN","autoMergeRequest":null}'
-CLOSEDPR="$T/closed"; forge_stub "$CLOSEDPR" '{"state":"CLOSED","autoMergeRequest":{"mergeMethod":"MERGE"}}'
+ARMED="$T/armed";     forge_stub "$ARMED"    '{"headRefOid":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","state":"OPEN","autoMergeRequest":{"mergeMethod":"MERGE"}}'
+UNARMED="$T/unarmed"; forge_stub "$UNARMED"  '{"headRefOid":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","state":"OPEN","autoMergeRequest":null}'
+CLOSEDPR="$T/closed"; forge_stub "$CLOSEDPR" '{"headRefOid":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","state":"CLOSED","autoMergeRequest":{"mergeMethod":"MERGE"}}'
 NOFORGE="$T/noforge"; mkdir -p "$NOFORGE"
 printf '#!/usr/bin/env bash\nexit 1\n' > "$NOFORGE/gh"; chmod +x "$NOFORGE/gh"
 
@@ -581,6 +581,12 @@ _check_lacks "exit-check bundle closed merge request: not ready" "$out" "EXIT: R
 wrapped "$NOFORGE" --phase exit-check --bundle-branch roar-wrap
 _check_rc "exit-check bundle unreadable forge: could-not-look" 2 "$rc"
 _check_lacks "exit-check bundle unreadable forge: not ready" "$out" "EXIT: READY"
+# the none backend (ticket 1318): origin remote but no gh at all is the forge's exit 2, which
+# the exit check keeps as could-not-look, never READY and never a new keep-pending
+out=$(env -i PATH="$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" CLOSE_AND_CLEAN_TRACKER_DIR="${TRACKERS:-$T/trackers}" GIT_CONFIG_GLOBAL=/dev/null bash "$SCRIPT" --phase exit-check --bundle-branch roar-wrap 2>&1) && rc=0 || rc=$?
+_check_rc "exit-check bundle with no gh on PATH: could-not-look" 2 "$rc"
+_check_says "exit-check bundle with no gh on PATH: says so" "$out" "COULD-NOT-LOOK cannot read the merge request"
+_check_lacks "exit-check bundle with no gh on PATH: not ready" "$out" "EXIT: READY"
 # Gated base (ticket 1156): a stub merge-gate.py answers `enabled` and `check`
 # with fixed codes; the forge stub answers the merge request's state.
 gate_stub() { # <file> <enabled rc> <check rc>
@@ -590,8 +596,8 @@ wrapped_gated() { # <gh dir> <gate stub> <args...>
     local wd="$1" gs="$2"; shift 2
     out=$(env -i PATH="$wd:$STUBS:$TOOLS" HOME="$T" CLOSE_AND_CLEAN_ROAR_DIR="$REPO/skills/roar" IDH_ROOT="$REPO" CLOSE_AND_CLEAN_TRACKER_DIR="${TRACKERS:-$T/trackers}" CLOSE_AND_CLEAN_MERGE_GATE="$gs" GIT_CONFIG_GLOBAL=/dev/null bash "$SCRIPT" "$@" 2>&1) && rc=0 || rc=$?
 }
-OPENPR="$T/openpr";   forge_stub "$OPENPR"   '{"state":"OPEN","autoMergeRequest":null}'
-MERGEDPR="$T/merged"; forge_stub "$MERGEDPR" '{"state":"MERGED","autoMergeRequest":null}'
+OPENPR="$T/openpr";   forge_stub "$OPENPR"   '{"headRefOid":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","state":"OPEN","autoMergeRequest":null}'
+MERGEDPR="$T/merged"; forge_stub "$MERGEDPR" '{"headRefOid":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","state":"MERGED","autoMergeRequest":null}'
 for c in 0 1 2 3; do gate_stub "$T/gate-$c.py" 0 "$c"; done
 gate_stub "$T/gate-unreadable.py" 3 0
 wrapped_gated "$OPENPR" "$T/gate-0.py" --phase exit-check --bundle-branch roar-wrap
