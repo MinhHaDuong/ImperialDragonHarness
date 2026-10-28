@@ -2,11 +2,17 @@
 Title: F1 review evidence on local notes: route PR reviews to refs/notes/review, push at merge
 Created: 2026-10-28
 Author: reviewer
+Closed: F1 review evidence on local notes, pushed at landing; children 1299-1301 merged, integration review PASS
 
 --- log ---
 2026-10-28T08:36Z reviewer created
 2026-10-28T08:40Z reviewer note author 2026-10-28: "independence is of the essence"; notes need no push when processed locally; a push can run in the background; no read-back, everything syncs at PR merge.
 2026-10-28T08:50Z reviewer note tracker: raid 2026-10-28 split it (monster: ~20 files, shared comment contract); children 1299, 1300, 1301
+2026-10-28T10:48Z reviewer note integration review 2026-10-28: children 1299 (#1852), 1300 (#1855), 1301 (#1858) merged; all 5 exit criteria met with tests on main 6d749bcb; no contradiction across the three; make check on main 2829 passed. #1858's landing pushed refs/notes/review and pr:1858 review-heads before the merge.
+2026-10-28T10:48Z reviewer note residual (consider, not regressions): a remote verdict arriving between push_for_landing's split-round check and _push_notes' re-merge is pushed unchecked (re-check after the merge would close it); clone A landing before clone B syncs a same-round verdict is caught only at B's next gate.
+2026-10-28T10:48Z reviewer note residual: skills/raid/references/detached-gaze.md:29-36 still says 'review comment' where the evidence is the notes answer; review_notes.py publish has no caller on the F1 path; bare model id prefixed by any family (family=unknown passes); pointer: posted printed when gh absent; review-heads retention (unbounded refs) open for the author.
+2026-10-28T10:48Z reviewer note residual: a caller writing 'scope: full' inside a gaze intent gets a delta answer (gaze_close answer_scope reads a separate scope: line or intent: default), so the gate refuses admission; seen twice on #1858.
+2026-10-28T10:48Z reviewer closed — F1 review evidence on local notes, pushed at landing; children 1299-1301 merged, integration review PASS
 
 --- body ---
 ## Tracker (raid 2026-10-28)
@@ -42,8 +48,8 @@ gaze answer and verdict (`gaze_close.py`, `review_notes.py publish`), and `revie
 - Web sessions stay outcome B (1277): readers and seats, entries leave by export/import.
 
 ## Exit criteria
-- [ ] gaze on a PR number in a repo with `origin` writes its answer to `refs/notes/review`, not a PR comment, with no network call on the write path.
-- [ ] verify-gate on a PR number reads gaze findings from notes and records its verdict in notes.
-- [ ] Landing pushes `refs/notes/review` before the merge and refuses on a failed push; test covers the refusal.
-- [ ] A failed background push or reader fetch never blocks a review and never reads as "no review"; tests cover both.
-- [ ] Skill texts (gaze, verify-gate, merge, raid) and STATE describe one F1 evidence path; `make check` passes.
+- [x] gaze on a PR number in a repo with `origin` writes its answer to `refs/notes/review`, not a PR comment, with no network call on the write path.
+- [x] verify-gate on a PR number reads gaze findings from notes and records its verdict in notes.
+- [x] Landing pushes `refs/notes/review` before the merge and refuses on a failed push; test covers the refusal.
+- [x] A failed background push or reader fetch never blocks a review and never reads as "no review"; tests cover both.
+- [x] Skill texts (gaze, verify-gate, merge, raid) and STATE describe one F1 evidence path; `make check` passes.
