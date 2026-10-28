@@ -291,7 +291,11 @@ def record_answer(primary, pr, text, attribution, identity=None):
         cov = {"scope": scope}
         if scope == "delta":  # spec §4: a delta counts only through the answer it carries (ticket 1274)
             cov["carried"] = rn.carry_target(cwd, rid)
+        forge_read = identity.get("forge") or "read"  # gaze_setup's forge read (ticket 1308)
+        if forge_read != "read" and not re.search(r"^forge:", text, re.M):
+            text = text.rstrip("\n") + f"\nforge: {forge_read}\n"
         entry = rn.add(cwd, "answer", rid, {
+            "forge": forge_read,
             "run_id": identity.get("run_id") or f"gz-{rn._compact(rn._now())}-{rn._hex(4)}",
             "result": result if result in ("REVIEWED", "FINDINGS", "ESCALATE") else "ESCALATE",
             "seats": seats_claim(text) or "self-only",
