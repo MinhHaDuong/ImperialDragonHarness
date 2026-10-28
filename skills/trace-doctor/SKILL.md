@@ -3,7 +3,7 @@ metadata:
   category: maintenance
   order: 2
 name: trace-doctor
-description: "Survey of Claude Code session-trace economics: cost census, hypothesis statistics, ranked cost-saving report cross-referenced to tickets. Never auto-applies; files tickets for findings."
+description: "Surveying doctor of session-trace costs and waits over all sessions; refers cases to /test-doctor, /harness-doctor or tickets. Never auto-applies."
 user-invocable: true
 argument-hint: "[--days N]"
 ---
@@ -14,7 +14,14 @@ Analytical survey with ordinary judgment; choose the worker per the `route` skil
 
 Survey the session-trace corpus, interpret the numbers against the settled
 phase 3–4 playbook, and emit a ranked cost-saving recommendation report. Run
-monthly or on-demand. `$ARGUMENTS` accepts `--days N` (default 28).
+when the author calls it, monthly by habit. `$ARGUMENTS` accepts `--days N` (default 28).
+
+**Role**: the surveying doctor, not a practitioner. It watches all sessions,
+finds patterns and refers cases: to `/test-doctor` for a slow gate, to
+`/harness-doctor` for a skill or rule defect, or to a ticket. It follows the
+ethic layer of `skills/harness-doctor/references/doctor-practice.md`, as a
+surveying doctor: its kit is § 1's survey commands, its history the watchlist
+and the treatment follow-up below; it does not follow the consultation layer.
 
 **Authority boundary**: report and propose only. This skill runs the committed,
 zero-LLM survey scripts, interprets their output, and opens tickets for
@@ -40,27 +47,34 @@ HARNESS_DIR="${IDH_ROOT:-$(p="<loaded-SKILL.md>"; [ -d "$p" ] || p=$(dirname "$p
 cd "$HARNESS_DIR"                                         # cache paths below are repo-relative
 SCRATCH=$(mktemp -d)
 
-# Census, compaction advisory and friction scan are independent full-corpus walks (none
-# consumes another's output) — run them concurrently.
+# The five walks below are independent (none consumes another's output): run them
+# concurrently. Memo, one line per tool: what it diagnoses; what it needs.
+# trace-stats: token and dollar cost per agent and session; needs ~/.claude/projects.
 python3 "$HARNESS_DIR/scripts/trace-stats.py" $ARGUMENTS \
   --output "$SCRATCH/census.csv" --json > "$SCRATCH/census-summary.json" &
+# trace-compact-audit: missed compact or clear points (context growth); needs the traces.
 python3 "$HARNESS_DIR/scripts/trace-compact-audit.py" $ARGUMENTS \
   --output "$SCRATCH/compact-audit-rows.csv" --json > "$SCRATCH/compact-audit.json" &
+# trace-friction: velocity losses (retries, slow tools, idle waits); needs the traces.
 python3 "$HARNESS_DIR/scripts/trace-friction.py" $ARGUMENTS \
   --output "$SCRATCH/friction-daily.csv" --json > "$SCRATCH/friction.json" &
+# trace-wall-time: where raid, hunt and gaze runs spend wall time; needs the traces.
 python3 "$HARNESS_DIR/scripts/trace-wall-time.py" $ARGUMENTS \
   --json > "$SCRATCH/wall-time.json" &
+# trace-stopguard: bad stops (ask without ask-up, wait without wake); needs the traces.
 python3 "$HARNESS_DIR/scripts/trace-stopguard.py" $ARGUMENTS \
   --json > "$SCRATCH/stopguard.json" &
 wait
 
-# Forge join: reads AND writes the accumulating committed cache (do not create a
-# new dated cache). Add --no-network if the forge is unreachable, and say so in
-# the report.
+# trace-pr-join: PR size and review outcome per session, the quality baseline;
+# needs the census, the forge CLI and the network (announce it: it writes a cache). It reads
+# AND writes the accumulating committed cache (do not create a new dated cache).
+# Add --no-network if the forge is unreachable, and say so in the report.
 python3 "$HARNESS_DIR/scripts/trace-pr-join.py" \
   --census "$SCRATCH/census.csv" --cache conception/trace-pr-join-2026-06.csv
 
-# Hypotheses: the compact-audit --json → --compact-audit-json routing IS the
+# trace-hypotheses: one statistic per cost hypothesis H1-H13; needs the census, the
+# compact audit and the forge-join cache. The --compact-audit-json routing IS the
 # adopt-item-#3 wiring — the compaction detector's output is consumed here as H8.
 python3 "$HARNESS_DIR/scripts/trace-hypotheses.py" \
   --census "$SCRATCH/census.csv" \

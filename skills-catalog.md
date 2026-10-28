@@ -30,9 +30,9 @@
 
 | Command | Description |
 |---------|-------------|
-| `/test-doctor` | An expert for slow, flaky or stale test gates in your project. Author-called only. |
-| `/trace-doctor` | Survey of Claude Code session-trace economics: cost census, hypothesis statistics, ranked cost-saving report cross-referenced to tickets. Never auto-applies; files tickets for findings. |
-| `/harness-doctor` | A harnessing expert. Can lint skills and rules for contradiction and overlap, and much more. Author-called, harness only. |
+| `/test-doctor` | Consulting doctor for a project's slow, flaky or stale test gates. Author-called. |
+| `/trace-doctor` | Surveying doctor of session-trace costs and waits over all sessions; refers cases to /test-doctor, /harness-doctor or tickets. Never auto-applies. |
+| `/harness-doctor` | Consulting doctor for harness skills and rules: contradiction, overlap, drift. Author-called, harness only. |
 
 ### Memory and learning
 

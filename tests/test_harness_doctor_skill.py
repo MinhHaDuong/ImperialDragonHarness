@@ -29,6 +29,7 @@ import skill_text_lint as stl  # noqa: E402
 DOCTOR = REPO / "skills" / "harness-doctor"
 SKILL = DOCTOR / "SKILL.md"
 HERE = REPO / "scripts" / "harness_here.sh"
+PRACTICE = DOCTOR / "references" / "doctor-practice.md"
 STUB = REPO / "rules" / "authoring-skills.md"
 POINTER = re.compile(r"`references/([\w.-]+\.md)`")
 CONTROL = REPO / "tests" / "fixtures" / "harness-doctor" / "trace-doctor-SKILL.md"
@@ -198,23 +199,30 @@ def test_no_retirement_text():
 
 def test_revisit_empty_case_is_stated():
     _, journal = _section(SKILL.read_text(encoding="utf-8"), "Journal")
-    assert "no prior visit" in journal
-    assert 'never "fixed"' in journal
     assert "revisit condition" in journal
     assert "-harness-doctor-" in journal
+    assert "doctor-practice.md" in SKILL.read_text(encoding="utf-8")
+    practice = PRACTICE.read_text(encoding="utf-8")
+    assert "no prior visit" in practice
+    assert 'never "fixed"' in practice
 
 
 def test_proposals_are_priced_with_one_recommended():
     _, report = _section(SKILL.read_text(encoding="utf-8"), "Findings")
-    for word in ("price", "author-hours", "agent cost", "odds", "recommend"):
-        assert word in report, word
+    assert "price" in report and "odds" in report
+    practice = PRACTICE.read_text(encoding="utf-8")
+    for word in ("author-hours", "agent cost", "odds", "recommend"):
+        assert word in practice, word
 
 
 def test_visit_forms_hypotheses_before_probes():
     body = SKILL.read_text(encoding="utf-8")
-    visit_start, visit = _section(body, "The visit")
-    assert visit_start < _section(body, "Probes")[0]
-    assert "Hypotheses" in visit and "prior" in visit
+    spec_start, _ = _section(body, "Specialty")
+    assert spec_start < _section(body, "Probes")[0]
+    practice = PRACTICE.read_text(encoding="utf-8")
+    assert "prior" in practice
+    # Hypotheses choose the probes: the differential precedes the examination.
+    assert practice.index("**Differential.**") < practice.index("**Examination.**")
 
 
 def test_skill_under_150_lines():
