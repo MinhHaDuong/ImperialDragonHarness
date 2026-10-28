@@ -473,18 +473,39 @@ def render_to_pr(pr, text, fg=None):
 
 def landing_date(cwd, review_id, base=None):
     """The committer date of the merge that landed a no-forge unit, read from evidence that
-    survives `raid_land --cleanup` deleting the branch: the review's latest retained request
-    head and the oldest merge on the base's first-parent chain that descends from it. None
-    when no such merge exists."""
-    requests = [e for e in review_notes.entries(cwd, review_id) if e["kind"] == "request"]
+    survives `raid_land --cleanup` deleting the branch (none of it reads the branch):
+    1. the oldest merge on the base's first-parent chain descending from a head the review
+       recorded, latest first: request heads and the gate's verdict heads (a rebased head the
+       gate admitted by patch-id has no request of its own);
+    2. else a first-parent merge whose second parent's range has the verbatim patch-id of one the
+       review recorded (a rebased landing nobody re-requested).
+    None when no merge matches."""
+    entries = review_notes.entries(cwd, review_id)
+    requests = [e for e in entries if e["kind"] == "request"]
     if not requests:
         return None
-    head, base_ref = requests[-1]["head"], base or requests[-1].get("base_ref") or "main"
-    for ref in dict.fromkeys([base_ref, base_ref.removeprefix("origin/")]):
-        dates = _git_out(cwd, "log", "--ancestry-path", "--first-parent", "--merges",
-                         "--format=%cs", f"{head}..{ref}").splitlines()
-        if dates:
-            return dates[-1]
+    base_ref = base or requests[-1].get("base_ref") or "main"
+    refs = list(dict.fromkeys([base_ref, base_ref.removeprefix("origin/")]))
+    heads = list(dict.fromkeys(e["head"] for e in reversed(entries) if e["kind"] in ("request", "verdict")))
+    for head in heads:
+        for ref in refs:
+            dates = _git_out(cwd, "log", "--ancestry-path", "--first-parent", "--merges",
+                             "--format=%cs", f"{head}..{ref}").splitlines()
+            if dates:
+                return dates[-1]
+    patch_ids = {e.get("range_patch_id") for e in entries} - {None, ""}
+    for ref in refs:
+        for line in _git_out(cwd, "log", "--first-parent", "--merges", "-n", "500",
+                             "--format=%P %cs", ref).splitlines():
+            parts = line.split()
+            if len(parts) != 3:
+                continue
+            try:
+                pid = review_notes._binding(cwd, parts[1], parts[0])["range_patch_id"]
+            except review_notes.Refusal:
+                continue
+            if pid in patch_ids:
+                return parts[2]
     return None
 
 

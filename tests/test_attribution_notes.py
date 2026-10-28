@@ -209,3 +209,22 @@ def test_capture_unit_for_a_branch_deleted_by_cleanup(repo, monkeypatch):
 def test_branch_unit_not_landed_has_no_merge_date(repo):
     gazed(repo, "branch:feat")
     assert ar.merged_date(str(repo), "branch:feat") is None
+
+
+def test_capture_unit_for_a_rebased_landing(repo, monkeypatch):
+    """Gaze round 2 on PR #1874: the gate admits a rebased head H' by patch-id with no new
+    request; raid_land merges H'. The reviewed head H never lands, yet the merge is found by
+    the patch-id of its second parent's range, after the branch is deleted."""
+    gazed(repo, "branch:feat")
+    reviewed = git(repo, "rev-parse", "feat")
+    git(repo, "switch", "-q", "main")
+    (repo / "c.txt").write_text("c\n")
+    git(repo, "add", "c.txt")
+    git(repo, "commit", "-qm", "main moved")
+    git(repo, "rebase", "-q", "main", "feat")
+    assert git(repo, "rev-parse", "feat") != reviewed
+    git(repo, "switch", "-q", "main")
+    git(repo, "-c", "core.hooksPath=/dev/null", "merge", "-q", "--no-ff", "-m", "land feat", "feat")
+    git(repo, "branch", "-D", "feat")
+    landed = git(repo, "show", "-s", "--format=%cs", "HEAD")
+    assert ar.merged_date(str(repo), "branch:feat") == landed
