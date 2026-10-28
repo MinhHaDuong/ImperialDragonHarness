@@ -501,10 +501,9 @@ never `git notes` by hand.
   `notes: stale (<stale>)` in the verdict text. `round` is the
   recorded verdicts of the review, every session, plus one. It applies
   § Gate sessions' admission itself: an answer covers the head (its head
-  equals the tip, or a rebased tip has the same non-empty verbatim patch-id;
-  a `delta` answer only through its `coverage.carried` chain to an earlier
-  full one), or the tip adds only bookkeeping to a reviewed head whose
-  answer is full or chained (`match: bookkeeping`), or it is the round-2
+  equals the tip, or a rebased tip has the same non-empty verbatim patch-id),
+  or the tip adds only bookkeeping to the latest reviewed head
+  (`match: bookkeeping`), or it is the round-2
   re-gate of a round-1 REROLL fix descending from the rerolled head
   (`match: reroll-fix`). It refuses with no answer, an ESCALATE answer,
   a recorded ESCALATE verdict, or past two rounds. On a refusal answer
