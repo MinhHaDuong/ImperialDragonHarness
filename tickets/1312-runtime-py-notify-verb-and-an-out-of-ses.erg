@@ -23,3 +23,26 @@ documented fallback whenever `can wake` answers no.
       (as of 2026-10-28, 8 raids and no dead coordinator)
 - [ ] If built: unit + timer installed by `bin/idh install`, documented in raid § Sitrep cadence
 - [ ] `make check` passes
+
+## Raid annotation (Imagine+Plan, 2026-10-28, opus seat)
+**Path.** `scripts/runtime_notify.py` (verb module per 1311's layout):
+`notify --key K --title T --body B [--repeat 3600]`.
+- Runs `notify-send -a idh` and writes an alert file plus a state file under
+  `<git-common-dir>/idh-alerts/`, under flock as in forge.py `_update_cache`.
+- A repeat within the window prints `SUPPRESSED K` and exits 0.
+- Without notify-send it writes the alert file only and says so.
+
+**Supervisor: defer, do not build here** (exit criterion 2: decision recorded). The blind-spot pass notes survivorship bias: a dead coordinator writes nothing, so the log cannot show one. Record the check that would settle it: count raids whose last line is not `QUEUE n=0` / a final SITREP, cross-checked with their sessions' end. Until that check runs, the supervisor stays a candidate, not a rejection. The raid log holds
+11 RAID_START, 41 SITREP and 4 BREAKER lines and no dead coordinator; record
+this with the counts. Fallback prose in sitrep.md: `can wake.*` answers 1, so
+use `notify`.
+
+**Refuse:** a systemd unit; `bin/idh install` changes.
+
+**First failing test:**
+`tests/test_runtime_notify.py::test_second_call_within_repeat_does_not_call_notify_send`.
+Assert the stub's log has exactly 1 line after 2 calls; an alert-file-only
+assertion passes with no stub on PATH. The real desktop popup is the author's
+check.
+
+**Feasibility:** PASS. sitrep.md is shared with 1311, which lands first (different wave).

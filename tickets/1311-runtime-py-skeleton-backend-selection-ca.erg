@@ -39,3 +39,81 @@ at `session_start` plus `pi.sendUserMessage()` should do it (docs only, untested
 - [ ] The wake sites listed in 1309 call `runtime.py`; "Codex and Pi have no timed
       wake" and "Claude Code only" lines removed; `scripts/check-agnostic.sh` passes
 - [ ] `make check` passes
+
+## Raid annotation (Imagine+Plan, 2026-10-28, opus seat)
+**Premise: holds.** Wake sites: hunt/SKILL.md:36, agents/team-lead.md:30,
+raid circuit-breakers.md:53, raid SKILL.md:476-477, sitrep.md "Wake sources",
+merge SKILL.md:198-212, roar SKILL.md:43-47 (lair:70's marker guards a `gh api`
+line, not a wake: out). Codex is now 0.165.0; re-run the queue probe.
+
+**Split:** the Pi reader side moved to 1316. Here, Pi `wake` writes into
+`$IDH_WAKE_INBOX`, or answers NOOP "extension not loaded" when it is absent.
+
+**Layout (lets wave 2 run in parallel).** `scripts/runtime.py` is the core only:
+argparse root, `--runtime auto|claude|codex|pi`, `detect()`, `session_id(rt)`,
+exit constants (0 done, 1 NOOP, 2 refused/failed, 3 could not read),
+`noop(verb, rt, reason)`, `which`, `can`. Verbs are discovered by sorted glob of
+`scripts/runtime_*.py` through `importlib.import_module`, the sibling-import
+convention of `raid_land.py` → `forge`. Each verb module exports
+`register(subparsers)`, `CAN: dict[runtime, dict[mode, bool]]` and
+`run(args, rt) -> int`, with per-backend functions inside the module. No
+backend classes in the core and no tuple registry, so later PRs add a file and
+touch no shared line.
+
+**Blind-spot amendments (2026-10-28, sonnet pass):**
+- Explicit verb list in `runtime.py`, not glob discovery: a stray file must not change
+  behaviour. Each wave-2 PR adds one import line, a trivial rebase.
+- Headless: `claude -p`, night sweeps (`CLAUDE_NIGHT_SWEEP`) and background forks have
+  no session to wake. `can wake.*` answers 1 there with the reason, and `which` reports
+  `headless` as a field.
+- Codex wake needs `systemd-run --user` (padme; a logged-out user needs lingering).
+  Elsewhere, and in CI (no systemd), it answers NOOP. Tests stub `systemd-run`.
+- Nested runtimes (a Claude session's `codex exec` child carries both markers): exit 3
+  stands. Callers in a child pass `--runtime` explicitly.
+
+**Detection.**
+- Markers: Claude `CLAUDECODE` / `CLAUDE_CODE_SESSION_ID`; Pi `PI_CODING_AGENT=true`
+  or `AI_AGENT=pi`; Codex `CODEX_THREAD_ID` (check that the shell tool exports it).
+- Two runtimes' markers at once (e.g. a Codex child of Claude inherits
+  `CLAUDECODE`) → exit 3, never "first wins".
+
+**Wake.**
+- `wake arm --after S --cmd CMD` sleeps S, runs CMD, then delivers
+  `<cmd> exited <rc>: <output|(no output)>`. `wake poll` is dropped:
+  `arm --after 0` with a bounded poller CMD covers merge, roar and
+  `raid-breaker.py --wait`, whose deadline exit 0 must still deliver.
+- `wake send` and `wake disarm` stay.
+- Claude: prints `RUN-IN-BACKGROUND <shlex-quoted cmd>`.
+- Codex: `systemd-run --user --on-active=S --unit idh-wake-<rand>
+  --working-directory=$PWD` runs a hidden `runtime.py --runtime codex wake fire
+  --thread ID --codex <abs path>`, which calls `codex queue`.
+- Claude `wake send` answers NOOP until `CLAUDE_CODE_MESSAGING_SOCKET` is probed.
+
+**Refuse:**
+- guessing the runtime;
+- printing DELIVERED when Codex only QUEUED;
+- relying on the unit's PATH (pass absolute paths);
+- repo-relative `scripts/runtime.py` in skills (use `$IDH_ROOT/scripts/`).
+
+**Actions.** (1) core + detection, (2) `which`/`can`, (3) `runtime_wake.py` per
+backend, (4) rewrite the 7 sites and the sitrep.md table, (5) check-agnostic +
+`make check`. First failing test:
+`tests/test_runtime.py::test_auto_without_markers_exits_3`.
+
+**Tests that catch a wrong implementation:**
+- Re-execute the logged systemd-run unit argv with a stub `codex`; assert it is
+  called with `queue --thread <id> --message` carrying CMD's output.
+- shlex-split Claude's printed command and run it with `--after 0`.
+- A both-markers test guards against "first wins".
+
+**Live controls.** Cheap, for the coder:
+- Claude positive: arm `--after 5 --cmd 'echo WAKE-OK'`, run the printed line in
+  the background, see the re-invocation.
+- Claude `wake send` exits 1.
+- No markers → `which` and `wake arm` exit 3.
+- systemd-run absent → Codex `arm` exits 1.
+
+Author / paid, recorded as pending if not run: Codex positive (idle tmux Codex
+gets the turn) and Codex negative (exited thread, no turn).
+
+**Feasibility:** WARN, `CODEX_THREAD_ID` export unverified. No open PR touches these files.
