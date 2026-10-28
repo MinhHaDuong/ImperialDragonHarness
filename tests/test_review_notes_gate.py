@@ -492,7 +492,8 @@ def test_self_and_subagent_seats_never_count_as_cross_family():
     """Gaze 1925 finding 1: only a headless seat's family is launcher-set; a plan labelling self
     or a subagent with another family cannot satisfy the requirement."""
     text = ("seat: self · runtime=claude-code · family=openai · route=self · model=anthropic/x · status: ran\n"
-            "seat: c · runtime=claude-code · family=openai · route=subagent · model=anthropic/y · status: ran\n")
+            "seat: c · runtime=claude-code · family=openai · route=subagent · model=anthropic/y · status: ran\n"
+            "seat: r · runtime=codex · family=openai · route=unconfirmed · model=openai/z · status: ran\n")
     assert rn.cross_family_seats(text, "anthropic") == []
 
 
@@ -507,3 +508,15 @@ def test_reroll_fix_regate_still_needs_the_cross_family_seat(repo):
     assert rn.gate_state(repo, rid, "feature")["match"] == "reroll-fix"
     state = rn.gate_state(repo, rid, "feature", producer_family="anthropic")
     assert not state["ready"] and "no cross-family seat" in state["reason"]
+
+
+def test_reroll_fix_regate_checks_the_answer_the_reroll_cited(repo):
+    rid = rn.open_review(repo, "feature", "main")
+    cited = answer_text(repo, rid, SAME_FAMILY_ONLY)
+    answer_text(repo, rid, CROSS_RAN)  # later, not the one round 1 ruled on
+    rn.record_verdict(repo, rid, session(), "REROLL", "feature", evidence=[cited["id"]])
+    sh(repo, "switch", "-q", "feature")
+    commit(repo, "f.py", "def f():\n    return 12\n\n\n\n\n\ndef g():\n    return 2\n", "fix")
+    sh(repo, "switch", "-q", "main")
+    state = rn.gate_state(repo, rid, "feature", producer_family="anthropic")
+    assert not state["ready"] and cited["id"] in state["reason"]

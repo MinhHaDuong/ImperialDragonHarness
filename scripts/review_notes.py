@@ -849,14 +849,15 @@ def cross_family_seats(text, producer_family):
 
     Read from the generated `seat:` lines (seat_clock.py identities, ticket 1303), keyed on
     `family=`, never on the runtime: a Claude model behind the codex door is still Anthropic,
-    GLM through Pi is GLM. `none`, `unknown` and an empty family never count, nor a `self` or
-    `subagent` seat: only a headless seat's family is launcher-set (seat_clock.identities), so a
-    plan's family column cannot relabel gaze's own read or a same-runtime subagent."""
+    GLM through Pi is GLM. `none`, `unknown` and an empty family never count, nor a `self`,
+    `subagent` or `unconfirmed` seat: only a headless seat whose report carries the launcher's
+    header has a launcher-set family (seat_clock.identities), so a plan's family column cannot
+    relabel gaze's own read, a same-runtime subagent or a report the launcher did not write."""
     home = _family(producer_family)
     out = []
     for m in SEAT_LINE.finditer(text or ""):
         fam = _family(m.group("family"))
-        if (m.group("status") == "ran" and m.group("route") not in ("self", "subagent")
+        if (m.group("status") == "ran" and m.group("route") not in ("self", "subagent", "unconfirmed")
                 and fam not in ("", "none", "unknown", home)):
             out.append(m.group("name").strip())
     return out
@@ -879,7 +880,7 @@ def gate_state(cwd, review_id, head, remote="origin", producer_family=None):
     `producer_family`, when given, says a cross-family seat was required (the decorrelation
     high-risk row, judged by the gate's caller): an admission resting on an answer that ran no
     seat of another family is refused, naming it (ticket 1326). `cross_family` lists the seats
-    that count; the round-2 re-gate of a REROLL fix re-checks the latest answer."""
+    that count; the round-2 re-gate of a REROLL fix re-checks the answer its REROLL cited."""
     report = refresh(cwd, remote)
     head = _rev(cwd, head)
     verdicts = _verdicts(cwd, review_id)
@@ -915,8 +916,16 @@ def gate_state(cwd, review_id, head, remote="origin", producer_family=None):
     else:
         state["reason"] = (f"stale: no gaze answer covers {head[:12]}, and it adds more than "
                            f"bookkeeping to the latest reviewed {state['reviewed_head'][:12]}")
-    # A REROLL-fix re-gate has no covering answer: re-check the latest one, which round 1 ruled on.
-    checked = state["answer"] or (answers[-1]["id"] if state["match"] == "reroll-fix" else None)
+    # A REROLL-fix re-gate has no covering answer: re-check the one the REROLL verdict cites,
+    # else the latest answer.
+    if state["answer"]:
+        checked = state["answer"]
+    elif state["match"] == "reroll-fix":
+        ids = {e["id"] for e in answers}
+        cited = [i for i in verdicts[-1].get("evidence") or [] if i in ids]
+        checked = cited[-1] if cited else answers[-1]["id"]
+    else:
+        checked = None
     if producer_family and state["ready"] and checked:
         text = next((e.get("text", "") for e in answers if e["id"] == checked), "")
         state["cross_family"] = cross_family_seats(text, producer_family)
