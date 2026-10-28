@@ -5,6 +5,7 @@ Author: claude
 
 --- log ---
 2026-10-28T14:17Z claude created
+2026-10-28T15:49Z reviewer runtime.py core + wake (Claude, Codex, Pi writer). Live 2026-10-28 padme: Claude positive fired (background fire --after 5 exit re-invoked the session with 'echo WAKE-OK exited 0: WAKE-OK'); real systemd-run --user timer ran wake fire, which called a stub codex with queue --thread live-fake --message 'echo SD-OK exited 0: SD-OK'; Claude wake send exit 1; no markers -> which/arm exit 3; no systemd-run -> codex arm exit 1. Pending (paid): Codex positive/negative with a live tmux thread through runtime.py; CODEX_THREAD_ID export by the shell tool unverified (string present in the 0.165.0 binary). Pi live control belongs to 1316 (reader).
 
 --- body ---
 ## Context
