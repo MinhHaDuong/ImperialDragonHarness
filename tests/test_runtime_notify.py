@@ -105,3 +105,8 @@ def test_can_notify_is_yes_everywhere(env, capsys):
 
 def test_notify_is_registered():
     assert runtime_notify in runtime.VERBS
+
+
+def test_keys_that_sanitize_alike_keep_separate_alert_files():
+    assert runtime_notify.safe_name("a/b") != runtime_notify.safe_name("a_b")
+    assert runtime_notify.safe_name("k1") == "k1"

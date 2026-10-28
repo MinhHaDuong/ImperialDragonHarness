@@ -67,8 +67,8 @@ touch no shared line.
 **Blind-spot amendments (2026-10-28, sonnet pass):**
 - Explicit verb list in `runtime.py`, not glob discovery: a stray file must not change
   behaviour. Each wave-2 PR adds one import line, a trivial rebase.
-- Headless: `claude -p`, night sweeps (`CLAUDE_NIGHT_SWEEP`) and background forks have
-  no session to wake. `can wake.*` answers 1 there with the reason, and `which` reports
+- Headless: `claude -p`, night sweeps (`CLAUDE_NIGHT_SWEEP`) have
+  no session to wake (background forks do: their own background command re-invokes them). `can wake.*` answers 1 there with the reason, and `which` reports
   `headless` as a field.
 - Codex wake needs `systemd-run --user` (padme; a logged-out user needs lingering).
   Elsewhere, and in CI (no systemd), it answers NOOP. Tests stub `systemd-run`.

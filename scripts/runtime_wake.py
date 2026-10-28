@@ -164,7 +164,7 @@ def arm(a, rt: str, env) -> int:
         codex = shutil.which("codex", path=env.get("PATH"))
         unit = f"{unit_stem(thread)}{secrets.token_hex(4)}"
         argv = [shutil.which("systemd-run", path=env.get("PATH")), "--user", "--quiet", "--collect",
-                "--expand-environment=no",
+                "--expand-environment=no", "--timer-property=AccuracySec=1s",
                 f"--on-active={max(a.after, 1):g}", f"--unit={unit}", f"--working-directory={os.getcwd()}",
                 f"--setenv=PATH={env.get('PATH', '')}",
                 *fire_argv(rt, 0, a.cmd, "--thread", thread, "--codex", codex)]

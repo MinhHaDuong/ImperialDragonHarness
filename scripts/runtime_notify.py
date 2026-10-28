@@ -15,6 +15,7 @@ This is the documented fallback whenever `runtime.py can wake` answers no (sitre
 """
 
 import fcntl
+import hashlib
 import json
 import os
 import re
@@ -56,7 +57,11 @@ def alert_dir() -> str:
 
 
 def safe_name(key: str) -> str:
-    return re.sub(r"[^A-Za-z0-9._-]", "_", key).lstrip(".") or "_"
+    """A file name for KEY; a key that needed rewriting gets a hash suffix, so a/b and a_b stay apart."""
+    name = re.sub(r"[^A-Za-z0-9._-]", "_", key).lstrip(".") or "_"
+    if name == key:
+        return name
+    return f"{name}-{hashlib.sha1(key.encode()).hexdigest()[:8]}"
 
 
 def write_atomic(path: str, text: str) -> None:

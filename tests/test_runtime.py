@@ -189,6 +189,7 @@ def test_codex_arm_queues_cmd_output_through_the_unit(env, tmp_path, monkeypatch
     assert "--user" in systemd and "--on-active=30" in systemd
     assert f"--setenv=PATH={env}" in systemd
     assert "--expand-environment=no" in systemd
+    assert "--timer-property=AccuracySec=1s" in systemd
     command = unit_command(systemd)
     assert os.path.isabs(command[0]) and os.path.isabs(command[1])
     assert command[command.index("--codex") + 1] == str(env / "codex")
