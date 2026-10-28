@@ -37,6 +37,10 @@ branch name is (merge never deletes branches), so a PR review is found by `find_
 (CLI `find --unit pr:<n>`), never by branch; `find <branch>` skips PR reviews. Fork
 PRs are out of scope: the harness takes none.
 
+Attribution (ticket 1307). Notes are the one attribution record: a `writer` entry holds one
+`writer:` line (`line`), recorded locally by raid or hunt through `attribution_record.py
+--record-writer`; each gaze `answer` carries its `reviewer:` lines in `attribution`.
+
 Writes stay local (ticket 1300, author 2026-10-28): gaze's answer and the gate's verdict
 are written to the local ref, then `sync_background` starts a detached `sync --if-idle`
 whose result nobody waits for or reads; `--if-idle` gives up at once when another sync
@@ -112,7 +116,7 @@ HEADS = "refs/review-heads"
 FETCH_NOTES = f"+{REF}:{TRACK}"  # explicit fetches only, after ls-remote saw the ref
 FETCH_NOTES_GLOB = f"+{REF}*:{TRACK}*"  # the persistent spec: a glob tolerates a notes-less remote
 FETCH_HEADS = f"{HEADS}/*:{HEADS}/*"
-KINDS = ("request", "plan", "report", "answer", "verdict", "link")
+KINDS = ("request", "plan", "report", "answer", "verdict", "link", "writer")  # writer: ticket 1307
 REQUIRED = ("ts", "id", "v", "kind", "review_id", "request_id", "author", "publisher",
             "head", "base", "base_ref", "merge_base", "range_patch_id", "links")
 CLOSED = ("fixed", "rejected", "wontfix", "withdrawn", "resolved", "invalid")

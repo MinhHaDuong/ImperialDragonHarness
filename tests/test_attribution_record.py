@@ -408,29 +408,35 @@ else jq -Rs '{{body: .}}' {store}; fi
     return store, stub.parent
 
 
-def run_append_pr(bin_dir, line):
+def run_render(bin_dir, line):
+    """Landing's render (ticket 1307, raid_land step 5a): one whole-block edit, read back, one retry."""
     env = child_env() | {"PATH": f"{bin_dir}:{child_env()['PATH']}"}
-    return subprocess.run([sys.executable, str(SCRIPT), "--append-pr", "1151", "--append", line,
-                           "--project", ".agents"], text=True, capture_output=True, env=env)
+    text = f"kind: review-attribution\npr: 1151 · merged pending · project: .agents\n{line}\n"
+    code = ("import sys; sys.path.insert(0, sys.argv[1]); import attribution_record as a\n"
+            "try:\n    a.render_to_pr(1151, sys.argv[2])\n"
+            "except ValueError as e:\n    sys.exit(f'attribution-record: {e}')\n")
+    return subprocess.run([sys.executable, "-c", code, str(SCRIPT.parent), text],
+                          text=True, capture_output=True, env=env)
 
 
-def test_append_pr_reads_back(tmp_path):
+def test_render_pr_reads_back(tmp_path):
     store, bin_dir = gh_stub(tmp_path, drop=0)
-    assert run_append_pr(bin_dir, PLAN).returncode == 0
-    assert PLAN in store.read_text()
+    assert run_render(bin_dir, PLAN).returncode == 0
+    assert PLAN in store.read_text() and store.read_text().startswith("Summary.\n")
+    assert store.read_text().count("```attribution") == 1
 
 
-def test_append_pr_retries_once_when_write_is_lost(tmp_path):
+def test_render_pr_retries_once_when_write_is_lost(tmp_path):
     store, bin_dir = gh_stub(tmp_path, drop=1)
-    result = run_append_pr(bin_dir, PLAN)
+    result = run_render(bin_dir, PLAN)
     assert result.returncode == 0, result.stderr
     assert PLAN in store.read_text()
     assert (tmp_path / "patches").read_text().count("patch") == 2
 
 
-def test_append_pr_fails_loud_when_both_writes_are_lost(tmp_path):
+def test_render_pr_fails_loud_when_both_writes_are_lost(tmp_path):
     store, bin_dir = gh_stub(tmp_path, drop=2)
-    result = run_append_pr(bin_dir, PLAN)
+    result = run_render(bin_dir, PLAN)
     assert result.returncode == 1 and "lost" in result.stderr
     assert (tmp_path / "patches").read_text().count("patch") == 2
 
@@ -438,7 +444,6 @@ def test_append_pr_fails_loud_when_both_writes_are_lost(tmp_path):
 def test_skills_wire_the_helper_modes():
     roar = (ROOT / "skills" / "roar" / "runbooks" / "capture.md").read_text()
     assert "--extract" in roar and "gh pr view" in roar
+    assert "--capture-unit" in roar
     raid = (ROOT / "skills" / "raid" / "SKILL.md").read_text()
-    assert "--append-pr" in raid
-    gaze = (ROOT / "skills" / "gaze" / "SKILL.md").read_text()
-    assert "--append-pr" in gaze
+    assert "--record-writer" in raid
