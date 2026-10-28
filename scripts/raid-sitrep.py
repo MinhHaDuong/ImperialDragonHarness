@@ -11,7 +11,6 @@ after it); `--no-mark` skips that.
 """
 
 import argparse
-import json
 import subprocess
 import sys
 import time
@@ -40,10 +39,16 @@ def worktrees() -> list[Path]:
     return paths
 
 
-def open_prs() -> list[dict]:
-    # harness-extension-point: the forge CLI
-    return json.loads(sh("gh", "pr", "list", "--state", "open",
-                         "--json", "number,headRefName,title"))
+def open_prs() -> list[dict] | None:
+    """Open requests as {number, headRefName, title}; None when there is no forge (typed NOOP)."""
+    import forge  # ticket 1319: the forge adapter, not raw gh
+    try:
+        rows = forge.get_forge_listing().list_requests("open", None, 100)
+    except forge.ForgeRefusal as error:
+        raise RuntimeError(str(error)) from error
+    if rows is forge.NOOP:
+        return None
+    return [{"number": r["number"], "headRefName": r["branch"], "title": r["title"]} for r in rows]
 
 
 def main(argv: list[str]) -> int:
@@ -131,8 +136,11 @@ def main(argv: list[str]) -> int:
     else:
         try:
             listed = open_prs()
-            out.append("forge open PRs: " + (", ".join(
-                f"#{p['number']} {p['headRefName']}" for p in listed) or "none"))
+            if listed is None:
+                out.append("forge: not inspected (no forge: no origin remote)")
+            else:
+                out.append("forge open PRs: " + (", ".join(
+                    f"#{p['number']} {p['headRefName']}" for p in listed) or "none"))
         except (OSError, RuntimeError, ValueError, KeyError, subprocess.SubprocessError) as error:
             fail("forge", str(error))
 

@@ -77,6 +77,8 @@ def _gh_record(ticket, pr):
     rec = {'ticket': ticket, 'pr': pr}
     if pr is None:
         return rec
+    # Residue of ticket 1319, kept on raw gh: forge.py has no verb for createdAt, comments and checks of one
+    # request, and a missing forge already degrades to an unknown duration (no all-clear is claimed).
     try:  # harness-extension-point: forge read
         j = json.loads(subprocess.run(
             ['gh', 'pr', 'view', str(pr), '--json', 'createdAt,mergedAt,comments,statusCheckRollup'],

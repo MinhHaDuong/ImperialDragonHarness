@@ -713,14 +713,14 @@ def _references(candidates, repo):
                 result[path]["git_log"] = path in log.stdout
     except OSError:
         pass
+    import forge  # ticket 1319: no forge or unreadable forge leaves "unknown", never "no PR"
     try:
-        gh = subprocess.run(["gh", "pr", "list", "--state", "all", "--limit", "1000", "--json", "number,title,body"], capture_output=True, text=True, cwd=repo)
-        if gh.returncode == 0:
-            prs = json.loads(gh.stdout)
+        prs = forge.get_forge_listing(cwd=str(repo)).list_requests("all", None, 1000)
+        if prs is not forge.NOOP:
             for path in paths:
                 hits = [pr.get("number") for pr in prs if path in (pr.get("title", "") + "\n" + pr.get("body", ""))]
                 result[path]["pull_requests"] = hits if hits or len(prs) < 1000 else "unknown (PR listing reached 1000-item limit)"
-    except (OSError, ValueError):
+    except (OSError, ValueError, forge.ForgeRefusal):
         pass
     verdicts = {path: [] for path in paths}
     verdict_readable = True

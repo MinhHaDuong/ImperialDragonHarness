@@ -2,11 +2,14 @@
 Title: Forge leaks, status and hygiene scripts: dashboard, raid-sitrep, slow_tickets, project-state, tmp_report, worktree-tmp-guard through forge.py
 Created: 2026-10-28
 Author: claude
+Closed: autoclosed — PR #1916
 
 --- log ---
 2026-10-28T17:48Z claude created
 2026-10-28T17:52Z claude note planned (raid f7fa41): Imagine, Blind-Spot (4 material findings folded into 1318), feasibility PASS
 2026-10-28T18:07Z reviewer note blocker 1318 closed — Blocked-by removed.
+2026-10-28T18:22Z reviewer residue: scripts/slow_tickets.py (PR view createdAt, comments, checks) stays on raw gh: no forge.py verb serves it and forge.py is out of scope; it already degrades to unknown duration. Other five sites ported; tests/test_forge_status_scripts.py covers the none backend.
+2026-10-28T18:33Z reviewer closed — autoclosed — PR #1916
 
 --- body ---
 ## Context

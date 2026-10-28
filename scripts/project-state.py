@@ -393,24 +393,15 @@ def disk_space_state(project):
 
 
 def pr_state(project):
-    r = run(
-        ["gh", "pr", "list", "--json", "number,title,headRefName", "--limit", "50"],
-        project,
-    )
-    if r.returncode != 0:
-        return {
-            "open": None,
-            "items": [],
-            "error": f"gh unavailable: {r.stderr.strip()[:80]}",
-        }
+    """Open requests through the forge adapter (ticket 1319). No forge: open None, never an empty all-clear."""
+    import forge
     try:
-        prs = json.loads(r.stdout)
-    except (json.JSONDecodeError, ValueError):
-        return {"open": None, "items": [], "error": "gh output parse error"}
-    items = [
-        {"number": p["number"], "title": p["title"], "branch": p["headRefName"]}
-        for p in prs
-    ]
+        rows = forge.get_forge_listing(cwd=str(project)).list_requests("open", None, 50)
+    except forge.ForgeRefusal as exc:
+        return {"open": None, "items": [], "error": f"forge unavailable: {str(exc)[:80]}"}
+    if rows is forge.NOOP:
+        return {"open": None, "items": [], "error": "not inspected: no forge"}
+    items = [{"number": p["number"], "title": p["title"], "branch": p["branch"]} for p in rows]
     return {"open": len(items), "items": items}
 
 
