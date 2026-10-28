@@ -2,10 +2,12 @@
 Title: runtime.py wake on Pi: idh-wake extension delivers inbox jobs with sendUserMessage
 Created: 2026-10-28
 Author: claude
+Closed: idh-wake Pi extension delivers wake inbox jobs; PR #1924
 
 --- log ---
 2026-10-28T15:40Z claude created
 2026-10-28T16:14Z reviewer note blocker 1311 closed — Blocked-by removed.
+2026-10-28T20:39Z reviewer closed — idh-wake Pi extension delivers wake inbox jobs; PR #1924
 
 --- body ---
 ## Context

@@ -21,10 +21,13 @@ Per backend:
   set for CMD, and `--expand-environment=no` keeps systemd from blanking CMD's `${VAR}`. Without systemd-run (CI, another OS, a logged-out user without lingering)
   `arm` and `disarm` answer NOOP. Unit names carry the thread id, and `disarm` stops only
   that thread's units. `send` calls `codex queue` directly.
-- Pi: the writer side only (the reader extension is ticket 1316). Messages go into the
-  `$IDH_WAKE_INBOX` directory as `<stamp>-<rand>.msg` (UTF-8 text, written to a dot-file
-  then renamed); `arm` runs a detached `wake fire --inbox` process and records its pid in
-  `<inbox>/.armed/`. Without `$IDH_WAKE_INBOX` every mode answers NOOP "extension not loaded".
+- Pi: an inbox, written here and read by `adapters/pi/extensions/idh-wake.ts`. The extension
+  creates a per-session inbox at `session_start`, exports `$IDH_WAKE_INBOX` (so `can wake`
+  answers from the extension's presence) and, when the agent is idle, delivers the oldest
+  job with `pi.sendUserMessage()`, deleting it afterwards. Messages go into the directory as
+  `<stamp>-<rand>.msg` (UTF-8 text, written to a dot-file then renamed); `arm` runs a
+  detached `wake fire --inbox` process and records its pid in `<inbox>/.armed/`. Without
+  `$IDH_WAKE_INBOX` every mode answers NOOP "extension not loaded".
 """
 
 import argparse

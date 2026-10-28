@@ -51,7 +51,7 @@ queued-merge wait does. Read its one-line answer:
 |---|---|---|
 | `RUN-IN-BACKGROUND <command>` | Claude Code: only the session's own tool can start the process whose exit wakes it | run `<command>` as a background command |
 | `ARMED codex <unit> ...` | Codex: a `systemd-run --user` timer will `codex queue` the result into the thread (queued, not proven delivered) | nothing; the turn starts when it arrives |
-| `ARMED pi ...` | Pi: the result goes to the wake inbox; delivery needs the reader extension (ticket 1316) | nothing |
+| `ARMED pi ...` | Pi: the result goes to the session's wake inbox; the `idh-wake` extension delivers it as a user message once the agent is idle (within a few seconds) | nothing |
 | `NOOP wake arm <runtime>: <reason>` (exit 1) | no timed wake here: headless, no `systemd-run`, extension not loaded | sitrep at each wave boundary and breaker event |
 | exit 3 | the runtime cannot be told (no marker, or two) | rerun with `--runtime <name>` |
 
