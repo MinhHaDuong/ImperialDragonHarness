@@ -231,8 +231,10 @@ renamed). Delete that path and its `.part` before every launch: hunt reruns
 this skill in the same worktree, and a report left by an earlier run must not
 answer the poll. This skill is a fork: its turn ends the moment it stops calling tools,
 so a launch followed by narration ("waiting for the semantic worker") returns no
-verdict to the caller. Wait by polling that written artifact in one bounded loop
-of 10 minutes (`sleep` inside the tool call), then validate the worker's report
+verdict to the caller. Wait for that written artifact, bounded to 10 minutes, with
+`python3 "$IDH_ROOT/scripts/wait-roster.py" <worktree>/.panel adherence-semantic --until <epoch>`
+(`<epoch>` fixed once at launch, `date +%s` plus 600, reused on a re-issue after
+exit 3; exit 1 is the deadline), then validate the worker's report
 before emitting PASS. At the deadline, or when the spawn is refused (the
 runtime's subagent spawn-depth cap can refuse a worker under
 raid -> coder -> fork), the worker timed out: record `status: unavailable`,
