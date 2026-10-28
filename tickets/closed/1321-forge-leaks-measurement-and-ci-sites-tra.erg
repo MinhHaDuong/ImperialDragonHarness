@@ -2,11 +2,13 @@
 Title: Forge leaks, measurement and CI sites: trace-pr-join, trace_merge_path, review_evidence, local-ci keep-with-reason or port
 Created: 2026-10-28
 Author: claude
+Closed: autoclosed — PR #1911
 
 --- log ---
 2026-10-28T17:48Z claude created
 2026-10-28T17:52Z claude note planned (raid f7fa41): Imagine, Blind-Spot (4 material findings folded into 1318), feasibility PASS
 2026-10-28T17:55Z reviewer keep-with-reason (raid f7fa41 plan, verified on main b6f53137): trace-pr-join.py gh_fetch_pr keeps gh REST, a one-off join over foreign repos by owner/name that forge.py (cwd-scoped) cannot serve, and fetch failures yield blank rows, never an all-clear; trace_merge_path.py keeps its regex, which runs no gh call; review_evidence.py cmd_forge keeps GraphQL, pinned to the forge host with FORGE_ACTORS, read_timeout and NET_ERR, failing closed (exit 4); local-ci.sh keeps gh pr list and the GITHUB_TOKEN write, gated on forge=1 with a stated fallback, act being a GitHub runner. Each site carries a one-line Keep (ticket 1321) comment. No forge.py verb added.
+2026-10-28T18:06Z reviewer closed — autoclosed — PR #1911
 
 --- body ---
 ## Context
