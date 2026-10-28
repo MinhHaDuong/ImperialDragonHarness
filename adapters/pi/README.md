@@ -45,8 +45,8 @@ unresolvable id leaves the sovereign backend usable only through warnings.
 
 ## Scope today
 
-The Pi adapter ships the bash guard extension
-(`extensions/idh-guard.ts`, ticket 0809); it does not drive Pi. No
+The Pi adapter ships the bash guard extension and the wake reader
+(`extensions/idh-guard.ts`, ticket 0809; `extensions/idh-wake.ts`, ticket 1316); it does not drive Pi. No
 `pi --print` call sites exist in harness code today (grep-verified in the
 raid log, 2026-10-02), so this rule is a documentation guard for the adapter
 pilots (tickets 0923 and 0924): when a `pi --print` driver is wired, the

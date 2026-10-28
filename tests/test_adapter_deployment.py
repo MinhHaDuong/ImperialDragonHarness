@@ -81,6 +81,7 @@ def test_full_pilot_surface_installs_and_skills_uninstall(home):
         home / ".agents" / "skills" / "perch",
         home / ".agents" / "skills" / "yawn",
         home / ".pi" / "agent" / "extensions" / "idh-guard.ts",
+        home / ".pi" / "agent" / "extensions" / "idh-wake.ts",
     ]
     for path in managed:
         assert path.is_symlink(), f"missing managed path: {path}"

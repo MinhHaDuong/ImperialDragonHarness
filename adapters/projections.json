@@ -61,6 +61,16 @@
       "installer": "$IDH_ROOT/bin/idh install"
     },
     {
+      "path": "~/.pi/agent/extensions/idh-wake.ts",
+      "target": "$IDH_ROOT/adapters/pi/extensions/idh-wake.ts",
+      "runtimes": [
+        "pi"
+      ],
+      "required": true,
+      "why": "the Pi wake reader; without it `runtime.py wake` answers NOOP extension not loaded",
+      "installer": "$IDH_ROOT/bin/idh install"
+    },
+    {
       "path": "~/.local/bin/idh",
       "target": "$IDH_ROOT/bin/idh",
       "runtimes": [],

@@ -140,6 +140,7 @@ def test_manifest_declares_one_guard_per_runtime():
     assert all(e["path"] != "~/.claude/CLAUDE.md" for e in MANIFEST["entries"])
     assert ("~/.codex/hooks.json", "codex") in required
     assert ("~/.pi/agent/extensions/idh-guard.ts", "pi") in required
+    assert ("~/.pi/agent/extensions/idh-wake.ts", "pi") in required
 
 
 def test_manifest_entries_are_well_formed():
