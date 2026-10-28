@@ -4,8 +4,8 @@
 `$IDH_RAID_LOG`, else `<git common dir>/idh-raid/raid.log`. One file per
 repository, shared by every worktree, untracked, append-only, and it survives
 worktree removal. Write with
-`python3 "$IDH_ROOT/scripts/raid_log.py" append EVENT key=value ...`; each line
-is `<epoch> EVENT key=value ...`, values without spaces.
+`python3 "$IDH_ROOT/scripts/raid_log.py" append EVENT raid=<id> key=value ...`; each line
+is `<epoch> EVENT raid=<id> key=value ...`, values without spaces.
 
 **Raid id.** Every line carries `raid=<id>`, so raids running at once in one
 repository do not mix. `append RAID_START ...` mints a short random id (or takes

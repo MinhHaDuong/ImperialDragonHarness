@@ -39,7 +39,8 @@ def log_path(cwd: Path | None = None) -> Path:
 def append(event: str, fields: dict[str, str], path: Path, now: float | None = None) -> str:
     fields = dict(fields)
     if event == "RAID_START":
-        fields.setdefault("raid", secrets.token_hex(3))
+        if not fields.get("raid"):
+            fields["raid"] = secrets.token_hex(3)
     elif not fields.get("raid"):
         raise ValueError(f"{event} needs raid=<id>, printed by the RAID_START line")
     line = f"{int(now if now is not None else time.time())} {event}"

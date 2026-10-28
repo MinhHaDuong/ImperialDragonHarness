@@ -214,8 +214,8 @@ TWO_RAIDS = (
     "1700000150 RAID_START raid=bbb deadline=1700003600 gate_max=1800\n"
     "1700000160 WAVE raid=bbb n=1 tickets=20\n"
     "1700000200 PR raid=bbb n=20 ticket=20 step=merged\n"
-    "1700000250 SITREP raid=bbb\n"
     "1700000300 BREAKER raid=aaa kind=STALL ticket=10\n"
+    "1700000305 SITREP raid=bbb\n"
     "1700000310 QUEUE raid=aaa n=2\n"
     "1700000320 QUEUE raid=bbb n=0\n"
     "1700000330 PR n=99 ticket=99 step=legacy\n"
@@ -237,6 +237,13 @@ def test_two_interleaved_raids_give_separate_sitreps(repo, tmp_path, monkeypatch
     assert "PR 20" in b and "PR 10" not in b and "PR 99" not in b
     assert "NEXT wrap-up" in b and "STALL" not in b
     assert "elapsed 22m of 57m" in b
+
+
+def test_raid_start_with_empty_raid_mints_an_id(tmp_path):
+    import raid_log
+    line = raid_log.append("RAID_START", {"raid": ""}, tmp_path / "raid.log", now=1700000000)
+    rid = dict(kv.split("=", 1) for kv in line.split()[2:])["raid"]
+    assert len(rid) == 6 and int(rid, 16) >= 0
 
 
 def test_sitrep_mark_carries_the_raid(repo, tmp_path, monkeypatch):
