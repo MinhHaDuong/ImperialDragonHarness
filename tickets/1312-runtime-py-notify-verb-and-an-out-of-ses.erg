@@ -2,10 +2,10 @@
 Title: runtime.py notify verb and an out-of-session raid supervisor (arena watchdog pattern)
 Created: 2026-10-28
 Author: claude
-Blocked-by: 1311
 
 --- log ---
 2026-10-28T14:17Z claude created
+2026-10-28T16:14Z reviewer note blocker 1311 closed — Blocked-by removed.
 
 --- body ---
 ## Context
