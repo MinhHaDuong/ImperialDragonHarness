@@ -88,7 +88,7 @@ Contract, the same as forge.py and merge-gate.py:
 - 1312 notify + out-of-session raid supervisor (Blocked-by 1311)
 - 1313 launch (Blocked-by 1311)
 - 1314 session reads (Blocked-by 1311)
-- 1310 (raid id in the raid log) is independent, in flight in a raid.
+- 1310 (raid id in the raid log): closed 2026-10-28, PR #1884 (independent of runtime.py).
 
 ## Exit criteria
 - [ ] 1311-1314 closed, or a child consciously dropped with its reason here
