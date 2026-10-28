@@ -1,0 +1,35 @@
+%erg 0.1
+Title: Offline forge mode: lazy async forge reads in gaze and verify-gate, human and Copilot reviews rechecked at landing
+Created: 2026-10-28
+Author: reviewer
+
+--- log ---
+2026-10-28T11:34Z reviewer created
+
+--- body ---
+## Context
+Author 2026-10-28: "even in forge mode, human and Copilot reviews are rare, so forge mode but offline
+should work without lag (lazy async)." After tracker 1298 the review writes are local, but these forge
+reads still block a review, each through `gh` with a 120 s timeout (`scripts/forge.py` ~107):
+- `gaze_setup.py` ~129-141: `resolve` (PR head, base, body), `comments` (discussion), `checks` (CI).
+- verify-gate reads human and Copilot reviews and comments (`skills/verify-gate/SKILL.md` ~53, ~294, ~505)
+  and posts a pointer comment (best-effort already).
+Offline or on a slow network, a review either stalls on these calls or stops.
+
+## Design (default; the implementer may refine)
+- What a review truly needs from the forge is the PR -> branch/base mapping and the head. Cache it on
+  first contact (e.g. in the review's request entry on notes); later runs read the cache and refresh it in
+  the background.
+- Discussion, CI and human/Copilot reviews are context: fetched lazily in the background with a short
+  bound; when unavailable the review proceeds and states `forge: unread (offline)` in its answer or
+  verdict, never "no reviews".
+- The forge read that can change a verdict (unresolved human review comments) is rechecked at landing,
+  which needs the forge anyway: `raid_land` refuses (or routes to the gate) when a human or Copilot review
+  newer than the gate's read is unresolved.
+- No new setting: behaviour follows reachability.
+
+## Exit criteria
+- [ ] With the forge unreachable, gaze and verify-gate on a PR whose mapping is cached complete without waiting on a forge timeout; the answer/verdict says the forge context was unread; tests (stub forge that hangs or fails).
+- [ ] A first-ever review of a PR with the forge unreachable stops with a clear message (it cannot map the PR), consistent with ticket 1300's fail-closed first discovery.
+- [ ] Landing rechecks human and Copilot reviews newer than the gate's read and refuses on an unresolved one; test.
+- [ ] Skill texts (gaze, verify-gate, merge) describe the lazy reads; `make check` passes.

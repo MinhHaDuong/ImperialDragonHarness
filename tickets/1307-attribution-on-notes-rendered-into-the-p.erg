@@ -1,0 +1,41 @@
+%erg 0.1
+Title: Attribution on notes, rendered into the PR body at landing; F2 writer lines and capture
+Created: 2026-10-28
+Author: reviewer
+
+--- log ---
+2026-10-28T11:34Z reviewer created
+
+--- body ---
+## Context
+Author 2026-10-28, after tracker 1298 (F1 review evidence on local notes): move the attribution writes off
+the review path to landing. Today, on `8fa57bf4`:
+- Forge mode (PR units): `gaze_close.py` edits the PR body twice per gaze, `--append-pr` (~line 384) and
+  `--seats-pr` (~line 418); either failure exits 2. Raid and hunt append `writer:` lines to the PR body
+  (`skills/raid/SKILL.md` ~256, `scripts/attribution_record.py --append-pr`). These are the remaining
+  blocking forge writes on the review path; seen failing on PRs #1852, #1855, #1858 (bare model ids,
+  hand-typed lines), each costing a manual repair.
+- No-origin mode (F2, `branch:` units): reviewer lines already live in each gaze answer's `attribution`
+  field on notes (`gaze_close.py` ~379, "carried in the answer entry (no forge)"). But writer lines have
+  no home (only the PR body), `raid_land.py` step 0 (`attribution()`, ~164) checks only a PR body so an
+  F2 landing always reads `missing`, and roar's `--capture-pr` takes only a PR number: no capture path
+  for a `branch:` unit.
+
+## Design (default; the implementer may refine)
+- Notes are the one attribution record, both modes. Reviewer lines: already in answers (and verify-gate
+  verdict entries if they carry any). Writer lines: a notes entry on the review (e.g. kind `writer`,
+  step plan/execute), written locally by raid/hunt with no network call.
+- `attribution_record.py`: assemble the block from a review's notes (`--from-notes <review_id>` or by
+  unit), validated by the existing strict parser; seat lines from gaze answers as `--seats-pr` does now.
+- Landing (`raid_land.py`, merge recipe): forge mode renders the block into the PR body in one edit just
+  before the merge; F2 has no body, the block stays on notes. A failed render is a warning, never a
+  refusal (claims.md: a missing block costs the record, not the merge).
+- gaze_close, raid and hunt stop editing the PR body. roar captures from notes for any unit (`--capture`
+  by review id or `branch:` unit as well as PR number).
+
+## Exit criteria
+- [ ] gaze_close makes no PR-body edit; its attribution is written to notes only, both modes; test.
+- [ ] Raid and hunt record writer lines on notes with no network call, both modes; test.
+- [ ] Landing in forge mode renders the notes block into the PR body before the merge; F2 landing reads the block from notes (step 0 no longer reports `missing` for a recorded F2 review); tests for both.
+- [ ] roar captures attribution for a `branch:` unit and for a PR unit from notes; test.
+- [ ] Skill texts (gaze, raid, hunt, merge claims.md, roar capture) describe one attribution path; `make check` passes.
