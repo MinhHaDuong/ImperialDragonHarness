@@ -1,0 +1,66 @@
+%erg 0.1
+Title: Portable wake: one runtime-wake helper so raid sitreps and stall alerts fire on Codex and Pi, not Claude Code only
+Created: 2026-10-28
+Author: claude
+
+--- log ---
+2026-10-28T14:08Z claude created
+
+--- body ---
+## Context
+The raid sitrep (ticket 1246) and the stall wake (`raid-breaker.py --wait`,
+ticket 1214) wake only a Claude Code session: their timer is a background
+command whose exit re-invokes the session. `skills/raid/references/sitrep.md`
+lists Codex and Pi as "none found". The author treats Claude-only as a bug
+(2026-10-28). Each caller also hand-writes its runtime case behind
+`<!-- harness-extension-point -->`. `adapters/` and `bin/idh` cover
+registration and skill install, but nothing covers runtime *verbs* such as
+waking a session or notifying the author.
+
+Probed 2026-10-28 on padme (session 38c9c55f):
+- **Codex 0.164.0: wake exists.** `codex queue --thread <id> --message <text>`
+  queued into a live, idle interactive session (resumed in tmux) started a turn,
+  and the model answered (positive control: "Reply with exactly: FIVE" → "FIVE").
+  Into a session whose process has exited, the message is queued and no turn
+  runs. So the probe of 2026-10-21 is out of date.
+- **Pi 1.4.0: wake likely, not live-tested.** Extensions may start timers in
+  `session_start` (not in the factory) and call `pi.sendUserMessage()`, which
+  starts a run when the session is idle; `agent_before_settle` can return
+  `continue: true` (docs `extensions.md` §§ events, actionable boundaries).
+  `adapters/pi/extensions/idh-guard.ts` already uses `pi.sendMessage`.
+- **Supervision outside the session:** the arena already runs
+  `arena-watchdog.timer` (systemd user timer, 3 min) → a one-shot check →
+  `notify-send` + an alert file, at most once an hour per condition. It
+  depends on no agent runtime, and it is the only path that survives a dead
+  coordinator.
+
+## Design direction
+One helper, e.g. `scripts/runtime_wake.py`, with a few verbs and one backend
+per runtime, so skills stop hard-coding runtime cases:
+- `wake --session <id> --message <text>`: Claude Code: the in-session
+  background-exit pattern (cross-process path to probe: SendMessage to a
+  local session); Codex: `codex queue`; Pi: a small extension that watches a
+  wake file or a timer and calls `sendUserMessage`.
+- `arm --every 900 --cmd <sitrep>` / `disarm`: one place for the cadence.
+- `notify --title --body`: `notify-send` + an alert file, the arena pattern;
+  the fallback when no live session answers.
+Runtime detection and the session id come from the runtime's environment;
+an unknown runtime goes to `notify`, it does not fail silently.
+Optional second step: a systemd user timer that runs `raid-sitrep.py` and calls
+`notify` when the queue is non-empty and no SITREP has appeared for 30 minutes
+(coordinator presumed dead).
+
+## Exit criteria
+- [ ] `runtime_wake.py` with `wake`, `arm`/`disarm`, `notify`; one backend
+      per runtime; unknown runtime → `notify`, stated in its output
+- [ ] Live positive control per runtime recorded (Codex done above; Pi and the
+      Claude cross-process path still to run), each with a negative control
+      (session gone → no turn, falls back to notify)
+- [ ] `skills/raid/SKILL.md` § Sitrep cadence and `references/sitrep.md` call the
+      helper; the "none found" rows replaced; `raid-breaker.py --wait` docs
+      point at it; `scripts/check-agnostic.sh` passes
+- [ ] Decision recorded on the systemd supervisor (build or drop), with the
+      raid-log evidence
+- [ ] `make check` passes
+
+Related: 1246, 1214, 1310 (raid id); arena `scripts/arena-watchdog.py`.
