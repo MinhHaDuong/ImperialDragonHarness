@@ -37,9 +37,6 @@ set -euo pipefail
 BASE_REF="${BASE_REF:-origin/main}"
 SELF_PR="${SELF_PR_NUMBER:-}"
 
-# Keep only top-level tickets/NNNN-*.erg — never tickets/closed/... (a PR that
-# merely closes a ticket "adds" the archived copy under closed/, which is not a
-# new ID claim). The anchored regex also drops any stray non-ticket path.
 renumber_and_fail() {  # only on failure — don't spawn erg on the clean path
     next_id=$(tickets/erg next-id 2>/dev/null || echo "(run ./tickets/erg next-id)")
     echo "" >&2
@@ -48,6 +45,9 @@ renumber_and_fail() {  # only on failure — don't spawn erg on the clean path
     exit 1
 }
 
+# Keep only top-level tickets/NNNN-*.erg — never tickets/closed/... (a PR that
+# merely closes a ticket "adds" the archived copy under closed/, which is not a
+# new ID claim). The anchored regex also drops any stray non-ticket path.
 ticket_ids_from_paths() {  # reads filenames on stdin, prints 4-digit IDs
     grep -E '^tickets/[0-9]{4}-.*\.erg$' \
         | sed -E 's|^tickets/([0-9]{4})-.*|\1|' \
