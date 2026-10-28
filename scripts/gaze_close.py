@@ -25,6 +25,18 @@ A comment whose `seats:` field says `panel` is refused (exit 2, nothing removed 
 posted) unless `seat_clock.py seats` reads `seats: panel` on the review panel: an item
 other than self filed a report the plan check accepts (ticket 1287).
 
+The `seat:` lines of the result and the `reviewer:` lines of the attribution append are never typed
+(ticket 1303). The comment file holds `{{seats}}`, which the script replaces with the lines
+`seat_clock.py identities` builds from the plan (one name per seat: the plan item's) and the
+launcher-set `worker:` headers, read before cleanup removes the panel and carried into a
+blocked-cleanup ESCALATE answer; a typed `seat:` line, or a comment without the placeholder, exits 2
+before anything is removed or posted. `--session-runtime` and `--session-model` (env
+`IDH_SESSION_RUNTIME`, `IDH_SESSION_MODEL`) give the identity of a `self` item. The attribution file holds
+only `finding: <seat> · verifiable|consider · <path:line> · adopted: yes|no` lines; the script
+writes each seat's `reviewer:` line (through `attribution_record.seat_lines`) and puts the seat's
+findings beneath it. A finding naming a seat absent from the plan, or a seat that did not run, or any other
+typed line, exits 2 before anything is removed, appended or posted.
+
 The comment file must hold `{{plan_check}}` (ticket 1267) and no typed
 `plan check:` line; otherwise the call exits 2 before anything is removed or
 posted. The script replaces it with the first line of `seat_clock.py
@@ -51,17 +63,21 @@ which reads the notes answers; a failed append exits 2. The `branch:` unit's pat
 """
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
+import attribution_record
 import forge  # same directory: the script dir is on sys.path
 import review_notes as rn
 
 HERE = Path(__file__).resolve().parent
 # A typed verdict line in any dress: indented, quoted, emphasised, any case.
+TYPED_SEAT = re.compile(r"^[\s>*_`#-]*seat\s*:", re.MULTILINE | re.IGNORECASE)
+FINDING = re.compile(r"finding: ([^·=:]*[^\s·=:]) · (verifiable|consider) · (.+) · adopted: (yes|no)")
 TYPED_PLAN_CHECK = re.compile(r"^[\s>*_`#-]*plan check\s*[:*_]", re.MULTILINE | re.IGNORECASE)
 
 
@@ -151,6 +167,46 @@ def plan_check_line(primary, pr):
     """The checker's verdict line for the review panel, verbatim."""
     first = panel_reading(primary, pr, "plan-check")
     return first if first.startswith("plan check:") else "plan check: FAIL — manifest unreadable"
+
+
+def seat_block(primary, pr, runtime, model):
+    """The `seat:` lines `seat_clock.py identities` builds from the review panel, as a list;
+    empty when the panel cannot be read."""
+    key = unit_key(pr)
+    panel = primary / ".claude" / "worktrees" / f"review-{key}" / ".panel" / key
+    r = subprocess.run([sys.executable, str(HERE / "seat_clock.py"), "identities", str(panel),
+                        "--session-runtime", runtime or "", "--session-model", model or ""],
+                       capture_output=True, text=True)
+    return [ln for ln in r.stdout.splitlines() if ln.strip()] if r.returncode == 0 else []
+
+
+def attribution_lines(file_text, seats):
+    """(lines, failures): the PR-body lines from the generated seats and the finding lines of the
+    attribution file. Each seat's `reviewer:` line is derived (attribution_record.seat_lines);
+    its findings follow it. A file the contract refuses raises ValueError, before anything is
+    removed or posted; failures are the capture failures of a derived line (an unobserved model)."""
+    names = {ln.split(" · ")[0][len("seat: "):]: ln for ln in seats}
+    findings = {}
+    for ln in file_text.splitlines():
+        if not ln.strip():
+            continue
+        m = FINDING.fullmatch(ln.strip())
+        if not m:
+            raise ValueError("the attribution file holds only `finding: <seat> · verifiable|consider · <path:line> · "
+                             f"adopted: yes|no` lines; the script writes the reviewer lines: {ln.strip()}")
+        seat = m.group(1)
+        if seat not in names:
+            raise ValueError(f"finding names seat {seat!r}, absent from the plan ({', '.join(names) or 'no seats'})")
+        if not names[seat].endswith("status: ran"):
+            raise ValueError(f"finding names seat {seat!r}, which did not run")
+        findings.setdefault(seat, []).append(f"  finding: {m.group(2)} · {m.group(3)} · adopted: {m.group(4)}")
+    out, failures = [], []
+    for ln in seats:
+        reviewers, failed = attribution_record.seat_lines(ln, "")
+        failures += failed
+        for rv in reviewers:
+            out += [rv, *findings.get(ln.split(" · ")[0][len("seat: "):], [])]
+    return out, failures
 
 
 def read_entry(primary, pr):
@@ -276,6 +332,10 @@ def main():
     ap.add_argument("--entry-branch")
     ap.add_argument("--attribution-file", type=Path, required=True)
     ap.add_argument("--comment-file", type=Path)
+    ap.add_argument("--session-runtime", default=os.environ.get("IDH_SESSION_RUNTIME", ""),
+                    help="runtime of this session, for a `self` seat")
+    ap.add_argument("--session-model", default=os.environ.get("IDH_SESSION_MODEL", ""),
+                    help="model of this session, for a `self` seat")
     a = ap.parse_args()
     primary = primary_root()
     tree = (primary / ".claude" / "worktrees" / f"review-{unit_key(a.pr)}").resolve()
@@ -290,6 +350,10 @@ def main():
         print("gaze_close: the comment file needs the {{plan_check}} placeholder and no typed "
               "'plan check:' line; the script writes that line", file=sys.stderr)
         return 2
+    if comment_text is not None and ("{{seats}}" not in comment_text or TYPED_SEAT.search(comment_text)):
+        print("gaze_close: the comment file needs the {{seats}} placeholder and no typed 'seat:' "
+              "line; the script writes those lines from the plan and the worker headers", file=sys.stderr)
+        return 2
     if seats_claim(comment_text) == "panel":  # in any case or markup, key and value
         derived = panel_reading(primary, a.pr, "seats") or "seats: self-only (panel unreadable)"
         if derived != "seats: panel":  # ticket 1287: a typed panel claim no non-self report backs
@@ -298,10 +362,20 @@ def main():
             return 2
     plan_line = plan_check_line(primary, a.pr)
     print(plan_line)  # the callers copy this line (comment, blocked-cleanup ESCALATE); never typed
+    seats = seat_block(primary, a.pr, a.session_runtime, a.session_model)  # before cleanup removes the panel
+    for ln in seats:
+        print(ln)
+    try:
+        lines, failures = attribution_lines(a.attribution_file.read_text(), seats)
+    except ValueError as exc:
+        print(f"gaze_close: {exc}", file=sys.stderr)
+        return 2
     entry = read_entry(primary, a.pr)
     entry_branch = a.entry_branch or entry["branch"]
-    status = 0
-    lines = a.attribution_file.read_text().strip()
+    status = 2 if failures else 0
+    for failure in failures:
+        print(f"attribution: seat line FAILED {failure}")
+    lines = "\n".join(lines)
     local = unit_key(a.pr) != str(a.pr).strip()  # branch:<name>: the none backend
     if local and lines:
         print("attribution: carried in the answer entry (no forge)")
@@ -316,7 +390,7 @@ def main():
     ok, msg = cleanup(primary, a.pr, a.branch)
     print(f"cleanup: {msg}")
     if not ok:
-        answered = record_answer(primary, a.pr, f"result: ESCALATE\nreason: cleanup blocked: {msg}\n{plan_line}",
+        answered = record_answer(primary, a.pr, f"result: ESCALATE\nreason: cleanup blocked: {msg}\n{plan_line}\n" + "\n".join(seats),
                                  lines, entry)
         if answered == 0 and not local:
             pointer(primary, a.pr, "ESCALATE", entry)
@@ -332,7 +406,7 @@ def main():
     print(duration)
     if a.comment_file:
         text = (comment_text.replace("{{plan_check}}", plan_line)
-                .replace("{{duration}}", duration).replace("{{containment}}", report))
+                .replace("{{seats}}", "\n".join(seats)).replace("{{duration}}", duration).replace("{{containment}}", report))
         answered = record_answer(primary, a.pr, text, lines, entry)  # the evidence, every unit
         status = answered or status
         if local or answered:

@@ -91,7 +91,12 @@ by default). Consent follows the provider that bills the seat, not the family
 the plan writes. Each plan item is `name<TAB>model<TAB>family<TAB>reason`, the
 reason naming the seat's door (`headless <runtime>`, or `subagent`). An item
 is self when its name or its model is `self`: gaze's own read. Every
-item, a check included, writes `<panel>/<name>.md`.
+item, a check included, writes `<panel>/<name>.md`. The item name is the seat's
+one name for good: the roster, the `seat:` line, the attribution `seat=` field and
+`finding:` lines use it, and `gaze_close.py` builds the identity lines from it
+(ticket 1303). It carries no round or ticket suffix (`correctness`, never
+`correctness-r1`), so records of one seat join across reviews; the reason names
+the door as `headless <runtime>` (the runtime of the seat's line) or `subagent`.
 
 #### Worked cases
 
