@@ -198,8 +198,11 @@ are tests, not comments.
 ## The dirty-reset guard through three runtimes (ticket 0809)
 
 One canonical decision — `scripts/guard-destructive-bash.sh` blocks
-`git reset --hard` over uncommitted changes to tracked files, exit 2 with
-the reason on stderr — carried by three thin wirings. The guard owns the
+`git reset --hard` over uncommitted changes to tracked files, and (ticket
+1324) a `pgrep -f`/`pkill -f` without `-A` or a bracketed pattern, exit 2
+with the reason on stderr — carried by three thin wirings. Every runtime
+honours a block; only Claude Code can rewrite the command, so a portable
+clause refuses and names the safe form instead of fixing the call. The guard owns the
 decision; adapters only normalize input and carry it. Portability did not
 turn enforcement into advice:
 
