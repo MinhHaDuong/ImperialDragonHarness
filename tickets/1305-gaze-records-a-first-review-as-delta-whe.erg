@@ -1,0 +1,38 @@
+%erg 0.1
+Title: gaze records a first review as delta when the caller states an intent, so verify-gate cannot admit it
+Created: 2026-10-28
+Author: MinhHaDuong
+
+--- log ---
+2026-10-28T11:18Z MinhHaDuong created
+
+--- body ---
+## Context
+padme PR #133 (2026-10-28, one line in `intervention-log.txt`) could not pass verify-gate. Gaze ran twice, both
+REVIEWED, and verify-gate refused admission both times: `review_notes.py gate rv-20261028-pr-133-9b75 <head>` exited 1
+with "no full review: the delta answer covering the head does not carry an earlier full answer (coverage.carried)".
+The author merged without the gate on an explicit decision (comment on the PR).
+
+Notes on padme `refs/notes/review`:
+- answer `20261028T111032959Z-padme-7df2567a` at 171a0eb, the first review of the PR: `coverage: {scope: delta,
+  carried: null}`;
+- answer `20261028T111308087Z-padme-4af4bb66` at e1b6fd4, asked in the brief as "FULL review (not delta) of the whole
+  PR diff": `coverage: {scope: delta, carried: <the first>}`.
+
+Cause (read, not yet reproduced in a test): `scripts/gaze_close.py` `answer_scope()` returns `full` only when the result
+carries `scope: full` or `intent: default`; any other intent records `delta` (spec §4, "a narrow intent is never
+widened"). A caller that passes a descriptive intent (every gaze call in that session did: "measurement-only PR…",
+"FULL review of the whole PR diff…") therefore gets a delta on a first review, `carry_target` finds nothing to carry,
+and `_full_or_chained` can never be satisfied: the PR is unadmittable however many times gaze reruns. PRs #128–#131 in
+the same session passed only because their gate runs went through other admission paths; not yet checked which.
+
+The attribution failures seen in the same runs (bare `gpt-6-luna`, `model=script`) are ticket 1303, not this one.
+
+## Exit criteria
+- [ ] A test replays the #133 shape: no prior answer, a caller intent that is not `default`, result REVIEWED;
+      verify-gate admission then succeeds (or gaze refuses up front and says how to ask for a full review).
+- [ ] The rule for when an intent is narrow (delta) versus whole-diff (full) is written in gaze `SKILL.md`, and a
+      caller can state it without knowing the `intent: default` keyword.
+- [ ] A delta answer with `carried: null` is never written silently: gaze either records it as full (nothing earlier
+      to be a delta of) or reports it as unadmittable in its result.
+
