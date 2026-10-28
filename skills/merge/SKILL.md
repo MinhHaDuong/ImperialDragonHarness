@@ -198,8 +198,9 @@ one background command. A `check` that answers 2 again after one re-record
 **Waiting for a queued merge.** The caller waits itself and finishes the
 chain itself. Step 7's read-back is the single-read status command. The
 caller arms exactly one wake,
-`python3 "$IDH_ROOT/scripts/runtime.py" wake arm --after 0 --cmd "<poll>"`, whose
-`<poll>` (the first line below) has a hard time bound of about 25 minutes,
+`python3 "$IDH_ROOT/scripts/runtime.py" wake arm --after 0 --cmd "$poll"`, whose
+`$poll` (below, read through a quoted heredoc so nothing in it expands early)
+has a hard time bound of about 25 minutes,
 polls this single-read status command at an interval inside the command
 and exits as soon as the status is no longer pending; the runtime wakes the
 caller on exit, and the caller continues from the status it reads (the
@@ -210,8 +211,12 @@ foreground loop. A runtime where `wake arm` answers NOOP asks once at its
 next step and reports the PR as pending.
 
 ```bash
+poll=$(cat <<'POLL'
 end=$((SECONDS + 1500)); while [ "$SECONDS" -lt "$end" ] && [ "$(gh pr view N --json state,autoMergeRequest -q '.state == "OPEN" and .autoMergeRequest != null')" = true ]; do sleep 60; done  # <!-- harness-extension-point -->
 gh pr view N --json state -q .state  # MERGED: sync (step 8); CLOSED: failed; OPEN: still queued at the bound (a failing check leaves auto-merge armed: read the checks) or not queued <!-- harness-extension-point -->
+POLL
+)
+python3 "$IDH_ROOT/scripts/runtime.py" wake arm --after 0 --cmd "$poll"
 ```
 
 ## Merge conflict recovery

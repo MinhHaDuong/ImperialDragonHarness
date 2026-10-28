@@ -4,7 +4,7 @@
     runtime.py wake disarm
     runtime.py wake send --session ID --message TEXT
 
-`arm` sleeps S seconds, runs CMD, then delivers `<cmd> exited <rc>: <output|(no output)>`
+`arm` sleeps S seconds, runs CMD under bash, then delivers `<cmd> exited <rc>: <output|(no output)>`
 to the session. A bounded poll is `--after 0` with a poller CMD that exits when the
 awaited status changes (merge's queued-merge wait, raid-breaker.py --wait): its exit is
 the wake, whatever its exit code.
@@ -17,8 +17,8 @@ Per backend:
 - Codex: `arm` starts a transient `systemd-run --user --on-active=S` timer that runs the
   hidden `wake fire`, which runs CMD and calls `codex queue --thread <id> --message`.
   `codex queue` only queues: into an exited thread nothing runs, so the result line says
-  QUEUED, never DELIVERED. Absolute paths are passed to the unit, and the caller's PATH is
-  set for CMD. Without systemd-run (CI, another OS, a logged-out user without lingering)
+  QUEUED, never DELIVERED. Absolute paths are passed to the unit, the caller's PATH is
+  set for CMD, and `--expand-environment=no` keeps systemd from blanking CMD's `${VAR}`. Without systemd-run (CI, another OS, a logged-out user without lingering)
   `arm` and `disarm` answer NOOP. Unit names carry the thread id, and `disarm` stops only
   that thread's units. `send` calls `codex queue` directly.
 - Pi: the writer side only (the reader extension is ticket 1316). Messages go into the
@@ -100,7 +100,9 @@ def message(cmd: str, rc: int, output: str) -> str:
 
 
 def run_cmd(cmd: str) -> str:
-    done = subprocess.run(["/bin/sh", "-c", cmd], capture_output=True, text=True,
+    """CMD runs under bash, the shell the skills' poll commands are written for ($SECONDS)."""
+    shell = shutil.which("bash") or "/bin/bash"
+    done = subprocess.run([shell, "-c", cmd], capture_output=True, text=True,
                           stdin=subprocess.DEVNULL)
     return message(cmd, done.returncode, done.stdout + done.stderr)
 
@@ -159,6 +161,7 @@ def arm(a, rt: str, env) -> int:
         codex = shutil.which("codex", path=env.get("PATH"))
         unit = f"{unit_stem(thread)}{secrets.token_hex(4)}"
         argv = [shutil.which("systemd-run", path=env.get("PATH")), "--user", "--quiet", "--collect",
+                "--expand-environment=no",
                 f"--on-active={max(a.after, 1):g}", f"--unit={unit}", f"--working-directory={os.getcwd()}",
                 f"--setenv=PATH={env.get('PATH', '')}",
                 *fire_argv(rt, 0, a.cmd, "--thread", thread, "--codex", codex)]

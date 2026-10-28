@@ -145,6 +145,18 @@ def test_claude_printed_command_runs_and_delivers(env, monkeypatch, capsys):
     assert done.stdout.strip() == "echo WAKE-OK; exit 4 exited 4: WAKE-OK"
 
 
+@pytest.mark.integration
+def test_cmd_runs_under_bash_so_a_seconds_poll_waits(env, monkeypatch, capsys):
+    """Gaze finding on PR 1890: under dash, merge's `$SECONDS` poll exited at once."""
+    monkeypatch.setenv("PATH", f"{env}:/usr/bin:/bin")
+    monkeypatch.setenv("CLAUDECODE", "1")
+    poll = 'end=$((SECONDS + 1)); while [ "$SECONDS" -lt "$end" ]; do sleep 0.2; done; echo "polled ${BASH_VERSION:+bash}"'
+    out = cli(capsys, "wake", "arm", "--after", "0", "--cmd", poll)[1]
+    done = subprocess.run(shlex.split(out.removeprefix("RUN-IN-BACKGROUND ")), capture_output=True,
+                          text=True, timeout=30)
+    assert done.stdout.strip().endswith("exited 0: polled bash"), done.stdout
+
+
 def test_claude_negative_controls(env, monkeypatch, capsys):
     """Headless has no session to wake; send and disarm are typed NOOPs."""
     monkeypatch.setenv("CLAUDECODE", "1")
@@ -176,6 +188,7 @@ def test_codex_arm_queues_cmd_output_through_the_unit(env, tmp_path, monkeypatch
     (systemd,) = calls(tmp_path)
     assert "--user" in systemd and "--on-active=30" in systemd
     assert f"--setenv=PATH={env}" in systemd
+    assert "--expand-environment=no" in systemd
     command = unit_command(systemd)
     assert os.path.isabs(command[0]) and os.path.isabs(command[1])
     assert command[command.index("--codex") + 1] == str(env / "codex")

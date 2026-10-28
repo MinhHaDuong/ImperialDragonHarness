@@ -43,8 +43,9 @@ that as "could not look", never as a clear. Its last line is the next action:
 **Wake sources.** Every timed wake goes through
 `python3 "$IDH_ROOT/scripts/runtime.py" wake arm --after <s> --cmd "<cmd>"` (ticket 1311): after
 `<s>` seconds it runs `<cmd>` and wakes the session with `<cmd> exited <rc>: <output>`. `<cmd>`
-runs later in a fresh shell, so expand `$IDH_ROOT` when arming (double-quote `--cmd`). Read
-its one-line answer:
+runs later in a fresh bash, so expand `$IDH_ROOT` when arming (double-quote `--cmd`); a
+`<cmd>` with its own quotes or `$` goes in through a quoted heredoc, as the merge skill's
+queued-merge wait does. Read its one-line answer:
 
 | Answer | Meaning | What the session does |
 |---|---|---|
