@@ -30,7 +30,6 @@ def env(tmp_path, monkeypatch):
     """No runtime markers; PATH holds only the stub directory."""
     for key in MARKERS:
         monkeypatch.delenv(key, raising=False)
-    monkeypatch.delenv("CLAUDE_CODE_CHILD_SESSION", raising=False)  # headless since 1314
     bindir = tmp_path / "bin"
     bindir.mkdir()
     monkeypatch.setenv("PATH", str(bindir))

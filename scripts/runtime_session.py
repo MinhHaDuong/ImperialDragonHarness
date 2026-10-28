@@ -6,8 +6,8 @@
 Per backend: Claude Code `CLAUDE_CODE_SESSION_ID`, Codex `CODEX_THREAD_ID`, Pi exports none
 (`id` answers NOOP). A runtime that should have an id but exports none (`CLAUDECODE` without
 `CLAUDE_CODE_SESSION_ID`) exits 3, never an empty line. `headless` is yes for `claude -p`
-(an sdk entrypoint), a night sweep (`CLAUDE_NIGHT_SWEEP`) or a child session
-(`CLAUDE_CODE_CHILD_SESSION`); `can wake` depends on it. `runtime.py which` and the wake verb
+(an sdk entrypoint) or a night sweep (`CLAUDE_NIGHT_SWEEP`). `CLAUDE_CODE_CHILD_SESSION` is not read:
+it is set on subagents whose wake fires and on main-thread SessionEnd alike. `can wake` depends on it. `runtime.py which` and the wake verb
 read the same two helpers, defined here.
 
 The hooks keep reading their payloads and `CLAUDE_*` variables (shrink recorded in ticket 1314).
@@ -27,11 +27,11 @@ def session_id(rt: str, env):
 
 def headless(rt: str, env) -> bool:
     """True when no interactive session is there to wake: `claude -p` (an sdk entrypoint),
-    a night sweep or a child session. Subagents and forks of a live session are not headless."""
+    or a night sweep. Subagents and forks of a live session are not headless."""
     if env.get("CLAUDE_NIGHT_SWEEP"):
         return True
     if rt == "claude":
-        return env.get("CLAUDE_CODE_ENTRYPOINT", "").startswith("sdk") or bool(env.get("CLAUDE_CODE_CHILD_SESSION"))
+        return env.get("CLAUDE_CODE_ENTRYPOINT", "").startswith("sdk")
     return False
 
 

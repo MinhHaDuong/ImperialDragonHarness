@@ -61,12 +61,19 @@ def test_headless_no_by_default(env, monkeypatch, capsys):
     assert cli(capsys, "session", "headless")[:2] == (0, "no")
 
 
-@pytest.mark.parametrize("key,val", [("CLAUDE_CODE_ENTRYPOINT", "sdk-cli"), ("CLAUDE_NIGHT_SWEEP", "1"),
-                                     ("CLAUDE_CODE_CHILD_SESSION", "1")])
+@pytest.mark.parametrize("key,val", [("CLAUDE_CODE_ENTRYPOINT", "sdk-cli"), ("CLAUDE_NIGHT_SWEEP", "1")])
 def test_headless_markers(env, monkeypatch, capsys, key, val):
     monkeypatch.setenv("CLAUDECODE", "1")
     monkeypatch.setenv(key, val)
     assert cli(capsys, "session", "headless")[:2] == (0, "yes")
+
+
+def test_child_session_marker_is_not_headless_and_wake_works(env, monkeypatch, capsys):
+    monkeypatch.setenv("CLAUDECODE", "1")
+    monkeypatch.setenv("CLAUDE_CODE_CHILD_SESSION", "1")
+    monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "cli")
+    assert cli(capsys, "session", "headless")[:2] == (0, "no")
+    assert cli(capsys, "can", "wake")[:2] == (0, "YES wake claude")
 
 
 def test_headless_entrypoint_cli_is_interactive(env, monkeypatch, capsys):
@@ -77,7 +84,7 @@ def test_headless_entrypoint_cli_is_interactive(env, monkeypatch, capsys):
 
 def test_which_goes_through_the_verb_helpers(env, monkeypatch, capsys):
     monkeypatch.setenv("CLAUDE_CODE_SESSION_ID", "s-9")
-    monkeypatch.setenv("CLAUDE_CODE_CHILD_SESSION", "1")
+    monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-cli")
     assert cli(capsys, "which")[1] == "runtime=claude session=s-9 headless=yes"
     assert runtime.headless is not None and runtime.session_id("claude", {"CLAUDE_CODE_SESSION_ID": "x"}) == "x"
 
