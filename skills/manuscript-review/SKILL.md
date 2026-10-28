@@ -1,6 +1,7 @@
 ---
 metadata:
-  category: research
+  category: reviewing
+  order: 2
 name: manuscript-review
 description: "Review a manuscript with real literature retrieval, page evidence and a bounded check of major criticisms; preserve the original review and pending author decisions."
 disable-model-invocation: false

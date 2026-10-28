@@ -1,8 +1,9 @@
 ---
 metadata:
   category: writing
+  order: 3
 name: pdf-finish
-description: "Finishing pass on a PDF deliverable before it leaves the workshop — journal submission, preprint deposit, personal page, report handoff. Keyword: finition."
+description: "Finishing pass on a PDF deliverable — journal submission, preprint deposit, personal page, report handoff."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: "<pdf-or-manuscript-path>"

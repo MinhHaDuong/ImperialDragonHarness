@@ -1,8 +1,9 @@
 ---
 metadata:
   category: build
+  order: 5
 name: merge
-description: "Land a merge request: close its claimed ticket, check the gate record on a gated base, merge pinned to the reviewed head, read the result back, sync local main."
+description: "Land a merge request: close its claimed ticket, check the gate record on a gated base, merge pinned to the reviewed head, read the result back, sync local main. Cleanup is left to /roar."
 user-invocable: true
 argument-hint: "[pr-number]"
 ---

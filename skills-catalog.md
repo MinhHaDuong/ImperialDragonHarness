@@ -8,7 +8,7 @@
 
 | Command | Description |
 |---------|-------------|
-| `/hunt` | Work a ticket: plan, execute in its own worktree, verify adherence, ask \gaze to review, fix and opens a merge request. Does not merge. |
+| `/hunt` | Work a ticket: plan, execute in its own worktree, verify adherence, ask /gaze to review, fix and open a merge request. Does not merge. |
 | `/verify-adherence` | Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM. |
 | `/gaze` | Review one merge request: plan the checks that settle what the caller asks, run them once, check the plan against what ran, post one result: REVIEWED / FINDINGS / ESCALATE. Does not modify code. |
 | `/verify-gate` | Anti-rubber-stamp merge gate: checks every ticket exit criterion and review comment against the diff. Emits APPROVED / REROLL / ESCALATE / NEEDS-AUTHOR with evidence. Does not merge. |
@@ -56,7 +56,6 @@
 |---------|-------------|
 | `/biblio-saturation` | Saturate a factual register or novelty claim with independent searches across fields, languages, gray literature and citation trails; adversarially judge candidates and completeness. |
 | `/critical-lit-review` | Critical literature review (état de l'art) in history of economics and STS: object, actors, controversies. |
-| `/manuscript-review` | Review a manuscript with real literature retrieval, page evidence and a bounded check of major criticisms; preserve the original review and pending author decisions. |
 | `/reading-note` | Critical reading note (note de lecture) on one article or book, filed in Zotero. |
 | `/related-work-note` | Due-diligence note for one cited paragraph of a manuscript: relevance, history, cited works (detailed), related-but-not-cited (justified), methods, verification checklist, bibliography with DOI/URL. |
 | `/zotero` | Import PDFs or URLs into Zotero, suggest edits or attachments to existing items, check staged files against the library, or report duplicate files: extract metadata, resolve identifiers, create items with PDFs through the running Zotero's local API. |

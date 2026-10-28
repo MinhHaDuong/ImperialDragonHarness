@@ -1,8 +1,9 @@
 ---
 metadata:
   category: session
+  order: 4
 name: perch
-description: "Mid-session orientation: summarize what's done, surface unresolved points, assess clear-readiness. Not for end-of-day (/lair) or post-merge (/roar) wrap-up."
+description: "Mid-session orientation: summarize what's done, surface unresolved points, assess clear-readiness. Read-only."
 user-invocable: true
 argument-hint:
 ---

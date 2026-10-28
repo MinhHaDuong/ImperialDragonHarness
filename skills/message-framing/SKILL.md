@@ -1,6 +1,7 @@
 ---
 metadata:
   category: writing
+  order: 1
 name: message-framing
 description: "Frame the central message of a talk, abstract or article before drafting it. Not for cutting a text (/cut-prose) or building a deck (/slides)."
 ---

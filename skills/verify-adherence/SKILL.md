@@ -1,6 +1,7 @@
 ---
 metadata:
-  category: runtime-review
+  category: build
+  order: 2
 name: verify-adherence
 description: "Check a branch's diff against project rules. Mechanical-first — runs hygiene tests + grep ratchet before falling back to LLM."
 disable-model-invocation: false

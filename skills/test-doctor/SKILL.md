@@ -1,8 +1,9 @@
 ---
 metadata:
-  category: session
+  category: maintenance
+  order: 1
 name: test-doctor
-description: "Testing expert for slow, flaky or stale test gates; author-called only."
+description: "An expert for slow, flaky or stale test gates in your project. Author-called only."
 disable-model-invocation: true
 user-invocable: true
 argument-hint: "[project or complaint]"

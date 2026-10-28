@@ -1,8 +1,9 @@
 ---
 metadata:
   category: session
+  order: 1
 name: yawn
-description: "Repo healthcheck, reports first, fixes on request: git hygiene, test status, doc freshness; degrades without project conventions. Not for unprompted fixes (/molt)."
+description: "Repo morning health check, read-only: git hygiene, test status, doc freshness; degrades without project conventions. Usually suggests /molt to fix findings."
 disable-model-invocation: false
 user-invocable: true
 argument-hint:

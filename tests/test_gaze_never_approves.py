@@ -54,11 +54,6 @@ RESULT_VALUES = {"REVIEWED", "FINDINGS", "ESCALATE"}
 # Every verdict-bearing line of the expanded contract, read and accepted.
 ALLOWED_LINES = (
     (
-        'description: "Review one merge request: plan the checks that settle '
-        'what the caller asks, run them once, check the plan against what ran, '
-        'post one result: REVIEWED / FINDINGS / ESCALATE, never APPROVED."'
-    ),
-    (
         '- Never returns APPROVED (pinned by '
         '`tests/test_gaze_never_approves.py`). REVIEWED means no blocking '
         'finding on the reviewed head, nothing more.'

@@ -1,8 +1,9 @@
 ---
 metadata:
-  category: writing
+  category: reviewing
+  order: 1
 name: external-peer-review
-description: "Obtain independent external peer reviews of a manuscript PDF; preserve dissent and synthesize verified findings."
+description: "Simulate independent external peer reviews of a manuscript PDF; preserve dissent and synthesize verified findings."
 user-invocable: true
 disable-model-invocation: false
 argument-hint: "<pdf-path> [reviewer needs or personas]"

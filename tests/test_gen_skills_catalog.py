@@ -68,7 +68,7 @@ def test_catalog_groups_before_sorting_names(tmp_path):
     path = directory / "SKILL.md"
     path.write_text(path.read_text().replace("category: build", "category: session"))
     lines = gen_skills_catalog.catalog_lines(str(tmp_path))
-    assert lines.index("### Build and ship") < lines.index("### Session and maintenance")
+    assert lines.index("### The build loop") < lines.index("### The session loop")
     assert lines.index("| `/zebra` | Build. |") < lines.index("| `/alpha` | Session. |")
 
 
@@ -78,7 +78,7 @@ def test_catalog_separates_generalist_and_research(tmp_path):
     path = directory / "SKILL.md"
     path.write_text(path.read_text().replace("category: build", "category: research"))
     lines = gen_skills_catalog.catalog_lines(str(tmp_path))
-    assert lines.index("## Generalist") < lines.index("### Build and ship")
+    assert lines.index("## Generalist") < lines.index("### The build loop")
     assert lines.index("## Research") < lines.index("### Research and bibliography")
     assert lines.index("| `/hunt` | Build. |") < lines.index("## Research")
 
@@ -100,3 +100,15 @@ def test_catalog_rejects_unknown_category(tmp_path):
     path.write_text(path.read_text().replace("category: build", "category: typo"))
     with pytest.raises(ValueError, match="missing or unknown category"):
         gen_skills_catalog.catalog_lines(str(tmp_path))
+
+
+def test_catalog_orders_by_metadata_order_then_name(tmp_path):
+    for name, order in (("alpha", None), ("zebra", 1), ("mid", 2)):
+        directory = _make_skill(tmp_path, name, name.title() + ".")
+        if order is not None:
+            path = directory / "SKILL.md"
+            path.write_text(path.read_text().replace(
+                "category: build", f"category: build\n  order: {order}"))
+    rows = [line for line in gen_skills_catalog.catalog_lines(str(tmp_path))
+            if line.startswith("| `/")]
+    assert rows == ["| `/zebra` | Zebra. |", "| `/mid` | Mid. |", "| `/alpha` | Alpha. |"]

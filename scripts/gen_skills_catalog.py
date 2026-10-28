@@ -19,14 +19,17 @@ import skill_frontmatter
 
 
 CATEGORIES = {
-    "build": "Build and ship",
-    "session": "Session and maintenance",
+    "build": "The build loop",
+    "session": "The session loop",
+    "maintenance": "Project maintenance",
     "memory": "Memory and learning",
     "runtime-review": "Runtime and review support",
     "research": "Research and bibliography",
-    "writing": "Writing and presentation",
+    "reviewing": "Reviewing",
+    "writing": "Copyediting",
     "publication": "Submission and publication",
 }
+GENERALIST = {"build", "session", "maintenance", "memory", "runtime-review"}
 
 
 def catalog_lines(root: str = ".") -> list[str]:
@@ -56,17 +59,21 @@ def catalog_lines(root: str = ".") -> list[str]:
         category = metadata.get("category") if isinstance(metadata, dict) else None
         if category not in CATEGORIES:
             raise ValueError(f"{skill_file}: missing or unknown category {category!r}")
-        catalog.append((category, name, " ".join(description.split())))
+        # An optional metadata.order puts a section in workflow order; skills
+        # without one follow, by name.
+        order = metadata.get("order", float("inf"))
+        catalog.append((category, order, name, " ".join(description.split())))
 
     lines = []
     current_family = None
     for category, title in CATEGORIES.items():
-        entries = sorted((name, desc) for cat, name, desc in catalog if cat == category)
+        entries = [(name, desc) for cat, _, name, desc in
+                   sorted(e for e in catalog if e[0] == category)]
         if not entries:
             continue
         if lines:
             lines.append("")
-        family = "Generalist" if category in {"build", "session", "memory", "runtime-review"} else "Research"
+        family = "Generalist" if category in GENERALIST else "Research"
         if family != current_family:
             lines.extend([f"## {family}", ""])
             current_family = family
