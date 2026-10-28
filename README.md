@@ -17,9 +17,7 @@ They `/yawn` at dawn, `/hunt` one ticket or `/raid` many in autonomous waves,
 - **Forge optional.** Everything works in a local repository with no remote.
   Issues live in `tickets/` ([git-erg](https://github.com/MinhHaDuong/git-erg));
   review comments and verdicts live in git notes (`refs/notes/review`), and
-  merge-gate records in `refs/notes/gate`. Today review notes are used in
-  repositories without an `origin` remote; ticket 1298 brings them to every
-  repository, pushed once at merge.
+  merge-gate records in `refs/notes/gate`.
 - **Forge independent.** A forge, when present, is a transport and a merge
   button, not a store of record. A hardcoded dependency on GitHub is a bug:
   forge calls go through one adapter (`scripts/forge.py`).
@@ -36,17 +34,18 @@ Every task passes through five phases:
 
 ## Workflows
 
-The README maps the workflows; each skill's `SKILL.md` is its procedure, and
-`conception/` keeps the design history behind it.
+Each skill's `SKILL.md` is its procedure; `conception/` keeps the design
+history behind it.
 
 - **Day cycle**: `/yawn` (healthcheck) → work → `/perch` (orient) → `/lair`
   (wrap-up: housekeeping, tests, STATE, suggestions).
-- **Ticket loop**: `/hunt N` for one ticket, `/raid` for autonomous waves;
-  each ticket gets its own worktree and branch.
-- **Review and merge**: `/gaze` reviews, `/verify-gate` checks exit criteria,
-  `/merge` lands behind the merge gate, `/roar` wraps up. With an `origin`
-  remote the forge merges the PR; without one the merge is local and gated
+- **Ticket loop**: `/hunt N` → `/merge` → `/roar`. Hunt works one ticket in
+  its own worktree and branch, reviewed by `/gaze` and `/verify-gate`; merge
+  lands it behind the merge gate. With an `origin` remote the forge merges
+  the PR; without one the merge is local and gated
   ([flows ruling](conception/2026-10-27-review-merge-flows.md)).
+- **Autonomous work**: `/raid` picks several tickets and runs them in waves,
+  each through the same loop, merging what the gate approves.
 - **Research**: literature, manuscript review, author decisions and PDF
   delivery ([research workflow](conception/research-workflow.md)).
 
@@ -67,6 +66,9 @@ explains the layout.
 - `rules/guards.md`: guards for every agent role (no credentials in chat,
   skill loads are not write authorization, context ceiling).
 - A destructive-command guard on every shell call (Claude Code `PreToolUse`).
+- `pgrep` and `pkill` wrappers (`scripts/self-safe-pgrep.sh`), installed on
+  `PATH` by `idh install`: they add `-A`, so a pattern search never matches or
+  kills the calling shell and its ancestors.
 - The main-update guard (`hooks/reference-transaction`): local `main` moves
   only to `origin/main` or onto a merge carrying a passing gate record.
 - The merge gate (`.merge-gate.json`, `scripts/merge-gate.py`): checks run on
@@ -84,10 +86,10 @@ project's own repository; the harness's memory is its own (`memory/`).
 2. **Events**: one Markdown file per significant fact in
    `memory/journal/YYYY/`, captured by `/roar`. Append-only.
 3. **Topics**: consolidated Markdown files in `memory/topics/`. Their index,
-   `memory/MEMORY.md`, is injected into the session prompt.
-4. **Consolidation**: `/hoard` turns events into topics. It runs on demand;
-   `/lair` suggests it when five or more events are not yet covered.
-5. **Crystallisation**: `/brood` proposes improvements to rules and skills
+   `memory/MEMORY.md`, is injected into the session prompt. `/hoard` turns
+   events into topics; it runs on demand, and `/lair` suggests it when five
+   or more events are not yet covered.
+4. **Crystallisation**: `/brood` proposes improvements to rules and skills
    from accepted hoard findings, on explicit request only.
 
 ### 4. Skills
