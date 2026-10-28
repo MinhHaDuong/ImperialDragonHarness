@@ -317,6 +317,12 @@ resolve_base() { # <label>
 # OPEN with a passing gate record, or MERGED; a gated one stays pending in
 # step 11 until MERGED). The caller then cds to the main checkout and lets
 # after-exit remove the tree: no `remove`, no `discard_changes` (ticket 1097).
+# The merge request's `STATE head queued|-` through the forge adapter (ticket 1318): a landing
+# read, no offline cache. Any nonzero exit (2 could not look, 3 no forge) is unreadable.
+forge_read_back() { # <ref> → "STATE head queued|-" on stdout
+    python3 "${CLOSE_AND_CLEAN_FORGE:-$IDH_ROOT/scripts/forge.py}" read-back "$1" 2>/dev/null
+}
+
 bundle_armed() { # <head oid>
     local answer armed rc=0
     answer=$(git ls-remote --exit-code --heads origin "refs/heads/$BUNDLE") || rc=$?
@@ -338,8 +344,7 @@ bundle_armed() { # <head oid>
     local gate="${CLOSE_AND_CLEAN_MERGE_GATE:-$IDH_ROOT/scripts/merge-gate.py}" grc=0 crc=0 state
     python3 "$gate" enabled --base "$base_tip" >/dev/null 2>&1 || grc=$?
     case "$grc" in
-        0)  # <!-- harness-extension-point --> forge read-back of the merge request
-            state=$(gh pr view "$BUNDLE" --json state --jq '.state' 2>/dev/null) || {
+        0)  state=$(forge_read_back "$BUNDLE") && state=${state%% *} || {
                 note "EXIT: COULD-NOT-LOOK cannot read the merge request for $BUNDLE"; bump 2; return 1;
             }
             case "$state" in
@@ -356,11 +361,10 @@ bundle_armed() { # <head oid>
         1)  ;;
         *)  note "EXIT: COULD-NOT-LOOK cannot read the base's merge-gate declaration"; bump 2; return 1 ;;
     esac
-    # <!-- harness-extension-point --> forge read-back of the merge request
-    armed=$(gh pr view "$BUNDLE" --json state,autoMergeRequest \
-        --jq 'select(.state == "OPEN" and .autoMergeRequest != null) | "armed"' 2>/dev/null) || {
+    armed=$(forge_read_back "$BUNDLE") || {
         note "EXIT: COULD-NOT-LOOK cannot read the merge request for $BUNDLE"; bump 2; return 1;
     }
+    case "$armed" in "OPEN "*" queued") armed=armed ;; esac
     if [ "$armed" != armed ]; then
         note "EXIT: KEEP-PENDING merge request for $BUNDLE is not open with auto-merge armed"; bump 1; return 1
     fi

@@ -28,7 +28,7 @@ def anchor(pr: str, worktree: Path) -> None:
     try:
         record = forge.get_forge(None, pr, str(worktree)).resolve(pr)
     except forge.ForgeRefusal as exc:
-        raise ValueError(f"command failed: gh pr view {pr}: {exc}") from exc
+        raise ValueError(f"cannot read PR {pr} from the forge: {exc}") from exc
     expected = record["head"]
     base = record["base"]
     if not expected or not base:

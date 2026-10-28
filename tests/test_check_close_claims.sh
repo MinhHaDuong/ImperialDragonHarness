@@ -9,9 +9,9 @@
 # on a repo where every claim was honoured must go quiet, which is what
 # separates "reads the tickets" from "always complains".
 #
-# `gh` is stubbed, but the stub runs the REAL jq against the canned payload
-# using the `--jq` expression the script passes, so the mergedAt window is
-# genuinely exercised rather than assumed.
+# `gh` is stubbed with the canned payload (forge.py maps it); the script then
+# applies the mergedAt window with the REAL jq, so the window is genuinely
+# exercised rather than assumed.
 set -euo pipefail
 
 # Hermetic children (ticket 0875): each case runs the detector as
@@ -54,6 +54,8 @@ _check_rc() { # <label> <expected> <actual>
 make_repo() { # <dir>
     local d="$1"
     mkdir -p "$d/tickets/closed" "$d/bin"
+    # a repository with an origin remote: forge.py routes to gh only then (ticket 1318)
+    git init -q "$d" && git -C "$d" remote add origin https://example.invalid/o/r.git
     # 0001: claimed by a merged PR, never closed — the defect.
     printf '%%erg 0.1\nTitle: dropped\nCreated: 2026-09-01\nAuthor: t\n' > "$d/tickets/0001-dropped.erg"
     # 0002: claimed and closed in place (closed but not yet archived).
@@ -263,6 +265,23 @@ out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bas
 _check_rc "all claims honoured exits 0" 0 "$rc"
 _check_lacks "…with no DROPPED line" "$out" "DROPPED"
 _check_says "…and still reports the count it examined" "$out" "2 close claim(s)"
+
+# --- 6. No usable forge is a typed "could not look", never an all-clear (ticket 1318) ---
+# PATH holding the real tools by symlink and no gh: with an origin remote forge.py
+# answers exit 2, without one exit 3; the sweep maps both to its not-an-all-clear exit 2,
+# naming nothing as clean. A dropped claim sits in the ticket store as the positive control.
+NOGH=$(mktemp -d)
+for tool in bash git jq python3 date dirname env sed grep tr cat; do
+    ln -s "$(command -v "$tool")" "$NOGH/$tool"
+done
+out=$( cd "$repo" && PATH="$NOGH" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "origin remote but no gh exits 2" 2 "$rc"
+_check_says "…says it is not an all-clear" "$out" "NOT an all-clear"
+git -C "$repo" remote remove origin
+out=$( cd "$repo" && PATH="$repo/bin:$PATH" GH_STUB_PAYLOAD="$repo/prs.json" bash "$SCRIPT" 2>&1 ) && rc=0 || rc=$?
+_check_rc "no origin remote exits 2 even with a gh on PATH" 2 "$rc"
+_check_says "…and says it is not an all-clear" "$out" "NOT an all-clear"
+rm -rf "$NOGH"
 
 rm -rf "$repo"
 exit $fail

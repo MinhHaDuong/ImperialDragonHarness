@@ -43,28 +43,26 @@ SINCE=$(date -u -d "${DAYS} days ago" +%Y-%m-%dT%H:%M:%SZ)
 
 # ── The only forge-specific part, isolated here on purpose ────────────────────
 # Everything below this function reasons over a JSON array of
-# {number, title, body, mergedAt}. Porting to another forge means replacing
-# these two calls and nothing else.
+# {number, title, body, mergedAt}. The forge is read through the forge adapter (forge.py)
+# (ticket 1318); any other forge is that adapter's business, not this script's.
+# `forge.py list` exits 2 when it could not look (origin remote but no usable gh)
+# and 3 when there is no forge at all; both mean "NOT an all-clear" here.
 
-forge_available() {
-    command -v gh >/dev/null 2>&1  # harness-extension-point
-}
+FORGE_PY="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)/scripts/forge.py"
 
 forge_merged_prs() { # <since-iso> <limit> → JSON array on stdout
     # One call. `body` populates on the list form (unlike `files`, which does
     # not — see tickets/AGENTS.md), so no per-PR query is needed here.
-    gh pr list --state merged --limit "$2" \
-        --json number,title,body,mergedAt \
-        --jq "[.[] | select(.mergedAt >= \"$1\")]" 2>/dev/null  # harness-extension-point
+    local rows
+    rows=$(python3 "$FORGE_PY" list --state merged --limit "$2") || return 1
+    jq --arg since "$1" '[.[] | select(.mergedAt != null and .mergedAt >= $since)]' <<< "$rows"
 }
 
-if ! forge_available; then
-    echo "check-close-claims: the forge CLI is not available, so merged PRs cannot be read." >&2
+PRS=$(forge_merged_prs "$SINCE" "$LIMIT") || {
+    echo "check-close-claims: the forge could not be read, so merged PRs cannot be listed." >&2
     echo "check-close-claims: this is NOT an all-clear." >&2
     exit 2
-fi
-
-PRS=$(forge_merged_prs "$SINCE" "$LIMIT") || PRS=""
+}
 
 if [ -z "$PRS" ]; then
     echo "check-close-claims: the forge query returned nothing." >&2

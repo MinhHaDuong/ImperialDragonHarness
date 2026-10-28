@@ -33,7 +33,9 @@ def test_bundle_exit_needs_pushed_tip_and_armed_auto_merge():
     assert "Wait for confirmed integration before cleaning up" not in ROAR
     probe = _function("bundle_armed")
     assert "git ls-remote" in probe, "the pushed tip is read from the remote, never a stale @{u}"
-    assert "autoMergeRequest" in probe, "armed must be read back from the forge, not asserted"
+    assert "forge_read_back" in probe and '"OPEN "*" queued"' in probe, \
+        "armed must be read back from the forge adapter, not asserted"
+    assert "gh pr view" not in SCRIPT, "the merge request is read through scripts/forge.py (ticket 1318)"
 
 
 def test_bundle_exception_excludes_task_and_reused_branches():
