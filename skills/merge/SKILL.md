@@ -147,7 +147,8 @@ reads and writes in its own spelling.
    or the repository has no remote; a non-zero exit stops the merge. On a forge, then render
    the attribution block of notes into the body, right before the merge:
    `python3 "$IDH_ROOT/scripts/attribution_record.py" --render-pr N` (`references/claims.md`
-   § Attribution block warning); a failure is a warning, never a stop.
+   § Attribution block warning); its exit 1 (`missing`, `invalid: …`, a lost edit) is a
+   warning, never a stop.
 6. **Merge.** Gated base:
    `gh pr merge N --merge --match-head-commit "$(git rev-parse HEAD)"`. <!-- harness-extension-point -->
    Never `--auto`; never `--delete-branch`. Ungated base:
