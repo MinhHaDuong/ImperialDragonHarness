@@ -40,7 +40,8 @@ Required:
 - Linux with GNU coreutils and `flock` (§ Platform contract below).
 - `git` and `make`; `bash` for the hooks and scripts.
 - Python 3.11 or later (`pyproject.toml`), with [uv](https://docs.astral.sh/uv/):
-  `make` runs Python through `uv run --frozen` against the locked `.venv`.
+  `make` runs Python through `uv run --frozen` against the locked `.venv`,
+  unless a virtual environment is already active or `uv` is absent.
 - At least one agent runtime: Claude Code, Codex or Pi. Each has a minimum
   version, checked by `./bin/idh check harness <name>`; the floors live in
   `adapters/pilot-support.json`, not here.
@@ -49,9 +50,9 @@ Optional, by feature:
 
 | Tool | Needed for | Without it |
 |---|---|---|
-| `gh`, authenticated | the GitHub forge backend of `scripts/forge.py` | the `none` backend: review and gate state in git notes |
-| `age`, `age-keygen`, and a per-project key at `~/.config/keys/memory/<sha256(origin)[:16]>.age` | journal entries not cleared for the repository's public audience, stored as age ciphertext (`scripts/memory-capture.sh`) | such captures are refused and reported as pending, never written in plaintext |
-| `systemd-run --user` (systemd 254 or later) | waking a Codex session (`scripts/runtime.py wake`) | `wake` answers NOOP |
+| `gh`, authenticated | the GitHub forge backend of `scripts/forge.py` | review and gate state go to git notes (the `none` backend); but on a repository with an `origin` remote, landing a merge waits for the forge and is refused |
+| `age` and `age-keygen`, and an `origin` remote | journal entries not cleared for the repository's public audience, stored as age ciphertext (`scripts/memory-capture.sh`); the per-project key, `~/.config/keys/memory/<sha256(normalized origin URL)[:16]>.age`, is created on the first private capture | such captures are refused and reported as pending, never written in plaintext |
+| `systemd-run --user` (systemd 254 or later) | arming a wake for a Codex session (`scripts/runtime.py wake arm`) | `wake arm` answers NOOP (`wake send` still works); a present but unusable user service manager makes `arm` fail with exit 2 |
 | `act` and `podman` | running CI locally (`scripts/local-ci.sh`) | CI runs only on the forge |
 | `rtk` | the token-saving command proxy ([RTK.md](RTK.md)) | commands run unproxied |
 | Zotero desktop, running | the `zotero` skill (local API on 127.0.0.1:23119) | bibliography work is unavailable |

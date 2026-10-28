@@ -26,9 +26,12 @@ call-time adapter, so that code and skills name a capability, never a vendor:
 The axes do not imply one another. Any runtime may work on any forge, and a
 door launches a *target* CLI whatever the current runtime is: a Claude session
 starting a Codex review seat is the normal case. `runtime.py` and `forge.py`
-share one contract: the backend is chosen by a flag (`auto` reads markers and
-never guesses), an unsupported verb answers a typed NOOP, and exit codes are
-0 done, 1 NOOP, 2 refused, 3 could not read.
+share a shape, not yet one contract: each picks its backend with a flag and
+answers an unsupported operation with a typed NOOP. `runtime.py`'s `auto`
+reads the runtime's own markers and exits 3 rather than guess; its exit codes
+are 0 done, 1 NOOP, 2 refused or failed, 3 could not read. `forge.py`'s `auto`
+picks `gh` when `gh` is installed and the reference is a PR number, else
+`none`; its NOOP is a return value, and its command line exits 1 on a refusal.
 
 This directory is the install-time half of the runtime axis: it makes each
 runtime *find* the harness (skills, hooks, agents, extensions), while
@@ -37,7 +40,8 @@ depend on a registration here (Pi's wake needs its extension), never the
 reverse. Single-system adapters sit outside the three axes: `scripts/zotero.py`
 (bibliography), `scripts/memory-capture.sh` (encryption policy) and
 `scripts/local-ci.sh` (a CI runner standing in for the forge's).
-`scripts/check-agnostic.sh` keeps vendor names out of skills and rules.
+`scripts/check-agnostic.sh` keeps vendor names out of skills, and a few
+runtime patterns out of rules.
 Open work: raw `gh` calls outside `forge.py` (tracker 1317); runtime verbs
 beyond `wake` (tracker 1309).
 

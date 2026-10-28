@@ -97,7 +97,8 @@ project's own repository; the harness's memory is its own (`memory/`).
 2. **Events**: one Markdown file per significant fact in
    `memory/journal/YYYY/`, captured by `/roar`. Append-only. An entry not
    cleared for the repository's public audience is committed as age
-   ciphertext, never as plaintext; the key setup is in
+   ciphertext, never as plaintext; what that needs (`age` and an `origin`
+   remote; the key is created on first use) is in
    [INSTALL.md § Dependencies](INSTALL.md#dependencies).
 3. **Topics**: consolidated Markdown files in `memory/topics/`. Their index,
    `memory/MEMORY.md`, is injected into the session prompt; subagents read
