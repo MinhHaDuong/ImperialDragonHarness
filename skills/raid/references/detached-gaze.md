@@ -16,7 +16,8 @@ answer on notes, `review_notes.py answers --unit pr:<n> --latest --json --head <
 (the output shape in `skills/gaze/SKILL.md` § Output shape; the PR comment is a
 pointer only), accepted only when its `reviewed_head_sha` is not stale against
 the branch tip (`current`, or a bookkeeping delta) and its `seats` is `panel`
-(`skills/raid/SKILL.md` § Phase 6). The poll accepts an answer only on exit 0 with `current: true`,
+(`skills/raid/SKILL.md` § Phase 6). The poll accepts an answer only on exit 0 with `current: true` (or a tip
+adding at most a bookkeeping delta to `reviewed_head_sha`),
 `seats: panel`, and a result other than ESCALATE; a tip that moved by more than a bookkeeping delta
 is stale — under that contract's bounded wait, never a spawn exit status,
 and the structured result must return to the orchestrator. Inside it, gaze
