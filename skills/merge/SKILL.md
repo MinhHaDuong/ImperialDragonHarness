@@ -101,15 +101,18 @@ Start the step clock before step 0 and end it after step 8 (`skills/gaze/referen
 on the request (`gh pr comment N --body "merge <head>: duration: …"`). <!-- harness-extension-point -->
 
 <!-- harness-extension-point -->
-Reads below go through `forge.py` (`resolve`, `list`, `read-back`; exit 3 means no
-forge, 2 could not look; `forge.py` docstring). Writes with no `forge.py`
+Reads below go through `forge.py` (`resolve`, `list`, `read-back`; for `list` and
+`read-back` exit 3 means no forge and 2 could not look, `resolve` refuses with exit 1;
+`forge.py` docstring). Any non-zero exit is a stop, never an empty answer. Writes with no `forge.py`
 verb (comment, ready, disarm, merge) keep the current forge CLI's spelling behind a
 marker; another forge needs the same writes in its own spelling.
 
 0. **Read it, on its branch.** `git rev-parse --abbrev-ref HEAD` must print
    `<branch>`; otherwise stop. Read the request once:
    `python3 "$IDH_ROOT/scripts/forge.py" resolve N`
-   (its `state`, `draft`, `branch`, `base`, `head` and `body`). It must be open. Parse the body's close claims (`references/claims.md`)
+   (its `state`, `draft`, `branch`, `base`, `head` and `body`). It must be open,
+   and read from the forge: an answer with `cached: true` (or `forge: unread …`) comes
+   from the offline cache, not a landing read, so stop and read again later. Parse the body's close claims (`references/claims.md`)
    and run the attribution check there; its warning never refuses.
 1. **Close.** For each claimed ticket not already in `tickets/closed/` with
    a `Closed:` header:
@@ -149,7 +152,7 @@ marker; another forge needs the same writes in its own spelling.
    could land a later head than the record covers. Read
    `python3 "$IDH_ROOT/scripts/forge.py" list --state open --head <branch>`; the row's `auto` is `true` when armed;
    on `true`, run `gh pr merge N --disable-auto` and read again; still armed: <!-- harness-extension-point -->
-   do not merge.
+   do not merge. A non-zero exit or no row for `<branch>` is not "not armed": do not merge.
 5a. **Push the review evidence.** `python3 "$IDH_ROOT/scripts/review_notes.py" push-landing <branch>`
    pushes `refs/notes/review` and the review-heads of the requests naming `<branch>`, never
    forced. It prints the refs pushed and does nothing when the branch has no review notes
