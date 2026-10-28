@@ -30,6 +30,7 @@ import argparse
 import os
 import sys
 
+import runtime_notify
 import runtime_wake
 
 DONE, NOOP, FAILED, UNREAD = 0, 1, 2, 3
@@ -39,6 +40,7 @@ RUNTIMES = ("claude", "codex", "pi")
 # changes behaviour). A later verb (notify 1312, launch 1313, session 1314) adds its import
 # above and one line here.
 VERBS = [
+    runtime_notify,
     runtime_wake,
 ]
 
