@@ -10,7 +10,7 @@
 set -euo pipefail
 
 MODEL="openweight-code"
-ALLOWED="openweight-code openweight-large deepseek-v4-flash"
+ALLOWED="openweight-code openweight-large"  # only ids declared under albert in Pi's models.json
 args=()
 while [ $# -gt 0 ]; do
   case "$1" in
