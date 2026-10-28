@@ -118,3 +118,13 @@ def test_catalog_hides_routing_hints():
     description = ("Cut a text to budget. Use for a trim. Not for framing (/x). "
                    "Keywords: couper, réduire. Keyword: finition.")
     assert gen_skills_catalog.catalog_description(description) == "Cut a text to budget."
+
+
+def test_catalog_rejects_non_numeric_order(tmp_path):
+    import pytest
+
+    directory = _make_skill(tmp_path, "quoted", "Description.")
+    path = directory / "SKILL.md"
+    path.write_text(path.read_text().replace("category: build", 'category: build\n  order: "1"'))
+    with pytest.raises(ValueError, match="metadata.order must be a number"):
+        gen_skills_catalog.catalog_lines(str(tmp_path))

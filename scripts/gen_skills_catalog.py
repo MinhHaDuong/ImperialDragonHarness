@@ -72,6 +72,8 @@ def catalog_lines(root: str = ".") -> list[str]:
         # An optional metadata.order puts a section in workflow order; skills
         # without one follow, by name.
         order = metadata.get("order", float("inf"))
+        if isinstance(order, bool) or not isinstance(order, (int, float)):
+            raise ValueError(f"{skill_file}: metadata.order must be a number, not {order!r}")
         catalog.append((category, order, name, catalog_description(description)))
 
     lines = []
