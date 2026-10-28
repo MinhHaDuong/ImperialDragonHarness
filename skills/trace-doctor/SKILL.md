@@ -14,7 +14,15 @@ Analytical survey with ordinary judgment; choose the worker per the `route` skil
 
 Survey the session-trace corpus, interpret the numbers against the settled
 phase 3–4 playbook, and emit a ranked cost-saving recommendation report. Run
-monthly or on-demand. `$ARGUMENTS` accepts `--days N` (default 28).
+when the author calls it, monthly by habit. `$ARGUMENTS` accepts `--days N` (default 28).
+
+**Role**: the surveying doctor, not a practitioner. It watches all sessions,
+finds patterns and refers cases: to `/test-doctor` for a slow gate, to
+`/harness-doctor` for a skill or rule defect, or to a ticket. It follows the
+ethic layer of `skills/harness-doctor/references/doctor-practice.md` (called,
+never self-started; consent before costly probes; labelled numbers; the author
+decides) and not its consultation layer. Its history is the watchlist and the
+treatment follow-up below.
 
 **Authority boundary**: report and propose only. This skill runs the committed,
 zero-LLM survey scripts, interprets their output, and opens tickets for

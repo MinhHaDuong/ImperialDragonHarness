@@ -46,9 +46,12 @@ def test_only_hunt_and_the_suggesters_mention_the_expert():
 
 
 def test_the_visit_covers_history_evidence_diagnosis_remedy_and_verification():
-    body = SKILL.read_text()
-    for needed in ("Complaint", "Chart", "Examination", "Differential", "Confirm",
-                   "Intervene", "Verify", "revisit"):
+    # The shared steps live in the doctors' common practice text.
+    practice = REPO / "skills" / "harness-doctor" / "references" / "doctor-practice.md"
+    assert "doctor-practice.md" in SKILL.read_text()
+    body = SKILL.read_text() + practice.read_text()
+    for needed in ("Complaint", "Chart", "Examination", "Differential", "confirmation",
+                   "intervention", "Verify", "revisit"):
         assert needed in body, f"the visit lost its {needed!r} step"
     for evidence_tool in ("gate_traces.py", "gate_profile.py"):
         assert evidence_tool in body
