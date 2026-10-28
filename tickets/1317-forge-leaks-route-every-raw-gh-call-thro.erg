@@ -1,0 +1,49 @@
+%erg 0.1
+Title: Forge leaks: route every raw gh call through scripts/forge.py, so no-forge and other forges work wherever the harness touches review or merge state
+Created: 2026-10-28
+Author: claude
+
+--- log ---
+2026-10-28T17:40Z claude created
+
+--- body ---
+## Context
+`scripts/forge.py` is the harness's forge adapter (`--forge auto|gh|none`;
+verbs resolve, comments, checks, review_state, comment, append_body_line,
+create, ready, auto_merge_armed, disarm, merge, read_back, merged_at; typed
+refusal and NOOP; offline cache). Its `none` backend keeps review and gate state
+in git notes (`review_notes.py`, `merge-gate.py`). Raw `gh` calls that bypass it
+make those steps GitHub-only: on a no-forge repository or another forge they fail
+or, worse, read as "nothing found". This is the forge twin of the runtime tracker
+1309. The author asked for it on 2026-10-28, in the session that mapped the
+three adapter axes (runtime, forge, model door; `adapters/README.md` § Adapter map).
+
+Raw `gh` sites on main, 2026-10-28 (`git grep -E "gh (pr|api|issue|run|repo)"`
+plus the inventory of tracker 1309):
+- **Landing path (highest stakes):** the merge skill's recipe prose
+  (skills/merge/SKILL.md, references/claims.md); `skills/roar/close-and-clean.sh`
+  (≈341, 359); `skills/roar/check-close-claims.sh`;
+  `scripts/check-cross-pr-ticket-collision.sh` (≈97-129); `scripts/review-anchor.py`.
+- **Status and reports:** `skills/dashboard/dashboard.sh` (≈26-29),
+  `scripts/raid-sitrep.py` (≈42), `scripts/slow_tickets.py` (≈80), `skills/lair/SKILL.md`,
+  `skills/roar/runbooks/capture.md` (the extension-point hint for the PR body read).
+- **Trace analytics:** `scripts/trace-pr-join.py`, `scripts/trace_merge_path.py`.
+  They join Claude traces to GitHub PRs as measurement, so a GitHub dependency
+  may be acceptable there; decide per site.
+- **Probably legitimate:** `scripts/local-ci.sh` passes a forge token to `act`
+  (a GitHub Actions runner by design).
+
+## Children (to file when work starts, one sign-off unit each)
+- landing path: close-and-clean, check-close-claims, cross-PR collision, review-anchor
+  onto forge.py verbs (add a verb only where a caller needs one)
+- skill prose: merge recipe and claims.md name forge.py commands, not `gh`
+- status/report scripts: dashboard, raid-sitrep, slow_tickets
+- trace analytics and local-ci: decide keep-with-reason or port
+
+## Exit criteria
+- [ ] Every site above is routed through `forge.py` or listed as residue with its reason
+- [ ] Each ported site has a `none`-backend test (no `gh` on PATH) that shows the
+      step still works or answers a typed NOOP, never an empty all-clear
+- [ ] `scripts/check-agnostic.sh` (or a forge equivalent, only if a leak recurs after
+      the sweep) keeps the count from growing
+- [ ] `make check` passes
