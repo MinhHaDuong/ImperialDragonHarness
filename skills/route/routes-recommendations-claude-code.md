@@ -30,8 +30,9 @@ oversize context, uncleared content, or a cross-family need).
   `Agent` child inherits the session model; harness agent definitions carry no
   `model:` line.
 - Every `Agent` child is Anthropic. A cross-family worker is a headless CLI
-  started from bash: `pi -p` with a provider-qualified model, or
-  `codex exec -m` for OpenAI.
+  started from bash: `codex exec -m` for OpenAI, `vibe` for Mistral; `pi -p`
+  reaches only the providers the host's Pi declares (on padme, its local
+  seats and huggingface).
 
 ## Which model for which work
 

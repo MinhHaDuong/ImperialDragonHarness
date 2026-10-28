@@ -131,5 +131,5 @@ quality, Q2_0 for speed on non-judgment tickets, 27B for vision.
 ## routes.json
 
 Cache of the doors: provider, endpoint, key name (names only, never values),
-status (live / dead / capped), price notes, caps, last_verified. Update
+status (live / dead / capped, or the hosts where it is live), price notes, caps, last_verified. Update
 routes.json whenever a door changes state.
