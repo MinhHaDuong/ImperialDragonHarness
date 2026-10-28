@@ -2,9 +2,11 @@
 Title: Guard blocks pgrep/pkill -f without -A; retire the PATH wrapper
 Created: 2026-10-28
 Author: claude
+Closed: autoclosed — PR #1914
 
 --- log ---
 2026-10-28T18:04Z claude created
+2026-10-28T18:16Z reviewer closed — autoclosed — PR #1914
 
 --- body ---
 
