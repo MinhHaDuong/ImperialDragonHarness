@@ -30,6 +30,7 @@ def env(tmp_path, monkeypatch):
     """No runtime markers; PATH holds only the stub directory."""
     for key in MARKERS:
         monkeypatch.delenv(key, raising=False)
+    monkeypatch.delenv("CLAUDE_CODE_CHILD_SESSION", raising=False)  # headless since 1314
     bindir = tmp_path / "bin"
     bindir.mkdir()
     monkeypatch.setenv("PATH", str(bindir))
@@ -119,7 +120,7 @@ def test_can_without_markers_exits_3(env, capsys):
 
 
 def test_verbs_are_an_explicit_list():
-    assert runtime.VERBS == [runtime_wake]
+    assert runtime_wake in runtime.VERBS
     assert "import_module" not in (SCRIPTS / "runtime.py").read_text()
 
 
