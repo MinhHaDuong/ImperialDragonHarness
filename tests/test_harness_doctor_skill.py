@@ -220,7 +220,9 @@ def test_visit_forms_hypotheses_before_probes():
     spec_start, _ = _section(body, "Specialty")
     assert spec_start < _section(body, "Probes")[0]
     practice = PRACTICE.read_text(encoding="utf-8")
-    assert "Differential" in practice and "prior" in practice
+    assert "prior" in practice
+    # Hypotheses choose the probes: the differential precedes the examination.
+    assert practice.index("**Differential.**") < practice.index("**Examination.**")
 
 
 def test_skill_under_150_lines():

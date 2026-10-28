@@ -19,10 +19,9 @@ when the author calls it, monthly by habit. `$ARGUMENTS` accepts `--days N` (def
 **Role**: the surveying doctor, not a practitioner. It watches all sessions,
 finds patterns and refers cases: to `/test-doctor` for a slow gate, to
 `/harness-doctor` for a skill or rule defect, or to a ticket. It follows the
-ethic layer of `skills/harness-doctor/references/doctor-practice.md` (called,
-never self-started; consent before costly probes; labelled numbers; the author
-decides) and not its consultation layer. Its history is the watchlist and the
-treatment follow-up below.
+ethic layer of `skills/harness-doctor/references/doctor-practice.md`, as a
+surveying doctor: its kit is § 1's survey commands, its history the watchlist
+and the treatment follow-up below; it does not follow the consultation layer.
 
 **Authority boundary**: report and propose only. This skill runs the committed,
 zero-LLM survey scripts, interprets their output, and opens tickets for

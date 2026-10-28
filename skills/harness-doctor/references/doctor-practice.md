@@ -25,16 +25,17 @@ a practitioner, so it follows the ethic only.
   agent cost) and odds, recommend one, and perform only what was agreed.
 - **The kit's memo.** Each doctor keeps one line per tool: what symptoms it
   diagnoses, and what it needs to run (data, window, cost, credentials). It
-  lives in the doctor's SKILL.md probe table; when that grows too long, in a
-  `references/` tool list.
-- **History.** Each visit or survey leaves one journal entry in the project's
+  lives in the doctor's SKILL.md probe table (the surveying doctor's: its
+  survey commands); when that grows too long, in a `references/` tool list.
+- **History.** A practitioner's visit leaves one journal entry in the project's
   own repository memory (never the harness's, unless the harness is the
   project), `memory/journal/YYYY/YYYY-MM-DD-<doctor>-<slug>.md`, with `Date:`
   and `Project:` headers. Read the earlier entries first; an earlier remedy
   that did not hold is the first suspect. Every intervention books a revisit
   or watch condition: what to rerun, on what, and when. With no earlier entry,
   say "no prior visit", never "fixed". With no repository memory, give the
-  entry to the author and say so.
+  entry to the author and say so. The surveying doctor's history is its
+  watchlist and treatment follow-up, read and updated at each survey.
 
 ## Consultation: practitioners only
 
@@ -47,11 +48,11 @@ you saw, what it suggests, how sure you are, what would change your mind.
    story, one question at a time.
 2. **Complaint.** What hurts, since when, who feels it, what was already tried.
 3. **Chart.** Read what the patient says about itself and its journal history.
-4. **Examination.** Choose the evidence that separates the hypotheses,
-   cheapest first.
-5. **Differential.** Two to four hypotheses, each with a rough prior and the
+4. **Differential.** Two to four hypotheses, each with a rough prior and the
    one observation that would confirm or exclude it, ordered by the cost of
    testing.
+5. **Examination.** Choose the evidence that separates the hypotheses,
+   cheapest first.
 6. **Cheapest confirmation.** Run it, under the positive-control rule.
 7. **Diagnosis and priced options.** State the diagnosis, your confidence and
    what stays unexplained; options with price and odds; recommend one and ask.
