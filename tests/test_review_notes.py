@@ -674,3 +674,39 @@ def test_push_for_landing_refuses_a_missing_review_head(world):
     sh(a, "update-ref", "-d", f"{rn.HEADS}/{rid}/{rq}")
     with pytest.raises(rn.Refusal, match="missing"):
         rn.push_for_landing(str(a), "feature")
+
+
+# --- ticket 1301: readers take the PR review's answers from notes, not from comments -------------
+
+def test_answers_latest_matches_stale_head(world):
+    """`answers` gives every answer's text (attribution's seat source) and, with --latest, the
+    newest answer's result, seats and reviewed head: a poller sees the head it reviewed, so a
+    branch that moved since is visibly stale."""
+    _, a, _, _ = world
+    rid = rn.open_review(a, "feature", "origin/main", unit="pr:7")
+    head = sh(a, "rev-parse", "feature")
+    rn.add(a, "answer", rid, {"run_id": "gz-1", "result": "FINDINGS", "seats": "self-only",
+                              "coverage": {"scope": "full"}, "text": "result: FINDINGS\nseat: one"})
+    rn.add(a, "answer", rid, {"run_id": "gz-2", "result": "REVIEWED", "seats": "panel",
+                              "coverage": {"scope": "full"}, "text": "result: REVIEWED\nseat: two"})
+    assert rn.answer_texts(a, rid) == ["result: FINDINGS\nseat: one", "result: REVIEWED\nseat: two"]
+    latest = rn.latest_answer(a, rid)
+    assert (latest["result"], latest["seats"], latest["reviewed_head_sha"]) == ("REVIEWED", "panel", head)
+    sh(a, "switch", "-q", "feature")
+    (a / "other.txt").write_text("moved\n")
+    sh(a, "commit", "-qam", "moved on")
+    moved = sh(a, "rev-parse", "HEAD")
+
+    def cli(*args):
+        return subprocess.run([sys.executable, str(SCRIPTS / "review_notes.py"), "-C", str(a), "answers",
+                               "--unit", "pr:7", *args], capture_output=True, text=True)
+    r = cli("--latest", "--json", "--head", moved)
+    assert r.returncode == 0, r.stderr
+    out = json.loads(r.stdout)
+    assert out["review_id"] == rid and out["reviewed_head_sha"] == head and out["current"] is False
+    assert json.loads(cli("--latest", "--json", "--head", head).stdout)["current"] is True
+    texts = cli()
+    assert texts.returncode == 0 and "seat: one" in texts.stdout and "seat: two" in texts.stdout
+    none = subprocess.run([sys.executable, str(SCRIPTS / "review_notes.py"), "-C", str(a), "answers",
+                           "--unit", "pr:8", "--latest"], capture_output=True, text=True)
+    assert none.returncode == 1 and "no review" in none.stderr
