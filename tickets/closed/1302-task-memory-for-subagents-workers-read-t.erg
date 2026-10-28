@@ -2,11 +2,13 @@
 Title: Task memory for subagents: workers read the memory index, the orchestrator names relevant topics in the brief
 Created: 2026-10-28
 Author: reviewer
+Closed: autoclosed — PR #1872
 
 --- log ---
 2026-10-28T09:29Z reviewer created
 2026-10-28T09:29Z reviewer note author 2026-10-28 picked option C of three (A inject all topics, ~22K tokens per spawn, estimated from 86 KB; B profile line only; C = B + orchestrator names topics in the brief).
 2026-10-28T11:47Z reviewer note raid imagine/plan (orchestrator inline): scope as written, small doc change; team-lead has no profiles/team-lead/PROFILE.md, its contract is agents/team-lead.md, so the line goes there; Actions: one line in each profiles/*/PROFILE.md + agents/team-lead.md, one line in rules/workflow.md § Delegation, README Subagents + Memory link; first test: none behavioural (doc); scoped gate + test_profile_tool_grants. Feasibility PASS.
+2026-10-28T11:57Z reviewer closed — autoclosed — PR #1872
 
 --- body ---
 ## Context
