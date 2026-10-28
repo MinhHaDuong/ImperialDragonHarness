@@ -4,7 +4,8 @@
     raid_land.py <pr> --ruled-head <sha|-> --ruled-claims <ids|-> [--base main] [--cleanup]
 
 Run it from the request's own worktree on its head branch. It executes
-`skills/merge/SKILL.md` § The recipe, steps 0 to 8; step 9 (the after-merge
+`skills/merge/SKILL.md` § The recipe, steps 0 to 8 (5a, the push of the review notes and heads of the unit, runs
+just before the merge: ticket 1299); step 9 (the after-merge
 runner) needs no call here: hooks/reference-transaction starts it when step 8's
 sync moves main (ticket 1265). That file stays the contract.
 `--ruled-head` is the tip the review gate ruled on (`-` for a bookkeeping tier
@@ -34,6 +35,7 @@ import time
 from pathlib import Path
 
 import forge
+import review_notes
 from step_clock import fmt
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -262,6 +264,13 @@ def land(fg, pr: str, ruled: str, base: str = "main", cwd: Path | None = None,
             fg.disarm(pr)
             if fg.auto_merge_armed(pr):
                 raise Refusal("auto-merge still armed")
+    if remote:  # step 5a: the review evidence reaches origin before the merge, or there is no merge
+        try:
+            pushed = review_notes.push_for_landing(cwd, branch)
+        except review_notes.Refusal as exc:
+            raise Refusal(f"review notes not pushed: {exc}") from exc
+        if pushed:
+            out(f"review notes pushed: {', '.join(pushed)}")
     try:
         try:
             fg.merge(pr, head, auto=not gated and not local)

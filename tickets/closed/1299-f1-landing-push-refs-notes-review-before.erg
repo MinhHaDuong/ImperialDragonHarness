@@ -1,0 +1,50 @@
+%erg 0.1
+Title: F1 landing: push refs/notes/review before the PR merge, refuse on failed push
+Created: 2026-10-28
+Author: reviewer
+Closed: landing pushes review notes before merge, refuses on failed push (PR #1852)
+
+--- log ---
+2026-10-28T08:43Z reviewer created
+2026-10-28T09:08Z reviewer closed — landing pushes review notes before merge, refuses on failed push (PR #1852)
+
+--- body ---
+## Context
+Child of tracker 1298 (F1: review evidence on local notes, push at merge). First in order: harmless alone,
+and it guarantees notes reach origin before any merge once 1300 makes notes the evidence.
+
+## Design (default; the implementer may refine)
+- `review_notes.py`: a `push_for_landing` helper — push `refs/notes/review` and the review-heads of the
+  review(s) being landed only (not every `refs/review-heads/*`), synchronously, never forced; raise
+  `Refusal` on a non-zero exit. A git push is atomic: exit code suffices, no re-fetch read-back.
+- `raid_land.py` `land()`: call it before `fg.merge` on the forge route; `Refusal` → exit 1. No-op when the
+  repository holds no review notes for the unit (today's PR units), so landing behaviour is unchanged until 1300.
+- Check `hooks/reference-transaction` (main-update guard, enforce mode) accepts these pushes on a gated
+  base; `refs/review-heads/*` is outside `refs/notes/*`.
+- Merge recipe text (`skills/merge/SKILL.md` § The recipe) gains the push step.
+
+## Exit criteria
+- [ ] Landing pushes `refs/notes/review` (and the landed review's head ref) before the merge and refuses on a failed push; test covers the refusal (tracker criterion 3).
+- [ ] The main-update guard does not refuse the push; evidence named in the PR.
+- [ ] `make check` passes.
+
+## Actions
+1. `scripts/review_notes.py`: extract the notes-push loop of `sync()` (fetch, `_check_remote`, `_integrate`, re-write dropped entries, `push REF`, at most ATTEMPTS, `Refusal` after the last) into `_push_notes(cwd, remote, warnings)`; `sync()` calls it, behaviour unchanged (existing sync tests are the guard).
+2. `scripts/review_notes.py`: add `push_for_landing(cwd, branch, remote="origin") -> list[str]`. `refresh()` first (an unreadable remote is a `Refusal`, as in `resolve`); collect the `request` entries with `branch == branch` (`all_entries`); none, or `setup()` returns None (no remote) -> return `[]`, nothing pushed. Else `_push_notes`, then for each of those requests `git push -q <remote> refs/review-heads/<rid>/<rq>:refs/review-heads/<rid>/<rq>` (never forced, never the `HEADS/*` glob) and raise `Refusal` on a non-zero exit. Return the refs pushed. No re-fetch read-back.
+3. `scripts/raid_land.py`: `import review_notes`; in `land()`, just before the `try:` that calls `fg.merge` (after the gate record and disarm), if `remote`: `try: pushed = review_notes.push_for_landing(cwd, branch)` / `except review_notes.Refusal as exc: raise Refusal(...)` (classes differ, so wrap; `main_land` maps it to exit 1); `out(f"review notes pushed: ...")` when non-empty. Same call serves the forge and the `NoneForge` route (one place).
+4. `skills/merge/SKILL.md` § The recipe: new step between 5 and 6 (renumber 6-9, and the "steps 4 to 8" mentions): "Push the review evidence: `python3 "$IDH_ROOT/scripts/review_notes.py" ...` push-for-landing; nothing when the branch has no review notes; a failure stops the merge." Add a thin CLI subcommand `push-landing <branch>` in `main()` of review_notes.py for the by-hand recipe.
+5. Docstring of `raid_land.py` (steps 0 to 8 list) and of `review_notes.py` (Transport, Commands) name the new call.
+
+## Test
+In `tests/test_raid_land_local.py` (real repos, bare origin, enforce hook; fixture `make_repo(remote=True)`; open a review with `review_notes.open_review(wt, "feat", "main")` for the pushed cases):
+- `test_landing_pushes_review_notes_and_head_before_the_merge`: after `land()` returns 0, `git ls-remote origin refs/notes/review` equals the local ref and `refs/review-heads/<rid>/<rq>` equals the unit head. Fails on a landing that skips the push.
+- `test_landing_refuses_on_a_rejected_notes_push_and_does_not_merge`: origin `pre-receive` rejects `refs/notes/review`; `land()` raises `Refusal` (`main_land` returns 1, not 6), local `main` and `origin/main` unchanged, no `main^2`. Fails on a landing that ignores a push failure or pushes after the merge.
+- `test_landing_refuses_on_a_rejected_review_head_push`: the hook rejects only `refs/review-heads/*`; same assertions. Fails on an implementation that checks only the notes ref.
+- `test_unit_without_notes_pushes_nothing`: no review opened, but a second review for another branch `other` exists locally; after landing `feat`, `ls-remote origin 'refs/notes/*' 'refs/review-heads/*'` is empty (also proves "only the landed review's heads"). Fails on an unconditional push or a `HEADS/*` glob.
+In `tests/test_review_notes.py` (fixture `world`):
+- `test_push_for_landing_pushes_only_the_branchs_review_heads`: two reviews (`feature`, `other`); only the `feature` head ref reaches origin.
+- `test_push_for_landing_raises_when_the_remote_rejects` (pre-receive hook, `IDH_REVIEW_BACKOFF=0` via `no_backoff`): `Refusal`, not a silent False.
+- `test_push_for_landing_no_remote_and_no_notes_are_no_ops`: returns `[]`, creates no remote ref.
+
+## Feasibility
+PASS. Hook: `hooks/reference-transaction:63-77` collects only updates whose ref is `refs/heads/main` (and notes `refs/remotes/origin/main`); `[ -n "$main_updates" ] || exit 0` (l.77) exits 0 for every other ref, in every mode, so enforce (`git config idh.mainGuard` = enforce here) cannot see `refs/notes/review` or `refs/review-heads/*`; a push also updates only the remote's refs, not local transactions on them. Signatures checked: `raid_land.land(fg, pr, ruled, base, cwd, do_cleanup, out, ruled_claims)` (fg.merge at the `try:` after gate/disarm, `remote` already computed), `review_notes.sync(cwd, remote)` / `publish` / `_retention_problems` / `keep_head` / `Refusal`, `forge.NoneForge._review_id` (already loads review_notes). Caveat: `sync()` today pushes the whole `HEADS/*` glob unchecked (review_notes.py ~l.414), hence Action 1-2 instead of reusing it. Risk: low; PR units carry no notes until 1300, so landing is unchanged.
